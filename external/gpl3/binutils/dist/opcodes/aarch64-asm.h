@@ -30,15 +30,17 @@ const aarch64_opcode* aarch64_find_real_opcode (const aarch64_opcode *);
 
 /* Switch-table-based high-level operand inserter.  */
 
-const char* aarch64_insert_operand (const aarch64_operand *,
+bfd_boolean aarch64_insert_operand (const aarch64_operand *,
 				    const aarch64_opnd_info *, aarch64_insn *,
-				    const aarch64_inst *);
+				    const aarch64_inst *,
+				    aarch64_operand_error *);
 
 /* Operand inserters.  */
 
 #define AARCH64_DECL_OPD_INSERTER(x)	\
-  const char* aarch64_##x (const aarch64_operand *, const aarch64_opnd_info *, \
-			   aarch64_insn *, const aarch64_inst *)
+  bfd_boolean aarch64_##x (const aarch64_operand *, const aarch64_opnd_info *, \
+			   aarch64_insn *, const aarch64_inst *, \
+			   aarch64_operand_error *)
 
 AARCH64_DECL_OPD_INSERTER (ins_regno);
 AARCH64_DECL_OPD_INSERTER (ins_reglane);

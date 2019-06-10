@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.87.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.87.2.1 2019/06/10 22:07:10 christos Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/rndsource.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -73,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <sys/bus.h>
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
@@ -188,8 +187,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	ifp->if_start = mb86960_start;
 	ifp->if_ioctl = mb86960_ioctl;
 	ifp->if_watchdog = mb86960_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 #if FE_DEBUG >= 3
@@ -231,6 +229,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	}
 
 	/* Initialize media goo. */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, mb86960_mediachange,
 	    mb86960_mediastatus);
 	if (media != NULL) {
@@ -238,8 +237,8 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
 		ifmedia_set(&sc->sc_media, defmedia);
 	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 	}
 
 	/* Attach the interface. */
@@ -1161,7 +1160,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 #if FE_DEBUG >= 3
@@ -1192,7 +1190,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1211,7 +1209,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			mb86960_init(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -1248,11 +1246,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				mb86960_setmode(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
@@ -1372,7 +1365,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m->m_flags & M_PKTHDR) == 0)
-	  	panic("mb86960_write_mbufs: no header mbuf");
+		panic("mb86960_write_mbufs: no header mbuf");
 
 #if FE_DEBUG >= 2
 	/* First, count up the total number of bytes to copy. */
@@ -1411,7 +1404,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	 * packet in the transmission buffer, we can skip the
 	 * padding process.  It may gain performance slightly.  FIXME.
 	 */
-	len = max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
+	len = uimax(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
 	if (sc->sc_flags & FE_FLAGS_SBW_BYTE) {
 		bus_space_write_1(bst, bsh, FE_BMPR8, len);
 		bus_space_write_1(bst, bsh, FE_BMPR8, len >> 8);
@@ -1427,7 +1420,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	 * if the chip is set in SBW_WORD mode.
 	 */
 	sc->txb_free -= FE_TXLEN_SIZE +
-	    max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
+	    uimax(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
 	sc->txb_count++;
 
 #if FE_DELAYED_PADDING
@@ -1493,8 +1486,8 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 					 */
 					leftover = len & 1;
 					len &= ~1;
-					bus_space_write_multi_stream_2(bst, bsh,
-					    FE_BMPR8, (uint16_t *)data,
+					bus_space_write_multi_stream_2(bst,
+					    bsh, FE_BMPR8, (uint16_t *)data,
 					    len >> 1);
 					data += len;
 					if (leftover)
@@ -1553,6 +1546,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 		goto allmulti;
 
 	memset(af, 0, FE_FILTER_LEN);
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1565,6 +1559,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1578,6 +1573,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return;
 
@@ -1864,7 +1860,7 @@ mb86965_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *data)
 			bus_space_write_1(iot, ioh,
 			    FE_BMPR16, FE_B16_SELECT);
 		}
-		data[addr * 2]     = val >> 8;
+		data[addr * 2]	   = val >> 8;
 		data[addr * 2 + 1] = val & 0xff;
 	}
 
@@ -1951,4 +1947,3 @@ mb86960_dump(int level, struct mb86960_softc *sc)
 	bus_space_write_1(bst, bsh, FE_DLCR7, save_dlcr7);
 }
 #endif
-

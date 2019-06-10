@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.41.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,15 +488,28 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 	int		error;
 	size_t		ni;
 
-	if (nfds > 1000 + curlwp->l_fd->fd_dt->dt_nfiles) {
+	if (nfds > curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_max + 1000) {
 		/*
-		 * Either the user passed in a very sparse 'fds' or junk!
-		 * The kmem_alloc() call below would be bad news.
-		 * We could process the 'fds' array in chunks, but that
+		 * Prevent userland from causing over-allocation.
+		 * Raising the default limit too high can still cause
+		 * a lot of memory to be allocated, but this also means
+		 * that the file descriptor array will also be large.
+		 *
+		 * To reduce the memory requirements here, we could 
+		 * process the 'fds' array in chunks, but that
 		 * is a lot of code that isn't normally useful.
 		 * (Or just move the copyin/out into pollscan().)
+		 *
 		 * Historically the code silently truncated 'fds' to
 		 * dt_nfiles entries - but that does cause issues.
+		 *
+		 * Using the max limit equivalent to sysctl
+		 * kern.maxfiles is the moral equivalent of OPEN_MAX
+		 * as specified by POSIX.
+		 *
+		 * We add a slop of 1000 in case the resource limit was
+		 * changed after opening descriptors or the same descriptor
+		 * was specified more than once.
 		 */
 		return EINVAL;
 	}

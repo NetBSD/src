@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_RESULT_BLOB 3
 .Os
 .Sh NAME
@@ -19,6 +19,7 @@
 .Nm sqlite3_result_text16le ,
 .Nm sqlite3_result_text16be ,
 .Nm sqlite3_result_value ,
+.Nm sqlite3_result_pointer ,
 .Nm sqlite3_result_zeroblob ,
 .Nm sqlite3_result_zeroblob64
 .Nd Setting The Result Of An SQL Function
@@ -121,6 +122,13 @@
 .Fo sqlite3_result_value
 .Fa "sqlite3_context*"
 .Fa "sqlite3_value*"
+.Fc
+.Ft void 
+.Fo sqlite3_result_pointer
+.Fa "sqlite3_context*"
+.Fa "void*"
+.Fa "const char*"
+.Fa "void(*)(void*)"
 .Fc
 .Ft void 
 .Fo sqlite3_result_zeroblob
@@ -227,7 +235,7 @@ of the parameter nor call a destructor on the content when it has finished
 using that result.
 If the 4th parameter to the sqlite3_result_text* interfaces or sqlite3_result_blob
 is the special constant SQLITE_TRANSIENT then SQLite makes a copy of
-the result into space obtained from from sqlite3_malloc()
+the result into space obtained from sqlite3_malloc()
 before it returns.
 .Pp
 The sqlite3_result_value() interface sets the result of the application-defined
@@ -242,10 +250,25 @@ be used where an unprotected sqlite3_value
 object is required, so either kind of sqlite3_value object
 can be used with this interface.
 .Pp
+The sqlite3_result_pointer(C,P,T,D) interface sets the result to an
+SQL NULL value, just like sqlite3_result_null(C),
+except that it also associates the host-language pointer P or type
+T with that NULL value such that the pointer can be retrieved within
+an application-defined SQL function
+using sqlite3_value_pointer().
+If the D parameter is not NULL, then it is a pointer to a destructor
+for the P parameter.
+SQLite invokes D with P as its only argument when SQLite is finished
+with P.
+The T parameter should be a static string and preferably a string literal.
+The sqlite3_result_pointer() routine is part of the pointer passing interface
+added for SQLite 3.20.0.
+.Pp
 If these routines are called from within the different thread than
 the one containing the application-defined function that received the
 sqlite3_context pointer, the results are undefined.
 .Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_value 3 ,
 .Xr sqlite3_bind_blob 3 ,
@@ -253,5 +276,6 @@ sqlite3_context pointer, the results are undefined.
 .Xr sqlite3_create_function 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_value 3 ,
+.Xr sqlite3_value_blob 3 ,
 .Xr SQLITE_UTF8 3 ,
 .Xr sqlite3_value 3

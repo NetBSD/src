@@ -1,6 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -114,9 +114,9 @@ OP (MULTI_SUBSCRIPT)
    Thus, the operation occupies four exp_elements.  */
 OP (OP_LONG)
 
-/* OP_DOUBLE is similar but takes a DOUBLEST constant instead of a
-   long.  */
-OP (OP_DOUBLE)
+/* OP_FLOAT is similar but takes a floating-point constant encoded in
+   the target format for the given type instead of a long.  */
+OP (OP_FLOAT)
 
 /* OP_VAR_VALUE takes one struct block * in the following element,
    and one struct symbol * in the following exp_element, followed
@@ -131,6 +131,12 @@ OP (OP_VAR_VALUE)
    somename@entry may mean parameter value as present at the entry of the
    current function.  Implemented via DW_OP_entry_value.  */
 OP (OP_VAR_ENTRY_VALUE)
+
+/* OP_VAR_MSYM_VALUE takes one struct objfile * in the following
+   element, and one struct minimal_symbol * in the following
+   exp_element, followed by another OP_VAR_MSYM_VALUE, making four
+   exp_elements.  */
+OP (OP_VAR_MSYM_VALUE)
 
 /* OP_LAST is followed by an integer in the next exp_element.
    The integer is zero for the last value printed,
@@ -212,13 +218,6 @@ OP (UNOP_REINTERPRET_CAST)
    following subexpression.  */
 OP (UNOP_MEMVAL)
 
-/* UNOP_MEMVAL_TLS is followed by a `struct objfile' pointer in the next
-   exp_element and a type pointer in the following exp_element.
-   With another UNOP_MEMVAL_TLS at the end, this makes four exp_elements.
-   It casts the contents of the word offsetted by the value of the
-   following subexpression from the TLS specified by `struct objfile'.  */
-OP (UNOP_MEMVAL_TLS)
-
 /* Like UNOP_MEMVAL, but the type is supplied as a subexpression.  */
 OP (UNOP_MEMVAL_TYPE)
 
@@ -235,6 +234,7 @@ OP (UNOP_POSTINCREMENT)		/* ++ after an expression */
 OP (UNOP_PREDECREMENT)		/* -- before an expression */
 OP (UNOP_POSTDECREMENT)		/* -- after an expression */
 OP (UNOP_SIZEOF)		/* Unary sizeof (followed by expression) */
+OP (UNOP_ALIGNOF)		/* Unary alignof (followed by expression) */
 
 OP (UNOP_PLUS)			/* Unary plus */
 
@@ -281,6 +281,36 @@ OP (OP_OBJC_SELECTOR)
    a string, which, of course, is variable length.  */
 OP (OP_SCOPE)
 
+/* OP_FUNC_STATIC_VAR refers to a function local static variable.  The
+   function is taken from the following subexpression.  The length of
+   the variable name as a string follows the opcode, followed by
+   BYTES_TO_EXP_ELEM(length) elements containing the data of the
+   string, followed by the length again and the opcode again.
+
+   Note this is used by C++, but not C.  The C parser handles local
+   static variables in the parser directly.  Also, this is only used
+   in C++ if the function/method name is not quoted, like e.g.:
+
+     p S:method()::var
+     p S:method() const::var
+
+   If the function/method is quoted like instead:
+
+     p 'S:method() const'::var
+
+   then the C-specific handling directly in the parser takes over (see
+   "block/variable productions).
+
+   Also, if the whole function+var is quoted like this:
+
+     p 'S:method() const::var'
+
+   then the whole quoted expression is interpreted as a single symbol
+   name and we don't use OP_FUNC_STATIC_VAR either.  In that case, the
+   C++-specific symbol lookup routines take care of the
+   function-local-static search.  */
+OP (OP_FUNC_STATIC_VAR)
+
 /* OP_TYPE is for parsing types, and used with the "ptype" command
    so we can look up types that are qualified by scope, either with
    the GDB "::" operator, or the Modula-2 '.' operator.  */
@@ -295,11 +325,6 @@ OP (OP_OBJC_NSSTRING)
 /* An array range operator (in Fortran 90, for "exp:exp", "exp:",
    ":exp" and ":").  */
 OP (OP_RANGE)
-
-/* OP_DECFLOAT is followed by a type pointer in the next exp_element
-   and a dec long constant value in the following exp_element.
-   Then comes another OP_DECFLOAT.  */
-OP (OP_DECFLOAT)
 
 /* OP_ADL_FUNC specifies that the function is to be looked up in an
    Argument Dependent manner (Koenig lookup).  */

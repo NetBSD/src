@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "linux-low.h"
 #include "i387-fp.h"
 #include "x86-low.h"
-#include "x86-xstate.h"
+#include "common/x86-xstate.h"
 #include "nat/gdb_ptrace.h"
 
 #ifdef __x86_64__
@@ -38,7 +38,7 @@
 #include "elf/common.h"
 #endif
 
-#include "agent.h"
+#include "common/agent.h"
 #include "tdesc.h"
 #include "tracepoint.h"
 #include "ax.h"
@@ -72,7 +72,6 @@ static const char *xmltarget_amd64_linux_no_xml = "@<target>\
 
 #include <sys/reg.h>
 #include <sys/procfs.h>
-#include "nat/gdb_ptrace.h"
 #include <sys/uio.h>
 
 #ifndef PTRACE_GET_THREAD_AREA
@@ -255,7 +254,7 @@ x86_get_thread_area (int lwpid, CORE_ADDR *addr)
 #endif
 
   {
-    struct lwp_info *lwp = find_lwp_pid (pid_to_ptid (lwpid));
+    struct lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
     struct thread_info *thr = get_lwp_thread (lwp);
     struct regcache *regcache = get_thread_regcache (thr, 1);
     unsigned int desc[4];
@@ -617,6 +616,14 @@ x86_linux_new_process (void)
   return info;
 }
 
+/* Called when a process is being deleted.  */
+
+static void
+x86_linux_delete_process (struct arch_process_info *info)
+{
+  xfree (info);
+}
+
 /* Target routine for linux_new_fork.  */
 
 static void
@@ -757,7 +764,7 @@ x86_linux_read_description (void)
 	{
 	  have_ptrace_getfpxregs = 0;
 	  have_ptrace_getregset = 0;
-	  return tdesc_i386_mmx_linux;
+	  return i386_linux_read_description (X86_XSTATE_X87);
 	}
       else
 	have_ptrace_getfpxregs = 1;
@@ -809,7 +816,7 @@ x86_linux_read_description (void)
 
   /* Check the native XCR0 only if PTRACE_GETREGSET is available.  */
   xcr0_features = (have_ptrace_getregset
-         && (xcr0 & X86_XSTATE_ALL_MASK));
+		   && (xcr0 & X86_XSTATE_ALL_MASK));
 
   if (xcr0_features)
     x86_xcr0 = xcr0;
@@ -817,117 +824,33 @@ x86_linux_read_description (void)
   if (machine == EM_X86_64)
     {
 #ifdef __x86_64__
-      if (is_elf64)
+      const target_desc *tdesc = NULL;
+
+      if (xcr0_features)
 	{
-	  if (xcr0_features)
-	    {
-	      switch (xcr0 & X86_XSTATE_ALL_MASK)
-	        {
-		case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
-		  return tdesc_amd64_avx_mpx_avx512_pku_linux;
-
-		case X86_XSTATE_AVX_AVX512_MASK:
-		  return tdesc_amd64_avx_avx512_linux;
-
-		case X86_XSTATE_AVX_MPX_MASK:
-		  return tdesc_amd64_avx_mpx_linux;
-
-		case X86_XSTATE_MPX_MASK:
-		  return tdesc_amd64_mpx_linux;
-
-		case X86_XSTATE_AVX_MASK:
-		  return tdesc_amd64_avx_linux;
-
-		default:
-		  return tdesc_amd64_linux;
-		}
-	    }
-	  else
-	    return tdesc_amd64_linux;
+	  tdesc = amd64_linux_read_description (xcr0 & X86_XSTATE_ALL_MASK,
+						!is_elf64);
 	}
-      else
-	{
-	  if (xcr0_features)
-	    {
-	      switch (xcr0 & X86_XSTATE_ALL_MASK)
-	        {
-		case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
-		  /* No x32 MPX and PKU, fall back to avx_avx512.  */
-		  return tdesc_x32_avx_avx512_linux;
 
-		case X86_XSTATE_AVX_AVX512_MASK:
-		  return tdesc_x32_avx_avx512_linux;
-
-		case X86_XSTATE_MPX_MASK: /* No MPX on x32.  */
-		case X86_XSTATE_AVX_MASK:
-		  return tdesc_x32_avx_linux;
-
-		default:
-		  return tdesc_x32_linux;
-		}
-	    }
-	  else
-	    return tdesc_x32_linux;
-	}
+      if (tdesc == NULL)
+	tdesc = amd64_linux_read_description (X86_XSTATE_SSE_MASK, !is_elf64);
+      return tdesc;
 #endif
     }
   else
     {
+      const target_desc *tdesc = NULL;
+
       if (xcr0_features)
-	{
-	  switch (xcr0 & X86_XSTATE_ALL_MASK)
-	    {
-	    case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
-	      return tdesc_i386_avx_mpx_avx512_pku_linux;
+	  tdesc = i386_linux_read_description (xcr0 & X86_XSTATE_ALL_MASK);
 
-	    case (X86_XSTATE_AVX_AVX512_MASK):
-	      return tdesc_i386_avx_avx512_linux;
+      if (tdesc == NULL)
+	tdesc = i386_linux_read_description (X86_XSTATE_SSE);
 
-	    case (X86_XSTATE_MPX_MASK):
-	      return tdesc_i386_mpx_linux;
-
-	    case (X86_XSTATE_AVX_MPX_MASK):
-	      return tdesc_i386_avx_mpx_linux;
-
-	    case (X86_XSTATE_AVX_MASK):
-	      return tdesc_i386_avx_linux;
-
-	    default:
-	      return tdesc_i386_linux;
-	    }
-	}
-      else
-	return tdesc_i386_linux;
+      return tdesc;
     }
 
   gdb_assert_not_reached ("failed to return tdesc");
-}
-
-/* Callback for find_inferior.  Stops iteration when a thread with a
-   given PID is found.  */
-
-static int
-same_process_callback (struct inferior_list_entry *entry, void *data)
-{
-  int pid = *(int *) data;
-
-  return (ptid_get_pid (entry->id) == pid);
-}
-
-/* Callback for for_each_inferior.  Calls the arch_setup routine for
-   each process.  */
-
-static void
-x86_arch_setup_process_callback (struct inferior_list_entry *entry)
-{
-  int pid = ptid_get_pid (entry->id);
-
-  /* Look up any thread of this processes.  */
-  current_thread
-    = (struct thread_info *) find_inferior (&all_threads,
-					    same_process_callback, &pid);
-
-  the_low_target.arch_setup ();
 }
 
 /* Update all the target description of all processes; a new GDB
@@ -943,7 +866,14 @@ x86_linux_update_xmltarget (void)
      release the current regcache objects.  */
   regcache_release ();
 
-  for_each_inferior (&all_processes, x86_arch_setup_process_callback);
+  for_each_process ([] (process_info *proc) {
+    int pid = proc->pid;
+
+    /* Look up any thread of this process.  */
+    current_thread = find_any_thread_of_pid (pid);
+
+    the_low_target.arch_setup ();
+  });
 
   current_thread = saved_thread;
 }
@@ -2897,37 +2827,13 @@ x86_get_ipa_tdesc_idx (void)
   const struct target_desc *tdesc = regcache->tdesc;
 
 #ifdef __x86_64__
-  if (tdesc == tdesc_amd64_linux || tdesc == tdesc_amd64_linux_no_xml
-      || tdesc == tdesc_x32_linux)
-    return X86_TDESC_SSE;
-  if (tdesc == tdesc_amd64_avx_linux || tdesc == tdesc_x32_avx_linux)
-    return X86_TDESC_AVX;
-  if (tdesc == tdesc_amd64_mpx_linux)
-    return X86_TDESC_MPX;
-  if (tdesc == tdesc_amd64_avx_mpx_linux)
-    return X86_TDESC_AVX_MPX;
-  if (tdesc == tdesc_amd64_avx_mpx_avx512_pku_linux || tdesc == tdesc_x32_avx_avx512_linux)
-    return X86_TDESC_AVX_MPX_AVX512_PKU;
-  if (tdesc == tdesc_amd64_avx_avx512_linux)
-    return X86_TDESC_AVX_AVX512;
+  return amd64_get_ipa_tdesc_idx (tdesc);
 #endif
 
-  if (tdesc == tdesc_i386_mmx_linux)
-    return X86_TDESC_MMX;
-  if (tdesc == tdesc_i386_linux || tdesc == tdesc_i386_linux_no_xml)
+  if (tdesc == tdesc_i386_linux_no_xml)
     return X86_TDESC_SSE;
-  if (tdesc == tdesc_i386_avx_linux)
-    return X86_TDESC_AVX;
-  if (tdesc == tdesc_i386_mpx_linux)
-    return X86_TDESC_MPX;
-  if (tdesc == tdesc_i386_avx_mpx_linux)
-    return X86_TDESC_AVX_MPX;
-  if (tdesc == tdesc_i386_avx_mpx_avx512_pku_linux)
-    return X86_TDESC_AVX_MPX_AVX512_PKU;
-  if (tdesc == tdesc_i386_avx_avx512_linux)
-    return X86_TDESC_AVX_AVX512;
 
-  return 0;
+  return i386_get_ipa_tdesc_idx (tdesc);
 }
 
 /* This is initialized assuming an amd64 target.
@@ -2960,7 +2866,9 @@ struct linux_target_ops the_low_target =
   /* need to fix up i386 siginfo if host is amd64 */
   x86_siginfo_fixup,
   x86_linux_new_process,
+  x86_linux_delete_process,
   x86_linux_new_thread,
+  x86_linux_delete_thread,
   x86_linux_new_fork,
   x86_linux_prepare_to_resume,
   x86_linux_process_qsupported,
@@ -2981,31 +2889,20 @@ initialize_low_arch (void)
 {
   /* Initialize the Linux target descriptions.  */
 #ifdef __x86_64__
-  init_registers_amd64_linux ();
-  init_registers_amd64_avx_linux ();
-  init_registers_amd64_mpx_linux ();
-  init_registers_amd64_avx_mpx_linux ();
-  init_registers_amd64_avx_avx512_linux ();
-  init_registers_amd64_avx_mpx_avx512_pku_linux ();
-
-  init_registers_x32_linux ();
-  init_registers_x32_avx_linux ();
-  init_registers_x32_avx_avx512_linux ();
-
-  tdesc_amd64_linux_no_xml = XNEW (struct target_desc);
-  copy_target_description (tdesc_amd64_linux_no_xml, tdesc_amd64_linux);
+  tdesc_amd64_linux_no_xml = allocate_target_description ();
+  copy_target_description (tdesc_amd64_linux_no_xml,
+			   amd64_linux_read_description (X86_XSTATE_SSE_MASK,
+							 false));
   tdesc_amd64_linux_no_xml->xmltarget = xmltarget_amd64_linux_no_xml;
 #endif
-  init_registers_i386_linux ();
-  init_registers_i386_mmx_linux ();
-  init_registers_i386_avx_linux ();
-  init_registers_i386_mpx_linux ();
-  init_registers_i386_avx_mpx_linux ();
-  init_registers_i386_avx_avx512_linux ();
-  init_registers_i386_avx_mpx_avx512_pku_linux ();
 
-  tdesc_i386_linux_no_xml = XNEW (struct target_desc);
-  copy_target_description (tdesc_i386_linux_no_xml, tdesc_i386_linux);
+#if GDB_SELF_TEST
+  initialize_low_tdesc ();
+#endif
+
+  tdesc_i386_linux_no_xml = allocate_target_description ();
+  copy_target_description (tdesc_i386_linux_no_xml,
+			   i386_linux_read_description (X86_XSTATE_SSE_MASK));
   tdesc_i386_linux_no_xml->xmltarget = xmltarget_i386_linux_no_xml;
 
   initialize_regsets_info (&x86_regsets_info);

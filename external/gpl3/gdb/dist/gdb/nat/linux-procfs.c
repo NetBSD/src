@@ -1,5 +1,5 @@
 /* Linux-specific PROCFS manipulation routines.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,9 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 #include "linux-procfs.h"
-#include "filestuff.h"
+#include "common/filestuff.h"
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -29,12 +29,11 @@ static int
 linux_proc_get_int (pid_t lwpid, const char *field, int warn)
 {
   size_t field_len = strlen (field);
-  FILE *status_file;
   char buf[100];
   int retval = -1;
 
   snprintf (buf, sizeof (buf), "/proc/%d/status", (int) lwpid);
-  status_file = gdb_fopen_cloexec (buf, "r");
+  gdb_file_up status_file = gdb_fopen_cloexec (buf, "r");
   if (status_file == NULL)
     {
       if (warn)
@@ -42,14 +41,13 @@ linux_proc_get_int (pid_t lwpid, const char *field, int warn)
       return -1;
     }
 
-  while (fgets (buf, sizeof (buf), status_file))
+  while (fgets (buf, sizeof (buf), status_file.get ()))
     if (strncmp (buf, field, field_len) == 0 && buf[field_len] == ':')
       {
 	retval = strtol (&buf[field_len + 1], NULL, 10);
 	break;
       }
 
-  fclose (status_file);
   return retval;
 }
 
@@ -98,7 +96,7 @@ enum proc_state
 static enum proc_state
 parse_proc_status_state (const char *state)
 {
-  state = skip_spaces_const (state);
+  state = skip_spaces (state);
 
   switch (state[0])
     {
@@ -128,12 +126,11 @@ parse_proc_status_state (const char *state)
 static int
 linux_proc_pid_get_state (pid_t pid, int warn, enum proc_state *state)
 {
-  FILE *procfile;
   int have_state;
   char buffer[100];
 
   xsnprintf (buffer, sizeof (buffer), "/proc/%d/status", (int) pid);
-  procfile = gdb_fopen_cloexec (buffer, "r");
+  gdb_file_up procfile = gdb_fopen_cloexec (buffer, "r");
   if (procfile == NULL)
     {
       if (warn)
@@ -142,14 +139,13 @@ linux_proc_pid_get_state (pid_t pid, int warn, enum proc_state *state)
     }
 
   have_state = 0;
-  while (fgets (buffer, sizeof (buffer), procfile) != NULL)
+  while (fgets (buffer, sizeof (buffer), procfile.get ()) != NULL)
     if (startswith (buffer, "State:"))
       {
 	have_state = 1;
 	*state = parse_proc_status_state (buffer + sizeof ("State:") - 1);
 	break;
       }
-  fclose (procfile);
   return have_state;
 }
 
@@ -242,20 +238,18 @@ linux_proc_tid_get_name (ptid_t ptid)
 
   static char comm_buf[TASK_COMM_LEN];
   char comm_path[100];
-  FILE *comm_file;
   const char *comm_val;
-  pid_t pid = ptid_get_pid (ptid);
-  pid_t tid = ptid_lwp_p (ptid) ? ptid_get_lwp (ptid) : ptid_get_pid (ptid);
+  pid_t pid = ptid.pid ();
+  pid_t tid = ptid.lwp_p () ? ptid.lwp () : ptid.pid ();
 
   xsnprintf (comm_path, sizeof (comm_path),
 	     "/proc/%ld/task/%ld/comm", (long) pid, (long) tid);
 
-  comm_file = gdb_fopen_cloexec (comm_path, "r");
+  gdb_file_up comm_file = gdb_fopen_cloexec (comm_path, "r");
   if (comm_file == NULL)
     return NULL;
 
-  comm_val = fgets (comm_buf, sizeof (comm_buf), comm_file);
-  fclose (comm_file);
+  comm_val = fgets (comm_buf, sizeof (comm_buf), comm_file.get ());
 
   if (comm_val != NULL)
     {
@@ -314,7 +308,7 @@ linux_proc_attach_tgid_threads (pid_t pid,
 	  lwp = strtoul (dp->d_name, NULL, 10);
 	  if (lwp != 0)
 	    {
-	      ptid_t ptid = ptid_build (pid, lwp, 0);
+	      ptid_t ptid = ptid_t (pid, lwp, 0);
 
 	      if (attach_lwp (ptid))
 		new_threads_found = 1;
@@ -362,4 +356,21 @@ linux_proc_pid_to_exec_file (int pid)
     buf[len] = '\0';
 
   return buf;
+}
+
+/* See linux-procfs.h.  */
+
+void
+linux_proc_init_warnings ()
+{
+  static bool warned = false;
+
+  if (warned)
+    return;
+  warned = true;
+
+  struct stat st;
+
+  if (stat ("/proc/self", &st) != 0)
+    warning (_("/proc is not accessible."));
 }

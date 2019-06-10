@@ -1,5 +1,5 @@
 ;; Scheduling description for Niagara-4
-;;   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+;;   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -74,6 +74,13 @@
     (and (eq_attr "type" "vismv")
       (eq_attr "fptype" "double")))
   "n4_slot1")
+
+;; The latency numbers for VIS instructions in the reservations below
+;; reflect empirical results, and don't match with the documented
+;; latency numbers in the T4 Processor Supplement.  This is because
+;; the HW chaps didn't feel it necessary to document the complexity in
+;; the PRM, and just assigned a latency of 11 to all/most of the VIS
+;; instructions.
 
 (define_insn_reservation "n4_vis_move_11cycle" 11
   (and (eq_attr "cpu" "niagara4")

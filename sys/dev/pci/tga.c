@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.85 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: tga.c,v 1.85.30.1 2019/06/10 22:07:27 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.85 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.85.30.1 2019/06/10 22:07:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,8 +424,8 @@ tgaattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrh, intrbuf, sizeof(intrbuf));
-	sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
-	    sc->sc_dc);
+	sc->sc_intr = pci_intr_establish_xname(pa->pa_pc, intrh, IPL_TTY,
+	    tga_intr, sc->sc_dc, device_xname(self));
 	if (sc->sc_intr == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)

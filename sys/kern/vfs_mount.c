@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.67.4.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.67.4.1 2019/06/10 22:09:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -149,7 +149,6 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
 	int error __diagused;
-	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	mp->mnt_op = vfsops;
@@ -159,10 +158,9 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
-	if (vfsops != &dead_vfsops) {
-		error = fstrans_mount(mp);
-		KASSERT(error == 0);
-	}
+
+	error = fstrans_mount(mp);
+	KASSERT(error == 0);
 
 	mutex_enter(&mountgen_lock);
 	mp->mnt_gen = mountgen++;
@@ -299,7 +297,13 @@ vfs_rele(struct mount *mp)
 	if (mp->mnt_op != NULL) {
 		vfs_delref(mp->mnt_op);
 	}
-	kmem_free(mp, sizeof(*mp));
+	fstrans_unmount(mp);
+	/*
+	 * Final free of mp gets done from fstrans_mount_dtor().
+	 *
+	 * Prevents this memory to be reused as a mount before
+	 * fstrans releases all references to it.
+	 */
 }
 
 /*
@@ -820,7 +824,6 @@ err_mounted:
 err_unmounted:
 	vp->v_mountedhere = NULL;
 	mutex_exit(&mp->mnt_updating);
-	fstrans_unmount(mp);
 	vfs_rele(mp);
 
 	return error;
@@ -835,10 +838,9 @@ err_unmounted:
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
-	mount_iterator_t *iter;
-	struct mount *cmp;
 	vnode_t *coveredvp;
 	int error, async, used_syncer, used_extattr;
+	const bool was_suspended = fstrans_is_owner(mp);
 
 #if NVERIEXEC > 0
 	error = veriexec_unmountchk(mp);
@@ -846,21 +848,11 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 #endif /* NVERIEXEC > 0 */
 
-	/*
-	 * No unmount below layered mounts.
-	 */
-	mountlist_iterator_init(&iter);
-	while ((cmp = mountlist_iterator_next(iter)) != NULL) {
-		if (cmp->mnt_lower == mp) {
-			mountlist_iterator_destroy(iter);
-			return EBUSY;
+	if (!was_suspended) {
+		error = vfs_suspend(mp, 0);
+		if (error) {
+			return error;
 		}
-	}
-	mountlist_iterator_destroy(iter);
-
-	error = vfs_suspend(mp, 0);
-	if (error) {
-		return error;
 	}
 
 	KASSERT((mp->mnt_iflag & IMNT_GONE) == 0);
@@ -888,7 +880,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
-		vfs_resume(mp);
+		if (!was_suspended)
+			vfs_resume(mp);
 		if (used_extattr) {
 			if (start_extattr(mp) != 0)
 				mp->mnt_flag &= ~MNT_EXTATTR;
@@ -905,7 +898,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * vfs_busy() from succeeding.
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
-	vfs_resume(mp);
+	if (!was_suspended)
+		vfs_resume(mp);
 
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);
@@ -917,7 +911,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		panic("unmount: dangling vnode");
 	vfs_hooks_unmount(mp);
 
-	fstrans_unmount(mp);
 	vfs_rele(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);

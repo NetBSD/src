@@ -1,5 +1,5 @@
 /* Vectorizer
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Dorit Naishlos <dorit@il.ibm.com>
 
 This file is part of GCC.
@@ -69,6 +69,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-iterator.h"
 #include "gimple-walk.h"
 #include "tree-ssa-loop-manip.h"
+#include "tree-ssa-loop-niter.h"
 #include "tree-cfg.h"
 #include "cfgloop.h"
 #include "tree-vectorizer.h"
@@ -204,6 +205,10 @@ adjust_simduid_builtins (hash_table<simduid_to_vf> *htab)
 	  gcc_assert (TREE_CODE (arg) == SSA_NAME);
 	  simduid_to_vf *p = NULL, data;
 	  data.simduid = DECL_UID (SSA_NAME_VAR (arg));
+	  /* Need to nullify loop safelen field since it's value is not
+	     valid after transformation.  */
+	  if (bb->loop_father && bb->loop_father->safelen > 0)
+	    bb->loop_father->safelen = 0;
 	  if (htab)
 	    {
 	      p = htab->find (&data);
@@ -364,6 +369,20 @@ vect_destroy_datarefs (vec_info *vinfo)
   free_data_refs (vinfo->datarefs);
 }
 
+/* A helper function to free scev and LOOP niter information, as well as
+   clear loop constraint LOOP_C_FINITE.  */
+
+void
+vect_free_loop_info_assumptions (struct loop *loop)
+{
+  scev_reset_htab ();
+  /* We need to explicitly reset upper bound information since they are
+     used even after free_numbers_of_iterations_estimates_loop.  */
+  loop->any_upper_bound = false;
+  loop->any_likely_upper_bound = false;
+  free_numbers_of_iterations_estimates_loop (loop);
+  loop_constraint_clear (loop, LOOP_C_FINITE);
+}
 
 /* Return whether STMT is inside the region we try to vectorize.  */
 
@@ -417,9 +436,7 @@ vect_loop_vectorized_call (struct loop *loop)
       if (!gsi_end_p (gsi))
 	{
 	  g = gsi_stmt (gsi);
-	  if (is_gimple_call (g)
-	      && gimple_call_internal_p (g)
-	      && gimple_call_internal_fn (g) == IFN_LOOP_VECTORIZED
+	  if (gimple_call_internal_p (g, IFN_LOOP_VECTORIZED)
 	      && (tree_to_shwi (gimple_call_arg (g, 0)) == loop->num
 		  || tree_to_shwi (gimple_call_arg (g, 1)) == loop->num))
 	    return g;
@@ -448,6 +465,7 @@ fold_loop_vectorized_call (gimple *g, tree value)
       update_stmt (use_stmt);
     }
 }
+
 /* Set the uids of all the statements in basic blocks inside loop
    represented by LOOP_VINFO. LOOP_VECTORIZED_CALL is the internal
    call guarding the loop which has been if converted.  */
@@ -460,9 +478,22 @@ set_uid_loop_bbs (loop_vec_info loop_vinfo, gimple *loop_vectorized_call)
   struct loop *scalar_loop = get_loop (cfun, tree_to_shwi (arg));
 
   LOOP_VINFO_SCALAR_LOOP (loop_vinfo) = scalar_loop;
-  gcc_checking_assert (vect_loop_vectorized_call
-		       (LOOP_VINFO_SCALAR_LOOP (loop_vinfo))
+  gcc_checking_assert (vect_loop_vectorized_call (scalar_loop)
 		       == loop_vectorized_call);
+  /* If we are going to vectorize outer loop, prevent vectorization
+     of the inner loop in the scalar loop - either the scalar loop is
+     thrown away, so it is a wasted work, or is used only for
+     a few iterations.  */
+  if (scalar_loop->inner)
+    {
+      gimple *g = vect_loop_vectorized_call (scalar_loop->inner);
+      if (g)
+	{
+	  arg = gimple_call_arg (g, 0);
+	  get_loop (cfun, tree_to_shwi (arg))->dont_vectorize = true;
+	  fold_loop_vectorized_call (g, boolean_false_node);
+	}
+    }
   bbs = get_loop_body (scalar_loop);
   for (i = 0; i < scalar_loop->num_nodes; i++)
     {
@@ -497,6 +528,7 @@ vectorize_loops (void)
   hash_table<simd_array_to_simduid> *simd_array_to_simduid_htab = NULL;
   bool any_ifcvt_loops = false;
   unsigned ret = 0;
+  struct loop *new_loop;
 
   vect_loops_num = number_of_loops (cfun);
 
@@ -516,12 +548,59 @@ vectorize_loops (void)
      only over initial loops skipping newly generated ones.  */
   FOR_EACH_LOOP (loop, 0)
     if (loop->dont_vectorize)
-      any_ifcvt_loops = true;
-    else if ((flag_tree_loop_vectorize
-	      && optimize_loop_nest_for_speed_p (loop))
-	     || loop->force_vectorize)
       {
-	loop_vec_info loop_vinfo;
+	any_ifcvt_loops = true;
+	/* If-conversion sometimes versions both the outer loop
+	   (for the case when outer loop vectorization might be
+	   desirable) as well as the inner loop in the scalar version
+	   of the loop.  So we have:
+	    if (LOOP_VECTORIZED (1, 3))
+	      {
+		loop1
+		  loop2
+	      }
+	    else
+	      loop3 (copy of loop1)
+		if (LOOP_VECTORIZED (4, 5))
+		  loop4 (copy of loop2)
+		else
+		  loop5 (copy of loop4)
+	   If FOR_EACH_LOOP gives us loop3 first (which has
+	   dont_vectorize set), make sure to process loop1 before loop4;
+	   so that we can prevent vectorization of loop4 if loop1
+	   is successfully vectorized.  */
+	if (loop->inner)
+	  {
+	    gimple *loop_vectorized_call
+	      = vect_loop_vectorized_call (loop);
+	    if (loop_vectorized_call
+		&& vect_loop_vectorized_call (loop->inner))
+	      {
+		tree arg = gimple_call_arg (loop_vectorized_call, 0);
+		struct loop *vector_loop
+		  = get_loop (cfun, tree_to_shwi (arg));
+		if (vector_loop && vector_loop != loop)
+		  {
+		    loop = vector_loop;
+		    /* Make sure we don't vectorize it twice.  */
+		    loop->dont_vectorize = true;
+		    goto try_vectorize;
+		  }
+	      }
+	  }
+      }
+    else
+      {
+	loop_vec_info loop_vinfo, orig_loop_vinfo;
+	gimple *loop_vectorized_call;
+       try_vectorize:
+	if (!((flag_tree_loop_vectorize
+	       && optimize_loop_nest_for_speed_p (loop))
+	      || loop->force_vectorize))
+	  continue;
+	orig_loop_vinfo = NULL;
+	loop_vectorized_call = vect_loop_vectorized_call (loop);
+       vectorize_epilogue:
 	vect_location = find_loop_location (loop);
         if (LOCATION_LOCUS (vect_location) != UNKNOWN_LOCATION
 	    && dump_enabled_p ())
@@ -529,11 +608,61 @@ vectorize_loops (void)
                        LOCATION_FILE (vect_location),
 		       LOCATION_LINE (vect_location));
 
-	loop_vinfo = vect_analyze_loop (loop);
+	loop_vinfo = vect_analyze_loop (loop, orig_loop_vinfo);
 	loop->aux = loop_vinfo;
 
 	if (!loop_vinfo || !LOOP_VINFO_VECTORIZABLE_P (loop_vinfo))
-	  continue;
+	  {
+	    /* Free existing information if loop is analyzed with some
+	       assumptions.  */
+	    if (loop_constraint_set_p (loop, LOOP_C_FINITE))
+	      vect_free_loop_info_assumptions (loop);
+
+	    /* If we applied if-conversion then try to vectorize the
+	       BB of innermost loops.
+	       ???  Ideally BB vectorization would learn to vectorize
+	       control flow by applying if-conversion on-the-fly, the
+	       following retains the if-converted loop body even when
+	       only non-if-converted parts took part in BB vectorization.  */
+	    if (flag_tree_slp_vectorize != 0
+		&& loop_vectorized_call
+		&& ! loop->inner)
+	      {
+		basic_block bb = loop->header;
+		bool has_mask_load_store = false;
+		for (gimple_stmt_iterator gsi = gsi_start_bb (bb);
+		     !gsi_end_p (gsi); gsi_next (&gsi))
+		  {
+		    gimple *stmt = gsi_stmt (gsi);
+		    if (is_gimple_call (stmt)
+			&& gimple_call_internal_p (stmt)
+			&& (gimple_call_internal_fn (stmt) == IFN_MASK_LOAD
+			    || gimple_call_internal_fn (stmt) == IFN_MASK_STORE))
+		      {
+			has_mask_load_store = true;
+			break;
+		      }
+		    gimple_set_uid (stmt, -1);
+		    gimple_set_visited (stmt, false);
+		  }
+		if (! has_mask_load_store && vect_slp_bb (bb))
+		  {
+		    dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, vect_location,
+				     "basic block vectorized\n");
+		    fold_loop_vectorized_call (loop_vectorized_call,
+					       boolean_true_node);
+		    loop_vectorized_call = NULL;
+		    ret |= TODO_cleanup_cfg;
+		  }
+	      }
+	    /* If outer loop vectorization fails for LOOP_VECTORIZED guarded
+	       loop, don't vectorize its inner loop; we'll attempt to
+	       vectorize LOOP_VECTORIZED guarded inner loop of the scalar
+	       loop version.  */
+	    if (loop_vectorized_call && loop->inner)
+	      loop->inner->dont_vectorize = true;
+	    continue;
+	  }
 
         if (!dbg_cnt (vect_loop))
 	  {
@@ -541,17 +670,21 @@ vectorize_loops (void)
 	       debug counter.  Set any_ifcvt_loops to visit
 	       them at finalization.  */
 	    any_ifcvt_loops = true;
+	    /* Free existing information if loop is analyzed with some
+	       assumptions.  */
+	    if (loop_constraint_set_p (loop, LOOP_C_FINITE))
+	      vect_free_loop_info_assumptions (loop);
+
 	    break;
 	  }
 
-	gimple *loop_vectorized_call = vect_loop_vectorized_call (loop);
 	if (loop_vectorized_call)
 	  set_uid_loop_bbs (loop_vinfo, loop_vectorized_call);
         if (LOCATION_LOCUS (vect_location) != UNKNOWN_LOCATION
 	    && dump_enabled_p ())
           dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, vect_location,
                            "loop vectorized\n");
-	vect_transform_loop (loop_vinfo);
+	new_loop = vect_transform_loop (loop_vinfo);
 	num_vectorized_loops++;
 	/* Now that the loop has been vectorized, allow it to be unrolled
 	   etc.  */
@@ -571,7 +704,17 @@ vectorize_loops (void)
 	if (loop_vectorized_call)
 	  {
 	    fold_loop_vectorized_call (loop_vectorized_call, boolean_true_node);
+	    loop_vectorized_call = NULL;
 	    ret |= TODO_cleanup_cfg;
+	  }
+
+	if (new_loop)
+	  {
+	    /* Epilogue of vectorized loop must be vectorized too.  */
+	    vect_loops_num = number_of_loops (cfun);
+	    loop = new_loop;
+	    orig_loop_vinfo = loop_vinfo;  /* To pass vect_analyze_loop.  */
+	    goto vectorize_epilogue;
 	  }
       }
 
@@ -794,38 +937,142 @@ make_pass_slp_vectorize (gcc::context *ctxt)
      This should involve global alignment analysis and in the future also
      array padding.  */
 
+static unsigned get_vec_alignment_for_type (tree);
+static hash_map<tree, unsigned> *type_align_map;
+
+/* Return alignment of array's vector type corresponding to scalar type.
+   0 if no vector type exists.  */
+static unsigned
+get_vec_alignment_for_array_type (tree type) 
+{
+  gcc_assert (TREE_CODE (type) == ARRAY_TYPE);
+
+  tree vectype = get_vectype_for_scalar_type (strip_array_types (type));
+  if (!vectype
+      || !TYPE_SIZE (type)
+      || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST
+      || tree_int_cst_lt (TYPE_SIZE (type), TYPE_SIZE (vectype)))
+    return 0;
+
+  return TYPE_ALIGN (vectype);
+}
+
+/* Return alignment of field having maximum alignment of vector type
+   corresponding to it's scalar type. For now, we only consider fields whose
+   offset is a multiple of it's vector alignment.
+   0 if no suitable field is found.  */
+static unsigned
+get_vec_alignment_for_record_type (tree type) 
+{
+  gcc_assert (TREE_CODE (type) == RECORD_TYPE);
+
+  unsigned max_align = 0, alignment;
+  HOST_WIDE_INT offset;
+  tree offset_tree;
+
+  if (TYPE_PACKED (type))
+    return 0;
+
+  unsigned *slot = type_align_map->get (type);
+  if (slot)
+    return *slot;
+
+  for (tree field = first_field (type);
+       field != NULL_TREE;
+       field = DECL_CHAIN (field))
+    {
+      /* Skip if not FIELD_DECL or if alignment is set by user.  */ 
+      if (TREE_CODE (field) != FIELD_DECL
+	  || DECL_USER_ALIGN (field)
+	  || DECL_ARTIFICIAL (field))
+	continue;
+
+      /* We don't need to process the type further if offset is variable,
+	 since the offsets of remaining members will also be variable.  */
+      if (TREE_CODE (DECL_FIELD_OFFSET (field)) != INTEGER_CST
+	  || TREE_CODE (DECL_FIELD_BIT_OFFSET (field)) != INTEGER_CST)
+	break;
+
+      /* Similarly stop processing the type if offset_tree
+	 does not fit in unsigned HOST_WIDE_INT.  */
+      offset_tree = bit_position (field);
+      if (!tree_fits_uhwi_p (offset_tree))
+	break;
+
+      offset = tree_to_uhwi (offset_tree); 
+      alignment = get_vec_alignment_for_type (TREE_TYPE (field));
+
+      /* Get maximum alignment of vectorized field/array among those members
+	 whose offset is multiple of the vector alignment.  */ 
+      if (alignment
+	  && (offset % alignment == 0)
+	  && (alignment > max_align))
+	max_align = alignment;
+    }
+
+  type_align_map->put (type, max_align);
+  return max_align;
+}
+
+/* Return alignment of vector type corresponding to decl's scalar type
+   or 0 if it doesn't exist or the vector alignment is lesser than
+   decl's alignment.  */
+static unsigned
+get_vec_alignment_for_type (tree type)
+{
+  if (type == NULL_TREE)
+    return 0;
+
+  gcc_assert (TYPE_P (type));
+
+  static unsigned alignment = 0;
+  switch (TREE_CODE (type))
+    {
+      case ARRAY_TYPE:
+	alignment = get_vec_alignment_for_array_type (type);
+	break;
+      case RECORD_TYPE:
+	alignment = get_vec_alignment_for_record_type (type);
+	break;
+      default:
+	alignment = 0;
+	break;
+    }
+
+  return (alignment > TYPE_ALIGN (type)) ? alignment : 0;
+}
+
+/* Entry point to increase_alignment pass.  */
 static unsigned int
 increase_alignment (void)
 {
   varpool_node *vnode;
 
   vect_location = UNKNOWN_LOCATION;
+  type_align_map = new hash_map<tree, unsigned>;
 
   /* Increase the alignment of all global arrays for vectorization.  */
   FOR_EACH_DEFINED_VARIABLE (vnode)
     {
-      tree vectype, decl = vnode->decl;
-      tree t;
+      tree decl = vnode->decl;
       unsigned int alignment;
 
-      t = TREE_TYPE (decl);
-      if (TREE_CODE (t) != ARRAY_TYPE)
-        continue;
-      vectype = get_vectype_for_scalar_type (strip_array_types (t));
-      if (!vectype)
-        continue;
-      alignment = TYPE_ALIGN (vectype);
-      if (DECL_ALIGN (decl) >= alignment)
-        continue;
+      if ((decl_in_symtab_p (decl)
+	  && !symtab_node::get (decl)->can_increase_alignment_p ())
+	  || DECL_USER_ALIGN (decl) || DECL_ARTIFICIAL (decl))
+	continue;
 
-      if (vect_can_force_dr_alignment_p (decl, alignment))
+      alignment = get_vec_alignment_for_type (TREE_TYPE (decl));
+      if (alignment && vect_can_force_dr_alignment_p (decl, alignment))
         {
-	  vnode->increase_alignment (TYPE_ALIGN (vectype));
+	  vnode->increase_alignment (alignment);
           dump_printf (MSG_NOTE, "Increasing alignment of decl: ");
           dump_generic_expr (MSG_NOTE, TDF_SLIM, decl);
           dump_printf (MSG_NOTE, "\n");
         }
     }
+
+  delete type_align_map;
   return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.321.4.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.1 2019/06/10 22:09:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -366,7 +366,7 @@ lfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	struct vnode	*tvp;
 	int		error;
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, &tvp);
 	if (error)
 		return error;
 	error = vn_lock(tvp, LK_EXCLUSIVE);
@@ -959,6 +959,11 @@ lfs_mkdir(void *v)
 	if (fs->lfs_ronly) {
 		return EROFS;
 	}
+
+	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
+		return EMLINK;
+	}
+
 	dirblksiz = fs->um_dirblksiz;
 	/* XXX dholland 20150911 I believe this to be true, but... */
 	//KASSERT(dirblksiz == LFS_DIRBLKSIZ);
@@ -967,17 +972,13 @@ lfs_mkdir(void *v)
 	if (error)
 		return error;
 
-	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto out;
-	}
-
 	/*
 	 * Must simulate part of lfs_makeinode here to acquire the inode,
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, ap->a_vpp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL,
+	    ap->a_vpp);
 	if (error)
 		goto out;
 

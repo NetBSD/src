@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.29 2016/09/22 18:22:51 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.29.14.1 2019/06/10 22:05:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.29 2016/09/22 18:22:51 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.29.14.1 2019/06/10 22:05:34 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1288,7 +1288,7 @@ iename(int elemid)
 	case IEEE80211_ELEMID_TPCREQ:	return " TPCREQ";
 	case IEEE80211_ELEMID_TPCREP:	return " TPCREP";
 	case IEEE80211_ELEMID_SUPPCHAN:	return " SUPPCHAN";
-	case IEEE80211_ELEMID_CHANSWITCHANN:return " CSA";
+	case IEEE80211_ELEMID_CSA:	return " CSA";
 	case IEEE80211_ELEMID_MEASREQ:	return " MEASREQ";
 	case IEEE80211_ELEMID_MEASREP:	return " MEASREP";
 	case IEEE80211_ELEMID_QUIET:	return " QUIET";

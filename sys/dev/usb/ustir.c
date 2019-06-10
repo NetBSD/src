@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.39 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.39.4.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.39 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.39.4.1 2019/06/10 22:07:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -216,7 +216,7 @@ void ustir_attach(device_t, device_t, void *);
 void ustir_childdet(device_t, device_t);
 int ustir_detach(device_t, int);
 int ustir_activate(device_t, enum devact);
-extern struct cfdriver ustir_cd;
+
 CFATTACH_DECL2_NEW(ustir, sizeof(struct ustir_softc), ustir_match,
     ustir_attach, ustir_detach, ustir_activate, NULL, ustir_childdet);
 

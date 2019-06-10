@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.14.6.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14.6.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill E
 static int	tegra124_car_match(device_t, cfdata_t, void *);
 static void	tegra124_car_attach(device_t, device_t, void *);
 
-static struct clk *tegra124_car_clock_decode(device_t, const void *, size_t);
+static struct clk *tegra124_car_clock_decode(device_t, int, const void *,
+					     size_t);
 
 static const struct fdtbus_clock_controller_func tegra124_car_fdtclock_funcs = {
 	.decode = tegra124_car_clock_decode
@@ -402,6 +403,9 @@ static const char *mux_sata_p[] =
 static const char *mux_hda_p[] =
 	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
 	  "pll_m_out0", NULL, "clk_m" };
+static const char *mux_mselect_p[] =
+	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
+	  "pll_m_out0", "clk_s", "clk_m" };
 static const char *mux_tsensor_p[] =
 	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0", "clk_m",
 	  NULL, "clk_s" };
@@ -496,6 +500,9 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_MUX("mux_soc_therm",
 		CAR_CLKSRC_SOC_THERM_REG, CAR_CLKSRC_SOC_THERM_SRC,
 		mux_soc_therm_p),
+	CLK_MUX("mux_mselect",
+		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_SRC,
+		mux_mselect_p),
 	CLK_MUX("mux_tsensor",
 		CAR_CLKSRC_TSENSOR_REG, CAR_CLKSRC_TSENSOR_SRC,
 		mux_tsensor_p),
@@ -574,6 +581,8 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_HDA_REG, CAR_CLKSRC_HDA_DIV),
 	CLK_DIV("div_soc_therm", "mux_soc_therm",
 		CAR_CLKSRC_SOC_THERM_REG, CAR_CLKSRC_SOC_THERM_DIV),
+	CLK_DIV("div_mselect", "mux_mselect",
+		CAR_CLKSRC_MSELECT_REG, CAR_CLKSRC_MSELECT_DIV),
 	CLK_DIV("div_tsensor", "mux_tsensor",
 		CAR_CLKSRC_TSENSOR_REG, CAR_CLKSRC_TSENSOR_DIV),
 	CLK_DIV("div_host1x", "mux_host1x",
@@ -625,6 +634,7 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_W("hda2hdmi", "clk_m", CAR_DEV_W_HDA2HDMICODEC),
 	CLK_GATE_H("fuse", "clk_m", CAR_DEV_H_FUSE),
 	CLK_GATE_U("soc_therm", "div_soc_therm", CAR_DEV_U_SOC_THERM),
+	CLK_GATE_V("mselect", "div_mselect", CAR_DEV_V_MSELECT),
 	CLK_GATE_V("tsensor", "div_tsensor", CAR_DEV_V_TSENSOR),
 	CLK_GATE_L("host1x", "div_host1x", CAR_DEV_L_HOST1X),
 	CLK_GATE_L("disp1", "mux_disp1", CAR_DEV_L_DISP1),
@@ -636,6 +646,8 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_W("xusb_ss", "xusb_ss_src", CAR_DEV_W_XUSB_SS),
 	CLK_GATE_X("gpu", "pll_ref", CAR_DEV_X_GPU),
 	CLK_GATE_H("apbdma", "clk_m", CAR_DEV_H_APBDMA),
+	CLK_GATE_U("pcie", "mselect", CAR_DEV_U_PCIE),
+	CLK_GATE_U("afi", "mselect", CAR_DEV_U_AFI),
 };
 
 struct tegra124_init_parent {
@@ -757,10 +769,13 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &tegra124_car_clock_funcs;
 	sc->sc_clkdom.priv = sc;
-	for (n = 0; n < __arraycount(tegra124_car_clocks); n++)
+	for (n = 0; n < __arraycount(tegra124_car_clocks); n++) {
 		tegra124_car_clocks[n].base.domain = &sc->sc_clkdom;
+		clk_attach(&tegra124_car_clocks[n].base);
+	}
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra124_car_fdtclock_funcs);
@@ -959,7 +974,8 @@ tegra124_car_clock_find_by_id(u_int clock_id)
 }
 
 static struct clk *
-tegra124_car_clock_decode(device_t dev, const void *data, size_t len)
+tegra124_car_clock_decode(device_t dev, int cc_phandle, const void *data,
+			  size_t len)
 {
 	struct tegra124_car_softc * const sc = device_private(dev);
 	struct tegra_clk *tclk;

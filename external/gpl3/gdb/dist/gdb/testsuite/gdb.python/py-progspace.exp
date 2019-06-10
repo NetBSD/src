@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,3 +51,34 @@ gdb_py_test_silent_cmd "python progspace.random_attribute = 42" \
     "Set random attribute in progspace" 1
 gdb_test "python print (progspace.random_attribute)" "42" \
     "Verify set of random attribute in progspace"
+
+if {![runto_main]} {
+    fail "can't run to main"
+    return
+}
+
+# With a single inferior, progspace.objfiles () and gdb.objfiles () should
+# be identical.
+gdb_test "python print (progspace.objfiles () == gdb.objfiles ())" "True"
+
+gdb_test "add-inferior"
+gdb_test "inferior 2"
+
+gdb_load ${binfile}
+
+# With a second (non-started) inferior, we should have a single objfile - the
+# main one.
+gdb_test "python print (len (gdb.objfiles ())) == 1"
+
+# And the gdb.objfiles() list should now be different from the objfiles of the
+# prog space of inferior 1.
+gdb_test "python print (progspace.objfiles () != gdb.objfiles ())" "True"
+
+# Delete inferior 2 (and therefore the second progspace), check that the Python
+# object reacts sensibly.
+gdb_py_test_silent_cmd "python progspace2 = gdb.current_progspace()" \
+    "save progspace 2" 1
+gdb_test "inferior 1" "Switching to inferior 1.*"
+gdb_test_no_output "remove-inferiors 2"
+gdb_test "python print (progspace2.objfiles ())" \
+    "RuntimeError: Program space no longer exists.*"

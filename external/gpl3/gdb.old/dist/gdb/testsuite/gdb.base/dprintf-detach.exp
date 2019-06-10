@@ -1,4 +1,4 @@
-#   Copyright 2014-2016 Free Software Foundation, Inc.
+#   Copyright 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ proc dprintf_detach_test { breakpoint_always_inserted dprintf_style disconnected
 	gdb_test_no_output "set disconnected-dprintf ${disconnected_dprintf}"
 
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 

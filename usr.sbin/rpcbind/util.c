@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.21.4.1 2019/06/10 22:10:36 christos Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/util.c 300973 2016-05-29 20:28:01Z ngie $ */
 
 /*-
@@ -130,14 +130,14 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	if (serv_nbp == NULL)
 		return NULL;
 
-	serv_sa = (struct sockaddr *)serv_nbp->buf;
+	serv_sa = serv_nbp->buf;
 	if (clnt_uaddr != NULL) {
 		clnt_nbp = uaddr2taddr(nconf, clnt_uaddr);
 		if (clnt_nbp == NULL) {
 			free(serv_nbp);
 			return NULL;
 		}
-		clnt_sa = (struct sockaddr *)clnt_nbp->buf;
+		clnt_sa = clnt_nbp->buf;
 		if (clnt_sa->sa_family == AF_LOCAL) {
 			free(serv_nbp);
 			free(clnt_nbp);
@@ -145,8 +145,11 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			return strdup(serv_uaddr);
 		}
 	} else {
-		clnt_sa = (struct sockaddr *)
-		    malloc(sizeof (struct sockaddr_storage));
+		clnt_sa = malloc(clnt->sa_len);
+		if (clnt_sa == NULL) {
+			free(serv_nbp);
+			return NULL;
+		}
 		memcpy(clnt_sa, clnt, clnt->sa_len);
 	}
 
@@ -264,7 +267,6 @@ found:
 		break;				
 #ifdef INET6
 	case AF_INET6:
-		assert(newsin6);
 		memcpy(newsin6, ifsin6, clnt_sa->sa_len);
 		newsin6->sin6_port = servsin6->sin6_port;
 		tbuf.maxlen = sizeof (struct sockaddr_storage);
@@ -313,7 +315,7 @@ network_init()
 			fprintf(stderr, "can't get local ip4 address: %s\n",
 			    gai_strerror(ecode));
 	} else {
-		local_in4 = (struct sockaddr_in *)malloc(sizeof *local_in4);
+		local_in4 = malloc(sizeof(*local_in4));
 		if (local_in4 == NULL) {
 			if (debugging)
 				fprintf(stderr, "can't alloc local ip4 addr\n");
@@ -328,7 +330,7 @@ network_init()
 			fprintf(stderr, "can't get local ip6 address: %s\n",
 			    gai_strerror(ecode));
 	} else {
-		local_in6 = (struct sockaddr_in6 *)malloc(sizeof *local_in6);
+		local_in6 = malloc(sizeof(*local_in6));
 		if (local_in6 == NULL) {
 			if (debugging)
 				fprintf(stderr, "can't alloc local ip6 addr\n");

@@ -1,5 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -287,6 +287,7 @@ rl78_info_to_howto_rela (bfd *               abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_RL78_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid RL78 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -684,17 +685,13 @@ rl78_elf_relocate_section
   struct elf_link_hash_entry ** sym_hashes;
   Elf_Internal_Rela *           rel;
   Elf_Internal_Rela *           relend;
-  bfd *dynobj;
   asection *splt;
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
 
-  dynobj = elf_hash_table (info)->dynobj;
-  splt = NULL;
-  if (dynobj != NULL)
-    splt = bfd_get_linker_section (dynobj, ".plt");
+  splt = elf_hash_table (info)->splt;
 
   for (rel = relocs; rel < relend; rel ++)
     {
@@ -1079,6 +1076,7 @@ rl78_elf_relocate_section
 	      /* Catch the case of a missing function declaration
 		 and emit a more helpful error message.  */
 	      if (r_type == R_RL78_DIR24S_PCREL)
+		/* xgettext:c-format */
 		msg = _("%B(%A): error: call to undefined function '%s'");
 	      else
 		(*info->callbacks->reloc_overflow)
@@ -1092,22 +1090,27 @@ rl78_elf_relocate_section
 	      break;
 
 	    case bfd_reloc_other:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): warning: unaligned access to symbol '%s' in the small data area");
 	      break;
 
 	    case bfd_reloc_outofrange:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: out of range error");
 	      break;
 
 	    case bfd_reloc_notsupported:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: unsupported relocation error");
 	      break;
 
 	    case bfd_reloc_dangerous:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: dangerous relocation");
 	      break;
 
 	    default:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: unknown error");
 	      break;
 	    }
@@ -1156,8 +1159,9 @@ rl78_cpu_name (flagword flags)
    object file when linking.  */
 
 static bfd_boolean
-rl78_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+rl78_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword new_flags;
   flagword old_flags;
   bfd_boolean error = FALSE;
@@ -1192,10 +1196,11 @@ rl78_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 		     but that is still incompatible with the G10 ABI.  */
 		  error = TRUE;
 
-		  (*_bfd_error_handler)
-		    (_("RL78 ABI conflict: G10 file %s cannot be linked with %s file %s"),
-		     bfd_get_filename (ibfd),
-		     rl78_cpu_name (out_cpu), bfd_get_filename (obfd));
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("RL78 ABI conflict: G10 file %B cannot be linked"
+		       " with %s file %B"),
+		     ibfd, rl78_cpu_name (out_cpu), obfd);
 		}
 	      else
 		{
@@ -1208,24 +1213,27 @@ rl78_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	    {
 	      error = TRUE;
 
-	      (*_bfd_error_handler)
-		(_("RL78 ABI conflict: cannot link %s file %s with %s file %s"),
-		 rl78_cpu_name (in_cpu),  bfd_get_filename (ibfd),
-		 rl78_cpu_name (out_cpu), bfd_get_filename (obfd));
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("RL78 ABI conflict: cannot link %s file %B with %s file %B"),
+		 rl78_cpu_name (in_cpu),  ibfd,
+		 rl78_cpu_name (out_cpu), obfd);
 	    }
 	}
 
       if (changed_flags & E_FLAG_RL78_64BIT_DOUBLES)
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("RL78 merge conflict: cannot link 32-bit and 64-bit objects together"));
 
 	  if (old_flags & E_FLAG_RL78_64BIT_DOUBLES)
-	    (*_bfd_error_handler) (_("- %s is 64-bit, %s is not"),
-				   bfd_get_filename (obfd), bfd_get_filename (ibfd));
+	    /* xgettext:c-format */
+	    _bfd_error_handler (_("- %B is 64-bit, %B is not"),
+				obfd, ibfd);
 	  else
-	    (*_bfd_error_handler) (_("- %s is 64-bit, %s is not"),
-				   bfd_get_filename (ibfd), bfd_get_filename (obfd));
+	    /* xgettext:c-format */
+	    _bfd_error_handler (_("- %B is 64-bit, %B is not"),
+				ibfd, obfd);
 	  error = TRUE;
 	}
     }
@@ -1299,7 +1307,6 @@ rl78_elf_check_relocs
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
   local_plt_offsets = elf_local_got_offsets (abfd);
-  splt = NULL;
   dynobj = elf_hash_table(info)->dynobj;
 
   rel_end = relocs + sec->reloc_count;
@@ -1332,20 +1339,18 @@ rl78_elf_check_relocs
 	case R_RL78_DIR16S:
 	  if (dynobj == NULL)
 	    elf_hash_table (info)->dynobj = dynobj = abfd;
+	  splt = elf_hash_table (info)->splt;
 	  if (splt == NULL)
 	    {
-	      splt = bfd_get_linker_section (dynobj, ".plt");
-	      if (splt == NULL)
-		{
-		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				    | SEC_READONLY | SEC_CODE);
-		  splt = bfd_make_section_anyway_with_flags (dynobj, ".plt",
-							     flags);
-		  if (splt == NULL
-		      || ! bfd_set_section_alignment (dynobj, splt, 1))
-		    return FALSE;
-		}
+	      flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
+				| SEC_IN_MEMORY | SEC_LINKER_CREATED
+				| SEC_READONLY | SEC_CODE);
+	      splt = bfd_make_section_anyway_with_flags (dynobj, ".plt",
+							 flags);
+	      elf_hash_table (info)->splt = splt;
+	      if (splt == NULL
+		  || ! bfd_set_section_alignment (dynobj, splt, 1))
+		return FALSE;
 	    }
 
 	  if (h != NULL)
@@ -1402,8 +1407,9 @@ rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
   if (info->relax_trip > 0)
     return TRUE;
 
-  if ((dynobj = elf_hash_table (info)->dynobj) != NULL
-      && (splt = bfd_get_linker_section (dynobj, ".plt")) != NULL)
+  dynobj = elf_hash_table (info)->dynobj;
+  splt = elf_hash_table (info)->splt;
+  if (dynobj != NULL && splt != NULL)
     {
       bfd_byte *contents = splt->contents;
       unsigned int i, size = splt->size;
@@ -1432,7 +1438,7 @@ rl78_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (dynobj == NULL)
     return TRUE;
 
-  splt = bfd_get_linker_section (dynobj, ".plt");
+  splt = elf_hash_table (info)->splt;
   BFD_ASSERT (splt != NULL);
 
   splt->contents = (bfd_byte *) bfd_zalloc (dynobj, splt->size);
@@ -1958,6 +1964,7 @@ rl78_offset_for_reloc (bfd *                    abfd,
 	default:
 	reloc_computes_value:
 	  symval = rl78_compute_complex_reloc (r_type, symval, input_section);
+	  /* Fall through.  */
 	case R_RL78_DIR32:
 	case R_RL78_DIR24S:
 	case R_RL78_DIR16:

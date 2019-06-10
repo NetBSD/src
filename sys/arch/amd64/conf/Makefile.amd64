@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.71 2018/06/02 15:09:37 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.71.2.1 2019/06/10 22:05:47 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -49,15 +49,21 @@ CFLAGS+=      -mindirect-branch=thunk-inline
 CFLAGS+=      -mindirect-branch-register
 .endif
 
+.if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+KASANFLAGS=	-fsanitize=kernel-address \
+		--param asan-globals=1 --param asan-stack=1 \
+		-fsanitize-address-use-after-scope \
+		-fasan-shadow-offset=0xDFFF900000000000
+.for f in subr_asan.c subr_kcov.c subr_lwp_specificdata.c subr_specificdata.c
+KASANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
+.endif
+
 ##
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

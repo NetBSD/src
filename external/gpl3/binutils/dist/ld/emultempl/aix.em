@@ -749,9 +749,9 @@ gld${EMULATION_NAME}_before_allocation (void)
 
       h = bfd_link_hash_lookup (link_info.hash, el->name, FALSE, FALSE, FALSE);
       if (h == NULL)
-	einfo (_("%P%F: bfd_link_hash_lookup of export symbol failed: %E\n"));
+	einfo (_("%F%P: bfd_link_hash_lookup of export symbol failed: %E\n"));
       if (!bfd_xcoff_export_symbol (link_info.output_bfd, &link_info, h))
-	einfo (_("%P%F: bfd_xcoff_export_symbol failed: %E\n"));
+	einfo (_("%F%P: bfd_xcoff_export_symbol failed: %E\n"));
     }
 
   /* Track down all relocations called for by the linker script (these
@@ -835,7 +835,7 @@ gld${EMULATION_NAME}_before_allocation (void)
        maxstack, maxdata, gc && !unix_ld ? TRUE : FALSE,
        modtype, textro ? TRUE : FALSE, flags, special_sections,
        rtld ? TRUE : FALSE))
-    einfo (_("%P%F: failed to set dynamic section sizes: %E\n"));
+    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
 
   /* Look through the special sections, and put them in the right
      place in the link ordering.  This is especially magic.  */
@@ -857,7 +857,7 @@ gld${EMULATION_NAME}_before_allocation (void)
       is = NULL;
       os = lang_output_section_get (sec->output_section);
       if (os == NULL)
-	einfo (_("%P%F: can't find output section %s\n"),
+	einfo (_("%F%P: can't find output section %s\n"),
 	       sec->output_section->name);
 
       for (pls = &os->children.head; *pls != NULL; pls = &(*pls)->header.next)
@@ -894,7 +894,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 
       if (is == NULL)
 	{
-	  einfo (_("%P%F: can't find %s in output section\n"),
+	  einfo (_("%F%P: can't find %s in output section\n"),
 		 bfd_get_section_name (sec->owner, sec));
 	}
 
@@ -1109,7 +1109,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
   if (f == NULL)
     {
       bfd_set_error (bfd_error_system_call);
-      einfo ("%F%s: %E\n", filename);
+      einfo ("%F%P: %s: %E\n", filename);
       return;
     }
 
@@ -1171,7 +1171,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 	      obstack_free (o, obstack_base (o));
 	    }
 	  else if (*s == '(')
-	    einfo (_("%F%s%d: #! ([member]) is not supported "
+	    einfo (_("%F%P:%s:%d: #! ([member]) is not supported "
 		     "in import files\n"),
 		   filename, lineno);
 	  else
@@ -1188,7 +1188,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 	      *s = '\0';
 	      if (!bfd_xcoff_split_import_path (link_info.output_bfd,
 						start, &imppath, &impfile))
-		einfo (_("%F%P: Could not parse import path: %E\n"));
+		einfo (_("%F%P: could not parse import path: %E\n"));
 	      while (ISSPACE (cs))
 		{
 		  ++s;
@@ -1198,7 +1198,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 		{
 		  impmember = "";
 		  if (cs != '\0')
-		    einfo (_("%s:%d: warning: syntax error in import file\n"),
+		    einfo (_("%P:%s:%d: warning: syntax error in import file\n"),
 			   filename, lineno);
 		}
 	      else
@@ -1210,7 +1210,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 		  if (*s == ')')
 		    *s = '\0';
 		  else
-		    einfo (_("%s:%d: warning: syntax error in import file\n"),
+		    einfo (_("%P:%s:%d: warning: syntax error in import file\n"),
 			   filename, lineno);
 		}
 	    }
@@ -1245,7 +1245,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 		  while (ISSPACE (*se))
 		    ++se;
 		  if (*se != '\0')
-		    einfo (_("%s%d: warning: syntax error in "
+		    einfo (_("%P:%s%d: warning: syntax error in "
 			     "import/export file\n"),
 			   filename, lineno);
 		}
@@ -1263,7 +1263,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 		      address = bfd_scan_vma (s, &end, 0);
 		      if (*end != '\0')
 			{
-			  einfo (_("%s:%d: warning: syntax error in "
+			  einfo (_("%P:%s:%d: warning: syntax error in "
 				   "import/export file\n"),
 				 filename, lineno);
 
@@ -1298,7 +1298,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 						&link_info, h,
 						address, imppath, impfile,
 						impmember, syscall_flag))
-		    einfo (_("%X%s:%d: failed to import symbol %s: %E\n"),
+		    einfo (_("%X%P:%s:%d: failed to import symbol %s: %E\n"),
 			   filename, lineno, symname);
 		}
 	    }
@@ -1308,7 +1308,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 
   if (obstack_object_size (o) > 0)
     {
-      einfo (_("%s:%d: warning: ignoring unterminated last line\n"),
+      einfo (_("%P:%s:%d: warning: ignoring unterminated last line\n"),
 	     filename, lineno);
       obstack_free (o, obstack_base (o));
     }
@@ -1374,7 +1374,7 @@ gld${EMULATION_NAME}_find_exp_assignment (etree_type *exp)
 	  if (!bfd_xcoff_record_link_assignment (link_info.output_bfd,
 						 &link_info,
 						 exp->assign.dst))
-	    einfo (_("%P%F: failed to record assignment to %s: %E\n"),
+	    einfo (_("%F%P: failed to record assignment to %s: %E\n"),
 		   exp->assign.dst);
 	}
       gld${EMULATION_NAME}_find_exp_assignment (exp->assign.src);
@@ -1472,7 +1472,7 @@ gld${EMULATION_NAME}_create_output_section_statements (void)
 				  bfd_get_arch (link_info.output_bfd),
 				  bfd_get_mach (link_info.output_bfd)))
 	{
-	  einfo (_("%X%P: can not create BFD %E\n"));
+	  einfo (_("%F%P: can not create BFD: %E\n"));
 	  return;
 	}
 
@@ -1482,7 +1482,7 @@ gld${EMULATION_NAME}_create_output_section_statements (void)
 					    link_info.fini_function,
 					    rtld))
 	{
-	  einfo (_("%X%P: can not create BFD %E\n"));
+	  einfo (_("%F%P: can not create BFD: %E\n"));
 	  return;
 	}
 

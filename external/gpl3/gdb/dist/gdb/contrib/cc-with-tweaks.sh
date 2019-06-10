@@ -1,8 +1,8 @@
-#! /bin/sh
+#!/usr/bin/env bash
 # Wrapper around gcc to tweak the output in various ways when running
 # the testsuite.
 
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -27,8 +27,8 @@
 #
 # bash$ cd $objdir/gdb/testsuite
 # bash$ runtest \
-#   CC_FOR_TARGET="/bin/sh $srcdir/gdb/contrib/cc-with-tweaks.sh ARGS gcc" \
-#   CXX_FOR_TARGET="/bin/sh $srcdir/gdb/contrib/cc-with-tweaks.sh ARGS g++"
+#   CC_FOR_TARGET="/bin/bash $srcdir/gdb/contrib/cc-with-tweaks.sh ARGS gcc" \
+#   CXX_FOR_TARGET="/bin/bash $srcdir/gdb/contrib/cc-with-tweaks.sh ARGS g++"
 #
 # For documentation on Fission and dwp files:
 #     http://gcc.gnu.org/wiki/DebugFission
@@ -47,6 +47,7 @@
 # If nothing is given, no changes are made
 
 myname=cc-with-tweaks.sh
+mydir=`dirname "$0"`
 
 if [ -z "$GDB" ]
 then
@@ -92,6 +93,20 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+if [ "$want_index" = true ]
+then
+    if [ -z "$GDB_ADD_INDEX" ]
+    then
+	if [ -f $mydir/gdb-add-index.sh ]
+	then
+	    GDB_ADD_INDEX="$mydir/gdb-add-index.sh"
+	else
+	    echo "$myname: unable to find usable contrib/gdb-add-index.sh" >&2
+	    exit 1
+	fi
+    fi
+fi
 
 for arg in "$@"
 do
@@ -152,20 +167,11 @@ if [ "$want_objcopy_compress" = true ]; then
 fi
 
 if [ "$want_index" = true ]; then
-    $GDB --batch-silent -nx -ex "set auto-load no" -ex "file $output_file" -ex "save gdb-index $output_dir"
-    rc=$?
-    [ $rc != 0 ] && exit $rc
-
-    # GDB might not always create an index.  Cope.
-    if [ -f "$index_file" ]
-    then
-	$OBJCOPY --add-section .gdb_index="$index_file" \
-	    --set-section-flags .gdb_index=readonly \
-	    "$output_file" "$output_file"
-	rc=$?
-    else
-	rc=0
-    fi
+    # Filter out these messages which would stop dejagnu testcase run:
+    # echo "$myname: No index was created for $file" 1>&2
+    # echo "$myname: [Was there no debuginfo? Was there already an index?]" 1>&2
+    GDB=$GDB $GDB_ADD_INDEX "$output_file" 2>&1|grep -v "^${GDB_ADD_INDEX##*/}: " >&2
+    rc=${PIPESTATUS[0]}
     [ $rc != 0 ] && exit $rc
 fi
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_LINUX_H
-#define X86_LINUX_H
+#ifndef NAT_X86_LINUX_H
+#define NAT_X86_LINUX_H
 
 #include "nat/linux-nat.h"
 
@@ -39,8 +39,12 @@ extern int lwp_debug_registers_changed (struct lwp_info *lwp);
 
 extern void x86_linux_new_thread (struct lwp_info *lwp);
 
+/* Function to call when a thread is being deleted.  */
+
+extern void x86_linux_delete_thread (struct arch_lwp_info *arch_lwp);
+
 /* Function to call prior to resuming a thread.  */
 
 extern void x86_linux_prepare_to_resume (struct lwp_info *lwp);
 
-#endif /* X86_LINUX_H */
+#endif /* NAT_X86_LINUX_H */

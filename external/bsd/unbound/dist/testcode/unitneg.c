@@ -94,7 +94,7 @@ static void print_neg_cache(struct val_neg_cache* neg)
 /** get static pointer to random zone name */
 static char* get_random_zone(void)
 {
-	static char zname[256];
+	static char zname[36];
 	int labels = random() % 3;
 	int i;
 	char* p = zname;
@@ -102,10 +102,10 @@ static char* get_random_zone(void)
 
 	for(i=0; i<labels; i++) {
 		labnum = random()%10;
-		snprintf(p, 256-(p-zname), "\003%3.3d", labnum);
+		snprintf(p, sizeof(zname)-(p-zname), "\003%3.3d", labnum);
 		p+=4;
 	}
-	snprintf(p, 256-(p-zname), "\007example\003com");
+	snprintf(p, sizeof(zname)-(p-zname), "\007example\003com");
 	return zname;
 }
 
@@ -118,6 +118,8 @@ static void get_random_data(char** fromp, char** top, char* zname)
 	int labnum1[10], labnum2[10];
 	int i;
 	char* p;
+	memset(labnum1, 0, sizeof(int)*10);
+	memset(labnum2, 0, sizeof(int)*10);
 
 	*fromp = buf1;
 	*top = buf2;

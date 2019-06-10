@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.229 2018/04/05 16:31:54 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.229.2.1 2019/06/10 22:10:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.229 2018/04/05 16:31:54 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.229.2.1 2019/06/10 22:10:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.229 2018/04/05 16:31:54 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.229.2.1 2019/06/10 22:10:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -676,21 +676,32 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 	if (cfname != NULL) {
 		(void)fprintf(f, "\"");
 		if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
-			char *cp;
-			const char *dir;
+			char *cp, *cp2;
+			const char *dir, *fname;
 
 			/*
 			 * Nothing is more annoying than not knowing
-			 * which Makefile is the culprit.
+			 * which Makefile is the culprit; we try ${.PARSEDIR}
+			 * and apply realpath(3) if not absolute.
 			 */
 			dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
-			if (dir == NULL || *dir == '\0' ||
-			    (*dir == '.' && dir[1] == '\0'))
-				dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
 			if (dir == NULL)
 				dir = ".";
-
-			(void)fprintf(f, "%s/%s", dir, cfname);
+			if (*dir != '/') {
+				dir = cp2 = realpath(dir, NULL);
+				free(cp);
+				cp = cp2; /* cp2 set to NULL by Var_Value */
+			}
+			fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &cp2);
+			if (fname == NULL) {
+				if ((fname = strrchr(cfname, '/')))
+					fname++;
+				else
+					fname = cfname;
+			}
+			(void)fprintf(f, "%s/%s", dir, fname);
+			free(cp2);
+			free(cp);
 		} else
 			(void)fprintf(f, "%s", cfname);
 
@@ -1742,7 +1753,8 @@ ParseDoDependency(char *line)
     }
 
 out:
-    assert(paths == NULL);
+    if (paths)
+	Lst_Destroy(paths, NULL);
     if (curTargs)
 	    Lst_Destroy(curTargs, NULL);
 }

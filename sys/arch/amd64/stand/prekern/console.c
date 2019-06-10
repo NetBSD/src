@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 2017/11/17 07:07:52 maxv Exp $	*/
+/*	$NetBSD: console.c,v 1.3.6.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -61,7 +61,7 @@ static void check_scroll(void)
 	memset(&cons_buffer[0] + (CONS_WID * 2) * (CONS_HEI-1), 0,
 	    (CONS_WID * 2));
 	cons_y--;
-	memcpy(cons_start, &cons_buffer[0], (CONS_WID * 2) * (CONS_HEI-1));
+	memcpy(cons_start, &cons_buffer[0], CONS_WID * 2 * CONS_HEI);
 }
 
 void print_ext(int color, char *buf)

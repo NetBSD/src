@@ -1,6 +1,6 @@
 # Test `info auxv' and related functionality.
 
-# Copyright (C) 1992-2017 Free Software Foundation, Inc.
+# Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 }
 
 # Use a fresh directory to confine the native core dumps.
-# Make it the working directory for gdb and its child.
+# Make it the working directory for the inferior.
 set coredir [standard_output_file coredir.[getpid]]
 file mkdir $coredir
 set core_works [expr [isnative] && ! [is_remote target]]
@@ -50,14 +50,15 @@ gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 
 if {$core_works} {
-    if {[gdb_test "cd $coredir" ".*Working directory .*" \
-	     "cd to temporary directory for core dumps"]} {
+    if {[gdb_test_no_output "set cwd $coredir" \
+	     "set cwd to temporary directory for core dumps"]} {
 	set core_works 0
     }
 }
 
-if { ![runto_main] } then {
-    gdb_suppress_tests
+if ![runto_main] then {
+    fail "can't run to main"
+    return 0
 }
 set print_core_line [gdb_get_line_number "ABORT;"]
 gdb_test "tbreak $print_core_line"

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2018/06/24 19:53:35 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.11.2.1 2019/06/10 22:10:38 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,6 +34,8 @@
 
 /* util.c -- routines that don't really fit anywhere else... */
 
+#include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -95,75 +97,75 @@ struct  tarstats {
 
 distinfo dist_list[] = {
 #ifdef SET_KERNEL_1_NAME
-	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1, NULL},
+	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		false, MSG_set_kernel_1, NULL},
 #endif
 #ifdef SET_KERNEL_2_NAME
-	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		MSG_set_kernel_2, NULL},
+	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		false, MSG_set_kernel_2, NULL},
 #endif
 #ifdef SET_KERNEL_3_NAME
-	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		MSG_set_kernel_3, NULL},
+	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		false, MSG_set_kernel_3, NULL},
 #endif
 #ifdef SET_KERNEL_4_NAME
-	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		MSG_set_kernel_4, NULL},
+	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		false, MSG_set_kernel_4, NULL},
 #endif
 #ifdef SET_KERNEL_5_NAME
-	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		MSG_set_kernel_5, NULL},
+	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		false, MSG_set_kernel_5, NULL},
 #endif
 #ifdef SET_KERNEL_6_NAME
-	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		MSG_set_kernel_6, NULL},
+	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		false, MSG_set_kernel_6, NULL},
 #endif
 #ifdef SET_KERNEL_7_NAME
-	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		MSG_set_kernel_7, NULL},
+	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		false, MSG_set_kernel_7, NULL},
 #endif
 #ifdef SET_KERNEL_8_NAME
-	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
+	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		false, MSG_set_kernel_8, NULL},
 #endif
 #ifdef SET_KERNEL_9_NAME
-	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		MSG_set_kernel_9, NULL},
+	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		false, MSG_set_kernel_9, NULL},
 #endif
 
-	{"modules",		SET_MODULES,		MSG_set_modules, NULL},
-	{"base",		SET_BASE,		MSG_set_base, NULL},
-	{"etc",			SET_ETC,		MSG_set_system, NULL},
-	{"comp",		SET_COMPILER,		MSG_set_compiler, NULL},
-	{"games",		SET_GAMES,		MSG_set_games, NULL},
-	{"man",			SET_MAN_PAGES,		MSG_set_man_pages, NULL},
-	{"misc",		SET_MISC,		MSG_set_misc, NULL},
-	{"tests",		SET_TESTS,		MSG_set_tests, NULL},
-	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools, NULL},
+	{"modules",		SET_MODULES,		false, MSG_set_modules, NULL},
+	{"base",		SET_BASE,		false, MSG_set_base, NULL},
+	{"etc",			SET_ETC,		false, MSG_set_system, NULL},
+	{"comp",		SET_COMPILER,		false, MSG_set_compiler, NULL},
+	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
+	{"man",			SET_MAN_PAGES,		false, MSG_set_man_pages, NULL},
+	{"misc",		SET_MISC,		false, MSG_set_misc, NULL},
+	{"tests",		SET_TESTS,		false, MSG_set_tests, NULL},
+	{"text",		SET_TEXT_TOOLS,		false, MSG_set_text_tools, NULL},
 
-	{NULL,			SET_GROUP,		MSG_set_X11, NULL},
-	{"xbase",		SET_X11_BASE,		MSG_set_X11_base, NULL},
-	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog, NULL},
-	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc, NULL},
-	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts, NULL},
-	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers, NULL},
-	{NULL,			SET_GROUP_END,		NULL, NULL},
+	{NULL,			SET_GROUP,		false, MSG_set_X11, NULL},
+	{"xbase",		SET_X11_BASE,		false, MSG_set_X11_base, NULL},
+	{"xcomp",		SET_X11_PROG,		false, MSG_set_X11_prog, NULL},
+	{"xetc",		SET_X11_ETC,		false, MSG_set_X11_etc, NULL},
+	{"xfont",		SET_X11_FONTS,		false, MSG_set_X11_fonts, NULL},
+	{"xserver",		SET_X11_SERVERS,	false, MSG_set_X11_servers, NULL},
+	{NULL,			SET_GROUP_END,		false, NULL, NULL},
 
 #ifdef SET_MD_1_NAME
-	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1, NULL},
+	{SET_MD_1_NAME,		SET_MD_1,		false, MSG_set_md_1, NULL},
 #endif
 #ifdef SET_MD_2_NAME
-	{SET_MD_2_NAME,		SET_MD_2,		MSG_set_md_2, NULL},
+	{SET_MD_2_NAME,		SET_MD_2,		false, MSG_set_md_2, NULL},
 #endif
 #ifdef SET_MD_3_NAME
-	{SET_MD_3_NAME,		SET_MD_3,		MSG_set_md_3, NULL},
+	{SET_MD_3_NAME,		SET_MD_3,		false, MSG_set_md_3, NULL},
 #endif
 #ifdef SET_MD_4_NAME
-	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4, NULL},
+	{SET_MD_4_NAME,		SET_MD_4,		false, MSG_set_md_4, NULL},
 #endif
 
-	{NULL,			SET_GROUP,		MSG_set_source, NULL},
-	{"syssrc",		SET_SYSSRC,		MSG_set_syssrc, NULL},
-	{"src",			SET_SRC,		MSG_set_src, NULL},
-	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
-	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
-	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
-	{"debug",		SET_DEBUG,		MSG_set_debug, NULL},
-	{"xdebug",		SET_X11_DEBUG,		MSG_set_xdebug, NULL},
-	{NULL,			SET_GROUP_END,		NULL, NULL},
+	{NULL,			SET_GROUP,		true, MSG_set_source, NULL},
+	{"syssrc",		SET_SYSSRC,		true, MSG_set_syssrc, NULL},
+	{"src",			SET_SRC,		true, MSG_set_src, NULL},
+	{"sharesrc",		SET_SHARESRC,		true, MSG_set_sharesrc, NULL},
+	{"gnusrc",		SET_GNUSRC,		true, MSG_set_gnusrc, NULL},
+	{"xsrc",		SET_XSRC,		true, MSG_set_xsrc, NULL},
+	{"debug",		SET_DEBUG,		false, MSG_set_debug, NULL},
+	{"xdebug",		SET_X11_DEBUG,		false, MSG_set_xdebug, NULL},
+	{NULL,			SET_GROUP_END,		false, NULL, NULL},
 
-	{NULL,			SET_LAST,		NULL, NULL},
+	{NULL,			SET_LAST,		false, NULL, NULL},
 };
 
 #define MAX_CD_INFOS	16	/* how many media can be found? */
@@ -342,7 +344,8 @@ floppy_fetch(const char *set_name)
 		if (run_program(RUN_DISPLAY,
 			    "sh -c '/bin/cat /mnt2/%s.%s %s %s/%s/%s%s'",
 			    set_name, post, write_mode,
-			    target_prefix(), xfer_dir, set_name, dist_postfix))
+			    target_prefix(), xfer_dir, set_name,
+			    set_postfix(set_name)))
 			/* XXX: a read error will give a corrupt file! */
 			continue;
 
@@ -412,72 +415,97 @@ get_iso9660_volname(int dev, int sess, char *volname)
 }
 
 /*
+ * Local state while iterating CDs and collecting volumes
+ */
+struct get_available_cds_state {
+	struct cd_info *info;
+	size_t count;
+};
+
+/*
+ * Callback function: if this is a CD, enumerate all volumes on it
+ */
+static bool
+get_available_cds_helper(void *arg, const char *device)
+{
+	struct get_available_cds_state *state = arg;
+	char dname[16], volname[80];
+	struct disklabel label;
+	int part, dev, error, sess, ready;
+
+	if (!is_cdrom_device(device, false))
+		return true;
+
+	sprintf(dname, "/dev/r%s%c", device, 'a'+RAW_PART);
+	dev = open(dname, O_RDONLY, 0);
+	if (dev == -1)
+		return true;
+
+	ready = 0;
+	error = ioctl(dev, DIOCTUR, &ready);
+	if (error != 0 || ready == 0) {
+		close(dev);
+		return true;
+	}
+	error = ioctl(dev, DIOCGDINFO, &label);
+	close(dev);
+	if (error != 0)
+		return true;
+
+	for (part = 0; part < label.d_npartitions; part++) {
+
+		if (label.d_partitions[part].p_fstype == FS_UNUSED
+		    || label.d_partitions[part].p_size == 0)
+			continue;
+
+		if (label.d_partitions[part].p_fstype == FS_ISO9660) {
+			sess = label.d_partitions[part].p_cdsession;
+			sprintf(dname, "/dev/r%s%c", device, 'a'+part);
+			dev = open(dname, O_RDONLY, 0);
+			if (dev == -1)
+				continue;
+			error = get_iso9660_volname(dev, sess, volname);
+			close(dev);
+			if (error)
+				continue;
+			sprintf(state->info->device_name,
+			    "%s%c", device, 'a'+part);
+			sprintf(state->info->menu, "%s (%s)",
+			    state->info->device_name, volname);
+		} else {
+			/*
+			 * All install CDs use partition
+			 * a for the sets.
+			 */
+			if (part > 0)
+				continue;
+			sprintf(state->info->device_name,
+			    "%s%c", device, 'a'+part);
+			strcpy(state->info->menu, state->info->device_name);
+		}
+		state->info++;
+		if (++state->count >= MAX_CD_INFOS)
+			return false;
+	}
+
+	return true;
+}
+
+/*
  * Get a list of all available CD media (not drives!), return
  * the number of entries collected.
  */
 static int
 get_available_cds(void)
 {
-	char dname[16], volname[80];
-	struct cd_info *info = cds;
-	struct disklabel label;
-	int i, part, dev, error, sess, ready, count = 0;
+	struct get_available_cds_state data;
 
-	for (i = 0; i < MAX_CD_DEVS; i++) {
-		sprintf(dname, "/dev/rcd%d%c", i, 'a'+RAW_PART);
-		dev = open(dname, O_RDONLY, 0);
-		if (dev == -1)
-			break;
-		ready = 0;
-		error = ioctl(dev, DIOCTUR, &ready);
-		if (error != 0 || ready == 0) {
-			close(dev);
-			continue;
-		}
-		error = ioctl(dev, DIOCGDINFO, &label);
-		close(dev);
-		if (error == 0) {
-			for (part = 0; part < label.d_npartitions; part++) {
-				if (label.d_partitions[part].p_fstype
-					== FS_UNUSED
-				    || label.d_partitions[part].p_size == 0)
-					continue;
-				if (label.d_partitions[part].p_fstype
-				    == FS_ISO9660) {
-					sess = label.d_partitions[part]
-					    .p_cdsession;
-					sprintf(dname, "/dev/rcd%d%c", i,
-					    'a'+part);
-					dev = open(dname, O_RDONLY, 0);
-					if (dev == -1)
-						continue;
-					error = get_iso9660_volname(dev, sess,
-					    volname);
-					close(dev);
-					if (error) continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					sprintf(info->menu, "%s (%s)",
-						info->device_name,
-						volname);
-				} else {
-					/*
-					 * All install CDs use partition
-					 * a for the sets.
-					 */
-					if (part > 0)
-						continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					strcpy(info->menu, info->device_name);
-				}
-				info++;
-				if (++count >= MAX_CD_INFOS)
-					break;
-			}
-		}
-	}
-	return count;
+	data.info = cds;
+	data.count = 0;
+
+	enumerate_disks(&data, get_available_cds_helper);
+
+	return data.count;
 }
 
 static int
@@ -887,7 +915,7 @@ extract_file(distinfo *dist, int update)
 		make_target_dir(xfer_dir);
 
 	(void)snprintf(path, sizeof path, "%s/%s%s",
-	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, set_postfix(dist->name));
 
 	owd = getcwd(NULL, 0);
 
@@ -907,7 +935,7 @@ extract_file(distinfo *dist, int update)
 	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
-	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, set_postfix(dist->name));
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
@@ -1743,3 +1771,114 @@ ask_noyes(const char *msgtxt)
 	process_menu(MENU_noyes, &p);
 	return p.rv;
 }
+
+bool
+use_tgz_for_set(const char *set_name)
+{
+	const struct distinfo *dist;
+	
+	for (dist = dist_list; dist->set != SET_LAST; dist++) {
+		if (dist->name == NULL)
+			continue;
+		if (strcmp(set_name, dist->name) == 0)
+			return dist->force_tgz;
+	}
+
+	return true;
+}
+
+/* Return the postfix used for a given set */
+const char *
+set_postfix(const char *set_name)
+{
+	return use_tgz_for_set(set_name) ? dist_tgz_postfix : dist_postfix;
+}
+
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the string
+ * passed by the contents of the passed argument array.
+ * Caller must free() the result string.
+ */
+char*
+str_arg_subst(const char *src, size_t argc, const char **argv)
+{
+	const char *p, *last;
+	char *out, *t;
+	size_t len;
+
+	len = strlen(src);
+	for (p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			len += strlen(argv[n]);
+			len -= endp-p;
+			p = endp-1;
+		}
+	}
+
+	out = malloc(len+1);
+	if (out == NULL)
+		return NULL;
+
+	t = out;
+	for (last = src, p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			size_t l = p-last;
+			memcpy(t, last, l);
+			t += l;
+			strcpy(t, argv[n]);
+			t += strlen(argv[n]);
+			last = endp;
+		}
+	}
+	if (*last) {
+		strcpy(t, last);
+		t += strlen(last);
+	} else {
+		*t = 0;
+	}
+	assert((size_t)(t-out) == len);
+
+	return out;
+}
+
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the
+ * message by the strings passed as ...
+ */
+void
+msg_display_subst(const char *master, size_t argc, ...)
+{
+	va_list ap;
+	const char **args, **arg;
+	char *out;
+
+	args = malloc(sizeof(const char *)*argc);
+	if (args == NULL)
+		return;
+
+	arg = args;
+	va_start(ap, argc);
+	for (size_t i = 0; i < argc; i++)
+		*arg++ = va_arg(ap, const char*);
+	va_end(ap);
+
+	out = str_arg_subst(msg_string(master), argc, args);
+	if (out != NULL) {
+		msg_display(out);
+		free(out);
+	}
+	free(args);
+}
+

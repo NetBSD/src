@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ set binfile [standard_output_file ${testfile}]
 set additional_flags [gdb_target_symbol_prefix_flags]
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfilec} ${srcdir}/${subdir}/${srcfileasm}" "${binfile}" executable [list debug $additional_flags]] != "" } {
-    untested i386-gnu-cfi.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -71,13 +71,13 @@ gdb_test "up 3" \
          "gate \\(\[^()\]*\\) at .*gate.c.*" \
          "shift up to the modified frame"
 
-gdb_test_multiple "info frame" "Existence of the CFI inserted register" {
+gdb_test_multiple "info frame" "existence of the CFI inserted register" {
     -re "Stack level 3, frame at (0x\[0-9a-f\]+):.*Saved registers:.* ecx at (0x\[0-9a-f\]+),.*" {
-	pass "Existence of the CFI inserted register"
+	pass "existence of the CFI inserted register"
 	if { [string compare $expect_out(1,string) $expect_out(2,string)] } then {
-	    fail "Value of the CFI inserted register"
+	    fail "value of the CFI inserted register"
 	} else {
-	    pass "Value of the CFI inserted register"
+	    pass "value of the CFI inserted register"
 	}
     }
 }

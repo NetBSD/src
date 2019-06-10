@@ -35,9 +35,6 @@ struct ppc_elf_params
   /* Set if individual PLT call stubs should be aligned.  */
   int plt_stub_align;
 
-  /* Clear if PLT call stubs should use a speculative execution barrier.  */
-  int speculate_indirect_jumps;
-
   /* Whether to emit symbols for stubs.  */
   int emit_stub_syms;
 
@@ -63,9 +60,10 @@ struct ppc_elf_params
 
 void ppc_elf_link_params (struct bfd_link_info *, struct ppc_elf_params *);
 int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *);
+bfd_boolean ppc_elf_inline_plt (struct bfd_link_info *);
 asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *);
 bfd_boolean ppc_elf_tls_optimize (bfd *, struct bfd_link_info *);
 void ppc_elf_maybe_strip_sdata_syms (struct bfd_link_info *);
-extern bfd_boolean ppc_elf_modify_segment_map (bfd *,
-			   struct bfd_link_info * ATTRIBUTE_UNUSED);
+extern bfd_boolean ppc_elf_modify_segment_map (bfd *, struct bfd_link_info *);
 extern bfd_boolean ppc_elf_section_processing (bfd *, Elf_Internal_Shdr *);
+extern bfd_boolean ppc_finish_symbols (struct bfd_link_info *);

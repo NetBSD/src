@@ -1,5 +1,5 @@
 #! @PATH_PERL@ -w
-# Id
+/* Id */
 #
 # Use Gnuplot to display data in summary files produced by summary.pl.
 # This script requires GNUPLOT 3.7!

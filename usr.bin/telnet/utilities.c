@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.23.40.1 2019/06/10 22:10:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.23.40.1 2019/06/10 22:10:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,6 @@ __RCSID("$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $");
 #include "defines.h"
 #include "externs.h"
 
-#ifdef TN3270
-#include "../sys_curses/telextrn.h"
-#endif
 
 #ifdef AUTHENTICATION
 #include <libtelnet/auth.h>
@@ -65,6 +62,8 @@ __RCSID("$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $");
 #ifdef ENCRYPTION
 #include <libtelnet/encrypt.h>
 #endif
+
+static void SetForExit(void);
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;
@@ -78,7 +77,7 @@ int	prettydump;
 void
 upcase(char *argument)
 {
-    int c;
+    unsigned char c;
 
     while ((c = *argument) != 0) {
 	if (islower(c)) {
@@ -107,7 +106,7 @@ SetSockOpt(int fd, int level, int option, int yesno)
 char NetTraceFile[256] = "(standard output)";
 
 void
-SetNetTrace(char *file)
+SetNetTrace(const char *file)
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
@@ -633,7 +632,7 @@ printsub(
 		}
 		{
 		    char tbuf[64];
-		    sprintf(tbuf, "%s%s%s%s%s",
+		    snprintf(tbuf, sizeof(tbuf), "%s%s%s%s%s",
 			pointer[2]&MODE_EDIT ? "|EDIT" : "",
 			pointer[2]&MODE_TRAPSIG ? "|TRAPSIG" : "",
 			pointer[2]&MODE_SOFT_TAB ? "|SOFT_TAB" : "",
@@ -751,12 +750,6 @@ printsub(
 
 	case TELOPT_NEW_ENVIRON:
 	    fprintf(NetTrace, "NEW-ENVIRON ");
-#ifdef	OLD_ENVIRON
-	    goto env_common1;
-	case TELOPT_OLD_ENVIRON:
-	    fprintf(NetTrace, "OLD-ENVIRON");
-	env_common1:
-#endif
 	    switch (pointer[1]) {
 	    case TELQUAL_IS:
 		fprintf(NetTrace, "IS ");
@@ -770,40 +763,15 @@ printsub(
 		{
 		    static const char NQ[] = "\" ";
 		    const char *noquote = NQ;
-#if defined(ENV_HACK) && defined(OLD_ENVIRON)
-		    extern int old_env_var, old_env_value;
-#endif
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VALUE:
-#ifdef OLD_ENVIRON
-		     /*	case NEW_ENV_OVAR: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_var == OLD_ENV_VALUE)
-				    fprintf(NetTrace, "%s(VALUE) ", noquote);
-				else
-# endif
-				    fprintf(NetTrace, "%sVAR ", noquote);
-			    } else
-#endif /* OLD_ENVIRON */
-				fprintf(NetTrace, "%sVALUE ", noquote);
+			    fprintf(NetTrace, "%sVALUE ", noquote);
 			    noquote = NQ;
 			    break;
 
 			case NEW_ENV_VAR:
-#ifdef OLD_ENVIRON
-		     /* case OLD_ENV_VALUE: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_value == OLD_ENV_VAR)
-				    fprintf(NetTrace, "%s(VAR) ", noquote);
-				else
-# endif
-				    fprintf(NetTrace, "%sVALUE ", noquote);
-			    } else
-#endif /* OLD_ENVIRON */
-				fprintf(NetTrace, "%sVAR ", noquote);
+			    fprintf(NetTrace, "%sVAR ", noquote);
 			    noquote = NQ;
 			    break;
 
@@ -882,28 +850,17 @@ EmptyTerminal(void)
     }
 }
 
-void
+static void
 SetForExit(void)
 {
     setconnmode(0);
-#ifdef TN3270
-    if (In3270) {
-	Finish3270();
-    }
-#else	/* defined(TN3270) */
     do {
 	(void)telrcv();			/* Process any incoming data */
 	EmptyTerminal();
     } while (ring_full_count(&netiring));	/* While there is any */
-#endif	/* defined(TN3270) */
     setcommandmode();
     fflush(stdout);
     fflush(stderr);
-#ifdef TN3270
-    if (In3270) {
-	StopScreen(1);
-    }
-#endif	/* defined(TN3270) */
     setconnmode(0);
     EmptyTerminal();			/* Flush the path to the tty */
     setcommandmode();
@@ -919,7 +876,6 @@ Exit(int returnCode)
 void
 ExitString(const char *string, int returnCode)
 {
-    SetForExit();
     fwrite(string, 1, strlen(string), stderr);
     exit(returnCode);
 }

@@ -1,5 +1,5 @@
 ;; Patterns for the Intel Wireless MMX technology architecture.
-;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2016 Free Software Foundation, Inc.
 ;; Contributed by Red Hat.
 
 ;; This file is part of GCC.
@@ -107,8 +107,8 @@
 )
 
 (define_insn "*iwmmxt_arm_movdi"
-  [(set (match_operand:DI 0 "nonimmediate_di_operand" "=r, r, r, r, m,y,y,yr,y,yrUy,*w, r,*w,*w, *Uv")
-        (match_operand:DI 1 "di_operand"              "rDa,Db,Dc,mi,r,y,yr,y,yrUy,y, r,*w,*w,*Uvi,*w"))]
+  [(set (match_operand:DI 0 "nonimmediate_di_operand" "=r, r, r, r, m,y,y,r, y,Uy,*w, r,*w,*w, *Uv")
+        (match_operand:DI 1 "di_operand"              "rDa,Db,Dc,mi,r,y,r,y,Uy,y,  r,*w,*w,*Uvi,*w"))]
   "TARGET_REALLY_IWMMXT
    && (   register_operand (operands[0], DImode)
        || register_operand (operands[1], DImode))"

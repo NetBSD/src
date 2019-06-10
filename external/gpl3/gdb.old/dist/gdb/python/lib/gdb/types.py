@@ -1,5 +1,5 @@
 # Type utilities.
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,10 @@ def get_basic_type(type_):
     """
 
     while (type_.code == gdb.TYPE_CODE_REF or
+           type_.code == gdb.TYPE_CODE_RVALUE_REF or
            type_.code == gdb.TYPE_CODE_TYPEDEF):
-        if type_.code == gdb.TYPE_CODE_REF:
+        if (type_.code == gdb.TYPE_CODE_REF or
+            type_.code == gdb.TYPE_CODE_RVALUE_REF):
             type_ = type_.target()
         else:
             type_ = type_.strip_typedefs()

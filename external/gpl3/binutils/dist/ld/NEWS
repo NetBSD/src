@@ -1,5 +1,14 @@
 -*- text -*-
 
+Changes in 2.31:
+
+* Speed up direct linking with DLLs for Cygwin and Mingw targets.
+
+* Add a configure option --enable-separate-code to decide whether
+  -z separate-code should be enabled in ELF linker by default.  Default
+  to yes for Linux/x86 targets.  Note that -z separate-code can increase
+  disk and memory size.
+
 Changes in 2.30:
 
 * Add -z separate-code to generate separate code PT_LOAD segment.

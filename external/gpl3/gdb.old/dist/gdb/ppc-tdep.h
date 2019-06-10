@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,7 +76,7 @@ int ppc_altivec_support_p (struct gdbarch *gdbarch);
 /* Return non-zero if the architecture described by GDBARCH has
    VSX registers (vsr0 --- vsr63).  */
 int vsx_support_p (struct gdbarch *gdbarch);
-int ppc_deal_with_atomic_sequence (struct frame_info *frame);
+VEC (CORE_ADDR) *ppc_deal_with_atomic_sequence (struct regcache *regcache);
 
 
 /* Register set description.  */

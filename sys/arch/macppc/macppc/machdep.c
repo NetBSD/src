@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167.4.1 2019/06/10 22:06:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.4.1 2019/06/10 22:06:28 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "adb.h"
@@ -68,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#endif
- 
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <dev/ofw/openfirm.h>
@@ -394,6 +389,8 @@ add_model_specifics(prop_dictionary_t dict)
 {
 	const char *bl_rev_models[] = {
 		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
+	const char *clamshell[] = {
+		"PowerBook2,1", "PowerBook2,2", NULL};
 	const char *pismo[] = {
 		"PowerBook3,1", NULL};
 	const char *mini1[] = {
@@ -406,6 +403,13 @@ add_model_specifics(prop_dictionary_t dict)
 
 	if (of_compatible(node, bl_rev_models) != -1) {
 		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
+	}
+	if (of_compatible(node, clamshell) != -1) {
+		prop_data_t edid;
+
+		edid = prop_data_create_data(edid_clamshell, sizeof(edid_clamshell));
+		prop_dictionary_set(dict, "EDID", edid);
+		prop_object_release(edid);
 	}
 	if (of_compatible(node, pismo) != -1) {
 		prop_data_t edid;

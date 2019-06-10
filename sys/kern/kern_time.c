@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189 2016/11/11 15:29:36 njoly Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.189.16.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189 2016/11/11 15:29:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.16.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -350,6 +350,8 @@ nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
 		timo = 1;
 again:
 	error = kpause("nanoslp", true, timo, NULL);
+	if (error == EWOULDBLOCK)
+		error = 0;
 	if (rmt != NULL || error == 0) {
 		struct timespec rmtend;
 		struct timespec t0;
@@ -374,8 +376,6 @@ again:
 
 	if (error == ERESTART)
 		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
 
 	return error;
 }
@@ -424,6 +424,7 @@ sys___gettimeofday50(struct lwp *l, const struct sys___gettimeofday50_args *uap,
 	struct timezone tzfake;
 
 	if (SCARG(uap, tp)) {
+		memset(&atv, 0, sizeof(atv));
 		microtime(&atv);
 		error = copyout(&atv, SCARG(uap, tp), sizeof(atv));
 		if (error)
@@ -523,6 +524,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
+		memset(olddelta, 0, sizeof(*olddelta));
 		mutex_spin_enter(&timecounter_lock);
 		olddelta->tv_sec = time_adjtime / 1000000;
 		olddelta->tv_usec = time_adjtime % 1000000;
@@ -601,7 +603,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	if ((pts = p->p_timers) == NULL)
 		pts = timers_alloc(p);
 
-	pt = pool_get(&ptimer_pool, PR_WAITOK);
+	pt = pool_get(&ptimer_pool, PR_WAITOK | PR_ZERO);
 	if (evp != NULL) {
 		if (((error =
 		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
@@ -1067,6 +1069,7 @@ sys___getitimer50(struct lwp *l, const struct sys___getitimer50_args *uap,
 	struct itimerval aitv;
 	int error;
 
+	memset(&aitv, 0, sizeof(aitv));
 	error = dogetitimer(p, SCARG(uap, which), &aitv);
 	if (error)
 		return error;
@@ -1162,7 +1165,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	if (pt == NULL) {
 		if (spare == NULL) {
 			mutex_spin_exit(&timer_lock);
-			spare = pool_get(&ptimer_pool, PR_WAITOK);
+			spare = pool_get(&ptimer_pool, PR_WAITOK | PR_ZERO);
 			goto retry;
 		}
 		pt = spare;
@@ -1174,7 +1177,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_type = which;
 		pt->pt_entry = which;
 		pt->pt_queued = false;
-		if (pt->pt_type == CLOCK_REALTIME)
+		if (!CLOCK_VIRTUAL_P(which))
 			callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
 		else
 			pt->pt_active = 0;

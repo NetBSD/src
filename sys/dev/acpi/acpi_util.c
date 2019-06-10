@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.11 2018/03/20 12:14:52 bouyer Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.11.2.1 2019/06/10 22:07:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,14 +65,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.11 2018/03/20 12:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.11.2.1 2019/06/10 22:07:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
+
+#include <machine/acpi_machdep.h>
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_util")
@@ -339,6 +342,43 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 }
 
 /*
+ * Match a PCI-defined bass-class, sub-class, and programming interface
+ * against a handle's _CLS object.
+ */
+int
+acpi_match_class(ACPI_HANDLE handle, uint8_t pci_class, uint8_t pci_subclass,
+    uint8_t pci_interface)
+{
+	ACPI_BUFFER buf;
+	ACPI_OBJECT *obj;
+	ACPI_STATUS rv;
+	int match = 0;
+
+	rv = acpi_eval_struct(handle, "_CLS", &buf);
+	if (ACPI_FAILURE(rv))
+		goto done;
+
+	obj = buf.Pointer;
+	if (obj->Type != ACPI_TYPE_PACKAGE)
+		goto done;
+	if (obj->Package.Count != 3)
+		goto done;
+	if (obj->Package.Elements[0].Type != ACPI_TYPE_INTEGER ||
+	    obj->Package.Elements[1].Type != ACPI_TYPE_INTEGER ||
+	    obj->Package.Elements[2].Type != ACPI_TYPE_INTEGER)
+		goto done;
+
+	match = obj->Package.Elements[0].Integer.Value == pci_class &&
+		obj->Package.Elements[1].Integer.Value == pci_subclass &&
+		obj->Package.Elements[2].Integer.Value == pci_interface;
+
+done:
+	if (buf.Pointer)
+		ACPI_FREE(buf.Pointer);
+	return match;
+}
+
+/*
  * Match a device node from a handle.
  */
 struct acpi_devnode *
@@ -512,18 +552,19 @@ out:
 struct acpi_irq_handler {
 	ACPI_HANDLE aih_hdl;
 	uint32_t aih_irq;
-	int (*aih_intr)(void *);
+	void *aih_ih;
 };
 
 void *
-acpi_intr_establish(device_t dev, uint64_t c,
-    unsigned int (*intr)(void *), void *iarg, const char *xname)
+acpi_intr_establish(device_t dev, uint64_t c, int ipl, bool mpsafe,
+    int (*intr)(void *), void *iarg, const char *xname)
 {
 	ACPI_STATUS rv;
 	ACPI_HANDLE hdl = (void *)(uintptr_t)c;
 	struct acpi_resources res;
 	struct acpi_irq *irq;
 	struct acpi_irq_handler *aih = NULL;
+	void *ih;
 
 	rv = acpi_resource_parse(dev, hdl, "_CRS", &res,
 	    &acpi_resource_parse_ops_quiet);
@@ -534,30 +575,28 @@ acpi_intr_establish(device_t dev, uint64_t c,
 	if (irq == NULL)
 		goto end;
 
-	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_NOSLEEP);
-	if (aih == NULL)
+	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
+	ih = acpi_md_intr_establish(irq->ar_irq, ipl, type, intr, iarg, mpsafe, xname);
+	if (ih == NULL)
 		goto end;
 
+	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_SLEEP);
 	aih->aih_hdl = hdl;
 	aih->aih_irq = irq->ar_irq;
-	rv = AcpiOsInstallInterruptHandler_xname(irq->ar_irq, intr, iarg, xname);
-	if (ACPI_FAILURE(rv)) {
-		kmem_free(aih, sizeof(struct acpi_irq_handler));
-		aih = NULL;
-	}
+	aih->aih_ih = ih;
+
 end:
 	acpi_resource_cleanup(&res);
 	return aih;
 }
 
 void
-acpi_intr_disestablish(void *c, unsigned int (*intr)(void *))
+acpi_intr_disestablish(void *c)
 {
 	struct acpi_irq_handler *aih = c;
 
-	AcpiOsRemoveInterruptHandler(aih->aih_irq, intr);
+	acpi_md_intr_disestablish(aih->aih_ih);
 	kmem_free(aih, sizeof(struct acpi_irq_handler));
-	return;
 }
 
 const char *
@@ -567,4 +606,68 @@ acpi_intr_string(void *c, char *buf, size_t size)
 	intr_handle_t ih = aih->aih_irq;
 
 	return intr_string(ih, buf, size);
+}
+
+/*
+ * USB Device-Specific Data (_DSD) support
+ */
+
+static UINT8 acpi_dsd_uuid[ACPI_UUID_LENGTH] = {
+	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
+	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
+};
+
+ACPI_STATUS
+acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
+{
+	ACPI_OBJECT *obj, *uuid, *props, *pobj, *propkey, *propval;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+	int n;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = AcpiEvaluateObjectTyped(handle, "_DSD", NULL, &buf, ACPI_TYPE_PACKAGE);
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	props = NULL;
+	obj = (ACPI_OBJECT *)buf.Pointer;
+	for (n = 0; (n + 1) < obj->Package.Count; n += 2) {
+		uuid = &obj->Package.Elements[n];
+		if (uuid->Buffer.Length == ACPI_UUID_LENGTH &&
+		    memcmp(uuid->Buffer.Pointer, acpi_dsd_uuid, ACPI_UUID_LENGTH) == 0) {
+			props = &obj->Package.Elements[n + 1];
+			break;
+		}
+	}
+	if (props == NULL) {
+		rv = AE_NOT_FOUND;
+		goto done;
+	}
+
+	for (n = 0; n < props->Package.Count; n++) {
+		pobj = &props->Package.Elements[n];
+		if (pobj->Type != ACPI_TYPE_PACKAGE || pobj->Package.Count != 2)
+			continue;
+		propkey = (ACPI_OBJECT *)&pobj->Package.Elements[0];
+		propval = (ACPI_OBJECT *)&pobj->Package.Elements[1];
+		if (propkey->Type != ACPI_TYPE_STRING)
+			continue;
+		if (strcmp(propkey->String.Pointer, prop) != 0)
+			continue;
+
+		if (propval->Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+		} else {
+			*val = propval->Integer.Value;
+			rv = AE_OK;
+		}
+		break;
+	}
+
+done:
+	ACPI_FREE(buf.Pointer);
+	return rv;
 }

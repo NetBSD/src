@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.39 2017/03/08 18:00:49 maxv Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.39.14.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
  *
@@ -61,9 +61,7 @@ void pmap_xen_suspend(void);
 void pmap_map_recursive_entries(void);
 void pmap_unmap_recursive_entries(void);
 
-#if defined(PAE) || defined(__x86_64__)
 void xen_kpm_sync(struct pmap *, int);
-#endif /* PAE || __x86_64__ */
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)
@@ -74,6 +72,7 @@ void xen_kpm_sync(struct pmap *, int);
 #define xpq_queue_pin_l4_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L4_TABLE)
 
+#ifdef XENPV
 extern unsigned long *xpmap_phys_to_machine_mapping;
 
 static __inline paddr_t
@@ -123,6 +122,8 @@ xpmap_ptom_isvalid(paddr_t ppa)
 	    != INVALID_P2M_ENTRY);
 }
 
+#endif /* XENPV */
+
 static inline void
 MULTI_update_va_mapping(
 	multicall_entry_t *mcl, vaddr_t va,
@@ -135,11 +136,7 @@ MULTI_update_va_mapping(
 	mcl->args[2] = flags;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
-#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
-#else
-	mcl->args[2] = 0;
-#endif
 	mcl->args[3] = flags;
 #endif
 }
@@ -157,11 +154,7 @@ MULTI_update_va_mapping_otherdomain(
 	mcl->args[3] = domid;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
-#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
-#else
-	mcl->args[2] = 0;
-#endif
 	mcl->args[3] = flags;
 	mcl->args[4] = domid;
 #endif

@@ -1,6 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003-2016 Free Software Foundation, Inc.
+// Copyright (C) 2003-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -29,11 +29,10 @@
 #ifndef _GLIBCXX_DEBUG_FUNCTIONS_H
 #define _GLIBCXX_DEBUG_FUNCTIONS_H 1
 
-#include <bits/move.h>				// for __addressof
-#include <bits/stl_function.h>			// for less
+#include <bits/move.h>		// for __addressof
+#include <bits/stl_function.h>	// for less
 #if __cplusplus >= 201103L
-# include <type_traits>				// for is_lvalue_reference and
-						// conditional.
+# include <type_traits>		// for is_lvalue_reference and conditional.
 #endif
 
 #include <debug/helper_functions.h>

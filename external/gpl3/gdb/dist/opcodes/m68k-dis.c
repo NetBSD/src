@@ -1,5 +1,5 @@
 /* Print Motorola 68k instructions.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,7 +19,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "floatformat.h"
 #include "libiberty.h"
 #include "opintl.h"

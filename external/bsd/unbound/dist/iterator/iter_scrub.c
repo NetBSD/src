@@ -316,6 +316,18 @@ sub_of_pkt(sldns_buffer* pkt, uint8_t* zone, uint8_t* comprname)
 	return dname_subdomain_c(zone, buf);
 }
 
+/** Check if there are SOA records in the authority section (negative) */
+static int
+soa_in_auth(struct msg_parse* msg)
+{
+	struct rrset_parse* rrset;
+	for(rrset = msg->rrset_first; rrset; rrset = rrset->rrset_all_next)
+		if(rrset->type == LDNS_RR_TYPE_SOA &&
+			rrset->section == LDNS_SECTION_AUTHORITY) 
+			return 1;
+	return 0;
+}
+
 /**
  * This routine normalizes a response. This includes removing "irrelevant"
  * records from the answer and additional sections and (re)synthesizing
@@ -437,7 +449,9 @@ scrub_normalize(sldns_buffer* pkt, struct msg_parse* msg,
 					rrset->rrset_all_next =
 						nx->rrset_all_next;
 					nx->rrset_all_next = rrset;
-					prev = nx;
+					/* prev = nx; unused, enable if there
+					 * is other rrset removal code after
+					 * this */
 				}
 			}
 
@@ -495,6 +509,19 @@ scrub_normalize(sldns_buffer* pkt, struct msg_parse* msg,
 					"RRset:", pkt, msg, prev, &rrset);
 				continue;
 			}
+			/* we don't want NS sets for NXDOMAIN answers,
+			 * because they could contain poisonous contents,
+			 * from. eg. fragmentation attacks, inserted after
+			 * long RRSIGs in the packet get to the packet
+			 * border and such */
+			/* also for NODATA answers */
+			if(FLAGS_GET_RCODE(msg->flags) == LDNS_RCODE_NXDOMAIN ||
+			   (FLAGS_GET_RCODE(msg->flags) == LDNS_RCODE_NOERROR
+			    && soa_in_auth(msg) && msg->an_rrsets == 0)) {
+				remove_rrset("normalize: removing irrelevant "
+					"RRset:", pkt, msg, prev, &rrset);
+				continue;
+			}
 			if(nsset == NULL) {
 				nsset = rrset;
 			} else {
@@ -502,6 +529,24 @@ scrub_normalize(sldns_buffer* pkt, struct msg_parse* msg,
 					"RRset:", pkt, msg, prev, &rrset);
 				continue;
 			}
+		}
+		/* if this is type DS and we query for type DS we just got
+		 * a referral answer for our type DS query, fix packet */
+		if(rrset->type==LDNS_RR_TYPE_DS &&
+			qinfo->qtype == LDNS_RR_TYPE_DS &&
+			dname_pkt_compare(pkt, qinfo->qname, rrset->dname) == 0) {
+			rrset->section = LDNS_SECTION_ANSWER;
+			msg->ancount = rrset->rr_count + rrset->rrsig_count;
+			msg->nscount = 0;
+			msg->arcount = 0;
+			msg->an_rrsets = 1;
+			msg->ns_rrsets = 0;
+			msg->ar_rrsets = 0;
+			msg->rrset_count = 1;
+			msg->rrset_first = rrset;
+			msg->rrset_last = rrset;
+			rrset->rrset_all_next = NULL;
+			return 1;
 		}
 		mark_additional_rrset(pkt, msg, rrset);
 		prev = rrset;
@@ -575,18 +620,6 @@ store_rrset(sldns_buffer* pkt, struct msg_parse* msg, struct module_env* env,
 	(void)rrset_cache_update(env->rrset_cache, &ref, env->alloc, now);
 }
 
-/** Check if there are SOA records in the authority section (negative) */
-static int
-soa_in_auth(struct msg_parse* msg)
-{
-	struct rrset_parse* rrset;
-	for(rrset = msg->rrset_first; rrset; rrset = rrset->rrset_all_next)
-		if(rrset->type == LDNS_RR_TYPE_SOA &&
-			rrset->section == LDNS_SECTION_AUTHORITY) 
-			return 1;
-	return 0;
-}
- 
 /**
  * Check if right hand name in NSEC is within zone
  * @param rrset: the NSEC rrset

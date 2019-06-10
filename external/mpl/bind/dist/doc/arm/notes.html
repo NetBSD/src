@@ -1,0 +1,206 @@
+<!--
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Id -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article">
+
+  <div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="id-1.2"></a>Release Notes for BIND Version 9.14.1</h2></div></div></div>
+  
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_intro"></a>Introduction</h3></div></div></div>
+    <p>
+      BIND 9.14 is a stable branch of BIND.
+      This document summarizes significant changes since the last
+      production release on that branch.
+    </p>
+<p>
+    </p>
+<p>
+      Please see the file <code class="filename">CHANGES</code> for a more
+      detailed list of changes and bug fixes.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_versions"></a>Note on Version Numbering</h3></div></div></div>
+    <p>
+      As of BIND 9.13/9.14, BIND has adopted the "odd-unstable/even-stable"
+      release numbering convention.  BIND 9.14 contains new features added
+      during the BIND 9.13 development process. Henceforth, the 9.14 branch
+      will be limited to bug fixes and new feature development will proceed
+      in the unstable 9.15 branch, and so forth.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_platforms"></a>Supported Platforms</h3></div></div></div>
+    <p>
+      Since 9.12, BIND has undergone substantial code refactoring and
+      cleanup, and some very old code has been removed that was needed
+      to support legacy platforms which are no longer supported by their
+      vendors and for which ISC is no longer able to perform quality
+      assurance testing.  Specifically, workarounds for old versions of
+      UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster and IRIX have been
+      removed.
+    </p>
+    <p>
+      On UNIX-like systems, BIND now requires support for POSIX.1c
+      threads (IEEE Std 1003.1c-1995), the Advanced Sockets API for
+      IPv6 (RFC 3542), and standard atomic operations provided by the
+      C compiler.
+    </p>
+    <p>
+      More information can be found in the <code class="filename">PLATFORM.md</code>
+      file that is included in the source distribution of BIND 9.  If your
+      platform compiler and system libraries provide the above features,
+      BIND 9 should compile and run. If that isn't the case, the BIND
+      development team will generally accept patches that add support
+      for systems that are still supported by their respective vendors.
+    </p>
+    <p>
+      As of BIND 9.14, the BIND development team has also made cryptography
+      (i.e., TSIG and DNSSEC) an integral part of the DNS server.  The
+      OpenSSL cryptography library must be available for the target
+      platform.  A PKCS#11 provider can be used instead for Public Key
+      cryptography (i.e., DNSSEC signing and validation), but OpenSSL is
+      still required for general cryptography operations such as hashing
+      and random number generation.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_download"></a>Download</h3></div></div></div>
+    <p>
+      The latest versions of BIND 9 software can always be found at
+      <a class="link" href="http://www.isc.org/downloads/" target="_top">http://www.isc.org/downloads/</a>.
+      There you will find additional information about each release,
+      source code, and pre-compiled versions for Microsoft Windows
+      operating systems.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+        <p>
+	  In certain configurations, <span class="command"><strong>named</strong></span> could crash
+	  with an assertion failure if <span class="command"><strong>nxdomain-redirect</strong></span>
+	  was in use and a redirected query resulted in an NXDOMAIN from the
+	  cache. This flaw is disclosed in CVE-2019-6467. [GL #880]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  The TCP client quota set using the <span class="command"><strong>tcp-clients</strong></span>
+	  option could be exceeded in some cases. This could lead to
+	  exhaustion of file descriptors. (CVE-2018-5743) [GL #615]
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_features"></a>New Features</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+	<p>
+	  The new <span class="command"><strong>add-soa</strong></span> option specifies whether
+	  or not the <span class="command"><strong>response-policy</strong></span> zone's SOA record
+	  should be included in the additional section of RPZ responses.
+	  [GL #865]
+        </p>
+      </li></ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_changes"></a>Feature Changes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+	<p>
+	  None.
+	</p>
+      </li></ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+        <p>
+	  The <span class="command"><strong>allow-update</strong></span> and
+	  <span class="command"><strong>allow-update-forwarding</strong></span> options were
+	  inadvertently treated as configuration errors when used at the
+	  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span> level.
+	  This has now been corrected.
+	  [GL #913]
+	</p>
+      </li></ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_license"></a>License</h3></div></div></div>
+    <p>
+      BIND is open source software licenced under the terms of the Mozilla
+      Public License, version 2.0 (see the <code class="filename">LICENSE</code>
+      file for the full text).
+    </p>
+    <p>
+      The license requires that if you make changes to BIND and distribute
+      them outside your organization, those changes must be published under
+      the same license. It does not require that you publish or disclose
+      anything other than the changes you have made to our software.  This
+      requirement does not affect anyone who is using BIND, with or without
+      modifications, without redistributing it, nor anyone redistributing
+      BIND without changes.
+    </p>
+    <p>
+      Those wishing to discuss license compliance may contact ISC at
+      <a class="link" href="https://www.isc.org/mission/contact/" target="_top">
+	https://www.isc.org/mission/contact/</a>.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="end_of_life"></a>End of Life</h3></div></div></div>
+    <p>
+      The end of life date for BIND 9.14 has not yet been determined.
+      For those needing long term support, the current Extended Support
+      Version (ESV) is BIND 9.11, which will be supported until at
+      least December 2021. See
+      <a class="link" href="https://www.isc.org/downloads/software-support-policy/" target="_top">https://www.isc.org/downloads/software-support-policy/</a>
+      for details of ISC's software support policy.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_thanks"></a>Thank You</h3></div></div></div>
+    <p>
+      Thank you to everyone who assisted us in making this release possible.
+      If you would like to contribute to ISC to assist us in continuing to
+      make quality open source software, please visit our donations page at
+      <a class="link" href="http://www.isc.org/donate/" target="_top">http://www.isc.org/donate/</a>.
+    </p>
+  </div>
+</div>
+</div></body>
+</html>

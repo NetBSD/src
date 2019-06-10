@@ -28,7 +28,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-#if defined (HOST_HPPAHPUX) || defined (HOST_HP300HPUX) || defined (HOST_HPPAMPEIX)
+#if defined (HOST_HPPAHPUX) || defined (HOST_HPPAMPEIX)
 
 /* FIXME: sys/core.h doesn't exist for HPUX version 7.  HPUX version
    5, 6, and 7 core files seem to be standard trad-core.c type core
@@ -337,7 +337,7 @@ hpux_core_core_file_p (bfd *abfd)
      */
   if ((unknown_sections > 0) && (good_sections > 0))
     _bfd_error_handler
-      ("%B appears to be a core file,\nbut contains unknown sections."
+      ("%pB appears to be a core file,\nbut contains unknown sections."
        "  It may have been created on an incompatible\nversion of HP-UX."
        "  As a result, some information may be unavailable.\n",
        abfd);
@@ -406,12 +406,16 @@ const bfd_target core_hpux_vec =
       hpux_core_core_file_p		/* a core file */
     },
     {				/* bfd_set_format */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {				/* bfd_write_contents */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,8 @@ AccessAttribKeyword
     | PARSEOP_ACCESSATTRIB_SND_RCV          {$$ = TrCreateLeafOp (PARSEOP_ACCESSATTRIB_SND_RCV);}
     | PARSEOP_ACCESSATTRIB_WORD             {$$ = TrCreateLeafOp (PARSEOP_ACCESSATTRIB_WORD);}
     | PARSEOP_ACCESSATTRIB_WORD_CALL        {$$ = TrCreateLeafOp (PARSEOP_ACCESSATTRIB_WORD_CALL);}
-    | PARSEOP_ACCESSATTRIB_MULTIBYTE
-        PARSEOP_OPEN_PAREN                  {$<n>$ = TrCreateLeafOp (PARSEOP_ACCESSATTRIB_MULTIBYTE);}
+    | PARSEOP_ACCESSATTRIB_BYTES
+        PARSEOP_OPEN_PAREN                  {$<n>$ = TrCreateLeafOp (PARSEOP_ACCESSATTRIB_BYTES);}
         ByteConst
         PARSEOP_CLOSE_PAREN                 {$$ = TrLinkOpChildren ($<n>3,1,$4);}
     | PARSEOP_ACCESSATTRIB_RAW_BYTES

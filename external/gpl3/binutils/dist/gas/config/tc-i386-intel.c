@@ -698,17 +698,14 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	case O_oword_ptr:
 	case O_xmmword_ptr:
 	  i.types[this_operand].bitfield.xmmword = 1;
-	  suffix = XMMWORD_MNEM_SUFFIX;
 	  break;
 
 	case O_ymmword_ptr:
 	  i.types[this_operand].bitfield.ymmword = 1;
-	  suffix = YMMWORD_MNEM_SUFFIX;
 	  break;
 
 	case O_zmmword_ptr:
 	  i.types[this_operand].bitfield.zmmword = 1;
-	  suffix = ZMMWORD_MNEM_SUFFIX;
 	  break;
 
 	case O_far_ptr:

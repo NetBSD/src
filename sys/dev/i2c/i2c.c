@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.66.2.1 2019/06/10 22:07:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66.2.1 2019/06/10 22:07:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -719,6 +719,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 		     const struct device_compatible_entry *compats,
 		     int *match_resultp)
 {
+	int res;
 
 	KASSERT(match_resultp != NULL);
 
@@ -729,8 +730,11 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		*match_resultp = iic_compatible_match(ia, compats, NULL);
-		return true;
+		res = iic_compatible_match(ia, compats, NULL);
+		if (res) {
+			*match_resultp = res;
+			return true;
+		}
 	}
 
 	return false;
@@ -844,8 +848,9 @@ iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 }
 
 
-CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
-    iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach);
+CFATTACH_DECL3_NEW(iic, sizeof(struct iic_softc),
+    iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach,
+    DVF_DETACH_SHUTDOWN);
 
 MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_bitbang");
 

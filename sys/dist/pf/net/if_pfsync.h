@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.h,v 1.3 2009/09/14 10:36:49 degroote Exp $	*/
+/*	$NetBSD: if_pfsync.h,v 1.3.64.1 2019/06/10 22:07:37 christos Exp $	*/
 /*	$OpenBSD: if_pfsync.h,v 1.31 2007/05/31 04:11:42 mcbride Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ struct pfsyncreq {
 } while (0)
 
 #ifdef _KERNEL
-void pfsync_input(struct mbuf *, ...);
+void pfsync_input(struct mbuf *, int, int);
 int pfsync_clear_states(u_int32_t, char *);
 int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 #define pfsync_insert_state(st)	do {				\

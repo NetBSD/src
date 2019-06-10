@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_STEP 3
 .Os
 .Sh NAME
@@ -11,17 +11,19 @@
 .Fc
 .Sh DESCRIPTION
 After a prepared statement has been prepared using
-either sqlite3_prepare_v2() or sqlite3_prepare16_v2()
+any of sqlite3_prepare_v2(), sqlite3_prepare_v3(),
+sqlite3_prepare16_v2(), or sqlite3_prepare16_v3()
 or one of the legacy interfaces sqlite3_prepare()
 or sqlite3_prepare16(), this function must be called
 one or more times to evaluate the statement.
 .Pp
 The details of the behavior of the sqlite3_step() interface depend
-on whether the statement was prepared using the newer "v2" interface
-sqlite3_prepare_v2() and sqlite3_prepare16_v2()
-or the older legacy interface sqlite3_prepare() and
+on whether the statement was prepared using the newer "vX" interfaces
+sqlite3_prepare_v3(), sqlite3_prepare_v2(),
+sqlite3_prepare16_v3(), sqlite3_prepare16_v2()
+or the older legacy interfaces sqlite3_prepare() and
 sqlite3_prepare16().
-The use of the new "v2" interface is recommended for new applications
+The use of the new "vX" interface is recommended for new applications
 but the legacy interface will continue to be supported.
 .Pp
 In the legacy interface, the return value will be either SQLITE_BUSY,
@@ -90,12 +92,13 @@ in order to find one of the specific error codes that better
 describes the error.
 We admit that this is a goofy design.
 The problem has been fixed with the "v2" interface.
-If you prepare all of your SQL statements using either sqlite3_prepare_v2()
-or sqlite3_prepare16_v2() instead of the legacy
+If you prepare all of your SQL statements using sqlite3_prepare_v3()
+or sqlite3_prepare_v2() or sqlite3_prepare16_v2()
+or sqlite3_prepare16_v3() instead of the legacy
 sqlite3_prepare() and sqlite3_prepare16()
 interfaces, then the more specific error codes are returned
 directly by sqlite3_step().
-The use of the "v2" interface is recommended.
+The use of the "vX" interfaces is recommended.
 .Sh SEE ALSO
 .Xr sqlite3_column_blob 3 ,
 .Xr sqlite3_stmt 3 ,

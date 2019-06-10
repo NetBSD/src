@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.15 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.15.38.1 2019/06/10 22:07:15 christos Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.15 2012/10/27 17:18:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.15.38.1 2019/06/10 22:07:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,7 @@ com_ofisa_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map register space\n");
                 return;
         }
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	osc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_SERIAL, comintr, sc);

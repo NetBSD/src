@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.4 2019/06/10 22:09:46 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,8 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-#if __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.14.4.4 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
@@ -39,7 +39,9 @@ __FBSDID("$FreeBSD$");
  * AP driver. The code is used with the consent of the author and
  * it's license is included below.
  */
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h> 

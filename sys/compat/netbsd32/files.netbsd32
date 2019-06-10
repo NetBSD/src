@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.39 2016/10/19 09:44:01 skrll Exp $
+#	$NetBSD: files.netbsd32,v 1.39.16.1 2019/06/10 22:07:01 christos Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -13,7 +13,9 @@ file	compat/netbsd32/netbsd32_exec_aout.c	compat_netbsd32 & exec_aout
 file	compat/netbsd32/netbsd32_netbsd.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_event.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_execve.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_fd.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_fs.c		compat_netbsd32
+file	compat/netbsd32/netbsd32_kern_proc.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_ioctl.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_ipc.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_lwp.c		compat_netbsd32
@@ -22,6 +24,8 @@ file	compat/netbsd32/netbsd32_mod.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_mqueue.c	compat_netbsd32 & mqueue
 file	compat/netbsd32/netbsd32_nfssvc.c	compat_netbsd32 & nfsserver
 file	compat/netbsd32/netbsd32_ptrace.c	compat_netbsd32 & ptrace
+file	compat/netbsd32/netbsd32_rlimit.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_quota.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_select.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_sem.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_signal.c	compat_netbsd32
@@ -29,18 +33,25 @@ file	compat/netbsd32/netbsd32_socket.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_sysctl.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_time.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_wait.c		compat_netbsd32
+file	compat/netbsd32/netbsd32_vm.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_sysent.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_syscalls.c	compat_netbsd32 & syscall_debug
 
 file	compat/netbsd32/netbsd32_compat_09.c	compat_netbsd32 & (compat_09 | compat_sunos)
-file	compat/netbsd32/netbsd32_compat_10.c	compat_netbsd32 & (compat_10 | compat_sunos)
+file	compat/netbsd32/netbsd32_compat_10_sysv.c compat_netbsd32 & compat_10 &
+						(sysvmsg | sysvsem | sysvshm)
 file	compat/netbsd32/netbsd32_compat_12.c	compat_netbsd32 & (compat_12 | compat_sunos)
 file	compat/netbsd32/netbsd32_compat_13.c	compat_netbsd32 & compat_13
-file	compat/netbsd32/netbsd32_compat_14.c	compat_netbsd32 & compat_14
+file	compat/netbsd32/netbsd32_compat_14_sysv.c compat_netbsd32 & compat_14 &
+						(sysvmsg | sysvsem | sysvshm)
+file	compat/netbsd32/netbsd32_compat_16.c	compat_netbsd32 & compat_16
 file	compat/netbsd32/netbsd32_compat_20.c	compat_netbsd32 & compat_20
 file	compat/netbsd32/netbsd32_compat_30.c	compat_netbsd32 & compat_30
+file	compat/netbsd32/netbsd32_compat_40.c	compat_netbsd32 & compat_40
 file	compat/netbsd32/netbsd32_compat_43.c	compat_netbsd32 & (compat_43 | compat_sunos | compat_linux32)
 file	compat/netbsd32/netbsd32_compat_50.c	compat_netbsd32 & compat_50
+file	compat/netbsd32/netbsd32_rndpseudo_50.c	compat_netbsd32 & compat_50
 file	compat/netbsd32/netbsd32_compat_50_sysv.c compat_netbsd32 & compat_50 &
 						(sysvmsg | sysvsem | sysvshm)
 file	compat/netbsd32/netbsd32_compat_60.c	compat_netbsd32 & compat_60
+file	compat/netbsd32/netbsd32_compat_80.c	compat_netbsd32 & compat_80

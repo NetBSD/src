@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.60 2016/02/27 21:48:34 joerg Exp $
+#	$NetBSD: Makefile.powerpc,v 1.60.18.1 2019/06/10 22:06:38 christos Exp $
 #
 # Makefile for NetBSD
 #
@@ -57,11 +57,6 @@ AFLAGS+=	${AOPTS} -D_NOREGNAMES
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

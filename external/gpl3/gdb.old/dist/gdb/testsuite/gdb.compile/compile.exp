@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Free Software Foundation, Inc.
+# Copyright 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,15 +42,15 @@ clean_restart ${testfile}
 #
 gdb_test "compile code int i=2;" \
     "The program must be running for the compile command to work.*" \
-    "Test compile code command without running inferior"
+    "test compile code command without running inferior"
 
 gdb_test "compile int i=2;" \
     "The program must be running for the compile command to work.*" \
-    "Test compile command without running inferior"
+    "test compile command without running inferior"
 
 gdb_test "compile file -r ${srcdir}/${subdir}/${testfile}-mod.c" \
     "The program must be running for the compile command to work.*" \
-    "Test compile file command without running inferior"
+    "test compile file command without running inferior"
 
 if ![runto_main] {
     return -1
@@ -66,20 +66,20 @@ if {[skip_compile_feature_tests]} {
 #
 
 gdb_test_no_output "compile -- f = 10" \
-    "Test abbreviations and code delimiter"
+    "test abbreviations and code delimiter"
 
 gdb_test "compile f = 10;" ".*= 10;: No such file.*" \
     "Test abbreviations and code collision"
 
 gdb_test_no_output "compile -r -- void _gdb_expr(){int i = 5;}" \
-    "Test delimiter with -r"
+    "test delimiter with -r"
 
 gdb_test_no_output "compile -raw -- void _gdb_expr(){int i = 5;}" \
-    "Test delimiter with -raw"
+    "test delimiter with -raw"
 
 gdb_test "compile -- -r  void _gdb_expr(){int i = 5;}" \
     ".* error: 'r' undeclared \\(first use in this function\\).*" \
-    "Test delimiter with -r after it"
+    "test delimiter with -r after it"
 
 gdb_test "p globalvar" " = 10" "expect 10"
 
@@ -322,9 +322,9 @@ gdb_test "show compile-args" \
     "Compile command command-line arguments are .*"
 gdb_test "compile code -z" "Unknown argument.*"
 
-gdb_test "set lang java" \
+gdb_test "set lang rust" \
     "Warning: the current language does not match this frame."
-gdb_test "compile code globalvar" "No compiler support for language java\\."
+gdb_test "compile code globalvar" "No compiler support for language rust\\."
 gdb_test_no_output "set lang auto"
 
 gdb_test_no_output "compile code union union_type newdecl_u"
@@ -339,7 +339,7 @@ gdb_test "compile file -r" \
     "Test compile file and raw option without a filename"
 gdb_test "compile file -z" \
     "Unknown argument.*" \
-    "Test compile file with unknown argument"
+    "test compile file with unknown argument"
 
 
 # LOC_CONST tests.

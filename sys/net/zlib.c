@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $	*/
+/*	$NetBSD: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $
+ * $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5813,7 +5813,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.34 2013/12/29 08:09:44 pgoyette Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
 
 /* #include "zlib.h" */
 

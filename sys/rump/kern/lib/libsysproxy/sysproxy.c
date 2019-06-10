@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.4 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.4.20.1 2019/06/10 22:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.4 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.4.20.1 2019/06/10 22:09:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.4 2016/01/26 23:12:17 pooka Exp $");
 #include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
+#include <sys/lockdebug.h>
+#include <sys/psref.h>
 
 #define _RUMP_SYSPROXY
 #include <rump/rumpuser.h>
@@ -72,6 +74,12 @@ hyp_syscall(int num, void *arg, long *retval)
 	rv = sy_invoke(callp, l, (void *)arg, regrv, num);
 	retval[0] = regrv[0];
 	retval[1] = regrv[1];
+
+	/* Sanity checks (from mi_userret) */
+	LOCKDEBUG_BARRIER(NULL, 0);
+	KASSERT(l->l_nopreempt == 0);
+	PSREF_DEBUG_BARRIER();
+	KASSERT(l->l_psrefs == 0);
 
 	return rv;
 }

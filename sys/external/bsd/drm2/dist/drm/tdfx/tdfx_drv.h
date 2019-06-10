@@ -1,3 +1,5 @@
+/*	$NetBSD: tdfx_drv.h,v 1.1.1.1.38.1 2019/06/10 22:08:27 christos Exp $	*/
+
 /* tdfx.h -- 3dfx DRM template customization -*- linux-c -*-
  * Created: Wed Feb 14 12:32:32 2001 by gareth@valinux.com
  */

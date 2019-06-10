@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.20 2018/02/26 23:09:32 sevan Exp $
+# $NetBSD: GENERIC_601,v 1.20.4.1 2019/06/10 22:06:27 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.20 $"
+ident 		"GENERIC-$Revision: 1.20.4.1 $"
 
 maxusers	32
 
@@ -129,10 +129,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -167,6 +163,7 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options         WSDISPLAY_SCROLLSUPPORT
 
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
@@ -210,7 +207,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # PCI SCSI controllers
-#ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 
 # Display devices
 #
@@ -293,6 +290,7 @@ uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
 ums*	at uhidev? reportid ?				# USB Mice
+wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 uhid*	at uhidev? reportid ?				# USB Generic HID
 
@@ -331,13 +329,13 @@ pseudo-device	vnd			# disk-like interface to files
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter		# packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	bpfilter		# packet filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	tun			# network tunneling over tty
-pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
@@ -353,24 +351,18 @@ pseudo-device	wsmux			# mouse and keyboard multiplexer
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	nsmb			# SMB requester
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 #pseudo-device	putter			# for puffs and pud
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device   drvctl
 
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+
+#rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+#ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g

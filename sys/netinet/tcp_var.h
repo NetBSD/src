@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.186 2018/04/29 12:12:42 maxv Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.186.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -646,7 +646,7 @@ struct syn_cache_head {
  * Compute the initial window for slow start.
  */
 #define	TCP_INITIAL_WINDOW(iw, segsz) \
-	min((iw) * (segsz), max(2 * (segsz), tcp_init_win_max[(iw)]))
+	uimin((iw) * (segsz), uimax(2 * (segsz), tcp_init_win_max[(iw)]))
 
 /*
  * TCP statistics.
@@ -779,45 +779,6 @@ struct syn_cache_head {
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
 #define	TCPCTL_DROP		33	/* drop tcp connection */
 #define	TCPCTL_MSL		34	/* Max Segment Life */
-#define	TCPCTL_MAXID		35
-
-#define	TCPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "rfc1323",	CTLTYPE_INT }, \
-	{ "sendspace",	CTLTYPE_INT }, \
-	{ "recvspace",	CTLTYPE_INT }, \
-	{ "mssdflt",	CTLTYPE_INT }, \
-	{ "syn_cache_limit", CTLTYPE_INT }, \
-	{ "syn_bucket_limit", CTLTYPE_INT }, \
-	{ 0, 0 },\
-	{ "init_win", CTLTYPE_INT }, \
-	{ "mss_ifmtu", CTLTYPE_INT }, \
-	{ "sack", CTLTYPE_INT }, \
-	{ "win_scale", CTLTYPE_INT }, \
-	{ "timestamps", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "cwm", CTLTYPE_INT }, \
-	{ "cwm_burstsize", CTLTYPE_INT }, \
-	{ "ack_on_push", CTLTYPE_INT }, \
-	{ "keepidle",	CTLTYPE_INT }, \
-	{ "keepintvl",	CTLTYPE_INT }, \
-	{ "keepcnt",	CTLTYPE_INT }, \
-	{ "slowhz",	CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "log_refused",CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "rstppslimit", CTLTYPE_INT }, \
-	{ "delack_ticks", CTLTYPE_INT }, \
-	{ "init_win_local", CTLTYPE_INT }, \
-	{ "ident", CTLTYPE_STRUCT }, \
-	{ "ackdropppslimit", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "debug", CTLTYPE_STRUCT }, \
-	{ "debx", CTLTYPE_INT }, \
-	{ "drop", CTLTYPE_STRUCT }, \
-	{ "msl", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 
@@ -915,7 +876,7 @@ void	 tcp_init_common(unsigned);
 #ifdef INET6
 int	 tcp6_input(struct mbuf **, int *, int);
 #endif
-void	 tcp_input(struct mbuf *, ...);
+void	 tcp_input(struct mbuf *, int, int);
 u_int	 tcp_hdrsz(struct tcpcb *);
 u_long	 tcp_mss_to_advertise(const struct ifnet *, int);
 void	 tcp_mss_from_peer(struct tcpcb *, int);
@@ -930,9 +891,9 @@ u_int	 tcp_optlen(struct tcpcb *);
 int	 tcp_output(struct tcpcb *);
 void	 tcp_pulloutofband(struct socket *,
 	    struct tcphdr *, struct mbuf *, int);
-void	 tcp_quench(struct inpcb *, int);
+void	 tcp_quench(struct inpcb *);
 #ifdef INET6
-void	 tcp6_quench(struct in6pcb *, int);
+void	 tcp6_quench(struct in6pcb *);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6

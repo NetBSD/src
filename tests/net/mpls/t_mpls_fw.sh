@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw.sh,v 1.5 2016/08/10 07:50:37 ozaki-r Exp $
+# $NetBSD: t_mpls_fw.sh,v 1.5.14.1 2019/06/10 22:10:10 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@ RUMP_SERVER3=unix://./r3
 RUMP_SERVER4=unix://./r4
 
 RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet	\
-            -lrumpdev -lrumpnet_netmpls -lrumpnet_shmif"
+            -lrumpnet_netmpls -lrumpnet_shmif"
 
 atf_test_case mplsfw4 cleanup
 mplsfw4_head()

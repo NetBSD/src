@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2015/08/20 11:05:01 christos Exp $
+# $NetBSD: Makefile,v 1.2.18.1 2019/06/10 22:09:33 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=   nandemulator
 IOCONF=	nandemulator.ioconf
 SRCS=	nandemulator.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

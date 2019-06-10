@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.82 2017/12/16 03:13:29 mrg Exp $	*/
+/*	$NetBSD: pool.h,v 1.82.4.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -81,6 +81,10 @@ struct pool_sysctl {
 #include <sys/tree.h>
 #include <sys/callback.h>
 
+#ifdef _KERNEL_OPT
+#include "opt_pool.h"
+#endif
+
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
 
 struct pool;
@@ -101,6 +105,12 @@ struct pool_allocator {
 LIST_HEAD(pool_pagelist,pool_item_header);
 SPLAY_HEAD(phtree, pool_item_header);
 
+#define POOL_QUARANTINE_DEPTH	128
+typedef struct {
+	size_t rotor;
+	intptr_t list[POOL_QUARANTINE_DEPTH];
+} pool_quar_t;
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
@@ -115,13 +125,13 @@ struct pool {
 	struct pool_cache *pr_cache;	/* Cache for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
-	unsigned int	pr_itemoffset;	/* Align this offset in item */
+	unsigned int	pr_itemoffset;	/* offset of the item space */
 	unsigned int	pr_minitems;	/* minimum # of items to keep */
 	unsigned int	pr_minpages;	/* same in page units */
 	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
 	unsigned int	pr_npages;	/* # of pages allocated */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
-	unsigned int	pr_slack;	/* unused space in a page */
+	unsigned int	pr_poolid;	/* id of the pool */
 	unsigned int	pr_nitems;	/* number of available items in pool */
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
@@ -149,6 +159,8 @@ struct pool {
 #define	PR_LARGECACHE	0x1000	/* use large cache groups */
 #define	PR_GROWING	0x2000	/* pool_grow in progress */
 #define	PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
+#define	PR_ZERO		0x8000	/* zero data before returning */
+#define	PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -167,7 +179,7 @@ struct pool {
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
-	int		pr_phoffset;	/* Offset in page of page header */
+	int		pr_phoffset;	/* unused */
 
 	/*
 	 * Warning message to be issued, and a per-time-delta rate cap,
@@ -195,6 +207,10 @@ struct pool {
 	void		*pr_qcache;
 	bool		pr_redzone;
 	size_t		pr_reqsize;
+	size_t		pr_reqsize_with_redzone;
+#ifdef POOL_QUARANTINE
+	pool_quar_t	pr_quar;
+#endif
 };
 
 /*
@@ -284,11 +300,6 @@ typedef struct pool_cache *pool_cache_t;
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
 extern struct pool_allocator pool_allocator_meta;
-#ifdef POOL_SUBPAGE
-/* The above are subpage allocators in this case. */
-extern struct pool_allocator pool_allocator_kmem_fullpage;
-extern struct pool_allocator pool_allocator_nointr_fullpage;
-#endif
 
 void		pool_subsystem_init(void);
 
@@ -309,6 +320,7 @@ void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
 bool		pool_drain(struct pool **);
 int		pool_totalpages(void);
+int		pool_totalpages_locked(void);
 
 /*
  * Debugging and diagnostic aides.

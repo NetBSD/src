@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -25,16 +25,30 @@
 #include "dis-asm.h"
 #include "opintl.h"
 #include "opcode/s390.h"
+#include "libiberty.h"
 
-static int init_flag = 0;
 static int opc_index[256];
 static int current_arch_mask = 0;
 static int option_use_insn_len_bits_p = 0;
 
+typedef struct
+{
+  const char *name;
+  const char *description;
+} s390_options_t;
+
+static const s390_options_t options[] =
+{
+  { "esa" ,       N_("Disassemble in ESA architecture mode") },
+  { "zarch",      N_("Disassemble in z/Architecture mode") },
+  { "insnlength", N_("Print unknown instructions according to "
+		     "length from first two bits") }
+};
+
 /* Set up index table for first opcode byte.  */
 
-static void
-init_disasm (struct disassemble_info *info)
+void
+disassemble_init_s390 (struct disassemble_info *info)
 {
   int i;
   const char *p;
@@ -45,6 +59,9 @@ init_disasm (struct disassemble_info *info)
      first matching entry instead of the last.  */
   for (i = s390_num_opcodes; i--; )
     opc_index[s390_opcodes[i].opcode[0]] = i;
+
+  current_arch_mask = 1 << S390_OPCODE_ZARCH;
+  option_use_insn_len_bits_p = 0;
 
   for (p = info->disassembler_options; p != NULL; )
     {
@@ -61,11 +78,6 @@ init_disasm (struct disassemble_info *info)
       if (p != NULL)
 	p++;
     }
-
-  if (!current_arch_mask)
-    current_arch_mask = 1 << S390_OPCODE_ZARCH;
-
-  init_flag = 1;
 }
 
 /* Derive the length of an instruction from its first byte.  */
@@ -266,9 +278,6 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
   unsigned int value;
   int status, opsize, bufsize, bytes_to_dump, i;
 
-  if (init_flag == 0)
-    init_disasm (info);
-
   /* The output looks better if we put 6 bytes on a line.  */
   info->bytes_per_line = 6;
 
@@ -360,15 +369,48 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
   return 0;
 }
 
+const disasm_options_t *
+disassembler_options_s390 (void)
+{
+  static disasm_options_t *opts = NULL;
+
+  if (opts == NULL)
+    {
+      size_t i, num_options = ARRAY_SIZE (options);
+      opts = XNEW (disasm_options_t);
+      opts->name = XNEWVEC (const char *, num_options + 1);
+      opts->description = XNEWVEC (const char *, num_options + 1);
+      for (i = 0; i < num_options; i++)
+	{
+	  opts->name[i] = options[i].name;
+	  opts->description[i] = _(options[i].description);
+	}
+      /* The array we return must be NULL terminated.  */
+      opts->name[i] = NULL;
+      opts->description[i] = NULL;
+    }
+
+  return opts;
+}
+
 void
 print_s390_disassembler_options (FILE *stream)
 {
+  unsigned int i, max_len = 0;
   fprintf (stream, _("\n\
 The following S/390 specific disassembler options are supported for use\n\
 with the -M switch (multiple options should be separated by commas):\n"));
 
-  fprintf (stream, _("  esa         Disassemble in ESA architecture mode\n"));
-  fprintf (stream, _("  zarch       Disassemble in z/Architecture mode\n"));
-  fprintf (stream, _("  insnlength  Print unknown instructions according "
-		     "to length from first two bits\n"));
+  for (i = 0; i < ARRAY_SIZE (options); i++)
+    {
+      unsigned int len = strlen (options[i].name);
+      if (max_len < len)
+	max_len = len;
+    }
+
+  for (i = 0, max_len++; i < ARRAY_SIZE (options); i++)
+    fprintf (stream, "  %s%*c %s\n",
+	     options[i].name,
+	     (int)(max_len - strlen (options[i].name)), ' ',
+	     _(options[i].description));
 }

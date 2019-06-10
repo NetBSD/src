@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.22 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.22.46.1 2019/06/10 22:10:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.22 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.22.46.1 2019/06/10 22:10:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ domacro(int argc, char *argv[])
 					}
 					break;
 				}
-				/* intentional drop through */
+				/* FALLTHROUGH */
 			default:
 				*cp2++ = *cp1;
 				break;

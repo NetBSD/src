@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -21,7 +21,7 @@ if {[skip_cplus_tests]} { continue }
 
 standard_testfile .cc anon-ns2.cc
 
-if {[prepare_for_testing $testfile $testfile "$srcfile $srcfile2" {c++ debug}]} {
+if {[prepare_for_testing "failed to prepare" $testfile "$srcfile $srcfile2" {c++ debug}]} {
     return -1
 }
 

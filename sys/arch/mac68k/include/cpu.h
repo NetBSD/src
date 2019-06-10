@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.99.16.1 2019/06/10 22:06:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,9 +122,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
 #endif /* _KERNEL */
-
-#define CPU_CONSDEV	1
-#define CPU_MAXID	2
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */
@@ -292,7 +289,6 @@ int	mac68k_ring_bell(int, int, int);
 u_int	get_mapping(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 /* fpu.c */

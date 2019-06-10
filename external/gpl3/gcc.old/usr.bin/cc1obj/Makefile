@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 21:58:09 christos Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj

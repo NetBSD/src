@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.12 2017/12/18 04:11:46 ozaki-r Exp $
+#	$NetBSD: t_change.sh,v 1.12.4.1 2019/06/10 22:10:10 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,11 +26,18 @@
 #
 
 netserver=\
-"rump_server -lrumpdev -lrumpnet -lrumpnet_net \
-	-lrumpnet_netinet -lrumpnet_shmif"
+"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
 export RUMP_SERVER=unix://commsock
 
 DEBUG=${DEBUG:-false}
+
+route_cleanup_common()
+{
+
+	$DEBUG && dump_kernel_stats unix://commsock
+	$DEBUG && extract_rump_server_core
+	env RUMP_SERVER=unix://commsock rump.halt
+}
 
 atf_test_case route_change_reject2blackhole cleanup
 route_change_reject2blackhole_head()
@@ -58,7 +65,7 @@ route_change_reject2blackhole_body()
 route_change_reject2blackhole_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_gateway cleanup
@@ -91,7 +98,7 @@ route_change_gateway_body()
 route_change_gateway_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_ifa cleanup
@@ -156,7 +163,7 @@ destination: 192.168.0.0
 route_change_ifa_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_ifp cleanup
@@ -223,7 +230,7 @@ destination: 192.168.0.0
 route_change_ifp_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_ifp_ifa cleanup
@@ -290,7 +297,7 @@ destination: 192.168.0.0
 route_change_ifp_ifa_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_flags cleanup
@@ -326,7 +333,7 @@ route_change_flags_body()
 route_change_flags_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_test_case route_change_default_flags cleanup
@@ -361,7 +368,7 @@ route_change_default_flags_body()
 route_change_default_flags_cleanup()
 {
 
-	env RUMP_SERVER=unix://commsock rump.halt
+	route_cleanup_common
 }
 
 atf_init_test_cases()

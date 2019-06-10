@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.104 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: ld.c,v 1.104.4.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.104 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.104.4.1 2019/06/10 22:07:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,11 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		return (error);
 
 	if (sc->sc_ioctl) {
+		if ((sc->sc_flags & LDF_MPSAFE) == 0)
+			KERNEL_LOCK(1, curlwp);
 		error = (*sc->sc_ioctl)(sc, cmd, addr, flag, 0);
+		if ((sc->sc_flags & LDF_MPSAFE) == 0)
+			KERNEL_UNLOCK_ONE(curlwp);
 		if (error != EPASSTHROUGH)
 			return (error);
 	}
@@ -388,7 +392,11 @@ ld_flush(device_t self, bool poll)
 	struct ld_softc *sc = device_private(self);
 
 	if (sc->sc_ioctl) {
+		if ((sc->sc_flags & LDF_MPSAFE) == 0)
+			KERNEL_LOCK(1, curlwp);
 		error = (*sc->sc_ioctl)(sc, DIOCCACHESYNC, NULL, 0, poll);
+		if ((sc->sc_flags & LDF_MPSAFE) == 0)
+			KERNEL_UNLOCK_ONE(curlwp);
 		if (error != 0)
 			device_printf(self, "unable to flush cache\n");
 	}
@@ -579,7 +587,7 @@ ld_set_geometry(struct ld_softc *sc)
 	dg->dg_ntracks = sc->sc_nheads;
 	dg->dg_ncylinders = sc->sc_ncylinders;
 
-	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
+	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sc->sc_typename);
 }
 
 static void

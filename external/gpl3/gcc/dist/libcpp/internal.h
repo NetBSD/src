@@ -1,5 +1,5 @@
 /* Part of CPP library.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -505,6 +505,11 @@ struct cpp_reader
   const unsigned char *date;
   const unsigned char *time;
 
+  /* Externally set timestamp to replace current date and time useful for
+     reproducibility.  It should be initialized to -2 (not yet set) and
+     set to -1 to disable it or to a non-negative value to enable it.  */
+  time_t source_date_epoch;
+
   /* EOF token, and a token forcing paste avoidance.  */
   cpp_token avoid_paste;
   cpp_token eof;
@@ -643,13 +648,14 @@ extern void _cpp_destroy_hashtable (cpp_reader *);
 /* In files.c */
 typedef struct _cpp_file _cpp_file;
 extern _cpp_file *_cpp_find_file (cpp_reader *, const char *, cpp_dir *,
-				  bool, int, bool);
+				  bool, int, bool, source_location);
 extern bool _cpp_find_failed (_cpp_file *);
 extern void _cpp_mark_file_once_only (cpp_reader *, struct _cpp_file *);
 extern void _cpp_fake_include (cpp_reader *, const char *);
-extern bool _cpp_stack_file (cpp_reader *, _cpp_file*, bool);
+extern bool _cpp_stack_file (cpp_reader *, _cpp_file*, bool,
+			     source_location);
 extern bool _cpp_stack_include (cpp_reader *, const char *, int,
-				enum include_type);
+				enum include_type, source_location);
 extern int _cpp_compare_file_date (cpp_reader *, const char *, int);
 extern void _cpp_report_missing_guards (cpp_reader *);
 extern void _cpp_init_files (cpp_reader *);
@@ -751,7 +757,9 @@ struct normalize_state
 extern bool _cpp_valid_ucn (cpp_reader *, const unsigned char **,
 			    const unsigned char *, int,
 			    struct normalize_state *state,
-			    cppchar_t *);
+			    cppchar_t *,
+			    source_range *char_range,
+			    cpp_string_location_reader *loc_reader);
 extern void _cpp_destroy_iconv (cpp_reader *);
 extern unsigned char *_cpp_convert_input (cpp_reader *, const char *,
 					  unsigned char *, size_t, size_t,

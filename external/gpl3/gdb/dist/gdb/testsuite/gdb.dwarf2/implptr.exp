@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,9 +66,13 @@ proc implptr_test_baz {} {
     gdb_test "break implptr.c:$line" "Breakpoint 3.*" \
 	"set baz breakpoint for implptr"
     gdb_continue_to_breakpoint "continue to baz breakpoint for implptr"
+
+    # We are breaking in an inlined function.  GDB should appear to
+    # have stopped "in" the inlined function.
+    gdb_test "up" "#1  foo .*"
     gdb_test {p p[0].y} " = 92" "sanity check element 0"
     gdb_test {p p[1].y} " = 46" "sanity check element 1"
-    gdb_test "step" "\r\nadd \\(.*" "enter the inlined function"
+    gdb_test "down" "#0  add .*"
     gdb_test "p a->y" " = 92" "check element 0 for the offset"
     gdb_test "p b->y" " = 46" "check element 1 for the offset"
     gdb_continue_to_breakpoint "ignore the second baz breakpoint"

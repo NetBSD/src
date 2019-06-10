@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124 2018/03/07 23:08:29 maya Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124.2.1 2019/06/10 22:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -200,17 +200,17 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
  */
 
 /*
- * Send an inter-processor interupt to each other CPU (excludes curcpu())
+ * Send an inter-processor interrupt to each other CPU (excludes curcpu())
  */
 void cpu_broadcast_ipi(int);
 
 /*
- * Send an inter-processor interupt to CPUs in kcpuset (excludes curcpu())
+ * Send an inter-processor interrupt to CPUs in kcpuset (excludes curcpu())
  */
 void cpu_multicast_ipi(const kcpuset_t *, int);
 
 /*
- * Send an inter-processor interupt to another CPU.
+ * Send an inter-processor interrupt to another CPU.
  */
 int cpu_send_ipi(struct cpu_info *, int);
 
@@ -289,13 +289,5 @@ void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
 #define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
 #define CPU_LMMI		5	/* Loongson multimedia instructions */
-
-/*
- * Platform can override, but note this breaks userland compatibility
- * with other mips platforms.
- */
-#ifndef CPU_MAXID
-#define CPU_MAXID		5	/* number of valid machdep ids */
-#endif
 
 #endif /* _CPU_H_ */

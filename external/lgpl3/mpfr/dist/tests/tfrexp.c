@@ -1,6 +1,6 @@
 /* Test file for mpfr_frexp.
 
-Copyright 2011-2016 Free Software Foundation, Inc.
+Copyright 2011-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,7 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdlib.h> /* for exit */
 #include "mpfr-test.h"
 
 static void
@@ -157,7 +156,7 @@ static void check1 (void)
             {
               int inex1, inex2;
               mpfr_exp_t e1, e2;
-              unsigned int flags1, flags2;
+              mpfr_flags_t flags1, flags2;
 
               for (red = 0; red < 2; red++)
                 {

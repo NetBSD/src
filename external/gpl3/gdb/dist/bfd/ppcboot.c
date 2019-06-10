@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -328,8 +328,7 @@ ppcboot_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 
 #define ppcboot_get_symbol_version_string \
   _bfd_nosymbols_get_symbol_version_string
-#define ppcboot_bfd_is_target_special_symbol \
-  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define ppcboot_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 #define ppcboot_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define ppcboot_get_lineno _bfd_nosymbols_get_lineno
 #define ppcboot_find_nearest_line _bfd_nosymbols_find_nearest_line
@@ -354,8 +353,8 @@ ppcboot_set_section_contents (bfd *abfd,
       asection *s;
 
       /* The lowest section VMA sets the virtual address of the start
-         of the file.  We use the set the file position of all the
-         sections.  */
+	 of the file.  We use the set the file position of all the
+	 sections.  */
       low = abfd->sections->vma;
       for (s = abfd->sections->next; s != NULL; s = s->next)
 	if (s->vma < low)
@@ -461,6 +460,8 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 #define ppcboot_section_already_linked \
   _bfd_generic_section_already_linked
 #define ppcboot_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define ppcboot_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
+#define ppcboot_bfd_define_start_stop bfd_generic_define_start_stop
 #define ppcboot_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define ppcboot_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define ppcboot_bfd_link_just_syms _bfd_generic_link_just_syms
@@ -506,16 +507,16 @@ const bfd_target powerpc_boot_vec =
     _bfd_dummy_target,
   },
   {				/* bfd_set_format */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     ppcboot_mkobject,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents */
-    bfd_false,
-    bfd_true,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_true,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (ppcboot),

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.5 2018/03/06 17:24:57 bouyer Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.5 2018/03/06 17:24:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,13 @@ struct fdtbus_regulator_controller {
 	int rc_phandle;
 	const struct fdtbus_regulator_controller_func *rc_funcs;
 
-	struct fdtbus_regulator_controller *rc_next;
+	u_int rc_enable_ramp_delay;
+
+	LIST_ENTRY(fdtbus_regulator_controller) rc_next;
 };
 
-static struct fdtbus_regulator_controller *fdtbus_rc = NULL;
+static LIST_HEAD(, fdtbus_regulator_controller) fdtbus_regulator_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_regulator_controllers);
 
 int
 fdtbus_register_regulator_controller(device_t dev, int phandle,
@@ -52,13 +56,14 @@ fdtbus_register_regulator_controller(device_t dev, int phandle,
 {
 	struct fdtbus_regulator_controller *rc;
 
-	rc = kmem_alloc(sizeof(*rc), KM_SLEEP);
+	rc = kmem_zalloc(sizeof(*rc), KM_SLEEP);
 	rc->rc_dev = dev;
 	rc->rc_phandle = phandle;
 	rc->rc_funcs = funcs;
 
-	rc->rc_next = fdtbus_rc;
-	fdtbus_rc = rc;
+	of_getprop_uint32(phandle, "regulator-enable-ramp-delay", &rc->rc_enable_ramp_delay);
+
+	LIST_INSERT_HEAD(&fdtbus_regulator_controllers, rc, rc_next);
 
 	return 0;
 }
@@ -68,10 +73,9 @@ fdtbus_get_regulator_controller(int phandle)
 {
 	struct fdtbus_regulator_controller *rc;
 
-	for (rc = fdtbus_rc; rc; rc = rc->rc_next) {
-		if (rc->rc_phandle == phandle) {
+	LIST_FOREACH(rc, &fdtbus_regulator_controllers, rc_next) {
+		if (rc->rc_phandle == phandle)
 			return rc;
-		}
 	}
 
 	return NULL;
@@ -121,14 +125,25 @@ int
 fdtbus_regulator_enable(struct fdtbus_regulator *reg)
 {
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+	int error;
 
-	return rc->rc_funcs->enable(rc->rc_dev, true);
+	error = rc->rc_funcs->enable(rc->rc_dev, true);
+	if (error != 0)
+		return error;
+
+	if (rc->rc_enable_ramp_delay != 0)
+		delay(rc->rc_enable_ramp_delay);
+
+	return 0;
 }
 
 int
 fdtbus_regulator_disable(struct fdtbus_regulator *reg)
 {
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+
+	if (of_hasprop(rc->rc_phandle, "regulator-always-on"))
+		return EIO;
 
 	return rc->rc_funcs->enable(rc->rc_dev, false);
 }
@@ -154,4 +169,26 @@ fdtbus_regulator_get_voltage(struct fdtbus_regulator *reg, u_int *puvol)
 		return EINVAL;
 
 	return rc->rc_funcs->get_voltage(rc->rc_dev, puvol);
+}
+
+int
+fdtbus_regulator_supports_voltage(struct fdtbus_regulator *reg, u_int min_uvol,
+    u_int max_uvol)
+{
+	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+	u_int uvol;
+
+	if (rc->rc_funcs->set_voltage == NULL)
+		return EINVAL;
+
+	if (of_getprop_uint32(rc->rc_phandle, "regulator-min-microvolt", &uvol) == 0) {
+		if (uvol < min_uvol)
+			return ERANGE;
+	}
+	if (of_getprop_uint32(rc->rc_phandle, "regulator-max-microvolt", &uvol) == 0) {
+		if (uvol > max_uvol)
+			return ERANGE;
+	}
+
+	return 0;
 }

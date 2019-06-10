@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,14 +28,14 @@ set libsrc   ${libfile}.c
 set library  [standard_output_file ${libfile}.sl]
 
 if { [gdb_compile_shlib ${srcdir}/${subdir}/${libsrc} ${library} "debug"] != "" } {
-    untested "Could not compile shared library."
+    untested "failed to compile shared library"
     return -1
 }
 
 set exec_opts [list debug shlib=${library}]
 
 if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opts] != "" } {
-    untested "Could not compile $binfile."
+    untested "failed to compile"
     return -1
 }
 
@@ -49,7 +49,7 @@ if { [skip_python_tests] } { continue }
 # The following tests require execution.
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 

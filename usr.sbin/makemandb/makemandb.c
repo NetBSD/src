@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.55.10.1 2019/06/10 22:10:33 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.55.10.1 2019/06/10 22:10:33 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $");
 #include "dist/mandoc.h"
 #include "dist/mdoc.h"
 #include "dist/roff.h"
+#include "dist/mandoc_parse.h"
 
 #define BUFLEN 1024
 #define MDOC 0	//If the page is of mdoc(7) type
@@ -98,12 +99,12 @@ static void init_secbuffs(mandb_rec *);
 static void free_secbuffs(mandb_rec *);
 static int check_md5(const char *, sqlite3 *, char **, void *, size_t);
 static void cleanup(mandb_rec *);
-static void set_section(const struct roff_man *, mandb_rec *);
-static void set_machine(const struct roff_man *, mandb_rec *);
+static void set_section(const struct roff_meta *, mandb_rec *);
+static void set_machine(const struct roff_meta *, mandb_rec *);
 static int insert_into_db(sqlite3 *, mandb_rec *);
-static	void begin_parse(const char *, struct mparse *, mandb_rec *,
-			 const void *, size_t len);
-static void proff_node(const struct roff_node *, mandb_rec *, const proff_nf *);
+static	void begin_parse(const char *, struct mparse *, mandb_rec *, int);
+static void proff_node(const struct roff_node *, mandb_rec *,
+		       struct roff_meta *, const proff_nf *);
 static void pmdoc_Nm(const struct roff_node *, mandb_rec *);
 static void pmdoc_Nd(const struct roff_node *, mandb_rec *);
 static void pmdoc_Sh(const struct roff_node *, mandb_rec *);
@@ -127,165 +128,130 @@ static char *parse_escape(const char *);
 static void replace_hyph(char *);
 static makemandb_flags mflags = { .verbosity = 1 };
 
-static	const proff_nf mdocs[MDOC_MAX + 1] = {
-	NULL, /* Ap */
+static	const proff_nf mdocs[MDOC_MAX - MDOC_Dd] = {
 	NULL, /* Dd */
 	NULL, /* Dt */
 	NULL, /* Os */
-
 	pmdoc_Sh, /* Sh */
 	NULL, /* Ss */
 	pmdoc_Pp, /* Pp */
 	NULL, /* D1 */
-
 	NULL, /* Dl */
 	NULL, /* Bd */
 	NULL, /* Ed */
 	NULL, /* Bl */
-
 	NULL, /* El */
 	NULL, /* It */
 	NULL, /* Ad */
 	NULL, /* An */
-
+	NULL, /* Ap */
 	NULL, /* Ar */
 	NULL, /* Cd */
 	NULL, /* Cm */
 	NULL, /* Dv */
-
 	NULL, /* Er */
 	NULL, /* Ev */
 	NULL, /* Ex */
 	NULL, /* Fa */
-
 	NULL, /* Fd */
 	NULL, /* Fl */
 	NULL, /* Fn */
 	NULL, /* Ft */
-
 	NULL, /* Ic */
 	NULL, /* In */
 	NULL, /* Li */
 	pmdoc_Nd, /* Nd */
-
 	pmdoc_Nm, /* Nm */
 	NULL, /* Op */
 	NULL, /* Ot */
 	NULL, /* Pa */
-
 	NULL, /* Rv */
 	NULL, /* St */
 	NULL, /* Va */
 	NULL, /* Vt */
-
 	pmdoc_Xr, /* Xr */
 	NULL, /* %A */
 	NULL, /* %B */
 	NULL, /* %D */
-
 	NULL, /* %I */
 	NULL, /* %J */
 	NULL, /* %N */
 	NULL, /* %O */
-
 	NULL, /* %P */
 	NULL, /* %R */
 	NULL, /* %T */
 	NULL, /* %V */
-
 	NULL, /* Ac */
 	NULL, /* Ao */
 	NULL, /* Aq */
 	NULL, /* At */
-
 	NULL, /* Bc */
 	NULL, /* Bf */
 	NULL, /* Bo */
 	NULL, /* Bq */
-
 	NULL, /* Bsx */
 	NULL, /* Bx */
 	NULL, /* Db */
 	NULL, /* Dc */
-
 	NULL, /* Do */
 	NULL, /* Dq */
 	NULL, /* Ec */
 	NULL, /* Ef */
-
 	NULL, /* Em */
 	NULL, /* Eo */
 	NULL, /* Fx */
 	NULL, /* Ms */
-
 	NULL, /* No */
 	NULL, /* Ns */
 	NULL, /* Nx */
 	NULL, /* Ox */
-
 	NULL, /* Pc */
 	NULL, /* Pf */
 	NULL, /* Po */
 	NULL, /* Pq */
-
 	NULL, /* Qc */
 	NULL, /* Ql */
 	NULL, /* Qo */
 	NULL, /* Qq */
-
 	NULL, /* Re */
 	NULL, /* Rs */
 	NULL, /* Sc */
 	NULL, /* So */
-
 	NULL, /* Sq */
 	NULL, /* Sm */
 	NULL, /* Sx */
 	NULL, /* Sy */
-
 	NULL, /* Tn */
 	NULL, /* Ux */
 	NULL, /* Xc */
 	NULL, /* Xo */
-
 	NULL, /* Fo */
 	NULL, /* Fc */
 	NULL, /* Oo */
 	NULL, /* Oc */
-
 	NULL, /* Bk */
 	NULL, /* Ek */
 	NULL, /* Bt */
 	NULL, /* Hf */
-
 	NULL, /* Fr */
 	NULL, /* Ud */
 	NULL, /* Lb */
 	NULL, /* Lp */
-
 	NULL, /* Lk */
 	NULL, /* Mt */
 	NULL, /* Brq */
 	NULL, /* Bro */
-
 	NULL, /* Brc */
 	NULL, /* %C */
 	NULL, /* Es */
 	NULL, /* En */
-
 	NULL, /* Dx */
 	NULL, /* %Q */
-	NULL, /* br */
-	NULL, /* sp */
-
 	NULL, /* %U */
-	NULL, /* Ta */
-	NULL, /* ll */
-	NULL, /* text */
+	NULL /* Ta */
 };
 
-static	const proff_nf mans[MAN_MAX] = {
-	NULL,	//br
+static	const proff_nf mans[MAN_MAX - MAN_TH] = {
 	NULL,	//TH
 	pman_sh, //SH
 	NULL,	//SS
@@ -306,7 +272,6 @@ static	const proff_nf mans[MAN_MAX] = {
 	NULL,	//I
 	NULL,	//IR
 	NULL,	//RI
-	NULL,	//sp
 	NULL,	//nf
 	NULL,	//fi
 	NULL,	//RE
@@ -316,15 +281,14 @@ static	const proff_nf mans[MAN_MAX] = {
 	NULL,	//PD
 	NULL,	//AT
 	NULL,	//in
-	NULL,	//ft
 	NULL,	//OP
 	NULL,	//EX
 	NULL,	//EE
 	NULL,	//UR
 	NULL,	//UE
-	NULL,	//ll
+	NULL,	//MT
+	NULL   //ME
 };
-
 
 int
 main(int argc, char *argv[])
@@ -372,7 +336,8 @@ main(int argc, char *argv[])
 
 	init_secbuffs(&rec);
 	mchars_alloc();
-	mp = mparse_alloc(0, MANDOCLEVEL_BADARG, NULL, NULL);
+	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1 |
+	    MPARSE_VALIDATE, MANDOC_OS_OTHER, NULL);
 
 	if (manconf) {
 		char *arg;
@@ -615,62 +580,6 @@ build_file_cache(sqlite3 *db, const char *parent, const char *file,
 	sqlite3_finalize(stmt);
 }
 
-static void
-update_existing_entry(sqlite3 *db, const char *file, const char *hash,
-    mandb_rec *rec, int *new_count, int *link_count, int *err_count)
-{
-	int update_count, rc, idx;
-	const char *inner_sqlstr;
-	sqlite3_stmt *inner_stmt;
-
-	update_count = sqlite3_total_changes(db);
-	inner_sqlstr = "UPDATE mandb_meta SET device = :device,"
-		       " inode = :inode, mtime = :mtime WHERE"
-		       " md5_hash = :md5 AND file = :file AND"
-		       " (device <> :device2 OR inode <> "
-		       "  :inode2 OR mtime <> :mtime2)";
-	rc = sqlite3_prepare_v2(db, inner_sqlstr, -1, &inner_stmt, NULL);
-	if (rc != SQLITE_OK) {
-		if (mflags.verbosity)
-			warnx("%s", sqlite3_errmsg(db));
-		return;
-	}
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":device");
-	sqlite3_bind_int64(inner_stmt, idx, rec->device);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":inode");
-	sqlite3_bind_int64(inner_stmt, idx, rec->inode);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":mtime");
-	sqlite3_bind_int64(inner_stmt, idx, rec->mtime);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":md5");
-	sqlite3_bind_text(inner_stmt, idx, hash, -1, NULL);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":file");
-	sqlite3_bind_text(inner_stmt, idx, file, -1, NULL);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":device2");
-	sqlite3_bind_int64(inner_stmt, idx, rec->device);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":inode2");
-	sqlite3_bind_int64(inner_stmt, idx, rec->inode);
-	idx = sqlite3_bind_parameter_index(inner_stmt, ":mtime2");
-	sqlite3_bind_int64(inner_stmt, idx, rec->mtime);
-
-	rc = sqlite3_step(inner_stmt);
-	if (rc == SQLITE_DONE) {
-		/* Check if an update has been performed. */
-		if (update_count != sqlite3_total_changes(db)) {
-			if (mflags.verbosity == 2)
-				printf("Updated %s\n", file);
-			(*new_count)++;
-		} else {
-			/* Otherwise it was a hardlink. */
-			(*link_count)++;
-		}
-	} else {
-		if (mflags.verbosity == 2)
-			warnx("Could not update the meta data for %s", file);
-		(*err_count)++;
-	}
-	sqlite3_finalize(inner_stmt);
-}
-
 /* read_and_decompress --
  *	Reads the given file into memory. If it is compressed, decompress
  *	it before returning to the caller.
@@ -726,6 +635,62 @@ archive_error:
 	warnx("Error while reading `%s': %s", file, archive_error_string(a));
 	archive_read_free(a);
 	return -1;
+}
+
+static void
+update_existing_entry(sqlite3 *db, const char *file, const char *hash,
+    mandb_rec *rec, int *new_count, int *link_count, int *err_count)
+{
+	int update_count, rc, idx;
+	const char *inner_sqlstr;
+	sqlite3_stmt *inner_stmt;
+
+	update_count = sqlite3_total_changes(db);
+	inner_sqlstr = "UPDATE mandb_meta SET device = :device,"
+		       " inode = :inode, mtime = :mtime WHERE"
+		       " md5_hash = :md5 AND file = :file AND"
+		       " (device <> :device2 OR inode <> "
+		       "  :inode2 OR mtime <> :mtime2)";
+	rc = sqlite3_prepare_v2(db, inner_sqlstr, -1, &inner_stmt, NULL);
+	if (rc != SQLITE_OK) {
+		if (mflags.verbosity)
+			warnx("%s", sqlite3_errmsg(db));
+		return;
+	}
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":device");
+	sqlite3_bind_int64(inner_stmt, idx, rec->device);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":inode");
+	sqlite3_bind_int64(inner_stmt, idx, rec->inode);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":mtime");
+	sqlite3_bind_int64(inner_stmt, idx, rec->mtime);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":md5");
+	sqlite3_bind_text(inner_stmt, idx, hash, -1, NULL);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":file");
+	sqlite3_bind_text(inner_stmt, idx, file, -1, NULL);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":device2");
+	sqlite3_bind_int64(inner_stmt, idx, rec->device);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":inode2");
+	sqlite3_bind_int64(inner_stmt, idx, rec->inode);
+	idx = sqlite3_bind_parameter_index(inner_stmt, ":mtime2");
+	sqlite3_bind_int64(inner_stmt, idx, rec->mtime);
+
+	rc = sqlite3_step(inner_stmt);
+	if (rc == SQLITE_DONE) {
+		/* Check if an update has been performed. */
+		if (update_count != sqlite3_total_changes(db)) {
+			if (mflags.verbosity == 2)
+				printf("Updated %s\n", file);
+			(*new_count)++;
+		} else {
+			/* Otherwise it was a hardlink. */
+			(*link_count)++;
+		}
+	} else {
+		if (mflags.verbosity == 2)
+			warnx("Could not update the meta data for %s", file);
+		(*err_count)++;
+	}
+	sqlite3_finalize(inner_stmt);
 }
 
 /* update_db --
@@ -791,6 +756,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	sqlite3_finalize(stmt);
 
 	for ( ; rows != NULL; free(parent), free(file), free(buf)) {
+		int fd;
+
 		row = rows;
 		rows = rows->next;
 
@@ -801,10 +768,16 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 		file = row->file;
 		free(row);
 
+		// XXX: reading twice!
 		if (read_and_decompress(file, &buf, &buflen)) {
 			err_count++;
 			continue;
 		}
+		if ((fd = mparse_open(mp, file)) == -1) {
+			err_count++;
+			continue;
+		}
+
 		md5_status = check_md5(file, db, &md5sum, buf, buflen);
 		assert(md5sum != NULL);
 		if (md5_status == -1) {
@@ -812,6 +785,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 				warnx("An error occurred in checking md5 value"
 			      " for file %s", file);
 			err_count++;
+			close(fd);
 			continue;
 		}
 
@@ -823,6 +797,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			update_existing_entry(db, file, md5sum, rec,
 			    &new_count, &link_count, &err_count);
 			free(md5sum);
+			close(fd);
 			continue;
 		}
 
@@ -838,6 +813,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 					    "not index `%s'", parent, file);
 				err_count++;
 				free(md5sum);
+				close(fd);
 				continue;
 			}
 
@@ -846,7 +822,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			rec->md5_hash = md5sum;
 			rec->file_path = estrdup(file);
 			// file_path is freed by insert_into_db itself.
-			begin_parse(file, mp, rec, buf, buflen);
+			begin_parse(file, mp, rec, fd);
 			if (insert_into_db(db, rec) < 0) {
 				if (mflags.verbosity)
 					warnx("Error in indexing `%s'", file);
@@ -855,6 +831,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 				new_count++;
 			}
 		}
+		close(fd);
 	}
 
 	if (mflags.verbosity == 2) {
@@ -895,25 +872,15 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
  *  parses the man page using libmandoc
  */
 static void
-begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
-    const void *buf, size_t len)
+begin_parse(const char *file, struct mparse *mp, mandb_rec *rec, int fd)
 {
-	struct roff_man *roff;
+	struct roff_meta *roff;
 	mparse_reset(mp);
 
 	rec->xr_found = 0;
 
-	if (mparse_readmem(mp, buf, len, file) >= MANDOCLEVEL_BADARG) {
-		/* Printing this warning at verbosity level 2
-		 * because some packages from pkgsrc might trigger several
-		 * of such warnings.
-		 */
-		if (mflags.verbosity == 2)
-			warnx("%s: Parse failure", file);
-		return;
-	}
-
-	mparse_result(mp, &roff, NULL);
+	mparse_readfd(mp, fd, file);
+	roff = mparse_result(mp);
 	if (roff == NULL) {
 		if (mflags.verbosity == 2)
 			warnx("Not a roff(7) page");
@@ -921,13 +888,11 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 	}
 
 	if (roff->macroset == MACROSET_MDOC) {
-		mdoc_validate(roff);
 		rec->page_type = MDOC;
-		proff_node(roff->first->child, rec, mdocs);
+		proff_node(roff->first->child, rec, roff, mdocs);
 	} else if (roff->macroset == MACROSET_MAN) {
-		man_validate(roff);
 		rec->page_type = MAN;
-		proff_node(roff->first->child, rec, mans);
+		proff_node(roff->first->child, rec, roff, mans);
 	} else
 		warnx("Unknown macroset %d", roff->macroset);
 	set_machine(roff, rec);
@@ -940,11 +905,11 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
  *  (Which should be the first character of the string).
  */
 static void
-set_section(const struct roff_man *rm, mandb_rec *rec)
+set_section(const struct roff_meta *rm, mandb_rec *rec)
 {
 	if (!rm)
 		return;
-	const char *s = rm->meta.msec == NULL ? "?" : rm->meta.msec;
+	const char *s = rm->msec == NULL ? "?" : rm->msec;
 	easprintf(&rec->section, "%s", s);
 	if (rec->section[0] == '?' && mflags.verbosity == 2)
 		warnx("%s: Missing section number", rec->file_path);
@@ -955,12 +920,12 @@ set_section(const struct roff_man *rm, mandb_rec *rec)
  *  Extracts the machine architecture information if available.
  */
 static void
-set_machine(const struct roff_man *rm, mandb_rec *rec)
+set_machine(const struct roff_meta *rm, mandb_rec *rec)
 {
 	if (rm == NULL)
 		return;
-	if (rm->meta.arch)
-		rec->machine = estrdup(rm->meta.arch);
+	if (rm->arch)
+		rec->machine = estrdup(rm->arch);
 }
 
 /*
@@ -1182,10 +1147,13 @@ mdoc_parse_section(enum roff_sec sec, const char *string, mandb_rec *rec)
 }
 
 static void
-proff_node(const struct roff_node *n, mandb_rec *rec, const proff_nf *func)
+proff_node(const struct roff_node * n, mandb_rec * rec,
+    struct roff_meta * roff, const proff_nf * func)
 {
 	if (n == NULL)
 		return;
+
+	int tok_idx;
 
 	switch (n->type) {
 	case (ROFFT_BODY):
@@ -1193,15 +1161,21 @@ proff_node(const struct roff_node *n, mandb_rec *rec, const proff_nf *func)
 	case (ROFFT_BLOCK):
 		/* FALLTHROUGH */
 	case (ROFFT_ELEM):
-		if (func[n->tok] != NULL)
-			(*func[n->tok])(n, rec);
+		if (roff->macroset == MACROSET_MAN)
+			tok_idx = n->tok - MAN_TH;
+		else if (roff->macroset == MACROSET_MDOC)
+			tok_idx = n->tok - MDOC_Dd;
+		else
+			tok_idx = -1;
+		if (tok_idx >= 0 && func[tok_idx] != NULL)
+			(*func[tok_idx]) (n, rec);
 		break;
 	default:
 		break;
 	}
 
-	proff_node(n->child, rec, func);
-	proff_node(n->next, rec, func);
+	proff_node(n->child, rec, roff, func);
+	proff_node(n->next, rec, roff, func);
 }
 
 /*
@@ -1793,9 +1767,9 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 				ln[strlen(ln) - 1] = 0;
 
 			str = sqlite3_mprintf("INSERT INTO mandb_links"
-					      " VALUES (%Q, %Q, %Q, %Q, %Q)",
+					      " VALUES (%Q, %Q, %Q, %Q, %Q, %Q)",
 					      ln, rec->name, rec->section,
-					      rec->machine, rec->md5_hash);
+					      rec->machine, rec->md5_hash, rec->name_desc);
 			sqlite3_exec(db, str, NULL, NULL, &errmsg);
 			sqlite3_free(str);
 			if (errmsg != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.24 2014/05/29 23:02:48 rmind Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.24.28.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@
 #endif
 
 void	igmp_init(void);
-void	igmp_input(struct mbuf *, ...);
+void	igmp_input(struct mbuf *, int, int);
 int	igmp_joingroup(struct in_multi *);
 void	igmp_leavegroup(struct in_multi *);
 void	igmp_fasttimo(void);

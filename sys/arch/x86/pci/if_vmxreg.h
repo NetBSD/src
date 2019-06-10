@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmxreg.h,v 1.2 2016/11/25 05:29:54 hikaru Exp $	*/
+/*	$NetBSD: if_vmxreg.h,v 1.2.16.1 2019/06/10 22:06:53 christos Exp $	*/
 /*	$OpenBSD: if_vmxreg.h,v 1.3 2013/08/28 10:19:19 reyk Exp $	*/
 
 /*
@@ -42,8 +42,6 @@ struct UPT1_RxStats {
 	uint64_t nobuffer;
 	uint64_t error;
 } __packed;
-
-#define ETHER_ALIGN 2
 
 /* interrupt moderation levels */
 #define UPT1_IMOD_NONE     0		/* no moderation */

@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -66,12 +66,12 @@ rx_get_byte (void * vdata)
 
 static char const * size_names[RX_MAX_SIZE] =
 {
-  "", ".b", ".ub", ".b", ".w", ".uw", ".w", ".a", ".l", "<error>"
+  "", ".b", ".ub", ".b", ".w", ".uw", ".w", ".a", ".l", "", "<error>"
 };
 
 static char const * opsize_names[RX_MAX_SIZE] =
 {
-  "", ".b", ".b", ".b", ".w", ".w", ".w", ".a", ".l", "<error>"
+  "", ".b", ".b", ".b", ".w", ".w", ".w", ".a", ".l", ".d", "<error>"
 };
 
 static char const * register_names[] =
@@ -99,6 +99,34 @@ static const char * flag_names[] =
   "", "", "", "", "", "", "", "",
   "i", "u", "", "", "", "", "", ""
   "", "", "", "", "", "", "", "",
+};
+
+static const char * double_register_names[] =
+{
+  "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7",
+  "dr8", "dr9", "dr10", "dr11", "dr12", "dr13", "dr14", "dr15",
+};
+
+static const char * double_register_high_names[] =
+{
+  "drh0", "drh1", "drh2", "drh3", "drh4", "drh5", "drh6", "drh7",
+  "drh8", "drh9", "drh10", "drh11", "drh12", "drh13", "drh14", "drh15",
+};
+
+static const char * double_register_low_names[] =
+{
+  "drl0", "drl1", "drl2", "drl3", "drl4", "drl5", "drl6", "drl7",
+  "drl8", "drl9", "drl10", "drl11", "drl12", "drl13", "drl14", "drl15",
+};
+
+static const char * double_control_register_names[] =
+{
+  "dpsw", "dcmr", "decnt", "depc",
+};
+
+static const char * double_condition_names[] =
+{
+  "", "un", "eq", "", "lt", "", "le",
 };
 
 int
@@ -186,6 +214,23 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
 	      PR (PS, "%s", opsize_names[opcode.size]);
 	      break;
 
+	    case 'b':
+	      s ++;
+	      if (*s == 'f') {
+		int imm = opcode.op[2].addend;
+		int slsb, dlsb, width;
+		dlsb = (imm >> 5) & 0x1f;
+		slsb = (imm & 0x1f);
+		slsb = (slsb >= 0x10?(slsb ^ 0x1f) + 1:slsb);
+		slsb = dlsb - slsb;
+		slsb = (slsb < 0?-slsb:slsb);
+		width = ((imm >> 10) & 0x1f) - dlsb;
+		PR (PS, "#%d, #%d, #%d, %s, %s",
+		    slsb, dlsb, width,
+		    register_names[opcode.op[1].reg],
+		    register_names[opcode.op[0].reg]);
+	      }
+	      break;
 	    case '0':
 	    case '1':
 	    case '2':
@@ -229,6 +274,21 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
 		    break;
 		  case RX_Operand_Flag:
 		    PR (PS, "%s", flag_names[oper->reg]);
+		    break;
+		  case RX_Operand_DoubleReg:
+		    PR (PS, "%s", double_register_names[oper->reg]);
+		    break;
+		  case RX_Operand_DoubleRegH:
+		    PR (PS, "%s", double_register_high_names[oper->reg]);
+		    break;
+		  case RX_Operand_DoubleRegL:
+		    PR (PS, "%s", double_register_low_names[oper->reg]);
+		    break;
+		  case RX_Operand_DoubleCReg:
+		    PR (PS, "%s", double_control_register_names[oper->reg]);
+		    break;
+		  case RX_Operand_DoubleCond:
+		    PR (PS, "%s", double_condition_names[oper->reg]);
 		    break;
 		  default:
 		    PR (PS, "[???]");

@@ -1,6 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -206,10 +206,7 @@ tui_show_register_group (struct reggroup *group,
 
   /* See how many registers must be displayed.  */
   nr_regs = 0;
-  for (regnum = 0;
-       regnum < gdbarch_num_regs (gdbarch)
-		+ gdbarch_num_pseudo_regs (gdbarch);
-       regnum++)
+  for (regnum = 0; regnum < gdbarch_num_cooked_regs (gdbarch); regnum++)
     {
       const char *name;
 
@@ -247,17 +244,13 @@ tui_show_register_group (struct reggroup *group,
 	  TUI_DATA_WIN->generic.content = NULL;
 	  TUI_DATA_WIN->generic.content_size = 0;
 	  tui_add_content_elements (&TUI_DATA_WIN->generic, nr_regs);
-	  display_info->regs_content
-            = (tui_win_content) TUI_DATA_WIN->generic.content;
+	  display_info->regs_content = TUI_DATA_WIN->generic.content;
 	  display_info->regs_content_count = nr_regs;
 	}
 
       /* Now set the register names and values.  */
       pos = 0;
-      for (regnum = 0;
-	   regnum < gdbarch_num_regs (gdbarch)
-		    + gdbarch_num_pseudo_regs (gdbarch);
-	   regnum++)
+      for (regnum = 0; regnum < gdbarch_num_cooked_regs (gdbarch); regnum++)
         {
 	  struct tui_gen_win_info *data_item_win;
           struct tui_data_element *data;
@@ -600,7 +593,7 @@ tui_reg_prev (struct gdbarch *gdbarch)
    not already on display.  */
 
 static void
-tui_reg_command (char *args, int from_tty)
+tui_reg_command (const char *args, int from_tty)
 {
   struct gdbarch *gdbarch = get_current_arch ();
 
@@ -668,28 +661,24 @@ tui_reg_command (char *args, int from_tty)
 /* Complete names of register groups, and add the special "prev" and "next"
    names.  */
 
-static VEC (char_ptr) *
+static void
 tui_reggroup_completer (struct cmd_list_element *ignore,
+			completion_tracker &tracker,
 			const char *text, const char *word)
 {
-  VEC (char_ptr) *result = NULL;
   static const char *extra[] = { "next", "prev", NULL };
   size_t len = strlen (word);
   const char **tmp;
 
-  result = reggroup_completer (ignore, text, word);
+  reggroup_completer (ignore, tracker, text, word);
 
+  /* XXXX use complete_on_enum instead?  */
   for (tmp = extra; *tmp != NULL; ++tmp)
     {
       if (strncmp (word, *tmp, len) == 0)
-	VEC_safe_push (char_ptr, result, xstrdup (*tmp));
+	tracker.add_completion (gdb::unique_xmalloc_ptr<char> (xstrdup (*tmp)));
     }
-
-  return result;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_tui_regs;
 
 void
 _initialize_tui_regs (void)
@@ -708,13 +697,6 @@ TUI command to control the register window."), tuicmd);
 ** STATIC LOCAL FUNCTIONS                 **
 ******************************************/
 
-static void
-tui_restore_gdbout (void *ui)
-{
-  gdb_stdout = (struct ui_file*) ui;
-  pagination_enabled = 1;
-}
-
 /* Get the register from the frame and return a printable
    representation of it.  */
 
@@ -722,17 +704,14 @@ static char *
 tui_register_format (struct frame_info *frame, int regnum)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct ui_file *old_stdout;
-  struct cleanup *cleanups;
-  char *p, *s;
-  char *ret;
 
   string_file stream;
 
-  pagination_enabled = 0;
-  old_stdout = gdb_stdout;
-  gdb_stdout = &stream;
-  cleanups = make_cleanup (tui_restore_gdbout, (void*) old_stdout);
+  scoped_restore save_pagination
+    = make_scoped_restore (&pagination_enabled, 0);
+  scoped_restore save_stdout
+    = make_scoped_restore (&gdb_stdout, &stream);
+
   gdbarch_print_registers_info (gdbarch, &stream, frame, regnum, 1);
 
   /* Remove the possible \n.  */
@@ -741,11 +720,7 @@ tui_register_format (struct frame_info *frame, int regnum)
     str.resize (str.size () - 1);
 
   /* Expand tabs into spaces, since ncurses on MS-Windows doesn't.  */
-  ret = tui_expand_tabs (str.c_str (), 0);
-
-  do_cleanups (cleanups);
-
-  return ret;
+  return tui_expand_tabs (str.c_str (), 0);
 }
 
 /* Get the register value from the given frame and format it for the

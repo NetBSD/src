@@ -1,5 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,11 +25,7 @@
 #define DEFINE_TABLE
 
 #include "sh-opc.h"
-#include "dis-asm.h"
-
-#ifdef ARCH_all
-#define INCLUDE_SHMEDIA
-#endif
+#include "disassemble.h"
 
 static void
 print_movxy (const sh_opcode_info *op,
@@ -403,16 +399,6 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
       if (info->symbols
 	  && bfd_asymbol_flavour(*info->symbols) == bfd_target_coff_flavour)
 	target_arch = arch_sh4;
-      break;
-    case bfd_mach_sh5:
-#ifdef INCLUDE_SHMEDIA
-      status = print_insn_sh64 (memaddr, info);
-      if (status != -2)
-	return status;
-#endif
-      /* When we get here for sh64, it's because we want to disassemble
-	 SHcompact, i.e. arch_sh4.  */
-      target_arch = arch_sh4;
       break;
     default:
       target_arch = sh_get_arch_from_bfd_mach (info->mach);

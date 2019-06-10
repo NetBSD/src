@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.89 2017/07/28 15:02:52 riastradh Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.89.4.1 2019/06/10 22:07:10 christos Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.89 2017/07/28 15:02:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.89.4.1 2019/06/10 22:07:10 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -105,7 +105,7 @@ isp_attach(struct ispsoftc *isp)
 	 * It's not stated whether max_periph is limited by SPI
 	 * tag uage, but let's assume that it is.
 	 */
-	isp->isp_osinfo.adapter.adapt_max_periph = min(isp->isp_maxcmds, 255);
+	isp->isp_osinfo.adapter.adapt_max_periph = uimin(isp->isp_maxcmds, 255);
 	isp->isp_osinfo.adapter.adapt_ioctl = ispioctl;
 	isp->isp_osinfo.adapter.adapt_request = isprequest;
 	if (isp->isp_type <= ISP_HA_SCSI_1020A) {
@@ -137,7 +137,7 @@ isp_attach(struct ispsoftc *isp)
 		 * Until the midlayer is fixed to use REPORT LUNS,
 		 * limit to 8 luns.
 		 */
-		isp->isp_osinfo.chan[i].chan_nluns = min(isp->isp_maxluns, 8);
+		isp->isp_osinfo.chan[i].chan_nluns = uimin(isp->isp_maxluns, 8);
 		if (IS_FC(isp)) {
 			isp->isp_osinfo.chan[i].chan_ntargets = MAX_FC_TARG;
 			if (ISP_CAP_2KLOGIN(isp) == 0 && MAX_FC_TARG > 256) {
@@ -1217,6 +1217,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		    ASYNC_EVENT_XFER_MODE, &xm);
 		break;
 	}
+	/* FALLTHROUGH */
 	case ISPASYNC_BUS_RESET:
 		va_start(ap, cmd);
 		bus = va_arg(ap, int);

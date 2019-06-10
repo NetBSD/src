@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.41 2017/09/14 07:58:38 mrg Exp $
+# $NetBSD: RAWHIDE,v 1.41.4.1 2019/06/10 22:05:45 christos Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -34,10 +34,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	INET
 options 	GATEWAY
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 include 	"conf/compat_netbsd12.config"
 
@@ -63,7 +59,6 @@ pci*	at	mcpcia?
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 esh*	at	pci? dev ? function ?		# Essential HIPPI card
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
@@ -98,7 +93,7 @@ ch*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	ccd
-pseudo-device	ipfilter
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		

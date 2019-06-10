@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if [is_ilp32_target] {
     set ptrbits 64
 }
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} \
+if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  [list $srcfile $srcfile2] \
 	  [list nodebug additional_flags=-DPTRBITS=$ptrbits]] } {
     return -1

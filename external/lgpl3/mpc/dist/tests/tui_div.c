@@ -1,6 +1,6 @@
 /* tui_div -- test file for mpc_ui_div.
 
-Copyright (C) 2008, 2011 INRIA
+Copyright (C) 2008, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -21,7 +21,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-tests.h"
 
 static void
-special (void)
+test_special (void)
 {
   mpc_t a, b;
 
@@ -41,8 +41,8 @@ special (void)
     }
 
   /* 0/(-1-0*I) should give (-0, +0) */
-  mpfr_set_str (mpc_realref(a), "-1", 10, GMP_RNDN);
-  mpfr_set_str (mpc_imagref(a), "-0", 10, GMP_RNDN);
+  mpfr_set_str (mpc_realref(a), "-1", 10, MPFR_RNDN);
+  mpfr_set_str (mpc_imagref(a), "-0", 10, MPFR_RNDN);
   mpc_ui_div (b, 0, a, MPC_RNDNN);
   if ((mpc_cmp_si_si (b, 0, 0) != 0) || (MPFR_SIGN (mpc_realref(b)) > 0)
       || (MPFR_SIGN (mpc_imagref(b)) < 0))
@@ -85,16 +85,21 @@ special (void)
   mpc_clear (b);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_ui_div (P[1].mpc, P[2].ui, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_ui_div (P[1].mpc, P[2].ui, P[1].mpc, P[4].mpc_rnd)
+
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CUC, f, mpc_ui_div);
-
   test_start ();
 
-  special ();
+  test_special ();
 
-  tgeneric (f, 2, 1024, 7, 4096);
+  tgeneric_template ("ui_div.dsc", 2, 1024, 7, 4096);
 
   test_end ();
 

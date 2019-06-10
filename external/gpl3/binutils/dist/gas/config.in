@@ -39,6 +39,10 @@
 /* Define if you want compressed debug sections by default. */
 #undef DEFAULT_FLAG_COMPRESS_DEBUG
 
+/* Define to 1 if you want to generate GNU Build attribute notes by default,
+   if none are contained in the input. */
+#undef DEFAULT_GENERATE_BUILD_NOTES
+
 /* Define to 1 if you want to generate ELF common symbols with the STT_COMMON
    type by default. */
 #undef DEFAULT_GENERATE_ELF_STT_COMMON
@@ -181,12 +185,6 @@
    */
 #undef LT_OBJDIR
 
-/* Using m68k COFF? */
-#undef M68KCOFF
-
-/* Using m88k COFF? */
-#undef M88KCOFF
-
 /* Default CPU for MIPS targets. */
 #undef MIPS_CPU_STRING_DEFAULT
 
@@ -238,9 +236,6 @@
 /* a.out support? */
 #undef OBJ_MAYBE_AOUT
 
-/* b.out support? */
-#undef OBJ_MAYBE_BOUT
-
 /* COFF support? */
 #undef OBJ_MAYBE_COFF
 
@@ -277,9 +272,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define if defaulting to ELF on SCO 5. */
-#undef SCO_ELF
-
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at runtime.
@@ -314,9 +306,6 @@
 
 /* Define if default target is PowerPC Solaris. */
 #undef TARGET_SOLARIS_COMMENT
-
-/* Define if target is Symbian OS. */
-#undef TARGET_SYMBIAN
 
 /* Target vendor. */
 #undef TARGET_VENDOR
@@ -377,6 +366,11 @@
    `char[]'. */
 #undef YYTEXT_POINTER
 
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -398,3 +392,6 @@
 #ifndef __cplusplus
 #undef inline
 #endif
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t

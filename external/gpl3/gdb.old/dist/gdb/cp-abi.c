@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -212,7 +212,7 @@ cplus_type_from_type_info (struct value *value)
 
 /* See cp-abi.h.  */
 
-char *
+std::string
 cplus_typename_from_type_info (struct value *value)
 {
   if (current_cp_abi.get_typename_from_type_info == NULL)
@@ -317,7 +317,7 @@ list_cp_abis (int from_tty)
   struct cleanup *cleanup_chain;
   int i;
 
-  ui_out_text (uiout, "The available C++ ABIs are:\n");
+  uiout->text ("The available C++ ABIs are:\n");
   cleanup_chain = make_cleanup_ui_out_tuple_begin_end (uiout,
 						       "cp-abi-list");
   for (i = 0; i < num_cp_abis; i++)
@@ -325,17 +325,17 @@ list_cp_abis (int from_tty)
       char pad[14];
       int padcount;
 
-      ui_out_text (uiout, "  ");
-      ui_out_field_string (uiout, "cp-abi", cp_abis[i]->shortname);
+      uiout->text ("  ");
+      uiout->field_string ("cp-abi", cp_abis[i]->shortname);
 
       padcount = 16 - 2 - strlen (cp_abis[i]->shortname);
       pad[padcount] = 0;
       while (padcount > 0)
 	pad[--padcount] = ' ';
-      ui_out_text (uiout, pad);
+      uiout->text (pad);
 
-      ui_out_field_string (uiout, "doc", cp_abis[i]->doc);
-      ui_out_text (uiout, "\n");
+      uiout->field_string ("doc", cp_abis[i]->doc);
+      uiout->text ("\n");
     }
   do_cleanups (cleanup_chain);
 }
@@ -384,12 +384,12 @@ show_cp_abi_cmd (char *args, int from_tty)
 {
   struct ui_out *uiout = current_uiout;
 
-  ui_out_text (uiout, "The currently selected C++ ABI is \"");
+  uiout->text ("The currently selected C++ ABI is \"");
 
-  ui_out_field_string (uiout, "cp-abi", current_cp_abi.shortname);
-  ui_out_text (uiout, "\" (");
-  ui_out_field_string (uiout, "longname", current_cp_abi.longname);
-  ui_out_text (uiout, ").\n");
+  uiout->field_string ("cp-abi", current_cp_abi.shortname);
+  uiout->text ("\" (");
+  uiout->field_string ("longname", current_cp_abi.longname);
+  uiout->text (").\n");
 }
 
 extern initialize_file_ftype _initialize_cp_abi; /* -Wmissing-prototypes */

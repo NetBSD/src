@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016 Free Software Foundation, Inc.
+# Copyright (C) 2011-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ if {![can_spawn_for_attach]} {
 standard_testfile .c
 set executable ${testfile}
 
-if { [prepare_for_testing ${testfile}.exp $executable "" [list debug "additional_flags=-fPIE -pie"]] } {
+if { [prepare_for_testing "failed to prepare" $executable "" [list debug "additional_flags=-fPIE -pie"]] } {
     return -1
 }
 
@@ -42,13 +42,13 @@ gdb_test_multiple "info shared" $test {
 	pass $test
     }
     -re "No shared libraries loaded at this time\\.\r\n$gdb_prompt $" {
-	untested ${testfile}.exp
+	untested "no shared libraries loaded"
     }
 }
 gdb_exit
 
 if {$arch == ""} {
-    untested ${testfile}.exp
+    untested "no architecture set"
     return 0
 }
 

@@ -31,8 +31,12 @@ ACLOCAL_AMFLAGS = -I ../bfd -I ../config
 ZLIB = @zlibdir@ -lz
 ZLIBINC = @zlibinc@
 
-AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC)
-AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC)
+THREADFLAGS = @PTHREAD_CFLAGS@
+THREADLIBS = @PTHREAD_LIBS@
+
+AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(THREADFLAGS)
+AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(THREADFLAGS)
+AM_LDFLAGS = $(THREADFLAGS)
 
 AM_CPPFLAGS = \
 	-I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../elfcpp \
@@ -44,10 +48,6 @@ LIBIBERTY = ../libiberty/libiberty.a
 
 if PLUGINS
 LIBDL = @DLOPEN_LIBS@
-endif
-
-if THREADS
-THREADSLIB = -lpthread
 endif
 
 AM_YFLAGS = -d
@@ -187,7 +187,7 @@ libgold_a_LIBADD = $(LIBOBJS)
 sources_var = main.cc
 deps_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
 ldadd_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) \
-	 $(THREADSLIB) $(LIBDL) $(ZLIB)
+	 $(THREADLIBS) $(LIBDL) $(ZLIB)
 ldflags_var = $(GOLD_LDFLAGS)
 
 ld_new_SOURCES = $(sources_var)
@@ -201,11 +201,11 @@ incremental_dump_SOURCES = incremental-dump.cc
 incremental_dump_DEPENDENCIES = $(TARGETOBJS) libgold.a $(LIBIBERTY) \
 	$(LIBINTL_DEP)
 incremental_dump_LDADD = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL) \
-	 $(THREADSLIB) $(LIBDL) $(ZLIB)
+	 $(THREADLIBS) $(LIBDL) $(ZLIB)
 
 dwp_SOURCES = dwp.cc
 dwp_DEPENDENCIES = libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
-dwp_LDADD = libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) $(THREADSLIB) \
+dwp_LDADD = libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) $(THREADLIBS) \
 	$(LIBDL) $(ZLIB)
 dwp_LDFLAGS = $(GOLD_LDFLAGS)
 

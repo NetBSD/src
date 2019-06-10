@@ -1,5 +1,5 @@
 /* DDG - Data Dependence Graph implementation.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -295,10 +295,13 @@ add_cross_iteration_register_deps (ddg_ptr g, df_ref last_def)
   /* Create inter-loop true dependences and anti dependences.  */
   for (r_use = DF_REF_CHAIN (last_def); r_use != NULL; r_use = r_use->next)
     {
-      rtx_insn *use_insn = DF_REF_INSN (r_use->ref);
-
-      if (BLOCK_FOR_INSN (use_insn) != g->bb)
+      if (DF_REF_BB (r_use->ref) != g->bb)
 	continue;
+
+      gcc_assert (!DF_REF_IS_ARTIFICIAL (r_use->ref)
+		  && DF_REF_INSN_INFO (r_use->ref) != NULL);
+
+      rtx_insn *use_insn = DF_REF_INSN (r_use->ref);
 
       /* ??? Do not handle uses with DF_REF_IN_NOTE notes.  */
       use_node = get_node_of_insn (g, use_insn);
@@ -997,7 +1000,7 @@ static void
 check_sccs (ddg_all_sccs_ptr sccs, int num_nodes)
 {
   int i = 0;
-  sbitmap tmp = sbitmap_alloc (num_nodes);
+  auto_sbitmap tmp (num_nodes);
 
   bitmap_clear (tmp);
   for (i = 0; i < sccs->num_sccs; i++)
@@ -1008,7 +1011,6 @@ check_sccs (ddg_all_sccs_ptr sccs, int num_nodes)
       gcc_assert (!bitmap_intersect_p (tmp, sccs->sccs[i]->nodes));
       bitmap_ior (tmp, tmp, sccs->sccs[i]->nodes);
     }
-  sbitmap_free (tmp);
 }
 
 /* Perform the Strongly Connected Components decomposing algorithm on the
@@ -1018,9 +1020,9 @@ create_ddg_all_sccs (ddg_ptr g)
 {
   int i;
   int num_nodes = g->num_nodes;
-  sbitmap from = sbitmap_alloc (num_nodes);
-  sbitmap to = sbitmap_alloc (num_nodes);
-  sbitmap scc_nodes = sbitmap_alloc (num_nodes);
+  auto_sbitmap from (num_nodes);
+  auto_sbitmap to (num_nodes);
+  auto_sbitmap scc_nodes (num_nodes);
   ddg_all_sccs_ptr sccs = (ddg_all_sccs_ptr)
 			  xmalloc (sizeof (struct ddg_all_sccs));
 
@@ -1052,9 +1054,6 @@ create_ddg_all_sccs (ddg_ptr g)
 	}
     }
   order_sccs (sccs);
-  sbitmap_free (from);
-  sbitmap_free (to);
-  sbitmap_free (scc_nodes);
 
   if (flag_checking)
     check_sccs (sccs, num_nodes);

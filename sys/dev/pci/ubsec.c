@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.43 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.43.18.1 2019/06/10 22:07:27 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.43 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.43.18.1 2019/06/10 22:07:27 christos Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -411,7 +411,8 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ubsec_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, ubsec_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -1588,7 +1589,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				}
 				if (len == MHLEN)
 				  /*XXX was M_DUP_PKTHDR*/
-				  M_COPY_PKTHDR(m, q->q_src_m);
+				  m_copy_pkthdr(m, q->q_src_m);
 				if (totlen >= MINCLSIZE) {
 					MCLGET(m, M_DONTWAIT);
 					if ((m->m_flags & M_EXT) == 0) {
@@ -1626,7 +1627,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 						}
 						len = MCLBYTES;
 					}
-					m->m_len = len = min(totlen, len);
+					m->m_len = len = uimin(totlen, len);
 					totlen -= len;
 					*mp = m;
 					mp = &m->m_next;
@@ -1931,7 +1932,7 @@ ubsec_mcopy(struct mbuf *srcm, struct mbuf *dstm, int hoffset, int toffset)
 	dlen = dstm->m_len;
 
 	while (1) {
-		for (i = 0; i < min(slen, dlen); i++) {
+		for (i = 0; i < uimin(slen, dlen); i++) {
 			if (j < hoffset || j >= toffset)
 				*dptr++ = *sptr++;
 			slen--;

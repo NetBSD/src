@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -301,7 +301,7 @@ AcpiEvAddressSpaceDispatch (
         /*
          * For handlers other than the default (supplied) handlers, we must
          * exit the interpreter because the handler *might* block -- we don't
-         * know what it will do, so we can't hold the lock on the intepreter.
+         * know what it will do, so we can't hold the lock on the interpreter.
          */
         AcpiExExitInterpreter();
     }
@@ -581,7 +581,7 @@ AcpiEvExecuteRegMethod (
     ACPI_EVALUATE_INFO      *Info;
     ACPI_OPERAND_OBJECT     *Args[3];
     ACPI_OPERAND_OBJECT     *RegionObj2;
-    const ACPI_NAME         *RegNamePtr = ACPI_CAST_PTR (ACPI_NAME, METHOD_NAME__REG);
+    const ACPI_NAME         *RegNamePtr = ACPI_ALIGNED_STR_UNION (ACPI_NAME, METHOD_NAME__REG);
     ACPI_NAMESPACE_NODE     *MethodNode;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
@@ -730,6 +730,20 @@ AcpiEvExecuteRegMethods (
 
     ACPI_FUNCTION_TRACE (EvExecuteRegMethods);
 
+    /*
+     * These address spaces do not need a call to _REG, since the ACPI
+     * specification defines them as: "must always be accessible". Since
+     * they never change state (never become unavailable), no need to ever
+     * call _REG on them. Also, a DataTable is not a "real" address space,
+     * so do not call _REG. September 2018.
+     */
+    if ((SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY) ||
+        (SpaceId == ACPI_ADR_SPACE_SYSTEM_IO) ||
+        (SpaceId == ACPI_ADR_SPACE_DATA_TABLE))
+    {
+        return_VOID;
+    }
+
     Info.SpaceId = SpaceId;
     Info.Function = Function;
     Info.RegRunCount = 0;
@@ -796,8 +810,8 @@ AcpiEvRegRun (
     }
 
     /*
-     * We only care about regions.and objects that are allowed to have address
-     * space handlers
+     * We only care about regions and objects that are allowed to have
+     * address space handlers
      */
     if ((Node->Type != ACPI_TYPE_REGION) &&
         (Node != AcpiGbl_RootNode))

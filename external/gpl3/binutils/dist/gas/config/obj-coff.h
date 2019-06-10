@@ -48,10 +48,6 @@
 #endif
 #endif
 
-#ifdef TC_SPARC
-#include "coff/sparc.h"
-#endif
-
 #ifdef TC_I386
 #ifdef TE_PEP
 #include "coff/x86_64.h"
@@ -75,11 +71,6 @@
 #endif
 #endif
 
-#ifdef TC_I960
-#include "coff/i960.h"
-#define TARGET_FORMAT "coff-Intel-little"
-#endif
-
 #ifdef TC_Z80
 #include "coff/z80.h"
 #define TARGET_FORMAT "coff-z80"
@@ -88,16 +79,6 @@
 #ifdef TC_Z8K
 #include "coff/z8k.h"
 #define TARGET_FORMAT "coff-z8k"
-#endif
-
-#ifdef TC_H8300
-#include "coff/h8300.h"
-#define TARGET_FORMAT "coff-h8300"
-#endif
-
-#ifdef TC_H8500
-#include "coff/h8500.h"
-#define TARGET_FORMAT "coff-h8500"
 #endif
 
 #ifdef TC_SH
@@ -168,11 +149,6 @@
 
 /* Alter the field names, for now, until we've fixed up the other
    references to use the new name.  */
-#ifdef TC_I960
-#define TC_SYMFIELD_TYPE	symbolS *
-#define sy_tc			bal
-#endif
-
 #define OBJ_SYMFIELD_TYPE	unsigned long
 #define sy_obj			sy_obj_flags
 
@@ -224,17 +200,7 @@
 
 /* Internal use only definitions. SF_ stands for symbol flags.
 
-   These values can be assigned to sy_symbol.ost_flags field of a symbolS.
-
-   You'll break i960 if you shift the SYSPROC bits anywhere else.  for
-   more on the balname/callname hack, see tc-i960.h.  b.out is done
-   differently.  */
-
-#define SF_I960_MASK	0x000001ff	/* Bits 0-8 are used by the i960 port.  */
-#define SF_SYSPROC	0x0000003f	/* bits 0-5 are used to store the sysproc number.  */
-#define SF_IS_SYSPROC	0x00000040	/* bit 6 marks symbols that are sysprocs.  */
-#define SF_BALNAME	0x00000080	/* bit 7 marks BALNAME symbols.  */
-#define SF_CALLNAME	0x00000100	/* bit 8 marks CALLNAME symbols.  */
+   These values can be assigned to sy_symbol.ost_flags field of a symbolS.  */
 
 #define SF_NORMAL_MASK	0x0000ffff	/* bits 12-15 are general purpose.  */
 
@@ -269,11 +235,6 @@
 #define SF_GET_TAGGED(s)	(SF_GET (s) & SF_TAGGED)
 #define SF_GET_TAG(s)		(SF_GET (s) & SF_TAG)
 #define SF_GET_GET_SEGMENT(s)	(SF_GET (s) & SF_GET_SEGMENT)
-#define SF_GET_I960(s)		(SF_GET (s) & SF_I960_MASK)	/* Used by i960.  */
-#define SF_GET_BALNAME(s)	(SF_GET (s) & SF_BALNAME)	/* Used by i960.  */
-#define SF_GET_CALLNAME(s)	(SF_GET (s) & SF_CALLNAME)	/* Used by i960.  */
-#define SF_GET_IS_SYSPROC(s)	(SF_GET (s) & SF_IS_SYSPROC)	/* Used by i960.  */
-#define SF_GET_SYSPROC(s)	(SF_GET (s) & SF_SYSPROC)	/* Used by i960.  */
 
 /* Modifiers.  */
 #define SF_SET(s,v)		(SF_GET (s) = (v))
@@ -290,11 +251,6 @@
 #define SF_SET_TAGGED(s)	(SF_GET (s) |= SF_TAGGED)
 #define SF_SET_TAG(s)		(SF_GET (s) |= SF_TAG)
 #define SF_SET_GET_SEGMENT(s)	(SF_GET (s) |= SF_GET_SEGMENT)
-#define SF_SET_I960(s,v)	(SF_GET (s) |= ((v) & SF_I960_MASK))	/* Used by i960.  */
-#define SF_SET_BALNAME(s)	(SF_GET (s) |= SF_BALNAME)		/* Used by i960.  */
-#define SF_SET_CALLNAME(s)	(SF_GET (s) |= SF_CALLNAME)		/* Used by i960.  */
-#define SF_SET_IS_SYSPROC(s)	(SF_GET (s) |= SF_IS_SYSPROC)		/* Used by i960.  */
-#define SF_SET_SYSPROC(s,v)	(SF_GET (s) |= ((v) & SF_SYSPROC))	/* Used by i960.  */
 
 
 /*  Line number handling.  */
@@ -329,12 +285,6 @@ extern symbolS *coff_last_function;
 #endif
 
 /* Sanity check.  */
-
-#ifdef TC_I960
-#ifndef C_LEAFSTAT
-hey ! Where is the C_LEAFSTAT definition ? i960 - coff support is depending on it.
-#endif /* no C_LEAFSTAT */
-#endif /* TC_I960 */
 
 extern const pseudo_typeS coff_pseudo_table[];
 

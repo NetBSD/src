@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: com_aubus.c,v 1.6.54.1 2019/06/10 22:06:29 christos Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.6.54.1 2019/06/10 22:06:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,16 +62,13 @@ static int	com_aubus_probe(device_t, cfdata_t , void *);
 static void	com_aubus_attach(device_t, device_t, void *);
 static int	com_aubus_enable(struct com_softc *);
 static void	com_aubus_disable(struct com_softc *);
-static void	com_aubus_initmap(struct com_regs *);
+static void	com_aubus_init_regs(struct com_regs *, bus_space_tag_t,
+				    bus_space_handle_t, bus_addr_t);
 
 CFATTACH_DECL_NEW(com_aubus, sizeof(struct com_aubus_softc),
     com_aubus_probe, com_aubus_attach, NULL, NULL);
 
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-#ifndef	COM_REGMAP
-#error	COM_REGMAP not defined!
-#endif
 
 int
 com_aubus_probe(device_t parent, cfdata_t cf, void *aux)
@@ -91,20 +88,20 @@ com_aubus_attach(device_t parent, device_t self, void *aux)
 	struct com_aubus_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	struct aubus_attach_args *aa = aux;
+	bus_space_handle_t bsh;
 	int addr = aa->aa_addr;
 
 	sc->sc_dev = self;
-	sc->sc_regs.cr_iot = aa->aa_st;
-	sc->sc_regs.cr_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
 
-	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
+	if (com_is_console(aa->aa_st, addr, &bsh) == 0 &&
 	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
 		&sc->sc_regs.cr_ioh) != 0) {
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
-	com_aubus_initmap(&sc->sc_regs);
+
+	com_aubus_init_regs(&sc->sc_regs, aa->aa_st, bsh, addr);
 
 	/*
 	 * The input to the clock divider is the internal pbus clock (1/4 the
@@ -175,22 +172,30 @@ com_aubus_disable(struct com_softc *sc)
 	    AUCOM_MODCTL, 0);
 }
 
+static const bus_size_t com_aubus_regmap[COM_REGMAP_NENTRIES] = {
+	[COM_REG_RXDATA]	=	AUCOM_RXDATA,
+	[COM_REG_TXDATA]	=	AUCOM_TXDATA,
+	[COM_REG_DLBL]		=	AUCOM_DLB,
+	[COM_REG_DLBH]		=	AUCOM_DLB,
+	[COM_REG_IER]		=	AUCOM_IER,
+	[COM_REG_IIR]		=	AUCOM_IIR,
+	[COM_REG_FIFO]		=	AUCOM_FIFO,
+	[COM_REG_TCR]		=	AUCOM_FIFO,
+	[COM_REG_LCR]		=	AUCOM_LCTL,
+	[COM_REG_MCR]		=	AUCOM_MCR,
+	[COM_REG_LSR]		=	AUCOM_LSR,
+	[COM_REG_MSR]		=	AUCOM_MSR,
+};
+
 void
-com_aubus_initmap(struct com_regs *regsp)
+com_aubus_init_regs(struct com_regs *regsp, bus_space_tag_t bst,
+		    bus_space_handle_t bsh, bus_addr_t addr)
 {
+
+	com_init_regs(regsp, bst, bsh, addr);
+
+	memcpy(regsp->cr_map, com_aubus_regmap, sizeof(regsp->cr_map));
 	regsp->cr_nports = AUCOM_NPORTS;
-	regsp->cr_map[COM_REG_RXDATA] = AUCOM_RXDATA;
-	regsp->cr_map[COM_REG_TXDATA] = AUCOM_TXDATA;
-	regsp->cr_map[COM_REG_DLBL] = AUCOM_DLB;
-	regsp->cr_map[COM_REG_DLBH] = AUCOM_DLB;
-	regsp->cr_map[COM_REG_IER] = AUCOM_IER;
-	regsp->cr_map[COM_REG_IIR] = AUCOM_IIR;
-	regsp->cr_map[COM_REG_FIFO] = AUCOM_FIFO;
-	regsp->cr_map[COM_REG_EFR] = 0;
-	regsp->cr_map[COM_REG_LCR] = AUCOM_LCTL;
-	regsp->cr_map[COM_REG_MCR] = AUCOM_MCR;
-	regsp->cr_map[COM_REG_LSR] = AUCOM_LSR;
-	regsp->cr_map[COM_REG_MSR] = AUCOM_MSR;
 }
 
 int
@@ -199,10 +204,8 @@ com_aubus_cnattach(bus_addr_t addr, int baud)
 	struct com_regs		regs;
 	uint32_t		sysfreq;
 
-	regs.cr_iot = aubus_st;
-	regs.cr_iobase = addr;
-	regs.cr_nports = AUCOM_NPORTS;
-	com_aubus_initmap(&regs);
+	com_aubus_init_regs(&regs, aubus_st, (bus_space_handle_t)0/*XXX*/,
+			    addr);
 
 	sysfreq = curcpu()->ci_cpu_freq / 4;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.25 2011/02/09 18:24:44 matt Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.25.56.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.25 2011/02/09 18:24:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.25.56.1 2019/06/10 22:07:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,8 @@ db_trap(int type, int code)
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
 
-	if (db_trap_callback) db_trap_callback(1);
+	if (db_trap_callback)
+		db_trap_callback(1);
 
 	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
 		if (db_inst_count) {

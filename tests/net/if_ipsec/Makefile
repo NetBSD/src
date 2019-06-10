@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2018/01/10 11:06:06 knakahara Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2019/06/10 22:10:09 christos Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/if_ipsec
 
-.for name in ipsec
+.for name in ipsec ipsec_natt ipsec_pfil
 TESTS_SH+=		t_${name}
 TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh \
 	../ipsec/common.sh ../ipsec/algorithms.sh

@@ -1,6 +1,6 @@
 /* Test file for mpfr_trunc, mpfr_ceil, mpfr_floor.
 
-Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -42,8 +39,7 @@ main (void)
   if (mpfr_cmp_ui (y, 1))
     {
       printf ("Error in mpfr_ceil for x=0.5: expected 1.0, got ");
-      mpfr_print_binary(y);
-      putchar('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -52,8 +48,7 @@ main (void)
   if (mpfr_cmp_ui(y,0))
     {
       printf ("Error in mpfr_ceil for x=0.0: expected 0.0, got ");
-      mpfr_print_binary(y);
-      putchar('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -62,8 +57,7 @@ main (void)
   if (mpfr_cmp_ui(y,1))
     {
       printf ("Error in mpfr_ceil for x=1.0: expected 1.0, got ");
-      mpfr_print_binary(y);
-      putchar('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -92,34 +86,25 @@ main (void)
 
           if (!mpfr_eq(y, y2, k))
             {
-              printf("Error in floor, x = "); mpfr_print_binary(x);
-              printf("\n");
-              printf("floor(x) = "); mpfr_print_binary(y);
-              printf("\n");
-              printf("round(x, RNDD) = "); mpfr_print_binary(y2);
-              printf("\n");
+              printf ("Error in floor, x = "); mpfr_dump (x);
+              printf ("floor(x) = "); mpfr_dump (y);
+              printf ("round(x, RNDD) = "); mpfr_dump (y2);
               exit(1);
             }
 
           if (!mpfr_eq(z, z2, k))
             {
-              printf("Error in trunc, x = "); mpfr_print_binary(x);
-              printf("\n");
-              printf("trunc(x) = "); mpfr_print_binary(z);
-              printf("\n");
-              printf("round(x, RNDZ) = "); mpfr_print_binary(z2);
-              printf("\n");
+              printf ("Error in trunc, x = "); mpfr_dump (x);
+              printf ("trunc(x) = "); mpfr_dump (z);
+              printf ("round(x, RNDZ) = "); mpfr_dump (z2);
               exit(1);
             }
 
           if (!mpfr_eq(y, y2, k))
             {
-              printf("Error in ceil, x = "); mpfr_print_binary(x);
-              printf("\n");
-              printf("ceil(x) = "); mpfr_print_binary(t);
-              printf("\n");
-              printf("round(x, RNDU) = "); mpfr_print_binary(t2);
-              printf("\n");
+              printf ("Error in ceil, x = "); mpfr_dump (x);
+              printf ("ceil(x) = "); mpfr_dump (t);
+              printf ("round(x, RNDU) = "); mpfr_dump (t2);
               exit(1);
             }
           MPFR_EXP(x)++;

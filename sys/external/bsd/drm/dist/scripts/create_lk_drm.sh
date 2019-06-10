@@ -31,7 +31,6 @@ cp linux-core/Kconfig $OUTDIR/.tmp
 cd $OUTDIR
 
 rm -rf .tmp
-rm via_ds.[ch]
 rm sis_ds.[ch]
 
 cd -

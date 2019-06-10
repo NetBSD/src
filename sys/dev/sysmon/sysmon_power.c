@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.58 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.58.4.1 2019/06/10 22:07:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.4.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58 2017/10/25 08:12:39 maya Exp $
 #include <sys/rndsource.h>
 #include <sys/module.h>
 #include <sys/once.h>
+#include <sys/compat_stub.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -344,16 +345,10 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		    (struct sysmon_pswitch *)pev_data;
 
 		pev.pev_type = POWER_EVENT_SWITCH_STATE_CHANGE;
-#ifdef COMPAT_40
-		pev.pev_switch.psws_state = event;
-		pev.pev_switch.psws_type = pswitch->smpsw_type;
 
-		if (pswitch->smpsw_name) {
-			(void)strlcpy(pev.pev_switch.psws_name,
-			          pswitch->smpsw_name,
-			          sizeof(pev.pev_switch.psws_name));
-		}
-#endif
+		MODULE_HOOK_CALL_VOID(compat_sysmon_power_40_hook,
+		    (&pev, pswitch, event), __nothing);
+
 		error = sysmon_power_make_dictionary(ped->dict,
 						     pswitch,
 						     event,

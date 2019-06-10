@@ -1,5 +1,5 @@
 /* RTL-level loop invariant motion.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -43,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -107,13 +108,13 @@ struct invariant
   /* The number of invariants which eqto this.  */
   unsigned eqno;
 
-  /* If we moved the invariant out of the loop, the register that contains its
-     value.  */
-  rtx reg;
-
   /* If we moved the invariant out of the loop, the original regno
      that contained its value.  */
   int orig_regno;
+
+  /* If we moved the invariant out of the loop, the register that contains its
+     value.  */
+  rtx reg;
 
   /* The definition of the invariant.  */
   struct def *def;
@@ -133,12 +134,12 @@ struct invariant
   /* Cost of the invariant.  */
   unsigned cost;
 
-  /* The invariants it depends on.  */
-  bitmap depends_on;
-
   /* Used for detecting already visited invariants during determining
      costs of movements.  */
   unsigned stamp;
+
+  /* The invariants it depends on.  */
+  bitmap depends_on;
 };
 
 /* Currently processed loop.  */
@@ -781,7 +782,7 @@ canonicalize_address_mult (rtx x)
 	{
 	  HOST_WIDE_INT shift = INTVAL (XEXP (sub, 1));
 	  PUT_CODE (sub, MULT);
-	  XEXP (sub, 1) = gen_int_mode ((HOST_WIDE_INT) 1 << shift,
+	  XEXP (sub, 1) = gen_int_mode (HOST_WIDE_INT_1 << shift,
 					GET_MODE (sub));
 	  iter.skip_subrtxes ();
 	}

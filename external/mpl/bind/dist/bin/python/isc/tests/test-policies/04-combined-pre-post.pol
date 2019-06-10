@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+policy combined_pre_post_rsa {
+	algorithm rsasha1;
+	coverage 1y;
+	roll-period zsk 3mo;
+	pre-publish zsk 2w;
+	post-publish zsk 2w;
+	roll-period ksk 1y;
+	pre-publish ksk 1mo;
+	post-publish ksk 2mo;
+	keyttl 1h;
+	key-size ksk 2048;
+	key-size zsk 1024;
+};
+
+// Policy that defines a combined pre-publish and post-publish period lower
+// than the rollover period
+zone good_combined_pre_post_ksk.test {
+	policy combined_pre_post_rsa;
+	coverage 6mo;
+	roll-period ksk 4mo;
+	pre-publish ksk 1mo;
+	post-publish ksk 1mo;
+};
+
+// Policy that defines a combined pre-publish and post-publish period higher
+// than the rollover period
+zone bad_combined_pre_post_ksk.test {
+	policy combined_pre_post_rsa;
+	coverage 6mo;
+	roll-period ksk 4mo;
+	pre-publish ksk 2mo;
+	post-publish ksk 2mo;
+};
+
+// Policy that defines a combined pre-publish and post-publish period lower
+// than the rollover period
+zone good_combined_pre_post_zsk.test {
+	policy combined_pre_post_rsa;
+	coverage 1y;
+	roll-period zsk 3mo;
+	pre-publish zsk 1mo;
+	post-publish zsk 1mo;
+};
+
+// Policy that defines a combined pre-publish and post-publish period higher
+// than the rollover period
+zone bad_combined_pre_post_zsk.test {
+	policy combined_pre_post_rsa;
+	coverage 1y;
+	roll-period zsk 3mo;
+	pre-publish zsk 2mo;
+	post-publish zsk 2mo;
+};
+
+

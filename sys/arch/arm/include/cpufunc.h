@@ -46,8 +46,6 @@
 
 #ifdef _KERNEL
 
-#if !defined(_RUMPKERNEL)
-
 #include <sys/types.h>
 
 #include <arm/armreg.h>
@@ -358,7 +356,7 @@ cpsid(register_t psw)
 	case I32_bit|F32_bit:	__asm("cpsid\tif"); break;
 	}
 	return oldpsw;
-#else 
+#else
 	return disable_interrupts(psw);
 #endif
 }
@@ -413,7 +411,7 @@ extern u_int arm_dcache_align_mask;
 extern struct arm_cache_info arm_pcache;
 extern struct arm_cache_info arm_scache;
 
-#endif	/* _GRRRRUMP */
+extern uint32_t cpu_ttb;
 
 #endif	/* _KERNEL */
 

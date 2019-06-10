@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
@@ -101,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
 
 #include <x86/nmi.h>
 
-#ifndef XEN
+#ifndef XENPV
 #include "isa.h"
 #endif
 
@@ -263,7 +264,7 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusuintrfailure[], kcopy_fault[];
+	extern char kcopy_fault[];
 	extern char IDTVEC(osyscall)[];
 	extern char IDTVEC(syscall32)[];
 	ksiginfo_t ksi;
@@ -295,7 +296,7 @@ trap(struct trapframe *frame)
 	 * A trap can occur while DTrace executes a probe. Before
 	 * executing the probe, DTrace blocks re-scheduling and sets
 	 * a flag in its per-cpu flags to indicate that it doesn't
-	 * want to fault. On returning from the the probe, the no-fault
+	 * want to fault. On returning from the probe, the no-fault
 	 * flag is cleared and finally re-scheduling is enabled.
 	 *
 	 * If the DTrace kernel module has registered a trap handler,
@@ -350,6 +351,11 @@ trap(struct trapframe *frame)
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 #if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
+
+/*
+ * XXX This code currently not included in loadable module;  it is
+ * only included in built-in modules.
+ */
 	{
 		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
 		const size_t sz = sizeof(lcall);
@@ -370,6 +376,7 @@ trap(struct trapframe *frame)
 		}
 	}
 #endif
+		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
@@ -463,15 +470,8 @@ trap(struct trapframe *frame)
 		if (__predict_false(l == NULL))
 			goto we_re_toast;
 
-		/*
-		 * fusuintrfailure is used by [fs]uswintr() to prevent
-		 * page faulting from inside the profiling interrupt.
-		 */
 		onfault = pcb->pcb_onfault;
-		if (onfault == fusuintrfailure) {
-			onfault_restore(frame, fusuintrfailure, EFAULT);
-			return;
-		}
+
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
 			goto we_re_toast;
 		}
@@ -583,7 +583,7 @@ faultcommon:
 				 * the copy functions, and so visible
 				 * to cpu_kpreempt_exit().
 				 */
-#ifndef XEN
+#ifndef XENPV
 				x86_disable_intr();
 #endif
 				l->l_nopreempt--;
@@ -591,7 +591,7 @@ faultcommon:
 				    pfail) {
 					return;
 				}
-#ifndef XEN
+#ifndef XENPV
 				x86_enable_intr();
 #endif
 				/*
@@ -751,10 +751,10 @@ sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	printf("pid %d.%d (%s): signal %d (trap %#lx) "
+	printf("pid %d.%d (%s): signal %d code=%d (trap %#lx) "
 	    "@rip %#lx addr %#lx error=%d\n",
-	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, tf->tf_trapno,
-	    tf->tf_rip, rcr2(), e);
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_code,
+	    tf->tf_trapno, tf->tf_rip, rcr2(), e);
 	frame_dump(tf, lwp_getpcb(l));
 }
 #endif

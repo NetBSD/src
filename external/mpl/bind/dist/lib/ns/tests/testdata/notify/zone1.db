@@ -1,0 +1,24 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 1000
+@		in	soa	localhost. postmaster.localhost. (
+				1993050801	;serial
+				3600		;refresh
+				1800		;retry
+				604800		;expiration
+				3600 )		;minimum
+		in	ns	ns.example.com.
+		in	ns	ns2.example.com.
+		in	ns	ns3.example.com.
+ns		in	a	10.0.0.1
+ns2		in	a	10.0.0.2
+ns3		in	a	10.0.0.3
+
+a		in	a	1.2.3.4

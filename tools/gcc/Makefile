@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.86.2.1 2019/06/10 22:10:14 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@ MODULE=			gcc4
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 5
+.if ${HAVE_GCC} == 6
 MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
@@ -35,10 +35,11 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
-			--disable-libstdcxx-dual-abi \
+			--without-isl \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
-			--enable-libstdcxx-threads
+			--enable-libstdcxx-threads \
+			--with-diagnostics-color=auto-if-env
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -46,9 +47,15 @@ COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
-.if ${HAVE_GCC} >= 5
-# Turn on colour output only if GCC_COLORS env is set
-COMMON_CONFIGURE_ARGS+= --with-diagnostics-color=auto-if-env
+# Too many CPUs have one or both of these bugs, the common code should
+# default to safety.
+.if ${MACHINE_CPU} == "aarch64"
+COMMON_CONFIGURE_ARGS+=	--enable-fix-cortex-a53-835769 \
+			--enable-fix-cortex-a53-843419
+.endif
+
+.if ${HAVE_GCC} >= 7
+COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
@@ -88,14 +95,15 @@ MKNATIVE_CONFIG_TARGET_LIBS=
 
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
-.if ${HAVE_GCC} == 6
+.if ${HAVE_GCC} == 7
+MKNATIVE_TARGET=	gcc7
+.elif ${HAVE_GCC} == 6
 MKNATIVE_TARGET=	gcc6
-.elif ${HAVE_GCC} == 5
-MKNATIVE_TARGET=	gcc5
 .endif
 
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libstdc++-v3 \
+	configure-target-libbacktrace \
 	configure-target-libobjc
 
 BINENV=		/usr/bin/env -i
@@ -107,7 +115,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CFLAGS_FOR_BUILD="-I${TOOLDIR}/include" \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
+			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include' '-I${DESTDIR}/usr/include/g++/bits \
 			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
 			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
@@ -185,16 +193,16 @@ EXTRA_GCC_TARGETS=	i386-builtin-types.inc
 
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
-			--disable-symvers \
 			--disable-libstdcxx-pch \
-			--disable-libstdcxx-dual-abi \
 			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--with-sysroot=${DESTDIR}
 MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
-	mkdir .native 2>/dev/null || true
+	mkdir .native .native/gcc .native/gcc/include 2>/dev/null || true
+	# If this fails, gthreads won't be configured initially, but reconfig will.
+	cp ${DESTDIR}/usr/include/g++/bits/gthr-default.h .native/gcc/include || true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \

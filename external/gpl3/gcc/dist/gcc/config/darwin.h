@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -185,7 +185,7 @@ extern GTY(()) int darwin_ms_struct;
     %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
     %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libgomp.a%s; : -lgomp } } \
-    %{fcilkplus:%:include(libcilkrts.spec)%(link_cilkrts)} \
+    %{fcilkplus:%:include(libcilkrts.spec)%(link_cilkrts)}\
     %{fgnu-tm: \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libitm.a%s; : -litm } } \
     %{!nostdlib:%{!nodefaultlibs:\
@@ -202,9 +202,9 @@ extern GTY(()) int darwin_ms_struct;
 #define DSYMUTIL_SPEC \
    "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
     %{v} \
-    %{gdwarf-2:%{!gstabs*:%{!g0: -idsym}}}\
+    %{gdwarf-2:%{!gstabs*:%{%:debug-level-gt(0): -idsym}}}\
     %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
-    %{gdwarf-2:%{!gstabs*:%{!g0: -dsym}}}}}}}}}}}"
+    %{gdwarf-2:%{!gstabs*:%{%:debug-level-gt(0): -dsym}}}}}}}}}}}"
 
 #define LINK_COMMAND_SPEC LINK_COMMAND_SPEC_A DSYMUTIL_SPEC
 
@@ -424,7 +424,7 @@ extern GTY(()) int darwin_ms_struct;
 /* Default ASM_DEBUG_SPEC.  Darwin's as cannot currently produce dwarf
    debugging data.  */
 
-#define ASM_DEBUG_SPEC  "%{g*:%{!g0:%{!gdwarf*:--gstabs}}}"
+#define ASM_DEBUG_SPEC  "%{g*:%{%:debug-level-gt(0):%{!gdwarf*:--gstabs}}}"
 
 /* We still allow output of STABS if the assembler supports it.  */
 #ifdef HAVE_AS_STABS_DIRECTIVE
@@ -448,8 +448,6 @@ extern GTY(()) int darwin_ms_struct;
 #define DEBUG_MACRO_SECTION    "__DWARF,__debug_macro,regular,debug"
 
 #define TARGET_WANT_DEBUG_PUB_SECTIONS true
-
-#define TARGET_FORCE_AT_COMP_DIR true
 
 /* When generating stabs debugging, use N_BINCL entries.  */
 
@@ -707,10 +705,6 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
 #undef	TARGET_ASM_FUNCTION_SECTION
 #define TARGET_ASM_FUNCTION_SECTION darwin_function_section
 
-#undef	TARGET_ASM_FUNCTION_SWITCHED_TEXT_SECTIONS
-#define TARGET_ASM_FUNCTION_SWITCHED_TEXT_SECTIONS \
-	darwin_function_switched_text_sections
-
 #undef	TARGET_ASM_SELECT_RTX_SECTION
 #define TARGET_ASM_SELECT_RTX_SECTION machopic_select_rtx_section
 #undef  TARGET_ASM_UNIQUE_SECTION
@@ -857,9 +851,6 @@ enum machopic_addr_class {
 #define EH_FRAME_SECTION_NAME   "__TEXT"
 #define EH_FRAME_SECTION_ATTR ",coalesced,no_toc+strip_static_syms+live_support"
 
-/* Java runtime class list.  */
-#define JCR_SECTION_NAME "__DATA,jcr,regular,no_dead_strip"
-
 #undef ASM_PREFERRED_EH_DATA_FORMAT
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL)  \
   (((CODE) == 2 && (GLOBAL) == 1) \
@@ -867,10 +858,10 @@ enum machopic_addr_class {
      ((CODE) == 1 || (GLOBAL) == 0) ? DW_EH_PE_pcrel : DW_EH_PE_absptr)
 
 #define ASM_OUTPUT_DWARF_DELTA(FILE,SIZE,LABEL1,LABEL2)  \
-  darwin_asm_output_dwarf_delta (FILE, SIZE, LABEL1, LABEL2)
+  darwin_asm_output_dwarf_delta (FILE, SIZE, LABEL1, LABEL2, 0)
 
-#define ASM_OUTPUT_DWARF_OFFSET(FILE,SIZE,LABEL,BASE)  \
-  darwin_asm_output_dwarf_offset (FILE, SIZE, LABEL, BASE)
+#define ASM_OUTPUT_DWARF_OFFSET(FILE,SIZE,LABEL,OFFSET,BASE)  \
+  darwin_asm_output_dwarf_offset (FILE, SIZE, LABEL, OFFSET, BASE)
 
 #define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(ASM_OUT_FILE, ENCODING, SIZE, ADDR, DONE)	\
       if (ENCODING == ASM_PREFERRED_EH_DATA_FORMAT (2, 1)) {				\

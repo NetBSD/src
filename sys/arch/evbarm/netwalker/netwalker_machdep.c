@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.21 2017/09/08 05:29:12 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.21.4.1 2019/06/10 22:06:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,10 +102,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21 2017/09/08 05:29:12 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21.4.1 2019/06/10 22:06:09 christos Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -258,8 +259,6 @@ initarm(void *arg)
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
-	/* Register devmap for devices we mapped in start */
-	pmap_devmap_register(netwalker_devmap);
 	setup_ioports();
 
 	consinit();

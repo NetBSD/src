@@ -1,6 +1,6 @@
 /* General utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "dyn-string.h"
 #include <ctype.h>
 #include "gdb_wait.h"
 #include "event-top.h"
@@ -38,7 +37,6 @@
 #endif
 
 #include <signal.h>
-#include "timeval-utils.h"
 #include "gdbcmd.h"
 #include "serial.h"
 #include "bfd.h"
@@ -62,8 +60,7 @@
 
 #include "readline/readline.h"
 
-#include "gdb_sys_time.h"
-#include <time.h>
+#include <chrono>
 
 #include "gdb_usleep.h"
 #include "interps.h"
@@ -99,7 +96,7 @@ static void set_width (void);
    Modified in prompt_for_continue and defaulted_query.
    Used in report_command_stats.  */
 
-static struct timeval prompt_for_continue_wait_time;
+static std::chrono::steady_clock::duration prompt_for_continue_wait_time;
 
 /* A flag indicating whether to timestamp debugging messages.  */
 
@@ -125,7 +122,7 @@ show_sevenbit_strings (struct ui_file *file, int from_tty,
 
 /* String to be printed before warning messages, if any.  */
 
-char *warning_pre_print = "\nwarning: ";
+const char *warning_pre_print = "\nwarning: ";
 
 int pagination_enabled = 1;
 static void
@@ -152,30 +149,6 @@ struct cleanup *
 make_cleanup_freeargv (char **arg)
 {
   return make_cleanup (do_freeargv, arg);
-}
-
-static void
-do_dyn_string_delete (void *arg)
-{
-  dyn_string_delete ((dyn_string_t) arg);
-}
-
-struct cleanup *
-make_cleanup_dyn_string_delete (dyn_string_t arg)
-{
-  return make_cleanup (do_dyn_string_delete, arg);
-}
-
-static void
-do_bfd_close_cleanup (void *arg)
-{
-  gdb_bfd_unref ((bfd *) arg);
-}
-
-struct cleanup *
-make_cleanup_bfd_unref (bfd *abfd)
-{
-  return make_cleanup (do_bfd_close_cleanup, abfd);
 }
 
 /* Helper function which does the work for make_cleanup_fclose.  */
@@ -214,18 +187,6 @@ make_cleanup_obstack_free (struct obstack *obstack)
   return make_cleanup (do_obstack_free, obstack);
 }
 
-static void
-do_ui_file_delete (void *arg)
-{
-  ui_file_delete ((struct ui_file *) arg);
-}
-
-struct cleanup *
-make_cleanup_ui_file_delete (struct ui_file *arg)
-{
-  return make_cleanup (do_ui_file_delete, arg);
-}
-
 /* Helper function for make_cleanup_ui_out_redirect_pop.  */
 
 static void
@@ -233,8 +194,7 @@ do_ui_out_redirect_pop (void *arg)
 {
   struct ui_out *uiout = (struct ui_out *) arg;
 
-  if (ui_out_redirect (uiout, NULL) < 0)
-    warning (_("Cannot restore redirection of the current output protocol"));
+  uiout->redirect (NULL);
 }
 
 /* Return a new cleanup that pops the last redirection by ui_out_redirect
@@ -312,59 +272,6 @@ struct cleanup *
 make_cleanup_unpush_target (struct target_ops *ops)
 {
   return make_cleanup (do_unpush_target, ops);
-}
-
-/* Helper for make_cleanup_htab_delete compile time checking the types.  */
-
-static void
-do_htab_delete_cleanup (void *htab_voidp)
-{
-  htab_t htab = (htab_t) htab_voidp;
-
-  htab_delete (htab);
-}
-
-/* Return a new cleanup that deletes HTAB.  */
-
-struct cleanup *
-make_cleanup_htab_delete (htab_t htab)
-{
-  return make_cleanup (do_htab_delete_cleanup, htab);
-}
-
-struct restore_ui_out_closure
-{
-  struct ui_out **variable;
-  struct ui_out *value;
-};
-
-struct restore_ui_file_closure
-{
-  struct ui_file **variable;
-  struct ui_file *value;
-};
-
-static void
-do_restore_ui_file (void *p)
-{
-  struct restore_ui_file_closure *closure
-    = (struct restore_ui_file_closure *) p;
-
-  *(closure->variable) = closure->value;
-}
-
-/* Remember the current value of *VARIABLE and make it restored when
-   the cleanup is run.  */
-
-struct cleanup *
-make_cleanup_restore_ui_file (struct ui_file **variable)
-{
-  struct restore_ui_file_closure *c = XNEW (struct restore_ui_file_closure);
-
-  c->variable = variable;
-  c->value = *variable;
-
-  return make_cleanup_dtor (do_restore_ui_file, (void *) c, xfree);
 }
 
 /* Helper for make_cleanup_value_free_to_mark.  */
@@ -526,12 +433,9 @@ verror (const char *string, va_list args)
 }
 
 void
-error_stream (struct ui_file *stream)
+error_stream (const string_file &stream)
 {
-  char *message = ui_file_xstrdup (stream, NULL);
-
-  make_cleanup (xfree, message);
-  error (("%s"), message);
+  error (("%s"), stream.c_str ());
 }
 
 /* Emit a message and abort.  */
@@ -1232,10 +1136,8 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
   int retval;
   int def_value;
   char def_answer, not_def_answer;
-  char *y_string, *n_string, *question, *prompt;
-  /* Used to add duration we waited for user to respond to
-     prompt_for_continue_wait_time.  */
-  struct timeval prompt_started, prompt_ended, prompt_delta;
+  const char *y_string, *n_string;
+  char *question, *prompt;
   struct cleanup *old_chain;
 
   /* Set up according to which answer is the default.  */
@@ -1274,7 +1176,9 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
      way, important error messages don't get lost when talking to GDB
      over a pipe.  */
   if (current_ui->instream != current_ui->stdin_stream
-      || !input_interactive_p (current_ui))
+      || !input_interactive_p (current_ui)
+      /* Restrict queries to the main UI.  */
+      || current_ui != main_ui)
     {
       old_chain = make_cleanup_restore_target_terminal ();
 
@@ -1310,8 +1214,10 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
 		      annotation_level > 1 ? "\n\032\032query\n" : "");
   make_cleanup (xfree, prompt);
 
-  /* Used for calculating time spend waiting for user.  */
-  gettimeofday (&prompt_started, NULL);
+  /* Used to add duration we waited for user to respond to
+     prompt_for_continue_wait_time.  */
+  using namespace std::chrono;
+  steady_clock::time_point prompt_started = steady_clock::now ();
 
   prepare_to_handle_input ();
 
@@ -1356,10 +1262,7 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
     }
 
   /* Add time spend in this routine to prompt_for_continue_wait_time.  */
-  gettimeofday (&prompt_ended, NULL);
-  timeval_sub (&prompt_delta, &prompt_ended, &prompt_started);
-  timeval_add (&prompt_for_continue_wait_time,
-               &prompt_for_continue_wait_time, &prompt_delta);
+  prompt_for_continue_wait_time += steady_clock::now () - prompt_started;
 
   if (annotation_level > 1)
     printf_filtered (("\n\032\032post-query\n"));
@@ -1683,14 +1586,14 @@ static char *wrap_pointer;
 
 /* String to indent by if the wrap occurs.  Must not be NULL if wrap_column
    is non-zero.  */
-static char *wrap_indent;
+static const char *wrap_indent;
 
 /* Column number on the screen where wrap_buffer begins, or 0 if wrapping
    is not in effect.  */
 static int wrap_column;
 
 
-/* Inialize the number of lines per page and chars per line.  */
+/* Initialize the number of lines per page and chars per line.  */
 
 void
 init_page_info (void)
@@ -1724,7 +1627,7 @@ init_page_info (void)
       /* Readline should have fetched the termcap entry for us.
          Only try to use tgetnum function if rl_get_screen_size
          did not return a useful value. */
-      if (((rows <= 0) && (tgetnum ("li") < 0))
+      if (((rows <= 0) && (tgetnum ((char *) "li") < 0))
 	/* Also disable paging if inside Emacs.  $EMACS was used
 	   before Emacs v25.1, $INSIDE_EMACS is used since then.  */
 	  || getenv ("EMACS") || getenv ("INSIDE_EMACS"))
@@ -1865,12 +1768,11 @@ prompt_for_continue (void)
 {
   char *ignore;
   char cont_prompt[120];
+  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
   /* Used to add duration we waited for user to respond to
      prompt_for_continue_wait_time.  */
-  struct timeval prompt_started, prompt_ended, prompt_delta;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
-
-  gettimeofday (&prompt_started, NULL);
+  using namespace std::chrono;
+  steady_clock::time_point prompt_started = steady_clock::now ();
 
   if (annotation_level > 1)
     printf_unfiltered (("\n\032\032pre-prompt-for-continue\n"));
@@ -1893,10 +1795,7 @@ prompt_for_continue (void)
   make_cleanup (xfree, ignore);
 
   /* Add time spend in this routine to prompt_for_continue_wait_time.  */
-  gettimeofday (&prompt_ended, NULL);
-  timeval_sub (&prompt_delta, &prompt_ended, &prompt_started);
-  timeval_add (&prompt_for_continue_wait_time,
-               &prompt_for_continue_wait_time, &prompt_delta);
+  prompt_for_continue_wait_time += steady_clock::now () - prompt_started;
 
   if (annotation_level > 1)
     printf_unfiltered (("\n\032\032post-prompt-for-continue\n"));
@@ -1921,20 +1820,20 @@ prompt_for_continue (void)
   do_cleanups (old_chain);
 }
 
-/* Initalize timer to keep track of how long we waited for the user.  */
+/* Initialize timer to keep track of how long we waited for the user.  */
 
 void
 reset_prompt_for_continue_wait_time (void)
 {
-  static const struct timeval zero_timeval = { 0 };
+  using namespace std::chrono;
 
-  prompt_for_continue_wait_time = zero_timeval;
+  prompt_for_continue_wait_time = steady_clock::duration::zero ();
 }
 
 /* Fetch the cumulative time spent in prompt_for_continue.  */
 
-struct timeval
-get_prompt_for_continue_wait_time (void)
+std::chrono::steady_clock::duration
+get_prompt_for_continue_wait_time ()
 {
   return prompt_for_continue_wait_time;
 }
@@ -1970,7 +1869,7 @@ reinitialize_more_filter (void)
    used to force out output from the wrap_buffer.  */
 
 void
-wrap_here (char *indent)
+wrap_here (const char *indent)
 {
   /* This should have been allocated, but be paranoid anyway.  */
   if (!wrap_buffer)
@@ -2093,7 +1992,7 @@ fputs_maybe_filtered (const char *linebuffer, struct ui_file *stream,
       || batch_flag
       || (lines_per_page == UINT_MAX && chars_per_line == UINT_MAX)
       || top_level_interpreter () == NULL
-      || ui_out_is_mi_like_p (interp_ui_out (top_level_interpreter ())))
+      || interp_ui_out (top_level_interpreter ())->is_mi_like_p ())
     {
       fputs_unfiltered (linebuffer, stream);
       return;
@@ -2239,8 +2138,8 @@ puts_debug (char *prefix, char *string, char *suffix)
   /* Print prefix and suffix after each line.  */
   static int new_line = 1;
   static int return_p = 0;
-  static char *prev_prefix = "";
-  static char *prev_suffix = "";
+  static const char *prev_prefix = "";
+  static const char *prev_suffix = "";
 
   if (*string == '\n')
     return_p = 0;
@@ -2357,21 +2256,21 @@ vfprintf_unfiltered (struct ui_file *stream, const char *format, va_list args)
   old_cleanups = make_cleanup (xfree, linebuffer);
   if (debug_timestamp && stream == gdb_stdlog)
     {
-      struct timeval tm;
-      char *timestamp;
+      using namespace std::chrono;
       int len, need_nl;
 
-      gettimeofday (&tm, NULL);
+      steady_clock::time_point now = steady_clock::now ();
+      seconds s = duration_cast<seconds> (now.time_since_epoch ());
+      microseconds us = duration_cast<microseconds> (now.time_since_epoch () - s);
 
       len = strlen (linebuffer);
       need_nl = (len > 0 && linebuffer[len - 1] != '\n');
 
-      timestamp = xstrprintf ("%ld:%ld %s%s",
-			      (long) tm.tv_sec, (long) tm.tv_usec,
-			      linebuffer,
-			      need_nl ? "\n": "");
-      make_cleanup (xfree, timestamp);
-      fputs_unfiltered (timestamp, stream);
+      std::string timestamp = string_printf ("%ld.%06ld %s%s",
+					     (long) s.count (),
+					     (long) us.count (),
+					     linebuffer, need_nl ? "\n": "");
+      fputs_unfiltered (timestamp.c_str (), stream);
     }
   else
     fputs_unfiltered (linebuffer, stream);
@@ -2709,7 +2608,7 @@ streq (const char *lhs, const char *rhs)
    **    at index 0.
  */
 int
-subset_compare (char *string_to_compare, char *template_string)
+subset_compare (const char *string_to_compare, const char *template_string)
 {
   int match;
 
@@ -3045,20 +2944,19 @@ dummy_obstack_deallocate (void *object, void *data)
 /* Simple, portable version of dirname that does not modify its
    argument.  */
 
-char *
+std::string
 ldirname (const char *filename)
 {
+  std::string dirname;
   const char *base = lbasename (filename);
-  char *dirname;
 
   while (base > filename && IS_DIR_SEPARATOR (base[-1]))
     --base;
 
   if (base == filename)
-    return NULL;
+    return dirname;
 
-  dirname = (char *) xmalloc (base - filename + 2);
-  memcpy (dirname, filename, base - filename);
+  dirname = std::string (filename, base - filename);
 
   /* On DOS based file systems, convert "d:foo" to "d:.", so that we
      create "d:./bar" later instead of the (different) "d:/bar".  */
@@ -3066,7 +2964,6 @@ ldirname (const char *filename)
       && !IS_DIR_SEPARATOR (filename[0]))
     dirname[base++ - filename] = '.';
 
-  dirname[base - filename] = '\0';
   return dirname;
 }
 
@@ -3218,7 +3115,7 @@ producer_is_gcc (const char *producer, int *major, int *minor)
       if (minor == NULL)
 	minor = &min;
 
-      /* Skip any identifier after "GNU " - such as "C11" "C++" or "Java".
+      /* Skip any identifier after "GNU " - such as "C11" or "C++".
 	 A full producer string might look like:
 	 "GNU C 4.7.2"
 	 "GNU Fortran 4.8.2 20140120 (Red Hat 4.8.2-16) -mtune=generic ..."

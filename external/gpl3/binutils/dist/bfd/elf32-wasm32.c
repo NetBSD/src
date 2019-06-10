@@ -103,26 +103,29 @@ elf32_wasm32_rtype_to_howto (bfd *abfd, unsigned r_type)
   if (i >= ARRAY_SIZE (elf32_wasm32_howto_table))
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid relocation type %d"),
-			  abfd, (int) r_type);
-      i = R_WASM32_NONE;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
 
   if (elf32_wasm32_howto_table[i].type != r_type)
     return NULL;
 
-  return &elf32_wasm32_howto_table[i];
+  return elf32_wasm32_howto_table + i;
 }
 
 /* Translate the ELF-internal relocation RELA into CACHE_PTR.  */
 
-static void
-elf32_wasm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+elf32_wasm32_info_to_howto_rela (bfd *abfd,
 				arelent *cache_ptr,
 				Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
+
   cache_ptr->howto = elf32_wasm32_rtype_to_howto (abfd, r_type);
+  return cache_ptr->howto != NULL;
 }
 
 #define ELF_ARCH		bfd_arch_wasm32

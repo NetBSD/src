@@ -136,9 +136,6 @@ Necessary when generating manpages from Texinfo manuals.
 Used by various scripts to generate some files included in SVN (mainly
 Unicode-related and rarely changing) from source tables.
 
-     <br><dt><samp><span class="command">jar</span></samp>, or InfoZIP (<samp><span class="command">zip</span></samp> and <samp><span class="command">unzip</span></samp>)<dd>
-Necessary to build libgcj, the GCJ runtime.
-
 </dl>
 
    <p>Several support libraries are necessary to build GCC, some are required,
@@ -157,7 +154,9 @@ subdirectory of your GCC sources named <samp><span class="file">gmp</span></samp
 together with GCC.  Alternatively, if GMP is already installed but it
 is not in your library search path, you will have to configure with the
 <samp><span class="option">--with-gmp</span></samp> configure option.  See also <samp><span class="option">--with-gmp-lib</span></samp>
-and <samp><span class="option">--with-gmp-include</span></samp>.
+and <samp><span class="option">--with-gmp-include</span></samp>. 
+The in-tree build is only supported with the GMP version that
+download_prerequisites installs.
 
      <br><dt>MPFR Library version 2.4.2 (or later)<dd>
 Necessary to build GCC.  It can be downloaded from
@@ -166,7 +165,9 @@ in a subdirectory of your GCC sources named <samp><span class="file">mpfr</span>
 built together with GCC.  Alternatively, if MPFR is already installed
 but it is not in your default library search path, the
 <samp><span class="option">--with-mpfr</span></samp> configure option should be used.  See also
-<samp><span class="option">--with-mpfr-lib</span></samp> and <samp><span class="option">--with-mpfr-include</span></samp>.
+<samp><span class="option">--with-mpfr-lib</span></samp> and <samp><span class="option">--with-mpfr-include</span></samp>. 
+The in-tree build is only supported with the MPFR version that
+download_prerequisites installs.
 
      <br><dt>MPC Library version 0.8.1 (or later)<dd>
 Necessary to build GCC.  It can be downloaded from
@@ -175,9 +176,11 @@ is found in a subdirectory of your GCC sources named <samp><span class="file">mp
 will be built together with GCC.  Alternatively, if MPC is already
 installed but it is not in your default library search path, the
 <samp><span class="option">--with-mpc</span></samp> configure option should be used.  See also
-<samp><span class="option">--with-mpc-lib</span></samp> and <samp><span class="option">--with-mpc-include</span></samp>.
+<samp><span class="option">--with-mpc-lib</span></samp> and <samp><span class="option">--with-mpc-include</span></samp>. 
+The in-tree build is only supported with the MPC version that
+download_prerequisites installs.
 
-     <br><dt>isl Library version 0.16, 0.15, or 0.14.<dd>
+     <br><dt>isl Library version 0.15 or later.<dd>
 Necessary to build GCC with the Graphite loop optimizations. 
 It can be downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a>. 
 If an isl source distribution is found
@@ -271,24 +274,6 @@ Useful when submitting patches for the GCC source code.
      <br><dt>patch version 2.5.4 (or later)<dd>
 Necessary when applying patches, created with <samp><span class="command">diff</span></samp>, to one's
 own sources.
-
-     <br><dt>ecj1<dt>gjavah<dd>
-If you wish to modify <samp><span class="file">.java</span></samp> files in libjava, you will need to
-configure with <samp><span class="option">--enable-java-maintainer-mode</span></samp>, and you will need
-to have executables named <samp><span class="command">ecj1</span></samp> and <samp><span class="command">gjavah</span></samp> in your path. 
-The <samp><span class="command">ecj1</span></samp> executable should run the Eclipse Java compiler via
-the GCC-specific entry point.  You can download a suitable jar from
-<a href="ftp://sourceware.org/pub/java/">ftp://sourceware.org/pub/java/</a>, or by running the script
-<samp><span class="command">contrib/download_ecj</span></samp>.
-
-     <br><dt>antlr.jar version 2.7.1 (or later)<dt>antlr binary<dd>
-If you wish to build the <samp><span class="command">gjdoc</span></samp> binary in libjava, you will
-need to have an <samp><span class="file">antlr.jar</span></samp> library available. The library is
-searched for in system locations but can be specified with
-<samp><span class="option">--with-antlr-jar=</span></samp> instead.  When configuring with
-<samp><span class="option">--enable-java-maintainer-mode</span></samp>, you will need to have one of
-the executables named <samp><span class="command">cantlr</span></samp>, <samp><span class="command">runantlr</span></samp> or
-<samp><span class="command">antlr</span></samp> in your path.
 
 </dl>
 

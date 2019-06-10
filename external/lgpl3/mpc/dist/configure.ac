@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014, 2015 INRIA
+# Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014, 2016, 2017 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -20,11 +20,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(mpc, 1.0.3, mpc-discuss@lists.gforge.inria.fr)
+AC_INIT(mpc, 1.1.0, mpc-discuss@lists.gforge.inria.fr)
 AC_CONFIG_SRCDIR([src/mpc-impl.h])
 AC_CONFIG_HEADER([config.h])
 
-AM_INIT_AUTOMAKE([1.9 -Wall -Werror])
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
 USER_CC=$CC
@@ -135,7 +135,7 @@ fi
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([locale.h inttypes.h stdint.h limits.h unistd.h sys/time.h])
+AC_CHECK_HEADERS([locale.h inttypes.h stdint.h limits.h unistd.h sys/time.h sys/resource.h])
 AC_HEADER_TIME
 MPC_COMPLEX_H
 
@@ -144,7 +144,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 
 # Checks for libraries.
-AC_CHECK_FUNCS([gettimeofday localeconv setlocale])
+AC_CHECK_FUNCS([gettimeofday localeconv setlocale getrusage])
 AC_CHECK_FUNCS([dup dup2],,
         [AC_DEFINE([MPC_NO_STREAM_REDIRECTION],1,[Do not check mpc_out_str on stdout])])
 
@@ -165,10 +165,26 @@ AC_LINK_IFELSE(
         AC_MSG_ERROR([libmpfr not found or uses a different ABI (including static vs shared).])
         ])
 
+AC_MSG_CHECKING(for mpfr_fmma)
+LIBS="-lmpfr $LIBS"
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+                [[#include "mpfr.h"]],
+                [[mpfr_t x; mpfr_fmma (x, x, x, x, x, 0);]]
+        )],
+        [
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_MPFR_FMMA, 1, [mpfr_fmma is present])
+	],
+        [
+        AC_MSG_RESULT(no)
+	AC_DEFINE(HAVE_MPFR_FMMA, 0, [mpfr_fmma	is not present])
+        ])
+
 # Check for a recent GMP
 # We only guarantee that with a *functional* and recent enough GMP version,
 # MPC will compile; we do not guarantee that GMP will compile.
-# In particular fat builds are broken in GMP 4.3.2 and GMP 5.0.0
+# In particular fat builds are broken in GMP 5.0.0
 # (at least on 64-bit Core 2 under GNU/Linux),
 # see http://gmplib.org/list-archives/gmp-bugs/2011-August/002345.html.
 AC_MSG_CHECKING(for recent GMP)
@@ -176,34 +192,33 @@ AC_COMPILE_IFELSE(
         [AC_LANG_SOURCE(
         [[
 #include "gmp.h"
-#if (__GNU_MP_VERSION*100 + __GNU_MP_VERSION_MINOR*10 + __GNU_MP_VERSION_PATCHLEVEL < 432)
-# error "Minimal GMP version is 4.3.2"
+#if (__GNU_MP_VERSION*100 + __GNU_MP_VERSION_MINOR*10 + __GNU_MP_VERSION_PATCHLEVEL < 500)
+# error "Minimal GMP version is 5.0.0"
 error
 #endif
         ]])],
         [AC_MSG_RESULT(yes)],
         [
         AC_MSG_RESULT(no)
-        AC_MSG_ERROR([GMP version >= 4.3.2 required])
+        AC_MSG_ERROR([GMP version >= 5.0.0 required])
         ])
 
-# Check for a recent MPFR: we require MPFR 2.4.2 so that the tests
-# in log.dat pass
+# Check for a recent MPFR: we require MPFR 3.0.0 for MPC_RNDA
 # The same remark as above for GMP applies.
 AC_MSG_CHECKING(for recent MPFR)
 AC_COMPILE_IFELSE(
         [AC_LANG_SOURCE(
         [[
 #include "mpfr.h"
-#if (MPFR_VERSION < MPFR_VERSION_NUM (2,4,2))
-# error "Minimal MPFR version is 2.4.2"
+#if (MPFR_VERSION < MPFR_VERSION_NUM (3,0,0))
+# error "Minimal MPFR version is 3.0.0"
 error
 #endif
         ]])],
         [AC_MSG_RESULT(yes)],
         [
          AC_MSG_RESULT(no)
-         AC_MSG_ERROR([MPFR version >= 2.4.2 required])
+         AC_MSG_ERROR([MPFR version >= 3.0.0 required])
          ])
 
 # Check for logging feature
@@ -238,5 +253,5 @@ AC_DEFINE_UNQUOTED([MPC_GCC_VERSION], ["$GCC_VERSION"], [Version of gcc])
 # Looks for short git hash if the version string contains "dev"
 MPC_GITVERSION
 
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile doc/Makefile tools/Makefile tools/bench/Makefile])
 AC_OUTPUT

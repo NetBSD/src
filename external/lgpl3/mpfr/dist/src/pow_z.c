@@ -1,6 +1,6 @@
 /* mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -52,7 +52,7 @@ mpfr_pow_pos_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd, int cr)
     return mpfr_set (y, x, rnd);
 
   absz[0] = z[0];
-  SIZ (absz) = ABS(SIZ(absz)); /* Hack to get abs(z) */
+  SIZ (absz) = ABSIZ (absz); /* Hack to get abs(z) */
   MPFR_MPZ_SIZEINBASE2 (size_z, z);
 
   /* round toward 1 (or -1) to avoid spurious overflow or underflow,
@@ -128,7 +128,7 @@ mpfr_pow_pos_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd, int cr)
           MPFR_ASSERTD (mpfr_cmp_si_2exp (x, MPFR_SIGN (x),
                                           MPFR_EXP (x) - 1) != 0);
           mpfr_init2 (y2, 2);
-          mpfr_init2 (zz, ABS (SIZ (z)) * GMP_NUMB_BITS);
+          mpfr_init2 (zz, ABSIZ (z) * GMP_NUMB_BITS);
           inexact = mpfr_set_z (zz, z, MPFR_RNDN);
           MPFR_ASSERTN (inexact == 0);
           inexact = mpfr_pow_general (y2, x, zz, rnd, 1,
@@ -211,7 +211,7 @@ mpfr_pow_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd)
             {
               /* 0^(-n) if +/- INF */
               MPFR_SET_INF (y);
-              mpfr_set_divby0 ();
+              MPFR_SET_DIVBY0 ();
             }
           if (MPFR_LIKELY (MPFR_IS_POS (x) || mpz_even_p (z)))
             MPFR_SET_POS (y);
@@ -280,13 +280,13 @@ mpfr_pow_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd)
       Nt = Nt + size_z + 3 + MPFR_INT_CEIL_LOG2 (Nt);
       /* ensures Nt >= bits(z)+2 */
 
-      /* initialise of intermediary variable */
+      /* initialize of intermediary variable */
       mpfr_init2 (t, Nt);
 
       /* We will compute rnd(rnd1(1/x) ^ (-z)), where rnd1 is the rounding
          toward sign(x), to avoid spurious overflow or underflow. */
       rnd1 = MPFR_EXP (x) < 1 ? MPFR_RNDZ :
-        (MPFR_SIGN (x) > 0 ? MPFR_RNDU : MPFR_RNDD);
+        (MPFR_IS_POS (x) ? MPFR_RNDU : MPFR_RNDD);
 
       MPFR_ZIV_INIT (loop, Nt);
       for (;;)
@@ -336,7 +336,7 @@ mpfr_pow_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd)
                   MPFR_ASSERTD (mpfr_cmp_si_2exp (x, MPFR_SIGN (x),
                                                   MPFR_EXP (x) - 1) != 0);
                   mpfr_init2 (y2, 2);
-                  mpfr_init2 (zz, ABS (SIZ (z)) * GMP_NUMB_BITS);
+                  mpfr_init2 (zz, ABSIZ (z) * GMP_NUMB_BITS);
                   inexact = mpfr_set_z (zz, z, MPFR_RNDN);
                   MPFR_ASSERTN (inexact == 0);
                   inexact = mpfr_pow_general (y2, x, zz, rnd, 1,
@@ -357,7 +357,7 @@ mpfr_pow_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t rnd)
           if (MPFR_LIKELY (MPFR_CAN_ROUND (t, Nt - size_z - 2, MPFR_PREC (y),
                                            rnd)))
             break;
-          /* actualisation of the precision */
+          /* actualization of the precision */
           MPFR_ZIV_NEXT (loop, Nt);
           mpfr_set_prec (t, Nt);
         }

@@ -1,7 +1,7 @@
 /* BFD back-end for AIX on PS/2 core files.
    This was based on trad-core.c, which was written by John Gilmore of
-        Cygnus Support.
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+	Cygnus Support.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -246,12 +246,24 @@ const bfd_target core_aix386_vec =
   NO_GET, NO_GETS, NO_PUT,
   NO_GET, NO_GETS, NO_PUT,	/* hdrs */
 
-  {_bfd_dummy_target, _bfd_dummy_target,
-   _bfd_dummy_target, aix386_core_file_p},
-  {bfd_false, bfd_false,	/* bfd_create_object */
-   bfd_false, bfd_false},
-  {bfd_false, bfd_false,	/* bfd_write_contents */
-   bfd_false, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    _bfd_dummy_target,
+    _bfd_dummy_target,
+    aix386_core_file_p
+  },
+  {				/* bfd_create_object */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
 
   BFD_JUMP_TABLE_GENERIC (_bfd_generic),
   BFD_JUMP_TABLE_COPY (_bfd_generic),

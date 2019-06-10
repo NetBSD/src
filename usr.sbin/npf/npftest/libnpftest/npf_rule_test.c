@@ -1,7 +1,5 @@
-/*	$NetBSD: npf_rule_test.c,v 1.14 2017/01/29 04:12:52 christos Exp $	*/
-
 /*
- * NPF ruleset test.
+ * NPF ruleset tests.
  *
  * Public Domain.
  */
@@ -12,6 +10,9 @@
 
 #include "npf_impl.h"
 #include "npf_test.h"
+
+#define	CHECK_TRUE(x)	\
+    if (!(x)) { printf("FAIL: %s line %d\n", __func__, __LINE__); return 0; }
 
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH
@@ -74,7 +75,7 @@ fill_packet(const struct test_case *t)
 }
 
 static int
-npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
+npf_rule_raw_test(struct mbuf *m, ifnet_t *ifp, int di)
 {
 	npf_t *npf = npf_getkernctx();
 	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf };
@@ -100,14 +101,14 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 }
 
 static int
-npf_test_case(u_int i, bool verbose)
+npf_test_case(unsigned i)
 {
 	const struct test_case *t = &test_cases[i];
 	ifnet_t *ifp = npf_test_getif(t->ifname);
 	int error;
 
 	struct mbuf *m = fill_packet(t);
-	error = npf_rule_raw_test(verbose, m, ifp, t->di);
+	error = npf_rule_raw_test(m, ifp, t->di);
 	m_freem(m);
 	return error;
 }
@@ -116,12 +117,11 @@ static npf_rule_t *
 npf_blockall_rule(void)
 {
 	npf_t *npf = npf_getkernctx();
-	prop_dictionary_t rldict;
+	nvlist_t *rule = nvlist_create(0);
 
-	rldict = prop_dictionary_create();
-	prop_dictionary_set_uint32(rldict, "attr",
+	nvlist_add_number(rule, "attr",
 	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_DYNAMIC);
-	return npf_rule_alloc(npf, rldict);
+	return npf_rule_alloc(npf, rule);
 }
 
 bool
@@ -130,7 +130,6 @@ npf_rule_test(bool verbose)
 	npf_t *npf = npf_getkernctx();
 	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
-	bool fail = false;
 	uint64_t id;
 	int error;
 
@@ -145,7 +144,7 @@ npf_rule_test(bool verbose)
 		}
 
 		struct mbuf *m = fill_packet(t);
-		error = npf_rule_raw_test(verbose, m, ifp, t->di);
+		error = npf_rule_raw_test(m, ifp, t->di);
 		serror = npf_packet_handler(npf, &m, ifp, t->di);
 
 		if (m) {
@@ -153,38 +152,38 @@ npf_rule_test(bool verbose)
 		}
 
 		if (verbose) {
-			printf("Rule test %d, expected %d (stateful) and %d \n"
-			    "-> returned %d and %d.\n",
+			printf("rule test %d:\texpected %d (stateful) and %d\n"
+			    "\t\t-> returned %d and %d\n",
 			    i + 1, t->stateful_ret, t->ret, serror, error);
 		}
-		fail |= (serror != t->stateful_ret || error != t->ret);
+		CHECK_TRUE(serror == t->stateful_ret && error == t->ret);
 	}
 
 	/*
 	 * Test dynamic NPF rules.
 	 */
 
-	error = npf_test_case(0, verbose);
-	assert(error == RESULT_PASS);
+	error = npf_test_case(0);
+	CHECK_TRUE(error == RESULT_PASS);
 
 	npf_config_enter(npf);
 	rlset = npf_config_ruleset(npf);
 
 	rl = npf_blockall_rule();
 	error = npf_ruleset_add(rlset, "test-rules", rl);
-	fail |= error != 0;
+	CHECK_TRUE(error == 0);
 
-	error = npf_test_case(0, verbose);
-	fail |= (error != RESULT_BLOCK);
+	error = npf_test_case(0);
+	CHECK_TRUE(error == RESULT_BLOCK);
 
 	id = npf_rule_getid(rl);
 	error = npf_ruleset_remove(rlset, "test-rules", id);
-	fail |= error != 0;
+	CHECK_TRUE(error == 0);
 
 	npf_config_exit(npf);
 
-	error = npf_test_case(0, verbose);
-	fail |= (error != RESULT_PASS);
+	error = npf_test_case(0);
+	CHECK_TRUE(error == RESULT_PASS);
 
-	return !fail;
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.52 2017/02/08 18:05:25 rin Exp $	*/
+/*	$NetBSD: fsck.h,v 1.52.12.1 2019/06/10 22:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -276,6 +276,7 @@ char	yflag;			/* assume a yes response */
 int	Uflag;			/* resolve user names */
 int	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
+int	zflag;			/* zero unused directory space */
 int	cvtlevel;		/* convert to newer file system format */
 int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */

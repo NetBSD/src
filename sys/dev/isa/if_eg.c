@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.94 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.94.2.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.94 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.94.2.1 2019/06/10 22:07:12 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -452,7 +452,7 @@ egattach(device_t parent, device_t self, void *aux)
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Now we can attach the interface. */
@@ -574,7 +574,7 @@ loop:
 		aprint_error_dev(sc->sc_dev, "no header mbuf\n");
 		panic("egstart");
 	}
-	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
+	len = uimax(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 
@@ -752,7 +752,7 @@ egget(struct eg_softc *sc, void *buf, int totlen)
 			len = MCLBYTES;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), buf, len);
 		buf = (char *)buf + len;
 

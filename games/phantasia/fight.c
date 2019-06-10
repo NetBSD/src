@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.13 2009/08/31 08:27:16 dholland Exp $	*/
+/*	$NetBSD: fight.c,v 1.13.46.1 2019/06/10 22:05:11 christos Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -1316,6 +1316,7 @@ awardtreasure(void)
 					/* fall through to treasure type 9 if
 					 * no treasure from above */
 
+					/* FALLTHROUGH */
 				case 9:	/* treasure type 9 */
 					switch (whichtreasure) {
 					case 1:
@@ -1326,8 +1327,8 @@ awardtreasure(void)
 							++Player.p_crowns;
 							break;
 						}
-						/* fall through otherwise */
 
+						/* FALLTHROUGH */
 					case 2:
 						addstr("You've been blessed!\n");
 						Player.p_blessing = TRUE;

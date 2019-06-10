@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.357 2018/05/28 21:04:38 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.357.2.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357 2018/05/28 21:04:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.1 2019/06/10 22:09:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357 2018/05/28 21:04:38 chs Exp $")
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -971,7 +970,7 @@ ffs_superblock_validate(struct fs *fs)
 	 * XXX: these values are just zero-checked to prevent obvious
 	 * bugs. We need more strict checks.
 	 */
-	if (fs->fs_size == 0)
+	if (fs->fs_size == 0 && fs->fs_old_size == 0)
 		return 0;
 	if (fs->fs_cssize == 0)
 		return 0;
@@ -2092,7 +2091,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
  */
 int
 ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 	ino_t ino;
@@ -2335,7 +2334,7 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 	void *space;
 	int i, size, error = 0, allerror = 0;
 
-	UFS_WAPBL_JLOCK_ASSERT(mp);
+	UFS_WAPBL_JLOCK_ASSERT(mp->um_mountp);
 
 	allerror = ffs_sbupdate(mp, waitfor);
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);

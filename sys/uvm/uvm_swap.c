@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.177.2.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177.2.1 2019/06/10 22:09:58 christos Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -708,7 +708,7 @@ out:
  * ensure it would fit in the stackgap in any case.
  */
 int
-uvm_swap_stats(char *ptr, int misc, 
+uvm_swap_stats(char *ptr, int misc,
     void (*f)(void *, const struct swapent *), size_t len,
     register_t *retval)
 {
@@ -744,6 +744,7 @@ uvm_swap_stats(char *ptr, int misc,
 			inuse = btodb((uint64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
 
+			memset(&sep, 0, sizeof(sep));
 			swapent_cvt(&sep, sdp, inuse);
 			if (f)
 				(*f)(&sep, &sep);

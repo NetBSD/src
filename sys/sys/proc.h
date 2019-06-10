@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.348 2018/05/09 19:55:35 kre Exp $	*/
+/*	$NetBSD: proc.h,v 1.348.2.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -150,6 +150,8 @@ struct emul {
 	int		e_nsysent;	/* Number of system call entries */
 #endif
 	struct sysent	*e_sysent;	/* System call array */
+	const uint32_t	*e_nomodbits;	/* sys_nosys/sys_nomodule flags
+					 * for syscall_disestablish() */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	struct sc_autoload *e_sc_autoload;	/* List of autoloadable syscalls */
@@ -314,7 +316,6 @@ struct proc {
 	pid_t 		p_vfpid_done;	/* :: vforked done pid */
 	lwpid_t		p_lwp_created;	/* :: lwp created */
 	lwpid_t		p_lwp_exited;	/* :: lwp exited */
-	u_int		p_nsems;	/* Count of semaphores */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
@@ -336,7 +337,6 @@ struct proc {
 
 	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	u_int		p_pax;		/* :: PAX flags */
-
 	int		p_xexit;	/* p: exit code */
 /*
  * End area that is copied on creation
@@ -376,6 +376,7 @@ struct proc {
 #define	PK_SYSTEM	0x00000002 /* System process (kthread) */
 #define	PK_SYSVSEM	0x00000004 /* Used SysV semaphores */
 #define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
+#define	PK_KMEM		0x00000200 /* Has kmem access */
 #define	PK_EXEC		0x00004000 /* Process called exec */
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
@@ -535,6 +536,7 @@ void	cpu_spawn_return(struct lwp*);
 void	syscall_intern(struct proc *);
 #endif
 
+void	md_child_return(struct lwp *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);

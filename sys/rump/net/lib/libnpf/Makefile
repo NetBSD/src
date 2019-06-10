@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.20 2017/01/03 03:47:51 christos Exp $
+#	$NetBSD: Makefile,v 1.20.16.1 2019/06/10 22:09:54 christos Exp $
 #
 # Public Domain.
 #
 
 NOLINT=		# defined
+S=${.CURDIR}/../../../../
 
-.PATH:	${.CURDIR}/../../../../net/npf
+.PATH:	${S}/net/npf ${S}/external/bsd/libnv/dist
+
 
 LIB=	rumpnet_npf
 COMMENT=NPF packet filter
@@ -17,6 +19,8 @@ SRCS+=	npf_ruleset.c npf_conn.c npf_conndb.c npf_rproc.c
 SRCS+=	npf_state.c npf_state_tcp.c npf_tableset.c
 SRCS+=	lpm.c npf_sendpkt.c npf_worker.c npf_os.c npf_ifaddr.c
 
+SRCS+=	nvlist.c nvpair.c nv_kern_netbsd.c dnvlist.c
+
 SRCS+=	if_npflog.c
 
 SRCS+=	npf_alg_icmp.c
@@ -26,6 +30,8 @@ SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
 SRCS+=	npf_component.c
 
 .include <bsd.own.mk>
+
+CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .if ${RUMP_NPF_TESTING:Uyes} == "yes"
 CPPFLAGS+=	-D_NPF_TESTING

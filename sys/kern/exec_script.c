@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.75 2018/04/27 18:33:24 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.75.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.75 2018/04/27 18:33:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.75.2.1 2019/06/10 22:09:03 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_script.h"
+#endif
+
+#ifdef _KERNEL_OPT
+#include "opt_script.h"
+#endif
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -141,7 +149,7 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	 * Check that the shell spec is terminated by a newline, and that
 	 * it isn't too large.
 	 */
-	hdrlinelen = min(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
+	hdrlinelen = uimin(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
 	    cp++) {
 		if (*cp == '\n') {

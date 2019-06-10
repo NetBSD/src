@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.239 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.239.4.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.239 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.239.4.1 2019/06/10 22:09:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -935,7 +935,8 @@ ufs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, ap->a_vpp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL,
+	    ap->a_vpp);
 	if (error)
 		goto out;
 	error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE);
@@ -1267,18 +1268,27 @@ ufs_readdir(void *v)
 	}
 
 	/* round start and end down to block boundaries */
-	physstart = startoffset & ~(off_t)(ump->um_dirblksiz - 1);
-	physend = endoffset & ~(off_t)(ump->um_dirblksiz - 1);
-	skipstart = startoffset - physstart;
-	dropend = endoffset - physend;
+	physstart = rounddown2(startoffset, ump->um_dirblksiz);
+	physend = rounddown2(endoffset, ump->um_dirblksiz);
 
-	if (callerbytes - dropend < _DIRENT_MINSIZE(rawdp)) {
-		/* no room for even one struct direct */
+	if (physstart >= physend) {
+		/* Need at least one block */
 		return EINVAL;
 	}
 
+	skipstart = startoffset - physstart;
+	dropend = endoffset - physend;
+
 	/* how much to actually read */
-	rawbufmax = callerbytes + skipstart - dropend;
+	rawbufmax = callerbytes + skipstart;
+	if (rawbufmax < callerbytes)
+		return EINVAL;
+	rawbufmax -= dropend;
+
+	if (rawbufmax < _DIRENT_MINSIZE(rawdp)) {
+		/* no room for even one struct direct */
+		return EINVAL;
+	}
 
 	/* read it */
 	rawbuf = kmem_alloc(rawbufmax, KM_SLEEP);
@@ -1783,7 +1793,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 
 	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, &tvp);
 	if (error)
 		return error;
 	error = vn_lock(tvp, LK_EXCLUSIVE);

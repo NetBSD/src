@@ -864,8 +864,8 @@ tpoff (struct bfd_link_info *info, bfd_vma address)
 			 elf_hash_table (info)->tls_sec->alignment_power));
 }
 
-static void
-metag_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+metag_info_to_howto_rela (bfd *abfd,
 			  arelent *cache_ptr,
 			  Elf_Internal_Rela *dst)
 {
@@ -875,10 +875,13 @@ metag_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_METAG_MAX)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid METAG reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = & elf_metag_howto_table [r_type];
+  return TRUE;
 }
 
 static reloc_howto_type *
@@ -1180,7 +1183,7 @@ metag_add_stub (const char *stub_name,
   if (hsh == NULL)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: cannot create stub entry %s"),
+      _bfd_error_handler (_("%pB: cannot create stub entry %s"),
 			  section->owner, stub_name);
       return NULL;
     }
@@ -1857,10 +1860,10 @@ elf_metag_relocate_section (bfd *output_bfd,
 			/* We don't support changing the TLS model.  */
 			/* PR 20675 */
 			if (bfd_link_pic (info))
-			  _bfd_error_handler (_("%B(%A): multiple TLS models are not supported"),
+			  _bfd_error_handler (_("%pB(%pA): multiple TLS models are not supported"),
 					      input_bfd, input_section);
 			else
-			  _bfd_error_handler (_("%B(%A): shared library symbol %s encountered whilst performing a static link"),
+			  _bfd_error_handler (_("%pB(%pA): shared library symbol %s encountered whilst performing a static link"),
 					      input_bfd, input_section, name);
 			return FALSE;
 		      }
@@ -1913,8 +1916,10 @@ elf_metag_relocate_section (bfd *output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): %s relocation not permitted in shared object"),
-		 input_bfd, input_section, rel->r_offset, howto->name);
+		(_("%pB(%pA+%#" PRIx64 "): "
+		   "%s relocation not permitted in shared object"),
+		 input_bfd, input_section, (uint64_t) rel->r_offset,
+		 howto->name);
 	      return FALSE;
 	    }
 	  else
@@ -2249,7 +2254,7 @@ elf_metag_check_relocs (bfd *abfd,
 		name = bfd_elf_sym_name (abfd, symtab_hdr, isym, NULL);
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: relocation %s against `%s' can not be used when making a shared object; recompile with -fPIC"),
+		(_("%pB: relocation %s against `%s' can not be used when making a shared object; recompile with -fPIC"),
 		 abfd, elf_metag_howto_table[r_type].name, name);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
@@ -2789,7 +2794,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 
       info->flags |= DF_TEXTREL;
       info->callbacks->minfo
-	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
 	 sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
@@ -4141,7 +4146,7 @@ elf_metag_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_finish_dynamic_sections	elf_metag_finish_dynamic_sections
 #define elf_backend_size_dynamic_sections	elf_metag_size_dynamic_sections
 #define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+	_bfd_elf_omit_section_dynsym_all
 #define elf_backend_post_process_headers	elf_metag_post_process_headers
 #define elf_backend_reloc_type_class		elf_metag_reloc_type_class
 #define elf_backend_copy_indirect_symbol	elf_metag_copy_indirect_symbol

@@ -1,0 +1,4 @@
+# $NetBSD: files.pci,v 1.1.6.2 2019/06/10 22:05:55 christos Exp $
+
+# PCI MSI/MSI-X support
+file	arch/arm/pci/pci_msi_machdep.c		pci & __have_pci_msi_msix

@@ -1,6 +1,6 @@
 /* Target resumption definitions and prototypes.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RESUME_H
-#define RESUME_H
+#ifndef TARGET_RESUME_H
+#define TARGET_RESUME_H
 
 /* Ways to "resume" a thread.  */
 
@@ -34,4 +34,4 @@ enum resume_kind
   resume_stop
 };
 
-#endif /* RESUME_H */
+#endif /* TARGET_RESUME_H */

@@ -426,7 +426,7 @@ gld${EMULATION_NAME}_finish (void)
 
 	  s = spu_elf_check_vma (&link_info);
 	  if (s != NULL && !params.auto_overlay)
-	    einfo (_("%X%P: %A exceeds local store range\n"), s);
+	    einfo (_("%X%P: %pA exceeds local store range\n"), s);
 	}
       else if (params.auto_overlay)
 	einfo (_("%P: --auto-overlay ignored with zero local store range\n"));
@@ -641,32 +641,51 @@ PARSE_AND_LIST_LONGOPTS='
 
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
-  --plugin                    Make SPU plugin.\n\
-  --no-overlays               No overlay handling.\n\
-  --compact-stubs             Use smaller and possibly slower call stubs.\n\
-  --emit-stub-syms            Add symbols on overlay call stubs.\n\
-  --extra-overlay-stubs       Add stubs on all calls out of overlay regions.\n\
-  --local-store=lo:hi         Valid address range.\n\
-  --stack-analysis            Estimate maximum stack requirement.\n\
-  --emit-stack-syms           Add sym giving stack needed for each func.\n\
+  --plugin                    Make SPU plugin\n"));
+  fprintf (file, _("\
+  --no-overlays               No overlay handling\n"));
+  fprintf (file, _("\
+  --compact-stubs             Use smaller and possibly slower call stubs\n"));
+  fprintf (file, _("\
+  --emit-stub-syms            Add symbols on overlay call stubs\n"));
+  fprintf (file, _("\
+  --extra-overlay-stubs       Add stubs on all calls out of overlay regions\n"));
+  fprintf (file, _("\
+  --local-store=lo:hi         Valid address range\n"));
+  fprintf (file, _("\
+  --stack-analysis            Estimate maximum stack requirement\n"));
+  fprintf (file, _("\
+  --emit-stack-syms           Add sym giving stack needed for each func\n"));
+  fprintf (file, _("\
   --auto-overlay [=filename]  Create an overlay script in filename if\n\
-                              executable does not fit in local store.\n\
-  --auto-relink               Rerun linker using auto-overlay script.\n\
+                                executable does not fit in local store\n"));
+  fprintf (file, _("\
+  --auto-relink               Rerun linker using auto-overlay script\n"));
+  fprintf (file, _("\
   --overlay-rodata            Place read-only data with associated function\n\
-                              code in overlays.\n\
-  --num-regions               Number of overlay buffers (default 1).\n\
-  --region-size               Size of overlay buffers (default 0, auto).\n\
-  --fixed-space=bytes         Local store for non-overlay code and data.\n\
+                                code in overlays\n"));
+  fprintf (file, _("\
+  --num-regions               Number of overlay buffers (default 1)\n"));
+  fprintf (file, _("\
+  --region-size               Size of overlay buffers (default 0, auto)\n"));
+  fprintf (file, _("\
+  --fixed-space=bytes         Local store for non-overlay code and data\n"));
+  fprintf (file, _("\
   --reserved-space=bytes      Local store for stack and heap.  If not specified\n\
-                              ld will estimate stack size and assume no heap.\n\
+                                ld will estimate stack size and assume no heap\n"));
+  fprintf (file, _("\
   --extra-stack-space=bytes   Space for negative sp access (default 2000) if\n\
-                              --reserved-space not given.\n\
-  --soft-icache               Generate software icache overlays.\n\
-  --num-lines                 Number of soft-icache lines (default 32).\n\
-  --line-size                 Size of soft-icache lines (default 1k).\n\
-  --non-ia-text               Allow non-icache code in icache lines.\n\
-  --lrlive-analysis           Scan function prologue for lr liveness.\n"
-		   ));
+                                --reserved-space not given\n"));
+  fprintf (file, _("\
+  --soft-icache               Generate software icache overlays\n"));
+  fprintf (file, _("\
+  --num-lines                 Number of soft-icache lines (default 32)\n"));
+  fprintf (file, _("\
+  --line-size                 Size of soft-icache lines (default 1k)\n"));
+  fprintf (file, _("\
+  --non-ia-text               Allow non-icache code in icache lines\n"));
+  fprintf (file, _("\
+  --lrlive-analysis           Scan function prologue for lr liveness\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -700,7 +719,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    if (*end == 0)
 	      break;
 	  }
-	einfo (_("%P%F: invalid --local-store address range `%s'\''\n"), optarg);
+	einfo (_("%F%P: invalid --local-store address range `%s'\''\n"), optarg);
       }
       break;
 
@@ -736,12 +755,12 @@ PARSE_AND_LIST_ARGS_CASES='
       if (!num_lines_set)
 	params.num_lines = 32;
       else if ((params.num_lines & -params.num_lines) != params.num_lines)
-	einfo (_("%P%F: invalid --num-lines/--num-regions `%u'\''\n"),
+	einfo (_("%F%P: invalid --num-lines/--num-regions `%u'\''\n"),
 	       params.num_lines);
       if (!line_size_set)
 	params.line_size = 1024;
       else if ((params.line_size & -params.line_size) != params.line_size)
-	einfo (_("%P%F: invalid --line-size/--region-size `%u'\''\n"),
+	einfo (_("%F%P: invalid --line-size/--region-size `%u'\''\n"),
 	       params.line_size);
       break;
 
@@ -762,7 +781,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    && (params.ovly_flavour != ovly_soft_icache
 		|| (params.num_lines & -params.num_lines) == params.num_lines))
 	  break;
-	einfo (_("%P%F: invalid --num-lines/--num-regions `%s'\''\n"), optarg);
+	einfo (_("%F%P: invalid --num-lines/--num-regions `%s'\''\n"), optarg);
       }
       break;
 
@@ -775,7 +794,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    && (params.ovly_flavour != ovly_soft_icache
 		|| (params.line_size & -params.line_size) == params.line_size))
 	  break;
-	einfo (_("%P%F: invalid --line-size/--region-size `%s'\''\n"), optarg);
+	einfo (_("%F%P: invalid --line-size/--region-size `%s'\''\n"), optarg);
       }
       break;
 
@@ -784,7 +803,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.auto_overlay_fixed = strtoul (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%P%F: invalid --fixed-space value `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid --fixed-space value `%s'\''\n"), optarg);
       }
       break;
 
@@ -793,7 +812,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.auto_overlay_reserved = strtoul (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%P%F: invalid --reserved-space value `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid --reserved-space value `%s'\''\n"), optarg);
       }
       break;
 
@@ -802,7 +821,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.extra_stack_space = strtol (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%P%F: invalid --extra-stack-space value `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid --extra-stack-space value `%s'\''\n"), optarg);
       }
       break;
 

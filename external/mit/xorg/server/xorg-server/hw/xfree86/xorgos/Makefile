@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2016/08/16 19:09:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.45.14.1 2019/06/10 22:02:49 christos Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -43,7 +43,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
-SRCS.bsd+=	alpha_video.c bsd_ev56.c pm_noop.c agp_noop.c
+SRCS.bsd+=	alpha_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
 .endfor
@@ -71,6 +71,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT  -DUSESTDRES -DHAVE_SYSV_IPC
 .if ${MACHINE} == "cats" || \
     ${MACHINE} == "evbarm" || \
     ${MACHINE} == "hpcarm" || \
+    ${MACHINE} == "iyonix" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || \
     ${MACHINE} == "zaurus"
@@ -159,7 +160,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/Xext \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared \
+		-I${X11SRCDIR.xorg-server}/../include
 .if ${X11DRI} != "no"
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif

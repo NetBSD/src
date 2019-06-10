@@ -1,4 +1,4 @@
-/*	$netBSD: iscsi_main.c,v 1.1.1.1 2011/05/02 07:01:11 agc Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.27.4.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ extern struct cfdriver iscsi_cd;
 #if defined(ISCSI_DEBUG)
 int iscsi_debug_level = ISCSI_DEBUG;
 #endif
+bool iscsi_hex_bignums = false;
 
 bool iscsi_detaching;
 
@@ -383,7 +384,7 @@ map_session(session_t *sess, device_t dev)
 	chan->chan_channel = 0;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE | SCSIPI_CHAN_CANGROW;
 	chan->chan_ntargets = 1;
-	chan->chan_nluns = 16;		/* ToDo: ??? */
+	chan->chan_nluns = 16;
 	chan->chan_id = sess->s_id;
 
 	sess->s_child_dev = config_found(dev, chan, scsiprint);
@@ -618,6 +619,12 @@ SYSCTL_SETUP(sysctl_iscsi_setup, "ISCSI subtree setup")
 		SYSCTL_DESCR("iscsi controls"),
 		NULL, 0, NULL, 0,
 		CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_BOOL, "hexbignums",
+		SYSCTL_DESCR("encode parameters in hex"),
+		NULL, 0,  &iscsi_hex_bignums, 0,
+		CTL_CREATE, CTL_EOL);
 
 #ifdef ISCSI_DEBUG
 	sysctl_createv(clog, 0, &node, NULL,

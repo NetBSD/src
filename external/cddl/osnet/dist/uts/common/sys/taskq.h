@@ -54,6 +54,16 @@ typedef struct taskq taskq_t;
 typedef uintptr_t taskqid_t;
 typedef void (task_func_t)(void *);
 
+#ifdef __NetBSD__
+typedef struct taskq_ent {
+	SIMPLEQ_ENTRY(taskq_ent) tqent_list; /* Task queue. */
+	task_func_t	*tqent_func;	/* Function to run. */
+	void		*tqent_arg;	/* Argument to function above. */
+	unsigned	tqent_dynamic:1; /* Must kmem_free() if true. */
+	unsigned	tqent_queued:1; /* Queued and waiting to run if true. */
+} taskq_ent_t;
+#endif
+
 struct proc;
 
 /*
@@ -89,7 +99,7 @@ taskq_t	*taskq_create_proc(const char *, int, pri_t, int, int,
 taskq_t	*taskq_create_sysdc(const char *, int, int, int,
     struct proc *, uint_t, uint_t);
 taskqid_t taskq_dispatch(taskq_t *, task_func_t, void *, uint_t);
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 void	taskq_dispatch_ent(taskq_t *, task_func_t, void *, uint_t,
     taskq_ent_t *);
 #endif

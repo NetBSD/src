@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.4.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.4.1 2019/06/10 22:05:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
 #include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
@@ -61,8 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 chris
 #include <sys/ras.h>
 #include <sys/ptrace.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
@@ -79,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 chris
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
-
-extern struct pool x86_dbregspl;
 
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
@@ -102,7 +103,12 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 #define x86_64_set_mtrr32(x, y, z)	ENOSYS
 #endif
 
-static int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
+int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
+
+void  netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
+    sig_t catcher, int onstack);
+
+int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #ifdef EXEC_AOUT
 /*
@@ -132,24 +138,22 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	netbsd32_adjust_limits(p);
 
-	l->l_md.md_flags = MDL_COMPAT32;	/* Force iret not sysret */
-	pcb->pcb_flags = PCB_COMPAT32;
-
-	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	fpu_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
+	x86_dbregs_clear(l);
 
-	if (pcb->pcb_dbregs != NULL) {
-		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
-		pcb->pcb_dbregs = NULL;
-	}
-
+	kpreempt_disable();
+	pcb->pcb_flags = PCB_COMPAT32;
 	p->p_flag |= PK_32;
+	l->l_md.md_flags = MDL_COMPAT32;	/* force iret not sysret */
+	cpu_segregs32_zero(l);
+	cpu_fsgs_reload(l, LSEL(LUDATA32_SEL, SEL_UPL),
+	    LSEL(LUDATA32_SEL, SEL_UPL));
+	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	cpu_segregs32_zero(l);
-	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -164,7 +168,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_ss = LSEL(LUDATA32_SEL, SEL_UPL);
 }
 
-static void
+void
 netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
     sig_t catcher, int onstack)
 {
@@ -179,7 +183,7 @@ netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
 #endif
 
 	/* Ensure FP state is sane. */
-	fpu_save_area_reset(l);
+	fpu_sigreset(l);
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -201,96 +205,7 @@ netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
 	}
 }
 
-#ifdef COMPAT_16
-static void
-netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
-	int sig = ksi->ksi_signo;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct netbsd32_sigframe_sigcontext *fp, frame;
-	int onstack, error;
-	struct sigacts *ps = p->p_sigacts;
-
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct netbsd32_sigframe_sigcontext *)
-		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
-	else
-		fp = (struct netbsd32_sigframe_sigcontext *)tf->tf_rsp;
-	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:
-		frame.sf_ra = (uint32_t)(u_long)p->p_sigctx.ps_sigcode;
-		break;
-	case 1:
-		frame.sf_ra = (uint32_t)(u_long)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(l, SIGILL);
-	}
-	frame.sf_signum = sig;
-	frame.sf_code = ksi->ksi_trap;
-	frame.sf_scp = (uint32_t)(u_long)&fp->sf_sc;
-
-	frame.sf_sc.sc_ds = tf->tf_ds & 0xFFFF;
-	frame.sf_sc.sc_es = tf->tf_es & 0xFFFF;
-	frame.sf_sc.sc_fs = tf->tf_fs & 0xFFFF;
-	frame.sf_sc.sc_gs = tf->tf_gs & 0xFFFF;
-
-	frame.sf_sc.sc_eflags = tf->tf_rflags;
-	frame.sf_sc.sc_edi = tf->tf_rdi;
-	frame.sf_sc.sc_esi = tf->tf_rsi;
-	frame.sf_sc.sc_ebp = tf->tf_rbp;
-	frame.sf_sc.sc_ebx = tf->tf_rbx;
-	frame.sf_sc.sc_edx = tf->tf_rdx;
-	frame.sf_sc.sc_ecx = tf->tf_rcx;
-	frame.sf_sc.sc_eax = tf->tf_rax;
-	frame.sf_sc.sc_eip = tf->tf_rip;
-	frame.sf_sc.sc_cs = tf->tf_cs & 0xFFFF;
-	frame.sf_sc.sc_esp = tf->tf_rsp;
-	frame.sf_sc.sc_ss = tf->tf_ss & 0xFFFF;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_err = tf->tf_err;
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-	sendsig_reset(l, sig);
-
-	mutex_exit(p->p_lock);
-	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(p->p_lock);
-
-	if (error != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
-}
-#endif
-
-static void
+int
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -328,6 +243,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		break;
 	}
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint32_t)(uintptr_t)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
 	frame.sf_sip = (uint32_t)(uintptr_t)&fp->sf_si;
@@ -338,7 +254,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);
@@ -356,78 +271,19 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
+
+	return 0;
 }
+
+struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
 
 void
 netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		netbsd32_sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		netbsd32_sendsig_siginfo(ksi, mask);
+
+	MODULE_HOOK_CALL_VOID(netbsd32_sendsig_hook, (ksi, mask),
+	    netbsd32_sendsig_siginfo(ksi, mask));
 }
-
-int
-compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32___sigreturn14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
-	} */
-	struct netbsd32_sigcontext *scp, context;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
-	int error;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = NETBSD32PTR64(SCARG(uap, sigcntxp));
-	if (copyin(scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/*
-	 * Check for security violations.
-	 */
-	error = check_sigcontext32(l, &context);
-	if (error != 0)
-		return error;
-
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
-	tf->tf_ds = context.sc_ds & 0xFFFF;
-	tf->tf_es = context.sc_es & 0xFFFF;
-	cpu_fsgs_reload(l, context.sc_fs, context.sc_gs);
-	tf->tf_rflags = context.sc_eflags;
-	tf->tf_rdi = context.sc_edi;
-	tf->tf_rsi = context.sc_esi;
-	tf->tf_rbp = context.sc_ebp;
-	tf->tf_rbx = context.sc_ebx;
-	tf->tf_rdx = context.sc_edx;
-	tf->tf_rcx = context.sc_ecx;
-	tf->tf_rax = context.sc_eax;
-
-	tf->tf_rip = context.sc_eip;
-	tf->tf_cs = context.sc_cs & 0xFFFF;
-	tf->tf_rsp = context.sc_esp;
-	tf->tf_ss = context.sc_ss & 0xFFFF;
-
-	mutex_enter(p->p_lock);
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(p->p_lock);
-
-	return (EJUSTRETURN);
-}
-
 
 #ifdef COREDUMP
 /*
@@ -480,6 +336,28 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 #endif
 
 int
+netbsd32_ptrace_translate_request(int req)
+{
+
+	switch (req)
+	{
+	case 0 ... PT_FIRSTMACH - 1:	return req;
+	case PT32_STEP:			return PT_STEP;
+	case PT32_GETREGS:		return PT_GETREGS;
+	case PT32_SETREGS:		return PT_SETREGS;
+	case PT32_GETFPREGS:		return PT_GETFPREGS;
+	case PT32_SETFPREGS:		return PT_SETFPREGS;
+	case PT32_GETXMMREGS:		return -1;
+	case PT32_SETXMMREGS:		return -1;
+	case PT32_GETDBREGS:		return PT_GETDBREGS;
+	case PT32_SETDBREGS:		return PT_SETDBREGS;
+	case PT32_SETSTEP:		return PT_SETSTEP;
+	case PT32_CLEARSTEP:		return PT_CLEARSTEP;
+	default:			return -1;
+	}
+}
+
+int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct trapframe *tf = l->l_md.md_regs;
@@ -517,23 +395,19 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 int
 netbsd32_process_read_dbregs(struct lwp *l, struct dbreg32 *regs, size_t *sz)
 {
-#if notyet
-	struct pcb *pcb;
+	struct dbreg regs64;
 
-	pcb = lwp_getpcb(l);
+	x86_dbregs_read(l, &regs64);
+	memset(regs, 0, sizeof(*regs));
+	regs->dr[0] = regs64.dr[0] & 0xffffffff;
+	regs->dr[1] = regs64.dr[1] & 0xffffffff;
+	regs->dr[2] = regs64.dr[2] & 0xffffffff;
+	regs->dr[3] = regs64.dr[3] & 0xffffffff;
 
-	regs->dr[0] = pcb->pcb_dbregs->dr[0] & 0xffffffff;
-	regs->dr[1] = pcb->pcb_dbregs->dr[1] & 0xffffffff;
-	regs->dr[2] = pcb->pcb_dbregs->dr[2] & 0xffffffff;
-	regs->dr[3] = pcb->pcb_dbregs->dr[3] & 0xffffffff;
-
-	regs->dr[6] = pcb->pcb_dbregs->dr[6] & 0xffffffff;
-	regs->dr[7] = pcb->pcb_dbregs->dr[7] & 0xffffffff;
+	regs->dr[6] = regs64.dr[6] & 0xffffffff;
+	regs->dr[7] = regs64.dr[7] & 0xffffffff;
 
 	return 0;
-#else
-	return ENOTSUP;
-#endif
 }
 
 int
@@ -600,23 +474,29 @@ int
 netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
     size_t sz)
 {
-#if notyet
-	struct pcb *pcb;
+	size_t i;
+	struct dbreg regs64;
 
-	pcb = lwp_getpcb(l);
+	/* Check that DR0-DR3 contain user-space address */
+	for (i = 0; i < X86_DBREGS; i++) {
+		if (regs->dr[i] >= VM_MAXUSER_ADDRESS32)
+			return EINVAL;
+	}
 
-	pcb->pcb_dbregs->dr[0] = regs->dr[0];
-	pcb->pcb_dbregs->dr[1] = regs->dr[1];
-	pcb->pcb_dbregs->dr[2] = regs->dr[2];
-	pcb->pcb_dbregs->dr[3] = regs->dr[3];
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE) {
+		return EINVAL;
+	}
 
-	pcb->pcb_dbregs->dr[6] = regs->dr[6];
-	pcb->pcb_dbregs->dr[7] = regs->dr[7];
+	regs64.dr[0] = regs->dr[0];
+	regs64.dr[1] = regs->dr[1];
+	regs64.dr[2] = regs->dr[2];
+	regs64.dr[3] = regs->dr[3];
 
+	regs64.dr[6] = regs->dr[6];
+	regs64.dr[7] = regs->dr[7];
+
+	x86_dbregs_write(l, &regs64);
 	return 0;
-#else
-	return ENOTSUP;
-#endif
 }
 
 int
@@ -1027,7 +907,7 @@ startlwp32(void *arg)
  * These functions perform the needed checks.
  */
 
-static int
+int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
@@ -1115,66 +995,23 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, sz);
 }
 
-#ifdef COMPAT_13
-int
-compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigreturn_args *uap, register_t *retval)
+static const char *
+netbsd32_machine32(void)
 {
-	/* {
-		syscallarg(struct netbsd32_sigcontext13 *) sigcntxp;
-	} */
-	struct proc *p = l->l_proc;
-	struct netbsd32_sigcontext13 *scp, context;
-	struct trapframe *tf;
-	sigset_t mask;
-	int error;
 
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = (struct netbsd32_sigcontext13 *)NETBSD32PTR64(SCARG(uap, sigcntxp));
-	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
-
-	/*
-	 * Check for security violations.
-	 */
-	error = check_sigcontext32(l, (const struct netbsd32_sigcontext *)&context);
-	if (error != 0)
-		return error;
-
-	tf->tf_gs = context.sc_gs & 0xFFFF;
-	tf->tf_fs = context.sc_fs & 0xFFFF;		
-	tf->tf_es = context.sc_es & 0xFFFF;
-	tf->tf_ds = context.sc_ds & 0xFFFF;
-	tf->tf_rflags = context.sc_eflags;
-	tf->tf_rdi = context.sc_edi;
-	tf->tf_rsi = context.sc_esi;
-	tf->tf_rbp = context.sc_ebp;
-	tf->tf_rbx = context.sc_ebx;
-	tf->tf_rdx = context.sc_edx;
-	tf->tf_rcx = context.sc_ecx;
-	tf->tf_rax = context.sc_eax;
-	tf->tf_rip = context.sc_eip;
-	tf->tf_cs = context.sc_cs & 0xFFFF;
-	tf->tf_rsp = context.sc_esp;
-	tf->tf_ss = context.sc_ss & 0xFFFF;
-
-	mutex_enter(p->p_lock);
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	native_sigset13_to_sigset((sigset13_t *)&context.sc_mask, &mask);
-	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(p->p_lock);
-
-	return (EJUSTRETURN);
+	return machine32;
 }
-#endif
+
+void
+netbsd32_machdep_md_init(void)
+{
+
+	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+}
+
+void
+netbsd32_machdep_md_fini(void)
+{
+
+	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
+}

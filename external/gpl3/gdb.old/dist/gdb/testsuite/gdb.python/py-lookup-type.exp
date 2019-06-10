@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2016 Free Software Foundation, Inc.
+# Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +46,6 @@ test_lookup_type "d" "ucent"
 test_lookup_type "fortran" "character"
 
 test_lookup_type "go" "int32"
-
-test_lookup_type "java" "byte"
 
 test_lookup_type "modula-2" "CARDINAL"
 

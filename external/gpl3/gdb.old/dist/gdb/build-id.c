@@ -1,6 +1,6 @@
 /* build-id-related functions.
 
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,14 +67,14 @@ build_id_verify (bfd *abfd, size_t check_len, const bfd_byte *check)
 
 /* See build-id.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
 {
   char *link, *debugdir;
   VEC (char_ptr) *debugdir_vec;
   struct cleanup *back_to;
   int ix;
-  bfd *abfd = NULL;
+  gdb_bfd_ref_ptr abfd;
   int alloc_len;
 
   /* DEBUG_FILE_DIRECTORY/.build-id/ab/cdef */
@@ -127,11 +127,10 @@ build_id_to_debug_bfd (size_t build_id_len, const bfd_byte *build_id)
       if (abfd == NULL)
 	continue;
 
-      if (build_id_verify (abfd, build_id_len, build_id))
+      if (build_id_verify (abfd.get(), build_id_len, build_id))
 	break;
 
-      gdb_bfd_unref (abfd);
-      abfd = NULL;
+      abfd.release ();
     }
 
   do_cleanups (back_to);
@@ -148,25 +147,16 @@ find_separate_debug_file_by_buildid (struct objfile *objfile)
   build_id = build_id_bfd_get (objfile->obfd);
   if (build_id != NULL)
     {
-      bfd *abfd;
-
-      abfd = build_id_to_debug_bfd (build_id->size, build_id->data);
+      gdb_bfd_ref_ptr abfd (build_id_to_debug_bfd (build_id->size,
+						   build_id->data));
       /* Prevent looping on a stripped .debug file.  */
       if (abfd != NULL
-	  && filename_cmp (bfd_get_filename (abfd),
+	  && filename_cmp (bfd_get_filename (abfd.get ()),
 			   objfile_name (objfile)) == 0)
-        {
-	  warning (_("\"%s\": separate debug info file has no debug info"),
-		   bfd_get_filename (abfd));
-	  gdb_bfd_unref (abfd);
-	}
+	warning (_("\"%s\": separate debug info file has no debug info"),
+		 bfd_get_filename (abfd.get ()));
       else if (abfd != NULL)
-	{
-	  char *result = xstrdup (bfd_get_filename (abfd));
-
-	  gdb_bfd_unref (abfd);
-	  return result;
-	}
+	return xstrdup (bfd_get_filename (abfd.get ()));
     }
   return NULL;
 }

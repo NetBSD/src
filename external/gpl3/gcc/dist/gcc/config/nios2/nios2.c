@@ -1,5 +1,5 @@
 /* Target machine subroutines for Altera Nios II.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Jonah Graham (jgraham@altera.com), 
    Will Reece (wreece@altera.com), and Jeff DaSilva (jdasilva@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -28,6 +28,7 @@
 #include "rtl.h"
 #include "tree.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "optabs.h"
 #include "regs.h"
@@ -1415,6 +1416,8 @@ nios2_option_override (void)
 static bool
 nios2_simple_const_p (const_rtx cst)
 {
+  if (!CONST_INT_P (cst))
+    return false;
   HOST_WIDE_INT val = INTVAL (cst);
   return SMALL_INT (val) || SMALL_INT_UNSIGNED (val) || UPPER16_INT (val);
 }
@@ -1492,6 +1495,7 @@ nios2_rtx_costs (rtx x, machine_mode mode ATTRIBUTE_UNUSED,
           *total = COSTS_N_INSNS (1);
           return true;
 	}
+      return false;
 
       default:
         return false;
@@ -1751,6 +1755,8 @@ nios2_alternate_compare_const (enum rtx_code code, rtx op,
 			       enum rtx_code *alt_code, rtx *alt_op,
 			       machine_mode mode)
 {
+  gcc_assert (CONST_INT_P (op));
+
   HOST_WIDE_INT opval = INTVAL (op);
   enum rtx_code scode = signed_condition (code);
   bool dec_p = (scode == LT || scode == GE);
@@ -1786,6 +1792,7 @@ nios2_alternate_compare_const (enum rtx_code code, rtx op,
 static bool
 nios2_valid_compare_const_p (enum rtx_code code, rtx op)
 {
+  gcc_assert (CONST_INT_P (op));
   switch (code)
     {
     case EQ: case NE: case GE: case LT:
@@ -1844,7 +1851,7 @@ nios2_validate_compare (machine_mode mode, rtx *cmp, rtx *op1, rtx *op2)
   if (GET_MODE_CLASS (mode) == MODE_FLOAT)
     return nios2_validate_fpu_compare (mode, cmp, op1, op2, true);
 
-  if (!reg_or_0_operand (*op2, mode))
+  if (CONST_INT_P (*op2) && *op2 != const0_rtx)
     {
       /* Create alternate constant compare.  */
       nios2_alternate_compare_const (code, *op2, &alt_code, &alt_op2, mode);
@@ -1876,8 +1883,11 @@ nios2_validate_compare (machine_mode mode, rtx *cmp, rtx *op1, rtx *op2)
 	  code = alt_code;
 	  *op2 = alt_op2;
 	}
-      *op2 = force_reg (SImode, *op2);
+      *op2 = force_reg (mode, *op2);
     }
+    else if (!reg_or_0_operand (*op2, mode))
+      *op2 = force_reg (mode, *op2);
+    
  check_rebuild_cmp:
   if (code == GT || code == GTU || code == LE || code == LEU)
     {
@@ -2332,7 +2342,8 @@ nios2_emit_move_sequence (rtx *operands, machine_mode mode)
 	    from = nios2_legitimize_constant_address (from);
 	  if (CONSTANT_P (from))
 	    {
-	      emit_insn (gen_rtx_SET (to, gen_rtx_HIGH (Pmode, from)));
+	      emit_insn (gen_rtx_SET (to,
+				      gen_rtx_HIGH (Pmode, copy_rtx (from))));
 	      emit_insn (gen_rtx_SET (to, gen_rtx_LO_SUM (Pmode, to, from)));
 	      set_unique_reg_note (get_last_insn (), REG_EQUAL,
 				   copy_rtx (operands[1]));
@@ -3602,12 +3613,10 @@ nios2_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 }
 
 /* Implement TARGET_INIT_LIBFUNCS.  */
-static void
+static void ATTRIBUTE_UNUSED
 nios2_init_libfuncs (void)
 {
-  /* For Linux, we have access to kernel support for atomic operations.  */
-  if (TARGET_LINUX_ABI)
-    init_sync_libfuncs (UNITS_PER_WORD);
+  init_sync_libfuncs (UNITS_PER_WORD);
 }
 
 
@@ -3817,7 +3826,7 @@ nios2_valid_target_attribute_rec (tree args)
 		}
 	      else
 		{
-		  error ("%<custom-%s=%> is not recognised as FPU instruction",
+		  error ("%<custom-%s=%> is not recognized as FPU instruction",
 			 argstr + 7);
 		  return false;
 		}		
@@ -4557,6 +4566,8 @@ ldstwm_operation_p (rtx op, bool load_p)
 	  if (!split_mem_address (XEXP (mem, 0),
 				  &first_base, &first_offset))
 	    return false;
+	  if (!REG_P (first_base) || !CONST_INT_P (first_offset))
+	    return false;
 	  base_reg = first_base;
 	  inc_p = INTVAL (first_offset) >= 0;
 	}
@@ -4984,9 +4995,6 @@ nios2_adjust_reg_alloc_order (void)
 #undef TARGET_BUILTIN_DECL
 #define TARGET_BUILTIN_DECL nios2_builtin_decl
 
-#undef TARGET_INIT_LIBFUNCS
-#define TARGET_INIT_LIBFUNCS nios2_init_libfuncs
-
 #undef TARGET_FUNCTION_OK_FOR_SIBCALL
 #define TARGET_FUNCTION_OK_FOR_SIBCALL hook_bool_tree_tree_true
 
@@ -5037,6 +5045,9 @@ nios2_adjust_reg_alloc_order (void)
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P nios2_legitimate_address_p
+
+#undef TARGET_LRA_P
+#define TARGET_LRA_P hook_bool_void_false
 
 #undef TARGET_PREFERRED_RELOAD_CLASS
 #define TARGET_PREFERRED_RELOAD_CLASS nios2_preferred_reload_class

@@ -1,6 +1,6 @@
 /* Support for printing D values for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,6 +88,7 @@ d_val_print (struct type *type, int embedded_offset,
 				  stream, recurse, val, options);
 	if (ret == 0)
 	  break;
+	/* Fall through.  */
       default:
 	c_val_print (type, embedded_offset, address, stream,
 		     recurse, val, options);

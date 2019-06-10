@@ -1,6 +1,6 @@
 /* Input functions for reading LTO sections.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -168,7 +168,8 @@ lto_get_section_data (struct lto_file_decl_data *file_data,
     }
 
   lto_check_version (((const lto_header *)data)->major_version,
-		     ((const lto_header *)data)->minor_version);
+		     ((const lto_header *)data)->minor_version,
+		     file_data->file_name);
   return data;
 }
 

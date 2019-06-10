@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 standard_testfile .cc
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug c++}] } {
      return -1
 }
 
@@ -48,7 +48,6 @@ gdb_test "p test3()"    "21"
 gdb_test "p foo3(1.0f)" "21"
 
 gdb_test "p test4()"  "24"
-setup_kfail "gdb/12098" *-*-*
 gdb_test "p foo4(&a)" "24"
 
 gdb_test "p test5()" "26"
@@ -71,7 +70,6 @@ setup_kfail "gdb/12098" *-*-*
 gdb_test "p foo10(amp)" "216"
 
 gdb_test "p test101()"   "218"
-setup_kfail "gdb/12098" *-*-*
 gdb_test "p foo101(\"abc\")" "218"
 
 gdb_test "p test11()"   "32"
@@ -91,5 +89,8 @@ gdb_test "p test14()" "46"
 setup_kfail "gdb/12096" *-*-*
 gdb_test "p foo14(e)" "46"
 
-
-
+gdb_test "p test15 ()" "194"
+gdb_test "p foo15 (c)" "47"
+gdb_test "p foo15 (cc)" "48"
+gdb_test "p foo15 (vc)" "49"
+gdb_test "p foo15 (cvc)" "50"

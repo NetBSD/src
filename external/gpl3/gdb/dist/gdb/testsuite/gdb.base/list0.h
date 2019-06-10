@@ -3,7 +3,7 @@
 extern void bar(int);
 static void foo (int x)
 /* !
-   !
+
    ! */
 {
     bar (x++);

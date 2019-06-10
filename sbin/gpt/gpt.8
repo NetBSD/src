@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.63 2018/05/01 21:16:02 kre Exp $
+.\" $NetBSD: gpt.8,v 1.63.2.1 2019/06/10 22:05:33 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd May 1, 2018
+.Dd April 4, 2019
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -249,8 +249,8 @@ command.
 The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
-.It Nm Ic biosboot Oo Fl A Oc Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc
+.It Nm Ic biosboot Oo Fl A Oc Oo Fl c Ar bootcode Oc Oo Fl b Ar startsec Oc \
+Oo Fl i Ar index Oc Oo Fl L Ar label Oc
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
@@ -279,6 +279,9 @@ The
 option selects the partition by label.
 If there are multiple partitions with the same label, the
 first one found will be used.
+The
+.Fl b
+options selects the partition by start block.
 .\" ==== create ====
 .It Nm Ic create Oo Fl AfP Oc Oo Fl p Ar partitions Oc
 The
@@ -466,7 +469,7 @@ See above for a description of these options.
 Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
-.It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
+.It Nm Ic resize Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc Oo Fl a Ar alignment Oc \
 Oo Fl s Ar size Oc
 The
 .Ic resize
@@ -555,7 +558,8 @@ the partitions fit, as
 will automatically adjust.
 However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
-.It Nm Ic set Fl a Ar attribute Fl i Ar index
+.It Nm Ic set Oo Fl a Ar attribute Oc Oo Fl N Oc Oo Fl i Ar index Oc \
+Oo Fl b Ar startsec Oc
 .It Nm Ic set Fl l
 The
 .Ic set
@@ -567,9 +571,16 @@ The
 .Fl a
 option specifies which attributes to set and may be specified more than once,
 or the attributes can be comma-separated.
+If the
+.Fl N
+option and no
+.Fl a
+option are specified, all attributes are removed.
 The
 .Fl i
-option specifies which entry to update.
+or the
+.Fl b
+option specify which entry to update.
 The possible attributes are
 .Do biosboot Dc ,
 .Do bootme Dc ,
@@ -592,7 +603,7 @@ They may be used by
 .Nx
 in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc
+.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -611,6 +622,8 @@ option the GPT partition type is displayed as an UUID instead of in a
 user friendly form.
 With the
 .Fl i
+or the
+.Fl b
 option, all the details of a particular GPT partition will be displayed.
 The format of this display is subject to change.
 With the
@@ -643,7 +656,7 @@ The
 .Fl l
 flag lists available types.
 .\" ==== unset ====
-.It Nm Ic unset Fl a Ar attribute Fl i Ar index
+.It Nm Ic unset Fl a Ar attribute Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 .It Nm Ic unset Fl l
 The
 .Ic unset
@@ -654,8 +667,11 @@ flag lists all available attributes.
 The
 .Fl a
 option specifies which attributes to unset and may be specified more than once.
+Alternatively a comma separated list of attributes can be used.
 The
 .Fl i
+or the
+.Fl b
 option specifies which entry to update.
 The possible attributes are
 .Do biosboot Dc ,

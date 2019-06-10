@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,21 +27,26 @@
 #include "serial.h"
 #include "gdbthread.h"
 #include "top.h"
+#include "common/gdb_optional.h"
 
 static void
 print_flush (void)
 {
   struct ui *ui = current_ui;
   struct serial *gdb_stdout_serial;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
 
   if (deprecated_error_begin_hook)
     deprecated_error_begin_hook ();
 
-  if (target_supports_terminal_ours ())
+  gdb::optional<target_terminal::scoped_restore_terminal_state> term_state;
+  /* While normally there's always something pushed on the target
+     stack, the NULL check is needed here because we can get here very
+     early during startup, before the target stack is first
+     initialized.  */
+  if (current_top_target () != NULL && target_supports_terminal_ours ())
     {
-      make_cleanup_restore_target_terminal ();
-      target_terminal_ours_for_output ();
+      term_state.emplace ();
+      target_terminal::ours_for_output ();
     }
 
   /* We want all output to appear now, before we print the error.  We
@@ -66,8 +71,6 @@ print_flush (void)
     }
 
   annotate_error_begin ();
-
-  do_cleanups (old_chain);
 }
 
 static void
@@ -133,128 +136,6 @@ exception_fprintf (struct ui_file *file, struct gdb_exception e,
 
       print_exception (file, e);
     }
-}
-
-/* Call FUNC(UIOUT, FUNC_ARGS) but wrapped within an exception
-   handler.  If an exception (enum return_reason) is thrown using
-   throw_exception() than all cleanups installed since
-   catch_exceptions() was entered are invoked, the (-ve) exception
-   value is then returned by catch_exceptions.  If FUNC() returns
-   normally (with a positive or zero return value) then that value is
-   returned by catch_exceptions().  It is an internal_error() for
-   FUNC() to return a negative value.
-
-   See exceptions.h for further usage details.  */
-
-/* MAYBE: cagney/1999-11-05: catch_errors() in conjunction with
-   error() et al. could maintain a set of flags that indicate the
-   current state of each of the longjmp buffers.  This would give the
-   longjmp code the chance to detect a longjmp botch (before it gets
-   to longjmperror()).  Prior to 1999-11-05 this wasn't possible as
-   code also randomly used a SET_TOP_LEVEL macro that directly
-   initialized the longjmp buffers.  */
-
-int
-catch_exceptions (struct ui_out *uiout,
-		  catch_exceptions_ftype *func,
-		  void *func_args,
-		  return_mask mask)
-{
-  return catch_exceptions_with_msg (uiout, func, func_args, NULL, mask);
-}
-
-int
-catch_exceptions_with_msg (struct ui_out *func_uiout,
-		  	   catch_exceptions_ftype *func,
-		  	   void *func_args,
-			   char **gdberrmsg,
-		  	   return_mask mask)
-{
-  struct gdb_exception exception = exception_none;
-  volatile int val = 0;
-  struct ui_out *saved_uiout;
-
-  /* Save and override the global ``struct ui_out'' builder.  */
-  saved_uiout = current_uiout;
-  current_uiout = func_uiout;
-
-  TRY
-    {
-      val = (*func) (current_uiout, func_args);
-    }
-  CATCH (ex, RETURN_MASK_ALL)
-    {
-      exception = ex;
-    }
-  END_CATCH
-
-  /* Restore the global builder.  */
-  current_uiout = saved_uiout;
-
-  if (exception.reason < 0 && (mask & RETURN_MASK (exception.reason)) == 0)
-    {
-      /* The caller didn't request that the event be caught.
-	 Rethrow.  */
-      throw_exception (exception);
-    }
-
-  exception_print (gdb_stderr, exception);
-  gdb_assert (val >= 0);
-  gdb_assert (exception.reason <= 0);
-  if (exception.reason < 0)
-    {
-      /* If caller wants a copy of the low-level error message, make
-	 one.  This is used in the case of a silent error whereby the
-	 caller may optionally want to issue the message.  */
-      if (gdberrmsg != NULL)
-	{
-	  if (exception.message != NULL)
-	    *gdberrmsg = xstrdup (exception.message);
-	  else
-	    *gdberrmsg = NULL;
-	}
-      return exception.reason;
-    }
-  return val;
-}
-
-/* This function is superseded by catch_exceptions().  */
-
-int
-catch_errors (catch_errors_ftype *func, void *func_args,
-	      const char *errstring, return_mask mask)
-{
-  struct gdb_exception exception = exception_none;
-  volatile int val = 0;
-  struct ui_out *saved_uiout;
-
-  /* Save the global ``struct ui_out'' builder.  */
-  saved_uiout = current_uiout;
-
-  TRY
-    {
-      val = func (func_args);
-    }
-  CATCH (ex, RETURN_MASK_ALL)
-    {
-      exception = ex;
-    }
-  END_CATCH
-
-  /* Restore the global builder.  */
-  current_uiout = saved_uiout;
-
-  if (exception.reason < 0 && (mask & RETURN_MASK (exception.reason)) == 0)
-    {
-      /* The caller didn't request that the event be caught.
-	 Rethrow.  */
-      throw_exception (exception);
-    }
-
-  exception_fprintf (gdb_stderr, exception, "%s", errstring);
-  if (exception.reason != 0)
-    return 0;
-  return val;
 }
 
 /* See exceptions.h.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2018/04/01 04:35:05 ryo Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32.2.1 2019/06/10 22:06:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,6 @@
 
 #ifndef	_EVBARM_VMPARAM_H_
 #define	_EVBARM_VMPARAM_H_
-
-#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #ifdef __aarch64__
 
@@ -94,7 +92,5 @@
 #define	VM_FREELIST_DIRECTMAP	2
 
 #endif
-
-#endif /* _KERNEL || _KMEMUSER */
 
 #endif	/* _EVBARM_VMPARAM_H_ */

@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_ioc32.c,v 1.1.1.1.32.1 2019/06/10 22:08:26 christos Exp $	*/
+
 /**
  * \file radeon_ioc32.c
  *
@@ -27,6 +29,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_ioc32.c,v 1.1.1.1.32.1 2019/06/10 22:08:26 christos Exp $");
+
 #include <linux/compat.h>
 
 #include <drm/drmP.h>
@@ -399,7 +404,7 @@ long radeon_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	if (nr < DRM_COMMAND_BASE)
 		return drm_compat_ioctl(filp, cmd, arg);
 
-	if (nr < DRM_COMMAND_BASE + DRM_ARRAY_SIZE(radeon_compat_ioctls))
+	if (nr < DRM_COMMAND_BASE + ARRAY_SIZE(radeon_compat_ioctls))
 		fn = radeon_compat_ioctls[nr - DRM_COMMAND_BASE];
 
 	if (fn != NULL)

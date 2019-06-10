@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -21,9 +21,14 @@ set expfile $testfile.exp
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
 
+if ![gdb_trace_common_supports_arch] {
+    unsupported "no trace-common.h support for arch"
+    return -1
+}
+
 if { [gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug $additional_flags] ] != "" } {
-    untested "failed to compile"
+    # gdb_compile_pthreads provides an appropriate unsupported message.
     return -1
 }
 
@@ -81,7 +86,7 @@ proc break_trace_same_addr { trace_type option } \
 
     gdb_test_no_output "set breakpoint always-inserted ${option}"
 
-    gdb_test "break end" "Breakpoint \[0-9\] at $hex: file.*"
+    gdb_breakpoint "end" qualified
 
     gdb_test "break set_point1" "Breakpoint \[0-9\] at $hex: file.*"
     gdb_test "${trace_type} set_point1" "\(Fast t|T\)racepoint \[0-9\] at $hex: file.*"
@@ -105,6 +110,10 @@ foreach break_always_inserted { "on" "off" } {
 }
 
 step_over_tracepoint "trace"
+
+if {[skip_shlib_tests]} {
+    return 0
+}
 
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]

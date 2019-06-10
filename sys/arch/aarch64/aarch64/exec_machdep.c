@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -62,19 +62,44 @@ aarch64_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 }
 #endif
 
+#if EXEC_ELF32
+int
+aarch64_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
+	char *itp, vaddr_t *start_p)
+{
+	const Elf32_Ehdr * const eh = eh0;
+	const bool elf_aapcs_p =
+	    (eh->e_flags & EF_ARM_EABIMASK) >= EF_ARM_EABI_VER4;
+
+	/* OABI not support */
+	if (!elf_aapcs_p)
+		return ENOEXEC;
+
+	/*
+	 * require aarch32 feature.
+	 * XXX should consider some cluster may have no aarch32?
+	 */
+	if (__SHIFTOUT(l->l_cpu->ci_id.ac_aa64pfr0, ID_AA64PFR0_EL1_EL0) !=
+	    ID_AA64PFR0_EL1_EL0_64_32)
+		return ENOEXEC;
+
+	return 0;
+}
+#endif
+
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
 
-	memset(tf, 0, sizeof(*tf));
+	p->p_flag &= ~PK_32;
 
 	/*
 	 * void __start(void (*cleanup)(void), const Obj_Entry *obj,
 	 *    struct ps_strings *ps_strings);
 	 */
-
+	memset(tf, 0, sizeof(*tf));
 	tf->tf_reg[2] = p->p_psstrp;
 	tf->tf_pc = pack->ep_entry;
 	tf->tf_sp = stack & -16L;

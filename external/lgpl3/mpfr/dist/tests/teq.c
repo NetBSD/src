@@ -1,6 +1,6 @@
 /* Test file for mpfr_eq.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,9 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
 static void
@@ -40,13 +37,13 @@ teq (mpfr_t x)
     {
       mpfr_set (y, x, MPFR_RNDN);
 
-      MPFR_MANT(y) [mx] ^= (mp_limb_t) 1 << px;
+      MPFR_MANT(y) [mx] ^= MPFR_LIMB_ONE << px;
 
       if (mpfr_eq(y, x, k) || !mpfr_eq(y, x, k - 1))
         {
           printf ("Error in eq.\n");
-          printf ("x = "); mpfr_print_binary (x); printf ("\n");
-          printf ("y = "); mpfr_print_binary (y); printf ("\n");
+          printf ("x = "); mpfr_dump (x);
+          printf ("y = "); mpfr_dump (y);
           printf ("k = %lu\n", k);
           printf ("mpfr_eq(y, x, k) = %d\nmpfr_eq(y, x, k - 1) = %d\n",
                   mpfr_eq (y, x, k), mpfr_eq (y, x, k - 1));

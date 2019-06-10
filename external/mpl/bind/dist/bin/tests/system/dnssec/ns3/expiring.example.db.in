@@ -1,0 +1,38 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300	; 5 minutes
+@			IN SOA	mname1. . (
+				2000042407 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns
+			MX	10 mx
+ns			A	10.53.0.3
+mx 		 	A 	10.0.0.30
+
+a			A	10.0.0.1
+b			A	10.0.0.2
+d			A	10.0.0.4
+z			A	10.0.0.26
+a.a.a.a			A	10.0.0.3
+*.wild			A	10.0.0.6
+child			NS	ns2.example.
+insecure		NS	ns.insecure
+ns.insecure 		A	10.53.0.3
+secure			NS	ns.secure
+ns.secure 		A	10.53.0.3
+nsec3			NS	ns.nsec3
+ns.nsec3 		A	10.53.0.3
+optout			NS	ns.optout
+ns.optout 		A	10.53.0.3
+02HC3EM7BDD011A0GMS3HKKJT2IF5VP8 A 10.0.0.17

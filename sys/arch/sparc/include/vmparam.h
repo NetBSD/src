@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2013/01/07 16:59:18 chs Exp $ */
+/*	$NetBSD: vmparam.h,v 1.43.38.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,15 +62,19 @@
 #define	PAGE_SHIFT_SUN4		13
 #define	PAGE_SHIFT_SUN4CM	12
 
-#define	MIN_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4CM)
-#define	MAX_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4)
+#define MAX_PAGE_SHIFT		PAGE_SHIFT_SUN4
+#define MIN_PAGE_SHIFT		PAGE_SHIFT_SUN4CM
+
+#define	MIN_PAGE_SIZE		(1 << MIN_PAGE_SHIFT)
+#define	MAX_PAGE_SIZE		(1 << MAX_PAGE_SHIFT)
 
 #if CPU_NTYPES != 0 && !defined(SUN4)
 #define	PAGE_SHIFT		PAGE_SHIFT_SUN4CM
-#define	PAGE_SIZE		(1 << PAGE_SHIFT)
-#define	PAGE_MASK		(PAGE_SIZE - 1)
 #elif CPU_NTYPES == 1 && defined(SUN4)
 #define	PAGE_SHIFT		PAGE_SHIFT_SUN4
+#endif
+
+#ifdef	PAGE_SHIFT
 #define	PAGE_SIZE		(1 << PAGE_SHIFT)
 #define	PAGE_MASK		(PAGE_SIZE - 1)
 #endif

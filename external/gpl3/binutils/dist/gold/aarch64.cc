@@ -3565,6 +3565,7 @@ const Target::Target_info Target_aarch64<64, false>::aarch64_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -3593,6 +3594,7 @@ const Target::Target_info Target_aarch64<32, false>::aarch64_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -3621,6 +3623,7 @@ const Target::Target_info Target_aarch64<64, true>::aarch64_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -3649,6 +3652,7 @@ const Target::Target_info Target_aarch64<32, true>::aarch64_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // Get the GOT section, creating it if necessary.
@@ -3968,6 +3972,7 @@ Target_aarch64<size, big_endian>::scan_reloc_section_for_stubs(
       const Symbol_value<size> *psymval;
       bool is_defined_in_discarded_section;
       unsigned int shndx;
+      const Symbol* gsym = NULL;
       if (r_sym < local_count)
 	{
 	  sym = NULL;
@@ -4020,7 +4025,6 @@ Target_aarch64<size, big_endian>::scan_reloc_section_for_stubs(
 	}
       else
 	{
-	  const Symbol* gsym;
 	  gsym = object->global_symbol(r_sym);
 	  gold_assert(gsym != NULL);
 	  if (gsym->is_forwarder())
@@ -4061,16 +4065,16 @@ Target_aarch64<size, big_endian>::scan_reloc_section_for_stubs(
       Symbol_value<size> symval2;
       if (is_defined_in_discarded_section)
 	{
+	  std::string name = object->section_name(relinfo->data_shndx);
+
 	  if (comdat_behavior == CB_UNDETERMINED)
-	    {
-	      std::string name = object->section_name(relinfo->data_shndx);
 	      comdat_behavior = default_comdat_behavior.get(name.c_str());
-	    }
+
 	  if (comdat_behavior == CB_PRETEND)
 	    {
 	      bool found;
 	      typename elfcpp::Elf_types<size>::Elf_Addr value =
-		object->map_to_kept_section(shndx, &found);
+		object->map_to_kept_section(shndx, name, &found);
 	      if (found)
 		symval2.set_output_value(value + psymval->input_value());
 	      else
@@ -4078,10 +4082,8 @@ Target_aarch64<size, big_endian>::scan_reloc_section_for_stubs(
 	    }
 	  else
 	    {
-	      if (comdat_behavior == CB_WARNING)
-		gold_warning_at_location(relinfo, i, offset,
-					 _("relocation refers to discarded "
-					   "section"));
+	      if (comdat_behavior == CB_ERROR)
+	        issue_discarded_error(relinfo, i, offset, r_sym, gsym);
 	      symval2.set_output_value(0);
 	    }
 	  symval2.set_no_output_symtab_entry();
@@ -5916,6 +5918,14 @@ Target_aarch64<size, big_endian>::optimize_tls_reloc(bool is_final,
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC:
       // When we already have Local-Exec, there is nothing further we
       // can do.
       return tls::TLSOPT_NONE;
@@ -6262,6 +6272,14 @@ Target_aarch64<size, big_endian>::Scan::local(
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC:
       {
 	layout->set_has_static_tls();
 	bool output_is_shared = parameters->options().shared();
@@ -6679,7 +6697,15 @@ Target_aarch64<size, big_endian>::Scan::global(
     case elfcpp::R_AARCH64_TLSLE_MOVW_TPREL_G0_NC:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12:
-    case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:  // Local executable
+    case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC:  // Local executable
       layout->set_has_static_tls();
       if (parameters->options().shared())
 	gold_error(_("%s: unsupported TLSLE reloc type %u in shared objects."),
@@ -6939,11 +6965,11 @@ Target_aarch64<size, big_endian>::do_finalize_sections(
     }
 
   // Set the size of the _GLOBAL_OFFSET_TABLE_ symbol to the size of
-  // the .got.plt section.
+  // the .got section.
   Symbol* sym = this->global_offset_table_;
   if (sym != NULL)
     {
-      uint64_t data_size = this->got_plt_->current_data_size();
+      uint64_t data_size = this->got_->current_data_size();
       symtab->get_sized_symbol<size>(sym)->set_symsize(data_size);
 
       // If the .got section is more than 0x8000 bytes, we add
@@ -7276,6 +7302,14 @@ Target_aarch64<size, big_endian>::Relocate::relocate(
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC:
     case elfcpp::R_AARCH64_TLSDESC_ADR_PAGE21:
     case elfcpp::R_AARCH64_TLSDESC_LD64_LO12:
     case elfcpp::R_AARCH64_TLSDESC_ADD_LO12:
@@ -7555,6 +7589,14 @@ Target_aarch64<size, big_endian>::Relocate::relocate_tls(
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12:
     case elfcpp::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12:
+    case elfcpp::R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC:
       {
 	gold_assert(tls_segment != NULL);
 	AArch64_address value = psymval->value(object, 0);

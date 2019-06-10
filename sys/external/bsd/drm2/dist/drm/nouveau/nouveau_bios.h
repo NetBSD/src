@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_bios.h,v 1.2.32.1 2019/06/10 22:08:06 christos Exp $	*/
+
 /*
  * Copyright 2007-2008 Nouveau Project
  *

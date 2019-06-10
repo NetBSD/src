@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.36.2.1 2019/06/10 22:10:14 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -9,7 +9,8 @@ GNUHOSTDIST=    ${GDBDIR}/dist
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
-		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-,"
+		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
+		--without-mpfr
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
@@ -59,6 +60,8 @@ MKNATIVE_CONFIGURE_PRESET= \
 	ac_cv_prog_cc_cross=yes \
 	ac_cv_func_fork_works=yes \
 	ac_cv_func_strcoll_works=yes \
+	ac_cv_func_XML_StopParser=yes \
+	ac_cv_libexpat=yes \
 	bash_cv_func_ctype_nonascii=yes \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_func_strcoll_broken=no \

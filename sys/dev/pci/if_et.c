@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.17 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.17.2.1 2019/06/10 22:07:16 christos Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.17 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.17.2.1 2019/06/10 22:07:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -86,8 +86,8 @@ void	et_attach(device_t, device_t, void *);
 int	et_detach(device_t, int flags);
 int	et_shutdown(device_t);
 
-int	et_miibus_readreg(device_t, int, int);
-void	et_miibus_writereg(device_t, int, int, int);
+int	et_miibus_readreg(device_t, int, int, uint16_t *);
+int	et_miibus_writereg(device_t, int, int, uint16_t);
 void	et_miibus_statchg(struct ifnet *);
 
 int	et_init(struct ifnet *ifp);
@@ -189,6 +189,7 @@ et_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
 	int error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -218,7 +219,8 @@ et_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, et_intr, sc);
+	sc->sc_irq_handle = pci_intr_establish_xname(pc, ih, IPL_NET, et_intr,
+	    sc, device_xname(self));
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -265,23 +267,22 @@ et_attach(device_t parent, device_t self, void *aux)
 
 	et_chip_attach(sc);
 
-	sc->sc_miibus.mii_ifp = ifp;
-	sc->sc_miibus.mii_readreg = et_miibus_readreg;
-	sc->sc_miibus.mii_writereg = et_miibus_writereg;
-	sc->sc_miibus.mii_statchg = et_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = et_miibus_readreg;
+	mii->mii_writereg = et_miibus_writereg;
+	mii->mii_statchg = et_miibus_statchg;
 
-	sc->sc_ethercom.ec_mii = &sc->sc_miibus;
-	ifmedia_init(&sc->sc_miibus.mii_media, 0, ether_mediachange,
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL,
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL,
 		    0, NULL);
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -359,18 +360,18 @@ et_shutdown(device_t self)
 }
 
 int
-et_miibus_readreg(device_t dev, int phy, int reg)
+et_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct et_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int i, ret;
 
 	/* Stop any pending operations */
 	CSR_WRITE_4(sc, ET_MII_CMD, 0);
 
-	val = __SHIFTIN(phy, ET_MII_ADDR_PHY) |
+	data = __SHIFTIN(phy, ET_MII_ADDR_PHY) |
 	      __SHIFTIN(reg, ET_MII_ADDR_REG);
-	CSR_WRITE_4(sc, ET_MII_ADDR, val);
+	CSR_WRITE_4(sc, ET_MII_ADDR, data);
 
 	/* Start reading */
 	CSR_WRITE_4(sc, ET_MII_CMD, ET_MII_CMD_READ);
@@ -378,22 +379,23 @@ et_miibus_readreg(device_t dev, int phy, int reg)
 #define NRETRY	50
 
 	for (i = 0; i < NRETRY; ++i) {
-		val = CSR_READ_4(sc, ET_MII_IND);
-		if ((val & (ET_MII_IND_BUSY | ET_MII_IND_INVALID)) == 0)
+		data = CSR_READ_4(sc, ET_MII_IND);
+		if ((data & (ET_MII_IND_BUSY | ET_MII_IND_INVALID)) == 0)
 			break;
 		DELAY(50);
 	}
 	if (i == NRETRY) {
 		aprint_error_dev(sc->sc_dev, "read phy %d, reg %d timed out\n",
 		    phy, reg);
-		ret = 0;
+		ret = ETIMEDOUT;
 		goto back;
 	}
 
 #undef NRETRY
 
-	val = CSR_READ_4(sc, ET_MII_STAT);
-	ret = __SHIFTOUT(val, ET_MII_STAT_VALUE);
+	data = CSR_READ_4(sc, ET_MII_STAT);
+	*val = __SHIFTOUT(data, ET_MII_STAT_VALUE);
+	ret = 0;
 
 back:
 	/* Make sure that the current operation is stopped */
@@ -401,41 +403,46 @@ back:
 	return ret;
 }
 
-void
-et_miibus_writereg(device_t dev, int phy, int reg, int val0)
+int
+et_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct et_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
+	uint16_t tmp;
+	int rv = 0;
 	int i;
 
 	/* Stop any pending operations */
 	CSR_WRITE_4(sc, ET_MII_CMD, 0);
 
-	val = __SHIFTIN(phy, ET_MII_ADDR_PHY) |
+	data = __SHIFTIN(phy, ET_MII_ADDR_PHY) |
 	      __SHIFTIN(reg, ET_MII_ADDR_REG);
-	CSR_WRITE_4(sc, ET_MII_ADDR, val);
+	CSR_WRITE_4(sc, ET_MII_ADDR, data);
 
 	/* Start writing */
-	CSR_WRITE_4(sc, ET_MII_CTRL, __SHIFTIN(val0, ET_MII_CTRL_VALUE));
+	CSR_WRITE_4(sc, ET_MII_CTRL, __SHIFTIN(val, ET_MII_CTRL_VALUE));
 
 #define NRETRY 100
 
 	for (i = 0; i < NRETRY; ++i) {
-		val = CSR_READ_4(sc, ET_MII_IND);
-		if ((val & ET_MII_IND_BUSY) == 0)
+		data = CSR_READ_4(sc, ET_MII_IND);
+		if ((data & ET_MII_IND_BUSY) == 0)
 			break;
 		DELAY(50);
 	}
 	if (i == NRETRY) {
 		aprint_error_dev(sc->sc_dev, "write phy %d, reg %d timed out\n",
 		    phy, reg);
-		et_miibus_readreg(dev, phy, reg);
+		et_miibus_readreg(dev, phy, reg, &tmp);
+		rv = ETIMEDOUT;
 	}
 
 #undef NRETRY
 
 	/* Make sure that the current operation is stopped */
 	CSR_WRITE_4(sc, ET_MII_CMD, 0);
+
+	return rv;
 }
 
 void
@@ -461,7 +468,7 @@ et_miibus_statchg(struct ifnet *ifp)
 		ctrl |= ET_MAC_CTRL_MODE_MII;
 	}
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		cfg2 |= ET_MAC_CFG2_FDX;
 	else
 		ctrl |= ET_MAC_CTRL_GHDX;
@@ -731,7 +738,7 @@ et_dma_free(struct et_softc *sc)
 	 * Destroy RX stat ring DMA stuffs
 	 */
 	et_dma_mem_destroy(sc, rxst_ring->rsr_stat, rxst_ring->rsr_dmap);
-			  
+
 	/*
 	 * Destroy RX status DMA stuffs
 	 */
@@ -1025,7 +1032,6 @@ int
 et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct et_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1051,10 +1057,6 @@ et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				et_stop(sc);
 		}
 		sc->sc_if_flags = ifp->if_flags;
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_miibus.mii_media, cmd);
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
@@ -1216,6 +1218,7 @@ et_setmulti(struct et_softc *sc)
 	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
 
 	count = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		uint32_t *hp, h;
@@ -1243,6 +1246,7 @@ et_setmulti(struct et_softc *sc)
 		++count;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	for (i = 0; i < 4; ++i)
 		CSR_WRITE_4(sc, ET_MULTI_HASH + (i * 4), hash[i]);
@@ -1825,7 +1829,7 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 			goto back;
 		}
 
-		M_COPY_PKTHDR(m_new, m);
+		m_copy_pkthdr(m_new, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
@@ -1901,7 +1905,6 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->tr_dmap, 0,
 	    tx_ring->tr_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		
 
 	tx_ready_pos = __SHIFTIN(tx_ring->tr_ready_index,
 		       ET_TX_READY_POS_INDEX);

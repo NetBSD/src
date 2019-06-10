@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.9 2013/10/19 01:09:59 christos Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.9.26.1 2019/06/10 22:05:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.9 2013/10/19 01:09:59 christos Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.9.26.1 2019/06/10 22:05:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static void usage(void) __dead;
 #define	DFL_SECSIZE	512
 
 int	Nflag;			/* run without writing file system */
-int	Oflag = 0;		/* format as conservative REV0 by default */
+int	Oflag = 1;		/* format as REV1 by default */
 int	verbosity;		/* amount of printf() output */
 #define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior of newfs(8) */
 int64_t fssize;			/* file system size */

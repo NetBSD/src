@@ -1,33 +1,32 @@
-#	$NetBSD: std.bcm53xx,v 1.14 2014/02/21 22:31:58 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.14.30.1 2019/06/10 22:06:05 christos Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
-machine	evbarm arm
+machine		evbarm arm
 include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in BCM53xx config definitions.
 include		"arch/evbarm/conf/files.bcm53xx"
 
-options 	SOSEND_NO_LOAN
+options 	ARM_GENERIC_TODR
+options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
 options 	COM_TOLERANCE=40
-options 	FPU_VFP
 options 	CORTEX_PMC
-options 	_ARM32_NEED_BUS_DMA_BOUNCE
-options 	PMAP_NEED_ALLOC_POOLPAGE
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	__HAVE_MM_MD_CACHE_ALIASING
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-options 	__HAVE_CPU_COUNTER
-options 	__HAVE_PCI_CONF_HOOK
-options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="bcm53xx"
+options 	FPU_VFP
+options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	SOSEND_NO_LOAN
+options 	TPIDRPRW_IS_CURCPU
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
+options 	__HAVE_MM_MD_CACHE_ALIASING
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	__HAVE_PCI_CONF_HOOK
 
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
 makeoptions	BOARDTYPE="bcm53xx"
 makeoptions	KERNEL_BASE_VIRT="0x80100000"
 makeoptions	LOADADDRESS="0x00100000"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
-
-options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
-options		ARM_GENERIC_TODR

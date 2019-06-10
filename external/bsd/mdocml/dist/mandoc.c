@@ -1,7 +1,7 @@
-/*	Id: mandoc.c,v 1.98 2015/11/12 22:44:27 schwarze Exp  */
+/*	Id: mandoc.c,v 1.114 2018/12/30 00:49:55 schwarze Exp  */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,19 +28,74 @@
 #include <string.h>
 #include <time.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mandoc.h"
+#include "roff.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 
 static	int	 a2time(time_t *, const char *, const char *);
 static	char	*time2a(time_t);
 
 
 enum mandoc_esc
+mandoc_font(const char *cp, int sz)
+{
+	switch (sz) {
+	case 0:
+		return ESCAPE_FONTPREV;
+	case 1:
+		switch (cp[0]) {
+		case 'B':
+		case '3':
+			return ESCAPE_FONTBOLD;
+		case 'I':
+		case '2':
+			return ESCAPE_FONTITALIC;
+		case 'P':
+			return ESCAPE_FONTPREV;
+		case 'R':
+		case '1':
+			return ESCAPE_FONTROMAN;
+		case '4':
+			return ESCAPE_FONTBI;
+		default:
+			return ESCAPE_ERROR;
+		}
+	case 2:
+		switch (cp[0]) {
+		case 'B':
+			switch (cp[1]) {
+			case 'I':
+				return ESCAPE_FONTBI;
+			default:
+				return ESCAPE_ERROR;
+			}
+		case 'C':
+			switch (cp[1]) {
+			case 'B':
+				return ESCAPE_FONTBOLD;
+			case 'I':
+				return ESCAPE_FONTITALIC;
+			case 'R':
+			case 'W':
+				return ESCAPE_FONTCW;
+			default:
+				return ESCAPE_ERROR;
+			}
+		default:
+			return ESCAPE_ERROR;
+		}
+	default:
+		return ESCAPE_ERROR;
+	}
+}
+
+enum mandoc_esc
 mandoc_escape(const char **end, const char **start, int *sz)
 {
 	const char	*local_start;
-	int		 local_sz;
+	int		 local_sz, c, i;
 	char		 term;
 	enum mandoc_esc	 gly;
 
@@ -53,6 +108,14 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		start = &local_start;
 	if (NULL == sz)
 		sz = &local_sz;
+
+	/*
+	 * Treat "\E" just like "\";
+	 * it only makes a difference in copy mode.
+	 */
+
+	if (**end == 'E')
+		++*end;
 
 	/*
 	 * Beyond the backslash, at least one input character
@@ -76,6 +139,10 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		*sz = 2;
 		break;
 	case '[':
+		if (**start == ' ') {
+			++*end;
+			return ESCAPE_ERROR;
+		}
 		gly = ESCAPE_SPECIAL;
 		term = ']';
 		break;
@@ -90,11 +157,28 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	/*
 	 * Escapes taking no arguments at all.
 	 */
-	case 'd':
-	case 'u':
+	case '!':
+	case '?':
+		return ESCAPE_UNSUPP;
+	case '%':
+	case '&':
+	case ')':
 	case ',':
 	case '/':
+	case '^':
+	case 'a':
+	case 'd':
+	case 'r':
+	case 't':
+	case 'u':
+	case '{':
+	case '|':
+	case '}':
 		return ESCAPE_IGNORE;
+	case 'c':
+		return ESCAPE_NOSPACE;
+	case 'p':
+		return ESCAPE_BREAK;
 
 	/*
 	 * The \z escape is supposed to output the following
@@ -110,31 +194,56 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * 'X' is the trigger.  These have opaque sub-strings.
 	 */
 	case 'F':
+	case 'f':
 	case 'g':
 	case 'k':
 	case 'M':
 	case 'm':
 	case 'n':
+	case 'O':
 	case 'V':
 	case 'Y':
-		gly = ESCAPE_IGNORE;
-		/* FALLTHROUGH */
-	case 'f':
-		if (ESCAPE_ERROR == gly)
-			gly = ESCAPE_FONT;
+		gly = (*start)[-1] == 'f' ? ESCAPE_FONT : ESCAPE_IGNORE;
 		switch (**start) {
 		case '(':
+			if ((*start)[-1] == 'O')
+				gly = ESCAPE_ERROR;
 			*start = ++*end;
 			*sz = 2;
 			break;
 		case '[':
+			if ((*start)[-1] == 'O')
+				gly = (*start)[1] == '5' ?
+				    ESCAPE_UNSUPP : ESCAPE_ERROR;
 			*start = ++*end;
 			term = ']';
 			break;
 		default:
+			if ((*start)[-1] == 'O') {
+				switch (**start) {
+				case '0':
+					gly = ESCAPE_UNSUPP;
+					break;
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+					break;
+				default:
+					gly = ESCAPE_ERROR;
+					break;
+				}
+			}
 			*sz = 1;
 			break;
 		}
+		break;
+	case '*':
+		if (strncmp(*start, "(.T", 3) != 0)
+			abort();
+		gly = ESCAPE_DEVICE;
+		*start = ++*end;
+		*sz = 2;
 		break;
 
 	/*
@@ -175,7 +284,17 @@ mandoc_escape(const char **end, const char **start, int *sz)
 				++*end;
 			return ESCAPE_ERROR;
 		}
-		gly = ESCAPE_IGNORE;
+		switch ((*start)[-1]) {
+		case 'h':
+			gly = ESCAPE_HORIZ;
+			break;
+		case 'l':
+			gly = ESCAPE_HLINE;
+			break;
+		default:
+			gly = ESCAPE_IGNORE;
+			break;
+		}
 		term = **start;
 		*start = ++*end;
 		break;
@@ -237,17 +356,28 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		break;
 
 	/*
-	 * Anything else is assumed to be a glyph.
-	 * In this case, pass back the character after the backslash.
+	 * Several special characters can be encoded as
+	 * one-byte escape sequences without using \[].
 	 */
-	default:
+	case ' ':
+	case '\'':
+	case '-':
+	case '.':
+	case '0':
+	case ':':
+	case '_':
+	case '`':
+	case 'e':
+	case '~':
 		gly = ESCAPE_SPECIAL;
+		/* FALLTHROUGH */
+	default:
+		if (gly == ESCAPE_ERROR)
+			gly = ESCAPE_UNDEF;
 		*start = --*end;
 		*sz = 1;
 		break;
 	}
-
-	assert(ESCAPE_ERROR != gly);
 
 	/*
 	 * Read up to the terminating character,
@@ -271,6 +401,15 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			}
 		}
 		*sz = (*end)++ - *start;
+
+		/*
+		 * The file chars.c only provides one common list
+		 * of character names, but \[-] == \- is the only
+		 * one of the characters with one-byte names that
+		 * allows enclosing the name in brackets.
+		 */
+		if (gly == ESCAPE_SPECIAL && *sz == 1 && **start != '-')
+			return ESCAPE_ERROR;
 	} else {
 		assert(*sz > 0);
 		if ((size_t)*sz > strlen(*start))
@@ -282,43 +421,25 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 	switch (gly) {
 	case ESCAPE_FONT:
-		if (2 == *sz) {
-			if ('C' == **start) {
-				/*
-				 * Treat constant-width font modes
-				 * just like regular font modes.
-				 */
-				(*start)++;
-				(*sz)--;
-			} else {
-				if ('B' == (*start)[0] && 'I' == (*start)[1])
-					gly = ESCAPE_FONTBI;
-				break;
-			}
-		} else if (1 != *sz)
-			break;
-
-		switch (**start) {
-		case '3':
-		case 'B':
-			gly = ESCAPE_FONTBOLD;
-			break;
-		case '2':
-		case 'I':
-			gly = ESCAPE_FONTITALIC;
-			break;
-		case 'P':
-			gly = ESCAPE_FONTPREV;
-			break;
-		case '1':
-		case 'R':
-			gly = ESCAPE_FONTROMAN;
-			break;
-		}
+		gly = mandoc_font(*start, *sz);
 		break;
 	case ESCAPE_SPECIAL:
-		if (1 == *sz && 'c' == **start)
-			gly = ESCAPE_NOSPACE;
+		if (**start == 'c') {
+			if (*sz < 6 || *sz > 7 ||
+			    strncmp(*start, "char", 4) != 0 ||
+			    (int)strspn(*start + 4, "0123456789") + 4 < *sz)
+				break;
+			c = 0;
+			for (i = 4; i < *sz; i++)
+				c = 10 * c + ((*start)[i] - '0');
+			if (c < 0x21 || (c > 0x7e && c < 0xa0) || c > 0xff)
+				break;
+			*start += 4;
+			*sz -= 4;
+			gly = ESCAPE_NUMBERED;
+			break;
+		}
+
 		/*
 		 * Unicode escapes are defined in groff as \[u0000]
 		 * to \[u10FFFF], where the contained value must be
@@ -343,101 +464,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	}
 
 	return gly;
-}
-
-/*
- * Parse a quoted or unquoted roff-style request or macro argument.
- * Return a pointer to the parsed argument, which is either the original
- * pointer or advanced by one byte in case the argument is quoted.
- * NUL-terminate the argument in place.
- * Collapse pairs of quotes inside quoted arguments.
- * Advance the argument pointer to the next argument,
- * or to the NUL byte terminating the argument line.
- */
-char *
-mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
-{
-	char	 *start, *cp;
-	int	  quoted, pairs, white;
-
-	/* Quoting can only start with a new word. */
-	start = *cpp;
-	quoted = 0;
-	if ('"' == *start) {
-		quoted = 1;
-		start++;
-	}
-
-	pairs = 0;
-	white = 0;
-	for (cp = start; '\0' != *cp; cp++) {
-
-		/*
-		 * Move the following text left
-		 * after quoted quotes and after "\\" and "\t".
-		 */
-		if (pairs)
-			cp[-pairs] = cp[0];
-
-		if ('\\' == cp[0]) {
-			/*
-			 * In copy mode, translate double to single
-			 * backslashes and backslash-t to literal tabs.
-			 */
-			switch (cp[1]) {
-			case 't':
-				cp[0] = '\t';
-				/* FALLTHROUGH */
-			case '\\':
-				pairs++;
-				cp++;
-				break;
-			case ' ':
-				/* Skip escaped blanks. */
-				if (0 == quoted)
-					cp++;
-				break;
-			default:
-				break;
-			}
-		} else if (0 == quoted) {
-			if (' ' == cp[0]) {
-				/* Unescaped blanks end unquoted args. */
-				white = 1;
-				break;
-			}
-		} else if ('"' == cp[0]) {
-			if ('"' == cp[1]) {
-				/* Quoted quotes collapse. */
-				pairs++;
-				cp++;
-			} else {
-				/* Unquoted quotes end quoted args. */
-				quoted = 2;
-				break;
-			}
-		}
-	}
-
-	/* Quoted argument without a closing quote. */
-	if (1 == quoted)
-		mandoc_msg(MANDOCERR_ARG_QUOTE, parse, ln, *pos, NULL);
-
-	/* NUL-terminate this argument and move to the next one. */
-	if (pairs)
-		cp[-pairs] = '\0';
-	if ('\0' != *cp) {
-		*cp++ = '\0';
-		while (' ' == *cp)
-			cp++;
-	}
-	*pos += (int)(cp - start) + (quoted ? 1 : 0);
-	*cpp = cp;
-
-	if ('\0' == *cp && (white || ' ' == cp[-1]))
-		mandoc_msg(MANDOCERR_SPACE_EOL, parse, ln, *pos, NULL);
-
-	return start;
 }
 
 static int
@@ -508,27 +534,38 @@ fail:
 }
 
 char *
-mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
+mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 {
+	char		*cp;
 	time_t		 t;
 
 	/* No date specified: use today's date. */
 
 	if (in == NULL || *in == '\0' || strcmp(in, "$" "Mdocdate$") == 0) {
-		mandoc_msg(MANDOCERR_DATE_MISSING, parse, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_DATE_MISSING, ln, pos, NULL);
 		return time2a(time(NULL));
 	}
 
 	/* Valid mdoc(7) date format. */
 
 	if (a2time(&t, "$" "Mdocdate: %b %d %Y $", in) ||
-	    a2time(&t, "%b %d, %Y", in))
-		return time2a(t);
+	    a2time(&t, "%b %d, %Y", in)) {
+		cp = time2a(t);
+		if (t > time(NULL) + 86400)
+			mandoc_msg(MANDOCERR_DATE_FUTURE, ln, pos, "%s", cp);
+		else if (*in != '$' && strcmp(in, cp) != 0)
+			mandoc_msg(MANDOCERR_DATE_NORM, ln, pos, "%s", cp);
+		return cp;
+	}
 
-	/* Do not warn about the legacy man(7) format. */
+	/* In man(7), do not warn about the legacy format. */
 
-	if ( ! a2time(&t, "%Y-%m-%d", in))
-		mandoc_msg(MANDOCERR_DATE_BAD, parse, ln, pos, in);
+	if (a2time(&t, "%Y-%m-%d", in) == 0)
+		mandoc_msg(MANDOCERR_DATE_BAD, ln, pos, "%s", in);
+	else if (t > time(NULL) + 86400)
+		mandoc_msg(MANDOCERR_DATE_FUTURE, ln, pos, "%s", in);
+	else if (man->meta.macroset == MACROSET_MDOC)
+		mandoc_msg(MANDOCERR_DATE_LEGACY, ln, pos, "Dd %s", in);
 
 	/* Use any non-mdoc(7) date verbatim. */
 

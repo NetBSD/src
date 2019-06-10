@@ -75,6 +75,7 @@ case ${cpu} in
   m680[012346]0)	cpu_type=m68k ;;
   m6811|m6812|m68hc12)	cpu_type=m68hc11 ;;
   m683??)		cpu_type=m68k ;;
+  s12z)               cpu_type=s12z ;;
   mep)			cpu_type=mep endian=little ;;
   microblazeel*)	cpu_type=microblaze endian=little;;
   microblaze*)		cpu_type=microblaze endian=big;;
@@ -97,10 +98,6 @@ case ${cpu} in
   s390*)		cpu_type=s390 arch=s390 ;;
   score*l)		cpu_type=score endian=little ;;
   score*)		cpu_type=score endian=big ;;
-  sh5le*)		cpu_type=sh64 endian=little ;;
-  sh5*)			cpu_type=sh64 endian=big ;;
-  sh64le*)		cpu_type=sh64 endian=little ;;
-  sh64*)		cpu_type=sh64 endian=big ;;
   sh*le)		cpu_type=sh endian=little ;;
   sh*)			cpu_type=sh endian=big ;;
   sparc64* | sparcv9*)	cpu_type=sparc arch=v9-64 ;;
@@ -141,8 +138,6 @@ case ${generic_target} in
   arc-*-elf*)				fmt=elf ;;
   arc*-*-linux*)			fmt=elf bfd_gas=yes ;;
 
-  arm-*-aout)				fmt=aout ;;
-  arm-*-coff)				fmt=coff ;;
   arm-*-phoenix*)			fmt=elf ;;
   arm-*-elf)				fmt=elf ;;
   arm-*-netbsdelf*-*eabihf*)		fmt=elf em=armnbsdeabihf ;;
@@ -155,20 +150,16 @@ case ${generic_target} in
 					fmt=elf  em=freebsd ;;
   arm-*-freebsd* | armeb-*-freebsd*)	fmt=elf  em=armfbsdeabi ;;
   arm*-*-freebsd*)			fmt=elf  em=armfbsdvfp ;;
-  arm-*-linux*aout*)			fmt=aout em=linux ;;
   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
   arm-*-nacl*)				fmt=elf  em=nacl ;;
   arm-*-netbsdelf*)			fmt=elf  em=armnbsd ;;
-  arm-*-*n*bsd*)			fmt=aout em=armnbsd ;;
   arm-*-nto*)				fmt=elf ;;
-  arm-epoc-pe)				fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
 					fmt=coff em=wince-pe ;;
   arm-*-pe)				fmt=coff em=pe ;;
-  arm-*-riscix*)			fmt=aout em=riscix ;;
   arm-*-fuchsia*)			fmt=elf ;;
 
   avr-*-*)				fmt=elf bfd_gas=yes ;;
@@ -220,13 +211,8 @@ case ${generic_target} in
   h8300-*-elf)				fmt=elf ;;
   h8300-*-linux*)			fmt=elf em=linux ;;
 
-  i370-*-elf* | i370-*-linux*)		fmt=elf ;;
-
-  i386-ibm-aix*)			fmt=coff em=i386aix ;;
-  i386-sequent-bsd*)			fmt=aout em=dynix ;;
   i386-*-beospe*)			fmt=coff em=pe ;;
   i386-*-beos*)				fmt=elf ;;
-  i386-*-coff)				fmt=coff ;;
   i386-*-elfiamcu)			fmt=elf arch=iamcu ;;
   i386-*-elf*)				fmt=elf ;;
   i386-*-fuchsia*)			fmt=elf ;;
@@ -236,45 +222,23 @@ case ${generic_target} in
     case ${cpu} in
       x86_64*)				arch=x86_64:32 ;;
     esac ;;
-  i386-*-netbsd0.8)			fmt=aout em=386bsd ;;
   i386-*-netbsdpe*)			fmt=coff em=pe ;;
   i386-*-netbsd*-gnu* | \
   i386-*-knetbsd*-gnu | \
-  i386-*-netbsdelf*)			fmt=elf em=nbsd ;;
-  i386-*-netbsd*)
-    case ${cpu} in
-      x86_64)				fmt=elf em=nbsd ;;
-      *)				fmt=aout em=nbsd ;;
-    esac ;;
-  i386-*-openbsd[0-2].* | \
-  i386-*-openbsd3.[0-2])		fmt=aout em=nbsd ;;
+  i386-*-netbsd* | \
   i386-*-openbsd*)			fmt=elf em=nbsd ;;
-  i386-*-linux*aout*)			fmt=aout em=linux ;;
-  i386-*-linux*oldld)			fmt=aout em=linux ;;
-  i386-*-linux*coff*)			fmt=coff em=linux ;;
   i386-*-linux-*)			fmt=elf em=linux
     case ${cpu}-${os} in
       x86_64*-linux-gnux32)		arch=x86_64:32 ;;
     esac ;;
   i386-*-lynxos*)			fmt=elf em=lynx ;;
   i386-*-redox*)			fmt=elf ;;
-  i386-*-sysv[45]*)			fmt=elf ;;
   i386-*-solaris*)			fmt=elf em=solaris ;;
-  i386-*-freebsdaout*)			fmt=aout em=386bsd ;;
-  i386-*-freebsd[12].*)			fmt=aout em=386bsd ;;
-  i386-*-freebsd[12])			fmt=aout em=386bsd ;;
   i386-*-freebsd* \
   | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
-  i386-*-sysv*)				fmt=coff ;;
-  i386-*-sco3.2v5*coff)			fmt=coff ;;
-  i386-*-isc*)				fmt=coff ;;
-  i386-*-sco3.2v5*)			fmt=elf ;;
-  i386-*-sco3.2*)			fmt=coff ;;
-  i386-*-vsta)				fmt=aout ;;
   i386-*-msdosdjgpp* \
   | i386-*-go32*)			fmt=coff em=go32 ;;
   i386-*-gnu*)				fmt=elf em=gnu ;;
-  i386-*-mach*)				fmt=aout em=mach ;;
   i386-*-msdos*)			fmt=aout ;;
   i386-*-moss*)				fmt=elf ;;
   i386-*-pe)				fmt=coff em=pe ;;
@@ -294,10 +258,6 @@ case ${generic_target} in
   i386-*-chaos)				fmt=elf ;;
   i386-*-rdos*)				fmt=elf ;;
   i386-*-darwin*)			fmt=macho ;;
-
-  i860-*-*)				fmt=elf endian=little ;;
-
-  i960-*-elf*)				fmt=elf ;;
 
   ia16-*-elf*)				fmt=elf ;;
 
@@ -322,16 +282,14 @@ case ${generic_target} in
   m68hc11-*-* | m6811-*-*)		fmt=elf ;;
   m68hc12-*-* | m6812-*-*)		fmt=elf ;;
 
-  m68k-*-aout)				fmt=aout bfd_gas=yes ;;
   m68k-*-elf*)				fmt=elf ;;
   m68k-*-sysv4*)			fmt=elf em=svr4 ;;
   m68k-*-linux-*)			fmt=elf em=linux ;;
   m68k-*-uclinux*)			fmt=elf em=uclinux ;;
   m68k-*-gnu*)				fmt=elf ;;
   m68k-*-netbsdelf*)			fmt=elf em=nbsd ;;
-  m68k-*-netbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-  m68k-*-openbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-  m68k-*-psos*)				fmt=elf em=psos;;
+
+  s12z-*-*)				fmt=elf ;;
 
   mep-*-elf)				fmt=elf ;;
 
@@ -348,12 +306,13 @@ case ${generic_target} in
   mips*-*-linux*)			fmt=elf em=tmips ;;
   mips*-*-freebsd* | mips*-*-kfreebsd*-gnu)
 					fmt=elf em=freebsd ;;
-  mips-*-sysv4*MP* | mips-*-gnu*)	fmt=elf em=tmips ;;
+  mips-*-sysv4* | mips-*-gnu*)		fmt=elf em=tmips ;;
   mips*-sde-elf* | mips*-mti-elf* | mips*-img-elf*)
 					fmt=elf em=tmips ;;
   mips-*-elf*)				fmt=elf ;;
   mips-*-netbsd*)			fmt=elf em=tmips ;;
   mips-*-openbsd*)			fmt=elf em=tmips ;;
+  mips-*-windiss)			fmt=elf ;;
 
   mmix-*-*)				fmt=elf ;;
 
@@ -416,14 +375,11 @@ case ${generic_target} in
       sh*eb)	endian=big ;;
       *)	endian=little ;;
     esac ;;
-  sh5*-*-netbsd*)			fmt=elf em=nbsd ;;
-  sh64*-*-netbsd*)			fmt=elf em=nbsd ;;
   sh*-*-netbsdelf*)			fmt=elf em=nbsd
     case ${cpu} in
       sh*l*)	endian=little ;;
       *)	endian=big ;;
     esac ;;
-  sh*-*-symbianelf*)			fmt=elf endian=little ;;
   sh-*-elf*)				fmt=elf ;;
   sh-*-uclinux* | sh[12]-*-uclinux*)	fmt=elf em=uclinux ;;
   sh-*-coff*)				fmt=coff ;;
@@ -431,30 +387,10 @@ case ${generic_target} in
   sh-*-pe*)				fmt=coff em=pe bfd_gas=yes endian=little ;;
   sh-*-kaos*)				fmt=elf ;;
   shle*-*-kaos*)			fmt=elf ;;
-  sh64-*-elf*)				fmt=elf ;;
 
-  sparc-*-sunos4*)			fmt=aout em=sun3 ;;
-  sparc-*-aout)				fmt=aout em=sparcaout ;;
-  sparc-*-coff)				fmt=coff ;;
-  sparc-*-linux*aout*)			fmt=aout em=linux ;;
   sparc-*-linux-*)			fmt=elf em=linux ;;
-  sparc-fujitsu-none)			fmt=aout ;;
-  sparc-*-elf)				fmt=elf ;;
-  sparc-*-sysv4*)			fmt=elf ;;
   sparc-*-solaris*)			fmt=elf em=solaris ;;
-  sparc-*-netbsdelf*)			fmt=elf em=nbsd ;;
-  sparc-*-netbsd*)
-    case ${cpu} in
-      sparc64)				fmt=elf em=nbsd ;;
-      *)				fmt=aout em=nbsd ;;
-    esac ;;
-  sparc-*-openbsd[0-2].* | \
-  sparc-*-openbsd3.[0-1])
-    case ${cpu} in
-      sparc64)				fmt=elf em=nbsd ;;
-      *)				fmt=aout em=nbsd ;;
-    esac ;;
-  sparc-*-openbsd*)			fmt=elf em=nbsd ;;
+  sparc-*-*bsd*)			fmt=elf em=nbsd ;;
 
   spu-*-elf)				fmt=elf ;;
 
@@ -489,7 +425,6 @@ case ${generic_target} in
   *-*-cloudabi*)			fmt=elf ;;
   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
-  *-*-bsd*)				fmt=aout em=sun3 ;;
   *-*-generic)				fmt=generic ;;
   *-*-xray | *-*-hms)			fmt=coff ;;
   *-*-sim)				fmt=coff ;;
@@ -497,7 +432,6 @@ case ${generic_target} in
   *-*-solaris*)				fmt=elf em=solaris ;;
   *-*-aros*)				fmt=elf em=linux ;;
   *-*-vxworks* | *-*-windiss)		fmt=elf em=vxworks ;;
-  *-*-netware)				fmt=elf em=netware ;;
 esac
 
 case ${cpu_type} in

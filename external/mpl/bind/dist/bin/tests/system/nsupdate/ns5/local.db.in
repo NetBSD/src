@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN .
+$TTL 300	; 5 minutes
+local.nil		IN SOA	ns5.local.nil. hostmaster.local.nil. (
+				1	   ; serial
+				2000       ; refresh (2000 seconds)
+				2000       ; retry (2000 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+local.nil.		NS	ns5.local.nil.
+ns5.local.nil.		A	10.53.0.5
+
+$ORIGIN local.nil.
+a			A	10.10.10.10

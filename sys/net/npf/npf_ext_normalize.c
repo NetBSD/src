@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.7 2018/04/07 09:20:25 maxv Exp $	*/
-
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.7 2018/04/07 09:20:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.7.2.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -67,7 +65,7 @@ typedef struct {
  * with the given parameters.
  */
 static int
-npf_normalize_ctor(npf_rproc_t *rp, prop_dictionary_t params)
+npf_normalize_ctor(npf_rproc_t *rp, const nvlist_t *params)
 {
 	npf_normalize_t *np;
 
@@ -75,12 +73,12 @@ npf_normalize_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 	np = kmem_zalloc(sizeof(npf_normalize_t), KM_SLEEP);
 
 	/* IP ID randomisation and IP_DF flag cleansing. */
-	prop_dictionary_get_bool(params, "random-id", &np->n_random_id);
-	prop_dictionary_get_bool(params, "no-df", &np->n_no_df);
+	np->n_random_id = dnvlist_get_bool(params, "random-id", false);
+	np->n_no_df = dnvlist_get_bool(params, "no-df", false);
 
 	/* Minimum IP TTL and maximum TCP MSS. */
-	prop_dictionary_get_uint32(params, "min-ttl", &np->n_minttl);
-	prop_dictionary_get_uint32(params, "max-mss", &np->n_maxmss);
+	np->n_minttl = dnvlist_get_number(params, "min-ttl", 0);
+	np->n_maxmss = dnvlist_get_number(params, "max-mss", 0);
 
 	/* Assign the parameters for this rule procedure. */
 	npf_rproc_assign(rp, np);
@@ -148,8 +146,10 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 {
 	npf_normalize_t *np = params;
 	uint16_t cksum, mss, maxmss = np->n_maxmss;
+	uint16_t old[2], new[2];
 	struct tcphdr *th;
 	int wscale;
+	bool mid;
 
 	/* Skip, if already blocking. */
 	if (*decision == NPF_DECISION_BLOCK) {
@@ -182,13 +182,22 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	maxmss = htons(maxmss);
 
 	/*
-	 * Store new MSS, calculate TCP checksum and update it.
+	 * Store new MSS, calculate TCP checksum and update it. The MSS may
+	 * not be aligned and fall in the middle of two uint16_t's, so we
+	 * need to take care of that when calculating the checksum.
+	 *
 	 * WARNING: must re-fetch the TCP header after the modification.
 	 */
-	if (npf_fetch_tcpopts(npc, &maxmss, &wscale) &&
+	if (npf_set_mss(npc, maxmss, old, new, &mid) &&
 	    !nbuf_cksum_barrier(npc->npc_nbuf, mi->mi_di)) {
 		th = npc->npc_l4.tcp;
-		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
+		if (mid) {
+			cksum = th->th_sum;
+			cksum = npf_fixup16_cksum(cksum, old[0], new[0]);
+			cksum = npf_fixup16_cksum(cksum, old[1], new[1]);
+		} else {
+			cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
+		}
 		th->th_sum = cksum;
 	}
 

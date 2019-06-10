@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@ if {![istarget "powerpc*"] || ![is_lp64_target]} {
 standard_testfile
 
 set kobz2file ${srcdir}/${subdir}/cordic.ko.bz2
-set kofile ${objdir}/${subdir}/cordic.ko
+set kofile [standard_output_file cordic.ko]
 set kodebugbz2file ${srcdir}/${subdir}/cordic.ko.debug.bz2
-set kodebugfile ${objdir}/${subdir}/cordic.ko.debug
+set kodebugfile [standard_output_file cordic.ko.debug]
 
 if {[catch "system \"bzip2 -dc ${kobz2file} >${kofile}\""] != 0} {
     untested "failed bzip2 for ${kobz2file}"

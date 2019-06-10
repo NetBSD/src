@@ -1,6 +1,6 @@
 /* Perform arithmetic and other operations on values, for GDB.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,10 +24,9 @@
 #include "expression.h"
 #include "target.h"
 #include "language.h"
-#include "doublest.h"
-#include "dfp.h"
-#include <math.h>
+#include "target-float.h"
 #include "infcall.h"
+#include "common/byte-vector.h"
 
 /* Define whether or not the C operator '/' truncates towards zero for
    differently signed operands (truncation direction is undefined in C).  */
@@ -35,9 +34,6 @@
 #ifndef TRUNCATION_TOWARDS_ZERO
 #define TRUNCATION_TOWARDS_ZERO ((-5 / 2) == -2)
 #endif
-
-void _initialize_valarith (void);
-
 
 /* Given a pointer, return the size of its target.
    If the pointer type is void *, then return 1.
@@ -64,8 +60,6 @@ find_size_for_pointer_math (struct type *ptr_type)
 	  const char *name;
 	  
 	  name = TYPE_NAME (ptr_target);
-	  if (name == NULL)
-	    name = TYPE_TAG_NAME (ptr_target);
 	  if (name == NULL)
 	    error (_("Cannot perform pointer math on incomplete types, "
 		   "try casting to a known type, or void *."));
@@ -195,8 +189,11 @@ value_subscripted_rvalue (struct value *array, LONGEST index, int lowerbound)
   ULONGEST elt_size = type_length_units (elt_type);
   ULONGEST elt_offs = elt_size * (index - lowerbound);
 
-  if (index < lowerbound || (!TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (array_type)
-			     && elt_offs >= type_length_units (array_type)))
+  if (index < lowerbound
+      || (!TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (array_type)
+          && elt_offs >= type_length_units (array_type))
+      || (VALUE_LVAL (array) != lval_memory
+          && TYPE_ARRAY_UPPER_BOUND_IS_UNDEFINED (array_type)))
     {
       if (type_not_associated (array_type))
         error (_("no such vector element (vector not associated)"));
@@ -284,14 +281,14 @@ unop_user_defined_p (enum exp_opcode op, struct value *arg1)
    situations or combinations thereof.  */
 
 static struct value *
-value_user_defined_cpp_op (struct value **args, int nargs, char *oper,
+value_user_defined_cpp_op (gdb::array_view<value *> args, char *oper,
                            int *static_memfuncp, enum noside noside)
 {
 
   struct symbol *symp = NULL;
   struct value *valp = NULL;
 
-  find_overload_match (args, nargs, oper, BOTH /* could be method */,
+  find_overload_match (args, oper, BOTH /* could be method */,
                        &args[0] /* objp */,
                        NULL /* pass NULL symbol since symbol is unknown */,
                        &valp, &symp, static_memfuncp, 0, noside);
@@ -315,19 +312,19 @@ value_user_defined_cpp_op (struct value **args, int nargs, char *oper,
    function, otherwise return NULL.  */
 
 static struct value *
-value_user_defined_op (struct value **argp, struct value **args, char *name,
-                       int *static_memfuncp, int nargs, enum noside noside)
+value_user_defined_op (struct value **argp, gdb::array_view<value *> args,
+		       char *name, int *static_memfuncp, enum noside noside)
 {
   struct value *result = NULL;
 
   if (current_language->la_language == language_cplus)
     {
-      result = value_user_defined_cpp_op (args, nargs, name, static_memfuncp,
+      result = value_user_defined_cpp_op (args, name, static_memfuncp,
 					  noside);
     }
   else
-    result = value_struct_elt (argp, args, name, static_memfuncp,
-                               "structure");
+    result = value_struct_elt (argp, args.data (), name, static_memfuncp,
+			       "structure");
 
   return result;
 }
@@ -345,7 +342,6 @@ struct value *
 value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
 	       enum exp_opcode otherop, enum noside noside)
 {
-  struct value **argvec;
   char *ptr;
   char tstr[13];
   int static_memfuncp;
@@ -359,10 +355,11 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
   if (TYPE_CODE (check_typedef (value_type (arg1))) != TYPE_CODE_STRUCT)
     error (_("Can't do that binary op on that type"));	/* FIXME be explicit */
 
-  argvec = (struct value **) alloca (sizeof (struct value *) * 4);
+  value *argvec_storage[3];
+  gdb::array_view<value *> argvec = argvec_storage;
+
   argvec[1] = value_addr (arg1);
   argvec[2] = arg2;
-  argvec[3] = 0;
 
   /* Make the right function name up.  */
   strcpy (tstr, "operator__");
@@ -472,15 +469,15 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
       error (_("Invalid binary operation specified."));
     }
 
-  argvec[0] = value_user_defined_op (&arg1, argvec + 1, tstr,
-                                     &static_memfuncp, 2, noside);
+  argvec[0] = value_user_defined_op (&arg1, argvec.slice (1), tstr,
+				     &static_memfuncp, noside);
 
   if (argvec[0])
     {
       if (static_memfuncp)
 	{
 	  argvec[1] = argvec[0];
-	  argvec++;
+	  argvec = argvec.slice (1);
 	}
       if (TYPE_CODE (value_type (argvec[0])) == TYPE_CODE_XMETHOD)
 	{
@@ -489,13 +486,13 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
 	  if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	    {
 	      struct type *return_type
-		= result_type_of_xmethod (argvec[0], 2, argvec + 1);
+		= result_type_of_xmethod (argvec[0], argvec.slice (1));
 
 	      if (return_type == NULL)
 		error (_("Xmethod is missing return type."));
 	      return value_zero (return_type, VALUE_LVAL (arg1));
 	    }
-	  return call_xmethod (argvec[0], 2, argvec + 1);
+	  return call_xmethod (argvec[0], argvec.slice (1));
 	}
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
@@ -505,14 +502,11 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
 	    = TYPE_TARGET_TYPE (check_typedef (value_type (argvec[0])));
 	  return value_zero (return_type, VALUE_LVAL (arg1));
 	}
-      return call_function_by_hand (argvec[0], 2 - static_memfuncp,
-				    argvec + 1);
+      return call_function_by_hand (argvec[0], NULL,
+				    argvec.slice (1, 2 - static_memfuncp));
     }
   throw_error (NOT_FOUND_ERROR,
                _("member function %s not found"), tstr);
-#ifdef lint
-  return call_function_by_hand (argvec[0], 2 - static_memfuncp, argvec + 1);
-#endif
 }
 
 /* We know that arg1 is a structure, so try to find a unary user
@@ -525,7 +519,6 @@ struct value *
 value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 {
   struct gdbarch *gdbarch = get_type_arch (value_type (arg1));
-  struct value **argvec;
   char *ptr;
   char tstr[13], mangle_tstr[13];
   int static_memfuncp, nargs;
@@ -538,7 +531,9 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
   if (TYPE_CODE (check_typedef (value_type (arg1))) != TYPE_CODE_STRUCT)
     error (_("Can't do that unary op on that type"));	/* FIXME be explicit */
 
-  argvec = (struct value **) alloca (sizeof (struct value *) * 4);
+  value *argvec_storage[3];
+  gdb::array_view<value *> argvec = argvec_storage;
+
   argvec[1] = value_addr (arg1);
   argvec[2] = 0;
 
@@ -559,13 +554,11 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
     case UNOP_POSTINCREMENT:
       strcpy (ptr, "++");
       argvec[2] = value_from_longest (builtin_type (gdbarch)->builtin_int, 0);
-      argvec[3] = 0;
       nargs ++;
       break;
     case UNOP_POSTDECREMENT:
       strcpy (ptr, "--");
       argvec[2] = value_from_longest (builtin_type (gdbarch)->builtin_int, 0);
-      argvec[3] = 0;
       nargs ++;
       break;
     case UNOP_LOGICAL_NOT:
@@ -590,16 +583,15 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
       error (_("Invalid unary operation specified."));
     }
 
-  argvec[0] = value_user_defined_op (&arg1, argvec + 1, tstr,
-                                     &static_memfuncp, nargs, noside);
+  argvec[0] = value_user_defined_op (&arg1, argvec.slice (1, nargs), tstr,
+				     &static_memfuncp, noside);
 
   if (argvec[0])
     {
       if (static_memfuncp)
 	{
 	  argvec[1] = argvec[0];
-	  nargs --;
-	  argvec++;
+	  argvec = argvec.slice (1);
 	}
       if (TYPE_CODE (value_type (argvec[0])) == TYPE_CODE_XMETHOD)
 	{
@@ -608,13 +600,13 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 	  if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	    {
 	      struct type *return_type
-		= result_type_of_xmethod (argvec[0], 1, argvec + 1);
+		= result_type_of_xmethod (argvec[0], argvec[1]);
 
 	      if (return_type == NULL)
 		error (_("Xmethod is missing return type."));
 	      return value_zero (return_type, VALUE_LVAL (arg1));
 	    }
-	  return call_xmethod (argvec[0], 1, argvec + 1);
+	  return call_xmethod (argvec[0], argvec[1]);
 	}
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
@@ -624,12 +616,11 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 	    = TYPE_TARGET_TYPE (check_typedef (value_type (argvec[0])));
 	  return value_zero (return_type, VALUE_LVAL (arg1));
 	}
-      return call_function_by_hand (argvec[0], nargs, argvec + 1);
+      return call_function_by_hand (argvec[0], NULL,
+				    argvec.slice (1, nargs));
     }
   throw_error (NOT_FOUND_ERROR,
                _("member function %s not found"), tstr);
-
-  return 0;			/* For lint -- never reached */
 }
 
 
@@ -661,7 +652,6 @@ value_concat (struct value *arg1, struct value *arg2)
   struct value *outval = NULL;
   int inval1len, inval2len;
   int count, idx;
-  char *ptr;
   char inchar;
   struct type *type1 = check_typedef (value_type (arg1));
   struct type *type2 = check_typedef (value_type (arg2));
@@ -697,12 +687,9 @@ value_concat (struct value *arg1, struct value *arg2)
       if (TYPE_CODE (type2) == TYPE_CODE_STRING
 	  || TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	{
-	  struct cleanup *back_to;
-
 	  count = longest_to_int (value_as_long (inval1));
 	  inval2len = TYPE_LENGTH (type2);
-	  ptr = (char *) xmalloc (count * inval2len);
-	  back_to = make_cleanup (xfree, ptr);
+	  std::vector<char> ptr (count * inval2len);
 	  if (TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	    {
 	      char_type = type2;
@@ -711,7 +698,7 @@ value_concat (struct value *arg1, struct value *arg2)
 					   value_contents (inval2));
 	      for (idx = 0; idx < count; idx++)
 		{
-		  *(ptr + idx) = inchar;
+		  ptr[idx] = inchar;
 		}
 	    }
 	  else
@@ -720,12 +707,11 @@ value_concat (struct value *arg1, struct value *arg2)
 
 	      for (idx = 0; idx < count; idx++)
 		{
-		  memcpy (ptr + (idx * inval2len), value_contents (inval2),
+		  memcpy (&ptr[idx * inval2len], value_contents (inval2),
 			  inval2len);
 		}
 	    }
-	  outval = value_string (ptr, count * inval2len, char_type);
-	  do_cleanups (back_to);
+	  outval = value_string (ptr.data (), count * inval2len, char_type);
 	}
       else if (TYPE_CODE (type2) == TYPE_CODE_BOOL)
 	{
@@ -739,8 +725,6 @@ value_concat (struct value *arg1, struct value *arg2)
   else if (TYPE_CODE (type1) == TYPE_CODE_STRING
 	   || TYPE_CODE (type1) == TYPE_CODE_CHAR)
     {
-      struct cleanup *back_to;
-
       /* We have two character strings to concatenate.  */
       if (TYPE_CODE (type2) != TYPE_CODE_STRING
 	  && TYPE_CODE (type2) != TYPE_CODE_CHAR)
@@ -749,31 +733,29 @@ value_concat (struct value *arg1, struct value *arg2)
 	}
       inval1len = TYPE_LENGTH (type1);
       inval2len = TYPE_LENGTH (type2);
-      ptr = (char *) xmalloc (inval1len + inval2len);
-      back_to = make_cleanup (xfree, ptr);
+      std::vector<char> ptr (inval1len + inval2len);
       if (TYPE_CODE (type1) == TYPE_CODE_CHAR)
 	{
 	  char_type = type1;
 
-	  *ptr = (char) unpack_long (type1, value_contents (inval1));
+	  ptr[0] = (char) unpack_long (type1, value_contents (inval1));
 	}
       else
 	{
 	  char_type = TYPE_TARGET_TYPE (type1);
 
-	  memcpy (ptr, value_contents (inval1), inval1len);
+	  memcpy (ptr.data (), value_contents (inval1), inval1len);
 	}
       if (TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	{
-	  *(ptr + inval1len) =
+	  ptr[inval1len] =
 	    (char) unpack_long (type2, value_contents (inval2));
 	}
       else
 	{
-	  memcpy (ptr + inval1len, value_contents (inval2), inval2len);
+	  memcpy (&ptr[inval1len], value_contents (inval2), inval2len);
 	}
-      outval = value_string (ptr, inval1len + inval2len, char_type);
-      do_cleanups (back_to);
+      outval = value_string (ptr.data (), inval1len + inval2len, char_type);
     }
   else if (TYPE_CODE (type1) == TYPE_CODE_BOOL)
     {
@@ -855,63 +837,62 @@ uinteger_pow (ULONGEST v1, LONGEST v2)
     }
 }
 
-/* Obtain decimal value of arguments for binary operation, converting from
-   other types if one of them is not decimal floating point.  */
+/* Obtain argument values for binary operation, converting from
+   other types if one of them is not floating point.  */
 static void
-value_args_as_decimal (struct value *arg1, struct value *arg2,
-		       gdb_byte *x, int *len_x, enum bfd_endian *byte_order_x,
-		       gdb_byte *y, int *len_y, enum bfd_endian *byte_order_y)
+value_args_as_target_float (struct value *arg1, struct value *arg2,
+			    gdb_byte *x, struct type **eff_type_x,
+			    gdb_byte *y, struct type **eff_type_y)
 {
   struct type *type1, *type2;
 
   type1 = check_typedef (value_type (arg1));
   type2 = check_typedef (value_type (arg2));
 
-  /* At least one of the arguments must be of decimal float type.  */
-  gdb_assert (TYPE_CODE (type1) == TYPE_CODE_DECFLOAT
-	      || TYPE_CODE (type2) == TYPE_CODE_DECFLOAT);
+  /* At least one of the arguments must be of floating-point type.  */
+  gdb_assert (is_floating_type (type1) || is_floating_type (type2));
 
-  if (TYPE_CODE (type1) == TYPE_CODE_FLT
-      || TYPE_CODE (type2) == TYPE_CODE_FLT)
+  if (is_floating_type (type1) && is_floating_type (type2)
+      && TYPE_CODE (type1) != TYPE_CODE (type2))
     /* The DFP extension to the C language does not allow mixing of
      * decimal float types with other float types in expressions
      * (see WDTR 24732, page 12).  */
     error (_("Mixing decimal floating types with "
 	     "other floating types is not allowed."));
 
-  /* Obtain decimal value of arg1, converting from other types
-     if necessary.  */
+  /* Obtain value of arg1, converting from other types if necessary.  */
 
-  if (TYPE_CODE (type1) == TYPE_CODE_DECFLOAT)
+  if (is_floating_type (type1))
     {
-      *byte_order_x = gdbarch_byte_order (get_type_arch (type1));
-      *len_x = TYPE_LENGTH (type1);
-      memcpy (x, value_contents (arg1), *len_x);
+      *eff_type_x = type1;
+      memcpy (x, value_contents (arg1), TYPE_LENGTH (type1));
     }
   else if (is_integral_type (type1))
     {
-      *byte_order_x = gdbarch_byte_order (get_type_arch (type2));
-      *len_x = TYPE_LENGTH (type2);
-      decimal_from_integral (arg1, x, *len_x, *byte_order_x);
+      *eff_type_x = type2;
+      if (TYPE_UNSIGNED (type1))
+	target_float_from_ulongest (x, *eff_type_x, value_as_long (arg1));
+      else
+	target_float_from_longest (x, *eff_type_x, value_as_long (arg1));
     }
   else
     error (_("Don't know how to convert from %s to %s."), TYPE_NAME (type1),
 	     TYPE_NAME (type2));
 
-  /* Obtain decimal value of arg2, converting from other types
-     if necessary.  */
+  /* Obtain value of arg2, converting from other types if necessary.  */
 
-  if (TYPE_CODE (type2) == TYPE_CODE_DECFLOAT)
+  if (is_floating_type (type2))
     {
-      *byte_order_y = gdbarch_byte_order (get_type_arch (type2));
-      *len_y = TYPE_LENGTH (type2);
-      memcpy (y, value_contents (arg2), *len_y);
+      *eff_type_y = type2;
+      memcpy (y, value_contents (arg2), TYPE_LENGTH (type2));
     }
   else if (is_integral_type (type2))
     {
-      *byte_order_y = gdbarch_byte_order (get_type_arch (type1));
-      *len_y = TYPE_LENGTH (type1);
-      decimal_from_integral (arg2, y, *len_y, *byte_order_y);
+      *eff_type_y = type1;
+      if (TYPE_UNSIGNED (type2))
+	target_float_from_ulongest (y, *eff_type_y, value_as_long (arg2));
+      else
+	target_float_from_longest (y, *eff_type_y, value_as_long (arg2));
     }
   else
     error (_("Don't know how to convert from %s to %s."), TYPE_NAME (type1),
@@ -936,111 +917,17 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
   type1 = check_typedef (value_type (arg1));
   type2 = check_typedef (value_type (arg2));
 
-  if ((TYPE_CODE (type1) != TYPE_CODE_FLT
-       && TYPE_CODE (type1) != TYPE_CODE_DECFLOAT
-       && !is_integral_type (type1))
-      || (TYPE_CODE (type2) != TYPE_CODE_FLT
-	  && TYPE_CODE (type2) != TYPE_CODE_DECFLOAT
-	  && !is_integral_type (type2)))
+  if ((!is_floating_value (arg1) && !is_integral_type (type1))
+      || (!is_floating_value (arg2) && !is_integral_type (type2)))
     error (_("Argument to arithmetic operation not a number or boolean."));
 
-  if (TYPE_CODE (type1) == TYPE_CODE_DECFLOAT
-      || TYPE_CODE (type2) == TYPE_CODE_DECFLOAT)
+  if (is_floating_type (type1) || is_floating_type (type2))
     {
-      int len_v1, len_v2, len_v;
-      enum bfd_endian byte_order_v1, byte_order_v2, byte_order_v;
-      gdb_byte v1[16], v2[16];
-      gdb_byte v[16];
-
-      /* If only one type is decimal float, use its type.
+      /* If only one type is floating-point, use its type.
 	 Otherwise use the bigger type.  */
-      if (TYPE_CODE (type1) != TYPE_CODE_DECFLOAT)
+      if (!is_floating_type (type1))
 	result_type = type2;
-      else if (TYPE_CODE (type2) != TYPE_CODE_DECFLOAT)
-	result_type = type1;
-      else if (TYPE_LENGTH (type2) > TYPE_LENGTH (type1))
-	result_type = type2;
-      else
-	result_type = type1;
-
-      len_v = TYPE_LENGTH (result_type);
-      byte_order_v = gdbarch_byte_order (get_type_arch (result_type));
-
-      value_args_as_decimal (arg1, arg2, v1, &len_v1, &byte_order_v1,
-					 v2, &len_v2, &byte_order_v2);
-
-      switch (op)
-	{
-	case BINOP_ADD:
-	case BINOP_SUB:
-	case BINOP_MUL:
-	case BINOP_DIV:
-	case BINOP_EXP:
-	  decimal_binop (op, v1, len_v1, byte_order_v1,
-			     v2, len_v2, byte_order_v2,
-			     v, len_v, byte_order_v);
-	  break;
-
-	default:
-	  error (_("Operation not valid for decimal floating point number."));
-	}
-
-      val = value_from_decfloat (result_type, v);
-    }
-  else if (TYPE_CODE (type1) == TYPE_CODE_FLT
-	   || TYPE_CODE (type2) == TYPE_CODE_FLT)
-    {
-      /* FIXME-if-picky-about-floating-accuracy: Should be doing this
-         in target format.  real.c in GCC probably has the necessary
-         code.  */
-      DOUBLEST v1, v2, v = 0;
-
-      v1 = value_as_double (arg1);
-      v2 = value_as_double (arg2);
-
-      switch (op)
-	{
-	case BINOP_ADD:
-	  v = v1 + v2;
-	  break;
-
-	case BINOP_SUB:
-	  v = v1 - v2;
-	  break;
-
-	case BINOP_MUL:
-	  v = v1 * v2;
-	  break;
-
-	case BINOP_DIV:
-	  v = v1 / v2;
-	  break;
-
-	case BINOP_EXP:
-	  errno = 0;
-	  v = pow (v1, v2);
-	  if (errno)
-	    error (_("Cannot perform exponentiation: %s"),
-		   safe_strerror (errno));
-	  break;
-
-	case BINOP_MIN:
-	  v = v1 < v2 ? v1 : v2;
-	  break;
-	      
-	case BINOP_MAX:
-	  v = v1 > v2 ? v1 : v2;
-	  break;
-
-	default:
-	  error (_("Integer-only operation on floating point number."));
-	}
-
-      /* If only one type is float, use its type.
-	 Otherwise use the bigger type.  */
-      if (TYPE_CODE (type1) != TYPE_CODE_FLT)
-	result_type = type2;
-      else if (TYPE_CODE (type2) != TYPE_CODE_FLT)
+      else if (!is_floating_type (type2))
 	result_type = type1;
       else if (TYPE_LENGTH (type2) > TYPE_LENGTH (type1))
 	result_type = type2;
@@ -1048,7 +935,18 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	result_type = type1;
 
       val = allocate_value (result_type);
-      store_typed_floating (value_contents_raw (val), value_type (val), v);
+
+      struct type *eff_type_v1, *eff_type_v2;
+      gdb::byte_vector v1, v2;
+      v1.resize (TYPE_LENGTH (result_type));
+      v2.resize (TYPE_LENGTH (result_type));
+
+      value_args_as_target_float (arg1, arg2,
+				  v1.data (), &eff_type_v1,
+				  v2.data (), &eff_type_v2);
+      target_float_binop (op, v1.data (), eff_type_v1,
+			      v2.data (), eff_type_v2,
+			      value_contents_raw (val), result_type);
     }
   else if (TYPE_CODE (type1) == TYPE_CODE_BOOL
 	   || TYPE_CODE (type2) == TYPE_CODE_BOOL)
@@ -1519,11 +1417,8 @@ value_logical_not (struct value *arg1)
   arg1 = coerce_array (arg1);
   type1 = check_typedef (value_type (arg1));
 
-  if (TYPE_CODE (type1) == TYPE_CODE_FLT)
-    return 0 == value_as_double (arg1);
-  else if (TYPE_CODE (type1) == TYPE_CODE_DECFLOAT)
-    return decimal_is_zero (value_contents (arg1), TYPE_LENGTH (type1),
-			    gdbarch_byte_order (get_type_arch (type1)));
+  if (is_floating_value (arg1))
+    return target_float_is_zero (value_contents (arg1), type1);
 
   len = TYPE_LENGTH (type1);
   p = value_contents (arg1);
@@ -1594,27 +1489,20 @@ value_equal (struct value *arg1, struct value *arg2)
   if (is_int1 && is_int2)
     return longest_to_int (value_as_long (value_binop (arg1, arg2,
 						       BINOP_EQUAL)));
-  else if ((code1 == TYPE_CODE_FLT || is_int1)
-	   && (code2 == TYPE_CODE_FLT || is_int2))
+  else if ((is_floating_value (arg1) || is_int1)
+	   && (is_floating_value (arg2) || is_int2))
     {
-      /* NOTE: kettenis/20050816: Avoid compiler bug on systems where
-	 `long double' values are returned in static storage (m68k).  */
-      DOUBLEST d = value_as_double (arg1);
+      struct type *eff_type_v1, *eff_type_v2;
+      gdb::byte_vector v1, v2;
+      v1.resize (std::max (TYPE_LENGTH (type1), TYPE_LENGTH (type2)));
+      v2.resize (std::max (TYPE_LENGTH (type1), TYPE_LENGTH (type2)));
 
-      return d == value_as_double (arg2);
-    }
-  else if ((code1 == TYPE_CODE_DECFLOAT || is_int1)
-	   && (code2 == TYPE_CODE_DECFLOAT || is_int2))
-    {
-      gdb_byte v1[16], v2[16];
-      int len_v1, len_v2;
-      enum bfd_endian byte_order_v1, byte_order_v2;
+      value_args_as_target_float (arg1, arg2,
+				  v1.data (), &eff_type_v1,
+				  v2.data (), &eff_type_v2);
 
-      value_args_as_decimal (arg1, arg2, v1, &len_v1, &byte_order_v1,
-					 v2, &len_v2, &byte_order_v2);
-
-      return decimal_compare (v1, len_v1, byte_order_v1,
-			      v2, len_v2, byte_order_v2) == 0;
+      return target_float_compare (v1.data (), eff_type_v1,
+				   v2.data (), eff_type_v2) == 0;
     }
 
   /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
@@ -1642,10 +1530,7 @@ value_equal (struct value *arg1, struct value *arg2)
       return value_strcmp (arg1, arg2) == 0;
     }
   else
-    {
-      error (_("Invalid type combination in equality test."));
-      return 0;			/* For lint -- never reached.  */
-    }
+    error (_("Invalid type combination in equality test."));
 }
 
 /* Compare values based on their raw contents.  Useful for arrays since
@@ -1690,27 +1575,20 @@ value_less (struct value *arg1, struct value *arg2)
   if (is_int1 && is_int2)
     return longest_to_int (value_as_long (value_binop (arg1, arg2,
 						       BINOP_LESS)));
-  else if ((code1 == TYPE_CODE_FLT || is_int1)
-	   && (code2 == TYPE_CODE_FLT || is_int2))
+  else if ((is_floating_value (arg1) || is_int1)
+	   && (is_floating_value (arg2) || is_int2))
     {
-      /* NOTE: kettenis/20050816: Avoid compiler bug on systems where
-	 `long double' values are returned in static storage (m68k).  */
-      DOUBLEST d = value_as_double (arg1);
+      struct type *eff_type_v1, *eff_type_v2;
+      gdb::byte_vector v1, v2;
+      v1.resize (std::max (TYPE_LENGTH (type1), TYPE_LENGTH (type2)));
+      v2.resize (std::max (TYPE_LENGTH (type1), TYPE_LENGTH (type2)));
 
-      return d < value_as_double (arg2);
-    }
-  else if ((code1 == TYPE_CODE_DECFLOAT || is_int1)
-	   && (code2 == TYPE_CODE_DECFLOAT || is_int2))
-    {
-      gdb_byte v1[16], v2[16];
-      int len_v1, len_v2;
-      enum bfd_endian byte_order_v1, byte_order_v2;
+      value_args_as_target_float (arg1, arg2,
+				  v1.data (), &eff_type_v1,
+				  v2.data (), &eff_type_v2);
 
-      value_args_as_decimal (arg1, arg2, v1, &len_v1, &byte_order_v1,
-					 v2, &len_v2, &byte_order_v2);
-
-      return decimal_compare (v1, len_v1, byte_order_v1,
-			      v2, len_v2, byte_order_v2) == -1;
+      return target_float_compare (v1.data (), eff_type_v1,
+				   v2.data (), eff_type_v2) == -1;
     }
   else if (code1 == TYPE_CODE_PTR && code2 == TYPE_CODE_PTR)
     return value_as_address (arg1) < value_as_address (arg2);
@@ -1740,27 +1618,11 @@ value_pos (struct value *arg1)
   arg1 = coerce_ref (arg1);
   type = check_typedef (value_type (arg1));
 
-  if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    return value_from_double (type, value_as_double (arg1));
-  else if (TYPE_CODE (type) == TYPE_CODE_DECFLOAT)
-    return value_from_decfloat (type, value_contents (arg1));
-  else if (is_integral_type (type))
-    {
-      return value_from_longest (type, value_as_long (arg1));
-    }
-  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
-    {
-      struct value *val = allocate_value (type);
-
-      memcpy (value_contents_raw (val), value_contents (arg1),
-              TYPE_LENGTH (type));
-      return val;
-    }
+  if (is_integral_type (type) || is_floating_value (arg1)
+      || (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type)))
+    return value_from_contents (type, value_contents (arg1));
   else
-    {
-      error (_("Argument to positive operation not a number."));
-      return 0;			/* For lint -- never reached.  */
-    }
+    error (_("Argument to positive operation not a number."));
 }
 
 struct value *
@@ -1771,28 +1633,8 @@ value_neg (struct value *arg1)
   arg1 = coerce_ref (arg1);
   type = check_typedef (value_type (arg1));
 
-  if (TYPE_CODE (type) == TYPE_CODE_DECFLOAT)
-    {
-      struct value *val = allocate_value (type);
-      int len = TYPE_LENGTH (type);
-      gdb_byte decbytes[16];  /* a decfloat is at most 128 bits long.  */
-
-      memcpy (decbytes, value_contents (arg1), len);
-
-      if (gdbarch_byte_order (get_type_arch (type)) == BFD_ENDIAN_LITTLE)
-	decbytes[len-1] = decbytes[len - 1] | 0x80;
-      else
-	decbytes[0] = decbytes[0] | 0x80;
-
-      memcpy (value_contents_raw (val), decbytes, len);
-      return val;
-    }
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    return value_from_double (type, -value_as_double (arg1));
-  else if (is_integral_type (type))
-    {
-      return value_from_longest (type, -value_as_long (arg1));
-    }
+  if (is_integral_type (type) || is_floating_type (type))
+    return value_binop (value_from_longest (type, 0), arg1, BINOP_SUB);
   else if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
     {
       struct value *tmp, *val = allocate_value (type);
@@ -1812,10 +1654,7 @@ value_neg (struct value *arg1)
       return val;
     }
   else
-    {
-      error (_("Argument to negate operation not a number."));
-      return 0;			/* For lint -- never reached.  */
-    }
+    error (_("Argument to negate operation not a number."));
 }
 
 struct value *

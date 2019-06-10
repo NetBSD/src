@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -174,22 +174,7 @@ proc gdb_file_cmd {arg} {
 
     send_gdb "symbol-file $arg\n"
     gdb_expect {
-	-re "Detected 64-bit symbol file.\r\nInvoking.*gdb64.*$gdb_prompt $" {
-            verbose "\t\tLoaded $arg into the $GDB"
-            send_gdb "exec-file $arg\n" 
-            gdb_expect {
-                -re ".*$gdb_prompt $" {
-                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
-                    return 0
-                }
-                timeout {
-                    perror "(timeout) Couldn't load $arg"
-                    return -1
-                }
-            }
-            return 0
-        }
-        -re "Reading symbols from.*done.*$gdb_prompt $" {
+        -re "Reading symbols from.*$gdb_prompt $" {
             verbose "\t\tLoaded $arg into the $GDB"
             send_gdb "exec-file $arg\n" 
             gdb_expect {
@@ -249,7 +234,7 @@ proc test_breakpoints { } {
     set stop_line [gdb_get_line_number "stop-at-call"]
     gdb_test "stop at average.c:$stop_line" "Breakpoint.*at.*: file.*average\.c, line $stop_line.*"
     gdb_test "stop in average.c:$stop_line" "Usage: stop in <function . address>"
-    gdb_test "stop at main" "Usage: stop at <line>"
+    gdb_test "stop at main" "Usage: stop at LINE"
 }
 
 #
@@ -282,7 +267,7 @@ proc test_assign { } {
 #test_whereis
 #
 proc test_whereis { } {
-    gdb_test "whereis my_list" "All variables matching regular expression \"my_list\":\r\n\r\nFile.*average\.c:\r\nstatic int my_list\\\[10\\\];"
+    gdb_test "whereis my_list" "All variables matching regular expression \"my_list\":\r\n\r\nFile.*average\.c:\r\n.*\tstatic int my_list\\\[10\\\];"
 }
 
 #

@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -31,13 +31,13 @@ set lib_opts [gdb_target_symbol_prefix_flags]
 
 if { [gdb_compile_shlib $libsrc1 $lib_sl1 $lib_opts] != ""
      || [gdb_compile_shlib $libsrc2 $lib_sl2 $lib_opts] != ""} {
-    untested "Could not compile either $libsrc1 or $libsrc2"
+    untested "failed to compile shared library"
     return -1
 }
 
 set exec_opts [list debug shlib=$lib_sl1 shlib_load]
 if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != "" } {
-    untested "Failed to compile $srcfile"
+    untested "failed to compile"
     return -1
 }
 
@@ -47,12 +47,12 @@ gdb_load_shlib $lib_sl1
 gdb_load_shlib $lib_sl2
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
 if ![gdb_target_supports_trace] {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return -1
 }
 
@@ -183,7 +183,7 @@ proc pending_tracepoint_resolved_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -252,7 +252,7 @@ proc pending_tracepoint_installed_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -326,7 +326,7 @@ proc pending_tracepoint_disconnect_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -374,7 +374,7 @@ proc pending_tracepoint_disconnect_after_resolved { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -427,7 +427,7 @@ proc pending_tracepoint_with_action_resolved { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -508,7 +508,7 @@ gdb_load_shlib $libipa
 lappend exec_opts "shlib=$libipa"
 
 if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != "" } {
-    untested "Failed to compile $srcfile"
+    untested "failed to compile with in-process agent library"
     return -1
 }
 

@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+options {
+	pid-file "named.pid";
+	listen-on port @PORT@ { 10.53.0.2; };
+	listen-on-v6 { none; };
+	port @PORT@;
+	recursion no;
+	notify no;
+	dnssec-enable yes;
+	servfail-ttl 0;
+};
+
+zone "example" {
+	type master;
+	file "example.db";
+};
+
+zone "transfer1" {
+	type slave;
+	masters { 10.53.0.1; };
+	file "transfer.db.raw";
+};
+
+zone "transfer2" {
+	type slave;
+	masters { 10.53.0.1; };
+	masterfile-format text;
+	file "transfer.db.txt";
+};
+
+zone "transfer3" {
+	type slave;
+	masters { 10.53.0.1; };
+	file "formerly-text.db";
+};
+
+zone "transfer4" {
+	type slave;
+	masters { 10.53.0.1; };
+	masterfile-format text;
+	masterfile-style full;
+	file "transfer.db.full";
+};
+
+zone "large" {
+	type slave;
+	masters { 10.53.0.1; };
+	masterfile-format raw;
+	file "large.bk";
+};

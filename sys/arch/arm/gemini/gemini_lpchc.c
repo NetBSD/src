@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_lpchc.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_lpchc.c,v 1.2.54.1 2019/06/10 22:05:53 christos Exp $	*/
 
 /*
  * GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.2.54.1 2019/06/10 22:05:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -17,7 +17,6 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.2 2011/07/01 19:32:28 dyoung Exp 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <machine/param.h>
 #include <sys/bus.h>
 
 #include <arm/gemini/gemini_lpchcvar.h>

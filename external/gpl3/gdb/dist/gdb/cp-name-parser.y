@@ -1,6 +1,6 @@
 /* YACC parser for C++ names, for GDB.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    Parts of the lexer are based on c-exp.y from GDB.
 
@@ -27,6 +27,14 @@
    too messy, particularly when such includes can be inserted at random
    times by the parser generator.  */
 
+/* The Bison manual says that %pure-parser is deprecated, but we use
+   it anyway because it also works with Byacc.  That is also why
+   this uses %lex-param and %parse-param rather than the simpler
+   %param -- Byacc does not support the latter.  */
+%pure-parser
+%lex-param {struct cpname_state *state}
+%parse-param {struct cpname_state *state}
+
 %{
 
 #include "defs.h"
@@ -35,17 +43,11 @@
 #include "safe-ctype.h"
 #include "demangle.h"
 #include "cp-support.h"
+#include "c-support.h"
+#include "parser-defs.h"
 
-/* Bison does not make it easy to create a parser without global
-   state, unfortunately.  Here are all the global variables used
-   in this parser.  */
-
-/* LEXPTR is the current pointer into our lex buffer.  PREV_LEXPTR
-   is the start of the last token lexed, only used for diagnostics.
-   ERROR_LEXPTR is the first place an error occurred.  GLOBAL_ERRMSG
-   is the first error message encountered.  */
-
-static const char *lexptr, *prev_lexptr, *error_lexptr, *global_errmsg;
+#define GDB_YY_REMAP_PREFIX cpname
+#include "yy-remap.h"
 
 /* The components built by the parser are allocated ahead of time,
    and cached in this structure.  */
@@ -57,195 +59,6 @@ struct demangle_info {
   struct demangle_info *next;
   struct demangle_component comps[ALLOC_CHUNK];
 };
-
-static struct demangle_info *demangle_info;
-
-static struct demangle_component *
-d_grab (void)
-{
-  struct demangle_info *more;
-
-  if (demangle_info->used >= ALLOC_CHUNK)
-    {
-      if (demangle_info->next == NULL)
-	{
-	  more = XNEW (struct demangle_info);
-	  more->next = NULL;
-	  demangle_info->next = more;
-	}
-      else
-	more = demangle_info->next;
-
-      more->used = 0;
-      demangle_info = more;
-    }
-  return &demangle_info->comps[demangle_info->used++];
-}
-
-/* The parse tree created by the parser is stored here after a successful
-   parse.  */
-
-static struct demangle_component *global_result;
-
-/* Prototypes for helper functions used when constructing the parse
-   tree.  */
-
-static struct demangle_component *d_qualify (struct demangle_component *, int,
-					     int);
-
-static struct demangle_component *d_int_type (int);
-
-static struct demangle_component *d_unary (const char *,
-					   struct demangle_component *);
-static struct demangle_component *d_binary (const char *,
-					    struct demangle_component *,
-					    struct demangle_component *);
-
-/* Flags passed to d_qualify.  */
-
-#define QUAL_CONST 1
-#define QUAL_RESTRICT 2
-#define QUAL_VOLATILE 4
-
-/* Flags passed to d_int_type.  */
-
-#define INT_CHAR	(1 << 0)
-#define INT_SHORT	(1 << 1)
-#define INT_LONG	(1 << 2)
-#define INT_LLONG	(1 << 3)
-
-#define INT_SIGNED	(1 << 4)
-#define INT_UNSIGNED	(1 << 5)
-
-/* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
-   as well as gratuitiously global symbol names, so we can have multiple
-   yacc generated parsers in gdb.  Note that these are only the variables
-   produced by yacc.  If other parser generators (bison, byacc, etc) produce
-   additional global names that conflict at link time, then those parser
-   generators need to be fixed instead of adding those names to this list. */
-
-#define	yymaxdepth cpname_maxdepth
-#define	yyparse	cpname_parse
-#define	yylex	cpname_lex
-#define	yyerror	cpname_error
-#define	yylval	cpname_lval
-#define	yychar	cpname_char
-#define	yydebug	cpname_debug
-#define	yypact	cpname_pact	
-#define	yyr1	cpname_r1			
-#define	yyr2	cpname_r2			
-#define	yydef	cpname_def		
-#define	yychk	cpname_chk		
-#define	yypgo	cpname_pgo		
-#define	yyact	cpname_act		
-#define	yyexca	cpname_exca
-#define yyerrflag cpname_errflag
-#define yynerrs	cpname_nerrs
-#define	yyps	cpname_ps
-#define	yypv	cpname_pv
-#define	yys	cpname_s
-#define	yy_yys	cpname_yys
-#define	yystate	cpname_state
-#define	yytmp	cpname_tmp
-#define	yyv	cpname_v
-#define	yy_yyv	cpname_yyv
-#define	yyval	cpname_val
-#define	yylloc	cpname_lloc
-#define yyreds	cpname_reds		/* With YYDEBUG defined */
-#define yytoks	cpname_toks		/* With YYDEBUG defined */
-#define yyname	cpname_name		/* With YYDEBUG defined */
-#define yyrule	cpname_rule		/* With YYDEBUG defined */
-#define yylhs	cpname_yylhs
-#define yylen	cpname_yylen
-#define yydefred cpname_yydefred
-#define yydgoto	cpname_yydgoto
-#define yysindex cpname_yysindex
-#define yyrindex cpname_yyrindex
-#define yygindex cpname_yygindex
-#define yytable	 cpname_yytable
-#define yycheck	 cpname_yycheck
-#define yyss	cpname_yyss
-#define yysslim	cpname_yysslim
-#define yyssp	cpname_yyssp
-#define yystacksize cpname_yystacksize
-#define yyvs	cpname_yyvs
-#define yyvsp	cpname_yyvsp
-
-int yyparse (void);
-static int yylex (void);
-static void yyerror (const char *);
-
-/* Enable yydebug for the stand-alone parser.  */
-#ifdef TEST_CPNAMES
-# define YYDEBUG	1
-#endif
-
-/* Helper functions.  These wrap the demangler tree interface, handle
-   allocation from our global store, and return the allocated component.  */
-
-static struct demangle_component *
-fill_comp (enum demangle_component_type d_type, struct demangle_component *lhs,
-	   struct demangle_component *rhs)
-{
-  struct demangle_component *ret = d_grab ();
-  int i;
-
-  i = cplus_demangle_fill_component (ret, d_type, lhs, rhs);
-  gdb_assert (i);
-
-  return ret;
-}
-
-static struct demangle_component *
-make_operator (const char *name, int args)
-{
-  struct demangle_component *ret = d_grab ();
-  int i;
-
-  i = cplus_demangle_fill_operator (ret, name, args);
-  gdb_assert (i);
-
-  return ret;
-}
-
-static struct demangle_component *
-make_dtor (enum gnu_v3_dtor_kinds kind, struct demangle_component *name)
-{
-  struct demangle_component *ret = d_grab ();
-  int i;
-
-  i = cplus_demangle_fill_dtor (ret, kind, name);
-  gdb_assert (i);
-
-  return ret;
-}
-
-static struct demangle_component *
-make_builtin_type (const char *name)
-{
-  struct demangle_component *ret = d_grab ();
-  int i;
-
-  i = cplus_demangle_fill_builtin_type (ret, name);
-  gdb_assert (i);
-
-  return ret;
-}
-
-static struct demangle_component *
-make_name (const char *name, int len)
-{
-  struct demangle_component *ret = d_grab ();
-  int i;
-
-  i = cplus_demangle_fill_name (ret, name, len);
-  gdb_assert (i);
-
-  return ret;
-}
-
-#define d_left(dc) (dc)->u.s_binary.left
-#define d_right(dc) (dc)->u.s_binary.right
 
 %}
 
@@ -268,6 +81,174 @@ make_name (const char *name, int len)
     int lval;
     const char *opname;
   }
+
+%{
+
+struct cpname_state
+{
+  /* LEXPTR is the current pointer into our lex buffer.  PREV_LEXPTR
+     is the start of the last token lexed, only used for diagnostics.
+     ERROR_LEXPTR is the first place an error occurred.  GLOBAL_ERRMSG
+     is the first error message encountered.  */
+
+  const char *lexptr, *prev_lexptr, *error_lexptr, *global_errmsg;
+
+  struct demangle_info *demangle_info;
+
+  /* The parse tree created by the parser is stored here after a
+     successful parse.  */
+
+  struct demangle_component *global_result;
+
+  struct demangle_component *d_grab ();
+
+  /* Helper functions.  These wrap the demangler tree interface,
+     handle allocation from our global store, and return the allocated
+     component.  */
+
+  struct demangle_component *fill_comp (enum demangle_component_type d_type,
+					struct demangle_component *lhs,
+					struct demangle_component *rhs);
+
+  struct demangle_component *make_operator (const char *name, int args);
+
+  struct demangle_component *make_dtor (enum gnu_v3_dtor_kinds kind,
+					struct demangle_component *name);
+
+  struct demangle_component *make_builtin_type (const char *name);
+
+  struct demangle_component *make_name (const char *name, int len);
+
+  struct demangle_component *d_qualify (struct demangle_component *lhs,
+					int qualifiers, int is_method);
+
+  struct demangle_component *d_int_type (int flags);
+
+  struct demangle_component *d_unary (const char *name,
+				      struct demangle_component *lhs);
+
+  struct demangle_component *d_binary (const char *name,
+				       struct demangle_component *lhs,
+				       struct demangle_component *rhs);
+
+  int parse_number (const char *p, int len, int parsed_float, YYSTYPE *lvalp);
+};
+
+struct demangle_component *
+cpname_state::d_grab ()
+{
+  struct demangle_info *more;
+
+  if (demangle_info->used >= ALLOC_CHUNK)
+    {
+      if (demangle_info->next == NULL)
+	{
+	  more = XNEW (struct demangle_info);
+	  more->next = NULL;
+	  demangle_info->next = more;
+	}
+      else
+	more = demangle_info->next;
+
+      more->used = 0;
+      demangle_info = more;
+    }
+  return &demangle_info->comps[demangle_info->used++];
+}
+
+/* Flags passed to d_qualify.  */
+
+#define QUAL_CONST 1
+#define QUAL_RESTRICT 2
+#define QUAL_VOLATILE 4
+
+/* Flags passed to d_int_type.  */
+
+#define INT_CHAR	(1 << 0)
+#define INT_SHORT	(1 << 1)
+#define INT_LONG	(1 << 2)
+#define INT_LLONG	(1 << 3)
+
+#define INT_SIGNED	(1 << 4)
+#define INT_UNSIGNED	(1 << 5)
+
+/* Enable yydebug for the stand-alone parser.  */
+#ifdef TEST_CPNAMES
+# define YYDEBUG	1
+#endif
+
+/* Helper functions.  These wrap the demangler tree interface, handle
+   allocation from our global store, and return the allocated component.  */
+
+struct demangle_component *
+cpname_state::fill_comp (enum demangle_component_type d_type,
+			 struct demangle_component *lhs,
+			 struct demangle_component *rhs)
+{
+  struct demangle_component *ret = d_grab ();
+  int i;
+
+  i = cplus_demangle_fill_component (ret, d_type, lhs, rhs);
+  gdb_assert (i);
+
+  return ret;
+}
+
+struct demangle_component *
+cpname_state::make_operator (const char *name, int args)
+{
+  struct demangle_component *ret = d_grab ();
+  int i;
+
+  i = cplus_demangle_fill_operator (ret, name, args);
+  gdb_assert (i);
+
+  return ret;
+}
+
+struct demangle_component *
+cpname_state::make_dtor (enum gnu_v3_dtor_kinds kind,
+			 struct demangle_component *name)
+{
+  struct demangle_component *ret = d_grab ();
+  int i;
+
+  i = cplus_demangle_fill_dtor (ret, kind, name);
+  gdb_assert (i);
+
+  return ret;
+}
+
+struct demangle_component *
+cpname_state::make_builtin_type (const char *name)
+{
+  struct demangle_component *ret = d_grab ();
+  int i;
+
+  i = cplus_demangle_fill_builtin_type (ret, name);
+  gdb_assert (i);
+
+  return ret;
+}
+
+struct demangle_component *
+cpname_state::make_name (const char *name, int len)
+{
+  struct demangle_component *ret = d_grab ();
+  int i;
+
+  i = cplus_demangle_fill_name (ret, name, len);
+  gdb_assert (i);
+
+  return ret;
+}
+
+#define d_left(dc) (dc)->u.s_binary.left
+#define d_right(dc) (dc)->u.s_binary.right
+
+static int yylex (YYSTYPE *, cpname_state *);
+static void yyerror (cpname_state *, const char *);
+%}
 
 %type <comp> exp exp1 type start start_opt oper colon_name
 %type <comp> unqualified_name colon_ext_name
@@ -365,7 +346,7 @@ make_name (const char *name, int len)
 %%
 
 result		:	start
-			{ global_result = $1; }
+			{ state->global_result = $1; }
 		;
 
 start		:	type
@@ -395,15 +376,19 @@ function
 		   start_opt is used to handle "function-local" variables and
 		   types.  */
 		|	typespec_2 function_arglist start_opt
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
-			  if ($3) $$ = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $3); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME,
+					  $1, $2.comp);
+			  if ($3)
+			    $$ = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME,
+						   $$, $3);
+			}
 		|	colon_ext_only function_arglist start_opt
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
-			  if ($3) $$ = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $3); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
+			  if ($3) $$ = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $3); }
 
 		|	conversion_op_name start_opt
 			{ $$ = $1.comp;
-			  if ($2) $$ = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $2); }
+			  if ($2) $$ = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $2); }
 		|	conversion_op_name abstract_declarator_fn
 			{ if ($2.last)
 			    {
@@ -415,102 +400,102 @@ function
 			    }
 			  /* If we have an arglist, build a function type.  */
 			  if ($2.fn.comp)
-			    $$ = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1.comp, $2.fn.comp);
+			    $$ = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1.comp, $2.fn.comp);
 			  else
 			    $$ = $1.comp;
-			  if ($2.start) $$ = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $2.start);
+			  if ($2.start) $$ = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$, $2.start);
 			}
 		;
 
 demangler_special
 		:	DEMANGLER_SPECIAL start
-			{ $$ = fill_comp ((enum demangle_component_type) $1, $2, NULL); }
+			{ $$ = state->fill_comp ((enum demangle_component_type) $1, $2, NULL); }
 		|	CONSTRUCTION_VTABLE start CONSTRUCTION_IN start
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_CONSTRUCTION_VTABLE, $2, $4); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_CONSTRUCTION_VTABLE, $2, $4); }
 		;
 
 oper	:	OPERATOR NEW
 			{
 			  /* Match the whitespacing of cplus_demangle_operators.
 			     It would abort on unrecognized string otherwise.  */
-			  $$ = make_operator ("new", 3);
+			  $$ = state->make_operator ("new", 3);
 			}
 		|	OPERATOR DELETE
 			{
 			  /* Match the whitespacing of cplus_demangle_operators.
 			     It would abort on unrecognized string otherwise.  */
-			  $$ = make_operator ("delete ", 1);
+			  $$ = state->make_operator ("delete ", 1);
 			}
 		|	OPERATOR NEW '[' ']'
 			{
 			  /* Match the whitespacing of cplus_demangle_operators.
 			     It would abort on unrecognized string otherwise.  */
-			  $$ = make_operator ("new[]", 3);
+			  $$ = state->make_operator ("new[]", 3);
 			}
 		|	OPERATOR DELETE '[' ']'
 			{
 			  /* Match the whitespacing of cplus_demangle_operators.
 			     It would abort on unrecognized string otherwise.  */
-			  $$ = make_operator ("delete[] ", 1);
+			  $$ = state->make_operator ("delete[] ", 1);
 			}
 		|	OPERATOR '+'
-			{ $$ = make_operator ("+", 2); }
+			{ $$ = state->make_operator ("+", 2); }
 		|	OPERATOR '-'
-			{ $$ = make_operator ("-", 2); }
+			{ $$ = state->make_operator ("-", 2); }
 		|	OPERATOR '*'
-			{ $$ = make_operator ("*", 2); }
+			{ $$ = state->make_operator ("*", 2); }
 		|	OPERATOR '/'
-			{ $$ = make_operator ("/", 2); }
+			{ $$ = state->make_operator ("/", 2); }
 		|	OPERATOR '%'
-			{ $$ = make_operator ("%", 2); }
+			{ $$ = state->make_operator ("%", 2); }
 		|	OPERATOR '^'
-			{ $$ = make_operator ("^", 2); }
+			{ $$ = state->make_operator ("^", 2); }
 		|	OPERATOR '&'
-			{ $$ = make_operator ("&", 2); }
+			{ $$ = state->make_operator ("&", 2); }
 		|	OPERATOR '|'
-			{ $$ = make_operator ("|", 2); }
+			{ $$ = state->make_operator ("|", 2); }
 		|	OPERATOR '~'
-			{ $$ = make_operator ("~", 1); }
+			{ $$ = state->make_operator ("~", 1); }
 		|	OPERATOR '!'
-			{ $$ = make_operator ("!", 1); }
+			{ $$ = state->make_operator ("!", 1); }
 		|	OPERATOR '='
-			{ $$ = make_operator ("=", 2); }
+			{ $$ = state->make_operator ("=", 2); }
 		|	OPERATOR '<'
-			{ $$ = make_operator ("<", 2); }
+			{ $$ = state->make_operator ("<", 2); }
 		|	OPERATOR '>'
-			{ $$ = make_operator (">", 2); }
+			{ $$ = state->make_operator (">", 2); }
 		|	OPERATOR ASSIGN_MODIFY
-			{ $$ = make_operator ($2, 2); }
+			{ $$ = state->make_operator ($2, 2); }
 		|	OPERATOR LSH
-			{ $$ = make_operator ("<<", 2); }
+			{ $$ = state->make_operator ("<<", 2); }
 		|	OPERATOR RSH
-			{ $$ = make_operator (">>", 2); }
+			{ $$ = state->make_operator (">>", 2); }
 		|	OPERATOR EQUAL
-			{ $$ = make_operator ("==", 2); }
+			{ $$ = state->make_operator ("==", 2); }
 		|	OPERATOR NOTEQUAL
-			{ $$ = make_operator ("!=", 2); }
+			{ $$ = state->make_operator ("!=", 2); }
 		|	OPERATOR LEQ
-			{ $$ = make_operator ("<=", 2); }
+			{ $$ = state->make_operator ("<=", 2); }
 		|	OPERATOR GEQ
-			{ $$ = make_operator (">=", 2); }
+			{ $$ = state->make_operator (">=", 2); }
 		|	OPERATOR ANDAND
-			{ $$ = make_operator ("&&", 2); }
+			{ $$ = state->make_operator ("&&", 2); }
 		|	OPERATOR OROR
-			{ $$ = make_operator ("||", 2); }
+			{ $$ = state->make_operator ("||", 2); }
 		|	OPERATOR INCREMENT
-			{ $$ = make_operator ("++", 1); }
+			{ $$ = state->make_operator ("++", 1); }
 		|	OPERATOR DECREMENT
-			{ $$ = make_operator ("--", 1); }
+			{ $$ = state->make_operator ("--", 1); }
 		|	OPERATOR ','
-			{ $$ = make_operator (",", 2); }
+			{ $$ = state->make_operator (",", 2); }
 		|	OPERATOR ARROW '*'
-			{ $$ = make_operator ("->*", 2); }
+			{ $$ = state->make_operator ("->*", 2); }
 		|	OPERATOR ARROW
-			{ $$ = make_operator ("->", 2); }
+			{ $$ = state->make_operator ("->", 2); }
 		|	OPERATOR '(' ')'
-			{ $$ = make_operator ("()", 2); }
+			{ $$ = state->make_operator ("()", 2); }
 		|	OPERATOR '[' ']'
-			{ $$ = make_operator ("[]", 2); }
+			{ $$ = state->make_operator ("[]", 2); }
 		;
 
 		/* Conversion operators.  We don't try to handle some of
@@ -518,7 +503,7 @@ oper	:	OPERATOR NEW
 		   since it's not clear that it's parseable.  */
 conversion_op
 		:	OPERATOR typespec_2
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_CONVERSION, $2, NULL); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_CONVERSION, $2, NULL); }
 		;
 
 conversion_op_name
@@ -546,9 +531,9 @@ conversion_op_name
 /* This accepts certain invalid placements of '~'.  */
 unqualified_name:	oper
 		|	oper '<' template_params '>'
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, $1, $3.comp); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_TEMPLATE, $1, $3.comp); }
 		|	'~' NAME
-			{ $$ = make_dtor (gnu_v3_complete_object_dtor, $2); }
+			{ $$ = state->make_dtor (gnu_v3_complete_object_dtor, $2); }
 		;
 
 /* This rule is used in name and nested_name, and expanded inline there
@@ -589,21 +574,21 @@ ext_only_name	:	nested_name unqualified_name
 		;
 
 nested_name	:	NAME COLONCOLON
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $1, NULL);
 			  $$.last = $$.comp;
 			}
 		|	nested_name NAME COLONCOLON
 			{ $$.comp = $1.comp;
-			  d_right ($1.last) = fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $2, NULL);
+			  d_right ($1.last) = state->fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $2, NULL);
 			  $$.last = d_right ($1.last);
 			}
 		|	templ COLONCOLON
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $1, NULL);
 			  $$.last = $$.comp;
 			}
 		|	nested_name templ COLONCOLON
 			{ $$.comp = $1.comp;
-			  d_right ($1.last) = fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $2, NULL);
+			  d_right ($1.last) = state->fill_comp (DEMANGLE_COMPONENT_QUAL_NAME, $2, NULL);
 			  $$.last = d_right ($1.last);
 			}
 		;
@@ -611,15 +596,15 @@ nested_name	:	NAME COLONCOLON
 /* DEMANGLE_COMPONENT_TEMPLATE */
 /* DEMANGLE_COMPONENT_TEMPLATE_ARGLIST */
 templ	:	NAME '<' template_params '>'
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, $1, $3.comp); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_TEMPLATE, $1, $3.comp); }
 		;
 
 template_params	:	template_arg
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, $1, NULL);
 			$$.last = &d_right ($$.comp); }
 		|	template_params ',' template_arg
 			{ $$.comp = $1.comp;
-			  *$1.last = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, $3, NULL);
+			  *$1.last = state->fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, $3, NULL);
 			  $$.last = &d_right (*$1.last);
 			}
 		;
@@ -634,36 +619,36 @@ template_arg	:	typespec_2
 			  *$2.last = $1;
 			}
 		|	'&' start
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), $2); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY, state->make_operator ("&", 1), $2); }
 		|	'&' '(' start ')'
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), $3); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY, state->make_operator ("&", 1), $3); }
 		|	exp
 		;
 
 function_args	:	typespec_2
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_ARGLIST, $1, NULL);
 			  $$.last = &d_right ($$.comp);
 			}
 		|	typespec_2 abstract_declarator
 			{ *$2.last = $1;
-			  $$.comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, $2.comp, NULL);
+			  $$.comp = state->fill_comp (DEMANGLE_COMPONENT_ARGLIST, $2.comp, NULL);
 			  $$.last = &d_right ($$.comp);
 			}
 		|	function_args ',' typespec_2
-			{ *$1.last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, $3, NULL);
+			{ *$1.last = state->fill_comp (DEMANGLE_COMPONENT_ARGLIST, $3, NULL);
 			  $$.comp = $1.comp;
 			  $$.last = &d_right (*$1.last);
 			}
 		|	function_args ',' typespec_2 abstract_declarator
 			{ *$4.last = $3;
-			  *$1.last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, $4.comp, NULL);
+			  *$1.last = state->fill_comp (DEMANGLE_COMPONENT_ARGLIST, $4.comp, NULL);
 			  $$.comp = $1.comp;
 			  $$.last = &d_right (*$1.last);
 			}
 		|	function_args ',' ELLIPSIS
 			{ *$1.last
-			    = fill_comp (DEMANGLE_COMPONENT_ARGLIST,
-					   make_builtin_type ("..."),
+			    = state->fill_comp (DEMANGLE_COMPONENT_ARGLIST,
+					   state->make_builtin_type ("..."),
 					   NULL);
 			  $$.comp = $1.comp;
 			  $$.last = &d_right (*$1.last);
@@ -671,17 +656,17 @@ function_args	:	typespec_2
 		;
 
 function_arglist:	'(' function_args ')' qualifiers_opt %prec NAME
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, $2.comp);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, $2.comp);
 			  $$.last = &d_left ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $4, 1); }
+			  $$.comp = state->d_qualify ($$.comp, $4, 1); }
 		|	'(' VOID ')' qualifiers_opt
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
 			  $$.last = &d_left ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $4, 1); }
+			  $$.comp = state->d_qualify ($$.comp, $4, 1); }
 		|	'(' ')' qualifiers_opt
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
 			  $$.last = &d_left ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $3, 1); }
+			  $$.comp = state->d_qualify ($$.comp, $3, 1); }
 		;
 
 /* Should do something about DEMANGLE_COMPONENT_VENDOR_TYPE_QUAL */
@@ -726,50 +711,50 @@ int_seq		:	int_part
 		;
 
 builtin_type	:	int_seq
-			{ $$ = d_int_type ($1); }
+			{ $$ = state->d_int_type ($1); }
 		|	FLOAT_KEYWORD
-			{ $$ = make_builtin_type ("float"); }
+			{ $$ = state->make_builtin_type ("float"); }
 		|	DOUBLE_KEYWORD
-			{ $$ = make_builtin_type ("double"); }
+			{ $$ = state->make_builtin_type ("double"); }
 		|	LONG DOUBLE_KEYWORD
-			{ $$ = make_builtin_type ("long double"); }
+			{ $$ = state->make_builtin_type ("long double"); }
 		|	BOOL
-			{ $$ = make_builtin_type ("bool"); }
+			{ $$ = state->make_builtin_type ("bool"); }
 		|	WCHAR_T
-			{ $$ = make_builtin_type ("wchar_t"); }
+			{ $$ = state->make_builtin_type ("wchar_t"); }
 		|	VOID
-			{ $$ = make_builtin_type ("void"); }
+			{ $$ = state->make_builtin_type ("void"); }
 		;
 
 ptr_operator	:	'*' qualifiers_opt
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_POINTER, NULL, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_POINTER, NULL, NULL);
 			  $$.last = &d_left ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $2, 0); }
+			  $$.comp = state->d_qualify ($$.comp, $2, 0); }
 		/* g++ seems to allow qualifiers after the reference?  */
 		|	'&'
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_REFERENCE, NULL, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_REFERENCE, NULL, NULL);
 			  $$.last = &d_left ($$.comp); }
 		|	ANDAND
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_RVALUE_REFERENCE, NULL, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_RVALUE_REFERENCE, NULL, NULL);
 			  $$.last = &d_left ($$.comp); }
 		|	nested_name '*' qualifiers_opt
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_PTRMEM_TYPE, $1.comp, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_PTRMEM_TYPE, $1.comp, NULL);
 			  /* Convert the innermost DEMANGLE_COMPONENT_QUAL_NAME to a DEMANGLE_COMPONENT_NAME.  */
 			  *$1.last = *d_left ($1.last);
 			  $$.last = &d_right ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $3, 0); }
+			  $$.comp = state->d_qualify ($$.comp, $3, 0); }
 		|	COLONCOLON nested_name '*' qualifiers_opt
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_PTRMEM_TYPE, $2.comp, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_PTRMEM_TYPE, $2.comp, NULL);
 			  /* Convert the innermost DEMANGLE_COMPONENT_QUAL_NAME to a DEMANGLE_COMPONENT_NAME.  */
 			  *$2.last = *d_left ($2.last);
 			  $$.last = &d_right ($$.comp);
-			  $$.comp = d_qualify ($$.comp, $4, 0); }
+			  $$.comp = state->d_qualify ($$.comp, $4, 0); }
 		;
 
 array_indicator	:	'[' ']'
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_ARRAY_TYPE, NULL, NULL); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_ARRAY_TYPE, NULL, NULL); }
 		|	'[' INT ']'
-			{ $$ = fill_comp (DEMANGLE_COMPONENT_ARRAY_TYPE, $2, NULL); }
+			{ $$ = state->fill_comp (DEMANGLE_COMPONENT_ARRAY_TYPE, $2, NULL); }
 		;
 
 /* Details of this approach inspired by the G++ < 3.4 parser.  */
@@ -783,29 +768,29 @@ typespec	:	builtin_type
 */
 
 typespec_2	:	builtin_type qualifiers
-			{ $$ = d_qualify ($1, $2, 0); }
+			{ $$ = state->d_qualify ($1, $2, 0); }
 		|	builtin_type
 		|	qualifiers builtin_type qualifiers
-			{ $$ = d_qualify ($2, $1 | $3, 0); }
+			{ $$ = state->d_qualify ($2, $1 | $3, 0); }
 		|	qualifiers builtin_type
-			{ $$ = d_qualify ($2, $1, 0); }
+			{ $$ = state->d_qualify ($2, $1, 0); }
 
 		|	name qualifiers
-			{ $$ = d_qualify ($1, $2, 0); }
+			{ $$ = state->d_qualify ($1, $2, 0); }
 		|	name
 		|	qualifiers name qualifiers
-			{ $$ = d_qualify ($2, $1 | $3, 0); }
+			{ $$ = state->d_qualify ($2, $1 | $3, 0); }
 		|	qualifiers name
-			{ $$ = d_qualify ($2, $1, 0); }
+			{ $$ = state->d_qualify ($2, $1, 0); }
 
 		|	COLONCOLON name qualifiers
-			{ $$ = d_qualify ($2, $3, 0); }
+			{ $$ = state->d_qualify ($2, $3, 0); }
 		|	COLONCOLON name
 			{ $$ = $2; }
 		|	qualifiers COLONCOLON name qualifiers
-			{ $$ = d_qualify ($3, $1 | $4, 0); }
+			{ $$ = state->d_qualify ($3, $1 | $4, 0); }
 		|	qualifiers COLONCOLON name
-			{ $$ = d_qualify ($3, $1, 0); }
+			{ $$ = state->d_qualify ($3, $1, 0); }
 		;
 
 abstract_declarator
@@ -922,7 +907,7 @@ direct_declarator
 			  $$.last = &d_right ($2);
 			}
 		|	colon_ext_name
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, NULL);
 			  $$.last = &d_right ($$.comp);
 			}
 		;
@@ -938,7 +923,7 @@ declarator_1	:	ptr_operator declarator_1
 			  $$.last = $1.last;
 			  *$2.last = $1.comp; }
 		|	colon_ext_name
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, NULL);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, NULL);
 			  $$.last = &d_right ($$.comp);
 			}
 		|	direct_declarator_1
@@ -950,15 +935,15 @@ declarator_1	:	ptr_operator declarator_1
 			   members will not be mangled.  If they are hopefully
 			   they'll end up to the right of the ::.  */
 		|	colon_ext_name function_arglist COLONCOLON start
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
 			  $$.last = $2.last;
-			  $$.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$.comp, $4);
+			  $$.comp = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$.comp, $4);
 			}
 		|	direct_declarator_1 function_arglist COLONCOLON start
 			{ $$.comp = $1.comp;
 			  *$1.last = $2.comp;
 			  $$.last = $2.last;
-			  $$.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$.comp, $4);
+			  $$.comp = state->fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, $$.comp, $4);
 			}
 		;
 
@@ -978,11 +963,11 @@ direct_declarator_1
 			  $$.last = &d_right ($2);
 			}
 		|	colon_ext_name function_arglist
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2.comp);
 			  $$.last = $2.last;
 			}
 		|	colon_ext_name array_indicator
-			{ $$.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2);
+			{ $$.comp = state->fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, $1, $2);
 			  $$.last = &d_right ($2);
 			}
 		;
@@ -997,29 +982,29 @@ exp1	:	exp
 	;
 
 exp1	:	exp '>' exp
-		{ $$ = d_binary (">", $1, $3); }
+		{ $$ = state->d_binary (">", $1, $3); }
 	;
 
 /* References.  Not allowed everywhere in template parameters, only
    at the top level, but treat them as expressions in case they are wrapped
    in parentheses.  */
 exp1	:	'&' start
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), $2); }
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY, state->make_operator ("&", 1), $2); }
 	|	'&' '(' start ')'
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), $3); }
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY, state->make_operator ("&", 1), $3); }
 	;
 
 /* Expressions, not including the comma operator.  */
 exp	:	'-' exp    %prec UNARY
-		{ $$ = d_unary ("-", $2); }
+		{ $$ = state->d_unary ("-", $2); }
 	;
 
 exp	:	'!' exp    %prec UNARY
-		{ $$ = d_unary ("!", $2); }
+		{ $$ = state->d_unary ("!", $2); }
 	;
 
 exp	:	'~' exp    %prec UNARY
-		{ $$ = d_unary ("~", $2); }
+		{ $$ = state->d_unary ("~", $2); }
 	;
 
 /* Casts.  First your normal C-style cast.  If exp is a LITERAL, just change
@@ -1033,8 +1018,8 @@ exp	:	'(' type ')' exp  %prec UNARY
 		      d_left ($4) = $2;
 		    }
 		  else
-		    $$ = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				      fill_comp (DEMANGLE_COMPONENT_CAST, $2, NULL),
+		    $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY,
+				      state->fill_comp (DEMANGLE_COMPONENT_CAST, $2, NULL),
 				      $4);
 		}
 	;
@@ -1042,22 +1027,22 @@ exp	:	'(' type ')' exp  %prec UNARY
 /* Mangling does not differentiate between these, so we don't need to
    either.  */
 exp	:	STATIC_CAST '<' type '>' '(' exp1 ')' %prec UNARY
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    state->fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
 				    $6);
 		}
 	;
 
 exp	:	DYNAMIC_CAST '<' type '>' '(' exp1 ')' %prec UNARY
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    state->fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
 				    $6);
 		}
 	;
 
 exp	:	REINTERPRET_CAST '<' type '>' '(' exp1 ')' %prec UNARY
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    state->fill_comp (DEMANGLE_COMPONENT_CAST, $3, NULL),
 				    $6);
 		}
 	;
@@ -1075,86 +1060,86 @@ exp	:	REINTERPRET_CAST '<' type '>' '(' exp1 ')' %prec UNARY
 /* Binary operators in order of decreasing precedence.  */
 
 exp	:	exp '*' exp
-		{ $$ = d_binary ("*", $1, $3); }
+		{ $$ = state->d_binary ("*", $1, $3); }
 	;
 
 exp	:	exp '/' exp
-		{ $$ = d_binary ("/", $1, $3); }
+		{ $$ = state->d_binary ("/", $1, $3); }
 	;
 
 exp	:	exp '%' exp
-		{ $$ = d_binary ("%", $1, $3); }
+		{ $$ = state->d_binary ("%", $1, $3); }
 	;
 
 exp	:	exp '+' exp
-		{ $$ = d_binary ("+", $1, $3); }
+		{ $$ = state->d_binary ("+", $1, $3); }
 	;
 
 exp	:	exp '-' exp
-		{ $$ = d_binary ("-", $1, $3); }
+		{ $$ = state->d_binary ("-", $1, $3); }
 	;
 
 exp	:	exp LSH exp
-		{ $$ = d_binary ("<<", $1, $3); }
+		{ $$ = state->d_binary ("<<", $1, $3); }
 	;
 
 exp	:	exp RSH exp
-		{ $$ = d_binary (">>", $1, $3); }
+		{ $$ = state->d_binary (">>", $1, $3); }
 	;
 
 exp	:	exp EQUAL exp
-		{ $$ = d_binary ("==", $1, $3); }
+		{ $$ = state->d_binary ("==", $1, $3); }
 	;
 
 exp	:	exp NOTEQUAL exp
-		{ $$ = d_binary ("!=", $1, $3); }
+		{ $$ = state->d_binary ("!=", $1, $3); }
 	;
 
 exp	:	exp LEQ exp
-		{ $$ = d_binary ("<=", $1, $3); }
+		{ $$ = state->d_binary ("<=", $1, $3); }
 	;
 
 exp	:	exp GEQ exp
-		{ $$ = d_binary (">=", $1, $3); }
+		{ $$ = state->d_binary (">=", $1, $3); }
 	;
 
 exp	:	exp '<' exp
-		{ $$ = d_binary ("<", $1, $3); }
+		{ $$ = state->d_binary ("<", $1, $3); }
 	;
 
 exp	:	exp '&' exp
-		{ $$ = d_binary ("&", $1, $3); }
+		{ $$ = state->d_binary ("&", $1, $3); }
 	;
 
 exp	:	exp '^' exp
-		{ $$ = d_binary ("^", $1, $3); }
+		{ $$ = state->d_binary ("^", $1, $3); }
 	;
 
 exp	:	exp '|' exp
-		{ $$ = d_binary ("|", $1, $3); }
+		{ $$ = state->d_binary ("|", $1, $3); }
 	;
 
 exp	:	exp ANDAND exp
-		{ $$ = d_binary ("&&", $1, $3); }
+		{ $$ = state->d_binary ("&&", $1, $3); }
 	;
 
 exp	:	exp OROR exp
-		{ $$ = d_binary ("||", $1, $3); }
+		{ $$ = state->d_binary ("||", $1, $3); }
 	;
 
 /* Not 100% sure these are necessary, but they're harmless.  */
 exp	:	exp ARROW NAME
-		{ $$ = d_binary ("->", $1, $3); }
+		{ $$ = state->d_binary ("->", $1, $3); }
 	;
 
 exp	:	exp '.' NAME
-		{ $$ = d_binary (".", $1, $3); }
+		{ $$ = state->d_binary (".", $1, $3); }
 	;
 
 exp	:	exp '?' exp ':' exp	%prec '?'
-		{ $$ = fill_comp (DEMANGLE_COMPONENT_TRINARY, make_operator ("?", 3),
-				    fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG1, $1,
-						 fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG2, $3, $5)));
+		{ $$ = state->fill_comp (DEMANGLE_COMPONENT_TRINARY, state->make_operator ("?", 3),
+				    state->fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG1, $1,
+						 state->fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG2, $3, $5)));
 		}
 	;
 			  
@@ -1169,25 +1154,25 @@ exp	:	SIZEOF '(' type ')'	%prec UNARY
 		{
 		  /* Match the whitespacing of cplus_demangle_operators.
 		     It would abort on unrecognized string otherwise.  */
-		  $$ = d_unary ("sizeof ", $3);
+		  $$ = state->d_unary ("sizeof ", $3);
 		}
 	;
 
 /* C++.  */
 exp     :       TRUEKEYWORD    
 		{ struct demangle_component *i;
-		  i = make_name ("1", 1);
-		  $$ = fill_comp (DEMANGLE_COMPONENT_LITERAL,
-				    make_builtin_type ("bool"),
+		  i = state->make_name ("1", 1);
+		  $$ = state->fill_comp (DEMANGLE_COMPONENT_LITERAL,
+				    state->make_builtin_type ( "bool"),
 				    i);
 		}
 	;
 
 exp     :       FALSEKEYWORD   
 		{ struct demangle_component *i;
-		  i = make_name ("0", 1);
-		  $$ = fill_comp (DEMANGLE_COMPONENT_LITERAL,
-				    make_builtin_type ("bool"),
+		  i = state->make_name ("0", 1);
+		  $$ = state->fill_comp (DEMANGLE_COMPONENT_LITERAL,
+				    state->make_builtin_type ("bool"),
 				    i);
 		}
 	;
@@ -1202,7 +1187,8 @@ exp     :       FALSEKEYWORD
    may already be qualified; duplicate qualifiers are not created.  */
 
 struct demangle_component *
-d_qualify (struct demangle_component *lhs, int qualifiers, int is_method)
+cpname_state::d_qualify (struct demangle_component *lhs, int qualifiers,
+			 int is_method)
 {
   struct demangle_component **inner_p;
   enum demangle_component_type type;
@@ -1212,8 +1198,8 @@ d_qualify (struct demangle_component *lhs, int qualifiers, int is_method)
 #define HANDLE_QUAL(TYPE, MTYPE, QUAL)				\
   if ((qualifiers & QUAL) && (type != TYPE) && (type != MTYPE))	\
     {								\
-      *inner_p = fill_comp (is_method ? MTYPE : TYPE,	\
-			      *inner_p, NULL);			\
+      *inner_p = fill_comp (is_method ? MTYPE : TYPE,		\
+			    *inner_p, NULL);			\
       inner_p = &d_left (*inner_p);				\
       type = (*inner_p)->type;					\
     }								\
@@ -1236,8 +1222,8 @@ d_qualify (struct demangle_component *lhs, int qualifiers, int is_method)
 
 /* Return a builtin type corresponding to FLAGS.  */
 
-static struct demangle_component *
-d_int_type (int flags)
+struct demangle_component *
+cpname_state::d_int_type (int flags)
 {
   const char *name;
 
@@ -1289,19 +1275,20 @@ d_int_type (int flags)
 
 /* Wrapper to create a unary operation.  */
 
-static struct demangle_component *
-d_unary (const char *name, struct demangle_component *lhs)
+struct demangle_component *
+cpname_state::d_unary (const char *name, struct demangle_component *lhs)
 {
   return fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator (name, 1), lhs);
 }
 
 /* Wrapper to create a binary operation.  */
 
-static struct demangle_component *
-d_binary (const char *name, struct demangle_component *lhs, struct demangle_component *rhs)
+struct demangle_component *
+cpname_state::d_binary (const char *name, struct demangle_component *lhs,
+			struct demangle_component *rhs)
 {
   return fill_comp (DEMANGLE_COMPONENT_BINARY, make_operator (name, 2),
-		      fill_comp (DEMANGLE_COMPONENT_BINARY_ARGS, lhs, rhs));
+		    fill_comp (DEMANGLE_COMPONENT_BINARY_ARGS, lhs, rhs));
 }
 
 /* Find the end of a symbol name starting at LEXPTR.  */
@@ -1311,7 +1298,7 @@ symbol_end (const char *lexptr)
 {
   const char *p = lexptr;
 
-  while (*p && (ISALNUM (*p) || *p == '_' || *p == '$' || *p == '.'))
+  while (*p && (c_ident_is_alnum (*p) || *p == '_' || *p == '$' || *p == '.'))
     p++;
 
   return p;
@@ -1321,8 +1308,9 @@ symbol_end (const char *lexptr)
    The number starts at P and contains LEN characters.  Store the result in
    YYLVAL.  */
 
-static int
-parse_number (const char *p, int len, int parsed_float)
+int
+cpname_state::parse_number (const char *p, int len, int parsed_float,
+			    YYSTYPE *lvalp)
 {
   int unsigned_p = 0;
 
@@ -1372,7 +1360,7 @@ parse_number (const char *p, int len, int parsed_float)
 	return ERROR;
 
       name = make_name (p, len);
-      yylval.comp = fill_comp (literal_type, type, name);
+      lvalp->comp = fill_comp (literal_type, type, name);
 
       return FLOAT;
     }
@@ -1421,13 +1409,13 @@ parse_number (const char *p, int len, int parsed_float)
      type = signed_type;
 
    name = make_name (p, len);
-   yylval.comp = fill_comp (literal_type, type, name);
+   lvalp->comp = fill_comp (literal_type, type, name);
 
    return INT;
 }
 
-static char backslashable[] = "abefnrtv";
-static char represented[] = "\a\b\e\f\n\r\t\v";
+static const char backslashable[] = "abefnrtv";
+static const char represented[] = "\a\b\e\f\n\r\t\v";
 
 /* Translate the backslash the way we would in the host character set.  */
 static int
@@ -1525,39 +1513,39 @@ cp_parse_escape (const char **string_ptr)
 #define HANDLE_SPECIAL(string, comp)				\
   if (strncmp (tokstart, string, sizeof (string) - 1) == 0)	\
     {								\
-      lexptr = tokstart + sizeof (string) - 1;			\
-      yylval.lval = comp;					\
+      state->lexptr = tokstart + sizeof (string) - 1;			\
+      lvalp->lval = comp;					\
       return DEMANGLER_SPECIAL;					\
     }
 
 #define HANDLE_TOKEN2(string, token)			\
-  if (lexptr[1] == string[1])				\
+  if (state->lexptr[1] == string[1])				\
     {							\
-      lexptr += 2;					\
-      yylval.opname = string;				\
+      state->lexptr += 2;					\
+      lvalp->opname = string;				\
       return token;					\
     }      
 
 #define HANDLE_TOKEN3(string, token)			\
-  if (lexptr[1] == string[1] && lexptr[2] == string[2])	\
+  if (state->lexptr[1] == string[1] && state->lexptr[2] == string[2])	\
     {							\
-      lexptr += 3;					\
-      yylval.opname = string;				\
+      state->lexptr += 3;					\
+      lvalp->opname = string;				\
       return token;					\
     }      
 
 /* Read one token, getting characters through LEXPTR.  */
 
 static int
-yylex (void)
+yylex (YYSTYPE *lvalp, cpname_state *state)
 {
   int c;
   int namelen;
   const char *tokstart;
 
  retry:
-  prev_lexptr = lexptr;
-  tokstart = lexptr;
+  state->prev_lexptr = state->lexptr;
+  tokstart = state->lexptr;
 
   switch (c = *tokstart)
     {
@@ -1567,27 +1555,27 @@ yylex (void)
     case ' ':
     case '\t':
     case '\n':
-      lexptr++;
+      state->lexptr++;
       goto retry;
 
     case '\'':
       /* We either have a character constant ('0' or '\177' for example)
 	 or we have a quoted symbol reference ('foo(int,int)' in C++
 	 for example). */
-      lexptr++;
-      c = *lexptr++;
+      state->lexptr++;
+      c = *state->lexptr++;
       if (c == '\\')
-	c = cp_parse_escape (&lexptr);
+	c = cp_parse_escape (&state->lexptr);
       else if (c == '\'')
 	{
-	  yyerror (_("empty character constant"));
+	  yyerror (state, _("empty character constant"));
 	  return ERROR;
 	}
 
-      c = *lexptr++;
+      c = *state->lexptr++;
       if (c != '\'')
 	{
-	  yyerror (_("invalid character constant"));
+	  yyerror (state, _("invalid character constant"));
 	  return ERROR;
 	}
 
@@ -1595,36 +1583,38 @@ yylex (void)
 	 presumably the same one that appears in manglings - the decimal
 	 representation.  But if that isn't in our input then we have to
 	 allocate memory for it somewhere.  */
-      yylval.comp = fill_comp (DEMANGLE_COMPONENT_LITERAL,
-				 make_builtin_type ("char"),
-				 make_name (tokstart, lexptr - tokstart));
+      lvalp->comp
+	= state->fill_comp (DEMANGLE_COMPONENT_LITERAL,
+			    state->make_builtin_type ("char"),
+			    state->make_name (tokstart,
+					      state->lexptr - tokstart));
 
       return INT;
 
     case '(':
       if (strncmp (tokstart, "(anonymous namespace)", 21) == 0)
 	{
-	  lexptr += 21;
-	  yylval.comp = make_name ("(anonymous namespace)",
-				     sizeof "(anonymous namespace)" - 1);
+	  state->lexptr += 21;
+	  lvalp->comp = state->make_name ("(anonymous namespace)",
+					  sizeof "(anonymous namespace)" - 1);
 	  return NAME;
 	}
 	/* FALL THROUGH */
 
     case ')':
     case ',':
-      lexptr++;
+      state->lexptr++;
       return c;
 
     case '.':
-      if (lexptr[1] == '.' && lexptr[2] == '.')
+      if (state->lexptr[1] == '.' && state->lexptr[2] == '.')
 	{
-	  lexptr += 3;
+	  state->lexptr += 3;
 	  return ELLIPSIS;
 	}
 
       /* Might be a floating point number.  */
-      if (lexptr[1] < '0' || lexptr[1] > '9')
+      if (state->lexptr[1] < '0' || state->lexptr[1] > '9')
 	goto symbol;		/* Nope, must be a symbol. */
 
       goto try_number;
@@ -1637,16 +1627,16 @@ yylex (void)
       /* For construction vtables.  This is kind of hokey.  */
       if (strncmp (tokstart, "-in-", 4) == 0)
 	{
-	  lexptr += 4;
+	  state->lexptr += 4;
 	  return CONSTRUCTION_IN;
 	}
 
-      if (lexptr[1] < '0' || lexptr[1] > '9')
+      if (state->lexptr[1] < '0' || state->lexptr[1] > '9')
 	{
-	  lexptr++;
+	  state->lexptr++;
 	  return '-';
 	}
-      /* FALL THRU into number case.  */
+      /* FALL THRU.  */
 
     try_number:
     case '0':
@@ -1704,74 +1694,75 @@ yylex (void)
 	    else if (! ISALNUM (*p))
 	      break;
 	  }
-	toktype = parse_number (tokstart, p - tokstart, got_dot|got_e);
+	toktype = state->parse_number (tokstart, p - tokstart, got_dot|got_e,
+				       lvalp);
         if (toktype == ERROR)
 	  {
 	    char *err_copy = (char *) alloca (p - tokstart + 1);
 
 	    memcpy (err_copy, tokstart, p - tokstart);
 	    err_copy[p - tokstart] = 0;
-	    yyerror (_("invalid number"));
+	    yyerror (state, _("invalid number"));
 	    return ERROR;
 	  }
-	lexptr = p;
+	state->lexptr = p;
 	return toktype;
       }
 
     case '+':
       HANDLE_TOKEN2 ("+=", ASSIGN_MODIFY);
       HANDLE_TOKEN2 ("++", INCREMENT);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '*':
       HANDLE_TOKEN2 ("*=", ASSIGN_MODIFY);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '/':
       HANDLE_TOKEN2 ("/=", ASSIGN_MODIFY);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '%':
       HANDLE_TOKEN2 ("%=", ASSIGN_MODIFY);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '|':
       HANDLE_TOKEN2 ("|=", ASSIGN_MODIFY);
       HANDLE_TOKEN2 ("||", OROR);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '&':
       HANDLE_TOKEN2 ("&=", ASSIGN_MODIFY);
       HANDLE_TOKEN2 ("&&", ANDAND);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '^':
       HANDLE_TOKEN2 ("^=", ASSIGN_MODIFY);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '!':
       HANDLE_TOKEN2 ("!=", NOTEQUAL);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '<':
       HANDLE_TOKEN3 ("<<=", ASSIGN_MODIFY);
       HANDLE_TOKEN2 ("<=", LEQ);
       HANDLE_TOKEN2 ("<<", LSH);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '>':
       HANDLE_TOKEN3 (">>=", ASSIGN_MODIFY);
       HANDLE_TOKEN2 (">=", GEQ);
       HANDLE_TOKEN2 (">>", RSH);
-      lexptr++;
+      state->lexptr++;
       return c;
     case '=':
       HANDLE_TOKEN2 ("==", EQUAL);
-      lexptr++;
+      state->lexptr++;
       return c;
     case ':':
       HANDLE_TOKEN2 ("::", COLONCOLON);
-      lexptr++;
+      state->lexptr++;
       return c;
 
     case '[':
@@ -1782,19 +1773,19 @@ yylex (void)
     case '{':
     case '}':
     symbol:
-      lexptr++;
+      state->lexptr++;
       return c;
 
     case '"':
       /* These can't occur in C++ names.  */
-      yyerror (_("unexpected string literal"));
+      yyerror (state, _("unexpected string literal"));
       return ERROR;
     }
 
-  if (!(c == '_' || c == '$' || ISALPHA (c)))
+  if (!(c == '_' || c == '$' || c_ident_is_alpha (c)))
     {
       /* We must have come across a bad character (e.g. ';').  */
-      yyerror (_("invalid character"));
+      yyerror (state, _("invalid character"));
       return ERROR;
     }
 
@@ -1802,9 +1793,9 @@ yylex (void)
   namelen = 0;
   do
     c = tokstart[++namelen];
-  while (ISALNUM (c) || c == '_' || c == '$');
+  while (c_ident_is_alnum (c) || c == '_' || c == '$');
 
-  lexptr += namelen;
+  state->lexptr += namelen;
 
   /* Catch specific keywords.  Notice that some of the keywords contain
      spaces, and are sorted by the length of the first word.  They must
@@ -1818,7 +1809,7 @@ yylex (void)
     case 12:
       if (strncmp (tokstart, "construction vtable for ", 24) == 0)
 	{
-	  lexptr = tokstart + 24;
+	  state->lexptr = tokstart + 24;
 	  return CONSTRUCTION_VTABLE;
 	}
       if (strncmp (tokstart, "dynamic_cast", 12) == 0)
@@ -1856,23 +1847,23 @@ yylex (void)
       if (strncmp (tokstart, "global constructors keyed to ", 29) == 0)
 	{
 	  const char *p;
-	  lexptr = tokstart + 29;
-	  yylval.lval = DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS;
+	  state->lexptr = tokstart + 29;
+	  lvalp->lval = DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS;
 	  /* Find the end of the symbol.  */
-	  p = symbol_end (lexptr);
-	  yylval.comp = make_name (lexptr, p - lexptr);
-	  lexptr = p;
+	  p = symbol_end (state->lexptr);
+	  lvalp->comp = state->make_name (state->lexptr, p - state->lexptr);
+	  state->lexptr = p;
 	  return DEMANGLER_SPECIAL;
 	}
       if (strncmp (tokstart, "global destructors keyed to ", 28) == 0)
 	{
 	  const char *p;
-	  lexptr = tokstart + 28;
-	  yylval.lval = DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS;
+	  state->lexptr = tokstart + 28;
+	  lvalp->lval = DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS;
 	  /* Find the end of the symbol.  */
-	  p = symbol_end (lexptr);
-	  yylval.comp = make_name (lexptr, p - lexptr);
-	  lexptr = p;
+	  p = symbol_end (state->lexptr);
+	  lvalp->comp = state->make_name (state->lexptr, p - state->lexptr);
+	  state->lexptr = p;
 	  return DEMANGLER_SPECIAL;
 	}
 
@@ -1929,18 +1920,18 @@ yylex (void)
       break;
     }
 
-  yylval.comp = make_name (tokstart, namelen);
+  lvalp->comp = state->make_name (tokstart, namelen);
   return NAME;
 }
 
 static void
-yyerror (const char *msg)
+yyerror (cpname_state *state, const char *msg)
 {
-  if (global_errmsg)
+  if (state->global_errmsg)
     return;
 
-  error_lexptr = prev_lexptr;
-  global_errmsg = msg ? msg : "parse error";
+  state->error_lexptr = state->prev_lexptr;
+  state->global_errmsg = msg ? msg : "parse error";
 }
 
 /* Allocate a chunk of the components we'll need to build a tree.  We
@@ -1963,13 +1954,14 @@ allocate_info (void)
    cplus_demangle_print does not, specifically the global destructor
    and constructor labels.  */
 
-char *
+gdb::unique_xmalloc_ptr<char>
 cp_comp_to_string (struct demangle_component *result, int estimated_len)
 {
   size_t err;
 
-  return cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI, result, estimated_len,
-			       &err);
+  char *res = cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI,
+				    result, estimated_len, &err);
+  return gdb::unique_xmalloc_ptr<char> (res);
 }
 
 /* Constructor for demangle_parse_info.  */
@@ -2031,36 +2023,31 @@ cp_merge_demangle_parse_infos (struct demangle_parse_info *dest,
 /* Convert a demangled name to a demangle_component tree.  On success,
    a structure containing the root of the new tree is returned.  On
    error, NULL is returned, and an error message will be set in
-   *ERRMSG (which does not need to be freed).  */
+   *ERRMSG.  */
 
 struct std::unique_ptr<demangle_parse_info>
-cp_demangled_name_to_comp (const char *demangled_name, const char **errmsg)
+cp_demangled_name_to_comp (const char *demangled_name,
+			   std::string *errmsg)
 {
-  static char errbuf[60];
+  cpname_state state;
 
-  prev_lexptr = lexptr = demangled_name;
-  error_lexptr = NULL;
-  global_errmsg = NULL;
+  state.prev_lexptr = state.lexptr = demangled_name;
+  state.error_lexptr = NULL;
+  state.global_errmsg = NULL;
 
-  demangle_info = allocate_info ();
+  state.demangle_info = allocate_info ();
 
   std::unique_ptr<demangle_parse_info> result (new demangle_parse_info);
-  result->info = demangle_info;
+  result->info = state.demangle_info;
 
-  if (yyparse ())
+  if (yyparse (&state))
     {
-      if (global_errmsg && errmsg)
-	{
-	  snprintf (errbuf, sizeof (errbuf) - 2, "%s, near `%s",
-		    global_errmsg, error_lexptr);
-	  strcat (errbuf, "'");
-	  *errmsg = errbuf;
-	}
+      if (state.global_errmsg && errmsg)
+	*errmsg = state.global_errmsg;
       return NULL;
     }
 
-  result->tree = global_result;
-  global_result = NULL;
+  result->tree = state.global_result;
 
   return result;
 }
@@ -2128,10 +2115,9 @@ internal_error (const char *file, int line, const char *fmt, ...)
 int
 main (int argc, char **argv)
 {
-  char *str2, *extra_chars = "", c;
+  char *str2, *extra_chars, c;
   char buf[65536];
   int arg;
-  const char *errmsg;
 
   arg = 1;
   if (argv[arg] && strcmp (argv[arg], "--debug") == 0)
@@ -2158,11 +2144,12 @@ main (int argc, char **argv)
 	    continue;
 	  }
 
+	std::string errmsg;
 	std::unique_ptr<demangle_parse_info> result
 	  = cp_demangled_name_to_comp (str2, &errmsg);
 	if (result == NULL)
 	  {
-	    fputs (errmsg, stderr);
+	    fputs (errmsg.c_str (), stderr);
 	    fputc ('\n', stderr);
 	    continue;
 	  }
@@ -2179,11 +2166,12 @@ main (int argc, char **argv)
       }
   else
     {
+      std::string errmsg;
       std::unique_ptr<demangle_parse_info> result
 	= cp_demangled_name_to_comp (argv[arg], &errmsg);
       if (result == NULL)
 	{
-	  fputs (errmsg, stderr);
+	  fputs (errmsg.c_str (), stderr);
 	  fputc ('\n', stderr);
 	  return 0;
 	}

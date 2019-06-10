@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.11 2004/09/17 18:16:31 wrstuden Exp $	*/
+/*	$NetBSD: menus.mc,v 1.11.92.1 2019/06/10 22:10:22 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,6 +82,9 @@ menu root, title "  Main Menu of Test System", x=10;
 	; 
 	option  "A dynamic menu ...",
 		action { do_dynamic (); }
+	;
+	option	"Continuous title and menu ...",
+		sub menu contdemo
 	;
 	option  "Run a shell...",
 		action (endwin) { system ("/bin/sh"); }
@@ -275,3 +278,16 @@ menu scrollit2, scrollable, title "  Big scrollable Menu";
 	option "option 49", action {};
 	option "option 50", action {};
 	option "option 51", action {};
+
+menu contdemo, title "Menus without space between title and menu", y=3, x=10;
+	option "With box", sub menu contdemo_box;
+	option "No box", sub menu contdemo_none;
+
+menu contdemo_box, title "title text ends here-->", y=3, x=10, no exit,
+	continuous title;
+	option  "<--- first menu item here", exit;
+
+menu contdemo_none, title "title text ends here-->", y=3, x=10, no box, no exit,
+	continuous title;
+	option  "<--- first menu item here", exit;
+

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
 #define ASL_CREATOR_ID              "INTL"
 #define ASL_DEFINE                  "__IASL__"
 #define ASL_PREFIX                  "iASL: "
-#define ASL_COMPLIANCE              "Supports ACPI Specification Revision 6.2A"
+#define ASL_COMPLIANCE              "Supports ACPI Specification Revision 6.3"
 
 
 /* Configuration constants */
@@ -187,8 +187,7 @@
 /*
  * Macros for ASL/ASL+ converter
  */
-#define COMMENT_CAPTURE_ON    Gbl_CommentState.CaptureComments = TRUE;
-#define COMMENT_CAPTURE_OFF   Gbl_CommentState.CaptureComments = FALSE;
-
+#define COMMENT_CAPTURE_ON    AslGbl_CommentState.CaptureComments = TRUE;
+#define COMMENT_CAPTURE_OFF   AslGbl_CommentState.CaptureComments = FALSE;
 
 #endif /* ASLDEFINE.H */

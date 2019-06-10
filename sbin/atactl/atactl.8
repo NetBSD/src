@@ -1,10 +1,10 @@
-.\"	$NetBSD: atactl.8,v 1.24 2013/01/09 21:58:23 riastradh Exp $
+.\"	$NetBSD: atactl.8,v 1.24.30.1 2019/06/10 22:05:31 christos Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Ken Hornstein.
+.\" by Ken Hornstein and Matthew R. Green.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2013
+.Dd March 2, 2019
 .Dt ATACTL 8
 .Os
 .Sh NAME
@@ -48,6 +48,11 @@ control devices which reside on standard IDE and ATA controllers, or
 the ATA bus itself.
 It is used by specifying a device or bus to manipulate,
 the command to perform, and any arguments the command may require.
+.Pp
+You may also control devices which are inside a SCSI enclosure, this
+includes many USB disks.
+In this case ATA commands are passed through
+the SCSI layer using SATL commands.
 .Sh DEVICE COMMANDS
 The following commands may be used on IDE and ATA devices.
 Note that not all devices support all commands.
@@ -84,7 +89,7 @@ A value of 0 will disable the Standby timer.
 .It Cm checkpower
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
-.It Cm apm Bq Ar disable | set #
+.It Cm apm Oo Ar disable | set # Oc
 Controls the Advanced Power Management feature of the specified device.
 Advanced Power Management is an optional feature used to specify a power
 management level to balance between device performance and power consumption.
@@ -103,7 +108,7 @@ and other from 127 to 253.
 Per the specification, values of 127 and higher do not permit the device
 to spin down to save power.
 .El
-.It Cm smart Bq Ar enable | disable | status | offline # | error-log | selftest-log
+.It Cm smart Oo Ar enable | disable | status Oo vendor Oc | offline # | error-log | selftest-log Oc
 Controls SMART feature set of the specified device.
 SMART stands for Self-Monitoring, Analysis, and Reporting Technology.
 It provides an early warning system by comparing subtle operation
@@ -119,7 +124,7 @@ be preserved by the device across power cycles.
 .It Ar disable
 Disables access to SMART capabilities within the device.
 Attribute values will be saved, and will no longer be monitored.
-.It Ar status
+.It Ar status Op Ar vendor
 Reports whether SMART is supported by the device, and whether SMART is
 enabled on the device (can only be determined on ATA6 or better devices).
 If SMART is enabled, then a table of attribute information is printed.
@@ -153,6 +158,17 @@ The collect field indicates whether this attribute is updated while the
 device is online.
 The reliability field indicates whether the attribute
 value is within the acceptable threshold.
+.Pp
+If the
+.Ar vendor
+argument is supplied, a vendor-specific table will be used for SMART
+information if known to
+.Nm .
+Currently, only
+.Dq micron
+has a vendor-specific table.
+If the vendor is not supplied, it may be guessed from devices' model
+or other data available.
 .It Ar offline #
 Runs the numbered offline self-test on the drive.
 .It Ar error-log
@@ -160,7 +176,7 @@ Prints the error log.
 .It Ar selftest-log
 Prints the self-test log.
 .El
-.It Cm security Bq Ar status | freeze | setpass | unlock | disable | erase
+.It Cm security Oo Ar status | freeze | setpass | unlock | disable | erase Oc
 Controls
 .Dq security
 (password protection) features of modern ATA drives.
@@ -179,13 +195,13 @@ command early in the boot process.
 displays the drive's security status
 .It Ar freeze
 freezes the drive's security status
-.It Ar setpass Bq user | master
+.It Ar setpass Oo user | master Oc
 sets the drive's user or master password
-.It Ar unlock Bq user | master
+.It Ar unlock Oo user | master Oc
 unlocks a password-protected drive
-.It Ar disable Bq user | master
+.It Ar disable Oo user | master Oc
 disables password protection
-.It Ar erase Bq user | master
+.It Ar erase Oo user | master Oc
 erases the device and clears security state, using enhanced erasure if
 the drive supports it; may take a long time to run
 .El
@@ -255,12 +271,21 @@ The
 command first appeared in
 .Nx 1.4 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-command was written by Ken Hornstein.
+command was written by
+.An Ken Hornstein .
 It was based heavily on the
 .Xr scsictl 8
-command written by Jason R. Thorpe.
+command written by
+.An Jason R. Thorpe .
+.An Matthew R. Green
+significantly enhanced the
+.Cm smart status
+support.
+.An Michael van Elst
+added support for SATL.
 .Sh BUGS
 The output from the
 .Cm identify
@@ -272,3 +297,10 @@ The
 .Nx
 kernel behaves poorly with drives that have passwords set and are
 locked.
+.Pp
+The
+.Cm smart status
+command currently guesses the vendor attribute name table to use,
+and may be wrong or miss supported devices.
+.Pp
+SATL bus commands don't work yet.

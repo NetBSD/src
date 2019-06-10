@@ -1,0 +1,122 @@
+#	$NetBSD: files.meson,v 1.9.2.2 2019/06/10 22:05:51 christos Exp $
+#
+# Configuration info for Amlogic Meson family SoCs
+#
+#
+
+file	arch/arm/amlogic/meson_platform.c	soc_meson
+
+# Common clocks
+define	meson_clk
+file	arch/arm/amlogic/meson_clk.c		meson_clk
+file	arch/arm/amlogic/meson_clk_div.c	meson_clk
+file	arch/arm/amlogic/meson_clk_fixed.c	meson_clk
+file	arch/arm/amlogic/meson_clk_fixed_factor.c meson_clk
+file	arch/arm/amlogic/meson_clk_gate.c	meson_clk
+file	arch/arm/amlogic/meson_clk_mpll.c	meson_clk
+file	arch/arm/amlogic/meson_clk_mux.c	meson_clk
+file	arch/arm/amlogic/meson_clk_pll.c	meson_clk
+
+# Meson8b clock controller
+device	meson8bclkc: meson_clk
+attach	meson8bclkc at fdt with meson8b_clkc
+file	arch/arm/amlogic/meson8b_clkc.c		meson8b_clkc
+
+# Meson GXBB clock controller
+device	gxbbclkc: meson_clk
+attach	gxbbclkc at fdt with mesongxbb_clkc
+file	arch/arm/amlogic/mesongxbb_clkc.c	mesongxbb_clkc
+
+# Meson GXBB AO clock controller
+device	gxbbaoclkc: meson_clk
+attach	gxbbaoclkc at fdt with mesongxbb_aoclkc
+file	arch/arm/amlogic/mesongxbb_aoclkc.c	mesongxbb_aoclkc
+
+# Meson reset controller
+device	mesonresets
+attach	mesonresets at fdt with meson_resets
+file	arch/arm/amlogic/meson_resets.c		meson_resets
+
+# UART
+device	mesonuart
+attach	mesonuart at fdt with meson_uart
+file	arch/arm/amlogic/meson_uart.c		meson_uart
+
+# Framebuffer console
+device	mesonfb: genfb, wsemuldisplaydev
+attach	mesonfb at fdt with meson_genfb
+file	arch/arm/amlogic/meson_genfb.c		meson_genfb & soc_meson
+
+# GPIO
+device	mesonpinctrl: gpiobus
+attach	mesonpinctrl at fdt with meson_pinctrl
+file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
+file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
+file	arch/arm/amlogic/mesongxbb_pinctrl.c	meson_pinctrl & soc_mesongxbb
+file	arch/arm/amlogic/mesongxl_pinctrl.c	meson_pinctrl & soc_mesongxl
+
+# Meson8b SDHC
+device	mesonsdhc: sdmmcbus
+attach	mesonsdhc at fdt with meson_sdhc
+file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
+
+# Meson8b SDIO
+device	mesonsdio: sdmmcbus
+attach	mesonsdio at fdt with meson_sdio
+file	arch/arm/amlogic/meson_sdio.c		meson_sdio
+
+# Meson GX MMC
+device	mesongxmmc: sdmmcbus
+attach	mesongxmmc at fdt with mesongx_mmc
+file	arch/arm/amlogic/mesongx_mmc.c		mesongx_mmc 
+
+# USB PHY
+device	mesonusbphy
+attach	mesonusbphy at fdt with meson_usbphy
+file	arch/arm/amlogic/meson_usbphy.c		meson_usbphy
+
+# Meson GXL USB2 PHY
+device	mesongxlu2phy
+attach	mesongxlu2phy at fdt with mesongxl_usb2phy
+file	arch/arm/amlogic/mesongxl_usb2phy.c	mesongxl_usb2phy
+
+# Meson GXL USB3 PHY
+device	mesongxlu3phy
+attach	mesongxlu3phy at fdt with mesongxl_usb3phy
+file	arch/arm/amlogic/mesongxl_usb3phy.c	mesongxl_usb3phy
+
+# RTC
+device	mesonrtc
+attach	mesonrtc at fdt with meson_rtc
+file	arch/arm/amlogic/meson_rtc.c		meson_rtc
+
+# RNG
+device	mesonrng
+attach	mesonrng at fdt with meson_rng
+file	arch/arm/amlogic/meson_rng.c		meson_rng
+
+# GMAC
+attach	awge at fdt with meson_dwmac
+file	arch/arm/amlogic/meson_dwmac.c		meson_dwmac
+
+# Meson GXL internal PHY
+device	gxlphy: mii_phy
+attach  gxlphy at mii
+file    arch/arm/amlogic/gxlphy.c		gxlphy
+
+# Meson8b Watchdog
+device	mesonwdt: sysmon_wdog
+attach	mesonwdt at fdt with meson_wdt
+file	arch/arm/amlogic/meson_wdt.c		meson_wdt
+
+# Meson GX Watchdog
+device	mesongxwdt: sysmon_wdog
+attach	mesongxwdt at fdt with mesongx_wdt
+file	arch/arm/amlogic/mesongx_wdt.c		mesongx_wdt
+
+# SOC parameters
+defflag	opt_soc.h			SOC_MESON
+defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGX: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESONGX
+defflag	opt_soc.h			SOC_MESONGXL: SOC_MESONGX

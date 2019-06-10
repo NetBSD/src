@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/03/05 11:52:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2019/06/10 22:02:41 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,13 @@ SRCS= \
 	dispatch_glx.c \
 	gl_generated_dispatch.c \
 	glx_generated_dispatch.c
-SRCS.EGL= \
+
+.if ${HAVE_XORG_GLAMOR} != "no"
+SRCS+= \
 	dispatch_egl.c \
 	egl_generated_dispatch.c
+CPPFLAGS+=	-DPLATFORM_HAS_EGL=1
+.endif
 
 INCSDIR=${X11INCDIR}/epoxy
 INCS= \

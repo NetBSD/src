@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/11/14 23:33:45 ad Exp $
+#	$NetBSD: Makefile,v 1.1.74.1 2019/06/10 22:09:09 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	aio
 SRCS=	sys_aio.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

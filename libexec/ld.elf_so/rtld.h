@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.133 2018/04/03 21:10:27 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.133.2.1 2019/06/10 22:05:29 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -136,20 +136,11 @@ typedef struct _rtld_library_xform_t {
  *
  * Items marked with "(%)" are dynamically allocated, and must be freed
  * when the structure is destroyed.
- *
- * The layout of this structure needs to be preserved because pre-2.0 binaries
- * hard-coded the location of dlopen() and friends.
  */
-
-#define RTLD_MAGIC	0xd550b87a
-#define RTLD_VERSION	1
 
 typedef void (*fptr_t)(void);
 
 typedef struct Struct_Obj_Entry {
-	Elf32_Word      magic;		/* Magic number (sanity check) */
-	Elf32_Word      version;	/* Version number of struct format */
-
 	struct Struct_Obj_Entry *next;
 	char           *path;		/* Pathname of underlying file (%) */
 	int             refcount;
@@ -195,18 +186,6 @@ typedef struct Struct_Obj_Entry {
 
 	Elf_Addr	init;		/* Initialization function to call */
 	Elf_Addr	fini;		/* Termination function to call */
-
-	/*
-	 * BACKWARDS COMPAT Entry points for dlopen() and friends.
-	 *
-	 * DO NOT MOVE OR ADD TO THE LIST
-	 *
-	 */
-	void           *(*dlopen)(const char *, int);
-	void           *(*dlsym)(void *, const char *);
-	char           *(*dlerror)(void);
-	int             (*dlclose)(void *);
-	int             (*dladdr)(const void *, Dl_info *);
 
 	u_int32_t	mainprog:1,	/* True if this is the main program */
 	        	rtld:1,		/* True if this is the dynamic linker */
@@ -328,6 +307,7 @@ extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
 extern u_int _rtld_objcount;
 extern u_int _rtld_objloads;
+extern const uintptr_t _rtld_compat_obj[];
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
@@ -391,6 +371,8 @@ void _rtld_shared_enter(void);
 void _rtld_shared_exit(void);
 void _rtld_exclusive_enter(sigset_t *);
 void _rtld_exclusive_exit(sigset_t *);
+
+int _rtld_relro(const Obj_Entry *, bool);
 
 /* expand.c */
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,\

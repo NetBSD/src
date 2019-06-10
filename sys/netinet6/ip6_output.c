@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.211.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -302,7 +302,7 @@ ip6_output(
 
 	if (needipsec &&
 	    (m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
-		in6_delayed_cksum(m);
+		in6_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 	}
 
@@ -578,6 +578,7 @@ ip6_output(
 
 	/* Ensure we only send from a valid address. */
 	if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
+	    (flags & IPV6_FORWARDING) == 0 &&
 	    (error = ip6_ifaddrvalid(&src0, &dst0)) != 0)
 	{
 		char ip6buf[INET6_ADDRSTRLEN];
@@ -755,10 +756,11 @@ ip6_output(
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT);
+	if (error != 0 || m == NULL) {
+		IP6_STATINC(IP6_STAT_PFILDROP_OUT);
 		goto done;
-	if (m == NULL)
-		goto done;
+	}
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	/*
@@ -836,18 +838,20 @@ ip6_output(
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
 			if (IN6_NEED_CHECKSUM(ifp,
 			    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
-				in6_delayed_cksum(m);
+				in6_undefer_cksum_tcpudp(m);
 			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
 
 		KASSERT(dst != NULL);
-		if (__predict_true(!tso ||
-		    (ifp->if_capenable & IFCAP_TSOv6) != 0)) {
-			error = ip6_if_output(ifp, origifp, m, dst, rt);
-		} else {
+		if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
+			/*
+			 * TSO6 is required by a packet, but disabled for
+			 * the interface.
+			 */
 			error = ip6_tso_output(ifp, origifp, m, dst, rt);
-		}
+		} else
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		goto done;
 	}
 
@@ -914,7 +918,7 @@ ip6_output(
 			if (IN6_NEED_CHECKSUM(ifp,
 			    m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
-				in6_delayed_cksum(m);
+				in6_undefer_cksum_tcpudp(m);
 			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
@@ -1069,33 +1073,6 @@ ip6_copyexthdr(struct mbuf **mp, void *hdr, int hlen)
 
 	*mp = m;
 	return 0;
-}
-
-/*
- * Process a delayed payload checksum calculation.
- */
-void
-in6_delayed_cksum(struct mbuf *m)
-{
-	uint16_t csum, offset;
-
-	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
-	KASSERT((~m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
-	KASSERT((m->m_pkthdr.csum_flags
-	    & (M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_TSOv4)) == 0);
-
-	offset = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
-	csum = in6_cksum(m, 0, offset, m->m_pkthdr.len - offset);
-	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv6) != 0) {
-		csum = 0xffff;
-	}
-
-	offset += M_CSUM_DATA_IPv6_OFFSET(m->m_pkthdr.csum_data);
-	if ((offset + sizeof(csum)) > m->m_len) {
-		m_copyback(m, offset, sizeof(csum), &csum);
-	} else {
-		*(uint16_t *)(mtod(m, char *) + offset) = csum;
-	}
 }
 
 /*
@@ -1726,9 +1703,9 @@ else 					\
 				error = ipsec_set_policy(in6p,
 				    sopt->sopt_data, sopt->sopt_size,
 				    kauth_cred_get());
-				break;
-			}
-			/*FALLTHROUGH*/
+			} else
+				error = ENOPROTOOPT;
+			break;
 #endif /* IPSEC */
 
 		default:
@@ -1934,9 +1911,9 @@ else 					\
 				    sopt->sopt_size, &m);
 				if (!error)
 					error = sockopt_setmbuf(sopt, m);
-				break;
-			}
-			/*FALLTHROUGH*/
+			} else
+				error = ENOPROTOOPT;
+			break;
 #endif /* IPSEC */
 
 		default:
@@ -2558,9 +2535,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		IFNET_LOCK(ifp);
 		imm = in6_joingroup(ifp, &ia, &error, 0);
-		IFNET_UNLOCK(ifp);
 		if (imm == NULL)
 			goto put_break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
@@ -2571,7 +2546,6 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	    }
 
 	case IPV6_LEAVE_GROUP: {
-		struct ifnet *in6m_ifp;
 		/*
 		 * Drop a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
@@ -2653,11 +2627,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 * membership points.
 		 */
 		LIST_REMOVE(imm, i6mm_chain);
-		in6m_ifp = imm->i6mm_maddr->in6m_ifp;
-		IFNET_LOCK(in6m_ifp);
 		in6_leavegroup(imm);
 		/* in6m_ifp should not leave thanks to in6p_lock */
-		IFNET_UNLOCK(in6m_ifp);
 		break;
 	    }
 
@@ -2738,15 +2709,8 @@ ip6_freemoptions(struct ip6_moptions *im6o)
 
 	/* The owner of im6o (in6p) should be protected by solock */
 	LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships, i6mm_chain, nimm) {
-		struct ifnet *ifp;
-
 		LIST_REMOVE(imm, i6mm_chain);
-
-		ifp = imm->i6mm_maddr->in6m_ifp;
-		IFNET_LOCK(ifp);
 		in6_leavegroup(imm);
-		/* ifp should not leave thanks to solock */
-		IFNET_UNLOCK(ifp);
 	}
 	free(im6o, M_IPMOPTS);
 }
@@ -2796,7 +2760,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 			return (EINVAL);
 
 		cm = mtod(control, struct cmsghdr *);
-		if (cm->cmsg_len == 0 || cm->cmsg_len > control->m_len)
+		if (cm->cmsg_len < CMSG_LEN(0) || cm->cmsg_len > control->m_len)
 			return (EINVAL);
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
@@ -3284,8 +3248,8 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 			m_freem(m);
 			return ENOBUFS;
 		}
-		M_MOVE_PKTHDR(mh, m);
-		MH_ALIGN(mh, sizeof(*ip6));
+		m_move_pkthdr(mh, m);
+		m_align(mh, sizeof(*ip6));
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;

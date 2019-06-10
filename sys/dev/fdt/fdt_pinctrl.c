@@ -1,6 +1,7 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.4 2017/07/02 15:27:58 jmcneill Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.4.8.1 2019/06/10 22:07:08 christos Exp $ */
 
 /*-
+ * Copyright (c) 2019 Jason R. Thorpe
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
  * Copyright (c) 2015 Martin Fouts
  * All rights reserved.
@@ -28,11 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4 2017/07/02 15:27:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4.8.1 2019/06/10 22:07:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -42,10 +45,11 @@ struct fdtbus_pinctrl_controller {
 	int pc_phandle;
 	const struct fdtbus_pinctrl_controller_func *pc_funcs;
 
-	struct fdtbus_pinctrl_controller *pc_next;
+	LIST_ENTRY(fdtbus_pinctrl_controller) pc_next;
 };
 
-static struct fdtbus_pinctrl_controller *fdtbus_pc = NULL;
+static LIST_HEAD(, fdtbus_pinctrl_controller) fdtbus_pinctrl_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_pinctrl_controllers);
 
 int
 fdtbus_register_pinctrl_config(device_t dev, int phandle,
@@ -58,8 +62,7 @@ fdtbus_register_pinctrl_config(device_t dev, int phandle,
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
-	pc->pc_next = fdtbus_pc;
-	fdtbus_pc = pc;
+	LIST_INSERT_HEAD(&fdtbus_pinctrl_controllers, pc, pc_next);
 
 	return 0;
 }
@@ -69,9 +72,10 @@ fdtbus_pinctrl_lookup(int phandle)
 {
 	struct fdtbus_pinctrl_controller *pc;
 
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next)
+	LIST_FOREACH(pc, &fdtbus_pinctrl_controllers, pc_next) {
 		if (pc->pc_phandle == phandle)
 			return pc;
+	}
 
 	return NULL;
 }
@@ -114,22 +118,14 @@ fdtbus_pinctrl_set_config_index(int phandle, u_int index)
 int
 fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 {
-	const char *pinctrl_names, *name;
-	int len, index;
+	u_int index;
+	int err;
 
-	if ((len = OF_getproplen(phandle, "pinctrl-names")) < 0)
+	err = fdtbus_get_index(phandle, "pinctrl-names", cfgname, &index);
+	if (err != 0)
 		return -1;
 
-	pinctrl_names = fdtbus_get_string(phandle, "pinctrl-names");
-
-	for (name = pinctrl_names, index = 0; len > 0;
-	     name += strlen(name) + 1, index++) {
-		if (strcmp(name, cfgname) == 0)
-			return fdtbus_pinctrl_set_config_index(phandle, index);
-	}
-
-	/* Not found */
-	return -1;
+	return fdtbus_pinctrl_set_config_index(phandle, index);
 }
 
 static void
@@ -163,4 +159,193 @@ void
 fdtbus_pinctrl_configure(void)
 {
 	fdtbus_pinctrl_configure_node(OF_finddevice("/"));
+}
+
+/*
+ * Helper routines for parsing put properties related to pinctrl bindings.
+ */
+
+/*
+ * Pin mux settings apply to sets of pins specified by one of 3
+ * sets of properties:
+ *
+ *	- "pins" + "function"
+ *	- "groups" + "function"
+ *	- "pinmux"
+ *
+ * Eactly one of those 3 combinations must be specified.
+ */
+
+const char *
+fdtbus_pinctrl_parse_function(int phandle)
+{
+	return fdtbus_get_string(phandle, "function");
+}
+
+const void *
+fdtbus_pinctrl_parse_pins(int phandle, int *pins_len)
+{
+	int len;
+
+	/*
+	 * The pinctrl bindings specify that entries in "pins"
+	 * may be integers or strings; this is determined by
+	 * the hardware-specific binding.
+	 */
+
+	len = OF_getproplen(phandle, "pins");
+	if (len > 0) {
+		return fdtbus_get_prop(phandle, "pins", pins_len);
+	}
+
+	return NULL;
+}
+
+const char *
+fdtbus_pinctrl_parse_groups(int phandle, int *groups_len)
+{
+	int len;
+
+	len = OF_getproplen(phandle, "groups");
+	if (len > 0) {
+		*groups_len = len;
+		return fdtbus_get_string(phandle, "groups");
+	}
+
+	return NULL;
+}
+
+const u_int *
+fdtbus_pinctrl_parse_pinmux(int phandle, int *pinmux_len)
+{
+	int len;
+
+	len = OF_getproplen(phandle, "pinmux");
+	if (len > 0) {
+		return fdtbus_get_prop(phandle, "pinmux", pinmux_len);
+	}
+
+	return NULL;
+}
+
+int
+fdtbus_pinctrl_parse_bias(int phandle, int *pull_strength)
+{
+	const char *bias_prop = NULL;
+	int bias = -1;
+
+	/*
+	 * bias-pull-{up,down,pin-default} properties have an optional
+	 * argument: the pull strength in Ohms.  (In practice, this is
+	 * sometimes a hardware-specific constant.)
+	 *
+	 * XXXJRT How to represent bias-pull-pin-default?
+	 */
+
+	if (of_hasprop(phandle, "bias-disable")) {
+		bias = 0;
+	} else if (of_hasprop(phandle, "bias-pull-up")) {
+		bias_prop = "bias-pull-up";
+		bias = GPIO_PIN_PULLUP;
+	} else if (of_hasprop(phandle, "bias-pull-down")) {
+		bias_prop = "bias-pull-down";
+		bias = GPIO_PIN_PULLDOWN;
+	}
+
+	if (pull_strength) {
+		*pull_strength = -1;
+		if (bias_prop) {
+			uint32_t val;
+			if (of_getprop_uint32(phandle, bias_prop, &val) == 0) {
+				*pull_strength = (int)val;
+			}
+		}
+	}
+
+	return bias;
+}
+
+int
+fdtbus_pinctrl_parse_drive(int phandle)
+{
+	int drive = -1;
+
+	if (of_hasprop(phandle, "drive-push-pull"))
+		drive = GPIO_PIN_PUSHPULL;
+	else if (of_hasprop(phandle, "drive-open-drain"))
+		drive = GPIO_PIN_OPENDRAIN;
+	else if (of_hasprop(phandle, "drive-open-source"))
+		drive = 0;
+
+	return drive;
+}
+
+int
+fdtbus_pinctrl_parse_drive_strength(int phandle)
+{
+	int val;
+
+	/*
+	 * drive-strength has as an argument the target strength
+	 * in mA.
+	 */
+
+	if (of_getprop_uint32(phandle, "drive-strength", &val) == 0)
+		return val;
+
+	return -1;
+}
+int fdtbus_pinctrl_parse_input_output(int phandle, int *output_value)
+{
+	int direction = -1;
+	int pinval = -1;
+
+	if (of_hasprop(phandle, "input-enable")) {
+		direction = GPIO_PIN_INPUT;
+	} else if (of_hasprop(phandle, "input-disable")) {
+		/*
+		 * XXXJRT How to represent this?  This is more than
+		 * just "don't set the direction" - it's an active
+		 * command that might involve disabling an input
+		 * buffer on the pin.
+		 */
+	}
+
+	if (of_hasprop(phandle, "output-enable")) {
+		if (direction == -1)
+			direction = 0;
+		direction |= GPIO_PIN_OUTPUT;
+	} else if (of_hasprop(phandle, "output-disable")) {
+		if (direction == -1)
+			direction = 0;
+		direction |= GPIO_PIN_TRISTATE;
+	}
+
+	if (of_hasprop(phandle, "output-low")) {
+		if (direction == -1)
+			direction = 0;
+		direction |= GPIO_PIN_OUTPUT;
+		pinval = GPIO_PIN_LOW;
+	} else if (of_hasprop(phandle, "output-high")) {
+		if (direction == -1)
+			direction = 0;
+		direction |= GPIO_PIN_OUTPUT;
+		pinval = GPIO_PIN_HIGH;
+	}
+
+	if (output_value)
+		*output_value = pinval;
+
+	/*
+	 * XXX input-schmitt-enable
+	 * XXX input-schmitt-disable
+	 */
+
+	if (direction != -1
+	    && (direction & (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT))
+			 == (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT)) {
+		direction |= GPIO_PIN_INOUT;
+	}
+
+	return direction;
 }

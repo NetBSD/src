@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.349 2018/05/28 14:07:37 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.349.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.349 2018/05/28 14:07:37 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.349.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -190,6 +190,13 @@ signal_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+static int
+sigacts_ctor(void *arg __unused, void *obj, int flags __unused)
+{
+	memset(obj, 0, sizeof(struct sigacts));
+	return 0;
+}
+
 /*
  * signal_init:
  *
@@ -203,7 +210,7 @@ signal_init(void)
 
 	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
 	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
-	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
+	    &sigactspool_allocator : NULL, IPL_NONE, sigacts_ctor, NULL, NULL);
 	ksiginfo_cache = pool_cache_init(sizeof(ksiginfo_t), 0, 0, 0,
 	    "ksiginfo", NULL, IPL_VM, NULL, NULL, NULL);
 
@@ -895,6 +902,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	struct sigacts	*ps;
 	int signo = ksi->ksi_signo;
 	sigset_t *mask;
+	sig_t action;
 
 	KASSERT(KSI_TRAP_P(ksi));
 
@@ -904,26 +912,56 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	KASSERT(!cpu_intr_p());
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		lwp_exit(l);
+		panic("trapsignal");
+		/* NOTREACHED */
+	}
+
 	mask = &l->l_sigmask;
 	ps = p->p_sigacts;
+	action = SIGACTION_PS(ps, signo).sa_handler;
 
-	const bool traced = (p->p_slflag & PSL_TRACED) != 0;
+	if (ISSET(p->p_slflag, PSL_TRACED) &&
+	    !(p->p_pptr == p->p_opptr && ISSET(p->p_lflag, PL_PPWAIT)) &&
+	    p->p_xsig != SIGKILL &&
+	    !sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		p->p_xsig = signo;
+		p->p_sigctx.ps_faked = true;
+		p->p_sigctx.ps_lwp = ksi->ksi_lid;
+		p->p_sigctx.ps_info = ksi->ksi_info;
+		sigswitch(0, signo, false);
+
+		if (ktrpoint(KTR_PSIG)) {
+			if (p->p_emul->e_ktrpsig)
+				p->p_emul->e_ktrpsig(signo, action, mask, ksi);
+			else
+				ktrpsig(signo, action, mask, ksi);
+		}
+		return;
+	}
+
 	const bool caught = sigismember(&p->p_sigctx.ps_sigcatch, signo);
 	const bool masked = sigismember(mask, signo);
-	if (!traced && caught && !masked) {
+	if (caught && !masked) {
 		mutex_exit(proc_lock);
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, mask);
 		mutex_exit(p->p_lock);
+
 		if (ktrpoint(KTR_PSIG)) {
 			if (p->p_emul->e_ktrpsig)
-				p->p_emul->e_ktrpsig(signo,
-				    SIGACTION_PS(ps, signo).sa_handler,
-				    mask, ksi);
+				p->p_emul->e_ktrpsig(signo, action, mask, ksi);
 			else
-				ktrpsig(signo, 
-				    SIGACTION_PS(ps, signo).sa_handler,
-				    mask, ksi);
+				ktrpsig(signo, action, mask, ksi);
 		}
 		return;
 	}
@@ -933,7 +971,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	 * reset it to the default action so that the process or
 	 * its tracer will be notified.
 	 */
-	const bool ignored = SIGACTION_PS(ps, signo).sa_handler == SIG_IGN;
+	const bool ignored = action == SIG_IGN;
 	if (masked || ignored) {
 		mutex_enter(&ps->sa_mutex);
 		sigdelset(mask, signo);	
@@ -1241,7 +1279,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	ksiginfo_t *kp;
 	lwpid_t lid;
 	sig_t action;
-	bool toall, debtrap = false;
+	bool toall;
 	int error = 0;
 
 	KASSERT(!cpu_intr_p());
@@ -1254,13 +1292,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * If the process is being created by fork, is a zombie or is
 	 * exiting, then just drop the signal here and bail out.
 	 */
-	if (p->p_stat == SIDL && signo == SIGTRAP
-	    && (p->p_slflag & PSL_TRACED)) {
-		/* allow an initial SIGTRAP for traced processes */
-		debtrap = true;
-	} else if (p->p_stat != SACTIVE && p->p_stat != SSTOP) {
+	if (p->p_stat != SACTIVE && p->p_stat != SSTOP)
 		return 0;
-	}
 
 	/* XXX for core dump/debugger */
 	p->p_sigctx.ps_lwp = ksi->ksi_lid;
@@ -1361,13 +1394,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * the signal to it.
 	 */
 	if (lid != 0) {
-		if (__predict_false(debtrap)) {
-			l = LIST_FIRST(&p->p_lwps);
-			if (l->l_lid != lid)
-				l = NULL;
-		} else {
-			l = lwp_find(p, lid);
-		}
+		l = lwp_find(p, lid);
 		if (l != NULL) {
 			if ((error = sigput(&l->l_sigpend, p, kp)) != 0)
 				goto out;
@@ -1530,6 +1557,83 @@ proc_stop_done(struct proc *p, int ppmask)
 }
 
 /*
+ * Stop the current process and switch away to the debugger notifying
+ * an event specific to a traced process only.
+ */
+void
+eventswitch(int code)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps;
+	sigset_t *mask;
+	sig_t action;
+	ksiginfo_t ksi;
+	const int signo = SIGTRAP;
+
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(p->p_pptr != initproc);
+	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
+	KASSERT(!ISSET(l->l_flag, LW_SYSTEM));
+	KASSERT(p->p_nrlwps > 0);
+	KASSERT((code == TRAP_CHLD) || (code == TRAP_LWP) ||
+	        (code == TRAP_EXEC));
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	*/
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		lwp_exit(l);
+		panic("eventswitch");
+		/* NOTREACHED */
+	}
+
+	/*
+	 * If there's a pending SIGKILL process it immediately.
+	 */
+	if (p->p_xsig == SIGKILL ||
+	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		return;
+	}
+
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_lid = l->l_lid;
+	ksi.ksi_info._signo = signo;
+	ksi.ksi_info._code = code;
+
+	/* Needed for ktrace */
+	ps = p->p_sigacts;
+	action = SIGACTION_PS(ps, signo).sa_handler;
+	mask = &l->l_sigmask;
+
+	p->p_xsig = signo;
+	p->p_sigctx.ps_faked = true;
+	p->p_sigctx.ps_lwp = ksi.ksi_lid;
+	p->p_sigctx.ps_info = ksi.ksi_info;
+
+	sigswitch(0, signo, false);
+
+	/* XXX: hangs for VFORK */
+	if (code == TRAP_CHLD)
+		return;
+
+	if (ktrpoint(KTR_PSIG)) {
+		if (p->p_emul->e_ktrpsig)
+			p->p_emul->e_ktrpsig(signo, action, mask, &ksi);
+		else
+			ktrpsig(signo, action, mask, &ksi);
+	}
+}
+
+/*
  * Stop the current process and switch away when being stopped or traced.
  */
 void
@@ -1542,6 +1646,21 @@ sigswitch(int ppmask, int signo, bool relock)
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		if (relock) {
+			mutex_exit(proc_lock);
+		}
+		lwp_exit(l);
+		panic("sigswitch");
+		/* NOTREACHED */
+	}
 
 	/*
 	 * On entry we know that the process needs to stop.  If it's
@@ -1592,7 +1711,6 @@ sigswitch(int ppmask, int signo, bool relock)
 	lwp_lock(l);
 	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
-	mutex_enter(p->p_lock);
 }
 
 /*
@@ -1670,8 +1788,11 @@ issignal(struct lwp *l)
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 			sigswitch(PS_NOCLDSTOP, 0, true);
+			mutex_enter(p->p_lock);
 			signo = sigchecktrace();
-		} else
+		} else if (p->p_stat == SACTIVE)
+			signo = sigchecktrace();
+		else
 			signo = 0;
 
 		/* Signals from the debugger are "out of band". */
@@ -1739,6 +1860,7 @@ issignal(struct lwp *l)
 
 			/* Handling of signal trace */
 			sigswitch(0, signo, true);
+			mutex_enter(p->p_lock);
 
 			/* Check for a signal from the debugger. */
 			if ((signo = sigchecktrace()) == 0)
@@ -1795,6 +1917,7 @@ issignal(struct lwp *l)
 				p->p_sflag &= ~PS_CONTINUED;
 				signo = 0;
 				sigswitch(PS_NOCLDSTOP, p->p_xsig, true);
+				mutex_enter(p->p_lock);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -2270,7 +2393,8 @@ proc_unstop(struct proc *p)
 }
 
 void
-proc_stoptrace(int trapno)
+proc_stoptrace(int trapno, int sysnum, const register_t args[],
+               const register_t *ret, int error)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -2278,33 +2402,69 @@ proc_stoptrace(int trapno)
 	sigset_t *mask;
 	sig_t action;
 	ksiginfo_t ksi;
+	size_t i, sy_narg;
 	const int signo = SIGTRAP;
 
 	KASSERT((trapno == TRAP_SCE) || (trapno == TRAP_SCX));
+	KASSERT(p->p_pptr != initproc);
+	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
+	KASSERT(ISSET(p->p_slflag, PSL_SYSCALL));
+
+	sy_narg = p->p_emul->e_sysent[sysnum].sy_narg;
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_lid = l->l_lid;
-	ksi.ksi_info._signo = signo;
-	ksi.ksi_info._code = trapno;
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = trapno;
+
+	ksi.ksi_sysnum = sysnum;
+	if (trapno == TRAP_SCE) {
+		ksi.ksi_retval[0] = 0;
+		ksi.ksi_retval[1] = 0;
+		ksi.ksi_error = 0;
+	} else {
+		ksi.ksi_retval[0] = ret[0];
+		ksi.ksi_retval[1] = ret[1];
+		ksi.ksi_error = error;
+	}
+
+	memset(ksi.ksi_args, 0, sizeof(ksi.ksi_args));
+
+	for (i = 0; i < sy_narg; i++)
+		ksi.ksi_args[i] = args[i];
 
 	mutex_enter(p->p_lock);
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		lwp_exit(l);
+		panic("proc_stoptrace");
+		/* NOTREACHED */
+	}
+
+	/*
+	 * If there's a pending SIGKILL process it immediately.
+	 */
+	if (p->p_xsig == SIGKILL ||
+	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		mutex_exit(p->p_lock);
+		return;
+	}
 
 	/* Needed for ktrace */
 	ps = p->p_sigacts;
 	action = SIGACTION_PS(ps, signo).sa_handler;
 	mask = &l->l_sigmask;
 
-	/* initproc (PID1) cannot became a debugger */
-	KASSERT(p->p_pptr != initproc);
-
-	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
-	KASSERT(ISSET(p->p_slflag, PSL_SYSCALL));
-
 	p->p_xsig = signo;
 	p->p_sigctx.ps_lwp = ksi.ksi_lid;
 	p->p_sigctx.ps_info = ksi.ksi_info;
 	sigswitch(0, signo, true);
-	mutex_exit(p->p_lock);
 
 	if (ktrpoint(KTR_PSIG)) {
 		if (p->p_emul->e_ktrpsig)

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007-2015 Free Software Foundation, Inc.
+// Copyright (C) 2007-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -53,12 +53,6 @@
 /** @brief Use floating-point scaling instead of modulo for mapping
  *  random numbers to a range.  This can be faster on certain CPUs. */
 #define _GLIBCXX_SCALE_DOWN_FPU 0
-#endif
-
-#ifndef _GLIBCXX_ASSERTIONS
-/** @brief Switch on many _GLIBCXX_PARALLEL_ASSERTions in parallel code.
- *  Should be switched on only locally. */
-#define _GLIBCXX_ASSERTIONS 0
 #endif
 
 #ifndef _GLIBCXX_RANDOM_SHUFFLE_CONSIDER_L1

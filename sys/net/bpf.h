@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.72 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: bpf.h,v 1.72.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -121,35 +121,35 @@ struct bpf_version {
  * header files.  If your using gcc, we assume that you
  * have run fixincludes so the latter set should work.
  */
-#define BIOCGBLEN	 _IOR('B',102, u_int)
-#define BIOCSBLEN	_IOWR('B',102, u_int)
-#define BIOCSETF	 _IOW('B',103, struct bpf_program)
-#define BIOCFLUSH	  _IO('B',104)
-#define BIOCPROMISC	  _IO('B',105)
-#define BIOCGDLT	 _IOR('B',106, u_int)
-#define BIOCGETIF	 _IOR('B',107, struct ifreq)
-#define BIOCSETIF	 _IOW('B',108, struct ifreq)
+#define BIOCGBLEN	 _IOR('B', 102, u_int)
+#define BIOCSBLEN	_IOWR('B', 102, u_int)
+#define BIOCSETF	 _IOW('B', 103, struct bpf_program)
+#define BIOCFLUSH	  _IO('B', 104)
+#define BIOCPROMISC	  _IO('B', 105)
+#define BIOCGDLT	 _IOR('B', 106, u_int)
+#define BIOCGETIF	 _IOR('B', 107, struct ifreq)
+#define BIOCSETIF	 _IOW('B', 108, struct ifreq)
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
-#define BIOCSORTIMEOUT	 _IOW('B',109, struct timeval50)
-#define BIOCGORTIMEOUT	 _IOR('B',110, struct timeval50)
+#define BIOCSORTIMEOUT	 _IOW('B', 109, struct timeval50)
+#define BIOCGORTIMEOUT	 _IOR('B', 110, struct timeval50)
 #endif
-#define BIOCGSTATS	 _IOR('B',111, struct bpf_stat)
-#define BIOCGSTATSOLD	 _IOR('B',111, struct bpf_stat_old)
-#define BIOCIMMEDIATE	 _IOW('B',112, u_int)
-#define BIOCVERSION	 _IOR('B',113, struct bpf_version)
-#define BIOCSTCPF	 _IOW('B',114, struct bpf_program)
-#define BIOCSUDPF	 _IOW('B',115, struct bpf_program)
-#define BIOCGHDRCMPLT	 _IOR('B',116, u_int)
-#define BIOCSHDRCMPLT	 _IOW('B',117, u_int)
-#define BIOCSDLT	 _IOW('B',118, u_int)
-#define BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
-#define BIOCGDIRECTION	 _IOR('B',120, u_int)
-#define BIOCSDIRECTION	 _IOW('B',121, u_int)
-#define BIOCSRTIMEOUT	 _IOW('B',122, struct timeval)
-#define BIOCGRTIMEOUT	 _IOR('B',123, struct timeval)
-#define BIOCGFEEDBACK	 _IOR('B',124, u_int)
-#define BIOCSFEEDBACK	 _IOW('B',125, u_int)
+#define BIOCGSTATS	 _IOR('B', 111, struct bpf_stat)
+#define BIOCGSTATSOLD	 _IOR('B', 111, struct bpf_stat_old)
+#define BIOCIMMEDIATE	 _IOW('B', 112, u_int)
+#define BIOCVERSION	 _IOR('B', 113, struct bpf_version)
+#define BIOCSTCPF	 _IOW('B', 114, struct bpf_program)
+#define BIOCSUDPF	 _IOW('B', 115, struct bpf_program)
+#define BIOCGHDRCMPLT	 _IOR('B', 116, u_int)
+#define BIOCSHDRCMPLT	 _IOW('B', 117, u_int)
+#define BIOCSDLT	 _IOW('B', 118, u_int)
+#define BIOCGDLTLIST	_IOWR('B', 119, struct bpf_dltlist)
+#define BIOCGDIRECTION	 _IOR('B', 120, u_int)
+#define BIOCSDIRECTION	 _IOW('B', 121, u_int)
+#define BIOCSRTIMEOUT	 _IOW('B', 122, struct timeval)
+#define BIOCGRTIMEOUT	 _IOR('B', 123, struct timeval)
+#define BIOCGFEEDBACK	 _IOR('B', 124, u_int)
+#define BIOCSFEEDBACK	 _IOW('B', 125, u_int)
 #define BIOCFEEDBACK     BIOCSFEEDBACK		/* FreeBSD name */
 
 /* Obsolete */
@@ -331,6 +331,16 @@ struct bpf_insn {
 	u_char 	  jt;
 	u_char 	  jf;
 	uint32_t  k;
+};
+
+/*
+ * Auxiliary data, for use when interpreting a filter intended for the
+ * Linux kernel when the kernel rejects the filter (requiring us to
+ * run it in userland).  It contains VLAN tag information.
+ */
+struct bpf_aux_data {
+	u_short vlan_tag_present;
+	u_short vlan_tag;
 };
 
 /*
@@ -545,6 +555,9 @@ void	bpf_jit_freecode(bpfjit_func_t);
 
 int	bpf_validate(const struct bpf_insn *, int);
 u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+
+u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
+
 
 __END_DECLS
 

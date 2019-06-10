@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.90 2018/06/04 19:53:01 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.90.2.1 2019/06/10 22:06:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.90 2018/06/04 19:53:01 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.90.2.1 2019/06/10 22:06:51 christos Exp $");
 #endif
 
 #define _KMEMUSER
@@ -91,6 +91,9 @@ __RCSID("$NetBSD: thunk.c,v 1.90 2018/06/04 19:53:01 reinoud Exp $");
 #endif
 
 //#define RFB_DEBUG
+
+static ssize_t safe_recv(int s, void *buf, int len);
+static ssize_t safe_send(int s, const void *msg, int len);
 
 extern int boothowto;
 
@@ -909,12 +912,6 @@ thunk_audio_close(int fd)
 }
 
 int
-thunk_audio_drain(int fd)
-{
-	return ioctl(fd, AUDIO_DRAIN, 0);
-}
-
-int
 thunk_audio_config(int fd, const thunk_audio_config_t *pconf,
     const thunk_audio_config_t *rconf)
 {
@@ -1015,6 +1012,78 @@ thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 	}
 
 	return 0;
+}
+
+int
+thunk_gdb_open(void)
+{
+	struct sockaddr_in sin;
+	int sockfd;
+	int portnr = 5001;	/* XXX configurable or random */
+
+	/* create socket */
+	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sockfd < 0) {
+		warn("kgdb stub: couldn't create socket");
+		return 0;
+	}
+
+	/* bind to requested port */
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family      = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port        = htons(portnr);
+
+	if (bind(sockfd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		warn("kgdb stub: couldn't bind port %d", portnr);
+		close(sockfd);
+		return 0;
+	}
+
+	/* listen for connections */
+	if (listen(sockfd, 1) < 0) {
+		warn("kgdb stub: couldn't listen on socket");
+		close(sockfd);
+		return 0;
+	}
+	printf("kgdb stub: accepting connections on port %d\n", portnr);
+
+	return sockfd;
+}
+
+int
+thunk_gdb_accept(int sockfd)
+{
+	struct sockaddr_in client_addr;
+	socklen_t client_addrlen;
+	int fd, flags;
+
+	fd = accept(sockfd, (struct sockaddr *) &client_addr, &client_addrlen);
+	if (fd < 0) {
+		warn("kgdb_stub: connect error");
+		return 0;
+	}
+
+  	/* make FIFO unblocking */
+	flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		flags = 0;
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+		warn("kgdb_stub: can't make socket non blocking");
+	}
+	return fd;
+}
+
+int
+thunk_kgdb_getc(int fd, char *ch)
+{
+	return safe_recv(fd, ch, 1);
+}
+
+int
+thunk_kgdb_putc(int fd, char ch)
+{
+	return safe_send(fd, &ch, 1);
 }
 
 static ssize_t

@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.10.2.1 2019/06/10 22:05:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.10.2.1 2019/06/10 22:05:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,16 +39,29 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.10 2018/06/20 05:50:09 hkenken Exp $")
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <arm/cortex/gic_intr.h>
+#include <arm/cortex/gic_reg.h>
+#include <arm/cortex/gic_v2m.h>
 #include <arm/cortex/mpcore_var.h>
 
 #include <dev/fdt/fdtvar.h>
 
 #define	GIC_MAXIRQ	1020
 
+extern struct pic_softc *pic_list[];
+
+struct gic_fdt_softc;
+struct gic_fdt_irq;
+
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
+#if NPCI > 0
+static void	gic_fdt_attach_v2m(struct gic_fdt_softc *, bus_space_tag_t, int);
+#endif
 
 static int	gic_fdt_intr(void *);
 
@@ -61,9 +76,6 @@ struct fdtbus_interrupt_controller_func gic_fdt_funcs = {
 	.intrstr = gic_fdt_intrstr
 };
 
-struct gic_fdt_softc;
-struct gic_fdt_irq;
-
 struct gic_fdt_irqhandler {
 	struct gic_fdt_irq	*ih_irq;
 	int			(*ih_fn)(void *);
@@ -75,6 +87,7 @@ struct gic_fdt_irqhandler {
 struct gic_fdt_irq {
 	struct gic_fdt_softc	*intr_sc;
 	void			*intr_ih;
+	void			*intr_arg;
 	int			intr_refcnt;
 	int			intr_ipl;
 	int			intr_level;
@@ -85,7 +98,10 @@ struct gic_fdt_irq {
 
 struct gic_fdt_softc {
 	device_t		sc_dev;
+	device_t		sc_gicdev;
 	int			sc_phandle;
+
+	int			sc_v2m_count;
 
 	struct gic_fdt_irq	*sc_irq[GIC_MAXIRQ];
 };
@@ -105,7 +121,7 @@ gic_fdt_match(device_t parent, cfdata_t cf, void *aux)
 	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -113,15 +129,16 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct gic_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_addr_t addr_d, addr_c;
 	bus_size_t size_d, size_c;
 	bus_space_handle_t bsh;
 	int error;
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 
-	error = fdtbus_register_interrupt_controller(self, faa->faa_phandle,
+	error = fdtbus_register_interrupt_controller(self, phandle,
 	    &gic_fdt_funcs);
 	if (error) {
 		aprint_error(": couldn't register with fdtbus: %d\n", error);
@@ -140,8 +157,8 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const bus_addr_t addr = min(addr_d, addr_c);
-	const bus_size_t end = max(addr_d + size_d, addr_c + size_c);
+	const bus_addr_t addr = uimin(addr_d, addr_c);
+	const bus_size_t end = uimax(addr_d + size_d, addr_c + size_c);
 	const bus_size_t size = end - addr;
 
 	error = bus_space_map(faa->faa_bst, addr, size, 0, &bsh);
@@ -158,10 +175,63 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_off2 = addr_c - addr,
 	};
 
-	config_found(self, &mpcaa, NULL);
+	sc->sc_gicdev = config_found(self, &mpcaa, NULL);
 
 	arm_fdt_irq_set_handler(armgic_irq_handler);
+
+#if NPCI > 0
+	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+		const char * const v2m_compat[] = { "arm,gic-v2m-frame", NULL };
+		if (of_match_compatible(child, v2m_compat))
+			gic_fdt_attach_v2m(sc, faa->faa_bst, child);
+	}
+#endif
 }
+
+#if NPCI > 0
+static void
+gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
+{
+	struct gic_v2m_frame *frame;
+	u_int base_spi, num_spis;
+	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "couldn't get V2M address\n");
+		return;
+	}
+
+	if (bus_space_map(bst, addr, size, 0, &bsh) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "couldn't map V2M frame\n");
+		return;
+	}
+	const uint32_t typer = bus_space_read_4(bst, bsh, GIC_MSI_TYPER);
+	bus_space_unmap(bst, bsh, size);
+
+	if (of_getprop_uint32(phandle, "arm,msi-base-spi", &base_spi))
+		base_spi = __SHIFTOUT(typer, GIC_MSI_TYPER_BASE);
+	if (of_getprop_uint32(phandle, "arm,msi-num-spis", &num_spis))
+		num_spis = __SHIFTOUT(typer, GIC_MSI_TYPER_NUMBER);
+
+	frame = kmem_zalloc(sizeof(*frame), KM_SLEEP);
+	frame->frame_reg = addr;
+	frame->frame_pic = pic_list[0];
+	frame->frame_base = base_spi;
+	frame->frame_count = num_spis;
+
+	if (gic_v2m_init(frame, sc->sc_gicdev, sc->sc_v2m_count++) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "failed to initialize GICv2m\n");
+	} else {
+		aprint_normal_dev(sc->sc_gicdev, "GICv2m @ %#" PRIx64 ", SPIs %u-%u\n",
+		    (uint64_t)frame->frame_reg, frame->frame_base,
+		    frame->frame_base + frame->frame_count);
+	}
+}
+#endif
 
 static void *
 gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
@@ -179,7 +249,8 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
 	const u_int trig = be32toh(specifier[2]) & 0xf;
-	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
+	const u_int level = (trig & FDT_INTR_TYPE_DOUBLE_EDGE)
+	    ? IST_EDGE : IST_LEVEL;
 
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
@@ -188,6 +259,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
 		firq->intr_sc = sc;
 		firq->intr_refcnt = 0;
+		firq->intr_arg = arg;
 		firq->intr_ipl = ipl;
 		firq->intr_level = level;
 		firq->intr_mpsafe = mpsafe;
@@ -206,7 +278,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		}
 		sc->sc_irq[irq] = firq;
 	} else {
-		if (arg) {
+		if (firq->intr_arg == NULL && arg != NULL) {
 			device_printf(dev, "cannot share irq with NULL arg\n");
 			return NULL;
 		}
@@ -236,28 +308,36 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	firqh->ih_arg = arg;
 	TAILQ_INSERT_TAIL(&firq->intr_handlers, firqh, ih_next);
 
-	return firqh;
+	return firq->intr_ih;
 }
 
 static void
 gic_fdt_disestablish(device_t dev, void *ih)
 {
 	struct gic_fdt_softc * const sc = device_private(dev);
-	struct gic_fdt_irqhandler *firqh = ih;
-	struct gic_fdt_irq *firq = firqh->ih_irq;
-	const int irq = firq->intr_irq;
+	struct gic_fdt_irqhandler *firqh;
+	struct gic_fdt_irq *firq;
+	u_int n;
 
-	KASSERT(firq->intr_refcnt > 0);
+	for (n = 0; n < GIC_MAXIRQ; n++) {
+		firq = sc->sc_irq[n];
+		if (firq->intr_ih != ih)
+			continue;
 
-	TAILQ_REMOVE(&firq->intr_handlers, firqh, ih_next);
-	kmem_free(firqh, sizeof(*firqh));
+		KASSERT(firq->intr_refcnt > 0);
 
-	firq->intr_refcnt--;
-	if (firq->intr_refcnt == 0) {
+		if (firq->intr_refcnt > 1)
+			panic("%s: cannot disestablish shared irq", __func__);
+
+		firqh = TAILQ_FIRST(&firq->intr_handlers);
+		kmem_free(firqh, sizeof(*firqh));
 		intr_disestablish(firq->intr_ih);
 		kmem_free(firq, sizeof(*firq));
-		sc->sc_irq[irq] = NULL;
+		sc->sc_irq[n] = NULL;
+		return;
 	}
+
+	panic("%s: interrupt not established", __func__);
 }
 
 static int

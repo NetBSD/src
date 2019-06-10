@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.114.2.5 2018/08/15 17:07:02 phil Exp $ */
+/*	$NetBSD: ieee80211_input.c,v 1.114.2.6 2019/06/10 22:09:46 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,11 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-#if __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.114.2.6 2019/06/10 22:09:46 christos Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +74,9 @@ __FBSDID("$FreeBSD$");
 
 #ifdef INET
 #include <netinet/in.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #endif
 
 #ifdef __NetBSD__
@@ -378,13 +382,58 @@ ieee80211_decap(struct ieee80211vap *vap, struct mbuf *m, int hdrlen)
 		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr4);
 		break;
 	}
-#ifndef __NO_STRICT_ALIGNMENT
-	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), uint32_t)) {
-		m = ieee80211_realign(vap, m, sizeof(*eh));
-		if (m == NULL)
-			return NULL;
+
+#ifdef ALIGNED_POINTER
+	if (!ALIGNED_POINTER(mtod(m, char *) + sizeof(*eh), u_int32_t)) {
+		struct mbuf *n, *n0, **np;
+		char *newdata;
+		int off, pktlen;
+
+		n0 = NULL;
+		np = &n0;
+		off = 0;
+		pktlen = m->m_pkthdr.len;
+		while (pktlen > off) {
+			if (n0 == NULL) {
+				MGETHDR(n, M_DONTWAIT, MT_DATA);
+				if (n == NULL) {
+					m_freem(m);
+					return NULL;
+				}
+				m_move_pkthdr(n, m);
+				n->m_len = MHLEN;
+			} else {
+				MGET(n, M_DONTWAIT, MT_DATA);
+				if (n == NULL) {
+					m_freem(m);
+					m_freem(n0);
+					return NULL;
+				}
+				n->m_len = MLEN;
+			}
+			if (pktlen - off >= MINCLSIZE) {
+				MCLGET(n, M_DONTWAIT);
+				if (n->m_flags & M_EXT)
+					n->m_len = n->m_ext.ext_size;
+			}
+			if (n0 == NULL) {
+				newdata =
+				    (char *)ALIGN(n->m_data + sizeof(*eh)) -
+				    sizeof(*eh);
+				n->m_len -= newdata - n->m_data;
+				n->m_data = newdata;
+			}
+			if (n->m_len > pktlen - off)
+				n->m_len = pktlen - off;
+			m_copydata(m, off, n->m_len, mtod(n, void *));
+			off += n->m_len;
+			*np = n;
+			np = &n->m_next;
+		}
+		m_freem(m);
+		m = n0;
 	}
-#endif /* !__NO_STRICT_ALIGNMENT */
+#endif /* ALIGNED_POINTER */
 	if (llc != NULL) {
 		eh = mtod(m, struct ether_header *);
 		eh->ether_type = htons(m->m_pkthdr.len - sizeof(*eh));

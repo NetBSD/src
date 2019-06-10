@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2018/05/25 16:01:31 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.2.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #include "pdir.h"
 #include "redef.h"
 
-/* 32bit version of PG_NX */
-#define PG_NX32	0x80000000
+/* 32bit version of PTE_NX */
+#define PTE_NX32	0x80000000
 
 #define TABLE_L2_ENTRIES (NKL2_KIMG_ENTRIES + 1)
 #define TABLE_L3_ENTRIES NKL3_KIMG_ENTRIES
@@ -193,8 +193,6 @@ LABEL(gdt64_start)
 	.quad 0x0000000000000000	/* always empty */
 	.quad 0x00af9a000000ffff	/* kernel CS */
 	.quad 0x00cf92000000ffff	/* kernel DS */
-	.quad 0x0000000000000000	/* kernel TSS [1/2] */
-	.quad 0x0000000000000000	/* kernel TSS [2/2] */
 END(gdt64_start)
 gdt64_end:
 
@@ -326,13 +324,13 @@ ENTRY(start)
 	movl	%eax,_C_LABEL(cpuid_level)
 
 	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 * Retrieve the NX/XD flag. We use the 32bit version of PTE_NX.
 	 */
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
 	jz	.Lno_NOX
-	movl	$PG_NX32,_C_LABEL(nox_flag)
+	movl	$PTE_NX32,_C_LABEL(nox_flag)
 .Lno_NOX:
 
 /*
@@ -424,7 +422,7 @@ ENTRY(start)
 	movl	$_C_LABEL(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt
 
 	/* Map the prekern rodata R. */
@@ -432,7 +430,7 @@ ENTRY(start)
 	movl	$_C_LABEL(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the prekern data+bss RW. */
@@ -440,7 +438,7 @@ ENTRY(start)
 	movl	$_C_LABEL(__prekern_end),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map a RO view of the kernel. */
@@ -448,21 +446,21 @@ ENTRY(start)
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
 	movl	$TABLESIZE,%ecx		/* length of BOOTSTRAP TABLES */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map the ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	orl	$(PTE_P|PTE_W/*|PTE_PCD*/),%eax
 	fillkpt_nox
 
 	/*
@@ -470,7 +468,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 
@@ -479,7 +477,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -488,14 +486,14 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE (one entry) */
 	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PML4_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$1,%ecx
 	fillkpt_nox
 
@@ -568,6 +566,9 @@ longmode:
 	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
+
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ss
 
 	/* The first physical page available. */
 	leaq	(TABLESIZE)(%rsi),%rdi

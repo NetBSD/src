@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/03/24 00:02:52 christos Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2019/06/10 21:55:39 christos Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -28,11 +28,8 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # XXX check this out, probably need it for plugins?
 # LDFLAGS+=	-rdynamic
 
-# VER_CPPFLAGS from Makefile.inc
-CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
-c-cppbuiltin.c: ${GCCARCH}/defs.mk
-
 COPTS.c-ada-spec.c=	-Wno-stack-protector
+COPTS.c-attribs.c=	-Wno-stack-protector
 COPTS.c-aux-info.c=	-Wno-stack-protector
 COPTS.c-common.c=	-Wno-stack-protector
 COPTS.c-cppbuiltin.c=	-Wno-stack-protector

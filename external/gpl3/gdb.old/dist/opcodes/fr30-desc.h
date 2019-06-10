@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2016 Free Software Foundation, Inc.
+Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -24,6 +24,10 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
 #ifndef FR30_CPU_H
 #define FR30_CPU_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CGEN_ARCH fr30
 
@@ -308,5 +312,9 @@ extern CGEN_KEYWORD fr30_cgen_opval_h_r15;
 extern const CGEN_HW_ENTRY fr30_cgen_hw_table[];
 
 
+
+   #ifdef __cplusplus
+   }
+   #endif
 
 #endif /* FR30_CPU_H */

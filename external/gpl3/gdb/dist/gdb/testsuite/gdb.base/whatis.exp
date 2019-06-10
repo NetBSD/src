@@ -1,4 +1,4 @@
-# Copyright 1988-2017 Free Software Foundation, Inc.
+# Copyright 1988-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -282,13 +282,30 @@ gdb_test "whatis v_double_pointer" \
 
 
 # test whatis command with structure types
+
+# First with a type argument, with both "set print object" set to "on"
+# and "off", ending with "off" for the following tests.
+foreach_with_prefix print_object {"on" "off"} {
+    gdb_test_no_output "set print object $print_object"
+
+    gdb_test "whatis struct t_struct" \
+	"type = struct t_struct" \
+	"whatis named structure using type name"
+
+    gdb_test "whatis struct t_struct *" \
+	"type = struct t_struct \\*" \
+	"whatis named structure using type name and pointer"
+
+    gdb_test "whatis struct t_struct &" \
+	"type = struct t_struct &" \
+	"whatis named structure using type name and reference"
+}
+
+# Now with an expression argument.
+
 gdb_test "whatis v_struct1" \
     "type = struct t_struct" \
     "whatis named structure"
-
-gdb_test "whatis struct t_struct" \
-    "type = struct t_struct" \
-    "whatis named structure using type name"
 
 gdb_test "whatis v_struct2" \
     "type = struct \{\.\.\.\}" \

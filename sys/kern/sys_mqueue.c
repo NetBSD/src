@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.40.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.40 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.40.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -431,11 +431,6 @@ mqueue_create(lwp_t *l, char *name, struct mq_attr *attr, mode_t mode,
 	mqueue_t *mq;
 	u_int i;
 
-	/* Pre-check the limit. */
-	if (p->p_mqueue_cnt >= mq_open_max) {
-		return EMFILE;
-	}
-
 	/* Empty name is invalid. */
 	if (name[0] == '\0') {
 		return EINVAL;
@@ -516,6 +511,14 @@ mq_handle_open(struct lwp *l, const char *u_name, int oflag, mode_t mode,
 		kmem_free(name, MQ_NAMELEN);
 		return error;
 	}
+
+	/* Account and check for the limit. */
+	if (atomic_inc_uint_nv(&p->p_mqueue_cnt) > mq_open_max) {
+		atomic_dec_uint(&p->p_mqueue_cnt);
+		error = EMFILE;
+		goto err;
+	}
+
 	fp->f_type = DTYPE_MQUEUE;
 	fp->f_flag = FFLAGS(oflag) & (FREAD | FWRITE);
 	fp->f_ops = &mqops;
@@ -559,14 +562,6 @@ mq_handle_open(struct lwp *l, const char *u_name, int oflag, mode_t mode,
 			mutex_exit(&mqlist_lock);
 			KASSERT(mq_new == NULL);
 			error = ENOENT;
-			goto err;
-		}
-
-		/* Account and check for the limit. */
-		if (atomic_inc_uint_nv(&p->p_mqueue_cnt) > mq_open_max) {
-			mutex_exit(&mqlist_lock);
-			atomic_dec_uint(&p->p_mqueue_cnt);
-			error = EMFILE;
 			goto err;
 		}
 
@@ -709,7 +704,7 @@ mq_recv1(mqd_t mqdes, void *msg_ptr, size_t msg_len, u_int *msg_prio,
 	/* Unmark the bit, if last message. */
 	if (__predict_true(idx) && TAILQ_EMPTY(&mq->mq_head[idx])) {
 		KASSERT((MQ_PQSIZE - idx) == msg->msg_prio);
-		mq->mq_bitmap &= ~(1 << --idx);
+		mq->mq_bitmap &= ~(1U << --idx);
 	}
 
 	/* Decrement the counter and signal waiter, if any */
@@ -812,6 +807,8 @@ mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
 		return EINVAL;
 
 	/* Allocate a new message */
+	if (msg_len > mq_max_msgsize)
+		return EMSGSIZE;
 	size = sizeof(struct mq_msg) + msg_len;
 	if (size > mq_max_msgsize)
 		return EMSGSIZE;
@@ -878,7 +875,7 @@ mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
 
 		KASSERT(idx != MQ_PQRESQ);
 		TAILQ_INSERT_TAIL(&mq->mq_head[idx], msg, msg_queue);
-		mq->mq_bitmap |= (1 << --idx);
+		mq->mq_bitmap |= (1U << --idx);
 	} else {
 		mqueue_linear_insert(mq, msg);
 	}

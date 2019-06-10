@@ -1,8 +1,9 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3CHANGESET_START 3
 .Os
 .Sh NAME
-.Nm sqlite3changeset_start
+.Nm sqlite3changeset_start ,
+.Nm sqlite3changeset_start_v2
 .Nd Create An Iterator To Traverse A Changeset 
 .Sh SYNOPSIS
 .Ft int 
@@ -10,6 +11,13 @@
 .Fa "sqlite3_changeset_iter **pp"
 .Fa "int nChangeset"
 .Fa "void *pChangeset                "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_start_v2
+.Fa "sqlite3_changeset_iter **pp"
+.Fa "int nChangeset"
+.Fa "void *pChangeset"
+.Fa "int flags                       "
 .Fc
 .Sh DESCRIPTION
 Create an iterator used to iterate through the contents of a changeset.
@@ -46,6 +54,13 @@ single table are visited consecutively.
 There is no chance that the iterator will visit a change the applies
 to table X, then one for table Y, and then later on visit another change
 for table X.
+.Pp
+The behavior of sqlite3changeset_start_v2() and its streaming equivalent
+may be modified by passing a combination of  supported flags
+as the 4th parameter.
+.Pp
+Note that the sqlite3changeset_start_v2() API is still \fBexperimental\fP
+and therefore subject to change.
 .Sh SEE ALSO
 .Xr sqlite3changeset_concat 3 ,
 .Xr sqlite3changeset_finalize 3 ,
@@ -54,4 +69,5 @@ for table X.
 .Xr sqlite3changeset_next 3 ,
 .Xr sqlite3changeset_old 3 ,
 .Xr sqlite3changeset_op 3 ,
-.Xr sqlite3session_changeset 3
+.Xr sqlite3session_changeset 3 ,
+.Xr SQLITE_CHANGESETSTART_INVERT 3

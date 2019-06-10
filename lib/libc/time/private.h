@@ -1,4 +1,6 @@
-/*	$NetBSD: private.h,v 1.52 2018/05/04 15:51:00 christos Exp $	*/
+/* Private header for tzdb code.  */
+
+/*	$NetBSD: private.h,v 1.52.2.1 2019/06/10 22:05:22 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -774,5 +776,20 @@ char *ctime_r(time_t const *, char *);
 #define SECSPERREPEAT \
   ((int_fast64_t) YEARSPERREPEAT * (int_fast64_t) AVGSECSPERYEAR)
 #define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
+
+#ifdef _LIBC
+#include "reentrant.h"
+extern struct __state *__lclptr;
+#if defined(__LIBC12_SOURCE__)
+#define tzset_unlocked __tzset_unlocked
+#else
+#define tzset_unlocked __tzset_unlocked50
+#endif
+
+void tzset_unlocked(void);
+#ifdef _REENTRANT
+extern rwlock_t __lcl_lock;
+#endif
+#endif
 
 #endif /* !defined PRIVATE_H */

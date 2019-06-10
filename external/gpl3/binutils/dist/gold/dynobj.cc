@@ -1439,7 +1439,7 @@ Versions::Versions(const Version_script_info& version_script,
                    Stringpool* dynpool)
   : defs_(), needs_(), version_table_(),
     is_finalized_(false), version_script_(version_script),
-    needs_base_version_(parameters->options().shared())
+    needs_base_version_(true)
 {
   if (!this->version_script_.empty())
     {
@@ -1536,8 +1536,7 @@ Versions::record_version(const Symbol_table* symtab,
 
   if (!sym->is_from_dynobj() && !sym->is_copied_from_dynobj())
     {
-      if (parameters->options().shared())
-        this->add_def(dynpool, sym, version, version_key);
+      this->add_def(dynpool, sym, version, version_key);
     }
   else
     {
@@ -1574,18 +1573,13 @@ Versions::add_def(Stringpool* dynpool, const Symbol* sym, const char* version,
       // find a definition of a symbol with a version which is not
       // in the version script.
       if (parameters->options().shared())
-	{
-	  gold_error(_("symbol %s has undefined version %s"),
-		     sym->demangled_name().c_str(), version);
-	  if (this->needs_base_version_)
-	    this->define_base_version(dynpool);
-	}
-      else
-	// We only insert a base version for shared library.
-	gold_assert(!this->needs_base_version_);
-	
+	gold_error(_("symbol %s has undefined version %s"),
+		   sym->demangled_name().c_str(), version);
+
       // When creating a regular executable, automatically define
       // a new version.
+      if (this->needs_base_version_)
+	this->define_base_version(dynpool);
       Verdef* vd = new Verdef(version, std::vector<std::string>(),
                               false, false, false, false);
       this->defs_.push_back(vd);
@@ -1631,7 +1625,7 @@ Versions::add_need(Stringpool* dynpool, const char* filename, const char* name,
   if (vn == NULL)
     {
       // Create base version definition lazily for shared library.
-      if (this->needs_base_version_)
+      if (parameters->options().shared() && this->needs_base_version_)
 	this->define_base_version(dynpool);
 
       // We have a new filename.
@@ -1715,8 +1709,6 @@ Versions::version_index(const Symbol_table* symtab, const Stringpool* dynpool,
   Key k;
   if (!sym->is_from_dynobj() && !sym->is_copied_from_dynobj())
     {
-      if (!parameters->options().shared())
-        return elfcpp::VER_NDX_GLOBAL;
       k = Key(version_key, 0);
     }
   else
@@ -1776,7 +1768,10 @@ Versions::symbol_section_contents(const Symbol_table* symtab,
 	version_index = this->version_index(symtab, dynpool, *p);
       // If the symbol was defined as foo@V1 instead of foo@@V1, add
       // the hidden bit.
-      if ((*p)->version() != NULL && !(*p)->is_default())
+      if ((*p)->version() != NULL
+	  && (*p)->is_defined()
+	  && !(*p)->is_default()
+	  && !(*p)->from_dyn())
         version_index |= elfcpp::VERSYM_HIDDEN;
       elfcpp::Swap<16, big_endian>::writeval(pbuf + (*p)->dynsym_index() * 2,
                                              version_index);

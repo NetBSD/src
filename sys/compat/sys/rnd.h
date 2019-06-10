@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.4 2015/04/14 12:19:57 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.4.18.1 2019/06/10 22:07:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997,2011 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ typedef struct {
  */
 #ifdef _KERNEL
 int compat_50_rnd_ioctl(struct file *, u_long, void *);
+int compat32_50_rnd_ioctl(struct file *, u_long, void *);
 #endif
 
 #define	RNDGETSRCNUM50		_IOWR('R', 102, rndstat50_t)

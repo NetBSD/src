@@ -1,6 +1,6 @@
 /* mpfr_exp2 -- power of 2 function 2^y
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -29,7 +29,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
-  int inexact;
+  int inexact, inex2;
   long xint;
   mpfr_t xfrac;
   MPFR_SAVE_EXPO_DECL (expo);
@@ -62,24 +62,22 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         }
     }
 
-  /* since the smallest representable non-zero float is 1/2*2^__gmpfr_emin,
-     if x < __gmpfr_emin - 1, the result is either 1/2*2^__gmpfr_emin or 0 */
-  MPFR_ASSERTN (MPFR_EMIN_MIN >= LONG_MIN + 2);
-  if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emin - 1) < 0))
-    {
-      mpfr_rnd_t rnd2 = rnd_mode;
-      /* in round to nearest mode, round to zero when x <= __gmpfr_emin-2 */
-      if (rnd_mode == MPFR_RNDN &&
-          mpfr_cmp_si_2exp (x, __gmpfr_emin - 2, 0) <= 0)
-        rnd2 = MPFR_RNDZ;
-      return mpfr_underflow (y, rnd2, 1);
-    }
+  /* Since the smallest representable non-zero float is 1/2 * 2^emin,
+     if x <= emin - 2, the result is either 1/2 * 2^emin or 0.
+     Warning, for emin - 2 < x < emin - 1, we cannot conclude, since 2^x
+     might round to 2^(emin - 1) for rounding away or to nearest, and there
+     might be no underflow, since we consider underflow "after rounding". */
 
-  MPFR_ASSERTN (MPFR_EMAX_MAX <= LONG_MAX);
+  MPFR_STAT_STATIC_ASSERT (MPFR_EMIN_MIN >= LONG_MIN + 2);
+  if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emin - 2) <= 0))
+    return mpfr_underflow (y, rnd_mode == MPFR_RNDN ? MPFR_RNDZ : rnd_mode, 1);
+
+  MPFR_STAT_STATIC_ASSERT (MPFR_EMAX_MAX <= LONG_MAX);
   if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emax) >= 0))
     return mpfr_overflow (y, rnd_mode, 1);
 
-  /* We now know that emin - 1 <= x < emax. */
+  /* We now know that emin - 2 < x < emax. Note that an underflow or
+     overflow is still possible (we have eliminated only easy cases). */
 
   MPFR_SAVE_EXPO_MARK (expo);
 
@@ -87,14 +85,17 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
      |2^x - 1| <= x < 2^EXP(x). If x > 0 we must round away from 0 (dir=1);
      if x < 0 we must round toward 0 (dir=0). */
   MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, __gmpfr_one, - MPFR_GET_EXP (x), 0,
-                                    MPFR_SIGN(x) > 0, rnd_mode, expo, {});
+                                    MPFR_IS_POS (x), rnd_mode, expo, {});
 
   xint = mpfr_get_si (x, MPFR_RNDZ);
   mpfr_init2 (xfrac, MPFR_PREC (x));
-  mpfr_sub_si (xfrac, x, xint, MPFR_RNDN); /* exact */
+  MPFR_DBGRES (inexact = mpfr_sub_si (xfrac, x, xint, MPFR_RNDN));
+  MPFR_ASSERTD (inexact == 0);
 
   if (MPFR_IS_ZERO (xfrac))
     {
+      /* Here, emin - 1 <= x <= emax - 1, so that an underflow or overflow
+         will not be possible. */
       mpfr_set_ui (y, 1, MPFR_RNDN);
       inexact = 0;
     }
@@ -113,7 +114,7 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       /* the optimal number of bits : see algorithms.tex */
       Nt = Ny + 5 + MPFR_INT_CEIL_LOG2 (Ny);
 
-      /* initialise of intermediary variable */
+      /* initialize of intermediary variable */
       mpfr_init2 (t, Nt);
 
       /* First computation */
@@ -141,11 +142,27 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     }
 
   mpfr_clear (xfrac);
-  mpfr_clear_flags ();
-  mpfr_mul_2si (y, y, xint, MPFR_RNDN); /* exact or overflow */
-  /* Note: We can have an overflow only when t was rounded up to 2. */
-  MPFR_ASSERTD (MPFR_IS_PURE_FP (y) || inexact > 0);
-  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+
+  if (MPFR_UNLIKELY (rnd_mode == MPFR_RNDN && xint == __gmpfr_emin - 1 &&
+                     MPFR_GET_EXP (y) == 0 && mpfr_powerof2_raw (y)))
+    {
+      /* y was rounded down to 1/2 and the rounded value with an unbounded
+         exponent range would be 2^(emin-2), i.e. the midpoint between 0
+         and the smallest positive FP number. This is a double rounding
+         problem: we should not round to 0, but to (1/2) * 2^emin. */
+      MPFR_SET_EXP (y, __gmpfr_emin);
+      inexact = 1;
+      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, MPFR_FLAGS_UNDERFLOW);
+    }
+  else
+    {
+      MPFR_CLEAR_FLAGS ();
+      inex2 = mpfr_mul_2si (y, y, xint, rnd_mode);
+      if (inex2 != 0)  /* underflow or overflow */
+        inexact = inex2;
+      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+    }
+
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (y, inexact, rnd_mode);
 }

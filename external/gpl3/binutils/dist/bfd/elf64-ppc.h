@@ -51,9 +51,6 @@ struct ppc64_elf_params
   /* Set if PLT call stubs for localentry:0 functions should omit r2 save.  */
   int plt_localentry0;
 
-  /* Clear if PLT call stubs should use a speculative execution barrier.  */
-  int speculate_indirect_jumps;
-
   /* Whether to canonicalize .opd so that there are no overlapping
      .opd entries.  */
   int non_overlapping_opd;
@@ -71,6 +68,8 @@ struct ppc64_elf_params
 bfd_boolean ppc64_elf_init_stub_bfd
   (struct bfd_link_info *, struct ppc64_elf_params *);
 bfd_boolean ppc64_elf_edit_opd
+  (struct bfd_link_info *);
+bfd_boolean ppc64_elf_inline_plt
   (struct bfd_link_info *);
 asection *ppc64_elf_tls_setup
   (struct bfd_link_info *);

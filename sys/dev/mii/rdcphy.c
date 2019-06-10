@@ -1,4 +1,4 @@
-/*      $NetBSD: rdcphy.c,v 1.1 2011/01/26 18:48:12 bouyer Exp $        */
+/*      $NetBSD: rdcphy.c,v 1.1.62.1 2019/06/10 22:07:14 christos Exp $        */
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,7 @@
  * Driver for the RDC Semiconductor R6040 10/100 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.1 2011/01/26 18:48:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.1.62.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,8 @@ static const struct mii_phy_funcs rdcphy_funcs = {
 };
 
 static const struct mii_phydesc rdcphys[] = {
-	{ MII_OUI_RDC, MII_MODEL_RDC_R6040,
-	  MII_STR_RDC_R6040 },
-	{ 0,                    0,
-	  NULL },
+	MII_PHY_DESC(RDC, R6040),
+	MII_PHY_END,
 };
 
 static int
@@ -86,9 +84,9 @@ rdcphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, rdcphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -115,9 +113,10 @@ rdcphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
 	aprint_normal("\n");
@@ -138,9 +137,7 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_MEDIACHG:
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -149,14 +146,13 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_100_TX:
 		case IFM_10_T:
 			/*
-			 * Report fake lost link event to parent
-			 * driver.  This will stop MAC of parent
-			 * driver and make it possible to reconfigure
-			 * MAC after completion of link establishment.
-			 * Note, the parent MAC seems to require
-			 * restarting MAC when underlying any PHY
-			 * configuration was changed even if the
-			 * resolved speed/duplex was not changed at
+			 * Report fake lost link event to parent driver.  This
+			 * will stop MAC of parent driver and make it possible
+			 * to reconfigure MAC after completion of link
+			 * establishment.
+			 * Note, the parent MAC seems to require restarting MAC
+			 * when underlying any PHY configuration was changed
+			 * even if the resolved speed/duplex was not changed at
 			 * all.
 			 */
 			mii->mii_media_status = 0;
@@ -164,7 +160,7 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			rsc->sc_mii_link_tick = RDCPHY_MANNEG_TICK;
 			/* Immediately report link down. */
 			mii_phy_update(sc, MII_MEDIACHG);
-			return (0);
+			return 0;
 		default:
 			break;
 		}
@@ -172,23 +168,22 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	case MII_TICK:
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
 			/*
-			 * It seems the PHY hardware does not correctly
-			 * report link status changes when manual link
-			 * configuration is in progress.  It is also
-			 * possible for the PHY to complete establishing
-			 * a link within one second such that mii(4)
-			 * did not notice the link change.  To workaround
-			 * the issue, emulate lost link event and wait
-			 * for 3 seconds when manual link configuration
-			 * is in progress.  3 seconds would be long
-			 * enough to absorb transient link flips.
+			 * It seems the PHY hardware does not correctly report
+			 * link status changes when manual link configuration
+			 * is in progress.  It is also possible for the PHY to
+			 * complete establishing a link within one second such
+			 * that mii(4) did not notice the link change.
+			 * To workaround the issue, emulate lost link event and
+			 * wait for 3 seconds when manual link configuration
+			 * is in progress.  3 seconds would be long enough to
+			 * absorb transient link flips.
 			 */
 			if (rsc->sc_mii_link_tick > 0) {
 				rsc->sc_mii_link_tick--;
-				return (0);
+				return 0;
 			}
 		}
 		break;
@@ -199,25 +194,26 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
 rdcphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, physts;
+	uint16_t bmsr, bmcr, physts;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-	physts = PHY_READ(sc, MII_RDCPHY_STATUS);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_RDCPHY_STATUS, &physts);
 
 	if ((physts & STATUS_LINK_UP) != 0)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if ((bmcr & BMCR_ISO) != 0) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;

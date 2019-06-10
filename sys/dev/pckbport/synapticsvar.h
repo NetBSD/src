@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.7 2017/11/06 21:07:17 blymn Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.7.4.1 2019/06/10 22:07:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -54,6 +54,7 @@ struct synaptics_softc {
 #define	SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD	(1 << 9)
 #define	SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD	(1 << 10)
 #define	SYN_FLAG_HAS_EXTENDED_WMODE		(1 << 11)
+#define	SYN_FLAG_HAS_ADV_GESTURE_MODE		(1 << 12)
 
 	u_int	total_packets[2];	/* Total number of packets received */
 #define	SYN_TIME(sc,c,n)	(((sc)->total_packets[(n)] >= (c)) ?	\
@@ -78,10 +79,16 @@ struct synaptics_softc {
 #define	SYN_IS_DRAG(t)		((t) & SYN_GESTURE_DRAG)
 
 #define	SYN_HIST_SIZE	4
+#define SYN_MAX_FINGERS 2
 	char	button_history;
-	int	rem_x[2], rem_y[2];
-	u_int	movement_history[2];
-	int	history_x[2][SYN_HIST_SIZE], history_y[2][SYN_HIST_SIZE];
+	int	dz_hold;
+	int	rem_x[SYN_MAX_FINGERS];
+	int	rem_y[SYN_MAX_FINGERS];
+	int	rem_z[SYN_MAX_FINGERS];
+	u_int	movement_history[SYN_MAX_FINGERS];
+	int	history_x[SYN_MAX_FINGERS][SYN_HIST_SIZE];
+	int	history_y[SYN_MAX_FINGERS][SYN_HIST_SIZE];
+	int	history_z[SYN_MAX_FINGERS][SYN_HIST_SIZE];
 };
 
 int pms_synaptics_probe_init(void *vsc);

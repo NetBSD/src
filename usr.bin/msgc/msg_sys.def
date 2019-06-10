@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.41 2012/03/06 16:26:01 mbalmer Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.41.32.1 2019/06/10 22:10:22 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -402,6 +402,10 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 			} else
 				_msg_beep();
 			break;
+		case 'l' & 0x1f:
+			endwin();
+			doupdate();
+			break;
 		case 'u' & 0x1f:	/* ^U; line kill */
 			/* kill line */
 			len = pos = 0;
@@ -486,6 +490,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	WINDOW *svmsg = NULL, *sv_win = NULL; /* XXX -Wuninitialized [many] */
 	int maxx, maxy;
 	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
+	const char *np, *ep;
 
 	maxx = getmaxx(msg_win);
 	maxy = getmaxy(msg_win);
@@ -505,10 +510,20 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 			}
 			w = maxx;
 		}
+	} else if (w > 0 && def != NULL && *def != 0) {
+		size_t tl = strlen(def);
+		if (tl + 1 + 2 + val_buf_len + 1 < (unsigned)w)
+			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
 	}
 
 	if (x == -1)
 		x = (maxx - w) / 2 + 1;
+	if (h < 0) {
+		h = 3;
+		for (np = msg_string(msg_no); (ep = strchr(np, '\n'));
+		    np = ep + 1)
+			h++;
+	}
 	if (h < 3)
 		h = 3;
 	if (y < 3)

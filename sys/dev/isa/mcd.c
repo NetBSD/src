@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: mcd.c,v 1.116.18.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116.18.1 2019/06/10 22:07:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,7 +669,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		error = mcd_toc_entries(sc, te, entries, &count);
 		if (error == 0)
 			/* Copy the data back. */
-			error = copyout(entries, te->data, min(te->data_len,
+			error = copyout(entries, te->data, uimin(te->data_len,
 					count * sizeof(struct cd_toc_entry)));
 		return error;
 	}
@@ -1192,6 +1192,7 @@ mcdintr(void *arg)
 		mbx->count = RDELAY_WAITMODE;
 		mbx->state = MCD_S_WAITMODE;
 
+		/* FALLTHROUGH */
 	case MCD_S_WAITMODE:
 		callout_stop(&sc->sc_pintr_ch);
 		for (i = 20; i; i--) {
@@ -1230,6 +1231,7 @@ mcdintr(void *arg)
 		mbx->count = RDELAY_WAITREAD;
 		mbx->state = MCD_S_WAITREAD;
 
+		/* FALLTHROUGH */
 	case MCD_S_WAITREAD:
 		callout_stop(&sc->sc_pintr_ch);
 	nextblock:

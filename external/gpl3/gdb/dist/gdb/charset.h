@@ -1,5 +1,5 @@
 /* Character set conversion support for GDB.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #ifndef CHARSET_H
 #define CHARSET_H
 
-#include <vector>
+#include "common/def-vector.h"
 
 /* If the target program uses a different character set than the host,
    GDB has some support for translating between the two; GDB converts
@@ -144,7 +144,7 @@ class wchar_iterator
   size_t m_width;
 
   /* The output buffer.  */
-  std::vector<gdb_wchar_t> m_out;
+  gdb::def_vector<gdb_wchar_t> m_out;
 };
 
 

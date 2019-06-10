@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Guile.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -602,7 +602,7 @@ pascm_param_value (enum var_types type, void *var,
     case var_filename:
     case var_enum:
       {
-	char *str = * (char **) var;
+	const char *str = *(char **) var;
 
 	if (str == NULL)
 	  str = "";

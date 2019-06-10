@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.138 2018/02/01 09:50:48 msaitoh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.138.4.1 2019/06/10 22:07:34 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.138 2018/02/01 09:50:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.138.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -113,9 +113,9 @@ struct uhub_softc {
 	uint8_t			*sc_statuspend;
 	uint8_t			*sc_status;
 	size_t			 sc_statuslen;
-	int			 sc_explorepending;
-
-	u_char			 sc_running;
+	bool			 sc_explorepending;
+	bool			 sc_first_explore;
+	bool			 sc_running;
 };
 
 #define UHUB_IS_HIGH_SPEED(sc) \
@@ -140,7 +140,7 @@ void uhub_attach(device_t, device_t, void *);
 int uhub_rescan(device_t, const char *, const int *);
 void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
-extern struct cfdriver uhub_cd;
+
 CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
     DVF_DETACH_SHUTDOWN);
@@ -263,6 +263,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 
+	config_pending_incr(self);
+
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
 	sc->sc_dev = self;
@@ -284,14 +286,14 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF("configuration failed, sc %#jx error %jd",
 		    (uintptr_t)sc, err, 0, 0);
-		return;
+		goto bad2;
 	}
 
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH) {
 		aprint_error_dev(self,
 		    "hub depth (%d) exceeded, hub ignored\n",
 		    USB_HUB_MAX_DEPTH);
-		return;
+		goto bad2;
 	}
 
 	/* Get hub descriptor. */
@@ -301,7 +303,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF("getting hub descriptor failed, uhub%jd error %jd",
 		    device_unit(self), err, 0, 0);
-		return;
+		goto bad2;
 	}
 
 	for (nremov = 0, port = 1; port <= nports; port++)
@@ -365,7 +367,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
-	sc->sc_explorepending = 1;
+	sc->sc_explorepending = true;
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK|USBD_MPSAFE, &sc->sc_ipipe, sc,
@@ -411,11 +413,11 @@ uhub_attach(device_t parent, device_t self, void *aux)
 			     sizeof(struct usbd_tt), KM_SLEEP);
 	}
 	/* Set up data structures */
-	for (p = 0; p < nports; p++) {
-		struct usbd_port *up = &hub->uh_ports[p];
+	for (p = 1; p <= nports; p++) {
+		struct usbd_port *up = &hub->uh_ports[p - 1];
 		up->up_dev = NULL;
 		up->up_parent = dev;
-		up->up_portno = p + 1;
+		up->up_portno = p;
 		if (dev->ud_selfpowered)
 			/* Self powered hub, give ports maximum current. */
 			up->up_power = USB_MAX_POWER;
@@ -424,7 +426,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		up->up_restartcnt = 0;
 		up->up_reattach = 0;
 		if (UHUB_IS_HIGH_SPEED(sc)) {
-			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
+			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p - 1];
 			up->up_tt->utt_hub = hub;
 		} else {
 			up->up_tt = NULL;
@@ -450,8 +452,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		usbd_delay_ms(dev, pwrdly);
 
 	/* The usual exploration will finish the setup. */
-
-	sc->sc_running = 1;
+	sc->sc_running = true;
+	sc->sc_first_explore = true;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -469,7 +471,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		kmem_free(hub,
 		    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	dev->ud_hub = NULL;
-	return;
+ bad2:
+	config_pending_decr(self);
 }
 
 usbd_status
@@ -778,7 +781,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_enter(&sc->sc_lock);
-	sc->sc_explorepending = 0;
+	sc->sc_explorepending = false;
 	for (int i = 0; i < sc->sc_statuslen; i++) {
 		if (sc->sc_statuspend[i] != 0) {
 			memcpy(sc->sc_status, sc->sc_statuspend,
@@ -789,6 +792,10 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_exit(&sc->sc_lock);
+	if (sc->sc_first_explore) {
+		config_pending_decr(sc->sc_dev);
+		sc->sc_first_explore = false;
+	}
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -816,8 +823,8 @@ uhub_detach(device_t self, int flags)
 	KERNEL_LOCK(1, curlwp);
 
 	nports = hub->uh_hubdesc.bNbrPorts;
-	for (port = 0; port < nports; port++) {
-		rup = &hub->uh_ports[port];
+	for (port = 1; port <= nports; port++) {
+		rup = &hub->uh_ports[port - 1];
 		if (rup->up_dev == NULL)
 			continue;
 		if ((rc = usb_disconnect_port(rup, self, flags)) != 0) {
@@ -864,8 +871,8 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct usbd_device *dev;
 	int port;
 
-	for (port = 0; port < hub->uh_hubdesc.bNbrPorts; port++) {
-		dev = hub->uh_ports[port].up_dev;
+	for (port = 1; port <= hub->uh_hubdesc.bNbrPorts; port++) {
+		dev = hub->uh_ports[port - 1].up_dev;
 		if (dev == NULL)
 			continue;
 		usbd_reattach_device(sc->sc_dev, dev, port, locators);
@@ -889,8 +896,8 @@ uhub_childdet(device_t self, device_t child)
 		panic("hub not fully initialised, but child deleted?");
 
 	nports = devhub->ud_hub->uh_hubdesc.bNbrPorts;
-	for (port = 0; port < nports; port++) {
-		dev = devhub->ud_hub->uh_ports[port].up_dev;
+	for (port = 1; port <= nports; port++) {
+		dev = devhub->ud_hub->uh_ports[port - 1].up_dev;
 		if (!dev || dev->ud_subdevlen == 0)
 			continue;
 		for (i = 0; i < dev->ud_subdevlen; i++) {
@@ -943,7 +950,7 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		}
 
 		if (!sc->sc_explorepending) {
-			sc->sc_explorepending = 1;
+			sc->sc_explorepending = true;
 
 			memcpy(sc->sc_status, sc->sc_statuspend,
 			    sc->sc_statuslen);

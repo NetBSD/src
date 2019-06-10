@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.34 2018/03/13 16:52:42 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.34.2.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.34 2018/03/13 16:52:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.34.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -119,17 +119,6 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
 	if (pcrel != NULL)
 		adjust_jumpoff(pcrel, from_s, to_s);
-
-#ifdef GPROF
-#ifdef i386
-#define	MCOUNT_CALL_OFFSET	3
-#endif
-#ifdef __x86_64__
-#define	MCOUNT_CALL_OFFSET	5
-#endif
-	/* Patch mcount call offset */
-	adjust_jumpoff((uint8_t *)from_s + MCOUNT_CALL_OFFSET, from_s, to_s);
-#endif
 }
 
 static inline void __unused
@@ -143,6 +132,12 @@ patchbytes(void *addr, const uint8_t *bytes, size_t size)
 	}
 }
 
+/* The local variables have unknown alignment to UBSan */
+#if defined(__clang__)
+__attribute__((no_sanitize("undefined")))
+#else
+__attribute__((no_sanitize_undefined))
+#endif
 void
 x86_hotpatch(uint32_t name, const uint8_t *bytes, size_t size)
 {
@@ -209,7 +204,6 @@ x86_patch(bool early)
 
 	x86_patch_window_open(&psl, &cr0);
 
-#if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
 		/*
@@ -244,7 +238,6 @@ x86_patch(bool early)
 		    NULL
 		);
 	}
-#endif	/* GPROF */
 
 #ifdef i386
 	/*

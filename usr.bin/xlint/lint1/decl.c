@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.68 2017/03/06 23:04:52 christos Exp $ */
+/* $NetBSD: decl.c,v 1.68.12.1 2019/06/10 22:10:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.68 2017/03/06 23:04:52 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.68.12.1 2019/06/10 22:10:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -446,6 +446,10 @@ tdeferr(type_t *td, tspec_t t)
 	case DOUBLE:
 	case UQUAD:
 	case QUAD:
+#ifdef INT128_SIZE
+	case UINT128:
+	case INT128:
+#endif
 	case ULONG:
 	case UINT:
 	case INT:
@@ -564,6 +568,8 @@ addqual(tqual_t q)
 		}
 		dcs->d_const = 1;
 	} else {
+		if (q == THREAD)
+			return;
 		if (q != VOLATILE)
 			LERROR("addqual()");
 		if (dcs->d_volatile) {

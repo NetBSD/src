@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 #define INFRUN_H 1
 
 #include "symtab.h"
+#include "common/byte-vector.h"
 
 struct target_waitstatus;
 struct frame_info;
@@ -81,10 +82,6 @@ extern void start_remote (int from_tty);
 extern void clear_proceed_status (int step);
 
 extern void proceed (CORE_ADDR, enum gdb_signal);
-
-/* The `resume' routine should only be called in special circumstances.
-   Normally, use `proceed', which handles a lot of bookkeeping.  */
-extern void resume (enum gdb_signal);
 
 /* Return a ptid representing the set of threads that we will proceed,
    in the perspective of the user/frontend.  We may actually resume
@@ -242,5 +239,67 @@ extern void all_uis_check_sync_execution_done (void);
    yet, re-disable its prompt (a synchronous execution command was
    started or re-started).  */
 extern void all_uis_on_sync_execution_starting (void);
+
+/* Base class for displaced stepping closures (the arch-specific data).  */
+
+struct displaced_step_closure
+{
+  virtual ~displaced_step_closure () = 0;
+};
+
+/* A simple displaced step closure that contains only a byte buffer.  */
+
+struct buf_displaced_step_closure : displaced_step_closure
+{
+  buf_displaced_step_closure (int buf_size)
+  : buf (buf_size)
+  {}
+
+  gdb::byte_vector buf;
+};
+
+/* Per-inferior displaced stepping state.  */
+struct displaced_step_inferior_state
+{
+  displaced_step_inferior_state ()
+  {
+    reset ();
+  }
+
+  /* Put this object back in its original state.  */
+  void reset ()
+  {
+    failed_before = 0;
+    step_thread = nullptr;
+    step_gdbarch = nullptr;
+    step_closure = nullptr;
+    step_original = 0;
+    step_copy = 0;
+    step_saved_copy.clear ();
+  }
+
+  /* True if preparing a displaced step ever failed.  If so, we won't
+     try displaced stepping for this inferior again.  */
+  int failed_before;
+
+  /* If this is not nullptr, this is the thread carrying out a
+     displaced single-step in process PID.  This thread's state will
+     require fixing up once it has completed its step.  */
+  thread_info *step_thread;
+
+  /* The architecture the thread had when we stepped it.  */
+  gdbarch *step_gdbarch;
+
+  /* The closure provided gdbarch_displaced_step_copy_insn, to be used
+     for post-step cleanup.  */
+  displaced_step_closure *step_closure;
+
+  /* The address of the original instruction, and the copy we
+     made.  */
+  CORE_ADDR step_original, step_copy;
+
+  /* Saved contents of copy area.  */
+  gdb::byte_vector step_saved_copy;
+};
 
 #endif /* INFRUN_H */

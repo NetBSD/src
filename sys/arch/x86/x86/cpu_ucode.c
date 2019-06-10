@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.9 2018/03/28 19:47:54 maxv Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.9.2.1 2019/06/10 22:06:53 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.9 2018/03/28 19:47:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.9.2.1 2019/06/10 22:06:53 christos Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_cpu_ucode.h"
 #include "opt_xen.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/cpuio.h>
@@ -46,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.9 2018/03/28 19:47:54 maxv Exp $");
 #include <x86/cpu_ucode.h>
 
 #ifdef XEN
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/xen.h>
 #include <xen/hypervisor.h>
 #endif
 
@@ -97,7 +99,7 @@ cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname
 	}
 }
 
-#ifndef XEN
+#ifndef XENPV
 int
 cpu_ucode_apply(const struct cpu_ucode *data)
 {

@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ set binlibfile [standard_output_file ${testfile}.so]
 if { [get_compiler_info]
      || [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" {debug}] != ""
      || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "shlib=${binlibfile}"] != "" } {
-    untested "could not compile sources"
+    untested "failed to compile"
     return -1
 }
 

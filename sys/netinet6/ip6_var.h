@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.80 2018/02/14 05:29:39 maxv Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.80.4.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -186,8 +186,10 @@ struct	ip6_pktopts {
 #define	IP6_STAT_FASTFORWARD	400	/* packets fast forwarded */
 #define	IP6_STAT_FASTFORWARDFLOWS 401	/* number of fast forward flows */
 #define	IP6_STAT_NOIPSEC	402	/* no match ipsec(4) found */
+#define	IP6_STAT_PFILDROP_IN	403	/* dropped by pfil (PFIL_IN) */
+#define	IP6_STAT_PFILDROP_OUT	404	/* dropped by pfil (PFIL_OUT) */
 
-#define	IP6_NSTATS		403
+#define	IP6_NSTATS		405
 
 #define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
 
@@ -364,6 +366,13 @@ int	ip6_get_membership(const struct sockopt *, struct ifnet **,
 
 u_int32_t ip6_randomid(void);
 u_int32_t ip6_randomflowlabel(void);
+
+static inline bool
+ip6_dad_enabled(void)
+{
+
+	return ip6_dad_count > 0;
+}
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

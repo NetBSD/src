@@ -1,6 +1,6 @@
 ; Options for the IA-32 and AMD64 ports of the compiler.
 
-; Copyright (C) 2005-2016 Free Software Foundation, Inc.
+; Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -25,10 +25,20 @@ config/i386/i386-opts.h
 Variable
 HOST_WIDE_INT ix86_isa_flags = TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT
 
+Variable
+HOST_WIDE_INT ix86_isa_flags2 = 0
+
 ; A mask of ix86_isa_flags that includes bit X if X was set or cleared
 ; on the command line.
 Variable
 HOST_WIDE_INT ix86_isa_flags_explicit
+
+Variable
+HOST_WIDE_INT ix86_isa_flags2_explicit
+
+; Additional target flags
+Variable
+int ix86_target_flags
 
 TargetVariable
 int recip_mask = RECIP_MASK_DEFAULT
@@ -70,15 +80,11 @@ unsigned char branch_cost
 
 ;; which flags were passed by the user
 TargetSave
-HOST_WIDE_INT x_ix86_isa_flags_explicit
-
-;; which flags were passed by the user
-Variable
-int ix86_target_flags_explicit
+HOST_WIDE_INT x_ix86_isa_flags2_explicit
 
 ;; which flags were passed by the user
 TargetSave
-HOST_WIDE_INT x_ix86_target_flags_explicit
+HOST_WIDE_INT x_ix86_isa_flags_explicit
 
 ;; whether -mtune was not specified
 TargetSave
@@ -252,7 +258,7 @@ Use given assembler dialect.
 
 Enum
 Name(asm_dialect) Type(enum asm_dialect)
-Known assembler dialects (for use with the -masm-dialect= option):
+Known assembler dialects (for use with the -masm= option):
 
 EnumValue
 Enum(asm_dialect) String(intel) Value(ASM_INTEL)
@@ -266,7 +272,7 @@ Branches are this expensive (1-5, arbitrary units).
 
 mlarge-data-threshold=
 Target RejectNegative Joined UInteger Var(ix86_section_threshold) Init(DEFAULT_LARGE_SECTION_THRESHOLD)
-Data greater than given threshold will go into .ldata section in x86-64 medium model.
+-mlarge-data-threshold=<number>	Data greater than given threshold will go into .ldata section in x86-64 medium model.
 
 mcmodel=
 Target RejectNegative Joined Enum(cmodel) Var(ix86_cmodel) Init(CM_32)
@@ -608,7 +614,7 @@ Target Report Mask(ISA_3DNOW) Var(ix86_isa_flags) Save
 Support 3DNow! built-in functions.
 
 m3dnowa
-Target Undocumented Mask(ISA_3DNOW_A) Var(ix86_isa_flags) Save
+Target Report Mask(ISA_3DNOW_A) Var(ix86_isa_flags) Save
 Support Athlon 3Dnow! built-in functions.
 
 msse
@@ -691,6 +697,18 @@ mavx512vbmi
 Target Report Mask(ISA_AVX512VBMI) Var(ix86_isa_flags) Save
 Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2 and AVX512F and AVX512VBMI built-in functions and code generation.
 
+mavx5124fmaps
+Target Report Mask(ISA_AVX5124FMAPS) Var(ix86_isa_flags2) Save
+Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512F and AVX5124FMAPS built-in functions and code generation.
+
+mavx5124vnniw
+Target Report Mask(ISA_AVX5124VNNIW) Var(ix86_isa_flags2) Save
+Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512F and AVX5124VNNIW built-in functions and code generation.
+
+mavx512vpopcntdq
+Target Report Mask(ISA_AVX512VPOPCNTDQ) Var(ix86_isa_flags2) Save
+Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AVX512F and AVX512VPOPCNTDQ built-in functions and code generation.
+
 mfma
 Target Report Mask(ISA_FMA) Var(ix86_isa_flags) Save
 Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and FMA built-in functions and code generation.
@@ -718,6 +736,14 @@ Support code generation of Advanced Bit Manipulation (ABM) instructions.
 mpopcnt
 Target Report Mask(ISA_POPCNT) Var(ix86_isa_flags) Save
 Support code generation of popcnt instruction.
+
+msgx
+Target Report Mask(ISA_SGX) Var(ix86_isa_flags2) Save
+Support SGX built-in functions and code generation.
+
+mrdpid
+Target Report Mask(ISA_RDPID) Var(ix86_isa_flags2) Save
+Support RDPID built-in functions and code generation.
 
 mbmi
 Target Report Mask(ISA_BMI) Var(ix86_isa_flags) Save
@@ -897,6 +923,10 @@ Enum(stack_protector_guard) String(global) Value(SSP_GLOBAL)
 mmitigate-rop
 Target Var(flag_mitigate_rop) Init(0)
 Attempt to avoid generating instruction sequences containing ret bytes.
+
+mgeneral-regs-only
+Target Report RejectNegative Mask(GENERAL_REGS_ONLY) Var(ix86_target_flags) Save
+Generate code which uses only the general registers.
 
 mindirect-branch=
 Target Report RejectNegative Joined Enum(indirect_branch) Var(ix86_indirect_branch) Init(indirect_branch_keep)

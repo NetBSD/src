@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.2 2018/06/20 20:12:51 jmcneill Exp $ */
+/* $NetBSD: rk_usb.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2 2018/06/20 20:12:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,43 +41,53 @@ __KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2 2018/06/20 20:12:51 jmcneill Exp $");
 #include <dev/clk/clk_backend.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 static int rk_usb_match(device_t, cfdata_t, void *);
 static void rk_usb_attach(device_t, device_t, void *);
 
-#define	CON0_REG	0x00
-#define	CON1_REG	0x04
-#define	CON2_REG	0x08
-#define	 USBPHY_COMMONONN	__BIT(4)
+#define	RK3328_CON0_REG			0x100
+#define	RK3328_CON1_REG			0x104
+#define	RK3328_CON2_REG			0x108
+#define	 RK3328_USBPHY_COMMONONN	__BIT(4)
+
+#define	RK3399_GRF_USB20_PHY0_CON0_REG	0x0e450
+#define	RK3399_GRF_USB20_PHY1_CON0_REG	0x0e460
+#define	 RK3399_USBPHY_COMMONONN	__BIT(4)
+#define	RK3399_GRF_USB20_PHY0_CON1_REG	0x0e454
+#define	RK3399_GRF_USB20_PHY1_CON1_REG	0x0e464
+#define	RK3399_GRF_USB20_PHY0_CON2_REG	0x0e458
+#define	RK3399_GRF_USB20_PHY1_CON2_REG	0x0e468
+#define	 RK3399_USBPHY_SUSPEND_N	__BIT(1)
+#define	 RK3399_USBPHY_UTMI_SEL		__BIT(0)
+
+#define	RK3399_PHY_NO(_sc)	((_sc)->sc_reg == 0xe450 ? 0 : 1)
 
 enum rk_usb_type {
 	USB_RK3328 = 1,
+	USB_RK3399,
 };
 
 static const struct of_compat_data compat_data[] = {
 	{ "rockchip,rk3328-usb2phy",		USB_RK3328 },
+	{ "rockchip,rk3399-usb2phy",		USB_RK3399 },
 	{ NULL }
 };
 
 struct rk_usb_clk {
 	struct clk		base;
-	bus_size_t		reg;
 };
 
 struct rk_usb_softc {
 	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
+	struct syscon		*sc_syscon;
 	enum rk_usb_type	sc_type;
 
 	struct clk_domain	sc_clkdom;
 	struct rk_usb_clk	sc_usbclk;
-};
 
-#define USB_READ(sc, reg)			\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define USB_WRITE(sc, reg, val)			\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+	bus_addr_t		sc_reg;
+};
 
 CFATTACH_DECL_NEW(rk_usb, sizeof(struct rk_usb_softc),
 	rk_usb_match, rk_usb_attach, NULL, NULL);
@@ -108,10 +118,28 @@ static int
 rk_usb_clk_enable(void *priv, struct clk *clk)
 {
 	struct rk_usb_softc * const sc = priv;
+	uint32_t reg, write_mask, write_val;
 
-	const uint32_t write_mask = USBPHY_COMMONONN << 16;
-	const uint32_t write_val = 0;
-	USB_WRITE(sc, CON2_REG, write_mask | write_val);
+	switch (sc->sc_type) {
+	case USB_RK3328:
+		reg = RK3328_CON2_REG;
+		write_mask = RK3328_USBPHY_COMMONONN << 16;
+		write_val = 0;
+		break;
+	case USB_RK3399:
+		reg = RK3399_PHY_NO(sc) == 0 ?
+		    RK3399_GRF_USB20_PHY0_CON0_REG :
+		    RK3399_GRF_USB20_PHY1_CON0_REG;
+		write_mask = RK3399_USBPHY_COMMONONN << 16;
+		write_val = 0;
+		break;
+	default:
+		return ENXIO;
+	}
+
+	syscon_lock(sc->sc_syscon);
+	syscon_write_4(sc->sc_syscon, reg, write_mask | write_val);
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -120,10 +148,28 @@ static int
 rk_usb_clk_disable(void *priv, struct clk *clk)
 {
 	struct rk_usb_softc * const sc = priv;
+	uint32_t reg, write_mask, write_val;
 
-	const uint32_t write_mask = USBPHY_COMMONONN << 16;
-	const uint32_t write_val = USBPHY_COMMONONN;
-	USB_WRITE(sc, CON2_REG, write_mask | write_val);
+	switch (sc->sc_type) {
+	case USB_RK3328:
+		reg = RK3328_CON2_REG;
+		write_mask = RK3328_USBPHY_COMMONONN << 16;
+		write_val = RK3328_USBPHY_COMMONONN;
+		break;
+	case USB_RK3399:
+		reg = RK3399_PHY_NO(sc) == 0 ?
+		    RK3399_GRF_USB20_PHY0_CON0_REG :
+		    RK3399_GRF_USB20_PHY1_CON0_REG;
+		write_mask = RK3399_USBPHY_COMMONONN << 16;
+		write_val = RK3399_USBPHY_COMMONONN;
+		break;
+	default:
+		return ENXIO;
+	}
+
+	syscon_lock(sc->sc_syscon);
+	syscon_write_4(sc->sc_syscon, reg, write_mask | write_val);
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -137,7 +183,7 @@ static const struct clk_funcs rk_usb_clk_funcs = {
 };
 
 static struct clk *
-rk_usb_fdt_decode(device_t dev, const void *data, size_t len)
+rk_usb_fdt_decode(device_t dev, int cc_phandle, const void *data, size_t len)
 {
 	struct rk_usb_softc * const sc = device_private(dev);
 
@@ -165,23 +211,26 @@ rk_usb_attach(device_t parent, device_t self, void *aux)
 	struct rk_usb_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	bus_addr_t grf_addr, phy_addr, phy_size;
+	struct clk *clk;
 	int child;
 
-	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
-	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	/* Cache the base address of this PHY so we know which instance we are */
+	if (fdtbus_get_reg(phandle, 0, &sc->sc_reg, NULL) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
-	if (fdtbus_get_reg(OF_parent(phandle), 0, &grf_addr, NULL) != 0) {
-		aprint_error(": couldn't get grf registers\n");
+	clk = fdtbus_clock_get(phandle, "phyclk");
+	if (clk && clk_enable(clk) != 0) {
+		aprint_error(": couldn't enable phy clock\n");
 		return;
 	}
-	if (fdtbus_get_reg(phandle, 0, &phy_addr, &phy_size) != 0) {
-		aprint_error(": couldn't get phy registers\n");
-		return;
-	}
-	if (bus_space_map(sc->sc_bst, grf_addr + phy_addr, phy_size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map phy registers\n");
+
+	sc->sc_dev = self;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(phandle));
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get grf syscon\n");
 		return;
 	}
 
@@ -224,6 +273,7 @@ static void rk_usbphy_attach(device_t, device_t, void *);
 struct rk_usbphy_softc {
 	device_t	sc_dev;
 	int		sc_phandle;
+	struct fdtbus_regulator *sc_supply;
 };
 
 CFATTACH_DECL_NEW(rk_usbphy, sizeof(struct rk_usbphy_softc),
@@ -248,11 +298,38 @@ rk_usbphy_release(device_t dev, void *priv)
 static int
 rk_usbphy_otg_enable(device_t dev, void *priv, bool enable)
 {
+	struct rk_usbphy_softc * const sc = device_private(dev);
 	struct rk_usb_softc * const usb_sc = device_private(device_parent(dev));
+	uint32_t reg, write_mask, write_val;
+	int error;
 
-	const uint32_t write_mask = 0x1ffU << 16;
-	const uint32_t write_val = enable ? 0 : 0x1d1;
-	USB_WRITE(usb_sc, CON0_REG, write_mask | write_val);
+	switch (usb_sc->sc_type) {
+	case USB_RK3328:
+		reg = RK3328_CON0_REG;
+		write_mask = 0x1ffU << 16;
+		write_val = enable ? 0 : 0x1d1;
+		break;
+	case USB_RK3399:
+		reg = RK3399_PHY_NO(usb_sc) == 0 ?
+		    RK3399_GRF_USB20_PHY0_CON1_REG :
+		    RK3399_GRF_USB20_PHY1_CON1_REG;
+		write_mask = (RK3399_USBPHY_SUSPEND_N|RK3399_USBPHY_UTMI_SEL) << 16;
+		write_val = enable ? 0 : RK3399_USBPHY_UTMI_SEL;
+		break;
+	default:
+		return ENXIO;
+	}
+
+	if (sc->sc_supply) {
+		error = enable ? fdtbus_regulator_enable(sc->sc_supply) :
+				 fdtbus_regulator_disable(sc->sc_supply);
+		if (error != 0)
+			return error;
+	}
+
+	syscon_lock(usb_sc->sc_syscon);
+	syscon_write_4(usb_sc->sc_syscon, reg, write_mask | write_val);
+	syscon_unlock(usb_sc->sc_syscon);
 
 	return 0;
 }
@@ -260,11 +337,38 @@ rk_usbphy_otg_enable(device_t dev, void *priv, bool enable)
 static int
 rk_usbphy_host_enable(device_t dev, void *priv, bool enable)
 {
+	struct rk_usbphy_softc * const sc = device_private(dev);
 	struct rk_usb_softc * const usb_sc = device_private(device_parent(dev));
+	uint32_t reg, write_mask, write_val;
+	int error;
 
-	const uint32_t write_mask = 0x1ffU << 16;
-	const uint32_t write_val = enable ? 0 : 0x1d1;
-	USB_WRITE(usb_sc, CON1_REG, write_mask | write_val);
+	switch (usb_sc->sc_type) {
+	case USB_RK3328:
+		reg = RK3328_CON1_REG;
+		write_mask = 0x1ffU << 16;
+		write_val = enable ? 0 : 0x1d1;
+		break;
+	case USB_RK3399:
+		reg = RK3399_PHY_NO(usb_sc) == 0 ?
+		    RK3399_GRF_USB20_PHY0_CON2_REG :
+		    RK3399_GRF_USB20_PHY1_CON2_REG;
+		write_mask = (RK3399_USBPHY_SUSPEND_N|RK3399_USBPHY_UTMI_SEL) << 16;
+		write_val = enable ? 0 : RK3399_USBPHY_UTMI_SEL;
+		break;
+	default:
+		return ENXIO;
+	}
+
+	if (sc->sc_supply) {
+		error = enable ? fdtbus_regulator_enable(sc->sc_supply) :
+				 fdtbus_regulator_disable(sc->sc_supply);
+		if (error != 0)
+			return error;
+	}
+
+	syscon_lock(usb_sc->sc_syscon);
+	syscon_write_4(usb_sc->sc_syscon, reg, write_mask | write_val);
+	syscon_unlock(usb_sc->sc_syscon);
 
 	return 0;
 }
@@ -304,6 +408,13 @@ rk_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
+	if (of_hasprop(phandle, "phy-supply")) {
+		sc->sc_supply = fdtbus_regulator_acquire(phandle, "phy-supply");
+		if (sc->sc_supply == NULL) {
+			aprint_error(": couldn't acquire regulator\n");
+			return;
+		}
+	}
 
 	aprint_naive("\n");
 

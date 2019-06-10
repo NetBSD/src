@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2016 Free Software Foundation, Inc.
+# Copyright 2004-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 # test.
 
 if [target_info exists gdb,cannot_call_functions] {
-    unsupported "This target can not call functions"
+    unsupported "this target can not call functions"
     continue
 }
 
@@ -35,6 +35,7 @@ standard_testfile .c
 if [get_compiler_info] {
     return -1
 }
+set skip_float_test [gdb_skip_float_test]
 
 # Compile a variant of scalars.c using TYPE to specify the type of the
 # parameter and return-type.  Run the compiled program up to "main".
@@ -58,7 +59,7 @@ proc start_scalars_test { type } {
 	# built the second test case since we can't use prototypes
 	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
 	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags} additional_flags=-DNO_PROTOTYPES"] != "" } {
-	    untested call-sc.exp
+	    untested "failed to compile"
 	    return -1
 	}
     }
@@ -427,7 +428,7 @@ start_scalars_test tll
 test_scalar_calls
 test_scalar_returns
 
-if ![target_info exists gdb,skip_float_tests] {
+if {!$skip_float_test} {
     # Approx size: 4, 8, ...
     start_scalars_test tf
     test_scalar_calls

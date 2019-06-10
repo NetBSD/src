@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.54 2018/06/26 06:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.54.2.1 2019/06/10 22:06:28 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.54 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.54.2.1 2019/06/10 22:06:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -114,12 +114,12 @@ void bmac_watchdog(struct ifnet *);
 int bmac_ioctl(struct ifnet *, u_long, void *);
 void bmac_setladrf(struct bmac_softc *);
 
-int bmac_mii_readreg(device_t, int, int);
-void bmac_mii_writereg(device_t, int, int, int);
+int bmac_mii_readreg(device_t, int, int, uint16_t *);
+int bmac_mii_writereg(device_t, int, int, uint16_t);
 void bmac_mii_statchg(struct ifnet *);
 void bmac_mii_tick(void *);
-u_int32_t bmac_mbo_read(device_t);
-void bmac_mbo_write(device_t, u_int32_t);
+uint32_t bmac_mbo_read(device_t);
+void bmac_mbo_write(device_t, uint32_t);
 
 CFATTACH_DECL_NEW(bm, sizeof(struct bmac_softc),
     bmac_match, bmac_attach, NULL, NULL);
@@ -236,8 +236,7 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = bmac_ioctl;
 	ifp->if_start = bmac_start;
-	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = bmac_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -252,10 +251,10 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_10_T);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_10_T);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	bmac_reset_chip(sc);
 
@@ -298,13 +297,14 @@ bmac_init(struct bmac_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	void *data;
-	int i, tb, bmcr;
+	int i, tb;
+	uint16_t bmcr;
 	u_short *p;
 
 	bmac_reset_chip(sc);
 
 	/* XXX */
-	bmcr = bmac_mii_readreg(sc->sc_dev, 0, MII_BMCR);
+	bmac_mii_readreg(sc->sc_dev, 0, MII_BMCR, &bmcr);
 	bmcr &= ~BMCR_ISO;
 	bmac_mii_writereg(sc->sc_dev, 0, MII_BMCR, bmcr);
 
@@ -321,7 +321,7 @@ bmac_init(struct bmac_softc *sc)
 		printf("%s: reset timeout\n", ifp->if_xname);
 
 	if (! (sc->sc_flags & BMAC_BMACPLUS))
-		bmac_set_bits(sc, XCVRIF, ClkBit|SerialMode|COLActiveLow);
+		bmac_set_bits(sc, XCVRIF, ClkBit | SerialMode | COLActiveLow);
 
 	if ((mfpvr() >> 16) == MPC601)
 		tb = mfrtcl();
@@ -665,7 +665,7 @@ bmac_get(struct bmac_softc *sc, void *pkt, int totlen)
 			}
 			len = MCLBYTES;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), pkt, len);
 		pkt = (char *)pkt + len;
 		totlen -= len;
@@ -749,10 +749,7 @@ bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 #endif
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -764,9 +761,6 @@ bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			}
 			error = 0;
 		}
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
@@ -780,11 +774,12 @@ bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 void
 bmac_setladrf(struct bmac_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t crc;
-	u_int16_t hash[4];
+	uint32_t crc;
+	uint16_t hash[4];
 	int x;
 
 	/*
@@ -807,7 +802,8 @@ bmac_setladrf(struct bmac_softc *sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -820,6 +816,7 @@ bmac_setladrf(struct bmac_softc *sc)
 			 */
 			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -833,6 +830,7 @@ bmac_setladrf(struct bmac_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -848,18 +846,18 @@ chipit:
 }
 
 int
-bmac_mii_readreg(device_t self, int phy, int reg)
+bmac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
-	return mii_bitbang_readreg(self, &bmac_mbo, phy, reg);
+	return mii_bitbang_readreg(self, &bmac_mbo, phy, reg, val);
 }
 
-void
-bmac_mii_writereg(device_t self, int phy, int reg, int val)
+int
+bmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
-	mii_bitbang_writereg(self, &bmac_mbo, phy, reg, val);
+	return mii_bitbang_writereg(self, &bmac_mbo, phy, reg, val);
 }
 
-u_int32_t
+uint32_t
 bmac_mbo_read(device_t self)
 {
 	struct bmac_softc *sc = device_private(self);
@@ -868,7 +866,7 @@ bmac_mbo_read(device_t self)
 }
 
 void
-bmac_mbo_write(device_t self, u_int32_t val)
+bmac_mbo_write(device_t self, uint32_t val)
 {
 	struct bmac_softc *sc = device_private(self);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.9 2016/02/24 22:17:54 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.9.18.1 2019/06/10 22:08:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -107,10 +107,6 @@ extern int dwc2debug;
 
 #define jiffies			hardclock_ticks
 #define msecs_to_jiffies	mstohz
-
-#define gfp_t		int
-#define GFP_KERNEL	 KM_SLEEP
-#define GFP_ATOMIC	 KM_NOSLEEP
 
 enum usb_otg_state {
 	OTG_STATE_RESERVED = 0,

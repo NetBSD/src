@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -227,7 +227,7 @@ ihex_bad_byte (bfd *abfd, unsigned int lineno, int c, bfd_boolean error)
 	}
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B:%d: unexpected character `%s' in Intel Hex file"),
+	(_("%pB:%d: unexpected character `%s' in Intel Hex file"),
 	 abfd, lineno, buf);
       bfd_set_error (bfd_error_bad_value);
     }
@@ -335,7 +335,7 @@ ihex_scan (bfd *abfd)
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B:%u: bad checksum in Intel Hex file (expected %u, found %u)"),
+		(_("%pB:%u: bad checksum in Intel Hex file (expected %u, found %u)"),
 		 abfd, lineno,
 		 (- chksum) & 0xff, (unsigned int) HEX2 (buf + 2 * i));
 	      bfd_set_error (bfd_error_bad_value);
@@ -350,7 +350,7 @@ ihex_scan (bfd *abfd)
 		  && sec->vma + sec->size == extbase + segbase + addr)
 		{
 		  /* This data goes at the end of the section we are
-                     currently building.  */
+		     currently building.  */
 		  sec->size += len;
 		}
 	      else if (len > 0)
@@ -391,7 +391,7 @@ ihex_scan (bfd *abfd)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B:%u: bad extended address record length in Intel Hex file"),
+		    (_("%pB:%u: bad extended address record length in Intel Hex file"),
 		     abfd, lineno);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
@@ -409,7 +409,7 @@ ihex_scan (bfd *abfd)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B:%u: bad extended start address length in Intel Hex file"),
+		    (_("%pB:%u: bad extended start address length in Intel Hex file"),
 		     abfd, lineno);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
@@ -427,7 +427,7 @@ ihex_scan (bfd *abfd)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B:%u: bad extended linear address record length in Intel Hex file"),
+		    (_("%pB:%u: bad extended linear address record length in Intel Hex file"),
 		     abfd, lineno);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
@@ -445,7 +445,7 @@ ihex_scan (bfd *abfd)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B:%u: bad extended linear start address length in Intel Hex file"),
+		    (_("%pB:%u: bad extended linear start address length in Intel Hex file"),
 		     abfd, lineno);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
@@ -463,7 +463,7 @@ ihex_scan (bfd *abfd)
 	    default:
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B:%u: unrecognized ihex type %u in Intel Hex file"),
+		(_("%pB:%u: unrecognized ihex type %u in Intel Hex file"),
 		 abfd, lineno, type);
 	      bfd_set_error (bfd_error_bad_value);
 	      goto error_return;
@@ -569,7 +569,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	continue;
 
       /* This is called after ihex_scan has succeeded, so we ought to
-         know the exact format.  */
+	 know the exact format.  */
       BFD_ASSERT (c == ':');
 
       if (bfd_bread (hdr, (bfd_size_type) 8, abfd) != 8)
@@ -582,7 +582,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
       if (type != 0)
 	{
 	  _bfd_error_handler
-	    (_("%B: internal error in ihex_read_section"), abfd);
+	    (_("%pB: internal error in ihex_read_section"), abfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
 	}
@@ -616,7 +616,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
   if ((bfd_size_type) (p - contents) < section->size)
     {
       _bfd_error_handler
-	(_("%B: bad section length in ihex_read_section"), abfd);
+	(_("%pB: bad section length in ihex_read_section"), abfd);
       bfd_set_error (bfd_error_bad_value);
       goto error_return;
     }
@@ -647,7 +647,7 @@ ihex_get_section_contents (bfd *abfd,
       if (section->used_by_bfd == NULL)
 	return FALSE;
       if (! ihex_read_section (abfd, section,
-                               (bfd_byte *) section->used_by_bfd))
+			       (bfd_byte *) section->used_by_bfd))
 	return FALSE;
     }
 
@@ -777,6 +777,28 @@ ihex_write_object_contents (bfd *abfd)
       bfd_size_type count;
 
       where = l->where;
+
+#ifdef BFD64
+      /* IHex only supports 32-bit addresses, and we want to check
+	 that 64-bit addresses are in range.  This isn't quite as
+	 obvious as it may seem, since some targets have 32-bit
+	 addresses that are sign extended to 64 bits.  So complain
+	 only if addresses overflow both unsigned and signed 32-bit
+	 integers.  */
+      if (where > 0xffffffff
+	  && where + 0x80000000 > 0xffffffff)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB 64-bit address %#" PRIx64
+	       " out of range for Intel Hex file"),
+	     abfd, (uint64_t) where);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
+	}
+      where &= 0xffffffff;
+#endif
+
       p = l->data;
       count = l->size;
 
@@ -808,11 +830,11 @@ ihex_write_object_contents (bfd *abfd)
 	      else
 		{
 		  /* The extended address record and the extended
-                     linear address record are combined, at least by
-                     some readers.  We need an extended linear address
-                     record here, so if we've already written out an
-                     extended address record, zero it out to avoid
-                     confusion.  */
+		     linear address record are combined, at least by
+		     some readers.  We need an extended linear address
+		     record here, so if we've already written out an
+		     extended address record, zero it out to avoid
+		     confusion.  */
 		  if (segbase != 0)
 		    {
 		      addr[0] = 0;
@@ -825,13 +847,11 @@ ihex_write_object_contents (bfd *abfd)
 		  extbase = where & 0xffff0000;
 		  if (where > extbase + 0xffff)
 		    {
-		      char buf[20];
-
-		      sprintf_vma (buf, where);
 		      _bfd_error_handler
 			/* xgettext:c-format */
-			(_("%B: address 0x%s out of range for Intel Hex file"),
-			 abfd, buf);
+			(_("%pB: address %#" PRIx64
+			   " out of range for Intel Hex file"),
+			 abfd, (uint64_t) where);
 		      bfd_set_error (bfd_error_bad_value);
 		      return FALSE;
 		    }
@@ -844,9 +864,9 @@ ihex_write_object_contents (bfd *abfd)
 
 	  rec_addr = where - (extbase + segbase);
 
-          /* Output records shouldn't cross 64K boundaries.  */
-          if (rec_addr + now > 0xffff)
-            now = 0x10000 - rec_addr;
+	  /* Output records shouldn't cross 64K boundaries.  */
+	  if (rec_addr + now > 0xffff)
+	    now = 0x10000 - rec_addr;
 
 	  if (! ihex_write_record (abfd, now, rec_addr, 0, p))
 	    return FALSE;
@@ -917,41 +937,43 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Some random definitions for the target vector.  */
 
-#define	ihex_close_and_cleanup                    _bfd_generic_close_and_cleanup
-#define ihex_bfd_free_cached_info                 _bfd_generic_bfd_free_cached_info
-#define ihex_new_section_hook                     _bfd_generic_new_section_hook
-#define ihex_get_section_contents_in_window       _bfd_generic_get_section_contents_in_window
-#define ihex_get_symtab_upper_bound               bfd_0l
-#define ihex_canonicalize_symtab                  ((long (*) (bfd *, asymbol **)) bfd_0l)
-#define ihex_make_empty_symbol                    _bfd_generic_make_empty_symbol
-#define ihex_print_symbol                         _bfd_nosymbols_print_symbol
-#define ihex_get_symbol_info                      _bfd_nosymbols_get_symbol_info
+#define	ihex_close_and_cleanup			  _bfd_generic_close_and_cleanup
+#define ihex_bfd_free_cached_info		  _bfd_generic_bfd_free_cached_info
+#define ihex_new_section_hook			  _bfd_generic_new_section_hook
+#define ihex_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
+#define ihex_get_symtab_upper_bound		  _bfd_long_bfd_0
+#define ihex_canonicalize_symtab		  _bfd_nosymbols_canonicalize_symtab
+#define ihex_make_empty_symbol			  _bfd_generic_make_empty_symbol
+#define ihex_print_symbol			  _bfd_nosymbols_print_symbol
+#define ihex_get_symbol_info			  _bfd_nosymbols_get_symbol_info
 #define ihex_get_symbol_version_string		  _bfd_nosymbols_get_symbol_version_string
-#define ihex_bfd_is_target_special_symbol         ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define ihex_bfd_is_local_label_name              _bfd_nosymbols_bfd_is_local_label_name
-#define ihex_get_lineno                           _bfd_nosymbols_get_lineno
-#define ihex_find_nearest_line                    _bfd_nosymbols_find_nearest_line
-#define ihex_find_line                            _bfd_nosymbols_find_line
-#define ihex_find_inliner_info                    _bfd_nosymbols_find_inliner_info
-#define ihex_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
-#define ihex_read_minisymbols                     _bfd_nosymbols_read_minisymbols
-#define ihex_minisymbol_to_symbol                 _bfd_nosymbols_minisymbol_to_symbol
-#define ihex_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define ihex_bfd_relax_section                    bfd_generic_relax_section
-#define ihex_bfd_gc_sections                      bfd_generic_gc_sections
-#define ihex_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
-#define ihex_bfd_merge_sections                   bfd_generic_merge_sections
-#define ihex_bfd_is_group_section                 bfd_generic_is_group_section
-#define ihex_bfd_discard_group                    bfd_generic_discard_group
-#define ihex_section_already_linked               _bfd_generic_section_already_linked
-#define ihex_bfd_define_common_symbol             bfd_generic_define_common_symbol
-#define ihex_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define ihex_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
-#define ihex_bfd_link_just_syms                   _bfd_generic_link_just_syms
-#define ihex_bfd_copy_link_hash_symbol_type       _bfd_generic_copy_link_hash_symbol_type
-#define ihex_bfd_final_link                       _bfd_generic_final_link
-#define ihex_bfd_link_split_section               _bfd_generic_link_split_section
-#define ihex_bfd_link_check_relocs                _bfd_generic_link_check_relocs
+#define ihex_bfd_is_target_special_symbol	  _bfd_bool_bfd_asymbol_false
+#define ihex_bfd_is_local_label_name		  _bfd_nosymbols_bfd_is_local_label_name
+#define ihex_get_lineno				  _bfd_nosymbols_get_lineno
+#define ihex_find_nearest_line			  _bfd_nosymbols_find_nearest_line
+#define ihex_find_line				  _bfd_nosymbols_find_line
+#define ihex_find_inliner_info			  _bfd_nosymbols_find_inliner_info
+#define ihex_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol
+#define ihex_read_minisymbols			  _bfd_nosymbols_read_minisymbols
+#define ihex_minisymbol_to_symbol		  _bfd_nosymbols_minisymbol_to_symbol
+#define ihex_bfd_get_relocated_section_contents	  bfd_generic_get_relocated_section_contents
+#define ihex_bfd_relax_section			  bfd_generic_relax_section
+#define ihex_bfd_gc_sections			  bfd_generic_gc_sections
+#define ihex_bfd_lookup_section_flags		  bfd_generic_lookup_section_flags
+#define ihex_bfd_merge_sections			  bfd_generic_merge_sections
+#define ihex_bfd_is_group_section		  bfd_generic_is_group_section
+#define ihex_bfd_discard_group			  bfd_generic_discard_group
+#define ihex_section_already_linked		  _bfd_generic_section_already_linked
+#define ihex_bfd_define_common_symbol		  bfd_generic_define_common_symbol
+#define ihex_bfd_link_hide_symbol		  _bfd_generic_link_hide_symbol
+#define ihex_bfd_define_start_stop		  bfd_generic_define_start_stop
+#define ihex_bfd_link_hash_table_create		  _bfd_generic_link_hash_table_create
+#define ihex_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
+#define ihex_bfd_link_just_syms			  _bfd_generic_link_just_syms
+#define ihex_bfd_copy_link_hash_symbol_type	  _bfd_generic_copy_link_hash_symbol_type
+#define ihex_bfd_final_link			  _bfd_generic_final_link
+#define ihex_bfd_link_split_section		  _bfd_generic_link_split_section
+#define ihex_bfd_link_check_relocs		  _bfd_generic_link_check_relocs
 
 /* The Intel Hex target vector.  */
 
@@ -981,16 +1003,16 @@ const bfd_target ihex_vec =
     _bfd_dummy_target,
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     ihex_mkobject,
     _bfd_generic_mkarchive,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     ihex_write_object_contents,
     _bfd_write_archive_contents,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (ihex),

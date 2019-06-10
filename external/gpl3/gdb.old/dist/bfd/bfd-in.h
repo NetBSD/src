@@ -1,6 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -34,6 +34,7 @@ extern "C" {
 
 #include "ansidecl.h"
 #include "symcat.h"
+#include <stdarg.h>
 #include <sys/stat.h>
 
 #if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
@@ -485,20 +486,20 @@ extern int bfd_stat (bfd *, struct stat *);
 /* Deprecated old routines.  */
 #if __GNUC__
 #define bfd_read(BUF, ELTSIZE, NITEMS, ABFD)				\
-  (warn_deprecated ("bfd_read", __FILE__, __LINE__, __FUNCTION__),	\
+  (_bfd_warn_deprecated ("bfd_read", __FILE__, __LINE__, __FUNCTION__),	\
    bfd_bread ((BUF), (ELTSIZE) * (NITEMS), (ABFD)))
 #define bfd_write(BUF, ELTSIZE, NITEMS, ABFD)				\
-  (warn_deprecated ("bfd_write", __FILE__, __LINE__, __FUNCTION__),	\
+  (_bfd_warn_deprecated ("bfd_write", __FILE__, __LINE__, __FUNCTION__),	\
    bfd_bwrite ((BUF), (ELTSIZE) * (NITEMS), (ABFD)))
 #else
 #define bfd_read(BUF, ELTSIZE, NITEMS, ABFD)				\
-  (warn_deprecated ("bfd_read", (const char *) 0, 0, (const char *) 0), \
+  (_bfd_warn_deprecated ("bfd_read", (const char *) 0, 0, (const char *) 0), \
    bfd_bread ((BUF), (ELTSIZE) * (NITEMS), (ABFD)))
 #define bfd_write(BUF, ELTSIZE, NITEMS, ABFD)				\
-  (warn_deprecated ("bfd_write", (const char *) 0, 0, (const char *) 0),\
+  (_bfd_warn_deprecated ("bfd_write", (const char *) 0, 0, (const char *) 0),\
    bfd_bwrite ((BUF), (ELTSIZE) * (NITEMS), (ABFD)))
 #endif
-extern void warn_deprecated (const char *, const char *, int, const char *);
+extern void _bfd_warn_deprecated (const char *, const char *, int, const char *);
 
 /* Cast from const char * to char * so that caller can assign to
    a char * without a warning.  */
@@ -900,9 +901,27 @@ extern bfd_boolean bfd_elf32_arm_allocate_interworking_sections
 extern bfd_boolean bfd_elf32_arm_process_before_allocation
   (bfd *, struct bfd_link_info *);
 
-void bfd_elf32_arm_set_target_relocs
-  (bfd *, struct bfd_link_info *, int, char *, int, int, bfd_arm_vfp11_fix,
-   bfd_arm_stm32l4xx_fix, int, int, int, int, int);
+struct elf32_arm_params {
+  char *thumb_entry_symbol;
+  int byteswap_code;
+  int target1_is_rel;
+  char * target2_type;
+  int fix_v4bx;
+  int use_blx;
+  bfd_arm_vfp11_fix vfp11_denorm_fix;
+  bfd_arm_stm32l4xx_fix stm32l4xx_fix;
+  int no_enum_size_warning;
+  int no_wchar_size_warning;
+  int pic_veneer;
+  int fix_cortex_a8;
+  int fix_arm1176;
+  int merge_exidx_entries;
+  int cmse_implib;
+  bfd *in_implib_bfd;
+};
+
+void bfd_elf32_arm_set_target_params
+  (bfd *, struct bfd_link_info *, struct elf32_arm_params *);
 
 extern bfd_boolean bfd_elf32_arm_get_bfd_for_interworking
   (bfd *, struct bfd_link_info *);
@@ -1026,3 +1045,7 @@ extern bfd_boolean v850_elf_create_sections
 
 extern bfd_boolean v850_elf_set_note
   (bfd *, unsigned int, unsigned int);
+
+/* MIPS ABI flags data access.  For the disassembler.  */
+struct elf_internal_abiflags_v0;
+extern struct elf_internal_abiflags_v0 *bfd_mips_elf_get_abiflags (bfd *);

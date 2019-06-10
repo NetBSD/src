@@ -1,5 +1,5 @@
 /* Include file for stabs debugging format support functions.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,7 +40,7 @@ struct objfile;
 
 EXTERN struct symbol *global_sym_chain[HASHSIZE];
 
-extern void common_block_start (char *, struct objfile *);
+extern void common_block_start (const char *, struct objfile *);
 extern void common_block_end (struct objfile *);
 
 /* Kludge for xcoffread.c */
@@ -132,7 +132,7 @@ extern void cleanup_undefined_stabs_types (struct objfile *);
 
 extern long read_number (char **, int);
 
-extern struct symbol *define_symbol (CORE_ADDR, char *, int, int,
+extern struct symbol *define_symbol (CORE_ADDR, const char *, int, int,
 				     struct objfile *);
 
 extern void stabsread_init (void);
@@ -167,7 +167,7 @@ extern struct partial_symtab *dbx_end_psymtab
    struct partial_symtab **dependency_list, int number_dependencies,
    int textlow_not_set);
 
-extern void process_one_symbol (int, int, CORE_ADDR, char *,
+extern void process_one_symbol (int, int, CORE_ADDR, const char *,
 				const struct section_offsets *,
 				struct objfile *);
 
@@ -185,9 +185,9 @@ extern void coffstab_build_psymtabs
 extern void stabsect_build_psymtabs (struct objfile *objfile, char *stab_name,
 				     char *stabstr_name, char *text_name);
 
-extern int symbol_reference_defined (char **);
+extern int symbol_reference_defined (const char **);
 
-extern void ref_add (int, struct symbol *, char *, CORE_ADDR);
+extern void ref_add (int, struct symbol *, const char *, CORE_ADDR);
 
 extern struct symbol *ref_search (int);
 

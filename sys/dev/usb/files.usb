@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.150 2018/03/05 09:35:01 ws Exp $
+#	$NetBSD: files.usb,v 1.150.4.1 2019/06/10 22:07:33 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -119,7 +119,7 @@ define	ezload
 file	dev/usb/ezload.c		ezload
 
 # Audio devices
-device	uaudio: audiobus, auconv, mulaw, aurateconv
+device	uaudio: audiobus
 attach	uaudio at usbifif
 file	dev/usb/uaudio.c		uaudio
 
@@ -200,7 +200,7 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 device	umass: scsi, atapi, ata_hl
 attach	umass at usbifif
 file	dev/usb/umass.c			umass
-file	dev/usb/umass_isdata.c		umass & wd
+file	dev/usb/umass_isdata.c		umass & wd & atabus
 file	dev/usb/umass_quirks.c		umass
 file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 
@@ -369,6 +369,11 @@ device	axen: arp, ether, ifnet, mii
 attach	axen at usbdevif
 file	dev/usb/if_axen.c		axen
 
+# Microchip LAN750x and LAN85xx
+device	mue: arp, ether, ifnet, mii, mii_phy
+attach	mue at usbdevif
+file	dev/usb/if_mue.c		mue
+
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy
 attach	udav at usbdevif
@@ -378,6 +383,16 @@ file	dev/usb/if_udav.c		udav
 device	otus: arp, ether, firmload, ifnet, wlan
 attach	otus at usbdevif
 file	dev/usb/if_otus.c		otus
+
+# Mobile Broadband Interface Model
+device	umb: ifnet
+attach	umb at usbifif
+file	dev/usb/if_umb.c		umb
+
+# RealTek RTL8152 and RTL8153
+device	ure: arp, ether, ifnet, mii, mii_phy
+attach	ure at usbdevif
+file	dev/usb/if_ure.c		ure
 
 # Serial drivers
 # Modems
@@ -403,11 +418,6 @@ attach	umct at usbdevif
 file	dev/usb/umct.c			umct
 
 # MOSCHIP MCS7xxx serial driver
-device	moscom: ucombus
-attach	moscom at usbdevif
-file	dev/usb/moscom.c		moscom
-
-# andother driver for the same chip
 device	umcs: ucombus
 attach	umcs at usbdevif
 file	dev/usb/umcs.c			umcs

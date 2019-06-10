@@ -34,7 +34,10 @@
 #    SUCH DAMAGE.
 #
 
-SRCDIR = .
+VERSION = 3.0.8
+
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+SRCDIR = $(dir $(MKFILE_PATH))
 
 VPATH = $(SRCDIR)
 
@@ -69,18 +72,25 @@ mkvars:
 	@echo prefix=$(prefix)
 	@echo PREFIX=$(PREFIX)
 	@echo RANLIB=$(RANLIB)
+	@echo SRCDIR=$(SRCDIR)
 	@echo TOPDIR=$(TOPDIR)
 
 $(SUBDIRS):
-	mkdir -p $@
-	$(MAKE) -C $@ -f $(SRCDIR)/../$@/Makefile SRCDIR=$(SRCDIR)/../$@ ARCH=$(ARCH)
+	mkdir -p $(OBJDIR)/$@
+	$(MAKE) -C $(OBJDIR)/$@ -f $(SRCDIR)/$@/Makefile SRCDIR=$(SRCDIR)/$@ ARCH=$(ARCH)
 
 clean:
 	rm -f *~
-	@for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
+	@for d in $(SUBDIRS); do \
+		if [ -d $(OBJDIR)/$$d ]; then \
+			$(MAKE) -C $(OBJDIR)/$$d -f $(SRCDIR)/$$d/Makefile SRCDIR=$(SRCDIR)/$$d clean; \
+		fi; \
+	done
 
 install:
-	@for d in $(SUBDIRS); do $(MAKE) -C $$d install; done
+	@for d in $(SUBDIRS); do \
+		mkdir -p $(OBJDIR)/$$d; \
+		$(MAKE) -C $(OBJDIR)/$$d -f $(SRCDIR)/$$d/Makefile SRCDIR=$(SRCDIR)/$$d install; done
 
 .PHONY:	$(SUBDIRS) clean depend
 
@@ -94,3 +104,26 @@ ifeq ($(GCC_VERSION),2)
 endif
 
 include $(SRCDIR)/Make.rules
+
+test-archive:
+	@rm -rf /tmp/gnu-efi-$(VERSION) /tmp/gnu-efi-$(VERSION)-tmp
+	@mkdir -p /tmp/gnu-efi-$(VERSION)-tmp
+	@git archive --format=tar $(shell git branch | awk '/^*/ { print $$2 }') | ( cd /tmp/gnu-efi-$(VERSION)-tmp/ ; tar x )
+	@git diff | ( cd /tmp/gnu-efi-$(VERSION)-tmp/ ; patch -s -p1 -b -z .gitdiff )
+	@mv /tmp/gnu-efi-$(VERSION)-tmp/ /tmp/gnu-efi-$(VERSION)/
+	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/gnu-efi-$(VERSION).tar.bz2 gnu-efi-$(VERSION)
+	@rm -rf /tmp/gnu-efi-$(VERSION)
+	@echo "The archive is in gnu-efi-$(VERSION).tar.bz2"
+
+tag:
+	git tag $(VERSION) refs/heads/master
+
+archive: tag
+	@rm -rf /tmp/gnu-efi-$(VERSION) /tmp/gnu-efi-$(VERSION)-tmp
+	@mkdir -p /tmp/gnu-efi-$(VERSION)-tmp
+	@git archive --format=tar $(VERSION) | ( cd /tmp/gnu-efi-$(VERSION)-tmp/ ; tar x )
+	@mv /tmp/gnu-efi-$(VERSION)-tmp/ /tmp/gnu-efi-$(VERSION)/
+	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/gnu-efi-$(VERSION).tar.bz2 gnu-efi-$(VERSION)
+	@rm -rf /tmp/gnu-efi-$(VERSION)
+	@echo "The archive is in gnu-efi-$(VERSION).tar.bz2"
+

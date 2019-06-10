@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.47 2016/10/15 20:31:15 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.47.16.1 2019/06/10 22:07:31 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.47 2016/10/15 20:31:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.47.16.1 2019/06/10 22:07:31 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,7 +71,7 @@ static void rf_FreeASMList(RF_AccessStripeMap_t *asm_list);
  *
  * raidAddress - starting address in RAID address space
  * numBlocks   - number of blocks in RAID address space to access
- * buffer      - buffer to supply/recieve data
+ * buffer      - buffer to supply/receive data
  * remap       - 1 => remap address to spare space
  ***************************************************************************/
 
@@ -129,7 +129,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 		RF_ASSERT(asmList);
 		t_asm = asmList;
 		asmList = asmList->next;
-		memset((char *) t_asm, 0, sizeof(RF_AccessStripeMap_t));
+		memset(t_asm, 0, sizeof(*t_asm));
 		if (!asm_p)
 			asm_list = asm_p = t_asm;
 		else {
@@ -157,7 +157,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
+			memset(t_pda, 0, sizeof(*t_pda));
 			if (!pda_p)
 				asm_p->physInfo = pda_p = t_pda;
 			else {
@@ -200,7 +200,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
+			memset(t_pda, 0, sizeof(*t_pda));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
@@ -217,12 +217,12 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			RF_ASSERT(pdaList && pdaList->next);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
+			memset(t_pda, 0, sizeof(*t_pda));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
+			memset(t_pda, 0, sizeof(*t_pda));
 			pda_q = asm_p->qInfo = t_pda;
 			pda_q->type = RF_PDA_TYPE_Q;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
@@ -278,8 +278,8 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
 		asmap->numParityFailed = 0;
 		asmap->numQFailed = 0;
 		asmap->numFailedPDAs = 0;
-		memset((char *) asmap->failedPDAs, 0,
-		    RF_MAX_FAILED_PDA * sizeof(RF_PhysDiskAddr_t *));
+		memset(asmap->failedPDAs, 0,
+		    RF_MAX_FAILED_PDA * sizeof(*asmap->failedPDAs));
 		for (pda = asmap->physInfo; pda; pda = pda->next) {
 			if (RF_DEAD_DISK(disks[pda->col].status)) {
 				asmap->numDataFailed++;
@@ -376,12 +376,7 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 RF_AccessStripeMapHeader_t *
 rf_AllocAccessStripeMapHeader(void)
 {
-	RF_AccessStripeMapHeader_t *p;
-
-	p = pool_get(&rf_pools.asm_hdr, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_AccessStripeMapHeader_t));
-
-	return (p);
+	return pool_get(&rf_pools.asm_hdr, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -394,12 +389,7 @@ rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 RF_VoidFunctionPointerListElem_t *
 rf_AllocVFPListElem(void)
 {
-	RF_VoidFunctionPointerListElem_t *p;
-
-	p = pool_get(&rf_pools.vfple, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_VoidFunctionPointerListElem_t));
-
-	return (p);
+	return pool_get(&rf_pools.vfple, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -413,12 +403,7 @@ rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
 RF_VoidPointerListElem_t *
 rf_AllocVPListElem(void)
 {
-	RF_VoidPointerListElem_t *p;
-
-	p = pool_get(&rf_pools.vple, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_VoidPointerListElem_t));
-
-	return (p);
+	return pool_get(&rf_pools.vple, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -431,12 +416,7 @@ rf_FreeVPListElem(RF_VoidPointerListElem_t *p)
 RF_ASMHeaderListElem_t *
 rf_AllocASMHeaderListElem(void)
 {
-	RF_ASMHeaderListElem_t *p;
-
-	p = pool_get(&rf_pools.asmhle, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_ASMHeaderListElem_t));
-
-	return (p);
+	return pool_get(&rf_pools.asmhle, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -449,12 +429,7 @@ rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *p)
 RF_FailedStripe_t *
 rf_AllocFailedStripeStruct(void)
 {
-	RF_FailedStripe_t *p;
-
-	p = pool_get(&rf_pools.fss, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_FailedStripe_t));
-
-	return (p);
+	return pool_get(&rf_pools.fss, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -470,12 +445,7 @@ rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
 RF_PhysDiskAddr_t *
 rf_AllocPhysDiskAddr(void)
 {
-	RF_PhysDiskAddr_t *p;
-
-	p = pool_get(&rf_pools.pda, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_PhysDiskAddr_t));
-
-	return (p);
+	return pool_get(&rf_pools.pda, PR_WAITOK | PR_ZERO);
 }
 /* allocates a list of PDAs, locking the free list only once when we
  * have to call calloc, we do it one component at a time to simplify

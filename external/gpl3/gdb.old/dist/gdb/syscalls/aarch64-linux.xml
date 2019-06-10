@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2015-2016 Free Software Foundation, Inc.
+<!-- Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.24 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.24.42.1 2019/06/10 22:10:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.24 2011/08/31 13:32:39 joerg Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.24.42.1 2019/06/10 22:10:35 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: ninepuffs.c,v 1.24 2011/08/31 13:32:39 joerg Exp $");
 #include <unistd.h>
 
 #include "ninepuffs.h"
+#include "nineproto.h"
 
 #define DEFPORT_9P 564
 
@@ -57,7 +58,7 @@ __dead static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-s] [-o mntopts] [-p port] "
+	fprintf(stderr, "usage: %s [-su] [-o mntopts] [-p port] "
 	    "[user@]server[:path] mountpoint\n", getprogname());
 	exit(1);
 }
@@ -107,6 +108,7 @@ main(int argc, char *argv[])
 	unsigned short port;
 	int mntflags, pflags, ch;
 	int detach;
+	int protover = P9PROTO_VERSION;
 
 	setprogname(argv[0]);
 
@@ -117,7 +119,7 @@ main(int argc, char *argv[])
 	detach = 1;
 	port = DEFPORT_9P;
 
-	while ((ch = getopt(argc, argv, "o:p:s")) != -1) {
+	while ((ch = getopt(argc, argv, "o:p:su")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -130,6 +132,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			detach = 0;
+			break;
+		case 'u':
+			protover = P9PROTO_VERSION_U;
 			break;
 		default:
 			usage();
@@ -177,6 +182,7 @@ main(int argc, char *argv[])
 	memset(&p9p, 0, sizeof(p9p));
 	p9p.maxreq = P9P_DEFREQLEN;
 	p9p.nextfid = 1;
+	p9p.protover = protover;
 
 	/* user@ */
 	if ((p = strchr(argv[0], '@')) != NULL) {

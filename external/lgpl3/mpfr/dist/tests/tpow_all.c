@@ -1,6 +1,6 @@
 /* Test file for the various power functions
 
-Copyright 2008-2016 Free Software Foundation, Inc.
+Copyright 2008-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,8 +28,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Execute with at least an argument to report all the errors found by
    comparisons. */
-
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -89,10 +87,7 @@ cmpres (int spx, const void *px, const char *sy, mpfr_rnd_t rnd,
           if (MPFR_IS_PURE_FP (z2))
             return;
         }
-      else if (SAME_SIGN (inex1, inex2) &&
-               ((MPFR_IS_NAN (z1) && MPFR_IS_NAN (z2)) ||
-                ((MPFR_IS_NEG (z1) ^ MPFR_IS_NEG (z2)) == 0 &&
-                 mpfr_equal_p (z1, z2))))
+      else if (SAME_SIGN (inex1, inex2) && SAME_VAL (z1, z2))
         return;
     }
 
@@ -115,12 +110,12 @@ cmpres (int spx, const void *px, const char *sy, mpfr_rnd_t rnd,
   else
     {
       mpfr_out_str (stdout, 16, 0, z1, MPFR_RNDN);
-      printf (", inex = %d,\n         flags =", SIGN (inex1));
+      printf (", inex = %d,\n         flags =", VSIGN (inex1));
       flags_out (flags1);
     }
   printf ("Got      ");
   mpfr_out_str (stdout, 16, 0, z2, MPFR_RNDN);
-  printf (", inex = %d,\n         flags =", SIGN (inex2));
+  printf (", inex = %d,\n         flags =", VSIGN (inex2));
   flags_out (flags2);
   if (all_cmpres_errors != 0)
     all_cmpres_errors = -1;
@@ -272,7 +267,6 @@ test_others (const void *sx, const char *sy, mpfr_rnd_t rnd,
               s, "mpfr_sqrt, flags set");
     }
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,4,0)
   /* If y = -0.5, we can test mpfr_rec_sqrt, except if x = -Inf
      (because the rule for mpfr_pow on -Inf is different). */
   if (MPFR_IS_PURE_FP (y) && mpfr_cmp_str1 (y, "-0.5") == 0 &&
@@ -287,7 +281,6 @@ test_others (const void *sx, const char *sy, mpfr_rnd_t rnd,
       cmpres (spx, sx, sy, rnd, z1, inex1, z2, inex2, MPFR_FLAGS_ALL,
               s, "mpfr_rec_sqrt, flags set");
     }
-#endif
 
   /* If x is an integer that fits in an unsigned long and is not -0,
      we can test mpfr_ui_pow. */
@@ -363,7 +356,7 @@ my_setstr (mpfr_ptr t, const char *s)
 static void
 tst (void)
 {
-  int sv = sizeof (val) / sizeof (*val);
+  int sv = numberof (val);
   int i, j;
   int rnd;
   mpfr_t x, y, z, tmp;
@@ -372,7 +365,7 @@ tst (void)
 
   for (i = 0; i < sv; i++)
     for (j = 0; j < sv; j++)
-      RND_LOOP (rnd)
+      RND_LOOP_NO_RNDF (rnd)
         {
           int exact, inex;
           unsigned int flags;
@@ -498,7 +491,7 @@ underflow_up1 (void)
   for (i = 0; i <= 12; i++)
     {
       unsigned int flags = 0;
-      char sy[16];
+      char sy[256];  /* larger than needed, for maintainability */
 
       /* Test 2^(emin - i/4).
        * --> Underflow iff i > 4.
@@ -512,7 +505,7 @@ underflow_up1 (void)
 
       sprintf (sy, "emin - %d/4", i);
 
-      RND_LOOP (rnd)
+      RND_LOOP_NO_RNDF (rnd)
         {
           int zero;
 
@@ -580,7 +573,7 @@ underflow_up2 (void)
   /* 0 < eps < 1 / (2n), thus (1 - eps)^n > 1/2,
      and 1/2 (1/2)^n < (1/2 - eps/2)^n < (1/2)^n. */
   mpfr_inits2 (64, z, z0, (mpfr_ptr) 0);
-  RND_LOOP (rnd)
+  RND_LOOP_NO_RNDF (rnd)
     {
       unsigned int ufinex = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
       int expected_inex;
@@ -618,7 +611,7 @@ underflow_up3 (void)
   inex = mpfr_set_exp_t (y, mpfr_get_emin () - 2, MPFR_RNDN);
   MPFR_ASSERTN (inex == 0);
   for (i = -1; i <= 1; i++)
-    RND_LOOP (rnd)
+    RND_LOOP_NO_RNDF (rnd)
       {
         unsigned int ufinex = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
         int expected_inex;
@@ -694,7 +687,7 @@ overflow_inv (void)
                * t = 0: always overflow
                * t > 0: overflow for MPFR_RNDN and MPFR_RNDU.
                */
-              RND_LOOP (rnd)
+              RND_LOOP_NO_RNDF (rnd)
                 {
                   int inf, overflow;
                   mpfr_rnd_t rnd2;

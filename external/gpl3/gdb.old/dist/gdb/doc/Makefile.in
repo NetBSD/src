@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2016 Free Software Foundation, Inc.
+##Copyright (C) 1991-2017 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -676,3 +676,6 @@ maintainer-clean realclean: distclean
 install: install-info install-man
 
 uninstall: uninstall-info uninstall-man
+
+# Disable implicit make rules.
+include $(srcdir)/../disable-implicit-rules.mk

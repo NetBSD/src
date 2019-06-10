@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/03/22 23:46:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.32.1 2019/06/10 22:02:43 christos Exp $
 
 WARNS?=		2
 
@@ -13,5 +13,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.${DRIVER}}/include
 
 CWARNFLAGS.clang+=	-Wno-parentheses-equality
+
+COPTS.emumb.c=		-Wno-error	# XXX deprecated
 
 .include "../Makefile.xf86-driver"

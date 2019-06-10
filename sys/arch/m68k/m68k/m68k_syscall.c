@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.50 2015/03/07 18:54:57 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.50.18.1 2019/06/10 22:06:26 christos Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.50 2015/03/07 18:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.50.18.1 2019/06/10 22:06:26 christos Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,9 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		error = ufetch_long((void *)params, (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(int);
 #if defined(COMPAT_13) || defined(COMPAT_16)
 		/*
@@ -194,7 +196,11 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		error = ufetch_long((void *)(params +
+					     _QUAD_LOWWORD * sizeof(int)),
+				    (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(quad_t);
 		break;
 	default:
@@ -261,7 +267,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	bad:
 		/*
 		 * XXX: SVR4 uses this code-path, so we may have
-		 * to translate errno.
+		 * to translate errno. XXX OBSOLETE
 		 */
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
@@ -291,7 +297,9 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		error = ufetch_long((void *)params, (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(int);
 #if defined(COMPAT_13) || defined(COMPAT_16)
 		/*
@@ -316,7 +324,11 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		error = ufetch_long((void *)(params +
+					     _QUAD_LOWWORD * sizeof(int)),
+				    (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(quad_t);
 		break;
 	default:
@@ -391,9 +403,8 @@ out:
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	/* See cpu_lwp_fork() */
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
@@ -402,7 +413,6 @@ child_return(void *arg)
 	f->f_format = FMT0;
 
 	machine_userret(l, f, 0);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

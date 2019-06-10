@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.99 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.99.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99 2018/01/21 13:57:12 skrll Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+
+#include "ioconf.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -171,7 +173,7 @@ void ulpt_attach(device_t, device_t, void *);
 int ulpt_detach(device_t, int);
 int ulpt_activate(device_t, enum devact);
 
-extern struct cfdriver ulpt_cd;
+
 
 CFATTACH_DECL_NEW(ulpt, sizeof(struct ulpt_softc), ulpt_match, ulpt_attach,
     ulpt_detach, ulpt_activate);
@@ -465,7 +467,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((void *)sc, LPTPRI | PCATCH, "ulptop", STEP);
+		error = kpause("ulptop", true, STEP, NULL);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			goto done;
@@ -615,7 +617,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	DPRINTFN(3, ("ulptwrite\n"));
 	xfer = sc->sc_out_xfer;
 	bufp = sc->sc_out_buf;
-	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
+	while ((n = uimin(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		ulpt_statusmsg(ulpt_status(sc), sc);
 		error = uiomove(bufp, n, uio);
 		if (error)
@@ -696,7 +698,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 	xfer = sc->sc_in_xfer;
 	bufp = sc->sc_in_buf;
 	nread = 0;
-	while ((nreq = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
+	while ((nreq = uimin(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		KASSERT(error == 0);
 		if (error != 0) {
 			printf("ulptread: pre-switch error %d != 0", error);
@@ -704,7 +706,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 		}
 
 		/*
-		 * XXX Even with the short timeout, this will tsleep,
+		 * XXX Even with the short timeout, this will sleep,
 		 * but it should be adequately prompt in practice.
 		 */
 		n = nreq;
@@ -748,7 +750,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 
 		case USBD_INTERRUPTED:
 			/*
-			 * The tsleep in usbd_bulk_transfer was
+			 * The sleep in usbd_bulk_transfer was
 			 * interrupted.  Reflect it to the caller so
 			 * that reading can be interrupted.
 			 */

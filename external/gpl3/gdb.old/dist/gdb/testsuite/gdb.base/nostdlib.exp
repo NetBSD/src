@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ standard_testfile .c
 # See also the comment in break-entry.exp.
 
 if [target_info exists use_gdb_stub] {
-    untested ${testfile}.exp
+    untested "skipping tests due to use_gdb_stub"
     return
 }
 
@@ -41,7 +41,7 @@ if [board_info $board exists mathlib] {
     unset_board_info mathlib
 }
 if {$err != ""} {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 

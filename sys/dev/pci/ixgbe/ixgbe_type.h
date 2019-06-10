@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.35 2018/06/11 10:34:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.35.2.1 2019/06/10 22:07:28 christos Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -131,7 +131,6 @@
 #define IXGBE_SUBDEV_ID_82599EN_SFP_OCP1	0x0001
 #define IXGBE_DEV_ID_82599_XAUI_LOM		PCI_PRODUCT_INTEL_82599_XAUI_LOM
 #define IXGBE_DEV_ID_82599_T3_LOM		0x151C
-#define IXGBE_DEV_ID_82599_LS			0x154F
 #define IXGBE_DEV_ID_82599_VF			0x10ED
 #define IXGBE_DEV_ID_82599_VF_HV		0x152E
 #define IXGBE_DEV_ID_82599_BYPASS		0x155D
@@ -1096,6 +1095,9 @@ struct ixgbe_dmac_config {
 #define IXGBE_FWSM_MODE_MASK	0xE
 #define IXGBE_FWSM_TS_ENABLED	0x1
 #define IXGBE_FWSM_FW_MODE_PT	0x4
+#define IXGBE_FWSM_FW_NVM_RECOVERY_MODE (1 << 5)
+#define IXGBE_FWSM_EXT_ERR_IND_MASK 0x01F80000
+#define IXGBE_FWSM_FW_VAL_BIT	(1 << 15)
 
 /* ARC Subsystem registers */
 #define IXGBE_HICR		0x15F00
@@ -3759,7 +3761,6 @@ enum ixgbe_media_type {
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
 	ixgbe_media_type_fiber_qsfp,
-	ixgbe_media_type_fiber_lco,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
@@ -3851,6 +3852,21 @@ struct ixgbe_fc_info {
 	enum ixgbe_fc_mode requested_mode; /* FC mode requested by caller */
 };
 
+/*
+ * NetBSD currently uses traffic class 0 only. Other traffic classes aren't
+ * used yet. When IXGBE_TC_COUNTER_NUM is set to lower than
+ * IXGBE_DCB_MAX_TRAFFIC_CLASS (e.g. 1), other traffic classes' counters are
+ * not used. It means we don't generate evcnt for them and don't add the values
+ * in ixgbe_update_stats_counters().
+ */
+#if !defined(IXGBE_TC_COUNTER_NUM)
+#define IXGBE_TC_COUNTER_NUM IXGBE_DCB_MAX_TRAFFIC_CLASS
+#endif
+#if ((IXGBE_TC_COUNTER_NUM < 1)					\
+    || (IXGBE_TC_COUNTER_NUM > IXGBE_DCB_MAX_TRAFFIC_CLASS))
+#error Wrong IXGBE_TC_COUNTER_NUM value
+#endif
+
 /* Statistics counters collected by the MAC */
 struct ixgbe_hw_stats {
 	char namebuf[32];
@@ -3865,7 +3881,7 @@ struct ixgbe_hw_stats {
 	struct evcnt mspdc;
 	struct evcnt mbsdc;
 	struct evcnt mpctotal;
-	struct evcnt mpc[8];
+	struct evcnt mpc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt mlfc;
 	struct evcnt mrfc;
 	struct evcnt rlec;
@@ -3873,10 +3889,10 @@ struct ixgbe_hw_stats {
 	struct evcnt lxonrxc;
 	struct evcnt lxofftxc;
 	struct evcnt lxoffrxc;
-	struct evcnt pxontxc[8];
-	struct evcnt pxonrxc[8];
-	struct evcnt pxofftxc[8];
-	struct evcnt pxoffrxc[8];
+	struct evcnt pxontxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxonrxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxofftxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxoffrxc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt prc64;
 	struct evcnt prc127;
 	struct evcnt prc255;
@@ -3889,7 +3905,7 @@ struct ixgbe_hw_stats {
 	struct evcnt gptc;
 	struct evcnt gorc;
 	struct evcnt gotc;
-	struct evcnt rnbc[8];
+	struct evcnt rnbc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt ruc;
 	struct evcnt rfc;
 	struct evcnt roc;
@@ -3914,7 +3930,7 @@ struct ixgbe_hw_stats {
 	struct evcnt qbrc[16];
 	struct evcnt qbtc[16];
 	struct evcnt qprdc[16];
-	struct evcnt pxon2offc[8];
+	struct evcnt pxon2offc[IXGBE_TC_COUNTER_NUM];
 	u64 fdirustat_add;
 	u64 fdirustat_remove;
 	u64 fdirfstat_fadd;
@@ -4063,6 +4079,7 @@ struct ixgbe_mac_operations {
 	void (*enable_mdd)(struct ixgbe_hw *hw);
 	void (*mdd_event)(struct ixgbe_hw *hw, u32 *vf_bitmap);
 	void (*restore_mdd_vf)(struct ixgbe_hw *hw, u32 vf);
+	bool (*fw_recovery_mode)(struct ixgbe_hw *hw);
 };
 
 struct ixgbe_phy_operations {
@@ -4117,6 +4134,8 @@ struct ixgbe_eeprom_info {
 	u16				address_bits;
 	u16 word_page_size;
 	u16 ctrl_word_3;
+	u8  nvm_image_ver_high;
+	u8  nvm_image_ver_low;
 };
 
 #define IXGBE_FLAGS_DOUBLE_RESET_REQUIRED	0x01
@@ -4166,6 +4185,7 @@ struct ixgbe_phy_info {
 	enum ixgbe_media_type		media_type;
 	u32 phy_semaphore_mask;
 	bool				reset_disable;
+	bool				force_10_100_autonego;
 	ixgbe_autoneg_advertised	autoneg_advertised;
 	ixgbe_link_speed speeds_supported;
 	ixgbe_link_speed eee_speeds_supported;

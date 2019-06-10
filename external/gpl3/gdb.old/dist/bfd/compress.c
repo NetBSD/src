@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -247,7 +247,15 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 	{
 	  p = (bfd_byte *) bfd_malloc (sz);
 	  if (p == NULL)
+	    {
+	      /* PR 20801: Provide a more helpful error message.  */
+	      if (bfd_get_error () == bfd_error_no_memory)
+		_bfd_error_handler
+		  /* xgettext:c-format */
+		  (_("error: %B(%A) is too large (%#lx bytes)"),
+		  abfd, sec, (long) sz);
 	    return FALSE;
+	    }
 	}
 
       if (!bfd_get_section_contents (abfd, sec, p, 0, sz))
@@ -292,7 +300,7 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 	   SHF_COMPRESSED section.  */
 	compression_header_size = 12;
       if (!decompress_contents (compressed_buffer + compression_header_size,
-				sec->compressed_size, p, sz))
+				sec->compressed_size - compression_header_size, p, sz))
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  if (p != *ptr)

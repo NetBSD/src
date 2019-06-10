@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.boot,v 1.71 2018/06/02 14:30:06 christos Exp $
+# $NetBSD: Makefile.boot,v 1.71.2.1 2019/06/10 22:06:21 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
 NOMAN=
+NOLIBCSANITIZER=
 NOSANITIZER=
 NOPIE=
 PROG?= boot

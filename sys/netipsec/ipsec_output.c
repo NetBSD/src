@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.80 2018/05/31 15:06:45 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.80.2.1 2019/06/10 22:09:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.80 2018/05/31 15:06:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.80.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -151,7 +151,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 	struct mbuf *mo;
 	struct udphdr *udp = NULL;
-	int hlen, roff;
+	int hlen, roff, iphlen;
 
 	KASSERT(m != NULL);
 	KASSERT(isr != NULL);
@@ -160,11 +160,30 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	saidx = &sav->sah->saidx;
 
 	if (sav->natt_type != 0) {
-		ip = mtod(m, struct ip *);
-
 		hlen = sizeof(struct udphdr);
 
-		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
+		switch (saidx->dst.sa.sa_family) {
+#ifdef INET
+		case AF_INET:
+			ip = mtod(m, struct ip *);
+			mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
+			iphlen = ip->ip_hl << 2;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			ip6 = mtod(m, struct ip6_hdr *);
+			mo = m_makespace(m, sizeof(struct ip6_hdr), hlen, &roff);
+			iphlen = sizeof(*ip6);
+			break;
+#endif
+		default:
+			IPSECLOG(LOG_DEBUG, "unknown protocol family %u\n",
+			    saidx->dst.sa.sa_family);
+			error = ENXIO;
+			goto bad;
+		}
+
 		if (mo == NULL) {
 			char buf[IPSEC_ADDRSTRLEN];
 			IPSECLOG(LOG_DEBUG,
@@ -179,7 +198,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		udp->uh_sport = key_portfromsaddr(&saidx->src);
 		udp->uh_dport = key_portfromsaddr(&saidx->dst);
 		udp->uh_sum = 0;
-		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
+		udp->uh_ulen = htons(m->m_pkthdr.len - iphlen);
 	}
 
 	/*
@@ -190,6 +209,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	case AF_INET:
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
+		/* IPv4 packet does not have to be set UDP checksum. */
 		if (sav->natt_type != 0)
 			ip->ip_p = IPPROTO_UDP;
 		break;
@@ -207,8 +227,11 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-		if (sav->natt_type != 0)
+		/* IPv6 packet should be set UDP checksum. */
+		if (sav->natt_type != 0) {
 			ip6->ip6_nxt = IPPROTO_UDP;
+			ipsec6_udp_cksum(m);
+		}
 		break;
 #endif
 	default:
@@ -266,6 +289,24 @@ static void
 ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
     const int af)
 {
+	struct m_tag *mtag;
+	u_int16_t natt_src = IPSEC_PORT_ANY;
+	u_int16_t natt_dst = IPSEC_PORT_ANY;
+
+	/*
+	 * For NAT-T enabled ipsecif(4), set NAT-T port numbers
+	 * even if the saidx uses transport mode.
+	 *
+	 * See also ipsecif[46]_output().
+	 */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
+	if (mtag) {
+		u_int16_t *natt_ports;
+
+		natt_ports = (u_int16_t *)(mtag + 1);
+		natt_src = natt_ports[1];
+		natt_dst = natt_ports[0];
+	}
 
 	if (af == AF_INET) {
 		struct sockaddr_in *sin;
@@ -275,14 +316,14 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin = &saidx->src.sin;
 			sin->sin_len = sizeof(*sin);
 			sin->sin_family = AF_INET;
-			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_port = natt_src;
 			sin->sin_addr = ip->ip_src;
 		}
 		if (saidx->dst.sa.sa_len == 0) {
 			sin = &saidx->dst.sin;
 			sin->sin_len = sizeof(*sin);
 			sin->sin_family = AF_INET;
-			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_port = natt_dst;
 			sin->sin_addr = ip->ip_dst;
 		}
 	} else {
@@ -293,7 +334,7 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin6 = (struct sockaddr_in6 *)&saidx->src;
 			sin6->sin6_len = sizeof(*sin6);
 			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_port = natt_src;
 			sin6->sin6_addr = ip6->ip6_src;
 			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
 				/* fix scope id for comparing SPD */
@@ -306,7 +347,7 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin6 = (struct sockaddr_in6 *)&saidx->dst;
 			sin6->sin6_len = sizeof(*sin6);
 			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_port = natt_dst;
 			sin6->sin6_addr = ip6->ip6_dst;
 			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
 				/* fix scope id for comparing SPD */

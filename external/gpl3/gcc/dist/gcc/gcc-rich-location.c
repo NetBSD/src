@@ -1,5 +1,5 @@
 /* Implementation of gcc_rich_location class
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -59,4 +59,16 @@ gcc_rich_location::maybe_add_expr (tree t)
 {
   if (EXPR_P (t))
     add_expr (t);
+}
+
+/* Add a fixit hint suggesting replacing the range at MISSPELLED_TOKEN_LOC
+   with the identifier HINT_ID.  */
+
+void
+gcc_rich_location::add_fixit_misspelled_id (location_t misspelled_token_loc,
+					    tree hint_id)
+{
+  gcc_assert (TREE_CODE (hint_id) == IDENTIFIER_NODE);
+
+  add_fixit_replace (misspelled_token_loc, IDENTIFIER_POINTER (hint_id));
 }

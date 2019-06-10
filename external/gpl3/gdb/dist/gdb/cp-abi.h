@@ -3,7 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CP_ABI_H_
-#define CP_ABI_H_ 1
+#ifndef CP_ABI_H
+#define CP_ABI_H
 
 struct fn_field;
 struct type;
@@ -253,5 +253,4 @@ struct cp_abi_ops
 extern int register_cp_abi (struct cp_abi_ops *abi);
 extern void set_cp_abi_as_auto_default (const char *short_name);
 
-#endif
-
+#endif /* CP_ABI_H */

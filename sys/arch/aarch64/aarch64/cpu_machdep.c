@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.3.2.1 2019/06/10 22:05:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.3 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.3.2.1 2019/06/10 22:05:42 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -51,30 +51,6 @@ __KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.3 2018/04/01 04:35:03 ryo Exp $");
 #include <aarch64/machdep.h>
 #include <aarch64/pcb.h>
 #include <aarch64/userret.h>
-
-#ifdef MULTIPROCESSOR
-/* for arm compatibility (referred from pic.c) */
-volatile u_int arm_cpu_hatched;
-u_int arm_cpu_max = 1;
-#endif
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store __cacheline_aligned = {
-	.ci_cpl = IPL_HIGH,
-	.ci_curlwp = &lwp0
-};
-
-#ifdef MULTIPROCESSOR
-#define NCPUINFO	MAXCPUS
-#else
-#define NCPUINFO	1
-#endif
-
-struct cpu_info *cpu_info[NCPUINFO] = {
-	[0] = &cpu_info_store
-};
-
-uint32_t cpu_boot_mbox;
 
 #ifdef __HAVE_FAST_SOFTINTS
 #if IPL_VM != IPL_SOFTSERIAL + 1
@@ -228,8 +204,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			return error;
 
 		memcpy(&tf->tf_regs, mcp->__gregs, sizeof(tf->tf_regs));
-		l->l_private = mcp->__gregs[_REG_TPIDR];
 	}
+
+	if (flags & _UC_TLSBASE)
+		l->l_private = (void *)mcp->__gregs[_REG_TPIDR];
 
 	if (flags & _UC_FPU) {
 		struct pcb * const pcb = lwp_getpcb(l);
@@ -381,16 +359,6 @@ cpu_kpreempt_disabled(void)
 #endif /* __HAVE_PREEMPTION */
 
 #ifdef MULTIPROCESSOR
-void
-cpu_boot_secondary_processors(void)
-{
-	uint32_t mbox;
-	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
-	atomic_swap_32(&cpu_boot_mbox, mbox);
-	membar_producer();
-	__asm __volatile("sev; sev; sev");
-}
-
 void
 xc_send_ipi(struct cpu_info *ci)
 {

@@ -1,6 +1,6 @@
 /* tui_ui_sub -- test file for mpc_ui_ui_sub.
 
-Copyright (C) 2008 INRIA
+Copyright (C) 2008, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,14 +20,19 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_ui_ui_sub (P[1].mpc, P[2].ui, P[3].ui, P[4].mpc, P[5].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP3                                     \
+  P[0].mpc_inex = mpc_ui_ui_sub (P[1].mpc, P[2].ui, P[3].ui, P[4].mpc, P[5].mpc_rnd)
+
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CUUC, f, mpc_ui_ui_sub);
-
   test_start ();
 
-  tgeneric (f, 2, 1024, 7, -1);
+  tgeneric_template ("ui_ui_sub.dsc", 2, 1024, 7, 1024);
 
   test_end ();
 

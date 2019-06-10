@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_mbuf_subr.c,v 1.6 2016/12/26 23:05:05 christos Exp $	*/
-
 /*
  * NPF testing - helper routines.
  *
@@ -22,7 +20,7 @@ npfkern_m_get(int flags, int space)
 	unsigned mlen = offsetof(struct mbuf, m_data0[space]);
 	struct mbuf *m;
 
-	m = calloc(1, sizeof(struct mbuf));
+	m = calloc(1, mlen);
 	if (m) {
 		m->m_type = 1;
 		m->m_flags = flags;
@@ -104,6 +102,7 @@ npfkern_m_ensure_contig(struct mbuf **m0, size_t len)
 		dptr += m->m_len;
 	}
 	*m0 = m1;
+	(void)len;
 	return true;
 }
 
@@ -246,7 +245,8 @@ mbuf_icmp_append(struct mbuf *m, struct mbuf *m_orig)
 {
 	struct ip *iphdr = mtod(m, struct ip *);
 	const size_t hlen = iphdr->ip_hl << 2;
-	struct icmp *ic = (struct icmp *)((uint8_t *)iphdr + hlen);
+	void *p = (uint8_t *)iphdr + hlen;
+	struct icmp *ic = (struct icmp *)p;
 	const size_t addlen = m_length(m_orig);
 
 	iphdr->ip_len = htons(ntohs(iphdr->ip_len) + addlen);

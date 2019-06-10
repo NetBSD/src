@@ -316,6 +316,9 @@ ideas of what it is for.  People use it as if it specified where to
 install part of GCC.  Perhaps they make this assumption because
 installing GCC creates the directory.
 
+     <br><dt><code>--with-gcc-major-version-only</code><dd>Specifies that GCC should use only the major number rather than
+<var>major</var>.<var>minor</var>.<var>patchlevel</var> in filesystem paths.
+
      <br><dt><code>--with-native-system-header-dir=</code><var>dirname</var><dd>Specifies that <var>dirname</var> is the directory that contains native system
 header files, rather than <samp><span class="file">/usr/include</span></samp>.  This option is most useful
 if you are creating a compiler that should be isolated from the system
@@ -332,7 +335,7 @@ only for the listed packages.  For other packages, only static libraries
 will be built.  Package names currently recognized in the GCC tree are
 &lsquo;<samp><span class="samp">libgcc</span></samp>&rsquo; (also known as &lsquo;<samp><span class="samp">gcc</span></samp>&rsquo;), &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo; (not
 &lsquo;<samp><span class="samp">libstdc++-v3</span></samp>&rsquo;), &lsquo;<samp><span class="samp">libffi</span></samp>&rsquo;, &lsquo;<samp><span class="samp">zlib</span></samp>&rsquo;, &lsquo;<samp><span class="samp">boehm-gc</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libjava</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libgo</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;. 
+&lsquo;<samp><span class="samp">ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libgo</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;. 
 Note &lsquo;<samp><span class="samp">libiberty</span></samp>&rsquo; does not support shared libraries at all.
 
      <p>Use <samp><span class="option">--disable-shared</span></samp> to build only static libraries.  Note that
@@ -351,7 +354,7 @@ but yielding a slightly slower compiler.
      <p>Contrast with <samp><span class="option">--enable-shared</span></samp>, which affects <em>target</em>
 libraries.
 
-     <br><dt><code><a name="with_002dgnu_002das"></a>--with-gnu-as</code><dd>Specify that the compiler should assume that the
+     <br><dt><code><a name="with-gnu-as"></a>--with-gnu-as</code><dd>Specify that the compiler should assume that the
 assembler it finds is the GNU assembler.  However, this does not modify
 the rules to find an assembler and will result in confusion if the
 assembler found is not actually the GNU assembler.  (Confusion may also
@@ -372,7 +375,7 @@ whether you use the GNU assembler.  On any other system,
 <li>&lsquo;<samp><span class="samp">sparc64-</span><var>any</var><span class="samp">-solaris2.</span><var>any</var></samp>&rsquo;
 </ul>
 
-     <br><dt><code><a name="with_002das"></a>--with-as=</code><var>pathname</var><dd>Specify that the compiler should use the assembler pointed to by
+     <br><dt><code><a name="with-as"></a>--with-as=</code><var>pathname</var><dd>Specify that the compiler should use the assembler pointed to by
 <var>pathname</var>, rather than the one found by the standard rules to find
 an assembler, which are:
           <ul>
@@ -403,7 +406,7 @@ is installed in the directories listed above, or if you have multiple
 assemblers installed and want to choose one that is not found by the
 above rules.
 
-     <br><dt><code><a name="with_002dgnu_002dld"></a>--with-gnu-ld</code><dd>Same as <a href="#with-gnu-as"><samp><span class="option">--with-gnu-as</span></samp></a>
+     <br><dt><code><a name="with-gnu-ld"></a>--with-gnu-ld</code><dd>Same as <a href="#with-gnu-as"><samp><span class="option">--with-gnu-as</span></samp></a>
 but for the linker.
 
      <br><dt><code>--with-ld=</code><var>pathname</var><dd>Same as <a href="#with-as"><samp><span class="option">--with-as</span></samp></a>
@@ -485,18 +488,57 @@ sysv, aix.
 
      </dl>
 
-     <br><dt><code>--with-multilib-list=</code><var>list</var><dt><code>--without-multilib-list</code><dd>Specify what multilibs to build. 
-Currently only implemented for arm*-*-*, sh*-*-* and x86-64-*-linux*.
+     <br><dt><code>--with-multilib-list=</code><var>list</var><dt><code>--without-multilib-list</code><dd>Specify what multilibs to build.  <var>list</var> is a comma separated list of
+values, possibly consisting of a single value.  Currently only implemented
+for arm*-*-*, sh*-*-* and x86-64-*-linux*.  The accepted values and meaning
+for each target is given below.
 
           <dl>
-<dt><code>arm*-*-*</code><dd><var>list</var> is either <code>default</code> or <code>aprofile</code>.  Specifying
-<code>default</code> is equivalent to omitting this option while specifying
-<code>aprofile</code> builds multilibs for each combination of ISA (<code>-marm</code> or
-<code>-mthumb</code>), architecture (<code>-march=armv7-a</code>, <code>-march=armv7ve</code>,
-or <code>-march=armv8-a</code>), FPU available (none, <code>-mfpu=vfpv3-d16</code>,
-<code>-mfpu=neon</code>, <code>-mfpu=vfpv4-d16</code>, <code>-mfpu=neon-vfpv4</code> or
-<code>-mfpu=neon-fp-armv8</code> depending on architecture) and floating-point ABI
-(<code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code>).
+<dt><code>arm*-*-*</code><dd><var>list</var> is one of<code>default</code>, <code>aprofile</code> or <code>rmprofile</code>. 
+Specifying <code>default</code> is equivalent to omitting this option, ie. only the
+default runtime library will be enabled.  Specifying <code>aprofile</code> or
+<code>rmprofile</code> builds multilibs for a combination of ISA, architecture,
+FPU available and floating-point ABI.
+
+          <p>The table below gives the combination of ISAs, architectures, FPUs and
+floating-point ABIs for which multilibs are built for each accepted value.
+
+          <p><table summary=""><tr align="left"><td valign="top" width="15%">Option </td><td valign="top" width="28%">aprofile </td><td valign="top" width="30%">rmprofile
+<br></td></tr><tr align="left"><td valign="top" width="15%">ISAs
+</td><td valign="top" width="28%"><code>-marm</code> and <code>-mthumb</code>
+</td><td valign="top" width="30%"><code>-mthumb</code>
+<br></td></tr><tr align="left"><td valign="top" width="15%">Architectures<br><br><br><br><br><br>
+</td><td valign="top" width="28%">default architecture<br>
+<code>-march=armv7-a</code><br>
+<code>-march=armv7ve</code><br>
+<code>-march=armv8-a</code><br><br><br>
+</td><td valign="top" width="30%">default architecture<br>
+<code>-march=armv6s-m</code><br>
+<code>-march=armv7-m</code><br>
+<code>-march=armv7e-m</code><br>
+<code>-march=armv8-m.base</code><br>
+<code>-march=armv8-m.main</code><br>
+<code>-march=armv7</code>
+<br></td></tr><tr align="left"><td valign="top" width="15%">FPUs<br><br><br><br><br>
+</td><td valign="top" width="28%">none<br>
+<code>-mfpu=vfpv3-d16</code><br>
+<code>-mfpu=neon</code><br>
+<code>-mfpu=vfpv4-d16</code><br>
+<code>-mfpu=neon-vfpv4</code><br>
+<code>-mfpu=neon-fp-armv8</code>
+</td><td valign="top" width="30%">none<br>
+<code>-mfpu=vfpv3-d16</code><br>
+<code>-mfpu=fpv4-sp-d16</code><br>
+<code>-mfpu=fpv5-sp-d16</code><br>
+<code>-mfpu=fpv5-d16</code><br>
+<br></td></tr><tr align="left"><td valign="top" width="15%">floating-point ABIs<br><br>
+</td><td valign="top" width="28%"><code>-mfloat-abi=soft</code><br>
+<code>-mfloat-abi=softfp</code><br>
+<code>-mfloat-abi=hard</code>
+</td><td valign="top" width="30%"><code>-mfloat-abi=soft</code><br>
+<code>-mfloat-abi=softfp</code><br>
+<code>-mfloat-abi=hard</code>
+          <br></td></tr></table>
 
           <br><dt><code>sh*-*-*</code><dd><var>list</var> is a comma separated list of CPU names.  These must be of the
 form <code>sh*</code> or <code>m*</code> (in which case they match the compiler option
@@ -547,7 +589,7 @@ Currently only implemented for sh*-*-*.
 
      <br><dt><code>--enable-threads</code><dd>Specify that the target
 supports threads.  This affects the Objective-C compiler and runtime
-library, and exception handling for other languages like C++ and Java. 
+library, and exception handling for other languages like C++. 
 On some systems, this is the default.
 
      <p>In general, the best (and, in many cases, the only known) threading
@@ -562,7 +604,7 @@ This is an alias for <samp><span class="option">--enable-threads=single</span></
      <br><dt><code>--enable-threads=</code><var>lib</var><dd>Specify that
 <var>lib</var> is the thread support library.  This affects the Objective-C
 compiler and runtime library, and exception handling for other languages
-like C++ and Java.  The possibilities for <var>lib</var> are:
+like C++.  The possibilities for <var>lib</var> are:
 
           <dl>
 <dt><code>aix</code><dd>AIX thread support. 
@@ -674,6 +716,35 @@ not provide them.
      <br><dt><code>--without-synci</code><dd>On MIPS targets, make <samp><span class="option">-mno-synci</span></samp> the default when no
 <samp><span class="option">-msynci</span></samp> option is passed.  This is the default.
 
+     <br><dt><code>--with-lxc1-sxc1</code><dd>On MIPS targets, make <samp><span class="option">-mlxc1-sxc1</span></samp> the default when no
+<samp><span class="option">-mno-lxc1-sxc1</span></samp> option is passed.  This is the default.
+
+     <br><dt><code>--without-lxc1-sxc1</code><dd>On MIPS targets, make <samp><span class="option">-mno-lxc1-sxc1</span></samp> the default when no
+<samp><span class="option">-mlxc1-sxc1</span></samp> option is passed.  The indexed load/store
+instructions are not directly a problem but can lead to unexpected
+behaviour when deployed in an application intended for a 32-bit address
+space but run on a 64-bit processor.  The issue is seen because all
+known MIPS 64-bit Linux kernels execute o32 and n32 applications
+with 64-bit addressing enabled which affects the overflow behaviour
+of the indexed addressing mode.  GCC will assume that ordinary
+32-bit arithmetic overflow behaviour is the same whether performed
+as an <code>addu</code> instruction or as part of the address calculation
+in <code>lwxc1</code> type instructions.  This assumption holds true in a
+pure 32-bit environment and can hold true in a 64-bit environment if
+the address space is accurately set to be 32-bit for o32 and n32.
+
+     <br><dt><code>--with-madd4</code><dd>On MIPS targets, make <samp><span class="option">-mmadd4</span></samp> the default when no
+<samp><span class="option">-mno-madd4</span></samp> option is passed.  This is the default.
+
+     <br><dt><code>--without-madd4</code><dd>On MIPS targets, make <samp><span class="option">-mno-madd4</span></samp> the default when no
+<samp><span class="option">-mmadd4</span></samp> option is passed.  The <code>madd4</code> instruction
+family can be problematic when targeting a combination of cores that
+implement these instructions differently.  There are two known cores
+that implement these as fused operations instead of unfused (where
+unfused is normally expected).  Disabling these instructions is the
+only way to ensure compatible code is generated; this will incur
+a performance penalty.
+
      <br><dt><code>--with-mips-plt</code><dd>On MIPS targets, make use of copy relocations and PLTs. 
 These features are extensions to the traditional
 SVR4-based MIPS ABIs and require support from GNU binutils
@@ -751,7 +822,7 @@ addition, &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;'s inclu
 <samp><span class="option">--with-gxx-include-dir=</span><var>dirname</var></samp>.  Using this option is
 particularly useful if you intend to use several versions of GCC in
 parallel.  This is currently supported by &lsquo;<samp><span class="samp">libgfortran</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">libjava</span></samp>&rsquo;, &lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;.
+&lsquo;<samp><span class="samp">libstdc++</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">libobjc</span></samp>&rsquo;.
 
      <br><dt><code><a name="WithAixSoname"></a>--with-aix-soname=&lsquo;</code><samp><span class="samp">aix</span></samp><code>&rsquo;, &lsquo;</code><samp><span class="samp">svr4</span></samp><code>&rsquo; or &lsquo;</code><samp><span class="samp">both</span></samp><code>&rsquo;</code><dd>Traditional AIX shared library versioning (versioned <code>Shared Object</code>
 files as members of unversioned <code>Archive Library</code> files named
@@ -764,7 +835,7 @@ linker does search for &lsquo;<samp><span class="samp">libNAME.so</span></samp>&
 filenames with the &lsquo;<samp><span class="samp">-lNAME</span></samp>&rsquo; linker flag.
 
      <p><a name="AixLdCommand"></a>For detailed information please refer to the AIX
-<a href="http://www-01.ibm.com/support/knowledgecenter/search/%22the%20ld%20command%2C%20also%20called%20the%20linkage%20editor%20or%20binder%22">ld Command</a> reference.
+<a href="https://www.ibm.com/support/knowledgecenter/search/%22the%20ld%20command%2C%20also%20called%20the%20linkage%20editor%20or%20binder%22">ld Command</a> reference.
 
      <p>As long as shared library creation is enabled, upon:
           <dl>
@@ -856,7 +927,7 @@ their runtime libraries should be built.  For a list of valid values for
 </pre>
      <p>Currently, you can use any of the following:
 <code>all</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>fortran</code>,
-<code>go</code>, <code>java</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>. 
+<code>go</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>. 
 Building the Ada compiler has special requirements, see below. 
 If you do not pass this flag, or specify the option <code>all</code>, then all
 default languages available in the <samp><span class="file">gcc</span></samp> sub-tree will be configured. 
@@ -963,7 +1034,7 @@ controlled by the Makefiles.
 consistency checks of the requested complexity.  This does not change the
 generated code, but adds error checking within the compiler.  This will
 slow down the compiler and may only work properly if you are building
-the compiler with GCC.  This is &lsquo;<samp><span class="samp">yes</span></samp>&rsquo; by default when building
+the compiler with GCC.  This is &lsquo;<samp><span class="samp">yes,extra</span></samp>&rsquo; by default when building
 from SVN or snapshots, but &lsquo;<samp><span class="samp">release</span></samp>&rsquo; for releases.  The default
 for building the stage1 compiler is &lsquo;<samp><span class="samp">yes</span></samp>&rsquo;.  More control
 over the checks may be had by specifying <var>list</var>.  The categories of
@@ -972,8 +1043,11 @@ checks available are &lsquo;<samp><span class="samp">yes</span></samp>&rsquo; (m
 all), &lsquo;<samp><span class="samp">all</span></samp>&rsquo; (all but &lsquo;<samp><span class="samp">valgrind</span></samp>&rsquo;), &lsquo;<samp><span class="samp">release</span></samp>&rsquo; (cheapest
 checks &lsquo;<samp><span class="samp">assert,runtime</span></samp>&rsquo;) or &lsquo;<samp><span class="samp">none</span></samp>&rsquo; (same as &lsquo;<samp><span class="samp">no</span></samp>&rsquo;). 
 Individual checks can be enabled with these flags &lsquo;<samp><span class="samp">assert</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">df</span></samp>&rsquo;, &lsquo;<samp><span class="samp">fold</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gcac</span></samp>&rsquo; &lsquo;<samp><span class="samp">misc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rtl</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">rtlflag</span></samp>&rsquo;, &lsquo;<samp><span class="samp">runtime</span></samp>&rsquo;, &lsquo;<samp><span class="samp">tree</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">valgrind</span></samp>&rsquo;.
+&lsquo;<samp><span class="samp">df</span></samp>&rsquo;, &lsquo;<samp><span class="samp">fold</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gcac</span></samp>&rsquo;, &lsquo;<samp><span class="samp">misc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rtl</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">rtlflag</span></samp>&rsquo;, &lsquo;<samp><span class="samp">runtime</span></samp>&rsquo;, &lsquo;<samp><span class="samp">tree</span></samp>&rsquo;, &lsquo;<samp><span class="samp">extra</span></samp>&rsquo; and &lsquo;<samp><span class="samp">valgrind</span></samp>&rsquo;. 
+&lsquo;<samp><span class="samp">extra</span></samp>&rsquo; adds for &lsquo;<samp><span class="samp">misc</span></samp>&rsquo; checking extra checks that might affect
+code generation and should therefore not differ between stage1 and later
+stages.
 
      <p>The &lsquo;<samp><span class="samp">valgrind</span></samp>&rsquo; check requires the external <samp><span class="command">valgrind</span></samp>
 simulator, available from <a href="http://valgrind.org/">http://valgrind.org/</a>.  The
@@ -1204,12 +1278,7 @@ explicitly specify the directory where they are installed.  The
 <samp><span class="option">--with-hsa-runtime=</span><var>hsainstalldir</var></samp> option is a
 shorthand for
 <samp><span class="option">--with-hsa-runtime-lib=</span><var>hsainstalldir</var><span class="option">/lib</span></samp> and
-<samp><span class="option">--with-hsa-runtime-include=</span><var>hsainstalldir</var><span class="option">/include</span></samp>.
-
-     <br><dt><code>--with-hsa-kmt-lib=</code><var>pathname</var><dd>
-If you configure GCC with HSA offloading but do not have the HSA
-KMT library installed in a standard location then you can
-explicitly specify the directory where it resides. 
+<samp><span class="option">--with-hsa-runtime-include=</span><var>hsainstalldir</var><span class="option">/include</span></samp>. 
 </dl>
 
 <h4 class="subheading"><a name="TOC3"></a>Cross-Compiler-Specific Options</h4>
@@ -1333,192 +1402,34 @@ scripts.
 overrides, you can pass a setting for <samp><span class="env">CONFIG_SITE</span></samp> and set
 variables in the site file.
 
-<h4 class="subheading"><a name="TOC5"></a>Java-Specific Options</h4>
+<h4 class="subheading"><a name="TOC5"></a>Objective-C-Specific Options</h4>
 
-<p>The following option applies to the build of the Java front end.
-
-     <dl>
-<dt><code>--disable-libgcj</code><dd>Specify that the run-time libraries
-used by GCJ should not be built.  This is useful in case you intend
-to use GCJ with some other run-time, or you're going to install it
-separately, or it just happens not to build on your particular
-machine.  In general, if the Java front end is enabled, the GCJ
-libraries will be enabled too, unless they're known to not work on
-the target platform.  If GCJ is enabled but &lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo; isn't built, you
-may need to port it; in this case, before modifying the top-level
-<samp><span class="file">configure.ac</span></samp> so that &lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo; is enabled by default on this platform,
-you may use <samp><span class="option">--enable-libgcj</span></samp> to override the default.
-
-   </dl>
-
-   <p>The following options apply to building &lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo;.
-
-<h5 class="subsubheading"><a name="TOC6"></a>General Options</h5>
+<p>The following options apply to the build of the Objective-C runtime library.
 
      <dl>
-<dt><code>--enable-java-maintainer-mode</code><dd>By default the &lsquo;<samp><span class="samp">libjava</span></samp>&rsquo; build will not attempt to compile the
-<samp><span class="file">.java</span></samp> source files to <samp><span class="file">.class</span></samp>.  Instead, it will use the
-<samp><span class="file">.class</span></samp> files from the source tree.  If you use this option you
-must have executables named <samp><span class="command">ecj1</span></samp> and <samp><span class="command">gjavah</span></samp> in your path
-for use by the build.  You must use this option if you intend to
-modify any <samp><span class="file">.java</span></samp> files in <samp><span class="file">libjava</span></samp>.
+<dt><code>--enable-objc-gc</code><dd>Specify that an additional variant of the GNU Objective-C runtime library
+is built, using an external build of the Boehm-Demers-Weiser garbage
+collector (<a href="http://www.hboehm.info/gc/">http://www.hboehm.info/gc/</a>).  This library needs to be
+available for each multilib variant, unless configured with
+<samp><span class="option">--enable-objc-gc=&lsquo;</span><samp><span class="samp">auto</span></samp><span class="option">&rsquo;</span></samp> in which case the build of the
+additional runtime library is skipped when not available and the build
+continues.
 
-     <br><dt><code>--with-java-home=</code><var>dirname</var><dd>This &lsquo;<samp><span class="samp">libjava</span></samp>&rsquo; option overrides the default value of the
-&lsquo;<samp><span class="samp">java.home</span></samp>&rsquo; system property.  It is also used to set
-&lsquo;<samp><span class="samp">sun.boot.class.path</span></samp>&rsquo; to <samp><var>dirname</var><span class="file">/lib/rt.jar</span></samp>.  By
-default &lsquo;<samp><span class="samp">java.home</span></samp>&rsquo; is set to <samp><var>prefix</var></samp> and
-&lsquo;<samp><span class="samp">sun.boot.class.path</span></samp>&rsquo; to
-<samp><var>datadir</var><span class="file">/java/libgcj-</span><var>version</var><span class="file">.jar</span></samp>.
+     <br><dt><code>--with-target-bdw-gc=</code><var>list</var><dt><code>--with-target-bdw-gc-include=</code><var>list</var><dt><code>--with-target-bdw-gc-lib=</code><var>list</var><dd>Specify search directories for the garbage collector header files and
+libraries. <var>list</var> is a comma separated list of key value pairs of the
+form &lsquo;<samp><var>multilibdir</var><span class="samp">=</span><var>path</var></samp>&rsquo;, where the default multilib key
+is named as &lsquo;<samp><span class="samp">.</span></samp>&rsquo; (dot), or is omitted (e.g. 
+&lsquo;<samp><span class="samp">--with-target-bdw-gc=/opt/bdw-gc,32=/opt-bdw-gc32</span></samp>&rsquo;).
 
-     <br><dt><code>--with-ecj-jar=</code><var>filename</var><dd>This option can be used to specify the location of an external jar
-file containing the Eclipse Java compiler.  A specially modified
-version of this compiler is used by <samp><span class="command">gcj</span></samp> to parse
-<samp><span class="file">.java</span></samp> source files.  If this option is given, the
-&lsquo;<samp><span class="samp">libjava</span></samp>&rsquo; build will create and install an <samp><span class="file">ecj1</span></samp> executable
-which uses this jar file at runtime.
-
-     <p>If this option is not given, but an <samp><span class="file">ecj.jar</span></samp> file is found in
-the topmost source tree at configure time, then the &lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo;
-build will create and install <samp><span class="file">ecj1</span></samp>, and will also install the
-discovered <samp><span class="file">ecj.jar</span></samp> into a suitable place in the install tree.
-
-     <p>If <samp><span class="file">ecj1</span></samp> is not installed, then the user will have to supply one
-on his path in order for <samp><span class="command">gcj</span></samp> to properly parse <samp><span class="file">.java</span></samp>
-source files.  A suitable jar is available from
-<a href="ftp://sourceware.org/pub/java/">ftp://sourceware.org/pub/java/</a>.
-
-     <br><dt><code>--disable-getenv-properties</code><dd>Don't set system properties from <samp><span class="env">GCJ_PROPERTIES</span></samp>.
-
-     <br><dt><code>--enable-hash-synchronization</code><dd>Use a global hash table for monitor locks.  Ordinarily,
-&lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo;'s &lsquo;<samp><span class="samp">configure</span></samp>&rsquo; script automatically makes
-the correct choice for this option for your platform.  Only use
-this if you know you need the library to be configured differently.
-
-     <br><dt><code>--enable-interpreter</code><dd>Enable the Java interpreter.  The interpreter is automatically
-enabled by default on all platforms that support it.  This option
-is really only useful if you want to disable the interpreter
-(using <samp><span class="option">--disable-interpreter</span></samp>).
-
-     <br><dt><code>--disable-java-net</code><dd>Disable java.net.  This disables the native part of java.net only,
-using non-functional stubs for native method implementations.
-
-     <br><dt><code>--disable-jvmpi</code><dd>Disable JVMPI support.
-
-     <br><dt><code>--disable-libgcj-bc</code><dd>Disable BC ABI compilation of certain parts of libgcj.  By default,
-some portions of libgcj are compiled with <samp><span class="option">-findirect-dispatch</span></samp>
-and <samp><span class="option">-fno-indirect-classes</span></samp>, allowing them to be overridden at
-run-time.
-
-     <p>If <samp><span class="option">--disable-libgcj-bc</span></samp> is specified, libgcj is built without
-these options.  This allows the compile-time linker to resolve
-dependencies when statically linking to libgcj.  However it makes it
-impossible to override the affected portions of libgcj at run-time.
-
-     <br><dt><code>--enable-reduced-reflection</code><dd>Build most of libgcj with <samp><span class="option">-freduced-reflection</span></samp>.  This reduces
-the size of libgcj at the expense of not being able to do accurate
-reflection on the classes it contains.  This option is safe if you
-know that code using libgcj will never use reflection on the standard
-runtime classes in libgcj (including using serialization, RMI or CORBA).
-
-     <br><dt><code>--with-ecos</code><dd>Enable runtime eCos target support.
-
-     <br><dt><code>--without-libffi</code><dd>Don't use &lsquo;<samp><span class="samp">libffi</span></samp>&rsquo;.  This will disable the interpreter and JNI
-support as well, as these require &lsquo;<samp><span class="samp">libffi</span></samp>&rsquo; to work.
-
-     <br><dt><code>--enable-libgcj-debug</code><dd>Enable runtime debugging code.
-
-     <br><dt><code>--enable-libgcj-multifile</code><dd>If specified, causes all <samp><span class="file">.java</span></samp> source files to be
-compiled into <samp><span class="file">.class</span></samp> files in one invocation of
-&lsquo;<samp><span class="samp">gcj</span></samp>&rsquo;.  This can speed up build time, but is more
-resource-intensive.  If this option is unspecified or
-disabled, &lsquo;<samp><span class="samp">gcj</span></samp>&rsquo; is invoked once for each <samp><span class="file">.java</span></samp>
-file to compile into a <samp><span class="file">.class</span></samp> file.
-
-     <br><dt><code>--with-libiconv-prefix=DIR</code><dd>Search for libiconv in <samp><span class="file">DIR/include</span></samp> and <samp><span class="file">DIR/lib</span></samp>.
-
-     <br><dt><code>--with-system-zlib</code><dd>Use installed &lsquo;<samp><span class="samp">zlib</span></samp>&rsquo; rather than that included with GCC.
-
-     <br><dt><code>--with-win32-nlsapi=ansi, unicows or unicode</code><dd>Indicates how MinGW &lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo; translates between UNICODE
-characters and the Win32 API.
-
-     <br><dt><code>--enable-java-home</code><dd>If enabled, this creates a JPackage compatible SDK environment during install. 
-Note that if &ndash;enable-java-home is used, &ndash;with-arch-directory=ARCH must also
-be specified.
-
-     <br><dt><code>--with-arch-directory=ARCH</code><dd>Specifies the name to use for the <samp><span class="file">jre/lib/ARCH</span></samp> directory in the SDK
-environment created when &ndash;enable-java-home is passed. Typical names for this
-directory include i386, amd64, ia64, etc.
-
-     <br><dt><code>--with-os-directory=DIR</code><dd>Specifies the OS directory for the SDK include directory. This is set to auto
-detect, and is typically 'linux'.
-
-     <br><dt><code>--with-origin-name=NAME</code><dd>Specifies the JPackage origin name. This defaults to the 'gcj' in
-java-1.5.0-gcj.
-
-     <br><dt><code>--with-arch-suffix=SUFFIX</code><dd>Specifies the suffix for the sdk directory. Defaults to the empty string. 
-Examples include '.x86_64' in 'java-1.5.0-gcj-1.5.0.0.x86_64'.
-
-     <br><dt><code>--with-jvm-root-dir=DIR</code><dd>Specifies where to install the SDK. Default is $(prefix)/lib/jvm.
-
-     <br><dt><code>--with-jvm-jar-dir=DIR</code><dd>Specifies where to install jars. Default is $(prefix)/lib/jvm-exports.
-
-     <br><dt><code>--with-python-dir=DIR</code><dd>Specifies where to install the Python modules used for aot-compile. DIR should
-not include the prefix used in installation. For example, if the Python modules
-are to be installed in /usr/lib/python2.5/site-packages, then
-&ndash;with-python-dir=/lib/python2.5/site-packages should be passed. If this is
-not specified, then the Python modules are installed in $(prefix)/share/python.
-
-     <br><dt><code>--enable-aot-compile-rpm</code><dd>Adds aot-compile-rpm to the list of installed scripts.
-
-     <br><dt><code>--enable-browser-plugin</code><dd>Build the gcjwebplugin web browser plugin.
-
-     <br><dt><code>--enable-static-libjava</code><dd>Build static libraries in libjava. The default is to only build shared
-libraries.
-
-          <dl>
-<dt><code>ansi</code><dd>Use the single-byte <code>char</code> and the Win32 A functions natively,
-translating to and from UNICODE when using these functions.  If
-unspecified, this is the default.
-
-          <br><dt><code>unicows</code><dd>Use the <code>WCHAR</code> and Win32 W functions natively.  Adds
-<code>-lunicows</code> to <samp><span class="file">libgcj.spec</span></samp> to link with &lsquo;<samp><span class="samp">libunicows</span></samp>&rsquo;. 
-<samp><span class="file">unicows.dll</span></samp> needs to be deployed on Microsoft Windows 9X machines
-running built executables.  <samp><span class="file">libunicows.a</span></samp>, an open-source
-import library around Microsoft's <code>unicows.dll</code>, is obtained from
-<a href="http://libunicows.sourceforge.net/">http://libunicows.sourceforge.net/</a>, which also gives details
-on getting <samp><span class="file">unicows.dll</span></samp> from Microsoft.
-
-          <br><dt><code>unicode</code><dd>Use the <code>WCHAR</code> and Win32 W functions natively.  Does <em>not</em>
-add <code>-lunicows</code> to <samp><span class="file">libgcj.spec</span></samp>.  The built executables will
-only run on Microsoft Windows NT and above. 
-</dl>
-     </dl>
-
-<h5 class="subsubheading"><a name="TOC7"></a>AWT-Specific Options</h5>
-
-     <dl>
-<dt><code>--with-x</code><dd>Use the X Window System.
-
-     <br><dt><code>--enable-java-awt=PEER(S)</code><dd>Specifies the AWT peer library or libraries to build alongside
-&lsquo;<samp><span class="samp">libgcj</span></samp>&rsquo;.  If this option is unspecified or disabled, AWT
-will be non-functional.  Current valid values are <samp><span class="option">gtk</span></samp> and
-<samp><span class="option">xlib</span></samp>.  Multiple libraries should be separated by a
-comma (i.e. <samp><span class="option">--enable-java-awt=gtk,xlib</span></samp>).
-
-     <br><dt><code>--enable-gtk-cairo</code><dd>Build the cairo Graphics2D implementation on GTK.
-
-     <br><dt><code>--enable-java-gc=TYPE</code><dd>Choose garbage collector.  Defaults to <samp><span class="option">boehm</span></samp> if unspecified.
-
-     <br><dt><code>--disable-gtktest</code><dd>Do not try to compile and run a test GTK+ program.
-
-     <br><dt><code>--disable-glibtest</code><dd>Do not try to compile and run a test GLIB program.
-
-     <br><dt><code>--with-libart-prefix=PFX</code><dd>Prefix where libart is installed (optional).
-
-     <br><dt><code>--with-libart-exec-prefix=PFX</code><dd>Exec prefix where libart is installed (optional).
-
-     <br><dt><code>--disable-libarttest</code><dd>Do not try to compile and run a test libart program.
-
+     <p>The options <samp><span class="option">--with-target-bdw-gc-include</span></samp> and
+<samp><span class="option">--with-target-bdw-gc-lib</span></samp> must always be specified together
+for each multilib variant and they take precedence over
+<samp><span class="option">--with-target-bdw-gc</span></samp>.  If <samp><span class="option">--with-target-bdw-gc-include</span></samp>
+is missing values for a multilib, then the value for the default
+multilib is used (e.g. &lsquo;<samp><span class="samp">--with-target-bdw-gc-include=/opt/bdw-gc/include</span></samp>&rsquo;
+&lsquo;<samp><span class="samp">--with-target-bdw-gc-lib=/opt/bdw-gc/lib64,32=/opt-bdw-gc/lib32</span></samp>&rsquo;). 
+If none of these options are specified, the library is assumed in
+default locations. 
 </dl>
 
    <p><hr />

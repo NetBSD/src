@@ -1,6 +1,6 @@
-/*	Id: mdoc_state.c,v 1.4 2017/01/10 13:47:00 schwarze Exp  */
+/*	Id: mdoc_state.c,v 1.15 2019/01/01 07:42:04 schwarze Exp  */
 /*
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
  */
 #include <sys/types.h>
 
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,20 +25,18 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 #define STATE_ARGS  struct roff_man *mdoc, struct roff_node *n
 
 typedef	void	(*state_handler)(STATE_ARGS);
 
-static	void	 state_bd(STATE_ARGS);
 static	void	 state_bl(STATE_ARGS);
-static	void	 state_dl(STATE_ARGS);
 static	void	 state_sh(STATE_ARGS);
 static	void	 state_sm(STATE_ARGS);
 
-static	const state_handler state_handlers[MDOC_MAX] = {
-	NULL,		/* Ap */
+static	const state_handler state_handlers[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Dd */
 	NULL,		/* Dt */
 	NULL,		/* Os */
@@ -44,14 +44,15 @@ static	const state_handler state_handlers[MDOC_MAX] = {
 	NULL,		/* Ss */
 	NULL,		/* Pp */
 	NULL,		/* D1 */
-	state_dl,	/* Dl */
-	state_bd,	/* Bd */
+	NULL,		/* Dl */
+	NULL,		/* Bd */
 	NULL,		/* Ed */
 	state_bl,	/* Bl */
 	NULL,		/* El */
 	NULL,		/* It */
 	NULL,		/* Ad */
 	NULL,		/* An */
+	NULL,		/* Ap */
 	NULL,		/* Ar */
 	NULL,		/* Cd */
 	NULL,		/* Cm */
@@ -154,11 +155,8 @@ static	const state_handler state_handlers[MDOC_MAX] = {
 	NULL,		/* En */
 	NULL,		/* Dx */
 	NULL,		/* %Q */
-	NULL,		/* br */
-	NULL,		/* sp */
 	NULL,		/* %U */
 	NULL,		/* Ta */
-	NULL,		/* ll */
 };
 
 
@@ -167,76 +165,39 @@ mdoc_state(struct roff_man *mdoc, struct roff_node *n)
 {
 	state_handler handler;
 
-	if (n->tok == TOKEN_NONE)
+	if (n->tok == TOKEN_NONE || n->tok < ROFF_MAX)
 		return;
 
-	if ( ! (mdoc_macros[n->tok].flags & MDOC_PROLOGUE))
+	assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
+	if ((mdoc_macro(n->tok)->flags & MDOC_PROLOGUE) == 0)
 		mdoc->flags |= MDOC_PBODY;
 
-	handler = state_handlers[n->tok];
+	handler = state_handlers[n->tok - MDOC_Dd];
 	if (*handler)
 		(*handler)(mdoc, n);
-}
-
-void
-mdoc_state_reset(struct roff_man *mdoc)
-{
-
-	roff_setreg(mdoc->roff, "nS", 0, '=');
-	mdoc->flags = 0;
-}
-
-static void
-state_bd(STATE_ARGS)
-{
-	enum mdocargt arg;
-
-	if (n->type != ROFFT_HEAD &&
-	    (n->type != ROFFT_BODY || n->end != ENDBODY_NOT))
-		return;
-
-	if (n->parent->args == NULL)
-		return;
-
-	arg = n->parent->args->argv[0].arg;
-	if (arg != MDOC_Literal && arg != MDOC_Unfilled)
-		return;
-
-	state_dl(mdoc, n);
 }
 
 static void
 state_bl(STATE_ARGS)
 {
+	struct mdoc_arg	*args;
+	size_t		 i;
 
 	if (n->type != ROFFT_HEAD || n->parent->args == NULL)
 		return;
 
-	switch(n->parent->args->argv[0].arg) {
-	case MDOC_Diag:
-		n->norm->Bl.type = LIST_diag;
-		break;
-	case MDOC_Column:
-		n->norm->Bl.type = LIST_column;
-		break;
-	default:
-		break;
-	}
-}
-
-static void
-state_dl(STATE_ARGS)
-{
-
-	switch (n->type) {
-	case ROFFT_HEAD:
-		mdoc->flags |= MDOC_LITERAL;
-		break;
-	case ROFFT_BODY:
-		mdoc->flags &= ~MDOC_LITERAL;
-		break;
-	default:
-		break;
+	args = n->parent->args;
+	for (i = 0; i < args->argc; i++) {
+		switch(args->argv[i].arg) {
+		case MDOC_Diag:
+			n->norm->Bl.type = LIST_diag;
+			return;
+		case MDOC_Column:
+			n->norm->Bl.type = LIST_column;
+			return;
+		default:
+			break;
+		}
 	}
 }
 

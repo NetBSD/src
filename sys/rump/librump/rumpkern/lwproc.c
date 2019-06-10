@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.40 2016/04/24 07:45:10 martin Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.40.18.1 2019/06/10 22:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,11 +28,12 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40 2016/04/24 07:45:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40.18.1 2019/06/10 22:09:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/lwp.h>
@@ -42,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40 2016/04/24 07:45:10 martin Exp $");
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/uidinfo.h>
+#include <sys/psref.h>
 
 #include <rump-sys/kern.h>
 
@@ -326,6 +328,7 @@ lwproc_freelwp(struct lwp *l)
 
 	if (l->l_name)
 		kmem_free(l->l_name, MAXCOMLEN);
+	fstrans_lwp_dtor(l);
 	lwp_finispecific(l);
 
 	lwproc_curlwpop(RUMPUSER_LWP_DESTROY, l);
@@ -370,6 +373,7 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	lwp_update_creds(l);
 	lwp_initspecific(l);
+	PSREF_DEBUG_INIT_LWP(l);
 
 	membar_enter();
 	lwproc_curlwpop(RUMPUSER_LWP_CREATE, l);

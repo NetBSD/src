@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2017 Free Software Foundation, Inc.
+# Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,6 +44,9 @@ gdb_test "python print (objfile.filename)" "${testfile}" \
 
 gdb_test "python print (objfile.username)" "${testfile}" \
   "Get objfile user name"
+
+gdb_test "python print (objfile)" \
+    "<gdb.Objfile filename=[string_to_regexp ${binfile}]>"
 
 gdb_test_no_output "python dir(objfile)"
 
@@ -149,3 +152,9 @@ if [remote_file host exists "${symlink_binary}"] {
     gdb_test "python print (gdb.lookup_objfile (\"${symlink_binary}\").filename)" \
 	"${testfile}" "gdb.lookup_objfile of symlinked binary"
 }
+
+# Test printing an Objfile object that is no longer valid.
+gdb_py_test_silent_cmd "python objfile = gdb.objfiles()\[0\]" \
+    "get first objfile" 1
+gdb_file_cmd ${binfile}
+gdb_test "python print(objfile)" "<gdb.Objfile \\\(invalid\\\)>"

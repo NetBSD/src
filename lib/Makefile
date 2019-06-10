@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258 2018/06/28 10:14:27 christos Exp $
+#	$NetBSD: Makefile,v 1.258.2.1 2019/06/10 22:05:12 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
-		libossaudio libpci libpmc libposix libprop libpthread \
+		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
@@ -50,6 +50,12 @@ SUBDIR+=	librumpclient
 SUBDIR+=	libskey
 .endif
 
+.if ${MACHINE_ARCH} == "x86_64" && ${MLIBDIR:Unone} != "i386"
+SUBDIR+=	libnvmm
+.endif
+
+SUBDIR+=	../external/public-domain/sqlite/lib
+
 .if (${MKMDNS} != "no")
 SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
@@ -67,6 +73,8 @@ SUBDIR+=	../external/bsd/sljit/lib
 SUBDIR+=	libbpfjit
 .endif
 
+SUBDIR+=	../external/bsd/libnv/lib
+
 .if (${MKZFS} != "no")
 SUBDIR+=        ../external/cddl/osnet/lib/libavl
 SUBDIR+=        ../external/cddl/osnet/lib/libnvpair
@@ -76,9 +84,9 @@ SUBDIR+=        ../external/cddl/osnet/lib/libuutil
 
 SUBDIR+=	../external/mit/expat/lib
 
-SUBDIR+=	../external/public-domain/sqlite/lib
-
 SUBDIR+=	../external/gpl2/libmalloc
+
+SUBDIR+=	../external/bsd/jemalloc/lib
 
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
@@ -130,7 +138,7 @@ SUBDIR+=	librumpuser	# depends on libpthread
 .endif
 
 .if (${MKNPF} != "no")
-SUBDIR+=	libnpf		# depends on libprop
+SUBDIR+=	libnpf		# depends on libnv
 .endif
 
 SUBDIR+=	../crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib # depends on libcrypt
@@ -162,6 +170,10 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
 
+.if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
+SUBDIR+=	../external/bsd/llvm/include
+.endif
+
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -170,6 +182,10 @@ SUBDIR+=	.WAIT
 SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif
 .endfor
+
+.if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
+SUBDIR+=	../external/bsd/llvm/librt
+.endif
 
 SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
 
@@ -220,7 +236,7 @@ SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 SUBDIR+=	.WAIT
 
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
-SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
+SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
 .if ${MKUNBOUND} != "no"
 SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
 .endif

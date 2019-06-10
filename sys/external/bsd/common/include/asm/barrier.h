@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.3 2017/09/11 07:33:45 maya Exp $	*/
+/*	$NetBSD: barrier.h,v 1.3.6.1 2019/06/10 22:07:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#else
+#define	MULTIPROCESSOR	1	/* safer to assume multiprocessor */
 #endif
 
 #define	mb	membar_sync

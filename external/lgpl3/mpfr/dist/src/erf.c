@@ -1,6 +1,6 @@
 /* mpfr_erf -- error function of a floating-point number
 
-Copyright 2001, 2003-2016 Free Software Foundation, Inc.
+Copyright 2001, 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,14 +23,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
-#define EXP1 2.71828182845904523536 /* exp(1) */
-
 static int mpfr_erf_0 (mpfr_ptr, mpfr_srcptr, double, mpfr_rnd_t);
 
 int
 mpfr_erf (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
   mpfr_t xf;
+  mp_limb_t xf_limb[(53 - 1) / GMP_NUMB_BITS + 1];
   int inex, large;
   MPFR_SAVE_EXPO_DECL (expo);
 
@@ -110,13 +109,11 @@ mpfr_erf (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
          the error term x^2/3 is not that small. */
     }
 
-  mpfr_init2 (xf, 53);
-  mpfr_const_log2 (xf, MPFR_RNDU);
-  mpfr_div (xf, x, xf, MPFR_RNDZ); /* round to zero ensures we get a lower
-                                     bound of |x/log(2)| */
+  MPFR_TMP_INIT1(xf_limb, xf, 53);
+  mpfr_div (xf, x, __gmpfr_const_log2_RNDU, MPFR_RNDZ); /* round to zero
+                        ensures we get a lower bound of |x/log(2)| */
   mpfr_mul (xf, xf, x, MPFR_RNDZ);
   large = mpfr_cmp_ui (xf, MPFR_PREC (y) + 1) > 0;
-  mpfr_clear (xf);
 
   /* when x goes to infinity, we have erf(x) = 1 - 1/sqrt(Pi)/exp(x^2)/x + ...
      and |erf(x) - 1| <= exp(-x^2) is true for any x >= 0, thus if
@@ -157,15 +154,21 @@ mpfr_erf (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 static double
 mul_2exp (double x, mpfr_exp_t e)
 {
-  if (e > 0)
+  /* Most of the times, the argument is negative */
+  if (MPFR_UNLIKELY (e > 0))
     {
       while (e--)
         x *= 2.0;
     }
   else
     {
+      while (e <= -16)
+        {
+          x *= (1.0 / 65536.0);
+          e += 16;
+        }
       while (e++)
-        x /= 2.0;
+        x *= 0.5;
     }
 
   return x;
@@ -188,6 +191,7 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
   unsigned int k;
   int log2tauk;
   int inex;
+  MPFR_GROUP_DECL (group);
   MPFR_ZIV_DECL (loop);
 
   n = MPFR_PREC (res); /* target precision */
@@ -195,10 +199,7 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
   /* initial working precision */
   m = n + (mpfr_prec_t) (xf2 / LOG2) + 8 + MPFR_INT_CEIL_LOG2 (n);
 
-  mpfr_init2 (y, m);
-  mpfr_init2 (s, m);
-  mpfr_init2 (t, m);
-  mpfr_init2 (u, m);
+  MPFR_GROUP_INIT_4(group, m, y, s, t, u);
 
   MPFR_ZIV_INIT (loop, m);
   for (;;)
@@ -243,20 +244,13 @@ mpfr_erf_0 (mpfr_ptr res, mpfr_srcptr x, double xf2, mpfr_rnd_t rnd_mode)
 
       /* Actualisation of the precision */
       MPFR_ZIV_NEXT (loop, m);
-      mpfr_set_prec (y, m);
-      mpfr_set_prec (s, m);
-      mpfr_set_prec (t, m);
-      mpfr_set_prec (u, m);
-
+      MPFR_GROUP_REPREC_4 (group, m, y, s, t, u);
     }
   MPFR_ZIV_FREE (loop);
 
   inex = mpfr_set (res, s, rnd_mode);
 
-  mpfr_clear (y);
-  mpfr_clear (t);
-  mpfr_clear (u);
-  mpfr_clear (s);
+  MPFR_GROUP_CLEAR (group);
 
   return inex;
 }

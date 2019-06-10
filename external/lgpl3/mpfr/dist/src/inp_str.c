@@ -1,7 +1,7 @@
 /* mpfr_inp_str -- input a number in base BASE from stdio stream STREAM
                    and store the result in ROP
 
-Copyright 1999, 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2002, 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -41,7 +41,7 @@ mpfr_inp_str (mpfr_ptr rop, FILE *stream, int base, mpfr_rnd_t rnd_mode)
     stream = stdin;
 
   alloc_size = 100;
-  str = (unsigned char *) (*__gmp_allocate_func) (alloc_size);
+  str = (unsigned char *) mpfr_allocate_func (alloc_size);
   str_size = 0;
   nread = 0;
 
@@ -62,7 +62,7 @@ mpfr_inp_str (mpfr_ptr rop, FILE *stream, int base, mpfr_rnd_t rnd_mode)
           size_t old_alloc_size = alloc_size;
           alloc_size = alloc_size * 3 / 2;
           str = (unsigned char *)
-            (*__gmp_reallocate_func) (str, old_alloc_size, alloc_size);
+            mpfr_reallocate_func (str, old_alloc_size, alloc_size);
         }
       if (c == EOF || isspace (c))
         break;
@@ -80,7 +80,7 @@ mpfr_inp_str (mpfr_ptr rop, FILE *stream, int base, mpfr_rnd_t rnd_mode)
   str[str_size] = '\0';
 
   retval = mpfr_set_str (rop, (char *) str, base, rnd_mode);
-  (*__gmp_free_func) (str, alloc_size);
+  mpfr_free_func (str, alloc_size);
 
   if (retval == -1)
     return 0;                   /* error */

@@ -1,4 +1,4 @@
-# Copyright 2003-2017 Free Software Foundation, Inc.
+# Copyright 2003-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ gdb_load ${binfile}
 #
 
 if ![runto_main] then {
-    gdb_suppress_tests
+    fail "can't run to main"
+    return 0
 }
 
 gdb_test "b marker" "Breakpoint 2 at.*file.*e500-abi.c, line \[0-9\]+." "break marker"

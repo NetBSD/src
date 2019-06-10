@@ -8,6 +8,7 @@
 # For 64-bit unsigned convert, test values 1.5, LONG_MAX, and ULONG_MAX.
 
 	.data
+	.align 4
 fm1p5:
 	.word	3217031168
 fimax:

@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.48.2.1 2019/06/10 22:05:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.48.2.1 2019/06/10 22:05:32 christos Exp $");
 #endif
 
 #include <err.h>
@@ -625,9 +625,11 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 			goto bail_err;
 
 		ret = verify(p, fd);
-		if (ret == -1)
+		if (ret == -1) {
+			(void)unconfigure_fd(fd);
 			goto bail_err;
-		if (!ret)
+		}
+		if (ret == 0)		/* success */
 			break;
 
 		(void)unconfigure_fd(fd);
@@ -644,7 +646,8 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	params_free(p);
 	(void)prog_close(fd);
 	return 0;
-bail_err:
+
+ bail_err:;
 	params_free(p);
 	(void)prog_close(fd);
 	return -1;
@@ -701,7 +704,7 @@ opendisk_werror(const char *cgd, char *buf, size_t buflen)
 {
 	int	fd;
 
-	VPRINTF(3, ("opendisk_werror(%s, %s, %zu) called.\n", cgd, buf, buflen));
+	VPRINTF(3, ("opendisk_werror(%s, %s, %zu) called.\n", cgd,buf,buflen));
 
 	/* sanity */
 	if (!cgd || !buf)
@@ -830,7 +833,7 @@ verify_mbr(int fd)
 
 	memcpy(&mbr, buf, sizeof(mbr));
 	if (le16toh(mbr.mbr_magic) != MBR_MAGIC)
-		return -1;
+		return 1;
 
 	return 0;
 }
@@ -916,15 +919,15 @@ verify_gpt(int fd)
 		return -1;
 	}
 
-	ret = -1;
-	for (blksize=DEV_BSIZE;
-             (off = blksize * GPT_HDR_BLKNO) <= SCANSIZE - sizeof(hdr);
+	ret = 1;
+	for (blksize = DEV_BSIZE;
+             (off = (blksize * GPT_HDR_BLKNO)) <= SCANSIZE - sizeof(hdr);
              blksize <<= 1) {
 
 		memcpy(&hdr, &buf[off], sizeof(hdr));
-		if (memcmp(hdr.hdr_sig, GPT_HDR_SIG, sizeof(hdr.hdr_sig)) == 0 &&
-		    le32toh(hdr.hdr_revision) == GPT_HDR_REVISION &&
-		    le32toh(hdr.hdr_size) == GPT_HDR_SIZE) {
+		if (memcmp(hdr.hdr_sig, GPT_HDR_SIG, sizeof(hdr.hdr_sig)) == 0
+		    && le32toh(hdr.hdr_revision) == GPT_HDR_REVISION
+		    && le32toh(hdr.hdr_size) == GPT_HDR_SIZE) {
 
 			hdr.hdr_crc_self = 0;
 			if (crc32(&hdr, sizeof(hdr))) {
@@ -991,7 +994,9 @@ verify_reenter(struct params *p)
 
 		/* add a compat flag till the _OLD method goes away */
 		key = getkey_pkcs5_pbkdf2("re-enter device", kg,
-			bits_len(orig_key), kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD);
+			bits_len(orig_key),
+			kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD);
+
 		ret = !bits_match(key, orig_key);
 
 		bits_free(key);
@@ -1111,7 +1116,7 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 	}
 
 	return params_cput(p, outfile);
-bail:
+ bail:;
 	params_free(oldp);
 	return -1;
 }
@@ -1139,7 +1144,7 @@ do_all(const char *cfile, int argc, char **argv,
 		fn = cfile;
 
 	f = fopen(fn, "r");
-	if (!f) {
+	if (f == NULL) {
 		warn("could not open config file \"%s\"", fn);
 		return -1;
 	}
@@ -1220,7 +1225,7 @@ show(const char *dev) {
 		printf("%s ", iv_method(cgu.cgu_mode));
 	}
 
-out:
+ out:;
 	putchar('\n');
 	close(fd);
 }

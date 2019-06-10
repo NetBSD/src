@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -316,6 +316,64 @@ proc test_ptype_class_objects {} {
 	    { field  public "int y;" }
 	    { method public "DynamicBar(int, int);" }
 	}
+
+    # Classes with typedefs of different access.
+
+    cp_test_ptype_class \
+	"class class_with_typedefs" "" "class" "class_with_typedefs" \
+	{
+	    { field protected \
+		  "class_with_typedefs::public_int public_int_;" }
+	    { field protected \
+		  "class_with_typedefs::protected_int protected_int_;" }
+	    { field protected \
+		  "class_with_typedefs::private_int private_int_;" }
+	    { method public "class_with_typedefs(void);" }
+	    { method public "class_with_typedefs::public_int add_public(class_with_typedefs::public_int);" }
+	    { method public \
+		  "class_with_typedefs::public_int add_all(int);" }
+	    { method protected "class_with_typedefs::protected_int add_protected(class_with_typedefs::protected_int);" }
+	    { method private "class_with_typedefs::private_int add_private(class_with_typedefs::private_int);" }
+	    { typedef public "typedef int public_int;" }
+	    { typedef protected "typedef int protected_int;" }
+	    { typedef private "typedef int private_int;" }
+	}
+
+    cp_test_ptype_class \
+	"class class_with_public_typedef" "" "class" \
+	"class_with_public_typedef" {
+	    { field private "int a;" }
+	    { field public "class_with_public_typedef::INT b;" }
+	    { typedef public "typedef int INT;" }
+	}
+    cp_test_ptype_class \
+	"class class_with_protected_typedef" "" "class" \
+	"class_with_protected_typedef" {
+	    { field private "int a;" }
+	    { field protected "class_with_protected_typedef::INT b;" }
+	    { typedef protected "typedef int INT;" }
+	}
+    cp_test_ptype_class \
+	"struct struct_with_protected_typedef" "" "struct" \
+	"struct_with_protected_typedef" {
+	    { field public "int a;" }
+	    { field protected "struct_with_protected_typedef::INT b;" }
+	    { typedef protected "typedef int INT;" }
+	}
+    cp_test_ptype_class \
+	"struct struct_with_private_typedef" "" "struct" \
+	"struct_with_private_typedef" {
+	    { field public "int a;" }
+	    { field private "struct_with_private_typedef::INT b;" }
+	    { typedef private "typedef int INT;" }
+	}
+
+    # For the following two cases, we cannot use cp_test_ptype_class.
+    # We need to explicitly check whether the access label was suppressed.
+    set ws {[ \t\r\n]*}
+    foreach {tag lbl} {"class" "private" "struct" "public"} {
+	gdb_test "ptype/r ${tag}_with_${lbl}_typedef" "type = $tag ${tag}_with_${lbl}_typedef \{${ws}int a;${ws}${tag}_with_${lbl}_typedef::INT b;${ws}typedef int INT;${ws}\}"
+    }
 }
 
 # Test simple access to class members.
@@ -544,6 +602,11 @@ proc test_static_members {} {
     gdb_test "print cnsi" \
 	"{x = 30, y = 40, static null = {x = 0, y = 0, static null = <same as static member of an already seen type>, static yy = {z = 5, static xx = {x = 1, y = 2, static null = <same as static member of an already seen type>, static yy = <same as static member of an already seen type>}}}, static yy = <same as static member of an already seen type>}" \
 	"print cnsi with static members"
+
+    # Another case of infinite recursion.
+    gdb_test "print Outer::instance" \
+	"{inner = {static instance = {static instance = <same as static member of an already seen type>}}, static instance = {inner = {static instance = {static instance = <same as static member of an already seen type>}}, static instance = <same as static member of an already seen type>}}" \
+	"print recursive static member"
 }
 
 proc do_tests {} {

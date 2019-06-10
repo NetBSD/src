@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/08/04 23:53:47 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2019/06/10 22:09:38 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ KMOD=	slcompress
 SRCS=	slcompress.c
 
 CPPFLAGS+=	-DINET
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

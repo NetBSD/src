@@ -1,5 +1,5 @@
 ;;  Machine Description for Renesas RL78 processors
-;;  Copyright (C) 2011-2015 Free Software Foundation, Inc.
+;;  Copyright (C) 2011-2016 Free Software Foundation, Inc.
 ;;  Contributed by Red Hat.
 
 ;; This file is part of GCC.
@@ -194,7 +194,7 @@
 )
 
 (define_insn "*andqi3_real"
-  [(set (match_operand:QI         0 "rl78_nonimmediate_operand"  "=Wsf,A,R,vWsa")
+  [(set (match_operand:QI         0 "rl78_nonimmediate_operand"  "=WsfWsaWhlWab,A,R,vWsa")
 	(and:QI (match_operand:QI 1 "rl78_general_operand"       "%0,0,0,0")
 		(match_operand:QI 2 "rl78_general_operand"       "IBqi,iRvWabWhbWh1Whl,A,i")))
    ]
@@ -208,7 +208,7 @@
 )
 
 (define_insn "*iorqi3_real"
-  [(set (match_operand:QI         0 "rl78_nonimmediate_operand"  "=Wsf,A,R,vWsa")
+  [(set (match_operand:QI         0 "rl78_nonimmediate_operand"  "=WsfWsaWhlWab,A,R,vWsa")
 	(ior:QI (match_operand:QI 1 "rl78_general_operand"       "%0,0,0,0")
 		(match_operand:QI 2 "rl78_general_operand"       "Ibqi,iRvWabWhbWh1Whl,A,i")))
    ]
@@ -342,6 +342,25 @@
   [(set (attr "update_Z") (const_string "clobber"))]
   )
 
+;; Peephole to match:
+;;
+;;	(set (reg1) (reg2))
+;;	(call (mem (reg1)))
+;;
+;;  and replace it with:
+;;
+;;	(call (mem (reg2)))
+
+(define_peephole2
+  [(set (match_operand:HI 0 "register_operand") (match_operand:HI 1 "register_operand"))
+   (call (mem:HI (match_dup 0))(const_int 0))
+  ]
+  "peep2_regno_dead_p (2, REGNO (operands[0]))
+   && REGNO (operands[1]) < 8"
+  [(call (mem:HI (match_dup 1))(const_int 0))
+  ]
+)
+
 (define_insn "*call_value_real"
   [(set (match_operand 0 "register_operand" "=v,v")
 	(call (match_operand:HI 1 "memory_operand" "Wab,Wca")
@@ -352,6 +371,25 @@
    call\t%A1"
   [(set (attr "update_Z") (const_string "clobber"))]
   )
+
+;; Peephole to match:
+;;
+;;	(set (reg1) (reg2))
+;;	(set (reg3) (call (mem (reg1))))
+;;
+;;  and replace it with:
+;;
+;;	(set (reg3) (call (mem (reg2))))
+
+(define_peephole2
+  [(set (match_operand:HI 0 "register_operand") (match_operand:HI 1 "register_operand"))
+   (set (match_operand:HI 2 "register_operand") (call (mem:HI (match_dup 0))(const_int 0)))
+  ]
+  "peep2_regno_dead_p (2, REGNO (operands[0]))
+   && REGNO (operands[1]) < 8"
+  [(set (match_dup 2) (call (mem:HI (match_dup 1))(const_int 0)))
+  ]
+)
 
 (define_insn "*cbranchqi4_real_signed"
   [(set (pc) (if_then_else
@@ -551,7 +589,7 @@
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
   ""
-  "bf\tA.%B0, $%1"
+  "bt\tA.%B0, $1f\n\tbr !!%1\n\t1:"
   [(set (attr "update_Z") (const_string "clobber"))]
 )
 
@@ -563,7 +601,7 @@
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
   ""
-  "bt\tA.%B0, $%1"
+  "bf\tA.%B0, $1f\n\tbr !!%1\n\t1:"
   [(set (attr "update_Z") (const_string "clobber"))]
 )
 

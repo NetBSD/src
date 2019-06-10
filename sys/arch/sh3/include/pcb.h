@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9.88.1 2019/06/10 22:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 struct pcb {
 	struct switchframe pcb_sf;	/* kernel context for resume */
 	void *	pcb_onfault;		/* for copyin/out fault */
-	int	pcb_faultbail;		/* bail out before call uvm_fault. */
 };
 
 extern struct pcb *curpcb;

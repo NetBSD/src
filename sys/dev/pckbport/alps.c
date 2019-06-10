@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $ */
+/* $NetBSD: alps.c,v 1.10.2.1 2019/06/10 22:07:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.10.2.1 2019/06/10 22:07:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,13 +340,13 @@ pms_alps_cm_write_nibble(pckbport_tag_t tag, pckbport_slot_t slot, uint8_t nibbl
 	uint8_t cmd[2];
 	uint8_t resp[3];
 	int sendparam;
-	int recieve;
+	int receive;
 	int res;
 
 	sendparam = alps_v7_nibble_command_data_arr[nibble].sendparam;
-	recieve= alps_v7_nibble_command_data_arr[nibble].recieve;
+	receive= alps_v7_nibble_command_data_arr[nibble].receive;
 	cmd[0] = alps_v7_nibble_command_data_arr[nibble].command;
-	if (recieve) {
+	if (receive) {
 		if ((res = pckbport_poll_cmd(tag, slot, cmd, 1, 3, resp, 0)) != 0) {
 			aprint_error("send nibble error: %d\n", res);
 		}
@@ -714,8 +714,10 @@ pms_alps_probe_init(void *opaque)
 		/* V7 device in Toshiba dynabook R63/PS */
 		sc->version = ALPS_PROTO_V7;
 	} else if ((e7sig[0] == 0x73) && (e7sig[1] == 0x02) &&
-		(e7sig[2] == 0x14)) {
-		/* V2 device in NEC VJ22MF-7 (VersaPro JVF-7) */
+		((e7sig[2] == 0x14) || (e7sig[2] == 0x0a))) {
+		/* 0x14: V2 device in NEC VJ22MF-7 (VersaPro JVF-7) */
+		/* 0x0a: V2 devices in Toshiba dynabook satellite B551/D
+			 and dynabook SS RX1 */
 		sc->version = ALPS_PROTO_V2;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.365 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.365.2.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,11 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365 2018/04/01 04:35:03 ryo Exp $");
+#ifdef DDB
+#include <arm/db_machdep.h>
+#endif
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365.2.1 2019/06/10 22:05:51 christos Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -257,6 +261,13 @@ int pmapdebug = 0;
 #else	/* PMAP_DEBUG */
 #define NPDEBUG(_lev_,_stat_) /* Nothing */
 #endif	/* PMAP_DEBUG */
+
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
 
 /*
  * pmap_kernel() points here
@@ -510,6 +521,7 @@ static size_t cnptes;
 vaddr_t memhook;			/* used by mem.c & others */
 kmutex_t memlock __cacheline_aligned;	/* used by mem.c & others */
 kmutex_t pmap_lock __cacheline_aligned;
+kmutex_t kpm_lock __cacheline_aligned;
 extern void *msgbufaddr;
 int pmap_kmpages;
 /*
@@ -531,25 +543,22 @@ vaddr_t pmap_directlimit;
 static inline void
 pmap_acquire_pmap_lock(pmap_t pm)
 {
-	if (pm == pmap_kernel()) {
-#ifdef MULTIPROCESSOR
-		KERNEL_LOCK(1, NULL);
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	if (__predict_false(db_onproc != NULL))
+		return;
 #endif
-	} else {
-		mutex_enter(pm->pm_lock);
-	}
+	
+	mutex_enter(pm->pm_lock);
 }
 
 static inline void
 pmap_release_pmap_lock(pmap_t pm)
 {
-	if (pm == pmap_kernel()) {
-#ifdef MULTIPROCESSOR
-		KERNEL_UNLOCK_ONE(NULL);
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	if (__predict_false(db_onproc != NULL))
+		return;
 #endif
-	} else {
-		mutex_exit(pm->pm_lock);
-	}
+	mutex_exit(pm->pm_lock);
 }
 
 static inline void
@@ -3050,6 +3059,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #else
 	const bool vector_page_p = (va == vector_page);
 #endif
+	struct pmap_page *pp = pmap_pv_tracked(pa);
+	struct pv_entry *new_pv = NULL;
+	struct pv_entry *old_pv = NULL;
+	int error = 0;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
@@ -3065,6 +3078,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * test for a managed page by checking pg != NULL.
 	 */
 	pg = pmap_initialized ? PHYS_TO_VM_PAGE(pa) : NULL;
+	/*
+	 * if we may need a new pv entry allocate if now, as we can't do it
+	 * with the kernel_pmap locked
+	 */
+	if (pg || pp)
+		new_pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 
 	nflags = 0;
 	if (prot & VM_PROT_WRITE)
@@ -3088,7 +3107,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (l2b == NULL) {
 		if (flags & PMAP_CANFAIL) {
 			pmap_release_pmap_lock(pm);
-			return (ENOMEM);
+			error = ENOMEM;
+			goto free_pv;
 		}
 		panic("pmap_enter: failed to allocate L2 bucket");
 	}
@@ -3110,8 +3130,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			opg = pg;
 	} else
 		opg = NULL;
-
-	struct pmap_page *pp = pmap_pv_tracked(pa);
 
 	if (pg || pp) {
 		KASSERT((pg != NULL) != (pp != NULL));
@@ -3221,9 +3239,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 #endif
 			} else {
-				pmap_release_page_lock(md);
-				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
+				pv = new_pv;
+				new_pv = NULL;
 				if (pv == NULL) {
+					pmap_release_page_lock(md);
 					pmap_release_pmap_lock(pm);
 					if ((flags & PMAP_CANFAIL) == 0)
 						panic("pmap_enter: "
@@ -3234,7 +3253,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					    0, 0, 0, 0);
 					return (ENOMEM);
 				}
-				pmap_acquire_page_lock(md);
 			}
 
 			pmap_enter_pv(md, pa, pv, pm, va, nflags);
@@ -3271,9 +3289,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			paddr_t opa = VM_PAGE_TO_PHYS(opg);
 
 			pmap_acquire_page_lock(omd);
-			struct pv_entry *pv = pmap_remove_pv(omd, opa, pm, va);
+			old_pv = pmap_remove_pv(omd, opa, pm, va);
 			pmap_vac_me_harder(omd, opa, pm, 0);
-			oflags = pv->pv_flags;
+			oflags = old_pv->pv_flags;
 			pmap_release_page_lock(omd);
 
 #ifdef PMAP_CACHE_VIVT
@@ -3281,7 +3299,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				pmap_cache_wbinv_page(pm, va, true, oflags);
 			}
 #endif
-			pool_put(&pmap_pv_pool, pv);
 		}
 	}
 
@@ -3383,7 +3400,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	pmap_release_pmap_lock(pm);
 
-	return (0);
+
+	if (old_pv)
+		pool_put(&pmap_pv_pool, old_pv);
+free_pv:
+	if (new_pv)
+		pool_put(&pmap_pv_pool, new_pv);
+	return (error);
 }
 
 /*
@@ -3411,10 +3434,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 void
 pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
+	SLIST_HEAD(,pv_entry) opv_list;
+	struct pv_entry *pv, *npv;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
 	    (uintptr_t)pm, sva, eva, 0);
 
+	SLIST_INIT(&opv_list);
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
@@ -3473,7 +3499,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			 */
 			if (pg != NULL) {
 				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
-				struct pv_entry *pv;
 
 				pmap_acquire_page_lock(md);
 				pv = pmap_remove_pv(md, pa, pm, sva);
@@ -3483,7 +3508,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 					if (pm->pm_remove_all == false) {
 						flags = pv->pv_flags;
 					}
-					pool_put(&pmap_pv_pool, pv);
+					SLIST_INSERT_HEAD(&opv_list,
+					    pv, pv_link);
 				}
 			}
 			mappings += PAGE_SIZE / L2_S_SIZE;
@@ -3585,6 +3611,9 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	}
 
 	pmap_release_pmap_lock(pm);
+	SLIST_FOREACH_SAFE(pv, &opv_list, pv_link, npv) {
+		pool_put(&pmap_pv_pool, pv);
+	}
 }
 
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
@@ -3808,15 +3837,15 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	UVMHIST_LOG(maphist, " (va=%#jx, len=%#jx)", va, len, 0, 0);
 
 	const vaddr_t eva = va + len;
+	pmap_t kpm = pmap_kernel();
 
-	pmap_acquire_pmap_lock(pmap_kernel());
+	pmap_acquire_pmap_lock(kpm);
 
 	while (va < eva) {
 		vaddr_t next_bucket = L2_NEXT_BUCKET_VA(va);
 		if (next_bucket > eva)
 			next_bucket = eva;
 
-		pmap_t kpm = pmap_kernel();
 		struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
 		KDASSERT(l2b != NULL);
 
@@ -3872,7 +3901,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		total_mappings += mappings;
 #endif
 	}
-	pmap_release_pmap_lock(pmap_kernel());
+	pmap_release_pmap_lock(kpm);
 	cpu_cpwait();
 	UVMHIST_LOG(maphist, "  <--- done (%ju mappings removed)",
 	    total_mappings, 0, 0, 0);
@@ -4131,7 +4160,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		     page_size = PAGE_SIZE) {
 			if (l2pte_valid_p(*ptep)) {
 				cpu_icache_sync_range(sva,
-				    min(page_size, eva - sva));
+				    uimin(page_size, eva - sva));
 			}
 		}
 	}
@@ -5897,8 +5926,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * whoops!   we need to add kernel PTPs
 	 */
 
-	s = splhigh();	/* to be safe */
-	mutex_enter(kpm->pm_lock);
+	s = splvm();	/* to be safe */
+	mutex_enter(&kpm_lock);
 
 	/* Map 1MB at a time */
 	size_t l1slot = l1pte_index(pmap_curmaxkvaddr);
@@ -5942,7 +5971,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	cpu_cpwait();
 #endif
 
-	mutex_exit(kpm->pm_lock);
+	mutex_exit(&kpm_lock);
 	splx(s);
 
 out:
@@ -6089,14 +6118,12 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
  * spread over a number of disparate files/functions.
  *
  * We are passed the following parameters
- *  - kernel_l1pt
- *    This is a pointer to the base of the kernel's L1 translation table.
  *  - vstart
  *    1MB-aligned start of managed kernel virtual memory.
  *  - vend
  *    1MB-aligned end of managed kernel virtual memory.
  *
- * We use the first parameter to build the metadata (struct l1_ttable and
+ * We use 'kernel_l1pt' to build the metadata (struct l1_ttable and
  * struct l2_dtable) necessary to track kernel mappings.
  */
 #define	PMAP_STATIC_L2_SIZE 16
@@ -6122,9 +6149,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	KASSERT(pte_l2_s_cache_mode == pte_l2_s_cache_mode_pt);
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("kpm ");
-#endif
+	VPRINTF("kpm ");
 	/*
 	 * Initialise the kernel pmap object
 	 */
@@ -6132,14 +6157,10 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #ifdef ARM_MMU_EXTENDED
 	pm->pm_l1 = l1pt;
 	pm->pm_l1_pa = kernel_l1pt.pv_pa;
-#ifdef VERBOSE_INIT_ARM
-	printf("tlb0 ");
-#endif
+	VPRINTF("tlb0 ");
 	pmap_tlb_info_init(&pmap_tlb0_info);
 #ifdef MULTIPROCESSOR
-#ifdef VERBOSE_INIT_ARM
-	printf("kcpusets ");
-#endif
+	VPRINTF("kcpusets ");
 	pm->pm_onproc = kcpuset_running;
 	pm->pm_active = kcpuset_running;
 #endif
@@ -6147,25 +6168,18 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	pm->pm_l1 = l1;
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("locks ");
-#endif
-#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
-	if (arm_cache_prefer_mask != 0) {
-		mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
-	} else {
-#endif
-		mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
-#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
-	}
-#endif
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	VPRINTF("locks ");
+	/*
+	 * pmap_kenter_pa() and pmap_kremove() may be called from interrupt
+	 * context, so its locks have to be at IPL_VM
+	 */
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&kpm_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_VM);
 	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
 	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
 
-#ifdef VERBOSE_INIT_ARM
-	printf("l1pt ");
-#endif
+	VPRINTF("l1pt ");
 	/*
 	 * Scan the L1 translation table created by initarm() and create
 	 * the required metadata for all valid mappings found in it.
@@ -6240,9 +6254,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 		}
 	}
 
-#ifdef VERBOSE_INIT_ARM
-	printf("cache(l1pt) ");
-#endif
+	VPRINTF("cache(l1pt) ");
 	/*
 	 * Ensure the primary (kernel) L1 has the correct cache mode for
 	 * a page table. Bitch if it is not correctly set.
@@ -6269,9 +6281,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	virtual_avail = vstart;
 	virtual_end = vend;
 
-#ifdef VERBOSE_INIT_ARM
-	printf("specials ");
-#endif
+	VPRINTF("specials ");
 #ifdef PMAP_CACHE_VIPT
 	/*
 	 * If we have a VIPT cache, we need one page/pte per possible alias
@@ -6344,9 +6354,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 		pm->pm_pl1vec = NULL;
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("pools ");
-#endif
+	VPRINTF("pools ");
 	/*
 	 * Initialize the pmap cache
 	 */
@@ -6368,8 +6376,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
-	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL, 0,
-	    L2_TABLE_SIZE_REAL, 0, "l2ptppl", NULL, IPL_NONE,
+	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL,
+	    L2_TABLE_SIZE_REAL, 0, 0, "l2ptppl", NULL, IPL_NONE,
 	    pmap_l2ptp_ctor, NULL, NULL);
 
 	mutex_init(&memlock, MUTEX_DEFAULT, IPL_NONE);
@@ -6749,10 +6757,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 	if (l1pt == 0)
 		panic("pmap_map_chunk: no L1 table provided");
 
-#ifdef VERBOSE_INIT_ARM
-	printf("pmap_map_chunk: pa=0x%lx va=0x%lx size=0x%lx resid=0x%lx "
-	    "prot=0x%x cache=%d\n", pa, va, size, resid, prot, cache);
-#endif
+// 	VPRINTF("pmap_map_chunk: pa=0x%lx va=0x%lx size=0x%lx resid=0x%lx "
+// 	    "prot=0x%x cache=%d\n", pa, va, size, resid, prot, cache);
 
 	switch (cache) {
 	case PTE_NOCACHE:
@@ -6779,21 +6785,19 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 
 	while (resid > 0) {
 		const size_t l1slot = l1pte_index(va);
-#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+#ifdef ARM_MMU_EXTENDED
 		/* See if we can use a supersection mapping. */
 		if (L1_SS_PROTO && L1_SS_MAPPABLE_P(va, pa, resid)) {
 			/* Supersection are always domain 0 */
 			const pd_entry_t npde = L1_SS_PROTO | pa
-#ifdef ARM_MMU_EXTENDED
 			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
 			    | (va & 0x80000000 ? 0 : L1_S_V6_nG)
-#endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1;
-#ifdef VERBOSE_INIT_ARM
-			printf("sS");
-#endif
+			VPRINTF("sS");
 			l1pte_set(&pdep[l1slot], npde);
 			PDE_SYNC_RANGE(&pdep[l1slot], L1_SS_SIZE / L1_S_SIZE);
+//			VPRINTF("\npmap_map_chunk: pa=0x%lx va=0x%lx resid=0x%08lx "
+//			    "npdep=%p pde=0x%x\n", pa, va, resid, &pdep[l1slot], npde);
 			va += L1_SS_SIZE;
 			pa += L1_SS_SIZE;
 			resid -= L1_SS_SIZE;
@@ -6809,11 +6813,11 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1
 			    | L1_S_DOM(PMAP_DOMAIN_KERNEL);
-#ifdef VERBOSE_INIT_ARM
-			printf("S");
-#endif
+			VPRINTF("S");
 			l1pte_set(&pdep[l1slot], npde);
 			PDE_SYNC(&pdep[l1slot]);
+//			VPRINTF("\npmap_map_chunk: pa=0x%lx va=0x%lx resid=0x%08lx "
+//			    "npdep=%p pde=0x%x\n", pa, va, resid, &pdep[l1slot], npde);
 			va += L1_S_SIZE;
 			pa += L1_S_SIZE;
 			resid -= L1_S_SIZE;
@@ -6843,9 +6847,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			    | (va & 0x80000000 ? 0 : L2_XS_nG)
 #endif
 			    | L2_L_PROT(PTE_KERNEL, prot) | f2l;
-#ifdef VERBOSE_INIT_ARM
-			printf("L");
-#endif
+			VPRINTF("L");
 			l2pte_set(ptep, npte, 0);
 			PTE_SYNC_RANGE(ptep, L2_L_SIZE / L2_S_SIZE);
 			va += L2_L_SIZE;
@@ -6854,9 +6856,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			continue;
 		}
 
-#ifdef VERBOSE_INIT_ARM
-		printf("P");
-#endif
+		VPRINTF("P");
 		/* Use a small page mapping. */
 		pt_entry_t npte = L2_S_PROTO | pa
 #ifdef ARM_MMU_EXTENDED
@@ -6873,11 +6873,30 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		pa += PAGE_SIZE;
 		resid -= PAGE_SIZE;
 	}
-#ifdef VERBOSE_INIT_ARM
-	printf("\n");
-#endif
+	VPRINTF("\n");
 	return (size);
 }
+
+/*
+ * pmap_unmap_chunk:
+ *
+ *	Unmap a chunk of memory that was previously pmap_map_chunk
+ */
+void
+pmap_unmap_chunk(vaddr_t l1pt, vaddr_t va, vsize_t size)
+{
+	pd_entry_t * const pdep = (pd_entry_t *) l1pt;
+	const size_t l1slot = l1pte_index(va);
+
+	KASSERT(size == L1_SS_SIZE || size == L1_S_SIZE);
+
+	l1pte_set(&pdep[l1slot], 0);
+	PDE_SYNC_RANGE(&pdep[l1slot], size / L1_S_SIZE);
+
+	pmap_tlb_flush_SE(pmap_kernel(), va, PVF_REF);
+}
+
+
 
 /********************** Static device map routines ***************************/
 
@@ -6908,18 +6927,17 @@ pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
 	pmap_devmap_table = table;
 
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-#ifdef VERBOSE_INIT_ARM
-		printf("devmap: %08lx -> %08lx @ %08lx\n",
-		    pmap_devmap_table[i].pd_pa,
-		    pmap_devmap_table[i].pd_pa +
-			pmap_devmap_table[i].pd_size - 1,
-		    pmap_devmap_table[i].pd_va);
-#endif
-		pmap_map_chunk(l1pt, pmap_devmap_table[i].pd_va,
-		    pmap_devmap_table[i].pd_pa,
-		    pmap_devmap_table[i].pd_size,
-		    pmap_devmap_table[i].pd_prot,
-		    pmap_devmap_table[i].pd_cache);
+		const struct pmap_devmap *pdp = &pmap_devmap_table[i];
+
+		KASSERTMSG(VADDR_MAX - pdp->pd_va >= pdp->pd_size - 1, "va %" PRIxVADDR
+		    " sz %" PRIxPSIZE, pdp->pd_va, pdp->pd_size);
+		KASSERTMSG(PADDR_MAX - pdp->pd_pa >= pdp->pd_size - 1, "pa %" PRIxPADDR
+		    " sz %" PRIxPSIZE, pdp->pd_pa, pdp->pd_size);
+		VPRINTF("devmap: %08lx -> %08lx @ %08lx\n", pdp->pd_pa,
+		    pdp->pd_pa + pdp->pd_size - 1, pdp->pd_va);
+
+		pmap_map_chunk(l1pt, pdp->pd_va, pdp->pd_pa, pdp->pd_size,
+		    pdp->pd_prot, pdp->pd_cache);
 	}
 }
 

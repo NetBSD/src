@@ -1,6 +1,6 @@
 /* Test case for hand function calls interrupted by a signal in another thread.
 
-   Copyright 2008-2016 Free Software Foundation, Inc.
+   Copyright 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1236,6 +1236,67 @@ mips_relocate_section (bfd *output_bfd,
 
   return TRUE;
 }
+
+static void
+mips_ecoff_swap_coff_aux_in (bfd *abfd ATTRIBUTE_UNUSED,
+			     void *ext1 ATTRIBUTE_UNUSED,
+			     int type ATTRIBUTE_UNUSED,
+			     int in_class ATTRIBUTE_UNUSED,
+			     int indx ATTRIBUTE_UNUSED,
+			     int numaux ATTRIBUTE_UNUSED,
+			     void *in1 ATTRIBUTE_UNUSED)
+{
+}
+
+static void
+mips_ecoff_swap_coff_sym_in (bfd *abfd ATTRIBUTE_UNUSED,
+			     void *ext1 ATTRIBUTE_UNUSED,
+			     void *in1 ATTRIBUTE_UNUSED)
+{
+}
+
+static void
+mips_ecoff_swap_coff_lineno_in (bfd *abfd ATTRIBUTE_UNUSED,
+				void *ext1 ATTRIBUTE_UNUSED,
+				void *in1 ATTRIBUTE_UNUSED)
+{
+}
+
+static unsigned int
+mips_ecoff_swap_coff_aux_out (bfd *abfd ATTRIBUTE_UNUSED,
+			      void *inp ATTRIBUTE_UNUSED,
+			      int type ATTRIBUTE_UNUSED,
+			      int in_class ATTRIBUTE_UNUSED,
+			      int indx ATTRIBUTE_UNUSED,
+			      int numaux ATTRIBUTE_UNUSED,
+			      void *extp ATTRIBUTE_UNUSED)
+{
+  return 0;
+}
+
+static unsigned int
+mips_ecoff_swap_coff_sym_out (bfd *abfd ATTRIBUTE_UNUSED,
+			      void *inp ATTRIBUTE_UNUSED,
+			      void *extp ATTRIBUTE_UNUSED)
+{
+  return 0;
+}
+
+static unsigned int
+mips_ecoff_swap_coff_lineno_out (bfd *abfd ATTRIBUTE_UNUSED,
+				 void *inp ATTRIBUTE_UNUSED,
+				 void *extp ATTRIBUTE_UNUSED)
+{
+  return 0;
+}
+
+static unsigned int
+mips_ecoff_swap_coff_reloc_out (bfd *abfd ATTRIBUTE_UNUSED,
+				void *inp ATTRIBUTE_UNUSED,
+				void *extp ATTRIBUTE_UNUSED)
+{
+  return 0;
+}
 
 /* This is the ECOFF backend structure.  The backend field of the
    target vector points to this.  */
@@ -1244,13 +1305,10 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 {
   /* COFF backend structure.  */
   {
-    (void (*) (bfd *,void *,int,int,int,int,void *)) bfd_void, /* aux_in */
-    (void (*) (bfd *,void *,void *)) bfd_void, /* sym_in */
-    (void (*) (bfd *,void *,void *)) bfd_void, /* lineno_in */
-    (unsigned (*) (bfd *,void *,int,int,int,int,void *)) bfd_void,/*aux_out*/
-    (unsigned (*) (bfd *,void *,void *)) bfd_void, /* sym_out */
-    (unsigned (*) (bfd *,void *,void *)) bfd_void, /* lineno_out */
-    (unsigned (*) (bfd *,void *,void *)) bfd_void, /* reloc_out */
+    mips_ecoff_swap_coff_aux_in, mips_ecoff_swap_coff_sym_in,
+    mips_ecoff_swap_coff_lineno_in, mips_ecoff_swap_coff_aux_out,
+    mips_ecoff_swap_coff_sym_out, mips_ecoff_swap_coff_lineno_out,
+    mips_ecoff_swap_coff_reloc_out,
     mips_ecoff_swap_filehdr_out, mips_ecoff_swap_aouthdr_out,
     mips_ecoff_swap_scnhdr_out,
     FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, TRUE,
@@ -1362,6 +1420,7 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 #define _bfd_ecoff_section_already_linked \
   _bfd_coff_section_already_linked
 #define _bfd_ecoff_bfd_define_common_symbol bfd_generic_define_common_symbol
+#define _bfd_ecoff_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
 #define _bfd_ecoff_bfd_define_start_stop bfd_generic_define_start_stop
 #define _bfd_ecoff_set_reloc _bfd_generic_set_reloc
 
@@ -1374,9 +1433,9 @@ const bfd_target mips_ecoff_le_vec =
   BFD_ENDIAN_LITTLE,		/* data byte order is little */
   BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   0,				/* leading underscore */
@@ -1390,26 +1449,38 @@ const bfd_target mips_ecoff_le_vec =
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
-     bfd_generic_archive_p, _bfd_dummy_target},
-  {bfd_false, _bfd_ecoff_mkobject,  /* bfd_set_format */
-     _bfd_generic_mkarchive, bfd_false},
-  {bfd_false, _bfd_ecoff_write_object_contents, /* bfd_write_contents */
-     _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    _bfd_dummy_target
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
-     BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
-     BFD_JUMP_TABLE_COPY (_bfd_ecoff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
-     BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
-     BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
-     BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
-     BFD_JUMP_TABLE_LINK (_bfd_ecoff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
+  BFD_JUMP_TABLE_COPY (_bfd_ecoff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
+  BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
+  BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
+  BFD_JUMP_TABLE_LINK (_bfd_ecoff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & mips_ecoff_be_vec,
+  &mips_ecoff_be_vec,
 
-  & mips_ecoff_backend_data
+  &mips_ecoff_backend_data
 };
 
 const bfd_target mips_ecoff_be_vec =
@@ -1419,9 +1490,9 @@ const bfd_target mips_ecoff_be_vec =
   BFD_ENDIAN_BIG,		/* data byte order is big */
   BFD_ENDIAN_BIG,		/* header byte order is big */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   0,				/* leading underscore */
@@ -1434,26 +1505,39 @@ const bfd_target mips_ecoff_be_vec =
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
      bfd_getb32, bfd_getb_signed_32, bfd_putb32,
      bfd_getb16, bfd_getb_signed_16, bfd_putb16,
- {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
-    bfd_generic_archive_p, _bfd_dummy_target},
- {bfd_false, _bfd_ecoff_mkobject, /* bfd_set_format */
-    _bfd_generic_mkarchive, bfd_false},
- {bfd_false, _bfd_ecoff_write_object_contents, /* bfd_write_contents */
-    _bfd_write_archive_contents, bfd_false},
 
-     BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
-     BFD_JUMP_TABLE_COPY (_bfd_ecoff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
-     BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
-     BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
-     BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
-     BFD_JUMP_TABLE_LINK (_bfd_ecoff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    _bfd_dummy_target
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
-  & mips_ecoff_le_vec,
+  BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
+  BFD_JUMP_TABLE_COPY (_bfd_ecoff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
+  BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
+  BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
+  BFD_JUMP_TABLE_LINK (_bfd_ecoff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & mips_ecoff_backend_data
+  &mips_ecoff_le_vec,
+
+  &mips_ecoff_backend_data
 };
 
 const bfd_target mips_ecoff_bele_vec =
@@ -1463,9 +1547,9 @@ const bfd_target mips_ecoff_bele_vec =
   BFD_ENDIAN_LITTLE,		/* data byte order is little */
   BFD_ENDIAN_BIG,		/* header byte order is big */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   0,				/* leading underscore */
@@ -1479,24 +1563,36 @@ const bfd_target mips_ecoff_bele_vec =
      bfd_getb32, bfd_getb_signed_32, bfd_putb32,
      bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
-     bfd_generic_archive_p, _bfd_dummy_target},
-  {bfd_false, _bfd_ecoff_mkobject,  /* bfd_set_format */
-     _bfd_generic_mkarchive, bfd_false},
-  {bfd_false, _bfd_ecoff_write_object_contents, /* bfd_write_contents */
-     _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    _bfd_dummy_target
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_ecoff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
-     BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
-     BFD_JUMP_TABLE_COPY (_bfd_ecoff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
-     BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
-     BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
-     BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
-     BFD_JUMP_TABLE_LINK (_bfd_ecoff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  BFD_JUMP_TABLE_GENERIC (_bfd_ecoff),
+  BFD_JUMP_TABLE_COPY (_bfd_ecoff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_ecoff),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_ecoff),
+  BFD_JUMP_TABLE_RELOCS (_bfd_ecoff),
+  BFD_JUMP_TABLE_WRITE (_bfd_ecoff),
+  BFD_JUMP_TABLE_LINK (_bfd_ecoff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   NULL,
 
-  & mips_ecoff_backend_data
+  &mips_ecoff_backend_data
 };

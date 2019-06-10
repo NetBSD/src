@@ -1,4 +1,4 @@
-/*	Id: att.c,v 1.15 2015/10/06 18:32:19 schwarze Exp  */
+/*	Id: att.c,v 1.18 2018/12/13 11:55:46 schwarze Exp  */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "roff.h"
-#include "mdoc.h"
 #include "libmdoc.h"
 
 #define LINE(x, y) \

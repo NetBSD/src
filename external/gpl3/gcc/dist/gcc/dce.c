@@ -1,5 +1,5 @@
 /* RTL dead code elimination.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,6 +25,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "predict.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "emit-rtl.h"  /* FIXME: Can go away once crtl is moved to rtl.h.  */
 #include "cfgrtl.h"
@@ -130,6 +131,12 @@ deletable_insn_p (rtx_insn *insn, bool fast, bitmap arg_stores)
 	     && REGNO (pic_offset_table_rtx) >= FIRST_PSEUDO_REGISTER)
       return false;
 
+  /* Callee-save restores are needed.  */
+  if (RTX_FRAME_RELATED_P (insn)
+      && crtl->shrink_wrapped_separate
+      && find_reg_note (insn, REG_CFA_RESTORE, NULL))
+    return false;
+
   body = PATTERN (insn);
   switch (GET_CODE (body))
     {
@@ -233,16 +240,17 @@ mark_nonreg_stores (rtx body, rtx_insn *insn, bool fast)
 }
 
 
-/* Return true if store to MEM, starting OFF bytes from stack pointer,
+/* Return true if a store to SIZE bytes, starting OFF bytes from stack pointer,
    is a call argument store, and clear corresponding bits from SP_BYTES
    bitmap if it is.  */
 
 static bool
-check_argument_store (rtx mem, HOST_WIDE_INT off, HOST_WIDE_INT min_sp_off,
-		      HOST_WIDE_INT max_sp_off, bitmap sp_bytes)
+check_argument_store (HOST_WIDE_INT size, HOST_WIDE_INT off,
+		      HOST_WIDE_INT min_sp_off, HOST_WIDE_INT max_sp_off,
+		      bitmap sp_bytes)
 {
   HOST_WIDE_INT byte;
-  for (byte = off; byte < off + GET_MODE_SIZE (GET_MODE (mem)); byte++)
+  for (byte = off; byte < off + size; byte++)
     {
       if (byte < min_sp_off
 	  || byte >= max_sp_off
@@ -467,8 +475,8 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
 	    break;
 	}
 
-      if (GET_MODE_SIZE (GET_MODE (mem)) == 0
-	  || !check_argument_store (mem, off, min_sp_off,
+      if (!MEM_SIZE_KNOWN_P (mem)
+	  || !check_argument_store (MEM_SIZE (mem), off, min_sp_off,
 				    max_sp_off, sp_bytes))
 	break;
 
@@ -558,9 +566,19 @@ delete_unmarked_insns (void)
     FOR_BB_INSNS_REVERSE_SAFE (bb, insn, next)
       if (NONDEBUG_INSN_P (insn))
 	{
+	  rtx turn_into_use = NULL_RTX;
+
 	  /* Always delete no-op moves.  */
 	  if (noop_move_p (insn))
-	    ;
+	    {
+	      if (RTX_FRAME_RELATED_P (insn))
+		turn_into_use
+		  = find_reg_note (insn, REG_CFA_RESTORE, NULL);
+	      if (turn_into_use && REG_P (XEXP (turn_into_use, 0)))
+		turn_into_use = XEXP (turn_into_use, 0);
+	      else
+		turn_into_use = NULL_RTX;
+	    }
 
 	  /* Otherwise rely only on the DCE algorithm.  */
 	  else if (marked_insn_p (insn))
@@ -600,8 +618,19 @@ delete_unmarked_insns (void)
 	  if (CALL_P (insn))
 	    must_clean = true;
 
-	  /* Now delete the insn.  */
-	  delete_insn_and_edges (insn);
+	  if (turn_into_use)
+	    {
+	      /* Don't remove frame related noop moves if they cary
+		 REG_CFA_RESTORE note, while we don't need to emit any code,
+		 we need it to emit the CFI restore note.  */
+	      PATTERN (insn)
+		= gen_rtx_USE (GET_MODE (turn_into_use), turn_into_use);
+	      INSN_CODE (insn) = -1;
+	      df_insn_rescan (insn);
+	    }
+	  else
+	    /* Now delete the insn.  */
+	    delete_insn_and_edges (insn);
 	}
 
   /* Deleted a pure or const call.  */

@@ -3,7 +3,7 @@
 # Note: this script must not be used to build MPFR due to the
 # dependency on perl, but this is OK for "make dist".
 
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2018 Free Software Foundation, Inc.
 # This script is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.

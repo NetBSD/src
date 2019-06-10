@@ -1,3 +1,5 @@
+/*	$NetBSD: tda998x.h,v 1.1.1.1.32.1 2019/06/10 22:08:30 christos Exp $	*/
+
 #ifndef __DRM_I2C_TDA998X_H__
 #define __DRM_I2C_TDA998X_H__
 

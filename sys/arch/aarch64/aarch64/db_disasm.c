@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: db_disasm.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
+#include <ddb/db_user.h>
 
 #include <arch/aarch64/aarch64/disasm.h>
 
@@ -63,3 +64,75 @@ db_disasm(db_addr_t loc, bool altfmt)
 {
 	return disasm(&db_disasm_interface, loc);
 }
+
+
+static char *strdisasm_ptr;
+static char strdisasm_buf[256];
+
+static uint32_t
+strdisasm_readword(uintptr_t address)
+{
+	return *(uint32_t *)address;
+}
+
+static void
+strdisasm_printf(const char *fmt, ...)
+{
+	va_list ap;
+	int len;
+
+	/* calculation spaces to append a string */
+	len = strdisasm_buf + sizeof(strdisasm_buf) - strdisasm_ptr;
+
+	va_start(ap, fmt);
+	len = vsnprintf(strdisasm_ptr, len, fmt, ap);
+	va_end(ap);
+
+	strdisasm_ptr += len;
+}
+
+static void
+strdisasm_printaddr(uintptr_t address)
+{
+	strdisasm_printf("0x%lx", address);
+}
+
+static const disasm_interface_t strdisasm_interface = {
+	.di_readword = strdisasm_readword,
+	.di_printaddr = strdisasm_printaddr,
+	.di_printf = strdisasm_printf
+};
+
+const char *
+strdisasm(vaddr_t pc)
+{
+	char *p;
+
+	strdisasm_ptr = strdisasm_buf;
+	disasm(&strdisasm_interface, (db_addr_t)pc);
+
+	/* replace tab to space, and chomp '\n' */
+	for (p = strdisasm_buf; *p != '\0'; p++) {
+		if (*p == '\t')
+			*p = ' ';
+	}
+	if ((p > strdisasm_buf) && (p[-1] == '\n'))
+		p[-1] = '\0';
+
+	return strdisasm_buf;
+}
+
+/*
+ * disassemble aarch32 insns?
+ */
+const char *
+strdisasm_aarch32(vaddr_t pc)
+{
+	uint32_t insn = *(uint32_t *)pc;
+
+	/* not supported any aarch32 insns yet... */
+	snprintf(strdisasm_buf, sizeof(strdisasm_buf), ".insn 0x%08x", insn);
+
+	return strdisasm_buf;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.15 2009/10/23 02:32:33 snj Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.15.64.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
  *
@@ -36,11 +36,8 @@
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
 
-#ifdef XENDEBUG_LOW
-#define	__PRINTK(x) printk x
-#else
-#define	__PRINTK(x)
-#endif
+u_long xen_read_psl(void);
+void xen_write_psl(u_long);
 
 void xen_set_ldt(vaddr_t, uint32_t);
 #endif /* _XEN_XENFUNC_H_ */

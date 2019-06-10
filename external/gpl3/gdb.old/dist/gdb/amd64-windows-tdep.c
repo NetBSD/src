@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 #include "coff/pe.h"
 #include "libcoff.h"
 #include "value.h"
+#include <algorithm>
 
 /* The registers used to pass integer arguments during a function call.  */
 static int amd64_windows_dummy_call_integer_regs[] =
@@ -55,6 +56,7 @@ amd64_windows_passed_by_integer_register (struct type *type)
       case TYPE_CODE_CHAR:
       case TYPE_CODE_PTR:
       case TYPE_CODE_REF:
+      case TYPE_CODE_RVALUE_REF:
       case TYPE_CODE_STRUCT:
       case TYPE_CODE_UNION:
 	return (TYPE_LENGTH (type) == 1
@@ -141,7 +143,7 @@ amd64_windows_store_arg_in_reg (struct regcache *regcache,
 
   gdb_assert (TYPE_LENGTH (type) <= 8);
   memset (buf, 0, sizeof buf);
-  memcpy (buf, valbuf, min (TYPE_LENGTH (type), 8));
+  memcpy (buf, valbuf, std::min (TYPE_LENGTH (type), (unsigned int) 8));
   regcache_cooked_write (regcache, regno, buf);
 }
 
@@ -1143,7 +1145,7 @@ amd64_windows_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       else if (target_read_memory (image_base + unwind_info,
 				   (gdb_byte *) &ex_ui, sizeof (ex_ui)) == 0
 	       && PEX64_UWI_VERSION (ex_ui.Version_Flags) == 1)
-	return max (pc, image_base + start_rva + ex_ui.SizeOfPrologue);
+	return std::max (pc, image_base + start_rva + ex_ui.SizeOfPrologue);
     }
 
   /* See if we can determine the end of the prologue via the symbol
@@ -1155,7 +1157,7 @@ amd64_windows_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	= skip_prologue_using_sal (gdbarch, func_addr);
 
       if (post_prologue_pc != 0)
-	return max (pc, post_prologue_pc);
+	return std::max (pc, post_prologue_pc);
     }
 
   return pc;

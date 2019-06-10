@@ -1,5 +1,5 @@
 /* Memory breakpoint interfaces for the remote server for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -101,9 +101,9 @@ int software_breakpoint_inserted_here (CORE_ADDR addr);
 
 int hardware_breakpoint_inserted_here (CORE_ADDR addr);
 
-/* Returns TRUE if there's any reinsert breakpoint at ADDR.  */
+/* Returns TRUE if there's any single-step breakpoint at ADDR.  */
 
-int reinsert_breakpoint_inserted_here (CORE_ADDR addr);
+int single_step_breakpoint_inserted_here (CORE_ADDR addr);
 
 /* Clear all breakpoint conditions and commands associated with a
    breakpoint.  */
@@ -152,32 +152,32 @@ struct breakpoint *set_breakpoint_at (CORE_ADDR where,
 
 int delete_breakpoint (struct breakpoint *bkpt);
 
-/* Set a reinsert breakpoint at STOP_AT for thread represented by
+/* Set a single-step breakpoint at STOP_AT for thread represented by
    PTID.  */
 
-void set_reinsert_breakpoint (CORE_ADDR stop_at, ptid_t ptid);
+void set_single_step_breakpoint (CORE_ADDR stop_at, ptid_t ptid);
 
-/* Delete all reinsert breakpoints of THREAD.  */
+/* Delete all single-step breakpoints of THREAD.  */
 
-void delete_reinsert_breakpoints (struct thread_info *thread);
+void delete_single_step_breakpoints (struct thread_info *thread);
 
-/* Reinsert all reinsert breakpoints of THREAD.  */
+/* Reinsert all single-step breakpoints of THREAD.  */
 
-void reinsert_reinsert_breakpoints (struct thread_info *thread);
+void reinsert_single_step_breakpoints (struct thread_info *thread);
 
-/* Uninsert all reinsert breakpoints of THREAD.  This still leaves
-   the reinsert breakpoints in the table.  */
+/* Uninsert all single-step breakpoints of THREAD.  This still leaves
+   the single-step breakpoints in the table.  */
 
-void uninsert_reinsert_breakpoints (struct thread_info *thread);
+void uninsert_single_step_breakpoints (struct thread_info *thread);
 
 /* Reinsert breakpoints at WHERE (and change their status to
    inserted).  */
 
 void reinsert_breakpoints_at (CORE_ADDR where);
 
-/* The THREAD has reinsert breakpoints or not.  */
+/* The THREAD has single-step breakpoints or not.  */
 
-int has_reinsert_breakpoints (struct thread_info *thread);
+int has_single_step_breakpoints (struct thread_info *thread);
 
 /* Uninsert breakpoints at WHERE (and change their status to
    uninserted).  This still leaves the breakpoints in the table.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.135 2017/12/26 17:08:56 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.135.4.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
+#include "opt_kasan.h"
 #endif
 
 /*
@@ -209,7 +210,7 @@
 #define __attribute__(x)
 #endif
 
-#if __GNUC_PREREQ__(2, 5)
+#if __GNUC_PREREQ__(2, 5) || defined(__lint__)
 #define	__dead		__attribute__((__noreturn__))
 #elif defined(__GNUC__)
 #define	__dead		__volatile
@@ -217,7 +218,7 @@
 #define	__dead
 #endif
 
-#if __GNUC_PREREQ__(2, 96)
+#if __GNUC_PREREQ__(2, 96) || defined(__lint__)
 #define	__pure		__attribute__((__pure__))
 #elif defined(__GNUC__)
 #define	__pure		__const
@@ -225,31 +226,31 @@
 #define	__pure
 #endif
 
-#if __GNUC_PREREQ__(2, 5)
+#if __GNUC_PREREQ__(2, 5) || defined(__lint__)
 #define	__constfunc	__attribute__((__const__))
 #else
 #define	__constfunc
 #endif
 
-#if __GNUC_PREREQ__(3, 0)
+#if __GNUC_PREREQ__(3, 0) || defined(__lint__)
 #define	__noinline	__attribute__((__noinline__))
 #else
 #define	__noinline	/* nothing */
 #endif
 
-#if __GNUC_PREREQ__(3, 0)
+#if __GNUC_PREREQ__(3, 0) || defined(__lint__)
 #define	__always_inline	__attribute__((__always_inline__))
 #else
 #define	__always_inline	/* nothing */
 #endif
 
-#if __GNUC_PREREQ__(4, 1)
+#if __GNUC_PREREQ__(4, 1) || defined(__lint__)
 #define	__returns_twice	__attribute__((__returns_twice__))
 #else
 #define	__returns_twice	/* nothing */
 #endif
 
-#if __GNUC_PREREQ__(4, 5)
+#if __GNUC_PREREQ__(4, 5) || defined(__lint__)
 #define	__noclone	__attribute__((__noclone__))
 #else
 #define	__noclone	/* nothing */
@@ -267,7 +268,7 @@
 /*
  * __used: Note that item is needed, even if it appears to be unused.
  */
-#if __GNUC_PREREQ__(3, 1)
+#if __GNUC_PREREQ__(3, 1) || defined(__lint__)
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
@@ -294,16 +295,24 @@
 #define	__debugused	__unused
 #endif
 
-#if __GNUC_PREREQ__(3, 1)
+#if __GNUC_PREREQ__(3, 1) || defined(__lint__)
 #define	__noprofile	__attribute__((__no_instrument_function__))
 #else
 #define	__noprofile	/* nothing */
 #endif
 
-#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__) || defined(__lint__)
 #define	__unreachable()	__builtin_unreachable()
 #else
 #define	__unreachable()	do {} while (/*CONSTCOND*/0)
+#endif
+
+#if defined(_KERNEL)
+#if __GNUC_PREREQ__(4, 9) && defined(KASAN)
+#define	__noasan	__attribute__((no_sanitize_address))
+#else
+#define	__noasan	/* nothing */
+#endif
 #endif
 
 /*
@@ -318,7 +327,7 @@
  * We use ((void)0) instead of do {} while (0) so that it
  * works on , expressions.
  */
-#define __nothing	((void)0)
+#define __nothing	(/*LINTED*/(void)0)
 
 #if defined(__cplusplus)
 #define	__BEGIN_EXTERN_C	extern "C" {
@@ -330,7 +339,7 @@
 #define	__static_cast(x,y)	(x)y
 #endif
 
-#if __GNUC_PREREQ__(4, 0)
+#if __GNUC_PREREQ__(4, 0) || defined(__lint__)
 #  define __dso_public	__attribute__((__visibility__("default")))
 #  define __dso_hidden	__attribute__((__visibility__("hidden")))
 #  define __BEGIN_PUBLIC_DECLS	\
@@ -347,7 +356,7 @@
 #  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
 #  define __END_HIDDEN_DECLS	__END_EXTERN_C
 #endif
-#if __GNUC_PREREQ__(4, 2)
+#if __GNUC_PREREQ__(4, 2) || defined(__lint__)
 #  define __dso_protected	__attribute__((__visibility__("protected")))
 #else
 #  define __dso_protected
@@ -378,7 +387,7 @@
 #define	__packed	__packed
 #define	__aligned(x)	/* delete */
 #define	__section(x)	/* delete */
-#elif __GNUC_PREREQ__(2, 7) || defined(__PCC__)
+#elif __GNUC_PREREQ__(2, 7) || defined(__PCC__) || defined(__lint__)
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
@@ -398,25 +407,23 @@
 #define	__restrict	/* delete __restrict when not supported */
 #elif __STDC_VERSION__ >= 199901L
 #define	__restrict	restrict
-#elif __GNUC_PREREQ__(2, 92)
+#elif __GNUC_PREREQ__(2, 92) || defined(__lint__)
 #define	__restrict	__restrict__
 #else
 #define	__restrict	/* delete __restrict when not supported */
 #endif
 
 /*
- * C99 defines __func__ predefined identifier, which was made available
- * in GCC 2.95.
+ * C99 and C++11 define __func__ predefined identifier, which was made
+ * available in GCC 2.95.
  */
-#if !(__STDC_VERSION__ >= 199901L)
-#if __GNUC_PREREQ__(2, 6)
-#define	__func__	__PRETTY_FUNCTION__
-#elif __GNUC_PREREQ__(2, 4)
+#if !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L)
+#if __GNUC_PREREQ__(2, 4) || defined(__lint__)
 #define	__func__	__FUNCTION__
 #else
 #define	__func__	""
 #endif
-#endif /* !(__STDC_VERSION__ >= 199901L) */
+#endif /* !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L) */
 
 #if defined(_KERNEL)
 #if defined(NO_KERNEL_RCSIDS)
@@ -442,7 +449,7 @@
  * register values. This is gcc specific, the version is more or less
  * arbitrary, might work with older compilers.
  */
-#if __GNUC_PREREQ__(2, 95)
+#if __GNUC_PREREQ__(2, 95) || defined(__lint__)
 #define	__insn_barrier()	__asm __volatile("":::"memory")
 #else
 #define	__insn_barrier()	/* */
@@ -476,7 +483,7 @@
  *	  basic block reordering that this affects can often generate
  *	  larger code.
  */
-#if __GNUC_PREREQ__(2, 96)
+#if __GNUC_PREREQ__(2, 96) || defined(__lint__)
 #define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
 #define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
 #else
@@ -490,7 +497,7 @@
  * that are known to support the features properly (old versions of gcc-2
  * didn't permit keeping the keywords out of the application namespace).
  */
-#if __GNUC_PREREQ__(2, 7)
+#if __GNUC_PREREQ__(2, 7) || defined(__lint__)
 #define __printflike(fmtarg, firstvararg)	\
 	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
 #ifndef __syslog_attribute__
@@ -560,7 +567,7 @@
 /*
  * Return the natural alignment in bytes for the given type
  */
-#if __GNUC_PREREQ__(4, 1)
+#if __GNUC_PREREQ__(4, 1) || defined(__lint__)
 #define	__alignof(__t)  __alignof__(__t)
 #else
 #define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
@@ -578,9 +585,13 @@
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
     ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
+/* Macros for min/max. */
+#define	__MIN(a,b)	((/*CONSTCOND*/(a)<=(b))?(a):(b))
+#define	__MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
+
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+	((__BIT(__MAX((__m), (__n)) + 1) - 1) ^ (__BIT(__MIN((__m), (__n))) - 1))
 #endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */

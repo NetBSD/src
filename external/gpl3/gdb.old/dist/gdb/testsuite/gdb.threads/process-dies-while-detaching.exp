@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -193,7 +193,7 @@ proc test_detach {multi_process cmd} {
 	clean_restart ${binfile}
 
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -218,7 +218,7 @@ proc test_detach_watch {multi_process cmd} {
 	clean_restart ${binfile}
 
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -254,7 +254,7 @@ proc test_detach_killed_outside {multi_process cmd} {
 	clean_restart ${binfile}
 
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 

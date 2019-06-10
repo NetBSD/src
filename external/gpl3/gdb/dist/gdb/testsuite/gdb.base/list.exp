@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -361,7 +361,7 @@ proc test_list_range {} {
 
     gdb_test "list ${past_end},${much_past_end}" "Line number ${past_end} out of range; .*list0.c has ${last_line} lines." "list range; both bounds past EOF"
 
-    gdb_test "list list0.c:2,list1.c:17" "Specified start and end are in different files." "list range, must be same files"
+    gdb_test "list list0.c:2,list1.c:17" "Specified first and last lines are in different files." "list range, must be same files"
 }
 
 #
@@ -485,7 +485,9 @@ proc test_list_filename_and_function {} {
 
 }
 
-proc test_forward_search {} {
+# Test the forward-search (aka search) and the reverse-search commands.
+
+proc test_forward_reverse_search {} {
 	global timeout
 
 	gdb_test_no_output "set listsize 4"
@@ -498,6 +500,17 @@ proc test_forward_search {} {
 	gdb_test "search 4321" " not found"
 
 	gdb_test "search 6789" "28\[ \t\]+oof .6789.;"
+
+	# Try again, we shouldn't re-find the same source line.  Also,
+	# while at it, test using the "forward-search" alias.
+	gdb_test "forward-search 6789" " not found"
+
+	# Now test backwards.  First make sure we start searching from
+	# the previous line, not the current line.
+	gdb_test "reverse-search 6789" " not found"
+
+	# Now find something in a previous line.
+	gdb_test "reverse-search 67" "26\[ \t\]+oof .67.;"
 
 	# Test that GDB won't crash if the line being searched is extremely long.
 
@@ -553,7 +566,7 @@ if [ set_listsize 10 ] then {
     test_repeat_list_command
     test_list_range
     test_list_filename_and_function
-    test_forward_search
+    test_forward_reverse_search
     test_only_end
     test_list_invalid_args
 }

@@ -199,7 +199,7 @@ struct bfd_hash_entry *
 
  /* Call the allocation method of the base class.  */
   ret = ((@var{entry_type} *)
-        @var{base_newfunc} ((struct bfd_hash_entry *) ret, table, string));
+         @var{base_newfunc} ((struct bfd_hash_entry *) ret, table, string));
 
  /* Initialize the local fields here.  */
 

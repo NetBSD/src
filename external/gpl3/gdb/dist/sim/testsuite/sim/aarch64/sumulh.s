@@ -6,9 +6,6 @@
 
 .include "testutils.inc"
 
-	.data
-	.align 4
-
 	start
 
 	mov x0, #-2

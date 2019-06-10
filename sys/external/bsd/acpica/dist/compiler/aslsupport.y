@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,9 +73,9 @@ AslLocalAllocate (
     if (!Mem)
     {
         AslCommonError (ASL_ERROR, ASL_MSG_MEMORY_ALLOCATION,
-            Gbl_CurrentLineNumber, Gbl_LogicalLineNumber,
-            Gbl_InputByteCount, Gbl_CurrentColumn,
-            Gbl_Files[ASL_FILE_INPUT].Filename, NULL);
+            AslGbl_CurrentLineNumber, AslGbl_LogicalLineNumber,
+            AslGbl_InputByteCount, AslGbl_CurrentColumn,
+            AslGbl_Files[ASL_FILE_INPUT].Filename, NULL);
         exit (1);
     }
 

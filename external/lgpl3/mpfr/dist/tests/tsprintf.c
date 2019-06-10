@@ -1,7 +1,7 @@
 /* tsprintf.c -- test file for mpfr_sprintf, mpfr_vsprintf, mpfr_snprintf,
    and mpfr_vsnprintf
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,10 +21,14 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#ifdef HAVE_STDARG
+/* Include config.h before using ANY configure macros if needed. */
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#if defined(HAVE_STDARG) && !defined(MPFR_USE_MINI_GMP)
 #include <stdarg.h>
 
-#include <stdlib.h>
 #include <float.h>
 
 #ifdef HAVE_LOCALE_H
@@ -32,8 +36,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #endif
 
 #include "mpfr-test.h"
-
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,4,0)
 
 const int prec_max_printf = 5000; /* limit for random precision in
                                      random_double() */
@@ -46,13 +48,15 @@ const char minf_uc_str[] = "-INF";
 const char nan_str[] = "nan";
 const char nan_uc_str[] = "NAN";
 
+int randsize;
+
 /* 1. compare expected string with the string BUFFER returned by
    mpfr_sprintf(buffer, fmt, x)
    2. then test mpfr_snprintf (buffer, p, fmt, x) with a random p. */
 static int
 check_sprintf (const char *expected, const char *fmt, mpfr_srcptr x)
 {
-  int n0, n1, p;
+  int n0, n1;
   char buffer[BUF_SIZE];
 
   /* test mpfr_sprintf */
@@ -66,35 +70,39 @@ check_sprintf (const char *expected, const char *fmt, mpfr_srcptr x)
     }
 
   /* test mpfr_snprintf */
-  p = (int) (randlimb () % n0);
-  if (p == 0 && (randlimb () & 1) == 0)
+  randsize = (int) (randlimb () % (n0 + 3)) - 3;  /* between -3 and n0 - 1 */
+  if (randsize < 0)
     {
       n1 = mpfr_snprintf (NULL, 0, fmt, x);
     }
   else
     {
-      buffer[p] = 17;
-      n1 = mpfr_snprintf (buffer, p, fmt, x);
-      if (buffer[p] != 17)
+      buffer[randsize] = 17;
+      n1 = mpfr_snprintf (buffer, randsize, fmt, x);
+      if (buffer[randsize] != 17)
         {
-          printf ("Buffer overflow in mpfr_snprintf for p = %d!\n", p);
+          printf ("Buffer overflow in mpfr_snprintf for randsize = %d!\n",
+                  randsize);
           exit (1);
         }
     }
   if (n0 != n1)
     {
       printf ("Error in mpfr_snprintf (s, %d, \"%s\", x) return value\n",
-              p, fmt);
-      printf ("expected: %d\ngot:      %d\n", n0, n1);
+              randsize, fmt);
+      printf ("expected: %d\ngot:      %d\nx='", n0, n1);
+      mpfr_printf (fmt, x);
+      printf ("'\n");
       exit (1);
     }
-  if ((p > 1 && strncmp (expected, buffer, p-1) != 0)
-      || (p == 1 && buffer[0] != '\0'))
+  if ((randsize > 1 && strncmp (expected, buffer, randsize - 1) != 0)
+      || (randsize == 1 && buffer[0] != '\0'))
     {
       char part_expected[BUF_SIZE];
-      strncpy (part_expected, expected, p);
-      part_expected[p-1] = '\0';
-      printf ("Error in mpfr_vsnprintf (s, %d, \"%s\", ...);\n", p, fmt);
+      strncpy (part_expected, expected, randsize);
+      part_expected[randsize - 1] = '\0';
+      printf ("Error in mpfr_vsnprintf (s, %d, \"%s\", ...);\n",
+              randsize, fmt);
       printf ("expected: \"%s\"\ngot:      \"%s\"\n", part_expected, buffer);
       exit (1);
     }
@@ -107,63 +115,63 @@ check_sprintf (const char *expected, const char *fmt, mpfr_srcptr x)
 static int
 check_vsprintf (const char *expected, const char *fmt, ...)
 {
-  int n0, n1, p;
+  int n0, n1;
   char buffer[BUF_SIZE];
   va_list ap0, ap1;
-  va_start (ap0, fmt);
-  va_start (ap1, fmt);
 
+  va_start (ap0, fmt);
   n0 = mpfr_vsprintf (buffer, fmt, ap0);
+  va_end (ap0);
+
   if (strcmp (buffer, expected) != 0)
     {
       printf ("Error in mpfr_vsprintf (s, \"%s\", ...);\n", fmt);
       printf ("expected: \"%s\"\ngot:      \"%s\"\n", expected, buffer);
-
-      va_end (ap0);
-      va_end (ap1);
       exit (1);
     }
-  va_end (ap0);
+
+  va_start (ap1, fmt);
 
   /* test mpfr_snprintf */
-  p = (int) (randlimb () % n0);
-  if (p == 0 && (randlimb () & 1) == 0)
+  randsize = (int) (randlimb () % (n0 + 3)) - 3;  /* between -3 and n0 - 1 */
+  if (randsize < 0)
     {
       n1 = mpfr_vsnprintf (NULL, 0, fmt, ap1);
     }
   else
     {
-      buffer[p] = 17;
-      n1 = mpfr_vsnprintf (buffer, p, fmt, ap1);
-      if (buffer[p] != 17)
+      buffer[randsize] = 17;
+      n1 = mpfr_vsnprintf (buffer, randsize, fmt, ap1);
+      if (buffer[randsize] != 17)
         {
-          printf ("Buffer overflow in mpfr_vsnprintf for p = %d!\n", p);
+          printf ("Buffer overflow in mpfr_vsnprintf for randsize = %d!\n",
+                  randsize);
           exit (1);
         }
     }
+
+  va_end (ap1);
+
   if (n0 != n1)
     {
       printf ("Error in mpfr_vsnprintf (s, %d, \"%s\", ...) return value\n",
-              p, fmt);
+              randsize, fmt);
       printf ("expected: %d\ngot:      %d\n", n0, n1);
-
-      va_end (ap1);
       exit (1);
     }
-  if ((p > 1 && strncmp (expected, buffer, p-1) != 0)
-      || (p == 1 && buffer[0] != '\0'))
+  if ((randsize > 1 && strncmp (expected, buffer, randsize - 1) != 0)
+      || (randsize == 1 && buffer[0] != '\0'))
     {
       char part_expected[BUF_SIZE];
-      strncpy (part_expected, expected, p);
-      part_expected[p-1] = '\0';
-      printf ("Error in mpfr_vsnprintf (s, %d, \"%s\", ...);\n", p, fmt);
-      printf ("expected: \"%s\"\ngot:      \"%s\"\n", part_expected, buffer);
 
-      va_end (ap1);
+      strncpy (part_expected, expected, randsize);
+      part_expected[randsize - 1] = '\0';
+      printf ("Error in mpfr_vsnprintf (s, %d, \"%s\", ...);\n",
+              randsize, fmt);
+      printf ("expected: \"%s\"\ngot:      \"%s\"\n", part_expected, buffer);
       exit (1);
     }
 
-  va_end (ap1);
   return n0;
 }
 
@@ -322,6 +330,8 @@ decimal (void)
   /* sign or space, decimal point, left justified */
   check_sprintf (" 1.8E+07   ", "%- #11.1RDE", x);
   check_sprintf (" 1.E+07    ", "%- #11.0RDE", x);
+  /* large requested precision */
+  check_sprintf ("18993474.61279296875", "%.2147483647Rg", x);
 
   /* negative numbers */
   mpfr_mul_si (x, x, -1, MPFR_RNDD);
@@ -555,6 +565,9 @@ decimal (void)
   mpfr_set_str (x, "-9.996", 10, MPFR_RNDN);
   check_sprintf ("-10.0", "%.1Rf", x);
 
+  /* regression in MPFR 3.1.0 (bug introduced in r7761, fixed in r7931) */
+  check_sprintf ("-10", "%.2Rg", x);
+
   mpfr_clears (x, z, (mpfr_ptr) 0);
   return 0;
 }
@@ -787,7 +800,7 @@ mixed (void)
   int n1;
   int n2;
   int i = 121;
-#ifndef NPRINTF_L
+#ifdef PRINTF_L
   long double d = 1. / 31.;
 #endif
   mpf_t mpf;
@@ -795,6 +808,7 @@ mixed (void)
   mpz_t mpz;
   mpfr_t x;
   mpfr_rnd_t rnd;
+  int k;
 
   mpf_init (mpf);
   mpf_set_ui (mpf, 40);
@@ -814,17 +828,31 @@ mixed (void)
                   x);
   check_vsprintf ("-12345678.9, 121", "%.1Rf, %i", x, i);
   check_vsprintf ("-12345678, 1e240/45b352", "%.0R*f, %Qx", MPFR_RNDZ, x, mpq);
-  n1 = check_vsprintf ("121, -12345678.875000000000, 1.290323", "%i, %.*Rf, %Ff%n",
-                       i, 12, x, mpf, &n2);
-  if (n1 != n2)
+
+  /* TODO: Systematically test with and without %n in check_vsprintf? */
+  /* Do the test several times due to random parameters in check_vsprintf
+     and the use of %n. In r11501, n2 is incorrect (seems random) when
+     randsize <= 0, i.e. when the size argument of mpfr_vsnprintf is 0. */
+  for (k = 0; k < 30; k++)
     {
-      printf ("error in number of characters written by mpfr_vsprintf\n");
-      printf ("expected: %d\n", n2);
-      printf ("     got: %d\n", n1);
-      exit (1);
+      n2 = -17;
+      /* If this value is obtained for n2 after the check_vsprintf call below,
+         this probably means that n2 has not been written as expected. */
+      n1 = check_vsprintf ("121, -12345678.875000000000, 1.290323",
+                           "%i, %.*Rf, %Ff%n", i, 12, x, mpf, &n2);
+      if (n1 != n2)
+        {
+          printf ("error in number of characters written by mpfr_vsprintf"
+                  " for k = %d, randsize = %d\n", k, randsize);
+          printf ("expected: %d\n", n2);
+          printf ("     got: %d\n", n1);
+          exit (1);
+        }
     }
 
-#ifndef NPRINTF_L
+#ifdef PRINTF_L
+  /* under MinGW, -D__USE_MINGW_ANSI_STDIO is required to support %Lf
+     see https://gcc.gnu.org/ml/gcc/2013-03/msg00103.html */
   check_vsprintf ("00000010610209857723, -1.2345678875e+07, 0.032258",
                   "%.*Zi, %R*e, %Lf", 20, mpz, rnd, x, d);
 #endif
@@ -869,16 +897,24 @@ locale_da_DK (void)
   check_sprintf (" 000000018.993.474,61279296875", "%' 030.19RG", x);
   check_sprintf (" 00000000000018.993.474,612793", "%' 030RF", x);
 
-  mpfr_set_ui (x, 50, MPFR_RNDN);
+#define T1 "000"
+#define T2 ".000"
+#define S1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1 T1
+#define S2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2 ","
+
+  mpfr_set_ui (x, 48, MPFR_RNDN);
   mpfr_exp10 (x, x, MPFR_RNDN);
-  check_sprintf ("100000000000000000000000000000000000000000000000000", "%.0Rf",
-                 x);
-  check_sprintf
-    ("100.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000,",
-     "%'#.0Rf", x);
-  check_sprintf
-    ("100.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000,0000",
-     "%'.4Rf", x);
+  check_sprintf ("1" S1, "%.0Rf", x);
+  check_sprintf ("1" S2, "%'#.0Rf", x);
+  check_sprintf ("1" S2 "0000", "%'.4Rf", x);
+  mpfr_mul_ui (x, x, 10, MPFR_RNDN);
+  check_sprintf ("10" S1, "%.0Rf", x);
+  check_sprintf ("10" S2, "%'#.0Rf", x);
+  check_sprintf ("10" S2 "0000", "%'.4Rf", x);
+  mpfr_mul_ui (x, x, 10, MPFR_RNDN);
+  check_sprintf ("100" S1, "%.0Rf", x);
+  check_sprintf ("100" S2, "%'#.0Rf", x);
+  check_sprintf ("100" S2 "0000", "%'.4Rf", x);
 
   mpfr_clear (x);
   return 0;
@@ -900,8 +936,8 @@ random_double (void)
       '+',
       ' ',
       '#',
-      '0', /* no ambiguity: first zeros are flag zero*/
-      '\''
+      '0', /* no ambiguity: first zeros are flag zero */
+      '\'' /* SUS extension */
     };
   /* no 'a': mpfr and glibc do not have the same semantic */
   char specifier[] =
@@ -965,8 +1001,12 @@ random_double (void)
       *ptr_mpfr++ = *ptr++ = '%';
       /* random specifier 'e', 'f', 'g', 'E', 'F', or 'G' */
       spec = (int) (randlimb() % 6);
-      /* random flags, but no ' flag with %e */
+      /* random flags, but no ' flag with %e or with non-glibc */
+#if __MPFR_GLIBC(1,0)
       jmax = (spec == 0 || spec == 3) ? 5 : 6;
+#else
+      jmax = 5;
+#endif
       for (j = 0; j < jmax; j++)
         {
           if (randlimb() % 3 == 0)
@@ -996,7 +1036,7 @@ random_double (void)
          the sign of a zero exponent (the C99 rationale says: "The sign
          of a zero exponent in %e format is unspecified.  The committee
          knows of different implementations and choose not to require
-         implementations to document their behaviour in this case
+         implementations to document their behavior in this case
          (by making this be implementation defined behaviour).  Most
          implementations use a "+" sign, e.g., 1.2e+00; but there is at
          least one implementation that uses the sign of the unlimited
@@ -1151,8 +1191,8 @@ check_emax_aux (mpfr_exp_t e)
         printf ("(>LONG_MAX)\n");
       else
         printf ("%ld\n", (long) e);
-      printf ("Expected %s\n", s2);
-      printf ("Got      %s\n", s1);
+      printf ("Expected '%s'\n", s2);
+      printf ("Got      '%s'\n", s1);
       exit (1);
     }
 
@@ -1251,34 +1291,177 @@ check_emin (void)
   check_emin_aux (MPFR_EMIN_MIN);
 }
 
+static void
+test20161214 (void)
+{
+  mpfr_t x;
+  char buf[32];
+  const char s[] = "0x0.fffffffffffff8p+1024";
+  int r;
+
+  mpfr_init2 (x, 64);
+  mpfr_set_str (x, s, 16, MPFR_RNDN);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", -2, x);
+  MPFR_ASSERTN(r == 316);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", INT_MIN + 1, x);
+  MPFR_ASSERTN(r == 316);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", INT_MIN, x);
+  MPFR_ASSERTN(r == 316);
+  mpfr_clear (x);
+}
+
+/* http://gforge.inria.fr/tracker/index.php?func=detail&aid=21056 */
+static void
+bug21056 (void)
+{
+  mpfr_t x;
+  const char s[] = "0x0.fffffffffffff8p+1024";
+  int ndigits, r;
+
+  mpfr_init2 (x, 64);
+
+  mpfr_set_str (x, s, 16, MPFR_RNDN);
+
+  ndigits = 1000;
+  r = mpfr_snprintf (0, 0, "%.*RDf", ndigits, x);
+  /* the return value should be ndigits + 310 */
+  MPFR_ASSERTN(r == ndigits + 310);
+
+  ndigits = INT_MAX - 310;
+  r = mpfr_snprintf (0, 0, "%.*RDf", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = INT_MAX - 10;
+  r = mpfr_snprintf (0, 0, "%.*RDa", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = INT_MAX - 7;
+  r = mpfr_snprintf (0, 0, "%.*RDe", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = 1000;
+  r = mpfr_snprintf (0, 0, "%.*RDg", ndigits, x);
+  /* since trailing zeros are removed with %g, we get less digits */
+  MPFR_ASSERTN(r == 309);
+
+  ndigits = INT_MAX;
+  r = mpfr_snprintf (0, 0, "%.*RDg", ndigits, x);
+  /* since trailing zeros are removed with %g, we get less digits */
+  MPFR_ASSERTN(r == 309);
+
+  ndigits = INT_MAX - 1;
+  r = mpfr_snprintf (0, 0, "%#.*RDg", ndigits, x);
+  MPFR_ASSERTN(r == ndigits + 1);
+
+  mpfr_clear (x);
+}
+
+/* Fails for i = 5, i.e. t[i] = (size_t) UINT_MAX + 1,
+   with r11427 on 64-bit machines (4-byte int, 8-byte size_t).
+   On such machines, t[5] converted to int typically gives 0.
+   Note: the assumed behavior corresponds to the snprintf behavior
+   in ISO C, but this conflicts with POSIX:
+     https://sourceware.org/bugzilla/show_bug.cgi?id=14771#c2
+     http://austingroupbugs.net/view.php?id=761
+*/
+static void
+snprintf_size (void)
+{
+  mpfr_t x;
+  char buf[12];
+  const char s[] = "17.00000000";
+  size_t t[] = { 11, 12, 64, INT_MAX, (size_t) INT_MAX + 1,
+                 (size_t) UINT_MAX + 1, (size_t) UINT_MAX + 2,
+                 (size_t) -1 };
+  int i, r;
+
+  mpfr_init2 (x, 64);
+  mpfr_set_ui (x, 17, MPFR_RNDN);
+
+  for (i = 0; i < sizeof (t) / sizeof (*t); i++)
+    {
+      memset (buf, 0, sizeof (buf));
+      /* r = snprintf (buf, t[i], "%.8f", 17.0); */
+      r = mpfr_snprintf (buf, t[i], "%.8Rf", x);
+      if (r != 11 || (t[i] > 11 && strcmp (buf, s) != 0))
+        {
+          printf ("Error in snprintf_size for i = %d:\n", i);
+          printf ("expected r = 11, \"%s\"\n", s);
+          printf ("got      r = %d, \"%s\"\n", r, buf);
+          exit (1);
+        }
+    }
+
+  mpfr_clear (x);
+}
+
+/* With r11516, n2 gets a random value for i = 0 only!
+   valgrind detects a problem for "nchar = buf.curr - buf.start;"
+   in the spec.spec == 'n' case. Indeed, there is no buffer when
+   size is 0. */
+static void
+percent_n (void)
+{
+  int err = 0, i, j;
+
+  for (i = 0; i < 24; i++)
+    for (j = 0; j < 3; j++)
+      {
+        volatile int n1, n2;
+        char buffer[64];
+
+        memset (buffer, 0, 64);
+        n2 = -17;
+        n1 = mpfr_snprintf (buffer, i % 8, "%d%n", 123, &n2);
+        if (n1 != 3 || n2 != 3)
+          {
+            printf ("Error 1 in percent_n: i = %d, n1 = %d, n2 = %d\n",
+                    i, n1, n2);
+            err = 1;
+          }
+      }
+
+  if (err)
+    exit (1);
+}
+
 int
 main (int argc, char **argv)
 {
-  char *locale;
+  int k;
 
   tests_start_mpfr ();
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
   /* currently, we just check with 'C' locale */
-  locale = setlocale (LC_ALL, "C");
+  setlocale (LC_ALL, "C");
 #endif
 
   bug20111102 ();
-  native_types ();
-  hexadecimal ();
-  binary ();
-  decimal ();
-  mixed ();
-  check_emax ();
-  check_emin ();
+
+  for (k = 0; k < 40; k++)
+    {
+      native_types ();
+      hexadecimal ();
+      binary ();
+      decimal ();
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
 #if MPFR_LCONV_DPTS
-  locale_da_DK ();
+      locale_da_DK ();
   /* Avoid a warning by doing the setlocale outside of this #if */
 #endif
-  setlocale (LC_ALL, locale);
+      setlocale (LC_ALL, "C");
 #endif
+    }
+
+  check_emax ();
+  check_emin ();
+  test20161214 ();
+  bug21056 ();
+  snprintf_size ();
+  percent_n ();
+  mixed ();
 
   if (getenv ("MPFR_CHECK_LIBC_PRINTF"))
     {
@@ -1291,17 +1474,6 @@ main (int argc, char **argv)
   tests_end_mpfr ();
   return 0;
 }
-
-#else  /* MPFR_VERSION */
-
-int
-main (void)
-{
-  printf ("Warning! Test disabled for this MPFR version.\n");
-  return 0;
-}
-
-#endif  /* MPFR_VERSION */
 
 #else  /* HAVE_STDARG */
 

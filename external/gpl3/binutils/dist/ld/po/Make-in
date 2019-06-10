@@ -50,10 +50,12 @@ COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
 SOURCES = cat-id-tbl.c
 POFILES = @POFILES@
 GMOFILES = @GMOFILES@
-DISTFILES = ChangeLog Makefile.in.in POTFILES.in $(PACKAGE).pot \
+DISTFILES = ChangeLog Makefile.in.in SRC-POTFILES.in BLD-POTFILES.in $(PACKAGE).pot \
 stamp-cat-id $(POFILES) $(GMOFILES) $(SOURCES)
 
-POTFILES = \
+SRC-POTFILES = \
+
+BLD-POTFILES = \
 
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
@@ -86,11 +88,16 @@ all: all-@USE_NLS@
 all-yes: $(CATALOGS) @MAINT@ $(PACKAGE).pot
 all-no:
 
-$(srcdir)/$(PACKAGE).pot: $(POTFILES)
+$(srcdir)/$(PACKAGE).pot: $(SRC-POTFILES) $(BLD-POTFILES)
 	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
-	  --add-comments -C --keyword=_ --keyword=N_ \
+	  --add-comments --keyword=_ --keyword=N_ \
 	  --msgid-bugs-address=bug-binutils@gnu.org \
-	  --files-from=$(srcdir)/POTFILES.in
+	  --files-from=$(srcdir)/SRC-POTFILES.in
+	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=.. \
+	  --add-comments --keyword=_ --keyword=N_ \
+	  --join-existing \
+	  --msgid-bugs-address=bug-binutils@gnu.org \
+	  --files-from=$(srcdir)/BLD-POTFILES.in
 	rm -f $(srcdir)/$(PACKAGE).pot
 	mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot
 
@@ -198,12 +205,13 @@ mostlyclean:
 clean: mostlyclean
 
 distclean: clean
-	rm -f Makefile Makefile.in POTFILES *.mo *.msg *.cat *.cat.m
+	rm -f Makefile Makefile.in *.mo *.msg *.cat *.cat.m
+	rm -f SRC-POTFILES BLD-POTFILES
 
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
-	rm -f $(GMOFILES)
+	rm -f $(GMOFILES) SRC-POTFILES.in BLD-POTFILES.in
 
 distdir = ../$(PACKAGE)-$(VERSION)/$(subdir)
 dist distdir: update-po $(DISTFILES)
@@ -232,7 +240,7 @@ update-po: Makefile
 	  fi; \
 	done
 
-POTFILES: POTFILES.in
+SRC-POTFILES: SRC-POTFILES.in
 	( if test 'x$(srcdir)' != 'x.'; then \
 	    posrcprefix='$(top_srcdir)/'; \
 	  else \
@@ -245,10 +253,21 @@ POTFILES: POTFILES.in
 	    && chmod a-w $@-t \
 	    && mv $@-t $@ )
 
-POTFILES.in: @MAINT@ ../Makefile
-	cd .. && $(MAKE) po/POTFILES.in
+BLD-POTFILES: BLD-POTFILES.in
+	  rm -f $@-t $@ \
+	  && sed -e '/^#/d' -e '/^[	 ]*$$/d' \
+		 -e "s@.*@	../& \\\\@" < $(srcdir)/$@.in \
+	     | sed -e '$$s/\\$$//' > $@-t \
+	  && chmod a-w $@-t \
+	  && mv $@-t $@
 
-Makefile: Make-in ../config.status POTFILES
+SRC-POTFILES.in: @MAINT@ ../Makefile
+	cd .. && $(MAKE) po/SRC-POTFILES.in
+
+BLD-POTFILES.in: @MAINT@ ../Makefile
+	cd .. && $(MAKE) po/BLD-POTFILES.in
+
+Makefile: Make-in ../config.status SRC-POTFILES BLD-POTFILES
 	cd .. \
 	  && CONFIG_FILES=$(subdir)/Makefile.in:$(subdir)/Make-in \
 	     CONFIG_HEADERS= $(SHELL) ./config.status

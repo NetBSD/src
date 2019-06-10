@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.6.26.1 2019/06/10 22:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.6.26.1 2019/06/10 22:05:22 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>

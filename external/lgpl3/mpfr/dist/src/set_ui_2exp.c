@@ -1,7 +1,7 @@
 /* mpfr_set_ui_2exp -- set a MPFR number from a machine unsigned integer with
    a shift
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -24,12 +24,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
-int
+MPFR_HOT_FUNCTION_ATTR int
 mpfr_set_ui_2exp (mpfr_ptr x, unsigned long i, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
 {
   MPFR_SET_POS (x);
 
-  if (i == 0)
+  if (MPFR_UNLIKELY (i == 0))
     {
       MPFR_SET_ZERO (x);
       MPFR_RET (0);
@@ -37,7 +37,7 @@ mpfr_set_ui_2exp (mpfr_ptr x, unsigned long i, mpfr_exp_t e, mpfr_rnd_t rnd_mode
   else
     {
       mp_size_t xn;
-      unsigned int cnt, nbits;
+      int cnt, nbits;
       mp_limb_t *xp;
       int inex = 0;
 

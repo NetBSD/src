@@ -1,6 +1,6 @@
 # mpc.m4
 #
-# Copyright (C) 2008, 2009, 2010, 2011, 2012 INRIA
+# Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -90,7 +90,7 @@ AC_DEFUN([MPC_C_CHECK_FLAG], [
 AC_DEFUN([MPC_C_CHECK_WARNINGCFLAGS], [
   AC_REQUIRE([AC_PROG_GREP])
   if echo $VERSION | grep -c dev >/dev/null 2>&1 ; then
-    if test "x$GCC" = "xyes" -a "x$compiler" != "xicc" -a "x$compiler" != "xg++"; then
+    if test "x$GCC" = "xyes" -a "x$compiler" != "xicc"; then
       # enable -Werror for myself (Andreas Enge)
       if test "x$USER" = "xenge"; then
          MPC_C_CHECK_FLAG(-Werror)
@@ -105,6 +105,7 @@ AC_DEFUN([MPC_C_CHECK_WARNINGCFLAGS], [
       MPC_C_CHECK_FLAG(-Wstrict-prototypes)
       MPC_C_CHECK_FLAG(-Wmissing-prototypes)
       MPC_C_CHECK_FLAG(-Wno-unused-value)
+      MPC_C_CHECK_FLAG(-Wlogical-op)
     fi
   fi
 ])
@@ -123,10 +124,11 @@ AC_DEFUN([MPC_C_CHECK_WARNINGCFLAGS], [
 #
 AC_DEFUN([MPC_GMP_CC_CFLAGS], [
    AC_MSG_CHECKING(for CC and CFLAGS in gmp.h)
+   GMP_CC=
+   GMP_CFLAGS=
    # AC_PROG_CPP triggers the search for a C compiler; use hack instead
-   for cpp in /lib/cpp gcc cc c99
+   for cpp in "$CPP" cpp "gcc -E" /lib/cpp "cc -E" "c99 -E"
    do
-      test $cpp = /lib/cpp || cpp="$cpp -E"
       echo foo > conftest.c
       if $cpp $CPPFLAGS conftest.c > /dev/null 2> /dev/null ; then
          # Get CC
@@ -141,16 +143,11 @@ AC_DEFUN([MPC_GMP_CC_CFLAGS], [
       fi
    done
 
-   if test "x$GMP_CFLAGS" = "x__GMP_CFLAGS" -o "x$GMP_CC" = "x__GMP_CC" ; then
+   if test -z "$GMP_CC$GMP_CFLAGS" ; then
       AC_MSG_RESULT(no)
-      GMP_CC=
-      GMP_CFLAGS=
    else
       AC_MSG_RESULT(yes [CC=$GMP_CC CFLAGS=$GMP_CFLAGS])
-   fi
-
-   # Check for validity of CC and CFLAGS obtained from gmp.h
-   if test -n "$GMP_CC$GMP_CFLAGS" ; then
+      # Check for validity of CC and CFLAGS obtained from gmp.h
       AC_MSG_CHECKING(for CC=$GMP_CC and CFLAGS=$GMP_CFLAGS)
       echo "int main (void) { return 0; }" > conftest.c
       if $GMP_CC $GMP_CFLAGS -o conftest conftest.c 2> /dev/null ; then

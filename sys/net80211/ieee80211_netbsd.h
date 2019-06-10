@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.8 2018/08/15 17:07:03 phil Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.21.2.9 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -846,7 +846,6 @@ struct ieee80211_channel_survey {
 	uint64_t s_tsc;
 };
 
-#endif /* _KERNEL */
 
 /*
  * Malloc API.  Other BSD operating systems have slightly
@@ -905,5 +904,7 @@ static __inline void m_clrprotoflags(struct mbuf *m)
 #define ETHER_IS_BROADCAST(addr) \
         (((addr)[0] & (addr)[1] & (addr)[2] & \
           (addr)[3] & (addr)[4] & (addr)[5]) == 0xff)
+
+#endif /* _KERNEL */
 
 #endif /* _NET80211_IEEE80211_NETBSD_H_ */

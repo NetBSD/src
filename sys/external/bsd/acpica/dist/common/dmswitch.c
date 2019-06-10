@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -217,6 +217,8 @@ AcpiDmClearTempList (
  * FUNCTION:    AcpiDmIsSwitchBlock
  *
  * PARAMETERS:  Op              - While Object
+ *              Temp            - Where the compiler temp name is returned
+ *                                  (_T_x)
  *
  * RETURN:      TRUE if While block can be converted to a Switch/Case block
  *
@@ -442,6 +444,10 @@ AcpiDmIsSwitchBlock (
     if (CurrentOp->Common.AmlOpcode == AML_ELSE_OP)
     {
         CurrentOp = CurrentOp->Common.Next;
+        if (!CurrentOp)
+        {
+            return (FALSE);
+        }
     }
 
     /* Ignore the Break Op */

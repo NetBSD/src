@@ -1,6 +1,6 @@
 /* Test file for multiple mpfr.h inclusion and va_list related functions
 
-Copyright 2011-2016 Free Software Foundation, Inc.
+Copyright 2011-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,9 +28,28 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # include <stdint.h>
 #endif
 
-/* Assume that this is in fact a header inclusion for some library
-   that uses MPFR, i.e. this inclusion is hidden in another one.
-   MPFR currently (rev 6704) fails to handle this case. */
+#define MPFR_DONT_USE_FILE  /* don't use FILE in mpfr-impl.h */
+#ifdef MPFR_USE_MINI_GMP
+#include "mpfr-test.h"
+#endif
+
+/* One of the goals of this test is to detect potential issues with the
+ * following case in user code:
+ *
+ * #include <some_lib.h>
+ * #include <stdarg.h>
+ * #define MPFR_USE_VA_LIST
+ * #include <mpfr.h>
+ *
+ * where some_lib.h has "#include <mpfr.h>". So, the mpfr.h header file
+ * is included multiple times, a first time without <stdarg.h> before,
+ * and a second time with <stdarg.h> support. We need to make sure that
+ * the second inclusion is not a no-op due to some #include guard. This
+ * was fixed in r7320.
+ *
+ * With mini-gmp, mpfr-impl.h is included first, but this should not
+ * affect this test thanks to MPFR_DONT_USE_FILE.
+ */
 #include <mpfr.h>
 
 #include <stdarg.h>
@@ -46,7 +65,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static void
 test (FILE *fout, const char *fmt, ...)
 {
-  int (*fct) (FILE*, __gmp_const char*, va_list);
+  int (*fct) (FILE*, const char*, va_list);
 
   fct = mpfr_vfprintf;
   if (0)

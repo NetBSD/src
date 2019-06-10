@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.132 2018/06/19 05:14:36 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.132.2.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.129 2018/06/19 05:14:16 msaitoh Exp
+ *	NetBSD: miidevs,v 1.153 2019/06/06 16:04:13 thorpej Exp
  */
 
 /*-
@@ -56,65 +56,74 @@
  * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
  */
 
-#define	MII_OUI_AGERE	0x00053d	/* Agere */
-#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
-#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
-#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
-#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_VITESSE	0x0001c1	/* Vitesse */
+#define	MII_OUI_TRIDIUM	0x0001f0	/* Tridium */
+#define	MII_OUI_DATATRACK	0x0002c6	/* Data Track Technology */
+#define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
+#define	MII_OUI_AGERE	0x00053d	/* Agere */
+#define	MII_OUI_BANKSPEED	0x0006b8	/* Bankspeed Pty */
+#define	MII_OUI_NETEXCELL	0x0008bb	/* NetExcell */
+#define	MII_OUI_NETAS	0x0009c3	/* Netas */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
-#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
-#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
-#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_RALINK	0x000c43	/* Ralink Technology */
+#define	MII_OUI_ASIX	0x000ec6	/* ASIX */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
+#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
+#define	MII_OUI_SUNPLUS	0x001105	/* Sunplus Technology */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_RALINK2	0x0017a5	/* Ralink Technology */
+#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
+#define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
+#define	MII_OUI_VIA	0x004063	/* VIA Technologies */
+#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
+#define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
+#define	MII_OUI_AMLOGIC	0x006051	/* Amlogic */
+#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_SMSC	0x00800f	/* SMSC */
 #define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
+#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
-#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
-#define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
-#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
-#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
-#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
-#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
-#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
-#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
-#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
-#define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
-#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
-#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
-#define	MII_OUI_SMSC	0x00800f	/* SMSC */
-#define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
+#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
+#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
+#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
+#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
+#define	MII_OUI_ADMTEK	0x00e092	/* ADMtek */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
+#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
 
-/* Some Intel 82553's use an alternative OUI. */
-#define	MII_OUI_xxINTEL	0x001f00	/* Intel */
-
-/* Some VIA 6122's use an alternative OUI. */
-#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
-
-/* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
+/* Unregisterd or wrong OUI */
+#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
-#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
-#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
-#define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
-#define	MII_OUI_yyINTEL	0x005500	/* Intel */
-#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */
-#define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
-#define	MII_OUI_xxQUALSEMI	0x00068a	/* Quality Semiconductor */
 #define	MII_OUI_xxTSC	0x00039c	/* TDK Semiconductor */
-
-/* bad byteorder (bits "q" and "r" (= LSBs byte 3) lost) */
+#define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
+#define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
+#define	MII_OUI_xxAMLOGIC	0x00068a	/* Amlogic */
+#define	MII_OUI_xxQUALSEMI	0x00068a	/* Quality Semiconductor */
+#define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
+#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
+#define	MII_OUI_xxINTEL	0x001f00	/* Intel */
+#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
+#define	MII_OUI_yyINTEL	0x005500	/* Intel */
+#define	MII_OUI_yyASIX	0x007063	/* Asix Semiconductor */
+#define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
+#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
+#define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
 #define	MII_OUI_xxLEVEL1	0x782000	/* Level 1 */
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
 
-/* Don't know what's going on here. */
-#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
-#define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
-
-#define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
-#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 /*
  * List of known models.  Grouped by oui.
  */
@@ -124,6 +133,36 @@
  */
 #define	MII_MODEL_AGERE_ET1011	0x0004
 #define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+
+/* Asix semiconductor PHYs */
+#define	MII_MODEL_xxASIX_AX88X9X	0x0031
+#define	MII_STR_xxASIX_AX88X9X	"Ax88x9x internal PHY"
+#define	MII_MODEL_yyASIX_AX88772	0x0001
+#define	MII_STR_yyASIX_AX88772	"AX88772 internal PHY"
+#define	MII_MODEL_yyASIX_AX88772A	0x0006
+#define	MII_STR_yyASIX_AX88772A	"AX88772A internal PHY"
+#define	MII_MODEL_yyASIX_AX88772B	0x0008
+#define	MII_STR_yyASIX_AX88772B	"AX88772B internal PHY"
+
+/* Altima Communications PHYs */
+/* Don't know the model for ACXXX */
+#define	MII_MODEL_ALTIMA_ACXXX	0x0001
+#define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101L	0x0012
+#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101	0x0021
+#define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
+/* AMD Am79C87[45] have ALTIMA OUI */
+#define	MII_MODEL_ALTIMA_Am79C875	0x0014
+#define	MII_STR_ALTIMA_Am79C875	"Am79C875 10/100 media interface"
+#define	MII_MODEL_ALTIMA_Am79C874	0x0021
+#define	MII_STR_ALTIMA_Am79C874	"Am79C874 10/100 media interface"
+
+/* Amlogic PHYs */
+#define	MII_MODEL_AMLOGIC_GXL	0x0000
+#define	MII_STR_AMLOGIC_GXL	"Meson GXL internal PHY"
+#define	MII_MODEL_xxAMLOGIC_GXL	0x0000
+#define	MII_STR_xxAMLOGIC_GXL	"Meson GXL internal PHY"
 
 /* Atheros PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
@@ -141,20 +180,6 @@
 #define	MII_MODEL_ATTANSIC_AR8035	0x0007
 #define	MII_STR_ATTANSIC_AR8035	"Atheros AR8035 10/100/1000 PHY"
 
-/* Altima Communications PHYs */
-/* Don't know the model for ACXXX */
-#define	MII_MODEL_ALTIMA_ACXXX	0x0001
-#define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
-#define	MII_MODEL_ALTIMA_AC101	0x0021
-#define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
-#define	MII_MODEL_ALTIMA_AC101L	0x0012
-#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
-/* AMD Am79C87[45] have ALTIMA OUI */
-#define	MII_MODEL_ALTIMA_Am79C875	0x0014
-#define	MII_STR_ALTIMA_Am79C875	"Am79C875 10/100 media interface"
-#define	MII_MODEL_ALTIMA_Am79C874	0x0021
-#define	MII_STR_ALTIMA_Am79C874	"Am79C874 10/100 media interface"
-
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
 #define	MII_MODEL_yyAMD_79C972_10T	0x0001
@@ -171,12 +196,12 @@
 #define	MII_STR_xxBROADCOM_3C905B	"Broadcom 3c905B internal PHY"
 #define	MII_MODEL_xxBROADCOM_3C905C	0x0017
 #define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3c905C internal PHY"
+#define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
+#define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5214	0x0028
 #define	MII_STR_xxBROADCOM_BCM5214	"BCM5214 Quad 10/100 media interface"
-#define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
-#define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5222	0x0032
 #define	MII_STR_xxBROADCOM_BCM5222	"BCM5222 Dual 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM4401	0x0036
@@ -187,8 +212,14 @@
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5402	0x0006
+#define	MII_STR_BROADCOM_BCM5402	"BCM5402 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5404	0x0008
+#define	MII_STR_BROADCOM_BCM5404	"BCM5404 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5424	0x000a
+#define	MII_STR_BROADCOM_BCM5424	"BCM5424/BCM5234 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5464	0x000b
 #define	MII_STR_BROADCOM_BCM5464	"BCM5464 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5461	0x000c
@@ -219,10 +250,16 @@
 #define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T/X media interface"
 #define	MII_MODEL_BROADCOM_BCM5708C	0x0036
 #define	MII_STR_BROADCOM_BCM5708C	"BCM5708C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5466	0x003b
+#define	MII_STR_BROADCOM_BCM5466	"BCM5466 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5325	0x0003
 #define	MII_STR_BROADCOM2_BCM5325	"BCM5325 10/100 5-port PHY switch"
 #define	MII_MODEL_BROADCOM2_BCM5906	0x0004
 #define	MII_STR_BROADCOM2_BCM5906	"BCM5906 10/100baseTX media interface"
+#define	MII_MODEL_BROADCOM2_BCM5478	0x0008
+#define	MII_STR_BROADCOM2_BCM5478	"BCM5478 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5488	0x0009
+#define	MII_STR_BROADCOM2_BCM5488	"BCM5488 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5481	0x000a
 #define	MII_STR_BROADCOM2_BCM5481	"BCM5481 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5482	0x000b
@@ -257,11 +294,15 @@
 #define	MII_STR_BROADCOM3_BCM5719C	"BCM5719C 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM3_BCM57765	0x0024
 #define	MII_STR_BROADCOM3_BCM57765	"BCM57765 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM3_BCM53125	0x0032
+#define	MII_STR_BROADCOM3_BCM53125	"BCM53125 1000BASE-T switch"
 #define	MII_MODEL_BROADCOM3_BCM5720C	0x0036
 #define	MII_STR_BROADCOM3_BCM5720C	"BCM5720C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM4_BCM5725C	0x0038
+#define	MII_STR_BROADCOM4_BCM5725C	"BCM5725C 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
- 
+
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
 #define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
@@ -273,19 +314,29 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8244	0x002c
+#define	MII_STR_CICADA_CS8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8221	0x0015
 #define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
-#define	MII_MODEL_xxCICADA_VSC8244	0x002c
-#define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
+#define	MII_MODEL_DAVICOM_DM9101	0x0000
+#define	MII_STR_DAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161	0x0008
+#define	MII_STR_xxDAVICOM_DM9161	"DM9161 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161A	0x000a
+#define	MII_STR_xxDAVICOM_DM9161A	"DM9161A 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161B	0x000b
+#define	MII_STR_xxDAVICOM_DM9161B	"DM9161[BC] 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9601	0x000c
+#define	MII_STR_xxDAVICOM_DM9601	"DM9601 internal 10/100 media interface"
 
 /* IC Plus Corp. PHYs */
 #define	MII_MODEL_ICPLUS_IP100	0x0004
@@ -306,6 +357,8 @@
 #define	MII_STR_ICS_1892	"ICS1892 10/100 media interface"
 #define	MII_MODEL_ICS_1893	0x0004
 #define	MII_STR_ICS_1893	"ICS1893 10/100 media interface"
+#define	MII_MODEL_ICS_1893C	0x0005
+#define	MII_STR_ICS_1893C	"ICS1893C 10/100 media interface"
 
 /* Intel PHYs */
 #define	MII_MODEL_xxINTEL_I82553	0x0000
@@ -346,8 +399,8 @@
 #define	MII_STR_xxMARVELL_I210	"I210 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
-#define	MII_MODEL_ATHEROS_I82578	0x0004
-#define	MII_STR_ATHEROS_I82578	"Intel 82578 10/100/1000 media interface"
+#define	MII_MODEL_ATTANSIC_I82578	0x0004
+#define	MII_STR_ATTANSIC_I82578	"Intel 82578 10/100/1000 media interface"
 
 
 /* JMicron PHYs */
@@ -359,18 +412,18 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
-#define	MII_MODEL_LEVEL1_LXT971	0x000e
-#define	MII_STR_LEVEL1_LXT971	"LXT971/2 10/100 media interface"
-#define	MII_MODEL_LEVEL1_LXT973	0x0021
-#define	MII_STR_LEVEL1_LXT973	"LXT973 10/100 Dual PHY"
+#define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
+#define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
 #define	MII_MODEL_LEVEL1_LXT974	0x0004
 #define	MII_STR_LEVEL1_LXT974	"LXT974 10/100 Quad PHY"
 #define	MII_MODEL_LEVEL1_LXT975	0x0005
 #define	MII_STR_LEVEL1_LXT975	"LXT975 10/100 Quad PHY"
-#define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
-#define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
 #define	MII_MODEL_LEVEL1_LXT1000	0x000c
 #define	MII_STR_LEVEL1_LXT1000	"LXT1000 1000BASE-T media interface"
+#define	MII_MODEL_LEVEL1_LXT971	0x000e
+#define	MII_STR_LEVEL1_LXT971	"LXT971/2 10/100 media interface"
+#define	MII_MODEL_LEVEL1_LXT973	0x0021
+#define	MII_STR_LEVEL1_LXT973	"LXT973 10/100 Dual PHY"
 
 /* Marvell Semiconductor PHYs */
 #define	MII_MODEL_xxMARVELL_E1000	0x0000
@@ -407,6 +460,8 @@
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1118	0x0022
 #define	MII_STR_xxMARVELL_E1118	"Marvell 88E1118 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1240	0x0023
+#define	MII_STR_xxMARVELL_E1240	"Marvell 88E1240 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R	0x0024
 #define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1149R	0x0025
@@ -415,10 +470,10 @@
 #define	MII_STR_xxMARVELL_E3016	"Marvell 88E3016 10/100 Fast Ethernet PHY"
 #define	MII_MODEL_xxMARVELL_PHYG65G	0x0027
 #define	MII_STR_xxMARVELL_PHYG65G	"Marvell PHYG65G Gigabit PHY"
-#define	MII_MODEL_xxMARVELL_E1116R_29	0x0029
-#define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1318S	0x0029
+#define	MII_STR_xxMARVELL_E1318S	"Marvell 88E1318S Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1543	0x002a
-#define	MII_STR_xxMARVELL_E1543	"Marvell 88E1543 Alaska Quad Port Gb PHY"
+#define	MII_STR_xxMARVELL_E1543	"Marvell 88E154[358] Alaska Quad Port Gb PHY"
 #define	MII_MODEL_MARVELL_E1000_0	0x0000
 #define	MII_STR_MARVELL_E1000_0	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1011	0x0002
@@ -433,8 +488,12 @@
 #define	MII_STR_MARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 
 /* Micrel PHYs */
+#define	MII_MODEL_MICREL_KSZ8081	0x0016
+#define	MII_STR_MICREL_KSZ8081	"Micrel KSZ8081 10/100 PHY"
 #define	MII_MODEL_MICREL_KSZ9021RNI	0x0021
 #define	MII_STR_MICREL_KSZ9021RNI	"Micrel KSZ9021RNI 10/100/1000 PHY"
+#define	MII_MODEL_MICREL_KSZ9031	0x0022
+#define	MII_STR_MICREL_KSZ9031	"Micrel KSZ9031 10/100/1000 PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -448,7 +507,7 @@
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83815	0x0002
-#define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
+#define	MII_STR_xxNATSEMI_DP83815	"DP83815/DP83846A 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83847	0x0003
 #define	MII_STR_xxNATSEMI_DP83847	"DP83847 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
@@ -477,13 +536,16 @@
 /* RDC Semiconductor PHYs */
 #define	MII_MODEL_RDC_R6040	0x0003
 #define	MII_STR_RDC_R6040	"R6040 10/100 media interface"
+
 /* RealTek PHYs */
-#define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
-#define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
+#define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
+#define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_REALTEK_RTL8251	0x0000
 #define	MII_STR_REALTEK_RTL8251	"RTL8251 1000BASE-T media interface"
+#define	MII_MODEL_REALTEK_RTL8201E	0x0008
+#define	MII_STR_REALTEK_RTL8201E	"RTL8201E 10/100 media interface"
 #define	MII_MODEL_REALTEK_RTL8169S	0x0011
 #define	MII_STR_REALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
 
@@ -500,10 +562,22 @@
 #define	MII_STR_SIS_900	"SiS 900 10/100 media interface"
 
 /* SMSC PHYs */
+#define	MII_MODEL_SMSC_LAN83C185	0x000a
+#define	MII_STR_SMSC_LAN83C185	"SMSC LAN83C185 10/100 PHY"
 #define	MII_MODEL_SMSC_LAN8700	0x000c
 #define	MII_STR_SMSC_LAN8700	"SMSC LAN8700 10/100 Ethernet Transceiver"
+#define	MII_MODEL_SMSC_LAN911X	0x000d
+#define	MII_STR_SMSC_LAN911X	"SMSC LAN911X internal 10/100 PHY"
+#define	MII_MODEL_SMSC_LAN75XX	0x000e
+#define	MII_STR_SMSC_LAN75XX	"SMSC LAN75XX internal 10/100 PHY"
 #define	MII_MODEL_SMSC_LAN8710_LAN8720	0x000f
 #define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
+#define	MII_MODEL_SMSC_LAN8740	0x0011
+#define	MII_STR_SMSC_LAN8740	"SMSC LAN8740 10/100 media interface"
+#define	MII_MODEL_SMSC_LAN8741A	0x0012
+#define	MII_STR_SMSC_LAN8741A	"SMSC LAN8741A 10/100 media interface"
+#define	MII_MODEL_SMSC_LAN8742	0x0013
+#define	MII_STR_SMSC_LAN8742	"SMSC LAN8742 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
@@ -518,6 +592,16 @@
 #define	MII_STR_xxTSC_78Q2120	"78Q2120 10/100 media interface"
 #define	MII_MODEL_xxTSC_78Q2121	0x0015
 #define	MII_STR_xxTSC_78Q2121	"78Q2121 100BASE-TX media interface"
+
+/* VIA Technologies PHYs */
+#define	MII_MODEL_VIA_VT6103	0x0032
+#define	MII_STR_VIA_VT6103	"VT6103 10/100 PHY"
+#define	MII_MODEL_VIA_VT6103_2	0x0034
+#define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
+
+/* Vitesse PHYs */
+#define	MII_MODEL_VITESSE_VSC8601	0x0002
+#define	MII_STR_VITESSE_VSC8601	"VSC8601 10/100/1000 PHY"
 
 /* XaQti Corp. PHYs */
 #define	MII_MODEL_xxXAQTI_XMACII	0x0000

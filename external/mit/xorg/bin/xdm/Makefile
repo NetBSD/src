@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/06/17 15:58:40 christos Exp $
+#	$NetBSD: Makefile,v 1.13.28.1 2019/06/10 22:02:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=		xdm
 SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 		error.c file.c genauth.c mitauth.c netaddr.c policy.c \
 		protodpy.c reset.c resource.c server.c session.c socket.c \
-		streams.c util.c xdmauth.c xdmcp.c prngc.c
+		util.c xdmauth.c xdmcp.c prngc.c
 
 .if ${MKPIC} == "no"
 SRCS+=		Login.c greet.c verify.c
@@ -14,11 +14,11 @@ CPPFLAGS+=	-DSTATIC_GREETER_LIB
 .endif
 
 CPPFLAGS+=		-DRETSIGTYPE=void
-CPPFLAGS.auth.c=	-DBSD44SOCKETS
-CPPFLAGS.socket.c=	-DBSD44SOCKETS
-CPPFLAGS.xdmcp.c=	-DBSD44SOCKETS
-CPPFLAGS.xdmshell.c=	-DHAS_VFORK
-CPPFLAGS.resource.c=	\
+CPPFLAGS.auth.c+=	-DBSD44SOCKETS
+CPPFLAGS.socket.c+=	-DBSD44SOCKETS
+CPPFLAGS.xdmcp.c+=	-DBSD44SOCKETS
+CPPFLAGS.xdmshell.c+=	-DHAS_VFORK
+CPPFLAGS.resource.c+=	\
 	-DDEF_SERVER_LINE="\":0 local ${X11BINDIR}/X :0\"" \
 	-DXRDB_PROGRAM=\"${X11BINDIR}/xrdb\" \
 	-DDEF_SESSION="\"${X11BINDIR}/xterm -ls\"" \
@@ -49,14 +49,17 @@ TARGETS+=	configinstall
 
 CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
 
-X11MANCPP=	yes
-X11EXTRAMANDEFS+=	-DARC4_RANDOM \
-			-DCHOOSERPATH=${XDMCHOOSERPATH} \
-			-DGREETERLIBPATH=${XDMGREETERLIB} \
-			-DXDMDIR=${XDMDIR} \
-			-DXDMXAUTHDIR=${XDMVARDIR} \
-			-DXDMLOGDIR=${XDMLOGDIR} \
-			-DXDMPIDDIR=${XDMPIDDIR}
+.include "../../xorg-pkg-ver.mk"
+
+X11EXTRAMANDEFS+= \
+		-e 's,ARC4_RANDOM,1,' \
+		-e 's,BINDIR,$(X11BINDIR),' \
+		-e 's,CHOOSERPATH,$(XDMCHOOSERPATH),' \
+		-e 's,DGREETERLIBPATH,$(XDMGREETERLIB),' \
+		-e 's,XDMDIR,$(XDMDIR),' \
+		-e 's,XDMXAUTHDIR,$(XDMVARDIR),' \
+		-e 's,XDMLOGDIR,$(XDMLOGDIR),' \
+		-e 's,XDMPIDDIR,$(XDMPIDDIR),'
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

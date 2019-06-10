@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.40.4.1 2019/06/10 22:10:33 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.40.4.1 2019/06/10 22:10:33 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -213,7 +213,7 @@ create_db(sqlite3 *db)
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
 	    //mandb_links
 	    "CREATE TABLE IF NOT EXISTS mandb_links(link COLLATE NOCASE, target, section, "
-		"machine, md5_hash); ";
+		"machine, md5_hash, name_desc); ";
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
@@ -270,31 +270,37 @@ unzip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 	unsigned int rc;
 	unsigned char *outbuf;
 	z_stream stream;
+	long total_out;
 
 	assert(nval == 1);
+	memset(&stream, 0, sizeof(stream));
 	stream.next_in = __UNCONST(sqlite3_value_blob(apval[0]));
 	stream.avail_in = sqlite3_value_bytes(apval[0]);
-	stream.avail_out = stream.avail_in * 2 + 100;
-	stream.next_out = outbuf = emalloc(stream.avail_out);
 	stream.zalloc = NULL;
 	stream.zfree = NULL;
 
 	if (inflateInit(&stream) != Z_OK) {
-		free(outbuf);
 		return;
 	}
 
+	total_out = stream.avail_out = stream.avail_in * 2 + 100;
+	stream.next_out = outbuf = emalloc(stream.avail_out);
 	while ((rc = inflate(&stream, Z_SYNC_FLUSH)) != Z_STREAM_END) {
 		if (rc != Z_OK ||
 		    (stream.avail_out != 0 && stream.avail_in == 0)) {
 			free(outbuf);
 			return;
 		}
-		outbuf = erealloc(outbuf, stream.total_out * 2);
+		total_out <<= 1;
+		outbuf = erealloc(outbuf, total_out);
 		stream.next_out = outbuf + stream.total_out;
-		stream.avail_out = stream.total_out;
+		stream.avail_out = total_out - stream.total_out;
 	}
 	if (inflateEnd(&stream) != Z_OK) {
+		free(outbuf);
+		return;
+	}
+	if (stream.total_out == 0) {
 		free(outbuf);
 		return;
 	}
@@ -574,7 +580,7 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 			if ((temp = sqlite3_mprintf("%Q%c", args->sections[i], c)) == NULL)
 				goto RETURN;
 			concat(&section_clause, temp);
-			free(temp);
+			sqlite3_free(temp);
 		}
 	}
 
@@ -642,9 +648,9 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	}
 
 RETURN:
-	free(machine_clause);
+	sqlite3_free(machine_clause);
 	free(section_clause);
-	free(limit_clause);
+	sqlite3_free(limit_clause);
 	return query;
 }
 
@@ -693,10 +699,13 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 		name_temp = (const char *) sqlite3_column_text(stmt, 1);
 		callback_args.name_desc = (const char *) sqlite3_column_text(stmt, 2);
 		callback_args.machine = (const char *) sqlite3_column_text(stmt, 3);
-		if (!args->legacy)
+		if (!args->legacy) {
 			callback_args.snippet = (const char *) sqlite3_column_text(stmt, 4);
-		else
+			callback_args.snippet_length = strlen(callback_args.snippet);
+		} else {
 			callback_args.snippet = "";
+			callback_args.snippet_length = 1;
+		}
 		if ((slash_ptr = strrchr(name_temp, '/')) != NULL)
 			name_temp = slash_ptr + 1;
 		if (callback_args.machine && callback_args.machine[0]) {

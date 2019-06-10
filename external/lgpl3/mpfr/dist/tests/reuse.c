@@ -1,6 +1,6 @@
 /* Test file for in-place operations.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,13 +20,17 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
-#define DISP(s, t) {printf(s); mpfr_out_str(stdout, 2, 0, t, MPFR_RNDN); }
-#define DISP2(s,t) {DISP(s,t); putchar('\n');}
+#define DISP(s,t)                                       \
+  do                                                    \
+    {                                                   \
+      printf (s);                                       \
+      mpfr_out_str (stdout, 2, 0, t, MPFR_RNDN);        \
+    }                                                   \
+  while (0)
+
+#define DISP2(s,t) do { DISP(s,t); putchar ('\n'); } while (0)
 
 #define SPECIAL_MAX 12
 
@@ -97,8 +101,8 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
-  printf("checking %s\n", foo);
+#ifdef MPFR_DEBUG
+  printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
   mpfr_init2 (ref2, prec);
@@ -121,10 +125,11 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
 
       if (mpfr_compare (res1, ref1))
         {
-          printf ("Error for %s(a, a, c) for ", foo);
+          printf ("Error for %s(a, a, c) with %s for ", foo,
+                  mpfr_print_rnd_mode (rnd));
           DISP("a=",ref2); DISP2(", c=",ref3);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
 
@@ -149,7 +154,7 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
         {
           printf ("Error for %s(a, a, a) for ", foo);
           DISP2("a=",ref2);
-          DISP("expected ", ref1); DISP2(", got", res1);
+          DISP("expected ", ref1); DISP2(", got ", res1);
           exit (1);
         }
     }
@@ -169,8 +174,8 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
   mpfr_t res;
   int i, j, k;
 
-#ifdef DEBUG
-  printf("checking %s\n", foo);
+#ifdef MPFR_DEBUG
+  printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref, prec);
   mpfr_init2 (op1, prec);
@@ -202,7 +207,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", b=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -214,7 +219,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", b=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -226,7 +231,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", b=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -238,7 +243,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", a=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -250,7 +255,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", a=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -262,7 +267,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, b, c) for ", foo);
                   DISP("a=", op1); DISP(", a=", op2); DISP2(", c=", op3);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
 
@@ -274,7 +279,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 {
                   printf ("Error for %s(a, a, a, a) for ", foo);
                   DISP2("a=", op1);
-                  DISP("expected ", ref); DISP2(", got", res);
+                  DISP("expected ", ref); DISP2(", got ", res);
                   exit (1);
                 }
             }
@@ -298,8 +303,8 @@ test2ui (int (*testfunc)(mpfr_ptr, mpfr_srcptr, unsigned long int, mpfr_rnd_t),
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
-  printf("checking %s\n", foo);
+#ifdef MPFR_DEBUG
+  printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
   mpfr_init2 (ref2, prec);
@@ -323,8 +328,8 @@ test2ui (int (*testfunc)(mpfr_ptr, mpfr_srcptr, unsigned long int, mpfr_rnd_t),
         {
           printf ("Error for %s(a, a, c) for c=%u\n", foo, ref3);
           DISP2("a=",ref2);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }
@@ -343,8 +348,8 @@ testui2 (int (*testfunc)(mpfr_ptr, unsigned long int, mpfr_srcptr, mpfr_rnd_t),
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
-  printf("checking %s\n", foo);
+#ifdef MPFR_DEBUG
+  printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
   mpfr_init2 (ref3, prec);
@@ -384,8 +389,8 @@ test2 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
-  printf("checking %s\n", foo);
+#ifdef MPFR_DEBUG
+  printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
   mpfr_init2 (ref2, prec);
@@ -424,7 +429,7 @@ test2a (int (*testfunc)(mpfr_ptr, mpfr_srcptr),
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
+#ifdef MPFR_DEBUG
   printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
@@ -464,7 +469,7 @@ test3a (int (*testfunc)(mpfr_ptr, mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
   mpfr_t res1, res2;
   int i;
 
-#ifdef DEBUG
+#ifdef MPFR_DEBUG
   printf ("checking %s\n", foo);
 #endif
   mpfr_init2 (ref1, prec);
@@ -527,8 +532,8 @@ pow_int (mpfr_rnd_t rnd)
   mpfr_t res1;
   int i;
 
-#ifdef DEBUG
-  printf("pow_int\n");
+#ifdef MPFR_DEBUG
+  printf ("pow_int\n");
 #endif
   mpfr_inits2 ((randlimb () % 200) + MPFR_PREC_MIN,
                ref1, ref2, res1, (mpfr_ptr) 0);
@@ -559,8 +564,8 @@ pow_int (mpfr_rnd_t rnd)
         {
           printf ("Error for pow_int(a, a, c) for ");
           DISP("a=",ref2); DISP2(", c=",ref3);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }
@@ -571,114 +576,125 @@ pow_int (mpfr_rnd_t rnd)
 int
 main (void)
 {
-  int rnd;
+  int i, rnd;
   mpfr_prec_t p;
+
   tests_start_mpfr ();
 
-  p = (randlimb () % 200) + MPFR_PREC_MIN;
-  RND_LOOP (rnd)
-  {
-    test2a (mpfr_round, "mpfr_round", p);
-    test2a (mpfr_ceil, "mpfr_ceil", p);
-    test2a (mpfr_floor, "mpfr_floor", p);
-    test2a (mpfr_trunc, "mpfr_trunc", p);
+  for (i = 1; i <= 5; i++)
+    {
+      /* Test on i limb(s), with a random number of trailing bits. */
+      p = GMP_NUMB_BITS * i - (randlimb () % GMP_NUMB_BITS);
+      if (p < MPFR_PREC_MIN)
+        p = MPFR_PREC_MIN;
 
-    test2ui (mpfr_add_ui, "mpfr_add_ui", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_div_2exp, "mpfr_div_2exp", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_div_ui, "mpfr_div_ui", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_mul_2exp, "mpfr_mul_2exp", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_mul_ui, "mpfr_mul_ui", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_pow_ui, "mpfr_pow_ui", p, (mpfr_rnd_t) rnd);
-    test2ui (mpfr_sub_ui, "mpfr_sub_ui", p, (mpfr_rnd_t) rnd);
+      RND_LOOP (rnd)
+        {
+          test2a (mpfr_round, "mpfr_round", p);
+          test2a (mpfr_ceil, "mpfr_ceil", p);
+          test2a (mpfr_floor, "mpfr_floor", p);
+          test2a (mpfr_trunc, "mpfr_trunc", p);
 
-    testui2 (mpfr_ui_div, "mpfr_ui_div", p, (mpfr_rnd_t) rnd);
-    testui2 (mpfr_ui_sub, "mpfr_ui_sub", p, (mpfr_rnd_t) rnd);
-    testui2 (mpfr_ui_pow, "mpfr_ui_pow", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_add_ui, "mpfr_add_ui", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_div_2exp, "mpfr_div_2exp", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_div_ui, "mpfr_div_ui", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_mul_2exp, "mpfr_mul_2exp", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_mul_ui, "mpfr_mul_ui", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_pow_ui, "mpfr_pow_ui", p, (mpfr_rnd_t) rnd);
+          test2ui (mpfr_sub_ui, "mpfr_sub_ui", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_sqr, "mpfr_sqr", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_sqrt, "mpfr_sqrt", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_abs, "mpfr_abs", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_neg, "mpfr_neg", p, (mpfr_rnd_t) rnd);
+          testui2 (mpfr_ui_div, "mpfr_ui_div", p, (mpfr_rnd_t) rnd);
+          testui2 (mpfr_ui_sub, "mpfr_ui_sub", p, (mpfr_rnd_t) rnd);
+          testui2 (mpfr_ui_pow, "mpfr_ui_pow", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_log, "mpfr_log", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_log2, "mpfr_log2", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_log10, "mpfr_log10", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_log1p, "mpfr_log1p", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sqr, "mpfr_sqr", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sqrt, "mpfr_sqrt", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_abs, "mpfr_abs", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_neg, "mpfr_neg", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_exp, "mpfr_exp", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_exp2, "mpfr_exp2", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_exp10, "mpfr_exp10", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_expm1, "mpfr_expm1", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_eint, "mpfr_eint", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_log, "mpfr_log", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_log2, "mpfr_log2", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_log10, "mpfr_log10", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_log1p, "mpfr_log1p", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_sinh, "mpfr_sinh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_cosh, "mpfr_cosh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_tanh, "mpfr_tanh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_asinh, "mpfr_asinh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_acosh, "mpfr_acosh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_atanh, "mpfr_atanh", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_sech, "mpfr_sech", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_csch, "mpfr_csch", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_coth, "mpfr_coth", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_exp, "mpfr_exp", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_exp2, "mpfr_exp2", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_exp10, "mpfr_exp10", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_expm1, "mpfr_expm1", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_eint, "mpfr_eint", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_asin, "mpfr_asin", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_acos, "mpfr_acos", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_atan, "mpfr_atan", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_cos, "mpfr_cos", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_sin, "mpfr_sin", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_tan, "mpfr_tan", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_sec, "mpfr_sec", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_csc, "mpfr_csc", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_cot, "mpfr_cot", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sinh, "mpfr_sinh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_cosh, "mpfr_cosh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_tanh, "mpfr_tanh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_asinh, "mpfr_asinh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_acosh, "mpfr_acosh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_atanh, "mpfr_atanh", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sech, "mpfr_sech", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_csch, "mpfr_csch", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_coth, "mpfr_coth", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_erf,  "mpfr_erf",  p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_erfc, "mpfr_erfc", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_j0,   "mpfr_j0",   p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_j1,   "mpfr_j1",   p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_y0,   "mpfr_y0",   p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_y1,   "mpfr_y1",   p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_zeta, "mpfr_zeta", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_gamma, "mpfr_gamma", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_lngamma, "mpfr_lngamma", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_asin, "mpfr_asin", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_acos, "mpfr_acos", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_atan, "mpfr_atan", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_cos, "mpfr_cos", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sin, "mpfr_sin", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_tan, "mpfr_tan", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_sec, "mpfr_sec", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_csc, "mpfr_csc", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_cot, "mpfr_cot", p, (mpfr_rnd_t) rnd);
 
-    test2 (mpfr_rint, "mpfr_rint", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_rint_ceil, "mpfr_rint_ceil", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_rint_floor, "mpfr_rint_floor", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_rint_round, "mpfr_rint_round", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_rint_trunc, "mpfr_rint_trunc", p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_frac, "mpfr_frac", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_erf,  "mpfr_erf",  p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_erfc, "mpfr_erfc", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_j0,   "mpfr_j0",   p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_j1,   "mpfr_j1",   p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_y0,   "mpfr_y0",   p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_y1,   "mpfr_y1",   p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_zeta, "mpfr_zeta", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_gamma, "mpfr_gamma", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_lngamma, "mpfr_lngamma", p, (mpfr_rnd_t) rnd);
 
-    test3 (mpfr_add, "mpfr_add", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_sub, "mpfr_sub", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_mul, "mpfr_mul", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_div, "mpfr_div", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rint, "mpfr_rint", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rint_ceil, "mpfr_rint_ceil", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rint_floor, "mpfr_rint_floor", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rint_round, "mpfr_rint_round", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rint_trunc, "mpfr_rint_trunc", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_frac, "mpfr_frac", p, (mpfr_rnd_t) rnd);
 
-    test3 (mpfr_agm, "mpfr_agm", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_min, "mpfr_min", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_max, "mpfr_max", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_add, "mpfr_add", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_sub, "mpfr_sub", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_mul, "mpfr_mul", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_div, "mpfr_div", p, (mpfr_rnd_t) rnd);
 
-    test3 (reldiff_wrapper, "mpfr_reldiff", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_dim, "mpfr_dim", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_agm, "mpfr_agm", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_min, "mpfr_min", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_max, "mpfr_max", p, (mpfr_rnd_t) rnd);
 
-    test3 (mpfr_remainder, "mpfr_remainder", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_pow, "mpfr_pow", p, (mpfr_rnd_t) rnd);
-    pow_int ((mpfr_rnd_t) rnd);
-    test3 (mpfr_atan2, "mpfr_atan2", p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_hypot, "mpfr_hypot", p, (mpfr_rnd_t) rnd);
+          test3 (reldiff_wrapper, "mpfr_reldiff", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_dim, "mpfr_dim", p, (mpfr_rnd_t) rnd);
 
-    test3a (mpfr_sin_cos, "mpfr_sin_cos", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_remainder, "mpfr_remainder", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_pow, "mpfr_pow", p, (mpfr_rnd_t) rnd);
+          pow_int ((mpfr_rnd_t) rnd);
+          test3 (mpfr_atan2, "mpfr_atan2", p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_hypot, "mpfr_hypot", p, (mpfr_rnd_t) rnd);
 
-    test4 (mpfr_fma, "mpfr_fma", p, (mpfr_rnd_t) rnd);
-    test4 (mpfr_fms, "mpfr_fms", p, (mpfr_rnd_t) rnd);
+          test3a (mpfr_sin_cos, "mpfr_sin_cos", p, (mpfr_rnd_t) rnd);
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,4,0)
-    test2 (mpfr_li2, "mpfr_li2",  p, (mpfr_rnd_t) rnd);
-    test2 (mpfr_rec_sqrt, "mpfr_rec_sqrt",  p, (mpfr_rnd_t) rnd);
-    test3 (mpfr_fmod, "mpfr_fmod", p, (mpfr_rnd_t) rnd);
-    test3a (mpfr_modf, "mpfr_modf", p, (mpfr_rnd_t) rnd);
-    test3a (mpfr_sinh_cosh, "mpfr_sinh_cosh", p, (mpfr_rnd_t) rnd);
+          test4 (mpfr_fma, "mpfr_fma", p, (mpfr_rnd_t) rnd);
+          test4 (mpfr_fms, "mpfr_fms", p, (mpfr_rnd_t) rnd);
+
+          test2 (mpfr_li2, "mpfr_li2",  p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_rec_sqrt, "mpfr_rec_sqrt",  p, (mpfr_rnd_t) rnd);
+          test3 (mpfr_fmod, "mpfr_fmod", p, (mpfr_rnd_t) rnd);
+          test3a (mpfr_modf, "mpfr_modf", p, (mpfr_rnd_t) rnd);
+          test3a (mpfr_sinh_cosh, "mpfr_sinh_cosh", p, (mpfr_rnd_t) rnd);
+
+#if MPFR_VERSION >= MPFR_VERSION_NUM(3,0,0)
+          test2 (mpfr_ai, "mpfr_ai", p, (mpfr_rnd_t) rnd);
+          test2 (mpfr_digamma, "mpfr_digamma", p, (mpfr_rnd_t) rnd);
 #endif
-  }
+        }
+    }
 
   tests_end_mpfr ();
   return 0;

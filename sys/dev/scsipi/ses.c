@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $ */
+/*	$NetBSD: ses.c,v 1.50.16.1 2019/06/10 22:07:32 christos Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.50.16.1 2019/06/10 22:07:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -552,7 +552,7 @@ ses_log(struct ses_softc *ssc, const char *fmt, ...)
 /*
  * Is this a device that supports enclosure services?
  *
- * It's a a pretty simple ruleset- if it is device type 0x0D (13), it's
+ * It's a pretty simple ruleset- if it is device type 0x0D (13), it's
  * an SES device. If it happens to be an old UNISYS SEN device, we can
  * handle that too.
  */

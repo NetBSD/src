@@ -375,8 +375,8 @@ xstormy16_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an XSTORMY16 ELF reloc.  */
 
-static void
-xstormy16_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+xstormy16_info_to_howto_rela (bfd * abfd,
 			      arelent * cache_ptr,
 			      Elf_Internal_Rela * dst)
 {
@@ -385,11 +385,19 @@ xstormy16_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   if (r_type <= (unsigned int) R_XSTORMY16_12)
     cache_ptr->howto = &xstormy16_elf_howto_table [r_type];
   else if (r_type - R_XSTORMY16_GNU_VTINHERIT
-	   <= (unsigned int) R_XSTORMY16_GNU_VTENTRY)
+	   <= ((unsigned int) R_XSTORMY16_GNU_VTENTRY
+	       - (unsigned int) R_XSTORMY16_GNU_VTINHERIT))
     cache_ptr->howto
       = &xstormy16_elf_howto_table2 [r_type - R_XSTORMY16_GNU_VTINHERIT];
   else
-    abort ();
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+  return TRUE;
 }
 
 /* We support 16-bit pointers to code above 64k by generating a thunk
@@ -1009,7 +1017,7 @@ xstormy16_elf_gc_mark_hook (asection *sec,
 #define elf_backend_always_size_sections \
   xstormy16_elf_always_size_sections
 #define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+  _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_sections \
   xstormy16_elf_finish_dynamic_sections
 

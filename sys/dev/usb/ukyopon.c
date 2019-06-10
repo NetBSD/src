@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.19 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.19.16.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.19 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.19.16.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -86,29 +86,30 @@ struct ukyopon_softc {
 #define UKYOPON_MODEM_IFACE_INDEX	0
 #define UKYOPON_DATA_IFACE_INDEX	3
 
-Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
-Static int	ukyopon_ioctl(void *, int, u_long, void *, int, proc_t *);
+static void	ukyopon_get_status(void *, int, u_char *, u_char *);
+static int	ukyopon_ioctl(void *, int, u_long, void *, int, proc_t *);
+static void	ukyopon_set(void *, int, int, int);
+static int	ukyopon_param(void *, int, struct termios *);
+static int	ukyopon_open(void *, int);
+static void	ukyopon_close(void *, int);
 
-Static struct ucom_methods ukyopon_methods = {
+static struct ucom_methods ukyopon_methods = {
 	.ucom_get_status = ukyopon_get_status,
-	.ucom_set = umodem_set,
-	.ucom_param = umodem_param,
+	.ucom_set = ukyopon_set,
+	.ucom_param = ukyopon_param,
 	.ucom_ioctl = ukyopon_ioctl,
-	.ucom_open = umodem_open,
-	.ucom_close = umodem_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
+	.ucom_open = ukyopon_open,
+	.ucom_close = ukyopon_close,
 };
 
-int		ukyopon_match(device_t, cfdata_t, void *);
-void		ukyopon_attach(device_t, device_t, void *);
-int		ukyopon_detach(device_t, int);
-int		ukyopon_activate(device_t, enum devact);
-extern struct cfdriver ukyopon_cd;
-CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
-    ukyopon_attach, ukyopon_detach, ukyopon_activate);
+static int	ukyopon_match(device_t, cfdata_t, void *);
+static void	ukyopon_attach(device_t, device_t, void *);
+static int	ukyopon_detach(device_t, int);
 
-int
+CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
+    ukyopon_attach, ukyopon_detach, NULL);
+
+static int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -117,12 +118,12 @@ ukyopon_match(device_t parent, cfdata_t match, void *aux)
 	    uiaa->uiaa_product == USB_PRODUCT_KYOCERA_AHK3001V &&
 	    (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
 	     uiaa->uiaa_ifaceno == UKYOPON_DATA_IFACE_INDEX))
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
-void
+static void
 ukyopon_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukyopon_softc *sc = device_private(self);
@@ -140,7 +141,7 @@ ukyopon_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-Static void
+static void
 ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct ukyopon_softc *sc = addr;
@@ -152,10 +153,43 @@ ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 	if ((sc->sc_umodem.sc_msr & UMSR_DCD) == 0)
 		sc->sc_umodem.sc_msr |= UMSR_DCD;
 
-	umodem_get_status(addr, portno, lsr, msr);
+	umodem_get_status(&sc->sc_umodem, portno, lsr, msr);
 }
 
-Static int
+static void
+ukyopon_set(void *addr, int portno, int reg, int onoff)
+{
+	struct ukyopon_softc *sc = addr;
+
+	umodem_set(&sc->sc_umodem, portno, reg, onoff);
+}
+
+static int
+ukyopon_param(void *addr, int portno, struct termios *t)
+{
+	struct ukyopon_softc *sc = addr;
+
+	return umodem_param(&sc->sc_umodem, portno, t);
+}
+
+static int
+ukyopon_open(void *addr, int portno)
+{
+	struct ukyopon_softc *sc = addr;
+
+	return umodem_open(&sc->sc_umodem, portno);
+}
+
+static void
+ukyopon_close(void *addr, int portno)
+{
+	struct ukyopon_softc *sc = addr;
+
+	umodem_close(&sc->sc_umodem, portno);
+}
+
+
+static int
 ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 	      proc_t *p)
 {
@@ -174,19 +208,11 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 		break;
 
 	default:
-		error = umodem_ioctl(addr, portno, cmd, data, flag, p);
+		error = umodem_ioctl(&sc->sc_umodem, portno, cmd, data, flag, p);
 		break;
 	}
 
-	return (error);
-}
-
-int
-ukyopon_activate(device_t self, enum devact act)
-{
-	struct ukyopon_softc *sc = device_private(self);
-
-	return umodem_common_activate(&sc->sc_umodem, act);
+	return error;
 }
 
 int

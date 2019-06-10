@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2017/04/08 19:53:20 christos Exp $
+#	$NetBSD: Makefile,v 1.22.14.1 2019/06/10 22:06:15 christos Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -126,7 +126,7 @@ ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 
 ${PROG}.coff:	${PROG}
 	${_MKTARGET_CREATE}
-	${ELF2ECOFF} ${PROG} ${.TARGET}.tmp
+	${MIPS_ELF2ECOFF} ${PROG} ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 	
 ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}

@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-USB,v 1.23 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: ADM5120-USB,v 1.23.4.1 2019/06/10 22:06:12 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.23.4.1 $"
 
 maxusers	32
 
@@ -68,6 +68,11 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
@@ -79,7 +84,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -105,6 +109,7 @@ cpu0 		at mainbus?
 
 # Network pseudo-devices
 #pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
@@ -118,7 +123,6 @@ pseudo-device	loop				# network loopback
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer			# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM				# use "com" randomness (BROKEN)
 
 # A pseudo device needed for Coda		# also needs CODA (above)
@@ -142,10 +146,10 @@ uhub*           at usb?
 uhub*           at uhub? port ? configuration ? interface ?
 ugen*           at uhub? port ?
 umass*          at uhub? port ?
-wd*		at umass?
 
 options       MSGBUFSIZE=65536
 
 scsibus* at scsi?
 sd*     at scsibus? target ? lun ?      # SCSI disk drives
 
+include "dev/veriexec.config"

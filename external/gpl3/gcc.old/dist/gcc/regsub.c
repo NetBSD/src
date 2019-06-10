@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.6 2017/07/23 01:10:58 mrg Exp $	*/
+/*	$NetBSD: regsub.c,v 1.6.4.1 2019/06/10 21:56:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.

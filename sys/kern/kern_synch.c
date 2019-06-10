@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.315 2018/05/19 11:39:37 jdolecek Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.315.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315 2018/05/19 11:39:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_kstack.h"
-#include "opt_perfctrs.h"
 #include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
@@ -81,9 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315 2018/05/19 11:39:37 jdolecek Ex
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#if defined(PERFCTRS)
-#include <sys/pmc.h>
-#endif
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
@@ -295,7 +291,7 @@ preempt(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
-	l->l_nivcsw++;
+	l->l_pflag |= LP_PREEMPTING;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -559,15 +555,6 @@ mi_switch(lwp_t *l)
 	if (!returning) {
 		SYSCALL_TIME_SLEEP(l);
 
-		/*
-		 * XXXSMP If we are using h/w performance counters,
-		 * save context.
-		 */
-#if PERFCTRS
-		if (PMC_ENABLED(l->l_proc)) {
-			pmc_save_context(l->l_proc);
-		}
-#endif
 		updatertime(l, &bt);
 	}
 
@@ -662,6 +649,9 @@ mi_switch(lwp_t *l)
 		KASSERT(l->l_ctxswtch == 0);
 		l->l_ctxswtch = 1;
 		l->l_ncsw++;
+		if ((l->l_pflag & LP_PREEMPTING) != 0)
+			l->l_nivcsw++;
+		l->l_pflag &= ~LP_PREEMPTING;
 		KASSERT((l->l_pflag & LP_RUNNING) != 0);
 		l->l_pflag &= ~LP_RUNNING;
 
@@ -712,6 +702,11 @@ mi_switch(lwp_t *l)
 			(*dtrace_vtime_switch_func)(newl);
 		}
 
+		/*
+		 * We must ensure not to come here from inside a read section.
+		 */
+		KASSERT(pserialize_not_in_read_section());
+
 		/* Switch to the new LWP.. */
 #ifdef MULTIPROCESSOR
 		KASSERT(curlwp == ci->ci_curlwp);
@@ -758,7 +753,9 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
+		pserialize_switchpoint();
 		mutex_spin_exit(spc->spc_mutex);
+		l->l_pflag &= ~LP_PREEMPTING;
 		lwp_unlock(l);
 		retval = 0;
 	}
@@ -766,15 +763,6 @@ mi_switch(lwp_t *l)
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
 
-	/*
-	 * XXXSMP If we are using h/w performance counters, restore context.
-	 * XXXSMP preemption problem.
-	 */
-#if PERFCTRS
-	if (PMC_ENABLED(l->l_proc)) {
-		pmc_restore_context(l->l_proc);
-	}
-#endif
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
 
@@ -1166,6 +1154,7 @@ sched_pstats(void)
 					if (l->l_slptime > 1) {
 						break;
 					}
+					/* FALLTHROUGH */
 				case LSRUN:
 				case LSONPROC:
 				case LSIDL:

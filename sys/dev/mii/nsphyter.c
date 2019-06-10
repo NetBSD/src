@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.39 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.39.18.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.39 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.39.18.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,20 +97,11 @@ static const struct mii_phy_funcs nsphyter_funcs = {
 };
 
 static const struct mii_phydesc nsphyters[] = {
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83843,
-	  MII_STR_xxNATSEMI_DP83843 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83847,
-	  MII_STR_xxNATSEMI_DP83847 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83849,
-	  MII_STR_xxNATSEMI_DP83849 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83815,
-	  MII_STR_xxNATSEMI_DP83815 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxNATSEMI, DP83843),
+	MII_PHY_DESC(xxNATSEMI, DP83847),
+	MII_PHY_DESC(xxNATSEMI, DP83849),
+	MII_PHY_DESC(xxNATSEMI, DP83815),
+	MII_PHY_END,
 };
 
 static int
@@ -119,9 +110,9 @@ nsphytermatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, nsphyters) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -146,7 +137,8 @@ nsphyterattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -159,15 +151,13 @@ static int
 nsphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -176,14 +166,12 @@ nsphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -191,19 +179,17 @@ nsphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -211,7 +197,7 @@ nsphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -219,18 +205,19 @@ nsphyter_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, physts;
+	uint16_t bmsr, bmcr, physts;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-	physts = PHY_READ(sc, MII_NSPHYTER_PHYSTS);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_NSPHYTER_PHYSTS, &physts);
 
 	if (physts & PHYSTS_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -265,10 +252,11 @@ nsphyter_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 nsphyter_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	int i;
+	uint16_t reg;
 
 	if (sc->mii_flags & MIIF_NOISOLATE)
 		reg = BMCR_RESET;
@@ -288,7 +276,7 @@ nsphyter_reset(struct mii_softc *sc)
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(sc, MII_BMCR);
+		PHY_READ(sc, MII_BMCR, &reg);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);

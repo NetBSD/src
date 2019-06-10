@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.21 2018/06/14 07:19:47 msaitoh Exp $ */
+/* $NetBSD: if_skreg.h,v 1.21.2.1 2019/06/10 22:07:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -451,9 +451,9 @@
 /* Number of ticks per usec for interrupt moderation */
 #define SK_IMTIMER_TICKS_YUKON_FE_P	50
 #define SK_IMTIMER_TICKS_GENESIS	53
-#define SK_IMTIMER_TICKS_YUKON		156
-#define SK_IMTIMER_TICKS_YUKON_EC	125
+#define SK_IMTIMER_TICKS_YUKON		78
 #define SK_IMTIMER_TICKS_YUKON_FE	100
+#define SK_IMTIMER_TICKS_YUKON_EC	125
 #define SK_IMTIMER_TICKS_YUKON_XL	156
 #define SK_IM_USECS(x)		((x) * imtimer_ticks)
 
@@ -515,6 +515,7 @@
 #define SK_GPIO_DAT7		0x00000080
 #define SK_GPIO_DAT8		0x00000100
 #define SK_GPIO_DAT9		0x00000200
+#define SK_Y2_GPIO_STAT_RACE_DIS	0x00002000
 #define SK_GPIO_DIR0		0x00010000
 #define SK_GPIO_DIR1		0x00020000
 #define SK_GPIO_DIR2		0x00040000
@@ -524,7 +525,7 @@
 #define SK_GPIO_DIR6		0x00400000
 #define SK_GPIO_DIR7		0x00800000
 #define SK_GPIO_DIR8		0x01000000
-#define SK_GPIO_DIR9           0x02000000
+#define SK_GPIO_DIR9		0x02000000
 
 #define	SK_Y2_CLKGATE_LINK2_INACTIVE	0x80	/* port 2 inactive */
 #define	SK_Y2_CLKGATE_LINK2_GATE_DIS	0x40	/* disable clock gate, 2 */
@@ -836,7 +837,7 @@
 #define SK_TXQS1_Y2_PREF_LIDX   0x0654
 #define SK_TXQS1_Y2_PREF_ADDRLO 0x0658
 #define SK_TXQS1_Y2_PREF_ADDRHI 0x065C
-#define SK_TXQS1_Y2_PREF_GETIDX 0x0660 
+#define SK_TXQS1_Y2_PREF_GETIDX 0x0660
 #define SK_TXQS1_Y2_PREF_PUTIDX 0x0664
 #define SK_TXQS1_Y2_PREF_FIFOWP 0x0670
 #define SK_TXQS1_Y2_PREF_FIFORP 0x0674
@@ -1679,6 +1680,8 @@ struct sk_tx_desc {
 #define SK_TX_RING_CNT		512
 #define SK_RX_RING_CNT		256
 
+#define SK_Y2_BMUOPC_ADDR64	0x21
+
 struct msk_rx_desc {
 	u_int32_t		sk_addr;
 	u_int16_t		sk_len;
@@ -1761,7 +1764,6 @@ struct msk_status_desc {
 
 #define SK_MAXUNIT	256
 #define SK_TIMEOUT	1000
-#define ETHER_ALIGN	2
 
 /* YUKON registers */
 

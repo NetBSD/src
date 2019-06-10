@@ -1,6 +1,6 @@
 /* The ptid_t type and common functions operating on it.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PTID_H
-#define PTID_H
+#ifndef COMMON_PTID_H
+#define COMMON_PTID_H
 
 /* The ptid struct is a collection of the various "ids" necessary for
    identifying the inferior process/thread being debugged.  This
@@ -152,48 +152,4 @@ extern ptid_t null_ptid;
 
 extern ptid_t minus_one_ptid;
 
-
-/* The following functions are kept for backwards compatibility.  The use of
-   the ptid_t methods is preferred.  */
-
-/* See ptid_t::ptid_t.  */
-
-extern ptid_t ptid_build (int pid, long lwp, long tid);
-
-/* See ptid_t::ptid_t.  */
-
-extern ptid_t pid_to_ptid (int pid);
-
-/* See ptid_t::pid.  */
-
-extern int ptid_get_pid (const ptid_t &ptid);
-
-/* See ptid_t::lwp.  */
-
-extern long ptid_get_lwp (const ptid_t &ptid);
-
-/* See ptid_t::tid.  */
-
-extern long ptid_get_tid (const ptid_t &ptid);
-
-/* See ptid_t::operator== and ptid_t::operator!=.  */
-
-extern int ptid_equal (const ptid_t &ptid1, const ptid_t &ptid2);
-
-/* See ptid_t::is_pid.  */
-
-extern int ptid_is_pid (const ptid_t &ptid);
-
-/* See ptid_t::lwp_p.  */
-
-extern int ptid_lwp_p (const ptid_t &ptid);
-
-/* See ptid_t::tid_p.  */
-
-extern int ptid_tid_p (const ptid_t &ptid);
-
-/* See ptid_t::matches.  */
-
-extern int ptid_match (const ptid_t &ptid, const ptid_t &filter);
-
-#endif
+#endif /* COMMON_PTID_H */

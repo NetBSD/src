@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -321,14 +321,35 @@ OpnDoFieldCommon (
                 Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
                 PkgLengthNode->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
             }
-            else if ((NewBitOffset == CurrentBitOffset) && Gbl_OptimizeTrivialParseNodes)
+            else if (NewBitOffset == CurrentBitOffset)
             {
                 /*
-                 * Offset is redundant; we don't need to output an
-                 * offset opcode. Just set these nodes to default
+                 * This Offset() operator is redundant and not needed,
+                 * because the offset value is the same as the current
+                 * offset.
                  */
-                Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
-                PkgLengthNode->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+                AslError (ASL_REMARK, ASL_MSG_OFFSET, PkgLengthNode, NULL);
+
+                if (AslGbl_OptimizeTrivialParseNodes)
+                {
+                    /*
+                     * Optimize this Offset() operator by removing/ignoring
+                     * it. Set the related nodes to default.
+                     */
+                    Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+                    PkgLengthNode->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+
+                    AslError (ASL_OPTIMIZATION, ASL_MSG_OFFSET, PkgLengthNode,
+                        "Optimizer has removed statement");
+                }
+                else
+                {
+                    /* Optimization is disabled, treat as a valid Offset */
+
+                    PkgLengthNode->Asl.Value.Integer =
+                        NewBitOffset - CurrentBitOffset;
+                    CurrentBitOffset = NewBitOffset;
+                }
             }
             else
             {
@@ -353,7 +374,7 @@ OpnDoFieldCommon (
 
             if ((NewBitOffset == 0) &&
                 (Next->Asl.ParseOpcode == PARSEOP_RESERVED_BYTES) &&
-                Gbl_OptimizeTrivialParseNodes)
+                AslGbl_OptimizeTrivialParseNodes)
             {
                 /*
                  * Unnamed field with a bit length of zero. We can
@@ -528,6 +549,7 @@ OpnDoRegion (
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_PARSE_OBJECT       *Next;
+    ACPI_ADR_SPACE_TYPE     SpaceId;
 
 
     /* Opcode is parent node */
@@ -535,9 +557,10 @@ OpnDoRegion (
 
     Next = Op->Asl.Child;
 
-    /* Second child is the space ID*/
+    /* Second child is the space ID */
 
     Next = Next->Asl.Next;
+    SpaceId = (ACPI_ADR_SPACE_TYPE) Next->Common.Value.Integer;
 
     /* Third child is the region offset */
 
@@ -548,7 +571,13 @@ OpnDoRegion (
     Next = Next->Asl.Next;
     if (Next->Asl.ParseOpcode == PARSEOP_INTEGER)
     {
+        /* Check for zero length */
+
         Op->Asl.Value.Integer = Next->Asl.Value.Integer;
+        if (!Op->Asl.Value.Integer && (SpaceId < ACPI_NUM_PREDEFINED_REGIONS))
+        {
+            AslError (ASL_ERROR, ASL_MSG_REGION_LENGTH, Op, NULL);
+        }
     }
     else
     {
@@ -908,6 +937,7 @@ OpnDoDefinitionBlock (
     ACPI_SIZE               Length;
     UINT32                  i;
     char                    *Filename;
+    ACPI_STATUS             Status;
 
 
     /*
@@ -923,22 +953,44 @@ OpnDoDefinitionBlock (
     Child = Op->Asl.Child;
     if (Child->Asl.Value.Buffer  &&
         *Child->Asl.Value.Buffer &&
-        (Gbl_UseDefaultAmlFilename))
+        (AslGbl_UseDefaultAmlFilename))
     {
+        /*
+         * The walk may traverse multiple definition blocks. Switch files
+         * to ensure that the correct files are manipulated.
+         */
+        FlSwitchFileSet (Op->Asl.Filename);
+
         /*
          * We will use the AML filename that is embedded in the source file
          * for the output filename.
          */
-        Filename = UtLocalCacheCalloc (strlen (Gbl_DirectoryPath) +
+        Filename = UtLocalCacheCalloc (strlen (AslGbl_DirectoryPath) +
             strlen ((char *) Child->Asl.Value.Buffer) + 1);
 
         /* Prepend the current directory path */
 
-        strcpy (Filename, Gbl_DirectoryPath);
+        strcpy (Filename, AslGbl_DirectoryPath);
         strcat (Filename, (char *) Child->Asl.Value.Buffer);
 
-        Gbl_OutputFilenamePrefix = Filename;
-        UtConvertBackslashes (Gbl_OutputFilenamePrefix);
+        AslGbl_OutputFilenamePrefix = Filename;
+        UtConvertBackslashes (AslGbl_OutputFilenamePrefix);
+
+        /*
+         * Use the definition block file parameter instead of the input
+         * filename. Since all files were opened previously, remove the
+         * existing file and open a new file with the name of this
+         * definiton block parameter. Since AML code generation has yet
+         * to happen, the previous file can be removed without any impacts.
+         */
+        FlCloseFile (ASL_FILE_AML_OUTPUT);
+        FlDeleteFile (ASL_FILE_AML_OUTPUT);
+        Status = FlOpenAmlOutputFile (AslGbl_OutputFilenamePrefix);
+        if (ACPI_FAILURE (Status))
+        {
+            AslError (ASL_ERROR, ASL_MSG_OUTPUT_FILE_OPEN, NULL, NULL);
+            return;
+        }
     }
 
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
@@ -949,16 +1001,17 @@ OpnDoDefinitionBlock (
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
     if (Child->Asl.Value.String)
     {
-        Gbl_TableSignature = Child->Asl.Value.String;
-        if (strlen (Gbl_TableSignature) != ACPI_NAME_SIZE)
+        AslGbl_FilesList->TableSignature = Child->Asl.Value.String;
+        AslGbl_TableSignature = Child->Asl.Value.String;
+        if (strlen (AslGbl_TableSignature) != ACPI_NAMESEG_SIZE)
         {
             AslError (ASL_ERROR, ASL_MSG_TABLE_SIGNATURE, Child,
                 "Length must be exactly 4 characters");
         }
 
-        for (i = 0; i < ACPI_NAME_SIZE; i++)
+        for (i = 0; i < ACPI_NAMESEG_SIZE; i++)
         {
-            if (!isalnum ((int) Gbl_TableSignature[i]))
+            if (!isalnum ((int) AslGbl_TableSignature[i]))
             {
                 AslError (ASL_ERROR, ASL_MSG_TABLE_SIGNATURE, Child,
                     "Contains non-alphanumeric characters");
@@ -999,8 +1052,9 @@ OpnDoDefinitionBlock (
                 "Length cannot exceed 8 characters");
         }
 
-        Gbl_TableId = UtLocalCacheCalloc (Length + 1);
-        strcpy (Gbl_TableId, Child->Asl.Value.String);
+        AslGbl_TableId = UtLocalCacheCalloc (Length + 1);
+        strcpy (AslGbl_TableId, Child->Asl.Value.String);
+        AslGbl_FilesList->TableId = AslGbl_TableId;
 
         /*
          * Convert anything non-alphanumeric to an underscore. This
@@ -1008,9 +1062,9 @@ OpnDoDefinitionBlock (
          */
         for (i = 0; i < Length; i++)
         {
-            if (!isalnum ((int) Gbl_TableId[i]))
+            if (!isalnum ((int) AslGbl_TableId[i]))
             {
-                Gbl_TableId[i] = '_';
+                AslGbl_TableId[i] = '_';
             }
         }
     }

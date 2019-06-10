@@ -1,5 +1,5 @@
 /* Top-level LTO routines.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -36,6 +36,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "toplev.h"
 #include "stor-layout.h"
 #include "symbol-summary.h"
+#include "tree-vrp.h"
 #include "ipa-prop.h"
 #include "common.h"
 #include "debug.h"
@@ -52,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "lto-symtab.h"
 #include "stringpool.h"
 #include "fold-const.h"
+#include "builtins.h"
 
 
 /* Number of parallel tasks to run, -1 if we want to use GNU Make jobserver.  */
@@ -828,12 +830,19 @@ static void
 register_resolution (struct lto_file_decl_data *file_data, tree decl,
 		     enum ld_plugin_symbol_resolution resolution)
 {
+  bool existed;
   if (resolution == LDPR_UNKNOWN)
     return;
   if (!file_data->resolution_map)
     file_data->resolution_map
       = new hash_map<tree, ld_plugin_symbol_resolution>;
-  file_data->resolution_map->put (decl, resolution);
+  ld_plugin_symbol_resolution_t &res
+     = file_data->resolution_map->get_or_insert (decl, &existed);
+  if (!existed
+      || resolution == LDPR_PREVAILING_DEF_IRONLY
+      || resolution == LDPR_PREVAILING_DEF
+      || resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
+    res = resolution;
 }
 
 /* Register DECL with the global symbol table and change its
@@ -874,6 +883,18 @@ lto_register_function_decl_in_symtab (struct data_in *data_in, tree decl,
   if (TREE_PUBLIC (decl) && !DECL_ABSTRACT_P (decl))
     register_resolution (data_in->file_data,
 			 decl, get_resolution (data_in, ix));
+}
+
+/* Check if T is a decl and needs register its resolution info.  */
+
+static void
+lto_maybe_register_decl (struct data_in *data_in, tree t, unsigned ix)
+{
+  if (TREE_CODE (t) == VAR_DECL)
+    lto_register_var_decl_in_symtab (data_in, t, ix);
+  else if (TREE_CODE (t) == FUNCTION_DECL
+	   && !DECL_BUILT_IN (t))
+    lto_register_function_decl_in_symtab (data_in, t, ix);
 }
 
 
@@ -1063,12 +1084,6 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 			TREE_FIXED_CST_PTR (t1), TREE_FIXED_CST_PTR (t2)))
       return false;
 
-
-  /* We want to compare locations up to the point where it makes
-     a difference for streaming - thus whether the decl is builtin or not.  */
-  if (CODE_CONTAINS_STRUCT (code, TS_DECL_MINIMAL))
-    compare_values (streamer_handle_as_builtin_p);
-
   if (CODE_CONTAINS_STRUCT (code, TS_DECL_COMMON))
     {
       compare_values (DECL_MODE);
@@ -1167,6 +1182,8 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 	}
       else if (code == ARRAY_TYPE)
 	compare_values (TYPE_NONALIASED_COMPONENT);
+      if (AGGREGATE_TYPE_P (t1))
+	compare_values (TYPE_TYPELESS_STORAGE);
       compare_values (TYPE_PACKED);
       compare_values (TYPE_RESTRICT);
       compare_values (TYPE_USER_ALIGN);
@@ -1604,14 +1621,16 @@ unify_scc (struct data_in *data_in, unsigned from,
 		   streamer.  The others should be singletons, too, and we
 		   should not merge them in any way.  */
 		gcc_assert (code != TRANSLATION_UNIT_DECL
-			    && code != IDENTIFIER_NODE
-			    && !streamer_handle_as_builtin_p (t));
+			    && code != IDENTIFIER_NODE);
 	      }
 
 	  /* Fixup the streamer cache with the prevailing nodes according
 	     to the tree node mapping computed by compare_tree_sccs.  */
 	  if (len == 1)
-	    streamer_tree_cache_replace_tree (cache, pscc->entries[0], from);
+	    {
+	      lto_maybe_register_decl (data_in, pscc->entries[0], from);
+	      streamer_tree_cache_replace_tree (cache, pscc->entries[0], from);
+	    }
 	  else
 	    {
 	      tree *map2 = XALLOCAVEC (tree, 2 * len);
@@ -1623,8 +1642,12 @@ unify_scc (struct data_in *data_in, unsigned from,
 	      qsort (map2, len, 2 * sizeof (tree), cmp_tree);
 	      qsort (map, len, 2 * sizeof (tree), cmp_tree);
 	      for (unsigned i = 0; i < len; ++i)
-		streamer_tree_cache_replace_tree (cache, map[2*i],
-						  (uintptr_t)map2[2*i]);
+		{
+		  lto_maybe_register_decl (data_in, map[2*i],
+					   (uintptr_t)map2[2*i]);
+		  streamer_tree_cache_replace_tree (cache, map[2*i],
+						    (uintptr_t)map2[2*i]);
+		}
 	    }
 
 	  /* Free the tree nodes from the read SCC.  */
@@ -1712,8 +1735,7 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 	  if (len == 1
 	      && (TREE_CODE (first) == IDENTIFIER_NODE
 		  || TREE_CODE (first) == INTEGER_CST
-		  || TREE_CODE (first) == TRANSLATION_UNIT_DECL
-		  || streamer_handle_as_builtin_p (first)))
+		  || TREE_CODE (first) == TRANSLATION_UNIT_DECL))
 	    continue;
 
 	  /* Try to unify the SCC with already existing ones.  */
@@ -1764,13 +1786,7 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 		}
 	      if (!flag_ltrans)
 		{
-		  /* Register variables and functions with the
-		     symbol table.  */
-		  if (TREE_CODE (t) == VAR_DECL)
-		    lto_register_var_decl_in_symtab (data_in, t, from + i);
-		  else if (TREE_CODE (t) == FUNCTION_DECL
-			   && !DECL_BUILT_IN (t))
-		    lto_register_function_decl_in_symtab (data_in, t, from + i);
+		  lto_maybe_register_decl (data_in, t, from + i);
 		  /* Scan the tree for references to global functions or
 		     variables and record those for later fixup.  */
 		  if (mentions_vars_p (t))
@@ -2294,6 +2310,8 @@ do_stream_out (char *temp_filename, lto_symtab_encoder_t encoder)
   lto_set_current_out_file (file);
 
   ipa_write_optimization_summaries (encoder);
+
+  free (CONST_CAST (char *, file->filename));
 
   lto_set_current_out_file (NULL);
   lto_obj_file_close (file);
@@ -2861,13 +2879,25 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
 
   /* Store resolutions into the symbol table.  */
 
-  ld_plugin_symbol_resolution_t *res;
   FOR_EACH_SYMBOL (snode)
-    if (snode->real_symbol_p ()
-	&& snode->lto_file_data
-	&& snode->lto_file_data->resolution_map
-	&& (res = snode->lto_file_data->resolution_map->get (snode->decl)))
-      snode->resolution = *res;
+    if (snode->externally_visible && snode->real_symbol_p ()
+	&& snode->lto_file_data && snode->lto_file_data->resolution_map
+	&& !is_builtin_fn (snode->decl)
+	&& !(VAR_P (snode->decl) && DECL_HARD_REGISTER (snode->decl)))
+      {
+	ld_plugin_symbol_resolution_t *res;
+
+	res = snode->lto_file_data->resolution_map->get (snode->decl);
+	if (!res || *res == LDPR_UNKNOWN)
+	  {
+	    if (snode->output_to_lto_symbol_table_p ())
+	      fatal_error (input_location, "missing resolution data for %s",
+		           IDENTIFIER_POINTER
+			     (DECL_ASSEMBLER_NAME (snode->decl)));
+	  }
+	else
+          snode->resolution = *res;
+      }
   for (i = 0; all_file_decl_data[i]; i++)
     if (all_file_decl_data[i]->resolution_map)
       {
@@ -3123,9 +3153,10 @@ do_whole_program_analysis (void)
   else if (flag_lto_partition == LTO_PARTITION_MAX)
     lto_max_map ();
   else if (flag_lto_partition == LTO_PARTITION_ONE)
-    lto_balanced_map (1);
+    lto_balanced_map (1, INT_MAX);
   else if (flag_lto_partition == LTO_PARTITION_BALANCED)
-    lto_balanced_map (PARAM_VALUE (PARAM_LTO_PARTITIONS));
+    lto_balanced_map (PARAM_VALUE (PARAM_LTO_PARTITIONS),
+		      PARAM_VALUE (MAX_PARTITION_SIZE));
   else
     gcc_unreachable ();
 
@@ -3250,7 +3281,7 @@ offload_handle_link_vars (void)
 	TREE_TYPE (link_ptr_var) = type;
 	TREE_USED (link_ptr_var) = 1;
 	TREE_STATIC (link_ptr_var) = 1;
-	DECL_MODE (link_ptr_var) = TYPE_MODE (type);
+	SET_DECL_MODE (link_ptr_var, TYPE_MODE (type));
 	DECL_SIZE (link_ptr_var) = TYPE_SIZE (type);
 	DECL_SIZE_UNIT (link_ptr_var) = TYPE_SIZE_UNIT (type);
 	DECL_ARTIFICIAL (link_ptr_var) = 1;
@@ -3327,6 +3358,9 @@ lto_main (void)
 	  materialize_cgraph ();
 	  if (!flag_ltrans)
 	    lto_promote_statics_nonwpa ();
+
+	  /* Annotate the CU DIE and mark the early debug phase as finished.  */
+	  debug_hooks->early_finish ("<artificial>");
 
 	  /* Let the middle end know that we have read and merged all of
 	     the input files.  */ 

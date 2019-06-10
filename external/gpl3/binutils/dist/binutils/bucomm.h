@@ -49,7 +49,7 @@ void list_supported_architectures (const char *, FILE *);
 
 int display_info (void);
 
-void print_arelt_descr (FILE *, bfd *, bfd_boolean);
+void print_arelt_descr (FILE *, bfd *, bfd_boolean, bfd_boolean);
 
 char *make_tempname (char *);
 char *make_tempdir (char *);

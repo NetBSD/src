@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,16 @@
 #include "server.h"
 #include "linux-low.h"
 
+#include "elf/common.h"
+#include <sys/uio.h>
 #include <elf.h>
 #include <asm/ptrace.h>
 
+#include "arch/ppc-linux-common.h"
+#include "arch/ppc-linux-tdesc.h"
 #include "nat/ppc-linux.h"
-#include "linux-ppc-tdesc.h"
+#include "nat/linux-ptrace.h"
+#include "linux-ppc-tdesc-init.h"
 #include "ax.h"
 #include "tracepoint.h"
 
@@ -39,7 +44,13 @@
 #define PPC_LI(insn)	(PPC_SEXT (PPC_FIELD (insn, 6, 24), 24) << 2)
 #define PPC_BD(insn)	(PPC_SEXT (PPC_FIELD (insn, 16, 14), 14) << 2)
 
+/* Holds the AT_HWCAP auxv entry.  */
+
 static unsigned long ppc_hwcap;
+
+/* Holds the AT_HWCAP2 auxv entry.  */
+
+static unsigned long ppc_hwcap2;
 
 
 #define ppc_num_regs 73
@@ -113,6 +124,24 @@ static int ppc_regmap_e500[] =
   PT_ORIG_R3 * 4, PT_TRAP * 4
  };
 #endif
+
+/* Check whether the kernel provides a register set with number
+   REGSET_ID of size REGSETSIZE for process/thread TID.  */
+
+static int
+ppc_check_regset (int tid, int regset_id, int regsetsize)
+{
+  void *buf = alloca (regsetsize);
+  struct iovec iov;
+
+  iov.iov_base = buf;
+  iov.iov_len = regsetsize;
+
+  if (ptrace (PTRACE_GETREGSET, tid, regset_id, &iov) >= 0
+      || errno == ENODATA)
+    return 1;
+  return 0;
+}
 
 static int
 ppc_cannot_store_register (int regno)
@@ -457,16 +486,278 @@ static void ppc_fill_gregset (struct regcache *regcache, void *buf)
     ppc_collect_ptrace_register (regcache, i, (char *) buf + ppc_regmap[i]);
 }
 
-#define SIZEOF_VSXREGS 32*8
+/* Program Priority Register regset fill function.  */
+
+static void
+ppc_fill_pprregset (struct regcache *regcache, void *buf)
+{
+  char *ppr = (char *) buf;
+
+  collect_register_by_name (regcache, "ppr", ppr);
+}
+
+/* Program Priority Register regset store function.  */
+
+static void
+ppc_store_pprregset (struct regcache *regcache, const void *buf)
+{
+  const char *ppr = (const char *) buf;
+
+  supply_register_by_name (regcache, "ppr", ppr);
+}
+
+/* Data Stream Control Register regset fill function.  */
+
+static void
+ppc_fill_dscrregset (struct regcache *regcache, void *buf)
+{
+  char *dscr = (char *) buf;
+
+  collect_register_by_name (regcache, "dscr", dscr);
+}
+
+/* Data Stream Control Register regset store function.  */
+
+static void
+ppc_store_dscrregset (struct regcache *regcache, const void *buf)
+{
+  const char *dscr = (const char *) buf;
+
+  supply_register_by_name (regcache, "dscr", dscr);
+}
+
+/* Target Address Register regset fill function.  */
+
+static void
+ppc_fill_tarregset (struct regcache *regcache, void *buf)
+{
+  char *tar = (char *) buf;
+
+  collect_register_by_name (regcache, "tar", tar);
+}
+
+/* Target Address Register regset store function.  */
+
+static void
+ppc_store_tarregset (struct regcache *regcache, const void *buf)
+{
+  const char *tar = (const char *) buf;
+
+  supply_register_by_name (regcache, "tar", tar);
+}
+
+/* Event-Based Branching regset store function.  Unless the inferior
+   has a perf event open, ptrace can return in error when reading and
+   writing to the regset, with ENODATA.  For reading, the registers
+   will correctly show as unavailable.  For writing, gdbserver
+   currently only caches any register writes from P and G packets and
+   the stub always tries to write all the regsets when resuming the
+   inferior, which would result in frequent warnings.  For this
+   reason, we don't define a fill function.  This also means that the
+   client-side regcache will be dirty if the user tries to write to
+   the EBB registers.  G packets that the client sends to write to
+   unrelated registers will also include data for EBB registers, even
+   if they are unavailable.  */
+
+static void
+ppc_store_ebbregset (struct regcache *regcache, const void *buf)
+{
+  const char *regset = (const char *) buf;
+
+  /* The order in the kernel regset is: EBBRR, EBBHR, BESCR.  In the
+     .dat file is BESCR, EBBHR, EBBRR.  */
+  supply_register_by_name (regcache, "ebbrr", &regset[0]);
+  supply_register_by_name (regcache, "ebbhr", &regset[8]);
+  supply_register_by_name (regcache, "bescr", &regset[16]);
+}
+
+/* Performance Monitoring Unit regset fill function.  */
+
+static void
+ppc_fill_pmuregset (struct regcache *regcache, void *buf)
+{
+  char *regset = (char *) buf;
+
+  /* The order in the kernel regset is SIAR, SDAR, SIER, MMCR2, MMCR0.
+     In the .dat file is MMCR0, MMCR2, SIAR, SDAR, SIER.  */
+  collect_register_by_name (regcache, "siar", &regset[0]);
+  collect_register_by_name (regcache, "sdar", &regset[8]);
+  collect_register_by_name (regcache, "sier", &regset[16]);
+  collect_register_by_name (regcache, "mmcr2", &regset[24]);
+  collect_register_by_name (regcache, "mmcr0", &regset[32]);
+}
+
+/* Performance Monitoring Unit regset store function.  */
+
+static void
+ppc_store_pmuregset (struct regcache *regcache, const void *buf)
+{
+  const char *regset = (const char *) buf;
+
+  supply_register_by_name (regcache, "siar", &regset[0]);
+  supply_register_by_name (regcache, "sdar", &regset[8]);
+  supply_register_by_name (regcache, "sier", &regset[16]);
+  supply_register_by_name (regcache, "mmcr2", &regset[24]);
+  supply_register_by_name (regcache, "mmcr0", &regset[32]);
+}
+
+/* Hardware Transactional Memory special-purpose register regset fill
+   function.  */
+
+static void
+ppc_fill_tm_sprregset (struct regcache *regcache, void *buf)
+{
+  int i, base;
+  char *regset = (char *) buf;
+
+  base = find_regno (regcache->tdesc, "tfhar");
+  for (i = 0; i < 3; i++)
+    collect_register (regcache, base + i, &regset[i * 8]);
+}
+
+/* Hardware Transactional Memory special-purpose register regset store
+   function.  */
+
+static void
+ppc_store_tm_sprregset (struct regcache *regcache, const void *buf)
+{
+  int i, base;
+  const char *regset = (const char *) buf;
+
+  base = find_regno (regcache->tdesc, "tfhar");
+  for (i = 0; i < 3; i++)
+    supply_register (regcache, base + i, &regset[i * 8]);
+}
+
+/* For the same reasons as the EBB regset, none of the HTM
+   checkpointed regsets have a fill function.  These registers are
+   only available if the inferior is in a transaction.  */
+
+/* Hardware Transactional Memory checkpointed general-purpose regset
+   store function.  */
+
+static void
+ppc_store_tm_cgprregset (struct regcache *regcache, const void *buf)
+{
+  int i, base, size, endian_offset;
+  const char *regset = (const char *) buf;
+
+  base = find_regno (regcache->tdesc, "cr0");
+  size = register_size (regcache->tdesc, base);
+
+  gdb_assert (size == 4 || size == 8);
+
+  for (i = 0; i < 32; i++)
+    supply_register (regcache, base + i, &regset[i * size]);
+
+  endian_offset = 0;
+
+  if ((size == 8) && (__BYTE_ORDER == __BIG_ENDIAN))
+    endian_offset = 4;
+
+  supply_register_by_name (regcache, "ccr",
+			   &regset[PT_CCR * size + endian_offset]);
+
+  supply_register_by_name (regcache, "cxer",
+			   &regset[PT_XER * size + endian_offset]);
+
+  supply_register_by_name (regcache, "clr", &regset[PT_LNK * size]);
+  supply_register_by_name (regcache, "cctr", &regset[PT_CTR * size]);
+}
+
+/* Hardware Transactional Memory checkpointed floating-point regset
+   store function.  */
+
+static void
+ppc_store_tm_cfprregset (struct regcache *regcache, const void *buf)
+{
+  int i, base;
+  const char *regset = (const char *) buf;
+
+  base = find_regno (regcache->tdesc, "cf0");
+
+  for (i = 0; i < 32; i++)
+    supply_register (regcache, base + i, &regset[i * 8]);
+
+  supply_register_by_name (regcache, "cfpscr", &regset[32 * 8]);
+}
+
+/* Hardware Transactional Memory checkpointed vector regset store
+   function.  */
+
+static void
+ppc_store_tm_cvrregset (struct regcache *regcache, const void *buf)
+{
+  int i, base;
+  const char *regset = (const char *) buf;
+  int vscr_offset = 0;
+
+  base = find_regno (regcache->tdesc, "cvr0");
+
+  for (i = 0; i < 32; i++)
+    supply_register (regcache, base + i, &regset[i * 16]);
+
+  if (__BYTE_ORDER == __BIG_ENDIAN)
+    vscr_offset = 12;
+
+  supply_register_by_name (regcache, "cvscr",
+			   &regset[32 * 16 + vscr_offset]);
+
+  supply_register_by_name (regcache, "cvrsave", &regset[33 * 16]);
+}
+
+/* Hardware Transactional Memory checkpointed vector-scalar regset
+   store function.  */
+
+static void
+ppc_store_tm_cvsxregset (struct regcache *regcache, const void *buf)
+{
+  int i, base;
+  const char *regset = (const char *) buf;
+
+  base = find_regno (regcache->tdesc, "cvs0h");
+  for (i = 0; i < 32; i++)
+    supply_register (regcache, base + i, &regset[i * 8]);
+}
+
+/* Hardware Transactional Memory checkpointed Program Priority
+   Register regset store function.  */
+
+static void
+ppc_store_tm_cpprregset (struct regcache *regcache, const void *buf)
+{
+  const char *cppr = (const char *) buf;
+
+  supply_register_by_name (regcache, "cppr", cppr);
+}
+
+/* Hardware Transactional Memory checkpointed Data Stream Control
+   Register regset store function.  */
+
+static void
+ppc_store_tm_cdscrregset (struct regcache *regcache, const void *buf)
+{
+  const char *cdscr = (const char *) buf;
+
+  supply_register_by_name (regcache, "cdscr", cdscr);
+}
+
+/* Hardware Transactional Memory checkpointed Target Address Register
+   regset store function.  */
+
+static void
+ppc_store_tm_ctarregset (struct regcache *regcache, const void *buf)
+{
+  const char *ctar = (const char *) buf;
+
+  supply_register_by_name (regcache, "ctar", ctar);
+}
 
 static void
 ppc_fill_vsxregset (struct regcache *regcache, void *buf)
 {
   int i, base;
   char *regset = (char *) buf;
-
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_VSX))
-    return;
 
   base = find_regno (regcache->tdesc, "vs0h");
   for (i = 0; i < 32; i++)
@@ -479,30 +770,28 @@ ppc_store_vsxregset (struct regcache *regcache, const void *buf)
   int i, base;
   const char *regset = (const char *) buf;
 
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_VSX))
-    return;
-
   base = find_regno (regcache->tdesc, "vs0h");
   for (i = 0; i < 32; i++)
     supply_register (regcache, base + i, &regset[i * 8]);
 }
-
-#define SIZEOF_VRREGS 33*16+4
 
 static void
 ppc_fill_vrregset (struct regcache *regcache, void *buf)
 {
   int i, base;
   char *regset = (char *) buf;
-
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC))
-    return;
+  int vscr_offset = 0;
 
   base = find_regno (regcache->tdesc, "vr0");
   for (i = 0; i < 32; i++)
     collect_register (regcache, base + i, &regset[i * 16]);
 
-  collect_register_by_name (regcache, "vscr", &regset[32 * 16 + 12]);
+  if (__BYTE_ORDER == __BIG_ENDIAN)
+    vscr_offset = 12;
+
+  collect_register_by_name (regcache, "vscr",
+			    &regset[32 * 16 + vscr_offset]);
+
   collect_register_by_name (regcache, "vrsave", &regset[33 * 16]);
 }
 
@@ -511,15 +800,17 @@ ppc_store_vrregset (struct regcache *regcache, const void *buf)
 {
   int i, base;
   const char *regset = (const char *) buf;
-
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC))
-    return;
+  int vscr_offset = 0;
 
   base = find_regno (regcache->tdesc, "vr0");
   for (i = 0; i < 32; i++)
     supply_register (regcache, base + i, &regset[i * 16]);
 
-  supply_register_by_name (regcache, "vscr", &regset[32 * 16 + 12]);
+  if (__BYTE_ORDER == __BIG_ENDIAN)
+    vscr_offset = 12;
+
+  supply_register_by_name (regcache, "vscr",
+			   &regset[32 * 16 + vscr_offset]);
   supply_register_by_name (regcache, "vrsave", &regset[33 * 16]);
 }
 
@@ -536,9 +827,6 @@ ppc_fill_evrregset (struct regcache *regcache, void *buf)
   int i, ev0;
   struct gdb_evrregset_t *regset = (struct gdb_evrregset_t *) buf;
 
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE))
-    return;
-
   ev0 = find_regno (regcache->tdesc, "ev0h");
   for (i = 0; i < 32; i++)
     collect_register (regcache, ev0 + i, &regset->evr[i]);
@@ -552,9 +840,6 @@ ppc_store_evrregset (struct regcache *regcache, const void *buf)
 {
   int i, ev0;
   const struct gdb_evrregset_t *regset = (const struct gdb_evrregset_t *) buf;
-
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE))
-    return;
 
   ev0 = find_regno (regcache->tdesc, "ev0h");
   for (i = 0; i < 32; i++)
@@ -577,11 +862,37 @@ static struct regset_info ppc_regsets[] = {
      fetch them every time, but still fall back to PTRACE_PEEKUSER for the
      general registers.  Some kernels support these, but not the newer
      PPC_PTRACE_GETREGS.  */
-  { PTRACE_GETVSXREGS, PTRACE_SETVSXREGS, 0, SIZEOF_VSXREGS, EXTENDED_REGS,
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CTAR, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_ctarregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CDSCR, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cdscrregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CPPR, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cpprregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CVSX, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cvsxregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CVMX, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cvrregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CFPR, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cfprregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_CGPR, 0, EXTENDED_REGS,
+    NULL, ppc_store_tm_cgprregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TM_SPR, 0, EXTENDED_REGS,
+    ppc_fill_tm_sprregset, ppc_store_tm_sprregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_EBB, 0, EXTENDED_REGS,
+    NULL, ppc_store_ebbregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_PMU, 0, EXTENDED_REGS,
+    ppc_fill_pmuregset, ppc_store_pmuregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_TAR, 0, EXTENDED_REGS,
+    ppc_fill_tarregset, ppc_store_tarregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_PPR, 0, EXTENDED_REGS,
+    ppc_fill_pprregset, ppc_store_pprregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PPC_DSCR, 0, EXTENDED_REGS,
+    ppc_fill_dscrregset, ppc_store_dscrregset },
+  { PTRACE_GETVSXREGS, PTRACE_SETVSXREGS, 0, 0, EXTENDED_REGS,
   ppc_fill_vsxregset, ppc_store_vsxregset },
-  { PTRACE_GETVRREGS, PTRACE_SETVRREGS, 0, SIZEOF_VRREGS, EXTENDED_REGS,
+  { PTRACE_GETVRREGS, PTRACE_SETVRREGS, 0, 0, EXTENDED_REGS,
     ppc_fill_vrregset, ppc_store_vrregset },
-  { PTRACE_GETEVRREGS, PTRACE_SETEVRREGS, 0, 32 * 4 + 8 + 4, EXTENDED_REGS,
+  { PTRACE_GETEVRREGS, PTRACE_SETEVRREGS, 0, 0, EXTENDED_REGS,
     ppc_fill_evrregset, ppc_store_evrregset },
   { 0, 0, 0, 0, GENERAL_REGS, ppc_fill_gregset, NULL },
   NULL_REGSET
@@ -617,74 +928,60 @@ static void
 ppc_arch_setup (void)
 {
   const struct target_desc *tdesc;
-#ifdef __powerpc64__
-  long msr;
-  struct regcache *regcache;
+  struct regset_info *regset;
+  struct ppc_linux_features features = ppc_linux_no_features;
 
-  /* On a 64-bit host, assume 64-bit inferior process with no
-     AltiVec registers.  Reset ppc_hwcap to ensure that the
-     collect_register call below does not fail.  */
-  tdesc = tdesc_powerpc_64l;
-  current_process ()->tdesc = tdesc;
-  ppc_hwcap = 0;
+  int tid = lwpid_of (current_thread);
 
-  regcache = new_register_cache (tdesc);
-  fetch_inferior_registers (regcache, find_regno (tdesc, "msr"));
-  collect_register_by_name (regcache, "msr", &msr);
-  free_register_cache (regcache);
-  if (ppc64_64bit_inferior_p (msr))
-    {
-      ppc_get_auxv (AT_HWCAP, &ppc_hwcap);
-      if (ppc_hwcap & PPC_FEATURE_CELL)
-	tdesc = tdesc_powerpc_cell64l;
-      else if (ppc_hwcap & PPC_FEATURE_HAS_VSX)
-	{
-	  /* Power ISA 2.05 (implemented by Power 6 and newer processors)
-	     increases the FPSCR from 32 bits to 64 bits. Even though Power 7
-	     supports this ISA version, it doesn't have PPC_FEATURE_ARCH_2_05
-	     set, only PPC_FEATURE_ARCH_2_06.  Since for now the only bits
-	     used in the higher half of the register are for Decimal Floating
-	     Point, we check if that feature is available to decide the size
-	     of the FPSCR.  */
-	  if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	    tdesc = tdesc_powerpc_isa205_vsx64l;
-	  else
-	    tdesc = tdesc_powerpc_vsx64l;
-	}
-      else if (ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC)
-	{
-	  if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	    tdesc = tdesc_powerpc_isa205_altivec64l;
-	  else
-	    tdesc = tdesc_powerpc_altivec64l;
-	}
+  features.wordsize = ppc_linux_target_wordsize (tid);
 
-      current_process ()->tdesc = tdesc;
-      return;
-    }
-#endif
+  if (features.wordsize == 4)
+      tdesc = tdesc_powerpc_32l;
+  else
+      tdesc = tdesc_powerpc_64l;
 
-  /* OK, we have a 32-bit inferior.  */
-  tdesc = tdesc_powerpc_32l;
   current_process ()->tdesc = tdesc;
 
+  /* The value of current_process ()->tdesc needs to be set for this
+     call.  */
   ppc_get_auxv (AT_HWCAP, &ppc_hwcap);
+  ppc_get_auxv (AT_HWCAP2, &ppc_hwcap2);
+
+  features.isa205 = ppc_linux_has_isa205 (ppc_hwcap);
+
+  if (ppc_hwcap & PPC_FEATURE_HAS_VSX)
+    features.vsx = true;
+
+  if (ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC)
+    features.altivec = true;
+
+  if ((ppc_hwcap2 & PPC_FEATURE2_DSCR)
+      && ppc_check_regset (tid, NT_PPC_DSCR, PPC_LINUX_SIZEOF_DSCRREGSET)
+      && ppc_check_regset (tid, NT_PPC_PPR, PPC_LINUX_SIZEOF_PPRREGSET))
+    {
+      features.ppr_dscr = true;
+      if ((ppc_hwcap2 & PPC_FEATURE2_ARCH_2_07)
+	  && (ppc_hwcap2 & PPC_FEATURE2_TAR)
+	  && (ppc_hwcap2 & PPC_FEATURE2_EBB)
+	  && ppc_check_regset (tid, NT_PPC_TAR,
+			       PPC_LINUX_SIZEOF_TARREGSET)
+	  && ppc_check_regset (tid, NT_PPC_EBB,
+			       PPC_LINUX_SIZEOF_EBBREGSET)
+	  && ppc_check_regset (tid, NT_PPC_PMU,
+			       PPC_LINUX_SIZEOF_PMUREGSET))
+	{
+	  features.isa207 = true;
+	  if ((ppc_hwcap2 & PPC_FEATURE2_HTM)
+	      && ppc_check_regset (tid, NT_PPC_TM_SPR,
+				   PPC_LINUX_SIZEOF_TM_SPRREGSET))
+	    features.htm = true;
+	}
+    }
+
   if (ppc_hwcap & PPC_FEATURE_CELL)
-    tdesc = tdesc_powerpc_cell32l;
-  else if (ppc_hwcap & PPC_FEATURE_HAS_VSX)
-    {
-      if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	tdesc = tdesc_powerpc_isa205_vsx32l;
-      else
-	tdesc = tdesc_powerpc_vsx32l;
-    }
-  else if (ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC)
-    {
-      if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	tdesc = tdesc_powerpc_isa205_altivec32l;
-      else
-	tdesc = tdesc_powerpc_altivec32l;
-    }
+    features.cell = true;
+
+  tdesc = ppc_linux_match_description (features);
 
   /* On 32-bit machines, check for SPE registers.
      Set the low target's regmap field as appropriately.  */
@@ -707,7 +1004,90 @@ ppc_arch_setup (void)
       ppc_regmap_adjusted = 1;
    }
 #endif
+
   current_process ()->tdesc = tdesc;
+
+  for (regset = ppc_regsets; regset->size >= 0; regset++)
+    switch (regset->get_request)
+      {
+      case PTRACE_GETVRREGS:
+	regset->size = features.altivec ? PPC_LINUX_SIZEOF_VRREGSET : 0;
+	break;
+      case PTRACE_GETVSXREGS:
+	regset->size = features.vsx ? PPC_LINUX_SIZEOF_VSXREGSET : 0;
+	break;
+      case PTRACE_GETEVRREGS:
+	if (ppc_hwcap & PPC_FEATURE_HAS_SPE)
+	  regset->size = 32 * 4 + 8 + 4;
+	else
+	  regset->size = 0;
+	break;
+      case PTRACE_GETREGSET:
+	switch (regset->nt_type)
+	  {
+	  case NT_PPC_PPR:
+	    regset->size = (features.ppr_dscr ?
+			    PPC_LINUX_SIZEOF_PPRREGSET : 0);
+	    break;
+	  case NT_PPC_DSCR:
+	    regset->size = (features.ppr_dscr ?
+			    PPC_LINUX_SIZEOF_DSCRREGSET : 0);
+	    break;
+	  case NT_PPC_TAR:
+	    regset->size = (features.isa207 ?
+			    PPC_LINUX_SIZEOF_TARREGSET : 0);
+	    break;
+	  case NT_PPC_EBB:
+	    regset->size = (features.isa207 ?
+			    PPC_LINUX_SIZEOF_EBBREGSET : 0);
+	    break;
+	  case NT_PPC_PMU:
+	    regset->size = (features.isa207 ?
+			    PPC_LINUX_SIZEOF_PMUREGSET : 0);
+	    break;
+	  case NT_PPC_TM_SPR:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_TM_SPRREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CGPR:
+	    if (features.wordsize == 4)
+	      regset->size = (features.htm ?
+			      PPC32_LINUX_SIZEOF_CGPRREGSET : 0);
+	    else
+	      regset->size = (features.htm ?
+			      PPC64_LINUX_SIZEOF_CGPRREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CFPR:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CFPRREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CVMX:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CVMXREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CVSX:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CVSXREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CPPR:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CPPRREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CDSCR:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CDSCRREGSET : 0);
+	    break;
+	  case NT_PPC_TM_CTAR:
+	    regset->size = (features.htm ?
+			    PPC_LINUX_SIZEOF_CTARREGSET : 0);
+	    break;
+	  default:
+	    break;
+	  }
+	break;
+      default:
+	break;
+      }
 }
 
 /* Implementation of linux_target_ops method "supports_tracepoints".  */
@@ -726,7 +1106,7 @@ ppc_supports_tracepoints (void)
 static int
 ppc_get_thread_area (int lwpid, CORE_ADDR *addr)
 {
-  struct lwp_info *lwp = find_lwp_pid (pid_to_ptid (lwpid));
+  struct lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
   struct thread_info *thr = get_lwp_thread (lwp);
   struct regcache *regcache = get_thread_regcache (thr, 1);
   ULONGEST tp = 0;
@@ -3080,6 +3460,12 @@ ppc_get_ipa_tdesc_idx (void)
     return PPC_TDESC_ISA205_ALTIVEC;
   if (tdesc == tdesc_powerpc_isa205_vsx64l)
     return PPC_TDESC_ISA205_VSX;
+  if (tdesc == tdesc_powerpc_isa205_ppr_dscr_vsx64l)
+    return PPC_TDESC_ISA205_PPR_DSCR_VSX;
+  if (tdesc == tdesc_powerpc_isa207_vsx64l)
+    return PPC_TDESC_ISA207_VSX;
+  if (tdesc == tdesc_powerpc_isa207_htm_vsx64l)
+    return PPC_TDESC_ISA207_HTM_VSX;
 #endif
 
   if (tdesc == tdesc_powerpc_32l)
@@ -3096,6 +3482,12 @@ ppc_get_ipa_tdesc_idx (void)
     return PPC_TDESC_ISA205_ALTIVEC;
   if (tdesc == tdesc_powerpc_isa205_vsx32l)
     return PPC_TDESC_ISA205_VSX;
+  if (tdesc == tdesc_powerpc_isa205_ppr_dscr_vsx32l)
+    return PPC_TDESC_ISA205_PPR_DSCR_VSX;
+  if (tdesc == tdesc_powerpc_isa207_vsx32l)
+    return PPC_TDESC_ISA207_VSX;
+  if (tdesc == tdesc_powerpc_isa207_htm_vsx32l)
+    return PPC_TDESC_ISA207_HTM_VSX;
   if (tdesc == tdesc_powerpc_e500l)
     return PPC_TDESC_E500;
 
@@ -3124,7 +3516,9 @@ struct linux_target_ops the_low_target = {
   ppc_supply_ptrace_register,
   NULL, /* siginfo_fixup */
   NULL, /* new_process */
+  NULL, /* delete_process */
   NULL, /* new_thread */
+  NULL, /* delete_thread */
   NULL, /* new_fork */
   NULL, /* prepare_to_resume */
   NULL, /* process_qsupported */
@@ -3152,6 +3546,9 @@ initialize_low_arch (void)
   init_registers_powerpc_isa205_32l ();
   init_registers_powerpc_isa205_altivec32l ();
   init_registers_powerpc_isa205_vsx32l ();
+  init_registers_powerpc_isa205_ppr_dscr_vsx32l ();
+  init_registers_powerpc_isa207_vsx32l ();
+  init_registers_powerpc_isa207_htm_vsx32l ();
   init_registers_powerpc_e500l ();
 #if __powerpc64__
   init_registers_powerpc_64l ();
@@ -3161,6 +3558,9 @@ initialize_low_arch (void)
   init_registers_powerpc_isa205_64l ();
   init_registers_powerpc_isa205_altivec64l ();
   init_registers_powerpc_isa205_vsx64l ();
+  init_registers_powerpc_isa205_ppr_dscr_vsx64l ();
+  init_registers_powerpc_isa207_vsx64l ();
+  init_registers_powerpc_isa207_htm_vsx64l ();
 #endif
 
   initialize_regsets_info (&ppc_regsets_info);

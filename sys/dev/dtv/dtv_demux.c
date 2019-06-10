@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.8.4.1 2019/06/10 22:07:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.8.4.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -279,7 +279,7 @@ dtv_demux_set_pidfilter(struct dtv_demux *demux, uint16_t pid, bool onoff)
 	 * PID.
 	 */
 	if (pid == 0x2000) {
-		memset(sc->sc_ts.ts_pidfilter, onoff,
+		memset(sc->sc_ts.ts_pidfilter, onoff ? 0xff : 0,
 		    sizeof(sc->sc_ts.ts_pidfilter));
 	} else {
 		sc->sc_ts.ts_pidfilter[pid] = onoff;
@@ -668,7 +668,7 @@ dtv_demux_process(struct dtv_demux *demux, const uint8_t *tspkt,
 		sec->sec_bytesused = sec->sec_length = 0;
 
 	/* Copy data into section buffer */
-	avail = min(sec->sec_length - sec->sec_bytesused, brem);
+	avail = uimin(sec->sec_length - sec->sec_bytesused, brem);
 	if (avail < 0)
 		goto done;
 	memcpy(&sec->sec_buf[sec->sec_bytesused], p, avail);

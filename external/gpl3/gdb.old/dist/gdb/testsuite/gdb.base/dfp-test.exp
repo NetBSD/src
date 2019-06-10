@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -223,17 +223,17 @@ gdb_test "backtrace" ".*arg0_128 \\(arg0=0.1, arg1=1.0, arg2=2.0, arg3=3.0, arg4
 
 # Test calling inferior function with DFP arguments or return value.
 
-gdb_test "call arg0_32 (1.2df, 2.2df, 3.2df, 4.2df, 5.2df, 6.2df)" "Breakpoint.*arg0_32.*" "Call function with correct _Decimal32 arguments."
-gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_32 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "Backtrace function with correct _Decimal32 arguments."
-gdb_test "finish" " = 1.2" "Correct _Decimal32 return value from called function."
+gdb_test "call arg0_32 (1.2df, 2.2df, 3.2df, 4.2df, 5.2df, 6.2df)" "Breakpoint.*arg0_32.*" "call function with correct _Decimal32 arguments."
+gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_32 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "backtrace function with correct _Decimal32 arguments."
+gdb_test "finish" " = 1.2" "correct _Decimal32 return value from called function."
 
-gdb_test "call arg0_64 (1.2dd, 2.2dd, 3.2dd, 4.2dd, 5.2dd, 6.2dd)" "Breakpoint.*arg0_64.*" "Call function with correct _Decimal64 arguments."
-gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_64 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "Backtrace function with correct _Decimal64 arguments."
-gdb_test "finish" " = 1.2" "Correct _Decimal64 return value from called function."
+gdb_test "call arg0_64 (1.2dd, 2.2dd, 3.2dd, 4.2dd, 5.2dd, 6.2dd)" "Breakpoint.*arg0_64.*" "call function with correct _Decimal64 arguments."
+gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_64 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "backtrace function with correct _Decimal64 arguments."
+gdb_test "finish" " = 1.2" "correct _Decimal64 return value from called function."
 
-gdb_test "call arg0_128 (1.2dl, 2.2dl, 3.2dl, 4.2dl, 5.2dl, 6.2dl)" "Breakpoint.*arg0_128.*" "Call function with correct _Decimal128 arguments."
-gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_128 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "Backtrace function with correct _Decimal128 arguments."
-gdb_test "finish" " = 1.2" "Correct _Decimal128 return value from called function."
+gdb_test "call arg0_128 (1.2dl, 2.2dl, 3.2dl, 4.2dl, 5.2dl, 6.2dl)" "Breakpoint.*arg0_128.*" "call function with correct _Decimal128 arguments."
+gdb_test "backtrace 1" "\n#\[0-9\]+  arg0_128 \\(arg0=1.2, arg1=2.2, arg2=3.2, arg3=4.2, arg4=5.2, arg5=6.2\\).*" "backtrace function with correct _Decimal128 arguments."
+gdb_test "finish" " = 1.2" "correct _Decimal128 return value from called function."
 
 gdb_test "call decimal_dec128_align (double_val1, dec128_val2, double_val3, double_val4, double_val5, double_val6, double_val7, double_val8, double_val9, double_val10, double_val11, double_val12, double_val13, double_val14)" " = 1" \
   "Call function with mixed decimal float arguments TEST."

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.109.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.109.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -358,6 +358,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		/*FALLTHROUGH*/
 	}
 
+		/*FALLTHROUGH*/
 	case AF_LINK:
 	{
 		const struct fddi_header *fh1 =
@@ -625,9 +626,6 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_output = fddi_output;
 	ifp->_if_input = fddi_input;
 	ifp->if_baudrate = IF_Mbps(100);
-#ifdef IFF_NOTRAILERS
-	ifp->if_flags |= IFF_NOTRAILERS;
-#endif
 
 	/*
 	 * Update the max_linkhdr

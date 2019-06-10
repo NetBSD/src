@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/26 22:37:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2019/06/10 22:02:47 christos Exp $
+
+.include <bsd.own.mk>
 
 DRIVER=		xf86-video-modesetting
 DRIVER_NAME=	modesetting_drv
@@ -7,8 +9,8 @@ SRCS=		dri2.c \
 		driver.c \
 		drmmode_display.c \
 		dumb_bo.c \
+		pageflip.c \
 		present.c \
-		sh3224.c \
 		vblank.c 
 MAN=		modesetting.4
 
@@ -21,6 +23,11 @@ CPPFLAGS+=	${X11FLAGS.DIX} \
 		-I${X11SRCDIR.xorg-server}/modes \
 		-I${X11SRCDIR.xorg-server}/parser \
 		-I${X11SRCDIR.xorg-server}/ramdac \
+
+.if ${HAVE_XORG_GLAMOR} != "no"
+CPPFLAGS+=	-DGLAMOR_HAS_GBM \
+		-DGLAMOR_HAS_GBM_LINEAR
+.endif
 
 # Set some overrides so Makefile.xf86-driver works for this
 # built-in driver.

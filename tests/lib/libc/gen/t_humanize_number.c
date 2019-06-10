@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.9 2017/01/10 15:20:44 christos Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.9.14.1 2019/06/10 22:10:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -287,6 +287,11 @@ ATF_TC_BODY(humanize_number_big, tc)
 
 	ATF_REQUIRE(rv != -1);
 	ATF_REQUIRE(strcmp(buf, "0%d%s%d%s%s%s") != 0);
+	/*
+	 * PR lib/54053: before version 1.18 the output was nonsense
+	 * with HN_AUTOSCALE and a buffer big enough to not need scaling
+	 */
+	ATF_REQUIRE(strcmp(buf, "10000") == 0);
 
 	/*
 	 * Tight buffer.

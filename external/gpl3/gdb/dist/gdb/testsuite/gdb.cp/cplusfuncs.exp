@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -292,7 +292,7 @@ proc info_func_regexp { name demangled } {
     regsub {\\\(void\\\)} $demangled {\(\)} demangled
 
     gdb_test "info function $name" \
-	"File .*:\r\n(class|)${demangled}.*" \
+	"File .*:\t(class|)${demangled}.*" \
 	"info function for \"$name\""
 }
 

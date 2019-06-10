@@ -65,6 +65,7 @@
 #include <sys/cmn_err.h>
 #include <sys/namei.h>
 #include <sys/stat.h>
+#include <sys/vnode.h>
 #include <sys/vfs_syscalls.h>
 
 __strong_alias(ddi_strtol,ddi_strtoul)
@@ -140,6 +141,50 @@ do_mkdirp(const char *path)
 		error = 0;
 	
 	return error;
+}
+
+static void
+do_rmdirp(const char *path)
+{
+	struct pathbuf *pb;
+	struct nameidata nd;
+	char *here, *e;
+	int error;
+
+	here = PNBUF_GET();
+	strlcpy(here, path, MAXPATHLEN);
+	while ((e = strrchr(here, '/')) && e != here) {
+		*e = '\0';
+		pb = pathbuf_create(here);
+		if (pb == NULL)
+			break;
+		/* XXX need do_sys_rmdir()? */
+		NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, pb);
+		error = namei(&nd);
+		if (error) {
+			pathbuf_destroy(pb);
+			break;
+		}
+		if ((nd.ni_vp->v_vflag & VV_ROOT) ||
+		    nd.ni_vp->v_type != VDIR ||
+		    nd.ni_vp->v_mountedhere ||
+		    nd.ni_vp == nd.ni_dvp) {
+			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+			if (nd.ni_vp == nd.ni_dvp)
+				vrele(nd.ni_dvp);
+			else
+				vput(nd.ni_dvp);
+			vput(nd.ni_vp);
+			pathbuf_destroy(pb);
+			break;
+		}
+		error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+		vput(nd.ni_dvp);
+		pathbuf_destroy(pb);
+		if (error)
+			break;
+	}
+	PNBUF_PUT(here);
 }
 
 int
@@ -562,25 +607,49 @@ ddi_create_minor_node(dev_info_t *dip, char *name, int spec_type,
     minor_t minor_num, char *node_type, int flag)
 {
 	struct lwp *l = curlwp;
+	vnode_t *vp;
+	enum vtype vtype;
+	struct stat sb;
 	char *pn;
 	dev_t dev;
 	int error;
 	register_t ret;
 
-	printf("ddi_create_minor_node: name %s\n", name);
-
-	dev = makedev(flag, minor_num);
-	
 	pn = PNBUF_GET();
-	if (spec_type == S_IFCHR)
+	if (spec_type == S_IFCHR) {
+		vtype = VCHR;
+		dev = makedev(dip->di_cmajor, minor_num);
 		snprintf(pn, MAXPATHLEN, "/dev/zvol/rdsk/%s", name);
-	else
+	} else if (spec_type == S_IFBLK) {
+		vtype = VBLK;
+		dev = makedev(dip->di_bmajor, minor_num);
 		snprintf(pn, MAXPATHLEN, "/dev/zvol/dsk/%s", name);
+	} else {
+		panic("bad spectype %#x", spec_type);
+	}
+	spec_type |= (S_IRUSR | S_IWUSR);
 
+	/* Create missing directories. */
 	if ((error = do_mkdirp(pn)) != 0)
 		goto exit;
-	
-	error = do_sys_mknod(l, (const char *)pn, spec_type, dev, &ret, UIO_SYSSPACE);
+
+	/*
+	 * If node exists and has correct type and rdev all done,
+	 * otherwise unlink the node.
+	 */
+	if (namei_simple_kernel(pn, NSM_NOFOLLOW_NOEMULROOT, &vp) == 0) {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		error = vn_stat(vp, &sb);
+		VOP_UNLOCK(vp, 0);
+		if (error == 0 && vp->v_type == vtype && sb.st_rdev == dev) {
+			vrele(vp);
+			return 0;
+		}
+		vrele(vp);
+		(void)do_sys_unlink(pn, UIO_SYSSPACE);
+	}
+
+	error = do_sys_mknod(l, pn, spec_type, dev, &ret, UIO_SYSSPACE);
 
 exit:
 	PNBUF_PUT(pn);
@@ -592,17 +661,19 @@ void
 ddi_remove_minor_node(dev_info_t *dip, char *name)
 {
 	char *pn;
-	int error;
 
+	/* Unlink block device and remove empty directories. */
 	pn = PNBUF_GET();
 	snprintf(pn, MAXPATHLEN, "/dev/zvol/dsk/%s", name);
 	(void)do_sys_unlink(pn, UIO_SYSSPACE);
+	do_rmdirp(pn);
 	PNBUF_PUT(pn);
 
-	/* We need to remove raw and block device nodes */
+	/* Unlink raw device and remove empty directories. */
 	pn = PNBUF_GET();
 	snprintf(pn, MAXPATHLEN, "/dev/zvol/rdsk/%s", name);
 	(void)do_sys_unlink(pn, UIO_SYSSPACE);
+	do_rmdirp(pn);
 	PNBUF_PUT(pn);
 }
 

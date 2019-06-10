@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,17 @@ AcpiDbDumpMethodInfo (
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_THREAD_STATE       *Thread;
+    ACPI_NAMESPACE_NODE     *Node;
 
+
+    Node = WalkState->MethodNode;
+
+    /* There are no locals or arguments for the module-level code case */
+
+    if (Node == AcpiGbl_RootNode)
+    {
+        return;
+    }
 
     /* Ignore control codes, they are not errors */
 
@@ -302,7 +312,7 @@ AcpiDbDisplayInternalObject (
 
             AcpiOsPrintf ("[%s] ", AcpiUtGetReferenceName (ObjDesc));
 
-            /* Decode the refererence */
+            /* Decode the reference */
 
             switch (ObjDesc->Reference.Class)
             {
@@ -448,8 +458,15 @@ AcpiDbDecodeLocals (
     BOOLEAN                 DisplayLocals = FALSE;
 
 
+    Node = WalkState->MethodNode;
     ObjDesc = WalkState->MethodDesc;
-    Node    = WalkState->MethodNode;
+
+    /* There are no locals for the module-level code case */
+
+    if (Node == AcpiGbl_RootNode)
+    {
+        return;
+    }
 
     if (!Node)
     {
@@ -526,6 +543,13 @@ AcpiDbDecodeArguments (
 
     Node = WalkState->MethodNode;
     ObjDesc = WalkState->MethodDesc;
+
+    /* There are no arguments for the module-level code case */
+
+    if (Node == AcpiGbl_RootNode)
+    {
+        return;
+    }
 
     if (!Node)
     {

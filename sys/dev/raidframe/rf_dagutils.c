@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.54 2016/01/07 21:57:00 joerg Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.54.18.1 2019/06/10 22:07:31 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.54 2016/01/07 21:57:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.54.18.1 2019/06/10 22:07:31 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -142,8 +142,7 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 		node->big_dag_ptrs = rf_AllocDAGPCache();
 		ptrs = (void **) node->big_dag_ptrs;
 	} else {
-		RF_MallocAndAdd(ptrs, nptrs * sizeof(void *),
-				(void **), alist);
+		ptrs = RF_MallocAndAdd(nptrs * sizeof(*ptrs), alist);
 	}
 	node->succedents = (nSucc) ? (RF_DagNode_t **) ptrs : NULL;
 	node->antecedents = (nAnte) ? (RF_DagNode_t **) (ptrs + nSucc) : NULL;
@@ -157,9 +156,8 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 			node->big_dag_params = rf_AllocDAGPCache();
 			node->params = node->big_dag_params;
 		} else {
-			RF_MallocAndAdd(node->params,
-					nParam * sizeof(RF_DagParam_t),
-					(RF_DagParam_t *), alist);
+			node->params = RF_MallocAndAdd(
+			    nParam * sizeof(*node->params), alist);
 		}
 	} else {
 		node->params = NULL;
@@ -256,11 +254,7 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 RF_DagHeader_t *
 rf_AllocDAGHeader(void)
 {
-	RF_DagHeader_t *dh;
-
-	dh = pool_get(&rf_pools.dagh, PR_WAITOK);
-	memset((char *) dh, 0, sizeof(RF_DagHeader_t));
-	return (dh);
+	return pool_get(&rf_pools.dagh, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -272,11 +266,7 @@ rf_FreeDAGHeader(RF_DagHeader_t * dh)
 RF_DagNode_t *
 rf_AllocDAGNode(void)
 {
-	RF_DagNode_t *node;
-
-	node = pool_get(&rf_pools.dagnode, PR_WAITOK);
-	memset(node, 0, sizeof(RF_DagNode_t));
-	return (node);
+	return pool_get(&rf_pools.dagnode, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -294,12 +284,7 @@ rf_FreeDAGNode(RF_DagNode_t *node)
 RF_DagList_t *
 rf_AllocDAGList(void)
 {
-	RF_DagList_t *dagList;
-
-	dagList = pool_get(&rf_pools.daglist, PR_WAITOK);
-	memset(dagList, 0, sizeof(RF_DagList_t));
-
-	return (dagList);
+	return pool_get(&rf_pools.daglist, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -311,11 +296,7 @@ rf_FreeDAGList(RF_DagList_t *dagList)
 void *
 rf_AllocDAGPCache(void)
 {
-	void *p;
-	p = pool_get(&rf_pools.dagpcache, PR_WAITOK);
-	memset(p, 0, RF_DAGPCACHE_SIZE);
-
-	return (p);
+	return pool_get(&rf_pools.dagpcache, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -327,12 +308,7 @@ rf_FreeDAGPCache(void *p)
 RF_FuncList_t *
 rf_AllocFuncList(void)
 {
-	RF_FuncList_t *funcList;
-
-	funcList = pool_get(&rf_pools.funclist, PR_WAITOK);
-	memset(funcList, 0, sizeof(RF_FuncList_t));
-
-	return (funcList);
+	return pool_get(&rf_pools.funclist, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -853,10 +829,9 @@ rf_ValidateDAG(RF_DagHeader_t *dag_h)
 
 	unvisited = dag_h->succedents[0]->visited;
 
-	RF_Malloc(scount, nodecount * sizeof(int), (int *));
-	RF_Malloc(acount, nodecount * sizeof(int), (int *));
-	RF_Malloc(nodes, nodecount * sizeof(RF_DagNode_t *),
-		  (RF_DagNode_t **));
+	scount = RF_Malloc(nodecount * sizeof(*scount));
+	acount = RF_Malloc(nodecount * sizeof(*acount));
+	nodes = RF_Malloc(nodecount * sizeof(*nodes));
 	for (i = 0; i < dag_h->numSuccedents; i++) {
 		if ((dag_h->succedents[i]->visited == unvisited)
 		    && rf_ValidateBranch(dag_h->succedents[i], scount,

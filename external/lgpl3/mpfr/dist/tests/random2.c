@@ -1,7 +1,7 @@
 /* mpfr_random2 -- Generate a positive random mpfr_t of specified size, with
    long runs of consecutive ones and zeros in the binary representation.
 
-Copyright 1999, 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -30,6 +30,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define BITS_PER_RANDCALL 32
 #endif
 
+/* exp is the maximum exponent in absolute value */
 void
 mpfr_random2 (mpfr_ptr x, mp_size_t size, mpfr_exp_t exp,
               gmp_randstate_t rstate)
@@ -97,7 +98,7 @@ mpfr_random2 (mpfr_ptr x, mp_size_t size, mpfr_exp_t exp,
               xp[ri--] = acc | (((mp_limb_t) 2 << bit_pos) - 1);
               bit_pos += GMP_NUMB_BITS;
               bit_pos -= nb;
-              acc = ((~(mp_limb_t) 1) << bit_pos) & GMP_NUMB_MASK;
+              acc = (~MPFR_LIMB_ONE) << bit_pos;
             }
           else
             {
@@ -137,8 +138,9 @@ mpfr_random2 (mpfr_ptr x, mp_size_t size, mpfr_exp_t exp,
 
   /* Generate random exponent.  */
   mpfr_rand_raw (&elimb, RANDS, GMP_NUMB_BITS);
-  exp = ABS (exp);
-  MPFR_SET_EXP (x, elimb % (2 * exp + 1) - exp);
+  MPFR_ASSERTN (exp >= 0 && exp <= MPFR_EMAX_MAX);
+  exp = (mpfr_exp_t) (elimb % (2 * exp + 1)) - exp;
+  MPFR_SET_EXP (x, exp);
 
   return ;
 }

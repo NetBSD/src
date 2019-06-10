@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.141.4.1 2019/06/10 22:07:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.141.4.1 2019/06/10 22:07:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1385,11 +1385,11 @@ wskbd_cngetc(dev_t dev)
 	keysym_t ks;
 
 	if (!wskbd_console_initted)
-		return 0;
+		return -1;
 
 	if (wskbd_console_device != NULL &&
 	    !wskbd_console_device->sc_translating)
-		return 0;
+		return -1;
 
 	for(;;) {
 		if (num-- > 0) {
@@ -1402,7 +1402,7 @@ wskbd_cngetc(dev_t dev)
 				 &type, &data);
 			if (type == 0) {
 				/* No data returned */
-				return 0;
+				return -1;
 			}
 			if (type == WSCONS_EVENT_ASCII) {
 				/*
@@ -1547,7 +1547,9 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 			} else {
 				return (0);
 			}
-		}
+		} else
+			update_modifier(sc->id, *type, 0, MOD_COMMAND);
+		break;
 
 	case KS_Cmd_ScrollSlowUp:
 	case KS_Cmd_ScrollSlowDown:
@@ -1566,7 +1568,9 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 			} else {
 				return (0);
 			}
-		}
+		} else
+			update_modifier(sc->id, *type, 0, MOD_COMMAND);
+		break;
 #endif
 
 	case KS_Cmd:

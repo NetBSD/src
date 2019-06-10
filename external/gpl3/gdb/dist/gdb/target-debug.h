@@ -1,6 +1,6 @@
 /* GDB target debugging macros
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,6 +56,8 @@
   target_debug_do_print (((X) ? (X) : "(null)"))
 #define target_debug_print_int(X)		\
   target_debug_do_print (plongest (X))
+#define target_debug_print_bool(X)		\
+  target_debug_do_print ((X) ? "true" : "false")
 #define target_debug_print_long(X)		\
   target_debug_do_print (plongest (X))
 #define target_debug_print_enum_target_xfer_status(X)	\
@@ -69,7 +71,7 @@
 #define target_debug_print_enum_btrace_error(X) \
   target_debug_do_print (plongest (X))
 #define target_debug_print_ptid_t(X)		\
-  target_debug_do_print (plongest (ptid_get_pid (X)))
+  target_debug_do_print (plongest (X.pid ()))
 #define target_debug_print_struct_gdbarch_p(X)	\
   target_debug_do_print (gdbarch_bfd_arch_info (X)->printable_name)
 #define target_debug_print_const_gdb_byte_p(X)	\
@@ -114,16 +116,18 @@
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_bfd_p(X) \
   target_debug_do_print (host_address_to_string (X))
-#define target_debug_print_VEC_mem_region_s__p(X)	\
-  target_debug_do_print (host_address_to_string (X))
-#define target_debug_print_VEC_static_tracepoint_marker_p__p(X)	\
-  target_debug_do_print (host_address_to_string (X))
+#define target_debug_print_std_vector_mem_region(X) \
+  target_debug_do_print (host_address_to_string (X.data ()))
+#define target_debug_print_std_vector_static_tracepoint_marker(X)	\
+  target_debug_do_print (host_address_to_string (X.data ()))
 #define target_debug_print_const_struct_target_desc_p(X)	\
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_struct_bp_location_p(X)	\
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_struct_trace_state_variable_p(X)	\
   target_debug_do_print (host_address_to_string (X))
+#define target_debug_print_const_trace_state_variable_r(X)	\
+  target_debug_do_print (host_address_to_string (&X))
 #define target_debug_print_struct_trace_status_p(X)	\
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_struct_breakpoint_p(X)	\
@@ -134,7 +138,7 @@
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_struct_uploaded_tsv_pp(X)	\
   target_debug_do_print (host_address_to_string (X))
-#define target_debug_print_struct_static_tracepoint_marker_p(X)	\
+#define target_debug_print_static_tracepoint_marker_p(X)	\
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_struct_traceframe_info_p(X)	\
   target_debug_do_print (host_address_to_string (X))
@@ -162,14 +166,31 @@
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_enum_remove_bp_reason(X) \
   target_debug_do_print (plongest (X))
+#define target_debug_print_gdb_disassembly_flags(X) \
+  target_debug_do_print (plongest (X))
+#define target_debug_print_traceframe_info_up(X) \
+  target_debug_do_print (host_address_to_string (X.get ()))
+#define target_debug_print_gdb_array_view_const_int(X)	\
+  target_debug_do_print (host_address_to_string (X.data ()))
+#define target_debug_print_inferior_p(inf) \
+  target_debug_do_print (host_address_to_string (inf))
+#define target_debug_print_record_print_flags(X) \
+  target_debug_do_print (plongest (X))
+#define target_debug_print_enum_info_proc_what(X) \
+  target_debug_do_print (plongest (X))
+#define target_debug_print_thread_control_capabilities(X) \
+  target_debug_do_print (plongest (X))
+#define target_debug_print_thread_info_p(X)	\
+  target_debug_do_print (host_address_to_string (X))
+#define target_debug_print_thread_info_pp(X)		\
+  target_debug_do_print (host_address_to_string (X))
 
 static void
 target_debug_print_struct_target_waitstatus_p (struct target_waitstatus *status)
 {
-  char *str = target_waitstatus_to_string (status);
+  std::string str = target_waitstatus_to_string (status);
 
-  fputs_unfiltered (str, gdb_stdlog);
-  xfree (str);
+  fputs_unfiltered (str.c_str (), gdb_stdlog);
 }
 
 
@@ -182,27 +203,22 @@ target_debug_print_struct_target_waitstatus_p (struct target_waitstatus *status)
 static void
 target_debug_print_options (int options)
 {
-  char *str = target_options_to_string (options);
+  std::string str = target_options_to_string (options);
 
-  fputs_unfiltered (str, gdb_stdlog);
-  xfree (str);
+  fputs_unfiltered (str.c_str (), gdb_stdlog);
 }
 
 static void
-target_debug_print_signals (unsigned char *sigs)
+target_debug_print_signals (gdb::array_view<const unsigned char> sigs)
 {
   fputs_unfiltered ("{", gdb_stdlog);
-  if (sigs != NULL)
-    {
-      int i;
 
-      for (i = 0; i < GDB_SIGNAL_LAST; i++)
-	if (sigs[i])
-	  {
-	    fprintf_unfiltered (gdb_stdlog, " %s",
-				gdb_signal_to_name ((enum gdb_signal) i));
-	  }
-    }
+  for (size_t i = 0; i < sigs.size (); i++)
+    if (sigs[i] != 0)
+      {
+	fprintf_unfiltered (gdb_stdlog, " %s",
+			    gdb_signal_to_name ((enum gdb_signal) i));
+      }
   fputs_unfiltered (" }", gdb_stdlog);
 }
 

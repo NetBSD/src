@@ -1,5 +1,3 @@
-/*	$NetBSD: calendar.c,v 1.1.1.6 2016/11/22 01:35:19 christos Exp $	*/
-
 #include "config.h"
 
 #include "ntp_stdlib.h" /* test fail without this include, for some reason */

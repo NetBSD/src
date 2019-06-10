@@ -2470,14 +2470,14 @@
 
 # examples to exercise overflow (re)
 #  positive overflow
-+ 0 2 inf 2 0 10 0x3ffp1073741813 10 0x3ffp1073741813 10 0x2abp-10 10 0x2abp-10 N N
++ 0 2 inf 2 0 10 0x3ffp1073741811 10 0x3ffp1073741811 10 0x2abp-10 10 0x2abp-10 N N
 #  negative overflow
-- 0 2 -inf 2 0 10 -0x3ffp1073741813 10 -0x3ffp1073741813 10 0x2abp-10 10 0x2abp-10 N N
+- 0 2 -inf 2 0 10 -0x3ffp1073741811 10 -0x3ffp1073741811 10 0x2abp-10 10 0x2abp-10 N N
 # examples to exercise overflow (im)
 #  positive overflow
-0 + 2 0 2 inf 10 0x3ffp1073741813 10 0x3ffp1073741813 10 0x2abp-10 10 -0x2abp-10 N N
+0 + 2 0 2 inf 10 0x3ffp1073741811 10 0x3ffp1073741811 10 0x2abp-10 10 -0x2abp-10 N N
 #  negative overflow
-0 - 2 0 2 -inf 10 -0x3ffp1073741813 10 -0x3ffp1073741813 10 0x2abp-10 10 -0x2abp-10 N N
+0 - 2 0 2 -inf 10 -0x3ffp1073741811 10 -0x3ffp1073741811 10 0x2abp-10 10 -0x2abp-10 N N
 
 # examples to exercise underflow
 # (1.5+i)*2^emin/(1-i) gives (0.25 + 1.25*i)*2^emin

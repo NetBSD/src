@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.21.2.1 2019/06/10 22:05:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21.2.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,8 +77,6 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $")
 #include <arch/arm/omap/if_cpswreg.h>
 #include <arch/arm/omap/sitara_cmreg.h>
 #include <arch/arm/omap/sitara_cm.h>
-
-#define ETHER_ALIGN (roundup2(ETHER_HDR_LEN, sizeof(uint32_t)) - ETHER_HDR_LEN)
 
 #define CPSW_TXFRAGS	16
 
@@ -155,8 +153,8 @@ static void cpsw_watchdog(struct ifnet *);
 static int cpsw_init(struct ifnet *);
 static void cpsw_stop(struct ifnet *, int);
 
-static int cpsw_mii_readreg(device_t, int, int);
-static void cpsw_mii_writereg(device_t, int, int, int);
+static int cpsw_mii_readreg(device_t, int, int, uint16_t *);
+static int cpsw_mii_writereg(device_t, int, int, uint16_t);
 static void cpsw_mii_statchg(struct ifnet *);
 
 static int cpsw_new_rxbuf(struct cpsw_softc * const, const u_int);
@@ -396,6 +394,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	struct ethercom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	int error;
 	u_int i;
 
@@ -510,7 +509,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_create(sc->sc_bdt, ETHER_MIN_LEN, 1, ETHER_MIN_LEN, 0,
 	    BUS_DMA_WAITOK, &sc->sc_txpad_dm);
 	bus_dmamap_load(sc->sc_bdt, sc->sc_txpad_dm, sc->sc_txpad,
-	    ETHER_MIN_LEN, NULL, BUS_DMA_WAITOK|BUS_DMA_WRITE);
+	    ETHER_MIN_LEN, NULL, BUS_DMA_WAITOK | BUS_DMA_WRITE);
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -530,14 +529,13 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	cpsw_stop(ifp, 0);
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = cpsw_mii_readreg;
-	sc->sc_mii.mii_writereg = cpsw_mii_writereg;
-	sc->sc_mii.mii_statchg = cpsw_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = cpsw_mii_readreg;
+	mii->mii_writereg = cpsw_mii_writereg;
+	mii->mii_statchg = cpsw_mii_statchg;
 
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
 	/* Initialize MDIO */
 	cpsw_write_4(sc, MDIOCONTROL,
@@ -545,13 +543,12 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	/* Clear ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL, ALECTL_CLEAR_TABLE);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, 0, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		sc->sc_phy_has_1000t = false;
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
 		if (sc->sc_phy_has_1000t) {
@@ -566,7 +563,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 			    GMIISEL_GMII1_SEL(RGMII_MODE));
 		}
 
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	if_attach(ifp);
@@ -599,7 +596,7 @@ cpsw_start(struct ifnet *ifp)
 	KERNHIST_FUNC(__func__);
 	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, 0, 0, 0);
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
+	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)) {
 		return;
 	}
@@ -753,29 +750,31 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 }
 
 static int
-cpsw_mii_readreg(device_t dev, int phy, int reg)
+cpsw_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct cpsw_softc * const sc = device_private(dev);
 	uint32_t v;
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
-		return 0;
+		return -1;
 
 	cpsw_write_4(sc, MDIOUSERACCESS0, (1 << 31) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16));
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
-		return 0;
+		return -1;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if (v & __BIT(29))
-		return v & 0xffff;
-	else
+	if (v & __BIT(29)) {
+		*val = v & 0xffff;
 		return 0;
+	}
+
+	return -1;
 }
 
-static void
-cpsw_mii_writereg(device_t dev, int phy, int reg, int val)
+static int
+cpsw_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct cpsw_softc * const sc = device_private(dev);
 	uint32_t v;
@@ -792,10 +791,13 @@ cpsw_mii_writereg(device_t dev, int phy, int reg, int val)
 		goto out;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if ((v & __BIT(29)) == 0)
+	if ((v & __BIT(29)) == 0) {
 out:
 		device_printf(sc->sc_dev, "%s error\n", __func__);
+		return -1;
+	}
 
+	return 0;
 }
 
 static void
@@ -835,7 +837,7 @@ cpsw_new_rxbuf(struct cpsw_softc * const sc, const u_int i)
 	rdp->rx_mb[i] = m;
 
 	error = bus_dmamap_load_mbuf(sc->sc_bdt, rdp->rx_dm[i], rdp->rx_mb[i],
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		device_printf(sc->sc_dev, "can't load rx DMA map %d: %d\n",
 		    i, error);
@@ -874,11 +876,13 @@ cpsw_init(struct ifnet *ifp)
 
 	/* Reset wrapper */
 	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1)
+		;
 
 	/* Reset SS */
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1)
+		;
 
 	/* Clear table and enable ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL,
@@ -890,7 +894,8 @@ cpsw_init(struct ifnet *ifp)
 
 		/* Reset */
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		while (cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1)
+			;
 		/* Set Slave Mapping */
 		cpsw_write_4(sc, CPSW_SL_RX_PRI_MAP(i), 0x76543210);
 		cpsw_write_4(sc, CPSW_PORT_P_TX_PRI_MAP(i+1), 0x33221100);
@@ -927,7 +932,8 @@ cpsw_init(struct ifnet *ifp)
 	cpsw_write_4(sc, CPSW_SS_STAT_PORT_EN, 7);
 
 	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1)
+		;
 
 	for (i = 0; i < 8; i++) {
 		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(i), 0);
@@ -1043,20 +1049,24 @@ cpsw_stop(struct ifnet *ifp, int disable)
 
 	/* Reset wrapper */
 	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1)
+		;
 
 	/* Reset SS */
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1)
+		;
 
 	for (i = 0; i < CPSW_ETH_PORTS; i++) {
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		while (cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1)
+			;
 	}
 
 	/* Reset CPDMA */
 	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1)
+		;
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < CPSW_NTXDESCS; i++) {
@@ -1065,7 +1075,7 @@ cpsw_stop(struct ifnet *ifp, int disable)
 		rdp->tx_mb[i] = NULL;
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	if (!disable)
@@ -1141,8 +1151,8 @@ cpsw_rxintr(void *arg)
 			return 1;
 		}
 
-		if ((dw[3] & (CPDMA_BD_SOP|CPDMA_BD_EOP)) !=
-		    (CPDMA_BD_SOP|CPDMA_BD_EOP)) {
+		if ((dw[3] & (CPDMA_BD_SOP | CPDMA_BD_EOP)) !=
+		    (CPDMA_BD_SOP | CPDMA_BD_EOP)) {
 			//Debugger();
 		}
 

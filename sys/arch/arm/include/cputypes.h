@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.2 2018/05/01 10:10:31 ryo Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.2.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -153,6 +153,7 @@
 #define CPU_ID_CORTEXA9R4	0x414fc090
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
+#define CPU_ID_CORTEXA15R4	0x414fc0f0
 #define CPU_ID_CORTEXA17R1	0x411fc0e0
 #define CPU_ID_CORTEXA35R0	0x410fd040
 #define CPU_ID_CORTEXA53R0	0x410fd030
@@ -162,6 +163,7 @@
 #define CPU_ID_CORTEXA72R0	0x410fd080
 #define CPU_ID_CORTEXA73R0	0x410fd090
 #define CPU_ID_CORTEXA75R2	0x412fd0a0
+#define CPU_ID_CORTEXA76R3	0x413fd0b0
 
 #define CPU_ID_CORTEX_P(n)	((n & 0xff0fe000) == 0x410fc000)
 #define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
@@ -176,6 +178,16 @@
 #define CPU_ID_CORTEX_A72_P(n)	((n & 0xff0ff0f0) == 0x410fd080)
 #define CPU_ID_CORTEX_A73_P(n)	((n & 0xff0ff0f0) == 0x410fd090)
 #define CPU_ID_CORTEX_A75_P(n)	((n & 0xff0ff0f0) == 0x410fd0a0)
+#define CPU_ID_CORTEX_A76_P(n)	((n & 0xff0ff0f0) == 0x410fd0b0)
+
+#define CPU_ID_THUNDERXRX	0x43000a10
+#define CPU_ID_THUNDERXP1d0	0x43000a10
+#define CPU_ID_THUNDERXP1d1	0x43000a11
+#define CPU_ID_THUNDERXP2d1	0x431f0a11
+#define CPU_ID_THUNDERX81XXRX	0x43000a20
+#define CPU_ID_THUNDERX83XXRX	0x43000a30
+#define CPU_ID_THUNDERX2RX	0x43000af0
+
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_TI925T		0x54029250

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.17 2015/07/01 15:38:56 christos Exp $
+#	$NetBSD: Makefile,v 1.17.16.1 2019/06/10 22:02:39 christos Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=		GLU
 LIBISCXX=	yes
@@ -131,7 +133,7 @@ INCSDIR=${X11INCDIR}/GL
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic \
-		GL	${.CURDIR}/../libGL \
+		GL	${.CURDIR}/../libGL${OLD_PREFIX} \
 		Xxf86vm	${.CURDIR}/../libXxf86vm \
 		Xfixes	${.CURDIR}/../libXfixes \
 		Xdamage	${.CURDIR}/../libXdamage \
@@ -140,7 +142,7 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 
 PKGCONFIG=	glu
 PKGDIST.glu=	${X11SRCDIR.glu}
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL${OLD_PREFIX}/mesa-ver.mk"
 PKGCONFIG_VERSION.glu=	${MESA_VER}
 PKGCONFIG_SED_FLAGS= \
 	-e "s,@GLU_REQUIRES@,gl,"
@@ -153,8 +155,5 @@ COPTS.arcsorter.cc+=	-Wno-error
 COPTS.sorter.cc+=	-Wno-error
 COPTS.tobezier.cc+=	-Wno-error
 
-.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
-COPTS.sampleCompTop.cc+=	-O0
-.endif
-
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare
+CWARNFLAGS.clang+=	-Wno-deprecated-register

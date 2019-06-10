@@ -41,6 +41,8 @@ static void	server_client_check_redraw(struct client *);
 static void	server_client_set_title(struct client *);
 static void	server_client_reset_state(struct client *);
 static int	server_client_assume_paste(struct session *);
+static void	server_client_clear_identify(struct client *,
+		    struct window_pane *);
 
 static void	server_client_dispatch(struct imsg *, void *);
 static void	server_client_dispatch_command(struct client *, struct imsg *);
@@ -91,7 +93,7 @@ server_client_set_identify(struct client *c, u_int delay)
 }
 
 /* Clear identify mode on client. */
-void
+static void
 server_client_clear_identify(struct client *c, struct window_pane *wp)
 {
 	if (~c->flags & CLIENT_IDENTIFY)
@@ -159,7 +161,7 @@ server_client_is_default_key_table(struct client *c, struct key_table *table)
 }
 
 /* Create a new client. */
-void
+struct client *
 server_client_create(int fd)
 {
 	struct client	*c;
@@ -193,7 +195,7 @@ server_client_create(int fd)
 	c->tty.sx = 80;
 	c->tty.sy = 24;
 
-	screen_init(&c->status, c->tty.sx, 1, 0);
+	screen_init(&c->status.status, c->tty.sx, 1, 0);
 
 	c->message_string = NULL;
 	TAILQ_INIT(&c->message_log);
@@ -212,6 +214,7 @@ server_client_create(int fd)
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
 	log_debug("new client %p", c);
+	return (c);
 }
 
 /* Open client terminal if needed. */
@@ -269,12 +272,12 @@ server_client_lost(struct client *c)
 	if (c->stderr_data != c->stdout_data)
 		evbuffer_free(c->stderr_data);
 
-	if (event_initialized(&c->status_timer))
-		evtimer_del(&c->status_timer);
-	screen_free(&c->status);
-	if (c->old_status != NULL) {
-		screen_free(c->old_status);
-		free(c->old_status);
+	if (event_initialized(&c->status.timer))
+		evtimer_del(&c->status.timer);
+	screen_free(&c->status.status);
+	if (c->status.old_status != NULL) {
+		screen_free(c->status.old_status);
+		free(c->status.old_status);
 	}
 
 	free(c->title);
@@ -812,7 +815,7 @@ server_client_handle_key(struct client *c, key_code key)
 	struct window_pane	*wp;
 	struct timeval		 tv;
 	struct key_table	*table, *first;
-	struct key_binding	 bd_find, *bd;
+	struct key_binding	*bd;
 	int			 xtimeout, flags;
 	struct cmd_find_state	 fs;
 	key_code		 key0;
@@ -881,11 +884,11 @@ server_client_handle_key(struct client *c, key_code key)
 
 	/* Forward mouse keys if disabled. */
 	if (KEYC_IS_MOUSE(key) && !options_get_number(s->options, "mouse"))
-		goto forward;
+		goto forward_key;
 
 	/* Treat everything as a regular key when pasting is detected. */
 	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
-		goto forward;
+		goto forward_key;
 
 	/*
 	 * Work out the current key table. If the pane is in a mode, use
@@ -900,6 +903,7 @@ server_client_handle_key(struct client *c, key_code key)
 		table = c->keytable;
 	first = table;
 
+table_changed:
 	/*
 	 * The prefix always takes precedence and forces a switch to the prefix
 	 * table, unless we are already there.
@@ -914,7 +918,6 @@ server_client_handle_key(struct client *c, key_code key)
 	}
 	flags = c->flags;
 
-retry:
 	/* Log key table. */
 	if (wp == NULL)
 		log_debug("key table %s (no pane)", table->name);
@@ -923,9 +926,9 @@ retry:
 	if (c->flags & CLIENT_REPEAT)
 		log_debug("currently repeating");
 
+try_again:
 	/* Try to see if there is a key binding in the current table. */
-	bd_find.key = key0;
-	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
+	bd = key_bindings_get(table, key0);
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a
@@ -938,7 +941,7 @@ retry:
 			c->flags &= ~CLIENT_REPEAT;
 			server_status_client(c);
 			table = c->keytable;
-			goto retry;
+			goto table_changed;
 		}
 		log_debug("found in key table %s", table->name);
 
@@ -973,6 +976,14 @@ retry:
 	}
 
 	/*
+	 * No match, try the ANY key.
+	 */
+	if (key0 != KEYC_ANY) {
+		key0 = KEYC_ANY;
+		goto try_again;
+	}
+
+	/*
 	 * No match in this table. If not in the root table or if repeating,
 	 * switch the client back to the root table and try again.
 	 */
@@ -983,7 +994,7 @@ retry:
 		c->flags &= ~CLIENT_REPEAT;
 		server_status_client(c);
 		table = c->keytable;
-		goto retry;
+		goto table_changed;
 	}
 
 	/*
@@ -996,7 +1007,7 @@ retry:
 		return;
 	}
 
-forward:
+forward_key:
 	if (c->flags & CLIENT_READONLY)
 		return;
 	if (wp != NULL)
@@ -1067,7 +1078,7 @@ server_client_resize_force(struct window_pane *wp)
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy - 1;
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 #ifdef __sun
 		if (errno != EINVAL && errno != ENXIO)
 #endif
@@ -1096,7 +1107,7 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy;
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
+	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 #ifdef __sun
 		/*
 		 * Some versions of Solaris apparently can return an error when
@@ -1157,10 +1168,6 @@ server_client_check_focus(struct window_pane *wp)
 	push = wp->flags & PANE_FOCUSPUSH;
 	wp->flags &= ~PANE_FOCUSPUSH;
 
-	/* If we don't care about focus, forget it. */
-	if (!(wp->base.mode & MODE_FOCUSON))
-		return;
-
 	/* If we're not the active pane in our window, we're not focused. */
 	if (wp->window->active != wp)
 		goto not_focused;
@@ -1184,14 +1191,20 @@ server_client_check_focus(struct window_pane *wp)
 	}
 
 not_focused:
-	if (push || (wp->flags & PANE_FOCUSED))
-		bufferevent_write(wp->event, "\033[O", 3);
+	if (push || (wp->flags & PANE_FOCUSED)) {
+		if (wp->base.mode & MODE_FOCUSON)
+			bufferevent_write(wp->event, "\033[O", 3);
+		notify_pane("pane-focus-out", wp);
+	}
 	wp->flags &= ~PANE_FOCUSED;
 	return;
 
 focused:
-	if (push || !(wp->flags & PANE_FOCUSED))
-		bufferevent_write(wp->event, "\033[I", 3);
+	if (push || !(wp->flags & PANE_FOCUSED)) {
+		if (wp->base.mode & MODE_FOCUSON)
+			bufferevent_write(wp->event, "\033[I", 3);
+		notify_pane("pane-focus-in", wp);
+	}
 	wp->flags |= PANE_FOCUSED;
 }
 
@@ -1211,7 +1224,7 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = w->active, *loop;
 	struct screen		*s = wp->screen;
 	struct options		*oo = c->session->options;
-	int			 status, mode, o;
+	int			 lines, mode;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
@@ -1219,13 +1232,14 @@ server_client_reset_state(struct client *c)
 	tty_region_off(&c->tty);
 	tty_margin_off(&c->tty);
 
-	status = options_get_number(oo, "status");
-	if (!window_pane_visible(wp) || wp->yoff + s->cy >= c->tty.sy - status)
+	if (status_at_line(c) != 0)
+		lines = 0;
+	else
+		lines = status_line_size(c->session);
+	if (!window_pane_visible(wp) || wp->yoff + s->cy >= c->tty.sy - lines)
 		tty_cursor(&c->tty, 0, 0);
-	else {
-		o = status && options_get_number(oo, "status-position") == 0;
-		tty_cursor(&c->tty, wp->xoff + s->cx, o + wp->yoff + s->cy);
-	}
+	else
+		tty_cursor(&c->tty, wp->xoff + s->cx, lines + wp->yoff + s->cy);
 
 	/*
 	 * Set mouse mode if requested. To support dragging, always use button
@@ -1287,6 +1301,8 @@ server_client_check_exit(struct client *c)
 	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
 		return;
 
+	if (c->flags & CLIENT_ATTACHED)
+		notify_client("client-detached", c);
 	proc_send(c->peer, MSG_EXIT, -1, &c->retval, sizeof c->retval);
 	c->flags &= ~CLIENT_EXIT;
 }
@@ -1558,6 +1574,9 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	struct cmd_list		 *cmdlist = NULL;
 	int			  argc;
 	char			**argv, *cause;
+
+	if (c->flags & CLIENT_EXIT)
+		return;
 
 	if (imsg->hdr.len - IMSG_HEADER_SIZE < sizeof data)
 		fatalx("bad MSG_COMMAND size");
@@ -1854,15 +1873,19 @@ server_client_add_message(struct client *c, const char *fmt, ...)
 
 /* Get client working directory. */
 const char *
-server_client_get_cwd(struct client *c)
+server_client_get_cwd(struct client *c, struct session *s)
 {
-	struct session	*s;
+	const char	*home;
 
 	if (c != NULL && c->session == NULL && c->cwd != NULL)
 		return (c->cwd);
+	if (s != NULL && s->cwd != NULL)
+		return (s->cwd);
 	if (c != NULL && (s = c->session) != NULL && s->cwd != NULL)
 		return (s->cwd);
-	return (".");
+	if ((home = find_home()) != NULL)
+		return (home);
+	return ("/");
 }
 
 /* Resolve an absolute path or relative to client working directory. */
@@ -1874,7 +1897,7 @@ server_client_get_path(struct client *c, const char *file)
 	if (*file == '/')
 		path = xstrdup(file);
 	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c), file);
+		xasprintf(&path, "%s/%s", server_client_get_cwd(c, NULL), file);
 	if (realpath(path, resolved) == NULL)
 		return (path);
 	free(path);

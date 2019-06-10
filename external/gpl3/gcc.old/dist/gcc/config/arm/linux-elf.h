@@ -1,5 +1,5 @@
 /* Definitions for ARM running Linux-based GNU systems using ELF
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Philip Blundell <philb@gnu.org>
 
    This file is part of GCC.
@@ -85,17 +85,6 @@
     }						\
   while (0)
 
-/* This is how we tell the assembler that two symbols have the same value.  */
-#define ASM_OUTPUT_DEF(FILE, NAME1, NAME2) \
-  do					   \
-    {					   \
-      assemble_name (FILE, NAME1); 	   \
-      fputs (" = ", FILE);		   \
-      assemble_name (FILE, NAME2);	   \
-      fputc ('\n', FILE);		   \
-    }					   \
-  while (0)
-
 #undef  FPUTYPE_DEFAULT
 #define FPUTYPE_DEFAULT "vfp"
 
@@ -124,3 +113,6 @@
    to COPY relocated symbol in the executable.  See PR65780.  */
 #undef TARGET_BINDS_LOCAL_P
 #define TARGET_BINDS_LOCAL_P default_binds_local_p_2
+
+/* Define this to be nonzero if static stack checking is supported.  */
+#define STACK_CHECK_STATIC_BUILTIN 1

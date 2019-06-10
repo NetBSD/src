@@ -1,4 +1,4 @@
-#	$NetBSD: t_tun.sh,v 1.5 2018/02/01 05:22:02 ozaki-r Exp $
+#	$NetBSD: t_tun.sh,v 1.5.4.1 2019/06/10 22:10:10 christos Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 #
 
 RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
-RUMP_FLAGS="$RUMP_FLAGS -lrumpnet_shmif -lrumpnet_tun -lrumpdev"
+RUMP_FLAGS="$RUMP_FLAGS -lrumpnet_shmif -lrumpnet_tun"
 
 BUS=bus
 SOCK_LOCAL=unix://commsock1

@@ -155,6 +155,7 @@ Andrew Cagney			cagney@gnu.org
 Doug Evans			dje@google.com
 Daniel Jacobowitz		drow@false.org
 Mark Kettenis           	kettenis@gnu.org
+Simon Marchi			simon.marchi@ericsson.com
 Yao Qi				yao.qi@arm.com
 Stan Shebs			stanshebs@google.com
 Ulrich Weigand			Ulrich.Weigand@de.ibm.com
@@ -378,6 +379,7 @@ language support
   C++			Daniel Jacobowitz	drow@false.org
   D			Iain Buclaw		ibuclaw@gdcproject.org
   Objective C support   Adam Fedor		fedor@gnu.org
+  Rust			Tom Tromey		tom@tromey.com
 shared libs		Kevin Buettner		kevinb@redhat.com
 MI interface		Vladimir Prus		vladimir@codesourcery.com
 
@@ -449,7 +451,6 @@ tui			Stephane Carrez		Stephane.Carrez@gmail.com
 ia64			Kevin Buettner		kevinb@redhat.com
 AIX			Kevin Buettner		kevinb@redhat.com
 GNU/Linux PPC native	Kevin Buettner		kevinb@redhat.com
-gdb.java tests		Anthony Green		green@redhat.com
 FreeBSD native & host	David O'Brien		obrien@freebsd.org
 event loop		Elena Zannoni		elena.zannoni@oracle.com
 generic symtabs		Elena Zannoni		elena.zannoni@oracle.com
@@ -534,7 +535,7 @@ Andreas From					andreas.from@ericsson.com
 Nathan Froyd					froydnj@codesourcery.com
 Mike Frysinger					vapier@gentoo.org
 Gary Funck					gary@intrepid.com
-Martin Galvan					martin.galvan@tallertechnologies.com
+Martin Galvan					martingalvan@sourceware.org
 Chen Gang					gang.chen.5i5j@gmail.com
 Mircea Gherzan					mircea.gherzan@intel.com
 Paul Gilliam					pgilliam@us.ibm.com
@@ -547,7 +548,7 @@ Matthew Gretton-Dann				matthew.gretton-dann@arm.com
 Maxim Grigoriev					maxim2405@gmail.com
 Jerome Guitton					guitton@act-europe.fr
 Ben Harris					bjh21@netbsd.org
-Bernhard Heckel					bernhard.heckel@intel.com
+Bernhard Heckel					heckel_bernhard@web.de
 Richard Henderson				rth@redhat.com
 Aldy Hernandez					aldyh@redhat.com
 Paul Hilfinger					hilfinger@gnat.com
@@ -571,6 +572,7 @@ Mark Kettenis					kettenis@gnu.org
 Marc Khouzam					marc.khouzam@ericsson.com
 Toshihito Kikuchi					k.toshihito@yahoo.de
 Jim Kingdon					kingdon@panix.com
+Anton Kolesov					anton.kolesov@synopsys.com
 Paul Koning					paul_koning@dell.com
 Marcin Kościelnicki				koriakin@0x04.net
 Jan Kratochvil					jan.kratochvil@redhat.com
@@ -585,12 +587,12 @@ Yan-Ting Lin					currygt52@gmail.com
 Robert Lipe					rjl@sco.com
 Lei Liu						lei.liu2@windriver.com
 Sandra Loosemore				sandra@codesourcery.com
+Carl Love                  cel@us.ibm.com
 H.J. Lu						hjl.tools@gmail.com
 Michal Ludvig                                   mludvig@suse.cz
 Edjunior B. Machado				emachado@linux.vnet.ibm.com
 Luis Machado					lgustavo@codesourcery.com
 Jose E. Marchesi                                jose.marchesi@oracle.com
-Simon Marchi					simon.marchi@ericsson.com
 Glen McCready					gkm@redhat.com
 Greg McGary					greg@mcgary.org
 Roland McGrath					roland@hack.frob.com

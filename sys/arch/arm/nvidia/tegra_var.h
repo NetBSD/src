@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.42 2017/09/24 20:09:53 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.42.6.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,8 +35,8 @@
 
 #include "opt_tegra.h"
 
-extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
+extern struct bus_space arm_generic_bs_tag;
+extern struct bus_space arm_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
 
@@ -55,6 +55,8 @@ void	tegra_pmc_hdmi_enable(void);
 
 void	tegra210_car_xusbio_enable_hw_control(void);
 void	tegra210_car_xusbio_enable_hw_seq(void);
+void	tegra210_car_sata_enable_hw_control(void);
+void	tegra210_car_sata_enable_hw_seq(void);
 
 uint32_t tegra_fuse_read(u_int);
 
@@ -75,10 +77,7 @@ struct tegra_cpufreq_func {
 void	tegra_cpufreq_register(const struct tegra_cpufreq_func *);
 
 #if defined(SOC_TEGRA124)
-void	tegra124_mpinit(void);
-#endif
-#if defined(SOC_TEGRA210)
-void	tegra210_mpinit(void);
+int	tegra124_mpstart(void);
 #endif
 
 static void inline

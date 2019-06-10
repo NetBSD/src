@@ -9,6 +9,8 @@ server:
 	ipsecmod-strict: no
 	ipsecmod-max-ttl: 200
 	ipsecmod-enabled: no
+	qname-minimisation: "no"
+	minimal-responses: no
 
 stub-zone:
 	name: "."

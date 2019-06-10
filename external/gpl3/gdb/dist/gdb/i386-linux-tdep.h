@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,14 +42,8 @@ extern uint64_t i386_linux_core_read_xcr0 (bfd *abfd);
 extern void i386_linux_handle_segmentation_fault (struct gdbarch *gdbarch,
 						  struct ui_out *uiout);
 
-/* Linux target description.  */
-extern struct target_desc *tdesc_i386_linux;
-extern struct target_desc *tdesc_i386_mmx_linux;
-extern struct target_desc *tdesc_i386_avx_linux;
-extern struct target_desc *tdesc_i386_mpx_linux;
-extern struct target_desc *tdesc_i386_avx_mpx_linux;
-extern struct target_desc *tdesc_i386_avx_avx512_linux;
-extern struct target_desc *tdesc_i386_avx_mpx_avx512_pku_linux;
+/* Return the target description according to XCR0.  */
+extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
 
 /* Format of XSAVE extended state is:
  	struct

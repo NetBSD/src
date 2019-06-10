@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,11 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_BTRACE_H
-#define LINUX_BTRACE_H
+#ifndef NAT_LINUX_BTRACE_H
+#define NAT_LINUX_BTRACE_H
 
-#include "btrace-common.h"
-#include "vec.h"
+#include "common/btrace-common.h"
+#include "common/vec.h"
 #if HAVE_LINUX_PERF_EVENT_H
 #  include <linux/perf_event.h>
 #endif
@@ -103,9 +103,6 @@ struct btrace_target_info
 #endif /* HAVE_LINUX_PERF_EVENT_H */
 };
 
-/* See to_supports_btrace in target.h.  */
-extern int linux_supports_btrace (struct target_ops *, enum btrace_format);
-
 /* See to_enable_btrace in target.h.  */
 extern struct btrace_target_info *
   linux_enable_btrace (ptid_t ptid, const struct btrace_config *conf);
@@ -122,4 +119,4 @@ extern enum btrace_error linux_read_btrace (struct btrace_data *btrace,
 extern const struct btrace_config *
   linux_btrace_conf (const struct btrace_target_info *);
 
-#endif /* LINUX_BTRACE_H */
+#endif /* NAT_LINUX_BTRACE_H */

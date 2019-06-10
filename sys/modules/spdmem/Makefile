@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/08/19 08:26:20 christos Exp $
+# $NetBSD: Makefile,v 1.3.54.1 2019/06/10 22:09:39 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,5 @@ SRCS=	spdmem_i2c.c
 .PATH:	${S}/dev/ic
 
 SRCS+=	spdmem.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

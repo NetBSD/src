@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.15 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.15.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -179,16 +179,16 @@ void	dme_mediastatus(struct ifnet *, struct ifmediareq *);
 /*** Internal methods ***/
 
 /* Prepare data to be transmitted (i.e. dequeue and load it into the DM9000) */
-void    dme_prepare(struct dme_softc *, struct ifnet *);
+void	dme_prepare(struct dme_softc *, struct ifnet *);
 
 /* Transmit prepared data */
-void    dme_transmit(struct dme_softc *);
+void	dme_transmit(struct dme_softc *);
 
 /* Receive data */
-void    dme_receive(struct dme_softc *, struct ifnet *);
+void	dme_receive(struct dme_softc *, struct ifnet *);
 
 /* Software Initialize/Reset of the DM9000 */
-void    dme_reset(struct dme_softc *);
+void	dme_reset(struct dme_softc *);
 
 /* Configure multicast filter */
 void	dme_set_addr_filter(struct dme_softc *);
@@ -214,7 +214,8 @@ dme_phy_read(struct dme_softc *sc, int reg)
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_ERPRR + DM9000_EPCR_EPOS_PHY);
 
 	/* Wait until access to PHY has completed */
-	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
+	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE)
+		;
 
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
@@ -240,7 +241,8 @@ dme_phy_write(struct dme_softc *sc, int reg, uint16_t value)
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_ERPRW + DM9000_EPCR_EPOS_PHY);
 
 	/* Wait until access to PHY has completed */
-	while(dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
+	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE)
+		;
 
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
@@ -287,11 +289,10 @@ dme_phy_init(struct dme_softc *sc)
 		break;
 	}
 
-	if(ifm_media & IFM_FDX) {
+	if (ifm_media & IFM_FDX)
 		bmcr |= DM9000_PHY_BMCR_DUPLEX_MODE;
-	} else {
+	else
 		bmcr &= ~DM9000_PHY_BMCR_DUPLEX_MODE;
-	}
 
 	dme_phy_write(sc, DM9000_PHY_BMCR, bmcr);
 	dme_phy_write(sc, DM9000_PHY_ANAR, anar);
@@ -349,15 +350,13 @@ dme_phy_update_media(struct dme_softc *sc)
 	sc->sc_media_active = IFM_ETHER;
 	reg = dme_phy_read(sc, DM9000_PHY_BMCR);
 
-	if (reg & DM9000_PHY_BMCR_SPEED_SELECT) {
+	if (reg & DM9000_PHY_BMCR_SPEED_SELECT)
 		sc->sc_media_active |= IFM_100_TX;
-	} else {
+	else
 		sc->sc_media_active |= IFM_10_T;
-	}
 
-	if (reg & DM9000_PHY_BMCR_DUPLEX_MODE) {
+	if (reg & DM9000_PHY_BMCR_DUPLEX_MODE)
 		sc->sc_media_active |= IFM_FDX;
-	}
 }
 
 void
@@ -371,16 +370,15 @@ dme_phy_check_link(void *arg)
 
 	reg = dme_read(sc, DM9000_NSR) & DM9000_NSR_LINKST;
 
-	if( reg )
+	if (reg)
 		reg = IFM_ETHER | IFM_AVALID | IFM_ACTIVE;
 	else {
 		reg = IFM_ETHER | IFM_AVALID;
 		sc->sc_media_active = IFM_NONE;
 	}
 
-	if ( (sc->sc_media_status != reg) && (reg & IFM_ACTIVE)) {
+	if ((sc->sc_media_status != reg) && (reg & IFM_ACTIVE))
 		dme_phy_reset(sc);
-	}
 
 	sc->sc_media_status = reg;
 
@@ -435,19 +433,19 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	ifp->if_ioctl = dme_ioctl;
 	ifp->if_stop = dme_stop;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_BROADCAST |
-			IFF_MULTICAST;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dme_mediachange, dme_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX, 0, NULL);
 
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	if (enaddr != NULL)
 		memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
@@ -466,9 +464,8 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 		uint8_t macAddr[6];
 		dme_read_c(sc, DM9000_PAB0, macAddr, 6);
 		printf("DM9000 configured with MAC address: ");
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 6; i++)
 			printf("%02X:", macAddr[i]);
-		}
 		printf("\n");
 	}
 #endif
@@ -486,9 +483,8 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 				printf("10Mbps");
 			else
 				printf("100Mbps");
-		} else {
+		} else
 			printf("Down");
-		}
 		printf("\n");
 	}
 #endif
@@ -497,7 +493,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
 
 	DPRINTF(("DM9000 Operation Mode: "));
-	switch( io_mode) {
+	switch (io_mode) {
 	case DM9000_MODE_16BIT:
 		DPRINTF(("16-bit mode"));
 		sc->sc_data_width = 2;
@@ -570,9 +566,8 @@ int dme_intr(void *arg)
 		}
 
 		/* If we have nothing ready to transmit, prepare something */
-		if (!sc->txready) {
+		if (!sc->txready)
 			dme_prepare(sc, ifp);
-		}
 
 		if (sc->txready)
 			dme_transmit(sc);
@@ -587,8 +582,8 @@ int dme_intr(void *arg)
 #endif
 
 	/* Enable interrupts again */
-	dme_write(sc, DM9000_IMR, DM9000_IMR_PAR | DM9000_IMR_PRM |
-		 DM9000_IMR_PTM);
+	dme_write(sc, DM9000_IMR,
+	    DM9000_IMR_PAR | DM9000_IMR_PRM | DM9000_IMR_PTM);
 
 	DPRINTF(("dme_intr: End\n"));
 
@@ -609,10 +604,9 @@ dme_start_output(struct ifnet *ifp)
 		return;
 	}
 
-	if (sc->txbusy && sc->txready) {
+	if (sc->txbusy && sc->txready)
 		panic("DM9000: Internal error, trying to send without"
 		    " any empty queue\n");
-	}
 
 	dme_prepare(sc, ifp);
 
@@ -660,9 +654,8 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 	length = sc->sc_pkt_write(sc, bufChain);
 	TX_DATA_DPRINTF(("\n"));
 
-	if (length % sc->sc_data_width != 0) {
+	if (length % sc->sc_data_width != 0)
 		panic("dme_prepare: length is not compatible with IO_MODE");
-	}
 
 	sc->txready_length = length;
 	sc->txready = 1;
@@ -701,16 +694,11 @@ int
 dme_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dme_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch(cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
+	switch (cmd) {
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -841,7 +829,7 @@ dme_reset(struct dme_softc *sc)
 
 	/* We only re-initialized the PHY in this function the first time it is
 	   called. */
-	if( !sc->sc_phy_initialized) {
+	if (!sc->sc_phy_initialized) {
 		/* PHY Reset */
 		dme_phy_write(sc, DM9000_PHY_BMCR, DM9000_PHY_BMCR_RESET);
 
@@ -861,7 +849,7 @@ dme_reset(struct dme_softc *sc)
 	delay(20);
 	dme_write(sc, DM9000_NCR, 0x0);
 
-	if( !sc->sc_phy_initialized) {
+	if (!sc->sc_phy_initialized) {
 		/* PHY Initialization */
 		dme_phy_init(sc);
 
@@ -872,7 +860,7 @@ dme_reset(struct dme_softc *sc)
 		dme_write(sc, DM9000_GPCR, var | DM9000_GPCR_GPIO0_OUT);
 
 		dme_write(sc, DM9000_NCR,
-			  DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
+		    DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
 		delay(20);
 		dme_write(sc, DM9000_NCR, 0x0);
 	}
@@ -926,19 +914,20 @@ dme_set_addr_filter(struct dme_softc *sc)
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		uint16_t hash;
 		if (memcpy(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo))) {
 			/*
-	                 * We must listen to a range of multicast addresses.
-	                 * For now, just accept all multicasts, rather than
-	                 * trying to set only those filter bits needed to match
-	                 * the range.  (At this time, the only use of address
-	                 * ranges is for IP multicast routing, for which the
-	                 * range is big enough to require all bits set.)
-	                 */
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = af[2] = af[3] = 0xffff;
 			break;
@@ -948,9 +937,10 @@ dme_set_addr_filter(struct dme_softc *sc)
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Write the multicast address filter */
-	for(i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		dme_write(sc, DM9000_MAB0+i*2, af[i] & 0xFF);
 		dme_write(sc, DM9000_MAB0+i*2+1, (af[i] >> 8) & 0xFF);
 	}
@@ -979,8 +969,7 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 
 		write_ptr = buf->m_data;
 		while (to_write > 0 ||
-		       (buf->m_next == NULL && left_over_count > 0)
-		       ) {
+		    (buf->m_next == NULL && left_over_count > 0)) {
 			if (left_over_count > 0) {
 				uint8_t b = 0;
 				DPRINTF(("dme_pkt_write_16: "
@@ -1017,7 +1006,7 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				uint16_t *dptr = (uint16_t *)write_ptr;
 
 				/* A block of aligned data. */
-				for(i = 0; i < to_write / 2; i++) {
+				for (i = 0; i < to_write / 2; i++) {
 					/* buf will be half-word aligned
 					 * all the time
 					 */
@@ -1049,8 +1038,8 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				}
 				to_write -= i * 2;
 			}
-		} /* while(...) */
-	} /* for(...) */
+		} /* while (...) */
+	} /* for (...) */
 
 	return length;
 }
@@ -1075,9 +1064,8 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
 		panic("Something is rotten");
 	}
-	RX_DPRINTF(("dme_receive: "
-		    "rx_statux: 0x%x, frame_length: %d\n",
-		    rx_status, frame_length));
+	RX_DPRINTF(("dme_receive: rx_statux: 0x%x, frame_length: %d\n",
+		rx_status, frame_length));
 
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
@@ -1126,8 +1114,10 @@ dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
 	struct mbuf *buf;
 	uint8_t *write_ptr;
 
-	/* We expect that the DM9000 has been setup to accept writes before
-	   this function is called. */
+	/*
+	 * We expect that the DM9000 has been setup to accept writes before
+	 * this function is called.
+	 */
 
 	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
 		int to_write = buf->m_len;
@@ -1140,7 +1130,7 @@ dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
 			    sc->dme_data, *write_ptr);
 			write_ptr++;
 		}
-	} /* for(...) */
+	} /* for (...) */
 
 	return length;
 }

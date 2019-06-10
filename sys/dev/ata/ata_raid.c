@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.40 2018/06/22 09:06:04 pgoyette Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.40.2.1 2019/06/10 22:07:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.40 2018/06/22 09:06:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.40.2.1 2019/06/10 22:07:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.40 2018/06/22 09:06:04 pgoyette Exp $
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/module.h>
@@ -274,7 +273,7 @@ ata_raid_get_array_info(u_int type, u_int arrayno)
 	}
 
 	/* Need to allocate a new one. */
-	aai = malloc(sizeof(*aai), M_DEVBUF, M_WAITOK | M_ZERO);
+	aai = kmem_zalloc(sizeof(*aai), KM_SLEEP);
 	aai->aai_type = type;
 	aai->aai_arrayno = arrayno;
 	aai->aai_curdisk = 0;
@@ -321,7 +320,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	return (error);
 }
 
-MODULE(MODULE_CLASS_DRIVER, ataraid, "");
+MODULE(MODULE_CLASS_DRIVER, ataraid, NULL);
  
 #ifdef _MODULE
 CFDRIVER_DECL(ataraid, DV_DISK, NULL);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/06/07 01:06:28 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2019/06/10 22:09:12 christos Exp $
 #
 
 .include "../Makefile.inc"
@@ -7,5 +7,7 @@
 
 KMOD=	bpf_filter
 SRCS=	bpf_filter.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

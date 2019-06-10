@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.44 2013/11/08 03:12:17 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.44.30.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.44 2013/11/08 03:12:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.44.30.1 2019/06/10 22:07:12 christos Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.44 2013/11/08 03:12:17 christos Exp $");
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -168,34 +168,25 @@ static bool ym_resume(device_t, const pmf_qual_t *);
 
 
 const struct audio_hw_if ym_hw_if = {
-	ad1848_isa_open,
-	ad1848_isa_close,
-	NULL,
-	ad1848_query_encoding,
-	ad1848_set_params,
-	ad1848_round_blocksize,
-	ad1848_commit_settings,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ad1848_isa_halt_output,
-	ad1848_isa_halt_input,
-	NULL,
-	ym_getdev,
-	NULL,
-	ym_mixer_set_port,
-	ym_mixer_get_port,
-	ym_query_devinfo,
-	ad1848_isa_malloc,
-	ad1848_isa_free,
-	ad1848_isa_round_buffersize,
-	ad1848_isa_mappage,
-	ad1848_isa_get_props,
-	ad1848_isa_trigger_output,
-	ad1848_isa_trigger_input,
-	NULL,
-	ad1848_get_locks,
+	.open			= ad1848_isa_open,
+	.close			= ad1848_isa_close,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
+	.round_blocksize	= ad1848_round_blocksize,
+	.commit_settings	= ad1848_commit_settings,
+	.halt_output		= ad1848_isa_halt_output,
+	.halt_input		= ad1848_isa_halt_input,
+	.getdev			= ym_getdev,
+	.set_port		= ym_mixer_set_port,
+	.get_port		= ym_mixer_get_port,
+	.query_devinfo		= ym_query_devinfo,
+	.allocm			= ad1848_isa_malloc,
+	.freem			= ad1848_isa_free,
+	.round_buffersize	= ad1848_isa_round_buffersize,
+	.get_props		= ad1848_isa_get_props,
+	.trigger_output		= ad1848_isa_trigger_output,
+	.trigger_input		= ad1848_isa_trigger_input,
+	.get_locks		= ad1848_get_locks,
 };
 
 static inline int ym_read(struct ym_softc *, int);

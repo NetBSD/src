@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.295 2018/05/16 16:33:23 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.295.2.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295 2018/05/16 16:33:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295.2.1 2019/06/10 22:06:20 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295 2018/05/16 16:33:23 maxv Exp $");
 #include <machine/mca_machdep.h>
 #endif
 
+#include <x86/dbregs.h>
 #include <x86/nmi.h>
 
 #include "isa.h"
@@ -128,7 +129,7 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
-#ifndef XEN
+#ifndef XENPV
 int ss_shadow(struct trapframe *tf);
 #endif
 
@@ -239,7 +240,7 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
-#ifndef XEN
+#ifndef XENPV
 int
 ss_shadow(struct trapframe *tf)
 {
@@ -274,7 +275,7 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[], return_address_fault[];
+	extern char kcopy_fault[], return_address_fault[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -311,7 +312,7 @@ trap(struct trapframe *frame)
 	 * A trap can occur while DTrace executes a probe. Before
 	 * executing the probe, DTrace blocks re-scheduling and sets
 	 * a flag in its per-cpu flags to indicate that it doesn't
-	 * want to fault. On returning from the the probe, the no-fault
+	 * want to fault. On returning from the probe, the no-fault
 	 * flag is cleared and finally re-scheduling is enabled.
 	 *
 	 * If the DTrace kernel module has registered a trap handler,
@@ -460,13 +461,15 @@ kernelfault:
 		}
 	}
 #endif
+		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_eip, rcr2());
+		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#"
+		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
+		    type, frame->tf_eip, rcr2());
 		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -506,8 +509,9 @@ kernelfault:
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): ILL at eip %#x addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, frame->tf_eip, rcr2());
+		printf("pid %d.%d (%s): ILL at eip %#x addr %#"
+		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
+		    frame->tf_eip, rcr2());
 		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -566,12 +570,8 @@ kernelfault:
 		if (__predict_false(l == NULL))
 			goto we_re_toast;
 
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
 		onfault = pcb->pcb_onfault;
-		if (onfault == fusubail || onfault == return_address_fault) {
+		if (onfault == return_address_fault) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
@@ -676,7 +676,7 @@ faultcommon:
 				 * the copy functions, and so visible
 				 * to cpu_kpreempt_exit().
 				 */
-#ifndef XEN
+#ifndef XENPV
 				x86_disable_intr();
 #endif
 				l->l_nopreempt--;
@@ -684,7 +684,7 @@ faultcommon:
 				    pfail) {
 					return;
 				}
-#ifndef XEN
+#ifndef XENPV
 				x86_enable_intr();
 #endif
 				/*

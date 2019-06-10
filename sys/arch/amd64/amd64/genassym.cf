@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2018/03/30 10:01:36 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.68.2.1 2019/06/10 22:05:47 christos Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ include <machine/i82093var.h>
 endif
 
 ifdef XEN
-include <xen/xen-public/xen.h>
+include <xen/include/public/xen.h>
 endif  
 
 include <sys/bus.h>
@@ -142,8 +142,6 @@ define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
 define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
-
-define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 
 define	PDE_SIZE		sizeof(pd_entry_t)
 
@@ -238,7 +236,6 @@ define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
 ifdef SVS
 define	CPU_INFO_UPDIRPA	offsetof(struct cpu_info, ci_svs_updirpa)
-define	CPU_INFO_KPDIRPA	offsetof(struct cpu_info, ci_svs_kpdirpa)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_svs_rsp0)
 define	CPU_INFO_URSP0		offsetof(struct cpu_info, ci_svs_ursp0)
 define	CPU_INFO_KRSP0		offsetof(struct cpu_info, ci_svs_krsp0)
@@ -250,12 +247,14 @@ define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curprior
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
+define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
-define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
-define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+endif
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
@@ -276,6 +275,14 @@ define	ACPI_SUSPEND_CR2	offsetof(struct cpu_info, ci_suspend_cr2)
 define	ACPI_SUSPEND_CR3	offsetof(struct cpu_info, ci_suspend_cr3)
 define	ACPI_SUSPEND_CR4	offsetof(struct cpu_info, ci_suspend_cr4)
 define	ACPI_SUSPEND_CR8	offsetof(struct cpu_info, ci_suspend_cr8)
+
+define	INVPCID_ADDRESS		INVPCID_ADDRESS
+define	INVPCID_CONTEXT		INVPCID_CONTEXT
+define	INVPCID_ALL		INVPCID_ALL
+define	INVPCID_ALL_NONGLOBAL	INVPCID_ALL_NONGLOBAL
+
+define	PMAP_PCID_USER		PMAP_PCID_USER
+define	PMAP_PCID_KERN		PMAP_PCID_KERN
 
 if NIOAPIC > 0
 define		PIC_IOAPIC		offsetof(struct pic, pic_ioapic)
@@ -317,11 +324,13 @@ define	IS_LWP			offsetof(struct intrsource, is_lwp)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
+define	IPL_NET			IPL_NET
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
+define	LIR_HV			LIR_HV
 
 define	SIR_NET			SIR_NET
 define	SIR_CLOCK		SIR_CLOCK
@@ -354,10 +363,16 @@ define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
+define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
+define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
+define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
+define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+ifdef XENPV
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
 define __HYPERVISOR_iret	__HYPERVISOR_iret
+endif /* XENPV */
 endif
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
@@ -367,7 +382,7 @@ define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
 
-define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
+define	VM_SPACE_SEP_HIGH32	(0xFFFF800000000000 >> 32)
 
 define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 

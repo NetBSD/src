@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -19,7 +19,7 @@ A GNU Manual
 You have freedom to copy and modify this GNU Manual, like GNU
      software.  Copies published by the Free Software Foundation raise
      funds for GNU development. -->
-<!-- Created by GNU Texinfo 6.1, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.4, http://www.gnu.org/software/texinfo/ -->
 <head>
 <title>Installing GCC</title>
 
@@ -559,7 +559,7 @@ if the files are found.  The auto detection is enabled for native builds,
 and for cross builds configured with <samp>--with-sysroot</samp>, and without
 <samp>--with-native-system-header-dir</samp>.
 More documentation about multiarch can be found at
-<a href="http://wiki.debian.org/Multiarch">http://wiki.debian.org/Multiarch</a>.
+<a href="https://wiki.debian.org/Multiarch">https://wiki.debian.org/Multiarch</a>.
 </p>
 </dd>
 <dt><code>--enable-sjlj-exceptions</code></dt>
@@ -613,9 +613,20 @@ sysv, aix.
 <dt><code>--with-multilib-list=<var>list</var></code></dt>
 <dt><code>--without-multilib-list</code></dt>
 <dd><p>Specify what multilibs to build.
-Currently only implemented for sh*-*-* and x86-64-*-linux*.
+Currently only implemented for arm*-*-*, sh*-*-* and x86-64-*-linux*.
 </p>
 <dl compact="compact">
+<dt><code>arm*-*-*</code></dt>
+<dd><p><var>list</var> is either <code>default</code> or <code>aprofile</code>.  Specifying
+<code>default</code> is equivalent to omitting this option while specifying
+<code>aprofile</code> builds multilibs for each combination of ISA (<code>-marm</code> or
+<code>-mthumb</code>), architecture (<code>-march=armv7-a</code>, <code>-march=armv7ve</code>,
+or <code>-march=armv8-a</code>), FPU available (none, <code>-mfpu=vfpv3-d16</code>,
+<code>-mfpu=neon</code>, <code>-mfpu=vfpv4-d16</code>, <code>-mfpu=neon-vfpv4</code> or
+<code>-mfpu=neon-fp-armv8</code> depending on architecture) and floating-point ABI
+(<code>-mfloat-abi=softfp</code> or <code>-mfloat-abi=hard</code>).
+</p>
+</dd>
 <dt><code>sh*-*-*</code></dt>
 <dd><p><var>list</var> is a comma separated list of CPU names.  These must be of the
 form <code>sh*</code> or <code>m*</code> (in which case they match the compiler option
@@ -766,7 +777,7 @@ This option is only supported on some targets, including ARC, ARM, i386, M68k,
 PowerPC, and SPARC.  It is mandatory for ARC.  The <samp>--with-cpu-32</samp> and
 <samp>--with-cpu-64</samp> options specify separate default CPUs for
 32-bit and 64-bit modes; these options are only supported for i386,
-x86-64 and PowerPC.
+x86-64, PowerPC, and SPARC.
 </p>
 </dd>
 <dt><code>--with-schedule=<var>cpu</var></code></dt>
@@ -1103,7 +1114,7 @@ see &ldquo;RS/6000 and PowerPC Options&rdquo; in the main manual.
 <p><samp>--with-aix-soname</samp> is currently supported by &lsquo;<samp>libgcc_s</samp>&rsquo; only, so
 this option is still experimental and not for normal use yet.
 </p>
-<p>Default is the traditional behaviour <samp>--with-aix-soname=&lsquo;<samp>aix</samp>&rsquo;</samp>.
+<p>Default is the traditional behavior <samp>--with-aix-soname=&lsquo;<samp>aix</samp>&rsquo;</samp>.
 </p>
 </dd>
 <dt><code>--enable-languages=<var>lang1</var>,<var>lang2</var>,&hellip;</code></dt>
@@ -1112,15 +1123,17 @@ their runtime libraries should be built.  For a list of valid values for
 <var>langN</var> you can issue the following command in the
 <samp>gcc</samp> directory of your GCC source tree:<br>
 </p><div class="smallexample">
-<pre class="smallexample">grep language= */config-lang.in
+<pre class="smallexample">grep ^language= */config-lang.in
 </pre></div>
 <p>Currently, you can use any of the following:
 <code>all</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>fortran</code>,
-<code>go</code>, <code>java</code>, <code>objc</code>, <code>obj-c++</code>.
+<code>go</code>, <code>java</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>.
 Building the Ada compiler has special requirements, see below.
 If you do not pass this flag, or specify the option <code>all</code>, then all
 default languages available in the <samp>gcc</samp> sub-tree will be configured.
-Ada, Go and Objective-C++ are not default languages; the rest are.
+Ada, Go, Jit, and Objective-C++ are not default languages.  LTO is not a
+default language, but is built by default because <samp>--enable-lto</samp> is
+enabled by default.  The other languages are default languages.
 </p>
 </dd>
 <dt><code>--enable-stage1-languages=<var>lang1</var>,<var>lang2</var>,&hellip;</code></dt>
@@ -1183,6 +1196,15 @@ should not be built.
 use DWARF 2 debugging information as the default.
 </p>
 </dd>
+<dt><code>--with-advance-toolchain=<var>at</var></code></dt>
+<dd><p>On 64-bit PowerPC Linux systems, configure the compiler to use the
+header files, library files, and the dynamic linker from the Advance
+Toolchain release <var>at</var> instead of the default versions that are
+provided by the Linux distribution.  In general, this option is
+intended for the developers of GCC, and it is not intended for general
+use.
+</p>
+</dd>
 <dt><code>--enable-targets=all</code></dt>
 <dt><code>--enable-targets=<var>target_list</var></code></dt>
 <dd><p>Some GCC targets, e.g. powerpc64-linux, build bi-arch compilers.
@@ -1198,9 +1220,17 @@ Currently, this option only affects sparc-linux, powerpc-linux, x86-linux,
 mips-linux and s390-linux.
 </p>
 </dd>
+<dt><code>--enable-default-pie</code></dt>
+<dd><p>Turn on <samp>-fPIE</samp> and <samp>-pie</samp> by default.
+</p>
+</dd>
 <dt><code>--enable-secureplt</code></dt>
 <dd><p>This option enables <samp>-msecure-plt</samp> by default for powerpc-linux.
 See &ldquo;RS/6000 and PowerPC Options&rdquo; in the main manual
+</p>
+</dd>
+<dt><code>--enable-default-ssp</code></dt>
+<dd><p>Turn on <samp>-fstack-protector-strong</samp> by default.
 </p>
 </dd>
 <dt><code>--enable-cld</code></dt>
@@ -1305,6 +1335,11 @@ allocation is gathered.  This information is printed when using
 <samp>-fmem-report</samp>.
 </p>
 </dd>
+<dt><code>--enable-valgrind-annotations</code></dt>
+<dd><p>Mark selected memory related operations in the compiler when run under
+valgrind to suppress false positives.
+</p>
+</dd>
 <dt><code>--enable-nls</code></dt>
 <dt><code>--disable-nls</code></dt>
 <dd><p>The <samp>--enable-nls</samp> option enables Native Language Support (NLS),
@@ -1375,6 +1410,10 @@ When neither of these configure options are used, the default will be
 64-bit <code>long double</code> otherwise.
 </p>
 </dd>
+<dt><code>--enable-fdpic</code></dt>
+<dd><p>On SH Linux systems, generate ELF FDPIC code.
+</p>
+</dd>
 <dt><code>--with-gmp=<var>pathname</var></code></dt>
 <dt><code>--with-gmp-include=<var>pathname</var></code></dt>
 <dt><code>--with-gmp-lib=<var>pathname</var></code></dt>
@@ -1413,7 +1452,7 @@ a cross compiler, they will not be used to configure target libraries.
 <dt><code>--with-isl=<var>pathname</var></code></dt>
 <dt><code>--with-isl-include=<var>pathname</var></code></dt>
 <dt><code>--with-isl-lib=<var>pathname</var></code></dt>
-<dd><p>If you do not have the ISL library installed in a standard location and you
+<dd><p>If you do not have the isl library installed in a standard location and you
 want to build GCC, you can explicitly specify the directory where it is
 installed (&lsquo;<samp>--with-isl=<var>islinstalldir</var></samp>&rsquo;). The
 <samp>--with-isl=<var>islinstalldir</var></samp> option is shorthand for
@@ -1426,40 +1465,30 @@ include and lib options directly.
 a cross compiler, they will not be used to configure target libraries.
 </p>
 </dd>
-<dt><code>--with-host-libstdcxx=<var>linker-args</var></code></dt>
-<dd><p>If you are linking with a static copy of PPL, you can use this option
-to specify how the linker should find the standard C++ library used
-internally by PPL.  Typical values of <var>linker-args</var> might be
-&lsquo;<samp>-lstdc++</samp>&rsquo; or &lsquo;<samp>-Wl,-Bstatic,-lstdc++,-Bdynamic -lm</samp>&rsquo;.  If you are
-linking with a shared copy of PPL, you probably do not need this
-option; shared library dependencies will cause the linker to search
-for the standard C++ library automatically.
-</p>
-</dd>
 <dt><code>--with-stage1-ldflags=<var>flags</var></code></dt>
 <dd><p>This option may be used to set linker flags to be used when linking
 stage 1 of GCC.  These are also used when linking GCC if configured with
-<samp>--disable-bootstrap</samp>.  By default no special flags are used.
+<samp>--disable-bootstrap</samp>.  If <samp>--with-stage1-libs</samp> is not set to a
+value, then the default is &lsquo;<samp>-static-libstdc++ -static-libgcc</samp>&rsquo;, if
+supported.
 </p>
 </dd>
 <dt><code>--with-stage1-libs=<var>libs</var></code></dt>
 <dd><p>This option may be used to set libraries to be used when linking stage 1
 of GCC.  These are also used when linking GCC if configured with
-<samp>--disable-bootstrap</samp>.  The default is the argument to
-<samp>--with-host-libstdcxx</samp>, if specified.
+<samp>--disable-bootstrap</samp>.
 </p>
 </dd>
 <dt><code>--with-boot-ldflags=<var>flags</var></code></dt>
 <dd><p>This option may be used to set linker flags to be used when linking
-stage 2 and later when bootstrapping GCC.  If neither &ndash;with-boot-libs
-nor &ndash;with-host-libstdcxx is set to a value, then the default is
+stage 2 and later when bootstrapping GCC.  If &ndash;with-boot-libs
+is not is set to a value, then the default is
 &lsquo;<samp>-static-libstdc++ -static-libgcc</samp>&rsquo;.
 </p>
 </dd>
 <dt><code>--with-boot-libs=<var>libs</var></code></dt>
 <dd><p>This option may be used to set libraries to be used when linking stage 2
-and later when bootstrapping GCC.  The default is the argument to
-<samp>--with-host-libstdcxx</samp>, if specified.
+and later when bootstrapping GCC.
 </p>
 </dd>
 <dt><code>--with-debug-prefix-map=<var>map</var></code></dt>
@@ -1571,7 +1600,31 @@ specifying paths <var>path1</var>, &hellip;, <var>pathN</var>.
 <pre class="smallexample">% <var>srcdir</var>/configure \
     --enable-offload-target=i686-unknown-linux-gnu=/path/to/i686/compiler,x86_64-pc-linux-gnu
 </pre></div>
+
+<p>If &lsquo;<samp>hsa</samp>&rsquo; is specified as one of the targets, the compiler will be
+built with support for HSA GPU accelerators.  Because the same
+compiler will emit the accelerator code, no path should be specified.
+</p>
 </dd>
+<dt><code>--with-hsa-runtime=<var>pathname</var></code></dt>
+<dt><code>--with-hsa-runtime-include=<var>pathname</var></code></dt>
+<dt><code>--with-hsa-runtime-lib=<var>pathname</var></code></dt>
+<dd>
+<p>If you configure GCC with HSA offloading but do not have the HSA
+run-time library installed in a standard location then you can
+explicitly specify the directory where they are installed.  The
+<samp>--with-hsa-runtime=<var>hsainstalldir</var></samp> option is a
+shorthand for
+<samp>--with-hsa-runtime-lib=<var>hsainstalldir</var>/lib</samp> and
+<samp>--with-hsa-runtime-include=<var>hsainstalldir</var>/include</samp>.
+</p>
+</dd>
+<dt><code>--with-hsa-kmt-lib=<var>pathname</var></code></dt>
+<dd>
+<p>If you configure GCC with HSA offloading but do not have the HSA
+KMT library installed in a standard location then you can
+explicitly specify the directory where it resides.
+</p></dd>
 </dl>
 
 <a name="Cross_002dCompiler_002dSpecific-Options"></a>
@@ -1742,7 +1795,7 @@ machine.  In general, if the Java front end is enabled, the GCJ
 libraries will be enabled too, unless they&rsquo;re known to not work on
 the target platform.  If GCJ is enabled but &lsquo;<samp>libgcj</samp>&rsquo; isn&rsquo;t built, you
 may need to port it; in this case, before modifying the top-level
-<samp>configure.in</samp> so that &lsquo;<samp>libgcj</samp>&rsquo; is enabled by default on this platform,
+<samp>configure.ac</samp> so that &lsquo;<samp>libgcj</samp>&rsquo; is enabled by default on this platform,
 you may use <samp>--enable-libgcj</samp> to override the default.
 </p>
 </dd>

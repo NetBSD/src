@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.18.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,13 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89 2016/05/21 15:27:15 riastradh Exp
 #include <sys/rndsink.h>
 #include <sys/rndsource.h>
 #include <sys/rngtest.h>
+#include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <dev/rnd_private.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/rnd.h>
-#endif
 
 #if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 #include <machine/cpu_rng.h>
@@ -747,6 +746,18 @@ rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
 	rs->state = rnd_sample_allocate(rs);
 
 	mutex_spin_enter(&rnd_global.lock);
+
+#ifdef DIAGNOSTIC
+	krndsource_t *s;
+	LIST_FOREACH(s, &rnd_global.sources, list) {
+		if (s == rs) {
+			panic("%s: source '%s' already attached",
+			    __func__, name);
+			/* NOTREACHED */
+		}
+	}
+#endif
+
 	LIST_INSERT_HEAD(&rnd_global.sources, rs, list);
 
 #ifdef RND_VERBOSE
@@ -1481,11 +1492,16 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-#ifdef COMPAT_50
-		return compat_50_rnd_ioctl(fp, cmd, addr);
-#else
-		return ENOTTY;
+		MODULE_HOOK_CALL(rnd_ioctl_50_hook, (fp, cmd, addr),
+		    enosys(), ret);
+#if defined(_LP64)
+		if (ret == ENOSYS)
+			MODULE_HOOK_CALL(rnd_ioctl32_50_hook, (fp, cmd, addr),
+			    enosys(), ret);
 #endif
+		if (ret == ENOSYS)
+			ret = ENOTTY;
+		return ret;
 	}
 
 	switch (cmd) {

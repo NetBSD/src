@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -372,7 +372,6 @@ windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
 			     struct gdbarch *gdbarch, struct obstack *obstack)
 {
   char *p;
-  struct bfd * dll;
   CORE_ADDR text_offset;
 
   obstack_grow_str (obstack, "<library name=\"");
@@ -380,12 +379,11 @@ windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
   obstack_grow_str (obstack, p);
   xfree (p);
   obstack_grow_str (obstack, "\"><segment address=\"");
-  dll = gdb_bfd_open (so_name, gnutarget, -1);
+  gdb_bfd_ref_ptr dll (gdb_bfd_open (so_name, gnutarget, -1));
   /* The following calls are OK even if dll is NULL.
      The default value 0x1000 is returned by pe_text_section_offset
      in that case.  */
-  text_offset = pe_text_section_offset (dll);
-  gdb_bfd_unref (dll);
+  text_offset = pe_text_section_offset (dll.get ());
   obstack_grow_str (obstack, paddress (gdbarch, load_addr + text_offset));
   obstack_grow_str (obstack, "\"/></library>");
 }
@@ -468,6 +466,9 @@ init_w32_command_list (void)
 void
 windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
+  set_gdbarch_wchar_bit (gdbarch, 16);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   /* Canonical paths on this target look like
      `c:\Program Files\Foo App\mydll.dll', for example.  */
   set_gdbarch_has_dos_based_file_system (gdbarch, 1);

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.17 2017/09/07 10:23:33 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.17.4.1 2019/06/10 22:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ struct gpt_cmd c_restore = {
 	"restore",
 	cmd_restore,
 	restorehelp, __arraycount(restorehelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_restore)

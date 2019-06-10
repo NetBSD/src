@@ -1,0 +1,147 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.filter-aaaa">
+  <info>
+    <date>2018-08-13</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle><application>filter-aaaa.so</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>filter-aaaa.so</application></refname>
+    <refpurpose>filter AAAA in DNS responses when A is present</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2018</year>
+      <year>2019</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>plugin query "filter-aaaa.so"</command>
+      <arg choice="opt" rep="norepeat"><replaceable class="parameter">{ parameters }</replaceable></arg>;
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+    <para>
+      <command>filter-aaaa.so</command> is a query plugin module for
+      <command>named</command>, enabling <command>named</command>
+      to omit some IPv6 addresses when responding to clients.
+    </para>
+    <para>
+      Until BIND 9.12, this feature was implemented natively in
+      <command>named</command> and enabled with the
+      <command>filter-aaaa</command> ACL and the
+      <command>filter-aaaa-on-v4</command> and
+      <command>filter-aaaa-on-v6</command> options. These options are
+      now deprecated in <filename>named.conf</filename>, but can be
+      passed as parameters to the <command>filter-aaaa.so</command>
+      plugin, for example:
+    </para>
+    <programlisting>
+plugin query "/usr/local/lib/filter-aaaa.so" {
+        filter-aaaa-on-v4 yes;
+        filter-aaaa-on-v6 yes;
+        filter-aaaa { 192.0.2.1; 2001:db8:2::1; };
+};
+</programlisting>
+    <para>
+      This module is intended to aid transition from IPv4 to IPv6 by
+      withholding IPv6 addresses from DNS clients which are not connected
+      to the IPv6 Internet, when the name being looked up has an IPv4
+      address available.  Use of this module is not recommended unless
+      absolutely necessary.
+    </para>
+    <para>
+      Note: This mechanism can erroneously cause other servers not to
+      give AAAA records to their clients.  If a recursing server with
+      both IPv6 and IPv4 network connections queries an authoritative
+      server using this mechanism via IPv4, it will be denied AAAA
+      records even if its client is using IPv6.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+    <variablelist>
+      <varlistentry>
+	<term><command>filter-aaaa</command></term>
+	<listitem>
+	  <para>
+	    Specifies a list of client addresses for which AAAA
+	    filtering is to be applied.  The default is
+	    <userinput>any</userinput>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><command>filter-aaaa-on-v4</command></term>
+	<listitem>
+	  <para>
+	    If set to <userinput>yes</userinput>, the DNS client is
+	    at an IPv4 address, in <command>filter-aaaa</command>,
+	    and if the response does not include DNSSEC signatures,
+	    then all AAAA records are deleted from the response.
+	    This filtering applies to all responses and not only
+	    authoritative responses.
+	  </para>
+	  <para>
+	    If set to <userinput>break-dnssec</userinput>,
+	    then AAAA records are deleted even when DNSSEC is
+	    enabled.  As suggested by the name, this causes the
+	    response to fail to verify, because the DNSSEC protocol is
+	    designed to detect deletions.
+	  </para>
+	  <para>
+	    This mechanism can erroneously cause other servers not to
+	    give AAAA records to their clients.  A recursing server with
+	    both IPv6 and IPv4 network connections that queries an
+	    authoritative server using this mechanism via IPv4 will be
+	    denied AAAA records even if its client is using IPv6.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><command>filter-aaaa-on-v6</command></term>
+	<listitem>
+	  <para>
+	    Identical to <command>filter-aaaa-on-v4</command>,
+	    except it filters AAAA responses to queries from IPv6
+	    clients instead of IPv4 clients.  To filter all
+	    responses, set both options to <userinput>yes</userinput>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+    <para>
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

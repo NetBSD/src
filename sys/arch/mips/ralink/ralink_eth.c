@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.14 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.14.2.1 2019/06/10 22:06:30 christos Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.14 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.14.2.1 2019/06/10 22:06:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -251,8 +251,8 @@ static void ralink_eth_mdio_enable(ralink_eth_softc_t *, bool);
 #endif
 static void ralink_eth_mii_statchg(struct ifnet *);
 static void ralink_eth_mii_tick(void *);
-static int  ralink_eth_mii_read(device_t, int, int);
-static void ralink_eth_mii_write(device_t, int, int, int);
+static int  ralink_eth_mii_read(device_t, int, int, uint16_t *);
+static int  ralink_eth_mii_write(device_t, int, int, uint16_t);
 
 CFATTACH_DECL_NEW(reth, sizeof(struct ralink_eth_softc),
     ralink_eth_match, ralink_eth_attach, ralink_eth_detach,
@@ -311,6 +311,7 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 {
 	ralink_eth_softc_t * const sc = device_private(self);
 	const struct mainbus_attach_args *ma = aux;
+	struct mii_data *mii = &sc->sc_mii;
 	int error;
 	int i;
 
@@ -380,7 +381,7 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	 * map the registers
 	 *
 	 * we map the Sysctl, Frame Engine and Ether Switch registers
-	 * seperately so we can use the defined register offsets sanely
+	 * separately so we can use the defined register offsets sanely
 	 */
 	if ((error = bus_space_map(sc->sc_memt, RA_SYSCTL_BASE,
 	    sc->sc_sy_size, 0, &sc->sc_sy_memh)) != 0) {
@@ -478,30 +479,28 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	 * Initialize our media structures.
 	 * This may probe the PHY, if present.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ralink_eth_mii_read;
-	sc->sc_mii.mii_writereg = ralink_eth_mii_write;
-	sc->sc_mii.mii_statchg = ralink_eth_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, ~0, MII_PHY_ANY, MII_OFFSET_ANY,
-	    MIIF_FORCEANEG|MIIF_DOPAUSE|MIIF_NOISOLATE);
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ralink_eth_mii_read;
+	mii->mii_writereg = ralink_eth_mii_write;
+	mii->mii_statchg = ralink_eth_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(sc->sc_dev, mii, ~0, MII_PHY_ANY, MII_OFFSET_ANY,
+	    MIIF_FORCEANEG | MIIF_DOPAUSE | MIIF_NOISOLATE);
 
-	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
+	if (LIST_EMPTY(&mii->mii_phys)) {
 #if 1
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|
-		    IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|
-		    IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_T |
+		    IFM_FDX | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_1000_T |
+		    IFM_FDX | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE);
 #else
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 #endif
 	} else {
 		/* Ensure we mask ok for the switch multiple phy's */
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	ifp->if_softc = sc;
@@ -862,7 +861,7 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
 	    (int)&sc->sc_txdesc - (int)sc->sc_descs, sizeof(sc->sc_txdesc),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Initialize the RX descriptor ring */
 	memset(sc->sc_rxdesc, 0, sizeof(sc->sc_rxdesc));
@@ -879,7 +878,7 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
 	    (int)&sc->sc_rxdesc - (int)sc->sc_descs, sizeof(sc->sc_rxdesc),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Clear the PDMA state */
 	r = fe_read(sc, RA_FE_PDMA_GLOBAL_CFG);
@@ -1130,7 +1129,7 @@ ralink_eth_add_rxbuf(ralink_eth_softc_t *sc, int idx)
 	rxs->rxs_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap, m->m_ext.ext_buf,
-	    m->m_ext.ext_size, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    m->m_ext.ext_size, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't load rx DMA map %d, "
 		    "error=%d\n", idx, error);
@@ -1163,7 +1162,7 @@ ralink_eth_start(struct ifnet *ifp)
 	int error;
 	int s;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	s = splnet();
@@ -1195,7 +1194,7 @@ ralink_eth_start(struct ifnet *ifp)
 		 * or does the DMA map load fail?
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 
 			/* Allocate a new mbuf for re-alignment */
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1217,7 +1216,7 @@ ralink_eth_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m,
-			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to load Tx buffer error=%d\n",
@@ -1267,7 +1266,7 @@ ralink_eth_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
 		    (int)&sc->sc_txdesc[tx_cpu_idx] - (int)sc->sc_descs,
 		    sizeof(struct ralink_tx_desc),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Store a pointer to the packet so we can free it later,
@@ -1425,7 +1424,7 @@ ralink_eth_intr(void *arg)
 			return (n != 0);
 		}
 
-		if (status & (RA_FE_INT_RX_DONE_INT1|RA_FE_INT_RX_DONE_INT0))
+		if (status & (RA_FE_INT_RX_DONE_INT1 | RA_FE_INT_RX_DONE_INT0))
 			ralink_eth_rxintr(sc);
 
 		if (status & (RA_FE_INT_TX_DONE_INT3 | RA_FE_INT_TX_DONE_INT2 |
@@ -1469,7 +1468,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 	sc->sc_evcnt_rxintr.ev_count++;
 	rx_cpu_idx = fe_read(sc, RA_FE_PDMA_RX0_CPU_IDX);
 
-	for (;;)  {
+	for (;;) {
 		rx_cpu_idx = (rx_cpu_idx + 1) % RALINK_ETH_NUM_RX_DESC;
 
 		rxs = &sc->sc_rxstate[rx_cpu_idx];
@@ -1477,7 +1476,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
 		    (int)&sc->sc_rxdesc[rx_cpu_idx] - (int)sc->sc_descs,
 		    sizeof(struct ralink_rx_desc),
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n",
 		    rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].data_ptr,
@@ -1593,7 +1592,7 @@ ralink_eth_txintr(ralink_eth_softc_t *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
 		    (int)&sc->sc_txdesc[txs->txs_idx] - (int)sc->sc_descs,
 		    sizeof(struct ralink_tx_desc),
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n",
 		    txs->txs_idx, (int)&sc->sc_txdesc[txs->txs_idx].data_ptr0,
@@ -1688,7 +1687,7 @@ ralink_eth_mii_tick(void *arg)
  * ralink_eth_mii_read
  */
 static int
-ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
+ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg, uint16_t *val)
 {
 	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
@@ -1697,7 +1696,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 #endif
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	if (phy_addr > 5)
-		return 0;
+		return -1;
 #endif
 
 	/* We enable mdio gpio purpose register, and disable it when exit. */
@@ -1736,17 +1735,17 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 	for (;;) {
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_RD_DONE) != 0) {
-			int data = PCTL1_RD_VAL(
+			*val = PCTL1_RD_VAL(
 			    sw_read(sc, RA_ETH_SW_PCTL1));
 			ralink_eth_mdio_enable(sc, false);
-			return data;
+			return 0;
 		}
 #else
 		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0) {
-			int data = MDIO_ACCESS_DATA(
+			*val = MDIO_ACCESS_DATA(
 			    fe_read(sc, RA_FE_MDIO_ACCESS));
 			ralink_eth_mdio_enable(sc, false);
-			return data;
+			return 0;
 		}
 #endif
 	}
@@ -1755,8 +1754,8 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 /*
  * ralink_eth_mii_write
  */
-static void
-ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
+static int
+ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, uint16_t val)
 {
 	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
@@ -1800,12 +1799,12 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_WR_DONE) != 0) {
 			ralink_eth_mdio_enable(sc, false);
-			return;
+			return 0;
 		}
 #else
-		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0){
+		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0) {
 			ralink_eth_mdio_enable(sc, false);
-			return;
+			return 0;
 		}
 #endif
 	}

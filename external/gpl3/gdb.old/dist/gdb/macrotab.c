@@ -1,5 +1,5 @@
 /* C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -965,8 +965,7 @@ macro_definition_location (struct macro_source_file *source,
    the FILE and LINE fields.  */
 struct macro_for_each_data
 {
-  macro_callback_fn fn;
-  void *user_data;
+  gdb::function_view<macro_callback_fn> fn;
   struct macro_source_file *file;
   int line;
 };
@@ -985,20 +984,18 @@ foreach_macro (splay_tree_node node, void *arg)
 			  (struct macro_definition *) node->value);
   xfree (key_fullname);
 
-  (*datum->fn) (key->name, def, key->start_file, key->start_line,
-		datum->user_data);
+  datum->fn (key->name, def, key->start_file, key->start_line);
   return 0;
 }
 
 /* Call FN for every macro in TABLE.  */
 void
-macro_for_each (struct macro_table *table, macro_callback_fn fn,
-		void *user_data)
+macro_for_each (struct macro_table *table,
+		gdb::function_view<macro_callback_fn> fn)
 {
   struct macro_for_each_data datum;
 
   datum.fn = fn;
-  datum.user_data = user_data;
   datum.file = NULL;
   datum.line = 0;
   splay_tree_foreach (table->definitions, foreach_macro, &datum);
@@ -1024,20 +1021,18 @@ foreach_macro_in_scope (splay_tree_node node, void *info)
       && (!key->end_file
 	  || compare_locations (key->end_file, key->end_line,
 				datum->file, datum->line) >= 0))
-    (*datum->fn) (key->name, def, key->start_file, key->start_line,
-		  datum->user_data);
+    datum->fn (key->name, def, key->start_file, key->start_line);
   return 0;
 }
 
 /* Call FN for every macro is visible in SCOPE.  */
 void
 macro_for_each_in_scope (struct macro_source_file *file, int line,
-			 macro_callback_fn fn, void *user_data)
+			 gdb::function_view<macro_callback_fn> fn)
 {
   struct macro_for_each_data datum;
 
   datum.fn = fn;
-  datum.user_data = user_data;
   datum.file = file;
   datum.line = line;
   splay_tree_foreach (file->table->definitions,

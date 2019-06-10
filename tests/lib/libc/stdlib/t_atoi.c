@@ -1,4 +1,4 @@
-/* $NetBSD: t_atoi.c,v 1.2 2012/03/29 05:56:36 jruoho Exp $ */
+/* $NetBSD: t_atoi.c,v 1.2.34.1 2019/06/10 22:10:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_atoi.c,v 1.2 2012/03/29 05:56:36 jruoho Exp $");
+__RCSID("$NetBSD: t_atoi.c,v 1.2.34.1 2019/06/10 22:10:05 christos Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -46,7 +46,7 @@ ATF_TC_HEAD(atof_strtod, tc)
 
 ATF_TC_BODY(atof_strtod, tc)
 {
-	char buf[128];
+	char buf[320];
 
 	(void)snprintf(buf, sizeof(buf), "%f\n", DBL_MAX);
 

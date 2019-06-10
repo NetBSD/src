@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.34 2016/12/22 14:47:55 cherry Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.34.16.1 2019/06/10 22:06:09 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,8 +112,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.34 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.34.16.1 2019/06/10 22:06:09 christos Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -904,7 +906,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 	printf("pmap ");
 	LEDSTEP();
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);

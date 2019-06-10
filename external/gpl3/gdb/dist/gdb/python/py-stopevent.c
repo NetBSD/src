@@ -1,6 +1,6 @@
 /* Python interface to inferior stop events.
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,10 +20,11 @@
 #include "defs.h"
 #include "py-stopevent.h"
 
-PyObject *
+gdbpy_ref<>
 create_stop_event_object (PyTypeObject *py_type)
 {
-  return create_thread_event_object (py_type);
+  gdbpy_ref<> thread = py_get_event_thread (inferior_ptid);
+  return create_thread_event_object (py_type, thread.get ());
 }
 
 /* Callback observers when a stop event occurs.  This function will create a
@@ -70,8 +71,8 @@ emit_stop_event (struct bpstats *bs, enum gdb_signal stop_signal)
 
   if (list != NULL)
     {
-      stop_event_obj.reset (create_breakpoint_event_object (list.get (),
-							    first_bp));
+      stop_event_obj = create_breakpoint_event_object (list.get (),
+						       first_bp);
       if (stop_event_obj == NULL)
 	return -1;
     }
@@ -80,7 +81,7 @@ emit_stop_event (struct bpstats *bs, enum gdb_signal stop_signal)
   if (stop_signal != GDB_SIGNAL_0
       && stop_signal != GDB_SIGNAL_TRAP)
     {
-      stop_event_obj.reset (create_signal_event_object (stop_signal));
+      stop_event_obj = create_signal_event_object (stop_signal);
       if (stop_event_obj == NULL)
 	return -1;
     }
@@ -89,16 +90,10 @@ emit_stop_event (struct bpstats *bs, enum gdb_signal stop_signal)
      be known and this should eventually be unused.  */
   if (stop_event_obj == NULL)
     {
-      stop_event_obj.reset (create_stop_event_object (&stop_event_object_type));
+      stop_event_obj = create_stop_event_object (&stop_event_object_type);
       if (stop_event_obj == NULL)
 	return -1;
     }
 
   return evpy_emit_event (stop_event_obj.get (), gdb_py_events.stop);
 }
-
-GDBPY_NEW_EVENT_TYPE (stop,
-                      "gdb.StopEvent",
-                      "StopEvent",
-                      "GDB stop event object",
-                      thread_event_object_type);

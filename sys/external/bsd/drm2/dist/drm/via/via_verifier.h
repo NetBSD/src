@@ -1,3 +1,5 @@
+/*	$NetBSD: via_verifier.h,v 1.1.1.1.38.1 2019/06/10 22:08:28 christos Exp $	*/
+
 /*
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
  *

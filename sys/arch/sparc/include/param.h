@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.71 2017/02/13 09:46:30 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.71.14.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,11 +84,6 @@ extern int nbpg, pgofset, pgshift;
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
 
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)
-
 #define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
 
@@ -117,8 +112,12 @@ extern int nbpg, pgofset, pgshift;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
+
+#ifndef __HIDE_DELAY
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
+#endif /* __HIDE_DELAY */
+
 #endif /* _LOCORE */
 
 /*

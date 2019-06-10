@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -239,8 +239,8 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
       /* DW_TAG_gnu_call_site will be missing just if GCC could not determine
 	 the call target.  */
       throw_error (NO_ENTRY_VALUE_ERROR,
-		   _("DW_OP_GNU_entry_value resolving cannot find "
-		     "DW_TAG_GNU_call_site %s in %s"),
+		   _("DW_OP_entry_value resolving cannot find "
+		     "DW_TAG_call_site %s in %s"),
 		   paddress (gdbarch, pc),
 		   (msym.minsym == NULL ? "???"
 		    : MSYMBOL_PRINT_NAME (msym.minsym)));

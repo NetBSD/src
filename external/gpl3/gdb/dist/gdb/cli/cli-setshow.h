@@ -1,5 +1,5 @@
 /* Header file for GDB CLI set and show commands implementation.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (CLI_SETSHOW_H)
-#define CLI_SETSHOW_H 1
+#ifndef CLI_CLI_SETSHOW_H
+#define CLI_CLI_SETSHOW_H
 
 struct cmd_list_element;
 
@@ -31,4 +31,4 @@ extern void do_show_command (const char *arg, int from_tty,
 extern void cmd_show_list (struct cmd_list_element *list, int from_tty,
 			   const char *prefix);
 
-#endif /* !defined (CLI_SETSHOW_H) */
+#endif /* CLI_CLI_SETSHOW_H */

@@ -1,5 +1,5 @@
 /* Simulator tracing/debugging support.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -510,6 +510,9 @@ trace_uninstall (SIM_DESC sd)
 	    fclose (cfile);
 	}
     }
+
+  if (STATE_PROG_SYMS (sd))
+    free (STATE_PROG_SYMS (sd));
 }
 
 /* compute the nr of trace data units consumed by data */
@@ -685,6 +688,57 @@ trace_results (SIM_DESC sd,
   trace_printf (sd, cpu, "\n");
 }
 
+int
+trace_load_symbols (SIM_DESC sd)
+{
+  bfd *abfd;
+  asymbol **asymbols;
+  long symsize;
+  long symbol_count;
+
+  /* Already loaded, so nothing to do.  */
+  if (STATE_PROG_SYMS (sd))
+    return 1;
+
+  abfd = STATE_PROG_BFD (sd);
+  if (abfd == NULL)
+    return 0;
+
+  symsize = bfd_get_symtab_upper_bound (abfd);
+  if (symsize < 0)
+    return 0;
+
+  asymbols = xmalloc (symsize);
+  symbol_count = bfd_canonicalize_symtab (abfd, asymbols);
+  if (symbol_count < 0)
+    {
+      free (asymbols);
+      return 0;
+    }
+
+  STATE_PROG_SYMS (sd) = asymbols;
+  STATE_PROG_SYMS_COUNT (sd) = symbol_count;
+  return 1;
+}
+
+bfd_vma
+trace_sym_value (SIM_DESC sd, const char *name)
+{
+  asymbol **asymbols;
+  long i;
+
+  if (!trace_load_symbols (sd))
+    return -1;
+
+  asymbols = STATE_PROG_SYMS (sd);
+
+  for (i = 0; i < STATE_PROG_SYMS_COUNT (sd); ++i)
+    if (strcmp (asymbols[i]->name, name) == 0)
+      return bfd_asymbol_value (asymbols[i]);
+
+  return -1;
+}
+
 void
 trace_prefix (SIM_DESC sd,
 	      sim_cpu *cpu,
@@ -744,9 +798,9 @@ trace_prefix (SIM_DESC sd,
     {
       char buf[256];
       buf[0] = 0;
-      if (STATE_TEXT_SECTION (CPU_STATE (cpu))
-	  && pc >= STATE_TEXT_START (CPU_STATE (cpu))
-	  && pc < STATE_TEXT_END (CPU_STATE (cpu)))
+      if (STATE_TEXT_SECTION (sd)
+	  && pc >= STATE_TEXT_START (sd)
+	  && pc < STATE_TEXT_END (sd))
 	{
 	  const char *pc_filename = (const char *)0;
 	  const char *pc_function = (const char *)0;
@@ -754,31 +808,14 @@ trace_prefix (SIM_DESC sd,
 	  bfd *abfd;
 	  asymbol **asymbols;
 
-	  abfd = STATE_PROG_BFD (CPU_STATE (cpu));
-	  asymbols = STATE_PROG_SYMS (CPU_STATE (cpu));
-	  if (asymbols == NULL)
-	    {
-	      long symsize;
-	      long symbol_count;
+	  if (!trace_load_symbols (sd))
+	    sim_engine_abort (sd, cpu, cia, "could not load symbols");
 
-	      symsize = bfd_get_symtab_upper_bound (abfd);
-	      if (symsize < 0)
-		{
-		  sim_engine_abort (sd, cpu, cia, "could not read symbols");
-		}
-	      asymbols = (asymbol **) xmalloc (symsize);
-	      symbol_count = bfd_canonicalize_symtab (abfd, asymbols);
-	      if (symbol_count < 0)
-		{
-		  sim_engine_abort (sd, cpu, cia, "could not canonicalize symbols");
-		}
-	      STATE_PROG_SYMS (CPU_STATE (cpu)) = asymbols;
-	    }
+	  abfd = STATE_PROG_BFD (sd);
+	  asymbols = STATE_PROG_SYMS (sd);
 
-	  if (bfd_find_nearest_line (abfd,
-				     STATE_TEXT_SECTION (CPU_STATE (cpu)),
-				     asymbols,
-				     pc - STATE_TEXT_START (CPU_STATE (cpu)),
+	  if (bfd_find_nearest_line (abfd, STATE_TEXT_SECTION (sd), asymbols,
+				     pc - STATE_TEXT_START (sd),
 				     &pc_filename, &pc_function, &pc_linenum))
 	    {
 	      char *p = buf;

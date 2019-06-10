@@ -1,4 +1,4 @@
-/*	$NetBSD: atoi.c,v 1.1 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: atoi.c,v 1.1.30.1 2019/06/10 22:09:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ atoi(const char *in)
 	int ret;
 
 	ret = 0;
-	c = (char *)in;
+	c = __UNCONST(in);
 	if (*c == '-')
 		c++;
 	for (; isdigit(*c); c++)

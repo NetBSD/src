@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  MIPS version.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
    Contributed by A. Lichnewsky (lich@inria.inria.fr).
    Changed by Michael Meissner	(meissner@osf.org).
    64-bit r4000 support by Ian Lance Taylor (ian@cygnus.com) and
@@ -44,18 +44,28 @@ extern int target_flags_explicit;
 
 /* Masks that affect tuning.
 
-   PTF_AVOID_BRANCHLIKELY
+   PTF_AVOID_BRANCHLIKELY_SPEED
 	Set if it is usually not profitable to use branch-likely instructions
-	for this target, typically because the branches are always predicted
-	taken and so incur a large overhead when not taken.
+	for this target when optimizing code for speed, typically because
+	the branches are always predicted taken and so incur a large overhead
+	when not taken.
+
+   PTF_AVOID_BRANCHLIKELY_SIZE
+	As above but when optimizing for size.
+
+   PTF_AVOID_BRANCHLIKELY_ALWAYS
+	As above but regardless of whether we optimize for speed or size.
 
    PTF_AVOID_IMADD
 	Set if it is usually not profitable to use the integer MADD or MSUB
 	instructions because of the overhead of getting the result out of
 	the HI/LO registers.  */
 
-#define PTF_AVOID_BRANCHLIKELY	0x1
-#define PTF_AVOID_IMADD		0x2
+#define PTF_AVOID_BRANCHLIKELY_SPEED	0x1
+#define PTF_AVOID_BRANCHLIKELY_SIZE	0x2
+#define PTF_AVOID_BRANCHLIKELY_ALWAYS	(PTF_AVOID_BRANCHLIKELY_SPEED | \
+					 PTF_AVOID_BRANCHLIKELY_SIZE)
+#define PTF_AVOID_IMADD			0x4
 
 /* Information about one recognized processor.  Defined here for the
    benefit of TARGET_CPU_CPP_BUILTINS.  */
@@ -209,10 +219,12 @@ struct mips_cpu_info {
 #endif
 
 /* ISA has LSA available.  */
-#define ISA_HAS_LSA		(mips_isa_rev >= 6)
+#define ISA_HAS_LSA		(mips_isa_rev >= 6 || ISA_HAS_MSA)
 
 /* ISA has DLSA available.  */
-#define ISA_HAS_DLSA		(TARGET_64BIT && mips_isa_rev >= 6)
+#define ISA_HAS_DLSA		(TARGET_64BIT \
+				 && (mips_isa_rev >= 6 \
+				     || ISA_HAS_MSA))
 
 /* The ISA compression flags that are currently in effect.  */
 #define TARGET_COMPRESSION (target_flags & (MASK_MIPS16 | MASK_MICROMIPS))
@@ -472,6 +484,12 @@ struct mips_cpu_info {
 	    builtin_define ("__mips_dsp_rev=1");			\
 	}								\
 									\
+      if (ISA_HAS_MSA)							\
+	{								\
+	  builtin_define ("__mips_msa");				\
+	  builtin_define ("__mips_msa_width=128");			\
+	}								\
+									\
       MIPS_CPP_SET_PROCESSOR ("_MIPS_ARCH", mips_arch_info);		\
       MIPS_CPP_SET_PROCESSOR ("_MIPS_TUNE", mips_tune_info);		\
 									\
@@ -619,6 +637,10 @@ struct mips_cpu_info {
 									\
       if (TARGET_CACHE_BUILTIN)						\
 	builtin_define ("__GCC_HAVE_BUILTIN_MIPS_CACHE");		\
+      if (!ISA_HAS_LXC1_SXC1)						\
+	builtin_define ("__mips_no_lxc1_sxc1");				\
+      if (!ISA_HAS_UNFUSED_MADD4 && !ISA_HAS_FUSED_MADD4)		\
+	builtin_define ("__mips_no_madd4");				\
     }									\
   while (0)
 
@@ -824,7 +846,8 @@ struct mips_cpu_info {
    --with-fpu is ignored if -msoft-float, -msingle-float or -mdouble-float are
      specified.
    --with-nan is ignored if -mnan is specified.
-   --with-fp-32 is ignored if -msoft-float, -msingle-float or -mfp are specified.
+   --with-fp-32 is ignored if -msoft-float, -msingle-float, -mmsa or -mfp are
+     specified.
    --with-odd-spreg-32 is ignored if -msoft-float, -msingle-float, -modd-spreg
      or -mno-odd-spreg are specified.
    --with-divide is ignored if -mdivide-traps or -mdivide-breaks are
@@ -841,13 +864,15 @@ struct mips_cpu_info {
   {"fpu", "%{!msoft-float:%{!msingle-float:%{!mdouble-float:-m%(VALUE)-float}}}" }, \
   {"nan", "%{!mnan=*:-mnan=%(VALUE)}" }, \
   {"fp_32", "%{" OPT_ARCH32 \
-	    ":%{!msoft-float:%{!msingle-float:%{!mfp*:-mfp%(VALUE)}}}}" }, \
+	    ":%{!msoft-float:%{!msingle-float:%{!mfp*:%{!mmsa:-mfp%(VALUE)}}}}}" }, \
   {"odd_spreg_32", "%{" OPT_ARCH32 ":%{!msoft-float:%{!msingle-float:" \
 		   "%{!modd-spreg:%{!mno-odd-spreg:-m%(VALUE)}}}}}" }, \
   {"divide", "%{!mdivide-traps:%{!mdivide-breaks:-mdivide-%(VALUE)}}" }, \
   {"llsc", "%{!mllsc:%{!mno-llsc:-m%(VALUE)}}" }, \
   {"mips-plt", "%{!mplt:%{!mno-plt:-m%(VALUE)}}" }, \
-  {"synci", "%{!msynci:%{!mno-synci:-m%(VALUE)}}" }
+  {"synci", "%{!msynci:%{!mno-synci:-m%(VALUE)}}" },			\
+  {"lxc1-sxc1", "%{!mlxc1-sxc1:%{!mno-lxc1-sxc1:-m%(VALUE)}}" }, \
+  {"madd4", "%{!mmadd4:%{!mno-madd4:-m%(VALUE)}}" } \
 
 /* A spec that infers the:
    -mnan=2008 setting from a -mips argument,
@@ -948,19 +973,25 @@ struct mips_cpu_info {
 /* ISA supports instructions DMUL, DMULU, DMUH, DMUHU.  */
 #define ISA_HAS_R6DMUL		(TARGET_64BIT && mips_isa_rev >= 6)
 
+/* For Loongson, it is preferable to use the Loongson-specific division and
+   modulo instructions instead of the regular (D)DIV(U) instruction,
+   because the former are faster and can also have the effect of reducing
+   code size.  */
+#define ISA_AVOID_DIV_HILO	((TARGET_LOONGSON_2EF			\
+				  || TARGET_LOONGSON_3A)		\
+				 && !TARGET_MIPS16)
+
 /* ISA supports instructions DDIV and DDIVU. */
 #define ISA_HAS_DDIV		(TARGET_64BIT				\
 				 && !TARGET_MIPS5900			\
+				 && !ISA_AVOID_DIV_HILO			\
 				 && mips_isa_rev <= 5)
 
 /* ISA supports instructions DIV and DIVU.
    This is always true, but the macro is needed for ISA_HAS_<D>DIV
    in mips.md.  */
-#define ISA_HAS_DIV		(mips_isa_rev <= 5)
-
-#define ISA_HAS_DIV3		((TARGET_LOONGSON_2EF			\
-				  || TARGET_LOONGSON_3A)		\
-				 && !TARGET_MIPS16)
+#define ISA_HAS_DIV		(!ISA_AVOID_DIV_HILO			\
+				 && mips_isa_rev <= 5)
 
 /* ISA supports instructions DIV, DIVU, MOD and MODU.  */
 #define ISA_HAS_R6DIV		(mips_isa_rev >= 6)
@@ -1011,7 +1042,8 @@ struct mips_cpu_info {
 
 /* ISA has floating-point indexed load and store instructions
    (LWXC1, LDXC1, SWXC1 and SDXC1).  */
-#define ISA_HAS_LXC1_SXC1	ISA_HAS_FP4
+#define ISA_HAS_LXC1_SXC1	(ISA_HAS_FP4				\
+				 && mips_lxc1_sxc1)
 
 /* ISA has paired-single instructions.  */
 #define ISA_HAS_PAIRED_SINGLE	((ISA_MIPS64				\
@@ -1037,11 +1069,16 @@ struct mips_cpu_info {
 
 /* ISA has 4 operand fused madd instructions of the form
    'd = [+-] (a * b [+-] c)'.  */
-#define ISA_HAS_FUSED_MADD4	TARGET_MIPS8000
+#define ISA_HAS_FUSED_MADD4	(mips_madd4				\
+				 && (TARGET_MIPS8000			\
+				     || TARGET_LOONGSON_3A))
 
 /* ISA has 4 operand unfused madd instructions of the form
    'd = [+-] (a * b [+-] c)'.  */
-#define ISA_HAS_UNFUSED_MADD4	(ISA_HAS_FP4 && !TARGET_MIPS8000)
+#define ISA_HAS_UNFUSED_MADD4	(mips_madd4				\
+				 && ISA_HAS_FP4				\
+				 && !TARGET_MIPS8000			\
+				 && !TARGET_LOONGSON_3A)
 
 /* ISA has 3 operand r6 fused madd instructions of the form
    'c = c [+-] (a * b)'.  */
@@ -1174,6 +1211,9 @@ struct mips_cpu_info {
 
 /* Revision 2 of the DSP ASE is available.  */
 #define ISA_HAS_DSPR2		(TARGET_DSPR2 && !TARGET_MIPS16)
+
+/* The MSA ASE is available.  */
+#define ISA_HAS_MSA		(TARGET_MSA && !TARGET_MIPS16)
 
 /* True if the result of a load is not available to the next instruction.
    A nop will then be needed between instructions like "lw $4,..."
@@ -1316,6 +1356,7 @@ struct mips_cpu_info {
 %{meva} %{mno-eva} \
 %{mvirt} %{mno-virt} \
 %{mxpa} %{mno-xpa} \
+%{mmsa} %{mno-msa} \
 %{msmartmips} %{mno-smartmips} \
 %{mmt} %{mno-mt} \
 %{mfix-rm7000} %{mno-fix-rm7000} \
@@ -1446,7 +1487,7 @@ FP_ASM_SPEC "\
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
 
 /* Before the prologue, RA lives in r31.  */
-#define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (VOIDmode, RETURN_ADDR_REGNUM)
+#define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, RETURN_ADDR_REGNUM)
 
 /* Describe how we implement __builtin_eh_return.  */
 #define EH_RETURN_DATA_REGNO(N) \
@@ -1486,6 +1527,11 @@ FP_ASM_SPEC "\
 #ifndef IN_LIBGCC2
 #define MIN_UNITS_PER_WORD 4
 #endif
+
+/* Width of a MSA vector register in bytes.  */
+#define UNITS_PER_MSA_REG 16
+/* Width of a MSA vector register in bits.  */
+#define BITS_PER_MSA_REG (UNITS_PER_MSA_REG * BITS_PER_UNIT)
 
 /* For MIPS, width of a floating point register.  */
 #define UNITS_PER_FPREG (TARGET_FLOAT64 ? 8 : 4)
@@ -1559,8 +1605,11 @@ FP_ASM_SPEC "\
 /* 8 is observed right on a DECstation and on riscos 4.02.  */
 #define STRUCTURE_SIZE_BOUNDARY 8
 
-/* There is no point aligning anything to a rounder boundary than this.  */
-#define BIGGEST_ALIGNMENT LONG_DOUBLE_TYPE_SIZE
+/* There is no point aligning anything to a rounder boundary than
+   LONG_DOUBLE_TYPE_SIZE, unless under MSA the bigggest alignment is
+   BITS_PER_MSA_REG.  */
+#define BIGGEST_ALIGNMENT \
+  (ISA_HAS_MSA ? BITS_PER_MSA_REG : LONG_DOUBLE_TYPE_SIZE)
 
 /* All accesses must be aligned.  */
 #define STRICT_ALIGNMENT 1
@@ -1667,7 +1716,7 @@ FP_ASM_SPEC "\
 /* The [d]clz instructions have the natural values at 0.  */
 
 #define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
-  ((VALUE) = GET_MODE_BITSIZE (MODE), 2)
+  ((VALUE) = GET_MODE_UNIT_BITSIZE (MODE), 2)
 
 /* Standard register usage.  */
 
@@ -1798,6 +1847,10 @@ FP_ASM_SPEC "\
 #define MD_REG_NUM   (MD_REG_LAST - MD_REG_FIRST + 1)
 #define MD_DBX_FIRST (FP_DBX_FIRST + FP_REG_NUM)
 
+#define MSA_REG_FIRST FP_REG_FIRST
+#define MSA_REG_LAST  FP_REG_LAST
+#define MSA_REG_NUM   FP_REG_NUM
+
 /* The DWARF 2 CFA column which tracks the return address from a
    signal handler context.  This means that to maintain backwards
    compatibility, no hard register can be assigned this column if it
@@ -1886,8 +1939,11 @@ FP_ASM_SPEC "\
 /* Test if REGNO is hi, lo, or one of the 6 new DSP accumulators.  */
 #define ACC_REG_P(REGNO) \
   (MD_REG_P (REGNO) || DSP_ACC_REG_P (REGNO))
+#define MSA_REG_P(REGNO) \
+  ((unsigned int) ((int) (REGNO) - MSA_REG_FIRST) < MSA_REG_NUM)
 
 #define FP_REG_RTX_P(X) (REG_P (X) && FP_REG_P (REGNO (X)))
+#define MSA_REG_RTX_P(X) (REG_P (X) && MSA_REG_P (REGNO (X)))
 
 /* True if X is (const (unspec [(const_int 0)] UNSPEC_GP)).  This is used
    to initialize the mips16 gp pseudo register.  */
@@ -1916,10 +1972,12 @@ FP_ASM_SPEC "\
   mips_hard_regno_caller_save_mode (REGNO, NREGS, MODE)
 
 /* Odd-numbered single-precision registers are not considered callee-saved
-   for o32 FPXX as they will be clobbered when run on an FR=1 FPU.  */
+   for o32 FPXX as they will be clobbered when run on an FR=1 FPU.
+   MSA vector registers with MODE > 64 bits are part clobbered too.  */
 #define HARD_REGNO_CALL_PART_CLOBBERED(REGNO, MODE)			\
-  (TARGET_FLOATXX && hard_regno_nregs[REGNO][MODE] == 1			\
-   && FP_REG_P (REGNO) && ((REGNO) & 1))
+  ((TARGET_FLOATXX && hard_regno_nregs[REGNO][MODE] == 1		\
+   && FP_REG_P (REGNO) && ((REGNO) & 1))				\
+   || (ISA_HAS_MSA && FP_REG_P (REGNO) && GET_MODE_SIZE (MODE) > 8))
 
 #define MODES_TIEABLE_P mips_modes_tieable_p
 
@@ -2381,6 +2439,13 @@ enum reg_class
 #define FP_ARG_FIRST (FP_REG_FIRST + 12)
 #define FP_ARG_LAST  (FP_ARG_FIRST + MAX_ARGS_IN_REGISTERS - 1)
 
+/* True if MODE is vector and supported in a MSA vector register.  */
+#define MSA_SUPPORTED_MODE_P(MODE)			\
+  (ISA_HAS_MSA						\
+   && GET_MODE_SIZE (MODE) == UNITS_PER_MSA_REG		\
+   && (GET_MODE_CLASS (MODE) == MODE_VECTOR_INT		\
+       || GET_MODE_CLASS (MODE) == MODE_VECTOR_FLOAT))
+
 /* Temporary register that is used when restoring $gp after a call.  $4 and $5
    are used for returning complex double values in soft-float code, so $6 is the
    first suitable candidate for TARGET_MIPS16.  For !TARGET_MIPS16 we can use
@@ -2606,6 +2671,7 @@ typedef struct mips_args {
    we generally don't want to use them for copying arbitrary data.
    A single N-word move is usually the same cost as N single-word moves.  */
 #define MOVE_MAX UNITS_PER_WORD
+/* We don't modify it for MSA as it is only used by the classic reload.  */
 #define MAX_MOVE_MAX 8
 
 /* Define this macro as a C expression which is nonzero if
@@ -2767,7 +2833,39 @@ typedef struct mips_args {
   { "gp",	28 + GP_REG_FIRST },					\
   { "sp",	29 + GP_REG_FIRST },					\
   { "fp",	30 + GP_REG_FIRST },					\
-  { "ra",	31 + GP_REG_FIRST }					\
+  { "ra",	31 + GP_REG_FIRST },					\
+  { "$w0",	 0 + FP_REG_FIRST },					\
+  { "$w1",	 1 + FP_REG_FIRST },					\
+  { "$w2",	 2 + FP_REG_FIRST },					\
+  { "$w3",	 3 + FP_REG_FIRST },					\
+  { "$w4",	 4 + FP_REG_FIRST },					\
+  { "$w5",	 5 + FP_REG_FIRST },					\
+  { "$w6",	 6 + FP_REG_FIRST },					\
+  { "$w7",	 7 + FP_REG_FIRST },					\
+  { "$w8",	 8 + FP_REG_FIRST },					\
+  { "$w9",	 9 + FP_REG_FIRST },					\
+  { "$w10",	10 + FP_REG_FIRST },					\
+  { "$w11",	11 + FP_REG_FIRST },					\
+  { "$w12",	12 + FP_REG_FIRST },					\
+  { "$w13",	13 + FP_REG_FIRST },					\
+  { "$w14",	14 + FP_REG_FIRST },					\
+  { "$w15",	15 + FP_REG_FIRST },					\
+  { "$w16",	16 + FP_REG_FIRST },					\
+  { "$w17",	17 + FP_REG_FIRST },					\
+  { "$w18",	18 + FP_REG_FIRST },					\
+  { "$w19",	19 + FP_REG_FIRST },					\
+  { "$w20",	20 + FP_REG_FIRST },					\
+  { "$w21",	21 + FP_REG_FIRST },					\
+  { "$w22",	22 + FP_REG_FIRST },					\
+  { "$w23",	23 + FP_REG_FIRST },					\
+  { "$w24",	24 + FP_REG_FIRST },					\
+  { "$w25",	25 + FP_REG_FIRST },					\
+  { "$w26",	26 + FP_REG_FIRST },					\
+  { "$w27",	27 + FP_REG_FIRST },					\
+  { "$w28",	28 + FP_REG_FIRST },					\
+  { "$w29",	29 + FP_REG_FIRST },					\
+  { "$w30",	30 + FP_REG_FIRST },					\
+  { "$w31",	31 + FP_REG_FIRST }					\
 }
 
 #define DBR_OUTPUT_SEQEND(STREAM)					\
@@ -2905,6 +3003,32 @@ do {									\
 	     ptr_mode == DImode ? ".dword" : ".word",			\
 	     LOCAL_LABEL_PREFIX, VALUE);				\
 } while (0)
+
+/* Mark inline jump tables as data for the purpose of disassembly.  For
+   simplicity embed the jump table's label number in the local symbol
+   produced so that multiple jump tables within a single function end
+   up marked with unique symbols.  Retain the alignment setting from
+   `elfos.h' as we are replacing the definition from there.  */
+
+#undef ASM_OUTPUT_BEFORE_CASE_LABEL
+#define ASM_OUTPUT_BEFORE_CASE_LABEL(STREAM, PREFIX, NUM, TABLE)	\
+  do									\
+    {									\
+      ASM_OUTPUT_ALIGN ((STREAM), 2);					\
+      if (JUMP_TABLES_IN_TEXT_SECTION)					\
+	mips_set_text_contents_type (STREAM, "__jump_", NUM, FALSE);	\
+    }									\
+  while (0);
+
+/* Reset text marking to code after an inline jump table.  Like with
+   the beginning of a jump table use the label number to keep symbols
+   unique.  */
+
+#define ASM_OUTPUT_CASE_END(STREAM, NUM, TABLE)				\
+  do									\
+    if (JUMP_TABLES_IN_TEXT_SECTION)					\
+      mips_set_text_contents_type (STREAM, "__jend_", NUM, TRUE);	\
+  while (0);
 
 /* This is how to output an assembler line
    that says to advance the location counter

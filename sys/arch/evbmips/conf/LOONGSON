@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.38 2018/06/07 13:36:29 thorpej Exp $
+# $NetBSD: LOONGSON,v 1.38.2.1 2019/06/10 22:06:12 christos Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.38 $"
+#ident 		"LOONGSON-$Revision: 1.38.2.1 $"
 
 maxusers	16
 
@@ -100,6 +100,11 @@ options 	WAPBL		# File system journaling support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -108,10 +113,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -154,11 +155,6 @@ options 	FONT_GALLANT12x22
 options 	FONT_BOLD8x16
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-#
-# Hpckbd will set key board layout appropriately. You can use option
-# 'PCKBD_LAYOUT' to overrite the default layout.
-#
-#options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 mainbus0	at root
 cpu0		at mainbus0
@@ -266,8 +262,8 @@ pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
-#pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter, NAT
+pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
@@ -305,18 +301,5 @@ pseudo-device	bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl			# driver control
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

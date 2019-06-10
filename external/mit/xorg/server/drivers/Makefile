@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2017/12/23 10:15:52 nakayama Exp $
+#	$NetBSD: Makefile,v 1.95.4.1 2019/06/10 22:02:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -61,6 +61,7 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
+	xf86-video-vboxvideo \
 	xf86-video-vmware \
 	xf86-video-vesa \
 	xf86-video-wsfb
@@ -211,6 +212,12 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-s3
 .endif	# ${MACHINE} == "ibmnws"
+
+.if ${MACHINE} == "iyonix"
+SUBDIR+= \
+	xf86-video-nv \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "iyonix"
 
 .if ${MACHINE} == "luna68k"
 SUBDIR+= \

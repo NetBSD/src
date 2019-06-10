@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.328 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.328.16.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2016/12/10 10:41:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328.16.1 2019/06/10 22:06:46 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -542,7 +542,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	ucsz = (int)&uc.__uc_pad - (int)&uc;
 	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	    ustore_int((u_int *)&((struct rwindow *)newsp)->rw_in[6], oldsp));
 	mutex_enter(p->p_lock);
 
 	if (error) {
@@ -3143,10 +3143,7 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 	case DEV_EEPROM:
 		if (cputyp == CPU_SUN4)
 			return eeprom_uio(uio);
-		else
 #endif
-		return ENXIO;
-	default:
-		return ENXIO;
 	}
+	return ENXIO;
 }

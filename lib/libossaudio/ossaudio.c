@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.12.1 2019/06/10 22:05:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.33.12.1 2019/06/10 22:05:25 christos Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -411,11 +411,11 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
-		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
-		    tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.play.seek
+		    + tmpinfo.blocksize - 1) / tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
+		    - tmpinfo.play.seek;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
@@ -425,8 +425,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
-		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.fragstotal =
+		    tmpinfo.record.buffer_size / tmpinfo.blocksize;
+		bufinfo.bytes = tmpinfo.record.seek;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
@@ -503,13 +504,13 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		memset(tmpsysinfo.options, 0, 8);
 		tmpsysinfo.numaudios = OSS_MAX_AUDIO_DEVS;
 		tmpsysinfo.numaudioengines = 1;
-		memset(tmpsysinfo.openedaudio, 0, 8);
+		memset(tmpsysinfo.openedaudio, 0, sizeof(tmpsysinfo.openedaudio));
 		tmpsysinfo.numsynths = 1;
 		tmpsysinfo.nummidis = -1;
 		tmpsysinfo.numtimers = -1;
 		tmpsysinfo.nummixers = 1;
 		tmpsysinfo.numcards = 1;
-		memset(tmpsysinfo.openedmidi, 0, 8);
+		memset(tmpsysinfo.openedmidi, 0, sizeof(tmpsysinfo.openedmidi));
 		*(struct oss_sysinfo *)argp = tmpsysinfo;
 		break;
 	case SNDCTL_ENGINEINFO:

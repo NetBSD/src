@@ -1,6 +1,6 @@
 /* Modula 2 language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -413,7 +413,8 @@ build_m2_types (struct gdbarch *gdbarch)
   builtin_m2_type->builtin_card
     = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "CARDINAL");
   builtin_m2_type->builtin_real
-    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch), "REAL", NULL);
+    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch), "REAL",
+		       gdbarch_float_format (gdbarch));
   builtin_m2_type->builtin_char
     = arch_character_type (gdbarch, TARGET_CHAR_BIT, 1, "CHAR");
   builtin_m2_type->builtin_bool

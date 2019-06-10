@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.88 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: midi.c,v 1.88.4.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.88 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.88.4.1 2019/06/10 22:07:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.88 2017/10/28 03:47:24 riastradh Exp $");
 #include <sys/intr.h>
 #include <sys/module.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
 

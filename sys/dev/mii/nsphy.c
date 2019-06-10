@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.61 2017/08/12 11:21:15 martin Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.61.4.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.61 2017/08/12 11:21:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.61.4.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,8 @@ static const struct mii_phy_funcs nsphy_funcs = {
 };
 
 static const struct mii_phydesc nsphys[] = {
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83840,
-	  MII_STR_xxNATSEMI_DP83840 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxNATSEMI, DP83840),
+	MII_PHY_END,
 };
 
 static int
@@ -106,9 +103,9 @@ nsphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, nsphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -133,7 +130,8 @@ nsphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -146,15 +144,13 @@ static int
 nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -163,18 +159,16 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		reg = PHY_READ(sc, MII_NSPHY_PCR);
+		PHY_READ(sc, MII_NSPHY_PCR, &reg);
 
 		/*
 		 * Set up the PCR to use LED4 to indicate full-duplex
@@ -213,19 +207,17 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -233,7 +225,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -241,17 +233,17 @@ nsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, par, anlpar;
+	uint16_t bmsr, bmcr, aner, anar, par, anlpar, result;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) |
-	    PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -277,19 +269,21 @@ nsphy_status(struct mii_softc *sc)
 		 * properly!  Determine media based on link partner's
 		 * advertised capabilities.
 		 */
-		if (PHY_READ(sc, MII_ANER) & ANER_LPAN) {
-			anlpar = PHY_READ(sc, MII_ANAR) &
-			    PHY_READ(sc, MII_ANLPAR);
-			if (anlpar & ANLPAR_TX_FD)
-				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-			else if (anlpar & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
-			else if (anlpar & ANLPAR_TX)
-				mii->mii_media_active |= IFM_100_TX|IFM_HDX;
-			else if (anlpar & ANLPAR_10_FD)
-				mii->mii_media_active |= IFM_10_T|IFM_FDX;
-			else if (anlpar & ANLPAR_10)
-				mii->mii_media_active |= IFM_10_T|IFM_HDX;
+		PHY_READ(sc, MII_ANER, &aner);
+		if (aner & ANER_LPAN) {
+			PHY_READ(sc, MII_ANAR, &anar);
+			PHY_READ(sc, MII_ANLPAR, &anlpar);
+			result = anar & anlpar;
+			if (result & ANLPAR_TX_FD)
+				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
+			else if (result & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
+			else if (result & ANLPAR_TX)
+				mii->mii_media_active |= IFM_100_TX | IFM_HDX;
+			else if (result & ANLPAR_10_FD)
+				mii->mii_media_active |= IFM_10_T | IFM_FDX;
+			else if (result & ANLPAR_10)
+				mii->mii_media_active |= IFM_10_T | IFM_HDX;
 			else
 				mii->mii_media_active |= IFM_NONE;
 			return;
@@ -300,7 +294,7 @@ nsphy_status(struct mii_softc *sc)
 		 * We will never be in full-duplex mode if this is
 		 * the case, so reading the PAR is OK.
 		 */
-		par = PHY_READ(sc, MII_NSPHY_PAR);
+		PHY_READ(sc, MII_NSPHY_PAR, &par);
 		if (par & PAR_10)
 			mii->mii_media_active |= IFM_10_T;
 		else
@@ -313,7 +307,8 @@ nsphy_status(struct mii_softc *sc)
 static void
 nsphy_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	int i;
+	uint16_t reg;
 
 	if (sc->mii_flags & MIIF_NOISOLATE)
 		reg = BMCR_RESET;
@@ -337,13 +332,12 @@ nsphy_reset(struct mii_softc *sc)
 	 * is not yet complete.
 	 */
 	for (i = 0; i < 1000; i++) {
-		reg = PHY_READ(sc, MII_BMCR);
+		PHY_READ(sc, MII_BMCR, &reg);
 		if (reg && ((reg & BMCR_RESET) == 0))
 			break;
 		delay(2000);
 	}
 
-	if (sc->mii_inst != 0 && ((sc->mii_flags & MIIF_NOISOLATE) == 0)) {
+	if (sc->mii_inst != 0 && ((sc->mii_flags & MIIF_NOISOLATE) == 0))
 		PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-	}
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_cache.h,v 1.1.1.1.38.1 2019/06/10 22:08:29 christos Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2009 Red Hat Inc.
@@ -34,5 +36,16 @@
 #define _DRM_CACHE_H_
 
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
+
+static inline bool drm_arch_can_wc_memory(void)
+{
+#if defined(CONFIG_PPC) && !defined(CONFIG_NOT_COHERENT_CACHE)
+	return false;
+#elif defined(CONFIG_MIPS) && defined(CONFIG_CPU_LOONGSON3)
+	return false;
+#else
+	return true;
+#endif
+}
 
 #endif

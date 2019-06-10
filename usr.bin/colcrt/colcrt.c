@@ -1,4 +1,4 @@
-/*	$NetBSD: colcrt.c,v 1.8 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: colcrt.c,v 1.8.60.1 2019/06/10 22:10:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: colcrt.c,v 1.8 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: colcrt.c,v 1.8.60.1 2019/06/10 22:10:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ main(int argc, char *argv[])
 					outcol &= ~7;
 					outcol--;
 					c = ' ';
+					/* FALLTHROUGH */
 				default:
 					if (outcol >= 132) {
 						outcol++;

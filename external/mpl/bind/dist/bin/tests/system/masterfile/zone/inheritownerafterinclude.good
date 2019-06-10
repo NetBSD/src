@@ -1,0 +1,3 @@
+example.				      0	IN SOA		. . 0 0 0 0 0
+example.				      0	IN NS		.
+example.				      0	IN TXT		"this should be at the zone apex"

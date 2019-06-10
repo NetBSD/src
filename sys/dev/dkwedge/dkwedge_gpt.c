@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.20 2017/09/07 10:18:26 christos Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.20.4.1 2019/06/10 22:07:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.20 2017/09/07 10:18:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.20.4.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,11 @@ static const struct {
 	{ GPT_ENT_TYPE_NETBSD_CCD,		DKW_PTYPE_CCD },
 	{ GPT_ENT_TYPE_NETBSD_CGD,		DKW_PTYPE_CGD },
 	{ GPT_ENT_TYPE_APPLE_HFS,		DKW_PTYPE_APPLEHFS },
+	{ GPT_ENT_TYPE_VMWARE_VMKCORE,		DKW_PTYPE_VMKCORE },
+	{ GPT_ENT_TYPE_VMWARE_VMFS,		DKW_PTYPE_VMFS },
+	{ GPT_ENT_TYPE_VMWARE_RESERVED,		DKW_PTYPE_VMWRESV },
+	{ GPT_ENT_TYPE_MS_BASIC_DATA,		DKW_PTYPE_NTFS },
+	{ GPT_ENT_TYPE_LINUX_DATA,		DKW_PTYPE_EXT2FS },
 };
 
 static const char *

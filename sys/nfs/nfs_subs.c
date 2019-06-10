@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.232 2018/05/08 16:47:58 maxv Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.232.2.1 2019/06/10 22:09:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.232 2018/05/08 16:47:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.232.2.1 2019/06/10 22:09:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -614,9 +614,9 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 	if ((authsiz + 10 * NFSX_UNSIGNED) >= MINCLSIZE) {
 		m_clget(mb, M_WAIT);
 	} else if ((authsiz + 10 * NFSX_UNSIGNED) < MHLEN) {
-		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
+		m_align(mb, authsiz + 10 * NFSX_UNSIGNED);
 	} else {
-		MH_ALIGN(mb, 8 * NFSX_UNSIGNED);
+		m_align(mb, 8 * NFSX_UNSIGNED);
 	}
 	mb->m_len = 0;
 	mreq = mb;
@@ -671,7 +671,7 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 				mb->m_len = 0;
 				bpos = mtod(mb, void *);
 			}
-			i = min(siz, M_TRAILINGSPACE(mb));
+			i = uimin(siz, M_TRAILINGSPACE(mb));
 			memcpy(bpos, auth_str, i);
 			mb->m_len += i;
 			auth_str += i;
@@ -706,7 +706,7 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 				mb->m_len = 0;
 				bpos = mtod(mb, void *);
 			}
-			i = min(siz, M_TRAILINGSPACE(mb));
+			i = uimin(siz, M_TRAILINGSPACE(mb));
 			memcpy(bpos, verf_str, i);
 			mb->m_len += i;
 			verf_str += i;
@@ -942,7 +942,7 @@ nfsm_disct(struct mbuf **mdp, char **dposp, int siz, int left, char **cp2)
 			*mdp = m1 = m_get(M_WAIT, MT_DATA);
 			MCLAIM(m1, m2->m_owner);
 			if ((m2->m_flags & M_PKTHDR) != 0) {
-				M_MOVE_PKTHDR(m1, m2);
+				m_move_pkthdr(m1, m2);
 			}
 			if (havebuf) {
 				havebuf->m_next = m1;
@@ -1002,7 +1002,7 @@ nfsm_disct(struct mbuf **mdp, char **dposp, int siz, int left, char **cp2)
 	 */
 	dst = mtod(m1, char *) + m1->m_len;
 	while ((len = M_TRAILINGSPACE(m1)) != 0 && m2) {
-		if ((len = min(len, m2->m_len)) != 0) {
+		if ((len = uimin(len, m2->m_len)) != 0) {
 			memcpy(dst, mtod(m2, char *), len);
 		}
 		m1->m_len += len;

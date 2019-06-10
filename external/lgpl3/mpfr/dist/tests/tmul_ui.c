@@ -1,6 +1,6 @@
 /* Test file for mpfr_mul_ui.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -45,9 +42,12 @@ check_inexact (mpfr_prec_t p)
       exit (1);
     }
 
-  for (q = 2; q <= p; q++)
+  for (q = MPFR_PREC_MIN; q <= p; q++)
     for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
       {
+        if (rnd == MPFR_RNDF)
+          continue; /* inexact is undefined */
+
         mpfr_set_prec (y, q);
         inexact = mpfr_mul_ui (y, x, u, (mpfr_rnd_t) rnd);
         cmp = mpfr_cmp (y, z);
@@ -108,8 +108,8 @@ main (int argc, char *argv[])
   if (mpfr_cmp (x, y))
     {
       printf ("Error in mpfr_mul_ui: 1*y != y\n");
-      printf ("y=  "); mpfr_print_binary (y); puts ("");
-      printf ("1*y="); mpfr_print_binary (x); puts ("");
+      printf ("y=  "); mpfr_dump (y);
+      printf ("1*y="); mpfr_dump (x);
       exit (1);
     }
 
@@ -148,9 +148,16 @@ main (int argc, char *argv[])
   emax = mpfr_get_emax ();
   set_emax (0);
   mpfr_set_str_binary (x, "0.1E0");
-  mpfr_mul_ui (x, x, 2, MPFR_RNDN);
+  (mpfr_mul_ui) (x, x, 2, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_inf_p (x) && MPFR_IS_POS(x));
   set_emax (emax);
+
+  /* To check the macros call */
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_mul_ui (x, x, 2, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui(x, 2) == 0);
+  mpfr_mul_si (x, x, 4, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui(x, 8) == 0);
 
   mpfr_set_str (x, /*1.0/3.0*/
                 "0.333333333333333333333333333333333", 10, MPFR_RNDZ);
@@ -168,7 +175,7 @@ main (int argc, char *argv[])
   if (mpfr_cmp_ui(x, 0) <= 0)
     {
       printf("Error in mpfr_mul_ui: 4*3.0 does not give a positive result:\n");
-      mpfr_print_binary(x); puts ("");
+      mpfr_dump (x);
       printf("mpfr_cmp_ui(x, 0) = %d\n", mpfr_cmp_ui(x, 0));
       exit(1);
     }
@@ -181,7 +188,7 @@ main (int argc, char *argv[])
   if (mpfr_cmp (x, y))
     {
       printf ("Error in mul_ui for 1335*(0.100001111E9)\n");
-      printf ("got "); mpfr_print_binary (x); puts ("");
+      printf ("got "); mpfr_dump (x);
       exit(1);
     }
 
@@ -195,7 +202,7 @@ main (int argc, char *argv[])
   if (mpfr_cmp(x, y))
     {
       printf("Error for 121*y: expected result is:\n");
-      mpfr_print_binary(y); puts ("");
+      mpfr_dump (y);
     }
 
   mpfr_set_prec (x, 32);
@@ -222,8 +229,8 @@ main (int argc, char *argv[])
   if (mpfr_cmp (x, y))
     {
       printf ("Error for 23 * 2143861251406875.0\n");
-      printf ("expected "); mpfr_print_binary (x); puts ("");
-      printf ("got      "); mpfr_print_binary (y); puts ("");
+      printf ("expected "); mpfr_dump (x);
+      printf ("got      "); mpfr_dump (y);
       exit (1);
     }
 
@@ -240,8 +247,8 @@ main (int argc, char *argv[])
             {
               printf ("multiplication by 1.0 fails for xprec=%u, yprec=%u\n",
                       xprec, yprec);
-              printf ("expected "); mpfr_print_binary (x); puts ("");
-              printf ("got      "); mpfr_print_binary (y); puts ("");
+              printf ("expected "); mpfr_dump (x);
+              printf ("got      "); mpfr_dump (y);
               exit (1);
             }
         }
@@ -275,7 +282,7 @@ main (int argc, char *argv[])
   mpfr_clear(x);
   mpfr_clear(y);
 
-  test_generic (2, 500, 100);
+  test_generic (MPFR_PREC_MIN, 500, 100);
 
   tests_end_mpfr ();
   return 0;

@@ -2,7 +2,7 @@
 
    Contributed by Evgeny Stupachenko <evstupac@gmail.com>
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -42,7 +42,7 @@ static void
 create_dispatcher_calls (struct cgraph_node *node)
 {
   cgraph_edge *e;
-  cgraph_edge *e_next;
+  cgraph_edge *e_next = NULL;
 
   /* We need to remember NEXT_CALLER as it could be modified in the loop.  */
   for (e = node->callers; e ;e = (e == NULL) ? e_next : e->next_caller)
@@ -303,10 +303,7 @@ expand_target_clones (struct cgraph_node *node, bool definition)
       if (!targetm.target_option.valid_attribute_p (new_node->decl, NULL,
 						    TREE_VALUE (attributes),
 						    0))
-	{
-	  input_location = saved_loc;
-	  continue;
-	}
+	return false;
 
       input_location = saved_loc;
       decl2_v = new_node->function_version ();

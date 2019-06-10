@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.384 2018/05/17 11:59:36 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.384.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.384 2018/05/17 11:59:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.384.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ int ip_do_randomid = 0;
  * and transmit implementation do not implement the Strong ES model,
  * setting this to 1 results in an odd hybrid.
  *
- * XXX - ip_checkinterface currently must be disabled if you use ipnat
+ * XXX - ip_checkinterface currently must be disabled if you use NAT
  * to translate the destination address to another local interface.
  *
  * XXX - ip_checkinterface must be disabled if you add IP aliases
@@ -323,13 +323,6 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 	 * and the arrival interface for a unicast packet (the RFC 1122
 	 * strong ES model) if IP forwarding is disabled and the packet
 	 * is not locally generated.
-	 *
-	 * XXX - Checking also should be disabled if the destination
-	 * address is ipnat'ed to a different interface.
-	 *
-	 * XXX - Checking is incompatible with IP aliases added
-	 * to the loopback interface instead of the interface where
-	 * the packets are received.
 	 *
 	 * XXX - We need to add a per ifaddr flag for this so that
 	 * we get finer grain control.
@@ -574,7 +567,7 @@ ip_input(struct mbuf *m)
 	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
+	if (!ipsec_used || !ipsec_skip_pfil(m))
 #else
 	if (1)
 #endif
@@ -585,6 +578,7 @@ ip_input(struct mbuf *m)
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
 		if (freed || m == NULL) {
 			m = NULL;
+			IP_STATINC(IP_STAT_PFILDROP_IN);
 			goto out;
 		}
 		KASSERT(m->m_len >= sizeof(struct ip));
@@ -752,7 +746,7 @@ ours:
 		/*
 		 * Pass to IP reassembly mechanism.
 		 */
-		if (ip_reass_packet(&m, ip) != 0) {
+		if (ip_reass_packet(&m) != 0) {
 			/* Failed; invalid fragment(s) or packet. */
 			goto out;
 		}
@@ -1228,7 +1222,7 @@ ip_srcroute(struct mbuf *m0)
 	struct ip_srcrt *isr;
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE, NULL);
+	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE);
 	if (mtag == NULL)
 		return NULL;
 	isr = (struct ip_srcrt *)(mtag + 1);

@@ -1578,9 +1578,6 @@ hdr_full_cons(void *vbuf, void *unused, int kmflag)
 {
 	arc_buf_hdr_t *hdr = vbuf;
 
-#ifdef __NetBSD__
-	hdr = unused;
-#endif
 	bzero(hdr, HDR_FULL_SIZE);
 	cv_init(&hdr->b_l1hdr.b_cv, NULL, CV_DEFAULT, NULL);
 	refcount_create(&hdr->b_l1hdr.b_refcnt);
@@ -1597,9 +1594,6 @@ hdr_l2only_cons(void *vbuf, void *unused, int kmflag)
 {
 	arc_buf_hdr_t *hdr = vbuf;
 
-#ifdef __NetBSD__
-	hdr = unused;
-#endif
 	bzero(hdr, HDR_L2ONLY_SIZE);
 	arc_space_consume(HDR_L2ONLY_SIZE, ARC_SPACE_L2HDRS);
 
@@ -1612,9 +1606,6 @@ buf_cons(void *vbuf, void *unused, int kmflag)
 {
 	arc_buf_t *buf = vbuf;
 
-#ifdef __NetBSD__
-	buf = unused;
-#endif
 	bzero(buf, sizeof (arc_buf_t));
 	mutex_init(&buf->b_evict_lock, NULL, MUTEX_DEFAULT, NULL);
 	arc_space_consume(sizeof (arc_buf_t), ARC_SPACE_HDRS);
@@ -1632,9 +1623,6 @@ hdr_full_dest(void *vbuf, void *unused)
 {
 	arc_buf_hdr_t *hdr = vbuf;
 
-#ifdef __NetBSD__
-	hdr = unused;
-#endif
 	ASSERT(HDR_EMPTY(hdr));
 	cv_destroy(&hdr->b_l1hdr.b_cv);
 	refcount_destroy(&hdr->b_l1hdr.b_refcnt);
@@ -1649,9 +1637,6 @@ hdr_l2only_dest(void *vbuf, void *unused)
 {
 	arc_buf_hdr_t *hdr = vbuf;
 
-#ifdef __NetBSD__
-	hdr = unused;
-#endif
 	ASSERT(HDR_EMPTY(hdr));
 	arc_space_return(HDR_L2ONLY_SIZE, ARC_SPACE_L2HDRS);
 }
@@ -1662,9 +1647,6 @@ buf_dest(void *vbuf, void *unused)
 {
 	arc_buf_t *buf = vbuf;
 
-#ifdef __NetBSD__
-	buf = unused;
-#endif
 	mutex_destroy(&buf->b_evict_lock);
 	arc_space_return(sizeof (arc_buf_t), ARC_SPACE_HDRS);
 }

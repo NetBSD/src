@@ -1,3 +1,3 @@
-/* $NetBSD: crtn.S,v 1.1 2014/09/19 17:36:25 matt Exp $ */
+/* $NetBSD: crtn.S,v 1.1.16.1 2019/06/10 22:05:14 christos Exp $ */
 
-/* no need for anything here since OR1K for NetBSD uses .init_array/.fini_array */
+/* no need for anything here since RISC-V for NetBSD uses .init_array/.fini_array */

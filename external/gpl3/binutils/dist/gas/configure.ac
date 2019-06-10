@@ -20,7 +20,6 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 dnl v2.5 needed for --bindir et al
-AC_PREREQ(2.59)
 m4_include([../bfd/version.m4])
 AC_INIT([gas], BFD_VERSION)
 AC_CONFIG_SRCDIR(as.h)
@@ -100,6 +99,20 @@ AC_ARG_ENABLE(elf_stt_common,
   yes)  ac_default_elf_stt_common=1 ;;
 esac])dnl
 
+
+# Decide if the ELF assembler should default to generating
+# GNU Build notes if none are provided by the input.
+ac_default_generate_build_notes=0
+# Provide a configuration option to override the default.
+AC_ARG_ENABLE(generate_build_notes,
+	      AS_HELP_STRING([--enable-generate-build-notes],
+	      [generate GNU Build notes if none are provided by the input]),
+[case "${enableval}" in
+  yes)  ac_default_generate_build_notes=1 ;;
+  no)   ac_default_generate_build_notes=0 ;;
+esac])dnl
+
+
 using_cgen=no
 
 AM_BINUTILS_WARNINGS
@@ -141,7 +154,7 @@ case "${host}" in
 esac
 AC_SUBST(GDBINIT)
 
-#We need this for the host.  BOUT header is in host order.
+#We need this for the host.
 AC_C_BIGENDIAN
 
 te_file=generic
@@ -190,12 +203,6 @@ for this_target in $target $canon_targets ; do
 
     generic_target=${cpu_type}-${target_vendor}-${target_os}
     case ${generic_target} in
-      i386-*-sco3.2v5*)
-	if test ${this_target} = $target; then
-	  AC_DEFINE(SCO_ELF, 1, [Define if defaulting to ELF on SCO 5.])
-	fi
-	;;
-
       i386-*-msdosdjgpp* \
       | i386-*-go32* \
       | i386-go32-rtems*)
@@ -211,10 +218,6 @@ for this_target in $target $canon_targets ; do
 	   && test ${ac_default_x86_relax_relocations} = unset; then
 	  ac_default_x86_relax_relocations=0
 	fi
-	;;
-
-      i860-*-*)
-	AC_MSG_WARN(GAS support for ${generic_target} is preliminary and a work in progress)
 	;;
 
       microblaze*)
@@ -234,10 +237,6 @@ changequote([,])dnl
 	if test x${endian} = xbig; then
 	  AC_MSG_ERROR(Solaris must be configured little endian)
 	fi
-	;;
-
-      sh*-*-symbianelf*)
-	AC_DEFINE(TARGET_SYMBIAN, 1, [Define if target is Symbian OS.])
 	;;
     esac
 
@@ -390,16 +389,13 @@ changequote([,])dnl
     case ${cpu_type} in
 
       bfin)
-        echo ${extra_objects} | grep -s "bfin-parse.o"
-        if test $? -ne 0 ; then
-          extra_objects="$extra_objects bfin-parse.o"
-        fi
-
-        echo ${extra_objects} | grep -s "bfin-lex-wrapper.o"
-        if test $? -ne 0 ; then
-          extra_objects="$extra_objects bfin-lex-wrapper.o"
-        fi
-        ;;
+	for f in bfin-parse.o bfin-lex-wrapper.o; do
+	  case " $extra_objects " in
+	    *" $f "*) ;;
+	    *) extra_objects="$extra_objects $f" ;;
+	  esac
+	done
+	;;
 
       epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | or1k)
 	using_cgen=yes
@@ -412,9 +408,10 @@ changequote([,])dnl
 	using_cgen=yes
 	;;
       m68k)
-	case ${extra_objects} in
-	*m68k-parse.o*) ;;
-	*) extra_objects="$extra_objects m68k-parse.o" ;;
+	f=m68k-parse.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
 	esac
 	;;
 
@@ -423,45 +420,37 @@ changequote([,])dnl
 	;;
 
       mips)
-	echo ${extra_objects} | grep -s "itbl-parse.o"
-	if test $? -ne 0 ; then
-	  extra_objects="$extra_objects itbl-parse.o"
-	fi
-
-	echo ${extra_objects} | grep -s "itbl-lex-wrapper.o"
-	if test $? -ne 0 ; then
-	  extra_objects="$extra_objects itbl-lex-wrapper.o"
-	fi
-
-	echo ${extra_objects} | grep -s "itbl-ops.o"
-	if test $? -ne 0 ; then
-	  extra_objects="$extra_objects itbl-ops.o"
-	fi
+	for f in itbl-parse.o itbl-lex-wrapper.o itbl-ops.o; do
+	  case " $extra_objects " in
+	    *" $f "*) ;;
+	    *) extra_objects="$extra_objects $f" ;;
+	  esac
+	done
 	;;
 
       mt)
-        using_cgen=yes
+	using_cgen=yes
 	;;
 
       nds32)
-        # Decide BASELINE, REDUCED_REGS, FPU_DP_EXT, FPU_SP_EXT features
+	# Decide BASELINE, REDUCED_REGS, FPU_DP_EXT, FPU_SP_EXT features
 	# based on arch_name.
 	AC_MSG_CHECKING(for default configuration of --with-arch)
 	if test "x${with_arch}" != x; then
 	  case ${with_arch} in
-            v2j | v2s | v2f | v2 | v3m | v3j | v3s | v3f | v3 )
+	    v2j | v2s | v2f | v2 | v3m | v3j | v3s | v3f | v3 )
 	      AC_DEFINE_UNQUOTED(NDS32_DEFAULT_ARCH_NAME, "$with_arch",
 				 [Define value for nds32_arch_name])
-              ;;
+	      ;;
 	    *)
 	      AC_MSG_ERROR(This kind of arch name does *NOT* exist!)
 	      ;;
-          esac
+	  esac
 	fi
 	AC_MSG_RESULT($with_arch)
 
-        # Decide features one by one.
-        AC_MSG_CHECKING(for default configuration of --enable-dx-regs)
+	# Decide features one by one.
+	AC_MSG_CHECKING(for default configuration of --enable-dx-regs)
 	if test "x${enable_dx_regs}" = xyes; then
 	  AC_DEFINE(NDS32_DEFAULT_DX_REGS, 1,
 		    [Define value for nds32_dx_regs])
@@ -471,7 +460,7 @@ changequote([,])dnl
 	fi
 	AC_MSG_RESULT($enable_dx_regs)
 
-        AC_MSG_CHECKING(for default configuration of --enable-perf-ext)
+	AC_MSG_CHECKING(for default configuration of --enable-perf-ext)
 	if test "x${enable_perf_ext}" = xno; then
 	  AC_DEFINE(NDS32_DEFAULT_PERF_EXT, 0,
 		    [Define value for nds32_perf_ext])
@@ -481,7 +470,7 @@ changequote([,])dnl
 	fi
 	AC_MSG_RESULT($enable_perf_ext)
 
-        AC_MSG_CHECKING(for default configuration of --enable-perf-ext2)
+	AC_MSG_CHECKING(for default configuration of --enable-perf-ext2)
 	if test "x${enable_perf_ext2}" = xno; then
 	  AC_DEFINE(NDS32_DEFAULT_PERF_EXT2, 0,
 		    [Define value for nds32_perf_ext2])
@@ -491,7 +480,7 @@ changequote([,])dnl
 	fi
 	AC_MSG_RESULT($enable_perf_ext2)
 
-        AC_MSG_CHECKING(for default configuration of --enable-string-ext)
+	AC_MSG_CHECKING(for default configuration of --enable-string-ext)
 	if test "x${enable_string_ext}" = xno; then
 	  AC_DEFINE(NDS32_DEFAULT_STRING_EXT, 0,
 		    [Define value for nds32_string_ext])
@@ -501,7 +490,7 @@ changequote([,])dnl
 	fi
 	AC_MSG_RESULT($enable_string_ext)
 
-        AC_MSG_CHECKING(for default configuration of --enable-audio-ext)
+	AC_MSG_CHECKING(for default configuration of --enable-audio-ext)
 	if test "x${enable_audio_ext}" = xno; then
 	  AC_DEFINE(NDS32_DEFAULT_AUDIO_EXT, 0,
 		    [Define value for nds32_audio_ext])
@@ -519,17 +508,19 @@ changequote([,])dnl
 	;;
 
       rl78)
-        echo ${extra_objects} | grep -s "rl78-parse.o"
-        if test $? -ne 0 ; then
-          extra_objects="$extra_objects rl78-parse.o"
-        fi
+	f=rl78-parse.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
+	esac
 	;;
 
       rx)
-        echo ${extra_objects} | grep -s "rx-parse.o"
-        if test $? -ne 0 ; then
-          extra_objects="$extra_objects rx-parse.o"
-        fi
+	f=rx-parse.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
+	esac
 	;;
 
       xstormy16)
@@ -541,10 +532,11 @@ changequote([,])dnl
 	;;
 
       xtensa)
-	echo ${extra_objects} | grep -s "xtensa-relax.o"
-	if test $? -ne 0 ; then
-	  extra_objects="$extra_objects xtensa-relax.o"
-	fi
+	f=config/xtensa-relax.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
+	esac
 	;;
 
       *)
@@ -552,9 +544,10 @@ changequote([,])dnl
     esac
 
     if test $using_cgen = yes ; then
-	case "x${extra_objects}" in
-	*cgen.o*) ;;
-	*) extra_objects="$extra_objects cgen.o" ;;
+	f=cgen.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
 	esac
     fi
 
@@ -565,9 +558,14 @@ changequote([,])dnl
       te_file=$em
     fi
 
-   case ${te_file} in
-      vms) extra_objects="$extra_objects te-vms.o" ;;
-   esac
+    case ${te_file} in
+      vms)
+	f=config/te-vms.o
+	case " $extra_objects " in
+	  *" $f "*) ;;
+	  *) extra_objects="$extra_objects $f" ;;
+	esac ;;
+    esac
 
 # From target name and format, produce a list of supported emulations.
 
@@ -609,6 +607,11 @@ AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_ELF_STT_COMMON,
   $ac_default_elf_stt_common,
   [Define to 1 if you want to generate ELF common symbols with the
    STT_COMMON type by default.])
+
+AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_BUILD_NOTES,
+  $ac_default_generate_build_notes,
+  [Define to 1 if you want to generate GNU Build attribute notes
+   by default, if none are contained in the input.])
 
 if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])
@@ -692,8 +695,6 @@ case ${obj_format} in
   coff)
     case ${target_cpu_type} in
       i386) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;
-      m68k) AC_DEFINE(M68KCOFF, 1, [Using m68k COFF?]) ;;
-      m88k) AC_DEFINE(M88KCOFF, 1, [Using m88k COFF?]) ;;
       x86_64) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;
     esac
     ;;
@@ -728,7 +729,7 @@ for em in . $emulations ; do
 	fmt=elf file=$em ;;
   esac
   formats="$formats $fmt"
-  emfiles="$emfiles e-$file.o"
+  emfiles="$emfiles config/e-$file.o"
   EMULATIONS="$EMULATIONS &$em,"
 done
 GAS_UNIQ(formats)
@@ -737,14 +738,13 @@ if test `set . $formats ; shift ; echo $#` -gt 1 ; then
   for fmt in $formats ; do
     case $fmt in
       aout)	AC_DEFINE(OBJ_MAYBE_AOUT, 1,    [a.out support?])   ;;
-      bout)	AC_DEFINE(OBJ_MAYBE_BOUT, 1,    [b.out support?])   ;;
       coff)	AC_DEFINE(OBJ_MAYBE_COFF, 1,    [COFF support?])    ;;
       ecoff)	AC_DEFINE(OBJ_MAYBE_ECOFF, 1,   [ECOFF support?])   ;;
       elf)	AC_DEFINE(OBJ_MAYBE_ELF, 1,     [ELF support?])     ;;
       generic)	AC_DEFINE(OBJ_MAYBE_GENERIC, 1, [generic support?]) ;;
       som)	AC_DEFINE(OBJ_MAYBE_SOM, 1,     [SOM support?])     ;;
     esac
-    extra_objects="$extra_objects obj-$fmt.o"
+    extra_objects="$extra_objects config/obj-$fmt.o"
   done
   obj_format=multi
 fi
@@ -797,7 +797,7 @@ AC_DEFINE_UNQUOTED(TARGET_OS,		"${target_os}",    [Target OS.])
 AC_PROG_YACC
 AM_PROG_LEX
 
-ALL_LINGUAS="fr tr es rw id ru fi ja zh_CN sv"
+ALL_LINGUAS="es fi fr id ja ru rw sv tr uk zh_CN"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 

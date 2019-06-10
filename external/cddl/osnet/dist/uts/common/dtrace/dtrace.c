@@ -1263,7 +1263,7 @@ dtrace_strtoll(char *input, int base, size_t limit)
  * Compare two strings using safe loads.
  */
 static int
-dtrace_strncmp(const char *s1, const char *s2, size_t limit)
+dtrace_strncmp(char *s1, char *s2, size_t limit)
 {
 	uint8_t c1, c2;
 	volatile uint16_t *flags;
@@ -6592,7 +6592,7 @@ dtrace_dif_emulate(dtrace_difo_t *difo, dtrace_mstate_t *mstate,
 			size_t sz = state->dts_options[DTRACEOPT_STRSIZE];
 			uintptr_t s1 = regs[r1];
 			uintptr_t s2 = regs[r2];
-			size_t lim1 = 0, lim2 = 0;
+			size_t lim1, lim2;
 
 			if (s1 != 0 &&
 			    !dtrace_strcanload(s1, sz, &lim1, mstate, vstate))

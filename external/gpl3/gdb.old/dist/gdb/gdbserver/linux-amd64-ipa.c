@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -197,8 +197,14 @@ get_ipa_tdesc (int idx)
       return tdesc_amd64_mpx_linux;
     case X86_TDESC_AVX_MPX:
       return tdesc_amd64_avx_mpx_linux;
-    case X86_TDESC_AVX512:
-      return tdesc_amd64_avx512_linux;
+    case X86_TDESC_AVX_MPX_AVX512_PKU:
+      return tdesc_amd64_avx_mpx_avx512_pku_linux;
+    case X86_TDESC_AVX_AVX512:
+      return tdesc_amd64_avx_avx512_linux;
+    default:
+      internal_error (__FILE__, __LINE__,
+		      "unknown ipa tdesc index: %d", idx);
+      return tdesc_amd64_linux;
     }
 #endif
 
@@ -277,8 +283,9 @@ initialize_low_tracepoint (void)
 #else
   init_registers_amd64_linux ();
   init_registers_amd64_avx_linux ();
-  init_registers_amd64_avx_mpx_linux ();
   init_registers_amd64_mpx_linux ();
-  init_registers_amd64_avx512_linux ();
+  init_registers_amd64_avx_mpx_linux ();
+  init_registers_amd64_avx_avx512_linux ();
+  init_registers_amd64_avx_mpx_avx512_pku_linux ();
 #endif
 }

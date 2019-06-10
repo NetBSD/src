@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.23 2013/02/21 01:39:54 pgoyette Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.23.38.1 2019/06/10 22:06:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,10 +70,6 @@ struct emul_flags_xtab {
 	unsigned long oval;
 	unsigned long nval;
 };
-
-void emul_find_root(struct lwp *, struct exec_package *);
-
-int emul_find_interp(struct lwp *, struct exec_package *, const char *);
 
 unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);

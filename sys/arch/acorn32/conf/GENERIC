@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.126 2018/06/07 13:36:28 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.126.2.1 2019/06/10 22:05:43 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.126 $"
+#ident		"GENERIC-$Revision: 1.126.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -131,7 +131,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
@@ -285,14 +285,14 @@ ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -319,9 +319,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
 
 #
@@ -329,18 +328,7 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 # If the standard modes don't work for your monitor, you can specify
 # a RISC-OS-format monitor definition file and a list of modes here.

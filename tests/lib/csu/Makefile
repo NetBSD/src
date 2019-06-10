@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2018/03/09 20:20:47 joerg Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2019/06/10 22:10:02 christos Exp $
 
 NOMAN=			# defined
 
@@ -24,8 +24,9 @@ SRCS.h_initfini3=	h_initfini3.cxx h_initfini_common.cxx \
 			${SRCS_CHECK_STACK}
 LDADD.h_initfini3+=	-Wl,-rpath,${TESTSDIR}
 
-PROGS+=			h_ifunc_static
+PROGS+=			h_ifunc_static h_initfini_array
 SRCS.h_ifunc_static=	h_ifunc_static.c
+SRCS.h_initfini_array=	h_initfini_array.c
 LDSTATIC.h_ifunc_static=-static
 
 .include <bsd.test.mk>

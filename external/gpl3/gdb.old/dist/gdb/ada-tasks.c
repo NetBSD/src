@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1013,15 +1013,14 @@ print_ada_task_info (struct ui_out *uiout,
 
   if (ada_build_task_list () == 0)
     {
-      ui_out_message (uiout, 0,
-		      _("Your application does not use any Ada tasks.\n"));
+      uiout->message (_("Your application does not use any Ada tasks.\n"));
       return;
     }
 
   if (arg_str != NULL && arg_str[0] != '\0')
     taskno_arg = value_as_long (parse_and_eval (arg_str));
 
-  if (ui_out_is_mi_like_p (uiout))
+  if (uiout->is_mi_like_p ())
     /* In GDB/MI mode, we want to provide the thread ID corresponding
        to each task.  This allows clients to quickly find the thread
        associated to any task, which is helpful for commands that
@@ -1047,25 +1046,25 @@ print_ada_task_info (struct ui_out *uiout,
   else
     nb_tasks = VEC_length (ada_task_info_s, data->task_list);
 
-  nb_columns = ui_out_is_mi_like_p (uiout) ? 8 : 7;
+  nb_columns = uiout->is_mi_like_p () ? 8 : 7;
   old_chain = make_cleanup_ui_out_table_begin_end (uiout, nb_columns,
 						   nb_tasks, "tasks");
-  ui_out_table_header (uiout, 1, ui_left, "current", "");
-  ui_out_table_header (uiout, 3, ui_right, "id", "ID");
-  ui_out_table_header (uiout, 9, ui_right, "task-id", "TID");
+  uiout->table_header (1, ui_left, "current", "");
+  uiout->table_header (3, ui_right, "id", "ID");
+  uiout->table_header (9, ui_right, "task-id", "TID");
   /* The following column is provided in GDB/MI mode only because
      it is only really useful in that mode, and also because it
      allows us to keep the CLI output shorter and more compact.  */
-  if (ui_out_is_mi_like_p (uiout))
-    ui_out_table_header (uiout, 4, ui_right, "thread-id", "");
-  ui_out_table_header (uiout, 4, ui_right, "parent-id", "P-ID");
-  ui_out_table_header (uiout, 3, ui_right, "priority", "Pri");
-  ui_out_table_header (uiout, 22, ui_left, "state", "State");
+  if (uiout->is_mi_like_p ())
+    uiout->table_header (4, ui_right, "thread-id", "");
+  uiout->table_header (4, ui_right, "parent-id", "P-ID");
+  uiout->table_header (3, ui_right, "priority", "Pri");
+  uiout->table_header (22, ui_left, "state", "State");
   /* Use ui_noalign for the last column, to prevent the CLI uiout
      from printing an extra space at the end of each row.  This
      is a bit of a hack, but does get the job done.  */
-  ui_out_table_header (uiout, 1, ui_noalign, "name", "Name");
-  ui_out_table_body (uiout);
+  uiout->table_header (1, ui_noalign, "name", "Name");
+  uiout->table_body ();
 
   for (taskno = 1;
        taskno <= VEC_length (ada_task_info_s, data->task_list);
@@ -1089,61 +1088,61 @@ print_ada_task_info (struct ui_out *uiout,
       /* Print a star if this task is the current task (or the task
          currently selected).  */
       if (ptid_equal (task_info->ptid, inferior_ptid))
-	ui_out_field_string (uiout, "current", "*");
+	uiout->field_string ("current", "*");
       else
-	ui_out_field_skip (uiout, "current");
+	uiout->field_skip ("current");
 
       /* Print the task number.  */
-      ui_out_field_int (uiout, "id", taskno);
+      uiout->field_int ("id", taskno);
 
       /* Print the Task ID.  */
-      ui_out_field_fmt (uiout, "task-id", "%9lx", (long) task_info->task_id);
+      uiout->field_fmt ("task-id", "%9lx", (long) task_info->task_id);
 
       /* Print the associated Thread ID.  */
-      if (ui_out_is_mi_like_p (uiout))
+      if (uiout->is_mi_like_p ())
         {
 	  const int thread_id = ptid_to_global_thread_id (task_info->ptid);
 
 	  if (thread_id != 0)
-	    ui_out_field_int (uiout, "thread-id", thread_id);
+	    uiout->field_int ("thread-id", thread_id);
 	  else
 	    /* This should never happen unless there is a bug somewhere,
 	       but be resilient when that happens.  */
-	    ui_out_field_skip (uiout, "thread-id");
+	    uiout->field_skip ("thread-id");
 	}
 
       /* Print the ID of the parent task.  */
       parent_id = get_task_number_from_id (task_info->parent, inf);
       if (parent_id)
-        ui_out_field_int (uiout, "parent-id", parent_id);
+        uiout->field_int ("parent-id", parent_id);
       else
-        ui_out_field_skip (uiout, "parent-id");
+        uiout->field_skip ("parent-id");
 
       /* Print the base priority of the task.  */
-      ui_out_field_int (uiout, "priority", task_info->priority);
+      uiout->field_int ("priority", task_info->priority);
 
       /* Print the task current state.  */
       if (task_info->caller_task)
-	ui_out_field_fmt (uiout, "state",
+	uiout->field_fmt ("state",
 			  _("Accepting RV with %-4d"),
 			  get_task_number_from_id (task_info->caller_task,
 						   inf));
       else if (task_info->state == Entry_Caller_Sleep
 	       && task_info->called_task)
-	ui_out_field_fmt (uiout, "state",
+	uiout->field_fmt ("state",
 			  _("Waiting on RV with %-3d"),
 			  get_task_number_from_id (task_info->called_task,
 						   inf));
       else
-	ui_out_field_string (uiout, "state", task_states[task_info->state]);
+	uiout->field_string ("state", task_states[task_info->state]);
 
       /* Finally, print the task name.  */
-      ui_out_field_fmt (uiout, "name",
+      uiout->field_fmt ("name",
 			"%s",
 			task_info->name[0] != '\0' ? task_info->name
 						   : _("<no name>"));
 
-      ui_out_text (uiout, "\n");
+      uiout->text ("\n");
       do_cleanups (chain2);
     }
 
@@ -1163,8 +1162,7 @@ info_task (struct ui_out *uiout, char *taskno_str, struct inferior *inf)
 
   if (ada_build_task_list () == 0)
     {
-      ui_out_message (uiout, 0,
-		      _("Your application does not use any Ada tasks.\n"));
+      uiout->message (_("Your application does not use any Ada tasks.\n"));
       return;
     }
 
@@ -1328,8 +1326,7 @@ task_command (char *taskno_str, int from_tty)
 
   if (ada_build_task_list () == 0)
     {
-      ui_out_message (uiout, 0,
-		      _("Your application does not use any Ada tasks.\n"));
+      uiout->message (_("Your application does not use any Ada tasks.\n"));
       return;
     }
 

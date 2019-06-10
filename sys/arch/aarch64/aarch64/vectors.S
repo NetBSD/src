@@ -1,12 +1,13 @@
-/*	$NetBSD: vectors.S,v 1.5 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.5.2.1 2019/06/10 22:05:43 christos Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
+#include "opt_ddb.h"
 
 	/*
 	 * vector_entry macro must be small enough to fit 0x80 bytes!
 	 */
-	.macro	vector_entry, el, label
+	.macro	vector_entry, el, label, tpidr
 	.align 7	/* aligned 0x80 */
 
 	.if \el == 1
@@ -60,21 +61,24 @@
 	.endif
 
 	.if \el == 0
-	/* curlwp->l_private = tpidr_el0 */
+	/* curlwp->l_private = tpidr{,ro}_el0 */
 	mrs	x1, tpidr_el1		/* curcpu() */
-	ldr	x1, [x1, #CI_CURLWP]	/* x0 = curcpu()->ci_curlwp */
-	mrs	x0, tpidr_el0
-	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr_el0 */
+	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
+	mrs	x0, tpidr\tpidr\()_el0
+	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
 	.endif
 
-	adr	lr, el\el\()_trap_exit	/* el[01]_trap_exit */
+	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
 	mov	x0, sp
+#ifdef DDB
+	mov	x29, sp			/* for backtrace */
+#endif
 	b	\label
 	.endm
 
 
 	.align 11	/* vector table must be aligned 2048 */
-ENTRY(el1_vectors)
+ENTRY_NP(el1_vectors)
 /*
  * Exception taken from current Exception Level with SP_EL0.
  * (These shouldn't happen)
@@ -106,8 +110,8 @@ ENTRY(el1_vectors)
  * Exception taken from lower Exception Level which is using AArch32
  * There are entries for exceptions caused in EL0 (compat user exceptions).
  */
-	vector_entry	0, trap_el0_32sync
-	vector_entry	0, interrupt
-	vector_entry	0, trap_el0_32fiq
-	vector_entry	0, trap_el0_32error
+	vector_entry	0, trap_el0_32sync, ro
+	vector_entry	0, interrupt, ro
+	vector_entry	0, trap_el0_32fiq, ro
+	vector_entry	0, trap_el0_32error, ro
 END(el1_vectors)

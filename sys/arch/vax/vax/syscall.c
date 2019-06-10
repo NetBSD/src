@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2017/05/22 16:53:05 ragge Exp $     */
+/*	$NetBSD: syscall.c,v 1.24.10.1 2019/06/10 22:06:51 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.10.1 2019/06/10 22:06:51 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -129,12 +129,10 @@ bad:
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 
 	userret(l, l->l_md.md_utf, 0);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

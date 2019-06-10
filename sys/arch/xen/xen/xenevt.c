@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.48 2017/11/30 20:25:54 christos Exp $      */
+/*      $NetBSD: xenevt.c,v 1.48.4.1 2019/06/10 22:06:56 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48 2017/11/30 20:25:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48.4.1 2019/06/10 22:06:56 christos Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -145,16 +145,25 @@ long xenevt_ev1;
 long xenevt_ev2[NR_EVENT_CHANNELS];
 static int xenevt_processevt(void *);
 
+static evtchn_port_t xenevt_alloc_event(void)
+{
+	evtchn_op_t op;
+	op.cmd = EVTCHNOP_alloc_unbound;
+	op.u.alloc_unbound.dom = DOMID_SELF;
+	op.u.alloc_unbound.remote_dom = DOMID_SELF;
+	if (HYPERVISOR_event_channel_op(&op) != 0)
+		panic("%s: Failed to allocate loopback event\n", __func__);	
+
+	return op.u.alloc_unbound.port;
+}
+
 /* called at boot time */
 void
 xenevtattach(int n)
 {
 	struct intrhand *ih;
-	int s;
 	int level = IPL_HIGH;
-#ifdef MULTIPROCESSOR
 	bool mpsafe = (level != IPL_VM);
-#endif /* MULTIPROCESSOR */
 
 	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
 	STAILQ_INIT(&devevent_pending);
@@ -165,26 +174,19 @@ xenevtattach(int n)
 	xenevt_ev1 = 0;
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
-	/* register a handler at splhigh, so that spllower() will call us */
-	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
-	     M_WAITOK|M_ZERO);
-	if (ih == NULL)
-		panic("can't allocate xenevt interrupt source");
-	ih->ih_level = level;
-	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
-	ih->ih_arg = ih->ih_realarg = NULL;
-	ih->ih_next = NULL;
-	ih->ih_cpu = &cpu_info_primary;
-#ifdef MULTIPROCESSOR
-	if (!mpsafe) {
-		ih->ih_fun = xen_intr_biglock_wrapper;
-		ih->ih_arg = ih;
-	}
-#endif /* MULTIPROCESSOR */
+	/*
+	 * Allocate a loopback event port.
+	 * This helps us massage xenevt_processevt() into the
+	 * callchain at the appropriate level using only
+	 * xen_intr_establish_xname().
+	 */
+	evtchn_port_t evtchn = xenevt_alloc_event();
 
-	s = splhigh();
-	event_set_iplhandler(ih->ih_cpu, ih, level);
-	splx(s);
+	/* The real objective here is to wiggle into the ih callchain for IPL level */
+	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
+	    xenevt_processevt, NULL, mpsafe, "xenevt");
+
+	KASSERT(ih != NULL);
 }
 
 /* register pending event - always called with interrupt disabled */
@@ -193,7 +195,7 @@ xenevt_setipending(int l1, int l2)
 {
 	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
 	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
-	atomic_or_32(&cpu_info_primary.ci_ipending, 1 << IPL_HIGH);
+	atomic_or_32(&cpu_info_primary.ci_xpending, 1 << IPL_HIGH);
 }
 
 /* process pending events */

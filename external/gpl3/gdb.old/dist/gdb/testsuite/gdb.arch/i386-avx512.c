@@ -1,6 +1,6 @@
 /* Test program for AVX 512 registers.
 
-   Copyright 2014-2016 Free Software Foundation, Inc.
+   Copyright 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

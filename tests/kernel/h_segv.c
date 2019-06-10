@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.7.2.1 2019/06/10 22:10:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,23 +29,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.7.2.1 2019/06/10 22:10:01 christos Exp $");
+
+#define	__TEST_FENV
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
+
 #include <err.h>
+#include <fenv.h>
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+#endif
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static int flags;
 #define F_RECURSE 	1
 #define F_HANDLE	2
 #define F_MASK		4
 #define F_IGNORE	8
+#define	F_CHECK		16
 
 static struct {
 	const char *n;
@@ -54,7 +62,8 @@ static struct {
 	{ "recurse",	F_RECURSE },
 	{ "handle",	F_HANDLE },
 	{ "mask",	F_MASK },
-	{ "ignore",	F_IGNORE }
+	{ "ignore",	F_IGNORE },
+	{ "check",	F_CHECK }
 };
 
 static int sig;
@@ -100,12 +109,33 @@ trigger_ill(void)
 }
 
 static void
+check_fpe(void)
+{
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+	/*
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
+	 * Skip these tests if running on them and compiled for
+	 * hard float.
+	 */
+	if (0 == fpsetmask(fpsetmask(FP_X_INV))) {
+		printf("FPU does not implement traps on FP exceptions\n");
+		exit(EXIT_FAILURE);
+	}
+#endif
+	exit(EXIT_SUCCESS);
+}
+
+static void
 trigger_fpe(void)
 {
-	volatile int a = getpid();
-	volatile int b = strtol("0", NULL, 0);
+	volatile double a = getpid();
+	volatile double b = strtol("0", NULL, 0);
 
-	usleep(a/b);
+#ifdef __HAVE_FENV
+	feenableexcept(FE_ALL_EXCEPT);
+#endif
+
+	usleep((int)(a/b));
 }
 
 static void
@@ -177,7 +207,7 @@ usage(void)
 	const char *pname = getprogname();
 
 	fprintf(stderr, "Usage: %s segv|trap|ill|fpe|bus "
-	                "[recurse|mask|handle|ignore] ...\n", pname);
+	                "[recurse|mask|handle|ignore|check] ...\n", pname);
 
 	exit(EXIT_FAILURE);
 }
@@ -212,6 +242,13 @@ main(int argc, char *argv[])
 
 	if (flags == 0 || sig == 0)
 		usage();
+
+	if (flags & F_CHECK && sig != SIGFPE) {
+		fprintf(stderr, "can only check for fpe support\n");
+		return 1;
+	}
+	if (flags & F_CHECK)
+		check_fpe();
 
 	if (flags & F_HANDLE) {
 		struct sigaction sa;

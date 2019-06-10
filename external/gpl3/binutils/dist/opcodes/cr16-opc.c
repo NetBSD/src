@@ -276,7 +276,7 @@ const inst cr16_instruction[] =
   {"storm",  1, 0x16, 19, NO_TYPE_INS | REG_LIST, {{uimm3_1,16}}},
   {"stormp", 1, 0x17, 19, NO_TYPE_INS | REG_LIST, {{uimm3_1,16}}},
 
- /* Processor Regsiter Manipulation instructions  */
+ /* Processor Register Manipulation instructions  */
   /* opc16 reg, preg */
   {"lpr",  2, 0x00140, 12, NO_TYPE_INS, {{regr,0}, {pregr,4}}},
   /* opc16 regp, pregp */

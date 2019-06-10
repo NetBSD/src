@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -267,7 +267,8 @@ struct cl_option_handler_func
 		   const struct cl_decoded_option *decoded,
 		   unsigned int lang_mask, int kind, location_t loc,
 		   const struct cl_option_handlers *handlers,
-		   diagnostic_context *dc);
+		   diagnostic_context *dc,
+		   void (*target_option_override_hook) (void));
 
   /* The mask that must have some bit in common with the flags for the
      option for this particular handler to be used.  */
@@ -288,6 +289,9 @@ struct cl_option_handlers
      language.  */
   void (*wrong_lang_callback) (const struct cl_decoded_option *decoded,
 			       unsigned int lang_mask);
+
+  /* Target option override hook.  */
+  void (*target_option_override_hook) (void);
 
   /* The number of individual handlers.  */
   size_t num_handlers;
@@ -333,13 +337,15 @@ extern void decode_cmdline_options_to_array_default_mask (unsigned int argc,
 							  const char **argv, 
 							  struct cl_decoded_option **decoded_options,
 							  unsigned int *decoded_options_count);
-extern void set_default_handlers (struct cl_option_handlers *handlers);
+extern void set_default_handlers (struct cl_option_handlers *handlers,
+				  void (*target_option_override_hook) (void));
 extern void decode_options (struct gcc_options *opts,
 			    struct gcc_options *opts_set,
 			    struct cl_decoded_option *decoded_options,
 			    unsigned int decoded_options_count,
 			    location_t loc,
-			    diagnostic_context *dc);
+			    diagnostic_context *dc,
+			    void (*target_option_override_hook) (void));
 extern int option_enabled (int opt_idx, void *opts);
 extern bool get_option_state (struct gcc_options *, int,
 			      struct cl_option_state *);
@@ -353,7 +359,7 @@ bool handle_generated_option (struct gcc_options *opts,
 			      size_t opt_index, const char *arg, int value,
 			      unsigned int lang_mask, int kind, location_t loc,
 			      const struct cl_option_handlers *handlers,
-			      diagnostic_context *dc);
+			      bool generated_p, diagnostic_context *dc);
 void generate_option (size_t opt_index, const char *arg, int value,
 		      unsigned int lang_mask,
 		      struct cl_decoded_option *decoded);
@@ -384,14 +390,16 @@ extern bool common_handle_option (struct gcc_options *opts,
 				  unsigned int lang_mask, int kind,
 				  location_t loc,
 				  const struct cl_option_handlers *handlers,
-				  diagnostic_context *dc);
+				  diagnostic_context *dc,
+				  void (*target_option_override_hook) (void));
 extern bool target_handle_option (struct gcc_options *opts,
 				  struct gcc_options *opts_set,
 				  const struct cl_decoded_option *decoded,
 				  unsigned int lang_mask, int kind,
 				  location_t loc,
 				  const struct cl_option_handlers *handlers,
-				  diagnostic_context *dc);
+				  diagnostic_context *dc,
+				  void (*target_option_override_hook) (void));
 extern void finish_options (struct gcc_options *opts,
 			    struct gcc_options *opts_set,
 			    location_t loc);
@@ -414,10 +422,14 @@ extern const struct sanitizer_opts_s
   const char *const name;
   unsigned int flag;
   size_t len;
+  bool can_recover;
 } sanitizer_opts[];
 
 extern void add_misspelling_candidates (auto_vec<char *> *candidates,
 					const struct cl_option *option,
 					const char *base_option);
+extern const char *candidates_list_and_hint (const char *arg, char *&str,
+					     const auto_vec <const char *> &
+					     candidates);
 
 #endif

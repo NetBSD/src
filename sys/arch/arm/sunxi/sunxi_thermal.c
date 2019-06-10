@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.5.4.1 2019/06/10 22:05:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5.4.1 2019/06/10 22:05:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ h5_to_temp(u_int sensor, uint32_t val)
 		mul = H5_TEMP_MUL_L;
 	} else {
 		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
-		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_0 : H5_TEMP_MUL_H_1;
 	}
 
 	return (base - val * mul) >> H5_TEMP_DIV;
@@ -275,7 +275,7 @@ h5_to_reg(u_int sensor, int val)
 		mul = H5_TEMP_MUL_L;
 	} else {
 		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
-		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_0 : H5_TEMP_MUL_H_1;
 	}
 
 	return (base - (val << H5_TEMP_DIV)) / mul;
@@ -513,28 +513,28 @@ sunxi_thermal_init_clocks(struct sunxi_thermal_softc *sc)
 	int error;
 
 	clk = fdtbus_clock_get(sc->phandle, "ahb");
-	if (clk == NULL)
-		return ENXIO;
-	error = clk_enable(clk);
-	if (error != 0)
-		return error;
+	if (clk) {
+		error = clk_enable(clk);
+		if (error != 0)
+			return error;
+	}
 
 	clk = fdtbus_clock_get(sc->phandle, "ths");
-	if (clk == NULL)
-		return ENXIO;
-	error = clk_set_rate(clk, sc->conf->clk_rate);
-	if (error != 0)
-		return error;
-	error = clk_enable(clk);
-	if (error != 0)
-		return error;
+	if (clk) {
+		error = clk_set_rate(clk, sc->conf->clk_rate);
+		if (error != 0)
+			return error;
+		error = clk_enable(clk);
+		if (error != 0)
+			return error;
+	}
 
 	rst = fdtbus_reset_get_index(sc->phandle, 0);
-	if (rst == NULL)
-		return ENXIO;
-	error = fdtbus_reset_deassert(rst);
-	if (error != 0)
-		return error;
+	if (rst) {
+		error = fdtbus_reset_deassert(rst);
+		if (error != 0)
+			return error;
+	}
 
 	return 0;
 }

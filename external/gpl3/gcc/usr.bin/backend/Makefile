@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2018/04/19 22:01:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.49.2.1 2019/06/10 21:55:38 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -18,6 +18,7 @@ CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I${HOST_LIBIBERTYOBJ}/libiberty
 HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+DPSRCS+=	${DIST}/gcc/BASE-VER
 CPPFLAGS+=	-I${DIST}/libgcc
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH}
 
@@ -47,7 +48,7 @@ CPPFLAGS.cppbuiltin.c+=	-DBASEVER="\"${BASEVER}"\"
 # Independent generation programs.
 #
 CLEANFILES+=	gengenrtl genrtl.h \
-		gengtype gtyp-gen.h gtype-desc.c gtype-desc.h \
+		gengtype gtyp-gen.h gtype-brig.h gtype-desc.c gtype-desc.h \
 		gtype-c.h gtype-cp.h gtype-f.h gtype-objc.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
@@ -403,7 +404,8 @@ insn-attrtab.c: genattrtab ${G_md_file} insn-conditions.md
 	./genattrtab ${G_md_file} insn-conditions.md \
 		-A${.TARGET}.tmp -Dinsn-dfatab.c.tmp -Linsn-latencytab.c.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c
+CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c \
+		insn-dfatab.c.tmp insn-latencytab.c.tmp
 
 # genopinit has two output files
 insn-opinit.h: insn-opinit.c
@@ -413,7 +415,7 @@ insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
 	./genopinit ${G_md_file} insn-conditions.md \
 		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-opinit.h insn-opinit.c
+CLEANFILES+=	insn-opinit.h insn-opinit.c insn-opinit.h.tmp
 
 LDFLAGS.genautomata+=	-lm
 
@@ -441,16 +443,24 @@ cfn-operators.pd: gencfn-macros
 CLEANFILES+=	case-cfn-macros.h.tmp case-cfn-macros.h \
 		cfn-operators.pd.tmp cfn-operators.pd
 
-CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c builtins.c \
+CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c \
+		riscv-builtins.c builtins.c \
 		fold-const.c tree-ssa-math-opts.c tree-ssa-reassoc.c \
 		tree-vect-patterns.c tree-vrp.c generic-match-head.c \
 		gimple-match-head.c ChangeLog-2015 fold-const-call.c \
 		gimple-ssa-backprop.c
 ${CASECFNDEPS}: case-cfn-macros.h
 
+aarch64-builtin-iterators.h: ${DIST}/gcc/config/aarch64/geniterators.sh \
+    ${DIST}/gcc/config/aarch64/iterators.md
+	$(HOST_SH) ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=	aarch-builtin-iterators.h
+
 #
 # Required hard-coded dependancies.
 #
+aarch64-builtins.o: aarch64-builtin-iterators.h
 tm.h: insn-constants.h
 genextract.lo: insn-config.h
 gencondmd.lo: tm_p.h tm-constrs.h
@@ -499,6 +509,8 @@ ${G_out_file:T:.c=.o}: insn-target-def.h target-hooks-def.h tm-constrs.h
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
 
+COPTS.ira-color.c+= -Wno-error=int-in-bool-context
+
 .if ${MACHINE_CPU} == "arm"
 # XXX insn-recog.c:10304:7: error: this decimal constant is unsigned only in ISO C90 [-Werror]
 COPTS.insn-recog.c+=-Wno-error
@@ -516,7 +528,9 @@ COPTS.insn-recog.c+=-Wno-error
 .if ${GCC_MACHINE_ARCH} == "vax"
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
 COPTS.builtins.c+=-O0
+COPTS.calls.c+=-O0
 COPTS.convert.c+=-O0
+COPTS.data-streamer-out.c+=-O0
 COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
 COPTS.expmed.c+=-O0
@@ -538,10 +552,12 @@ COPTS.targhooks.c+=-O0
 COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
 COPTS.tree-eh.c+=-O0
+COPTS.tree-if-conv.c+=-O0
 COPTS.tree-object-size.c+=-O0
 COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
+COPTS.tree-ssa.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
 COPTS.tree-ssa-ccp.c+=-O0
 COPTS.tree-ssa-forwprop.c+=-O0
@@ -554,12 +570,14 @@ COPTS.tree-ssa-reassoc.c+=-O0
 COPTS.tree-ssa-uninit.c+=-O0
 COPTS.tree-switch-conversion.c+=-O0
 COPTS.tree-vect-data-refs.c+=-O0
+COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-loop-manip.c+=-O0
 COPTS.tree-vect-patterns.c+=-O0
 COPTS.tree-vect-stmts.c+=-O0
 COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
+COPTS.web.c+=-O0
 COPTS.varasm.c+=-O0
 COPTS.wide-int.cc+=-O0
 .else
@@ -583,3 +601,6 @@ CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
+.if ${MACHINE_ARCH} == "aarch64"
+.PATH: ${DIST}/gcc/config/arm
+.endif

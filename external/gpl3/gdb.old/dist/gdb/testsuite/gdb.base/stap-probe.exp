@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Free Software Foundation, Inc.
+# Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ standard_testfile
 proc stap_test {exec_name {arg ""}} {
     global testfile hex srcfile
 
-    if {[prepare_for_testing ${testfile}.exp ${exec_name} $srcfile \
+    if {[prepare_for_testing "failed to prepare" ${exec_name} $srcfile \
 	   [concat $arg debug]]} {
 	return -1
     }
@@ -96,7 +96,7 @@ proc stap_test {exec_name {arg ""}} {
 proc stap_test_no_debuginfo {exec_name {arg ""}} {
     global testfile hex
 
-    if {[prepare_for_testing ${testfile}.exp ${exec_name} ${testfile}.c \
+    if {[prepare_for_testing "failed to prepare" ${exec_name} ${testfile}.c \
 	   {$arg nodebug optimize=-O2}]} {
 	return -1
     }
@@ -161,7 +161,7 @@ proc stap_test_no_debuginfo {exec_name {arg ""}} {
 
 with_test_prefix "without semaphore, not optimized" {
     if {[stap_test "stap-probe-nosem-noopt"] == -1} {
-	untested stap-probe.exp
+	untested "stap probe test failed"
 	  return -1
     }
 }

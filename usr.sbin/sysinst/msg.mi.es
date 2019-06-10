@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.7 2018/06/03 13:16:30 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.7.2.1 2019/06/10 22:10:38 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,10 +33,6 @@
  */
 
 /* MI Message catalog -- spanish, machine independent */
-
-message usage
-{uso: sysinst [-D] [-f fichero_definición] [-r versión] [-C bg:fg]
-}
 
 /*
  * We can not use non ascii characters in this message - it is displayed
@@ -954,6 +950,7 @@ message Base_dir {Directorio base}
 message Set_dir_src {Directorio de conjuntos binary} /* fix XLAT */
 message Set_dir_bin {Directorio de conjuntos source} /* fix XLAT */
 message Xfer_dir {Directorio a transferir a}
+message transfer_method {Download via}
 message User {Usuario}
 message Password {Contraseña}
 message Proxy {Proxy}
@@ -1082,7 +1079,7 @@ la contraseña es opcional.
 }
 message Pkgsrc_dir {Directorio de pkgsrc}
 message get_pkgsrc
-{Descargar y desempaquetar pkgsrc para compilar desde código fuente}
+{Descargar y desempaquetar pkgsrc}
 message retry_pkgsrc_network
 {La configuración de la red ha fallado.  ¿Reintentar?}
 message quit_pkgsrc {Salir sin instalar pkgsrc}
@@ -1251,4 +1248,8 @@ message Auto_add_swap_part
 {A swap partition (named %s) seems to exist on %s. 
 Do you want to use that?}
 
+message parttype_mbr {Master Boot Record (MBR)}
+message parttype_mbr_short {MBR}
+message parttype_disklabel {BSD disklabel}
+message parttype_disklabel_short {disklabel}
 

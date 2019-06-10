@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/03/25 00:11:16 nonaka Exp $
+# $NetBSD: Makefile,v 1.1.44.1 2019/06/10 22:09:30 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,6 @@ KMOD=	if_urtwn
 IOCONF=	if_urtwn.ioconf
 SRCS=	if_urtwn.c
 
-WARNS=	4
+WARNS=	3
 
 .include <bsd.kmodule.mk>

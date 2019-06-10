@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.56.4.1 2019/06/10 22:07:10 christos Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.56.4.1 2019/06/10 22:07:10 christos Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1484,7 +1484,7 @@ spc_dataout_pio(struct spc_softc *sc, uint8_t *p, int n)
 			DELAY(1);
 		}
 
-		xfer = min(DOUTAMOUNT, n);
+		xfer = uimin(DOUTAMOUNT, n);
 
 		SPC_MISC(("%d> ", xfer));
 

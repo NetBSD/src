@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -407,14 +407,13 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 
 #ifndef MY_bfd_debug_info_start
-#define MY_bfd_debug_info_start		bfd_void
+#define MY_bfd_debug_info_start		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_end
-#define MY_bfd_debug_info_end		bfd_void
+#define MY_bfd_debug_info_end		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_accumulate
-#define MY_bfd_debug_info_accumulate	\
-		(void (*) (bfd *, struct bfd_section *)) bfd_void
+#define MY_bfd_debug_info_accumulate	_bfd_void_bfd_asection
 #endif
 
 #ifndef MY_core_file_failing_command
@@ -449,6 +448,9 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 #ifndef MY_canonicalize_reloc
 #define MY_canonicalize_reloc NAME (aout, canonicalize_reloc)
+#endif
+#ifndef MY_set_reloc
+#define MY_set_reloc _bfd_generic_set_reloc
 #endif
 #ifndef MY_make_empty_symbol
 #define MY_make_empty_symbol NAME (aout, make_empty_symbol)
@@ -509,6 +511,12 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 #ifndef MY_bfd_define_common_symbol
 #define MY_bfd_define_common_symbol bfd_generic_define_common_symbol
+#endif
+#ifndef MY_bfd_link_hide_symbol
+#define MY_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
+#endif
+#ifndef MY_bfd_define_start_stop
+#define MY_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
 #ifndef MY_bfd_reloc_type_lookup
 #define MY_bfd_reloc_type_lookup NAME (aout, reloc_type_lookup)
@@ -575,7 +583,7 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 
 #ifndef MY_bfd_is_target_special_symbol
-#define MY_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define MY_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 #endif
 
 #ifndef MY_bfd_free_cached_info
@@ -663,12 +671,24 @@ const bfd_target MY (vec) =
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Headers.  */
 #endif
-    {_bfd_dummy_target, MY_object_p, 		/* bfd_check_format.  */
-       bfd_generic_archive_p, MY_core_file_p},
-    {bfd_false, MY_mkobject,			/* bfd_set_format.  */
-       _bfd_generic_mkarchive, bfd_false},
-    {bfd_false, MY_write_object_contents, 	/* bfd_write_contents.  */
-       _bfd_write_archive_contents, bfd_false},
+    {				/* bfd_check_format.  */
+      _bfd_dummy_target,
+      MY_object_p,
+      bfd_generic_archive_p,
+      MY_core_file_p
+    },
+    {				/* bfd_set_format.  */
+      _bfd_bool_bfd_false_error,
+      MY_mkobject,
+      _bfd_generic_mkarchive,
+      _bfd_bool_bfd_false_error
+    },
+    {				/* bfd_write_contents.  */
+      _bfd_bool_bfd_false_error,
+      MY_write_object_contents,
+      _bfd_write_archive_contents,
+      _bfd_bool_bfd_false_error
+    },
 
      BFD_JUMP_TABLE_GENERIC (MY),
      BFD_JUMP_TABLE_COPY (MY),

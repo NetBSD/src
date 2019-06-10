@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.120 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.120.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.120 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.120.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.120 2018/01/21 13:57:12 skrll Exp $");
 #include <dev/usb/ucomvar.h>
 
 #include "ucom.h"
-
 #include "locators.h"
+#include "ioconf.h"
 
 #if NUCOM > 0
 
@@ -245,10 +245,9 @@ static void	ucom_softintr(void *);
 int ucom_match(device_t, cfdata_t, void *);
 void ucom_attach(device_t, device_t, void *);
 int ucom_detach(device_t, int);
-int ucom_activate(device_t, enum devact);
-extern struct cfdriver ucom_cd;
+
 CFATTACH_DECL_NEW(ucom, sizeof(struct ucom_softc), ucom_match, ucom_attach,
-    ucom_detach, ucom_activate);
+    ucom_detach, NULL);
 
 int
 ucom_match(device_t parent, cfdata_t match, void *aux)
@@ -413,10 +412,14 @@ ucom_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_bulkin_pipe != NULL)
+	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-	if (sc->sc_bulkout_pipe != NULL)
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
+	}
 
 	mutex_enter(&sc->sc_lock);
 
@@ -441,10 +444,8 @@ ucom_detach(device_t self, int flags)
 			mutex_spin_exit(&tty_lock);
 		}
 		/* Wait for processes to go away. */
-		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60)) {
-			printf("%s: %s didn't detach\n", __func__,
-			    device_xname(sc->sc_dev));
-		}
+		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(self, ": didn't detach\n");
 	}
 
 	softint_disestablish(sc->sc_si);
@@ -495,26 +496,6 @@ ucom_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_detachcv);
 
 	return 0;
-}
-
-int
-ucom_activate(device_t self, enum devact act)
-{
-	struct ucom_softc *sc = device_private(self);
-
-	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	DPRINTFN(5, "%jd", act, 0, 0, 0);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		mutex_enter(&sc->sc_lock);
-		sc->sc_dying = true;
-		mutex_exit(&sc->sc_lock);
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 void
@@ -1250,7 +1231,7 @@ out:
 
 	mutex_exit(&sc->sc_lock);
 
-	return 0;
+	return error;
 }
 
 static int
@@ -1265,15 +1246,18 @@ ucomhwiflow(struct tty *tp, int block)
 	if (sc == NULL)
 		return 0;
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(&sc->sc_lock);
+	KASSERT(mutex_owned(&tty_lock));
+
 	old = sc->sc_rx_stopped;
 	sc->sc_rx_stopped = (u_char)block;
 
 	if (old && !block) {
 		sc->sc_rx_unblock = 1;
+		kpreempt_disable();
 		softint_schedule(sc->sc_si);
+		kpreempt_enable();
 	}
-	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
@@ -1339,7 +1323,9 @@ ucomstart(struct tty *tp)
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_full, ub, ub_link);
 
+	kpreempt_disable();
 	softint_schedule(sc->sc_si);
+	kpreempt_enable();
 
  out:
 	DPRINTF("... done", 0, 0, 0, 0);
@@ -1381,7 +1367,9 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		break;
 	case USBD_STALLED:
 		ub->ub_index = 0;
+		kpreempt_disable();
 		softint_schedule(sc->sc_si);
+		kpreempt_enable();
 		break;
 	case USBD_NORMAL_COMPLETION:
 		usbd_get_xfer_status(ub->ub_xfer, NULL, NULL, &cc, NULL);

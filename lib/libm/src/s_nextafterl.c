@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.5 2014/01/31 19:38:47 matt Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.5.26.1 2019/06/10 22:05:25 christos Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.5 2014/01/31 19:38:47 matt Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.5.26.1 2019/06/10 22:05:25 christos Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -29,6 +29,8 @@ __RCSID("$NetBSD: s_nextafterl.c,v 1.5 2014/01/31 19:38:47 matt Exp $");
 #ifdef LDBL_IMPLICIT_NBIT
 #define	LDBL_NBIT	0
 #endif
+
+__strong_alias(nexttowardl, nextafterl)
 
 /*
  * IEEE functions

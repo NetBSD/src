@@ -16,6 +16,6 @@ attach 	pwmclock at voyagerbus
 file	dev/pci/voyager/pwmclock.c		pwmclock needs-flag
 
 # the audio part
-device 	vac: audiobus, auconv, mulaw
+device 	vac: audiobus
 attach 	vac at voyagerbus
 file 	dev/pci/voyager/vac.c			vac needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.25 2017/08/21 17:01:04 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.25.4.1 2019/06/10 22:10:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -175,10 +175,11 @@ rpcbind_main(void *arg)
 #ifndef RPCBIND_RUMP
 	/* Check that another rpcbind isn't already running. */
 	if ((rpcbindlockfd = open(RPCBINDDLOCK, O_RDONLY|O_CREAT, 0444)) == -1)
-		err(1, "%s", RPCBINDDLOCK);
+		err(EXIT_FAILURE, "%s", RPCBINDDLOCK);
 
 	if (flock(rpcbindlockfd, LOCK_EX|LOCK_NB) == -1 && errno == EWOULDBLOCK)
-		errx(1, "another rpcbind is already running. Aborting");
+		errx(EXIT_FAILURE,
+		    "another rpcbind is already running. Aborting");
 
 	if (geteuid()) /* This command allowed only to root */
 		errx(EXIT_FAILURE, "Sorry. You are not superuser\n");
@@ -360,12 +361,18 @@ init_transport(struct netconfig *nconf)
 	}
 
 	if (strcmp(nconf->nc_netid, "local") != 0) {
+		char **nhp;
 		/*
 		 * If no hosts were specified, just bind to INADDR_ANY.
 		 * Otherwise  make sure 127.0.0.1 is added to the list.
 		 */
 		nhostsbak = nhosts + 1;
-		hosts = realloc(hosts, nhostsbak * sizeof(char *));
+		nhp = realloc(hosts, nhostsbak * sizeof(*hosts));
+		if (nhp == NULL) {
+			syslog(LOG_ERR, "Can't grow hosts array");
+			return 1;
+		}
+		hosts = nhp;
 		if (nhostsbak == 1)
 			hosts[0] = __UNCONST("*");
 		else {
@@ -475,9 +482,8 @@ init_transport(struct netconfig *nconf)
 			taddr.addr.len = taddr.addr.maxlen = addrlen;
 			taddr.addr.buf = malloc(addrlen);
 			if (taddr.addr.buf == NULL) {
-				syslog(LOG_ERR,
-				    "cannot allocate memory for %s address",
-				    nconf->nc_netid);
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				if (res != NULL)
 					freeaddrinfo(res);
 				return 1;
@@ -533,8 +539,7 @@ init_transport(struct netconfig *nconf)
 		taddr.addr.len = taddr.addr.maxlen = addrlen;
 		taddr.addr.buf = malloc(addrlen);
 		if (taddr.addr.buf == NULL) {
-			syslog(LOG_ERR, "cannot allocate memory for %s address",
-			    nconf->nc_netid);
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			if (res != NULL)
 			    freeaddrinfo(res);
 			return 1;
@@ -560,7 +565,7 @@ init_transport(struct netconfig *nconf)
 
 		my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr,
 		    RPC_MAXDATASIZE, RPC_MAXDATASIZE);
-		if (my_xprt == (SVCXPRT *)NULL) {
+		if (my_xprt == NULL) {
 			syslog(LOG_ERR, "%s: could not create service",
 			    nconf->nc_netid);
 			goto error;
@@ -583,9 +588,9 @@ init_transport(struct netconfig *nconf)
 			    nconf->nc_netid);
 			goto error;
 		}
-		pml = malloc(sizeof (struct pmaplist));
+		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 
@@ -602,7 +607,8 @@ init_transport(struct netconfig *nconf)
 			tcptrans = strdup(nconf->nc_netid);
 			if (tcptrans == NULL) {
 				free(pml);
-				syslog(LOG_ERR, "Cannot allocate memory");
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_TCP;
@@ -620,7 +626,8 @@ init_transport(struct netconfig *nconf)
 			udptrans = strdup(nconf->nc_netid);
 			if (udptrans == NULL) {
 				free(pml);
-				syslog(LOG_ERR, "Cannot allocate memory");
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_UDP;
@@ -628,18 +635,20 @@ init_transport(struct netconfig *nconf)
 			/* Let's snarf the universal address */
 			/* "h1.h2.h3.h4.p1.p2" */
 			udp_uaddr = taddr2uaddr(nconf, &taddr.addr);
-		}
+		} else if (strcmp(nconf->nc_netid, "local") == 0) {
 #ifdef IPPROTO_ST
-		else if (strcmp(nconf->nc_netid, "local") == 0)
 			pml->pml_map.pm_prot = IPPROTO_ST;
+#else
+			pml->pml_map.pm_prot = 0;
 #endif
+		}
 		pml->pml_next = list_pml;
 		list_pml = pml;
 
 		/* Add version 3 information */
-		pml = malloc(sizeof (struct pmaplist));
+		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -648,9 +657,9 @@ init_transport(struct netconfig *nconf)
 		list_pml = pml;
 
 		/* Add version 4 information */
-		pml = malloc(sizeof (struct pmaplist));
+		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -742,13 +751,17 @@ update_bound_sa(void)
 
 	if (nhosts == 0)
 		return;
-	bound_sa = malloc(sizeof(*bound_sa) * nhosts);
+	bound_sa = calloc(nhosts, sizeof(*bound_sa));
+	if (bound_sa == NULL)
+		err(EXIT_FAILURE, "no space for bound address array");
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	for (i = 0; i < nhosts; i++)  {
 		if (getaddrinfo(hosts[i], NULL, &hints, &res) != 0)
 			continue;
 		bound_sa[i] = malloc(res->ai_addrlen);
+		if (bound_sa[i] == NULL)
+		    err(EXIT_FAILURE, "no space for bound address");
 		memcpy(bound_sa[i], res->ai_addr, res->ai_addrlen);
 	}
 }
@@ -801,9 +814,9 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 {
 	rpcblist_ptr rbl;
 
-	rbl = malloc(sizeof(rpcblist));
+	rbl = calloc(1, sizeof(*rbl));
 	if (rbl == NULL) {
-		syslog(LOG_ERR, "Out of memory");
+		syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 		return;
 	}
 
@@ -812,6 +825,17 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 	rbl->rpcb_map.r_netid = strdup(nconf->nc_netid);
 	rbl->rpcb_map.r_addr = taddr2uaddr(nconf, addr);
 	rbl->rpcb_map.r_owner = strdup(rpcbind_superuser);
+	if (rbl->rpcb_map.r_netid == NULL ||
+	    rbl->rpcb_map.r_addr == NULL ||
+	    rbl->rpcb_map.r_owner == NULL)
+	{
+	    free(rbl->rpcb_map.r_netid);
+	    free(rbl->rpcb_map.r_addr);
+	    free(rbl->rpcb_map.r_owner);
+	    free(rbl);
+	    syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
+	    return;
+	}
 	rbl->rpcb_next = list_rbl;	/* Attach to global list */
 	list_rbl = rbl;
 }
@@ -878,12 +902,12 @@ parseargs(int argc, char *argv[])
 			break;
 		case 'h':
 			++nhosts;
-			hosts = realloc(hosts, nhosts * sizeof(char *));
+			hosts = realloc(hosts, nhosts * sizeof(*hosts));
 			if (hosts == NULL)
-				errx(1, "Out of memory");
+				err(EXIT_FAILURE, "Can't allocate host array");
 			hosts[nhosts - 1] = strdup(optarg);
 			if (hosts[nhosts - 1] == NULL)
-				errx(1, "Out of memory");
+				err(EXIT_FAILURE, "Can't allocate host");
 			break;
 		case 'i':
 			insecure = 1;

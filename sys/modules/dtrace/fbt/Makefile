@@ -26,4 +26,6 @@ CPPFLAGS+=	-Wno-unknown-pragmas
 
 CPPFLAGS+=	-DDIAGNOSTIC
 
+WARNS=		3
+
 .include <bsd.kmodule.mk>

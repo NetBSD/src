@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.175 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.175.4.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175.4.1 2019/06/10 22:07:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -70,6 +70,7 @@ static void *usbd_alloc_buffer(struct usbd_xfer *, uint32_t);
 static void usbd_free_buffer(struct usbd_xfer *);
 static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *, unsigned int);
 static usbd_status usbd_free_xfer(struct usbd_xfer *);
+static void usbd_request_async_cb(struct usbd_xfer *, void *, usbd_status);
 
 #if defined(USB_DEBUG)
 void
@@ -257,13 +258,14 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	LIST_REMOVE(pipe, up_next);
 	pipe->up_endpoint->ue_refcnt--;
 
+	pipe->up_methods->upm_close(pipe);
+
 	if (pipe->up_intrxfer != NULL) {
 	    	usbd_unlock_pipe(pipe);
 		usbd_destroy_xfer(pipe->up_intrxfer);
 		usbd_lock_pipe(pipe);
 	}
 
-	pipe->up_methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 
@@ -282,6 +284,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	USBHIST_LOG(usbdebug,
 	    "xfer = %#jx, flags = %#jx, pipe = %#jx, running = %jd",
 	    (uintptr_t)xfer, xfer->ux_flags, (uintptr_t)pipe, pipe->up_running);
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -347,7 +350,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 
 	if (err != USBD_IN_PROGRESS) {
-		USBHIST_LOG(usbdebug, "<- done xfer %#jx, err %jd "
+		USBHIST_LOG(usbdebug, "<- done xfer %#jx, sync (err %jd)"
 		    "(complete/error)", (uintptr_t)xfer, err, 0, 0);
 		return err;
 	}
@@ -476,7 +479,6 @@ usbd_alloc_xfer(struct usbd_device *dev, unsigned int nframes)
 	xfer->ux_bus = dev->ud_bus;
 	callout_init(&xfer->ux_callout, CALLOUT_MPSAFE);
 	cv_init(&xfer->ux_cv, "usbxfer");
-	cv_init(&xfer->ux_hccv, "usbhcxfer");
 
 	USBHIST_LOG(usbdebug, "returns %#jx", (uintptr_t)xfer, 0, 0, 0);
 
@@ -499,7 +501,6 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	}
 #endif
 	cv_destroy(&xfer->ux_cv);
-	cv_destroy(&xfer->ux_hccv);
 	xfer->ux_bus->ub_methods->ubm_freex(xfer->ux_bus, xfer);
 	return USBD_NORMAL_COMPLETION;
 }
@@ -883,9 +884,13 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 		USBHIST_LOG(usbdebug, "pipe = %#jx xfer = %#jx "
 		    "(methods = %#jx)", (uintptr_t)pipe, (uintptr_t)xfer,
 		    (uintptr_t)pipe->up_methods, 0);
-		/* Make the HC abort it (and invoke the callback). */
-		pipe->up_methods->upm_abort(xfer);
-		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
+		if (xfer->ux_status == USBD_NOT_STARTED) {
+			SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
+		} else {
+			/* Make the HC abort it (and invoke the callback). */
+			pipe->up_methods->upm_abort(xfer);
+			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
+		}
 	}
 	pipe->up_aborting = 0;
 	return USBD_NORMAL_COMPLETION;
@@ -898,9 +903,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	int sync = xfer->ux_flags & USBD_SYNCHRONOUS;
-	int erred =
-	    xfer->ux_status == USBD_CANCELLED ||
-	    xfer->ux_status == USBD_TIMEOUT;
+	int erred;
 	int polling = bus->ub_usepolling;
 	int repeat = pipe->up_repeat;
 
@@ -911,8 +914,30 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    xfer->ux_actlen);
 
 	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));
-	KASSERT(xfer->ux_state == XFER_ONQU);
+	KASSERTMSG(xfer->ux_state == XFER_ONQU, "xfer %p state is %x", xfer,
+	    xfer->ux_state);
 	KASSERT(pipe != NULL);
+
+	/*
+	 * If device is known to miss out ack, then pretend that
+	 * output timeout is a success. Userland should handle
+	 * the logic to verify that the operation succeeded.
+	 */
+	if (pipe->up_dev->ud_quirks &&
+	    pipe->up_dev->ud_quirks->uq_flags & UQ_MISS_OUT_ACK &&
+	    xfer->ux_status == USBD_TIMEOUT &&
+	    !usbd_xfer_isread(xfer)) {
+		USBHIST_LOG(usbdebug, "Possible output ack miss for xfer %#jx: "
+		    "hiding write timeout to %d.%s for %d bytes written",
+		    (uintptr_t)xfer, curlwp->l_proc->p_pid, curlwp->l_lid,
+		    xfer->ux_length);
+
+		xfer->ux_status = USBD_NORMAL_COMPLETION;
+		xfer->ux_actlen = xfer->ux_length;
+	}
+
+	erred = xfer->ux_status == USBD_CANCELLED ||
+	        xfer->ux_status == USBD_TIMEOUT;
 
 	if (!repeat) {
 		/* Remove request from queue. */
@@ -963,19 +988,19 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    (uintptr_t)xfer, (uintptr_t)xfer->ux_callback, xfer->ux_status, 0);
 
 	if (xfer->ux_callback) {
-		if (!polling)
+		if (!polling) {
 			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
-
-		if (!(pipe->up_flags & USBD_MPSAFE))
-			KERNEL_LOCK(1, curlwp);
+			if (!(pipe->up_flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
+		}
 
 		xfer->ux_callback(xfer, xfer->ux_priv, xfer->ux_status);
 
-		if (!(pipe->up_flags & USBD_MPSAFE))
-			KERNEL_UNLOCK_ONE(curlwp);
-
-		if (!polling)
+		if (!polling) {
+			if (!(pipe->up_flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
 			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
+		}
 	}
 
 	if (sync && !polling) {
@@ -1120,6 +1145,36 @@ usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 	return err;
 }
 
+static void
+usbd_request_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
+{
+	usbd_free_xfer(xfer);
+}
+
+/*
+ * Execute a request without waiting for completion.
+ * Can be used from interrupt context.
+ */
+usbd_status
+usbd_request_async(struct usbd_device *dev, struct usbd_xfer *xfer,
+    usb_device_request_t *req, void *priv, usbd_callback callback)
+{
+	usbd_status err;
+
+	if (callback == NULL)
+		callback = usbd_request_async_cb;
+
+	usbd_setup_default_xfer(xfer, dev, priv,
+	    USBD_DEFAULT_TIMEOUT, req, NULL, UGETW(req->wLength), 0,
+	    callback);
+	err = usbd_transfer(xfer);
+	if (err != USBD_IN_PROGRESS) {
+		usbd_free_xfer(xfer);
+		return (err);
+	}
+	return (USBD_NORMAL_COMPLETION);
+}
+
 const struct usbd_quirks *
 usbd_get_quirks(struct usbd_device *dev)
 {
@@ -1144,7 +1199,8 @@ usbd_dopoll(struct usbd_interface *iface)
 }
 
 /*
- * XXX use this more???  ub_usepolling it touched manually all over
+ * This is for keyboard driver as well, which only operates in polling
+ * mode from the ask root, etc., prompt and from DDB.
  */
 void
 usbd_set_polling(struct usbd_device *dev, int on)

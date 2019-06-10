@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2016 Free Software Foundation, Inc.
+# Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,16 +50,16 @@ proc test_all_threads { name kill } {
     gdb_test_multiple "continue" "all threads ran once" {
 	-re "Breakpoint \[0-9\]+, thread_function \\(arg=.*\\) at .*print-threads.c:\[0-9\]+.*$gdb_prompt" {
 	    set i [expr $i + 1]
-	    pass "Hit thread_function breakpoint, $i ($name)"
+	    pass "hit thread_function breakpoint, $i ($name)"
 	    send_gdb "continue\n"
 	    exp_continue
 	}
 	-re "Breakpoint \[0-9\]+, .* kill \\(.*\\) .*$gdb_prompt" {
 	    set j [expr $j + 1]
 	    if { $kill == 1 } {
-		pass "Hit kill breakpoint, $j ($name)"
+		pass "hit kill breakpoint, $j ($name)"
 	    } else {
-		fail "Hit kill breakpoint, $j ($name) (unexpected)"
+		fail "hit kill breakpoint, $j ($name) (unexpected)"
 	    }
 	    send_gdb "continue\n"
 	    exp_continue
@@ -76,7 +76,7 @@ proc test_all_threads { name kill } {
 	    if { $kill == 1 } {
 		kfail "gdb/1265" "Running threads ($name) (zombie thread)"
 	    } else {
-		fail "Running threads ($name) (unknown output)"
+		fail "running threads ($name) (unknown output)"
 	    }
 	}
     }

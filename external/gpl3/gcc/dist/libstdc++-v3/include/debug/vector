@@ -1,6 +1,6 @@
 // Debugging vector implementation -*- C++ -*-
 
-// Copyright (C) 2003-2016 Free Software Foundation, Inc.
+// Copyright (C) 2003-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -28,6 +28,8 @@
 
 #ifndef _GLIBCXX_DEBUG_VECTOR
 #define _GLIBCXX_DEBUG_VECTOR 1
+
+#pragma GCC system_header
 
 #include <vector>
 #include <utility>
@@ -476,7 +478,11 @@ namespace __debug
 	{ emplace_back(std::move(__x)); }
 
       template<typename... _Args>
+#if __cplusplus > 201402L
+	reference
+#else
 	void
+#endif
 	emplace_back(_Args&&... __args)
 	{
 	  bool __realloc = this->_M_requires_reallocation(this->size() + 1);
@@ -484,6 +490,9 @@ namespace __debug
 	  if (__realloc)
 	    this->_M_invalidate_all();
 	  this->_M_update_guaranteed_capacity();
+#if __cplusplus > 201402L
+	  return back();
+#endif
 	}
 #endif
 

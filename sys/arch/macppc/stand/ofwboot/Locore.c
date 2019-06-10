@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.31 2018/06/06 23:50:29 uwe Exp $	*/
+/*	$NetBSD: Locore.c,v 1.31.2.1 2019/06/10 22:06:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
+#include <powerpc/oea/spr.h>
 
 #include "openfirm.h"
 
@@ -80,10 +81,14 @@ __asm(
 "				\n" /* test for 601 */
 "	mfspr	%r0,287		\n" /* mfpvbr %r0 PVR = 287 */
 "	srwi	%r0,%r0,0x10	\n"
-"	cmpi	0,1,%r0,0x02	\n" /* 601 CPU = 0x0001 */
-"	blt	1f		\n" /* skip over non-601 BAT setup */
+"	cmplwi	%r0,0x02	\n" /* 601 CPU = 0x0001 */
+"	blt	2f		\n" /* skip over non-601 BAT setup */
+"	cmplwi	%r0,0x39	\n" /* PPC970 */
+"	blt	0f		\n"
+"	cmplwi	%r0,0x45	\n" /* PPC970GX */
+"	ble	1f		\n"
 	/* non PPC 601 BATs */
-"	li	%r0,0		\n"
+"0:	li	%r0,0		\n"
 "	mtibatu	0,%r0		\n"
 "	mtibatu	1,%r0		\n"
 "	mtibatu	2,%r0		\n"
@@ -99,10 +104,31 @@ __asm(
 "	li	%r9,0x1ffe	\n"	/* BATU(0, BAT_BL_256M, BAT_Vs) */
 "	mtibatu	0,%r9		\n"
 "	mtdbatu	0,%r9		\n"
-"	b	2f		\n"
-
+"	b	3f		\n"
+	/* 970 initialization stuff */
+"1:				\n"
+	/* make sure we're in bridge mode */
+"	clrldi	%r8,%r8,3	\n"
+"	mtmsrd	%r8		\n"
+"	isync			\n"
+	 /* clear HID5 DCBZ bits (56/57), need to do this early */
+"	mfspr	%r9,0x3f6	\n"
+"	rldimi	%r9,0,6,56	\n"
+"	sync			\n"
+"	mtspr	0x3f6,%r9	\n"
+"	isync			\n"
+"	sync			\n"
+	/* Setup HID1 features, prefetch + i-cacheability controlled by PTE */
+"	mfspr	%r9,0x3f1	\n"
+"	li	%r11,0x1200	\n"
+"	sldi	%r11,%r11,44	\n"
+"	or	%r9,%r9,%r11	\n"
+"	mtspr	0x3f1,%r9	\n"
+"	isync			\n"
+"	sync			\n"
+"	b	3f		\n"	
 	/* PPC 601 BATs */
-"1:	li	%r0,0		\n"
+"2:	li	%r0,0		\n"
 "	mtibatu	0,%r0		\n"
 "	mtibatu	1,%r0		\n"
 "	mtibatu	2,%r0		\n"
@@ -134,7 +160,7 @@ __asm(
 "	addi	%r9,%r9,0x1a	\n"
 "	mtibatu	3,%r9		\n"
 "				\n"
-"2:	isync			\n"
+"3:	isync			\n"
 "				\n"
 "	mtmsr	%r8		\n"
 "	isync			\n"
@@ -151,7 +177,13 @@ __asm(
 "				\n"
 "5:	cmpw	0,%r8,%r9	\n"
 "	bge	6f		\n"
-"	stw	%r0,0(%r8)	\n"
+	/*
+	 * clear by bytes to avoid ppc601 alignment exceptions
+	 */
+"	stb	%r0,0(%r8)	\n"
+"	stb	%r0,1(%r8)	\n"
+"	stb	%r0,2(%r8)	\n"
+"	stb	%r0,3(%r8)	\n"
 "	addi	%r8,%r8,4	\n"
 "	b	5b		\n"
 "				\n"
@@ -649,7 +681,13 @@ setup(void)
 		OF_exit();
 
 #ifdef HEAP_VARIABLE
-	heapspace = OF_claim(0, HEAP_SIZE, NBPG);
+	uint32_t pvr, vers, hsize = HEAP_SIZE;
+
+	__asm volatile ("mfpvr %0" : "=r"(pvr));
+	vers = pvr >> 16;
+	if (vers >= IBM970 && vers <= IBM970GX) hsize = 0x800000;
+
+	heapspace = OF_claim(0, hsize, NBPG);
 	if (heapspace == (char *)-1) {
 		panic("Failed to allocate heap");
 	}

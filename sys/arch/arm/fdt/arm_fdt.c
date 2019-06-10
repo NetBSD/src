@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.7 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.7.4.1 2019/06/10 22:05:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_arm_timer.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.7 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.7.4.1 2019/06/10 22:05:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,6 @@ static void	arm_fdt_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(arm_fdt, 0,
     arm_fdt_match, arm_fdt_attach, NULL, NULL);
-
-static struct arm_platlist arm_platform_list =
-    TAILQ_HEAD_INITIALIZER(arm_platform_list);
 
 struct arm_fdt_cpu_hatch_cb {
 	TAILQ_ENTRY(arm_fdt_cpu_hatch_cb) next;
@@ -79,7 +76,7 @@ arm_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	plat->init_attach_args(&faa);
+	plat->ap_init_attach_args(&faa);
 	faa.faa_name = "";
 	faa.faa_phandle = OF_peer(0);
 
@@ -99,7 +96,7 @@ arm_fdt_platform(void)
 		int match, best_match = 0;
 
 		__link_set_foreach(info, arm_platforms) {
-			const char * const compat[] = { (*info)->compat, NULL };
+			const char * const compat[] = { (*info)->api_compat, NULL };
 			match = of_match_compatible(phandle, compat);
 			if (match > best_match) {
 				best_match = match;
@@ -110,7 +107,7 @@ arm_fdt_platform(void)
 		booted_platform = best_info;
 	}
 
-	return booted_platform == NULL ? NULL : booted_platform->ops;
+	return booted_platform == NULL ? NULL : booted_platform->api_ops;
 }
 
 void
@@ -166,7 +163,7 @@ arm_fdt_memory_dump(paddr_t pa)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
-	plat->init_attach_args(&faa);
+	plat->ap_init_attach_args(&faa);
 
 	bst = faa.faa_bst;
 	bus_space_map(bst, pa, 0x100, 0, &bsh);

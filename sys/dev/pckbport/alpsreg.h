@@ -1,4 +1,4 @@
-/* $NetBSD: alpsreg.h,v 1.1 2017/08/13 08:49:27 christos Exp $ */
+/* $NetBSD: alpsreg.h,v 1.1.8.1 2019/06/10 22:07:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -39,7 +39,7 @@ struct alps_nibble_command_data {
 	uint8_t command;
 	uint8_t data;
 	int sendparam;
-	int recieve;
+	int receive;
 };
 
 struct alps_nibble_command_data alps_v7_nibble_command_data_arr[] = {

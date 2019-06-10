@@ -1,6 +1,6 @@
 /* Serial interface for UN*X file-descriptor based connection.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -169,8 +169,7 @@ extract_long_unsigned_integer (const gdb_byte *addr, int orig_len,
 CORE_ADDR
 extract_typed_address (const gdb_byte *buf, struct type *type)
 {
-  if (TYPE_CODE (type) != TYPE_CODE_PTR
-      && TYPE_CODE (type) != TYPE_CODE_REF)
+  if (TYPE_CODE (type) != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
     internal_error (__FILE__, __LINE__,
 		    _("extract_typed_address: "
 		    "type is not a pointer or reference"));
@@ -242,8 +241,7 @@ store_unsigned_integer (gdb_byte *addr, int len,
 void
 store_typed_address (gdb_byte *buf, struct type *type, CORE_ADDR addr)
 {
-  if (TYPE_CODE (type) != TYPE_CODE_PTR
-      && TYPE_CODE (type) != TYPE_CODE_REF)
+  if (TYPE_CODE (type) != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
     internal_error (__FILE__, __LINE__,
 		    _("store_typed_address: "
 		    "type is not a pointer or reference"));
@@ -283,17 +281,23 @@ value_of_register_lazy (struct frame_info *frame, int regnum)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct value *reg_val;
+  struct frame_info *next_frame;
 
   gdb_assert (regnum < (gdbarch_num_regs (gdbarch)
 			+ gdbarch_num_pseudo_regs (gdbarch)));
 
-  /* We should have a valid (i.e. non-sentinel) frame.  */
-  gdb_assert (frame_id_p (get_frame_id (frame)));
+  gdb_assert (frame != NULL);
+
+  next_frame = get_next_frame_sentinel_okay (frame);
+
+  /* We should have a valid next frame.  */
+  gdb_assert (frame_id_p (get_frame_id (next_frame)));
 
   reg_val = allocate_value_lazy (register_type (gdbarch, regnum));
   VALUE_LVAL (reg_val) = lval_register;
   VALUE_REGNUM (reg_val) = regnum;
-  VALUE_FRAME_ID (reg_val) = get_frame_id (frame);
+  VALUE_NEXT_FRAME_ID (reg_val) = get_frame_id (next_frame);
+
   return reg_val;
 }
 
@@ -815,9 +819,17 @@ default_value_from_register (struct gdbarch *gdbarch, struct type *type,
 {
   int len = TYPE_LENGTH (type);
   struct value *value = allocate_value (type);
+  struct frame_info *frame;
 
   VALUE_LVAL (value) = lval_register;
-  VALUE_FRAME_ID (value) = frame_id;
+  frame = frame_find_by_id (frame_id);
+
+  if (frame == NULL)
+    frame_id = null_frame_id;
+  else
+    frame_id = get_frame_id (get_next_frame_sentinel_okay (frame));
+
+  VALUE_NEXT_FRAME_ID (value) = frame_id;
   VALUE_REGNUM (value) = regnum;
 
   /* Any structure stored in more than one register will always be
@@ -902,7 +914,7 @@ value_from_register (struct type *type, int regnum, struct frame_info *frame)
          including the location.  */
       v = allocate_value (type);
       VALUE_LVAL (v) = lval_register;
-      VALUE_FRAME_ID (v) = get_frame_id (frame);
+      VALUE_NEXT_FRAME_ID (v) = get_frame_id (get_next_frame_sentinel_okay (frame));
       VALUE_REGNUM (v) = regnum;
       ok = gdbarch_register_to_value (gdbarch, frame, regnum, type1,
 				      value_contents_raw (v), &optim,
@@ -950,7 +962,7 @@ address_from_register (int regnum, struct frame_info *frame)
      where the ID of FRAME is not yet known.  Calling value_from_register
      would therefore abort in get_frame_id.  However, since we only need
      a temporary value that is never used as lvalue, we actually do not
-     really need to set its VALUE_FRAME_ID.  Therefore, we re-implement
+     really need to set its VALUE_NEXT_FRAME_ID.  Therefore, we re-implement
      the core of value_from_register, but use the null_frame_id.  */
 
   /* Some targets require a special conversion routine even for plain

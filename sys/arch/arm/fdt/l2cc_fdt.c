@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cc_fdt.c,v 1.1 2018/06/20 08:03:55 hkenken Exp $	*/
+/*	$NetBSD: l2cc_fdt.c,v 1.1.4.1 2019/06/10 22:05:53 christos Exp $	*/
 /*
  * Copyright (c) 2018  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cc_fdt.c,v 1.1 2018/06/20 08:03:55 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cc_fdt.c,v 1.1.4.1 2019/06/10 22:05:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,9 @@ l2cc_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	struct mpcore_attach_args mpcaa = {
 		.mpcaa_name = "arml2cc",

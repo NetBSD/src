@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ Dwarf::assemble $asm_file {
     }
 }
 
-if [prepare_for_testing ${testfile}.exp $executable "${asm_file} ${srcfile}" {}] {
+if [prepare_for_testing "failed to prepare" $executable "${asm_file} ${srcfile}" {}] {
     return -1
 }
 

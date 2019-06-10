@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.7 2016/07/07 15:27:42 kiyohara Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.7.18.1 2019/06/10 22:05:55 christos Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.7 2016/07/07 15:27:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.7.18.1 2019/06/10 22:05:55 christos Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -158,7 +158,7 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 		panic(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

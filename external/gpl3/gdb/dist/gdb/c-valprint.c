@@ -1,6 +1,6 @@
 /* Support for printing C values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -198,14 +198,17 @@ print_unpacked_pointer (struct type *type, struct type *elttype,
 	  struct symbol *wsym = NULL;
 	  struct type *wtype;
 	  struct block *block = NULL;
-	  struct field_of_this_result is_this_fld;
 
 	  if (want_space)
 	    fputs_filtered (" ", stream);
 
 	  if (msymbol.minsym != NULL)
-	    wsym = lookup_symbol (MSYMBOL_LINKAGE_NAME(msymbol.minsym), block,
-				  VAR_DOMAIN, &is_this_fld).symbol;
+	    {
+	      const char *search_name
+		= MSYMBOL_SEARCH_NAME (msymbol.minsym);
+	      wsym = lookup_symbol_search_name (search_name, block,
+						VAR_DOMAIN).symbol;
+	    }
 
 	  if (wsym)
 	    {
@@ -454,8 +457,8 @@ c_val_print_int (struct type *type, struct type *unresolved_type,
     }
   else
     {
-      val_print_type_code_int (type, valaddr + embedded_offset * unit_size,
-			       stream);
+      val_print_scalar_formatted (type, embedded_offset,
+				  original_value, options, 0, stream);
       /* C and C++ has no single byte int type, char is used
 	 instead.  Since we don't know whether the value is really
 	 intended to be used as an integer or a character, print

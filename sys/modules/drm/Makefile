@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/02/18 14:26:40 jmcneill Exp $
+# $NetBSD: Makefile,v 1.4.56.1 2019/06/10 22:09:21 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -27,5 +27,7 @@ SRCS+=	drm_sysctl.c
 SRCS+=	drm_vm.c
 
 CPPFLAGS+=	-I${S}/external/bsd/drm/dist/shared-core
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

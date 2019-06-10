@@ -1,5 +1,5 @@
 /* Operations with very long integers.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -22,18 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hwint.h"
-#include "wide-int.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "inchash.h"
 #include "tree.h"
-#include "dumpfile.h"
 
 
 #define HOST_BITS_PER_HALF_WIDE_INT 32
@@ -126,6 +115,20 @@ canonize (HOST_WIDE_INT *val, unsigned int len, unsigned int precision)
     }
 
   /* The number is 0 or -1.  */
+  return 1;
+}
+
+/* VAL[0] is the unsigned result of an operation.  Canonize it by adding
+   another 0 block if needed, and return number of blocks needed.  */
+
+static inline unsigned int
+canonize_uhwi (HOST_WIDE_INT *val, unsigned int precision)
+{
+  if (val[0] < 0 && precision > HOST_BITS_PER_WIDE_INT)
+    {
+      val[1] = 0;
+      return 2;
+    }
   return 1;
 }
 
@@ -1804,25 +1807,12 @@ wi::divmod_internal (HOST_WIDE_INT *quotient, unsigned int *remainder_len,
       if (quotient)
 	{
 	  quotient[0] = o0 / o1;
-	  if (o1 == 1
-	      && (HOST_WIDE_INT) o0 < 0
-	      && dividend_prec > HOST_BITS_PER_WIDE_INT)
-	    {
-	      quotient[1] = 0;
-	      quotient_len = 2;
-	    }
+	  quotient_len = canonize_uhwi (quotient, dividend_prec);
 	}
       if (remainder)
 	{
 	  remainder[0] = o0 % o1;
-	  if ((HOST_WIDE_INT) remainder[0] < 0
-	      && dividend_prec > HOST_BITS_PER_WIDE_INT)
-	    {
-	      remainder[1] = 0;
-	      *remainder_len = 2;
-	    }
-	  else
-	    *remainder_len = 1;
+	  *remainder_len = canonize_uhwi (remainder, dividend_prec);
 	}
       return quotient_len;
     }

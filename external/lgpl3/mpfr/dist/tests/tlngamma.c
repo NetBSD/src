@@ -1,6 +1,6 @@
 /* mpfr_tlngamma -- test file for lngamma function
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -146,9 +143,9 @@ special (void)
     {
       printf ("mpfr_lngamma("CHECK_X1") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -161,9 +158,9 @@ special (void)
     {
       printf ("mpfr_lngamma("CHECK_X2") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -188,8 +185,8 @@ special (void)
   if (mpfr_cmp0 (x, y))
     {
       printf ("Error in mpfr_lngamma (120)\n");
-      printf ("Expected "); mpfr_print_binary (y); puts ("");
-      printf ("Got      "); mpfr_print_binary (x); puts ("");
+      printf ("Expected "); mpfr_dump (y);
+      printf ("Got      "); mpfr_dump (x);
       exit (1);
     }
 
@@ -255,13 +252,71 @@ special (void)
   mpfr_clear (y);
 }
 
+/* test failing with GMP_CHECK_RANDOMIZE=1513869588 */
+static void
+bug20171220 (void)
+{
+  mpfr_t x, y, z;
+  int inex;
+
+  mpfr_init2 (x, 15);
+  mpfr_init2 (y, 15);
+  mpfr_init2 (z, 15);
+
+  mpfr_set_str (x, "1.01111e+00", 10, MPFR_RNDN); /* x = 8283/8192 */
+  inex = mpfr_lngamma (y, x, MPFR_RNDN);
+  mpfr_set_str (z, "-0.0063109971733698154140545190234", 10, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (y, z));
+  MPFR_ASSERTN(inex > 0);
+
+  mpfr_set_prec (x, 43);
+  mpfr_set_prec (y, 1);
+  mpfr_set_prec (z, 1);
+  mpfr_set_str (x, "9.8888652212918e-01", 10, MPFR_RNDN);
+  /* lngamma(x) = 0.00651701007222520, should be rounded up to 0.0078125 */
+  inex = mpfr_lngamma (y, x, MPFR_RNDU);
+  mpfr_set_ui_2exp (z, 1, -7, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (y, z));
+  MPFR_ASSERTN(inex > 0);
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+}
+
+/* taway failing with GMP_CHECK_RANDOMIZE=1513888822 */
+static void
+bug20171220a (void)
+{
+  mpfr_t x, y, z;
+  int inex;
+
+  mpfr_init2 (x, 198);
+  mpfr_init2 (y, 1);
+  mpfr_init2 (z, 1);
+
+  mpfr_set_str (x, "9.999962351340362288585900348170984233205352566408878552154832e-01", 10, MPFR_RNDN);
+  inex = mpfr_lngamma (y, x, MPFR_RNDA);
+  /* lngamma(x) ~ 2.1731512683e0-6 ~ 2^-18.81, should be rounded to 2^-18 */
+  mpfr_set_si_2exp (z, 1, -18, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (y, z));
+  MPFR_ASSERTN(inex > 0);
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+}
+
 int
 main (void)
 {
   tests_start_mpfr ();
 
+  bug20171220 ();
+  bug20171220a ();
+
   special ();
-  test_generic (2, 100, 2);
+  test_generic (MPFR_PREC_MIN, 100, 2);
 
   tests_end_mpfr ();
   return 0;

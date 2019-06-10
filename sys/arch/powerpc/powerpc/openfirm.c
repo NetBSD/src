@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.25 2014/08/07 09:08:09 joerg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.25.28.1 2019/06/10 22:06:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25 2014/08/07 09:08:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25.28.1 2019/06/10 22:06:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25 2014/08/07 09:08:09 joerg Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
+#include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -491,7 +492,7 @@ OF_read(int handle, void *addr, int len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(PAGE_SIZE, len);
+		l = uimin(PAGE_SIZE, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -532,7 +533,7 @@ OF_write(int handle, const void *addr, int len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(PAGE_SIZE, len);
+		l = uimin(PAGE_SIZE, len);
 		ofbcopy(p, OF_buf, l);
 		args.len = l;
 		args.actual = l;	/* work around a PIBS bug */
@@ -757,3 +758,11 @@ ofbcopy(const void *src, void *dst, size_t len)
 	while (len-- > 0)
 		*dp++ = *sp++;
 }
+
+#ifdef __OPENFIRMIO_OPEN_CHECK_BROKEN
+int
+__openfirmio_open_check_broken(void)
+{
+	return strncmp(model_name, "Pegasos", 7) == 0 ? ENXIO : 0;
+}
+#endif

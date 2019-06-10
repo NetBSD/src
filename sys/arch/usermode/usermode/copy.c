@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.7 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: copy.c,v 1.7.48.1 2019/06/10 22:06:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,14 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.7 2012/01/14 17:42:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.7.48.1 2019/06/10 22:06:51 christos Exp $");
+
+#define	__UFETCHSTORE_PRIVATE
+#define	__UCAS_PRIVATE
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <machine/thunk.h>
 
 /* XXX until strnlen(3) has been added to the kernel, we *could* panic on it */
-#define strnlen(str, maxlen) min(strlen((str)), maxlen)
+#define strnlen(str, maxlen) uimin(strlen((str)), maxlen)
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -55,7 +58,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
-	len = min(strnlen(uaddr, len), len) + 1;
+	len = uimin(strnlen(uaddr, len), len) + 1;
 	strncpy(kaddr, uaddr, len);
 	if (done)
 		*done = len;
@@ -65,7 +68,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
-	len = min(strnlen(kaddr, len), len) + 1;
+	len = uimin(strnlen(kaddr, len), len) + 1;
 	strncpy(uaddr, kaddr, len);
 	if (done)
 		*done = len;
@@ -75,7 +78,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 int
 copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
-	len = min(strnlen(kfaddr, len), len) + 1;
+	len = uimin(strnlen(kfaddr, len), len) + 1;
 	strncpy(kdaddr, kfaddr, len);
 	if (done)
 		*done = len;
@@ -94,28 +97,61 @@ kcopy(const void *src, void *dst, size_t len)
 }
 
 int
-fuswintr(const void *base)
+_ufetch_8(const uint8_t *uaddr, uint8_t *valp)
 {
-	return *(const short *)base;
-}
-
-int
-suswintr(void *base, short c)
-{
-	*(short *)base = c;
+	*valp = *uaddr;
 	return 0;
 }
 
 int
-subyte(void *base, int c)
+_ufetch_16(const uint16_t *uaddr, uint16_t *valp)
 {
-	*(char *)base = c;
+	*valp = *uaddr;
 	return 0;
 }
 
 int
-suword(void *base, long c)
+_ufetch_32(const uint32_t *uaddr, uint32_t *valp)
 {
-	*(long *)base = c;
+	*valp = *uaddr;
 	return 0;
 }
+
+#ifdef _LP64
+int
+_ufetch_64(const uint64_t *uaddr, uint64_t *valp)
+{
+	*valp = *uaddr;
+	return 0;
+}
+#endif /* _LP64 */
+
+int
+_ustore_8(uint8_t *uaddr, uint8_t val)
+{
+	*uaddr = val;
+	return 0;
+}
+
+int
+_ustore_16(uint16_t *uaddr, uint16_t val)
+{
+	*uaddr = val;
+	return 0;
+}
+
+int
+_ustore_32(uint32_t *uaddr, uint32_t val)
+{
+	*uaddr = val;
+	return 0;
+}
+
+#ifdef _LP64
+int
+_ustore_64(uint64_t *uaddr, uint64_t val)
+{
+	*uaddr = val;
+	return 0;
+}
+#endif /* _LP64 */

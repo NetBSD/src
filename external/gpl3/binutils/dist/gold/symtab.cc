@@ -989,7 +989,7 @@ Symbol_table::add_from_object(Object* object,
   // ins.first->second: the value (Symbol*).
   // ins.second: true if new entry was inserted, false if not.
 
-  Sized_symbol<size>* ret;
+  Sized_symbol<size>* ret = NULL;
   bool was_undefined_in_reg;
   bool was_common;
   if (!ins.second)
@@ -1049,17 +1049,42 @@ Symbol_table::add_from_object(Object* object,
 	  // it, then change it to NAME/VERSION.
 	  ret = this->get_sized_symbol<size>(insdefault.first->second);
 
-	  was_undefined_in_reg = ret->is_undefined() && ret->in_reg();
-	  // Commons from plugins are just placeholders.
-	  was_common = ret->is_common() && ret->object()->pluginobj() == NULL;
+	  // If the existing symbol already has a version,
+	  // don't override it with the new symbol.
+	  // This should only happen when the new symbol
+	  // is from a shared library.
+	  if (ret->version() != NULL)
+	    {
+	      if (!object->is_dynamic())
+	        {
+		  gold_warning(_("%s: conflicting default version definition"
+				 " for %s@@%s"),
+			       object->name().c_str(), name, version);
+		  if (ret->source() == Symbol::FROM_OBJECT)
+		    gold_info(_("%s: %s: previous definition of %s@@%s here"),
+			      program_name,
+			      ret->object()->name().c_str(),
+			      name, ret->version());
+	        }
+	      ret = NULL;
+	      is_default_version = false;
+	    }
+	  else
+	    {
+	      was_undefined_in_reg = ret->is_undefined() && ret->in_reg();
+	      // Commons from plugins are just placeholders.
+	      was_common = (ret->is_common()
+			    && ret->object()->pluginobj() == NULL);
 
-	  this->resolve(ret, sym, st_shndx, is_ordinary, orig_st_shndx, object,
-			version, is_default_version);
-          if (parameters->options().gc_sections())
-            this->gc_mark_dyn_syms(ret);
-	  ins.first->second = ret;
+	      this->resolve(ret, sym, st_shndx, is_ordinary, orig_st_shndx,
+			    object, version, is_default_version);
+	      if (parameters->options().gc_sections())
+		this->gc_mark_dyn_syms(ret);
+	      ins.first->second = ret;
+	    }
 	}
-      else
+
+      if (ret == NULL)
 	{
 	  was_undefined_in_reg = false;
 	  was_common = false;
@@ -1873,10 +1898,13 @@ Symbol_table::define_special_symbol(const char** pname, const char** pversion,
 	  add_to_table = true;
 	  add_loc = ins.first;
 
-	  if (is_default_version && !insdefault.second)
+	  if (is_default_version
+	      && !insdefault.second
+	      && insdefault.first->second->version() == NULL)
 	    {
 	      // We are adding NAME/VERSION, and it is the default
-	      // version.  We already have an entry for NAME/NULL.
+	      // version.  We already have an entry for NAME/NULL
+	      // that does not already have a version.
 	      oldsym = insdefault.first->second;
 	      *resolve_oldsym = true;
 	    }
@@ -2518,8 +2546,6 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
 				 Stringpool* dynpool,
 				 Versions* versions)
 {
-  std::vector<Symbol*> as_needed_sym;
-
   // First process all the symbols which have been forced to be local,
   // as they must appear before all global symbols.
   unsigned int forced_local_count = 0;
@@ -2586,15 +2612,6 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
 	  syms->push_back(sym);
 	  dynpool->add(sym->name(), false, NULL);
 
-	  // If the symbol is defined in a dynamic object and is
-	  // referenced strongly in a regular object, then mark the
-	  // dynamic object as needed.  This is used to implement
-	  // --as-needed.
-	  if (sym->is_from_dynobj()
-	      && sym->in_reg()
-	      && !sym->is_undef_binding_weak())
-	    sym->object()->set_is_needed();
-
 	  // Record any version information, except those from
 	  // as-needed libraries not seen to be needed.  Note that the
 	  // is_needed state for such libraries can change in this loop.
@@ -2605,22 +2622,16 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
 		  || sym->object()->is_needed())
 		versions->record_version(this, dynpool, sym);
 	      else
-		as_needed_sym.push_back(sym);
+		{
+		  gold_warning(_("discarding version information for "
+				 "%s@%s, defined in unused shared library %s "
+				 "(linked with --as-needed)"),
+			       sym->name(), sym->version(),
+			       sym->object()->name().c_str());
+		  sym->clear_version();
+		}
 	    }
 	}
-    }
-
-  // Process version information for symbols from as-needed libraries.
-  for (std::vector<Symbol*>::iterator p = as_needed_sym.begin();
-       p != as_needed_sym.end();
-       ++p)
-    {
-      Symbol* sym = *p;
-
-      if (sym->object()->is_needed())
-	versions->record_version(this, dynpool, sym);
-      else
-	sym->clear_version();
     }
 
   // Finish up the versions.  In some cases this may add new dynamic

@@ -1,4 +1,4 @@
---  Copyright 2015-2017 Free Software Foundation, Inc.
+--  Copyright 2015-2019 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -14,10 +14,10 @@
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package body Pack is
-   function Next (I : Integer) return Integer is
+   function Fun_Rename_Test_Next (I : Integer) return Integer is
    begin
       return I + 1;
-   end Next;
+   end Fun_Rename_Test_Next;
 
    procedure Discard (I : Integer) is
    begin

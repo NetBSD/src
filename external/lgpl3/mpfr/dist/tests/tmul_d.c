@@ -1,6 +1,6 @@
 /* Test file for mpfr_mul_d
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,13 +20,9 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <float.h>
 
 #include "mpfr-test.h"
-
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,4,0)
 
 static void
 check_nans (void)
@@ -42,7 +38,7 @@ check_nans (void)
   mpfr_clear_flags();
   inexact = mpfr_mul_d (y, x, 1.0, MPFR_RNDN);
   MPFR_ASSERTN (inexact == 0);
-  MPFR_ASSERTN ((__gmpfr_flags ^ MPFR_FLAGS_NAN) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
   MPFR_ASSERTN (mpfr_nan_p (y));
 
   /* +inf * 1.0 == +inf */
@@ -58,7 +54,7 @@ check_nans (void)
   mpfr_clear_flags();
   inexact = mpfr_mul_d (y, x, 0.0, MPFR_RNDN);
   MPFR_ASSERTN (inexact == 0);
-  MPFR_ASSERTN ((__gmpfr_flags ^ MPFR_FLAGS_NAN) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
   MPFR_ASSERTN (mpfr_nan_p (y));
 
   /* -inf * 1.0 == -inf */
@@ -74,6 +70,24 @@ check_nans (void)
   mpfr_clear (y);
 }
 
+static void
+bug20171218 (void)
+{
+  mpfr_t a, b;
+  mpfr_init2 (a, 22);
+  mpfr_init2 (b, 1312);
+  mpfr_set_str (b, "1.ffffffffffffffffffc3e0007ffe000700fff8001fff800000000007e0fffe0007fffffff00001f800000003ffffffe1fc00000003fffe7c03ffffffffffffffe000000fffffffff83f0000007ffc03ffffffffc0007ff0000ffcfffffe00000f80000000003c007ffffffff3ff807ffffffffff000000000000001fc000fffe000600000ff0003ffe00fffffffc00001ffc0fffffffffff00000807fe03ffffffc01ffe", 16, MPFR_RNDN);
+  mpfr_mul_d (a, b, 0.5, MPFR_RNDF);
+  /* a should be 1 or nextbelow(1) */
+  if (mpfr_cmp_ui (a, 1) != 0)
+    {
+      mpfr_nextabove (a);
+      MPFR_ASSERTN(mpfr_cmp_ui (a, 1) == 0);
+    }
+  mpfr_clear (a);
+  mpfr_clear (b);
+}
+
 #define TEST_FUNCTION mpfr_mul_d
 #define DOUBLE_ARG2
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), 1, RANDS)
@@ -87,6 +101,8 @@ main (void)
   int inexact;
 
   tests_start_mpfr ();
+
+  bug20171218 ();
 
   /* check with enough precision */
   mpfr_init2 (x, IEEE_DBL_MANT_DIG);
@@ -118,19 +134,8 @@ main (void)
 
   check_nans ();
 
-  test_generic (2, 1000, 100);
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   tests_end_mpfr ();
   return 0;
 }
-
-#else
-
-int
-main (void)
-{
-  printf ("Warning! Test disabled for this MPFR version.\n");
-  return 0;
-}
-
-#endif

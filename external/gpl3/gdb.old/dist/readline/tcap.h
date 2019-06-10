@@ -31,6 +31,8 @@
 #    include "rltty.h"
 #  endif
 #  include <termcap.h>
+#elif defined (HAVE_NCURSES_TERMCAP_H)
+#  include <ncurses/termcap.h>
 #else
 
 /* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.

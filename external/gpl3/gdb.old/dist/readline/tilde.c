@@ -360,6 +360,10 @@ tilde_expand_word (filename)
     {
       /* Prefix $HOME to the rest of the string. */
       expansion = sh_get_env_value ("HOME");
+#ifdef _WIN32
+      if (!expansion)
+	expansion = sh_get_env_value ("APPDATA");
+#endif
 
       /* If there is no HOME variable, look up the directory in
 	 the password database. */

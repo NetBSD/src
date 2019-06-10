@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.254 2018/05/31 13:51:56 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.254.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,13 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.254 2018/05/31 13:51:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.254.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
-#include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
 #include "opt_net_mpsafe.h"
 #endif
@@ -119,10 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.254 2018/05/31 13:51:56 maxv Exp $"
 #include <netipsec/esp.h>
 #endif
 
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
-#endif
-
 int udpcksum = 1;
 int udp_do_loopback_cksum = 0;
 
@@ -132,7 +127,7 @@ percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
-static int udp4_espinudp(struct mbuf **, int, struct socket *);
+static int udp4_espinudp(struct mbuf **, int);
 #endif
 static void udp4_sendup(struct mbuf *, int, struct sockaddr *,
     struct socket *);
@@ -313,21 +308,15 @@ badcsum:
 }
 
 void
-udp_input(struct mbuf *m, ...)
+udp_input(struct mbuf *m, int off, int proto)
 {
-	va_list ap;
 	struct sockaddr_in src, dst;
 	struct ip *ip;
 	struct udphdr *uh;
-	int iphlen;
+	int iphlen = off;
 	int len;
 	int n;
 	u_int16_t ip_len;
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	(void)va_arg(ap, int);		/* ignore value, advance ap */
-	va_end(ap);
 
 	MCLAIM(m, &udp_rx_mowner);
 	UDP_STATINC(UDP_STAT_IPACKETS);
@@ -424,7 +413,7 @@ udp_input(struct mbuf *m, ...)
 		in6_in_2_v4mapin6(&ip->ip_dst, &dst6.sin6_addr);
 		dst6.sin6_port = uh->uh_dport;
 
-		n += udp6_realinput(AF_INET, &src6, &dst6, m, iphlen);
+		n += udp6_realinput(AF_INET, &src6, &dst6, &m, iphlen);
 	}
 #endif
 
@@ -434,17 +423,6 @@ udp_input(struct mbuf *m, ...)
 			goto bad;
 		}
 		UDP_STATINC(UDP_STAT_NOPORT);
-#ifdef IPKDB
-		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
-		    m, iphlen + sizeof(struct udphdr),
-		    m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
-			/*
-			 * It was a debugger connect packet,
-			 * just drop it now
-			 */
-			goto bad;
-		}
-#endif
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 		m = NULL;
 	}
@@ -599,7 +577,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 #ifdef IPSEC
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP) {
-			switch (udp4_espinudp(mp, off, inp->inp_socket)) {
+			switch (udp4_espinudp(mp, off)) {
 			case -1: /* Error, m was freed */
 				rcvcnt = -1;
 				goto bad;
@@ -1245,7 +1223,7 @@ udp_statinc(u_int stat)
  *    -1 if an error occurred and m was freed
  */
 static int
-udp4_espinudp(struct mbuf **mp, int off, struct socket *so)
+udp4_espinudp(struct mbuf **mp, int off)
 {
 	const size_t skip = sizeof(struct udphdr);
 	size_t len;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.11 2011/08/30 21:03:31 joerg Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.11.42.1 2019/06/10 22:10:44 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@ __dead static void usage(void);
 
 static const char *ctlpath = "/dev/wsmuxctl";
 
-static const char *devnames[] = { "?", "wsmouse", "wskbd", "wsmux" };
-
 static void
 usage(void)
 {
@@ -71,7 +69,11 @@ parsedev(const char *dev, struct wsmux_device *mdev)
 		mdev->type = WSMUX_MUX;
 		return;
 	}
-	errx(1, "bad device: `%s', use wsmouse, wskdb, or wsmux", dev);
+	if (sscanf(dev, "wsbell%d", &mdev->idx) == 1) {
+		mdev->type = WSMUX_BELL;
+		return;
+	}
+	errx(1, "bad device: `%s', use wsmouse, wskdb, wsmux or wsbell", dev);
 }
 
 static void
@@ -80,12 +82,19 @@ listdevs(int fd, int rec, int ind)
 	int i, rfd;
 	char buf[100];
 	struct wsmux_device_list devs;
+	const char *name;
 
 	if (ioctl(fd, WSMUXIO_LIST_DEVICES, &devs) < 0)
 		err(1, "WSMUXIO_LIST_DEVICES");
 	for (i = 0; i < devs.ndevices; i++) {
-		printf("%*s%s%d\n", ind, "", devnames[devs.devices[i].type],
-		       devs.devices[i].idx);
+		switch (devs.devices[i].type) {
+		case WSMUX_MOUSE:   name = "wsmouse"; break;
+		case WSMUX_KBD:     name = "wskbd"; break;
+		case WSMUX_MUX:     name = "wsmux"; break;
+		case WSMUX_BELL:    name = "wsbell"; break;
+		default:            name = "?"; break;
+		}
+		printf("%*s%s%d\n", ind, "", name, devs.devices[i].idx);
 		if (rec && devs.devices[i].type == WSMUX_MUX) {
 			snprintf(buf, sizeof(buf), "%s%d", ctlpath,
 			    devs.devices[i].idx);
@@ -132,6 +141,7 @@ main(int argc, char **argv)
 			break;
 		case 'L':
 			recursive++;
+			/* FALLTHROUGH */
 		case 'l':
 			list++;
 			break;

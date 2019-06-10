@@ -1,6 +1,6 @@
 /* Definitions for targets which report shared library events.
 
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -159,7 +159,7 @@ library_list_start_list (struct gdb_xml_parser *parser,
       if (strcmp (string, "1.0") != 0)
 	gdb_xml_error (parser,
 		       _("Library list has unsupported version \"%s\""),
-		       version);
+		       string);
     }
 }
 
@@ -307,12 +307,6 @@ solib_target_current_sos (void)
   VEC_free (lm_info_p, library_list);
 
   return start;
-}
-
-static void
-solib_target_special_symbol_handling (void)
-{
-  /* Nothing needed.  */
 }
 
 static void
@@ -503,8 +497,6 @@ _initialize_solib_target (void)
   solib_target_so_ops.clear_solib = solib_target_clear_solib;
   solib_target_so_ops.solib_create_inferior_hook
     = solib_target_solib_create_inferior_hook;
-  solib_target_so_ops.special_symbol_handling
-    = solib_target_special_symbol_handling;
   solib_target_so_ops.current_sos = solib_target_current_sos;
   solib_target_so_ops.open_symbol_file_object
     = solib_target_open_symbol_file_object;

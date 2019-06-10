@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ set additional_flags [gdb_target_symbol_prefix_flags]
 # Don't use "debug", so that we don't have line information for the assembly
 # fragments.
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list $additional_flags]] != "" } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -51,7 +51,7 @@ if ![runto_main] then {
 
 set function "standard"
 
-set retcode [gdb_test_multiple "disassemble $function" "Disassemble function '$function'" {
+set retcode [gdb_test_multiple "disassemble $function" "disassemble function '$function'" {
     -re "($hex) <\\+0>.*($hex) <\\+$decimal>.*int3.*($hex) <\\+$decimal>.*leave.*$gdb_prompt $" {
       set address_bp $expect_out(2,string)
       set address_after_bp $expect_out(3,string)
@@ -59,7 +59,7 @@ set retcode [gdb_test_multiple "disassemble $function" "Disassemble function '$f
 }]
 
 if {$retcode != 0} {
-  fail "Disassemble failed, skipping entire test."
+  fail "disassemble failed, skipping entire test."
   return -1
 }
 

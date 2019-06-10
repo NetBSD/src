@@ -225,6 +225,11 @@ after_parse_default (void)
       if (!is_vma)
 	ldlang_add_undef (entry_symbol.name, entry_from_cmdline);
     }
+  if (config.maxpagesize == 0)
+    config.maxpagesize = bfd_emul_get_maxpagesize (default_target);
+  if (config.commonpagesize == 0)
+    config.commonpagesize = bfd_emul_get_commonpagesize (default_target,
+							 link_info.relro);
 }
 
 void
@@ -271,13 +276,13 @@ set_output_arch_default (void)
 void
 syslib_default (char *ignore ATTRIBUTE_UNUSED)
 {
-  info_msg (_("%S SYSLIB ignored\n"), NULL);
+  info_msg (_("%pS SYSLIB ignored\n"), NULL);
 }
 
 void
 hll_default (char *ignore ATTRIBUTE_UNUSED)
 {
-  info_msg (_("%S HLL ignored\n"), NULL);
+  info_msg (_("%pS HLL ignored\n"), NULL);
 }
 
 ld_emulation_xfer_type *ld_emulations[] = { EMULATION_LIST };

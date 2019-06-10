@@ -1,8 +1,16 @@
-#	$NetBSD: Makefile,v 1.25 2016/10/08 20:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.25.14.1 2019/06/10 22:02:44 christos Exp $
 
 .include <bsd.own.mk>
 
+# Set this to 2014 for the last release, which does not support newer
+# chipsets as well, but cause major problems on older chipsets.
+INTEL_DRIVER_DATE?=	2019
+
+.if ${INTEL_DRIVER_DATE} > 2014
 DRIVER=		xf86-video-intel
+.else
+DRIVER=		xf86-video-intel-2014
+.endif
 DRIVER_NAME=	intel_drv
 
 # main module
@@ -41,6 +49,9 @@ SRCS+=		gen7_render.c
 SRCS+=		gen8_eu.c
 SRCS+=		gen8_render.c
 SRCS+=		gen8_vertex.c
+.if ${INTEL_DRIVER_DATE} > 2014
+SRCS+=		gen9_render.c
+.endif
 
 SRCS+=		sna_accel.c
 SRCS+=		sna_acpi.c
@@ -126,11 +137,11 @@ SRCS+=		intel_uxa.c
 SRCS+=		intel_uxa_video.c
 SRCS+=		intel_video.c
 SRCS+=		intel_video_overlay.c
+SRCS+=		uxa.c
 SRCS+=		uxa-accel.c
 SRCS+=		uxa-glyphs.c
 SRCS+=		uxa-render.c
 SRCS+=		uxa-unaccel.c
-SRCS+=		uxa.c
 
 MAN=		intel.4
 
@@ -178,15 +189,23 @@ CPPFLAGS+=	-DUMS=1
 CPPFLAGS+=	-DUSE_BACKLIGHT=1
 CPPFLAGS+=	-DUSE_SNA=1
 CPPFLAGS+=	-DUSE_UXA=1
+# XXX without this we get visual corruption, but it doesn't seem to be tearing
+CPPFLAGS+=	-DTEARFREE
 
 # XXX This should not be hard-coded here...
 DRI_DRIVER_PATH=	/usr/X11R7/lib/modules/dri
-CPPFLAGS+=	-DDRI_DRIVER_PATH=\"${DRI_DRIVER_PATH:Q}\"
+CPPFLAGS+=		-DDRI_DRIVER_PATH=\"${DRI_DRIVER_PATH:Q}\" \
+			-DHAVE_XF86_CURSOR_RESET_CURSOR \
+			-DDEFAULT_DRI_LEVEL=2
+
+# XXX new version things:
+CPPFLAGS+=		-DHAVE_DEV_WSCONS_WSCONSIO_H
 
 # XXX Probably better to set this in Makefile.xf86-driver, conditional
 # on ELF &c.
 CFLAGS+=	-fvisibility=hidden
 
+LIBDPLIBS+=	Xfont		${.CURDIR}/../../../lib/libXfont
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../../lib/libdrm_intel
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 
@@ -207,3 +226,6 @@ COPTS.sna_trapezoids_imprecise.c+=	-Wno-stack-protector
 COPTS.sna_trapezoids_mono.c+=	-Wno-stack-protector
 COPTS.sna_trapezoids_precise.c+=	-Wno-stack-protector
 COPTS.i965_video.c+=	-Wno-stack-protector
+
+COPTS.sna_display.c+=		-Wno-error	# XXX deprecated
+COPTS.intel_driver.c+=		-Wno-error	# XXX deprecated

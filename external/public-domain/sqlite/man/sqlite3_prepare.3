@@ -1,11 +1,13 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_PREPARE 3
 .Os
 .Sh NAME
 .Nm sqlite3_prepare ,
 .Nm sqlite3_prepare_v2 ,
+.Nm sqlite3_prepare_v3 ,
 .Nm sqlite3_prepare16 ,
-.Nm sqlite3_prepare16_v2
+.Nm sqlite3_prepare16_v2 ,
+.Nm sqlite3_prepare16_v3
 .Nd Compiling An SQL Statement
 .Sh SYNOPSIS
 .Ft int 
@@ -25,6 +27,15 @@
 .Fa "const char **pzTail     "
 .Fc
 .Ft int 
+.Fo sqlite3_prepare_v3
+.Fa "sqlite3 *db"
+.Fa "const char *zSql"
+.Fa "int nByte"
+.Fa "unsigned int prepFlags"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const char **pzTail     "
+.Fc
+.Ft int 
 .Fo sqlite3_prepare16
 .Fa "sqlite3 *db"
 .Fa "const void *zSql"
@@ -40,9 +51,32 @@
 .Fa "sqlite3_stmt **ppStmt"
 .Fa "const void **pzTail     "
 .Fc
+.Ft int 
+.Fo sqlite3_prepare16_v3
+.Fa "sqlite3 *db"
+.Fa "const void *zSql"
+.Fa "int nByte"
+.Fa "unsigned int prepFlags"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const void **pzTail     "
+.Fc
 .Sh DESCRIPTION
-To execute an SQL query, it must first be compiled into a byte-code
+To execute an SQL statement, it must first be compiled into a byte-code
 program using one of these routines.
+Or, in other words, these routines are constructors for the prepared statement
+object.
+.Pp
+The preferred routine to use is sqlite3_prepare_v2().
+The sqlite3_prepare() interface is legacy and should
+be avoided.
+sqlite3_prepare_v3() has an extra "prepFlags" option
+that is used for special purposes.
+.Pp
+The use of the UTF-8 interfaces is preferred, as SQLite currently does
+all parsing using UTF-8.
+The UTF-16 interfaces are provided as a convenience.
+The UTF-16 interfaces work by converting the input text into UTF-8,
+then invoking the corresponding UTF-8 interface.
 .Pp
 The first argument, "db", is a database connection
 obtained from a prior successful call to sqlite3_open(),
@@ -51,8 +85,9 @@ The database connection must not have been closed.
 .Pp
 The second argument, "zSql", is the statement to be compiled, encoded
 as either UTF-8 or UTF-16.
-The sqlite3_prepare() and sqlite3_prepare_v2() interfaces use UTF-8,
-and sqlite3_prepare16() and sqlite3_prepare16_v2() use UTF-16.
+The sqlite3_prepare(), sqlite3_prepare_v2(), and sqlite3_prepare_v3()
+interfaces use UTF-8, and sqlite3_prepare16(), sqlite3_prepare16_v2(),
+and sqlite3_prepare16_v3() use UTF-16.
 .Pp
 If the nByte argument is negative, then zSql is read up to the first
 zero terminator.
@@ -81,11 +116,11 @@ ppStmt may not be NULL.
 On success, the sqlite3_prepare() family of routines return SQLITE_OK;
 otherwise an error code is returned.
 .Pp
-The sqlite3_prepare_v2() and sqlite3_prepare16_v2() interfaces are
-recommended for all new programs.
-The two older interfaces are retained for backwards compatibility,
-but their use is discouraged.
-In the "v2" interfaces, the prepared statement that is returned (the
+The sqlite3_prepare_v2(), sqlite3_prepare_v3(), sqlite3_prepare16_v2(),
+and sqlite3_prepare16_v3() interfaces are recommended for all new programs.
+The older interfaces (sqlite3_prepare() and sqlite3_prepare16()) are
+retained for backwards compatibility, but their use is discouraged.
+In the "vX" interfaces, the prepared statement that is returned (the
 sqlite3_stmt object) contains a copy of the original SQL
 text.
 This causes the sqlite3_step() interface to behave differently
@@ -119,13 +154,21 @@ an indexed column and the SQLITE_ENABLE_STAT3 compile-time
 option is enabled.
 .El
 .Pp
+<p> sqlite3_prepare_v3() differs from sqlite3_prepare_v2() only in
+having the extra prepFlags parameter, which is a bit array consisting
+of zero or more of the SQLITE_PREPARE_* flags.
+The sqlite3_prepare_v2() interface works exactly the same as sqlite3_prepare_v3()
+with a zero prepFlags parameter.
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
 .Xr sqlite3_stmt 3 ,
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_finalize 3 ,
 .Xr sqlite3_open 3 ,
+.Xr sqlite3_prepare 3 ,
 .Xr sqlite3_reset 3 ,
 .Xr sqlite3_step 3 ,
 .Xr sqlite3_stmt 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_PREPARE_PERSISTENT 3 ,
 .Xr SQLITE_OK 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.212.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,13 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_kaslr.h"
 #endif
 
 #if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
@@ -89,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $"
 #include <sys/uio.h>
 #include <sys/pool.h>
 #include <sys/pset.h>
-#include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
@@ -105,13 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $"
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/cpu.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
-
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#endif
 
 /*
  * Process lists.
@@ -219,7 +216,13 @@ static const int	maxuprc	= MAXUPRC;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
+static int sysctl_security_expose_address(SYSCTLFN_PROTO);
 
+#ifdef KASLR
+static int kern_expose_address = 0;
+#else
+static int kern_expose_address = 1;
+#endif
 /*
  * The process list descriptors, used during pid allocation and
  * by sysctl.  No locking on this data structure is needed since
@@ -241,7 +244,9 @@ static pool_cache_t proc_cache;
 
 static kauth_listener_t proc_listener;
 
+static void fill_proc(const struct proc *, struct proc *, bool);
 static int fill_pathname(struct lwp *, pid_t, void *, size_t *);
+static int fill_cwd(struct lwp *, pid_t, void *, size_t *);
 
 static int
 proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -263,8 +268,8 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+		case KAUTH_REQ_PROCESS_CANSEE_EPROC:
 			result = KAUTH_RESULT_ALLOW;
-
 			break;
 
 		case KAUTH_REQ_PROCESS_CANSEE_ENV:
@@ -272,6 +277,17 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 			    kauth_cred_getuid(p->p_cred) ||
 			    kauth_cred_getuid(cred) !=
 			    kauth_cred_getsvuid(p->p_cred))
+				break;
+
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_CANSEE_KPTR:
+			if (!kern_expose_address)
+				break;
+
+			if (kern_expose_address == 1 && !(p->p_flag & PK_KMEM))
 				break;
 
 			result = KAUTH_RESULT_ALLOW;
@@ -315,6 +331,13 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+static int
+proc_ctor(void *arg __unused, void *obj, int flags __unused)
+{
+	memset(obj, 0, sizeof(struct proc));
+	return 0;
+}
+
 /*
  * Initialize global process hashing structures.
  */
@@ -354,7 +377,7 @@ procinit(void)
 	KASSERT(proc_specificdata_domain != NULL);
 
 	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
-	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
 
 	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    proc_listener_cb, NULL);
@@ -365,6 +388,12 @@ procinit_sysctl(void)
 {
 	static struct sysctllog *clog;
 
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "expose_address",
+		       SYSCTL_DESCR("Enable exposing kernel addresses"),
+		       sysctl_security_expose_address, 0,
+		       &kern_expose_address, 0, CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc",
@@ -1630,6 +1659,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	u_int elem_size, kelem_size, elem_count;
 	size_t buflen, needed;
 	bool match, zombie, mmmbrains;
+	const bool allowaddr = get_expose_address(curproc);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1669,7 +1699,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 
-	kbuf = kmem_alloc(sizeof(*kbuf), KM_SLEEP);
+	kbuf = kmem_zalloc(sizeof(*kbuf), KM_SLEEP);
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
 	marker->p_flag = PK_MARKER;
 
@@ -1701,7 +1731,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSEE, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_EPROC), NULL, NULL);
 		if (error != 0) {
 			mutex_exit(p->p_lock);
 			continue;
@@ -1790,10 +1820,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		if (buflen >= elem_size &&
 		    (type == KERN_PROC || elem_count > 0)) {
 			if (type == KERN_PROC) {
-				kbuf->kproc.kp_proc = *p;
-				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie);
+				fill_proc(p, &kbuf->kproc.kp_proc, allowaddr);
+				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie,
+				    allowaddr);
 			} else {
-				fill_kproc2(p, &kbuf->kproc2, zombie);
+				fill_kproc2(p, &kbuf->kproc2, zombie,
+				    allowaddr);
 				elem_count--;
 			}
 			mutex_exit(p->p_lock);
@@ -1802,7 +1834,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			 * Copy out elem_size, but not larger than kelem_size
 			 */
 			error = sysctl_copyout(l, kbuf, dp,
-			    min(kelem_size, elem_size));
+			    uimin(kelem_size, elem_size));
 			mutex_enter(proc_lock);
 			if (error) {
 				goto bah;
@@ -1864,22 +1896,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 int
 copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 {
+#if !defined(_RUMPKERNEL)
+	int retval;
 
-#ifdef COMPAT_NETBSD32
 	if (p->p_flag & PK_32) {
-		struct ps_strings32 arginfo32;
-
-		int error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
-		    sizeof(arginfo32));
-		if (error)
-			return error;
-		arginfo->ps_argvstr = (void *)(uintptr_t)arginfo32.ps_argvstr;
-		arginfo->ps_nargvstr = arginfo32.ps_nargvstr;
-		arginfo->ps_envstr = (void *)(uintptr_t)arginfo32.ps_envstr;
-		arginfo->ps_nenvstr = arginfo32.ps_nenvstr;
-		return 0;
+		MODULE_HOOK_CALL(kern_proc32_copyin_hook, (p, arginfo),
+		    enosys(), retval);
+		return retval;
 	}
-#endif
+#endif /* !defined(_RUMPKERNEL) */
+
 	return copyin_proc(p, (void *)p->p_psstrp, arginfo, sizeof(*arginfo));
 }
 
@@ -1917,6 +1943,12 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	case KERN_PROC_PATHNAME:
 		sysctl_unlock();
 		error = fill_pathname(l, pid, oldp, oldlenp);
+		sysctl_relock();
+		return error;
+
+	case KERN_PROC_CWD:
+		sysctl_unlock();
+		error = fill_cwd(l, pid, oldp, oldlenp);
 		sysctl_relock();
 		return error;
 
@@ -2088,14 +2120,12 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 			i = 0;
 		}
 
-#ifdef COMPAT_NETBSD32
-		if (p->p_flag & PK_32) {
-			netbsd32_charp *argv32;
-
-			argv32 = (netbsd32_charp *)argv;
-			base = (vaddr_t)NETBSD32PTR64(argv32[i++]);
-		} else
-#endif
+#if !defined(_RUMPKERNEL)
+		if (p->p_flag & PK_32)
+			MODULE_HOOK_CALL(kern_proc32_base_hook,
+			    (argv, i++), 0, base);
+		else
+#endif /* !defined(_RUMPKERNEL) */
 			base = (vaddr_t)argv[i++];
 		loaded -= entry_len;
 
@@ -2160,10 +2190,102 @@ done:
 }
 
 /*
+ * Fill in a proc structure for the specified process.
+ */
+static void
+fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
+{
+	COND_SET_VALUE(p->p_list, psrc->p_list, allowaddr);
+	COND_SET_VALUE(p->p_auxlock, psrc->p_auxlock, allowaddr);
+	COND_SET_VALUE(p->p_lock, psrc->p_lock, allowaddr);
+	COND_SET_VALUE(p->p_stmutex, psrc->p_stmutex, allowaddr);
+	COND_SET_VALUE(p->p_reflock, psrc->p_reflock, allowaddr);
+	COND_SET_VALUE(p->p_waitcv, psrc->p_waitcv, allowaddr);
+	COND_SET_VALUE(p->p_lwpcv, psrc->p_lwpcv, allowaddr);
+	COND_SET_VALUE(p->p_cred, psrc->p_cred, allowaddr);
+	COND_SET_VALUE(p->p_fd, psrc->p_fd, allowaddr);
+	COND_SET_VALUE(p->p_cwdi, psrc->p_cwdi, allowaddr);
+	COND_SET_VALUE(p->p_stats, psrc->p_stats, allowaddr);
+	COND_SET_VALUE(p->p_limit, psrc->p_limit, allowaddr);
+	COND_SET_VALUE(p->p_vmspace, psrc->p_vmspace, allowaddr);
+	COND_SET_VALUE(p->p_sigacts, psrc->p_sigacts, allowaddr);
+	COND_SET_VALUE(p->p_aio, psrc->p_aio, allowaddr);
+	p->p_mqueue_cnt = psrc->p_mqueue_cnt;
+	COND_SET_VALUE(p->p_specdataref, psrc->p_specdataref, allowaddr);
+	p->p_exitsig = psrc->p_exitsig;
+	p->p_flag = psrc->p_flag;
+	p->p_sflag = psrc->p_sflag;
+	p->p_slflag = psrc->p_slflag;
+	p->p_lflag = psrc->p_lflag;
+	p->p_stflag = psrc->p_stflag;
+	p->p_stat = psrc->p_stat;
+	p->p_trace_enabled = psrc->p_trace_enabled;
+	p->p_pid = psrc->p_pid;
+	COND_SET_VALUE(p->p_pglist, psrc->p_pglist, allowaddr);
+	COND_SET_VALUE(p->p_pptr, psrc->p_pptr, allowaddr);
+	COND_SET_VALUE(p->p_sibling, psrc->p_sibling, allowaddr);
+	COND_SET_VALUE(p->p_children, psrc->p_children, allowaddr);
+	COND_SET_VALUE(p->p_lwps, psrc->p_lwps, allowaddr);
+	COND_SET_VALUE(p->p_raslist, psrc->p_raslist, allowaddr);
+	p->p_nlwps = psrc->p_nlwps;
+	p->p_nzlwps = psrc->p_nzlwps;
+	p->p_nrlwps = psrc->p_nrlwps;
+	p->p_nlwpwait = psrc->p_nlwpwait;
+	p->p_ndlwps = psrc->p_ndlwps;
+	p->p_nlwpid = psrc->p_nlwpid;
+	p->p_nstopchild = psrc->p_nstopchild;
+	p->p_waited = psrc->p_waited;
+	COND_SET_VALUE(p->p_zomblwp, psrc->p_zomblwp, allowaddr);
+	COND_SET_VALUE(p->p_vforklwp, psrc->p_vforklwp, allowaddr);
+	COND_SET_VALUE(p->p_sched_info, psrc->p_sched_info, allowaddr);
+	p->p_estcpu = psrc->p_estcpu;
+	p->p_estcpu_inherited = psrc->p_estcpu_inherited;
+	p->p_forktime = psrc->p_forktime;
+	p->p_pctcpu = psrc->p_pctcpu;
+	COND_SET_VALUE(p->p_opptr, psrc->p_opptr, allowaddr);
+	COND_SET_VALUE(p->p_timers, psrc->p_timers, allowaddr);
+	p->p_rtime = psrc->p_rtime;
+	p->p_uticks = psrc->p_uticks;
+	p->p_sticks = psrc->p_sticks;
+	p->p_iticks = psrc->p_iticks;
+	p->p_xutime = psrc->p_xutime;
+	p->p_xstime = psrc->p_xstime;
+	p->p_traceflag = psrc->p_traceflag;
+	COND_SET_VALUE(p->p_tracep, psrc->p_tracep, allowaddr);
+	COND_SET_VALUE(p->p_textvp, psrc->p_textvp, allowaddr);
+	COND_SET_VALUE(p->p_emul, psrc->p_emul, allowaddr);
+	COND_SET_VALUE(p->p_emuldata, psrc->p_emuldata, allowaddr);
+	COND_SET_VALUE(p->p_execsw, psrc->p_execsw, allowaddr);
+	COND_SET_VALUE(p->p_klist, psrc->p_klist, allowaddr);
+	COND_SET_VALUE(p->p_sigwaiters, psrc->p_sigwaiters, allowaddr);
+	COND_SET_VALUE(p->p_sigpend, psrc->p_sigpend, allowaddr);
+	COND_SET_VALUE(p->p_lwpctl, psrc->p_lwpctl, allowaddr);
+	p->p_ppid = psrc->p_ppid;
+	p->p_fpid = psrc->p_fpid;
+	p->p_vfpid = psrc->p_vfpid;
+	p->p_vfpid_done = psrc->p_vfpid_done;
+	p->p_lwp_created = psrc->p_lwp_created;
+	p->p_lwp_exited = psrc->p_lwp_exited;
+	COND_SET_VALUE(p->p_path, psrc->p_path, allowaddr);
+	COND_SET_VALUE(p->p_sigctx, psrc->p_sigctx, allowaddr);
+	p->p_nice = psrc->p_nice;
+	memcpy(p->p_comm, psrc->p_comm, sizeof(p->p_comm));
+	COND_SET_VALUE(p->p_pgrp, psrc->p_pgrp, allowaddr);
+	COND_SET_VALUE(p->p_psstrp, psrc->p_psstrp, allowaddr);
+	p->p_pax = psrc->p_pax;
+	p->p_xexit = psrc->p_xexit;
+	p->p_xsig = psrc->p_xsig;
+	p->p_acflag = psrc->p_acflag;
+	COND_SET_VALUE(p->p_md, psrc->p_md, allowaddr);
+	p->p_stackbase = psrc->p_stackbase;
+	COND_SET_VALUE(p->p_dtrace, psrc->p_dtrace, allowaddr);
+}
+
+/*
  * Fill in an eproc structure for the specified process.
  */
 void
-fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
+fill_eproc(struct proc *p, struct eproc *ep, bool zombie, bool allowaddr)
 {
 	struct tty *tp;
 	struct lwp *l;
@@ -2171,10 +2293,8 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
-	memset(ep, 0, sizeof(*ep));
-
-	ep->e_paddr = p;
-	ep->e_sess = p->p_session;
+	COND_SET_VALUE(ep->e_paddr, p, allowaddr);
+	COND_SET_VALUE(ep->e_sess, p->p_session, allowaddr);
 	if (p->p_cred) {
 		kauth_cred_topcred(p->p_cred, &ep->e_pcred);
 		kauth_cred_toucred(p->p_cred, &ep->e_ucred);
@@ -2202,16 +2322,16 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_jobc = p->p_pgrp->pg_jobc;
 		ep->e_sid = p->p_session->s_sid;
 		if ((p->p_lflag & PL_CONTROLT) &&
-		    (tp = ep->e_sess->s_ttyp)) {
+		    (tp = p->p_session->s_ttyp)) {
 			ep->e_tdev = tp->t_dev;
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ep->e_tsess = tp->t_session;
+			COND_SET_VALUE(ep->e_tsess, tp->t_session, allowaddr);
 		} else
 			ep->e_tdev = (uint32_t)NODEV;
-		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
+		ep->e_flag = p->p_session->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;
-		strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
+		strncpy(ep->e_login, p->p_session->s_login, MAXLOGNAME);
 	}
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
@@ -2221,7 +2341,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
  * Fill in a kinfo_proc2 structure for the specified process.
  */
 void
-fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
+fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 {
 	struct tty *tp;
 	struct lwp *l, *l2;
@@ -2235,18 +2355,17 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	sigemptyset(&ss1);
 	sigemptyset(&ss2);
-	memset(ki, 0, sizeof(*ki));
 
-	ki->p_paddr = PTRTOUINT64(p);
-	ki->p_fd = PTRTOUINT64(p->p_fd);
-	ki->p_cwdi = PTRTOUINT64(p->p_cwdi);
-	ki->p_stats = PTRTOUINT64(p->p_stats);
-	ki->p_limit = PTRTOUINT64(p->p_limit);
-	ki->p_vmspace = PTRTOUINT64(p->p_vmspace);
-	ki->p_sigacts = PTRTOUINT64(p->p_sigacts);
-	ki->p_sess = PTRTOUINT64(p->p_session);
+	COND_SET_VALUE(ki->p_paddr, PTRTOUINT64(p), allowaddr);
+	COND_SET_VALUE(ki->p_fd, PTRTOUINT64(p->p_fd), allowaddr);
+	COND_SET_VALUE(ki->p_cwdi, PTRTOUINT64(p->p_cwdi), allowaddr);
+	COND_SET_VALUE(ki->p_stats, PTRTOUINT64(p->p_stats), allowaddr);
+	COND_SET_VALUE(ki->p_limit, PTRTOUINT64(p->p_limit), allowaddr);
+	COND_SET_VALUE(ki->p_vmspace, PTRTOUINT64(p->p_vmspace), allowaddr);
+	COND_SET_VALUE(ki->p_sigacts, PTRTOUINT64(p->p_sigacts), allowaddr);
+	COND_SET_VALUE(ki->p_sess, PTRTOUINT64(p->p_session), allowaddr);
 	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
+	COND_SET_VALUE(ki->p_ru, PTRTOUINT64(&p->p_stats->p_ru), allowaddr);
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
 	ki->p_flag = L_INMEM;   /* Process never swapped out */
@@ -2265,14 +2384,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
 	kauth_cred_getgroups(p->p_cred, ki->p_groups,
-	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
+	    uimin(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
 	    UIO_SYSSPACE);
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
 	ki->p_iticks = p->p_iticks;
 	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
-	ki->p_tracep = PTRTOUINT64(p->p_tracep);
+	COND_SET_VALUE(ki->p_tracep, PTRTOUINT64(p->p_tracep), allowaddr);
 	ki->p_traceflag = p->p_traceflag;
 
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
@@ -2288,7 +2407,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_acflag = p->p_acflag;
 
 	strncpy(ki->p_comm, p->p_comm,
-	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	    uimin(sizeof(ki->p_comm), sizeof(p->p_comm)));
 	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
@@ -2316,7 +2435,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_nrlwps = p->p_nrlwps;
 		ki->p_forw = 0;
 		ki->p_back = 0;
-		ki->p_addr = PTRTOUINT64(l->l_addr);
+		COND_SET_VALUE(ki->p_addr, PTRTOUINT64(l->l_addr), allowaddr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 		ki->p_swtime = l->l_swtime;
@@ -2329,7 +2448,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wchan)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
-		ki->p_wchan = PTRTOUINT64(l->l_wchan);
+		COND_SET_VALUE(ki->p_wchan, PTRTOUINT64(l->l_wchan), allowaddr);
 		ki->p_cpuid = cpu_index(l->l_cpu);
 		lwp_unlock(l);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -2353,12 +2472,13 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		if (SESS_LEADER(p))
 			ki->p_eflag |= EPROC_SLEADER;
 		strncpy(ki->p_login, p->p_session->s_login,
-		    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
+		    uimin(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 		ki->p_jobc = p->p_pgrp->pg_jobc;
 		if ((p->p_lflag & PL_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 			ki->p_tdev = tp->t_dev;
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ki->p_tsess = PTRTOUINT64(tp->t_session);
+			COND_SET_VALUE(ki->p_tsess, PTRTOUINT64(tp->t_session),
+			    allowaddr);
 		} else {
 			ki->p_tdev = (int32_t)NODEV;
 		}
@@ -2453,13 +2573,61 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 
 	size_t len = strlen(p->p_path) + 1;
 	if (oldp != NULL) {
-		error = sysctl_copyout(l, p->p_path, oldp, *oldlenp);
+		size_t copylen = uimin(len, *oldlenp);
+		error = sysctl_copyout(l, p->p_path, oldp, copylen);
 		if (error == 0 && *oldlenp < len)
 			error = ENOSPC;
 	}
 	*oldlenp = len;
 	if (pid != -1)
 		mutex_exit(p->p_lock);
+	return error;
+}
+
+static int
+fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
+{
+	int error;
+	struct proc *p;
+	char *path;
+	char *bp, *bend;
+	struct cwdinfo *cwdi;
+	struct vnode *vp;
+	size_t len, lenused;
+
+	if ((error = proc_find_locked(l, &p, pid)) != 0)
+		return error;
+
+	len = MAXPATHLEN * 4;
+
+	path = kmem_alloc(len, KM_SLEEP);
+
+	bp = &path[len];
+	bend = bp;
+	*(--bp) = '\0';
+
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	vp = cwdi->cwdi_cdir;
+	error = getcwd_common(vp, NULL, &bp, path, len/2, 0, l);
+	rw_exit(&cwdi->cwdi_lock);
+
+	if (error)
+		goto out;
+
+	lenused = bend - bp;
+
+	if (oldp != NULL) {
+		size_t copylen = uimin(lenused, *oldlenp);
+		error = sysctl_copyout(l, bp, oldp, copylen);
+		if (error == 0 && *oldlenp < lenused)
+			error = ENOSPC;
+	}
+	*oldlenp = lenused;
+out:
+	if (pid != -1)
+		mutex_exit(p->p_lock);
+	kmem_free(path, len);
 	return error;
 }
 
@@ -2495,4 +2663,44 @@ proc_getauxv(struct proc *p, void **buf, size_t *len)
 	*len = size;
 
 	return 0;
+}
+
+
+static int
+sysctl_security_expose_address(SYSCTLFN_ARGS)
+{
+	int expose_address, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &expose_address;
+	expose_address = *(int *)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_KERNADDR,
+	    0, NULL, NULL, NULL))
+		return EPERM;
+
+	switch (expose_address) {
+	case 0:
+	case 1:
+	case 2:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	*(int *)rnode->sysctl_data = expose_address;
+
+	return 0;
+}
+
+bool
+get_expose_address(struct proc *p)
+{
+	/* allow only if sysctl variable is set or privileged */
+	return kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL) == 0;
 }

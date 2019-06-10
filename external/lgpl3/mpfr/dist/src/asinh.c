@@ -1,6 +1,6 @@
 /* mpfr_asinh -- inverse hyperbolic sine
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -104,7 +104,7 @@ mpfr_asinh (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
             break;
         }
 
-      /* actualisation of the precision */
+      /* actualization of the precision */
       MPFR_ZIV_NEXT (loop, Nt);
       mpfr_set_prec (t, Nt);
     }

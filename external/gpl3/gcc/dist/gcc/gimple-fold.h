@@ -1,6 +1,6 @@
 /* Gimple folding definitions.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -24,6 +24,8 @@ along with GCC; see the file COPYING3.  If not see
 
 extern tree canonicalize_constructor_val (tree, tree);
 extern tree get_symbol_constant_value (tree);
+extern bool get_range_strlen (tree, tree[2]);
+extern tree get_maxval_strlen (tree, int);
 extern void gimplify_and_update_call_from_tree (gimple_stmt_iterator *, tree);
 extern bool fold_stmt (gimple_stmt_iterator *);
 extern bool fold_stmt (gimple_stmt_iterator *, tree (*) (tree));
@@ -32,6 +34,8 @@ extern tree maybe_fold_and_comparisons (enum tree_code, tree, tree,
 					enum tree_code, tree, tree);
 extern tree maybe_fold_or_comparisons (enum tree_code, tree, tree,
 				       enum tree_code, tree, tree);
+extern bool optimize_atomic_compare_exchange_p (gimple *);
+extern void fold_builtin_atomic_compare_exchange (gimple_stmt_iterator *);
 extern bool arith_overflowed_p (enum tree_code, const_tree, const_tree,
 				const_tree);
 extern tree no_follow_ssa_edges (tree);

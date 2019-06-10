@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "vec.h"
+#include "common/vec.h"
+#include "value.h"
 
 /* Enumeration for the format types */
 enum varobj_display_formats
@@ -57,29 +58,33 @@ extern const char *varobj_format_string[];
 
 struct varobj;
 
-typedef struct varobj *varobj_p;
-DEF_VEC_P (varobj_p);
-
-typedef struct varobj_update_result_t
+struct varobj_update_result
 {
+  varobj_update_result (struct varobj *varobj_,
+			varobj_scope_status status_ = VAROBJ_IN_SCOPE)
+  : varobj (varobj_), status (status_)
+  {}
+
+  varobj_update_result (varobj_update_result &&other) = default;
+
+  DISABLE_COPY_AND_ASSIGN (varobj_update_result);
+
   struct varobj *varobj;
-  int type_changed;
-  int children_changed;
-  int changed;
+  bool type_changed = false;
+  bool children_changed = false;
+  bool changed = false;
   enum varobj_scope_status status;
   /* This variable is used internally by varobj_update to indicate if the
      new value of varobj is already computed and installed, or has to
      be yet installed.  Don't use this outside varobj.c.  */
-  int value_installed;  
+  bool value_installed = false;
 
   /* This will be non-NULL when new children were added to the varobj.
      It lists the new children (which must necessarily come at the end
      of the child list) added during an update.  The caller is
      responsible for freeing this vector.  */
-  VEC (varobj_p) *newobj;
-} varobj_update_result;
-
-DEF_VEC_O (varobj_update_result);
+  std::vector<struct varobj *> newobj;
+};
 
 struct varobj_root;
 struct varobj_dynamic;
@@ -89,6 +94,9 @@ struct varobj_dynamic;
    a particular object variable.  */
 struct varobj
 {
+  explicit varobj (varobj_root *root_);
+  ~varobj ();
+
   /* Name of the variable for this object.  If this variable is a
      child, then this name will be the child's source name.
      (bar, not foo.bar).  */
@@ -104,37 +112,37 @@ struct varobj
   std::string obj_name;
 
   /* Index of this variable in its parent or -1.  */
-  int index;
+  int index = -1;
 
   /* The type of this variable.  This can be NULL
      for artificial variable objects -- currently, the "accessibility"
      variable objects in C++.  */
-  struct type *type;
+  struct type *type = NULL;
 
   /* The value of this expression or subexpression.  A NULL value
      indicates there was an error getting this value.
      Invariant: if varobj_value_is_changeable_p (this) is non-zero, 
      the value is either NULL, or not lazy.  */
-  struct value *value;
+  value_ref_ptr value;
 
   /* The number of (immediate) children this variable has.  */
-  int num_children;
+  int num_children = -1;
 
   /* If this object is a child, this points to its immediate parent.  */
-  const struct varobj *parent;
+  struct varobj *parent = NULL;
 
   /* Children of this object.  */
-  VEC (varobj_p) *children;
+  std::vector<varobj *> children;
 
   /* Description of the root variable.  Points to root variable for
      children.  */
   struct varobj_root *root;
 
   /* The format of the output for this object.  */
-  enum varobj_display_formats format;
+  enum varobj_display_formats format = FORMAT_NATURAL;
 
   /* Was this variable updated via a varobj_set_value operation.  */
-  int updated;
+  bool updated = false;
 
   /* Last print value.  */
   std::string print_value;
@@ -142,18 +150,18 @@ struct varobj
   /* Is this variable frozen.  Frozen variables are never implicitly
      updated by -var-update * 
      or -var-update <direct-or-indirect-parent>.  */
-  int frozen;
+  bool frozen = false;
 
   /* Is the value of this variable intentionally not fetched?  It is
      not fetched if either the variable is frozen, or any parents is
      frozen.  */
-  int not_fetched;
+  bool not_fetched = false;
 
   /* Sub-range of children which the MI consumer has requested.  If
      FROM < 0 or TO < 0, means that all children have been
      requested.  */
-  int from;
-  int to;
+  int from = -1;
+  int to = -1;
 
   /* Dynamic part of varobj.  */
   struct varobj_dynamic *dynamic;
@@ -190,17 +198,17 @@ struct lang_varobj_ops
   std::string (*value_of_variable) (const struct varobj *var,
 				    enum varobj_display_formats format);
 
-  /* Return non-zero if changes in value of VAR must be detected and
-     reported by -var-update.  Return zero if -var-update should never
+  /* Return true if changes in value of VAR must be detected and
+     reported by -var-update.  Return false if -var-update should never
      report changes of such values.  This makes sense for structures
      (since the changes in children values will be reported separately),
      or for artificial objects (like 'public' pseudo-field in C++).
 
-     Return value of 0 means that gdb need not call value_fetch_lazy
+     Return value of false means that gdb need not call value_fetch_lazy
      for the value of this variable object.  */
-  int (*value_is_changeable_p) (const struct varobj *var);
+  bool (*value_is_changeable_p) (const struct varobj *var);
 
-  /* Return nonzero if the type of VAR has mutated.
+  /* Return true if the type of VAR has mutated.
 
      VAR's value is still the varobj's previous value, while NEW_VALUE
      is VAR's new value and NEW_TYPE is the var's new type.  NEW_VALUE
@@ -212,14 +220,14 @@ struct lang_varobj_ops
      children is set (not < 0).
 
      Languages where types do not mutate can set this to NULL.  */
-  int (*value_has_mutated) (const struct varobj *var, struct value *new_value,
-			    struct type *new_type);
+  bool (*value_has_mutated) (const struct varobj *var, struct value *new_value,
+			     struct type *new_type);
 
-  /* Return nonzero if VAR is a suitable path expression parent.
+  /* Return true if VAR is a suitable path expression parent.
 
      For C like languages with anonymous structures and unions an anonymous
      structure or union is not a suitable parent.  */
-  int (*is_path_expr_parent) (const struct varobj *var);
+  bool (*is_path_expr_parent) (const struct varobj *var);
 };
 
 extern const struct lang_varobj_ops c_varobj_ops;
@@ -233,7 +241,7 @@ extern struct varobj *varobj_create (const char *objname,
 				     const char *expression, CORE_ADDR frame,
 				     enum varobj_type type);
 
-extern char *varobj_gen_name (void);
+extern std::string varobj_gen_name (void);
 
 extern struct varobj *varobj_get_handle (const char *name);
 
@@ -241,10 +249,10 @@ extern const char *varobj_get_objname (const struct varobj *var);
 
 extern std::string varobj_get_expression (const struct varobj *var);
 
-/* Delete a varobj and all its children if only_children == 0, otherwise delete
-   only the children.  Return the number of deleted variables.  */
+/* Delete a varobj and all its children if only_children is false, otherwise
+   delete only the children.  Return the number of deleted variables.  */
 
-extern int varobj_delete (struct varobj *var, int only_children);
+extern int varobj_delete (struct varobj *var, bool only_children);
 
 extern enum varobj_display_formats varobj_set_display_format (
 							 struct varobj *var,
@@ -255,9 +263,9 @@ extern enum varobj_display_formats varobj_get_display_format (
 
 extern int varobj_get_thread_id (const struct varobj *var);
 
-extern void varobj_set_frozen (struct varobj *var, int frozen);
+extern void varobj_set_frozen (struct varobj *var, bool frozen);
 
-extern int varobj_get_frozen (const struct varobj *var);
+extern bool varobj_get_frozen (const struct varobj *var);
 
 extern void varobj_get_child_range (const struct varobj *var, int *from,
 				    int *to);
@@ -277,8 +285,8 @@ extern int varobj_get_num_children (struct varobj *var);
    that was returned.  The resulting VEC will contain at least the
    children from *FROM to just before *TO; it might contain more
    children, depending on whether any more were available.  */
-extern VEC (varobj_p)* varobj_list_children (struct varobj *var,
-					     int *from, int *to);
+extern const std::vector<varobj *> &
+  varobj_list_children (struct varobj *var, int *from, int *to);
 
 extern std::string varobj_get_type (struct varobj *var);
 
@@ -297,35 +305,35 @@ extern std::string
 
 extern std::string varobj_get_value (struct varobj *var);
 
-extern int varobj_set_value (struct varobj *var, const char *expression);
+extern bool varobj_set_value (struct varobj *var, const char *expression);
 
 extern void all_root_varobjs (void (*func) (struct varobj *var, void *data),
 			      void *data);
 
-extern VEC(varobj_update_result) *varobj_update (struct varobj **varp, 
-						 int is_explicit);
+extern std::vector<varobj_update_result>
+  varobj_update (struct varobj **varp, bool is_explicit);
 
 extern void varobj_invalidate (void);
 
-extern int varobj_editable_p (const struct varobj *var);
+extern bool varobj_editable_p (const struct varobj *var);
 
-extern int varobj_floating_p (const struct varobj *var);
+extern bool varobj_floating_p (const struct varobj *var);
 
 extern void varobj_set_visualizer (struct varobj *var,
 				   const char *visualizer);
 
 extern void varobj_enable_pretty_printing (void);
 
-extern int varobj_has_more (const struct varobj *var, int to);
+extern bool varobj_has_more (const struct varobj *var, int to);
 
-extern int varobj_is_dynamic_p (const struct varobj *var);
+extern bool varobj_is_dynamic_p (const struct varobj *var);
 
-extern int varobj_default_value_is_changeable_p (const struct varobj *var);
-extern int varobj_value_is_changeable_p (const struct varobj *var);
+extern bool varobj_default_value_is_changeable_p (const struct varobj *var);
+extern bool varobj_value_is_changeable_p (const struct varobj *var);
 
 extern struct type *varobj_get_value_type (const struct varobj *var);
 
-extern int varobj_is_anonymous_child (const struct varobj *child);
+extern bool varobj_is_anonymous_child (const struct varobj *child);
 
 extern const struct varobj *
   varobj_get_path_expr_parent (const struct varobj *var);
@@ -338,9 +346,9 @@ extern std::string
 extern void varobj_formatted_print_options (struct value_print_options *opts,
 					    enum varobj_display_formats format);
 
-extern void varobj_restrict_range (VEC (varobj_p) *children, int *from,
-				   int *to);
+extern void varobj_restrict_range (const std::vector<varobj *> &children,
+				   int *from, int *to);
 
-extern int varobj_default_is_path_expr_parent (const struct varobj *var);
+extern bool varobj_default_is_path_expr_parent (const struct varobj *var);
 
 #endif /* VAROBJ_H */

@@ -1,5 +1,5 @@
 /* GNU/Linux/Xtensa specific low level interface, for the remote server for GDB.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,7 @@ enum regnum {
 	R_LBEG,	R_LEND,	R_LCOUNT,
 	R_SAR,
 	R_WS, R_WB,
+	R_THREADPTR,
 	R_A0 = 64
 };
 
@@ -59,6 +60,20 @@ xtensa_fill_gregset (struct regcache *regcache, void *buf)
       ptr += register_size (tdesc, i);
     }
 
+  if (XSHAL_ABI == XTHAL_ABI_CALL0)
+    {
+      int a0_regnum = find_regno (tdesc, "a0");
+      ptr = (char *) &rset[R_A0 + 4 * rset[R_WB]];
+
+      for (i = a0_regnum; i < a0_regnum + C0_NREGS; i++)
+	{
+	  if ((4 * rset[R_WB] + i - a0_regnum) == XCHAL_NUM_AREGS)
+	    ptr = (char *) &rset[R_A0];
+	  collect_register (regcache, i, ptr);
+	  ptr += register_size (tdesc, i);
+	}
+    }
+
   /* Loop registers, if hardware has it.  */
 
 #if XCHAL_HAVE_LOOPS
@@ -72,6 +87,11 @@ xtensa_fill_gregset (struct regcache *regcache, void *buf)
   collect_register_by_name (regcache, "ps", (char*)&rset[R_PS]);
   collect_register_by_name (regcache, "windowbase", (char*)&rset[R_WB]);
   collect_register_by_name (regcache, "windowstart", (char*)&rset[R_WS]);
+
+#if XCHAL_HAVE_THREADPTR
+  collect_register_by_name (regcache, "threadptr",
+			    (char *) &rset[R_THREADPTR]);
+#endif
 }
 
 static void
@@ -94,6 +114,20 @@ xtensa_store_gregset (struct regcache *regcache, const void *buf)
       ptr += register_size (tdesc, i);
     }
 
+  if (XSHAL_ABI == XTHAL_ABI_CALL0)
+    {
+      int a0_regnum = find_regno (tdesc, "a0");
+      ptr = (char *) &rset[R_A0 + (4 * rset[R_WB]) % XCHAL_NUM_AREGS];
+
+      for (i = a0_regnum; i < a0_regnum + C0_NREGS; i++)
+	{
+	  if ((4 * rset[R_WB] + i - a0_regnum) == XCHAL_NUM_AREGS)
+	    ptr = (char *) &rset[R_A0];
+	  supply_register (regcache, i, ptr);
+	  ptr += register_size (tdesc, i);
+	}
+    }
+
   /* Loop registers, if hardware has it.  */
 
 #if XCHAL_HAVE_LOOPS
@@ -107,6 +141,11 @@ xtensa_store_gregset (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "ps", (char*)&rset[R_PS]);
   supply_register_by_name (regcache, "windowbase", (char*)&rset[R_WB]);
   supply_register_by_name (regcache, "windowstart", (char*)&rset[R_WS]);
+
+#if XCHAL_HAVE_THREADPTR
+  supply_register_by_name (regcache, "threadptr",
+			   (char *) &rset[R_THREADPTR]);
+#endif
 }
 
 /* Xtensa GNU/Linux PTRACE interface includes extended register set.  */

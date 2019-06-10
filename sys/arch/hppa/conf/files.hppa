@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.18 2014/02/24 07:23:42 skrll Exp $
+#	$NetBSD: files.hppa,v 1.18.30.1 2019/06/10 22:06:18 christos Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -21,9 +21,6 @@ defflag			USELEDS
 # Compatibility
 #
 include "compat/ossaudio/files.ossaudio"
-
-include "compat/osf1/files.osf1"
-file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
 
 include	"compat/linux/files.linux"
 file	arch/hppa/hppa/linux_machdep.c		compat_linux
@@ -157,7 +154,7 @@ file	arch/hppa/dev/mongoose.c	mongoose
 
 # Dino, GSC-PCI bridge. Includes ps/2, serial, and flying toaster interfaces
 # Cujo is a 64-bit data path Dino
-device	dino { }: pcibus
+device	dino { } : pcibus, gedoens
 attach	dino at gedoens
 file	arch/hppa/dev/dino.c		dino
 
@@ -243,13 +240,13 @@ attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c		gsckbc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
-device	aone: audiobus, mulaw, auconv
+device	aone: audiobus
 attach	aone at gsc
 file	arch/hppa/gsc/aone.c		aone
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)
-device	harmony {} : audiobus, mulaw, auconv
+device	harmony {} : audiobus
 attach	harmony at gsc
 file	arch/hppa/gsc/harmony.c		harmony
 

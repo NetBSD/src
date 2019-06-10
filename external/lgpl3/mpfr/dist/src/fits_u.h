@@ -1,6 +1,6 @@
 /* mpfr_fits_*_p -- test whether an mpfr fits a C unsigned type.
 
-Copyright 2003-2016 Free Software Foundation, Inc.
+Copyright 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 FUNCTION (mpfr_srcptr f, mpfr_rnd_t rnd)
 {
-  unsigned int saved_flags;
+  mpfr_flags_t saved_flags;
   mpfr_exp_t e;
   int prec;
   TYPE s;
@@ -65,7 +65,8 @@ FUNCTION (mpfr_srcptr f, mpfr_rnd_t rnd)
   /* hard case: first round to prec bits, then check */
   saved_flags = __gmpfr_flags;
   mpfr_init2 (x, prec);
-  mpfr_set (x, f, rnd);
+  /* For MPFR_RNDF, if f > 0 fits with RNDU, it will also fit with RNDD. */
+  mpfr_set (x, f, (rnd != MPFR_RNDF) ? rnd : MPFR_RNDU);
   /* Warning! Due to the rounding, x can be an infinity. Here we use
      the fact that singular numbers have a special exponent field,
      thus well-defined and different from e, in which case this means

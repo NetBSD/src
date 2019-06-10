@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.96.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,7 +60,6 @@
 #define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
-#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
@@ -133,37 +132,55 @@ static inline void cpu_dosoftints(void);
 #include <sys/evcnt.h>
 
 struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	device_t ci_dev;		/* Device corresponding to this CPU */
-	cpuid_t ci_cpuid;
-	uint32_t ci_arm_cpuid;		/* aggregate CPU id */
-	uint32_t ci_arm_cputype;	/* CPU type */
-	uint32_t ci_arm_cpurev;		/* CPU revision */
-	uint32_t ci_ctrl;		/* The CPU control register */
-	int ci_cpl;			/* current processor level (spl) */
-	volatile int ci_astpending;	/* */
-	int ci_want_resched;		/* resched() was called */
-	int ci_intr_depth;		/* */
-	struct cpu_softc *ci_softc;	/* platform softc */
-	lwp_t *ci_softlwps[SOFTINT_COUNT];
-	volatile uint32_t ci_softints;
-	lwp_t *ci_curlwp;		/* current lwp */
-	lwp_t *ci_lastlwp;		/* last lwp */
-	struct evcnt ci_arm700bugcount;
-	int32_t ci_mtx_count;
-	int ci_mtx_oldspl;
-	register_t ci_undefsave[3];
-	uint32_t ci_vfp_id;
-	uint64_t ci_lastintr;
-	struct pmap_tlb_info *ci_tlb_info;
-	struct pmap *ci_pmap_lastuser;
-	struct pmap *ci_pmap_cur;
-	tlb_asid_t ci_pmap_asid_cur;
-	struct trapframe *ci_ddb_regs;
-	struct evcnt ci_abt_evs[16];
-	struct evcnt ci_und_ev;
-	struct evcnt ci_und_cp15_ev;
-	struct evcnt ci_vfp_evs[3];
+	struct cpu_data	ci_data;	/* MI per-cpu data */
+	device_t	ci_dev;		/* Device corresponding to this CPU */
+	cpuid_t		ci_cpuid;
+	uint32_t	ci_arm_cpuid;	/* aggregate CPU id */
+	uint32_t	ci_arm_cputype;	/* CPU type */
+	uint32_t	ci_arm_cpurev;	/* CPU revision */
+	uint32_t	ci_ctrl;	/* The CPU control register */
+	int		ci_cpl;		/* current processor level (spl) */
+	volatile int	ci_astpending;	/* */
+	int		ci_want_resched;/* resched() was called */
+	int		ci_intr_depth;	/* */
+
+	struct cpu_softc *
+			ci_softc;	/* platform softc */
+
+	lwp_t *		ci_softlwps[SOFTINT_COUNT];
+	volatile uint32_t
+			ci_softints;
+
+	lwp_t *		ci_curlwp;	/* current lwp */
+	lwp_t *		ci_lastlwp;	/* last lwp */
+
+	struct evcnt	ci_arm700bugcount;
+	int32_t		ci_mtx_count;
+	int		ci_mtx_oldspl;
+	register_t	ci_undefsave[3];
+	uint32_t	ci_vfp_id;
+	uint64_t	ci_lastintr;
+
+	struct pmap_tlb_info *
+			ci_tlb_info;
+	struct pmap *	ci_pmap_lastuser;
+	struct pmap *	ci_pmap_cur;
+	tlb_asid_t	ci_pmap_asid_cur;
+
+	struct trapframe *
+			ci_ddb_regs;
+
+	struct evcnt	ci_abt_evs[16];
+	struct evcnt	ci_und_ev;
+	struct evcnt	ci_und_cp15_ev;
+	struct evcnt	ci_vfp_evs[3];
+
+	uint32_t	ci_midr;
+	uint32_t	ci_mpidr;
+
+	struct arm_cache_info *
+			ci_cacheinfo;
+
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
@@ -235,6 +252,12 @@ extern struct cpu_info *cpu_info[];
 #endif
 
 #if defined(MULTIPROCESSOR)
+
+extern volatile u_int arm_cpu_hatched;
+extern uint32_t cpu_mpidr[];
+
+void cpu_mpstart(void);
+void cpu_init_secondary_processor(int);
 void cpu_boot_secondary_processors(void);
 #endif
 

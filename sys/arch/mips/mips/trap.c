@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.246.4.1 2019/06/10 22:06:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246.4.1 2019/06/10 22:06:30 christos Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -125,16 +125,14 @@ void ast(void);
  * which will be called the very first time when child gets running.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	struct trapframe *utf = l->l_md.md_utf;
 
 	utf->tf_regs[_R_V0] = 0;
 	utf->tf_regs[_R_V1] = 1;
 	utf->tf_regs[_R_A3] = 0;
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 #ifdef MIPS3_PLUS
@@ -322,11 +320,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 */
 		if (pcb->pcb_onfault == NULL) {
 			goto dopanic;
-		}
-		/* check for fuswintr() or suswintr() getting a page fault */
-		if (pcb->pcb_onfault == (void *)fswintrberr) {
-			tf->tf_regs[_R_PC] = (intptr_t)pcb->pcb_onfault;
-			return; /* KERN */
 		}
 		goto pagefault;
 	case T_TLB_LD_MISS+T_USER:
@@ -535,7 +528,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		vaddr_t va = pc + (cause & MIPS_CR_BR_DELAY ? sizeof(int) : 0);
 
 		/* read break instruction */
-		instr = ufetch_uint32((void *)va);
+		instr = mips_ufetch32((void *)va);
 
 		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			ksi.ksi_trap = type & ~T_USER;
@@ -550,15 +543,16 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		/*
 		 * Restore original instruction and clear BP
 		 */
-		rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
-		if (rv < 0) {
+		rv = mips_ustore32_isync((void *)va, l->l_md.md_ss_instr);
+		if (rv != 0) {
 			vaddr_t sa, ea;
 			sa = trunc_page(va);
 			ea = round_page(va + sizeof(int) - 1);
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_ALL, false);
 			if (rv == 0) {
-				rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
+				rv = mips_ustore32_isync((void *)va,
+				    l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 			}
@@ -566,7 +560,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		mips_icache_sync_all();		/* XXXJRT -- necessary? */
 		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
-		if (rv < 0)
+		if (rv != 0)
 			printf("Warning: can't restore instruction"
 			    " at %#"PRIxVADDR": 0x%x\n",
 			    l->l_md.md_ss_addr, l->l_md.md_ss_instr);
@@ -703,7 +697,7 @@ mips_singlestep(struct lwp *l)
 		return EFAULT;
 	}
 	pc = (vaddr_t)tf->tf_regs[_R_PC];
-	if (ufetch_uint32((void *)pc) != 0) { /* not a NOP instruction */
+	if (mips_ufetch32((void *)pc) != 0) { /* not a NOP instruction */
 		struct pcb * const pcb = lwp_getpcb(l);
 		va = mips_emul_branch(tf, pc, PCB_FSR(pcb), true);
 	} else {
@@ -720,16 +714,17 @@ mips_singlestep(struct lwp *l)
 	}
 
 	l->l_md.md_ss_addr = va;
-	l->l_md.md_ss_instr = ufetch_uint32((void *)va);
-	rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
-	if (rv < 0) {
+	l->l_md.md_ss_instr = mips_ufetch32((void *)va);
+	rv = mips_ustore32_isync((void *)va, MIPS_BREAK_SSTEP);
+	if (rv != 0) {
 		vaddr_t sa, ea;
 		sa = trunc_page(va);
 		ea = round_page(va + sizeof(int) - 1);
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_ALL, false);
 		if (rv == 0) {
-			rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
+			rv = mips_ustore32_isync((void *)va,
+			    MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 		}
@@ -737,7 +732,7 @@ mips_singlestep(struct lwp *l)
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-		p->p_md.md_ss_instr, pc, ufetch_uint32((void *)va)); /* XXX */
+		p->p_md.md_ss_instr, pc, mips_ufetch32((void *)va)); /* XXX */
 #endif
 	return 0;
 }

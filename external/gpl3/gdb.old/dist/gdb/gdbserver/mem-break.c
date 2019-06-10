@@ -1,5 +1,5 @@
 /* Memory breakpoint operations for the remote server for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -133,8 +133,8 @@ enum bkpt_type
     /* A GDB access watchpoint, requested with a Z4 packet.  */
     gdb_breakpoint_Z4,
 
-    /* A basic-software-single-step breakpoint.  */
-    reinsert_breakpoint,
+    /* A software single-step breakpoint.  */
+    single_step_breakpoint,
 
     /* Any other breakpoint type that doesn't require specific
        treatment goes here.  E.g., an event breakpoint.  */
@@ -206,9 +206,9 @@ struct other_breakpoint
   int (*handler) (CORE_ADDR);
 };
 
-/* Reinsert breakpoint.  */
+/* Breakpoint for single step.  */
 
-struct reinsert_breakpoint
+struct single_step_breakpoint
 {
   struct breakpoint base;
 
@@ -828,12 +828,12 @@ set_breakpoint (enum bkpt_type type, enum raw_bkpt_type raw_type,
       other_bp->handler = handler;
       bp = (struct breakpoint *) other_bp;
     }
-  else if (type == reinsert_breakpoint)
+  else if (type == single_step_breakpoint)
     {
-      struct reinsert_breakpoint *reinsert_bp
-	= XCNEW (struct reinsert_breakpoint);
+      struct single_step_breakpoint *ss_bp
+	= XCNEW (struct single_step_breakpoint);
 
-      bp = (struct breakpoint *) reinsert_bp;
+      bp = (struct breakpoint *) ss_bp;
     }
   else
     gdb_assert_not_reached ("unhandled breakpoint type");
@@ -1284,8 +1284,7 @@ add_breakpoint_condition (struct gdb_breakpoint *bp, char **condition)
 
   if (cond == NULL)
     {
-      fprintf (stderr, "Condition evaluation failed. "
-	       "Assuming unconditional.\n");
+      warning ("Condition evaluation failed. Assuming unconditional.");
       return 0;
     }
 
@@ -1384,8 +1383,7 @@ add_breakpoint_commands (struct gdb_breakpoint *bp, char **command,
 
   if (cmd == NULL)
     {
-      fprintf (stderr, "Command evaluation failed. "
-	       "Disabling.\n");
+      warning ("Command evaluation failed. Disabling.");
       return 0;
     }
 
@@ -1479,19 +1477,19 @@ gdb_breakpoint_here (CORE_ADDR where)
 }
 
 void
-set_reinsert_breakpoint (CORE_ADDR stop_at, ptid_t ptid)
+set_single_step_breakpoint (CORE_ADDR stop_at, ptid_t ptid)
 {
-  struct reinsert_breakpoint *bp;
+  struct single_step_breakpoint *bp;
 
   gdb_assert (ptid_get_pid (current_ptid) == ptid_get_pid (ptid));
 
-  bp = (struct reinsert_breakpoint *) set_breakpoint_type_at (reinsert_breakpoint,
-							      stop_at, NULL);
+  bp = (struct single_step_breakpoint *) set_breakpoint_type_at (single_step_breakpoint,
+								stop_at, NULL);
   bp->ptid = ptid;
 }
 
 void
-delete_reinsert_breakpoints (struct thread_info *thread)
+delete_single_step_breakpoints (struct thread_info *thread)
 {
   struct process_info *proc = get_thread_process (thread);
   struct breakpoint *bp, **bp_link;
@@ -1501,8 +1499,8 @@ delete_reinsert_breakpoints (struct thread_info *thread)
 
   while (bp)
     {
-      if (bp->type == reinsert_breakpoint
-	  && ptid_equal (((struct reinsert_breakpoint *) bp)->ptid,
+      if (bp->type == single_step_breakpoint
+	  && ptid_equal (((struct single_step_breakpoint *) bp)->ptid,
 			 ptid_of (thread)))
 	{
 	  struct thread_info *saved_thread = current_thread;
@@ -1591,15 +1589,15 @@ uninsert_all_breakpoints (void)
 }
 
 void
-uninsert_reinsert_breakpoints (struct thread_info *thread)
+uninsert_single_step_breakpoints (struct thread_info *thread)
 {
   struct process_info *proc = get_thread_process (thread);
   struct breakpoint *bp;
 
   for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
     {
-    if (bp->type == reinsert_breakpoint
-	&& ptid_equal (((struct reinsert_breakpoint *) bp)->ptid,
+    if (bp->type == single_step_breakpoint
+	&& ptid_equal (((struct single_step_breakpoint *) bp)->ptid,
 		       ptid_of (thread)))
       {
 	gdb_assert (bp->raw->inserted > 0);
@@ -1663,7 +1661,7 @@ reinsert_breakpoints_at (CORE_ADDR pc)
 }
 
 int
-has_reinsert_breakpoints (struct thread_info *thread)
+has_single_step_breakpoints (struct thread_info *thread)
 {
   struct process_info *proc = get_thread_process (thread);
   struct breakpoint *bp, **bp_link;
@@ -1673,8 +1671,8 @@ has_reinsert_breakpoints (struct thread_info *thread)
 
   while (bp)
     {
-      if (bp->type == reinsert_breakpoint
-	  && ptid_equal (((struct reinsert_breakpoint *) bp)->ptid,
+      if (bp->type == single_step_breakpoint
+	  && ptid_equal (((struct single_step_breakpoint *) bp)->ptid,
 			 ptid_of (thread)))
 	return 1;
       else
@@ -1701,15 +1699,15 @@ reinsert_all_breakpoints (void)
 }
 
 void
-reinsert_reinsert_breakpoints (struct thread_info *thread)
+reinsert_single_step_breakpoints (struct thread_info *thread)
 {
   struct process_info *proc = get_thread_process (thread);
   struct breakpoint *bp;
 
   for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
     {
-      if (bp->type == reinsert_breakpoint
-	  && ptid_equal (((struct reinsert_breakpoint *) bp)->ptid,
+      if (bp->type == single_step_breakpoint
+	  && ptid_equal (((struct single_step_breakpoint *) bp)->ptid,
 			 ptid_of (thread)))
 	{
 	  gdb_assert (bp->raw->inserted > 0);
@@ -1839,13 +1837,13 @@ hardware_breakpoint_inserted_here (CORE_ADDR addr)
 /* See mem-break.h.  */
 
 int
-reinsert_breakpoint_inserted_here (CORE_ADDR addr)
+single_step_breakpoint_inserted_here (CORE_ADDR addr)
 {
   struct process_info *proc = current_process ();
   struct breakpoint *bp;
 
   for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
-    if (bp->type == reinsert_breakpoint
+    if (bp->type == single_step_breakpoint
 	&& bp->raw->pc == addr
 	&& bp->raw->inserted)
       return 1;
@@ -1885,9 +1883,9 @@ delete_disabled_breakpoints (void)
       next = bp->next;
       if (bp->raw->inserted < 0)
 	{
-	  /* If reinsert_breakpoints become disabled, that means the
+	  /* If single_step_breakpoints become disabled, that means the
 	     manipulations (insertion and removal) of them are wrong.  */
-	  gdb_assert (bp->type != reinsert_breakpoint);
+	  gdb_assert (bp->type != single_step_breakpoint);
 	  delete_breakpoint_1 (proc, bp);
 	}
     }
@@ -2200,15 +2198,15 @@ clone_one_breakpoint (const struct breakpoint *src, ptid_t ptid)
       other_dest->handler = ((struct other_breakpoint *) src)->handler;
       dest = (struct breakpoint *) other_dest;
     }
-  else if (src->type == reinsert_breakpoint)
+  else if (src->type == single_step_breakpoint)
     {
-      struct reinsert_breakpoint *reinsert_dest
-	= XCNEW (struct reinsert_breakpoint);
+      struct single_step_breakpoint *ss_dest
+	= XCNEW (struct single_step_breakpoint);
 
-      dest = (struct breakpoint *) reinsert_dest;
-      /* Since reinsert breakpoint is thread specific, don't copy
+      dest = (struct breakpoint *) ss_dest;
+      /* Since single-step breakpoint is thread specific, don't copy
 	 thread id from SRC, use ID instead.  */
-      reinsert_dest->ptid = ptid;
+      ss_dest->ptid = ptid;
     }
   else
     gdb_assert_not_reached ("unhandled breakpoint type");

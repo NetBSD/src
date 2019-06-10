@@ -1,17 +1,23 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_STMTSTATUS_FULLSCAN_STEP 3
 .Os
 .Sh NAME
 .Nm SQLITE_STMTSTATUS_FULLSCAN_STEP ,
 .Nm SQLITE_STMTSTATUS_SORT ,
 .Nm SQLITE_STMTSTATUS_AUTOINDEX ,
-.Nm SQLITE_STMTSTATUS_VM_STEP
+.Nm SQLITE_STMTSTATUS_VM_STEP ,
+.Nm SQLITE_STMTSTATUS_REPREPARE ,
+.Nm SQLITE_STMTSTATUS_RUN ,
+.Nm SQLITE_STMTSTATUS_MEMUSED
 .Nd Status Parameters for prepared statements
 .Sh SYNOPSIS
 .Fd #define SQLITE_STMTSTATUS_FULLSCAN_STEP
 .Fd #define SQLITE_STMTSTATUS_SORT
 .Fd #define SQLITE_STMTSTATUS_AUTOINDEX
 .Fd #define SQLITE_STMTSTATUS_VM_STEP
+.Fd #define SQLITE_STMTSTATUS_REPREPARE
+.Fd #define SQLITE_STMTSTATUS_RUN
+.Fd #define SQLITE_STMTSTATUS_MEMUSED
 .Sh DESCRIPTION
 These preprocessor macros define integer codes that name counter values
 associated with the sqlite3_stmt_status() interface.
@@ -39,7 +45,24 @@ The number of virtual machine operations can be used as a proxy for
 the total work done by the prepared statement.
 If the number of virtual machine operations exceeds 2147483647 then
 the value returned by this statement status code is undefined.
+.It SQLITE_STMTSTATUS_REPREPARE
+This is the number of times that the prepare statement has been automatically
+regenerated due to schema changes or change to bound parameters
+that might affect the query plan.
+.It SQLITE_STMTSTATUS_RUN
+This is the number of times that the prepared statement has been run.
+A single "run" for the purposes of this counter is one or more calls
+to sqlite3_step() followed by a call to sqlite3_reset().
+The counter is incremented on the first sqlite3_step()
+call of each cycle.
+.It SQLITE_STMTSTATUS_MEMUSED
+This is the approximate number of bytes of heap memory used to store
+the prepared statement.
+This value is not actually a counter, and so the resetFlg parameter
+to sqlite3_stmt_status() is ignored when the opcode is SQLITE_STMTSTATUS_MEMUSED.
 .El
 .Pp
 .Sh SEE ALSO
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_step 3 ,
 .Xr sqlite3_stmt_status 3

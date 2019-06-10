@@ -130,9 +130,8 @@ m68hc11_elf_${EMULATION_NAME}_before_allocation (void)
 
       if (pinfo->bank_size != region->length)
 	{
-	  einfo (_("warning: the size of the 'window' memory region "
-		   "is not a power of 2\n"));
-	  einfo (_("warning: its size %d is truncated to %d\n"),
+	  einfo (_("%P: warning: the size of the 'window' memory region "
+		   "is not a power of 2; its size %d is truncated to %d\n"),
 		 region->length, pinfo->bank_size);
 	}
     }
@@ -160,7 +159,7 @@ m68hc11elf_create_output_section_statements (void)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%X%P: can not create BFD %E\n"));
+      einfo (_("%F%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -361,10 +360,10 @@ PARSE_AND_LIST_LONGOPTS='
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _(
 "  --no-trampoline             Do not generate the far trampolines used to call\n"
-"                                a far function using 'jsr' or 'bsr'.\n"
+"                                a far function using 'jsr' or 'bsr'\n"));
+  fprintf (file, _(
 "  --bank-window NAME          Specify the name of the memory region describing\n"
-"                                the layout of the memory bank window.\n"
-		   ));
+"                                the layout of the memory bank window\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='

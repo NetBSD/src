@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -1203,7 +1203,7 @@ directories for target libraries.
      value of KIND can be '"auto"', in addition to one of the supported
      file system kinds.  In that case, GDB tries to determine the
      appropriate file system variant based on the current target's
-     operating system (*note Configuring the Current ABI: ABI.).  The
+     operating system (*note Configuring the Current ABI: ABI.). The
      supported file system settings are:
 
      'unix'
@@ -1222,7 +1222,7 @@ directories for target libraries.
      'auto'
           Instruct GDB to use the file system kind associated with the
           target operating system (*note Configuring the Current ABI:
-          ABI.).  This is the default.
+          ABI.). This is the default.
 
    When processing file names provided by the user, GDB frequently needs
 to compare them to the file names recorded in the program's debug info.
@@ -1415,6 +1415,7 @@ second or both methods to link the two files:
      support plus compatibility fixes for debug files separation are
      present in GNU binary utilities (Binutils) package since version
      2.18.
+
 
    The CRC used in '.gnu_debuglink' is the CRC-32 defined in IEEE 802.3
 using the polynomial:
@@ -1906,7 +1907,7 @@ control various aspects of this process.
      Show the current status of displaying communications between GDB
      and the remote monitor.
 
-'load FILENAME'
+'load FILENAME OFFSET'
      Depending on what remote debugging facilities are configured into
      GDB, the 'load' command may be available.  Where it exists, it is
      meant to make FILENAME (an executable) available for debugging on
@@ -1923,10 +1924,18 @@ control various aspects of this process.
      address when you link the program; for other formats, like a.out,
      the object file format specifies a fixed address.
 
+     It is also possible to tell GDB to load the executable file at a
+     specific offset described by the optional argument OFFSET.  When
+     OFFSET is provided, FILENAME must also be provided.
+
      Depending on the remote side capabilities, GDB may be able to load
      programs into flash memory.
 
      'load' does not repeat if you press <RET> again after using it.
+
+'flash-erase'
+
+     Erases all known flash memory regions on the target.
 
 
 File: gdb.info,  Node: Byte Order,  Prev: Target Commands,  Up: Targets
@@ -3883,6 +3892,7 @@ send an arbitrary command to the simulator.
 
 * Menu:
 
+* ARC::                         Synopsys ARC
 * ARM::                         ARM
 * M68K::                        Motorola M68K
 * MicroBlaze::			Xilinx MicroBlaze
@@ -3893,9 +3903,29 @@ send an arbitrary command to the simulator.
 * Super-H::                     Renesas Super-H
 
 
-File: gdb.info,  Node: ARM,  Next: M68K,  Up: Embedded Processors
+File: gdb.info,  Node: ARC,  Next: ARM,  Up: Embedded Processors
 
-21.3.1 ARM
+21.3.1 Synopsys ARC
+-------------------
+
+GDB provides the following ARC-specific commands:
+
+'set debug arc'
+     Control the level of ARC specific debug messages.  Use 0 for no
+     messages (the default), 1 for debug messages, and 2 for even more
+     debug messages.
+
+'show debug arc'
+     Show the level of ARC specific debugging in operation.
+
+'maint print arc arc-instruction ADDRESS'
+     Print internal disassembler information about instruction at a
+     given address.
+
+
+File: gdb.info,  Node: ARM,  Next: M68K,  Prev: ARC,  Up: Embedded Processors
+
+21.3.2 ARM
 ----------
 
 GDB provides the following ARM-specific commands:
@@ -3981,7 +4011,7 @@ GDB provides the following ARM-specific commands:
 
 File: gdb.info,  Node: M68K,  Next: MicroBlaze,  Prev: ARM,  Up: Embedded Processors
 
-21.3.2 M68k
+21.3.3 M68k
 -----------
 
 The Motorola m68k configuration includes ColdFire support.
@@ -3989,7 +4019,7 @@ The Motorola m68k configuration includes ColdFire support.
 
 File: gdb.info,  Node: MicroBlaze,  Next: MIPS Embedded,  Prev: M68K,  Up: Embedded Processors
 
-21.3.3 MicroBlaze
+21.3.4 MicroBlaze
 -----------------
 
 The MicroBlaze is a soft-core processor supported on various Xilinx
@@ -4026,7 +4056,7 @@ need to do this.)
 
 File: gdb.info,  Node: MIPS Embedded,  Next: PowerPC Embedded,  Prev: MicroBlaze,  Up: Embedded Processors
 
-21.3.4 MIPS Embedded
+21.3.5 MIPS Embedded
 --------------------
 
 GDB supports these special commands for MIPS targets:
@@ -4058,7 +4088,7 @@ GDB supports these special commands for MIPS targets:
 
 File: gdb.info,  Node: PowerPC Embedded,  Next: AVR,  Prev: MIPS Embedded,  Up: Embedded Processors
 
-21.3.5 PowerPC Embedded
+21.3.6 PowerPC Embedded
 -----------------------
 
 GDB supports using the DVC (Data Value Compare) register to implement in
@@ -4130,7 +4160,7 @@ command.
 
 File: gdb.info,  Node: AVR,  Next: CRIS,  Prev: PowerPC Embedded,  Up: Embedded Processors
 
-21.3.6 Atmel AVR
+21.3.7 Atmel AVR
 ----------------
 
 When configured for debugging the Atmel AVR, GDB supports the following
@@ -4143,7 +4173,7 @@ AVR-specific commands:
 
 File: gdb.info,  Node: CRIS,  Next: Super-H,  Prev: AVR,  Up: Embedded Processors
 
-21.3.7 CRIS
+21.3.8 CRIS
 -----------
 
 When configured for debugging CRIS, GDB provides the following
@@ -4176,7 +4206,7 @@ CRIS-specific commands:
 
 File: gdb.info,  Node: Super-H,  Prev: CRIS,  Up: Embedded Processors
 
-21.3.8 Renesas Super-H
+21.3.9 Renesas Super-H
 ----------------------
 
 For the Renesas Super-H processor, GDB provides these commands:
@@ -4297,6 +4327,34 @@ purpose:
      three parameters: POINTER is the pointers whose bounds are to be
      changed, LBOUND and UBOUND are new values for lower and upper
      bounds respectively.
+
+   When you call an inferior function on an Intel MPX enabled program,
+GDB sets the inferior's bound registers to the init (disabled) state
+before calling the function.  As a consequence, bounds checks for the
+pointer arguments passed to the function will always pass.
+
+   This is necessary because when you call an inferior function, the
+program is usually in the middle of the execution of other function.
+Since at that point bound registers are in an arbitrary state, not
+clearing them would lead to random bound violations in the called
+function.
+
+   You can still examine the influence of the bound registers on the
+execution of the called function by stopping the execution of the called
+function at its prologue, setting bound registers, and continuing the
+execution.  For example:
+
+     	$ break *upper
+     	Breakpoint 2 at 0x4009de: file i386-mpx-call.c, line 47.
+     	$ print upper (a, b, c, d, 1)
+     	Breakpoint 2, upper (a=0x0, b=0x6e0000005b, c=0x0, d=0x0, len=48)....
+     	$ print $bnd0
+	     {lbound = 0x0, ubound = ffffffff} : size -1
+
+   At this last step the value of bnd0 can be changed for investigation
+of bound violations caused along the execution of the call.  In order to
+know how to set the bound registers or bound table for the call consult
+the ABI.
 
    ---------- Footnotes ----------
 
@@ -5607,9 +5665,9 @@ File: gdb.info,  Node: Define,  Next: Hooks,  Up: Sequences
 
 A "user-defined command" is a sequence of GDB commands to which you
 assign a new name as a command.  This is done with the 'define' command.
-User commands may accept up to 10 arguments separated by whitespace.
-Arguments are accessed within the user command via '$arg0...$arg9'.  A
-trivial example:
+User commands may accept an unlimited number of arguments separated by
+whitespace.  Arguments are accessed within the user command via
+'$arg0...$argN'.  A trivial example:
 
      define adder
        print $arg0 + $arg1 + $arg2
@@ -5625,7 +5683,7 @@ reference variables, use complex expressions, or even perform inferior
 functions calls.
 
    In addition, '$argc' may be used to find out how many arguments have
-been passed.  This expands to a number in the range 0...10.
+been passed.
 
      define adder
        if $argc == 2
@@ -5634,6 +5692,19 @@ been passed.  This expands to a number in the range 0...10.
        if $argc == 3
          print $arg0 + $arg1 + $arg2
        end
+     end
+
+   Combining with the 'eval' command (*note eval::) makes it easier to
+process a variable number of arguments:
+
+     define adder
+       set $i = 0
+       set $sum = 0
+       while $i < $argc
+         eval "set $sum = $sum + $arg%d", $i
+         set $i = $i + 1
+       end
+       print $sum
      end
 
 'define COMMANDNAME'
@@ -6153,6 +6224,7 @@ optional arguments while skipping others.  Example:
 * Inferiors In Python::         Python representation of inferiors (processes)
 * Events In Python::            Listening for events from GDB.
 * Threads In Python::           Accessing inferior threads from Python.
+* Recordings In Python::        Accessing recordings from Python.
 * Commands In Python::          Implementing new commands in Python.
 * Parameters In Python::        Adding new GDB parameters.
 * Functions In Python::         Writing new convenience functions.

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2014/04/06 19:28:59 christos Exp $
+# $NetBSD: Makefile,v 1.7.24.1 2019/06/10 22:10:04 christos Exp $
 
 NOMAN=		# defined
 
@@ -47,5 +47,10 @@ PROGS+=		h_strncat
 PROGS+=		h_strncpy
 PROGS+=		h_vsnprintf
 PROGS+=		h_vsprintf
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+# Test exercises truncation
+COPTS.h_snprintf.c+=	-Wno-error=format-truncation
+.endif
 
 .include <bsd.test.mk>

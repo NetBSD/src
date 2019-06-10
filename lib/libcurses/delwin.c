@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: delwin.c,v 1.20.14.1 2019/06/10 22:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.20.14.1 2019/06/10 22:05:22 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -114,6 +114,7 @@ delwin(WINDOW *win)
 		_cursesi_screen->__virtscr = NULL;
 	if (win->fp)
 		fclose(win->fp);
+	free(win->buf);
 	free(win);
 	return OK;
 }

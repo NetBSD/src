@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.132 2018/01/14 22:44:04 christos Exp $
+#	$NetBSD: Makefile,v 1.132.4.1 2019/06/10 22:05:31 christos Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -14,7 +14,7 @@ SUBDIR=	amrctl apmlabel atactl badsect bioctl brconfig \
 	newbtconf nologin nvmectl \
 	ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
-	ttyflags umount veriexecctl wdogctl wsconsctl
+	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs
@@ -47,15 +47,12 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_ptyfs
 SUBDIR+= mount_puffs
+SUBDIR+= mount_qemufwcfg
 SUBDIR+= mount_sysvbfs
 SUBDIR+= mount_tmpfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_v7fs
-
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
-SUBDIR+= mount_qemufwcfg
-.endif
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6

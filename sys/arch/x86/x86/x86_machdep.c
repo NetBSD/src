@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.117 2018/06/16 17:11:13 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.117.2.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117 2018/06/16 17:11:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -68,15 +68,21 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117 2018/06/16 17:11:13 maxv Exp $
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
-#include <machine/pmc.h>
 
 #include <uvm/uvm_extern.h>
 
 #include "tsc.h"
 
 #include "acpica.h"
+#include "ioapic.h"
+#include "lapic.h"
+
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
+#endif
+
+#if NIOAPIC > 0 || NACPICA > 0
+#include <machine/i82093var.h>
 #endif
 
 #include "opt_md.h"
@@ -90,7 +96,6 @@ static char x86_cpu_idle_text[16];
 
 #ifdef XEN
 char module_machine_amd64_xen[] = "amd64-xen";
-char module_machine_i386_xen[] = "i386-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
 #endif
 
@@ -207,14 +212,10 @@ module_init_md(void)
 
 	/* setup module path for XEN kernels */
 #ifdef XEN
-#if defined(amd64)
+#ifdef __x86_64__
 	module_machine = module_machine_amd64_xen;
-#elif defined(i386)
-#ifdef PAE
-	module_machine = module_machine_i386pae_xen;
 #else
-	module_machine = module_machine_i386_xen;
-#endif
+	module_machine = module_machine_i386pae_xen;
 #endif
 #endif
 
@@ -460,7 +461,7 @@ void
 x86_cpu_idle_init(void)
 {
 
-#ifndef XEN
+#ifndef XENPV
 	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
 	    cpu_vendor == CPUVENDOR_AMD)
 		x86_cpu_idle_set(x86_cpu_idle_halt, "halt", true);
@@ -490,7 +491,7 @@ x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 	(void)strlcpy(x86_cpu_idle_text, text, sizeof(x86_cpu_idle_text));
 }
 
-#ifndef XEN
+#ifndef XENPV
 
 #define KBTOB(x)	((size_t)(x) * 1024UL)
 #define MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
@@ -947,7 +948,7 @@ init_x86_vm(paddr_t pa_kend)
 	return 0;
 }
 
-#endif /* !XEN */
+#endif /* !XENPV */
 
 void
 init_x86_msgbuf(void)
@@ -1091,9 +1092,8 @@ machdep_init(void)
 void
 x86_startup(void)
 {
-#if !defined(XEN)
+#if !defined(XENPV)
 	nmi_init();
-	pmc_init();
 #endif
 }
 
@@ -1150,7 +1150,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-#ifndef XEN
+#ifndef XENPV
 static int
 sysctl_machdep_tsc_enable(SYSCTLFN_ARGS)
 {
@@ -1182,6 +1182,32 @@ sysctl_machdep_tsc_enable(SYSCTLFN_ARGS)
 }
 #endif
 
+static const char * const vm_guest_name[VM_LAST] = {
+	[VM_GUEST_NO] =		"none",
+	[VM_GUEST_VM] =		"generic",
+	[VM_GUEST_XEN] =	"Xen",
+	[VM_GUEST_HV] =		"Hyper-V",
+	[VM_GUEST_VMWARE] =	"VMware",
+	[VM_GUEST_KVM] =	"KVM",
+};
+
+static int
+sysctl_machdep_hypervisor(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	const char *t = NULL;
+	char buf[8];
+
+	node = *rnode;
+	node.sysctl_data = buf;
+	if (vm_guest >= VM_GUEST_NO && vm_guest < VM_LAST)
+		t = vm_guest_name[vm_guest];
+	if (t == NULL)
+		t = "unknown";
+	strlcpy(buf, t, sizeof(buf));
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 static void
 const_sysctl(struct sysctllog **clog, const char *name, int type,
     u_quad_t value, int tag)
@@ -1195,7 +1221,7 @@ const_sysctl(struct sysctllog **clog, const char *name, int type,
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 	extern uint64_t tsc_freq;
-#ifndef XEN
+#ifndef XENPV
 	extern int tsc_user_enabled;
 #endif
 	extern int sparse_dump;
@@ -1247,7 +1273,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-#ifndef XEN
+#ifndef XENPV
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tsc_user_enable",
@@ -1255,19 +1281,29 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_machdep_tsc_enable, 0, &tsc_user_enabled, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "hypervisor", NULL,
+		       sysctl_machdep_hypervisor, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #ifdef SVS
-	int sysctl_machdep_svs_enabled(SYSCTLFN_ARGS);
 	const struct sysctlnode *svs_rnode = NULL;
 	sysctl_createv(clog, 0, NULL, &svs_rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "svs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_CREATE);
-	sysctl_createv(clog, 0, &svs_rnode, &svs_rnode,
-		       CTLFLAG_READWRITE,
+	sysctl_createv(clog, 0, &svs_rnode, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_BOOL, "enabled",
 		       SYSCTL_DESCR("Whether the kernel uses SVS"),
-		       sysctl_machdep_svs_enabled, 0, &svs_enabled, 0,
+		       NULL, 0, &svs_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &svs_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_BOOL, "pcid",
+		       SYSCTL_DESCR("Whether SVS uses PCID"),
+		       NULL, 0, &svs_pcid, 0,
 		       CTL_CREATE, CTL_EOL);
 #endif
 
@@ -1276,10 +1312,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_speculation_init(clog);
 #endif
 
-#ifndef XEN
 	void sysctl_eagerfpu_init(struct sysctllog **);
 	sysctl_eagerfpu_init(clog);
-#endif
 
 	/* None of these can ever change once the system has booted */
 	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,
@@ -1298,10 +1332,30 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
 	    CPU_XSAVE_FEATURES);
 
-#ifndef XEN
+#ifndef XENPV
 	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,
 	    CPU_BIOSBASEMEM);
 	const_sysctl(clog, "biosextmem", CTLTYPE_INT, biosextmem,
 	    CPU_BIOSEXTMEM);
 #endif
 }
+
+/* Here for want of a better place */
+#if defined(DOM0OPS) || !defined(XENPV)
+struct pic *
+intr_findpic(int num)
+{
+#if NIOAPIC > 0
+	struct ioapic_softc *pic;
+
+	pic = ioapic_find_bybase(num);
+	if (pic != NULL)
+		return &pic->sc_pic;
+#endif
+	if (num < NUM_LEGACY_IRQS)
+		return &i8259_pic;
+
+	return NULL;
+}
+#endif
+

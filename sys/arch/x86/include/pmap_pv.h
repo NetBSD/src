@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.3 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.3.54.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -81,7 +81,10 @@ struct pmap_page {
 #define	pp_head	pp_u.u_head
 #define	pp_link	pp_u.u_link
 	uint8_t pp_flags;
-	uint8_t pp_attrs;	/* saved PG_M and PG_U */
+	uint8_t pp_attrs;
+#define PP_ATTRS_M	0x01	/* Dirty */
+#define PP_ATTRS_U	0x02	/* Accessed */
+#define PP_ATTRS_W	0x04	/* Writable */
 };
 
 /* pp_flags */

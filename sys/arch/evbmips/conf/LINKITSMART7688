@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.6 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: LINKITSMART7688,v 1.6.6.1 2019/06/10 22:06:12 christos Exp $
 #
 # MediaTek MT7688
 #
@@ -64,7 +64,6 @@ include         "conf/compat_netbsd50.config"
 
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems
@@ -94,6 +93,11 @@ file-system	TMPFS		# Efficient memory file-system
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and immutable) behave as system flags.
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -106,9 +110,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -180,6 +181,8 @@ reth*		at mainbus?
 options 	RALINK_ETH_MACADDR="00:00:aa:bb:cc:dd"	# according to u-boot env
 
 # MII/PHY support
+rgephy*	at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI/PCIe support
@@ -233,7 +236,6 @@ pseudo-device	swcrypto		# software crypto implementation
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -252,11 +254,8 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-#pseudo-device	pfsync			# PF sync if
-#pseudo-device	npf			# NPF packet filter
-#pseudo-device	etherip			# Tunnel Ethernet over IP
+pseudo-device	npf			# NPF packet filter
+#pseudo-device	l2tp			# L2TPv3 interface
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
 

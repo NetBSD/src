@@ -1,5 +1,5 @@
 /* Random host-dependent support code.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
    Written by Ken Raeburn.
 
    This file is part of the GNU opcodes library.
@@ -55,6 +55,8 @@
 #if !HAVE_DECL_STPCPY
 extern char *stpcpy (char *__dest, const char *__src);
 #endif
+
+#define opcodes_error_handler _bfd_error_handler
 
 /* Use sigsetjmp/siglongjmp without saving the signal mask if possible.
    It is faster than setjmp/longjmp on systems where the signal mask is

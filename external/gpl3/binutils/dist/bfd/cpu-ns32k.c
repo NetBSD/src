@@ -220,8 +220,8 @@ do_ns32k_reloc (bfd *      abfd,
 	 the addend to be the negative of the position of the location
 	 within the section; for example, i386-aout does this.  For
 	 i386-aout, pcrel_offset is FALSE.  Some other targets do not
-	 include the position of the location; for example, m88kbcs,
-	 or ELF.  For those targets, pcrel_offset is TRUE.
+	 include the position of the location; for example, ELF.
+	 For those targets, pcrel_offset is TRUE.
 
 	 If we are producing relocatable output, then we must ensure
 	 that this reloc will be correctly computed when the final
@@ -793,12 +793,7 @@ _bfd_ns32k_final_link_relocate (reloc_howto_type *howto,
 
   /* If the relocation is PC relative, we want to set RELOCATION to
      the distance between the symbol (currently in RELOCATION) and the
-     location we are relocating.  Some targets (e.g., i386-aout)
-     arrange for the contents of the section to be the negative of the
-     offset of the location within the section; for such targets
-     pcrel_offset is FALSE.  Other targets (e.g., m88kbcs or ELF)
-     simply leave the contents of the section as zero; for such
-     targets pcrel_offset is TRUE.  If pcrel_offset is FALSE we do not
+     location we are relocating.  If pcrel_offset is FALSE we do not
      need to subtract out the offset of the location within the
      section (which is just ADDRESS).  */
   if (howto->pc_relative)

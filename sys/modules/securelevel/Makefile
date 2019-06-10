@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/10/02 18:50:12 elad Exp $
+# $NetBSD: Makefile,v 1.1.66.1 2019/06/10 22:09:38 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	securelevel
 SRCS=	secmodel_securelevel.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

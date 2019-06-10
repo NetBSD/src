@@ -1,0 +1,2 @@
+include window
+call 2 getbegy $win1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.8 2015/09/18 21:30:02 phx Exp $	*/
+/*	$NetBSD: cfi.c,v 1.8.18.1 2019/06/10 22:07:14 christos Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.8 2015/09/18 21:30:02 phx Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.8.18.1 2019/06/10 22:07:14 christos Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,7 +829,7 @@ cfi_jedec_fill(struct cfi *cfi, const struct cfi_jedec_tab *jt)
 	cfi->cfi_name = jt->jt_name;
 
 	struct cfi_query_data *qryp = &cfi->cfi_qry_data;
-	memset(&qryp, 0, sizeof(*qryp));
+	memset(qryp, 0, sizeof(*qryp));
 	qryp->id_pri = jt->jt_id_pri;
 	qryp->id_alt = jt->jt_id_alt;
 	qryp->interface_code_desc = jt->jt_interface_code_desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.186 2018/05/11 09:43:59 roy Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.186.2.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.186 2018/05/11 09:43:59 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.186.2.1 2019/06/10 22:09:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -123,10 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.186 2018/05/11 09:43:59 roy Exp $"
 #include <sys/uidinfo.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/compat_stub.h>
 
-#ifdef COMPAT_70
 #include <compat/sys/socket.h>
-#endif
+#include <compat/net/route_70.h>
 
 /*
  * Unix communications domain.
@@ -196,6 +196,20 @@ static kcondvar_t unp_thread_cv;
 static lwp_t *unp_thread_lwp;
 static SLIST_HEAD(,file) unp_thread_discard;
 static int unp_defer;
+
+/* Compat interface */
+
+struct mbuf * stub_compat_70_unp_addsockcred(lwp_t *, struct mbuf *);
+
+struct mbuf * stub_compat_70_unp_addsockcred(struct lwp *lwp,
+    struct mbuf *control)
+{
+
+/* just copy our initial argument */
+	return control;
+}
+
+bool compat70_ocreds_valid = false;
 
 /*
  * Initialize Unix protocols.
@@ -336,20 +350,21 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(curlwp, control);
-#ifdef COMPAT_SOCKCRED70
 	if (unp->unp_conn->unp_flags & UNP_OWANTCRED)
-		control = compat_70_unp_addsockcred(curlwp, control);
-#endif
+		MODULE_HOOK_CALL(uipc_unp_70_hook, (curlwp, control),
+		    stub_compat_70_unp_addsockcred(curlwp, control), control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		unp_dispose(control);
 		m_freem(control);
 		m_freem(m);
-		soroverflow(so2);
-		return (ENOBUFS);
+		/* Don't call soroverflow because we're returning this
+		 * error directly to the sender. */
+		so2->so_rcv.sb_overflowed++;
+		return ENOBUFS;
 	} else {
 		sorwakeup(so2);
-		return (0);
+		return 0;
 	}
 }
 
@@ -512,16 +527,16 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
 			control = unp_addsockcred(l, control);
 		}
-#ifdef COMPAT_SOCKCRED70
 		if (unp->unp_conn->unp_flags & UNP_OWANTCRED) {
 			/*
 			 * Credentials are passed only once on
 			 * SOCK_STREAM and SOCK_SEQPACKET.
 			 */
 			unp->unp_conn->unp_flags &= ~UNP_OWANTCRED;
-			control = compat_70_unp_addsockcred(l, control);
+			MODULE_HOOK_CALL(uipc_unp_70_hook, (curlwp, control),
+			    stub_compat_70_unp_addsockcred(curlwp, control),
+			    control);
 		}
-#endif
 		/*
 		 * Send to paired receive port, and then reduce
 		 * send buffer hiwater marks to maintain backpressure.
@@ -595,11 +610,14 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 	case PRCO_SETOPT:
 		switch (sopt->sopt_name) {
+		case LOCAL_OCREDS:
+			if (!compat70_ocreds_valid)  {
+				error = ENOPROTOOPT;
+				break;
+			}
+			/* FALLTHROUGH */
 		case LOCAL_CREDS:
 		case LOCAL_CONNWAIT:
-#ifdef COMPAT_SOCKCRED70
-		case LOCAL_OCREDS:
-#endif
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -616,11 +634,9 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			case LOCAL_CONNWAIT:
 				OPTSET(UNP_CONNWAIT);
 				break;
-#ifdef COMPAT_SOCKCRED70
 			case LOCAL_OCREDS:
 				OPTSET(UNP_OWANTCRED);
 				break;
-#endif
 			}
 			break;
 #undef OPTSET
@@ -648,14 +664,14 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			optval = OPTBIT(UNP_WANTCRED);
 			error = sockopt_setint(sopt, optval);
 			break;
-#ifdef COMPAT_SOCKCRED70
 		case LOCAL_OCREDS:
-			optval = OPTBIT(UNP_OWANTCRED);
-			error = sockopt_setint(sopt, optval);
-			break;
-#endif
+			if (compat70_ocreds_valid) {
+				optval = OPTBIT(UNP_OWANTCRED);
+				error = sockopt_setint(sopt, optval);
+				break;
+			}
 #undef OPTBIT
-
+			/* FALLTHROUGH */
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1242,7 +1258,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		/*
 		 * If the connection is fully established, break the
 		 * association with uipc_lock and give the connected
-		 * pair a seperate lock to share.
+		 * pair a separate lock to share.
 		 */
 		KASSERT(so2->so_head != NULL);
 		unp_setpeerlocks(so, so2);

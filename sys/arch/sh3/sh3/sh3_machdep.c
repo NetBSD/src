@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.105 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.105.16.1 2019/06/10 22:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.105 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.105.16.1 2019/06/10 22:06:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -361,13 +361,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp = getframe(l, sig, &onstack);
 	--fp;
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -532,7 +532,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
 	tf->tf_r3 = 0;
-	tf->tf_r4 = fuword((void *)stack);	/* argc */
+	if (ufetch_int((void *)stack, (u_int *)&tf->tf_r4) != 0) /* argc */
+		tf->tf_r4 = -1;
 	tf->tf_r5 = stack + 4;			/* argv */
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;

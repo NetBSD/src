@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.24 2018/06/07 13:36:29 thorpej Exp $
+#	$NetBSD: NETBOOKPRO,v 1.24.2.1 2019/06/10 22:06:16 christos Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.24.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -177,7 +177,7 @@ iic*	at nbpiic?
 
 nbppcon* at iic? addr 0x13			# PCon
 r2025rtc* at iic? addr 0x32			# R2025S RTC
-seeprom* at iic? addr 0x53 size 128
+seeprom* at iic? addr 0x53
 
 nbppm* at nbppcon? tag 0x05
 hpcapm* at nbppm?
@@ -262,7 +262,6 @@ wskbd*	at ukbd? console ? mux 1
 
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # Bluetooth USB Controllers
 ubt*	at uhub? port ?
@@ -286,7 +285,7 @@ pseudo-device	bpfilter 		# packet filter
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -305,6 +304,7 @@ pseudo-device	biconsdev 1		# build-in console device
 
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)

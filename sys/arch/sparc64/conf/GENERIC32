@@ -1,13 +1,12 @@
-# $NetBSD: GENERIC32,v 1.141 2016/05/25 20:00:50 nakayama Exp $
+# $NetBSD: GENERIC32,v 1.141.18.1 2019/06/10 22:06:47 christos Exp $
 #
 # GENERIC machine description file for 32-bit kernel
 #
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"GENERIC32-$Revision: 1.141 $"
+#ident		"GENERIC32-$Revision: 1.141.18.1 $"
 
 include 	"arch/sparc64/conf/std.sparc64-32"
 
 no options	COMPAT_NETBSD32
-no options	COMPAT_SVR4_32

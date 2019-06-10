@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -18,6 +18,8 @@
 
 #ifndef AARCH64_LINUX_HW_POINT_H
 #define AARCH64_LINUX_HW_POINT_H 1
+
+#include "break-common.h" /* For enum target_hw_bp_type.  */
 
 /* Macro definitions, data structures, and code for the hardware
    breakpoint and hardware watchpoint support follow.  We use the

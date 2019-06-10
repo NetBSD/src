@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RL78.
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -25,7 +25,7 @@
 
 #include "bfd.h"
 #include "elf-bfd.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/rl78.h"
 #include "elf/rl78.h"
 
@@ -406,7 +406,11 @@ print_insn_rl78_g14 (bfd_vma addr, disassemble_info * dis)
 disassembler_ftype
 rl78_get_disassembler (bfd *abfd)
 {
-  int cpu = abfd->tdata.elf_obj_data->elf_header->e_flags & E_FLAG_RL78_CPU_MASK;
+  int cpu = E_FLAG_RL78_ANY_CPU;
+
+  if (abfd != NULL)
+    cpu = abfd->tdata.elf_obj_data->elf_header->e_flags & E_FLAG_RL78_CPU_MASK;
+
   switch (cpu)
     {
     case E_FLAG_RL78_G10:

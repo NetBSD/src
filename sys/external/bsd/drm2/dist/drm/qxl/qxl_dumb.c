@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_dumb.c,v 1.1.1.1.32.1 2019/06/10 22:08:24 christos Exp $	*/
+
 /*
  * Copyright 2013 Red Hat Inc.
  *
@@ -22,6 +24,9 @@
  * Authors: Dave Airlie
  *          Alon Levy
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qxl_dumb.c,v 1.1.1.1.32.1 2019/06/10 22:08:24 christos Exp $");
 
 #include "qxl_drv.h"
 #include "qxl_object.h"

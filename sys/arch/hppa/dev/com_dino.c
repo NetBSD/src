@@ -77,9 +77,9 @@ com_dino_match(device_t parent, cfdata_t match, void *aux)
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
 	    ca->ca_type.iodc_sv_model != HPPA_FIO_GRS232)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 	/* HOZER comprobe1(ca->ca_iot, ca->ca_hpa + IOMOD_DEVOFFSET); */
 }
 
@@ -131,7 +131,7 @@ com_dino_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map I/O space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, ca->ca_iot, ioh, iobase);
 
 	/* select clock freq */
 	regs->test = COM_DINO_CLK_SEL;

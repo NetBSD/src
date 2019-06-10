@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.7 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.7.2.1 2019/06/10 22:05:55 christos Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -252,8 +252,8 @@ static u_int emac_free_descs(struct emac_softc * const sc,
 
 static void emac_mii_statchg(struct ifnet *ifp);
 static int emac_mii_wait(struct emac_softc * const sc);
-static int emac_mii_readreg(device_t dev, int phy, int reg);
-static void emac_mii_writereg(device_t dev, int phy, int reg, int val);
+static int emac_mii_readreg(device_t dev, int phy, int reg, uint16_t *val);
+static int emac_mii_writereg(device_t dev, int phy, int reg, uint16_t val);
 
 CFATTACH_DECL_NEW(emac, sizeof(struct emac_softc),
 		  emac_match, emac_attach, NULL, NULL);
@@ -263,7 +263,7 @@ emac_mii_wait (struct emac_softc * const sc)
 {
 	u_int tries;
 
-	for(tries = 0; tries < 1000; tries++) {
+	for (tries = 0; tries < 1000; tries++) {
 		if ((EMAC_READ(sc, MACMDIOUSERACCESS0) & USERACCESS_GO) == 0)
 			return 0;
 
@@ -274,7 +274,7 @@ emac_mii_wait (struct emac_softc * const sc)
 }
 
 static int
-emac_mii_readreg (device_t dev, int phy, int reg)
+emac_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	int ret = 0;
 	uint32_t v, reg_mask = 0;
@@ -310,18 +310,19 @@ emac_mii_readreg (device_t dev, int phy, int reg)
 	}
 
 	v = EMAC_READ(sc, MACMDIOUSERACCESS0);
-	if (v & USERACCESS_ACK)
-		ret = USERACCESS_DATA(v);
-	else
+	if (v & USERACCESS_ACK) {
+		*val = USERACCESS_DATA(v);
 		ret = 0;
+	} else
+		ret = -1;
 
 	mutex_spin_exit(sc->sc_mii_lock);
 
 	return ret;
 }
 
-static void
-emac_mii_writereg (device_t dev, int phy, int reg, int val)
+static int
+emac_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	int ret = 0;
 	uint32_t reg_mask = 0;
@@ -356,6 +357,8 @@ emac_mii_writereg (device_t dev, int phy, int reg, int val)
 	}
 
 	mutex_spin_exit(sc->sc_mii_lock);
+
+	return 0;
 }
 
 static void
@@ -1017,7 +1020,7 @@ emac_ifstop (struct ifnet *ifp, int disable)
 
 	mutex_exit(rx_chan->lock);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 static int
@@ -1039,7 +1042,8 @@ emac_ifinit (struct ifnet *ifp)
 	EMAC_WRITE(sc, MACHASH2, 0);
 
 	EMAC_WRITE(sc, MACSOFTRESET, 1);
-	while (EMAC_READ(sc, MACSOFTRESET) == 1);
+	while (EMAC_READ(sc, MACSOFTRESET) == 1)
+		;
 
 	/* Till we figure out mcast, do this */
 	EMAC_WRITE(sc, MACHASH1, 0xffffffff);
@@ -1177,7 +1181,7 @@ emac_desc_list_create (struct emac_cppi_bd **desc, void *desc_base_ptr, int ndes
 {
 	int i;
 	struct emac_cppi_bd *ptr = desc_base_ptr;
-	
+
 	for (i = 0; i < ndescs; i++)
 		desc[i] = ptr + i;
 }
@@ -1193,6 +1197,7 @@ emac_attach (device_t parent, device_t self, void *aux)
 {
 	struct emac_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_if;
+	struct mii_data *mii = &sc->sc_mii;
 	struct tipb_attach_args *tipb = aux;
 	const char * const xname = device_xname(self);
 	prop_dictionary_t dict = device_properties(self);
@@ -1276,7 +1281,7 @@ emac_attach (device_t parent, device_t self, void *aux)
 	SIMPLEQ_INIT(&tx_chan->free_head);
 	SIMPLEQ_INIT(&tx_chan->inuse_head);
 	for (i = 0; i < EMAC_NTXDESCS; i++) {
-		/* 
+		/*
 		 * Ok, we keep this simple, one dma segment per tx dma map.
 		 * This makes the mapping of the desc's and the dma map's
 		 * pretty straightforward.
@@ -1316,26 +1321,23 @@ emac_attach (device_t parent, device_t self, void *aux)
 	}
 
 	/* mii related stuff */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = emac_mii_readreg;
-	sc->sc_mii.mii_writereg = emac_mii_writereg;
-	sc->sc_mii.mii_statchg = emac_mii_statchg;
-	sc->sc_ec.ec_mii = &sc->sc_mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = emac_mii_readreg;
+	mii->mii_writereg = emac_mii_writereg;
+	mii->mii_statchg = emac_mii_statchg;
+	sc->sc_ec.ec_mii = mii;
 
 	EMAC_WRITE(sc, MACMDIOCONTROL, __BIT(30) | __BIT(18) |
 		   EMAC_MDIO_CLKDIV);
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, 0, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
+	} else
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

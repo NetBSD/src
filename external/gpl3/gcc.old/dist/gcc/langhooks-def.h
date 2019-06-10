@@ -1,5 +1,5 @@
 /* Default macros to initialize the lang_hooks data structure.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -173,9 +173,12 @@ extern tree lhd_make_node (enum tree_code);
 #define LANG_HOOKS_TYPE_HASH_EQ		NULL
 #define LANG_HOOKS_GET_ARRAY_DESCR_INFO	NULL
 #define LANG_HOOKS_GET_SUBRANGE_BOUNDS	NULL
+#define LANG_HOOKS_GET_TYPE_BIAS	NULL
 #define LANG_HOOKS_DESCRIPTIVE_TYPE	NULL
 #define LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE reconstruct_complex_type
 #define LANG_HOOKS_ENUM_UNDERLYING_BASE_TYPE lhd_enum_underlying_base_type
+#define LANG_HOOKS_GET_DEBUG_TYPE	NULL
+#define LANG_HOOKS_GET_FIXED_POINT_TYPE_INFO NULL
 
 #define LANG_HOOKS_FOR_TYPES_INITIALIZER { \
   LANG_HOOKS_MAKE_TYPE, \
@@ -193,9 +196,12 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_TYPE_HASH_EQ, \
   LANG_HOOKS_GET_ARRAY_DESCR_INFO, \
   LANG_HOOKS_GET_SUBRANGE_BOUNDS, \
+  LANG_HOOKS_GET_TYPE_BIAS, \
   LANG_HOOKS_DESCRIPTIVE_TYPE, \
   LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE, \
-  LANG_HOOKS_ENUM_UNDERLYING_BASE_TYPE \
+  LANG_HOOKS_ENUM_UNDERLYING_BASE_TYPE, \
+  LANG_HOOKS_GET_DEBUG_TYPE, \
+  LANG_HOOKS_GET_FIXED_POINT_TYPE_INFO \
 }
 
 /* Declaration hooks.  */
@@ -205,7 +211,7 @@ extern tree lhd_make_node (enum tree_code);
 #define LANG_HOOKS_FUNCTION_DECL_EXPLICIT_P hook_bool_tree_false
 #define LANG_HOOKS_FUNCTION_DECL_DELETED_P hook_bool_tree_false
 #define LANG_HOOKS_WARN_UNUSED_GLOBAL_DECL lhd_warn_unused_global_decl
-#define LANG_HOOKS_WRITE_GLOBALS write_global_declarations
+#define LANG_HOOKS_POST_COMPILATION_PARSING_CLEANUPS NULL
 #define LANG_HOOKS_DECL_OK_FOR_SIBCALL	lhd_decl_ok_for_sibcall
 #define LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE hook_bool_const_tree_false
 #define LANG_HOOKS_OMP_PREDETERMINED_SHARING lhd_omp_predetermined_sharing
@@ -230,7 +236,7 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_FUNCTION_PARM_EXPANDED_FROM_PACK_P, \
   LANG_HOOKS_GET_GENERIC_FUNCTION_DECL, \
   LANG_HOOKS_WARN_UNUSED_GLOBAL_DECL, \
-  LANG_HOOKS_WRITE_GLOBALS, \
+  LANG_HOOKS_POST_COMPILATION_PARSING_CLEANUPS, \
   LANG_HOOKS_DECL_OK_FOR_SIBCALL, \
   LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE, \
   LANG_HOOKS_OMP_PREDETERMINED_SHARING, \

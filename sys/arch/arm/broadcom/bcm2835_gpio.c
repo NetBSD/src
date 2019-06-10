@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.7 2018/05/19 14:02:10 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.7.2.1 2019/06/10 22:05:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.7 2018/05/19 14:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.7.2.1 2019/06/10 22:05:52 christos Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -288,7 +288,10 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			sc->sc_gpio_pins[pin].pin_caps = GPIO_PIN_INPUT |
 				GPIO_PIN_OUTPUT |
 				GPIO_PIN_PUSHPULL | GPIO_PIN_TRISTATE |
-				GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+				GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN |
+				GPIO_PIN_ALT0 | GPIO_PIN_ALT1 |
+				GPIO_PIN_ALT2 | GPIO_PIN_ALT3 |
+				GPIO_PIN_ALT4 | GPIO_PIN_ALT5;
 			sc->sc_gpio_pins[pin].pin_intrcaps =
 				GPIO_INTR_POS_EDGE |
 				GPIO_INTR_NEG_EDGE |
@@ -299,11 +302,11 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			/* read initial state */
 			sc->sc_gpio_pins[pin].pin_state =
 				bcm2835gpio_gpio_pin_read(sc, pin);
-			DPRINTF(1, ("%s: attach pin %d\n", device_xname(sc->sc_dev), pin));
+			aprint_debug_dev(sc->sc_dev, "attach pin %d\n", pin);
 		} else {
 			sc->sc_gpio_pins[pin].pin_caps = 0;
 			sc->sc_gpio_pins[pin].pin_state = 0;
-  			DPRINTF(1, ("%s: skip pin %d - func = 0x%x\n", device_xname(sc->sc_dev), pin, func));
+			aprint_debug_dev(sc->sc_dev, "skip pin %d - func = %x\n", pin, func);
 		}
 	}
 
@@ -329,7 +332,7 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS),
 			    intrstr);
 		} else {
-			aprint_normal_dev(self,
+			aprint_error_dev(self,
 			    "failed to establish interrupt for pins %d..%d\n",
 			    bank * 32,
 			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS));
@@ -411,7 +414,7 @@ bcmgpio_intr(void *arg)
 			if (!mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 		}
-		
+
 		/*
 		 * Now that all of the handlers have been called,
 		 * we can clear the indicators for any level-triggered
@@ -447,7 +450,7 @@ bmcgpio_intr_enable(struct bcmgpio_softc *sc, int (*func)(void *), void *arg,
 	/* Can't have HIGH and LOW together. */
 	if (has_level == (BCMGPIO_INTR_HIGH_LEVEL|BCMGPIO_INTR_LOW_LEVEL))
 		return (NULL);
-	
+
 	/* Can't have EDGE and LEVEL together. */
 	if (has_edge && has_level)
 		return (NULL);
@@ -560,27 +563,26 @@ bcmgpio_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		return (NULL);
 	}
 
-	/* 1st cell is the bank */
-	/* 2nd cell is the pin */
-	/* 3rd cell is flags */
-	const u_int bank = be32toh(specifier[0]);
-	const u_int pin = be32toh(specifier[1]);
-	const u_int type = be32toh(specifier[2]) & 0xf;
+	/* 1st cell is the GPIO number */
+	/* 2nd cell is flags */
+	const u_int bank = be32toh(specifier[0]) / 32;
+	const u_int pin = be32toh(specifier[0]) % 32;
+	const u_int type = be32toh(specifier[1]) & 0xf;
 
 	switch (type) {
-	case 0x1:
+	case FDT_INTR_TYPE_POS_EDGE:
 		eint_flags |= BCMGPIO_INTR_POS_EDGE;
 		break;
-	case 0x2:
+	case FDT_INTR_TYPE_NEG_EDGE:
 		eint_flags |= BCMGPIO_INTR_NEG_EDGE;
 		break;
-	case 0x3:
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
 		eint_flags |= BCMGPIO_INTR_POS_EDGE | BCMGPIO_INTR_NEG_EDGE;
 		break;
-	case 0x4:
+	case FDT_INTR_TYPE_HIGH_LEVEL:
 		eint_flags |= BCMGPIO_INTR_HIGH_LEVEL;
 		break;
-	case 0x8:
+	case FDT_INTR_TYPE_LOW_LEVEL:
 		eint_flags |= BCMGPIO_INTR_LOW_LEVEL;
 		break;
 	default:
@@ -668,20 +670,41 @@ static bool
 bcmgpio_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 
-	/* 1st cell is the bank */
-	/* 2nd cell is the pin */
-	/* 3rd cell is flags */
+	/* 1st cell is the GPIO number */
+	/* 2nd cell is flags */
 	if (!specifier)
 		return (false);
-	const u_int bank = be32toh(specifier[0]);
-	const u_int pin = be32toh(specifier[1]);
+	const u_int bank = be32toh(specifier[0]) / 32;
+	const u_int pin = be32toh(specifier[0]) % 32;
+	const u_int type = be32toh(specifier[1]) & 0xf;
+	char const* typestr;
 
 	if (bank >= BCMGPIO_NBANKS)
 		return (false);
-	if (pin >= 32)
+	switch (type) {
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
+		typestr = "double edge";
+		break;
+	case FDT_INTR_TYPE_POS_EDGE:
+		typestr = "positive edge";
+		break;
+	case FDT_INTR_TYPE_NEG_EDGE:
+		typestr = "negative edge";
+		break;
+	case FDT_INTR_TYPE_HIGH_LEVEL:
+		typestr = "high level";
+		break;
+	case FDT_INTR_TYPE_LOW_LEVEL:
+		typestr = "low level";
+		break;
+	default:
+		aprint_error_dev(dev, "%s: unsupported irq type 0x%x\n",
+		    __func__, type);
+
 		return (false);
-	
-	snprintf(buf, buflen, "GPIO %u", (bank * 32) + pin);
+	}
+
+	snprintf(buf, buflen, "GPIO %u (%s)", (bank * 32) + pin, typestr);
 
 	return (true);
 }
@@ -791,17 +814,49 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct bcmgpio_softc *sc = arg;
 	uint32_t cmd;
+	uint32_t altmask = GPIO_PIN_ALT0 | GPIO_PIN_ALT1 |
+	                   GPIO_PIN_ALT2 | GPIO_PIN_ALT3 |
+	                   GPIO_PIN_ALT4 | GPIO_PIN_ALT5;
 
 	DPRINTF(2, ("%s: gpio_ctl pin %d flags 0x%x\n", device_xname(sc->sc_dev), pin, flags));
 
 	mutex_enter(&sc->sc_lock);
 	if (flags & (GPIO_PIN_OUTPUT|GPIO_PIN_INPUT)) {
-		if ((flags & GPIO_PIN_INPUT) || !(flags & GPIO_PIN_OUTPUT)) {
+		if ((flags & GPIO_PIN_INPUT) != 0) {
 			/* for safety INPUT will overide output */
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_IN);
 		} else {
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_OUT);
 		}
+	} else if ((flags & altmask) != 0) {
+		u_int func;
+
+		switch (flags & altmask) {
+		case GPIO_PIN_ALT0:
+			func = BCM2835_GPIO_ALT0;
+			break;
+		case GPIO_PIN_ALT1:
+			func = BCM2835_GPIO_ALT1;
+			break;
+		case GPIO_PIN_ALT2:
+			func = BCM2835_GPIO_ALT2;
+			break;
+		case GPIO_PIN_ALT3:
+			func = BCM2835_GPIO_ALT3;
+			break;
+		case GPIO_PIN_ALT4:
+			func = BCM2835_GPIO_ALT4;
+			break;
+		case GPIO_PIN_ALT5:
+			func = BCM2835_GPIO_ALT5;
+			break;
+		default:
+			/* ignored below */
+			func = BCM2835_GPIO_IN;
+			break;
+		}
+		if (func != BCM2835_GPIO_IN)
+			bcm283x_pin_setfunc(sc, pin, func);
 	}
 
 	if (flags & (GPIO_PIN_PULLUP|GPIO_PIN_PULLDOWN)) {

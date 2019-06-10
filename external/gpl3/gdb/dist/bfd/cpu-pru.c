@@ -1,5 +1,5 @@
 /* BFD support for the TI PRU microprocessor.
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,7 +36,7 @@
     DEFAULT,						\
     bfd_default_compatible,				\
     bfd_default_scan,					\
-    bfd_arch_default_fill,			       	\
+    bfd_arch_default_fill,				\
     NEXT						\
   }
 

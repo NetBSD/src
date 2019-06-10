@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2017/04/08 17:46:01 scole Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.14.1 2019/06/10 22:06:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -119,6 +119,12 @@
 #include <dev/cons.h>
 #include <dev/mm.h>
 
+#ifdef DEBUG
+#define	DPRINTF(fmt, args...)	printf("%s: " fmt, __func__, ##args)
+#else
+#define	DPRINTF(fmt, args...)	((void)0)
+#endif
+     
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -152,7 +158,7 @@ extern uint64_t ia64_gateway_page[];
 uint64_t pa_bootinfo;
 struct bootinfo bootinfo;
 
-
+extern vaddr_t kstack, kstack_top;
 extern vaddr_t kernel_text, end;
 
 struct fpswa_iface *fpswa_iface;
@@ -261,18 +267,24 @@ map_vhpt(uintptr_t vhpt)
         pt_entry_t pte;
         uint64_t psr;
 
+	/*
+	 * XXX read pmap_vhpt_log2size before any memory translation
+	 * instructions to avoid "Data Nested TLB faults".  Not
+	 * exactly sure why this is needed with GCC 7.4
+	 */
+	register uint64_t log2size = pmap_vhpt_log2size << 2;
+	
         pte = PTE_PRESENT | PTE_MA_WB | PTE_ACCESSED | PTE_DIRTY |
 		PTE_PL_KERN | PTE_AR_RW;
         pte |= vhpt & PTE_PPN_MASK;
 
-        __asm __volatile("ptr.d %0,%1" :: "r"(vhpt),
-			 "r"(pmap_vhpt_log2size << 2));
+        __asm __volatile("ptr.d %0,%1" :: "r"(vhpt), "r"(log2size));
 
         __asm __volatile("mov   %0=psr" : "=r"(psr));
         __asm __volatile("rsm   psr.ic|psr.i");
         ia64_srlz_i();
         ia64_set_ifa(vhpt);
-        ia64_set_itir(pmap_vhpt_log2size << 2);
+	ia64_set_itir(log2size);
         ia64_srlz_d();
         __asm __volatile("itr.d dtr[%0]=%1" :: "r"(3), "r"(pte));
         __asm __volatile("mov   psr.l=%0" :: "r" (psr));
@@ -377,21 +389,16 @@ calculate_frequencies(void)
 
 /* XXXX: Don't allocate 'ci' on stack. */
 register struct cpu_info *ci __asm__("r13");
-void
+struct ia64_init_return
 ia64_init(void)
 {
+	struct ia64_init_return ret;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	struct pcb *pcb0;
 	struct efi_md *md;
 	vaddr_t v;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
-
-	/*
-	 * TODO: Disable interrupts, floating point etc.
-	 * Maybe flush cache and tlb
-	 */
-
 	ia64_set_fpsr(IA64_FPSR_DEFAULT);
 
 	/*
@@ -513,10 +520,8 @@ ia64_init(void)
 
 	for (md = efi_md_first(); md != NULL; md = efi_md_next(md)) {
 
-#ifdef DEBUG
-		printf("MD %p: type %d pa 0x%lx cnt 0x%lx\n", md,
-		    md->md_type, md->md_phys, md->md_pages);
-#endif
+		DPRINTF("MD %p: type %d pa 0x%lx cnt 0x%lx\n", md,
+			md->md_type, md->md_phys, md->md_pages);
 
 		pfn0 = ia64_btop(round_page(md->md_phys));
 		pfn1 = ia64_btop(trunc_page(md->md_phys + md->md_pages * 4096));
@@ -552,17 +557,15 @@ ia64_init(void)
 			 * Must compute the location of the kernel
 			 * within the segment.
 			 */
-#ifdef DEBUG
-			printf("Descriptor %p contains kernel\n", md);
-#endif
+			DPRINTF("Descriptor %p contains kernel\n", md);
+
 			if (pfn0 < kernstartpfn) {
 				/*
 				 * There is a chunk before the kernel.
 				 */
-#ifdef DEBUG
-				printf("Loading chunk before kernel: "
-				       "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
-#endif
+				DPRINTF("Loading chunk before kernel: "
+					"0x%lx / 0x%lx\n", pfn0, kernstartpfn);
+
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
 
@@ -571,10 +574,8 @@ ia64_init(void)
 				/*
 				 * There is a chunk after the kernel.
 				 */
-#ifdef DEBUG
-				printf("Loading chunk after kernel: "
-				       "0x%lx / 0x%lx\n", kernendpfn, pfn1);
-#endif
+				DPRINTF("Loading chunk after kernel: "
+					"0x%lx / 0x%lx\n", kernendpfn, pfn1);
 
 				uvm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
@@ -584,10 +585,8 @@ ia64_init(void)
 			/*
 			 * Just load this cluster as one chunk.
 			 */
-#ifdef DEBUG
-			printf("Loading descriptor %p: 0x%lx / 0x%lx\n",
-			    md, pfn0, pfn1);
-#endif
+			DPRINTF("Loading descriptor %p: 0x%lx / 0x%lx\n",
+				md, pfn0, pfn1);
 
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
@@ -599,56 +598,33 @@ ia64_init(void)
 		panic("can't happen: system seems to have no memory!");
 
 	/*
-	 * Initialize the virtual memory system.
-	 */
-
-	pmap_bootstrap();
-
-	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	msgbufaddr = (void *) uvm_pageboot_alloc(MSGBUFSIZE);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
-	 * Init mapping for u page(s) for proc 0
+	 * Init mapping for u page(s) for proc 0.  use memory area
+	 * already set up in locore.S
 	 */
-	v = uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	v = (vaddr_t)&kstack;
 	uvm_lwp_setuarea(&lwp0, v);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
+	lwp0.l_md.md_tf = (struct trapframe *)(v + UAREA_TF_OFFSET);
+	lwp0.l_md.md_tf->tf_length = sizeof(struct trapframe);
+	lwp0.l_md.md_tf->tf_flags = FRAME_SYSCALL;
 
-	/*
-	 * Process u-area is organised as follows:
-	 *
-	 *  -----------------------------------------------------------
-	 * |  P  |                  |                    | 16Bytes | T |
-	 * |  C  | Register Stack   |      Memory Stack  | <-----> | F |
-	 * |  B  | ------------->   |       <----------  |         |   |
-	 *  -----------------------------------------------------------
-	 *        ^                                      ^
-	 *        |___ bspstore                          |___ sp
-	 *
-	 *                 --------------------------->
-         *                       Higher Addresses
-	 *
-	 *	PCB: struct pcb;    TF: struct trapframe;
-	 */
-
-
-	lwp0.l_md.md_tf = (struct trapframe *)(v + USPACE) - 1;
-
+	lwp0.l_md.user_stack = NULL;
+	lwp0.l_md.user_stack_size = 0;
+	
 	pcb0 = lwp_getpcb(&lwp0);
-
-	/* 16 bytes is the scratch area defined by the ia64 ABI. */
-	pcb0->pcb_special.sp = (vaddr_t)lwp0.l_md.md_tf - 16;
-	pcb0->pcb_special.bspstore = v + 1;
-
-	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
-
+	pcb0->pcb_special.sp = v + UAREA_SP_OFFSET;
+	pcb0->pcb_special.bspstore = v + UAREA_BSPSTORE_OFFSET;
+	
 	/*
 	 * Setup global data for the bootstrap cpu.
 	 */
@@ -660,9 +636,8 @@ ia64_init(void)
 	ia64_set_k4((uint64_t) ci);
 	ci->ci_cpuid = cpu_number();
 
-
 	/*
-	 * Initialise process context. XXX: This should really be in cpu_switch
+	 * Initialise process context. XXX: This should really be in cpu_switchto
 	 */
 	ci->ci_curlwp = &lwp0;
 
@@ -679,6 +654,8 @@ ia64_init(void)
 	ia64_set_tpr(0);
 	ia64_srlz_d();
 
+	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
+
 	/*
 	 * Save our current context so that we have a known (maybe even
 	 * sane) context as the initial context for new threads that are
@@ -687,6 +664,11 @@ ia64_init(void)
 	if (savectx(pcb0))
 		panic("savectx failed");
 
+	/*
+	 * Initialize the virtual memory system.
+	 */
+	pmap_bootstrap();
+	
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
@@ -699,6 +681,11 @@ ia64_init(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	ret.bspstore = pcb0->pcb_special.bspstore;
+	ret.sp = pcb0->pcb_special.sp;
+	
+	return (ret);
 }
 
 uint64_t
@@ -774,16 +761,17 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 */
 
 		/* in0 = *cleanup */
-		suword((char *)tf->tf_special.bspstore - 32, 0);
+		ustore_long((u_long *)(tf->tf_special.bspstore - 32), 0);
 
 		/* in1 == *obj */
-		suword((char *)tf->tf_special.bspstore -  24, 0);
+		ustore_long((u_long *)(tf->tf_special.bspstore -  24), 0);
 
 		/* in2 == ps_strings */
-		suword((char *)tf->tf_special.bspstore -  16, l->l_proc->p_psstrp);
+		ustore_long((u_long *)(tf->tf_special.bspstore -  16),
+		    l->l_proc->p_psstrp);
 
 		/* in3 = sp */
-		suword((char *)tf->tf_special.bspstore - 8,
+		ustore_long((u_long *)(tf->tf_special.bspstore - 8),
 		    stack);
 
 	}

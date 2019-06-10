@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.20 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: reg.h,v 1.20.14.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
 #ifndef _I386_REG_H_
 #define _I386_REG_H_
 
+#include <x86/fpu.h>
 #include <machine/frame.h>
 
 /*
@@ -92,20 +93,14 @@ struct reg {
 };
 
 struct fpreg {
-	/*
-	 * XXX
-	 * Fill this in with real info.
-	 */
-	char	__data[108];
+	struct save87 fstate;
 };
+__CTASSERT_NOLINT(sizeof(struct fpreg) == 108);
 
 struct xmmregs {
-	/*
-	 * XXX
-	 * Fill this in with real info.
-	 */
-	char	__data[512];
+	struct fxsave fxstate;
 };
+__CTASSERT(sizeof(struct xmmregs) == 512);
 
 /*
  * Debug Registers

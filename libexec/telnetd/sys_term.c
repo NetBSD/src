@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.47 2013/06/28 15:48:02 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.47.28.1 2019/06/10 22:05:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.47 2013/06/28 15:48:02 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.47.28.1 2019/06/10 22:05:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,6 @@ __RCSID("$NetBSD: sys_term.c,v 1.47 2013/06/28 15:48:02 christos Exp $");
 #ifdef SUPPORT_UTMPX
 #include <utmpx.h>
 #endif
-
-#define SCPYN(a, b)	(void) strncpy(a, b, sizeof(a))
-#define SCMPN(a, b)	strncmp(a, b, sizeof(a))
 
 struct termios termbuf, termbuf2;	/* pty control structure */
 

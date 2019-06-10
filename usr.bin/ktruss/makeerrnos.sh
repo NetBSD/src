@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makeerrnos.sh,v 1.6 2012/03/12 22:02:07 dyoung Exp $
+#	$NetBSD: makeerrnos.sh,v 1.6.32.1 2019/06/10 22:10:20 christos Exp $
 
 if [ $# -ne 3 ]; then
 	echo "usage: makeerrnos.sh errno.h signal.h output"
@@ -53,10 +53,22 @@ ${AWK} '
 			break;
 	i++;
 	j = i + 1;
+
+	if ($i == "SIGRTMIN") {
+		sigrtmin=$j;
+	}
+	if ($i == "SIGRTMAX") {
+		sigrtmax=$j;
+	}
+
 	#
 	printf("\t{ \"%s\", %s },\n", $i, $j);
 }
 END {
+	j = 1;
+	for (i = sigrtmin + 1; i < sigrtmax; i++) {
+		printf("\t{ \"SIGRTMIN+%s\", %s },\n", j++, i);
+	}
 	print "	{ \"0\", 0 },\n";
 }
 ' | sort -n -k 3 >> $CFILE

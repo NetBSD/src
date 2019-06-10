@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.5 2018/05/16 10:22:54 jmcneill Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.5.4.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5 2018/05/16 10:22:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5.4.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5 2018/05/16 10:22:54 jmcneill Exp
 #include <sys/gpio.h>
 #include <sys/workqueue.h>
 
-#include <dev/audio_dai.h>
+#include <dev/audio/audio_dai.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -132,22 +132,6 @@ struct sun8i_codec_softc {
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 static int
-sun8i_codec_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	if (play && (setmode & AUMODE_PLAY))
-		if (play->sample_rate != 48000)
-			return EINVAL;
-
-	if (rec && (setmode & AUMODE_RECORD))
-		if (rec->sample_rate != 48000)
-			return EINVAL;
-
-	return 0;
-}
-
-static int
 sun8i_codec_set_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct sun8i_codec_softc * const sc = priv;
@@ -181,7 +165,6 @@ sun8i_codec_query_devinfo(void *priv, mixer_devinfo_t *di)
 }
 
 static const struct audio_hw_if sun8i_codec_hw_if = {
-	.set_params = sun8i_codec_set_params,
 	.set_port = sun8i_codec_set_port,
 	.get_port = sun8i_codec_get_port,
 	.query_devinfo = sun8i_codec_query_devinfo,
@@ -350,7 +333,7 @@ sun8i_codec_thread(struct work *wk, void *priv)
 }
 
 static const char * compatible[] = {
-	"allwinner,sun50i-a64-codec",
+	"allwinner,sun8i-a33-codec",
 	NULL
 };
 

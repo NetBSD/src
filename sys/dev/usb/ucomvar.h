@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.21 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.21.18.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,18 +36,69 @@
 
 struct	ucom_softc;
 
+/*
+ * USB detach requires ensuring that outstanding operations and
+ * open devices are properly closed before detach can return.
+ *
+ * ucom parents rely upon ucom(4) itself doing any safety here.
+ * The standard method is:
+ *
+ * 1. device softc has a "bool sc_dying" member, that may be set
+ *    in attach or other run-time for general failure, and set
+ *    early in the detach callback
+ *
+ * 2. if sc_dying is set, most functions should perform as close
+ *    to zero operations as possible
+ *
+ * 3. detach callback sets sc_dying to true and then cleans up
+ *    any local state and calls config_detach() on each child
+ */
+
+/*
+ * The first argument to the ucom callbacks is the passed in ucaa_arg
+ * member of the attach args, typically the parent softc pointer.
+ *
+ * All of these are optional.
+ */
 struct ucom_methods {
+	/*
+	 * arg2: port number
+	 * arg3: pointer to lsr (always non NULL)
+	 * arg4: pointer to msr (always non NULL)
+	 */
 	void (*ucom_get_status)(void *, int, u_char *, u_char *);
+	/*
+	 * arg2: port number
+	 * arg3: value to turn on or off (DTR, RTS, BREAK)
+	 * arg4: onoff
+	 */
 	void (*ucom_set)(void *, int, int, int);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
+	/*
+	 * arg2: port number
+	 * arg3: termios structure to set parameters from
+	 */
 	int (*ucom_param)(void *, int, struct termios *);
+	/*
+	 * arg2: port number
+	 * arg3: ioctl command
+	 * arg4: ioctl data
+	 * arg5: ioctl flags
+	 * arg6: process calling ioctl
+	 */
 	int (*ucom_ioctl)(void *, int, u_long, void *, int, proc_t *);
+	/* arg2: port number */
 	int (*ucom_open)(void *, int);
+	/* arg2: port number */
 	void (*ucom_close)(void *, int);
 	/*
-	 * Note: The 'ptr' (2nd arg) and 'count' (3rd arg) pointers can be
+	 * arg2: port number
+	 * arg3: pointer to buffer pointer 
+	 * arg4: pointer to buffer count
+	 *
+	 * Note: The 'ptr' (3nd arg) and 'count' (4rd arg) pointers can be
 	 * adjusted as follows:
 	 *
 	 *  ptr:	If consuming characters from the start of the buffer,
@@ -60,6 +111,12 @@ struct ucom_methods {
 	 * If consuming all characters, set '*count' to zero.
 	 */
 	void (*ucom_read)(void *, int, u_char **, uint32_t *);
+	/*
+	 * arg2: port number
+	 * arg3: pointer to source buffer
+	 * arg4: pointer to destination buffer
+	 * arg5: pointer to buffer count
+	 */
 	void (*ucom_write)(void *, int, u_char *, u_char *, uint32_t *);
 };
 

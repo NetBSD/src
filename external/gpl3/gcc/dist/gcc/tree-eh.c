@@ -1,5 +1,5 @@
 /* Exception handling semantics and decomposition for trees.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -43,6 +43,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 #include "cfgloop.h"
 #include "gimple-low.h"
+#include "asan.h"
+#include "gimplify.h"
 
 /* In some instances a tree and a gimple need to be stored in a same table,
    i.e. in hash tables. This is a structure to do this. */
@@ -2437,7 +2439,7 @@ operation_could_trap_helper_p (enum tree_code op,
     case ROUND_MOD_EXPR:
     case TRUNC_MOD_EXPR:
     case RDIV_EXPR:
-      if (honor_snans || honor_trapv)
+      if (honor_snans)
 	return true;
       if (fp_operation)
 	return flag_trapping_math;
@@ -2721,6 +2723,91 @@ tree_could_trap_p (tree expr)
     }
 }
 
+/* Return non-NULL if there is an integer operation with trapping overflow
+   we can rewrite into non-trapping.  Called via walk_tree from
+   rewrite_to_non_trapping_overflow.  */
+
+static tree
+find_trapping_overflow (tree *tp, int *walk_subtrees, void *data)
+{
+  if (EXPR_P (*tp)
+      && !operation_no_trapping_overflow (TREE_TYPE (*tp), TREE_CODE (*tp)))
+    return *tp;
+  if (IS_TYPE_OR_DECL_P (*tp)
+      || (TREE_CODE (*tp) == SAVE_EXPR && data == NULL))
+    *walk_subtrees = 0;
+  return NULL_TREE;
+}
+
+/* Rewrite selected operations into unsigned arithmetics, so that they
+   don't trap on overflow.  */
+
+static tree
+replace_trapping_overflow (tree *tp, int *walk_subtrees, void *data)
+{
+  if (find_trapping_overflow (tp, walk_subtrees, data))
+    {
+      tree type = TREE_TYPE (*tp);
+      tree utype = unsigned_type_for (type);
+      *walk_subtrees = 0;
+      int len = TREE_OPERAND_LENGTH (*tp);
+      for (int i = 0; i < len; ++i)
+	walk_tree (&TREE_OPERAND (*tp, i), replace_trapping_overflow,
+		   data, (hash_set<tree> *) data);
+
+      if (TREE_CODE (*tp) == ABS_EXPR)
+	{
+	  tree op = TREE_OPERAND (*tp, 0);
+	  op = save_expr (op);
+	  /* save_expr skips simple arithmetics, which is undesirable
+	     here, if it might trap due to flag_trapv.  We need to
+	     force a SAVE_EXPR in the COND_EXPR condition, to evaluate
+	     it before the comparison.  */
+	  if (EXPR_P (op)
+	      && TREE_CODE (op) != SAVE_EXPR
+	      && walk_tree (&op, find_trapping_overflow, NULL, NULL))
+	    {
+	      op = build1_loc (EXPR_LOCATION (op), SAVE_EXPR, type, op);
+	      TREE_SIDE_EFFECTS (op) = 1;
+	    }
+	  /* Change abs (op) to op < 0 ? -op : op and handle the NEGATE_EXPR
+	     like other signed integer trapping operations.  */
+	  tree cond = fold_build2 (LT_EXPR, boolean_type_node,
+				   op, build_int_cst (type, 0));
+	  tree neg = fold_build1 (NEGATE_EXPR, utype,
+				  fold_convert (utype, op));
+	  *tp = fold_build3 (COND_EXPR, type, cond,
+			     fold_convert (type, neg), op);
+	}
+      else
+	{
+	  TREE_TYPE (*tp) = utype;
+	  len = TREE_OPERAND_LENGTH (*tp);
+	  for (int i = 0; i < len; ++i)
+	    TREE_OPERAND (*tp, i)
+	      = fold_convert (utype, TREE_OPERAND (*tp, i));
+	  *tp = fold_convert (type, *tp);
+	}
+    }
+  return NULL_TREE;
+}
+
+/* If any subexpression of EXPR can trap due to -ftrapv, rewrite it
+   using unsigned arithmetics to avoid traps in it.  */
+
+tree
+rewrite_to_non_trapping_overflow (tree expr)
+{
+  if (!flag_trapv)
+    return expr;
+  hash_set<tree> pset;
+  if (!walk_tree (&expr, find_trapping_overflow, &pset, &pset))
+    return expr;
+  expr = unshare_expr (expr);
+  hash_set<tree> pset2;
+  walk_tree (&expr, replace_trapping_overflow, &pset2, &pset2);
+  return expr;
+}
 
 /* Helper for stmt_could_throw_p.  Return true if STMT (assumed to be a
    an assignment or a conditional) may throw.  */
@@ -3262,6 +3349,8 @@ lower_resx (basic_block bb, gresx *stmt,
 	  e = single_succ_edge (bb);
 	  gcc_assert (e->flags & EDGE_EH);
 	  e->flags = (e->flags & ~EDGE_EH) | EDGE_FALLTHRU;
+	  e->probability = REG_BR_PROB_BASE;
+	  e->count = bb->count;
 
 	  /* If there are no more EH users of the landing pad, delete it.  */
 	  FOR_EACH_EDGE (e, ei, e->dest->preds)
@@ -3301,6 +3390,20 @@ lower_resx (basic_block bb, gresx *stmt,
 	  var = make_ssa_name (var, x);
 	  gimple_call_set_lhs (x, var);
 	  gsi_insert_before (&gsi, x, GSI_SAME_STMT);
+
+	  /* When exception handling is delegated to a caller function, we
+	     have to guarantee that shadow memory variables living on stack
+	     will be cleaner before control is given to a parent function.  */
+	  if ((flag_sanitize & SANITIZE_ADDRESS) != 0
+	      && !lookup_attribute ("no_sanitize_address",
+				    DECL_ATTRIBUTES (current_function_decl)))
+	    {
+	      tree decl
+		= builtin_decl_implicit (BUILT_IN_ASAN_HANDLE_NO_RETURN);
+	      gimple *g = gimple_build_call (decl, 0);
+	      gimple_set_location (g, gimple_location (stmt));
+	      gsi_insert_before (&gsi, g, GSI_SAME_STMT);
+	    }
 
 	  fn = builtin_decl_implicit (BUILT_IN_UNWIND_RESUME);
 	  x = gimple_build_call (fn, 1, var);
@@ -4282,6 +4385,7 @@ cleanup_empty_eh_move_lp (basic_block bb, edge e_out,
   /* Clean up E_OUT for the fallthru.  */
   e_out->flags = (e_out->flags & ~EDGE_EH) | EDGE_FALLTHRU;
   e_out->probability = REG_BR_PROB_BASE;
+  e_out->count = e_out->src->count;
 }
 
 /* A subroutine of cleanup_empty_eh.  Handle more complex cases of
@@ -4396,7 +4500,8 @@ cleanup_empty_eh (eh_landing_pad lp)
       return false;
     }
 
-  resx = last_stmt (bb);
+  gsi = gsi_last_nondebug_bb (bb);
+  resx = gsi_stmt (gsi);
   if (resx && is_gimple_resx (resx))
     {
       if (stmt_can_throw_external (resx))
@@ -4430,12 +4535,12 @@ cleanup_empty_eh (eh_landing_pad lp)
   resx = gsi_stmt (gsi);
   if (!e_out && gimple_call_builtin_p (resx, BUILT_IN_STACK_RESTORE))
     {
-      gsi_next (&gsi);
+      gsi_next_nondebug (&gsi);
       resx = gsi_stmt (gsi);
     }
   if (!is_gimple_resx (resx))
     return ret;
-  gcc_assert (gsi_one_before_end_p (gsi));
+  gcc_assert (gsi_one_nondebug_before_end_p (gsi));
 
   /* Determine if there are non-EH edges, or resx edges into the handler.  */
   has_non_eh_pred = false;

@@ -1,7 +1,6 @@
 /* mpfr_ui_div -- divide a machine integer by a floating-point number
-   mpfr_si_div -- divide a machine number by a floating-point number
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -54,7 +53,7 @@ mpfr_ui_div (mpfr_ptr y, unsigned long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode
               /* u > 0, so y = sign(x) * Inf */
               MPFR_SET_SAME_SIGN(y, x);
               MPFR_SET_INF(y);
-              mpfr_set_divby0 ();
+              MPFR_SET_DIVBY0 ();
               MPFR_RET(0);
             }
           else
@@ -94,21 +93,4 @@ mpfr_ui_div (mpfr_ptr y, unsigned long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode
       MPFR_SET_SAME_SIGN(y, x); /* u considered as +0: sign(+0/x) = sign(x) */
       MPFR_RET(0);
     }
-}
-
-
-int
-mpfr_si_div (mpfr_ptr y, long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
-{
-  int res;
-
-  if (u >= 0)
-    res = mpfr_ui_div (y, u, x, rnd_mode);
-  else
-    {
-      res = - mpfr_ui_div (y, - (unsigned long) u, x,
-                           MPFR_INVERT_RND(rnd_mode));
-      MPFR_CHANGE_SIGN (y);
-    }
-  return res;
 }

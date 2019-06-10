@@ -38,10 +38,7 @@ the section descriptor is created. Some targets may leave the
 data in place until a @code{bfd_get_section_contents} call is
 made. Other back ends may read in all the data at once.  For
 example, an S-record file has to be read once to determine the
-size of the data. An IEEE-695 file doesn't contain raw data in
-sections, but data and relocation expressions intermixed, so
-the data area has to be parsed to get out the data and
-relocations.
+size of the data.
 
 @node Section Output, typedef asection, Section Input, Sections
 @subsection Section output
@@ -180,13 +177,10 @@ typedef struct bfd_section
   /* The section contains thread local data.  */
 #define SEC_THREAD_LOCAL                0x400
 
-  /* The section has GOT references.  This flag is only for the
-     linker, and is currently only used by the elf32-hppa back end.
-     It will be set if global offset table references were detected
-     in this section, which indicate to the linker that the section
-     contains PIC code, and must be handled specially when doing a
-     static link.  */
-#define SEC_HAS_GOT_REF                 0x800
+  /* The section's size is fixed.  Generic linker code will not
+     recalculate it and it is up to whoever has set this flag to
+     get the size right.  */
+#define SEC_FIXED_SIZE                  0x800
 
   /* The section contains common symbols (symbols may be defined
      multiple times, the value of a symbol is the amount of
@@ -891,15 +885,6 @@ Like @code{bfd_make_section_anyway}, but return @code{NULL} (without calling
 bfd_set_error ()) without changing the section chain if there is already a
 section named @var{name}.  If there is an error, return @code{NULL} and set
 @code{bfd_error}.
-
-@findex bfd_get_next_section_id
-@subsubsection @code{bfd_get_next_section_id}
-@strong{Synopsis}
-@example
-int bfd_get_next_section_id (void);
-@end example
-@strong{Description}@*
-Returns the id that the next section created will have.
 
 @findex bfd_set_section_flags
 @subsubsection @code{bfd_set_section_flags}

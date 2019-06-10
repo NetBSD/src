@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13 2015/12/03 02:51:01 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13 2015/12/03 02:51:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,20 +44,24 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13 2015/12/03 02:51:01 pgoyette E
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/module_hook.h>
 
 #include <compat/netbsd32/netbsd32_sysctl.h>
+#include <compat/netbsd32/netbsd32_kern_proc.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
-# define	DEPS1	"compat,sysv_ipc,ksem"
+#define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
+    sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
+
+struct compat32_80_modctl_hook_t compat32_80_modctl_hook;
+
+# define	DEPS1	"ksem,coredump,compat_util"
 
 #if defined(EXEC_ELF32)
 # define	DEPS2	",exec_elf32"
 #else
 # define	DEPS2	""
 #endif
-
-#define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
-    sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32, DEPS1 DEPS2);
 
@@ -91,7 +95,7 @@ static struct execsw netbsd32_execsw[] = {
 		.es_copyargs = netbsd32_elf32_copyargs,
 		.es_setregs = NULL,
 		.es_coredump = coredump_elf32,
-		.es_setup_stack = exec_setup_stack,	/* XXX XXX XXX */
+		.es_setup_stack = exec_setup_stack,
 	},
 #endif
 };
@@ -103,18 +107,27 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		netbsd32_sysctl_init();
 		error = exec_add(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
-		if (error != 0)
-			netbsd32_sysctl_fini();
+		if (error == 0) {
+			netbsd32_sysctl_init();
+			netbsd32_machdep_md_init();
+			netbsd32_kern_proc_32_init();
+		}
 		return error;
 
 	case MODULE_CMD_FINI:
+		netbsd32_machdep_md_fini();
+		netbsd32_sysctl_fini();
+		netbsd32_kern_proc_32_fini();
+
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
-		if (error == 0)
-			netbsd32_sysctl_fini();
+		if (error) {
+			netbsd32_kern_proc_32_init();
+			netbsd32_sysctl_init();
+			netbsd32_machdep_md_init();
+		}
 		return error;
 
 	default:

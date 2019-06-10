@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.48 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.48.2.1 2019/06/10 22:06:38 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.48 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.48.2.1 2019/06/10 22:06:38 christos Exp $");
 
 #include "opt_emac.h"
 
@@ -267,7 +267,7 @@ do {									\
 	__rxd->md_stat_ctrl = MAL_RX_EMPTY | MAL_RX_INTERRUPT |		\
 	    /* Set wrap on last descriptor. */				\
 	    (((x) == EMAC_NRXDESC - 1) ? MAL_RX_WRAP : 0);		\
-	EMAC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	EMAC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
 #define	EMAC_WRITE(sc, reg, val) \
@@ -304,8 +304,8 @@ static int	emac_txreap(struct emac_softc *);
 static void	emac_soft_reset(struct emac_softc *);
 static void	emac_smart_reset(struct emac_softc *);
 
-static int	emac_mii_readreg(device_t, int, int);
-static void	emac_mii_writereg(device_t, int, int, int);
+static int	emac_mii_readreg(device_t, int, int, uint16_t *);
+static int	emac_mii_writereg(device_t, int, int, uint16_t);
 static void	emac_mii_statchg(struct ifnet *);
 static uint32_t	emac_mii_wait(struct emac_softc *);
 static void	emac_mii_tick(void *);
@@ -525,10 +525,10 @@ emac_attach(device_t parent, device_t self, void *aux)
 	mii_attach(self, mii, 0xffffffff, mii_phy, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, xname);
@@ -660,7 +660,7 @@ emac_start(struct ifnet *ifp)
 
 	lasttx = 0;	/* XXX gcc */
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -701,7 +701,7 @@ emac_start(struct ifnet *ifp)
 		 * and try again.
 		 */
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
 				EMAC_EVCNT_INCR(&sc->sc_ev_txdrop);
@@ -1176,6 +1176,7 @@ emac_rxdrain(struct emac_softc *sc)
 static int
 emac_set_filter(struct emac_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1195,7 +1196,8 @@ emac_set_filter(struct emac_softc *sc)
 	rmr &= ~(RMR_PMME | RMR_MAE);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
@@ -1222,6 +1224,7 @@ emac_set_filter(struct emac_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 		cnt++;
 	}
+	ETHER_UNLOCK(ec);
 
 	for (i = 1, tmp = gaht[0]; i < regs; i++)
 		tmp &= gaht[i];
@@ -1266,7 +1269,7 @@ emac_txreap(struct emac_softc *sc)
 
 		EMAC_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_dmamap->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		txstat = sc->sc_txdescs[txs->txs_lastdesc].md_stat_ctrl;
 		if (txstat & MAL_TX_READY)
@@ -1341,7 +1344,7 @@ emac_soft_reset(struct emac_softc *sc)
 	/*
 	 * The PHY must provide a TX Clk in order perform a soft reset the
 	 * EMAC.  If none is present, select the internal clock,
-	 * SDR0_MFR[E0CS,E1CS].  After the soft reset, select the external
+	 * SDR0_MFR[E0CS, E1CS].  After the soft reset, select the external
 	 * clock.
 	 */
 
@@ -1397,16 +1400,17 @@ emac_smart_reset(struct emac_softc *sc)
  */
 
 static int
-emac_mii_readreg(device_t self, int phy, int reg)
+emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct emac_softc *sc = device_private(self);
 	uint32_t sta_reg;
+	int rv;
 
 	if (sc->sc_rmii_enable)
 		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
 
 	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto fail;
 
 	sta_reg =
@@ -1416,34 +1420,34 @@ emac_mii_readreg(device_t self, int phy, int reg)
 	    sc->sc_stacr_bits;
 	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto fail;
 	sta_reg = EMAC_READ(sc, EMAC_STACR);
 
-	if (sc->sc_rmii_disable)
-		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
-
-	if (sta_reg & STACR_PHYE)
-		return 0;
-	return sta_reg >> STACR_PHYD_SHIFT;
+	if (sta_reg & STACR_PHYE) {
+		rv = -1;
+		goto fail;
+	}
+	*val = sta_reg >> STACR_PHYD_SHIFT;
 
 fail:
 	if (sc->sc_rmii_disable)
 		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
-	return 0;
+	return rv;
 }
 
-static void
-emac_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+emac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct emac_softc *sc = device_private(self);
 	uint32_t sta_reg;
+	int rv;
 
 	if (sc->sc_rmii_enable)
 		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
 
 	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto out;
 
 	sta_reg =
@@ -1454,14 +1458,18 @@ emac_mii_writereg(device_t self, int phy, int reg, int val)
 	    sc->sc_stacr_bits;
 	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto out;
-	if (EMAC_READ(sc, EMAC_STACR) & STACR_PHYE)
+	if (EMAC_READ(sc, EMAC_STACR) & STACR_PHYE) {
 		aprint_error_dev(sc->sc_dev, "MII PHY Error\n");
+		rv = -1;
+	}
 
 out:
 	if (sc->sc_rmii_disable)
 		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
+
+	return rv;
 }
 
 static void
@@ -1527,7 +1535,7 @@ emac_mii_wait(struct emac_softc *sc)
 		delay(7);
 		if (i++ > 5) {
 			aprint_error_dev(sc->sc_dev, "MII timed out\n");
-			return -1;
+			return ETIMEDOUT;
 		}
 		oc = EMAC_READ(sc, EMAC_STACR) & STACR_OC;
 	}
@@ -1581,7 +1589,7 @@ emac_rxeob_intr(void *arg)
 		rxs = &sc->sc_rxsoft[i];
 
 		EMAC_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].md_stat_ctrl;
 
@@ -1591,7 +1599,7 @@ emac_rxeob_intr(void *arg)
 			 */
 			/* Flush current empty descriptor */
 			EMAC_CDRXSYNC(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
 

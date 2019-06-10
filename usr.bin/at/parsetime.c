@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.19 2009/01/18 01:02:31 lukem Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.19.48.1 2019/06/10 22:10:17 christos Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -160,7 +160,7 @@ static bool sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.19 2009/01/18 01:02:31 lukem Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.19.48.1 2019/06/10 22:10:17 christos Exp $");
 #endif
 #endif
 
@@ -405,7 +405,8 @@ tod(struct tm *tm)
 	 * if we've gone past that time - but if we're specifying a time plus
 	 * a relative offset, it's okay to bump things
 	 */
-	if ((sc_tokid == TOKEOF || sc_tokid == PLUS) && tm->tm_hour > hour) {
+	if ((sc_tokid == TOKEOF || sc_tokid == PLUS) && (tm->tm_hour > hour ||
+	    (tm->tm_hour == hour && tm->tm_min > minute))) {
 		tm->tm_mday++;
 		tm->tm_wday++;
 	}

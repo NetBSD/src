@@ -113,7 +113,7 @@ Printed copies are available for $45 each.
 @contents
 @page
 
-@node Top, G++ and GCC,, (DIR)
+@node Top, G++ and GCC
 @top Introduction
 @cindex introduction
 

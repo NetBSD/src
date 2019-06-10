@@ -657,7 +657,7 @@ rl_yank_last_arg (count, key)
 }
 
 /* A special paste command for users of Cygnus's cygwin32. */
-#if defined (__CYGWIN__)
+#if defined (_WIN32)
 #include <windows.h>
 
 int

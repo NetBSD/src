@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/11 13:54:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.42.1 2019/06/10 22:10:15 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}clang-tblgen
 HOSTPROG_CXX=	${_TOOL_PREFIX}clang-tblgen

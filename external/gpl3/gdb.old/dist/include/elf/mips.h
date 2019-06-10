@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -1101,7 +1101,7 @@ typedef struct
   unsigned char flags2[4];
 } Elf_External_ABIFlags_v0;
 
-typedef struct
+typedef struct elf_internal_abiflags_v0
 {
   /* Version of flags structure.  */
   unsigned short version;

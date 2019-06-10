@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.43 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: fms.c,v 1.43.10.1 2019/06/10 22:07:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.43 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.43.10.1 2019/06/10 22:07:15 christos Exp $");
 
 #include "mpu.h"
 
@@ -51,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.43 2017/06/01 02:45:11 chs Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
@@ -75,10 +73,10 @@ static int	fms_match(device_t, cfdata_t, void *);
 static void	fms_attach(device_t, device_t, void *);
 static int	fms_intr(void *);
 
-static int	fms_query_encoding(void *, struct audio_encoding *);
-static int	fms_set_params(void *, int, int, audio_params_t *,
-			       audio_params_t *, stream_filter_list_t *,
-			       stream_filter_list_t *);
+static int	fms_query_format(void *, audio_format_query_t *);
+static int	fms_set_format(void *, int,
+			       const audio_params_t *, const audio_params_t *,
+			       audio_filter_reg_t *, audio_filter_reg_t *);
 static int	fms_round_blocksize(void *, int, int, const audio_params_t *);
 static int	fms_halt_output(void *);
 static int	fms_halt_input(void *);
@@ -88,8 +86,6 @@ static int	fms_get_port(void *, mixer_ctrl_t *);
 static int	fms_query_devinfo(void *, mixer_devinfo_t *);
 static void	*fms_malloc(void *, int, size_t);
 static void	fms_free(void *, void *, size_t);
-static size_t	fms_round_buffersize(void *, int, size_t);
-static paddr_t	fms_mappage(void *, void *, off_t, int);
 static int	fms_get_props(void *);
 static int	fms_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
@@ -108,42 +104,49 @@ static struct audio_device fms_device = {
 	"fms"
 };
 
+/*
+ * The frequency list in this format is also referred from fms_rate2index().
+ * So don't rearrange or delete entries.
+ */
+static const struct audio_format fms_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 11,
+		.frequency	= { 5500, 8000, 9600, 11025, 16000, 19200,
+		                    22050, 32000, 38400, 44100, 48000},
+	},
+};
+#define FMS_NFORMATS	__arraycount(fms_formats)
+
 
 static const struct audio_hw_if fms_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,
-	fms_query_encoding,
-	fms_set_params,
-	fms_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	fms_halt_output,
-	fms_halt_input,
-	NULL,
-	fms_getdev,
-	NULL,
-	fms_set_port,
-	fms_get_port,
-	fms_query_devinfo,
-	fms_malloc,
-	fms_free,
-	fms_round_buffersize,
-	fms_mappage,
-	fms_get_props,
-	fms_trigger_output,
-	fms_trigger_input,
-	NULL,
-	fms_get_locks,
+	.query_format		= fms_query_format,
+	.set_format		= fms_set_format,
+	.round_blocksize	= fms_round_blocksize,
+	.halt_output		= fms_halt_output,
+	.halt_input		= fms_halt_input,
+	.getdev			= fms_getdev,
+	.set_port		= fms_set_port,
+	.get_port		= fms_get_port,
+	.query_devinfo		= fms_query_devinfo,
+	.allocm			= fms_malloc,
+	.freem			= fms_free,
+	.get_props		= fms_get_props,
+	.trigger_output		= fms_trigger_output,
+	.trigger_input		= fms_trigger_input,
+	.get_locks		= fms_get_locks,
 };
 
 static int	fms_attach_codec(void *, struct ac97_codec_if *);
 static int	fms_read_codec(void *, uint8_t, uint16_t *);
 static int	fms_write_codec(void *, uint8_t, uint16_t);
 static int	fms_reset_codec(void *);
+static int	fms_rate2index(u_int);
 
 #define FM_PCM_VOLUME		0x00
 #define FM_FM_VOLUME		0x02
@@ -264,7 +267,8 @@ fms_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, fms_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -472,141 +476,45 @@ fms_intr(void *arg)
 }
 
 static int
-fms_query_encoding(void *addr, struct audio_encoding *fp)
+fms_query_format(void *addr, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 1:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	case 2:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	case 3:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 4:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 5:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 6:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 7:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	default:
-		return EINVAL;
-	}
+	return audio_query_format(fms_formats, FMS_NFORMATS, afp);
 }
 
-/*
- * Range below -limit- is set to -rate-
- * What a pity FM801 does not have 24000
- * 24000 -> 22050 sounds rather poor
- */
-static struct {
-	int limit;
-	int rate;
-} const fms_rates[11] = {
-	{  6600,  5500 },
-	{  8750,  8000 },
-	{ 10250,  9600 },
-	{ 13200, 11025 },
-	{ 17500, 16000 },
-	{ 20500, 19200 },
-	{ 26500, 22050 },
-	{ 35000, 32000 },
-	{ 41000, 38400 },
-	{ 46000, 44100 },
-	{ 48000, 48000 },
-	/* anything above -> 48000 */
-};
+/* Return index number of sample_rate */
+static int
+fms_rate2index(u_int sample_rate)
+{
+	int i;
 
-#define FMS_NFORMATS	4
-static const struct audio_format fms_formats[FMS_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-			       32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-				 32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-			       32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-				 32000, 38400, 44100, 48000}},
-};
+	for (i = 0; i < fms_formats[0].frequency_type; i++) {
+		if (sample_rate == fms_formats[0].frequency[i])
+			return i;
+	}
+
+	/* NOTREACHED */
+	panic("fms_format.frequency mismatch?\n");
+}
 
 static int
-fms_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+fms_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct fms_softc *sc;
-	int i, index;
 
 	sc = addr;
 	if (setmode & AUMODE_PLAY) {
-		for (i = 0; i < 10 && play->sample_rate > fms_rates[i].limit;
-		     i++)
-			continue;
-		play->sample_rate = fms_rates[i].rate;
-		index = auconv_set_converter(fms_formats, FMS_NFORMATS,
-					     AUMODE_PLAY, play, FALSE, pfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_play_reg = i << 8;
-		if (fms_formats[index].channels == 2)
-			sc->sc_play_reg |= FM_PLAY_STEREO;
-		if (fms_formats[index].precision == 16)
-			sc->sc_play_reg |= FM_PLAY_16BIT;
+		sc->sc_play_reg = fms_rate2index(play->sample_rate) << 8;
+		sc->sc_play_reg |= FM_PLAY_STEREO;
+		sc->sc_play_reg |= FM_PLAY_16BIT;
 	}
 
 	if (setmode & AUMODE_RECORD) {
-		for (i = 0; i < 10 && rec->sample_rate > fms_rates[i].limit;
-		     i++)
-			continue;
-		rec->sample_rate = fms_rates[i].rate;
-		index = auconv_set_converter(fms_formats, FMS_NFORMATS,
-					     AUMODE_RECORD, rec, FALSE, rfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_rec_reg = i << 8;
-		if (fms_formats[index].channels == 2)
-			sc->sc_rec_reg |= FM_REC_STEREO;
-		if (fms_formats[index].precision == 16)
-			sc->sc_rec_reg |= FM_REC_16BIT;
+		sc->sc_rec_reg = fms_rate2index(rec->sample_rate) << 8;
+		sc->sc_rec_reg |= FM_REC_STEREO;
+		sc->sc_rec_reg |= FM_REC_16BIT;
 	}
 
 	return 0;
@@ -754,37 +662,12 @@ fms_free(void *addr, void *ptr, size_t size)
 	panic("fms_free: trying to free unallocated memory");
 }
 
-static size_t
-fms_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
-static paddr_t
-fms_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct fms_softc *sc;
-	struct fms_dma *p;
-
-	sc = addr;
-	if (off < 0)
-		return -1;
-
-	for (p = sc->sc_dmas; p && p->addr != mem; p = p->next)
-		continue;
-	if (p == NULL)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
-			       BUS_DMA_WAITOK);
-}
-
 static int
 fms_get_props(void *addr)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	       AUDIO_PROP_FULLDUPLEX;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

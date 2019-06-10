@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,11 +21,9 @@
 #include "target.h"
 #include "value.h"
 #include "gdbtypes.h"
-#include "floatformat.h"
 #include "gdbcore.h"
 #include "frame.h"
 #include "regcache.h"
-#include "doublest.h"
 #include "solib-svr4.h"
 #include "osabi.h"
 #include "regset.h"
@@ -387,7 +385,7 @@ static struct tramp_frame arm_linux_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   4,
   {
-    { ARM_LINUX_SIGRETURN_INSTR, -1 },
+    { ARM_LINUX_SIGRETURN_INSTR, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_sigreturn_init
@@ -397,7 +395,7 @@ static struct tramp_frame arm_linux_rt_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   4,
   {
-    { ARM_LINUX_RT_SIGRETURN_INSTR, -1 },
+    { ARM_LINUX_RT_SIGRETURN_INSTR, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_rt_sigreturn_init
@@ -407,8 +405,8 @@ static struct tramp_frame arm_eabi_linux_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   4,
   {
-    { ARM_SET_R7_SIGRETURN, -1 },
-    { ARM_EABI_SYSCALL, -1 },
+    { ARM_SET_R7_SIGRETURN, ULONGEST_MAX },
+    { ARM_EABI_SYSCALL, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_sigreturn_init
@@ -418,8 +416,8 @@ static struct tramp_frame arm_eabi_linux_rt_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   4,
   {
-    { ARM_SET_R7_RT_SIGRETURN, -1 },
-    { ARM_EABI_SYSCALL, -1 },
+    { ARM_SET_R7_RT_SIGRETURN, ULONGEST_MAX },
+    { ARM_EABI_SYSCALL, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_rt_sigreturn_init
@@ -429,9 +427,9 @@ static struct tramp_frame thumb2_eabi_linux_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   2,
   {
-    { THUMB2_SET_R7_SIGRETURN1, -1 },
-    { THUMB2_SET_R7_SIGRETURN2, -1 },
-    { THUMB2_EABI_SYSCALL, -1 },
+    { THUMB2_SET_R7_SIGRETURN1, ULONGEST_MAX },
+    { THUMB2_SET_R7_SIGRETURN2, ULONGEST_MAX },
+    { THUMB2_EABI_SYSCALL, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_sigreturn_init
@@ -441,9 +439,9 @@ static struct tramp_frame thumb2_eabi_linux_rt_sigreturn_tramp_frame = {
   SIGTRAMP_FRAME,
   2,
   {
-    { THUMB2_SET_R7_RT_SIGRETURN1, -1 },
-    { THUMB2_SET_R7_RT_SIGRETURN2, -1 },
-    { THUMB2_EABI_SYSCALL, -1 },
+    { THUMB2_SET_R7_RT_SIGRETURN1, ULONGEST_MAX },
+    { THUMB2_SET_R7_RT_SIGRETURN2, ULONGEST_MAX },
+    { THUMB2_EABI_SYSCALL, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_rt_sigreturn_init
@@ -453,8 +451,8 @@ static struct tramp_frame arm_linux_restart_syscall_tramp_frame = {
   NORMAL_FRAME,
   4,
   {
-    { ARM_OABI_SYSCALL_RESTART_SYSCALL, -1 },
-    { ARM_LDR_PC_SP_12, -1 },
+    { ARM_OABI_SYSCALL_RESTART_SYSCALL, ULONGEST_MAX },
+    { ARM_LDR_PC_SP_12, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_restart_syscall_init
@@ -464,8 +462,8 @@ static struct tramp_frame arm_kernel_linux_restart_syscall_tramp_frame = {
   NORMAL_FRAME,
   4,
   {
-    { ARM_OABI_SYSCALL_RESTART_SYSCALL, -1 },
-    { ARM_LDR_PC_SP_4, -1 },
+    { ARM_OABI_SYSCALL_RESTART_SYSCALL, ULONGEST_MAX },
+    { ARM_LDR_PC_SP_4, ULONGEST_MAX },
     { TRAMP_SENTINEL_INSN }
   },
   arm_linux_restart_syscall_init
@@ -480,7 +478,7 @@ arm_linux_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
 			  int regnum, const void *gregs_buf, size_t len)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const gdb_byte *gregs = (const gdb_byte *) gregs_buf;
   int regno;
@@ -489,16 +487,15 @@ arm_linux_supply_gregset (const struct regset *regset,
 
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
-      regcache_raw_supply (regcache, regno,
-			   gregs + INT_REGISTER_SIZE * regno);
+      regcache->raw_supply (regno, gregs + INT_REGISTER_SIZE * regno);
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
     {
       if (arm_apcs_32)
-	regcache_raw_supply (regcache, ARM_PS_REGNUM,
-			     gregs + INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
+	regcache->raw_supply (ARM_PS_REGNUM,
+			      gregs + INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
       else
-	regcache_raw_supply (regcache, ARM_PS_REGNUM,
+	regcache->raw_supply (ARM_PS_REGNUM,
 			     gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
     }
 
@@ -509,7 +506,7 @@ arm_linux_supply_gregset (const struct regset *regset,
 					 INT_REGISTER_SIZE, byte_order);
       reg_pc = gdbarch_addr_bits_remove (gdbarch, reg_pc);
       store_unsigned_integer (pc_buf, INT_REGISTER_SIZE, byte_order, reg_pc);
-      regcache_raw_supply (regcache, ARM_PC_REGNUM, pc_buf);
+      regcache->raw_supply (ARM_PC_REGNUM, pc_buf);
     }
 }
 
@@ -523,22 +520,22 @@ arm_linux_collect_gregset (const struct regset *regset,
 
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
-      regcache_raw_collect (regcache, regno,
+      regcache->raw_collect (regno,
 			    gregs + INT_REGISTER_SIZE * regno);
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
     {
       if (arm_apcs_32)
-	regcache_raw_collect (regcache, ARM_PS_REGNUM,
+	regcache->raw_collect (ARM_PS_REGNUM,
 			      gregs + INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
       else
-	regcache_raw_collect (regcache, ARM_PS_REGNUM,
+	regcache->raw_collect (ARM_PS_REGNUM,
 			      gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
     }
 
   if (regnum == ARM_PC_REGNUM || regnum == -1)
-    regcache_raw_collect (regcache, ARM_PC_REGNUM,
-			  gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
+    regcache->raw_collect (ARM_PC_REGNUM,
+			   gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
 }
 
 /* Support for register format used by the NWFPE FPA emulator.  */
@@ -580,7 +577,7 @@ supply_nwfpe_register (struct regcache *regcache, int regno,
       break;
     }
 
-  regcache_raw_supply (regcache, regno, buf);
+  regcache->raw_supply (regno, buf);
 }
 
 void
@@ -591,7 +588,7 @@ collect_nwfpe_register (const struct regcache *regcache, int regno,
   gdb_byte reg_tag;
   gdb_byte buf[FP_REGISTER_SIZE];
 
-  regcache_raw_collect (regcache, regno, buf);
+  regcache->raw_collect (regno, buf);
 
   /* NOTE drow/2006-06-07: This code uses the tag already in the
      register buffer.  I've preserved that when moving the code
@@ -629,7 +626,7 @@ arm_linux_supply_nwfpe (const struct regset *regset,
   int regno;
 
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ARM_FPS_REGNUM,
+    regcache->raw_supply (ARM_FPS_REGNUM,
 			 regs + NWFPE_FPSR_OFFSET);
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
@@ -650,8 +647,8 @@ arm_linux_collect_nwfpe (const struct regset *regset,
       collect_nwfpe_register (regcache, regno, regs);
 
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
-    regcache_raw_collect (regcache, ARM_FPS_REGNUM,
-			  regs + INT_REGISTER_SIZE * ARM_FPS_REGNUM);
+    regcache->raw_collect (ARM_FPS_REGNUM,
+			   regs + INT_REGISTER_SIZE * ARM_FPS_REGNUM);
 }
 
 /* Support VFP register format.  */
@@ -667,12 +664,11 @@ arm_linux_supply_vfp (const struct regset *regset,
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ARM_FPSCR_REGNUM, regs + 32 * 8);
+    regcache->raw_supply (ARM_FPSCR_REGNUM, regs + 32 * 8);
 
   for (regno = ARM_D0_REGNUM; regno <= ARM_D31_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
-      regcache_raw_supply (regcache, regno,
-			   regs + (regno - ARM_D0_REGNUM) * 8);
+      regcache->raw_supply (regno, regs + (regno - ARM_D0_REGNUM) * 8);
 }
 
 static void
@@ -684,12 +680,11 @@ arm_linux_collect_vfp (const struct regset *regset,
   int regno;
 
   if (regnum == ARM_FPSCR_REGNUM || regnum == -1)
-    regcache_raw_collect (regcache, ARM_FPSCR_REGNUM, regs + 32 * 8);
+    regcache->raw_collect (ARM_FPSCR_REGNUM, regs + 32 * 8);
 
   for (regno = ARM_D0_REGNUM; regno <= ARM_D31_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
-      regcache_raw_collect (regcache, regno,
-			    regs + (regno - ARM_D0_REGNUM) * 8);
+      regcache->raw_collect (regno, regs + (regno - ARM_D0_REGNUM) * 8);
 }
 
 static const struct regset arm_linux_gregset =
@@ -717,14 +712,15 @@ arm_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  cb (".reg", ARM_LINUX_SIZEOF_GREGSET, &arm_linux_gregset, NULL, cb_data);
+  cb (".reg", ARM_LINUX_SIZEOF_GREGSET, ARM_LINUX_SIZEOF_GREGSET,
+      &arm_linux_gregset, NULL, cb_data);
 
   if (tdep->vfp_register_count > 0)
-    cb (".reg-arm-vfp", ARM_LINUX_SIZEOF_VFP, &arm_linux_vfpregset,
-	"VFP floating-point", cb_data);
+    cb (".reg-arm-vfp", ARM_LINUX_SIZEOF_VFP, ARM_LINUX_SIZEOF_VFP,
+	&arm_linux_vfpregset, "VFP floating-point", cb_data);
   else if (tdep->have_fpa_registers)
-    cb (".reg2", ARM_LINUX_SIZEOF_NWFPE, &arm_linux_fpregset,
-	"FPA floating-point", cb_data);
+    cb (".reg2", ARM_LINUX_SIZEOF_NWFPE, ARM_LINUX_SIZEOF_NWFPE,
+	&arm_linux_fpregset, "FPA floating-point", cb_data);
 }
 
 /* Determine target description from core file.  */
@@ -792,7 +788,7 @@ arm_linux_sigreturn_next_pc (struct regcache *regcache,
   ULONGEST sp;
   unsigned long sp_data;
   CORE_ADDR next_pc = 0;
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int pc_offset = 0;
   int is_sigreturn = 0;
@@ -824,9 +820,9 @@ arm_linux_sigreturn_next_pc (struct regcache *regcache,
 
 static LONGEST
 arm_linux_get_syscall_number (struct gdbarch *gdbarch,
-			      ptid_t ptid)
+			      thread_info *thread)
 {
-  struct regcache *regs = get_thread_regcache (ptid);
+  struct regcache *regs = get_thread_regcache (thread);
 
   ULONGEST pc;
   ULONGEST cpsr;
@@ -884,7 +880,7 @@ arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
     }
   else
     {
-      struct gdbarch *gdbarch = get_regcache_arch (self->regcache);
+      struct gdbarch *gdbarch = self->regcache->arch ();
       enum bfd_endian byte_order_for_code = 
 	gdbarch_byte_order_for_code (gdbarch);
       unsigned long this_instr = 
@@ -921,22 +917,16 @@ arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
 
 /* Insert a single step breakpoint at the next executed instruction.  */
 
-static VEC (CORE_ADDR) *
+static std::vector<CORE_ADDR>
 arm_linux_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct arm_get_next_pcs next_pcs_ctx;
-  CORE_ADDR pc;
-  int i;
-  VEC (CORE_ADDR) *next_pcs = NULL;
-  struct cleanup *old_chain;
 
   /* If the target does have hardware single step, GDB doesn't have
      to bother software single step.  */
   if (target_can_do_single_step () == 1)
-    return NULL;
-
-  old_chain = make_cleanup (VEC_cleanup (CORE_ADDR), &next_pcs);
+    return {};
 
   arm_get_next_pcs_ctor (&next_pcs_ctx,
 			 &arm_linux_get_next_pcs_ops,
@@ -945,15 +935,10 @@ arm_linux_software_single_step (struct regcache *regcache)
 			 1,
 			 regcache);
 
-  next_pcs = arm_get_next_pcs (&next_pcs_ctx);
+  std::vector<CORE_ADDR> next_pcs = arm_get_next_pcs (&next_pcs_ctx);
 
-  for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); i++)
-    {
-      pc = gdbarch_addr_bits_remove (gdbarch, pc);
-      VEC_replace (CORE_ADDR, next_pcs, i, pc);
-    }
-
-  discard_cleanups (old_chain);
+  for (CORE_ADDR &pc_ref : next_pcs)
+    pc_ref = gdbarch_addr_bits_remove (gdbarch, pc_ref);
 
   return next_pcs;
 }
@@ -963,7 +948,7 @@ arm_linux_software_single_step (struct regcache *regcache)
 static void
 arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 		       struct regcache *regs,
-		       struct displaced_step_closure *dsc)
+		       arm_displaced_step_closure *dsc)
 {
   ULONGEST apparent_pc;
   int within_scratch;
@@ -991,7 +976,7 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 
 static int
 arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
-		    struct displaced_step_closure *dsc)
+		    arm_displaced_step_closure *dsc)
 {
   CORE_ADDR return_to = 0;
 
@@ -1033,7 +1018,7 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 	{
 	  inferior_thread ()->control.step_resume_breakpoint
 	    = set_momentary_breakpoint (gdbarch, sal, get_frame_id (frame),
-					bp_step_resume);
+					bp_step_resume).release ();
 
 	  /* set_momentary_breakpoint invalidates FRAME.  */
 	  frame = NULL;
@@ -1082,7 +1067,7 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 static void
 cleanup_kernel_helper_return (struct gdbarch *gdbarch,
 			      struct regcache *regs,
-			      struct displaced_step_closure *dsc)
+			      arm_displaced_step_closure *dsc)
 {
   displaced_write_reg (regs, dsc, ARM_LR_REGNUM, dsc->tmp[0], CANNOT_WRITE_PC);
   displaced_write_reg (regs, dsc, ARM_PC_REGNUM, dsc->tmp[0], BRANCH_WRITE_PC);
@@ -1091,7 +1076,7 @@ cleanup_kernel_helper_return (struct gdbarch *gdbarch,
 static void
 arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
 				CORE_ADDR to, struct regcache *regs,
-				struct displaced_step_closure *dsc)
+				arm_displaced_step_closure *dsc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
@@ -1125,7 +1110,7 @@ arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				    CORE_ADDR from, CORE_ADDR to,
 				    struct regcache *regs)
 {
-  struct displaced_step_closure *dsc = XNEW (struct displaced_step_closure);
+  arm_displaced_step_closure *dsc = new arm_displaced_step_closure;
 
   /* Detect when we enter an (inaccessible by GDB) Linux kernel helper, and
      stop at the return location.  */
@@ -1222,7 +1207,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
 	       regname, p->saved_arg);
 
       ++tmp;
-      tmp = skip_spaces_const (tmp);
+      tmp = skip_spaces (tmp);
       if (*tmp == '#' || *tmp == '$')
 	++tmp;
 
@@ -1725,6 +1710,15 @@ arm_linux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   return find_solib_trampoline_target (frame, pc);
 }
 
+/* Implement the gcc_target_options gdbarch method.  */
+
+static char *
+arm_linux_gcc_target_options (struct gdbarch *gdbarch)
+{
+  /* GCC doesn't know "-m32".  */
+  return NULL;
+}
+
 static void
 arm_linux_init_abi (struct gdbarch_info info,
 		    struct gdbarch *gdbarch)
@@ -1823,8 +1817,6 @@ arm_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_displaced_step_copy_insn (gdbarch,
 					arm_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, arm_displaced_step_fixup);
-  set_gdbarch_displaced_step_free_closure (gdbarch,
-					   simple_displaced_step_free_closure);
   set_gdbarch_displaced_step_location (gdbarch, linux_displaced_step_location);
 
   /* Reversible debugging, process record.  */
@@ -2007,10 +1999,9 @@ arm_linux_init_abi (struct gdbarch_info info,
   arm_linux_record_tdep.arg5 = ARM_A1_REGNUM + 4;
   arm_linux_record_tdep.arg6 = ARM_A1_REGNUM + 5;
   arm_linux_record_tdep.arg7 = ARM_A1_REGNUM + 6;
-}
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_arm_linux_tdep;
+  set_gdbarch_gcc_target_options (gdbarch, arm_linux_gcc_target_options);
+}
 
 void
 _initialize_arm_linux_tdep (void)

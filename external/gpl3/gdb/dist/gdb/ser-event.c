@@ -1,5 +1,5 @@
 /* Serial interface for a selectable event.
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -144,7 +144,6 @@ static const struct serial_ops serial_event_ops =
   NULL, /* copy_tty_state */
   NULL, /* set_tty_state */
   NULL, /* print_tty_state */
-  NULL, /* noflush_set_tty_state */
   NULL, /* setbaudrate */
   NULL, /* setstopbits */
   NULL, /* setparity */
@@ -203,7 +202,6 @@ void
 serial_event_clear (struct serial_event *event)
 {
   struct serial *ser = (struct serial *) event;
-  struct serial_event_state *state = (struct serial_event_state *) ser->state;
 #ifndef USE_WIN32API
   int r;
 
@@ -215,6 +213,7 @@ serial_event_clear (struct serial_event *event)
     }
   while (r > 0 || (r < 0 && errno == EINTR));
 #else
+  struct serial_event_state *state = (struct serial_event_state *) ser->state;
   ResetEvent (state->event);
 #endif
 }

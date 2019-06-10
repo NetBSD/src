@@ -1,4 +1,4 @@
-# Copyright 2006-2016 Free Software Foundation, Inc.
+# Copyright 2006-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ runto "watch.adb:$bp_location"
 
 gdb_test "watch x" \
          ".*atchpoint \[0-9\]+: x" \
-         "Set watchpoint on function argument X"
+         "set watchpoint on function argument X"
 
 # Then insert a breakpoint at the location we'd like to continue to...
 set bp_location [gdb_get_line_number "BREAK2" ${testdir}/watch.adb]
@@ -45,6 +45,6 @@ gdb_test "break watch.adb:$bp_location" \
 
 gdb_test "cont" \
          "Breakpoint \[0-9\]+, watch \\(\\).*" \
-         "Continuing to second breakpoint"
+         "continuing to second breakpoint"
 
 

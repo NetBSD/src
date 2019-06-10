@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.16 2015/11/27 00:08:43 nonaka Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.16.18.1 2019/06/10 22:07:13 christos Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.16 2015/11/27 00:08:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.16.18.1 2019/06/10 22:07:13 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -659,7 +659,7 @@ mvpex_intr_evcnt(void *v, pci_intr_handle_t pin)
 /* ARGSUSED */
 void *
 mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
-		     int (*intrhand)(void *), void *intrarg)
+		     int (*intrhand)(void *), void *intrarg, const char *xname)
 {
 	struct mvpex_softc *sc = (struct mvpex_softc *)v;
 	struct mvpex_intrtab *intrtab;

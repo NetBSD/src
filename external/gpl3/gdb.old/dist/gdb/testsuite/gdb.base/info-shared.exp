@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,18 +31,18 @@ set define2 -DSHLIB2_NAME=\"$binfile_lib2\"
 
 if { [gdb_compile_shlib $srcfile_lib1 $binfile_lib1 \
 	  [list additional_flags=-fPIC]] != "" } {
-    untested "Could not compile $binfile_lib1."
+    untested "failed to compile shared library 1"
     return -1
 }
 
 if { [gdb_compile_shlib $srcfile_lib2 $binfile_lib2 \
 	  [list additional_flags=-fPIC]] != "" } {
-    untested "Could not compile $binfile_lib2."
+    untested "failed to compile shared library 2"
     return -1
 }
 
 set cflags "$define1 $define2"
-if { [prepare_for_testing $testfile.exp $testfile $srcfile \
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 	  [list additional_flags=$cflags libs=-ldl]] } {
     return -1
 }

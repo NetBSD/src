@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.77.2.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.77.2.1 2019/06/10 22:06:20 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.77 2018/04/03 07:20:52 christos Exp $")
 
 #include "ioapic.h"
 #include "lapic.h"
+#ifndef XEN
+#include "hyperv.h"
+#endif
 
 #include "assym.h"
 
@@ -141,7 +144,7 @@ dtrace_invop_calltrap_addr:
 	.text
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 /*
@@ -317,6 +320,45 @@ IDTVEC(resume_lapic_ltimer)
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ltimer)
+
+#if NHYPERV > 0
+	/*
+	 * Hyper-V event channel upcall interrupt handler.
+	 * Only used when the hypervisor supports direct vector callbacks.
+	 */
+IDTVEC(recurse_hyperv_hypercall)
+	INTR_RECURSE_HWFRAME
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
+	jmp	1f
+IDTVEC_END(recurse_hyperv_hypercall)
+IDTVEC(intr_hyperv_hypercall)
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_NET,%ebx
+	jae	2f
+	jmp	1f
+IDTVEC_END(intr_hyperv_hypercall)
+IDTVEC(resume_hyperv_hypercall)
+1:
+	pushl	%ebx
+	IDEPTH_INCR
+	movl	$IPL_NET,CPUVAR(ILEVEL)
+	sti
+	pushl	%esp
+	call	_C_LABEL(hyperv_hypercall_intr)
+	addl	$4,%esp
+	cli
+	jmp	_C_LABEL(Xdoreti)
+2:
+	orl	$(1 << LIR_HV),CPUVAR(IPENDING)
+	INTRFASTEXIT
+IDTVEC_END(resume_hyperv_hypercall)
+#endif	/* NHYPERV > 0 */
+
 #endif /* NLAPIC > 0 */
 
 
@@ -884,7 +926,7 @@ LABEL(x2apic_level_stubs)
 	.long _C_LABEL(Xresume_x2apic_level31)
 END(x2apic_level_stubs)
 #endif
-#endif /* XEN */
+#endif /* XENPV */
 
 #if defined(XEN)
 #define voidop(num)
@@ -899,7 +941,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
+	movl	CPUVAR(XSOURCES) + (num) * 4,%ebp			;\
 	movl	$num,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
@@ -962,40 +1004,50 @@ XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 
+/* On Xen, the xenev_stubs are purely for spl entry, since there is no
+ * vector based mechanism. We however provide the entrypoint to ensure
+ * that native and Xen struct intrstub ; definitions are uniform.
+ */
+panicmsg:	.ascii "vector Xen event entry path entered."
+LABEL(entry_xenev)
+	pushl $panicmsg
+	call  _C_LABEL(panic)
+END(entry_xenev)
+
 	.type	_C_LABEL(xenev_stubs), @object
 LABEL(xenev_stubs)
-	.long _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
-	.long _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
-	.long _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
-	.long _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
-	.long _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
-	.long _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
-	.long _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
-	.long _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
-	.long _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
-	.long _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
-	.long _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
-	.long _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
-	.long _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
-	.long _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
-	.long _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
-	.long _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
-	.long _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
-	.long _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
-	.long _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
-	.long _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
-	.long _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
-	.long _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
-	.long _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
-	.long _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
-	.long _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
-	.long _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
-	.long _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
-	.long _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
-	.long _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
-	.long _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
-	.long _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
-	.long _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
+	.long entry_xenev, _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
 END(xenev_stubs)
 
 #endif /* XEN */
@@ -1017,7 +1069,8 @@ END(xenev_stubs)
  * existing activation in its critical region -- if so, we pop the current
  * activation and restart the handler using the previous one.
  */
-NENTRY(hypervisor_callback)
+ENTRY(hypervisor_callback)
+IDTVEC(hypervisor_pvhvm_callback)	
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
@@ -1078,13 +1131,15 @@ critical_region_fixup:
 	loop	15b
 16:	movl	%edi,%esp	/* final %edi is top of merged stack */
 	jmp	11b
+IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
 
-
+#endif /* XEN */
+#ifdef XENPV	
 /*
  * Hypervisor uses this for application faults while it executes.
  */
-NENTRY(failsafe_callback)
+ENTRY(failsafe_callback)
 	pop	%ds
 	pop	%es
 	pop	%fs
@@ -1093,4 +1148,4 @@ NENTRY(failsafe_callback)
 	iret
 END(failsafe_callback)
 
-#endif /* XEN */
+#endif /* XENPV */

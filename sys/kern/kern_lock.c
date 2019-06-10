@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.161 2017/12/25 09:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.161.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.161 2017/12/25 09:13:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.161.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,7 +117,7 @@ do {									\
 #define	_KERNEL_LOCK_ASSERT(cond)	/* nothing */
 #endif
 
-void	_kernel_lock_dump(const volatile void *);
+static void	_kernel_lock_dump(const volatile void *, lockop_printer_t);
 
 lockops_t _kernel_lock_ops = {
 	.lo_name = "Kernel lock",
@@ -141,14 +141,14 @@ CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
 /*
  * Print debugging information about the kernel lock.
  */
-void
-_kernel_lock_dump(const volatile void *junk)
+static void
+_kernel_lock_dump(const volatile void *junk, lockop_printer_t pr)
 {
 	struct cpu_info *ci = curcpu();
 
 	(void)junk;
 
-	printf_nolog("curcpu holds : %18d wanted by: %#018lx\n",
+	pr("curcpu holds : %18d wanted by: %#018lx\n",
 	    ci->ci_biglock_count, (long)ci->ci_biglock_wanted);
 }
 

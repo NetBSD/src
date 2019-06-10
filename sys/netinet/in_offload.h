@@ -1,6 +1,6 @@
-/*	$NetBSD: in_offload.h,v 1.8 2011/04/25 22:20:59 yamt Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.8.56.1 2019/06/10 22:09:47 christos Exp $	*/
 
-/*-
+/*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -30,21 +30,20 @@
 #define	_NETINET_IN_OFFLOAD_H_
 
 /*
- * subroutines to do software-only equivalent of h/w offloading.
+ * Subroutines to do software-only equivalent of h/w offloading.
  */
-
-int tcp4_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
+struct mbuf *tcp4_segment(struct mbuf *, int);
 int ip_tso_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
     struct rtentry *);
-void ip_undefer_csum(struct mbuf *, size_t, int);        
+void in_undefer_cksum(struct mbuf *, size_t, int);
+void in_undefer_cksum_tcpudp(struct mbuf *);
 
 /*
- * offloading related sysctl variables.
+ * Offloading-related sysctl variables.
  *
- * they are here because it violates protocol layering in unusual way.
+ * They are here because it violates protocol layering in unusual way.
  * ie. while they are TCP/UDP sysctls, they are used by IP layer.
  */
-
 extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
 extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
 

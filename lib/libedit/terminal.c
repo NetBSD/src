@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.33.6.1 2019/06/10 22:05:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.33.6.1 2019/06/10 22:05:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -419,7 +419,7 @@ terminal_rebuffer_display(EditLine *el)
 	return 0;
 }
 
-static wchar_t **
+static wint_t **
 terminal_alloc_buffer(EditLine *el)
 {
 	wint_t **b;
@@ -509,36 +509,14 @@ terminal_move_to_line(EditLine *el, int where)
 		return;
 	}
 	if ((del = where - el->el_cursor.v) > 0) {
-		while (del > 0) {
-			if (EL_HAS_AUTO_MARGINS &&
-			    el->el_display[el->el_cursor.v][0] != '\0') {
-                                size_t h = (size_t)
-				    (el->el_terminal.t_size.h - 1);
-                                for (; h > 0 &&
-                                         el->el_display[el->el_cursor.v][h] ==
-                                                 MB_FILL_CHAR;
-                                         h--)
-                                                continue;
-				/* move without newline */
-				terminal_move_to_char(el, (int)h);
-				terminal_overwrite(el, &el->el_display
-				    [el->el_cursor.v][el->el_cursor.h],
-				    (size_t)(el->el_terminal.t_size.h -
-				    el->el_cursor.h));
-				/* updates Cursor */
-				del--;
-			} else {
-				if ((del > 1) && GoodStr(T_DO)) {
-					terminal_tputs(el, tgoto(Str(T_DO), del,
-					    del), del);
-					del = 0;
-				} else {
-					for (; del > 0; del--)
-						terminal__putc(el, '\n');
-					/* because the \n will become \r\n */
-					el->el_cursor.h = 0;
-				}
-			}
+		if ((del > 1) && GoodStr(T_DO)) {
+			terminal_tputs(el, tgoto(Str(T_DO), del, del), del);
+			del = 0;
+		} else {
+			for (; del > 0; del--)
+				terminal__putc(el, '\n');
+			/* because the \n will become \r\n */
+			el->el_cursor.h = 0;
 		}
 	} else {		/* del < 0 */
 		if (GoodStr(T_UP) && (-del > 1 || !GoodStr(T_up)))
@@ -988,9 +966,10 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 libedit_private int
 terminal_change_size(EditLine *el, int lins, int cols)
 {
+	coord_t cur = el->el_cursor;
 	/*
-         * Just in case
-         */
+	 * Just in case
+	 */
 	Val(T_co) = (cols < 2) ? 80 : cols;
 	Val(T_li) = (lins < 1) ? 24 : lins;
 
@@ -998,6 +977,7 @@ terminal_change_size(EditLine *el, int lins, int cols)
 	if (terminal_rebuffer_display(el) == -1)
 		return -1;
 	re_clear_display(el);
+	el->el_cursor = cur;
 	return 0;
 }
 

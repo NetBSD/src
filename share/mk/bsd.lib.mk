@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.376 2018/06/25 17:58:36 kamil Exp $
+#	$NetBSD: bsd.lib.mk,v 1.376.2.1 2019/06/10 22:05:42 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -55,6 +55,11 @@ realinstall:	checkver libinstall
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
+.endif
+
+PGFLAGS+=	-pg
+.if ${MKPIC} != "no"
+PGFLAGS+=	-fPIC
 .endif
 
 ##### Libraries that this may depend upon.
@@ -157,7 +162,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 .endif
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
@@ -230,7 +235,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .c.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
@@ -258,7 +263,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .cc.po .cpp.po .cxx.po .C.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -286,7 +291,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .f.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${PROFFLAGS} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
@@ -321,7 +326,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .m.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${PROFFLAGS} -pg ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${PROFFLAGS} ${PGFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
@@ -658,7 +663,7 @@ ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${_LIB.so.debug} \
 		${_LIB.so.link} ${_LIB.so.full}.tmp && \
-		mv -f ${_LIB.so.full}.tmp ${_LIB.so.full} \
+		${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.link}: ${_MAINLIBDEPS}
 .else # aka no MKDEBUG
@@ -673,7 +678,7 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}.tmp
 .endif
-	mv -f ${.TARGET}.tmp ${.TARGET}
+	${MV} ${.TARGET}.tmp ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
@@ -682,10 +687,10 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
     "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so.major}.tmp
-	mv -f ${_LIB.so.major}.tmp ${_LIB.so.major}
+	${MV} ${_LIB.so.major}.tmp ${_LIB.so.major}
 .endif
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so}.tmp
-	mv -f ${_LIB.so}.tmp ${_LIB.so}
+	${MV} ${_LIB.so}.tmp ${_LIB.so}
 
 .if !empty(LOBJS)							# {
 LLIBS?=		-lc

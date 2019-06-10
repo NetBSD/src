@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.205.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $"
 #include <sys/ktrace.h>
 #include <sys/sched.h>
 #include <sys/signalvar.h>
+#include <sys/syscall.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/syscallargs.h>
@@ -203,6 +204,39 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 static struct timeval fork_tfmrate = { 10, 0 };
 
 /*
+ * Check if a process is traced and shall inform about FORK events.
+ */
+static inline bool
+tracefork(struct proc *p, int flags)
+{
+
+	return (p->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
+	    (PSL_TRACEFORK|PSL_TRACED) && (flags & FORK_PPWAIT) == 0;
+}
+
+/*
+ * Check if a process is traced and shall inform about VFORK events.
+ */
+static inline bool
+tracevfork(struct proc *p, int flags)
+{
+
+	return (p->p_slflag & (PSL_TRACEVFORK|PSL_TRACED)) ==
+	    (PSL_TRACEVFORK|PSL_TRACED) && (flags & FORK_PPWAIT) != 0;
+}
+
+/*
+ * Check if a process is traced and shall inform about VFORK_DONE events.
+ */
+static inline bool
+tracevforkdone(struct proc *p, int flags)
+{
+
+	return (p->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
+	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags & FORK_PPWAIT);
+}
+
+/*
  * General fork call.  Note that another LWP in the process may call exec()
  * or exit() while we are forking.  It's safe to continue here, because
  * neither operation will complete until all LWPs have exited the process.
@@ -218,7 +252,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	int		tracefork, tracevfork, tracevforkdone;
+	bool		trace_fork, trace_vfork;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -476,19 +510,15 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
-	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
-	tracevfork = (p1->p_slflag & (PSL_TRACEVFORK|PSL_TRACED)) ==
-	    (PSL_TRACEVFORK|PSL_TRACED) && (flags && FORK_PPWAIT) != 0;
-	tracevforkdone = (p1->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
-	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags && FORK_PPWAIT);
-	if (tracefork || tracevfork)
+	trace_fork = tracefork(p1, flags);
+	trace_vfork = tracevfork(p1, flags);
+	if (trace_fork || trace_vfork)
 		proc_changeparent(p2, p1->p_pptr);
-	if (tracefork) {
+	if (trace_fork) {
 		p1->p_fpid = p2->p_pid;
 		p2->p_fpid = p1->p_pid;
 	}
-	if (tracevfork) {
+	if (trace_vfork) {
 		p1->p_vfpid = p2->p_pid;
 		p2->p_vfpid = p1->p_pid;
 	}
@@ -500,17 +530,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
-
-	/* if we are being traced, give the owner a chance to interfere */
-	if (p2->p_slflag & PSL_TRACED) {
-		ksiginfo_t ksi;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_CHLD;
-		ksi.ksi_lid = l2->l_lid;
-		kpsignal(p2, &ksi, NULL);
-	}
 
 	/*
 	 * Update stats now that we know the fork was successful.
@@ -583,15 +602,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
-	if (tracefork || tracevfork) {
+	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		p1->p_xsig = SIGTRAP;
-		p1->p_sigctx.ps_faked = true; // XXX
-		p1->p_sigctx.ps_info._signo = p1->p_xsig;
-		p1->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, false);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p1->p_lock);
+		eventswitch(TRAP_CHLD);
 		mutex_enter(proc_lock);
 	}
 
@@ -605,18 +618,44 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
-	if (tracevforkdone) {
-		ksiginfo_t ksi;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_CHLD;
-		ksi.ksi_lid = l1->l_lid;
-		kpsignal(p1, &ksi, NULL);
-
+	if (tracevforkdone(p1, flags)) {
+		mutex_enter(p1->p_lock);
 		p1->p_vfpid_done = retval[0];
-	}
-	mutex_exit(proc_lock);
+		eventswitch(TRAP_CHLD);
+	} else
+		mutex_exit(proc_lock);
 
 	return 0;
+}
+
+/*
+ * MI code executed in each newly spawned process before returning to userland.
+ */
+void
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		/* Paranoid check */
+		mutex_enter(proc_lock);
+		if (!(p->p_slflag & PSL_TRACED)) {
+			mutex_exit(proc_lock);
+			goto my_tracer_is_gone;
+		}
+
+		mutex_enter(p->p_lock);
+		eventswitch(TRAP_CHLD);
+	}
+
+my_tracer_is_gone:
+	md_child_return(l);
+
+	/*
+	 * Return SYS_fork for all fork types, including vfork(2) and clone(2).
+	 *
+	 * This approach simplifies the code and avoids extra locking.
+	 */
+	ktrsysret(SYS_fork, 0, 0);
 }

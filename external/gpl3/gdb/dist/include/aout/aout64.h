@@ -1,6 +1,6 @@
 /* `a.out' object-file definitions, including extensions to 64-bit fields
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -346,7 +346,7 @@ struct internal_nlist
 
 struct reloc_std_external
 {
-  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of of data to relocate.  */
+  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of data to relocate.  */
   bfd_byte r_index[3];			/* Symbol table index of symbol.  */
   bfd_byte r_type[1];			/* Relocation type.  */
 };
@@ -406,7 +406,7 @@ struct reloc_std_internal
 
 struct reloc_ext_external
 {
-  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of of data to relocate.  */
+  bfd_byte r_address[BYTES_IN_WORD];	/* Offset of data to relocate.  */
   bfd_byte r_index[3];			/* Symbol table index of symbol.  */
   bfd_byte r_type[1];			/* Relocation type.  */
   bfd_byte r_addend[BYTES_IN_WORD];	/* Datum addend.  */
@@ -476,32 +476,14 @@ enum reloc_type
   RELOC_11,	
   RELOC_WDISP2_14,
   RELOC_WDISP19,
-  RELOC_HHI22,			/* data[0:21] = (addend + sv) >> 42     */
-  RELOC_HLO10,			/* data[0:9] = (addend + sv) >> 32      */
-  
-  /* 29K relocation types.  */
-  RELOC_JUMPTARG,
-  RELOC_CONST,
-  RELOC_CONSTH,
-  
-  /* All the new ones I can think of, for sparc v9.  */
-  RELOC_64,			/* data[0:63] = addend + sv 		*/
-  RELOC_DISP64,			/* data[0:63] = addend - pc + sv 	*/
-  RELOC_WDISP21,		/* data[0:20] = (addend + sv - pc)>>2 	*/
-  RELOC_DISP21,			/* data[0:20] = addend - pc + sv        */
-  RELOC_DISP14,			/* data[0:13] = addend - pc + sv 	*/
-  /* Q .
-     What are the other ones,
-     Since this is a clean slate, can we throw away the ones we dont
-     understand ? Should we sort the values ? What about using a
-     microcode format like the 68k ?  */
+
   NO_RELOC
   };
 
 
 struct reloc_internal
 {
-  bfd_vma r_address;		/* Offset of of data to relocate.  */
+  bfd_vma r_address;		/* Offset of data to relocate.  */
   long	r_index;		/* Symbol table index of symbol.  */
   enum reloc_type r_type;	/* Relocation type.  */
   bfd_vma r_addend;		/* Datum addend.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.89.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,9 +14,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.89.2.1 2019/06/10 22:07:10 christos Exp $");
 
-#include "opt_ipkdb.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -27,8 +26,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-
 #include <sys/rndsource.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -43,13 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.89 2018/06/26 06:48:00 msaitoh Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-
-#include <sys/bus.h>
-
-#ifdef IPKDB_DP8390
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <dev/ic/dp8390reg.h>
@@ -74,9 +66,10 @@ void
 dp8390_media_init(struct dp8390_softc *sc)
 {
 
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 }
 
 /*
@@ -131,8 +124,7 @@ dp8390_config(struct dp8390_softc *sc)
 	ifp->if_ioctl = dp8390_ioctl;
 	if (ifp->if_watchdog == NULL)
 		ifp->if_watchdog = dp8390_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Print additional info when attached. */
@@ -142,9 +134,7 @@ dp8390_config(struct dp8390_softc *sc)
 	/* Initialize media goo. */
 	(*sc->sc_media_init)(sc);
 
-	/*
-	 * We can support 802.1Q VLAN-sized frames.
-	 */
+	/* We can support 802.1Q VLAN-sized frames. */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Attach the interface. */
@@ -623,14 +613,12 @@ dp8390_intr(void *arg)
 	uint8_t isr;
 	uint8_t rndisr;
 
-	if (sc->sc_enabled == 0 ||
-	    !device_is_active(sc->sc_dev))
+	if (sc->sc_enabled == 0 || !device_is_active(sc->sc_dev))
 		return 0;
 
 	/* Set NIC to page 0 registers. */
 	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR,
-	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_PUT(regt, regh, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 	NIC_BARRIER(regt, regh);
 
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
@@ -678,9 +666,7 @@ dp8390_intr(void *arg)
 			 * when a network is heavily loaded.
 			 */
 			if ((isr & ED_ISR_TXE) != 0) {
-				/*
-				 * Excessive collisions (16).
-				 */
+				/* Excessive collisions (16). */
 				if ((NIC_GET(regt, regh, ED_P0_TSR)
 				    & ED_TSR_ABT) && (collisions == 0)) {
 					/*
@@ -722,8 +708,8 @@ dp8390_intr(void *arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occurred while not
-			 * actually transmitting).
+			 * be zero if a transmitter interrupt occurred while
+			 * not actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
@@ -827,7 +813,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = data;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -854,7 +839,7 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -873,7 +858,7 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			dp8390_init(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -905,11 +890,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
@@ -975,6 +955,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 	}
 	for (i = 0; i < 8; i++)
 		af[i] = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -990,6 +971,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 			ifp->if_flags |= IFF_ALLMULTI;
 			for (i = 0; i < 8; i++)
 				af[i] = 0xff;
+			ETHER_UNLOCK(ec);
 			return;
 		}
 
@@ -1003,6 +985,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
@@ -1036,9 +1019,7 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 			len = MCLBYTES;
 		}
 
-		/*
-		 * Make sure the data after the Ethernet header is aligned.
-		 */
+		/* Make sure the data after the Ethernet header is aligned. */
 		if (m == m0) {
 			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
@@ -1047,7 +1028,7 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(total_len, len);
+		m->m_len = len = uimin(total_len, len);
 		src = (*sc->ring_copy)(sc, src, mtod(m, void *), len);
 
 		total_len -= len;
@@ -1244,264 +1225,3 @@ dp8390_detach(struct dp8390_softc *sc, int flags)
 
 	return 0;
 }
-
-#ifdef IPKDB_DP8390
-static void dp8390_ipkdb_hwinit(struct ipkdb_if *);
-static void dp8390_ipkdb_init(struct ipkdb_if *);
-static void dp8390_ipkdb_leave(struct ipkdb_if *);
-static int dp8390_ipkdb_rcv(struct ipkdb_if *, uint8_t *, int);
-static void dp8390_ipkdb_send(struct ipkdb_if *, uint8_t *, int);
-
-/*
- * This is essentially similar to dp8390_config above.
- */
-int
-dp8390_ipkdb_attach(struct ipkdb_if *kip)
-{
-	struct dp8390_softc *sc = kip->port;
-
-	if (sc->mem_size < 8192 * 2)
-		sc->txb_cnt = 1;
-	else if (sc->mem_size < 8192 * 3)
-		sc->txb_cnt = 2;
-	else
-		sc->txb_cnt = 3;
-
-	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
-	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start +
-	    ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
-	sc->mem_end = sc->mem_start + sc->mem_size;
-
-	dp8390_stop(sc);
-
-	kip->start = dp8390_ipkdb_init;
-	kip->leave = dp8390_ipkdb_leave;
-	kip->receive = dp8390_ipkdb_rcv;
-	kip->send = dp8390_ipkdb_send;
-
-	return 0;
-}
-
-/*
- * Similar to dp8390_init above.
- */
-static void
-dp8390_ipkdb_hwinit(struct ipkdb_if *kip)
-{
-	struct dp8390_softc *sc = kip->port;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	bus_space_tag_t regt = sc->sc_regt;
-	bus_space_handle_t regh = sc->sc_regh;
-	int i;
-
-	sc->txb_inuse = 0;
-	sc->txb_new = 0;
-	sc->txb_next_tx = 0;
-	dp8390_stop(sc);
-
-	if (sc->dcr_reg & ED_DCR_LS)
-		NIC_PUT(regt, regh, ED_P0_DCR, sc->dcr_reg);
-	else
-		NIC_PUT(regt, regh, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
-	NIC_PUT(regt, regh, ED_P0_RBCR0, 0);
-	NIC_PUT(regt, regh, ED_P0_RBCR1, 0);
-	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON | sc->rcr_proto);
-	NIC_PUT(regt, regh, ED_P0_TCR, ED_TCR_LB0);
-	if (sc->is790)
-		NIC_PUT(regt, regh, 0x09, 0);
-	NIC_PUT(regt, regh, ED_P0_BNRY, sc->rec_page_start);
-	NIC_PUT(regt, regh, ED_P0_PSTART, sc->rec_page_start);
-	NIC_PUT(regt, regh, ED_P0_PSTOP, sc->rec_page_stop);
-	NIC_PUT(regt, regh, ED_P0_IMR, 0);
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_ISR, 0xff);
-
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR,
-	    sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STP);
-	NIC_BARRIER(regt, regh);
-
-	for (i = 0; i < sizeof kip->myenetaddr; i++)
-		NIC_PUT(regt, regh, ED_P1_PAR0 + i, kip->myenetaddr[i]);
-	/* multicast filter? */
-
-	sc->next_packet = sc->rec_page_start + 1;
-	NIC_PUT(regt, regh, ED_P1_CURR, sc->next_packet);
-
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P1_CR,
-	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
-	NIC_BARRIER(regt, regh);
-
-	/* promiscuous mode? */
-	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_AB | ED_RCR_AM | sc->rcr_proto);
-	NIC_PUT(regt, regh, ED_P0_TCR, 0);
-
-	/* card-specific initialization? */
-
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR,
-	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-}
-
-static void
-dp8390_ipkdb_init(struct ipkdb_if *kip)
-{
-	struct dp8390_softc *sc = kip->port;
-	bus_space_tag_t regt = sc->sc_regt;
-	bus_space_handle_t regh = sc->sc_regh;
-	uint8_t cmd;
-
-	cmd = NIC_GET(regt, regh, ED_P0_CR) & ~(ED_CR_PAGE_3 | ED_CR_STA);
-
-	/* Select page 0 */
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR, cmd | ED_CR_PAGE_0 | ED_CR_STP);
-	NIC_BARRIER(regt, regh);
-
-	/* If not started, init chip */
-	if ((cmd & ED_CR_STP) != 0)
-		dp8390_ipkdb_hwinit(kip);
-
-	/* If output active, wait for packets to drain */
-	while (sc->txb_inuse) {
-		while ((cmd = (NIC_GET(regt, regh, ED_P0_ISR) &
-		    (ED_ISR_PTX | ED_ISR_TXE))) == 0)
-			DELAY(1);
-		NIC_PUT(regt, regh, ED_P0_ISR, cmd);
-		if (--sc->txb_inuse)
-			dp8390_xmit(sc);
-	}
-}
-
-static void
-dp8390_ipkdb_leave(struct ipkdb_if *kip)
-{
-	struct dp8390_softc *sc = kip->port;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-
-	ifp->if_timer = 0;
-}
-
-/*
- * Similar to dp8390_intr above.
- */
-static int
-dp8390_ipkdb_rcv(struct ipkdb_if *kip, uint8_t *buf, int poll)
-{
-	struct dp8390_softc *sc = kip->port;
-	bus_space_tag_t regt = sc->sc_regt;
-	bus_space_handle_t regh = sc->sc_regh;
-	uint8_t bnry, current, isr;
-	int len, nlen, packet_ptr;
-	struct dp8390_ring packet_hdr;
-
-	/* Switch to page 0. */
-	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR,
-	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
-	NIC_BARRIER(regt, regh);
-
-	for (;;) {
-		isr = NIC_GET(regt, regh, ED_P0_ISR);
-		NIC_PUT(regt, regh, ED_P0_ISR, isr);
-
-		if (isr & (ED_ISR_PRX | ED_ISR_TXE)) {
-			NIC_GET(regt, regh, ED_P0_NCR);
-			NIC_GET(regt, regh, ED_P0_TSR);
-		}
-
-		if (isr & ED_ISR_OVW) {
-			dp8390_ipkdb_hwinit(kip);
-			continue;
-		}
-
-		if (isr & ED_ISR_CNT) {
-			NIC_GET(regt, regh, ED_P0_CNTR0);
-			NIC_GET(regt, regh, ED_P0_CNTR1);
-			NIC_GET(regt, regh, ED_P0_CNTR2);
-		}
-
-		/* Similar to dp8390_rint above. */
-		NIC_BARRIER(regt, regh);
-		NIC_PUT(regt, regh, ED_P0_CR,
-		    sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
-		NIC_BARRIER(regt, regh);
-
-		current = NIC_GET(regt, regh, ED_P1_CURR);
-
-		NIC_BARRIER(regt, regh);
-		NIC_PUT(regt, regh, ED_P1_CR,
-		    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
-		NIC_BARRIER(regt, regh);
-
-		if (sc->next_packet == current) {
-			if (poll)
-				return 0;
-			continue;
-		}
-
-		packet_ptr = sc->mem_ring +
-		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
-		sc->read_hdr(sc, packet_ptr, &packet_hdr);
-		len = packet_hdr.count;
-		nlen = packet_hdr.next_packet - sc->next_packet;
-		if (nlen < 0)
-			nlen += sc->rec_page_stop - sc->rec_page_start;
-		nlen--;
-		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
-			nlen--;
-		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
-		len -= sizeof(packet_hdr);
-
-		if (len <= ETHERMTU &&
-		    packet_hdr.next_packet >= sc->rec_page_start &&
-		    packet_hdr.next_packet < sc->rec_page_stop) {
-			sc->ring_copy(sc, packet_ptr + sizeof(packet_hdr),
-			    buf, len);
-			sc->next_packet = packet_hdr.next_packet;
-			bnry = sc->next_packet - 1;
-			if (bnry < sc->rec_page_start)
-				bnry = sc->rec_page_stop - 1;
-			NIC_PUT(regt, regh, ED_P0_BNRY, bnry);
-			return len;
-		}
-
-		dp8390_ipkdb_hwinit(kip);
-	}
-}
-
-static void
-dp8390_ipkdb_send(struct ipkdb_if *kip, uint8_t *buf, int l)
-{
-	struct dp8390_softc *sc = kip->port;
-	bus_space_tag_t regt = sc->sc_regt;
-	bus_space_handle_t regh = sc->sc_regh;
-	struct mbuf mb;
-
-	mbuf_hdr_init(&mb, MT_DATA, NULL, buf, l);
-	mbuf_pkthdr_init(&mb);
-	mb.m_pkthdr.len = l;
-	mb.m_flags |= M_EXT;
-
-	l = sc->write_mbuf(sc, &mb,
-	    sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT));
-	sc->txb_len[sc->txb_new] = max(l, ETHER_MIN_LEN - ETHER_CRC_LEN);
-
-	if (++sc->txb_new == sc->txb_cnt)
-		sc->txb_new = 0;
-
-	sc->txb_inuse++;
-	dp8390_xmit(sc);
-
-	while ((NIC_GET(regt, regh, ED_P0_ISR) &
-	    (ED_ISR_PTX | ED_ISR_TXE)) == 0)
-		DELAY(1);
-
-	sc->txb_inuse--;
-}
-#endif

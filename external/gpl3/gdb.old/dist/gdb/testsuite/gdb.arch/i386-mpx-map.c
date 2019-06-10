@@ -1,6 +1,6 @@
 /* Test program for MPX map allocated bounds.
 
-   Copyright 2015-2016 Free Software Foundation, Inc.
+   Copyright 2015-2017 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <walfred.tedeschi@intel.com>
 			      <mircea.gherzan@intel.com>

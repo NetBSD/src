@@ -1,6 +1,6 @@
 /* mpfr_frexp -- convert to integral and fractional parts
 
-Copyright 2011-2016 Free Software Foundation, Inc.
+Copyright 2011-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,7 +26,7 @@ int
 mpfr_frexp (mpfr_exp_t *exp, mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 {
   int inex;
-  unsigned int saved_flags = __gmpfr_flags;
+  mpfr_flags_t saved_flags = __gmpfr_flags;
   MPFR_BLOCK_DECL (flags);
 
   MPFR_LOG_FUNC

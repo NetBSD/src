@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.44 2014/06/14 02:53:02 pgoyette Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.44.28.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -55,7 +55,8 @@
 #define _XEN_HYPERVISOR_H_
 
 #include "opt_xen.h"
-
+#include "isa.h"
+#include "pci.h"
 
 struct hypervisor_attach_args {
 	const char 		*haa_busname;
@@ -79,17 +80,33 @@ struct xen_npx_attach_args {
 #define	s32 int32_t
 #define	s64 int64_t
 
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/sched.h>
-#include <xen/xen-public/platform.h>
+#include <sys/atomic.h>
+
+#include <xen/include/public/xen.h>
+#include <xen/include/public/sched.h>
+#include <xen/include/public/platform.h>
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
-#include <xen/xen-public/dom0_ops.h>
+#include <xen/include/public/dom0_ops.h>
 #endif
-#include <xen/xen-public/event_channel.h>
-#include <xen/xen-public/physdev.h>
-#include <xen/xen-public/memory.h>
-#include <xen/xen-public/io/netif.h>
-#include <xen/xen-public/io/blkif.h>
+#include <xen/include/public/event_channel.h>
+#include <xen/include/public/physdev.h>
+#include <xen/include/public/memory.h>
+#include <xen/include/public/io/netif.h>
+#include <xen/include/public/io/blkif.h>
+
+#if __XEN_INTERFACE_VERSION < 0x00030208
+/* Undo namespace damage from xen/include/public/io/ring.h
+ * The proper fix is to get upstream to stop assuming that all OSs use
+ * mb(), rmb(), wmb().
+ */
+#undef xen_mb
+#undef xen_rmb
+#undef xen_wmb
+
+#define xen_mb()  membar_sync()
+#define xen_rmb() membar_producer()
+#define xen_wmb() membar_consumer()
+#endif /* __XEN_INTERFACE_VERSION */
 
 #include <machine/hypercalls.h>
 
@@ -130,7 +147,10 @@ extern volatile shared_info_t *HYPERVISOR_shared_info;
 struct intrframe;
 struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
-void hypervisor_enable_event(unsigned int);
+#if NPCI > 0 || NISA > 0
+void hypervisor_prime_pirq_event(int, unsigned int);
+void hypervisor_ack_pirq_event(unsigned int);
+#endif /* NPCI > 0 || NISA > 0 */
 
 extern int xen_version;
 #define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)

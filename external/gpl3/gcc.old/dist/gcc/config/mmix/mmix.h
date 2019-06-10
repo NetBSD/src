@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MMIX.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GCC.
@@ -451,7 +451,7 @@ enum reg_class
 
 /* Node: Frame Layout */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 #define FRAME_GROWS_DOWNWARD 1
 
 #define STARTING_FRAME_OFFSET \
@@ -793,7 +793,7 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 #define CASE_VECTOR_MODE DImode
 #define CASE_VECTOR_PC_RELATIVE 0
 
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* We have a choice, which makes this yet another parameter to tweak.  The
    gut feeling is currently that SIGN_EXTEND wins; "int" is more frequent

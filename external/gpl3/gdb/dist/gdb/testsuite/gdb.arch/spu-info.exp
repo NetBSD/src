@@ -1,4 +1,4 @@
-# Copyright 2007-2017 Free Software Foundation, Inc.
+# Copyright 2007-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,19 +24,13 @@ if { ![istarget "spu-*-elf"] } then {
   return
 }
 
-set testfile "spu-info"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-set sources ${srcdir}/${subdir}/${srcfile}
+standard_testfile
 
-if { [gdb_compile $sources ${binfile} executable { debug }] != "" } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug}] } {
+  fail "cannot compile test program"
   return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 # Continue to MARKER
 proc c_to { marker } {
@@ -99,7 +93,7 @@ gdb_test "info spu signal" \
 
 # 'info spu mailbox'.
 gdb_test "info spu mailbox" \
-	 "SPU Outbound Mailbox.*SPU Outbound Interrupt Mailbox.*" \
+	 "" \
 	 "info spu mailbox"
 
 # 'info spu dma'.
@@ -121,62 +115,62 @@ gdb_test "info spu event" \
 # MFC_MULTI_SRC_SYNC_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00001000.*" \
+	"Event Status 0x0000.*Event Mask   0x00001000.*" \
 	"event mask 0x1000"
 # MFC_PRIV_ATTN_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000800.*" \
+	"Event Status 0x0000.*Event Mask   0x00000800.*" \
 	"event mask 0x0800"
 # MFC_LLR_LOST_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000400.*" \
+	"Event Status 0x0000.*Event Mask   0x00000400.*" \
 	"event mask 0x0400"
 # MFC_SIGNAL_NOTIFY_1_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000200.*" \
+	"Event Status 0x0000.*Event Mask   0x00000200.*" \
 	"event mask 0x0200"
 # MFC_SIGNAL_NOTIFY_2_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000100.*" \
+	"Event Status 0x0000.*Event Mask   0x00000100.*" \
 	"event mask 0x0100"
 # MFC_OUT_MBOX_AVAILABLE_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000080.*" \
+	"Event Status 0x0000.*Event Mask   0x00000080.*" \
 	"event mask 0x0080"
 # MFC_OUT_INTR_MBOX_AVAILABLE_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000040.*" \
+	"Event Status 0x0000.*Event Mask   0x00000040.*" \
 	"event mask 0x0040"
 # MFC_DECREMENTER_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000020.*" \
+	"Event Status 0x0000.*Event Mask   0x00000020.*" \
 	"event mask 0x0020"
 # MFC_IN_MBOX_AVAILABLE_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000010.*" \
+	"Event Status 0x0000.*Event Mask   0x00000010.*" \
 	"event mask 0x0010"
 # MFC_COMMAND_QUEUE_AVAILABLE_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000008.*" \
+	"Event Status 0x0000.*Event Mask   0x00000008.*" \
 	"event mask 0x0008"
 # MFC_LIST_STALL_NOTIFY_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000002.*" \
+	"Event Status 0x0000.*Event Mask   0x00000002.*" \
 	"event mask 0x0002"
 # MFC_TAG_STATUS_UPDATE_EVENT.
 gdb_test "next" "" "next"
 gdb_test "info spu event" \
-	"Event Status 0x00000000.*Event Mask   0x00000001.*" \
+	"Event Status 0x0000.*Event Mask   0x00000001.*" \
 	"event mask 0x0001"
 
 
@@ -200,7 +194,7 @@ gdb_test "finish" "" "finish"
 c_to "Marker Mbox"
 set msg "info spu mailbox"
 gdb_test_multiple "info spu mailbox" $msg {
-    -re "SPU Outbound Mailbox.*0x00000000.*SPU Outbound Interrupt Mailbox.*0x00000000.*$gdb_prompt $" {
+    -re "$gdb_prompt $" {
       pass $msg
     }
     -re "SPU Outbound Mailbox.*0x.*SPU Outbound Interrupt Mailbox.*0x.*$gdb_prompt $" {
@@ -226,19 +220,19 @@ gdb_test "info spu signal" \
 # 'info spu signal' with signal1 pending.
 c_to "Marker Signal1"
 gdb_test "info spu signal" \
-	 "Signal 1 control word 0x801c0800.*Signal 2 not pending.*\(Type.*\).*" \
+	 "Signal 1 control word 0x00000017.*Signal 2 not pending.*\(Type.*\).*" \
 	 "info spu signal"
 
 # 'info spu signal' with signal1 and signal2 pending.
 c_to "Marker Signal2"
 gdb_test "info spu signal" \
-	 "Signal 1 control word 0x801c0800.*Signal 2 control word 0x801c0800.*" \
+	 "Signal 1 control word 0x00000017.*Signal 2 control word 0x00000017.*" \
 	 "info spu signal"
 
 # Read signal1. Only signal2 is pending.
 c_to "Marker SignalRead"
 gdb_test "info spu signal" \
-	 "Signal 1 not pending.*Signal 2 control word 0x801c0800.*" \
+	 "Signal 1 not pending.*Signal 2 control word 0x00000017.*" \
 	 "info spu signal"
 
 

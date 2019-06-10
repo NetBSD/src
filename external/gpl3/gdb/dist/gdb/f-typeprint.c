@@ -1,6 +1,6 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -290,7 +290,12 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
 
   if ((show <= 0) && (TYPE_NAME (type) != NULL))
     {
-      fprintfi_filtered (level, stream, "%s", TYPE_NAME (type));
+      const char *prefix = "";
+      if (TYPE_CODE (type) == TYPE_CODE_UNION)
+	prefix = "Type, C_Union :: ";
+      else if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
+	prefix = "Type ";
+      fprintfi_filtered (level, stream, "%s%s", prefix, TYPE_NAME (type));
       return;
     }
 
@@ -304,18 +309,23 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
       break;
 
     case TYPE_CODE_ARRAY:
-    case TYPE_CODE_FUNC:
       f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, level);
+      break;
+    case TYPE_CODE_FUNC:
+      if (TYPE_TARGET_TYPE (type) == NULL)
+	type_print_unknown_return_type (stream);
+      else
+	f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, level);
       break;
 
     case TYPE_CODE_PTR:
-      fprintf_filtered (stream, "PTR TO -> ( ");
-      f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, level);
+      fprintfi_filtered (level, stream, "PTR TO -> ( ");
+      f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, 0);
       break;
 
     case TYPE_CODE_REF:
-      fprintf_filtered (stream, "REF TO -> ( ");
-      f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, level);
+      fprintfi_filtered (level, stream, "REF TO -> ( ");
+      f_type_print_base (TYPE_TARGET_TYPE (type), stream, show, 0);
       break;
 
     case TYPE_CODE_VOID:
@@ -365,7 +375,7 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
 	fprintfi_filtered (level, stream, "Type, C_Union :: ");
       else
 	fprintfi_filtered (level, stream, "Type ");
-      fputs_filtered (TYPE_TAG_NAME (type), stream);
+      fputs_filtered (TYPE_NAME (type), stream);
       /* According to the definition,
          we only print structure elements in case show > 0.  */
       if (show > 0)
@@ -382,12 +392,12 @@ f_type_print_base (struct type *type, struct ui_file *stream, int show,
 	      fputs_filtered ("\n", stream);
 	    }
 	  fprintfi_filtered (level, stream, "End Type ");
-	  fputs_filtered (TYPE_TAG_NAME (type), stream);
+	  fputs_filtered (TYPE_NAME (type), stream);
 	}
       break;
 
     case TYPE_CODE_MODULE:
-      fprintfi_filtered (level, stream, "module %s", TYPE_TAG_NAME (type));
+      fprintfi_filtered (level, stream, "module %s", TYPE_NAME (type));
       break;
 
     default_case:

@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.3 2018/06/22 10:17:04 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.3.4.1 2019/06/10 22:07:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.3 2018/06/22 10:17:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.3.4.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,12 +52,12 @@ struct dwcmmc_fdt_config {
 	u_int		ciu_div;
 };
 
-static const struct dwcmmc_fdt_config dwcmmc_rk3328_config = {
+static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 	.ciu_div = 2,
 };
 
 static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3328-dw-mshc",	(uintptr_t)&dwcmmc_rk3328_config },
+	{ "rockchip,rk3288-dw-mshc",	(uintptr_t)&dwcmmc_rk3288_config },
 	{ NULL }
 };
 
@@ -70,7 +70,7 @@ struct dwcmmc_fdt_softc {
 	u_int			sc_ciu_div;
 };
 
-CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwc_mmc_softc),
+CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwcmmc_fdt_softc),
 	dwcmmc_fdt_match, dwcmmc_fdt_attach, NULL, NULL);
 
 static int
@@ -102,6 +102,8 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth))
 		fifo_depth = 0;
 
+	fdtbus_clock_assign(phandle);
+
 	esc->sc_clk_biu = fdtbus_clock_get(phandle, "biu");
 	if (esc->sc_clk_biu == NULL) {
 		aprint_error(": couldn't get clock biu\n");
@@ -129,11 +131,11 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d\n",
+		aprint_error(": couldn't map %#" PRIx64 ": %d\n",
 		    (uint64_t)addr, error);
 		return;
 	}
-	esc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	esc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 
 	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
@@ -193,7 +195,7 @@ dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
 		return error;
 	}
 
-	sc->sc_clock_freq = (clk_get_rate(esc->sc_clk_ciu) / ciu_div) / 1000;
+	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
 
 	aprint_debug_dev(sc->sc_dev, "set clock rate to %u kHz (target %u kHz)\n",
 	    sc->sc_clock_freq, rate);

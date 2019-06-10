@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 # We want to do some tests when Guile is not present.
 gdb_test_multiple "guile (display 23) (newline)" "verify guile support" {
     -re "Undefined command.*$gdb_prompt $" {
-	unsupported "Guile not supported."
+	unsupported "guile not supported."
 	return
     }
     -re "not supported.*$gdb_prompt $"	{

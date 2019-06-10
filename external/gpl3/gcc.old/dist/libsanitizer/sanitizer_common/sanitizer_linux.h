@@ -15,6 +15,7 @@
 #if SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_NETBSD
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_posix.h"
 #include "sanitizer_platform_limits_posix.h"
 
 struct link_map;  // Opaque type returned by dlopen().
@@ -39,11 +40,20 @@ uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 // internal_sigaction instead.
 int internal_sigaction_norestorer(int signum, const void *act, void *oldact);
 void internal_sigdelset(__sanitizer_sigset_t *set, int signum);
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__mips__) || defined(__aarch64__)
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                     int *parent_tidptr, void *newtls, int *child_tidptr);
 #endif
 #endif  // SANITIZER_LINUX
+
+#ifdef SANITIZER_NETBSD
+int internal_sigaction_norestorer(int signum, const void *act, void *oldact);
+#define internal_sigdelset(set, signum) \
+    __sigdelset(set, signum)
+#define internal_clone(fn, child_stack, flags, arg, \
+    parent_tidptr, newtls, child_tidptr) \
+    __clone(fn, child_stack, flags, arg)
+#endif
 
 // This class reads thread IDs from /proc/<pid>/task using only syscalls.
 class ThreadLister {
@@ -75,11 +85,6 @@ uptr ThreadSelfOffset();
 // Matches a library's file name against a base name (stripping path and version
 // information).
 bool LibraryNameIs(const char *full_name, const char *base_name);
-
-// Read the name of the current binary from /proc/self/exe.
-uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
-// Cache the value of /proc/self/exe.
-void CacheBinaryName();
 
 // Call cb for each region mapped by map.
 void ForEachMappedRegion(link_map *map, void (*cb)(const void *, uptr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.16 2016/03/12 11:55:14 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.16.16.1 2019/06/10 22:10:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -58,15 +58,15 @@ ATF_TC_BODY(no_test, tc)
 
 #include <ieeefp.h>
 
-#if __arm__ && !__SOFTFP__
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus do not implement IEEE exception handling,
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * skip these tests if running on them and compiled for
 	 * hard float.
 	 */
 #define	FPU_PREREQ()							\
 	if (0 == fpsetmask(fpsetmask(FP_X_INV)))			\
-		atf_tc_skip("FPU does not implement exception handling");
+		atf_tc_skip("FPU does not implement traps on FP exceptions");
 #endif
 
 #ifndef FPU_PREREQ
@@ -310,9 +310,6 @@ sigfpe(int s, siginfo_t *si, void *c)
 	{								\
 									\
 		FPU_PREREQ();						\
-									\
-		if (strcmp(MACHINE, "macppc") == 0)			\
-			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
 		if (isQEMU())						\
 			atf_tc_expect_fail("PR misc/44767");		\

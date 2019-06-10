@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.128 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.128.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.128 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.128.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -144,11 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.128 2018/05/03 07:13:48 maxv Exp $");
 #include <net/if_pfsync.h>
 #endif
 
-#include "etherip.h"
-#if NETHERIP > 0
-#include <netinet/ip_etherip.h>
-#endif
-
 DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
 
 /* Wrappers to acquire kernel_lock. */
@@ -195,9 +190,6 @@ PR_WRAP_INPUT(dccp_input)
 PR_WRAP_INPUT(sctp_input)
 #endif
 PR_WRAP_INPUT(rip_input)
-#if NETHERIP > 0
-PR_WRAP_INPUT(ip_etherip_input)
-#endif
 #if NPFSYNC > 0
 PR_WRAP_INPUT(pfsync_input)
 #endif
@@ -211,7 +203,6 @@ PR_WRAP_INPUT(pim_input)
 #define	dccp_input		dccp_input_wrapper
 #define	sctp_input		sctp_input_wrapper
 #define	rip_input		rip_input_wrapper
-#define	ip_etherip_input	ip_etherip_input_wrapper
 #define	pfsync_input		pfsync_input_wrapper
 #define	igmp_input		igmp_input_wrapper
 #define	pim_input		pim_input_wrapper
@@ -225,18 +216,11 @@ PR_WRAP_INPUT(pim_input)
  * the ipsec shared library. We need a wrapper anyway.
  */
 static void
-ipsec4_common_input_wrapper(struct mbuf *m, ...)
+ipsec4_common_input_wrapper(struct mbuf *m, int off, int proto)
 {
 
 	if (ipsec_enabled) {
-		int off, nxt;
-		va_list args;
-		/* XXX just passing args to ipsec4_common_input doesn't work */
-		va_start(args, m);
-		off = va_arg(args, int);
-		nxt = va_arg(args, int);
-		va_end(args);
-		ipsec4_common_input(m, off, nxt);
+		ipsec4_common_input(m, off, proto);
 	} else {
 		m_freem(m);
 	}
@@ -416,17 +400,6 @@ const struct protosw inetsw[] = {
 	.pr_init = encap_init,
 },
 #endif /* INET6 */
-#if NETHERIP > 0
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_ETHERIP,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = ip_etherip_input,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_usrreqs = &rip_usrreqs,
-},
-#endif /* NETHERIP > 0 */
 #if NCARP > 0
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,

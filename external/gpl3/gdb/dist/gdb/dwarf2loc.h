@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,7 +67,7 @@ const gdb_byte *dwarf2_find_location_expression
 struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_sect_off
   (sect_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
    CORE_ADDR (*get_frame_pc) (void *baton),
-   void *baton);
+   void *baton, bool resolve_abstract_p = false);
 
 struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_cu_off
   (cu_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
@@ -156,7 +156,7 @@ int dwarf2_evaluate_property (const struct dynamic_prop *prop,
    evaluated.
    SYM the originating symbol, used for error reporting.  */
 
-void dwarf2_compile_property_to_c (string_file &stream,
+void dwarf2_compile_property_to_c (string_file *stream,
 				   const char *result_name,
 				   struct gdbarch *gdbarch,
 				   unsigned char *registers_used,
@@ -222,7 +222,7 @@ struct dwarf2_offset_baton
   LONGEST offset;
 
   /* The type of the object whose property is dynamic.  In the example
-     provided above, this would the the array's index type.  */
+     provided above, this would the array's index type.  */
   struct type *type;
 };
 
@@ -270,7 +270,6 @@ extern const struct symbol_block_ops dwarf2_block_frame_base_loclist_funcs;
 
 extern void dwarf2_compile_expr_to_ax (struct agent_expr *expr,
 				       struct axs_value *loc,
-				       struct gdbarch *arch,
 				       unsigned int addr_size,
 				       const gdb_byte *op_ptr,
 				       const gdb_byte *op_end,

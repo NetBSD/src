@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.90 2018/02/25 00:27:16 mrg Exp $
+#	$NetBSD: files.hp300,v 1.90.4.1 2019/06/10 22:06:16 christos Exp $
 #
 # hp300-specific configuration info
 
@@ -219,6 +219,7 @@ file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
@@ -232,9 +233,6 @@ include "arch/m68k/fpe/files.fpe"
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"

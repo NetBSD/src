@@ -865,8 +865,8 @@ _bfd_merged_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED, asection **psec,
       if (offset > sec->rawsize)
 	_bfd_error_handler
 	  /* xgettext:c-format */
-	  (_("%B: access beyond end of merged section (%Ld)"),
-	   sec->owner, offset);
+	  (_("%pB: access beyond end of merged section (%" PRId64 ")"),
+	   sec->owner, (int64_t) offset);
       return secinfo->first_str ? sec->size : 0;
     }
 

@@ -6077,8 +6077,7 @@ s7_s_score_lcomm (int bytes_p)
   *p = c;
 
   if (
-#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT) \
-     || defined (OBJ_BOUT) || defined (OBJ_MAYBE_BOUT))
+#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
 #ifdef BFD_ASSEMBLER
        (OUTPUT_FLAVOR != bfd_target_aout_flavour
         || (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0)) &&

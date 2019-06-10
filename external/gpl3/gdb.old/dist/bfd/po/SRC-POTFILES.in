@@ -119,6 +119,8 @@ cpu-pdp11.c
 cpu-pj.c
 cpu-plugin.c
 cpu-powerpc.c
+cpu-pru.c
+cpu-riscv.c
 cpu-rl78.c
 cpu-rs6000.c
 cpu-rx.c
@@ -139,6 +141,7 @@ cpu-v850_rh850.c
 cpu-vax.c
 cpu-visium.c
 cpu-w65.c
+cpu-wasm32.c
 cpu-we32k.c
 cpu-xc16x.c
 cpu-xgate.c
@@ -161,6 +164,7 @@ elf-linux-core.h
 elf-m10200.c
 elf-m10300.c
 elf-nacl.c
+elf-properties.c
 elf-strtab.c
 elf-vxworks.c
 elf.c
@@ -211,6 +215,7 @@ elf32-nios2.c
 elf32-or1k.c
 elf32-pj.c
 elf32-ppc.c
+elf32-pru.c
 elf32-rl78.c
 elf32-rx.c
 elf32-s390.c
@@ -228,6 +233,7 @@ elf32-tilepro.c
 elf32-v850.c
 elf32-vax.c
 elf32-visium.c
+elf32-wasm32.c
 elf32-xc16x.c
 elf32-xgate.c
 elf32-xstormy16.c
@@ -254,6 +260,7 @@ elfn32-mips.c
 elfxx-aarch64.c
 elfxx-ia64.c
 elfxx-mips.c
+elfxx-riscv.c
 elfxx-sparc.c
 elfxx-tilegx.c
 epoc-pe-arm.c
@@ -380,6 +387,7 @@ vms-alpha.c
 vms-lib.c
 vms-misc.c
 vms.h
+wasm-module.c
 xcofflink.c
 xsym.c
 xsym.h

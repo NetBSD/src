@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 static inline ATTR int
 func1 (int x)
 {
-  return x * 23;
+  return x * 23; /* break here */
 }
 
 /* A non-static inlined function that is called once.  */
@@ -128,6 +128,86 @@ func8a (int x)
   return func8b (x * 31);
 }
 
+static inline ATTR int
+inline_func1 (int x)
+{
+  int y = 1;			/* inline_func1  */
+
+  return y + x;
+}
+
+static int
+not_inline_func1 (int x)
+{
+  int y = 2;			/* not_inline_func1  */
+
+  return y + inline_func1 (x);
+}
+
+inline ATTR int
+inline_func2 (int x)
+{
+  int y = 3;			/* inline_func2  */
+
+  return y + not_inline_func1 (x);
+}
+
+int
+not_inline_func2 (int x)
+{
+  int y = 4;			/* not_inline_func2  */
+
+  return y + inline_func2 (x);
+}
+
+static inline ATTR int
+inline_func3 (int x)
+{
+  int y = 5;			/* inline_func3  */
+
+  return y + not_inline_func2 (x);
+}
+
+static int
+not_inline_func3 (int x)
+{
+  int y = 6;			/* not_inline_func3  */
+
+  return y + inline_func3 (x);
+}
+
+/* The following three functions serve to exercise GDB's inline frame
+   skipping logic when setting a user breakpoint on an inline function
+   by name.  */
+
+/* A static inlined function that is called by another static inlined
+   function.  */
+
+static inline ATTR int
+func_inline_callee (int x)
+{
+  return x * 23;
+}
+
+/* A static inlined function that calls another static inlined
+   function.  The body of the function is as simple as possible so
+   that both functions are inlined to the same PC address.  */
+
+static inline ATTR int
+func_inline_caller (int x)
+{
+  return func_inline_callee (x);
+}
+
+/* An extern not-inline function that calls a static inlined
+   function.  */
+
+int
+func_extern_caller (int x)
+{
+  return func_inline_caller (x);
+}
+
 /* Entry point.  */
 
 int
@@ -154,6 +234,10 @@ main (int argc, char *argv[])
   x = func7a (x) + func7b (x);
 
   x = func8a (x) + func8b (x);
+
+  x = not_inline_func3 (-21);
+
+  func_extern_caller (1);
 
   return x;
 }

@@ -1,7 +1,7 @@
 # Makefile template for Configure for the CRIS simulator, based on a mix
 # of the ones for m32r and i960.
 #
-# Copyright (C) 2004-2016 Free Software Foundation, Inc.
+# Copyright (C) 2004-2017 Free Software Foundation, Inc.
 # Contributed by Axis Communications.
 #
 # This program is free software; you can redistribute it and/or modify

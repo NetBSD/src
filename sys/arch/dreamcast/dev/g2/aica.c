@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $	*/
+/*	$NetBSD: aica.c,v 1.24.4.1 2019/06/10 22:06:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24.4.1 2019/06/10 22:06:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $");
 #include <sys/audioio.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
+#include <dev/audio/audiovar.h>	/* AUDIO_MIN_FREQUENCY */
 
 #include <machine/sysasicvar.h>
 
@@ -65,7 +64,6 @@ struct aica_softc {
 
 	/* audio property */
 	int			sc_open;
-	int			sc_encodings;
 	int			sc_precision;
 	int			sc_channels;
 	int			sc_rate;
@@ -85,35 +83,19 @@ struct aica_softc {
 	int			sc_nextfill;
 };
 
-const struct {
-	const char *name;
-	int	encoding;
-	int	precision;
-} aica_encodings[] = {
-	{AudioEadpcm,		AUDIO_ENCODING_ADPCM,		4},
-	{AudioEslinear,		AUDIO_ENCODING_SLINEAR,		8},
-	{AudioEulinear,		AUDIO_ENCODING_ULINEAR,		8},
-	{AudioEmulaw,		AUDIO_ENCODING_ULAW,		8},
-	{AudioEalaw,		AUDIO_ENCODING_ALAW,		8},
-	{AudioEslinear_be,	AUDIO_ENCODING_SLINEAR_BE,	16},
-	{AudioEslinear_le,	AUDIO_ENCODING_SLINEAR_LE,	16},
-	{AudioEulinear_be,	AUDIO_ENCODING_ULINEAR_BE,	16},
-	{AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE,	16},
+static const struct audio_format aica_formats[] = {
+	{
+		.mode		= AUMODE_PLAY,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { AUDIO_MIN_FREQUENCY, 65536 },
+	},
 };
-
-#define AICA_NFORMATS	5
-static const struct audio_format aica_formats[AICA_NFORMATS] = {
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ADPCM, 4, 4,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {1, 65536}},
-};
+#define AICA_NFORMATS	__arraycount(aica_formats)
 
 int aica_match(device_t, cfdata_t, void *);
 void aica_attach(device_t, device_t, void *);
@@ -145,9 +127,10 @@ int aica_intr(void *);
 /* for audio */
 int aica_open(void *, int);
 void aica_close(void *);
-int aica_query_encoding(void *, struct audio_encoding *);
-int aica_set_params(void *, int, int, audio_params_t *,
-    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int aica_query_format(void *, audio_format_query_t *);
+int aica_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 int aica_round_blocksize(void *, int, int, const audio_params_t *);
 size_t aica_round_buffersize(void *, int, size_t);
 int aica_trigger_output(void *, void *, void *, int, void (*)(void *), void *,
@@ -165,36 +148,22 @@ int aica_get_props(void *);
 void aica_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if aica_hw_if = {
-	aica_open,
-	aica_close,
-	NULL,				/* aica_drain */
-	aica_query_encoding,
-	aica_set_params,
-	aica_round_blocksize,
-	NULL,				/* aica_commit_setting */
-	NULL,				/* aica_init_output */
-	NULL,				/* aica_init_input */
-	NULL,				/* aica_start_output */
-	NULL,				/* aica_start_input */
-	aica_halt_output,
-	aica_halt_input,
-	NULL,				/* aica_speaker_ctl */
-	aica_getdev,
-	NULL,				/* aica_setfd */
-	aica_set_port,
-	aica_get_port,
-	aica_query_devinfo,
-	NULL,				/* aica_allocm */
-	NULL,				/* aica_freem */
-
-	aica_round_buffersize,		/* aica_round_buffersize */
-
-	NULL,				/* aica_mappage */
-	aica_get_props,
-	aica_trigger_output,
-	aica_trigger_input,
-	NULL,				/* aica_dev_ioctl */
-	aica_get_locks,
+	.open			= aica_open,
+	.close			= aica_close,
+	.query_format		= aica_query_format,
+	.set_format		= aica_set_format,
+	.round_blocksize	= aica_round_blocksize,
+	.halt_output		= aica_halt_output,
+	.halt_input		= aica_halt_input,
+	.getdev			= aica_getdev,
+	.set_port		= aica_set_port,
+	.get_port		= aica_get_port,
+	.query_devinfo		= aica_query_devinfo,
+	.round_buffersize	= aica_round_buffersize,
+	.get_props		= aica_get_props,
+	.trigger_output		= aica_trigger_output,
+	.trigger_input		= aica_trigger_input,
+	.get_locks		= aica_get_locks,
 };
 
 int
@@ -450,38 +419,23 @@ aica_close(void *addr)
 }
 
 int
-aica_query_encoding(void *addr, struct audio_encoding *fp)
+aica_query_format(void *addr, audio_format_query_t *afp)
 {
-	if (fp->index >= sizeof(aica_encodings) / sizeof(aica_encodings[0]))
-		return EINVAL;
 
-	strcpy(fp->name, aica_encodings[fp->index].name);
-	fp->encoding = aica_encodings[fp->index].encoding;
-	fp->precision = aica_encodings[fp->index].precision;
-	fp->flags = 0;
-
-	return 0;
+	return audio_query_format(aica_formats, AICA_NFORMATS, afp);
 }
 
 int
-aica_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+aica_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct aica_softc *sc;
-	const audio_params_t *hw;
-	int i;
 
-	i = auconv_set_converter(aica_formats, AICA_NFORMATS,
-				 AUMODE_PLAY, play, false, pfil);
-	if (i < 0)
-		return EINVAL;
-	hw = pfil->req_size > 0 ? &pfil->filters[0].param : play;
 	sc = addr;
-	sc->sc_precision = hw->precision;
-	sc->sc_channels = hw->channels;
-	sc->sc_rate = hw->sample_rate;
-	sc->sc_encodings = hw->encoding;
+	sc->sc_precision = play->precision;
+	sc->sc_channels = play->channels;
+	sc->sc_rate = play->sample_rate;
 	return 0;
 }
 
@@ -522,11 +476,12 @@ aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 size_t
 aica_round_buffersize(void *addr, int dir, size_t bufsize)
 {
+	struct aica_softc *sc;
 
-	if (dir == AUMODE_PLAY)
-		return 65536;
-
-	return 512;	/* XXX: AUMINBUF */
+	sc = addr;
+	if (bufsize > 65536 * sc->sc_channels)
+		return 65536 * sc->sc_channels;
+	return bufsize;
 }
 
 void
@@ -630,8 +585,6 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 	struct aica_softc *sc;
 
 	sc = addr;
-	aica_command(sc, AICA_COMMAND_INIT);
-	tsleep(aica_trigger_output, PWAIT, "aicawait", hz / 20);
 
 	sc->sc_buffer_start = sc->sc_buffer = start;
 	sc->sc_buffer_end = end;
@@ -641,9 +594,12 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 	sc->sc_intr = intr;
 	sc->sc_intr_arg = arg;
 
-	/* fill buffers in advance */
-	aica_intr(sc);
-	aica_intr(sc);
+	/*
+	 * The aica arm side driver uses a double buffer to play sounds.
+	 * we need to fill two buffers before playing.
+	 */
+	aica_fillbuffer(sc);
+	aica_fillbuffer(sc);
 
 	/* ...and start playing */
 	aica_play(sc, blksize / sc->sc_channels, sc->sc_channels, sc->sc_rate,

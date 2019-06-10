@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -754,10 +754,6 @@ struct tilepro_elf_link_hash_table
 {
   struct elf_link_hash_table elf;
 
-  /* Short-cuts to get to dynamic linker sections.  */
-  asection *sdynbss;
-  asection *srelbss;
-
   /* Small local sym to section mapping cache.  */
   struct sym_cache sym_cache;
 };
@@ -1234,8 +1230,7 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   /* This function may be called more than once.  */
-  s = bfd_get_linker_section (abfd, ".got");
-  if (s != NULL)
+  if (htab->sgot != NULL)
     return TRUE;
 
   flags = bed->dynamic_sec_flags;
@@ -1296,26 +1291,10 @@ static bfd_boolean
 tilepro_elf_create_dynamic_sections (bfd *dynobj,
 				     struct bfd_link_info *info)
 {
-  struct tilepro_elf_link_hash_table *htab;
-
-  htab = tilepro_elf_hash_table (info);
-  BFD_ASSERT (htab != NULL);
-
   if (!tilepro_elf_create_got_section (dynobj, info))
     return FALSE;
 
-  if (!_bfd_elf_create_dynamic_sections (dynobj, info))
-    return FALSE;
-
-  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
-  if (!bfd_link_pic (info))
-    htab->srelbss = bfd_get_linker_section (dynobj, ".rela.bss");
-
-  if (!htab->elf.splt || !htab->elf.srelplt || !htab->sdynbss
-      || (!bfd_link_pic (info) && !htab->srelbss))
-    abort ();
-
-  return TRUE;
+  return _bfd_elf_create_dynamic_sections (dynobj, info);
 }
 
 /* Copy the extra info we tack onto an elf_link_hash_entry.  */
@@ -1508,8 +1487,9 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
-	  (*_bfd_error_handler) (_("%B: bad symbol index: %d"),
-				 abfd, r_symndx);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+			      abfd, r_symndx);
 	  return FALSE;
 	}
 
@@ -1623,7 +1603,8 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  tls_type = old_tls_type;
 		else
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: `%s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
 		    return FALSE;
@@ -2081,7 +2062,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   struct tilepro_elf_link_hash_table *htab;
   struct tilepro_elf_link_hash_entry * eh;
   struct tilepro_elf_dyn_relocs *p;
-  asection *s;
+  asection *s, *srel;
 
   htab = tilepro_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
@@ -2183,13 +2164,23 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      to copy the initial value out of the dynamic object and into the
      runtime process image.  We need to remember the offset into the
      .rel.bss section we are going to use.  */
+  if ((h->root.u.def.section->flags & SEC_READONLY) != 0)
+    {
+      s = htab->elf.sdynrelro;
+      srel = htab->elf.sreldynrelro;
+    }
+  else
+    {
+      s = htab->elf.sdynbss;
+      srel = htab->elf.srelbss;
+    }
   if ((h->root.u.def.section->flags & SEC_ALLOC) != 0 && h->size != 0)
     {
-      htab->srelbss->size += TILEPRO_ELF_RELA_BYTES;
+      srel->size += TILEPRO_ELF_RELA_BYTES;
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (info, h, htab->sdynbss);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2584,7 +2575,8 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
       if (s == htab->elf.splt
 	  || s == htab->elf.sgot
 	  || s == htab->elf.sgotplt
-	  || s == htab->sdynbss)
+	  || s == htab->elf.sdynbss
+	  || s == htab->elf.sdynrelro)
 	{
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
@@ -2871,7 +2863,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       if ((unsigned int)r_type >= NELEMS(tilepro_elf_howto_table))
 	{
           /* Not clear if we need to check here, but just be paranoid. */
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: unrecognized relocation (0x%x) in section `%A'"),
 	     input_bfd, r_type, input_section);
 	  bfd_set_error (bfd_error_bad_value);
@@ -3320,7 +3313,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			  if (indx == 0)
 			    {
 			      BFD_FAIL ();
-			      (*_bfd_error_handler)
+			      _bfd_error_handler
 				(_("%B: probably compiled without -fPIC?"),
 				 input_bfd);
 			      bfd_set_error (bfd_error_bad_value);
@@ -3571,7 +3564,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	       && h->def_dynamic)
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
-	(*_bfd_error_handler)
+	_bfd_error_handler
+	  /* xgettext:c-format */
 	  (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 	   input_bfd,
 	   input_section,
@@ -3814,14 +3808,15 @@ tilepro_elf_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbols needs a copy reloc.  Set it up.  */
       BFD_ASSERT (h->dynindx != -1);
 
-      s = htab->srelbss;
-      BFD_ASSERT (s != NULL);
-
       rela.r_offset = (h->root.u.def.value
 		       + h->root.u.def.section->output_section->vma
 		       + h->root.u.def.section->output_offset);
       rela.r_info = ELF32_R_INFO (h->dynindx, R_TILEPRO_COPY);
       rela.r_addend = 0;
+      if (h->root.u.def.section == htab->elf.sdynrelro)
+	s = htab->elf.sreldynrelro;
+      else
+	s = htab->elf.srelbss;
       tilepro_elf_append_rela_32 (output_bfd, s, &rela);
     }
 
@@ -3921,7 +3916,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
     {
       if (bfd_is_abs_section (htab->elf.sgotplt->output_section))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("discarded output section: `%A'"), htab->elf.sgotplt);
 	  return FALSE;
 	}
@@ -4062,6 +4057,7 @@ tilepro_additional_program_headers (bfd *abfd,
 #define elf_backend_plt_alignment 6
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size GOT_ENTRY_SIZE
+#define elf_backend_want_dynrelro 1
 #define elf_backend_rela_normal 1
 #define elf_backend_default_execstack 0
 

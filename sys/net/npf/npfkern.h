@@ -70,6 +70,7 @@ void	npf_gc(npf_t *);
 void	npf_destroy(npf_t *);
 
 void	npf_thread_register(npf_t *);
+void	npf_thread_unregister(npf_t *);
 int	npf_packet_handler(npf_t *, struct mbuf **, struct ifnet *, int);
 void	npf_ifmap_attach(npf_t *, struct ifnet *);
 void	npf_ifmap_detach(npf_t *, struct ifnet *);

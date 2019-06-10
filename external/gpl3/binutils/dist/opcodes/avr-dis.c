@@ -212,7 +212,8 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 
     case 'n':
       sprintf (buf, "??");
-      fprintf (stderr, _("Internal disassembler error"));
+      /* xgettext:c-format */
+      opcodes_error_handler (_("internal disassembler error"));
       ok = 0;
       break;
 
@@ -265,7 +266,8 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
 
     default:
       sprintf (buf, "??");
-      fprintf (stderr, _("unknown constraint `%c'"), constraint);
+      /* xgettext:c-format */
+      opcodes_error_handler (_("unknown constraint `%c'"), constraint);
       ok = 0;
     }
 

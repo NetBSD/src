@@ -1,6 +1,6 @@
 /* Python interface to breakpoints
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,13 +25,14 @@
 #include "breakpoint.h"
 #include "gdbcmd.h"
 #include "gdbthread.h"
-#include "observer.h"
+#include "observable.h"
 #include "cli/cli-script.h"
 #include "ada-lang.h"
 #include "arch-utils.h"
 #include "language.h"
 #include "location.h"
 #include "py-event.h"
+#include "linespec.h"
 
 /* Number of live breakpoints.  */
 static int bppy_live;
@@ -390,10 +391,15 @@ bppy_get_location (PyObject *self, void *closure)
   if (obj->bp->type != bp_breakpoint)
     Py_RETURN_NONE;
 
-  str = event_location_to_string (obj->bp->location.get ());
+  struct event_location *location = obj->bp->location.get ();
+  /* "catch throw" makes a breakpoint of type bp_breakpoint that does
+     not have a location.  */
+  if (location == nullptr)
+    Py_RETURN_NONE;
+  str = event_location_to_string (location);
   if (! str)
     str = "";
-  return host_string_to_python_string (str);
+  return host_string_to_python_string (str).release ();
 }
 
 /* Python function to get the breakpoint expression.  */
@@ -415,7 +421,7 @@ bppy_get_expression (PyObject *self, void *closure)
   if (! str)
     str = "";
 
-  return host_string_to_python_string (str);
+  return host_string_to_python_string (str).release ();
 }
 
 /* Python function to get the condition expression of a breakpoint.  */
@@ -431,7 +437,7 @@ bppy_get_condition (PyObject *self, void *closure)
   if (! str)
     Py_RETURN_NONE;
 
-  return host_string_to_python_string (str);
+  return host_string_to_python_string (str).release ();
 }
 
 /* Returns 0 on success.  Returns -1 on error, with a python exception set.
@@ -484,8 +490,6 @@ bppy_get_commands (PyObject *self, void *closure)
 {
   gdbpy_breakpoint_object *self_bp = (gdbpy_breakpoint_object *) self;
   struct breakpoint *bp = self_bp->bp;
-  long length;
-  PyObject *result;
 
   BPPY_REQUIRE_VALID (self_bp);
 
@@ -508,7 +512,49 @@ bppy_get_commands (PyObject *self, void *closure)
   END_CATCH
 
   current_uiout->redirect (NULL);
-  return host_string_to_python_string (stb.c_str ());
+  return host_string_to_python_string (stb.c_str ()).release ();
+}
+
+/* Set the commands attached to a breakpoint.  Returns 0 on success.
+   Returns -1 on error, with a python exception set.  */
+static int
+bppy_set_commands (PyObject *self, PyObject *newvalue, void *closure)
+{
+  gdbpy_breakpoint_object *self_bp = (gdbpy_breakpoint_object *) self;
+  struct gdb_exception except = exception_none;
+
+  BPPY_SET_REQUIRE_VALID (self_bp);
+
+  gdb::unique_xmalloc_ptr<char> commands
+    (python_string_to_host_string (newvalue));
+  if (commands == nullptr)
+    return -1;
+
+  TRY
+    {
+      bool first = true;
+      char *save_ptr = nullptr;
+      auto reader
+	= [&] ()
+	  {
+	    const char *result = strtok_r (first ? commands.get () : nullptr,
+					   "\n", &save_ptr);
+	    first = false;
+	    return result;
+	  };
+
+      counted_command_line lines = read_command_lines_1 (reader, 1, nullptr);
+      breakpoint_set_commands (self_bp->bp, std::move (lines));
+    }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
+  GDB_PY_SET_HANDLE_EXCEPTION (except);
+
+  return 0;
 }
 
 /* Python function to get the breakpoint type.  */
@@ -633,24 +679,105 @@ bppy_get_ignore_count (PyObject *self, void *closure)
   return PyInt_FromLong (self_bp->bp->ignore_count);
 }
 
+/* Internal function to validate the Python parameters/keywords
+   provided to bppy_init.  */
+
+static int
+bppy_init_validate_args (const char *spec, char *source,
+			 char *function, char *label,
+			 char *line, enum bptype type)
+{
+  /* If spec is defined, ensure that none of the explicit location
+     keywords are also defined.  */
+  if (spec != NULL)
+    {
+      if (source != NULL || function != NULL || label != NULL || line != NULL)
+	{
+	  PyErr_SetString (PyExc_RuntimeError,
+			   _("Breakpoints specified with spec cannot "
+			     "have source, function, label or line defined."));
+	  return -1;
+	}
+    }
+  else
+    {
+      /* If spec isn't defined, ensure that the user is not trying to
+	 define a watchpoint with an explicit location.  */
+      if (type == bp_watchpoint)
+	{
+	  PyErr_SetString (PyExc_RuntimeError,
+			   _("Watchpoints cannot be set by explicit "
+			     "location parameters."));
+	  return -1;
+	}
+      else
+	{
+	  /* Otherwise, ensure some explicit locations are defined.  */
+	  if (source == NULL && function == NULL && label == NULL
+	      && line == NULL)
+	    {
+	      PyErr_SetString (PyExc_RuntimeError,
+			       _("Neither spec nor explicit location set."));
+	      return -1;
+	    }
+	  /* Finally, if source is specified, ensure that line, label
+	     or function are specified too.  */
+	  if (source != NULL && function == NULL && label == NULL
+	      && line == NULL)
+	    {
+	      PyErr_SetString (PyExc_RuntimeError,
+			       _("Specifying a source must also include a "
+				 "line, label or function."));
+	      return -1;
+	    }
+	}
+    }
+  return 1;
+}
+
 /* Python function to create a new breakpoint.  */
 static int
 bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
 {
   static const char *keywords[] = { "spec", "type", "wp_class", "internal",
-				    "temporary", NULL };
-  const char *spec;
-  int type = bp_breakpoint;
+				    "temporary","source", "function",
+				    "label", "line", "qualified", NULL };
+  const char *spec = NULL;
+  enum bptype type = bp_breakpoint;
   int access_type = hw_write;
   PyObject *internal = NULL;
   PyObject *temporary = NULL;
+  PyObject *lineobj = NULL;;
   int internal_bp = 0;
   int temporary_bp = 0;
+  gdb::unique_xmalloc_ptr<char> line;
+  char *label = NULL;
+  char *source = NULL;
+  char *function = NULL;
+  PyObject * qualified = NULL;
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "s|iiOO", keywords,
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "|siiOOsssOO", keywords,
 					&spec, &type, &access_type,
-					&internal, &temporary))
+					&internal,
+					&temporary, &source,
+					&function, &label, &lineobj,
+					&qualified))
     return -1;
+
+
+  if (lineobj != NULL)
+    {
+      if (PyInt_Check (lineobj))
+	line.reset (xstrprintf ("%ld", PyInt_AsLong (lineobj)));
+      else if (PyString_Check (lineobj))
+	line = python_string_to_host_string (lineobj);
+      else
+	{
+	  PyErr_SetString (PyExc_RuntimeError,
+			   _("Line keyword should be an integer or a string. "));
+	  return -1;
+	}
+    }
 
   if (internal)
     {
@@ -666,22 +793,54 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
 	return -1;
     }
 
+  if (bppy_init_validate_args (spec, source, function, label, line.get (),
+			       type) == -1)
+    return -1;
+
   bppy_pending_object = (gdbpy_breakpoint_object *) self;
   bppy_pending_object->number = -1;
   bppy_pending_object->bp = NULL;
 
   TRY
     {
-      gdb::unique_xmalloc_ptr<char>
-	copy_holder (xstrdup (skip_spaces_const (spec)));
-      char *copy = copy_holder.get ();
-
       switch (type)
 	{
 	case bp_breakpoint:
 	  {
-	    event_location_up location
-	      = string_to_event_location_basic (&copy, current_language);
+	    event_location_up location;
+	    symbol_name_match_type func_name_match_type
+	      = (qualified != NULL && PyObject_IsTrue (qualified)
+		  ? symbol_name_match_type::FULL
+		  : symbol_name_match_type::WILD);
+
+	    if (spec != NULL)
+	      {
+		gdb::unique_xmalloc_ptr<char>
+		  copy_holder (xstrdup (skip_spaces (spec)));
+		const char *copy = copy_holder.get ();
+
+		location  = string_to_event_location (&copy,
+						      current_language,
+						      func_name_match_type);
+	      }
+	    else
+	      {
+		struct explicit_location explicit_loc;
+
+		initialize_explicit_location (&explicit_loc);
+		explicit_loc.source_filename = source;
+		explicit_loc.function_name = function;
+		explicit_loc.label_name = label;
+
+		if (line != NULL)
+		  explicit_loc.line_offset =
+		    linespec_parse_line_offset (line.get ());
+
+		explicit_loc.func_name_match_type = func_name_match_type;
+
+		location = new_explicit_location (&explicit_loc);
+	      }
+
 	    create_breakpoint (python_gdbarch,
 			       location.get (), NULL, -1, NULL,
 			       0,
@@ -692,8 +851,12 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
 			       0, 1, internal_bp, 0);
 	    break;
 	  }
-        case bp_watchpoint:
+	case bp_watchpoint:
 	  {
+	    gdb::unique_xmalloc_ptr<char>
+	      copy_holder (xstrdup (skip_spaces (spec)));
+	    char *copy = copy_holder.get ();
+
 	    if (access_type == hw_write)
 	      watch_command_wrapper (copy, 0, internal_bp);
 	    else if (access_type == hw_access)
@@ -711,9 +874,7 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
   CATCH (except, RETURN_MASK_ALL)
     {
       bppy_pending_object = NULL;
-      PyErr_Format (except.reason == RETURN_QUIT
-		    ? PyExc_KeyboardInterrupt : PyExc_RuntimeError,
-		    "%s", except.message);
+      gdbpy_convert_exception (except);
       return -1;
     }
   END_CATCH
@@ -935,7 +1096,6 @@ gdbpy_breakpoint_modified (struct breakpoint *b)
   int num = b->number;
   PyGILState_STATE state;
   struct breakpoint *bp = NULL;
-  gdbpy_breakpoint_object *bp_obj;
 
   state = PyGILState_Ensure ();
   bp = get_breakpoint (num);
@@ -971,9 +1131,9 @@ gdbpy_initialize_breakpoints (void)
 			      (PyObject *) &breakpoint_object_type) < 0)
     return -1;
 
-  observer_attach_breakpoint_created (gdbpy_breakpoint_created);
-  observer_attach_breakpoint_deleted (gdbpy_breakpoint_deleted);
-  observer_attach_breakpoint_modified (gdbpy_breakpoint_modified);
+  gdb::observers::breakpoint_created.attach (gdbpy_breakpoint_created);
+  gdb::observers::breakpoint_deleted.attach (gdbpy_breakpoint_deleted);
+  gdb::observers::breakpoint_modified.attach (gdbpy_breakpoint_modified);
 
   /* Add breakpoint types constants.  */
   for (i = 0; pybp_codes[i].name; ++i)
@@ -1026,20 +1186,17 @@ local_setattro (PyObject *self, PyObject *name, PyObject *v)
 	extlang = get_breakpoint_cond_ext_lang (obj->bp, EXT_LANG_PYTHON);
       if (extlang != NULL)
 	{
-	  char *error_text;
-
-	  error_text
-	    = xstrprintf (_("Only one stop condition allowed.  There is"
-			    " currently a %s stop condition defined for"
-			    " this breakpoint."),
-			  ext_lang_capitalized_name (extlang));
-	  PyErr_SetString (PyExc_RuntimeError, error_text);
-	  xfree (error_text);
+	  std::string error_text
+	    = string_printf (_("Only one stop condition allowed.  There is"
+			       " currently a %s stop condition defined for"
+			       " this breakpoint."),
+			     ext_lang_capitalized_name (extlang));
+	  PyErr_SetString (PyExc_RuntimeError, error_text.c_str ());
 	  return -1;
 	}
     }
 
-  return PyObject_GenericSetAttr ((PyObject *)self, name, v);
+  return PyObject_GenericSetAttr (self, name, v);
 }
 
 static gdb_PyGetSetDef breakpoint_object_getset[] = {
@@ -1073,7 +1230,7 @@ when setting this property.", NULL },
   { "condition", bppy_get_condition, bppy_set_condition,
     "Condition of the breakpoint, as specified by the user,\
 or None if no condition set."},
-  { "commands", bppy_get_commands, NULL,
+  { "commands", bppy_get_commands, bppy_set_commands,
     "Commands of the breakpoint, as specified by the user."},
   { "type", bppy_get_type, NULL,
     "Type of breakpoint."},

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.10 2015/07/28 01:25:00 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10 2015/07/28 01:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $");
 
 #include <sys/types.h>
 
@@ -112,7 +112,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		 */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		(void)ttm_bo_wait_unreserved(bo);
-		return -ERESTART;
+		return ERESTART;
 	}
 
 	/* drm prime buffers are not mappable.  XXX Catch this earlier?  */
@@ -211,22 +211,16 @@ out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 static int
 ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi)
 {
-	struct ttm_bo_device *const bdev = bo->bdev;
-	int ret = 0;
 
-	spin_lock(&bdev->fence_lock);
 	if (__predict_true(!test_bit(TTM_BO_PRIV_FLAG_MOVING,
 		    &bo->priv_flags)))
-		goto out;
+		return 0;
 	if (ttm_bo_wait(bo, false, false, true) == 0)
-		goto out;
+		return 0;
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 	(void)ttm_bo_wait(bo, false, true, false);
-	ret = -ERESTART;
-
-out:	spin_unlock(&bdev->fence_lock);
-	return ret;
+	return -ERESTART;
 }
 
 int

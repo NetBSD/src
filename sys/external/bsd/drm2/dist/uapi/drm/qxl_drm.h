@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_drm.h,v 1.1.1.1.32.1 2019/06/10 22:08:30 christos Exp $	*/
+
 /*
  * Copyright 2013 Red Hat
  * All Rights Reserved.

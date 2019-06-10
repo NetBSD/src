@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.16 2015/07/07 21:43:46 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.16.18.1 2019/06/10 22:05:55 christos Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,8 @@
 #include <sys/kcpuset.h>
 #endif
 
+typedef uint32_t	intr_handle_t;		/* for ACPI */
+
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
@@ -73,15 +75,22 @@ uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	    uint32_t pending);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
-	    int (*func)(void *), void *arg);
+	    int (*func)(void *), void *arg, const char *);
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
+#ifdef MULTIPROCESSOR
+void	pic_distribute_source(struct intrsource *is, const kcpuset_t *,
+	    kcpuset_t *);
+#endif
 void	pic_do_pending_ints(register_t psw, int newipl, void *frame);
 void	pic_dispatch(struct intrsource *is, void *frame);
 
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg);
+void	*intr_establish_xname(int irq, int ipl, int type, int (*func)(void *),
+	    void *arg, const char *xname);
 void	intr_disestablish(void *);
+const char *intr_string(intr_handle_t, char *, size_t);
 #ifdef MULTIPROCESSOR
 void	intr_cpu_init(struct cpu_info *);
 void	intr_ipi_send(const kcpuset_t *, u_long ipi);
@@ -110,10 +119,11 @@ struct intrsource {
 	struct pic_softc *is_pic;		/* owning PIC */
 	uint8_t is_type;			/* IST_xxx */
 	uint8_t is_ipl;				/* IPL_xxx */
-	uint8_t is_irq;				/* local to pic */
+	uint32_t is_irq;			/* local to pic */
 	uint8_t is_iplidx;
 	bool is_mpsafe;
 	char is_source[16];
+	char *is_xname;
 };
 
 struct pic_percpu {
@@ -138,8 +148,8 @@ struct pic_softc {
 	size_t pic_maxsources;
 	percpu_t *pic_percpu;
 	uint8_t pic_id;
-	int16_t pic_irqbase;
-	char pic_name[14];
+	int pic_irqbase;
+	char pic_name[16];
 };
 
 struct pic_ops {
@@ -156,6 +166,8 @@ struct pic_ops {
 #ifdef MULTIPROCESSOR
 	void (*pic_cpu_init)(struct pic_softc *, struct cpu_info *);
 	void (*pic_ipi_send)(struct pic_softc *, const kcpuset_t *, u_long);
+	int (*pic_set_affinity)(struct pic_softc *, size_t, const kcpuset_t *);
+	void (*pic_get_affinity)(struct pic_softc *, size_t, kcpuset_t *);
 #endif
 };
 

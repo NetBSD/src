@@ -1,6 +1,6 @@
 // Custom pointer adapter and sample storage policies
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -437,6 +437,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _CXX_POINTER_ARITH_OPERATOR_SET(unsigned int);
       _CXX_POINTER_ARITH_OPERATOR_SET(long);
       _CXX_POINTER_ARITH_OPERATOR_SET(unsigned long);
+#ifdef _GLIBCXX_USE_LONG_LONG
+      _CXX_POINTER_ARITH_OPERATOR_SET(long long);
+      _CXX_POINTER_ARITH_OPERATOR_SET(unsigned long long);
+#endif
 
       // Mathematical Manipulators
       inline _Pointer_adapter& 

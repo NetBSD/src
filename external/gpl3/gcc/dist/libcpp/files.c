@@ -1,5 +1,5 @@
 /* Part of CPP library.  File handling.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -171,14 +171,18 @@ static bool open_file (_cpp_file *file);
 static bool pch_open_file (cpp_reader *pfile, _cpp_file *file,
 			   bool *invalid_pch);
 static bool find_file_in_dir (cpp_reader *pfile, _cpp_file *file,
-			      bool *invalid_pch);
-static bool read_file_guts (cpp_reader *pfile, _cpp_file *file);
-static bool read_file (cpp_reader *pfile, _cpp_file *file);
-static bool should_stack_file (cpp_reader *, _cpp_file *file, bool import);
+			      bool *invalid_pch, source_location loc);
+static bool read_file_guts (cpp_reader *pfile, _cpp_file *file,
+			    source_location loc);
+static bool read_file (cpp_reader *pfile, _cpp_file *file,
+		       source_location loc);
+static bool should_stack_file (cpp_reader *, _cpp_file *file, bool import,
+			       source_location loc);
 static struct cpp_dir *search_path_head (cpp_reader *, const char *fname,
 				 int angle_brackets, enum include_type);
 static const char *dir_name_of_file (_cpp_file *file);
-static void open_file_failed (cpp_reader *pfile, _cpp_file *file, int);
+static void open_file_failed (cpp_reader *pfile, _cpp_file *file, int,
+			      source_location);
 static struct cpp_file_hash_entry *search_cache (struct cpp_file_hash_entry *head,
 					     const cpp_dir *start_dir);
 static _cpp_file *make_cpp_file (cpp_reader *, cpp_dir *, const char *fname);
@@ -380,10 +384,12 @@ maybe_shorter_path (const char * file)
 /* Try to open the path FILE->name appended to FILE->dir.  This is
    where remap and PCH intercept the file lookup process.  Return true
    if the file was found, whether or not the open was successful.
-   Set *INVALID_PCH to true if a PCH file is found but wasn't valid.  */
+   Set *INVALID_PCH to true if a PCH file is found but wasn't valid.
+   Use LOC when emitting any diagnostics.  */
 
 static bool
-find_file_in_dir (cpp_reader *pfile, _cpp_file *file, bool *invalid_pch)
+find_file_in_dir (cpp_reader *pfile, _cpp_file *file, bool *invalid_pch,
+		  source_location loc)
 {
   char *path;
 
@@ -436,7 +442,7 @@ find_file_in_dir (cpp_reader *pfile, _cpp_file *file, bool *invalid_pch)
 
       if (file->err_no != ENOENT)
 	{
-	  open_file_failed (pfile, file, 0);
+	  open_file_failed (pfile, file, 0, loc);
 	  return true;
 	}
 
@@ -507,10 +513,13 @@ _cpp_find_failed (_cpp_file *file)
    If IMPLICIT_PREINCLUDE then it is OK for the file to be missing.
    If present, it is OK for a precompiled header to be included after
    it.
-*/
+
+   Use LOC as the location for any errors.  */
+
 _cpp_file *
 _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
-		bool fake, int angle_brackets, bool implicit_preinclude)
+		bool fake, int angle_brackets, bool implicit_preinclude,
+		source_location loc)
 {
   struct cpp_file_hash_entry *entry;
   void **hash_slot;
@@ -522,7 +531,7 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
 
   /* Ensure we get no confusion between cached files and directories.  */
   if (start_dir == NULL)
-    cpp_error (pfile, CPP_DL_ICE, "NULL directory in find_file");
+    cpp_error_at (pfile, CPP_DL_ICE, loc, "NULL directory in find_file");
 
   hash_slot
     = htab_find_slot_with_hash (pfile->file_hash, fname,
@@ -542,7 +551,7 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
   /* Try each path in the include chain.  */
   for (; !fake ;)
     {
-      if (find_file_in_dir (pfile, file, &invalid_pch))
+      if (find_file_in_dir (pfile, file, &invalid_pch, loc))
 	break;
 
       file->dir = file->dir->next;
@@ -591,7 +600,7 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
 	      return NULL;
 	    }
 	  else
-	    open_file_failed (pfile, file, angle_brackets);
+	    open_file_failed (pfile, file, angle_brackets, loc);
 	  break;
 	}
 
@@ -670,9 +679,11 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
    except for plain files and block devices, since there is no
    reliable portable way of doing this.
 
+   Use LOC for any diagnostics.
+
    FIXME: Flush file cache and try again if we run out of memory.  */
 static bool
-read_file_guts (cpp_reader *pfile, _cpp_file *file)
+read_file_guts (cpp_reader *pfile, _cpp_file *file, source_location loc)
 {
   ssize_t size, total, count;
   uchar *buf;
@@ -680,7 +691,8 @@ read_file_guts (cpp_reader *pfile, _cpp_file *file)
 
   if (S_ISBLK (file->st.st_mode))
     {
-      cpp_error (pfile, CPP_DL_ERROR, "%s is a block device", file->path);
+      cpp_error_at (pfile, CPP_DL_ERROR, loc,
+		    "%s is a block device", file->path);
       return false;
     }
 
@@ -697,7 +709,8 @@ read_file_guts (cpp_reader *pfile, _cpp_file *file)
 	 does not bite us.  */
       if (file->st.st_size > INTTYPE_MAXIMUM (ssize_t))
 	{
-	  cpp_error (pfile, CPP_DL_ERROR, "%s is too large", file->path);
+	  cpp_error_at (pfile, CPP_DL_ERROR, loc,
+			"%s is too large", file->path);
 	  return false;
 	}
 
@@ -730,13 +743,13 @@ read_file_guts (cpp_reader *pfile, _cpp_file *file)
 
   if (count < 0)
     {
-      cpp_errno_filename (pfile, CPP_DL_ERROR, file->path);
+      cpp_errno_filename (pfile, CPP_DL_ERROR, file->path, loc);
       free (buf);
       return false;
     }
 
   if (regular && total != size && STAT_SIZE_RELIABLE (file->st))
-    cpp_error (pfile, CPP_DL_WARNING,
+    cpp_error_at (pfile, CPP_DL_WARNING, loc,
 	       "%s is shorter than expected", file->path);
 
   file->buffer = _cpp_convert_input (pfile,
@@ -751,9 +764,10 @@ read_file_guts (cpp_reader *pfile, _cpp_file *file)
 
 /* Convenience wrapper around read_file_guts that opens the file if
    necessary and closes the file descriptor after reading.  FILE must
-   have been passed through find_file() at some stage.  */
+   have been passed through find_file() at some stage.  Use LOC for
+   any diagnostics.  */
 static bool
-read_file (cpp_reader *pfile, _cpp_file *file)
+read_file (cpp_reader *pfile, _cpp_file *file, source_location loc)
 {
   /* If we already have its contents in memory, succeed immediately.  */
   if (file->buffer_valid)
@@ -765,11 +779,11 @@ read_file (cpp_reader *pfile, _cpp_file *file)
 
   if (file->fd == -1 && !open_file (file))
     {
-      open_file_failed (pfile, file, 0);
+      open_file_failed (pfile, file, 0, loc);
       return false;
     }
 
-  file->dont_read = !read_file_guts (pfile, file);
+  file->dont_read = !read_file_guts (pfile, file, loc);
   close (file->fd);
   file->fd = -1;
 
@@ -777,9 +791,11 @@ read_file (cpp_reader *pfile, _cpp_file *file)
 }
 
 /* Returns TRUE if FILE's contents have been successfully placed in
-   FILE->buffer and the file should be stacked, otherwise false.  */
+   FILE->buffer and the file should be stacked, otherwise false.
+   Use LOC for any diagnostics.  */
 static bool
-should_stack_file (cpp_reader *pfile, _cpp_file *file, bool import)
+should_stack_file (cpp_reader *pfile, _cpp_file *file, bool import,
+		   source_location loc)
 {
   _cpp_file *f;
 
@@ -814,7 +830,7 @@ should_stack_file (cpp_reader *pfile, _cpp_file *file, bool import)
       return false;
     }
 
-  if (!read_file (pfile, file))
+  if (!read_file (pfile, file, loc))
     return false;
 
   /* Check the file against the PCH file.  This is done before
@@ -861,7 +877,7 @@ should_stack_file (cpp_reader *pfile, _cpp_file *file, bool import)
 	    /* The file is not stacked anymore.  We can reuse it.  */
 	    ref_file = f;
 
-	  same_file_p = read_file (pfile, ref_file)
+	  same_file_p = read_file (pfile, ref_file, loc)
 			/* Size might have changed in read_file().  */
 			&& ref_file->st.st_size == file->st.st_size
 			&& !memcmp (ref_file->buffer,
@@ -885,14 +901,15 @@ should_stack_file (cpp_reader *pfile, _cpp_file *file, bool import)
 /* Place the file referenced by FILE into a new buffer on the buffer
    stack if possible.  IMPORT is true if this stacking attempt is
    because of a #import directive.  Returns true if a buffer is
-   stacked.  */
+   stacked.  Use LOC for any diagnostics.  */
 bool
-_cpp_stack_file (cpp_reader *pfile, _cpp_file *file, bool import)
+_cpp_stack_file (cpp_reader *pfile, _cpp_file *file, bool import,
+		 source_location loc)
 {
   cpp_buffer *buffer;
   int sysp;
 
-  if (!should_stack_file (pfile, file, import))
+  if (!should_stack_file (pfile, file, import, loc))
       return false;
 
   if (pfile->buffer == NULL || file->dir == NULL)
@@ -1002,7 +1019,7 @@ dir_name_of_file (_cpp_file *file)
    Returns true if a buffer was stacked.  */
 bool
 _cpp_stack_include (cpp_reader *pfile, const char *fname, int angle_brackets,
-		    enum include_type type)
+		    enum include_type type, source_location loc)
 {
   struct cpp_dir *dir;
   _cpp_file *file;
@@ -1025,7 +1042,7 @@ _cpp_stack_include (cpp_reader *pfile, const char *fname, int angle_brackets,
     return false;
 
   file = _cpp_find_file (pfile, fname, dir, false, angle_brackets,
-			 type == IT_DEFAULT);
+			 type == IT_DEFAULT, loc);
   if (type == IT_DEFAULT && file == NULL)
     return false;
 
@@ -1041,7 +1058,7 @@ _cpp_stack_include (cpp_reader *pfile, const char *fname, int angle_brackets,
       && type != IT_CMDLINE && type != IT_DEFAULT)
     pfile->line_table->highest_location--;
 
-  stacked = _cpp_stack_file (pfile, file, type == IT_IMPORT);
+  stacked = _cpp_stack_file (pfile, file, type == IT_IMPORT, loc);
 
   if (!stacked)
     /* _cpp_stack_file didn't stack the file, so let's rollback the
@@ -1053,7 +1070,8 @@ _cpp_stack_include (cpp_reader *pfile, const char *fname, int angle_brackets,
 
 /* Could not open FILE.  The complication is dependency output.  */
 static void
-open_file_failed (cpp_reader *pfile, _cpp_file *file, int angle_brackets)
+open_file_failed (cpp_reader *pfile, _cpp_file *file, int angle_brackets,
+		  source_location loc)
 {
   int sysp = pfile->line_table->highest_line > 1 && pfile->buffer ? pfile->buffer->sysp : 0;
   bool print_dep = CPP_OPTION (pfile, deps.style) > (angle_brackets || !!sysp);
@@ -1069,7 +1087,8 @@ open_file_failed (cpp_reader *pfile, _cpp_file *file, int angle_brackets)
          being used, we must also flag an error.  */
       if (CPP_OPTION (pfile, deps.need_preprocessor_output))
 	cpp_errno_filename (pfile, CPP_DL_FATAL,
-			    file->path ? file->path : file->name);
+			    file->path ? file->path : file->name,
+			    loc);
     }
   else
     {
@@ -1084,10 +1103,12 @@ open_file_failed (cpp_reader *pfile, _cpp_file *file, int angle_brackets)
           || print_dep
           || CPP_OPTION (pfile, deps.need_preprocessor_output))
 	cpp_errno_filename (pfile, CPP_DL_FATAL,
-			    file->path ? file->path : file->name);
+			    file->path ? file->path : file->name,
+			    loc);
       else
 	cpp_errno_filename (pfile, CPP_DL_WARNING,
-			    file->path ? file->path : file->name);
+			    file->path ? file->path : file->name,
+			    loc);
     }
 }
 
@@ -1123,6 +1144,7 @@ destroy_cpp_file (_cpp_file *file)
 {
   free ((void *) file->buffer_start);
   free ((void *) file->name);
+  free ((void *) file->path);
   free (file);
 }
 
@@ -1335,7 +1357,7 @@ cpp_clear_file_cache (cpp_reader *pfile)
 void
 _cpp_fake_include (cpp_reader *pfile, const char *fname)
 {
-  _cpp_find_file (pfile, fname, pfile->buffer->file->dir, true, 0, false);
+  _cpp_find_file (pfile, fname, pfile->buffer->file->dir, true, 0, false, 0);
 }
 
 /* Not everyone who wants to set system-header-ness on a buffer can
@@ -1453,7 +1475,7 @@ _cpp_compare_file_date (cpp_reader *pfile, const char *fname,
   if (!dir)
     return -1;
 
-  file = _cpp_find_file (pfile, fname, dir, false, angle_brackets, false);
+  file = _cpp_find_file (pfile, fname, dir, false, angle_brackets, false, 0);
   if (file->err_no)
     return -1;
 
@@ -1471,7 +1493,7 @@ _cpp_compare_file_date (cpp_reader *pfile, const char *fname,
 bool
 cpp_push_include (cpp_reader *pfile, const char *fname)
 {
-  return _cpp_stack_include (pfile, fname, false, IT_CMDLINE);
+  return _cpp_stack_include (pfile, fname, false, IT_CMDLINE, 0);
 }
 
 /* Pushes the given file, implicitly included at the start of a
@@ -1480,7 +1502,7 @@ cpp_push_include (cpp_reader *pfile, const char *fname)
 bool
 cpp_push_default_include (cpp_reader *pfile, const char *fname)
 {
-  return _cpp_stack_include (pfile, fname, true, IT_DEFAULT);
+  return _cpp_stack_include (pfile, fname, true, IT_DEFAULT, 0);
 }
 
 /* Do appropriate cleanup when a file INC's buffer is popped off the
@@ -1663,7 +1685,7 @@ static char *
 remap_filename (cpp_reader *pfile, _cpp_file *file)
 {
   const char *fname, *p;
-  char *new_dir;
+  char *new_dir, *p3;
   cpp_dir *dir;
   size_t index, len;
 
@@ -1692,9 +1714,15 @@ remap_filename (cpp_reader *pfile, _cpp_file *file)
 	return NULL;
 
       len = dir->len + (p - fname + 1);
-      new_dir = XNEWVEC (char, len + 1);
+      new_dir = XNEWVEC (char, len + 2);
+      p3 = new_dir + dir->len;
       memcpy (new_dir, dir->name, dir->len);
-      memcpy (new_dir + dir->len, fname, p - fname + 1);
+      if (dir->len && !IS_DIR_SEPARATOR (dir->name[dir->len - 1]))
+	{
+	  *p3++ = '/';
+	  len++;
+	}
+      memcpy (p3, fname, p - fname + 1);
       new_dir[len] = '\0';
 
       dir = make_cpp_dir (pfile, new_dir, dir->sysp);
@@ -1865,7 +1893,7 @@ _cpp_save_file_entries (cpp_reader *pfile, FILE *fp)
 
 	  if (!open_file (f))
 	    {
-	      open_file_failed (pfile, f, 0);
+	      open_file_failed (pfile, f, 0, 0);
 	      free (result);
 	      return false;
 	    }
@@ -1992,7 +2020,7 @@ _cpp_has_header (cpp_reader *pfile, const char *fname, int angle_brackets,
   cpp_dir *start_dir = search_path_head (pfile, fname, angle_brackets, type);
   _cpp_file *file = _cpp_find_file (pfile, fname, start_dir,
 				    /*fake=*/false, angle_brackets,
-				    /*implicit_preinclude=*/false);
+				    /*implicit_preinclude=*/false, 0);
   return file->err_no != ENOENT;
 }
 

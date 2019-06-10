@@ -300,8 +300,8 @@ rx_reloc_name_lookup (bfd * abfd ATTRIBUTE_UNUSED, const char * r_name)
 
 /* Set the howto pointer for an RX ELF reloc.  */
 
-static void
-rx_info_to_howto_rela (bfd *		   abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+rx_info_to_howto_rela (bfd *		   abfd,
 		       arelent *	   cache_ptr,
 		       Elf_Internal_Rela * dst)
 {
@@ -311,10 +311,21 @@ rx_info_to_howto_rela (bfd *		   abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_RX_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid RX reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = rx_elf_howto_table + r_type;
+  if (cache_ptr->howto->name == NULL)
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+  return TRUE;
 }
 
 static bfd_vma
@@ -592,14 +603,14 @@ rx_elf_relocate_section
 	  if (table_end_cache <= entry_vma || entry_vma < table_start_cache)
 	    {
 	      /* xgettext:c-format */
-	      _bfd_error_handler (_("%B:%A: table entry %s outside table"),
+	      _bfd_error_handler (_("%pB:%pA: table entry %s outside table"),
 				  input_bfd, input_section,
 				  name);
 	    }
 	  else if ((int) (entry_vma - table_start_cache) % 4)
 	    {
 	      /* xgettext:c-format */
-	      _bfd_error_handler (_("%B:%A: table entry %s not word-aligned within table"),
+	      _bfd_error_handler (_("%pB:%pA: table entry %s not word-aligned within table"),
 				  input_bfd, input_section,
 				  name);
 	    }
@@ -660,13 +671,20 @@ rx_elf_relocate_section
 
       r = bfd_reloc_ok;
 
-#define RANGE(a,b) if (a > (long) relocation || (long) relocation > b) r = bfd_reloc_overflow
-#define ALIGN(m)   if (relocation & m) r = bfd_reloc_other;
-#define OP(i)      (contents[rel->r_offset + (i)])
+#define RANGE(a,b) \
+  if (a > (long) relocation || (long) relocation > b)		\
+    r = bfd_reloc_overflow
+#define ALIGN(m) \
+  if (relocation & m)						\
+    r = bfd_reloc_other
+#define OP(i) \
+  (contents[rel->r_offset + (i)])
 #define WARN_REDHAT(type) \
-      /* xgettext:c-format */ \
-      _bfd_error_handler (_("%B:%A: Warning: deprecated Red Hat reloc " type " detected against: %s."), \
-      input_bfd, input_section, name)
+  /* xgettext:c-format */					\
+  _bfd_error_handler						\
+    (_("%pB:%pA: warning: deprecated Red Hat reloc "		\
+       "%s detected against: %s"),				\
+     input_bfd, input_section, #type, name)
 
       /* Check for unsafe relocs in PID mode.  These are any relocs where
 	 an absolute address is being computed.  There are special cases
@@ -684,9 +702,12 @@ rx_elf_relocate_section
 	  && strcmp (name, "__romdatastart") != 0			\
 	  && !saw_subtract)						\
 	/* xgettext:c-format */						\
-	_bfd_error_handler (_("%B(%A): unsafe PID relocation %s at %#Lx (against %s in %s)"), \
+	_bfd_error_handler (_("%pB(%pA): unsafe PID relocation %s "	\
+			      "at %#" PRIx64 " (against %s in %s)"),	\
 			    input_bfd, input_section, howto->name,	\
-			    input_section->output_section->vma + input_section->output_offset + rel->r_offset, \
+			    (uint64_t) (input_section->output_section->vma \
+					+ input_section->output_offset	\
+					+ rel->r_offset),		\
 			    name, sec->name);				\
     }									\
   while (0)
@@ -1264,7 +1285,8 @@ rx_elf_relocate_section
 			       + sec->output_offset
 			       + rel->r_addend);
 	      else
-		_bfd_error_handler (_("Warning: RX_SYM reloc with an unknown symbol"));
+		_bfd_error_handler
+		  (_("warning: RX_SYM reloc with an unknown symbol"));
 	    }
 	  break;
 
@@ -1432,7 +1454,7 @@ rx_elf_relocate_section
 		 and emit a more helpful error message.  */
 	      if (r_type == R_RX_DIR24S_PCREL)
 		/* xgettext:c-format */
-		msg = _("%B(%A): error: call to undefined function '%s'");
+		msg = _("%pB(%pA): error: call to undefined function '%s'");
 	      else
 		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
@@ -1446,27 +1468,27 @@ rx_elf_relocate_section
 
 	    case bfd_reloc_other:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): warning: unaligned access to symbol '%s' in the small data area");
+	      msg = _("%pB(%pA): warning: unaligned access to symbol '%s' in the small data area");
 	      break;
 
 	    case bfd_reloc_outofrange:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: out of range error");
+	      msg = _("%pB(%pA): internal error: out of range error");
 	      break;
 
 	    case bfd_reloc_notsupported:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: unsupported relocation error");
+	      msg = _("%pB(%pA): internal error: unsupported relocation error");
 	      break;
 
 	    case bfd_reloc_dangerous:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: dangerous relocation");
+	      msg = _("%pB(%pA): internal error: dangerous relocation");
 	      break;
 
 	    default:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: unknown error");
+	      msg = _("%pB(%pA): internal error: unknown error");
 	      break;
 	    }
 
@@ -3143,8 +3165,8 @@ rx_elf_merge_private_bfd_data (bfd * ibfd, struct bfd_link_info *info)
 	    }
 	  else
 	    {
-	      _bfd_error_handler (_("There is a conflict merging the"
-				    " ELF header flags from %B"),
+	      _bfd_error_handler (_("there is a conflict merging the"
+				    " ELF header flags from %pB"),
 				  ibfd);
 	      _bfd_error_handler (_("  the input  file's flags: %s"),
 				  describe_flags (new_flags));
@@ -3755,7 +3777,7 @@ rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
 	     && h->type != bfd_link_hash_defweak))
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B:%A: table %s missing corresponding %s"),
+      _bfd_error_handler (_("%pB:%pA: table %s missing corresponding %s"),
 			  abfd, sec, name, buf);
       return TRUE;
     }
@@ -3763,7 +3785,7 @@ rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
   if (h->u.def.section != ent->u.def.section)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B:%A: %s and %s must be in the same input section"),
+      _bfd_error_handler (_("%pB:%pA: %s and %s must be in the same input section"),
 			  h->u.def.section->owner, h->u.def.section,
 			  name, buf);
       return TRUE;

@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X processors.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of simulators.
@@ -37,11 +37,6 @@ struct sim_state
 {
   sim_cpu *cpu[MAX_NR_PROCESSORS];
 
-  asymbol **symbol_table;
-  long number_of_symbols;
-#define STATE_SYMBOL_TABLE(sd)   ((sd)->symbol_table)
-#define STATE_NUM_SYMBOLS(sd) ((sd)->number_of_symbols)
-  
   /* Simulator specific members.  */
   sim_state_base base;
 };
@@ -53,8 +48,5 @@ struct sim_state
 #include "sim-types.h"
 #include "sim-engine.h"
 #include "sim-options.h"
-
-extern void msp430_sim_close (SIM_DESC sd, int quitting);
-#define SIM_CLOSE_HOOK(...) msp430_sim_close (__VA_ARGS__)
 
 #endif /* _MSP430_MAIN_SIM_H_ */

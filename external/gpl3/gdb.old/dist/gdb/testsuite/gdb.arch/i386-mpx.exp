@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>
 #
@@ -29,7 +29,7 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
 
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
      [list debug nowarnings additional_flags=${comp_flags}]] } {
     return -1
 }
@@ -71,30 +71,30 @@ gdb_breakpoint [ gdb_get_line_number "break here" ]
 gdb_continue_to_breakpoint "break here" ".*break here.*"
 
 set test_string ".*\\\{lbound = 0xa, ubound = 0x13\\\}.*"
-gdb_test "info register bnd0" ".*bnd0$test_string" "Pure bnd0 register"
+gdb_test "info register bnd0" ".*bnd0$test_string" "pure bnd0 register"
 
 set test_string ".*\\\{lbound = 0x14, ubound = 0x1d\\\}.*"
-gdb_test "info register bnd1" ".*bnd1$test_string" "Pure bnd1 register"
+gdb_test "info register bnd1" ".*bnd1$test_string" "pure bnd1 register"
 
 set test_string ".*\\\{lbound = 0x1e, ubound = 0x27\\\}.*"
-gdb_test "info register bnd2" ".*bnd2$test_string" "Pure bnd2 register"
+gdb_test "info register bnd2" ".*bnd2$test_string" "pure bnd2 register"
 
 set test_string ".*\\\{lbound = 0x28, ubound = 0x31\\\}.*"
-gdb_test "info register bnd3" ".*bnd3$test_string" "Pure bnd3 register"
+gdb_test "info register bnd3" ".*bnd3$test_string" "pure bnd3 register"
 
 # Read value from registers bndrs.
 
 set test_string ".*\\\{lbound = 0xa, ubound_raw = 0x\[f\]+ec\\\}.*"
-gdb_test "info register bnd0raw" ".*bnd0$test_string" "Pure bnd0r register"
+gdb_test "info register bnd0raw" ".*bnd0$test_string" "pure bnd0r register"
 
 set test_string ".*\\\{lbound = 0x14, ubound_raw = 0x\[f\]+e2\\\}.*"
-gdb_test "info register bnd1raw" ".*bnd1$test_string" "Pure bnd1r register"
+gdb_test "info register bnd1raw" ".*bnd1$test_string" "pure bnd1r register"
 
 set test_string ".*\\\{lbound = 0x1e, ubound_raw = 0x\[f\]+d8\\\}.*"
-gdb_test "info register bnd2raw" ".*bnd2$test_string" "Pure bnd2r register"
+gdb_test "info register bnd2raw" ".*bnd2$test_string" "pure bnd2r register"
 
 set test_string ".*\\\{lbound = 0x28, ubound_raw = 0x\[f\]+ce\\\}.*"
-gdb_test "info register bnd3raw" ".*bnd3$test_string" "Pure bnd3r register"
+gdb_test "info register bnd3raw" ".*bnd3$test_string" "pure bnd3r register"
 
 # Setting fields on bnds
 set test_string ".*\\\{lbound = 0xa, ubound = 0x400\\\}.*"

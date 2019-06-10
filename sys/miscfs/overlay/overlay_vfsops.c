@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.67 2017/04/11 07:51:37 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.67.12.1 2019/06/10 22:09:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.67 2017/04/11 07:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.67.12.1 2019/06/10 22:09:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * that the node create call will work.
 	 */
 	vfs_getnewfsid(mp);
+	mp->mnt_lower = lowerrootvp->v_mount;
 
 	nmp->ovm_size = sizeof (struct overlay_node);
 	nmp->ovm_tag = VT_OVERLAY;
@@ -189,7 +190,6 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return error;
 
-	mp->mnt_lower = lowerrootvp->v_mount;
 	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 #ifdef OVERLAYFS_DIAGNOSTIC

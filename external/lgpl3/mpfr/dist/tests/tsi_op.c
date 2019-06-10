@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_si, mpfr_sub_si, mpfr_si_sub, mpfr_mul_si,
    mpfr_div_si, mpfr_si_div
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,12 +21,13 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
-#define ERROR1(s,i,z,exp)                                               \
+/* TODO: Add generic tests for mpfr_si_sub and mpfr_si_div.
+   tgeneric_ui.c should probably be replaced by tgeneric.c,
+   with some changes, since tgeneric.c does more checks. */
+
+#define PRINT_ERROR1(s,i,z,exp)                                         \
   do                                                                    \
     {                                                                   \
       printf ("Error for " s " and i=%d\n", i);                         \
@@ -59,7 +60,12 @@ check_invert (void)
 
   mpfr_set_ui (x, 0xC, MPFR_RNDN);
   mpfr_si_sub (x, -1, x, MPFR_RNDD); /* -0001 - 1100 = - 1101 --> -1 0000 */
-  if (mpfr_cmp_si (x, -0x10) )
+  /* If MPFR_PREC_MIN = 2, then x is first set to 12 exactly, then we get
+     -13 which is rounded down to -16.
+     If MPFR_PREC_MIN = 1, then x is first set to 16 exactly, then we get
+     -17 which is rounded down to -32. */
+  if ((MPFR_PREC_MIN == 2 && mpfr_cmp_si (x, -0x10)) ||
+      (MPFR_PREC_MIN == 1 && mpfr_cmp_si (x, -0x20)))
     {
       printf ("Special rounding error\n");
       exit (1);
@@ -111,37 +117,37 @@ main (int argc, char *argv[])
       y = tab[i].op2;
       mpfr_add_si (z, x, y, MPFR_RNDZ);
       if (mpfr_cmp_str (z, tab[i].res_add, 16, MPFR_RNDN))
-        ERROR1("add_si", i, z, tab[i].res_add);
+        PRINT_ERROR1 ("add_si", i, z, tab[i].res_add);
       mpfr_sub_si (z, x, y, MPFR_RNDZ);
       if (mpfr_cmp_str (z, tab[i].res_sub, 16, MPFR_RNDN))
-        ERROR1("sub_si", i, z, tab[i].res_sub);
+        PRINT_ERROR1 ("sub_si", i, z, tab[i].res_sub);
       mpfr_si_sub (z, y, x, MPFR_RNDZ);
       mpfr_neg (z, z, MPFR_RNDZ);
       if (mpfr_cmp_str (z, tab[i].res_sub, 16, MPFR_RNDN))
-        ERROR1("si_sub", i, z, tab[i].res_sub);
+        PRINT_ERROR1 ("si_sub", i, z, tab[i].res_sub);
       mpfr_mul_si (z, x, y, MPFR_RNDZ);
       if (mpfr_cmp_str (z, tab[i].res_mul, 16, MPFR_RNDN))
-        ERROR1("mul_si", i, z, tab[i].res_mul);
+        PRINT_ERROR1 ("mul_si", i, z, tab[i].res_mul);
       mpfr_div_si (z, x, y, MPFR_RNDZ);
       if (mpfr_cmp_str (z, tab[i].res_div, 16, MPFR_RNDN))
-        ERROR1("div_si", i, z, tab[i].res_div);
+        PRINT_ERROR1 ("div_si", i, z, tab[i].res_div);
     }
   mpfr_set_str1 (x, "1");
   mpfr_si_div (z, 1024, x, MPFR_RNDN);
   if (mpfr_cmp_str1 (z, "1024"))
-    ERROR1("si_div", i, z, "1024");
+    PRINT_ERROR1 ("si_div", i, z, "1024");
   mpfr_si_div (z, -1024, x, MPFR_RNDN);
   if (mpfr_cmp_str1 (z, "-1024"))
-    ERROR1("si_div", i, z, "-1024");
+    PRINT_ERROR1 ("si_div", i, z, "-1024");
 
   mpfr_clears (x, z, (mpfr_ptr) 0);
 
   check_invert ();
 
-  test_generic_add_si (2, 200, 17);
-  test_generic_sub_si (2, 200, 17);
-  test_generic_mul_si (2, 200, 17);
-  test_generic_div_si (2, 200, 17);
+  test_generic_add_si (MPFR_PREC_MIN, 200, 17);
+  test_generic_sub_si (MPFR_PREC_MIN, 200, 17);
+  test_generic_mul_si (MPFR_PREC_MIN, 200, 17);
+  test_generic_div_si (MPFR_PREC_MIN, 200, 17);
 
   tests_end_mpfr ();
   return 0;

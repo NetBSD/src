@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.271 2018/05/07 21:03:45 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.271.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.271 2018/05/07 21:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.271.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
-#include "opt_perfctrs.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -85,13 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.271 2018/05/07 21:03:45 christos Exp
 #include <sys/buf.h>
 #include <sys/wait.h>
 #include <sys/file.h>
+#include <sys/fstrans.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/uidinfo.h>
-#if defined(PERFCTRS)
-#include <sys/pmc.h>
-#endif
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
@@ -108,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.271 2018/05/07 21:03:45 christos Exp
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/sdt.h>
+#include <sys/psref.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -404,6 +402,9 @@ exit1(struct lwp *l, int exitcode, int signo)
 	}
 	fixjobc(p, p->p_pgrp, 0);
 
+	/* Release fstrans private data. */
+	fstrans_lwp_dtor(l);
+
 	/*
 	 * Finalize the last LWP's specificdata, as well as the
 	 * specificdata for the proc itself.
@@ -420,17 +421,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 		((p->p_sflag & PS_COREDUMP) ? CLD_DUMPED :
 		 (p->p_xsig ? CLD_KILLED : CLD_EXITED)),
 		0,0,0,0);
-
-#if PERFCTRS
-	/*
-	 * Save final PMC information in parent process & clean up.
-	 */
-	if (PMC_ENABLED(p)) {
-		pmc_save_context(p);
-		pmc_accumulate(p->p_pptr, p);
-		pmc_process_exit(p);
-	}
-#endif
 
 	/*
 	 * Reset p_opptr pointer of all former children which got
@@ -662,6 +652,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 	if (child == NULL) {
 		mutex_exit(proc_lock);
 		*pid = 0;
+		*status = 0;
 		return error;
 	}
 	*pid = child->p_pid;

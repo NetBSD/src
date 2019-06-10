@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.68 2012/04/06 13:13:13 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.68.40.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,11 +95,10 @@
  *	Utah $Hdr: locore.s 1.63 95/01/20$
  */
 
-#include "opt_compat_osf1.h"
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 
-/* 
+/*
  * NOTICE: This is not a standalone file.  To use it, #include it in
  * your port's locore.S, like so:
  *
@@ -131,37 +130,12 @@ emergency_stack_end:
 gateway_page:
 	nop				/* @ 0.C0000000 (Nothing)  */
 	gate,n	bsd_syscall,%r0		/* @ 0.C0000004 (HPUX/BSD) */
-#ifdef COMPAT_OSF1
-	bl,n	osf_syscall,%r0
-	bl,n	osf_syscall,%r0
-#else
 	nop				/* @ 0.C0000008 (HPOSF UNIX) */
 	nop				/* @ 0.C000000C (HPOSF Mach) */
-#endif
 	nop
 	nop
 	nop
 	nop
-
-#ifdef COMPAT_OSF1
-osf_syscall:
-	/*
-	 * Ripped screaming from OSF/MkLinux:
-	 *
-	 * Convert HPOSF system call to a BSD one by stashing arg4 and arg5
-	 * back into the frame, and moving the system call number into r22.
-	 * Fortunately, the HPOSF compiler has a bigger stack frame, which
-	 * allows this horrible hack.
-	 *
-	 * We also need to save r29 (aka ret1) for the emulator since it may
-	 * get clobbered between here and there.
-	 */
-	stw	%r22, HPPA_FRAME_ARG(4)(%sp)
-	stw	%r21, HPPA_FRAME_ARG(5)(%sp)
-	stw	%r29, HPPA_FRAME_SL(%sp)
-	gate	bsd_syscall,%r0
-	copy	%r1, %r22
-#endif /* COMPAT_OSF1 */
 
 bsd_syscall:
 	/*
@@ -246,7 +220,7 @@ syscall_entry:
 	ldw	CI_PSW(%sr1, %t1), %t1
 	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc (block copy cache control hint) */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
- 
+
 	mfsp	%sr3, %t1
 	stw	%t1, TF_SR3-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%ret0, TF_CR8-TRAPFRAME_SIZEOF(%sr1, %t3)	/* pidr1 */
@@ -767,7 +741,7 @@ EXIT(os_toc)
 ENTRY_NOPROFILE(TLABEL(hpmc),0)
 ALTENTRY(os_hpmc_cont)
 	ldi	T_HPMC, %arg0
-	
+
 	/* Disable interrupts. */
 	mtctl	%r0, %eiem
 
@@ -891,7 +865,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 */
 	mtctl	%arg0, %tr2
 	mfctl	%iir, %arg0
-	
+
 	/*
 	 * If the opcode field in the instruction is 4, indicating a special
 	 * function unit SPOP instruction, branch to emulate an sfu.  If the
@@ -925,7 +899,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 hppa_fpu_emulate:
 
 	/*
-	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
+	 * We have a hardware FPU.  If it is enabled, branch to emulate the
 	 * instruction.
 	 */
 	mfctl	CR_CCR, %arg0
@@ -934,11 +908,11 @@ hppa_fpu_emulate:
 
 	/*
 	 * The hardware FPU is disabled, so we need to swap in the FPU state of
-	 * the LWP whose uspace physical address in CR_UPADDR.  We may also
+	 * the LWP whose uspace physical address in CR_FPPADDR.  We may also
 	 * need to swap out the FPU state of any LWP whose uspace physical
 	 * address is in curcpu()->ci_fpu_state.
 	 */
-	
+
 	/*
 	 * So far, the CTRAP() macro has saved %r1 in %tr7, and the dispatching
 	 * above has saved %arg0 in tr2.  Save the other registers that we want
@@ -955,7 +929,7 @@ hppa_fpu_emulate:
 	blr	0, %rp
 	b	hppa_fpu_swap
 	nop
-	
+
 	/* Restore registers and rfi. */
 	mfctl	%tr5, %rp
 	mfctl	%tr4, %arg1
@@ -1041,7 +1015,7 @@ ALTENTRY(hppa_fpu_swap)
 	/*
 	 * Assuming that out and in aren't both NULL, we will have to run co-
 	 * processor instructions, so we'd better enable it.
-	 * 
+	 *
 	 * Also, branch if there's no FPU state to swap out.
 	 */
 	mfctl	CR_CCR, %r1
@@ -1801,7 +1775,7 @@ EXIT(hpti_l)
 LEAF_ENTRY_NOPROFILE(pbtlb_l)
 	; DR_PAGE0
 	rsm	(PSW_R|PSW_I), %t4
-	nop ! nop ! nop ! nop 
+	nop ! nop ! nop ! nop
 	ldil	L%0xc041, %t1
 	ldo	R%0xc041(%t1), %t1
 	dep	%arg0, 30, 3, %t1

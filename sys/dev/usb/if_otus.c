@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.33 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.33.2.1 2019/06/10 22:07:33 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.33 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.33.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -701,7 +701,7 @@ otus_detach(device_t self, int flags)
 	if (ifp != NULL)	/* Failed to attach properly */
 		otus_stop(ifp);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
 
@@ -811,7 +811,7 @@ otus_attachhook(device_t arg)
 	aprint_normal_dev(sc->sc_dev,
 	    "MAC/BBP AR9170, RF AR%X, MIMO %dT%dR, address %s\n",
 	    (sc->sc_capflags & AR5416_OPFLAGS_11A) ?
-	        0x9104 : ((sc->sc_txmask == 0x5) ? 0x9102 : 0x9101),
+		0x9104 : ((sc->sc_txmask == 0x5) ? 0x9102 : 0x9101),
 	    (sc->sc_txmask == 0x5) ? 2 : 1, (sc->sc_rxmask == 0x5) ? 2 : 1,
 	    ether_sprintf(ic->ic_myaddr));
 
@@ -860,7 +860,7 @@ otus_attachhook(device_t arg)
 	ieee80211_ifattach(ic);
 
 	ic->ic_node_alloc = otus_node_alloc;
-	ic->ic_newassoc   = otus_newassoc;
+	ic->ic_newassoc	  = otus_newassoc;
 	ic->ic_updateslot = otus_updateslot;
 #ifdef HAVE_EDCA
 	ic->ic_updateedca = otus_updateedca;
@@ -901,7 +901,7 @@ otus_get_chanlist(struct otus_softc *sc)
 	/* XXX regulatory domain. */
 	uint16_t domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "regdomain=0x%04x\n", domain);
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "regdomain=0x%04x\n", domain);
 #endif
 
 	ic = &sc->sc_ic;
@@ -1132,7 +1132,7 @@ otus_alloc_tx_data_list(struct otus_softc *sc)
 	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++) {
 		data = &sc->sc_tx_data[i];
 
-		data->sc = sc;  /* Backpointer for callbacks. */
+		data->sc = sc;	/* Backpointer for callbacks. */
 
 		error = usbd_create_xfer(sc->sc_data_tx_pipe, OTUS_TXBUFSZ,
 		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
@@ -1302,7 +1302,7 @@ otus_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	sc = ic->ic_ifp->if_softc;
 
-	DPRINTFN(DBG_FN|DBG_STM, sc, "nstate=%s(%d), arg=%d\n",
+	DPRINTFN(DBG_FN | DBG_STM, sc, "nstate=%s(%d), arg=%d\n",
 	    ieee80211_state_name[nstate], nstate, arg);
 
 	/* Do it in a process context. */
@@ -1328,7 +1328,7 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 
 #ifdef OTUS_DEBUG
 	enum ieee80211_state ostate = ostate = ic->ic_state;
-	DPRINTFN(DBG_FN|DBG_STM, sc, "%s(%d)->%s(%d)\n",
+	DPRINTFN(DBG_FN | DBG_STM, sc, "%s(%d)->%s(%d)\n",
 	    ieee80211_state_name[ostate], ostate,
 	    ieee80211_state_name[nstate], nstate);
 #endif
@@ -1450,7 +1450,7 @@ Static void
 otus_write(struct otus_softc *sc, uint32_t reg, uint32_t val)
 {
 
-	DPRINTFN(DBG_FN|DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
+	DPRINTFN(DBG_FN | DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 	KASSERT(sc->sc_write_idx < __arraycount(sc->sc_write_buf));
@@ -2275,6 +2275,7 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 Static int
 otus_set_multi(struct otus_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -2290,7 +2291,8 @@ otus_set_multi(struct otus_softc *sc)
 		goto done;
 	}
 	lo = hi = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -2305,6 +2307,7 @@ otus_set_multi(struct otus_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
  done:
+	ETHER_UNLOCK(ec);
 	mutex_enter(&sc->sc_write_mtx);
 	hi |= 1 << 31;	/* Make sure the broadcast bit is set. */
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_L, lo);
@@ -2449,7 +2452,7 @@ otus_init_mac(struct otus_softc *sc)
 {
 	int error;
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "\n");
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
@@ -3109,7 +3112,7 @@ otus_led_newstate_type3(struct otus_softc *sc)
 
 	ic = &sc->sc_ic;
 	led_state = sc->sc_led_state;
-	switch(ic->ic_state) {
+	switch (ic->ic_state) {
 	case IEEE80211_S_INIT:
 		led_state = 0;
 		break;
@@ -3145,7 +3148,7 @@ otus_init(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "\n");
 
 	ic = &sc->sc_ic;
 

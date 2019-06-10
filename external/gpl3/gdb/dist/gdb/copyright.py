@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (C) 2011-2017 Free Software Foundation, Inc.
+# Copyright (C) 2011-2019 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -150,11 +150,20 @@ def main ():
     update_files (update_list)
 
     # Remind the user that some files need to be updated by HAND...
+
+    if MULTIPLE_COPYRIGHT_HEADERS:
+        print
+        print("\033[31m"
+              "REMINDER: Multiple copyright headers must be updated by hand:"
+              "\033[0m")
+        for filename in MULTIPLE_COPYRIGHT_HEADERS:
+            print "  ", filename
+
     if BY_HAND:
         print
         print "\033[31mREMINDER: The following files must be updated by hand." \
               "\033[0m"
-        for filename in BY_HAND + MULTIPLE_COPYRIGHT_HEADERS:
+        for filename in BY_HAND:
             print "  ", filename
 
 ############################################################################
@@ -191,9 +200,7 @@ EXCLUDE_ALL_LIST = (
 
 # The list of files to update by hand.
 BY_HAND = (
-    # These files are sensitive to line numbering.
-    "gdb/testsuite/gdb.base/step-line.inp",
-    "gdb/testsuite/gdb.base/step-line.c",
+    # Nothing at the moment :-).
 )
 
 # Files containing multiple copyright headers.  This script is only

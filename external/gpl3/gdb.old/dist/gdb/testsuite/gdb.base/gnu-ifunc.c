@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2016 Free Software Foundation, Inc.
+   Copyright 2009-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,6 +34,10 @@ final (int arg)
    being cached anywhere for the debugging purposes.  */
 
 volatile int gnu_ifunc_initialized;
+
+/* This stores the argument received by the ifunc resolver.  */
+
+volatile unsigned long resolver_hwcap = -1;
 
 static void
 gnu_ifunc_pre (void)

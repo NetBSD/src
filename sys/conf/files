@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1200 2018/06/06 18:10:36 jakllsch Exp $
+#	$NetBSD: files,v 1.1200.2.1 2019/06/10 22:07:04 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -29,6 +29,10 @@ defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
+defflag				KASAN
+defflag				KLEAK
+defflag				KCOV
+defflag opt_pool.h		POOL_QUARANTINE
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
@@ -70,7 +74,10 @@ defflag				CPU_IN_CKSUM
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
-defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
+defparam opt_sysvparam.h	MSGMAX MSGMNI MSGMNB MSGTQL MSGSSZ MSGSEG
+defparam opt_sysvparam.h	SEMMAP SEMMNI SEMMNS SEMMNU SEMMSL SEMOPM
+defparam opt_sysvparam.h	SEMUME SEMUSZ SEMVMX SEMAEM
+defparam opt_sysvparam.h	SHMMAX SHMMIN SHMMNI SHMSEG SHMMAXPGS
 
 defflag	opt_ntp.h		PPS_SYNC PPS_DEBUG NTP
 
@@ -149,20 +156,26 @@ defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD: COMPAT_30
-defflag				COMPAT_IBCS2
-defflag				COMPAT_LINUX: COMPAT_NETBSD
-defflag				COMPAT_OSF1
-defflag				COMPAT_SUNOS: COMPAT_30
-defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
+defflag				COMPAT_43
+defflag				COMPAT_FREEBSD: COMPAT_09, COMPAT_43
+defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_43
+defflag				COMPAT_SUNOS: COMPAT_09, COMPAT_43
 defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
-defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32
+defflag				COMPAT_SYSV
+defflag				SYSV_IPC	: SYSVSHM, SYSVSEM, SYSVMSG
+defflag				COMPAT_NETBSD32_SYSVIPC : SYSV_IPC,
+							  COMPAT_SYSV,
+							  COMPAT_NETBSD32
+defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32,
+						 COMPAT_50, COMPAT_SYSV,
+						 COMPAT_NETBSD32_SYSVIPC
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
 defflag				COMPAT_VAX1K
-defflag				COMPAT_43
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
+
+include	"compat/common/files.common"
 
 define	machdep
 defflag	opt_machdep.h		MACHDEP
@@ -236,7 +249,6 @@ include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
 include "netmpls/files.netmpls"
-include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
 
 include "net/npf/files.npf"
@@ -303,6 +315,7 @@ defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME KGDB_DEVPORT
 defflag				LOCKDEBUG
 defflag				SYSCALL_DEBUG
 defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
+defflag				PSREF_DEBUG
 
 # memory (ram) disk options
 #
@@ -313,10 +326,6 @@ defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 defparam opt_memory_disk_image.h	makeoptions_MEMORY_DISK_IMAGE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
-
-# Support for hardware performance monitoring counters
-#
-defflag	opt_perfctrs.h		PERFCTRS
 
 defflag	opt_wlan.h		WLAN
 
@@ -341,6 +350,7 @@ define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
+define	ipmibus		{ }
 
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
@@ -380,6 +390,10 @@ file	dev/ic/nslm7x.c			lm			needs-flag
 
 device	spdmem
 file	dev/ic/spdmem.c			spdmem
+
+# SSD1306 or SH1106 OLED/PLED display (attaches via I2C or SPI)
+device	ssdfb:	wsemuldisplaydev
+file	dev/ic/ssdfb.c	ssdfb
 
 # Generic HID support (used by USB, bluetooth and i2c)
 include "dev/hid/files.hid"
@@ -421,10 +435,9 @@ include "dev/splash/files.splash"
 include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring, and atm.
+# fddi, and token ring.
 #
 define	arcnet
-define	atm
 define	ether
 define	fddi
 define	hippi
@@ -446,11 +459,6 @@ define	arp
 # ALTQ network traffic shaping subsystem
 #
 include "altq/files.altq"
-
-#
-# IPKDB kernel debugger
-#
-include "ipkdb/files.ipkdb"
 
 # Logical disk
 #
@@ -746,9 +754,8 @@ file	dev/ic/dwc_gmac.c		awge
 
 # 8390-family Ethernet controllers
 #
-defflag	opt_ipkdb.h		IPKDB_DP8390
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic | ipkdb_dp8390
+file	dev/ic/dp8390.c			dp8390nic
 
 # National Semiconductor DP83905 AT/LANTIC Ethernet media support
 #
@@ -788,11 +795,6 @@ file	dev/ic/pdq_ifsubr.c		pdq
 #
 device	cy: tty
 file	dev/ic/cy.c			cy			needs-flag
-
-# Efficient Networks, Inc. ATM interface
-#
-device	en: atm, ifnet
-file	dev/ic/midway.c			en
 
 # NCR 53x9x or Emulex ESP SCSI Controller
 #
@@ -888,17 +890,15 @@ file	dev/ic/tms320av110.c		tms320av110
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 #
-defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
-file	dev/ic/ne2000.c			ne | ipkdb_ne
+file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 #
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_16750
-				COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP COM_FUNCMAP
+				COM_HAYESP COM_PXA2X0
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
@@ -1150,10 +1150,6 @@ file	dev/ic/acpipmtimer.c	acpipmtimer
 device 	hpet
 file 	dev/ic/hpet.c		hpet			needs-flag
 
-# DesignWare timer
-device	dwctmr
-file	dev/ic/dwc_tmr.c	dwctmr
-
 # SMSC LAN9118 Family Ethernet Controller
 #
 device	smsh: arp, ether, ifnet, mii
@@ -1336,6 +1332,10 @@ file	dev/ic/pl041.c			aaci
 device	plkmi: pckbport
 file	dev/ic/pl050.c			plkmi
 
+# ARM PrimeCell PL061 (GPIO) general purpose input/output
+device	plgpio: gpiobus
+file	dev/ic/pl061.c			plgpio
+
 # ARM PrimeCell PL181 (MMCI) host controller
 device	plmmc: sdmmcbus
 file	dev/ic/pl181.c			plmmc
@@ -1374,41 +1374,6 @@ attach	cpciic at cpcbus with iic_cpcbus
 file	dev/ic/iic_cpcbus.c		iic_cpcbus
 
 
-# Attributes used by the ISDN subsystem
-#
-define	isdndev		# the ISDN subsystem
-define	passive_isdn	# files needed by passive cards (XXX - protocol
-			# specific)
-define	isdncapi	# ISDN CAPI (http://www.capi.org/)
-
-# The isac found on the Fritz V2.0 Card.
-define	nisacsx
-file	dev/ic/isacsx.c			nisacsx	needs-flag
-
-# The 'standard' isac
-define	nisac
-file	dev/ic/isac.c			nisac	needs-flag
-
-# ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
-#
-device	isic: isdndev, passive_isdn, nisac
-
-file	dev/ic/isic.c			isic
-file	dev/ic/isic_l1.c		isic|ifpci|ifritz
-file	dev/ic/isic_l1fsm.c		isic|ifpci|ifritz
-file	dev/ic/hscx.c			isic
-file	dev/ic/isic_bchan.c		isic
-
-# (old) Diehl active ISDN cards
-#
-#device	daic: isdndev
-#file	dev/ic/daic.c			daic
-
-# AWM B1/T1
-# XXX: passive_isdn
-device	iavc: isdndev, isdncapi, passive_isdn
-file	dev/ic/iavc.c			iavc
-
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan
 file	dev/ic/bwi.c			bwi
@@ -1433,6 +1398,10 @@ file	dev/ic/bwfm.c			bwfm
 # QEMU Firmware Configuration (fw_cfg) device
 device	qemufwcfg
 file	dev/ic/qemufwcfg.c		qemufwcfg
+
+# AMD Cryptographic Coprocessor
+device	amdccp
+file	dev/ic/amdccp.c			amdccp
 
 # legitimate pseudo-devices
 #
@@ -1467,7 +1436,6 @@ defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
-defpseudodev etherip:	ifnet, ether, arp
 defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
 defpseudo ipsecif:	ifnet		# avoid to confuse ipsec itself option
@@ -1480,19 +1448,6 @@ defpseudo clockctl
 #
 defpseudo accf_data
 defpseudo accf_http
-
-# ISDN userland pseudo devices
-#
-defpseudo isdntrc:	isdndev, tty
-defpseudo isdnbchan:	isdndev, tty
-defpseudo isdntel:	isdndev, tty
-defpseudo isdnctl:	isdndev, tty
-defpseudo isdn:		isdndev, tty
-
-# ISDN network interfaces
-defpseudo irip:		isdndev, ifnet
-defflag opt_irip.h	IRIP_VJ
-defpseudo ippp:		isdndev, sppp, ifnet
 
 # KTTCP network throughput testing pseudo-device
 defpseudo kttcp
@@ -1525,6 +1480,14 @@ include "dev/dm/files.dm"
 
 # LED framework
 file	dev/led.c			leds
+
+# IPMI
+device	ipmi: sysmon_envsys, sysmon_wdog
+attach	ipmi at ipmibus
+
+# Designware HDMI TX
+device	dwhdmi: edid, videomode, drmkms, drmkms_i2c
+file	dev/ic/dw_hdmi.c		dwhdmi
 
 #
 # File systems
@@ -1607,6 +1570,11 @@ include "lib/libx86emu/files.x86emu"
 include	"dev/tprof/files.tprof"
 
 #
+# NetBSD Virtual Machine Monitor.
+#
+include	"dev/nvmm/files.nvmm"
+
+#
 # alternate memory device
 #
 include "dev/altmem/files.altmem"
@@ -1646,3 +1614,8 @@ include "dev/clk/files.clk"
 #
 include "dev/ofw/files.ofw"
 include "dev/fdt/files.fdt"
+
+#
+# Name value library
+#
+include "external/bsd/libnv/conf/files.libnv"

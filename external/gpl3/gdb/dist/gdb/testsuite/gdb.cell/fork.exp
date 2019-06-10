@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,10 +23,10 @@ load_lib cell.exp
 set testfile "fork"
 set ppu_file "fork"
 set ppu_src ${srcdir}/${subdir}/${ppu_file}.c
-set ppu_bin ${objdir}/${subdir}/${ppu_file}
+set ppu_bin [standard_output_file ${ppu_file}]
 set spu_file "fork-spu"
 set spu_src ${srcdir}/${subdir}/${spu_file}.c
-set spu_bin ${objdir}/${subdir}/${spu_file}
+set spu_bin [standard_output_file ${spu_file}]
 
 if {[skip_cell_tests]} {
     return 0

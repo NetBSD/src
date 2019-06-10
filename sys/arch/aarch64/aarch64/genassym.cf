@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.2 2018/04/01 04:35:03 ryo Exp $
+# $NetBSD: genassym.cf,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,6 +50,7 @@ include <arm/bus_defs.h>
 include <aarch64/vmparam.h>
 include <aarch64/frame.h>
 include <aarch64/armreg.h>
+include <aarch64/pte.h>
 
 if defined(_KERNEL_OPT)
 include "opt_multiprocessor.h"
@@ -67,6 +68,7 @@ define	MAXCPUS			MAXCPUS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 define	VM_KERNEL_IO_ADDRESS	VM_KERNEL_IO_ADDRESS
+define	VM_KERNEL_IO_SIZE	VM_KERNEL_IO_SIZE
 define	AARCH64_KSEG_START	AARCH64_KSEG_START
 define	UPAGES			UPAGES
 define	USPACE			(UPAGES * PAGE_SIZE)
@@ -102,6 +104,65 @@ define	USPACE			(UPAGES * PAGE_SIZE)
 #define	L2_C			L2_C
 #define	L2_AP_KRW		L2_AP(AP_KRW)
 
+define	L0_ADDR_BITS		L0_ADDR_BITS
+define	L0_SHIFT		L0_SHIFT
+define	L0_TABLE		L0_TABLE
+define	L1_ADDR_BITS		L1_ADDR_BITS
+define	L1_BLOCK		L1_BLOCK
+define	L1_SHIFT		L1_SHIFT
+define	L1_SIZE			L1_SIZE
+define	L1_TABLE		L1_TABLE
+define	L2_ADDR_BITS		L2_ADDR_BITS
+define	L2_BLK_OA		L2_BLK_OA
+define	L2_BLOCK		L2_BLOCK
+define	L2_BLOCK_MASK		L2_BLOCK_MASK
+define	L2_SHIFT		L2_SHIFT
+define	L2_SIZE			L2_SIZE
+define	LX_BLKPAG_UXN		LX_BLKPAG_UXN
+define	LX_BLKPAG_PXN		LX_BLKPAG_PXN
+define	LX_BLKPAG_AF		LX_BLKPAG_AF
+define	LX_BLKPAG_AP		LX_BLKPAG_AP
+define	LX_BLKPAG_AP_RO		LX_BLKPAG_AP_RO
+define	LX_BLKPAG_AP_RW		LX_BLKPAG_AP_RW
+define	LX_BLKPAG_SH_IS		LX_BLKPAG_SH_IS
+define	LX_BLKPAG_ATTR_NORMAL_WB	LX_BLKPAG_ATTR_NORMAL_WB
+define	LX_BLKPAG_ATTR_NORMAL_NC	LX_BLKPAG_ATTR_NORMAL_NC
+define	LX_BLKPAG_ATTR_NORMAL_WT	LX_BLKPAG_ATTR_NORMAL_WT
+define	LX_BLKPAG_ATTR_DEVICE_MEM	LX_BLKPAG_ATTR_DEVICE_MEM
+define	Ln_ENTRIES		Ln_ENTRIES
+
+define	TCR_AS64K		TCR_AS64K
+define	TCR_TG1_16KB		TCR_TG1_16KB
+define	TCR_TG1_4KB		TCR_TG1_4KB
+define	TCR_TG1_64KB		TCR_TG1_64KB
+define	TCR_TG0_16KB		TCR_TG0_16KB
+define	TCR_TG0_4KB		TCR_TG0_4KB
+define	TCR_TG0_64KB		TCR_TG0_64KB
+define	TCR_SH1_NONE		TCR_SH1_NONE
+define	TCR_SH1_OUTER		TCR_SH1_OUTER
+define	TCR_SH1_INNER		TCR_SH1_INNER
+define	TCR_ORGN1_NC		TCR_ORGN1_NC
+define	TCR_ORGN1_WB_WA		TCR_ORGN1_WB_WA
+define	TCR_ORGN1_WT		TCR_ORGN1_WT
+define	TCR_ORGN1_WB		TCR_ORGN1_WB
+define	TCR_IRGN1_NC		TCR_IRGN1_NC
+define	TCR_IRGN1_WB_WA		TCR_IRGN1_WB_WA
+define	TCR_IRGN1_WT		TCR_IRGN1_WT
+define	TCR_IRGN1_WB		TCR_IRGN1_WB
+define	TCR_T1SZ		TCR_T1SZ
+define	TCR_SH0_NONE		TCR_SH0_NONE
+define	TCR_SH0_OUTER		TCR_SH0_OUTER
+define	TCR_SH0_INNER		TCR_SH0_INNER
+define	TCR_ORGN0_NC		TCR_ORGN0_NC
+define	TCR_ORGN0_WB_WA		TCR_ORGN0_WB_WA
+define	TCR_ORGN0_WT		TCR_ORGN0_WT
+define	TCR_ORGN0_WB		TCR_ORGN0_WB
+define	TCR_IRGN0_NC		TCR_IRGN0_NC
+define	TCR_IRGN0_WB_WA		TCR_IRGN0_WB_WA
+define	TCR_IRGN0_WT		TCR_IRGN0_WT
+define	TCR_IRGN0_WB		TCR_IRGN0_WB
+define	TCR_T0SZ		TCR_T0SZ
+
 define	EFAULT			EFAULT
 
 define	PAGE_SIZE		PAGE_SIZE
@@ -119,7 +180,6 @@ define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
-define	L_MD_KTF		offsetof(struct lwp, l_md.md_ktf)
 define	L_MD_CPACR		offsetof(struct lwp, l_md.md_cpacr)
 define	L_MD_ONFAULT		offsetof(struct lwp, l_md.md_onfault)
 
@@ -167,6 +227,8 @@ define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 
 define	SIGTRAP			SIGTRAP
 define	SIGEMT			SIGEMT
+
+define	PCB_TF			offsetof(struct pcb, pcb_tf)
 
 define	TF_X0			offsetof(struct trapframe, tf_reg[0])
 define	TF_X1			offsetof(struct trapframe, tf_reg[1])
@@ -241,10 +303,13 @@ define	FPREG_Q31		offsetof(struct fpreg, fp_reg[31])
 define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
 define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
+define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
+define	CI_MIDR			offsetof(struct cpu_info, ci_id.ac_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_id.ac_mpidr)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
@@ -264,6 +329,8 @@ define	DAIF_SETCLR_SHIFT	DAIF_SETCLR_SHIFT
 
 define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
 define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
+define	CNTKCTL_EL0VCTEN	CNTKCTL_EL0VCTEN
+define	SPSR_SS_SHIFT		SPSR_SS_SHIFT
 define	SPSR_F			SPSR_F
 define	SPSR_I			SPSR_I
 define	SPSR_A			SPSR_A
@@ -281,6 +348,16 @@ define	CPACR_FPEN_ALL		CPACR_FPEN_ALL
 define	ID_AA64PFR0_EL1_GIC		ID_AA64PFR0_EL1_GIC
 define	ID_AA64PFR0_EL1_GIC_SHIFT	ID_AA64PFR0_EL1_GIC_SHIFT
 define	ID_AA64PFR0_EL1_GIC_CPUIF_EN	ID_AA64PFR0_EL1_GIC_CPUIF_EN
+
+define	MPIDR_AFF0		MPIDR_AFF0
+define	MPIDR_AFF1		MPIDR_AFF1
+define	MPIDR_AFF2		MPIDR_AFF2
+define	MPIDR_AFF3		MPIDR_AFF3
+
+define	MDSCR_MDE		MDSCR_MDE
+define	MDSCR_KDE		MDSCR_KDE
+define	MDSCR_TDCC		MDSCR_TDCC
+define	MDSCR_SS		MDSCR_SS
 
 define	MAIR_ATTR0		MAIR_ATTR0
 define	MAIR_ATTR1		MAIR_ATTR1

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gates.c,v 1.1 2017/07/08 11:12:24 jmcneill Exp $ */
+/* $NetBSD: sunxi_gates.c,v 1.1.12.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.1 2017/07/08 11:12:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.1.12.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.1 2017/07/08 11:12:24 jmcneill Exp
 
 static const char * compatible[] = {
 	"allwinner,sun4i-a10-gates-clk",
+	"allwinner,sun9i-a80-apbs-gates-clk",
 	NULL
 };
 
@@ -70,7 +71,8 @@ struct sunxi_gates_softc {
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 static struct clk *
-sunxi_gates_clock_decode(device_t dev, const void *data, size_t len)
+sunxi_gates_clock_decode(device_t dev, int cc_phandle, const void *data,
+			 size_t len)
 {
 	struct sunxi_gates_softc * const sc = device_private(dev);
 	struct sunxi_gate *gate;

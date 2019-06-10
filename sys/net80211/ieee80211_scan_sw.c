@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.4 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.5 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2008 Sam Leffler, Errno Consulting
@@ -26,14 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_scan_sw.c,v 1.1.2.5 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
  * IEEE 802.11 scanning support.
  */
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h> 

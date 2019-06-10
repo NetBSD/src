@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.9 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.9.32.1 2019/06/10 22:05:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.9 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.9.32.1 2019/06/10 22:05:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

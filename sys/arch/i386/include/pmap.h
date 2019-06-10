@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.118 2016/09/19 20:46:55 maya Exp $	*/
+/*	$NetBSD: pmap.h,v 1.118.16.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,10 +77,10 @@
 #endif
 
 #include <uvm/uvm_object.h>
-#ifdef XEN
+#ifdef XENPV
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * see pte.h for a description of i386 MMU terminology and hardware
@@ -224,7 +224,7 @@
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
 #endif /* PAE */
 
-#define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#define L2_SLOT_KERNBASE L2_SLOT_KERN
 
 #define PDIR_SLOT_KERN	L2_SLOT_KERN
 #define PDIR_SLOT_PTE	L2_SLOT_PTE
@@ -256,18 +256,19 @@
 #define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
 #define NKL1_START_ENTRIES	0	/* XXX unused */
 
-#ifndef XEN
+#ifndef XENPV
 #define NTOPLEVEL_PDES		(PAGE_SIZE * PDP_SIZE / (sizeof (pd_entry_t)))
-#else	/* !XEN */
+#else	/* !XENPV */
 #ifdef  PAE
 #define NTOPLEVEL_PDES		1964	/* 1964-2047 reserved by Xen */
 #else	/* PAE */
 #define NTOPLEVEL_PDES		1008	/* 1008-1023 reserved by Xen */
 #endif	/* PAE */
-#endif  /* !XEN */
+#endif  /* !XENPV */
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
-#define PTP_MASK_INITIALIZER	{ L1_FRAME, L2_FRAME }
+#define PTP_MASK_INITIALIZER	{ L1_MASK, L2_MASK }
+#define PTP_FRAME_INITIALIZER	{ L1_FRAME, L2_FRAME }
 #define PTP_SHIFT_INITIALIZER	{ L1_SHIFT, L2_SHIFT }
 #define NKPTP_INITIALIZER	{ NKL1_START_ENTRIES, NKL2_START_ENTRIES }
 #define NKPTPMAX_INITIALIZER	{ NKL1_MAX_ENTRIES, NKL2_MAX_ENTRIES }
@@ -277,28 +278,22 @@
 #define PTP_LEVELS	2
 
 /*
- * PG_AVAIL usage: we make use of the ignored bits of the PTE
+ * PTE_AVL usage: we make use of the ignored bits of the PTE
  */
+#define PTE_WIRED	PTE_AVL1	/* Wired Mapping */
+#define PTE_PVLIST	PTE_AVL2	/* Mapping has entry on pvlist */
+#define PTE_X		PTE_AVL3	/* Executable */
 
-#define PG_W		PG_AVAIL1	/* "wired" mapping */
-#define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
-#define PG_X		PG_AVAIL3	/* executable mapping */
-
-/*
- * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
- * Used to avoid false sharing of cache lines.
- */
-#ifdef PAE
-#define NPTECL		4
-#else
-#define NPTECL		8
-#endif
+/* XXX To be deleted. */
+#define PG_W		PTE_WIRED
+#define PG_PVLIST	PTE_PVLIST
+#define PG_X		PTE_X
 
 #include <x86/pmap.h>
 
-#ifndef XEN
+#ifndef XENPV
 #define pmap_pa2pte(a)			(a)
-#define pmap_pte2pa(a)			((a) & PG_FRAME)
+#define pmap_pte2pa(a)			((a) & PTE_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
 #define pmap_pte_flush()		/* nothing */
 
@@ -320,7 +315,7 @@
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #endif /* PAE */
 
-#else /* XEN */
+#else /* XENPV */
 extern kmutex_t pte_lock;
 
 static __inline pt_entry_t
@@ -332,7 +327,7 @@ pmap_pa2pte(paddr_t pa)
 static __inline paddr_t
 pmap_pte2pa(pt_entry_t pte)
 {
-	return xpmap_mtop_masked(pte & PG_FRAME);
+	return xpmap_mtop_masked(pte & PTE_FRAME);
 }
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)

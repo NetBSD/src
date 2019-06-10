@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.7 2015/09/08 18:33:12 plunky Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.7.16.1 2019/06/10 22:10:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -243,8 +243,8 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 } while (/*CONSTCOND*/0)
 
 #define MAXUNAMES		20	/* maximum number of user names */
-#define BSD_TIMESTAMPLEN	14+1
-#define MAX_TIMESTAMPLEN	31+1
+#define BSD_TIMESTAMPLEN	(14+1)
+#define MAX_TIMESTAMPLEN	(31+1)
 
 /* maximum field lengths in syslog-protocol */
 #define PRI_MAX	      5

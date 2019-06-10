@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.125 2018/04/08 12:18:06 maxv Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.125.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -147,8 +147,10 @@ struct ip_pktopts {
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
 #define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 #define	IP_STAT_NOIPSEC		31	/* no match ipsec(4) found */
+#define	IP_STAT_PFILDROP_IN	32	/* dropped by pfil (PFIL_IN) */
+#define	IP_STAT_PFILDROP_OUT	33	/* dropped by pfil (PFIL_OUT) */
 
-#define	IP_NSTATS		32
+#define	IP_NSTATS		34
 
 #ifdef _KERNEL
 
@@ -209,7 +211,7 @@ int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);
-int	 ip_reass_packet(struct mbuf **, struct ip *);
+int	 ip_reass_packet(struct mbuf **);
 void	 ip_reass_slowtimo(void);
 void	 ip_reass_drain(void);
 
@@ -224,7 +226,7 @@ void	 ip_statinc(u_int);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
-void	 rip_input(struct mbuf *, ...);
+void	 rip_input(struct mbuf *, int, int);
 int	 rip_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);

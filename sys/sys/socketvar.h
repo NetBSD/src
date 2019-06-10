@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.156 2018/06/06 09:46:46 roy Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.156.2.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -252,8 +252,6 @@ struct knote;
 struct sockaddr_big;
 enum uio_seg;
 
-struct	mbuf *getsombuf(struct socket *, int);
-
 /* 0x400 is SO_OTIMESTAMP */
 #define SOOPT_TIMESTAMP(o)     ((o) & (SO_TIMESTAMP | 0x400))
 
@@ -378,6 +376,7 @@ int	do_sys_connect(struct lwp *, int, struct sockaddr *);
 int	do_sys_accept(struct lwp *, int, struct sockaddr *, register_t *,
 	    const sigset_t *, int, int);
 
+int	do_sys_peeloff(struct socket *, void *);
 /*
  * Inline functions for sockets and socket buffering.
  */
@@ -409,6 +408,21 @@ sbspace(const struct sockbuf *sb)
 	if (sb->sb_hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
 		return 0;
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
+}
+
+static __inline u_long
+sbspace_oob(const struct sockbuf *sb)
+{
+	u_long hiwat = sb->sb_hiwat;
+
+	if (hiwat < ULONG_MAX - 1024)
+		hiwat += 1024;
+
+	KASSERT(solocked(sb->sb_so));
+
+	if (hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
+		return 0;
+	return lmin(hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
 
 /* do we have to send all at once on a socket? */
@@ -574,6 +588,10 @@ struct	accept_filter *accept_filt_get(char *);
 SYSCTL_DECL(_net_inet_accf);
 #endif
 void	accept_filter_init(void);
+#endif
+#ifdef DDB
+int sofindproc(struct socket *so, int all, void (*pr)(const char *, ...));
+void socket_print(const char *modif, void (*pr)(const char *, ...));
 #endif
 
 #endif /* _KERNEL */

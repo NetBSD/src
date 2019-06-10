@@ -1,7 +1,7 @@
 /* Target-dependent code for Lattice Mico32 processor, for GDB.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,7 +35,7 @@
 #include "regcache.h"
 #include "trad-frame.h"
 #include "reggroups.h"
-#include "opcodes/lm32-desc.h"
+#include "../opcodes/lm32-desc.h"
 #include <algorithm>
 
 /* Macros to extract fields from an instruction.  */
@@ -228,7 +228,8 @@ static CORE_ADDR
 lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr,
 		      int nargs, struct value **args, CORE_ADDR sp,
-		      int struct_return, CORE_ADDR struct_addr)
+		      function_call_return_method return_method,
+		      CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int first_arg_reg = SIM_LM32_R1_REGNUM;
@@ -240,7 +241,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* If we're returning a large struct, a pointer to the address to
      store it at is passed as a first hidden parameter.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     {
       regcache_cooked_write_unsigned (regcache, first_arg_reg, struct_addr);
       first_arg_reg++;
@@ -303,7 +304,7 @@ static void
 lm32_extract_return_value (struct type *type, struct regcache *regcache,
 			   gdb_byte *valbuf)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST l;
   CORE_ADDR return_buffer;
@@ -340,7 +341,7 @@ static void
 lm32_store_return_value (struct type *type, struct regcache *regcache,
 			 const gdb_byte *valbuf)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST val;
   int len = TYPE_LENGTH (type);
@@ -521,7 +522,7 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* None found, create a new architecture from the information provided.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Type sizes.  */
@@ -565,17 +566,11 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_push_dummy_call (gdbarch, lm32_push_dummy_call);
   set_gdbarch_return_value (gdbarch, lm32_return_value);
 
-  /* Instruction disassembler.  */
-  set_gdbarch_print_insn (gdbarch, print_insn_lm32);
-
   lm32_add_reggroups (gdbarch);
   set_gdbarch_register_reggroup_p (gdbarch, lm32_register_reggroup_p);
 
   return gdbarch;
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_lm32_tdep;
 
 void
 _initialize_lm32_tdep (void)

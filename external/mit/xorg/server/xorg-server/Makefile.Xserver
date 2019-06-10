@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.20 2016/11/22 10:34:57 snj Exp $
+#	$NetBSD: Makefile.Xserver,v 1.20.14.1 2019/06/10 22:02:45 christos Exp $
 
 .for _SL in \
 	mi \
@@ -34,7 +34,6 @@
 	hw/xfree86/dixmods/fb \
 	hw/xfree86/dixmods/shadow \
 	hw/xfree86/dixmods/wfb \
-	hw/xfree86/dixmods/xorgxkb \
 	hw/xfree86/doc \
 	hw/xfree86/dri \
 	hw/xfree86/dri2 \
@@ -50,7 +49,8 @@
 	hw/xfree86/vgahw \
 	hw/xfree86/x86emu \
 	hw/xfree86/xf86config \
-	hw/xfree86/xf86modes
+	hw/xfree86/xf86modes \
+	hw/xfree86/xkb
 
 .if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/${_SL} && ${PRINTOBJDIR}
@@ -66,10 +66,13 @@ DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
 # X servers need all symbols exported
 LDFLAGS+=	-Wl,--export-dynamic
 
+LDFLAGS+=	-pthread
+CFLAGS+=	-pthread
+
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
 
-LDADD+=		-lm
-DPADD+=		${LIBM}
+LDADD+=		-lm -lexecinfo
+DPADD+=		${LIBM} ${LIBEXECINFO}

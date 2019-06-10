@@ -1,12 +1,12 @@
-# $NetBSD: files.fdt,v 1.17 2018/06/20 08:03:55 hkenken Exp $
+# $NetBSD: files.fdt,v 1.17.2.1 2019/06/10 22:05:53 christos Exp $
 
 include	"dev/pckbport/files.pckbport"
 
-device	armfdt { }: bus_space_generic, fdtbus
+device	armfdt { }: bus_space_generic, fdt
 attach	armfdt at root with arm_fdt
 file	arch/arm/fdt/arm_fdt.c			arm_fdt
 
-attach	cpu at cpus with cpu_fdt
+attach	cpu at fdt with cpu_fdt
 file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
 
 device	cpufreqdt
@@ -23,11 +23,14 @@ file	arch/arm/fdt/gtmr_fdt.c			gtmr_fdt
 
 device  gic: mpcorebus
 attach  gic at fdt with gic_fdt
-file    arch/arm/fdt/gic_fdt.c             	gic_fdt
+file    arch/arm/fdt/gic_fdt.c			gic_fdt
+
+attach	gicvthree at fdt with gicv3_fdt
+file	arch/arm/fdt/gicv3_fdt.c		gicv3_fdt
 
 device  l2cc: mpcorebus
 attach  l2cc at fdt with l2cc_fdt
-file    arch/arm/fdt/l2cc_fdt.c             	l2cc_fdt
+file    arch/arm/fdt/l2cc_fdt.c			l2cc_fdt
 
 attach	plcom at fdt with plcom_fdt
 file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
@@ -48,10 +51,20 @@ attach	plrtc at fdt with plrtc_fdt
 file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
 
 attach	psci at fdt with psci_fdt
-file	arch/arm/fdt/psci_fdt.c			psci_fdt
+file	arch/arm/fdt/psci_fdt.c			psci_fdt	needs-flag
+
+# Generic PCI host controller
+device	pcihost: pcibus
+attach	pcihost at fdt with pcihost_fdt
+file	arch/arm/fdt/pcihost_fdt.c		pcihost_fdt
+
+device	armpmu: tprof
+attach	armpmu at fdt with pmu_fdt
+file	arch/arm/fdt/pmu_fdt.c			pmu_fdt
 
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
-# Console parameters
-defparam opt_fdt_arm.h				CONSADDR
+device	acpifdt: acpibus
+attach	acpifdt at fdt with acpi_fdt
+file	arch/arm/fdt/acpi_fdt.c			acpi_fdt

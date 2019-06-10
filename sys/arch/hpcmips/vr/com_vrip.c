@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.22 2012/10/27 17:17:55 chs Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.22.38.1 2019/06/10 22:06:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.22 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.22.38.1 2019/06/10 22:06:18 christos Exp $");
 
 #include "opt_kgdb.h"
 
@@ -181,7 +181,7 @@ com_vrip_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, va->va_addr);
+	com_init_regs(&sc->sc_regs, iot, ioh, va->va_addr);
 
 	sc->enable = NULL; /* XXX: CMU control */
 	sc->disable = NULL;

@@ -15,10 +15,18 @@
 
 #include "common.h"
 
-#ifdef NETBSD_NATIVE_SHA256
-#include <sha2.h>
-#else
-#if defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+// If the function for external SHA-256 is missing, use the internal SHA-256
+// code. Due to how configure works, these defines can only get defined when
+// both a usable header and a type have already been found.
+#if !(defined(HAVE_CC_SHA256_INIT) \
+		|| defined(HAVE_SHA256_INIT) \
+		|| defined(HAVE_SHA256INIT))
+#	define HAVE_INTERNAL_SHA256 1
+#endif
+
+#if defined(HAVE_INTERNAL_SHA256)
+// Nothing
+#elif defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
 #	include <CommonCrypto/CommonDigest.h>
 #elif defined(HAVE_SHA256_H)
 #	include <sys/types.h>
@@ -26,19 +34,9 @@
 #elif defined(HAVE_SHA2_H)
 #	include <sys/types.h>
 #	include <sha2.h>
-#elif defined(HAVE_MINIX_SHA2_H)
-#	include <sys/types.h>
-#	include <minix/sha2.h>
-#endif
 #endif
 
-#if defined(HAVE_CC_SHA256_CTX)
-typedef CC_SHA256_CTX lzma_sha256_state;
-#elif defined(HAVE_SHA256_CTX)
-typedef SHA256_CTX lzma_sha256_state;
-#elif defined(HAVE_SHA2_CTX)
-typedef SHA2_CTX lzma_sha256_state;
-#else
+#if defined(HAVE_INTERNAL_SHA256)
 /// State for the internal SHA-256 implementation
 typedef struct {
 	/// Internal state
@@ -47,9 +45,17 @@ typedef struct {
 	/// Size of the message excluding padding
 	uint64_t size;
 } lzma_sha256_state;
+#elif defined(HAVE_CC_SHA256_CTX)
+typedef CC_SHA256_CTX lzma_sha256_state;
+#elif defined(HAVE_SHA256_CTX)
+typedef SHA256_CTX lzma_sha256_state;
+#elif defined(HAVE_SHA2_CTX)
+typedef SHA2_CTX lzma_sha256_state;
 #endif
 
-#if defined(HAVE_CC_SHA256_INIT)
+#if defined(HAVE_INTERNAL_SHA256)
+// Nothing
+#elif defined(HAVE_CC_SHA256_INIT)
 #	define LZMA_SHA256FUNC(x) CC_SHA256_ ## x
 #elif defined(HAVE_SHA256_INIT)
 #	define LZMA_SHA256FUNC(x) SHA256_ ## x
@@ -84,15 +90,10 @@ typedef struct {
 	union {
 		uint32_t crc32;
 		uint64_t crc64;
-#ifdef NETBSD_NATIVE_SHA256
-		SHA256_CTX sha256;
-#else
 		lzma_sha256_state sha256;
-#endif
 	} state;
 
 } lzma_check_state;
-#endif
 
 
 /// lzma_crc32_table[0] is needed by LZ encoder so we need to keep
@@ -120,14 +121,6 @@ extern void lzma_check_update(lzma_check_state *check, lzma_check type,
 /// Finish the check calculation and store the result to check->buffer.u8.
 extern void lzma_check_finish(lzma_check_state *check, lzma_check type);
 
-#ifdef NETBSD_NATIVE_SHA256
-#define lzma_sha256_init(check)	\
-	SHA256_Init(&(check)->state.sha256)
-#define lzma_sha256_update(buf,size,check) \
-	SHA256_Update(&(check)->state.sha256, buf, size)
-#define lzma_sha256_finish(check) \
-	SHA256_Final((check)->buffer.u8, &(check)->state.sha256)
-#else
 
 #ifndef LZMA_SHA256FUNC
 

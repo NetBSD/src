@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.18 2016/11/10 06:44:35 macallan Exp $	*/
+/*	$NetBSD: pyro.c,v 1.18.16.1 2019/06/10 22:06:47 christos Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.18 2016/11/10 06:44:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.18.16.1 2019/06/10 22:06:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -497,7 +497,7 @@ pyro_bus_map(bus_space_tag_t t, bus_addr_t offset,
 
 	/*
 	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
-	 * out for now until someone can verify wether it works on pyro
+	 * out for now until someone can verify whether it works on pyro
 	 */
 	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
@@ -535,7 +535,7 @@ pyro_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
 
 	/*
 	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
-	 * out for now until someone can verify wether it works on pyro
+	 * out for now until someone can verify whether it works on pyro
 	 */
 	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 

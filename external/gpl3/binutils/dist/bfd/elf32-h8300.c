@@ -26,9 +26,9 @@
 
 static reloc_howto_type *elf32_h8_reloc_type_lookup
   (bfd *abfd, bfd_reloc_code_real_type code);
-static void elf32_h8_info_to_howto
+static bfd_boolean elf32_h8_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
-static void elf32_h8_info_to_howto_rel
+static bfd_boolean elf32_h8_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
 static unsigned long elf32_h8_mach (flagword);
 static void elf32_h8_final_write_processing (bfd *, bfd_boolean);
@@ -284,7 +284,7 @@ elf32_h8_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static void
+static bfd_boolean
 elf32_h8_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
 			Elf_Internal_Rela *elf_reloc)
 {
@@ -296,20 +296,20 @@ elf32_h8_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
     if (h8_elf_howto_table[i].type == r)
       {
 	bfd_reloc->howto = &h8_elf_howto_table[i];
-	return;
+	return TRUE;
       }
-  abort ();
+  /* xgettext:c-format */
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r);
+  bfd_set_error (bfd_error_bad_value);
+  return FALSE;
 }
 
-static void
-elf32_h8_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
+static bfd_boolean
+elf32_h8_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+			    arelent *bfd_reloc ATTRIBUTE_UNUSED,
 			    Elf_Internal_Rela *elf_reloc ATTRIBUTE_UNUSED)
 {
-  unsigned int r;
-
-  abort ();
-  r = ELF32_R_TYPE (elf_reloc->r_info);
-  bfd_reloc->howto = &h8_elf_howto_table[r];
+  return FALSE;
 }
 
 /* Special handling for H8/300 relocs.
@@ -453,7 +453,8 @@ elf32_h8_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       arelent bfd_reloc;
       reloc_howto_type *howto;
 
-      elf32_h8_info_to_howto (input_bfd, &bfd_reloc, rel);
+      if (! elf32_h8_info_to_howto (input_bfd, &bfd_reloc, rel))
+	continue;
       howto = bfd_reloc.howto;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -733,7 +734,8 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
       {
 	arelent bfd_reloc;
 
-	elf32_h8_info_to_howto (abfd, &bfd_reloc, irel);
+	if (! elf32_h8_info_to_howto (abfd, &bfd_reloc, irel))
+	  continue;
       }
       /* Keep track of the previous reloc so that we can delete
 	 some long jumps created by the compiler.  */
@@ -1249,7 +1251,8 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
 			reloc_howto_type *h;
 			bfd_vma last_reloc_size;
 
-			elf32_h8_info_to_howto (abfd, &bfd_reloc, last_reloc);
+			if (! elf32_h8_info_to_howto (abfd, &bfd_reloc, last_reloc))
+			  break;
 			h = bfd_reloc.howto;
 			last_reloc_size = 1 << h->size;
 			if (last_reloc->r_offset + last_reloc_size
@@ -1267,7 +1270,8 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
 			reloc_howto_type *h;
 			bfd_vma next_reloc_size;
 
-			elf32_h8_info_to_howto (abfd, &bfd_reloc, next_reloc);
+			if (! elf32_h8_info_to_howto (abfd, &bfd_reloc, next_reloc))
+			  break;
 			h = bfd_reloc.howto;
 			next_reloc_size = 1 << h->size;
 			if (next_reloc->r_offset + next_reloc_size

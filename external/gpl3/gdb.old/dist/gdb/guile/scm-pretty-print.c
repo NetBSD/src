@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -957,10 +957,10 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 
 enum ext_lang_rc
 gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
-				 struct type *type, const gdb_byte *valaddr,
+				 struct type *type,
 				 LONGEST embedded_offset, CORE_ADDR address,
 				 struct ui_file *stream, int recurse,
-				 const struct value *val,
+				 struct value *val,
 				 const struct value_print_options *options,
 				 const struct language_defn *language)
 {
@@ -973,6 +973,7 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   struct cleanup *cleanups;
   enum ext_lang_rc result = EXT_LANG_RC_NOP;
   enum string_repr_result print_result;
+  const gdb_byte *valaddr = value_contents_for_printing (val);
 
   /* No pretty-printer support for unavailable values.  */
   if (!value_bytes_available (val, embedded_offset, TYPE_LENGTH (type)))
@@ -984,18 +985,7 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   cleanups = make_cleanup (null_cleanup, NULL);
 
   /* Instantiate the printer.  */
-  if (valaddr)
-    valaddr += embedded_offset;
-  value = value_from_contents_and_address (type, valaddr,
-					   address + embedded_offset);
-
-  set_value_component_location (value, val);
-  /* set_value_component_location resets the address, so we may
-     need to set it again.  */
-  if (VALUE_LVAL (value) != lval_internalvar
-      && VALUE_LVAL (value) != lval_internalvar_component
-      && VALUE_LVAL (value) != lval_computed)
-    set_value_address (value, address + embedded_offset);
+  value = value_from_component (val, type, embedded_offset);
 
   val_obj = vlscm_scm_from_value (value);
   if (gdbscm_is_exception (val_obj))

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.11.2.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,14 +26,15 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_tegra.h"
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_tegra.h"
 
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.11.2.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp 
 
 #include <arm/fdt/arm_fdtvar.h>
 
+#include <arm/arm/psci.h>
+#include <arm/fdt/psci_fdtvar.h>
+
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
@@ -64,6 +68,23 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.11 2018/04/01 04:35:04 ryo Exp 
 #define	PLLP_OUT0_FREQ	408000000
 
 void tegra_platform_early_putchar(char);
+
+void
+tegra_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
+
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = c;
+#endif
+}
 
 static const struct pmap_devmap *
 tegra_platform_devmap(void)
@@ -87,25 +108,30 @@ tegra_platform_devmap(void)
 	return devmap;
 }
 
+#if defined(SOC_TEGRA124)
 static void
 tegra124_platform_bootstrap(void)
 {
-	tegra_bootstrap();
-
 #ifdef MULTIPROCESSOR
-	tegra124_mpinit();
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
 #endif
-}
 
+	tegra_bootstrap();
+}
+#endif
+
+#if defined(SOC_TEGRA210)
 static void
 tegra210_platform_bootstrap(void)
 {
+
 	tegra_bootstrap();
 
-#ifdef MULTIPROCESSOR
-	tegra210_mpinit();
+#if defined(MULTIPROCESSOR) && defined(__aarch64__)
+	arm_fdt_cpu_bootstrap();
 #endif
 }
+#endif
 
 static void
 tegra_platform_init_attach_args(struct fdt_attach_args *faa)
@@ -117,23 +143,6 @@ tegra_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_bst = &arm_generic_bs_tag;
 	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
-}
-
-void
-tegra_platform_early_putchar(char c)
-{
-#ifdef CONSADDR
-#define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
-
-	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
-	    (volatile uint32_t *)CONSADDR_VA :
-	    (volatile uint32_t *)CONSADDR;
-
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
-		;
-
-	uartaddr[com_data] = c;
-#endif
 }
 
 static void
@@ -204,28 +213,32 @@ tegra_platform_uart_freq(void)
 	return PLLP_OUT0_FREQ;
 }
 
+#if defined(SOC_TEGRA124)
 static const struct arm_platform tegra124_platform = {
-	.devmap = tegra_platform_devmap,
-	.bootstrap = tegra124_platform_bootstrap,
-	.init_attach_args = tegra_platform_init_attach_args,
-	.early_putchar = tegra_platform_early_putchar,
-	.device_register = tegra_platform_device_register,
-	.reset = tegra_platform_reset,
-	.delay = tegra_platform_delay,
-	.uart_freq = tegra_platform_uart_freq,
+	.ap_devmap = tegra_platform_devmap,
+	.ap_bootstrap = tegra124_platform_bootstrap,
+	.ap_init_attach_args = tegra_platform_init_attach_args,
+	.ap_device_register = tegra_platform_device_register,
+	.ap_reset = tegra_platform_reset,
+	.ap_delay = tegra_platform_delay,
+	.ap_uart_freq = tegra_platform_uart_freq,
+	.ap_mpstart = tegra124_mpstart,
 };
 
 ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
+#endif
 
+#if defined(SOC_TEGRA210)
 static const struct arm_platform tegra210_platform = {
-	.devmap = tegra_platform_devmap,
-	.bootstrap = tegra210_platform_bootstrap,
-	.init_attach_args = tegra_platform_init_attach_args,
-	.early_putchar = tegra_platform_early_putchar,
-	.device_register = tegra_platform_device_register,
-	.reset = tegra_platform_reset,
-	.delay = tegra_platform_delay,
-	.uart_freq = tegra_platform_uart_freq,
+	.ap_devmap = tegra_platform_devmap,
+	.ap_bootstrap = tegra210_platform_bootstrap,
+	.ap_init_attach_args = tegra_platform_init_attach_args,
+	.ap_device_register = tegra_platform_device_register,
+	.ap_reset = tegra_platform_reset,
+	.ap_delay = tegra_platform_delay,
+	.ap_uart_freq = tegra_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
+#endif

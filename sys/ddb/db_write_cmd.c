@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.27 2015/06/06 22:06:05 matt Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.27.18.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.27 2015/06/06 22:06:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.27.18.1 2019/06/10 22:07:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,6 +73,7 @@ db_write_cmd(db_expr_t address, bool have_addr,
 			db_error("q not supported\n");
 			/*NOTREACHED*/
 		}
+		/* FALLTHROUGH */
 	case 'L':
 		size = sizeof(db_expr_t);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.20 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.20.28.1 2019/06/10 22:07:13 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.20 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.20.28.1 2019/06/10 22:07:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,8 @@ static const struct mii_phy_funcs amhphy_funcs = {
 };
 
 static const struct mii_phydesc amhphys[] = {
-	{ MII_OUI_yyAMD,		MII_MODEL_yyAMD_79c901,
-	  MII_STR_yyAMD_79c901 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(yyAMD, 79c901),
+	MII_PHY_END,
 };
 
 static int
@@ -85,9 +82,9 @@ amhphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, amhphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -112,8 +109,8 @@ amhphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -126,15 +123,13 @@ static int
 amhphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -143,14 +138,12 @@ amhphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -158,19 +151,17 @@ amhphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -178,7 +169,7 @@ amhphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -186,18 +177,18 @@ amhphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, ssr;
+	uint16_t bmsr, bmcr, ssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR);
-	ssr = PHY_READ(sc, MII_AMHPHY_SSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_AMHPHY_SSR, &ssr);
 
 	if (ssr & SSR_LS)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -221,9 +212,8 @@ amhphy_status(struct mii_softc *sc)
 		if (ssr & SSR_S) {
 			/*
 			 * This should't really ever happen, since it's
-			 * a 10BASE-T only PHY.  But the bit exists,
-			 * according to the documentation, so we pay
-			 * attention to it.
+			 * a 10BASE-T only PHY. But the bit exists, according
+			 * to the documentation, so we pay attention to it.
 			 */
 			mii->mii_media_active |= IFM_100_TX;
 		} else

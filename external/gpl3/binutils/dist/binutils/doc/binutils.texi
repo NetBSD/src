@@ -34,7 +34,6 @@ section entitled ``GNU Free Documentation License''.
 * c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols.
 * cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt.
 * dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs.
-* nlmconv: (binutils)nlmconv.     Converts object code into an NLM.
 * nm: (binutils)nm.               List symbols from object files.
 * objcopy: (binutils)objcopy.	  Copy and translate object files.
 * objdump: (binutils)objdump.     Display information from object files.
@@ -121,9 +120,6 @@ Demangle encoded C++ symbols (on MS-DOS, this program is named
 @item addr2line
 Convert addresses into file names and line numbers
 
-@item nlmconv
-Convert object code into a Netware Loadable Module
-
 @item windres
 Manipulate Windows resources
 
@@ -151,7 +147,6 @@ in the section entitled ``GNU Free Documentation License''.
 * c++filt::			Filter to demangle encoded C++ symbols
 * cxxfilt: c++filt.             MS-DOS name for c++filt
 * addr2line::			Convert addresses to file and line
-* nlmconv::                     Converts object code into an NLM
 * windmc::			Generator for Windows message resources
 * windres::			Manipulate Windows resources
 * dlltool::			Create files needed to build and use DLLs
@@ -366,9 +361,10 @@ modifier.  In either case it does the same thing.
 @cindex contents of archive
 Display a @emph{table} listing the contents of @var{archive}, or those
 of the files listed in @var{member}@dots{} that are present in the
-archive.  Normally only the member name is shown; if you also want to
-see the modes (permissions), timestamp, owner, group, and size, you can
-request that by also specifying the @samp{v} modifier.
+archive.  Normally only the member name is shown, but if the modifier
+@samp{O} is specified, then the corresponding offset of the member is also
+displayed.  Finally, in order to see the modes (permissions), timestamp,
+owner, group, and size the @samp{v} modifier should be included.
 
 If you do not specify a @var{member}, all files in the archive
 are listed.
@@ -460,6 +456,11 @@ entries in the archive with the same name.  Extract or delete instance
 Preserve the @emph{original} dates of members when extracting them.  If
 you do not specify this modifier, files extracted from the archive
 are stamped with the time of extraction.
+
+@item O
+@cindex offsets of files
+Display member offsets inside the archive. Use together with the @samp{t}
+option.
 
 @item P
 Use the full path name when matching names in the archive.  @sc{gnu}
@@ -802,7 +803,9 @@ linking.
 
 @item B
 @itemx b
-The symbol is in the uninitialized data section (known as BSS).
+The symbol is in the BSS data section.  This section typically
+contains zero-initialized or uninitialized data, although the exact
+behavior is system dependent.
 
 @item C
 The symbol is common.  Common symbols are uninitialized data.  When
@@ -848,7 +851,8 @@ The symbol is in a read only data section.
 
 @item S
 @itemx s
-The symbol is in an uninitialized data section for small objects.
+The symbol is in an uninitialized or zero-initialized data section
+for small objects.
 
 @item T
 @itemx t
@@ -1167,7 +1171,7 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--localize-symbols=}@var{filename}]
         [@option{--globalize-symbols=}@var{filename}]
         [@option{--weaken-symbols=}@var{filename}]
-        [@option{--add-symbol} @var{name}=[@var{section}:]@var{value}[,@var{flags}]
+        [@option{--add-symbol} @var{name}=[@var{section}:]@var{value}[,@var{flags}]]
         [@option{--alt-machine-code=}@var{index}]
         [@option{--prefix-symbols=}@var{string}]
         [@option{--prefix-sections=}@var{string}]
@@ -1872,7 +1876,7 @@ needed if debugging abilities are required.  The suggested procedure
 to create these files is as follows:
 
 @enumerate
-@item Link the executable as normal.  Assuming that is is called
+@item Link the executable as normal.  Assuming that it is called
 @code{foo} then...
 @item Run @code{objcopy --only-keep-debug foo foo.dbg} to
 create a file containing the debugging info.
@@ -2073,7 +2077,7 @@ objdump [@option{-a}|@option{--archive-headers}]
         [@option{-R}|@option{--dynamic-reloc}]
         [@option{-s}|@option{--full-contents}]
         [@option{-W[lLiaprmfFsoRtUuTgAckK]}|
-         @option{--dwarf}[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow-links]
+         @option{--dwarf}[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames-interp,=str,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow-links]]
         [@option{-G}|@option{--stabs}]
         [@option{-t}|@option{--syms}]
         [@option{-T}|@option{--dynamic-syms}]
@@ -2164,9 +2168,9 @@ for more information on demangling.
 
 @item -g
 @itemx --debugging
-Display debugging information.  This attempts to parse STABS and IEEE
+Display debugging information.  This attempts to parse STABS
 debugging format information stored in the file and print it out using
-a C like syntax.  If neither of these formats are found this option
+a C like syntax.  If no STABS debuging was found this option
 falls back on the @option{-W} option to print any DWARF information in
 the file.
 
@@ -2310,7 +2314,7 @@ precision FP instructions, @option{quarkse_em} selects the printing of
 special QuarkSE-EM instructions, @option{fpuda} selects the printing
 of double precision assist instructions, @option{fpus} selects the
 printing of FPU single precision FP instructions, while @option{fpud}
-selects the printing of FPU souble precision FP instructions.
+selects the printing of FPU double precision FP instructions.
 Additionally, one can choose to have all the immediates printed in
 hexadecimal using @option{hex}.  By default, the short immediates are
 printed using the decimal representation, while the long immediate
@@ -2343,6 +2347,11 @@ disassembler to interpret all instructions as Thumb instructions by
 using the switch @option{--disassembler-options=force-thumb}.  This can be
 useful when attempting to disassemble thumb code produced by other
 compilers.
+
+For AArch64 targets this switch can be used to set whether instructions are
+disassembled as the most general instruction using the @option{-M no-aliases}
+option or whether instruction notes should be generated as comments in the
+disasssembly using @option{-M notes}.
 
 For the x86, some of the options duplicate functions of the @option{-m}
 switch, but allow finer grained control.  Multiple selections from the
@@ -3317,7 +3326,7 @@ needed if debugging abilities are required.  The suggested procedure
 to create these files is as follows:
 
 @enumerate
-@item Link the executable as normal.  Assuming that is is called
+@item Link the executable as normal.  Assuming that it is called
 @code{foo} then...
 @item Run @code{objcopy --only-keep-debug foo foo.dbg} to
 create a file containing the debugging info.
@@ -3691,111 +3700,6 @@ prefixed with @samp{(inlined by)}.
 @ignore
 @c man begin SEEALSO addr2line
 Info entries for @file{binutils}.
-@c man end
-@end ignore
-
-@node nlmconv
-@chapter nlmconv
-
-@command{nlmconv} converts a relocatable object file into a NetWare
-Loadable Module.
-
-@ignore
-@command{nlmconv} currently works with @samp{i386} object
-files in @code{coff}, @sc{elf}, or @code{a.out} format, and @sc{SPARC}
-object files in @sc{elf}, or @code{a.out} format@footnote{
-@command{nlmconv} should work with any @samp{i386} or @sc{sparc} object
-format in the Binary File Descriptor library.  It has only been tested
-with the above formats.}.
-@end ignore
-
-@quotation
-@emph{Warning:} @command{nlmconv} is not always built as part of the binary
-utilities, since it is only useful for NLM targets.
-@end quotation
-
-@c man title nlmconv converts object code into an NLM.
-
-@smallexample
-@c man begin SYNOPSIS nlmconv
-nlmconv [@option{-I} @var{bfdname}|@option{--input-target=}@var{bfdname}]
-        [@option{-O} @var{bfdname}|@option{--output-target=}@var{bfdname}]
-        [@option{-T} @var{headerfile}|@option{--header-file=}@var{headerfile}]
-        [@option{-d}|@option{--debug}] [@option{-l} @var{linker}|@option{--linker=}@var{linker}]
-        [@option{-h}|@option{--help}] [@option{-V}|@option{--version}]
-        @var{infile} @var{outfile}
-@c man end
-@end smallexample
-
-@c man begin DESCRIPTION nlmconv
-
-@command{nlmconv} converts the relocatable @samp{i386} object file
-@var{infile} into the NetWare Loadable Module @var{outfile}, optionally
-reading @var{headerfile} for NLM header information.  For instructions
-on writing the NLM command file language used in header files, see the
-@samp{linkers} section, @samp{NLMLINK} in particular, of the @cite{NLM
-Development and Tools Overview}, which is part of the NLM Software
-Developer's Kit (``NLM SDK''), available from Novell, Inc.
-@command{nlmconv} uses the @sc{gnu} Binary File Descriptor library to read
-@var{infile};
-@ifclear man
-see @ref{BFD,,BFD,ld.info,Using LD}, for more information.
-@end ifclear
-
-@command{nlmconv} can perform a link step.  In other words, you can list
-more than one object file for input if you list them in the definitions
-file (rather than simply specifying one input file on the command line).
-In this case, @command{nlmconv} calls the linker for you.
-
-@c man end
-
-@c man begin OPTIONS nlmconv
-
-@table @env
-@item -I @var{bfdname}
-@itemx --input-target=@var{bfdname}
-Object format of the input file.  @command{nlmconv} can usually determine
-the format of a given file (so no default is necessary).
-@xref{Target Selection}, for more information.
-
-@item -O @var{bfdname}
-@itemx --output-target=@var{bfdname}
-Object format of the output file.  @command{nlmconv} infers the output
-format based on the input format, e.g. for a @samp{i386} input file the
-output format is @samp{nlm32-i386}.
-@xref{Target Selection}, for more information.
-
-@item -T @var{headerfile}
-@itemx --header-file=@var{headerfile}
-Reads @var{headerfile} for NLM header information.  For instructions on
-writing the NLM command file language used in header files, see@ see the
-@samp{linkers} section, of the @cite{NLM Development and Tools
-Overview}, which is part of the NLM Software Developer's Kit, available
-from Novell, Inc.
-
-@item -d
-@itemx --debug
-Displays (on standard error) the linker command line used by @command{nlmconv}.
-
-@item -l @var{linker}
-@itemx --linker=@var{linker}
-Use @var{linker} for any linking.  @var{linker} can be an absolute or a
-relative pathname.
-
-@item -h
-@itemx --help
-Prints a usage summary.
-
-@item -V
-@itemx --version
-Prints the version number for @command{nlmconv}.
-@end table
-
-@c man end
-
-@ignore
-@c man begin SEEALSO nlmconv
-the Info entries for @file{binutils}.
 @c man end
 @end ignore
 

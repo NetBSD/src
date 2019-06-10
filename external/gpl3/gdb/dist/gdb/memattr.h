@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,6 @@
 
 #ifndef MEMATTR_H
 #define MEMATTR_H
-
-#include "vec.h"
 
 enum mem_access_mode
 {
@@ -54,27 +52,62 @@ enum mem_access_width
  
 struct mem_attrib 
 {
-  /* read/write, read-only, or write-only */
-  enum mem_access_mode mode;
+  static mem_attrib unknown ()
+  {
+    mem_attrib attrib;
 
-  enum mem_access_width width;
+    attrib.mode = MEM_NONE;
+
+    return attrib;
+  }
+
+  /* read/write, read-only, or write-only */
+  enum mem_access_mode mode = MEM_RW;
+
+  enum mem_access_width width = MEM_WIDTH_UNSPECIFIED;
 
   /* enables hardware breakpoints */
-  int hwbreak;
+  int hwbreak = 0;
   
   /* enables host-side caching of memory region data */
-  int cache;
+  int cache = 0;
   
   /* Enables memory verification.  After a write, memory is re-read
      to verify that the write was successful.  */
-  int verify;
+  int verify = 0;
 
   /* Block size.  Only valid if mode == MEM_FLASH.  */
-  int blocksize;
+  int blocksize = -1;
 };
 
 struct mem_region 
 {
+  /* Create a mem_region with default attributes.  */
+
+  mem_region (CORE_ADDR lo_, CORE_ADDR hi_)
+    : lo (lo_), hi (hi_)
+  {}
+
+  /* Create a mem_region with access mode MODE_, but otherwise default
+     attributes.  */
+
+  mem_region (CORE_ADDR lo_, CORE_ADDR hi_, mem_access_mode mode_)
+    : lo (lo_), hi (hi_)
+  {
+    attrib.mode = mode_;
+  }
+
+  /* Create a mem_region with attributes ATTRIB_.  */
+
+  mem_region (CORE_ADDR lo_, CORE_ADDR hi_, const mem_attrib &attrib_)
+    : lo (lo_), hi (hi_), attrib (attrib_)
+  {}
+
+  bool operator< (const mem_region &other) const
+  {
+    return this->lo < other.lo;
+  }
+
   /* Lowest address in the region.  */
   CORE_ADDR lo;
   /* Address past the highest address of the region. 
@@ -82,28 +115,18 @@ struct mem_region
   CORE_ADDR hi;
 
   /* Item number of this memory region.  */
-  int number;
+  int number = 0;
 
-  /* Status of this memory region (enabled if non-zero, otherwise
+  /* Status of this memory region (enabled if true, otherwise
      disabled).  */
-  int enabled_p;
+  bool enabled_p = true;
 
   /* Attributes for this region.  */
-  struct mem_attrib attrib;
+  mem_attrib attrib;
 };
 
-/* Declare a vector type for a group of mem_region structures.  The
-   typedef is necessary because vec.h can not handle a struct tag.
-   Except during construction, these vectors are kept sorted.  */
-typedef struct mem_region mem_region_s;
-DEF_VEC_O(mem_region_s);
-
-extern struct mem_region *lookup_mem_region(CORE_ADDR);
+extern struct mem_region *lookup_mem_region (CORE_ADDR);
 
 void invalidate_target_mem_regions (void);
-
-void mem_region_init (struct mem_region *);
-
-int mem_region_cmp (const void *, const void *);
 
 #endif	/* MEMATTR_H */

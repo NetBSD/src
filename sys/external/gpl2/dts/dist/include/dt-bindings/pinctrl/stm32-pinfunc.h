@@ -1,4 +1,4 @@
-/*	$NetBSD: stm32-pinfunc.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: stm32-pinfunc.h,v 1.1.1.2.2.1 2019/06/10 22:08:57 christos Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /*

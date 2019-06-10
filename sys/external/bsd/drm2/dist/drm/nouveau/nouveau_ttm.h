@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_ttm.h,v 1.2.18.1 2019/06/10 22:08:07 christos Exp $	*/
+
 #ifndef __NOUVEAU_TTM_H__
 #define __NOUVEAU_TTM_H__
 

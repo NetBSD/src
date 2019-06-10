@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.157 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: fd.c,v 1.157.18.1 2019/06/10 22:06:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.157 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.157.18.1 2019/06/10 22:06:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -225,7 +225,7 @@ CFATTACH_DECL_NEW(fdc_mainbus, sizeof(struct fdc_softc),
 CFATTACH_DECL_NEW(fdc_obio, sizeof(struct fdc_softc),
     fdcmatch_obio, fdcattach_obio, NULL, NULL);
 
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -839,7 +839,7 @@ bool fdsuspend(device_t self, const pmf_qual_t *qual)
 }
 
 
-inline struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
@@ -1589,8 +1589,8 @@ loop:
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FD_BSIZE(fd));
-		nblks = min(nblks, FDC_MAXIOSIZE / FD_BSIZE(fd));
+		nblks = uimin(nblks, fd->sc_bcount / FD_BSIZE(fd));
+		nblks = uimin(nblks, FDC_MAXIOSIZE / FD_BSIZE(fd));
 		fd->sc_nblks = nblks;
 		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FD_BSIZE(fd);
 		head = sec / type->sectrac;

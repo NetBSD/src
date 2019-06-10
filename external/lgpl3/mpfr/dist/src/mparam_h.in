@@ -1,6 +1,6 @@
 /* Various Thresholds of MPFR, not exported.  -*- mode: C -*-
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 
 This file is part of the GNU MPFR Library.
 
@@ -23,11 +23,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # error "MPFR Internal not included"
 #endif
 
+/* Threshold when testing coverage */
+#if defined(MPFR_TUNE_COVERAGE)
+#define MPFR_TUNE_CASE "src/generic/coverage/mparam.h"
+#include "generic/coverage/mparam.h"
+
 /* Note: the different macros used here are those defined by gcc,
    for example with gcc -dM -E -xc /dev/null
    As of gcc 4.2, you can also use: -march=native or -mtune=native */
 
-#if defined (__tune_pentium4__) /* Threshold for Pentium 4 */
+#elif defined (__tune_pentium4__) /* Threshold for Pentium 4 */
 #define MPFR_TUNE_CASE "src/x86_64/pentium4/mparam.h"
 #include "x86_64/pentium4/mparam.h"
 
@@ -40,7 +45,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_TUNE_CASE "src/x86/core2/mparam.h"
 #include "x86/core2/mparam.h"
 
-#elif defined (__tune_k8__) /* Threshold for AMD 64 */
+#elif defined (__tune_k8__) && defined (__amd64__) /* AMD K8 */
 #define MPFR_TUNE_CASE "src/amd/k8/mparam.h"
 #include "amd/k8/mparam.h"
 
@@ -78,6 +83,10 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #elif defined (__hppa__) /* Threshold for HPPA */
 #define MPFR_TUNE_CASE "src/hppa/mparam.h"
 #include "hppa/mparam.h"
+
+#elif defined (__mips__) /* MIPS */
+#define MPFR_TUNE_CASE "src/mips/mparam.h"
+#include "mips/mparam.h"
 
 #else
 #define MPFR_TUNE_CASE "default"

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.28 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: GENERIC.common,v 1.28.2.1 2019/06/10 22:06:04 christos Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -15,6 +15,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 options 	PMAPCOUNTERS
+options 	BUSDMA_COUNTERS
 
 # Architecture options
 
@@ -106,13 +107,11 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1
@@ -134,6 +133,7 @@ pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	vlan			# IEEE 802.1q encapsulation
@@ -149,25 +149,11 @@ pseudo-device	npf			# NPF packet filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM
-#pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
-# Veriexec
-#
-# a pseudo device needed for veriexec
-pseudo-device   veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard

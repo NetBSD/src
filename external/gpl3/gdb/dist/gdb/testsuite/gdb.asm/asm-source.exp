@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -294,7 +294,8 @@ gdb_load ${binfile}
 #
 
 if ![runto_main] then {
-    gdb_suppress_tests
+    fail "can't run to main"
+    return 0
 }
 
 # Execute the `f' command and see if the result includes source info.
@@ -435,7 +436,7 @@ gdb_test "next" "$line_foo2_leave\[ \t\]+gdbasm_leave" "next over foo3"
 # Like "finish", "return" command also can return to the caller
 # line again or the statement after, depending on the architecture.
 gdb_test_multiple "return" "return from foo2" {
-    -re "Make (foo2|selected stack frame) return now\?.*" {
+    -re "Make (foo2|selected stack frame) return now\\? .y or n. " {
         send_gdb "y\n"
         exp_continue
     }
@@ -465,14 +466,14 @@ proc test_dis { command var } {
 }
 
 # See if we can look at a global variable, three ways
-gdb_test "print globalvar" ".* = 11" "look at global variable"
+gdb_test "print (int) globalvar" ".* = 11" "look at global variable"
 test_dis "x/i &globalvar" "globalvar"
-test_dis "disassem &globalvar, &globalvar+1" "globalvar"
+test_dis "disassem &globalvar, (int *) &globalvar+1" "globalvar"
 
 # See if we can look at a static variable, three ways
-gdb_test "print staticvar" ".* = 5" "look at static variable"
+gdb_test "print (int) staticvar" ".* = 5" "look at static variable"
 test_dis "x/i &staticvar" "staticvar"
-test_dis "disassem &staticvar, &staticvar+1" "staticvar"
+test_dis "disassem &staticvar, (int *) &staticvar+1" "staticvar"
 
 # See if we can look at a static function
 gdb_test "disassem foostatic" ".*<\\+0>:.*End of assembler dump." \

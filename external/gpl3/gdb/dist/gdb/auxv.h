@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,8 +35,7 @@ extern int default_auxv_parse (struct target_ops *ops, gdb_byte **readptr,
    Return 0 if *READPTR is already at the end of the buffer.
    Return -1 if there is insufficient buffer for a whole entry.
    Return 1 if an entry was read into *TYPEP and *VALP.  */
-extern int target_auxv_parse (struct target_ops *ops,
-			      gdb_byte **readptr, gdb_byte *endptr,
+extern int target_auxv_parse (gdb_byte **readptr, gdb_byte *endptr,
 			      CORE_ADDR *typep, CORE_ADDR *valp);
 
 /* Extract the auxiliary vector entry with a_type matching MATCH.

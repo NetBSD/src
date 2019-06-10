@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.4.16.1 2019/06/10 21:51:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: DLLMain.c,v 1.7 2007/06/18 23:47:49 tbox Exp  */
+/* Id */
 
 #include <windows.h>
 #include <stdio.h>

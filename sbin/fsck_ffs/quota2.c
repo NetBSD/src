@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.c,v 1.6 2012/08/26 09:34:42 dholland Exp $ */
+/* $NetBSD: quota2.c,v 1.6.32.1 2019/06/10 22:05:33 christos Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -259,6 +259,7 @@ quota2_check_inode(int type)
 			break;
 		case DSTATE:
 			freei = 1;
+			/* FALLTHROUGH */
 		case DFOUND:
 			pwarn("%s QUOTA INODE %" PRIu64 " IS A DIRECTORY",
 			    capstrtype, sblock->fs_quotafile[type]);

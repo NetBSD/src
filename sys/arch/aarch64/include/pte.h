@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.3 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: pte.h,v 1.3.2.1 2019/06/10 22:05:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -72,6 +72,10 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define LX_BLKPAG_APUSER	__BIT(6)
 #define LX_BLKPAG_NS		__BIT(5)
 #define LX_BLKPAG_ATTR_INDX	__BITS(4,2)	/* refer MAIR_EL1 attr<n> */
+#define  LX_BLKPAG_ATTR_INDX_0	__SHIFTIN(0,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_1	__SHIFTIN(1,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_2	__SHIFTIN(2,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_3	__SHIFTIN(3,LX_BLKPAG_ATTR_INDX)
 #define LX_TYPE			__BIT(1)
 #define LX_TYPE_BLK		__SHIFTIN(0, LX_TYPE)
 #define LX_TYPE_TBL		__SHIFTIN(1, LX_TYPE)
@@ -181,6 +185,8 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 /* TTBR0_EL1, TTBR1_EL1 - Translation Table Base Register */
 #define TTBR_ASID		__BITS(63,48)
 #define TTBR_BADDR		__BITS(47,0)
+
+#define TTBR_SEL_VA		__BIT(63)	/* which TTBR is selected */
 
 
 #elif defined(__arm__)

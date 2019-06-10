@@ -1,6 +1,6 @@
 /* Native support for QNX Neutrino version 6.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This code was donated by QNX Software Systems Ltd.
 
@@ -19,11 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NM_NTO_H
-#define NM_NTO_H
+#ifndef CONFIG_NM_NTO_H
+#define CONFIG_NM_NTO_H
 
 /* Setup the valid realtime signal range.  */
 #define REALTIME_LO 41
 #define REALTIME_HI 56
 
-#endif /* NM_NTO_H */
+#endif /* CONFIG_NM_NTO_H */

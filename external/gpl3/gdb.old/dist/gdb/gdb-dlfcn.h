@@ -1,6 +1,6 @@
 /* Platform independent shared object routines for GDB.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,26 +20,28 @@
 #ifndef GDB_DLFCN_H
 #define GDB_DLFCN_H
 
+/* A deleter that closes an open dynamic library.  */
+
+struct dlclose_deleter
+{
+  void operator() (void *handle) const;
+};
+
+/* A unique pointer that points to a dynamic library.  */
+
+typedef std::unique_ptr<void, dlclose_deleter> gdb_dlhandle_up;
+
 /* Load the dynamic library file named FILENAME, and return a handle
    for that dynamic library.  Return NULL if the loading fails for any
    reason.  */
 
-void *gdb_dlopen (const char *filename);
+gdb_dlhandle_up gdb_dlopen (const char *filename);
 
 /* Return the address of the symbol named SYMBOL inside the shared
    library whose handle is HANDLE.  Return NULL when the symbol could
    not be found.  */
 
-void *gdb_dlsym (void *handle, const char *symbol);
-
-/* Install a cleanup routine which closes the handle HANDLE.  */
-
-struct cleanup *make_cleanup_dlclose (void *handle);
-
-/* Cleanup the shared object pointed to by HANDLE. Return 0 on success
-   and nonzero on failure.  */
-
-int gdb_dlclose (void *handle);
+void *gdb_dlsym (const gdb_dlhandle_up &handle, const char *symbol);
 
 /* Return non-zero if the dynamic library functions are available on
    this platform.  */

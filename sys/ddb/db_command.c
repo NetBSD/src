@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp $	*/
+/*	$NetBSD: db_command.c,v 1.153.2.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153.2.1 2019/06/10 22:07:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -89,9 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153 2018/03/19 08:41:21 ozaki-r Exp
 #include <sys/buf.h>
 #include <sys/module.h>
 #include <sys/kernhist.h>
-
-/*include queue macros*/
+#include <sys/socketvar.h>
 #include <sys/queue.h>
+
+#include <dev/cons.h>
 
 #include <ddb/ddb.h>
 
@@ -203,6 +204,7 @@ static void	db_show_all_pages(db_expr_t, bool, db_expr_t, const char *);
 static void	db_pool_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_reboot_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sifting_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_socket_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -257,6 +259,7 @@ static const struct db_command db_show_cmds[] = {
 	    "Print statistics of locks", NULL, NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
 	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
@@ -539,7 +542,14 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 	return ENOENT;
 }
 
-/* This function is called from machine trap code. */
+#ifndef _KERNEL
+#define	cnpollc(c)	__nothing
+#endif
+
+/*
+ * This function is called via db_trap() or directly from
+ * machine trap code.
+ */
 void
 db_command_loop(void)
 {
@@ -576,7 +586,9 @@ db_command_loop(void)
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
+		cnpollc(1);
 		(void) db_read_line();
+		cnpollc(0);
 		db_command(&db_last_command);
 	}
 
@@ -1211,6 +1223,17 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 #endif
 }
 
+/*ARGSUSED */
+static void
+db_socket_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	socket_print(modif, db_printf);
+#endif
+}
+
 #ifdef KERNHIST
 /*ARGSUSED*/
 static void
@@ -1218,7 +1241,7 @@ db_kernhist_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	kernhist_print((void *)(uintptr_t)addr, db_printf);
+	kernhist_print((void *)(uintptr_t)addr, count, modif, db_printf);
 }
 #endif
 
@@ -1338,7 +1361,11 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	 * called from cpu_reboot.
 	 */
 	db_recover = 0;
+	/* Avoid all mutex errors */
+	lockdebug_dismiss();
 	panicstr = "reboot forced via kernel debugger";
+	/* Make it possible to break into the debugger again */
+	spl0();
 	cpu_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
 	db_printf("This command can only be used in-kernel.\n");

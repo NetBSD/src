@@ -1,5 +1,5 @@
 /* SuperH SH64-specific support for 64-bit ELF
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1432,7 +1432,6 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
   Elf_Internal_Rela *rel, *relend;
-  bfd *dynobj;
   bfd_vma *local_got_offsets;
   asection *sgot;
   asection *sgotplt;
@@ -1442,12 +1441,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
-  dynobj = elf_hash_table (info)->dynobj;
   local_got_offsets = elf_local_got_offsets (input_bfd);
 
-  sgot = NULL;
-  sgotplt = NULL;
-  splt = NULL;
   sreloc = NULL;
 
   rel = relocs;
@@ -1539,7 +1534,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	      if (howto->rightshift || howto->src_mask != 0xffffffff)
 		{
-		  (*_bfd_error_handler)
+		  _bfd_error_handler
+		    /* xgettext:c-format */
 		    (_("%B(%A+0x%lx): %s relocation against SEC_MERGE section"),
 		     input_bfd, input_section,
 		     (long) rel->r_offset, howto->name);
@@ -1635,7 +1631,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 						    rel->r_offset)
 			   != (bfd_vma) -1))
 		{
-		  (*_bfd_error_handler)
+		  _bfd_error_handler
+		    /* xgettext:c-format */
 		    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 		     input_bfd,
 		     input_section,
@@ -1678,9 +1675,11 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       if (dropped != 0)
 	{
-	  (*_bfd_error_handler)
-	    (_("%s: error: unaligned relocation type %d at %08x reloc %08x\n"),
-	     bfd_get_filename (input_bfd), (int)r_type, (unsigned)rel->r_offset, (unsigned)relocation);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: error: unaligned relocation type %d at %08x reloc %08x\n"),
+	     input_bfd, (int) r_type, (unsigned) rel->r_offset,
+	     (unsigned) relocation);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -1791,11 +1790,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	  /* Relocation is to the entry for this symbol in the global
 	     offset table extension for the procedure linkage table.  */
-	  if (sgotplt == NULL)
-	    {
-	      sgotplt = bfd_get_linker_section (dynobj, ".got.plt");
-	      BFD_ASSERT (sgotplt != NULL);
-	    }
+	  sgotplt = elf_hash_table (info)->sgotplt;
+	  BFD_ASSERT (sgotplt != NULL);
 
 	  relocation = (sgotplt->output_offset
 			+ ((h->plt.offset / elf_sh64_sizeof_plt (info)
@@ -1814,11 +1810,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	case R_SH_GOT10BY8:
 	  /* Relocation is to the entry for this symbol in the global
 	     offset table.  */
-	  if (sgot == NULL)
-	    {
-	      sgot = bfd_get_linker_section (dynobj, ".got");
-	      BFD_ASSERT (sgot != NULL);
-	    }
+	  sgot = elf_hash_table (info)->sgot;
+	  BFD_ASSERT (sgot != NULL);
 
 	  if (h != NULL)
 	    {
@@ -1910,7 +1903,7 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		      Elf_Internal_Rela outrel;
 		      bfd_byte *loc;
 
-		      s = bfd_get_linker_section (dynobj, ".rela.got");
+		      s = elf_hash_table (info)->srelgot;
 		      BFD_ASSERT (s != NULL);
 
 		      outrel.r_offset = (sgot->output_section->vma
@@ -1943,11 +1936,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Relocation is relative to the start of the global offset
 	     table.  */
 
-	  if (sgot == NULL)
-	    {
-	      sgot = bfd_get_linker_section (dynobj, ".got");
-	      BFD_ASSERT (sgot != NULL);
-	    }
+	  sgot = elf_hash_table (info)->sgot;
+	  BFD_ASSERT (sgot != NULL);
 
 	  /* Note that sgot->output_offset is not involved in this
 	     calculation.  We always want the start of .got.  If we
@@ -1968,11 +1958,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	case R_SH_GOTPC_HI16:
 	  /* Use global offset table as symbol value.  */
 
-	  if (sgot == NULL)
-	    {
-	      sgot = bfd_get_linker_section (dynobj, ".got");
-	      BFD_ASSERT (sgot != NULL);
-	    }
+	  sgot = elf_hash_table (info)->sgot;
+	  BFD_ASSERT (sgot != NULL);
 
 	  relocation = sgot->output_section->vma;
 
@@ -2006,11 +1993,8 @@ sh_elf64_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      goto final_link_relocate;
 	    }
 
-	  if (splt == NULL)
-	    {
-	      splt = bfd_get_linker_section (dynobj, ".plt");
-	      BFD_ASSERT (splt != NULL);
-	    }
+	  splt = elf_hash_table (info)->splt;
+	  BFD_ASSERT (splt != NULL);
 
 	  relocation = (splt->output_section->vma
 			+ splt->output_offset
@@ -2271,11 +2255,12 @@ sh_elf64_copy_private_data (bfd *ibfd, bfd *obfd)
 }
 
 static bfd_boolean
-sh_elf64_merge_private_data (bfd *ibfd, bfd *obfd)
+sh_elf64_merge_private_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags, new_flags;
 
-  if (! _bfd_generic_verify_endian_match (ibfd, obfd))
+  if (! _bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
@@ -2288,15 +2273,17 @@ sh_elf64_merge_private_data (bfd *ibfd, bfd *obfd)
 
       if (bfd_get_arch_size (ibfd) == 32
 	  && bfd_get_arch_size (obfd) == 64)
-	msg = _("%s: compiled as 32-bit object and %s is 64-bit");
+	/* xgettext:c-format */
+	msg = _("%B: compiled as 32-bit object and %B is 64-bit");
       else if (bfd_get_arch_size (ibfd) == 64
 	       && bfd_get_arch_size (obfd) == 32)
-	msg = _("%s: compiled as 64-bit object and %s is 32-bit");
+	/* xgettext:c-format */
+	msg = _("%B: compiled as 64-bit object and %B is 32-bit");
       else
-	msg = _("%s: object size does not match that of target %s");
+	/* xgettext:c-format */
+	msg = _("%B: object size does not match that of target %B");
 
-      (*_bfd_error_handler) (msg, bfd_get_filename (ibfd),
-			     bfd_get_filename (obfd));
+      _bfd_error_handler (msg, ibfd, obfd);
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
     }
@@ -2314,9 +2301,8 @@ sh_elf64_merge_private_data (bfd *ibfd, bfd *obfd)
      here as things change.  */
   else if ((new_flags & EF_SH_MACH_MASK) != EF_SH5)
     {
-      (*_bfd_error_handler)
-	("%s: does not use the SH64 64-bit ABI as previous modules do",
-	 bfd_get_filename (ibfd));
+      _bfd_error_handler
+	("%B: does not use the SH64 64-bit ABI as previous modules do", ibfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
     }
@@ -2369,8 +2355,6 @@ sh_elf64_check_relocs (bfd *abfd, struct bfd_link_info *info,
   asection *srelgot;
   asection *sreloc;
 
-  sgot = NULL;
-  srelgot = NULL;
   sreloc = NULL;
 
   if (bfd_link_relocatable (info))
@@ -2465,29 +2449,9 @@ sh_elf64_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_SH_GOT10BY8:
 	  /* This symbol requires a global offset table entry.  */
 
-	  if (sgot == NULL)
-	    {
-	      sgot = bfd_get_linker_section (dynobj, ".got");
-	      BFD_ASSERT (sgot != NULL);
-	    }
-
-	  if (srelgot == NULL
-	      && (h != NULL || bfd_link_pic (info)))
-	    {
-	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
-	      if (srelgot == NULL)
-		{
-		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				    | SEC_READONLY);
-		  srelgot = bfd_make_section_anyway_with_flags (dynobj,
-								".rela.got",
-								flags);
-		  if (srelgot == NULL
-		      || ! bfd_set_section_alignment (dynobj, srelgot, 2))
-		    return FALSE;
-		}
-	    }
+	  sgot = elf_hash_table (info)->sgot;
+	  srelgot = elf_hash_table (info)->srelgot;
+	  BFD_ASSERT (sgot != NULL && srelgot != NULL);
 
 	  if (h != NULL)
 	    {
@@ -2808,9 +2772,8 @@ sh64_elf64_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	      && h->root.type != bfd_link_hash_indirect))
 	{
 	  /* Make sure we don't get confused on invalid input.  */
-	  (*_bfd_error_handler)
-	    (_("%s: encountered datalabel symbol in input"),
-	     bfd_get_filename (abfd));
+	  _bfd_error_handler
+	    (_("%B: encountered datalabel symbol in input"), abfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -3260,7 +3223,7 @@ sh64_elf64_adjust_dynamic_symbol (struct bfd_link_info *info,
 	    return FALSE;
 	}
 
-      s = bfd_get_linker_section (dynobj, ".plt");
+      s = elf_hash_table (info)->splt;
       BFD_ASSERT (s != NULL);
 
       /* If this is the first .plt entry, make room for the special
@@ -3288,13 +3251,13 @@ sh64_elf64_adjust_dynamic_symbol (struct bfd_link_info *info,
       /* We also need to make an entry in the .got.plt section, which
 	 will be placed in the .got section by the linker script.  */
 
-      s = bfd_get_linker_section (dynobj, ".got.plt");
+      s = elf_hash_table (info)->sgotplt;
       BFD_ASSERT (s != NULL);
       s->size += 8;
 
       /* We also need to make an entry in the .rela.plt section.  */
 
-      s = bfd_get_linker_section (dynobj, ".rela.plt");
+      s = elf_hash_table (info)->srelplt;
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf64_External_Rela);
 
@@ -3414,7 +3377,7 @@ sh64_elf64_size_dynamic_sections (bfd *output_bfd,
 	 not actually use these entries.  Reset the size of .rela.got,
 	 which will cause it to get stripped from the output file
 	 below.  */
-      s = bfd_get_linker_section (dynobj, ".rela.got");
+      s = elf_hash_table (info)->srelgot;
       if (s != NULL)
 	s->size = 0;
     }
@@ -3583,9 +3546,9 @@ sh64_elf64_finish_dynamic_symbol (bfd *output_bfd,
 
       BFD_ASSERT (h->dynindx != -1);
 
-      splt = bfd_get_linker_section (dynobj, ".plt");
-      sgot = bfd_get_linker_section (dynobj, ".got.plt");
-      srel = bfd_get_linker_section (dynobj, ".rela.plt");
+      splt = elf_hash_table (info)->splt;
+      sgot = elf_hash_table (info)->sgotplt;
+      srel = elf_hash_table (info)->srelplt;
       BFD_ASSERT (splt != NULL && sgot != NULL && srel != NULL);
 
       /* Get the index in the procedure linkage table which
@@ -3686,8 +3649,8 @@ sh64_elf64_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbol has an entry in the global offset table.  Set it
 	 up.  */
 
-      sgot = bfd_get_linker_section (dynobj, ".got");
-      srel = bfd_get_linker_section (dynobj, ".rela.got");
+      sgot = elf_hash_table (info)->sgot;
+      srel = elf_hash_table (info)->srelgot;
       BFD_ASSERT (sgot != NULL && srel != NULL);
 
       rel.r_offset = (sgot->output_section->vma
@@ -3765,7 +3728,7 @@ sh64_elf64_finish_dynamic_sections (bfd *output_bfd,
 
   dynobj = elf_hash_table (info)->dynobj;
 
-  sgot = bfd_get_linker_section (dynobj, ".got.plt");
+  sgot = elf_hash_table (info)->sgotplt;
   BFD_ASSERT (sgot != NULL);
   sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
@@ -3812,43 +3775,26 @@ sh64_elf64_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got.plt";
+	      s = elf_hash_table (info)->sgotplt;
 	      goto get_vma;
 
 	    case DT_JMPREL:
-	      name = ".rela.plt";
+	      s = elf_hash_table (info)->srelplt;
 	    get_vma:
-	      s = bfd_get_linker_section (dynobj, name);
 	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
+	      s = elf_hash_table (info)->srelplt;
 	      dyn.d_un.d_val = s->size;
-	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
-	      break;
-
-	    case DT_RELASZ:
-	      /* My reading of the SVR4 ABI indicates that the
-		 procedure linkage table relocs (DT_JMPREL) should be
-		 included in the overall relocs (DT_RELA).  This is
-		 what Solaris does.  However, UnixWare can not handle
-		 that case.  Therefore, we override the DT_RELASZ entry
-		 here to make it not include the JMPREL relocs.  Since
-		 the linker script arranges for .rela.plt to follow all
-		 other relocation sections, we don't have to worry
-		 about changing the DT_RELA entry.  */
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
-	      if (s != NULL)
-		dyn.d_un.d_val -= s->size;
 	      bfd_elf64_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }
 	}
 
       /* Fill in the first entry in the procedure linkage table.  */
-      splt = bfd_get_linker_section (dynobj, ".plt");
+      splt = elf_hash_table (info)->splt;
       if (splt && splt->size > 0)
 	{
 	  if (bfd_link_pic (info))
@@ -3996,6 +3942,7 @@ static const struct bfd_elf_special_section sh64_elf64_special_sections[]=
 #define elf_backend_plt_readonly	1
 #define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	24
+#define elf_backend_dtrel_excludes_plt	1
 
 #include "elf64-target.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.66 2017/05/23 03:18:40 nonaka Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.66.10.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.66 2017/05/23 03:18:40 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.66.10.1 2019/06/10 22:06:54 christos Exp $");
 
 #include "acpica.h"
 #include "lapic.h"

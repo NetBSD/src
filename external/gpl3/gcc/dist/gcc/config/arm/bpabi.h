@@ -1,5 +1,5 @@
 /* Configuration file for ARM BPABI targets.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC   
 
    This file is part of GCC.
@@ -79,8 +79,10 @@
    |mcpu=cortex-a57.cortex-a53				\
    |mcpu=cortex-a72					\
    |mcpu=cortex-a72.cortex-a53				\
+   |mcpu=cortex-a73					\
+   |mcpu=cortex-a73.cortex-a35				\
+   |mcpu=cortex-a73.cortex-a53				\
    |mcpu=exynos-m1                                      \
-   |mcpu=qdf24xx					\
    |mcpu=xgene1                                         \
    |mcpu=cortex-m1.small-multiply                       \
    |mcpu=cortex-m0.small-multiply                       \
@@ -94,6 +96,11 @@
    |march=armv8-a+crc					\
    |march=armv8.1-a					\
    |march=armv8.1-a+crc					\
+   |march=armv8.2-a					\
+   |march=armv8.2-a+fp16				\
+   |march=armv8-m.base|mcpu=cortex-m23			\
+   |march=armv8-m.main					\
+   |march=armv8-m.main+dsp|mcpu=cortex-m33		\
    :%{!r:--be8}}}"
 #else
 #define BE8_LINK_SPEC \
@@ -109,8 +116,10 @@
    |mcpu=cortex-a57.cortex-a53				\
    |mcpu=cortex-a72					\
    |mcpu=cortex-a72.cortex-a53				\
+   |mcpu=cortex-a73					\
+   |mcpu=cortex-a73.cortex-a35				\
+   |mcpu=cortex-a73.cortex-a53				\
    |mcpu=exynos-m1                                      \
-   |mcpu=qdf24xx					\
    |mcpu=xgene1                                         \
    |mcpu=cortex-m1.small-multiply                       \
    |mcpu=cortex-m0.small-multiply                       \
@@ -125,6 +134,11 @@
    |march=armv8-a+crc					\
    |march=armv8.1-a					\
    |march=armv8.1-a+crc					\
+   |march=armv8.2-a					\
+   |march=armv8.2-a+fp16				\
+   |march=armv8-m.base|mcpu=cortex-m23			\
+   |march=armv8-m.main					\
+   |march=armv8-m.main+dsp|mcpu=cortex-m33		\
    :%{!r:--be8}}}"
 #endif
 
@@ -171,7 +185,9 @@
 /* The BPABI specifies the use of .{init,fini}_array.  Therefore, we
    do not want GCC to put anything into the .{init,fini} sections.  */
 #undef INIT_SECTION_ASM_OP
+#define INIT_SECTION_ASM_OP ""
 #undef FINI_SECTION_ASM_OP
+#define FINI_SECTION_ASM_OP ""
 #define INIT_ARRAY_SECTION_ASM_OP ARM_EABI_CTORS_SECTION_OP
 #define FINI_ARRAY_SECTION_ASM_OP ARM_EABI_DTORS_SECTION_OP
 

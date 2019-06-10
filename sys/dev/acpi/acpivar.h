@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.75 2018/05/05 17:16:23 christos Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.75.2.1 2019/06/10 22:07:05 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -222,17 +222,17 @@ struct acpi_iorange {
 struct acpi_mem {
 	SIMPLEQ_ENTRY(acpi_mem) ar_list;
 	int		ar_index;
-	uint32_t	ar_base;
-	uint32_t	ar_length;
+	bus_addr_t	ar_base;
+	bus_size_t	ar_length;
 };
 
 struct acpi_memrange {
 	SIMPLEQ_ENTRY(acpi_memrange) ar_list;
 	int		ar_index;
-	uint32_t	ar_low;
-	uint32_t	ar_high;
-	uint32_t	ar_length;
-	uint32_t	ar_align;
+	bus_addr_t	ar_low;
+	bus_addr_t	ar_high;
+	bus_size_t	ar_length;
+	bus_size_t	ar_align;
 };
 
 struct acpi_irq {
@@ -282,9 +282,9 @@ struct acpi_resource_parse_ops {
 	void	(*iorange)(device_t, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*memory)(device_t, void *, uint32_t, uint32_t);
-	void	(*memrange)(device_t, void *, uint32_t, uint32_t,
-		    uint32_t, uint32_t);
+	void	(*memory)(device_t, void *, uint64_t, uint64_t);
+	void	(*memrange)(device_t, void *, uint64_t, uint64_t,
+		    uint64_t, uint64_t);
 
 	void	(*irq)(device_t, void *, uint32_t, uint32_t);
 	void	(*drq)(device_t, void *, uint32_t);
@@ -348,6 +348,14 @@ void			acpi_enter_sleep_state(int);
 ACPI_STATUS		acpi_madt_map(void);
 void			acpi_madt_unmap(void);
 void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
+				       void *), void *);
+
+/*
+ * GTDT.
+ */
+ACPI_STATUS		acpi_gtdt_map(void);
+void			acpi_gtdt_unmap(void);
+void			acpi_gtdt_walk(ACPI_STATUS (*)(ACPI_GTDT_HEADER *,
 				       void *), void *);
 
 /*

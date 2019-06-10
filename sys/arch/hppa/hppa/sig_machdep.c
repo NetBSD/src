@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25 2011/02/08 20:20:15 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25.56.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2011/02/08 20:20:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.56.1 2019/06/10 22:06:19 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -100,7 +100,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
- 
+
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
@@ -141,13 +141,13 @@ sendsig_siginfo(const struct ksiginfo *ksi, const sigset_t *mask)
 		break;
 	}
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK |
 		((l->l_sigstk.ss_flags & SS_ONSTACK) ?
 		 _UC_SETSTACK : _UC_CLRSTACK);
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);

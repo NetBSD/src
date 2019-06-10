@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_none.c,v 1.8.4.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto_none.c,v 1.8.4.3 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,14 +28,16 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.8.4.3 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
  * IEEE 802.11 NULL crypto support.
  */
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h> 

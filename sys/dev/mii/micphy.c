@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.4.18.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4.18.1 2019/06/10 22:07:14 christos Exp $");
 
 #include "opt_mii.h"
 
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $");
 
 static int	micphymatch(device_t, cfdata_t, void *);
 static void	micphyattach(device_t, device_t, void *);
+static void	micphy_reset(struct mii_softc *);
+static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 
 CFATTACH_DECL3_NEW(micphy, sizeof(struct mii_softc),
     micphymatch, micphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
@@ -88,16 +90,16 @@ static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 static void	micphy_fixup(struct mii_softc *, int, int, device_t);
 
 static const struct mii_phy_funcs micphy_funcs = {
-	micphy_service, ukphy_status, mii_phy_reset,
+	micphy_service, ukphy_status, micphy_reset,
 };
 
 static const struct mii_phydesc micphys[] = {
-	{ MII_OUI_MICREL,		MII_MODEL_MICREL_KSZ9021RNI,
-	  MII_STR_MICREL_KSZ9021RNI },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(MICREL, KSZ8081),
+	MII_PHY_DESC(MICREL, KSZ9021RNI),
+	MII_PHY_END,
 };
+
+#define	MII_KSZ8081_PHYCTL2			0x1f
 
 static int
 micphymatch(device_t parent, cfdata_t match, void *aux)
@@ -136,9 +138,10 @@ micphyattach(device_t parent, device_t self, void *aux)
 
 	micphy_fixup(sc, model, rev, parent);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
@@ -148,17 +151,34 @@ micphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 }
 
+static void
+micphy_reset(struct mii_softc *sc)
+{
+	uint16_t reg;
+
+	/*
+	 * The 8081 has no "sticky bits" that survive a soft reset; several
+	 * bits in the Phy Control Register 2 must be preserved across the
+	 * reset. These bits are set up by the bootloader; they control how the
+	 * phy interfaces to the board (such as clock frequency and LED
+	 * behavior).
+	 */
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8081)
+		PHY_READ(sc, MII_KSZ8081_PHYCTL2, &reg);
+	mii_phy_reset(sc);
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8081)
+		PHY_WRITE(sc, MII_KSZ8081_PHYCTL2, reg);
+}
+
 static int
 micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -169,14 +189,12 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -184,9 +202,7 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
@@ -216,14 +232,15 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 #define REG_RGMII_CLOCK_AND_CONTROL	0x104
 #define REG_RGMII_RX_DATA		0x105
 
-static void micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
+static void
+micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
 {
-	int rval __debugused;
+	uint16_t rval __debugused;
 
 	PHY_WRITE(sc, XREG_CONTROL, XREG_CTL_SEL_WRITE | reg);
 	PHY_WRITE(sc, XREG_WRITE, wval);
 	PHY_WRITE(sc, XREG_CONTROL, XREG_CTL_SEL_READ | reg);
-	rval = PHY_READ(sc, XREG_READ);
+	PHY_READ(sc, XREG_READ, &rval);
 	KDASSERT(wval == rval);
 }
 
@@ -235,7 +252,8 @@ micphy_fixup(struct mii_softc *sc, int model, int rev, device_t parent)
 		if (!device_is_a(parent, "cpsw"))
 			break;
 
-		aprint_normal_dev(sc->mii_dev, "adjusting RGMII signal timing for cpsw\n");
+		aprint_normal_dev(sc->mii_dev,
+		    "adjusting RGMII signal timing for cpsw\n");
 
 		// RGMII RX Data Pad Skew
 		micphy_writexreg(sc, REG_RGMII_RX_DATA, 0x0000);
@@ -243,6 +261,8 @@ micphy_fixup(struct mii_softc *sc, int model, int rev, device_t parent)
 		// RGMII Clock and Control Pad Skew
 		micphy_writexreg(sc, REG_RGMII_CLOCK_AND_CONTROL, 0x9090);
 
+		break;
+	default:
 		break;
 	}
 

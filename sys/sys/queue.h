@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.72 2017/10/02 06:37:04 pgoyette Exp $	*/
+/*	$NetBSD: queue.h,v 1.72.4.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,6 +89,13 @@
  */
 #ifdef __NetBSD__
 #include <sys/null.h>
+#endif
+
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_diagnostic.h"
+#ifdef DIAGNOSTIC
+#define QUEUEDEBUG	1
+#endif
 #endif
 
 #if defined(QUEUEDEBUG)
@@ -665,7 +672,7 @@ struct {								\
  */
 
 /*
- * __launder_type():  We use this ugly hack to work around the the compiler
+ * __launder_type():  We use this ugly hack to work around the compiler
  * noticing that two types may not alias each other and elide tests in code.
  * We hit this in the CIRCLEQ macros when comparing 'struct name *' and
  * 'struct type *' (see CIRCLEQ_HEAD()).  Modern compilers (such as GCC

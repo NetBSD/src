@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.67 2017/12/09 03:22:33 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.67.4.1 2019/06/10 22:06:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -162,6 +162,8 @@ typedef __uint32_t tlb_asid_t;
 #if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS
 #endif
+
+#define	__HAVE_UCAS_FULL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

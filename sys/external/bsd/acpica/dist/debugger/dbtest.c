@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
 #include "acdebug.h"
 #include "acnamesp.h"
 #include "acpredef.h"
+#include "acinterp.h"
 
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
@@ -83,6 +84,10 @@ AcpiDbTestStringType (
 static ACPI_STATUS
 AcpiDbTestPackageType (
     ACPI_NAMESPACE_NODE     *Node);
+
+static ACPI_STATUS
+AcpiDbTestFieldUnitType (
+    ACPI_OPERAND_OBJECT     *ObjDesc);
 
 static ACPI_STATUS
 AcpiDbReadFromObject (
@@ -133,7 +138,7 @@ static ACPI_DB_ARGUMENT_INFO    AcpiDbTestTypes [] =
 static ACPI_HANDLE          ReadHandle = NULL;
 static ACPI_HANDLE          WriteHandle = NULL;
 
-/* ASL Definitions of the debugger read/write control methods */
+/* ASL Definitions of the debugger read/write control methods. AML below. */
 
 #if 0
 DefinitionBlock ("ssdt.aml", "SSDT", 2, "Intel", "DEBUG", 0x00000001)
@@ -299,10 +304,8 @@ AcpiDbTestAllObjects (
  * RETURN:      Status
  *
  * DESCRIPTION: Test one namespace object. Supported types are Integer,
- *              String, Buffer, BufferField, and FieldUnit. All other object
- *              types are simply ignored.
- *
- *              Note: Support for Packages is not implemented.
+ *              String, Buffer, Package, BufferField, and FieldUnit.
+ *              All other object types are simply ignored.
  *
  ******************************************************************************/
 
@@ -315,7 +318,6 @@ AcpiDbTestOneObject (
 {
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_OPERAND_OBJECT     *RegionObj;
     ACPI_OBJECT_TYPE        LocalType;
     UINT32                  BitLength = 0;
     UINT32                  ByteLength = 0;
@@ -358,19 +360,22 @@ AcpiDbTestOneObject (
         break;
 
     case ACPI_TYPE_FIELD_UNIT:
-    case ACPI_TYPE_BUFFER_FIELD:
     case ACPI_TYPE_LOCAL_REGION_FIELD:
     case ACPI_TYPE_LOCAL_INDEX_FIELD:
     case ACPI_TYPE_LOCAL_BANK_FIELD:
 
+        LocalType = ACPI_TYPE_FIELD_UNIT;
+        break;
+
+    case ACPI_TYPE_BUFFER_FIELD:
+        /*
+         * The returned object will be a Buffer if the field length
+         * is larger than the size of an Integer (32 or 64 bits
+         * depending on the DSDT version).
+         */
         LocalType = ACPI_TYPE_INTEGER;
         if (ObjDesc)
         {
-            /*
-             * Returned object will be a Buffer if the field length
-             * is larger than the size of an Integer (32 or 64 bits
-             * depending on the DSDT version).
-             */
             BitLength = ObjDesc->CommonField.BitLength;
             ByteLength = ACPI_ROUND_BITS_UP_TO_BYTES (BitLength);
             if (BitLength > AcpiGbl_IntegerBitWidth)
@@ -380,9 +385,9 @@ AcpiDbTestOneObject (
         }
         break;
 
-    default:
+default:
 
-        /* Ignore all other types */
+        /* Ignore all non-data types - Methods, Devices, Scopes, etc. */
 
         return (AE_OK);
     }
@@ -394,38 +399,8 @@ AcpiDbTestOneObject (
 
     if (!ObjDesc)
     {
-        AcpiOsPrintf (" Ignoring, no attached object\n");
+        AcpiOsPrintf (" No attached sub-object, ignoring\n");
         return (AE_OK);
-    }
-
-    /*
-     * Check for unsupported region types. Note: AcpiExec simulates
-     * access to SystemMemory, SystemIO, PCI_Config, and EC.
-     */
-    switch (Node->Type)
-    {
-    case ACPI_TYPE_LOCAL_REGION_FIELD:
-
-        RegionObj = ObjDesc->Field.RegionObj;
-        switch (RegionObj->Region.SpaceId)
-        {
-        case ACPI_ADR_SPACE_SYSTEM_MEMORY:
-        case ACPI_ADR_SPACE_SYSTEM_IO:
-        case ACPI_ADR_SPACE_PCI_CONFIG:
-
-            break;
-
-        default:
-
-            AcpiOsPrintf ("      %s space is not supported in this command [%4.4s]\n",
-                AcpiUtGetRegionName (RegionObj->Region.SpaceId),
-                RegionObj->Region.Node->Name.Ascii);
-            return (AE_OK);
-        }
-        break;
-
-    default:
-        break;
     }
 
     /* At this point, we have resolved the object to one of the major types */
@@ -452,6 +427,11 @@ AcpiDbTestOneObject (
         Status = AcpiDbTestPackageType (Node);
         break;
 
+    case ACPI_TYPE_FIELD_UNIT:
+
+        Status = AcpiDbTestFieldUnitType (ObjDesc);
+        break;
+
     default:
 
         AcpiOsPrintf (" Ignoring, type not implemented (%2.2X)",
@@ -464,24 +444,8 @@ AcpiDbTestOneObject (
     if (ACPI_FAILURE (Status))
     {
         Status = AE_OK;
-        goto Exit;
     }
 
-    switch (Node->Type)
-    {
-    case ACPI_TYPE_LOCAL_REGION_FIELD:
-
-        RegionObj = ObjDesc->Field.RegionObj;
-        AcpiOsPrintf (" (%s)",
-            AcpiUtGetRegionName (RegionObj->Region.SpaceId));
-
-        break;
-
-    default:
-        break;
-    }
-
-Exit:
     AcpiOsPrintf ("\n");
     return (Status);
 }
@@ -531,7 +495,7 @@ AcpiDbTestIntegerType (
         return (Status);
     }
 
-    AcpiOsPrintf (" (%4.4X/%3.3X) %8.8X%8.8X",
+    AcpiOsPrintf (ACPI_DEBUG_LENGTH_FORMAT " %8.8X%8.8X",
         BitLength, ACPI_ROUND_BITS_UP_TO_BYTES (BitLength),
         ACPI_FORMAT_UINT64 (Temp1->Integer.Value));
 
@@ -653,8 +617,8 @@ AcpiDbTestBufferType (
 
     /* Emit a few bytes of the buffer */
 
-    AcpiOsPrintf (" (%4.4X/%3.3X)", BitLength, Temp1->Buffer.Length);
-    for (i = 0; ((i < 4) && (i < ByteLength)); i++)
+    AcpiOsPrintf (ACPI_DEBUG_LENGTH_FORMAT, BitLength, Temp1->Buffer.Length);
+    for (i = 0; ((i < 8) && (i < ByteLength)); i++)
     {
         AcpiOsPrintf (" %2.2X", Temp1->Buffer.Pointer[i]);
     }
@@ -768,7 +732,7 @@ AcpiDbTestStringType (
         return (Status);
     }
 
-    AcpiOsPrintf (" (%4.4X/%3.3X) \"%s\"", (Temp1->String.Length * 8),
+    AcpiOsPrintf (ACPI_DEBUG_LENGTH_FORMAT " \"%s\"", (Temp1->String.Length * 8),
         Temp1->String.Length, Temp1->String.Pointer);
 
     /* Write a new value */
@@ -858,9 +822,76 @@ AcpiDbTestPackageType (
         return (Status);
     }
 
-    AcpiOsPrintf (" %8.8X Elements", Temp1->Package.Count);
+    AcpiOsPrintf (" %.2X Elements", Temp1->Package.Count);
     AcpiOsFree (Temp1);
     return (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbTestFieldUnitType
+ *
+ * PARAMETERS:  ObjDesc                 - A field unit object
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Test read/write on a named field unit.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiDbTestFieldUnitType (
+    ACPI_OPERAND_OBJECT     *ObjDesc)
+{
+    ACPI_OPERAND_OBJECT     *RegionObj;
+    UINT32                  BitLength = 0;
+    UINT32                  ByteLength = 0;
+    ACPI_STATUS             Status = AE_OK;
+    ACPI_OPERAND_OBJECT     *RetBufferDesc;
+
+
+    /* Supported spaces are memory/io/pci_config */
+
+    RegionObj = ObjDesc->Field.RegionObj;
+    switch (RegionObj->Region.SpaceId)
+    {
+    case ACPI_ADR_SPACE_SYSTEM_MEMORY:
+    case ACPI_ADR_SPACE_SYSTEM_IO:
+    case ACPI_ADR_SPACE_PCI_CONFIG:
+
+        /* Need the interpreter to execute */
+
+        AcpiUtAcquireMutex (ACPI_MTX_INTERPRETER);
+        AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
+
+        /* Exercise read-then-write */
+
+        Status = AcpiExReadDataFromField (NULL, ObjDesc, &RetBufferDesc);
+        if (Status == AE_OK)
+        {
+            AcpiExWriteDataToField (RetBufferDesc, ObjDesc, NULL);
+            AcpiUtRemoveReference (RetBufferDesc);
+        }
+
+        AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
+        AcpiUtReleaseMutex (ACPI_MTX_INTERPRETER);
+
+        BitLength = ObjDesc->CommonField.BitLength;
+        ByteLength = ACPI_ROUND_BITS_UP_TO_BYTES (BitLength);
+
+        AcpiOsPrintf (ACPI_DEBUG_LENGTH_FORMAT " [%s]", BitLength,
+            ByteLength, AcpiUtGetRegionName (RegionObj->Region.SpaceId));
+        return (Status);
+
+    default:
+
+        AcpiOsPrintf (
+            "      %s address space is not supported in this command [%4.4s]",
+            AcpiUtGetRegionName (RegionObj->Region.SpaceId),
+            RegionObj->Region.Node->Name.Ascii);
+        return (AE_OK);
+    }
 }
 
 

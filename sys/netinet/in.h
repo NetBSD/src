@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.105 2018/04/19 21:21:44 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.105.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,14 +42,14 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#ifndef uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef __uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef __uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
 #include <sys/ansi.h>
@@ -335,114 +335,6 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
-
-#define	CTL_IPPROTO_NAMES { \
-	{ "ip", CTLTYPE_NODE }, \
-	{ "icmp", CTLTYPE_NODE }, \
-	{ "igmp", CTLTYPE_NODE }, \
-	{ "ggp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "tcp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ "egp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pup", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "udp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "idp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ipsec", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pim", CTLTYPE_NODE }, \
-}
 
 /*
  * Names for IP sysctl objects
@@ -472,36 +364,7 @@ struct ip_mreq {
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
 #define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
-#define	IPCTL_MAXID	       26
 
-#define	IPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "forwarding", CTLTYPE_INT }, \
-	{ "redirect", CTLTYPE_INT }, \
-	{ "ttl", CTLTYPE_INT }, \
-	{ "mtu", CTLTYPE_INT }, \
-	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ "directed-broadcast", CTLTYPE_INT }, \
-	{ "allowsrcrt", CTLTYPE_INT }, \
-	{ "subnetsarelocal", CTLTYPE_INT }, \
-	{ "mtudisc", CTLTYPE_INT }, \
-	{ "anonportmin", CTLTYPE_INT }, \
-	{ "anonportmax", CTLTYPE_INT }, \
-	{ "mtudisctimeout", CTLTYPE_INT }, \
-	{ "maxflows", CTLTYPE_INT }, \
-	{ "hostzerobroadcast", CTLTYPE_INT }, \
-	{ "gifttl", CTLTYPE_INT }, \
-	{ "lowportmin", CTLTYPE_INT }, \
-	{ "lowportmax", CTLTYPE_INT }, \
-	{ "maxfragpackets", CTLTYPE_INT }, \
-	{ "grettl", CTLTYPE_INT }, \
-	{ "checkinterface", CTLTYPE_INT }, \
-	{ "ifq", CTLTYPE_NODE }, \
-	{ "random_id", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "dad_count", CTLTYPE_INT }, \
-}
 #endif /* _NETBSD_SOURCE */
 
 /* INET6 stuff */
@@ -569,7 +432,6 @@ int	in_canforward(struct in_addr);
 int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);
 int	in4_cksum(struct mbuf *, u_int8_t, int, int);
-void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
 

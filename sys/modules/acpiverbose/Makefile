@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/02/16 08:01:53 jruoho Exp $
+#	$NetBSD: Makefile,v 1.4.56.1 2019/06/10 22:09:08 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	acpiverbose
 IOCONF=	acpiverbose.ioconf
 SRCS=	acpi_verbose.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

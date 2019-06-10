@@ -103,6 +103,12 @@ enum
   R_X86_64_GNU_VTENTRY = 251
 };
 
+// The bit values that can appear in the GNU_PROPERTY_X86_FEATURE_1_AND
+// program property.
+
+const uint64_t GNU_PROPERTY_X86_FEATURE_1_IBT = 1ULL << 0;
+const uint64_t GNU_PROPERTY_X86_FEATURE_1_SHSTK = 1ULL << 1;
+
 } // End namespace elfcpp.
 
 #endif // !defined(ELFCPP_X86_64_H)

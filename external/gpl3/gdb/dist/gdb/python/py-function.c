@@ -1,6 +1,6 @@
 /* Convenience functions implemented in Python.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,14 +27,16 @@
 #include "completer.h"
 #include "expression.h"
 #include "language.h"
-#include "py-ref.h"
 
 extern PyTypeObject fnpy_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("PyObject");
 
 
 
-static PyObject *
+/* Return a reference to a tuple ARGC elements long.  Each element of the
+   tuple is a PyObject converted from the corresponding element of ARGV.  */
+
+static gdbpy_ref<>
 convert_values_to_python (int argc, struct value **argv)
 {
   int i;
@@ -50,7 +52,7 @@ convert_values_to_python (int argc, struct value **argv)
 	return NULL;
       PyTuple_SetItem (result.get (), i, elt.release ());
     }
-  return result.release ();
+  return result;
 }
 
 /* Call a Python function object's invoke method.  */
@@ -64,7 +66,7 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
   gdbpy_enter enter_py (gdbarch, language);
   struct value *value;
   gdbpy_ref<> result;
-  gdbpy_ref<> args (convert_values_to_python (argc, argv));
+  gdbpy_ref<> args = convert_values_to_python (argc, argv);
 
   /* convert_values_to_python can return NULL on error.  If we
      encounter this, do not call the function, but allow the Python ->
@@ -83,56 +85,7 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
     }
 
   if (result == NULL)
-    {
-      PyObject *ptype, *pvalue, *ptraceback;
-
-      PyErr_Fetch (&ptype, &pvalue, &ptraceback);
-
-      /* Try to fetch an error message contained within ptype, pvalue.
-	 When fetching the error message we need to make our own copy,
-	 we no longer own ptype, pvalue after the call to PyErr_Restore.  */
-
-      gdb::unique_xmalloc_ptr<char>
-	msg (gdbpy_exception_to_string (ptype, pvalue));
-
-      if (msg == NULL)
-	{
-	  /* An error occurred computing the string representation of the
-	     error message.  This is rare, but we should inform the user.  */
-
-	  printf_filtered (_("An error occurred in a Python "
-			     "convenience function\n"
-			     "and then another occurred computing the "
-			     "error message.\n"));
-	  gdbpy_print_stack ();
-	}
-
-      /* Don't print the stack for gdb.GdbError exceptions.
-	 It is generally used to flag user errors.
-
-	 We also don't want to print "Error occurred in Python command"
-	 for user errors.  However, a missing message for gdb.GdbError
-	 exceptions is arguably a bug, so we flag it as such.  */
-
-      if (!PyErr_GivenExceptionMatches (ptype, gdbpy_gdberror_exc)
-	  || msg == NULL || *msg == '\0')
-	{
-	  PyErr_Restore (ptype, pvalue, ptraceback);
-	  gdbpy_print_stack ();
-	  if (msg != NULL && *msg != '\0')
-	    error (_("Error occurred in Python convenience function: %s"),
-		   msg.get ());
-	  else
-	    error (_("Error occurred in Python convenience function."));
-	}
-      else
-	{
-	  Py_XDECREF (ptype);
-	  Py_XDECREF (pvalue);
-	  Py_XDECREF (ptraceback);
-	  error ("%s", msg.get ());
-	}
-    }
+    gdbpy_handle_exception ();
 
   value = convert_value_from_python (result.get ());
   if (value == NULL)
@@ -155,7 +108,8 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 
   if (! PyArg_ParseTuple (args, "s", &name))
     return -1;
-  Py_INCREF (self);
+
+  gdbpy_ref<> self_ref = gdbpy_ref<>::new_reference (self);
 
   if (PyObject_HasAttrString (self, "__doc__"))
     {
@@ -166,17 +120,15 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 	    {
 	      docstring = python_string_to_host_string (ds_obj.get ());
 	      if (docstring == NULL)
-		{
-		  Py_DECREF (self);
-		  return -1;
-		}
+		return -1;
 	    }
 	}
     }
   if (! docstring)
     docstring.reset (xstrdup (_("This function is not documented.")));
 
-  add_internal_function (name, docstring.release (), fnpy_call, self);
+  add_internal_function (name, docstring.release (), fnpy_call,
+			 self_ref.release ());
   return 0;
 }
 

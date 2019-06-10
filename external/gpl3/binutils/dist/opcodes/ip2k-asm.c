@@ -508,7 +508,9 @@ ip2k_cgen_parse_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while parsing.\n"), opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while parsing"),
+	 opindex);
       abort ();
   }
 

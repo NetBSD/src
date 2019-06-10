@@ -496,6 +496,7 @@
 *vr5000:
 *vr5400:
 *vr5500:
+*r3900:
 {
   // The check should be similar to mips64 for any with PX/UX bit equivalents.
 }

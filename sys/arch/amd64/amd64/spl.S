@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.34 2018/04/04 22:52:58 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.34.2.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -65,6 +65,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
@@ -76,6 +77,17 @@
 #include "assym.h"
 
 	.text
+
+/*
+ * int splraise(int s);
+ */
+ENTRY(splraise)
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edi,%eax
+	cmoval	%eax,%edi
+	movl	%edi,CPUVAR(ILEVEL)
+	ret
+END(splraise)
 
 #ifndef XEN
 /*
@@ -104,6 +116,17 @@ IDTVEC(softintr)
 	movq	L_PCB(%rdi),%rdx
 	movq	L_PCB(%r15),%rcx
 	movq	%rdi,CPUVAR(CURLWP)
+
+#ifdef KASAN
+	/* clear the new stack */
+	pushq	%rax
+	pushq	%rdx
+	pushq	%rcx
+	callq	_C_LABEL(kasan_softint)
+	popq	%rcx
+	popq	%rdx
+	popq	%rax
+#endif
 
 	/* save old context */
 	movq	%rsp,PCB_RSP(%rcx)
@@ -137,7 +160,7 @@ IDTVEC_END(softintr)
  *
  *	%rax		prevlwp from cpu_switchto()
  */
-NENTRY(softintr_ret)
+ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0,L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
@@ -149,7 +172,7 @@ END(softintr_ret)
  *
  * Software interrupt registration.
  */
-NENTRY(softint_trigger)
+ENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
 END(softint_trigger)
@@ -188,18 +211,9 @@ IDTVEC(resume_preempt)
 	cli
 	jmp	*%r13			/* back to Xdoreti */
 IDTVEC_END(resume_preempt)
+#endif /* XEN */
 
-/*
- * int splraise(int s);
- */
-ENTRY(splraise)
-	movl	CPUVAR(ILEVEL),%eax
-	cmpl	%edi,%eax
-	cmoval	%eax,%edi
-	movl	%edi,CPUVAR(ILEVEL)
-	ret
-END(splraise)
-
+#ifndef XENPV
 /*
  * void spllower(int s);
  *
@@ -228,7 +242,6 @@ ENTRY(spllower)
 	.align	16
 END(spllower)
 LABEL(spllower_end)
-#endif /* !XEN */
 
 /*
  * void	cx8_spllower(int s);
@@ -268,6 +281,7 @@ LABEL(cx8_spllower_patch)
 END(cx8_spllower_patch)
 END(cx8_spllower)
 LABEL(cx8_spllower_end)
+#endif /* !XENPV */
 
 /*
  * void Xspllower(int s);
@@ -296,6 +310,7 @@ IDTVEC(spllower)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
 1:	movl	%ebx,%eax		/* get cpl */
+#if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
@@ -304,7 +319,19 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
+#endif
 2:
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
+	CLI(si)
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
+	jz	3f
+	bsrl	%eax,%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
+	jmp	*IS_RECURSE(%rax)
+#endif
+3:
 	movl	%ebx,CPUVAR(ILEVEL)
 	STI(si)
 	popq	%r12
@@ -327,6 +354,7 @@ IDTVEC(doreti)
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
+#if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
@@ -335,7 +363,19 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RESUME(%rax)
-2:	/* Check for ASTs on exit to user mode. */
+#endif
+2:
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
+	CLI(si)
+	andl	CPUVAR(XPENDING),%eax
+	jz	3f
+	bsrl	%eax,%eax		/* slow, but not worth optimizing */
+	btrl	%eax,CPUVAR(XPENDING)
+	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
+	jmp	*IS_RESUME(%rax)
+#endif
+3:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$SEL_RPL,TF_CS(%rsp)

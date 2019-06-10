@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.5 2016/01/07 07:36:35 jdc Exp $ */
+/*   $NetBSD: add_wch.c,v 1.5.16.1 2019/06/10 22:05:22 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.5 2016/01/07 07:36:35 jdc Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.5.16.1 2019/06/10 22:05:22 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -54,11 +54,7 @@ __RCSID("$NetBSD: add_wch.c,v 1.5 2016/01/07 07:36:35 jdc Exp $");
 int
 add_wch(const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wch(stdscr, wch);
-#endif /* HAVE_WCHAR */
 }
 
 
@@ -69,11 +65,7 @@ add_wch(const cchar_t *wch)
 int
 mvadd_wch(int y, int x, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wch(stdscr, y, x, wch);
-#endif /* HAVE_WCHAR */
 }
 
 
@@ -84,14 +76,10 @@ mvadd_wch(int y, int x, const cchar_t *wch)
 int
 mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wadd_wch(win, wch);
-#endif /* HAVE_WCHAR */
 }
 
 
@@ -104,21 +92,19 @@ mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 int
 wadd_wch(WINDOW *win, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
-	int x = win->curx, y = win->cury;
+	int y = win->cury;
 	__LINE *lnp = NULL;
 
 #ifdef DEBUG
 	int i;
+	int x = win->curx;
 
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
 	}
-	__CTRACE(__CTRACE_INPUT, "wadd_wch: win(%p)\n", win);
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: win(%p), x: %d, y: %d\n",
+	    win, x, y);
 #endif
 	lnp = win->alines[y];
-	return _cursesi_addwchar(win, &lnp, &y, &x, wch, 1);
-#endif /* HAVE_WCHAR */
+	return _cursesi_addwchar(win, &lnp, &(win->cury), &(win->curx), wch, 1);
 }

@@ -1,6 +1,6 @@
 /* Routines for reading GIMPLE from a file stream.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -22,44 +22,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "diagnostic.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "gimple-iterator.h"
-#include "gimple-ssa.h"
-#include "tree-phinodes.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "data-streamer.h"
-#include "tree-streamer.h"
+#include "ssa.h"
 #include "gimple-streamer.h"
+#include "tree-eh.h"
+#include "gimple-iterator.h"
+#include "cgraph.h"
 #include "value-prof.h"
 
 /* Read a PHI function for basic block BB in function FN.  DATA_IN is
@@ -112,11 +82,11 @@ input_phi (struct lto_input_block *ib, basic_block bb, struct data_in *data_in,
 /* Read a statement with tag TAG in function FN from block IB using
    descriptors in DATA_IN.  */
 
-static gimple
+static gimple *
 input_gimple_stmt (struct lto_input_block *ib, struct data_in *data_in,
 		   enum LTO_tags tag)
 {
-  gimple stmt;
+  gimple *stmt;
   enum gimple_code code;
   unsigned HOST_WIDE_INT num_ops;
   size_t i;
@@ -228,8 +198,12 @@ input_gimple_stmt (struct lto_input_block *ib, struct data_in *data_in,
       break;
 
     case GIMPLE_TRANSACTION:
-      gimple_transaction_set_label (as_a <gtransaction *> (stmt),
-				    stream_read_tree (ib, data_in));
+      gimple_transaction_set_label_norm (as_a <gtransaction *> (stmt),
+				         stream_read_tree (ib, data_in));
+      gimple_transaction_set_label_uninst (as_a <gtransaction *> (stmt),
+				           stream_read_tree (ib, data_in));
+      gimple_transaction_set_label_over (as_a <gtransaction *> (stmt),
+				         stream_read_tree (ib, data_in));
       break;
 
     default:
@@ -303,7 +277,7 @@ input_bb (struct lto_input_block *ib, enum LTO_tags tag,
   tag = streamer_read_record_start (ib);
   while (tag)
     {
-      gimple stmt = input_gimple_stmt (ib, data_in, tag);
+      gimple *stmt = input_gimple_stmt (ib, data_in, tag);
       gsi_insert_after (&bsi, stmt, GSI_NEW_STMT);
 
       /* After the statement, expect a 0 delimiter or the EH region

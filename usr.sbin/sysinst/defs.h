@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2018/06/03 13:16:30 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.11.2.1 2019/06/10 22:10:37 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,8 @@ const char *getfslabelname(uint8_t);
 #define max(a,b)	((a) > (b) ? (a) : (b))
 
 /* constants */
-#define MEG (1024 * 1024)
+#define MEG (1024 * 1024UL)
+#define GIG (1024 * MEG)
 #define STRSIZE 255
 #define SSTRSIZE 30
 
@@ -178,8 +179,14 @@ enum {
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
 		       (p)->pi_fstype == FS_BSDFFS)
 
-/* standard cd0 device */
-#define CD_NAMES "cd0a"
+/*
+ * We do not offer CDs or floppies as installation target usually.
+ * Architectures might want to undefine if they want to allow
+ * these devices or redefine if they have unusual CD device names.
+ * Do not define to empty or an empty string, undefine instead.
+ */
+#define CD_NAMES "cd*"
+#define FLOPPY_NAMES "fd*"
 
 /* Types */
 
@@ -192,6 +199,7 @@ typedef struct arg_rv {
 typedef struct distinfo {
 	const char	*name;
 	uint		set;
+	bool		force_tgz;	/* this set is always in .tgz format */
 	const char	*desc;
 	const char	*marker_file;	/* set assumed installed if exists */
 } distinfo;
@@ -340,20 +348,51 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
 #endif
 
+#if !defined(SYSINST_HTTP_HOST)
+#define SYSINST_HTTP_HOST	"cdn.NetBSD.org"
+#endif
+
 #if !defined(SYSINST_FTP_DIR)
+#if defined(NETBSD_OFFICIAL_RELEASE)
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
+#elif defined(REL_PATH)
+#define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH "/latest"
+#else
+#define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
+#endif
+#endif
+
+#if !defined(ARCH_SUBDIR)
+#define	ARCH_SUBDIR	MACH
+#endif
+#if !defined(PKG_ARCH_SUBDIR)
+#define	PKG_ARCH_SUBDIR	MACH
 #endif
 
 #if !defined(SYSINST_PKG_HOST)
-#define SYSINST_PKG_HOST	SYSINST_FTP_HOST
+#define SYSINST_PKG_HOST	"ftp.NetBSD.org"
+#endif
+#if !defined(SYSINST_PKG_HTTP_HOST)
+#define SYSINST_PKG_HTTP_HOST	"cdn.NetBSD.org"
 #endif
 
 #if !defined(SYSINST_PKG_DIR)
 #define SYSINST_PKG_DIR		"pub/pkgsrc/packages/NetBSD"
 #endif
 
+#if !defined(PKG_SUBDIR)
+#define	PKG_SUBDIR		REL
+#endif
+
 #if !defined(SYSINST_PKGSRC_HOST)
 #define SYSINST_PKGSRC_HOST	SYSINST_PKG_HOST
+#endif
+#if !defined(SYSINST_PKGSRC_HTTP_HOST)
+#define SYSINST_PKGSRC_HTTP_HOST	SYSINST_PKG_HTTP_HOST
+#endif
+
+#ifndef SETS_TAR_SUFF
+#define	SETS_TAR_SUFF	 "tgz"
 #endif
 
 /* Abs. path we extract binary sets from */
@@ -380,13 +419,17 @@ char pkgsrc_dir[STRSIZE];
 /* User shell */
 const char *ushell;
 
+#define	XFER_FTP	0
+#define	XFER_HTTP	1
+#define	XFER_MAX	XFER_HTTP
+
 struct ftpinfo {
-    char host[STRSIZE];
+    char xfer_host[XFER_MAX+1][STRSIZE];
     char dir[STRSIZE] ;
     char user[SSTRSIZE];
     char pass[STRSIZE];
     char proxy[STRSIZE];
-    const char *xfer_type;		/* "ftp" or "http" */
+    unsigned int xfer;	/* XFER_FTP for "ftp" or XFER_HTTP for "http" */
 };
 
 /* use the same struct for sets ftp and to build pkgpath */
@@ -409,6 +452,7 @@ char targetroot_mnt[SSTRSIZE];
 int  mnt2_mounted;
 
 char dist_postfix[SSTRSIZE];
+char dist_tgz_postfix[SSTRSIZE];
 
 /* needed prototypes */
 void set_menu_numopts(int, int);
@@ -443,8 +487,13 @@ int	md_update(void);
 void	toplevel(void);
 
 /* from disks.c */
-const char *get_default_cdrom(void);
+bool	get_default_cdrom(char *, size_t);
 int	find_disks(const char *);
+bool enumerate_disks(void *state,bool (*func)(void *state, const char *dev));
+bool is_cdrom_device(const char *dev, bool as_target);
+bool is_bootable_device(const char *dev);
+bool is_partitionable_device(const char *dev);
+
 struct menudesc;
 void	fmt_fspart(struct menudesc *, int, void *);
 void	disp_cur_fspart(int, int);
@@ -492,12 +541,13 @@ int	get_real_geom(const char *, struct disklabel *);
 /* from net.c */
 extern int network_up;
 extern char net_namesvr[STRSIZE];
-int	get_via_ftp(const char *);
+int	get_via_ftp(unsigned int);
 int	get_via_nfs(void);
 int	config_network(void);
 void	mnt_net_config(void);
 void	make_url(char *, struct ftpinfo *, const char *);
 int	get_pkgsrc(void);
+const char *url_proto(unsigned int);
 
 /* From run.c */
 int	collect(int, char **, const char *, ...) __printflike(3, 4);
@@ -511,6 +561,8 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
+char*	str_arg_subst(const char *, size_t, const char **);
+void	msg_display_subst(const char *, size_t, ...);
 int	ask_yesno(const char *);
 int	ask_noyes(const char *);
 int	dir_exists_p(const char *);
@@ -554,6 +606,8 @@ int	extract_file(distinfo *, int);
 void	do_coloring (unsigned int, unsigned int);
 int set_menu_select(menudesc *, void *);
 const char *safectime(time_t *);
+bool	use_tgz_for_set(const char*);
+const char *set_postfix(const char*);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
@@ -588,9 +642,16 @@ void	unwind_mounts(void);
 int	target_mounted(void);
 
 /* from partman.c */
+#ifndef NO_PARTMAN
 int partman(void);
-int pm_partusage(pm_devs_t *, int, int);
 int pm_getrefdev(pm_devs_t *);
+void update_wedges(const char *);
+#else
+static inline int partman(void) { return -1; }
+static inline int pm_getrefdev(pm_devs_t *x __unused) { return -1; }
+#define update_wedges(x) __nothing
+#endif
+int pm_partusage(pm_devs_t *, int, int);
 void pm_setfstype(pm_devs_t *, int, int);
 int pm_editpart(int);
 void pm_rename(pm_devs_t *);
@@ -601,13 +662,16 @@ int pm_cgd_edit(void *, part_entry_t *);
 int pm_gpt_convert(pm_devs_t *);
 void pm_wedges_fill(pm_devs_t *);
 void pm_make_bsd_partitions(pm_devs_t *);
-void update_wedges(const char *);
 
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
 int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 /* initialize above variables */
+#ifndef NO_PARTMAN
 void check_available_binaries(void);
+#else
+#define check_available_binaries() __nothing
+#endif
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);

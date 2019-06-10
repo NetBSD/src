@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 23:50:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.28.1 2019/06/10 22:02:36 christos Exp $
 
 NOMAN=	1
 
@@ -6,7 +6,7 @@ NOMAN=	1
 
 PROG=	chooser
 
-CPPFLAGS.chooser.c=	-DBSD44SOCKETS -DRETSIGTYPE=void
+CPPFLAGS.chooser.c+=	-DBSD44SOCKETS -DRETSIGTYPE=void
 
 APPDEFS=Chooser
 

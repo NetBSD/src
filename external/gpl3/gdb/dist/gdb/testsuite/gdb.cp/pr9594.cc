@@ -39,6 +39,19 @@ void Foo::Foofoo ()
 {
 }
 
+namespace Test_NS {
+
+int foo;
+int bar;
+
+namespace Nested {
+
+int qux;
+
+} /* namespace Nested */
+
+} /* namespace Test_NS */
+
 int main ()
 {
   // Anonymous struct with method.

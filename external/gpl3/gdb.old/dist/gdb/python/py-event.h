@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "command.h"
 #include "python-internal.h"
 #include "inferior.h"
+#include "py-ref.h"
 
 /* This macro creates the following functions:
 
@@ -121,8 +122,7 @@ extern int emit_register_changed_event (struct frame_info *frame,
 				        int regnum);
 extern int emit_memory_changed_event (CORE_ADDR addr, ssize_t len);
 extern int evpy_emit_event (PyObject *event,
-                            eventregistry_object *registry)
-  CPYCHECKER_STEALS_REFERENCE_TO_ARG (1);
+                            eventregistry_object *registry);
 
 extern PyObject *create_event_object (PyTypeObject *py_type);
 extern PyObject *create_thread_event_object (PyTypeObject *py_type);
@@ -131,9 +131,9 @@ extern int emit_clear_objfiles_event (void);
 
 extern void evpy_dealloc (PyObject *self);
 extern int evpy_add_attribute (PyObject *event,
-                               char *name, PyObject *attr)
+                               const char *name, PyObject *attr)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
-int gdbpy_initialize_event_generic (PyTypeObject *type, char *name)
+int gdbpy_initialize_event_generic (PyTypeObject *type, const char *name)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 
 #endif /* GDB_PY_EVENT_H */

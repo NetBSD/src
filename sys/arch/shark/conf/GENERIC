@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.130 2017/09/14 07:58:43 mrg Exp $
+#	$NetBSD: GENERIC,v 1.130.4.1 2019/06/10 22:06:45 christos Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.130 $"
+#ident		"GENERIC-$Revision: 1.130.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -133,6 +133,11 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
@@ -275,11 +280,11 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -297,25 +302,13 @@ pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	openfirm		# /dev/openfirm
 #pseudo-device	vcoda			# coda kernel <-> cachemanager
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 options PAX_ASLR=0			# PaX Address Space Layout Randomization

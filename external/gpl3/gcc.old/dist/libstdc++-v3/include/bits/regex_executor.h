@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2015 Free Software Foundation, Inc.
+// Copyright (C) 2013-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -148,7 +148,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_word_boundary() const;
 
       bool
-      _M_lookahead(_State<_TraitsT> __state);
+      _M_lookahead(_StateIdT __next);
 
        // Holds additional information used in BFS-mode.
       template<typename _SearchMode, typename _ResultsVec>

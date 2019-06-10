@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.82 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.82.18.1 2019/06/10 22:05:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.82 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.82.18.1 2019/06/10 22:05:58 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -335,7 +335,7 @@ int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 static void	fdgetdisklabel(struct fd_softc *, dev_t);
 static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *, int);
 
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 int
 fdcprobe(device_t parent, cfdata_t cf, void *aux)
@@ -592,7 +592,7 @@ fdc_ctrl_intr(struct clockframe frame)
 	}
 }
 
-inline struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
@@ -1043,8 +1043,8 @@ loop:
 		head  = sec / type->sectrac;
 		sec  -= head * type->sectrac;
 		nblks = type->sectrac - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = uimin(nblks, fd->sc_bcount / FDC_BSIZE);
+		nblks = uimin(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks  = nblks;
 		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
 #ifdef DIAGNOSTIC

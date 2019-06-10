@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.93 2018/06/26 06:34:55 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.93.2.1 2019/06/10 22:07:09 christos Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -123,6 +123,7 @@ file	dev/i2c/lm87.c				lmenv
 device	dsrtc: sysmon_envsys
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
+defflag opt_dsrtc.h				DSRTC_YEAR_START_2K
 
 # Xicor X1226 Real Time Clock
 device	xrtc
@@ -339,3 +340,29 @@ file	dev/i2c/imt.c				imt
 device	tsllux: sysmon_envsys
 attach	tsllux at iic
 file	dev/i2c/tsl256x.c			tsllux
+
+# Philips/NXP TEA5767 
+device tea5767radio : radiodev
+attach tea5767radio at iic
+file dev/i2c/tea5767.c				tea5767radio
+
+# Fairchild FAN53555 / Silergy SY82x regulator
+device	fan53555reg
+attach	fan53555reg at iic
+file	dev/i2c/fan53555.c			fan53555reg
+
+# Rockchip Power Management IC
+device	rkpmic { }
+device	rkreg: rkpmic
+attach	rkpmic at iic
+attach	rkreg at rkpmic
+file	dev/i2c/rkpmic.c			rkpmic
+
+# SSD1306 or SH1106 OLED/PLED display
+attach	ssdfb at iic with ssdfb_iic
+file	dev/i2c/ssdfb_i2c.c			ssdfb_iic
+
+# Analogix ANX6345 eDP transmitter
+device	anxedp: edid, videomode, drmkms, drmkms_i2c
+attach	anxedp at iic
+file	dev/i2c/anxedp.c			anxedp

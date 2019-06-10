@@ -1,6 +1,6 @@
 // <forward_list.h> -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -274,7 +274,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     struct _Fwd_list_base
     {
     protected:
-      typedef __alloc_rebind<_Alloc, _Tp> 		  _Tp_alloc_type;
       typedef __alloc_rebind<_Alloc, _Fwd_list_node<_Tp>> _Node_alloc_type;
       typedef __gnu_cxx::__alloc_traits<_Node_alloc_type> _Node_alloc_traits;
 
@@ -345,11 +344,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
           _Node* __node = this->_M_get_node();
           __try
             {
-	      _Tp_alloc_type __a(_M_get_Node_allocator());
-	      typedef allocator_traits<_Tp_alloc_type> _Alloc_traits;
 	      ::new ((void*)__node) _Node;
-	      _Alloc_traits::construct(__a, __node->_M_valptr(),
-				       std::forward<_Args>(__args)...);
+	      _Node_alloc_traits::construct(_M_get_Node_allocator(),
+					    __node->_M_valptr(),
+					    std::forward<_Args>(__args)...);
             }
           __catch(...)
             {
@@ -412,10 +410,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef _Fwd_list_base<_Tp, _Alloc>                  _Base;
       typedef _Fwd_list_node<_Tp>                          _Node;
       typedef _Fwd_list_node_base                          _Node_base;
-      typedef typename _Base::_Tp_alloc_type               _Tp_alloc_type;
       typedef typename _Base::_Node_alloc_type             _Node_alloc_type;
       typedef typename _Base::_Node_alloc_traits           _Node_alloc_traits;
-      typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type>    _Alloc_traits;
+      typedef allocator_traits<__alloc_rebind<_Alloc, _Tp>>    _Alloc_traits;
 
     public:
       // types:
@@ -566,8 +563,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  @param  __list  A %forward_list of identical element and allocator
        *                types.
        *
-       *  All the elements of @a __list are copied, but unlike the copy
-       *  constructor, the allocator object is not copied.
+       *  All the elements of @a __list are copied.
+       *
+       *  Whether the allocator is copied depends on the allocator traits.
        */
       forward_list&
       operator=(const forward_list& __list);
@@ -579,7 +577,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *
        *  The contents of @a __list are moved into this %forward_list
        *  (without copying, if the allocators permit it).
-       *  @a __list is a valid, but unspecified %forward_list
+       *
+       *  Afterwards @a __list is a valid, but unspecified %forward_list
+       *
+       *  Whether the allocator is moved depends on the allocator traits.
        */
       forward_list&
       operator=(forward_list&& __list)
@@ -617,7 +618,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *
        *  Note that the assignment completely changes the %forward_list and
        *  that the number of elements of the resulting %forward_list is the
-       *  same as the number of elements assigned.  Old data is lost.
+       *  same as the number of elements assigned.
        */
       template<typename _InputIterator,
 	       typename = std::_RequireInputIter<_InputIterator>>
@@ -636,7 +637,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  This function fills a %forward_list with @a __n copies of the
        *  given value.  Note that the assignment completely changes the
        *  %forward_list, and that the resulting %forward_list has __n
-       *  elements.  Old data is lost.
+       *  elements.
        */
       void
       assign(size_type __n, const _Tp& __val)
@@ -793,10 +794,19 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  and references.
        */
       template<typename... _Args>
-        void
+#if __cplusplus > 201402L
+        reference
+#else
+	void
+#endif
         emplace_front(_Args&&... __args)
-        { this->_M_insert_after(cbefore_begin(),
-                                std::forward<_Args>(__args)...); }
+        {
+	  this->_M_insert_after(cbefore_begin(),
+                                std::forward<_Args>(__args)...);
+#if __cplusplus > 201402L
+	  return front();
+#endif
+	}
 
       /**
        *  @brief  Add data to the front of the %forward_list.
@@ -991,6 +1001,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  time.  Note that the global std::swap() function is
        *  specialized such that std::swap(l1,l2) will feed to this
        *  function.
+       *
+       *  Whether the allocators are swapped depends on the allocator traits.
        */
       void
       swap(forward_list& __list) noexcept

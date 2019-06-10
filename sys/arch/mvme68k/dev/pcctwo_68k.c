@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.10 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.10.38.1 2019/06/10 22:06:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.10 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.10.38.1 2019/06/10 22:06:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,6 +187,7 @@ pcctwoattach(device_t parent, device_t self, void *aux)
 	uint8_t cid;
 
 	sc = sys_pcctwo = device_private(self);
+	sc->sc_dev = self;
 	ma = aux;
 
 	/* Get a handle to the PCCChip2's registers */

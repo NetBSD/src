@@ -1,4 +1,4 @@
-/* 	$NetBSD */
+/* 	$NetBSD: cdmacreg.h,v 1.1.142.1 2019/06/10 22:06:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Jachym Holecek

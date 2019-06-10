@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.96 2018/04/19 21:21:44 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.96.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -378,6 +378,17 @@ struct in_multi {
 extern pktqueue_t *ip_pktq;
 
 extern int ip_dad_count;		/* Duplicate Address Detection probes */
+
+static inline bool
+ip_dad_enabled(void)
+{
+#if NARP > 0
+	return ip_dad_count > 0;
+#else
+	return false;
+#endif
+}
+
 #if defined(INET) && NARP > 0
 extern int arp_debug;
 #define ARPLOGADDR(a) IN_PRINT(_ipbuf, a)

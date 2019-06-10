@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.66 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: lapic.c,v 1.66.2.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.66 2018/04/03 07:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.66.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -335,7 +335,7 @@ lapic_setup_bsp(paddr_t lapic_base)
 #endif
 #if defined(DDB) && defined(MULTIPROCESSOR)
 #ifdef __x86_64__
-		setgate(&idt[ddb_vec], &Xintr_x2apic_ddbipi, 1, SDT_SYS386IGT,
+		set_idtgate(&idt[ddb_vec], &Xintr_x2apic_ddbipi, 1, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 #else
 		/* Set DDB IPI handler in cpu_set_tss_gates() when cpu0 is attached. */
@@ -387,7 +387,7 @@ lapic_map(paddr_t lapic_base)
 	 */
 
 	pte = kvtopte(va);
-	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g | pmap_pg_nx;
+	*pte = lapic_base | PTE_W | PTE_P | PTE_PCD | pmap_pg_g | pmap_pg_nx;
 	invlpg(va);
 
 #ifdef MULTIPROCESSOR
@@ -535,7 +535,7 @@ lapic_get_timecount(struct timecounter *tc)
 		if (lapic_readreg(reg) & (1 << (LAPIC_TIMER_VECTOR % 32))) {
 			cur_timer -= lapic_tval;
 		}
-	} else if (ci->ci_istate.ipending & (1 << LIR_TIMER))
+	} else if (ci->ci_ipending & (1 << LIR_TIMER))
 		cur_timer = lapic_gettick() - lapic_tval;
 	cur_timer = ci->ci_lapic_counter - cur_timer;
 	splx(s);
@@ -587,7 +587,6 @@ lapic_initclocks(void)
 	lapic_eoi();
 }
 
-extern unsigned int gettick(void);	/* XXX put in header file */
 extern u_long rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
@@ -610,6 +609,9 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	uint64_t tmp;
 	int i;
 	char tbuf[9];
+
+	if (lapic_per_second != 0)
+		goto calibrate_done;
 
 	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
 
@@ -641,6 +643,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	tmp = initial_lapic - cur_lapic;
 	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 
+calibrate_done:
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
 	aprint_debug_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
@@ -777,7 +780,7 @@ i82489_ipi_init(int target)
 
 	i82489_writereg(LAPIC_ICRLO, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 	i82489_icr_wait();
-	i8254_delay(10000);
+	x86_delay(10000);
 	i82489_writereg(LAPIC_ICRLO,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
 	i82489_icr_wait();
@@ -849,7 +852,7 @@ x2apic_ipi_init(int target)
 
 	x2apic_write_icr(target, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 
-	i8254_delay(10000);
+	x86_delay(10000);
 
 	x2apic_write_icr(0,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135.30.1 2019/06/10 22:06:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135.30.1 2019/06/10 22:06:49 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -669,7 +669,7 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 }
 
 /*
- * Allow access to the PROM mapping similiar to uvm_kernacc().
+ * Allow access to the PROM mapping similar to uvm_kernacc().
  */
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)

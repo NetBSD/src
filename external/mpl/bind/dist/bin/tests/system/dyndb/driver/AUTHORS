@@ -1,0 +1,8 @@
+This sample driver is based on bind-dyndb-ldap project and small portions
+of code from ISC BIND 9.10.
+
+Authors listed in alphabetical order:
+Adam Tkac   <atkac@redhat.com>
+Jiri Kuncar <jkuncar@redhat.com>
+Martin Nagy <mnagy@redhat.com>
+Petr Spacek <pspacek@redhat.com>

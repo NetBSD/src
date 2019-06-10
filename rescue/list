@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.49 2018/04/11 00:26:38 rin Exp $
+#	$NetBSD: list,v 1.49.2.1 2019/06/10 22:05:31 christos Exp $
 
 SRCDIRS	bin
 
@@ -64,7 +64,6 @@ PROG	fsirand
 PROG	gpt
 PROG	ifconfig
 PROG	init		init.bak
-PROG	lmcconfig
 PROG	mbrlabel
 PROG	mknod
 PROG	modload
@@ -96,7 +95,7 @@ PROG	newfs		mount_mfs
 PROG	newfs_lfs
 PROG	newfs_msdos
 PROG	ping
-PROG	pppoectl	ipppctl
+PROG	pppoectl
 PROG	raidctl
 PROG	rcorder
 PROG	reboot		halt
@@ -114,6 +113,7 @@ PROG	swapctl		swapon
 PROG	sysctl
 PROG	ttyflags
 PROG	tunefs
+PROG	umbctl
 PROG	umount
 PROG	wdogctl
 PROG	veriexecctl

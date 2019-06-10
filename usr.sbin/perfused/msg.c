@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.24 2016/10/19 01:31:05 christos Exp $ */
+/*  $NetBSD: msg.c,v 1.24.14.1 2019/06/10 22:10:35 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -78,7 +78,7 @@ perfused_open_sock(void)
 	(void)strcpy(sun.sun_path, _PATH_FUSE); 
 
 	/*
-	 * Set a buffer lentgh large enough so that a few FUSE packets
+	 * Set a buffer length large enough so that a few FUSE packets
 	 * will fit. 
 	 */
 	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE", 16 * FUSE_BUFSIZE);

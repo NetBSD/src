@@ -1,0 +1,58 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+# a comment which should be skipped
+
+algorithm-policy rsasha1 {
+	key-size ksk 2048;
+	key-size zsk 1024;     // this too
+};
+
+// and this
+
+policy default {
+	directory "keydir";
+	algorithm rsasha1;
+	coverage 1y;            # another comment
+	roll-period zsk 6mo;    // and yet another
+	pre-publish zsk 6w;
+	post-publish zsk 6w;
+	keyttl 1h;
+};
+
+policy extra {
+	policy default;
+	coverage 5y;
+	roll-period KSK 1 year;
+	roll-period zsk 3mo;
+	pre-publish ksk 3mo;
+	post-publish zsk 1w;
+	keyttl 2h;
+};
+
+/*
+ * and this is also a comment,
+ * and it should be ignored like
+ * the others.
+ */
+
+zone example.com {
+	policy extra;
+	coverage 5 mon;
+	algorithm nsec3rsasha1;
+};
+
+/*
+ * This confirms that zones starting with digits are accepted.
+ */
+zone "99example.com" {
+	policy global;
+};

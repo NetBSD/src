@@ -22,8 +22,7 @@
 
 /* Most of this hacked by Steve Chamberlain <sac@cygnus.com>.  */
 
-/* These routines are used by coff-h8300 and coff-z8k to do
-   relocation.
+/* These routines are used by coff-z8k to do relocation.
 
    FIXME: This code should be rewritten to support the new COFF
    linker.  Basically, they need to deal with COFF relocs rather than

@@ -1,6 +1,6 @@
 /* mpfr_acos -- arc-cosinus of a floating-point number
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -75,7 +75,7 @@ mpfr_acos (mpfr_ptr acos, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         }
       else
         {
-          if (MPFR_IS_POS_SIGN (sign)) /* acos(+1) = 0 */
+          if (MPFR_IS_POS_SIGN (sign)) /* acos(+1) = +0 */
             return mpfr_set_ui (acos, 0, rnd_mode);
           else /* acos(-1) = Pi */
             return mpfr_const_pi (acos, rnd_mode);

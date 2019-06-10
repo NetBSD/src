@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.11 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.11.12.1 2019/06/10 21:51:19 christos Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -90,6 +90,8 @@ netwrite(
 	return (size_t)(b - (const char *)vb);
 }
 
+
+int set_user_group_ids(void);
 
 /* === functions === */
 /*
@@ -432,6 +434,32 @@ fork_deferred_worker(void)
 }
 #endif
 
+#if HAVE_SETPROCTITLE == 0
+static void
+setproctitle(const char *fmt, ...)
+{
+	va_list ap;
+	char b1[128];
+	int argcc, argvlen, l;
+
+	if (saved_argc == 0)
+		return;
+
+	va_start(ap, fmt);
+	vsnprintf(b1, sizeof(b1), fmt, ap);
+	va_end(ap);
+
+	/* Clear argv */
+	for (argvlen = 0, argcc = 0; argcc < saved_argc; argcc++) {
+		l = strlen(saved_argv[argcc]);
+		argvlen += l + 1;
+		memset(saved_argv[argcc], 0, l);
+	}
+	l = snprintf(saved_argv[0], argvlen, "ntpd: %s", b1);
+	for (argcc = 1; argcc < saved_argc; argcc++)
+		saved_argv[argcc] = &saved_argv[0][l];
+}
+#endif
 
 static void
 fork_blocking_child(
@@ -543,17 +571,7 @@ fork_blocking_child(
 	 * Change the process name of the child to avoid confusion
 	 * about ntpd trunning twice.
 	 */
-	if (saved_argc != 0) {
-		int argcc;
-		int argvlen = 0;
-		/* Clear argv */
-		for (argcc = 0; argcc < saved_argc; argcc++) {
-			int l = strlen(saved_argv[argcc]);
-			argvlen += l + 1;
-			memset(saved_argv[argcc], 0, l);
-		}
-		strlcpy(saved_argv[0], "ntpd: asynchronous dns resolver", argvlen);
-	}
+	setproctitle("asynchronous dns resolver");
 
 	/*
 	 * In the child, close all files except stdin, stdout, stderr,
@@ -593,6 +611,8 @@ fork_blocking_child(
 	signal_no_reset(SIGHUP, worker_sighup);
 	init_logging("ntp_intres", 0, FALSE);
 	setup_logfile(NULL);
+
+	(void) set_user_group_ids();
 
 	/*
 	 * And now back to the portable code

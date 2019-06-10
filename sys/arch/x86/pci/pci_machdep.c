@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.82 2018/06/23 16:09:53 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.82.2.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.82 2018/06/23 16:09:53 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.82.2.1 2019/06/10 22:06:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.82 2018/06/23 16:09:53 jakllsch Ex
 #include <dev/pci/puccn.h>
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 #include <x86/efi.h>
 #endif
 
@@ -340,20 +340,23 @@ pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
 	if (cpuno == cl->cl_cpuno) {
 		ocl->cl_cpuno = cpuno;
 	} else {
-		u_int spins;
+#ifdef LOCKDEBUG
+		u_int spins = 0;
+#endif
+		u_int count;
+		count = SPINLOCK_BACKOFF_MIN;
 
 		ocl->cl_cpuno = 0;
 
-		spins = SPINLOCK_BACKOFF_MIN;
 		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0) {
-			SPINLOCK_BACKOFF(spins);
+			SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins)) {
 				panic("%s: cpu %" PRId32
 				    " spun out waiting for cpu %" PRId32,
 				    __func__, cpuno, cl->cl_cpuno);
 			}
-#endif	/* LOCKDEBUG */
+#endif
 		}
 	}
 
@@ -1051,10 +1054,69 @@ x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 	return true;
 }
 
+static void
+populate_fbinfo(device_t dev, prop_dictionary_t dict)
+{
+#if NWSDISPLAY > 0 && NGENFB > 0
+	extern struct vcons_screen x86_genfb_console_screen;
+	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
+#endif
+	const void *fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+	struct btinfo_framebuffer fbinfo;
+
+	if (fbptr == NULL)
+		return;
+
+	memcpy(&fbinfo, fbptr, sizeof(fbinfo));
+
+	if (fbinfo.physaddr != 0) {
+		prop_dictionary_set_uint32(dict, "width", fbinfo.width);
+		prop_dictionary_set_uint32(dict, "height", fbinfo.height);
+		prop_dictionary_set_uint8(dict, "depth", fbinfo.depth);
+		prop_dictionary_set_uint16(dict, "linebytes", fbinfo.stride);
+
+		prop_dictionary_set_uint64(dict, "address", fbinfo.physaddr);
+#if NWSDISPLAY > 0 && NGENFB > 0
+		if (ri->ri_bits != NULL) {
+			prop_dictionary_set_uint64(dict, "virtual_address",
+			    ri->ri_hwbits != NULL ?
+			    (vaddr_t)ri->ri_hworigbits :
+			    (vaddr_t)ri->ri_origbits);
+		}
+#endif
+	}
+#if notyet
+	prop_dictionary_set_bool(dict, "splash", 
+	    (fbinfo.flags & BI_FB_SPLASH) != 0);
+#endif
+	if (fbinfo.depth == 8) {
+		gfb_cb.gcc_cookie = NULL;
+		gfb_cb.gcc_set_mapreg = x86_genfb_set_mapreg;
+		prop_dictionary_set_uint64(dict, "cmap_callback",
+		    (uint64_t)(uintptr_t)&gfb_cb);
+	}
+	if (fbinfo.physaddr != 0) {
+		mode_cb.gmc_setmode = x86_genfb_setmode;
+		prop_dictionary_set_uint64(dict, "mode_callback",
+		    (uint64_t)(uintptr_t)&mode_cb);
+	}
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+	if (device_is_a(dev, "genfb")) {
+		prop_dictionary_set_bool(dict, "enable_shadowfb",
+		    ri->ri_hwbits != NULL);
+
+		x86_genfb_set_console_dev(dev);
+#ifdef DDB
+		db_trap_callback = x86_genfb_ddb_trap_callback;
+#endif
+	}
+#endif
+}
+
 device_t
 device_pci_register(device_t dev, void *aux)
 {
-	static bool found_console = false;
 	device_t parent = device_parent(dev);
 
 	device_pci_props_register(dev, aux);
@@ -1092,7 +1154,7 @@ device_pci_register(device_t dev, void *aux)
 			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
 				return dev;
 
-#ifndef XEN
+#ifndef XENPV
 			/*
 			 * efiboot reports parent ppb bus/device/function.
 			 */
@@ -1108,83 +1170,17 @@ device_pci_register(device_t dev, void *aux)
 		}
 	}
 	if (parent && device_is_a(parent, "pci") &&
-	    found_console == false) {
-		struct btinfo_framebuffer *fbinfo;
+	    x86_found_console == false) {
 		struct pci_attach_args *pa = aux;
-		prop_dictionary_t dict;
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
-#if NWSDISPLAY > 0 && NGENFB > 0
-			extern struct vcons_screen x86_genfb_console_screen;
-			struct rasops_info *ri;
-
-			ri = &x86_genfb_console_screen.scr_ri;
-#endif
-
-			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
-			dict = device_properties(dev);
+			prop_dictionary_t dict = device_properties(dev);
 			/*
 			 * framebuffer drivers other than genfb can work
 			 * without the address property
 			 */
-			if (fbinfo != NULL) {
-				if (fbinfo->physaddr != 0) {
-				prop_dictionary_set_uint32(dict, "width",
-				    fbinfo->width);
-				prop_dictionary_set_uint32(dict, "height",
-				    fbinfo->height);
-				prop_dictionary_set_uint8(dict, "depth",
-				    fbinfo->depth);
-				prop_dictionary_set_uint16(dict, "linebytes",
-				    fbinfo->stride);
+			populate_fbinfo(dev, dict);
 
-				prop_dictionary_set_uint64(dict, "address",
-				    fbinfo->physaddr);
-#if NWSDISPLAY > 0 && NGENFB > 0
-				if (ri->ri_bits != NULL) {
-					prop_dictionary_set_uint64(dict,
-					    "virtual_address",
-					    ri->ri_hwbits != NULL ?
-					    (vaddr_t)ri->ri_hworigbits :
-					    (vaddr_t)ri->ri_origbits);
-				}
-#endif
-				}
-#if notyet
-				prop_dictionary_set_bool(dict, "splash",
-				    fbinfo->flags & BI_FB_SPLASH ?
-				     true : false);
-#endif
-				if (fbinfo->depth == 8) {
-					gfb_cb.gcc_cookie = NULL;
-					gfb_cb.gcc_set_mapreg =
-					    x86_genfb_set_mapreg;
-					prop_dictionary_set_uint64(dict,
-					    "cmap_callback",
-					    (uint64_t)(uintptr_t)&gfb_cb);
-				}
-				if (fbinfo->physaddr != 0) {
-					mode_cb.gmc_setmode = x86_genfb_setmode;
-					prop_dictionary_set_uint64(dict,
-					    "mode_callback",
-					    (uint64_t)(uintptr_t)&mode_cb);
-				}
-
-#if NWSDISPLAY > 0 && NGENFB > 0
-				if (device_is_a(dev, "genfb")) {
-					prop_dictionary_set_bool(dict,
-					    "enable_shadowfb",
-					    ri->ri_hwbits != NULL ?
-					      true : false);
-
-					x86_genfb_set_console_dev(dev);
-#ifdef DDB
-					db_trap_callback =
-					    x86_genfb_ddb_trap_callback;
-#endif
-				}
-#endif
-			}
 #if 1 && NWSDISPLAY > 0 && NGENFB > 0
 			/* XXX */
 			if (device_is_a(dev, "genfb")) {
@@ -1196,12 +1192,13 @@ device_pci_register(device_t dev, void *aux)
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
+			extern struct vcons_screen x86_genfb_console_screen;
 			prop_dictionary_set_uint16(dict, "cursor-row",
 			    x86_genfb_console_screen.scr_ri.ri_crow);
 #endif
 #if notyet
 			prop_dictionary_set_bool(dict, "splash",
-			    fbinfo->flags & BI_FB_SPLASH ? true : false);
+			    (fbinfo->flags & BI_FB_SPLASH) != 0);
 #endif
 			pmf_cb.gpc_suspend = x86_genfb_suspend;
 			pmf_cb.gpc_resume = x86_genfb_resume;
@@ -1211,7 +1208,7 @@ device_pci_register(device_t dev, void *aux)
 			vga_posth = vga_post_init(pa->pa_bus, pa->pa_device,
 			    pa->pa_function);
 #endif
-			found_console = true;
+			x86_found_console = true;
 			return NULL;
 		}
 	}

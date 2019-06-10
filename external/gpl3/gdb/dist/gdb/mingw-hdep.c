@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -176,4 +176,196 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     Sleep (1);
 
   return num_ready;
+}
+
+/* Map COLOR's RGB triplet, with 8 bits per component, into 16 Windows
+   console colors, where each component has just 1 bit, plus a single
+   intensity bit which affects all 3 components.  */
+static int
+rgb_to_16colors (const ui_file_style::color &color)
+{
+  uint8_t rgb[3];
+  color.get_rgb (rgb);
+
+  int retval = 0;
+  for (int i = 0; i < 3; i++)
+    {
+      /* Subdivide 256 possible values of each RGB component into 3
+	 regions: no color, normal color, bright color.  256 / 3 = 85,
+	 but ui-style.c follows xterm and uses 92 for R and G
+	 components of the bright-blue color, so we bias the divisor a
+	 bit to have the bright colors between 9 and 15 identical to
+	 what ui-style.c expects.  */
+      int bits = rgb[i] / 93;
+      retval |= ((bits > 0) << (2 - i)) | ((bits > 1) << 3);
+    }
+
+  return retval;
+}
+
+/* Zero if not yet initialized, 1 if stdout is a console device, else -1.  */
+static int mingw_console_initialized;
+
+/* Handle to stdout . */
+static HANDLE hstdout = INVALID_HANDLE_VALUE;
+
+/* Text attribute to use for normal text (the "none" pseudo-color).  */
+static SHORT  norm_attr;
+
+/* The most recently applied style.  */
+static ui_file_style last_style;
+
+/* Alternative for the libc 'fputs' which handles embedded SGR
+   sequences in support of styling.  */
+
+int
+gdb_console_fputs (const char *linebuf, FILE *fstream)
+{
+  if (!mingw_console_initialized)
+    {
+      hstdout = (HANDLE)_get_osfhandle (fileno (fstream));
+      DWORD cmode;
+      CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+      if (hstdout != INVALID_HANDLE_VALUE
+	  && GetConsoleMode (hstdout, &cmode) != 0
+	  && GetConsoleScreenBufferInfo (hstdout, &csbi))
+	{
+	  norm_attr = csbi.wAttributes;
+	  mingw_console_initialized = 1;
+	}
+      else if (hstdout != INVALID_HANDLE_VALUE)
+	mingw_console_initialized = -1; /* valid, but not a console device */
+    }
+  /* If our stdout is not a console device, let the default 'fputs'
+     handle the task. */
+  if (mingw_console_initialized <= 0)
+    return 0;
+
+  /* Mapping between 8 ANSI colors and Windows console attributes.  */
+  static int fg_color[] = {
+    0,					/* black */
+    FOREGROUND_RED,			/* red */
+    FOREGROUND_GREEN,			/* green */
+    FOREGROUND_GREEN | FOREGROUND_RED,	/* yellow */
+    FOREGROUND_BLUE,			/* blue */
+    FOREGROUND_BLUE | FOREGROUND_RED,	/* magenta */
+    FOREGROUND_BLUE | FOREGROUND_GREEN, /* cyan */
+    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE /* gray */
+  };
+  static int bg_color[] = {
+    0,					/* black */
+    BACKGROUND_RED,			/* red */
+    BACKGROUND_GREEN,			/* green */
+    BACKGROUND_GREEN | BACKGROUND_RED,	/* yellow */
+    BACKGROUND_BLUE,			/* blue */
+    BACKGROUND_BLUE | BACKGROUND_RED,	/* magenta */
+    BACKGROUND_BLUE | BACKGROUND_GREEN, /* cyan */
+    BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE /* gray */
+  };
+
+  ui_file_style style = last_style;
+  unsigned char c;
+  size_t n_read;
+
+  for ( ; (c = *linebuf) != 0; linebuf += n_read)
+    {
+      if (c == '\033')
+	{
+	  fflush (fstream);
+	  bool parsed = style.parse (linebuf, &n_read);
+	  if (n_read <= 0)	/* should never happen */
+	    n_read = 1;
+	  if (!parsed)
+	    {
+	      /* This means we silently swallow SGR sequences we
+		 cannot parse.  */
+	      continue;
+	    }
+	  /* Colors.  */
+	  const ui_file_style::color &fg = style.get_foreground ();
+	  const ui_file_style::color &bg = style.get_background ();
+	  int fgcolor, bgcolor, bright, inverse;
+	  if (fg.is_none ())
+	    fgcolor = norm_attr & 15;
+	  else if (fg.is_basic ())
+	    fgcolor = fg_color[fg.get_value () & 15];
+	  else
+	    fgcolor = rgb_to_16colors (fg);
+	  if (bg.is_none ())
+	    bgcolor = norm_attr & (15 << 4);
+	  else if (bg.is_basic ())
+	    bgcolor = bg_color[bg.get_value () & 15];
+	  else
+	    bgcolor = rgb_to_16colors (bg) << 4;
+
+	  /* Intensity.  */
+	  switch (style.get_intensity ())
+	    {
+	    case ui_file_style::NORMAL:
+	    case ui_file_style::DIM:
+	      bright = 0;
+	      break;
+	    case ui_file_style::BOLD:
+	      bright = 1;
+	      break;
+	    default:
+	      gdb_assert_not_reached ("invalid intensity");
+	    }
+
+	  /* Inverse video.  */
+	  if (style.is_reverse ())
+	    inverse = 1;
+	  else
+	    inverse = 0;
+
+	  /* Construct the attribute.  */
+	  if (inverse)
+	    {
+	      int t = fgcolor;
+	      fgcolor = (bgcolor >> 4);
+	      bgcolor = (t << 4);
+	    }
+	  if (bright)
+	    fgcolor |= FOREGROUND_INTENSITY;
+
+	  SHORT attr = (bgcolor & (15 << 4)) | (fgcolor & 15);
+
+	  /* Apply the attribute.  */
+	  SetConsoleTextAttribute (hstdout, attr);
+	}
+      else
+	{
+	  /* When we are about to write newline, we need to clear to
+	     EOL with the normal attribute, to avoid spilling the
+	     colors to the next screen line.  We assume here that no
+	     non-default attribute extends beyond the newline.  */
+	  if (c == '\n')
+	    {
+	      DWORD nchars;
+	      COORD start_pos;
+	      DWORD written;
+	      CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	      fflush (fstream);
+	      GetConsoleScreenBufferInfo (hstdout, &csbi);
+
+	      if (csbi.wAttributes != norm_attr)
+		{
+		  start_pos = csbi.dwCursorPosition;
+		  nchars = csbi.dwSize.X - start_pos.X;
+
+		  FillConsoleOutputAttribute (hstdout, norm_attr, nchars,
+					      start_pos, &written);
+		  FillConsoleOutputCharacter (hstdout, ' ', nchars,
+					      start_pos, &written);
+		}
+	    }
+	  fputc (c, fstream);
+	  n_read = 1;
+	}
+    }
+
+  last_style = style;
+  return 1;
 }

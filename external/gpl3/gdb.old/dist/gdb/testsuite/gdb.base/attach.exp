@@ -1,4 +1,4 @@
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,14 +30,14 @@ remote_exec build "rm -f ${binfile} ${binfile2}"
 # build the first test case
 #
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested attach.exp
+    untested "failed to compile"
     return -1
 }
 
 # Build the in-system-call test
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug}] != "" } {
-    untested attach.exp
+    untested "failed to compile in-system-call test"
     return -1
 }
 

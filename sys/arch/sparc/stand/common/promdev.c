@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.28 2017/03/25 09:21:21 martin Exp $ */
+/*	$NetBSD: promdev.c,v 1.28.14.1 2019/06/10 22:06:47 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -234,7 +234,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		memcpy(disk_pd, pd, sizeof(struct promdata));
 		if (prom_version() != PROM_OLDMON) {
 			strcpy(rawpart, prom_bootdevice);
-			if ((partition = strchr(rawpart, ':')) != '\0' &&
+			if ((partition = strchr(rawpart, ':')) != NULL &&
 		    	    *++partition >= 'a' &&
 			    *partition <= 'a' +  MAXPARTITIONS) {
 				part = *partition - 'a';

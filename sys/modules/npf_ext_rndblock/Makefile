@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/12/10 00:32:25 rmind Exp $
+# $NetBSD: Makefile,v 1.1.44.1 2019/06/10 22:09:34 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=		npf_ext_rndblock
 
 SRCS=		npf_ext_rndblock.c
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .include <bsd.kmodule.mk>

@@ -1,0 +1,2 @@
+include start
+call $TRUE has_colors

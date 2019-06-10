@@ -1,6 +1,6 @@
 /* mpc_exp -- exponential of a complex number.
 
-Copyright (C) 2002, 2009, 2010, 2011 INRIA
+Copyright (C) 2002, 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -88,15 +88,16 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
 
       mpfr_init2 (n, 2);
       if (mpfr_signbit (mpc_realref (op)))
-        mpfr_set_ui (n, 0, GMP_RNDN);
+        mpfr_set_ui (n, 0, MPFR_RNDN);
       else
         mpfr_set_inf (n, +1);
 
       if (mpfr_inf_p (mpc_imagref (op)))
         {
-          inex_re = mpfr_set (mpc_realref (rop), n, GMP_RNDN);
-          if (mpfr_signbit (mpc_realref (op)))
-            inex_im = mpfr_set (mpc_imagref (rop), n, GMP_RNDN);
+          int real_sign = mpfr_signbit (mpc_realref (op));
+          inex_re = mpfr_set (mpc_realref (rop), n, MPFR_RNDN);
+          if (real_sign)
+            inex_im = mpfr_set (mpc_imagref (rop), n, MPFR_RNDN);
           else
             {
               mpfr_set_nan (mpc_imagref (rop));
@@ -109,9 +110,9 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
           mpfr_init2 (c, 2);
           mpfr_init2 (s, 2);
 
-          mpfr_sin_cos (s, c, mpc_imagref (op), GMP_RNDN);
-          inex_re = mpfr_copysign (mpc_realref (rop), n, c, GMP_RNDN);
-          inex_im = mpfr_copysign (mpc_imagref (rop), n, s, GMP_RNDN);
+          mpfr_sin_cos (s, c, mpc_imagref (op), MPFR_RNDN);
+          inex_re = mpfr_copysign (mpc_realref (rop), n, c, MPFR_RNDN);
+          inex_im = mpfr_copysign (mpc_imagref (rop), n, s, MPFR_RNDN);
 
           mpfr_clear (s);
           mpfr_clear (c);
@@ -159,34 +160,34 @@ mpc_exp (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
          could be represented in the precision of rop. */
       mpfr_clear_overflow ();
       mpfr_clear_underflow ();
-      mpfr_exp (x, mpc_realref(op), GMP_RNDN); /* error <= 0.5ulp */
-      mpfr_sin_cos (z, y, mpc_imagref(op), GMP_RNDN); /* errors <= 0.5ulp */
-      mpfr_mul (y, y, x, GMP_RNDN); /* error <= 2ulp */
+      mpfr_exp (x, mpc_realref(op), MPFR_RNDN); /* error <= 0.5ulp */
+      mpfr_sin_cos (z, y, mpc_imagref(op), MPFR_RNDN); /* errors <= 0.5ulp */
+      mpfr_mul (y, y, x, MPFR_RNDN); /* error <= 2ulp */
       ok = mpfr_overflow_p () || mpfr_zero_p (x)
-        || mpfr_can_round (y, prec - 2, GMP_RNDN, GMP_RNDZ,
-                       MPC_PREC_RE(rop) + (MPC_RND_RE(rnd) == GMP_RNDN));
+        || mpfr_can_round (y, prec - 2, MPFR_RNDN, MPFR_RNDZ,
+                       MPC_PREC_RE(rop) + (MPC_RND_RE(rnd) == MPFR_RNDN));
       if (ok) /* compute imaginary part */
         {
-          mpfr_mul (z, z, x, GMP_RNDN);
+          mpfr_mul (z, z, x, MPFR_RNDN);
           ok = mpfr_overflow_p () || mpfr_zero_p (x)
-            || mpfr_can_round (z, prec - 2, GMP_RNDN, GMP_RNDZ,
-                       MPC_PREC_IM(rop) + (MPC_RND_IM(rnd) == GMP_RNDN));
+            || mpfr_can_round (z, prec - 2, MPFR_RNDN, MPFR_RNDZ,
+                       MPC_PREC_IM(rop) + (MPC_RND_IM(rnd) == MPFR_RNDN));
         }
     }
   while (ok == 0);
 
   inex_re = mpfr_set (mpc_realref(rop), y, MPC_RND_RE(rnd));
   inex_im = mpfr_set (mpc_imagref(rop), z, MPC_RND_IM(rnd));
-  if (mpfr_overflow_p ()) {
-    /* overflow in real exponential, inex is sign of infinite result */
-    inex_re = mpfr_sgn (y);
-    inex_im = mpfr_sgn (z);
-  }
-  else if (mpfr_underflow_p ()) {
-    /* underflow in real exponential, inex is opposite of sign of 0 result */
-    inex_re = (mpfr_signbit (y) ? +1 : -1);
-    inex_im = (mpfr_signbit (z) ? +1 : -1);
-  }
+  if (mpfr_overflow_p ())
+    {
+      inex_re = mpc_fix_inf (mpc_realref(rop), MPC_RND_RE(rnd));
+      inex_im = mpc_fix_inf (mpc_imagref(rop), MPC_RND_IM(rnd));
+    }
+  else if (mpfr_underflow_p ())
+    {
+      inex_re = mpc_fix_zero (mpc_realref(rop), MPC_RND_RE(rnd));
+      inex_im = mpc_fix_zero (mpc_imagref(rop), MPC_RND_IM(rnd));
+    }
 
   mpfr_clear (x);
   mpfr_clear (y);

@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.6 2012/11/05 15:14:34 chs Exp $ */
+/* $NetBSD: syscall.c,v 1.6.38.1 2019/06/10 22:06:23 christos Exp $ */
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2012/11/05 15:14:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.38.1 2019/06/10 22:06:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,14 +61,14 @@ syscall_intern(struct proc *p)
 void
 syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
-printf("%s: not yet\n", __func__);
+	panic("XXX %s: not implemented\n", __func__);
 	return;
 }
 
 void
 syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
-printf("%s: not yet\n", __func__);
+	panic("XXX %s: not implemented\n", __func__);
 	return;
 }
 
@@ -76,10 +76,9 @@ printf("%s: not yet\n", __func__);
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-printf("%s: not yet\n", __func__);
-	return;
+	panic("XXX %s: not implemented\n", __func__);
 }
 
 /*

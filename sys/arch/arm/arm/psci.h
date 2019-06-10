@@ -1,4 +1,4 @@
-/* $NetBSD: psci.h,v 1.1 2017/06/28 23:48:23 jmcneill Exp $ */
+/* $NetBSD: psci.h,v 1.1.12.1 2019/06/10 22:05:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -63,6 +63,11 @@ typedef int (*psci_fn)(register_t, register_t, register_t, register_t);
  * Set the PSCI call method. Pass either psci_call_smc or psci_call_hvc.
  */
 void	psci_init(psci_fn);
+
+/*
+ * Return true if PSCI is available (psci_init has been called).
+ */
+bool	psci_available(void);
 
 /*
  * PSCI call methods, implemented in psci.S

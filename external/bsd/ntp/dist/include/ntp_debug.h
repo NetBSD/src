@@ -1,9 +1,9 @@
-/*	$NetBSD: ntp_debug.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_debug.h,v 1.4.16.1 2019/06/10 21:51:14 christos Exp $	*/
 
 /*
  * Header
  *
- * $Created: Sat Aug 20 14:23:01 2005 $
+ * Created
  *
  * Copyright (C) 2005 by Frank Kardel
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.2 2012/02/17 08:20:55 yamt Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.2.40.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ typedef struct rb_node {
 	 * rb_node will have an alignment of 4 or 8 bytes.
 	 */
 	uintptr_t rb_info;
-#define	RB_FLAG_POSITION	0x2
-#define	RB_FLAG_RED		0x1
+#define	RB_FLAG_POSITION	(uintptr_t)0x2
+#define	RB_FLAG_RED		(uintptr_t)0x1
 #define	RB_FLAG_MASK		(RB_FLAG_POSITION|RB_FLAG_RED)
 #define	RB_FATHER(rb) \
     ((struct rb_node *)((rb)->rb_info & ~RB_FLAG_MASK))
@@ -102,12 +102,20 @@ typedef struct rb_node {
 
 #define RB_TREE_MIN(T) rb_tree_iterate((T), NULL, RB_DIR_LEFT)
 #define RB_TREE_MAX(T) rb_tree_iterate((T), NULL, RB_DIR_RIGHT)
+#define RB_TREE_NEXT(T, N) rb_tree_iterate((T), (N), RB_DIR_RIGHT)
+#define RB_TREE_PREV(T, N) rb_tree_iterate((T), (N), RB_DIR_LEFT)
 #define RB_TREE_FOREACH(N, T) \
-    for ((N) = RB_TREE_MIN(T); (N); \
-	(N) = rb_tree_iterate((T), (N), RB_DIR_RIGHT))
+    for ((N) = RB_TREE_MIN(T); (N); (N) = RB_TREE_NEXT((T), (N)))
 #define RB_TREE_FOREACH_REVERSE(N, T) \
-    for ((N) = RB_TREE_MAX(T); (N); \
-	(N) = rb_tree_iterate((T), (N), RB_DIR_LEFT))
+    for ((N) = RB_TREE_MAX(T); (N); (N) = RB_TREE_PREV((T), (N)))
+#define RB_TREE_FOREACH_SAFE(N, T, S) \
+    for ((N) = RB_TREE_MIN(T); \
+        (N) && ((S) = RB_TREE_NEXT((T), (N)), 1); \
+        (N) = (S))
+#define RB_TREE_FOREACH_REVERSE_SAFE(N, T, S) \
+    for ((N) = RB_TREE_MAX(T); \
+        (N) && ((S) = RB_TREE_PREV((T), (N)), 1); \
+        (N) = (S))
 
 #ifdef RBDEBUG
 TAILQ_HEAD(rb_node_qh, rb_node);

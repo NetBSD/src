@@ -1,5 +1,5 @@
 /* Motorola 68HC11/68HC12-specific support for 32-bit ELF
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -33,7 +33,8 @@
 #define BFD_M68HC11_BANK_VIRTUAL_NAME "__bank_virtual"
 
 /* Set and control ELF flags in ELF header.  */
-extern bfd_boolean _bfd_m68hc11_elf_merge_private_bfd_data (bfd*,bfd*);
+extern bfd_boolean _bfd_m68hc11_elf_merge_private_bfd_data
+  (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_m68hc11_elf_set_private_flags (bfd*,flagword);
 extern bfd_boolean _bfd_m68hc11_elf_print_private_bfd_data (bfd*, void*);
 

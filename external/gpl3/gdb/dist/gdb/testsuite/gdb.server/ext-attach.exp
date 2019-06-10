@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2017 Free Software Foundation, Inc.
+# Copyright 2007-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ gdb_test "attach $testpid" \
     "attach to remote program 2"
 gdb_test "backtrace" ".*main.*" "backtrace 2"
 
-gdb_test "kill" "" "kill" "Kill the program being debugged.*" "y"
+gdb_test "kill" "" "kill" "Kill the program being debugged. .y or n. " "y"
 gdb_test_no_output "monitor exit"
 
 kill_wait_spawned_process $test_spawn_id

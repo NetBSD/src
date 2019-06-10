@@ -23,6 +23,7 @@ extern FILE* c_in, *c_out;
 int c_parse(void);
 int c_lex(void);
 int c_wrap(void);
+int c_lex_destroy(void);
 void c_error(const char *message);
 extern char* c_text;
 
@@ -64,6 +65,7 @@ nsd_options_create(region_type* region)
 	opt->log_time_ascii = 1;
 	opt->round_robin = 0; /* also packet.h::round_robin */
 	opt->minimal_responses = 0; /* also packet.h::minimal_responses */
+	opt->refuse_any = 0;
 	opt->server_count = 1;
 	opt->tcp_count = 100;
 	opt->tcp_query_count = 0;
@@ -95,6 +97,16 @@ nsd_options_create(region_type* region)
 	opt->rrl_ratelimit = RRL_LIMIT/2;
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
 #  endif
+#endif
+#ifdef USE_DNSTAP
+	opt->dnstap_enable = 0;
+	opt->dnstap_socket_path = DNSTAP_SOCKET_PATH;
+	opt->dnstap_send_identity = 0;
+	opt->dnstap_send_version = 0;
+	opt->dnstap_identity = NULL;
+	opt->dnstap_version = NULL;
+	opt->dnstap_log_auth_query_messages = 0;
+	opt->dnstap_log_auth_response_messages = 0;
 #endif
 	opt->zonefiles_check = 1;
 	if(opt->database == NULL || opt->database[0] == 0)
@@ -280,9 +292,9 @@ void options_zonestatnames_create(struct nsd_options* opt)
 	/* allocate "" as zonestat 0, for zones without a zonestat */
 	if(!rbtree_search(opt->zonestatnames, "")) {
 		struct zonestatname* n;
-		n = (struct zonestatname*)xalloc(sizeof(*n));
-		memset(n, 0, sizeof(*n));
-		n->node.key = strdup("");
+		n = (struct zonestatname*)region_alloc_zero(opt->region,
+			sizeof(*n));
+		n->node.key = region_strdup(opt->region, "");
 		if(!n->node.key) {
 			log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
 			exit(1);
@@ -692,8 +704,10 @@ zone_list_compact(struct nsd_options* opt)
 void
 zone_list_close(struct nsd_options* opt)
 {
-	fclose(opt->zonelist);
-	opt->zonelist = NULL;
+	if(opt->zonelist) {
+		fclose(opt->zonelist);
+		opt->zonelist = NULL;
+	}
 }
 
 void
@@ -1887,11 +1901,15 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 #ifdef INET6
 		if(inet_pton(AF_INET6, ip, &acl->addr.addr6) != 1)
 			c_error_msg("Bad ip6 address '%s'", ip);
-		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax)
+		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax) {
+			assert(p);
 			if(inet_pton(AF_INET6, p, &acl->range_mask.addr6) != 1)
 				c_error_msg("Bad ip6 address mask '%s'", p);
-		if(acl->rangetype==acl_range_subnet)
+		}
+		if(acl->rangetype==acl_range_subnet) {
+			assert(p);
 			parse_acl_range_subnet(p, &acl->range_mask.addr6, 128);
+		}
 #else
 		c_error_msg("encountered IPv6 address '%s'.", ip);
 #endif /* INET6 */
@@ -1899,11 +1917,15 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 		acl->is_ipv6 = 0;
 		if(inet_pton(AF_INET, ip, &acl->addr.addr) != 1)
 			c_error_msg("Bad ip4 address '%s'", ip);
-		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax)
+		if(acl->rangetype==acl_range_mask || acl->rangetype==acl_range_minmax) {
+			assert(p);
 			if(inet_pton(AF_INET, p, &acl->range_mask.addr) != 1)
 				c_error_msg("Bad ip4 address mask '%s'", p);
-		if(acl->rangetype==acl_range_subnet)
+		}
+		if(acl->rangetype==acl_range_subnet) {
+			assert(p);
 			parse_acl_range_subnet(p, &acl->range_mask.addr, 32);
+		}
 	}
 
 	/* key */
@@ -2005,6 +2027,9 @@ void
 nsd_options_destroy(struct nsd_options* opt)
 {
 	region_destroy(opt->region);
+#ifdef MEMCLEAN /* OS collects memory pages */
+	c_lex_destroy();
+#endif
 }
 
 unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
@@ -2021,9 +2046,8 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 	if(res)
 		return ((struct zonestatname*)res)->id;
 	/* create it */
-	n = (struct zonestatname*)xalloc(sizeof(*n));
-	memset(n, 0, sizeof(*n));
-	n->node.key = strdup(statname);
+	n = (struct zonestatname*)region_alloc_zero(opt->region, sizeof(*n));
+	n->node.key = region_strdup(opt->region, statname);
 	if(!n->node.key) {
 		log_msg(LOG_ERR, "malloc failed: %s", strerror(errno));
 		exit(1);
@@ -2035,4 +2059,16 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 	(void)opt; (void)zopt;
 	return 0;
 #endif /* USE_ZONE_STATS */
+}
+
+/** check if config turns on IP-address interface with certificates or a
+ * named pipe without certificates. */
+int
+options_remote_is_address(struct nsd_options* cfg)
+{
+	if(!cfg->control_enable) return 0;
+	if(!cfg->control_interface) return 1;
+	if(!cfg->control_interface->address) return 1;
+	if(cfg->control_interface->address[0] == 0) return 1;
+	return (cfg->control_interface->address[0] != '/');
 }

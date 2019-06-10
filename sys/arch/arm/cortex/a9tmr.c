@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.16 2018/06/20 05:01:39 hkenken Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.16.2.1 2019/06/10 22:05:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.16 2018/06/20 05:01:39 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.16.2.1 2019/06/10 22:05:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	const char *cpu_type;
 
 	/*
-	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
+	 * This runs at the ARM PERIPHCLOCK.
 	 * The MD code should have setup our frequency for us.
 	 */
 	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq)) {
@@ -149,6 +149,9 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh,
 	    mpcaa->mpcaa_off1, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
+
+	/* Enable the timer early for delay(), disable all other features */
+	a9tmr_global_write(sc, TMR_GBL_CTL, TMR_CTL_ENABLE);
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
@@ -359,10 +362,15 @@ a9tmr_intr(void *arg)
 	return 1;
 }
 
+/* XXX This conflicts with gtmr, hence the temporary weak alias kludge */
+#if 1
+void a9tmr_setstatclockrate(int);
 void
-setstatclockrate(int newhz)
+a9tmr_setstatclockrate(int newhz)
 {
 }
+__weak_alias(setstatclockrate, a9tmr_setstatclockrate);
+#endif
 
 static u_int
 a9tmr_get_timecount(struct timecounter *tc)

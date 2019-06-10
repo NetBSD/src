@@ -1,6 +1,6 @@
 // ABI Support -*- C++ -*-
 
-// Copyright (C) 2000-2015 Free Software Foundation, Inc.
+// Copyright (C) 2000-2016 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -281,7 +281,8 @@ namespace __cxxabiv1
 	__volatile_mask = 0x2,
 	__restrict_mask = 0x4,
 	__incomplete_mask = 0x8,
-	__incomplete_class_mask = 0x10
+	__incomplete_class_mask = 0x10,
+	__transaction_safe_mask = 0x20
       };
 
   protected:

@@ -1,6 +1,6 @@
 /* Test file for mpfr_hypot.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,10 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <limits.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -314,17 +310,46 @@ alltst (void)
     }
 }
 
+/* Test failing with GMP_CHECK_RANDOMIZE=1513841234 (overflow flag not set).
+   The bug was in fact in mpfr_nexttoinf which didn't set the overflow flag. */
+static void
+bug20171221 (void)
+{
+  mpfr_t x, u, y;
+  int inex;
+  mpfr_exp_t emax;
+
+  mpfr_init2 (x, 12);
+  mpfr_init2 (u, 12);
+  mpfr_init2 (y, 11);
+  mpfr_set_str_binary (x, "0.111111111110E0");
+  mpfr_set_str_binary (u, "0.111011110100E-177");
+  emax = mpfr_get_emax ();
+  mpfr_set_emax (0);
+  mpfr_clear_flags ();
+  inex = mpfr_hypot (y, x, u, MPFR_RNDU);
+  MPFR_ASSERTN(mpfr_inf_p (y) && mpfr_sgn (y) > 0);
+  MPFR_ASSERTN(inex > 0);
+  MPFR_ASSERTN(mpfr_inexflag_p ());
+  MPFR_ASSERTN(mpfr_overflow_p ());
+  mpfr_set_emax (emax);
+  mpfr_clear (x);
+  mpfr_clear (u);
+  mpfr_clear (y);
+}
+
 int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
+  bug20171221 ();
   special ();
 
   test_large ();
   alltst ();
 
-  test_generic (2, 100, 10);
+  test_generic (MPFR_PREC_MIN, 100, 10);
 
   tests_end_mpfr ();
   return 0;

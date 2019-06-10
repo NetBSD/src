@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -241,7 +241,7 @@ tui_erase_source_content (struct tui_win_info *win_info,
       tui_check_and_display_highlight_if_needed (win_info);
       if (display_prompt == EMPTY_SOURCE_PROMPT)
 	{
-	  char *no_src_str;
+	  const char *no_src_str;
 
 	  if (win_info->generic.type == SRC_WIN)
 	    no_src_str = NO_SRC_STRING;
@@ -254,7 +254,7 @@ tui_erase_source_content (struct tui_win_info *win_info,
 	  mvwaddstr (win_info->generic.handle,
 		     (win_info->generic.height / 2),
 		     x_pos,
-		     no_src_str);
+		     (char *) no_src_str);
 
 	  /* elz: Added this function call to set the real contents of
 	     the window to what is on the screen, so that later calls
@@ -280,7 +280,7 @@ tui_show_source_line (struct tui_win_info *win_info, int lineno)
     wattron (win_info->generic.handle, A_STANDOUT);
 
   mvwaddstr (win_info->generic.handle, lineno, 1,
-             line->which_element.source.line);
+             (char *) line->which_element.source.line);
   if (line->which_element.source.is_exec_point)
     wattroff (win_info->generic.handle, A_STANDOUT);
 
@@ -559,13 +559,17 @@ tui_show_exec_info_content (struct tui_win_info *win_info)
     = win_info->detail.source_info.execution_info;
   int cur_line;
 
+  if (exec_info->handle == NULL)
+    return;
+
   werase (exec_info->handle);
   tui_refresh_win (exec_info);
   for (cur_line = 1; (cur_line <= exec_info->content_size); cur_line++)
     mvwaddstr (exec_info->handle,
 	       cur_line,
 	       0,
-	       exec_info->content[cur_line - 1]->which_element.simple_string);
+	       (char *) exec_info->content[cur_line - 1]
+			  ->which_element.simple_string);
   tui_refresh_win (exec_info);
   exec_info->content_in_use = TRUE;
 }
@@ -576,6 +580,9 @@ tui_erase_exec_info_content (struct tui_win_info *win_info)
 {
   struct tui_gen_win_info *exec_info
     = win_info->detail.source_info.execution_info;
+
+  if (exec_info->handle == NULL)
+    return;
 
   werase (exec_info->handle);
   tui_refresh_win (exec_info);
@@ -604,8 +611,11 @@ tui_alloc_source_buffer (struct tui_win_info *win_info)
   char *src_line_buf;
   int i, line_width, max_lines;
 
-  max_lines = win_info->generic.height;	/* Less the highlight box.  */
-  line_width = win_info->generic.width - 1;
+  /* The window width/height includes the highlight box.  Determine actual
+     content dimensions, including string null-terminators.  */
+  max_lines = win_info->generic.height - 2;
+  line_width = win_info->generic.width - 2 + 1;
+
   /*
    * Allocate the buffer for the source lines.  Do this only once
    * since they will be re-used for all source displays.  The only
@@ -615,23 +625,8 @@ tui_alloc_source_buffer (struct tui_win_info *win_info)
     {
       src_line_buf = (char *) 
 	xmalloc ((max_lines * line_width) * sizeof (char));
-      if (src_line_buf == (char *) NULL)
-	{
-	  fputs_unfiltered ("Unable to Allocate Memory for "
-			    "Source or Disassembly Display.\n",
-			    gdb_stderr);
-	  return TUI_FAILURE;
-	}
       /* Allocate the content list.  */
       win_info->generic.content = tui_alloc_content (max_lines, SRC_WIN);
-      if (win_info->generic.content == NULL)
-	{
-	  xfree (src_line_buf);
-	  fputs_unfiltered ("Unable to Allocate Memory for "
-			    "Source or Disassembly Display.\n",
-			    gdb_stderr);
-	  return TUI_FAILURE;
-	}
       for (i = 0; i < max_lines; i++)
 	win_info->generic.content[i]->which_element.source.line
 	  = src_line_buf + (line_width * i);

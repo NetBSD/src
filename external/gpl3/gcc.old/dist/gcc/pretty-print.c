@@ -1,5 +1,5 @@
 /* Various declarations for language-independent pretty-print subroutines.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -28,6 +28,27 @@ along with GCC; see the file COPYING3.  If not see
 #if HAVE_ICONV
 #include <iconv.h>
 #endif
+
+/* Overwrite the given location/range within this text_info's rich_location.
+   For use e.g. when implementing "+" in client format decoders.  */
+
+void
+text_info::set_location (unsigned int idx, location_t loc, bool show_caret_p)
+{
+  gcc_checking_assert (m_richloc);
+  m_richloc->set_range (line_table, idx, loc, show_caret_p);
+}
+
+location_t
+text_info::get_location (unsigned int index_of_location) const
+{
+  gcc_checking_assert (m_richloc);
+
+  if (index_of_location == 0)
+    return m_richloc->get_loc ();
+  else
+    return UNKNOWN_LOCATION;
+}
 
 // Default construct an output buffer.
 
@@ -623,10 +644,9 @@ pp_format (pretty_printer *pp, text_info *text)
       *formatters[argno] = XOBFINISH (&buffer->chunk_obstack, const char *);
     }
 
-#ifdef ENABLE_CHECKING
-  for (; argno < PP_NL_ARGMAX; argno++)
-    gcc_assert (!formatters[argno]);
-#endif
+  if (CHECKING_P)
+    for (; argno < PP_NL_ARGMAX; argno++)
+      gcc_assert (!formatters[argno]);
 
   /* Revert to normal obstack and wrapping mode.  */
   buffer->obstack = &buffer->formatted_obstack;
@@ -851,7 +871,6 @@ pp_printf (pretty_printer *pp, const char *msg, ...)
   text.err_no = errno;
   text.args_ptr = &ap;
   text.format_spec = msg;
-  text.locus = NULL;
   pp_format (pp, &text);
   pp_output_formatted_text (pp);
   va_end (ap);
@@ -869,7 +888,6 @@ pp_verbatim (pretty_printer *pp, const char *msg, ...)
   text.err_no = errno;
   text.args_ptr = &ap;
   text.format_spec = msg;
-  text.locus = NULL;
   pp_format_verbatim (pp, &text);
   va_end (ap);
 }
@@ -905,7 +923,8 @@ pp_character (pretty_printer *pp, int c)
 void
 pp_string (pretty_printer *pp, const char *str)
 {
-  pp_maybe_wrap_text (pp, str, str + (str ? strlen (str) : 0));
+  gcc_checking_assert (str);
+  pp_maybe_wrap_text (pp, str, str + strlen (str));
 }
 
 /* Maybe print out a whitespace if needed.  */

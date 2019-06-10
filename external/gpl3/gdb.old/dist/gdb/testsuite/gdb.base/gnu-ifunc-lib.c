@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2016 Free Software Foundation, Inc.
+   Copyright 2009-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 extern volatile int gnu_ifunc_initialized;
+extern volatile unsigned long resolver_hwcap;
 extern int init_stub (int arg);
 extern int final (int arg);
 
@@ -24,8 +25,9 @@ typedef int (*final_t) (int arg);
 asm (".type gnu_ifunc, %gnu_indirect_function");
 
 final_t
-gnu_ifunc (void)
+gnu_ifunc (unsigned long hwcap)
 {
+  resolver_hwcap = hwcap;
   if (! gnu_ifunc_initialized)
     return init_stub;
   else

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.59 2017/06/25 16:07:48 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.59.6.1 2019/06/10 22:07:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.59 2017/06/25 16:07:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.59.6.1 2019/06/10 22:07:27 christos Exp $");
 
 #include "mpu.h"
 
@@ -56,9 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.59 2017/06/25 16:07:48 christos Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
@@ -151,10 +149,10 @@ CFATTACH_DECL_NEW(yds, sizeof(struct yds_softc),
 
 static int	yds_open(void *, int);
 static void	yds_close(void *);
-static int	yds_query_encoding(void *, struct audio_encoding *);
-static int	yds_set_params(void *, int, int, audio_params_t *,
-			       audio_params_t *, stream_filter_list_t *,
-			       stream_filter_list_t *);
+static int	yds_query_format(void *, audio_format_query_t *);
+static int	yds_set_format(void *, int,
+			       const audio_params_t *, const audio_params_t *,
+			       audio_filter_reg_t *, audio_filter_reg_t *);
 static int	yds_round_blocksize(void *, int, int, const audio_params_t *);
 static int	yds_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
@@ -170,7 +168,6 @@ static int	yds_mixer_get_port(void *, mixer_ctrl_t *);
 static void *	yds_malloc(void *, int, size_t);
 static void	yds_free(void *, void *, size_t);
 static size_t	yds_round_buffersize(void *, int, size_t);
-static paddr_t	yds_mappage(void *, void *, off_t, int);
 static int	yds_get_props(void *);
 static int	yds_query_devinfo(void *, mixer_devinfo_t *);
 static void	yds_get_locks(void *, kmutex_t **, kmutex_t **);
@@ -205,9 +202,8 @@ static void	yds_dump_play_slot(struct yds_softc *, int);
 static const struct audio_hw_if yds_hw_if = {
 	.open		  = yds_open,
 	.close		  = yds_close,
-	.drain		  = NULL,
-	.query_encoding	  = yds_query_encoding,
-	.set_params	  = yds_set_params,
+	.query_format	  = yds_query_format,
+	.set_format	  = yds_set_format,
 	.round_blocksize  = yds_round_blocksize,
 	.commit_settings  = NULL,
 	.init_output	  = NULL,
@@ -218,14 +214,12 @@ static const struct audio_hw_if yds_hw_if = {
 	.halt_input	  = yds_halt_input,
 	.speaker_ctl	  = NULL,
 	.getdev		  = yds_getdev,
-	.setfd		  = NULL,
 	.set_port	  = yds_mixer_set_port,
 	.get_port	  = yds_mixer_get_port,
 	.query_devinfo	  = yds_query_devinfo,
 	.allocm		  = yds_malloc,
 	.freem		  = yds_free,
 	.round_buffersize = yds_round_buffersize,
-	.mappage	  = yds_mappage,
 	.get_props	  = yds_get_props,
 	.trigger_output	  = yds_trigger_output,
 	.trigger_input	  = yds_trigger_input,
@@ -268,14 +262,17 @@ static const struct {
 #endif
 
 static const struct audio_format yds_formats[] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 8,
+		.frequency	=
+		    { 5512, 8000, 11025, 16000, 22050, 32000, 44100, 48000 },
+	},
 };
 #define	YDS_NFORMATS	(sizeof(yds_formats) / sizeof(struct audio_format))
 
@@ -771,11 +768,12 @@ yds_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO); /* XXX IPL_NONE? */
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, yds_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, yds_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -929,13 +927,6 @@ detected:
 		}
 	}
 
-	if (0 != auconv_create_encodings(yds_formats, YDS_NFORMATS,
-	    &sc->sc_encodings)) {
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
-		return;
-	}
-
 	audio_attach_mi(&yds_hw_if, sc, self);
 
 	sc->sc_legacy_iot = pa->pa_iot;
@@ -1074,19 +1065,32 @@ yds_intr(void *p)
 		printf ("yds_intr: timeout!\n");
 	}
 
+	/*
+	 * XXX
+	 * An interrupt in YMF754 occurs when next hardware frame is
+	 * requested, not when current hardware frame processing is
+	 * completed.  According to the datasheet, only access to the
+	 * inactive bank is permitted, but in fact, fields in inactive
+	 * bank that the chip should write to may or may not be filled
+	 * at that time.  On the other hand, both the CPU and the device
+	 * must guarantee that the fields in active bank are determined
+	 * at the beginning of the interrupt.
+	 * Therefore, we read active bank.
+	 */
+
 	if (status & YDS_STAT_INT) {
 		int nbank;
+		u_int pdma = 0;
+		u_int rdma = 0;
 
-		nbank = (YREAD4(sc, YDS_CONTROL_SELECT) == 0);
+		/* nbank is bank number that YDS is processing now. */
+		nbank = YREAD4(sc, YDS_CONTROL_SELECT) & 1;
+
 		/* Clear interrupt flag */
 		YWRITE4(sc, YDS_STATUS, YDS_STAT_INT);
 
-		/* Buffer for the next frame is always ready. */
-		YWRITE4(sc, YDS_MODE, YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV2);
-
+		/* Read current data offset before ACTV2 */
 		if (sc->sc_play.intr) {
-			u_int dma, ccpu, blk, len;
-
 			/* Sync play slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 					sc->pbankoff,
@@ -1095,38 +1099,12 @@ yds_intr(void *p)
 					    N_PLAY_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = le32toh(sc->pbankp[nbank]->pgstart) * sc->sc_play.factor;
-			ccpu = sc->sc_play.offset;
-			blk = sc->sc_play.blksize;
-			len = sc->sc_play.length;
-
-			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
-			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
-				/* We can fill the next block */
-				/* Sync ring buffer for previous write */
-				bus_dmamap_sync(sc->sc_dmatag,
-						sc->sc_play.dma->map,
-						ccpu, blk,
-						BUS_DMASYNC_POSTWRITE);
-				sc->sc_play.intr(sc->sc_play.intr_arg);
-				sc->sc_play.offset += blk;
-				if (sc->sc_play.offset >= len) {
-					sc->sc_play.offset -= len;
-#ifdef DIAGNOSTIC
-					if (sc->sc_play.offset != 0)
-						printf ("Audio ringbuffer botch\n");
-#endif
-				}
-				/* Sync ring buffer for next write */
-				bus_dmamap_sync(sc->sc_dmatag,
-						sc->sc_play.dma->map,
-						ccpu, blk,
-						BUS_DMASYNC_PREWRITE);
-			}
+			/* start offset of current processing bank */
+			pdma = le32toh(sc->pbankp[nbank]->pgstart) *
+			    sc->sc_play.factor;
 		}
-		if (sc->sc_rec.intr) {
-			u_int dma, ccpu, blk, len;
 
+		if (sc->sc_rec.intr) {
 			/* Sync rec slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 					sc->rbankoff,
@@ -1135,23 +1113,54 @@ yds_intr(void *p)
 					    N_REC_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = le32toh(sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr);
-			ccpu = sc->sc_rec.offset;
-			blk = sc->sc_rec.blksize;
-			len = sc->sc_rec.length;
+			/* start offset of current processing bank */
+			rdma = le32toh(
+			    sc->rbank[YDS_INPUT_SLOT * 2 + nbank].pgstartadr);
+		}
 
-			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
-			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
+		/* Buffer for the next frame is always ready. */
+		YWRITE4(sc, YDS_MODE, YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV2);
+
+		if (sc->sc_play.intr) {
+			if (pdma < sc->sc_play.offset)
+				pdma += sc->sc_play.length;
+			if (pdma >= sc->sc_play.offset + sc->sc_play.blksize) {
+				/* We can fill the next block */
+				/* Sync ring buffer for previous write */
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						0, sc->sc_play.length,
+						BUS_DMASYNC_POSTWRITE);
+				sc->sc_play.intr(sc->sc_play.intr_arg);
+				sc->sc_play.offset += sc->sc_play.blksize;
+				if (sc->sc_play.offset >= sc->sc_play.length) {
+					sc->sc_play.offset -= sc->sc_play.length;
+#ifdef DIAGNOSTIC
+					if (sc->sc_play.offset != 0)
+						printf ("Audio ringbuffer botch\n");
+#endif
+				}
+				/* Sync ring buffer for next write */
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						0, sc->sc_play.length,
+						BUS_DMASYNC_PREWRITE);
+			}
+		}
+		if (sc->sc_rec.intr) {
+			if (rdma < sc->sc_rec.offset)
+				rdma += sc->sc_rec.length;
+			if (rdma >= sc->sc_rec.offset + sc->sc_rec.blksize) {
 				/* We can drain the current block */
 				/* Sync ring buffer first */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						ccpu, blk,
+						0, sc->sc_rec.length,
 						BUS_DMASYNC_POSTREAD);
 				sc->sc_rec.intr(sc->sc_rec.intr_arg);
-				sc->sc_rec.offset += blk;
-				if (sc->sc_rec.offset >= len) {
-					sc->sc_rec.offset -= len;
+				sc->sc_rec.offset += sc->sc_rec.blksize;
+				if (sc->sc_rec.offset >= sc->sc_rec.length) {
+					sc->sc_rec.offset -= sc->sc_rec.length;
 #ifdef DIAGNOSTIC
 					if (sc->sc_rec.offset != 0)
 						printf ("Audio ringbuffer botch\n");
@@ -1160,7 +1169,7 @@ yds_intr(void *p)
 				/* Sync ring buffer for next read */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						ccpu, blk,
+						0, sc->sc_rec.length,
 						BUS_DMASYNC_PREREAD);
 			}
 		}
@@ -1245,29 +1254,17 @@ yds_close(void *addr)
 }
 
 static int
-yds_query_encoding(void *addr, struct audio_encoding *fp)
+yds_query_format(void *addr, audio_format_query_t *afp)
 {
-	struct yds_softc *sc;
 
-	sc = addr;
-	return auconv_query_encoding(sc->sc_encodings, fp);
+	return audio_query_format(yds_formats, YDS_NFORMATS, afp);
 }
 
 static int
-yds_set_params(void *addr, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t* rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+yds_set_format(void *addr, int setmode,
+	const audio_params_t *play, const audio_params_t *rec,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	if (setmode & AUMODE_RECORD) {
-		if (auconv_set_converter(yds_formats, YDS_NFORMATS,
-					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
-			return EINVAL;
-	}
-	if (setmode & AUMODE_PLAY) {
-		if (auconv_set_converter(yds_formats, YDS_NFORMATS,
-					 AUMODE_PLAY, play, FALSE, pfil) < 0)
-			return EINVAL;
-	}
 	return 0;
 }
 
@@ -1283,7 +1280,7 @@ yds_round_blocksize(void *addr, int blk, int mode,
 	if (blk < 1024)
 		blk = 1024;
 
-	return blk & ~4;
+	return blk & ~3;
 }
 
 static uint32_t
@@ -1454,7 +1451,7 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	/* Now the play slot for the next frame is set up!! */
 	/* Sync play slot control data for both directions */
 	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-			sc->ptbloff,
+			sc->pbankoff,
 			sizeof(struct play_slot_ctrl_bank) *
 			    channels * N_PLAY_SLOT_CTRL_BANK,
 			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
@@ -1612,11 +1609,10 @@ yds_halt_input(void *addr)
 
 	DPRINTF(("yds: yds_halt_input\n"));
 	sc = addr;
-	sc->sc_rec.intr = NULL;
 	if (sc->sc_rec.intr) {
+		sc->sc_rec.intr = NULL;
 		/* Stop the rec slot operation */
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
-		sc->sc_rec.intr = 0;
 		/* Sync rec slot control data */
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 				sc->rbankoff,
@@ -1728,28 +1724,12 @@ yds_round_buffersize(void *addr, int direction, size_t size)
 	return size;
 }
 
-static paddr_t
-yds_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct yds_softc *sc;
-	struct yds_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = addr;
-	p = yds_find_dma(sc, mem);
-	if (p == NULL)
-		return -1;
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
-}
-
 static int
 yds_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void

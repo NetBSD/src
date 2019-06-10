@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,13 +46,13 @@ remote_file target delete $standalone_txt
 
 set options [list debug "additional_flags=-DOUTPUT_TXT=\"$gdb_txt\""]
 if {[build_executable $testfile.exp $testfile $srcfile $options]} {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 
 set options [list debug "additional_flags=-DOUTPUT_TXT=\"$standalone_txt\""]
 if {[build_executable $testfile.exp $testfile-standalone $srcfile $options]} {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -80,7 +80,7 @@ remote_close target
 clean_restart $binfile
 
 if { ! [ runto_main ] } then {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 

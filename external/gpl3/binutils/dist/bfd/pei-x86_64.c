@@ -98,14 +98,20 @@ pex64_get_runtime_function (bfd *abfd, struct pex64_runtime_function *rf,
 
 /* Swap in unwind info header.  */
 
-static void
-pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui, void *data)
+static bfd_boolean
+pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui,
+		       void *data, void *data_end)
 {
   struct external_pex64_unwind_info *ex_ui =
     (struct external_pex64_unwind_info *) data;
   bfd_byte *ex_dta = (bfd_byte *) data;
+  bfd_byte *ex_dta_end = (bfd_byte *) data_end;
 
   memset (ui, 0, sizeof (struct pex64_unwind_info));
+
+  if (ex_dta >= ex_dta_end || ex_dta + 4 >= ex_dta_end)
+    return FALSE;
+
   ui->Version = PEX64_UWI_VERSION (ex_ui->Version_Flags);
   ui->Flags = PEX64_UWI_FLAGS (ex_ui->Version_Flags);
   ui->SizeOfPrologue = (bfd_vma) ex_ui->SizeOfPrologue;
@@ -114,25 +120,33 @@ pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui, void *data)
   ui->FrameOffset = PEX64_UWI_FRAMEOFF (ex_ui->FrameRegisterOffset);
   ui->sizeofUnwindCodes = PEX64_UWI_SIZEOF_UWCODE_ARRAY (ui->CountOfCodes);
   ui->SizeOfBlock = ui->sizeofUnwindCodes + 4;
-  ui->rawUnwindCodes = &ex_dta[4];
+  ui->rawUnwindCodes = ex_dta + 4;
+  ui->rawUnwindCodesEnd = ex_dta_end;
 
   ex_dta += ui->SizeOfBlock;
+  if (ex_dta >= ex_dta_end)
+    return FALSE;
+  
   switch (ui->Flags)
     {
     case UNW_FLAG_CHAININFO:
+      if (ex_dta + 12 >= ex_dta_end)
+	return FALSE;
       ui->rva_BeginAddress = bfd_get_32 (abfd, ex_dta + 0);
       ui->rva_EndAddress = bfd_get_32 (abfd, ex_dta + 4);
       ui->rva_UnwindData = bfd_get_32 (abfd, ex_dta + 8);
       ui->SizeOfBlock += 12;
-      return;
+      return TRUE;
     case UNW_FLAG_EHANDLER:
     case UNW_FLAG_UHANDLER:
     case UNW_FLAG_FHANDLER:
+      if (ex_dta + 4 >= ex_dta_end)
+	return FALSE;
       ui->rva_ExceptionHandler = bfd_get_32 (abfd, ex_dta);
       ui->SizeOfBlock += 4;
-      return;
+      return TRUE;
     default:
-      return;
+      return TRUE;
     }
 }
 
@@ -158,6 +172,12 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
 
   i = 0;
 
+  if (ui->rawUnwindCodes + 1 >= ui->rawUnwindCodesEnd)
+    {
+      fprintf (file, _("warning: corrupt unwind data\n"));
+      return;
+    }
+
   if (ui->Version == 2
       && PEX64_UNWCODE_CODE (ui->rawUnwindCodes[1]) == UWOP_EPILOG)
     {
@@ -166,10 +186,18 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
 	 to decode instruction flow if outside an epilog.  */
       unsigned int func_size = rf->rva_EndAddress - rf->rva_BeginAddress;
 
+      if (ui->rawUnwindCodes + 1 + (ui->CountOfCodes * 2) >= ui->rawUnwindCodesEnd)
+	{
+	  fprintf (file, _("warning: corrupt unwind data\n"));
+	  return;
+	}
+	  
       fprintf (file, "\tv2 epilog (length: %02x) at pc+:",
 	       ui->rawUnwindCodes[0]);
+
       if (PEX64_UNWCODE_INFO (ui->rawUnwindCodes[1]))
 	fprintf (file, " 0x%x", func_size - ui->rawUnwindCodes[0]);
+
       i++;
       for (; i < ui->CountOfCodes; i++)
 	{
@@ -187,6 +215,12 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
       fputc ('\n', file);
     }
 
+  if (ui->rawUnwindCodes + 2 + (ui->CountOfCodes * 2) >= ui->rawUnwindCodesEnd)
+    {
+      fprintf (file, _("warning: corrupt unwind data\n"));
+      return;
+    }
+	  
   for (; i < ui->CountOfCodes; i++)
     {
       const bfd_byte *dta = ui->rawUnwindCodes + 2 * i;
@@ -338,14 +372,18 @@ pex64_dump_xdata (FILE *file, bfd *abfd,
       /* PR 17512: file: 2245-7442-0.004.  */
       if (end_addr > sec_size)
 	{
-	  fprintf (file, _("warning: xdata section corrupt"));
+	  fprintf (file, _("warning: xdata section corrupt\n"));
 	  end_addr = sec_size;
 	}
     }
   else
     end_addr = sec_size;
 
-  pex64_get_unwind_info (abfd, &ui, &xdata[addr]);
+  if (! pex64_get_unwind_info (abfd, &ui, xdata + addr, xdata + end_addr))
+    {
+      fprintf (file, _("warning: xdata section corrupt\n"));
+      return;
+    }
 
   if (ui.Version != 1 && ui.Version != 2)
     {

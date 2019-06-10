@@ -80,15 +80,13 @@
 
 // We don't have ThreadState in these methods, so this is an ugly hack that
 // works only in C++.
-#ifndef TSAN_GO
+#ifndef SANITIZER_GO
 # define CPP_STAT_INC(typ) StatInc(cur_thread(), typ)
 #else
 # define CPP_STAT_INC(typ) (void)0
 #endif
 
 namespace __tsan {
-
-const unsigned kInvalidTid = (unsigned)-1;
 
 ThreadClock::ThreadClock(unsigned tid, unsigned reused)
     : tid_(tid)
@@ -102,8 +100,8 @@ ThreadClock::ThreadClock(unsigned tid, unsigned reused)
 }
 
 void ThreadClock::acquire(ClockCache *c, const SyncClock *src) {
-  DCHECK(nclk_ <= kMaxTid);
-  DCHECK(src->size_ <= kMaxTid);
+  DCHECK_LE(nclk_, kMaxTid);
+  DCHECK_LE(src->size_, kMaxTid);
   CPP_STAT_INC(StatClockAcquire);
 
   // Check if it's empty -> no need to do anything.
@@ -213,8 +211,8 @@ void ThreadClock::release(ClockCache *c, SyncClock *dst) const {
 }
 
 void ThreadClock::ReleaseStore(ClockCache *c, SyncClock *dst) const {
-  DCHECK(nclk_ <= kMaxTid);
-  DCHECK(dst->size_ <= kMaxTid);
+  DCHECK_LE(nclk_, kMaxTid);
+  DCHECK_LE(dst->size_, kMaxTid);
   CPP_STAT_INC(StatClockStore);
 
   // Check if we need to resize dst.

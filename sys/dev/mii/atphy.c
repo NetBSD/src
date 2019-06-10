@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.18 2016/11/02 10:11:32 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.18.16.1 2019/06/10 22:07:13 christos Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.18 2016/11/02 10:11:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.18.16.1 2019/06/10 22:07:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,18 +91,12 @@ const struct mii_phy_funcs atphy_funcs = {
 };
 
 static const struct mii_phydesc etphys[] = {
-	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
-	  MII_STR_ATHEROS_F1 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L1,
-	  MII_STR_ATTANSIC_L1 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L2,
-	  MII_STR_ATTANSIC_L2 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_AR8021,
-	  MII_STR_ATTANSIC_AR8021 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_AR8035,
-	  MII_STR_ATTANSIC_AR8035 },
-	{ 0,			0,
-	  NULL },
+	MII_PHY_DESC(ATHEROS, F1),
+	MII_PHY_DESC(ATTANSIC, L1),
+	MII_PHY_DESC(ATTANSIC, L2),
+	MII_PHY_DESC(ATTANSIC, AR8021),
+	MII_PHY_DESC(ATTANSIC, AR8035),
+	MII_PHY_END,
 };
 
 static bool
@@ -161,10 +155,11 @@ atphy_attach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	sc->mii_capabilities = bmsr & ma->mii_capmask;
 	if (atphy_is_gige(mpd) && (sc->mii_capabilities & BMSR_EXTSTAT))
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
 	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
@@ -179,9 +174,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -192,14 +185,12 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &bmcr);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -216,7 +207,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr = BMCR_S10;
 			break;
 		case IFM_NONE:
-			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &bmcr);
 			/*
 			 * XXX
 			 * Due to an unknown reason powering down PHY resulted
@@ -232,7 +223,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		}
 
 		anar = mii_anar(IFM_SUBTYPE(ife->ifm_media));
-		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
+		if ((ife->ifm_media & IFM_FDX) != 0) {
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
 			if (sc->mii_flags & MIIF_DOPAUSE)
@@ -244,29 +235,21 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			PHY_WRITE(sc, MII_100T2CR, 0);
 		PHY_WRITE(sc, MII_ANAR, anar);
 
-		/*
-		 * Start autonegotiation.
-		 */
+		/* Start autonegotiation. */
 		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
 done:
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
@@ -277,7 +260,8 @@ done:
 		 * Check for link.
 		 * Read the status register twice; BMSR_LINK is latch-low.
 		 */
-		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		PHY_READ(sc, MII_BMSR, &bmsr);
 		if (bmsr & BMSR_LINK) {
 			sc->mii_ticks = 0;
 			break;
@@ -287,9 +271,7 @@ done:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
+		/* Only retry autonegotiation every mii_anegticks seconds. */
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
 
@@ -309,16 +291,17 @@ static void
 atphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	uint32_t bmsr, bmcr, gsr, ssr;
+	uint16_t bmsr, bmcr, gsr, ssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -328,7 +311,7 @@ atphy_status(struct mii_softc *sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	ssr = PHY_READ(sc, ATPHY_SSR);
+	PHY_READ(sc, ATPHY_SSR, &ssr);
 	if (!(ssr & ATPHY_SSR_SPD_DPLX_RESOLVED)) {
 		/* Erg, still trying, I guess... */
 		mii->mii_media_active |= IFM_NONE;
@@ -363,7 +346,7 @@ atphy_status(struct mii_softc *sc)
 	else
 		mii->mii_media_active |= IFM_HDX;
 
-	gsr = PHY_READ(sc, MII_100T2SR);
+	PHY_READ(sc, MII_100T2SR, &gsr);
 	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
 	    gsr & GTSR_MS_RES)
 		mii->mii_media_active |= IFM_ETH_MASTER;
@@ -372,14 +355,14 @@ atphy_status(struct mii_softc *sc)
 static void
 atphy_reset(struct mii_softc *sc)
 {
-	uint32_t reg;
+	uint16_t reg;
 	int i;
 
 	/* Take PHY out of power down mode. */
 	PHY_WRITE(sc, 29, 0x29);
 	PHY_WRITE(sc, 30, 0);
 
-	reg = PHY_READ(sc, ATPHY_SCR);
+	PHY_READ(sc, ATPHY_SCR, &reg);
 	/* Enable automatic crossover. */
 	reg |= ATPHY_SCR_AUTO_X_MODE;
 	/* Disable power down. */
@@ -393,12 +376,14 @@ atphy_reset(struct mii_softc *sc)
 	atphy_mii_phy_auto(sc);
 
 	/* Workaround F1 bug to reset phy. */
-	reg = PHY_READ(sc, MII_BMCR) | BMCR_RESET;
+	PHY_READ(sc, MII_BMCR, &reg);
+	reg |= BMCR_RESET;
 	PHY_WRITE(sc, MII_BMCR, reg);
 
 	for (i = 0; i < 1000; i++) {
 		DELAY(1);
-		if ((PHY_READ(sc, MII_BMCR) & BMCR_RESET) == 0)
+		PHY_READ(sc, MII_BMCR, &reg);
+		if ((reg & BMCR_RESET) == 0)
 			break;
 	}
 }

@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ Dwarf::assemble $asm_file {
     }
 }
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} \
+if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  [list $srcfile $asm_file] {nodebug}] } {
     return -1
 }

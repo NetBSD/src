@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.6 2014/07/13 17:12:23 dholland Exp $ */
+/* $NetBSD: spivar.h,v 1.6.28.1 2019/06/10 22:07:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -111,6 +111,7 @@ struct spi_transfer {
 	kmutex_t	st_lock;
 	kcondvar_t	st_cv;
 	void		*st_busprivate;
+	void		*st_spiprivate;
 };
 
 /* declare a list of transfers */

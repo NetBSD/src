@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.7 2012/09/19 11:51:08 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.7.30.1 2019/06/10 22:10:06 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1274,7 +1274,8 @@ cmd_mvinnstr(int nargs, char **args)
 void
 cmd_mvinsch(int nargs, char **args)
 {
-	int y, x, ch;
+	int y, x;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 3) == 1)
 		return;
@@ -1291,14 +1292,10 @@ cmd_mvinsch(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[2], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[2];
 
 	report_count(1);
-	report_return(mvinsch(y, x, ch));
+	report_return(mvinsch(y, x, ch[0]));
 }
 
 
@@ -6146,11 +6143,15 @@ cmd_mvwchgat(int nargs, char **args)
 void
 cmd_add_wch(int nargs, char **args)
 {
+	cchar_t *ch;
+
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
+	ch = (cchar_t *) args[0];
+
 	report_count(1);
-	report_error("UNSUPPORTED");
+	report_return(add_wch(ch));
 }
 
 

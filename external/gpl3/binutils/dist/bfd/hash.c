@@ -435,6 +435,7 @@ bfd_hash_hash (const char *string, unsigned int *lenp)
   unsigned int len;
   unsigned int c;
 
+  BFD_ASSERT (string != NULL);
   hash = 0;
   len = 0;
   s = (const unsigned char *) string;

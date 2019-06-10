@@ -1,5 +1,5 @@
 /* Macros for atomic functionality for tile.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is free software; you can redistribute it and/or modify it
@@ -93,9 +93,11 @@
 #endif
 
 #ifdef __tilegx__
-#include <arch/spr_def.h>
+#define SPR_CMPEXCH_VALUE 0x2780
 #else
-#include <asm/unistd.h>
+#define __NR_FAST_cmpxchg	-1
+#define __NR_FAST_atomic_update	-2
+#define __NR_FAST_cmpxchg64	-3
 #endif
 
 

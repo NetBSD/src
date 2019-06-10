@@ -1,5 +1,5 @@
 /* Some code common to C++ and ObjC++ front ends.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -21,24 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
 #include "cp-tree.h"
-#include "c-family/c-common.h"
-#include "langhooks.h"
-#include "langhooks-def.h"
-#include "diagnostic.h"
-#include "debug.h"
-#include "cxx-pretty-print.h"
 #include "cp-objcp-common.h"
 
 /* Special routine to get the alias set for C++.  */
@@ -60,7 +43,7 @@ cxx_get_alias_set (tree t)
   return c_common_get_alias_set (t);
 }
 
-/* Called from check_global_declarations.  */
+/* Called from check_global_declaration.  */
 
 bool
 cxx_warn_unused_global_decl (const_tree decl)
@@ -68,10 +51,6 @@ cxx_warn_unused_global_decl (const_tree decl)
   if (TREE_CODE (decl) == FUNCTION_DECL && DECL_DECLARED_INLINE_P (decl))
     return false;
   if (DECL_IN_SYSTEM_HEADER (decl))
-    return false;
-
-  /* Const variables take the place of #defines in C++.  */
-  if (VAR_P (decl) && TREE_READONLY (decl))
     return false;
 
   return true;
@@ -107,6 +86,8 @@ cp_tree_size (enum tree_code code)
     case LAMBDA_EXPR:           return sizeof (struct tree_lambda_expr);
 
     case TEMPLATE_INFO:         return sizeof (struct tree_template_info);
+
+    case CONSTRAINT_INFO:       return sizeof (struct tree_constraint_info);
 
     case USERDEF_LITERAL:	return sizeof (struct tree_userdef_literal);
 
@@ -248,6 +229,7 @@ cp_common_init_ts (void)
 {
   MARK_TS_DECL_NON_COMMON (USING_DECL);
   MARK_TS_DECL_COMMON (TEMPLATE_DECL);
+  MARK_TS_DECL_COMMON (WILDCARD_DECL);
 
   MARK_TS_COMMON (TEMPLATE_TEMPLATE_PARM);
   MARK_TS_COMMON (TEMPLATE_TYPE_PARM);
@@ -319,6 +301,11 @@ cp_common_init_ts (void)
   MARK_TS_TYPED (LAMBDA_EXPR);
   MARK_TS_TYPED (CTOR_INITIALIZER);
   MARK_TS_TYPED (ARRAY_NOTATION_REF);
+  MARK_TS_TYPED (REQUIRES_EXPR);
+  MARK_TS_TYPED (UNARY_LEFT_FOLD_EXPR);
+  MARK_TS_TYPED (UNARY_RIGHT_FOLD_EXPR);
+  MARK_TS_TYPED (BINARY_LEFT_FOLD_EXPR);
+  MARK_TS_TYPED (BINARY_RIGHT_FOLD_EXPR);
 }
 
 #include "gt-cp-cp-objcp-common.h"

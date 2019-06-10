@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -242,8 +242,9 @@ enum AcpiSratType
     ACPI_SRAT_TYPE_MEMORY_AFFINITY      = 1,
     ACPI_SRAT_TYPE_X2APIC_CPU_AFFINITY  = 2,
     ACPI_SRAT_TYPE_GICC_AFFINITY        = 3,
-    ACPI_SRAT_TYPE_GIC_ITS_AFFINITY     = 4,    /* ACPI 6.2 */
-    ACPI_SRAT_TYPE_RESERVED             = 5     /* 5 and greater are reserved */
+    ACPI_SRAT_TYPE_GIC_ITS_AFFINITY     = 4, /* ACPI 6.2 */
+    ACPI_SRAT_TYPE_GENERIC_AFFINITY     = 5, /* ACPI 6.3 */
+    ACPI_SRAT_TYPE_RESERVED             = 6  /* 5 and greater are reserved */
 };
 
 /*
@@ -338,6 +339,24 @@ typedef struct acpi_srat_gic_its_affinity
 
 } ACPI_SRAT_GIC_ITS_AFFINITY;
 
+
+/* 5: Generic Initiator Affinity Structure (ACPI 6.3) */
+
+typedef struct acpi_srat_generic_affinity
+{
+    ACPI_SUBTABLE_HEADER    Header;
+    UINT8                   Reserved;
+    UINT8                   DeviceHandleType;
+    UINT32                  ProximityDomain;
+    UINT8                   DeviceHandle[16];
+    UINT32                  Flags;
+    UINT32                  Reserved1;
+
+} ACPI_SRAT_GENERIC_AFFINITY;
+
+/* Flags for ACPI_SRAT_GENERIC_AFFINITY */
+
+#define ACPI_SRAT_GENERIC_AFFINITY_ENABLED (1) /* 00: Use affinity structure */
 
 /*******************************************************************************
  *
@@ -443,6 +462,34 @@ typedef struct acpi_table_tcpa_server
  * February 27, 2017
  *
  ******************************************************************************/
+
+/* Revision 3 */
+
+typedef struct acpi_table_tpm23
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+    UINT32                  Reserved;
+    UINT64                  ControlAddress;
+    UINT32                  StartMethod;
+
+} ACPI_TABLE_TPM23;
+
+/* Value for StartMethod above */
+
+#define ACPI_TPM23_ACPI_START_METHOD                 2
+
+/*
+ * Optional trailer for revision 3. If start method is 2, there is a 4 byte
+ * reserved area of all zeros.
+ */
+typedef struct acpi_tmp23_trailer
+{
+    UINT32                  Reserved;
+
+} ACPI_TPM23_TRAILER;
+
+
+/* Revision 4 */
 
 typedef struct acpi_table_tpm2
 {

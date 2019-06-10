@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.60 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.60.18.1 2019/06/10 22:07:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -942,7 +942,6 @@ static tulip_softc_t *tulips[TULIP_MAX_DEVICES];
 #define TULIP_IFP_TO_SOFTC(ifp) ((tulip_softc_t *)((ifp)->if_softc))
 #define	tulip_intrfunc_t	void
 #define	TULIP_VOID_INTRFUNC
-#define	IFF_NOTRAILERS		0
 #define	CLBYTES			PAGE_SIZE
 #if 0
 #define	TULIP_KVATOPHYS(sc, va)	kvtop(va)
@@ -1057,7 +1056,7 @@ extern struct cfdriver de_cd;
 	 (sc)->tulip_perfstats[TULIP_PERF_PREVIOUS].member \
 	      = (sc)->tulip_perfstats[TULIP_PERF_CURRENT].member; \
 	    (sc)->tulip_perfstats[TULIP_PERF_CURRENT].member = 0; } while (0)
-#define	TULIP_PERFSTART(name) const tulip_cycle_t perfstart_ ## name = TULIP_PERFREAD();
+#define	TULIP_PERFSTART(name) const tulip_cycle_t perfstart_ ## name = TULIP_PERFREAD()
 #define	TULIP_PERFEND(name)	do { \
 	    (sc)->tulip_curperfstats.perf_ ## name ## _cycles += TULIP_PERFDIFF(perfstart_ ## name, TULIP_PERFREAD()); \
 	    (sc)->tulip_curperfstats.perf_ ## name++; \

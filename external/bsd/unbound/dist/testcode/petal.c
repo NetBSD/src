@@ -323,9 +323,9 @@ file_name_is_safe(char* s)
 	return 1;
 }
 
-/** adjust host and filename */
+/** adjust host */
 static void
-adjust_host_file(char* host, char* file)
+adjust_host(char* host)
 {
 	size_t i, len;
 	/* remove a port number if present */
@@ -335,6 +335,13 @@ adjust_host_file(char* host, char* file)
 	len = strlen(host);
 	for(i=0; i<len; i++)
 		host[i] = tolower((unsigned char)host[i]);
+}
+
+/** adjust filename */
+static void
+adjust_file(char* file)
+{
+	size_t i, len;
 	len = strlen(file);
 	for(i=0; i<len; i++)
 		file[i] = tolower((unsigned char)file[i]);
@@ -417,7 +424,7 @@ provide_file_10(SSL* ssl, char* fname)
 	}
 	fclose(in);
 	at += len;
-	avail -= len;
+	/* avail -= len; unused */
 	if(SSL_write(ssl, buf, at-buf) <= 0) {
 		/* write failure */
 	}
@@ -506,7 +513,7 @@ provide_file_chunked(SSL* ssl, char* fname)
 			snprintf(at, avail, "\r\n");
 			r = strlen(at);
 			at += r;
-			avail -= r;
+			/* avail -= r; unused */
 		}
 		/* send chunk */
 		if(SSL_write(ssl, buf, at-buf) <= 0) {
@@ -534,7 +541,8 @@ service_ssl(SSL* ssl, struct sockaddr_storage* from, socklen_t falen)
 	if(!read_http_headers(ssl, file, sizeof(file), host, sizeof(host),
 		&vs))
 		return;
-	adjust_host_file(host, file);
+	if(host[0] != 0) adjust_host(host);
+	if(file[0] != 0) adjust_file(file);
 	if(host[0] == 0 || !host_name_is_safe(host))
 		(void)strlcpy(host, "default", sizeof(host));
 	if(!file_name_is_safe(file)) {
@@ -569,7 +577,9 @@ do_service(char* addr, int port, char* key, char* cert)
 	while(go) {
 		struct sockaddr_storage from;
 		socklen_t flen = (socklen_t)sizeof(from);
-		int s = accept(fd, (struct sockaddr*)&from, &flen);
+		int s;
+		memset(&from, 0, sizeof(from));
+		s = accept(fd, (struct sockaddr*)&from, &flen);
 		if(verb) fflush(stdout);
 		if(s != -1) {
 			SSL* ssl = setup_ssl(s, sslctx);
@@ -633,7 +643,7 @@ int main(int argc, char* argv[])
 		}
 	}
 	argc -= optind;
-	argv += optind;
+	/* argv += optind; not using further arguments */
 	if(argc != 0)
 		usage();
 

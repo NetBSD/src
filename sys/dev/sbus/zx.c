@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.41 2016/04/21 18:10:57 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.41.18.1 2019/06/10 22:07:32 christos Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.41 2016/04/21 18:10:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.41.18.1 2019/06/10 22:07:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,16 +475,24 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			if (cu->cmap.index > 2 ||
 			    cu->cmap.count > 2 - cu->cmap.index)
 				return (EINVAL);
-			for (i = 0; i < cu->cmap.count; i++) {
-				if ((v = fubyte(&cu->cmap.red[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 0] = v;
-				if ((v = fubyte(&cu->cmap.green[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 2] = v;
-				if ((v = fubyte(&cu->cmap.blue[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 4] = v;
+
+			uint8_t red[2], green[2], blue[2];
+			const u_int cnt = cu->cmap.count;
+
+			if (cnt &&
+			    ((error = copyin(cu->cmap.red,   red,   cnt)) ||
+			     (error = copyin(cu->cmap.green, green, cnt)) ||
+			     (error = copyin(cu->cmap.blue,  blue,  cnt)))) {
+				return error;
+			}
+
+			for (i = 0; i < cnt; i++) {
+				sc->sc_curcmap[i + cu->cmap.index + 0] =
+				    red[i];
+				sc->sc_curcmap[i + cu->cmap.index + 2] =
+				    green[i];
+				sc->sc_curcmap[i + cu->cmap.index + 4] =
+				    blue[i];
 			}
 			zx_cursor_color(sc);
 		}
@@ -678,13 +686,13 @@ zx_cursor_move(struct zx_softc *sc)
 	y = sc->sc_curpos.y - sc->sc_curhot.y;
 
 	if (x < 0) {
-		sx = min(-x, 32);
+		sx = uimin(-x, 32);
 		x = 0;
 	} else
 		sx = 0;
 
 	if (y < 0) {
-		sy = min(-y, 32);
+		sy = uimin(-y, 32);
 		y = 0;
 	} else
 		sy = 0;
@@ -763,7 +771,7 @@ zx_cursor_color(struct zx_softc *sc)
 
 	tmp = sc->sc_curcmap[1] | (sc->sc_curcmap[3] << 8) |
 	    (sc->sc_curcmap[5] << 16);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, sc->sc_curcmap[1]);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, tmp);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x03);

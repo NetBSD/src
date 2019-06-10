@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/01/18 00:32:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2019/06/10 22:09:50 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
@@ -26,14 +26,6 @@ SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 SRCS+=	raidframe_component.c
 
 .include <bsd.init.mk>
-
-.if !empty(RUMP_NBCOMPAT:M50)
-SRCS+=	rf_compat50.c
-.endif
-
-.if !empty(RUMP_NBCOMPAT:M80)
-SRCS+=	rf_compat80.c
-.endif
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

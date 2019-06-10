@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.97.2.1 2019/06/10 22:06:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97.2.1 2019/06/10 22:06:39 christos Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -329,10 +329,12 @@ cpu_idlespin(void)
 	if (powersave <= 0)
 		return;
 
-	__asm volatile(
 #if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
-		"dssall;"
+	if (cpu_altivec)
+		__asm volatile("dssall");
 #endif
+
+	__asm volatile(
 		"sync;"
 		"mfmsr	%0;"
 		"oris	%0,%0,%1@h;"	/* enter power saving mode */
@@ -1131,6 +1133,7 @@ cpu_get_dfs(void)
 	case MPC7448:
 		if (mfspr(SPR_HID1) & HID1_DFS4)
 			return 4;
+		/* FALLTHROUGH */
 	case MPC7447A:
 		if (mfspr(SPR_HID1) & HID1_DFS2)
 			return 2;
@@ -1153,6 +1156,7 @@ cpu_set_dfs(int div)
 	switch (vers) {
 	case MPC7448:
 		dfs_mask |= HID1_DFS4;
+		/* FALLTHROUGH */
 	case MPC7447A:
 		dfs_mask |= HID1_DFS2;
 		break;

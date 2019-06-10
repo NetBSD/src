@@ -6,6 +6,7 @@ cat << _EOF > $2
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sha2.h>
 
@@ -16,10 +17,13 @@ cat << _EOF > $2
 #undef vsnprintf
 #undef sprintf
 #undef vsprintf
+#undef vasprintf
 
 #define KPRINTF_BUFSIZE 1024
 #undef putchar
 #define putchar xputchar
+
+#define kmem_alloc(n, f)	malloc(n)
 
 static int putchar(char c, int foo, void *b)
 {
@@ -53,12 +57,12 @@ static void (*v_flush)(void) = empty;
 ATF_TC(snprintf_print);
 ATF_TC_HEAD(snprintf_print, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf print");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf print");
 }
  
 ATF_TC_BODY(snprintf_print, tc)
 {
-	char buf[10];
+	char buf[13];
 	int i;
 
 	memset(buf, 'x', sizeof(buf));
@@ -70,7 +74,7 @@ ATF_TC_BODY(snprintf_print, tc)
 ATF_TC(snprintf_print_overflow);
 ATF_TC_HEAD(snprintf_print_overflow, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf print with overflow");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf print with overflow");
 }
  
 ATF_TC_BODY(snprintf_print_overflow, tc)
@@ -87,7 +91,7 @@ ATF_TC_BODY(snprintf_print_overflow, tc)
 ATF_TC(snprintf_count);
 ATF_TC_HEAD(snprintf_count, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf count");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf count");
 }
  
 ATF_TC_BODY(snprintf_count, tc)
@@ -101,7 +105,7 @@ ATF_TC_BODY(snprintf_count, tc)
 ATF_TC(snprintf_count_overflow);
 ATF_TC_HEAD(snprintf_count_overflow, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf count with overflow");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf count with overflow");
 }
  
 ATF_TC_BODY(snprintf_count_overflow, tc)
@@ -112,14 +116,46 @@ ATF_TC_BODY(snprintf_count_overflow, tc)
 	ATF_CHECK_EQ(i, 16);
 }
 
+ATF_TC(vasprintf_print);
+ATF_TC_HEAD(vasprintf_print, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "checks vasprintf works");
+}
+
+static int __printflike(2, 3)
+vasp_helper(char **buf, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vasprintf(buf, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+ATF_TC_BODY(vasprintf_print, tc)
+{
+	int i;
+	char *buf;
+
+	buf = NULL;
+	i =  vasp_helper(&buf, "N=%d C=%c S=%s", 7, 'x', "abc");
+	ATF_CHECK_EQ(i, 13);
+	ATF_CHECK(buf != NULL);
+	ATF_CHECK_STREQ(buf, "N=7 C=x S=abc");
+	free(buf);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
-        ATF_TP_ADD_TC(tp, snprintf_print);
-        ATF_TP_ADD_TC(tp, snprintf_print_overflow);
-        ATF_TP_ADD_TC(tp, snprintf_count);
-        ATF_TP_ADD_TC(tp, snprintf_count_overflow);
+	ATF_TP_ADD_TC(tp, snprintf_print);
+	ATF_TP_ADD_TC(tp, snprintf_print_overflow);
+	ATF_TP_ADD_TC(tp, snprintf_count);
+	ATF_TP_ADD_TC(tp, snprintf_count_overflow);
+	ATF_TP_ADD_TC(tp, vasprintf_print);
 
-        return atf_no_error();
+	return atf_no_error();
 }
 _EOF
 

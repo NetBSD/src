@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.4 2016/01/08 21:35:37 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.4.16.1 2019/06/10 21:51:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.c,v 1.18 2011/01/04 23:47:14 tbox Exp  */
+/* Id */
 
 /*! \file */
 

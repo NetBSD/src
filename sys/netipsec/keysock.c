@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.65 2018/04/26 19:50:09 maxv Exp $	*/
+/*	$NetBSD: keysock.c,v 1.65.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.65 2018/04/26 19:50:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.65.2.1 2019/06/10 22:09:48 christos Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -207,105 +207,15 @@ key_sendup0(
 		    __func__);
 		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(m);
-		soroverflow(rp->rcb_socket);
+		/* Don't call soroverflow because we're returning this
+		 * error directly to the sender. */
+		rp->rcb_socket->so_rcv.sb_overflowed++;
 		error = ENOBUFS;
 	} else {
 		sorwakeup(rp->rcb_socket);
 		error = 0;
 	}
 	return error;
-}
-
-/* XXX this interface should be obsoleted. */
-int
-key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
-	   int target)	/*target of the resulting message*/
-{
-	struct mbuf *m, *n, *mprev;
-	int tlen;
-
-	KASSERT(so != NULL);
-	KASSERT(msg != NULL);
-
-	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
-		printf("key_sendup: \n");
-		kdebug_sadb(msg);
-	}
-
-	/*
-	 * we increment statistics here, just in case we have ENOBUFS
-	 * in this function.
-	 */
-	{
-		uint64_t *ps = PFKEY_STAT_GETREF();
-		ps[PFKEY_STAT_IN_TOTAL]++;
-		ps[PFKEY_STAT_IN_BYTES] += len;
-		ps[PFKEY_STAT_IN_MSGTYPE + msg->sadb_msg_type]++;
-		PFKEY_STAT_PUTREF();
-	}
-
-	/*
-	 * Get mbuf chain whenever possible (not clusters),
-	 * to save socket buffer.  We'll be generating many SADB_ACQUIRE
-	 * messages to listening key sockets.  If we simply allocate clusters,
-	 * sbappendaddr() will raise ENOBUFS due to too little sbspace().
-	 * sbspace() computes # of actual data bytes AND mbuf region.
-	 *
-	 * TODO: SADB_ACQUIRE filters should be implemented.
-	 */
-	tlen = len;
-	m = mprev = NULL;
-	while (tlen > 0) {
-		int mlen;	
-		if (tlen == len) {
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			mlen = MHLEN;
-		} else {
-			MGET(n, M_DONTWAIT, MT_DATA);
-			mlen = MLEN;
-		}
-		if (!n) {
-			PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
-			return ENOBUFS;
-		}
-		n->m_len = mlen;
-		if (tlen >= MCLBYTES) {	/*XXX better threshold? */
-			MCLGET(n, M_DONTWAIT);
-			if ((n->m_flags & M_EXT) == 0) {
-				m_free(n);
-				m_freem(m);
-				PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
-				return ENOBUFS;
-			}
-			n->m_len = MCLBYTES;
-		}
-
-		if (tlen < n->m_len)
-			n->m_len = tlen;
-		n->m_next = NULL;
-		if (m == NULL)
-			m = mprev = n;
-		else {
-			mprev->m_next = n;
-			mprev = n;
-		}
-		tlen -= n->m_len;
-		n = NULL;
-	}
-	m->m_pkthdr.len = len;
-	m_reset_rcvif(m);
-	m_copyback(m, 0, len, msg);
-
-	/* avoid duplicated statistics */
-	{
-		uint64_t *ps = PFKEY_STAT_GETREF();
-		ps[PFKEY_STAT_IN_TOTAL]--;
-		ps[PFKEY_STAT_IN_BYTES] -= len;
-		ps[PFKEY_STAT_IN_MSGTYPE + msg->sadb_msg_type]--;
-		PFKEY_STAT_PUTREF();
-	}
-
-	return key_sendup_mbuf(so, m, target);
 }
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
@@ -473,10 +383,12 @@ key_attach(struct socket *so, int proto)
 
 	s = splsoftnet();
 
-	KASSERT(so->so_lock == NULL);
-	mutex_obj_hold(key_so_mtx);
-	so->so_lock = key_so_mtx;
-	solock(so);
+	if (so->so_lock != key_so_mtx) {
+		KASSERT(so->so_lock == NULL);
+		mutex_obj_hold(key_so_mtx);
+		so->so_lock = key_so_mtx;
+		solock(so);
+	}
 
 	error = raw_attach(so, proto, &key_rawcb);
 	if (error) {

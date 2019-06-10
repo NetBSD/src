@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.51 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.51.2.1 2019/06/10 22:07:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.51 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.51.2.1 2019/06/10 22:07:30 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -619,7 +619,7 @@ com_mhzc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	aprint_normal("\n");
 
-	COM_INIT_REGS(sc->sc_regs, 
+	com_init_regs(&sc->sc_regs, 
 	    msc->sc_modem_pcioh.iot,
 	    msc->sc_modem_pcioh.ioh,
 	    -1);

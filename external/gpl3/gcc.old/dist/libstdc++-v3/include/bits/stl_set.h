@@ -1,6 +1,6 @@
 // Set implementation -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -140,10 +140,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  @brief  Default constructor creates no elements.
        */
       set()
-#if __cplusplus >= 201103L
-      noexcept(is_nothrow_default_constructible<allocator_type>::value
-               && is_nothrow_default_constructible<key_compare>::value)
-#endif
+      _GLIBCXX_NOEXCEPT_IF(
+	  is_nothrow_default_constructible<allocator_type>::value
+	  && is_nothrow_default_constructible<key_compare>::value)
       : _M_t() { }
 
       /**
@@ -411,9 +410,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       void
       swap(set& __x)
-#if __cplusplus >= 201103L
-      noexcept(_Alloc_traits::_S_nothrow_swap())
-#endif
+      _GLIBCXX_NOEXCEPT_IF(__is_nothrow_swappable<_Compare>::value)
       { _M_t.swap(__x._M_t); }
 
       // insert/erase
@@ -893,6 +890,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
   template<typename _Key, typename _Compare, typename _Alloc>
     inline void
     swap(set<_Key, _Compare, _Alloc>& __x, set<_Key, _Compare, _Alloc>& __y)
+    _GLIBCXX_NOEXCEPT_IF(noexcept(__x.swap(__y)))
     { __x.swap(__y); }
 
 _GLIBCXX_END_NAMESPACE_CONTAINER

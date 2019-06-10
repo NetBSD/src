@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Concurrency</title><meta name="generator" content="DocBook XSL-NS Stylesheets V1.78.1" /><meta name="keywords" content="ISO C++, library" /><meta name="keywords" content="ISO C++, runtime, library" /><link rel="home" href="../index.html" title="The GNU C++ Library" /><link rel="up" href="using.html" title="Chapter 3. Using" /><link rel="prev" href="using_dynamic_or_shared.html" title="Linking" /><link rel="next" href="using_exceptions.html" title="Exceptions" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Concurrency</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="using_dynamic_or_shared.html">Prev</a> </td><th width="60%" align="center">Chapter 3. Using</th><td width="20%" align="right"> <a accesskey="n" href="using_exceptions.html">Next</a></td></tr></table><hr /></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="manual.intro.using.concurrency"></a>Concurrency</h2></div></div></div><p>This section discusses issues surrounding the proper compilation
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Concurrency</title><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="ISO C++, library" /><meta name="keywords" content="ISO C++, runtime, library" /><link rel="home" href="../index.html" title="The GNU C++ Library" /><link rel="up" href="using.html" title="Chapter 3. Using" /><link rel="prev" href="using_dynamic_or_shared.html" title="Linking" /><link rel="next" href="using_exceptions.html" title="Exceptions" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Concurrency</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="using_dynamic_or_shared.html">Prev</a> </td><th width="60%" align="center">Chapter 3. Using</th><td width="20%" align="right"> <a accesskey="n" href="using_exceptions.html">Next</a></td></tr></table><hr /></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="manual.intro.using.concurrency"></a>Concurrency</h2></div></div></div><p>This section discusses issues surrounding the proper compilation
       of multithreaded applications which use the Standard C++
       library.  This information is GCC-specific since the C++
       standard does not address matters of multithreaded applications.
@@ -157,9 +157,9 @@ gcc version 4.1.2 20070925 (Red Hat 4.1.2-33)
       t2.join();
     }
       </pre><p>For further details of the C++11 memory model see Hans-J. Boehm's
-      <a class="link" href="http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/user-faq.html" target="_top">Threads
-      and memory model for C++</a> pages, particularly the <a class="link" href="http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/threadsintro.html" target="_top">introduction</a> 
-      and <a class="link" href="http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/user-faq.html" target="_top">FAQ</a>.
+      <a class="link" href="https://www.hboehm.info/c++mm/" target="_top">Threads
+      and memory model for C++</a> pages, particularly the <a class="link" href="http://www.hboehm.info/c++mm/threadsintro.html" target="_top">introduction</a> 
+      and <a class="link" href="https://www.hboehm.info/c++mm/user-faq.html" target="_top">FAQ</a>.
       </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="manual.intro.using.concurrency.atomics"></a>Atomics</h3></div></div></div><p>
     </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="manual.intro.using.concurrency.io"></a>IO</h3></div></div></div><p>This gets a bit tricky.  Please read carefully, and bear with me.
    </p><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="concurrency.io.structure"></a>Structure</h4></div></div></div><p>A wrapper
@@ -180,10 +180,11 @@ gcc version 4.1.2 20070925 (Red Hat 4.1.2-33)
       implementations of the C library with varying tradeoffs of threadsafety
       and efficiency.  You, the programmer, are always required to take care
       with multiple threads.
-   </p><p>(As an example, the POSIX standard requires that C stdio FILE*
-       operations are atomic.  POSIX-conforming C libraries (e.g, on Solaris
-       and GNU/Linux) have an internal mutex to serialize operations on
-       FILE*s.  However, you still need to not do stupid things like calling
+   </p><p>(As an example, the POSIX standard requires that C stdio
+       <code class="code">FILE*</code> operations are atomic.  POSIX-conforming C libraries
+       (e.g, on Solaris and GNU/Linux) have an internal mutex to serialize
+       operations on <code class="code">FILE*</code>s.
+       However, you still need to not do stupid things like calling
        <code class="code">fclose(fs)</code> in one thread followed by an access of
        <code class="code">fs</code> in another.)
    </p><p>So, if your platform's C library is threadsafe, then your

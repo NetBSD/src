@@ -1,5 +1,5 @@
 /* Disassembler code for CR16.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com).
 
    This file is part of GAS, GDB and the GNU binutils.
@@ -815,7 +815,7 @@ print_insn_cr16 (bfd_vma memaddr, struct disassemble_info *info)
   /* Find a matching opcode in table.  */
   is_decoded = cr16_match_opcode ();
   /* If found, print the instruction's mnemonic and arguments.  */
-  if (is_decoded > 0 && (cr16_words[0] << 16 || cr16_words[1]) != 0)
+  if (is_decoded > 0 && (cr16_words[0] != 0 || cr16_words[1] != 0))
     {
       if (strneq (instruction->mnemonic, "cinv", 4))
         info->fprintf_func (info->stream,"%s", getcinvstring (instruction->mnemonic));

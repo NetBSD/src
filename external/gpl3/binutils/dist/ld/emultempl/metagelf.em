@@ -59,7 +59,7 @@ metagelf_create_output_section_statements (void)
 			      bfd_get_arch (link_info.output_bfd),
 			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%X%P: can not create BFD %E\n"));
+      einfo (_("%F%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -330,7 +330,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	const char *end;
 	group_size = bfd_scan_vma (optarg, &end, 0);
 	if (*end)
-	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 '

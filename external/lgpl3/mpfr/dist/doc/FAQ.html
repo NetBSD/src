@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <!--
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -337,19 +337,19 @@ installation using <cite>autoconf</cite> or <cite>pkg-config</cite>?</dt>
 
 <dd><p>The <cite><acronym>MPFR</acronym></cite> team does not currently
 recommend any <cite>autoconf</cite> code, but a section will later
-be added to the <cite><acronym>MPFR</acronym></cite> manual. The
-<cite><acronym>MPFR</acronym></cite> team does not wish to support
-<cite>pkg-config</cite> yet.</p></dd>
+be added to the <cite><acronym>MPFR</acronym></cite> manual.
+Limited <cite>pkg-config</cite> support has been added for
+<cite><acronym>MPFR</acronym></cite> 4.0.0; example:</p>
+<pre style="margin-left: 2em">cc myprogram.c $(pkg-config --cflags --libs mpfr)</pre></dd>
 
 <dt id="cite">9. How to cite <cite><acronym>MPFR</acronym></cite> in a
 scientific publication?</dt>
 
 <dd><p>To properly cite <cite><acronym>MPFR</acronym></cite> in a scientific
 publication, please cite the
-<a href="http://doi.acm.org/10.1145/1236463.1236468"><acronym title="Association for Computing Machinery">ACM</acronym>
+<a href="https://doi.org/10.1145/1236463.1236468"><acronym title="Association for Computing Machinery">ACM</acronym>
 <acronym title="Transactions on Mathematical Software">TOMS</acronym>
 paper</a>
-(<a href="http://toms.acm.org/cgi/TOMSbibget.cgi?Fousse:2007:MMP">BibTeX</a>)
 and/or the library web page
 <a href="http://www.mpfr.org/">http://www.mpfr.org</a>. If your publication
 is related to a particular release of <cite><acronym>MPFR</acronym></cite>,

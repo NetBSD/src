@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2016/12/22 14:48:00 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.16.1 2019/06/10 22:06:57 christos Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2016/12/22 14:48:00 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.16.1 2019/06/10 22:06:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1095,7 +1095,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
@@ -1109,9 +1109,13 @@ initarm(void *arg)
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
+#if NKSYMS || defined(MODULAR)
+# ifdef DDB
 	ddb_init(0, NULL, NULL);
+# else
+	/* Firmware doesn't load symbols. */
+	ksyms_addsyms_elf(0, NULL, NULL);
+# endif
 #endif
 
 #ifdef KGDB

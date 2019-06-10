@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.151 2017/12/08 09:24:31 kre Exp $	*/
+/*	$NetBSD: pthread.c,v 1.151.4.1 2019/06/10 22:05:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.151 2017/12/08 09:24:31 kre Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.151.4.1 2019/06/10 22:05:26 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1322,7 +1322,6 @@ pthread__initmainstack(void)
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux) {
 		if (aux->a_type == AT_STACKBASE) {
-			pthread__main->pt_stack.ss_sp = (void *)aux->a_v;
 #ifdef __MACHINE_STACK_GROWS_UP
 			pthread__main->pt_stack.ss_sp = (void *)aux->a_v;
 #else
@@ -1331,6 +1330,7 @@ pthread__initmainstack(void)
 			break;
 		}
 	}
+	pthread__copy_tsd(pthread__main);
 }
 
 /*

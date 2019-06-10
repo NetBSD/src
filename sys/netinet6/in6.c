@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.268 2018/05/29 09:10:39 prlw1 Exp $	*/
+/*	$NetBSD: in6.c,v 1.268.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268 2018/05/29 09:10:39 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -179,7 +179,7 @@ in6_ifaddlocal(struct ifaddr *ifa)
 	    (ifa->ifa_ifp->if_flags & IFF_POINTOPOINT &&
 	    IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), IFA_DSTIN6(ifa))))
 	{
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
 
@@ -531,10 +531,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			error = EADDRNOTAVAIL;
 			goto out;
 		}
-		/* FALLTHROUGH */
 #ifdef OSIOCAIFADDR_IN6
+		/* FALLTHROUGH */
 	case OSIOCAIFADDR_IN6:
 #endif
+		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
 		/*
 		 * We always require users to specify a valid IPv6 address for
@@ -632,7 +633,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
@@ -653,7 +654,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
+			    (time_t)~(1ULL << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
@@ -674,8 +675,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 #ifdef OSIOCAIFADDR_IN6
 	case OSIOCAIFADDR_IN6:
 		in6_aliasreq50_to_in6_aliasreq(ifra);
-		/*FALLTHROUGH*/
 #endif
+		/*FALLTHROUGH*/
 	case SIOCAIFADDR_IN6:
 	{
 		struct in6_addrlifetime *lt;
@@ -867,8 +868,23 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 			    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
 			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
 			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
+#ifdef NET_MPSAFE
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+				rt_replace_ifa(rt, &ia->ia_ifa);
+				rt->rt_ifp = ifp;
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
+			}
+#else
 			rt_replace_ifa(rt, &ia->ia_ifa);
 			rt->rt_ifp = ifp;
+#endif
 		}
 	}
 	if (!rt) {
@@ -951,8 +967,23 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 			    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
 			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
 			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
+#ifdef NET_MPSAFE
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+				rt_replace_ifa(rt, &ia->ia_ifa);
+				rt->rt_ifp = ifp;
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
+			}
+#else
 			rt_replace_ifa(rt, &ia->ia_ifa);
 			rt->rt_ifp = ifp;
+#endif
 		}
 	}
 	if (!rt) {
@@ -1239,7 +1270,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp) &&
-	           ip6_dad_count > 0) {
+	           ip6_dad_enabled()) {
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 	}
 
@@ -1809,7 +1840,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 		in6_ifaddlocal(&ia->ia_ifa);
 	} else {
 		/* Inform the routing socket of new flags/timings */
-		rt_newaddrmsg(RTM_NEWADDR, &ia->ia_ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, &ia->ia_ifa);
 	}
 
 	/* Add the network prefix route. */
@@ -2174,13 +2205,13 @@ in6_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia6_flags & IN6_IFF_DETACHED) {
 			ia->ia6_flags &= ~IN6_IFF_DETACHED;
-			if (if_do_dad(ifp)) {
+			if (ip6_dad_enabled() && if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				nd6log(LOG_ERR, "%s marked tentative\n",
 				    IN6_PRINT(ip6buf,
 				    &ia->ia_addr.sin6_addr));
 			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
-				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
@@ -2271,7 +2302,7 @@ in6_if_link_down(struct ifnet *ifp)
 			ia->ia6_flags |= IN6_IFF_DETACHED;
 			ia->ia6_flags &=
 			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
-			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		s = pserialize_read_enter();
@@ -2340,7 +2371,7 @@ in6_tunnel_validate(const struct ip6_hdr *ip6, const struct in6_addr *src,
 
 	/* martian filters on outer source - done in ip6_input */
 
-	/* NOTE: the pakcet may be dropped by uRPF. */
+	/* NOTE: the packet may be dropped by uRPF. */
 
 	/* return valid bytes length */
 	return sizeof(*src) + sizeof(*dst);

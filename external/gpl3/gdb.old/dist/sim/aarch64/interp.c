@@ -1,6 +1,6 @@
 /* interp.c -- AArch64 sim interface to GDB.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "ansidecl.h"
+#include "bfd.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
 #include "gdb/signals.h"
@@ -38,15 +39,12 @@
 #include "memory.h"
 #include "simulator.h"
 
-static unsigned long            symcount = 0;
-static asymbol **               symtab = NULL;
-
 /* Filter out (in place) symbols that are useless for disassembly.
    COUNT is the number of elements in SYMBOLS.
    Return the number of useful symbols. */
 
-static unsigned long
-remove_useless_symbols (asymbol **symbols, unsigned long count)
+static long
+remove_useless_symbols (asymbol **symbols, long count)
 {
   asymbol **in_ptr  = symbols;
   asymbol **out_ptr = symbols;
@@ -87,8 +85,10 @@ compare_symbols (const void *ap, const void *bp)
 
 /* Find the name of the function at ADDR.  */
 const char *
-aarch64_get_func (uint64_t addr)
+aarch64_get_func (SIM_DESC sd, uint64_t addr)
 {
+  long symcount = STATE_PROG_SYMS_COUNT (sd);
+  asymbol **symtab = STATE_PROG_SYMS (sd);
   int  min, max;
 
   min = -1;
@@ -118,24 +118,11 @@ aarch64_get_func (uint64_t addr)
   return "";
 }
 
-uint64_t
-aarch64_get_sym_value (const char *name)
-{
-  unsigned long i;
-
-  for (i = 0; i < symcount; i++)
-    if (strcmp (bfd_asymbol_name (symtab[i]), name) == 0)
-      return bfd_asymbol_value (symtab[i]);
-
-  return 0;
-}
-
 SIM_RC
 sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 		     char * const *argv, char * const *env)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  long storage;
   bfd_vma addr = 0;
 
   if (abfd != NULL)
@@ -154,16 +141,16 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
       STATE_PROG_ARGV (sd) = dupargv (argv);
     }
 
-  storage = bfd_get_symtab_upper_bound (abfd);
-  if (storage > 0)
+  if (trace_load_symbols (sd))
     {
-      symtab = (asymbol **) xmalloc (storage);
-      symcount = bfd_canonicalize_symtab (abfd, symtab);
-      symcount = remove_useless_symbols (symtab, symcount);
-      qsort (symtab, symcount, sizeof (asymbol *), compare_symbols);
+      STATE_PROG_SYMS_COUNT (sd) =
+	remove_useless_symbols (STATE_PROG_SYMS (sd),
+				STATE_PROG_SYMS_COUNT (sd));
+      qsort (STATE_PROG_SYMS (sd), STATE_PROG_SYMS_COUNT (sd),
+	     sizeof (asymbol *), compare_symbols);
     }
 
-  aarch64_init (cpu, bfd_get_start_address (abfd));
+  aarch64_init (cpu, addr);
 
   return SIM_RC_OK;
 }
@@ -332,7 +319,6 @@ sim_open (SIM_OPEN_KIND                  kind,
 	  struct bfd *                   abfd,
 	  char * const *                 argv)
 {
-  int i;
   sim_cpu *cpu;
   SIM_DESC sd = sim_state_alloc (kind, callback);
 

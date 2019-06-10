@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.6 2017/12/26 14:54:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.6.4.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.6 2017/12/26 14:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.6.4.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -53,7 +53,8 @@ tegra_drm_fb_init(struct drm_device *ddev)
 	int error;
 
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
-	fbdev->helper.funcs = &tegra_fb_helper_funcs;
+
+	drm_fb_helper_prepare(ddev, &fbdev->helper, &tegra_fb_helper_funcs);
 
 	error = drm_fb_helper_init(ddev, &fbdev->helper, 2, 1);
 	if (error) {

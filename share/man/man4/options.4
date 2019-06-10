@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.488 2018/06/13 03:28:36 ozaki-r Exp $
+.\"	$NetBSD: options.4,v 1.488.2.1 2019/06/10 22:05:40 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 13, 2018
+.Dd May 21, 2019
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -123,20 +123,6 @@ Functions the same as
 except failure to open
 .Ar filename
 produces a fatal error.
-.It Sy options Ar option_name Op , Ar option_name=value Op ...
-Specifies (or sets) the option, or comma-separated list of options,
-.Ar option_name .
-Some options expect to be assigned a value, which may be an integer,
-a double-quoted word, a bare word, or an empty string
-.Pq Qq .
-Note that those are eventually handled by the C compiler, so the rules
-of that language apply.
-.Pp
-.Em Note :
-Options that are not defined by device definition files are passed to
-the compile process as
-.Fl D
-flags to the C compiler.
 .It Sy makeoptions Ar name=value
 Defines a
 .Xr make 1
@@ -165,6 +151,20 @@ include "arch/i386/conf/GENERIC"
 no options COMPAT_09
 no pseudo-device bridge
 .Ed
+.It Sy options Ar option_name Op , Ar option_name=value Op ...
+Specifies (or sets) the option, or comma-separated list of options,
+.Ar option_name .
+Some options expect to be assigned a value, which may be an integer,
+a double-quoted word, a bare word, or an empty string
+.Pq Qq .
+Note that those are eventually handled by the C compiler, so the rules
+of that language apply.
+.Pp
+.Em Note :
+Options that are not defined by device definition files are passed to
+the compile process as
+.Fl D
+flags to the C compiler.
 .It Sy pseudo-device Ar name Op Ar N
 Includes support for the pseudo-device
 .Ar name .
@@ -411,12 +411,6 @@ to find and use ptys named
 Eventually this option will become optional as ptyfs based pseudo-ttys become
 the default, see
 .Xr mount_ptyfs 8 .
-.It Cd options COMPAT_SVR4
-On those architectures that support it, this enables binary
-compatibility with
-.At V.4
-applications built for the same architecture.
-This currently includes the m68k and sparc ports.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and
@@ -446,17 +440,6 @@ compatibility with
 .Fx
 applications built for the same architecture.
 At the moment this is limited to the i386 port.
-.It Cd options COMPAT_IBCS2
-On those architectures that support it, this enables binary
-compatibility with iBCS2 or SVR3 applications built for the same architecture.
-This is currently limited to the i386 and vax ports.
-.It Cd options COMPAT_OSF1
-On those architectures that support it, this enables binary
-compatibility with Digital
-.Ux
-(formerly OSF/1)
-applications built for the same architecture.
-This is currently limited to the alpha port.
 .It Cd options COMPAT_NOMID
 Enable compatibility with
 .Xr a.out 5
@@ -472,11 +455,6 @@ On those architectures that support it, this enables binary
 compatibility with 32-bit applications built for the same architecture.
 This is currently limited to the amd64 and sparc64 ports, and only
 applicable for 64-bit kernels.
-.It Cd options COMPAT_SVR4_32
-On those architectures that support it, this enables binary
-compatibility with 32-bit SVR4 applications built for the same architecture.
-This is currently limited to the sparc64 port, and only applicable for
-64-bit kernels.
 .It Cd options COMPAT_AOUT_M68K
 On m68k architectures which have switched to ELF,
 this enables binary compatibility with
@@ -973,7 +951,6 @@ for details.
 You also need to enable the pseudo-device, nsmb, for the SMB
 file system to work.
 .It Cd file-system PTYFS
-.Bq Em EXPERIMENTAL
 Includes code for a special file system (normally mounted on
 .Pa /dev/pts )
 in which pseudo-terminal slave devices become visible in the file system.
@@ -1083,13 +1060,24 @@ emulation for Linux binaries is required.
 .El
 .Ss Options for FFS/UFS File Systems
 .Bl -ohang
-.It Cd options WAPBL
+.It Cd options APPLE_UFS
+Enable support for UFS file systems created on Mac OS X.
+.It Cd options FFS_EI
 Enable
-.Dq Write Ahead Physical Block Logging file system journaling .
-This provides rapid file system consistency checking after a system outage.
-It also provides better general use performance over regular FFS.
+.Dq Endian-Independent
+FFS support.
+This allows a system to mount an FFS file system created for another
+architecture, at a small performance cost for all FFS file systems.
 See also
-.Xr wapbl 4 .
+.Xr newfs 8 ,
+.Xr fsck_ffs 8 ,
+.Xr dumpfs 8
+for file system byte order status and manipulation.
+.It Cd options FFS_NO_SNAPSHOT
+Disable support for the creation of file system internal snapshot
+of FFS file systems.
+Maybe useful for install media kernels, small memory systems and
+embedded systems which don't require the snapshot support.
 .It Cd options QUOTA
 Enables kernel support for traditional quotas in FFS.
 Traditional quotas store the quota information in external files and
@@ -1110,27 +1098,18 @@ MFS volumes can also use
 quotas; see
 .Xr mount_mfs 8
 for more information.
-.It Cd options FFS_EI
-Enable
-.Dq Endian-Independent
-FFS support.
-This allows a system to mount an FFS file system created for another
-architecture, at a small performance cost for all FFS file systems.
-See also
-.Xr newfs 8 ,
-.Xr fsck_ffs 8 ,
-.Xr dumpfs 8
-for file system byte order status and manipulation.
-.It Cd options FFS_NO_SNAPSHOT
-Disable support for the creation of file system internal snapshot
-of FFS file systems.
-Maybe useful for install media kernels, small memory systems and
-embedded systems which don't require the snapshot support.
-.It Cd options UFS_EXTATTR
-Enable extended attribute support for UFS1 file systems.
 .It Cd options UFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
+.It Cd options UFS_EXTATTR
+Enable extended attribute support for UFS1 file systems.
+.It Cd options WAPBL
+Enable
+.Dq Write Ahead Physical Block Logging file system journaling .
+This provides rapid file system consistency checking after a system outage.
+It also provides better general use performance over regular FFS.
+See also
+.Xr wapbl 4 .
 .El
 .Ss Options for the LFS File System
 .Bl -ohang
@@ -1587,13 +1566,6 @@ Compiles in the in-kernel device configuration manager.
 See
 .Xr userconf 4
 for details.
-.It Cd options PERFCTRS
-Compiles in kernel support for CPU performance-monitoring counters.
-See
-.Xr pmc 1
-for details.
-.Em NOTE :
-not available on all architectures.
 .It Cd options SCDEBUG_DEFAULT
 Used with the
 .Cd options SYSCALL_DEBUG
@@ -1667,10 +1639,8 @@ Default is 4.
 .It Cd options GATEWAY
 Enables
 .Em IPFORWARDING
-(which see)
 and (on most ports) increases the size of
-.Em NMBCLUSTERS
-(which see).
+.Em NMBCLUSTERS .
 In general,
 .Em GATEWAY
 is used to indicate that a system should act as a router, and
@@ -1678,7 +1648,7 @@ is used to indicate that a system should act as a router, and
 is not invoked directly.
 (Note that
 .Em GATEWAY
-has no impact on protocols other than IP, such as CLNP).
+has no impact on protocols other than IP).
 .Em GATEWAY
 option also compiles IPv4 and IPv6 fast forwarding code into the kernel.
 .It Cd options IPFORWARDING=value
@@ -2362,9 +2332,19 @@ Sets the initial value of the flag which controls whether user programs
 can map virtual address 0.
 The flag can be changed at runtime by
 .Xr sysctl 3 .
+.It Cd options KASAN
+Enables Kernel Address Sanitizer.
+Should not be used in conjunction with KLEAK.
+.Em NOTE :
+not available on all architectures.
 .It Cd options KASLR
 Enables Kernel ASLR.
 This randomizes the location of the kernel image in memory.
+.Em NOTE :
+not available on all architectures.
+.It Cd options KLEAK
+Enables the KLEAK feature, that allows to detect kernel information leaks.
+Should not be used in conjunction with KASAN.
 .Em NOTE :
 not available on all architectures.
 .It Cd options SVS
@@ -2532,10 +2512,6 @@ See
 for more information.
 .It Cd options SPLASHSCREEN
 Display a splash screen during boot.
-.It Cd options SPLASHSCREEN_PROGRESS
-Display a progress bar at the splash screen during boot.
-This option requires
-.Em SPLASHSCREEN .
 .El
 .Ss isa-specific Options
 Options specific to
@@ -2628,11 +2604,6 @@ handling happens.
 .It Cd options DEBUG_EMUL
 Adds debugging messages calls for emulated floating point and
 alignment fixing operations.
-.It Cd options DEBUG_SVR4
-Prints registers messages calls for emulated SVR4 getcontext and
-setcontext operations.
-See
-.Em options COMPAT_SVR4 .
 .It Cd options EXTREME_DEBUG
 Adds debugging functions callable from
 .Xr ddb 4 .
@@ -2701,6 +2672,18 @@ underlined
 bolded
 .El
 .El
+.Ss x86-specific Options
+.Bl -ohang
+.It Cd options NO_PCI_MSI_MSIX
+Disable support for MSI/MSIX in the kernel.
+See
+.Xr pci_msi 9
+for details of MSI/MSIX support
+.It Cd options NO_PREEMPTION
+Disables
+.Xr kpreempt 9
+support in the kernel.
+.El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
 .\" .Sh EXAMPLES
@@ -2709,7 +2692,6 @@ bolded
 .Xr gcc 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
-.Xr pmc 1 ,
 .Xr quota 1 ,
 .Xr vndcompress 1 ,
 .Xr gettimeofday 2 ,

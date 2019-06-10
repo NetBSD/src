@@ -119,6 +119,7 @@ static _Unwind_Reason_Code unwind_phase2(ThisUnwindCursor &cursor,
     case _URC_INSTALL_CONTEXT:
       // Transfer control to landing pad.
       cursor.jumpto();
+      __builtin_unreachable();
     default:
       // Bad personality routine.
       return _URC_FATAL_PHASE2_ERROR;
@@ -181,6 +182,7 @@ static _Unwind_Reason_Code unwind_phase2_forced(ThisUnwindCursor &cursor,
     case _URC_INSTALL_CONTEXT:
       // Transfer control to landing pad.
       cursor.jumpto();
+      __builtin_unreachable();
     default:
       // Bad personality routine.
       return _URC_FATAL_PHASE2_ERROR;
@@ -277,6 +279,8 @@ void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t new_value) {
   unw_proc_info_t info;
   cursor->getInfo(&info);
   cursor->setInfoBasedOnIPRegister(false);
+  if (info.extra_args)
+    cursor->setSP(cursor->getSP() + info.extra_args);
 }
 
 uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context) {

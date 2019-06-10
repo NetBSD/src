@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.7 2018/02/04 21:49:51 skrll Exp $ */
+/* $NetBSD: mdreloc.c,v 1.7.4.1 2019/06/10 22:05:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,9 +29,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 2014-2015 The FreeBSD Foundation
+ * All rights reserved.
+ *
+ * Portions of this software were developed by Andrew Turner
+ * under sponsorship from the FreeBSD Foundation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.7 2018/02/04 21:49:51 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.7.4.1 2019/06/10 22:05:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,10 +69,17 @@ __RCSID("$NetBSD: mdreloc.c,v 1.7 2018/02/04 21:49:51 skrll Exp $");
 #include "debug.h"
 #include "rtld.h"
 
+struct tls_data {
+	size_t		td_tlsindex;
+	Elf_Addr	td_tlsoffs;
+};
+
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
-void *_rtld_tlsdesc(void *);
+void *_rtld_tlsdesc_static(void *);
+void *_rtld_tlsdesc_undef(void *);
+void *_rtld_tlsdesc_dynamic(void *);
 
 /*
  * AARCH64 PLT looks like this;
@@ -77,6 +113,67 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+}
+
+static struct tls_data *
+_rtld_tlsdesc_alloc(size_t tlsindex, Elf_Addr offs)
+{
+	struct tls_data *tlsdesc;
+
+	tlsdesc = xmalloc(sizeof(*tlsdesc));
+	tlsdesc->td_tlsindex = tlsindex;
+	tlsdesc->td_tlsoffs = offs;
+
+	return tlsdesc;
+}
+
+static void
+_rtld_tlsdesc_fill(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *where, u_int flags)
+{
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr offs = 0;
+	unsigned long symnum = ELF_R_SYM(rela->r_info);
+
+	if (symnum != 0) {
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
+		    flags);
+		if (def == NULL)
+			_rtld_die();
+		if (def == &_rtld_sym_zero) {
+			/* Weak undefined thread variable */
+			where[0] = (Elf_Addr)_rtld_tlsdesc_undef;
+			where[1] = rela->r_addend;
+
+			rdbg(("TLSDESC %s (weak) in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)where[1]));
+
+			return;
+		}
+		offs = def->st_value;
+	} else {
+		defobj = obj;
+	}
+	offs += rela->r_addend;
+
+	if (defobj->tls_done) {
+		/* Variable is in initialy allocated TLS segment */
+		where[0] = (Elf_Addr)_rtld_tlsdesc_static;
+		where[1] = defobj->tlsoffset + offs +
+		    sizeof(struct tls_tcb);
+
+		rdbg(("TLSDESC %s --> %p static",
+		    obj->path, (void *)where[1]));
+	} else {
+		/* TLS offset is unknown at load time, use dynamic resolving */
+		where[0] = (Elf_Addr)_rtld_tlsdesc_dynamic;
+		where[1] = (Elf_Addr)_rtld_tlsdesc_alloc(defobj->tlsindex, offs);
+
+		rdbg(("TLSDESC %s in %s --> %p dynamic (%zu, %p)",
+		    obj->strtab + obj->symtab[symnum].st_name,
+		    obj->path, (void *)where[1], defobj->tlsindex, (void *)offs));
+	}
 }
 
 void
@@ -113,7 +210,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	for (const Elf_Rela *rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
 		Elf_Addr	tmp;
-		unsigned long	symnum;
+		unsigned long	symnum = ULONG_MAX;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
@@ -173,6 +270,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
+		case R_TYPE(TLSDESC):
+			_rtld_tlsdesc_fill(obj, rela, where, 0);
+			break;
+
 		case R_TLS_TYPE(TLS_DTPREL):
 			*where = (Elf_Addr)(def->st_value + rela->r_addend);
 
@@ -204,12 +305,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
-			    "addend = %p, contents = %p, symbol = %s",
+			    "addend = %p, contents = %p",
 			    (u_long)ELF_R_SYM(rela->r_info),
 			    (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
-			    (void *)*where,
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    (void *)*where));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
@@ -239,11 +339,7 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 			rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 			break;
 		case R_TYPE(TLSDESC):
-			assert(ELF_R_SYM(rela->r_info) == 0);	/* XXX */
-			if (ELF_R_SYM(rela->r_info) == 0) {
-				where[0] = (Elf_Addr)_rtld_tlsdesc;
-				where[1] = obj->tlsoffset + rela->r_addend + sizeof(struct tls_tcb);
-			}
+			_rtld_tlsdesc_fill(obj, rela, where, SYMLOOK_IN_PLT);
 			break;
 		}
 	}
@@ -280,29 +376,36 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
-	unsigned long info = rela->r_info;
 
-	assert(ELF_R_TYPE(info) == R_TYPE(JUMP_SLOT));
-
-	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
-	if (__predict_false(def == NULL))
-		return -1;
-	if (__predict_false(def == &_rtld_sym_zero))
-		return 0;
-
-	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
-		if (tp == NULL)
+	switch (ELF_R_TYPE(rela->r_info)) {
+	case R_TYPE(JUMP_SLOT):
+		def = _rtld_find_plt_symdef(ELF_R_SYM(rela->r_info), obj,
+		    &defobj, tp != NULL);
+		if (__predict_false(def == NULL))
+			return -1;
+		if (__predict_false(def == &_rtld_sym_zero))
 			return 0;
-		new_value = _rtld_resolve_ifunc(defobj, def);
-	} else {
-		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+
+		if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+			if (tp == NULL)
+				return 0;
+			new_value = _rtld_resolve_ifunc(defobj, def);
+		} else {
+			new_value = (Elf_Addr)(defobj->relocbase +
+			     def->st_value);
+		}
+		rdbg(("bind now/fixup in %s --> old=%p new=%p",
+		    defobj->strtab + def->st_name, (void *)*where,
+		    (void *)new_value));
+		if (*where != new_value)
+			*where = new_value;
+		if (tp)
+			*tp = new_value;
+		break;
+	case R_TYPE(TLSDESC):
+		_rtld_tlsdesc_fill(obj, rela, where, SYMLOOK_IN_PLT);
+		break;
 	}
-	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
-	if (*where != new_value)
-		*where = new_value;
-	if (tp)
-		*tp = new_value;
 
 	return 0;
 }
@@ -311,7 +414,7 @@ Elf_Addr
 _rtld_bind(const Obj_Entry *obj, Elf_Word relaidx)
 {
 	const Elf_Rela *rela = obj->pltrela + relaidx;
-	Elf_Addr new_value;
+	Elf_Addr new_value = 0;
 
 	_rtld_shared_enter();
 	int err = _rtld_relocate_plt_object(obj, rela, &new_value);
@@ -326,7 +429,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int err = 0;
-	
+
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
 		err = _rtld_relocate_plt_object(obj, rela, NULL);
 		if (err)

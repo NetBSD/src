@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 
 if ![mi_run_to_main] then {
-   fail "Cannot run to main, testcase aborted"
+   fail "cannot run to main, testcase aborted"
    return 0
 }
 
@@ -45,7 +45,7 @@ mi_continue_to_line \
 
 mi_gdb_test "-var-create vta * vta" \
     "\\^done,name=\"vta\",numchild=\"2\",.*" \
-    "Create bt varobj"
+    "create bt varobj"
 
 mi_gdb_test "-var-list-children vta" \
     "\\^done,numchild=\"2\",children=\\\[child={name=\"vta.n\",exp=\"n\",numchild=\"0\",type=\"bar\\.int\"},child={name=\"vta.f\",exp=\"f\",numchild=\"0\",type=\"array \\(1 .. n\\) of character\"}\\\],.*" \

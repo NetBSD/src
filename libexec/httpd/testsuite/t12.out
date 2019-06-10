@@ -1,0 +1,11 @@
+HTTP/1.1 404 Not Found
+Content-Type: text/html
+Content-Length: 197
+Server: bozohttpd/20170201
+Allow: GET, HEAD, POST
+
+<html><head><title>404 Not Found</title></head>
+<body><h1>404 Not Found</h1>
+auth-dir/updipv4.pl: <pre>This item has not been found</pre>
+<hr><address><a href="// /"> </a></address>
+</body></html>

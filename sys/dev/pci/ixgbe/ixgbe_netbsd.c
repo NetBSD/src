@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.7 2018/04/25 08:46:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.7.2.1 2019/06/10 22:07:28 christos Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -162,10 +162,10 @@ post_zalloc_err:
 }
 
 void
-ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
-    size_t size)
+ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
+    struct rx_ring *rxr, int nbuf, size_t size)
 {
-	ixgbe_extmem_head_t *eh = &adapter->jcl_head;
+	ixgbe_extmem_head_t *eh = &rxr->jcl_head;
 	ixgbe_extmem_t *em;
 	int i;
 
@@ -182,8 +182,8 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
 	 *  Note that the num_rx_desc is currently fixed value. It's never
 	 * changed after device is attached.
 	 */
-	if ((adapter->osdep.last_rx_mbuf_sz == adapter->rx_mbuf_sz)
-	    && (adapter->osdep.last_num_rx_desc == adapter->num_rx_desc))
+	if ((rxr->last_rx_mbuf_sz == rxr->mbuf_sz)
+	    && (rxr->last_num_rx_desc == adapter->num_rx_desc))
 		return;
 
 	/* Free all dmamem */
@@ -205,8 +205,8 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
 	}
 
 	/* Keep current parameters */
-	adapter->osdep.last_rx_mbuf_sz = adapter->rx_mbuf_sz;
-	adapter->osdep.last_num_rx_desc = adapter->num_rx_desc;
+	rxr->last_rx_mbuf_sz = adapter->rx_mbuf_sz;
+	rxr->last_num_rx_desc = adapter->num_rx_desc;
 }
 
 static void
@@ -272,4 +272,20 @@ ixgbe_pci_enable_busmaster(pci_chipset_tag_t pc, pcitag_t tag)
 		pci_cmd_word |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
 	}
+}
+
+u_int
+atomic_load_acq_uint(volatile u_int *p)
+{
+	u_int rv;
+
+	rv = *p;
+	/*
+	 * XXX
+	 * membar_sync() is far more than we need on most CPUs;
+	 * we just don't have an MI load-acqure operation.
+	 */
+	membar_sync();
+
+	return rv;
 }

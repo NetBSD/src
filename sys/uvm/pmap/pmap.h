@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2017/06/24 05:49:50 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9.8.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,10 +130,13 @@ struct pmap {
 	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
-#define	PMAP_DEFERRED_ACTIVATE	0x0001
+#define	PMAP_DEFERRED_ACTIVATE	__BIT(0)
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	vaddr_t			pm_minaddr;
 	vaddr_t			pm_maxaddr;
+#ifdef __HAVE_PMAP_MD
+	struct pmap_md		pm_md;
+#endif
 	struct pmap_asid_info	pm_pai[1];
 };
 
@@ -157,11 +160,11 @@ struct pmap_limits {
  */
 #ifdef MULTIPROCESSOR
 #define PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
-#else       
+#else
 #define PMAP_SIZE	sizeof(struct pmap)
-#endif      
+#endif
 
-/* 
+/*
  * The pools from which pmap structures and sub-structures are allocated.
  */
 extern struct pool pmap_pmap_pool;

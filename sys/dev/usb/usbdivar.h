@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.115 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.115.2.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -153,7 +153,8 @@ struct usbd_bus {
 #define USBREV_1_1	3
 #define USBREV_2_0	4
 #define USBREV_3_0	5
-#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0" }
+#define USBREV_3_1	6
+#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0", "3.1" }
 
 	const struct usbd_bus_methods
 			       *ub_methods;
@@ -284,11 +285,8 @@ struct usbd_xfer {
 				ux_next;
 
 	void		       *ux_hcpriv;	/* private use by the HC driver */
-	uint8_t			ux_hcflags;	/* private use by the HC driver */
-#define UXFER_ABORTING	0x01	/* xfer is aborting. */
-#define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
-	kcondvar_t		ux_hccv;	/* private use by the HC driver */
 
+	struct usb_task		ux_aborttask;
 	struct callout		ux_callout;
 };
 
@@ -326,7 +324,6 @@ usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
 void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
-int		usbd_printBCD(char *, size_t, int);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 

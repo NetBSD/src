@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.5 from gdb.texinfo.
 
-Copyright (C) 1988-2017 Free Software Foundation, Inc.
+Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 8.0.1.
+Source-Level Debugger' for GDB (GDB) Version 8.3.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,1642 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Annotations,  Next: JIT Interface,  Prev: GDB/MI,  Up: Top
+
+28 GDB Annotations
+******************
+
+This chapter describes annotations in GDB.  Annotations were designed to
+interface GDB to graphical user interfaces or other similar programs
+which want to interact with GDB at a relatively high level.
+
+   The annotation mechanism has largely been superseded by GDB/MI (*note
+GDB/MI::).
+
+* Menu:
+
+* Annotations Overview::  What annotations are; the general syntax.
+* Server Prefix::       Issuing a command without affecting user state.
+* Prompting::           Annotations marking GDB's need for input.
+* Errors::              Annotations for error messages.
+* Invalidation::        Some annotations describe things now invalid.
+* Annotations for Running::
+                        Whether the program is running, how it stopped, etc.
+* Source Annotations::  Annotations describing source code.
+
+
+File: gdb.info,  Node: Annotations Overview,  Next: Server Prefix,  Up: Annotations
+
+28.1 What is an Annotation?
+===========================
+
+Annotations start with a newline character, two 'control-z' characters,
+and the name of the annotation.  If there is no additional information
+associated with this annotation, the name of the annotation is followed
+immediately by a newline.  If there is additional information, the name
+of the annotation is followed by a space, the additional information,
+and a newline.  The additional information cannot contain newline
+characters.
+
+   Any output not beginning with a newline and two 'control-z'
+characters denotes literal output from GDB.  Currently there is no need
+for GDB to output a newline followed by two 'control-z' characters, but
+if there was such a need, the annotations could be extended with an
+'escape' annotation which means those three characters as output.
+
+   The annotation LEVEL, which is specified using the '--annotate'
+command line option (*note Mode Options::), controls how much
+information GDB prints together with its prompt, values of expressions,
+source lines, and other types of output.  Level 0 is for no annotations,
+level 1 is for use when GDB is run as a subprocess of GNU Emacs, level 3
+is the maximum annotation suitable for programs that control GDB, and
+level 2 annotations have been made obsolete (*note Limitations of the
+Annotation Interface: (annotate)Limitations.).
+
+'set annotate LEVEL'
+     The GDB command 'set annotate' sets the level of annotations to the
+     specified LEVEL.
+
+'show annotate'
+     Show the current annotation level.
+
+   This chapter describes level 3 annotations.
+
+   A simple example of starting up GDB with annotations is:
+
+     $ gdb --annotate=3
+     GNU gdb 6.0
+     Copyright 2003 Free Software Foundation, Inc.
+     GDB is free software, covered by the GNU General Public License,
+     and you are welcome to change it and/or distribute copies of it
+     under certain conditions.
+     Type "show copying" to see the conditions.
+     There is absolutely no warranty for GDB.  Type "show warranty"
+     for details.
+     This GDB was configured as "i386-pc-linux-gnu"
+
+     ^Z^Zpre-prompt
+     (gdb)
+     ^Z^Zprompt
+     quit
+
+     ^Z^Zpost-prompt
+     $
+
+   Here 'quit' is input to GDB; the rest is output from GDB.  The three
+lines beginning '^Z^Z' (where '^Z' denotes a 'control-z' character) are
+annotations; the rest is output from GDB.
+
+
+File: gdb.info,  Node: Server Prefix,  Next: Prompting,  Prev: Annotations Overview,  Up: Annotations
+
+28.2 The Server Prefix
+======================
+
+If you prefix a command with 'server ' then it will not affect the
+command history, nor will it affect GDB's notion of which command to
+repeat if <RET> is pressed on a line by itself.  This means that
+commands can be run behind a user's back by a front-end in a transparent
+manner.
+
+   The 'server ' prefix does not affect the recording of values into the
+value history; to print a value without recording it into the value
+history, use the 'output' command instead of the 'print' command.
+
+   Using this prefix also disables confirmation requests (*note
+confirmation requests::).
+
+
+File: gdb.info,  Node: Prompting,  Next: Errors,  Prev: Server Prefix,  Up: Annotations
+
+28.3 Annotation for GDB Input
+=============================
+
+When GDB prompts for input, it annotates this fact so it is possible to
+know when to send output, when the output from a given command is over,
+etc.
+
+   Different kinds of input each have a different "input type".  Each
+input type has three annotations: a 'pre-' annotation, which denotes the
+beginning of any prompt which is being output, a plain annotation, which
+denotes the end of the prompt, and then a 'post-' annotation which
+denotes the end of any echo which may (or may not) be associated with
+the input.  For example, the 'prompt' input type features the following
+annotations:
+
+     ^Z^Zpre-prompt
+     ^Z^Zprompt
+     ^Z^Zpost-prompt
+
+   The input types are
+
+'prompt'
+     When GDB is prompting for a command (the main GDB prompt).
+
+'commands'
+     When GDB prompts for a set of commands, like in the 'commands'
+     command.  The annotations are repeated for each command which is
+     input.
+
+'overload-choice'
+     When GDB wants the user to select between various overloaded
+     functions.
+
+'query'
+     When GDB wants the user to confirm a potentially dangerous
+     operation.
+
+'prompt-for-continue'
+     When GDB is asking the user to press return to continue.  Note:
+     Don't expect this to work well; instead use 'set height 0' to
+     disable prompting.  This is because the counting of lines is buggy
+     in the presence of annotations.
+
+
+File: gdb.info,  Node: Errors,  Next: Invalidation,  Prev: Prompting,  Up: Annotations
+
+28.4 Errors
+===========
+
+     ^Z^Zquit
+
+   This annotation occurs right before GDB responds to an interrupt.
+
+     ^Z^Zerror
+
+   This annotation occurs right before GDB responds to an error.
+
+   Quit and error annotations indicate that any annotations which GDB
+was in the middle of may end abruptly.  For example, if a
+'value-history-begin' annotation is followed by a 'error', one cannot
+expect to receive the matching 'value-history-end'.  One cannot expect
+not to receive it either, however; an error annotation does not
+necessarily mean that GDB is immediately returning all the way to the
+top level.
+
+   A quit or error annotation may be preceded by
+
+     ^Z^Zerror-begin
+
+   Any output between that and the quit or error annotation is the error
+message.
+
+   Warning messages are not yet annotated.
+
+
+File: gdb.info,  Node: Invalidation,  Next: Annotations for Running,  Prev: Errors,  Up: Annotations
+
+28.5 Invalidation Notices
+=========================
+
+The following annotations say that certain pieces of state may have
+changed.
+
+'^Z^Zframes-invalid'
+
+     The frames (for example, output from the 'backtrace' command) may
+     have changed.
+
+'^Z^Zbreakpoints-invalid'
+
+     The breakpoints may have changed.  For example, the user just added
+     or deleted a breakpoint.
+
+
+File: gdb.info,  Node: Annotations for Running,  Next: Source Annotations,  Prev: Invalidation,  Up: Annotations
+
+28.6 Running the Program
+========================
+
+When the program starts executing due to a GDB command such as 'step' or
+'continue',
+
+     ^Z^Zstarting
+
+   is output.  When the program stops,
+
+     ^Z^Zstopped
+
+   is output.  Before the 'stopped' annotation, a variety of annotations
+describe how the program stopped.
+
+'^Z^Zexited EXIT-STATUS'
+     The program exited, and EXIT-STATUS is the exit status (zero for
+     successful exit, otherwise nonzero).
+
+'^Z^Zsignalled'
+     The program exited with a signal.  After the '^Z^Zsignalled', the
+     annotation continues:
+
+          INTRO-TEXT
+          ^Z^Zsignal-name
+          NAME
+          ^Z^Zsignal-name-end
+          MIDDLE-TEXT
+          ^Z^Zsignal-string
+          STRING
+          ^Z^Zsignal-string-end
+          END-TEXT
+
+     where NAME is the name of the signal, such as 'SIGILL' or
+     'SIGSEGV', and STRING is the explanation of the signal, such as
+     'Illegal Instruction' or 'Segmentation fault'.  The arguments
+     INTRO-TEXT, MIDDLE-TEXT, and END-TEXT are for the user's benefit
+     and have no particular format.
+
+'^Z^Zsignal'
+     The syntax of this annotation is just like 'signalled', but GDB is
+     just saying that the program received the signal, not that it was
+     terminated with it.
+
+'^Z^Zbreakpoint NUMBER'
+     The program hit breakpoint number NUMBER.
+
+'^Z^Zwatchpoint NUMBER'
+     The program hit watchpoint number NUMBER.
+
+
+File: gdb.info,  Node: Source Annotations,  Prev: Annotations for Running,  Up: Annotations
+
+28.7 Displaying Source
+======================
+
+The following annotation is used instead of displaying source code:
+
+     ^Z^Zsource FILENAME:LINE:CHARACTER:MIDDLE:ADDR
+
+   where FILENAME is an absolute file name indicating which source file,
+LINE is the line number within that file (where 1 is the first line in
+the file), CHARACTER is the character position within the file (where 0
+is the first character in the file) (for most debug formats this will
+necessarily point to the beginning of a line), MIDDLE is 'middle' if
+ADDR is in the middle of the line, or 'beg' if ADDR is at the beginning
+of the line, and ADDR is the address in the target program associated
+with the source which is being displayed.  The ADDR is in the form '0x'
+followed by one or more lowercase hex digits (note that this does not
+depend on the language).
+
+
+File: gdb.info,  Node: JIT Interface,  Next: In-Process Agent,  Prev: Annotations,  Up: Top
+
+29 JIT Compilation Interface
+****************************
+
+This chapter documents GDB's "just-in-time" (JIT) compilation interface.
+A JIT compiler is a program or library that generates native executable
+code at runtime and executes it, usually in order to achieve good
+performance while maintaining platform independence.
+
+   Programs that use JIT compilation are normally difficult to debug
+because portions of their code are generated at runtime, instead of
+being loaded from object files, which is where GDB normally finds the
+program's symbols and debug information.  In order to debug programs
+that use JIT compilation, GDB has an interface that allows the program
+to register in-memory symbol files with GDB at runtime.
+
+   If you are using GDB to debug a program that uses this interface,
+then it should work transparently so long as you have not stripped the
+binary.  If you are developing a JIT compiler, then the interface is
+documented in the rest of this chapter.  At this time, the only known
+client of this interface is the LLVM JIT.
+
+   Broadly speaking, the JIT interface mirrors the dynamic loader
+interface.  The JIT compiler communicates with GDB by writing data into
+a global variable and calling a fuction at a well-known symbol.  When
+GDB attaches, it reads a linked list of symbol files from the global
+variable to find existing code, and puts a breakpoint in the function so
+that it can find out about additional code.
+
+* Menu:
+
+* Declarations::                Relevant C struct declarations
+* Registering Code::            Steps to register code
+* Unregistering Code::          Steps to unregister code
+* Custom Debug Info::           Emit debug information in a custom format
+
+
+File: gdb.info,  Node: Declarations,  Next: Registering Code,  Up: JIT Interface
+
+29.1 JIT Declarations
+=====================
+
+These are the relevant struct declarations that a C program should
+include to implement the interface:
+
+     typedef enum
+     {
+       JIT_NOACTION = 0,
+       JIT_REGISTER_FN,
+       JIT_UNREGISTER_FN
+     } jit_actions_t;
+
+     struct jit_code_entry
+     {
+       struct jit_code_entry *next_entry;
+       struct jit_code_entry *prev_entry;
+       const char *symfile_addr;
+       uint64_t symfile_size;
+     };
+
+     struct jit_descriptor
+     {
+       uint32_t version;
+       /* This type should be jit_actions_t, but we use uint32_t
+          to be explicit about the bitwidth.  */
+       uint32_t action_flag;
+       struct jit_code_entry *relevant_entry;
+       struct jit_code_entry *first_entry;
+     };
+
+     /* GDB puts a breakpoint in this function.  */
+     void __attribute__((noinline)) __jit_debug_register_code() { };
+
+     /* Make sure to specify the version statically, because the
+        debugger may check the version before we can set it.  */
+     struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+
+   If the JIT is multi-threaded, then it is important that the JIT
+synchronize any modifications to this global data properly, which can
+easily be done by putting a global mutex around modifications to these
+structures.
+
+
+File: gdb.info,  Node: Registering Code,  Next: Unregistering Code,  Prev: Declarations,  Up: JIT Interface
+
+29.2 Registering Code
+=====================
+
+To register code with GDB, the JIT should follow this protocol:
+
+   * Generate an object file in memory with symbols and other desired
+     debug information.  The file must include the virtual addresses of
+     the sections.
+
+   * Create a code entry for the file, which gives the start and size of
+     the symbol file.
+
+   * Add it to the linked list in the JIT descriptor.
+
+   * Point the relevant_entry field of the descriptor at the entry.
+
+   * Set 'action_flag' to 'JIT_REGISTER' and call
+     '__jit_debug_register_code'.
+
+   When GDB is attached and the breakpoint fires, GDB uses the
+'relevant_entry' pointer so it doesn't have to walk the list looking for
+new code.  However, the linked list must still be maintained in order to
+allow GDB to attach to a running process and still find the symbol
+files.
+
+
+File: gdb.info,  Node: Unregistering Code,  Next: Custom Debug Info,  Prev: Registering Code,  Up: JIT Interface
+
+29.3 Unregistering Code
+=======================
+
+If code is freed, then the JIT should use the following protocol:
+
+   * Remove the code entry corresponding to the code from the linked
+     list.
+
+   * Point the 'relevant_entry' field of the descriptor at the code
+     entry.
+
+   * Set 'action_flag' to 'JIT_UNREGISTER' and call
+     '__jit_debug_register_code'.
+
+   If the JIT frees or recompiles code without unregistering it, then
+GDB and the JIT will leak the memory used for the associated symbol
+files.
+
+
+File: gdb.info,  Node: Custom Debug Info,  Prev: Unregistering Code,  Up: JIT Interface
+
+29.4 Custom Debug Info
+======================
+
+Generating debug information in platform-native file formats (like ELF
+or COFF) may be an overkill for JIT compilers; especially if all the
+debug info is used for is displaying a meaningful backtrace.  The issue
+can be resolved by having the JIT writers decide on a debug info format
+and also provide a reader that parses the debug info generated by the
+JIT compiler.  This section gives a brief overview on writing such a
+parser.  More specific details can be found in the source file
+'gdb/jit-reader.in', which is also installed as a header at
+'INCLUDEDIR/gdb/jit-reader.h' for easy inclusion.
+
+   The reader is implemented as a shared object (so this functionality
+is not available on platforms which don't allow loading shared objects
+at runtime).  Two GDB commands, 'jit-reader-load' and
+'jit-reader-unload' are provided, to be used to load and unload the
+readers from a preconfigured directory.  Once loaded, the shared object
+is used the parse the debug information emitted by the JIT compiler.
+
+* Menu:
+
+* Using JIT Debug Info Readers::       How to use supplied readers correctly
+* Writing JIT Debug Info Readers::     Creating a debug-info reader
+
+
+File: gdb.info,  Node: Using JIT Debug Info Readers,  Next: Writing JIT Debug Info Readers,  Up: Custom Debug Info
+
+29.4.1 Using JIT Debug Info Readers
+-----------------------------------
+
+Readers can be loaded and unloaded using the 'jit-reader-load' and
+'jit-reader-unload' commands.
+
+'jit-reader-load READER'
+     Load the JIT reader named READER, which is a shared object
+     specified as either an absolute or a relative file name.  In the
+     latter case, GDB will try to load the reader from a pre-configured
+     directory, usually 'LIBDIR/gdb/' on a UNIX system (here LIBDIR is
+     the system library directory, often '/usr/local/lib').
+
+     Only one reader can be active at a time; trying to load a second
+     reader when one is already loaded will result in GDB reporting an
+     error.  A new JIT reader can be loaded by first unloading the
+     current one using 'jit-reader-unload' and then invoking
+     'jit-reader-load'.
+
+'jit-reader-unload'
+     Unload the currently loaded JIT reader.
+
+
+File: gdb.info,  Node: Writing JIT Debug Info Readers,  Prev: Using JIT Debug Info Readers,  Up: Custom Debug Info
+
+29.4.2 Writing JIT Debug Info Readers
+-------------------------------------
+
+As mentioned, a reader is essentially a shared object conforming to a
+certain ABI. This ABI is described in 'jit-reader.h'.
+
+   'jit-reader.h' defines the structures, macros and functions required
+to write a reader.  It is installed (along with GDB), in
+'INCLUDEDIR/gdb' where INCLUDEDIR is the system include directory.
+
+   Readers need to be released under a GPL compatible license.  A reader
+can be declared as released under such a license by placing the macro
+'GDB_DECLARE_GPL_COMPATIBLE_READER' in a source file.
+
+   The entry point for readers is the symbol 'gdb_init_reader', which is
+expected to be a function with the prototype
+
+     extern struct gdb_reader_funcs *gdb_init_reader (void);
+
+   'struct gdb_reader_funcs' contains a set of pointers to callback
+functions.  These functions are executed to read the debug info
+generated by the JIT compiler ('read'), to unwind stack frames
+('unwind') and to create canonical frame IDs ('get_Frame_id').  It also
+has a callback that is called when the reader is being unloaded
+('destroy').  The struct looks like this
+
+     struct gdb_reader_funcs
+     {
+       /* Must be set to GDB_READER_INTERFACE_VERSION.  */
+       int reader_version;
+
+       /* For use by the reader.  */
+       void *priv_data;
+
+       gdb_read_debug_info *read;
+       gdb_unwind_frame *unwind;
+       gdb_get_frame_id *get_frame_id;
+       gdb_destroy_reader *destroy;
+     };
+
+   The callbacks are provided with another set of callbacks by GDB to do
+their job.  For 'read', these callbacks are passed in a 'struct
+gdb_symbol_callbacks' and for 'unwind' and 'get_frame_id', in a 'struct
+gdb_unwind_callbacks'.  'struct gdb_symbol_callbacks' has callbacks to
+create new object files and new symbol tables inside those object files.
+'struct gdb_unwind_callbacks' has callbacks to read registers off the
+current frame and to write out the values of the registers in the
+previous frame.  Both have a callback ('target_read') to read bytes off
+the target's address space.
+
+
+File: gdb.info,  Node: In-Process Agent,  Next: GDB Bugs,  Prev: JIT Interface,  Up: Top
+
+30 In-Process Agent
+*******************
+
+The traditional debugging model is conceptually low-speed, but works
+fine, because most bugs can be reproduced in debugging-mode execution.
+However, as multi-core or many-core processors are becoming mainstream,
+and multi-threaded programs become more and more popular, there should
+be more and more bugs that only manifest themselves at normal-mode
+execution, for example, thread races, because debugger's interference
+with the program's timing may conceal the bugs.  On the other hand, in
+some applications, it is not feasible for the debugger to interrupt the
+program's execution long enough for the developer to learn anything
+helpful about its behavior.  If the program's correctness depends on its
+real-time behavior, delays introduced by a debugger might cause the
+program to fail, even when the code itself is correct.  It is useful to
+be able to observe the program's behavior without interrupting it.
+
+   Therefore, traditional debugging model is too intrusive to reproduce
+some bugs.  In order to reduce the interference with the program, we can
+reduce the number of operations performed by debugger.  The "In-Process
+Agent", a shared library, is running within the same process with
+inferior, and is able to perform some debugging operations itself.  As a
+result, debugger is only involved when necessary, and performance of
+debugging can be improved accordingly.  Note that interference with
+program can be reduced but can't be removed completely, because the
+in-process agent will still stop or slow down the program.
+
+   The in-process agent can interpret and execute Agent Expressions
+(*note Agent Expressions::) during performing debugging operations.  The
+agent expressions can be used for different purposes, such as collecting
+data in tracepoints, and condition evaluation in breakpoints.
+
+   You can control whether the in-process agent is used as an aid for
+debugging with the following commands:
+
+'set agent on'
+     Causes the in-process agent to perform some operations on behalf of
+     the debugger.  Just which operations requested by the user will be
+     done by the in-process agent depends on the its capabilities.  For
+     example, if you request to evaluate breakpoint conditions in the
+     in-process agent, and the in-process agent has such capability as
+     well, then breakpoint conditions will be evaluated in the
+     in-process agent.
+
+'set agent off'
+     Disables execution of debugging operations by the in-process agent.
+     All of the operations will be performed by GDB.
+
+'show agent'
+     Display the current setting of execution of debugging operations by
+     the in-process agent.
+
+* Menu:
+
+* In-Process Agent Protocol::
+
+
+File: gdb.info,  Node: In-Process Agent Protocol,  Up: In-Process Agent
+
+30.1 In-Process Agent Protocol
+==============================
+
+The in-process agent is able to communicate with both GDB and GDBserver
+(*note In-Process Agent::).  This section documents the protocol used
+for communications between GDB or GDBserver and the IPA. In general, GDB
+or GDBserver sends commands (*note IPA Protocol Commands::) and data to
+in-process agent, and then in-process agent replies back with the return
+result of the command, or some other information.  The data sent to
+in-process agent is composed of primitive data types, such as 4-byte or
+8-byte type, and composite types, which are called objects (*note IPA
+Protocol Objects::).
+
+* Menu:
+
+* IPA Protocol Objects::
+* IPA Protocol Commands::
+
+
+File: gdb.info,  Node: IPA Protocol Objects,  Next: IPA Protocol Commands,  Up: In-Process Agent Protocol
+
+30.1.1 IPA Protocol Objects
+---------------------------
+
+The commands sent to and results received from agent may contain some
+complex data types called "objects".
+
+   The in-process agent is running on the same machine with GDB or
+GDBserver, so it doesn't have to handle as much differences between two
+ends as remote protocol (*note Remote Protocol::) tries to handle.
+However, there are still some differences of two ends in two processes:
+
+  1. word size.  On some 64-bit machines, GDB or GDBserver can be
+     compiled as a 64-bit executable, while in-process agent is a 32-bit
+     one.
+  2. ABI. Some machines may have multiple types of ABI, GDB or GDBserver
+     is compiled with one, and in-process agent is compiled with the
+     other one.
+
+   Here are the IPA Protocol Objects:
+
+  1. agent expression object.  It represents an agent expression (*note
+     Agent Expressions::).
+  2. tracepoint action object.  It represents a tracepoint action (*note
+     Tracepoint Action Lists: Tracepoint Actions.) to collect registers,
+     memory, static trace data and to evaluate expression.
+  3. tracepoint object.  It represents a tracepoint (*note
+     Tracepoints::).
+
+   The following table describes important attributes of each IPA
+protocol object:
+
+Name                   Size           Description
+---------------------------------------------------------------------------
+_agent expression
+object_
+length                 4              length of bytes code
+byte code              LENGTH         contents of byte code
+_tracepoint action
+for collecting
+memory_
+'M'                    1              type of tracepoint action
+addr                   8              if BASEREG is '-1', ADDR is the
+                                      address of the lowest byte to
+                                      collect, otherwise ADDR is the
+                                      offset of BASEREG for memory
+                                      collecting.
+len                    8              length of memory for collecting
+basereg                4              the register number containing the
+                                      starting memory address for
+                                      collecting.
+_tracepoint action
+for collecting
+registers_
+'R'                    1              type of tracepoint action
+_tracepoint action
+for collecting
+static trace data_
+'L'                    1              type of tracepoint action
+_tracepoint action
+for expression
+evaluation_
+'X'                    1              type of tracepoint action
+agent expression       length of      *note agent expression object::
+_tracepoint object_
+number                 4              number of tracepoint
+address                8              address of tracepoint inserted on
+type                   4              type of tracepoint
+enabled                1              enable or disable of tracepoint
+step_count             8              step
+pass_count             8              pass
+numactions             4              number of tracepoint actions
+hit count              8              hit count
+trace frame usage      8              trace frame usage
+compiled_cond          8              compiled condition
+orig_size              8              orig size
+condition              4 if           zero if condition is NULL,
+                       condition is   otherwise is
+                       NULL           *note agent expression object::
+                       otherwise
+                       length of
+                       *note agent expression object::
+actions                variable       numactions number of
+                                      *note tracepoint action object::
+
+
+File: gdb.info,  Node: IPA Protocol Commands,  Prev: IPA Protocol Objects,  Up: In-Process Agent Protocol
+
+30.1.2 IPA Protocol Commands
+----------------------------
+
+The spaces in each command are delimiters to ease reading this commands
+specification.  They don't exist in real commands.
+
+'FastTrace:TRACEPOINT_OBJECT GDB_JUMP_PAD_HEAD'
+     Installs a new fast tracepoint described by TRACEPOINT_OBJECT
+     (*note tracepoint object::).  The GDB_JUMP_PAD_HEAD, 8-byte long,
+     is the head of "jumppad", which is used to jump to data collection
+     routine in IPA finally.
+
+     Replies:
+     'OK TARGET_ADDRESS GDB_JUMP_PAD_HEAD FJUMP_SIZE FJUMP'
+          TARGET_ADDRESS is address of tracepoint in the inferior.  The
+          GDB_JUMP_PAD_HEAD is updated head of jumppad.  Both of
+          TARGET_ADDRESS and GDB_JUMP_PAD_HEAD are 8-byte long.  The
+          FJUMP contains a sequence of instructions jump to jumppad
+          entry.  The FJUMP_SIZE, 4-byte long, is the size of FJUMP.
+     'E NN'
+          for an error
+
+'close'
+     Closes the in-process agent.  This command is sent when GDB or
+     GDBserver is about to kill inferiors.
+
+'qTfSTM'
+     *Note qTfSTM::.
+'qTsSTM'
+     *Note qTsSTM::.
+'qTSTMat'
+     *Note qTSTMat::.
+'probe_marker_at:ADDRESS'
+     Asks in-process agent to probe the marker at ADDRESS.
+
+     Replies:
+     'E NN'
+          for an error
+'unprobe_marker_at:ADDRESS'
+     Asks in-process agent to unprobe the marker at ADDRESS.
+
+
+File: gdb.info,  Node: GDB Bugs,  Next: Command Line Editing,  Prev: In-Process Agent,  Up: Top
+
+31 Reporting Bugs in GDB
+************************
+
+Your bug reports play an essential role in making GDB reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of GDB work
+better.  Bug reports are your contribution to the maintenance of GDB.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+
+
+File: gdb.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: GDB Bugs
+
+31.1 Have You Found a Bug?
+==========================
+
+If you are not sure whether you have found a bug, here are some
+guidelines:
+
+   * If the debugger gets a fatal signal, for any input whatever, that
+     is a GDB bug.  Reliable debuggers never crash.
+
+   * If GDB produces an error message for valid input, that is a bug.
+     (Note that if you're cross debugging, the problem may also be
+     somewhere in the connection to the target.)
+
+   * If GDB does not produce an error message for invalid input, that is
+     a bug.  However, you should note that your idea of "invalid input"
+     might be our idea of "an extension" or "support for traditional
+     practice".
+
+   * If you are an experienced user of debugging tools, your suggestions
+     for improvement of GDB are welcome in any case.
+
+
+File: gdb.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: GDB Bugs
+
+31.2 How to Report Bugs
+=======================
+
+A number of companies and individuals offer support for GNU products.
+If you obtained GDB from a support organization, we recommend you
+contact that organization first.
+
+   You can find contact information for many support companies and
+individuals in the file 'etc/SERVICE' in the GNU Emacs distribution.
+
+   In any event, we also recommend that you submit bug reports for GDB.
+The preferred method is to submit them directly using GDB's Bugs web
+page (http://www.gnu.org/software/gdb/bugs/).  Alternatively, the e-mail
+gateway <bug-gdb@gnu.org> can be used.
+
+   *Do not send bug reports to 'info-gdb', or to 'help-gdb', or to any
+newsgroups.*  Most users of GDB do not want to receive bug reports.
+Those that do have arranged to receive 'bug-gdb'.
+
+   The mailing list 'bug-gdb' has a newsgroup 'gnu.gdb.bug' which serves
+as a repeater.  The mailing list and the newsgroup carry exactly the
+same messages.  Often people think of posting bug reports to the
+newsgroup instead of mailing them.  This appears to work, but it has one
+problem which can be crucial: a newsgroup posting often lacks a mail
+path back to the sender.  Thus, if we need to ask for more information,
+we may be unable to reach you.  For this reason, it is better to send
+bug reports to the mailing list.
+
+   The fundamental principle of reporting bugs usefully is this: *report
+all the facts*.  If you are not sure whether to state a fact or leave it
+out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of the variable you use in an example does not
+matter.  Well, probably it does not, but one cannot be sure.  Perhaps
+the bug is a stray memory reference which happens to fetch from the
+location where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the debugger into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug.  It may be that the bug has been reported previously, but
+neither you nor we can know that unless your bug report is complete and
+self-contained.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  Those bug reports are useless, and we urge everyone to _refuse
+to respond to them_ except to chide the sender to report bugs properly.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of GDB.  GDB announces it if you start with no
+     arguments; you can also print it at any time using 'show version'.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of GDB.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * The details of the GDB build-time configuration.  GDB shows these
+     details if you invoke it with the '--configuration' command-line
+     option, or if you type 'show configuration' at GDB's prompt.
+
+   * What compiler (and its version) was used to compile GDB--e.g.
+     "gcc-2.8.1".
+
+   * What compiler (and its version) was used to compile the program you
+     are debugging--e.g. "gcc-2.8.1", or "HP92453-01 A.10.32.03 HP C
+     Compiler".  For GCC, you can say 'gcc --version' to get this
+     information; for other compilers, see the documentation for those
+     compilers.
+
+   * The command arguments you gave the compiler to compile your example
+     and observe the bug.  For example, did you use '-O'?  To guarantee
+     you will not omit something important, list them all.  A copy of
+     the Makefile (or the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input script, and all necessary source files, that will
+     reproduce the bug.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that GDB gets a fatal signal, then we will
+     certainly notice it.  But if the bug is incorrect output, we might
+     not notice unless it is glaringly wrong.  You might as well not
+     give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as, your copy of GDB is out of synch, or you have encountered
+     a bug in the C library on your system.  (This has happened!)  Your
+     copy might crash and ours would not.  If you told us to expect a
+     crash, then when ours fails to crash, we would know that the bug
+     was not happening for us.  If you had not told us to expect a
+     crash, then we would not be able to draw any conclusion from our
+     observations.
+
+     To collect all this information, you can use a session recording
+     program such as 'script', which is available on many Unix systems.
+     Just run your GDB session inside 'script' and then include the
+     'typescript' file with your bug report.
+
+     Another way to record a GDB session is to run GDB inside Emacs and
+     then save the entire buffer to a file.
+
+   * If you wish to suggest changes to the GDB source, send us context
+     diffs.  If you even discuss something in the GDB source, refer to
+     it by context, not by line number.
+
+     The line numbers in our development sources will not match those in
+     your sources.  Your line numbers would convey no useful information
+     to us.
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report _instead_ of
+     the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems with
+     your patch and decide to fix the problem another way, or we might
+     not understand it at all.
+
+     Sometimes with a program as complicated as GDB it is very hard to
+     construct an example that will make the program follow a certain
+     path through the code.  If you do not send us the example, we will
+     not be able to construct one, so we will not be able to verify that
+     the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+
+
+File: gdb.info,  Node: Command Line Editing,  Next: Using History Interactively,  Prev: GDB Bugs,  Up: Top
+
+32 Command Line Editing
+***********************
+
+This chapter describes the basic features of the GNU command line
+editing interface.
+
+* Menu:
+
+* Introduction and Notation::	Notation used in this text.
+* Readline Interaction::	The minimum set of commands for editing a line.
+* Readline Init File::		Customizing Readline from a user's view.
+* Bindable Readline Commands::	A description of most of the Readline commands
+				available for binding
+* Readline vi Mode::		A short description of how to make Readline
+				behave like the vi editor.
+
+
+File: gdb.info,  Node: Introduction and Notation,  Next: Readline Interaction,  Up: Command Line Editing
+
+32.1 Introduction to Line Editing
+=================================
+
+The following paragraphs describe the notation used to represent
+keystrokes.
+
+   The text 'C-k' is read as 'Control-K' and describes the character
+produced when the <k> key is pressed while the Control key is depressed.
+
+   The text 'M-k' is read as 'Meta-K' and describes the character
+produced when the Meta key (if you have one) is depressed, and the <k>
+key is pressed.  The Meta key is labeled <ALT> on many keyboards.  On
+keyboards with two keys labeled <ALT> (usually to either side of the
+space bar), the <ALT> on the left side is generally set to work as a
+Meta key.  The <ALT> key on the right may also be configured to work as
+a Meta key or may be configured as some other modifier, such as a
+Compose key for typing accented characters.
+
+   If you do not have a Meta or <ALT> key, or another key working as a
+Meta key, the identical keystroke can be generated by typing <ESC>
+_first_, and then typing <k>.  Either process is known as "metafying"
+the <k> key.
+
+   The text 'M-C-k' is read as 'Meta-Control-k' and describes the
+character produced by "metafying" 'C-k'.
+
+   In addition, several keys have their own names.  Specifically, <DEL>,
+<ESC>, <LFD>, <SPC>, <RET>, and <TAB> all stand for themselves when seen
+in this text, or in an init file (*note Readline Init File::).  If your
+keyboard lacks a <LFD> key, typing <C-j> will produce the desired
+character.  The <RET> key may be labeled <Return> or <Enter> on some
+keyboards.
+
+
+File: gdb.info,  Node: Readline Interaction,  Next: Readline Init File,  Prev: Introduction and Notation,  Up: Command Line Editing
+
+32.2 Readline Interaction
+=========================
+
+Often during an interactive session you type in a long line of text,
+only to notice that the first word on the line is misspelled.  The
+Readline library gives you a set of commands for manipulating the text
+as you type it in, allowing you to just fix your typo, and not forcing
+you to retype the majority of the line.  Using these editing commands,
+you move the cursor to the place that needs correction, and delete or
+insert the text of the corrections.  Then, when you are satisfied with
+the line, you simply press <RET>.  You do not have to be at the end of
+the line to press <RET>; the entire line is accepted regardless of the
+location of the cursor within the line.
+
+* Menu:
+
+* Readline Bare Essentials::	The least you need to know about Readline.
+* Readline Movement Commands::	Moving about the input line.
+* Readline Killing Commands::	How to delete text, and how to get it back!
+* Readline Arguments::		Giving numeric arguments to commands.
+* Searching::			Searching through previous lines.
+
+
+File: gdb.info,  Node: Readline Bare Essentials,  Next: Readline Movement Commands,  Up: Readline Interaction
+
+32.2.1 Readline Bare Essentials
+-------------------------------
+
+In order to enter characters into the line, simply type them.  The typed
+character appears where the cursor was, and then the cursor moves one
+space to the right.  If you mistype a character, you can use your erase
+character to back up and delete the mistyped character.
+
+   Sometimes you may mistype a character, and not notice the error until
+you have typed several other characters.  In that case, you can type
+'C-b' to move the cursor to the left, and then correct your mistake.
+Afterwards, you can move the cursor to the right with 'C-f'.
+
+   When you add text in the middle of a line, you will notice that
+characters to the right of the cursor are 'pushed over' to make room for
+the text that you have inserted.  Likewise, when you delete text behind
+the cursor, characters to the right of the cursor are 'pulled back' to
+fill in the blank space created by the removal of the text.  A list of
+the bare essentials for editing the text of an input line follows.
+
+'C-b'
+     Move back one character.
+'C-f'
+     Move forward one character.
+<DEL> or <Backspace>
+     Delete the character to the left of the cursor.
+'C-d'
+     Delete the character underneath the cursor.
+Printing characters
+     Insert the character into the line at the cursor.
+'C-_' or 'C-x C-u'
+     Undo the last editing command.  You can undo all the way back to an
+     empty line.
+
+(Depending on your configuration, the <Backspace> key be set to delete
+the character to the left of the cursor and the <DEL> key set to delete
+the character underneath the cursor, like 'C-d', rather than the
+character to the left of the cursor.)
+
+
+File: gdb.info,  Node: Readline Movement Commands,  Next: Readline Killing Commands,  Prev: Readline Bare Essentials,  Up: Readline Interaction
+
+32.2.2 Readline Movement Commands
+---------------------------------
+
+The above table describes the most basic keystrokes that you need in
+order to do editing of the input line.  For your convenience, many other
+commands have been added in addition to 'C-b', 'C-f', 'C-d', and <DEL>.
+Here are some commands for moving more rapidly about the line.
+
+'C-a'
+     Move to the start of the line.
+'C-e'
+     Move to the end of the line.
+'M-f'
+     Move forward a word, where a word is composed of letters and
+     digits.
+'M-b'
+     Move backward a word.
+'C-l'
+     Clear the screen, reprinting the current line at the top.
+
+   Notice how 'C-f' moves forward a character, while 'M-f' moves forward
+a word.  It is a loose convention that control keystrokes operate on
+characters while meta keystrokes operate on words.
+
+
+File: gdb.info,  Node: Readline Killing Commands,  Next: Readline Arguments,  Prev: Readline Movement Commands,  Up: Readline Interaction
+
+32.2.3 Readline Killing Commands
+--------------------------------
+
+"Killing" text means to delete the text from the line, but to save it
+away for later use, usually by "yanking" (re-inserting) it back into the
+line.  ('Cut' and 'paste' are more recent jargon for 'kill' and 'yank'.)
+
+   If the description for a command says that it 'kills' text, then you
+can be sure that you can get the text back in a different (or the same)
+place later.
+
+   When you use a kill command, the text is saved in a "kill-ring".  Any
+number of consecutive kills save all of the killed text together, so
+that when you yank it back, you get it all.  The kill ring is not line
+specific; the text that you killed on a previously typed line is
+available to be yanked back later, when you are typing another line.
+
+   Here is the list of commands for killing text.
+
+'C-k'
+     Kill the text from the current cursor position to the end of the
+     line.
+
+'M-d'
+     Kill from the cursor to the end of the current word, or, if between
+     words, to the end of the next word.  Word boundaries are the same
+     as those used by 'M-f'.
+
+'M-<DEL>'
+     Kill from the cursor the start of the current word, or, if between
+     words, to the start of the previous word.  Word boundaries are the
+     same as those used by 'M-b'.
+
+'C-w'
+     Kill from the cursor to the previous whitespace.  This is different
+     than 'M-<DEL>' because the word boundaries differ.
+
+   Here is how to "yank" the text back into the line.  Yanking means to
+copy the most-recently-killed text from the kill buffer.
+
+'C-y'
+     Yank the most recently killed text back into the buffer at the
+     cursor.
+
+'M-y'
+     Rotate the kill-ring, and yank the new top.  You can only do this
+     if the prior command is 'C-y' or 'M-y'.
+
+
+File: gdb.info,  Node: Readline Arguments,  Next: Searching,  Prev: Readline Killing Commands,  Up: Readline Interaction
+
+32.2.4 Readline Arguments
+-------------------------
+
+You can pass numeric arguments to Readline commands.  Sometimes the
+argument acts as a repeat count, other times it is the sign of the
+argument that is significant.  If you pass a negative argument to a
+command which normally acts in a forward direction, that command will
+act in a backward direction.  For example, to kill text back to the
+start of the line, you might type 'M-- C-k'.
+
+   The general way to pass numeric arguments to a command is to type
+meta digits before the command.  If the first 'digit' typed is a minus
+sign ('-'), then the sign of the argument will be negative.  Once you
+have typed one meta digit to get the argument started, you can type the
+remainder of the digits, and then the command.  For example, to give the
+'C-d' command an argument of 10, you could type 'M-1 0 C-d', which will
+delete the next ten characters on the input line.
+
+
+File: gdb.info,  Node: Searching,  Prev: Readline Arguments,  Up: Readline Interaction
+
+32.2.5 Searching for Commands in the History
+--------------------------------------------
+
+Readline provides commands for searching through the command history for
+lines containing a specified string.  There are two search modes:
+"incremental" and "non-incremental".
+
+   Incremental searches begin before the user has finished typing the
+search string.  As each character of the search string is typed,
+Readline displays the next entry from the history matching the string
+typed so far.  An incremental search requires only as many characters as
+needed to find the desired history entry.  To search backward in the
+history for a particular string, type 'C-r'.  Typing 'C-s' searches
+forward through the history.  The characters present in the value of the
+'isearch-terminators' variable are used to terminate an incremental
+search.  If that variable has not been assigned a value, the <ESC> and
+'C-J' characters will terminate an incremental search.  'C-g' will abort
+an incremental search and restore the original line.  When the search is
+terminated, the history entry containing the search string becomes the
+current line.
+
+   To find other matching entries in the history list, type 'C-r' or
+'C-s' as appropriate.  This will search backward or forward in the
+history for the next entry matching the search string typed so far.  Any
+other key sequence bound to a Readline command will terminate the search
+and execute that command.  For instance, a <RET> will terminate the
+search and accept the line, thereby executing the command from the
+history list.  A movement command will terminate the search, make the
+last line found the current line, and begin editing.
+
+   Readline remembers the last incremental search string.  If two 'C-r's
+are typed without any intervening characters defining a new search
+string, any remembered search string is used.
+
+   Non-incremental searches read the entire search string before
+starting to search for matching history lines.  The search string may be
+typed by the user or be part of the contents of the current line.
+
+
+File: gdb.info,  Node: Readline Init File,  Next: Bindable Readline Commands,  Prev: Readline Interaction,  Up: Command Line Editing
+
+32.3 Readline Init File
+=======================
+
+Although the Readline library comes with a set of Emacs-like keybindings
+installed by default, it is possible to use a different set of
+keybindings.  Any user can customize programs that use Readline by
+putting commands in an "inputrc" file, conventionally in his home
+directory.  The name of this file is taken from the value of the
+environment variable 'INPUTRC'.  If that variable is unset, the default
+is '~/.inputrc'.  If that file does not exist or cannot be read, the
+ultimate default is '/etc/inputrc'.
+
+   When a program which uses the Readline library starts up, the init
+file is read, and the key bindings are set.
+
+   In addition, the 'C-x C-r' command re-reads this init file, thus
+incorporating any changes that you might have made to it.
+
+* Menu:
+
+* Readline Init File Syntax::	Syntax for the commands in the inputrc file.
+
+* Conditional Init Constructs::	Conditional key bindings in the inputrc file.
+
+* Sample Init File::		An example inputrc file.
+
+
+File: gdb.info,  Node: Readline Init File Syntax,  Next: Conditional Init Constructs,  Up: Readline Init File
+
+32.3.1 Readline Init File Syntax
+--------------------------------
+
+There are only a few basic constructs allowed in the Readline init file.
+Blank lines are ignored.  Lines beginning with a '#' are comments.
+Lines beginning with a '$' indicate conditional constructs (*note
+Conditional Init Constructs::).  Other lines denote variable settings
+and key bindings.
+
+Variable Settings
+     You can modify the run-time behavior of Readline by altering the
+     values of variables in Readline using the 'set' command within the
+     init file.  The syntax is simple:
+
+          set VARIABLE VALUE
+
+     Here, for example, is how to change from the default Emacs-like key
+     binding to use 'vi' line editing commands:
+
+          set editing-mode vi
+
+     Variable names and values, where appropriate, are recognized
+     without regard to case.  Unrecognized variable names are ignored.
+
+     Boolean variables (those that can be set to on or off) are set to
+     on if the value is null or empty, ON (case-insensitive), or 1.  Any
+     other value results in the variable being set to off.
+
+     A great deal of run-time behavior is changeable with the following
+     variables.
+
+     'bell-style'
+          Controls what happens when Readline wants to ring the terminal
+          bell.  If set to 'none', Readline never rings the bell.  If
+          set to 'visible', Readline uses a visible bell if one is
+          available.  If set to 'audible' (the default), Readline
+          attempts to ring the terminal's bell.
+
+     'bind-tty-special-chars'
+          If set to 'on', Readline attempts to bind the control
+          characters treated specially by the kernel's terminal driver
+          to their Readline equivalents.
+
+     'comment-begin'
+          The string to insert at the beginning of the line when the
+          'insert-comment' command is executed.  The default value is
+          '"#"'.
+
+     'completion-display-width'
+          The number of screen columns used to display possible matches
+          when performing completion.  The value is ignored if it is
+          less than 0 or greater than the terminal screen width.  A
+          value of 0 will cause matches to be displayed one per line.
+          The default value is -1.
+
+     'completion-ignore-case'
+          If set to 'on', Readline performs filename matching and
+          completion in a case-insensitive fashion.  The default value
+          is 'off'.
+
+     'completion-map-case'
+          If set to 'on', and COMPLETION-IGNORE-CASE is enabled,
+          Readline treats hyphens ('-') and underscores ('_') as
+          equivalent when performing case-insensitive filename matching
+          and completion.
+
+     'completion-prefix-display-length'
+          The length in characters of the common prefix of a list of
+          possible completions that is displayed without modification.
+          When set to a value greater than zero, common prefixes longer
+          than this value are replaced with an ellipsis when displaying
+          possible completions.
+
+     'completion-query-items'
+          The number of possible completions that determines when the
+          user is asked whether the list of possibilities should be
+          displayed.  If the number of possible completions is greater
+          than this value, Readline will ask the user whether or not he
+          wishes to view them; otherwise, they are simply listed.  This
+          variable must be set to an integer value greater than or equal
+          to 0.  A negative value means Readline should never ask.  The
+          default limit is '100'.
+
+     'convert-meta'
+          If set to 'on', Readline will convert characters with the
+          eighth bit set to an ASCII key sequence by stripping the
+          eighth bit and prefixing an <ESC> character, converting them
+          to a meta-prefixed key sequence.  The default value is 'on'.
+
+     'disable-completion'
+          If set to 'On', Readline will inhibit word completion.
+          Completion characters will be inserted into the line as if
+          they had been mapped to 'self-insert'.  The default is 'off'.
+
+     'editing-mode'
+          The 'editing-mode' variable controls which default set of key
+          bindings is used.  By default, Readline starts up in Emacs
+          editing mode, where the keystrokes are most similar to Emacs.
+          This variable can be set to either 'emacs' or 'vi'.
+
+     'echo-control-characters'
+          When set to 'on', on operating systems that indicate they
+          support it, readline echoes a character corresponding to a
+          signal generated from the keyboard.  The default is 'on'.
+
+     'enable-keypad'
+          When set to 'on', Readline will try to enable the application
+          keypad when it is called.  Some systems need this to enable
+          the arrow keys.  The default is 'off'.
+
+     'enable-meta-key'
+          When set to 'on', Readline will try to enable any meta
+          modifier key the terminal claims to support when it is called.
+          On many terminals, the meta key is used to send eight-bit
+          characters.  The default is 'on'.
+
+     'expand-tilde'
+          If set to 'on', tilde expansion is performed when Readline
+          attempts word completion.  The default is 'off'.
+
+     'history-preserve-point'
+          If set to 'on', the history code attempts to place the point
+          (the current cursor position) at the same location on each
+          history line retrieved with 'previous-history' or
+          'next-history'.  The default is 'off'.
+
+     'history-size'
+          Set the maximum number of history entries saved in the history
+          list.  If set to zero, the number of entries in the history
+          list is not limited.
+
+     'horizontal-scroll-mode'
+          This variable can be set to either 'on' or 'off'.  Setting it
+          to 'on' means that the text of the lines being edited will
+          scroll horizontally on a single screen line when they are
+          longer than the width of the screen, instead of wrapping onto
+          a new screen line.  By default, this variable is set to 'off'.
+
+     'input-meta'
+          If set to 'on', Readline will enable eight-bit input (it will
+          not clear the eighth bit in the characters it reads),
+          regardless of what the terminal claims it can support.  The
+          default value is 'off'.  The name 'meta-flag' is a synonym for
+          this variable.
+
+     'isearch-terminators'
+          The string of characters that should terminate an incremental
+          search without subsequently executing the character as a
+          command (*note Searching::).  If this variable has not been
+          given a value, the characters <ESC> and 'C-J' will terminate
+          an incremental search.
+
+     'keymap'
+          Sets Readline's idea of the current keymap for key binding
+          commands.  Acceptable 'keymap' names are 'emacs',
+          'emacs-standard', 'emacs-meta', 'emacs-ctlx', 'vi', 'vi-move',
+          'vi-command', and 'vi-insert'.  'vi' is equivalent to
+          'vi-command'; 'emacs' is equivalent to 'emacs-standard'.  The
+          default value is 'emacs'.  The value of the 'editing-mode'
+          variable also affects the default keymap.
+
+     'mark-directories'
+          If set to 'on', completed directory names have a slash
+          appended.  The default is 'on'.
+
+     'mark-modified-lines'
+          This variable, when set to 'on', causes Readline to display an
+          asterisk ('*') at the start of history lines which have been
+          modified.  This variable is 'off' by default.
+
+     'mark-symlinked-directories'
+          If set to 'on', completed names which are symbolic links to
+          directories have a slash appended (subject to the value of
+          'mark-directories').  The default is 'off'.
+
+     'match-hidden-files'
+          This variable, when set to 'on', causes Readline to match
+          files whose names begin with a '.' (hidden files) when
+          performing filename completion.  If set to 'off', the leading
+          '.' must be supplied by the user in the filename to be
+          completed.  This variable is 'on' by default.
+
+     'menu-complete-display-prefix'
+          If set to 'on', menu completion displays the common prefix of
+          the list of possible completions (which may be empty) before
+          cycling through the list.  The default is 'off'.
+
+     'output-meta'
+          If set to 'on', Readline will display characters with the
+          eighth bit set directly rather than as a meta-prefixed escape
+          sequence.  The default is 'off'.
+
+     'page-completions'
+          If set to 'on', Readline uses an internal 'more'-like pager to
+          display a screenful of possible completions at a time.  This
+          variable is 'on' by default.
+
+     'print-completions-horizontally'
+          If set to 'on', Readline will display completions with matches
+          sorted horizontally in alphabetical order, rather than down
+          the screen.  The default is 'off'.
+
+     'revert-all-at-newline'
+          If set to 'on', Readline will undo all changes to history
+          lines before returning when 'accept-line' is executed.  By
+          default, history lines may be modified and retain individual
+          undo lists across calls to 'readline'.  The default is 'off'.
+
+     'show-all-if-ambiguous'
+          This alters the default behavior of the completion functions.
+          If set to 'on', words which have more than one possible
+          completion cause the matches to be listed immediately instead
+          of ringing the bell.  The default value is 'off'.
+
+     'show-all-if-unmodified'
+          This alters the default behavior of the completion functions
+          in a fashion similar to SHOW-ALL-IF-AMBIGUOUS.  If set to
+          'on', words which have more than one possible completion
+          without any possible partial completion (the possible
+          completions don't share a common prefix) cause the matches to
+          be listed immediately instead of ringing the bell.  The
+          default value is 'off'.
+
+     'skip-completed-text'
+          If set to 'on', this alters the default completion behavior
+          when inserting a single match into the line.  It's only active
+          when performing completion in the middle of a word.  If
+          enabled, readline does not insert characters from the
+          completion that match characters after point in the word being
+          completed, so portions of the word following the cursor are
+          not duplicated.  For instance, if this is enabled, attempting
+          completion when the cursor is after the 'e' in 'Makefile' will
+          result in 'Makefile' rather than 'Makefilefile', assuming
+          there is a single possible completion.  The default value is
+          'off'.
+
+     'visible-stats'
+          If set to 'on', a character denoting a file's type is appended
+          to the filename when listing possible completions.  The
+          default is 'off'.
+
+Key Bindings
+     The syntax for controlling key bindings in the init file is simple.
+     First you need to find the name of the command that you want to
+     change.  The following sections contain tables of the command name,
+     the default keybinding, if any, and a short description of what the
+     command does.
+
+     Once you know the name of the command, simply place on a line in
+     the init file the name of the key you wish to bind the command to,
+     a colon, and then the name of the command.  There can be no space
+     between the key name and the colon - that will be interpreted as
+     part of the key name.  The name of the key can be expressed in
+     different ways, depending on what you find most comfortable.
+
+     In addition to command names, readline allows keys to be bound to a
+     string that is inserted when the key is pressed (a MACRO).
+
+     KEYNAME: FUNCTION-NAME or MACRO
+          KEYNAME is the name of a key spelled out in English.  For
+          example:
+               Control-u: universal-argument
+               Meta-Rubout: backward-kill-word
+               Control-o: "> output"
+
+          In the above example, 'C-u' is bound to the function
+          'universal-argument', 'M-DEL' is bound to the function
+          'backward-kill-word', and 'C-o' is bound to run the macro
+          expressed on the right hand side (that is, to insert the text
+          '> output' into the line).
+
+          A number of symbolic character names are recognized while
+          processing this key binding syntax: DEL, ESC, ESCAPE, LFD,
+          NEWLINE, RET, RETURN, RUBOUT, SPACE, SPC, and TAB.
+
+     "KEYSEQ": FUNCTION-NAME or MACRO
+          KEYSEQ differs from KEYNAME above in that strings denoting an
+          entire key sequence can be specified, by placing the key
+          sequence in double quotes.  Some GNU Emacs style key escapes
+          can be used, as in the following example, but the special
+          character names are not recognized.
+
+               "\C-u": universal-argument
+               "\C-x\C-r": re-read-init-file
+               "\e[11~": "Function Key 1"
+
+          In the above example, 'C-u' is again bound to the function
+          'universal-argument' (just as it was in the first example),
+          ''C-x' 'C-r'' is bound to the function 're-read-init-file',
+          and '<ESC> <[> <1> <1> <~>' is bound to insert the text
+          'Function Key 1'.
+
+     The following GNU Emacs style escape sequences are available when
+     specifying key sequences:
+
+     '\C-'
+          control prefix
+     '\M-'
+          meta prefix
+     '\e'
+          an escape character
+     '\\'
+          backslash
+     '\"'
+          <">, a double quotation mark
+     '\''
+          <'>, a single quote or apostrophe
+
+     In addition to the GNU Emacs style escape sequences, a second set
+     of backslash escapes is available:
+
+     '\a'
+          alert (bell)
+     '\b'
+          backspace
+     '\d'
+          delete
+     '\f'
+          form feed
+     '\n'
+          newline
+     '\r'
+          carriage return
+     '\t'
+          horizontal tab
+     '\v'
+          vertical tab
+     '\NNN'
+          the eight-bit character whose value is the octal value NNN
+          (one to three digits)
+     '\xHH'
+          the eight-bit character whose value is the hexadecimal value
+          HH (one or two hex digits)
+
+     When entering the text of a macro, single or double quotes must be
+     used to indicate a macro definition.  Unquoted text is assumed to
+     be a function name.  In the macro body, the backslash escapes
+     described above are expanded.  Backslash will quote any other
+     character in the macro text, including '"' and '''.  For example,
+     the following binding will make ''C-x' \' insert a single '\' into
+     the line:
+          "\C-x\\": "\\"
+
+
+File: gdb.info,  Node: Conditional Init Constructs,  Next: Sample Init File,  Prev: Readline Init File Syntax,  Up: Readline Init File
+
+32.3.2 Conditional Init Constructs
+----------------------------------
+
+Readline implements a facility similar in spirit to the conditional
+compilation features of the C preprocessor which allows key bindings and
+variable settings to be performed as the result of tests.  There are
+four parser directives used.
+
+'$if'
+     The '$if' construct allows bindings to be made based on the editing
+     mode, the terminal being used, or the application using Readline.
+     The text of the test extends to the end of the line; no characters
+     are required to isolate it.
+
+     'mode'
+          The 'mode=' form of the '$if' directive is used to test
+          whether Readline is in 'emacs' or 'vi' mode.  This may be used
+          in conjunction with the 'set keymap' command, for instance, to
+          set bindings in the 'emacs-standard' and 'emacs-ctlx' keymaps
+          only if Readline is starting out in 'emacs' mode.
+
+     'term'
+          The 'term=' form may be used to include terminal-specific key
+          bindings, perhaps to bind the key sequences output by the
+          terminal's function keys.  The word on the right side of the
+          '=' is tested against both the full name of the terminal and
+          the portion of the terminal name before the first '-'.  This
+          allows 'sun' to match both 'sun' and 'sun-cmd', for instance.
+
+     'application'
+          The APPLICATION construct is used to include
+          application-specific settings.  Each program using the
+          Readline library sets the APPLICATION NAME, and you can test
+          for a particular value.  This could be used to bind key
+          sequences to functions useful for a specific program.  For
+          instance, the following command adds a key sequence that
+          quotes the current or previous word in Bash:
+               $if Bash
+               # Quote the current or previous word
+               "\C-xq": "\eb\"\ef\""
+               $endif
+
+'$endif'
+     This command, as seen in the previous example, terminates an '$if'
+     command.
+
+'$else'
+     Commands in this branch of the '$if' directive are executed if the
+     test fails.
+
+'$include'
+     This directive takes a single filename as an argument and reads
+     commands and bindings from that file.  For example, the following
+     directive reads from '/etc/inputrc':
+          $include /etc/inputrc
 
 
 File: gdb.info,  Node: Sample Init File,  Prev: Conditional Init Constructs,  Up: Readline Init File
@@ -859,7 +2495,7 @@ and TeX (or 'texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version of
 this manual in the 'gdb' subdirectory.  The main Info file is
-'gdb-8.0.1/gdb/gdb.info', and it refers to subordinate files matching
+'gdb-8.3/gdb/gdb.info', and it refers to subordinate files matching
 'gdb.info*' in the same directory.  If necessary, you can print out
 these files, or read them with any editor; but they are easier to read
 using the 'info' subsystem in GNU Emacs or the standalone 'info'
@@ -869,8 +2505,8 @@ program, available as part of the GNU Texinfo distribution.
 Info formatting programs, such as 'texinfo-format-buffer' or 'makeinfo'.
 
    If you have 'makeinfo' installed, and are in the top level GDB source
-directory ('gdb-8.0.1', in the case of version 8.0.1), you can make the
-Info file by typing:
+directory ('gdb-8.3', in the case of version 8.3), you can make the Info
+file by typing:
 
      cd gdb
      make gdb.info
@@ -895,7 +2531,7 @@ On its own, TeX cannot either read or typeset a Texinfo file.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the 'gdb' subdirectory of the
-main source directory (for example, to 'gdb-8.0.1/gdb') and type:
+main source directory (for example, to 'gdb-8.3/gdb') and type:
 
      make gdb.dvi
 
@@ -903,7 +2539,7 @@ main source directory (for example, to 'gdb-8.0.1/gdb') and type:
 
    ---------- Footnotes ----------
 
-   (1) In 'gdb-8.0.1/gdb/refcard.ps' of the version 8.0.1 release.
+   (1) In 'gdb-8.3/gdb/refcard.ps' of the version 8.3 release.
 
 
 File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
@@ -932,9 +2568,13 @@ packages will be used only if they are found.
 Tools/Packages Necessary for Building GDB
 =========================================
 
-ISO C90 compiler
-     GDB is written in ISO C90.  It should be buildable with any working
-     C90 compiler, e.g. GCC.
+C++11 compiler
+     GDB is written in C++11.  It should be buildable with any recent
+     C++11 compiler, e.g. GCC.
+
+GNU make
+     GDB's build system relies on features only found in the GNU make
+     program.  Other variants of 'make' will not work.
 
 Tools/Packages Optional for Building GDB
 ========================================
@@ -958,16 +2598,13 @@ Expat
         * Branch trace (*note Branch Trace Format::, *note Branch Trace
           Configuration Format::)
 
-zlib
-     GDB will use the 'zlib' library, if available, to read compressed
-     debug sections.  Some linkers, such as GNU gold, are capable of
-     producing binaries with compressed debug sections.  If GDB is
-     compiled with 'zlib', it will be able to read the debug information
-     in such binaries.
-
-     The 'zlib' library is likely included with your operating system
-     distribution; if it is not, you can get the latest version from
-     <http://zlib.net>.
+Guile
+     GDB can be scripted using GNU Guile.  *Note Guile::.  By default,
+     GDB will be compiled if the Guile libraries are installed and are
+     found by 'configure'.  You can use the '--with-guile' option to
+     request Guile, and pass either the Guile version number or the file
+     name of the relevant 'pkg-config' program to choose a particular
+     version of Guile.
 
 iconv
      GDB's features related to character sets (*note Character Sets::)
@@ -978,11 +2615,14 @@ iconv
      If GDB is using the 'iconv' program which is installed in a
      non-standard place, you will need to tell GDB where to find it.
      This is done with '--with-iconv-bin' which specifies the directory
-     that contains the 'iconv' program.
+     that contains the 'iconv' program.  This program is run in order to
+     make a list of the available character sets.
 
-     On systems without 'iconv', you can install GNU Libiconv.  If you
-     have previously installed Libiconv, you can use the
-     '--with-libiconv-prefix' option to configure.
+     On systems without 'iconv', you can install GNU Libiconv.  If
+     Libiconv is installed in a standard place, GDB will automatically
+     use it if it is needed.  If you have previously installed Libiconv
+     in a non-standard place, you can use the '--with-libiconv-prefix'
+     option to 'configure'.
 
      GDB's top-level 'configure' and 'Makefile' will arrange to build
      Libiconv if a directory named 'libiconv' appears in the top-most
@@ -990,8 +2630,51 @@ iconv
      operating system does not provide a suitable 'iconv'
      implementation, then the just-built library will automatically be
      used by GDB.  One easy way to set this up is to download GNU
-     Libiconv, unpack it, and then rename the directory holding the
-     Libiconv source code to 'libiconv'.
+     Libiconv, unpack it inside the top-level directory of the GDB
+     source tree, and then rename the directory holding the Libiconv
+     source code to 'libiconv'.
+
+lzma
+     GDB can support debugging sections that are compressed with the
+     LZMA library.  *Note MiniDebugInfo::.  If this library is not
+     included with your operating system, you can find it in the xz
+     package at <http://tukaani.org/xz/>.  If the LZMA library is
+     available in the usual place, then the 'configure' script will use
+     it automatically.  If it is installed in an unusual path, you can
+     use the '--with-lzma-prefix' option to specify its location.
+
+MPFR
+     GDB can use the GNU MPFR multiple-precision floating-point library.
+     This library may be included with your operating system
+     distribution; if it is not, you can get the latest version from
+     <http://www.mpfr.org>.  The 'configure' script will search for this
+     library in several standard locations; if it is installed in an
+     unusual path, you can use the '--with-libmpfr-prefix' option to
+     specify its location.
+
+     GNU MPFR is used to emulate target floating-point arithmetic during
+     expression evaluation when the target uses different floating-point
+     formats than the host.  If GNU MPFR it is not available, GDB will
+     fall back to using host floating-point arithmetic.
+
+Python
+     GDB can be scripted using Python language.  *Note Python::.  By
+     default, GDB will be compiled if the Python libraries are installed
+     and are found by 'configure'.  You can use the '--with-python'
+     option to request Python, and pass either the file name of the
+     relevant 'python' executable, or the name of the directory in which
+     Python is installed, to choose a particular installation of Python.
+
+zlib
+     GDB will use the 'zlib' library, if available, to read compressed
+     debug sections.  Some linkers, such as GNU gold, are capable of
+     producing binaries with compressed debug sections.  If GDB is
+     compiled with 'zlib', it will be able to read the debug information
+     in such binaries.
+
+     The 'zlib' library is likely included with your operating system
+     distribution; if it is not, you can get the latest version from
+     <http://zlib.net>.
 
 
 File: gdb.info,  Node: Running Configure,  Next: Separate Objdir,  Prev: Requirements,  Up: Installing GDB
@@ -1007,39 +2690,35 @@ preparing GDB for installation; you can then use 'make' to build the
 a single directory, whose name is usually composed by appending the
 version number to 'gdb'.
 
-   For example, the GDB version 8.0.1 distribution is in the 'gdb-8.0.1'
+   For example, the GDB version 8.3 distribution is in the 'gdb-8.3'
 directory.  That directory contains:
 
-'gdb-8.0.1/configure (and supporting files)'
+'gdb-8.3/configure (and supporting files)'
      script for configuring GDB and all its supporting libraries
 
-'gdb-8.0.1/gdb'
+'gdb-8.3/gdb'
      the source specific to GDB itself
 
-'gdb-8.0.1/bfd'
+'gdb-8.3/bfd'
      source for the Binary File Descriptor library
 
-'gdb-8.0.1/include'
+'gdb-8.3/include'
      GNU include files
 
-'gdb-8.0.1/libiberty'
+'gdb-8.3/libiberty'
      source for the '-liberty' free software library
 
-'gdb-8.0.1/opcodes'
+'gdb-8.3/opcodes'
      source for the library of opcode tables and disassemblers
 
-'gdb-8.0.1/readline'
+'gdb-8.3/readline'
      source for the GNU command-line interface
 
-'gdb-8.0.1/glob'
-     source for the GNU filename pattern-matching subroutine
-
-'gdb-8.0.1/mmalloc'
-     source for the GNU memory-mapped malloc package
+   There may be other subdirectories as well.
 
    The simplest way to configure and build GDB is to run 'configure'
 from the 'gdb-VERSION-NUMBER' source directory, which in this example is
-the 'gdb-8.0.1' directory.
+the 'gdb-8.3' directory.
 
    First switch to the 'gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run 'configure'.  Pass the identifier for the
@@ -1047,31 +2726,19 @@ platform on which GDB will run as an argument.
 
    For example:
 
-     cd gdb-8.0.1
-     ./configure HOST
+     cd gdb-8.3
+     ./configure
      make
 
-where HOST is an identifier such as 'sun4' or 'decstation', that
-identifies the platform where GDB will run.  (You can often leave off
-HOST; 'configure' tries to guess the correct value by examining your
-system.)
-
-   Running 'configure HOST' and then running 'make' builds the 'bfd',
-'readline', 'mmalloc', and 'libiberty' libraries, then 'gdb' itself.
-The configured source files, and the binaries, are left in the
-corresponding source directories.
+   Running 'configure' and then running 'make' builds the included
+supporting libraries, then 'gdb' itself.  The configured source files,
+and the binaries, are left in the corresponding source directories.
 
    'configure' is a Bourne-shell ('/bin/sh') script; if your system does
 not recognize this automatically when you run a different shell, you may
 need to run 'sh' on it explicitly:
 
-     sh configure HOST
-
-   If you run 'configure' from a directory that contains source
-directories for multiple libraries or programs, such as the 'gdb-8.0.1'
-source directory for version 8.0.1, 'configure' creates configuration
-files for every directory level underneath (unless you tell it not to,
-with the '--norecursion' option).
+     sh configure
 
    You should run the 'configure' script from the top directory in the
 source tree, the 'gdb-VERSION-NUMBER' directory.  If you run 'configure'
@@ -1083,11 +2750,9 @@ run the first 'configure' from the 'gdb' subdirectory of the
 subdirectory.  This leads to build errors about missing include files
 such as 'bfd/bfd.h'.
 
-   You can install 'gdb' anywhere; it has no hardwired paths.  However,
-you should make sure that the shell on your path (named by the 'SHELL'
-environment variable) is publicly readable.  Remember that GDB uses the
-shell to start your program--some systems refuse to let GDB debug child
-processes whose programs are not readable.
+   You can install 'GDB' anywhere.  The best way to do this is to pass
+the '--prefix' option to 'configure', and then install it with 'make
+install'.
 
 
 File: gdb.info,  Node: Separate Objdir,  Next: Config Names,  Prev: Running Configure,  Up: Installing GDB
@@ -1109,13 +2774,13 @@ to specify a path to find 'configure' itself from your working
 directory.  If the path to 'configure' would be the same as the argument
 to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
 
-   For example, with version 8.0.1, you can build GDB in a separate
+   For example, with version 8.3, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-8.0.1
+     cd gdb-8.3
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-8.0.1/configure sun4
+     ../gdb-8.3/configure
      make
 
    When 'configure' builds a configuration using a remote source
@@ -1126,8 +2791,8 @@ the example, you'd find the Sun 4 library 'libiberty.a' in the directory
 
    Make sure that your path to the 'configure' script has just one
 instance of 'gdb' in it.  If your path to 'configure' looks like
-'../gdb-8.0.1/gdb/configure', you are configuring only one subdirectory
-of GDB, not the whole package.  This leads to build errors about missing
+'../gdb-8.3/gdb/configure', you are configuring only one subdirectory of
+GDB, not the whole package.  This leads to build errors about missing
 include files such as 'bfd/bfd.h'.
 
    One popular reason to build several GDB configurations in separate
@@ -1142,9 +2807,9 @@ a configured directory--whatever directory you were in when you called
 
    The 'Makefile' that 'configure' generates in each source directory
 also runs recursively.  If you type 'make' in a source directory such as
-'gdb-8.0.1' (or in a separate configured directory configured with
-'--srcdir=DIRNAME/gdb-8.0.1'), you will build all the required
-libraries, and then build GDB.
+'gdb-8.3' (or in a separate configured directory configured with
+'--srcdir=DIRNAME/gdb-8.3'), you will build all the required libraries,
+and then build GDB.
 
    When you have multiple hosts or targets configured in separate
 directories, you can run 'make' on them in parallel (for example, if
@@ -1187,8 +2852,8 @@ you can use it to test your guesses on abbreviations--for example:
      % sh config.sub i986v
      Invalid configuration `i986v': machine `i986v' not recognized
 
-'config.sub' is also distributed in the GDB source directory
-('gdb-8.0.1', for version 8.0.1).
+'config.sub' is also distributed in the GDB source directory ('gdb-8.3',
+for version 8.3).
 
 
 File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
@@ -1198,16 +2863,14 @@ C.5 'configure' Options
 
 Here is a summary of the 'configure' options and arguments that are most
 often useful for building GDB.  'configure' also has several other
-options not listed here.  *note (configure.info)What Configure Does::,
-for a full explanation of 'configure'.
+options not listed here.  *note (autoconf.info)Running configure
+scripts::, for a full explanation of 'configure'.
 
      configure [--help]
                [--prefix=DIR]
                [--exec-prefix=DIR]
                [--srcdir=DIRNAME]
-               [--norecursion] [--rm]
                [--target=TARGET]
-               HOST
 
 You may introduce options with a single '-' rather than '--' if you
 prefer; but you may abbreviate option names if you use '--'.
@@ -1223,8 +2886,6 @@ prefer; but you may abbreviate option names if you use '--'.
      Configure the source to install programs under directory 'DIR'.
 
 '--srcdir=DIRNAME'
-     *Warning: using this option requires GNU 'make', or another 'make'
-     that implements the 'VPATH' feature.*
      Use this option to make configurations in directories separate from
      the GDB source directories.  Among other things, you can use this
      to build (or maintain) several configurations simultaneously, in
@@ -1234,26 +2895,164 @@ prefer; but you may abbreviate option names if you use '--'.
      under the working directory in parallel to the source directories
      below DIRNAME.
 
-'--norecursion'
-     Configure only the directory level where 'configure' is executed;
-     do not propagate configuration to subdirectories.
-
 '--target=TARGET'
      Configure GDB for cross-debugging programs running on the specified
      TARGET.  Without this option, GDB is configured to debug programs
      that run on the same machine (HOST) as GDB itself.
 
      There is no convenient way to generate a list of all available
-     targets.
+     targets.  Also see the '--enable-targets' option, below.
 
-'HOST ...'
-     Configure GDB to run on the specified HOST.
+   There are many other options that are specific to GDB.  This lists
+just the most common ones; there are some very specialized options not
+described here.
 
-     There is no convenient way to generate a list of all available
-     hosts.
+'--enable-targets=[TARGET]...'
+'--enable-targets=all'
+     Configure GDB for cross-debugging programs running on the specified
+     list of targets.  The special value 'all' configures GDB for
+     debugging programs running on any target it supports.
 
-   There are many other options available as well, but they are
-generally needed for special purposes only.
+'--with-gdb-datadir=PATH'
+     Set the GDB-specific data directory.  GDB will look here for
+     certain supporting files or scripts.  This defaults to the 'gdb'
+     subdirectory of 'datadi' (which can be set using '--datadir').
+
+'--with-relocated-sources=DIR'
+     Sets up the default source path substitution rule so that directory
+     names recorded in debug information will be automatically adjusted
+     for any directory under DIR.  DIR should be a subdirectory of GDB's
+     configured prefix, the one mentioned in the '--prefix' or
+     '--exec-prefix' options to configure.  This option is useful if GDB
+     is supposed to be moved to a different place after it is built.
+
+'--enable-64-bit-bfd'
+     Enable 64-bit support in BFD on 32-bit hosts.
+
+'--disable-gdbmi'
+     Build GDB without the GDB/MI machine interface (*note GDB/MI::).
+
+'--enable-tui'
+     Build GDB with the text-mode full-screen user interface (TUI).
+     Requires a curses library (ncurses and cursesX are also supported).
+
+'--with-curses'
+     Use the curses library instead of the termcap library, for
+     text-mode terminal operations.
+
+'--with-libunwind-ia64'
+     Use the libunwind library for unwinding function call stack on ia64
+     target platforms.  See http://www.nongnu.org/libunwind/index.html
+     for details.
+
+'--with-system-readline'
+     Use the readline library installed on the host, rather than the
+     library supplied as part of GDB.
+
+'--with-system-zlib'
+     Use the zlib library installed on the host, rather than the library
+     supplied as part of GDB.
+
+'--with-expat'
+     Build GDB with Expat, a library for XML parsing.  (Done by default
+     if libexpat is installed and found at configure time.)  This
+     library is used to read XML files supplied with GDB.  If it is
+     unavailable, some features, such as remote protocol memory maps,
+     target descriptions, and shared library lists, that are based on
+     XML files, will not be available in GDB.  If your host does not
+     have libexpat installed, you can get the latest version from
+     'http://expat.sourceforge.net'.
+
+'--with-libiconv-prefix[=DIR]'
+
+     Build GDB with GNU libiconv, a character set encoding conversion
+     library.  This is not done by default, as on GNU systems the
+     'iconv' that is built in to the C library is sufficient.  If your
+     host does not have a working 'iconv', you can get the latest
+     version of GNU iconv from 'https://www.gnu.org/software/libiconv/'.
+
+     GDB's build system also supports building GNU libiconv as part of
+     the overall build.  *Note Requirements::.
+
+'--with-lzma'
+     Build GDB with LZMA, a compression library.  (Done by default if
+     liblzma is installed and found at configure time.)  LZMA is used by
+     GDB's "mini debuginfo" feature, which is only useful on platforms
+     using the ELF object file format.  If your host does not have
+     liblzma installed, you can get the latest version from
+     'https://tukaani.org/xz/'.
+
+'--with-mpfr'
+     Build GDB with GNU MPFR, a library for multiple-precision
+     floating-point computation with correct rounding.  (Done by default
+     if GNU MPFR is installed and found at configure time.)  This
+     library is used to emulate target floating-point arithmetic during
+     expression evaluation when the target uses different floating-point
+     formats than the host.  If GNU MPFR is not available, GDB will fall
+     back to using host floating-point arithmetic.  If your host does
+     not have GNU MPFR installed, you can get the latest version from
+     'http://www.mpfr.org'.
+
+'--with-python[=PYTHON]'
+     Build GDB with Python scripting support.  (Done by default if
+     libpython is present and found at configure time.)  Python makes
+     GDB scripting much more powerful than the restricted CLI scripting
+     language.  If your host does not have Python installed, you can
+     find it on 'http://www.python.org/download/'.  The oldest version
+     of Python supported by GDB is 2.6.  The optional argument PYTHON is
+     used to find the Python headers and libraries.  It can be either
+     the name of a Python executable, or the name of the directory in
+     which Python is installed.
+
+'--with-guile[=GUILE]''
+     Build GDB with GNU Guile scripting support.  (Done by default if
+     libguile is present and found at configure time.)  If your host
+     does not have Guile installed, you can find it at
+     'https://www.gnu.org/software/guile/'.  The optional argument GUILE
+     can be a version number, which will cause 'configure' to try to use
+     that version of Guile; or the file name of a 'pkg-config'
+     executable, which will be queried to find the information needed to
+     compile and link against Guile.
+
+'--without-included-regex'
+     Don't use the regex library included with GDB (as part of the
+     libiberty library).  This is the default on hosts with version 2 of
+     the GNU C library.
+
+'--with-sysroot=DIR'
+     Use DIR as the default system root directory for libraries whose
+     file names begin with '/lib'' or '/usr/lib''.  (The value of DIR
+     can be modified at run time by using the 'set sysroot' command.)
+     If DIR is under the GDB configured prefix (set with '--prefix' or
+     '--exec-prefix options', the default system root will be
+     automatically adjusted if and when GDB is moved to a different
+     location.
+
+'--with-system-gdbinit=FILE'
+     Configure GDB to automatically load a system-wide init file.  FILE
+     should be an absolute file name.  If FILE is in a directory under
+     the configured prefix, and GDB is moved to another location after
+     being built, the location of the system-wide init file will be
+     adjusted accordingly.
+
+'--enable-build-warnings'
+     When building the GDB sources, ask the compiler to warn about any
+     code which looks even vaguely suspicious.  It passes many different
+     warning flags, depending on the exact version of the compiler you
+     are using.
+
+'--enable-werror'
+     Treat compiler warnings as werrors.  It adds the '-Werror' flag to
+     the compiler, which will fail the compilation if the compiler
+     outputs any warning messages.
+
+'--enable-ubsan'
+     Enable the GCC undefined behavior sanitizer.  This is disabled by
+     default, but passing '--enable-ubsan=yes' or '--enable-ubsan=auto'
+     to 'configure' will enable it.  The undefined behavior sanitizer
+     checks for C++ undefined behavior.  It has a performance cost, so
+     if you are looking at GDB's performance, you should disable it.
+     The undefined behavior sanitizer was first introduced in GCC 4.9.
 
 
 File: gdb.info,  Node: System-wide configuration,  Prev: Configure Options,  Up: Installing GDB
@@ -1558,9 +3357,26 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      FILE names the file where the output goes.
 
 'maint print c-tdesc'
-     Print the current target description (*note Target Descriptions::)
-     as a C source file.  The created source file can be used in GDB
-     when an XML parser is not available to parse the description.
+     Print the target description (*note Target Descriptions::) as a C
+     source file.  By default, the target description is for the current
+     target, but if the optional argument FILE is provided, that file is
+     used to produce the description.  The FILE should be an XML
+     document, of the form described in *note Target Description
+     Format::.  The created source file is built into GDB when GDB is
+     built again.  This command is used by developers after they add or
+     modify XML target descriptions.
+
+'maint check xml-descriptions DIR'
+     Check that the target descriptions dynamically created by GDB equal
+     the descriptions created from XML files found in DIR.
+
+'maint check libthread-db'
+     Run integrity checks on the current inferior's thread debugging
+     library.  This exercises all 'libthread_db' functionality used by
+     GDB on GNU/Linux systems, and by extension also exercises the
+     'proc_service' functions provided by GDB that 'libthread_db' uses.
+     Note that parts of the test may be skipped on some platforms when
+     debugging core files.
 
 'maint print dummy-frames'
      Prints the contents of GDB's internal dummy-frame stack.
@@ -1670,8 +3486,14 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      command is a recursive definition of the data type as stored in
      GDB's data structures, including its flags and contained types.
 
+'maint selftest [FILTER]'
      Run any self tests that were compiled in to GDB.  This will print a
-     message showing how many tests were run, and how many failed.
+     message showing how many tests were run, and how many failed.  If a
+     FILTER is passed, only the tests with FILTER in their name will by
+     ran.
+
+'maint info selftests'
+     List the selftests compiled in to GDB.
 
 'maint set dwarf always-disassemble'
 'maint show dwarf always-disassemble'
@@ -1708,6 +3530,28 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      disables caching, which will slow down GDB startup, but reduce
      memory consumption.
 
+'maint set dwarf unwinders'
+'maint show dwarf unwinders'
+     Control use of the DWARF frame unwinders.
+
+     Many targets that support DWARF debugging use GDB's DWARF frame
+     unwinders to build the backtrace.  Many of these targets will also
+     have a second mechanism for building the backtrace for use in cases
+     where DWARF information is not available, this second mechanism is
+     often an analysis of a function's prologue.
+
+     In order to extend testing coverage of the second level stack
+     unwinding mechanisms it is helpful to be able to disable the DWARF
+     stack unwinders, this can be done with this switch.
+
+     In normal use of GDB disabling the DWARF unwinders is not
+     advisable, there are cases that are better handled through DWARF
+     than prologue analysis, and the debug experience is likely to be
+     better with the DWARF frame unwinders enabled.
+
+     If DWARF frame unwinders are not supported for a particular target
+     architecture, then enabling this flag does not cause them to be
+     used.
 'maint set profile'
 'maint show profile'
      Control profiling of GDB.
@@ -1804,6 +3648,15 @@ commands that turn on debugging messages, see *note Debugging Output::.)
             a. number of symbol tables
             b. number of primary symbol tables
             c. number of blocks in the blockvector
+
+'maint set check-libthread-db [on|off]'
+'maint show check-libthread-db'
+     Control whether GDB should run integrity checks on inferior
+     specific thread debugging libraries as they are loaded.  The
+     default is not to perform such checks.  If any check fails GDB will
+     unload the library and continue searching for a suitable candidate
+     as described in *note set libthread-db-search-path::.  For more
+     information about the tests, see *note maint check libthread-db::.
 
 'maint space VALUE'
      An alias for 'maint set per-command space'.  A non-zero value
@@ -2490,6 +4343,18 @@ letter, other than those described here, are reserved for future use.
      'OK'
           for success
 
+'vMustReplyEmpty'
+     The correct reply to an unknown 'v' packet is to return the empty
+     string, however, some older versions of 'gdbserver' would
+     incorrectly return 'OK' for unknown 'v' packets.
+
+     The 'vMustReplyEmpty' is used as a feature test to check how
+     'gdbserver' handles unknown packets, it is important that this
+     packet be handled in the same way as other unknown 'v' packets.  If
+     this packet is handled differently to other unknown 'v' packets
+     then it is possile that GDB may run into problems in other areas,
+     specifically around use of 'vFile:setfs:'.
+
 'vRun;FILENAME[;ARGUMENT]...'
      Run the program FILENAME, passing it each ARGUMENT on its command
      line.  The file and arguments are hex-encoded strings.  If FILENAME
@@ -2575,7 +4440,7 @@ letter, other than those described here, are reserved for future use.
 
      'X LEN,EXPR'
           LEN is the length of the bytecode expression and EXPR is the
-          actual conditional expression in bytecode form.
+          actual commands expression in bytecode form.
 
      _Implementation note: It is possible for a target to copy or move
      code that contains software breakpoints (e.g., when implementing
@@ -2988,6 +4853,129 @@ GDB packet uses spaces to separate its components.
      it, by supplying an appropriate 'qSupported' response (*note
      qSupported::).  This should only be done on targets that actually
      support disabling address space randomization.
+
+'QStartupWithShell:VALUE'
+     On UNIX-like targets, it is possible to start the inferior using a
+     shell program.  This is the default behavior on both GDB and
+     'gdbserver' (*note set startup-with-shell::).  This packet is used
+     to inform 'gdbserver' whether it should start the inferior using a
+     shell or not.
+
+     If VALUE is '0', 'gdbserver' will not use a shell to start the
+     inferior.  If VALUE is '1', 'gdbserver' will use a shell to start
+     the inferior.  All other values are considered an error.
+
+     This packet is only available in extended mode (*note extended
+     mode::).
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     'E NN'
+          An error occurred.  The error number NN is given as hex
+          digits.
+
+     This packet is not probed by default; the remote stub must request
+     it, by supplying an appropriate 'qSupported' response (*note
+     qSupported::).  This should only be done on targets that actually
+     support starting the inferior using a shell.
+
+     Use of this packet is controlled by the 'set startup-with-shell'
+     command; *note set startup-with-shell::.
+
+'QEnvironmentHexEncoded:HEX-VALUE'
+     On UNIX-like targets, it is possible to set environment variables
+     that will be passed to the inferior during the startup process.
+     This packet is used to inform 'gdbserver' of an environment
+     variable that has been defined by the user on GDB (*note set
+     environment::).
+
+     The packet is composed by HEX-VALUE, an hex encoded representation
+     of the NAME=VALUE format representing an environment variable.  The
+     name of the environment variable is represented by NAME, and the
+     value to be assigned to the environment variable is represented by
+     VALUE.  If the variable has no value (i.e., the value is 'null'),
+     then VALUE will not be present.
+
+     This packet is only available in extended mode (*note extended
+     mode::).
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     This packet is not probed by default; the remote stub must request
+     it, by supplying an appropriate 'qSupported' response (*note
+     qSupported::).  This should only be done on targets that actually
+     support passing environment variables to the starting inferior.
+
+     This packet is related to the 'set environment' command; *note set
+     environment::.
+
+'QEnvironmentUnset:HEX-VALUE'
+     On UNIX-like targets, it is possible to unset environment variables
+     before starting the inferior in the remote target.  This packet is
+     used to inform 'gdbserver' of an environment variable that has been
+     unset by the user on GDB (*note unset environment::).
+
+     The packet is composed by HEX-VALUE, an hex encoded representation
+     of the name of the environment variable to be unset.
+
+     This packet is only available in extended mode (*note extended
+     mode::).
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     This packet is not probed by default; the remote stub must request
+     it, by supplying an appropriate 'qSupported' response (*note
+     qSupported::).  This should only be done on targets that actually
+     support passing environment variables to the starting inferior.
+
+     This packet is related to the 'unset environment' command; *note
+     unset environment::.
+
+'QEnvironmentReset'
+     On UNIX-like targets, this packet is used to reset the state of
+     environment variables in the remote target before starting the
+     inferior.  In this context, reset means unsetting all environment
+     variables that were previously set by the user (i.e., were not
+     initially present in the environment).  It is sent to 'gdbserver'
+     before the 'QEnvironmentHexEncoded' (*note
+     QEnvironmentHexEncoded::) and the 'QEnvironmentUnset' (*note
+     QEnvironmentUnset::) packets.
+
+     This packet is only available in extended mode (*note extended
+     mode::).
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     This packet is not probed by default; the remote stub must request
+     it, by supplying an appropriate 'qSupported' response (*note
+     qSupported::).  This should only be done on targets that actually
+     support passing environment variables to the starting inferior.
+
+'QSetWorkingDir:[DIRECTORY]'
+     This packet is used to inform the remote server of the intended
+     current working directory for programs that are going to be
+     executed.
+
+     The packet is composed by DIRECTORY, an hex encoded representation
+     of the directory that the remote inferior will use as its current
+     working directory.  If DIRECTORY is an empty string, the remote
+     server should reset the inferior's current working directory to its
+     original, empty value.
+
+     This packet is only available in extended mode (*note extended
+     mode::).
+
+     Reply:
+     'OK'
+          The request succeeded.
 
 'qfThreadInfo'
 'qsThreadInfo'
@@ -5253,2430 +7241,4 @@ pipes, sockets or any other communication method on the host system are
 not supported by this protocol.
 
    File I/O is not supported in non-stop mode.
-
-
-File: gdb.info,  Node: Protocol Basics,  Next: The F Request Packet,  Prev: File-I/O Overview,  Up: File-I/O Remote Protocol Extension
-
-E.13.2 Protocol Basics
-----------------------
-
-The File-I/O protocol uses the 'F' packet as the request as well as
-reply packet.  Since a File-I/O system call can only occur when GDB is
-waiting for a response from the continuing or stepping target, the
-File-I/O request is a reply that GDB has to expect as a result of a
-previous 'C', 'c', 'S' or 's' packet.  This 'F' packet contains all
-information needed to allow GDB to call the appropriate host system
-call:
-
-   * A unique identifier for the requested system call.
-
-   * All parameters to the system call.  Pointers are given as addresses
-     in the target memory address space.  Pointers to strings are given
-     as pointer/length pair.  Numerical values are given as they are.
-     Numerical control flags are given in a protocol-specific
-     representation.
-
-   At this point, GDB has to perform the following actions.
-
-   * If the parameters include pointer values to data needed as input to
-     a system call, GDB requests this data from the target with a
-     standard 'm' packet request.  This additional communication has to
-     be expected by the target implementation and is handled as any
-     other 'm' packet.
-
-   * GDB translates all value from protocol representation to host
-     representation as needed.  Datatypes are coerced into the host
-     types.
-
-   * GDB calls the system call.
-
-   * It then coerces datatypes back to protocol representation.
-
-   * If the system call is expected to return data in buffer space
-     specified by pointer parameters to the call, the data is
-     transmitted to the target using a 'M' or 'X' packet.  This packet
-     has to be expected by the target implementation and is handled as
-     any other 'M' or 'X' packet.
-
-   Eventually GDB replies with another 'F' packet which contains all
-necessary information for the target to continue.  This at least
-contains
-
-   * Return value.
-
-   * 'errno', if has been changed by the system call.
-
-   * "Ctrl-C" flag.
-
-   After having done the needed type and value coercion, the target
-continues the latest continue or step action.
-
-
-File: gdb.info,  Node: The F Request Packet,  Next: The F Reply Packet,  Prev: Protocol Basics,  Up: File-I/O Remote Protocol Extension
-
-E.13.3 The 'F' Request Packet
------------------------------
-
-The 'F' request packet has the following format:
-
-'FCALL-ID,PARAMETER...'
-
-     CALL-ID is the identifier to indicate the host system call to be
-     called.  This is just the name of the function.
-
-     PARAMETER... are the parameters to the system call.  Parameters are
-     hexadecimal integer values, either the actual values in case of
-     scalar datatypes, pointers to target buffer space in case of
-     compound datatypes and unspecified memory areas, or pointer/length
-     pairs in case of string parameters.  These are appended to the
-     CALL-ID as a comma-delimited list.  All values are transmitted in
-     ASCII string representation, pointer/length pairs separated by a
-     slash.
-
-
-File: gdb.info,  Node: The F Reply Packet,  Next: The Ctrl-C Message,  Prev: The F Request Packet,  Up: File-I/O Remote Protocol Extension
-
-E.13.4 The 'F' Reply Packet
----------------------------
-
-The 'F' reply packet has the following format:
-
-'FRETCODE,ERRNO,CTRL-C FLAG;CALL-SPECIFIC ATTACHMENT'
-
-     RETCODE is the return code of the system call as hexadecimal value.
-
-     ERRNO is the 'errno' set by the call, in protocol-specific
-     representation.  This parameter can be omitted if the call was
-     successful.
-
-     CTRL-C FLAG is only sent if the user requested a break.  In this
-     case, ERRNO must be sent as well, even if the call was successful.
-     The CTRL-C FLAG itself consists of the character 'C':
-
-          F0,0,C
-
-     or, if the call was interrupted before the host call has been
-     performed:
-
-          F-1,4,C
-
-     assuming 4 is the protocol-specific representation of 'EINTR'.
-
-
-File: gdb.info,  Node: The Ctrl-C Message,  Next: Console I/O,  Prev: The F Reply Packet,  Up: File-I/O Remote Protocol Extension
-
-E.13.5 The 'Ctrl-C' Message
----------------------------
-
-If the 'Ctrl-C' flag is set in the GDB reply packet (*note The F Reply
-Packet::), the target should behave as if it had gotten a break message.
-The meaning for the target is "system call interrupted by 'SIGINT'".
-Consequentially, the target should actually stop (as with a break
-message) and return to GDB with a 'T02' packet.
-
-   It's important for the target to know in which state the system call
-was interrupted.  There are two possible cases:
-
-   * The system call hasn't been performed on the host yet.
-
-   * The system call on the host has been finished.
-
-   These two states can be distinguished by the target by the value of
-the returned 'errno'.  If it's the protocol representation of 'EINTR',
-the system call hasn't been performed.  This is equivalent to the
-'EINTR' handling on POSIX systems.  In any other case, the target may
-presume that the system call has been finished -- successfully or not --
-and should behave as if the break message arrived right after the system
-call.
-
-   GDB must behave reliably.  If the system call has not been called
-yet, GDB may send the 'F' reply immediately, setting 'EINTR' as 'errno'
-in the packet.  If the system call on the host has been finished before
-the user requests a break, the full action must be finished by GDB.
-This requires sending 'M' or 'X' packets as necessary.  The 'F' packet
-may only be sent when either nothing has happened or the full action has
-been completed.
-
-
-File: gdb.info,  Node: Console I/O,  Next: List of Supported Calls,  Prev: The Ctrl-C Message,  Up: File-I/O Remote Protocol Extension
-
-E.13.6 Console I/O
-------------------
-
-By default and if not explicitly closed by the target system, the file
-descriptors 0, 1 and 2 are connected to the GDB console.  Output on the
-GDB console is handled as any other file output operation ('write(1,
-...)' or 'write(2, ...)').  Console input is handled by GDB so that
-after the target read request from file descriptor 0 all following
-typing is buffered until either one of the following conditions is met:
-
-   * The user types 'Ctrl-c'.  The behaviour is as explained above, and
-     the 'read' system call is treated as finished.
-
-   * The user presses <RET>.  This is treated as end of input with a
-     trailing newline.
-
-   * The user types 'Ctrl-d'.  This is treated as end of input.  No
-     trailing character (neither newline nor 'Ctrl-D') is appended to
-     the input.
-
-   If the user has typed more characters than fit in the buffer given to
-the 'read' call, the trailing characters are buffered in GDB until
-either another 'read(0, ...)' is requested by the target, or debugging
-is stopped at the user's request.
-
-
-File: gdb.info,  Node: List of Supported Calls,  Next: Protocol-specific Representation of Datatypes,  Prev: Console I/O,  Up: File-I/O Remote Protocol Extension
-
-E.13.7 List of Supported Calls
-------------------------------
-
-* Menu:
-
-* open::
-* close::
-* read::
-* write::
-* lseek::
-* rename::
-* unlink::
-* stat/fstat::
-* gettimeofday::
-* isatty::
-* system::
-
-
-File: gdb.info,  Node: open,  Next: close,  Up: List of Supported Calls
-
-open
-....
-
-Synopsis:
-          int open(const char *pathname, int flags);
-          int open(const char *pathname, int flags, mode_t mode);
-
-Request:
-     'Fopen,PATHPTR/LEN,FLAGS,MODE'
-
-     FLAGS is the bitwise 'OR' of the following values:
-
-     'O_CREAT'
-          If the file does not exist it will be created.  The host rules
-          apply as far as file ownership and time stamps are concerned.
-
-     'O_EXCL'
-          When used with 'O_CREAT', if the file already exists it is an
-          error and open() fails.
-
-     'O_TRUNC'
-          If the file already exists and the open mode allows writing
-          ('O_RDWR' or 'O_WRONLY' is given) it will be truncated to zero
-          length.
-
-     'O_APPEND'
-          The file is opened in append mode.
-
-     'O_RDONLY'
-          The file is opened for reading only.
-
-     'O_WRONLY'
-          The file is opened for writing only.
-
-     'O_RDWR'
-          The file is opened for reading and writing.
-
-     Other bits are silently ignored.
-
-     MODE is the bitwise 'OR' of the following values:
-
-     'S_IRUSR'
-          User has read permission.
-
-     'S_IWUSR'
-          User has write permission.
-
-     'S_IRGRP'
-          Group has read permission.
-
-     'S_IWGRP'
-          Group has write permission.
-
-     'S_IROTH'
-          Others have read permission.
-
-     'S_IWOTH'
-          Others have write permission.
-
-     Other bits are silently ignored.
-
-Return value:
-     'open' returns the new file descriptor or -1 if an error occurred.
-
-Errors:
-
-     'EEXIST'
-          PATHNAME already exists and 'O_CREAT' and 'O_EXCL' were used.
-
-     'EISDIR'
-          PATHNAME refers to a directory.
-
-     'EACCES'
-          The requested access is not allowed.
-
-     'ENAMETOOLONG'
-          PATHNAME was too long.
-
-     'ENOENT'
-          A directory component in PATHNAME does not exist.
-
-     'ENODEV'
-          PATHNAME refers to a device, pipe, named pipe or socket.
-
-     'EROFS'
-          PATHNAME refers to a file on a read-only filesystem and write
-          access was requested.
-
-     'EFAULT'
-          PATHNAME is an invalid pointer value.
-
-     'ENOSPC'
-          No space on device to create the file.
-
-     'EMFILE'
-          The process already has the maximum number of files open.
-
-     'ENFILE'
-          The limit on the total number of files open on the system has
-          been reached.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: close,  Next: read,  Prev: open,  Up: List of Supported Calls
-
-close
-.....
-
-Synopsis:
-          int close(int fd);
-
-Request:
-     'Fclose,FD'
-
-Return value:
-     'close' returns zero on success, or -1 if an error occurred.
-
-Errors:
-
-     'EBADF'
-          FD isn't a valid open file descriptor.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: read,  Next: write,  Prev: close,  Up: List of Supported Calls
-
-read
-....
-
-Synopsis:
-          int read(int fd, void *buf, unsigned int count);
-
-Request:
-     'Fread,FD,BUFPTR,COUNT'
-
-Return value:
-     On success, the number of bytes read is returned.  Zero indicates
-     end of file.  If count is zero, read returns zero as well.  On
-     error, -1 is returned.
-
-Errors:
-
-     'EBADF'
-          FD is not a valid file descriptor or is not open for reading.
-
-     'EFAULT'
-          BUFPTR is an invalid pointer value.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: write,  Next: lseek,  Prev: read,  Up: List of Supported Calls
-
-write
-.....
-
-Synopsis:
-          int write(int fd, const void *buf, unsigned int count);
-
-Request:
-     'Fwrite,FD,BUFPTR,COUNT'
-
-Return value:
-     On success, the number of bytes written are returned.  Zero
-     indicates nothing was written.  On error, -1 is returned.
-
-Errors:
-
-     'EBADF'
-          FD is not a valid file descriptor or is not open for writing.
-
-     'EFAULT'
-          BUFPTR is an invalid pointer value.
-
-     'EFBIG'
-          An attempt was made to write a file that exceeds the
-          host-specific maximum file size allowed.
-
-     'ENOSPC'
-          No space on device to write the data.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: lseek,  Next: rename,  Prev: write,  Up: List of Supported Calls
-
-lseek
-.....
-
-Synopsis:
-          long lseek (int fd, long offset, int flag);
-
-Request:
-     'Flseek,FD,OFFSET,FLAG'
-
-     FLAG is one of:
-
-     'SEEK_SET'
-          The offset is set to OFFSET bytes.
-
-     'SEEK_CUR'
-          The offset is set to its current location plus OFFSET bytes.
-
-     'SEEK_END'
-          The offset is set to the size of the file plus OFFSET bytes.
-
-Return value:
-     On success, the resulting unsigned offset in bytes from the
-     beginning of the file is returned.  Otherwise, a value of -1 is
-     returned.
-
-Errors:
-
-     'EBADF'
-          FD is not a valid open file descriptor.
-
-     'ESPIPE'
-          FD is associated with the GDB console.
-
-     'EINVAL'
-          FLAG is not a proper value.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: rename,  Next: unlink,  Prev: lseek,  Up: List of Supported Calls
-
-rename
-......
-
-Synopsis:
-          int rename(const char *oldpath, const char *newpath);
-
-Request:
-     'Frename,OLDPATHPTR/LEN,NEWPATHPTR/LEN'
-
-Return value:
-     On success, zero is returned.  On error, -1 is returned.
-
-Errors:
-
-     'EISDIR'
-          NEWPATH is an existing directory, but OLDPATH is not a
-          directory.
-
-     'EEXIST'
-          NEWPATH is a non-empty directory.
-
-     'EBUSY'
-          OLDPATH or NEWPATH is a directory that is in use by some
-          process.
-
-     'EINVAL'
-          An attempt was made to make a directory a subdirectory of
-          itself.
-
-     'ENOTDIR'
-          A component used as a directory in OLDPATH or new path is not
-          a directory.  Or OLDPATH is a directory and NEWPATH exists but
-          is not a directory.
-
-     'EFAULT'
-          OLDPATHPTR or NEWPATHPTR are invalid pointer values.
-
-     'EACCES'
-          No access to the file or the path of the file.
-
-     'ENAMETOOLONG'
-
-          OLDPATH or NEWPATH was too long.
-
-     'ENOENT'
-          A directory component in OLDPATH or NEWPATH does not exist.
-
-     'EROFS'
-          The file is on a read-only filesystem.
-
-     'ENOSPC'
-          The device containing the file has no room for the new
-          directory entry.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: unlink,  Next: stat/fstat,  Prev: rename,  Up: List of Supported Calls
-
-unlink
-......
-
-Synopsis:
-          int unlink(const char *pathname);
-
-Request:
-     'Funlink,PATHNAMEPTR/LEN'
-
-Return value:
-     On success, zero is returned.  On error, -1 is returned.
-
-Errors:
-
-     'EACCES'
-          No access to the file or the path of the file.
-
-     'EPERM'
-          The system does not allow unlinking of directories.
-
-     'EBUSY'
-          The file PATHNAME cannot be unlinked because it's being used
-          by another process.
-
-     'EFAULT'
-          PATHNAMEPTR is an invalid pointer value.
-
-     'ENAMETOOLONG'
-          PATHNAME was too long.
-
-     'ENOENT'
-          A directory component in PATHNAME does not exist.
-
-     'ENOTDIR'
-          A component of the path is not a directory.
-
-     'EROFS'
-          The file is on a read-only filesystem.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: stat/fstat,  Next: gettimeofday,  Prev: unlink,  Up: List of Supported Calls
-
-stat/fstat
-..........
-
-Synopsis:
-          int stat(const char *pathname, struct stat *buf);
-          int fstat(int fd, struct stat *buf);
-
-Request:
-     'Fstat,PATHNAMEPTR/LEN,BUFPTR'
-     'Ffstat,FD,BUFPTR'
-
-Return value:
-     On success, zero is returned.  On error, -1 is returned.
-
-Errors:
-
-     'EBADF'
-          FD is not a valid open file.
-
-     'ENOENT'
-          A directory component in PATHNAME does not exist or the path
-          is an empty string.
-
-     'ENOTDIR'
-          A component of the path is not a directory.
-
-     'EFAULT'
-          PATHNAMEPTR is an invalid pointer value.
-
-     'EACCES'
-          No access to the file or the path of the file.
-
-     'ENAMETOOLONG'
-          PATHNAME was too long.
-
-     'EINTR'
-          The call was interrupted by the user.
-
-
-File: gdb.info,  Node: gettimeofday,  Next: isatty,  Prev: stat/fstat,  Up: List of Supported Calls
-
-gettimeofday
-............
-
-Synopsis:
-          int gettimeofday(struct timeval *tv, void *tz);
-
-Request:
-     'Fgettimeofday,TVPTR,TZPTR'
-
-Return value:
-     On success, 0 is returned, -1 otherwise.
-
-Errors:
-
-     'EINVAL'
-          TZ is a non-NULL pointer.
-
-     'EFAULT'
-          TVPTR and/or TZPTR is an invalid pointer value.
-
-
-File: gdb.info,  Node: isatty,  Next: system,  Prev: gettimeofday,  Up: List of Supported Calls
-
-isatty
-......
-
-Synopsis:
-          int isatty(int fd);
-
-Request:
-     'Fisatty,FD'
-
-Return value:
-     Returns 1 if FD refers to the GDB console, 0 otherwise.
-
-Errors:
-
-     'EINTR'
-          The call was interrupted by the user.
-
-   Note that the 'isatty' call is treated as a special case: it returns
-1 to the target if the file descriptor is attached to the GDB console, 0
-otherwise.  Implementing through system calls would require implementing
-'ioctl' and would be more complex than needed.
-
-
-File: gdb.info,  Node: system,  Prev: isatty,  Up: List of Supported Calls
-
-system
-......
-
-Synopsis:
-          int system(const char *command);
-
-Request:
-     'Fsystem,COMMANDPTR/LEN'
-
-Return value:
-     If LEN is zero, the return value indicates whether a shell is
-     available.  A zero return value indicates a shell is not available.
-     For non-zero LEN, the value returned is -1 on error and the return
-     status of the command otherwise.  Only the exit status of the
-     command is returned, which is extracted from the host's 'system'
-     return value by calling 'WEXITSTATUS(retval)'.  In case '/bin/sh'
-     could not be executed, 127 is returned.
-
-Errors:
-
-     'EINTR'
-          The call was interrupted by the user.
-
-   GDB takes over the full task of calling the necessary host calls to
-perform the 'system' call.  The return value of 'system' on the host is
-simplified before it's returned to the target.  Any termination signal
-information from the child process is discarded, and the return value
-consists entirely of the exit status of the called command.
-
-   Due to security concerns, the 'system' call is by default refused by
-GDB.  The user has to allow this call explicitly with the 'set remote
-system-call-allowed 1' command.
-
-'set remote system-call-allowed'
-     Control whether to allow the 'system' calls in the File I/O
-     protocol for the remote target.  The default is zero (disabled).
-
-'show remote system-call-allowed'
-     Show whether the 'system' calls are allowed in the File I/O
-     protocol.
-
-
-File: gdb.info,  Node: Protocol-specific Representation of Datatypes,  Next: Constants,  Prev: List of Supported Calls,  Up: File-I/O Remote Protocol Extension
-
-E.13.8 Protocol-specific Representation of Datatypes
-----------------------------------------------------
-
-* Menu:
-
-* Integral Datatypes::
-* Pointer Values::
-* Memory Transfer::
-* struct stat::
-* struct timeval::
-
-
-File: gdb.info,  Node: Integral Datatypes,  Next: Pointer Values,  Up: Protocol-specific Representation of Datatypes
-
-Integral Datatypes
-..................
-
-The integral datatypes used in the system calls are 'int', 'unsigned
-int', 'long', 'unsigned long', 'mode_t', and 'time_t'.
-
-   'int', 'unsigned int', 'mode_t' and 'time_t' are implemented as 32
-bit values in this protocol.
-
-   'long' and 'unsigned long' are implemented as 64 bit types.
-
-   *Note Limits::, for corresponding MIN and MAX values (similar to
-those in 'limits.h') to allow range checking on host and target.
-
-   'time_t' datatypes are defined as seconds since the Epoch.
-
-   All integral datatypes transferred as part of a memory read or write
-of a structured datatype e.g. a 'struct stat' have to be given in big
-endian byte order.
-
-
-File: gdb.info,  Node: Pointer Values,  Next: Memory Transfer,  Prev: Integral Datatypes,  Up: Protocol-specific Representation of Datatypes
-
-Pointer Values
-..............
-
-Pointers to target data are transmitted as they are.  An exception is
-made for pointers to buffers for which the length isn't transmitted as
-part of the function call, namely strings.  Strings are transmitted as a
-pointer/length pair, both as hex values, e.g.
-
-     1aaf/12
-
-which is a pointer to data of length 18 bytes at position 0x1aaf.  The
-length is defined as the full string length in bytes, including the
-trailing null byte.  For example, the string '"hello world"' at address
-0x123456 is transmitted as
-
-     123456/d
-
-
-File: gdb.info,  Node: Memory Transfer,  Next: struct stat,  Prev: Pointer Values,  Up: Protocol-specific Representation of Datatypes
-
-Memory Transfer
-...............
-
-Structured data which is transferred using a memory read or write (for
-example, a 'struct stat') is expected to be in a protocol-specific
-format with all scalar multibyte datatypes being big endian.
-Translation to this representation needs to be done both by the target
-before the 'F' packet is sent, and by GDB before it transfers memory to
-the target.  Transferred pointers to structured data should point to the
-already-coerced data at any time.
-
-
-File: gdb.info,  Node: struct stat,  Next: struct timeval,  Prev: Memory Transfer,  Up: Protocol-specific Representation of Datatypes
-
-struct stat
-...........
-
-The buffer of type 'struct stat' used by the target and GDB is defined
-as follows:
-
-     struct stat {
-         unsigned int  st_dev;      /* device */
-         unsigned int  st_ino;      /* inode */
-         mode_t        st_mode;     /* protection */
-         unsigned int  st_nlink;    /* number of hard links */
-         unsigned int  st_uid;      /* user ID of owner */
-         unsigned int  st_gid;      /* group ID of owner */
-         unsigned int  st_rdev;     /* device type (if inode device) */
-         unsigned long st_size;     /* total size, in bytes */
-         unsigned long st_blksize;  /* blocksize for filesystem I/O */
-         unsigned long st_blocks;   /* number of blocks allocated */
-         time_t        st_atime;    /* time of last access */
-         time_t        st_mtime;    /* time of last modification */
-         time_t        st_ctime;    /* time of last change */
-     };
-
-   The integral datatypes conform to the definitions given in the
-appropriate section (see *note Integral Datatypes::, for details) so
-this structure is of size 64 bytes.
-
-   The values of several fields have a restricted meaning and/or range
-of values.
-
-'st_dev'
-     A value of 0 represents a file, 1 the console.
-
-'st_ino'
-     No valid meaning for the target.  Transmitted unchanged.
-
-'st_mode'
-     Valid mode bits are described in *note Constants::.  Any other bits
-     have currently no meaning for the target.
-
-'st_uid'
-'st_gid'
-'st_rdev'
-     No valid meaning for the target.  Transmitted unchanged.
-
-'st_atime'
-'st_mtime'
-'st_ctime'
-     These values have a host and file system dependent accuracy.
-     Especially on Windows hosts, the file system may not support exact
-     timing values.
-
-   The target gets a 'struct stat' of the above representation and is
-responsible for coercing it to the target representation before
-continuing.
-
-   Note that due to size differences between the host, target, and
-protocol representations of 'struct stat' members, these members could
-eventually get truncated on the target.
-
-
-File: gdb.info,  Node: struct timeval,  Prev: struct stat,  Up: Protocol-specific Representation of Datatypes
-
-struct timeval
-..............
-
-The buffer of type 'struct timeval' used by the File-I/O protocol is
-defined as follows:
-
-     struct timeval {
-         time_t tv_sec;  /* second */
-         long   tv_usec; /* microsecond */
-     };
-
-   The integral datatypes conform to the definitions given in the
-appropriate section (see *note Integral Datatypes::, for details) so
-this structure is of size 8 bytes.
-
-
-File: gdb.info,  Node: Constants,  Next: File-I/O Examples,  Prev: Protocol-specific Representation of Datatypes,  Up: File-I/O Remote Protocol Extension
-
-E.13.9 Constants
-----------------
-
-The following values are used for the constants inside of the protocol.
-GDB and target are responsible for translating these values before and
-after the call as needed.
-
-* Menu:
-
-* Open Flags::
-* mode_t Values::
-* Errno Values::
-* Lseek Flags::
-* Limits::
-
-
-File: gdb.info,  Node: Open Flags,  Next: mode_t Values,  Up: Constants
-
-Open Flags
-..........
-
-All values are given in hexadecimal representation.
-
-       O_RDONLY        0x0
-       O_WRONLY        0x1
-       O_RDWR          0x2
-       O_APPEND        0x8
-       O_CREAT       0x200
-       O_TRUNC       0x400
-       O_EXCL        0x800
-
-
-File: gdb.info,  Node: mode_t Values,  Next: Errno Values,  Prev: Open Flags,  Up: Constants
-
-mode_t Values
-.............
-
-All values are given in octal representation.
-
-       S_IFREG       0100000
-       S_IFDIR        040000
-       S_IRUSR          0400
-       S_IWUSR          0200
-       S_IXUSR          0100
-       S_IRGRP           040
-       S_IWGRP           020
-       S_IXGRP           010
-       S_IROTH            04
-       S_IWOTH            02
-       S_IXOTH            01
-
-
-File: gdb.info,  Node: Errno Values,  Next: Lseek Flags,  Prev: mode_t Values,  Up: Constants
-
-Errno Values
-............
-
-All values are given in decimal representation.
-
-       EPERM           1
-       ENOENT          2
-       EINTR           4
-       EBADF           9
-       EACCES         13
-       EFAULT         14
-       EBUSY          16
-       EEXIST         17
-       ENODEV         19
-       ENOTDIR        20
-       EISDIR         21
-       EINVAL         22
-       ENFILE         23
-       EMFILE         24
-       EFBIG          27
-       ENOSPC         28
-       ESPIPE         29
-       EROFS          30
-       ENAMETOOLONG   91
-       EUNKNOWN       9999
-
-   'EUNKNOWN' is used as a fallback error value if a host system returns
-any error value not in the list of supported error numbers.
-
-
-File: gdb.info,  Node: Lseek Flags,  Next: Limits,  Prev: Errno Values,  Up: Constants
-
-Lseek Flags
-...........
-
-       SEEK_SET      0
-       SEEK_CUR      1
-       SEEK_END      2
-
-
-File: gdb.info,  Node: Limits,  Prev: Lseek Flags,  Up: Constants
-
-Limits
-......
-
-All values are given in decimal representation.
-
-       INT_MIN       -2147483648
-       INT_MAX        2147483647
-       UINT_MAX       4294967295
-       LONG_MIN      -9223372036854775808
-       LONG_MAX       9223372036854775807
-       ULONG_MAX      18446744073709551615
-
-
-File: gdb.info,  Node: File-I/O Examples,  Prev: Constants,  Up: File-I/O Remote Protocol Extension
-
-E.13.10 File-I/O Examples
--------------------------
-
-Example sequence of a write call, file descriptor 3, buffer is at target
-address 0x1234, 6 bytes should be written:
-
-     <- Fwrite,3,1234,6
-     _request memory read from target_
-     -> m1234,6
-     <- XXXXXX
-     _return "6 bytes written"_
-     -> F6
-
-   Example sequence of a read call, file descriptor 3, buffer is at
-target address 0x1234, 6 bytes should be read:
-
-     <- Fread,3,1234,6
-     _request memory write to target_
-     -> X1234,6:XXXXXX
-     _return "6 bytes read"_
-     -> F6
-
-   Example sequence of a read call, call fails on the host due to
-invalid file descriptor ('EBADF'):
-
-     <- Fread,3,1234,6
-     -> F-1,9
-
-   Example sequence of a read call, user presses 'Ctrl-c' before syscall
-on host is called:
-
-     <- Fread,3,1234,6
-     -> F-1,4,C
-     <- T02
-
-   Example sequence of a read call, user presses 'Ctrl-c' after syscall
-on host is called:
-
-     <- Fread,3,1234,6
-     -> X1234,6:XXXXXX
-     <- T02
-
-
-File: gdb.info,  Node: Library List Format,  Next: Library List Format for SVR4 Targets,  Prev: File-I/O Remote Protocol Extension,  Up: Remote Protocol
-
-E.14 Library List Format
-========================
-
-On some platforms, a dynamic loader (e.g. 'ld.so') runs in the same
-process as your application to manage libraries.  In this case, GDB can
-use the loader's symbol table and normal memory operations to maintain a
-list of shared libraries.  On other platforms, the operating system
-manages loaded libraries.  GDB can not retrieve the list of currently
-loaded libraries through memory operations, so it uses the
-'qXfer:libraries:read' packet (*note qXfer library list read::) instead.
-The remote stub queries the target's operating system and reports which
-libraries are loaded.
-
-   The 'qXfer:libraries:read' packet returns an XML document which lists
-loaded libraries and their offsets.  Each library has an associated name
-and one or more segment or section base addresses, which report where
-the library was loaded in memory.
-
-   For the common case of libraries that are fully linked binaries, the
-library should have a list of segments.  If the target supports dynamic
-linking of a relocatable object file, its library XML element should
-instead include a list of allocated sections.  The segment or section
-bases are start addresses, not relocation offsets; they do not depend on
-the library's link-time base addresses.
-
-   GDB must be linked with the Expat library to support XML library
-lists.  *Note Expat::.
-
-   A simple memory map, with one loaded library relocated by a single
-offset, looks like this:
-
-     <library-list>
-       <library name="/lib/libc.so.6">
-         <segment address="0x10000000"/>
-       </library>
-     </library-list>
-
-   Another simple memory map, with one loaded library with three
-allocated sections (.text, .data, .bss), looks like this:
-
-     <library-list>
-       <library name="sharedlib.o">
-         <section address="0x10000000"/>
-         <section address="0x20000000"/>
-         <section address="0x30000000"/>
-       </library>
-     </library-list>
-
-   The format of a library list is described by this DTD:
-
-     <!-- library-list: Root element with versioning -->
-     <!ELEMENT library-list  (library)*>
-     <!ATTLIST library-list  version CDATA   #FIXED  "1.0">
-     <!ELEMENT library       (segment*, section*)>
-     <!ATTLIST library       name    CDATA   #REQUIRED>
-     <!ELEMENT segment       EMPTY>
-     <!ATTLIST segment       address CDATA   #REQUIRED>
-     <!ELEMENT section       EMPTY>
-     <!ATTLIST section       address CDATA   #REQUIRED>
-
-   In addition, segments and section descriptors cannot be mixed within
-a single library element, and you must supply at least one segment or
-section for each library.
-
-
-File: gdb.info,  Node: Library List Format for SVR4 Targets,  Next: Memory Map Format,  Prev: Library List Format,  Up: Remote Protocol
-
-E.15 Library List Format for SVR4 Targets
-=========================================
-
-On SVR4 platforms GDB can use the symbol table of a dynamic loader (e.g.
-'ld.so') and normal memory operations to maintain a list of shared
-libraries.  Still a special library list provided by this packet is more
-efficient for the GDB remote protocol.
-
-   The 'qXfer:libraries-svr4:read' packet returns an XML document which
-lists loaded libraries and their SVR4 linker parameters.  For each
-library on SVR4 target, the following parameters are reported:
-
-   - 'name', the absolute file name from the 'l_name' field of 'struct
-     link_map'.
-   - 'lm' with address of 'struct link_map' used for TLS (Thread Local
-     Storage) access.
-   - 'l_addr', the displacement as read from the field 'l_addr' of
-     'struct link_map'.  For prelinked libraries this is not an absolute
-     memory address.  It is a displacement of absolute memory address
-     against address the file was prelinked to during the library load.
-   - 'l_ld', which is memory address of the 'PT_DYNAMIC' segment
-
-   Additionally the single 'main-lm' attribute specifies address of
-'struct link_map' used for the main executable.  This parameter is used
-for TLS access and its presence is optional.
-
-   GDB must be linked with the Expat library to support XML SVR4 library
-lists.  *Note Expat::.
-
-   A simple memory map, with two loaded libraries (which do not use
-prelink), looks like this:
-
-     <library-list-svr4 version="1.0" main-lm="0xe4f8f8">
-       <library name="/lib/ld-linux.so.2" lm="0xe4f51c" l_addr="0xe2d000"
-                l_ld="0xe4eefc"/>
-       <library name="/lib/libc.so.6" lm="0xe4fbe8" l_addr="0x154000"
-                l_ld="0x152350"/>
-     </library-list-svr>
-
-   The format of an SVR4 library list is described by this DTD:
-
-     <!-- library-list-svr4: Root element with versioning -->
-     <!ELEMENT library-list-svr4  (library)*>
-     <!ATTLIST library-list-svr4  version CDATA   #FIXED  "1.0">
-     <!ATTLIST library-list-svr4  main-lm CDATA   #IMPLIED>
-     <!ELEMENT library            EMPTY>
-     <!ATTLIST library            name    CDATA   #REQUIRED>
-     <!ATTLIST library            lm      CDATA   #REQUIRED>
-     <!ATTLIST library            l_addr  CDATA   #REQUIRED>
-     <!ATTLIST library            l_ld    CDATA   #REQUIRED>
-
-
-File: gdb.info,  Node: Memory Map Format,  Next: Thread List Format,  Prev: Library List Format for SVR4 Targets,  Up: Remote Protocol
-
-E.16 Memory Map Format
-======================
-
-To be able to write into flash memory, GDB needs to obtain a memory map
-from the target.  This section describes the format of the memory map.
-
-   The memory map is obtained using the 'qXfer:memory-map:read' (*note
-qXfer memory map read::) packet and is an XML document that lists memory
-regions.
-
-   GDB must be linked with the Expat library to support XML memory maps.
-*Note Expat::.
-
-   The top-level structure of the document is shown below:
-
-     <?xml version="1.0"?>
-     <!DOCTYPE memory-map
-               PUBLIC "+//IDN gnu.org//DTD GDB Memory Map V1.0//EN"
-                      "http://sourceware.org/gdb/gdb-memory-map.dtd">
-     <memory-map>
-         region...
-     </memory-map>
-
-   Each region can be either:
-
-   * A region of RAM starting at ADDR and extending for LENGTH bytes
-     from there:
-
-          <memory type="ram" start="ADDR" length="LENGTH"/>
-
-   * A region of read-only memory:
-
-          <memory type="rom" start="ADDR" length="LENGTH"/>
-
-   * A region of flash memory, with erasure blocks BLOCKSIZE bytes in
-     length:
-
-          <memory type="flash" start="ADDR" length="LENGTH">
-            <property name="blocksize">BLOCKSIZE</property>
-          </memory>
-
-   Regions must not overlap.  GDB assumes that areas of memory not
-covered by the memory map are RAM, and uses the ordinary 'M' and 'X'
-packets to write to addresses in such ranges.
-
-   The formal DTD for memory map format is given below:
-
-     <!-- ................................................... -->
-     <!-- Memory Map XML DTD ................................ -->
-     <!-- File: memory-map.dtd .............................. -->
-     <!-- .................................... .............. -->
-     <!-- memory-map.dtd -->
-     <!-- memory-map: Root element with versioning -->
-     <!ELEMENT memory-map (memory | property)>
-     <!ATTLIST memory-map    version CDATA   #FIXED  "1.0.0">
-     <!ELEMENT memory (property)>
-     <!-- memory: Specifies a memory region,
-                  and its type, or device. -->
-     <!ATTLIST memory        type    CDATA   #REQUIRED
-                             start   CDATA   #REQUIRED
-                             length  CDATA   #REQUIRED
-                             device  CDATA   #IMPLIED>
-     <!-- property: Generic attribute tag -->
-     <!ELEMENT property (#PCDATA | property)*>
-     <!ATTLIST property      name    CDATA   #REQUIRED>
-
-
-File: gdb.info,  Node: Thread List Format,  Next: Traceframe Info Format,  Prev: Memory Map Format,  Up: Remote Protocol
-
-E.17 Thread List Format
-=======================
-
-To efficiently update the list of threads and their attributes, GDB
-issues the 'qXfer:threads:read' packet (*note qXfer threads read::) and
-obtains the XML document with the following structure:
-
-     <?xml version="1.0"?>
-     <threads>
-         <thread id="id" core="0" name="name">
-         ... description ...
-         </thread>
-     </threads>
-
-   Each 'thread' element must have the 'id' attribute that identifies
-the thread (*note thread-id syntax::).  The 'core' attribute, if
-present, specifies which processor core the thread was last executing
-on.  The 'name' attribute, if present, specifies the human-readable name
-of the thread.  The content of the of 'thread' element is interpreted as
-human-readable auxiliary information.
-
-
-File: gdb.info,  Node: Traceframe Info Format,  Next: Branch Trace Format,  Prev: Thread List Format,  Up: Remote Protocol
-
-E.18 Traceframe Info Format
-===========================
-
-To be able to know which objects in the inferior can be examined when
-inspecting a tracepoint hit, GDB needs to obtain the list of memory
-ranges, registers and trace state variables that have been collected in
-a traceframe.
-
-   This list is obtained using the 'qXfer:traceframe-info:read' (*note
-qXfer traceframe info read::) packet and is an XML document.
-
-   GDB must be linked with the Expat library to support XML traceframe
-info discovery.  *Note Expat::.
-
-   The top-level structure of the document is shown below:
-
-     <?xml version="1.0"?>
-     <!DOCTYPE traceframe-info
-               PUBLIC "+//IDN gnu.org//DTD GDB Memory Map V1.0//EN"
-                      "http://sourceware.org/gdb/gdb-traceframe-info.dtd">
-     <traceframe-info>
-        block...
-     </traceframe-info>
-
-   Each traceframe block can be either:
-
-   * A region of collected memory starting at ADDR and extending for
-     LENGTH bytes from there:
-
-          <memory start="ADDR" length="LENGTH"/>
-
-   * A block indicating trace state variable numbered NUMBER has been
-     collected:
-
-          <tvar id="NUMBER"/>
-
-   The formal DTD for the traceframe info format is given below:
-
-     <!ELEMENT traceframe-info  (memory | tvar)* >
-     <!ATTLIST traceframe-info  version CDATA   #FIXED  "1.0">
-
-     <!ELEMENT memory        EMPTY>
-     <!ATTLIST memory        start   CDATA   #REQUIRED
-                             length  CDATA   #REQUIRED>
-     <!ELEMENT tvar>
-     <!ATTLIST tvar          id      CDATA   #REQUIRED>
-
-
-File: gdb.info,  Node: Branch Trace Format,  Next: Branch Trace Configuration Format,  Prev: Traceframe Info Format,  Up: Remote Protocol
-
-E.19 Branch Trace Format
-========================
-
-In order to display the branch trace of an inferior thread, GDB needs to
-obtain the list of branches.  This list is represented as list of
-sequential code blocks that are connected via branches.  The code in
-each block has been executed sequentially.
-
-   This list is obtained using the 'qXfer:btrace:read' (*note qXfer
-btrace read::) packet and is an XML document.
-
-   GDB must be linked with the Expat library to support XML traceframe
-info discovery.  *Note Expat::.
-
-   The top-level structure of the document is shown below:
-
-     <?xml version="1.0"?>
-     <!DOCTYPE btrace
-               PUBLIC "+//IDN gnu.org//DTD GDB Branch Trace V1.0//EN"
-                      "http://sourceware.org/gdb/gdb-btrace.dtd">
-     <btrace>
-        block...
-     </btrace>
-
-   * A block of sequentially executed instructions starting at BEGIN and
-     ending at END:
-
-          <block begin="BEGIN" end="END"/>
-
-   The formal DTD for the branch trace format is given below:
-
-     <!ELEMENT btrace  (block* | pt) >
-     <!ATTLIST btrace  version CDATA   #FIXED "1.0">
-
-     <!ELEMENT block        EMPTY>
-     <!ATTLIST block        begin  CDATA   #REQUIRED
-                            end    CDATA   #REQUIRED>
-
-     <!ELEMENT pt (pt-config?, raw?)>
-
-     <!ELEMENT pt-config (cpu?)>
-
-     <!ELEMENT cpu EMPTY>
-     <!ATTLIST cpu vendor   CDATA #REQUIRED
-                   family   CDATA #REQUIRED
-                   model    CDATA #REQUIRED
-                   stepping CDATA #REQUIRED>
-
-     <!ELEMENT raw (#PCDATA)>
-
-
-File: gdb.info,  Node: Branch Trace Configuration Format,  Prev: Branch Trace Format,  Up: Remote Protocol
-
-E.20 Branch Trace Configuration Format
-======================================
-
-For each inferior thread, GDB can obtain the branch trace configuration
-using the 'qXfer:btrace-conf:read' (*note qXfer btrace-conf read::)
-packet.
-
-   The configuration describes the branch trace format and configuration
-settings for that format.  The following information is described:
-
-'bts'
-     This thread uses the "Branch Trace Store" (BTS) format.
-     'size'
-          The size of the BTS ring buffer in bytes.
-'pt'
-     This thread uses the "Intel Processor Trace" (Intel PT) format.
-     'size'
-          The size of the Intel PT ring buffer in bytes.
-
-   GDB must be linked with the Expat library to support XML branch trace
-configuration discovery.  *Note Expat::.
-
-   The formal DTD for the branch trace configuration format is given
-below:
-
-     <!ELEMENT btrace-conf	(bts?, pt?)>
-     <!ATTLIST btrace-conf	version	CDATA	#FIXED "1.0">
-
-     <!ELEMENT bts	EMPTY>
-     <!ATTLIST bts	size	CDATA	#IMPLIED>
-
-     <!ELEMENT pt	EMPTY>
-     <!ATTLIST pt	size	CDATA	#IMPLIED>
-
-
-File: gdb.info,  Node: Agent Expressions,  Next: Target Descriptions,  Prev: Remote Protocol,  Up: Top
-
-Appendix F The GDB Agent Expression Mechanism
-*********************************************
-
-In some applications, it is not feasible for the debugger to interrupt
-the program's execution long enough for the developer to learn anything
-helpful about its behavior.  If the program's correctness depends on its
-real-time behavior, delays introduced by a debugger might cause the
-program to fail, even when the code itself is correct.  It is useful to
-be able to observe the program's behavior without interrupting it.
-
-   Using GDB's 'trace' and 'collect' commands, the user can specify
-locations in the program, and arbitrary expressions to evaluate when
-those locations are reached.  Later, using the 'tfind' command, she can
-examine the values those expressions had when the program hit the trace
-points.  The expressions may also denote objects in memory -- structures
-or arrays, for example -- whose values GDB should record; while visiting
-a particular tracepoint, the user may inspect those objects as if they
-were in memory at that moment.  However, because GDB records these
-values without interacting with the user, it can do so quickly and
-unobtrusively, hopefully not disturbing the program's behavior.
-
-   When GDB is debugging a remote target, the GDB "agent" code running
-on the target computes the values of the expressions itself.  To avoid
-having a full symbolic expression evaluator on the agent, GDB translates
-expressions in the source language into a simpler bytecode language, and
-then sends the bytecode to the agent; the agent then executes the
-bytecode, and records the values for GDB to retrieve later.
-
-   The bytecode language is simple; there are forty-odd opcodes, the
-bulk of which are the usual vocabulary of C operands (addition,
-subtraction, shifts, and so on) and various sizes of literals and memory
-reference operations.  The bytecode interpreter operates strictly on
-machine-level values -- various sizes of integers and floating point
-numbers -- and requires no information about types or symbols; thus, the
-interpreter's internal data structures are simple, and each bytecode
-requires only a few native machine instructions to implement it.  The
-interpreter is small, and strict limits on the memory and time required
-to evaluate an expression are easy to determine, making it suitable for
-use by the debugging agent in real-time applications.
-
-* Menu:
-
-* General Bytecode Design::     Overview of the interpreter.
-* Bytecode Descriptions::       What each one does.
-* Using Agent Expressions::     How agent expressions fit into the big picture.
-* Varying Target Capabilities:: How to discover what the target can do.
-* Rationale::                   Why we did it this way.
-
-
-File: gdb.info,  Node: General Bytecode Design,  Next: Bytecode Descriptions,  Up: Agent Expressions
-
-F.1 General Bytecode Design
-===========================
-
-The agent represents bytecode expressions as an array of bytes.  Each
-instruction is one byte long (thus the term "bytecode").  Some
-instructions are followed by operand bytes; for example, the 'goto'
-instruction is followed by a destination for the jump.
-
-   The bytecode interpreter is a stack-based machine; most instructions
-pop their operands off the stack, perform some operation, and push the
-result back on the stack for the next instruction to consume.  Each
-element of the stack may contain either a integer or a floating point
-value; these values are as many bits wide as the largest integer that
-can be directly manipulated in the source language.  Stack elements
-carry no record of their type; bytecode could push a value as an
-integer, then pop it as a floating point value.  However, GDB will not
-generate code which does this.  In C, one might define the type of a
-stack element as follows:
-     union agent_val {
-       LONGEST l;
-       DOUBLEST d;
-     };
-where 'LONGEST' and 'DOUBLEST' are 'typedef' names for the largest
-integer and floating point types on the machine.
-
-   By the time the bytecode interpreter reaches the end of the
-expression, the value of the expression should be the only value left on
-the stack.  For tracing applications, 'trace' bytecodes in the
-expression will have recorded the necessary data, and the value on the
-stack may be discarded.  For other applications, like conditional
-breakpoints, the value may be useful.
-
-   Separate from the stack, the interpreter has two registers:
-'pc'
-     The address of the next bytecode to execute.
-
-'start'
-     The address of the start of the bytecode expression, necessary for
-     interpreting the 'goto' and 'if_goto' instructions.
-
-Neither of these registers is directly visible to the bytecode language
-itself, but they are useful for defining the meanings of the bytecode
-operations.
-
-   There are no instructions to perform side effects on the running
-program, or call the program's functions; we assume that these
-expressions are only used for unobtrusive debugging, not for patching
-the running code.
-
-   Most bytecode instructions do not distinguish between the various
-sizes of values, and operate on full-width values; the upper bits of the
-values are simply ignored, since they do not usually make a difference
-to the value computed.  The exceptions to this rule are:
-
-memory reference instructions ('ref'N)
-     There are distinct instructions to fetch different word sizes from
-     memory.  Once on the stack, however, the values are treated as
-     full-size integers.  They may need to be sign-extended; the 'ext'
-     instruction exists for this purpose.
-
-the sign-extension instruction ('ext' N)
-     These clearly need to know which portion of their operand is to be
-     extended to occupy the full length of the word.
-
-   If the interpreter is unable to evaluate an expression completely for
-some reason (a memory location is inaccessible, or a divisor is zero,
-for example), we say that interpretation "terminates with an error".
-This means that the problem is reported back to the interpreter's caller
-in some helpful way.  In general, code using agent expressions should
-assume that they may attempt to divide by zero, fetch arbitrary memory
-locations, and misbehave in other ways.
-
-   Even complicated C expressions compile to a few bytecode
-instructions; for example, the expression 'x + y * z' would typically
-produce code like the following, assuming that 'x' and 'y' live in
-registers, and 'z' is a global variable holding a 32-bit 'int':
-     reg 1
-     reg 2
-     const32 address of z
-     ref32
-     ext 32
-     mul
-     add
-     end
-
-   In detail, these mean:
-
-'reg 1'
-     Push the value of register 1 (presumably holding 'x') onto the
-     stack.
-
-'reg 2'
-     Push the value of register 2 (holding 'y').
-
-'const32 address of z'
-     Push the address of 'z' onto the stack.
-
-'ref32'
-     Fetch a 32-bit word from the address at the top of the stack;
-     replace the address on the stack with the value.  Thus, we replace
-     the address of 'z' with 'z''s value.
-
-'ext 32'
-     Sign-extend the value on the top of the stack from 32 bits to full
-     length.  This is necessary because 'z' is a signed integer.
-
-'mul'
-     Pop the top two numbers on the stack, multiply them, and push their
-     product.  Now the top of the stack contains the value of the
-     expression 'y * z'.
-
-'add'
-     Pop the top two numbers, add them, and push the sum.  Now the top
-     of the stack contains the value of 'x + y * z'.
-
-'end'
-     Stop executing; the value left on the stack top is the value to be
-     recorded.
-
-
-File: gdb.info,  Node: Bytecode Descriptions,  Next: Using Agent Expressions,  Prev: General Bytecode Design,  Up: Agent Expressions
-
-F.2 Bytecode Descriptions
-=========================
-
-Each bytecode description has the following form:
-
-'add' (0x02): A B => A+B
-
-     Pop the top two stack items, A and B, as integers; push their sum,
-     as an integer.
-
-   In this example, 'add' is the name of the bytecode, and '(0x02)' is
-the one-byte value used to encode the bytecode, in hexadecimal.  The
-phrase "A B => A+B" shows the stack before and after the bytecode
-executes.  Beforehand, the stack must contain at least two values, A and
-B; since the top of the stack is to the right, B is on the top of the
-stack, and A is underneath it.  After execution, the bytecode will have
-popped A and B from the stack, and replaced them with a single value,
-A+B.  There may be other values on the stack below those shown, but the
-bytecode affects only those shown.
-
-   Here is another example:
-
-'const8' (0x22) N: => N
-     Push the 8-bit integer constant N on the stack, without sign
-     extension.
-
-   In this example, the bytecode 'const8' takes an operand N directly
-from the bytecode stream; the operand follows the 'const8' bytecode
-itself.  We write any such operands immediately after the name of the
-bytecode, before the colon, and describe the exact encoding of the
-operand in the bytecode stream in the body of the bytecode description.
-
-   For the 'const8' bytecode, there are no stack items given before the
-=>; this simply means that the bytecode consumes no values from the
-stack.  If a bytecode consumes no values, or produces no values, the
-list on either side of the => may be empty.
-
-   If a value is written as A, B, or N, then the bytecode treats it as
-an integer.  If a value is written is ADDR, then the bytecode treats it
-as an address.
-
-   We do not fully describe the floating point operations here; although
-this design can be extended in a clean way to handle floating point
-values, they are not of immediate interest to the customer, so we avoid
-describing them, to save time.
-
-'float' (0x01): =>
-
-     Prefix for floating-point bytecodes.  Not implemented yet.
-
-'add' (0x02): A B => A+B
-     Pop two integers from the stack, and push their sum, as an integer.
-
-'sub' (0x03): A B => A-B
-     Pop two integers from the stack, subtract the top value from the
-     next-to-top value, and push the difference.
-
-'mul' (0x04): A B => A*B
-     Pop two integers from the stack, multiply them, and push the
-     product on the stack.  Note that, when one multiplies two N-bit
-     numbers yielding another N-bit number, it is irrelevant whether the
-     numbers are signed or not; the results are the same.
-
-'div_signed' (0x05): A B => A/B
-     Pop two signed integers from the stack; divide the next-to-top
-     value by the top value, and push the quotient.  If the divisor is
-     zero, terminate with an error.
-
-'div_unsigned' (0x06): A B => A/B
-     Pop two unsigned integers from the stack; divide the next-to-top
-     value by the top value, and push the quotient.  If the divisor is
-     zero, terminate with an error.
-
-'rem_signed' (0x07): A B => A MODULO B
-     Pop two signed integers from the stack; divide the next-to-top
-     value by the top value, and push the remainder.  If the divisor is
-     zero, terminate with an error.
-
-'rem_unsigned' (0x08): A B => A MODULO B
-     Pop two unsigned integers from the stack; divide the next-to-top
-     value by the top value, and push the remainder.  If the divisor is
-     zero, terminate with an error.
-
-'lsh' (0x09): A B => A<<B
-     Pop two integers from the stack; let A be the next-to-top value,
-     and B be the top value.  Shift A left by B bits, and push the
-     result.
-
-'rsh_signed' (0x0a): A B => '(signed)'A>>B
-     Pop two integers from the stack; let A be the next-to-top value,
-     and B be the top value.  Shift A right by B bits, inserting copies
-     of the top bit at the high end, and push the result.
-
-'rsh_unsigned' (0x0b): A B => A>>B
-     Pop two integers from the stack; let A be the next-to-top value,
-     and B be the top value.  Shift A right by B bits, inserting zero
-     bits at the high end, and push the result.
-
-'log_not' (0x0e): A => !A
-     Pop an integer from the stack; if it is zero, push the value one;
-     otherwise, push the value zero.
-
-'bit_and' (0x0f): A B => A&B
-     Pop two integers from the stack, and push their bitwise 'and'.
-
-'bit_or' (0x10): A B => A|B
-     Pop two integers from the stack, and push their bitwise 'or'.
-
-'bit_xor' (0x11): A B => A^B
-     Pop two integers from the stack, and push their bitwise
-     exclusive-'or'.
-
-'bit_not' (0x12): A => ~A
-     Pop an integer from the stack, and push its bitwise complement.
-
-'equal' (0x13): A B => A=B
-     Pop two integers from the stack; if they are equal, push the value
-     one; otherwise, push the value zero.
-
-'less_signed' (0x14): A B => A<B
-     Pop two signed integers from the stack; if the next-to-top value is
-     less than the top value, push the value one; otherwise, push the
-     value zero.
-
-'less_unsigned' (0x15): A B => A<B
-     Pop two unsigned integers from the stack; if the next-to-top value
-     is less than the top value, push the value one; otherwise, push the
-     value zero.
-
-'ext' (0x16) N: A => A, sign-extended from N bits
-     Pop an unsigned value from the stack; treating it as an N-bit
-     twos-complement value, extend it to full length.  This means that
-     all bits to the left of bit N-1 (where the least significant bit is
-     bit 0) are set to the value of bit N-1.  Note that N may be larger
-     than or equal to the width of the stack elements of the bytecode
-     engine; in this case, the bytecode should have no effect.
-
-     The number of source bits to preserve, N, is encoded as a single
-     byte unsigned integer following the 'ext' bytecode.
-
-'zero_ext' (0x2a) N: A => A, zero-extended from N bits
-     Pop an unsigned value from the stack; zero all but the bottom N
-     bits.
-
-     The number of source bits to preserve, N, is encoded as a single
-     byte unsigned integer following the 'zero_ext' bytecode.
-
-'ref8' (0x17): ADDR => A
-'ref16' (0x18): ADDR => A
-'ref32' (0x19): ADDR => A
-'ref64' (0x1a): ADDR => A
-     Pop an address ADDR from the stack.  For bytecode 'ref'N, fetch an
-     N-bit value from ADDR, using the natural target endianness.  Push
-     the fetched value as an unsigned integer.
-
-     Note that ADDR may not be aligned in any particular way; the 'refN'
-     bytecodes should operate correctly for any address.
-
-     If attempting to access memory at ADDR would cause a processor
-     exception of some sort, terminate with an error.
-
-'ref_float' (0x1b): ADDR => D
-'ref_double' (0x1c): ADDR => D
-'ref_long_double' (0x1d): ADDR => D
-'l_to_d' (0x1e): A => D
-'d_to_l' (0x1f): D => A
-     Not implemented yet.
-
-'dup' (0x28): A => A A
-     Push another copy of the stack's top element.
-
-'swap' (0x2b): A B => B A
-     Exchange the top two items on the stack.
-
-'pop' (0x29): A =>
-     Discard the top value on the stack.
-
-'pick' (0x32) N: A ... B => A ... B A
-     Duplicate an item from the stack and push it on the top of the
-     stack.  N, a single byte, indicates the stack item to copy.  If N
-     is zero, this is the same as 'dup'; if N is one, it copies the item
-     under the top item, etc.  If N exceeds the number of items on the
-     stack, terminate with an error.
-
-'rot' (0x33): A B C => C B A
-     Rotate the top three items on the stack.
-
-'if_goto' (0x20) OFFSET: A =>
-     Pop an integer off the stack; if it is non-zero, branch to the
-     given offset in the bytecode string.  Otherwise, continue to the
-     next instruction in the bytecode stream.  In other words, if A is
-     non-zero, set the 'pc' register to 'start' + OFFSET.  Thus, an
-     offset of zero denotes the beginning of the expression.
-
-     The OFFSET is stored as a sixteen-bit unsigned value, stored
-     immediately following the 'if_goto' bytecode.  It is always stored
-     most significant byte first, regardless of the target's normal
-     endianness.  The offset is not guaranteed to fall at any particular
-     alignment within the bytecode stream; thus, on machines where
-     fetching a 16-bit on an unaligned address raises an exception, you
-     should fetch the offset one byte at a time.
-
-'goto' (0x21) OFFSET: =>
-     Branch unconditionally to OFFSET; in other words, set the 'pc'
-     register to 'start' + OFFSET.
-
-     The offset is stored in the same way as for the 'if_goto' bytecode.
-
-'const8' (0x22) N: => N
-'const16' (0x23) N: => N
-'const32' (0x24) N: => N
-'const64' (0x25) N: => N
-     Push the integer constant N on the stack, without sign extension.
-     To produce a small negative value, push a small twos-complement
-     value, and then sign-extend it using the 'ext' bytecode.
-
-     The constant N is stored in the appropriate number of bytes
-     following the 'const'B bytecode.  The constant N is always stored
-     most significant byte first, regardless of the target's normal
-     endianness.  The constant is not guaranteed to fall at any
-     particular alignment within the bytecode stream; thus, on machines
-     where fetching a 16-bit on an unaligned address raises an
-     exception, you should fetch N one byte at a time.
-
-'reg' (0x26) N: => A
-     Push the value of register number N, without sign extension.  The
-     registers are numbered following GDB's conventions.
-
-     The register number N is encoded as a 16-bit unsigned integer
-     immediately following the 'reg' bytecode.  It is always stored most
-     significant byte first, regardless of the target's normal
-     endianness.  The register number is not guaranteed to fall at any
-     particular alignment within the bytecode stream; thus, on machines
-     where fetching a 16-bit on an unaligned address raises an
-     exception, you should fetch the register number one byte at a time.
-
-'getv' (0x2c) N: => V
-     Push the value of trace state variable number N, without sign
-     extension.
-
-     The variable number N is encoded as a 16-bit unsigned integer
-     immediately following the 'getv' bytecode.  It is always stored
-     most significant byte first, regardless of the target's normal
-     endianness.  The variable number is not guaranteed to fall at any
-     particular alignment within the bytecode stream; thus, on machines
-     where fetching a 16-bit on an unaligned address raises an
-     exception, you should fetch the register number one byte at a time.
-
-'setv' (0x2d) N: V => V
-     Set trace state variable number N to the value found on the top of
-     the stack.  The stack is unchanged, so that the value is readily
-     available if the assignment is part of a larger expression.  The
-     handling of N is as described for 'getv'.
-
-'trace' (0x0c): ADDR SIZE =>
-     Record the contents of the SIZE bytes at ADDR in a trace buffer,
-     for later retrieval by GDB.
-
-'trace_quick' (0x0d) SIZE: ADDR => ADDR
-     Record the contents of the SIZE bytes at ADDR in a trace buffer,
-     for later retrieval by GDB. SIZE is a single byte unsigned integer
-     following the 'trace' opcode.
-
-     This bytecode is equivalent to the sequence 'dup const8 SIZE
-     trace', but we provide it anyway to save space in bytecode strings.
-
-'trace16' (0x30) SIZE: ADDR => ADDR
-     Identical to trace_quick, except that SIZE is a 16-bit big-endian
-     unsigned integer, not a single byte.  This should probably have
-     been named 'trace_quick16', for consistency.
-
-'tracev' (0x2e) N: => A
-     Record the value of trace state variable number N in the trace
-     buffer.  The handling of N is as described for 'getv'.
-
-'tracenz' (0x2f) ADDR SIZE =>
-     Record the bytes at ADDR in a trace buffer, for later retrieval by
-     GDB. Stop at either the first zero byte, or when SIZE bytes have
-     been recorded, whichever occurs first.
-
-'printf' (0x34) NUMARGS STRING =>
-     Do a formatted print, in the style of the C function 'printf').
-     The value of NUMARGS is the number of arguments to expect on the
-     stack, while STRING is the format string, prefixed with a two-byte
-     length.  The last byte of the string must be zero, and is included
-     in the length.  The format string includes escaped sequences just
-     as it appears in C source, so for instance the format string
-     '"\t%d\n"' is six characters long, and the output will consist of a
-     tab character, a decimal number, and a newline.  At the top of the
-     stack, above the values to be printed, this bytecode will pop a
-     "function" and "channel".  If the function is nonzero, then the
-     target may treat it as a function and call it, passing the channel
-     as a first argument, as with the C function 'fprintf'.  If the
-     function is zero, then the target may simply call a standard
-     formatted print function of its choice.  In all, this bytecode pops
-     2 + NUMARGS stack elements, and pushes nothing.
-
-'end' (0x27): =>
-     Stop executing bytecode; the result should be the top element of
-     the stack.  If the purpose of the expression was to compute an
-     lvalue or a range of memory, then the next-to-top of the stack is
-     the lvalue's address, and the top of the stack is the lvalue's
-     size, in bytes.
-
-
-File: gdb.info,  Node: Using Agent Expressions,  Next: Varying Target Capabilities,  Prev: Bytecode Descriptions,  Up: Agent Expressions
-
-F.3 Using Agent Expressions
-===========================
-
-Agent expressions can be used in several different ways by GDB, and the
-debugger can generate different bytecode sequences as appropriate.
-
-   One possibility is to do expression evaluation on the target rather
-than the host, such as for the conditional of a conditional tracepoint.
-In such a case, GDB compiles the source expression into a bytecode
-sequence that simply gets values from registers or memory, does
-arithmetic, and returns a result.
-
-   Another way to use agent expressions is for tracepoint data
-collection.  GDB generates a different bytecode sequence for collection;
-in addition to bytecodes that do the calculation, GDB adds 'trace'
-bytecodes to save the pieces of memory that were used.
-
-   * The user selects trace points in the program's code at which GDB
-     should collect data.
-
-   * The user specifies expressions to evaluate at each trace point.
-     These expressions may denote objects in memory, in which case those
-     objects' contents are recorded as the program runs, or computed
-     values, in which case the values themselves are recorded.
-
-   * GDB transmits the tracepoints and their associated expressions to
-     the GDB agent, running on the debugging target.
-
-   * The agent arranges to be notified when a trace point is hit.
-
-   * When execution on the target reaches a trace point, the agent
-     evaluates the expressions associated with that trace point, and
-     records the resulting values and memory ranges.
-
-   * Later, when the user selects a given trace event and inspects the
-     objects and expression values recorded, GDB talks to the agent to
-     retrieve recorded data as necessary to meet the user's requests.
-     If the user asks to see an object whose contents have not been
-     recorded, GDB reports an error.
-
-
-File: gdb.info,  Node: Varying Target Capabilities,  Next: Rationale,  Prev: Using Agent Expressions,  Up: Agent Expressions
-
-F.4 Varying Target Capabilities
-===============================
-
-Some targets don't support floating-point, and some would rather not
-have to deal with 'long long' operations.  Also, different targets will
-have different stack sizes, and different bytecode buffer lengths.
-
-   Thus, GDB needs a way to ask the target about itself.  We haven't
-worked out the details yet, but in general, GDB should be able to send
-the target a packet asking it to describe itself.  The reply should be a
-packet whose length is explicit, so we can add new information to the
-packet in future revisions of the agent, without confusing old versions
-of GDB, and it should contain a version number.  It should contain at
-least the following information:
-
-   * whether floating point is supported
-
-   * whether 'long long' is supported
-
-   * maximum acceptable size of bytecode stack
-
-   * maximum acceptable length of bytecode expressions
-
-   * which registers are actually available for collection
-
-   * whether the target supports disabled tracepoints
-
-
-File: gdb.info,  Node: Rationale,  Prev: Varying Target Capabilities,  Up: Agent Expressions
-
-F.5 Rationale
-=============
-
-Some of the design decisions apparent above are arguable.
-
-What about stack overflow/underflow?
-     GDB should be able to query the target to discover its stack size.
-     Given that information, GDB can determine at translation time
-     whether a given expression will overflow the stack.  But this spec
-     isn't about what kinds of error-checking GDB ought to do.
-
-Why are you doing everything in LONGEST?
-
-     Speed isn't important, but agent code size is; using LONGEST brings
-     in a bunch of support code to do things like division, etc.  So
-     this is a serious concern.
-
-     First, note that you don't need different bytecodes for different
-     operand sizes.  You can generate code without _knowing_ how big the
-     stack elements actually are on the target.  If the target only
-     supports 32-bit ints, and you don't send any 64-bit bytecodes,
-     everything just works.  The observation here is that the MIPS and
-     the Alpha have only fixed-size registers, and you can still get C's
-     semantics even though most instructions only operate on full-sized
-     words.  You just need to make sure everything is properly
-     sign-extended at the right times.  So there is no need for 32- and
-     64-bit variants of the bytecodes.  Just implement everything using
-     the largest size you support.
-
-     GDB should certainly check to see what sizes the target supports,
-     so the user can get an error earlier, rather than later.  But this
-     information is not necessary for correctness.
-
-Why don't you have '>' or '<=' operators?
-     I want to keep the interpreter small, and we don't need them.  We
-     can combine the 'less_' opcodes with 'log_not', and swap the order
-     of the operands, yielding all four asymmetrical comparison
-     operators.  For example, '(x <= y)' is '! (x > y)', which is '! (y
-     < x)'.
-
-Why do you have 'log_not'?
-Why do you have 'ext'?
-Why do you have 'zero_ext'?
-     These are all easily synthesized from other instructions, but I
-     expect them to be used frequently, and they're simple, so I include
-     them to keep bytecode strings short.
-
-     'log_not' is equivalent to 'const8 0 equal'; it's used in half the
-     relational operators.
-
-     'ext N' is equivalent to 'const8 S-N lsh const8 S-N rsh_signed',
-     where S is the size of the stack elements; it follows 'refM' and
-     REG bytecodes when the value should be signed.  See the next
-     bulleted item.
-
-     'zero_ext N' is equivalent to 'constM MASK log_and'; it's used
-     whenever we push the value of a register, because we can't assume
-     the upper bits of the register aren't garbage.
-
-Why not have sign-extending variants of the 'ref' operators?
-     Because that would double the number of 'ref' operators, and we
-     need the 'ext' bytecode anyway for accessing bitfields.
-
-Why not have constant-address variants of the 'ref' operators?
-     Because that would double the number of 'ref' operators again, and
-     'const32 ADDRESS ref32' is only one byte longer.
-
-Why do the 'refN' operators have to support unaligned fetches?
-     GDB will generate bytecode that fetches multi-byte values at
-     unaligned addresses whenever the executable's debugging information
-     tells it to.  Furthermore, GDB does not know the value the pointer
-     will have when GDB generates the bytecode, so it cannot determine
-     whether a particular fetch will be aligned or not.
-
-     In particular, structure bitfields may be several bytes long, but
-     follow no alignment rules; members of packed structures are not
-     necessarily aligned either.
-
-     In general, there are many cases where unaligned references occur
-     in correct C code, either at the programmer's explicit request, or
-     at the compiler's discretion.  Thus, it is simpler to make the GDB
-     agent bytecodes work correctly in all circumstances than to make
-     GDB guess in each case whether the compiler did the usual thing.
-
-Why are there no side-effecting operators?
-     Because our current client doesn't want them?  That's a cheap
-     answer.  I think the real answer is that I'm afraid of implementing
-     function calls.  We should re-visit this issue after the present
-     contract is delivered.
-
-Why aren't the 'goto' ops PC-relative?
-     The interpreter has the base address around anyway for PC bounds
-     checking, and it seemed simpler.
-
-Why is there only one offset size for the 'goto' ops?
-     Offsets are currently sixteen bits.  I'm not happy with this
-     situation either:
-
-     Suppose we have multiple branch ops with different offset sizes.
-     As I generate code left-to-right, all my jumps are forward jumps
-     (there are no loops in expressions), so I never know the target
-     when I emit the jump opcode.  Thus, I have to either always assume
-     the largest offset size, or do jump relaxation on the code after I
-     generate it, which seems like a big waste of time.
-
-     I can imagine a reasonable expression being longer than 256 bytes.
-     I can't imagine one being longer than 64k.  Thus, we need 16-bit
-     offsets.  This kind of reasoning is so bogus, but relaxation is
-     pathetic.
-
-     The other approach would be to generate code right-to-left.  Then
-     I'd always know my offset size.  That might be fun.
-
-Where is the function call bytecode?
-
-     When we add side-effects, we should add this.
-
-Why does the 'reg' bytecode take a 16-bit register number?
-
-     Intel's IA-64 architecture has 128 general-purpose registers, and
-     128 floating-point registers, and I'm sure it has some random
-     control registers.
-
-Why do we need 'trace' and 'trace_quick'?
-     Because GDB needs to record all the memory contents and registers
-     an expression touches.  If the user wants to evaluate an expression
-     'x->y->z', the agent must record the values of 'x' and 'x->y' as
-     well as the value of 'x->y->z'.
-
-Don't the 'trace' bytecodes make the interpreter less general?
-     They do mean that the interpreter contains special-purpose code,
-     but that doesn't mean the interpreter can only be used for that
-     purpose.  If an expression doesn't use the 'trace' bytecodes, they
-     don't get in its way.
-
-Why doesn't 'trace_quick' consume its arguments the way everything else does?
-     In general, you do want your operators to consume their arguments;
-     it's consistent, and generally reduces the amount of stack
-     rearrangement necessary.  However, 'trace_quick' is a kludge to
-     save space; it only exists so we needn't write 'dup const8 SIZE
-     trace' before every memory reference.  Therefore, it's okay for it
-     not to consume its arguments; it's meant for a specific context in
-     which we know exactly what it should do with the stack.  If we're
-     going to have a kludge, it should be an effective kludge.
-
-Why does 'trace16' exist?
-     That opcode was added by the customer that contracted Cygnus for
-     the data tracing work.  I personally think it is unnecessary;
-     objects that large will be quite rare, so it is okay to use 'dup
-     const16 SIZE trace' in those cases.
-
-     Whatever we decide to do with 'trace16', we should at least leave
-     opcode 0x30 reserved, to remain compatible with the customer who
-     added it.
-
-
-File: gdb.info,  Node: Target Descriptions,  Next: Operating System Information,  Prev: Agent Expressions,  Up: Top
-
-Appendix G Target Descriptions
-******************************
-
-One of the challenges of using GDB to debug embedded systems is that
-there are so many minor variants of each processor architecture in use.
-It is common practice for vendors to start with a standard processor
-core -- ARM, PowerPC, or MIPS, for example -- and then make changes to
-adapt it to a particular market niche.  Some architectures have hundreds
-of variants, available from dozens of vendors.  This leads to a number
-of problems:
-
-   * With so many different customized processors, it is difficult for
-     the GDB maintainers to keep up with the changes.
-   * Since individual variants may have short lifetimes or limited
-     audiences, it may not be worthwhile to carry information about
-     every variant in the GDB source tree.
-   * When GDB does support the architecture of the embedded system at
-     hand, the task of finding the correct architecture name to give the
-     'set architecture' command can be error-prone.
-
-   To address these problems, the GDB remote protocol allows a target
-system to not only identify itself to GDB, but to actually describe its
-own features.  This lets GDB support processor variants it has never
-seen before -- to the extent that the descriptions are accurate, and
-that GDB understands them.
-
-   GDB must be linked with the Expat library to support XML target
-descriptions.  *Note Expat::.
-
-* Menu:
-
-* Retrieving Descriptions::         How descriptions are fetched from a target.
-* Target Description Format::       The contents of a target description.
-* Predefined Target Types::         Standard types available for target
-                                    descriptions.
-* Enum Target Types::               How to define enum target types.
-* Standard Target Features::        Features GDB knows about.
-
-
-File: gdb.info,  Node: Retrieving Descriptions,  Next: Target Description Format,  Up: Target Descriptions
-
-G.1 Retrieving Descriptions
-===========================
-
-Target descriptions can be read from the target automatically, or
-specified by the user manually.  The default behavior is to read the
-description from the target.  GDB retrieves it via the remote protocol
-using 'qXfer' requests (*note qXfer: General Query Packets.).  The ANNEX
-in the 'qXfer' packet will be 'target.xml'.  The contents of the
-'target.xml' annex are an XML document, of the form described in *note
-Target Description Format::.
-
-   Alternatively, you can specify a file to read for the target
-description.  If a file is set, the target will not be queried.  The
-commands to specify a file are:
-
-'set tdesc filename PATH'
-     Read the target description from PATH.
-
-'unset tdesc filename'
-     Do not read the XML target description from a file.  GDB will use
-     the description supplied by the current target.
-
-'show tdesc filename'
-     Show the filename to read for a target description, if any.
-
-
-File: gdb.info,  Node: Target Description Format,  Next: Predefined Target Types,  Prev: Retrieving Descriptions,  Up: Target Descriptions
-
-G.2 Target Description Format
-=============================
-
-A target description annex is an XML (http://www.w3.org/XML/) document
-which complies with the Document Type Definition provided in the GDB
-sources in 'gdb/features/gdb-target.dtd'.  This means you can use
-generally available tools like 'xmllint' to check that your feature
-descriptions are well-formed and valid.  However, to help people
-unfamiliar with XML write descriptions for their targets, we also
-describe the grammar here.
-
-   Target descriptions can identify the architecture of the remote
-target and (for some architectures) provide information about custom
-register sets.  They can also identify the OS ABI of the remote target.
-GDB can use this information to autoconfigure for your target, or to
-warn you if you connect to an unsupported target.
-
-   Here is a simple target description:
-
-     <target version="1.0">
-       <architecture>i386:x86-64</architecture>
-     </target>
-
-This minimal description only says that the target uses the x86-64
-architecture.
-
-   A target description has the following overall form, with [ ] marking
-optional elements and ... marking repeatable elements.  The elements are
-explained further below.
-
-     <?xml version="1.0"?>
-     <!DOCTYPE target SYSTEM "gdb-target.dtd">
-     <target version="1.0">
-       [ARCHITECTURE]
-       [OSABI]
-       [COMPATIBLE]
-       [FEATURE...]
-     </target>
-
-The description is generally insensitive to whitespace and line breaks,
-under the usual common-sense rules.  The XML version declaration and
-document type declaration can generally be omitted (GDB does not require
-them), but specifying them may be useful for XML validation tools.  The
-'version' attribute for '<target>' may also be omitted, but we recommend
-including it; if future versions of GDB use an incompatible revision of
-'gdb-target.dtd', they will detect and report the version mismatch.
-
-G.2.1 Inclusion
----------------
-
-It can sometimes be valuable to split a target description up into
-several different annexes, either for organizational purposes, or to
-share files between different possible target descriptions.  You can
-divide a description into multiple files by replacing any element of the
-target description with an inclusion directive of the form:
-
-     <xi:include href="DOCUMENT"/>
-
-When GDB encounters an element of this form, it will retrieve the named
-XML DOCUMENT, and replace the inclusion directive with the contents of
-that document.  If the current description was read using 'qXfer', then
-so will be the included document; DOCUMENT will be interpreted as the
-name of an annex.  If the current description was read from a file, GDB
-will look for DOCUMENT as a file in the same directory where it found
-the original description.
-
-G.2.2 Architecture
-------------------
-
-An '<architecture>' element has this form:
-
-       <architecture>ARCH</architecture>
-
-   ARCH is one of the architectures from the set accepted by 'set
-architecture' (*note Specifying a Debugging Target: Targets.).
-
-G.2.3 OS ABI
-------------
-
-This optional field was introduced in GDB version 7.0.  Previous
-versions of GDB ignore it.
-
-   An '<osabi>' element has this form:
-
-       <osabi>ABI-NAME</osabi>
-
-   ABI-NAME is an OS ABI name from the same selection accepted by
-'set osabi' (*note Configuring the Current ABI: ABI.).
-
-G.2.4 Compatible Architecture
------------------------------
-
-This optional field was introduced in GDB version 7.0.  Previous
-versions of GDB ignore it.
-
-   A '<compatible>' element has this form:
-
-       <compatible>ARCH</compatible>
-
-   ARCH is one of the architectures from the set accepted by 'set
-architecture' (*note Specifying a Debugging Target: Targets.).
-
-   A '<compatible>' element is used to specify that the target is able
-to run binaries in some other than the main target architecture given by
-the '<architecture>' element.  For example, on the Cell Broadband
-Engine, the main architecture is 'powerpc:common' or 'powerpc:common64',
-but the system is able to run binaries in the 'spu' architecture as
-well.  The way to describe this capability with '<compatible>' is as
-follows:
-
-       <architecture>powerpc:common</architecture>
-       <compatible>spu</compatible>
-
-G.2.5 Features
---------------
-
-Each '<feature>' describes some logical portion of the target system.
-Features are currently used to describe available CPU registers and the
-types of their contents.  A '<feature>' element has this form:
-
-     <feature name="NAME">
-       [TYPE...]
-       REG...
-     </feature>
-
-Each feature's name should be unique within the description.  The name
-of a feature does not matter unless GDB has some special knowledge of
-the contents of that feature; if it does, the feature should have its
-standard name.  *Note Standard Target Features::.
-
-G.2.6 Types
------------
-
-Any register's value is a collection of bits which GDB must interpret.
-The default interpretation is a two's complement integer, but other
-types can be requested by name in the register description.  Some
-predefined types are provided by GDB (*note Predefined Target Types::),
-and the description can define additional composite and enum types.
-
-   Each type element must have an 'id' attribute, which gives a unique
-(within the containing '<feature>') name to the type.  Types must be
-defined before they are used.
-
-   Some targets offer vector registers, which can be treated as arrays
-of scalar elements.  These types are written as '<vector>' elements,
-specifying the array element type, TYPE, and the number of elements,
-COUNT:
-
-     <vector id="ID" type="TYPE" count="COUNT"/>
-
-   If a register's value is usefully viewed in multiple ways, define it
-with a union type containing the useful representations.  The '<union>'
-element contains one or more '<field>' elements, each of which has a
-NAME and a TYPE:
-
-     <union id="ID">
-       <field name="NAME" type="TYPE"/>
-       ...
-     </union>
-
-   If a register's value is composed from several separate values,
-define it with either a structure type or a flags type.  A flags type
-may only contain bitfields.  A structure type may either contain only
-bitfields or contain no bitfields.  If the value contains only
-bitfields, its total size in bytes must be specified.
-
-   Non-bitfield values have a NAME and TYPE.
-
-     <struct id="ID">
-       <field name="NAME" type="TYPE"/>
-       ...
-     </struct>
-
-   Both NAME and TYPE values are required.  No implicit padding is
-added.
-
-   Bitfield values have a NAME, START, END and TYPE.
-
-     <struct id="ID" size="SIZE">
-       <field name="NAME" start="START" end="END" type="TYPE"/>
-       ...
-     </struct>
-
-     <flags id="ID" size="SIZE">
-       <field name="NAME" start="START" end="END" type="TYPE"/>
-       ...
-     </flags>
-
-   The NAME value is required.  Bitfield values may be named with the
-empty string, '""', in which case the field is "filler" and its value is
-not printed.  Not all bits need to be specified, so "filler" fields are
-optional.
-
-   The START and END values are required, and TYPE is optional.  The
-field's START must be less than or equal to its END, and zero represents
-the least significant bit.
-
-   The default value of TYPE is 'bool' for single bit fields, and an
-unsigned integer otherwise.
-
-   Which to choose?  Structures or flags?
-
-   Registers defined with 'flags' have these advantages over defining
-them with 'struct':
-
-   * Arithmetic may be performed on them as if they were integers.
-   * They are printed in a more readable fashion.
-
-   Registers defined with 'struct' have one advantage over defining them
-with 'flags':
-
-   * One can fetch individual fields like in 'C'.
-
-          (gdb) print $my_struct_reg.field3
-          $1 = 42
-
-G.2.7 Registers
----------------
-
-Each register is represented as an element with this form:
-
-     <reg name="NAME"
-          bitsize="SIZE"
-          [regnum="NUM"]
-          [save-restore="SAVE-RESTORE"]
-          [type="TYPE"]
-          [group="GROUP"]/>
-
-The components are as follows:
-
-NAME
-     The register's name; it must be unique within the target
-     description.
-
-BITSIZE
-     The register's size, in bits.
-
-REGNUM
-     The register's number.  If omitted, a register's number is one
-     greater than that of the previous register (either in the current
-     feature or in a preceding feature); the first register in the
-     target description defaults to zero.  This register number is used
-     to read or write the register; e.g. it is used in the remote 'p'
-     and 'P' packets, and registers appear in the 'g' and 'G' packets in
-     order of increasing register number.
-
-SAVE-RESTORE
-     Whether the register should be preserved across inferior function
-     calls; this must be either 'yes' or 'no'.  The default is 'yes',
-     which is appropriate for most registers except for some system
-     control registers; this is not related to the target's ABI.
-
-TYPE
-     The type of the register.  It may be a predefined type, a type
-     defined in the current feature, or one of the special types 'int'
-     and 'float'.  'int' is an integer type of the correct size for
-     BITSIZE, and 'float' is a floating point type (in the
-     architecture's normal floating point format) of the correct size
-     for BITSIZE.  The default is 'int'.
-
-GROUP
-     The register group to which this register belongs.  It must be
-     either 'general', 'float', or 'vector'.  If no GROUP is specified,
-     GDB will not display the register in 'info registers'.
-
-
-File: gdb.info,  Node: Predefined Target Types,  Next: Enum Target Types,  Prev: Target Description Format,  Up: Target Descriptions
-
-G.3 Predefined Target Types
-===========================
-
-Type definitions in the self-description can build up composite types
-from basic building blocks, but can not define fundamental types.
-Instead, standard identifiers are provided by GDB for the fundamental
-types.  The currently supported types are:
-
-'bool'
-     Boolean type, occupying a single bit.
-
-'int8'
-'int16'
-'int32'
-'int64'
-'int128'
-     Signed integer types holding the specified number of bits.
-
-'uint8'
-'uint16'
-'uint32'
-'uint64'
-'uint128'
-     Unsigned integer types holding the specified number of bits.
-
-'code_ptr'
-'data_ptr'
-     Pointers to unspecified code and data.  The program counter and any
-     dedicated return address register may be marked as code pointers;
-     printing a code pointer converts it into a symbolic address.  The
-     stack pointer and any dedicated address registers may be marked as
-     data pointers.
-
-'ieee_single'
-     Single precision IEEE floating point.
-
-'ieee_double'
-     Double precision IEEE floating point.
-
-'arm_fpa_ext'
-     The 12-byte extended precision format used by ARM FPA registers.
-
-'i387_ext'
-     The 10-byte extended precision format used by x87 registers.
-
-'i386_eflags'
-     32bit EFLAGS register used by x86.
-
-'i386_mxcsr'
-     32bit MXCSR register used by x86.
 

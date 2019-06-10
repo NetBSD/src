@@ -1,5 +1,5 @@
 /* Portable <regex.h>.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,10 +27,37 @@
 # include <regex.h>
 #endif
 
-/* From utils.c.  */
-struct cleanup *make_regfree_cleanup (regex_t *);
-char *get_regcomp_error (int, regex_t *);
-struct cleanup *compile_rx_or_error (regex_t *pattern, const char *rx,
-				     const char *message);
+/* A compiled regex.  This is mainly a wrapper around regex_t.  The
+   the constructor throws on regcomp error and the destructor is
+   responsible for calling regfree.  The former means that it's not
+   possible to create an instance of compiled_regex that isn't
+   compiled, hence the name.  */
+class compiled_regex
+{
+public:
+  /* Compile a regexp and throw an exception on error, including
+     MESSAGE.  REGEX and MESSAGE must not be NULL.  */
+  compiled_regex (const char *regex, int cflags,
+		  const char *message)
+    ATTRIBUTE_NONNULL (2) ATTRIBUTE_NONNULL (4);
+
+  ~compiled_regex ();
+
+  DISABLE_COPY_AND_ASSIGN (compiled_regex);
+
+  /* Wrapper around ::regexec.  */
+  int exec (const char *string,
+	    size_t nmatch, regmatch_t pmatch[],
+	    int eflags) const;
+
+  /* Wrapper around ::re_search.  (Not const because re_search's
+     regex_t parameter isn't either.)  */
+  int search (const char *string, int size, int startpos,
+	      int range, struct re_registers *regs);
+
+private:
+  /* The compiled pattern.  */
+  regex_t m_pattern;
+};
 
 #endif /* not GDB_REGEX_H */

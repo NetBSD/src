@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2001-2016 Free Software Foundation, Inc.
+# Copyright 2001-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 standard_testfile .c charset-malloc.c
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} [list $srcfile $srcfile2]] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} [list $srcfile $srcfile2]] } {
     return -1
 }
 
@@ -146,7 +146,7 @@ gdb_expect {
 # sets: "auto" and the default.  In this situation, this set of tests
 # is pointless.
 if {[llength [array names charsets]] < 3} {
-    untested charset.exp
+    untested "fewer than 3 charsets"
     return -1
 }
 
@@ -591,8 +591,8 @@ gdb_test "print 'a' == 'a' || 'b' == 'b'" \
 
 
 proc string_display { var_name set_prefix x_size x_type} {
-  gdb_test_no_output "set ${var_name} = ${set_prefix}\"Test String\\0with zeroes\"" "Assign ${var_name} with prefix ${set_prefix}"
-  gdb_test "x /2${x_size}s ${var_name}" ".*\t${x_type}\"Test String\"\[\r\n\]+.*\t${x_type}\"with zeroes\"" "Display String ${var_name} with x/${x_size}s"
+  gdb_test_no_output "set ${var_name} = ${set_prefix}\"Test String\\0with zeroes\"" "assign ${var_name} with prefix ${set_prefix}"
+  gdb_test "x /2${x_size}s ${var_name}" ".*\t${x_type}\"Test String\"\[\r\n\]+.*\t${x_type}\"with zeroes\"" "display String ${var_name} with x/${x_size}s"
 }
 
 if {$ucs2_ok} {

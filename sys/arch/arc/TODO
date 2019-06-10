@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.30 2014/06/20 12:31:55 joerg Exp $
+$NetBSD: TODO,v 1.30.28.1 2019/06/10 22:05:49 christos Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -58,8 +58,6 @@ XXX some entries might be obsolete.
     o	allocate PICA_TL_BASE dynamically
 
     o	remove inb/outb
-
-    o	remove UADDR
 
     o	fix mem_clusters[] usage.
 

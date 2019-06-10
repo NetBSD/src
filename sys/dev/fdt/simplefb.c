@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.5 2018/05/06 10:31:10 jmcneill Exp $ */
+/* $NetBSD: simplefb.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.5 2018/05/06 10:31:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,8 +85,15 @@ simplefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		fbi = data;
 		ri = &sc->sc_gen.vd.active->scr_ri;
 		error = wsdisplayio_get_fbinfo(ri, fbi);
-		if (error == 0)
+		if (error == 0) {
+	                /*
+	                 * XXX
+	                 * if the fb isn't page aligned, tell wsfb to skip the
+			 * unaligned part
+			 */
+			fbi->fbi_fboffset = sc->sc_paddr & PAGE_MASK;
 			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+		}
 		return error;
 	case WSDISPLAYIO_SVIDEO:
 		video = *(u_int *)data;
@@ -192,6 +199,7 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 
 #ifdef WSDISPLAY_MULTICONS
 	const bool is_console = true;
+	genfb_cnattach();
 #else
 	const bool is_console = phandle == simplefb_console_phandle;
 	if (is_console)

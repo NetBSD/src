@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Vitesse IQ2000 processors
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,63 +20,29 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "df.h"
+#include "tm_p.h"
+#include "optabs.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
 #include "stor-layout.h"
 #include "calls.h"
 #include "varasm.h"
-#include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
 #include "output.h"
 #include "insn-attr.h"
-#include "flags.h"
-#include "function.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "libfuncs.h"
-#include "recog.h"
-#include "diagnostic-core.h"
-#include "reload.h"
-#include "ggc.h"
-#include "tm_p.h"
-#include "debug.h"
-#include "target.h"
-#include "target-def.h"
 #include "langhooks.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* Enumeration for all of the relational tests, so that we can build
    arrays indexed by the test type, and not worry about the order
@@ -183,7 +149,7 @@ static bool iq2000_return_in_memory   (const_tree, const_tree);
 static void iq2000_setup_incoming_varargs (cumulative_args_t,
 					   machine_mode, tree, int *,
 					   int);
-static bool iq2000_rtx_costs          (rtx, int, int, int, int *, bool);
+static bool iq2000_rtx_costs          (rtx, machine_mode, int, int, int *, bool);
 static int  iq2000_address_cost       (rtx, machine_mode, addr_space_t,
 				       bool);
 static section *iq2000_select_section (tree, int, unsigned HOST_WIDE_INT);
@@ -206,7 +172,7 @@ static void iq2000_trampoline_init    (rtx, tree, rtx);
 static rtx iq2000_function_value      (const_tree, const_tree, bool);
 static rtx iq2000_libcall_value       (machine_mode, const_rtx);
 static void iq2000_print_operand      (FILE *, rtx, int);
-static void iq2000_print_operand_address (FILE *, rtx);
+static void iq2000_print_operand_address (FILE *, machine_mode, rtx);
 static bool iq2000_print_operand_punct_valid_p (unsigned char code);
 
 #undef  TARGET_INIT_BUILTINS
@@ -1106,7 +1072,7 @@ gen_conditional_branch (rtx operands[], machine_mode mode)
       label1 = pc_rtx;
     }
 
-  emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx,
+  emit_jump_insn (gen_rtx_SET (pc_rtx,
 			       gen_rtx_IF_THEN_ELSE (VOIDmode,
 						     gen_rtx_fmt_ee (test_code,
 								     VOIDmode,
@@ -1820,7 +1786,7 @@ iq2000_emit_frame_related_store (rtx mem, rtx reg, HOST_WIDE_INT offset)
   rtx dwarf_mem = gen_rtx_MEM (GET_MODE (reg), dwarf_address);
 
   iq2000_annotate_frame_insn (emit_move_insn (mem, reg),
-			    gen_rtx_SET (GET_MODE (reg), dwarf_mem, reg));
+			      gen_rtx_SET (dwarf_mem, reg));
 }
 
 /* Emit instructions to save/restore registers, as determined by STORE_P.  */
@@ -2064,7 +2030,7 @@ iq2000_expand_prologue (void)
       insn = emit_insn (gen_subsi3 (stack_pointer_rtx, stack_pointer_rtx,
 				    adjustment_rtx));
 
-      dwarf_pattern = gen_rtx_SET (Pmode, stack_pointer_rtx,
+      dwarf_pattern = gen_rtx_SET (stack_pointer_rtx,
 				   plus_constant (Pmode, stack_pointer_rtx,
 						  -tsize));
 
@@ -2083,6 +2049,9 @@ iq2000_expand_prologue (void)
 	    RTX_FRAME_RELATED_P (insn) = 1;
 	}
     }
+
+  if (flag_stack_usage_info)
+    current_function_static_stack_size = cfun->machine->total_size;
 
   emit_insn (gen_blockage ());
 }
@@ -2927,7 +2896,7 @@ iq2000_setup_incoming_varargs (cumulative_args_t cum_v,
    reference whose address is ADDR.  ADDR is an RTL expression.  */
 
 static void
-iq2000_print_operand_address (FILE * file, rtx addr)
+iq2000_print_operand_address (FILE * file, machine_mode mode, rtx addr)
 {
   if (!addr)
     error ("PRINT_OPERAND_ADDRESS, null pointer");
@@ -2952,7 +2921,7 @@ iq2000_print_operand_address (FILE * file, rtx addr)
 			     "PRINT_OPERAND_ADDRESS, LO_SUM with #1 not REG.");
 
 	  fprintf (file, "%%lo(");
-	  iq2000_print_operand_address (file, arg1);
+	  iq2000_print_operand_address (file, mode, arg1);
 	  fprintf (file, ")(%s)", reg_names [REGNO (arg0)]);
 	}
 	break;
@@ -3200,10 +3169,12 @@ iq2000_print_operand (FILE *file, rtx op, int letter)
 
   else if (code == MEM)
     {
+      machine_mode mode = GET_MODE (op);
+
       if (letter == 'D')
-	output_address (plus_constant (Pmode, XEXP (op, 0), 4));
+	output_address (mode, plus_constant (Pmode, XEXP (op, 0), 4));
       else
-	output_address (XEXP (op, 0));
+	output_address (mode, XEXP (op, 0));
     }
 
   else if (code == CONST_DOUBLE
@@ -3305,8 +3276,7 @@ iq2000_legitimize_address (rtx xinsn, rtx old_x ATTRIBUTE_UNUSED,
           emit_move_insn (int_reg,
                           GEN_INT (INTVAL (xplus1) & ~ 0x7fff));
 
-          emit_insn (gen_rtx_SET (VOIDmode,
-                                  ptr_reg,
+          emit_insn (gen_rtx_SET (ptr_reg,
                                   gen_rtx_PLUS (Pmode, xplus0, int_reg)));
 
           return plus_constant (Pmode, ptr_reg, INTVAL (xplus1) & 0x7fff);
@@ -3321,11 +3291,11 @@ iq2000_legitimize_address (rtx xinsn, rtx old_x ATTRIBUTE_UNUSED,
 
 
 static bool
-iq2000_rtx_costs (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
+iq2000_rtx_costs (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
 		  int opno ATTRIBUTE_UNUSED, int * total,
 		  bool speed ATTRIBUTE_UNUSED)
 {
-  machine_mode mode = GET_MODE (x);
+  int code = GET_CODE (x);
 
   switch (code)
     {

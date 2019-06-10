@@ -1,6 +1,6 @@
 /* mpfr_ui_pow -- power of n function n^x
 
-Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,14 +27,14 @@ mpfr_ui_pow (mpfr_ptr y, unsigned long int n, mpfr_srcptr x, mpfr_rnd_t rnd_mode
 {
   mpfr_t t;
   int inexact;
+  mp_limb_t tmp_mant[(sizeof (n) - 1) / sizeof (mp_limb_t) + 1];
   MPFR_SAVE_EXPO_DECL (expo);
 
   MPFR_SAVE_EXPO_MARK (expo);
-  mpfr_init2 (t, sizeof(n) * CHAR_BIT);
+  MPFR_TMP_INIT1(tmp_mant, t, sizeof(n) * CHAR_BIT);
   inexact = mpfr_set_ui (t, n, MPFR_RNDN);
-  MPFR_ASSERTN (!inexact);
+  MPFR_ASSERTD (inexact == 0);
   inexact = mpfr_pow (y, t, x, rnd_mode);
-  mpfr_clear (t);
   MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (y, inexact, rnd_mode);

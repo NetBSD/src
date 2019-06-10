@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29 2015/10/04 08:19:13 joerg Exp $ */
+/*	$NetBSD: syscall.c,v 1.29.18.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2015/10/04 08:19:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29.18.1 2019/06/10 22:06:46 christos Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -283,16 +283,13 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork,
-	    0, 0);
 }
 
 /*
@@ -304,4 +301,3 @@ cpu_spawn_return(struct lwp *l)
 
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.62 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: cz.c,v 1.62.18.1 2019/06/10 22:07:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.62 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.62.18.1 2019/06/10 22:07:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,8 +344,8 @@ cz_attach(device_t parent, device_t self, void *aux)
 		goto polling_mode;
 	} else {
 		intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-		cz->cz_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY,
-		    cz_intr, cz);
+		cz->cz_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_TTY,
+		    cz_intr, cz, device_xname(self));
 	}
 	if (cz->cz_ih == NULL) {
 		aprint_error_dev(cz->cz_dev, "unable to establish interrupt");
@@ -360,7 +360,7 @@ cz_attach(device_t parent, device_t self, void *aux)
 	if (cz->cz_ih == NULL) {
 		callout_init(&cz->cz_callout, 0);
 		if (cz_timeout_ticks == 0)
-			cz_timeout_ticks = max(1, hz * CZ_POLL_MS / 1000);
+			cz_timeout_ticks = uimax(1, hz * CZ_POLL_MS / 1000);
 		aprint_normal_dev(cz->cz_dev,
 		    "polling mode, %d ms interval (%d tick%s)\n", CZ_POLL_MS,
 		    cz_timeout_ticks, cz_timeout_ticks == 1 ? "" : "s");
@@ -834,7 +834,7 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 	int	error;
 
 	while (CZ_PLX_READ(cz, PLX_PCI_LOCAL_DOORBELL)) {
-		error = tsleep(cz, TTIPRI | PCATCH, wstring, max(1, hz/100));
+		error = tsleep(cz, TTIPRI | PCATCH, wstring, uimax(1, hz/100));
 		if ((error != 0) && (error != EWOULDBLOCK))
 			return (error);
 	}
@@ -1588,7 +1588,7 @@ cztty_transmit(struct cztty_softc *sc, struct tty *tp)
 	while ((tp->t_outq.c_cc > 0) && ((move = TX_MOVEABLE(get, put, size)))){
 #ifdef HOSTRAMCODE
 		if (0) {
-			move = min(tp->t_outq.c_cc, move);
+			move = uimin(tp->t_outq.c_cc, move);
 			error = q_to_b(&tp->t_outq, 0, move);
 			if (error != move) {
 				printf("%s: channel %d: error moving to "
@@ -1598,7 +1598,7 @@ cztty_transmit(struct cztty_softc *sc, struct tty *tp)
 			}
 		} else {
 #endif
-			move = min(ndqb(&tp->t_outq, 0), move);
+			move = uimin(ndqb(&tp->t_outq, 0), move);
 			bus_space_write_region_1(cz->cz_win_st, cz->cz_win_sh,
 			    address + put, tp->t_outq.c_cf, move);
 			ndflush(&tp->t_outq, move);

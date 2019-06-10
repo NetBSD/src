@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2016 Free Software Foundation, Inc.
+// Copyright (C) 2013-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -241,7 +241,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
       _StateIdT
-      _M_insert_alt(_StateIdT __next, _StateIdT __alt, bool __neg)
+      _M_insert_alt(_StateIdT __next, _StateIdT __alt,
+		    bool __neg __attribute__((__unused__)))
       {
 	_StateT __tmp(_S_opcode_alternative);
 	// It labels every quantifier to make greedy comparison easier in BFS
@@ -332,7 +333,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    "Number of NFA states exceeds limit. Please use shorter regex "
 	    "string, or use smaller brace expression, or make "
 	    "_GLIBCXX_REGEX_STATE_LIMIT larger.");
-	return this->size()-1;
+	return this->size() - 1;
       }
 
       // Eliminate dummy node in this NFA to make it compact.

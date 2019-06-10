@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.85 2018/01/25 14:45:58 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.85.4.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -284,7 +284,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 0 /*BUS_SPACE_MAP_LINEAR*/,
+			 BUS_SPACE_MAP_LINEAR,
 			 &bh) != 0) {
 		printf("%s: cannot map control registers\n",
 		    device_xname(self));
@@ -744,7 +744,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rectfill = cg14_rectfill_a;
 	sc->sc_gc.gc_rop = 0xc;
-	if (is_cons) {
+
 		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
 		    &defattr);
 
@@ -770,21 +770,10 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
 			defattr);
+	if (is_cons) {
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
-			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) -
-			 sc->sc_fb.fb_type.fb_height - 5,
-			sc->sc_fb.fb_type.fb_width,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			DEFATTR);
 	}
 
 	cg14_init_cmap(sc);
@@ -1125,7 +1114,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		    (cur->cmap.index + cur->cmap.count > 3))
 			return EINVAL;
 
-		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+		for (i = 0; i < uimin(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] << 16);
@@ -1222,7 +1211,7 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 3) {
-			words = min(32, cnt >> 2);
+			words = uimin(32, cnt >> 2);
 			sta(pptr & ~7, ASI_SX, SX_STS(8, words - 1, pptr & 7));
 			pptr += words << 2;
 			cnt -= words << 2;
@@ -1274,7 +1263,7 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 15) {
-			words = min(16, cnt >> 2);
+			words = uimin(16, cnt >> 2);
 			sta(pptr & ~7, ASI_SX, SX_LD(8, words - 1, pptr & 7));
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(8, 8, 32, words - 1));
@@ -1297,7 +1286,7 @@ cg14_slurp(int reg, uint32_t addr, int cnt)
 {
 	int num;
 	while (cnt > 0) {
-		num = min(32, cnt);
+		num = uimin(32, cnt);
 		sta(addr & ~7, ASI_SX, SX_LD(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
@@ -1310,7 +1299,7 @@ cg14_spit(int reg, uint32_t addr, int cnt)
 {
 	int num;
 	while (cnt > 0) {
-		num = min(32, cnt);
+		num = uimin(32, cnt);
 		sta(addr & ~7, ASI_SX, SX_ST(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
@@ -1356,7 +1345,7 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			}
 			words = cnt >> 2;
 			while(cnt > 3) {
-				num = min(120, words);
+				num = uimin(120, words);
 				cg14_slurp(8, sptr, num);
 				cg14_spit(8, dptr, num);
 				sptr += num << 2;

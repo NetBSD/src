@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2013/07/11 16:40:27 matt Exp $ */
+/* $NetBSD: crt0.S,v 1.1.32.1 2019/06/10 22:05:13 christos Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <alpha/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2013/07/11 16:40:27 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.1.32.1 2019/06/10 22:05:13 christos Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -48,7 +48,6 @@ STRONG_ALIAS(_start,__start)
 LEAF(__start, 4)
 	LDGP(pv)
 	mov	a1, a0		/* cleanup */
-	mov	a2, a1		/* Obj_Entry */
-	mov	a3, a2		/* ps_strings */
+	mov	a3, a1		/* ps_strings */
 	CALL(___start)
 END(__start)

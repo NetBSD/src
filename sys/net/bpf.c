@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.226 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.226.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.226 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.226.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1544,7 +1544,7 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
 	while (len > 0) {
 		if (m == NULL)
 			panic("bpf_mcpy");
-		count = min(m->m_len, len);
+		count = uimin(m->m_len, len);
 		memcpy(dst, mtod(m, const void *), count);
 		m = m->m_next;
 		dst += count;
@@ -1650,6 +1650,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m,
 	 * absolutely needed--this mbuf should never go anywhere else.
 	 */
 	(void)memset(&mb, 0, sizeof(mb));
+	mb.m_type = MT_DATA;
 	mb.m_next = m;
 	mb.m_data = data;
 	mb.m_len = dlen;
@@ -1700,8 +1701,11 @@ _bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m, u_int direction)
 {
 	struct mbuf m0;
 
+	m0.m_type = MT_DATA;
 	m0.m_flags = 0;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_len = 4;
 	m0.m_data = (char *)&af;
 
@@ -1743,8 +1747,11 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	struct mbuf m0;
 	u_char *hp;
 
+	m0.m_type = MT_DATA;
 	m0.m_flags = 0;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_data = m0.m_dat;
 	m0.m_len = SLIP_HDRLEN;
 
@@ -1882,7 +1889,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * much.  Otherwise, transfer the whole packet (unless
 	 * we hit the buffer size limit).
 	 */
-	totlen = hdrlen + min(snaplen, pktlen);
+	totlen = hdrlen + uimin(snaplen, pktlen);
 	if (totlen > d->bd_bufsize)
 		totlen = d->bd_bufsize;
 	/*

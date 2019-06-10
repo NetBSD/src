@@ -1,6 +1,6 @@
 # Xmethods for libstdc++.
 
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
+# Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ class ArrayMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::array<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?array<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -265,7 +265,7 @@ class DequeMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::deque<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?deque<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -309,7 +309,7 @@ class ForwardListMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::forward_list<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?forward_list<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -390,7 +390,7 @@ class ListMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::(__cxx11::)?list<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?(__cxx11::)?list<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -505,7 +505,7 @@ class VectorMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::vector<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?vector<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -554,7 +554,7 @@ class AssociativeContainerMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::%s<.*>$' % self._name, class_type.tag):
+        if not re.match('^std::(__\d+::)?%s<.*>$' % self._name, class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -585,7 +585,12 @@ class UniquePtrGetWorker(gdb.xmethod.XMethodWorker):
         return method_name == 'get' or not self._is_array
 
     def __call__(self, obj):
-        return obj['_M_t']['_M_head_impl']
+        impl_type = obj.dereference().type.fields()[0].type.tag
+        if re.match('^std::(__\d+::)?__uniq_ptr_impl<.*>$', impl_type): # New implementation
+            return obj['_M_t']['_M_t']['_M_head_impl']
+        elif re.match('^std::(__\d+::)?tuple<.*>$', impl_type):
+            return obj['_M_t']['_M_head_impl']
+        return None
 
 class UniquePtrDerefWorker(UniquePtrGetWorker):
     "Implements std::unique_ptr<T>::operator*()"
@@ -635,7 +640,7 @@ class UniquePtrMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::unique_ptr<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?unique_ptr<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
@@ -663,6 +668,10 @@ class SharedPtrGetWorker(gdb.xmethod.XMethodWorker):
     def get_result_type(self, obj):
         return self._elem_type.pointer()
 
+    def _supports(self, method_name):
+        "operator-> is not supported for shared_ptr<T[]>"
+        return method_name == 'get' or not self._is_array
+
     def __call__(self, obj):
         return obj['_M_ptr']
 
@@ -674,6 +683,10 @@ class SharedPtrDerefWorker(SharedPtrGetWorker):
 
     def get_result_type(self, obj):
         return self._elem_type
+
+    def _supports(self, method_name):
+        "operator* is not supported for shared_ptr<T[]>"
+        return not self._is_array
 
     def __call__(self, obj):
         return SharedPtrGetWorker.__call__(self, obj).dereference()
@@ -689,6 +702,10 @@ class SharedPtrSubscriptWorker(SharedPtrGetWorker):
 
     def get_result_type(self, obj, index):
         return self._elem_type
+
+    def _supports(self, method_name):
+        "operator[] is only supported for shared_ptr<T[]>"
+        return self._is_array
 
     def __call__(self, obj, index):
         # Check bounds if _elem_type is an array of known bound
@@ -741,12 +758,15 @@ class SharedPtrMethodsMatcher(gdb.xmethod.XMethodMatcher):
         self.methods = [self._method_dict[m] for m in self._method_dict]
 
     def match(self, class_type, method_name):
-        if not re.match('^std::shared_ptr<.*>$', class_type.tag):
+        if not re.match('^std::(__\d+::)?shared_ptr<.*>$', class_type.tag):
             return None
         method = self._method_dict.get(method_name)
         if method is None or not method.enabled:
             return None
-        return method.worker_class(class_type.template_argument(0))
+        worker = method.worker_class(class_type.template_argument(0))
+        if worker._supports(method_name):
+            return worker
+        return None
 
 def register_libstdcxx_xmethods(locus):
     gdb.xmethod.register_xmethod_matcher(locus, ArrayMethodsMatcher())

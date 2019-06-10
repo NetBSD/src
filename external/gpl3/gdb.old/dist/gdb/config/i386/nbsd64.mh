@@ -1,6 +1,6 @@
 # Host: NetBSD/amd64
 NATDEPFILES= fork-child.o inf-ptrace.o \
-	nbsd-nat.o amd64-nat.o x86bsd-nat.o amd64bsd-nat.o amd64nbsd-nat.o \
-	bsd-kvm.o nbsd-thread.o
+	nbsd-nat.o amd64-nat.o x86-bsd-nat.o amd64-bsd-nat.o amd64-nbsd-nat.o \
+	bsd-kvm.o x86-nat.o x86-dregs.o
 
 LOADLIBES= -lkvm

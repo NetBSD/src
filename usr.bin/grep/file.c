@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.7.44.1 2019/06/10 22:10:20 christos Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -35,13 +35,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.7.44.1 2019/06/10 22:10:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <bzlib.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -51,17 +50,20 @@ __RCSID("$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $");
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
-#include <zlib.h>
 
 #include "grep.h"
 
 #define	MAXBUFSIZ	(32 * 1024)
 #define	LNBUFBUMP	80
 
+#ifndef WITHOUT_GZIP
 static gzFile gzbufdesc;
+#endif
+#ifndef WITHOUT_BZ2
 static BZFILE* bzbufdesc;
+#endif
 
-static unsigned char buffer[MAXBUFSIZ];
+static unsigned char buffer[MAXBUFSIZ + 1];
 static unsigned char *bufpos;
 static size_t bufrem;
 
@@ -71,15 +73,21 @@ static size_t lnbuflen;
 static inline int
 grep_refill(struct file *f)
 {
-	ssize_t nr;
+	ssize_t nr = -1;
 	int bzerr;
 
 	bufpos = buffer;
 	bufrem = 0;
 
-	if (filebehave == FILE_GZIP)
+#ifndef WITHOUT_GZIP
+	if (filebehave == FILE_GZIP) {
 		nr = gzread(gzbufdesc, buffer, MAXBUFSIZ);
-	else if (filebehave == FILE_BZIP && bzbufdesc != NULL) {
+		if (nr == -1)
+			return -1;
+	}
+#endif
+#ifndef WITHOUT_BZ2
+	if (filebehave == FILE_BZIP && bzbufdesc != NULL) {
 		nr = BZ2_bzRead(&bzerr, bzbufdesc, buffer, MAXBUFSIZ);
 		switch (bzerr) {
 		case BZ_OK:
@@ -105,8 +113,13 @@ grep_refill(struct file *f)
 			/* Make sure we exit with an error */
 			nr = -1;
 		}
-	} else
+		if (nr == -1)
+			return -1;
+	}
+#endif
+	if (nr == -1) {
 		nr = read(f->fd, buffer, MAXBUFSIZ);
+	}
 
 	if (nr < 0)
 		return (-1);
@@ -115,7 +128,7 @@ grep_refill(struct file *f)
 	return (0);
 }
 
-static inline int
+static inline void
 grep_lnbufgrow(size_t newlen)
 {
 
@@ -123,15 +136,19 @@ grep_lnbufgrow(size_t newlen)
 		lnbuf = grep_realloc(lnbuf, newlen);
 		lnbuflen = newlen;
 	}
+}
 
-	return (0);
+static void
+grep_copyline(size_t off, size_t len)
+{
+	memcpy(lnbuf + off, bufpos, len);
+	lnbuf[off + len] = '\0';
 }
 
 char *
 grep_fgetln(struct file *f, size_t *lenp)
 {
 	unsigned char *p;
-	char *ret;
 	size_t len;
 	size_t off;
 	ptrdiff_t diff;
@@ -149,20 +166,20 @@ grep_fgetln(struct file *f, size_t *lenp)
 	/* Look for a newline in the remaining part of the buffer */
 	if ((p = memchr(bufpos, line_sep, bufrem)) != NULL) {
 		++p; /* advance over newline */
-		ret = (char *)bufpos;
 		len = p - bufpos;
+		grep_lnbufgrow(len + 1);
+		grep_copyline(0, len);
+		*lenp = len;
 		bufrem -= len;
 		bufpos = p;
-		*lenp = len;
-		return (ret);
+		return (char *)lnbuf;
 	}
 
 	/* We have to copy the current buffered data to the line buffer */
 	for (len = bufrem, off = 0; ; len += bufrem) {
 		/* Make sure there is room for more data */
-		if (grep_lnbufgrow(len + LNBUFBUMP))
-			goto error;
-		memcpy(lnbuf + off, bufpos, len - off);
+		grep_lnbufgrow(len + LNBUFBUMP);
+		grep_copyline(off, len - off);
 		off = len;
 		if (grep_refill(f) != 0)
 			goto error;
@@ -175,9 +192,8 @@ grep_fgetln(struct file *f, size_t *lenp)
 		++p;
 		diff = p - bufpos;
 		len += diff;
-		if (grep_lnbufgrow(len))
-		    goto error;
-		memcpy(lnbuf + off, bufpos, diff);
+		grep_lnbufgrow(len + 1);
+		grep_copyline(off, diff);
 		bufrem -= diff;
 		bufpos = p;
 		break;
@@ -194,13 +210,17 @@ static inline struct file *
 grep_file_init(struct file *f)
 {
 
+#ifndef WITHOUT_GZIP
 	if (filebehave == FILE_GZIP &&
 	    (gzbufdesc = gzdopen(f->fd, "r")) == NULL)
 		goto error;
+#endif
 
+#ifndef WITHOUT_BZ2
 	if (filebehave == FILE_BZIP &&
 	    (bzbufdesc = BZ2_bzdopen(f->fd, "r")) == NULL)
 		goto error;
+#endif
 
 	/* Fill read buffer, also catches errors early */
 	if (grep_refill(f) != 0)

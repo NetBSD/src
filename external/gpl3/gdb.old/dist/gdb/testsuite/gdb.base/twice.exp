@@ -1,4 +1,4 @@
-#   Copyright 1997-2016 Free Software Foundation, Inc.
+#   Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ close $fileid
 gdb_remote_download host ${srcdir}/${subdir}/twice.c
 
 if  { [gdb_compile $local_srcfile "${binfile}" executable $options] != "" } {
-     untested twice.exp
+     untested "failed to compile"
      return -1
 }
 

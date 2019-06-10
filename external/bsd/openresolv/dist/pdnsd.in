@@ -28,7 +28,7 @@
 
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
-[ -z "$pdnsd_conf" -a -z "$pdnsd_resolv" ] && exit 0
+[ -z "${pdnsd_conf}${pdnsd_resolv}" ] && exit 0
 [ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "

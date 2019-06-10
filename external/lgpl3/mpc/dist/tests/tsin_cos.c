@@ -1,6 +1,6 @@
 /* tsin_cos -- test file for mpc_sin_cos.
 
-Copyright (C) 2011 INRIA
+Copyright (C) 2011, 2013, 2014 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,14 +20,17 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpcc_inex = mpc_sin_cos (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd, P[5].mpc_rnd)
+
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC_C, f, mpc_sin_cos);
-
   test_start ();
 
-  tgeneric (f, 2, 512, 13, 7);
+  tgeneric_template ("sin_cos.dsc", 2, 512, 13, 7);
 
   test_end ();
 

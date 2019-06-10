@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.156 2017/11/06 02:57:18 rin Exp $
+#	$NetBSD: INSTALL_TINY,v 1.156.4.1 2019/06/10 22:06:20 christos Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -380,7 +380,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
@@ -464,16 +463,8 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
-
-# Miscellaneous Devices
-
-# Planetconnect Satellite receiver driver.
-#satlink0 at isa? port 0x300 drq 1
-
-
 # Pull in optional local configuration
 cinclude "arch/i386/conf/INSTALL.local"
-
 
 # Pseudo-Devices
 
@@ -485,7 +476,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP

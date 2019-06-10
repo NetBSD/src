@@ -1,6 +1,6 @@
 /* Print values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,7 @@
 #include "charset.h"
 #include "typeprint.h"
 #include <ctype.h>
+#include <algorithm>
 
 /* Maximum number of wchars returned from wchar_iterate.  */
 #define MAX_WCHARS 4
@@ -280,7 +281,7 @@ int
 val_print_scalar_type_p (struct type *type)
 {
   type = check_typedef (type);
-  while (TYPE_CODE (type) == TYPE_CODE_REF)
+  while (TYPE_IS_REFERENCE (type))
     {
       type = TYPE_TARGET_TYPE (type);
       type = check_typedef (type);
@@ -420,10 +421,10 @@ print_unpacked_pointer (struct type *type, struct type *elttype,
 /* generic_val_print helper for TYPE_CODE_ARRAY.  */
 
 static void
-generic_val_print_array (struct type *type, const gdb_byte *valaddr,
+generic_val_print_array (struct type *type,
 			 int embedded_offset, CORE_ADDR address,
 			 struct ui_file *stream, int recurse,
-			 const struct value *original_value,
+			 struct value *original_value,
 			 const struct value_print_options *options,
 			 const struct
 			     generic_val_print_decorations *decorations)
@@ -444,7 +445,7 @@ generic_val_print_array (struct type *type, const gdb_byte *valaddr,
 	}
 
       fputs_filtered (decorations->array_start, stream);
-      val_print_array_elements (type, valaddr, embedded_offset,
+      val_print_array_elements (type, embedded_offset,
 				address, stream,
 				recurse, original_value, options, 0);
       fputs_filtered (decorations->array_end, stream);
@@ -461,9 +462,9 @@ generic_val_print_array (struct type *type, const gdb_byte *valaddr,
 /* generic_val_print helper for TYPE_CODE_PTR.  */
 
 static void
-generic_val_print_ptr (struct type *type, const gdb_byte *valaddr,
+generic_val_print_ptr (struct type *type,
 		       int embedded_offset, struct ui_file *stream,
-		       const struct value *original_value,
+		       struct value *original_value,
 		       const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
@@ -471,13 +472,14 @@ generic_val_print_ptr (struct type *type, const gdb_byte *valaddr,
 
   if (options->format && options->format != 's')
     {
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, options, 0, stream);
     }
   else
     {
       struct type *unresolved_elttype = TYPE_TARGET_TYPE(type);
       struct type *elttype = check_typedef (unresolved_elttype);
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
       CORE_ADDR addr = unpack_pointer (type,
 				       valaddr + embedded_offset * unit_size);
 
@@ -489,12 +491,12 @@ generic_val_print_ptr (struct type *type, const gdb_byte *valaddr,
 /* generic_val_print helper for TYPE_CODE_MEMBERPTR.  */
 
 static void
-generic_val_print_memberptr (struct type *type, const gdb_byte *valaddr,
+generic_val_print_memberptr (struct type *type,
 			     int embedded_offset, struct ui_file *stream,
-			     const struct value *original_value,
+			     struct value *original_value,
 			     const struct value_print_options *options)
 {
-  val_print_scalar_formatted (type, valaddr, embedded_offset,
+  val_print_scalar_formatted (type, embedded_offset,
 			      original_value, options, 0, stream);
 }
 
@@ -534,12 +536,12 @@ get_value_addr_contents (struct value *deref_val)
     }
 }
 
-/* generic_val_print helper for TYPE_CODE_REF.  */
+/* generic_val_print helper for TYPE_CODE_{RVALUE_,}REF.  */
 
 static void
-generic_val_print_ref (struct type *type, const gdb_byte *valaddr,
+generic_val_print_ref (struct type *type,
 		       int embedded_offset, struct ui_file *stream, int recurse,
-		       const struct value *original_value,
+		       struct value *original_value,
 		       const struct value_print_options *options)
 {
   struct type *elttype = check_typedef (TYPE_TARGET_TYPE (type));
@@ -551,6 +553,7 @@ generic_val_print_ref (struct type *type, const gdb_byte *valaddr,
   const int must_coerce_ref = ((options->addressprint && value_is_synthetic)
 			       || options->deref_ref);
   const int type_is_defined = TYPE_CODE (elttype) != TYPE_CODE_UNDEF;
+  const gdb_byte *valaddr = value_contents_for_printing (original_value);
 
   if (must_coerce_ref && type_is_defined)
     {
@@ -662,9 +665,9 @@ generic_val_print_enum_1 (struct type *type, LONGEST val,
 /* generic_val_print helper for TYPE_CODE_ENUM.  */
 
 static void
-generic_val_print_enum (struct type *type, const gdb_byte *valaddr,
+generic_val_print_enum (struct type *type,
 			int embedded_offset, struct ui_file *stream,
-			const struct value *original_value,
+			struct value *original_value,
 			const struct value_print_options *options)
 {
   LONGEST val;
@@ -673,45 +676,53 @@ generic_val_print_enum (struct type *type, const gdb_byte *valaddr,
 
   if (options->format)
     {
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, options, 0, stream);
-      return;
     }
-  val = unpack_long (type, valaddr + embedded_offset * unit_size);
+  else
+    {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
 
-  generic_val_print_enum_1 (type, val, stream);
+      val = unpack_long (type, valaddr + embedded_offset * unit_size);
+
+      generic_val_print_enum_1 (type, val, stream);
+    }
 }
 
 /* generic_val_print helper for TYPE_CODE_FLAGS.  */
 
 static void
-generic_val_print_flags (struct type *type, const gdb_byte *valaddr,
+generic_val_print_flags (struct type *type,
 			 int embedded_offset, struct ui_file *stream,
-			 const struct value *original_value,
+			 struct value *original_value,
 			 const struct value_print_options *options)
 
 {
   if (options->format)
-    val_print_scalar_formatted (type, valaddr, embedded_offset, original_value,
+    val_print_scalar_formatted (type, embedded_offset, original_value,
 				options, 0, stream);
   else
-    val_print_type_code_flags (type, valaddr + embedded_offset, stream);
+    {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
+      val_print_type_code_flags (type, valaddr + embedded_offset, stream);
+    }
 }
 
 /* generic_val_print helper for TYPE_CODE_FUNC and TYPE_CODE_METHOD.  */
 
 static void
-generic_val_print_func (struct type *type, const gdb_byte *valaddr,
+generic_val_print_func (struct type *type,
 			int embedded_offset, CORE_ADDR address,
 			struct ui_file *stream,
-			const struct value *original_value,
+			struct value *original_value,
 			const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
 
   if (options->format)
     {
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, options, 0, stream);
     }
   else
@@ -730,9 +741,9 @@ generic_val_print_func (struct type *type, const gdb_byte *valaddr,
 /* generic_val_print helper for TYPE_CODE_BOOL.  */
 
 static void
-generic_val_print_bool (struct type *type, const gdb_byte *valaddr,
+generic_val_print_bool (struct type *type,
 			int embedded_offset, struct ui_file *stream,
-			const struct value *original_value,
+			struct value *original_value,
 			const struct value_print_options *options,
 			const struct generic_val_print_decorations *decorations)
 {
@@ -745,11 +756,13 @@ generic_val_print_bool (struct type *type, const gdb_byte *valaddr,
       struct value_print_options opts = *options;
       opts.format = (options->format ? options->format
 		     : options->output_format);
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, &opts, 0, stream);
     }
   else
     {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
       val = unpack_long (type, valaddr + embedded_offset * unit_size);
       if (val == 0)
 	fputs_filtered (decorations->false_name, stream);
@@ -763,9 +776,9 @@ generic_val_print_bool (struct type *type, const gdb_byte *valaddr,
 /* generic_val_print helper for TYPE_CODE_INT.  */
 
 static void
-generic_val_print_int (struct type *type, const gdb_byte *valaddr,
+generic_val_print_int (struct type *type,
 		       int embedded_offset, struct ui_file *stream,
-		       const struct value *original_value,
+		       struct value *original_value,
 		       const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
@@ -777,21 +790,25 @@ generic_val_print_int (struct type *type, const gdb_byte *valaddr,
 
       opts.format = (options->format ? options->format
 		     : options->output_format);
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, &opts, 0, stream);
     }
   else
-    val_print_type_code_int (type, valaddr + embedded_offset * unit_size,
-			     stream);
+    {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
+      val_print_type_code_int (type, valaddr + embedded_offset * unit_size,
+			       stream);
+    }
 }
 
 /* generic_val_print helper for TYPE_CODE_CHAR.  */
 
 static void
 generic_val_print_char (struct type *type, struct type *unresolved_type,
-			const gdb_byte *valaddr, int embedded_offset,
+			int embedded_offset,
 			struct ui_file *stream,
-			const struct value *original_value,
+			struct value *original_value,
 			const struct value_print_options *options)
 {
   LONGEST val;
@@ -804,11 +821,13 @@ generic_val_print_char (struct type *type, struct type *unresolved_type,
 
       opts.format = (options->format ? options->format
 		     : options->output_format);
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, &opts, 0, stream);
     }
   else
     {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
       val = unpack_long (type, valaddr + embedded_offset * unit_size);
       if (TYPE_UNSIGNED (type))
 	fprintf_filtered (stream, "%u", (unsigned int) val);
@@ -822,9 +841,9 @@ generic_val_print_char (struct type *type, struct type *unresolved_type,
 /* generic_val_print helper for TYPE_CODE_FLT.  */
 
 static void
-generic_val_print_float (struct type *type, const gdb_byte *valaddr,
+generic_val_print_float (struct type *type,
 			 int embedded_offset, struct ui_file *stream,
-			 const struct value *original_value,
+			 struct value *original_value,
 			 const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
@@ -832,11 +851,13 @@ generic_val_print_float (struct type *type, const gdb_byte *valaddr,
 
   if (options->format)
     {
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, options, 0, stream);
     }
   else
     {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
       print_floating (valaddr + embedded_offset * unit_size, type, stream);
     }
 }
@@ -844,38 +865,43 @@ generic_val_print_float (struct type *type, const gdb_byte *valaddr,
 /* generic_val_print helper for TYPE_CODE_DECFLOAT.  */
 
 static void
-generic_val_print_decfloat (struct type *type, const gdb_byte *valaddr,
+generic_val_print_decfloat (struct type *type,
 			    int embedded_offset, struct ui_file *stream,
-			    const struct value *original_value,
+			    struct value *original_value,
 			    const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
   int unit_size = gdbarch_addressable_memory_unit_size (gdbarch);
 
   if (options->format)
-    val_print_scalar_formatted (type, valaddr, embedded_offset, original_value,
+    val_print_scalar_formatted (type, embedded_offset, original_value,
 				options, 0, stream);
   else
-    print_decimal_floating (valaddr + embedded_offset * unit_size, type,
-			    stream);
+    {
+      const gdb_byte *valaddr = value_contents_for_printing (original_value);
+
+      print_decimal_floating (valaddr + embedded_offset * unit_size, type,
+			      stream);
+    }
 }
 
 /* generic_val_print helper for TYPE_CODE_COMPLEX.  */
 
 static void
-generic_val_print_complex (struct type *type, const gdb_byte *valaddr,
+generic_val_print_complex (struct type *type,
 			   int embedded_offset, struct ui_file *stream,
-			   const struct value *original_value,
+			   struct value *original_value,
 			   const struct value_print_options *options,
 			   const struct generic_val_print_decorations
 			     *decorations)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
   int unit_size = gdbarch_addressable_memory_unit_size (gdbarch);
+  const gdb_byte *valaddr = value_contents_for_printing (original_value);
 
   fprintf_filtered (stream, "%s", decorations->complex_prefix);
   if (options->format)
-    val_print_scalar_formatted (TYPE_TARGET_TYPE (type), valaddr,
+    val_print_scalar_formatted (TYPE_TARGET_TYPE (type),
 				embedded_offset, original_value, options, 0,
 				stream);
   else
@@ -883,7 +909,7 @@ generic_val_print_complex (struct type *type, const gdb_byte *valaddr,
 		    TYPE_TARGET_TYPE (type), stream);
   fprintf_filtered (stream, "%s", decorations->complex_infix);
   if (options->format)
-    val_print_scalar_formatted (TYPE_TARGET_TYPE (type), valaddr,
+    val_print_scalar_formatted (TYPE_TARGET_TYPE (type),
 				embedded_offset
 				+ type_length_units (TYPE_TARGET_TYPE (type)),
 				original_value, options, 0, stream);
@@ -906,10 +932,10 @@ generic_val_print_complex (struct type *type, const gdb_byte *valaddr,
    output in some small, language-specific ways.  */
 
 void
-generic_val_print (struct type *type, const gdb_byte *valaddr,
+generic_val_print (struct type *type,
 		   int embedded_offset, CORE_ADDR address,
 		   struct ui_file *stream, int recurse,
-		   const struct value *original_value,
+		   struct value *original_value,
 		   const struct value_print_options *options,
 		   const struct generic_val_print_decorations *decorations)
 {
@@ -919,43 +945,44 @@ generic_val_print (struct type *type, const gdb_byte *valaddr,
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_ARRAY:
-      generic_val_print_array (type, valaddr, embedded_offset, address, stream,
+      generic_val_print_array (type, embedded_offset, address, stream,
 			       recurse, original_value, options, decorations);
       break;
 
     case TYPE_CODE_MEMBERPTR:
-      generic_val_print_memberptr (type, valaddr, embedded_offset, stream,
+      generic_val_print_memberptr (type, embedded_offset, stream,
 				   original_value, options);
       break;
 
     case TYPE_CODE_PTR:
-      generic_val_print_ptr (type, valaddr, embedded_offset, stream,
+      generic_val_print_ptr (type, embedded_offset, stream,
 			     original_value, options);
       break;
 
     case TYPE_CODE_REF:
-      generic_val_print_ref (type, valaddr, embedded_offset, stream, recurse,
+    case TYPE_CODE_RVALUE_REF:
+      generic_val_print_ref (type, embedded_offset, stream, recurse,
 			     original_value, options);
       break;
 
     case TYPE_CODE_ENUM:
-      generic_val_print_enum (type, valaddr, embedded_offset, stream,
+      generic_val_print_enum (type, embedded_offset, stream,
 			      original_value, options);
       break;
 
     case TYPE_CODE_FLAGS:
-      generic_val_print_flags (type, valaddr, embedded_offset, stream,
+      generic_val_print_flags (type, embedded_offset, stream,
 			       original_value, options);
       break;
 
     case TYPE_CODE_FUNC:
     case TYPE_CODE_METHOD:
-      generic_val_print_func (type, valaddr, embedded_offset, address, stream,
+      generic_val_print_func (type, embedded_offset, address, stream,
 			      original_value, options);
       break;
 
     case TYPE_CODE_BOOL:
-      generic_val_print_bool (type, valaddr, embedded_offset, stream,
+      generic_val_print_bool (type, embedded_offset, stream,
 			      original_value, options, decorations);
       break;
 
@@ -971,22 +998,22 @@ generic_val_print (struct type *type, const gdb_byte *valaddr,
       /* FALLTHROUGH */
 
     case TYPE_CODE_INT:
-      generic_val_print_int (type, valaddr, embedded_offset, stream,
+      generic_val_print_int (type, embedded_offset, stream,
 			     original_value, options);
       break;
 
     case TYPE_CODE_CHAR:
-      generic_val_print_char (type, unresolved_type, valaddr, embedded_offset,
+      generic_val_print_char (type, unresolved_type, embedded_offset,
 			      stream, original_value, options);
       break;
 
     case TYPE_CODE_FLT:
-      generic_val_print_float (type, valaddr, embedded_offset, stream,
+      generic_val_print_float (type, embedded_offset, stream,
 			       original_value, options);
       break;
 
     case TYPE_CODE_DECFLOAT:
-      generic_val_print_decfloat (type, valaddr, embedded_offset, stream,
+      generic_val_print_decfloat (type, embedded_offset, stream,
 				  original_value, options);
       break;
 
@@ -999,15 +1026,14 @@ generic_val_print (struct type *type, const gdb_byte *valaddr,
       break;
 
     case TYPE_CODE_UNDEF:
-      /* This happens (without TYPE_FLAG_STUB set) on systems which
-         don't use dbx xrefs (NO_DBX_XREFS in gcc) if a file has a
-         "struct foo *bar" and no complete type for struct foo in that
-         file.  */
+      /* This happens (without TYPE_STUB set) on systems which don't use
+         dbx xrefs (NO_DBX_XREFS in gcc) if a file has a "struct foo *bar"
+         and no complete type for struct foo in that file.  */
       fprintf_filtered (stream, _("<incomplete type>"));
       break;
 
     case TYPE_CODE_COMPLEX:
-      generic_val_print_complex (type, valaddr, embedded_offset, stream,
+      generic_val_print_complex (type, embedded_offset, stream,
 				 original_value, options, decorations);
       break;
 
@@ -1022,15 +1048,14 @@ generic_val_print (struct type *type, const gdb_byte *valaddr,
 }
 
 /* Print using the given LANGUAGE the data of type TYPE located at
-   VALADDR + EMBEDDED_OFFSET (within GDB), which came from the
-   inferior at address ADDRESS + EMBEDDED_OFFSET, onto stdio stream
-   STREAM according to OPTIONS.  VAL is the whole object that came
-   from ADDRESS.  VALADDR must point to the head of VAL's contents
-   buffer.
+   VAL's contents buffer + EMBEDDED_OFFSET (within GDB), which came
+   from the inferior at address ADDRESS + EMBEDDED_OFFSET, onto
+   stdio stream STREAM according to OPTIONS.  VAL is the whole object
+   that came from ADDRESS.
 
    The language printers will pass down an adjusted EMBEDDED_OFFSET to
    further helper subroutines as subfields of TYPE are printed.  In
-   such cases, VALADDR is passed down unadjusted, as well as VAL, so
+   such cases, VAL is passed down unadjusted, so
    that VAL can be queried for metadata about the contents data being
    printed, using EMBEDDED_OFFSET as an offset into VAL's contents
    buffer.  For example: "has this field been optimized out", or "I'm
@@ -1042,9 +1067,9 @@ generic_val_print (struct type *type, const gdb_byte *valaddr,
    RECURSE.  */
 
 void
-val_print (struct type *type, const gdb_byte *valaddr, LONGEST embedded_offset,
+val_print (struct type *type, LONGEST embedded_offset,
 	   CORE_ADDR address, struct ui_file *stream, int recurse,
-	   const struct value *val,
+	   struct value *val,
 	   const struct value_print_options *options,
 	   const struct language_defn *language)
 {
@@ -1074,7 +1099,7 @@ val_print (struct type *type, const gdb_byte *valaddr, LONGEST embedded_offset,
 
   if (!options->raw)
     {
-      ret = apply_ext_lang_val_pretty_printer (type, valaddr, embedded_offset,
+      ret = apply_ext_lang_val_pretty_printer (type, embedded_offset,
 					       address, stream, recurse,
 					       val, options, language);
       if (ret)
@@ -1091,7 +1116,7 @@ val_print (struct type *type, const gdb_byte *valaddr, LONGEST embedded_offset,
 
   TRY
     {
-      language->la_val_print (type, valaddr, embedded_offset, address,
+      language->la_val_print (type, embedded_offset, address,
 			      stream, recurse, val,
 			      &local_opts);
     }
@@ -1177,7 +1202,10 @@ common_val_print (struct value *val, struct ui_file *stream, int recurse,
        get a fixed representation of our value.  */
     val = ada_to_fixed_value (val);
 
-  val_print (value_type (val), value_contents_for_printing (val),
+  if (value_lazy (val))
+    value_fetch_lazy (val);
+
+  val_print (value_type (val),
 	     value_embedded_offset (val), value_address (val),
 	     stream, recurse,
 	     val, options, language);
@@ -1197,7 +1225,6 @@ value_print (struct value *val, struct ui_file *stream,
     {
       int r
 	= apply_ext_lang_val_pretty_printer (value_type (val),
-					     value_contents_for_printing (val),
 					     value_embedded_offset (val),
 					     value_address (val),
 					     stream, 0,
@@ -1303,8 +1330,8 @@ val_print_type_code_flags (struct type *type, const gdb_byte *valaddr,
 
 void
 val_print_scalar_formatted (struct type *type,
-			    const gdb_byte *valaddr, LONGEST embedded_offset,
-			    const struct value *val,
+			    LONGEST embedded_offset,
+			    struct value *val,
 			    const struct value_print_options *options,
 			    int size,
 			    struct ui_file *stream)
@@ -1313,7 +1340,6 @@ val_print_scalar_formatted (struct type *type,
   int unit_size = gdbarch_addressable_memory_unit_size (arch);
 
   gdb_assert (val != NULL);
-  gdb_assert (valaddr == value_contents_for_printing_const (val));
 
   /* If we get here with a string format, try again without it.  Go
      all the way back to the language printers, which may call us
@@ -1323,10 +1349,15 @@ val_print_scalar_formatted (struct type *type,
       struct value_print_options opts = *options;
       opts.format = 0;
       opts.deref_ref = 0;
-      val_print (type, valaddr, embedded_offset, 0, stream, 0, val, &opts,
+      val_print (type, embedded_offset, 0, stream, 0, val, &opts,
 		 current_language);
       return;
     }
+
+  /* value_contents_for_printing fetches all VAL's contents.  They are
+     needed to check whether VAL is optimized-out or unavailable
+     below.  */
+  const gdb_byte *valaddr = value_contents_for_printing (val);
 
   /* A scalar object that does not have all bits available can't be
      printed, because all bits contribute to its representation.  */
@@ -1965,10 +1996,10 @@ maybe_print_array_index (struct type *index_type, LONGEST index,
 
 void
 val_print_array_elements (struct type *type,
-			  const gdb_byte *valaddr, LONGEST embedded_offset,
+			  LONGEST embedded_offset,
 			  CORE_ADDR address, struct ui_file *stream,
 			  int recurse,
-			  const struct value *val,
+			  struct value *val,
 			  const struct value_print_options *options,
 			  unsigned int i)
 {
@@ -2066,7 +2097,7 @@ val_print_array_elements (struct type *type,
 
       if (reps > options->repeat_count_threshold)
 	{
-	  val_print (elttype, valaddr, embedded_offset + i * eltlen,
+	  val_print (elttype, embedded_offset + i * eltlen,
 		     address, stream, recurse + 1, val, options,
 		     current_language);
 	  annotate_elt_rep (reps);
@@ -2078,7 +2109,7 @@ val_print_array_elements (struct type *type,
 	}
       else
 	{
-	  val_print (elttype, valaddr, embedded_offset + i * eltlen,
+	  val_print (elttype, embedded_offset + i * eltlen,
 		     address,
 		     stream, recurse + 1, val, options, current_language);
 	  annotate_elt ();
@@ -2179,7 +2210,7 @@ read_string (CORE_ADDR addr, int len, int width, unsigned int fetchlimit,
     {
       /* We want fetchlimit chars, so we might as well read them all in
 	 one operation.  */
-      unsigned int fetchlen = min (len, fetchlimit);
+      unsigned int fetchlen = std::min ((unsigned) len, fetchlimit);
 
       *buffer = (gdb_byte *) xmalloc (fetchlen * width);
       bufptr = *buffer;
@@ -2203,12 +2234,12 @@ read_string (CORE_ADDR addr, int len, int width, unsigned int fetchlimit,
 	 So we choose the minimum of 8 and fetchlimit.  We used to use 200
 	 instead of 8 but 200 is way too big for remote debugging over a
 	  serial line.  */
-      chunksize = min (8, fetchlimit);
+      chunksize = std::min (8u, fetchlimit);
 
       do
 	{
 	  QUIT;
-	  nfetch = min (chunksize, fetchlimit - bufsize);
+	  nfetch = std::min ((unsigned long) chunksize, fetchlimit - bufsize);
 
 	  if (*buffer == NULL)
 	    *buffer = (gdb_byte *) xmalloc (nfetch * width);
@@ -2404,19 +2435,16 @@ generic_emit_char (int c, struct type *type, struct ui_file *stream,
   struct obstack wchar_buf, output;
   struct cleanup *cleanups;
   gdb_byte *buf;
-  struct wchar_iterator *iter;
   int need_escape = 0;
 
   buf = (gdb_byte *) alloca (TYPE_LENGTH (type));
   pack_long (buf, type, c);
 
-  iter = make_wchar_iterator (buf, TYPE_LENGTH (type),
-			      encoding, TYPE_LENGTH (type));
-  cleanups = make_cleanup_wchar_iterator (iter);
+  wchar_iterator iter (buf, TYPE_LENGTH (type), encoding, TYPE_LENGTH (type));
 
   /* This holds the printable form of the wchar_t data.  */
   obstack_init (&wchar_buf);
-  make_cleanup_obstack_free (&wchar_buf);
+  cleanups = make_cleanup_obstack_free (&wchar_buf);
 
   while (1)
     {
@@ -2427,7 +2455,7 @@ generic_emit_char (int c, struct type *type, struct ui_file *stream,
       int print_escape = 1;
       enum wchar_iterate_result result;
 
-      num_chars = wchar_iterate (iter, &result, &chars, &buf, &buflen);
+      num_chars = iter.iterate (&result, &chars, &buf, &buflen);
       if (num_chars < 0)
 	break;
       if (num_chars > 0)
@@ -2481,7 +2509,7 @@ generic_emit_char (int c, struct type *type, struct ui_file *stream,
    storing the result in VEC.  */
 
 static int
-count_next_character (struct wchar_iterator *iter,
+count_next_character (wchar_iterator *iter,
 		      VEC (converted_character_d) **vec)
 {
   struct converted_character *current;
@@ -2492,7 +2520,7 @@ count_next_character (struct wchar_iterator *iter,
       gdb_wchar_t *chars;
 
       tmp.num_chars
-	= wchar_iterate (iter, &tmp.result, &chars, &tmp.buf, &tmp.buflen);
+	= iter->iterate (&tmp.result, &chars, &tmp.buf, &tmp.buflen);
       if (tmp.num_chars > 0)
 	{
 	  gdb_assert (tmp.num_chars < MAX_WCHARS);
@@ -2521,8 +2549,7 @@ count_next_character (struct wchar_iterator *iter,
       while (1)
 	{
 	  /* Get the next character.  */
-	  d.num_chars
-	    = wchar_iterate (iter, &d.result, &chars, &d.buf, &d.buflen);
+	  d.num_chars = iter->iterate (&d.result, &chars, &d.buf, &d.buflen);
 
 	  /* If a character was successfully converted, save the character
 	     into the converted character.  */
@@ -2736,7 +2763,6 @@ generic_printstr (struct ui_file *stream, struct type *type,
   int width = TYPE_LENGTH (type);
   struct obstack wchar_buf, output;
   struct cleanup *cleanup;
-  struct wchar_iterator *iter;
   int finished = 0;
   struct converted_character *last;
   VEC (converted_character_d) *converted_chars;
@@ -2771,10 +2797,10 @@ generic_printstr (struct ui_file *stream, struct type *type,
     }
 
   /* Arrange to iterate over the characters, in wchar_t form.  */
-  iter = make_wchar_iterator (string, length * width, encoding, width);
-  cleanup = make_cleanup_wchar_iterator (iter);
+  wchar_iterator iter (string, length * width, encoding, width);
   converted_chars = NULL;
-  make_cleanup (VEC_cleanup (converted_character_d), &converted_chars);
+  cleanup = make_cleanup (VEC_cleanup (converted_character_d),
+			  &converted_chars);
 
   /* Convert characters until the string is over or the maximum
      number of printed characters has been reached.  */
@@ -2786,7 +2812,7 @@ generic_printstr (struct ui_file *stream, struct type *type,
       QUIT;
 
       /* Grab the next character and repeat count.  */
-      r = count_next_character (iter, &converted_chars);
+      r = count_next_character (&iter, &converted_chars);
 
       /* If less than zero, the end of the input string was reached.  */
       if (r < 0)
@@ -2865,8 +2891,8 @@ val_print_string (struct type *elttype, const char *encoding,
      because finding the null byte (or available memory) is what actually
      limits the fetch.  */
 
-  fetchlimit = (len == -1 ? options->print_max : min (len,
-						      options->print_max));
+  fetchlimit = (len == -1 ? options->print_max : std::min ((unsigned) len,
+							   options->print_max));
 
   err = read_string (addr, len, width, fetchlimit, byte_order,
 		     &buffer, &bytes_read);

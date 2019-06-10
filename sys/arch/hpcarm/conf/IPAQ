@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.80 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: IPAQ,v 1.80.4.1 2019/06/10 22:06:16 christos Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -91,6 +91,11 @@ options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Development and Debugging options
 
 #options 	BOOT_DUMP	# Enable memorydump at boot
@@ -171,11 +176,12 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 		# ip filter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -195,3 +201,5 @@ pseudo-device	biconsdev 1		# build-in console device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+
+include "dev/veriexec.config"

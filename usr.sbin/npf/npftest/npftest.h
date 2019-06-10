@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.h,v 1.14 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npftest.h,v 1.14.14.1 2019/06/10 22:10:35 christos Exp $	*/
 
 /*
  * Public Domain.
@@ -23,6 +23,7 @@
 #define	rumpns_npf_table_test		npf_table_test
 #define	rumpns_npf_state_test		npf_state_test
 #define	rumpns_npf_rule_test		npf_rule_test
+#define	rumpns_npf_conn_test		npf_conn_test
 #define	rumpns_npf_nat_test		npf_nat_test
 #define	rumpns_npf_test_conc		npf_test_conc
 #define	rumpns_npf_test_statetrack	npf_test_statetrack
@@ -34,7 +35,7 @@ void		rumpns_npf_test_init(int (*)(int, const char *, void *),
 		    const char *(*)(int, const void *, char *, socklen_t),
 		    long (*)(void));
 void		rumpns_npf_test_fini(void);
-int		rumpns_npf_test_load(const void *);
+int		rumpns_npf_test_load(const void *, size_t, bool);
 ifnet_t *	rumpns_npf_test_addif(const char *, bool, bool);
 ifnet_t *	rumpns_npf_test_getif(const char *);
 
@@ -48,6 +49,7 @@ bool		rumpns_npf_table_test(bool, void *, size_t);
 bool		rumpns_npf_state_test(bool);
 
 bool		rumpns_npf_rule_test(bool);
+bool		rumpns_npf_conn_test(bool);
 bool		rumpns_npf_nat_test(bool);
 
 int		process_stream(const char *, const char *, ifnet_t *);

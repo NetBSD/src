@@ -1,5 +1,5 @@
 /* BFD back-end for a.out.adobe binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -121,7 +121,8 @@ aout_adobe_callback (bfd *abfd)
 	  goto no_more_sections;
 
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: Unknown section type in a.out.adobe file: %x\n"),
 	     abfd, ext->e_type[0]);
 	  goto no_more_sections;

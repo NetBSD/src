@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_THREAD_DB_H
-#define GDB_THREAD_DB_H 1
+#ifndef NAT_GDB_THREAD_DB_H
+#define NAT_GDB_THREAD_DB_H
 
 #ifdef HAVE_THREAD_DB_H
 #include <thread_db.h>
@@ -41,6 +41,7 @@ typedef td_err_e (td_init_ftype) (void);
 
 typedef td_err_e (td_ta_new_ftype) (struct ps_prochandle * ps,
 				    td_thragent_t **ta);
+typedef td_err_e (td_ta_delete_ftype) (td_thragent_t *ta_p);
 typedef td_err_e (td_ta_map_lwp2thr_ftype) (const td_thragent_t *ta,
 					    lwpid_t lwpid, td_thrhandle_t *th);
 typedef td_err_e (td_ta_thr_iter_ftype) (const td_thragent_t *ta,
@@ -72,4 +73,4 @@ typedef td_err_e (td_thr_tlsbase_ftype) (const td_thrhandle_t *th,
 typedef const char ** (td_symbol_list_ftype) (void);
 typedef td_err_e (td_ta_delete_ftype) (td_thragent_t *);
 
-#endif /* GDB_THREAD_DB_H */
+#endif /* NAT_GDB_THREAD_DB_H */

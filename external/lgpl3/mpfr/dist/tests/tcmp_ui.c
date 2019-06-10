@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp_ui and mpfr_cmp_si.
 
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -55,9 +55,6 @@ if (TCMP_UI_CHECK_NAN >= 0)
   }
 
 #else
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 

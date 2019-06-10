@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/08/30 08:19:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.14.1 2019/06/10 22:02:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -19,9 +19,6 @@ WARNS?=	2
 SRCS=	x68kInit.c x68kConfig.c x68kIo.c x68kMouse.c x68kKbd.c x68kKeyMap.c \
 	x68kFb.c x68kGraph.c x68kText.c
 
-.PATH:	${X11SRCDIR.xorg-server}/Xext
-SRCS+=	dpmsstubs.c
-
 .PATH:	${X11SRCDIR.xorg-server}/Xi
 SRCS+=	stubs.c
 
@@ -33,6 +30,7 @@ SRCS+=	fbcmap_mi.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/hw/netbsd/x68k \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/fb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/render \

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.15 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.15.2.1 2019/06/10 22:07:34 christos Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.15 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.15.2.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -774,11 +774,14 @@ urtw_detach(device_t self, int flags)
 
 	sc->sc_dying = true;
 
+	callout_halt(&sc->scan_to, NULL);
+	callout_halt(&sc->sc_led_ch, NULL);
 	callout_destroy(&sc->scan_to);
 	callout_destroy(&sc->sc_led_ch);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_ledtask);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_ledtask, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (ifp->if_softc != NULL) {
 		bpf_detach(ifp);
@@ -1042,6 +1045,11 @@ urtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct urtw_softc *sc = ic->ic_ifp->if_softc;
 
+	/*
+	 * XXXSMP: This does not wait for the task, if it is in flight,
+	 * to complete.  If this code works at all, it must rely on the
+	 * kernel lock to serialize with the USB task thread.
+	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->scan_to);
 
@@ -4048,7 +4056,7 @@ fail:
 	return error;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_urtw, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_urtw, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $ */
+/* $NetBSD: mfi.c,v 1.58.4.1 2019/06/10 22:07:10 christos Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58.4.1 2019/06/10 22:07:10 christos Exp $");
 
 #include "bio.h"
 
@@ -1053,10 +1053,10 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
 	max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
-		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_max_sgl = uimin(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
 		sc->sc_sgl_size = sizeof(struct mfi_sg_ieee);
 	} else if (sc->sc_64bit_dma) {
-		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_max_sgl = uimin(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
 		sc->sc_sgl_size = sizeof(struct mfi_sg64);
 	} else {
 		sc->sc_max_sgl = max_sgl;
@@ -1879,7 +1879,7 @@ mfi_mgmt(struct mfi_ccb *ccb, struct scsipi_xfer *xs,
 	DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt %#x\n", DEVNAME(ccb->ccb_sc), opc);
 
 	dcmd = &ccb->ccb_frame->mfr_dcmd;
-	memset(dcmd->mdf_mbox, 0, MFI_MBOX_SIZE);
+	memset(dcmd->mdf_mbox.b, 0, MFI_MBOX_SIZE);
 	dcmd->mdf_header.mfh_cmd = MFI_CMD_DCMD;
 	dcmd->mdf_header.mfh_timeout = 0;
 
@@ -1893,7 +1893,7 @@ mfi_mgmt(struct mfi_ccb *ccb, struct scsipi_xfer *xs,
 
 	/* handle special opcodes */
 	if (mbox)
-		memcpy(dcmd->mdf_mbox, mbox, MFI_MBOX_SIZE);
+		memcpy(dcmd->mdf_mbox.b, mbox, MFI_MBOX_SIZE);
 
 	if (dir != MFI_DATA_NONE) {
 		dcmd->mdf_header.mfh_data_len = len;
@@ -2017,7 +2017,7 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 
 	/* get figures */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CONF_GET, MFI_DATA_IN,
 	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
@@ -2141,7 +2141,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CONF_GET, MFI_DATA_IN,
 	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
@@ -2150,7 +2150,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CONF_GET, MFI_DATA_IN,
 	    size, cfg, NULL, false))
 		goto freeme;
 
@@ -2400,7 +2400,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	}
 
 
-	if (mfi_mgmt_internal(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE,
+	if (mfi_mgmt_internal(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE,
 	    0, NULL, mbox, false))
 		goto done;
 
@@ -2433,7 +2433,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CONF_GET, MFI_DATA_IN,
 	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
@@ -2442,7 +2442,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CONF_GET, MFI_DATA_IN,
 	    size, cfg, NULL, false))
 		goto freeme;
 

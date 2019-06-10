@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.68 2017/11/28 12:22:27 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.68.4.1 2019/06/10 22:05:29 christos Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2017 Matthew R. Green
+.\" Copyright (c) 1997-2019 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 28, 2017
+.Dd February 27, 2019
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
 .Op Fl S Ar server_software
+.Op Fl T Ar type timeout
 .Op Fl U Ar username
 .Op Fl Z Ar cert privkey
 .Op Fl c Ar cgibin
@@ -236,6 +237,21 @@ Sets the internal server version to
 .Ar server_software .
 .It Fl s
 Forces logging to be set to stderr always.
+.It Fl T Ar type timeout
+Set the timeout for
+.Ar type
+to
+.Ar timeout .
+The valid values of
+.Ar type
+are
+.Dq ssl timeout ,
+.Dq initial timeout ,
+.Dq header timeout ,
+and
+.Dq request timeout .
+The default values are 30 seconds, 30 seconds, 10 seconds and 600 seconds,
+respectively.
 .It Fl t Ar chrootdir
 Makes
 .Nm
@@ -463,9 +479,7 @@ if a
 .Pa .bzdirect
 file is found (contents are irrelevant)
 .Nm
-will allow direct access even with the
-.Fl r
-option.
+will allow direct access.
 If a
 .Pa .bzredirect
 symbolic link is found,
@@ -489,6 +503,37 @@ will redirect to
 Otherwise provided schema will be used i.e. symbolic link to
 .Em ftp://NetBSD.org/
 will redirect to the provided URL.
+If a
+.Pa .bzremap
+file is found at the root of a (virtual) server, it is expected to contain
+rewrite mappings for URLs.
+.Pp
+These remappings are performed internally in the server before authentication
+happens and can be used to hide implementation details, like the CGI handler
+specific suffix for non cgi scripts in authorized directories.
+.Pp
+The map file consists of lines two paths separated by a colon, where the left
+side needs to exactly match a (sub) path of the request and will be replaced
+by the right side.
+.Pp
+The first match always wins.
+.Pp
+A
+.Pa .bzremap
+file could look like this:
+.Bd -literal
+/nic/update:/auth-dir/updipv4.pl
+.Ed
+.Pp
+The remap file should be short, access to it is slow and needs to happen
+on each request.
+If a request path needs to include a colon
+.Pq Li \&:
+character, it can be escaped
+with a backslash
+.Pq Li \e
+The right hand side of the colon is always used verbatim, no escape sequences
+are interpreted.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -554,7 +599,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20170201.
+version 20190116.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -565,13 +610,13 @@ was written by
 The large list of contributors includes:
 .Bl -dash
 .It
-.An Marc Balmer
-.Aq Mt mbalmer@NetBSD.org
-added Lua support for dynamic content creation
-.It
 .An Christoph Badura
 .Aq Mt bad@bsd.de
 provided Range: header support
+.It
+.An Marc Balmer
+.Aq Mt mbalmer@NetBSD.org
+added Lua support for dynamic content creation
 .It
 .An Sean Boudreau
 .Aq Mt seanb@NetBSD.org
@@ -589,7 +634,7 @@ provided cgi-bin support fixes, and more
 .Aq Mt agc@NetBSD.org
 cleaned up many internal interfaces, made
 .Nm
-linkable as a library and provided the Lua binding.
+linkable as a library and provided the Lua binding
 .It
 .An DEGROOTE Arnaud
 .Aq Mt degroote@NetBSD.org
@@ -599,13 +644,13 @@ provided a fix for daemon mode
 .Aq Mt ad@NetBSD.org
 provided directory indexing support
 .It
-.An Per Ekman
-.Aq Mt pek@pdc.kth.se
-provided a fix for a minor (non-security) buffer overflow condition
-.It
 .An Roland Dowdeswell
 .Aq Mt elric@NetBSD.org
 added support for serving gzipped files and better SSL handling
+.It
+.An Per Ekman
+.Aq Mt pek@pdc.kth.se
+provided a fix for a minor (non-security) buffer overflow condition
 .It
 .An Jun-ichiro itojun Hagino, KAME
 .Aq Mt itojun@iijlab.net
@@ -613,7 +658,8 @@ provided initial IPv6 support
 .It
 .An Martin Husemann
 .Aq Mt martin@NetBSD.org
-provided .bzabsredirect support, and fixed various redirection issues
+provided .bzabsredirect and .bzredir support, and fixed various
+redirection issues
 .It
 .An Arto Huusko
 .Aq Mt arto.huusko@pp2.inet.fi
@@ -644,7 +690,7 @@ provided many fixes and enhancements for the man page
 fixed memory leaks, various issues with userdir support,
 information disclosure issues, added support for using CGI handlers
 with directory indexing, found several security issues and provided
-various other fixes.
+various other fixes
 .It
 .An Arnaud Lacombe
 .Aq Mt alc@NetBSD.org
@@ -662,7 +708,7 @@ provided a cgi-bin fix
 .Aq Mt jmmv@NetBSD.org
 Added the
 .Fl P
-option (pidfile support) and provided some man page fixes.
+option (pidfile support) and provided some man page fixes
 .It
 .An Luke Mewburn
 .Aq Mt lukem@NetBSD.org
@@ -671,7 +717,8 @@ HTTP basic authorization support and much code clean up
 .It
 .An Rajeev V. Pillai
 .Aq Mt rajeev_v_pillai@yahoo.com
-provided several fixes for virtual hosting
+provided several fixes for virtual hosting and directory indexing and
+fixes for CGI
 .It
 .An Jeremy C. Reed
 .Aq Mt reed@NetBSD.org
@@ -693,11 +740,11 @@ provided minor compile fixes and a CGI content map fix
 .Aq Mt rumble@ephemeral.org
 provided the
 .Fl V
-option.
+option
 .It
 .An Thor Lancelot Simon
 .Aq Mt tls@NetBSD.org
-enhanced cgi-bin support.
+enhanced cgi-bin support
 .It
 .An Joerg Sonnenberger
 .Aq Mt joerg@NetBSD.org
@@ -714,7 +761,7 @@ provided http authorization fixes
 .Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
 .It
-Coyote Point provided various CGI fixes.
+Coyote Point provided various CGI fixes
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)

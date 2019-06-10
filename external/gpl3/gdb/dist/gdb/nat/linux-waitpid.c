@@ -1,6 +1,6 @@
 /* Wrapper implementation for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 
 #ifdef GDBSERVER
 /* FIXME: server.h is required for the definition of debug_threads
@@ -29,12 +29,12 @@
 
 #include "linux-nat.h"
 #include "linux-waitpid.h"
-#include "gdb_wait.h"
+#include "common/gdb_wait.h"
 
 /* Print debugging output based on the format string FORMAT and
    its parameters.  */
 
-static inline void
+static inline void ATTRIBUTE_PRINTF (1,2)
 linux_debug (const char *format, ...)
 {
 #ifdef GDBSERVER

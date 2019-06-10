@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.231 2018/05/13 22:42:51 khorben Exp $	*/
+/*	$NetBSD: in.c,v 1.231.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.231 2018/05/13 22:42:51 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.231.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #include "arp.h"
 
@@ -775,7 +775,7 @@ in_ifaddlocal(struct ifaddr *ifa)
 	    (ia->ia_ifp->if_flags & IFF_POINTOPOINT &&
 	    in_hosteq(ia->ia_dstaddr.sin_addr, ia->ia_addr.sin_addr)))
 	{
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
 
@@ -1155,11 +1155,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		ia->ia4_flags |= IN_IFF_DETACHED;
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
-	} else if (hostIsNew && if_do_dad(ifp)
-#if NARP > 0
-	    && ip_dad_count > 0
-#endif
-	)
+	} else if (hostIsNew && if_do_dad(ifp) && ip_dad_enabled())
 		ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
 
 	/*
@@ -1474,10 +1470,11 @@ in_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia4_flags & IN_IFF_DETACHED) {
 			ia->ia4_flags &= ~IN_IFF_DETACHED;
-			if (if_do_dad(ifp) && ia->ia_dad_start != NULL)
+			if (ip_dad_enabled() && if_do_dad(ifp) &&
+			    ia->ia_dad_start != NULL)
 				ia->ia4_flags |= IN_IFF_TENTATIVE;
 			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
-				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		if (ia->ia4_flags & IN_IFF_TENTATIVE) {
@@ -1534,7 +1531,7 @@ in_if_link_down(struct ifnet *ifp)
 			ia->ia4_flags |= IN_IFF_DETACHED;
 			ia->ia4_flags &=
 			    ~(IN_IFF_TENTATIVE | IN_IFF_DUPLICATED);
-			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		s = pserialize_read_enter();

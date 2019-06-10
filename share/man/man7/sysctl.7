@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.128 2018/06/18 02:57:51 eadler Exp $
+.\"	$NetBSD: sysctl.7,v 1.128.2.1 2019/06/10 22:05:41 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd May 5, 2018
+.Dd June 1, 2019
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -278,7 +278,7 @@ privilege may change the value.
 .It kern.arandom	integer	no
 .It kern.argmax	integer	no
 .It kern.boothowto	integer	no
-.It kern.boottime	struct timeval	no
+.It kern.boottime	struct timespec	no
 .It kern.buildinfo	string	no
 .\".It kern.bufq	node	not applicable
 .It kern.ccpu	integer	no
@@ -293,6 +293,7 @@ privilege may change the value.
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
 .It kern.dump_on_panic	integer	yes
+.It kern.expose_address	integer	yes
 .It kern.file	struct file	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
@@ -358,6 +359,7 @@ privilege may change the value.
 .It kern.sched	node	not applicable
 .It kern.securelevel	integer	raise only
 .It kern.somaxkva	integer	yes
+.It kern.sooptions	integer	yes
 .It kern.synchronized_io	integer	no
 .It kern.timecounter	node	not applicable
 .It kern.timex	struct	no
@@ -395,9 +397,11 @@ Flags passed from the boot loader; see
 for the meanings of the flags.
 .It Li kern.boottime ( Dv KERN_BOOTTIME )
 A
-.Vt struct timeval
+.Vt struct timespec
 structure is returned.
 This structure contains the time that the system was booted.
+That time is defined (for this purpose) to be the time at
+which the kernel first started accumulating clock ticks.
 .It Li kern.bufq
 This variable contains information on the
 .Xr bufq 9
@@ -513,6 +517,35 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.expose_address
+Expose kernel addresses in
+.Xr sysctl 3
+calls used by
+.Xr fstat 1
+and
+.Xr sockstat 1 .
+If it is set to
+.Dv 0
+access is not allowed.
+If it is set to
+.Dv 1
+then only processes that have opened
+.Pa /dev/kmem
+can have access.
+If it is set to
+.Dv 2
+every process is allowed.
+Defaults to
+.Dv 0
+for
+.Dv KASLR
+kernels
+and
+.Dv 1
+otherwise.
+Allowing general access renders KASLR ineffective; allowing only kmem
+accessing programs weakens KASLR if those programs can be subverted
+to leak the addresses.
 .It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
 .Xr panic 9 .
@@ -993,6 +1026,7 @@ The fourth level name is as follows:
 .It Dv KERN_PROC_NARGV	The number of argv strings
 .It Dv KERN_PROC_NENV	The number of environ strings
 .It Dv KERN_PROC_PATHNAME	The full pathname of the executable
+.It Dv KERN_PROC_CWD	The current working directory
 .El
 .It Li kern.profiling ( Dv KERN_PROF )
 Return profiling information about the kernel.
@@ -1049,8 +1083,7 @@ Return the offset of real time clock from UTC in minutes.
 .It Li kern.saved_ids ( Dv KERN_SAVED_IDS )
 Returns 1 if saved set-group and saved set-user ID is available.
 .It Li kern.sbmax ( Dv KERN_SBMAX )
-Maximum socket buffer size.
-.\" XXX units?
+Maximum socket buffer size in bytes.
 .It Li kern.securelevel ( Dv KERN_SECURELVL )
 See
 .Xr secmodel_securelevel 9 .
@@ -1153,8 +1186,14 @@ See
 .Xr sched 3 .
 .El
 .It Li kern.somaxkva ( Dv KERN_SOMAXKVA )
-Maximum amount of kernel memory to be used for socket buffers.
-.\" XXX units?
+Maximum amount of kernel memory to be used for socket buffers in bytes.
+.It Li kern.sooptions
+Set the default socket option flags for
+.Xr socket 2
+creation.
+See
+.Xr setsockopt 2
+for a list of supported flags.
 .It Li kern.synchronized_io ( Dv KERN_SYNCHRONIZED_IO )
 Returns 1 if the
 .St -p1003.1b-93
@@ -1231,6 +1270,7 @@ Resource usage for the current user.
 .It kern.uidinfo.proccnt	integer	no
 .It kern.uidinfo.lwpcnt	integer	no
 .It kern.uidinfo.lockcnt	integer	no
+.It kern.uidinfo.semcnt	integer	no
 .It kern.uidinfo.sbsize	integer	no
 .El
 .Bl -tag -width "123456"
@@ -1241,6 +1281,8 @@ Returns the number of active threads for the current user; the first thread
 of each process is not counted.
 .It Li kern.uidinfo.lockcnt
 Number of locks held by the current user.
+.It Li kern.uidinfo.semcnt
+Number of semaphores held by the current user.
 .It Li kern.uidinfo.sbsize
 Number of bytes in socket buffers allocated to the current user.
 .El
@@ -1492,7 +1534,7 @@ This cannot be set to less than 1024 or greater than 65535.
 .It Li ip.checkinterface
 If set to non-zero, the host will reject packets addressed to it
 that arrive on an interface not bound to that address.
-Currently, this must be disabled if ipnat is used to translate the
+Currently, this must be disabled if NAT is used to translate the
 destination address to another local interface, or if addresses
 are added to the loopback interface instead of the interface where
 the packets for those packets are received.
@@ -2046,7 +2088,7 @@ The variables are as follows:
 .It Li debug
 Turn on debugging message from within the kernel.
 The value is a bitmap, as defined in
-.In netkey/key_debug.h .
+.In netipsec/key_debug.h .
 .It Li enabled
 Control processing of IPsec control messages.
 .Bl -tag -width indent
@@ -2126,9 +2168,9 @@ The variables are as follows:
 .It Li dgram.pcblist
 The Protocol Control Block list structure for datagram sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li dgram.recvspace
 The default datagram receive buffer size.
 .It Li dgram.sendspace
@@ -2136,15 +2178,15 @@ The default datagram send buffer size.
 .It Li seqpacket.pcblist
 The Protocol Control Block list structure for Sequential Packet sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.pcblist
 The Protocol Control Block list structure for stream sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.recvspace
 The default stream receive buffer size.
 .It Li stream.sendspace
@@ -2607,7 +2649,7 @@ See
 .Xr secmodel 9
 for more information.
 .It Li security.pax
-Settings for PaX -- exploit mitigation features.
+Settings for PaX \(em exploit mitigation features.
 For more information on any of the PaX features, please see
 .Xr paxctl 8
 and

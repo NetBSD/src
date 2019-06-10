@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ if {$tool == ""} {
 load_lib libgloss.exp
 load_lib cache.exp
 load_lib gdb-utils.exp
+load_lib memory.exp
 
 global GDB
 
@@ -116,6 +117,10 @@ if ![info exists env(EXEEXT)] {
 set octal "\[0-7\]+"
 
 set inferior_exited_re "(\\\[Inferior \[0-9\]+ \\(.*\\) exited)"
+
+# A regular expression that matches a value history number.
+# E.g., $1, $2, etc.
+set valnum_re "\\\$$decimal"
 
 ### Only procedures should come after this point.
 
@@ -519,7 +524,7 @@ proc runto { function args } {
 	}
 	-re "The target does not support running in non-stop mode.\r\n$gdb_prompt $" {
 	    if { $print_fail } {
-		unsupported "Non-stop mode not supported"
+		unsupported "non-stop mode not supported"
 	    }
 	    return 0
 	}
@@ -1722,12 +1727,6 @@ proc skip_go_tests {} {
     return 0
 }
 
-# Return a 1 if I don't even want to try to test java.
-
-proc skip_java_tests {} {
-    return 0
-}
-
 # Return a 1 if I don't even want to try to test D.
 
 proc skip_d_tests {} {
@@ -1923,6 +1922,14 @@ proc foreach_with_prefix {var list body} {
 	}
     }
 }
+
+# Like TCL's native proc, but defines a procedure that wraps its body
+# within 'with_test_prefix "$proc_name" { ... }'.
+proc proc_with_prefix {name arguments body} {
+    # Define the advertised proc.
+    proc $name $arguments [list with_test_prefix $name $body]
+}
+
 
 # Run BODY in the context of the caller.  After BODY is run, the variables
 # listed in VARS will be reset to the values they had before BODY was run.
@@ -2176,6 +2183,13 @@ proc with_timeout_factor { factor body } {
 # Return 1 if _Complex types are supported, otherwise, return 0.
 
 gdb_caching_proc support_complex_tests {
+
+    if { [gdb_skip_float_test] } {
+	# If floating point is not supported, _Complex is not
+	# supported.
+	return 0
+    }
+
     # Set up, compile, and execute a test program containing _Complex types.
     # Include the current process ID in the file names to prevent conflicts
     # with invocations for multiple testsuites.
@@ -2953,7 +2967,8 @@ proc skip_hw_breakpoint_tests {} {
 	 || [istarget "x86_64-*-*"]
 	 || [istarget "ia64-*-*"] 
 	 || [istarget "arm*-*-*"]
-	 || [istarget "aarch64*-*-*"]} {
+	 || [istarget "aarch64*-*-*"]
+	 || [istarget "s390*-*-*"] } {
 	return 0
     }
 
@@ -3136,7 +3151,7 @@ gdb_caching_proc target_is_gdbserver {
     global gdb_prompt
 
     set is_gdbserver -1
-    set test "Probing for GDBserver"
+    set test "probing for GDBserver"
 
     gdb_test_multiple "monitor help" $test {
 	-re "The following monitor commands are supported.*Quit GDBserver.*$gdb_prompt $" {
@@ -3288,12 +3303,8 @@ proc get_compiler_info {{arg ""}} {
     }
 
     # Set the legacy symbols.
-    set gcc_compiled     0
-    if { [regexp "^gcc-1-" "$compiler_info" ] } { set gcc_compiled 1 }
-    if { [regexp "^gcc-2-" "$compiler_info" ] } { set gcc_compiled 2 }
-    if { [regexp "^gcc-3-" "$compiler_info" ] } { set gcc_compiled 3 }
-    if { [regexp "^gcc-4-" "$compiler_info" ] } { set gcc_compiled 4 }
-    if { [regexp "^gcc-5-" "$compiler_info" ] } { set gcc_compiled 5 }
+    set gcc_compiled 0
+    regexp "^gcc-(\[0-9\]+)-" "$compiler_info" matchall gcc_compiled
 
     # Log what happened.
     verbose -log "get_compiler_info: $compiler_info"
@@ -3592,7 +3603,7 @@ proc gdb_compile_pthreads {source dest type options} {
         }
     }
     if {!$built_binfile} {
-	unsupported "Couldn't compile [file tail $source]: ${why_msg}"
+	unsupported "couldn't compile [file tail $source]: ${why_msg}"
         return -1
     }
 }
@@ -3721,7 +3732,7 @@ proc gdb_compile_shlib_pthreads {sources dest options} {
         }
     }
     if {!$built_binfile} {
-        unsupported "Couldn't compile $sources: ${why_msg}"
+        unsupported "couldn't compile $sources: ${why_msg}"
         return -1
     }
 }
@@ -3761,7 +3772,7 @@ proc gdb_compile_objc {source dest type options} {
         }
     }
     if {!$built_binfile} {
-        unsupported "Couldn't compile [file tail $source]: ${why_msg}"
+        unsupported "couldn't compile [file tail $source]: ${why_msg}"
         return -1
     }
 }
@@ -4900,13 +4911,101 @@ proc rerun_to_main {} {
   }
 }
 
-# Print a message and return true if a test should be skipped
-# due to lack of floating point suport.
+# Return true if a test should be skipped due to lack of floating
+# point support or GDB can't fetch the contents from floating point
+# registers.
 
-proc gdb_skip_float_test { msg } {
+gdb_caching_proc gdb_skip_float_test {
     if [target_info exists gdb,skip_float_tests] {
-	verbose "Skipping test '$msg': no float tests."
 	return 1
+    }
+
+    # There is an ARM kernel ptrace bug that hardware VFP registers
+    # are not updated after GDB ptrace set VFP registers.  The bug
+    # was introduced by kernel commit 8130b9d7b9d858aa04ce67805e8951e3cb6e9b2f
+    # in 2012 and is fixed in e2dfb4b880146bfd4b6aa8e138c0205407cebbaf
+    # in May 2016.  In other words, kernels older than 4.6.3, 4.4.14,
+    # 4.1.27, 3.18.36, and 3.14.73 have this bug.
+    # This kernel bug is detected by check how does GDB change the
+    # program result by changing one VFP register.
+    if { [istarget "arm*-*-linux*"] } {
+
+	set compile_flags {debug nowarnings }
+
+	# Set up, compile, and execute a test program having VFP
+	# operations.
+	set src [standard_temp_file arm_vfp[pid].c]
+	set exe [standard_temp_file arm_vfp[pid].x]
+
+	gdb_produce_source $src {
+	    int main() {
+		double d = 4.0;
+		int ret;
+
+		asm ("vldr d0, [%0]" : : "r" (&d));
+		asm ("vldr d1, [%0]" : : "r" (&d));
+		asm (".global break_here\n"
+		     "break_here:");
+		asm ("vcmp.f64 d0, d1\n"
+		     "vmrs APSR_nzcv, fpscr\n"
+		     "bne L_value_different\n"
+		     "movs %0, #0\n"
+		     "b L_end\n"
+		     "L_value_different:\n"
+		     "movs %0, #1\n"
+		     "L_end:\n" : "=r" (ret) :);
+
+		/* Return $d0 != $d1.  */
+		return ret;
+	    }
+	}
+
+	verbose "compiling testfile $src" 2
+	set lines [gdb_compile $src $exe executable $compile_flags]
+	file delete $src
+
+	if ![string match "" $lines] then {
+	    verbose "testfile compilation failed, returning 1" 2
+	    return 0
+	}
+
+	# No error message, compilation succeeded so now run it via gdb.
+	# Run the test up to 5 times to detect whether ptrace can
+	# correctly update VFP registers or not.
+	set skip_vfp_test 0
+	for {set i 0} {$i < 5} {incr i} {
+	    global gdb_prompt srcdir subdir
+
+	    gdb_exit
+	    gdb_start
+	    gdb_reinitialize_dir $srcdir/$subdir
+	    gdb_load "$exe"
+
+	    runto_main
+	    gdb_test "break *break_here"
+	    gdb_continue_to_breakpoint "break_here"
+
+	    # Modify $d0 to a different value, so the exit code should
+	    # be 1.
+	    gdb_test "set \$d0 = 5.0"
+
+	    set test "continue to exit"
+	    gdb_test_multiple "continue" "$test" {
+		-re "exited with code 01.*$gdb_prompt $" {
+		}
+		-re "exited normally.*$gdb_prompt $" {
+		    # However, the exit code is 0.  That means something
+		    # wrong in setting VFP registers.
+		    set skip_vfp_test 1
+		    break
+		}
+	    }
+	}
+
+	gdb_exit
+	remote_file build delete $exe
+
+	return $skip_vfp_test
     }
     return 0
 }
@@ -4931,8 +5030,13 @@ proc gdb_skip_bogus_test { msg } {
 # NOTE: This must be called while gdb is *not* running.
 
 gdb_caching_proc gdb_skip_xml_test {
+    global gdb_spawn_id
     global gdb_prompt
     global srcdir
+
+    if { [info exists gdb_spawn_id] } {
+        error "GDB must not be running in gdb_skip_xml_tests."
+    }
 
     set xml_file [gdb_remote_download host "${srcdir}/gdb.xml/trivial.xml"]
 
@@ -5419,10 +5523,18 @@ proc prepare_for_testing { testname executable {sources ""} {options {debug}}} {
     return 0
 }
 
-proc get_valueof { fmt exp default } {
+# Retrieve the value of EXP in the inferior, represented in format
+# specified in FMT (using "printFMT").  DEFAULT is used as fallback if
+# print fails.  TEST is the test message to use.  It can be omitted,
+# in which case a test message is built from EXP.
+
+proc get_valueof { fmt exp default {test ""} } {
     global gdb_prompt
 
-    set test "get valueof \"${exp}\""
+    if {$test == "" } {
+	set test "get valueof \"${exp}\""
+    }
+
     set val ${default}
     gdb_test_multiple "print${fmt} ${exp}" "$test" {
 	-re "\\$\[0-9\]* = (.*)\[\r\n\]*$gdb_prompt $" {
@@ -5436,10 +5548,18 @@ proc get_valueof { fmt exp default } {
     return ${val}
 }
 
-proc get_integer_valueof { exp default } {
+# Retrieve the value of EXP in the inferior, as a signed decimal value
+# (using "print /d").  DEFAULT is used as fallback if print fails.
+# TEST is the test message to use.  It can be omitted, in which case
+# a test message is built from EXP.
+
+proc get_integer_valueof { exp default {test ""} } {
     global gdb_prompt
 
-    set test "get integer valueof \"${exp}\""
+    if {$test == ""} {
+	set test "get integer valueof \"${exp}\""
+    }
+
     set val ${default}
     gdb_test_multiple "print /d ${exp}" "$test" {
 	-re "\\$\[0-9\]* = (\[-\]*\[0-9\]*).*$gdb_prompt $" {
@@ -5455,7 +5575,7 @@ proc get_integer_valueof { exp default } {
 
 # Retrieve the value of EXP in the inferior, as an hexadecimal value
 # (using "print /x").  DEFAULT is used as fallback if print fails.
-# TEST is the test message to use.  If can be ommitted, in which case
+# TEST is the test message to use.  It can be omitted, in which case
 # a test message is built from EXP.
 
 proc get_hexadecimal_valueof { exp default {test ""} } {
@@ -5475,8 +5595,12 @@ proc get_hexadecimal_valueof { exp default {test ""} } {
     return ${val}
 }
 
-proc get_sizeof { type default } {
-    return [get_integer_valueof "sizeof (${type})" $default]
+# Retrieve the size of TYPE in the inferior, as a decimal value.  DEFAULT
+# is used as fallback if print fails.  TEST is the test message to use.
+# It can be omitted, in which case a test message is 'sizeof (TYPE)'.
+
+proc get_sizeof { type default {test ""} } {
+    return [get_integer_valueof "sizeof (${type})" $default $test]
 }
 
 proc get_target_charset { } {
@@ -5494,6 +5618,30 @@ proc get_target_charset { } {
     # Pick a reasonable default.
     warning "Unable to read target-charset."
     return "UTF-8"
+}
+
+# Get the address of VAR.
+
+proc get_var_address { var } {
+    global gdb_prompt hex
+
+    # Match output like:
+    # $1 = (int *) 0x0
+    # $5 = (int (*)()) 0
+    # $6 = (int (*)()) 0x24 <function_bar>
+
+    gdb_test_multiple "print &${var}" "get address of ${var}" {
+	-re "\\\$\[0-9\]+ = \\(.*\\) (0|$hex)( <${var}>)?\[\r\n\]+${gdb_prompt} $"
+	{
+	    pass "get address of ${var}"
+	    if { $expect_out(1,string) == "0" } {
+		return "0x0"
+	    } else {
+		return $expect_out(1,string)
+	    }
+	}
+    }
+    return ""
 }
 
 # Get the current value for remotetimeout and return it.
@@ -5885,6 +6033,41 @@ proc capture_command_output { command prefix } {
 
 proc multi_line { args } {
     return [join $args "\r\n"]
+}
+
+# Similar to the above, but while multi_line is meant to be used to
+# match GDB output, this one is meant to be used to build strings to
+# send as GDB input.
+
+proc multi_line_input { args } {
+    return [join $args "\n"]
+}
+
+# Return the version of the DejaGnu framework.
+#
+# The return value is a list containing the major, minor and patch version
+# numbers.  If the version does not contain a minor or patch number, they will
+# be set to 0.  For example:
+#
+#   1.6   -> {1 6 0}
+#   1.6.1 -> {1 6 1}
+#   2     -> {2 0 0}
+
+proc dejagnu_version { } {
+    # The frame_version variable is defined by DejaGnu, in runtest.exp.
+    global frame_version
+
+    verbose -log "DejaGnu version: $frame_version"
+    verbose -log "Expect version: [exp_version]"
+    verbose -log "Tcl version: [info tclversion]"
+
+    set dg_ver [split $frame_version .]
+
+    while { [llength $dg_ver] < 3 } {
+	lappend dg_ver 0
+    }
+
+    return $dg_ver
 }
 
 # Always load compatibility stuff.

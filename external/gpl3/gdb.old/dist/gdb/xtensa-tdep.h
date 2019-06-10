@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -103,7 +103,7 @@ typedef struct
 
 typedef struct 
 {
-  char* name;             	/* Register name.  */
+  const char *name;            	/* Register name.  */
   int offset;             	/* Offset.  */
   xtensa_register_type_t type;  /* Register type.  */
   xtensa_register_group_t group;/* Register group.  */
@@ -204,6 +204,7 @@ struct gdbarch_tdep
   int lcount_regnum;
   int sar_regnum;		/* Register number of SAR.  */
   int litbase_regnum;		/* Register number of LITBASE.  */
+  int threadptr_regnum;		/* Register number of THREADPTR.  */
 
   int interrupt_regnum;		/* Register number for interrupt.  */
   int interrupt2_regnum;	/* Register number for interrupt2.  */

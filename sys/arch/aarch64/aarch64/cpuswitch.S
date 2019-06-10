@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,9 +33,11 @@
 #include <aarch64/locore.h>
 #include "assym.h"
 
+#include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1 2018/04/01 04:35:03 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $")
 
 /*
  * At IPL_SCHED:
@@ -64,27 +66,23 @@ ENTRY_NP(cpu_switchto)
 	 */
 	mov	x4, sp 
 	mrs	x5, cpacr_el1
-#if L_MD_KTF + 8 == L_MD_CPACR
-	stp	x4, x5, [x0, #L_MD_KTF]
-#else
-	str	x4, [x0, #L_MD_KTF]
 	str	x5, [x0, #L_MD_CPACR]
-#endif
+	ldr	x6, [x0, #L_PCB]	/* x6 = lwp_getpcb(oldlwp) */
+	str	x4, [x6, #PCB_TF]
 
 	/* We are done with the old lwp */
 
 .Lrestore_lwp:
-#if L_MD_KTF + 8 == L_MD_CPACR
-	ldp	x4, x5, [x1, #L_MD_KTF]	/* get trapframe ptr and cpacr_el1 */
-#else
-	ldr	x4, [x1, #L_MD_KTF]	/* get trapframe ptr (aka SP) */
+	DISABLE_INTERRUPT
+	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
+	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */
 	ldr	x5, [x1, #L_MD_CPACR]	/* get cpacr_el1 */
-#endif
 	mov	sp, x4			/* restore stack pointer */
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
 
 	mrs	x3, tpidr_el1
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
+	ENABLE_INTERRUPT
 
 	/*
 	 * Restore callee save registers.
@@ -119,6 +117,7 @@ ENTRY_NP(cpu_switchto_softint)
 	sub	sp, sp, #TF_SIZE	/* make switchframe */
 	adr	x2, softint_cleanup	/* return address for cpu_switchto() */
 	mov	x20, lr			/* x20 := original lr */
+	mrs	x19, daif		/* x19 := original interrupt mask */
 	stp	x19, x20, [sp, #TF_X19]
 	stp	x21, x22, [sp, #TF_X21]
 	stp	x23, x24, [sp, #TF_X23]
@@ -131,13 +130,17 @@ ENTRY_NP(cpu_switchto_softint)
 	ldr	x19, [x3, #CI_CURLWP]	/* x19 := curcpu()->ci_curlwp */
 	mov	x4, sp
 	mrs	x5, cpacr_el1
-#if L_MD_KTF + 8 == L_MD_CPACR
-	stp	x4, x5, [x19, #L_MD_KTF]
-#else
-	str	x4, [x19, #L_MD_KTF]
+	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
+	str	x4, [x6, #PCB_TF]
 	str	x5, [x19, #L_MD_CPACR]
-#endif
 	str	x0, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
+
+#ifdef KASAN
+	/* clear the new stack */
+	stp	x0, x1, [sp, #-16]!
+	bl	_C_LABEL(kasan_softint)
+	ldp	x0, x1, [sp], #16
+#endif
 
 	/* onto new stack */
 	ldr	x4, [x0, #L_MD_UTF]
@@ -153,16 +156,16 @@ ENTRY_NP(cpu_switchto_softint)
 	mrs	x3, tpidr_el1
 	DISABLE_INTERRUPT
 	str	x19, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
-#if L_MD_KTF + 8 == L_MD_CPACR
-	ldp	x4, x5, [x19, #L_MD_KTF]
-#else
-	ldr	x4, [x19, #L_MD_KTF]	/* x4 := pinned_lwp->l_md_ktf */
+	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
+	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
 	ldr	x5, [x19, #L_MD_CPACR]	/* x5 := pinned_lwp->l_md_cpacr */
-#endif
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
-	ENABLE_INTERRUPT
+
+	ldp	x19, x20, [sp, #TF_X19]
+	msr	daif, x19		/* restore interrupt mask */
 	mov	lr, x20			/* restore pinned_lwp lr */
+
 	add	sp, sp, #TF_SIZE	/* unwind switchframe */
 	ldp	x19, x20, [sp], #16	/* restore */
 	ret
@@ -188,7 +191,8 @@ ENTRY_NP(softint_cleanup)
 	str	w2, [x3, #CI_MTX_COUNT]
 	str	wzr, [x0, #L_CTXSWTCH]	/* softlwp->l_ctxswtch = 0 */
 
-	ldp	x19, x20, [sp], #16
+	msr	daif, x19		/* restore interrupt mask */
+	ldp	x19, x20, [sp], #16	/* restore */
 	ret
 END(softint_cleanup)
 
@@ -200,13 +204,6 @@ END(softint_cleanup)
  *	x28 = arg
  */
 ENTRY_NP(lwp_trampoline)
-#if defined(MULTIPROCESSOR)
-	mov	x19, x0
-	mov	x20, x1
-	bl	_C_LABEL(proc_trampoline_mp)
-	mov	x1, x20
-	mov	x0, x19
-#endif
 	bl	_C_LABEL(lwp_startup)
 
 	/*
@@ -315,6 +312,9 @@ ENTRY_NP(el0_trap_exit)
 
 	ldr	x0, [x9, #L_PRIVATE]	/* tpidr_el0 = curlwp->l_private */
 	msr	tpidr_el0, x0
+#ifdef COMPAT_NETBSD32
+	msr	tpidrro_el0, x0
+#endif
 
 	unwind_x3_x30
 
@@ -328,6 +328,13 @@ ENTRY_NP(el0_trap_exit)
 	msr	elr_el1, x0		/* exception pc */
 	msr	spsr_el1, x1		/* exception pstate */
 	msr	sp_el0, x2		/* restore EL0 stack */
+
+	/* if the process is traced, enable MDSCR_EL1.SS */
+	tbz	x1, #SPSR_SS_SHIFT, 1f
+	mrs	x0, mdscr_el1
+	orr	x0, x0, #MDSCR_SS
+	msr	mdscr_el1, x0
+1:
 
 	unwind_x0_x2
 
@@ -344,24 +351,6 @@ ENTRY_NP(cpu_Debugger)
 	ret
 END(cpu_Debugger)
 #endif /* DDB */
-
-#ifdef MULTIPROCESSOR
-/*
- * void
- * cpu_spinup_trampoline(int cpu_index)
- * {
- *      ci := tp == cpu_info[cpu_index]
- *      ci->ci_curlwp = ci->ci_data.ci_idlelwp;
- *      sp := ci->ci_curlwp->l_addr + USPACE - sizeof(struct trapframe)
- *      cpu_hatch(ci);
- *      jump to idle_loop() to join the cpu pool.
- * }
- */
-ENTRY_NP(cpu_spinup_trampoline)
-	bl	_C_LABEL(cpu_hatch)
-	b	_C_LABEL(cpu_idle)
-END(cpu_spinup_trampoline)
-#endif
 
 /*
  * int cpu_set_onfault(struct faultbuf *fb)

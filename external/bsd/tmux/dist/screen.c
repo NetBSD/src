@@ -24,10 +24,52 @@
 
 #include "tmux.h"
 
+/* Selected area in screen. */
+struct screen_sel {
+	int		 hidden;
+	int		 rectangle;
+	int		 modekeys;
+
+	u_int		 sx;
+	u_int		 sy;
+
+	u_int		 ex;
+	u_int		 ey;
+
+	struct grid_cell cell;
+};
+
+/* Entry on title stack. */
+struct screen_title_entry {
+	char				*text;
+
+	TAILQ_ENTRY(screen_title_entry)	 entry;
+};
+TAILQ_HEAD(screen_titles, screen_title_entry);
+
 static void	screen_resize_x(struct screen *, u_int);
 static void	screen_resize_y(struct screen *, u_int);
 
 static void	screen_reflow(struct screen *, u_int);
+
+/* Free titles stack. */
+static void
+screen_free_titles(struct screen *s)
+{
+	struct screen_title_entry	*title_entry;
+
+	if (s->titles == NULL)
+		return;
+
+	while ((title_entry = TAILQ_FIRST(s->titles)) != NULL) {
+		TAILQ_REMOVE(s->titles, title_entry, entry);
+		free(title_entry->text);
+		free(title_entry);
+	}
+
+	free(s->titles);
+	s->titles = NULL;
+}
 
 /* Create a new screen. */
 void
@@ -35,10 +77,12 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 {
 	s->grid = grid_create(sx, sy, hlimit);
 	s->title = xstrdup("");
+	s->titles = NULL;
 
 	s->cstyle = 0;
 	s->ccolour = xstrdup("");
 	s->tabs = NULL;
+	s->sel = NULL;
 
 	screen_reinit(s);
 }
@@ -60,16 +104,21 @@ screen_reinit(struct screen *s)
 	grid_clear_lines(s->grid, s->grid->hsize, s->grid->sy, 8);
 
 	screen_clear_selection(s);
+	screen_free_titles(s);
 }
 
 /* Destroy a screen. */
 void
 screen_free(struct screen *s)
 {
+	free(s->sel);
 	free(s->tabs);
 	free(s->title);
 	free(s->ccolour);
+
 	grid_destroy(s->grid);
+
+	screen_free_titles(s);
 }
 
 /* Reset tabs to default, eight spaces apart. */
@@ -110,6 +159,43 @@ screen_set_title(struct screen *s, const char *title)
 	utf8_stravis(&s->title, title, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 }
 
+/* Push the current title onto the stack. */
+void
+screen_push_title(struct screen *s)
+{
+	struct screen_title_entry *title_entry;
+
+	if (s->titles == NULL) {
+		s->titles = xmalloc(sizeof *s->titles);
+		TAILQ_INIT(s->titles);
+	}
+	title_entry = xmalloc(sizeof *title_entry);
+	title_entry->text = xstrdup(s->title);
+	TAILQ_INSERT_HEAD(s->titles, title_entry, entry);
+}
+
+/*
+ * Pop a title from the stack and set it as the screen title. If the stack is
+ * empty, do nothing.
+ */
+void
+screen_pop_title(struct screen *s)
+{
+	struct screen_title_entry *title_entry;
+
+	if (s->titles == NULL)
+		return;
+
+	title_entry = TAILQ_FIRST(s->titles);
+	if (title_entry != NULL) {
+		screen_set_title(s, title_entry->text);
+
+		TAILQ_REMOVE(s->titles, title_entry, entry);
+		free(title_entry->text);
+		free(title_entry);
+	}
+}
+
 /* Resize screen. */
 void
 screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
@@ -128,7 +214,8 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		 * is simpler and more reliable so let's do that.
 		 */
 		screen_reset_tabs(s);
-	}
+	} else
+		reflow = 0;
 
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy);
@@ -211,9 +298,8 @@ screen_resize_y(struct screen *s, u_int sy)
 		s->cy -= needed;
 	}
 
-	/* Resize line arrays. */
-	gd->linedata = xreallocarray(gd->linedata, gd->hsize + sy,
-	    sizeof *gd->linedata);
+	/* Resize line array. */
+	grid_adjust_lines(gd, gd->hsize + sy);
 
 	/* Size increasing. */
 	if (sy > oldy) {
@@ -236,7 +322,7 @@ screen_resize_y(struct screen *s, u_int sy)
 
 		/* Then fill the rest in with blanks. */
 		for (i = gd->hsize + sy - needed; i < gd->hsize + sy; i++)
-			memset(&gd->linedata[i], 0, sizeof gd->linedata[i]);
+			memset(grid_get_line(gd, i), 0, sizeof(struct grid_line));
 	}
 
 	/* Set the new size, and reset the scroll region. */
@@ -248,51 +334,49 @@ screen_resize_y(struct screen *s, u_int sy)
 /* Set selection. */
 void
 screen_set_selection(struct screen *s, u_int sx, u_int sy,
-    u_int ex, u_int ey, u_int rectflag, struct grid_cell *gc)
+    u_int ex, u_int ey, u_int rectangle, int modekeys, struct grid_cell *gc)
 {
-	struct screen_sel	*sel = &s->sel;
+	if (s->sel == NULL)
+		s->sel = xcalloc(1, sizeof *s->sel);
 
-	memcpy(&sel->cell, gc, sizeof sel->cell);
-	sel->flag = 1;
-	sel->hidden = 0;
+	memcpy(&s->sel->cell, gc, sizeof s->sel->cell);
+	s->sel->hidden = 0;
+	s->sel->rectangle = rectangle;
+	s->sel->modekeys = modekeys;
 
-	sel->rectflag = rectflag;
-
-	sel->sx = sx; sel->sy = sy;
-	sel->ex = ex; sel->ey = ey;
+	s->sel->sx = sx;
+	s->sel->sy = sy;
+	s->sel->ex = ex;
+	s->sel->ey = ey;
 }
 
 /* Clear selection. */
 void
 screen_clear_selection(struct screen *s)
 {
-	struct screen_sel	*sel = &s->sel;
-
-	sel->flag = 0;
-	sel->hidden = 0;
-	sel->lineflag = LINE_SEL_NONE;
+	free(s->sel);
+	s->sel = NULL;
 }
 
 /* Hide selection. */
 void
 screen_hide_selection(struct screen *s)
 {
-	struct screen_sel	*sel = &s->sel;
-
-	sel->hidden = 1;
+	if (s->sel != NULL)
+		s->sel->hidden = 1;
 }
 
 /* Check if cell in selection. */
 int
 screen_check_selection(struct screen *s, u_int px, u_int py)
 {
-	struct screen_sel	*sel = &s->sel;
+	struct screen_sel	*sel = s->sel;
 	u_int			 xx;
 
-	if (!sel->flag || sel->hidden)
+	if (sel == NULL || sel->hidden)
 		return (0);
 
-	if (sel->rectflag) {
+	if (sel->rectangle) {
 		if (sel->sy < sel->ey) {
 			/* start line < end line -- downward selection. */
 			if (py < sel->sy || py > sel->ey)
@@ -385,10 +469,10 @@ void
 screen_select_cell(struct screen *s, struct grid_cell *dst,
     const struct grid_cell *src)
 {
-	if (!s->sel.flag || s->sel.hidden)
+	if (s->sel == NULL || s->sel->hidden)
 		return;
 
-	memcpy(dst, &s->sel.cell, sizeof *dst);
+	memcpy(dst, &s->sel->cell, sizeof *dst);
 
 	utf8_copy(&dst->data, &src->data);
 	dst->attr = dst->attr & ~GRID_ATTR_CHARSET;
@@ -400,14 +484,5 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 static void
 screen_reflow(struct screen *s, u_int new_x)
 {
-	struct grid	*old = s->grid;
-	u_int		 change;
-
-	s->grid = grid_create(old->sx, old->sy, old->hlimit);
-
-	change = grid_reflow(s->grid, old, new_x);
-	if (change < s->cy)
-		s->cy -= change;
-	else
-		s->cy = 0;
+	grid_reflow(s->grid, new_x, &s->cy);
 }

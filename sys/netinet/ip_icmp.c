@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.172 2018/06/21 10:37:50 knakahara Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.172.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.172 2018/06/21 10:37:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.172.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -295,12 +295,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	 * Compute the number of bytes we will put in 'icmp_ip'. Truncate
 	 * it to the size of the mbuf, if it's too big.
 	 */
-	datalen = oiphlen + min(icmpreturndatabytes,
+	datalen = oiphlen + uimin(icmpreturndatabytes,
 	    ntohs(oip->ip_len) - oiphlen);
 	mblen = 0;
 	for (m = n; m && (mblen < datalen); m = m->m_next)
 		mblen += m->m_len;
-	datalen = min(mblen, datalen);
+	datalen = uimin(mblen, datalen);
 
 	/*
 	 * Compute the total length of the new packet. Truncate it if it's
@@ -336,7 +336,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
 
 	if ((m->m_flags & M_EXT) == 0)
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 
 	/*
 	 * Get pointers on the IP header and the ICMP header.
@@ -382,7 +382,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
 	/* move PF m_tag to new packet, if it exists */
-	mtag = m_tag_find(n, PACKET_TAG_PF, NULL);
+	mtag = m_tag_find(n, PACKET_TAG_PF);
 	if (mtag != NULL) {
 		m_tag_unlink(n, mtag);
 		m_tag_prepend(m, mtag);
@@ -431,7 +431,7 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		goto freeit;
 	}
-	i = hlen + min(icmplen, ICMP_ADVLENMIN);
+	i = hlen + uimin(icmplen, ICMP_ADVLENMIN);
 	if (M_UNWRITABLE(m, i) && (m = m_pullup(m, i)) == NULL) {
 		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		return;
@@ -693,17 +693,9 @@ freeit:
 }
 
 void
-icmp_input(struct mbuf *m, ...)
+icmp_input(struct mbuf *m, int off, int proto)
 {
-	int hlen, proto;
-	va_list ap;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
-
-	wqinput_input(icmp_wqinput, m, hlen, proto);
+	wqinput_input(icmp_wqinput, m, off, proto);
 }
 
 /*
@@ -927,7 +919,7 @@ icmp_reflect(struct mbuf *m)
 		memmove(ip + 1, (char *)ip + optlen,
 		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/*

@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for VAX.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,6 +25,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "tree.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "optabs.h"
 #include "regs.h"
@@ -96,6 +97,9 @@ static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 #undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
 #define TARGET_BUILTIN_SETJMP_FRAME_VALUE vax_builtin_setjmp_frame_value
 
+#undef TARGET_LRA_P
+#define TARGET_LRA_P hook_bool_void_false
+
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P vax_legitimate_address_p
 #undef TARGET_MODE_DEPENDENT_ADDRESS_P
@@ -113,6 +117,18 @@ static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE vax_option_override
+
+#if TARGET_ELF
+#undef TARGET_BINDS_LOCAL_P
+#define TARGET_BINDS_LOCAL_P vax_elf_binds_local_p
+
+static bool
+vax_elf_binds_local_p (const_tree exp)
+{
+  return default_binds_local_p_3 (exp, (flag_shlib | flag_pic) != 0,
+				  true, false, false);
+}
+#endif
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -713,6 +729,7 @@ vax_address_cost_1 (rtx addr)
     {
     case PRE_DEC:
       predec = 1;
+      /* FALLTHRU */
     case REG:
     case SUBREG:
     case POST_INC:
@@ -1119,6 +1136,7 @@ vax_notice_update_cc (rtx exp, rtx insn ATTRIBUTE_UNUSED)
 	    case NEG:
 	      if (GET_MODE_CLASS (GET_MODE (exp)) == MODE_FLOAT)
 		break;
+	      /* FALLTHRU */
 	    case AND:
 	    case IOR:
 	    case XOR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.120 2016/07/07 06:55:38 msaitoh Exp $ */
+/*	$NetBSD: clock.c,v 1.120.18.1 2019/06/10 22:06:48 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.120 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.120.18.1 2019/06/10 22:06:48 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -406,6 +406,7 @@ stickintr_establish(int pil, int (*fun)(void *))
 	ci->ci_tick_increment = ci->ci_system_clockrate[0] / hz;
 
 	s = intr_disable();
+	next_stick_init();
 	next_stick(ci->ci_tick_increment);
 	intr_restore(s);
 }

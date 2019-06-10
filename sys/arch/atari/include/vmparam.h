@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2018/02/26 15:11:12 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32.4.1 2019/06/10 22:05:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,8 +40,6 @@
 
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
-
-#include <machine/pte.h>
 
 /*
  * Machine dependent constants for atari

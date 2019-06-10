@@ -44,7 +44,7 @@
 #include <sys/zfeature.h>
 #include <zfeature_common.h>
 
-#if defined(__NetBSD__) && defined(_HARDKERNEL)
+#if defined(__NetBSD__) && defined(_KERNEL)
 #include <sys/workqueue.h>
 #endif
 
@@ -276,7 +276,7 @@ struct spa {
 #endif
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-#ifdef _HARDKERNEL
+#ifdef _KERNEL
 	struct callout	spa_deadman_cycid;	/* callout id */
 	struct work	spa_deadman_work;
 #endif

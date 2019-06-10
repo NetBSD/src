@@ -1,6 +1,6 @@
 /* Declarations for value printing routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -121,9 +121,6 @@ extern void val_print_array_elements (struct type *, LONGEST,
 				      const struct value_print_options *,
 				      unsigned int);
 
-extern void val_print_type_code_int (struct type *, const gdb_byte *,
-				     struct ui_file *);
-
 extern void val_print_scalar_formatted (struct type *,
 					LONGEST,
 					struct value *,
@@ -132,16 +129,16 @@ extern void val_print_scalar_formatted (struct type *,
 					struct ui_file *);
 
 extern void print_binary_chars (struct ui_file *, const gdb_byte *,
-				unsigned int, enum bfd_endian);
+				unsigned int, enum bfd_endian, bool);
 
 extern void print_octal_chars (struct ui_file *, const gdb_byte *,
 			       unsigned int, enum bfd_endian);
 
 extern void print_decimal_chars (struct ui_file *, const gdb_byte *,
-				 unsigned int, enum bfd_endian);
+				 unsigned int, bool, enum bfd_endian);
 
 extern void print_hex_chars (struct ui_file *, const gdb_byte *,
-			     unsigned int, enum bfd_endian);
+			     unsigned int, enum bfd_endian, bool);
 
 extern void print_char_chars (struct ui_file *, struct type *,
 			      const gdb_byte *, unsigned int, enum bfd_endian);
@@ -153,7 +150,8 @@ extern void print_function_pointer_address (const struct value_print_options *op
 
 extern int read_string (CORE_ADDR addr, int len, int width,
 			unsigned int fetchlimit,
-			enum bfd_endian byte_order, gdb_byte **buffer,
+			enum bfd_endian byte_order,
+			gdb::unique_xmalloc_ptr<gdb_byte> *buffer,
 			int *bytes_read);
 
 extern void val_print_optimized_out (const struct value *val,
@@ -213,7 +211,7 @@ extern void generic_printstr (struct ui_file *stream, struct type *type,
    arguments passed to all command implementations, except ARGS is
    const.  */
 
-extern void output_command_const (const char *args, int from_tty);
+extern void output_command (const char *args, int from_tty);
 
 extern int val_print_scalar_type_p (struct type *type);
 
@@ -231,5 +229,21 @@ struct format_data
 extern void print_command_parse_format (const char **expp, const char *cmdname,
 					struct format_data *fmtp);
 extern void print_value (struct value *val, const struct format_data *fmtp);
+
+/* Given an address ADDR return all the elements needed to print the
+   address in a symbolic form.  NAME can be mangled or not depending
+   on DO_DEMANGLE (and also on the asm_demangle global variable,
+   manipulated via ''set print asm-demangle'').  Return 0 in case of
+   success, when all the info in the OUT paramters is valid.  Return 1
+   otherwise.  */
+
+extern int build_address_symbolic (struct gdbarch *,
+				   CORE_ADDR addr,
+				   int do_demangle,
+				   std::string *name,
+				   int *offset,
+				   std::string *filename,
+				   int *line,
+				   int *unmapped);
 
 #endif

@@ -39,6 +39,9 @@
 /* Define if pthread_{,attr_}{g,s}etaffinity_np is supported. */
 #undef HAVE_PTHREAD_AFFINITY_NP
 
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
 /* Define to 1 if you have the <semaphore.h> header file. */
 #undef HAVE_SEMAPHORE_H
 
@@ -57,6 +60,9 @@
 /* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 
+/* Define to 1 if the system has the type `struct _Mutex_Control'. */
+#undef HAVE_STRUCT__MUTEX_CONTROL
+
 /* Define to 1 if the target runtime linker supports binding the same symbol
    to different versions. */
 #undef HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT
@@ -69,6 +75,9 @@
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
@@ -89,7 +98,7 @@
    */
 #undef LT_OBJDIR
 
-/* Define to hold the list of target names suitable for offloading. */
+/* Define to offload targets, separated by commas. */
 #undef OFFLOAD_TARGETS
 
 /* Name of package */
@@ -112,6 +121,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to 1 if the HSA plugin is built, 0 if not. */
+#undef PLUGIN_HSA
 
 /* Define to 1 if the NVIDIA plugin is built, 0 if not. */
 #undef PLUGIN_NVPTX

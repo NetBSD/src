@@ -1,5 +1,5 @@
 /* Event loop machinery for the remote server for GDB.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -411,7 +411,7 @@ handle_file_event (gdb_fildes_t event_file_desc)
 
 	  if (file_ptr->ready_mask & GDB_EXCEPTION)
 	    {
-	      fprintf (stderr, "Exception condition detected on fd %s\n",
+	      warning ("Exception condition detected on fd %s",
 		       pfildes (file_ptr->fd));
 	      file_ptr->error = 1;
 	    }

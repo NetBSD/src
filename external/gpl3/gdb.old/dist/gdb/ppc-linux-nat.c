@@ -1,6 +1,6 @@
 /* PPC GNU/Linux native support.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <sys/procfs.h>
 #include "nat/gdb_ptrace.h"
+#include "inf-ptrace.h"
 
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
@@ -809,12 +810,7 @@ static void
 ppc_linux_fetch_inferior_registers (struct target_ops *ops,
 				    struct regcache *regcache, int regno)
 {
-  /* Overload thread id onto process id.  */
-  int tid = ptid_get_lwp (inferior_ptid);
-
-  /* No thread id, just use process id.  */
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regno == -1)
     fetch_ppc_registers (regcache, tid);
@@ -2291,12 +2287,7 @@ static void
 ppc_linux_store_inferior_registers (struct target_ops *ops,
 				    struct regcache *regcache, int regno)
 {
-  /* Overload thread id onto process id.  */
-  int tid = ptid_get_lwp (inferior_ptid);
-
-  /* No thread id, just use process id.  */
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regno >= 0)
     store_register (regcache, tid, regno);

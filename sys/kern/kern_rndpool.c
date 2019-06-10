@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.16 2015/04/21 04:41:36 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.16.18.1 2019/06/10 22:09:03 christos Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.16 2015/04/21 04:41:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.16.18.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/rndpool.h>
@@ -182,10 +182,13 @@ rndpool_add_data(rndpool_t *rp,
 		switch (len) {
 		case 3:
 			val = *buf++;
+			/* FALLTHROUGH */
 		case 2:
 			val = val << 8 | *buf++;
+			/* FALLTHROUGH */
 		case 1:
 			val = val << 8 | *buf++;
+			/* FALLTHROUGH */
 		}
 
 		rndpool_add_one_word(rp, val);
@@ -260,7 +263,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 		}
 
 		/* XXX careful, here the THRESHOLD just controls folding */
-		count = min(remain, RND_ENTROPY_THRESHOLD);
+		count = uimin(remain, RND_ENTROPY_THRESHOLD);
 
 		for (i = 0; i < count; i++)
 			buf[i] = digest[i] ^ digest[i + RND_ENTROPY_THRESHOLD];
@@ -269,7 +272,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 		deltae = count * 8;
 		remain -= count;
 
-		deltae = min(deltae, rp->stats.curentropy);
+		deltae = uimin(deltae, rp->stats.curentropy);
 
 		rp->stats.removed += deltae;
 		rp->stats.curentropy -= deltae;

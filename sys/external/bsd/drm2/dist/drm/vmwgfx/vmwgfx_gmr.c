@@ -1,6 +1,8 @@
+/*	$NetBSD: vmwgfx_gmr.c,v 1.1.1.2.30.1 2019/06/10 22:08:29 christos Exp $	*/
+
 /**************************************************************************
  *
- * Copyright © 2009-2011 VMware, Inc., Palo Alto, CA., USA
+ * Copyright © 2009-2015 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +26,9 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_gmr.c,v 1.1.1.2.30.1 2019/06/10 22:08:29 christos Exp $");
 
 #include "vmwgfx_drv.h"
 #include <drm/drmP.h>

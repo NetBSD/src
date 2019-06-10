@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.2 2018/05/09 02:53:00 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.2.2.1 2019/06/10 22:05:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.2 2018/05/09 02:53:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.2.2.1 2019/06/10 22:05:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,7 @@ struct sunxi_rsb_softc {
 	device_t sc_i2cdev;
 	void *sc_ih;
 	uint32_t sc_stat;
+	bool sc_busy;
 
 	uint16_t sc_rsb_last_da;
 };
@@ -141,9 +142,6 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_rsb_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	struct i2cbus_attach_args iba;
-	prop_dictionary_t devs;
-	uint32_t address_cells;
 	struct fdtbus_reset *rst;
 	struct clk *clk;
 	char intrstr[128];
@@ -180,7 +178,7 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_cv, "awinp2wi");
+	cv_init(&sc->sc_cv, "sunxirsb");
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_type == SUNXI_P2WI ? "P2WI" : "RSB");
@@ -194,14 +192,6 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	/* Enable interrupts */
-	RSB_WRITE(sc, RSB_INTE_REG,
-	    RSB_INTE_LOAD_BSY_ENB |
-	    RSB_INTE_TRANS_ERR_ENB |
-	    RSB_INTE_TRANS_OVER_ENB);
-	RSB_WRITE(sc, RSB_CTRL_REG,
-	    RSB_CTRL_GLOBAL_INT_ENB);
-
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = sunxi_rsb_acquire_bus;
 	sc->sc_ic.ic_release_bus = sunxi_rsb_release_bus;
@@ -209,20 +199,7 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_i2c_controller(self, phandle, &sunxi_rsb_funcs);
 
-	devs = prop_dictionary_create();
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
-
-	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_ic;
-	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
-	if (iba.iba_child_devices)
-		prop_object_retain(iba.iba_child_devices);
-	prop_object_release(devs);
-
-	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
 }
 
 static int
@@ -243,6 +220,23 @@ sunxi_rsb_intr(void *priv)
 	mutex_exit(&sc->sc_lock);
 
 	return 1;
+}
+
+static int
+sunxi_rsb_soft_reset(struct sunxi_rsb_softc *sc)
+{
+	int retry = 1000;
+
+	RSB_WRITE(sc, RSB_CTRL_REG, RSB_CTRL_SOFT_RESET);
+	while (--retry > 0) {
+		if ((RSB_READ(sc, RSB_CTRL_REG) & RSB_CTRL_SOFT_RESET) == 0)
+			break;
+		delay(10);
+	}
+	if (retry == 0)
+		return EIO;
+
+	return 0;
 }
 
 static int
@@ -290,8 +284,8 @@ sunxi_rsb_wait(struct sunxi_rsb_softc *sc, int flags)
 		return EBUSY;
 	}
 	if (sc->sc_stat & RSB_STAT_TRANS_ERR) {
-		device_printf(sc->sc_dev, "transfer error, id 0x%02llx\n",
-		    __SHIFTOUT(sc->sc_stat, RSB_STAT_TRANS_ERR_ID));
+		device_printf(sc->sc_dev, "transfer error, id 0x%02" PRIx64
+		    "\n", __SHIFTOUT(sc->sc_stat, RSB_STAT_TRANS_ERR_ID));
 		return EIO;
 	}
 
@@ -333,12 +327,13 @@ sunxi_rsb_acquire_bus(void *priv, int flags)
 {
 	struct sunxi_rsb_softc *sc = priv;
 
-	if (flags & I2C_F_POLL) {
-		if (!mutex_tryenter(&sc->sc_lock))
-			return EBUSY;
-	} else {
+	for (;;) {
 		mutex_enter(&sc->sc_lock);
+		if (sc->sc_busy == false)
+			break;
+		mutex_exit(&sc->sc_lock);
 	}
+	sc->sc_busy = true;
 
 	return 0;
 }
@@ -348,6 +343,7 @@ sunxi_rsb_release_bus(void *priv, int flags)
 {
 	struct sunxi_rsb_softc *sc = priv;
 
+	sc->sc_busy = false;
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -361,9 +357,26 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	int error, i;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_busy == true);
 
 	if (cmdlen != 1 || (len != 1 && len != 2 && len != 4))
 		return EINVAL;
+
+	error = sunxi_rsb_soft_reset(sc);
+	if (error != 0) {
+		device_printf(sc->sc_dev, "soft reset timed out\n");
+		return error;
+	}
+
+	if ((flags & I2C_F_POLL) == 0) {
+		/* Enable interrupts */
+		RSB_WRITE(sc, RSB_INTE_REG,
+		    RSB_INTE_LOAD_BSY_ENB |
+		    RSB_INTE_TRANS_ERR_ENB |
+		    RSB_INTE_TRANS_OVER_ENB);
+		RSB_WRITE(sc, RSB_CTRL_REG,
+		    RSB_CTRL_GLOBAL_INT_ENB);
+	}
 
 	if (sc->sc_type == SUNXI_RSB && sc->sc_rsb_last_da != addr) {
 		/* Lookup run-time address for given device address */
@@ -383,7 +396,7 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			    "SRTA failed, flags = %x, error = %d\n",
 			    flags, error);
 			sc->sc_rsb_last_da = 0;
-			return error;
+			goto done;
 		}
 
 		sc->sc_rsb_last_da = addr;
@@ -408,7 +421,8 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			    (pbuf[2] << 16) | (pbuf[3] << 24);
 			break;
 		default:
-			return EINVAL;
+			error = EINVAL;
+			goto done;
 		}
 		RSB_WRITE(sc, RSB_DATA0_REG, data);
 	}
@@ -420,14 +434,14 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			case 1:	cmd = RSB_CMD_IDX_WR8; break;
 			case 2: cmd = RSB_CMD_IDX_WR16; break;
 			case 4: cmd = RSB_CMD_IDX_WR32; break;
-			default: return EINVAL;
+			default: error = EINVAL; goto done;
 			}
 		} else {
 			switch (len) {
 			case 1:	cmd = RSB_CMD_IDX_RD8; break;
 			case 2: cmd = RSB_CMD_IDX_RD16; break;
 			case 4: cmd = RSB_CMD_IDX_RD32; break;
-			default: return EINVAL;
+			default: error = EINVAL; goto done;
 			}
 		}
 		RSB_WRITE(sc, RSB_CMD_REG, cmd);
@@ -444,7 +458,8 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	ctrl = RSB_READ(sc, RSB_CTRL_REG);
 	if (ctrl & RSB_CTRL_START_TRANS) {
 		device_printf(sc->sc_dev, "device is busy\n");
-		return EBUSY;
+		error = EBUSY;
+		goto done;
 	}
 
 	/* Start the transfer */
@@ -452,9 +467,8 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	    ctrl | RSB_CTRL_START_TRANS);
 
 	error = sunxi_rsb_wait(sc, flags);
-	if (error) {
-		return error;
-	}
+	if (error)
+		goto done;
 
 	if (I2C_OP_READ_P(op)) {
 		uint32_t data = RSB_READ(sc, RSB_DATA0_REG);
@@ -469,9 +483,15 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			*(uint8_t *)buf = data & 0xff;
 			break;
 		default:
-			return EINVAL;
+			error = EINVAL;
+			goto done;
 		}
 	}
 
-	return 0;
+	error = 0;
+
+done:
+	RSB_WRITE(sc, RSB_CTRL_REG, 0);
+
+	return error;
 }

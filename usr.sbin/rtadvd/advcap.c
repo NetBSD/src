@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.17 2017/11/06 15:15:04 christos Exp $	*/
+/*	$NetBSD: advcap.c,v 1.17.4.1 2019/06/10 22:10:36 christos Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -282,6 +282,7 @@ tskip(char *bp)
 					;
 			} else
 				bp++;
+			/* FALLTHROUGH */
 		case '"':
 			dquote = (dquote ? 0 : 1);
 			bp++;

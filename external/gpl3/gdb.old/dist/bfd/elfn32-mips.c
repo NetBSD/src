@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -3436,7 +3436,7 @@ mips_elf_n32_rtype_to_howto (unsigned int r_type, bfd_boolean rela_p)
 	}
       if (r_type >= R_MIPS_max)
 	{
-	  (*_bfd_error_handler) (_("unrecognised MIPS reloc number: %d"), r_type);
+	  _bfd_error_handler (_("unrecognised MIPS reloc number: %d"), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  r_type = R_MIPS_NONE;
 	}
@@ -3687,6 +3687,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_ecoff_debug_swap	&mips_elf32_ecoff_debug_swap
 
 #define elf_backend_got_header_size	(4 * MIPS_RESERVED_GOTNO)
+#define elf_backend_want_dynrelro	1
 
 /* MIPS n32 ELF can use a mixture of REL and RELA, but some Relocations
    work better/work only in RELA, so we default to this.  */
@@ -3720,7 +3721,6 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define bfd_elf32_bfd_set_private_flags	_bfd_mips_elf_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data \
 					_bfd_mips_elf_print_private_bfd_data
-#define bfd_elf32_bfd_relax_section     _bfd_mips_relax_section
 #define bfd_elf32_mkobject		_bfd_mips_elf_mkobject
 
 /* Support for SGI-ish mips targets using n32 ABI.  */

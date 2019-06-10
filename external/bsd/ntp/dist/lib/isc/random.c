@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.4.16.1 2019/06/10 21:51:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: random.c,v 1.28 2009/07/16 05:52:46 marka Exp  */
+/* Id */
 
 /*! \file */
 

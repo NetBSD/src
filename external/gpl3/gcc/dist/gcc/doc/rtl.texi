@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2017 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -1291,10 +1291,11 @@ point values.  The floating point values are in @code{QFmode},
 @findex CDImode
 @findex CTImode
 @findex COImode
-@item CQImode, CHImode, CSImode, CDImode, CTImode, COImode
+@findex CPSImode
+@item CQImode, CHImode, CSImode, CDImode, CTImode, COImode, CPSImode
 These modes stand for a complex number represented as a pair of integer
 values.  The integer values are in @code{QImode}, @code{HImode},
-@code{SImode}, @code{DImode}, @code{TImode}, and @code{OImode},
+@code{SImode}, @code{DImode}, @code{TImode}, @code{OImode}, and @code{PSImode},
 respectively.
 
 @findex BND32mode
@@ -1882,7 +1883,7 @@ When used as an rvalue, the low-order bits of the @code{subreg} are
 taken from @var{reg} while the high-order bits may or may not be
 defined.
 
-The high-order bits of rvalues are in the following circumstances:
+The high-order bits of rvalues are defined in the following circumstances:
 
 @itemize
 @item @code{subreg}s of @code{mem}
@@ -2225,7 +2226,7 @@ Represents the result of subtracting @var{y} from @var{x} for purposes
 of comparison.  The result is computed without overflow, as if with
 infinite precision.
 
-Of course, machines can't really subtract with infinite precision.
+Of course, machines cannot really subtract with infinite precision.
 However, they can pretend to do so when only the sign of the result will
 be used, which is the case when the result is stored in the condition
 code.  And that is the @emph{only} way this kind of expression may

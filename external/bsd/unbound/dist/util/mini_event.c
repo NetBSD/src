@@ -45,10 +45,10 @@
 #include <time.h>
 #endif
 #include <sys/time.h>
+#include "util/mini_event.h"
 
 #if defined(USE_MINI_EVENT) && !defined(USE_WINSOCK)
 #include <signal.h>
-#include "util/mini_event.h"
 #include "util/fptr_wlist.h"
 
 /** compare events in tree, based on timevalue, ptr for uniqueness */

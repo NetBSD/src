@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.149 2018/02/06 20:22:41 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.149.4.1 2019/06/10 22:05:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -244,9 +244,9 @@ pid_t	 getsid(pid_t);
  */
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
-#ifndef	intptr_t
-typedef	__intptr_t	intptr_t;
-#define	intptr_t	__intptr_t
+#ifndef _BSD_INTPTR_T_
+typedef __intptr_t      intptr_t;
+#define _BSD_INTPTR_T_
 #endif
 
 #define F_ULOCK		0
@@ -355,7 +355,6 @@ char	*getpassfd(const char *, char *, size_t, int *, int, int);
 
 char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
-int	 getsubopt(char **, char * const *, char **);
 __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.54 2018/04/09 16:21:11 jakllsch Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.54.2.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ typedef union {
 
 struct uhci_xfer {
 	struct usbd_xfer ux_xfer;
-	struct usb_task ux_aborttask;
 	enum {
 		UX_NONE, UX_CTRL, UX_BULK, UX_INTR, UX_ISOC
 	} ux_type;
@@ -152,7 +151,6 @@ typedef struct uhci_softc {
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
-	kcondvar_t sc_softwake_cv;
 
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;
@@ -172,10 +170,8 @@ typedef struct uhci_softc {
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
 
-	uint8_t sc_saved_sof;
 	uint16_t sc_saved_frnum;
-
-	char sc_softwake;
+	uint8_t sc_saved_sof;
 
 	char sc_isreset;
 	char sc_suspend;

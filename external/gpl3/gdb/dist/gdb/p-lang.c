@@ -1,6 +1,6 @@
 /* Pascal language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,9 +30,7 @@
 #include "valprint.h"
 #include "value.h"
 #include <ctype.h>
-
-extern void _initialize_pascal_language (void);
-
+#include "c-lang.h"
 
 /* All GPC versions until now (2007-09-27) also define a symbol called
    '_p_initialize'.  Check for the presence of this symbol first.  */
@@ -417,7 +415,7 @@ static const char *p_extensions[] =
   ".pas", ".p", ".pp", NULL
 };
 
-const struct language_defn pascal_language_defn =
+extern const struct language_defn pascal_language_defn =
 {
   "pascal",			/* Language name */
   "Pascal",
@@ -429,7 +427,6 @@ const struct language_defn pascal_language_defn =
   p_extensions,
   &exp_descriptor_standard,
   pascal_parse,
-  pascal_yyerror,
   null_post_parser,
   pascal_printchar,		/* Print a character constant */
   pascal_printstr,		/* Function to print string constant */
@@ -441,6 +438,7 @@ const struct language_defn pascal_language_defn =
   default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline */
   "this",		        /* name_of_this */
+  false,			/* la_store_sym_names_in_linkage_form_p */
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   NULL,				/* Language specific symbol demangler */
@@ -450,21 +448,17 @@ const struct language_defn pascal_language_defn =
   1,				/* c-style arrays */
   0,				/* String lower bound */
   default_word_break_characters,
-  default_make_symbol_completion_list,
+  default_collect_symbol_completion_matches,
   pascal_language_arch_info,
   default_print_array_index,
   default_pass_by_reference,
   default_get_string,
-  NULL,				/* la_get_symbol_name_cmp */
+  c_watch_location_expression,
+  NULL,				/* la_compare_symbol_for_completion */
   iterate_over_symbols,
+  default_search_name_hash,
   &default_varobj_ops,
   NULL,
   NULL,
   LANG_MAGIC
 };
-
-void
-_initialize_pascal_language (void)
-{
-  add_language (&pascal_language_defn);
-}

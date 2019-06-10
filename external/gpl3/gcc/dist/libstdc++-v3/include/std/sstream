@@ -1,6 +1,6 @@
 // String based streams -*- C++ -*-
 
-// Copyright (C) 1997-2016 Free Software Foundation, Inc.
+// Copyright (C) 1997-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -209,7 +209,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
       virtual streamsize
       showmanyc()
-      { 
+      {
 	streamsize __ret = -1;
 	if (_M_mode & ios_base::in)
 	  {
@@ -248,10 +248,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 	    // that an external char_type array of length __n exists
 	    // and has been pre-allocated. If this is not the case,
 	    // things will quickly blow up.
-	    
+
 	    // Step 1: Destroy the current internal array.
 	    _M_string.clear();
-	    
+
 	    // Step 2: Use the external array.
 	    _M_sync(__s, __n, 0);
 	  }
@@ -302,18 +302,31 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 	__xfer_bufptrs(const basic_stringbuf& __from, basic_stringbuf* __to)
 	: _M_to{__to}, _M_goff{-1, -1, -1}, _M_poff{-1, -1, -1}
 	{
-	  const _CharT* __str = __from._M_string.data();
+	  const _CharT* const __str = __from._M_string.data();
+	  const _CharT* __end = nullptr;
 	  if (__from.eback())
 	    {
-	    _M_goff[0] = __from.eback() - __str;
-	    _M_goff[1] = __from.gptr() - __str;
-	    _M_goff[2] = __from.egptr() - __str;
+	      _M_goff[0] = __from.eback() - __str;
+	      _M_goff[1] = __from.gptr() - __str;
+	      _M_goff[2] = __from.egptr() - __str;
+	      __end = __from.egptr();
 	    }
 	  if (__from.pbase())
 	    {
 	      _M_poff[0] = __from.pbase() - __str;
 	      _M_poff[1] = __from.pptr() - __from.pbase();
 	      _M_poff[2] = __from.epptr() - __str;
+	      if (__from.pptr() > __end)
+		__end = __from.pptr();
+	    }
+
+	  // Set _M_string length to the greater of the get and put areas.
+	  if (__end)
+	    {
+	      // The const_cast avoids changing this constructor's signature,
+	      // because it is exported from the dynamic library.
+	      auto& __mut_from = const_cast<basic_stringbuf&>(__from);
+	      __mut_from._M_string._M_length(__end - __str);
 	    }
 	}
 

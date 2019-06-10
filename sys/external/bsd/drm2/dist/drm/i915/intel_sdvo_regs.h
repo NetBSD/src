@@ -1,3 +1,5 @@
+/*	$NetBSD: intel_sdvo_regs.h,v 1.1.1.2.30.1 2019/06/10 22:08:06 christos Exp $	*/
+
 /*
  * Copyright © 2006-2007 Intel Corporation
  *

@@ -1,0 +1,26 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@	IN SOA	ns hostmaster 1 1800 900 604800 600
+@	IN NS	ns
+ns	IN A	10.53.0.6
+ns0	IN A	10.53.0.6
+ns1	IN A	10.53.0.6
+ns2	IN A	10.53.0.6
+ns3	IN A	10.53.0.6
+ns4	IN A	10.53.0.6
+ns5	IN A	10.53.0.6
+ns6	IN A	10.53.0.6
+ns7	IN A	10.53.0.6
+ns8	IN A	10.53.0.6
+ns9	IN A	10.53.0.6
+$TTL 1
+@	IN A	10.53.0.6
+www.sub	IN A	10.53.0.6

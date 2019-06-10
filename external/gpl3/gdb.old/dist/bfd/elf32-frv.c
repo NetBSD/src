@@ -1,5 +1,5 @@
 /* FRV-specific support for 32-bit ELF.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -805,16 +805,8 @@ struct frvfdpic_elf_link_hash_table
 {
   struct elf_link_hash_table elf;
 
-  /* A pointer to the .got section.  */
-  asection *sgot;
-  /* A pointer to the .rel.got section.  */
-  asection *sgotrel;
   /* A pointer to the .rofixup section.  */
   asection *sgotfixup;
-  /* A pointer to the .plt section.  */
-  asection *splt;
-  /* A pointer to the .rel.plt section.  */
-  asection *spltrel;
   /* GOT base offset.  */
   bfd_vma got0;
   /* Location of the first non-lazy PLT entry, i.e., the number of
@@ -837,15 +829,15 @@ struct frvfdpic_elf_link_hash_table
   == FRV_ELF_DATA ? ((struct frvfdpic_elf_link_hash_table *) ((p)->hash)) : NULL)
 
 #define frvfdpic_got_section(info) \
-  (frvfdpic_hash_table (info)->sgot)
+  (frvfdpic_hash_table (info)->elf.sgot)
 #define frvfdpic_gotrel_section(info) \
-  (frvfdpic_hash_table (info)->sgotrel)
+  (frvfdpic_hash_table (info)->elf.srelgot)
 #define frvfdpic_gotfixup_section(info) \
   (frvfdpic_hash_table (info)->sgotfixup)
 #define frvfdpic_plt_section(info) \
-  (frvfdpic_hash_table (info)->splt)
+  (frvfdpic_hash_table (info)->elf.splt)
 #define frvfdpic_pltrel_section(info) \
-  (frvfdpic_hash_table (info)->spltrel)
+  (frvfdpic_hash_table (info)->elf.srelplt)
 #define frvfdpic_relocs_info(info) \
   (frvfdpic_hash_table (info)->relocs_info)
 #define frvfdpic_got_initial_offset(info) \
@@ -2561,6 +2553,7 @@ frv_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
     default:
       if (r_type >= (unsigned int) R_FRV_max)
 	{
+	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%B: invalid FRV reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
@@ -2775,6 +2768,7 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	case R_FRV_32:
 	  if (! IS_FDPIC (output_bfd))
 	    goto non_fdpic;
+	  /* Fall through.  */
 
 	case R_FRV_GOT12:
 	case R_FRV_GOTHI:
@@ -2825,6 +2819,7 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 						      rel->r_addend))
 	    {
 	      info->callbacks->einfo
+		/* xgettext:c-format */
 		(_("%H: relocation to `%s+%v'"
 		   " may have caused the error above\n"),
 		 input_bfd, input_section, rel->r_offset, name, rel->r_addend);
@@ -3911,6 +3906,7 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		   && picrel->d.h->root.type == bfd_link_hash_undefined))
 	    {
 	      info->callbacks->einfo
+		/* xgettext:c-format */
 		(_("%H: reloc against `%s' references a different segment\n"),
 		 input_bfd, input_section, rel->r_offset, name);
 	    }
@@ -4061,6 +4057,7 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if (msg)
 	    {
 	      info->callbacks->einfo
+		/* xgettext:c-format */
 		(_("%H: reloc against `%s': %s\n"),
 		 input_bfd, input_section, rel->r_offset, name, msg);
 	      return FALSE;
@@ -4170,7 +4167,7 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
   int offset;
 
   /* This function may be called more than once.  */
-  s = bfd_get_linker_section (abfd, ".got");
+  s = elf_hash_table (info)->sgot;
   if (s != NULL)
     return TRUE;
 
@@ -4185,17 +4182,10 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
   pltflags = flags;
 
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
+  elf_hash_table (info)->sgot = s;
   if (s == NULL
       || !bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
-
-  if (bed->want_got_plt)
-    {
-      s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
-      if (s == NULL
-	  || !bfd_set_section_alignment (abfd, s, ptralign))
-	return FALSE;
-    }
 
   if (bed->want_got_sym)
     {
@@ -4221,7 +4211,6 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
      data for the got.  */
   if (IS_FDPIC (abfd))
     {
-      frvfdpic_got_section (info) = s;
       frvfdpic_relocs_info (info) = htab_try_create (1,
 						     frvfdpic_relocs_info_hash,
 						     frvfdpic_relocs_info_eq,
@@ -4231,11 +4220,10 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
 
       s = bfd_make_section_anyway_with_flags (abfd, ".rel.got",
 					      (flags | SEC_READONLY));
+      elf_hash_table (info)->srelgot = s;
       if (s == NULL
 	  || ! bfd_set_section_alignment (abfd, s, 2))
 	return FALSE;
-
-      frvfdpic_gotrel_section (info) = s;
 
       /* Machine-specific.  */
       s = bfd_make_section_anyway_with_flags (abfd, ".rofixup",
@@ -6266,6 +6254,7 @@ elf32_frv_check_relocs (bfd *abfd,
 	default:
 	bad_reloc:
 	  info->callbacks->einfo
+	    /* xgettext:c-format */
 	    (_("%B: unsupported relocation type %i\n"),
 	     abfd, ELF32_R_TYPE (rel->r_info));
 	  return FALSE;
@@ -6348,8 +6337,9 @@ frv_elf_arch_extension_p (flagword base, flagword extension)
    object file when linking.  */
 
 static bfd_boolean
-frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags, old_partial;
   flagword new_flags, new_partial;
   bfd_boolean error = FALSE;
@@ -6364,9 +6354,10 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
     new_flags &= ~EF_FRV_PIC;
 
 #ifdef DEBUG
-  (*_bfd_error_handler) ("old_flags = 0x%.8lx, new_flags = 0x%.8lx, init = %s, filename = %s",
-			 old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no",
-			 bfd_get_filename (ibfd));
+  _bfd_error_handler
+    ("old_flags = 0x%.8lx, new_flags = 0x%.8lx, init = %s, filename = %s",
+     old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no",
+     bfd_get_filename (ibfd));
 #endif
 
   if (!elf_flags_init (obfd))			/* First call, no flags set.  */
@@ -6514,10 +6505,11 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	      old_flags &= ~ EF_FRV_PIC_FLAGS;
 #ifndef FRV_NO_PIC_ERROR
 	      error = TRUE;
-	      (*_bfd_error_handler)
-		(_("%s: compiled with %s and linked with modules that use non-pic relocations"),
-		 bfd_get_filename (ibfd),
-		 (new_flags & EF_FRV_BIGPIC) ? "-fPIC" : "-fpic");
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%B: compiled with %s and linked with modules"
+		   " that use non-pic relocations"),
+		 ibfd, (new_flags & EF_FRV_BIGPIC) ? "-fPIC" : "-fpic");
 #endif
 	    }
 	}
@@ -6567,9 +6559,10 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
       if (new_opt[0])
 	{
 	  error = TRUE;
-	  (*_bfd_error_handler)
-	    (_("%s: compiled with %s and linked with modules compiled with %s"),
-	     bfd_get_filename (ibfd), new_opt, old_opt);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: compiled with %s and linked with modules compiled with %s"),
+	     ibfd, new_opt, old_opt);
 	}
 
       /* Warn about any other mismatches */
@@ -6579,9 +6572,11 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	{
 	  old_flags |= new_partial;
 	  error = TRUE;
-	  (*_bfd_error_handler)
-	    (_("%s: uses different unknown e_flags (0x%lx) fields than previous modules (0x%lx)"),
-	     bfd_get_filename (ibfd), (long)new_partial, (long)old_partial);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: uses different unknown e_flags (0x%lx) fields"
+	       " than previous modules (0x%lx)"),
+	     ibfd, (long) new_partial, (long) old_partial);
 	}
     }
 
@@ -6600,13 +6595,13 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
     {
       error = TRUE;
       if (IS_FDPIC (obfd))
-	(*_bfd_error_handler)
-	  (_("%s: cannot link non-fdpic object file into fdpic executable"),
-	   bfd_get_filename (ibfd));
+	_bfd_error_handler
+	  (_("%B: cannot link non-fdpic object file into fdpic executable"),
+	   ibfd);
       else
-	(*_bfd_error_handler)
-	  (_("%s: cannot link fdpic object file into non-fdpic executable"),
-	   bfd_get_filename (ibfd));
+	_bfd_error_handler
+	  (_("%B: cannot link fdpic object file into non-fdpic executable"),
+	   ibfd);
     }
 
   if (error)

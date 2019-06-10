@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -252,5 +252,7 @@ extern const char * const auto_boolean_enums[];
    Return 1 if it is user-defined.  Return 0 otherwise.  */
 
 extern int cli_user_command_p (struct cmd_list_element *);
+
+extern int find_command_name_length (const char *);
 
 #endif /* !defined (CLI_DECODE_H) */

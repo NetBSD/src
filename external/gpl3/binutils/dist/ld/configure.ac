@@ -17,7 +17,6 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-AC_PREREQ(2.59)
 m4_include([../bfd/version.m4])
 AC_INIT([ld], BFD_VERSION)
 AC_CONFIG_SRCDIR(ldmain.c)
@@ -177,6 +176,16 @@ AC_ARG_ENABLE(relro,
   no)  ac_default_ld_z_relro=0 ;;
 esac])dnl
 
+# Decide if -z separate-code should be enabled in ELF linker by default.
+ac_default_ld_z_separate_code=unset
+AC_ARG_ENABLE(separate-code,
+	      AS_HELP_STRING([--enable-separate-code],
+	      [enable -z separate-code in ELF linker by default]),
+[case "${enableval}" in
+  yes) ac_default_ld_z_separate_code=1 ;;
+  no) ac_default_ld_z_separate_code=0 ;;
+esac])
+
 # Decide which "--hash-style" to use by default
 # Provide a configure time option to override our default.
 AC_ARG_ENABLE([default-hash-style],
@@ -227,7 +236,7 @@ fi
 
 # host-specific stuff:
 
-ALL_LINGUAS="bg da de es fi fr ga id it ru sr sv tr uk vi zh_CN zh_TW pt_BR"
+ALL_LINGUAS="bg da de es fi fr ga id it ja pt_BR ru sr sv tr uk vi zh_CN zh_TW"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -259,23 +268,11 @@ AC_SEARCH_LIBS([dlopen], [dl])
 AM_CONDITIONAL([ENABLE_PLUGINS], [test x$plugins = xyes])
 
 AC_ARG_ENABLE(initfini-array,
-	[  --enable-initfini-array	use .init_array/.fini_array sections],
-	[], [
-AC_CACHE_CHECK(for .preinit_array/.init_array/.fini_array support,
-		 gcc_cv_initfini_array, [dnl
-  if test "x${build}" = "x${target}" ; then
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
-static int x = -1;
-int main (void) { return x; }
-int foo (void) { x = 0; }
-int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;])],
-	     [gcc_cv_initfini_array=yes], [gcc_cv_initfini_array=no],
-	     [gcc_cv_initfini_array=no])
-   else
-     gcc_cv_initfini_array=no
-   fi])
-  enable_initfini_array=$gcc_cv_initfini_array
-])
+[  --disable-initfini-array do not use .init_array/.fini_array sections],
+[case "${enableval}" in
+ yes|no) ;;
+ *) AC_MSG_ERROR([invalid --enable-initfini-array argument]) ;;
+ esac], [enable_initfini_array=yes])
 AC_SUBST(enable_initfini_array)
 if test $enable_initfini_array = yes; then
   AC_DEFINE(HAVE_INITFINI_ARRAY, 1,
@@ -446,6 +443,13 @@ AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_RELRO,
   $ac_default_ld_z_relro,
   [Define to 1 if you want to enable -z relro in ELF linker by default.])
 
+if test "${ac_default_ld_z_separate_code}" = unset; then
+  ac_default_ld_z_separate_code=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_SEPARATE_CODE,
+  $ac_default_ld_z_separate_code,
+  [Define to 1 if you want to enable -z separate-code in ELF linker by default.])
+
 AC_DEFINE_UNQUOTED([DEFAULT_EMIT_SYSV_HASH],
   [$ac_default_emit_sysv_hash],
   [Define to 1 if you want to emit sysv hash in the ELF linker by default.])
@@ -502,6 +506,26 @@ if test x${EXTRA_SHLIB_EXTENSION} != x ; then
   AC_DEFINE_UNQUOTED(EXTRA_SHLIB_EXTENSION, "$EXTRA_SHLIB_EXTENSION",
    [Additional extension a shared object might have.])
 fi
+
+AC_CONFIG_COMMANDS([default],
+[[
+case "$srcdir" in
+  .) srcdirpre= ;;
+  *) srcdirpre='$(srcdir)/' ;;
+esac
+POFILES=
+GMOFILES=
+for lang in dummy $OBSOLETE_ALL_LINGUAS; do
+  if test $lang != dummy; then
+    POFILES="$POFILES $srcdirpre$lang.po"
+    GMOFILES="$GMOFILES $srcdirpre$lang.gmo"
+  fi
+done
+sed -e '/^SRC-POTFILES =/r po/SRC-POTFILES' \
+    -e '/^BLD-POTFILES =/r po/BLD-POTFILES' \
+    -e "s,@POFILES@,$POFILES," \
+    -e "s,@GMOFILES@,$GMOFILES," \
+    po/Makefile.in > po/Makefile]],[[]])
 
 dnl Required by html, pdf, install-pdf and install-html
 AC_SUBST(datarootdir)

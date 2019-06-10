@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,5 @@ set_board_info compiler "[find_gcc]"
 # Use -gstabs+ instead of -gstabs for better c++ support.
 set_board_info debug_flags "-gstabs+"
 
-# This is needed otherwise dejagnu tries to rsh to host "stabs".  Blech.
-# Double blech: set_board_info only sets the value if not already set.
-unset_board_info isremote
-set_board_info isremote 0
+# This is needed otherwise dejagnu tries to rsh to host "stabs".
+load_board_description "local-board"

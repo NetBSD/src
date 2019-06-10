@@ -1,5 +1,5 @@
 /* Functions to support general ended bitmaps.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -86,7 +86,7 @@ along with GCC; see the file COPYING3.  If not see
      * set_disjuction		: bitmap_xor_comp / bitmap_xor_comp_into
      * set_compare		: bitmap_equal_p
 
-   Some operations on 3 sets that occur frequently in in data flow problems
+   Some operations on 3 sets that occur frequently in data flow problems
    are also implemented:
 
      * A | (B & C)		: bitmap_ior_and_into
@@ -127,9 +127,66 @@ along with GCC; see the file COPYING3.  If not see
    bad for persistent sets, so persistent sets should be allocated on an
    obstack whenever possible.  */
 
-#include "hashtab.h"
-#include "statistics.h"
 #include "obstack.h"
+
+/* Bitmap memory usage.  */
+struct bitmap_usage: public mem_usage
+{
+  /* Default contructor.  */
+  bitmap_usage (): m_nsearches (0), m_search_iter (0) {}
+  /* Constructor.  */
+  bitmap_usage (size_t allocated, size_t times, size_t peak,
+	     uint64_t nsearches, uint64_t search_iter)
+    : mem_usage (allocated, times, peak),
+    m_nsearches (nsearches), m_search_iter (search_iter) {}
+
+  /* Sum the usage with SECOND usage.  */
+  bitmap_usage
+  operator+ (const bitmap_usage &second)
+  {
+    return bitmap_usage (m_allocated + second.m_allocated,
+			     m_times + second.m_times,
+			     m_peak + second.m_peak,
+			     m_nsearches + second.m_nsearches,
+			     m_search_iter + second.m_search_iter);
+  }
+
+  /* Dump usage coupled to LOC location, where TOTAL is sum of all rows.  */
+  inline void
+  dump (mem_location *loc, mem_usage &total) const
+  {
+    char *location_string = loc->to_string ();
+
+    fprintf (stderr, "%-48s %10" PRIu64 ":%5.1f%%"
+	     "%10" PRIu64 "%10" PRIu64 ":%5.1f%%"
+	     "%12" PRIu64 "%12" PRIu64 "%10s\n",
+	     location_string, (uint64_t)m_allocated,
+	     get_percent (m_allocated, total.m_allocated),
+	     (uint64_t)m_peak, (uint64_t)m_times,
+	     get_percent (m_times, total.m_times),
+	     m_nsearches, m_search_iter,
+	     loc->m_ggc ? "ggc" : "heap");
+
+    free (location_string);
+  }
+
+  /* Dump header with NAME.  */
+  static inline void
+  dump_header (const char *name)
+  {
+    fprintf (stderr, "%-48s %11s%16s%17s%12s%12s%10s\n", name, "Leak", "Peak",
+	     "Times", "N searches", "Search iter", "Type");
+    print_dash_line ();
+  }
+
+  /* Number search operations.  */
+  uint64_t m_nsearches;
+  /* Number of search iterations.  */
+  uint64_t m_search_iter;
+};
+
+/* Bitmap memory description.  */
+extern mem_alloc_description<bitmap_usage> bitmap_mem_desc;
 
 /* Fundamental storage type for bitmap.  */
 
@@ -198,6 +255,9 @@ extern void bitmap_clear (bitmap);
 /* Copy a bitmap to another bitmap.  */
 extern void bitmap_copy (bitmap, const_bitmap);
 
+/* Move a bitmap to another bitmap.  */
+extern void bitmap_move (bitmap, bitmap);
+
 /* True if two bitmaps are identical.  */
 extern bool bitmap_equal_p (const_bitmap, const_bitmap);
 
@@ -219,6 +279,9 @@ extern bool bitmap_single_bit_set_p (const_bitmap);
 
 /* Count the number of bits set in the bitmap.  */
 extern unsigned long bitmap_count_bits (const_bitmap);
+
+/* Count the number of unique bits set across the two bitmaps.  */
+extern unsigned long bitmap_count_unique_bits (const_bitmap, const_bitmap);
 
 /* Boolean operations on bitmaps.  The _into variants are two operand
    versions that modify the first source operand.  The other variants

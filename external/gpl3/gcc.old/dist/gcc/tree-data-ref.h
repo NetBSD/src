@@ -1,5 +1,5 @@
 /* Data references and dependences detectors.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <pop@cri.ensmp.fr>
 
 This file is part of GCC.
@@ -22,7 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_TREE_DATA_REF_H
 
 #include "graphds.h"
-#include "omega.h"
 #include "tree-chrec.h"
 
 /*
@@ -109,7 +108,7 @@ typedef lambda_vector *lambda_matrix;
 struct data_reference
 {
   /* A pointer to the statement that contains this DR.  */
-  gimple stmt;
+  gimple *stmt;
 
   /* A pointer to the memory reference.  */
   tree ref;
@@ -301,9 +300,6 @@ extern bool compute_data_dependences_for_loop (struct loop *, bool,
 					       vec<loop_p> *,
 					       vec<data_reference_p> *,
 					       vec<ddr_p> *);
-extern bool compute_data_dependences_for_bb (basic_block, bool,
-                                             vec<data_reference_p> *,
-                                             vec<ddr_p> *);
 extern void debug_ddrs (vec<ddr_p> );
 extern void dump_data_reference (FILE *, struct data_reference *);
 extern void debug (data_reference &ref);
@@ -321,12 +317,13 @@ extern void free_dependence_relation (struct data_dependence_relation *);
 extern void free_dependence_relations (vec<ddr_p> );
 extern void free_data_ref (data_reference_p);
 extern void free_data_refs (vec<data_reference_p> );
-extern bool find_data_references_in_stmt (struct loop *, gimple,
+extern bool find_data_references_in_stmt (struct loop *, gimple *,
 					  vec<data_reference_p> *);
-extern bool graphite_find_data_references_in_stmt (loop_p, loop_p, gimple,
+extern bool graphite_find_data_references_in_stmt (loop_p, loop_p, gimple *,
 						   vec<data_reference_p> *);
 tree find_data_references_in_loop (struct loop *, vec<data_reference_p> *);
-struct data_reference *create_data_ref (loop_p, loop_p, tree, gimple, bool);
+bool loop_nest_has_data_refs (loop_p loop);
+struct data_reference *create_data_ref (loop_p, loop_p, tree, gimple *, bool);
 extern bool find_loop_nest (struct loop *, vec<loop_p> *);
 extern struct data_dependence_relation *initialize_data_dependence_relation
      (struct data_reference *, struct data_reference *, vec<loop_p>);
@@ -343,8 +340,6 @@ extern bool dr_may_alias_p (const struct data_reference *,
 			    const struct data_reference *, bool);
 extern bool dr_equal_offsets_p (struct data_reference *,
                                 struct data_reference *);
-extern void tree_check_data_deps (void);
-
 
 /* Return true when the base objects of data references A and B are
    the same memory object.  */

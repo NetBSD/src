@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.18 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.18.28.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.18 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.18.28.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	error = 0;
 
-	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
+	while ((n = uimin(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);

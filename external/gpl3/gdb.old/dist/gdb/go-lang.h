@@ -1,6 +1,6 @@
 /* Go language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,7 +60,7 @@ enum go_type
 
 extern int go_parse (struct parser_state *);
 
-extern void go_yyerror (char *);
+extern void go_yyerror (const char *);
 
 /* Defined in go-lang.c.  */
 
@@ -84,10 +84,10 @@ extern void go_print_type (struct type *type, const char *varstring,
 
 /* Defined in go-valprint.c.  */
 
-extern void go_val_print (struct type *type, const gdb_byte *valaddr,
+extern void go_val_print (struct type *type,
 			  int embedded_offset, CORE_ADDR address,
 			  struct ui_file *stream, int recurse,
-			  const struct value *val,
+			  struct value *val,
 			  const struct value_print_options *options);
 
 #endif /* !defined (GO_LANG_H) */

@@ -61,10 +61,10 @@ extern void pe_dll_fill_sections
   (bfd *, struct bfd_link_info *);
 extern void pe_exe_fill_sections
   (bfd *, struct bfd_link_info *);
-extern void pe_walk_relocs_of_symbol
-  (struct bfd_link_info *, char *, int (*) (arelent *, asection *, char *));
+extern void pe_find_data_imports
+  (const char *, void (*cb) (arelent *, asection *, char *, const char *));
 extern void pe_create_import_fixup
-  (arelent * rel, asection *, bfd_vma, char *);
+  (arelent * rel, asection *, bfd_vma, char *, const char *);
 extern bfd_boolean pe_bfd_is_dll
   (bfd *);
 extern void pe_output_file_set_long_section_names

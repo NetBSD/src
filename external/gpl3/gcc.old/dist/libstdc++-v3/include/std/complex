@@ -1,6 +1,6 @@
 // The template and inlines for the -*- C++ -*- complex number classes.
 
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -503,7 +503,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator>>(basic_istream<_CharT, _Traits>& __is, complex<_Tp>& __x)
     {
       _Tp __re_x, __im_x;
-      _CharT __ch;
+      _CharT __ch = _CharT();
       __is >> __ch;
       if (__ch == '(') 
 	{
@@ -521,11 +521,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  else
 	    __is.setstate(ios_base::failbit);
 	}
-      else 
+      else if (__is)
 	{
 	  __is.putback(__ch);
-	  __is >> __re_x;
-	  __x = __re_x;
+	  if (__is >> __re_x)
+	    __x = __re_x;
+	  else
+	    __is.setstate(ios_base::failbit);
 	}
       return __is;
     }
@@ -678,7 +680,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp>
     inline complex<_Tp>
     polar(const _Tp& __rho, const _Tp& __theta)
-    { return complex<_Tp>(__rho * cos(__theta), __rho * sin(__theta)); }
+    {
+      __glibcxx_assert( __rho >= 0 );
+      return complex<_Tp>(__rho * cos(__theta), __rho * sin(__theta));
+    }
 
   template<typename _Tp>
     inline complex<_Tp>
@@ -1003,7 +1008,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     complex<_Tp>
     pow(const complex<_Tp>& __x, const _Tp& __y)
     {
-#ifndef _GLIBCXX_USE_C99_COMPLEX
+#if ! _GLIBCXX_USE_C99_COMPLEX
       if (__x == _Tp())
 	return _Tp();
 #endif
@@ -1839,7 +1844,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     arg(_Tp __x)
     {
       typedef typename __gnu_cxx::__promote<_Tp>::__type __type;
-#if (_GLIBCXX_USE_C99_MATH && !_GLIBCXX_USE_C99_FP_MACROS_DYNAMIC)
+#if (_GLIBCXX11_USE_C99_MATH && !_GLIBCXX_USE_C99_FP_MACROS_DYNAMIC)
       return std::signbit(__x) ? __type(3.1415926535897932384626433832795029L)
 	                       : __type();
 #else

@@ -1,4 +1,4 @@
-# Copyright 2004-2016 Free Software Foundation, Inc.
+# Copyright 2004-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -666,3 +666,8 @@ if {[info procs lreverse] == ""} {
 	return $retval
     }
 }
+
+# Various ccache versions provide incorrect debug info such as ignoring
+# different current directory, breaking GDB testsuite.
+set env(CCACHE_DISABLE) 1
+unset -nocomplain env(CCACHE_NODISABLE)

@@ -2395,7 +2395,8 @@ Output_section::Output_section(const char* name, elfcpp::Elf_Word type,
     lookup_maps_(new Output_section_lookup_maps),
     free_list_(),
     free_space_fill_(NULL),
-    patch_space_(0)
+    patch_space_(0),
+    reloc_section_(NULL)
 {
   // An unallocated section has no address.  Forcing this means that
   // we don't need special treatment for symbols defined in debug

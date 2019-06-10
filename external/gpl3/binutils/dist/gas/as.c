@@ -97,6 +97,7 @@ int verbose = 0;
 
 #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
 int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
+bfd_boolean flag_generate_build_notes = DEFAULT_GENERATE_BUILD_NOTES;
 #endif
 
 /* Keep the output file.  */
@@ -304,7 +305,18 @@ Options:\n\
                           generate ELF common symbols with STT_COMMON type\n"));
   fprintf (stream, _("\
   --sectname-subst        enable section name substitution sequences\n"));
+
+  fprintf (stream, _("\
+  --generate-missing-build-notes=[no|yes] "));
+#if DEFAULT_GENERATE_BUILD_NOTES
+  fprintf (stream, _("(default: yes)\n"));
+#else
+  fprintf (stream, _("(default: no)\n"));
 #endif
+  fprintf (stream, _("\
+                          generate GNU Build notes if none are present in the input\n"));
+#endif /* OBJ_ELF */
+
   fprintf (stream, _("\
   -f                      skip whitespace and comment preprocessing\n"));
   fprintf (stream, _("\
@@ -470,6 +482,7 @@ parse_args (int * pargc, char *** pargv)
       OPTION_NOEXECSTACK,
       OPTION_SIZE_CHECK,
       OPTION_ELF_STT_COMMON,
+      OPTION_ELF_BUILD_NOTES,
       OPTION_SECTNAME_SUBST,
       OPTION_ALTERNATE,
       OPTION_AL,
@@ -508,6 +521,7 @@ parse_args (int * pargc, char *** pargv)
     ,{"size-check", required_argument, NULL, OPTION_SIZE_CHECK}
     ,{"elf-stt-common", required_argument, NULL, OPTION_ELF_STT_COMMON}
     ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}
+    ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
 #endif
     ,{"fatal-warnings", no_argument, NULL, OPTION_WARN_FATAL}
     ,{"gdwarf-2", no_argument, NULL, OPTION_GDWARF2}
@@ -900,7 +914,19 @@ This program has absolutely no warranty.\n"));
 	case OPTION_SECTNAME_SUBST:
 	  flag_sectname_subst = 1;
 	  break;
-#endif
+
+	case OPTION_ELF_BUILD_NOTES:
+	  if (strcasecmp (optarg, "no") == 0)
+	    flag_generate_build_notes = FALSE;
+	  else if (strcasecmp (optarg, "yes") == 0)
+	    flag_generate_build_notes = TRUE;
+	  else
+	    as_fatal (_("Invalid --generate-missing-build-notes option: `%s'"),
+		      optarg);
+	  break;
+
+#endif /* OBJ_ELF */
+
 	case 'Z':
 	  flag_always_generate_output = 1;
 	  break;
@@ -1171,6 +1197,7 @@ int
 main (int argc, char ** argv)
 {
   char ** argv_orig = argv;
+  struct stat sob;
 
   int macro_strip_at;
 
@@ -1218,6 +1245,27 @@ main (int argc, char ** argv)
   /* Call parse_args before any of the init/begin functions
      so that switches like --hash-size can be honored.  */
   parse_args (&argc, &argv);
+
+  if (argc > 1 && stat (out_file_name, &sob) == 0)
+    {
+      int i;
+
+      for (i = 1; i < argc; ++i)
+	{
+	  struct stat sib;
+
+	  if (stat (argv[i], &sib) == 0)
+	    {
+	      if (sib.st_ino == sob.st_ino && sib.st_ino != 0)
+		{
+		  /* Don't let as_fatal remove the output file!  */
+		  out_file_name = NULL;
+		  as_fatal (_("The input and output files must be distinct"));
+		}
+	    }
+	}
+    }
+
   symbol_begin ();
   frag_init ();
   subsegs_begin ();

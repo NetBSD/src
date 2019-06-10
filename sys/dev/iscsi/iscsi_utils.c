@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.24 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.24.4.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -422,7 +422,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 
 	case CCBDISP_SCSIPI:
 		iscsi_done(ccb);
-		/* FALLTRHOUGH */
+		/* FALLTHROUGH */
 	case CCBDISP_FREE:
 		free_ccb(ccb);
 		break;
@@ -571,7 +571,7 @@ init_sernum(sernum_buffer_t *buff)
  *    Returns:
  *          0     if the received block is a duplicate
  *          1     if the number is the expected one
- *          >1    if the numer is > the expected value, in this case the
+ *          >1    if the number is > the expected value, in this case the
  *                return value is the number of unacknowledged blocks
  *          <0    if the buffer is full (i.e. an excessive number of blocks
  *                is unacknowledged)
@@ -686,7 +686,7 @@ get_sernum(session_t *sess, pdu_t *pdu)
 
 /*
  * sernum_in_window:
- *   Check wether serial number is in send window
+ *   Check whether serial number is in send window
  *
  */
 int

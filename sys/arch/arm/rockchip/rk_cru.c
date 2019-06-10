@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.3 2018/06/26 17:44:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru.c,v 1.3.2.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,10 @@
  */
 
 #include "opt_soc.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.3 2018/06/26 17:44:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.3.2.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.3 2018/06/26 17:44:04 jmcneill Exp $");
 #include <dev/clk/clk_backend.h>
 
 #include <arm/rockchip/rk_cru.h>
-
-#define	CRU_SOFTRST_CON0	0x0300
 
 static void *
 rk_cru_reset_acquire(device_t dev, const void *data, size_t len)
@@ -64,7 +62,7 @@ rk_cru_reset_assert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const bus_size_t reg = sc->sc_softrst_base + (reset_id / 16) * 4;
 	const u_int shift = reset_id % 16;
 
 	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (1 << shift));
@@ -77,7 +75,7 @@ rk_cru_reset_deassert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const bus_size_t reg = sc->sc_softrst_base + (reset_id / 16) * 4;
 	const u_int shift = reset_id % 16;
 
 	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (0 << shift));
@@ -93,7 +91,7 @@ static const struct fdtbus_reset_controller_func rk_cru_fdtreset_funcs = {
 };
 
 static struct clk *
-rk_cru_clock_decode(device_t dev, const void *data, size_t len)
+rk_cru_clock_decode(device_t dev, int cc_phandle, const void *data, size_t len)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	struct rk_cru_clk *clk;
@@ -146,7 +144,7 @@ rk_cru_clock_get_rate(void *priv, struct clk *clkp)
 
 	clkp_parent = clk_get_parent(clkp);
 	if (clkp_parent == NULL) {
-		aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+		aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
 		return 0;
 	}
 
@@ -300,19 +298,9 @@ rk_cru_attach(struct rk_cru_softc *sc)
 	int i;
 
 	if (of_hasprop(sc->sc_phandle, "rockchip,grf")) {
-		const int grf_phandle = fdtbus_get_phandle(sc->sc_phandle, "rockchip,grf");
-		if (grf_phandle == -1) {
-			aprint_error(": couldn't get grf phandle\n");
-			return ENXIO;
-		}
-
-		if (fdtbus_get_reg(grf_phandle, 0, &addr, &size) != 0) {
-			aprint_error(": couldn't get grf registers\n");
-			return ENXIO;
-		}
-
-		if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_grf) != 0) {
-			aprint_error(": couldn't map registers\n");
+		sc->sc_grf = fdtbus_syscon_acquire(sc->sc_phandle, "rockchip,grf");
+		if (sc->sc_grf == NULL) {
+			aprint_error(": couldn't get grf syscon\n");
 			return ENXIO;
 		}
 	}

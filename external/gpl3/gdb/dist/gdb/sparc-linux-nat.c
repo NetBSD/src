@@ -1,5 +1,5 @@
 /* Native-dependent code for GNU/Linux SPARC.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,19 @@
 #include "target.h"
 #include "linux-nat.h"
 
+class sparc_linux_nat_target final : public linux_nat_target
+{
+public:
+  /* Add our register access methods.  */
+  void fetch_registers (struct regcache *regcache, int regnum) override
+  { sparc_fetch_inferior_registers (regcache, regnum); }
+
+  void store_registers (struct regcache *regcache, int regnum) override
+  { sparc_store_inferior_registers (regcache, regnum); }
+};
+
+static sparc_linux_nat_target the_sparc_linux_nat_target;
+
 void
 supply_gregset (struct regcache *regcache, const prgregset_t *gregs)
 {
@@ -53,22 +66,12 @@ fill_fpregset (const struct regcache *regcache,
   sparc32_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
 }
 
-void _initialize_sparc_linux_nat (void);
-
 void
 _initialize_sparc_linux_nat (void)
 {
-  struct target_ops *t;
-
-  /* Fill in the generic GNU/Linux methods.  */
-  t = linux_target ();
-
   sparc_fpregmap = &sparc32_bsd_fpregmap;
 
-  /* Add our register access methods.  */
-  t->to_fetch_registers = sparc_fetch_inferior_registers;
-  t->to_store_registers = sparc_store_inferior_registers;
-
   /* Register the target.  */
-  linux_nat_add_target (t);
+  linux_target = &the_sparc_linux_nat_target;
+  add_inf_child_target (&the_sparc_linux_nat_target);
 }

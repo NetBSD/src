@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
-#include "terminal.h"
+#include "gdb_termios.h"
 #include "target.h"
 #include "gdbthread.h"
 #include "tdesc.h"
@@ -217,9 +217,9 @@ handle_accept_event (int err, gdb_client_data client_data)
    NAME is the filename used for communication.  */
 
 void
-remote_prepare (char *name)
+remote_prepare (const char *name)
 {
-  char *port_str;
+  const char *port_str;
 #ifdef USE_WIN32API
   static int winsock_initialized;
 #endif
@@ -284,9 +284,9 @@ remote_prepare (char *name)
    NAME is the filename used for communication.  */
 
 void
-remote_open (char *name)
+remote_open (const char *name)
 {
-  char *port_str;
+  const char *port_str;
 
   port_str = strchr (name, ':');
 #ifdef USE_WIN32API
@@ -664,18 +664,18 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
 	  if (remote_debug)
 	    {
 	      if (is_notif)
-		fprintf (stderr, "putpkt (\"%s\"); [notif]\n", buf2);
+		debug_printf ("putpkt (\"%s\"); [notif]\n", buf2);
 	      else
-		fprintf (stderr, "putpkt (\"%s\"); [noack mode]\n", buf2);
-	      fflush (stderr);
+		debug_printf ("putpkt (\"%s\"); [noack mode]\n", buf2);
+	      debug_flush ();
 	    }
 	  break;
 	}
 
       if (remote_debug)
 	{
-	  fprintf (stderr, "putpkt (\"%s\"); [looking for ack]\n", buf2);
-	  fflush (stderr);
+	  debug_printf ("putpkt (\"%s\"); [looking for ack]\n", buf2);
+	  debug_flush ();
 	}
 
       cc = readchar ();
@@ -688,8 +688,8 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
 
       if (remote_debug)
 	{
-	  fprintf (stderr, "[received '%c' (0x%x)]\n", cc, cc);
-	  fflush (stderr);
+	  debug_printf ("[received '%c' (0x%x)]\n", cc, cc);
+	  debug_flush ();
 	}
 
       /* Check for an input interrupt while we're here.  */
@@ -889,7 +889,7 @@ readchar (void)
 	  if (readchar_bufcnt == 0)
 	    {
 	      if (remote_debug)
-		fprintf (stderr, "readchar: Got EOF\n");
+		debug_printf ("readchar: Got EOF\n");
 	    }
 	  else
 	    perror ("readchar");
@@ -977,8 +977,8 @@ getpkt (char *buf)
 	    break;
 	  if (remote_debug)
 	    {
-	      fprintf (stderr, "[getpkt: discarding char '%c']\n", c);
-	      fflush (stderr);
+	      debug_printf ("[getpkt: discarding char '%c']\n", c);
+	      debug_flush ();
 	    }
 
 	  if (c < 0)
@@ -1024,8 +1024,8 @@ getpkt (char *buf)
     {
       if (remote_debug)
 	{
-	  fprintf (stderr, "getpkt (\"%s\");  [sending ack] \n", buf);
-	  fflush (stderr);
+	  debug_printf ("getpkt (\"%s\");  [sending ack] \n", buf);
+	  debug_flush ();
 	}
 
       if (write_prim ("+", 1) != 1)
@@ -1033,16 +1033,16 @@ getpkt (char *buf)
 
       if (remote_debug)
 	{
-	  fprintf (stderr, "[sent ack]\n");
-	  fflush (stderr);
+	  debug_printf ("[sent ack]\n");
+	  debug_flush ();
 	}
     }
   else
     {
       if (remote_debug)
 	{
-	  fprintf (stderr, "getpkt (\"%s\");  [no ack sent] \n", buf);
-	  fflush (stderr);
+	  debug_printf ("getpkt (\"%s\");  [no ack sent] \n", buf);
+	  debug_flush ();
 	}
     }
 
@@ -1579,7 +1579,6 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
   ULONGEST written = 0;
 
   /* Send the request.  */
-  strcpy (own_buf, "qRelocInsn:");
   sprintf (own_buf, "qRelocInsn:%s;%s", paddress (oldloc),
 	   paddress (*to));
   if (putpkt (own_buf) < 0)

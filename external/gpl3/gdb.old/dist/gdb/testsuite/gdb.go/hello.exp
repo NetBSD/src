@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@ if { [skip_go_tests] } { continue }
 
 standard_testfile .go
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug go}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug go}] } {
     return -1
 }
 
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 
 if { [go_runto_main] < 0 } {
-    untested $testfile
+    untested "could not run to main"
     return -1
 }
 
@@ -39,14 +39,14 @@ setup_xfail "*-*-*"
 
 gdb_test "print st" \
     ".* = $hex \"\"" \
-    "Starting string check"
+    "starting string check"
 
 if { [gdb_breakpoint ${srcfile}:${bp_location1}] } {
     pass "setting breakpoint 1"
 }
 
-gdb_test "cont" "Breakpoint .*:${bp_location1}.*" "Going to first breakpoint"
+gdb_test "cont" "Breakpoint .*:${bp_location1}.*" "going to first breakpoint"
 
 gdb_test "print st" \
     ".* = $hex \"Hello, world!\"" \
-    "String after assignment check"
+    "string after assignment check"

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.22.1 2019/06/10 22:06:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _EVBARM_NITROGEN_PLATFORM_H
 
 #include <arm/imx/imx6_reg.h>
+#include <arm/arm32/pte.h>
 
 /*
  * Memory will be mapped starting at 0x80000000 through 0xbfffffff

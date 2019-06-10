@@ -339,7 +339,7 @@ emul_bugapi_instruction_name(int call_id)
   static char buffer[40];
   int i;
 
-  for (i = 0; i < sizeof (bug_mapping) / sizeof (bug_mapping[0]); i++)
+  for (i = 0; i < ARRAY_SIZE (bug_mapping); i++)
     {
       if (bug_mapping[i].value == call_id)
 	return bug_mapping[i].info;

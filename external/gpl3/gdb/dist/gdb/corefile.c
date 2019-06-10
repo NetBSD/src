@@ -1,6 +1,6 @@
 /* Core dump and executable file functions above target vector, for GDB.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,12 +30,8 @@
 #include "dis-asm.h"
 #include <sys/stat.h>
 #include "completer.h"
-#include "observer.h"
+#include "observable.h"
 #include "cli/cli-utils.h"
-
-/* Local function declarations.  */
-
-extern void _initialize_core (void);
 
 /* You can have any number of hooks for `exec_file_command' command to
    call.  If there's only one hook, it is set in exec_file_display
@@ -53,29 +49,6 @@ static hook_type *exec_file_extra_hooks;	/* Array of additional
 						   hooks.  */
 static int exec_file_hook_count = 0;		/* Size of array.  */
 
-/* Binary file diddling handle for the core file.  */
-
-bfd *core_bfd = NULL;
-
-/* corelow.c target.  It is never NULL after GDB initialization.  */
-
-struct target_ops *core_target;
-
-
-/* Backward compatability with old way of specifying core files.  */
-
-void
-core_file_command (char *filename, int from_tty)
-{
-  dont_repeat ();		/* Either way, seems bogus.  */
-
-  gdb_assert (core_target != NULL);
-
-  if (!filename)
-    (core_target->to_detach) (core_target, filename, from_tty);
-  else
-    (core_target->to_open) (filename, from_tty);
-}
 
 
 /* If there are two or more functions that wish to hook into
@@ -130,29 +103,24 @@ specify_exec_file_hook (void (*hook) (const char *))
 void
 reopen_exec_file (void)
 {
-  char *filename;
   int res;
   struct stat st;
-  struct cleanup *cleanups;
 
   /* Don't do anything if there isn't an exec file.  */
   if (exec_bfd == NULL)
     return;
 
   /* If the timestamp of the exec file has changed, reopen it.  */
-  filename = xstrdup (bfd_get_filename (exec_bfd));
-  cleanups = make_cleanup (xfree, filename);
-  res = stat (filename, &st);
+  std::string filename = bfd_get_filename (exec_bfd);
+  res = stat (filename.c_str (), &st);
 
   if (res == 0 && exec_bfd_mtime && exec_bfd_mtime != st.st_mtime)
-    exec_file_attach (filename, 0);
+    exec_file_attach (filename.c_str (), 0);
   else
     /* If we accessed the file since last opening it, close it now;
        this stops GDB from holding the executable open after it
        exits.  */
     bfd_cache_close_all ();
-
-  do_cleanups (cleanups);
 }
 
 /* If we have both a core file and an exec file,
@@ -170,9 +138,7 @@ validate_files (void)
     }
 }
 
-/* Return the name of the executable file as a string.
-   ERR nonzero means get error if there is none specified;
-   otherwise return 0 in that case.  */
+/* See common/common-inferior.h.  */
 
 char *
 get_exec_file (int err)
@@ -188,7 +154,7 @@ Use the \"file\" or \"exec-file\" command."));
 }
 
 
-char *
+std::string
 memory_error_message (enum target_xfer_status err,
 		      struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
@@ -197,11 +163,11 @@ memory_error_message (enum target_xfer_status err,
     case TARGET_XFER_E_IO:
       /* Actually, address between memaddr and memaddr + len was out of
 	 bounds.  */
-      return xstrprintf (_("Cannot access memory at address %s"),
-			 paddress (gdbarch, memaddr));
+      return string_printf (_("Cannot access memory at address %s"),
+			    paddress (gdbarch, memaddr));
     case TARGET_XFER_UNAVAILABLE:
-      return xstrprintf (_("Memory at address %s unavailable."),
-			 paddress (gdbarch, memaddr));
+      return string_printf (_("Memory at address %s unavailable."),
+			    paddress (gdbarch, memaddr));
     default:
       internal_error (__FILE__, __LINE__,
 		      "unhandled target_xfer_status: %s (%s)",
@@ -215,12 +181,10 @@ memory_error_message (enum target_xfer_status err,
 void
 memory_error (enum target_xfer_status err, CORE_ADDR memaddr)
 {
-  char *str;
   enum errors exception = GDB_NO_ERROR;
 
   /* Build error string.  */
-  str = memory_error_message (err, target_gdbarch (), memaddr);
-  make_cleanup (xfree, str);
+  std::string str = memory_error_message (err, target_gdbarch (), memaddr);
 
   /* Choose the right error to throw.  */
   switch (err)
@@ -234,7 +198,7 @@ memory_error (enum target_xfer_status err, CORE_ADDR memaddr)
     }
 
   /* Throw it.  */
-  throw_error (exception, ("%s"), str);
+  throw_error (exception, ("%s"), str.c_str ());
 }
 
 /* Helper function.  */
@@ -250,8 +214,7 @@ read_memory_object (enum target_object object, CORE_ADDR memaddr,
       enum target_xfer_status status;
       ULONGEST xfered_len;
 
-      status = target_xfer_partial (current_target.beneath,
-				    object, NULL,
+      status = target_xfer_partial (current_top_target (), object, NULL,
 				    myaddr + xfered, NULL,
 				    memaddr + xfered, len - xfered,
 				    &xfered_len);
@@ -421,7 +384,7 @@ write_memory_with_notification (CORE_ADDR memaddr, const bfd_byte *myaddr,
 				ssize_t len)
 {
   write_memory (memaddr, myaddr, len);
-  observer_notify_memory_changed (current_inferior (), memaddr, len, myaddr);
+  gdb::observers::memory_changed.notify (current_inferior (), memaddr, len, myaddr);
 }
 
 /* Store VALUE at ADDR in the inferior as a LEN-byte unsigned
@@ -465,11 +428,8 @@ show_gnutarget_string (struct ui_file *file, int from_tty,
 		    _("The current BFD target is \"%s\".\n"), value);
 }
 
-static void set_gnutarget_command (char *, int,
-				   struct cmd_list_element *);
-
 static void
-set_gnutarget_command (char *ignore, int from_tty,
+set_gnutarget_command (const char *ignore, int from_tty,
 		       struct cmd_list_element *c)
 {
   char *gend = gnutarget_string + strlen (gnutarget_string);
@@ -485,8 +445,9 @@ set_gnutarget_command (char *ignore, int from_tty,
 
 /* A completion function for "set gnutarget".  */
 
-static VEC (char_ptr) *
+static void
 complete_set_gnutarget (struct cmd_list_element *cmd,
+			completion_tracker &tracker,
 			const char *text, const char *word)
 {
   static const char **bfd_targets;
@@ -504,7 +465,7 @@ complete_set_gnutarget (struct cmd_list_element *cmd,
       bfd_targets[last + 1] = NULL;
     }
 
-  return complete_on_enum (bfd_targets, text, word);
+  complete_on_enum (tracker, bfd_targets, text, word);
 }
 
 /* Set the gnutarget.  */
@@ -524,6 +485,7 @@ _initialize_core (void)
 
   c = add_cmd ("core-file", class_files, core_file_command, _("\
 Use FILE as core dump for examining memory and registers.\n\
+Usage: core-file FILE\n\
 No arg means have no core file.  This command has been superseded by the\n\
 `target core' and `detach' commands."), &cmdlist);
   set_cmd_completer (c, filename_completer);

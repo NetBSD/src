@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.2.12.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2.12.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll E
 
 #include <dev/fdt/fdtvar.h>
 
-static struct clk *exynos5410_clock_decode(device_t, const void *, size_t);
+static struct clk *exynos5410_clock_decode(device_t, int, const void *, size_t);
 
 static const struct fdtbus_clock_controller_func exynos5410_car_fdtclock_funcs = {
 	.decode = exynos5410_clock_decode
@@ -549,7 +549,8 @@ exynos5410_clock_print(struct exynos5410_clock_softc *sc,
 }
 
 static struct clk *
-exynos5410_clock_decode(device_t dev, const void *data, size_t len)
+exynos5410_clock_decode(device_t dev, int cc_phandle, const void *data,
+			size_t len)
 {
 	struct exynos_clk *eclk;
 
@@ -669,7 +670,7 @@ exynos5410_clock_set_rate_div(struct exynos5410_clock_softc *sc,
 	clk_parent = exynos5410_clock_get_parent(sc, &eclk->base);
 	const u_int parent_rate = exynos5410_clock_get_rate(sc, clk_parent);
 
-	for (tmp_div = 0; tmp_div < popcount32(ediv->bits); tmp_div++) {
+	for (tmp_div = 0; tmp_div < __SHIFTOUT_MASK(ediv->bits); tmp_div++) {
 		tmp_rate = parent_rate / (tmp_div + 1);
 		if (tmp_rate <= rate) {
 			new_div = tmp_div;

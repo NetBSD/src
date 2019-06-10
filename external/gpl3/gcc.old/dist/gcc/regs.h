@@ -1,5 +1,5 @@
 /* Define per-register tables for data flow info and register allocation.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,10 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_REGS_H
 #define GCC_REGS_H
-
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "rtl.h"
 
 #define REG_BYTES(R) mode_size[(int) GET_MODE (R)]
 
@@ -285,14 +281,6 @@ end_hard_regno (machine_mode mode, unsigned int regno)
 {
   return regno + hard_regno_nregs[regno][(int) mode];
 }
-
-/* Likewise for hard register X.  */
-
-#define END_HARD_REGNO(X) end_hard_regno (GET_MODE (X), REGNO (X))
-
-/* Likewise for hard or pseudo register X.  */
-
-#define END_REGNO(X) (HARD_REGISTER_P (X) ? END_HARD_REGNO (X) : REGNO (X) + 1)
 
 /* Add to REGS all the registers required to store a value of mode MODE
    in register REGNO.  */

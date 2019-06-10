@@ -1,0 +1,72 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	ixfr-from-differences yes;
+	check-integrity no;
+};
+
+key one {
+	algorithm hmac-md5;
+	secret "1234abcd8765";
+};
+
+key two {
+	algorithm hmac-md5;
+	secret "1234abcd8765";
+};
+
+key three {
+	algorithm hmac-md5;
+	secret "1234abcd8765";
+};
+
+acl reject {
+	!key one; !key two; any;
+};
+
+acl accept {
+	10.53.0.1; 10.53.0.2;
+};
+
+zone "." {
+	type hint;
+	file "../../common/root.hint";
+};
+
+zone "example" {
+	type master;
+	file "example.db";
+};
+
+zone "tsigzone" {
+	type master;
+	file "tsigzone.db";
+	allow-transfer { !reject; accept; };
+};

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.259 2018/02/05 15:18:11 maxv Exp $
+# $NetBSD: GENERIC,v 1.259.4.1 2019/06/10 22:06:45 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.259 $"
+#ident 		"GENERIC-$Revision: 1.259.4.1 $"
 
 maxusers	32
 
@@ -88,7 +88,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
@@ -153,13 +153,11 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 include 	"conf/compat_netbsd10.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -184,6 +182,7 @@ file-system	TMPFS		# Efficient memory file-system
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -201,10 +200,6 @@ options 	INET6		# IPV6
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -535,9 +530,6 @@ qe*	at qec?					# Mace Ethernet (10MBd)
 ## Happy Meal Ethernet
 hme*	at sbus? slot ? offset ?
 
-# midway ATM
-en0	at sbus? slot ? offset ?
-
 # PCMCIA ethernet devices
 #ep*	at pcmcia?
 #mbe*	at pcmcia?
@@ -585,11 +577,9 @@ pseudo-device	tap			# virtual Ethernet
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
 
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-pseudo-device	ipfilter
+pseudo-device	npf			# NPF packet filter
 
 ## for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -619,7 +609,6 @@ audioamd0	at sbus0 slot ? offset ?		# sun4m
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 
 #options 	DBRI_DEBUG	# noisy debug output from the dbri driver
-#options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri*		at sbus? slot ? offset ?		# SUNW,DBRI[s3|e]
 
 audio*		at audiobus?
@@ -717,29 +706,14 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device	fss			# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	putter			# for puffs and pud
 
-#options 	FILEASSOC		# fileassoc(9)
-					# and PAX_SEGVGUARD
-
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 					# (for static binaries only for now)

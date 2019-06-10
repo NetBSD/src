@@ -1,5 +1,5 @@
 ;; Predicate definitions for DEC Alpha.
-;; Copyright (C) 2004-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -73,6 +73,11 @@
 (define_predicate "non_zero_const_operand"
   (and (match_code "const_int,const_wide_int,const_double,const_vector")
        (not (match_test "op == CONST0_RTX (mode)"))))
+
+;; Return 1 if OP is the constant 2 or 3.
+(define_predicate "const23_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 2 || INTVAL (op) == 3")))
 
 ;; Return 1 if OP is the constant 4 or 8.
 (define_predicate "const48_operand"
@@ -181,7 +186,7 @@
     case SUBREG:
       if (register_operand (op, mode))
 	return 1;
-      /* ... fall through ...  */
+      /* fall through */
     case MEM:
       return ((TARGET_BWX || (mode != HImode && mode != QImode))
 	      && general_operand (op, mode));

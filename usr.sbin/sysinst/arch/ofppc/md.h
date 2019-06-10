@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:41 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,8 +69,9 @@
 #define DEFSWAPSIZE	128
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	256	/* Default /usr size, if /home */
-#define XNEEDMB		120	/* Extra megs for full X installation */
+#define DEFUSRSIZE	750	/* Default /usr size, if /home */
+#define XNEEDMB 	256	/* Extra megs for full X installation */
+#define DEBNEEDMB	900	/* Extra megs for debug sets */
 
 /* allow using tmpfs for /tmp instead of mfs */
 #define HAVE_TMPFS

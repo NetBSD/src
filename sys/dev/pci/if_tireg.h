@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.20 2012/10/27 17:18:34 chs Exp $ */
+/* $NetBSD: if_tireg.h,v 1.20.38.1 2019/06/10 22:07:16 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -765,8 +765,6 @@ struct ti_tx_desc {
  * alignes the packet after the Ethernet header at a 32-bit
  * boundary.
  */
-
-#define ETHER_ALIGN 2
 
 #define TI_PAGE_SIZE		PAGE_SIZE
 

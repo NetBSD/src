@@ -1,6 +1,6 @@
 /* tset -- Test file for mpc_set_x and mpc_set_x_x functions.
 
-Copyright (C) 2009, 2010, 2011 INRIA
+Copyright (C) 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -92,7 +92,7 @@ check_set (void)
 
       lo = -prec;
 
-      mpfr_set_d (fr, 1.23456789, GMP_RNDN);
+      mpfr_set_d (fr, 1.23456789, MPFR_RNDN);
 
       mpc_set_d (z, 1.23456789, MPC_RNDNN);
       if (mpfr_cmp (mpc_realref(z), fr) != 0 || mpfr_cmp_si (mpc_imagref(z), 0) != 0)
@@ -117,7 +117,7 @@ check_set (void)
       if (mpfr_cmp_si (mpc_realref(z), lo) != 0 || mpfr_cmp_ui (mpc_imagref(z), 0) != 0)
         PRINT_ERROR ("mpc_set_si", prec, z);
 
-      mpfr_set_ld (fr, 1.23456789L, GMP_RNDN);
+      mpfr_set_ld (fr, 1.23456789L, MPFR_RNDN);
 
       mpc_set_ld_ld (z, 1.23456789L, 1.23456789L, MPC_RNDNN);
       if (mpfr_cmp (mpc_realref(z), fr) != 0 || mpfr_cmp (mpc_imagref(z), fr) != 0)
@@ -141,10 +141,10 @@ check_set (void)
         PRINT_ERROR ("mpc_set_ld", prec, z);
 
       mpc_set_prec (x, prec);
-      mpfr_set_ui(fr, 1, GMP_RNDN);
-      mpfr_div_ui(fr, fr, 3, GMP_RNDN);
-      mpfr_set(mpc_realref(x), fr, GMP_RNDN);
-      mpfr_set(mpc_imagref(x), fr, GMP_RNDN);
+      mpfr_set_ui(fr, 1, MPFR_RNDN);
+      mpfr_div_ui(fr, fr, 3, MPFR_RNDN);
+      mpfr_set(mpc_realref(x), fr, MPFR_RNDN);
+      mpfr_set(mpc_imagref(x), fr, MPFR_RNDN);
 
       mpc_set (z, x, MPC_RNDNN);
       mpfr_clear_flags (); /* mpc_cmp set erange flag when an operand is a
@@ -170,7 +170,7 @@ check_set (void)
           || mpfr_erangeflag_p())
         PRINT_ERROR ("mpc_set_fr", prec, z);
 
-      mpfr_set_z (fr, mpz, GMP_RNDN);
+      mpfr_set_z (fr, mpz, MPFR_RNDN);
       mpc_set_z_z (z, mpz, mpz, MPC_RNDNN);
       mpfr_clear_flags ();
       if (mpfr_cmp (mpc_realref(z), fr) != 0
@@ -192,7 +192,7 @@ check_set (void)
           || mpfr_erangeflag_p())
         PRINT_ERROR ("mpc_set_z", prec, z);
 
-      mpfr_set_q (fr, mpq, GMP_RNDN);
+      mpfr_set_q (fr, mpq, MPFR_RNDN);
       mpc_set_q_q (z, mpq, mpq, MPC_RNDNN);
       mpfr_clear_flags ();
       if (mpfr_cmp (mpc_realref(z), fr) != 0
@@ -221,7 +221,7 @@ check_set (void)
           || mpfr_erangeflag_p())
         PRINT_ERROR ("mpc_set_q", prec, z);
 
-      mpfr_set_f (fr, mpf, GMP_RNDN);
+      mpfr_set_f (fr, mpf, MPFR_RNDN);
       mpc_set_f_f (z, mpf, mpf, MPC_RNDNN);
       mpfr_clear_flags ();
       if (mpfr_cmp (mpc_realref(z), fr) != 0
@@ -277,13 +277,13 @@ check_set (void)
           im = 2 * im * im + 4 * im + 1; /* gives 2^(2n-1)-1 from 2^(n-1)-1 */
 
         mpc_set_sj (z, im, MPC_RNDNN);
-        if (mpfr_get_sj (mpc_realref(z), GMP_RNDN) != im ||
+        if (mpfr_get_sj (mpc_realref(z), MPFR_RNDN) != im ||
             mpfr_cmp_ui (mpc_imagref(z), 0) != 0)
           PRINT_ERROR ("mpc_set_sj (2)", im, z);
 
         mpc_set_sj_sj (z, im, im, MPC_RNDNN);
-        if (mpfr_get_sj (mpc_realref(z), GMP_RNDN) != im ||
-            mpfr_get_sj (mpc_imagref(z), GMP_RNDN) != im)
+        if (mpfr_get_sj (mpc_realref(z), MPFR_RNDN) != im ||
+            mpfr_get_sj (mpc_imagref(z), MPFR_RNDN) != im)
           PRINT_ERROR ("mpc_set_sj_sj (2)", im, z);
       }
 #endif /* _MPC_H_HAVE_INTMAX_T */
@@ -408,7 +408,7 @@ check_set_str (mpfr_exp_t exp_max)
   /* the real part has a zero exponent in base ten (fixed in r439) */
   mpc_set_prec (expected, 37);
   mpc_set_prec (got, 37);
-  mpc_set_str (expected, "921FC04EDp-35  ", 16, GMP_RNDN);
+  mpc_set_str (expected, "921FC04EDp-35  ", 16, MPFR_RNDN);
   str = mpc_get_str (10, 0, expected, MPC_RNDNN);
   if (mpc_set_str (got, str, 10, MPC_RNDNN) == -1
       || mpc_cmp (got, expected) != 0)

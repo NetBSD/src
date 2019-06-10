@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.107 2018/01/04 14:02:23 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.107.4.1 2019/06/10 22:06:20 christos Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ include <machine/types.h>
 include <machine/segments.h>
 
 ifdef XEN
-include <xen/xen-public/sched.h>
+include <xen/include/public/sched.h>
 endif
 
 if defined(_KERNEL) && defined(_KERNEL_OPT)
@@ -144,7 +144,8 @@ define	KERNTEXTOFF		KERNTEXTOFF
 define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
-define	PG_KR			PG_KR
+define	PTE_P			PTE_P
+define	PTE_W			PTE_W
 define	PGEX_U			PGEX_U
 
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
@@ -268,12 +269,14 @@ define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
+define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
+endif
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
-define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
@@ -319,6 +322,7 @@ define	IS_LWP			offsetof(struct intrsource, is_lwp)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
+define	IPL_NET			IPL_NET
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
@@ -329,6 +333,7 @@ define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
+define	LIR_HV			LIR_HV
 
 define	SIR_NET			SIR_NET
 define	SIR_CLOCK		SIR_CLOCK
@@ -372,6 +377,10 @@ define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
+define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
+define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
+define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
+define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
 define START_INFO_FLAGS		offsetof(struct start_info, flags)
 define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console.domU.mfn)

@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -184,9 +184,9 @@ ia64_linux_supply_fpregset (const struct regset *regset,
      did the same.  So ignore whatever might be recorded in fpregset_t
      for fr0/fr1 and always supply their expected values.  */
   if (regnum == -1 || regnum == IA64_FR0_REGNUM)
-    regcache_raw_supply (regcache, IA64_FR0_REGNUM, f_zero);
+    regcache->raw_supply (IA64_FR0_REGNUM, f_zero);
   if (regnum == -1 || regnum == IA64_FR1_REGNUM)
-    regcache_raw_supply (regcache, IA64_FR1_REGNUM, f_one);
+    regcache->raw_supply (IA64_FR1_REGNUM, f_one);
 }
 
 static const struct regset ia64_linux_gregset =
@@ -207,8 +207,10 @@ ia64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					 void *cb_data,
 					 const struct regcache *regcache)
 {
-  cb (".reg", IA64_LINUX_GREGS_SIZE, &ia64_linux_gregset, NULL, cb_data);
-  cb (".reg2", IA64_LINUX_FPREGS_SIZE, &ia64_linux_fpregset, NULL, cb_data);
+  cb (".reg", IA64_LINUX_GREGS_SIZE, IA64_LINUX_GREGS_SIZE, &ia64_linux_gregset,
+      NULL, cb_data);
+  cb (".reg2", IA64_LINUX_FPREGS_SIZE, IA64_LINUX_FPREGS_SIZE,
+      &ia64_linux_fpregset, NULL, cb_data);
 }
 
 static void
@@ -255,9 +257,6 @@ ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_stap_is_single_operand (gdbarch,
 				      ia64_linux_stap_is_single_operand);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_ia64_linux_tdep;
 
 void
 _initialize_ia64_linux_tdep (void)

@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,19 +30,26 @@
 #include "inferior.h"
 #include <sys/stat.h>
 #include "inf-child.h"
-#include "fileio.h"
-#include "agent.h"
-#include "gdb_wait.h"
-#include "filestuff.h"
+#include "common/fileio.h"
+#include "common/agent.h"
+#include "common/gdb_wait.h"
+#include "common/filestuff.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-/* A pointer to what is returned by inf_child_target.  Used by
-   inf_child_open to push the most-derived target in reaction to
-   "target native".  */
-static struct target_ops *inf_child_ops = NULL;
+static const target_info inf_child_target_info = {
+  "native",
+  N_("Native process"),
+  N_("Native process (started by the \"run\" command).")
+};
+
+const target_info &
+inf_child_target::info () const
+{
+  return inf_child_target_info;
+}
 
 /* Helper function for child_wait and the derivatives of child_wait.
    HOSTSTATUS is the waitstatus from wait() or the equivalent; store our
@@ -67,35 +74,11 @@ store_waitstatus (struct target_waitstatus *ourstatus, int hoststatus)
     }
 }
 
-/* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
-   for all registers.  */
+inf_child_target::~inf_child_target ()
+{}
 
-static void
-inf_child_fetch_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regnum)
-{
-  if (regnum == -1)
-    {
-      for (regnum = 0;
-	   regnum < gdbarch_num_regs (get_regcache_arch (regcache));
-	   regnum++)
-	regcache_raw_supply (regcache, regnum, NULL);
-    }
-  else
-    regcache_raw_supply (regcache, regnum, NULL);
-}
-
-/* Store register REGNUM back into the inferior.  If REGNUM is -1, do
-   this for all registers (including the floating point registers).  */
-
-static void
-inf_child_store_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regnum)
-{
-}
-
-static void
-inf_child_post_attach (struct target_ops *self, int pid)
+void
+inf_child_target::post_attach (int pid)
 {
   /* This target doesn't require a meaningful "post attach" operation
      by a debugger.  */
@@ -107,10 +90,63 @@ inf_child_post_attach (struct target_ops *self, int pid)
    makes sure that registers contains all the registers from the
    program being debugged.  */
 
-static void
-inf_child_prepare_to_store (struct target_ops *self,
-			    struct regcache *regcache)
+void
+inf_child_target::prepare_to_store (struct regcache *regcache)
 {
+}
+
+bool
+inf_child_target::supports_terminal_ours ()
+{
+  return true;
+}
+
+void
+inf_child_target::terminal_init ()
+{
+  child_terminal_init (this);
+}
+
+void
+inf_child_target::terminal_inferior ()
+{
+  child_terminal_inferior (this);
+}
+
+void
+inf_child_target::terminal_save_inferior ()
+{
+  child_terminal_save_inferior (this);
+}
+
+void
+inf_child_target::terminal_ours_for_output ()
+{
+  child_terminal_ours_for_output (this);
+}
+
+void
+inf_child_target::terminal_ours ()
+{
+  child_terminal_ours (this);
+}
+
+void
+inf_child_target::interrupt ()
+{
+  child_interrupt (this);
+}
+
+void
+inf_child_target::pass_ctrlc ()
+{
+  child_pass_ctrlc (this);
+}
+
+void
+inf_child_target::terminal_info (const char *args, int from_tty)
+{
+  child_terminal_info (this, args, from_tty);
 }
 
 /* True if the user did "target native".  In that case, we won't
@@ -121,9 +157,14 @@ static int inf_child_explicitly_opened;
 /* See inf-child.h.  */
 
 void
-inf_child_open_target (struct target_ops *target, const char *arg,
-		       int from_tty)
+inf_child_open_target (const char *arg, int from_tty)
 {
+  target_ops *target = get_native_target ();
+
+  /* There's always only ever one native target, and if we get here,
+     it better be an inf-child target.  */
+  gdb_assert (dynamic_cast<inf_child_target *> (target) != NULL);
+
   target_preopen (from_tty);
   push_target (target);
   inf_child_explicitly_opened = 1;
@@ -131,16 +172,10 @@ inf_child_open_target (struct target_ops *target, const char *arg,
     printf_filtered ("Done.  Use the \"run\" command to start a process.\n");
 }
 
-static void
-inf_child_open (const char *arg, int from_tty)
-{
-  inf_child_open_target (inf_child_ops, arg, from_tty);
-}
-
 /* Implement the to_disconnect target_ops method.  */
 
-static void
-inf_child_disconnect (struct target_ops *target, const char *args, int from_tty)
+void
+inf_child_target::disconnect (const char *args, int from_tty)
 {
   if (args != NULL)
     error (_("Argument given to \"disconnect\"."));
@@ -152,52 +187,56 @@ inf_child_disconnect (struct target_ops *target, const char *args, int from_tty)
 
 /* Implement the to_close target_ops method.  */
 
-static void
-inf_child_close (struct target_ops *target)
+void
+inf_child_target::close ()
 {
   /* In case we were forcibly closed.  */
   inf_child_explicitly_opened = 0;
 }
 
 void
-inf_child_mourn_inferior (struct target_ops *ops)
+inf_child_target::mourn_inferior ()
 {
   generic_mourn_inferior ();
-  inf_child_maybe_unpush_target (ops);
+  maybe_unpush_target ();
 }
 
 /* See inf-child.h.  */
 
 void
-inf_child_maybe_unpush_target (struct target_ops *ops)
+inf_child_target::maybe_unpush_target ()
 {
   if (!inf_child_explicitly_opened && !have_inferiors ())
-    unpush_target (ops);
+    unpush_target (this);
 }
 
-static void
-inf_child_post_startup_inferior (struct target_ops *self, ptid_t ptid)
+void
+inf_child_target::post_startup_inferior (ptid_t ptid)
 {
   /* This target doesn't require a meaningful "post startup inferior"
      operation by a debugger.  */
 }
 
-static int
-inf_child_follow_fork (struct target_ops *ops, int follow_child,
-		       int detach_fork)
+bool
+inf_child_target::can_run ()
 {
-  /* This target doesn't support following fork or vfork events.  */
-  return 0;
+  return true;
 }
 
-static int
-inf_child_can_run (struct target_ops *self)
+bool
+inf_child_target::can_create_inferior ()
 {
-  return 1;
+  return true;
 }
 
-static char *
-inf_child_pid_to_exec_file (struct target_ops *self, int pid)
+bool
+inf_child_target::can_attach ()
+{
+  return true;
+}
+
+char *
+inf_child_target::pid_to_exec_file (int pid)
 {
   /* This target doesn't support translation of a process ID to the
      filename of the executable file.  */
@@ -206,11 +245,10 @@ inf_child_pid_to_exec_file (struct target_ops *self, int pid)
 
 /* Implementation of to_fileio_open.  */
 
-static int
-inf_child_fileio_open (struct target_ops *self,
-		       struct inferior *inf, const char *filename,
-		       int flags, int mode, int warn_if_slow,
-		       int *target_errno)
+int
+inf_child_target::fileio_open (struct inferior *inf, const char *filename,
+			       int flags, int mode, int warn_if_slow,
+			       int *target_errno)
 {
   int nat_flags;
   mode_t nat_mode;
@@ -232,10 +270,9 @@ inf_child_fileio_open (struct target_ops *self,
 
 /* Implementation of to_fileio_pwrite.  */
 
-static int
-inf_child_fileio_pwrite (struct target_ops *self,
-			 int fd, const gdb_byte *write_buf, int len,
-			 ULONGEST offset, int *target_errno)
+int
+inf_child_target::fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
+				 ULONGEST offset, int *target_errno)
 {
   int ret;
 
@@ -260,10 +297,9 @@ inf_child_fileio_pwrite (struct target_ops *self,
 
 /* Implementation of to_fileio_pread.  */
 
-static int
-inf_child_fileio_pread (struct target_ops *self,
-			int fd, gdb_byte *read_buf, int len,
-			ULONGEST offset, int *target_errno)
+int
+inf_child_target::fileio_pread (int fd, gdb_byte *read_buf, int len,
+				ULONGEST offset, int *target_errno)
 {
   int ret;
 
@@ -288,9 +324,8 @@ inf_child_fileio_pread (struct target_ops *self,
 
 /* Implementation of to_fileio_fstat.  */
 
-static int
-inf_child_fileio_fstat (struct target_ops *self, int fd,
-			struct stat *sb, int *target_errno)
+int
+inf_child_target::fileio_fstat (int fd, struct stat *sb, int *target_errno)
 {
   int ret;
 
@@ -303,12 +338,12 @@ inf_child_fileio_fstat (struct target_ops *self, int fd,
 
 /* Implementation of to_fileio_close.  */
 
-static int
-inf_child_fileio_close (struct target_ops *self, int fd, int *target_errno)
+int
+inf_child_target::fileio_close (int fd, int *target_errno)
 {
   int ret;
 
-  ret = close (fd);
+  ret = ::close (fd);
   if (ret == -1)
     *target_errno = host_to_fileio_error (errno);
 
@@ -317,10 +352,9 @@ inf_child_fileio_close (struct target_ops *self, int fd, int *target_errno)
 
 /* Implementation of to_fileio_unlink.  */
 
-static int
-inf_child_fileio_unlink (struct target_ops *self,
-			 struct inferior *inf, const char *filename,
-			 int *target_errno)
+int
+inf_child_target::fileio_unlink (struct inferior *inf, const char *filename,
+				 int *target_errno)
 {
   int ret;
 
@@ -333,112 +367,53 @@ inf_child_fileio_unlink (struct target_ops *self,
 
 /* Implementation of to_fileio_readlink.  */
 
-static char *
-inf_child_fileio_readlink (struct target_ops *self,
-			   struct inferior *inf, const char *filename,
-			   int *target_errno)
+gdb::optional<std::string>
+inf_child_target::fileio_readlink (struct inferior *inf, const char *filename,
+				   int *target_errno)
 {
   /* We support readlink only on systems that also provide a compile-time
      maximum path length (PATH_MAX), at least for now.  */
 #if defined (PATH_MAX)
   char buf[PATH_MAX];
   int len;
-  char *ret;
 
   len = readlink (filename, buf, sizeof buf);
   if (len < 0)
     {
       *target_errno = host_to_fileio_error (errno);
-      return NULL;
+      return {};
     }
 
-  ret = (char *) xmalloc (len + 1);
-  memcpy (ret, buf, len);
-  ret[len] = '\0';
-  return ret;
+  return std::string (buf, len);
 #else
   *target_errno = FILEIO_ENOSYS;
-  return NULL;
+  return {};
 #endif
 }
 
-static int
-inf_child_use_agent (struct target_ops *self, int use)
+bool
+inf_child_target::use_agent (bool use)
 {
   if (agent_loaded_p ())
     {
-      use_agent = use;
-      return 1;
+      ::use_agent = use;
+      return true;
     }
   else
-    return 0;
+    return false;
 }
 
-static int
-inf_child_can_use_agent (struct target_ops *self)
+bool
+inf_child_target::can_use_agent ()
 {
   return agent_loaded_p ();
 }
 
-/* Default implementation of the to_can_async_p and
-   to_supports_non_stop methods.  */
+/* See inf-child.h.  */
 
-static int
-return_zero (struct target_ops *ignore)
+void
+add_inf_child_target (inf_child_target *target)
 {
-  return 0;
-}
-
-struct target_ops *
-inf_child_target (void)
-{
-  struct target_ops *t = XCNEW (struct target_ops);
-
-  t->to_shortname = "native";
-  t->to_longname = "Native process";
-  t->to_doc = "Native process (started by the \"run\" command).";
-  t->to_open = inf_child_open;
-  t->to_close = inf_child_close;
-  t->to_disconnect = inf_child_disconnect;
-  t->to_post_attach = inf_child_post_attach;
-  t->to_fetch_registers = inf_child_fetch_inferior_registers;
-  t->to_store_registers = inf_child_store_inferior_registers;
-  t->to_prepare_to_store = inf_child_prepare_to_store;
-  t->to_insert_breakpoint = memory_insert_breakpoint;
-  t->to_remove_breakpoint = memory_remove_breakpoint;
-  t->to_terminal_init = child_terminal_init;
-  t->to_terminal_inferior = child_terminal_inferior;
-  t->to_terminal_ours_for_output = child_terminal_ours_for_output;
-  t->to_terminal_ours = child_terminal_ours;
-  t->to_terminal_info = child_terminal_info;
-  t->to_post_startup_inferior = inf_child_post_startup_inferior;
-  t->to_follow_fork = inf_child_follow_fork;
-  t->to_can_run = inf_child_can_run;
-  /* We must default these because they must be implemented by any
-     target that can run.  */
-  t->to_can_async_p = return_zero;
-  t->to_supports_non_stop = return_zero;
-  t->to_pid_to_exec_file = inf_child_pid_to_exec_file;
-  t->to_stratum = process_stratum;
-  t->to_has_all_memory = default_child_has_all_memory;
-  t->to_has_memory = default_child_has_memory;
-  t->to_has_stack = default_child_has_stack;
-  t->to_has_registers = default_child_has_registers;
-  t->to_has_execution = default_child_has_execution;
-  t->to_fileio_open = inf_child_fileio_open;
-  t->to_fileio_pwrite = inf_child_fileio_pwrite;
-  t->to_fileio_pread = inf_child_fileio_pread;
-  t->to_fileio_fstat = inf_child_fileio_fstat;
-  t->to_fileio_close = inf_child_fileio_close;
-  t->to_fileio_unlink = inf_child_fileio_unlink;
-  t->to_fileio_readlink = inf_child_fileio_readlink;
-  t->to_magic = OPS_MAGIC;
-  t->to_use_agent = inf_child_use_agent;
-  t->to_can_use_agent = inf_child_can_use_agent;
-
-  /* Store a pointer so we can push the most-derived target from
-     inf_child_open.  */
-  inf_child_ops = t;
-
-  return t;
+  set_native_target (target);
+  add_target (inf_child_target_info, inf_child_open_target);
 }

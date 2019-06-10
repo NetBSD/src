@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,14 @@ OptionalAccessSize
     | ','                           {$$ = TrCreateValuedLeafOp (
                                         PARSEOP_BYTECONST, 0);}
     | ',' ByteConstExpr             {$$ = $2;}
+    ;
+
+OptionalAccessTypeKeyword   /* Default: AnyAcc */
+    :                               {$$ = TrCreateLeafOp (
+                                        PARSEOP_ACCESSTYPE_ANY);}
+    | ','                           {$$ = TrCreateLeafOp (
+                                        PARSEOP_ACCESSTYPE_ANY);}
+    | ',' AccessTypeKeyword         {$$ = $2;}
     ;
 
 OptionalAddressingMode
@@ -142,6 +150,14 @@ OptionalListString
                                         PARSEOP_STRING_LITERAL,
                                         ACPI_TO_INTEGER (""));}   /* Placeholder is a NULL string */
     | ',' TermArg                   {$$ = $2;}
+    ;
+
+OptionalLockRuleKeyword     /* Default: NoLock */
+    :                               {$$ = TrCreateLeafOp (
+                                        PARSEOP_LOCKRULE_NOLOCK);}
+    | ','                           {$$ = TrCreateLeafOp (
+                                        PARSEOP_LOCKRULE_NOLOCK);}
+    | ',' LockRuleKeyword           {$$ = $2;}
     ;
 
 OptionalMaxType
@@ -258,6 +274,14 @@ OptionalStringData
     | ',' StringData                {$$ = $2;}
     ;
 
+OptionalSyncLevel           /* Default: 0 */
+    :                               {$$ = TrCreateValuedLeafOp (
+                                        PARSEOP_BYTECONST, 0);}
+    | ','                           {$$ = TrCreateValuedLeafOp (
+                                        PARSEOP_BYTECONST, 0);}
+    | ',' ByteConstExpr             {$$ = $2;}
+    ;
+
 OptionalTranslationType_Last
     :                               {$$ = NULL;}
     | ','                           {$$ = NULL;}
@@ -274,6 +298,14 @@ OptionalType_Last
     :                               {$$ = NULL;}
     | ','                           {$$ = NULL;}
     | ',' TypeKeyword               {$$ = $2;}
+    ;
+
+OptionalUpdateRuleKeyword   /* Default: Preserve */
+    :                               {$$ = TrCreateLeafOp (
+                                        PARSEOP_UPDATERULE_PRESERVE);}
+    | ','                           {$$ = TrCreateLeafOp (
+                                        PARSEOP_UPDATERULE_PRESERVE);}
+    | ',' UpdateRuleKeyword         {$$ = $2;}
     ;
 
 OptionalWireMode

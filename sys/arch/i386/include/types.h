@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.87 2016/02/27 00:09:45 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.87.18.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,8 +88,6 @@ typedef unsigned long	vsize_t;
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
 
-typedef int		pmc_evid_t;
-typedef __uint64_t	pmc_ctr_t;
 typedef __register_t	register_t;
 #define	PRIxREGISTER	"x"
 
@@ -131,6 +129,7 @@ typedef __register_t	register_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_TLS_VARIANT_II
 #define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_UCAS_FULL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

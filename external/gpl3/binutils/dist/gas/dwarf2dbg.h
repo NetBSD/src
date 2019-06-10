@@ -41,8 +41,10 @@ struct dwarf2_line_info
 
 /* Implements the .file FILENO "FILENAME" directive.  FILENO can be 0
    to indicate that no file number has been assigned.  All real file
-   number must be >0.  */
-extern char *dwarf2_directive_file (int);
+   number must be >0.  The second form returns the filename extracted
+   from the input stream.  */
+extern void   dwarf2_directive_file (int);
+extern char * dwarf2_directive_filename (void);
 
 /* Implements the .loc FILENO LINENO [COLUMN] directive.  FILENO is
    the file number, LINENO the line number and the (optional) COLUMN

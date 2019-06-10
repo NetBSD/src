@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.264 2018/02/17 22:47:14 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.264.4.1 2019/06/10 22:07:04 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -155,10 +155,10 @@ LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${KLINK.o}
 
 ##
-## (3) libkern and compat
+## (3) libkern
 ##
-## Set KERN_AS in the port Makefile to "obj" or "library".  The
-## default is "library", as documented in $S/lib/libkern/Makefile.inc.
+## Set OPT_MODULAR in the port Makefile if module(7) is enabled,
+## as documented in $S/lib/libkern/Makefile.inc.
 ##
 
 ### find out what to use for libkern
@@ -170,16 +170,6 @@ LIBKERN?=	${KERNLIB_PROF}
 .endif
 
 LIBKERNLN?=	${KERNLIBLN}
-
-### find out what to use for libcompat
-.include "$S/compat/common/Makefile.inc"
-.ifndef PROF
-SYSLIBCOMPAT?=	${COMPATLIB}
-.else
-SYSLIBCOMPAT?=	${COMPATLIB_PROF}
-.endif
-
-SYSLIBCOMPATLN?=	${COMPATLIBLN}
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -205,7 +195,7 @@ _MD_OBJS=	${MD_OBJS}
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxxx.o vers.o build_kernel
 
-SYSTEM_LIB=	${MD_LIBS} ${SYSLIBCOMPAT} ${LIBKERN}
+SYSTEM_LIB=	${MD_LIBS} ${LIBKERN}
 SYSTEM_OBJ?=	${_MD_OBJS} ${OBJS} ${SYSTEM_LIB}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O}
 .if defined(CTFMERGE)
@@ -327,6 +317,7 @@ ${_s:T:R}.o: ${_s}
 .if "${_SKIP_DTS}" != "yes"
 .include "${S}/conf/dts.mk"
 .endif
+.include "${S}/conf/copts.mk"
 
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
@@ -438,6 +429,12 @@ AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
+
+.for _v in CFLAGS CPPFLAGS CWARNFLAGS
+.for _c in ${CSRCS}
+${_v}.${_c:T}+=${OPT.${_c:T}:@.o.@${${_v}.${.o.}}@}
+.endfor
+.endfor
 
 .MAIN: all
 all: .gdbinit

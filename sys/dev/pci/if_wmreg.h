@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.107 2018/04/12 02:15:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.107.2.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -512,6 +512,8 @@ struct livengood_tcpip_ctxdesc {
 #define EECD_SEC1VAL_VALMASK (EECD_EE_AUTORD | EECD_EE_PRES) /* Valid Mask */
 
 #define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
+#define	FEXTNVM6_REQ_PLL_CLK	__BIT(8)
+#define	FEXTNVM6_ENABLE_K1_ENTRY_CONDITION __BIT(9)
 #define	FEXTNVM6_K1_OFF_ENABLE	__BIT(31)
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
@@ -718,17 +720,17 @@ struct livengood_tcpip_ctxdesc {
 #define IVAR_VALID       __BIT(7)
 /* IVAR definitions for 82580 and newer */
 #define WMREG_IVAR_Q(x)	(WMREG_IVAR0 + ((x) / 2) * 4)
-#define IVAR_TX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 8 : 24))
-#define IVAR_RX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 0 : 16))
+#define IVAR_TX_MASK_Q(x) (0x000000ffUL << (((x) % 2) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q(x) (0x000000ffUL << (((x) % 2) == 0 ? 0 : 16))
 /* IVAR definitions for 82576 */
 #define WMREG_IVAR_Q_82576(x)	(WMREG_IVAR0 + ((x) & 0x7) * 4)
-#define IVAR_TX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 8 : 24))
-#define IVAR_RX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 0 : 16))
+#define IVAR_TX_MASK_Q_82576(x) (0x000000ffUL << (((x) / 8) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q_82576(x) (0x000000ffUL << (((x) / 8) == 0 ? 0 : 16))
 /* IVAR definitions for 82574 */
 #define IVAR_ALLOC_MASK_82574	__BITS(0, 2)
 #define IVAR_VALID_82574	__BIT(3)
-#define IVAR_TX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 8 : 12))
-#define IVAR_RX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 0 : 4))
+#define IVAR_TX_MASK_Q_82574(x) (0x0000000fUL << ((x) == 0 ? 8 : 12))
+#define IVAR_RX_MASK_Q_82574(x) (0x0000000fUL << ((x) == 0 ? 0 : 4))
 #define IVAR_OTHER_MASK		__BITS(16, 19)
 #define IVAR_INT_ON_ALL_WB	__BIT(31)
 
@@ -771,7 +773,7 @@ struct livengood_tcpip_ctxdesc {
 #define RCTL_DTYP_ONEBUF RCTL_DTYP(0)	/* use one buffer(not split header). */
 #define RCTL_DTYP_SPH	RCTL_DTYP(1)	/* split header buffer. */
 					/* RCTL_DTYP(2) and RCTL_DTYP(3) are reserved. */
-#define	RCTL_MO(x)	((x) << 12)	/* multicast offset */
+#define	RCTL_MO		__BITS(13, 12)	/* multicast offset */
 #define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
 #define	RCTL_RDMTS_HEX	__BIT(16)
 #define	RCTL_2k		(0 << 16)	/* 2k Rx buffers */
@@ -904,7 +906,8 @@ struct livengood_tcpip_ctxdesc {
 #define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
 
 #define	WMREG_TIPG	0x0410	/* Transmit IPG Register */
-#define	TIPG_IPGT(x)	(x)		/* IPG transmit time */
+#define	TIPG_IPGT_MASK	__BITS(0, 9)	/* IPG transmit time MASK */
+#define	TIPG_IPGT(x)	__SHIFTIN((x), TIPG_IPGT_MASK) /* IPG transmit time */
 #define	TIPG_IPGR1(x)	((x) << 10)	/* IPG receive time 1 */
 #define	TIPG_IPGR2(x)	((x) << 20)	/* IPG receive time 2 */
 #define	TIPG_WM_DFLT	(TIPG_IPGT(0x0a) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x0a))
@@ -1193,15 +1196,38 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_WUC	0x5800	/* Wakeup Control */
 #define	WUC_APME		0x00000001 /* APM Enable */
 #define	WUC_PME_EN		0x00000002 /* PME Enable */
+#define WUC_PME_STATUS		0x00000004 /* PME Status */
+#define WUC_APMPME		0x00000008 /* Assert PME on APM Wakeup */
+#define WUC_PHY_WAKE		0x00000100 /* if PHY supports wakeup */
 
 #define	WMREG_WUFC	0x5808	/* Wakeup Filter Control */
-#define WUFC_MAG		0x00000002 /* Magic Packet Wakeup Enable */
-#define WUFC_EX			0x00000004 /* Directed Exact Wakeup Enable */
-#define WUFC_MC			0x00000008 /* Directed Multicast Wakeup En */
-#define WUFC_BC			0x00000010 /* Broadcast Wakeup Enable */
-#define WUFC_ARP		0x00000020 /* ARP Request Packet Wakeup En */
-#define WUFC_IPV4		0x00000040 /* Directed IPv4 Packet Wakeup En */
-#define WUFC_IPV6		0x00000080 /* Directed IPv6 Packet Wakeup En */
+#define WUFC_LNKC	__BIT(0)	/* Link Status Change Wakeup Enable */
+#define WUFC_MAG	__BIT(1)	/* Magic Packet Wakeup Enable */
+#define WUFC_EX		__BIT(2)	/* Directed Exact Wakeup Enable */
+#define WUFC_MC		__BIT(3)	/* Directed Multicast Wakeup En */
+#define WUFC_BC		__BIT(4)	/* Broadcast Wakeup Enable */
+#define WUFC_ARPDIR	__BIT(5)	/* ARP Request Packet Wakeup En */
+#define WUFC_IPV4	__BIT(6)	/* Directed IPv4 Packet Wakeup En */
+#define WUFC_IPV6	__BIT(7)	/* Directed IPv6 Packet Wakeup En */
+#define WUFC_NS		__BIT(9)	/* NS Wakeup En */
+#define WUFC_NSDIR	__BIT(10)	/* NS Directed En */
+#define WUFC_ARP	__BIT(11)	/* ARP request En */
+#define WUFC_FLEX_HQ	__BIT(14)	/* Flex Filters Host Queueing En */
+#define WUFC_NOTCO	__BIT(15)	/* ? */
+#define WUFC_FLX	__BITS(23, 16)	/* Flexible Filter [0-7] En */
+#define WUFC_FLXACT	__BITS(27, 24)	/* Flexible Filter [0-3] Action */
+#define WUFC_FW_RST_WK	__BIT(31)	/* Wake on Firmware Reset Assert En */
+
+#define	WMREG_WUS	0x5810	/* Wakeup Status (R/W1C) */
+	/* Bit 30-24 and 15-12 are reserved */
+#define WUS_MNG		__BIT(8)	/* Manageability event */
+#define WUS_FLAGS	"\20"						\
+	"\1LINKC"	"\2MAG"		"\3EX"		"\4MC"		\
+	"\5BC"		"\6ARPDIR"	"\7IPV4"	"\10IPV6"	\
+	"\11MNG"	"\12NS"		"\13NSDIR"	"\14ARP"	\
+	"\21FLX0"	"\22FLX1"	"\23FLX2"	"\24FLX3"	\
+	"\25FLX4"	"\26FLX5"	"\27FLX6"	"\30FLX7"	\
+							"\40FW_RST_WK"
 
 #define WMREG_MRQC	0x5818	/* Multiple Receive Queues Command */
 #define MRQC_DISABLE_RSS	0x00000000
@@ -1280,6 +1306,12 @@ struct livengood_tcpip_ctxdesc {
 #define GCR_CMPL_TMOUT_RESEND	0x00010000
 #define GCR_CAP_VER2		0x00040000
 #define GCR_L1_ACT_WITHOUT_L0S_RX 0x08000000
+#define GCR_NO_SNOOP_ALL (GCR_RXD_NO_SNOOP | \
+	    GCR_RXDSCW_NO_SNOOP |	     \
+	    GCR_RXDSCR_NO_SNOOP |	     \
+	    GCR_TXD_NO_SNOOP |		     \
+	    GCR_TXDSCW_NO_SNOOP |	     \
+	    GCR_TXDSCR_NO_SNOOP)
 
 #define WMREG_FACTPS	0x5b30	/* Function Active and Power State to MNG */
 #define FACTPS_MNGCG		0x20000000
@@ -1461,7 +1493,7 @@ struct livengood_tcpip_ctxdesc {
 #define WM_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
 #define INVM_SIZE			64 /* Number of INVM Data Registers */
 
-/* iNVM default vaule */
+/* iNVM default value */
 #define NVM_INIT_CTRL_2_DEFAULT_I211	0x7243
 #define NVM_INIT_CTRL_4_DEFAULT_I211	0x00c1
 #define NVM_LED_1_CFG_DEFAULT_I211	0x0184

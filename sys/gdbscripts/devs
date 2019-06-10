@@ -1,0 +1,24 @@
+#	$NetBSD: devs,v 1.2.2.2 2019/06/10 22:09:02 christos Exp $
+
+define devs
+	set $i = 0
+
+	while ($i < 2)
+		if ($i == 0)
+			set $d = alldevs.tqh_first
+		end
+		if ($d)
+			printf "        device_t            parent           private  dv_xname\n"
+		end
+		while ($d)
+			printf "%16lx  %16lx  %16lx  %s\n", \
+				$d, $d->dv_parent, $d->dv_private, $d->dv_xname
+			set $d = $d->dv_list.tqe_next
+		end
+		set $i++
+	end
+end
+document devs
+dump a list of all devices known on the system with their name,
+and these pointers: this device, parent device, device private.
+end

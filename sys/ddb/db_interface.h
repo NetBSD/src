@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.36 2018/03/04 07:14:50 mlelstv Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.36.4.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -83,5 +83,13 @@ void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 #define	db_stacktrace() \
     db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
 	true, 65535, "", printf)
+
+#define	db_ustacktrace() \
+    db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
+	true, 65535, "", uprintf)
+
+#define	db_lstacktrace() \
+    db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
+	true, 65535, "", addlog)
 
 #endif /* _DDB_DB_INTERFACE_H_ */

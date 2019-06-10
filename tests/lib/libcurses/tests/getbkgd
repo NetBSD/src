@@ -1,0 +1,2 @@
+include bkgdset
+call `\002A` getbkgd STDSCR

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.129 2018/03/01 06:37:40 snj Exp $
+.\"	$NetBSD: hier.7,v 1.129.4.1 2019/06/10 22:05:41 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd January 8, 2018
+.Dd March 25, 2019
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -461,11 +461,9 @@ Include files for Internet standard protocols; see
 .It Pa netinet6/
 Include files for Internet protocol version 6; see
 .Xr inet6 4 .
-.It Pa netkey/
+.It Pa netipsec/
 Include files for secret key management, used for security protocols; see
 .Xr ipsec 4 .
-.It Pa netnatm/
-C include files for native mode ATM.
 .It Pa nfs/
 C include files for NFS (Network File System).
 .It Pa protocols/
@@ -886,8 +884,6 @@ binaries; see
 .Xr compat_freebsd 8 .
 .It Pa hpux/
 Support for 68000 HP-UX binaries.
-.It Pa ibcs2/
-Support for Intel Binary binaries.
 .It Pa linux/
 Support for Linux binaries; see
 .Xr compat_linux 8 .
@@ -897,18 +893,11 @@ Support for 4KB page 68000 binaries.
 Support for
 .Nx
 32-bit binaries on 64 bit platforms with compatible CPU families.
-.It Pa osf1/
-Support for Digital
-.Ux
-(formerly OSF/1) binaries.
 .It Pa ossaudio/
 Support for OSS audio.
 .It Pa sunos/
 Support for SunOS 4.x binaries; see
 .Xr compat_sunos 8 .
-.It Pa svr4/
-Support for System V Release 4 binaries; see
-.Xr compat_svr4 8 .
 .It Pa ultrix/
 Support for ULTRIX binaries.
 .It Pa vax1k/
@@ -958,8 +947,6 @@ Union file system; see
 .It Pa gdbscripts/
 Support for accessing kernel structures from within the debugger
 .Xr gdb 1 .
-.It Pa ipkdb/
-Support for kernel debugging over the network.
 .Pp
 .It Pa kern/
 Primary kernel source code.
@@ -1017,10 +1004,8 @@ AppleTalk networking support.
 IP networking support.
 .It Pa netinet6/
 IPv6 networking support.
-.It Pa netkey/
+.It Pa netipsec/
 Key database for IPsec networking support.
-.It Pa netnatm/
-ATM networking support.
 .It Pa nfs/
 NFS (network file system) support, both client and server.
 .It Pa stand/

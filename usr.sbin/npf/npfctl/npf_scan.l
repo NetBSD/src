@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_scan.l,v 1.26 2017/12/10 22:04:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,7 +90,9 @@ table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+lpm			return LPM;
 cdb			return CDB;
+const			return CONST;
 static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
@@ -103,6 +103,10 @@ set			return SET;
 "<-"			return ARROWLEFT;
 "->"			return ARROWRIGHT;
 algo			return ALGO;
+netmap			return NETMAP;
+ipset			return IPSET;
+"ip-hash"		return IPHASH;
+"round-robin"		return ROUNDROBIN;
 npt66			return NPT66;
 "-"			return MINUS;
 procedure		return PROCEDURE;

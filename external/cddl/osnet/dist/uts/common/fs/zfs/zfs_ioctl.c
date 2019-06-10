@@ -211,11 +211,8 @@ static struct cdev *zfsdev;
 #endif
 
 #ifdef __NetBSD__
-static int zfs_cmajor = -1;
-static int zfs_bmajor = -1;
-dev_info_t *zfs_dip;
-
-#define ddi_driver_major(x)	zfs_cmajor
+static dev_info_t __zfs_devinfo = { -1, -1 };
+dev_info_t *zfs_dip = &__zfs_devinfo;
 
 #define zfs_init() /* nothing */
 #define zfs_fini() /* nothing */
@@ -3363,10 +3360,8 @@ zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
-#ifdef __FreeBSD__
 	if (error == 0 && type == DMU_OST_ZVOL)
 		zvol_create_minors(fsname);
-#endif
 	return (error);
 }
 
@@ -3408,10 +3403,8 @@ zfs_ioc_clone(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
-#ifdef __FreeBSD__
 	if (error == 0)
 		zvol_create_minors(fsname);
-#endif
 	return (error);
 }
 
@@ -3684,9 +3677,7 @@ zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl, nvlist_t *outnvl)
 		error = zfs_unmount_snap(name);
 		if (error != 0)
 			return (error);
-#if defined(__FreeBSD__)
 		zvol_remove_minors(name);
-#endif
 	}
 
 	return (dsl_destroy_snapshots_nvl(snaps, defer, outnvl));
@@ -3810,7 +3801,7 @@ zfs_ioc_destroy(zfs_cmd_t *zc)
 	else
 		err = dsl_destroy_head(zc->zc_name);
 	if (zc->zc_objset_type == DMU_OST_ZVOL && err == 0)
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 		zvol_remove_minors(zc->zc_name);
 #else
 		(void) zvol_remove_minor(zc->zc_name);
@@ -3881,7 +3872,7 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 	char *at;
 	boolean_t allow_mounted = B_TRUE;
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 	allow_mounted = (zc->zc_cookie & 2) != 0;
 #endif
 
@@ -4553,10 +4544,8 @@ zfs_ioc_recv(zfs_cmd_t *zc)
 	}
 #endif
 
-#ifdef __FreeBSD__
 	if (error == 0)
 		zvol_create_minors(tofs);
-#endif
 
 	/*
 	 * On error, restore the original props.
@@ -6169,7 +6158,9 @@ zfsdev_minor_alloc(void)
 	static minor_t last_minor;
 	minor_t m;
 
+#ifndef __NetBSD__
 	ASSERT(MUTEX_HELD(&spa_namespace_lock));
+#endif
 
 	for (m = last_minor + 1; m != last_minor; m++) {
 		if (m > ZFSDEV_MAX_MINOR)
@@ -6205,6 +6196,8 @@ zfs_ctldev_init(dev_t *devp)
 
 #ifdef __FreeBSD__
 	devfs_set_cdevpriv((void *)(uintptr_t)minor, zfsdev_close);
+#else
+	*devp = makedev(major(*devp), minor);
 #endif
 
 	zs = ddi_get_soft_state(zfsdev_state, minor);
@@ -6292,6 +6285,7 @@ zfsdev_close(dev_t dev, int flag, int otyp, cred_t *cr)
 #ifdef __FreeBSD__
 		return;
 #else
+		return zvol_close(dev, flag, otyp, cr);
 		return 0;
 #endif
 	}
@@ -6310,7 +6304,7 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 #endif
 #ifdef __NetBSD__
 static int
-zfsdev_ioctl(dev_t dev, int zcmd, intptr_t iarg, int flag, cred_t *cr, int *rvalp)
+zfsdev_ioctl(dev_t dev, u_long zcmd, intptr_t iarg, int flag, cred_t *cr, int *rvalp)
 #endif
 {
 	zfs_cmd_t *zc;
@@ -6470,7 +6464,8 @@ zfsdev_ioctl(dev_t dev, int zcmd, intptr_t iarg, int flag, cred_t *cr, int *rval
 				goto out;
 			}
 		}
-	}
+	} else
+		zc_iocparm = NULL;
 
 	if (compat) {
 		if (newioc) {
@@ -6970,13 +6965,54 @@ MODULE_DEPEND(zfsctrl, acl_nfs4, 1, 1, 1);
 #include <sys/module.h>
 #include <uvm/uvm_extern.h>
 
-MODULE(MODULE_CLASS_DRIVER, zfs, "solaris");
+MODULE(MODULE_CLASS_VFS, zfs, "solaris");
+
+static const struct fileops zfs_fileops;
+
+static int
+nb_zfsdev_fioctl(struct file *fp,  u_long cmd, void *argp)
+{
+	dev_t dev = (dev_t)(uintptr_t)fp->f_data;
+	int rval;
+
+	return zfsdev_ioctl(dev, cmd, (intptr_t)argp, fp->f_flag,
+	    kauth_cred_get(), &rval);
+}
+
+static int
+nb_zfsdev_fclose(struct file *fp)
+{
+	dev_t dev = (dev_t)(uintptr_t)fp->f_data;
+	int error;
+
+	return zfsdev_close(dev, fp->f_flag, OTYPCHR, fp->f_cred);
+}
 
 static int
 nb_zfsdev_copen(dev_t dev, int flag, int mode, lwp_t *l)
 {
+	const bool must_clone = (getminor(dev) == 0 && (flag & FEXCL) != 0);
+	struct file *fp;
+	int error, fd;
 
-	return zfsdev_open(&dev, flag, OTYPCHR, kauth_cred_get());
+	if (must_clone) {
+		error = fd_allocfile(&fp, &fd);
+		if (error)
+			return error;
+	}
+
+	error = zfsdev_open(&dev, flag, OTYPCHR, kauth_cred_get());
+
+	if (must_clone) {
+		if (error) {
+			fd_abort(curproc, fp, fd);
+			return error;
+		}
+		return fd_clone(fp, fd, flag, &zfs_fileops,
+		    (void *)(uintptr_t)dev);
+	}
+
+	return error;
 }
 
 static int
@@ -7029,6 +7065,19 @@ nb_zvol_strategy(struct buf *bp)
 
 	(void) zvol_strategy(bp);
 }
+
+static const struct fileops zfs_fileops = {
+	.fo_name = "zfs",
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = nb_zfsdev_fioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = fnullop_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = nb_zfsdev_fclose,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_restart = fnullop_restart,
+};
 
 const struct bdevsw zfs_bdevsw = {
 	.d_open = nb_zfsdev_bopen,
@@ -7119,14 +7168,10 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 	uint64_t availrmem;
 
 	extern struct vfsops zfs_vfsops;
-	extern uint_t zfs_loadvnode_key;
 	extern uint_t zfs_putpage_key;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if (!rootvnode)
-			return EAGAIN;
-
 		/* XXXNETBSD trim is not supported yet */
 		zfs_trim_enabled = B_FALSE;
 
@@ -7143,7 +7188,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		tsd_create(&zfs_fsyncer_key, NULL);
 		tsd_create(&rrw_tsd_key, rrw_tsd_destroy);
 		tsd_create(&zfs_allow_log_key, zfs_allow_log_destroy);
-		tsd_create(&zfs_loadvnode_key, zfs_loadvnode_destroy);
 		tsd_create(&zfs_putpage_key, NULL);
 
 		spa_init(FREAD | FWRITE);
@@ -7152,8 +7196,8 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		zfs_ioctl_init();
 		zfs_sysctl_init();
 
-		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_bmajor,
-		    &zfs_cdevsw, &zfs_cmajor);
+		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_dip->di_bmajor,
+		    &zfs_cdevsw, &zfs_dip->di_cmajor);
 		if (error != 0) {
 			goto attacherr;
 		}
@@ -7178,7 +7222,6 @@ attacherr:
 		spa_fini();
 
 		tsd_destroy(&zfs_putpage_key);
-		tsd_destroy(&zfs_loadvnode_key);
 		tsd_destroy(&zfs_fsyncer_key);
 		tsd_destroy(&rrw_tsd_key);
 		tsd_destroy(&zfs_allow_log_key);

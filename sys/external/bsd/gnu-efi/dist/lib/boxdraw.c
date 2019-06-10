@@ -1,4 +1,4 @@
-/*	$NetBSD: boxdraw.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: boxdraw.c,v 1.1.1.1.36.1 2019/06/10 22:08:36 christos Exp $	*/
 
 /*++
 
@@ -97,7 +97,7 @@ STATIC UNICODE_TO_CHAR UnicodeToPcAnsiOrAscii[] = {
     */      
     { ARROW_DOWN,                         0x19, L'v'},
     
-    { 0x0000, 0x00 }
+    { 0x0000, 0x00, L'\0' }
 };
 
 

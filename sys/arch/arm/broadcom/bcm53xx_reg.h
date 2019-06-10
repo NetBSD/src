@@ -69,11 +69,15 @@
 #define BCM53XX_PCIE2_OWIN_SIZE	0x04000000
 #define BCM53XX_PCIE2_OWIN_MAX	0x08000000
 
+#define BCM53XX_ROM_REGION_PBASE 0xfff00000
+#define BCM53XX_ROM_REGION_SIZE	0x00100000
+
 #define BCM53XX_IO_SIZE		(BCM53XX_IOREG_SIZE		\
 				 + BCM53XX_ARMCORE_SIZE		\
 				 + BCM53XX_PCIE0_OWIN_SIZE	\
 				 + BCM53XX_PCIE1_OWIN_SIZE	\
-				 + BCM53XX_PCIE2_OWIN_SIZE)
+				 + BCM53XX_PCIE2_OWIN_SIZE	\
+				 + BCM53XX_ROM_REGION_SIZE)
 
 #define BCM53XX_REF_CLK		(25*1000*1000)
 
@@ -727,7 +731,7 @@ struct gmac_txdb {
 };
 #define TXDB_FLAG_SF		__BIT(31)	// Start oF Frame
 #define TXDB_FLAG_EF		__BIT(30)	// End oF Frame
-#define TXDB_FLAG_IC		__BIT(29)	// Interupt on Completetion
+#define TXDB_FLAG_IC		__BIT(29)	// Interrupt on Completetion
 #define TXDB_FLAG_ET		__BIT(28)	// End Of Table
 
 struct gmac_rxdb {

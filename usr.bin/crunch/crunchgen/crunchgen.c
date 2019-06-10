@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.87 2018/06/21 10:55:54 kamil Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.87.2.1 2019/06/10 22:10:18 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.87 2018/06/21 10:55:54 kamil Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.87.2.1 2019/06/10 22:10:18 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -102,7 +102,9 @@ static int goterror = 0;
 
 static const char *pname = "crunchgen";
 
-static int verbose, readcache, useobjs, oneobj, pie, sanitizer;	/* options */
+/* options */
+static int verbose, readcache, useobjs, oneobj, pie, libcsanitizer, sanitizer;
+
 static int reading_cache;
 static char *machine;
 static char *makeobjdirprefix;
@@ -165,6 +167,7 @@ main(int argc, char **argv)
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
 	case 's':       sanitizer = 1; break;
+	case 'S':       libcsanitizer = 1; break;
 
 	case 'm':	(void)estrlcpy(outmkname, optarg, sizeof(outmkname)); break;
 	case 'c':	(void)estrlcpy(outcfname, optarg, sizeof(outcfname)); break;
@@ -222,7 +225,7 @@ void
 usage(void)
 {
     fprintf(stderr, 
-	"%s [-fOoq] [-c c-file-name] [-D src-root] [-d build-options]\n"
+	"%s [-fOopqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
 	"\t  [-e exec-file-name] [-L lib-dir] [-m makefile-name]\n"
 	"\t  [-v var-spec] conf-file\n", pname);
     exit(1);
@@ -923,6 +926,8 @@ top_makefile_rules(FILE *outmk)
 
     if (!pie)
 	    fprintf(outmk, "NOPIE=\n");
+    if (!libcsanitizer)
+	    fprintf(outmk, "NOLIBCSANITIZER=\n");
     if (!sanitizer)
 	    fprintf(outmk, "NOSANITIZER=\n");
     fprintf(outmk, "NOMAN=\n\n");
@@ -956,6 +961,13 @@ top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "LDSTATIC=-static%s\n\n", pie ? " -pie" : "");
     fprintf(outmk, "PROG=%s\n\n", execfname);
+
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS=-R .eh_frame_hdr -R .note -R .note.netbsd.pax -R .ident -R .comment -R .copyright\n\n");
+
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS+=-R .eh_frame\n");
+    fprintf(outmk, ".if ${MACHINE} != \"sparc64\"\n");
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS+=-R .note.netbsd.mcmodel\n");
+    fprintf(outmk, ".endif\n\n");
     
     fprintf(outmk, "all: ${PROG}.crunched\n");
     fprintf(outmk, "${PROG}.crunched: ${SUBMAKE_TARGETS} .WAIT ${PROG}.strip\n");
@@ -964,7 +976,7 @@ top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
     fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip \" ${PROG}; \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
-    fprintf(outmk, "\t\t${OBJCOPY} -S -R .eh_frame -R .eh_frame_hdr -R .note -R .note.netbsd.mcmodel -R .note.netbsd.pax -R .ident -R .comment -R .copyright ${PROG} && \\\n");
+    fprintf(outmk, "\t\t${OBJCOPY} -S ${OBJCOPY_REMOVE_FLAGS} ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
@@ -1020,7 +1032,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, MAKECMD "%s ", sanitizer ? "" : "NOSANITIZER=");
+	fprintf(outmk, MAKECMD "%s %s ", libcsanitizer ? "" : "NOLIBCSANITIZER=", sanitizer ? "" : "NOSANITIZER=");
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else

@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Free Software Foundation, Inc.
+# Copyright 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -156,11 +156,11 @@ proc make_mi_re { mode thread frame type } {
     set thread_event_re "=thread-selected,id=\"$thread\""
     set thread_answer_re "\\^done,new-thread-id=\"$thread\""
 
-    set frame_re(0) ",frame=\{level=\"0\",addr=\"$hex\",func=\"child_sub_function\",args=\\\[\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"$thread_loop_line\"\}"
-    set frame_re(1) ",frame=\{level=\"1\",addr=\"$hex\",func=\"child_function\",args=\\\[\{name=\"args\",value=\"0x0\"\}\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"$thread_caller_line\"\}"
+    set frame_re(0) ",frame=\{level=\"0\",addr=\"$hex\",func=\"child_sub_function\",args=\\\[\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"$thread_loop_line\",arch=\"$any\"\}"
+    set frame_re(1) ",frame=\{level=\"1\",addr=\"$hex\",func=\"child_function\",args=\\\[\{name=\"args\",value=\"0x0\"\}\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"$thread_caller_line\",arch=\"$any\"\}"
 
     # Special frame for main thread.
-    set frame_re(2) ",frame=\{level=\"0\",addr=\"$hex\",func=\"main\",args=\\\[\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"${main_break_line}\"\}"
+    set frame_re(2) ",frame=\{level=\"0\",addr=\"$hex\",func=\"main\",args=\\\[\\\],file=\"${any}${srcfile}\",fullname=\"${any}${srcfile}\",line=\"${main_break_line}\",arch=\"$any\"\}"
 
     if { $thread != -1 } {
 	if { $type == "event" } {

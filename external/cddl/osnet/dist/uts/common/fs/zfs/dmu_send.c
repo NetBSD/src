@@ -72,6 +72,8 @@ static int
 fo_write(struct file *fp, struct uio *uio, cred_t *cred, int flags, kthread_t *thr)
 {
 
+	if (fp->f_type == DTYPE_VNODE)
+		flags |= FOF_UPDATE_OFFSET;
 	return (*fp->f_ops->fo_write)(fp, &fp->f_offset, uio, cred, flags);
 }
 
@@ -79,6 +81,8 @@ static int
 fo_read(struct file *fp, struct uio *uio, cred_t *cred, int flags, kthread_t *thr)
 {
 
+	if (fp->f_type == DTYPE_VNODE)
+		flags |= FOF_UPDATE_OFFSET;
 	return (*fp->f_ops->fo_read)(fp, &fp->f_offset, uio, cred, flags);
 }
 #endif

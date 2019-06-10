@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux multi-architecture debugging support.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -22,7 +22,7 @@
 #include "gdbcore.h"
 #include "gdbcmd.h"
 #include "arch-utils.h"
-#include "observer.h"
+#include "observable.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "symfile.h"
@@ -34,8 +34,43 @@
 #include "ppc-linux-tdep.h"
 #include "spu-tdep.h"
 
-/* This module's target vector.  */
-static struct target_ops spu_ops;
+/* The SPU multi-architecture support target.  */
+
+static const target_info spu_multiarch_target_info = {
+  "spu",
+  N_("SPU multi-architecture support."),
+  N_("SPU multi-architecture support.")
+};
+
+struct spu_multiarch_target final : public target_ops
+{
+  const target_info &info () const override
+  { return spu_multiarch_target_info; }
+
+  strata stratum () const override { return arch_stratum; }
+
+  void mourn_inferior () override;
+
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+
+  enum target_xfer_status xfer_partial (enum target_object object,
+					const char *annex,
+					gdb_byte *readbuf,
+					const gdb_byte *writebuf,
+					ULONGEST offset, ULONGEST len,
+					ULONGEST *xfered_len) override;
+
+  int search_memory (CORE_ADDR start_addr, ULONGEST search_space_len,
+		     const gdb_byte *pattern, ULONGEST pattern_len,
+		     CORE_ADDR *found_addrp) override;
+
+  int region_ok_for_hw_watchpoint (CORE_ADDR, int) override;
+
+  struct gdbarch *thread_architecture (ptid_t) override;
+};
+
+static spu_multiarch_target spu_ops;
 
 /* Number of SPE objects loaded into the current inferior.  */
 static int spu_nr_solib;
@@ -56,7 +91,6 @@ static int
 parse_spufs_run (ptid_t ptid, int *fd, CORE_ADDR *addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  struct cleanup *old_chain;
   struct gdbarch_tdep *tdep;
   struct regcache *regcache;
   gdb_byte buf[4];
@@ -76,10 +110,11 @@ parse_spufs_run (ptid_t ptid, int *fd, CORE_ADDR *addr)
   tdep = gdbarch_tdep (target_gdbarch ());
 
   /* Fetch instruction preceding current NIP.  */
-  old_chain = save_inferior_ptid ();
-  inferior_ptid = ptid;
-  regval = target_read_memory (regcache_read_pc (regcache) - 4, buf, 4);
-  do_cleanups (old_chain);
+  {
+    scoped_restore save_inferior_ptid = make_scoped_restore (&inferior_ptid);
+    inferior_ptid = ptid;
+    regval = target_read_memory (regcache_read_pc (regcache) - 4, buf, 4);
+  }
   if (regval != 0)
     return 0;
   /* It should be a "sc" instruction.  */
@@ -107,13 +142,13 @@ spu_gdbarch (int spufs_fd)
   info.bfd_arch_info = bfd_lookup_arch (bfd_arch_spu, bfd_mach_spu);
   info.byte_order = BFD_ENDIAN_BIG;
   info.osabi = GDB_OSABI_LINUX;
-  info.tdep_info = &spufs_fd;
+  info.id = &spufs_fd;
   return gdbarch_find_by_info (info);
 }
 
 /* Override the to_thread_architecture routine.  */
-static struct gdbarch *
-spu_thread_architecture (struct target_ops *ops, ptid_t ptid)
+struct gdbarch *
+spu_multiarch_target::thread_architecture (ptid_t ptid)
 {
   int spufs_fd;
   CORE_ADDR spufs_addr;
@@ -121,43 +156,40 @@ spu_thread_architecture (struct target_ops *ops, ptid_t ptid)
   if (parse_spufs_run (ptid, &spufs_fd, &spufs_addr))
     return spu_gdbarch (spufs_fd);
 
-  return target_gdbarch ();
+  return beneath ()->thread_architecture (ptid);
 }
 
 /* Override the to_region_ok_for_hw_watchpoint routine.  */
-static int
-spu_region_ok_for_hw_watchpoint (struct target_ops *self,
-				 CORE_ADDR addr, int len)
-{
-  struct target_ops *ops_beneath = find_target_beneath (self);
 
+int
+spu_multiarch_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+{
   /* We cannot watch SPU local store.  */
   if (SPUADDR_SPU (addr) != -1)
     return 0;
 
-  return ops_beneath->to_region_ok_for_hw_watchpoint (ops_beneath, addr, len);
+  return beneath ()->region_ok_for_hw_watchpoint (addr, len);
 }
 
 /* Override the to_fetch_registers routine.  */
-static void
-spu_fetch_registers (struct target_ops *ops,
-		     struct regcache *regcache, int regno)
+
+void
+spu_multiarch_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct target_ops *ops_beneath = find_target_beneath (ops);
   int spufs_fd;
   CORE_ADDR spufs_addr;
 
   /* Since we use functions that rely on inferior_ptid, we need to set and
      restore it.  */
   scoped_restore save_ptid
-    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
+    = make_scoped_restore (&inferior_ptid, regcache->ptid ());
 
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
     {
-      ops_beneath->to_fetch_registers (ops_beneath, regcache, regno);
+      beneath ()->fetch_registers (regcache, regno);
       return;
     }
 
@@ -170,7 +202,7 @@ spu_fetch_registers (struct target_ops *ops,
     {
       gdb_byte buf[4];
       store_unsigned_integer (buf, 4, byte_order, spufs_fd);
-      regcache_raw_supply (regcache, SPU_ID_REGNUM, buf);
+      regcache->raw_supply (SPU_ID_REGNUM, buf);
     }
 
   /* The NPC register is found in PPC memory at SPUFS_ADDR.  */
@@ -178,9 +210,9 @@ spu_fetch_registers (struct target_ops *ops,
     {
       gdb_byte buf[4];
 
-      if (target_read (ops_beneath, TARGET_OBJECT_MEMORY, NULL,
+      if (target_read (beneath (), TARGET_OBJECT_MEMORY, NULL,
 		       buf, spufs_addr, sizeof buf) == sizeof buf)
-	regcache_raw_supply (regcache, SPU_PC_REGNUM, buf);
+	regcache->raw_supply (SPU_PC_REGNUM, buf);
     }
 
   /* The GPRs are found in the "regs" spufs file.  */
@@ -191,32 +223,31 @@ spu_fetch_registers (struct target_ops *ops,
       int i;
 
       xsnprintf (annex, sizeof annex, "%d/regs", spufs_fd);
-      if (target_read (ops_beneath, TARGET_OBJECT_SPU, annex,
+      if (target_read (beneath (), TARGET_OBJECT_SPU, annex,
 		       buf, 0, sizeof buf) == sizeof buf)
 	for (i = 0; i < SPU_NUM_GPRS; i++)
-	  regcache_raw_supply (regcache, i, buf + i*16);
+	  regcache->raw_supply (i, buf + i*16);
     }
 }
 
 /* Override the to_store_registers routine.  */
-static void
-spu_store_registers (struct target_ops *ops,
-		     struct regcache *regcache, int regno)
+
+void
+spu_multiarch_target::store_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct target_ops *ops_beneath = find_target_beneath (ops);
+  struct gdbarch *gdbarch = regcache->arch ();
   int spufs_fd;
   CORE_ADDR spufs_addr;
 
   /* Since we use functions that rely on inferior_ptid, we need to set and
      restore it.  */
   scoped_restore save_ptid
-    = make_scoped_restore (&inferior_ptid, regcache_get_ptid (regcache));
+    = make_scoped_restore (&inferior_ptid, regcache->ptid ());
 
   /* This version applies only if we're currently in spu_run.  */
   if (gdbarch_bfd_arch_info (gdbarch)->arch != bfd_arch_spu)
     {
-      ops_beneath->to_store_registers (ops_beneath, regcache, regno);
+      beneath ()->store_registers (regcache, regno);
       return;
     }
 
@@ -228,9 +259,9 @@ spu_store_registers (struct target_ops *ops,
   if (regno == -1 || regno == SPU_PC_REGNUM)
     {
       gdb_byte buf[4];
-      regcache_raw_collect (regcache, SPU_PC_REGNUM, buf);
+      regcache->raw_collect (SPU_PC_REGNUM, buf);
 
-      target_write (ops_beneath, TARGET_OBJECT_MEMORY, NULL,
+      target_write (beneath (), TARGET_OBJECT_MEMORY, NULL,
 		    buf, spufs_addr, sizeof buf);
     }
 
@@ -242,22 +273,23 @@ spu_store_registers (struct target_ops *ops,
       int i;
 
       for (i = 0; i < SPU_NUM_GPRS; i++)
-	regcache_raw_collect (regcache, i, buf + i*16);
+	regcache->raw_collect (i, buf + i*16);
 
       xsnprintf (annex, sizeof annex, "%d/regs", spufs_fd);
-      target_write (ops_beneath, TARGET_OBJECT_SPU, annex,
+      target_write (beneath (), TARGET_OBJECT_SPU, annex,
 		    buf, 0, sizeof buf);
     }
 }
 
 /* Override the to_xfer_partial routine.  */
-static enum target_xfer_status
-spu_xfer_partial (struct target_ops *ops, enum target_object object,
-		  const char *annex, gdb_byte *readbuf,
-		  const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
-		  ULONGEST *xfered_len)
+
+enum target_xfer_status
+spu_multiarch_target::xfer_partial (enum target_object object,
+				    const char *annex, gdb_byte *readbuf,
+				    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
+				    ULONGEST *xfered_len)
 {
-  struct target_ops *ops_beneath = find_target_beneath (ops);
+  struct target_ops *ops_beneath = this->beneath ();
 
   /* Use the "mem" spufs file to access SPU local store.  */
   if (object == TARGET_OBJECT_MEMORY)
@@ -272,9 +304,9 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
       if (fd >= 0)
 	{
 	  xsnprintf (mem_annex, sizeof mem_annex, "%d/mem", fd);
-	  ret = ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					      mem_annex, readbuf, writebuf,
-					      addr, len, xfered_len);
+	  ret = ops_beneath->xfer_partial (TARGET_OBJECT_SPU,
+					   mem_annex, readbuf, writebuf,
+					   addr, len, xfered_len);
 	  if (ret == TARGET_XFER_OK)
 	    return ret;
 
@@ -284,41 +316,36 @@ spu_xfer_partial (struct target_ops *ops, enum target_object object,
 	     trying the original address first, and getting end-of-file.  */
 	  xsnprintf (lslr_annex, sizeof lslr_annex, "%d/lslr", fd);
 	  memset (buf, 0, sizeof buf);
-	  if (ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					    lslr_annex, buf, NULL,
-					    0, sizeof buf, xfered_len)
+	  if (ops_beneath->xfer_partial (TARGET_OBJECT_SPU,
+					 lslr_annex, buf, NULL,
+					 0, sizeof buf, xfered_len)
 	      != TARGET_XFER_OK)
 	    return ret;
 
 	  lslr = strtoulst ((char *) buf, NULL, 16);
-	  return ops_beneath->to_xfer_partial (ops_beneath, TARGET_OBJECT_SPU,
-					       mem_annex, readbuf, writebuf,
-					       addr & lslr, len, xfered_len);
+	  return ops_beneath->xfer_partial (TARGET_OBJECT_SPU,
+					    mem_annex, readbuf, writebuf,
+					    addr & lslr, len, xfered_len);
 	}
     }
 
-  return ops_beneath->to_xfer_partial (ops_beneath, object, annex,
-				       readbuf, writebuf, offset, len, xfered_len);
+  return ops_beneath->xfer_partial (object, annex,
+				    readbuf, writebuf, offset, len, xfered_len);
 }
 
 /* Override the to_search_memory routine.  */
-static int
-spu_search_memory (struct target_ops* ops,
-		   CORE_ADDR start_addr, ULONGEST search_space_len,
-		   const gdb_byte *pattern, ULONGEST pattern_len,
-		   CORE_ADDR *found_addrp)
+int
+spu_multiarch_target::search_memory (CORE_ADDR start_addr, ULONGEST search_space_len,
+				     const gdb_byte *pattern, ULONGEST pattern_len,
+				     CORE_ADDR *found_addrp)
 {
-  struct target_ops *ops_beneath = find_target_beneath (ops);
-
   /* For SPU local store, always fall back to the simple method.  */
   if (SPUADDR_SPU (start_addr) >= 0)
-    return simple_search_memory (ops,
-				 start_addr, search_space_len,
+    return simple_search_memory (this, start_addr, search_space_len,
 				 pattern, pattern_len, found_addrp);
 
-  return ops_beneath->to_search_memory (ops_beneath,
-					start_addr, search_space_len,
-					pattern, pattern_len, found_addrp);
+  return beneath ()->search_memory (start_addr, search_space_len,
+				    pattern, pattern_len, found_addrp);
 }
 
 
@@ -372,48 +399,19 @@ spu_multiarch_solib_unloaded (struct so_list *so)
 	spu_multiarch_deactivate ();
 }
 
-static void
-spu_mourn_inferior (struct target_ops *ops)
+void
+spu_multiarch_target::mourn_inferior ()
 {
-  struct target_ops *ops_beneath = find_target_beneath (ops);
-
-  ops_beneath->to_mourn_inferior (ops_beneath);
+  beneath ()->mourn_inferior ();
   spu_multiarch_deactivate ();
 }
-
-
-/* Initialize the SPU multi-architecture support target.  */
-
-static void
-init_spu_ops (void)
-{
-  spu_ops.to_shortname = "spu";
-  spu_ops.to_longname = "SPU multi-architecture support.";
-  spu_ops.to_doc = "SPU multi-architecture support.";
-  spu_ops.to_mourn_inferior = spu_mourn_inferior;
-  spu_ops.to_fetch_registers = spu_fetch_registers;
-  spu_ops.to_store_registers = spu_store_registers;
-  spu_ops.to_xfer_partial = spu_xfer_partial;
-  spu_ops.to_search_memory = spu_search_memory;
-  spu_ops.to_region_ok_for_hw_watchpoint = spu_region_ok_for_hw_watchpoint;
-  spu_ops.to_thread_architecture = spu_thread_architecture;
-  spu_ops.to_stratum = arch_stratum;
-  spu_ops.to_magic = OPS_MAGIC;
-}
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_spu_multiarch;
 
 void
 _initialize_spu_multiarch (void)
 {
-  /* Install ourselves on the target stack.  */
-  init_spu_ops ();
-  complete_target_initialization (&spu_ops);
-
   /* Install observers to watch for SPU objects.  */
-  observer_attach_inferior_created (spu_multiarch_inferior_created);
-  observer_attach_solib_loaded (spu_multiarch_solib_loaded);
-  observer_attach_solib_unloaded (spu_multiarch_solib_unloaded);
+  gdb::observers::inferior_created.attach (spu_multiarch_inferior_created);
+  gdb::observers::solib_loaded.attach (spu_multiarch_solib_loaded);
+  gdb::observers::solib_unloaded.attach (spu_multiarch_solib_unloaded);
 }
 

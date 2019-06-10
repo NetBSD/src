@@ -1,6 +1,7 @@
 # THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
 # Generated from: i386/i386.xml
 name:i386
+feature:1
 xmltarget:i386.xml
 expedite:ebp,esp,eip
 32:eax

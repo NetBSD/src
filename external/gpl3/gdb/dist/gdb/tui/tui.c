@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -75,8 +75,10 @@ static const struct tui_char_command tui_commands[] = {
   { 'd', "down" },
   { 'f', "finish" },
   { 'n', "next" },
+  { 'o', "nexti" },
   { 'r', "run" },
   { 's', "step" },
+  { 'i', "stepi" },
   { 'u', "up" },
   { 'v', "info locals" },
   { 'w', "where" },
@@ -408,12 +410,14 @@ tui_enable (void)
     {
       WINDOW *w;
       SCREEN *s;
-      const char *cap;
+#ifndef __MINGW32__
+       const char *cap;
+#endif
       const char *interp;
 
       /* If the top level interpreter is not the console/tui (e.g.,
 	 MI), enabling curses will certainly lose.  */
-      interp = interp_name (top_level_interpreter ());
+      interp = top_level_interpreter ()->name ();
       if (strcmp (interp, INTERP_TUI) != 0)
 	error (_("Cannot enable the TUI when the interpreter is '%s'"), interp);
 
@@ -435,6 +439,15 @@ tui_enable (void)
 		 gdb_getenv_term ());
 	}
       w = stdscr;
+      if (has_colors ())
+	{
+#ifdef HAVE_USE_DEFAULT_COLORS
+	  /* Ncurses extension to help with resetting to the default
+	     color.  */
+	  use_default_colors ();
+#endif
+	  start_color ();
+	}
 
       /* Check required terminal capabilities.  The MinGW port of
 	 ncurses does have them, but doesn't expose them through "cup".  */
@@ -543,7 +556,7 @@ tui_disable (void)
 /* Command wrapper for enabling tui mode.  */
 
 static void
-tui_enable_command (char *args, int from_tty)
+tui_enable_command (const char *args, int from_tty)
 {
   tui_enable ();
 }
@@ -551,7 +564,7 @@ tui_enable_command (char *args, int from_tty)
 /* Command wrapper for leaving tui mode.  */
 
 static void
-tui_disable_command (char *args, int from_tty)
+tui_disable_command (const char *args, int from_tty)
 {
   tui_disable ();
 }
@@ -560,7 +573,7 @@ void
 strcat_to_buf (char *buf, int buflen, 
 	       const char *item_to_add)
 {
-  if (item_to_add != (char *) NULL && buf != (char *) NULL)
+  if (item_to_add != NULL && buf != NULL)
     {
       if ((strlen (buf) + strlen (item_to_add)) <= buflen)
 	strcat (buf, item_to_add);
@@ -668,9 +681,6 @@ tui_get_command_dimension (unsigned int *width,
   *height = TUI_CMD_WIN->generic.height;
   return 1;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_tui;
 
 void
 _initialize_tui (void)

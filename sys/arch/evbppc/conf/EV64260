@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.71 2018/02/05 15:18:10 maxv Exp $
+#	$NetBSD: EV64260,v 1.71.4.1 2019/06/10 22:06:13 christos Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -51,6 +51,11 @@ options 	SYSVSHM		# System V shared memory
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -108,8 +113,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -248,7 +251,8 @@ wd*		at atabus? drive ? flags 0x0000
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device 	carp			# Common Address Redundancy Protocol
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	tun			# network tunneling over tty
@@ -263,3 +267,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	swdmover		# softare dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+include "dev/veriexec.config"

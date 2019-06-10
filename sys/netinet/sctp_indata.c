@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.6 2018/05/01 07:21:39 maxv Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.6.2.1 2019/06/10 22:09:47 christos Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.6 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.6.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -128,7 +128,7 @@ sctp_set_rwnd(struct sctp_tcb *stcb, struct sctp_association *asoc)
 	    asoc->size_on_reasm_queue == 0 &&
 	    asoc->size_on_all_streams == 0) {
 		/* Full rwnd granted */
-		asoc->my_rwnd = max(stcb->sctp_socket->so_rcv.sb_hiwat,
+		asoc->my_rwnd = uimax(stcb->sctp_socket->so_rcv.sb_hiwat,
 				    SCTP_MINIMAL_RWND);
 		return;
 	}
@@ -2550,7 +2550,7 @@ sctp_process_data(struct mbuf **mm, int iphlen, int *offset, int length,
 #ifdef __APPLE__
 				M_COPY_PKTHDR(m, (*mm));
 #else
-				M_MOVE_PKTHDR(m, (*mm));
+				m_move_pkthdr(m, (*mm));
 #endif
 			}
 			/* get the pointers and copy */

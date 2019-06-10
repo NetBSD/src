@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.124 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.124.2.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -132,7 +132,30 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_NOSIGPIPE	0x0800		/* no SIGPIPE from EPIPE */
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 #define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
+#define	SO_RERROR	0x4000		/* Keep track of receive errors */
 
+/* Allowed default option flags */
+#define SO_DEFOPTS	(SO_DEBUG|SO_REUSEADDR|SO_KEEPALIVE|SO_DONTROUTE| \
+    SO_BROADCAST|SO_USELOOPBACK|SO_LINGER|SO_OOBINLINE|SO_REUSEPORT| \
+    SO_NOSIGPIPE|SO_TIMESTAMP|SO_RERROR)
+
+#define __SO_OPTION_BITS \
+	"\20" \
+	"\1SO_DEBUG" \
+	"\2SO_ACCEPTCONN" \
+	"\3SO_REUSEADDR" \
+	"\4SO_KEEPALIVE" \
+	"\5SO_DONTROUTE" \
+	"\6SO_BROADCAST" \
+	"\7SO_USELOOPBACK" \
+	"\10SO_LINGER" \
+	"\11SO_OOBINLINE" \
+	"\12SO_REUSEPORT" \
+	"\13SO_OTIMESTAMP" \
+	"\14SO_NOSIGPIPE" \
+	"\15SO_ACCEPTFILTER" \
+	"\16SO_TIMESTAMP" \
+	"\17SO_RERROR"
 
 /*
  * Additional options, not kept in so_options.
@@ -222,7 +245,8 @@ struct	accept_filter_arg {
 #define	AF_MPLS		33		/* MultiProtocol Label Switching */
 #define	AF_ROUTE	34		/* Internal Routing Protocol */
 #define	AF_CAN		35
-#define	AF_MAX		36
+#define	AF_ETHER	36
+#define	AF_MAX		37
 
 /*
  * Structure used by kernel to store most
@@ -332,6 +356,7 @@ struct sockaddr_storage {
 #define	PF_MPLS		AF_MPLS
 #define	PF_ROUTE	AF_ROUTE
 #define	PF_CAN		AF_CAN
+#define	PF_ETHER	AF_ETHER
 
 #define	PF_MAX		AF_MAX
 
@@ -375,52 +400,7 @@ struct sockcred {
 
 
 #if defined(_NETBSD_SOURCE)
-/*
- * Definitions for network related sysctl, CTL_NET.
- *
- * Second level is protocol family.
- * Third level is protocol number.
- *
- * Further levels are defined by the individual families below.
- */
-#define NET_MAXID	AF_MAX
-
-#define CTL_NET_NAMES { \
-	{ 0, 0 }, \
-	{ "local", CTLTYPE_NODE }, \
-	{ "inet", CTLTYPE_NODE }, \
-	{ "implink", CTLTYPE_NODE }, \
-	{ "pup", CTLTYPE_NODE }, \
-	{ "chaos", CTLTYPE_NODE }, \
-	{ "xerox_ns", CTLTYPE_NODE }, \
-	{ "iso", CTLTYPE_NODE }, \
-	{ "emca", CTLTYPE_NODE }, \
-	{ "datakit", CTLTYPE_NODE }, \
-	{ "ccitt", CTLTYPE_NODE }, \
-	{ "ibm_sna", CTLTYPE_NODE }, \
-	{ "decnet", CTLTYPE_NODE }, \
-	{ "dec_dli", CTLTYPE_NODE }, \
-	{ "lat", CTLTYPE_NODE }, \
-	{ "hylink", CTLTYPE_NODE }, \
-	{ "appletalk", CTLTYPE_NODE }, \
-	{ "oroute", CTLTYPE_NODE }, \
-	{ "link_layer", CTLTYPE_NODE }, \
-	{ "xtp", CTLTYPE_NODE }, \
-	{ "coip", CTLTYPE_NODE }, \
-	{ "cnt", CTLTYPE_NODE }, \
-	{ "rtip", CTLTYPE_NODE }, \
-	{ "ipx", CTLTYPE_NODE }, \
-	{ "inet6", CTLTYPE_NODE }, \
-	{ "pip", CTLTYPE_NODE }, \
-	{ "isdn", CTLTYPE_NODE }, \
-	{ "natm", CTLTYPE_NODE }, \
-	{ "arp", CTLTYPE_NODE }, \
-	{ "key", CTLTYPE_NODE }, \
-	{ "ieee80211", CTLTYPE_NODE }, \
-	{ "mlps", CTLTYPE_NODE }, \
-	{ "route", CTLTYPE_NODE }, \
-}
-
+/* Definition for CTL_NET PCB fetching sysctls */
 struct kinfo_pcb {
 	__uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
 	__uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */
@@ -480,16 +460,7 @@ struct kinfo_pcb {
 #define	NET_RT_OOIFLIST		4	/* old NET_RT_IFLIST (pre-64bit time) */
 #define	NET_RT_OIFLIST		5	/* old NET_RT_IFLIST (pre 8.0) */
 #define	NET_RT_IFLIST		6	/* survey interface list */
-#define	NET_RT_MAXID		7
 
-#define CTL_NET_RT_NAMES { \
-	{ 0, 0 }, \
-	{ "dump", CTLTYPE_STRUCT }, \
-	{ "flags", CTLTYPE_STRUCT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "iflist", CTLTYPE_STRUCT }, \
-}
 #endif /* _NETBSD_SOURCE */
 
 /*
@@ -653,6 +624,7 @@ int	connect(int, const struct sockaddr *, socklen_t);
 int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);
 int	getsockname(int, struct sockaddr * __restrict, socklen_t * __restrict);
 int	getsockopt(int, int, int, void *__restrict, socklen_t * __restrict);
+int	getsockopt2(int, int, int, void *__restrict, socklen_t * __restrict);
 int	listen(int, int);
 int	paccept(int, struct sockaddr * __restrict, socklen_t * __restrict,
 	const sigset_t * __restrict, int);

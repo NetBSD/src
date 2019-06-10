@@ -1,9 +1,11 @@
-2016-07-19  Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
+2017-02-14  Jim Wilson  <jim.wilson@linaro.org>
 
-	PR target/ 19401
-	* avr/interp.c (step_once): Pass break instruction address to
-	sim_engine_halt function which writes that to PC. Remove code that
-	follows that function call as it is unreachable.
+	* MAINTAINTERS (aarch64): Add myself.
+
+2016-12-14  Maciej W. Rozycki  <macro@imgtec.com>
+
+	* MAINTAINERS (Maintainers for particular sims): Add myself as
+	a MIPS maintainer.
 
 2016-02-03  Maciej W. Rozycki  <macro@linux-mips.org>
 

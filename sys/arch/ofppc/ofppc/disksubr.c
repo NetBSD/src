@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2017/03/05 22:14:51 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27.14.1 2019/06/10 22:06:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2017/03/05 22:14:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27.14.1 2019/06/10 22:06:36 christos Exp $");
 
 #include "opt_disksubr.h"
 
@@ -332,7 +332,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	/*
 	 * I also don't trust rdb->secpercyl
 	 */
-	lp->d_secpercyl = min(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
+	lp->d_secpercyl = uimin(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 #ifdef DIAGNOSTIC
@@ -346,7 +346,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		    rbp->nsectors, rbp->nheads);
 #endif
 	lp->d_sparespercyl =
-	    max(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks)
+	    uimax(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks)
 	    - lp->d_secpercyl;
 	if (lp->d_sparespercyl == 0)
 		lp->d_sparespertrack = 0;
@@ -521,7 +521,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			 */
 			int bsize, secperblk, minbsize, prefac;
 
-			minbsize = max(512, lp->d_secsize);
+			minbsize = uimax(512, lp->d_secsize);
 
 			bsize	  = pbp->e.sizeblock << 2;
 			secperblk = pbp->e.secperblk;
@@ -784,58 +784,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     done:
 	brelse(bp, 0);
 	return msg;
-}
-
-/*
- * Check new disk label for sensibility before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-	    || (nlp->d_secsize % DEV_BSIZE) != 0)
-		return EINVAL;
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return 0;
-	}
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC
-	    || dkcksum(nlp) != 0)
-		return EINVAL;
-
-	while ((i = ffs(openmask)) != 0) {
-		i--;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return EBUSY;
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return EBUSY;
-		/*
-		 * Copy internally-set partition information
-		 * if new label doesn't include it.		XXX
-		 */
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
-			npp->p_cpg = opp->p_cpg;
-		}
-	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
-
-	*olp = *nlp;
-	return 0;
 }
 
 /*

@@ -1,5 +1,5 @@
 /* Renesas / SuperH SH specific support for 32-bit ELF
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -38,10 +38,8 @@ static bfd_boolean sh_elf_relax_delete_bytes
   (bfd *, asection *, bfd_vma, int);
 static bfd_boolean sh_elf_align_loads
   (bfd *, asection *, Elf_Internal_Rela *, bfd_byte *, bfd_boolean *);
-#ifndef SH64_ELF
 static bfd_boolean sh_elf_swap_insns
   (bfd *, asection *, void *, bfd_byte *, bfd_vma);
-#endif
 static int sh_elf_optimized_tls_reloc
   (struct bfd_link_info *, int, int);
 static bfd_vma dtpoff_base
@@ -87,7 +85,7 @@ static reloc_howto_type sh_vxworks_howto_table[] =
 static bfd_boolean
 vxworks_object_p (bfd *abfd ATTRIBUTE_UNUSED)
 {
-#if !defined INCLUDE_SHMEDIA && !defined SH_TARGET_ALREADY_DEFINED
+#if !defined SH_TARGET_ALREADY_DEFINED
   extern const bfd_target sh_elf32_vxworks_le_vec;
   extern const bfd_target sh_elf32_vxworks_vec;
 
@@ -103,7 +101,7 @@ vxworks_object_p (bfd *abfd ATTRIBUTE_UNUSED)
 static bfd_boolean
 fdpic_object_p (bfd *abfd ATTRIBUTE_UNUSED)
 {
-#if !defined INCLUDE_SHMEDIA && !defined SH_TARGET_ALREADY_DEFINED
+#if !defined SH_TARGET_ALREADY_DEFINED
   extern const bfd_target sh_elf32_fdpic_le_vec;
   extern const bfd_target sh_elf32_fdpic_be_vec;
 
@@ -371,57 +369,6 @@ static const struct elf_reloc_map sh_reloc_map[] =
   { BFD_RELOC_SH_GOTOFFFUNCDESC, R_SH_GOTOFFFUNCDESC },
   { BFD_RELOC_SH_GOTOFFFUNCDESC20, R_SH_GOTOFFFUNCDESC20 },
   { BFD_RELOC_SH_FUNCDESC, R_SH_FUNCDESC },
-#ifdef INCLUDE_SHMEDIA
-  { BFD_RELOC_SH_GOT_LOW16, R_SH_GOT_LOW16 },
-  { BFD_RELOC_SH_GOT_MEDLOW16, R_SH_GOT_MEDLOW16 },
-  { BFD_RELOC_SH_GOT_MEDHI16, R_SH_GOT_MEDHI16 },
-  { BFD_RELOC_SH_GOT_HI16, R_SH_GOT_HI16 },
-  { BFD_RELOC_SH_GOTPLT_LOW16, R_SH_GOTPLT_LOW16 },
-  { BFD_RELOC_SH_GOTPLT_MEDLOW16, R_SH_GOTPLT_MEDLOW16 },
-  { BFD_RELOC_SH_GOTPLT_MEDHI16, R_SH_GOTPLT_MEDHI16 },
-  { BFD_RELOC_SH_GOTPLT_HI16, R_SH_GOTPLT_HI16 },
-  { BFD_RELOC_SH_PLT_LOW16, R_SH_PLT_LOW16 },
-  { BFD_RELOC_SH_PLT_MEDLOW16, R_SH_PLT_MEDLOW16 },
-  { BFD_RELOC_SH_PLT_MEDHI16, R_SH_PLT_MEDHI16 },
-  { BFD_RELOC_SH_PLT_HI16, R_SH_PLT_HI16 },
-  { BFD_RELOC_SH_GOTOFF_LOW16, R_SH_GOTOFF_LOW16 },
-  { BFD_RELOC_SH_GOTOFF_MEDLOW16, R_SH_GOTOFF_MEDLOW16 },
-  { BFD_RELOC_SH_GOTOFF_MEDHI16, R_SH_GOTOFF_MEDHI16 },
-  { BFD_RELOC_SH_GOTOFF_HI16, R_SH_GOTOFF_HI16 },
-  { BFD_RELOC_SH_GOTPC_LOW16, R_SH_GOTPC_LOW16 },
-  { BFD_RELOC_SH_GOTPC_MEDLOW16, R_SH_GOTPC_MEDLOW16 },
-  { BFD_RELOC_SH_GOTPC_MEDHI16, R_SH_GOTPC_MEDHI16 },
-  { BFD_RELOC_SH_GOTPC_HI16, R_SH_GOTPC_HI16 },
-  { BFD_RELOC_SH_COPY64, R_SH_COPY64 },
-  { BFD_RELOC_SH_GLOB_DAT64, R_SH_GLOB_DAT64 },
-  { BFD_RELOC_SH_JMP_SLOT64, R_SH_JMP_SLOT64 },
-  { BFD_RELOC_SH_RELATIVE64, R_SH_RELATIVE64 },
-  { BFD_RELOC_SH_GOT10BY4, R_SH_GOT10BY4 },
-  { BFD_RELOC_SH_GOT10BY8, R_SH_GOT10BY8 },
-  { BFD_RELOC_SH_GOTPLT10BY4, R_SH_GOTPLT10BY4 },
-  { BFD_RELOC_SH_GOTPLT10BY8, R_SH_GOTPLT10BY8 },
-  { BFD_RELOC_SH_PT_16, R_SH_PT_16 },
-  { BFD_RELOC_SH_SHMEDIA_CODE, R_SH_SHMEDIA_CODE },
-  { BFD_RELOC_SH_IMMU5, R_SH_DIR5U },
-  { BFD_RELOC_SH_IMMS6, R_SH_DIR6S },
-  { BFD_RELOC_SH_IMMU6, R_SH_DIR6U },
-  { BFD_RELOC_SH_IMMS10, R_SH_DIR10S },
-  { BFD_RELOC_SH_IMMS10BY2, R_SH_DIR10SW },
-  { BFD_RELOC_SH_IMMS10BY4, R_SH_DIR10SL },
-  { BFD_RELOC_SH_IMMS10BY8, R_SH_DIR10SQ },
-  { BFD_RELOC_SH_IMMS16, R_SH_IMMS16 },
-  { BFD_RELOC_SH_IMMU16, R_SH_IMMU16 },
-  { BFD_RELOC_SH_IMM_LOW16, R_SH_IMM_LOW16 },
-  { BFD_RELOC_SH_IMM_LOW16_PCREL, R_SH_IMM_LOW16_PCREL },
-  { BFD_RELOC_SH_IMM_MEDLOW16, R_SH_IMM_MEDLOW16 },
-  { BFD_RELOC_SH_IMM_MEDLOW16_PCREL, R_SH_IMM_MEDLOW16_PCREL },
-  { BFD_RELOC_SH_IMM_MEDHI16, R_SH_IMM_MEDHI16 },
-  { BFD_RELOC_SH_IMM_MEDHI16_PCREL, R_SH_IMM_MEDHI16_PCREL },
-  { BFD_RELOC_SH_IMM_HI16, R_SH_IMM_HI16 },
-  { BFD_RELOC_SH_IMM_HI16_PCREL, R_SH_IMM_HI16_PCREL },
-  { BFD_RELOC_64, R_SH_64 },
-  { BFD_RELOC_64_PCREL, R_SH_64_PCREL },
-#endif /* not INCLUDE_SHMEDIA */
 };
 
 /* Given a BFD reloc code, return the howto structure for the
@@ -472,7 +419,7 @@ sh_elf_reloc_name_lookup (bfd *abfd, const char *r_name)
 
 /* Given an ELF reloc, fill in the howto field of a relent.  */
 
-static void
+static bfd_boolean
 sh_elf_info_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r;
@@ -488,13 +435,14 @@ sh_elf_info_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
       || (r >= R_SH_FIRST_INVALID_RELOC_6 && r <= R_SH_LAST_INVALID_RELOC_6))
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: unrecognised SH reloc number: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r);
       bfd_set_error (bfd_error_bad_value);
-      r = R_SH_NONE;
+      return FALSE;
     }
 
   cache_ptr->howto = get_howto_table (abfd) + r;
+  return TRUE;
 }
 
 /* This function handles relaxing for SH ELF.  See the corresponding
@@ -524,14 +472,6 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;
-
-#ifdef INCLUDE_SHMEDIA
-  if (elf_section_data (sec)->this_hdr.sh_flags
-      & (SHF_SH5_ISA32 | SHF_SH5_ISA32_MIXED))
-    {
-      return TRUE;
-    }
-#endif
 
   symtab_hdr = &elf_symtab_hdr (abfd);
 
@@ -577,8 +517,9 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
       if (laddr >= sec->size)
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: 0x%lx: warning: bad R_SH_USES offset"),
-			      abfd, (unsigned long) irel->r_offset);
+	  _bfd_error_handler
+	    (_("%pB: %#" PRIx64 ": warning: bad R_SH_USES offset"),
+	     abfd, (uint64_t) irel->r_offset);
 	  continue;
 	}
       insn = bfd_get_16 (abfd, contents + laddr);
@@ -589,8 +530,9 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: 0x%lx: warning: R_SH_USES points to unrecognized insn 0x%x"),
-	     abfd, (unsigned long) irel->r_offset, insn);
+	    (_("%pB: %#" PRIx64 ": warning: "
+	       "R_SH_USES points to unrecognized insn 0x%x"),
+	     abfd, (uint64_t) irel->r_offset, insn);
 	  continue;
 	}
 
@@ -607,8 +549,8 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: 0x%lx: warning: bad R_SH_USES load offset"),
-	     abfd, (unsigned long) irel->r_offset);
+	    (_("%pB: %#" PRIx64 ": warning: bad R_SH_USES load offset"),
+	     abfd, (uint64_t) irel->r_offset);
 	  continue;
 	}
 
@@ -623,8 +565,8 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: 0x%lx: warning: could not find expected reloc"),
-	     abfd, (unsigned long) paddr);
+	    (_("%pB: %#" PRIx64 ": warning: could not find expected reloc"),
+	     abfd, (uint64_t) paddr);
 	  continue;
 	}
 
@@ -652,8 +594,8 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: warning: symbol in unexpected section"),
-		 abfd, (unsigned long) paddr);
+		(_("%pB: %#" PRIx64 ": warning: symbol in unexpected section"),
+		 abfd, (uint64_t) paddr);
 	      continue;
 	    }
 
@@ -782,8 +724,9 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: 0x%lx: warning: could not find expected COUNT reloc"),
-	     abfd, (unsigned long) paddr);
+	    (_("%pB: %#" PRIx64 ": warning: "
+	       "could not find expected COUNT reloc"),
+	     abfd, (uint64_t) paddr);
 	  continue;
 	}
 
@@ -792,8 +735,8 @@ sh_elf_relax_section (bfd *abfd, asection *sec,
       if (irelcount->r_addend == 0)
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: 0x%lx: warning: bad count"),
-			      abfd, (unsigned long) paddr);
+	  _bfd_error_handler (_("%pB: %#" PRIx64 ": warning: bad count"),
+			      abfd, (uint64_t) paddr);
 	  continue;
 	}
 
@@ -913,7 +856,7 @@ sh_elf_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr,
 
   contents = elf_section_data (sec)->this_hdr.contents;
 
-  /* The deletion must stop at the next ALIGN reloc for an aligment
+  /* The deletion must stop at the next ALIGN reloc for an alignment
      power larger than the number of bytes we are deleting.  */
 
   irelalign = NULL;
@@ -1196,8 +1139,8 @@ sh_elf_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: reloc overflow while relaxing"),
-		 abfd, (unsigned long) irel->r_offset);
+		(_("%pB: %#" PRIx64 ": fatal: reloc overflow while relaxing"),
+		 abfd, (uint64_t) irel->r_offset);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -1447,7 +1390,6 @@ sh_elf_align_loads (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   return FALSE;
 }
 
-#ifndef SH64_ELF
 /* Swap two SH instructions.  This is like sh_swap_insns in coff-sh.c.  */
 
 static bfd_boolean
@@ -1567,8 +1509,8 @@ sh_elf_swap_insns (bfd *abfd, asection *sec, void *relocs,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: reloc overflow while relaxing"),
-		 abfd, (unsigned long) irel->r_offset);
+		(_("%pB: %#" PRIx64 ": fatal: reloc overflow while relaxing"),
+		 abfd, (uint64_t) irel->r_offset);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -1577,7 +1519,6 @@ sh_elf_swap_insns (bfd *abfd, asection *sec, void *relocs,
 
   return TRUE;
 }
-#endif /* defined SH64_ELF */
 
 /* Describes one of the various PLT styles.  */
 
@@ -1622,223 +1563,6 @@ struct elf_sh_plt_info
   const struct elf_sh_plt_info *short_plt;
 };
 
-#ifdef INCLUDE_SHMEDIA
-
-/* The size in bytes of an entry in the procedure linkage table.  */
-
-#define ELF_PLT_ENTRY_SIZE 64
-
-/* First entry in an absolute procedure linkage table look like this.  */
-
-static const bfd_byte elf_sh_plt0_entry_be[ELF_PLT_ENTRY_SIZE] =
-{
-  0xcc, 0x00, 0x01, 0x10, /* movi  .got.plt >> 16, r17 */
-  0xc8, 0x00, 0x01, 0x10, /* shori .got.plt & 65535, r17 */
-  0x89, 0x10, 0x09, 0x90, /* ld.l  r17, 8, r25 */
-  0x6b, 0xf1, 0x66, 0x00, /* ptabs r25, tr0 */
-  0x89, 0x10, 0x05, 0x10, /* ld.l  r17, 4, r17 */
-  0x44, 0x01, 0xff, 0xf0, /* blink tr0, r63 */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-};
-
-static const bfd_byte elf_sh_plt0_entry_le[ELF_PLT_ENTRY_SIZE] =
-{
-  0x10, 0x01, 0x00, 0xcc, /* movi  .got.plt >> 16, r17 */
-  0x10, 0x01, 0x00, 0xc8, /* shori .got.plt & 65535, r17 */
-  0x90, 0x09, 0x10, 0x89, /* ld.l  r17, 8, r25 */
-  0x00, 0x66, 0xf1, 0x6b, /* ptabs r25, tr0 */
-  0x10, 0x05, 0x10, 0x89, /* ld.l  r17, 4, r17 */
-  0xf0, 0xff, 0x01, 0x44, /* blink tr0, r63 */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-};
-
-/* Sebsequent entries in an absolute procedure linkage table look like
-   this.  */
-
-static const bfd_byte elf_sh_plt_entry_be[ELF_PLT_ENTRY_SIZE] =
-{
-  0xcc, 0x00, 0x01, 0x90, /* movi  nameN-in-GOT >> 16, r25 */
-  0xc8, 0x00, 0x01, 0x90, /* shori nameN-in-GOT & 65535, r25 */
-  0x89, 0x90, 0x01, 0x90, /* ld.l  r25, 0, r25 */
-  0x6b, 0xf1, 0x66, 0x00, /* ptabs r25, tr0 */
-  0x44, 0x01, 0xff, 0xf0, /* blink tr0, r63 */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0xcc, 0x00, 0x01, 0x90, /* movi  .PLT0 >> 16, r25 */
-  0xc8, 0x00, 0x01, 0x90, /* shori .PLT0 & 65535, r25 */
-  0x6b, 0xf1, 0x66, 0x00, /* ptabs r25, tr0 */
-  0xcc, 0x00, 0x01, 0x50, /* movi  reloc-offset >> 16, r21 */
-  0xc8, 0x00, 0x01, 0x50, /* shori reloc-offset & 65535, r21 */
-  0x44, 0x01, 0xff, 0xf0, /* blink tr0, r63 */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-};
-
-static const bfd_byte elf_sh_plt_entry_le[ELF_PLT_ENTRY_SIZE] =
-{
-  0x90, 0x01, 0x00, 0xcc, /* movi  nameN-in-GOT >> 16, r25 */
-  0x90, 0x01, 0x00, 0xc8, /* shori nameN-in-GOT & 65535, r25 */
-  0x90, 0x01, 0x90, 0x89, /* ld.l  r25, 0, r25 */
-  0x00, 0x66, 0xf1, 0x6b, /* ptabs r25, tr0 */
-  0xf0, 0xff, 0x01, 0x44, /* blink tr0, r63 */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0x90, 0x01, 0x00, 0xcc, /* movi  .PLT0 >> 16, r25 */
-  0x90, 0x01, 0x00, 0xc8, /* shori .PLT0 & 65535, r25 */
-  0x00, 0x66, 0xf1, 0x6b, /* ptabs r25, tr0 */
-  0x50, 0x01, 0x00, 0xcc, /* movi  reloc-offset >> 16, r21 */
-  0x50, 0x01, 0x00, 0xc8, /* shori reloc-offset & 65535, r21 */
-  0xf0, 0xff, 0x01, 0x44, /* blink tr0, r63 */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-};
-
-/* Entries in a PIC procedure linkage table look like this.  */
-
-static const bfd_byte elf_sh_pic_plt_entry_be[ELF_PLT_ENTRY_SIZE] =
-{
-  0xcc, 0x00, 0x01, 0x90, /* movi  nameN@GOT >> 16, r25 */
-  0xc8, 0x00, 0x01, 0x90, /* shori nameN@GOT & 65535, r25 */
-  0x40, 0xc2, 0x65, 0x90, /* ldx.l r12, r25, r25 */
-  0x6b, 0xf1, 0x66, 0x00, /* ptabs r25, tr0 */
-  0x44, 0x01, 0xff, 0xf0, /* blink tr0, r63 */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0x6f, 0xf0, 0xff, 0xf0, /* nop */
-  0xce, 0x00, 0x01, 0x10, /* movi  -GOT_BIAS, r17 */
-  0x00, 0xc8, 0x45, 0x10, /* add.l r12, r17, r17 */
-  0x89, 0x10, 0x09, 0x90, /* ld.l  r17, 8, r25 */
-  0x6b, 0xf1, 0x66, 0x00, /* ptabs r25, tr0 */
-  0x89, 0x10, 0x05, 0x10, /* ld.l  r17, 4, r17 */
-  0xcc, 0x00, 0x01, 0x50, /* movi  reloc-offset >> 16, r21 */
-  0xc8, 0x00, 0x01, 0x50, /* shori reloc-offset & 65535, r21 */
-  0x44, 0x01, 0xff, 0xf0, /* blink tr0, r63 */
-};
-
-static const bfd_byte elf_sh_pic_plt_entry_le[ELF_PLT_ENTRY_SIZE] =
-{
-  0x90, 0x01, 0x00, 0xcc, /* movi  nameN@GOT >> 16, r25 */
-  0x90, 0x01, 0x00, 0xc8, /* shori nameN@GOT & 65535, r25 */
-  0x90, 0x65, 0xc2, 0x40, /* ldx.l r12, r25, r25 */
-  0x00, 0x66, 0xf1, 0x6b, /* ptabs r25, tr0 */
-  0xf0, 0xff, 0x01, 0x44, /* blink tr0, r63 */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0xf0, 0xff, 0xf0, 0x6f, /* nop */
-  0x10, 0x01, 0x00, 0xce, /* movi  -GOT_BIAS, r17 */
-  0x10, 0x45, 0xc8, 0x00, /* add.l r12, r17, r17 */
-  0x90, 0x09, 0x10, 0x89, /* ld.l  r17, 8, r25 */
-  0x00, 0x66, 0xf1, 0x6b, /* ptabs r25, tr0 */
-  0x10, 0x05, 0x10, 0x89, /* ld.l  r17, 4, r17 */
-  0x50, 0x01, 0x00, 0xcc, /* movi  reloc-offset >> 16, r21 */
-  0x50, 0x01, 0x00, 0xc8, /* shori reloc-offset & 65535, r21 */
-  0xf0, 0xff, 0x01, 0x44, /* blink tr0, r63 */
-};
-
-static const struct elf_sh_plt_info elf_sh_plts[2][2] = {
-  {
-    {
-      /* Big-endian non-PIC.  */
-      elf_sh_plt0_entry_be,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, MINUS_ONE, MINUS_ONE },
-      elf_sh_plt_entry_be,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, 32, 48, FALSE },
-      33, /* includes ISA encoding */
-      NULL
-    },
-    {
-      /* Little-endian non-PIC.  */
-      elf_sh_plt0_entry_le,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, MINUS_ONE, MINUS_ONE },
-      elf_sh_plt_entry_le,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, 32, 48, FALSE },
-      33, /* includes ISA encoding */
-      NULL
-    },
-  },
-  {
-    {
-      /* Big-endian PIC.  */
-      elf_sh_plt0_entry_be,
-      ELF_PLT_ENTRY_SIZE,
-      { MINUS_ONE, MINUS_ONE, MINUS_ONE },
-      elf_sh_pic_plt_entry_be,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, MINUS_ONE, 52, FALSE },
-      33, /* includes ISA encoding */
-      NULL
-    },
-    {
-      /* Little-endian PIC.  */
-      elf_sh_plt0_entry_le,
-      ELF_PLT_ENTRY_SIZE,
-      { MINUS_ONE, MINUS_ONE, MINUS_ONE },
-      elf_sh_pic_plt_entry_le,
-      ELF_PLT_ENTRY_SIZE,
-      { 0, MINUS_ONE, 52, FALSE },
-      33, /* includes ISA encoding */
-      NULL
-    },
-  }
-};
-
-/* Return offset of the linker in PLT0 entry.  */
-#define elf_sh_plt0_gotplt_offset(info) 0
-
-/* Install a 32-bit PLT field starting at ADDR, which occurs in OUTPUT_BFD.
-   VALUE is the field's value and CODE_P is true if VALUE refers to code,
-   not data.
-
-   On SH64, each 32-bit field is loaded by a movi/shori pair.  */
-
-inline static void
-install_plt_field (bfd *output_bfd, bfd_boolean code_p,
-		   unsigned long value, bfd_byte *addr)
-{
-  value |= code_p;
-  bfd_put_32 (output_bfd,
-	      bfd_get_32 (output_bfd, addr)
-	      | ((value >> 6) & 0x3fffc00),
-	      addr);
-  bfd_put_32 (output_bfd,
-	      bfd_get_32 (output_bfd, addr + 4)
-	      | ((value << 10) & 0x3fffc00),
-	      addr + 4);
-}
-
-/* Return the type of PLT associated with ABFD.  PIC_P is true if
-   the object is position-independent.  */
-
-static const struct elf_sh_plt_info *
-get_plt_info (bfd *abfd ATTRIBUTE_UNUSED, bfd_boolean pic_p)
-{
-  return &elf_sh_plts[pic_p][!bfd_big_endian (abfd)];
-}
-#else
 /* The size in bytes of an entry in the procedure linkage table.  */
 
 #define ELF_PLT_ENTRY_SIZE 28
@@ -2317,7 +2041,6 @@ install_plt_field (bfd *output_bfd, bfd_boolean code_p ATTRIBUTE_UNUSED,
 {
   bfd_put_32 (output_bfd, value, addr);
 }
-#endif
 
 /* The number of PLT entries which can use a shorter PLT, if any.
    Currently always 64K, since only SH-2A FDPIC uses this; a
@@ -2367,26 +2090,6 @@ get_plt_offset (const struct elf_sh_plt_info *info, bfd_vma plt_index)
 	  + (plt_index * info->symbol_entry_size));
 }
 
-/* The sh linker needs to keep track of the number of relocs that it
-   decides to copy as dynamic relocs in check_relocs for each symbol.
-   This is so that it can later discard them if they are found to be
-   unnecessary.  We store the information in a field extending the
-   regular ELF linker hash table.  */
-
-struct elf_sh_dyn_relocs
-{
-  struct elf_sh_dyn_relocs *next;
-
-  /* The input section of the reloc.  */
-  asection *sec;
-
-  /* Total number of relocs copied for the input section.  */
-  bfd_size_type count;
-
-  /* Number of pc-relative relocs copied for the input section.  */
-  bfd_size_type pc_count;
-};
-
 union gotref
 {
   bfd_signed_vma refcount;
@@ -2399,16 +2102,8 @@ struct elf_sh_link_hash_entry
 {
   struct elf_link_hash_entry root;
 
-#ifdef INCLUDE_SHMEDIA
-  union
-  {
-    bfd_signed_vma refcount;
-    bfd_vma offset;
-  } datalabel_got;
-#endif
-
   /* Track dynamic relocs copied for this symbol.  */
-  struct elf_sh_dyn_relocs *dyn_relocs;
+  struct elf_dyn_relocs *dyn_relocs;
 
   bfd_signed_vma gotplt_refcount;
 
@@ -2545,9 +2240,6 @@ sh_elf_link_hash_newfunc (struct bfd_hash_entry *entry,
     {
       ret->dyn_relocs = NULL;
       ret->gotplt_refcount = 0;
-#ifdef INCLUDE_SHMEDIA
-      ret->datalabel_got.refcount = ret->root.got.refcount;
-#endif
       ret->funcdesc.refcount = 0;
       ret->abs_funcdesc_refcount = 0;
       ret->got_type = GOT_UNKNOWN;
@@ -2795,6 +2487,23 @@ sh_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   return TRUE;
 }
 
+/* Find dynamic relocs for H that apply to read-only sections.  */
+
+static asection *
+readonly_dynrelocs (struct elf_link_hash_entry *h)
+{
+  struct elf_dyn_relocs *p;
+
+  for (p = sh_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
+    {
+      asection *s = p->sec->output_section;
+
+      if (s != NULL && (s->flags & SEC_READONLY) != 0)
+	return p->sec;
+    }
+  return NULL;
+}
+
 /* Adjust a symbol defined by a dynamic object and referenced by a
    regular object.  The current definition is in some section of the
    dynamic object, but we're not including those sections.  We have to
@@ -2806,8 +2515,6 @@ sh_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 			      struct elf_link_hash_entry *h)
 {
   struct elf_sh_link_hash_table *htab;
-  struct elf_sh_link_hash_entry *eh;
-  struct elf_sh_dyn_relocs *p;
   asection *s;
 
   htab = sh_elf_hash_table (info);
@@ -2817,7 +2524,7 @@ sh_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (htab->root.dynobj != NULL
 	      && (h->needs_plt
-		  || h->u.weakdef != NULL
+		  || h->is_weakalias
 		  || (h->def_dynamic
 		      && h->ref_regular
 		      && !h->def_regular)));
@@ -2850,14 +2557,14 @@ sh_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef != NULL)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
       if (info->nocopyreloc)
-	h->non_got_ref = h->u.weakdef->non_got_ref;
+	h->non_got_ref = def->non_got_ref;
       return TRUE;
     }
 
@@ -2877,24 +2584,15 @@ sh_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
     return TRUE;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
-  if (info->nocopyreloc)
+  if (0 && info->nocopyreloc)
     {
       h->non_got_ref = 0;
       return TRUE;
     }
 
-  eh = (struct elf_sh_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
-    {
-      s = p->sec->output_section;
-      if (s != NULL && (s->flags & (SEC_READONLY | SEC_HAS_CONTENTS)) != 0)
-	break;
-    }
-
-  /* If we didn't find any dynamic relocs in sections which needs the
-     copy reloc, then we'll be keeping the dynamic relocs and avoiding
-     the copy reloc.  */
-  if (p == NULL)
+  /* If we don't find any dynamic relocs in read-only sections, then
+     we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
+  if (0 && !readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -2939,7 +2637,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   struct bfd_link_info *info;
   struct elf_sh_link_hash_table *htab;
   struct elf_sh_link_hash_entry *eh;
-  struct elf_sh_dyn_relocs *p;
+  struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
@@ -3111,32 +2809,6 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-#ifdef INCLUDE_SHMEDIA
-  if (eh->datalabel_got.refcount > 0)
-    {
-      asection *s;
-      bfd_boolean dyn;
-
-      /* Make sure this symbol is output as a dynamic symbol.
-	 Undefined weak syms won't yet be marked as dynamic.  */
-      if (h->dynindx == -1
-	  && !h->forced_local)
-	{
-	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
-	}
-
-      s = htab->root.sgot;
-      eh->datalabel_got.offset = s->size;
-      s->size += 4;
-      dyn = htab->root.dynamic_sections_created;
-      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h))
-	htab->root.srelgot->size += sizeof (Elf32_External_Rela);
-    }
-  else
-    eh->datalabel_got.offset = (bfd_vma) -1;
-#endif
-
   /* Allocate space for any dynamic relocations to function
      descriptors, canonical or otherwise.  We need to relocate the
      reference unless it resolves to zero, which only happens for
@@ -3190,7 +2862,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     {
       if (SYMBOL_CALLS_LOCAL (info, h))
 	{
-	  struct elf_sh_dyn_relocs **pp;
+	  struct elf_dyn_relocs **pp;
 
 	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
 	    {
@@ -3205,7 +2877,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       if (htab->vxworks_p)
 	{
-	  struct elf_sh_dyn_relocs **pp;
+	  struct elf_dyn_relocs **pp;
 
 	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
 	    {
@@ -3221,7 +2893,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       if (eh->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
-	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
 	    eh->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
@@ -3281,28 +2954,29 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   return TRUE;
 }
 
-/* Find any dynamic relocs that apply to read-only sections.  */
+/* Set DF_TEXTREL if we find any dynamic relocs that apply to
+   read-only sections.  */
 
 static bfd_boolean
-readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
+maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 {
-  struct elf_sh_link_hash_entry *eh;
-  struct elf_sh_dyn_relocs *p;
+  asection *sec;
 
-  eh = (struct elf_sh_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  if (h->root.type == bfd_link_hash_indirect)
+    return TRUE;
+
+  sec = readonly_dynrelocs (h);
+  if (sec != NULL)
     {
-      asection *s = p->sec->output_section;
+      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
 
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	{
-	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+      info->flags |= DF_TEXTREL;
+      info->callbacks->minfo
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
+	 sec->owner, h->root.root.string, sec);
 
-	  info->flags |= DF_TEXTREL;
-
-	  /* Not an error, just cut short the traversal.  */
-	  return FALSE;
-	}
+      /* Not an error, just cut short the traversal.  */
+      return FALSE;
     }
   return TRUE;
 }
@@ -3372,9 +3046,9 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       for (s = ibfd->sections; s != NULL; s = s->next)
 	{
-	  struct elf_sh_dyn_relocs *p;
+	  struct elf_dyn_relocs *p;
 
-	  for (p = ((struct elf_sh_dyn_relocs *)
+	  for (p = ((struct elf_dyn_relocs *)
 		    elf_section_data (s)->local_dynrel);
 	       p != NULL;
 	       p = p->next)
@@ -3399,7 +3073,11 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  srel = elf_section_data (p->sec)->sreloc;
 		  srel->size += p->count * sizeof (Elf32_External_Rela);
 		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
+		    {
+		      info->flags |= DF_TEXTREL;
+		      info->callbacks->minfo (_("%pB: dynamic relocation in read-only section `%pA'\n"),
+					      p->sec->owner, p->sec);
+		    }
 
 		  /* If we need relocations, we do not need fixups.  */
 		  if (htab->fdpic_p && !bfd_link_pic (info))
@@ -3410,10 +3088,6 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       symtab_hdr = &elf_symtab_hdr (ibfd);
       locsymcount = symtab_hdr->sh_info;
-#ifdef INCLUDE_SHMEDIA
-      /* Count datalabel local GOT.  */
-      locsymcount *= 2;
-#endif
       s = htab->root.sgot;
       srel = htab->root.srelgot;
 
@@ -3622,7 +3296,7 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* If any dynamic relocs apply to a read-only section,
 	     then we need a DT_TEXTREL entry.  */
 	  if ((info->flags & DF_TEXTREL) == 0)
-	    elf_link_hash_traverse (&htab->root, readonly_dynrelocs, info);
+	    elf_link_hash_traverse (&htab->root, maybe_set_textrel, info);
 
 	  if ((info->flags & DF_TEXTREL) != 0)
 	    {
@@ -3836,7 +3510,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   unsigned isec_segment, got_segment, plt_segment, check_segment[2];
   bfd_boolean fdpic_p = FALSE;
 
-  BFD_ASSERT (is_sh_elf (input_bfd));
+  if (!is_sh_elf (input_bfd))
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return FALSE;
+    }
 
   htab = sh_elf_hash_table (info);
   if (htab != NULL)
@@ -3887,6 +3565,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       bfd_vma off;
       enum got_type got_type;
       const char *symname = NULL;
+      bfd_boolean resolved_to_zero;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
 
@@ -3926,6 +3605,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       if (! howto->partial_inplace)
 	addend = rel->r_addend;
 
+      resolved_to_zero = FALSE;
       h = NULL;
       sym = NULL;
       sec = NULL;
@@ -3950,7 +3630,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  if ((sym->st_other & STO_SH5_ISA32) != 0)
 	    (*info->callbacks->reloc_dangerous)
 	      (info,
-	       _("Unexpected STO_SH5_ISA32 on local symbol is not handled"),
+	       _("unexpected STO_SH5_ISA32 on local symbol is not handled"),
 	       input_bfd, input_section, rel->r_offset);
 
 	  if (sec != NULL && discarded_section (sec))
@@ -4006,9 +3686,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B(%A+0x%lx): %s relocation against SEC_MERGE section"),
+		    (_("%pB(%pA+%#" PRIx64 "): "
+		       "%s relocation against SEC_MERGE section"),
 		     input_bfd, input_section,
-		     (long) rel->r_offset, howto->name);
+		     (uint64_t) rel->r_offset, howto->name);
 		  return FALSE;
 		}
 
@@ -4031,15 +3712,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  symname = h->root.root.string;
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
-	    {
-#ifdef INCLUDE_SHMEDIA
-	      /* If the reference passes a symbol marked with
-		 STT_DATALABEL, then any STO_SH5_ISA32 on the final value
-		 doesn't count.  */
-	      seen_stt_datalabel |= h->type == STT_DATALABEL;
-#endif
-	      h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	    }
+	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 	  if (h->root.type == bfd_link_hash_defined
 	      || h->root.type == bfd_link_hash_defweak)
 	    {
@@ -4124,17 +3797,18 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
+		    (_("%pB(%pA+%#" PRIx64 "): "
+		       "unresolvable %s relocation against symbol `%s'"),
 		     input_bfd,
 		     input_section,
-		     (long) rel->r_offset,
+		     (uint64_t) rel->r_offset,
 		     howto->name,
 		     h->root.root.string);
 		  return FALSE;
 		}
 	    }
 	  else if (h->root.type == bfd_link_hash_undefweak)
-	    ;
+	    resolved_to_zero = UNDEFWEAK_NO_DYNAMIC_RELOC (info, h);
 	  else if (info->unresolved_syms_in_objects == RM_IGNORE
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    ;
@@ -4203,9 +3877,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: 0x%lx: fatal: unaligned branch target for relax-support relocation"),
+		    (_("%pB: %#" PRIx64 ": fatal: "
+		       "unaligned branch target for relax-support relocation"),
 		     input_section->owner,
-		     (unsigned long) rel->r_offset);
+		     (uint64_t) rel->r_offset);
 		  bfd_set_error (bfd_error_bad_value);
 		  return FALSE;
 		}
@@ -4216,11 +3891,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  break;
 
 	default:
-#ifdef INCLUDE_SHMEDIA
-	  if (shmedia_prepare_reloc (info, input_bfd, input_section,
-				     contents, rel, &relocation))
-	    goto final_link_relocate;
-#endif
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 
@@ -4237,10 +3907,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: unaligned %s relocation 0x%lx"),
-		 input_section->owner,
-		 (unsigned long) rel->r_offset, howto->name,
-		 (unsigned long) relocation);
+		(_("%pB: %#" PRIx64 ": fatal: "
+		   "unaligned %s relocation %#" PRIx64),
+		 input_section->owner, (uint64_t) rel->r_offset,
+		 howto->name, (uint64_t) relocation);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -4253,10 +3923,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: unaligned %s relocation 0x%lx"),
+		(_("%pB: %#" PRIx64 ": fatal: "
+		   "unaligned %s relocation %#" PRIx64 ""),
 		 input_section->owner,
-		 (unsigned long) rel->r_offset, howto->name,
-		 (unsigned long) relocation);
+		 (uint64_t) rel->r_offset, howto->name,
+		 (uint64_t) relocation);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -4268,10 +3939,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: R_SH_PSHA relocation %d not in range -32..32"),
+		(_("%pB: %#" PRIx64 ": fatal: R_SH_PSHA relocation %" PRId64
+		   " not in range -32..32"),
 		 input_section->owner,
-		 (unsigned long) rel->r_offset,
-		 (unsigned long) relocation);
+		 (uint64_t) rel->r_offset,
+		 (int64_t) relocation);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -4283,10 +3955,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: 0x%lx: fatal: R_SH_PSHL relocation %d not in range -32..32"),
+		(_("%pB: %#" PRIx64 ": fatal: R_SH_PSHL relocation %" PRId64
+		   " not in range -32..32"),
 		 input_section->owner,
-		 (unsigned long) rel->r_offset,
-		 (unsigned long) relocation);
+		 (uint64_t) rel->r_offset,
+		 (int64_t) relocation);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -4294,15 +3967,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	case R_SH_DIR32:
 	case R_SH_REL32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_IMM_LOW16_PCREL:
-	case R_SH_IMM_MEDLOW16_PCREL:
-	case R_SH_IMM_MEDHI16_PCREL:
-	case R_SH_IMM_HI16_PCREL:
-#endif
 	  if (bfd_link_pic (info)
 	      && (h == NULL
-		  || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		  || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		      && !resolved_to_zero)
 		  || h->root.type != bfd_link_hash_undefweak)
 	      && r_symndx != STN_UNDEF
 	      && (input_section->flags & SEC_ALLOC) != 0
@@ -4350,17 +4018,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		       ? bfd_get_32 (input_bfd, contents + rel->r_offset)
 		       : addend);
 		}
-#ifdef INCLUDE_SHMEDIA
-	      else if (r_type == R_SH_IMM_LOW16_PCREL
-		       || r_type == R_SH_IMM_MEDLOW16_PCREL
-		       || r_type == R_SH_IMM_MEDHI16_PCREL
-		       || r_type == R_SH_IMM_HI16_PCREL)
-		{
-		  BFD_ASSERT (h != NULL && h->dynindx != -1);
-		  outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
-		  outrel.r_addend = addend;
-		}
-#endif
 	      else if (fdpic_p
 		       && (h == NULL
 			   || ((info->symbolic || h->dynindx == -1)
@@ -4428,10 +4085,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  {
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B(%A+0x%lx): cannot emit fixup to `%s' in read-only section"),
+		      (_("%pB(%pA+%#" PRIx64 "): "
+			 "cannot emit fixup to `%s' in read-only section"),
 		       input_bfd,
 		       input_section,
-		       (long) rel->r_offset,
+		       (uint64_t) rel->r_offset,
 		       symname);
 		    return FALSE;
 		  }
@@ -4455,14 +4113,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  goto final_link_relocate;
 
 	case R_SH_GOTPLT32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOTPLT_LOW16:
-	case R_SH_GOTPLT_MEDLOW16:
-	case R_SH_GOTPLT_MEDHI16:
-	case R_SH_GOTPLT_HI16:
-	case R_SH_GOTPLT10BY4:
-	case R_SH_GOTPLT10BY8:
-#endif
 	  /* Relocation is to the entry for this symbol in the
 	     procedure linkage table.  */
 
@@ -4493,14 +4143,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	force_got:
 	case R_SH_GOT32:
 	case R_SH_GOT20:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOT_LOW16:
-	case R_SH_GOT_MEDLOW16:
-	case R_SH_GOT_MEDHI16:
-	case R_SH_GOT_HI16:
-	case R_SH_GOT10BY4:
-	case R_SH_GOT10BY8:
-#endif
 	  /* Relocation is to the entry for this symbol in the global
 	     offset table.  */
 
@@ -4513,15 +4155,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      bfd_boolean dyn;
 
 	      off = h->got.offset;
-#ifdef INCLUDE_SHMEDIA
-	      if (seen_stt_datalabel)
-		{
-		  struct elf_sh_link_hash_entry *hsh;
-
-		  hsh = (struct elf_sh_link_hash_entry *)h;
-		  off = hsh->datalabel_got.offset;
-		}
-#endif
 	      BFD_ASSERT (off != (bfd_vma) -1);
 
 	      dyn = htab->root.dynamic_sections_created;
@@ -4530,7 +4163,8 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 						     h)
 		  || (bfd_link_pic (info)
 		      && SYMBOL_REFERENCES_LOCAL (info, h))
-		  || (ELF_ST_VISIBILITY (h->other)
+		  || ((ELF_ST_VISIBILITY (h->other)
+		       || resolved_to_zero)
 		      && h->root.type == bfd_link_hash_undefweak))
 		{
 		  /* This is actually a static link, or it is a
@@ -4551,17 +4185,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		    {
 		      bfd_put_32 (output_bfd, relocation,
 				  sgot->contents + off);
-#ifdef INCLUDE_SHMEDIA
-		      if (seen_stt_datalabel)
-			{
-			  struct elf_sh_link_hash_entry *hsh;
-
-			  hsh = (struct elf_sh_link_hash_entry *)h;
-			  hsh->datalabel_got.offset |= 1;
-			}
-		      else
-#endif
-			h->got.offset |= 1;
+		      h->got.offset |= 1;
 
 		      /* If we initialize the GOT entry here with a valid
 			 symbol address, also add a fixup.  */
@@ -4580,27 +4204,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    }
 	  else
 	    {
-#ifdef INCLUDE_SHMEDIA
-	      if (rel->r_addend)
-		{
-		  BFD_ASSERT (local_got_offsets != NULL
-			      && (local_got_offsets[symtab_hdr->sh_info
-						    + r_symndx]
-				  != (bfd_vma) -1));
-
-		  off = local_got_offsets[symtab_hdr->sh_info
-					  + r_symndx];
-		}
-	      else
-		{
-#endif
 	      BFD_ASSERT (local_got_offsets != NULL
 			  && local_got_offsets[r_symndx] != (bfd_vma) -1);
 
 	      off = local_got_offsets[r_symndx];
-#ifdef INCLUDE_SHMEDIA
-		}
-#endif
 
 	      /* The offset must always be a multiple of 4.  We use
 		 the least significant bit to record whether we have
@@ -4644,12 +4251,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 					+ sgot->output_offset
 					+ off);
 
-#ifdef INCLUDE_SHMEDIA
-		  if (rel->r_addend)
-		    local_got_offsets[symtab_hdr->sh_info + r_symndx] |= 1;
-		  else
-#endif
-		    local_got_offsets[r_symndx] |= 1;
+		  local_got_offsets[r_symndx] |= 1;
 		}
 
 	      relocation = sh_elf_got_offset (htab) + off;
@@ -4671,12 +4273,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	case R_SH_GOTOFF:
 	case R_SH_GOTOFF20:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOTOFF_LOW16:
-	case R_SH_GOTOFF_MEDLOW16:
-	case R_SH_GOTOFF_MEDHI16:
-	case R_SH_GOTOFF_HI16:
-#endif
 	  /* GOTOFF relocations are relative to _GLOBAL_OFFSET_TABLE_, which
 	     we place at the start of the .got.plt section.  This is the same
 	     as the start of the output .got section, unless there are function
@@ -4704,12 +4300,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    goto final_link_relocate;
 
 	case R_SH_GOTPC:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOTPC_LOW16:
-	case R_SH_GOTPC_MEDLOW16:
-	case R_SH_GOTPC_MEDHI16:
-	case R_SH_GOTPC_HI16:
-#endif
 	  /* Use global offset table as symbol value.  */
 
 	  BFD_ASSERT (sgotplt != NULL);
@@ -4724,12 +4314,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  goto final_link_relocate;
 
 	case R_SH_PLT32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_PLT_LOW16:
-	case R_SH_PLT_MEDLOW16:
-	case R_SH_PLT_MEDHI16:
-	case R_SH_PLT_HI16:
-#endif
 	  /* Relocation is to the entry for this symbol in the
 	     procedure linkage table.  */
 
@@ -4761,10 +4345,6 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  relocation = (splt->output_section->vma
 			+ splt->output_offset
 			+ h->plt.offset);
-
-#ifdef INCLUDE_SHMEDIA
-	  relocation++;
-#endif
 
 	  addend = rel->r_addend;
 
@@ -4900,10 +4480,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  {
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B(%A+0x%lx): cannot emit fixup to `%s' in read-only section"),
+		      (_("%pB(%pA+%#" PRIx64 "): "
+			 "cannot emit fixup to `%s' in read-only section"),
 		       input_bfd,
 		       input_section,
-		       (long) rel->r_offset,
+		       (uint64_t) rel->r_offset,
 		       symname);
 		    return FALSE;
 		  }
@@ -5002,9 +4583,10 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+0x%lx): %s relocation against external symbol \"%s\""),
-		 input_bfd, input_section, (long) rel->r_offset, howto->name,
-		 h->root.root.string);
+		(_("%pB(%pA+%#" PRIx64 "): "
+		   "%s relocation against external symbol \"%s\""),
+		 input_bfd, input_section, (uint64_t) rel->r_offset,
+		 howto->name, h->root.root.string);
 	      return FALSE;
 	    }
 	  else
@@ -5116,7 +4698,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		       1: .long x@TPOFF; 2: .long __tls_get_addr@PLT; 3:.  */
 
 		  offset = rel->r_offset;
-		  BFD_ASSERT (offset >= 16);
+		  if (offset < 16)
+		    {
+		      _bfd_error_handler
+			/* xgettext:c-format */
+			(_("%pB(%pA): offset in relocation for GD->LE translation is too small: %#" PRIx64),
+			 input_bfd, input_section, (uint64_t) offset);
+		      return FALSE;
+		    }
+
 		  /* Size of GD instructions is 16 or 18.  */
 		  offset -= 16;
 		  insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -5127,17 +4717,47 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      insn = bfd_get_16 (input_bfd, contents + offset + 0);
 		    }
 
-		  BFD_ASSERT ((insn & 0xff00) == 0xd400);
+		  if ((insn & 0xff00) != 0xd400)
+		    _bfd_error_handler
+		      /* xgettext:c-format */  /* The backslash is to prevent bogus trigraph detection.  */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd4?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 2);
-		  BFD_ASSERT ((insn & 0xff00) == 0xc700);
+
+		  if ((insn & 0xff00) != 0xc700)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xc7?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 4);
-		  BFD_ASSERT ((insn & 0xff00) == 0xd100);
+		  if ((insn & 0xff00) != 0xd100)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd1?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 6);
-		  BFD_ASSERT (insn == 0x310c);
+		  if (insn != 0x310c)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x310c)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 8);
-		  BFD_ASSERT (insn == 0x410b);
+		  if (insn != 0x410b)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x410b)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 10);
-		  BFD_ASSERT (insn == 0x34cc);
+		  if (insn != 0x34cc)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x34cc)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
 
 		  bfd_put_16 (output_bfd, 0x0012, contents + offset + 2);
 		  bfd_put_16 (output_bfd, 0x304c, contents + offset + 4);
@@ -5150,14 +4770,32 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  int target;
 
 		  /* IE->LE transition:
-		     mov.l 1f,r0; stc gbr,rN; mov.l @(r0,r12),rM;
-		     bra 2f; add ...; .align 2; 1: x@GOTTPOFF; 2:
+		         mov.l 1f,r0;
+		         stc gbr,rN;
+		         mov.l @(r0,r12),rM;
+		         bra 2f;
+		         add ...;
+		         .align 2;
+		       1: x@GOTTPOFF;
+		       2:
 		     We change it into:
-		     mov.l .Ln,rM; stc gbr,rN; nop; ...;
-		     1: x@TPOFF; 2:.  */
+		         mov.l .Ln,rM;
+			 stc gbr,rN;
+			 nop;
+			 ...;
+		       1: x@TPOFF;
+		       2:.  */
 
 		  offset = rel->r_offset;
-		  BFD_ASSERT (offset >= 16);
+		  if (offset < 16)
+		    {
+		      _bfd_error_handler
+			/* xgettext:c-format */
+			(_("%pB(%pA): offset in relocation for IE->LE translation is too small: %#" PRIx64),
+			 input_bfd, input_section, (uint64_t) offset);
+		      return FALSE;
+		    }
+
 		  /* Size of IE instructions is 10 or 12.  */
 		  offset -= 10;
 		  insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -5168,12 +4806,28 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      insn = bfd_get_16 (input_bfd, contents + offset + 0);
 		    }
 
-		  BFD_ASSERT ((insn & 0xff00) == 0xd000);
+		  if ((insn & 0xff00) != 0xd000)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd0??: mov.l)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  target = insn & 0x00ff;
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 2);
-		  BFD_ASSERT ((insn & 0xf0ff) == 0x0012);
+		  if ((insn & 0xf0ff) != 0x0012)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x0?12: stc)"),
+		       input_bfd, input_section, (uint64_t) (offset + 2), (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 4);
-		  BFD_ASSERT ((insn & 0xf0ff) == 0x00ce);
+		  if ((insn & 0xf0ff) != 0x00ce)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x0?ce: mov.l)"),
+		       input_bfd, input_section, (uint64_t) (offset + 4), (int) insn);
+
 		  insn = 0xd000 | (insn & 0x0f00) | target;
 		  bfd_put_16 (output_bfd, insn, contents + offset + 0);
 		  bfd_put_16 (output_bfd, 0x0009, contents + offset + 4);
@@ -5282,7 +4936,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		   1: .long x@TPOFF; 2:...; 3:.  */
 
 	      offset = rel->r_offset;
-	      BFD_ASSERT (offset >= 16);
+	      if (offset < 16)
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA): offset in relocation for GD->IE translation is too small: %#" PRIx64),
+		     input_bfd, input_section, (uint64_t) offset);
+		  return FALSE;
+		}
+
 	      /* Size of GD instructions is 16 or 18.  */
 	      offset -= 16;
 	      insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -5342,7 +5004,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		   nop; nop; bra 3f; ...; 3:.  */
 
 	      offset = rel->r_offset;
-	      BFD_ASSERT (offset >= 16);
+	      if (offset < 16)
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA): offset in relocation for LD->LE translation is too small: %#" PRIx64),
+		     input_bfd, input_section, (uint64_t) offset);
+		  return FALSE;
+		}
+
 	      /* Size of LD instructions is 16 or 18.  */
 	      offset -= 16;
 	      insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -5683,14 +5353,14 @@ sh_elf_copy_indirect_symbol (struct bfd_link_info *info,
     {
       if (edir->dyn_relocs != NULL)
 	{
-	  struct elf_sh_dyn_relocs **pp;
-	  struct elf_sh_dyn_relocs *p;
+	  struct elf_dyn_relocs **pp;
+	  struct elf_dyn_relocs *p;
 
 	  /* Add reloc counts against the indirect sym to the direct sym
 	     list.  Merge any entries against the same section.  */
 	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
 	    {
-	      struct elf_sh_dyn_relocs *q;
+	      struct elf_dyn_relocs *q;
 
 	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
 		if (q->sec == p->sec)
@@ -5711,10 +5381,6 @@ sh_elf_copy_indirect_symbol (struct bfd_link_info *info,
     }
   edir->gotplt_refcount = eind->gotplt_refcount;
   eind->gotplt_refcount = 0;
-#ifdef INCLUDE_SHMEDIA
-  edir->datalabel_got.refcount += eind->datalabel_got.refcount;
-  eind->datalabel_got.refcount = 0;
-#endif
   edir->funcdesc.refcount += eind->funcdesc.refcount;
   eind->funcdesc.refcount = 0;
   edir->abs_funcdesc_refcount += eind->abs_funcdesc_refcount;
@@ -5786,6 +5452,15 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
   if (bfd_link_relocatable (info))
     return TRUE;
 
+  /* Don't do anything special with non-loaded, non-alloced sections.
+     In particular, any relocs in such sections should not affect GOT
+     and PLT reference counting (ie. we don't allow them to create GOT
+     or PLT entries), there's no possibility or desire to optimize TLS
+     relocs, and there's not much point in propagating relocs to shared
+     libs that the dynamic linker won't relocate.  */
+  if ((sec->flags & SEC_ALLOC) == 0)
+    return TRUE;
+
   BFD_ASSERT (is_sh_elf (abfd));
 
   symtab_hdr = &elf_symtab_hdr (abfd);
@@ -5800,9 +5475,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
     {
       struct elf_link_hash_entry *h;
       unsigned long r_symndx;
-#ifdef INCLUDE_SHMEDIA
-      int seen_stt_datalabel = 0;
-#endif
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -5814,16 +5486,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
-	    {
-#ifdef INCLUDE_SHMEDIA
-	      seen_stt_datalabel |= h->type == STT_DATALABEL;
-#endif
-	      h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	    }
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
+	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 	}
 
       r_type = sh_elf_optimized_tls_reloc (info, r_type, h == NULL);
@@ -5881,28 +5544,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	    case R_SH_GOTOFFFUNCDESC:
 	    case R_SH_GOTOFFFUNCDESC20:
 	    case R_SH_GOTPC:
-#ifdef INCLUDE_SHMEDIA
-	    case R_SH_GOTPLT_LOW16:
-	    case R_SH_GOTPLT_MEDLOW16:
-	    case R_SH_GOTPLT_MEDHI16:
-	    case R_SH_GOTPLT_HI16:
-	    case R_SH_GOTPLT10BY4:
-	    case R_SH_GOTPLT10BY8:
-	    case R_SH_GOT_LOW16:
-	    case R_SH_GOT_MEDLOW16:
-	    case R_SH_GOT_MEDHI16:
-	    case R_SH_GOT_HI16:
-	    case R_SH_GOT10BY4:
-	    case R_SH_GOT10BY8:
-	    case R_SH_GOTOFF_LOW16:
-	    case R_SH_GOTOFF_MEDLOW16:
-	    case R_SH_GOTOFF_MEDHI16:
-	    case R_SH_GOTOFF_HI16:
-	    case R_SH_GOTPC_LOW16:
-	    case R_SH_GOTPC_MEDLOW16:
-	    case R_SH_GOTPC_MEDHI16:
-	    case R_SH_GOTPC_HI16:
-#endif
 	    case R_SH_TLS_GD_32:
 	    case R_SH_TLS_LD_32:
 	    case R_SH_TLS_IE_32:
@@ -5944,14 +5585,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	case R_SH_TLS_GD_32:
 	case R_SH_GOT32:
 	case R_SH_GOT20:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOT_LOW16:
-	case R_SH_GOT_MEDLOW16:
-	case R_SH_GOT_MEDHI16:
-	case R_SH_GOT_HI16:
-	case R_SH_GOT10BY4:
-	case R_SH_GOT10BY8:
-#endif
 	case R_SH_GOTFUNCDESC:
 	case R_SH_GOTFUNCDESC20:
 	  switch (r_type)
@@ -5973,17 +5606,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
 	  if (h != NULL)
 	    {
-#ifdef INCLUDE_SHMEDIA
-	      if (seen_stt_datalabel)
-		{
-		  struct elf_sh_link_hash_entry *eh
-		    = (struct elf_sh_link_hash_entry *) h;
-
-		  eh->datalabel_got.refcount += 1;
-		}
-	      else
-#endif
-		h->got.refcount += 1;
+	      h->got.refcount += 1;
 	      old_got_type = sh_elf_hash_entry (h)->got_type;
 	    }
 	  else
@@ -5999,33 +5622,16 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
 		  size = symtab_hdr->sh_info;
 		  size *= sizeof (bfd_signed_vma);
-#ifdef INCLUDE_SHMEDIA
-		  /* Reserve space for both the datalabel and
-		     codelabel local GOT offsets.  */
-		  size *= 2;
-#endif
 		  size += symtab_hdr->sh_info;
 		  local_got_refcounts = ((bfd_signed_vma *)
 					 bfd_zalloc (abfd, size));
 		  if (local_got_refcounts == NULL)
 		    return FALSE;
 		  elf_local_got_refcounts (abfd) = local_got_refcounts;
-#ifdef 	INCLUDE_SHMEDIA
-		  /* Take care of both the datalabel and codelabel local
-		     GOT offsets.  */
-		  sh_elf_local_got_type (abfd)
-		    = (char *) (local_got_refcounts + 2 * symtab_hdr->sh_info);
-#else
 		  sh_elf_local_got_type (abfd)
 		    = (char *) (local_got_refcounts + symtab_hdr->sh_info);
-#endif
 		}
-#ifdef INCLUDE_SHMEDIA
-	      if (rel->r_addend & 1)
-		local_got_refcounts[symtab_hdr->sh_info + r_symndx] += 1;
-	      else
-#endif
-		local_got_refcounts[r_symndx] += 1;
+	      local_got_refcounts[r_symndx] += 1;
 	      old_got_type = sh_elf_local_got_type (abfd) [r_symndx];
 	    }
 
@@ -6042,18 +5648,18 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		      && (old_got_type == GOT_NORMAL || got_type == GOT_NORMAL))
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as normal and FDPIC symbol"),
+		      (_("%pB: `%s' accessed both as normal and FDPIC symbol"),
 		       abfd, h->root.root.string);
 		  else if (old_got_type == GOT_FUNCDESC
 			   || got_type == GOT_FUNCDESC)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as FDPIC and thread local symbol"),
+		      (_("%pB: `%s' accessed both as FDPIC and thread local symbol"),
 		       abfd, h->root.root.string);
 		  else
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as normal and thread local symbol"),
+		      (_("%pB: `%s' accessed both as normal and thread local symbol"),
 		       abfd, h->root.root.string);
 		  return FALSE;
 		}
@@ -6079,7 +5685,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  if (rel->r_addend)
 	    {
 	      _bfd_error_handler
-		(_("%B: Function descriptor relocation with non-zero addend"),
+		(_("%pB: Function descriptor relocation with non-zero addend"),
 		 abfd);
 	      return FALSE;
 	    }
@@ -6095,10 +5701,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		  bfd_size_type size;
 
 		  size = symtab_hdr->sh_info * sizeof (union gotref);
-#ifdef INCLUDE_SHMEDIA
-		  /* Count datalabel local GOT.  */
-		  size *= 2;
-#endif
 		  local_funcdesc = (union gotref *) bfd_zalloc (abfd, size);
 		  if (local_funcdesc == NULL)
 		    return FALSE;
@@ -6128,26 +5730,18 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		  if (old_got_type == GOT_NORMAL)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as normal and FDPIC symbol"),
+		      (_("%pB: `%s' accessed both as normal and FDPIC symbol"),
 		       abfd, h->root.root.string);
 		  else
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as FDPIC and thread local symbol"),
+		      (_("%pB: `%s' accessed both as FDPIC and thread local symbol"),
 		       abfd, h->root.root.string);
 		}
 	    }
 	  break;
 
 	case R_SH_GOTPLT32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_GOTPLT_LOW16:
-	case R_SH_GOTPLT_MEDLOW16:
-	case R_SH_GOTPLT_MEDHI16:
-	case R_SH_GOTPLT_HI16:
-	case R_SH_GOTPLT10BY4:
-	case R_SH_GOTPLT10BY8:
-#endif
 	  /* If this is a local symbol, we resolve it directly without
 	     creating a procedure linkage table entry.  */
 
@@ -6165,12 +5759,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  break;
 
 	case R_SH_PLT32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_PLT_LOW16:
-	case R_SH_PLT_MEDLOW16:
-	case R_SH_PLT_MEDHI16:
-	case R_SH_PLT_HI16:
-#endif
 	  /* This symbol requires a procedure linkage table entry.  We
 	     actually build the entry in adjust_dynamic_symbol,
 	     because this might be a case of linking PIC code which is
@@ -6192,12 +5780,6 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
 	case R_SH_DIR32:
 	case R_SH_REL32:
-#ifdef INCLUDE_SHMEDIA
-	case R_SH_IMM_LOW16_PCREL:
-	case R_SH_IMM_MEDLOW16_PCREL:
-	case R_SH_IMM_MEDHI16_PCREL:
-	case R_SH_IMM_HI16_PCREL:
-#endif
 	  if (h != NULL && ! bfd_link_pic (info))
 	    {
 	      h->non_got_ref = 1;
@@ -6236,8 +5818,8 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		  && (h->root.type == bfd_link_hash_defweak
 		      || !h->def_regular)))
 	    {
-	      struct elf_sh_dyn_relocs *p;
-	      struct elf_sh_dyn_relocs **head;
+	      struct elf_dyn_relocs *p;
+	      struct elf_dyn_relocs **head;
 
 	      if (htab->root.dynobj == NULL)
 		htab->root.dynobj = abfd;
@@ -6275,7 +5857,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		    s = sec;
 
 		  vpp = &elf_section_data (s)->local_dynrel;
-		  head = (struct elf_sh_dyn_relocs **) vpp;
+		  head = (struct elf_dyn_relocs **) vpp;
 		}
 
 	      p = *head;
@@ -6293,14 +5875,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		}
 
 	      p->count += 1;
-	      if (r_type == R_SH_REL32
-#ifdef INCLUDE_SHMEDIA
-		  || r_type == R_SH_IMM_LOW16_PCREL
-		  || r_type == R_SH_IMM_MEDLOW16_PCREL
-		  || r_type == R_SH_IMM_MEDHI16_PCREL
-		  || r_type == R_SH_IMM_HI16_PCREL
-#endif
-		  )
+	      if (r_type == R_SH_REL32)
 		p->pc_count += 1;
 	    }
 
@@ -6317,7 +5892,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  if (bfd_link_dll (info))
 	    {
 	      _bfd_error_handler
-		(_("%B: TLS local exec code cannot be linked into shared objects"),
+		(_("%pB: TLS local exec code cannot be linked into shared objects"),
 		 abfd);
 	      return FALSE;
 	    }
@@ -6344,7 +5919,7 @@ sh_elf_set_mach_from_flags (bfd *abfd)
 {
   flagword flags = elf_elfheader (abfd)->e_flags & EF_SH_MACH_MASK;
 
-  if (flags >= sizeof(sh_ef_bfd_table))
+  if (flags >= ARRAY_SIZE (sh_ef_bfd_table))
     return FALSE;
 
   if (sh_ef_bfd_table[flags] == 0)
@@ -6432,7 +6007,7 @@ sh_merge_bfd_arch (bfd *ibfd, struct bfd_link_info *info)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: uses %s instructions while previous modules "
+	(_("%pB: uses %s instructions while previous modules "
 	   "use %s instructions"),
 	 ibfd,
 	 SH_ARCH_SET_HAS_DSP (new_arch) ? "dsp" : "floating point",
@@ -6481,7 +6056,7 @@ sh_elf_merge_private_data (bfd *ibfd, struct bfd_link_info *info)
 
   if (! sh_merge_bfd_arch (ibfd, info))
     {
-      _bfd_error_handler (_("%B: uses instructions which are incompatible "
+      _bfd_error_handler (_("%pB: uses instructions which are incompatible "
 			    "with instructions used in previous modules"),
 			  ibfd);
       bfd_set_error (bfd_error_bad_value);
@@ -6494,7 +6069,7 @@ sh_elf_merge_private_data (bfd *ibfd, struct bfd_link_info *info)
 
   if (fdpic_object_p (ibfd) != fdpic_object_p (obfd))
     {
-      _bfd_error_handler (_("%B: attempt to mix FDPIC and non-FDPIC objects"),
+      _bfd_error_handler (_("%pB: attempt to mix FDPIC and non-FDPIC objects"),
 			  ibfd);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -6790,70 +6365,6 @@ sh_elf_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
       bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
     }
 
-#ifdef INCLUDE_SHMEDIA
-  {
-    struct elf_sh_link_hash_entry *eh;
-
-    eh = (struct elf_sh_link_hash_entry *) h;
-    if (eh->datalabel_got.offset != (bfd_vma) -1)
-      {
-	asection *sgot;
-	asection *srelgot;
-	Elf_Internal_Rela rel;
-	bfd_byte *loc;
-
-	/* This symbol has a datalabel entry in the global offset table.
-	   Set it up.  */
-
-	sgot = htab->root.sgot;
-	srelgot = htab->root.srelgot;
-	BFD_ASSERT (sgot != NULL && srelgot != NULL);
-
-	rel.r_offset = (sgot->output_section->vma
-			+ sgot->output_offset
-			+ (eh->datalabel_got.offset &~ (bfd_vma) 1));
-
-	/* If this is a static link, or it is a -Bsymbolic link and the
-	   symbol is defined locally or was forced to be local because
-	   of a version file, we just want to emit a RELATIVE reloc.
-	   The entry in the global offset table will already have been
-	   initialized in the relocate_section function.  */
-	if (bfd_link_pic (info)
-	    && SYMBOL_REFERENCES_LOCAL (info, h))
-	  {
-	    if (htab->fdpic_p)
-	      {
-		asection *sec = h->root.u.def.section;
-		int dynindx
-		  = elf_section_data (sec->output_section)->dynindx;
-
-		rel.r_info = ELF32_R_INFO (dynindx, R_SH_DIR32);
-		rel.r_addend = (h->root.u.def.value
-				+ h->root.u.def.section->output_offset);
-	      }
-	    else
-	      {
-		rel.r_info = ELF32_R_INFO (0, R_SH_RELATIVE);
-		rel.r_addend = (h->root.u.def.value
-				+ h->root.u.def.section->output_section->vma
-				+ h->root.u.def.section->output_offset);
-	      }
-	  }
-	else
-	  {
-	    bfd_put_32 (output_bfd, (bfd_vma) 0, sgot->contents
-			+ eh->datalabel_got.offset);
-	    rel.r_info = ELF32_R_INFO (h->dynindx, R_SH_GLOB_DAT);
-	    rel.r_addend = 0;
-	  }
-
-	loc = srelgot->contents;
-	loc += srelgot->reloc_count++ * sizeof (Elf32_External_Rela);
-	bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
-      }
-  }
-#endif
-
   if (h->needs_copy)
     {
       asection *s;
@@ -6917,9 +6428,6 @@ sh_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	{
 	  Elf_Internal_Dyn dyn;
 	  asection *s;
-#ifdef INCLUDE_SHMEDIA
-	  const char *name;
-#endif
 
 	  bfd_elf32_swap_dyn_in (htab->root.dynobj, dyncon, &dyn);
 
@@ -6930,29 +6438,6 @@ sh_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		  && elf_vxworks_finish_dynamic_entry (output_bfd, &dyn))
 		bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
-
-#ifdef INCLUDE_SHMEDIA
-	    case DT_INIT:
-	      name = info->init_function;
-	      goto get_sym;
-
-	    case DT_FINI:
-	      name = info->fini_function;
-	    get_sym:
-	      if (dyn.d_un.d_val != 0)
-		{
-		  struct elf_link_hash_entry *h;
-
-		  h = elf_link_hash_lookup (&htab->root, name,
-					    FALSE, FALSE, TRUE);
-		  if (h != NULL && (h->other & STO_SH5_ISA32))
-		    {
-		      dyn.d_un.d_val |= 1;
-		      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-		    }
-		}
-	      break;
-#endif
 
 	    case DT_PLTGOT:
 	      BFD_ASSERT (htab->root.hgot != NULL);
@@ -7301,7 +6786,9 @@ sh_elf_encode_eh_address (bfd *abfd,
 #define elf_backend_got_header_size	12
 #define elf_backend_dtrel_excludes_plt	1
 
-#if !defined INCLUDE_SHMEDIA && !defined SH_TARGET_ALREADY_DEFINED
+#define elf_backend_linux_prpsinfo32_ugid16	TRUE
+
+#if !defined SH_TARGET_ALREADY_DEFINED
 
 #include "elf32-target.h"
 
@@ -7399,4 +6886,4 @@ sh_elf_encode_eh_address (bfd *abfd,
 
 #include "elf32-target.h"
 
-#endif /* neither INCLUDE_SHMEDIA nor SH_TARGET_ALREADY_DEFINED */
+#endif /* not SH_TARGET_ALREADY_DEFINED */

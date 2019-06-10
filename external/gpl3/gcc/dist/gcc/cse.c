@@ -1,5 +1,5 @@
 /* Common subexpression elimination for GNU compiler.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -41,10 +42,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "dbgcnt.h"
 #include "rtl-iter.h"
-
-#ifndef LOAD_EXTEND_OP
-#define LOAD_EXTEND_OP(M) UNKNOWN
-#endif
 
 /* The basic idea of common subexpression elimination is to go
    through the code, keeping a record of expressions that would
@@ -2364,7 +2361,7 @@ hash_rtx_cb (const_rtx x, machine_mode mode,
       /* We don't hash on the address of the CODE_LABEL to avoid bootstrap
 	 differences and differences between each stage's debugging dumps.  */
 	 hash += (((unsigned int) LABEL_REF << 7)
-		  + CODE_LABEL_NUMBER (LABEL_REF_LABEL (x)));
+		  + CODE_LABEL_NUMBER (label_ref_label (x)));
       return hash;
 
     case SYMBOL_REF:
@@ -2617,7 +2614,7 @@ exp_equiv_p (const_rtx x, const_rtx y, int validate, bool for_gcse)
       return x == y;
 
     case LABEL_REF:
-      return LABEL_REF_LABEL (x) == LABEL_REF_LABEL (y);
+      return label_ref_label (x) == label_ref_label (y);
 
     case SYMBOL_REF:
       return XSTR (x, 0) == XSTR (y, 0);
@@ -3054,7 +3051,7 @@ find_comparison_args (enum rtx_code code, rtx *parg1, rtx *parg2,
 	 with floating-point operands.  */
       if (reverse_code)
 	{
-	  enum rtx_code reversed = reversed_comparison_code (x, NULL_RTX);
+	  enum rtx_code reversed = reversed_comparison_code (x, NULL);
 	  if (reversed == UNKNOWN)
 	    break;
 	  else
@@ -3506,7 +3503,7 @@ fold_rtx (rtx x, rtx_insn *insn)
 		: lookup_as_function (folded_arg0, MINUS);
 
 	      if (y != 0 && GET_CODE (XEXP (y, 1)) == LABEL_REF
-		  && LABEL_REF_LABEL (XEXP (y, 1)) == LABEL_REF_LABEL (const_arg1))
+		  && label_ref_label (XEXP (y, 1)) == label_ref_label (const_arg1))
 		return XEXP (y, 0);
 
 	      /* Now try for a CONST of a MINUS like the above.  */
@@ -3514,7 +3511,7 @@ fold_rtx (rtx x, rtx_insn *insn)
 			: lookup_as_function (folded_arg0, CONST))) != 0
 		  && GET_CODE (XEXP (y, 0)) == MINUS
 		  && GET_CODE (XEXP (XEXP (y, 0), 1)) == LABEL_REF
-		  && LABEL_REF_LABEL (XEXP (XEXP (y, 0), 1)) == LABEL_REF_LABEL (const_arg1))
+		  && label_ref_label (XEXP (XEXP (y, 0), 1)) == label_ref_label (const_arg1))
 		return XEXP (XEXP (y, 0), 0);
 	    }
 
@@ -3526,7 +3523,7 @@ fold_rtx (rtx x, rtx_insn *insn)
 		: lookup_as_function (folded_arg1, MINUS);
 
 	      if (y != 0 && GET_CODE (XEXP (y, 1)) == LABEL_REF
-		  && LABEL_REF_LABEL (XEXP (y, 1)) == LABEL_REF_LABEL (const_arg0))
+		  && label_ref_label (XEXP (y, 1)) == label_ref_label (const_arg0))
 		return XEXP (y, 0);
 
 	      /* Now try for a CONST of a MINUS like the above.  */
@@ -3534,7 +3531,7 @@ fold_rtx (rtx x, rtx_insn *insn)
 			: lookup_as_function (folded_arg1, CONST))) != 0
 		  && GET_CODE (XEXP (y, 0)) == MINUS
 		  && GET_CODE (XEXP (XEXP (y, 0), 1)) == LABEL_REF
-		  && LABEL_REF_LABEL (XEXP (XEXP (y, 0), 1)) == LABEL_REF_LABEL (const_arg0))
+		  && label_ref_label (XEXP (XEXP (y, 0), 1)) == label_ref_label (const_arg0))
 		return XEXP (XEXP (y, 0), 0);
 	    }
 
@@ -3558,7 +3555,7 @@ fold_rtx (rtx x, rtx_insn *insn)
 		 instead we test for the problematic value in a more direct
 		 manner and hope the Sun compilers get it correct.  */
 	      && INTVAL (const_arg1) !=
-	        ((HOST_WIDE_INT) 1 << (HOST_BITS_PER_WIDE_INT - 1))
+	        (HOST_WIDE_INT_1 << (HOST_BITS_PER_WIDE_INT - 1))
 	      && REG_P (folded_arg1))
 	    {
 	      rtx new_const = GEN_INT (-INTVAL (const_arg1));
@@ -3643,13 +3640,13 @@ fold_rtx (rtx x, rtx_insn *insn)
 
 	      if (code == PLUS && const_arg1 == inner_const
 		  && ((HAVE_PRE_INCREMENT
-			  && exact_log2 (INTVAL (const_arg1)) >= 0)
+			  && pow2p_hwi (INTVAL (const_arg1)))
 		      || (HAVE_POST_INCREMENT
-			  && exact_log2 (INTVAL (const_arg1)) >= 0)
+			  && pow2p_hwi (INTVAL (const_arg1)))
 		      || (HAVE_PRE_DECREMENT
-			  && exact_log2 (- INTVAL (const_arg1)) >= 0)
+			  && pow2p_hwi (- INTVAL (const_arg1)))
 		      || (HAVE_POST_DECREMENT
-			  && exact_log2 (- INTVAL (const_arg1)) >= 0)))
+			  && pow2p_hwi (- INTVAL (const_arg1)))))
 		break;
 
 	      /* ??? Vector mode shifts by scalar
@@ -4157,10 +4154,10 @@ struct set
      The size of this field should match the size of the mode
      field of struct rtx_def (see rtl.h).  */
   ENUM_BITFIELD(machine_mode) mode : 8;
-  /* A constant equivalent for SET_SRC, if any.  */
-  rtx src_const;
   /* Hash value of constant equivalent for SET_SRC.  */
   unsigned src_const_hash;
+  /* A constant equivalent for SET_SRC, if any.  */
+  rtx src_const;
   /* Table entry for constant equivalent for SET_SRC, if any.  */
   struct table_elt *src_const_elt;
   /* Table entry for the destination address.  */
@@ -4298,6 +4295,22 @@ find_sets_in_insn (rtx_insn *insn, struct set **psets)
   return n_sets;
 }
 
+/* Subroutine of canonicalize_insn.  X is an ASM_OPERANDS in INSN.  */
+
+static void
+canon_asm_operands (rtx x, rtx_insn *insn)
+{
+  for (int i = ASM_OPERANDS_INPUT_LENGTH (x) - 1; i >= 0; i--)
+    {
+      rtx input = ASM_OPERANDS_INPUT (x, i);
+      if (!(REG_P (input) && HARD_REGISTER_P (input)))
+	{
+	  input = canon_reg (input, insn);
+	  validate_change (insn, &ASM_OPERANDS_INPUT (x, i), input, 1);
+	}
+    }
+}
+
 /* Where possible, substitute every register reference in the N_SETS
    number of SETS in INSN with the canonical register.
 
@@ -4361,17 +4374,7 @@ canonicalize_insn (rtx_insn *insn, struct set **psets, int n_sets)
     /* Canonicalize a USE of a pseudo register or memory location.  */
     canon_reg (x, insn);
   else if (GET_CODE (x) == ASM_OPERANDS)
-    {
-      for (i = ASM_OPERANDS_INPUT_LENGTH (x) - 1; i >= 0; i--)
-	{
-	  rtx input = ASM_OPERANDS_INPUT (x, i);
-	  if (!(REG_P (input) && REGNO (input) < FIRST_PSEUDO_REGISTER))
-	    {
-	      input = canon_reg (input, insn);
-	      validate_change (insn, &ASM_OPERANDS_INPUT (x, i), input, 1);
-	    }
-	}
-    }
+    canon_asm_operands (x, insn);
   else if (GET_CODE (x) == CALL)
     {
       canon_reg (x, insn);
@@ -4400,6 +4403,8 @@ canonicalize_insn (rtx_insn *insn, struct set **psets, int n_sets)
 		   && ! (REG_P (XEXP (y, 0))
 			 && REGNO (XEXP (y, 0)) < FIRST_PSEUDO_REGISTER))
 	    canon_reg (y, insn);
+	  else if (GET_CODE (y) == ASM_OPERANDS)
+	    canon_asm_operands (y, insn);
 	  else if (GET_CODE (y) == CALL)
 	    {
 	      canon_reg (y, insn);
@@ -4557,9 +4562,9 @@ cse_insn (rtx_insn *insn)
 	  else
 	    shift = INTVAL (pos);
 	  if (INTVAL (width) == HOST_BITS_PER_WIDE_INT)
-	    mask = ~(HOST_WIDE_INT) 0;
+	    mask = HOST_WIDE_INT_M1;
 	  else
-	    mask = ((HOST_WIDE_INT) 1 << INTVAL (width)) - 1;
+	    mask = (HOST_WIDE_INT_1 << INTVAL (width)) - 1;
 	  val = (val >> shift) & mask;
 	  src_eqv = GEN_INT (val);
 	}
@@ -4575,6 +4580,7 @@ cse_insn (rtx_insn *insn)
   for (i = 0; i < n_sets; i++)
     {
       bool repeat = false;
+      bool mem_noop_insn = false;
       rtx src, dest;
       rtx src_folded;
       struct table_elt *elt = 0, *p;
@@ -4656,7 +4662,7 @@ cse_insn (rtx_insn *insn)
 	      && INTVAL (width) < HOST_BITS_PER_WIDE_INT
 	      && (INTVAL (src) & ((HOST_WIDE_INT) (-1) << INTVAL (width))))
 	    src_folded
-	      = GEN_INT (INTVAL (src) & (((HOST_WIDE_INT) 1
+	      = GEN_INT (INTVAL (src) & ((HOST_WIDE_INT_1
 					  << INTVAL (width)) - 1));
 	}
 #endif
@@ -4909,11 +4915,10 @@ cse_insn (rtx_insn *insn)
 	 also have such operations, but this is only likely to be
 	 beneficial on these machines.  */
 
+      rtx_code extend_op;
       if (flag_expensive_optimizations && src_related == 0
-	  && (GET_MODE_SIZE (mode) < UNITS_PER_WORD)
-	  && GET_MODE_CLASS (mode) == MODE_INT
 	  && MEM_P (src) && ! do_not_record
-	  && LOAD_EXTEND_OP (mode) != UNKNOWN)
+	  && (extend_op = load_extend_op (mode)) != UNKNOWN)
 	{
 	  struct rtx_def memory_extend_buf;
 	  rtx memory_extend_rtx = &memory_extend_buf;
@@ -4922,7 +4927,7 @@ cse_insn (rtx_insn *insn)
 	  /* Set what we are trying to extend and the operation it might
 	     have been extended with.  */
 	  memset (memory_extend_rtx, 0, sizeof (*memory_extend_rtx));
-	  PUT_CODE (memory_extend_rtx, LOAD_EXTEND_OP (mode));
+	  PUT_CODE (memory_extend_rtx, extend_op);
 	  XEXP (memory_extend_rtx, 0) = src;
 
 	  for (tmode = GET_MODE_WIDER_MODE (mode);
@@ -5166,7 +5171,7 @@ cse_insn (rtx_insn *insn)
 	    }
 
 	  /* Avoid creation of overlapping memory moves.  */
-	  if (MEM_P (trial) && MEM_P (SET_DEST (sets[i].rtl)))
+	  if (MEM_P (trial) && MEM_P (dest) && !rtx_equal_p (trial, dest))
 	    {
 	      rtx src, dest;
 
@@ -5224,9 +5229,9 @@ cse_insn (rtx_insn *insn)
 		  else
 		    shift = INTVAL (pos);
 		  if (INTVAL (width) == HOST_BITS_PER_WIDE_INT)
-		    mask = ~(HOST_WIDE_INT) 0;
+		    mask = HOST_WIDE_INT_M1;
 		  else
-		    mask = ((HOST_WIDE_INT) 1 << INTVAL (width)) - 1;
+		    mask = (HOST_WIDE_INT_1 << INTVAL (width)) - 1;
 		  val &= ~(mask << shift);
 		  val |= (INTVAL (trial) & mask) << shift;
 		  val = trunc_int_for_mode (val, GET_MODE (dest_reg));
@@ -5274,6 +5279,21 @@ cse_insn (rtx_insn *insn)
 
 	      SET_SRC (sets[i].rtl) = trial;
 	      cse_jumps_altered = true;
+	      break;
+	    }
+
+	  /* Similarly, lots of targets don't allow no-op
+	     (set (mem x) (mem x)) moves.  */
+	  else if (n_sets == 1
+		   && MEM_P (trial)
+		   && MEM_P (dest)
+		   && rtx_equal_p (trial, dest)
+		   && !side_effects_p (dest)
+		   && (cfun->can_delete_dead_exceptions
+		       || insn_nothrow_p (insn)))
+	    {
+	      SET_SRC (sets[i].rtl) = trial;
+	      mem_noop_insn = true;
 	      break;
 	    }
 
@@ -5489,8 +5509,18 @@ cse_insn (rtx_insn *insn)
       else if (n_sets == 1 && dest == pc_rtx && src == pc_rtx)
 	{
 	  /* One less use of the label this insn used to jump to.  */
-	  delete_insn_and_edges (insn);
+	  cse_cfg_altered |= delete_insn_and_edges (insn);
 	  cse_jumps_altered = true;
+	  /* No more processing for this set.  */
+	  sets[i].rtl = 0;
+	}
+
+      /* Similarly for no-op MEM moves.  */
+      else if (mem_noop_insn)
+	{
+	  if (cfun->can_throw_non_call_exceptions && can_throw_internal (insn))
+	    cse_cfg_altered = true;
+	  cse_cfg_altered |= delete_insn_and_edges (insn);
 	  /* No more processing for this set.  */
 	  sets[i].rtl = 0;
 	}
@@ -5525,7 +5555,7 @@ cse_insn (rtx_insn *insn)
 		  REG_NOTES (new_rtx) = note;
 		}
 
-	      delete_insn_and_edges (insn);
+	      cse_cfg_altered |= delete_insn_and_edges (insn);
 	      insn = new_rtx;
 	    }
 	  else
@@ -5725,6 +5755,13 @@ cse_insn (rtx_insn *insn)
     {
       if (!(RTL_CONST_OR_PURE_CALL_P (insn)))
 	invalidate_memory ();
+      else
+	/* For const/pure calls, invalidate any argument slots, because
+	   those are owned by the callee.  */
+	for (tem = CALL_INSN_FUNCTION_USAGE (insn); tem; tem = XEXP (tem, 1))
+	  if (GET_CODE (XEXP (tem, 0)) == USE
+	      && MEM_P (XEXP (XEXP (tem, 0), 0)))
+	    invalidate (XEXP (XEXP (tem, 0), 0), VOIDmode);
       invalidate_for_call ();
     }
 
@@ -5857,15 +5894,7 @@ cse_insn (rtx_insn *insn)
 	    || GET_MODE (dest) == BLKmode
 	    /* If we didn't put a REG_EQUAL value or a source into the hash
 	       table, there is no point is recording DEST.  */
-	    || sets[i].src_elt == 0
-	    /* If DEST is a paradoxical SUBREG and SRC is a ZERO_EXTEND
-	       or SIGN_EXTEND, don't record DEST since it can cause
-	       some tracking to be wrong.
-
-	       ??? Think about this more later.  */
-	    || (paradoxical_subreg_p (dest)
-		&& (GET_CODE (sets[i].src) == SIGN_EXTEND
-		    || GET_CODE (sets[i].src) == ZERO_EXTEND)))
+	    || sets[i].src_elt == 0)
 	  continue;
 
 	/* STRICT_LOW_PART isn't part of the value BEING set,
@@ -5883,6 +5912,11 @@ cse_insn (rtx_insn *insn)
 	      rehash_using_reg (dest);
 	      sets[i].dest_hash = HASH (dest, GET_MODE (dest));
 	    }
+
+	/* If DEST is a paradoxical SUBREG, don't record DEST since the bits
+	   outside the mode of GET_MODE (SUBREG_REG (dest)) are undefined.  */
+	if (paradoxical_subreg_p (dest))
+	  continue;
 
 	elt = insert (dest, sets[i].src_elt,
 		      sets[i].dest_hash, GET_MODE (dest));
@@ -6458,10 +6492,10 @@ check_for_label_ref (rtx_insn *insn)
       if (GET_CODE (x) == LABEL_REF
 	  && !LABEL_REF_NONLOCAL_P (x)
 	  && (!JUMP_P (insn)
-	      || !label_is_jump_target_p (LABEL_REF_LABEL (x), insn))
-	  && LABEL_P (LABEL_REF_LABEL (x))
-	  && INSN_UID (LABEL_REF_LABEL (x)) != 0
-	  && !find_reg_note (insn, REG_LABEL_OPERAND, LABEL_REF_LABEL (x)))
+	      || !label_is_jump_target_p (label_ref_label (x), insn))
+	  && LABEL_P (label_ref_label (x))
+	  && INSN_UID (label_ref_label (x)) != 0
+	  && !find_reg_note (insn, REG_LABEL_OPERAND, label_ref_label (x)))
 	return true;
     }
   return false;
@@ -6642,6 +6676,10 @@ cse_main (rtx_insn *f ATTRIBUTE_UNUSED, int nregs)
   basic_block bb;
   int *rc_order = XNEWVEC (int, last_basic_block_for_fn (cfun));
   int i, n_blocks;
+
+  /* CSE doesn't use dominane info but can invalidate it in different ways.
+     For simplicity free dominance info here.  */
+  free_dominance_info (CDI_DOMINATORS);
 
   df_set_flags (DF_LR_RUN_DCE);
   df_note_add_problem ();
@@ -7105,7 +7143,7 @@ delete_trivially_dead_insns (rtx_insn *insns, int nreg)
 	      count_reg_usage (insn, counts, NULL_RTX, -1);
 	      ndead++;
 	    }
-	  delete_insn_and_edges (insn);
+	  cse_cfg_altered |= delete_insn_and_edges (insn);
 	}
     }
 
@@ -7401,7 +7439,7 @@ cse_cc_succs (basic_block bb, basic_block orig_bb, rtx cc_reg, rtx cc_src,
 				    newreg);
 	}
 
-      delete_insn_and_edges (insns[i]);
+      cse_cfg_altered |= delete_insn_and_edges (insns[i]);
     }
 
   return mode;
@@ -7536,11 +7574,11 @@ rest_of_handle_cse (void)
     {
       timevar_push (TV_JUMP);
       rebuild_jump_labels (get_insns ());
-      cleanup_cfg (CLEANUP_CFG_CHANGED);
+      cse_cfg_altered |= cleanup_cfg (CLEANUP_CFG_CHANGED);
       timevar_pop (TV_JUMP);
     }
   else if (tem == 1 || optimize > 1)
-    cleanup_cfg (0);
+    cse_cfg_altered |= cleanup_cfg (0);
 
   return 0;
 }
@@ -7605,11 +7643,11 @@ rest_of_handle_cse2 (void)
     {
       timevar_push (TV_JUMP);
       rebuild_jump_labels (get_insns ());
-      cleanup_cfg (CLEANUP_CFG_CHANGED);
+      cse_cfg_altered |= cleanup_cfg (CLEANUP_CFG_CHANGED);
       timevar_pop (TV_JUMP);
     }
   else if (tem == 1)
-    cleanup_cfg (0);
+    cse_cfg_altered |= cleanup_cfg (0);
 
   cse_not_expected = 1;
   return 0;
@@ -7669,7 +7707,7 @@ rest_of_handle_cse_after_global_opts (void)
 
   rebuild_jump_labels (get_insns ());
   tem = cse_main (get_insns (), max_reg_num ());
-  purge_all_dead_edges ();
+  cse_cfg_altered |= purge_all_dead_edges ();
   delete_trivially_dead_insns (get_insns (), max_reg_num ());
 
   cse_not_expected = !flag_rerun_cse_after_loop;
@@ -7679,11 +7717,11 @@ rest_of_handle_cse_after_global_opts (void)
     {
       timevar_push (TV_JUMP);
       rebuild_jump_labels (get_insns ());
-      cleanup_cfg (CLEANUP_CFG_CHANGED);
+      cse_cfg_altered |= cleanup_cfg (CLEANUP_CFG_CHANGED);
       timevar_pop (TV_JUMP);
     }
   else if (tem == 1)
-    cleanup_cfg (0);
+    cse_cfg_altered |= cleanup_cfg (0);
 
   flag_cse_follow_jumps = save_cfj;
   return 0;

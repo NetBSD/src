@@ -1,8 +1,8 @@
-/*	$NetBSD: exec.h,v 1.2 2002/12/10 17:14:10 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.2.198.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*	$OpenBSD: exec.h,v 1.6 2001/01/22 14:51:03 art Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -37,7 +37,7 @@
 
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB
-#define ELF_TARG_MACH           EM_PARISC   
+#define ELF_TARG_MACH           EM_PARISC
 
 /* #define _NLIST_DO_AOUT */
 /* #define _NLIST_DO_ECOFF */

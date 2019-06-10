@@ -1,5 +1,5 @@
 /* Interprocedural Identical Code Folding pass
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -20,67 +20,25 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#define INCLUDE_LIST
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
-#include "hashtab.h"
+#include "backend.h"
 #include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "gimple-iterator.h"
-#include "gimple-ssa.h"
-#include "tree-cfg.h"
-#include "stringpool.h"
-#include "tree-dfa.h"
+#include "tree.h"
+#include "gimple.h"
 #include "tree-pass.h"
-#include "gimple-pretty-print.h"
-#include "cfgloop.h"
-#include "except.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
+#include "ssa.h"
 #include "cgraph.h"
 #include "data-streamer.h"
+#include "gimple-pretty-print.h"
+#include "alias.h"
+#include "fold-const.h"
+#include "gimple-iterator.h"
 #include "ipa-utils.h"
-#include "tree-ssanames.h"
 #include "tree-eh.h"
 #include "builtins.h"
 
 #include "ipa-icf-gimple.h"
-#include "ipa-icf.h"
 
 namespace ipa_icf_gimple {
 
@@ -274,7 +232,15 @@ func_checker::compatible_types_p (tree t1, tree t2)
   if (!types_compatible_p (t1, t2))
     return return_false_with_msg ("types are not compatible");
 
-  if (get_alias_set (t1) != get_alias_set (t2))
+  /* We do a lot of unnecesary matching of types that are not being
+     accessed and thus do not need to be compatible.  In longer term we should
+     remove these checks on all types which are not accessed as memory
+     locations.
+
+     For time being just avoid calling get_alias_set on types that are not
+     having alias sets defined at all.  */
+  if (type_with_alias_set_p (t1) && type_with_alias_set_p (t2)
+      && get_alias_set (t1) != get_alias_set (t2))
     return return_false_with_msg ("alias sets are different");
 
   return true;
@@ -649,7 +615,7 @@ func_checker::parse_labels (sem_bb *bb)
   for (gimple_stmt_iterator gsi = gsi_start_bb (bb->bb); !gsi_end_p (gsi);
        gsi_next (&gsi))
     {
-      gimple stmt = gsi_stmt (gsi);
+      gimple *stmt = gsi_stmt (gsi);
 
       if (glabel *label_stmt = dyn_cast <glabel *> (stmt))
 	{
@@ -672,7 +638,7 @@ bool
 func_checker::compare_bb (sem_bb *bb1, sem_bb *bb2)
 {
   gimple_stmt_iterator gsi1, gsi2;
-  gimple s1, s2;
+  gimple *s1, *s2;
 
   gsi1 = gsi_start_bb_nondebug (bb1->bb);
   gsi2 = gsi_start_bb_nondebug (bb2->bb);
@@ -832,7 +798,7 @@ func_checker::compare_gimple_call (gcall *s1, gcall *s2)
    assignment statements are semantically equivalent.  */
 
 bool
-func_checker::compare_gimple_assign (gimple s1, gimple s2)
+func_checker::compare_gimple_assign (gimple *s1, gimple *s2)
 {
   tree arg1, arg2;
   tree_code code1, code2;
@@ -867,7 +833,7 @@ func_checker::compare_gimple_assign (gimple s1, gimple s2)
    condition statements are semantically equivalent.  */
 
 bool
-func_checker::compare_gimple_cond (gimple s1, gimple s2)
+func_checker::compare_gimple_cond (gimple *s1, gimple *s2)
 {
   tree t1, t2;
   tree_code code1, code2;
@@ -993,7 +959,7 @@ func_checker::compare_gimple_return (const greturn *g1, const greturn *g2)
    goto statements are semantically equivalent.  */
 
 bool
-func_checker::compare_gimple_goto (gimple g1, gimple g2)
+func_checker::compare_gimple_goto (gimple *g1, gimple *g2)
 {
   tree dest1, dest2;
 
@@ -1023,6 +989,9 @@ bool
 func_checker::compare_gimple_asm (const gasm *g1, const gasm *g2)
 {
   if (gimple_asm_volatile_p (g1) != gimple_asm_volatile_p (g2))
+    return false;
+
+  if (gimple_asm_input_p (g1) != gimple_asm_input_p (g2))
     return false;
 
   if (gimple_asm_ninputs (g1) != gimple_asm_ninputs (g2))

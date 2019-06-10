@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.28.20.1 2019/06/10 22:06:56 christos Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28.20.1 2019/06/10 22:06:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouy
 #include <xen/xenpmap.h>
 
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
+#ifdef XENPV
 /*
  * arch-dependent p2m frame lists list (L3 and L2)
  * used by Xen for save/restore mappings
@@ -82,6 +85,8 @@ static int l2_p2m_page_size; /* size of L2 page, in pages */
 
 static void build_p2m_frame_list_list(void);
 static void update_p2m_frame_list_list(void);
+
+#endif
 
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
@@ -187,7 +192,7 @@ stipending(void)
 	 */
 
 	while (vci->evtchn_upcall_pending) {
-		cli();
+		x86_disable_intr();
 
 		vci->evtchn_upcall_pending = 0;
 
@@ -195,15 +200,15 @@ stipending(void)
 		    s->evtchn_pending, s->evtchn_mask,
 		    evt_set_pending, &ret);
 
-		sti();
+		x86_enable_intr();
 	}
 
 #if 0
-	if (ci->ci_ipending & 0x1)
+	if (ci->ci_xpending & 0x1)
 		printf("stipending events %08lx mask %08lx ilevel %d ipending %08x\n",
 		    HYPERVISOR_shared_info->events,
 		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel,
-		    ci->ci_ipending);
+		    ci->ci_xpending);
 #endif
 
 	return (ret);
@@ -259,6 +264,11 @@ do_hypervisor_callback(struct intrframe *regs)
 	vci = ci->ci_vcpu;
 	level = ci->ci_ilevel;
 
+	/* Save trapframe for clock handler */
+	KASSERT(regs != NULL);
+	ci->ci_xen_clockf_usermode = USERMODE(regs->_INTRFRAME_CS);
+	ci->ci_xen_clockf_pc = regs->_INTRFRAME_IP;
+
 	// DDD printf("do_hypervisor_callback\n");
 
 #ifdef EARLY_DEBUG_EVENT
@@ -280,7 +290,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
 		    (uint)vci->evtchn_pending_sel,
-		    level, ci->ci_ilevel, ci->ci_ipending);
+		    level, ci->ci_ilevel, ci->ci_xpending);
 #endif
 }
 
@@ -320,47 +330,22 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 void
 hypervisor_unmask_event(unsigned int ev)
 {
-	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	volatile struct vcpu_info *vci;
+
+	KASSERT(ev > 0 && ev < NR_EVENT_CHANNELS);
 
 #ifdef PORT_DEBUG
 	if (ev == PORT_DEBUG)
 		printf("hypervisor_unmask_event %d\n", ev);
 #endif
 
-	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
-	/*
-	 * The following is basically the equivalent of
-	 * 'hw_resend_irq'. Just like a real IO-APIC we 'lose the
-	 * interrupt edge' if the channel is masked.
-	 */
-	if (!xen_atomic_test_bit(&s->evtchn_pending[0], ev))
-		return;
+	/* Xen unmasks the evtchn_mask[0]:ev bit for us. */
+	evtchn_op_t op;
+	op.cmd = EVTCHNOP_unmask;
+	op.u.unmask.port = ev;
+	if (HYPERVISOR_event_channel_op(&op) != 0)
+		panic("Failed to unmask event %d\n", ev);
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
-			continue;
-		vci = ci->ci_vcpu;
-		if (__predict_true(ci == curcpu())) {
-			if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
-				ev>>LONG_SHIFT))
-				xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
-		}
-		if (!vci->evtchn_upcall_mask) {
-			if (__predict_true(ci == curcpu())) {
-				hypervisor_force_callback();
-			} else {
-				if (__predict_false(
-				    xen_send_ipi(ci, XEN_IPI_HVCB))) {
-					panic("xen_send_ipi(cpu%d, "
-					    "XEN_IPI_HVCB) failed\n",
-					    (int) ci->ci_cpuid);
-				}
-			}
-		}
-	}
+	return;
 }
 
 void
@@ -392,7 +377,10 @@ evt_enable_event(unsigned int port, unsigned int l1i,
 		 unsigned int l2i, void *args)
 {
 	KASSERT(args == NULL);
-	hypervisor_enable_event(port);
+	hypervisor_unmask_event(port);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(port);
+#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void
@@ -406,8 +394,8 @@ hypervisor_enable_ipl(unsigned int ipl)
 	 * we know that all callback for this event have been processed.
 	 */
 
-	evt_iterate_bits(&ci->ci_isources[ipl]->ipl_evt_mask1,
-	    ci->ci_isources[ipl]->ipl_evt_mask2, NULL, 
+	evt_iterate_bits(&ci->ci_xsources[ipl]->ipl_evt_mask1,
+	    ci->ci_xsources[ipl]->ipl_evt_mask2, NULL,
 	    evt_enable_event, NULL);
 
 }
@@ -423,7 +411,7 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	struct cpu_info *ci = curcpu();
 
 	/* set pending bit for the appropriate IPLs */	
-	ci->ci_ipending |= iplmask;
+	ci->ci_xpending |= iplmask;
 
 	/*
 	 * And set event pending bit for the lowest IPL. As IPL are handled
@@ -434,9 +422,9 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	KASSERT(ipl > 0);
 	ipl--;
 	KASSERT(ipl < NIPL);
-	KASSERT(ci->ci_isources[ipl] != NULL);
-	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
-	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	KASSERT(ci->ci_xsources[ipl] != NULL);
+	ci->ci_xsources[ipl]->ipl_evt_mask1 |= 1UL << l1;
+	ci->ci_xsources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 	if (__predict_false(ci != curcpu())) {
 		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
 			panic("hypervisor_set_ipending: "
@@ -449,21 +437,26 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 void
 hypervisor_machdep_attach(void)
 {
+#ifdef XENPV
  	/* dom0 does not require the arch-dependent P2M translation table */
 	if (!xendomain_is_dom0()) {
 		build_p2m_frame_list_list();
 		sysctl_xen_suspend_setup();
 	}
+#endif
 }
 
 void
 hypervisor_machdep_resume(void)
 {
+#ifdef XENPV
 	/* dom0 does not require the arch-dependent P2M translation table */
 	if (!xendomain_is_dom0())
 		update_p2m_frame_list_list();
+#endif
 }
 
+#ifdef XENPV
 /*
  * Generate the p2m_frame_list_list table,
  * needed for guest save/restore
@@ -547,3 +540,4 @@ update_p2m_frame_list_list(void)
         HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
 
 }
+#endif /* XENPV */

@@ -1,6 +1,6 @@
 // Low-level type for atomic operations -*- C++ -*-
 
-// Copyright (C) 2004-2016 Free Software Foundation, Inc.
+// Copyright (C) 2004-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -37,4 +37,4 @@ typedef int _Atomic_word;
 // This is a memory order release fence.
 #define _GLIBCXX_WRITE_MEM_BARRIER __atomic_thread_fence (__ATOMIC_RELEASE)
 
-#endif 
+#endif

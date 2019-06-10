@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,7 @@
  * IORT - IO Remapping Table
  *
  * Conforms to "IO Remapping Table System Software on ARM Platforms",
- * Document number: ARM DEN 0049C, May 2017
+ * Document number: ARM DEN 0049D, March 2018
  *
  ******************************************************************************/
 
@@ -142,7 +142,8 @@ enum AcpiIortNodeType
     ACPI_IORT_NODE_NAMED_COMPONENT      = 0x01,
     ACPI_IORT_NODE_PCI_ROOT_COMPLEX     = 0x02,
     ACPI_IORT_NODE_SMMU                 = 0x03,
-    ACPI_IORT_NODE_SMMU_V3              = 0x04
+    ACPI_IORT_NODE_SMMU_V3              = 0x04,
+    ACPI_IORT_NODE_PMCG                 = 0x05
 };
 
 
@@ -194,7 +195,7 @@ typedef struct acpi_iort_memory_access
 typedef struct acpi_iort_its_group
 {
     UINT32                  ItsCount;
-    UINT32                  Identifiers[1];         /* GIC ITS identifier arrary */
+    UINT32                  Identifiers[1];         /* GIC ITS identifier array */
 
 } ACPI_IORT_ITS_GROUP;
 
@@ -208,12 +209,18 @@ typedef struct acpi_iort_named_component
 
 } ACPI_IORT_NAMED_COMPONENT;
 
+/* Masks for Flags field above */
+
+#define ACPI_IORT_NC_STALL_SUPPORTED    (1)
+#define ACPI_IORT_NC_PASID_BITS         (31<<1)
 
 typedef struct acpi_iort_root_complex
 {
     UINT64                  MemoryProperties;       /* Memory access properties */
     UINT32                  AtsAttribute;
     UINT32                  PciSegmentNumber;
+    UINT8                   MemoryAddressLimit;     /* Memory address size limit */
+    UINT8                   Reserved[3];            /* Reserved, must be zero */
 
 } ACPI_IORT_ROOT_COMPLEX;
 
@@ -275,9 +282,7 @@ typedef struct acpi_iort_smmu_v3
     UINT32                  PriGsiv;
     UINT32                  GerrGsiv;
     UINT32                  SyncGsiv;
-    UINT8                   Pxm;
-    UINT8                   Reserved1;
-    UINT16                  Reserved2;
+    UINT32                  Pxm;
     UINT32                  IdMappingIndex;
 
 } ACPI_IORT_SMMU_V3;
@@ -291,8 +296,17 @@ typedef struct acpi_iort_smmu_v3
 /* Masks for Flags field above */
 
 #define ACPI_IORT_SMMU_V3_COHACC_OVERRIDE   (1)
-#define ACPI_IORT_SMMU_V3_HTTU_OVERRIDE     (1<<1)
+#define ACPI_IORT_SMMU_V3_HTTU_OVERRIDE     (3<<1)
 #define ACPI_IORT_SMMU_V3_PXM_VALID         (1<<3)
+
+typedef struct acpi_iort_pmcg
+{
+    UINT64                  Page0BaseAddress;
+    UINT32                  OverflowGsiv;
+    UINT32                  NodeReference;
+    UINT64                  Page1BaseAddress;
+
+} ACPI_IORT_PMCG;
 
 
 /*******************************************************************************
@@ -751,7 +765,7 @@ typedef struct acpi_madt_local_x2apic_nmi
 } ACPI_MADT_LOCAL_X2APIC_NMI;
 
 
-/* 11: Generic Interrupt (ACPI 5.0 + ACPI 6.0 changes) */
+/* 11: Generic Interrupt - GICC (ACPI 5.0 + ACPI 6.0 + ACPI 6.3 changes) */
 
 typedef struct acpi_madt_generic_interrupt
 {
@@ -770,7 +784,8 @@ typedef struct acpi_madt_generic_interrupt
     UINT64                  GicrBaseAddress;
     UINT64                  ArmMpidr;
     UINT8                   EfficiencyClass;
-    UINT8                   Reserved2[3];
+    UINT8                   Reserved2[1];
+    UINT16                  SpeInterrupt;       /* ACPI 6.3 */
 
 } ACPI_MADT_GENERIC_INTERRUPT;
 
@@ -1615,6 +1630,7 @@ typedef struct acpi_pdtt_channel
 
 #define ACPI_PDTT_RUNTIME_TRIGGER           (1)
 #define ACPI_PDTT_WAIT_COMPLETION           (1<<1)
+#define ACPI_PDTT_TRIGGER_ORDER             (1<<2)
 
 
 /*******************************************************************************
@@ -1751,8 +1767,11 @@ typedef struct acpi_pptt_processor
 
 /* Flags */
 
-#define ACPI_PPTT_PHYSICAL_PACKAGE          (1)     /* Physical package */
-#define ACPI_PPTT_ACPI_PROCESSOR_ID_VALID   (2)     /* ACPI Processor ID valid */
+#define ACPI_PPTT_PHYSICAL_PACKAGE          (1)
+#define ACPI_PPTT_ACPI_PROCESSOR_ID_VALID   (1<<1)
+#define ACPI_PPTT_ACPI_PROCESSOR_IS_THREAD  (1<<2)  /* ACPI 6.3 */
+#define ACPI_PPTT_ACPI_LEAF_NODE            (1<<3)  /* ACPI 6.3 */
+#define ACPI_PPTT_ACPI_IDENTICAL            (1<<4)  /* ACPI 6.3 */
 
 
 /* 1: Cache Type Structure */

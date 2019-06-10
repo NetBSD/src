@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -52,6 +52,8 @@
 #include "solist.h"
 #include "gdb_bfd.h"
 #include "btrace.h"
+
+#include <vector>
 
 /* Keep a registry of per-objfile data-pointers required by other GDB
    modules.  */
@@ -363,17 +365,8 @@ build_objfile_section_table (struct objfile *objfile)
    requests for specific operations.  Other bits like OBJF_SHARED are
    simply copied through to the new objfile flags member.  */
 
-/* NOTE: carlton/2003-02-04: This function is called with args NULL, 0
-   by jv-lang.c, to create an artificial objfile used to hold
-   information about dynamically-loaded Java classes.  Unfortunately,
-   that branch of this function doesn't get tested very frequently, so
-   it's prone to breakage.  (E.g. at one time the name was set to NULL
-   in that situation, which broke a loop over all names in the dynamic
-   library loader.)  If you change this function, please try to leave
-   things in a consistent state even if abfd is NULL.  */
-
 struct objfile *
-allocate_objfile (bfd *abfd, const char *name, int flags)
+allocate_objfile (bfd *abfd, const char *name, objfile_flags flags)
 {
   struct objfile *objfile;
   char *expanded_name;
@@ -943,7 +936,6 @@ objfile_relocate (struct objfile *objfile,
        debug_objfile = objfile_separate_debug_iterate (objfile, debug_objfile))
     {
       struct section_addr_info *objfile_addrs;
-      struct section_offsets *new_debug_offsets;
       struct cleanup *my_cleanups;
 
       objfile_addrs = build_section_addr_info_from_objfile (objfile);
@@ -956,15 +948,13 @@ objfile_relocate (struct objfile *objfile,
 
       gdb_assert (debug_objfile->num_sections
 		  == gdb_bfd_count_sections (debug_objfile->obfd));
-      new_debug_offsets = 
-	((struct section_offsets *)
-	 xmalloc (SIZEOF_N_SECTION_OFFSETS (debug_objfile->num_sections)));
-      make_cleanup (xfree, new_debug_offsets);
-      relative_addr_info_to_section_offsets (new_debug_offsets,
+      std::vector<struct section_offsets>
+	new_debug_offsets (SIZEOF_N_SECTION_OFFSETS (debug_objfile->num_sections));
+      relative_addr_info_to_section_offsets (new_debug_offsets.data (),
 					     debug_objfile->num_sections,
 					     objfile_addrs);
 
-      changed |= objfile_relocate1 (debug_objfile, new_debug_offsets);
+      changed |= objfile_relocate1 (debug_objfile, new_debug_offsets.data ());
 
       do_cleanups (my_cleanups);
     }
@@ -1487,7 +1477,7 @@ find_pc_section (CORE_ADDR pc)
 /* Return non-zero if PC is in a section called NAME.  */
 
 int
-pc_in_section (CORE_ADDR pc, char *name)
+pc_in_section (CORE_ADDR pc, const char *name)
 {
   struct obj_section *s;
   int retval = 0;

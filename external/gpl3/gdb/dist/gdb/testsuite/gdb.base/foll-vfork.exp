@@ -1,4 +1,4 @@
-#   Copyright 1997-2017 Free Software Foundation, Inc.
+#   Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,10 +55,6 @@ proc setup_gdb {} {
 
     clean_restart $testfile
 
-    # The "Detaching..." and "Attaching..." messages may be hidden by
-    # default.
-    gdb_test_no_output "set verbose"
-
     if ![runto_main] {
 	return -code return
     }
@@ -103,7 +99,7 @@ proc vfork_parent_follow_through_step {} {
 
    set test "step"
    gdb_test_multiple "next" $test {
-       -re "Detaching after vfork from.*if \\(pid == 0\\).*$gdb_prompt " {
+       -re "\\\[Detaching after vfork from.*if \\(pid == 0\\).*$gdb_prompt " {
 	   pass $test
        }
    }
@@ -128,7 +124,7 @@ proc vfork_parent_follow_to_bp {} {
 
    set test "continue to bp"
    gdb_test_multiple "continue" $test {
-       -re ".*Detaching after vfork from child process.*Breakpoint.*${bp_location}.*$gdb_prompt " {
+       -re ".*\\\[Detaching after vfork from child process.*Breakpoint.*${bp_location}.*$gdb_prompt " {
 	   pass $test
        }
    }
@@ -153,7 +149,7 @@ proc vfork_child_follow_to_exit {} {
 	  # PR gdb/14766
 	  fail "$test"
       }
-      -re "Attaching after.* vfork to.*Detaching vfork parent .* after child exit.*$gdb_prompt " {
+       -re "\\\[Attaching after.* vfork to.*\\\[Detaching vfork parent .* after child exit.*$gdb_prompt " {
 	  pass $test
       }
    }
@@ -177,7 +173,7 @@ proc vfork_and_exec_child_follow_to_main_bp {} {
 
    set test "continue to bp"
    gdb_test_multiple "continue" $test {
-      -re "Attaching after.* vfork to.*Detaching vfork parent.*xecuting new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
+      -re "\\\[Attaching after.* vfork to.*\\\[Detaching vfork parent.*xecuting new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
 	  pass $test
       }
    }
@@ -203,7 +199,7 @@ proc vfork_and_exec_child_follow_through_step {} {
    # before it execs.  Thus, "next" lands on the next line after
    # the vfork.
    gdb_test_multiple "next" $test {
-       -re "Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
+       -re "\\\[Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
 	   pass "$test"
        }
    }
@@ -341,7 +337,7 @@ proc vfork_relations_in_info_inferiors { variant } {
 
    set test "step over vfork"
    gdb_test_multiple "next" $test {
-       -re "Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
+       -re "\\\[Attaching after .* vfork to child.*if \\(pid == 0\\).*$gdb_prompt " {
 	   pass "$test"
        }
    }

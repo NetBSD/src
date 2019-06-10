@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.19 2017/01/14 01:01:48 christos Exp $ */
+/*	$NetBSD: sockstat.c,v 1.19.14.1 2019/06/10 22:10:24 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.19 2017/01/14 01:01:48 christos Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.19.14.1 2019/06/10 22:10:24 christos Exp $");
 #endif
 
 #define _KMEMUSER
@@ -251,6 +251,7 @@ parse_ports(const char *l)
 		switch (*e) {
 		case ',':
 			e++;
+			/* FALLTHROUGH */
 		case '\0':
 			bit_set(portmap, i);
 			s = e;

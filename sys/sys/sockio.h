@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.33 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: sockio.h,v 1.33.18.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -44,6 +44,9 @@
 #define	SIOCATMARK	 _IOR('s',  7, int)		/* at oob mark? */
 #define	SIOCSPGRP	 _IOW('s',  8, int)		/* set process group */
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
+#define SIOCPEELOFF	_IOWR('s', 10, int)
+/* ('s', 11, ...) is SIOCCONNECTX in sctp_uio.h */
+/* ('s', 12, ...) is SIOCCONNECTXDEL in sctp_uio.h */
 
 #define	SIOCADDRT	 _IOW('r', 10, struct ortentry)	/* add route */
 #define	SIOCDELRT	 _IOW('r', 11, struct ortentry)	/* delete route */
@@ -87,8 +90,8 @@
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
 #define	SIOCGETSGCNT	_IOWR('u', 52, struct sioc_sg_req) /* sg pkt cnt */
 
-#define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
-#define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
+#define	SIOCSIFMEDIA	_IOWR('i', 55, struct ifreq)	/* set net media */
+#define	SIOCGIFMEDIA	_IOWR('i', 56, struct ifmediareq) /* get net media */
 
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
@@ -138,6 +141,11 @@
 
 #define	SIOCGETHERCAP	_IOWR('i', 139, struct eccapreq) /* get ethercap */
 #define SIOCGIFINDEX  _IOWR('i', 140, struct ifreq)   /* get ifnet index */
+#define	SIOCSETHERCAP    _IOW('i', 141, struct eccapreq) /* set ethercap */
+
+#define SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
+#define SIOCSUMBPARAM	_IOW('i', 191, struct ifreq)	/* set MBIM param */
+#define SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
 
 #define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
 #define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)

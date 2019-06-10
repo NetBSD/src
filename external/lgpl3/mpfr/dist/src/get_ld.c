@@ -1,7 +1,7 @@
 /* mpfr_get_ld, mpfr_get_ld_2exp -- convert a multiple precision floating-point
                                     number to a machine long double
 
-Copyright 2002-2016 Free Software Foundation, Inc.
+Copyright 2002-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,94 +21,28 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <float.h>
+#include <float.h> /* needed so that MPFR_LDBL_MANT_DIG is correctly defined */
 
 #include "mpfr-impl.h"
 
-#ifndef HAVE_LDOUBLE_IEEE_EXT_LITTLE
+#if defined(HAVE_LDOUBLE_IS_DOUBLE)
 
+/* special code when "long double" is the same format as "double" */
 long double
 mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
-
-  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
-    return (long double) mpfr_get_d (x, rnd_mode);
-  else /* now x is a normal non-zero number */
-    {
-      long double r; /* result */
-      long double m;
-      double s; /* part of result */
-      mpfr_exp_t sh; /* exponent shift, so that x/2^sh is in the double range */
-      mpfr_t y, z;
-      int sign;
-
-      /* first round x to the target long double precision, so that
-         all subsequent operations are exact (this avoids double rounding
-         problems) */
-      mpfr_init2 (y, MPFR_LDBL_MANT_DIG);
-      mpfr_init2 (z, MPFR_LDBL_MANT_DIG);
-      /* Note about the precision of z: even though IEEE_DBL_MANT_DIG is
-         sufficient, z has been set to the same precision as y so that
-         the mpfr_sub below calls mpfr_sub1sp, which is faster than the
-         generic subtraction, even in this particular case (from tests
-         done by Patrick Pelissier on a 64-bit Core2 Duo against r7285).
-         But here there is an important cancellation in the subtraction.
-         TODO: get more information about what has been tested. */
-
-      mpfr_set (y, x, rnd_mode);
-      sh = MPFR_GET_EXP (y);
-      sign = MPFR_SIGN (y);
-      MPFR_SET_EXP (y, 0);
-      MPFR_SET_POS (y);
-
-      r = 0.0;
-      do {
-        s = mpfr_get_d (y, MPFR_RNDN); /* high part of y */
-        r += (long double) s;
-        mpfr_set_d (z, s, MPFR_RNDN);  /* exact */
-        mpfr_sub (y, y, z, MPFR_RNDN); /* exact */
-      } while (!MPFR_IS_ZERO (y));
-
-      mpfr_clear (z);
-      mpfr_clear (y);
-
-      /* we now have to multiply back by 2^sh */
-      MPFR_ASSERTD (r > 0);
-      if (sh != 0)
-        {
-          /* An overflow may occurs (example: 0.5*2^1024) */
-          while (r < 1.0)
-            {
-              r += r;
-              sh--;
-            }
-
-          if (sh > 0)
-            m = 2.0;
-          else
-            {
-              m = 0.5;
-              sh = -sh;
-            }
-
-          for (;;)
-            {
-              if (sh % 2)
-                r = r * m;
-              sh >>= 1;
-              if (sh == 0)
-                break;
-              m = m * m;
-            }
-        }
-      if (sign < 0)
-        r = -r;
-      return r;
-    }
+  return (long double) mpfr_get_d (x, rnd_mode);
 }
 
-#else
+#elif defined(HAVE_LDOUBLE_IEEE_EXT_LITTLE)
 
+/* Note: The code will return a result with a 64-bit precision, even
+   if the rounding precision is only 53 bits like on FreeBSD and
+   NetBSD 6- (or with GCC's -mpc64 option to simulate this on other
+   platforms). This is consistent with how strtold behaves in these
+   cases, for instance. */
+
+/* special code for IEEE 754 little-endian extended format */
 long double
 mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
@@ -122,7 +56,7 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   mpfr_init2 (tmp, MPFR_LDBL_MANT_DIG);
   inex = mpfr_set (tmp, x, rnd_mode);
 
-  mpfr_set_emin (-16381-63); /* emin=-16444 */
+  mpfr_set_emin (-16381-63); /* emin=-16444, see below */
   mpfr_set_emax (16384);
   mpfr_subnormalize (tmp, mpfr_check_range (tmp, inex, rnd_mode), rnd_mode);
   mpfr_prec_round (tmp, 64, MPFR_RNDZ); /* exact */
@@ -135,10 +69,12 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
       tmpmant = MPFR_MANT (tmp);
       e = MPFR_GET_EXP (tmp);
-      /* the smallest normal number is 2^(-16382), which is 0.5*2^(-16381)
-         in MPFR, thus any exponent <= -16382 corresponds to a subnormal
-         number */
+      /* The smallest positive normal number is 2^(-16382), which is
+         0.5*2^(-16381) in MPFR, thus any exponent <= -16382 corresponds to a
+         subnormal number. The smallest positive subnormal number is 2^(-16445)
+         which is 0.5*2^(-16444) in MPFR thus 0 <= denorm <= 63. */
       denorm = MPFR_UNLIKELY (e <= -16382) ? - e - 16382 + 1 : 0;
+      MPFR_ASSERTD (0 <= denorm && denorm < 64);
 #if GMP_NUMB_BITS >= 64
       ld.s.manl = (tmpmant[0] >> denorm);
       ld.s.manh = (tmpmant[0] >> denorm) >> 32;
@@ -153,7 +89,7 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           ld.s.manl = (tmpmant[0] >> denorm) | (tmpmant[1] << (32 - denorm));
           ld.s.manh = tmpmant[1] >> denorm;
         }
-      else /* 32 <= denorm <= 64 */
+      else /* 32 <= denorm < 64 */
         {
           ld.s.manl = tmpmant[1] >> (denorm - 32);
           ld.s.manh = 0;
@@ -177,6 +113,128 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   return ld.ld;
 }
 
+#else
+
+/* generic code */
+long double
+mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
+{
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+    return (long double) mpfr_get_d (x, rnd_mode);
+  else /* now x is a normal non-zero number */
+    {
+      long double r; /* result */
+      double s; /* part of result */
+      MPFR_SAVE_EXPO_DECL (expo);
+
+      MPFR_SAVE_EXPO_MARK (expo);
+
+#if defined(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE)
+      if (MPFR_LDBL_MANT_DIG == 106)
+        {
+          /* Assume double-double format (as found with the PowerPC ABI).
+             The generic code below isn't used because numbers with
+             precision > 106 would not be supported. */
+          s = mpfr_get_d (x, MPFR_RNDN); /* high part of x */
+          /* Let's first consider special cases separately. The test for
+             infinity is really needed to avoid a NaN result. The test
+             for NaN is mainly for optimization. The test for 0 is useful
+             to get the correct sign (assuming mpfr_get_d supports signed
+             zeros on the implementation). */
+          if (s == 0 || DOUBLE_ISNAN (s) || DOUBLE_ISINF (s))
+            r = (long double) s;
+          else
+            {
+              mpfr_t y, z;
+
+              mpfr_init2 (y, mpfr_get_prec (x));
+              mpfr_init2 (z, IEEE_DBL_MANT_DIG); /* keep the precision small */
+              mpfr_set_d (z, s, MPFR_RNDN);  /* exact */
+              mpfr_sub (y, x, z, MPFR_RNDN); /* exact */
+              /* Add the second part of y (in the correct rounding mode). */
+              r = (long double) s + (long double) mpfr_get_d (y, rnd_mode);
+              mpfr_clear (z);
+              mpfr_clear (y);
+            }
+        }
+      else
+#endif
+        {
+          long double m;
+          mpfr_exp_t sh; /* exponent shift -> x/2^sh is in the double range */
+          mpfr_t y, z;
+          int sign;
+
+          /* First round x to the target long double precision, so that
+             all subsequent operations are exact (this avoids double rounding
+             problems). However if the format contains numbers that have more
+             precision, MPFR won't be able to generate such numbers. */
+          mpfr_init2 (y, MPFR_LDBL_MANT_DIG);
+          mpfr_init2 (z, MPFR_LDBL_MANT_DIG);
+          /* Note about the precision of z: even though IEEE_DBL_MANT_DIG is
+             sufficient, z has been set to the same precision as y so that
+             the mpfr_sub below calls mpfr_sub1sp, which is faster than the
+             generic subtraction, even in this particular case (from tests
+             done by Patrick Pelissier on a 64-bit Core2 Duo against r7285).
+             But here there is an important cancellation in the subtraction.
+             TODO: get more information about what has been tested. */
+
+          mpfr_set (y, x, rnd_mode);
+          sh = MPFR_GET_EXP (y);
+          sign = MPFR_SIGN (y);
+          MPFR_SET_EXP (y, 0);
+          MPFR_SET_POS (y);
+
+          r = 0.0;
+          do
+            {
+              s = mpfr_get_d (y, MPFR_RNDN); /* high part of y */
+              r += (long double) s;
+              mpfr_set_d (z, s, MPFR_RNDN);  /* exact */
+              mpfr_sub (y, y, z, MPFR_RNDN); /* exact */
+            }
+          while (!MPFR_IS_ZERO (y));
+
+          mpfr_clear (z);
+          mpfr_clear (y);
+
+          /* we now have to multiply back by 2^sh */
+          MPFR_ASSERTD (r > 0);
+          if (sh != 0)
+            {
+              /* An overflow may occur (example: 0.5*2^1024) */
+              while (r < 1.0)
+                {
+                  r += r;
+                  sh--;
+                }
+
+              if (sh > 0)
+                m = 2.0;
+              else
+                {
+                  m = 0.5;
+                  sh = -sh;
+                }
+
+              for (;;)
+                {
+                  if (sh % 2)
+                    r = r * m;
+                  sh >>= 1;
+                  if (sh == 0)
+                    break;
+                  m = m * m;
+                }
+            }
+          if (sign < 0)
+            r = -r;
+        }
+      MPFR_SAVE_EXPO_FREE (expo);
+      return r;
+    }
+}
+
 #endif
 
 /* contributed by Damien Stehle */
@@ -190,8 +248,7 @@ mpfr_get_ld_2exp (long *expptr, mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
     return (long double) mpfr_get_d_2exp (expptr, src, rnd_mode);
 
-  tmp[0] = *src;        /* Hack copy mpfr_t */
-  MPFR_SET_EXP (tmp, 0);
+  MPFR_ALIAS (tmp, src, MPFR_SIGN (src), 0);
   ret = mpfr_get_ld (tmp, rnd_mode);
 
   if (MPFR_IS_PURE_FP(src))

@@ -1,0 +1,26 @@
+2017-02-20  Nick Clifton  <nickc@redhat.com>
+
+	Sync with FSF GCC sources, bringing in version 1.2.11.
+
+2017-01-23  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac: Restore old behaviour of only enabling multilibs
+	when a target subdirectory is defined.  This allows building with
+	srcdir == builddir.
+	* configure: Regenerate.
+
+Copyright (C) 2017 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+change-log-default-name: "ChangeLog.bin-gdb"
+End:
+
+

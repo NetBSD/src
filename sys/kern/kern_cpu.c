@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.73 2018/03/18 00:51:46 christos Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.73.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.73 2018/03/18 00:51:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.73.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -309,7 +309,11 @@ cpu_lookup(u_int idx)
 {
 	struct cpu_info *ci;
 
-	KASSERT(idx < maxcpus);
+	/*
+	 * cpu_infos is a NULL terminated array of MAXCPUS + 1 entries,
+	 * so an index of MAXCPUS here is ok.  See mi_cpu_attach.
+	 */
+	KASSERT(idx <= maxcpus);
 
 	if (__predict_false(cpu_infos == NULL)) {
 		KASSERT(idx == 0);
@@ -318,6 +322,7 @@ cpu_lookup(u_int idx)
 
 	ci = cpu_infos[idx];
 	KASSERT(ci == NULL || cpu_index(ci) == idx);
+	KASSERTMSG(idx < maxcpus || ci == NULL, "idx %d ci %p", idx, ci);
 
 	return ci;
 }
@@ -602,6 +607,11 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 	}
 
 	sc->sc_blobsize = firmware_get_size(fwh);
+	if (sc->sc_blobsize == 0) {
+		error = EFTYPE;
+		firmware_close(fwh);
+		goto err0;
+	}
 	sc->sc_blob = firmware_malloc(sc->sc_blobsize);
 	if (sc->sc_blob == NULL) {
 		error = ENOMEM;

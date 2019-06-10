@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.30 2016/12/08 11:31:09 nat Exp $
+#	$NetBSD: majors.alpha,v 1.30.16.1 2019/06/10 22:05:45 christos Exp $
 #
 # Device majors for alpha
 #
@@ -19,6 +19,7 @@ device-major	st		char 12  block 2	st
 device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
 device-major	zstty		char 15			zstty
+#device-major	obsolete	char 16			obsolete (lkm)
 
 device-major	prom		char 23
 device-major	audio		char 24			audio
@@ -35,9 +36,10 @@ device-major	fd		char 34  block 0	fdc
 device-major	ipl		char 35			ipfilter
 device-major	wd		char 36  block 4	wd
 device-major	se		char 37			se
-device-major	satlink		char 38			satlink
+#device-major	obsolete	char 38			obsolete (satlink)
 device-major	rnd		char 39			rnd
-#device-major	obsolete	char 40			obsolete
+#device-major	obsolete	char 40			obsolete (a12dc)
+#device-major	obsolete	char 41			obsolete (spkr)
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh
@@ -47,11 +49,11 @@ device-major	ulpt		char 47			ulpt
 device-major	ugen		char 48			ugen
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
-device-major	isdn		char 51			isdn
-device-major	isdnctl		char 52			isdnctl
-device-major	isdnbchan	char 53			isdnbchan
-device-major	isdntrc		char 54			isdntrc
-device-major	isdntel		char 55			isdntel
+#device-major	obsolete	char 51			obsolete (isdn)
+#device-major	obsolete	char 52			obsolete (isdnctl)
+#device-major	obsolete	char 53			obsolete (isdnbchan)
+#device-major	obsolete	char 54			obsolete (isdntrc)
+#device-major	obsolete	char 55			obsolete (isdntel)
 device-major	wsmux		char 56			wsmux
 device-major	ucom		char 57			ucom
 device-major	ses		char 58			ses
@@ -66,6 +68,7 @@ device-major	pci		char 66			pci
 device-major	agp		char 67			agp
 device-major	stic		char 68			stic
 device-major	clockctl	char 69			clockctl
+#device-major	obsolete	char 70			obsolete (systrace)
 device-major	bktr		char 71			bktr
 device-major	kttcp		char 72			kttcp
 device-major	cgd		char 73  block 18	cgd

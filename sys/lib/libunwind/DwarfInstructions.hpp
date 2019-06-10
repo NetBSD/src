@@ -153,7 +153,6 @@ step_result DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
   // The CFA is defined as the stack pointer at the call site.
   // Therefore the SP is restored by setting it to the CFA.
   newRegisters.setSP(cfa);
-  newRegisters.setIP(returnAddress + R::RETURN_OFFSET);
   returnAddress += R::RETURN_OFFSET;
   returnAddress &= ~R::RETURN_MASK;
   newRegisters.setIP(returnAddress);

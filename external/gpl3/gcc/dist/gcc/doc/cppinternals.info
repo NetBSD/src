@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -167,7 +167,7 @@ unterminated macro argument list.
 
    The C standard also specifies that a new line in the middle of the
 arguments to a macro is treated as whitespace.  This white space is
-important in case the macro argument is stringified.  The state variable
+important in case the macro argument is stringized.  The state variable
 `parsing_args' is nonzero when the preprocessor is collecting the
 arguments to a macro call.  It is set to 1 when looking for the opening
 parenthesis to a function-like macro, and 2 when collecting the actual
@@ -330,11 +330,11 @@ expanded by chaining a new token run on to the end of the existing one.
 pointers to the tokens of its expansion that are returned will always
 remain valid.  However, macros are a little trickier than that, since
 they give rise to three sources of fresh tokens.  They are the built-in
-macros like `__LINE__', and the `#' and `##' operators for
-stringification and token pasting.  I handled this by allocating space
-for these tokens from the lexer's token run chain.  This means they
-automatically receive the same lifetime guarantees as lexed tokens, and
-we don't need to concern ourselves with freeing them.
+macros like `__LINE__', and the `#' and `##' operators for stringizing
+and token pasting.  I handled this by allocating space for these tokens
+from the lexer's token run chain.  This means they automatically
+receive the same lifetime guarantees as lexed tokens, and we don't need
+to concern ourselves with freeing them.
 
    Lexing into a line of tokens solves some of the token memory
 management issues, but not all.  The opening parenthesis after a
@@ -434,7 +434,7 @@ the preprocessor's expansion algorithm wrong in quite subtle ways.
    I strongly recommend you have a good grasp of how the C and C++
 standards require macros to be expanded before diving into this
 section, let alone the code!.  If you don't have a clear mental picture
-of how things like nested macro expansion, stringification and token
+of how things like nested macro expansion, stringizing and token
 pasting are supposed to work, damage to your sanity can quickly result.
 
 Internal representation of macros
@@ -694,7 +694,7 @@ then have it take its spacing from the first of these, which carries
 source token `foo' with no leading space.
 
    It is vital that cpplib get spacing correct in these examples since
-any of these macro expansions could be stringified, where spacing
+any of these macro expansions could be stringized, where spacing
 matters.
 
    So, this demonstrates that not just entering macro and argument
@@ -1022,14 +1022,14 @@ Tag Table:
 Node: Top969
 Node: Conventions2654
 Node: Lexer3596
-Ref: Invalid identifiers11509
-Ref: Lexing a line13458
-Node: Hash Nodes18231
-Node: Macro Expansion21110
-Node: Token Spacing30057
-Node: Line Numbering35917
-Node: Guard Macros40002
-Node: Files44793
-Node: Concept Index48259
+Ref: Invalid identifiers11508
+Ref: Lexing a line13457
+Node: Hash Nodes18226
+Node: Macro Expansion21105
+Node: Token Spacing30048
+Node: Line Numbering35907
+Node: Guard Macros39992
+Node: Files44783
+Node: Concept Index48249
 
 End Tag Table

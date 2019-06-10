@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.35 2012/01/25 00:28:35 christos Exp $
+.\"	$NetBSD: getsockopt.2,v 1.35.40.1 2019/06/10 22:05:21 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,13 @@
 .\"
 .\"     @(#)getsockopt.2	8.4 (Berkeley) 5/2/95
 .\"
-.Dd January 23, 2012
+.Dd May 8, 2019
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
 .Nm getsockopt ,
-.Nm setsockopt
+.Nm setsockopt ,
+.Nm getsockopt2
 .Nd get and set options on sockets
 .Sh LIBRARY
 .Lb libc
@@ -44,10 +45,13 @@
 .Fn getsockopt "int s" "int level" "int optname" "void * restrict optval" "socklen_t * restrict optlen"
 .Ft int
 .Fn setsockopt "int s" "int level" "int optname" "const void *optval" "socklen_t optlen"
+.Ft int
+.Fn getsockopt2 "int s" "int level" "int optname" "void * restrict optval" "socklen_t * restrict optlen"
 .Sh DESCRIPTION
-.Fn getsockopt
-and
+.Fn getsockopt ,
 .Fn setsockopt
+and
+.Fn getsockopt2
 manipulate the
 .Em options
 associated with a socket.
@@ -82,16 +86,33 @@ are used to access option values for
 .Fn setsockopt .
 For
 .Fn getsockopt
+and
+.Fn getsockopt2
 they identify a buffer in which the value for the
 requested option(s) are to be returned.
 For
-.Fn getsockopt ,
+.Fn getsockopt2
+they are also used to provide an extra argument to select which
+value to return.
+For
+.Fn getsockopt
+and
+.Fn getsockopt2 ,
 .Fa optlen
 is a value-result parameter, initially containing the
 size of the buffer pointed to by
 .Fa optval ,
 and modified on return to indicate the actual size of
 the value returned.
+If the size of the requested option value to be stored in
+.Fa optval
+is greater than the size indicated in
+.Fa optlen
+then only
+.Fa optlen
+bytes will be stored in
+.Fa optval
+and the result will be silently truncated.
 If no option value is to be supplied or returned,
 .Fa optval
 may be
@@ -108,7 +129,6 @@ Options at other protocol levels vary in format and
 name; consult the appropriate entries in
 section
 4 of the manual, including:
-.Xr clnp 4 ,
 .Xr faith 4 ,
 .Xr icmp6 4 ,
 .Xr ip 4 ,
@@ -118,7 +138,6 @@ section
 .Xr pim 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
-.Xr tp 4 ,
 and
 .Xr unix 4 .
 .Pp
@@ -148,6 +167,8 @@ parameter, defined in
 The following options are recognized at the socket level.
 Except as noted, each may be examined with
 .Fn getsockopt
+or
+.Fn getsockopt2
 and set with
 .Fn setsockopt .
 .Bl -column SO_ACCEPTFILTER data -offset indent
@@ -167,6 +188,7 @@ and set with
 .It Dv SO_RCVTIMEO Ta "set timeout value for input"
 .It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
 .It Dv SO_ACCEPTFILTER Ta "set accept filter on listening socket"
+.It Dv SO_RERROR Ta "enables receive size error reporting"
 .It Dv SO_NOSIGPIPE Ta
 controls generation of
 .Dv SIGPIPE
@@ -201,6 +223,19 @@ indicates that outgoing messages should
 bypass the standard routing facilities.
 Instead, messages are directed to the appropriate network interface
 according to the network portion of the destination address.
+.Dv SO_RERROR
+indicates that receive buffer overflows should be handled as errors.
+Historically receive buffer overflows have been ignored and programs
+could not tell if they missed messages or messages had been truncated
+because of overflows.
+Since programs historically do not expect to get receive overflow errors,
+this behavior is not the default, but the default can be changed by
+setting the
+.Dv SO_RERROR
+flag using
+.Xr sysctl 8
+and
+.Dv kern.sooptions .
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages
@@ -379,7 +414,9 @@ Finally,
 and
 .Dv SO_ERROR
 are options used only with
-.Fn getsockopt .
+.Fn getsockopt
+or
+.Fn getsockopt2 .
 .Dv SO_TYPE
 returns the type of the socket, such as
 .Dv SOCK_STREAM ;
@@ -425,7 +462,6 @@ is a file, not a socket.
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
-.Xr clnp 4 ,
 .Xr faith 4 ,
 .Xr icmp6 4 ,
 .Xr ip 4 ,
@@ -435,7 +471,6 @@ is a file, not a socket.
 .Xr pim 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
-.Xr tp 4 ,
 .Xr unix 4 ,
 .Xr protocols 5 ,
 .Xr accept_filter 9
@@ -444,5 +479,10 @@ The
 .Fn getsockopt
 system call appeared in
 .Bx 4.2 .
+.Pp
+The
+.Fn getsockopt2
+system call appeared in
+.Nx 9.0 .
 .Sh BUGS
 Several of the socket options should be handled at lower levels of the system.

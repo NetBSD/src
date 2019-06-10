@@ -1,6 +1,6 @@
-/*	$NetBSD: imx6ull-pinfunc-snvs.h,v 1.1.1.1 2018/04/28 18:25:52 jmcneill Exp $	*/
+/*	$NetBSD: imx6ull-pinfunc-snvs.h,v 1.1.1.1.4.1 2019/06/10 22:08:42 christos Exp $	*/
 
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright (C) 2017 NXP

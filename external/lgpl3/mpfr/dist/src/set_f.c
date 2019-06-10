@@ -1,6 +1,6 @@
 /* mpfr_set_f -- set a MPFR number from a GNU MPF number
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,17 +21,20 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H
+#define MPFR_NEED_MPF_INTERNALS
 #include "mpfr-impl.h"
 
+#ifndef MPFR_USE_MINI_GMP
 int
 mpfr_set_f (mpfr_ptr y, mpf_srcptr x, mpfr_rnd_t rnd_mode)
 {
   mp_limb_t *my, *mx, *tmp;
-  unsigned long cnt, sx, sy;
+  int cnt;
+  mp_size_t sx, sy;
   int inexact, carry = 0;
   MPFR_TMP_DECL(marker);
 
-  sx = ABS(SIZ(x)); /* number of limbs of the mantissa of x */
+  sx = ABSIZ(x); /* number of limbs of the mantissa of x */
 
   if (sx == 0) /* x is zero */
     {
@@ -51,7 +54,7 @@ mpfr_set_f (mpfr_ptr y, mpf_srcptr x, mpfr_rnd_t rnd_mode)
 
   if (sy <= sx) /* we may have to round even when sy = sx */
     {
-      unsigned long xprec = sx * GMP_NUMB_BITS;
+      mpfr_prec_t xprec = (mpfr_prec_t) sx * GMP_NUMB_BITS;
 
       MPFR_TMP_MARK(marker);
       tmp = MPFR_TMP_LIMBS_ALLOC (sx);
@@ -92,8 +95,9 @@ mpfr_set_f (mpfr_ptr y, mpf_srcptr x, mpfr_rnd_t rnd_mode)
   else
     {
       /* Do not use MPFR_SET_EXP as the exponent may be out of range. */
-      MPFR_EXP (y) = EXP (x) * GMP_NUMB_BITS - (mpfr_exp_t) cnt + carry;
+      MPFR_EXP (y) = EXP (x) * GMP_NUMB_BITS - cnt + carry;
     }
 
   return mpfr_check_range (y, inexact, rnd_mode);
 }
+#endif

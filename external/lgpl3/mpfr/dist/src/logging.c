@@ -1,6 +1,6 @@
 /* MPFR Logging functions.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,14 +26,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #ifdef MPFR_USE_LOGGING
 
-/* Can't include them before (in particular, printf.h) */
-#include <stdlib.h>
-#include <stdarg.h>
+/* The <time.h> header might not be available everywhere (it is standard,
+   but not even required by freestanding C implementations); thus it isn't
+   included unconditionally. */
 #include <time.h>
 
 /* Define LOGGING variables */
 
 FILE *mpfr_log_file;
+int   mpfr_log_flush;
 int   mpfr_log_type;
 int   mpfr_log_level;
 int   mpfr_log_current;
@@ -78,6 +79,8 @@ mpfr_log_begin (void)
     mpfr_log_type = MPFR_LOG_INPUT_F|MPFR_LOG_OUTPUT_F|MPFR_LOG_TIME_F
       |MPFR_LOG_INTERNAL_F|MPFR_LOG_MSG_F|MPFR_LOG_BADCASE_F|MPFR_LOG_STAT_F;
 
+  mpfr_log_flush = getenv ("MPFR_LOG_FLUSH") != NULL;
+
   /* Open filename if needed */
   var = getenv ("MPFR_LOG_FILE");
   if (var == NULL || *var == 0)
@@ -92,6 +95,7 @@ mpfr_log_begin (void)
         }
       time (&tt);
       fprintf (mpfr_log_file, "MPFR LOG FILE %s\n", ctime (&tt));
+      fflush (mpfr_log_file);  /* always done */
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.14 2018/06/26 06:47:57 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.14.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14.2.1 2019/06/10 22:05:54 christos Exp $");
 
 #include "vlan.h"
 
@@ -137,7 +137,7 @@ static void enet_tick(void *);
 static int enet_tx_intr(void *);
 static int enet_rx_intr(void *);
 static void enet_rx_csum(struct enet_softc *, struct ifnet *, struct mbuf *,
-                         int);
+			 int);
 
 static void enet_start(struct ifnet *);
 static int enet_ifflags_cb(struct ethercom *);
@@ -147,8 +147,8 @@ static void enet_stop(struct ifnet *, int);
 static void enet_watchdog(struct ifnet *);
 static void enet_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int enet_miibus_readreg(device_t, int, int);
-static void enet_miibus_writereg(device_t, int, int, int);
+static int enet_miibus_readreg(device_t, int, int, uint16_t *);
+static int enet_miibus_writereg(device_t, int, int, uint16_t);
 static void enet_miibus_statchg(struct ifnet *);
 
 static void enet_gethwaddr(struct enet_softc *, uint8_t *);
@@ -165,7 +165,7 @@ static int enet_alloc_rxbuf(struct enet_softc *, int);
 static void enet_drain_txbuf(struct enet_softc *);
 static void enet_drain_rxbuf(struct enet_softc *);
 static int enet_alloc_dma(struct enet_softc *, size_t, void **,
-                          bus_dmamap_t *);
+			  bus_dmamap_t *);
 
 CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
     enet_match, enet_attach, NULL, NULL);
@@ -174,10 +174,10 @@ void
 enet_attach_common(device_t self, bus_space_tag_t iot,
     bus_dma_tag_t dmat, bus_addr_t addr, bus_size_t size, int irq)
 {
-	struct enet_softc *sc;
+	struct enet_softc *sc = device_private(self);
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_mii;
 
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_iot = iot;
 	sc->sc_addr = addr;
@@ -279,27 +279,24 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx |
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(ENET_TX_RING_CNT, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(ENET_TX_RING_CNT, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* setup MII */
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = enet_miibus_readreg;
-	sc->sc_mii.mii_writereg = enet_miibus_writereg;
-	sc->sc_mii.mii_statchg = enet_miibus_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    enet_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = enet_miibus_readreg;
+	mii->mii_writereg = enet_miibus_writereg;
+	mii->mii_statchg = enet_miibus_statchg;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, enet_mediastatus);
 
 	/* try to attach PHY */
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
-		    0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	if_attach(ifp);
@@ -460,9 +457,9 @@ enet_intr(void *arg)
 	status = ENET_REG_READ(sc, ENET_EIR);
 
 	if (sc->sc_imxtype == 7) {
-		if (status & (ENET_EIR_TXF|ENET_EIR_TXF1|ENET_EIR_TXF2))
+		if (status & (ENET_EIR_TXF | ENET_EIR_TXF1 | ENET_EIR_TXF2))
 			enet_tx_intr(arg);
-		if (status & (ENET_EIR_RXF|ENET_EIR_RXF1|ENET_EIR_RXF2))
+		if (status & (ENET_EIR_RXF | ENET_EIR_RXF1 | ENET_EIR_RXF2))
 			enet_rx_intr(arg);
 	} else {
 		if (status & ENET_EIR_TXF)
@@ -761,17 +758,16 @@ enet_rx_csum(struct enet_softc *sc, struct ifnet *ifp, struct mbuf *m, int idx)
 static void
 enet_setmulti(struct enet_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int promisc;
 	uint32_t crc;
 	uint32_t gaddr[2];
 
-	ifp = &sc->sc_ethercom.ec_if;
-
 	promisc = 0;
-	if ((ifp->if_flags & IFF_PROMISC) || sc->sc_ethercom.ec_multicnt > 0) {
+	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			promisc = 1;
@@ -779,12 +775,14 @@ enet_setmulti(struct enet_softc *sc)
 	} else {
 		gaddr[0] = gaddr[1] = 0;
 
-		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			gaddr[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[0]);
@@ -1041,7 +1039,6 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0)
@@ -1085,11 +1082,11 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
  * for MII
  */
 static int
-enet_miibus_readreg(device_t dev, int phy, int reg)
+enet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct enet_softc *sc;
 	int timeout;
-	uint32_t val, status;
+	uint32_t status;
 
 	sc = device_private(dev);
 
@@ -1110,16 +1107,15 @@ enet_miibus_readreg(device_t dev, int phy, int reg)
 	if (timeout <= 0) {
 		DEVICE_DPRINTF("MII read timeout: reg=0x%02x\n",
 		    reg);
-		val = -1;
-	} else {
-		val = ENET_REG_READ(sc, ENET_MMFR) & ENET_MMFR_DATAMASK;
-	}
+		return ETIMEDOUT;
+	} else
+		*val = ENET_REG_READ(sc, ENET_MMFR) & ENET_MMFR_DATAMASK;
 
-	return val;
+	return 0;
 }
 
-static void
-enet_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+enet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct enet_softc *sc;
 	int timeout;
@@ -1141,9 +1137,11 @@ enet_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 	if (timeout <= 0) {
-		DEVICE_DPRINTF("MII write timeout: reg=0x%02x\n",
-		    reg);
+		DEVICE_DPRINTF("MII write timeout: reg=0x%02x\n", reg);
+		return ETIMEDOUT;
 	}
+
+	return 0;
 }
 
 static void
@@ -1171,7 +1169,7 @@ enet_miibus_statchg(struct ifnet *ifp)
 		mii->mii_media_active &= ~IFM_ETH_FMASK;
 	}
 
-	if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
+	if ((ife->ifm_media & IFM_FDX) != 0) {
 		tcr |= ENET_TCR_FDEN;	/* full duplex */
 		rcr &= ~ENET_RCR_DRT;;	/* enable receive on transmit */
 	} else {
@@ -1505,7 +1503,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 					}
 					MCLAIM(x, m->m_owner);
 					if (m->m_flags & M_PKTHDR)
-						M_MOVE_PKTHDR(x, m);
+						m_move_pkthdr(x, m);
 					x->m_len = m->m_len;
 					x->m_data = ALIGN_PTR(x->m_data,
 					    ALIGNBYTE);
@@ -1630,7 +1628,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 				}
 				MCLAIM(x, m->m_owner);
 				if (m->m_flags & M_PKTHDR)
-					M_MOVE_PKTHDR(x, m);
+					m_move_pkthdr(x, m);
 				x->m_data = ALIGN_PTR(x->m_data, ALIGNBYTE);
 				memcpy(mtod(x, void *), mtod(m, void *),
 				    chiplen);
@@ -1786,7 +1784,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 		mii = &sc->sc_mii;
 		ife = mii->mii_media.ifm_cur;
 
-		if ((ife->ifm_media & IFM_GMASK) == IFM_FDX)
+		if ((ife->ifm_media & IFM_FDX) != 0)
 			fulldup = 1;
 		else
 			fulldup = 0;
@@ -1888,9 +1886,10 @@ enet_init_regs(struct enet_softc *sc, int init)
 	    sc->sc_rxdesc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* enable interrupts */
-	val = ENET_EIMR|ENET_EIR_TXF|ENET_EIR_RXF|ENET_EIR_EBERR;
+	val = ENET_EIMR | ENET_EIR_TXF | ENET_EIR_RXF | ENET_EIR_EBERR;
 	if (sc->sc_imxtype == 7)
-		val |= ENET_EIR_TXF2|ENET_EIR_RXF2|ENET_EIR_TXF1|ENET_EIR_RXF1;
+		val |= ENET_EIR_TXF2 | ENET_EIR_RXF2 | ENET_EIR_TXF1 |
+		    ENET_EIR_RXF1;
 	ENET_REG_WRITE(sc, ENET_EIMR, val);
 
 	/* enable ether */
@@ -1907,7 +1906,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 
 static int
 enet_alloc_dma(struct enet_softc *sc, size_t size, void **addrp,
-              bus_dmamap_t *mapp)
+    bus_dmamap_t *mapp)
 {
 	bus_dma_segment_t seglist[1];
 	int nsegs, error;

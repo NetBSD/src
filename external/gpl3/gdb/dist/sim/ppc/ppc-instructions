@@ -734,7 +734,7 @@ void::model-function::ppc_insn_to_spr:itable_index index, model_data *model_ptr,
 	busy_ptr->nr_writebacks = 1;
 	TRACE(trace_model,("Making register %s busy.\n", spr_name(nSPR)));
 
-# Schedule a MFCR instruction that moves the CR into an integer regsiter
+# Schedule a MFCR instruction that moves the CR into an integer register
 void::model-function::ppc_insn_mfcr:itable_index index, model_data *model_ptr, unsigned32 int_mask
 	const unsigned32 cr_mask = 0xff;
 	model_busy *busy_ptr;

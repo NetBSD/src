@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ gdb_test_no_output "set can-use-hw-watchpoints 1" ""
 
 # Run to `main' where we begin our tests.
 if ![runto_main] then {
-    fail "Failed to run to main"
+    fail "failed to run to main"
     return 0
 }
 
@@ -86,7 +86,7 @@ gdb_test_no_output "set breakpoint always-inserted off"
 # (through board settings) that it did not support them in the first place.
 # Just exit.
 if { $hwatch_count == 0} {
-  fail "No hardware watchpoints available"
+  fail "no hardware watchpoints available"
   return 0
 }
 
@@ -102,7 +102,7 @@ delete_breakpoints
 # Prepare to create all the threads.
 gdb_test "break thread_started" \
 	 "Breakpoint \[0-9\]+ at .*: file .*${srcfile}, line .*" \
-	 "Breakpoint on thread_started"
+	 "breakpoint on thread_started"
 
 # Move all threads to where they're supposed to be for testing.
 for { set i 0 } { $i < $NR_THREADS } { incr i } {

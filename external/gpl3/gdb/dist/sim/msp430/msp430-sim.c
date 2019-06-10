@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Based on sim/bfin/bfin-sim.c which was contributed by Analog Devices, Inc.
 
@@ -278,7 +278,7 @@ static int
 get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 {
   MSP430_Opcode_Operand *op = opc->op + n;
-  int rv;
+  int rv = 0;
   int addr;
   unsigned char buf[4];
   int incval = 0;
@@ -465,7 +465,7 @@ static int
 put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 {
   MSP430_Opcode_Operand *op = opc->op + n;
-  int rv;
+  int rv = 0;
   int addr;
   unsigned char buf[4];
   int incval = 0;
@@ -986,11 +986,26 @@ maybe_perform_syscall (SIM_DESC sd, int call_addr)
   if ((call_addr & ~0x3f) == 0x00180)
     {
       /* Syscall!  */
+      int arg1, arg2, arg3, arg4;
       int syscall_num = call_addr & 0x3f;
-      int arg1 = MSP430_CPU (sd)->state.regs[12];
-      int arg2 = MSP430_CPU (sd)->state.regs[13];
-      int arg3 = MSP430_CPU (sd)->state.regs[14];
-      int arg4 = MSP430_CPU (sd)->state.regs[15];
+
+      /* syscall_num == 2 is used for the variadic function "open".
+	 The arguments are set up differently for variadic functions.
+	 See slaa534.pdf distributed by TI.  */
+      if (syscall_num == 2)
+	{
+	  arg1 = MSP430_CPU (sd)->state.regs[12];
+	  arg2 = mem_get_val (sd, SP, 16);
+	  arg3 = mem_get_val (sd, SP + 2, 16);
+	  arg4 = mem_get_val (sd, SP + 4, 16);
+	}
+      else
+	{
+	  arg1 = MSP430_CPU (sd)->state.regs[12];
+	  arg2 = MSP430_CPU (sd)->state.regs[13];
+	  arg3 = MSP430_CPU (sd)->state.regs[14];
+	  arg4 = MSP430_CPU (sd)->state.regs[15];
+	}
 
       MSP430_CPU (sd)->state.regs[12] = sim_syscall (MSP430_CPU (sd),
 						     syscall_num, arg1, arg2,
@@ -1012,13 +1027,13 @@ msp430_step_once (SIM_DESC sd)
   MSP430_Opcode_Decoded opcode_buf;
   MSP430_Opcode_Decoded *opcode = &opcode_buf;
   int s1, s2, result;
-  int u1, u2, uresult;
-  int c, reg;
+  int u1 = 0, u2, uresult;
+  int c = 0, reg;
   int sp;
   int carry_to_use;
   int n_repeats;
   int rept;
-  int op_bytes, op_bits;
+  int op_bytes = 0, op_bits;
 
   PC &= 0xfffff;
   opcode_pc = PC;
@@ -1072,7 +1087,7 @@ msp430_step_once (SIM_DESC sd)
 
   if (TRACE_ANY_P (MSP430_CPU (sd)))
     trace_prefix (sd, MSP430_CPU (sd), NULL_CIA, opcode_pc,
-		  TRACE_LINENUM_P (MSP430_CPU (sd)), NULL, 0, "");
+		  TRACE_LINENUM_P (MSP430_CPU (sd)), NULL, 0, " ");
 
   TRACE_DISASM (MSP430_CPU (sd), opcode_pc);
 

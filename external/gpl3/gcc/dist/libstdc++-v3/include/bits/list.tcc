@@ -1,6 +1,6 @@
 // List implementation (out of line) -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -474,27 +474,36 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
         list __tmp[64];
         list * __fill = __tmp;
         list * __counter;
-
-        do
+	__try
 	  {
-	    __carry.splice(__carry.begin(), *this, begin());
-
-	    for(__counter = __tmp;
-		__counter != __fill && !__counter->empty();
-		++__counter)
+	    do
 	      {
-		__counter->merge(__carry);
-		__carry.swap(*__counter);
-	      }
-	    __carry.swap(*__counter);
-	    if (__counter == __fill)
-	      ++__fill;
-	  }
-	while ( !empty() );
+		__carry.splice(__carry.begin(), *this, begin());
 
-        for (__counter = __tmp + 1; __counter != __fill; ++__counter)
-          __counter->merge(*(__counter - 1));
-        swap( *(__fill - 1) );
+		for(__counter = __tmp;
+		    __counter != __fill && !__counter->empty();
+		    ++__counter)
+		  {
+		    __counter->merge(__carry);
+		    __carry.swap(*__counter);
+		  }
+		__carry.swap(*__counter);
+		if (__counter == __fill)
+		  ++__fill;
+	      }
+	    while ( !empty() );
+
+	    for (__counter = __tmp + 1; __counter != __fill; ++__counter)
+	      __counter->merge(*(__counter - 1));
+	    swap( *(__fill - 1) );
+	  }
+	__catch(...)
+	  {
+	    this->splice(this->end(), __carry);
+	    for (int __i = 0; __i < sizeof(__tmp)/sizeof(__tmp[0]); ++__i)
+	      this->splice(this->end(), __tmp[__i]);
+	    __throw_exception_again;
+	  }
       }
     }
 
@@ -551,27 +560,36 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    list __tmp[64];
 	    list * __fill = __tmp;
 	    list * __counter;
-
-	    do
+	    __try
 	      {
-		__carry.splice(__carry.begin(), *this, begin());
-
-		for(__counter = __tmp;
-		    __counter != __fill && !__counter->empty();
-		    ++__counter)
+		do
 		  {
-		    __counter->merge(__carry, __comp);
-		    __carry.swap(*__counter);
-		  }
-		__carry.swap(*__counter);
-		if (__counter == __fill)
-		  ++__fill;
-	      }
-	    while ( !empty() );
+		    __carry.splice(__carry.begin(), *this, begin());
 
-	    for (__counter = __tmp + 1; __counter != __fill; ++__counter)
-	      __counter->merge(*(__counter - 1), __comp);
-	    swap(*(__fill - 1));
+		    for(__counter = __tmp;
+			__counter != __fill && !__counter->empty();
+			++__counter)
+		      {
+			__counter->merge(__carry, __comp);
+			__carry.swap(*__counter);
+		      }
+		    __carry.swap(*__counter);
+		    if (__counter == __fill)
+		      ++__fill;
+		  }
+		while ( !empty() );
+
+		for (__counter = __tmp + 1; __counter != __fill; ++__counter)
+		  __counter->merge(*(__counter - 1), __comp);
+		swap(*(__fill - 1));
+	      }
+	    __catch(...)
+	      {
+		this->splice(this->end(), __carry);
+		for (int __i = 0; __i < sizeof(__tmp)/sizeof(__tmp[0]); ++__i)
+		  this->splice(this->end(), __tmp[__i]);
+		__throw_exception_again;
+	      }
 	  }
       }
 

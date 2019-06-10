@@ -27,7 +27,7 @@
 #include "elf/vax.h"
 
 static reloc_howto_type *reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
-static void rtype_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
+static bfd_boolean rtype_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 static struct bfd_hash_entry *elf_vax_link_hash_newfunc (struct bfd_hash_entry *,
 							 struct bfd_hash_table *,
 							 const char *);
@@ -278,7 +278,7 @@ static reloc_howto_type howto_table[] = {
 	 FALSE),		/* pcrel_offset */
 };
 
-static void
+static bfd_boolean
 rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
@@ -287,12 +287,13 @@ rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
   if (r_type >= R_VAX_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: unrecognised VAX reloc number: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      r_type = R_VAX_NONE;
+      return FALSE;
     }
   cache_ptr->howto = &howto_table[r_type];
+  return TRUE;
 }
 
 #define elf_info_to_howto rtype_to_howto
@@ -646,10 +647,10 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		  if (eh->got_addend != (bfd_vma) rel->r_addend)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: warning: GOT addend of %Ld to `%s' does"
-			 " not match previous GOT addend of %Ld"),
-			 abfd, rel->r_addend, h->root.root.string,
-			 eh->got_addend);
+		      (_("%pB: warning: GOT addend of %" PRId64 " to `%s' does"
+			 " not match previous GOT addend of %" PRId64),
+			 abfd, (int64_t) rel->r_addend, h->root.root.string,
+			 (int64_t) eh->got_addend);
 
 		}
 	    }
@@ -1471,9 +1472,10 @@ elf_vax_relocate_section (bfd *output_bfd,
 	  else if (rel->r_addend != 0)
 	    _bfd_error_handler
 	      /* xgettext:c-format */
-	      (_("%B: warning: PLT addend of %Ld to `%s'"
-		 " from %A section ignored"),
-	       input_bfd, rel->r_addend, h->root.root.string, input_section);
+	      (_("%pB: warning: PLT addend of %" PRId64 " to `%s'"
+		 " from %pA section ignored"),
+	       input_bfd, (int64_t) rel->r_addend, h->root.root.string,
+	       input_section);
 	  rel->r_addend = 0;
 
 	  break;
@@ -1599,15 +1601,16 @@ elf_vax_relocate_section (bfd *output_bfd,
 		  if (h != NULL)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: warning: %s relocation against symbol `%s'"
-			 " from %A section"),
+		      (_("%pB: warning: %s relocation against symbol `%s'"
+			 " from %pA section"),
 		      input_bfd, howto->name, h->root.root.string,
 		      input_section);
 		  else
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: warning: %s relocation to %#Lx from %A section"),
-		      input_bfd, howto->name, outrel.r_addend,
+		      (_("%pB: warning: %s relocation to %#" PRIx64
+			 " from %pA section"),
+		      input_bfd, howto->name, (uint64_t) outrel.r_addend,
 		      input_section);
 		}
 	      loc = sreloc->contents;

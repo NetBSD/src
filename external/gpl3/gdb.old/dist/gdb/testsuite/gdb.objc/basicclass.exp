@@ -1,4 +1,4 @@
-# Copyright 2003-2016 Free Software Foundation, Inc.
+# Copyright 2003-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -163,21 +163,21 @@ gdb_test continue \
 #
 gdb_test "print \[self printHi\]" \
     "Hi.*\\$\[0-9\] = \\(.*objc_object \\*\\) 0x\[0-9a-f\]+" \
-    "Call an Objective-C method with no arguments"
+    "call an Objective-C method with no arguments"
 
 gdb_test "print \[self printNumber: 42\]" \
     "42.*\\$\[0-9\] = 43" \
-    "Call an Objective-C method with one argument"
+    "call an Objective-C method with one argument"
 
 #
 # Test printing the object description
 #
 gdb_test "print-object object" \
     "BasicClass gdb test object" \
-    "Use of the print-object command"
+    "use of the print-object command"
 
 gdb_test "po self" \
     "BasicClass gdb test object" \
-    "Use of the po (print-object) command"
+    "use of the po (print-object) command"
 
 

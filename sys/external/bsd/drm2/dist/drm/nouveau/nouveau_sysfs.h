@@ -1,10 +1,12 @@
+/*	$NetBSD: nouveau_sysfs.h,v 1.1.1.1.32.1 2019/06/10 22:08:07 christos Exp $	*/
+
 #ifndef __NOUVEAU_SYSFS_H__
 #define __NOUVEAU_SYSFS_H__
 
 #include "nouveau_drm.h"
 
 struct nouveau_sysfs {
-	struct nouveau_object *ctrl;
+	struct nvif_object ctrl;
 };
 
 static inline struct nouveau_sysfs *
@@ -15,5 +17,7 @@ nouveau_sysfs(struct drm_device *dev)
 
 int  nouveau_sysfs_init(struct drm_device *);
 void nouveau_sysfs_fini(struct drm_device *);
+
+extern int nouveau_pstate;
 
 #endif

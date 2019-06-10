@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24 2018/01/21 16:51:14 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24.4.1 2019/06/10 22:05:46 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2018/01/21 16:51:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.4.1 2019/06/10 22:05:46 christos Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -1207,8 +1207,12 @@ db_disasm(db_addr_t loc, bool altfmt)
 		pte = kvtopte((vaddr_t)loc);
 	else
 		pte = vtopte((vaddr_t)loc);
-	pde = vtopte((vaddr_t)pte);
-	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
+	if ((vaddr_t)pte >= VM_MIN_KERNEL_ADDRESS)
+		pde = kvtopte((vaddr_t)pte);
+	else
+		pde = vtopte((vaddr_t)pte);
+
+	if ((*pde & PTE_P) == 0 || (*pte & PTE_P) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
 	}
@@ -1462,6 +1466,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 				db_printf("$%s", tbuf);
 				break;
 			}
+			/* FALLTHROUGH */
 		case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, false);/* unsigned */

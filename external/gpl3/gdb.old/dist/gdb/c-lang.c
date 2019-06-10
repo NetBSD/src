@@ -1,6 +1,6 @@
 /* C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -356,14 +356,11 @@ c_get_string (struct value *value, gdb_byte **buffer,
 
  error:
   {
-    char *type_str;
-
-    type_str = type_to_string (type);
-    if (type_str)
+    std::string type_str = type_to_string (type);
+    if (!type_str.empty ())
       {
-	make_cleanup (xfree, type_str);
 	error (_("Trying to read string with inappropriate type `%s'."),
-	       type_str);
+	       type_str.c_str ());
       }
     else
       error (_("Trying to read string with inappropriate type."));
@@ -898,6 +895,9 @@ enum cplus_primitive_types {
   cplus_primitive_type_decfloat,
   cplus_primitive_type_decdouble,
   cplus_primitive_type_declong,
+  cplus_primitive_type_char16_t,
+  cplus_primitive_type_char32_t,
+  cplus_primitive_type_wchar_t,
   nr_cplus_primitive_types
 };
 
@@ -953,6 +953,12 @@ cplus_language_arch_info (struct gdbarch *gdbarch,
     = builtin->builtin_decdouble;
   lai->primitive_type_vector [cplus_primitive_type_declong]
     = builtin->builtin_declong;
+  lai->primitive_type_vector [cplus_primitive_type_char16_t]
+    = builtin->builtin_char16;
+  lai->primitive_type_vector [cplus_primitive_type_char32_t]
+    = builtin->builtin_char32;
+  lai->primitive_type_vector [cplus_primitive_type_wchar_t]
+    = builtin->builtin_wchar;
 
   lai->bool_type_symbol = "bool";
   lai->bool_type_default = builtin->builtin_bool;

@@ -1,5 +1,5 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -3618,7 +3618,7 @@ mips_elf64_rtype_to_howto (unsigned int r_type, bfd_boolean rela_p)
 	}
       if (r_type >= R_MIPS_max)
 	{
-	  (*_bfd_error_handler) (_("unrecognised MIPS reloc number: %d"), r_type);
+	  _bfd_error_handler (_("unrecognised MIPS reloc number: %d"), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  r_type = R_MIPS_NONE;
 	}
@@ -4467,6 +4467,7 @@ const struct elf_size_info mips_elf64_size_info =
 #define elf_backend_grok_psinfo		elf64_mips_grok_psinfo
 
 #define elf_backend_got_header_size	(8 * MIPS_RESERVED_GOTNO)
+#define elf_backend_want_dynrelro	1
 
 /* MIPS ELF64 can use a mixture of REL and RELA, but some Relocations
    work better/work only in RELA, so we default to this.  */
@@ -4506,7 +4507,6 @@ const struct elf_size_info mips_elf64_size_info =
 #define bfd_elf64_canonicalize_reloc mips_elf64_canonicalize_reloc
 #define bfd_elf64_get_dynamic_reloc_upper_bound mips_elf64_get_dynamic_reloc_upper_bound
 #define bfd_elf64_canonicalize_dynamic_reloc mips_elf64_canonicalize_dynamic_reloc
-#define bfd_elf64_bfd_relax_section     _bfd_mips_relax_section
 #define bfd_elf64_mkobject		_bfd_mips_elf_mkobject
 
 /* The SGI style (n)64 NewABI.  */

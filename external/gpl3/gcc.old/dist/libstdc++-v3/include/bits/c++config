@@ -1,6 +1,6 @@
 // Predefined symbols and macros -*- C++ -*-
 
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -115,10 +115,12 @@
 #ifndef _GLIBCXX_NOEXCEPT
 # if __cplusplus >= 201103L
 #  define _GLIBCXX_NOEXCEPT noexcept
+#  define _GLIBCXX_NOEXCEPT_IF(_COND) noexcept(_COND)
 #  define _GLIBCXX_USE_NOEXCEPT noexcept
 #  define _GLIBCXX_THROW(_EXC)
 # else
 #  define _GLIBCXX_NOEXCEPT
+#  define _GLIBCXX_NOEXCEPT_IF(_COND)
 #  define _GLIBCXX_USE_NOEXCEPT throw()
 #  define _GLIBCXX_THROW(_EXC) throw(_EXC)
 # endif
@@ -136,7 +138,7 @@
 # endif
 #endif
 
-// Macro for extern template, ie controling template linkage via use
+// Macro for extern template, ie controlling template linkage via use
 // of extern keyword on template declaration. As documented in the g++
 // manual, it inhibits all implicit instantiations and is used
 // throughout the library to avoid multiple weak definitions for
@@ -355,8 +357,6 @@ namespace std
 	 namespace _GLIBCXX_STD_C { _GLIBCXX_BEGIN_NAMESPACE_VERSION
 # define _GLIBCXX_END_NAMESPACE_CONTAINER \
 	 _GLIBCXX_END_NAMESPACE_VERSION }
-# undef _GLIBCXX_EXTERN_TEMPLATE
-# define _GLIBCXX_EXTERN_TEMPLATE -1
 #endif
 
 #ifdef _GLIBCXX_PARALLEL
@@ -419,10 +419,20 @@ namespace std
 # define _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11 _GLIBCXX_END_NAMESPACE_LDBL
 #endif
 
+// Debug Mode implies checking assertions.
+#ifdef _GLIBCXX_DEBUG
+# define _GLIBCXX_ASSERTIONS 1
+#endif
+
+// Disable std::string explicit instantiation declarations in order to assert.
+#ifdef _GLIBCXX_ASSERTIONS
+# undef _GLIBCXX_EXTERN_TEMPLATE
+# define _GLIBCXX_EXTERN_TEMPLATE -1
+#endif
+
 // Assert.
-#if !defined(_GLIBCXX_DEBUG) && !defined(_GLIBCXX_PARALLEL)
-# define __glibcxx_assert(_Condition)
-#else
+#if defined(_GLIBCXX_ASSERTIONS) \
+  || defined(_GLIBCXX_PARALLEL) || defined(_GLIBCXX_PARALLEL_ASSERTIONS)
 namespace std
 {
   // Avoid the use of assert, because we're trying to keep the <cassert>
@@ -436,13 +446,19 @@ namespace std
     __builtin_abort();
   }
 }
-#define __glibcxx_assert(_Condition)				   	 \
+#define __glibcxx_assert_impl(_Condition)				 \
   do 									 \
   {							      		 \
     if (! (_Condition))                                                  \
       std::__replacement_assert(__FILE__, __LINE__, __PRETTY_FUNCTION__, \
 				#_Condition);				 \
   } while (false)
+#endif
+
+#if defined(_GLIBCXX_ASSERTIONS)
+# define __glibcxx_assert(_Condition) __glibcxx_assert_impl(_Condition)
+#else
+# define __glibcxx_assert(_Condition)
 #endif
 
 // Macros for race detectors.
@@ -477,6 +493,8 @@ namespace std
 # define _GLIBCXX_BEGIN_EXTERN_C extern "C" {
 # define _GLIBCXX_END_EXTERN_C }
 
+#define _GLIBCXX_USE_ALLOCATOR_NEW
+
 #else // !__cplusplus
 # define _GLIBCXX_BEGIN_EXTERN_C
 # define _GLIBCXX_END_EXTERN_C
@@ -504,6 +522,28 @@ namespace std
 # define _GLIBCXX_WEAK_DEFINITION
 #endif
 
+// By default, we assume that __GXX_WEAK__ also means that there is support
+// for declaring functions as weak while not defining such functions.  This
+// allows for referring to functions provided by other libraries (e.g.,
+// libitm) without depending on them if the respective features are not used.
+#ifndef _GLIBCXX_USE_WEAK_REF
+# define _GLIBCXX_USE_WEAK_REF __GXX_WEAK__
+#endif
+
+// Conditionally enable annotations for the Transactional Memory TS on C++11.
+// Most of the following conditions are due to limitations in the current
+// implementation.
+#if __cplusplus >= 201103L && _GLIBCXX_USE_CXX11_ABI			\
+  && _GLIBCXX_USE_DUAL_ABI && __cpp_transactional_memory >= 201505L	\
+  &&  !_GLIBCXX_FULLY_DYNAMIC_STRING && _GLIBCXX_USE_WEAK_REF		\
+  && _GLIBCXX_USE_ALLOCATOR_NEW
+#define _GLIBCXX_TXN_SAFE transaction_safe
+#define _GLIBCXX_TXN_SAFE_DYN transaction_safe_dynamic
+#else
+#define _GLIBCXX_TXN_SAFE
+#define _GLIBCXX_TXN_SAFE_DYN
+#endif
+
 
 // The remainder of the prewritten config is automatic; all the
 // user hooks are listed above.
@@ -524,5 +564,41 @@ namespace std
 // For example, <windows.h> is known to #define min and max as macros...
 #undef min
 #undef max
+
+// N.B. these _GLIBCXX_USE_C99_XXX macros are defined unconditionally
+// so they should be tested with #if not with #ifdef.
+#if __cplusplus >= 201103L
+# ifndef _GLIBCXX_USE_C99_MATH
+#  define _GLIBCXX_USE_C99_MATH _GLIBCXX11_USE_C99_MATH
+# endif
+# ifndef _GLIBCXX_USE_C99_COMPLEX
+# define _GLIBCXX_USE_C99_COMPLEX _GLIBCXX11_USE_C99_COMPLEX
+# endif
+# ifndef _GLIBCXX_USE_C99_STDIO
+# define _GLIBCXX_USE_C99_STDIO _GLIBCXX11_USE_C99_STDIO
+# endif
+# ifndef _GLIBCXX_USE_C99_STDLIB
+# define _GLIBCXX_USE_C99_STDLIB _GLIBCXX11_USE_C99_STDLIB
+# endif
+# ifndef _GLIBCXX_USE_C99_WCHAR
+# define _GLIBCXX_USE_C99_WCHAR _GLIBCXX11_USE_C99_WCHAR
+# endif
+#else
+# ifndef _GLIBCXX_USE_C99_MATH
+#  define _GLIBCXX_USE_C99_MATH _GLIBCXX98_USE_C99_MATH
+# endif
+# ifndef _GLIBCXX_USE_C99_COMPLEX
+# define _GLIBCXX_USE_C99_COMPLEX _GLIBCXX98_USE_C99_COMPLEX
+# endif
+# ifndef _GLIBCXX_USE_C99_STDIO
+# define _GLIBCXX_USE_C99_STDIO _GLIBCXX98_USE_C99_STDIO
+# endif
+# ifndef _GLIBCXX_USE_C99_STDLIB
+# define _GLIBCXX_USE_C99_STDLIB _GLIBCXX98_USE_C99_STDLIB
+# endif
+# ifndef _GLIBCXX_USE_C99_WCHAR
+# define _GLIBCXX_USE_C99_WCHAR _GLIBCXX98_USE_C99_WCHAR
+# endif
+#endif
 
 // End of prewritten config; the settings discovered at configure time follow.

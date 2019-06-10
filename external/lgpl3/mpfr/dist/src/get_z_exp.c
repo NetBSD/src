@@ -1,7 +1,7 @@
 /* mpfr_get_z_2exp -- get a multiple-precision integer and an exponent
                       from a floating-point number
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -48,16 +48,19 @@ mpfr_get_z_2exp (mpz_ptr z, mpfr_srcptr f)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (f)))
     {
       if (MPFR_UNLIKELY (MPFR_NOTZERO (f)))
-        MPFR_SET_ERANGE ();
+        MPFR_SET_ERANGEFLAG ();
       mpz_set_ui (z, 0);
       return __gmpfr_emin;
     }
 
   fn = MPFR_LIMB_SIZE(f);
 
+  /* FIXME: temporary assert for security. Too large values should
+     probably be handled like infinities. */
+  MPFR_ASSERTN (fn <= INT_MAX);  /* due to SIZ(z) being an int */
+
   /* check whether allocated space for z is enough */
-  if (MPFR_UNLIKELY (ALLOC (z) < fn))
-    MPZ_REALLOC (z, fn);
+  mpz_realloc2 (z, (mp_bitcnt_t) fn * GMP_NUMB_BITS);
 
   MPFR_UNSIGNED_MINUS_MODULO (sh, MPFR_PREC (f));
   if (MPFR_LIKELY (sh))
@@ -71,7 +74,7 @@ mpfr_get_z_2exp (mpz_ptr z, mpfr_srcptr f)
                      < (mpfr_uexp_t) MPFR_PREC (f)))
     {
       /* The exponent isn't representable in an mpfr_exp_t. */
-      MPFR_SET_ERANGE ();
+      MPFR_SET_ERANGEFLAG ();
       return MPFR_EXP_MIN;
     }
 

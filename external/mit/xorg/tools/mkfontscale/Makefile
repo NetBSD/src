@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/05/09 08:13:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2019/06/10 22:02:51 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -7,7 +7,7 @@ HOSTPROG=	mkfontscale
 FREETYPE=       ${X11SRCDIR.freetype}
 
 .PATH:	${X11SRCDIR.${HOSTPROG}}
-SRCS.mkfontscale=	mkfontscale.c list.c hash.c ident.c
+SRCS.mkfontscale=	mkfontscale.c hash.c ident.c list.c constlist.c
 
 .PATH:	${FREETYPE}/src/base
 SRCS.freetype+=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
@@ -81,7 +81,7 @@ LDADD=	-lz
 
 HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
 		-DFT2_BUILD_LIBRARY -DDARWIN_NO_CARBON \
-		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\" \
+		-DFONT_ENCODINGS_DIRECTORY=\"${DESTDIR}${X11FONTDIR}/encodings/encodings.dir\" \
 		-DPACKAGE_STRING=\"NetBSD\ tools\ version\"
 HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 

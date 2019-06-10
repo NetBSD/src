@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X
 
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Based on sim/bfin/bfin-sim.c which was contributed by Analog Devices, Inc.
 
@@ -26,7 +26,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <assert.h>
-#include "bfd.h"
 #include "opcode/msp430-decode.h"
 #include "sim-main.h"
 #include "sim-syscall.h"
@@ -42,39 +41,6 @@ static void
 msp430_pc_store (SIM_CPU *cpu, sim_cia newpc)
 {
   cpu->state.regs[0] = newpc;
-}
-
-static long
-lookup_symbol (SIM_DESC sd, const char *name)
-{
-  struct bfd *abfd = STATE_PROG_BFD (sd);
-  asymbol **symbol_table = STATE_SYMBOL_TABLE (sd);
-  long number_of_symbols = STATE_NUM_SYMBOLS (sd);
-  long i;
-
-  if (abfd == NULL)
-    return -1;
-
-  if (symbol_table == NULL)
-    {
-      long storage_needed;
-
-      storage_needed = bfd_get_symtab_upper_bound (abfd);
-      if (storage_needed <= 0)
-	return -1;
-
-      STATE_SYMBOL_TABLE (sd) = symbol_table = xmalloc (storage_needed);
-      STATE_NUM_SYMBOLS (sd) = number_of_symbols =
-	bfd_canonicalize_symtab (abfd, symbol_table);
-    }
-
-  for (i = 0; i < number_of_symbols; i++)
-    if (strcmp (symbol_table[i]->name, name) == 0)
-      {
-	long val = symbol_table[i]->section->vma + symbol_table[i]->value;
-	return val;
-      }
-  return -1;
 }
 
 static int
@@ -207,18 +173,12 @@ sim_open (SIM_OPEN_KIND kind,
   assert (MAX_NR_PROCESSORS == 1);
   msp430_initialize_cpu (sd, MSP430_CPU (sd));
 
-  MSP430_CPU (sd)->state.cio_breakpoint = lookup_symbol (sd, "C$$IO$$");
-  MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "__CIOBUF__");
+  MSP430_CPU (sd)->state.cio_breakpoint = trace_sym_value (sd, "C$$IO$$");
+  MSP430_CPU (sd)->state.cio_buffer = trace_sym_value (sd, "__CIOBUF__");
   if (MSP430_CPU (sd)->state.cio_buffer == -1)
-    MSP430_CPU (sd)->state.cio_buffer = lookup_symbol (sd, "_CIOBUF_");
+    MSP430_CPU (sd)->state.cio_buffer = trace_sym_value (sd, "_CIOBUF_");
 
   return sd;
-}
-
-void
-msp430_sim_close (SIM_DESC sd, int quitting)
-{
-  free (STATE_SYMBOL_TABLE (sd));
 }
 
 SIM_RC

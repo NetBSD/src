@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.6 2009/01/11 02:45:56 christos Exp $ */
+/* $NetBSD: timetc.h,v 1.6.66.1 2019/06/10 22:09:57 christos Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -40,6 +40,7 @@
  */
 
 struct timecounter;
+struct timespec;
 typedef u_int timecounter_get_t(struct timecounter *);
 typedef void timecounter_pps_t(struct timecounter *);
 

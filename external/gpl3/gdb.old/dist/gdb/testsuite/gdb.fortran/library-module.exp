@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if [get_compiler_info] {
 }
 
 if  { [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" $libfile {debug f90}] != "" } {
-    untested "Couldn't compile ${srclibfile}"
+    untested "failed to compile shared library"
     return -1
 }
 
@@ -33,7 +33,7 @@ if  { [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" $libfile {debug f90
 # warnings on ignored $libfile abort the process.
 
 if  { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable [list debug f90 shlib=$libfile]] != "" } {
-    untested "Couldn't compile ${srcfile}"
+    untested "failed to compile"
     return -1
 }
 

@@ -1,7 +1,7 @@
 /* This file is part of the Intel(R) Cilk(TM) Plus support
    This file contains routines to handle Cilk Plus specific
    routines for the C++ Compiler.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>.
 
    This file is part of GCC.
@@ -24,10 +24,7 @@
 #include "system.h"
 #include "coretypes.h"
 #include "cp-tree.h"
-#include "diagnostic-core.h"
 #include "tree-iterator.h"
-#include "tree-inline.h"  /* for copy_tree_body_r.  */
-#include "ggc.h"
 #include "cilk.h"
 
 /* Callback for cp_walk_tree to validate the body of a pragma simd loop

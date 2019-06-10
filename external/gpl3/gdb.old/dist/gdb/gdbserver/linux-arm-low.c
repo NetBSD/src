@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -263,7 +263,8 @@ get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
   ULONGEST res;
 
   res = 0;
-  (*the_target->read_memory) (memaddr, (unsigned char *) &res, len);
+  target_read_memory (memaddr, (unsigned char *) &res, len);
+
   return res;
 }
 
@@ -804,7 +805,7 @@ get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
       unsigned long this_instr;
       unsigned long svc_operand;
 
-      (*the_target->read_memory) (pc, (unsigned char *) &this_instr, 4);
+      target_read_memory (pc, (unsigned char *) &this_instr, 4);
       svc_operand = (0x00ffffff & this_instr);
 
       if (svc_operand)  /* OABI.  */

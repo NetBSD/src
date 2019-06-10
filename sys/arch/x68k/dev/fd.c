@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.120 2017/08/11 07:08:40 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.120.4.1 2019/06/10 22:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.120 2017/08/11 07:08:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.120.4.1 2019/06/10 22:06:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -315,7 +315,7 @@ void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
 void fdfinish(struct fd_softc *, struct buf *);
-struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
@@ -670,7 +670,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 }
 
-struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	size_t type = FDTYPE(dev);
@@ -1210,7 +1210,7 @@ fdcintr(void *arg)
 		if (finfo != NULL || type->secsize == 2) {
 			fd->sc_part = SEC_P11;
 			nblks = (sectrac - sec) << (type->secsize - 2);
-			nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
+			nblks = uimin(nblks, fd->sc_bcount / FDC_BSIZE);
 			DPRINTF(("nblks(0)"));
 		} else if ((fd->sc_blkno % 2) == 0) {
 			if (fd->sc_bcount & 0x00000200) {
@@ -1221,14 +1221,14 @@ fdcintr(void *arg)
 				} else {
 					fd->sc_part = SEC_P11;
 					nblks = (sectrac - sec) * 2;
-					nblks = min(nblks,
+					nblks = uimin(nblks,
 					    fd->sc_bcount / FDC_BSIZE - 1);
 					DPRINTF(("nblks(2)"));
 				}
 			} else {
 				fd->sc_part = SEC_P11;
 				nblks = (sectrac - sec) << (type->secsize - 2);
-				nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
+				nblks = uimin(nblks, fd->sc_bcount / FDC_BSIZE);
 				DPRINTF(("nblks(3)"));
 			}
 		} else {
@@ -1236,7 +1236,7 @@ fdcintr(void *arg)
 			nblks = 1;
 			DPRINTF(("nblks(4)"));
 		}
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = uimin(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		DPRINTF((" %d\n", nblks));
 		fd->sc_nblks = nblks;
 		fd->sc_nbytes =

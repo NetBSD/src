@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.99 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.99.2.1 2019/06/10 22:09:47 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.99 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.99.2.1 2019/06/10 22:09:47 christos Exp $");
 
 /*
  * TODO:
@@ -253,11 +253,13 @@ carp_cksum(struct mbuf *m, int len)
 	return (in_cksum(m, len));
 }
 
+#ifdef INET6
 static __inline u_int16_t
 carp6_cksum(struct mbuf *m, uint32_t off, uint32_t len)
 {
 	return (in6_cksum(m, IPPROTO_CARP, off, len));
 }
+#endif
 
 static void
 carp_hmac_prepare(struct carp_softc *sc)
@@ -410,7 +412,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				    ifatoia(ifa), CARP_COUNT_MASTER);
 				if ((cmd == RTM_ADD && count != 1) ||
 				    (cmd == RTM_DELETE && count != 0))
-					continue;
+					goto next;
 			}
 
 			/* Remove the existing host route, if any */
@@ -485,6 +487,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		default:
 			break;
 		}
+	next:
 		s = pserialize_read_enter();
 		ifa_release(ifa, &psref);
 	}
@@ -569,7 +572,7 @@ _carp_proto_input(struct mbuf *m, int hlen, int proto)
 }
 
 void
-carp_proto_input(struct mbuf *m, ...)
+carp_proto_input(struct mbuf *m, int off, int proto)
 {
 
 	wqinput_input(carp_wqinput, m, 0, 0);
@@ -1081,7 +1084,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m_reset_rcvif(m);
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 		m->m_flags |= M_MCAST;
 		ip = mtod(m, struct ip *);
 		ip->ip_v = IPVERSION;
@@ -1165,7 +1168,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m_reset_rcvif(m);
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 		m->m_flags |= M_MCAST;
 		ip6 = mtod(m, struct ip6_hdr *);
 		memset(ip6, 0, sizeof(*ip6));

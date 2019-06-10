@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@ standard_testfile .c
 
 # Fission doesn't support macros yet.  Bug 15954.
 if [using_fission] {
-    untested ${testfile}.exp
+    untested "fission does not support macros yet"
     return -1
 }
 
 get_compiler_info
 if ![test_compiler_info gcc*] {
-  untested ${testfile}.exp
+  untested "no compiler info"
   return -1
 }
 
@@ -31,13 +31,12 @@ if ![test_compiler_info gcc*] {
 # command line, possibly overriding "-g3" (depending on gcc version).
 set options "additional_flags=-g3"
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} $options] } {
-    untested ${testfile}.exp
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $options] } {
     return -1
 }
 
 if ![runto_main] {
-    untested ${testfile}.exp
+    untested "could not run to main"
     return -1
 }
 

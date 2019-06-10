@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.5.2.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5.2.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $
 #define DMA_CFG_REG(n)			(0x0100 + (n) * 0x40 + 0x0C)
 #define  DMA_CFG_DEST_DATA_WIDTH		__BITS(26,25)
 #define   DMA_CFG_DATA_WIDTH(n)			((n) >> 4)
-#define  DMA_CFG_DEST_BST_LEN			__BITS(24,23)
 #define	  DMA_CFG_BST_LEN(n)			((n) == 1 ? 0 : (((n) >> 3) + 1))
 #define  DMA_CFG_DEST_ADDR_MODE			__BITS(22,21)
 #define   DMA_CFG_ADDR_MODE_LINEAR		0
@@ -72,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $
 #define  DMA_CFG_DEST_DRQ_TYPE			__BITS(20,16)
 #define	  DMA_CFG_DRQ_TYPE_SDRAM		1
 #define  DMA_CFG_SRC_DATA_WIDTH			__BITS(10,9)
-#define  DMA_CFG_SRC_BST_LEN			__BITS(8,7)
 #define  DMA_CFG_SRC_ADDR_MODE			__BITS(6,5)
 #define  DMA_CFG_SRC_DRQ_TYPE			__BITS(4,0)
 #define DMA_CUR_SRC_REG(n)		(0x0100 + (n) * 0x40 + 0x10)
@@ -81,6 +79,13 @@ __KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $
 #define DMA_PARA_REG(n)			(0x0100 + (n) * 0x40 + 0x1C)
 #define  DMA_PARA_DATA_BLK_SIZE			__BITS(15,8)
 #define  DMA_PARA_WAIT_CYC			__BITS(7,0)
+#define DMA_MODE_REG(n)			(0x0100 + (n) * 0x40 + 0x28)
+#define  MODE_WAIT				0b0
+#define  MODE_HANDSHAKE				0b1
+#define  DMA_MODE_DST(m)			__SHIFTIN((m), __BIT(3))
+#define  DMA_MODE_SRC(m)			__SHIFTIN((m), __BIT(2))
+#define DMA_FDESC_ADDR_REG(n)		(0x0100 + (n) * 0x40 + 0x2C)
+#define DMA_PKG_NUM_REG(n)		(0x0100 + (n) * 0x40 + 0x30)
 
 struct sun6idma_desc {
 	uint32_t	dma_config;
@@ -95,12 +100,25 @@ struct sun6idma_desc {
 struct sun6idma_config {
 	u_int		num_channels;
 	bool		autogate;
+	uint8_t		bursts;
+	uint8_t		widths;
 	bus_size_t	autogate_reg;
 	uint32_t	autogate_mask;
+	uint32_t	burst_mask;
 };
 
+#define IL2B(x)			__BIT(ilog2(x))
+#define IL2B_RANGE(x, y)	__BITS(ilog2(x), ilog2(y))
+#define WIDTHS_1_2_4		IL2B_RANGE(4, 1)
+#define WIDTHS_1_2_4_8		IL2B_RANGE(8, 1)
+#define BURSTS_1_8		(IL2B(8)|IL2B(1))
+#define BURSTS_1_4_8_16		(IL2B(16)|IL2B(8)|IL2B(4)|IL2B(1))
+
 static const struct sun6idma_config sun6i_a31_dma_config = {
-	.num_channels = 16
+	.num_channels = 16,
+	.burst_mask = __BITS(8,7),
+	.bursts = BURSTS_1_8,
+	.widths = WIDTHS_1_2_4,
 };
 
 static const struct sun6idma_config sun8i_a83t_dma_config = {
@@ -108,6 +126,9 @@ static const struct sun6idma_config sun8i_a83t_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x20,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(8,7),
+	.bursts = BURSTS_1_8,
+	.widths = WIDTHS_1_2_4,
 };
 
 static const struct sun6idma_config sun8i_h3_dma_config = {
@@ -115,6 +136,9 @@ static const struct sun6idma_config sun8i_h3_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x28,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(7,6),
+	.bursts = BURSTS_1_4_8_16,
+	.widths = WIDTHS_1_2_4_8,
 };
 
 static const struct sun6idma_config sun50i_a64_dma_config = {
@@ -122,6 +146,9 @@ static const struct sun6idma_config sun50i_a64_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x28,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(7,6),
+	.bursts = BURSTS_1_4_8_16,
+	.widths = WIDTHS_1_2_4_8,
 };
 
 static const struct of_compat_data compat_data[] = {
@@ -137,11 +164,7 @@ struct sun6idma_channel {
 	void			(*ch_callback)(void *);
 	void			*ch_callbackarg;
 	u_int			ch_portid;
-
-	bus_dma_segment_t	ch_dmasegs[1];
-	bus_dmamap_t		ch_dmamap;
 	void			*ch_dmadesc;
-	bus_size_t		ch_dmadesclen;
 };
 
 struct sun6idma_softc {
@@ -152,16 +175,33 @@ struct sun6idma_softc {
 	int			sc_phandle;
 	void			*sc_ih;
 
+	uint32_t		sc_burst_mask;
+
 	kmutex_t		sc_lock;
 
 	struct sun6idma_channel	*sc_chan;
 	u_int			sc_nchan;
+	u_int			sc_ndesc_ch;
+	uint8_t			sc_widths;
+	uint8_t			sc_bursts;
+
+	bus_dma_segment_t	sc_dmasegs[1];
+	bus_dmamap_t		sc_dmamap;
+	void			*sc_dmadescs;
 };
 
 #define DMA_READ(sc, reg)		\
     bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define DMA_WRITE(sc, reg, val)		\
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+#define DESC_NUM			((MAXPHYS / MIN_PAGE_SIZE + 1) + 1)
+#define DESC_LEN(n)			\
+    (sizeof(struct sun6idma_desc) * (n))
+#define DESC_OFFS(ch, n)		\
+    ((ch) * roundup2(DESC_LEN(DESC_NUM), COHERENCY_UNIT) + DESC_LEN(n))
+#define DESC_ADDR(sc, chp, n)		\
+    ((sc)->sc_dmamap->dm_segs[0].ds_addr + DESC_OFFS((chp)->ch_index, (n)))
 
 static void *
 sun6idma_acquire(device_t dev, const void *data, size_t len,
@@ -242,7 +282,20 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	uint32_t src, dst, len, cfg, mem_cfg, dev_cfg;
 	uint32_t mem_width, dev_width, mem_burst, dev_burst;
 
-	if (req->dreq_nsegs != 1)
+	if (req->dreq_nsegs > sc->sc_ndesc_ch)
+		return EINVAL;
+
+	if ((sc->sc_widths &
+	    IL2B(req->dreq_mem_opt.opt_bus_width/NBBY)) == 0)
+		return EINVAL;
+	if ((sc->sc_widths &
+	    IL2B(req->dreq_dev_opt.opt_bus_width/NBBY)) == 0)
+		return EINVAL;
+	if ((sc->sc_bursts &
+	    IL2B(req->dreq_mem_opt.opt_burst_len)) == 0)
+		return EINVAL;
+	if ((sc->sc_bursts &
+	    IL2B(req->dreq_dev_opt.opt_burst_len)) == 0)
 		return EINVAL;
 
 	mem_width = DMA_CFG_DATA_WIDTH(req->dreq_mem_opt.opt_bus_width);
@@ -251,37 +304,47 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	dev_burst = DMA_CFG_BST_LEN(req->dreq_dev_opt.opt_burst_len);
 
 	mem_cfg = __SHIFTIN(mem_width, DMA_CFG_SRC_DATA_WIDTH) |
-	    __SHIFTIN(mem_burst, DMA_CFG_SRC_BST_LEN) |
+	    __SHIFTIN(mem_burst, sc->sc_burst_mask) |
 	    __SHIFTIN(DMA_CFG_ADDR_MODE_LINEAR, DMA_CFG_SRC_ADDR_MODE) |
 	    __SHIFTIN(DMA_CFG_DRQ_TYPE_SDRAM, DMA_CFG_SRC_DRQ_TYPE);
 	dev_cfg = __SHIFTIN(dev_width, DMA_CFG_SRC_DATA_WIDTH) |
-	    __SHIFTIN(dev_burst, DMA_CFG_SRC_BST_LEN) |
+	    __SHIFTIN(dev_burst, sc->sc_burst_mask) |
 	    __SHIFTIN(DMA_CFG_ADDR_MODE_IO, DMA_CFG_SRC_ADDR_MODE) |
 	    __SHIFTIN(ch->ch_portid, DMA_CFG_SRC_DRQ_TYPE);
 
-	if (req->dreq_dir == FDT_DMA_READ) {
-		src = req->dreq_dev_phys;
-		dst = req->dreq_segs[0].ds_addr;
-		cfg = mem_cfg << 16 | dev_cfg;
-	} else {
-		src = req->dreq_segs[0].ds_addr;
-		dst = req->dreq_dev_phys;
-		cfg = dev_cfg << 16 | mem_cfg;
+	for (size_t j = 0; j < req->dreq_nsegs; j++) {
+		if (req->dreq_dir == FDT_DMA_READ) {
+			src = req->dreq_dev_phys;
+			dst = req->dreq_segs[j].ds_addr;
+			cfg = mem_cfg << 16 | dev_cfg;
+		} else {
+			src = req->dreq_segs[j].ds_addr;
+			dst = req->dreq_dev_phys;
+			cfg = dev_cfg << 16 | mem_cfg;
+		}
+		len = req->dreq_segs[j].ds_len;
+
+		desc[j].dma_config = htole32(cfg);
+		desc[j].dma_srcaddr = htole32(src);
+		desc[j].dma_dstaddr = htole32(dst);
+		desc[j].dma_bcnt = htole32(len);
+		desc[j].dma_para = htole32(0);
+		if (j < req->dreq_nsegs - 1)
+			desc[j].dma_next = htole32(DESC_ADDR(sc, ch, j + 1));
+		else
+			desc[j].dma_next = htole32(DMA_NULL);
 	}
-	len = req->dreq_segs[0].ds_len;
 
-	desc->dma_config = htole32(cfg);
-	desc->dma_srcaddr = htole32(src);
-	desc->dma_dstaddr = htole32(dst);
-	desc->dma_bcnt = htole32(len);
-	desc->dma_para = htole32(0);
-	desc->dma_next = htole32(DMA_NULL);
+#if notyet && maybenever
+	DMA_WRITE(sc, DMA_MODE_REG(ch->ch_index),
+	    DMA_MODE_DST(MODE_HANDSHAKE)|DMA_MODE_SRC(MODE_HANDSHAKE));
+#endif
 
-	bus_dmamap_sync(sc->sc_dmat, ch->ch_dmamap, 0, ch->ch_dmadesclen,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, DESC_OFFS(ch->ch_index, 0),
+	    DESC_LEN(req->dreq_nsegs), BUS_DMASYNC_PREWRITE);
 
 	DMA_WRITE(sc, DMA_START_ADDR_REG(ch->ch_index),
-	    ch->ch_dmamap->dm_segs[0].ds_addr);
+	    DESC_ADDR(sc, ch, 0));
 	DMA_WRITE(sc, DMA_EN_REG(ch->ch_index), DMA_EN_EN);
 
 	if ((DMA_READ(sc, DMA_EN_REG(ch->ch_index)) & DMA_EN_EN) == 0) {
@@ -355,7 +418,7 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 	struct sun6idma_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	const size_t desclen = sizeof(struct sun6idma_desc);
+	size_t desclen;
 	const struct sun6idma_config *conf;
 	struct fdtbus_reset *rst;
 	struct clk *clk;
@@ -398,8 +461,13 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 
 	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
+	sc->sc_burst_mask = conf->burst_mask;
 	sc->sc_nchan = conf->num_channels;
+	sc->sc_widths = conf->widths;
+	sc->sc_bursts = conf->bursts;
 	sc->sc_chan = kmem_alloc(sizeof(*sc->sc_chan) * sc->sc_nchan, KM_SLEEP);
+	desclen = DESC_OFFS(sc->sc_nchan, 0);
+	sc->sc_ndesc_ch = DESC_OFFS(1, 0) / sizeof(struct sun6idma_desc);
 
 	aprint_naive("\n");
 	aprint_normal(": DMA controller (%u channels)\n", sc->sc_nchan);
@@ -409,29 +477,29 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 	DMA_WRITE(sc, DMA_IRQ_PEND_REG0_REG, ~0);
 	DMA_WRITE(sc, DMA_IRQ_PEND_REG1_REG, ~0);
 
+	error = bus_dmamem_alloc(sc->sc_dmat, desclen, 0, 0,
+	    sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamem_alloc failed: %d", error);
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
+	    desclen, (void **)&sc->sc_dmadescs, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamem_map failed: %d", error);
+	error = bus_dmamap_create(sc->sc_dmat, desclen, 1, desclen, 0,
+	    BUS_DMA_WAITOK, &sc->sc_dmamap);
+	if (error)
+		panic("bus_dmamap_create failed: %d", error);
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+	    sc->sc_dmadescs, desclen, NULL, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamap_load failed: %d", error);
+
 	for (index = 0; index < sc->sc_nchan; index++) {
 		struct sun6idma_channel *ch = &sc->sc_chan[index];
 		ch->ch_index = index;
+		ch->ch_dmadesc = (void *)((uintptr_t)sc->sc_dmadescs + DESC_OFFS(index, 0));
 		ch->ch_callback = NULL;
 		ch->ch_callbackarg = NULL;
-		ch->ch_dmadesclen = desclen;
-
-		error = bus_dmamem_alloc(sc->sc_dmat, desclen, 0, 0,
-		    ch->ch_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
-		if (error)
-			panic("bus_dmamem_alloc failed: %d", error);
-		error = bus_dmamem_map(sc->sc_dmat, ch->ch_dmasegs, nsegs,
-		    desclen, &ch->ch_dmadesc, BUS_DMA_WAITOK);
-		if (error)
-			panic("bus_dmamem_map failed: %d", error);
-		error = bus_dmamap_create(sc->sc_dmat, desclen, 1, desclen, 0,
-		    BUS_DMA_WAITOK, &ch->ch_dmamap);
-		if (error)
-			panic("bus_dmamap_create failed: %d", error);
-		error = bus_dmamap_load(sc->sc_dmat, ch->ch_dmamap,
-		    ch->ch_dmadesc, desclen, NULL, BUS_DMA_WAITOK);
-		if (error)
-			panic("bus_dmamap_load failed: %d", error);
 
 		DMA_WRITE(sc, DMA_EN_REG(index), 0);
 	}
@@ -487,6 +555,9 @@ sun6idma_dump(void)
 		device_printf(dev, " %2d: DMA_CUR_DEST_REG:   %08x\n", index, DMA_READ(sc, DMA_CUR_DEST_REG(index)));
 		device_printf(dev, " %2d: DMA_BCNT_LEFT_REG:  %08x\n", index, DMA_READ(sc, DMA_BCNT_LEFT_REG(index)));
 		device_printf(dev, " %2d: DMA_PARA_REG:       %08x\n", index, DMA_READ(sc, DMA_PARA_REG(index)));
+		device_printf(dev, " %2d: DMA_MODE_REG:       %08x\n", index, DMA_READ(sc, DMA_MODE_REG(index)));
+		device_printf(dev, " %2d: DMA_FDESC_ADDR_REG: %08x\n", index, DMA_READ(sc, DMA_FDESC_ADDR_REG(index)));
+		device_printf(dev, " %2d: DMA_PKG_NUM_REG:    %08x\n", index, DMA_READ(sc, DMA_PKG_NUM_REG(index)));
 	}
 }
 #endif

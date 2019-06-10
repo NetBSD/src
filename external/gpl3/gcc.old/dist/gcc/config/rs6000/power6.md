@@ -1,5 +1,5 @@
 ;; Scheduling description for IBM POWER6 processor.
-;;   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+;;   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 ;;   Contributed by Peter Steinmetz (steinmtz@us.ibm.com)
 ;;
 ;; This file is part of GCC.
@@ -108,7 +108,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-load-ext" 4 ; fx
   (and (eq_attr "type" "load")
@@ -128,7 +128,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-load-update" 2 ; fx
   (and (eq_attr "type" "load")
@@ -276,7 +276,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-cntlz" 2
   (and (eq_attr "type" "cntlz")
@@ -289,7 +289,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-var-rotate" 4
   (and (eq_attr "type" "shift")
@@ -355,7 +355,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-delayed-compare" 2 ; N/A
   (and (eq_attr "type" "shift")
@@ -420,7 +420,7 @@
                   power6-store-update-indexed,\
                   power6-fpstore,\
                   power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-idiv" 44
   (and (eq_attr "type" "div")
@@ -436,7 +436,7 @@
 ;                  power6-store-update-indexed,\
 ;                  power6-fpstore,\
 ;                  power6-fpstore-update"
-;  "store_data_bypass_p")
+;  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-ldiv" 56
   (and (eq_attr "type" "div")
@@ -452,7 +452,7 @@
 ;                  power6-store-update-indexed,\
 ;                  power6-fpstore,\
 ;                  power6-fpstore-update"
-;  "store_data_bypass_p")
+;  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-mtjmpr" 2
   (and (eq_attr "type" "mtjmpr,mfjmpr")
@@ -500,7 +500,7 @@
 (define_bypass 9 "power6-mtcr" "power6-branch")
 
 (define_insn_reservation "power6-fp" 6
-  (and (eq_attr "type" "fp,dmul")
+  (and (eq_attr "type" "fp,fpsimple,dmul,dfp")
        (eq_attr "cpu" "power6"))
   "FPU_power6")
 
@@ -510,7 +510,7 @@
 
 (define_bypass 1 "power6-fp"
                  "power6-fpstore,power6-fpstore-update"
-  "store_data_bypass_p")
+  "rs6000_store_data_bypass_p")
 
 (define_insn_reservation "power6-fpcompare" 8
   (and (eq_attr "type" "fpcompare")
@@ -556,7 +556,7 @@
   "LSF_power6")
 
 (define_insn_reservation "power6-vecsimple" 3
-  (and (eq_attr "type" "vecsimple")
+  (and (eq_attr "type" "vecsimple,veclogical,vecmove")
        (eq_attr "cpu" "power6"))
   "FPU_power6")
 
@@ -568,7 +568,7 @@
 (define_bypass 4 "power6-vecsimple" "power6-vecstore" )
 
 (define_insn_reservation "power6-veccmp" 1
-  (and (eq_attr "type" "veccmp")
+  (and (eq_attr "type" "veccmp,veccmpfx")
        (eq_attr "cpu" "power6"))
   "FPU_power6")
 

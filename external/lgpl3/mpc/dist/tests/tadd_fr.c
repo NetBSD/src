@@ -1,6 +1,6 @@
 /* tadd_fr -- test file for mpc_add_fr.
 
-Copyright (C) 2008, 2010, 2012 INRIA
+Copyright (C) 2008, 2010, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -37,7 +37,7 @@ check_ternary_value (mpfr_prec_t prec_max, mpfr_prec_t step)
       mpfr_set_prec (f, prec);
 
       mpc_set_ui (z, 1, MPC_RNDNN);
-      mpfr_set_ui (f, 1, GMP_RNDN);
+      mpfr_set_ui (f, 1, MPFR_RNDN);
       if (mpc_add_fr (z, z, f, MPC_RNDNZ))
         {
           printf ("Error in mpc_add_fr: 1+1 should be exact\n");
@@ -56,17 +56,26 @@ check_ternary_value (mpfr_prec_t prec_max, mpfr_prec_t step)
   mpfr_clear (f);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_add_fr (P[1].mpc, P[2].mpc, P[3].mpfr, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_add_fr (P[1].mpc, P[1].mpc, P[3].mpfr, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CCF, f, mpc_add_fr);
   test_start ();
 
   check_ternary_value (1024, 1);
 
-  data_check (f, "add_fr.dat");
-  tgeneric (f, 2, 1024, 7, 10);
+  data_check_template ("add_fr.dsc", "add_fr.dat");
+
+  tgeneric_template ("add_fr.dsc", 2, 1024, 7, 128);
 
   test_end ();
+
   return 0;
 }

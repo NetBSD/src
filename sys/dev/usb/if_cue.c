@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.78 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.78.2.1 2019/06/10 22:07:33 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.78 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.78.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -94,11 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.78 2018/06/26 06:48:02 msaitoh Exp $");
 
 #ifdef CUE_DEBUG
 #define DPRINTF(x)	if (cuedebug) printf x
-#define DPRINTFN(n,x)	if (cuedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (cuedebug >= (n)) printf x
 int	cuedebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -116,7 +116,7 @@ int cue_match(device_t, cfdata_t, void *);
 void cue_attach(device_t, device_t, void *);
 int cue_detach(device_t, int);
 int cue_activate(device_t, enum devact);
-extern struct cfdriver cue_cd;
+
 CFATTACH_DECL_NEW(cue, sizeof(struct cue_softc), cue_match, cue_attach,
     cue_detach, cue_activate);
 
@@ -356,6 +356,7 @@ cue_crc(const char *addr)
 Static void
 cue_setmulti(struct cue_softc *sc)
 {
+	struct ethercom		*ec = &sc->cue_ec;
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -381,16 +382,20 @@ allmulti:
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = cue_crc(enm->enm_addrlo);
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -571,13 +576,18 @@ cue_detach(device_t self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->cue_dev), __func__));
 
-	callout_stop(&sc->cue_stat_ch);
 	/*
-	 * Remove any pending task.  It cannot be executing because it run
-	 * in the same thread as detach.
+	 * XXX Halting callout guarantees no more tick tasks.  What
+	 * guarantees no more stop tasks?  What guarantees no more
+	 * calls to cue_send?  Don't we need to wait for if_detach or
+	 * something?  Should we set sc->cue_dying here?  Is device
+	 * deactivation guaranteed to have already happened?
 	 */
-	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
-	usb_rem_task(sc->cue_udev, &sc->cue_stop_task);
+	callout_halt(&sc->cue_stat_ch, NULL);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */
@@ -1094,7 +1104,7 @@ Static int
 cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct cue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
@@ -1103,7 +1113,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cue_init(sc);
@@ -1120,7 +1130,8 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+		else if ((error = ifioctl_common(ifp, command, data))
+		    == ENETRESET)
 			error = 0;
 		break;
 

@@ -1,6 +1,6 @@
 ! model
   pc101           Generic 101-key PC
-  pc102           Generic 101-key PC (intl.)
+  pc102           Generic 102-key PC (intl.)
   pc104           Generic 104-key PC
   pc105           Generic 105-key PC (intl.)
   dell101         Dell 101-key PC
@@ -187,6 +187,9 @@
   teck227         Truly Ergonomic 227
   teck229         Truly Ergonomic 229
   apex300         SteelSeries Apex 300 (Apex RAW)
+  chromebook      Chromebook
+  teck227         Truly Ergonomic Computer Keyboard Model 227 (Wide Alt keys)
+  teck229         Truly Ergonomic Computer Keyboard Model 229 (Standard sized Alt keys, additional Super and Menu key)
 
 ! layout
   us              English (US)
@@ -353,19 +356,21 @@
   jhelum          in: Punjabi (Gurmukhi Jhelum)
   kan             in: Kannada
   kan-kagapa      in: Kannada (KaGaPa phonetic)
+  kan-kagapa      in: Kannada (KaGaPa phonetic)
   mal             in: Malayalam
   mal_lalitha     in: Malayalam (Lalitha)
   mal_enhanced    in: Malayalam (enhanced Inscript, with rupee)
   ori             in: Oriya
   olck            in: Ol Chiki
-  tam_unicode     in: Tamil (Unicode)
-  tam_keyboard_with_numerals in: Tamil (keyboard with numerals)
-  tam_TAB         in: Tamil (TAB typewriter)
-  tam_TSCII       in: Tamil (TSCII typewriter)
-  tam             in: Tamil
+  tam_tamilnet    in: Tamil (TamilNet '99)
+  tam_tamilnet_with_tam_nums in: Tamil (TamilNet '99 with Tamil numerals)
+  tam_tamilnet_TAB in: Tamil (TamilNet '99, TAB encoding)
+  tam_tamilnet_TSCII in: Tamil (TamilNet '99, TSCII encoding)
+  tam             in: Tamil (Inscript)
   tel             in: Telugu
   tel-kagapa      in: Telugu (KaGaPa phonetic)
   tel-sarala      in: Telugu (Sarala)
+  tel-kagapa      in: Telugu (KaGaPa phonetic)
   urd-phonetic    in: Urdu (phonetic)
   urd-phonetic3   in: Urdu (alt. phonetic)
   urd-winkeys     in: Urdu (Win keys)
@@ -401,6 +406,7 @@
   azerty          cm: Cameroon Multilingual (AZERTY)
   dvorak          cm: Cameroon Multilingual (Dvorak)
   mmuock          cm: Mmuock
+  zawgyi          mm: Burmese Zawgyi
   fr-dvorak       ca: French (Canada, Dvorak)
   fr-legacy       ca: French (Canada, legacy)
   multix          ca: Canadian Multilingual
@@ -411,6 +417,7 @@
   tib             cn: Tibetan
   tib_asciinum    cn: Tibetan (with ASCII numerals)
   ug              cn: Uyghur
+  altgr-pinyin    cn: Hanyu Pinyin (altgr)
   alternatequotes hr: Croatian (with guillemets)
   unicode         hr: Croatian (with Croatian digraphs)
   unicodeus       hr: Croatian (US, with Croatian digraphs)
@@ -464,6 +471,7 @@
   bre             fr: French (Breton)
   oci             fr: Occitan
   geo             fr: Georgian (France, AZERTY Tskapo)
+  us              fr: French (US, with French letters)
   generic         gh: English (Ghana, multilingual)
   akan            gh: Akan
   ewe             gh: Ewe
@@ -541,11 +549,14 @@
   ruskaz          kz: Russian (Kazakhstan, with Kazakh)
   kazrus          kz: Kazakh (with Russian)
   ext             kz: Kazakh (extended)
+  latin           kz: Kazakh (Latin)
   stea            la: Lao (STEA proposed standard layout)
   nodeadkeys      latam: Spanish (Latin American, no dead keys)
   deadtilde       latam: Spanish (Latin American, dead tilde)
   sundeadkeys     latam: Spanish (Latin American, with Sun dead keys)
   dvorak          latam: Spanish (Latin American, Dvorak)
+  colemak         latam: Spanish (Latin American, Colemak)
+  colemak-gaming  latam: Spanish (Latin American, Colemak for gaming)
   std             lt: Lithuanian (standard)
   us              lt: Lithuanian (US, with Lithuanian letters)
   ibm             lt: Lithuanian (IBM LST 1205-92)
@@ -597,6 +608,7 @@
   winkeys         ro: Romanian (Win keys)
   phonetic        ru: Russian (phonetic)
   phonetic_winkeys ru: Russian (phonetic, with Win keys)
+  phonetic_yazherty ru: Russian (phonetic yazherty)
   typewriter      ru: Russian (typewriter)
   legacy          ru: Russian (legacy)
   typewriter-legacy ru: Russian (typewriter, legacy)
@@ -646,6 +658,7 @@
   mac             se: Swedish (Macintosh)
   svdvorak        se: Swedish (Svdvorak)
   us_dvorak       se: Swedish (based on US Intl. Dvorak)
+  us              se: Swedish (US, with Swedish letters)
   swl             se: Swedish Sign Language
   legacy          ch: German (Switzerland, legacy)
   de_nodeadkeys   ch: German (Switzerland, no dead keys)
@@ -661,8 +674,8 @@
   ku_f            sy: Kurdish (Syria, F)
   ku_alt          sy: Kurdish (Syria, Latin Alt-Q)
   legacy          tj: Tajik (legacy)
-  tam_unicode     lk: Tamil (Sri Lanka, Unicode)
-  tam_TAB         lk: Tamil (Sri Lanka, TAB Typewriter)
+  tam_unicode     lk: Tamil (Sri Lanka, TamilNet '99)
+  tam_TAB         lk: Tamil (Sri Lanka, TamilNet '99, TAB encoding)
   us              lk: Sinhala (US, with Sinhala letters)
   tis             th: Thai (TIS-820.2538)
   pat             th: Thai (Pattachote)
@@ -692,7 +705,10 @@
   mac             gb: English (UK, Macintosh)
   mac_intl        gb: English (UK, intl., Macintosh)
   colemak         gb: English (UK, Colemak)
+  pl              gb: Polish (British keyboard)
   latin           uz: Uzbek (Latin)
+  us              vn: Vietnamese (US, with Vietnamese letters)
+  fr              vn: Vietnamese (French, with Vietnamese letters)
   kr104           kr: Korean (101/104 key compatible)
   CloGaelach      ie: CloGaelach
   UnicodeExpert   ie: Irish (UnicodeExpert)
@@ -707,7 +723,9 @@
   yoruba          ng: Yoruba
   hausa           ng: Hausa (Nigeria)
   left_hand       brai: Braille (left-handed)
+  left_hand_invert brai: Braille (left-handed inverted thumb)
   right_hand      brai: Braille (right-handed)
+  right_hand_invert brai: Braille (right-handed inverted thumb)
   alt             tm: Turkmen (Alt-Q)
   fr-oss          ml: French (Mali, alt.)
   us-mac          ml: English (Mali, US, Macintosh)
@@ -912,7 +930,6 @@
   japan:nicola_f_bs    NICOLA-F style Backspace
   japan:hztg_escape    Make Zenkaku Hankaku an additional Esc
   korean               Korean Hangul/Hanja keys
-  korean:hw_keys       Hardware Hangul/Hanja keys
   korean:ralt_rctrl    Right Alt as Hangul, right Ctrl as Hanja
   korean:rctrl_ralt    Right Ctrl as Hangul, right Alt as Hanja
   esperanto            Adding Esperanto supersigned letters

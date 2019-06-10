@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/04/07 17:48:13 christos Exp $
+#	$NetBSD: Makefile,v 1.9.16.1 2019/06/10 22:05:09 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,9 @@ SRCS+=		deflate.c blocksplitter.c tree.c lz77.c cache.c hash.c util.c \
 DPADD=		${LIBM} ${LIBPTHREAD}
 .endif
 LDADD=		-lm -lz -lpthread
+
+MLINKS+=	pigz.1 unpigz.1
+LINKS+=		${BINDIR}/pigz ${BINDIR}/unpigz
 
 .if ${MKPIGZGZIP} != "no"
 # these ones are from mrg's gzip

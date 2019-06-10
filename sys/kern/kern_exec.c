@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.459 2018/05/28 11:32:20 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.459.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459 2018/05/28 11:32:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -209,6 +209,7 @@ struct emul emul_netbsd = {
 	.e_sc_autoload =	netbsd_syscalls_autoload,
 #endif
 	.e_sysent =		sysent,
+	.e_nomodbits =		sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	syscallnames,
 #else
@@ -1268,15 +1269,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	mutex_enter(proc_lock);
 
-	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
+	if (p->p_slflag & PSL_TRACED) {
 		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_EXEC;
-		sigswitch(0, SIGTRAP, false);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
+		eventswitch(TRAP_EXEC);
 		mutex_enter(proc_lock);
 	}
 
@@ -1422,6 +1417,8 @@ copyoutargs(struct execve_data * restrict data, struct lwp *l,
 	struct exec_package	* const epp = &data->ed_pack;
 	struct proc		*p = l->l_proc;
 	int			error;
+
+	memset(&data->ed_arginfo, 0, sizeof(data->ed_arginfo));
 
 	/* remember information about the process */
 	data->ed_arginfo.ps_nargvstr = data->ed_argc;
@@ -2628,7 +2625,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	/* copy in file_actions struct */
 	if (SCARG(uap, file_actions) != NULL) {
-		max_fileactions = 2 * min(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
+		max_fileactions = 2 * uimin(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
 		    maxfiles);
 		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions),
 		    max_fileactions);

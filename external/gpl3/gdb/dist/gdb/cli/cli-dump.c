@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -30,19 +30,14 @@
 #include "gdbcore.h"
 #include "cli/cli-utils.h"
 #include "gdb_bfd.h"
-#include "filestuff.h"
+#include "common/filestuff.h"
+#include "common/byte-vector.h"
 
-
-static const char *
-scan_expression_with_cleanup (const char **cmd, const char *def)
+static gdb::unique_xmalloc_ptr<char>
+scan_expression (const char **cmd, const char *def)
 {
   if ((*cmd) == NULL || (**cmd) == '\0')
-    {
-      char *exp = xstrdup (def);
-
-      make_cleanup (xfree, exp);
-      return exp;
-    }
+    return gdb::unique_xmalloc_ptr<char> (xstrdup (def));
   else
     {
       char *exp;
@@ -50,18 +45,16 @@ scan_expression_with_cleanup (const char **cmd, const char *def)
 
       end = (*cmd) + strcspn (*cmd, " \t");
       exp = savestring ((*cmd), end - (*cmd));
-      make_cleanup (xfree, exp);
-      (*cmd) = skip_spaces_const (end);
-      return exp;
+      (*cmd) = skip_spaces (end);
+      return gdb::unique_xmalloc_ptr<char> (exp);
     }
 }
 
 
-static char *
-scan_filename_with_cleanup (const char **cmd, const char *defname)
+static gdb::unique_xmalloc_ptr<char>
+scan_filename (const char **cmd, const char *defname)
 {
-  char *filename;
-  char *fullname;
+  gdb::unique_xmalloc_ptr<char> filename;
 
   /* FIXME: Need to get the ``/a(ppend)'' flag from somewhere.  */
 
@@ -70,37 +63,21 @@ scan_filename_with_cleanup (const char **cmd, const char *defname)
     {
       if (defname == NULL)
 	error (_("Missing filename."));
-      filename = xstrdup (defname);
-      make_cleanup (xfree, filename);
+      filename.reset (xstrdup (defname));
     }
   else
     {
       /* FIXME: should parse a possibly quoted string.  */
       const char *end;
 
-      (*cmd) = skip_spaces_const (*cmd);
+      (*cmd) = skip_spaces (*cmd);
       end = *cmd + strcspn (*cmd, " \t");
-      filename = savestring ((*cmd), end - (*cmd));
-      make_cleanup (xfree, filename);
-      (*cmd) = skip_spaces_const (end);
+      filename.reset (savestring ((*cmd), end - (*cmd)));
+      (*cmd) = skip_spaces (end);
     }
   gdb_assert (filename != NULL);
 
-  fullname = tilde_expand (filename);
-  make_cleanup (xfree, fullname);
-  
-  return fullname;
-}
-
-static FILE *
-fopen_with_cleanup (const char *filename, const char *mode)
-{
-  FILE *file = gdb_fopen_cloexec (filename, mode);
-
-  if (file == NULL)
-    perror_with_name (filename);
-  make_cleanup_fclose (file);
-  return file;
+  return gdb::unique_xmalloc_ptr<char> (tilde_expand (filename.get ()));
 }
 
 static gdb_bfd_ref_ptr
@@ -151,14 +128,14 @@ static struct cmd_list_element *binary_dump_cmdlist;
 static struct cmd_list_element *binary_append_cmdlist;
 
 static void
-dump_command (char *cmd, int from_tty)
+dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump\" must be followed by a subcommand.\n\n"));
   help_list (dump_cmdlist, "dump ", all_commands, gdb_stdout);
 }
 
 static void
-append_command (char *cmd, int from_tty)
+append_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"append\" must be followed by a subcommand.\n\n"));
   help_list (dump_cmdlist, "append ", all_commands, gdb_stdout);
@@ -168,11 +145,10 @@ static void
 dump_binary_file (const char *filename, const char *mode, 
 		  const bfd_byte *buf, ULONGEST len)
 {
-  FILE *file;
   int status;
 
-  file = fopen_with_cleanup (filename, mode);
-  status = fwrite (buf, len, 1, file);
+  gdb_file_up file = gdb_fopen_cloexec (filename, mode);
+  status = fwrite (buf, len, 1, file.get ());
   if (status != 1)
     perror_with_name (filename);
 }
@@ -201,28 +177,25 @@ dump_bfd_file (const char *filename, const char *mode,
 static void
 dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
 {
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
   CORE_ADDR lo;
   CORE_ADDR hi;
   ULONGEST count;
-  const char *filename;
-  const char *lo_exp;
   const char *hi_exp;
 
   /* Open the file.  */
-  filename = scan_filename_with_cleanup (&cmd, NULL);
+  gdb::unique_xmalloc_ptr<char> filename = scan_filename (&cmd, NULL);
 
   /* Find the low address.  */
   if (cmd == NULL || *cmd == '\0')
     error (_("Missing start address."));
-  lo_exp = scan_expression_with_cleanup (&cmd, NULL);
+  gdb::unique_xmalloc_ptr<char> lo_exp = scan_expression (&cmd, NULL);
 
   /* Find the second address - rest of line.  */
   if (cmd == NULL || *cmd == '\0')
     error (_("Missing stop address."));
   hi_exp = cmd;
 
-  lo = parse_and_eval_address (lo_exp);
+  lo = parse_and_eval_address (lo_exp.get ());
   hi = parse_and_eval_address (hi_exp);
   if (hi <= lo)
     error (_("Invalid memory address range (start >= end)."));
@@ -230,24 +203,18 @@ dump_memory_to_file (const char *cmd, const char *mode, const char *file_format)
 
   /* FIXME: Should use read_memory_partial() and a magic blocking
      value.  */
-  std::unique_ptr<gdb_byte[]> buf (new gdb_byte[count]);
-  read_memory (lo, buf.get (), count);
+  gdb::byte_vector buf (count);
+  read_memory (lo, buf.data (), count);
   
   /* Have everything.  Open/write the data.  */
   if (file_format == NULL || strcmp (file_format, "binary") == 0)
-    {
-      dump_binary_file (filename, mode, buf.get (), count);
-    }
+    dump_binary_file (filename.get (), mode, buf.data (), count);
   else
-    {
-      dump_bfd_file (filename, mode, file_format, lo, buf.get (), count);
-    }
-
-  do_cleanups (old_cleanups);
+    dump_bfd_file (filename.get (), mode, file_format, lo, buf.data (), count);
 }
 
 static void
-dump_memory_command (char *cmd, const char *mode)
+dump_memory_command (const char *cmd, const char *mode)
 {
   dump_memory_to_file (cmd, mode, "binary");
 }
@@ -255,12 +222,10 @@ dump_memory_command (char *cmd, const char *mode)
 static void
 dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 {
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, NULL);
   struct value *val;
-  const char *filename;
 
   /* Open the file.  */
-  filename = scan_filename_with_cleanup (&cmd, NULL);
+  gdb::unique_xmalloc_ptr<char> filename = scan_filename (&cmd, NULL);
 
   /* Find the value.  */
   if (cmd == NULL || *cmd == '\0')
@@ -271,10 +236,8 @@ dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 
   /* Have everything.  Open/write the data.  */
   if (file_format == NULL || strcmp (file_format, "binary") == 0)
-    {
-      dump_binary_file (filename, mode, value_contents (val), 
-			TYPE_LENGTH (value_type (val)));
-    }
+    dump_binary_file (filename.get (), mode, value_contents (val),
+		      TYPE_LENGTH (value_type (val)));
   else
     {
       CORE_ADDR vaddr;
@@ -289,100 +252,98 @@ dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 	  warning (_("value is not an lval: address assumed to be zero"));
 	}
 
-      dump_bfd_file (filename, mode, file_format, vaddr, 
+      dump_bfd_file (filename.get (), mode, file_format, vaddr,
 		     value_contents (val), 
 		     TYPE_LENGTH (value_type (val)));
     }
-
-  do_cleanups (old_cleanups);
 }
 
 static void
-dump_value_command (char *cmd, const char *mode)
+dump_value_command (const char *cmd, const char *mode)
 {
   dump_value_to_file (cmd, mode, "binary");
 }
 
 static void
-dump_srec_memory (char *args, int from_tty)
+dump_srec_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_WB, "srec");
 }
 
 static void
-dump_srec_value (char *args, int from_tty)
+dump_srec_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_WB, "srec");
 }
 
 static void
-dump_ihex_memory (char *args, int from_tty)
+dump_ihex_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_WB, "ihex");
 }
 
 static void
-dump_ihex_value (char *args, int from_tty)
+dump_ihex_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_WB, "ihex");
 }
 
 static void
-dump_verilog_memory (char *args, int from_tty)
+dump_verilog_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_WB, "verilog");
 }
 
 static void
-dump_verilog_value (char *args, int from_tty)
+dump_verilog_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_WB, "verilog");
 }
 
 static void
-dump_tekhex_memory (char *args, int from_tty)
+dump_tekhex_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_WB, "tekhex");
 }
 
 static void
-dump_tekhex_value (char *args, int from_tty)
+dump_tekhex_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_WB, "tekhex");
 }
 
 static void
-dump_binary_memory (char *args, int from_tty)
+dump_binary_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_WB, "binary");
 }
 
 static void
-dump_binary_value (char *args, int from_tty)
+dump_binary_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_WB, "binary");
 }
 
 static void
-append_binary_memory (char *args, int from_tty)
+append_binary_memory (const char *args, int from_tty)
 {
   dump_memory_to_file (args, FOPEN_AB, "binary");
 }
 
 static void
-append_binary_value (char *args, int from_tty)
+append_binary_value (const char *args, int from_tty)
 {
   dump_value_to_file (args, FOPEN_AB, "binary");
 }
 
 struct dump_context
 {
-  void (*func) (char *cmd, const char *mode);
+  void (*func) (const char *cmd, const char *mode);
   const char *mode;
 };
 
 static void
-call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
+call_dump_func (struct cmd_list_element *c, const char *args, int from_tty)
 {
   struct dump_context *d = (struct dump_context *) get_cmd_context (c);
 
@@ -391,14 +352,14 @@ call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
 
 static void
 add_dump_command (const char *name,
-		  void (*func) (char *args, const char *mode),
+		  void (*func) (const char *args, const char *mode),
 		  const char *descr)
 
 {
   struct cmd_list_element *c;
   struct dump_context *d;
 
-  c = add_cmd (name, all_commands, NULL, descr, &dump_cmdlist);
+  c = add_cmd (name, all_commands, descr, &dump_cmdlist);
   c->completer =  filename_completer;
   d = XNEW (struct dump_context);
   d->func = func;
@@ -406,7 +367,7 @@ add_dump_command (const char *name,
   set_cmd_context (c, d);
   c->func = call_dump_func;
 
-  c = add_cmd (name, all_commands, NULL, descr, &append_cmdlist);
+  c = add_cmd (name, all_commands, descr, &append_cmdlist);
   c->completer =  filename_completer;
   d = XNEW (struct dump_context);
   d->func = func;
@@ -446,8 +407,6 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
   bfd_vma sec_end    = sec_start + size;
   bfd_size_type sec_offset = 0;
   bfd_size_type sec_load_count = size;
-  struct cleanup *old_chain;
-  gdb_byte *buf;
   int ret;
 
   /* Ignore non-loadable sections, eg. from elf files.  */
@@ -475,9 +434,8 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
     sec_load_count -= sec_end - data->load_end;
 
   /* Get the data.  */
-  buf = (gdb_byte *) xmalloc (size);
-  old_chain = make_cleanup (xfree, buf);
-  if (!bfd_get_section_contents (ibfd, isec, buf, 0, size))
+  gdb::byte_vector buf (size);
+  if (!bfd_get_section_contents (ibfd, isec, buf.data (), 0, size))
     error (_("Failed to read bfd file %s: '%s'."), bfd_get_filename (ibfd), 
 	   bfd_errmsg (bfd_get_error ()));
 
@@ -499,24 +457,24 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
 
   /* Write the data.  */
   ret = target_write_memory (sec_start + sec_offset + data->load_offset, 
-			     buf + sec_offset, sec_load_count);
+			     &buf[sec_offset], sec_load_count);
   if (ret != 0)
     warning (_("restore: memory write failed (%s)."), safe_strerror (ret));
-  do_cleanups (old_chain);
-  return;
 }
 
 static void
 restore_binary_file (const char *filename, struct callback_data *data)
 {
-  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
-  FILE *file = fopen_with_cleanup (filename, FOPEN_RB);
+  gdb_file_up file = gdb_fopen_cloexec (filename, FOPEN_RB);
   long len;
 
+  if (file == NULL)
+    error (_("Failed to open %s: %s"), filename, safe_strerror (errno));
+
   /* Get the file size for reading.  */
-  if (fseek (file, 0, SEEK_END) == 0)
+  if (fseek (file.get (), 0, SEEK_END) == 0)
     {
-      len = ftell (file);
+      len = ftell (file.get ());
       if (len < 0)
 	perror_with_name (filename);
     }
@@ -541,30 +499,26 @@ restore_binary_file (const char *filename, struct callback_data *data)
      (unsigned long) (data->load_start + data->load_offset + len));
 
   /* Now set the file pos to the requested load start pos.  */
-  if (fseek (file, data->load_start, SEEK_SET) != 0)
+  if (fseek (file.get (), data->load_start, SEEK_SET) != 0)
     perror_with_name (filename);
 
   /* Now allocate a buffer and read the file contents.  */
-  std::unique_ptr<gdb_byte[]> buf (new gdb_byte[len]);
-  if (fread (buf.get (), 1, len, file) != len)
+  gdb::byte_vector buf (len);
+  if (fread (buf.data (), 1, len, file.get ()) != len)
     perror_with_name (filename);
 
   /* Now write the buffer into target memory.  */
   len = target_write_memory (data->load_start + data->load_offset,
-			     buf.get (), len);
+			     buf.data (), len);
   if (len != 0)
     warning (_("restore: memory write failed (%s)."), safe_strerror (len));
-  do_cleanups (cleanup);
 }
 
 static void
-restore_command (char *args_in, int from_tty)
+restore_command (const char *args, int from_tty)
 {
-  char *filename;
   struct callback_data data;
-  bfd *ibfd;
   int binary_flag = 0;
-  const char *args = args_in;
 
   if (!target_has_execution)
     noprocess ();
@@ -574,7 +528,7 @@ restore_command (char *args_in, int from_tty)
   data.load_end    = 0;
 
   /* Parse the input arguments.  First is filename (required).  */
-  filename = scan_filename_with_cleanup (&args, NULL);
+  gdb::unique_xmalloc_ptr<char> filename = scan_filename (&args, NULL);
   if (args != NULL && *args != '\0')
     {
       static const char binary_string[] = "binary";
@@ -584,18 +538,18 @@ restore_command (char *args_in, int from_tty)
 	{
 	  binary_flag = 1;
 	  args += strlen (binary_string);
-	  args = skip_spaces_const (args);
+	  args = skip_spaces (args);
 	}
       /* Parse offset (optional).  */
       if (args != NULL && *args != '\0')
 	data.load_offset = binary_flag ?
-	  parse_and_eval_address (scan_expression_with_cleanup (&args, NULL)) :
-	  parse_and_eval_long (scan_expression_with_cleanup (&args, NULL));
+	  parse_and_eval_address (scan_expression (&args, NULL).get ()) :
+	  parse_and_eval_long (scan_expression (&args, NULL).get ());
       if (args != NULL && *args != '\0')
 	{
 	  /* Parse start address (optional).  */
 	  data.load_start = 
-	    parse_and_eval_long (scan_expression_with_cleanup (&args, NULL));
+	    parse_and_eval_long (scan_expression (&args, NULL).get ());
 	  if (args != NULL && *args != '\0')
 	    {
 	      /* Parse end address (optional).  */
@@ -608,18 +562,18 @@ restore_command (char *args_in, int from_tty)
 
   if (info_verbose)
     printf_filtered ("Restore file %s offset 0x%lx start 0x%lx end 0x%lx\n",
-		     filename, (unsigned long) data.load_offset, 
+		     filename.get (), (unsigned long) data.load_offset,
 		     (unsigned long) data.load_start, 
 		     (unsigned long) data.load_end);
 
   if (binary_flag)
     {
-      restore_binary_file (filename, &data);
+      restore_binary_file (filename.get (), &data);
     }
   else
     {
       /* Open the file for loading.  */
-      gdb_bfd_ref_ptr ibfd (bfd_openr_or_error (filename, NULL));
+      gdb_bfd_ref_ptr ibfd (bfd_openr_or_error (filename.get (), NULL));
 
       /* Process the sections.  */
       bfd_map_over_sections (ibfd.get (), restore_section_callback, &data);
@@ -627,49 +581,47 @@ restore_command (char *args_in, int from_tty)
 }
 
 static void
-srec_dump_command (char *cmd, int from_tty)
+srec_dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump srec\" must be followed by a subcommand.\n"));
   help_list (srec_cmdlist, "dump srec ", all_commands, gdb_stdout);
 }
 
 static void
-ihex_dump_command (char *cmd, int from_tty)
+ihex_dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump ihex\" must be followed by a subcommand.\n"));
   help_list (ihex_cmdlist, "dump ihex ", all_commands, gdb_stdout);
 }
 
 static void
-verilog_dump_command (char *cmd, int from_tty)
+verilog_dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump verilog\" must be followed by a subcommand.\n"));
   help_list (verilog_cmdlist, "dump verilog ", all_commands, gdb_stdout);
 }
 
 static void
-tekhex_dump_command (char *cmd, int from_tty)
+tekhex_dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump tekhex\" must be followed by a subcommand.\n"));
   help_list (tekhex_cmdlist, "dump tekhex ", all_commands, gdb_stdout);
 }
 
 static void
-binary_dump_command (char *cmd, int from_tty)
+binary_dump_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"dump binary\" must be followed by a subcommand.\n"));
   help_list (binary_dump_cmdlist, "dump binary ", all_commands, gdb_stdout);
 }
 
 static void
-binary_append_command (char *cmd, int from_tty)
+binary_append_command (const char *cmd, int from_tty)
 {
   printf_unfiltered (_("\"append binary\" must be followed by a subcommand.\n"));
   help_list (binary_append_cmdlist, "append binary ", all_commands,
 	     gdb_stdout);
 }
-
-extern initialize_file_ftype _initialize_cli_dump; /* -Wmissing-prototypes */
 
 void
 _initialize_cli_dump (void)

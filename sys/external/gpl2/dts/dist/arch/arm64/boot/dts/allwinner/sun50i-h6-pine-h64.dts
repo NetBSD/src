@@ -23,28 +23,34 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	reg_gmac_3v3: gmac-3v3 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc-gmac-3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		startup-delay-us = <100000>;
-		gpio = <&pio 2 16 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
+	connector {
+		compatible = "hdmi-connector";
+		type = "a";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
 	};
 
-	reg_vcc3v3: vcc3v3 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-	};
+	leds {
+		compatible = "gpio-leds";
 
-	reg_vcc1v8: vcc1v8 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc1v8";
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <1800000>;
+		heartbeat {
+			label = "pine-h64:green:heartbeat";
+			gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>; /* PL4 */
+		};
+
+		link {
+			label = "pine-h64:white:link";
+			gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>; /* PL3 */
+		};
+
+		status {
+			label = "pine-h64:blue:status";
+			gpios = <&r_pio 0 7 GPIO_ACTIVE_HIGH>; /* PL7 */
+		};
 	};
 
 	reg_usb_vbus: vbus {
@@ -58,28 +64,12 @@
 	};
 };
 
-&cpu0 {
-	cpu-supply = <&reg_dcdca>;
-};
-
-&dwc3 {
-	status = "okay";
-};
-
-&ehci0 {
-	status = "okay";
-};
-
-&ehci3 {
-	status = "okay";
-};
-
 &emac {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ext_rgmii_pins>;
 	phy-mode = "rgmii";
 	phy-handle = <&ext_rgmii_phy>;
-	phy-supply = <&reg_gmac_3v3>;
+	phy-supply = <&reg_aldo2>;
 	allwinner,rx-delay-ps = <200>;
 	allwinner,tx-delay-ps = <200>;
 	status = "okay";
@@ -92,21 +82,45 @@
 	};
 };
 
+&de {
+	status = "okay";
+};
+
+&hdmi {
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ehci3 {
+	status = "okay";
+};
+
 &mmc0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc0_pins>;
-	vmmc-supply = <&reg_vcc3v3>;
+	vmmc-supply = <&reg_cldo1>;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
+	bus-width = <4>;
 	status = "okay";
 };
 
 &mmc2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc2_pins>;
-	vmmc-supply = <&reg_vcc3v3>;
-	vqmmc-supply = <&reg_vcc1v8>;
+	vmmc-supply = <&reg_cldo1>;
+	vqmmc-supply = <&reg_bldo2>;
 	non-removable;
 	cap-mmc-hw-reset;
+	bus-width = <8>;
 	status = "okay";
 };
 
@@ -119,18 +133,16 @@
 };
 
 &r_i2c {
-	pinctrl-names = "default";
-	pinctrl-0 = <&r_i2c_pins>;
 	status = "okay";
 
 	axp805: pmic@36 {
-		compatible = "x-powers,axp805";
+		compatible = "x-powers,axp805", "x-powers,axp806";
 		reg = <0x36>;
 		interrupt-parent = <&r_intc>;
 		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-controller;
 		#interrupt-cells = <1>;
-		x-powers,master-mode;
+		x-powers,self-working-mode;
 
 		regulators {
 			reg_aldo1: aldo1 {
@@ -144,6 +156,7 @@
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
 				regulator-name = "vcc-ac200";
+				regulator-enable-ramp-delay = <100000>;
 			};
 
 			reg_aldo3: aldo3 {
@@ -158,20 +171,21 @@
 				regulator-always-on;
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-name = "vcc-ddr-bias-pll";
+				regulator-name = "vcc-bias-pll";
 			};
 
 			reg_bldo2: bldo2 {
 				regulator-always-on;
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-name = "vcc-efuse-emmc-pcie-hdmi";
+				regulator-name = "vcc-efuse-pcie-hdmi-io";
 			};
 
 			reg_bldo3: bldo3 {
+				regulator-always-on;
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
-				regulator-name = "vcc-wifi-io";
+				regulator-name = "vcc-dcxoio";
 			};
 
 			bldo4 {
@@ -238,19 +252,22 @@
 	};
 };
 
-&r_i2c {
-	status = "okay";
-
-	pcf8563: rtc@51 {
-		compatible = "nxp,pcf8563";
-		reg = <0x51>;
-		#clock-cells = <0>;
-	};
-};
-
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_ph_pins>;
+	status = "okay";
+};
+
+&dwc3 {
+	status = "okay";
+};
+
+&usb3 {
+	status = "okay";
+};
+
+&usb3phy {
+	phy-supply = <&reg_usb_vbus>;
 	status = "okay";
 };
 
@@ -262,14 +279,5 @@
 &usb2phy {
 	usb0_vbus-supply = <&reg_usb_vbus>;
 	usb3_vbus-supply = <&reg_usb_vbus>;
-	status = "okay";
-};
-
-&usb3 {
-	status = "okay";
-};
-
-&usb3phy {
-	phy-supply = <&reg_usb_vbus>;
 	status = "okay";
 };

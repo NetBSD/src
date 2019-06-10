@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -2736,9 +2736,10 @@ xcoff_reloc_type_fail (bfd *input_bfd,
                        bfd_vma *relocation ATTRIBUTE_UNUSED,
                        bfd_byte *contents ATTRIBUTE_UNUSED)
 {
-  (*_bfd_error_handler)
-    (_("%s: unsupported relocation type 0x%02x"),
-     bfd_get_filename (input_bfd), (unsigned int) rel->r_type);
+  _bfd_error_handler
+    /* xgettext: c-format */
+    (_("%B: unsupported relocation type 0x%02x"),
+     input_bfd, (unsigned int) rel->r_type);
   bfd_set_error (bfd_error_bad_value);
   return FALSE;
 }
@@ -2821,10 +2822,10 @@ xcoff_reloc_type_toc (bfd *input_bfd,
     {
       if (h->toc_section == NULL)
 	{
-	  (*_bfd_error_handler)
-	    (_("%s: TOC reloc at 0x%x to symbol `%s' with no TOC entry"),
-	     bfd_get_filename (input_bfd), rel->r_vaddr,
-	     h->root.root.string);
+	  _bfd_error_handler
+	    /* xgettext: c-format */
+	    (_("%B: TOC reloc at 0x%x to symbol `%s' with no TOC entry"),
+	     input_bfd, rel->r_vaddr, h->root.root.string);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -3567,7 +3568,8 @@ xcoff_create_csect_from_smclas (bfd *abfd,
     }
   else
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext: c-format */
 	(_("%B: symbol `%s' has unrecognized smclas %d"),
 	 abfd, symbol_name, aux->x_csect.x_smclas);
       bfd_set_error (bfd_error_bad_value);

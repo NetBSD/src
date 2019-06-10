@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.24 2017/04/25 09:02:34 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.24.12.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,11 +29,12 @@
  */
 
 #ifdef _KERNEL_OPT
+#include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.24 2017/04/25 09:02:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.24.12.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

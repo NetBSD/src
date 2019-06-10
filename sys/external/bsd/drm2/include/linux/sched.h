@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.5 2014/11/08 19:27:40 nonaka Exp $	*/
+/*	$NetBSD: sched.h,v 1.5.20.1 2019/06/10 22:08:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,14 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
+#include <asm/param.h>
+#include <asm/barrier.h>
+#include <asm/processor.h>
+#include <linux/errno.h>
+
 #define	TASK_COMM_LEN	MAXCOMLEN
+
+#define	MAX_SCHEDULE_TIMEOUT	(INT_MAX/2)	/* paranoia */
 
 #define	current	curproc
 
@@ -53,17 +60,34 @@ schedule_timeout_uninterruptible(long timeout)
 	int start, end;
 
 	if (cold) {
-		DELAY(timeout);
+		unsigned us;
+		if (hz <= 1000) {
+			unsigned ms = hztoms(MIN(timeout, mstohz(INT_MAX)));
+			us = MIN(ms, INT_MAX/1000)*1000;
+		} else if (hz <= 1000000) {
+			us = MIN(timeout, (INT_MAX/1000000)/hz)*hz*1000000;
+		} else {
+			us = timeout/(1000000/hz);
+		}
+		DELAY(us);
 		return 0;
 	}
 
 	start = hardclock_ticks;
-	/* XXX Integer truncation...not likely to matter here.  */
-	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
+	/* Caller is expected to loop anyway, so no harm in truncating.  */
+	(void)kpause("loonix", false /*!intr*/, MIN(timeout, INT_MAX), NULL);
 	end = hardclock_ticks;
 
 	remain = timeout - (end - start);
 	return remain > 0 ? remain : 0;
+}
+
+static inline void
+cond_resched(void)
+{
+
+	if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		preempt();
 }
 
 #endif  /* _LINUX_SCHED_H_ */

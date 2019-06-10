@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 # Test that when a thread other than the main thread execs, we follow
 # through to the new incarnation of the main thread, even if the main
 # thread had already exited before the exec.
-
-# No exec event support in the remote protocol.
-if { [is_remote target] } then {
-    continue
-}
 
 standard_testfile
 set executable ${testfile}

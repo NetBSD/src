@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-1993, 1996-2006, 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-1993, 1996-2006, 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software; you can redistribute it and/or modify
@@ -1031,7 +1031,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
   struct patternlist
   {
     struct patternlist *next;
-    CHAR str[1];
+    CHAR str[FLEXIBLE_ARRAY_MEMBER];
   } *list = NULL;
   struct patternlist **lastp = &list;
   size_t pattern_len = STRLEN (pattern);
@@ -1083,7 +1083,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
                     ? pattern_len                                             \
                     : p - startp + 1UL);                                      \
             plensize = plen * sizeof (CHAR);                                  \
-            newpsize = offsetof (struct patternlist, str) + plensize;         \
+            newpsize = FLEXSIZEOF (struct patternlist, str, plensize);        \
             if ((size_t) -1 / sizeof (CHAR) < plen                            \
                 || newpsize < offsetof (struct patternlist, str)              \
                 || ALLOCA_LIMIT <= newpsize)                                  \

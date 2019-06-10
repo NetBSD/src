@@ -1,9 +1,10 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 /* Instruction building/extraction support for lm32. -*- C -*-
 
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -634,8 +635,9 @@ lm32_cgen_insert_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while building insn.\n"),
-	       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while building insn"),
+	 opindex);
       abort ();
   }
 
@@ -738,8 +740,9 @@ lm32_cgen_extract_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while decoding insn.\n"),
-	       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while decoding insn"),
+	 opindex);
       abort ();
     }
 
@@ -827,8 +830,9 @@ lm32_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while getting int operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while getting int operand"),
+	 opindex);
       abort ();
   }
 
@@ -898,8 +902,9 @@ lm32_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while getting vma operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while getting vma operand"),
+	 opindex);
       abort ();
   }
 
@@ -976,8 +981,9 @@ lm32_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while setting int operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while setting int operand"),
+	 opindex);
       abort ();
   }
 }
@@ -1044,8 +1050,9 @@ lm32_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while setting vma operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while setting vma operand"),
+	 opindex);
       abort ();
   }
 }

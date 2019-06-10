@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.2.4.1 2019/06/10 22:04:55 christos Exp $	*/
 
 /* result.c
  */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.2.4.1 2019/06/10 22:04:55 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -77,15 +77,12 @@ static const char *text[DHCP_R_NRESULTS] = {
 #define DHCP_RESULT_RESULTSET		2
 #define DHCP_RESULT_UNAVAILABLESET	3
 
-// This is a placeholder as we don't allow for external message catalogs yet
-isc_msgcat_t * dhcp_msgcat = NULL;
-
 isc_result_t
 dhcp_result_register(void) {
 	isc_result_t result;
 
 	result = isc_result_register(ISC_RESULTCLASS_DHCP, DHCP_R_NRESULTS,
-				     text, dhcp_msgcat, DHCP_RESULT_RESULTSET);
+				     text, DHCP_RESULT_RESULTSET);
 
 	return(result);
 }

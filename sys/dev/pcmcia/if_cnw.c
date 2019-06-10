@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.63.2.1 2019/06/10 22:07:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.63.2.1 2019/06/10 22:07:30 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -550,8 +550,7 @@ cnw_attach(device_t parent, device_t self, void *aux)
 	ifp->if_start = cnw_start;
 	ifp->if_ioctl = cnw_ioctl;
 	ifp->if_watchdog = cnw_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX |
-	    IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface */
@@ -789,7 +788,7 @@ cnw_read(struct cnw_softc *sc)
 			mbytes -= pad;
 		}
 		mptr = mtod(m, u_int8_t *);
-		mbytes = m->m_len = min(totbytes, mbytes);
+		mbytes = m->m_len = uimin(totbytes, mbytes);
 		totbytes -= mbytes;
 		while (mbytes > 0) {
 			if (bufbytes == 0) {

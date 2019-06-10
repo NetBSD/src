@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.26 2018/06/17 15:46:39 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.26.2.1 2019/06/10 22:06:20 christos Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -8,16 +8,16 @@
 #include "opt_xen.h"
 #endif
 
-#if !defined(XEN)
-#define CLI(reg)	cli
-#define STI(reg)	sti
-#else
+
+#ifdef XEN
 /* XXX assym.h */
 #define TRAP_INSTR	int	$0x82
 #define XEN_BLOCK_EVENTS(reg)	movb	$1,EVTCHN_UPCALL_MASK(reg)
 #define XEN_UNBLOCK_EVENTS(reg)	movb	$0,EVTCHN_UPCALL_MASK(reg)
 #define XEN_TEST_PENDING(reg)	testb	$0xFF,EVTCHN_UPCALL_PENDING(reg)
+#endif /* XEN */
 
+#if defined(XENPV)
 #define CLI(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_BLOCK_EVENTS(reg)
 #define STI(reg)	movl	CPUVAR(VCPU),reg ;  \
@@ -25,7 +25,17 @@
 #define STIC(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)  ; \
 			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
-#endif
+#else
+#define CLI(reg)	cli
+#define STI(reg)	sti
+#ifdef XENPVHVM
+#define STIC(reg)	sti ; \
+			movl	CPUVAR(VCPU),reg ; \
+			XEN_UNBLOCK_EVENTS(reg)  ; \
+			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
+#endif /* XENPVHVM */
+
+#endif /* XENPV */
 
 #define HP_NAME_CLAC		1
 #define HP_NAME_STAC		2

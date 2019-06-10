@@ -1,5 +1,5 @@
 /* MI Command Set - MI Console.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_CONSOLE_H
-#define MI_CONSOLE_H
+#ifndef MI_MI_CONSOLE_H
+#define MI_MI_CONSOLE_H
 
 /* An output stream for MI.  Wraps a given output stream with a prefix
    and handles quoting.  This stream is locally buffered.  */
@@ -39,6 +39,8 @@ public:
 
   void write (const char *buf, long length_buf) override;
 
+  void write_async_safe (const char *buf, long length_buf) override;
+
 private:
   /* The wrapped raw output stream.  */
   ui_file *m_raw;
@@ -53,4 +55,4 @@ private:
   char m_quote;
 };
 
-#endif
+#endif /* MI_MI_CONSOLE_H */

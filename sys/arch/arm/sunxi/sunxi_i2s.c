@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,8 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $
 #include <sys/gpio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
+#include <dev/audio/linear.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $
 #define	 DA_FCTL_HUB_EN	__BIT(31)
 #define	 DA_FCTL_FTX	__BIT(25)
 #define	 DA_FCTL_FRX	__BIT(24)
+#define	 DA_FCTL_TXIM	__BIT(2)
+#define	 DA_FCTL_RXIM	__BITS(1,0)
 #define	DA_FSTA		0x18
 #define	DA_INT		0x1c
 #define	 DA_INT_TX_DRQ	__BIT(7)
@@ -79,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $
 #define	DA_CLKD		0x24
 #define	 DA_CLKD_MCLKO_EN __BIT(7)
 #define	 DA_CLKD_BCLKDIV __BITS(6,4)
+#define	  DA_CLKD_BCLKDIV_8	3
 #define	  DA_CLKD_BCLKDIV_16	5
 #define	 DA_CLKD_MCLKDIV __BITS(3,0)
 #define	  DA_CLKD_MCLKDIV_1	0
@@ -105,7 +108,7 @@ static const struct sunxi_i2s_config sun50i_a64_codec_config = {
 };
 
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun50i-a64-acodec-i2s",
+	{ "allwinner,sun50i-a64-codec-i2s",
 	  (uintptr_t)&sun50i_a64_codec_config },
 
 	{ NULL }
@@ -156,7 +159,6 @@ struct sunxi_i2s_softc {
 	kmutex_t		sc_intr_lock;
 
 	struct audio_format	sc_format;
-	struct audio_encoding_set *sc_encodings;
 
 	struct sunxi_i2s_chan	sc_pchan;
 	struct sunxi_i2s_chan	sc_rchan;
@@ -231,47 +233,24 @@ sunxi_i2s_transfer(struct sunxi_i2s_chan *ch)
 }
 
 static int
-sunxi_i2s_open(void *priv, int flags)
-{
-	return 0;
-}
-
-static void
-sunxi_i2s_close(void *priv)
-{
-}
-
-static int
-sunxi_i2s_query_encoding(void *priv, struct audio_encoding *ae)
+sunxi_i2s_query_format(void *priv, audio_format_query_t *afp)
 {
 	struct sunxi_i2s_softc * const sc = priv;
 
-	return auconv_query_encoding(sc->sc_encodings, ae);
+	return audio_query_format(&sc->sc_format, 1, afp);
 }
 
 static int
-sunxi_i2s_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+sunxi_i2s_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	struct sunxi_i2s_softc * const sc = priv;
-	int index;
 
-	if (play && (setmode & AUMODE_PLAY)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_PLAY, play, true, pfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_pchan.ch_params = pfil->req_size > 0 ?
-		    pfil->filters[0].param : *play;
+	if ((setmode & AUMODE_PLAY)) {
+		pfil->codec = audio_internal_to_linear32;
 	}
-	if (rec && (setmode & AUMODE_RECORD)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_RECORD, rec, true, rfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_rchan.ch_params = rfil->req_size > 0 ?
-		    rfil->filters[0].param : *rec;
+	if ((setmode & AUMODE_RECORD)) {
+		rfil->codec = audio_linear32_to_internal;
 	}
 
 	return 0;
@@ -314,29 +293,12 @@ sunxi_i2s_freem(void *priv, void *addr, size_t size)
 		}
 }
 
-static paddr_t
-sunxi_i2s_mappage(void *priv, void *addr, off_t off, int prot)
-{
-	struct sunxi_i2s_softc * const sc = priv;
-	struct sunxi_i2s_dma *dma;
-
-	if (off < 0)
-		return -1;
-
-	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list)
-		if (dma->dma_addr == addr) {
-			return bus_dmamem_mmap(sc->sc_dmat, dma->dma_segs,
-			    dma->dma_nsegs, off, prot, BUS_DMA_WAITOK);
-		}
-
-	return -1;
-}
-
 static int
 sunxi_i2s_get_props(void *priv)
 {
-	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|
-	    AUDIO_PROP_MMAP|AUDIO_PROP_FULLDUPLEX|AUDIO_PROP_INDEPENDENT;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
 }
 
 static int
@@ -347,12 +309,6 @@ sunxi_i2s_round_blocksize(void *priv, int bs, int mode,
 	if (bs == 0)
 		bs = 4;
 	return bs;
-}
-
-static size_t
-sunxi_i2s_round_buffersize(void *priv, int dir, size_t bufsize)
-{
-	return bufsize;
 }
 
 static int
@@ -526,17 +482,12 @@ sunxi_i2s_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 }
 
 static const struct audio_hw_if sunxi_i2s_hw_if = {
-	.open = sunxi_i2s_open,
-	.close = sunxi_i2s_close,
-	.drain = NULL,
-	.query_encoding = sunxi_i2s_query_encoding,
-	.set_params = sunxi_i2s_set_params,
+	.query_format = sunxi_i2s_query_format,
+	.set_format = sunxi_i2s_set_format,
 	.allocm = sunxi_i2s_allocm,
 	.freem = sunxi_i2s_freem,
-	.mappage = sunxi_i2s_mappage,
 	.get_props = sunxi_i2s_get_props,
 	.round_blocksize = sunxi_i2s_round_blocksize,
-	.round_buffersize = sunxi_i2s_round_buffersize,
 	.trigger_output = sunxi_i2s_trigger_output,
 	.trigger_input = sunxi_i2s_trigger_input,
 	.halt_output = sunxi_i2s_halt_output,
@@ -600,7 +551,7 @@ sunxi_i2s_dai_set_sysclk(audio_dai_tag_t dai, u_int rate, int dir)
 	/* XXX */
 
 	val = DA_CLKD_MCLKO_EN;
-	val |= __SHIFTIN(DA_CLKD_BCLKDIV_16, DA_CLKD_BCLKDIV);
+	val |= __SHIFTIN(DA_CLKD_BCLKDIV_8, DA_CLKD_BCLKDIV);
 	val |= __SHIFTIN(DA_CLKD_MCLKDIV_1, DA_CLKD_MCLKDIV);
 
 	I2S_WRITE(sc, DA_CLKD, val);
@@ -744,7 +695,6 @@ sunxi_i2s_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	uint32_t val;
-	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -802,18 +752,12 @@ sunxi_i2s_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
 	sc->sc_format.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	sc->sc_format.validbits = 16;
-	sc->sc_format.precision = 16;
+	sc->sc_format.validbits = 32;
+	sc->sc_format.precision = 32;
 	sc->sc_format.channels = 2;
 	sc->sc_format.channel_mask = AUFMT_STEREO;
-	sc->sc_format.frequency_type = 0;
-	sc->sc_format.frequency[0] = sc->sc_format.frequency[1] = 48000;
-
-	error = auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings);
-	if (error) {
-		aprint_error_dev(self, "couldn't create encodings\n");
-		return;
-	}
+	sc->sc_format.frequency_type = 1;
+	sc->sc_format.frequency[0] = 48000;
 
 	sc->sc_dai.dai_set_sysclk = sunxi_i2s_dai_set_sysclk;
 	sc->sc_dai.dai_set_format = sunxi_i2s_dai_set_format;

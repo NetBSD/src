@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $");
 
 
 #include <sys/param.h>
@@ -251,7 +251,7 @@ do {									\
 	__rfd->rfd_next =						\
 	    htole64((uint64_t)STGE_CDRXADDR((sc), STGE_NEXTRX((x))));	\
 	__rfd->rfd_status = 0;						\
-	STGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	STGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
 #define STGE_TIMEOUT 1000
@@ -278,8 +278,8 @@ static int	stge_intr(void *);
 static void	stge_txintr(struct stge_softc *);
 static void	stge_rxintr(struct stge_softc *);
 
-static int	stge_mii_readreg(device_t, int, int);
-static void	stge_mii_writereg(device_t, int, int, int);
+static int	stge_mii_readreg(device_t, int, int, uint16_t *);
+static int	stge_mii_writereg(device_t, int, int, uint16_t);
 static void	stge_mii_statchg(struct ifnet *);
 
 static int	stge_match(device_t, cfdata_t, void *);
@@ -375,6 +375,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	struct stge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -407,7 +408,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
 	memh_valid = (pci_mapreg_map(pa, STGE_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
 
 	if (memh_valid) {
@@ -442,7 +443,8 @@ stge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, stge_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, stge_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
@@ -594,20 +596,20 @@ stge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = stge_mii_readreg;
-	sc->sc_mii.mii_writereg = stge_mii_writereg;
-	sc->sc_mii.mii_statchg = stge_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = stge_mii_readreg;
+	mii->mii_writereg = stge_mii_writereg;
+	mii->mii_statchg = stge_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
@@ -789,7 +791,7 @@ stge_start(struct ifnet *ifp)
 	int error, firsttx, nexttx, opending, seg, totlen;
 	uint64_t csum_flags;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -938,7 +940,7 @@ stge_start(struct ifnet *ifp)
 #if	0
 			struct ether_header *eh =
 			    mtod(m0, struct ether_header *);
-			u_int16_t etype = ntohs(eh->ether_type);
+			uint16_t etype = ntohs(eh->ether_type);
 			printf("%s: xmit (tag %d) etype %x\n",
 			   ifp->if_xname, *mtod(n, int *), etype);
 #endif
@@ -952,7 +954,7 @@ stge_start(struct ifnet *ifp)
 
 		/* Sync the descriptor. */
 		STGE_CDTXSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Kick the transmit DMA logic.
@@ -1085,7 +1087,7 @@ stge_intr(void *arg)
 		}
 
 		/* Receive interrupts. */
-		if (isr & (IS_RxDMAComplete|IS_RFDListEnd)) {
+		if (isr & (IS_RxDMAComplete | IS_RFDListEnd)) {
 			STGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 			stge_rxintr(sc);
 			if (isr & IS_RFDListEnd) {
@@ -1100,7 +1102,7 @@ stge_intr(void *arg)
 		}
 
 		/* Transmit interrupts. */
-		if (isr & (IS_TxDMAComplete|IS_TxComplete)) {
+		if (isr & (IS_TxDMAComplete | IS_TxComplete)) {
 #ifdef STGE_EVENT_COUNTERS
 			if (isr & IS_TxDMAComplete)
 				STGE_EVCNT_INCR(&sc->sc_ev_txdmaintr);
@@ -1174,7 +1176,7 @@ stge_txintr(struct stge_softc *sc)
 		ds = &sc->sc_txsoft[i];
 
 		STGE_CDTXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		control = le64toh(sc->sc_txdescs[i].tfd_control);
 		if ((control & TFD_TFDDone) == 0)
@@ -1216,7 +1218,7 @@ stge_rxintr(struct stge_softc *sc)
 		ds = &sc->sc_rxsoft[i];
 
 		STGE_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		status = le64toh(sc->sc_rxdescs[i].rfd_status);
 
@@ -1367,12 +1369,12 @@ stge_rxintr(struct stge_softc *sc)
 #if	0
 		if (status & RFD_VLANDetected) {
 			struct ether_header *eh;
-			u_int16_t etype;
+			uint16_t etype;
 
 			eh = mtod(m, struct ether_header *);
 			etype = ntohs(eh->ether_type);
 			printf("%s: VLANtag detected (TCI %d) etype %x\n",
-			    ifp->if_xname, (u_int16_t) RFD_TCI(status),
+			    ifp->if_xname, (uint16_t) RFD_TCI(status),
 			    etype);
 		}
 #endif
@@ -1880,9 +1882,12 @@ stge_set_filter(struct stge_softc *sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm == NULL)
+	if (enm == NULL) {
+		ETHER_UNLOCK(ec);
 		goto done;
+	}
 
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1894,6 +1899,7 @@ stge_set_filter(struct stge_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1907,6 +1913,7 @@ stge_set_filter(struct stge_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
 
@@ -1938,10 +1945,10 @@ stge_set_filter(struct stge_softc *sc)
  *	Read a PHY register on the MII of the TC9021.
  */
 static int
-stge_mii_readreg(device_t self, int phy, int reg)
+stge_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 
-	return (mii_bitbang_readreg(self, &stge_mii_bitbang_ops, phy, reg));
+	return mii_bitbang_readreg(self, &stge_mii_bitbang_ops, phy, reg, val);
 }
 
 /*
@@ -1949,11 +1956,12 @@ stge_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the TC9021.
  */
-static void
-stge_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+stge_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 
-	mii_bitbang_writereg(self, &stge_mii_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, &stge_mii_bitbang_ops, phy, reg,
+	    val);
 }
 
 /*

@@ -1,6 +1,6 @@
 /* mpfr_ai -- Airy function Ai
 
-Copyright 2010-2016 Free Software Foundation, Inc.
+Copyright 2010-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -45,7 +45,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 */
 
 
-/* Airy function Ai evaluated by the most naive algorithm */
+/* Airy function Ai evaluated by the most naive algorithm.
+   Assume that x is a finite number. */
 static int
 mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 {
@@ -72,26 +73,13 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
     ("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
     ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y) );
 
-  /* Special cases */
-  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
-    {
-      if (MPFR_IS_NAN (x))
-        {
-          MPFR_SET_NAN (y);
-          MPFR_RET_NAN;
-        }
-      else if (MPFR_IS_INF (x))
-        return mpfr_set_ui (y, 0, rnd);
-    }
-
-
   /* Save current exponents range */
   MPFR_SAVE_EXPO_MARK (expo);
 
   if (MPFR_UNLIKELY (MPFR_IS_ZERO (x)))
     {
       mpfr_t y1, y2;
-      prec = MPFR_PREC (y) + 3;
+      prec = MPFR_ADD_PREC (MPFR_PREC (y), 3);
       mpfr_init2 (y1, prec);
       mpfr_init2 (y2, prec);
       MPFR_ZIV_INIT (loop, prec);
@@ -133,7 +121,7 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   /* if x<=0,    ?????                                                   */
 
   /* We begin with 11 guard bits */
-  prec = MPFR_PREC (y)+11;
+  prec = MPFR_ADD_PREC (MPFR_PREC (y), 11);
   MPFR_ZIV_INIT (loop, prec);
 
   /* The working precision is heuristically chosen in order to obtain  */
@@ -178,7 +166,11 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
         assumed_exponent = 10;
     }
 
-  wprec = prec + MPFR_INT_CEIL_LOG2 (prec) + 5 + cond + assumed_exponent;
+  {
+    mpfr_prec_t incr =
+      MPFR_INT_CEIL_LOG2 (prec) + 5 + cond + assumed_exponent;
+    wprec = MPFR_ADD_PREC (prec, incr);
+  }
 
   mpfr_init (ti);
   mpfr_init (tip1);
@@ -276,8 +268,9 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
         {
           if (correct_bits < prec)
             { /* The precision was badly chosen */
-              MPFR_LOG_MSG (("Bad assumption on the exponent of Ai(x)", 0));
-              MPFR_LOG_MSG ((" (E=%ld)\n", (long) MPFR_GET_EXP (s)));
+              MPFR_LOG_MSG (("Bad assumption on the exponent of Ai(x)"
+                             " (E=%" MPFR_EXP_FSPEC "d)\n",
+                             (mpfr_eexp_t) MPFR_GET_EXP (s)));
               wprec = prec + err + 1;
             }
           else
@@ -311,7 +304,8 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 }
 
 
-/* Airy function Ai evaluated by Smith algorithm */
+/* Airy function Ai evaluated by Smith algorithm.
+   Assume that x is a finite number. */
 static int
 mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 {
@@ -338,18 +332,6 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   MPFR_LOG_FUNC (
     ("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x),  mpfr_log_prec, x, rnd),
     ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
-
-  /* Special cases */
-  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
-    {
-      if (MPFR_IS_NAN (x))
-        {
-          MPFR_SET_NAN (y);
-          MPFR_RET_NAN;
-        }
-      else if (MPFR_IS_INF (x))
-        return mpfr_set_ui (y, 0, rnd);
-    }
 
   /* Save current exponents range */
   MPFR_SAVE_EXPO_MARK (expo);
@@ -407,7 +389,7 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   L = __gmpfr_isqrt (prec);
   MPFR_LOG_MSG (("size of blocks L = %lu\n", L));
 
-  z = (mpfr_t *) (*__gmp_allocate_func) ( (L + 1) * sizeof (mpfr_t) );
+  z = (mpfr_t *) mpfr_allocate_func ( (L + 1) * sizeof (mpfr_t) );
   MPFR_ASSERTN (z != NULL);
   for (j=0; j<=L; j++)
     mpfr_init (z[j]);
@@ -557,10 +539,10 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 
       for (j=0; j<=L; j++)
         mpfr_clear (z[j]);
-      (*__gmp_free_func) (z, (L + 1) * sizeof (mpfr_t));
+      mpfr_free_func (z, (L + 1) * sizeof (mpfr_t));
       L = __gmpfr_isqrt (t);
       MPFR_LOG_MSG (("size of blocks L = %lu\n", L));
-      z = (mpfr_t *) (*__gmp_allocate_func) ( (L + 1) * sizeof (mpfr_t));
+      z = (mpfr_t *) mpfr_allocate_func ( (L + 1) * sizeof (mpfr_t));
       MPFR_ASSERTN (z != NULL);
       for (j=0; j<=L; j++)
         mpfr_init (z[j]);
@@ -576,8 +558,9 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       {
         if (correctBits < prec)
           { /* The precision was badly chosen */
-            MPFR_LOG_MSG (("Bad assumption on the exponent of Ai (x)", 0));
-            MPFR_LOG_MSG ((" (E=%ld)\n", (long) (MPFR_GET_EXP (result))));
+            MPFR_LOG_MSG (("Bad assumption on the exponent of Ai(x)"
+                           " (E=%" MPFR_EXP_FSPEC "d)\n",
+                           (mpfr_eexp_t) MPFR_GET_EXP (result)));
             wprec = prec + err + 1;
           }
         else
@@ -593,7 +576,6 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
     } /* End of ZIV loop */
 
   MPFR_ZIV_FREE (loop);
-  MPFR_SAVE_EXPO_FREE (expo);
 
   r = mpfr_set (y, result, rnd);
 
@@ -601,7 +583,7 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   mpfr_clear (tmp2_sp);
   for (j=0; j<=L; j++)
     mpfr_clear (z[j]);
-  (*__gmp_free_func) (z, (L + 1) * sizeof (mpfr_t));
+  mpfr_free_func (z, (L + 1) * sizeof (mpfr_t));
 
   mpfr_clear (s);
   mpfr_clear (u0); mpfr_clear (u1);
@@ -609,7 +591,8 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   mpfr_clear (temp1);
   mpfr_clear (temp2);
 
-  return r;
+  MPFR_SAVE_EXPO_FREE (expo);
+  return mpfr_check_range (y, r, rnd);
 }
 
 /* We consider that the boundary between the area where the naive method
@@ -635,6 +618,18 @@ mpfr_ai (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   mpfr_t temp1, temp2;
   int use_ai2;
   MPFR_SAVE_EXPO_DECL (expo);
+
+  /* Special cases */
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+    {
+      if (MPFR_IS_NAN (x))
+        {
+          MPFR_SET_NAN (y);
+          MPFR_RET_NAN;
+        }
+      else if (MPFR_IS_INF (x))
+        return mpfr_set_ui (y, 0, rnd);
+    }
 
   /* The exponent range must be large enough for the computation of temp1. */
   MPFR_SAVE_EXPO_MARK (expo);

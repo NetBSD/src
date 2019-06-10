@@ -1,5 +1,5 @@
 /* TI PRU disassemble routines
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the GNU opcodes library.
@@ -20,7 +20,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/pru.h"
 #include "libiberty.h"
 #include <string.h>

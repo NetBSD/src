@@ -1,0 +1,17 @@
+%%
+%% This style is derivated from the docbook one
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{notestyle}[]
+
+%% Just use the original package and pass the options
+\RequirePackageWithOptions{db2latex}
+
+%% My Cover Page
+\def\maketitle{%
+}
+
+%% Suppress header
+\fancyhead{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2014/12/18 06:24:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2019/06/10 22:02:39 christos Exp $
 
 .include <bsd.own.mk>
 
-.PATH:		${X11SRCDIR.MesaLib}/include/GL/internal
+.PATH:		${X11SRCDIR.Mesa}/include/GL/internal
 
 INCS=	dri_interface.h
 INCSDIR=${X11INCDIR}/GL/internal

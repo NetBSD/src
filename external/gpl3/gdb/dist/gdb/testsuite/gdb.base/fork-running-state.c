@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2017 Free Software Foundation, Inc.
+   Copyright 2015-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,38 +19,67 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 int save_parent;
+
+/* Variable set by GDB.  If true, then a fork child (or parent) exits
+   if its parent (or child) exits.  Otherwise the process waits
+   forever until either GDB or the alarm kills it.  */
+volatile int exit_if_relative_exits = 0;
 
 /* The fork child.  Just runs forever.  */
 
 static int
 fork_child (void)
 {
+  /* Don't run forever.  */
+  alarm (180);
+
   while (1)
     {
-      sleep (1);
+      if (exit_if_relative_exits)
+	{
+	  sleep (1);
 
-      /* Exit if GDB kills the parent.  */
-      if (getppid () != save_parent)
-	break;
-      if (kill (getppid (), 0) != 0)
-	break;
+	  /* Exit if GDB kills the parent.  */
+	  if (getppid () != save_parent)
+	    break;
+	  if (kill (getppid (), 0) != 0)
+	    break;
+	}
+      else
+	pause ();
     }
 
   return 0;
 }
 
-/* The fork parent.  Just runs forever waiting for the child to
-   exit.  */
+/* The fork parent.  Just runs forever.  */
 
 static int
 fork_parent (void)
 {
-  if (wait (NULL) == -1)
+  /* Don't run forever.  */
+  alarm (180);
+
+  while (1)
     {
-      perror ("wait");
-      return 1;
+      if (exit_if_relative_exits)
+	{
+	  int res = wait (NULL);
+	  if (res == -1 && errno == EINTR)
+	    continue;
+	  else if (res == -1)
+	    {
+	      perror ("wait");
+	      return 1;
+	    }
+	  else
+	    return 0;
+	}
+      else
+	pause ();
     }
 
   return 0;
@@ -62,9 +91,6 @@ main (void)
   pid_t pid;
 
   save_parent = getpid ();
-
-  /* Don't run forever.  */
-  alarm (180);
 
   /* The parent and child should basically run forever without
      tripping on any debug event.  We want to check that GDB updates

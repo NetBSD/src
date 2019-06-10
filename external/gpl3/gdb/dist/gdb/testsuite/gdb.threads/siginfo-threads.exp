@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,11 +40,16 @@ gdb_test "handle SIGUSR2 stop print pass" \
 gdb_breakpoint [gdb_get_line_number "break-at-exit"]
 
 set test "get pid"
-gdb_test_multiple "p getpid ()" $test {
+set pid ""
+gdb_test_multiple "p (int) getpid ()" $test {
     -re " = (\[0-9\]+)\r\n$gdb_prompt $" {
 	set pid $expect_out(1,string)
 	pass $test
     }
+}
+if {$pid == ""} {
+    untested "failed to get pid"
+    return
 }
 
 for {set sigcount 0} {$sigcount < 4} {incr sigcount} {

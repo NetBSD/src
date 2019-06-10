@@ -35,7 +35,6 @@ static bfd_boolean read_section_stabs_debugging_info
   (bfd *, asymbol **, long, void *, bfd_boolean *);
 static bfd_boolean read_symbol_stabs_debugging_info
   (bfd *, asymbol **, long, void *, bfd_boolean *);
-static bfd_boolean read_ieee_debugging_info (bfd *, void *, bfd_boolean *);
 static void save_stab (int, int, bfd_vma, const char *);
 static void stab_context (void);
 static void free_saved_stabs (void);
@@ -61,12 +60,6 @@ read_debugging_info (bfd *abfd, asymbol **syms, long symcount, bfd_boolean no_me
     {
       if (! read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle,
 					      &found))
-	return NULL;
-    }
-
-  if (bfd_get_flavour (abfd) == bfd_target_ieee_flavour)
-    {
-      if (! read_ieee_debugging_info (abfd, dhandle, &found))
 	return NULL;
     }
 
@@ -343,37 +336,6 @@ read_symbol_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
       if (! finish_stab (dhandle, shandle))
 	return FALSE;
     }
-
-  return TRUE;
-}
-
-/* Read IEEE debugging information.  */
-
-static bfd_boolean
-read_ieee_debugging_info (bfd *abfd, void *dhandle, bfd_boolean *pfound)
-{
-  asection *dsec;
-  bfd_size_type size;
-  bfd_byte *contents;
-
-  /* The BFD backend puts the debugging information into a section
-     named .debug.  */
-
-  dsec = bfd_get_section_by_name (abfd, ".debug");
-  if (dsec == NULL)
-    return TRUE;
-
-  size = bfd_section_size (abfd, dsec);
-  contents = (bfd_byte *) xmalloc (size);
-  if (! bfd_get_section_contents (abfd, dsec, contents, 0, size))
-    return FALSE;
-
-  if (! parse_ieee (dhandle, abfd, contents, size))
-    return FALSE;
-
-  free (contents);
-
-  *pfound = TRUE;
 
   return TRUE;
 }

@@ -1,5 +1,5 @@
 /* Specific flags and argument handling of the C++ front end.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,7 +21,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "gcc.h"
 #include "opts.h"
 
 /* This bit is set if we saw a `-xfoo' language specification.  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: smu7.h,v 1.1.1.1.32.1 2019/06/10 22:08:27 christos Exp $	*/
+
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *

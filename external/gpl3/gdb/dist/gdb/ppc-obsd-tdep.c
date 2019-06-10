@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,7 +88,7 @@ ppcobsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 				      void *cb_data,
 				      const struct regcache *regcache)
 {
-  cb (".reg", 412, &ppcobsd_gregset, NULL, cb_data);
+  cb (".reg", 412, 412, &ppcobsd_gregset, NULL, cb_data);
 }
 
 
@@ -260,10 +260,6 @@ ppcobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   frame_unwind_append_unwinder (gdbarch, &ppcobsd_sigtramp_frame_unwind);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_ppcobsd_tdep (void);
 
 void
 _initialize_ppcobsd_tdep (void)
@@ -293,10 +289,6 @@ _initialize_ppcobsd_tdep (void)
       ppcobsd_reg_offsets.f0_offset = 128;
       ppcobsd_reg_offsets.fpscr_offset = -1;
 
-      /* AltiVec registers.  */
-      ppcobsd_reg_offsets.vr0_offset = 0;
-      ppcobsd_reg_offsets.vscr_offset = 512;
-      ppcobsd_reg_offsets.vrsave_offset = 520;
     }
 
   if (ppcobsd_fpreg_offsets.fpscr_offset == 0)

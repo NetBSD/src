@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,10 @@ static void
 UtAttachNameseg (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Name);
+
+static void
+UtDisplayErrorSummary (
+    UINT32                  FileId);
 
 
 /*******************************************************************************
@@ -246,7 +250,7 @@ UtDisplaySupportedTables (
     /* All ACPI tables with the common table header */
 
     printf ("\n  Supported ACPI tables:\n");
-    for (TableData = Gbl_AcpiSupportedTables, i = 1;
+    for (TableData = AcpiGbl_SupportedTables, i = 1;
          TableData->Signature; TableData++, i++)
     {
         printf ("%8u) %s    %s\n", i,
@@ -370,7 +374,7 @@ DbgPrint (
     va_list                 Args;
 
 
-    if (!Gbl_DebugFlag)
+    if (!AslGbl_DebugFlag)
     {
         return;
     }
@@ -412,21 +416,23 @@ UtSetParseOpName (
 
 /*******************************************************************************
  *
- * FUNCTION:    UtDisplaySummary
+ * FUNCTION:    UtDisplayOneSummary
  *
  * PARAMETERS:  FileID              - ID of outpout file
  *
  * RETURN:      None
  *
- * DESCRIPTION: Display compilation statistics
+ * DESCRIPTION: Display compilation statistics for one input file
  *
  ******************************************************************************/
 
 void
-UtDisplaySummary (
-    UINT32                  FileId)
+UtDisplayOneSummary (
+    UINT32                  FileId,
+    BOOLEAN                 DisplayErrorSummary)
 {
     UINT32                  i;
+    ASL_GLOBAL_FILE_NODE    *FileNode;
 
 
     if (FileId != ASL_FILE_STDOUT)
@@ -439,43 +445,59 @@ UtDisplaySummary (
 
     /* Summary of main input and output files */
 
-    if (Gbl_FileType == ASL_INPUT_TYPE_ASCII_DATA)
+    if (AslGbl_FileType == ASL_INPUT_TYPE_ASCII_DATA)
     {
         FlPrintFile (FileId,
             "%-14s %s - %u lines, %u bytes, %u fields\n",
             "Table Input:",
-            Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_CurrentLineNumber,
-            Gbl_InputByteCount, Gbl_InputFieldCount);
+            AslGbl_Files[ASL_FILE_INPUT].Filename, AslGbl_CurrentLineNumber,
+            AslGbl_InputByteCount, AslGbl_InputFieldCount);
 
-        if ((Gbl_ExceptionCount[ASL_ERROR] == 0) || (Gbl_IgnoreErrors))
+        if ((AslGbl_ExceptionCount[ASL_ERROR] == 0) || (AslGbl_IgnoreErrors))
         {
             FlPrintFile (FileId,
                 "%-14s %s - %u bytes\n",
                 "Binary Output:",
-                Gbl_Files[ASL_FILE_AML_OUTPUT].Filename, Gbl_TableLength);
+                AslGbl_Files[ASL_FILE_AML_OUTPUT].Filename, AslGbl_TableLength);
         }
     }
     else
     {
-        FlPrintFile (FileId,
-            "%-14s %s - %u lines, %u bytes, %u keywords\n",
-            "ASL Input:",
-            Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_CurrentLineNumber,
-            Gbl_OriginalInputFileSize, TotalKeywords);
-
-        /* AML summary */
-
-        if ((Gbl_ExceptionCount[ASL_ERROR] == 0) || (Gbl_IgnoreErrors))
+        FileNode = FlGetCurrentFileNode ();
+        if (!FileNode)
         {
-            if (Gbl_Files[ASL_FILE_AML_OUTPUT].Handle)
+            fprintf (stderr, "Summary could not be generated");
+            return;
+        }
+        if (FileNode->ParserErrorDetected)
+        {
+            FlPrintFile (FileId,
+                "%-14s %s - Compilation aborted due to parser-detected syntax error(s)\n",
+                "ASL Input:", AslGbl_Files[ASL_FILE_INPUT].Filename);
+        }
+        else
+        {
+            FlPrintFile (FileId,
+                "%-14s %s - %7u bytes %6u keywords %6u source lines\n",
+                "ASL Input:",
+                AslGbl_Files[ASL_FILE_INPUT].Filename,
+                FileNode->OriginalInputFileSize,
+                FileNode->TotalKeywords,
+                FileNode->TotalLineCount);
+
+            /* AML summary */
+
+            if (!AslGbl_ParserErrorDetected &&
+                ((AslGbl_ExceptionCount[ASL_ERROR] == 0) || AslGbl_IgnoreErrors) &&
+                AslGbl_Files[ASL_FILE_AML_OUTPUT].Handle)
             {
                 FlPrintFile (FileId,
-                    "%-14s %s - %u bytes, %u named objects, "
-                    "%u executable opcodes\n",
+                    "%-14s %s - %7u bytes %6u opcodes  %6u named objects\n",
                     "AML Output:",
-                    Gbl_Files[ASL_FILE_AML_OUTPUT].Filename,
+                    AslGbl_Files[ASL_FILE_AML_OUTPUT].Filename,
                     FlGetFileSize (ASL_FILE_AML_OUTPUT),
-                    TotalNamedObjects, TotalExecutableOpcodes);
+                    FileNode->TotalExecutableOpcodes,
+                    FileNode->TotalNamedObjects);
             }
         }
     }
@@ -484,54 +506,148 @@ UtDisplaySummary (
 
     for (i = ASL_FILE_SOURCE_OUTPUT; i <= ASL_MAX_FILE_TYPE; i++)
     {
-        if (!Gbl_Files[i].Filename || !Gbl_Files[i].Handle)
+        if (!AslGbl_Files[i].Filename || !AslGbl_Files[i].Handle)
         {
             continue;
         }
 
         /* .SRC is a temp file unless specifically requested */
 
-        if ((i == ASL_FILE_SOURCE_OUTPUT) && (!Gbl_SourceOutputFlag))
+        if ((i == ASL_FILE_SOURCE_OUTPUT) && (!AslGbl_SourceOutputFlag))
         {
             continue;
         }
 
         /* .PRE is the preprocessor intermediate file */
 
-        if ((i == ASL_FILE_PREPROCESSOR)  && (!Gbl_KeepPreprocessorTempFile))
+        if ((i == ASL_FILE_PREPROCESSOR)  && (!AslGbl_KeepPreprocessorTempFile))
         {
             continue;
         }
 
         FlPrintFile (FileId, "%14s %s - %u bytes\n",
-            Gbl_Files[i].ShortDescription,
-            Gbl_Files[i].Filename, FlGetFileSize (i));
+            AslGbl_FileDescs[i].ShortDescription,
+            AslGbl_Files[i].Filename, FlGetFileSize (i));
     }
 
-    /* Error summary */
+
+    /*
+     * Optionally emit an error summary for a file. This is used to enhance the
+     * appearance of listing files.
+     */
+    if (DisplayErrorSummary)
+    {
+        UtDisplayErrorSummary (FileId);
+    }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    UtDisplayErrorSummary
+ *
+ * PARAMETERS:  FileID              - ID of outpout file
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display compilation statistics for all input files
+ *
+ ******************************************************************************/
+
+static void
+UtDisplayErrorSummary (
+    UINT32                  FileId)
+{
+    BOOLEAN                 ErrorDetected;
+
+
+    ErrorDetected = AslGbl_ParserErrorDetected ||
+        ((AslGbl_ExceptionCount[ASL_ERROR] > 0) && !AslGbl_IgnoreErrors);
+
+    if (ErrorDetected)
+    {
+        FlPrintFile (FileId, "\nCompilation failed. ");
+    }
+    else
+    {
+        FlPrintFile (FileId, "\nCompilation successful. ");
+    }
 
     FlPrintFile (FileId,
-        "\nCompilation complete. %u Errors, %u Warnings, %u Remarks",
-        Gbl_ExceptionCount[ASL_ERROR],
-        Gbl_ExceptionCount[ASL_WARNING] +
-            Gbl_ExceptionCount[ASL_WARNING2] +
-            Gbl_ExceptionCount[ASL_WARNING3],
-        Gbl_ExceptionCount[ASL_REMARK]);
+        "%u Errors, %u Warnings, %u Remarks",
+        AslGbl_ExceptionCount[ASL_ERROR],
+        AslGbl_ExceptionCount[ASL_WARNING] +
+            AslGbl_ExceptionCount[ASL_WARNING2] +
+            AslGbl_ExceptionCount[ASL_WARNING3],
+        AslGbl_ExceptionCount[ASL_REMARK]);
 
-    if (Gbl_FileType != ASL_INPUT_TYPE_ASCII_DATA)
+    if (AslGbl_FileType != ASL_INPUT_TYPE_ASCII_DATA)
     {
-        FlPrintFile (FileId, ", %u Optimizations",
-            Gbl_ExceptionCount[ASL_OPTIMIZATION]);
-
-        if (TotalFolds)
+        if (AslGbl_ParserErrorDetected)
         {
-            FlPrintFile (FileId, ", %u Constants Folded", TotalFolds);
+            FlPrintFile (FileId,
+                "\nNo AML files were generated due to syntax error(s)\n");
+            return;
+        }
+        else if (ErrorDetected)
+        {
+            FlPrintFile (FileId,
+                "\nNo AML files were generated due to compiler error(s)\n");
+            return;
+        }
+
+        FlPrintFile (FileId, ", %u Optimizations",
+            AslGbl_ExceptionCount[ASL_OPTIMIZATION]);
+
+        if (AslGbl_TotalFolds)
+        {
+            FlPrintFile (FileId, ", %u Constants Folded", AslGbl_TotalFolds);
         }
     }
 
     FlPrintFile (FileId, "\n");
 }
 
+
+/*******************************************************************************
+ *
+ * FUNCTION:    UtDisplaySummary
+ *
+ * PARAMETERS:  FileID              - ID of outpout file
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display compilation statistics for all input files
+ *
+ ******************************************************************************/
+
+void
+UtDisplaySummary (
+    UINT32                  FileId)
+{
+    ASL_GLOBAL_FILE_NODE    *Current = AslGbl_FilesList;
+
+
+    while (Current)
+    {
+        switch  (FlSwitchFileSet(Current->Files[ASL_FILE_INPUT].Filename))
+        {
+            case SWITCH_TO_SAME_FILE:
+            case SWITCH_TO_DIFFERENT_FILE:
+
+                UtDisplayOneSummary (FileId, FALSE);
+                Current = Current->Next;
+                break;
+
+            case FILE_NOT_FOUND:
+            default:
+
+                Current = NULL;
+                break;
+        }
+    }
+    UtDisplayErrorSummary (FileId);
+}
 
 /*******************************************************************************
  *
@@ -562,10 +678,10 @@ UtCheckIntegerRange (
     if ((Op->Asl.Value.Integer < LowValue) ||
         (Op->Asl.Value.Integer > HighValue))
     {
-        snprintf (MsgBuffer, sizeof(MsgBuffer), "0x%X, allowable: 0x%X-0x%X",
+        snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "0x%X, allowable: 0x%X-0x%X",
             (UINT32) Op->Asl.Value.Integer, LowValue, HighValue);
 
-        AslError (ASL_ERROR, ASL_MSG_RANGE, Op, MsgBuffer);
+        AslError (ASL_ERROR, ASL_MSG_RANGE, Op, AslGbl_MsgBuffer);
         return (NULL);
     }
 
@@ -644,7 +760,7 @@ UtPadNameWithUnderscores (
     UINT32                  i;
 
 
-    for (i = 0; (i < ACPI_NAME_SIZE); i++)
+    for (i = 0; (i < ACPI_NAMESEG_SIZE); i++)
     {
         if (*NameSeg)
         {
@@ -715,7 +831,7 @@ UtAttachNameseg (
         UtPadNameWithUnderscores (Name, PaddedNameSeg);
     }
 
-    ACPI_MOVE_NAME (Op->Asl.NameSeg, PaddedNameSeg);
+    ACPI_COPY_NAMESEG (Op->Asl.NameSeg, PaddedNameSeg);
 }
 
 
@@ -791,9 +907,9 @@ UtDoConstant (
         snprintf (ErrBuf, sizeof(ErrBuf), "While creating 64-bit constant: %s\n",
             AcpiFormatException (Status));
 
-        AslCommonError (ASL_ERROR, ASL_MSG_SYNTAX, Gbl_CurrentLineNumber,
-            Gbl_LogicalLineNumber, Gbl_CurrentLineOffset,
-            Gbl_CurrentColumn, Gbl_Files[ASL_FILE_INPUT].Filename, ErrBuf);
+        AslCommonError (ASL_ERROR, ASL_MSG_SYNTAX, AslGbl_CurrentLineNumber,
+            AslGbl_LogicalLineNumber, AslGbl_CurrentLineOffset,
+            AslGbl_CurrentColumn, AslGbl_Files[ASL_FILE_INPUT].Filename, ErrBuf);
     }
 
     return (ConvertedInteger);

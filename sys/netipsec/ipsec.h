@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.82 2018/05/14 17:34:26 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.82.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -248,7 +248,23 @@ extern int crypto_support;
 #define ipsec_indone(m)	\
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
 #define ipsec_outdone(m) \
-	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
+	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE) != NULL)
+
+static __inline bool
+ipsec_skip_pfil(struct mbuf *m)
+{
+	bool rv;
+
+	if (ipsec_indone(m) &&
+	    ((m->m_pkthdr.pkthdr_flags & PKTHDR_FLAG_IPSEC_SKIP_PFIL) != 0)) {
+		m->m_pkthdr.pkthdr_flags &= ~PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+		rv = true;
+	} else {
+		rv = false;
+	}
+
+	return rv;
+}
 
 void ipsec_pcbconn(struct inpcbpolicy *);
 void ipsec_pcbdisconn(struct inpcbpolicy *);
@@ -259,6 +275,9 @@ int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *);
 
 int ipsec_ip_input(struct mbuf *, bool);
 void ipsec_mtu(struct mbuf *, int *);
+#ifdef INET6
+void ipsec6_udp_cksum(struct mbuf *);
+#endif
 
 struct inpcb;
 int ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **);
@@ -291,7 +310,7 @@ void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
 void ipsec_output_init(void);
 struct m_tag;
-void ipsec4_common_input(struct mbuf *m, ...);
+void ipsec4_common_input(struct mbuf *m, int, int);
 int ipsec4_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec4_process_packet(struct mbuf *, const struct ipsecrequest *, u_long *);
 int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,
@@ -301,8 +320,6 @@ struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
 void *m_pad(struct mbuf *, int);
 int m_striphdr(struct mbuf *, int, int);
-
-void nat_t_ports_get(struct mbuf *, u_int16_t *, u_int16_t *);
 
 extern int ipsec_used __read_mostly;
 extern int ipsec_enabled __read_mostly;

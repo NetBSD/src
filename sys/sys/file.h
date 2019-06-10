@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.83 2017/11/30 20:25:56 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.83.4.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ union file_data {
 	struct kqueue *fd_kq;		// DTYPE_KQUEUE
 	void *fd_data;			// DTYPE_MISC
 	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
-	struct audio_chan *fd_audioctx;	// DTYPE_MISC (audio)
+	struct audio_file *fd_audioctx;	// DTYPE_MISC (audio)
 	struct pad_softc *fd_pad;	// DTYPE_MISC (pad)
 	int fd_devunit;			// DTYPE_MISC (tap)
 	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)
@@ -118,8 +118,12 @@ union file_data {
  * Kernel file descriptor.  One entry for each open kernel vnode and
  * socket.
  *
- * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
- * calls.  Only add members to the end, do not delete them.
+ * This structure is exported via the KERN_FILE sysctl.
+ * Only add members to the end, do not delete them.
+ *
+ * Note: new code should not use KERN_FILE; use KERN_FILE2 instead,
+ * which exports struct kinfo_file instead; struct kinfo_file is
+ * declared in sys/sysctl.h and is meant to be ABI-stable.
  */
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */

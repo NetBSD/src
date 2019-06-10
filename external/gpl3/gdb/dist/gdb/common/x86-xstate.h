@@ -1,6 +1,6 @@
 /* Common code for x86 XSAVE extended state.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_XSTATE_H
-#define X86_XSTATE_H 1
+#ifndef COMMON_X86_XSTATE_H
+#define COMMON_X86_XSTATE_H
 
 /* The extended state feature bits.  */
 #define X86_XSTATE_X87		(1ULL << 0)
@@ -72,4 +72,17 @@
       (HAS_MPX (XCR0) ? X86_XSTATE_BNDCFG_SIZE : \
        (HAS_AVX (XCR0) ? X86_XSTATE_AVX_SIZE : X86_XSTATE_SSE_SIZE))))
 
-#endif /* X86_XSTATE_H */
+/* Initial value for fctrl register, as defined in the X86 manual, and
+   confirmed in the (Linux) kernel source.  When the x87 floating point
+   feature is not enabled in an inferior we use this as the value of the
+   fcrtl register.  */
+
+#define I387_FCTRL_INIT_VAL 0x037f
+
+/* Initial value for mxcsr register.  When the avx and sse floating point
+   features are not enabled in an inferior we use this as the value of the
+   mxcsr register.  */
+
+#define I387_MXCSR_INIT_VAL 0x1f80
+
+#endif /* COMMON_X86_XSTATE_H */

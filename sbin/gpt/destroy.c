@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.10 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.10.16.1 2019/06/10 22:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: destroy.c,v 1.10 2015/12/03 01:07:28 christos Exp $");
 static int cmd_destroy(gpt_t, int, char *[]);
 
 static const char *destroyhelp[] = {
-	"[-rf]",
+	"[-r]",
 };
 
 struct gpt_cmd c_destroy = {
@@ -68,10 +68,11 @@ struct gpt_cmd c_destroy = {
 static int
 destroy(gpt_t gpt, int force, int recoverable)
 {
-	map_t pri_hdr, sec_hdr;
+	map_t pri_hdr, sec_hdr, pmbr;
 
 	pri_hdr = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
 	sec_hdr = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
+	pmbr = map_find(gpt, MAP_TYPE_PMBR);
 
 	if (pri_hdr == NULL && sec_hdr == NULL) {
 		gpt_warnx(gpt, "Device doesn't contain a GPT");
@@ -99,6 +100,14 @@ destroy(gpt_t gpt, int force, int recoverable)
 		}
 	}
 
+	if (!recoverable && pmbr != NULL) {
+		memset(pmbr->map_data, 0, gpt->secsz);
+		if (gpt_write(gpt, pmbr) == -1) {
+			gpt_warnx(gpt, "Error deleting PMBR");
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -107,12 +116,10 @@ cmd_destroy(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 	int recoverable = 0;
-	int force = 0;
 
 	while ((ch = getopt(argc, argv, "fr")) != -1) {
 		switch(ch) {
 		case 'f':
-			force = 1;
 			break;
 		case 'r':
 			recoverable = 1;
@@ -125,5 +132,5 @@ cmd_destroy(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return destroy(gpt, force, recoverable);
+	return destroy(gpt, 0, recoverable);
 }

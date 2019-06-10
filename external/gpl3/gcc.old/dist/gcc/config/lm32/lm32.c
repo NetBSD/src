@@ -1,7 +1,7 @@
 /* Subroutines used for code generation on the Lattice Mico32 architecture.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -22,63 +22,26 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
+#include "tree.h"
+#include "df.h"
+#include "tm_p.h"
+#include "optabs.h"
 #include "regs.h"
-#include "hard-reg-set.h"
-#include "predict.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "basic-block.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-flags.h"
-#include "insn-attr.h"
-#include "insn-codes.h"
+#include "emit-rtl.h"
 #include "recog.h"
 #include "output.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
 #include "calls.h"
-#include "flags.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
 #include "alias.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
 #include "expr.h"
-#include "reload.h"
-#include "tm_p.h"
-#include "diagnostic-core.h"
-#include "optabs.h"
-#include "libfuncs.h"
-#include "ggc.h"
-#include "target.h"
-#include "target-def.h"
-#include "langhooks.h"
 #include "tm-constrs.h"
-#include "df.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 struct lm32_frame_info
 {
@@ -98,7 +61,7 @@ static bool lm32_in_small_data_p (const_tree);
 static void lm32_setup_incoming_varargs (cumulative_args_t cum,
 					 machine_mode mode, tree type,
 					 int *pretend_size, int no_rtl);
-static bool lm32_rtx_costs (rtx x, int code, int outer_code, int opno,
+static bool lm32_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno,
 			    int *total, bool speed);
 static bool lm32_can_eliminate (const int, const int);
 static bool
@@ -237,9 +200,8 @@ gen_int_relational (enum rtx_code code,
       /* Generate conditional branch instruction.  */
       cond = gen_rtx_fmt_ee (code, mode, cmp0, cmp1);
       label = gen_rtx_LABEL_REF (VOIDmode, destination);
-      insn = gen_rtx_SET (VOIDmode, pc_rtx,
-			  gen_rtx_IF_THEN_ELSE (VOIDmode,
-						cond, label, pc_rtx));
+      insn = gen_rtx_SET (pc_rtx, gen_rtx_IF_THEN_ELSE (VOIDmode,
+							cond, label, pc_rtx));
       emit_jump_insn (insn);
     }
   else
@@ -536,7 +498,7 @@ lm32_print_operand (FILE * file, rtx op, int letter)
   else if (code == HIGH)
     output_addr_const (file, XEXP (op, 0));  
   else if (code == MEM)
-    output_address (XEXP (op, 0));
+    output_address (GET_MODE (op), XEXP (op, 0));
   else if (letter == 'z' && GET_CODE (op) == CONST_INT && INTVAL (op) == 0)
     fprintf (file, "%s", reg_names[0]);
   else if (GET_CODE (op) == CONST_DOUBLE)
@@ -589,7 +551,7 @@ lm32_print_operand_address (FILE * file, rtx addr)
       break;
 
     case MEM:
-      output_address (XEXP (addr, 0));
+      output_address (VOIDmode, XEXP (addr, 0));
       break;
 
     case PLUS:
@@ -952,10 +914,10 @@ nonpic_symbol_mentioned_p (rtx x)
    scanned.  In either case, *TOTAL contains the cost result.  */
 
 static bool
-lm32_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
-		int *total, bool speed)
+lm32_rtx_costs (rtx x, machine_mode mode, int outer_code,
+		int opno ATTRIBUTE_UNUSED, int *total, bool speed)
 {
-  machine_mode mode = GET_MODE (x);
+  int code = GET_CODE (x);
   bool small_mode;
 
   const int arithmetic_latency = 1;

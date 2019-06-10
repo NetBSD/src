@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.92 2016/08/14 14:42:22 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.92.16.1 2019/06/10 22:07:35 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -139,6 +139,8 @@ usbd_status usbd_sync_transfer(struct usbd_xfer *);
 usbd_status usbd_sync_transfer_sig(struct usbd_xfer *);
 
 usbd_status usbd_do_request(struct usbd_device *, usb_device_request_t *, void *);
+usbd_status usbd_request_async(struct usbd_device *, struct usbd_xfer *,
+    usb_device_request_t *, void *, usbd_callback);
 usbd_status usbd_do_request_flags(struct usbd_device *, usb_device_request_t *,
     void *, uint16_t, int *, uint32_t);
 
@@ -156,10 +158,6 @@ usbd_status usbd_get_interface(struct usbd_interface *, uint8_t *);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 
 void usbd_fill_deviceinfo(struct usbd_device *, struct usb_device_info *, int);
-#ifdef COMPAT_30
-void usbd_fill_deviceinfo_old(struct usbd_device *, struct usb_device_info_old *,
-    int);
-#endif
 int usbd_get_interface_altindex(struct usbd_interface *);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *,
@@ -219,6 +217,8 @@ struct usb_task {
 
 void usb_add_task(struct usbd_device *, struct usb_task *, int);
 void usb_rem_task(struct usbd_device *, struct usb_task *);
+bool usb_rem_task_wait(struct usbd_device *, struct usb_task *, int,
+    kmutex_t *);
 #define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_NUM_TASKQS, (t)->flags = (fl))
 
 struct usb_devno {
@@ -230,6 +230,12 @@ const struct usb_devno *usb_match_device(const struct usb_devno *,
 #define usb_lookup(tbl, vendor, product) \
 	usb_match_device((const struct usb_devno *)(tbl), sizeof(tbl) / sizeof((tbl)[0]), sizeof((tbl)[0]), (vendor), (product))
 #define	USB_PRODUCT_ANY		0xffff
+
+/* compat callbacks */
+void usbd_devinfo_vp(struct usbd_device *, char *, size_t, char *, size_t,
+    int, int);
+int usbd_printBCD(char *, size_t, int);
+
 
 /* NetBSD attachment information */
 

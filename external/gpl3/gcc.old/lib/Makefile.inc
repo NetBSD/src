@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2017/07/23 01:11:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5.4.1 2019/06/10 21:57:26 christos Exp $
 
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.125 2018/03/04 23:47:55 christos Exp $
+#	$NetBSD: bsd.x11.mk,v 1.125.4.1 2019/06/10 22:05:42 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -44,7 +44,7 @@ X11FLAGS.EXTENSION=	${X11FLAGS.BASE_EXTENSION} \
 			${X11FLAGS.PERVASIVE_EXTENSION}
 
 X11FLAGS.DIX=		-DHAVE_DIX_CONFIG_H -D_BSD_SOURCE -DHAS_FCHOWN \
-			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS \
+			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS=200112L \
 			-DHAVE_XORG_CONFIG_H
 X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
 			-I${X11INCSDIR}/pixman-1 \
@@ -93,7 +93,8 @@ X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 X11FLAGS.DIX+=		-DDBE -DXRECORD -DPRESENT
 
 #	ServerDefines
-X11FLAGS.SERVER+=	-DXINPUT -DXFreeXDGA -DXF86VIDMODE -DXSERVER_LIBPCIACCESS
+X11FLAGS.SERVER+=	-DXFreeXDGA -DXF86VIDMODE
+X11FLAGS.SERVER+=	-DXINPUT -DXSERVER_LIBPCIACCESS
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"	|| \
@@ -132,8 +133,8 @@ XORG_SERVER_MAJOR=	1
 XORG_SERVER_MINOR=	10
 XORG_SERVER_TEENY=	6
 .else
-XORG_SERVER_MINOR=	18
-XORG_SERVER_TEENY=	4
+XORG_SERVER_MINOR=	20
+XORG_SERVER_TEENY=	5
 .endif
   
 XVENDORNAMESHORT=	'"X.Org"'
@@ -355,7 +356,7 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,;" \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
-	mv -f ${.TARGET}.tmp ${.TARGET}
+	${MV} ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
@@ -394,6 +395,10 @@ _X11MANTRANSFORM= \
 	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
 	__appmansuffix__ 	1 \
 	__bindir__		${X11BINDIR} \
+	__datadir__		${X11LIBDIR} \
+	__libdir__		${X11ROOTDIR}/lib \
+	__xkbconfigroot__	${X11LIBDIR}/xkb \
+	__sysconfdir__		/etc \
 	__drivermansuffix__	4 \
 	__filemansuffix__	5 \
 	__LIB_MAN_SUFFIX__	3 \
@@ -412,7 +417,7 @@ _X11MANTRANSFORM+= \
 	__vendorversion__	${XORGVERSION:C/ /%/gW} \
 	__XCONFIGFILE__		xorg.conf \
 	__xconfigfile__		xorg.conf \
-	__XCONFIGFILEMAN__	'__XCONFIGFILE__%(__filemansuffix__)' \
+	__XCONFIGFILEMAN__	'xorg.conf(5)' \
 	__xorgversion__		${XORGVERSION:C/ /%/gW} \
 	__XSERVERNAME__		Xorg \
 	__xservername__		Xorg

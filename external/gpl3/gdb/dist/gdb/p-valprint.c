@@ -1,6 +1,6 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +38,7 @@
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "objfiles.h"
+#include "common/byte-vector.h"
 
 
 /* Decorations for Pascal.  */
@@ -68,7 +69,6 @@ pascal_val_print (struct type *type,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   unsigned int i = 0;	/* Number of characters printed */
   unsigned len;
-  LONGEST low_bound, high_bound;
   struct type *elttype;
   unsigned eltlen;
   int length_pos, length_size, string_pos;
@@ -81,67 +81,71 @@ pascal_val_print (struct type *type,
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_ARRAY:
-      if (get_array_bounds (type, &low_bound, &high_bound))
-	{
-	  len = high_bound - low_bound + 1;
-	  elttype = check_typedef (TYPE_TARGET_TYPE (type));
-	  eltlen = TYPE_LENGTH (elttype);
-	  if (options->prettyformat_arrays)
-	    {
-	      print_spaces_filtered (2 + 2 * recurse, stream);
-	    }
-	  /* If 's' format is used, try to print out as string.
-	     If no format is given, print as string if element type
-	     is of TYPE_CODE_CHAR and element size is 1,2 or 4.  */
-	  if (options->format == 's'
-	      || ((eltlen == 1 || eltlen == 2 || eltlen == 4)
-		  && TYPE_CODE (elttype) == TYPE_CODE_CHAR
-		  && options->format == 0))
-	    {
-	      /* If requested, look for the first null char and only print
-	         elements up to it.  */
-	      if (options->stop_print_at_null)
-		{
-		  unsigned int temp_len;
+      {
+	LONGEST low_bound, high_bound;
 
-		  /* Look for a NULL char.  */
-		  for (temp_len = 0;
-		       extract_unsigned_integer (valaddr + embedded_offset +
-						 temp_len * eltlen, eltlen,
-						 byte_order)
-		       && temp_len < len && temp_len < options->print_max;
-		       temp_len++);
-		  len = temp_len;
-		}
+	if (get_array_bounds (type, &low_bound, &high_bound))
+	  {
+	    len = high_bound - low_bound + 1;
+	    elttype = check_typedef (TYPE_TARGET_TYPE (type));
+	    eltlen = TYPE_LENGTH (elttype);
+	    if (options->prettyformat_arrays)
+	      {
+		print_spaces_filtered (2 + 2 * recurse, stream);
+	      }
+	    /* If 's' format is used, try to print out as string.
+	       If no format is given, print as string if element type
+	       is of TYPE_CODE_CHAR and element size is 1,2 or 4.  */
+	    if (options->format == 's'
+		|| ((eltlen == 1 || eltlen == 2 || eltlen == 4)
+		    && TYPE_CODE (elttype) == TYPE_CODE_CHAR
+		    && options->format == 0))
+	      {
+		/* If requested, look for the first null char and only print
+		   elements up to it.  */
+		if (options->stop_print_at_null)
+		  {
+		    unsigned int temp_len;
 
-	      LA_PRINT_STRING (stream, TYPE_TARGET_TYPE (type),
-			       valaddr + embedded_offset, len, NULL, 0,
-			       options);
-	      i = len;
-	    }
-	  else
-	    {
-	      fprintf_filtered (stream, "{");
-	      /* If this is a virtual function table, print the 0th
-	         entry specially, and the rest of the members normally.  */
-	      if (pascal_object_is_vtbl_ptr_type (elttype))
-		{
-		  i = 1;
-		  fprintf_filtered (stream, "%d vtable entries", len - 1);
-		}
-	      else
-		{
-		  i = 0;
-		}
-	      val_print_array_elements (type, embedded_offset,
-					address, stream, recurse,
-					original_value, options, i);
-	      fprintf_filtered (stream, "}");
-	    }
-	  break;
-	}
-      /* Array of unspecified length: treat like pointer to first elt.  */
-      addr = address + embedded_offset;
+		    /* Look for a NULL char.  */
+		    for (temp_len = 0;
+			 extract_unsigned_integer (valaddr + embedded_offset +
+						   temp_len * eltlen, eltlen,
+						   byte_order)
+			   && temp_len < len && temp_len < options->print_max;
+			 temp_len++);
+		    len = temp_len;
+		  }
+
+		LA_PRINT_STRING (stream, TYPE_TARGET_TYPE (type),
+				 valaddr + embedded_offset, len, NULL, 0,
+				 options);
+		i = len;
+	      }
+	    else
+	      {
+		fprintf_filtered (stream, "{");
+		/* If this is a virtual function table, print the 0th
+		   entry specially, and the rest of the members normally.  */
+		if (pascal_object_is_vtbl_ptr_type (elttype))
+		  {
+		    i = 1;
+		    fprintf_filtered (stream, "%d vtable entries", len - 1);
+		  }
+		else
+		  {
+		    i = 0;
+		  }
+		val_print_array_elements (type, embedded_offset,
+					  address, stream, recurse,
+					  original_value, options, i);
+		fprintf_filtered (stream, "}");
+	      }
+	    break;
+	  }
+	/* Array of unspecified length: treat like pointer to first elt.  */
+	addr = address + embedded_offset;
+      }
       goto print_unpacked_pointer;
 
     case TYPE_CODE_PTR:
@@ -245,15 +249,17 @@ pascal_val_print (struct type *type,
 	      struct symbol *wsym = NULL;
 	      struct type *wtype;
 	      struct block *block = NULL;
-	      struct field_of_this_result is_this_fld;
 
 	      if (want_space)
 		fputs_filtered (" ", stream);
 
 	      if (msymbol.minsym != NULL)
-		wsym = lookup_symbol (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
-				      block,
-				      VAR_DOMAIN, &is_this_fld).symbol;
+		{
+		  const char *search_name
+		    = MSYMBOL_SEARCH_NAME (msymbol.minsym);
+		  wsym = lookup_symbol_search_name (search_name, block,
+						    VAR_DOMAIN).symbol;
+		}
 
 	      if (wsym)
 		{
@@ -350,22 +356,21 @@ pascal_val_print (struct type *type,
 	{
 	  struct type *range = elttype;
 	  LONGEST low_bound, high_bound;
-	  int i;
 	  int need_comma = 0;
 
 	  fputs_filtered ("[", stream);
 
-	  i = get_discrete_bounds (range, &low_bound, &high_bound);
+	  int bound_info = get_discrete_bounds (range, &low_bound, &high_bound);
 	  if (low_bound == 0 && high_bound == -1 && TYPE_LENGTH (type) > 0)
 	    {
 	      /* If we know the size of the set type, we can figure out the
 	      maximum value.  */
-	      i = 0;
+	      bound_info = 0;
 	      high_bound = TYPE_LENGTH (type) * TARGET_CHAR_BIT - 1;
 	      TYPE_HIGH_BOUND (range) = high_bound;
 	    }
 	maybe_bad_bstring:
-	  if (i < 0)
+	  if (bound_info < 0)
 	    {
 	      fputs_filtered ("<error value>", stream);
 	      goto done;
@@ -486,7 +491,7 @@ const char pascal_vtbl_ptr_name[] =
 int
 pascal_object_is_vtbl_ptr_type (struct type *type)
 {
-  const char *type_name = type_name_no_tag (type);
+  const char *type_name = TYPE_NAME (type);
 
   return (type_name != NULL
 	  && strcmp (type_name, pascal_vtbl_ptr_name) == 0);
@@ -584,7 +589,7 @@ pascal_object_print_value_fields (struct type *type, const gdb_byte *valaddr,
 		  fprintf_filtered (stream, "\n");
 		  print_spaces_filtered (2 + 2 * recurse, stream);
 		  fputs_filtered ("members of ", stream);
-		  fputs_filtered (type_name_no_tag (type), stream);
+		  fputs_filtered (TYPE_NAME (type), stream);
 		  fputs_filtered (": ", stream);
 		}
 	    }
@@ -726,10 +731,11 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
     {
       LONGEST boffset = 0;
       struct type *baseclass = check_typedef (TYPE_BASECLASS (type, i));
-      const char *basename = type_name_no_tag (baseclass);
+      const char *basename = TYPE_NAME (baseclass);
       const gdb_byte *base_valaddr = NULL;
       LONGEST thisoffset;
       int skip = 0;
+      gdb::byte_vector buf;
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
 	{
@@ -769,20 +775,15 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
 
 	  if (boffset < 0 || boffset >= TYPE_LENGTH (type))
 	    {
-	      gdb_byte *buf;
-	      struct cleanup *back_to;
+	      buf.resize (TYPE_LENGTH (baseclass));
 
-	      buf = (gdb_byte *) xmalloc (TYPE_LENGTH (baseclass));
-	      back_to = make_cleanup (xfree, buf);
-
-	      base_valaddr = buf;
-	      if (target_read_memory (address + boffset, buf,
+	      base_valaddr = buf.data ();
+	      if (target_read_memory (address + boffset, buf.data (),
 				      TYPE_LENGTH (baseclass)) != 0)
 		skip = 1;
 	      address = address + boffset;
 	      thisoffset = 0;
 	      boffset = 0;
-	      do_cleanups (back_to);
 	    }
 	  else
 	    base_valaddr = valaddr;
@@ -890,9 +891,6 @@ pascal_object_print_static_field (struct value *val,
   opts.deref_ref = 0;
   common_val_print (val, stream, recurse, &opts, current_language);
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_pascal_valprint;
 
 void
 _initialize_pascal_valprint (void)

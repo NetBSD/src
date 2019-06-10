@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2017 Free Software Foundation, Inc.
+   Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #ifndef MAX_INSN_FLGS
-#define MAX_INSN_FLGS	     3
+#define MAX_INSN_FLGS	     4
 #endif
 
 /* Instruction Class.  */
@@ -76,6 +76,7 @@ typedef enum
   PMU,
   POP,
   PUSH,
+  SJLI,
   STORE,
   SUB,
   ULTRAIP,
@@ -85,28 +86,31 @@ typedef enum
 /* Instruction Subclass.  */
 typedef enum
 {
-  NONE,
-  CVT,
-  BTSCN,
-  CD1,
-  CD2,
-  COND,
-  DIV,
-  DP,
-  DPA,
-  DPX,
-  MPY1E,
-  MPY6E,
-  MPY7E,
-  MPY8E,
-  MPY9E,
-  NPS400,
-  QUARKSE,
-  SHFT1,
-  SHFT2,
-  SWAP,
-  SP,
-  SPX
+  NONE     = 0,
+  CVT      = (1U << 1),
+  BTSCN    = (1U << 2),
+  CD       = (1U << 3),
+  CD1      = CD,
+  CD2      = CD,
+  COND     = (1U << 4),
+  DIV      = (1U << 5),
+  DP       = (1U << 6),
+  DPA      = (1U << 7),
+  DPX      = (1U << 8),
+  LL64     = (1U << 9),
+  MPY1E    = (1U << 10),
+  MPY6E    = (1U << 11),
+  MPY7E    = (1U << 12),
+  MPY8E    = (1U << 13),
+  MPY9E    = (1U << 14),
+  NPS400   = (1U << 15),
+  QUARKSE1 = (1U << 16),
+  QUARKSE2 = (1U << 17),
+  SHFT1    = (1U << 18),
+  SHFT2    = (1U << 19),
+  SWAP     = (1U << 20),
+  SP       = (1U << 21),
+  SPX      = (1U << 22)
 } insn_subclass_t;
 
 /* Flags class.  */
@@ -196,47 +200,9 @@ extern int arc_opcode_len (const struct arc_opcode *opcode);
 #define ARC_OPCODE_ARCALL  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
 			    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
 #define ARC_OPCODE_ARCFPX  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM)
+#define ARC_OPCODE_ARCV1   (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700)
 #define ARC_OPCODE_ARCV2   (ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
-
-/* CPU extensions.  */
-#define ARC_EA       0x0001
-#define ARC_CD       0x0001    /* Mutual exclusive with EA.  */
-#define ARC_LLOCK    0x0002
-#define ARC_ATOMIC   0x0002    /* Mutual exclusive with LLOCK.  */
-#define ARC_MPY      0x0004
-#define ARC_MULT     0x0004
-#define ARC_NPS400   0x0008
-
-/* Floating point support.  */
-#define ARC_DPFP     0x0010
-#define ARC_SPFP     0x0020
-#define ARC_FPU      0x0030
-#define ARC_FPUDA    0x0040
-
-/* NORM & SWAP.  */
-#define ARC_SWAP     0x0100
-#define ARC_NORM     0x0200
-#define ARC_BSCAN    0x0200
-
-/* A7 specific.  */
-#define ARC_UIX      0x1000
-#define ARC_TSTAMP   0x1000
-
-/* A6 specific.  */
-#define ARC_VBFDW    0x1000
-#define ARC_BARREL   0x1000
-#define ARC_DSPA     0x1000
-
-/* EM specific.  */
-#define ARC_SHIFT    0x1000
-
-/* V2 specific.  */
-#define ARC_INTR     0x1000
-#define ARC_DIV      0x1000
-
-/* V1 specific.  */
-#define ARC_XMAC     0x1000
-#define ARC_CRC      0x1000
+#define ARC_OPCODE_ARCMPY6E  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCV2)
 
 /* The operands table is an array of struct arc_operand.  */
 struct arc_operand

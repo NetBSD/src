@@ -46,6 +46,7 @@ enum verbosity_value { NO_VERBOSE=0 };
 #endif
 /** logging routine, provided by caller */
 void verbose(enum verbosity_value lvl, const char* msg, ...) ATTR_FORMAT(printf, 2, 3);
+static void error(const char* msg, ...) ATTR_NORETURN;
 
 /** print error and exit */
 static void error(const char* msg, ...)
@@ -235,6 +236,8 @@ static void adjustline(char* line, struct entry* e,
 			e->copy_query = 1;
 		} else if(str_keyword(&parse, "copy_ednsdata_assume_clientsubnet")) {
 			e->copy_ednsdata_assume_clientsubnet = 1;
+		} else if(str_keyword(&parse, "increment_ecs_scope")) {
+			e->increment_ecs_scope = 1;
 		} else if(str_keyword(&parse, "sleep=")) {
 			e->sleeptime = (unsigned int) strtol(parse, (char**)&parse, 10);
 			while(isspace((unsigned char)*parse)) 
@@ -273,6 +276,7 @@ static struct entry* new_entry(void)
 	e->copy_id = 0;
 	e->copy_query = 0;
 	e->copy_ednsdata_assume_clientsubnet = 0;
+	e->increment_ecs_scope = 0;
 	e->sleeptime = 0;
 	e->next = NULL;
 	return e;
@@ -509,7 +513,8 @@ add_edns(uint8_t* pktbuf, size_t pktsize, int do_flag, uint8_t *ednsdata,
 	if(*pktlen + sizeof(edns) + ednslen > pktsize)
 		error("not enough space for EDNS OPT record");
 	memmove(pktbuf+*pktlen, edns, sizeof(edns));
-	memmove(pktbuf+*pktlen+sizeof(edns), ednsdata, ednslen);
+	if(ednsdata && ednslen)
+		memmove(pktbuf+*pktlen+sizeof(edns), ednsdata, ednslen);
 	sldns_write_uint16(pktbuf+10, LDNS_ARCOUNT(pktbuf)+1);
 	*pktlen += (sizeof(edns) + ednslen);
 }
@@ -572,7 +577,15 @@ read_entry(FILE* in, const char* name, struct sldns_file_parse_state* pstate,
 		} else if(str_keyword(&parse, "ADJUST")) {
 			adjustline(parse, current, cur_reply);
 		} else if(str_keyword(&parse, "EXTRA_PACKET")) {
+			/* copy current packet into buffer */
+			cur_reply->reply_pkt = memdup(pktbuf, pktlen);
+			cur_reply->reply_len = pktlen;
+			if(!cur_reply->reply_pkt)
+				error("out of memory");
 			cur_reply = entry_add_reply(current);
+			/* clear for next packet */
+			pktlen = LDNS_HEADER_SIZE;
+			memset(pktbuf, 0, pktlen); /* ID = 0, FLAGS="", and rr counts 0 */
 		} else if(str_keyword(&parse, "SECTION")) {
 			if(str_keyword(&parse, "QUESTION"))
 				add_section = LDNS_SECTION_QUESTION;
@@ -1558,10 +1571,10 @@ adjust_packet(struct entry* match, uint8_t** answer_pkt, size_t *answer_len,
 		return;
 	}
 	/* copy the ID */
-	if(match->copy_id && reslen >= 2)
-		res[1] = orig[1];
-	if(match->copy_id && reslen >= 1)
-		res[0] = orig[0];
+	if(match->copy_id && reslen >= 2 && query_len >= 2)
+		res[1] = query_pkt[1];
+	if(match->copy_id && reslen >= 1 && query_len >= 1)
+		res[0] = query_pkt[0];
 
 	if(match->copy_ednsdata_assume_clientsubnet) {
 		/** Assume there is only one EDNS option, which is ECS.
@@ -1584,6 +1597,9 @@ adjust_packet(struct entry* match, uint8_t** answer_pkt, size_t *answer_len,
 		if(walk_qlen >= 15 && walk_plen >= 15) {
 			walk_p[15] = walk_q[14];
 		}	
+		if(match->increment_ecs_scope) {
+			walk_p[15]++;
+		}
 	}
 
 	if(match->sleeptime > 0) {

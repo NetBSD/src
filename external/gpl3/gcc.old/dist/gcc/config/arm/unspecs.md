@@ -1,5 +1,5 @@
 ;; Unspec defintions.
-;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2016 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -83,6 +83,7 @@
                         ; FPSCR rounding mode and signal inexactness.
   UNSPEC_VRINTA         ; Represent a float to integral float rounding
                         ; towards nearest, ties away from zero.
+  UNSPEC_PROBE_STACK    ; Probe stack memory reference
 ])
 
 (define_c_enum "unspec" [
@@ -146,6 +147,7 @@
   VUNSPEC_STL		; Represent a store-register-release.
   VUNSPEC_GET_FPSCR	; Represent fetch of FPSCR content.
   VUNSPEC_SET_FPSCR	; Represent assign of FPSCR content.
+  VUNSPEC_PROBE_STACK_RANGE ; Represent stack range probing.
 ])
 
 ;; Enumerators for NEON unspecs.
@@ -225,8 +227,10 @@
   UNSPEC_VLD4_LANE
   UNSPEC_VMAX
   UNSPEC_VMAX_U
+  UNSPEC_VMAXNM
   UNSPEC_VMIN
   UNSPEC_VMIN_U
+  UNSPEC_VMINNM
   UNSPEC_VMLA
   UNSPEC_VMLA_LANE
   UNSPEC_VMLAL_S
@@ -359,5 +363,7 @@
   UNSPEC_NVRINTX
   UNSPEC_NVRINTA
   UNSPEC_NVRINTN
+  UNSPEC_VQRDMLAH
+  UNSPEC_VQRDMLSH
 ])
 

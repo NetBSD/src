@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.2 2012/10/19 17:16:55 apb Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.2.42.1 2019/06/10 22:07:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
+struct tty;
+
 #ifdef COMPAT_60
 
 /*
@@ -62,5 +64,11 @@ int compat_60_ptmioctl(dev_t, u_long, void *, int, struct lwp *);
 #endif
 
 #endif /* COMPAT_60 */
+
+#ifdef COMPAT_43
+#ifdef _KERNEL
+int compat_43_ttioctl(struct tty *, u_long, void *, int, struct lwp *);
+#endif
+#endif
 
 #endif /* !_COMPAT_SYS_TTYCOM_H_ */

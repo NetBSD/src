@@ -1,6 +1,6 @@
 // -*- C++ -*- forwarding header.
 
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -41,6 +41,11 @@
 
 #pragma GCC system_header
 
+#undef __need_wchar_t
+#undef __need_ptrdiff_t
+#undef __need_size_t
+#undef __need_NULL
+#undef __need_wint_t
 #include <bits/c++config.h>
 #include <stddef.h>
 

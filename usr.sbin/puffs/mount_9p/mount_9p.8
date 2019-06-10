@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.4 2007/12/02 21:03:32 wiz Exp $
+.\"	$NetBSD: mount_9p.8,v 1.4.70.1 2019/06/10 22:10:35 christos Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 8, 2007
+.Dd June 7, 2019
 .Dt MOUNT_9P 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd mount a file server using the 9P resource sharing protocol
 .Sh SYNOPSIS
 .Nm
-.Op Fl s
+.Op Fl su
 .Op Fl o Ar mntopts
 .Op Fl p Ar port
 .Ar [user@]host[:path]
@@ -51,20 +51,49 @@ If
 is supplied, it is used as the mount rootpath on the remote host.
 .Ar path
 must be an absolute path.
+.Pp
+By default
+.Nm
+runs in the background with
+.Xr daemon 3 .
+With the
+.Fl s
+option
+.Nm
+runs in the forground.
+.Pp
+By default
+.Nm
+follows the 9P2000 protocol.
+With the
+.Fl u
+option
+.Nm
+follows the 9P2000.u protocol that includes extensions to better support Unix
+environments.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
 .Xr mount 8
+.Rs
+.%T RFC and standards documents relating the 9P protocol
+.%U http://ericvh.github.io/9p-rfc/
+.Re
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
 .Nx 5.0 .
+.Pp
+Experimental 9P2000.u support appeared in
+.Nx 9.0 .
 .Sh CAVEATS
 Permissions are not handled well.
 .Pp
 Authentication support is missing.
 .Pp
-Error code handling is missing.
+Error code handling is missing for 9P2000.
 .Pp
 Under construction.
+.Pp
+9P2000.u support doesn't use extension fields.

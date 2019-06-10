@@ -674,6 +674,111 @@ Available with the following commands: \fBimport\fR,
 and \fBupdate\fR.
 .SP
 .SP
+.SH "add"
+.SS "Add files and directories to the repository"
+.IX "add (subcommand)"
+.SP
+.IP "\(bu" 2
+Synopsis: add [-k rcs-kflag] [-m message] files...
+.IP "\(bu" 2
+Requires: repository, working directory.
+.IP "\(bu" 2
+Changes: repository, working directory.
+.SP
+The \fBadd\fR command is used to present new files
+and directories for addition into the \fBcvs\fR
+repository.  When \fBadd\fR is used on a directory,
+a new directory is created in the repository
+immediately.  When used on a file, only the working
+directory is updated.  Changes to the repository are
+not made until the \fBcommit\fR command is used on
+the newly added file. 
+.SP
+The \fBadd\fR command also resurrects files that
+have been previously removed.  This can be done
+before or after the \fBcommit\fR command is used
+to finalize the removal of files.  Resurrected files
+are restored into the working directory at the time
+the \fBadd\fR command is executed.
+.SP
+.SH "add options"
+.SP
+These standard options are supported by \fBadd\fR
+(see node `Common options\(aq in the CVS manual, for a complete description of
+them):
+.SP
+.IP "" 0
+\fB-k \fIkflag\fB\fR
+.IP "" 2
+Process keywords according to \fIkflag\fR.  See
+see node `Keyword substitution\(aq in the CVS manual.
+This option is sticky; future updates of
+this file in this working directory will use the same
+\fIkflag\fR.  The \fBstatus\fR command can be viewed
+to see the sticky options.  For more information on
+the \fBstatus\fR command, see node `Invoking CVS\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-m \fImessage\fB\fR
+.IP "" 2
+Use \fImessage\fR as the log message, instead of
+invoking an editor.
+.SP
+.SH "add examples"
+.SP
+.SS "Adding a directory"
+.SP
+.PD 0
+.SP
+.IP "" 2
+$ mkdir doc
+.IP "" 2
+$ cvs add doc
+.IP "" 2
+Directory /path/to/repository/doc added to the repository
+
+.PD
+.IP "" 0
+.SP
+.SS "Adding a file"
+.SP
+.PD 0
+.SP
+.SP
+.IP "" 2
+$ >TODO
+.IP "" 2
+$ cvs add TODO
+.IP "" 2
+cvs add: scheduling file \`TODO\(aq for addition
+.IP "" 2
+cvs add: use \(aqcvs commit\(aq to add this file permanently
+
+.PD
+.IP "" 0
+.SP
+.SS "Undoing a \fBremove\fR command"
+.SP
+.PD 0
+.SP
+.IP "" 2
+$ rm -f makefile
+.IP "" 2
+$ cvs remove makefile
+.IP "" 2
+cvs remove: scheduling \`makefile\(aq for removal
+.IP "" 2
+cvs remove: use \(aqcvs commit\(aq to remove this file permanently
+.IP "" 2
+$ cvs add makefile
+.IP "" 2
+U makefile
+.IP "" 2
+cvs add: makefile, version 1.2, resurrected
+
+.PD
+.IP "" 0
+.SP
 .SH "admin"
 .SS "Administration"
 .IX "Admin (subcommand)"
@@ -993,7 +1098,7 @@ acceptable for \fIstate\fR.  A useful set of states is
 stable), and \fBRel\fR (for released).  By default,
 the state of a new revision is set to \fBExp\fR when
 it is created.  The state is visible in the output from
-\fIcvs log\fR (see node `log\(aq in the CVS manual), and in the
+\fIcvs log\fR (see node `log & rlog\(aq in the CVS manual), and in the
 \fB$\fP\fPLog$\fR and \fB$\fP\fPState$\fR keywords
 (see node `Keyword substitution\(aq in the CVS manual).  Note that \fBcvs\fR
 uses the \fBdead\fR state for its own purposes (see node `Attic\(aq in the CVS manual); to
@@ -1008,7 +1113,7 @@ Useful with \fBcvs\fR.  Write descriptive text from the
 contents of the named \fIfile\fR into the RCS file,
 deleting the existing text.  The \fIfile\fR pathname
 may not begin with \fB-\fR.  The descriptive text can be seen in the
-output from \fBcvs log\fR (see node `log\(aq in the CVS manual).
+output from \fBcvs log\fR (see node `log & rlog\(aq in the CVS manual).
 There can be no space between \fB-t\fR and its argument.
 .SP
 If \fIfile\fR is omitted,
@@ -1066,9 +1171,10 @@ files.  However, \fBcvs\fR has always required that the
 this option has never done anything useful.
 .SP
 .SP
-.SH "annotate"
+.SH "annotate & rannotate"
 .SS "What revision modified each line of a file?"
 .IX "annotate (subcommand)"
+.IX "rannotate (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: annotate [options] files\&...
@@ -1120,6 +1226,8 @@ existed on \fIdate\fR.  See see node `Common options\(aq in the CVS manual.
 Annotate file as of specified date.
 .SP
 .SH "annotate example"
+.IX "annotate (subcommand)"
+.IX "rannotate (subcommand)"
 .SP
 For example:
 .SP
@@ -1406,6 +1514,7 @@ $ cvs checkout -D yesterday tc
 .SH "commit"
 .SS "Check files into the repository"
 .IX "commit (subcommand)"
+.IX "ci (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: commit [-lnRf] [-m \(aqlog_message\(aq |
@@ -1445,7 +1554,7 @@ enter a log message that will be written to one or more
 logging programs (see node `modules\(aq in the CVS manual, and see node `loginfo\(aq in the CVS manual)
 and placed in the \fBrcs\fR file inside the
 repository.  This log message can be retrieved with the
-\fBlog\fR command; see see node `log\(aq in the CVS manual.  You can specify the
+\fBlog\fR command (see node `log & rlog\(aq in the CVS manual).  You can specify the
 log message on the command line with the \fB-m
 \fImessage\fB\fR option, and thus avoid the editor invocation,
 or use the \fB-F \fIfile\fB\fR option to specify
@@ -1454,8 +1563,8 @@ that the argument file contains the log message.
 At \fBcommit\fR, a unique commitid is placed in the \fBrcs\fR
 file inside the repository. All files committed at once
 get the same commitid. The commitid can be retrieved with
-the \fBlog\fR and \fBstatus\fR command; see see node `log\(aq in the CVS manual,
-see node `File status\(aq in the CVS manual.
+the \fBlog\fR and \fBstatus\fR command (see node `log & rlog\(aq in the CVS manual,
+see node `File status\(aq in the CVS manual).
 .SP
 .SH "commit options"
 .SP
@@ -2674,7 +2783,7 @@ export
 .IP "" 2
 \fBT\fR
 .IP "" 4
-rtag
+tag and rtag
 .SP
 One of five record types may result from an update:
 .SP
@@ -2715,6 +2824,12 @@ A file was modified.
 \fBR\fR
 .IP "" 4
 A file was removed.
+.SP
+One record type results from the admin command:
+.IP "" 2
+\fBX\fR
+.IP "" 4
+The admin command.
 .SP
 The options shown as \fB-flags\fR constrain or expand
 the report without requiring option arguments:
@@ -2976,9 +3091,46 @@ see node `modules\(aq in the CVS manual.)
 .SP
 See see node `Tracking sources\(aq in the CVS manual, and see node `From files\(aq in the CVS manual.
 .SP
-.SH "log"
+.SH "init"
+.SS "Initialize a repository"
+.IX "init (subcommand)"
+.SP
+.IP "\(bu" 2
+Synopsis: init
+.IP "\(bu" 2
+Requires: working directory.
+.IP "\(bu" 2
+Changes: repository, working directory.
+.SP
+The \fBinit\fR command initializes a repository by adding the
+\fBCVSROOT\fR subdirectory and some default control files. You must
+use this command or initialize the repository in some other way before
+you can use it. Specify the root of the repository with the general
+\fB-d\fR option.  This will set up an empty repository in the
+\fBcvs\fR root specified in the usual way (see node `Repository\(aq in the CVS manual).
+.SP
+\fBinit\fR is careful to never overwrite any existing files in the
+repository, so no harm is done if you run \fBinit\fR on an already
+set-up repository. Note you may need to be a member of the group
+\fBcvsadmin\fR to do this.
+.SP
+Note \fBinit\fR will enable history logging; if you don\(aqt want that,
+remove the history file after running \fBinit\fR (see node `history file\(aq in the CVS manual).
+.SP
+.SH "init examples"
+.SP
+.PD 0
+.SP
+.IP "" 2
+$ cvs -d /usr/local/cvsroot init
+
+.PD
+.IP "" 0
+.SP
+.SH "log & rlog"
 .SS "Print out log information for files"
 .IX "log (subcommand)"
+.IX "rlog (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: log [options] [files\&...]
@@ -3347,7 +3499,7 @@ verifymsg
 .IX "rdiff (subcommand)"
 .SP
 .IP "\(bu" 2
-rdiff [-flags] [-V vn] (-r tag1[:date1] | -D date1) [-r tag2[:date2] | -D date2] modules\&...
+rdiff [options] {-r tag1[:date1] | -D date1} [-r tag2[:date2] | -D date2] modules\&...
 .IP "\(bu" 2
 Requires: repository.
 .IP "\(bu" 2
@@ -3358,10 +3510,7 @@ Synonym: patch
 Builds a Larry Wall format patch(1) file between two
 releases, that can be fed directly into the \fBpatch\fR
 program to bring an old release up-to-date with the new
-release.  (This is one of the few \fBcvs\fR commands that
-operates directly from the repository, and doesn\(aqt
-require a prior checkout.) The diff output is sent to
-the standard output device.
+release.  The diff output is sent to the standard output device.
 .SP
 You can specify (using the standard \fB-r\fR and
 \fB-D\fR options) any combination of one or two
@@ -3370,11 +3519,11 @@ specified, the patch file reflects differences between
 that revision or date and the current head revisions in
 the \fBrcs\fR file.
 .SP
-Note that if the software release affected is contained
-in more than one directory, then it may be necessary to
-specify the \fB-p\fR option to the \fBpatch\fR command when
-patching the old sources, so that \fBpatch\fR is able to find
-the files that are located in other directories.
+Note that if the patch created by rdiff spans multiple directories,
+then it may be necessary to specify the \fB-p\fR option when feeding
+the patch back to the \fBpatch\fR command, so that \fBpatch\fR is able
+to update files that are located in directories other than the one
+patch is run in.
 .SP
 .SH "rdiff options"
 .SP
@@ -3453,15 +3602,6 @@ Remember that old versions
 of the \fBpatch\fR program can\(aqt handle the unidiff
 format, so if you plan to post this patch to the net
 you should probably not use \fB-u\fR.
-.SP
-.IP "" 0
-\fB-V \fIvn\fB\fR
-.IP "" 2
-Expand keywords according to the rules current in
-\fBrcs\fR version \fIvn\fR (the expansion format changed with
-\fBrcs\fR version 5).  Note that this option is no
-longer accepted.  \fBcvs\fR will always expand keywords the
-way that \fBrcs\fR version 5 does.
 .SP
 .SH "rdiff examples"
 .SP
@@ -3624,6 +3764,131 @@ $
 .PD
 .IP "" 0
 .SP
+.SH "remove"
+.SS "Remove files from active use"
+.IX "remove (subcommand)"
+.SP
+.IP "\(bu" 2
+Synopsis: remove [-flR] [files...]
+.IP "\(bu" 2
+Requires: repository, working directory.
+.IP "\(bu" 2
+Changes: working directory.
+.SP
+The \fBremove\fR command is used to remove unwanted
+files from active use.  The user normally deletes the
+files from the working directory prior to invocation
+of the \fBremove\fR command.  Only the working
+directory is updated.  Changes to the repository are
+not made until the \fBcommit\fR command is run.
+.SP
+The \fBremove\fR command does not delete files from
+from the repository.  \fBcvs\fR keeps all historical
+data in the repository so that it is possible to
+reconstruct previous states of the projects under
+revision control.
+.SP
+To undo \fBcvs\fR \fBremove\fR or to resurrect files
+that were previously removed, see node `add\(aq in the CVS manual.
+.SP
+.SH "remove options"
+.SP
+These standard options are supported by \fBremove\fR
+(see node `Common options\(aq in the CVS manual for a complete description of
+them):
+.SP
+.IP "" 0
+\fB-l\fR
+.IP "" 2
+Local; run only in current working directory.  See see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-R\fR
+.IP "" 2
+Process directories recursively.  See see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.SP
+In addition, these options are also supported:
+.SP
+.IP "" 0
+\fB-f\fR
+.IP "" 2
+Note that this is not the standard behavior of
+the \fB-f\fR option as defined in see node `Common options\(aq in the CVS manual.
+.SP
+Delete files before removing them.
+.SP
+Entire directory hierarchies are easily removed
+using \fB-f\fR, but take note that it is not as
+easy to resurrect directory hierarchies as it is
+to remove them.
+.SP
+.SP
+.SH "remove examples"
+.SP
+.SS "Removing a file"
+.SP
+.PD 0
+.SP
+.IP "" 2
+$ cvs remove remove.me
+.IP "" 2
+cvs remove: file \`remove.me\(aq still in working directory
+.IP "" 2
+cvs remove: 1 file exists; remove it first
+.IP "" 2
+$ rm -f remove.me
+.IP "" 2
+$ cvs remove remove.me
+.IP "" 2
+cvs remove: scheduling \`remove.me\(aq for removal
+.IP "" 2
+cvs remove: use \(aqcvs commit\(aq to remove this file permanently
+.SP
+.IP "" 2
+$ ls remove.it
+.IP "" 2
+remove.it
+.IP "" 2
+$ cvs remove -f remove.it
+.IP "" 2
+cvs remove: scheduling \`remove.it\(aq for removal
+.IP "" 2
+cvs remove: use \(aqcvs commit\(aq to remove this file permanently
+
+.PD
+.IP "" 0
+.SP
+.SS "Removing entire directories"
+.SP
+.PD 0
+.IP "" 2
+$ tree -d a
+.IP "" 2
+a
+.IP "" 2
+|-- CVS
+.IP "" 2
+\`-- b
+.IP "" 2
+    \`-- CVS
+.SP
+.IP "" 2
+3 directories
+.IP "" 2
+$ cvs remove -f a
+.IP "" 2
+cvs remove: Removing a
+.IP "" 2
+cvs remove: Removing a/b
+.IP "" 2
+cvs remove: scheduling \`a/b/c\(aq for removal
+.IP "" 2
+cvs remove: use \(aqcvs commit\(aq to remove this file permanently
+
+.PD
+.IP "" 0
+.SP
 .SH "server & pserver"
 .SS "Act as a server for a client on stdin/stdout"
 .IX "pserver (subcommand)"
@@ -3659,18 +3924,166 @@ Load configuration from \fIpath\fR rather than the default location
 \fB/etc/cvs.conf\fR or prefixed by \fB/etc/cvs/\fR.  This option is
 supported beginning with \fBcvs\fR release 1.12.13.
 .SP
+.SH "tag & rtag"
+.SS "Mark project snapshot for later retrieval."
+.IX "tag (subcommand)"
+.IX "freeze (subcommand)"
+.IX "rtag (subcommand)"
+.IX "rfreeze (subcommand)"
+.SP
+.IP "\(bu" 2
+tag [-bBcdFflR] [-r tag] [-D date] new_tag [files\&...]
+.IP "\(bu" 2
+Requires: working directory, repository.
+.IP "\(bu" 2
+Changes: repository.
+.IP "\(bu" 2
+Synonym: ta, freeze
+.SP
+and
+.SP
+.IP "\(bu" 2
+rtag [-abBdFflnR] [-r tag | -D date] new_tag module\&...
+.IP "\(bu" 2
+Requires: repository.
+.IP "\(bu" 2
+Changes: repository.
+.IP "\(bu" 2
+Synonym: rt, rfreeze
+.SP
+Use \fBtag\fR to assign symbolic tags to the revisions of files
+checked out into your sandbox.  The tags are applied immediately
+to the repository, with the revision numbers to attach the tag
+to supplied implicitly by the \fBcvs\fR records of your working files.
+.SP
+\fBrtag\fR works similarly, but does not need a sandbox to operate
+in, requiring an explicitly supplied tag or date instead (or assuming
+the tip of the trunk when one is not supplied explicitly).  \fBcvs\fR
+uses this preexisting tag or date to determine which revisions of
+files in the repository to attach the new symbolic tag to.
+.SP
+The symbolic tags are meant to permanently record which
+revisions of which files were used for some purpose.  The \fBcheckout\fR
+and \fBupdate\fR commands allow you to extract an exact
+copy of a tagged release at any time in the future,
+regardless of whether files have been changed, added,
+or removed on the trunk or other branches since the release was tagged.
+For more, see node `Branching and merging\(aq in the CVS manual.
+.SP
+These commands may also be used to delete a symbolic tag,
+or to create a branch.  See the options section below.
+.SP
+Note if you wish to run destructive commands such as tag deletion, you may
+need to be a member of the group \fBcvsadmin\fR to do this.
+.SP
+If you attempt to create a tag that already exists,
+CVS will complain and not overwrite that tag.  Use
+the \fB-F\fR option to move the tag to a new set of
+revisions.
+.SP
+These standard options are supported by \fBtag\fR or \fBrtag\fR
+(see node `Common options\(aq in the CVS manual, for a complete description of them):
+.SP
+.IP "" 0
+\fB-D \fIdate\fB\fR
+.IP "" 2
+Tag the most recent revision no later than \fIdate\fR.  This option is
+not valid when deleting tags (see \fB-d\fR option, below).
+.SP
+.IP "" 0
+\fB-l\fR
+.IP "" 2
+Local; run only in current working directory.  see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-R\fR
+.IP "" 2
+Update directories recursively (default).  see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-r \fItag\fB[:\fIdate\fB]\fR
+.IP "" 2
+Tag the revisions specified by \fItag\fR or, when \fIdate\fR is specified
+and \fItag\fR is a branch tag, the version from the branch \fItag\fR as it
+existed on \fIdate\fR.  This option is not valid when deleting tags
+(see \fB-d\fR option, below).
+.SP
+Several tag specific options are also available.  When an option is only
+available with one of \fBtag\fR or \fBrtag\fR, it is noted below:
+.SP
+.IP "" 0
+\fB-a\fR
+.IP "" 2
+Clear \fInew_tag\fR from removed files that would not otherwise be tagged
+(\fBrtag\fR only).
+.SP
+.IP "" 0
+\fB-B\fR
+.IP "" 2
+Allows \fB-d\fR or \fB-F\fR to delete or move branch tags.
+.SP
+\fBWARNING: Recovering the information stored by branch tags is
+a very hard problem, more so than regular tags.  Be absolutely sure you
+understand what you are doing before using this option.\fR
+.SP
+.IP "" 0
+\fB-b\fR
+.IP "" 2
+The \fB-b\fR option makes the new tag a branch tag (see node `Branching and
+merging\(aq in the CVS manual), allowing concurrent, isolated development.  This is commonly used
+to create patches to a previously released software distribution.
+.SP
+.IP "" 0
+\fB-c\fR
+.IP "" 2
+Abort if any tagged files are locally modified (\fBtag\fR only).
+.SP
+.IP "" 0
+\fB-d\fR
+.IP "" 2
+Delete \fInew_tag\fR, instead of creating it.
+.SP
+\fBWARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.\fR
+.SP
+.IP "" 0
+\fB-F\fR
+.IP "" 2
+When a tag already exists, move it to the new revision.  When the tag
+does not exist, create it as normal.  This option is new in \fBcvs\fR 1.4.
+The pre-1.4 behavior is identical to \fBcvs tag -F\fR.
+.SP
+\fBWARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.\fR
+.SP
+.IP "" 0
+\fB-f\fR
+.IP "" 2
+With \fB-r \fItag\fB\fR or \fB-d \fIdate\fB\fR, force a head revision match
+if \fItag\fR and \fIdate\fR are not found (in other words, attach \fInew_tag\fR
+to the most recent trunk revision when \fItag\fR and \fIdate\fR do not
+resolve to an existing revision).
+.SP
+.IP "" 0
+\fB-n\fR
+.IP "" 2
+Do not execute the tag program specified in the \fBmodules\fR file
+(\fBrtag\fR only).  see node `modules\(aq in the CVS manual, for more.
+.SP
 .SH "update"
 .SS "Bring work tree in sync with repository"
 .IX "update (subcommand)"
 .SP
 .IP "\(bu" 2
-update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files\&...
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] [files\&...]
 .IP "\(bu" 2
 Requires: repository, working directory.
 .IP "\(bu" 2
 Changes: working directory.
 .SP
-After you\(aqve run checkout to create your private copy
+After you\(aqve run \fBcheckout\fR to create your private copy
 of source from the common repository, other developers
 will continue changing the central source.  From time
 to time, when it is convenient in your development
@@ -3724,19 +4137,6 @@ Local; run only in current working directory.  see node `Recursive behavior\(aq 
 Prune empty directories.  See see node `Moving directories\(aq in the CVS manual.
 .SP
 .IP "" 0
-\fB-t\fR
-.IP "" 2
-Preserve source timestamps.  Unlike \fBcheckout\fR where files are created
-using the original timestamp of the file in the repository, \fBupdate\fR
-updates files using the current time of the machine.  This is convenient
-because updated files appear newer than any other files on the system so
-.BR make ( 1 )
-knows that are their corresponding built artifacts are out of date and
-they will get rebuilt.  The \fB-t\fR flag instead preserves the timestamps
-of the original repository files, behaving exactly like \fBcheckout\fR.
-This is useful for maintaining a tree in the original checked-out state.
-.SP
-.IP "" 0
 \fB-p\fR
 .IP "" 2
 Pipe files to the standard output.
@@ -3755,6 +4155,18 @@ and \fItag\fR is a branch tag, the version from the branch \fItag\fR as it
 existed on \fIdate\fR.  This option is sticky, and implies \fB-P\fR.
 See see node `Sticky tags\(aq in the CVS manual, for more information on sticky tags/dates. Also
 see see node `Common options\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-t\fR
+.IP "" 2
+Preserve source timestamps.  Unlike \fBcheckout\fR, where files are created
+using the original timestamp of the file in the repository, \fBupdate\fR
+updates files using the current time of the machine.  This is convenient
+because updated files appear newer than any other files on the system so
+\fBmake(1)\fR knows that their corresponding built artifacts are out of date
+and they will get rebuilt.  The \fB-t\fR flag instead preserves the timestamps
+of the original repository files, behaving exactly like \fBcheckout\fR.
+This is useful for maintaining a tree in the original checked-out state.
 .SP
 These special options are also available with
 \fBupdate\fR.

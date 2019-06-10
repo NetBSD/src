@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.25 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.25.32.1 2019/06/10 22:05:11 christos Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.25 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.32.1 2019/06/10 22:05:11 christos Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -793,6 +793,7 @@ parse(void)
 			savegame(savefilename);
 			wizard = 1;
 			died(-257);	/* save the game - doesn't return	 */
+			__unreachable();
 
 		case 'Z':
 			yrepcount = 0;
@@ -918,6 +919,7 @@ parse(void)
 		case 'g':
 			cursors();
 			lprintf("\nThe stuff you are carrying presently weighs %ld pounds", (long) packweight());
+			/* FALLTHROUGH */
 		case ' ':
 			yrepcount = 0;
 			nomove = 1;

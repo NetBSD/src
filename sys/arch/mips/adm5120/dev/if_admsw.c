@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.17 2018/06/26 06:47:58 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.17.2.1 2019/06/10 22:06:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.17 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.17.2.1 2019/06/10 22:06:29 christos Exp $");
 
 
 #include <sys/param.h>
@@ -101,11 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.17 2018/06/26 06:47:58 msaitoh Exp $"
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
-
-#include <dev/mii/mii.h>
-#include <dev/mii/miivar.h>
 
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
@@ -167,7 +163,7 @@ admsw_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 #define	REG_READ(o)	bus_space_read_4(sc->sc_st, sc->sc_ioh, (o))
-#define	REG_WRITE(o,v)	bus_space_write_4(sc->sc_st, sc->sc_ioh, (o),(v))
+#define	REG_WRITE(o, v)	bus_space_write_4(sc->sc_st, sc->sc_ioh, (o),(v))
 
 
 static void
@@ -187,11 +183,11 @@ admsw_init_bufs(struct admsw_softc *sc)
 		desc->len = MAC_BUFLEN;
 		desc->status = 0;
 		ADMSW_CDTXHSYNC(sc, i,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txhdescs[ADMSW_NTXHDESC - 1].data |= ADM5120_DMA_RINGEND;
 	ADMSW_CDTXHSYNC(sc, ADMSW_NTXHDESC - 1,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < ADMSW_NRXHDESC; i++) {
 		if (sc->sc_rxhsoft[i].ds_mbuf == NULL) {
@@ -212,11 +208,11 @@ admsw_init_bufs(struct admsw_softc *sc)
 		desc->len = MAC_BUFLEN;
 		desc->status = 0;
 		ADMSW_CDTXLSYNC(sc, i,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txldescs[ADMSW_NTXLDESC - 1].data |= ADM5120_DMA_RINGEND;
 	ADMSW_CDTXLSYNC(sc, ADMSW_NTXLDESC - 1,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < ADMSW_NRXLDESC; i++) {
 		if (sc->sc_rxlsoft[i].ds_mbuf == NULL) {
@@ -242,7 +238,8 @@ admsw_setvlan(struct admsw_softc *sc, char matrix[6])
 {
 	uint32_t i;
 
-	i = matrix[0] + (matrix[1] << 8) + (matrix[2] << 16) + (matrix[3] << 24);
+	i = matrix[0] + (matrix[1] << 8) + (matrix[2] << 16)
+	    + (matrix[3] << 24);
 	REG_WRITE(VLAN_G1_REG, i);
 	i = matrix[4] + (matrix[5] << 8);
 	REG_WRITE(VLAN_G2_REG, i);
@@ -259,13 +256,13 @@ admsw_reset(struct admsw_softc *sc)
 	REG_WRITE(CPUP_CONF_REG,
 	    REG_READ(CPUP_CONF_REG) | CPUP_CONF_DCPUP);
 
-        /* Wait for DMA to complete.  Overkill.  In 3ms, we can
-         * send at least two entire 1500-byte packets at 10 Mb/s.
+	/* Wait for DMA to complete.  Overkill.	 In 3ms, we can
+	 * send at least two entire 1500-byte packets at 10 Mb/s.
 	 */
 	DELAY(3000);
 
-        /* The datasheet recommends that we move all PHYs to reset
-         * state prior to software reset.
+	/* The datasheet recommends that we move all PHYs to reset
+	 * state prior to software reset.
 	 */
 	REG_WRITE(PHY_CNTL2_REG,
 	    REG_READ(PHY_CNTL2_REG) & ~PHY_CNTL2_PHYR_MASK);
@@ -285,8 +282,8 @@ admsw_reset(struct admsw_softc *sc)
 	REG_WRITE(PORT_CONF0_REG, PORT_CONF0_EMCP_MASK | PORT_CONF0_EMBP_MASK);
 
 	REG_WRITE(PHY_CNTL2_REG,
-	    REG_READ(PHY_CNTL2_REG) | PHY_CNTL2_ANE_MASK | PHY_CNTL2_PHYR_MASK |
-	    PHY_CNTL2_AMDIX_MASK);
+	    REG_READ(PHY_CNTL2_REG) | PHY_CNTL2_ANE_MASK |
+	    PHY_CNTL2_PHYR_MASK | PHY_CNTL2_AMDIX_MASK);
 
 	REG_WRITE(PHY_CNTL3_REG, REG_READ(PHY_CNTL3_REG) | PHY_CNTL3_RNT);
 
@@ -317,7 +314,8 @@ admsw_reset(struct admsw_softc *sc)
 		    (sc->sc_enaddr[0]<<16) | (sc->sc_enaddr[1]<<24) |
 		    MAC_WT0_WRITE | MAC_WT0_VLANID_EN);
 
-		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE));
+		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE))
+			;
 	}
 	wdog1 = REG_READ(ADM5120_WDOG1);
 	REG_WRITE(ADM5120_WDOG1, wdog1 & ~ADM5120_WDOG1_WDE);
@@ -475,7 +473,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 		ifp->if_init = admsw_init;
 		ifp->if_stop = admsw_stop;
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx;
-		IFQ_SET_MAXLEN(&ifp->if_snd, max(ADMSW_NTXLDESC, IFQ_MAXLEN));
+		IFQ_SET_MAXLEN(&ifp->if_snd, uimax(ADMSW_NTXLDESC, IFQ_MAXLEN));
 		IFQ_SET_READY(&ifp->if_snd);
 
 		/* Attach the interface. */
@@ -557,7 +555,7 @@ admsw_start(struct ifnet *ifp)
 		i = vlan;
 		for (;;) {
 			ifp = &sc->sc_ethercom[i].ec_if;
-			if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) ==
+			if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) ==
 			    IFF_RUNNING) {
 				/* Grab a packet off the queue. */
 				IFQ_POLL(&ifp->if_snd, m0);
@@ -593,7 +591,7 @@ admsw_start(struct ifnet *ifp)
 		 */
 		if (m0->m_pkthdr.len < ETHER_MIN_LEN ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -620,10 +618,10 @@ admsw_start(struct ifnet *ifp)
 				m->m_pkthdr.len = m->m_len = ETHER_MIN_LEN;
 			}
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->sc_dev), error);
+				printf("%s: unable to load Tx buffer, error = "
+				    "%d\n", device_xname(sc->sc_dev), error);
 				break;
 			}
 		}
@@ -643,12 +641,14 @@ admsw_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		if (dmamap->dm_nsegs != 1 && dmamap->dm_nsegs != 2)
-			panic("admsw_start: dm_nsegs == %d\n", dmamap->dm_nsegs);
+			panic("admsw_start: dm_nsegs == %d\n",
+			    dmamap->dm_nsegs);
 		desc->data = dmamap->dm_segs[0].ds_addr;
 		desc->len = len = dmamap->dm_segs[0].ds_len;
 		if (dmamap->dm_nsegs > 1) {
 			len += dmamap->dm_segs[1].ds_len;
-			desc->cntl = dmamap->dm_segs[1].ds_addr | ADM5120_DMA_BUF2ENABLE;
+			desc->cntl = dmamap->dm_segs[1].ds_addr
+			    | ADM5120_DMA_BUF2ENABLE;
 		} else
 			desc->cntl = 0;
 		desc->status = (len << ADM5120_DMA_LENSHIFT) | (1 << vlan);
@@ -662,10 +662,10 @@ admsw_start(struct ifnet *ifp)
 
 		/* Sync the descriptor. */
 		ADMSW_CDTXLSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		REG_WRITE(SEND_TRIG_REG, 1);
-		/* printf("send slot %d\n",nexttx); */
+		/* printf("send slot %d\n", nexttx); */
 
 		/*
 		 * Store a pointer to the packet so we can free it later.
@@ -702,23 +702,27 @@ admsw_watchdog(struct ifnet *ifp)
 		return;
 	}
 	if (sc->sc_ethercom[0].ec_if.if_timer != 0)
-		printf("%s: watchdog timer is %d!\n", device_xname(sc->sc_dev), sc->sc_ethercom[0].ec_if.if_timer);
+		printf("%s: watchdog timer is %d!\n", device_xname(sc->sc_dev),
+		    sc->sc_ethercom[0].ec_if.if_timer);
 	admsw_txintr(sc, 0);
 	if (sc->sc_txfree == ADMSW_NTXLDESC) {
-		printf("%s: tx IRQ lost (queue empty)\n", device_xname(sc->sc_dev));
+		printf("%s: tx IRQ lost (queue empty)\n",
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	if (sc->sc_ethercom[0].ec_if.if_timer != 0) {
-		printf("%s: tx IRQ lost (timer recharged)\n", device_xname(sc->sc_dev));
+		printf("%s: tx IRQ lost (timer recharged)\n",
+		    device_xname(sc->sc_dev));
 		return;
 	}
 #endif
 
-	printf("%s: device timeout, txfree = %d\n", device_xname(sc->sc_dev), sc->sc_txfree);
+	printf("%s: device timeout, txfree = %d\n",
+	    device_xname(sc->sc_dev), sc->sc_txfree);
 	for (vlan = 0; vlan < SW_DEVS; vlan++)
 		admsw_stop(&sc->sc_ethercom[vlan].ec_if, 0);
 	for (vlan = 0; vlan < SW_DEVS; vlan++)
-		(void) admsw_init(&sc->sc_ethercom[vlan].ec_if);
+		(void)admsw_init(&sc->sc_ethercom[vlan].ec_if);
 
 	/* Try to get more packets going. */
 	admsw_start(ifp);
@@ -745,7 +749,7 @@ admsw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		port = (struct ethercom *)ifp - sc->sc_ethercom;	/* XXX */
+		port = (struct ethercom *)ifp - sc->sc_ethercom; /* XXX */
 		if (port >= SW_DEVS)
 			error = EOPNOTSUPP;
 		else
@@ -787,7 +791,7 @@ admsw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	admsw_start(ifp);
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 
@@ -805,14 +809,15 @@ admsw_intr(void *arg)
 
 	pending = REG_READ(ADMSW_INT_ST);
 
-	if ((pending & ~(ADMSW_INTR_RHD|ADMSW_INTR_RLD|ADMSW_INTR_SHD|ADMSW_INTR_SLD|ADMSW_INTR_W1TE|ADMSW_INTR_W0TE)) != 0) {
+	if ((pending & ~(ADMSW_INTR_RHD | ADMSW_INTR_RLD | ADMSW_INTR_SHD |
+	    ADMSW_INTR_SLD | ADMSW_INTR_W1TE | ADMSW_INTR_W0TE)) != 0) {
 		snprintb(buf, sizeof(buf), ADMSW_INT_FMT, pending);
 		printf("%s: pending=%s\n", __func__, buf);
 	}
 	REG_WRITE(ADMSW_INT_ST, pending);
 
 	if (sc->ndevs == 0)
-		return (0);
+		return 0;
 
 	if ((pending & ADMSW_INTR_RHD) != 0)
 		admsw_rxintr(sc, 1);
@@ -826,7 +831,7 @@ admsw_intr(void *arg)
 	if ((pending & ADMSW_INTR_SLD) != 0)
 		admsw_txintr(sc, 0);
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -843,18 +848,18 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 	int i, vlan;
 	int gotone = 0;
 
-	/* printf("txintr: txdirty: %d, txfree: %d\n",sc->sc_txdirty, sc->sc_txfree); */
+	/* printf("txintr: txdirty: %d, txfree: %d\n", sc->sc_txdirty, sc->sc_txfree); */
 	for (i = sc->sc_txdirty; sc->sc_txfree != ADMSW_NTXLDESC;
 	    i = ADMSW_NEXTTXL(i)) {
 
 		ADMSW_CDTXLSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		desc = &sc->sc_txldescs[i];
 		ds = &sc->sc_txlsoft[i];
 		if (desc->data & ADM5120_DMA_OWN) {
 			ADMSW_CDTXLSYNC(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
 
@@ -869,7 +874,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 			panic("admsw_txintr: bad vlan\n");
 		ifp = &sc->sc_ethercom[vlan].ec_if;
 		gotone = 1;
-		/* printf("clear tx slot %d\n",i); */
+		/* printf("clear tx slot %d\n", i); */
 
 		ifp->if_opackets++;
 
@@ -898,7 +903,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 
 	}
 
-	/* printf("txintr end: txdirty: %d, txfree: %d\n",sc->sc_txdirty, sc->sc_txfree); */
+	/* printf("txintr end: txdirty: %d, txfree: %d\n", sc->sc_txdirty, sc->sc_txfree); */
 }
 
 /*
@@ -924,26 +929,34 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 #endif
 
 #if 1
-	ADMSW_CDRXLSYNC(sc, sc->sc_rxptr, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	ADMSW_CDRXLSYNC(sc, sc->sc_rxptr,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	if ((sc->sc_rxldescs[sc->sc_rxptr].data & ADM5120_DMA_OWN) == 0)
-		ADMSW_CDRXLSYNC(sc, sc->sc_rxptr, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		ADMSW_CDRXLSYNC(sc, sc->sc_rxptr,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	else {
 		i = sc->sc_rxptr;
 		do {
-			ADMSW_CDRXLSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			ADMSW_CDRXLSYNC(sc, i,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			i = ADMSW_NEXTRXL(i);
 			/* the ring is empty, just return. */
 			if (i == sc->sc_rxptr)
 				return;
-			ADMSW_CDRXLSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			ADMSW_CDRXLSYNC(sc, i,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		} while (sc->sc_rxldescs[i].data & ADM5120_DMA_OWN);
-		ADMSW_CDRXLSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		ADMSW_CDRXLSYNC(sc, i,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		ADMSW_CDRXLSYNC(sc, sc->sc_rxptr, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		ADMSW_CDRXLSYNC(sc, sc->sc_rxptr,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		if ((sc->sc_rxldescs[sc->sc_rxptr].data & ADM5120_DMA_OWN) == 0)
-			ADMSW_CDRXLSYNC(sc, sc->sc_rxptr, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			ADMSW_CDRXLSYNC(sc, sc->sc_rxptr,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		else {
-			ADMSW_CDRXLSYNC(sc, sc->sc_rxptr, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			ADMSW_CDRXLSYNC(sc, sc->sc_rxptr,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			/* We've fallen behind the chip: catch it. */
 			printf("%s: RX ring resync, base=%x, work=%x, %d -> %d\n",
 			    device_xname(sc->sc_dev), REG_READ(RECV_LBADDR_REG),
@@ -956,14 +969,16 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 	for (i = sc->sc_rxptr;; i = ADMSW_NEXTRXL(i)) {
 		ds = &sc->sc_rxlsoft[i];
 
-		ADMSW_CDRXLSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		ADMSW_CDRXLSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		if (sc->sc_rxldescs[i].data & ADM5120_DMA_OWN) {
-			ADMSW_CDRXLSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			ADMSW_CDRXLSYNC(sc, i,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
 
-		/* printf("process slot %d\n",i); */
+		/* printf("process slot %d\n", i); */
 
 #ifdef ADMSW_EVENT_COUNTERS
 		pkts++;
@@ -1034,13 +1049,14 @@ admsw_init(struct ifnet *ifp)
 			REG_WRITE(CPUP_CONF_REG,
 			    CPUP_CONF_CRCP | CPUP_CONF_DUNP_MASK |
 			    CPUP_CONF_DMCP_MASK);
-			/* clear all pending interrupts */
+			/* Clear all pending interrupts */
 			REG_WRITE(ADMSW_INT_ST, INT_MASK);
 
-			/* enable needed interrupts */
+			/* Enable needed interrupts */
 			REG_WRITE(ADMSW_INT_MASK, REG_READ(ADMSW_INT_MASK) &
-			    ~(ADMSW_INTR_SHD | ADMSW_INTR_SLD | ADMSW_INTR_RHD |
-			    ADMSW_INTR_RLD | ADMSW_INTR_HDF | ADMSW_INTR_LDF));
+			    ~(ADMSW_INTR_SHD | ADMSW_INTR_SLD |
+				ADMSW_INTR_RHD | ADMSW_INTR_RLD |
+				ADMSW_INTR_HDF | ADMSW_INTR_LDF));
 		}
 		sc->ndevs++;
 	}
@@ -1048,7 +1064,7 @@ admsw_init(struct ifnet *ifp)
 	/* Set the receive filter. */
 	admsw_set_filter(sc);
 
-	/* mark iface as running */
+	/* Mark iface as running */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1065,7 +1081,7 @@ admsw_stop(struct ifnet *ifp, int disable)
 {
 	struct admsw_softc *sc = ifp->if_softc;
 
-	/* printf("admsw_stop: %d\n",disable); */
+	/* printf("admsw_stop: %d\n", disable); */
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -1073,16 +1089,16 @@ admsw_stop(struct ifnet *ifp, int disable)
 	if (--sc->ndevs == 0) {
 		/* printf("debug: de-initializing hardware\n"); */
 
-		/* disable cpu port */
+		/* Disable cpu port */
 		REG_WRITE(CPUP_CONF_REG,
 				CPUP_CONF_DCPUP | CPUP_CONF_CRCP |
 				CPUP_CONF_DUNP_MASK | CPUP_CONF_DMCP_MASK);
 
 		/* XXX We should disable, then clear? --dyoung */
-		/* clear all pending interrupts */
+		/* Clear all pending interrupts */
 		REG_WRITE(ADMSW_INT_ST, INT_MASK);
 
-		/* disable interrupts */
+		/* Disable interrupts */
 		REG_WRITE(ADMSW_INT_MASK, INT_MASK);
 	}
 
@@ -1118,6 +1134,7 @@ admsw_set_filter(struct admsw_softc *sc)
 
 		ifp->if_flags &= ~IFF_ALLMULTI;
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1143,20 +1160,22 @@ admsw_set_filter(struct admsw_softc *sc)
 			    (enm->enm_addrlo[0] << 16) |
 			    (enm->enm_addrlo[1] << 24) |
 			    MAC_WT0_WRITE | MAC_WT0_VLANID_EN);
-			/* timeout? */
-			while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE));
+			/* Timeout? */
+			while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE))
+				;
 #endif
 
-			/* load h/w with mcast address, port = CPU */
+			/* Load h/w with mcast address, port = CPU */
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	conf = REG_READ(CPUP_CONF_REG);
-        /* 1 Disable forwarding of unknown & multicast packets to
-         *   CPU on all ports.
-         * 2 Enable forwarding of unknown & multicast packets to
-         *   CPU on ports where IFF_PROMISC or IFF_ALLMULTI is set.
+	/* 1 Disable forwarding of unknown & multicast packets to
+	 *   CPU on all ports.
+	 * 2 Enable forwarding of unknown & multicast packets to
+	 *   CPU on ports where IFF_PROMISC or IFF_ALLMULTI is set.
 	 */
 	conf |= CPUP_CONF_DUNP_MASK | CPUP_CONF_DMCP_MASK;
 	/* Enable forwarding of unknown packets to CPU on selected ports. */
@@ -1185,12 +1204,12 @@ admsw_add_rxbuf(struct admsw_softc *sc, int idx, int high)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (ds->ds_mbuf != NULL)
@@ -1215,7 +1234,7 @@ admsw_add_rxbuf(struct admsw_softc *sc, int idx, int high)
 	else
 		ADMSW_INIT_RXLDESC(sc, idx);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1227,31 +1246,32 @@ admsw_mediachange(struct ifnet *ifp)
 	int old, new, val;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return (EINVAL);
+		return EINVAL;
 
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		val = PHY_CNTL2_AUTONEG|PHY_CNTL2_100M|PHY_CNTL2_FDX;
+		val = PHY_CNTL2_AUTONEG | PHY_CNTL2_100M | PHY_CNTL2_FDX;
 	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
-			val = PHY_CNTL2_100M|PHY_CNTL2_FDX;
+		if ((ifm->ifm_media & IFM_FDX) != 0)
+			val = PHY_CNTL2_100M | PHY_CNTL2_FDX;
 		else
 			val = PHY_CNTL2_100M;
 	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+		if ((ifm->ifm_media & IFM_FDX) != 0)
 			val = PHY_CNTL2_FDX;
 		else
 			val = 0;
 	} else
-		return (EINVAL);
+		return EINVAL;
 
 	old = REG_READ(PHY_CNTL2_REG);
-	new = old & ~((PHY_CNTL2_AUTONEG|PHY_CNTL2_100M|PHY_CNTL2_FDX) << port);
+	new = old & ~((PHY_CNTL2_AUTONEG | PHY_CNTL2_100M | PHY_CNTL2_FDX)
+	    << port);
 	new |= (val << port);
 
 	if (new != old)
 		REG_WRITE(PHY_CNTL2_REG, new);
 
-	return (0);
+	return 0;
 }
 
 void

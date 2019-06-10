@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ with_test_prefix "read-only" {
     set orig -1
 
     set test "get value of read-only section"
-    gdb_test_multiple "print /d *(unsigned char *) $ro_address" "$test" {
+    gdb_test_multiple "print /u *(unsigned char *) $ro_address" "$test" {
 	-re " = (\[0-9\]*).*$gdb_prompt $" {
 	    set orig $expect_out(1,string)
 	    pass "$test"
@@ -135,7 +135,10 @@ with_test_prefix "read-only" {
     # Write PATCH to memory.
     set written -1
     set test "corrupt read-only section"
-    gdb_test_multiple "print /d *(unsigned char *) $ro_address = $patch" "$test" {
+    gdb_test_multiple "print /u *(unsigned char *) $ro_address = $patch" "$test" {
+	-re " = .*Cannot access memory at address $ro_address.*$gdb_prompt $" {
+	    pass "$test (cannot write)"
+	}
 	-re " = (\[0-9\]*).*$gdb_prompt $" {
 	    set written $expect_out(1,string)
 	    pass "$test"

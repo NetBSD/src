@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.17 2018/06/27 03:31:44 msaitoh Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.17.2.1 2019/06/10 22:07:37 christos Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.17 2018/06/27 03:31:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.17.2.1 2019/06/10 22:07:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -348,7 +348,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 }
 
 void
-pfsync_input(struct mbuf *m, ...)
+pfsync_input(struct mbuf *m, int off, int proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct pfsync_header *ph;
@@ -1089,7 +1089,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 		}
 		m->m_data += (MCLBYTES - len) &~ (sizeof(long) - 1);
 	} else
-		MH_ALIGN(m, len);
+		m_align(m, len);
 
 	m_reset_rcvif(m);
 	m->m_pkthdr.len = m->m_len = sizeof(struct pfsync_header);

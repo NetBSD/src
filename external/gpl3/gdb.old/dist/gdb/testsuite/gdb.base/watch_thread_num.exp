@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +46,8 @@ if { ![runto main] } then {
    return
 }
 
-gdb_test "watch shared_var thread 0" "Invalid thread ID: 0" "Watchpoint on invalid thread"
-gdb_test "watch shared_var thread" "A syntax error in expression, near `thread'\." "Invalid watch syntax"
+gdb_test "watch shared_var thread 0" "Invalid thread ID: 0" "watchpoint on invalid thread"
+gdb_test "watch shared_var thread" "A syntax error in expression, near `thread'\." "invalid watch syntax"
 
 set bpexitline [gdb_get_line_number "all threads started"]
 gdb_breakpoint "$bpexitline"
@@ -56,11 +56,11 @@ gdb_continue_to_breakpoint "all threads started"
 gdb_test "break loop" "Breakpoint \[0-9\].*" \
   "Set breakpoint at loop"
 
-gdb_test "continue" ".*Breakpoint .*loop.*" "Stopped in loop"
+gdb_test "continue" ".*Breakpoint .*loop.*" "stopped in loop"
 
-gdb_test_multiple "thread" "Thread command" {
+gdb_test_multiple "thread" "thread command" {
     -re ".*Current thread is (\[0-9\]*).*$gdb_prompt $" {
-	pass "Thread command" 
+	pass "thread command"
     }
 }
 
@@ -75,7 +75,7 @@ delete_breakpoints
 
 gdb_test "awatch shared_var thread $thread_num" \
     "Hardware access \\(read/write\\) watchpoint .*: shared_var.*" \
-    "Watchpoint on shared variable"
+    "watchpoint on shared variable"
 
 gdb_test "info breakpoint \$bpnum" \
     "stop only in thread $thread_num" \

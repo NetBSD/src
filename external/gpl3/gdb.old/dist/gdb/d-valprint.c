@@ -1,6 +1,6 @@
 /* Support for printing D values for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,10 +28,10 @@
    TYPE is a dynamic array, non-zero otherwise.  */
 
 static int
-dynamic_array_type (struct type *type, const gdb_byte *valaddr,
+dynamic_array_type (struct type *type,
 		    LONGEST embedded_offset, CORE_ADDR address,
 		    struct ui_file *stream, int recurse,
-		    const struct value *val,
+		    struct value *val,
 		    const struct value_print_options *options)
 {
   if (TYPE_NFIELDS (type) == 2
@@ -48,6 +48,7 @@ dynamic_array_type (struct type *type, const gdb_byte *valaddr,
       struct type *ptr_type;
       struct value *ival;
       int length;
+      const gdb_byte *valaddr = value_contents_for_printing (val);
 
       length = unpack_field_as_long (type, valaddr + embedded_offset, 0);
 
@@ -63,7 +64,6 @@ dynamic_array_type (struct type *type, const gdb_byte *valaddr,
       true_type = value_type (ival);
 
       d_val_print (true_type,
-		   value_contents_for_printing (ival),
 		   value_embedded_offset (ival), addr,
 		   stream, recurse + 1, ival, options);
       return 0;
@@ -73,9 +73,9 @@ dynamic_array_type (struct type *type, const gdb_byte *valaddr,
 
 /* Implements the la_val_print routine for language D.  */
 void
-d_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
+d_val_print (struct type *type, int embedded_offset,
              CORE_ADDR address, struct ui_file *stream, int recurse,
-	     const struct value *val,
+	     struct value *val,
              const struct value_print_options *options)
 {
   int ret;
@@ -84,12 +84,12 @@ d_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
   switch (TYPE_CODE (type))
     {
       case TYPE_CODE_STRUCT:
-        ret = dynamic_array_type (type, valaddr, embedded_offset, address,
+	ret = dynamic_array_type (type, embedded_offset, address,
 				  stream, recurse, val, options);
 	if (ret == 0)
 	  break;
       default:
-	c_val_print (type, valaddr, embedded_offset, address, stream,
+	c_val_print (type, embedded_offset, address, stream,
 		     recurse, val, options);
     }
 }

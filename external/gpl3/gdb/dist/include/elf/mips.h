@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -294,11 +294,14 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 #define E_MIPS_MACH_OCTEON3	0x008e0000
 #define E_MIPS_MACH_5400	0x00910000
 #define E_MIPS_MACH_5900	0x00920000
+#define E_MIPS_MACH_IAMR2	0x00930000
 #define E_MIPS_MACH_5500	0x00980000
 #define E_MIPS_MACH_9000	0x00990000
 #define E_MIPS_MACH_LS2E        0x00A00000
 #define E_MIPS_MACH_LS2F        0x00A10000
-#define E_MIPS_MACH_LS3A        0x00A20000
+#define E_MIPS_MACH_GS464       0x00A20000
+#define E_MIPS_MACH_GS464E	0x00A30000
+#define E_MIPS_MACH_GS264E	0x00A40000
 
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these
@@ -1233,14 +1236,21 @@ extern void bfd_mips_elf_swap_abiflags_v0_out
 #define AFL_ASE_MICROMIPS    0x00000800 /* MICROMIPS ASE.  */
 #define AFL_ASE_XPA          0x00001000 /* XPA ASE.  */
 #define AFL_ASE_DSPR3        0x00002000 /* DSP R3 ASE.  */
-#define AFL_ASE_MASK         0x00003fff /* All ASEs.  */
+#define AFL_ASE_MIPS16E2     0x00004000 /* MIPS16e2 ASE.  */
+#define AFL_ASE_CRC          0x00008000 /* CRC ASE.  */
+#define AFL_ASE_RESERVED1    0x00010000 /* Reserved by MIPS Tech for WIP.  */
+#define AFL_ASE_GINV         0x00020000 /* GINV ASE.  */
+#define AFL_ASE_LOONGSON_MMI 0x00040000 /* Loongson MMI ASE.  */
+#define AFL_ASE_LOONGSON_CAM 0x00080000 /* Loongson CAM ASE.  */
+#define AFL_ASE_LOONGSON_EXT 0x00100000 /* Loongson EXT instructions.  */
+#define AFL_ASE_LOONGSON_EXT2 0x00200000 /* Loongson EXT2 instructions.  */
+#define AFL_ASE_MASK         0x003effff /* All ASEs.  */
 
 /* Values for the isa_ext word of an ABI flags structure.  */
 
 #define AFL_EXT_XLR           1  /* RMI Xlr instruction.  */
 #define AFL_EXT_OCTEON2       2  /* Cavium Networks Octeon2.  */
 #define AFL_EXT_OCTEONP       3  /* Cavium Networks OcteonP.  */
-#define AFL_EXT_LOONGSON_3A   4  /* Loongson 3A.  */
 #define AFL_EXT_OCTEON        5  /* Cavium Networks Octeon.  */
 #define AFL_EXT_5900          6  /* MIPS R5900 instruction.  */
 #define AFL_EXT_4650          7  /* MIPS R4650 instruction.  */
@@ -1256,6 +1266,7 @@ extern void bfd_mips_elf_swap_abiflags_v0_out
 #define AFL_EXT_LOONGSON_2E  17  /* ST Microelectronics Loongson 2E.  */
 #define AFL_EXT_LOONGSON_2F  18  /* ST Microelectronics Loongson 2F.  */
 #define AFL_EXT_OCTEON3      19  /* Cavium Networks Octeon3.  */
+#define AFL_EXT_INTERAPTIV_MR2 20  /* Imagination interAptiv MR2.  */
 
 /* Masks for the flags1 word of an ABI flags structure.  */
 #define AFL_FLAGS1_ODDSPREG   1	 /* Uses odd single-precision registers.  */

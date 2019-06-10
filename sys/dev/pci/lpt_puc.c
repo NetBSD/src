@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.18 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.18.10.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.18 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.18.10.1 2019/06/10 22:07:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,11 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
+
+	if (aa->poll) {
+		aprint_error(": polling not supported\n");
+		return;
+	}
 
 	aprint_naive(": Parallel port");
 	aprint_normal(": ");

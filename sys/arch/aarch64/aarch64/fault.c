@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $");
 
+#include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 
@@ -118,8 +119,12 @@ is_fatal_abort(uint32_t esr)
 	return true;
 }
 
+/* SPSR_M is SPSR_M_EL0T or SPSR_M_USR32 ? */
+#define IS_SPSR_USER(spsr)	\
+	(((spsr) & (SPSR_M & ~SPSR_A32)) == 0)
+
 void
-data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
+data_abort_handler(struct trapframe *tf, uint32_t eclass)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -128,11 +133,12 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	vaddr_t va;
 	uint32_t esr, fsc, rw;
 	vm_prot_t ftype;
-	int error;
-	const bool user = (__SHIFTOUT(tf->tf_spsr, SPSR_M) == SPSR_M_EL0T) ?
-	    true : false;
+	int error = 0, len;
+	const bool user = IS_SPSR_USER(tf->tf_spsr) ? true : false;
+
 	bool fatalabort;
 	const char *faultstr;
+	static char panicinfo[256];
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -159,6 +165,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 		UVMHIST_LOG(pmaphist, "use user vm_map %p (kernel_map=%p)",
 		   map, kernel_map, 0, 0);
 	} else {
+		error = EINVAL;
 		goto do_fault;
 	}
 
@@ -190,8 +197,6 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	if (__predict_true(error == 0)) {
 		if (user)
 			uvm_grow(p, va);
-		else
-			ucas_ras_check(tf);
 
 		UVMHIST_LOG(pmaphist, "uvm_fault success: va=%016llx",
 		    tf->tf_far, 0, 0, 0);
@@ -210,71 +215,69 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	fsc = __SHIFTOUT(esr, ESR_ISS_DATAABORT_DFSC); /* also IFSC */
 	if (user) {
 		if (!fatalabort) {
-			if (error == ENOMEM) {
+			switch (error) {
+			case ENOMEM:
 				printf("UVM: pid %d (%s), uid %d killed: "
 				    "out of swap\n",
 				    l->l_proc->p_pid, l->l_proc->p_comm,
 				    l->l_cred ?
 				    kauth_cred_geteuid(l->l_cred) : -1);
-				do_trapsignal(l, SIGKILL, 0, tf->tf_far, esr);
-				goto done_userfault;
-			} else if (error == EACCES) {
+				do_trapsignal(l, SIGKILL, 0,
+				    (void *)tf->tf_far, esr);
+				break;
+			case EACCES:
 				do_trapsignal(l, SIGSEGV, SEGV_ACCERR,
-				    tf->tf_far, esr);
-				goto done_userfault;
+				    (void *)tf->tf_far, esr);
+				break;
+			case EINVAL:
+				do_trapsignal(l, SIGBUS, BUS_ADRERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			default:
+				do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+				    (void *)tf->tf_far, esr);
+				break;
 			}
-			/* if other error, select signal by ESR */
+		} else {
+			/*
+			 * fatal abort in usermode
+			 */
+			switch (fsc) {
+			case ESR_ISS_FSC_TLB_CONFLICT_FAULT:
+			case ESR_ISS_FSC_LOCKDOWN_ABORT:
+			case ESR_ISS_FSC_UNSUPPORTED_EXCLUSIVE:
+			case ESR_ISS_FSC_FIRST_LEVEL_DOMAIN_FAULT:
+			case ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT:
+			default:
+				do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_0:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_1:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_2:
+			case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_3:
+				do_trapsignal(l, SIGBUS, BUS_ADRERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_0:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_1:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_2:
+			case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_3:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_0:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_1:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_2:
+			case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_3:
+				do_trapsignal(l, SIGBUS, BUS_OBJERR,
+				    (void *)tf->tf_far, esr);
+				break;
+			case ESR_ISS_FSC_ALIGNMENT_FAULT:
+				do_trapsignal(l, SIGBUS, BUS_ADRALN,
+				    (void *)tf->tf_far, esr);
+				break;
+			}
 		}
-
-		/*
-		 * fatal abort in usermode
-		 */
-		switch (esr) {
-		case ESR_ISS_FSC_ACCESS_FAULT_0:
-		case ESR_ISS_FSC_ACCESS_FAULT_1:
-		case ESR_ISS_FSC_ACCESS_FAULT_2:
-		case ESR_ISS_FSC_ACCESS_FAULT_3:
-		case ESR_ISS_FSC_PERM_FAULT_0:
-		case ESR_ISS_FSC_PERM_FAULT_1:
-		case ESR_ISS_FSC_PERM_FAULT_2:
-		case ESR_ISS_FSC_PERM_FAULT_3:
-			do_trapsignal(l, SIGSEGV, SEGV_ACCERR, tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_TRANSLATION_FAULT_0:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_1:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_2:
-		case ESR_ISS_FSC_TRANSLATION_FAULT_3:
-		case ESR_ISS_FSC_TLB_CONFLICT_FAULT:
-		case ESR_ISS_FSC_LOCKDOWN_ABORT:
-		case ESR_ISS_FSC_UNSUPPORTED_EXCLUSIVE:
-		case ESR_ISS_FSC_FIRST_LEVEL_DOMAIN_FAULT:
-		case ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT:
-		default:
-			do_trapsignal(l, SIGSEGV, SEGV_MAPERR, tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_0:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_1:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_2:
-		case ESR_ISS_FSC_ADDRESS_SIZE_FAULT_3:
-			do_trapsignal(l, SIGBUS, BUS_ADRERR, tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_0:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_1:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_2:
-		case ESR_ISS_FSC_SYNC_EXTERNAL_ABORT_TTWALK_3:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_0:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_1:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_2:
-		case ESR_ISS_FSC_SYNC_PARITY_ERROR_ON_TTWALK_3:
-			do_trapsignal(l, SIGBUS, BUS_OBJERR, tf->tf_far, esr);
-			break;
-		case ESR_ISS_FSC_ALIGNMENT_FAULT:
-			do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_far, esr);
-			break;
-		}
- done_userfault:
 
 #undef DEBUG_DUMP_ON_USERFAULT		/* DEBUG */
 #undef DEBUG_DDB_ON_USERFAULT		/* DEBUG */
@@ -288,36 +291,62 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass, const char *trapname)
 	}
 
 	/*
-	 * fatal abort. dump trapframe and panic
+	 * fatal abort. analyze fault status code to show by panic()
 	 */
-	printf("Trap: %s:", trapname);
+	len = snprintf(panicinfo, sizeof(panicinfo), "Trap: %s:",
+	    eclass_trapname(eclass));
 
 	if ((fsc >= __arraycount(fault_status_code)) ||
 	    ((faultstr = fault_status_code[fsc]) == NULL))
-		printf(" unknown fault status 0x%x ", fsc);
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " unknown fault status 0x%x ", fsc);
 	else
-		printf(" %s", faultstr);
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " %s", faultstr);
 
 	if ((__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL1) ||
 	    (__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL0))
-		printf(" with %s access", (rw == 0) ? "read" : "write");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    " with %s access", (rw == 0) ? "read" : "write");
+
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    " for %016"PRIxREGISTER, tf->tf_far);
 
 	if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_EA) != 0)
-		printf(", External abort");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ", External abort");
 
 	if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_S1PTW) != 0)
-		printf(", State 2 Fault");
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ", State 2 Fault");
 
-	printf("\n");
+	len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+	    ": pc %016"PRIxREGISTER, tf->tf_pc);
+
+	if (tf->tf_pc == tf->tf_far) {	/* XXX? */
+		/* fault address is pc. the causal instruction cannot be read */
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": opcode unknown");
+	} else {
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": opcode %08x", *(uint32_t *)tf->tf_pc);
 #ifdef DDB
-	dump_trapframe(tf, printf);
+		/* ...and disassemble the instruction */
+		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
+		    ": %s", strdisasm(tf->tf_pc));
 #endif
+	}
 
-#ifdef DEBUG_DDB_ON_USERFAULT
-	if (user)
+	if (user) {
+#if defined(DEBUG_DDB_ON_USERFAULT) && defined(DDB)
+		printf("%s\n", panicinfo);
 		Debugger();
+#elif defined(DEBUG_DUMP_ON_USERFAULT)
+		printf("%s\n", panicinfo);
+		dump_trapframe(tf, printf);
 #endif
+	}
 
 	if (!user)
-		panic("Fatal abort: %s", trapname);
+		panic("%s\n", panicinfo);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.121 2017/08/31 19:55:43 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.121.4.1 2019/06/10 22:07:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -109,6 +109,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
 #define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
 #define	WSKBD_TYPE_EPOC		25	/* Psion EPOC machine keyboard */
+#define	WSKBD_TYPE_HYPERV	26	/* Hyper-V synthetic keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -341,6 +342,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_TEGRA	63	/* NVIDIA Tegra ARM SoC */
 #define	WSDISPLAY_TYPE_PLATINUM	64	/* onboard fb in PowerMac 7200 */
 #define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
+#define	WSDISPLAY_TYPE_SSDFB	66	/* ssdfb(4) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

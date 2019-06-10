@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <blacklist.h>
 
 #include "pfilter.h"
@@ -20,5 +21,5 @@ pfilter_notify(int what, const char *msg)
 	if (blstate == NULL)
 		return;
 
-	blacklist_r(blstate, what, 0, msg);
+	blacklist_r(blstate, what, STDIN_FILENO, msg);
 }

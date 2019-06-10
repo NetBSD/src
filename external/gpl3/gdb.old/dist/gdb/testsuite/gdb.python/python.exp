@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ gdb_py_test_multiple "post event insertion" \
   "end" ""
 
 gdb_test "python print (someVal)" "1" "test post event execution"
-gdb_test "python gdb.post_event(str(1))" "RuntimeError: Posted event is not callable.*" "Test non callable class"
+gdb_test "python gdb.post_event(str(1))" "RuntimeError: Posted event is not callable.*" "test non callable class"
 
 # Test (no) pagination of the executed command.
 gdb_test "show height" {Number of lines gdb thinks are in a page is unlimited\.}
@@ -177,7 +177,7 @@ gdb_test "python print (a)" ".*aliases -- Aliases of other commands.*" "verify h
 # Test PR 12212, using InfThread.selected_thread() when no inferior is
 # loaded.
 gdb_py_test_silent_cmd "python nothread = gdb.selected_thread()" "Attempt to aquire thread with no inferior" 1
-gdb_test "python print (nothread == None)" "True" "Ensure that no threads are returned"
+gdb_test "python print (nothread == None)" "True" "ensure that no threads are returned"
 
 gdb_py_test_multiple "register atexit function" \
     "python" "" \
@@ -203,7 +203,7 @@ clean_restart ${testfile}
 # The following tests require execution.
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 
@@ -215,49 +215,70 @@ gdb_test "python gdb.decode_line(\"main.c:43\")" \
     "gdb.error: No source file named main.c.*" "test decode_line no source named main"
 
 gdb_py_test_silent_cmd "python symtab = gdb.decode_line()" "test decode_line current location" 1
-gdb_test "python print (len(symtab))" "2" "Test decode_line current location"
-gdb_test "python print (symtab\[0\])" "None" "Test decode_line expression parse"
-gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line current location"
+gdb_test "python print (len(symtab))" "2" "test decode_line current location"
+gdb_test "python print (symtab\[0\])" "None" "test decode_line expression parse"
+gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line current location"
 
 if { [is_remote host] } {
     set python_c [string_to_regexp "python.c"]
 } else {
     set python_c [string_to_regexp "gdb.python/python.c"]
 }
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "Test decode_line current location filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "$lineno" "Test decode_line current location line number"
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "test decode_line current location filename"
+gdb_test "python print (symtab\[1\]\[0\].line)" "$lineno" "test decode_line current location line number"
 
 gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"python.c:26 if foo\")" "test decode_line python.c:26" 1
-gdb_test "python print (len(symtab))" "2" "Test decode_line python.c:26 length"
-gdb_test "python print (symtab\[0\])" "if foo" "Test decode_line expression parse"
-gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line python.c:26 length"
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "Test decode_line python.c:26 filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "26" "Test decode_line python.c:26 line number"
+gdb_test "python print (len(symtab))" "2" "test decode_line python.c:26 length"
+gdb_test "python print (symtab\[0\])" "if foo" "test decode_line expression parse"
+gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line python.c:26 length"
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_c}" "test decode_line python.c:26 filename"
+gdb_test "python print (symtab\[1\]\[0\].line)" "26" "test decode_line python.c:26 line number"
 
 gdb_test "python gdb.decode_line(\"randomfunc\")" \
     "gdb.error: Function \"randomfunc\" not defined.*" "test decode_line randomfunc"
 gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"func1\")" "test decode_line func1()" 1
-gdb_test "python print (len(symtab))" "2" "Test decode_line func1 length"
-gdb_test "python print (len(symtab\[1\]))" "1" "Test decode_line func1 length"
+gdb_test "python print (len(symtab))" "2" "test decode_line func1 length"
+gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line func1 length"
 
 if { [is_remote host] } {
     set python_1_c [string_to_regexp "python-1.c"]
 } else {
     set python_1_c [string_to_regexp "gdb.python/python-1.c"]
 }
-gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_1_c}" "Test decode_line func1 filename"
-gdb_test "python print (symtab\[1\]\[0\].line)" "19" "Test decode_line func1 line number"
+gdb_test "python print (symtab\[1\]\[0\].symtab)" ".*${python_1_c}" "test decode_line func1 filename"
+
+# Set a default value for func1_lineno in case we fail to fetch the line number
+# below.
+set func1_lineno "noline"
+
+# Fetch the line GDB thinks func1 starts at.  This may change depending
+# on the architecture and on how GDB handles the prologue of the function.
+gdb_test_multiple "info line func1" "info line func1" {
+    -re "Line ($decimal) of .* starts at address $hex <func1> and ends at $hex <func1\\+$decimal>\.\[\r\n\]+$gdb_prompt $" {
+	# Fetch the line number.
+	set func1_lineno $expect_out(1,string)
+    }
+}
+
+gdb_test "python print (symtab\[1\]\[0\].line)" "$func1_lineno" "test decode_line func1 line number"
 gdb_py_test_silent_cmd {python symtab = gdb.decode_line ("func1,func2")} \
     "test decode_line func1,func2" 1
 gdb_test {python print (symtab[0])} ",func2" "stop at comma in linespec"
 
+gdb_py_test_silent_cmd "python symtab = gdb.decode_line(\"*0\")" "Test decode_line *0" 1
+gdb_test "python print (len(symtab))" "2" "test decode_line *0 result length"
+gdb_test "python print (symtab\[0\])" "None" "test decode_line *0 unparsed"
+gdb_test "python print (len(symtab\[1\]))" "1" "test decode_line *0 locations length"
+gdb_test "python print (symtab\[1\]\[0\].symtab)" "None" "test decode_line *0 filename"
+gdb_test "python print (symtab\[1\]\[0\].pc)" "0" "test decode_line *0 pc"
+
 # gdb.write
-gdb_test "python print (sys.stderr)" ".*gdb.GdbOutputErrorFile (instance|object) at.*" "Test stderr location"
-gdb_test "python print (sys.stdout)" ".*gdb.GdbOutputFile (instance|object) at.*" "Test stdout location"
-gdb_test "python gdb.write(\"Foo\\n\")" "Foo" "Test default write"
-gdb_test "python gdb.write(\"Error stream\\n\", stream=gdb.STDERR)" "Error stream" "Test stderr write"
-gdb_test "python gdb.write(\"Normal stream\\n\", stream=gdb.STDOUT)" "Normal stream" "Test stdout write"
-gdb_test "python gdb.write(\"Log stream\\n\", stream=gdb.STDLOG)" "Log stream" "Test stdlog write"
+gdb_test "python print (sys.stderr)" ".*gdb.GdbOutputErrorFile (instance|object) at.*" "test stderr location"
+gdb_test "python print (sys.stdout)" ".*gdb.GdbOutputFile (instance|object) at.*" "test stdout location"
+gdb_test "python gdb.write(\"Foo\\n\")" "Foo" "test default write"
+gdb_test "python gdb.write(\"Error stream\\n\", stream=gdb.STDERR)" "Error stream" "test stderr write"
+gdb_test "python gdb.write(\"Normal stream\\n\", stream=gdb.STDOUT)" "Normal stream" "test stdout write"
+gdb_test "python gdb.write(\"Log stream\\n\", stream=gdb.STDLOG)" "Log stream" "test stdlog write"
 
 # Turn on full stack printing for subsequent tests.
 gdb_py_test_silent_cmd "set python print-stack full" \
@@ -315,9 +336,9 @@ gdb_test_multiple "set prompt blah " "set blah in GDB" {
     }
 }
 
-gdb_test_multiple "python gdb.prompt_hook = None" "Delete hook" {
+gdb_test_multiple "python gdb.prompt_hook = None" "delete hook" {
     -re "\[\r\n\]$newprompt2 $" {
-	pass "Delete old hook"
+	pass "delete old hook"
     }
 }
 
@@ -384,7 +405,7 @@ clean_restart ${testfile}
 # The following tests require execution.
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 
@@ -401,7 +422,7 @@ gdb_py_test_silent_cmd "set python print-stack none" \
     "Test print-stack set setting to none" 1
 gdb_test "show python print-stack" \
     "The mode of Python stack printing on error is \"none\".*" \
-    "Test print-stack show setting to none"
+    "test print-stack show setting to none"
 
 gdb_py_test_silent_cmd "set python print-stack message" \
     "Test print-stack set setting to message" 1
@@ -440,16 +461,16 @@ clean_restart ${testfile}
 # The following tests require execution.
 
 if ![runto_main] then {
-    fail "Can't run to main"
+    fail "can't run to main"
     return 0
 }
 
 runto [gdb_get_line_number "Break at func2 call site."]
 
 gdb_py_test_silent_cmd "python line = gdb.selected_frame().find_sal().line" "Get line number of func2 call site" 1
-gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line == line)" "True" "Test find_pc_line at func2 call site"
+gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line == line)" "True" "test find_pc_line at func2 call site"
 
 gdb_py_test_silent_cmd "step" "Step into func2" 1
 gdb_py_test_silent_cmd "up" "Step out of func2" 1
 
-gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line > line)" "True" "Test find_pc_line with resume address"
+gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line > line)" "True" "test find_pc_line with resume address"

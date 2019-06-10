@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.14.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.14.2.3 2019/06/10 22:09:46 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,8 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-#if __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.14.2.3 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
@@ -39,7 +39,9 @@ __FBSDID("$FreeBSD$");
  * AP driver. The code is used with the consent of the author and
  * it's license is included below.
  */
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -526,7 +528,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			sp = space;
 			for (;;) {
 				pos_next = mtod(n, uint8_t *);
-				len = min(dl, AES_BLOCK_LEN);
+				len = uimin(dl, AES_BLOCK_LEN);
 				space_next = len > sp ? len - sp : 0;
 				if (n->m_len >= space_next) {
 					/*
@@ -555,7 +557,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			sp = space;
 			for (;;) {
 				pos_next = mtod(m, uint8_t *);
-				len = min(dl, AES_BLOCK_LEN);
+				len = uimin(dl, AES_BLOCK_LEN);
 				space_next = len > sp ? len - sp : 0;
 				if (m->m_len >= space_next) {
 					xor_block(pos_next, e+sp, space_next);
@@ -659,7 +661,7 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 			 * because drivers typically recv in clusters.
 			 */
 			pos_next = mtod(m, uint8_t *);
-			len = min(data_len, AES_BLOCK_LEN);
+			len = uimin(data_len, AES_BLOCK_LEN);
 			space_next = len > space ? len - space : 0;
 			KASSERT(m->m_len >= space_next,
 				("not enough data in following buffer, "

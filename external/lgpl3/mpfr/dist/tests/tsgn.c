@@ -1,6 +1,6 @@
 /* tsgn -- Test for the sign of a floating point number.
 
-Copyright 2003, 2006-2016 Free Software Foundation, Inc.
+Copyright 2003, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,9 +20,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
+#define MPFR_TESTS_TSGN 1
 #include "mpfr-test.h"
 
 static void

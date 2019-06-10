@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.92.2.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,8 +69,8 @@
 #include <sys/device_if.h> /* for device_t */
 
 #ifdef XEN
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/event_channel.h>
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
 #include <sys/mutex.h>
 #endif /* XEN */
 
@@ -94,6 +94,15 @@ struct cpu_tss {
 } __packed;
 
 /*
+ * Arguments to hardclock, softclock and statclock
+ * encapsulate the previous machine state in an opaque
+ * clockframe; for now, use generic intrframe.
+ */
+struct clockframe {
+	struct intrframe cf_if;
+};
+
+/*
  * a bunch of this belongs in cpuvar.h; move it later..
  */
 
@@ -101,7 +110,9 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+#ifdef XEN
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
+#endif
 
 	/*
 	 * Will be accessed by other CPUs.
@@ -127,23 +138,18 @@ struct cpu_info {
 	uint64_t ci_scratch;
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
-#ifdef XEN
-	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-#endif
+#ifndef XENPV
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-
+#endif
+#if defined(XEN)
+	struct intrsource *ci_xsources[NIPL];
+	uint32_t	ci_xmask[NIPL];
+	uint32_t	ci_xunmask[NIPL];
+	uint32_t	ci_xpending; /* XEN doesn't use the cmpxchg8 path */
+#endif
+	
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
-
-#ifndef __HAVE_DIRECT_MAP
-#define VPAGE_SRC 0
-#define VPAGE_DST 1
-#define VPAGE_ZER 2
-#define VPAGE_PTP 3
-#define VPAGE_MAX 4
-	vaddr_t		vpage[VPAGE_MAX];
-	pt_entry_t	*vpage_pte[VPAGE_MAX];
-#endif
 
 	/* The following must be aligned for cmpxchg8b. */
 	struct {
@@ -152,7 +158,6 @@ struct cpu_info {
 	} ci_istate __aligned(8);
 #define ci_ipending	ci_istate.ipending
 #define	ci_ilevel	ci_istate.ilevel
-
 	int		ci_idepth;
 	void *		ci_intrstack;
 	uint32_t	ci_imask[NIPL];
@@ -183,46 +188,6 @@ struct cpu_info {
 
 	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
-
-#ifdef PAE
-	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
-	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
-#endif
-
-#ifdef SVS
-	pd_entry_t *	ci_svs_updir;
-	paddr_t		ci_svs_updirpa;
-	paddr_t		ci_svs_kpdirpa;
-	kmutex_t	ci_svs_mtx;
-	pd_entry_t *	ci_svs_rsp0_pte;
-	vaddr_t		ci_svs_rsp0;
-	vaddr_t		ci_svs_ursp0;
-	vaddr_t		ci_svs_krsp0;
-	vaddr_t		ci_svs_utls;
-#endif
-
-#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
-	/* Currently active user PGD (can't use rcr3() with Xen) */
-	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
-	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
-	kmutex_t	ci_kpm_mtx;
-#if defined(__x86_64__)
-	/* per-cpu version of normal_pdes */
-	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
-	paddr_t		ci_xen_current_user_pgd;
-#endif /* __x86_64__ */
-#endif /* XEN et.al */
-
-#ifdef XEN
-	size_t		ci_xpq_idx;
-#endif
-
-#ifndef XEN
-	struct evcnt ci_ipi_events[X86_NIPI];
-#else   /* XEN */
-	struct evcnt ci_ipi_events[XEN_NIPIS];
-	evtchn_port_t ci_ipi_evtchn;
-#endif  /* XEN */
 
 	device_t	ci_frequency;	/* Frequency scaling technology */
 	device_t	ci_padlock;	/* VIA PadLock private storage */
@@ -261,6 +226,92 @@ struct cpu_info {
 	/* The following must be in a single cache line. */
 	int		ci_want_resched __aligned(64);
 	int		ci_padout __aligned(64);
+
+#ifndef __HAVE_DIRECT_MAP
+#define VPAGE_SRC 0
+#define VPAGE_DST 1
+#define VPAGE_ZER 2
+#define VPAGE_PTP 3
+#define VPAGE_MAX 4
+	vaddr_t		vpage[VPAGE_MAX];
+	pt_entry_t	*vpage_pte[VPAGE_MAX];
+#endif
+
+#ifdef PAE
+	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
+	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
+#endif
+
+#ifdef SVS
+	pd_entry_t *	ci_svs_updir;
+	paddr_t		ci_svs_updirpa;
+	paddr_t		ci_unused;
+	kmutex_t	ci_svs_mtx;
+	pd_entry_t *	ci_svs_rsp0_pte;
+	vaddr_t		ci_svs_rsp0;
+	vaddr_t		ci_svs_ursp0;
+	vaddr_t		ci_svs_krsp0;
+	vaddr_t		ci_svs_utls;
+#endif
+
+#ifdef XEN
+	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
+	struct evcnt ci_ipi_events[XEN_NIPIS];
+	evtchn_port_t ci_ipi_evtchn;
+#if defined(XENPV)
+#if defined(PAE) || defined(__x86_64__)
+	/* Currently active user PGD (can't use rcr3() with Xen) */
+	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
+	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
+	kmutex_t	ci_kpm_mtx;
+#endif /* defined(PAE) || defined(__x86_64__) */
+
+#if defined(__x86_64__)
+	/* per-cpu version of normal_pdes */
+	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XENPV */
+	paddr_t		ci_xen_current_user_pgd;
+#endif	/* defined(__x86_64__) */
+
+	size_t		ci_xpq_idx;
+#endif /* XENPV */
+
+	/* Xen raw system time at which we last ran hardclock.  */
+	uint64_t	ci_xen_hardclock_systime_ns;
+
+	/*
+	 * Last TSC-adjusted local Xen system time we observed.  Used
+	 * to detect whether the Xen clock has gone backwards.
+	 */
+	uint64_t	ci_xen_last_systime_ns;
+
+	/*
+	 * Distance in nanoseconds from the local view of system time
+	 * to the global view of system time, if the local time is
+	 * behind the global time.
+	 */
+	uint64_t	ci_xen_systime_ns_skew;
+
+	/* Xen periodic timer interrupt handle.  */
+	struct intrhand	*ci_xen_timer_intrhand;
+
+	/*
+	 * Clockframe for timer interrupt handler.
+	 * Saved at entry via event callback.
+	 */
+	vaddr_t ci_xen_clockf_pc; /* RIP at last event interrupt */
+	bool ci_xen_clockf_usermode; /* Was the guest in usermode ? */
+
+	/* Event counters for various pathologies that might happen.  */
+	struct evcnt	ci_xen_cpu_tsc_backwards_evcnt;
+	struct evcnt	ci_xen_tsc_delta_negative_evcnt;
+	struct evcnt	ci_xen_raw_systime_wraparound_evcnt;
+	struct evcnt	ci_xen_raw_systime_backwards_evcnt;
+	struct evcnt	ci_xen_systime_backwards_hardclock_evcnt;
+	struct evcnt	ci_xen_missed_hardclock_evcnt;
+#else   /* XEN */
+	struct evcnt ci_ipi_events[X86_NIPI];
+#endif	/* XEN */
+
 };
 
 /*
@@ -355,15 +406,6 @@ void cpu_speculation_init(struct cpu_info *);
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for now, use generic intrframe.
- */
-struct clockframe {
-	struct intrframe cf_if;
-};
-
-/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
@@ -417,6 +459,7 @@ extern int x86_fpu_save;
 #define	FPU_SAVE_XSAVEOPT	3
 extern unsigned int x86_fpu_save_size;
 extern uint64_t x86_xsave_features;
+extern uint32_t x86_fpu_mxcsr_mask;
 extern bool x86_fpu_eager;
 
 extern void (*x86_cpu_idle)(void);
@@ -442,6 +485,7 @@ typedef enum vm_guest {
 	VM_GUEST_NO = 0,
 	VM_GUEST_VM,
 	VM_GUEST_XEN,
+	VM_GUEST_XENPVHVM,
 	VM_GUEST_HV,
 	VM_GUEST_VMWARE,
 	VM_GUEST_KVM,
@@ -455,7 +499,7 @@ void	x86_cpu_topology(struct cpu_info *);
 /* locore.s */
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
-#ifdef XEN
+#ifdef XENPV
 void	lgdt_finish(void);
 #endif
 
@@ -463,19 +507,20 @@ struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
 #ifdef XEN
-void	startrtclock(void);
+void	xen_startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
 void	xen_suspendclocks(struct cpu_info *);
 void	xen_resumeclocks(struct cpu_info *);
-#else
+#endif /* XEN */
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
-#endif
+unsigned int gettick(void);
+extern void (*x86_delay)(unsigned int);
 
 /* cpu.c */
 void	cpu_probe_features(struct cpu_info *);
@@ -539,8 +584,6 @@ void x86_bus_space_mallocok(void);
 					 */
 #define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
 #define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
-
-#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

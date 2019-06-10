@@ -61,9 +61,6 @@ public:
       this->setInfoBasedOnIPRegister(true);
       if (fUnwindInfoMissing)
         return UNW_STEP_END;
-
-      if (fInfo.extra_args)
-        setSP(getSP() + fInfo.extra_args);
       return UNW_STEP_SUCCESS;
     }
     __builtin_unreachable();

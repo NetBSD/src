@@ -44,7 +44,7 @@
 .\" for an already extremely slow package.
 .\"
 .
-.Dd June 9, 2013
+.Dd July 27, 2018
 .Os
 .Dt GROFF_MDOC 7
 .
@@ -1948,6 +1948,8 @@ are:
 .St -isoC-99
 .It Li -isoC-2011
 .St -isoC-2011
+.It Li -isoC-2018
+.St -isoC-2018
 .El
 .Pp
 .

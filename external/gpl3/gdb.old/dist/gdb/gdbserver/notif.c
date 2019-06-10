@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,8 +104,8 @@ handle_notif_ack (char *own_buf, int packet_len)
 	= QUEUE_deque (notif_event_p, np->queue);
 
       if (remote_debug)
-	fprintf (stderr, "%s: acking %d\n", np->ack_name,
-		 QUEUE_length (notif_event_p, np->queue));
+	debug_printf ("%s: acking %d\n", np->ack_name,
+		      QUEUE_length (notif_event_p, np->queue));
 
       xfree (head);
     }
@@ -124,8 +124,8 @@ notif_event_enque (struct notif_server *notif,
   QUEUE_enque (notif_event_p, notif->queue, event);
 
   if (remote_debug)
-    fprintf (stderr, "pending events: %s %d\n", notif->notif_name,
-	     QUEUE_length (notif_event_p, notif->queue));
+    debug_printf ("pending events: %s %d\n", notif->notif_name,
+		  QUEUE_length (notif_event_p, notif->queue));
 
 }
 

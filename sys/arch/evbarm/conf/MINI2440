@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.22 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: MINI2440,v 1.22.4.1 2019/06/10 22:06:04 christos Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -270,7 +270,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?
@@ -287,11 +286,19 @@ wd* at umass?
 #ustir* at uhub? port ?
 #irframe* at ustir?
 
+# MII/PHY support
+#rgephy* at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
+#rlphy* at mii? phy ?		# Realtek 8139/8201L PHYs
+#ukphy*	at mii? phy ?		# generic unknown PHYs
+#urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
+
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
+#ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
@@ -350,7 +357,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

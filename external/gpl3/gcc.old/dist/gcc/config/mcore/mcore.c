@@ -1,5 +1,5 @@
 /* Output routines for Motorola MCore processor
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -20,61 +20,28 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "df.h"
+#include "tm_p.h"
+#include "stringpool.h"
+#include "emit-rtl.h"
+#include "diagnostic-core.h"
 #include "stor-layout.h"
 #include "varasm.h"
-#include "stringpool.h"
 #include "calls.h"
-#include "tm_p.h"
 #include "mcore.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
 #include "output.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "obstack.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "reload.h"
-#include "recog.h"
-#include "ggc.h"
-#include "diagnostic-core.h"
-#include "target.h"
-#include "target-def.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
 #include "builtins.h"
+#include "regs.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* For dumping information about frame sizes.  */
 char * mcore_current_function_name = 0;
@@ -145,7 +112,7 @@ static void	  mcore_asm_named_section       (const char *,
 						 unsigned int, tree);
 #endif
 static void       mcore_print_operand           (FILE *, rtx, int);
-static void       mcore_print_operand_address   (FILE *, rtx);
+static void       mcore_print_operand_address   (FILE *, machine_mode, rtx);
 static bool       mcore_print_operand_punct_valid_p (unsigned char code);
 static void       mcore_unique_section	        (tree, int);
 static void mcore_encode_section_info		(tree, rtx, int);
@@ -153,7 +120,7 @@ static const char *mcore_strip_name_encoding	(const char *);
 static int        mcore_const_costs             (rtx, RTX_CODE);
 static int        mcore_and_cost                (rtx);
 static int        mcore_ior_cost                (rtx);
-static bool       mcore_rtx_costs		(rtx, int, int, int,
+static bool       mcore_rtx_costs		(rtx, machine_mode, int, int,
 						 int *, bool);
 static void       mcore_external_libcall	(rtx);
 static bool       mcore_return_in_memory	(const_tree, const_tree);
@@ -173,6 +140,8 @@ static void       mcore_trampoline_init		(rtx, tree, rtx);
 static bool       mcore_warn_func_return        (tree);
 static void       mcore_option_override		(void);
 static bool       mcore_legitimate_constant_p   (machine_mode, rtx);
+static bool	  mcore_legitimate_address_p	(machine_mode, rtx, bool,
+						 addr_space_t);
 
 /* MCore specific attributes.  */
 
@@ -260,6 +229,8 @@ static const struct attribute_spec mcore_attribute_table[] =
 
 #undef TARGET_LEGITIMATE_CONSTANT_P
 #define TARGET_LEGITIMATE_CONSTANT_P mcore_legitimate_constant_p
+#undef TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P
+#define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P mcore_legitimate_address_p
 
 #undef TARGET_WARN_FUNC_RETURN
 #define TARGET_WARN_FUNC_RETURN mcore_warn_func_return
@@ -338,7 +309,7 @@ calc_live_regs (int * count)
 /* Print the operand address in x to the stream.  */
 
 static void
-mcore_print_operand_address (FILE * stream, rtx x)
+mcore_print_operand_address (FILE * stream, machine_mode /*mode*/, rtx x)
 {
   switch (GET_CODE (x))
     {
@@ -430,7 +401,7 @@ mcore_print_operand (FILE * stream, rtx x, int code)
 	  break;
 	case MEM:
 	  mcore_print_operand_address
-	    (stream, XEXP (adjust_address (x, SImode, 4), 0));
+	    (stream, GET_MODE (x), XEXP (adjust_address (x, SImode, 4), 0));
 	  break;
 	default:
 	  gcc_unreachable ();
@@ -454,7 +425,7 @@ mcore_print_operand (FILE * stream, rtx x, int code)
 	  fputs (reg_names[REGNO (x)], (stream));
 	  break;
 	case MEM:
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), XEXP (x, 0));
 	  break;
 	default:
 	  output_addr_const (stream, x);
@@ -545,9 +516,12 @@ mcore_ior_cost (rtx x)
 }
 
 static bool
-mcore_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
+mcore_rtx_costs (rtx x, machine_mode mode ATTRIBUTE_UNUSED, int outer_code,
+		 int opno ATTRIBUTE_UNUSED,
 		 int * total, bool speed ATTRIBUTE_UNUSED)
 {
+  int code = GET_CODE (x);
+
   switch (code)
     {
     case CONST_INT:
@@ -689,9 +663,7 @@ mcore_gen_compare (enum rtx_code code, rtx op0, rtx op1)
       break;
     }
 
-  emit_insn (gen_rtx_SET (VOIDmode,
-			  cc_reg,
-			  gen_rtx_fmt_ee (code, CCmode, op0, op1)));
+  emit_insn (gen_rtx_SET (cc_reg, gen_rtx_fmt_ee (code, CCmode, op0, op1)));
   return invert;
 }
 
@@ -1481,14 +1453,16 @@ mcore_expand_insv (rtx operands[])
       if ((INTVAL (operands[3]) & 1) == 0)
 	{
 	  mask = ~(1 << posn);
-	  emit_insn (gen_rtx_SET (SImode, operands[0],
-			      gen_rtx_AND (SImode, operands[0], GEN_INT (mask))));
+	  emit_insn (gen_rtx_SET (operands[0],
+				  gen_rtx_AND (SImode, operands[0],
+					       GEN_INT (mask))));
 	}
       else
 	{
 	  mask = 1 << posn;
-	  emit_insn (gen_rtx_SET (SImode, operands[0],
-			    gen_rtx_IOR (SImode, operands[0], GEN_INT (mask))));
+	  emit_insn (gen_rtx_SET (operands[0],
+				  gen_rtx_IOR (SImode, operands[0],
+					       GEN_INT (mask))));
 	}
       
       return 1;
@@ -1517,8 +1491,8 @@ mcore_expand_insv (rtx operands[])
       && INTVAL (operands[3]) == ((1 << width) - 1))
     {
       mreg = force_reg (SImode, GEN_INT (INTVAL (operands[3]) << posn));
-      emit_insn (gen_rtx_SET (SImode, operands[0],
-                         gen_rtx_IOR (SImode, operands[0], mreg)));
+      emit_insn (gen_rtx_SET (operands[0],
+			      gen_rtx_IOR (SImode, operands[0], mreg)));
       return 1;
     }
 
@@ -1526,8 +1500,8 @@ mcore_expand_insv (rtx operands[])
   mreg = force_reg (SImode, GEN_INT (~(((1 << width) - 1) << posn)));
 
   /* Clear the field, to overlay it later with the source.  */
-  emit_insn (gen_rtx_SET (SImode, operands[0], 
-		      gen_rtx_AND (SImode, operands[0], mreg)));
+  emit_insn (gen_rtx_SET (operands[0],
+			  gen_rtx_AND (SImode, operands[0], mreg)));
 
   /* If the source is constant 0, we've nothing to add back.  */
   if (GET_CODE (operands[3]) == CONST_INT && INTVAL (operands[3]) == 0)
@@ -1546,17 +1520,16 @@ mcore_expand_insv (rtx operands[])
   if (width + posn != (int) GET_MODE_SIZE (SImode))
     {
       ereg = force_reg (SImode, GEN_INT ((1 << width) - 1));      
-      emit_insn (gen_rtx_SET (SImode, sreg,
-                          gen_rtx_AND (SImode, sreg, ereg)));
+      emit_insn (gen_rtx_SET (sreg, gen_rtx_AND (SImode, sreg, ereg)));
     }
 
   /* Insert source value in dest.  */
   if (posn != 0)
-    emit_insn (gen_rtx_SET (SImode, sreg,
-		        gen_rtx_ASHIFT (SImode, sreg, GEN_INT (posn))));
+    emit_insn (gen_rtx_SET (sreg, gen_rtx_ASHIFT (SImode, sreg,
+						  GEN_INT (posn))));
   
-  emit_insn (gen_rtx_SET (SImode, operands[0],
-		      gen_rtx_IOR (SImode, operands[0], sreg)));
+  emit_insn (gen_rtx_SET (operands[0],
+			  gen_rtx_IOR (SImode, operands[0], sreg)));
 
   return 1;
 }
@@ -1627,7 +1600,7 @@ block_move_sequence (rtx dst_mem, rtx src_mem, int size, int align)
 	  temp[next] = gen_reg_rtx (mode[next]);
 
 	  x = adjust_address (src_mem, mode[next], offset_ld);
-	  emit_insn (gen_rtx_SET (VOIDmode, temp[next], x));
+	  emit_insn (gen_rtx_SET (temp[next], x));
 
 	  offset_ld += next_amount;
 	  size -= next_amount;
@@ -1639,7 +1612,7 @@ block_move_sequence (rtx dst_mem, rtx src_mem, int size, int align)
 	  active[phase] = false;
 	  
 	  x = adjust_address (dst_mem, mode[phase], offset_st);
-	  emit_insn (gen_rtx_SET (VOIDmode, x, temp[phase]));
+	  emit_insn (gen_rtx_SET (x, temp[phase]));
 
 	  offset_st += amount[phase];
 	}
@@ -3211,3 +3184,74 @@ mcore_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   return GET_CODE (x) != CONST_DOUBLE;
 }
+
+/* Helper function for `mcore_legitimate_address_p'.  */
+
+static bool
+mcore_reg_ok_for_base_p (const_rtx reg, bool strict_p)
+{
+  if (strict_p)
+    return REGNO_OK_FOR_BASE_P (REGNO (reg));
+  else
+    return (REGNO (reg) <= 16 || !HARD_REGISTER_P (reg));
+}
+
+static bool
+mcore_base_register_rtx_p (const_rtx x, bool strict_p)
+{
+  return REG_P(x) && mcore_reg_ok_for_base_p (x, strict_p); 
+}
+
+/*  A legitimate index for a QI is 0..15, for HI is 0..30, for SI is 0..60,
+    and for DI is 0..56 because we use two SI loads, etc.  */
+
+static bool   
+mcore_legitimate_index_p (machine_mode mode, const_rtx op)
+{
+  if (CONST_INT_P (op))
+    {
+      if (GET_MODE_SIZE (mode) >= 4
+	  && (((unsigned HOST_WIDE_INT) INTVAL (op)) % 4) == 0
+	  &&  ((unsigned HOST_WIDE_INT) INTVAL (op))
+	      <= (unsigned HOST_WIDE_INT) 64 - GET_MODE_SIZE (mode))
+	return true;
+      if (GET_MODE_SIZE (mode) == 2
+	  && (((unsigned HOST_WIDE_INT) INTVAL (op)) % 2) == 0
+	  &&  ((unsigned HOST_WIDE_INT) INTVAL (op)) <= 30)
+	return true;
+      if (GET_MODE_SIZE (mode) == 1
+	  && ((unsigned HOST_WIDE_INT) INTVAL (op)) <= 15)
+	return true;
+  }								
+  return false;
+}
+
+ 
+/* Worker function for TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P.
+
+   Allow  REG
+	  REG + disp  */
+
+static bool
+mcore_legitimate_address_p (machine_mode mode, rtx x, bool strict_p,
+			    addr_space_t as)
+{
+  gcc_assert (ADDR_SPACE_GENERIC_P (as));
+
+  if (mcore_base_register_rtx_p (x, strict_p))
+    return true;
+  else if (GET_CODE (x) == PLUS || GET_CODE (x) == LO_SUM)
+    {
+      rtx xop0 = XEXP (x, 0);
+      rtx xop1 = XEXP (x, 1);
+      if (mcore_base_register_rtx_p (xop0, strict_p)
+	  && mcore_legitimate_index_p (mode, xop1))
+	return true;
+      if (mcore_base_register_rtx_p (xop1, strict_p)
+ 	  && mcore_legitimate_index_p (mode, xop0))
+	return true;
+    }
+
+  return false;
+}
+

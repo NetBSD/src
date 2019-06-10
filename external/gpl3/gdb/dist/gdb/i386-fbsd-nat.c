@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,24 +30,42 @@
 #include "fbsd-nat.h"
 #include "i386-tdep.h"
 #include "x86-nat.h"
+#include "common/x86-xstate.h"
 #include "x86-bsd-nat.h"
 #include "i386-bsd-nat.h"
+
+class i386_fbsd_nat_target final
+  : public i386_bsd_nat_target<fbsd_nat_target>
+{
+public:
+  /* Add some extra features to the common *BSD/i386 target.  */
+#ifdef PT_GETXSTATE_INFO
+  const struct target_desc *read_description () override;
+#endif
+
+  void resume (ptid_t, int, enum gdb_signal) override;
+
+#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
+  bool supports_stopped_by_hw_breakpoint () override;
+#endif
+};
+
+static i386_fbsd_nat_target the_i386_fbsd_nat_target;
 
 /* Resume execution of the inferior process.  If STEP is nonzero,
    single-step it.  If SIGNAL is nonzero, give it that signal.  */
 
-static void
-i386fbsd_resume (struct target_ops *ops,
-		 ptid_t ptid, int step, enum gdb_signal signal)
+void
+i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 {
-  pid_t pid = ptid_get_pid (ptid);
+  pid_t pid = ptid.pid ();
   int request = PT_STEP;
 
   if (pid == -1)
     /* Resume all threads.  This only gets used in the non-threaded
        case, where "resume all threads" and "resume inferior_ptid" are
        the same.  */
-    pid = ptid_get_pid (inferior_ptid);
+    pid = inferior_ptid.pid ();
 
   if (!step)
     {
@@ -105,23 +123,23 @@ i386fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   pcb->pcb_esp += 4;
-  regcache_raw_supply (regcache, I386_EDI_REGNUM, &pcb->pcb_edi);
-  regcache_raw_supply (regcache, I386_ESI_REGNUM, &pcb->pcb_esi);
-  regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
-  regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
-  regcache_raw_supply (regcache, I386_EBX_REGNUM, &pcb->pcb_ebx);
-  regcache_raw_supply (regcache, I386_EIP_REGNUM, &pcb->pcb_eip);
-  regcache_raw_supply (regcache, I386_GS_REGNUM, &pcb->pcb_gs);
+  regcache->raw_supply (I386_EDI_REGNUM, &pcb->pcb_edi);
+  regcache->raw_supply (I386_ESI_REGNUM, &pcb->pcb_esi);
+  regcache->raw_supply (I386_EBP_REGNUM, &pcb->pcb_ebp);
+  regcache->raw_supply (I386_ESP_REGNUM, &pcb->pcb_esp);
+  regcache->raw_supply (I386_EBX_REGNUM, &pcb->pcb_ebx);
+  regcache->raw_supply (I386_EIP_REGNUM, &pcb->pcb_eip);
+  regcache->raw_supply (I386_GS_REGNUM, &pcb->pcb_gs);
 
   return 1;
 }
 
 
 #ifdef PT_GETXSTATE_INFO
-/* Implement the to_read_description method.  */
+/* Implement the read_description method.  */
 
-static const struct target_desc *
-i386fbsd_read_description (struct target_ops *ops)
+const struct target_desc *
+i386_fbsd_nat_target::read_description ()
 {
   static int xsave_probed;
   static uint64_t xcr0;
@@ -130,7 +148,7 @@ i386fbsd_read_description (struct target_ops *ops)
     {
       struct ptrace_xstate_info info;
 
-      if (ptrace (PT_GETXSTATE_INFO, ptid_get_pid (inferior_ptid),
+      if (ptrace (PT_GETXSTATE_INFO, inferior_ptid.pid (),
 		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
 	{
 	  x86bsd_xsave_len = info.xsave_len;
@@ -139,32 +157,27 @@ i386fbsd_read_description (struct target_ops *ops)
       xsave_probed = 1;
     }
 
-  if (x86bsd_xsave_len != 0)
-    {
-      return i386_target_description (xcr0);
-    }
-  else
-    return tdesc_i386;
+  if (x86bsd_xsave_len == 0)
+    xcr0 = X86_XSTATE_SSE_MASK;
+
+  return i386_target_description (xcr0);
 }
 #endif
 
-/* Prevent warning from -Wmissing-prototypes.  */
-void _initialize_i386fbsd_nat (void);
+#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
+/* Implement the supports_stopped_by_hw_breakpoints method.  */
+
+bool
+i386_fbsd_nat_target::supports_stopped_by_hw_breakpoint ()
+{
+  return true;
+}
+#endif
 
 void
 _initialize_i386fbsd_nat (void)
 {
-  struct target_ops *t;
-
-  /* Add some extra features to the common *BSD/i386 target.  */
-  t = i386bsd_target ();
-
-#ifdef PT_GETXSTATE_INFO
-  t->to_read_description = i386fbsd_read_description;
-#endif
-
-  t->to_resume = i386fbsd_resume;
-  fbsd_nat_add_target (t);
+  add_inf_child_target (&the_i386_fbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386fbsd_supply_pcb);

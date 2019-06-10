@@ -448,7 +448,6 @@ General_options::parse_library(const char*, const char* arg,
   cmdline->inputs().add_file(file);
 }
 
-#ifdef ENABLE_PLUGINS
 void
 General_options::parse_plugin(const char*, const char* arg,
 			      Command_line*)
@@ -464,7 +463,6 @@ General_options::parse_plugin_opt(const char*, const char* arg,
 {
   this->add_plugin_option(arg);
 }
-#endif // ENABLE_PLUGINS
 
 void
 General_options::parse_R(const char* option, const char* arg,
@@ -1206,6 +1204,13 @@ General_options::finalize()
     gold_warning(_("ignoring --thread-count: "
 		   "%s was compiled without thread support"),
 		 program_name);
+#endif
+
+#ifndef ENABLE_PLUGINS
+  if (this->has_plugins())
+    gold_fatal(_("cannot use --plugin: "
+		 "%s was compiled without plugin support"),
+	       program_name);
 #endif
 
   std::string libpath;

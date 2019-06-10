@@ -6,7 +6,6 @@
 /dlltool
 /dllwrap
 /elfedit
-/nlmconv
 /nm-new
 /objcopy
 /objdump
@@ -29,8 +28,6 @@
 /defparse.h
 /mcparse.c
 /mcparse.h
-/nlmheader.c
-/nlmheader.h
 /rcparse.c
 /rcparse.h
 /sysinfo.c
@@ -45,7 +42,6 @@
 /doc/cxxfilt.man
 /doc/dlltool.1
 /doc/elfedit.1
-/doc/nlmconv.1
 /doc/nm.1
 /doc/objcopy.1
 /doc/objdump.1

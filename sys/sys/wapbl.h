@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.20 2016/11/10 20:56:32 jdolecek Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.20.16.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ void	wapbl_dump(struct wapbl *);
 
 void	wapbl_biodone(struct buf *);
 
-extern struct wapbl_ops wapbl_ops;
+extern const struct wapbl_ops wapbl_ops;
 
 static __inline struct mount *
 wapbl_vptomp(struct vnode *vp)

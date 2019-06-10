@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.51 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.51.2.1 2019/06/10 22:07:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.51 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.51.2.1 2019/06/10 22:07:16 christos Exp $");
 
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ do {									\
 	__rfd->rfd_frag.frag_len = htole32((MCLBYTES - 2) | FRAG_LAST);	\
 	__rfd->rfd_next = htole32(STE_CDRXADDR((sc), STE_NEXTRX((x))));	\
 	__rfd->rfd_status = 0;						\
-	STE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	STE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
 #define STE_TIMEOUT 1000
@@ -199,9 +199,9 @@ static void	ste_stop(struct ifnet *, int);
 
 static bool	ste_shutdown(device_t, int);
 
-static void	ste_reset(struct ste_softc *, u_int32_t);
+static void	ste_reset(struct ste_softc *, uint32_t);
 static void	ste_setthresh(struct ste_softc *);
-static void	ste_txrestart(struct ste_softc *, u_int8_t);
+static void	ste_txrestart(struct ste_softc *, uint8_t);
 static void	ste_rxdrain(struct ste_softc *);
 static int	ste_add_rxbuf(struct ste_softc *, int);
 static void	ste_read_eeprom(struct ste_softc *, int, uint16_t *);
@@ -215,8 +215,8 @@ static int	ste_intr(void *);
 static void	ste_txintr(struct ste_softc *);
 static void	ste_rxintr(struct ste_softc *);
 
-static int	ste_mii_readreg(device_t, int, int);
-static void	ste_mii_writereg(device_t, int, int, int);
+static int	ste_mii_readreg(device_t, int, int, uint16_t *);
+static int	ste_mii_writereg(device_t, int, int, uint16_t);
 static void	ste_mii_statchg(struct ifnet *);
 
 static int	ste_match(device_t, cfdata_t, void *);
@@ -250,7 +250,7 @@ static const struct ste_product {
 	pci_product_id_t	ste_product;
 	const char		*ste_name;
 } ste_products[] = {
-	{ PCI_VENDOR_SUNDANCETI, 	PCI_PRODUCT_SUNDANCETI_IP100A,
+	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_IP100A,
 	  "IC Plus Corp. IP00A 10/100 Fast Ethernet Adapter" },
 
 	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_ST201,
@@ -293,6 +293,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	struct ste_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -325,7 +326,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
 	memh_valid = (pci_mapreg_map(pa, STE_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
 
 	if (memh_valid) {
@@ -361,7 +362,8 @@ ste_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ste_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, ste_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
@@ -458,20 +460,20 @@ ste_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ste_mii_readreg;
-	sc->sc_mii.mii_writereg = ste_mii_writereg;
-	sc->sc_mii.mii_statchg = ste_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ste_mii_readreg;
+	mii->mii_writereg = ste_mii_writereg;
+	mii->mii_statchg = ste_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0,NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
@@ -593,7 +595,7 @@ ste_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, olasttx, nexttx, opending, seg, totlen;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -633,7 +635,7 @@ ste_start(struct ifnet *ifp)
 		 * and try again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -653,7 +655,7 @@ ste_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
@@ -692,7 +694,7 @@ ste_start(struct ifnet *ifp)
 
 		/* Sync the descriptor. */
 		STE_CDTXSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Store a pointer to the packet so we can free it later,
@@ -734,7 +736,7 @@ ste_start(struct ifnet *ifp)
 		sc->sc_txdescs[sc->sc_txlast].tfd_control |=
 		    htole32(TFD_TxDMAIndicate);
 		STE_CDTXSYNC(sc, sc->sc_txlast,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Link up the new chain of descriptors to the
@@ -743,7 +745,7 @@ ste_start(struct ifnet *ifp)
 		sc->sc_txdescs[olasttx].tfd_next =
 		    htole32(STE_CDTXADDR(sc, STE_NEXTTX(olasttx)));
 		STE_CDTXSYNC(sc, olasttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Kick the transmit DMA logic.  Note that since we're
@@ -847,7 +849,7 @@ ste_intr(void *arg)
 			ste_rxintr(sc);
 
 		/* Transmit interrupts. */
-		if (isr & (IE_TxDMAComplete|IE_TxComplete))
+		if (isr & (IE_TxDMAComplete | IE_TxComplete))
 			ste_txintr(sc);
 
 		/* Statistics overflow. */
@@ -942,7 +944,7 @@ ste_txintr(struct ste_softc *sc)
 		ds = &sc->sc_txsoft[i];
 
 		STE_CDTXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		control = le32toh(sc->sc_txdescs[i].tfd_control);
 		if ((control & TFD_TxDMAComplete) == 0)
@@ -983,7 +985,8 @@ ste_rxintr(struct ste_softc *sc)
 	for (i = sc->sc_rxptr;; i = STE_NEXTRX(i)) {
 		ds = &sc->sc_rxsoft[i];
 
-		STE_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		STE_CDRXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		status = le32toh(sc->sc_rxdescs[i].rfd_status);
 
@@ -1126,7 +1129,7 @@ ste_stats_update(struct ste_softc *sc)
  *	Perform a soft reset on the ST-201.
  */
 static void
-ste_reset(struct ste_softc *sc, u_int32_t rstbits)
+ste_reset(struct ste_softc *sc, uint32_t rstbits)
 {
 	uint32_t ac;
 	int i;
@@ -1172,15 +1175,15 @@ ste_setthresh(struct ste_softc *sc)
  * restart TX at the given frame ID in the transmitter ring
  */
 static void
-ste_txrestart(struct ste_softc *sc, u_int8_t id)
+ste_txrestart(struct ste_softc *sc, uint8_t id)
 {
-	u_int32_t control;
+	uint32_t control;
 
-	STE_CDTXSYNC(sc, id, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	STE_CDTXSYNC(sc, id, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	control = le32toh(sc->sc_txdescs[id].tfd_control);
 	control &= ~TFD_TxDMAComplete;
 	sc->sc_txdescs[id].tfd_control = htole32(control);
-	STE_CDTXSYNC(sc, id, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	STE_CDTXSYNC(sc, id, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_TxDMAListPtr, 0);
 	bus_space_write_2(sc->sc_st, sc->sc_sh, STE_MacCtrl1, MC1_TxEnable);
@@ -1485,7 +1488,7 @@ ste_add_rxbuf(struct ste_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    device_xname(sc->sc_dev), idx, error);
@@ -1534,9 +1537,12 @@ ste_set_filter(struct ste_softc *sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm == NULL)
+	if (enm == NULL) {
+		ETHER_UNLOCK(ec);
 		goto done;
+	}
 
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1548,6 +1554,7 @@ ste_set_filter(struct ste_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1561,6 +1568,7 @@ ste_set_filter(struct ste_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
 
@@ -1596,10 +1604,10 @@ ste_set_filter(struct ste_softc *sc)
  *	Read a PHY register on the MII of the ST-201.
  */
 static int
-ste_mii_readreg(device_t self, int phy, int reg)
+ste_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 
-	return (mii_bitbang_readreg(self, &ste_mii_bitbang_ops, phy, reg));
+	return mii_bitbang_readreg(self, &ste_mii_bitbang_ops, phy, reg, val);
 }
 
 /*
@@ -1607,11 +1615,11 @@ ste_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the ST-201.
  */
-static void
-ste_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+ste_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 
-	mii_bitbang_writereg(self, &ste_mii_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, &ste_mii_bitbang_ops, phy, reg, val);
 }
 
 /*

@@ -1,5 +1,5 @@
 /* Data structures and functions associated with agent expressions in GDB.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (AX_H)
-#define AX_H 1
+#ifndef GDBSERVER_AX_H
+#define GDBSERVER_AX_H
 
 #include "regcache.h"
 
@@ -55,7 +55,7 @@ struct agent_expr
 
 /* The packet form of an agent expression consists of an 'X', number
    of bytes in expression, a comma, and then the bytes.  */
-struct agent_expr *gdb_parse_agent_expr (char **actparm);
+struct agent_expr *gdb_parse_agent_expr (const char **actparm);
 
 /* Release an agent expression.  */
 void gdb_free_agent_expr (struct agent_expr *aexpr);
@@ -142,4 +142,4 @@ struct emit_ops
 extern CORE_ADDR current_insn_ptr;
 extern int emit_error;
 
-#endif /* AX_H */
+#endif /* GDBSERVER_AX_H */

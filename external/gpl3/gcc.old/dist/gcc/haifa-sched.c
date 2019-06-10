@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) Enhanced by,
    and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -125,39 +125,26 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "diagnostic-core.h"
-#include "hard-reg-set.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
+#include "cfghooks.h"
+#include "df.h"
 #include "tm_p.h"
-#include "regs.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "flags.h"
 #include "insn-config.h"
-#include "insn-attr.h"
-#include "except.h"
+#include "regs.h"
+#include "ira.h"
 #include "recog.h"
-#include "dominance.h"
-#include "cfg.h"
+#include "insn-attr.h"
 #include "cfgrtl.h"
 #include "cfgbuild.h"
-#include "predict.h"
-#include "basic-block.h"
 #include "sched-int.h"
-#include "target.h"
 #include "common/common-target.h"
 #include "params.h"
 #include "dbgcnt.h"
 #include "cfgloop.h"
-#include "ira.h"
-#include "emit-rtl.h"  /* FIXME: Can go away once crtl is moved to rtl.h.  */
-#include "hash-table.h"
 #include "dumpfile.h"
+#include "print-rtl.h"
 
 #ifdef INSN_SCHEDULING
 
@@ -216,17 +203,14 @@ static int modulo_last_stage;
 
 /* sched-verbose controls the amount of debugging output the
    scheduler prints.  It is controlled by -fsched-verbose=N:
-   N>0 and no -DSR : the output is directed to stderr.
-   N>=10 will direct the printouts to stderr (regardless of -dSR).
-   N=1: same as -dSR.
+   N=0: no debugging output.
+   N=1: default value.
    N=2: bb's probabilities, detailed ready list info, unit/insn info.
    N=3: rtl at abort point, control-flow, regions info.
    N=5: dependences info.  */
-
 int sched_verbose = 0;
 
-/* Debugging file.  All printouts are sent to dump, which is always set,
-   either to stderr, or to the dump listing file (-dRS).  */
+/* Debugging file.  All printouts are sent to dump. */
 FILE *sched_dump = 0;
 
 /* This is a placeholder for the scheduler parameters common
@@ -619,18 +603,17 @@ struct delay_pair
 
 /* Helpers for delay hashing.  */
 
-struct delay_i1_hasher : typed_noop_remove <delay_pair>
+struct delay_i1_hasher : nofree_ptr_hash <delay_pair>
 {
-  typedef delay_pair value_type;
-  typedef void compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  typedef void *compare_type;
+  static inline hashval_t hash (const delay_pair *);
+  static inline bool equal (const delay_pair *, const void *);
 };
 
 /* Returns a hash value for X, based on hashing just I1.  */
 
 inline hashval_t
-delay_i1_hasher::hash (const value_type *x)
+delay_i1_hasher::hash (const delay_pair *x)
 {
   return htab_hash_pointer (x->i1);
 }
@@ -638,23 +621,22 @@ delay_i1_hasher::hash (const value_type *x)
 /* Return true if I1 of pair X is the same as that of pair Y.  */
 
 inline bool
-delay_i1_hasher::equal (const value_type *x, const compare_type *y)
+delay_i1_hasher::equal (const delay_pair *x, const void *y)
 {
   return x->i1 == y;
 }
 
-struct delay_i2_hasher : typed_free_remove <delay_pair>
+struct delay_i2_hasher : free_ptr_hash <delay_pair>
 {
-  typedef delay_pair value_type;
-  typedef void compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  typedef void *compare_type;
+  static inline hashval_t hash (const delay_pair *);
+  static inline bool equal (const delay_pair *, const void *);
 };
 
 /* Returns a hash value for X, based on hashing just I2.  */
 
 inline hashval_t
-delay_i2_hasher::hash (const value_type *x)
+delay_i2_hasher::hash (const delay_pair *x)
 {
   return htab_hash_pointer (x->i2);
 }
@@ -662,7 +644,7 @@ delay_i2_hasher::hash (const value_type *x)
 /* Return true if I2 of pair X is the same as that of pair Y.  */
 
 inline bool
-delay_i2_hasher::equal (const value_type *x, const compare_type *y)
+delay_i2_hasher::equal (const delay_pair *x, const void *y)
 {
   return x->i2 == y;
 }
@@ -881,7 +863,7 @@ static int early_queue_to_ready (state_t, struct ready_list *);
 /* The following functions are used to implement multi-pass scheduling
    on the first cycle.  */
 static rtx_insn *ready_remove (struct ready_list *, int);
-static void ready_remove_insn (rtx);
+static void ready_remove_insn (rtx_insn *);
 
 static void fix_inter_tick (rtx_insn *, rtx_insn *);
 static int fix_tick_ready (rtx_insn *);
@@ -894,7 +876,7 @@ static void extend_h_i_d (void);
 static void init_h_i_d (rtx_insn *);
 static int haifa_speculate_insn (rtx_insn *, ds_t, rtx *);
 static void generate_recovery_code (rtx_insn *);
-static void process_insn_forw_deps_be_in_spec (rtx, rtx_insn *, ds_t);
+static void process_insn_forw_deps_be_in_spec (rtx_insn *, rtx_insn *, ds_t);
 static void begin_speculative_block (rtx_insn *);
 static void add_to_speculative_block (rtx_insn *);
 static void init_before_recovery (basic_block *);
@@ -1032,18 +1014,13 @@ initiate_reg_pressure_info (bitmap live)
 static void
 setup_ref_regs (rtx x)
 {
-  int i, j, regno;
+  int i, j;
   const RTX_CODE code = GET_CODE (x);
   const char *fmt;
 
   if (REG_P (x))
     {
-      regno = REGNO (x);
-      if (HARD_REGISTER_NUM_P (regno))
-	bitmap_set_range (region_ref_regs, regno,
-			  hard_regno_nregs[regno][GET_MODE (x)]);
-      else
-	bitmap_set_bit (region_ref_regs, REGNO (x));
+      bitmap_set_range (region_ref_regs, REGNO (x), REG_NREGS (x));
       return;
     }
   fmt = GET_RTX_FORMAT (code);
@@ -1070,7 +1047,6 @@ initiate_bb_reg_pressure_info (basic_block bb)
       if (NONDEBUG_INSN_P (insn))
 	setup_ref_regs (PATTERN (insn));
   initiate_reg_pressure_info (df_get_live_in (bb));
-#ifdef EH_RETURN_DATA_REGNO
   if (bb_has_eh_pred (bb))
     for (i = 0; ; ++i)
       {
@@ -1082,7 +1058,6 @@ initiate_bb_reg_pressure_info (basic_block bb)
 	  mark_regno_birth_or_death (curr_reg_live, curr_reg_pressure,
 				     regno, true);
       }
-#endif
 }
 
 /* Save current register pressure related info.  */
@@ -1392,7 +1367,7 @@ static rtx_insn *last_scheduled_insn;
    block, or the prev_head of the scheduling block.  Used by
    rank_for_schedule, so that insns independent of the last scheduled
    insn will be preferred over dependent instructions.  */
-static rtx last_nondebug_scheduled_insn;
+static rtx_insn *last_nondebug_scheduled_insn;
 
 /* Pointer that iterates through the list of unscheduled insns if we
    have a dbg_cnt enabled.  It always points at an insn prior to the
@@ -1600,7 +1575,7 @@ contributes_to_priority_p (dep_t dep)
 /* Compute the number of nondebug deps in list LIST for INSN.  */
 
 static int
-dep_list_size (rtx insn, sd_list_types_def list)
+dep_list_size (rtx_insn *insn, sd_list_types_def list)
 {
   sd_iterator_def sd_it;
   dep_t dep;
@@ -2588,7 +2563,7 @@ static const char *rfs_str[RFS_N] = {
   "RFS_DEP_COUNT", "RFS_TIE", "RFS_FUSION" };
 
 /* Statistical breakdown of rank_for_schedule decisions.  */
-typedef struct { unsigned stats[RFS_N]; } rank_for_schedule_stats_t;
+struct rank_for_schedule_stats_t { unsigned stats[RFS_N]; };
 static rank_for_schedule_stats_t rank_for_schedule_stats;
 
 /* Return the result of comparing insns TMP and TMP2 and update
@@ -2789,7 +2764,7 @@ rank_for_schedule (const void *x, const void *y)
     {
       dep_t dep1;
       dep_t dep2;
-      rtx last = last_nondebug_scheduled_insn;
+      rtx_insn *last = last_nondebug_scheduled_insn;
 
       /* Classify the instructions into three classes:
          1) Data dependent on last schedule insn.
@@ -3034,7 +3009,7 @@ ready_remove (struct ready_list *ready, int index)
 
 /* Remove INSN from the ready list.  */
 static void
-ready_remove_insn (rtx insn)
+ready_remove_insn (rtx_insn *insn)
 {
   int i;
 
@@ -3289,7 +3264,7 @@ sched_setup_bb_reg_pressure_info (basic_block bb, rtx_insn *after)
    only be scheduled once their control dependency is resolved.  */
 
 static void
-check_clobbered_conditions (rtx insn)
+check_clobbered_conditions (rtx_insn *insn)
 {
   HARD_REG_SET t;
   int i;
@@ -4311,7 +4286,7 @@ struct haifa_saved_data
   state_t curr_state;
 
   rtx_insn *last_scheduled_insn;
-  rtx last_nondebug_scheduled_insn;
+  rtx_insn *last_nondebug_scheduled_insn;
   rtx_insn *nonscheduled_insns_begin;
   int cycle_issued_insns;
 
@@ -4341,7 +4316,7 @@ static struct haifa_saved_data *backtrack_queue;
 /* For every dependency of INSN, set the FEEDS_BACKTRACK_INSN bit according
    to SET_P.  */
 static void
-mark_backtrack_feeds (rtx insn, int set_p)
+mark_backtrack_feeds (rtx_insn *insn, int set_p)
 {
   sd_iterator_def sd_it;
   dep_t dep;
@@ -4487,7 +4462,7 @@ undo_replacements_for_backtrack (struct haifa_saved_data *save)
    queued nowhere.  */
 
 static void
-unschedule_insns_until (rtx insn)
+unschedule_insns_until (rtx_insn *insn)
 {
   auto_vec<rtx_insn *> recompute_vec;
 
@@ -5135,7 +5110,7 @@ queue_to_ready (struct ready_list *ready)
 {
   rtx_insn *insn;
   rtx_insn_list *link;
-  rtx skip_insn;
+  rtx_insn *skip_insn;
 
   q_ptr = NEXT_Q (q_ptr);
 
@@ -5144,7 +5119,7 @@ queue_to_ready (struct ready_list *ready)
        nonscheduled insn.  */
     skip_insn = first_nonscheduled_insn ();
   else
-    skip_insn = NULL_RTX;
+    skip_insn = NULL;
 
   /* Add all pending insns that can be scheduled without stalls to the
      ready list.  */
@@ -5239,11 +5214,10 @@ queue_to_ready (struct ready_list *ready)
    addition) depending on user flags and target hooks.  */
 
 static bool
-ok_for_early_queue_removal (rtx insn)
+ok_for_early_queue_removal (rtx_insn *insn)
 {
   if (targetm.sched.is_costly_dependence)
     {
-      rtx prev_insn;
       int n_cycles;
       int i = scheduled_insns.length ();
       for (n_cycles = flag_sched_stalled_insns_dep; n_cycles; n_cycles--)
@@ -5252,7 +5226,7 @@ ok_for_early_queue_removal (rtx insn)
 	    {
 	      int cost;
 
-	      prev_insn = scheduled_insns[i];
+	      rtx_insn *prev_insn = scheduled_insns[i];
 
 	      if (!NOTE_P (prev_insn))
 		{
@@ -5553,6 +5527,35 @@ insn_finishes_cycle_p (rtx_insn *insn)
   return false;
 }
 
+/* Helper for autopref_multipass_init.  Given a SET in PAT and whether
+   we're expecting a memory WRITE or not, check that the insn is relevant to
+   the autoprefetcher modelling code.  Return true iff that is the case.
+   If it is relevant, record the base register of the memory op in BASE and
+   the offset in OFFSET.  */
+
+static bool
+analyze_set_insn_for_autopref (rtx pat, bool write, rtx *base, int *offset)
+{
+  if (GET_CODE (pat) != SET)
+    return false;
+
+  rtx mem = write ? SET_DEST (pat) : SET_SRC (pat);
+  if (!MEM_P (mem))
+    return false;
+
+  struct address_info info;
+  decompose_mem_address (&info, mem);
+
+  /* TODO: Currently only (base+const) addressing is supported.  */
+  if (info.base == NULL || !REG_P (*info.base)
+      || (info.disp != NULL && !CONST_INT_P (*info.disp)))
+    return false;
+
+  *base = *info.base;
+  *offset = info.disp ? INTVAL (*info.disp) : 0;
+  return true;
+}
+
 /* Functions to model cache auto-prefetcher.
 
    Some of the CPUs have cache auto-prefetcher, which /seems/ to initiate
@@ -5577,30 +5580,139 @@ autopref_multipass_init (const rtx_insn *insn, int write)
 
   gcc_assert (data->status == AUTOPREF_MULTIPASS_DATA_UNINITIALIZED);
   data->base = NULL_RTX;
-  data->offset = 0;
+  data->min_offset = 0;
+  data->max_offset = 0;
+  data->multi_mem_insn_p = false;
   /* Set insn entry initialized, but not relevant for auto-prefetcher.  */
   data->status = AUTOPREF_MULTIPASS_DATA_IRRELEVANT;
 
+  rtx pat = PATTERN (insn);
+
+  /* We have a multi-set insn like a load-multiple or store-multiple.
+     We care about these as long as all the memory ops inside the PARALLEL
+     have the same base register.  We care about the minimum and maximum
+     offsets from that base but don't check for the order of those offsets
+     within the PARALLEL insn itself.  */
+  if (GET_CODE (pat) == PARALLEL)
+    {
+      int n_elems = XVECLEN (pat, 0);
+
+      int i = 0;
+      rtx prev_base = NULL_RTX;
+      int min_offset = 0;
+      int max_offset = 0;
+
+      for (i = 0; i < n_elems; i++)
+	{
+	  rtx set = XVECEXP (pat, 0, i);
+	  if (GET_CODE (set) != SET)
+	    return;
+
+	  rtx base = NULL_RTX;
+	  int offset = 0;
+	  if (!analyze_set_insn_for_autopref (set, write, &base, &offset))
+	    return;
+
+	  if (i == 0)
+	    {
+	      prev_base = base;
+	      min_offset = offset;
+	      max_offset = offset;
+	    }
+	  /* Ensure that all memory operations in the PARALLEL use the same
+	     base register.  */
+	  else if (REGNO (base) != REGNO (prev_base))
+	    return;
+	  else
+	    {
+	      min_offset = MIN (min_offset, offset);
+	      max_offset = MAX (max_offset, offset);
+	    }
+	}
+
+      /* If we reached here then we have a valid PARALLEL of multiple memory
+	 ops with prev_base as the base and min_offset and max_offset
+	 containing the offsets range.  */
+      gcc_assert (prev_base);
+      data->base = prev_base;
+      data->min_offset = min_offset;
+      data->max_offset = max_offset;
+      data->multi_mem_insn_p = true;
+      data->status = AUTOPREF_MULTIPASS_DATA_NORMAL;
+
+      return;
+    }
+
+  /* Otherwise this is a single set memory operation.  */
   rtx set = single_set (insn);
   if (set == NULL_RTX)
     return;
 
-  rtx mem = write ? SET_DEST (set) : SET_SRC (set);
-  if (!MEM_P (mem))
+  if (!analyze_set_insn_for_autopref (set, write, &data->base,
+				       &data->min_offset))
     return;
 
-  struct address_info info;
-  decompose_mem_address (&info, mem);
-
-  /* TODO: Currently only (base+const) addressing is supported.  */
-  if (info.base == NULL || !REG_P (*info.base)
-      || (info.disp != NULL && !CONST_INT_P (*info.disp)))
-    return;
-
-  /* This insn is relevant for auto-prefetcher.  */
-  data->base = *info.base;
-  data->offset = info.disp ? INTVAL (*info.disp) : 0;
+  /* This insn is relevant for the auto-prefetcher.
+     The base and offset fields will have been filled in the
+     analyze_set_insn_for_autopref call above.  */
   data->status = AUTOPREF_MULTIPASS_DATA_NORMAL;
+}
+
+
+/* Helper for autopref_rank_for_schedule.  Given the data of two
+   insns relevant to the auto-prefetcher modelling code DATA1 and DATA2
+   return their comparison result.  Return 0 if there is no sensible
+   ranking order for the two insns.  */
+
+static int
+autopref_rank_data (autopref_multipass_data_t data1,
+		     autopref_multipass_data_t data2)
+{
+  /* Simple case when both insns are simple single memory ops.  */
+  if (!data1->multi_mem_insn_p && !data2->multi_mem_insn_p)
+    return data1->min_offset - data2->min_offset;
+
+  /* Two load/store multiple insns.  Return 0 if the offset ranges
+     overlap and the difference between the minimum offsets otherwise.  */
+  else if (data1->multi_mem_insn_p && data2->multi_mem_insn_p)
+    {
+      int min1 = data1->min_offset;
+      int max1 = data1->max_offset;
+      int min2 = data2->min_offset;
+      int max2 = data2->max_offset;
+
+      if (max1 < min2 || min1 > max2)
+	return min1 - min2;
+      else
+	return 0;
+    }
+
+  /* The other two cases is a pair of a load/store multiple and
+     a simple memory op.  Return 0 if the single op's offset is within the
+     range of the multi-op insn and the difference between the single offset
+     and the minimum offset of the multi-set insn otherwise.  */
+  else if (data1->multi_mem_insn_p && !data2->multi_mem_insn_p)
+    {
+      int max1 = data1->max_offset;
+      int min1 = data1->min_offset;
+
+      if (data2->min_offset >= min1
+	  && data2->min_offset <= max1)
+	return 0;
+      else
+	return min1 - data2->min_offset;
+    }
+  else
+    {
+      int max2 = data2->max_offset;
+      int min2 = data2->min_offset;
+
+      if (data1->min_offset >= min2
+	  && data1->min_offset <= max2)
+	return 0;
+      else
+	return data1->min_offset - min2;
+    }
 }
 
 /* Helper function for rank_for_schedule sorting.  */
@@ -5627,7 +5739,7 @@ autopref_rank_for_schedule (const rtx_insn *insn1, const rtx_insn *insn2)
       if (!rtx_equal_p (data1->base, data2->base))
 	continue;
 
-      return data1->offset - data2->offset;
+      return autopref_rank_data (data1, data2);
     }
 
   return 0;
@@ -5653,7 +5765,7 @@ autopref_multipass_dfa_lookahead_guard_1 (const rtx_insn *insn1,
     return 0;
 
   if (rtx_equal_p (data1->base, data2->base)
-      && data1->offset > data2->offset)
+      && autopref_rank_data (data1, data2) > 0)
     {
       if (sched_verbose >= 2)
 	{
@@ -6473,7 +6585,7 @@ schedule_block (basic_block *target_bb, state_t init_state)
 
   /* We start inserting insns after PREV_HEAD.  */
   last_scheduled_insn = prev_head;
-  last_nondebug_scheduled_insn = NULL_RTX;
+  last_nondebug_scheduled_insn = NULL;
   nonscheduled_insns_begin = NULL;
 
   gcc_assert ((NOTE_P (last_scheduled_insn)
@@ -7107,17 +7219,14 @@ set_priorities (rtx_insn *head, rtx_insn *tail)
   return n_insn;
 }
 
-/* Set dump and sched_verbose for the desired debugging output.  If no
-   dump-file was specified, but -fsched-verbose=N (any N), print to stderr.
-   For -fsched-verbose=N, N>=10, print everything to stderr.  */
+/* Set sched_dump and sched_verbose for the desired debugging output. */
 void
 setup_sched_dump (void)
 {
   sched_verbose = sched_verbose_param;
-  if (sched_verbose_param == 0 && dump_file)
-    sched_verbose = 1;
-  sched_dump = ((sched_verbose_param >= 10 || !dump_file)
-		? stderr : dump_file);
+  sched_dump = dump_file;
+  if (!dump_file)
+    sched_verbose = 0;
 }
 
 /* Allocate data for register pressure sensitive scheduling.  */
@@ -7189,9 +7298,8 @@ void
 sched_init (void)
 {
   /* Disable speculative loads in their presence if cc0 defined.  */
-#ifdef HAVE_cc0
+  if (HAVE_cc0)
   flag_schedule_speculative_load = 0;
-#endif
 
   if (targetm.sched.dispatch (NULL, IS_DISPATCH_ON))
     targetm.sched.dispatch_do (NULL, DISPATCH_INIT);
@@ -7807,7 +7915,7 @@ generate_recovery_code (rtx_insn *insn)
    Tries to add speculative dependencies of type FS between instructions
    in deps_list L and TWIN.  */
 static void
-process_insn_forw_deps_be_in_spec (rtx insn, rtx_insn *twin, ds_t fs)
+process_insn_forw_deps_be_in_spec (rtx_insn *insn, rtx_insn *twin, ds_t fs)
 {
   sd_iterator_def sd_it;
   dep_t dep;
@@ -8110,8 +8218,6 @@ init_before_recovery (basic_block *before_recovery_ptr)
          Between these two blocks recovery blocks will be emitted.  */
 
       basic_block single, empty;
-      rtx_insn *x;
-      rtx label;
 
       /* If the fallthrough edge to exit we've found is from the block we've
 	 created before, don't do anything more.  */
@@ -8142,8 +8248,9 @@ init_before_recovery (basic_block *before_recovery_ptr)
       make_single_succ_edge (empty, EXIT_BLOCK_PTR_FOR_FN (cfun),
 			     EDGE_FALLTHRU);
 
-      label = block_label (empty);
-      x = emit_jump_insn_after (gen_jump (label), BB_END (single));
+      rtx_code_label *label = block_label (empty);
+      rtx_jump_insn *x = emit_jump_insn_after (targetm.gen_jump (label),
+					       BB_END (single));
       JUMP_LABEL (x) = label;
       LABEL_NUSES (label)++;
       haifa_init_insn (x);
@@ -8174,7 +8281,6 @@ init_before_recovery (basic_block *before_recovery_ptr)
 basic_block
 sched_create_recovery_block (basic_block *before_recovery_ptr)
 {
-  rtx label;
   rtx_insn *barrier;
   basic_block rec;
 
@@ -8186,7 +8292,7 @@ sched_create_recovery_block (basic_block *before_recovery_ptr)
   barrier = get_last_bb_insn (before_recovery);
   gcc_assert (BARRIER_P (barrier));
 
-  label = emit_label_after (gen_label_rtx (), barrier);
+  rtx_insn *label = emit_label_after (gen_label_rtx (), barrier);
 
   rec = create_basic_block (label, label, before_recovery);
 
@@ -8209,8 +8315,6 @@ void
 sched_create_recovery_edges (basic_block first_bb, basic_block rec,
 			     basic_block second_bb)
 {
-  rtx label;
-  rtx jump;
   int edge_flags;
 
   /* This is fixing of incoming edge.  */
@@ -8222,8 +8326,9 @@ sched_create_recovery_edges (basic_block first_bb, basic_block rec,
     edge_flags = 0;
 
   make_edge (first_bb, rec, edge_flags);
-  label = block_label (second_bb);
-  jump = emit_jump_insn_after (gen_jump (label), BB_END (rec));
+  rtx_code_label *label = block_label (second_bb);
+  rtx_jump_insn *jump = emit_jump_insn_after (targetm.gen_jump (label),
+					      BB_END (rec));
   JUMP_LABEL (jump) = label;
   LABEL_NUSES (label)++;
 
@@ -9042,17 +9147,24 @@ haifa_finish_h_i_d (void)
 {
   int i;
   haifa_insn_data_t data;
-  struct reg_use_data *use, *next;
+  reg_use_data *use, *next_use;
+  reg_set_data *set, *next_set;
 
   FOR_EACH_VEC_ELT (h_i_d, i, data)
     {
       free (data->max_reg_pressure);
       free (data->reg_pressure);
-      for (use = data->reg_use_list; use != NULL; use = next)
+      for (use = data->reg_use_list; use != NULL; use = next_use)
 	{
-	  next = use->next_insn_use;
+	  next_use = use->next_insn_use;
 	  free (use);
 	}
+      for (set = data->reg_set_list; set != NULL; set = next_set)
+	{
+	  next_set = set->next_insn_set;
+	  free (set);
+	}
+
     }
   h_i_d.release ();
 }

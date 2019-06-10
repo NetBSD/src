@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $	*/
+/*	$NetBSD: emac3.c,v 1.11.18.1 2019/06/10 22:06:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.11.18.1 2019/06/10 22:06:36 christos Exp $");
 
 #include "debug_playstation2.h"
 
@@ -242,14 +242,18 @@ allmulti:
 		return;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
-		ETHER_NEXT_MULTI(step, enm)
+		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* XXX always multicast promiscuous mode. XXX use hash table.. */
 	ifp->if_flags |= IFF_ALLMULTI;
@@ -308,37 +312,39 @@ emac3_config(const u_int8_t *eaddr)
 /*
  * PHY/MII
  */
-void
-emac3_phy_writereg(device_t self, int phy, int reg, int data)
+int
+emac3_phy_writereg(device_t self, int phy, int reg, uint16_t val)
 {
+	int rv;
 
-	if (emac3_phy_ready() != 0)
-		return;
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
 	_emac3_reg_write_4(EMAC3_STACR, STACR_WRITE |
 	    ((phy << STACR_PCDASHIFT) & STACR_PCDA)  | /* command dest addr*/
 	    ((reg << STACR_PRASHIFT) & STACR_PRA) |   /* register addr */
-	    ((data << STACR_PHYDSHIFT) & STACR_PHYD)); /* data */
+	    ((val << STACR_PHYDSHIFT) & STACR_PHYD)); /* data */
 
-	if (emac3_phy_ready() != 0)
-		return;
+	return emac3_phy_ready();
 }
 
 int
-emac3_phy_readreg(device_t self, int phy, int reg)
+emac3_phy_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
+	int rv;
 
-	if (emac3_phy_ready() != 0)
-		return (0);
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
 	_emac3_reg_write_4(EMAC3_STACR, STACR_READ |
 	    ((phy << STACR_PCDASHIFT) & STACR_PCDA)  | /* command dest addr*/
 	    ((reg << STACR_PRASHIFT) & STACR_PRA));   /* register addr */
 
-	if (emac3_phy_ready() != 0)
-		return (0);
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
-	return ((_emac3_reg_read_4(EMAC3_STACR) >> STACR_PHYDSHIFT) & 0xffff);
+	*val =(_emac3_reg_read_4(EMAC3_STACR) >> STACR_PHYDSHIFT) & 0xffff;
+	return 0;
 }
 
 void
@@ -389,7 +395,7 @@ emac3_phy_ready(void)
 		;
 	if (retry == 0) {
 		printf("emac3: phy busy.\n");
-		return (1);
+		return ETIMEDOUT;
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.30 2013/04/27 21:18:42 christos Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.30.36.1 2019/06/10 22:07:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

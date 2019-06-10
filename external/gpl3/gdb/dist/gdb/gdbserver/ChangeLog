@@ -1,3 +1,2286 @@
+2019-03-04  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* configure.srv: Use '$enable_unittest' instead of '$development'
+	when checking whether to fill 'srv_regobj' on 'aarch64*-*-linux*'
+	case.
+
+2019-02-07  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-low.c (linux_attach): Add process before lwp.
+	* server.c (attach_inferior): Check if already attached.
+
+2019-02-07  Tom Tromey  <tom@tromey.com>
+
+	* x86-tdesc.h: Rename include guard.
+	* x86-low.h: Add include guard.
+	* wincecompat.h: Rename include guard.
+	* win32-low.h: Add include guard.
+	* utils.h: Rename include guard.
+	* tracepoint.h: Rename include guard.
+	* tdesc.h: Rename include guard.
+	* target.h: Rename include guard.
+	* server.h: Rename include guard.
+	* remote-utils.h: Rename include guard.
+	* regcache.h: Rename include guard.
+	* nto-low.h: Rename include guard.
+	* notif.h: Add include guard.
+	* mem-break.h: Rename include guard.
+	* lynx-low.h: Add include guard.
+	* linux-x86-tdesc.h: Add include guard.
+	* linux-s390-tdesc.h: Add include guard.
+	* linux-ppc-tdesc-init.h: Add include guard.
+	* linux-low.h: Add include guard.
+	* linux-aarch64-tdesc.h: Add include guard.
+	* linux-aarch32-low.h: Add include guard.
+	* inferiors.h: Rename include guard.
+	* i387-fp.h: Rename include guard.
+	* hostio.h: Rename include guard.
+	* gdbthread.h: Rename include guard.
+	* gdb_proc_service.h: Rename include guard.
+	* event-loop.h: Rename include guard.
+	* dll.h: Rename include guard.
+	* debug.h: Rename include guard.
+	* ax.h: Rename include guard.
+
+2018-01-30  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+
+	PR gdb/23985
+	* Makefile.in (IPAGENT_CFLAGS): Add UNDO_GNULIB_CFLAGS.
+	(UNDO_GNULIB_CFLAGS): Undo gnulib replacements.
+
+2019-01-25  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in (INCLUDE_CFLAGS): Don't add -I for common.
+
+2019-01-25  Tom Tromey  <tom@tromey.com>
+
+	* win32-low.c: Fix common/ includes.
+	* win32-i386-low.c: Fix common/ includes.
+	* tracepoint.c: Fix common/ includes.
+	* thread-db.c: Fix common/ includes.
+	* target.h: Fix common/ includes.
+	* symbol.c: Fix common/ includes.
+	* spu-low.c: Fix common/ includes.
+	* server.h: Fix common/ includes.
+	* server.c: Fix common/ includes.
+	* remote-utils.c: Fix common/ includes.
+	* regcache.h: Fix common/ includes.
+	* regcache.c: Fix common/ includes.
+	* nto-x86-low.c: Fix common/ includes.
+	* notif.h: Fix common/ includes.
+	* mem-break.h: Fix common/ includes.
+	* lynx-low.c: Fix common/ includes.
+	* lynx-i386-low.c: Fix common/ includes.
+	* linux-x86-tdesc-selftest.c: Fix common/ includes.
+	* linux-x86-low.c: Fix common/ includes.
+	* linux-low.c: Fix common/ includes.
+	* inferiors.h: Fix common/ includes.
+	* i387-fp.c: Fix common/ includes.
+	* hostio.c: Fix common/ includes.
+	* hostio-errno.c: Fix common/ includes.
+	* gdbthread.h: Fix common/ includes.
+	* gdbreplay.c: Fix common/ includes.
+	* fork-child.c: Fix common/ includes.
+	* event-loop.c: Fix common/ includes.
+	* ax.c: 
+	(enum gdb_agent_op): Fix common/ includes.
+
+2019-01-21  Tom Tromey  <tom@tromey.com>
+
+	* tracepoint.c: Fix includes.
+	* remote-utils.c: Fix includes.
+	* linux-x86-low.c: Fix includes.
+
+2019-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbreplay.c (gdbreplay_version): Update copyright year in
+	version message.
+	* server.c (gdbserver_version): Likewise.
+
+2018-12-05  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-low.c (add_lwp): Switch ordering.
+
+2018-11-29  Tom Tromey  <tom@tromey.com>
+
+	* win32-low.c (win32_join): Take pid, not process.
+	* target.h (struct target_ops) <join>: Change argument type.
+	(join_inferior): Change argument name.
+	* spu-low.c (spu_join): Take pid, not process.
+	* server.c (handle_detach): Preserve pid before destroying
+	process.
+	* lynx-low.c (lynx_join): Take pid, not process.
+	* linux-low.c (linux_join): Take pid, not process.
+
+2018-11-23  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-low.c (aarch64_cannot_store_register): Remove.
+	(aarch64_cannot_fetch_register): Likewise.
+	(struct linux_target_ops): Update references.
+
+2018-10-31  Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* linux-ppc-low.c: Include nat/linux-ptrace.h.
+
+2018-10-26  Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* configure.srv (ipa_ppc_linux_regobj): Add
+	powerpc-isa207-htm-vsx32l-ipa.o and
+	powerpc-isa207-htm-vsx64l-ipa.o.
+	(powerpc*-*-linux*): Add powerpc-isa207-htm-vsx32l.o and
+	powerpc-isa207-htm-vsx64l.o to srv_regobj.  Add
+	rs6000/power-htm-spr.xml, rs6000/power-htm-core.xml,
+	rs6000/power64-htm-core.xml, rs6000/power-htm-fpu.xml,
+	rs6000/power-htm-altivec.xml, rs6000/power-htm-vsx.xml,
+	rs6000/power-htm-ppr.xml, rs6000/power-htm-dscr.xml,
+	rs6000/power-htm-tar.xml, rs6000/powerpc-isa207-htm-vsx32l.xml,
+	and rs6000/powerpc-isa207-htm-vsx64l.xml to srv_xmlfiles.
+	* linux-ppc-tdesc-init.h (enum ppc_linux_tdesc)
+	<PPC_TDESC_ISA207_HTM_VSX>: New enum value.
+	(init_registers_powerpc_isa207_htm_vsx32l)
+	(init_registers_powerpc_isa207_htm_vsx64l): Declare.
+	* linux-ppc-low.c (ppc_fill_tm_sprregset, ppc_store_tm_sprregset)
+	(ppc_store_tm_cgprregset, ppc_store_tm_cfprregset)
+	(ppc_store_tm_cvrregset, ppc_store_tm_cvsxregset)
+	(ppc_store_tm_cpprregset, ppc_store_tm_cdscrregset)
+	(ppc_store_tm_ctarregset): New functions.
+	(ppc_regsets): Add entries for HTM regsets.
+	(ppc_arch_setup): Set htm in features struct when needed.  Set
+	sizes for the HTM regsets.
+	(ppc_get_ipa_tdesc_idx): Return PPC_TDESC_ISA207_HTM_VSX.
+	(initialize_low_arch): Call
+	init_registers_powerpc_isa207_htm_vsx32l and
+	init_registers_powerpc_isa207_htm_vsx64l.
+	* linux-ppc-ipa.c (get_ipa_tdesc): Handle
+	PPC_TDESC_ISA207_HTM_VSX.
+	(initialize_low_tracepoint): Call
+	init_registers_powerpc_isa207_htm_vsx32l and
+	init_registers_powerpc_isa207_htm_vsx64l.
+
+2018-10-26  Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* configure.srv (powerpc*-*-linux*): Add rs6000/power-ebb.xml and
+	rs6000/power-linux-pmu.xml to srv_xmlfiles.
+	* linux-ppc-low.c (ppc_store_ebbregset, ppc_fill_pmuregset)
+	(ppc_store_pmuregset): New functions.
+	(ppc_regsets): Add entries for ebb and pmu regsets.
+	(ppc_arch_setup): Set isa207 in features struct if the ebb and
+	pmu regsets are available.  Set sizes for these regsets.
+
+2018-10-26  Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* configure.srv (ipa_ppc_linux_regobj): Add
+	powerpc-isa207-vsx64l-ipa.o and powerpc-isa207-vsx32l-ipa.o.
+	(powerpc*-*-linux*): Add powerpc-isa207-vsx32l.o and
+	powerpc-isa207-vsx64l.o to srv_regobj, add rs6000/power-tar.xml,
+	rs6000/powerpc-isa207-vsx32l.xml, and
+	rs6000/powerpc-isa207-vsx64l.xml to srv_xmlfiles.
+	* linux-ppc-tdesc-init.h (enum ppc_linux_tdesc)
+	<PPC_TDESC_ISA207_VSX>: New enum value.
+	(init_registers_powerpc_isa207_vsx32l): Declare.
+	(init_registers_powerpc_isa207_vsx64l): Declare.
+	* linux-ppc-low.c (ppc_fill_tarregset): New function.
+	(ppc_store_tarregset): New function.
+	(ppc_regsets): Add entry for the TAR regset.
+	(ppc_arch_setup): Set isa207 in features struct when needed.  Set
+	size for the TAR regsets.
+	(ppc_get_ipa_tdesc_idx): Return PPC_TDESC_ISA207_VSX.
+	(initialize_low_arch): Call init_registers_powerpc_isa207_vsx32l
+	and init_registers_powerpc_isa207_vsx64l.
+	* linux-ppc-ipa.c (get_ipa_tdesc): Handle PPC_TDESC_ISA207_VSX.
+	(initialize_low_tracepoint): Call
+	init_registers_powerpc_isa207_vsx32l and
+	init_registers_powerpc_isa207_vsx64l.
+
+2018-10-26  Edjunior Barbosa Machado  <emachado@linux.vnet.ibm.com>
+	    Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* configure.srv (ipa_ppc_linux_regobj): Add
+	powerpc-isa205-ppr-dscr-vsx32l-ipa.o and
+	powerpc-isa205-ppr-dscr-vsx64l-ipa.o.
+	(powerpc*-*-linux*): Add powerpc-isa205-ppr-dscr-vsx32l.o and
+	powerpc-isa205-ppr-dscr-vsx64l.o to srv_regobj, add
+	rs6000/power-dscr.xml, rs6000/power-ppr.xml,
+	rs6000/powerpc-isa205-ppr-dscr-vsx32l.xml and
+	rs6000/powerpc-isa205-ppr-dscr-vsx64l.xml to srv_xmlfiles.
+	* linux-ppc-tdesc-init.h (enum ppc_linux_tdesc)
+	<PPC_TDESC_ISA205_PPR_DSCR_VSX>: New enum value.
+	(init_registers_powerpc_isa205_ppr_dscr_vsx32l)
+	(init_registers_powerpc_isa205_ppr_dscr_vsx64l): Declare.
+	* linux-ppc-low.c: Include "elf/common.h" and <sys/uio.h>.
+	(ppc_hwcap): Add comment.
+	(ppc_hwcap2): New global.
+	(ppc_check_regset, ppc_fill_pprregset, ppc_store_pprregset)
+	(ppc_fill_dscrregset, ppc_store_dscrregset): New functions.
+	(ppc_regsets): Add entries for the DSCR and PPR regsets.
+	(ppc_arch_setup): Get AT_HWCAP2.  Set ppr_dscr in features struct
+	when needed.  Set sizes for the the DSCR and PPR regsets.
+	(ppc_get_ipa_tdesc_idx): Return PPC_TDESC_ISA205_PPR_DSCR_VSX.
+	(initialize_low_arch): Call
+	init_registers_powerpc_isa205_ppr_dscr_vsx32l and
+	init_registers_powerpc_isa205_ppr_dscr_vsx64l.
+	* linux-ppc-ipa.c (get_ipa_tdesc): Handle
+	PPC_TDESC_ISA205_PPR_DSCR_VSX.
+	(initialize_low_tracepoint): Call
+	init_registers_powerpc_isa205_ppr_dscr_vsx32l and
+	init_registers_powerpc_isa205_ppr_dscr_vsx64l.
+
+2018-10-26  Pedro Franco de Carvalho  <pedromfc@linux.ibm.com>
+
+	* linux-ppc-low.c (ppc_fill_vrregset): Remove memset calls.
+
+2018-10-10  Sergio Durigan Junior  <sergiodj@redhat.com>
+	    Simon Marchi <simark@simark.ca>
+
+	* acinclude.m4: Include "../selftest.m4".
+	* configure: Regenerate.
+	* configure.ac: Use "GDB_AC_SELFTEST".
+	* configure.srv: Use "$enable_unittests" instead of
+	"$development" when checking whether unit tests have been
+	enabled.
+	* server.c (captured_main): Update message informing that
+	selftests have been disabled.
+
+2018-10-04  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-10-04  Tom Tromey  <tom@tromey.com>
+
+	* server.c (handle_status): Rename inner "thread".
+	(process_serial_event): Declare "res" in 'm' case.
+	* linux-low.c (last_thread_of_process_p, find_lwp_pid)
+	(iterate_over_lwps): Rename inner "thread".
+	(linux_qxfer_libraries_svr4): Rename inner "len".
+	* gdbthread.h (find_thread_in_random): Rename inner "thread".
+
+2018-10-01  Gary Benson <gbenson@redhat.com>
+
+	* gdb_proc_service.h: Moved common code to
+	common/gdb_proc_service.h.
+
+2018-10-01  Gary Benson <gbenson@redhat.com>
+
+	* gdb_proc_service.h: Synchronize comments and whitespace with
+	GDB's version of this file.
+
+2018-09-25  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+	* configure.ac (WARN_CFLAGS): Don't remove -Wmissing-prototypes.
+
+2018-09-16  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in (gdbserver$(EXEEXT)): Sort OBS.
+	(gdbreplay$(EXEEXT)): Sort GDBREPLAY_OBS.
+	($(IPA_LIB)): Sort IPA_OBJS.
+
+2018-09-16  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Remove references to $(ADD_DEPS).
+
+2018-09-16  Tom Tromey  <tom@tromey.com>
+
+	* remote-utils.c (remote_open): Use GNU style for metasyntactic
+	variables.
+	* gdbreplay.c (gdbreplay_usage): Use GNU style for metasyntactic
+	variables.
+
+2018-09-05  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-08-28  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	PR build/23399
+	* tracepoint.c (IPA_SYM_STRUCT_NAME): Define.
+
+2018-08-27  Tom Tromey  <tom@tromey.com>
+
+	PR build/23087:
+	* configure: Rebuild.
+
+2018-08-27  Tom Tromey  <tom@tromey.com>
+
+	* linux-s390-low.c (s390_emit_ext, s390_emit_litpool)
+	(s390_emit_const, s390_emit_reg, s390_emit_zero_ext)
+	(s390_emit_stack_adjust, s390_emit_set_r2, s390x_emit_ext)
+	(s390x_emit_const, s390x_emit_reg, s390x_emit_zero_ext)
+	(s390x_emit_stack_adjust): Add casts to unsigned char.
+
+2018-08-22  Simon Marchi  <simon.marchi@ericsson.com>
+
+	PR gdb/23374
+	PR gdb/23375
+	* server.h (struct client_state) <disable_randomization>:
+	Initialize to 1.
+
+2018-07-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-mips-low.c (mips_collect_ptrace_register): Remove unused
+	variable.
+	(mips_supply_ptrace_register): Likewise.
+
+2018-07-22  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-07-22  Tom Tromey  <tom@tromey.com>
+
+	* win32-low.c (win32_create_inferior): Remove unused variables.
+	* gdbreplay.c (remote_open): Remove unused variable.
+	* remote-utils.c (remote_prepare): Remove unused variable.
+	* x86-tdesc.h (X86_TDESC_H): Define.
+	(amd64_expedite_regs): Define conditionally.
+	(i386_expedite_regs): Mark ATTRIBUTE_UNUSED.
+	* linux-x86-tdesc.c (i386_tdescs): Move inside #if.
+	* remote-utils.c (readchar): Remove unused variable.
+
+2018-07-13  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_kill): Change parameter to process_info
+	pointer instead of pid.  Adjust.
+	* lynx-low.c (lynx_kill): Likewise.
+	* nto-low.c (nto_kill): Likewise.
+	* spu-low.c (spu_kill): Likewise.
+	* win32-low.c (win32_kill): Likewise.
+	* server.c (handle_v_kill, kill_inferior_callback)
+	(detach_or_kill_for_exit): Adjust.
+	* target.c (kill_inferior): Change parameter to process_info
+	pointer instead of pid.  Adjust.
+	* target.h (struct target_ops) <kill>: Change parameter to
+	process_info pointer instead of pid.  Adjust all implementations
+	and callers.
+	(kill_inferior): Likewise.
+
+2018-07-13  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_detach, linux_join): Change parameter to
+	process_info pointer instead of pid.  Adjust.
+	* lynx-low.c (lynx_detach, lynx_join): Likewise.
+	* nto-low.c (nto_detach): Likewise.
+	* spu-low.c (spu_detach, spu_join): Likewise.
+	* win32-low.c (win32_detach, win32_join): Likewise.
+	* server.c (handle_detach, detach_or_kill_for_exit): Adjust.
+	* target.h (struct target_ops) <detach, join>: Change parameter to
+	process_info pointer instead of pid.  Adjust all implementations
+	and callers.
+	(detach_inferior, join_inferior): Rename 'pid' parameter to
+	'proc'.
+
+2018-07-11  Sergio Durigan Junior  <sergiodj@redhat.com>
+	    Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Paul Fertser  <fercerpav@gmail.com>
+	    Tsutomu Seki  <sekiriki@gmail.com>
+
+	* Makefile.in (SFILES): Add '$(srcdir)/common/netstuff.c'.
+	(OBS): Add 'common/netstuff.o'.
+	(GDBREPLAY_OBS): Likewise.
+	* gdbreplay.c: Include 'wspiapi.h' and 'netstuff.h'.
+	(remote_open): Implement support for IPv6
+	connections.
+	* remote-utils.c: Include 'netstuff.h', 'filestuff.h'
+	and 'wspiapi.h'.
+	(handle_accept_event): Accept connections from IPv6 sources.
+	(remote_prepare): Handle IPv6-style hostnames; implement
+	support for IPv6 connections.
+	(remote_open): Implement support for printing connections from
+	IPv6 sources.
+
+2018-07-11  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/23377
+	* mem-break.c (any_persistent_commands): Add process_info
+	parameter and use it instead of relying on the current process.
+	Change return type to bool.
+	* mem-break.h (any_persistent_commands): Add process_info
+	parameter and change return type to bool.
+	* server.c (handle_detach): Remove require_running_or_return call.
+	Look up the process_info for the process we're about to detach.
+	If not found, return back error to GDB.  Adjust
+	any_persistent_commands call to pass down a process pointer.
+
+2018-07-11  Pedro Alves  <palves@redhat.com>
+
+	* i387-fp.c (i387_cache_to_fsave, cache_to_fxsave)
+	(i387_cache_to_xsave): Use regcache_raw_get_unsigned_by_name
+	instead of collect_register_by_name.
+	* regcache.c (regcache_raw_get_unsigned_by_name): New.
+	* regcache.h (regcache_raw_get_unsigned_by_name): New.
+
+2018-07-04  Vyacheslav Barinov  <v.barinov@samsung.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (initialize_low): Call linux_proc_init_warnings.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+	* lynx-low.c: Update.
+	* mem-break.c: Update.
+	* nto-low.c: Update.
+	* remote-utils.c: Update.
+	* server.c: Update.
+	* spu-low.c: Update.
+	* target.c: Update.
+	* win32-low.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* server.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* target.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+	* linux-mips-low.c: Update.
+	* lynx-low.c: Update.
+	* nto-low.c: Update.
+	* remote-utils.c: Update.
+	* server.c: Update.
+	* spu-low.c: Update.
+	* target.c: Update.
+	* thread-db.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+	* linux-mips-low.c: Update.
+	* lynx-low.c: Update.
+	* mem-break.c: Update.
+	* nto-low.c: Update.
+	* remote-utils.c: Update.
+	* server.c: Update.
+	* spu-low.c: Update.
+	* target.c: Update.
+	* tracepoint.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+	* linux-ppc-low.c: Update.
+	* linux-x86-low.c: Update.
+	* proc-service.c: Update.
+	* server.c: Update.
+	* spu-low.c: Update.
+	* thread-db.c: Update.
+	* win32-low.c: Update.
+
+2018-07-03  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c: Update.
+	* lynx-low.c: Update.
+	* nto-low.c: Update.
+	* remote-utils.c: Update.
+	* spu-low.c: Update.
+	* thread-db.c: Update.
+	* win32-low.c: Update.
+
+2018-06-29  Joel Brobecker  <brobecker@adacore.com>
+
+	* linux-x86-tdesc.c (amd64_linux_read_description): Add missing
+	parameter in call to 'amd64_create_target_description'.
+
+2018-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* x86-tdesc.h: Remove executable permission flag.
+
+2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure.ac: Remove AC_PREREQ, add missing quoting.
+	* configure: Re-generate.
+	* config.in: Re-generate.
+	* aclocal.m4: Re-generate.
+
+2018-06-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* tracepoint.h (current_traceframe): Remove declaration.
+
+2018-06-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-low.c (is_sve_tdesc): New function.
+	(aarch64_sve_regs_copy_to_regcache): Likewise.
+	(aarch64_sve_regs_copy_from_regcache): Likewise.
+	(aarch64_regs_info): Add SVE checks.
+	(initialize_low_arch): Initialize SVE.
+
+2018-06-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* Makefile.in: Add aarch64-sve-linux-ptrace.c.
+
+2018-06-11  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-ipa.c (get_ipa_tdesc): Add null VQ param.
+	(initialize_low_tracepoint): Likewise
+	* linux-aarch64-low.c (aarch64_arch_setup): Get VQ.
+	* linux-aarch64-tdesc-selftest.c (aarch64_tdesc_test): Add null VQ
+	param.
+	* linux-aarch64-tdesc.c (aarch64_linux_read_description): Add VQ
+	checks.
+	* linux-aarch64-tdesc.h (aarch64_linux_read_description): Add VQ.
+
+2018-06-11  Alan Hayward  <alan.hayward@arm.com>
+
+	* server.h (PBUFSIZ): Increase size
+
+2018-06-11  Alan Hayward  <alan.hayward@arm.com>
+
+	* regcache.c (regcache::raw_compare): New function.
+	* regcache.h (regcache::raw_compare): New declaration.
+
+2018-06-11  Alan Hayward  <alan.hayward@arm.com>
+
+	* regcache.c (new_register_cache): Use new.
+	(free_register_cache): Use delete.
+	(register_data): Use const.
+	(supply_register): Move body inside regcache.
+	(regcache::raw_supply): New override function.
+	(collect_register): Move body inside regcache.
+	(regcache::raw_collect): New override function.
+	(regcache::get_register_status): New override function.
+	* regcache.h (struct regcache): Inherit from reg_buffer_common.
+
+2018-06-09  Tom Tromey  <tom@tromey.com>
+
+	* event-loop.c (gdb_event, gdb_event_p): Remove typedefs.  Don't
+	declare queue.
+	(event_queue): Use std::queue.
+	(gdb_event_xfree): Remove.
+	(initialize_event_loop, process_event, wait_for_event): Update.
+
+2018-06-08  Stan Cox  <scox@redhat.com>
+
+	* win32-low.c (win32_create_inferior):  last_ptid and last_status
+	moved to client_state.
+
+2018-06-08  Pedro Alves  <palves@redhat.com>
+
+	* Makefile.in (GDBREPLAY_OBS): Add common/cleanups.o,
+	common/common-exceptions.o, common/common-utils.o,
+	common/errors.o, common/print-utils.o and utils.o.
+	* gdbreplay.c: Include "common-defs.h" instead of the two
+	'config.h's here.  Don't include stdio.h, errno.h, stdlib.h,
+	string.h or alloca.h.
+	(perror_with_name): Delete.
+	(remote_open): Use xstrdup instead of strdup.
+	(main): Rename to ...
+	(captured_main): ... this.
+	(main): New.
+
+2018-06-08  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c (linux_low_read_btrace): Update.
+
+2018-06-04  Stan Cox  <scox@redhat.com>
+
+	* server.h (struct client_state): New.
+	* server.c (cont_thread, general_thread, multi_process)
+	(report_fork_events, report_vfork_events, report_exec_events)
+	(report_thread_events, swbreak_feature, hwbreak_feature)
+	(vCont_supported, disable_randomization, pass_signals)
+	(program_signals, program_signals_p, last_status, last_ptid, own_buf):
+	Moved to client_state.
+	* remote-utils.c (remote_debug, noack_mode)
+	(transport_is_reliable): Moved to client_state.
+	* tracepoint.c (current_traceframe): Moved to client_state.
+
+	Update all callers.
+	* server.c, remote-utils.c, tracepoint.c, fork-child.c,
+	linux-low.c, remote-utils.h, target.c: Use client_state.
+
+2018-05-31  Alan Hayward  <alan.hayward@arm.com>
+
+	* configure.srv: Add new c/h file.
+
+2018-05-31  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-tdesc.c (aarch64_linux_read_description): Add
+	null VQ.
+
+2018-05-25  Maciej W. Rozycki  <macro@mips.com>
+
+	* gdb.arch/mips-fpregset-core.exp: New test.
+	* gdb.arch/mips-fpregset-core.c: New test source.
+
+2018-05-23  Erik Kurzinger  <ekurzinger@nvidia.com>
+
+	PR server/23198
+	* hostio.c (require_int): Do not report overflow for integers
+	between 0xfffffff and 0x7fffffff.
+
+2018-05-22  Maciej W. Rozycki  <macro@mips.com>
+
+	* linux-mips-low.c [HAVE_PTRACE_GETREGS] (mips_collect_register)
+	(mips_supply_register): Move outside HAVE_PTRACE_GETREGS.
+	(mips_collect_ptrace_register, mips_supply_ptrace_register): New
+	functions.
+	(the_low_target): Wire them.
+
+2018-05-22  Pedro Franco de Carvalho  <pedromfc@linux.vnet.ibm.com>
+
+	* linux-ppc-low.c (ppc_fill_vrregset): Add vscr_offset variable.
+	Set vscr_offset to 0 in little-endian mode and 12 in big-endian
+	mode. Call collect_register_by_name with vscr using
+	vscr_offset. Zero-pad vscr and vrsave fields in collector buffer.
+	(ppc_store_vrregset): Add and set vscr_offset variable as in
+	ppc_fill_vrregset. Call supply_register_by_name with vscr using
+	vscr_offset.
+
+2018-05-22  Pedro Franco de Carvalho  <pedromfc@linux.vnet.ibm.com>
+
+	* linux-ppc-low.c (SIZEOF_VSXREGS, SIZEOF_VRREGS): Remove.
+	(ppc_arch_setup): Change SIZEOF_VRREGS and SIZEOF_VSXREGS to
+	PPC_LINUX_SIZEOF_VRREGSET and PPC_LINUX_SIZEOF_VSXREGSET.
+
+2018-05-22  Pedro Franco de Carvalho  <pedromfc@linux.vnet.ibm.com>
+
+	* linux-ppc-low.c (ppc_fill_vsxregset): Remove ppc_hwcap check.
+	(ppc_store_vsxregset): Likewise.
+	(ppc_fill_vrregset): Likewise.
+	(ppc_store_vrregset): Likewise.
+	(ppc_fill_evrregset): Likewise.
+	(ppc_store_evrregset): Likewise.
+	(ppc_regsets): Set VSX/VR/EVR regset sizes to 0.
+	(ppc_arch_setup): Iterate through ppc_regsets and set sizes when
+	needed.
+
+2018-05-22  Pedro Franco de Carvalho  <pedromfc@linux.vnet.ibm.com>
+
+	* linux-ppc-low.c (ppc_arch_setup): Remove code for getting the
+	wordsize of the inferior. Call ppc_linux_target_wordsize.
+
+2018-05-22  Pedro Franco de Carvalho  <pedromfc@linux.vnet.ibm.com>
+
+	* configure.srv (srv_tgtobj): Add arch/ppc-linux-common.o.
+	* Makefile.in (SFILES): Add arch/ppc-linux-common.c.
+	* linux-ppc-tdesc.h: Rename to linux-ppc-tdesc-init.h.
+	* linux-ppc-tdesc-init.h (tdesc_powerpc_32l, tdesc_powerpc_64l)
+	(tdesc_powerpc_altivec32l, tdesc_powerpc_altivec64l)
+	(tdesc_powerpc_cell32l, tdesc_powerpc_cell64l)
+	(tdesc_powerpc_vsx32l, tdesc_powerpc_vsx64l)
+	(tdesc_powerpc_isa205_32l, tdesc_powerpc_isa205_64l)
+	(tdesc_powerpc_isa205_altivec32l, tdesc_powerpc_isa205_altivec64l)
+	(tdesc_powerpc_isa205_vsx32l, tdesc_powerpc_isa205_vsx64l)
+	(tdesc_powerpc_e500l): Remove.
+	* linux-ppc-ipa.c: Include arch/ppc-linux-tdesc.h and
+	linux-ppc-tdesc-init.h. Don't include linux-ppc-tdesc.h.
+	* linux-ppc-low.c: Include arch/ppc-linux-common.h,
+	arch/ppc-linux-tdesc.h, and linux-ppc-tdesc-init.h. Don't include
+	linux-ppc-tdesc.h.
+	(ppc_arch_setup): Remove target description matching code. Fill a
+	ppc_linux_features struct and call ppc_linux_match_description
+	with it.
+
+2018-05-22  Maciej W. Rozycki  <macro@mips.com>
+
+	* linux-mips-low.c (mips_cannot_fetch_register): Return 1 if the
+	width of the requested register exceeds the width of the
+	`ptrace' data type.
+	(mips_cannot_store_register): Likewise.
+
+2018-05-21  Maciej W. Rozycki  <macro@mips.com>
+
+	* linux-mips-low.c (mips_fetch_register): New function.  Update
+	preceding comment.
+	(mips_store_gregset): Supply 0 rather than $restart for $zero.
+	(the_low_target): Wire `mips_fetch_register'.
+
+2018-05-10  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-i386-low.c (LYNXOS_178): New macro.
+	[LYNXOS_178] (usr_fcontext_t): Provide a definition that matches
+	the layout on LynxOS-178.
+	(lynx_i386_fill_fpregset, lynx_i386_store_fpregset): Do not
+	handle floating point registers that are not supported by
+	LynxOS-178.
+
+2018-05-10  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-05-10  Joel Brobecker  <brobecker@adacore.com>
+
+	PR server/23158:
+	* tdesc.h (init_target_desc) <expedite_regs>: New parameter.
+	* tdesc.c (init_target_desc) <expedite_regs>: New parameter.
+	Use it to set the expedite_regs field in the given tdesc.
+	* x86-tdesc.h: New file.
+	* linux-aarch64-tdesc.c (aarch64_linux_read_description):
+	Adjust following the addition of the new expedite_regs parameter
+	to init_target_desc.
+	* linux-tic6x-low.c (tic6x_read_description): Likewise.
+	* linux-x86-tdesc.c: #include "x86-tdesc.h".
+	(i386_linux_read_description, amd64_linux_read_description):
+	Adjust following the addition of the new expedite_regs parameter
+	to init_target_desc.
+	* lynx-i386-low.c: #include "x86-tdesc.h".
+	(lynx_i386_arch_setup): Adjust following the addition of the new
+	expedite_regs parameter to init_target_desc.
+	* nto-x86-low.c: #include "x86-tdesc.h".
+	(nto_x86_arch_setup): Adjust following the addition of the new
+	expedite_regs parameter to init_target_desc.
+	* win32-i386-low.c: #include "x86-tdesc.h".
+	(i386_arch_setup): Adjust following the addition of the new
+	expedite_regs parameter to init_target_desc.
+
+2018-05-10  Joel Brobecker  <brobecker@adacore.com>
+
+	PR server/23158:
+	* win32-low.c (win32_create_inferior): Add call to my_wait
+	setting last_status global.
+
+2018-05-10  Joel Brobecker  <brobecker@adacore.com>
+
+	PR server/23158:
+	* win32-low.c (create_process): Only call gdb_tilde_expand if
+	inferior_cwd is not NULL.
+
+2018-05-08  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* i387-fp.c (i387_cache_to_xsave): Only write x87 control
+	registers to the cache if their values have changed.
+	(i387_xsave_to_cache): Provide default values for x87 control
+	registers when these features are available, but disabled.
+	* regcache.c (supply_register_by_name_zeroed): New function.
+	* regcache.h (supply_register_by_name_zeroed): Declare new
+	function.
+
+2018-05-07  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-05-04  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-05-04  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Pedro Alves <palves@redhat.com>
+
+	* linux-aarch64-low.c (aarch64_stopped_data_address):
+	Likewise.
+
+2018-04-27  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-04-23  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+
+2018-04-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (depcomp): Add "..".
+	(all_deps_files): New and use it.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* configure.srv (aarch64*-*-linux*): Don't include xml.
+	(i[34567]86-*-cygwin*): Likewise.
+	(i[34567]86-*-linux*): Likewise.
+	(i[34567]86-*-lynxos*): Likewise.
+	(i[34567]86-*-mingw32ce*): Likewise.
+	(i[34567]86-*-mingw*): Likewise.
+	(i[34567]86-*-nto*): Likewise.
+	(tic6x-*-uclinux): Likewise.
+	(x86_64-*-linux*): Likewise.
+	(x86_64-*-mingw*): Likewise.
+	(x86_64-*-cygwin*): Likewise.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c: Remove xml parameter.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* server.c (get_features_xml): Remove cast.
+	* tdesc.c (void target_desc::accept): Fill in function.
+	(tdesc_get_features_xml): Remove old xml creation.
+	(print_xml_feature::visit_pre): Add xml vistor.
+	* tdesc.h (struct target_desc): Make xmltarget mutable.
+	(tdesc_get_features_xml): Remove declaration.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c (tdesc_architecture_name): Add new function.
+	(tdesc_osabi_name): Likewise.
+	(tdesc_get_features_xml): Use new functions.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c (tdesc_create_flags): Remove.
+	(tdesc_add_flag): Likewise.
+	(tdesc_named_type): Likewise.
+	(tdesc_create_union): Likewise.
+	(tdesc_create_struct): Likewise.
+	(tdesc_create_vector): Likewise.
+	(tdesc_add_bitfield): Likewise.
+	(tdesc_add_field): Likewise.
+	(tdesc_set_struct_size): Likewise.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c (~target_desc): Remove implictly deleted items.
+	(init_target_desc): Iterate all features.
+	(tdesc_get_features_xml): Use vector.
+	(tdesc_create_feature): Create feature.
+	* tdesc.h (tdesc_feature) Remove
+	(target_desc): Add features.
+
+2018-04-18  Alan Hayward  <alan.hayward@arm.com>
+
+	* Makefile.in: Add common/tdesc.c
+	* tdesc.c (init_target_desc): init all reg_defs from register
+	vector.
+	(tdesc_create_reg): Create tdesc_reg.
+	* tdesc.h (tdesc_feature): Add register vector.
+
+2018-03-30  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* tdesc.h (struct target_desc) <features>: Change type to
+	std::vector<std::string>.
+	* tdesc.c (target_desc::~target_desc): Adjust to std::vector
+	changes.
+	(tdesc_get_features_xml): Likewise.
+	(tdesc_create_feature): Likewise.
+
+2018-03-26  Alan Hayward  <alan.hayward@arm.com>
+
+	* regcache.c (find_register_by_number): Return a ref.
+	(find_regno): Use references.
+	(register_size): Likewise.
+	(register_data): Likewise.
+	* tdesc.c (target_desc::~target_desc): Remove free calls.
+	(target_desc::operator==): Use std::vector compare.
+	(init_target_desc): Use reference.
+	(tdesc_create_reg): Use reg constructors.
+	* tdesc.h (struct target_desc): Replace pointer with object.
+
+2018-03-23  Alan Hayward  <alan.hayward@arm.com>
+
+	* regcache.c (find_register_by_number): Make static.
+	(find_regno): Use find_register_by_number
+	* regcache.h (struct reg): Remove declaration.
+
+2018-03-23  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c (target_desc::~target_desc): Move to here.
+	(target_desc::operator==): Likewise.
+	* tdesc.h (target_desc::~target_desc): Move from here.
+	(target_desc::operator==): Likewise.
+
+2018-03-22  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-s390-low.c (s390_get_wordsize): Correct brace style.
+
+2018-03-21  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-s390-ipa.c (get_ipa_tdesc): Add handling for
+	S390_TDESC_GS.
+	* linux-s390-low.c (s390_get_ipa_tdesc_idx): Likewise.
+	(initialize_low_tracepoint): Call init_registers_s390x_gs_linux64
+	and init_registers_s390_gs_linux64.
+
+2018-03-21  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-s390-low.c (s390_fill_gs): Remove function.
+	(s390_fill_gsbc): Remove function.
+	(s390_regsets): Set fill functions for the guarded storage regsets
+	to NULL.
+
+2018-03-21  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-s390-low.c (s390_get_hwcap): Replace tdesc parameter by
+	the word size.  Add comment.
+	(s390_get_wordsize): New function.
+	(s390_arch_setup): No longer select a temporary tdesc to fetch the
+	pswm with it.  Instead, use s390_get_wordsize to determine the
+	word size first and derive the correct tdesc from that directly.
+
+2018-03-16  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* Makefile.in: Include silent-rules.mk.
+	(srcdir, abs_top_srcdir, abs_srcdir, VPATH): Move up.
+	(COMPILE): Add ECHO_CXX.
+	(gdbserver$(EXEEXT)): Add SILENCE and ECHO_CXXLD.
+	(gdbreplay$(EXEEXT)): Add SILENCE and ECHO_CXXLD.
+	($(IPA_LIB)): Add SILENCE and ECHO_CXXLD.
+	(version-generated.c): Add ECHO_GEN.
+	(stamp-xml): Add SILENCE and ECHO_GEN_XML_BUILTIN_GENERATED.
+	(IPAGENT_COMPILE): Add ECHO_CXX.
+	(%-generated.c): Add ECHO_REGDAT.
+
+2018-03-14  Tom Tromey  <tom@tromey.com>
+
+	PR cli/14977:
+	* ax.c (ax_printf): Special case for NULL.
+
+2018-03-08  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (linux_qxfer_libraries_svr4): Use
+	xml_escape_text_append.
+
+2018-03-08  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (linux_qxfer_libraries_svr4): Use std::string.
+
+2018-03-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* server.c (handle_general_set): Remove unnecessary xstrdup.
+
+2018-03-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* server.c (parse_debug_format_options): Adjust to
+	delim_string_to_char_ptr_vec changes.
+	* thread-db.c (thread_db_load_search): Adjust to
+	dirnames_to_char_ptr_vec changes.
+
+2018-03-01  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* target.h (target_enable_btrace, target_disable_btrace)
+	(target_read_btrace, target_read_btrace_conf): Turn macro into
+	inline function.  Throw error if target method is not defined.
+	* server.c (handle_qxfer_btrace handle_qxfer_btrace_conf): Remove
+	check for btrace target method.  Be prepared to handle exceptions
+	from btrace target methods.
+
+2018-02-28  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c (captured_main): Change order of error message printed
+	when the current working directory cannot be found.
+
+2018-02-28  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c: Include "filenames.h" and "pathstuff.h".
+	(program_name): Delete variable.
+	(program_path): New anonymous class.
+	(get_exec_wrapper): Use "program_path" instead of
+	"program_name".
+	(handle_v_run): Likewise.
+	(captured_main): Likewise.
+	(process_serial_event): Likewise.
+
+2018-02-28  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile.in (SFILES): Add "$(srcdir)/common/pathstuff.c".
+	(OBJS): Add "pathstuff.o".
+	* server.c (current_directory): New global variable.
+	(captured_main): Initialize "current_directory".
+
+2018-02-26  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c: Use common/tdesc.h.
+	* tdesc.h: Likewise.
+
+2018-02-20  Alan Hayward  <alan.hayward@arm.com>
+	    Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in: Switch order of make rules.
+
+2018-02-19  Alan Hayward  <alan.hayward@arm.com>
+
+	* Makefile.in: Add common directory in build.
+	* configure.ac: Add common reference.
+	* configure: Regenerate.
+
+2018-02-09  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* linux-low.c (linux_target_ops): Remove linux_supports_btrace.
+	* nto-low.c (nto_target_ops): Remove NULL for supports_btrace.
+	* spu-low.c (spu_target_ops): Likewise.
+	* win32-low.c (win32_target_ops): Likewise.
+	* server.c (supported_btrace_packets): Report packets unconditionally.
+	* target.h (target_ops) <supports_btrace>: Remove.
+	(target_supports_btrace): Remove.
+
+2018-02-09  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* server.c (handle_btrace_enable_bts, handle_btrace_enable_pt)
+	(handle_btrace_disable): Change return type to void.  Use exceptions
+	to report errors.
+	(handle_btrace_general_set): Catch exception and copy message to
+	return message.
+
+2018-02-08  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c (install_software_single_step_breakpoints): Use
+	make_scoped_restore.
+	* inferiors.c (make_cleanup_restore_current_thread): Remove.
+	(do_restore_current_thread_cleanup): Remove.
+	* gdbthread.h (make_cleanup_restore_current_thread): Don't
+	declare.
+
+2018-02-08  Tom Tromey  <tom@tromey.com>
+
+	* mem-break.c (set_raw_breakpoint_at): Use
+	gdb::unique_xmalloc_ptr.
+
+2018-01-30  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/13211
+	* target.c (target_terminal::terminal_state): Rename to ...
+	(target_terminal::m_terminal_state): ... this.
+
+2018-01-19  James Clarke  <jrtc27@jrtc27.com>
+
+	* linux-low.c (handle_extended_wait): Surround call to
+	thread_db_notice_clone with #ifdef USE_THREAD_DB.
+
+2018-01-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (attach_proc_task_lwp_callback): Adjust to
+	linux_ptrace_attach_fail_reason_string now returning an
+	std::string.
+	(linux_attach): Likewise.
+	* thread-db.c (attach_thread): Likewise.
+
+2018-01-17  Eldar Abusalimov  <eldar.abusalimov@jetbrains.com>
+
+	PR gdb/21559
+	* configure.ac: Include <sys/types.h> prior to <sys/user.h> when
+	checking for fs_base/gs_base fields in struct user_regs_struct.
+	* configure: Regenerate.
+
+2018-01-16  Yao Qi  <yao.qi@linaro.org>
+
+	PR gdb/18749
+	* linux-low.c (fetch_register): Call supply_register instead of
+	error.
+
+2018-01-08  Yao Qi  <yao.qi@linaro.org>
+	    Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (OBS): Remove selftest.o.
+	* configure.ac: Set srv_selftest_objs if $development is true.
+	(GDBSERVER_DEPFILES): Append $srv_selftest_objs.
+	* configure: Re-generated.
+	* server.c (captured_main): Wrap variable selftest_filter with
+	GDB_SELF_TEST.
+
+2018-01-07  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* server.c (parse_debug_format_options): Return std::string.
+	(handle_monitor_command, captured_main): Adjust.
+
+2018-01-05  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/18653
+	* server.c (captured_main): Pass quiet=false to
+	save_original_signals_state.
+
+2018-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbreplay.c (gdbreplay_version): Update copyright year in
+	version message.
+	* server.c (gdbserver_version): Likewise.
+
+2017-12-08  Tom Tromey  <tom@tromey.com>
+
+	* ax.c (ax_printf): Update.
+
+2017-12-07  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-aarch64-ipa.c (initialize_low_tracepoint): Call
+	aarch64_linux_read_description.
+	* linux-amd64-ipa.c (idx2mask): New array.
+	(get_ipa_tdesc): Move idx2mask out.
+	(initialize_low_tracepoint): Initialize target descriptions.
+	* linux-i386-ipa.c (idx2mask): New array.
+	(get_ipa_tdesc): Move idx2mask out.
+	(initialize_low_tracepoint): Initialize target descriptions.
+
+2017-12-05  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* tdesc.c (struct tdesc_type): Change return type.
+	(tdesc_add_flag): Change parameter type.
+	(tdesc_add_bitfield): Likewise.
+	(tdesc_add_field): Likewise.
+	(tdesc_set_struct_size): Likewise.
+
+2017-12-05  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* regcache.c (registers_to_string): Remove unused variable.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.c (for_each_inferior_with_data): Remove.
+	* inferiors.h (for_each_inferior_with_data): Remove.
+	* server.c (handle_qxfer_threads_worker): Change parameter type.
+	(handle_qxfer_threads_proper): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.c (for_each_inferior): Remove.
+	(clear_inferiors): Use for_each_thread.
+	* inferiors.h (for_each_inferior): Remove.
+	* linux-low.c (linux_wait_for_event_filtered): Use
+	for_each_thread.
+	(linux_stabilize_threads): Likewise.
+	* regcache.c (regcache_release): Likewise.
+	* server.c (gdb_wants_all_threads_stopped): Likewise.
+	(clear_pending_status_callback): Remove.
+	(handle_status): Use for_each_thread.
+	(captured_main): Likewise.
+	* win32-low.c (child_init_thread_list): Likewise.
+	(win32_clear_inferiors): Likewise.
+	(fake_breakpoint_event): Likewise.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.h (find_inferior): Remove.
+	* inferiors.c (find_inferior): Remove.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (resume_status_pending_p): Update comment.
+	(need_step_over_p): Update comment.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (proceed_one_lwp): Return void, change parameter
+	type.
+	(unsuspend_and_proceed_one_lwp): Likewise.
+	(proceed_all_lwps): Use for_each_thread.
+	(unstop_all_lwps): Likewise.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (linux_resume_one_thread): Return void, take
+	parameter directly.
+	(linux_resume): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (send_sigstop_callback): Return void, change
+	parameter type.  Rename to...
+	(send_sigstop): ... this.
+	(suspend_and_send_sigstop_callback): Return void, change parameter
+	type.  Rename to...
+	(suspend_and_send_sigstop): ... this.
+	(stop_all_lwps): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (lwp_running): Return bool, remove unused
+	argument.
+	(linux_stabilize_threads): Use find_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (select_singlestep_lwp_callback): Remove.
+	(count_events_callback): Remove.
+	(select_event_lwp_callback): Remove.
+	(select_event_lwp): Use find_thread/for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (not_stopped_callback): Return bool, take filter
+	argument directly.
+	(linux_wait_for_event_filtered): Use find_thread.
+	(linux_wait_1): Likewise.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (same_lwp): Remove.
+	(find_lwp_pid): Use find_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (delete_lwp_callback): Remove.
+	(linux_mourn): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (linux_detach_lwp_callback): Return void, remove
+	args parameter, don't check for pid.
+	(linux_detach): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-low.c (struct counter): Remove.
+	(second_thread_of_pid_p): Remove.
+	(last_thread_of_process_p): Use find_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.c (find_inferior_in_random): Remove.
+	* inferiors.h (find_inferior_in_random): Remove.
+	* linux-low.c (status_pending_p_callback): Return bool, accept
+	parameter ptid directly.
+	(linux_wait_for_event_filtered): Use find_thread_in_random.
+	(linux_wait_1): Likewise.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.c (find_inferior_id): Remove.
+	(find_thread_ptid): Move implemention from find_inferior_id to
+	here.
+	* inferiors.h (find_inferior_id): Remove.
+	* server.c (handle_status): Use find_thread_ptid.
+	(process_serial_event): Likewise.
+	* thread-db.c (find_one_thread): Likewise.
+	(thread_db_thread_handle): Likewise.
+	* win32-low.c (thread_rec): Likewise.
+	(child_delete_thread): Likewise.
+	(win32_thread_alive): Likewise.
+	(get_child_debug_event): Likewise.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-mips-low.c (update_watch_registers_callback): Return
+	void, remove pid_p parameter, don't check for pid.
+	(mips_insert_point, mips_remove_point): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* lynx.low (lynx_delete_thread_callback): Remove.
+	(lynx_mourn): Use for_each_thread.
+
+2017-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* regcache.c (regcache_invalidate_one): Remove.
+	(regcache_invalidate_pid): use for_each_thread.
+
+2017-11-26  Tom Tromey  <tom@tromey.com>
+
+	* linux-low.c (linux_create_inferior): Update.
+
+2017-11-24  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* spu-low.c (spu_create_inferior): Fix typo in argument name.
+
+2017-11-24  Alan Hayward  <alan.hayward@arm.com>
+
+	* configure.srv: Add linux-aarch64-tdesc-selftest.o.
+	* linux-aarch64-low.c (initialize_low_arch): Call init func.
+	* linux-aarch64-tdesc-selftest.c: New file.
+	* linux-aarch64-tdesc.h (initialize_low_tdesc): New declaration.
+
+2017-11-24  Alan Hayward  <alan.hayward@arm.com>
+
+	* configure.srv: Add new file.
+	* linux-aarch64-low.c (initialize_low_arch): Call init func.
+	* linux-aarch64-tdesc-selftest.c: New file.
+	* linux-aarch64-tdesc.h (initialize_low_tdesc): New declaration.
+
+2017-11-24  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-ipa.c (initialize_low_tracepoint): Remove init.
+	* linux-aarch64-low.c (initialize_low_arch): Remove init.
+	* linux-aarch64-tdesc.c (aarch64_linux_read_description): Add init.
+
+2017-11-24  Alan Hayward  <alan.hayward@arm.com>
+
+	* configure.srv: Add new files.
+	* linux-aarch64-ipa.c (get_ipa_tdesc): Call
+	aarch64_linux_read_description.
+	* linux-aarch64-low.c (aarch64_linux_read_description):
+	Merge with aarch64_arch_setup.
+	(aarch64_arch_setup): Call aarch64_linux_read_description.
+	* linux-aarch64-tdesc.c: New file.
+	* linux-aarch64-tdesc.h: New file.
+
+2017-11-24  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Set $srv_regobj for tic6x-linux.
+	* linux-tic6x-low.c: Include "arch/tic6x.h" and "tdesc.h".
+	(tic6x_read_description): Move some code to tic6x_arch_setup.
+	(tic6x_tdesc_test): New function.
+	(initialize_low_arch): Call selftests::register_test.
+
+2017-11-22  Yao Qi  <yao.qi@linaro.org>
+
+	* remote-utils.c (prepare_resume_reply): Use memcpy.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (kill_one_lwp_callback): Return void, take
+	argument directly, don't filter on pid.
+	(linux_kill): Use for_each_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (need_step_over_p): Return bool, remove dummy
+	argument.
+	(linux_resume, proceed_all_lwps): Use find_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (resume_status_pending_p): Return bool, remove
+	flag_p argument.
+	(linux_resume): Use find_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (struct thread_resume_array): Remove.
+	(linux_set_resume_request): Return void, take arguments
+	directly.
+	(linux_resume): Use for_each_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (stuck_in_jump_pad_callback): Change prototype,
+	return bool, remove data argument.
+	(linux_stabilize_threads): Use find_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (unsuspend_one_lwp): Remove.
+	(unsuspend_all_lwps): Use for_each_thread, inline code from
+	unsuspend_one_lwp.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdbthread.h (find_thread): Add overload with ptid_t filter.
+	* linux-low.c (struct iterate_over_lwps_args): Remove.
+	(iterate_over_lwps_filter): Remove.
+	(iterate_over_lwps): Use find_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (reset_lwp_ptrace_options_callback): Remove.
+	(linux_handle_new_gdb_connection): Use for_each_thread, inline
+	code from reset_lwp_ptrace_options_callback.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-arm-low.c (struct update_registers_data): Remove.
+	(update_registers_callback): Return void, take arguments
+	directly, don't check thread's pid.
+	(arm_insert_point, arm_remove_point): Use for_each_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* win32-low.c (continue_one_thread): Return void, take argument
+	directly.
+	(child_continue): Use for_each_thread.
+
+2017-11-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* win32-i386-low.c (update_debug_registers_callback): Rename
+	to ...
+	(update_debug_registers): ... this, return void, remove pid_p arg.
+	(x86_dr_low_set_addr, x86_dr_low_set_control): Use for_each_thread.
+
+2017-11-17  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.h (struct process_info): Add constructor, initialize
+	fields..
+	<syscalls_to_catch>: Change type to std::vector<int>.
+	* inferiors.c (add_process): Allocate process_info with new.
+	(remove_process): Free process_info with delete.
+	* linux-low.c (handle_extended_wait): Adjust.
+	(gdb_catching_syscalls_p, gdb_catch_this_syscall_p): Adjust.
+	* server.c (handle_general_set): Adjust.
+
+2017-11-16  Pedro Alves  <palves@redhat.com>
+
+	* remote-utils.c (remote_close): Block SIGIO signals instead of
+	uninstalling the SIGIO handler.
+
+2017-11-16  Alan Hayward  <alan.hayward@arm.com>
+
+	* tdesc.c (tdesc_get_features_xml): Allow null osabi.
+
+2017-11-16  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-tic6x-low.c (tic6x_fill_gregset): Cast buf.
+	(tic6x_store_gregset): Likewise.
+	(tic6x_usrregs_info): Move it up.
+
+2017-11-15  Alan Hayward  <alan.hayward@arm.com>
+
+	* Makefile.in: Update arch rules.
+	* configure.srv: Explicitly mark arch/ files.
+
+2017-11-13  Andreas Schwab  <schwab@suse.de>
+
+	* linux-m68k-low.c (m68k_supports_hardware_single_step): New
+	function.
+	(struct linux_target_ops) <supports_hardware_single_step>: Initialize.
+
+2017-11-06  Pedro Alves  <palves@redhat.com>
+
+	* config.in, configure: Regenerate.
+
+2017-10-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* target.c (struct thread_search): Remove.
+	(thread_search_callback): Remove.
+	(prepare_to_access_memory): Use for_each_thread instead of
+	find_inferior.  Inline code from thread_search_callback.
+
+2017-10-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (struct visit_actioned_threads_data): Remove.
+	(visit_actioned_threads): Change prototype to take arguments
+	directly.
+	(resume): Use find_thread instead of find_inferior.
+
+2017-10-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (queue_stop_reply_callback): Change prototype, return
+	void.
+	(find_status_pending_thread_callback): Remove.
+	(handle_status): Replace find_inferior with find_thread and
+	for_each_thread.
+
+2017-10-25  Alan Hayward  <alan.hayward@arm.com>
+
+	* linux-aarch64-low.c (aarch64_fill_gregset): Replace defines
+	with REGNO.
+	(aarch64_store_gregset): Likewise.
+	(aarch64_fill_fpregset): Likewise.
+	(aarch64_store_fpregset): Likewise.
+
+2017-10-21  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdbthread.h (find_thread, for_each_thread): New functions.
+	* inferiors.c (thread_of_pid): Remove.
+	(find_any_thread_of_pid): Use find_thread.
+	* linux-low.c (num_lwps): Use for_each_thread.
+
+2017-10-17  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in: Remove one rule.
+	* configure.srv: Rename aarch64-insn.o with arch/aarch64-insn.o.
+
+2017-10-17  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Rename arm-linux.o with arch/arm-linux.o.
+	Rename arm-get-next-pcs.o with arch/arm-get-next-pcs.o.
+
+2017-10-17  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Rename arm.o with arch/arm.o.
+
+2017-10-17  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in (CONFIG_SRC_SUBDIR): New variable.
+	(clean): Remove .o files in CONFIG_SRC_SUBDIR.
+	(distclean): Remove DEPDIR in CONFIG_SRC_SUBDIR.
+	(arch-i386.o, arch-amd64.o): Remove rules.
+	(arch/%.o): New rule.
+	Update POSTCOMPILE and COMPILE.pre.
+	* configure.ac: Invoke AC_CONFIG_COMMANDS.
+	* configure: Re-generated.
+	* configure.srv: Replace arch-i386.o with arch/i386.o.
+	Replace arch-amd64.o with arch/amd64.o.
+
+2017-10-16  Yao Qi  <yao.qi@linaro.org>
+
+	* configure: Regenerated.
+
+2017-10-14  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* inferiors.h: (struct inferior_list): Remove.
+	(struct inferior_list_entry); Remove.
+	(add_inferior_to_list, clear_inferior_list, one_inferior_p,
+	A_I_NEXT, ALL_INFERIORS_TYPE, ALL_INFERIORS, remove_inferior,
+	get_first_inferior): Remove.
+	(for_each_inferior, for_each_inferior_with_data, find_inferior,
+	find_inferior_id, find_inferior_in_random): Change signature.
+	* inferiors.c (all_threads): Change type to
+	std::list<thread_info *>.
+	(get_thread): Remove macro.
+	(find_inferior, find_inferior_id): Change signature, implement
+	using find_thread.
+	(find_inferior_in_random): Change signature, implement using
+	find_thread_in_random.
+	(for_each_inferior, for_each_inferior_with_data): Change
+	signature, implement using for_each_thread.
+	(add_inferior_to_list, remove_inferior): Remove.
+	(add_thread, get_first_thread, thread_of_pid,
+	find_any_thread_of_pid, free_one_thread, remove_thread): Update.
+	(get_first_inferior, one_inferior_p, clear_inferior_list):
+	Remove.
+	(clear_inferiors, get_thread_process): Update.
+	* gdbthread.h: Include <list>.
+	(struct thread_info) <entry>: Remove field.
+	<id>: New field.
+	(all_threads): Change type to std::list<thread_info *>.
+	(get_first_inferior): Add doc.
+	(find_thread, for_each_thread, find_thread_in_random): New
+	functions.
+	(current_ptid, pid_of, ptid_of, lwpid_of): Update.
+	* linux-arm-low.c (update_registers_callback): Update.
+	* linux-low.c (second_thread_of_pid_p): Update.
+	(kill_one_lwp_callback, linux_detach_lwp_callback,
+	delete_lwp_callback, status_pending_p_callback, same_lwp,
+	find_lwp_pid, num_lwps, iterate_over_lwps_filter,
+	iterate_over_lwps, not_stopped_callback,
+	resume_stopped_resumed_lwps, count_events_callback,
+	select_singlestep_lwp_callback, select_event_lwp_callback,
+	unsuspend_one_lwp, linux_wait_1, send_sigstop_callback,
+	suspend_and_send_sigstop_callback, wait_for_sigstop,
+	stuck_in_jump_pad_callback, move_out_of_jump_pad_callback,
+	lwp_running, linux_set_resume_request, resume_status_pending_p,
+	need_step_over_p, start_step_over, linux_resume_one_thread,
+	proceed_one_lwp, unsuspend_and_proceed_one_lwp,
+	reset_lwp_ptrace_options_callback): Update.
+	* linux-mips-low.c (update_watch_registers_callback): Update.
+	* regcache.c (regcache_invalidate_one, regcache_invalidate):
+	Update.
+	(free_register_cache_thread_one): Remove.
+	(regcache_release): Update.
+	* server.c (handle_btrace_enable_bts, handle_btrace_enable_pt,
+	handle_qxfer_threads_worker): Update.
+	(handle_query): Update, use list iterator.
+	(visit_actioned_threads, handle_pending_status,
+	queue_stop_reply_callback, gdb_wants_all_threads_stopped,
+	clear_pending_status_callback, set_pending_status_callback,
+	find_status_pending_thread_callback, handle_status,
+	process_serial_event): Update.
+	* target.c (thread_search_callback): Update.
+	* thread-db.c (thread_db_get_tls_address): Update.
+	* tracepoint.c (tracepoint_finished_step, tracepoint_was_hit):
+	Update.
+	* win32-i386-low.c (update_debug_registers_callback): Update.
+	* win32-low.c (delete_thread_info, child_delete_thread,
+	continue_one_thread, suspend_one_thread,
+	get_child_debug_event): Adjust.
+
+2017-10-14  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbthread.h (ptid_of, pid_of, lwpid_of): New functions.
+	* inferiors.h: Include <list>.
+	(struct process_info) <entry>: Remove field.
+	<pid>: New field.
+	(pid_of): Change macro to function.
+	(ptid_of, lwpid_of): Remove macro.
+	(all_processes): Change type to std::list<process_info *>.
+	(ALL_PROCESSES): Remove macro.
+	(for_each_process, find_process): New function.
+	* inferiors.c (all_processes): Change type to
+	std::list<process_info *>.
+	(find_thread_process): Adjust.
+	(add_process): Likewise.
+	(remove_process): Likewise.
+	(find_process_pid): Likewise.
+	(get_first_process): Likewise.
+	(started_inferior_callback): Remove.
+	(have_started_inferiors_p): Adjust.
+	(attached_inferior_callback): Remove.
+	(have_attached_inferiors_p): Adjust.
+	* linux-low.c (check_zombie_leaders): Likewise.
+	* linux-x86-low.c (x86_arch_setup_process_callback): Remove.
+	(x86_linux_update_xmltarget): Adjust.
+	* server.c (handle_query): Likewise.
+	(gdb_reattached_process): Remove.
+	(handle_status): Adjust.
+	(kill_inferior_callback): Likewise.
+	(detach_or_kill_inferior): Remove.
+	(print_started_pid): Likewise.
+	(print_attached_pid): Likewise.
+	(detach_or_kill_for_exit): Update.
+	(process_serial_event): Likewise.
+	* linux-arm-low.c (arm_new_fork): Likewise.
+
+2017-10-14  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* dll.h: Include <list>.
+	(struct dll_info): Add constructor.
+	<entry>: Remove field.
+	(all_dlls): Change type to std::list<dll_info>.
+	* dll.c: Include <algorithm>.
+	(get_dll): Remove macro.
+	(all_dlls): Change type to std::list<dll_info *>.
+	(free_one_dll): Remove.
+	(match_dll): Likewise.
+	(loaded_dll): Adjust.
+	(unloaded_dll): Adjust to all_dlls type change, use
+	std::find_if.  Inline code from match_dll.
+	(clear_dlls): Adjust to all_dlls type change.
+	* server.c (emit_dll_description): Remove.
+	(handle_qxfer_libraries): Adjust to all_dlls type change,
+	integrate emit_dll_description's functionality.
+
+2017-10-12  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.h (struct linux_target_ops) <delete_process>: New
+	field.
+	* linux-low.c (linux_mourn): Call the_low_target.delete_process.
+	* linux-aarch64-low.c (aarch64_linux_delete_process): New.
+	(struct linux_target_ops): Add delete_process callback.
+	* linux-arm-low.c (arm_delete_process): New.
+	(struct linux_target_ops): Add delete_process callback.
+	* linux-bfin-low.c (struct linux_target_ops): Likewise.
+	* linux-crisv32-low.c (struct linux_target_ops): Likewise.
+	* linux-m32r-low.c (struct linux_target_ops): Likewise.
+	* linux-mips-low.c (mips_linux_delete_process): New.
+	(struct linux_target_ops): Add delete_process callback.
+	* linux-ppc-low.c (struct linux_target_ops): Likewise.
+	* linux-s390-low.c (struct linux_target_ops): Likewise.
+	* linux-sh-low.c (struct linux_target_ops): Likewise.
+	* linux-tic6x-low.c (struct linux_target_ops): Likewise.
+	* linux-tile-low.c (struct linux_target_ops): Likewise.
+	* linux-x86-low.c (x86_linux_delete_process): New.
+	(struct linux_target_ops): Add delete_process callback.
+	* linux-xtensa-low.c (struct linux_target_ops): Likewise.
+
+2017-10-12  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-aarch64-low.c (the_low_target): Add thread delete
+	callback.
+	* linux-arm-low.c (arm_delete_thread): New function.
+	(the_low_target): Add thread delete callback.
+	* linux-bfin-low.c (the_low_target): Likewise.
+	* linux-crisv32-low.c (the_low_target): Likewise.
+	* linux-low.c (delete_lwp): Invoke delete_thread callback if
+	set.
+	* linux-low.h (struct linux_target_ops) <delete_thread>: New
+	field.
+	* linux-m32r-low.c (the_low_target): Add thread delete callback.
+	* linux-mips-low.c (mips_linux_delete_thread): New function.
+	(the_low_target): Add thread delete callback.
+	* linux-ppc-low.c (the_low_target): Likewise.
+	* linux-s390-low.c (the_low_target): Likewise.
+	* linux-sh-low.c (the_low_target): Likewise.
+	* linux-tic6x-low.c (the_low_target): Likewise.
+	* linux-tile-low.c (the_low_target): Likewise.
+	* linux-x86-low.c (the_low_target): Likewise.
+	* linux-xtensa-low.c (the_low_target): Likewise.
+
+2017-10-06  Yuanhui Zhang  <asmwarrior@gmail.com>
+
+	* win32-low.c: Include "common-inferior.h".
+
+2017-10-04  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* inferiors.c (set_inferior_cwd): New function.
+	* server.c (handle_general_set): Handle QSetWorkingDir packet.
+	(handle_query): Inform that QSetWorkingDir is supported.
+	* win32-low.c (create_process): Pass the inferior's cwd to
+	CreateProcess.
+
+2017-10-04  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* inferiors.c (current_inferior_cwd): New global variable.
+	(get_inferior_cwd): New function.
+	* inferiors.h (struct process_info) <cwd>: New field.
+
+2017-10-04  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile.in (SFILES): Add $(srcdir)/common/gdb_tilde_expand.c.
+	(OBS): Add gdb_tilde_expand.o.
+
+2017-10-02  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lynx-i386-low.c (lynx_i386_arch_setup): Call init_target_desc.
+	* nto-x86-low.c (nto_x86_arch_setup): Likewise.
+
+2017-09-29  Pedro Alves  <palves@redhat.com>
+
+	* ax.c (gdb_parse_agent_expr): Constify.
+	* ax.h (gdb_parse_agent_expr): Constify.
+	* mem-break.c (add_breakpoint_condition, add_breakpoint_commands):
+	Constify.
+	* mem-break.h (add_breakpoint_condition, add_breakpoint_commands): Constify.
+	* remote-utils.c (hex_or_minus_one, read_ptid): Constify.
+	* remote-utils.h (read_ptid): Constify.
+	* server.c (handle_qxfer_exec_file, handle_query, handle_v_cont)
+	(process_point_options, process_serial_event): Constify.
+	* tracepoint.c (add_tracepoint_action, cmd_qtdp, cmd_qtdpsrc)
+	(cmd_qtdv, cmd_qtenable_disable, cmd_qtro, cmd_qtframe, cmd_qtp)
+	(cmd_qtbuffer): Constify.
+
+2017-09-29  Pedro Alves  <palves@redhat.com>
+
+	* proc-service.c (ps_pdread): Return PS_ERR if reading memory
+	fails.
+
+2017-09-29  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (handle_extended_wait): Pass parent thread instead
+	of process to thread_db_notice_clone.
+	* linux-low.h (thread_db_notice_clone): Replace parent process
+	parameter with parent thread parameter.
+	* thread-db.c (find_one_thread): Add comment.
+	(thread_db_notice_clone): Replace parent process parameter with
+	parent thread parameter.  Temporarily switch to the parent thread.
+
+2017-09-26  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdbthread.h: Include "common-gdbthread.h".
+	* inferiors.c (switch_to_thread): Use "gdb_assert" instead of
+	"if" when validating the ptid.
+	* remote-utils.c: Include "gdbthread.h".
+	(prepare_resume_reply): Use "switch_to_thread".
+	* target.c (done_accessing_memory): Likewise.
+
+2017-09-25  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* configure.srv (s390*-*-linux*): Add s390-gs-linux64.o and
+	s390x-gs-linux64.o to srv_regobj.  Add s390-gs-linux64.xml,
+	s390x-gs-linux64.xml, s390-gs.xml, and s390-gsbc.xml to
+	srv_xmlfiles.  Add s390-gs-linux64-ipa.o and
+	s390x-gs-linux64-ipa.o to ipa_obj.
+	* linux-s390-low.c (HWCAP_S390_GS): New define.
+	(s390_fill_gs, s390_store_gs, s390_fill_gsbc, s390_store_gsbc):
+	New functions.
+	(s390_regsets): Add regsets for NT_S390_GS_CB and NT_S390_GS_BC.
+	(s390_arch_setup): Check for guarded-storage support and choose
+	appropriate tdesc.
+	(initialize_low_arch): Invoke init_registers_s390_gs_linux64 and
+	init_registers_s390x_gs_linux64.
+	* linux-s390-tdesc.h (enum s390_linux_tdesc) <S390_TDESC_GS>: New
+	enum value.
+	(init_registers_s390x_gs_linux64, tdesc_s390x_gs_linux64)
+	(init_registers_s390_gs_linux64, tdesc_s390_gs_linux64): Declare.
+
+2017-09-22  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* win32-i386-low.c (i386_arch_setup): Call init_target_desc.
+
+2017-09-21  Kevin Buettner  <kevinb@redhat.com>
+
+	* linux-low.h (struct lwp_info): Add new field, thread_handle.
+	(thread_db_thread_handle): Declare.
+	* linux-low.c (linux_target_ops): Initialize thread_handle.
+	* server.c (handle_qxfer_threads_worker): Add support for
+	"handle" attribute.
+	* target.h (struct target_ops): Add new function pointer,
+	thread_handle.
+	(target_thread_handle): Define.
+	* thread-db.c (find_one_thread, attach_thread): Set thread_handle
+	field in lwp.
+	(thread_db_thread_handle): New function.
+
+2017-09-21  Kevin Buettner  <kevinb@redhat.com>
+
+	* linux-low.c (handle_extended_wait): Call thread_db_notice_clone().
+	* linux-low.h (thread_db_notice_clone): Declare.
+	* thread-db.c (thread_db_notice_clone): New function.
+
+2017-09-21  Pedro Alves  <palves@redhat.com>
+
+	* server.c (gdb_read_memory, handle_status, process_serial_event)
+	(handle_serial_event, handle_target_event): Adjust to
+	set_desired_thread prototype change.
+	* target.c (set_desired_thread): Remove 'use_general' parameter
+	and adjust.
+	* target.h (set_desired_thread): Remove 'use_general' parameter.
+
+2017-09-20  Tom Tromey  <tom@tromey.com>
+
+	* target.c (target_terminal::terminal_state): Define.
+	(target_terminal::init): Rename from target_terminal_init.
+	(target_terminal::inferior): Rename from
+	target_terminal_inferior.
+	(target_terminal::ours): Rename from target_terminal_ours.
+	(target_terminal::ours_for_output, target_terminal::info): New.
+
+2017-09-16  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (accumulate_file_name_length): Remove.
+	(emit_dll_description): Adjust to std::string change.
+	(handle_qxfer_libraries): Use std::string to hold document.
+
+2017-09-16  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (linux_qxfer_libraries_svr4): Adjust to change of
+	return type of xml_escape_text.
+	* server.c (emit_dll_description): Likewise.
+
+2017-09-16  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (captured_main): Accept argument for --selftest.
+	Update run_tests call.
+	* linux-x86-tdesc-selftest.c (initialize_low_tdesc): Add names
+	when registering selftests.
+
+2017-09-16  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* regcache.c (get_thread_regcache): Update code to use "std::vector"
+	instead of "VEC" for "target_desc.reg_defs".
+	(regcache_cpy): Likewise.
+	(registers_to_string): Likewise.
+	(registers_from_string): Likewise.
+	(find_regno): Likewise.
+	(supply_regblock): Likewise.
+	(regcache_raw_read_unsigned): Likewise.
+	* tdesc.c (init_target_desc): Likewise.
+	(tdesc_create_reg): Likewise.
+	* tdesc.h: Remove declaration of "tdesc_reg_p".  Include <vector>.
+	(struct target_desc) <reg_defs>: Convert to "std::vector".
+	(target_desc): Do not initialize "reg_defs".
+	(~target_desc): Update code to use "std::vector" instead of "VEC"
+	for "target_desc.reg_defs".
+	(operator==): Likewise.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* inferiors.h (thread_to_gdb_id): Remove.
+	* inferiors.c (thread_to_gdb_id): Remove.
+	* server.c (handle_qxfer_threads_worker, handle_query): Adjust.
+	* lynx-low.c (lynx_resume, lynx_wait_1, lynx_fetch_registers,
+	lynx_store_registers, lynx_read_memory, lynx_write_memory):
+	Likewise.
+	* nto-low.c (nto_fetch_registers, nto_store_registers,
+	nto_stopped_by_watchpoint, nto_stopped_data_address): Likewise.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* inferiors.h (gdb_id_to_thread_id): Remove.
+	* inferiors.c (gdb_id_to_thread_id): Remove.
+	* server.c (process_serial_event): Adjust to gdb_id_to_thread_id
+	removal.  Move pid declaration closer to where it's used.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (handle_detach): New function.
+	(process_serial_event): Move code out, call handle_detach.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (require_running): Rename to ...
+	(require_running_or_return): ... this ...
+	(require_running_or_break): ... and this.
+	(handle_query, process_serial_event): Adjust.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (linux_set_resume_request): Remove unused
+	variables.
+
+2017-09-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* server.c (first_thread_of): Remove.
+	(process_serial_event): Replace usage of first_thread_of with
+	find_any_thread_of_pid.
+	* tracepoint.c (same_process_p): Remove.
+	(gdb_agent_about_to_close): Replace usage of same_process_p with
+	find_any_thread_of_pid.
+	* linux-x86-low.c (same_process_callback): Remove.
+	(x86_arch_setup_process_callback): Replace usage of
+	same_process_callback with find_any_thread_of_pid.
+	* thread-db.c (any_thread_of): Remove.
+	(switch_to_process): Replace usage of any_thread_of with
+	find_any_thread_of_pid.
+	* inferiors.c (thread_pid_matches_callback): Remove.
+	(find_thread_process): Adjust to use find_any_thread_of_pid.
+
+2017-09-10  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* regcache.c (get_thread_regcache): Guard calls to "memset"
+          with "!VEC_empty".
+
+2017-09-10  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* linux-low.c (handle_extended_wait): Use
+	"allocate_target_description" instead of "XNEW".
+	* linux-x86-low.c (initialize_low_arch): Likewise.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_i386_regobj): Remove.
+	(srv_amd64_regobj): Remove.
+	(srv_regobj): Set it to "" for x86 non-linux targets.
+	* linux-x86-tdesc.c (i386_linux_read_description):
+	* lynx-i386-low.c: Include x86-xstate.h and arch/i386.h.
+	(init_registers_i386): Remove the declaration.
+	(tdesc_i386): Remove the declaration.
+	(lynx_i386_arch_setup): Call i386_create_target_description.
+	* nto-x86-low.c: Likewise.
+	* win32-i386-low.c [__x86_64__]: include arch/amd64.h.
+	[!__x86_64__]: include arch/i386.h.
+	(i386_arch_setup) [__x86_64__]: Call amd64_create_target_description.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_amd64_linux_xmlfiles): Remove
+	i386/amd64-XXX-linux from it.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Empty srv_amd64_linux_regobj if $development is
+	false.
+	(ipa_amd64_linux_regobj): Remove.
+	(ipa_x32_linux_regobj): Remove.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in (arch-amd64.o): New rule.
+	* configure.srv: Append arch-amd64.o.
+	* linux-amd64-ipa.c: Include common/x86-xstate.h.
+	(get_ipa_tdesc): Call amd64_linux_read_description.
+	(initialize_low_tracepoint): Don't call init_registers_x32_XXX
+	and init_registers_amd64_XXX.
+	* linux-x86-low.c (x86_linux_read_description): Call
+	amd64_linux_read_description.
+	(x86_get_ipa_tdesc_idx): Call amd64_get_ipa_tdesc_idx.
+	(initialize_low_arch): Don't call init_registers_x32_XXX and
+	init_registers_amd64_XXX.
+	* linux-x86-tdesc-selftest.c: Declare init_registers_amd64_XXX
+	and tdesc_amd64_XXX.
+	[__x86_64__] (amd64_tdesc_test): New function.
+	(initialize_low_tdesc) [__x86_64__]: Call init_registers_x32_XXX
+	and init_registers_amd64_XXX.
+	* linux-x86-tdesc.c: Include arch/amd64.h.
+	(xcr0_to_tdesc_idx): New function.
+	(i386_linux_read_description): New function.
+	(amd64_get_ipa_tdesc_idx): New function.
+	* linux-x86-tdesc.h (amd64_get_ipa_tdesc_idx): Declare.
+	(amd64_get_ipa_tdesc): Declare.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_i386_linux_xmlfiles): Remove
+	i386/i386-XXX-linux.xml from it.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv: Set srv_i386_linux_regobj empty if $development
+	is false.
+	* linux-i386-ipa.c (initialize_low_tracepoint): Don't call
+	initialize_low_tdesc.
+	* linux-x86-low.c (initialize_low_arch): Wrap initialize_low_tdesc
+	with #if initialize_low_tdesc.
+	* linux-x86-tdesc-selftest.c: New file.
+	* linux-x86-tdesc.c: Move code to linux-x86-tdesc-selftest.c.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in (arch-i386.o): New rule.
+	* configure.srv (i[34567]86-*-linux*): Add arch-i386.o.
+	(x86_64-*-linux*): Likewise.
+	* linux-x86-tdesc.c: Don't include ../features/i386/32bit-XXX.c,
+	include arch/i386.h.
+	(i386_linux_read_description): Remove code and call
+	i386_create_target_description.
+	* tdesc.c (allocate_target_description): New function.
+	* tdesc.h (set_tdesc_architecture): Remove declaration.
+	(set_tdesc_osabi): Likewise.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-x86-tdesc.c: Don't include <inttypes.h>.
+	(i386_linux_read_description) [!IN_PROCESS_AGENT]: Call
+	set_tdesc_architecture and set_tdesc_osabi.  Remove code setting
+	.xmltarget.
+	* server.c (get_features_xml): Call tdesc_get_features_xml.
+	* tdesc.c (set_tdesc_architecture): New function.
+	(set_tdesc_osabi): New function.
+	(tdesc_get_features_xml): New function.
+	(tdesc_create_feature): Add an argument.
+	* tdesc.h (struct target_desc) <features>: New field.
+	<arch, osabi>: New field.
+	(~target_desc): xfree features, arch, and osabi.
+	(target_desc::oerator==): Don't compare .xmltarget.
+	[!IN_PROCESS_AGENT] (set_tdesc_architecture): Declare.
+	(set_tdesc_osabi): Likewise.
+	(tdesc_get_features_xml): Likewise.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-x86-tdesc.c: Include selftest.h.
+	(i386_tdesc_test): New function.
+	(initialize_low_tdesc): Call selftests::register_test.
+	* tdesc.h: Include regdef.h.
+	(target_desc): Override operator == and !=.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_tgtobj): Append linux-x86-tdesc.o.
+	(ipa_obj): Likewise.
+	* linux-i386-ipa.c: Include common/x86-xstate.h
+	(get_ipa_tdesc): Call i386_linux_read_description.
+	(initialize_low_tracepoint): Don't call  init_registers_XXX
+	functions, call initialize_low_tdesc instead.
+	* linux-x86-low.c (x86_linux_read_description): Call
+	i386_linux_read_description.
+	(initialize_low_arch): Don't call init_registers_i386_XXX
+	functions, call initialize_low_tdesc.
+	* linux-x86-tdesc.c: New file.
+	* linux-x86-tdesc.h (x86_linux_tdesc): New X86_TDESC_LAST.
+	(i386_get_ipa_tdesc_idx): Declare.
+	(i386_get_ipa_tdesc): Declare.
+	(initialize_low_tdesc): Declare.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-x86-low.c (x86_get_ipa_tdesc_idx): Use X86_TDESC_MMX
+	instead of 0.
+
+2017-09-05  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in (IPA_OBJS): Add vec-ipa.o
+	* regcache.c (get_thread_regcache): Use VEC_length.
+	(init_register_cache): Likewise.
+	(regcache_cpy): Likewise.
+	(registers_to_string): Iterate reg_defs via VEC_iterate.
+	(find_regno): Likewise.
+	(find_register_by_number): Use VEC_index.
+	(register_size): Call find_register_by_number.
+	(register_data): Call find_register_by_number.
+	(supply_regblock): Use VEC_length.
+	(regcache_raw_read_unsigned): Likewise.
+	* tdesc.c (init_target_desc): Iterate reg_defs via
+	VEC_iterate.
+	(default_description): Update initializer.
+	(copy_target_description): Don't update field num_registers.
+	* tdesc.h (struct target_desc) <reg_defs>: Change it to VEC.
+	<num_registers>: Remove.
+
+2017-09-04  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (.SECONDARY): Define target.
+
+2017-09-03  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (linux_wait_1): Adjust.
+	* server.c (queue_stop_reply_callback): Adjust.
+
+2017-08-31  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c (handle_general_set): Handle QEnvironmentHexEncoded,
+	QEnvironmentUnset and QEnvironmentReset packets.
+	(handle_query): Inform remote that QEnvironmentHexEncoded,
+	QEnvironmentUnset and QEnvironmentReset are supported.
+
+2017-08-25  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* inferiors.h (inferior_target_data): Rename to ...
+	(thread_target_data): ... this.
+	(inferior_regcache_data): Rename to ...
+	(thread_regcache_data): ... this.
+	(set_inferior_regcache_data): Rename to ...
+	(set_thread_regcache_data): ... this.
+	* inferiors.c (inferior_target_data): Rename to ...
+	(thread_target_data): ... this.
+	(inferior_regcache_data): Rename to ...
+	(thread_regcache_data): ... this.
+	(set_inferior_regcache_data): Rename to ...
+	(set_thread_regcache_data): ... this.
+	(free_one_thread): Update.
+	* linux-low.h (get_thread_lwp): Update.
+	* regcache.c (get_thread_regcache): Update.
+	(regcache_invalidate_thread): Update.
+	(free_register_cache_thread): Update.
+	* win32-i386-low.c (update_debug_registers_callback): Update.
+	(win32_get_current_dr): Update.
+	* win32-low.c (thread_rec): Update.
+	(delete_thread_info): Update.
+	(continue_one_thread): Update.
+	(suspend_one_thread): Update.
+
+2017-08-24  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* inferiors.c (set_inferior_target_data): Remove.
+	* inferiors.h (set_inferior_target_data): Remove.
+
+2017-08-18  Yao Qi  <yao.qi@linaro.org>
+
+	* Makefile.in (OBS): Add selftest.o.
+	* configure.ac: AC_DEFINE GDB_SELF_TEST if $development.
+	* configure, config.in: Re-generated.
+	* server.c: Include common/sefltest.h.
+	(captured_main): Handle option --selftest.
+
+2017-08-09  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_i386_regobj): Remove i386-avx.o,
+	i386-avx-avx512.o, i386-avx-mpx-avx512-pku.o, i386-mpx.o,
+	i386-avx-mpx.o and i386-mmx.o.
+	(srv_amd64_regobj): Remove amd64-avx.o, amd64-avx-avx512.o,
+	amd64-avx-mpx-avx512-pku.o, amd64-mpx.o and amd64-avx-mpx.o.
+	(srv_i386_xmlfiles): Remove i386/i386-avx.xml,
+	i386/i386-avx-avx512.xml, i386/i386-avx-mpx-avx512-pku.xml,
+	i386/i386-mpx.xml, i386/i386-avx-mpx.xml and i386/i386-mmx.xml.
+	(srv_amd64_xmlfile):i386/amd64-avx.xml, i386/amd64-avx-avx512.xml,
+	i386/amd64-avx-mpx-avx512-pku.xml, i386/amd64-mpx.xml,
+	i386/amd64-avx-mpx.xml.
+
+2017-08-09  Yao Qi  <yao.qi@linaro.org>
+
+	* configure.srv (srv_amd64_regobj): Remove x32.o, x32-avx.o
+	and x32-avx-avx512.o.
+	(srv_amd64_xmlfiles): Remove i386/x32.xml, i386/x32-avx.xml
+	i386/x32-avx-avx512.xml.
+
+2017-07-26  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* tracepoint.h (enum class fast_tpoint_collect_result): New
+	enumeration.
+	(fast_tracepoint_collecting): Change return type to
+	fast_tpoint_collect_result.
+	* tracepoint.c (fast_tracepoint_collecting): Likewise.
+	* linux-low.h: Include tracepoint.h.
+	(struct lwp_info) <collecting_fast_tracepoint>: Change type to
+	fast_tpoint_collect_result.
+	* linux-low.c (handle_tracepoints): Adjust.
+	(linux_fast_tracepoint_collecting): Change return type to
+	fast_tpoint_collect_result.
+	(maybe_move_out_of_jump_pad, linux_wait_for_event_filtered,
+	linux_wait_1, stuck_in_jump_pad_callback,
+	lwp_signal_can_be_delivered, linux_resume_one_lwp_throw,
+	proceed_one_lwp): Adjust to type change.
+
+2017-07-10  Yao Qi  <yao.qi@linaro.org>
+
+	* linux-x86-low.c (x86_linux_read_description): Re-indent the code.
+
+2017-06-29  Yao Qi  <yao.qi@linaro.org>
+
+	* tdesc.h (struct target_desc) [IN_PROCESS_AGENT] <expedite_regs>:
+	Remove.
+	[IN_PROCESS_AGENT] <xmltarget>: Likewise.
+
+2017-06-20  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (IPA_OBJS): Sort and format one item per line.
+
+2017-06-20  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* linux-low.c (linux_create_inferior): Adjust code to access the
+	environment information via 'gdb_environ' class.
+	* lynx-low.c (lynx_create_inferior): Likewise.
+	* server.c (our_environ): Make it an instance of 'gdb_environ'.
+	(get_environ): Return a pointer to 'our_environ'.
+	(captured_main): Initialize 'our_environ'.
+	* server.h (get_environ): Adjust prototype.
+	* spu-low.c (spu_create_inferior): Adjust code to access the
+	environment information via 'gdb_environ' class.
+
+2017-06-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* linux-low.c (linux_read_memory, linux_write_memory): Remove
+	usage of "register" keyword.
+
+2017-06-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure: Re-generate.
+
+2017-06-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure: Re-generate.
+
+2017-06-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (COMPILE.pre): Add "-x c++".
+
+2017-06-09  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* fork-child.c: Conditionally include <signal.h>.
+
+2017-06-07  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* server.c (handle_general_set): Handle new packet
+	"QStartupWithShell".
+	(handle_query): Add "QStartupWithShell" to the list of supported
+	packets.
+	(gdbserver_usage): Add help text explaining the
+	new "--startup-with-shell" and "--no-startup-with-shell" CLI
+	options.
+	(captured_main): Recognize and act upon the presence of the new
+	CLI options.
+
+2017-06-07  Sergio Durigan Junior  <sergiodj@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* Makefile.in (SFILES): Add "nat/fork-inferior.o".
+	* configure: Regenerate.
+	* configure.srv (srv_linux_obj): Add "fork-child.o" and
+	"fork-inferior.o".
+	(i[34567]86-*-lynxos*): Likewise.
+	(spu*-*-*): Likewise.
+	* fork-child.c: New file.
+	* linux-low.c: Include "common-inferior.h", "nat/fork-inferior.h"
+	and "environ.h".
+	(linux_ptrace_fun): New function.
+	(linux_create_inferior): Adjust function prototype to reflect
+	change on "target.h".  Adjust function code to use
+	"fork_inferior".
+	(linux_request_interrupt): Delete "signal_pid".
+	* lynx-low.c: Include "common-inferior.h" and "nat/fork-inferior.h".
+	(lynx_ptrace_fun): New function.
+	(lynx_create_inferior): Adjust function prototype to reflect
+	change on "target.h".  Adjust function code to use
+	"fork_inferior".
+	* nto-low.c (nto_create_inferior): Adjust function prototype and
+	code to reflect change on "target.h".  Update comments.
+	* server.c: Include "common-inferior.h", "nat/fork-inferior.h",
+	"common-terminal.h" and "environ.h".
+	(terminal_fd): Moved to fork-child.c.
+	(old_foreground_pgrp): Likewise.
+	(restore_old_foreground_pgrp): Likewise.
+	(last_status): Make it global.
+	(last_ptid): Likewise.
+	(our_environ): New variable.
+	(startup_with_shell): Likewise.
+	(program_name): Likewise.
+	(program_argv): Rename to...
+	(program_args): ...this.
+	(wrapper_argv): New variable.
+	(start_inferior): Delete function.
+	(get_exec_wrapper): New function.
+	(get_exec_file): Likewise.
+	(get_environ): Likewise.
+	(prefork_hook): Likewise.
+	(post_fork_inferior): Likewise.
+	(postfork_hook): Likewise.
+	(postfork_child_hook): Likewise.
+	(handle_v_run): Update code to deal with arguments coming from the
+	remote host.  Update calls from "start_inferior" to
+	"create_inferior".
+	(captured_main): Likewise.  Initialize environment variable.  Call
+	"have_job_control".
+	* server.h (post_fork_inferior): New prototype.
+	(get_environ): Likewise.
+	(last_status): Declare.
+	(last_ptid): Likewise.
+	(signal_pid): Likewise.
+	* spu-low.c: Include "common-inferior.h" and "nat/fork-inferior.h".
+	(spu_ptrace_fun): New function.
+	(spu_create_inferior): Adjust function prototype to reflect change
+	on "target.h".  Adjust function code to use "fork_inferior".
+	* target.c (target_terminal_init): New function.
+	(target_terminal_inferior): Likewise.
+	(target_terminal_ours): Likewise.
+	* target.h: Include <vector>.
+	(struct target_ops) <create_inferior>: Update prototype.
+	(create_inferior): Update macro.
+	* utils.c (gdb_flush_out_err): New function.
+	* win32-low.c (win32_create_inferior): Adjust function prototype
+	and code to reflect change on "target.h".
+
+2017-06-07  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* inferiors.c (switch_to_thread): New function.
+
+2017-06-07  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile.in (SFILE): Add "common/job-control.c".
+	(OBS): Add "job-control.o".
+
+2017-05-06  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile: Remove "@host_makefile_frag@".
+
+2017-05-05  Pedro Alves  <palves@redhat.com>
+
+	* configure: Regenerate.
+
+2017-05-03  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* configure: Regenerate.
+
+2017-05-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* linux-arm-low.c (arm_gdbserver_get_next_pcs): Adjust to
+	software_single_step change of return type to
+	std::vector<CORE_ADDR>.
+	* linux-low.c (install_software_single_step_breakpoints):
+	Likewise.
+	* linux-low.h (install_software_single_step_breakpoints):
+	Likewise.
+
 2017-04-12  Sergio Durigan Junior  <sergiodj@redhat.com>
 
 	* remote-utils.c: Include "gdb_termios.h" instead of

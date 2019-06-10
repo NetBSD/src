@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2017 Free Software Foundation, Inc.
+# Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -208,11 +208,11 @@ for {set idx 0} {$idx < [llength $overloads]} {incr idx} {
 }
 
 # Verify the breakpoints.
-set bptable "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*"
-append bptable "\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\[\r\n\]+"
-append bptable "\[\t \]+breakpoint already hit 1 time\[\r\n\]+"
+set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
+append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\[\r\n\]+"
+append bptable "\[\t \]+breakpoint already hit 1 time\[\r\n\]+."
 foreach ovld $overloads {
-    append bptable [format "\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" $ovld \
+    append bptable [format "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" $ovld \
 			$line($type_map("$ovld"))]
 }
 gdb_test "info break" $bptable "breakpoint info (after setting one-by-one)"
@@ -317,7 +317,7 @@ gdb_expect {
 }
 
 # Create the breakpoint table for "info breakpoint".
-set bptable "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
+set bptable "Num\[\t \]+Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
 append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+<MULTIPLE>.*\[\r\n\]+"
 foreach ovld {void char signed_char unsigned_char short_int \
 		  unsigned_short_int int unsigned_int long_int \

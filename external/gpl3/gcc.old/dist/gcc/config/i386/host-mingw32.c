@@ -1,5 +1,5 @@
 /* mingw32 host-specific hook definitions.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -20,9 +20,9 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "diagnostic.h"
 #include "hosthooks.h"
 #include "hosthooks-def.h"
-#include "diagnostic.h"
 
 
 #define WIN32_LEAN_AND_MEAN  /* Not so important if we have windows.h.gch.  */

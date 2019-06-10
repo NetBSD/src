@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.26.2.1 2019/06/10 22:07:17 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26.2.1 2019/06/10 22:07:17 christos Exp $");
 
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $");
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 
@@ -58,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
 
 #include <sys/bus.h>
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#include <sys/proc.h>
 
 #include <dev/pci/if_xgereg.h>
 
@@ -95,11 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26 2018/06/26 06:48:01 msaitoh Exp $");
 /*
  * Use clever macros to avoid a bunch of #ifdef's.
  */
-#define XCONCAT3(x,y,z) x ## y ## z
-#define CONCAT3(x,y,z) XCONCAT3(x,y,z)
-#define NDESC_BUFMODE CONCAT3(NDESC_,RX_MODE,BUFMODE)
-#define rxd_4k CONCAT3(rxd,RX_MODE,_4k)
-#define rxdesc ___CONCAT(rxd,RX_MODE)
+#define XCONCAT3(x, y, z) x ## y ## z
+#define CONCAT3(x, y, z) XCONCAT3(x, y, z)
+#define NDESC_BUFMODE CONCAT3(NDESC_, RX_MODE, BUFMODE)
+#define rxd_4k CONCAT3(rxd, RX_MODE, _4k)
+#define rxdesc ___CONCAT(rxd, RX_MODE)
 
 #define NEXTTX(x)	(((x)+1) % NTXDESCS)
 #define NRXFRAGS	RX_MODE /* hardware imposed frags */
@@ -267,9 +265,9 @@ xge_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_S2IO &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_S2IO_XFRAME)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -312,7 +310,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	val = (uint64_t)0xFFFFFFFFFFFFFFFFULL;
-	val &= ~(TxF_R_SE|RxF_W_SE);
+	val &= ~(TxF_R_SE | RxF_W_SE);
 	PIF_WCSR(SWAPPER_CTRL, val);
 	PIF_WCSR(SWAPPER_CTRL, val);
 #elif BYTE_ORDER == BIG_ENDIAN
@@ -350,7 +348,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	val = (uint64_t)0xFFFFFFFFFFFFFFFFULL;
-	val &= ~(TxF_R_SE|RxF_W_SE);
+	val &= ~(TxF_R_SE | RxF_W_SE);
 	PIF_WCSR(SWAPPER_CTRL, val);
 	PIF_WCSR(SWAPPER_CTRL, val);
 #elif BYTE_ORDER == BIG_ENDIAN
@@ -378,7 +376,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	/* 33, program MAC address (not needed here) */
 	/* Get ethernet address */
 	PIF_WCSR(RMAC_ADDR_CMD_MEM,
-	    RMAC_ADDR_CMD_MEM_STR|RMAC_ADDR_CMD_MEM_OFF(0));
+	    RMAC_ADDR_CMD_MEM_STR | RMAC_ADDR_CMD_MEM_OFF(0));
 	while (PIF_RCSR(RMAC_ADDR_CMD_MEM) & RMAC_ADDR_CMD_MEM_STR)
 		;
 	val = PIF_RCSR(RMAC_ADDR_DATA0_MEM);
@@ -408,7 +406,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 	/* 13, disable some error checks */
 	PIF_WCSR(TX_PA_CFG,
-	    TX_PA_CFG_IFR|TX_PA_CFG_ISO|TX_PA_CFG_ILC|TX_PA_CFG_ILE);
+	    TX_PA_CFG_IFR | TX_PA_CFG_ISO | TX_PA_CFG_ILC | TX_PA_CFG_ILE);
 
 	/*
 	 * Create transmit DMA maps.
@@ -472,7 +470,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 #else /* RX_MODE == RX_MODE_5 */
 	val = RING_MODE_5;
 #endif
-	PIF_WCSR(PRC_CTRL_0, RC_IN_SVC|val);
+	PIF_WCSR(PRC_CTRL_0, RC_IN_SVC | val);
 	/* leave 1-7 disabled */
 	/* XXXX snoop configuration? */
 
@@ -491,7 +489,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 	/* 23, initiate RLDRAM */
 	val = PIF_RCSR(MC_RLDRAM_MRS);
-	val |= MC_QUEUE_SIZE_ENABLE|MC_RLDRAM_MRS_ENABLE;
+	val |= MC_QUEUE_SIZE_ENABLE | MC_RLDRAM_MRS_ENABLE;
 	PIF_WCSR(MC_RLDRAM_MRS, val);
 	DELAY(1000);
 
@@ -519,10 +517,11 @@ xge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Setup media stuff.
 	 */
+	sc->sc_ethercom.ec_ifmedia = &sc->xena_media;
 	ifmedia_init(&sc->xena_media, IFM_IMASK, xge_xgmii_mediachange,
 	    xge_ifmedia_status);
-	ifmedia_add(&sc->xena_media, IFM_ETHER|IFM_10G_LR, 0, NULL);
-	ifmedia_set(&sc->xena_media, IFM_ETHER|IFM_10G_LR);
+	ifmedia_add(&sc->xena_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+	ifmedia_set(&sc->xena_media, IFM_ETHER | IFM_10G_LR);
 
 	aprint_normal("%s: Ethernet address %s\n", XNAME,
 	    ether_sprintf(enaddr));
@@ -536,7 +535,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xge_ioctl;
 	ifp->if_start = xge_start;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(NTXDESCS - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(NTXDESCS - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -564,8 +563,9 @@ xge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	if ((sc->sc_ih =
-		pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL) {
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, xge_intr, sc,
+	    device_xname(self));
+	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to establish interrupt at %s\n",
 		    intrstr ? intrstr : "<unknown>");
@@ -592,10 +592,10 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	uint64_t reg;
 
 	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER|IFM_10G_LR;
+	ifmr->ifm_active = IFM_ETHER | IFM_10G_LR;
 
 	reg = PIF_RCSR(ADAPTER_STATUS);
-	if ((reg & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
+	if ((reg & (RMAC_REMOTE_FAULT | RMAC_LOCAL_FAULT)) == 0)
 		ifmr->ifm_status |= IFM_ACTIVE;
 }
 
@@ -633,8 +633,8 @@ xge_init(struct ifnet *ifp)
 		return 0;
 
 	/* 31+32, setup MAC config */
-	PIF_WKEY(MAC_CFG, TMAC_EN|RMAC_EN|TMAC_APPEND_PAD|RMAC_STRIP_FCS|
-	    RMAC_BCAST_EN|RMAC_DISCARD_PFRM|RMAC_PROM_EN);
+	PIF_WKEY(MAC_CFG, TMAC_EN | RMAC_EN | TMAC_APPEND_PAD |
+	    RMAC_STRIP_FCS | RMAC_BCAST_EN | RMAC_DISCARD_PFRM | RMAC_PROM_EN);
 
 	DELAY(1000);
 
@@ -714,7 +714,7 @@ xge_intr(void *pv)
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
 
 		val = PIF_RCSR(ADAPTER_STATUS);
-		if ((val & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
+		if ((val & (RMAC_REMOTE_FAULT | RMAC_LOCAL_FAULT)) == 0)
 			xge_enable(sc); /* Only if link restored */
 	}
 
@@ -732,7 +732,7 @@ xge_intr(void *pv)
 
 		bus_dmamap_sync(sc->sc_dmat, dmp, 0,
 		    dmp->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		if (txd->txd_control1 & TXD_CTL1_OWN) {
 			bus_dmamap_sync(sc->sc_dmat, dmp, 0,
@@ -751,11 +751,12 @@ xge_intr(void *pv)
 	if (sc->sc_lasttx != lasttx)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-	if_schedule_deferred_start(ifp); /* Try to get more packets on the wire */
+	/* Try to get more packets on the wire */
+	if_schedule_deferred_start(ifp);
 
 	if ((val = PIF_RCSR(RX_TRAFFIC_INT))) {
 		XGE_EVCNT_INCR(&sc->sc_rxintr);
-		PIF_WCSR(RX_TRAFFIC_INT, val); /* clear interrupt bits */
+		PIF_WCSR(RX_TRAFFIC_INT, val); /* Clear interrupt bits */
 	}
 
 	for (;;) {
@@ -763,7 +764,7 @@ xge_intr(void *pv)
 		struct mbuf *m;
 
 		XGE_RXSYNC(sc->sc_nextrx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxd = XGE_RXD(sc->sc_nextrx);
 		if (rxd->rxd_control1 & RXD_CTL1_OWN) {
@@ -771,7 +772,7 @@ xge_intr(void *pv)
 			break;
 		}
 
-		/* got a packet */
+		/* Got a packet */
 		m = sc->sc_rxb[sc->sc_nextrx];
 #if RX_MODE == RX_MODE_1
 		plen = m->m_len = RXD_CTL2_BUF0SIZ(rxd->rxd_control2);
@@ -801,7 +802,7 @@ xge_intr(void *pv)
 #elif RX_MODE == RX_MODE_5
 #endif
 			XGE_RXSYNC(sc->sc_nextrx,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			ifp->if_ierrors++;
 			break;
 		}
@@ -812,12 +813,12 @@ xge_intr(void *pv)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
 		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_TCP) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4|M_CSUM_TCPv6;
+			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4 | M_CSUM_TCPv6;
 			if (RXD_CTL1_L4CSUM(val) != 0xffff)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 		if (RXD_CTL1_PROTOS(val) & RXD_CTL1_P_UDP) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4|M_CSUM_UDPv6;
+			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4 | M_CSUM_UDPv6;
 			if (RXD_CTL1_L4CSUM(val) != 0xffff)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
@@ -845,16 +846,12 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
+		else if ((error = ifioctl_common(ifp, cmd, data))
+		    == ENETRESET) {
 			PIF_WCSR(RMAC_MAX_PYLD_LEN,
 			    RMAC_PYLD_LEN(ifr->ifr_mtu));
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->xena_media, cmd);
 		break;
 
 	default:
@@ -873,7 +870,7 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	splx(s);
-	return(error);
+	return error;
 }
 
 void
@@ -886,33 +883,38 @@ xge_mcast_filter(struct xge_softc *sc)
 	int i, numaddr = 1; /* first slot used for card unicast address */
 	uint64_t val;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/* Skip ranges */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
-		if (numaddr == MAX_MCAST_ADDR)
+		if (numaddr == MAX_MCAST_ADDR) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 		for (val = 0, i = 0; i < ETHER_ADDR_LEN; i++) {
 			val <<= 8;
 			val |= enm->enm_addrlo[i];
 		}
 		PIF_WCSR(RMAC_ADDR_DATA0_MEM, val << 16);
 		PIF_WCSR(RMAC_ADDR_DATA1_MEM, 0xFFFFFFFFFFFFFFFFULL);
-		PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE|
-		    RMAC_ADDR_CMD_MEM_STR|RMAC_ADDR_CMD_MEM_OFF(numaddr));
+		PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE |
+		    RMAC_ADDR_CMD_MEM_STR | RMAC_ADDR_CMD_MEM_OFF(numaddr));
 		while (PIF_RCSR(RMAC_ADDR_CMD_MEM) & RMAC_ADDR_CMD_MEM_STR)
 			;
 		numaddr++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	/* set the remaining entries to the broadcast address */
 	for (i = numaddr; i < MAX_MCAST_ADDR; i++) {
 		PIF_WCSR(RMAC_ADDR_DATA0_MEM, 0xffffffffffff0000ULL);
 		PIF_WCSR(RMAC_ADDR_DATA1_MEM, 0xFFFFFFFFFFFFFFFFULL);
-		PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE|
-		    RMAC_ADDR_CMD_MEM_STR|RMAC_ADDR_CMD_MEM_OFF(i));
+		PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE |
+		    RMAC_ADDR_CMD_MEM_STR | RMAC_ADDR_CMD_MEM_OFF(i));
 		while (PIF_RCSR(RMAC_ADDR_CMD_MEM) & RMAC_ADDR_CMD_MEM_STR)
 			;
 	}
@@ -924,8 +926,8 @@ allmulti:
 	ifp->if_flags |= IFF_ALLMULTI;
 	PIF_WCSR(RMAC_ADDR_DATA0_MEM, 0x8000000000000000ULL);
 	PIF_WCSR(RMAC_ADDR_DATA1_MEM, 0xF000000000000000ULL);
-	PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE|
-	    RMAC_ADDR_CMD_MEM_STR|RMAC_ADDR_CMD_MEM_OFF(1));
+	PIF_WCSR(RMAC_ADDR_CMD_MEM, RMAC_ADDR_CMD_MEM_WE |
+	    RMAC_ADDR_CMD_MEM_STR | RMAC_ADDR_CMD_MEM_OFF(1));
 	while (PIF_RCSR(RMAC_ADDR_CMD_MEM) & RMAC_ADDR_CMD_MEM_STR)
 		;
 }
@@ -940,7 +942,7 @@ xge_start(struct ifnet *ifp)
 	uint64_t par, lcr;
 	int nexttx = 0, ntxd, error, i;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	par = lcr = 0;
@@ -956,7 +958,7 @@ xge_start(struct ifnet *ifp)
 		dmp = sc->sc_txm[nexttx];
 
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmp, m,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: bus_dmamap_load_mbuf error %d\n",
 			    XNAME, error);
 			break;
@@ -978,7 +980,7 @@ xge_start(struct ifnet *ifp)
 		}
 		ntxd = txd - sc->sc_txd[nexttx] - 1;
 		txd = sc->sc_txd[nexttx];
-		txd->txd_control1 |= TXD_CTL1_OWN|TXD_CTL1_GCF;
+		txd->txd_control1 |= TXD_CTL1_OWN | TXD_CTL1_GCF;
 		txd->txd_control2 = TXD_CTL2_UTIL;
 		if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
 			txd->txd_control1 |= TXD_CTL1_MSS(m->m_pkthdr.segsz);
@@ -994,7 +996,7 @@ xge_start(struct ifnet *ifp)
 		txd[ntxd].txd_control1 |= TXD_CTL1_GCL;
 
 		bus_dmamap_sync(sc->sc_dmat, dmp, 0, dmp->dm_mapsize,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		par = sc->sc_txdp[nexttx];
 		lcr = TXDL_NUMTXD(ntxd) | TXDL_LGC_FIRST | TXDL_LGC_LAST;
@@ -1190,7 +1192,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	sc->sc_rxb[id] = m[0];
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rxm[id], m[0],
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error)
 		return error;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxm[id], 0,
@@ -1212,7 +1214,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	rxd->rxd_control1 = RXD_CTL1_OWN;
 #endif
 
-	XGE_RXSYNC(id, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	XGE_RXSYNC(id, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	return 0;
 }
 

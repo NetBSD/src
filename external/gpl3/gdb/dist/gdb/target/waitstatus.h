@@ -1,6 +1,6 @@
 /* Target waitstatus definitions and prototypes.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef WAITSTATUS_H
-#define WAITSTATUS_H
+#ifndef TARGET_WAITSTATUS_H
+#define TARGET_WAITSTATUS_H
 
-#include "gdb_signals.h"
+#include "common/gdb_signals.h"
 
 /* Stuff for target_wait.  */
 
@@ -145,8 +145,7 @@ enum target_stop_reason
 
 /* Prototypes */
 
-/* Return a pretty printed form of target_waitstatus.
-   Space for the result is malloc'd, caller must free.  */
-extern char *target_waitstatus_to_string (const struct target_waitstatus *);
+/* Return a pretty printed form of target_waitstatus.  */
+std::string target_waitstatus_to_string (const struct target_waitstatus *);
 
-#endif /* WAITSTATUS_H */
+#endif /* TARGET_WAITSTATUS_H */

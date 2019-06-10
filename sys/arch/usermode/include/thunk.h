@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.65 2018/06/04 19:53:01 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.65.2.1 2019/06/10 22:06:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -127,6 +127,11 @@ int	thunk_mkstemp(char *);
 int	thunk_unlink(const char *);
 pid_t	thunk_getpid(void);
 
+int	thunk_gdb_open(void);
+int	thunk_gdb_accept(int sockfd);
+int	thunk_kgdb_getc(int fd, char *ch);
+int	thunk_kgdb_putc(int fd, char ch);
+
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
 int	thunk_sigaltstack(const stack_t *, stack_t *);
 void	thunk_signal(int, void (*)(int));
@@ -180,7 +185,6 @@ typedef struct {
 
 int	thunk_audio_open(const char *);
 int	thunk_audio_close(int);
-int	thunk_audio_drain(int);
 int	thunk_audio_config(int, const thunk_audio_config_t *,
 			   const thunk_audio_config_t *);
 int	thunk_audio_pollout(int);
