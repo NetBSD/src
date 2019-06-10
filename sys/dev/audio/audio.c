@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.14 2019/06/10 13:12:51 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.15 2019/06/10 13:28:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.14 2019/06/10 13:12:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.15 2019/06/10 13:28:08 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5205,7 +5205,7 @@ audio_pmixer_output(struct audio_softc *sc)
 			    start, end, blksize, audio_pintr, sc, &params);
 			if (error) {
 				device_printf(sc->sc_dev,
-				    "trigger_output failed with %d", error);
+				    "trigger_output failed with %d\n", error);
 				return;
 			}
 		}
@@ -5217,7 +5217,7 @@ audio_pmixer_output(struct audio_softc *sc)
 		    start, blksize, audio_pintr, sc);
 		if (error) {
 			device_printf(sc->sc_dev,
-			    "start_output failed with %d", error);
+			    "start_output failed with %d\n", error);
 			return;
 		}
 	}
@@ -5476,7 +5476,7 @@ audio_rmixer_input(struct audio_softc *sc)
 			    start, end, blksize, audio_rintr, sc, &params);
 			if (error) {
 				device_printf(sc->sc_dev,
-				    "trigger_input failed with %d", error);
+				    "trigger_input failed with %d\n", error);
 				return;
 			}
 		}
@@ -5488,7 +5488,7 @@ audio_rmixer_input(struct audio_softc *sc)
 		    start, blksize, audio_rintr, sc);
 		if (error) {
 			device_printf(sc->sc_dev,
-			    "start_input failed with %d", error);
+			    "start_input failed with %d\n", error);
 			return;
 		}
 	}
