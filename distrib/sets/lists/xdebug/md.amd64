@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.47 2019/06/01 07:55:31 mrg Exp $
+# $NetBSD: md.amd64,v 1.48 2019/06/10 00:51:46 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -67,8 +67,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r128_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r200_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		xorg,debug,llvmrt
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	-unknown-		xorg,debug,llvmrt
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/s3v_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/savage_dri.so.0.debug	-unknown-		obsolete
