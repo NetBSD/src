@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -march=ppc32 -mcpu=ppc32 -mtriple=powerpc-unknown-linux-gnu < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mcpu=ppc32 -mtriple=powerpc-unknown-linux-gnu < %s | FileCheck %s
 define double @test(i1 %X) {
         %Y = uitofp i1 %X to double
         ret double %Y
@@ -6,9 +6,9 @@ define double @test(i1 %X) {
 
 ; CHECK-LABEL: @test
 
-; CHECK: andi. {{[0-9]+}}, 3, 1
-; CHECK-NEXT: addis 4, 4, .LCPI
+; CHECK: addis 4, 4, .LCPI
 ; CHECK-NEXT: addis 5, 5, .LCPI
+; CHECK: andi. {{[0-9]+}}, 3, 1
 ; CHECK-NEXT: bc 12, 1, [[TRUE:.LBB[0-9]+]]
 ; CHECK: ori 3, 4, 0
 ; CHECK-NEXT: b [[SUCCESSOR:.LBB[0-9]+]]

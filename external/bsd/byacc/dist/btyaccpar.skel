@@ -1,4 +1,4 @@
-/* Id: btyaccpar.skel,v 1.7 2017/05/01 00:13:19 tom Exp  */
+/* Id: btyaccpar.skel,v 1.11 2018/06/10 00:41:06 Tom.Shields Exp  */
 
 #include "defs.h"
 
@@ -53,14 +53,17 @@ extern const char *const yyrule[];
 #endif
 %% global_vars
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 %% impure_vars
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
+
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
 YYLTYPE  yyloc; /* position returned by actions */
 YYLTYPE  yylloc; /* position from the lexer */
@@ -185,6 +188,8 @@ static YYINT  *yylexemes = 0;
     int      yychar;
     YYSTYPE  yyval;
     YYSTYPE  yylval;
+    int      yynerrs;
+
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
     YYLTYPE  yyloc; /* position returned by actions */
     YYLTYPE  yylloc; /* position from the lexer */
@@ -371,7 +376,7 @@ YYPARSE_DECL()
     YYParseState *yyerrctx = NULL;
 %%endif
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
-    YYLTYPE  yyerror_loc_range[3]; /* position of error start&end (0 unused) */
+    YYLTYPE  yyerror_loc_range[3]; /* position of error start/end (0 unused) */
 #endif
 #if YYDEBUG
     const char *yys;

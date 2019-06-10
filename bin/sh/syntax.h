@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.9 2017/08/21 13:20:49 kre Exp $	*/
+/*	$NetBSD: syntax.h,v 1.9.4.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,9 +47,15 @@
 #define CLP 8			/* a left paren in arithmetic */
 #define CRP 9			/* a right paren in arithmetic */
 #define CEOF 10			/* end of file */
-#define CCTL 11			/* like CWORD, except it must be escaped */
-#define CSPCL 12		/* these terminate a word */
+#define CSPCL 11		/* these terminate a word */
+#define CCTL 12			/* like CWORD, except it must be escaped */
 #define CSBACK 13		/* a backslash in a single quote syntax */
+#define CFAKE 14		/* a delimiter that does not exist */
+	/*
+	 * note CSBACK == (CCTL|1)
+	 * the code does not rely upon that, but keeping it allows a
+	 * smart enough compiler to optimise some tests
+	 */
 
 /* Syntax classes for is_ functions */
 #define ISDIGIT 01		/* a digit */
@@ -59,8 +65,9 @@
 #define ISSPECL 020		/* the name of a special parameter */
 #define ISSPACE 040		/* a white space character */
 
-#define PEOF (CHAR_MIN - 1)
-#define SYNBASE (-PEOF)
+#define PEOF	(CHAR_MIN - 1)
+#define PFAKE	(CHAR_MIN - 2)
+#define SYNBASE	(-PFAKE)
 
 
 #define BASESYNTAX (basesyntax + SYNBASE)
@@ -79,6 +86,15 @@
 #define	is_special(c)	(sh_ctype(c) & (ISSPECL|ISDIGIT))
 #define	is_space(c)	(sh_ctype(c) & ISSPACE)
 #define	digit_val(c)	((c) - '0')
+
+/* true if the arg char needs CTLESC to protect it */
+#define	NEEDESC(c)	(SQSYNTAX[(int)(c)] == CCTL || \
+			 SQSYNTAX[(int)(c)] == CSBACK)
+
+#define	ISCTL(c)	((c) >= CTL_FIRST && (c) <= CTL_LAST)
+#if 0				/* alternative form (generally slower) */
+#define	ICCTL(c)	(BASESYNTAX[(int)(c)] == CCTL)
+#endif
 
 extern const char basesyntax[];
 extern const char dqsyntax[];

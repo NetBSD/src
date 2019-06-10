@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "trousers/tss.h"
+#include "spi_utils.h"
 #include "tsplog.h"
 
 #ifdef TSS_DEBUG
@@ -38,12 +39,12 @@ LogBlobData(char *szDescriptor, unsigned long sizeOfBlob, unsigned char *blob)
 	if (getenv("TSS_DEBUG_OFF"))
 		return;
 
-	memset(temp, 0, sizeof(temp));
+	__tspi_memset(temp, 0, sizeof(temp));
 
 	for (i = 0; (unsigned long)i < sizeOfBlob; i++) {
 		if ((i > 0) && ((i % 16) == 0))	{
 			fprintf(stdout, "%s\n", temp);
-			memset(temp, 0, sizeof(temp));
+			__tspi_memset(temp, 0, sizeof(temp));
 		}
 		snprintf(&temp[(i%16)*3], 4, "%.2X ", blob[i]);
 	}

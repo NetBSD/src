@@ -125,7 +125,7 @@ Tspi_TPM_CertifySelfTest(TSS_HTPM hTPM,				/* in */
 		}
 
 		offset = 0;
-		memset(&keyContainer, 0, sizeof(TSS_KEY));
+		__tspi_memset(&keyContainer, 0, sizeof(TSS_KEY));
 		if ((result = UnloadBlob_TSS_KEY(&offset, keyData, &keyContainer)))
 			return result;
 

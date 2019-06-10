@@ -1,5 +1,6 @@
-/*	$NetBSD: auth2-passwd.c,v 1.9 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.15 2018/03/03 03:15:51 djm Exp $ */
+/*	$NetBSD: auth2-passwd.c,v 1.9.2.1 2019/06/10 21:41:11 christos Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.16 2018/07/09 21:35:50 markus Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.9 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.9.2.1 2019/06/10 21:41:11 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -37,7 +38,6 @@ __RCSID("$NetBSD: auth2-passwd.c,v 1.9 2018/04/06 18:58:59 christos Exp $");
 #include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
-#include "buffer.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif

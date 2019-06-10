@@ -19,7 +19,6 @@ base-crypto-root	root file system directories required by cryptographic utilitie
 base-crypto-shlib	shared library providing cryptographic routines
 base-cxx-usr	/usr file system directories required by C++ programming language utilities
 base-debug-bin	debugging utilities
-base-dhclient-root	root file system support for DHCP client software
 base-dhcpd-bin	DHCP server
 base-dhcpd-examples	example configuration files for DHCP server
 base-efs-root		root file system support for efs file system
@@ -39,8 +38,6 @@ base-i18n-root	directories for internationalisation support
 base-i18n-shlib	shared library modules for internationalisation support
 base-ipf-bin utilities for IPfilter
 base-ipf-root directories for IPfilter
-base-isdn-bin	utilities and daemons for ISDN network connectivity
-base-isdn-examples	directories for the ISDN example files
 base-krb5-bin	commands and utilities for the Kerberos V network authentication system
 base-krb5-examples	example configuration files for the Kerberos V network authentication system
 base-krb5-root	root file system support for the Kerberos V network authentication system
@@ -210,6 +207,7 @@ comp-c-catman	the C programming language:
 comp-c-include	This package contains header files for the C programming language,
 comp-c-include	including standard C and UNIX APIs, and APIs specific to the NetBSD
 comp-c-include	operating system.
+comp-nis-include	Header files for building NIS applications
 comp-c-lib	This contains library archives to build statically linked versions of C
 comp-c-lib	libraries.
 comp-c-lib	programs and simbolic links for use in linking software against shared
@@ -512,8 +510,6 @@ etc-bootserver-rc	startup script for diskless boot server utilities
 etc-cron-log	empty log file for cron(8)
 etc-cron-rc	startup script for cron(8) command scheduler
 etc-cron-root	root file system support for cron(8) command scheduler
-etc-dhclient-etc	configuration files for DHCP dyanamic host configuration protocol client utilities
-etc-dhclient-rc	startup script for DHCP dynamic host configuration protocol client
 etc-dhcpd-rc	startup script for DHCP dynamic host configuration protocol daemon
 etc-extsrc-rc	startup scripts for externally added programs
 etc-games-etc	configuration file for games
@@ -521,7 +517,6 @@ etc-games-scores	empty score files for games
 etc-ipf-rc	startup script for IP filter
 etc-iscsi-etc	configuration files for the NetBSD iSCSI target
 etc-iscsi-rc	startup script for the NetBSD iSCSI target
-etc-isdn-rc	startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc	startup script for the Kerberos V authentication service 
 etc-libsaslc-etc	configuration file for SASL C library
 etc-libsaslc-postfix	configuration file for postfix SASL
@@ -597,8 +592,6 @@ man-cxx-info	texinfo documentation for the C++ programming language
 man-debug-catman	formatted manual pages for debugging utilities
 man-debug-info	texinfo documentation for debugging utilities
 man-debug-man	manual pages source for debugging utilities
-man-dhclient-catman	formatted manual pages for DHCP (dynamic host configuration protocol) client utilities
-man-dhclient-man	manual pages source for DHCP (dynamic host configuration protocol) client utilities
 man-dhcpd-catman	formatted manual pages for DHCP (dynamic host configuration protocol) server utilities
 man-dhcpd-man	manual pages source for DHCP (dynamic host configuration protocol) server utilities
 man-efs-catman		formatted manual pages for the Silicon Graphics EFS file system support
@@ -624,8 +617,6 @@ man-ipf-catman	formatted manual pages for the IPfilter packet filtering software
 man-ipf-man	manual pages source for the IPfilter packet filtering software
 man-iscsi-catman	formatted manual pages for NetBSD iSCSI target
 man-iscsi-man	manual pages source for NetBSD iSCSI target
-man-isdn-catman	formatted manual pages for ISDN (Integrated Services Data Networking) support
-man-isdn-man	manual pages source for ISDN (Integrated Services Data Networking) support
 man-krb5-catman	formatted manual pages for the Kerberos V network authentication system
 man-krb5-info	the GNU texinfo software
 man-krb5-man	manual pages source for the Kerberos V network authentication system
@@ -711,7 +702,6 @@ misc-crypto-examples	example configuration files for cryptographic software
 misc-dhcpd-examples	example configuration files for dhcpd(8)
 misc-fstab-examples	example configuration files for file system tables
 misc-ipf-examples	example configuration files for IPfilter
-misc-isdn-examples	example configuration files for isdn
 misc-krb5-examples	example configuration files for Kerberos5
 misc-libsaslc-examples	example configuration files for libsaslc 
 misc-netutil-examples	example configuration files for network software 

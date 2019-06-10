@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.32 2015/05/11 16:50:35 christos Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.32.16.1 2019/06/10 21:41:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _PROPLIB_PROP_OBJECT_IMPL_H_
 #define	_PROPLIB_PROP_OBJECT_IMPL_H_
+
+#if defined(HAVE_NBTOOL_CONFIG_H)
+#include "nbtool_config.h"
+#endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>

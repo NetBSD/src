@@ -40,7 +40,7 @@ DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(trousersinclude_HEADERS) \
 	$(tssinclude_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -131,12 +131,9 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 RPC = @RPC@
 SED = @SED@
@@ -144,6 +141,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 TCSD_DEFAULT_PORT = @TCSD_DEFAULT_PORT@
+TCSD_LDFLAGS = @TCSD_LDFLAGS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -241,7 +239,7 @@ noinst_HEADERS = auth_mgr.h authsess.h biosem.h capabilities.h \
 	tcslog.h tcsps.h tcs_tsp.h tcs_utils.h \
 	tddl.h threads.h trousers_types.h tsp_audit.h \
 	tsp_delegate.h tsplog.h tspps.h tsp_seal.h \
-	linux/tpm.h
+	linux/tpm.h tsp_tcsi_param.h
 
 all: all-am
 

@@ -73,11 +73,11 @@ if.else:
 ; CHECK: bc_raise
 ; CHECK: rsbeq
 ; CHECK: cmp
-define i32 @bc_raise() nounwind ssp {
+define i32 @bc_raise(i1 %cond) nounwind ssp {
 entry:
-  %val.2.i = select i1 undef, i32 0, i32 undef
+  %val.2.i = select i1 %cond, i32 0, i32 undef
   %sub.i = sub nsw i32 0, %val.2.i
-  %retval.0.i = select i1 undef, i32 %val.2.i, i32 %sub.i
+  %retval.0.i = select i1 %cond, i32 %val.2.i, i32 %sub.i
   %cmp1 = icmp eq i32 %retval.0.i, 0
   br i1 %cmp1, label %land.lhs.true, label %if.end11
 
@@ -167,8 +167,8 @@ define i32 @cmp_slt0(i32 %a, i32 %b, i32 %x, i32 %y) {
 entry:
 ; CHECK-LABEL: cmp_slt0
 ; CHECK: sub
-; CHECK: cmp
-; CHECK: bge
+; CHECK: cmn
+; CHECK: bgt
   %load = load i32, i32* @t, align 4
   %sub = sub i32 %load, 17
   %cmp = icmp slt i32 %sub, 0

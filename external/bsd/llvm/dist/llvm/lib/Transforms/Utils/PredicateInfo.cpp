@@ -32,7 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DebugCounter.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/OrderedInstructions.h"
 #include <algorithm>
 #define DEBUG_TYPE "predicateinfo"
@@ -49,9 +49,10 @@ INITIALIZE_PASS_END(PredicateInfoPrinterLegacyPass, "print-predicateinfo",
 static cl::opt<bool> VerifyPredicateInfo(
     "verify-predicateinfo", cl::init(false), cl::Hidden,
     cl::desc("Verify PredicateInfo in legacy printer pass."));
-namespace {
 DEBUG_COUNTER(RenameCounter, "predicateinfo-rename",
-              "Controls which variables are renamed with predicateinfo")
+              "Controls which variables are renamed with predicateinfo");
+
+namespace {
 // Given a predicate info that is a type of branching terminator, get the
 // branching block.
 const BasicBlock *getBranchBlock(const PredicateBase *PB) {
@@ -117,7 +118,7 @@ static bool valueComesBefore(OrderedInstructions &OI, const Value *A,
     return false;
   if (ArgA && ArgB)
     return ArgA->getArgNo() < ArgB->getArgNo();
-  return OI.dominates(cast<Instruction>(A), cast<Instruction>(B));
+  return OI.dfsBefore(cast<Instruction>(A), cast<Instruction>(B));
 }
 
 // This compares ValueDFS structures, creating OrderedBasicBlocks where
@@ -552,10 +553,11 @@ void PredicateInfo::renameUses(SmallPtrSetImpl<Value *> &OpSet) {
   auto Comparator = [&](const Value *A, const Value *B) {
     return valueComesBefore(OI, A, B);
   };
-  std::sort(OpsToRename.begin(), OpsToRename.end(), Comparator);
+  llvm::sort(OpsToRename.begin(), OpsToRename.end(), Comparator);
   ValueDFS_Compare Compare(OI);
   // Compute liveness, and rename in O(uses) per Op.
   for (auto *Op : OpsToRename) {
+    LLVM_DEBUG(dbgs() << "Visiting " << *Op << "\n");
     unsigned Counter = 0;
     SmallVector<ValueDFS, 16> OrderedUses;
     const auto &ValueInfo = getValueInfo(Op);
@@ -610,7 +612,12 @@ void PredicateInfo::renameUses(SmallPtrSetImpl<Value *> &OpSet) {
     }
 
     convertUsesToDFSOrdered(Op, OrderedUses);
-    std::sort(OrderedUses.begin(), OrderedUses.end(), Compare);
+    // Here we require a stable sort because we do not bother to try to
+    // assign an order to the operands the uses represent. Thus, two
+    // uses in the same instruction do not have a strict sort order
+    // currently and will be considered equal. We could get rid of the
+    // stable sort by creating one if we wanted.
+    std::stable_sort(OrderedUses.begin(), OrderedUses.end(), Compare);
     SmallVector<ValueDFS, 8> RenameStack;
     // For each use, sorted into dfs order, push values and replaces uses with
     // top of stack, which will represent the reaching def.
@@ -619,15 +626,15 @@ void PredicateInfo::renameUses(SmallPtrSetImpl<Value *> &OpSet) {
       // we want to.
       bool PossibleCopy = VD.PInfo != nullptr;
       if (RenameStack.empty()) {
-        DEBUG(dbgs() << "Rename Stack is empty\n");
+        LLVM_DEBUG(dbgs() << "Rename Stack is empty\n");
       } else {
-        DEBUG(dbgs() << "Rename Stack Top DFS numbers are ("
-                     << RenameStack.back().DFSIn << ","
-                     << RenameStack.back().DFSOut << ")\n");
+        LLVM_DEBUG(dbgs() << "Rename Stack Top DFS numbers are ("
+                          << RenameStack.back().DFSIn << ","
+                          << RenameStack.back().DFSOut << ")\n");
       }
 
-      DEBUG(dbgs() << "Current DFS numbers are (" << VD.DFSIn << ","
-                   << VD.DFSOut << ")\n");
+      LLVM_DEBUG(dbgs() << "Current DFS numbers are (" << VD.DFSIn << ","
+                        << VD.DFSOut << ")\n");
 
       bool ShouldPush = (VD.Def || PossibleCopy);
       bool OutOfScope = !stackIsInScope(RenameStack, VD);
@@ -646,7 +653,7 @@ void PredicateInfo::renameUses(SmallPtrSetImpl<Value *> &OpSet) {
       if (VD.Def || PossibleCopy)
         continue;
       if (!DebugCounter::shouldExecute(RenameCounter)) {
-        DEBUG(dbgs() << "Skipping execution due to debug counter\n");
+        LLVM_DEBUG(dbgs() << "Skipping execution due to debug counter\n");
         continue;
       }
       ValueDFS &Result = RenameStack.back();
@@ -657,8 +664,9 @@ void PredicateInfo::renameUses(SmallPtrSetImpl<Value *> &OpSet) {
       if (!Result.Def)
         Result.Def = materializeStack(Counter, RenameStack, Op);
 
-      DEBUG(dbgs() << "Found replacement " << *Result.Def << " for "
-                   << *VD.U->get() << " in " << *(VD.U->getUser()) << "\n");
+      LLVM_DEBUG(dbgs() << "Found replacement " << *Result.Def << " for "
+                        << *VD.U->get() << " in " << *(VD.U->getUser())
+                        << "\n");
       assert(DT.dominates(cast<Instruction>(Result.Def), *VD.U) &&
              "Predicateinfo def should have dominated this use");
       VD.U->set(Result.Def);
@@ -734,7 +742,7 @@ PreservedAnalyses PredicateInfoPrinterPass::run(Function &F,
   return PreservedAnalyses::all();
 }
 
-/// \brief An assembly annotator class to print PredicateInfo information in
+/// An assembly annotator class to print PredicateInfo information in
 /// comments.
 class PredicateInfoAnnotatedWriter : public AssemblyAnnotationWriter {
   friend class PredicateInfo;

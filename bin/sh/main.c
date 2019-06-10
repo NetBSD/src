@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.73.4.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.4.1 2019/06/10 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $");
 
 int rootpid;
 int rootshell;
+struct jmploc main_handler;
 int max_user_fd;
 #if PROFILE
 short profile_buf[16384];
@@ -102,7 +103,6 @@ STATIC void read_profile(const char *);
 int
 main(int argc, char **argv)
 {
-	struct jmploc jmploc;
 	struct stackmark smark;
 	volatile int state;
 	char *shinit;
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
 #endif
 	state = 0;
-	if (setjmp(jmploc.loc)) {
+	if (setjmp(main_handler.loc)) {
 		/*
 		 * When a shell procedure is executed, we raise the
 		 * exception EXSHELLPROC to clean up before executing
@@ -150,7 +150,8 @@ main(int argc, char **argv)
 		}
 
 		if (exception != EXSHELLPROC) {
-			if (state == 0 || iflag == 0 || ! rootshell)
+			if (state == 0 || iflag == 0 || ! rootshell ||
+			    exception == EXEXIT)
 				exitshell(exitstatus);
 		}
 		reset();
@@ -169,7 +170,7 @@ main(int argc, char **argv)
 		else
 			goto state4;
 	}
-	handler = &jmploc;
+	handler = &main_handler;
 #ifdef DEBUG
 #if DEBUG >= 2
 	debug = 1;	/* this may be reset by procargs() later */
@@ -201,20 +202,24 @@ main(int argc, char **argv)
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
-state1:
+ state1:
 		state = 2;
 		read_profile(".profile");
 	}
-state2:
+ state2:
 	state = 3;
 	if ((iflag || !posix) &&
 	    getuid() == geteuid() && getgid() == getegid()) {
+		struct stackmark env_smark;
+
+		setstackmark(&env_smark);
 		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
 			state = 3;
-			read_profile(shinit);
+			read_profile(expandenv(shinit));
 		}
+		popstackmark(&env_smark);
 	}
-state3:
+ state3:
 	state = 4;
 	line_number = 1;	/* undo anything from profile files */
 
@@ -234,15 +239,20 @@ state3:
 	}
 
 	if (minusc)
-		evalstring(minusc, 0);
+		evalstring(minusc, sflag ? 0 : EV_EXIT);
 
 	if (sflag || minusc == NULL) {
-state4:	/* XXX ??? - why isn't this before the "if" statement */
+ state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
+		if (iflag) {
+			out2str("\n");
+			flushout(&errout);
+		}
 	}
 #if PROFILE
 	monitor(0);
 #endif
+	line_number = plinno;
 	exitshell(exitstatus);
 	/* NOTREACHED */
 }
@@ -291,10 +301,9 @@ cmdloop(int top)
 		} else if (n != NULL && nflag == 0) {
 			job_warning = (job_warning == 2) ? 1 : 0;
 			numeof = 0;
-			evaltree(n, EV_MORE);
+			evaltree(n, 0);
 		}
-		popstackmark(&smark);
-		setstackmark(&smark);
+		rststackmark(&smark);
 
 		/*
 		 * Any SKIP* can occur here!  SKIP(FUNC|BREAK|CONT) occur when
@@ -326,6 +335,9 @@ read_profile(const char *name)
 	int xflag_set = 0;
 	int vflag_set = 0;
 
+	if (*name == '\0')
+		return;
+
 	INTOFF;
 	if ((fd = open(name, O_RDONLY)) >= 0)
 		setinputfd(fd, 1);
@@ -339,7 +351,9 @@ read_profile(const char *name)
 	    if (vflag)
 		    vflag = 0, vflag_set = 1;
 	}
+	(void)set_dot_funcnest(1);	/* allow profile to "return" */
 	cmdloop(0);
+	(void)set_dot_funcnest(0);
 	if (qflag)  {
 	    if (xflag_set)
 		    xflag = 1;
@@ -378,7 +392,8 @@ exitcmd(int argc, char **argv)
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)
-		exitstatus = number(argv[1]);
-	exitshell(exitstatus);
+		exitshell(number(argv[1]));
+	else
+		exitshell_savedstatus();
 	/* NOTREACHED */
 }

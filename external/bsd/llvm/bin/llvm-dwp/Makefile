@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/08/01 20:07:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2019/06/10 21:45:06 christos Exp $
 
 PROG_CXX=	llvm-dwp
 NOMAN=		yes
@@ -21,6 +21,7 @@ LLVM_LIBS+= \
 	ARMTargetInfo \
 	ARMMCTargetDesc \
 	ARMAsmPrinter \
+	ARMUtils \
 	MipsCodeGen \
 	MipsTargetInfo \
 	MipsMCTargetDesc \

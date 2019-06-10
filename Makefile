@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.324 2018/05/02 07:34:44 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.324.2.1 2019/06/10 21:41:01 christos Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -93,8 +93,7 @@
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
-#   do-lib:          builds and installs prerequisites from lib
-#                    if ${MKCOMPAT} != "no".
+#   do-lib:          builds and installs prerequisites from lib.
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
 #                    if ${MKCOMPAT} != "no".
 #   do-x11:          builds and installs X11 tools and libraries
@@ -137,8 +136,8 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include external crypto/external bin games
-_SUBDIR+=	libexec sbin usr.bin
+_SUBDIR=	tools .WAIT lib include external crypto/external bin
+_SUBDIR+=	games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
 _SUBDIR+=	.WAIT rescue .WAIT distrib regress
 

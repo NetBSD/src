@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.85 2017/12/17 21:16:33 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.85.4.1 2019/06/10 21:45:03 christos Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		branches/release_50
+SVN_BRANCH=		trunk
 
-COMMON_REVISION=	r319952
+COMMON_REVISION=	r337282
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}
@@ -17,9 +17,9 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		5.0.1
-CLANG_VERSION=		5.0.1
-LLD_VERSION=		5.0.1
+LLVM_VERSION=		7.0.0
+CLANG_VERSION=		7.0.0
+LLD_VERSION=		7.0.0
 
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
 LLD_SRCDIR:=	${.PARSEDIR}/dist/lld
@@ -34,9 +34,11 @@ CPPFLAGS+=	-I. -I${CLANG_SRCDIR}/include -I${LLD_SRCDIR}/include \
 		-I${LLDB_SRCDIR}/include \
 		-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 		-D__STDC_FORMAT_MACROS -DCLANG_ENABLE_STATIC_ANALYZER \
-		-DLLVM_BUILD_GLOBAL_ISEL
+		-DENABLE_EXPERIMENTAL_NEW_PASS_MANAGER=false \
+		-DCLANG_OPENMP_NVPTX_DEFAULT_ARCH=\"sm_35\" \
+		-DCLANG_DEFAULT_OBJCOPY=\"objcopy\"
 
-.if defined(HOSTLIB) || defined(HOSTPROG)
+.if defined(HOSTLIB) || defined(HOSTPROG) || defined(_BSD_HOSTINIT_MK_)
 LLVM_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/include
 CLANG_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/tools/clang/include
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
@@ -45,11 +47,13 @@ LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
 HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
 HOST_CPPFLAGS+=	-std=c++11
+LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
+LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips,amdgpu
 
 .if ${MKLLDB:Uno} == "yes"
 CPPFLAGS+=	-DLLDB_DISABLE_PYTHON
@@ -67,7 +71,7 @@ CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 LLVM_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 
 LLVM_CONFIGURE_ARGS=	\
-	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
+	--enable-targets=${LLVM_TARGETS} \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-default-openmp-runtime=libomp \

@@ -888,7 +888,7 @@ protected:
   /// int * but is actually an Obj-C class pointer.
   llvm::WeakTrackingVH ConstantStringClassRef;
 
-  /// \brief The LLVM type corresponding to NSConstantString.
+  /// The LLVM type corresponding to NSConstantString.
   llvm::StructType *NSConstantStringType = nullptr;
 
   llvm::StringMap<llvm::GlobalVariable *> NSConstantStringMap;
@@ -1708,7 +1708,7 @@ struct NullReturnState {
            e = Method->param_end(); i != e; ++i, ++I) {
         const ParmVarDecl *ParamDecl = (*i);
         if (ParamDecl->hasAttr<NSConsumedAttr>()) {
-          RValue RV = I->RV;
+          RValue RV = I->getRValue(CGF);
           assert(RV.isScalar() && 
                  "NullReturnState::complete - arg not on object");
           CGF.EmitARCRelease(RV.getScalarVal(), ARCImpreciseLifetime);
@@ -3401,7 +3401,9 @@ static bool hasMRCWeakIvars(CodeGenModule &CGM,
   See EmitClassExtension();
 */
 void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
-  DefinedSymbols.insert(ID->getIdentifier());
+  IdentifierInfo *RuntimeName =
+      &CGM.getContext().Idents.get(ID->getObjCRuntimeNameAsString());
+  DefinedSymbols.insert(RuntimeName);
 
   std::string ClassName = ID->getNameAsString();
   // FIXME: Gross
@@ -4179,10 +4181,6 @@ void FragileHazards::emitHazardsInNewBlocks() {
   }
 }
 
-static void addIfPresent(llvm::DenseSet<llvm::Value*> &S, llvm::Value *V) {
-  if (V) S.insert(V);
-}
-
 static void addIfPresent(llvm::DenseSet<llvm::Value*> &S, Address V) {
   if (V.isValid()) S.insert(V.getPointer());
 }
@@ -4885,10 +4883,7 @@ void CGObjCCommonMac::EmitImageInfo() {
   }
 
   // Indicate whether we're compiling this to run on a simulator.
-  const llvm::Triple &Triple = CGM.getTarget().getTriple();
-  if ((Triple.isiOS() || Triple.isWatchOS()) &&
-      (Triple.getArch() == llvm::Triple::x86 ||
-       Triple.getArch() == llvm::Triple::x86_64))
+  if (CGM.getTarget().getTriple().isSimulatorEnvironment())
     Mod.addModuleFlag(llvm::Module::Error, "Objective-C Is Simulated",
                       eImageInfo_ImageIsSimulated);
 
@@ -4987,7 +4982,9 @@ llvm::Value *CGObjCMac::EmitClassRef(CodeGenFunction &CGF,
   if (ID->hasAttr<ObjCRuntimeVisibleAttr>())
     return EmitClassRefViaRuntime(CGF, ID, ObjCTypes);
 
-  return EmitClassRefFromId(CGF, ID->getIdentifier());
+  IdentifierInfo *RuntimeName =
+      &CGM.getContext().Idents.get(ID->getObjCRuntimeNameAsString());
+  return EmitClassRefFromId(CGF, RuntimeName);
 }
 
 llvm::Value *CGObjCMac::EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF) {
@@ -5084,6 +5081,11 @@ void IvarLayoutBuilder::visitField(const FieldDecl *field,
 
   // Drill down into arrays.
   uint64_t numElts = 1;
+  if (auto arrayType = CGM.getContext().getAsIncompleteArrayType(fieldType)) {
+    numElts = 0;
+    fieldType = arrayType->getElementType();
+  }
+  // Unlike incomplete arrays, constant arrays can be nested.
   while (auto arrayType = CGM.getContext().getAsConstantArrayType(fieldType)) {
     numElts *= arrayType->getSize().getZExtValue();
     fieldType = arrayType->getElementType();
@@ -6307,9 +6309,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *MetaTClass =
     BuildClassObject(CI, /*metaclass*/ true,
                      IsAGV, SuperClassGV, CLASS_RO_GV, classIsHidden);
-  if (CGM.getTriple().isOSBinFormatCOFF())
-    if (CI->hasAttr<DLLExportAttr>())
-      MetaTClass->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+  CGM.setGVProperties(MetaTClass, CI);
   DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
@@ -6349,9 +6349,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *ClassMD =
     BuildClassObject(CI, /*metaclass*/ false,
                      MetaTClass, SuperClassGV, CLASS_RO_GV, classIsHidden);
-  if (CGM.getTriple().isOSBinFormatCOFF())
-    if (CI->hasAttr<DLLExportAttr>())
-      ClassMD->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+  CGM.setGVProperties(ClassMD, CI);
   DefinedClasses.push_back(ClassMD);
   ImplementedClasses.push_back(CI);
 
@@ -6401,7 +6399,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CodeGenFunction &CGF,
   PTGV->setAlignment(Align.getQuantity());
   if (!CGM.getTriple().isOSBinFormatMachO())
     PTGV->setComdat(CGM.getModule().getOrInsertComdat(ProtocolName));
-  CGM.addCompilerUsedGlobal(PTGV);
+  CGM.addUsedGlobal(PTGV);
   return CGF.Builder.CreateAlignedLoad(PTGV, Align);
 }
 
@@ -6615,10 +6613,14 @@ CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
           Ivar->getAccessControl() == ObjCIvarDecl::Private ||
           Ivar->getAccessControl() == ObjCIvarDecl::Package;
 
-      if (ID->hasAttr<DLLExportAttr>() && !IsPrivateOrPackage)
-        IvarOffsetGV->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
-      else if (ID->hasAttr<DLLImportAttr>())
-        IvarOffsetGV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+      const ObjCInterfaceDecl *ContainingID = Ivar->getContainingInterface();
+
+      if (ContainingID->hasAttr<DLLImportAttr>())
+        IvarOffsetGV
+            ->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+      else if (ContainingID->hasAttr<DLLExportAttr>() && !IsPrivateOrPackage)
+        IvarOffsetGV
+            ->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
     }
   }
   return IvarOffsetGV;
@@ -6841,7 +6843,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     Protocols[PD->getIdentifier()] = Entry;
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  CGM.addCompilerUsedGlobal(Entry);
+  CGM.addUsedGlobal(Entry);
 
   // Use this protocol meta-data to build protocol list table in section
   // __DATA, __objc_protolist
@@ -6860,7 +6862,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   PTGV->setSection(GetSectionName("__objc_protolist",
                                   "coalesced,no_dead_strip"));
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  CGM.addCompilerUsedGlobal(PTGV);
+  CGM.addUsedGlobal(PTGV);
   return Entry;
 }
 
@@ -6946,7 +6948,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
 
   // This could be 32bit int or 64bit integer depending on the architecture.
   // Cast it to 64bit integer value, if it is a 32bit integer ivar offset value
-  //  as this is what caller always expectes.
+  //  as this is what caller always expects.
   if (ObjCTypes.IvarOffsetVarTy == ObjCTypes.IntTy)
     IvarOffsetValue = CGF.Builder.CreateIntCast(
         IvarOffsetValue, ObjCTypes.LongTy, true, "ivar.conv");
@@ -7073,7 +7075,7 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
             CGF.getPointerAlign());
 
   // Update the message ref argument.
-  args[1].RV = RValue::get(mref.getPointer());
+  args[1].setRValue(RValue::get(mref.getPointer()));
 
   // Load the function to call from the message ref table.
   Address calleeAddr =
@@ -7522,12 +7524,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
       Entry = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.EHTypeTy,
                                        false, llvm::GlobalValue::ExternalLinkage,
                                        nullptr, EHTypeName);
-      if (CGM.getTriple().isOSBinFormatCOFF()) {
-        if (ID->hasAttr<DLLExportAttr>())
-          Entry->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
-        else if (ID->hasAttr<DLLImportAttr>())
-          Entry->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
-      }
+      CGM.setGVProperties(Entry, ID);
       return Entry;
     }
   }
@@ -7549,8 +7546,9 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   llvm::Value *VTableIdx = llvm::ConstantInt::get(CGM.Int32Ty, 2);
   ConstantInitBuilder builder(CGM);
   auto values = builder.beginStruct(ObjCTypes.EHTypeTy);
-  values.add(llvm::ConstantExpr::getGetElementPtr(VTableGV->getValueType(),
-                                                  VTableGV, VTableIdx));
+  values.add(
+    llvm::ConstantExpr::getInBoundsGetElementPtr(VTableGV->getValueType(),
+                                                 VTableGV, VTableIdx));
   values.add(GetClassName(ClassName));
   values.add(GetClassGlobal(ID, /*metaclass*/ false, NotForDefinition));
 
@@ -7565,10 +7563,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                          CGM.getPointerAlign(),
                                          /*constant*/ false,
                                          L);
-    if (CGM.getTriple().isOSBinFormatCOFF())
-      if (hasObjCExceptionAttribute(CGM.getContext(), ID))
-        if (ID->hasAttr<DLLExportAttr>())
-          Entry->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+    if (hasObjCExceptionAttribute(CGM.getContext(), ID))
+      CGM.setGVProperties(Entry, ID);
   }
   assert(Entry->getLinkage() == L);
 

@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-darwin -O0 -filetype=obj -o - < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -O0 -filetype=obj -o - < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 ; PR33157. Don't crash on duplicate dbg.declare.
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK: DW_AT_location [DW_FORM_exprloc]
@@ -39,6 +39,6 @@ done:
 !22 = !{i32 2, !"Dwarf Version", i32 4}
 !23 = !{i32 2, !"Debug Info Version", i32 3}
 !62 = !{!10}
-!98 = distinct !DISubprogram(name: "NSMaxX", scope: !1, file: !1, line: 27, isLocal: true, isDefinition: true, scopeLine: 27, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !62, type: !99)
+!98 = distinct !DISubprogram(name: "NSMaxX", scope: !1, file: !1, line: 27, isLocal: true, isDefinition: true, scopeLine: 27, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !62, type: !99)
 !99 = !DISubroutineType(types: !100)
 !100 = !{null}

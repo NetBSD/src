@@ -122,43 +122,53 @@ Tspi_Key_CertifyKey(TSS_HKEY hKey,			/* in */
 		result |= Trspi_Hash_UINT32(&hashCtx, outDataSize);
 		result |= Trspi_HashUpdate(&hashCtx, outDataSize, outData);
 		if ((result |= Trspi_HashFinal(&hashCtx, digest.digest)))
-			return result;
+			goto cleanup;
 
 		if (useAuthKey)
 			if ((result = obj_policy_validate_auth_oiap(hPolicy, &digest, &keyAuth)))
-				return result;
+				goto cleanup;
 
 		if (useAuthCert)
 			if ((result = obj_policy_validate_auth_oiap(hCertPolicy, &digest,
 								    &certAuth)))
-				return result;
+				goto cleanup;
 	}
 
 	if (pValidationData == NULL) {
 		if ((result = Trspi_Hash(TSS_HASH_SHA1, CertifyInfoSize, CertifyInfo,
 					 digest.digest)))
-			return result;
+			goto cleanup;
+
 
 		if ((result = __tspi_rsa_verify(hCertifyingKey, TSS_HASH_SHA1, TPM_SHA1_160_HASH_LEN,
-					 digest.digest, outDataSize, outData)))
-			return TSPERR(TSS_E_VERIFICATION_FAILED);
+					 digest.digest, outDataSize, outData))){
+			result = TSPERR(TSS_E_VERIFICATION_FAILED);
+			goto cleanup;
+		}
 	} else {
 		pValidationData->ulDataLength = CertifyInfoSize;
 		pValidationData->rgbData = calloc_tspi(tspContext, CertifyInfoSize);
 		if (pValidationData->rgbData == NULL) {
 			LogError("malloc of %u bytes failed.", CertifyInfoSize);
-			return TSPERR(TSS_E_OUTOFMEMORY);
+			result = TSPERR(TSS_E_OUTOFMEMORY);
+			goto cleanup;
 		}
 		memcpy(pValidationData->rgbData, CertifyInfo, CertifyInfoSize);
 		pValidationData->ulValidationDataLength = outDataSize;
 		pValidationData->rgbValidationData = calloc_tspi(tspContext, outDataSize);
 		if (pValidationData->rgbValidationData == NULL) {
 			LogError("malloc of %u bytes failed.", outDataSize);
-			return TSPERR(TSS_E_OUTOFMEMORY);
+			result = TSPERR(TSS_E_OUTOFMEMORY);
+			goto cleanup;
 		}
 		memcpy(pValidationData->rgbValidationData, outData, outDataSize);
 	}
 
-	return TSS_SUCCESS;
+	result = TSS_SUCCESS;
+
+	cleanup:
+	free(CertifyInfo);
+	free(outData);
+	return result;
 }
 

@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.2 2009/10/01 00:22:03 tsarna Exp $
+# $NetBSD: Makefile.inc,v 1.2.48.1 2019/06/10 21:42:45 christos Exp $
 
 .include <bsd.own.mk>
 
-DIST=	${NETBSDSRCDIR}/external/apache2/mDNSResponder/dist
+DIST:=	${.PARSEDIR}/dist
 
 # IPv6 support.
 .if ${MKINET6} == "no"

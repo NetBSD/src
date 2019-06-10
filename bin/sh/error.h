@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.19 2012/03/15 02:02:20 joerg Exp $	*/
+/*	$NetBSD: error.h,v 1.19.34.1 2019/06/10 21:41:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ struct jmploc {
 	jmp_buf loc;
 };
 
+extern volatile int errors_suppressed;
+extern const char * volatile currentcontext;
+
 extern struct jmploc *handler;
 extern int exception;
 extern int exerrno;	/* error for EXEXEC */
@@ -70,6 +73,7 @@ extern int exerrno;	/* error for EXEXEC */
 #define EXERROR 1	/* a generic error */
 #define EXSHELLPROC 2	/* execute a shell procedure */
 #define EXEXEC 3	/* command execution failed */
+#define EXEXIT 4	/* shell wants to exit(exitstatus) */
 
 
 /*
@@ -83,9 +87,9 @@ extern volatile int suppressint;
 extern volatile int intpending;
 
 #define INTOFF suppressint++
-#define INTON { if (--suppressint == 0 && intpending) onint(); }
-#define FORCEINTON {suppressint = 0; if (intpending) onint();}
-#define CLEAR_PENDING_INT intpending = 0
+#define INTON do { if (--suppressint == 0 && intpending) onint(); } while (0)
+#define FORCEINTON do { suppressint = 0; if (intpending) onint(); } while (0)
+#define CLEAR_PENDING_INT (intpending = 0)
 #define int_pending() intpending
 
 #if ! defined(SHELL_BUILTIN)

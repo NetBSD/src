@@ -18,7 +18,6 @@ base-crypto-root base-sys-root
 base-crypto-shlib base-sys-usr
 base-cxx-usr base-c-usr
 base-debug-bin base-sys-usr
-base-dhclient-root base-sys-root
 base-dhcpd-bin base-sys-share
 base-dhcpd-bin base-sys-usr
 base-dhcpd-examples base-sys-share
@@ -37,8 +36,6 @@ base-hesiod-bin base-sys-usr
 base-htmldoc-share base-sys-share
 base-i18n-root base-sys-usr
 base-i18n-shlib base-i18n-root
-base-isdn-bin base-sys-usr
-base-isdn-examples base-sys-share
 base-krb5-bin base-sys-usr
 base-krb5-examples base-sys-share
 base-krb5-root base-sys-root
@@ -254,6 +251,7 @@ comp-krb5-lib base-sys-usr
 comp-krb5-man base-man-share
 comp-krb5-proflib base-sys-usr
 comp-krb5c-catman base-man-share
+comp-nis-include comp-c-include
 comp-objc-bin base-sys-usr
 comp-objc-lib base-sys-usr
 comp-objc-piclib base-sys-usr
@@ -286,12 +284,10 @@ etc-bootserver-rc base-sys-root
 etc-cron-log base-sys-root
 etc-cron-rc base-sys-root
 etc-cron-root base-cron-root
-etc-dhclient-rc base-sys-root
 etc-dhcpd-rc base-sys-root
 etc-games-etc base-sys-root
 etc-games-scores base-games-root
 etc-ipf-rc base-sys-root
-etc-isdn-rc base-sys-root
 etc-krb5-rc base-sys-root
 etc-libsaslc-etc base-sys-root
 etc-libsaslc-postfix base-sys-root
@@ -367,8 +363,6 @@ man-cvs-info base-texinfo-share
 man-debug-catman base-man-share
 man-debug-info base-texinfo-share
 man-debug-man base-man-share
-man-dhclient-catman base-man-share
-man-dhclient-man base-man-share
 man-dhcpd-catman base-man-share
 man-dhcpd-man base-man-share
 man-efs-catman base-man-share
@@ -389,8 +383,6 @@ man-hesiod-man base-man-share
 man-info-share base-texinfo-share
 man-ipf-catman base-man-share
 man-ipf-man base-man-share
-man-isdn-catman base-man-share
-man-isdn-man base-man-share
 man-krb5-catman base-man-share
 man-krb5-info base-texinfo-share
 man-krb5-man base-man-share
@@ -476,7 +468,6 @@ misc-bind-htmldoc base-htmldoc-share
 misc-crypto-examples base-crypto-examples
 misc-dhcpd-examples base-dhcpd-examples
 misc-fstab-examples base-fstab-examples
-misc-isdn-examples base-isdn-examples
 misc-krb5-examples base-krb5-examples
 misc-libsaslc-examples base-libsaslc-examples
 misc-netutil-examples base-netutil-examples

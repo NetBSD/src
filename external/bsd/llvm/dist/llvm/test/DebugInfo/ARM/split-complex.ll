@@ -1,5 +1,5 @@
 ; RUN: %llc_dwarf -O0 -filetype=obj -o %t.o %s
-; RUN: llvm-dwarfdump -debug-dump=info %t.o | FileCheck %s
+; RUN: llvm-dwarfdump -v -debug-info %t.o | FileCheck %s
 ; REQUIRES: object-emission
 target datalayout = "e-m:o-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
 target triple = "thumbv7-apple-unknown-macho"
@@ -14,12 +14,11 @@ entry:
   ; The target has no native double type.
   ; SROA split the complex value into two i64 values.
   ; CHECK: DW_TAG_formal_parameter
-  ; CHECK-NEXT:  DW_AT_location [DW_FORM_block1]	(<0x04> 10 00 93 08 )
-  ;              DW_AT_location       ( constu 0x00000000, piece 0x00000008 )
+  ; CHECK-NEXT:  DW_AT_location [DW_FORM_block1]	(DW_OP_constu 0x0, DW_OP_piece 0x8)
   ; CHECK-NEXT:  DW_AT_name {{.*}} "c"
-  tail call void @llvm.dbg.value(metadata i64 0, i64 0, metadata !14, metadata !17), !dbg !16
+  tail call void @llvm.dbg.value(metadata i64 0, metadata !14, metadata !17), !dbg !16
   ; Manually removed to disable location list emission:
-  ; tail call void @llvm.dbg.value(metadata i64 0, i64 0, metadata !14, metadata !18), !dbg !16
+  ; tail call void @llvm.dbg.value(metadata i64 0, metadata !14, metadata !18), !dbg !16
   ret void, !dbg !19
 }
 
@@ -27,7 +26,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #0
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #0
+declare void @llvm.dbg.value(metadata, metadata, metadata) #0
 
 attributes #0 = { nounwind readnone }
 
@@ -38,7 +37,7 @@ attributes #0 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.9.0 (trunk 259998) (llvm/trunk 259999)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
 !1 = !DIFile(filename: "<stdin>", directory: "/")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "f", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !5 = !DIFile(filename: "test.c", directory: "/")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

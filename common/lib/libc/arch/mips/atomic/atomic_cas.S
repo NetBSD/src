@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.4 2015/06/01 23:16:54 matt Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4.16.1 2019/06/10 21:41:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_cas.S,v 1.4 2015/06/01 23:16:54 matt Exp $")
+RCSID("$NetBSD: atomic_cas.S,v 1.4.16.1 2019/06/10 21:41:06 christos Exp $")
 
 	.text
 	.set	noat
@@ -54,6 +54,7 @@ LEAF(_atomic_cas_32)
 	 nop
 END(_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_32, _atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_32_ni, _atomic_cas_32)
 
 #if !defined(__mips_o32)
 LEAF(_atomic_cas_64)
@@ -74,6 +75,7 @@ LEAF(_atomic_cas_64)
 	 nop
 END(_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_64, _atomic_cas_64)
+ATOMIC_OP_ALIAS(atomic_cas_64_ni, _atomic_cas_64)
 #endif
 
 #ifdef _LP64

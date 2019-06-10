@@ -6,8 +6,9 @@
 %#      pre-compilation stage of flex. Only macros starting
 %#      with `m4preproc_' are processed, and quoting is normal.
 %#
-%#   2. The preprocessed skeleton is translated verbatim into a
-%#      C array, saved as "skel.c" and compiled into the flex binary.
+%#   2. The preprocessed skeleton is translated into a C array, saved
+%#      as "skel.c" and compiled into the flex binary. The %# comment
+%#      lines are removed.
 %#
 %#   3. At runtime, the skeleton is generated and filtered (again)
 %#      through m4. Macros beginning with `m4_' will be processed.
@@ -114,6 +115,16 @@ m4_ifdef( [[M4_YY_PREFIX]],, [[m4_define([[M4_YY_PREFIX]], [[yy]])]])
 m4preproc_define(`M4_GEN_PREFIX',
     ``[[#define yy$1 ]]M4_YY_PREFIX[[$1]]
 %# m4_define([[yy$1]], [[M4_YY_PREFIX[[$1]]m4_ifelse($'`#,0,,[[($'`@)]])]])'')
+m4preproc_define(`M4_GEN_PREFIX',``
+[[#ifdef yy$1
+#define ]]M4_YY_PREFIX[[$1_ALREADY_DEFINED
+#else
+#define yy$1 ]]M4_YY_PREFIX[[$1
+#endif]]
+'m4preproc_divert(1)`
+[[#ifndef ]]M4_YY_PREFIX[[$1_ALREADY_DEFINED
+#undef yy$1
+#endif]]'m4preproc_divert(0)')
 
 %if-c++-only
     /* The c++ scanner is a mess. The FlexLexer.h header file relies on the
@@ -1682,6 +1693,8 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size M4_YY_CALL_LAST_ARG );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+		/* "- 2" to take care of EOB's */
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_size = (yy_size_t) (new_size - 2);
 	}
 
 	YY_G(yy_n_chars) += number_to_move;
@@ -1914,6 +1927,9 @@ m4_ifdef( [[M4_YY_USE_LINENO]],
  */
 void yyFlexLexer::yyrestart( std::istream* input_file )
 {
+	if( ! input_file ) {
+		input_file = &yyin;
+	}
 	yyrestart( *input_file );
 }
 %endif
@@ -2075,7 +2091,7 @@ static void yy_load_buffer_state  (M4_YY_DEF_ONLY_ARG)
 	b->yy_input_file = file;
 %endif
 %if-c++-only
-	b->yy_input_file = (&file == 0) ? NULL : file.rdbuf();
+	b->yy_input_file = file.rdbuf();
 %endif
 	b->yy_fill_buffer = 1;
 
@@ -2453,7 +2469,7 @@ static void yynoreturn yy_fatal_error YYFARGS1(const char*, msg)
 {
 	M4_YY_DECL_GUTS_VAR();
 	M4_YY_NOOP_GUTS_VAR();
-	(void) fprintf( stderr, "%s\n", msg );
+	fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 %endif
@@ -3416,4 +3432,5 @@ m4_ifdef( [[M4_YY_IN_HEADER]],
 #undef YY_DECL_IS_OURS
 #undef YY_DECL
 #endif
+m4preproc_undivert(1)
 ]])

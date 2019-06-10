@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/01/16 16:10:39 roy Exp $
+#	$NetBSD: Makefile,v 1.11.48.1 2019/06/10 21:42:35 christos Exp $
 
 SUBDIR+=base-adosfs-root
 SUBDIR+=base-amd-bin
@@ -19,7 +19,6 @@ SUBDIR+=base-crypto-root
 SUBDIR+=base-crypto-shlib
 SUBDIR+=base-cxx-usr
 SUBDIR+=base-debug-bin
-SUBDIR+=base-dhclient-root
 SUBDIR+=base-dhcpd-bin
 SUBDIR+=base-dhcpd-examples
 SUBDIR+=base-ext2fs-root
@@ -33,7 +32,6 @@ SUBDIR+=base-groff-share
 SUBDIR+=base-hesiod-bin
 SUBDIR+=base-htmldoc-share
 SUBDIR+=base-i18n-shlib
-SUBDIR+=base-isdn-bin
 SUBDIR+=base-krb5-bin
 SUBDIR+=base-krb5-examples
 SUBDIR+=base-krb5-root

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.24 2017/08/21 13:20:49 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.24.4.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,16 +73,17 @@
 
 union node *parsecmd(int);
 void fixredir(union node *, const char *, int);
-int goodname(char *);
+int goodname(const char *);
+int isassignment(const char *);
 const char *getprompt(void *);
 const char *expandstr(char *, int);
+const char *expandenv(char *);
 
 struct HereDoc;
 union node;
 struct nodelist;
 
 struct parse_state {
-	int ps_noalias;			/* when set, don't handle aliases */
 	struct HereDoc *ps_heredoclist;	/* list of here documents to read */
 	int ps_parsebackquote;		/* nonzero inside backquotes */
 	int ps_doprompt;		/* if set, prompt the user */
@@ -90,10 +91,10 @@ struct parse_state {
 	int ps_lasttoken;		/* last token read */
 	int ps_tokpushback;		/* last token pushed back */
 	char *ps_wordtext;	/* text of last word returned by readtoken */
-	int ps_checkkwd;	/* 1 == check for kwds, 2 += eat newlines */
+	int ps_checkkwd;		/* word expansion flags, see below */
 	struct nodelist *ps_backquotelist; /* list of cmdsubs to process */
 	union node *ps_redirnode;	/* node for current redirect */
-	struct HereDoc *ps_heredoc;	/* current heredoc << beign parsed */
+	struct HereDoc *ps_heredoc;	/* current heredoc << being parsed */
 	int ps_quoteflag;		/* set if (part) of token was quoted */
 	int ps_startlinno;		/* line # where last token started */
 	int ps_funclinno;		/* line # of the current function */
@@ -103,7 +104,7 @@ struct parse_state {
 /*
  * The parser references the elements of struct parse_state quite
  * frequently - they used to be simple globals, so one memory ref
- * per access, adding an indirect through global ptr would not be
+ * per access, adding an indirect through a global ptr would not be
  * nice.   The following gross hack allows most of that cost to be
  * avoided, by allowing the compiler to understand that the global
  * pointer is in fact constant in any function, and so its value can
@@ -134,7 +135,6 @@ extern union parse_state_p psp;
 #define	tokpushback	(current_parser->ps_tokpushback)
 #define	checkkwd	(current_parser->ps_checkkwd)
 
-#define	noalias		(current_parser->ps_noalias)
 #define	heredoclist	(current_parser->ps_heredoclist)
 #define	parsebackquote	(current_parser->ps_parsebackquote)
 #define	doprompt	(current_parser->ps_doprompt)
@@ -148,6 +148,13 @@ extern union parse_state_p psp;
 #define	startlinno	(current_parser->ps_startlinno)
 #define	funclinno	(current_parser->ps_funclinno)
 #define	elided_nl	(current_parser->ps_elided_nl)
+
+/*
+ * Values that can be set in checkkwd
+ */
+#define CHKKWD		0x01		/* turn word into keyword (if it is) */
+#define CHKNL		0x02		/* ignore leading \n's */
+#define CHKALIAS	0x04		/* lookup words as aliases and ... */
 
 /*
  * NEOF is returned by parsecmd when it encounters an end of file.  It

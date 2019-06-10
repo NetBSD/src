@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -251,7 +251,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	const struct ipv4ll_state *istate;
 #endif
 #endif
-#ifdef INET6
+#ifdef DHCP6
 	const struct dhcp6_state *d6_state;
 #endif
 
@@ -261,14 +261,16 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	istate = IPV4LL_CSTATE(ifp);
 #endif
 #endif
-#ifdef INET6
+#ifdef DHCP6
 	d6_state = D6_CSTATE(ifp);
 #endif
 	if (strcmp(reason, "TEST") == 0) {
 		if (1 == 2) {}
 #ifdef INET6
+#ifdef DHCP6
 		else if (d6_state && d6_state->new)
 			protocol = PROTO_DHCP6;
+#endif
 		else if (ipv6nd_hasra(ifp))
 			protocol = PROTO_RA;
 #endif
@@ -284,8 +286,10 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #ifdef INET6
 	else if (strcmp(reason, "STATIC6") == 0)
 		protocol = PROTO_STATIC6;
+#ifdef DHCP6
 	else if (reason[strlen(reason) - 1] == '6')
 		protocol = PROTO_DHCP6;
+#endif
 	else if (strcmp(reason, "ROUTERADVERT") == 0)
 		protocol = PROTO_RA;
 #endif
@@ -379,7 +383,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #endif
 #ifdef INET6
 	    || (protocol == PROTO_STATIC6 && IPV6_STATE_RUNNING(ifp))
+#ifdef DHCP6
 	    || (protocol == PROTO_DHCP6 && d6_state && d6_state->new)
+#endif
 	    || (protocol == PROTO_RA && ipv6nd_hasra(ifp))
 #endif
 	    )
@@ -463,7 +469,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			goto eexit;
 	}
 #endif
-#ifdef INET6
+#ifdef DHCP6
 	if (protocol == PROTO_DHCP6 && d6_state && d6_state->old) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->old, d6_state->old_len);
@@ -534,6 +540,7 @@ dumplease:
 			elen += (size_t)n;
 		}
 	}
+#ifdef DHCP6
 	if (protocol == PROTO_DHCP6 && D6_STATE_RUNNING(ifp)) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->new, d6_state->new_len);
@@ -550,6 +557,7 @@ dumplease:
 			elen += (size_t)n;
 		}
 	}
+#endif
 	if (protocol == PROTO_RA) {
 		n = ipv6nd_env(NULL, NULL, ifp);
 		if (n > 0) {
@@ -632,7 +640,7 @@ send_interface(struct fd_list *fd, const struct interface *ifp)
 #ifdef INET
 	const struct dhcp_state *d;
 #endif
-#ifdef INET6
+#ifdef DHCP6
 	const struct dhcp6_state *d6;
 #endif
 
@@ -641,6 +649,7 @@ send_interface(struct fd_list *fd, const struct interface *ifp)
 		reason = "CARRIER";
 		break;
 	case LINK_DOWN:
+	case LINK_DOWN_IFFUP:
 		reason = "NOCARRIER";
 		break;
 	default:
@@ -672,11 +681,13 @@ send_interface(struct fd_list *fd, const struct interface *ifp)
 		if (send_interface1(fd, ifp, "ROUTERADVERT") == -1)
 			retval = -1;
 	}
+#ifdef DHCP6
 	if (D6_STATE_RUNNING(ifp)) {
 		d6 = D6_CSTATE(ifp);
 		if (send_interface1(fd, ifp, d6->reason) == -1)
 			retval = -1;
 	}
+#endif
 #endif
 
 	return retval;
@@ -693,9 +704,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	int status = 0;
 	struct fd_list *fd;
 
-	if (ifp->options->script &&
-	    (ifp->options->script[0] == '\0' ||
-	    strcmp(ifp->options->script, "/dev/null") == 0) &&
+	if (ifp->options->script == NULL &&
 	    TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
 		return 0;
 
@@ -706,12 +715,10 @@ script_runreason(const struct interface *ifp, const char *reason)
 		return -1;
 	}
 
-	if (ifp->options->script &&
-	    (ifp->options->script[0] == '\0' ||
-	    strcmp(ifp->options->script, "/dev/null") == 0))
+	if (ifp->options->script == NULL)
 		goto send_listeners;
 
-	argv[0] = ifp->options->script ? ifp->options->script : UNCONST(SCRIPT);
+	argv[0] = ifp->options->script;
 	argv[1] = NULL;
 	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
 

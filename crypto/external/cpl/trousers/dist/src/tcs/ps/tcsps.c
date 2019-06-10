@@ -20,11 +20,13 @@
 #if defined (HAVE_BYTEORDER_H)
 #include <sys/byteorder.h>
 #elif defined (HTOLE_DEFINED)
-#ifdef __NetBSD__
-#include <sys/endian.h>
-#else
+
+#ifndef __APPLE__
 #include <endian.h>
+#else
+#include "portable_endian.h"
 #endif
+
 #define LE_16 htole16
 #define LE_32 htole32
 #define LE_64 htole64

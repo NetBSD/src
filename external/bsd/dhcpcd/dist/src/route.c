@@ -1,6 +1,6 @@
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,21 @@
 #include "route.h"
 #include "sa.h"
 
+/*
+ * On some systems, host routes have no need for a netmask.
+ * However DHCP specifies host routes using an all-ones netmask.
+ * This handy function allows easy comparison when the two
+ * differ.
+ */
+static int
+rt_cmp_netmask(const struct rt *rt1, const struct rt *rt2)
+{
+
+	if (rt1->rt_flags & RTF_HOST && rt2->rt_flags & RTF_HOST)
+		return 0;
+	return sa_cmp(&rt1->rt_netmask, &rt2->rt_netmask);
+}
+
 void
 rt_init(struct dhcpcd_ctx *ctx)
 {
@@ -63,14 +78,12 @@ rt_desc(const char *cmd, const struct rt *rt)
 
 	assert(cmd != NULL);
 	assert(rt != NULL);
-	assert(rt->rt_ifp != NULL);
 
-	ifname = rt->rt_ifp->name;
 	sa_addrtop(&rt->rt_dest, dest, sizeof(dest));
 	prefix = sa_toprefix(&rt->rt_netmask);
 	sa_addrtop(&rt->rt_gateway, gateway, sizeof(gateway));
-
 	gateway_unspec = sa_is_unspecified(&rt->rt_gateway);
+	ifname = rt->rt_ifp == NULL ? "(null)" : rt->rt_ifp->name;
 
 	if (rt->rt_flags & RTF_HOST) {
 		if (gateway_unspec)
@@ -236,7 +249,7 @@ rt_find(struct rt_head *rts, const struct rt *f)
 		    (f->rt_ifp == NULL ||
 		    rt->rt_ifp->metric == f->rt_ifp->metric) &&
 #endif
-		    sa_cmp(&rt->rt_netmask, &f->rt_netmask) == 0)
+		    rt_cmp_netmask(f, rt) == 0)
 			return rt;
 	}
 	return NULL;
@@ -259,7 +272,7 @@ rt_kfree(struct rt *rt)
 /* If something other than dhcpcd removes a route,
  * we need to remove it from our internal table. */
 void
-rt_recvrt(int cmd, const struct rt *rt)
+rt_recvrt(int cmd, const struct rt *rt, pid_t pid)
 {
 	struct dhcpcd_ctx *ctx;
 	struct rt *f;
@@ -275,8 +288,11 @@ rt_recvrt(int cmd, const struct rt *rt)
 			rt_free(f);
 		}
 		if ((f = rt_find(&ctx->routes, rt)) != NULL) {
+			char buf[32];
+
 			TAILQ_REMOVE(&ctx->routes, f, rt_next);
-			rt_desc("deleted", f);
+			snprintf(buf, sizeof(buf), "pid %d deleted", pid);
+			rt_desc(buf, f);
 			rt_free(f);
 		}
 		break;
@@ -290,7 +306,7 @@ rt_recvrt(int cmd, const struct rt *rt)
 		break;
 	}
 
-#if defined(INET) && defined(HAVE_ROUTE_METRIC)
+#if defined(IPV4LL) && defined(HAVE_ROUTE_METRIC)
 	if (rt->rt_dest.sa_family == AF_INET)
 		ipv4ll_recvrt(cmd, rt);
 #endif
@@ -345,7 +361,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 	    ort->rt_metric == nrt->rt_metric &&
 #endif
 	    sa_cmp(&ort->rt_dest, &nrt->rt_dest) == 0 &&
-	    sa_cmp(&ort->rt_netmask, &nrt->rt_netmask) == 0 &&
+	    rt_cmp_netmask(ort, nrt) == 0 &&
 	    sa_cmp(&ort->rt_gateway, &nrt->rt_gateway) == 0)
 	{
 		if (ort->rt_mtu == nrt->rt_mtu)

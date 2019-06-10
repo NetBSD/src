@@ -159,6 +159,8 @@
 // RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-CL20
 // RUN: %clang_cc1 %s -E -dM -o - -x cl -cl-fast-relaxed-math \
 // RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-FRM
+// RUN: %clang_cc1 %s -E -dM -o - -x cl -cl-std=c++ \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-CLCPP10
 // CHECK-CL10: #define CL_VERSION_1_0 100
 // CHECK-CL10: #define CL_VERSION_1_1 110
 // CHECK-CL10: #define CL_VERSION_1_2 120
@@ -184,10 +186,109 @@
 // CHECK-CL20: #define __OPENCL_C_VERSION__ 200
 // CHECK-CL20-NOT: #define __FAST_RELAXED_MATH__ 1
 // CHECK-FRM: #define __FAST_RELAXED_MATH__ 1
+// CHECK-CLCPP10: #define __CL_CPP_VERSION_1_0__ 100
+// CHECK-CLCPP10: #define __OPENCL_CPP_VERSION__ 100
+// CHECK-CLCPP10-NOT: #define __FAST_RELAXED_MATH__ 1
+// CHECK-CLCPP10-NOT: #define __ENDIAN_LITTLE__ 1
 
-// RUN: %clang_cc1 -triple aarch64-windows %s -E -dM -o - -x cl \
+// RUN: %clang_cc1 %s -E -dM -o - -x cl \
+// RUN:   | FileCheck %s --check-prefix=MSCOPE
+// MSCOPE:#define __OPENCL_MEMORY_SCOPE_ALL_SVM_DEVICES 3
+// MSCOPE:#define __OPENCL_MEMORY_SCOPE_DEVICE 2
+// MSCOPE:#define __OPENCL_MEMORY_SCOPE_SUB_GROUP 4
+// MSCOPE:#define __OPENCL_MEMORY_SCOPE_WORK_GROUP 1
+// MSCOPE:#define __OPENCL_MEMORY_SCOPE_WORK_ITEM 0
+
+// RUN: %clang_cc1 -triple i386-windows %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-X86-WIN
+
+// CHECK-X86-WIN-NOT: #define WIN32 1
+// CHECK-X86-WIN-NOT: #define WIN64 1
+// CHECK-X86-WIN-NOT: #define WINNT 1
+// CHECK-X86-WIN: #define _WIN32 1
+// CHECK-X86-WIN-NOT: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple thumbv7-windows %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-ARM-WIN
+
+// CHECK-ARM-WIN-NOT: #define WIN32 1
+// CHECK-ARM-WIN-NOT: #define WIN64 1
+// CHECK-ARM-WIN-NOT: #define WINNT 1
+// CHECK-ARM-WIN: #define _WIN32 1
+// CHECK-ARM-WIN-NOT: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple x86_64-windows %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-AMD64-WIN
+
+// CHECK-AMD64-WIN-NOT: #define WIN32 1
+// CHECK-AMD64-WIN-NOT: #define WIN64 1
+// CHECK-AMD64-WIN-NOT: #define WINNT 1
+// CHECK-AMD64-WIN: #define _WIN32 1
+// CHECK-AMD64-WIN: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple aarch64-windows %s -E -dM -o - \
 // RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-ARM64-WIN
 
+// CHECK-ARM64-WIN-NOT: #define WIN32 1
+// CHECK-ARM64-WIN-NOT: #define WIN64 1
+// CHECK-ARM64-WIN-NOT: #define WINNT 1
 // CHECK-ARM64-WIN: #define _M_ARM64 1
 // CHECK-ARM64-WIN: #define _WIN32 1
 // CHECK-ARM64-WIN: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple i686-windows-gnu %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-X86-MINGW
+
+// CHECK-X86-MINGW: #define WIN32 1
+// CHECK-X86-MINGW-NOT: #define WIN64 1
+// CHECK-X86-MINGW: #define WINNT 1
+// CHECK-X86-MINGW: #define _WIN32 1
+// CHECK-X86-MINGW-NOT: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple thumbv7-windows-gnu %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-ARM-MINGW
+
+// CHECK-ARM-MINGW: #define WIN32 1
+// CHECK-ARM-MINGW-NOT: #define WIN64 1
+// CHECK-ARM-MINGW: #define WINNT 1
+// CHECK-ARM-MINGW: #define _WIN32 1
+// CHECK-ARM-MINGW-NOT: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple x86_64-windows-gnu %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-AMD64-MINGW
+
+// CHECK-AMD64-MINGW: #define WIN32 1
+// CHECK-AMD64-MINGW: #define WIN64 1
+// CHECK-AMD64-MINGW: #define WINNT 1
+// CHECK-AMD64-MINGW: #define _WIN32 1
+// CHECK-AMD64-MINGW: #define _WIN64 1
+
+// RUN: %clang_cc1 -triple aarch64-windows-gnu %s -E -dM -o - \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-ARM64-MINGW
+
+// CHECK-ARM64-MINGW-NOT: #define _M_ARM64 1
+// CHECK-ARM64-MINGW: #define WIN32 1
+// CHECK-ARM64-MINGW: #define WIN64 1
+// CHECK-ARM64-MINGW: #define WINNT 1
+// CHECK-ARM64-MINGW: #define _WIN32 1
+// CHECK-ARM64-MINGW: #define _WIN64 1
+// CHECK-ARM64-MINGW: #define __aarch64__ 1
+
+// RUN: %clang_cc1 %s -E -dM -o - -x cl -triple spir-unknown-unknown \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-SPIR
+// CHECK-SPIR: #define __IMAGE_SUPPORT__ 1
+
+// RUN: %clang_cc1 %s -E -dM -o - -x hip -triple amdgcn-amd-amdhsa \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-HIP
+// CHECK-HIP-NOT: #define __CUDA_ARCH__
+// CHECK-HIP: #define __HIPCC__ 1
+// CHECK-HIP-NOT: #define __HIP_DEVICE_COMPILE__ 1
+// CHECK-HIP: #define __HIP__ 1
+
+// RUN: %clang_cc1 %s -E -dM -o - -x hip -triple amdgcn-amd-amdhsa \
+// RUN:   -fcuda-is-device \
+// RUN:   | FileCheck -match-full-lines %s --check-prefix=CHECK-HIP-DEV
+// CHECK-HIP-DEV-NOT: #define __CUDA_ARCH__
+// CHECK-HIP-DEV: #define __HIPCC__ 1
+// CHECK-HIP-DEV: #define __HIP_DEVICE_COMPILE__ 1
+// CHECK-HIP-DEV: #define __HIP__ 1

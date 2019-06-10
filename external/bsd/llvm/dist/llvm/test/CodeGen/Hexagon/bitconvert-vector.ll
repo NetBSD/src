@@ -24,4 +24,4 @@ entry:
 
 
 attributes #0 = { nounwind readnone }
-attributes #1 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvx,+hvx-double" }
+attributes #1 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvxv60,+hvx-length128b" }

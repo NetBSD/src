@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.10 2012/11/29 15:31:25 vanhu Exp $	*/
+/*	$NetBSD: strnames.c,v 1.10.32.1 2019/06/10 21:41:08 christos Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -812,7 +812,6 @@ s_oakley_attr_v(type, val)
 	return num2str(val);
 }
 
-/* netinet6/ipsec.h */
 static struct ksmap name_ipsec_level[] = {
 { IPSEC_LEVEL_USE,	"use",		NULL },
 { IPSEC_LEVEL_REQUIRE,	"require",	NULL },

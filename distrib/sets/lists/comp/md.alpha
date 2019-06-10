@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.73 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: md.alpha,v 1.73.4.1 2019/06/10 21:42:29 christos Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -49,7 +49,7 @@
 ./usr/include/alpha/pcb.h			comp-c-include
 ./usr/include/alpha/pio.h			comp-c-include
 ./usr/include/alpha/pmap.h			comp-c-include
-./usr/include/alpha/pmc.h			comp-c-include
+./usr/include/alpha/pmc.h			comp-obsolete		obsolete
 ./usr/include/alpha/proc.h			comp-c-include
 ./usr/include/alpha/profile.h			comp-c-include
 ./usr/include/alpha/prom.h			comp-c-include
@@ -71,9 +71,10 @@
 ./usr/include/alpha/wsconsio.h			comp-obsolete		obsolete
 ./usr/include/alpha/z8530var.h			comp-c-include
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/crtfm.o				comp-c-lib
 ./usr/lib/libalpha.a				comp-c-lib

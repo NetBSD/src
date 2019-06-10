@@ -90,4 +90,9 @@ struct key_disk_cache
 /* needed by execute transport in the TSP */
 #define TSS_TPM_TXBLOB_HDR_LEN		(sizeof(UINT16) + (2 * sizeof(UINT32)))
 
+#define TSS_TPM_TXBLOB_SIZE		(4096)
+#define TSS_TXBLOB_WRAPPEDCMD_OFFSET	(TSS_TPM_TXBLOB_HDR_LEN + sizeof(UINT32))
+#define TSS_MAX_AUTHS_CAP		(1024)
+#define TSS_REQ_MGR_MAX_RETRIES		(5)
+
 #endif

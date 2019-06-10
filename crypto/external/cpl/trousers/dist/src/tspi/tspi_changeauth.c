@@ -290,7 +290,7 @@ Tspi_ChangeAuthAsym(TSS_HOBJECT hObjectToChange,	/* in */
 						   &keyObjectSize, &keyObject)))
 					return result;
 
-				memset(&keyContainer, 0, sizeof(TSS_KEY));
+				__tspi_memset(&keyContainer, 0, sizeof(TSS_KEY));
 
 				offset = 0;
 				if ((result = UnloadBlob_TSS_KEY(&offset,

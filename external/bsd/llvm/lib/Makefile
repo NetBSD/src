@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2017/08/01 21:40:03 joerg Exp $
+# $NetBSD: Makefile,v 1.46.4.1 2019/06/10 21:50:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ SUBDIR=	\
 	libLLVMSupport \
 	libLLVMTableGen \
 	libLLVMTarget \
+	libLLVMTransformsAggressiveInstCombine \
 	libLLVMTransformsCoroutines \
 	libLLVMTransformsUtils \
 	libLLVMVectorize \
@@ -45,7 +46,21 @@ SUBDIR=	\
 	libLLVMSparcCodeGen \
 	libLLVMX86CodeGen
 
+.if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
+SUBDIR+= \
+	libLLVMAMDGPUCodeGen
+.endif
+
 SUBDIR+= .WAIT
+
+.if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
+SUBDIR+= \
+	libLLVMAMDGPUMCTargetDesc \
+	libLLVMAMDGPUAsmPrinter \
+	libLLVMAMDGPUTargetInfo \
+	libLLVMAMDGPUAsmParser \
+	libLLVMAMDGPUUtils
+.endif
 
 SUBDIR+= \
 	libLLVMAArch64AsmParser \
@@ -60,7 +75,8 @@ SUBDIR+= \
 	libLLVMARMAsmPrinter \
 	libLLVMARMDisassembler \
 	libLLVMARMMCTargetDesc \
-	libLLVMARMTargetInfo
+	libLLVMARMTargetInfo \
+	libLLVMARMUtils
 
 SUBDIR+= \
 	libLLVMMipsAsmParser \
@@ -126,11 +142,13 @@ SUBDIR+= \
 	libclangASTMatchers \
 	libclangBasic \
 	libclangCodeGen \
+	libclangCrossTU \
 	libclangDriver \
 	libclangEdit \
 	libclangFrontend \
 	libclangFrontendRewrite \
 	libclangFrontendTool \
+	libclangIndex \
 	libclangLex \
 	libclangParse \
 	libclangRewrite \
@@ -145,9 +163,9 @@ SUBDIR+= \
 SUBDIR+= \
 	libclangASTMatchersDynamic \
 	libclangFormat \
-	libclangIndex \
 	libclangTooling \
 	libclangToolingCore \
+	libclangToolingInclusions \
 	libclangToolingRefactoring
 .endif
 

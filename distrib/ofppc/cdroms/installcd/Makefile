@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2017/02/10 16:43:59 christos Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2019/06/10 21:42:27 christos Exp $
 
 CDBASE=		ofppccd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE_NODEBUG=	true
 CDKERNELS+=	netbsd-INSTALL.gz netbsd
 CDINSTKERNEL=	../../instkernel
 

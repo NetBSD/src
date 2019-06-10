@@ -19,14 +19,12 @@ entry:
   %size = alloca i32, align 4
   %0 = bitcast i32* %size to i8*, !dbg !15
   %call = call i8* @_Z3fooPv(i8* %0) #3, !dbg !15
-  call void @llvm.dbg.value(metadata i32* %size, i64 0, metadata !10, metadata !16), !dbg !17
+  call void @llvm.dbg.value(metadata i32* %size, metadata !10, metadata !16), !dbg !17
   ; CHECK: .debug_info contents:
   ; CHECK: DW_TAG_variable
   ; CHECK-NEXT: DW_AT_location
+  ; CHECK-NEXT: DW_OP_breg31 WSP+12, DW_OP_deref
   ; CHECK-NEXT: DW_AT_name {{.*}}"size"
-  ; CHECK: .debug_loc contents:
-  ; Expecting the encoding for sp+12: DW_OP_breg31 0c
-  ; CHECK: Location description: 8f 0c
   ret void, !dbg !18
 }
 
@@ -34,7 +32,7 @@ entry:
 declare i8* @_Z3fooPv(i8*) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind optsize }
 attributes #1 = { optsize }
@@ -48,7 +46,7 @@ attributes #3 = { nounwind optsize }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 (trunk 223149) (llvm/trunk 223115)", isOptimized: true, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "<stdin>", directory: "")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "start", linkageName: "_Z5startv", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !9)
+!4 = distinct !DISubprogram(name: "start", linkageName: "_Z5startv", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 3, file: !5, scope: !6, type: !7, retainedNodes: !9)
 !5 = !DIFile(filename: "test1.c", directory: "")
 !6 = !DIFile(filename: "test1.c", directory: "")
 !7 = !DISubroutineType(types: !8)

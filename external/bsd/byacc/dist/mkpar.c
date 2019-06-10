@@ -1,11 +1,11 @@
-/*	$NetBSD: mkpar.c,v 1.10 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.10.12.1 2019/06/10 21:44:41 christos Exp $	*/
 
 /* Id: mkpar.c,v 1.15 2016/06/07 00:22:12 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkpar.c,v 1.10 2017/02/11 19:33:12 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.10.12.1 2019/06/10 21:44:41 christos Exp $");
 
 #define NotSuppressed(p)	((p)->suppressed == 0)
 

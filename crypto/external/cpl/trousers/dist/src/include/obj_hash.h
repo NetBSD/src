@@ -34,7 +34,7 @@ TSS_RESULT obj_hash_update_value(TSS_HHASH, UINT32, BYTE *);
 
 #define HASH_LIST_DECLARE		struct obj_list hash_list
 #define HASH_LIST_DECLARE_EXTERN	extern struct obj_list hash_list
-#define HASH_LIST_INIT()		list_init(&hash_list)
+#define HASH_LIST_INIT()		tspi_list_init(&hash_list)
 #define HASH_LIST_CONNECT(a,b)		obj_connectContext_list(&hash_list, a, b)
 #define HASH_LIST_CLOSE(a)		obj_list_close(&hash_list, &__tspi_hash_free, a)
 

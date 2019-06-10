@@ -1,9 +1,9 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin -o - %s -filetype=obj \
-; RUN:   | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN:   | llvm-dwarfdump -v -debug-info - | FileCheck %s
 ; A single FI location. This used to trigger an assertion in debug libstdc++.
 ; CHECK: DW_TAG_formal_parameter
 ;                                          fbreg -8
-; CHECK-NEXT: DW_AT_location {{.*}} (<0x2> 91 78 )
+; CHECK-NEXT: DW_AT_location {{.*}} (DW_OP_fbreg -8)
 ; CHECK-NEXT: DW_AT_name {{.*}} "dipsy"
 define void @tinkywinky(i8* %dipsy) !dbg !6 {
 entry:
@@ -28,7 +28,7 @@ runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 5.0.0 (trunk 297917) (llvm/trunk 297929)"}
 !6 = distinct !DISubprogram(name: "tinkywinky", scope: !1, file: !1, line: 1, type: !7, isLocal: false, isDefinition: true, scopeLine: 1, flags:
-DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}
 !9 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !10, size: 64)

@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2015/03/22 14:02:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2019/06/10 21:42:34 christos Exp $
 
-LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc64-live-sd0root # gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc64-live # gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 
 KERN_SET=		kern-GENERIC
-BOOTDISK=		sd0		# for QEMU
-#BOOTDISK=		wd0		# for Ultra5/10 image?
 .if defined(EMUIMAGEMB)
 LIVEIMAGEMB=		${EMUIMAGEMB}
 .endif

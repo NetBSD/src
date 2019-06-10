@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/06/30 03:37:50 jmc Exp $
+#	$NetBSD: Makefile,v 1.2.94.1 2019/06/10 21:42:35 christos Exp $
 
 SUBDIR+=etc-bind-etc
 SUBDIR+=etc-bind-rc
@@ -7,13 +7,10 @@ SUBDIR+=etc-bootserver-rc
 SUBDIR+=etc-cron-log
 SUBDIR+=etc-cron-rc
 SUBDIR+=etc-cron-root
-SUBDIR+=etc-dhclient-etc
-SUBDIR+=etc-dhclient-rc
 SUBDIR+=etc-dhcpd-rc
 SUBDIR+=etc-games-etc
 SUBDIR+=etc-games-scores
 SUBDIR+=etc-ipf-rc
-SUBDIR+=etc-isdn-rc
 SUBDIR+=etc-krb5-rc
 SUBDIR+=etc-lpr-etc
 SUBDIR+=etc-lpr-log

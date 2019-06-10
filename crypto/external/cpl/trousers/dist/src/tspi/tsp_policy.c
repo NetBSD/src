@@ -77,7 +77,7 @@ popup_GetSecret(UINT32 new_pin, UINT32 hash_mode, BYTE *popup_str, void *auth_ha
 	result = Trspi_Hash(TSS_HASH_SHA1, secret_len, secret, auth_hash);
 
 	/* zero, then unpin the memory */
-	memset(secret, 0, secret_len);
+	__tspi_memset(secret, 0, secret_len);
 	unpin_mem(&secret, UI_MAX_SECRET_STRING_LENGTH);
 
 	return result;

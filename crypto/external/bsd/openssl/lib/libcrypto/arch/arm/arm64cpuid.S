@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -42,12 +43,20 @@ _armv8_sha256_probe:
 	sha256su0	v0.4s, v0.4s
 	ret
 .size	_armv8_sha256_probe,.-_armv8_sha256_probe
+
 .globl	_armv8_pmull_probe
 .type	_armv8_pmull_probe,%function
 _armv8_pmull_probe:
 	pmull	v0.1q, v0.1d, v0.1d
 	ret
 .size	_armv8_pmull_probe,.-_armv8_pmull_probe
+
+.globl	_armv8_sha512_probe
+.type	_armv8_sha512_probe,%function
+_armv8_sha512_probe:
+.long	0xcec08000	// sha512su0	v0.2d,v0.2d
+	ret
+.size	_armv8_sha512_probe,.-_armv8_sha512_probe
 
 .globl	OPENSSL_cleanse
 .type	OPENSSL_cleanse,%function
@@ -86,6 +95,19 @@ OPENSSL_cleanse:
 CRYPTO_memcmp:
 	eor	w3,w3,w3
 	cbz	x2,.Lno_data	// len==0?
+	cmp	x2,#16
+	b.ne	.Loop_cmp
+	ldp	x8,x9,[x0]
+	ldp	x10,x11,[x1]
+	eor	x8,x8,x10
+	eor	x9,x9,x11
+	orr	x8,x8,x9
+	mov	x0,#1
+	cmp	x8,#0
+	csel	x0,xzr,x0,eq
+	ret
+
+.align	4
 .Loop_cmp:
 	ldrb	w4,[x0],#1
 	ldrb	w5,[x1],#1

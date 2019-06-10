@@ -90,7 +90,7 @@ ctx_remove_key_loaded(TCS_CONTEXT_HANDLE ctx_handle, TCS_KEY_HANDLE key_handle)
 
 	for (prev = cur = c->keys; cur; prev = cur, cur = cur->next) {
 		if (cur->key_handle == key_handle) {
-			if (prev == c->keys)
+			if (cur == c->keys)
 				c->keys = cur->next;
 			else
 				prev->next = cur->next;

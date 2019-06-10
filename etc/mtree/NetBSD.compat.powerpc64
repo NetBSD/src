@@ -1,0 +1,4 @@
+#	$NetBSD: NetBSD.compat.powerpc64,v 1.1.2.2 2019/06/10 21:42:45 christos Exp $
+
+./usr/include/g++/bits/powerpc
+./usr/include/g++/bits/powerpc64

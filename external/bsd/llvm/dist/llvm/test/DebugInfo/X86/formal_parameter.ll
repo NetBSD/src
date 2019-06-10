@@ -14,7 +14,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;
 ; RUN: opt %s -O2 -S -o %t
 ; RUN: cat %t | FileCheck --check-prefix=LOWERING %s
-; RUN: llc -filetype=obj %t -o - | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -filetype=obj %t -o - | llvm-dwarfdump -debug-info - | FileCheck %s
 ; Test that we only emit only one DW_AT_formal_parameter "map" for this function.
 ; rdar://problem/14874886
 ;
@@ -49,7 +49,7 @@ declare i32 @lookup(...)
 declare i32 @verify(...)
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }
@@ -62,7 +62,7 @@ attributes #3 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "formal_parameter.c", directory: "")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !9)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 2, file: !1, scope: !5, type: !6, retainedNodes: !9)
 !5 = !DIFile(filename: "formal_parameter.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

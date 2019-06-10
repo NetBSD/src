@@ -16,6 +16,7 @@
 #include "trousers/tss.h"
 #include "trousers/trousers.h"
 #include "trousers_types.h"
+#include "spi_utils.h"
 #include "tsplog.h"
 #include "hosttable.h"
 #include "tcsd_wrap.h"
@@ -123,7 +124,7 @@ RPC_CMK_CreateKey_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 7, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -266,7 +267,7 @@ RPC_CMK_CreateBlob_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 14, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -359,7 +360,7 @@ RPC_CMK_ConvertMigration_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 10, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}

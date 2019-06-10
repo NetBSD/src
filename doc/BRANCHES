@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.345 2018/03/06 00:15:24 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.345.2.1 2019/06/10 21:42:38 christos Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -247,7 +247,7 @@ Notes:		Commits restricted to Release Engineering.
 
 Branch:		netbsd-6
 Description:	The NetBSD 6 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	15 Feb 2012
 End Date:
 Base Tag:	netbsd-6-base
@@ -258,7 +258,7 @@ Notes:
 
 Branch:		netbsd-6-0
 Description:	Tracking security/critical fixes for NetBSD 6.0
-Status:		Active
+Status:		Terminated
 Start Date:	17 Oct 2012
 End Date:
 Base Tag:	netbsd-6-0-RELEASE
@@ -269,7 +269,7 @@ Notes:
 
 Branch:		netbsd-6-1
 Description:	Tracking security/critical fixes for NetBSD 6.1
-Status:		Active
+Status:		Terminated
 Start Date:	01 Feb 2013
 End Date:
 Base Tag:	netbsd-6-1-RELEASE
@@ -887,20 +887,20 @@ Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
 
-Branch:		pgoyette-compat
-Description:	clean-up of compat module
-Status:		Active
-Start Date:	Tues Mar 6, 2018
-End Date:
-Base Tag:	pgoyette-compat-base
-Maintainer:	pgoyette
-Scope:		src/
-Notes:
-
 
 ########################################################################
 # Individual developers' branches (Terminated):
 ########################################################################
+
+Branch:		pgoyette-compat
+Description:	clean-up of compat module
+Status:		Merged
+Start Date:	Tues Mar 6, 2018
+End Date:	Sun Jan 27, 2019
+Base Tag:	pgoyette-compat-base
+Maintainer:	pgoyette
+Scope:		src/
+Notes:
 
 Branch:		prg-localcount2
 Description:	Implement localcount reference counting as proposed by
@@ -1096,6 +1096,17 @@ Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
 Notes:
 
+Branch:		isaki-audio2
+Description:	Overhaul audio subsystem
+Status:		Terminated; merged to -current
+Start Date:	21 Apr 2019
+End Date:	08 May 2019
+Base Tag:	isaki-audio2-base
+Maintainer:	Tetsuya Isaki <isaki@NetBSD.org>
+Scope:		src/sys
+Notes:		Rework audio subsystem, including multiple streaming,
+		filter pipeline.
+
 Branch:		jmcneill-pm
 Description:	Power management framework overhaul, ACPI improvements
 Status:		Terminated; merged before NetBSD 5.0
@@ -1150,8 +1161,6 @@ Notes:		Integration of FreeBSD's kqueue(2) mechanism, with various
 		local internal changes to better suit NetBSD, and
 		enhancements such as looking up filters by name or
 		number, and dynamic registration of "user" filters.
-		The work is complete as is, but is awaiting more
-		feedback from various kernel gurus before going mainline.
 
 Branch:		ktrace-lwp
 Description:	ktrace support for lwp ids.

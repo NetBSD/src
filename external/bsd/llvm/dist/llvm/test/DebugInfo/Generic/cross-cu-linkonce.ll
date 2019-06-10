@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 
 ; Built from source:
 ; $ clang++ a.cpp b.cpp -g -c -emit-llvm
@@ -50,14 +50,14 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!16, !17}
 !llvm.ident = !{!18, !18}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "x", scope: null, file: !2, line: 4, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "func.h", directory: "/tmp/dbginfo")
 !3 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !4, size: 64, align: 64)
 !4 = !DISubroutineType(types: !5)
 !5 = !{!6, !6}
 !6 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!7 = !DIGlobalVariableExpression(var: !8)
+!7 = !DIGlobalVariableExpression(var: !8, expr: !DIExpression())
 !8 = !DIGlobalVariable(name: "y", scope: null, file: !2, line: 4, type: !3, isLocal: false, isDefinition: true)
 !9 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !10, producer: "clang version 3.5.0 ", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !11, retainedTypes: !11, globals: !12, imports: !11)
 !10 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
@@ -69,7 +69,7 @@ attributes #1 = { nounwind readnone }
 !16 = !{i32 2, !"Dwarf Version", i32 4}
 !17 = !{i32 1, !"Debug Info Version", i32 3}
 !18 = !{!"clang version 3.5.0 "}
-!19 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", scope: !2, file: !2, line: 1, type: !4, isLocal: false, isDefinition: true, scopeLine: 1, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !9, variables: !11)
+!19 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", scope: !2, file: !2, line: 1, type: !4, isLocal: false, isDefinition: true, scopeLine: 1, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !9, retainedNodes: !11)
 !20 = !DILocalVariable(name: "i", arg: 1, scope: !19, file: !2, line: 1, type: !6)
 !21 = !DIExpression()
 !22 = !DILocation(line: 1, scope: !19)

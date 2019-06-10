@@ -1,26 +1,34 @@
-# $NetBSD: ad.mips,v 1.73 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: ad.mips,v 1.73.4.1 2019/06/10 21:42:29 christos Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
 -./usr/lib/64/libgomp.so.1.1
+-./usr/lib/64/libgomp.so.2
+-./usr/lib/64/libgomp.so.2.0
 -./usr/lib/64/libgomp_p.a
 -./usr/lib/64/libgomp_pic.a
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/clang-4.0/msa.h			comp-obsolete		obsolete
-./usr/include/clang-5.0/msa.h			comp-c-include		llvm
+./usr/include/clang-5.0/msa.h			comp-obsolete		obsolete
+./usr/include/clang-7.0/msa.h			comp-c-include		llvm
 ./usr/include/g++/bits/mips32			comp-c-include		compat,arch64
 ./usr/include/g++/bits/mips32/c++config.h	comp-c-include		compat,arch64,gcc
 ./usr/include/g++/bits/mips64			comp-c-include		compat,arch64
 ./usr/include/g++/bits/mips64/c++config.h	comp-c-include		compat,arch64,gcc
 ./usr/include/g++/bits/mipso32			comp-c-include		compat,arch64
 ./usr/include/g++/bits/mipso32/c++config.h	comp-c-include		compat,arch64,gcc
-./usr/include/gcc-4.8/loongson.h		comp-c-include		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-5/loongson.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/loongson.h			comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-4.5/loongson.h		comp-obsolete		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-4.8/loongson.h		comp-obsolete		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/loongson.h			comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/loongson.h			comp-c-include		gcc=6
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-7/loongson.h			comp-c-include		gcc=7
+./usr/include/gcc-7/msa.h			comp-c-include		gcc=7
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete
@@ -60,7 +68,7 @@
 ./usr/include/mips/mutex.h			comp-c-include
 ./usr/include/mips/pcb.h			comp-c-include
 ./usr/include/mips/pmap.h			comp-c-include
-./usr/include/mips/pmc.h			comp-c-include
+./usr/include/mips/pmc.h			comp-obsolete		obsolete
 ./usr/include/mips/proc.h			comp-c-include
 ./usr/include/mips/profile.h			comp-c-include
 ./usr/include/mips/psl.h			comp-c-include
@@ -94,9 +102,9 @@
 ./usr/libdata/ldscripts/elf32btsmip.x		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmip.xbn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmip.xc		comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmip.xd		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmip.xdc		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmip.xd		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmip.xdc		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmip.xdw		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmip.xn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmip.xr		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmip.xs		comp-util-bin		binutils,arch64
@@ -107,9 +115,9 @@
 ./usr/libdata/ldscripts/elf32btsmipn32.x	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmipn32.xbn	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmipn32.xc	comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmipn32.xd	-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmipn32.xdc	-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32btsmipn32.xdw	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xd	comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xdc	comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xdw	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmipn32.xn	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmipn32.xr	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32btsmipn32.xs	comp-util-bin		binutils,arch64
@@ -120,9 +128,9 @@
 ./usr/libdata/ldscripts/elf32ltsmip.x		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmip.xbn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmip.xc		comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmip.xd		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmip.xdc		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xd		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xdc		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xdw		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmip.xn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmip.xr		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmip.xs		comp-util-bin		binutils,arch64
@@ -133,9 +141,9 @@
 ./usr/libdata/ldscripts/elf32ltsmipn32.x	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmipn32.xbn	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmipn32.xc	comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmipn32.xd	-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmipn32.xdc	-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf32ltsmipn32.xdw	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xd	comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xdc	comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xdw	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmipn32.xn	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmipn32.xr	comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf32ltsmipn32.xs	comp-util-bin		binutils,arch64
@@ -146,9 +154,9 @@
 ./usr/libdata/ldscripts/elf64btsmip.x		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64btsmip.xbn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64btsmip.xc		comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf64btsmip.xd		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf64btsmip.xdc		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf64btsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xd		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xdc		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xdw		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64btsmip.xn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64btsmip.xr		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64btsmip.xs		comp-util-bin		binutils,arch64
@@ -159,9 +167,9 @@
 ./usr/libdata/ldscripts/elf64ltsmip.x		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64ltsmip.xbn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64ltsmip.xc		comp-util-bin		binutils,arch64
-./usr/libdata/ldscripts/elf64ltsmip.xd		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf64ltsmip.xdc		-unknown-		binutils,arch64
-./usr/libdata/ldscripts/elf64ltsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xd		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xdc		comp-util-bin		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xdw		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64ltsmip.xn		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64ltsmip.xr		comp-util-bin		binutils,arch64
 ./usr/libdata/ldscripts/elf64ltsmip.xs		comp-util-bin		binutils,arch64

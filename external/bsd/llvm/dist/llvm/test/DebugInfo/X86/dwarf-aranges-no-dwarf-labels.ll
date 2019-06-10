@@ -28,14 +28,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind readnone uwtable
 define i32 @_Z3fooi(i32 %bar) #0 !dbg !9 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %bar, i64 0, metadata !13, metadata !14), !dbg !15
+  tail call void @llvm.dbg.value(metadata i32 %bar, metadata !13, metadata !14), !dbg !15
   ret i32 %bar, !dbg !15
 }
 
 ; Function Attrs: nounwind readnone uwtable
 define i32 @_Z4foo2i(i32 %bar2) #0 !dbg !16 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %bar2, i64 0, metadata !18, metadata !14), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 %bar2, metadata !18, metadata !14), !dbg !19
   ret i32 %bar2, !dbg !19
 }
 
@@ -51,7 +51,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readonly uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -60,7 +60,7 @@ attributes #2 = { nounwind readnone }
 !llvm.dbg.cu = !{!4}
 !llvm.module.flags = !{!7, !8}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "global", scope: null, file: !2, line: 1, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "tmp/debug_ranges/a.cc", directory: "/")
 !3 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
@@ -69,18 +69,18 @@ attributes #2 = { nounwind readnone }
 !6 = !{!0}
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 1, !"Debug Info Version", i32 3}
-!9 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !2, file: !2, line: 2, type: !10, isLocal: false, isDefinition: true, scopeLine: 2, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, variables: !12)
+!9 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !2, file: !2, line: 2, type: !10, isLocal: false, isDefinition: true, scopeLine: 2, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, retainedNodes: !12)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!3, !3}
 !12 = !{!13}
 !13 = !DILocalVariable(name: "bar", arg: 1, scope: !9, file: !2, line: 2, type: !3)
 !14 = !DIExpression()
 !15 = !DILocation(line: 2, scope: !9)
-!16 = distinct !DISubprogram(name: "foo2", linkageName: "_Z4foo2i", scope: !2, file: !2, line: 3, type: !10, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, variables: !17)
+!16 = distinct !DISubprogram(name: "foo2", linkageName: "_Z4foo2i", scope: !2, file: !2, line: 3, type: !10, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, retainedNodes: !17)
 !17 = !{!18}
 !18 = !DILocalVariable(name: "bar2", arg: 1, scope: !16, file: !2, line: 3, type: !3)
 !19 = !DILocation(line: 3, scope: !16)
-!20 = distinct !DISubprogram(name: "main", scope: !2, file: !2, line: 5, type: !21, isLocal: false, isDefinition: true, scopeLine: 5, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, variables: !5)
+!20 = distinct !DISubprogram(name: "main", scope: !2, file: !2, line: 5, type: !21, isLocal: false, isDefinition: true, scopeLine: 5, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !4, retainedNodes: !5)
 !21 = !DISubroutineType(types: !22)
 !22 = !{!3}
 !23 = !DILocation(line: 6, scope: !20)

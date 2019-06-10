@@ -1,7 +1,10 @@
-$NetBSD: TODO.smpnet,v 1.20 2018/06/25 09:32:28 msaitoh Exp $
+$NetBSD: TODO.smpnet,v 1.20.2.1 2019/06/10 21:42:38 christos Exp $
 
 MP-safe components
 ==================
+
+They work without the big kernel lock (KERNEL_LOCK), i.e., with NET_MPSAFE
+kernel option.  Some components scale up and some don't.
 
  - Device drivers
    - vioif(4)
@@ -18,6 +21,7 @@ MP-safe components
    - All except for items in the below section
  - Interfaces
    - gif(4)
+   - ipsecif(4)
    - l2tp(4)
    - pppoe(4)
      - if_spppsubr.c
@@ -34,11 +38,27 @@ MP-safe components
 Non MP-safe components and kernel options
 =========================================
 
+The components and options aren't MP-safe, i.e., requires the big kernel lock,
+yet.  Some of them can be used safely even if NET_MPSAFE is enabled because
+they're still protected by the big kernel lock.  The others aren't protected and
+so unsafe, e.g, they may crash the kernel.
+
+Protected ones
+--------------
+
  - Device drivers
    - Most drivers other than ones listed in the above section
+ - Layer 4
+   - DCCP
+   - SCTP
+   - TCP
+   - UDP
+
+Unprotected ones
+----------------
+
  - Layer 2
    - ARCNET (if_arcsubr.c)
-   - ATM (if_atmsubr.c)
    - BRIDGE_IPF
    - FDDI (if_fddisubr.c)
    - HIPPI (if_hippisubr.c)
@@ -51,15 +71,9 @@ Non MP-safe components and kernel options
    - PIM
    - MPLS (mpls(4))
    - IPv6 address selection policy
- - Layer 4
-   - DCCP
-   - SCTP
-   - TCP
-   - UDP
  - Interfaces
    - agr(4)
    - carp(4)
-   - etherip(4)
    - faith(4)
    - gre(4)
    - ppp(4)
@@ -73,11 +87,9 @@ Non MP-safe components and kernel options
    - pf(4)
  - Others
    - AppleTalk (sys/netatalk/)
-   - ATM (sys/netnatm/)
    - Bluetooth (sys/netbt/)
    - altq(4)
    - CIFS (sys/netsmb/)
-   - ISDN (sys/netisbn/)
    - kttcp(4)
    - NFS
 
@@ -103,9 +115,6 @@ Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context
 This is the list of the functions that have such bpf_mtap:
 
  - sca_frame_process() @ sys/dev/ic/hd64570.c
- - en_intr() @ sys/dev/ic/midway.c
- - rxintr_cleanup() @ sys/dev/pci/if_lmc.c
- - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
 
 Ideally we should make the functions run in softint somehow, but we don't have
 actual devices, no time (or interest/love) to work on the task, so instead we
@@ -181,3 +190,63 @@ for packet transmissions, resulting in serializing all Tx packet processing on
 the queue.  We should probably design and implement an alternative queuing
 mechanism that deals with multi-core systems at the first place, not making the
 existing ALTQ MP-safe because it's just annoying.
+
+Using kernel modules
+--------------------
+
+Please note that if you enable NET_MPSAFE in your kernel, and you use and
+loadable kernel modules (including compat_xx modules or individual network
+interface if_xxx device driver modules), you will need to build custom
+modules.  For each module you will need to add the following line to its
+Makefile:
+
+	CPPFLAGS+=	NET_MPSAFE
+
+Failure to do this may result in unpredictable behavior.
+
+IPv4 address initialization atomicity
+-------------------------------------
+
+An IPv4 address is referenced by several data structures: an associated
+interface, its local route, a connected route (if necessary), the global list,
+the global hash table, etc.  These data structures are not updated atomically,
+i.e., there can be inconsistent states on an IPv4 address in the kernel during
+the initialization of an IPv4 address.
+
+One known failure of the issue is that incoming packets destinating to an
+initializing address can loop in the network stack in a short period of time.
+The address initialization creates an local route first and then registers an
+initializing address to the global hash table that is used to decide if an
+incoming packet destinates to the host by checking the destination of the packet
+is registered to the hash table.  So, if the host allows forwaring, an incoming
+packet can match on a local route of an initializing address at ip_output while
+it fails the to-self check described above at ip_input.  Because a matched local
+route points a loopback interface as its destination interface, an incoming
+packet sends to the network stack (ip_input) again, which results in looping.
+The loop stops once an initializing address is registered to the hash table.
+
+One solution of the issue is to reorder the address initialization instructions,
+first register an address to the hash table then create its routes.  Another
+solution is to use the routing table for the to-self check instead of using the
+global hash table, like IPv6.
+
+if_flags
+--------
+
+To avoid data race on if_flags it should be protected by a lock (currently it's
+IFNET_LOCK).  Thus, if_flags should not be accessed on packet processing to
+avoid performance degradation by lock contentions.  Traditionally IFF_RUNNING,
+IFF_UP and IFF_OACTIVE flags of if_flags are checked on packet processing.  If
+you make a driver MP-safe you must remove such checks.
+
+IFF_ALLMULTI can be set/unset via if_mcast_op.  To protect updates of the flag,
+we had added IFNET_LOCK around if_mcast_op.  However that was not a good
+approach because if_mcast_op is typically called in the middle of a call path
+and holding IFNET_LOCK such places is problematic.  Actually a deadlock is
+observed.  Probably we should remove IFNET_LOCK and manage IFF_ALLMULTI
+somewhere other than if_flags, for example ethercom or driver itself (or a
+common driver framework once it appears).  Such a change is feasible because
+IFF_ALLMULTI is only set/unset by a driver and not accessed from any common
+components such as network protocols.
+
+Also IFF_PROMISC is checked in ether_input and we should get rid of it somehow.

@@ -110,7 +110,7 @@ TSS_RESULT obj_rsakey_set_srk_pubkey(BYTE *);
 
 #define RSAKEY_LIST_DECLARE		struct obj_list rsakey_list
 #define RSAKEY_LIST_DECLARE_EXTERN	extern struct obj_list rsakey_list
-#define RSAKEY_LIST_INIT()		list_init(&rsakey_list)
+#define RSAKEY_LIST_INIT()		tspi_list_init(&rsakey_list)
 #define RSAKEY_LIST_CONNECT(a,b)	obj_connectContext_list(&rsakey_list, a, b)
 #define RSAKEY_LIST_CLOSE(a)		obj_list_close(&rsakey_list, &__tspi_rsakey_free, a)
 

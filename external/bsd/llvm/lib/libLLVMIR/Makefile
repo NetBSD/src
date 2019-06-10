@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/08/01 20:07:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2019/06/10 21:50:52 christos Exp $
 
 LIB=	LLVMIR
 
@@ -10,6 +10,8 @@ TABLEGEN_SRC=		AttributesCompatFunc.td
 TABLEGEN_OUTPUT= \
 	AttributesCompatFunc.inc|-gen-attrs
 
+.include "${.PARSEDIR}/../../tablegen.mk"
+
 SRCS+=	AsmWriter.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
@@ -19,29 +21,30 @@ SRCS+=	AsmWriter.cpp \
 	ConstantRange.cpp \
 	Constants.cpp \
 	Core.cpp \
-	DIBuilder.cpp \
 	DataLayout.cpp \
 	DebugInfo.cpp \
 	DebugInfoMetadata.cpp \
 	DebugLoc.cpp \
+	DiagnosticHandler.cpp \
 	DiagnosticInfo.cpp \
 	DiagnosticPrinter.cpp \
+	DIBuilder.cpp \
 	Dominators.cpp \
+	DomTreeUpdater.cpp \
 	Function.cpp \
-	GCOV.cpp \
-	GVMaterializer.cpp \
 	Globals.cpp \
-	IRBuilder.cpp \
-	IRPrintingPasses.cpp \
+	GVMaterializer.cpp \
 	InlineAsm.cpp \
 	Instruction.cpp \
 	Instructions.cpp \
 	IntrinsicInst.cpp \
+	IRBuilder.cpp \
+	IRPrintingPasses.cpp \
+	LegacyPassManager.cpp \
 	LLVMContext.cpp \
 	LLVMContextImpl.cpp \
-	LegacyPassManager.cpp \
-	MDBuilder.cpp \
 	Mangler.cpp \
+	MDBuilder.cpp \
 	Metadata.cpp \
 	Module.cpp \
 	ModuleSummaryIndex.cpp \
@@ -59,10 +62,7 @@ SRCS+=	AsmWriter.cpp \
 	User.cpp \
 	Value.cpp \
 	ValueSymbolTable.cpp \
-	ValueTypes.cpp \
 	Verifier.cpp
-
-.include "${.PARSEDIR}/../../tablegen.mk"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

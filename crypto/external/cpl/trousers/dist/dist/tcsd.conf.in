@@ -168,3 +168,24 @@
 # all_platform_classes = PC_11,PDA_12,SERVER_12,MOBILE_12
 #
 
+#
+# Option: disable_ipv4
+# Values: 0 or 1
+# Description: This options determines if the TCSD will bind itself to the
+# machine's local IPv4 addresses in order to receive requisitions through
+# its TCP port. Value of 1 disables IPv4 support, so clients cannot reach
+# TCSD using that protocol.
+#
+#  disable_ipv4 = 0
+#
+
+#
+# Option: disable_ipv6
+# Values: 0 or 1
+# Description: This options determines if the TCSD will bind itself to the
+# machine's local IPv6 addresses in order to receive requisitions through
+# its TCP port. Value of 1 disables IPv6 support, so clients cannot reach
+# TCSD using that protocol.
+#
+#  disable_ipv6 = 0
+#

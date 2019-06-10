@@ -125,18 +125,26 @@ Tspi_TPM_Quote(TSS_HTPM hTPM,				/* in */
 	if (hPcrComposite) {
 		TCPA_PCR_COMPOSITE pcrComp;
 
+		__tspi_memset(&pcrComp, 0, sizeof(pcrComp)); 
 		offset = 0;
 		if ((result = Trspi_UnloadBlob_PCR_COMPOSITE(&offset, pcrDataOut, &pcrComp))) {
 			free(pcrDataOut);
+			free(pcrComp.pcrValue);
+			free(pcrComp.select.pcrSelect);
 			free(validationData);
 			return result;
 		}
 
 		if ((result = obj_pcrs_set_values(hPcrComposite, &pcrComp))) {
 			free(pcrDataOut);
+			free(pcrComp.pcrValue);
+			free(pcrComp.select.pcrSelect);
 			free(validationData);
 			return result;
 		}
+
+		free(pcrComp.pcrValue);
+		free(pcrComp.select.pcrSelect);
 	}
 
 	if ((result = Tspi_GetAttribData(hIdentKey, TSS_TSPATTRIB_KEY_BLOB,
@@ -148,7 +156,7 @@ Tspi_TPM_Quote(TSS_HTPM hTPM,				/* in */
 
 	/* create the validation data */
 	offset = 0;
-	memset(&keyContainer, 0, sizeof(TSS_KEY));
+	__tspi_memset(&keyContainer, 0, sizeof(TSS_KEY));
 	if ((result = UnloadBlob_TSS_KEY(&offset, keyData, &keyContainer)))
 		return result;
 

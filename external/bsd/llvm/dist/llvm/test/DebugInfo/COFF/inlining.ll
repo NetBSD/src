@@ -49,11 +49,11 @@
 ; ASM: .long   0
 ; ASM: # Inlined function bar starts at t.cpp:8
 ; ASM: .long   4098                    # Type index of inlined function
-; ASM: .long   0                       # Offset into filechecksum table
+; ASM: .cv_filechecksumoffset 1        # Offset into filechecksum table
 ; ASM: .long   8                       # Starting line number
 ; ASM: # Inlined function foo starts at t.cpp:2
 ; ASM: .long   4099
-; ASM: .long   0
+; ASM: .cv_filechecksumoffset 1        # Offset into filechecksum table
 ; ASM: .long   2
 ; ASM: [[inline_end]]:
 
@@ -71,6 +71,8 @@
 ; ASM: .cv_inline_linetable 2 1 2 Lfunc_begin0 Lfunc_end0
 ; ASM: .short  4430
 ; ASM: .short  4430
+
+; ASM: .cv_filechecksums
 
 ; ASM: .section .debug$T,"dr"
 ; ASM: .long 4 # Debug section magic
@@ -269,10 +271,10 @@ attributes #2 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "clang version 3.9.0 ", isOptimized: true, runtimeVersion: 0, emissionKind: LineTablesOnly, enums: !2)
 !1 = !DIFile(filename: "t.cpp", directory: "D:\5Csrc\5Cllvm\5Cbuild")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "baz", scope: !1, file: !1, line: 13, type: !5, isLocal: false, isDefinition: true, scopeLine: 13, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!4 = distinct !DISubprogram(name: "baz", scope: !1, file: !1, line: 13, type: !5, isLocal: false, isDefinition: true, scopeLine: 13, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !5 = !DISubroutineType(types: !2)
-!6 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 8, type: !5, isLocal: true, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
-!7 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 2, type: !5, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!6 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 8, type: !5, isLocal: true, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
+!7 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 2, type: !5, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !8 = !{i32 2, !"CodeView", i32 1}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{i32 1, !"PIC Level", i32 2}

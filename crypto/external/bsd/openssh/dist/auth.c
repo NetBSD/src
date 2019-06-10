@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.21 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.127 2018/03/12 00:52:01 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.21.2.1 2019/06/10 21:41:11 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.138 2019/01/19 21:41:18 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.21 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.21.2.1 2019/06/10 21:41:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -42,15 +42,16 @@ __RCSID("$NetBSD: auth.c,v 1.21 2018/04/06 18:58:59 christos Exp $");
 #include <unistd.h>
 #include <limits.h>
 #include <netdb.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "match.h"
 #include "groupaccess.h"
 #include "log.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "misc.h"
 #include "servconf.h"
-#include "key.h"
+#include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "auth-options.h"
@@ -78,8 +79,7 @@ extern int use_privsep;
 extern struct sshauthopt *auth_opts;
 
 /* Debugging messages */
-Buffer auth_debug;
-int auth_debug_init;
+static struct sshbuf *auth_debug;
 
 #ifndef HOST_ONLY
 /*
@@ -92,14 +92,13 @@ int auth_debug_init;
  * Otherwise true is returned.
  */
 int
-allowed_user(struct passwd * pw)
+allowed_user(struct ssh *ssh, struct passwd * pw)
 {
 #ifdef HAVE_LOGIN_CAP
 	extern login_cap_t *lc;
 	int match_name, match_ip;
 	char *cap_hlist, *hp;
 #endif
-	struct ssh *ssh = active_state; /* XXX */
 	struct stat st;
 	const char *hostname = NULL, *ipaddr = NULL;
 	int r;
@@ -334,22 +333,26 @@ format_method_key(Authctxt *authctxt)
 {
 	const struct sshkey *key = authctxt->auth_method_key;
 	const char *methinfo = authctxt->auth_method_info;
-	char *fp, *ret = NULL;
+	char *fp, *cafp, *ret = NULL;
 
 	if (key == NULL)
 		return NULL;
 
-	if (key_is_cert(key)) {
-		fp = sshkey_fingerprint(key->cert->signature_key,
+	if (sshkey_is_cert(key)) {
+		fp = sshkey_fingerprint(key,
 		    options.fingerprint_hash, SSH_FP_DEFAULT);
-		xasprintf(&ret, "%s ID %s (serial %llu) CA %s %s%s%s",
-		    sshkey_type(key), key->cert->key_id,
+		cafp = sshkey_fingerprint(key->cert->signature_key,
+		    options.fingerprint_hash, SSH_FP_DEFAULT);
+		xasprintf(&ret, "%s %s ID %s (serial %llu) CA %s %s%s%s",
+		    sshkey_type(key), fp == NULL ? "(null)" : fp,
+		    key->cert->key_id,
 		    (unsigned long long)key->cert->serial,
 		    sshkey_type(key->cert->signature_key),
-		    fp == NULL ? "(null)" : fp,
+		    cafp == NULL ? "(null)" : cafp,
 		    methinfo == NULL ? "" : ", ",
 		    methinfo == NULL ? "" : methinfo);
 		free(fp);
+		free(cafp);
 	} else {
 		fp = sshkey_fingerprint(key, options.fingerprint_hash,
 		    SSH_FP_DEFAULT);
@@ -363,11 +366,11 @@ format_method_key(Authctxt *authctxt)
 }
 
 void
-auth_log(Authctxt *authctxt, int authenticated, int partial,
+auth_log(struct ssh *ssh, int authenticated, int partial,
     const char *method, const char *submethod)
 {
-	struct ssh *ssh = active_state; /* XXX */
-	void (*authlog) (const char *fmt,...) = verbose;
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
+	int level = SYSLOG_LEVEL_VERBOSE;
 	const char *authmsg;
 	char *extra = NULL;
 
@@ -379,7 +382,7 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 	    !authctxt->valid ||
 	    authctxt->failures >= options.max_authtries / 2 ||
 	    strcmp(method, "password") == 0)
-		authlog = logit;
+		level = SYSLOG_LEVEL_INFO;
 
 	if (authctxt->postponed)
 		authmsg = "Postponed";
@@ -393,7 +396,7 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 			extra = xstrdup(authctxt->auth_method_info);
 	}
 
-	authlog("%s %s%s%s for %s%.100s from %.200s port %d ssh2%s%s",
+	do_log2(level, "%s %s%s%s for %s%.100s from %.200s port %d ssh2%s%s",
 	    authmsg,
 	    method,
 	    submethod != NULL ? "/" : "", submethod == NULL ? "" : submethod,
@@ -410,9 +413,9 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 }
 
 void
-auth_maxtries_exceeded(Authctxt *authctxt)
+auth_maxtries_exceeded(struct ssh *ssh)
 {
-	struct ssh *ssh = active_state; /* XXX */
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
 
 	error("maximum authentication attempts exceeded for "
 	    "%s%.100s from %.200s port %d ssh2",
@@ -420,7 +423,7 @@ auth_maxtries_exceeded(Authctxt *authctxt)
 	    authctxt->user,
 	    ssh_remote_ipaddr(ssh),
 	    ssh_remote_port(ssh));
-	packet_disconnect("Too many authentication failures");
+	ssh_packet_disconnect(ssh, "Too many authentication failures");
 	/* NOTREACHED */
 }
 
@@ -462,17 +465,19 @@ auth_root_allowed(struct ssh *ssh, const char *method)
 char *
 expand_authorized_keys(const char *filename, struct passwd *pw)
 {
-	char *file, ret[PATH_MAX];
+	char *file, uidstr[32], ret[PATH_MAX];
 	int i;
 
+	snprintf(uidstr, sizeof(uidstr), "%llu",
+	    (unsigned long long)pw->pw_uid);
 	file = percent_expand(filename, "h", pw->pw_dir,
-	    "u", pw->pw_name, (char *)NULL);
+	    "u", pw->pw_name, "U", uidstr, (char *)NULL);
 
 	/*
 	 * Ensure that filename starts anchored. If not, be backward
 	 * compatible and prepend the '%h/'
 	 */
-	if (*file == '/')
+	if (path_absolute(file))
 		return (file);
 
 	i = snprintf(ret, sizeof(ret), "%s/%s", pw->pw_dir, file);
@@ -593,7 +598,7 @@ auth_openprincipals(const char *file, struct passwd *pw, int strict_modes)
 }
 
 struct passwd *
-getpwnamallow(const char *user)
+getpwnamallow(struct ssh *ssh, const char *user)
 {
 #ifdef HAVE_LOGIN_CAP
  	extern login_cap_t *lc;
@@ -601,10 +606,10 @@ getpwnamallow(const char *user)
  	auth_session_t *as;
 #endif
 #endif
-	struct ssh *ssh = active_state; /* XXX */
 	struct passwd *pw;
-	struct connection_info *ci = get_connection_info(1, options.use_dns);
+	struct connection_info *ci;
 
+	ci = get_connection_info(ssh, 1, options.use_dns);
 	ci->user = user;
 	parse_server_match_config(&options, ci);
 	log_change_level(options.log_level);
@@ -617,7 +622,7 @@ getpwnamallow(const char *user)
 		    user, ssh_remote_ipaddr(ssh), ssh_remote_port(ssh));
 		return (NULL);
 	}
-	if (!allowed_user(pw))
+	if (!allowed_user(ssh, pw))
 		return (NULL);
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
@@ -684,26 +689,31 @@ auth_debug_add(const char *fmt,...)
 {
 	char buf[1024];
 	va_list args;
+	int r;
 
-	if (!auth_debug_init)
+	if (auth_debug == NULL)
 		return;
 
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
-	buffer_put_cstring(&auth_debug, buf);
+	if ((r = sshbuf_put_cstring(auth_debug, buf)) != 0)
+		fatal("%s: sshbuf_put_cstring: %s", __func__, ssh_err(r));
 }
 
 void
-auth_debug_send(void)
+auth_debug_send(struct ssh *ssh)
 {
 	char *msg;
+	int r;
 
-	if (!auth_debug_init)
+	if (auth_debug == NULL)
 		return;
-	while (buffer_len(&auth_debug)) {
-		msg = buffer_get_string(&auth_debug, NULL);
-		packet_send_debug("%s", msg);
+	while (sshbuf_len(auth_debug) != 0) {
+		if ((r = sshbuf_get_cstring(auth_debug, &msg, NULL)) != 0)
+			fatal("%s: sshbuf_get_cstring: %s",
+			    __func__, ssh_err(r));
+		ssh_packet_send_debug(ssh, "%s", msg);
 		free(msg);
 	}
 }
@@ -711,12 +721,10 @@ auth_debug_send(void)
 void
 auth_debug_reset(void)
 {
-	if (auth_debug_init)
-		buffer_clear(&auth_debug);
-	else {
-		buffer_init(&auth_debug);
-		auth_debug_init = 1;
-	}
+	if (auth_debug != NULL)
+		sshbuf_reset(auth_debug);
+	else if ((auth_debug = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
 }
 
 struct passwd *
@@ -851,7 +859,7 @@ auth_get_canonical_hostname(struct ssh *ssh, int use_dns)
 }
 
 /*
- * Runs command in a subprocess wuth a minimal environment.
+ * Runs command in a subprocess with a minimal environment.
  * Returns pid on success, 0 on failure.
  * The child stdout and stderr maybe captured, left attached or sent to
  * /dev/null depending on the contents of flags.
@@ -892,7 +900,7 @@ subprocess(const char *tag, struct passwd *pw, const char *command,
 	 * If executing an explicit binary, then verify the it exists
 	 * and appears safe-ish to execute
 	 */
-	if (*av[0] != '/') {
+	if (!path_absolute(av[0])) {
 		error("%s path is not absolute", tag);
 		return 0;
 	}
@@ -1015,17 +1023,20 @@ auth_log_authopts(const char *loc, const struct sshauthopt *opts, int do_remote)
 	int do_env = options.permit_user_env && opts->nenv > 0;
 	int do_permitopen = opts->npermitopen > 0 &&
 	    (options.allow_tcp_forwarding & FORWARD_LOCAL) != 0;
+	int do_permitlisten = opts->npermitlisten > 0 &&
+	    (options.allow_tcp_forwarding & FORWARD_REMOTE) != 0;
 	size_t i;
 	char msg[1024], buf[64];
 
 	snprintf(buf, sizeof(buf), "%d", opts->force_tun_device);
 	/* Try to keep this alphabetically sorted */
-	snprintf(msg, sizeof(msg), "key options:%s%s%s%s%s%s%s%s%s%s%s%s",
+	snprintf(msg, sizeof(msg), "key options:%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    opts->permit_agent_forwarding_flag ? " agent-forwarding" : "",
 	    opts->force_command == NULL ? "" : " command",
 	    do_env ?  " environment" : "",
 	    opts->valid_before == 0 ? "" : "expires",
 	    do_permitopen ?  " permitopen" : "",
+	    do_permitlisten ?  " permitlisten" : "",
 	    opts->permit_port_forwarding_flag ? " port-forwarding" : "",
 	    opts->cert_principals == NULL ? "" : " principals",
 	    opts->permit_pty_flag ? " pty" : "",
@@ -1059,10 +1070,16 @@ auth_log_authopts(const char *loc, const struct sshauthopt *opts, int do_remote)
 	}
 	if (opts->force_command != NULL)
 		debug("%s: forced command: \"%s\"", loc, opts->force_command);
-	if ((options.allow_tcp_forwarding & FORWARD_LOCAL) != 0) {
+	if (do_permitopen) {
 		for (i = 0; i < opts->npermitopen; i++) {
 			debug("%s: permitted open: %s",
 			    loc, opts->permitopen[i]);
+		}
+	}
+	if (do_permitlisten) {
+		for (i = 0; i < opts->npermitlisten; i++) {
+			debug("%s: permitted listen: %s",
+			    loc, opts->permitlisten[i]);
 		}
 	}
 }
@@ -1093,6 +1110,7 @@ auth_restrict_session(struct ssh *ssh)
 
 	/* A blank sshauthopt defaults to permitting nothing */
 	restricted = sshauthopt_new();
+	restricted->permit_pty_flag = 1;
 	restricted->restricted = 1;
 
 	if (auth_activate_options(ssh, restricted) != 0)

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2017/09/18 14:42:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.4.1 2019/06/10 21:42:17 christos Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-amd64-install	# gives ${IMGBASE}.img
 
-BOOTDISK=	sd0			# for USB flash etc.
 INSTIMAGEMB?=	1450			# for all installation binaries
 
 PRIMARY_BOOT=		bootxx_ffsv1

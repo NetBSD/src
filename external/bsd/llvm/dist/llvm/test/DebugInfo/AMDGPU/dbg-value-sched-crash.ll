@@ -16,15 +16,15 @@
 ;   }
 ; }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
+declare void @llvm.dbg.value(metadata, metadata, metadata)
 
 ; CHECK-LABEL: {{^}}kernel1:
 define amdgpu_kernel void @kernel1(
     i32 addrspace(1)* nocapture readonly %A,
     i32 addrspace(1)* nocapture %B) !dbg !7  {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 addrspace(1)* %A, i64 0, metadata !13, metadata !19), !dbg !20
-  tail call void @llvm.dbg.value(metadata i32 addrspace(1)* %B, i64 0, metadata !14, metadata !19), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 addrspace(1)* %A, metadata !13, metadata !19), !dbg !20
+  tail call void @llvm.dbg.value(metadata i32 addrspace(1)* %B, metadata !14, metadata !19), !dbg !21
   %0 = load i32, i32 addrspace(1)* %A, align 4, !dbg !22, !tbaa !24
   %cmp = icmp eq i32 %0, 1, !dbg !28
   br i1 %cmp, label %if.then, label %if.end, !dbg !29
@@ -59,7 +59,7 @@ if.end3:                                          ; preds = %if.then2, %if.end
 !4 = !{i32 2, !"Dwarf Version", i32 2}
 !5 = !{i32 2, !"Debug Info Version", i32 3}
 !6 = !{!"clang version 4.0 "}
-!7 = distinct !DISubprogram(name: "kernel1", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !12)
+!7 = distinct !DISubprogram(name: "kernel1", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !12)
 !8 = !DISubroutineType(types: !9)
 !9 = !{null, !10, !10}
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !11, size: 64)

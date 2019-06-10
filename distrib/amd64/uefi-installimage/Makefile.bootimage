@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.6 2017/02/16 03:47:23 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.6.16.1 2019/06/10 21:42:18 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -34,9 +34,6 @@
 #		Basename of the image
 #
 # Optional variables:
-#	BOOTDISK
-#		device name of target bootable disk specified in /etc/fstab
-#		(default: sd0)
 #	USE_MBR
 #		set yes if target disk image requires MBR partition
 #		(default: no)
@@ -158,7 +155,6 @@ RM?=		rm
 #
 # common definitions for image
 #
-BOOTDISK?=	sd0
 USE_MBR?=	no
 USE_GPT?=	no
 USE_SUNLABEL?=	no
@@ -215,8 +211,8 @@ BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} - ${EFISECTORS} - 2048
 FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS}
 SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} + ${EFISECTORS}
 
-BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | awk '/^GUID/ {print $$2}'`
-SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | awk '/^GUID/ {print $$2}'`
+BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
 .endif
 
 #
@@ -243,6 +239,8 @@ WORKFSTAB?=	work.fstab
 WORKRCCONF?=	work.rc.conf
 WORKFS?=        work.rootfs
 TARGETFS?=      imgroot.fs
+COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
+TAR_SUFF=	${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 
 CLEANFILES+=	${WORKSPEC} ${WORKFSTAB} ${WORKRCCONF} ${WORKFS}
 CLEANFILES+=	${TARGETFS}
@@ -257,12 +255,14 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 	fi;
 	@${MKDIR} ${MKDIRPERM} ${WORKDIR}
 .for set in ${IMG_SETS}
-	@if [ ! -f ${SETS_DIR}/${set}.tgz ]; then 			\
-		echo "Missing ${SETS_DIR}/${set}.tgz, aborting";	\
+	@if [ ! -f ${SETS_DIR}/${set}.${TAR_SUFF} ]; then 		\
+		echo "Missing ${SETS_DIR}/${set}.${TAR_SUFF}, aborting";\
 		false; 							\
 	fi
-	@echo Extracting ${set}.tgz ...
-	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rnz -f ${SETS_DIR}/${set}.tgz .)
+	@echo Extracting ${set}.${TAR_SUFF} ...
+	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rn \
+		--use-compress-program=${COMPRESS_PROGRAM:Q} \
+		-f ${SETS_DIR}/${set}.${TAR_SUFF} .)
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
@@ -272,22 +272,21 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 .if ${USE_GPT} != "no"
 .if ${OMIT_SWAPIMG} == "no"
 	${TOOL_SED}							\
-	    -e "s/\/dev\/@@BOOTDISK@@a/NAME=${BOOTDISK_UUID}/"		\
-	    -e "s/\/dev\/@@BOOTDISK@@b/NAME=${SWAPDISK_UUID}/"		\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "s/ROOT.b/NAME=${SWAPDISK_UUID}/"			\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .else
 	${TOOL_SED}							\
-	    -e "s/\/dev\/@@BOOTDISK@@a/NAME=${BOOTDISK_UUID}/"		\
-	    -e "/@@BOOTDISK@@b/d"					\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "/ROOT.b/d"						\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .endif
 .else	# USE_GPT == "no"
 .if ${OMIT_SWAPIMG} == "no"
-	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
+	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
 .else
 	${TOOL_SED}							\
-	    -e "s/@@BOOTDISK@@/${BOOTDISK}/"				\
-	    -e "/@@BOOTDISK@@b/d"					\
+	    -e "/ROOT.b/d"						\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .endif
 .endif	# USE_GPT != "no"
@@ -374,7 +373,8 @@ WORKLABEL?=	work.diskproto
 WORKIMG?=	work.img
 EFIWORKDIR?=	work.efidir
 
-CLEANFILES+=	${WORKMBR} ${WORKSWAP} ${WORKEFI} ${WORKGPT}
+CLEANFILES+=	${WORKMBR} ${WORKSWAP}
+CLEANFILES+=	${WORKEFI} ${WORKGPT}
 CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
 CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
 
@@ -424,7 +424,7 @@ ${IMGBASE}.img:	${TARGETFS}
 	    count=2048
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${WORKEFI} ${TARGETFS} ${WORKGPT} > ${WORKIMG}
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2				\
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2		\
 	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
 	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
 .else	# USE_GPT == "no"

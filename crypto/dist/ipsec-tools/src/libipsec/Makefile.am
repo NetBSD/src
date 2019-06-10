@@ -1,5 +1,4 @@
 
-#bin_PROGRAMS = test-policy test-policy-priority
 lib_LTLIBRARIES = libipsec.la
 
 libipsecdir = $(includedir)/libipsec
@@ -30,10 +29,4 @@ libipsec_la_LIBADD = $(LEXLIB)
 
 noinst_HEADERS = ipsec_strerror.h
 
-#test_policy_SOURCES = test-policy.c
-#test_policy_LDFLAGS = libipsec.la
-
-#test_policy_priority_SOURCES = test-policy-priority.c
-#test_policy_priority_LDFLAGS = libipsec.la
-
-EXTRA_DIST = ${man3_MANS} test-policy.c
+EXTRA_DIST = ${man3_MANS}

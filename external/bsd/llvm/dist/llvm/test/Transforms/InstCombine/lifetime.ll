@@ -17,11 +17,11 @@ entry:
 ; CHECK: bb3:
 ; CHECK-NEXT: call void @llvm.dbg.declare
 ; CHECK-NEXT: br label %fin
-; CHECK: call void @llvm.lifetime.start.p0i8(i64 1, i8* %[[T]])
-; CHECK-NEXT: call void @llvm.lifetime.start.p0i8(i64 1, i8* %[[B]])
-; CHECK-NEXT: call void @foo(i8* %[[B]], i8* %[[T]])
-; CHECK-NEXT: call void @llvm.lifetime.end.p0i8(i64 1, i8* %[[B]])
-; CHECK-NEXT: call void @llvm.lifetime.end.p0i8(i64 1, i8* %[[T]])
+; CHECK: call void @llvm.lifetime.start.p0i8(i64 1, i8* nonnull %[[T]])
+; CHECK-NEXT: call void @llvm.lifetime.start.p0i8(i64 1, i8* nonnull %[[B]])
+; CHECK-NEXT: call void @foo(i8* nonnull %[[B]], i8* nonnull %[[T]])
+; CHECK-NEXT: call void @llvm.lifetime.end.p0i8(i64 1, i8* nonnull %[[B]])
+; CHECK-NEXT: call void @llvm.lifetime.end.p0i8(i64 1, i8* nonnull %[[T]])
   %text = alloca [1 x i8], align 1
   %buff = alloca [1 x i8], align 1
   %0 = getelementptr inbounds [1 x i8], [1 x i8]* %text, i64 0, i64 0
@@ -67,7 +67,7 @@ fin:
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "clang version 3.8.0 (trunk 248826) (llvm/trunk 248827)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
 !1 = !DIFile(filename: "test.cpp", directory: "/home/user")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "bar", linkageName: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !8)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !8)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null, !7}
 !7 = !DIBasicType(name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)

@@ -244,15 +244,12 @@ bn_mul_mont:
 	mov	sp,t7
 	mov	a2,a0		# restore rp
 
-	and	sp,t1,a1
-	bic	a2,t1,a2
-	bis	a2,a1,a1	# ap=borrow?tp:rp
-
 .align	4
-.Lcopy:	ldq	t4,0(a1)	# copy or in-place refresh
+.Lcopy:	ldq	t4,0(t7)	# conditional copy
+	ldq	t6,0(a0)
 	lda	t7,8(t7)
 	lda	a0,8(a0)
-	lda	a1,8(a1)
+	cmoveq	t1,t6,t4
 	stq	zero,-8(t7)	# zap tp
 	cmpult	t7,t12,AT
 	stq	t4,-8(a0)

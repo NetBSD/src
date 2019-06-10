@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2017/05/21 15:28:37 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2019/06/10 21:41:54 christos Exp $
 
 .include "bsd.own.mk"
 
 # OpenSSL libraries.
-SUBDIR= libcrypto libdes
+SUBDIR= libcrypto libcryptotest libdes
 
 SUBDIR+= .WAIT	libssl		# depends on libcrypto
 

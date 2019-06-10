@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.9 2017/05/24 23:59:57 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.9.10.1 2019/06/10 21:44:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -78,9 +78,9 @@ typedef struct {
 	cdf_secid_t	h_master_sat[436/4];
 } cdf_header_t;
 
-#define CDF_SEC_SIZE(h) ((size_t)(1 << (h)->h_sec_size_p2))
+#define CDF_SEC_SIZE(h) CAST(size_t, 1 << (h)->h_sec_size_p2)
 #define CDF_SEC_POS(h, secid) (CDF_SEC_SIZE(h) + (secid) * CDF_SEC_SIZE(h))
-#define CDF_SHORT_SEC_SIZE(h)	((size_t)(1 << (h)->h_short_sec_size_p2))
+#define CDF_SHORT_SEC_SIZE(h)	CAST(size_t, 1 << (h)->h_short_sec_size_p2)
 #define CDF_SHORT_SEC_POS(h, secid) ((secid) * CDF_SHORT_SEC_SIZE(h))
 
 typedef int32_t cdf_dirid_t;
@@ -274,7 +274,7 @@ typedef struct {
 typedef struct {
 	uint16_t ce_namlen;
 	uint32_t ce_num;
-	uint64_t ce_timestamp; 
+	uint64_t ce_timestamp;
 	uint16_t ce_name[256];
 } cdf_catalog_entry_t;
 

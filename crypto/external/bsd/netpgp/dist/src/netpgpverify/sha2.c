@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2 2016/06/14 20:47:08 agc Exp $ */
+/* $NetBSD: sha2.c,v 1.2.16.1 2019/06/10 21:41:10 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -48,7 +48,9 @@
 #   undef be32toh
 #   undef be64toh
 
+#ifndef __CAST
 #define __CAST(__dt, __st)      ((__dt)(__st)) /* srsly? */
+#endif
 
 static __inline void
 be32encode(void *buf, uint32_t u)
@@ -76,7 +78,7 @@ htobe32(uint32_t x)
 	uint8_t p[4];
 	memcpy(p, &x, 4);
 
-	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+	return (((uint32_t)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
 }
 
 static uint64_t
@@ -86,8 +88,8 @@ htobe64(uint64_t x)
 	uint32_t u, v;
 	memcpy(p, &x, 8);
 
-	u = ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
-	v = ((p[4] << 24) | (p[5] << 16) | (p[6] << 8) | p[7]);
+	u = (((uint32_t)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+	v = (((uint32_t)p[4] << 24) | (p[5] << 16) | (p[6] << 8) | p[7]);
 
 	return ((((uint64_t)u) << 32) | v);
 }

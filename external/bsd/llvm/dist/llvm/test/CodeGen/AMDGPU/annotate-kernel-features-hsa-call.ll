@@ -8,10 +8,10 @@ declare i32 @llvm.amdgcn.workitem.id.x() #0
 declare i32 @llvm.amdgcn.workitem.id.y() #0
 declare i32 @llvm.amdgcn.workitem.id.z() #0
 
-declare i8 addrspace(2)* @llvm.amdgcn.dispatch.ptr() #0
-declare i8 addrspace(2)* @llvm.amdgcn.queue.ptr() #0
-declare i8 addrspace(2)* @llvm.amdgcn.kernarg.segment.ptr() #0
-declare i8 addrspace(2)* @llvm.amdgcn.implicitarg.ptr() #0
+declare i8 addrspace(4)* @llvm.amdgcn.dispatch.ptr() #0
+declare i8 addrspace(4)* @llvm.amdgcn.queue.ptr() #0
+declare i8 addrspace(4)* @llvm.amdgcn.kernarg.segment.ptr() #0
+declare i8 addrspace(4)* @llvm.amdgcn.implicitarg.ptr() #0
 declare i64 @llvm.amdgcn.dispatch.id() #0
 
 ; HSA: define void @use_workitem_id_x() #1 {
@@ -58,15 +58,15 @@ define void @use_workgroup_id_z() #1 {
 
 ; HSA: define void @use_dispatch_ptr() #7 {
 define void @use_dispatch_ptr() #1 {
-  %dispatch.ptr = call i8 addrspace(2)* @llvm.amdgcn.dispatch.ptr()
-  store volatile i8 addrspace(2)* %dispatch.ptr, i8 addrspace(2)* addrspace(1)* undef
+  %dispatch.ptr = call i8 addrspace(4)* @llvm.amdgcn.dispatch.ptr()
+  store volatile i8 addrspace(4)* %dispatch.ptr, i8 addrspace(4)* addrspace(1)* undef
   ret void
 }
 
 ; HSA: define void @use_queue_ptr() #8 {
 define void @use_queue_ptr() #1 {
-  %queue.ptr = call i8 addrspace(2)* @llvm.amdgcn.queue.ptr()
-  store volatile i8 addrspace(2)* %queue.ptr, i8 addrspace(2)* addrspace(1)* undef
+  %queue.ptr = call i8 addrspace(4)* @llvm.amdgcn.queue.ptr()
+  store volatile i8 addrspace(4)* %queue.ptr, i8 addrspace(4)* addrspace(1)* undef
   ret void
 }
 
@@ -186,22 +186,22 @@ define void @call_recursive_use_workitem_id_y() #1 {
 
 ; HSA: define void @use_group_to_flat_addrspacecast(i32 addrspace(3)* %ptr) #8 {
 define void @use_group_to_flat_addrspacecast(i32 addrspace(3)* %ptr) #1 {
-  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(4)*
-  store volatile i32 0, i32 addrspace(4)* %stof
+  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(2)*
+  store volatile i32 0, i32 addrspace(2)* %stof
   ret void
 }
 
 ; HSA: define void @use_group_to_flat_addrspacecast_gfx9(i32 addrspace(3)* %ptr) #12 {
 define void @use_group_to_flat_addrspacecast_gfx9(i32 addrspace(3)* %ptr) #2 {
-  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(4)*
-  store volatile i32 0, i32 addrspace(4)* %stof
+  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(2)*
+  store volatile i32 0, i32 addrspace(2)* %stof
   ret void
 }
 
 ; HSA: define void @use_group_to_flat_addrspacecast_queue_ptr_gfx9(i32 addrspace(3)* %ptr) #13 {
 define void @use_group_to_flat_addrspacecast_queue_ptr_gfx9(i32 addrspace(3)* %ptr) #2 {
-  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(4)*
-  store volatile i32 0, i32 addrspace(4)* %stof
+  %stof = addrspacecast i32 addrspace(3)* %ptr to i32 addrspace(2)*
+  store volatile i32 0, i32 addrspace(2)* %stof
   call void @func_indirect_use_queue_ptr()
   ret void
 }
@@ -226,8 +226,8 @@ define void @indirect_use_group_to_flat_addrspacecast_queue_ptr_gfx9() #1 {
 
 ; HSA: define void @use_kernarg_segment_ptr() #14 {
 define void @use_kernarg_segment_ptr() #1 {
-  %kernarg.segment.ptr = call i8 addrspace(2)* @llvm.amdgcn.kernarg.segment.ptr()
-  store volatile i8 addrspace(2)* %kernarg.segment.ptr, i8 addrspace(2)* addrspace(1)* undef
+  %kernarg.segment.ptr = call i8 addrspace(4)* @llvm.amdgcn.kernarg.segment.ptr()
+  store volatile i8 addrspace(4)* %kernarg.segment.ptr, i8 addrspace(4)* addrspace(1)* undef
   ret void
 }
 
@@ -237,52 +237,59 @@ define void @func_indirect_use_kernarg_segment_ptr() #1 {
   ret void
 }
 
-; HSA: define void @use_implicitarg_ptr() #14 {
-define void @use_implicitarg_ptr() #1 {
-  %implicitarg.ptr = call i8 addrspace(2)* @llvm.amdgcn.implicitarg.ptr()
-  store volatile i8 addrspace(2)* %implicitarg.ptr, i8 addrspace(2)* addrspace(1)* undef
+; HSA: define amdgpu_kernel void @kern_use_implicitarg_ptr() #15 {
+define amdgpu_kernel void @kern_use_implicitarg_ptr() #1 {
+  %implicitarg.ptr = call i8 addrspace(4)* @llvm.amdgcn.implicitarg.ptr()
+  store volatile i8 addrspace(4)* %implicitarg.ptr, i8 addrspace(4)* addrspace(1)* undef
   ret void
 }
 
-; HSA: define void @func_indirect_use_implicitarg_ptr() #14 {
+; HSA: define void @use_implicitarg_ptr() #15 {
+define void @use_implicitarg_ptr() #1 {
+  %implicitarg.ptr = call i8 addrspace(4)* @llvm.amdgcn.implicitarg.ptr()
+  store volatile i8 addrspace(4)* %implicitarg.ptr, i8 addrspace(4)* addrspace(1)* undef
+  ret void
+}
+
+; HSA: define void @func_indirect_use_implicitarg_ptr() #15 {
 define void @func_indirect_use_implicitarg_ptr() #1 {
   call void @use_implicitarg_ptr()
   ret void
 }
 
-; HSA: declare void @external.func() #15
+; HSA: declare void @external.func() #16
 declare void @external.func() #3
 
-; HSA: define internal void @defined.func() #15 {
+; HSA: define internal void @defined.func() #16 {
 define internal void @defined.func() #3 {
   ret void
 }
 
-; HSA: define void @func_call_external() #15 {
+; HSA: define void @func_call_external() #16 {
 define void @func_call_external() #3 {
   call void @external.func()
   ret void
 }
 
-; HSA: define void @func_call_defined() #15 {
+; HSA: define void @func_call_defined() #16 {
 define void @func_call_defined() #3 {
   call void @defined.func()
   ret void
 }
 
-; HSA: define void @func_call_asm() #15 {
+; HSA: define void @func_call_asm() #16 {
 define void @func_call_asm() #3 {
   call void asm sideeffect "", ""() #3
   ret void
 }
 
-; HSA: define amdgpu_kernel void @kern_call_external() #16 {
+; HSA: define amdgpu_kernel void @kern_call_external() #17 {
 define amdgpu_kernel void @kern_call_external() #3 {
   call void @external.func()
   ret void
 }
 
-; HSA: define amdgpu_kernel void @func_kern_defined() #16 {
+; HSA: define amdgpu_kernel void @func_kern_defined() #17 {
 define amdgpu_kernel void @func_kern_defined() #3 {
   call void @defined.func()
   ret void
@@ -308,5 +315,6 @@ attributes #3 = { nounwind }
 ; HSA: attributes #12 = { nounwind "target-cpu"="gfx900" }
 ; HSA: attributes #13 = { nounwind "amdgpu-queue-ptr" "target-cpu"="gfx900" }
 ; HSA: attributes #14 = { nounwind "amdgpu-kernarg-segment-ptr" "target-cpu"="fiji" }
-; HSA: attributes #15 = { nounwind }
-; HSA: attributes #16 = { nounwind "amdgpu-flat-scratch" }
+; HSA: attributes #15 = { nounwind "amdgpu-implicitarg-ptr" "target-cpu"="fiji" }
+; HSA: attributes #16 = { nounwind }
+; HSA: attributes #17 = { nounwind "amdgpu-flat-scratch" }

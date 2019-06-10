@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/03/23 05:24:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2019/06/10 21:42:32 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ LISTS=		${.CURDIR}/list64
 .endif
 
 IMAGE=		diskimage
-IMAGESIZE=	4500k
+IMAGESIZE=	4700k
 MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	be
 
@@ -30,9 +30,7 @@ MDSETTARGETS=	INSTALL${NX}_IP2x ${RAMDISK} netbsd-INSTALL${NX}_IP2x${SFX} \
 MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_SUFFIXES.netbsd-INSTALL${NX}_IP2x=ecoff create-ecoff
-create-ecoff=	${OBJCOPY} --impure -O ecoff-bigmips \
-		-R .pdr -R .mdebug.abi32 -R .comment -R .ident \
-		${.TARGET:R} ${.TARGET}
+create-ecoff=	${MIPS_ELF2ECOFF} ${.TARGET:R} ${.TARGET}
 
 IMAGE_RELEASEDIR=	installation/diskimage
 

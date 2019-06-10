@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-ctr-mt.c,v 1.9 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: cipher-ctr-mt.c,v 1.9.2.1 2019/06/10 21:41:12 christos Exp $	*/
 /*
  * OpenSSH Multi-threaded AES-CTR Cipher
  *
@@ -21,7 +21,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: cipher-ctr-mt.c,v 1.9 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: cipher-ctr-mt.c,v 1.9.2.1 2019/06/10 21:41:12 christos Exp $");
 
 #include <sys/types.h>
 

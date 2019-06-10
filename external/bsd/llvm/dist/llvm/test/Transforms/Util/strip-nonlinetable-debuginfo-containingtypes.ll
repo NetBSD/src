@@ -51,7 +51,7 @@ attributes #2 = { nounwind }
 
 ; CHECK-NEG-NOT: !DI{{Basic|Composite|Derived}}Type
 
-!0 = distinct !DIGlobalVariableExpression(var: !1)
+!0 = distinct !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "b", scope: !2, file: !3, line: 5, type: !6, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "clang version 4.0.0 (trunk 282583) (llvm/trunk 282611)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5)
 !3 = !DIFile(filename: "t.cpp", directory: "/")
@@ -78,7 +78,7 @@ attributes #2 = { nounwind }
 !24 = !{!"clang version 4.0.0 (trunk 282583) (llvm/trunk 282611)"}
 ; Only referenced by the type system.
 ; CHECK-NEG-NOT: !DISubprogram(name: "~A"
-!25 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", scope: !6, file: !3, line: 4, type: !26, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, unit: !2, declaration: !29, variables: !4)
+!25 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", scope: !6, file: !3, line: 4, type: !26, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, unit: !2, declaration: !29, retainedNodes: !4)
 !26 = !DISubroutineType(types: !27)
 !27 = !{null, !28}
 !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !6, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer)

@@ -23,16 +23,21 @@ llvm_canonicalize_cmake_booleans(
   CLANG_ENABLE_ARCMT
   CLANG_ENABLE_STATIC_ANALYZER
   ENABLE_BACKTRACES
-  HAVE_LIBZ)
+  HAVE_LIBZ
+  LLVM_ENABLE_PER_TARGET_RUNTIME_DIR)
 
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
+  MAIN_CONFIG
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py
   )
 
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg.py
+  MAIN_CONFIG
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.cfg.py
   )
 
 option(CLANG_TEST_USE_VG "Run Clang tests under Valgrind" OFF)
@@ -48,11 +53,15 @@ list(APPEND CLANG_TEST_DEPS
   clang-offload-bundler
   clang-import-test
   clang-rename
+  clang-refactor
+  clang-diff
+  hmaptool
   )
   
 if(CLANG_ENABLE_STATIC_ANALYZER)
   list(APPEND CLANG_TEST_DEPS
     clang-check
+    clang-func-mapping
     )
 endif()
 
@@ -86,9 +95,11 @@ if( NOT CLANG_BUILT_STANDALONE )
     llvm-config
     FileCheck count not
     llc
+    llvm-as
     llvm-bcanalyzer
     llvm-cat
     llvm-dis
+    llvm-lto2
     llvm-modextract
     llvm-nm
     llvm-objdump
@@ -124,3 +135,12 @@ add_lit_testsuites(CLANG ${CMAKE_CURRENT_SOURCE_DIR}
 add_custom_target(clang-test)
 add_dependencies(clang-test check-clang)
 set_target_properties(clang-test PROPERTIES FOLDER "Clang tests")
+
+# FIXME: This logic can be removed once all buildbots have moved
+# debuginfo-test from clang/test to llvm/projects or monorepo.
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/debuginfo-tests)
+  message(WARNING "Including debuginfo-tests in clang/test is deprecated.  Move to llvm/projects or use monorepo.")
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/debuginfo-tests/CMakeLists.txt)
+    add_subdirectory(debuginfo-tests)
+  endif()
+endif()

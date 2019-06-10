@@ -19,11 +19,17 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+/* Define to 1 if you have the `available.' function. */
+#undef HAVE_AVAILABLE_
+
+/* Define to 1 if you have the `by' function. */
+#undef HAVE_BY
+
+/* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
 #undef HAVE_CFLOCALECOPYCURRENT
 
-/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+/* Define to 1 if you have the MacOS X function CFPreferencesCopyAppValue in
    the CoreFoundation framework. */
 #undef HAVE_CFPREFERENCESCOPYAPPVALUE
 
@@ -34,29 +40,44 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the `dnl' function. */
+#undef HAVE_DNL
+
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
+
+/* Define to 1 if you have the `enabled' function. */
+#undef HAVE_ENABLED
 
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
+/* Define to 1 if you have the `function.' function. */
+#undef HAVE_FUNCTION_
+
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
+
+/* Define to 1 if you have the `have' function. */
+#undef HAVE_HAVE
 
 /* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
 
+/* Define to 1 if you have the `if' function. */
+#undef HAVE_IF
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `is' function. */
+#undef HAVE_IS
 
 /* Define to 1 if you have the <libintl.h> header file. */
 #undef HAVE_LIBINTL_H
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
-
-/* pthread library */
-#undef HAVE_LIBPTHREAD
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -77,8 +98,23 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
+/* Define to 1 if you have the `Needed' function. */
+#undef HAVE_NEEDED
+
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the `NLS' function. */
+#undef HAVE_NLS
+
+/* Define to 1 if you have the `not' function. */
+#undef HAVE_NOT
+
+/* Define to 1 if you have the `only' function. */
+#undef HAVE_ONLY
+
+/* Define to 1 if you have the `OpenBSD' function. */
+#undef HAVE_OPENBSD
 
 /* Define to 1 if you have the `pow' function. */
 #undef HAVE_POW
@@ -99,6 +135,9 @@
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
+/* Define to 1 if you have the `replacement' function. */
+#undef HAVE_REPLACEMENT
+
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
 
@@ -110,6 +149,9 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
 
 /* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
@@ -132,14 +174,23 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `Used' function. */
+#undef HAVE_USED
 
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `We' function. */
+#undef HAVE_WE
 
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK

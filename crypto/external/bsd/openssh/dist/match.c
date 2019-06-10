@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.37 2017/03/10 04:24:55 djm Exp $ */
+/*	$NetBSD: match.c,v 1.8.12.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: match.c,v 1.39 2019/03/06 22:14:23 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.8.12.1 2019/06/10 21:41:12 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -171,6 +171,14 @@ match_pattern_list(const char *string, const char *pattern, int dolower)
 	return got_positive;
 }
 
+/* Match a list representing users or groups. */
+int
+match_usergroup_pattern_list(const char *string, const char *pattern)
+{
+	/* Case sensitive match */
+	return match_pattern_list(string, pattern, 0);
+}
+
 /*
  * Tries to match the host name (which must be in all lowercase) against the
  * comma-separated sequence of subpatterns (each possibly preceded by ! to
@@ -295,16 +303,20 @@ match_list(const char *client, const char *server, u_int *next)
 }
 
 /*
- * Filters a comma-separated list of strings, excluding any entry matching
- * the 'filter' pattern list. Caller must free returned string.
+ * Filter proposal using pattern-list filter.
+ * "blacklist" determines sense of filter:
+ * non-zero indicates that items matching filter should be excluded.
+ * zero indicates that only items matching filter should be included.
+ * returns NULL on allocation error, otherwise caller must free result.
  */
-char *
-match_filter_list(const char *proposal, const char *filter)
+static char *
+filter_list(const char *proposal, const char *filter, int blacklist)
 {
 	size_t len = strlen(proposal) + 1;
 	char *fix_prop = malloc(len);
 	char *orig_prop = strdup(proposal);
 	char *cp, *tmp;
+	int r;
 
 	if (fix_prop == NULL || orig_prop == NULL) {
 		free(orig_prop);
@@ -315,7 +327,8 @@ match_filter_list(const char *proposal, const char *filter)
 	tmp = orig_prop;
 	*fix_prop = '\0';
 	while ((cp = strsep(&tmp, ",")) != NULL) {
-		if (match_pattern_list(cp, filter, 0) != 1) {
+		r = match_pattern_list(cp, filter, 0);
+		if ((blacklist && r != 1) || (!blacklist && r == 1)) {
 			if (*fix_prop != '\0')
 				strlcat(fix_prop, ",", len);
 			strlcat(fix_prop, cp, len);
@@ -325,3 +338,22 @@ match_filter_list(const char *proposal, const char *filter)
 	return fix_prop;
 }
 
+/*
+ * Filters a comma-separated list of strings, excluding any entry matching
+ * the 'filter' pattern list. Caller must free returned string.
+ */
+char *
+match_filter_blacklist(const char *proposal, const char *filter)
+{
+	return filter_list(proposal, filter, 1);
+}
+
+/*
+ * Filters a comma-separated list of strings, including only entries matching
+ * the 'filter' pattern list. Caller must free returned string.
+ */
+char *
+match_filter_whitelist(const char *proposal, const char *filter)
+{
+	return filter_list(proposal, filter, 0);
+}

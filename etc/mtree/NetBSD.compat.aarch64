@@ -1,0 +1,4 @@
+# $NetBSD: NetBSD.compat.aarch64,v 1.1.2.2 2019/06/10 21:42:45 christos Exp $
+
+./usr/include/g++/bits/arm
+./usr/include/g++/bits/aarch64

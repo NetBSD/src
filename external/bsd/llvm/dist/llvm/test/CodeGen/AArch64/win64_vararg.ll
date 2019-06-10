@@ -159,27 +159,28 @@ attributes #6 = { "no-frame-pointer-elim"="true" }
 ; CHECK: stur    x8, [x29, #-40]
 ; CHECK: mov     w8, w0
 ; CHECK: add     x8, x8, #15
-; CHECK: mov     x9, sp
-; CHECK: and     x8, x8, #0x1fffffff0
-; CHECK: sub     x20, x9, x8
+; CHECK: lsr     x15, x8, #4
 ; CHECK: mov     x19, x1
-; CHECK: mov     x23, sp
+; CHECK: mov     [[REG2:x[0-9]+]], sp
 ; CHECK: stp     x6, x7, [x29, #48]
 ; CHECK: stp     x4, x5, [x29, #32]
 ; CHECK: stp     x2, x3, [x29, #16]
-; CHECK: mov     sp, x20
-; CHECK: ldur    x21, [x29, #-40]
-; CHECK: sxtw    x22, w0
+; CHECK: bl      __chkstk
+; CHECK: mov     x8, sp
+; CHECK: sub     [[REG:x[0-9]+]], x8, x15, lsl #4
+; CHECK: mov     sp, [[REG]]
+; CHECK: ldur    [[REG3:x[0-9]+]], [x29, #-40]
+; CHECK: sxtw    [[REG4:x[0-9]+]], w0
 ; CHECK: bl      __local_stdio_printf_options
 ; CHECK: ldr     x8, [x0]
-; CHECK: mov     x1, x20
-; CHECK: mov     x2, x22
+; CHECK: mov     x1, [[REG]]
+; CHECK: mov     x2, [[REG4]]
 ; CHECK: mov     x3, x19
 ; CHECK: orr     x0, x8, #0x2
 ; CHECK: mov     x4, xzr
-; CHECK: mov     x5, x21
+; CHECK: mov     x5, [[REG3]]
 ; CHECK: bl      __stdio_common_vsprintf
-; CHECK: mov     sp, x23
+; CHECK: mov     sp, [[REG2]]
 ; CHECK: sub     sp, x29, #48
 ; CHECK: ldp     x29, x30, [sp, #48]
 ; CHECK: ldp     x20, x19, [sp, #32]
@@ -252,3 +253,27 @@ define i32 @snprintf(i8*, i64, i8*, ...) local_unnamed_addr #5 {
   call void @llvm.lifetime.end.p0i8(i64 8, i8* nonnull %5) #2
   ret i32 %12
 }
+
+; CHECK-LABEL: fixed_params
+; CHECK: sub     sp,  sp, #32
+; CHECK-DAG: mov     w6,  w3
+; CHECK-DAG: mov     [[REG1:w[0-9]+]],  w2
+; CHECK: mov     w2, w1
+; CHECK: str     w4,  [sp]
+; CHECK: fmov    x1,  d0
+; CHECK: fmov    x3,  d1
+; CHECK: fmov    x5,  d2
+; CHECK: fmov    x7,  d3
+; CHECK: mov     w4,  [[REG1]]
+; CHECK: str     x30, [sp, #16]
+; CHECK: str     d4,  [sp, #8]
+; CHECK: bl      varargs
+; CHECK: ldr     x30, [sp, #16]
+; CHECK: add     sp,  sp, #32
+; CHECK: ret
+define void @fixed_params(i32, double, i32, double, i32, double, i32, double, i32, double) nounwind {
+  tail call void (i32, ...) @varargs(i32 %0, double %1, i32 %2, double %3, i32 %4, double %5, i32 %6, double %7, i32 %8, double %9)
+  ret void
+}
+
+declare void @varargs(i32, ...) local_unnamed_addr

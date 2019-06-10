@@ -1,0 +1,4 @@
+#	$NetBSD: NetBSD.compat.x86_64,v 1.1.2.2 2019/06/10 21:42:45 christos Exp $
+
+./usr/include/g++/bits/i386
+./usr/include/g++/bits/x86_64

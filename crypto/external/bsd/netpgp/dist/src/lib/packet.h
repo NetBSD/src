@@ -675,6 +675,7 @@ typedef struct pgp_ss_sig_target_t {
 
 /** pgp_subpacket_t */
 typedef struct pgp_subpacket_t {
+	pgp_content_enum	 tag;
 	size_t          	 length;
 	uint8_t			*raw;
 } pgp_subpacket_t;

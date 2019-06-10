@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.69.4.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.69.4.1 2019/06/10 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $");
 #include <time.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <inttypes.h>
 
 /*
  * Shell variables.
@@ -169,7 +170,7 @@ const struct varinit varinit[] = {
 #endif
 	{ &voptind,	VSTRFIXED|VTEXTFIXED|VNOFUNC,	"OPTIND=1",
 	   { .set_func= getoptsreset } },
-	{ &line_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"LINENO=1",
+	{ &line_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF|VSPECIAL,	"LINENO=1",
 	   { .ref_func= get_lineno } },
 #ifndef SMALL
 	{ &tod,		VSTRFIXED|VTEXTFIXED|VFUNCREF,	"ToD=",
@@ -180,7 +181,7 @@ const struct varinit varinit[] = {
 	   { .ref_func= get_seconds } },
 	{ &euname,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"EUSER=",
 	   { .ref_func= get_euser } },
-	{ &random_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"RANDOM=",
+	{ &random_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF|VSPECIAL,	"RANDOM=",
 	   { .ref_func= get_random } },
 #endif
 	{ NULL,	0,				NULL,
@@ -191,6 +192,9 @@ struct var *vartab[VTABSIZE];
 
 STATIC int strequal(const char *, const char *);
 STATIC struct var *find_var(const char *, struct var ***, int *);
+STATIC void showvar(struct var *, const char *, const char *, int);
+static void export_usage(const char *) __dead;
+STATIC int makespecial(const char *);
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -230,14 +234,17 @@ INIT {
 	 *
 	 * PPID is readonly
 	 * Always default IFS
+	 * POSIX: "Whenever the shell is invoked, OPTIND shall
+	 *         be initialized to 1."
 	 * PSc indicates the root/non-root status of this shell.
-	 * NETBSD_SHELL is a constant (readonly), and is never exported
 	 * START_TIME belongs only to this shell.
+	 * NETBSD_SHELL is a constant (readonly), and is never exported
 	 * LINENO is simply magic...
 	 */
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
 	setvar("PPID", buf, VREADONLY);
 	setvar("IFS", ifs_default, VTEXTFIXED);
+	setvar("OPTIND", "1", VTEXTFIXED);
 	setvar("PSc", (geteuid() == 0 ? "#" : "$"), VTEXTFIXED);
 
 #ifndef SMALL
@@ -319,15 +326,17 @@ initvar(void)
 void
 choose_ps1(void)
 {
+	uid_t u = geteuid();
+
 	if ((vps1.flags & (VTEXTFIXED|VSTACK)) == 0)
 		free(vps1.text);
-	vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
+	vps1.text = strdup(u != 0 ? "PS1=$ " : "PS1=# ");
 	vps1.flags &= ~(VTEXTFIXED|VSTACK);
 
 	/*
 	 * Update PSc whenever we feel the need to update PS1
 	 */
-	setvarsafe("PSc", (geteuid() == 0 ? "#" : "$"), 0);
+	setvarsafe("PSc", (u == 0 ? "#" : "$"), 0);
 }
 
 /*
@@ -473,12 +482,21 @@ setvareq(char *s, int flags)
 		if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(vp->text);
 
+		/*
+		 * if we set a magic var, the magic dissipates,
+		 * unless it is very special indeed.
+		 */
+		if (vp->rfunc && (vp->flags & (VFUNCREF|VSPECIAL)) == VFUNCREF)
+			vp->rfunc = NULL;
+
 		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 		if (flags & VNOEXPORT)
 			vp->flags &= ~VEXPORT;
+		if (flags & VDOEXPORT)
+			vp->flags &= ~VNOEXPORT;
 		if (vp->flags & VNOEXPORT)
 			flags &= ~VEXPORT;
-		vp->flags |= flags & ~VNOFUNC;
+		vp->flags |= flags & ~(VNOFUNC | VDOEXPORT);
 		vp->text = s;
 
 		/*
@@ -491,20 +509,22 @@ setvareq(char *s, int flags)
 		INTON;
 		return;
 	}
-	VTRACE(DBG_VARS, ("new\n"));
 	/* not found */
 	if (flags & VNOSET) {
+		VTRACE(DBG_VARS, ("new noset\n"));
 		if ((flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(s);
 		return;
 	}
 	vp = ckmalloc(sizeof (*vp));
-	vp->flags = flags & ~(VNOFUNC|VFUNCREF);
+	vp->flags = flags & ~(VNOFUNC|VFUNCREF|VDOEXPORT);
 	vp->text = s;
 	vp->name_len = nlen;
-	vp->next = *vpp;
 	vp->func = NULL;
+	vp->next = *vpp;
 	*vpp = vp;
+
+	VTRACE(DBG_VARS, ("new [%s] (%d) %#x\n", s, nlen, vp->flags));
 }
 
 
@@ -543,13 +563,19 @@ char *
 lookupvar(const char *name)
 {
 	struct var *v;
+	char *p;
 
 	v = find_var(name, NULL, NULL);
 	if (v == NULL || v->flags & VUNSET)
 		return NULL;
-	if (v->rfunc && (v->flags & VFUNCREF) != 0)
-		return (*v->rfunc)(v) + v->name_len + 1;
-	return v->text + v->name_len + 1;
+	if (v->rfunc && (v->flags & VFUNCREF) != 0) {
+		p = (*v->rfunc)(v);
+		if (p == NULL)
+			return NULL;
+	} else
+		p = v->text;
+
+	return p + v->name_len + 1;
 }
 
 
@@ -565,6 +591,7 @@ bltinlookup(const char *name, int doall)
 {
 	struct strlist *sp;
 	struct var *v;
+	char *p;
 
 	for (sp = cmdenviron ; sp ; sp = sp->next) {
 		if (strequal(sp->text, name))
@@ -575,9 +602,15 @@ bltinlookup(const char *name, int doall)
 
 	if (v == NULL || v->flags & VUNSET || (!doall && !(v->flags & VEXPORT)))
 		return NULL;
-	if (v->rfunc && (v->flags & VFUNCREF) != 0)
-		return (*v->rfunc)(v) + v->name_len + 1;
-	return v->text + v->name_len + 1;
+
+	if (v->rfunc && (v->flags & VFUNCREF) != 0) {
+		p = (*v->rfunc)(v);
+		if (p == NULL)
+			return NULL;
+	} else
+		p = v->text;
+
+	return p + v->name_len + 1;
 }
 
 
@@ -607,9 +640,11 @@ environment(void)
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
 			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT) {
-				if (vp->rfunc && (vp->flags & VFUNCREF))
-					*ep++ = (*vp->rfunc)(vp);
-				else
+				if (vp->rfunc && (vp->flags & VFUNCREF)) {
+					*ep = (*vp->rfunc)(vp);
+					if (*ep != NULL)
+						ep++;
+				} else
 					*ep++ = vp->text;
 				VTRACE(DBG_VARS, ("environment: %s\n", ep[-1]));
 			}
@@ -739,12 +774,39 @@ sort_var(const void *v_v1, const void *v_v2)
  * For now just roll 'em through qsort for printing...
  */
 
+STATIC void
+showvar(struct var *vp, const char *cmd, const char *xtra, int show_value)
+{
+	const char *p;
+
+	p = vp->text;
+	if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
+		p = (*vp->rfunc)(vp);
+		if (p == NULL) {
+			if (!(show_value & 2))
+				return;
+			p = vp->text;
+			show_value = 0;
+		}
+	}
+	if (cmd)
+		out1fmt("%s ", cmd);
+	if (xtra)
+		out1fmt("%s ", xtra);
+	for ( ; *p != '=' ; p++)
+		out1c(*p);
+	if (!(vp->flags & VUNSET) && show_value) {
+		out1fmt("=");
+		print_quoted(++p);
+	}
+	out1c('\n');
+}
+
 int
-showvars(const char *name, int flag, int show_value, const char *xtra)
+showvars(const char *cmd, int flag, int show_value, const char *xtra)
 {
 	struct var **vpp;
 	struct var *vp;
-	const char *p;
 
 	static struct var **list;	/* static in case we are interrupted */
 	static int list_len;
@@ -772,26 +834,11 @@ showvars(const char *name, int flag, int show_value, const char *xtra)
 
 	qsort(list, count, sizeof *list, sort_var);
 
-	for (vpp = list; count--; vpp++) {
-		vp = *vpp;
-		if (name)
-			out1fmt("%s ", name);
-		if (xtra)
-			out1fmt("%s ", xtra);
-		p = vp->text;
-		if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
-			p = (*vp->rfunc)(vp);
-			if (p == NULL)
-				p = vp->text;
-		}
-		for ( ; *p != '=' ; p++)
-			out1c(*p);
-		if (!(vp->flags & VUNSET) && show_value) {
-			out1fmt("=");
-			print_quoted(++p);
-		}
-		out1c('\n');
-	}
+	for (vpp = list; count--; vpp++)
+		showvar(*vpp, cmd, xtra, show_value);
+
+	/* no free(list), will be used again next time ... */
+
 	return 0;
 }
 
@@ -801,74 +848,169 @@ showvars(const char *name, int flag, int show_value, const char *xtra)
  * The export and readonly commands.
  */
 
+static void __dead
+export_usage(const char *cmd)
+{
+#ifdef SMALL
+	if (*cmd == 'r')
+	    error("Usage: %s [ -p | var[=val]... ]", cmd);
+	else
+	    error("Usage: %s [ -p | [-n] var[=val]... ]", cmd);
+#else
+	if (*cmd == 'r')
+	    error("Usage: %s [-p [var...] | -q var... | var[=val]... ]", cmd);
+	else
+	    error(
+	     "Usage: %s [ -px [var...] | -q[x] var... | [-n|x] var[=val]... ]",
+		cmd);
+#endif
+}
+
 int
 exportcmd(int argc, char **argv)
 {
 	struct var *vp;
 	char *name;
-	const char *p;
-	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
+	const char *p = argv[0];
+	int flag = p[0] == 'r'? VREADONLY : VEXPORT;
 	int pflg = 0;
 	int nflg = 0;
+#ifndef SMALL
 	int xflg = 0;
+	int qflg = 0;
+#endif
 	int res;
 	int c;
 	int f;
 
-	while ((c = nextopt("npx")) != '\0') {
+#ifdef SMALL
+#define EXPORT_OPTS "np"
+#else
+#define	EXPORT_OPTS "npqx"
+#endif
+
+	while ((c = nextopt(EXPORT_OPTS)) != '\0') {
+
+#undef EXPORT_OPTS
+
 		switch (c) {
+		case 'n':
+			if (pflg || flag == VREADONLY
+#ifndef SMALL
+				|| qflg || xflg
+#endif
+						)
+				export_usage(p);
+			nflg = 1;
+			break;
 		case 'p':
-			if (nflg)
-				return 1;
+			if (nflg
+#ifndef SMALL
+				|| qflg
+#endif
+					)
+				export_usage(p);
 			pflg = 3;
 			break;
-		case 'n':
-			if (pflg || xflg || flag == VREADONLY)
-				return 1;
-			nflg = 1;
+#ifndef SMALL
+		case 'q':
+			if (nflg || pflg)
+				export_usage(p);
+			qflg = 1;
 			break;
 		case 'x':
 			if (nflg || flag == VREADONLY)
-				return 1;
+				export_usage(p);
 			flag = VNOEXPORT;
 			xflg = 1;
 			break;
-		default:
-			return 1;
+#endif
 		}
 	}
 
-	if (nflg && *argptr == NULL)
-		return 1;
+	if ((nflg
+#ifndef SMALL
+		|| qflg
+#endif
+		 ) && *argptr == NULL)
+		export_usage(p);
 
-	if (pflg || *argptr == NULL) {
-		showvars( pflg ? argv[0] : 0, flag, pflg,
-		    pflg && xflg ? "-x" : NULL );
+#ifndef SMALL
+	if (pflg && *argptr != NULL) {
+		while ((name = *argptr++) != NULL) {
+			int len;
+
+			vp = find_var(name, NULL, &len);
+			if (name[len] == '=')
+				export_usage(p);
+			if (!goodname(name))
+				error("%s: bad variable name", name);
+
+			if (vp && vp->flags & flag)
+				showvar(vp, p, xflg ? "-x" : NULL, 1);
+		}
 		return 0;
 	}
+#endif
+
+	if (pflg || *argptr == NULL)
+		return showvars( pflg ? p : 0, flag, pflg,
+#ifndef SMALL
+		    pflg && xflg ? "-x" :
+#endif
+					    NULL );
 
 	res = 0;
-	while ((name = *argptr++) != NULL) {
-		f = flag;
-		if ((p = strchr(name, '=')) != NULL) {
-			p++;
-		} else {
-			vp = find_var(name, NULL, NULL);
-			if (vp != NULL) {
-				if (nflg)
-					vp->flags &= ~flag;
-				else if (flag&VEXPORT && vp->flags&VNOEXPORT)
-					res = 1;
-				else {
-					vp->flags |= flag;
-					if (flag == VNOEXPORT)
-						vp->flags &= ~VEXPORT;
-				}
-				continue;
-			} else
-				f |= VUNSET;
+#ifndef SMALL
+	if (qflg) {
+		while ((name = *argptr++) != NULL) {
+			int len;
+
+			vp = find_var(name, NULL, &len);
+			if (name[len] == '=')
+				export_usage(p);
+			if (!goodname(name))
+				error("%s: bad variable name", name);
+
+			if (vp == NULL || !(vp->flags & flag))
+				res = 1;
 		}
-		if (!nflg)
+		return res;
+	}
+#endif
+
+	while ((name = *argptr++) != NULL) {
+		int len;
+
+		f = flag;
+
+		vp = find_var(name, NULL, &len);
+		p = name + len;
+		if (*p++ != '=')
+			p = NULL;
+
+		if (vp != NULL) {
+			if (nflg)
+				vp->flags &= ~flag;
+			else if (flag&VEXPORT && vp->flags&VNOEXPORT) {
+				/* note we go ahead and do any assignment */
+				sh_warnx("%.*s: not available for export",
+				    len, name);
+				res = 1;
+			} else {
+				if (flag == VNOEXPORT)
+					vp->flags &= ~VEXPORT;
+
+				/* if not NULL will be done in setvar below */
+				if (p == NULL)
+					vp->flags |= flag;
+			}
+			if (p == NULL)
+				continue;
+		} else if (nflg && p == NULL && !goodname(name))
+			error("%s: bad variable name", name);
+
+		if (!nflg || p != NULL)
 			setvar(name, p, f);
 	}
 	return res;
@@ -924,6 +1066,7 @@ mklocal(const char *name, int flags)
 		char *p;
 		p = ckmalloc(sizeof_optlist);
 		lvp->text = memcpy(p, optlist, sizeof_optlist);
+		lvp->rfunc = NULL;
 		vp = NULL;
 		xtrace_clone(0);
 	} else {
@@ -938,11 +1081,16 @@ mklocal(const char *name, int flags)
 			vp = *vpp;	/* the new variable */
 			lvp->text = NULL;
 			lvp->flags = VUNSET;
+			lvp->rfunc = NULL;
 		} else {
 			lvp->text = vp->text;
 			lvp->flags = vp->flags;
+			lvp->v_u = vp->v_u;
 			vp->flags |= VSTRFIXED|VTEXTFIXED;
-			if (vp->flags & VNOEXPORT)
+			if (flags & (VDOEXPORT | VUNSET))
+				vp->flags &= ~VNOEXPORT;
+			if (vp->flags & VNOEXPORT &&
+			    (flags & (VEXPORT|VDOEXPORT|VUNSET)) == VEXPORT)
 				flags &= ~VEXPORT;
 			if (flags & (VNOEXPORT | VUNSET))
 				vp->flags &= ~VEXPORT;
@@ -982,7 +1130,7 @@ poplocalvars(void)
 	while ((lvp = localvars) != NULL) {
 		localvars = lvp->next;
 		vp = lvp->vp;
-		VTRACE(DBG_VARS, ("poplocalvar %s", vp ? vp->text : "-"));
+		VTRACE(DBG_VARS, ("poplocalvar %s\n", vp ? vp->text : "-"));
 		if (vp == NULL) {	/* $- saved */
 			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
@@ -991,12 +1139,13 @@ poplocalvars(void)
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
 			(void)unsetvar(vp->text, 0);
 		} else {
-			if (vp->func && (vp->flags & (VNOFUNC|VFUNCREF)) == 0)
-				(*vp->func)(lvp->text + vp->name_len + 1);
+			if (lvp->func && (lvp->flags & (VNOFUNC|VFUNCREF)) == 0)
+				(*lvp->func)(lvp->text + vp->name_len + 1);
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;
 			vp->text = lvp->text;
+			vp->v_u = lvp->v_u;
 		}
 		ckfree(lvp);
 	}
@@ -1120,7 +1269,7 @@ strequal(const char *p, const char *q)
  * Search for a variable.
  * 'name' may be terminated by '=' or a NUL.
  * vppp is set to the pointer to vp, or the list head if vp isn't found
- * lenp is set to the number of charactets in 'name'
+ * lenp is set to the number of characters in 'name'
  */
 
 STATIC struct var *
@@ -1134,10 +1283,11 @@ find_var(const char *name, struct var ***vppp, int *lenp)
 	hashval = 0;
 	while (*p && *p != '=')
 		hashval = 2 * hashval + (unsigned char)*p++;
-	len = p - name;
 
+	len = p - name;
 	if (lenp)
 		*lenp = len;
+
 	vpp = &vartab[hashval % VTABSIZE];
 	if (vppp)
 		*vppp = vpp;
@@ -1212,16 +1362,17 @@ make_space(struct space_reserved *m, int bytes)
 		return 1;
 
 	bytes = SHELL_ALIGN(bytes);
+	INTOFF;
 	/* not ckrealloc() - we want failure, not error() here */
 	p = realloc(m->b, bytes);
-	if (p == NULL)	/* what we had should still be there */
-		return 0;
+	if (p != NULL) {
+		m->b = p;
+		m->len = bytes;
+		m->b[bytes - 1] = '\0';
+	}
+	INTON;
 
-	m->b = p;
-	m->len = bytes;
-	m->b[bytes - 1] = '\0';
-
-	return 1;
+	return p != NULL;
 }
 #endif
 
@@ -1248,7 +1399,7 @@ get_lineno(struct var *vp)
 		return vp->text;
 #endif
 
-	snprintf(result, length - 1, "%.*s=%d", vp->name_len, vp->text, ln);
+	snprintf(result, length, "%.*s=%d", vp->name_len, vp->text, ln);
 	return result;
 }
 #undef result
@@ -1298,8 +1449,8 @@ get_tod(struct var *vp)
 
 	if (tz != NULL) {
 		if (tzs.b == NULL || strcmp(tzs.b, tz) != 0) {
+			INTOFF;
 			if (make_space(&tzs, strlen(tz) + 1)) {
-				INTOFF;
 				strcpy(tzs.b, tz);
 				if (last_zone)
 					tzfree(last_zone);
@@ -1320,8 +1471,10 @@ get_tod(struct var *vp)
 		if (tmp == NULL) {
 			if (buf.len >= vp->name_len+2+(int)(sizeof t_err - 1)) {
 				strcpy(buf.b + vp->name_len + 1, t_err);
-				if (zone && zone != last_zone)
+				if (zone && zone != last_zone) {
 					tzfree(zone);
+					INTON;
+				}
 				return buf.b;
 			}
 			len = vp->name_len + 4 + sizeof t_err - 1;
@@ -1329,16 +1482,20 @@ get_tod(struct var *vp)
 		}
 		if (strftime_z(zone, buf.b + vp->name_len + 1,
 		     buf.len - vp->name_len - 2, fmt, tmp)) {
-			if (zone && zone != last_zone)
+			if (zone && zone != last_zone) {
 				tzfree(zone);
+				INTON;
+			}
 			return buf.b;
 		}
 		if (len >= 4096)	/* Let's be reasonable */
 			break;
 		len <<= 1;
 	}
-	if (zone && zone != last_zone)
+	if (zone && zone != last_zone) {
 		tzfree(zone);
+		INTON;
+	}
 	return vp->text;
 }
 
@@ -1355,7 +1512,7 @@ get_seconds(struct var *vp)
 	if (!make_space(&buf, vp->name_len + 2 + digits_in(secs)))
 		return vp->text;
 
-	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text, secs);
+	snprintf(buf.b, buf.len, "%.*s=%jd", vp->name_len, vp->text, secs);
 	return buf.b;
 }
 
@@ -1379,9 +1536,11 @@ get_euser(struct var *vp)
 		return vp->text;
 
 	if (make_space(&buf, vp->name_len + 2 + strlen(pw->pw_name))) {
+		INTOFF;
 		lastuid = euid;
 		snprintf(buf.b, buf.len, "%.*s=%s", vp->name_len, vp->text,
 		    pw->pw_name);
+		INTON;
 		return buf.b;
 	}
 
@@ -1413,6 +1572,7 @@ get_random(struct var *vp)
 			 * initialisation (without pre-seeding),
 			 * or explictly requesting a truly random seed.
 			 */
+			INTOFF;
 			fd = open("/dev/urandom", 0);
 			if (fd == -1) {
 				out2str("RANDOM initialisation failed\n");
@@ -1425,9 +1585,10 @@ get_random(struct var *vp)
 				} while (n != sizeof random_val);
 				close(fd);
 			}
+			INTON;
 		} else
 			/* good enough for today */
-			random_val = atoi(vp->text + vp->name_len + 1);
+			random_val = strtoimax(vp->text+vp->name_len+1,NULL,0);
 
 		srandom((long)random_val);
 	}
@@ -1441,17 +1602,61 @@ get_random(struct var *vp)
 	if (!make_space(&buf, vp->name_len + 2 + digits_in(random_val)))
 		return vp->text;
 
-	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text,
+	snprintf(buf.b, buf.len, "%.*s=%jd", vp->name_len, vp->text,
 	    random_val);
 
+	INTOFF;
 	if (buf.b != vp->text && (vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 		free(vp->text);
 	vp->flags |= VTEXTFIXED;
 	vp->text = buf.b;
+	INTON;
 
 	return vp->text;
 #undef random
 #undef srandom
+}
+
+STATIC int
+makespecial(const char *name)
+{
+	const struct varinit *ip;
+	struct var *vp;
+
+	CTRACE(DBG_VARS, ("makespecial('%s') -> ", name));
+	for (ip = varinit ; (vp = ip->var) != NULL ; ip++) {
+		if (strequal(ip->text, name)) {
+			if (!(ip->flags & VFUNCREF)) {
+				CTRACE(DBG_VARS, ("+1\n"));
+				return 1;
+			}
+			INTOFF;
+			vp->flags &= ~VUNSET;
+			vp->v_u = ip->v_u;
+			INTON;
+			CTRACE(DBG_VARS, ("0\n"));
+			return 0;
+		}
+	}
+	CTRACE(DBG_VARS, ("1\n"));
+	return 1;
+}
+
+int
+specialvarcmd(int argc, char **argv)
+{
+	int res = 0;
+	char **ap;
+
+	(void) nextopt("");
+
+	if (!*argptr)
+		error("Usage: specialvar var...");
+
+	for (ap = argptr; *ap ; ap++)
+		res |= makespecial(*ap);
+
+	return res;
 }
 
 #endif /* SMALL */

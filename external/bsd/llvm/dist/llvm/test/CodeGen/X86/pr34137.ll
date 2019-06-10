@@ -7,11 +7,12 @@
 
 define void @pr34127() {
 ; CHECK-LABEL: pr34127:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movzwl {{.*}}(%rip), %eax
-; CHECK-NEXT:    movw {{.*}}(%rip), %cx
-; CHECK-NEXT:    andw %ax, %cx
+; CHECK-NEXT:    movzwl {{.*}}(%rip), %ecx
 ; CHECK-NEXT:    andl %eax, %ecx
+; CHECK-NEXT:    andl %eax, %ecx
+; CHECK-NEXT:    movzwl %cx, %ecx
 ; CHECK-NEXT:    movl %ecx, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    xorl %edx, %edx
 ; CHECK-NEXT:    testw %cx, %cx

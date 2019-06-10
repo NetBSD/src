@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.14 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.54 2018/02/23 15:58:38 markus Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.14.2.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.56 2018/11/23 05:08:07 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.14 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.14.2.1 2019/06/10 21:41:12 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -56,9 +56,6 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.14 2018/04/06 18:59:00 christos Exp $");
 #include "ssherr.h"
 
 extern char *__progname;
-
-/* XXX readconf.c needs these */
-uid_t original_real_uid;
 
 static int
 valid_request(struct passwd *pw, char *host, struct sshkey **ret,
@@ -193,8 +190,7 @@ main(int argc, char **argv)
 	key_fd[i++] = open(_PATH_HOST_XMSS_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 
-	original_real_uid = getuid();	/* XXX readconf.c needs this */
-	if ((pw = getpwuid(original_real_uid)) == NULL)
+	if ((pw = getpwuid(getuid())) == NULL)
 		fatal("getpwuid failed");
 	pw = pwcopy(pw);
 
@@ -206,7 +202,8 @@ main(int argc, char **argv)
 
 	/* verify that ssh-keysign is enabled by the admin */
 	initialize_options(&options);
-	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "", &options, 0);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "",
+	    &options, 0, NULL);
 	fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",

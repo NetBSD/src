@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+# $NetBSD: Makefile,v 1.1.44.1 2019/06/10 21:42:23 christos Exp $
 
 SUBDIR=
 SUBDIR+=	emuimage
-SUBDIR+=	usbimage
 
 TARGETS+=	release live_image
 

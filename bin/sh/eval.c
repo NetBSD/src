@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.155 2018/06/22 11:04:55 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.155.2.1 2019/06/10 21:41:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.155 2018/06/22 11:04:55 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.155.2.1 2019/06/10 21:41:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,10 @@ __RCSID("$NetBSD: eval.c,v 1.155 2018/06/22 11:04:55 kre Exp $");
 #endif
 
 
-STATIC enum skipstate evalskip;	/* != SKIPNONE if we are skipping commands */
-STATIC int skipcount;		/* number of levels to skip */
+STATIC struct skipsave s_k_i_p;
+#define	evalskip	(s_k_i_p.state)
+#define	skipcount	(s_k_i_p.count)
+
 STATIC int loopnest;		/* current loop nesting level */
 STATIC int funcnest;		/* depth of function calls */
 STATIC int builtin_flags;	/* evalcommand flags for builtins */
@@ -114,6 +116,7 @@ STATIC void evalfor(union node *, int);
 STATIC void evalcase(union node *, int);
 STATIC void evalsubshell(union node *, int);
 STATIC void expredir(union node *);
+STATIC void evalredir(union node *, int);
 STATIC void evalpipe(union node *);
 STATIC void evalcommand(union node *, int, struct backcmd *);
 STATIC void prehash(union node *);
@@ -214,18 +217,35 @@ evalstring(char *s, int flag)
 {
 	union node *n;
 	struct stackmark smark;
+	int last;
+	int any;
+
+	last = flag & EV_EXIT;
+	flag &= ~EV_EXIT;
 
 	setstackmark(&smark);
 	setinputstring(s, 1, line_number);
 
+	any = 0;	/* to determine if exitstatus will have been set */
 	while ((n = parsecmd(0)) != NEOF) {
 		XTRACE(DBG_EVAL, ("evalstring: "), showtree(n));
-		if (n && nflag == 0)
-			evaltree(n, flag | EV_MORE);
-		popstackmark(&smark);
+		if (n && nflag == 0) {
+			if (last && at_eof())
+				evaltree(n, flag | EV_EXIT);
+			else
+				evaltree(n, flag);
+			any = 1;
+			if (evalskip)
+				break;
+		}
+		rststackmark(&smark);
 	}
 	popfile();
 	popstackmark(&smark);
+	if (!any)
+		exitstatus = 0;
+	if (last)
+		exraise(EXEXIT);
 }
 
 
@@ -240,6 +260,8 @@ evaltree(union node *n, int flags)
 {
 	bool do_etest;
 	int sflags = flags & ~EV_EXIT;
+	union node *next;
+	struct stackmark smark;
 
 	do_etest = false;
 	if (n == NULL || nflag) {
@@ -247,120 +269,116 @@ evaltree(union node *n, int flags)
 		    n == NULL ? "NULL" : "-n"));
 		if (nflag == 0)
 			exitstatus = 0;
-		goto out;
+		goto out2;
 	}
-#ifndef SMALL
-	displayhist = 1;	/* show history substitutions done with fc */
-#endif
-	CTRACE(DBG_EVAL, ("pid %d, evaltree(%p: %s(%d), %#x) called\n",
-	    getpid(), n, NODETYPENAME(n->type), n->type, flags));
-	switch (n->type) {
-	case NSEMI:
-		evaltree(n->nbinary.ch1, (sflags & EV_TESTED) |
-		    (n->nbinary.ch2 ? EV_MORE : 0));
-		if (nflag || evalskip)
-			goto out;
-		evaltree(n->nbinary.ch2, flags);
-		break;
-	case NAND:
-		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
-		if (nflag || evalskip || exitstatus != 0)
-			goto out;
-		evaltree(n->nbinary.ch2, flags);
-		break;
-	case NOR:
-		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
-		if (nflag || evalskip || exitstatus == 0)
-			goto out;
-		evaltree(n->nbinary.ch2, flags);
-		break;
-	case NREDIR:
-		expredir(n->nredir.redirect);
-		if (xflag && n->nredir.redirect) {
-			union node *rn;
 
-			outxstr(expandstr(ps4val(), line_number));
-			outxstr("using redirections:");
-			for (rn = n->nredir.redirect; rn; rn = rn->nfile.next)
-				(void) outredir(outx, rn, ' ');
-			outxstr(" do\n");
-			flushout(outx);
-		}
-		redirect(n->nredir.redirect, REDIR_PUSH | REDIR_KEEP);
-		evaltree(n->nredir.n, flags);
-		popredir();
-		if (xflag && n->nredir.redirect) {
-			outxstr(expandstr(ps4val(), line_number));
-			outxstr("done\n");
-			flushout(outx);
-		}
-		break;
-	case NSUBSHELL:
-		evalsubshell(n, flags & ~EV_MORE);
-		do_etest = !(flags & EV_TESTED);
-		break;
-	case NBACKGND:
-		evalsubshell(n, flags & ~EV_MORE);
-		break;
-	case NIF: {
-		evaltree(n->nif.test, EV_TESTED | EV_MORE);
-		if (nflag || evalskip)
-			goto out;
-		if (exitstatus == 0)
-			evaltree(n->nif.ifpart, flags);
-		else if (n->nif.elsepart)
-			evaltree(n->nif.elsepart, flags);
-		else
-			exitstatus = 0;
-		break;
-	}
-	case NWHILE:
-	case NUNTIL:
-		evalloop(n, sflags);
-		break;
-	case NFOR:
-		evalfor(n, sflags);
-		break;
-	case NCASE:
-		evalcase(n, sflags);
-		break;
-	case NDEFUN:
-		CTRACE(DBG_EVAL, ("Defining fn %s @%d%s\n", n->narg.text,
-		    n->narg.lineno, fnline1 ? " LINENO=1" : ""));
-		defun(n->narg.text, n->narg.next, n->narg.lineno);
-		exitstatus = 0;
-		break;
-	case NNOT:
-		evaltree(n->nnot.com, (sflags & EV_MORE) | EV_TESTED);
-		exitstatus = !exitstatus;
-		break;
-	case NDNOT:
-		evaltree(n->nnot.com, (sflags & EV_MORE) | EV_TESTED);
-		if (exitstatus != 0)
-			exitstatus = 1;
-		break;
-	case NPIPE:
-		evalpipe(n);
-		do_etest = !(flags & EV_TESTED);
-		break;
-	case NCMD:
-		evalcommand(n, flags, NULL);
-		do_etest = !(flags & EV_TESTED);
-		break;
-	default:
-#ifdef NODETYPENAME
-		out1fmt("Node type = %d(%s)\n", n->type, NODETYPENAME(n->type));
-#else
-		out1fmt("Node type = %d\n", n->type);
+	setstackmark(&smark);
+	do {
+#ifndef SMALL
+		displayhist = 1; /* show history substitutions done with fc */
 #endif
-		flushout(&output);
-		break;
-	}
- out:
+		next = NULL;
+		CTRACE(DBG_EVAL, ("pid %d, evaltree(%p: %s(%d), %#x) called\n",
+		    getpid(), n, NODETYPENAME(n->type), n->type, flags));
+		if (n->type != NCMD && traps_invalid)
+			free_traps();
+		switch (n->type) {
+		case NSEMI:
+			evaltree(n->nbinary.ch1, sflags);
+			if (nflag || evalskip)
+				goto out1;
+			next = n->nbinary.ch2;
+			break;
+		case NAND:
+			evaltree(n->nbinary.ch1, EV_TESTED);
+			if (nflag || evalskip || exitstatus != 0)
+				goto out1;
+			next = n->nbinary.ch2;
+			break;
+		case NOR:
+			evaltree(n->nbinary.ch1, EV_TESTED);
+			if (nflag || evalskip || exitstatus == 0)
+				goto out1;
+			next = n->nbinary.ch2;
+			break;
+		case NREDIR:
+			evalredir(n, flags);
+			break;
+		case NSUBSHELL:
+			evalsubshell(n, flags);
+			do_etest = !(flags & EV_TESTED);
+			break;
+		case NBACKGND:
+			evalsubshell(n, flags);
+			break;
+		case NIF: {
+			evaltree(n->nif.test, EV_TESTED);
+			if (nflag || evalskip)
+				goto out1;
+			if (exitstatus == 0)
+				next = n->nif.ifpart;
+			else if (n->nif.elsepart)
+				next = n->nif.elsepart;
+			else
+				exitstatus = 0;
+			break;
+		}
+		case NWHILE:
+		case NUNTIL:
+			evalloop(n, sflags);
+			break;
+		case NFOR:
+			evalfor(n, sflags);
+			break;
+		case NCASE:
+			evalcase(n, sflags);
+			break;
+		case NDEFUN:
+			CTRACE(DBG_EVAL, ("Defining fn %s @%d%s\n",
+			    n->narg.text, n->narg.lineno,
+			    fnline1 ? " LINENO=1" : ""));
+			defun(n->narg.text, n->narg.next, n->narg.lineno);
+			exitstatus = 0;
+			break;
+		case NNOT:
+			evaltree(n->nnot.com, EV_TESTED);
+			exitstatus = !exitstatus;
+			break;
+		case NDNOT:
+			evaltree(n->nnot.com, EV_TESTED);
+			if (exitstatus != 0)
+				exitstatus = 1;
+			break;
+		case NPIPE:
+			evalpipe(n);
+			do_etest = !(flags & EV_TESTED);
+			break;
+		case NCMD:
+			evalcommand(n, flags, NULL);
+			do_etest = !(flags & EV_TESTED);
+			break;
+		default:
+#ifdef NODETYPENAME
+			out1fmt("Node type = %d(%s)\n",
+				n->type, NODETYPENAME(n->type));
+#else
+			out1fmt("Node type = %d\n", n->type);
+#endif
+			flushout(&output);
+			break;
+		}
+		n = next;
+		rststackmark(&smark);
+	} while(n != NULL);
+ out1:
+	popstackmark(&smark);
+ out2:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) != 0 || (eflag && exitstatus != 0 && do_etest))
+	if (eflag && exitstatus != 0 && do_etest)
 		exitshell(exitstatus);
+	if (flags & EV_EXIT)
+		exraise(EXEXIT);
 }
 
 
@@ -379,7 +397,7 @@ evalloop(union node *n, int flags)
 	CTRACE(DBG_EVAL,  ("\n"));
 
 	for (;;) {
-		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
+		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (nflag)
 			break;
 		if (evalskip) {
@@ -389,6 +407,8 @@ evalloop(union node *n, int flags)
 			}
 			if (evalskip == SKIPBREAK && --skipcount <= 0)
 				evalskip = SKIPNONE;
+			if (evalskip == SKIPFUNC || evalskip == SKIPFILE)
+				status = exitstatus;
 			break;
 		}
 		if (n->type == NWHILE) {
@@ -398,7 +418,7 @@ evalloop(union node *n, int flags)
 			if (exitstatus == 0)
 				break;
 		}
-		evaltree(n->nbinary.ch2, (flags & EV_TESTED) | EV_MORE);
+		evaltree(n->nbinary.ch2, flags & EV_TESTED);
 		status = exitstatus;
 		if (evalskip)
 			goto skipping;
@@ -431,11 +451,6 @@ evalfor(union node *n, int flags)
 
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
-		int f = flags & (EV_TESTED | EV_MORE);
-
-		if (sp->next)
-			f |= EV_MORE;
-
 		if (xflag) {
 			outxstr(expandstr(ps4val(), line_number));
 			outxstr("for ");
@@ -447,7 +462,7 @@ evalfor(union node *n, int flags)
 		}
 
 		setvar(n->nfor.var, sp->text, 0);
-		evaltree(n->nfor.body, f);
+		evaltree(n->nfor.body, flags & EV_TESTED);
 		status = exitstatus;
 		if (nflag)
 			break;
@@ -493,8 +508,7 @@ evalcase(union node *n, int flags)
 					else
 						ncp = NULL;
 					line_number = cp->nclist.lineno;
-					evaltree(cp->nclist.body,
-					    ncp ? (flags | EV_MORE) : flags);
+					evaltree(cp->nclist.body, flags);
 					status = exitstatus;
 					cp = ncp;
 				}
@@ -516,7 +530,7 @@ evalcase(union node *n, int flags)
 STATIC void
 evalsubshell(union node *n, int flags)
 {
-	struct job *jp;
+	struct job *jp= NULL;
 	int backgnd = (n->type == NBACKGND);
 
 	expredir(n->nredir.redirect);
@@ -527,24 +541,29 @@ evalsubshell(union node *n, int flags)
 		outxstr("using redirections:");
 		for (rn = n->nredir.redirect; rn; rn = rn->nfile.next)
 			(void) outredir(outx, rn, ' ');
-		outxstr(" do subshell\n");
+		outxstr(" do subshell ("/*)*/);
+		if (backgnd)
+			outxstr(/*(*/") &");
+		outxc('\n');
 		flushout(outx);
 	}
 	INTOFF;
-	jp = makejob(n, 1);
-	if (forkshell(jp, n, backgnd ? FORK_BG : FORK_FG) == 0) {
-		INTON;
+	if ((!backgnd && flags & EV_EXIT && !have_traps()) ||
+	    forkshell(jp = makejob(n, 1), n, backgnd?FORK_BG:FORK_FG) == 0) {
 		if (backgnd)
 			flags &=~ EV_TESTED;
 		redirect(n->nredir.redirect, REDIR_KEEP);
-		/* never returns */
-		evaltree(n->nredir.n, flags | EV_EXIT);
-	}
-	exitstatus = backgnd ? 0 : waitforjob(jp);
+		INTON;
+		evaltree(n->nredir.n, flags | EV_EXIT);   /* never returns */
+	} else if (backgnd)
+		exitstatus = 0;
+	else
+		exitstatus = waitforjob(jp);
 	INTON;
+
 	if (!backgnd && xflag && n->nredir.redirect) {
 		outxstr(expandstr(ps4val(), line_number));
-		outxstr("done subshell\n");
+		outxstr(/*(*/") done subshell\n");
 		flushout(outx);
 	}
 }
@@ -584,6 +603,67 @@ expredir(union node *n)
 	}
 }
 
+/*
+ * Perform redirections for a compound command, and then do it (and restore)
+ */
+STATIC void
+evalredir(union node *n, int flags)
+{
+	struct jmploc jmploc;
+	struct jmploc * const savehandler = handler;
+	volatile int in_redirect = 1;
+	const char * volatile PS4 = NULL;
+
+	expredir(n->nredir.redirect);
+
+	if (xflag && n->nredir.redirect) {
+		union node *rn;
+
+		outxstr(PS4 = expandstr(ps4val(), line_number));
+		outxstr("using redirections:");
+		for (rn = n->nredir.redirect; rn != NULL; rn = rn->nfile.next)
+			(void) outredir(outx, rn, ' ');
+		outxstr(" do {\n");	/* } */
+		flushout(outx);
+	}
+
+	if (setjmp(jmploc.loc)) {
+		int e;
+
+		handler = savehandler;
+		e = exception;
+		popredir();
+		if (PS4 != NULL) {
+			outxstr(PS4);
+			/* { */ outxstr("} failed\n");
+			flushout(outx);
+		}
+		if (e == EXERROR || e == EXEXEC) {
+			if (in_redirect) {
+				exitstatus = 2;
+				return;
+			}
+		}
+		longjmp(handler->loc, 1);
+	} else {
+		INTOFF;
+		handler = &jmploc;
+		redirect(n->nredir.redirect, REDIR_PUSH | REDIR_KEEP);
+		in_redirect = 0;
+		INTON;
+		evaltree(n->nredir.n, flags);
+	}
+	INTOFF;
+	handler = savehandler;
+	popredir();
+	INTON;
+
+	if (PS4 != NULL) {
+		outxstr(PS4);
+		/* { */ outxstr("} done\n");
+		flushout(outx);
+	}
+}
 
 
 /*
@@ -616,10 +696,11 @@ evalpipe(union node *n)
 			if (sh_pipe(pip) < 0) {
 				if (prevfd >= 0)
 					close(prevfd);
-				error("Pipe call failed");
+				error("Pipe call failed: %s", strerror(errno));
 			}
 		}
-		if (forkshell(jp, lp->n, n->npipe.backgnd ? FORK_BG : FORK_FG) == 0) {
+		if (forkshell(jp, lp->n,
+		    n->npipe.backgnd ? FORK_BG : FORK_FG) == 0) {
 			INTON;
 			if (prevfd > 0)
 				movefd(prevfd, 0);
@@ -657,16 +738,18 @@ evalbackcmd(union node *n, struct backcmd *result)
 {
 	int pip[2];
 	struct job *jp;
-	struct stackmark smark;		/* unnecessary */
+	struct stackmark smark;		/* unnecessary (because we fork) */
 
-	setstackmark(&smark);
 	result->fd = -1;
 	result->buf = NULL;
 	result->nleft = 0;
 	result->jp = NULL;
-	if (nflag || n == NULL) {
+
+	if (nflag || n == NULL)
 		goto out;
-	}
+
+	setstackmark(&smark);
+
 #ifdef notyet
 	/*
 	 * For now we disable executing builtins in the same
@@ -675,7 +758,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 	 * supposed only to affect subshells. eg. echo "`cd /`"
 	 */
 	if (n->type == NCMD) {
-		exitstatus = oexitstatus;
+		exitstatus = oexitstatus;	/* XXX o... no longer exists */
 		evalcommand(n, EV_BACKCMD, result);
 	} else
 #endif
@@ -697,13 +780,13 @@ evalbackcmd(union node *n, struct backcmd *result)
 		result->jp = jp;
 		INTON;
 	}
- out:
 	popstackmark(&smark);
+ out:
 	CTRACE(DBG_EVAL, ("evalbackcmd done: fd=%d buf=0x%x nleft=%d jp=0x%x\n",
 		result->fd, result->buf, result->nleft, result->jp));
 }
 
-static const char *
+const char *
 syspath(void)
 {
 	static char *sys_path = NULL;
@@ -760,7 +843,6 @@ parse_command_args(int argc, char **argv, int *use_syspath)
 }
 
 int vforked = 0;
-extern char *trap[];
 
 /*
  * Execute a simple command.
@@ -788,12 +870,14 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	const char *volatile savecmdname;
 	volatile struct shparam saveparam;
 	struct localvar *volatile savelocalvars;
+	struct parsefile *volatile savetopfile;
 	volatile int e;
 	char * volatile lastarg;
 	const char * volatile path = pathval();
 	volatile int temp_path;
 	const int savefuncline = funclinebase;
 	const int savefuncabs = funclineabs;
+	volatile int cmd_flags = 0;
 
 	vforked = 0;
 	/* First expand the arguments. */
@@ -808,18 +892,11 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	varflag = 1;
 	/* Expand arguments, ignoring the initial 'name=value' ones */
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
-		char *p = argp->narg.text;
-
-		line_number = argp->narg.lineno;
-		if (varflag && is_name(*p)) {
-			do {
-				p++;
-			} while (is_in_name(*p));
-			if (*p == '=')
-				continue;
-		}
-		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
+		if (varflag && isassignment(argp->narg.text))
+			continue;
 		varflag = 0;
+		line_number = argp->narg.lineno;
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
 	}
 	*arglist.lastp = NULL;
 
@@ -828,15 +905,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* Now do the initial 'name=value' ones we skipped above */
 	varlist.lastp = &varlist.list;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
-		char *p = argp->narg.text;
-
 		line_number = argp->narg.lineno;
-		if (!is_name(*p))
-			break;
-		do
-			p++;
-		while (is_in_name(*p));
-		if (*p != '=')
+		if (!isassignment(argp->narg.text))
 			break;
 		expandarg(argp, &varlist, EXP_VARTILDE);
 	}
@@ -900,11 +970,17 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	/* Now locate the command. */
 	if (argc == 0) {
-		cmdentry.cmdtype = CMDSPLBLTIN;
+		/*
+		 * the empty command begins as a normal builtin, and
+		 * remains that way while redirects are processed, then
+		 * will become special before we get to doing the
+		 * var assigns.
+		 */
+		cmdentry.cmdtype = CMDBUILTIN;
 		cmdentry.u.bltin = bltincmd;
+		VTRACE(DBG_CMDS, ("No command name, assume \"comamnd\"\n"));
 	} else {
 		static const char PATH[] = "PATH=";
-		int cmd_flags = DO_ERR;
 
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
@@ -918,20 +994,34 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			int argsused, use_syspath;
 
 			find_command(argv[0], &cmdentry, cmd_flags, path);
+			VTRACE(DBG_CMDS, ("Command %s type %d\n", argv[0],
+			    cmdentry.cmdtype));
+#if 0
+			/*
+			 * This short circuits all of the processing that
+			 * should be done (including processing the
+			 * redirects), so just don't ...
+			 *
+			 * (eventually this whole #if'd block will vanish)
+			 */
 			if (cmdentry.cmdtype == CMDUNKNOWN) {
 				exitstatus = 127;
 				flushout(&errout);
 				goto out;
 			}
+#endif
 
 			/* implement the 'command' builtin here */
 			if (cmdentry.cmdtype != CMDBUILTIN ||
 			    cmdentry.u.bltin != bltincmd)
 				break;
+			VTRACE(DBG_CMDS, ("Command \"command\"\n"));
 			cmd_flags |= DO_NOFUNC;
 			argsused = parse_command_args(argc, argv, &use_syspath);
 			if (argsused == 0) {
 				/* use 'type' builtin to display info */
+				VTRACE(DBG_CMDS,
+				    ("Command \"command\" -> \"type\"\n"));
 				cmdentry.u.bltin = typecmd;
 				break;
 			}
@@ -946,18 +1036,41 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			cmdentry.cmdtype = CMDBUILTIN;
 	}
 
+	/*
+	 * When traps are invalid, we permit the following:
+	 *	trap
+	 *	command trap
+	 *	eval trap
+	 *	command eval trap
+	 *	eval command trap
+	 * without zapping the traps completely, in all other cases we do.
+	 *
+	 * The test here permits eval "anything" but when evalstring() comes
+	 * back here again, the "anything" will be validated.
+	 * This means we can actually do:
+	 *	eval eval eval command eval eval command trap
+	 * as long as we end up with just "trap"
+	 *
+	 * We permit "command" by allowing CMDBUILTIN as well as CMDSPLBLTIN
+	 *
+	 * trapcmd() takes care of doing free_traps() if it is needed there.
+	 */
+	if (traps_invalid &&
+	    ((cmdentry.cmdtype!=CMDSPLBLTIN && cmdentry.cmdtype!=CMDBUILTIN) ||
+	     (cmdentry.u.bltin != trapcmd && cmdentry.u.bltin != evalcmd)))
+		free_traps();
+
 	/* Fork off a child process if necessary. */
-	if (cmd->ncmd.backgnd || (trap[0] && (flags & EV_EXIT) != 0)
-	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
-	 || ((flags & EV_BACKCMD) != 0
-	    && ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
+	if (cmd->ncmd.backgnd || (have_traps() && (flags & EV_EXIT) != 0)
+	 || ((cmdentry.cmdtype == CMDNORMAL || cmdentry.cmdtype == CMDUNKNOWN)
+	     && (flags & EV_EXIT) == 0)
+	 || ((flags & EV_BACKCMD) != 0 &&
+	    ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
 		 || cmdentry.u.bltin == dotcmd
 		 || cmdentry.u.bltin == evalcmd))) {
 		INTOFF;
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
-		if (mode)
-			flags &= ~EV_MORE;
 		if (flags & EV_BACKCMD) {
 			mode = FORK_NOJOB;
 			if (sh_pipe(pip) < 0)
@@ -1000,17 +1113,22 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 						vforked = 2;
 						_exit(0);
 					} else {
-						_exit(exerrno);
+						_exit(exception == EXEXIT ?
+						    exitstatus : exerrno);
 					}
 				}
 				savehandler = handler;
 				handler = &jmploc;
-				listmklocal(varlist.list, VEXPORT | VNOFUNC);
+				listmklocal(varlist.list,
+				    VDOEXPORT | VEXPORT | VNOFUNC);
 				forkchild(jp, cmd, mode, vforked);
 				break;
 			default:
 				VFORK_UNDO();
 						/* restore from vfork(2) */
+				CTRACE(DBG_PROCS|DBG_CMDS,
+				    ("parent after vfork - vforked=%d\n",
+				      vforked));
 				handler = savehandler;
 				poplocalvars();
 				localvars = savelocalvars;
@@ -1039,6 +1157,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 #endif
 			if (forkshell(jp, cmd, mode) != 0)
 				goto parent;	/* at end of routine */
+			CTRACE(DBG_PROCS|DBG_CMDS, ("Child sets EV_EXIT\n"));
+			flags |= EV_EXIT;
 			FORCEINTON;
 #ifdef DO_SHAREDVFORK
 		}
@@ -1056,10 +1176,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* This is the child process if a fork occurred. */
 	/* Execute the command. */
 	switch (cmdentry.cmdtype) {
+		volatile int saved;
+
 	case CMDFUNCTION:
 		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
 		    trargs(argv));
-		redirect(cmd->ncmd.redirect, flags & EV_MORE ? REDIR_PUSH : 0);
+		redirect(cmd->ncmd.redirect, saved =
+			!(flags & EV_EXIT) || have_traps() ? REDIR_PUSH : 0);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
 		shellparam.reset = 1;
@@ -1079,6 +1202,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				freeparam(&shellparam);
 				shellparam = saveparam;
 			}
+			if (saved)
+				popredir();;
 			unreffunc(cmdentry.u.func);
 			poplocalvars();
 			localvars = savelocalvars;
@@ -1103,11 +1228,12 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			    cmdentry.lineno, cmdentry.lno_frel?" (=1)":"",
 			    funclinebase));
 		}
-		listmklocal(varlist.list, VEXPORT);
+		listmklocal(varlist.list, VDOEXPORT | VEXPORT);
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
 			error("too many nested function calls");
-		evaltree(getfuncnode(cmdentry.u.func), flags & EV_TESTED);
+		evaltree(getfuncnode(cmdentry.u.func),
+		    flags & (EV_TESTED|EV_EXIT));
 		funcnest--;
 		INTOFF;
 		unreffunc(cmdentry.u.func);
@@ -1118,7 +1244,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		freeparam(&shellparam);
 		shellparam = saveparam;
 		handler = savehandler;
-		if (flags & EV_MORE)
+		if (saved)
 			popredir();
 		INTON;
 		if (evalskip == SKIPFUNC) {
@@ -1129,9 +1255,11 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			exitshell(exitstatus);
 		break;
 
-	case CMDBUILTIN:
 	case CMDSPLBLTIN:
-		VXTRACE(DBG_EVAL, ("builtin command%s:  ",vforked?" VF":""), trargs(argv));
+		VTRACE(DBG_EVAL, ("special "));
+	case CMDBUILTIN:
+		VXTRACE(DBG_EVAL, ("builtin command [%d]%s:  ", argc,
+		    vforked ? " VF" : ""), trargs(argv));
 		mode = (cmdentry.u.bltin == execcmd) ? 0 : REDIR_PUSH;
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
@@ -1140,11 +1268,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			mode |= REDIR_BACKQ;
 		}
 		e = -1;
-		savehandler = handler;
 		savecmdname = commandname;
-		handler = &jmploc;
+		savetopfile = getcurrentfile();
+		savehandler = handler;
 		temp_path = 0;
 		if (!setjmp(jmploc.loc)) {
+			handler = &jmploc;
+
 			/*
 			 * We need to ensure the command hash table isn't
 			 * corrupted by temporary PATH assignments.
@@ -1158,6 +1288,15 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				mklocal(path - 5 /* PATH= */, 0);
 			}
 			redirect(cmd->ncmd.redirect, mode);
+
+			/*
+			 * the empty command is regarded as a normal
+			 * builtin for the purposes of redirects, but
+			 * is a special builtin for var assigns.
+			 * (unless we are the "command" command.)
+			 */
+			if (argc == 0 && !(cmd_flags & DO_NOFUNC))
+				cmdentry.cmdtype = CMDSPLBLTIN;
 
 			/* exec is a special builtin, but needs this list... */
 			cmdenviron = varlist.list;
@@ -1175,8 +1314,12 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			exitstatus = cmdentry.u.bltin(argc, argv);
 		} else {
 			e = exception;
-			exitstatus = e == EXINT ? SIGINT + 128 :
-					e == EXEXEC ? exerrno : 2;
+			if (e == EXINT)
+				exitstatus = SIGINT + 128;
+			else if (e == EXEXEC)
+				exitstatus = exerrno;
+			else if (e != EXEXIT)
+				exitstatus = 2;
 		}
 		handler = savehandler;
 		flushall();
@@ -1197,6 +1340,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			if ((e != EXERROR && e != EXEXEC)
 			    || cmdentry.cmdtype == CMDSPLBLTIN)
 				exraise(e);
+			popfilesupto(savetopfile);
 			FORCEINTON;
 		}
 		if (cmdentry.u.bltin != execcmd)
@@ -1215,7 +1359,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
 		if (!vforked)
 			for (sp = varlist.list ; sp ; sp = sp->next)
-				setvareq(sp->text, VEXPORT|VSTACK);
+				setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		envp = environment();
 		shellexec(argv, envp, path, cmdentry.u.index, vforked);
 		break;
@@ -1270,6 +1414,18 @@ enum skipstate
 current_skipstate(void)
 {
 	return evalskip;
+}
+
+void
+save_skipstate(struct skipsave *p)
+{
+	*p = s_k_i_p;
+}
+
+void
+restore_skipstate(const struct skipsave *p)
+{
+	s_k_i_p = *p;
 }
 
 void
@@ -1352,6 +1508,23 @@ dotcmd(int argc, char **argv)
 		popstackmark(&smark);
 	}
 	return exitstatus;
+}
+
+/*
+ * allow dotfile function nesting to be manipulated
+ * (for read_profile).  This allows profile files to
+ * be treated as if they were used as '.' commands,
+ * (approximately) and in particular, for "return" to work.
+ */
+int
+set_dot_funcnest(int new)
+{
+	int rv = dot_funcnest;
+
+	if (new >= 0)
+		dot_funcnest = new;
+
+	return rv;
 }
 
 /*
@@ -1477,7 +1650,7 @@ execcmd(int argc, char **argv)
 		mflag = 0;
 		optschanged();
 		for (sp = cmdenviron; sp; sp = sp->next)
-			setvareq(sp->text, VEXPORT|VSTACK);
+			setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		shellexec(argv + 1, environment(), pathval(), 0, 0);
 	}
 	return 0;

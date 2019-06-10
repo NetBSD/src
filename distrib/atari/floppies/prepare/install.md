@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.4 2017/11/25 09:41:45 tsutsui Exp $
+#	$NetBSD: install.md,v 1.4.4.1 2019/06/10 21:42:19 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,14 +46,6 @@ md_set_term() {
 	export TERM
 }
 
-__mount_kernfs() {
-	# Make sure kernfs is mounted.
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern
-	fi
-}
-
 md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
 	if [ ! -e /tmp/.root_writable ]; then
@@ -65,10 +57,8 @@ md_makerootwritable() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^sd[0-9] /s/ .*//p' \
-	       -e '/^wd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^[sw]d[0-9] /s/ .*//p'
 }
 
 md_prep_disklabel()
@@ -125,9 +115,9 @@ You will now be given the opportunity to place disklabels on any additional
 disks on your system.
 __md_prep_disklabel_4
 
-	_DKDEVS=`rmel ${1} ${_DKDEVS}`
-	resp="X"	# force at least one iteration
-	while [ "X$resp" != X"done" ]; do
+	_DKDEVS=$(rmel ${1} ${_DKDEVS})
+	resp="not-done"	# force at least one iteration
+	while [ "$resp" != "done" ]; do
 		labelmoredisks
 	done
 }
@@ -162,7 +152,7 @@ __welcome_banner_1
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 Note: If you wish to have another try. Just type '^D' at the prompt. After

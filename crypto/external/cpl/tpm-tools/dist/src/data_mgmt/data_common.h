@@ -47,6 +47,7 @@
 #define TOKEN_MEMORY_ERROR		_("Error, unable to allocate needed memory\n")
 #define TOKEN_OPENSSL_ERROR		_("Error, OpenSSL error: %s\n")
 #define TOKEN_FILE_OPEN_ERROR		_("Error, unable to open file %s: %s\n")
+#define TOKEN_FILE_WRITE_ERROR		_("Error writing to file %s: %s\n")
 
 #define TOKEN_CMD_SUCCESS		_("%s succeeded\n")
 #define TOKEN_CMD_FAILED		_("%s failed\n")

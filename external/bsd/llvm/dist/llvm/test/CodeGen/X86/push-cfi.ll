@@ -13,16 +13,12 @@ declare void @empty()
 ; CHECK-LABEL: test1_nofp:
 ; LINUX: .cfi_escape 0x2e, 0x10
 ; LINUX-NEXT: pushl   $4
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $3
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $2
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $1
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: call
 ; LINUX-NEXT: addl $16, %esp
@@ -70,20 +66,16 @@ cleanup:
 ; CHECK-LABEL: test2_nofp:
 ; LINUX-NOT: .cfi_escape
 ; LINUX: pushl   $4
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $3
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $2
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $1
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: call
 ; LINUX-NEXT: addl $28, %esp
-; LINUX: .cfi_adjust_cfa_offset -16
+; LINUX: .cfi_adjust_cfa_offset -28
 ; DARWIN-NOT: .cfi_escape
 ; DARWIN-NOT: pushl
 define void @test2_nofp() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
@@ -185,16 +177,12 @@ cleanup:
 ; CHECK-LABEL: test5_nofp:
 ; LINUX: .cfi_escape 0x2e, 0x10
 ; LINUX-NEXT: pushl   $4
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $3
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $2
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: pushl   $1
-; LINUX-NEXT: Lcfi{{[0-9]+}}:
 ; LINUX-NEXT: .cfi_adjust_cfa_offset 4
 ; LINUX-NEXT: call
 ; LINUX-NEXT: addl $16, %esp

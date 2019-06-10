@@ -869,11 +869,13 @@
 /* Define to 1 if you have the <rpcsvc/nis.h> header file. */
 /* #undef HAVE_RPCSVC_NIS_H */
 
+#ifdef YP
 /* Define to 1 if you have the <rpcsvc/ypclnt.h> header file. */
 #define HAVE_RPCSVC_YPCLNT_H 1
 
 /* Define to 1 if you have the <rpcsvc/yp_prot.h> header file. */
 #define HAVE_RPCSVC_YP_PROT_H 1
+#endif
 
 /* Define to 1 if you have the <rpc/auth_des.h> header file. */
 /* #undef HAVE_RPC_AUTH_DES_H */

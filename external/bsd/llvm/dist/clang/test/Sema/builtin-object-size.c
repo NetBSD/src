@@ -13,10 +13,10 @@ int f1() {
           __builtin_object_size(&a, 3));
 }
 int f2() {
-  return __builtin_object_size(&a, -1); // expected-error {{argument should be a value from 0 to 3}}
+  return __builtin_object_size(&a, -1); // expected-error {{argument value -1 is outside the valid range [0, 3]}}
 }
 int f3() {
-  return __builtin_object_size(&a, 4); // expected-error {{argument should be a value from 0 to 3}}
+  return __builtin_object_size(&a, 4); // expected-error {{argument value 4 is outside the valid range [0, 3]}}
 }
 
 
@@ -41,7 +41,7 @@ void f5(void)
   char buf[10];
   memset((void *)0x100000000ULL, 0, 0x1000);
   memcpy((char *)NULL + 0x10000, buf, 0x10);
-  memcpy1((char *)NULL + 0x10000, buf, 0x10); // expected-error {{argument should be a value from 0 to 3}}
+  memcpy1((char *)NULL + 0x10000, buf, 0x10); // expected-error {{argument value 4 is outside the valid range [0, 3]}}
 }
 
 // rdar://18431336
@@ -90,4 +90,23 @@ int pr31843() {
   n += __builtin_object_size(outStatFSBuf->f_mntonname ?: "", 1);
 
   return n;
+}
+
+typedef struct {
+  char string[512];
+} NestedArrayStruct;
+
+typedef struct {
+  int x;
+  NestedArrayStruct session[];
+} IncompleteArrayStruct;
+
+void rd36094951_IAS_builtin_object_size_assertion(IncompleteArrayStruct *p) {
+#define rd36094951_CHECK(mode)                                                 \
+  __builtin___strlcpy_chk(p->session[0].string, "ab", 2,                       \
+                          __builtin_object_size(p->session[0].string, mode))
+  rd36094951_CHECK(0);
+  rd36094951_CHECK(1);
+  rd36094951_CHECK(2);
+  rd36094951_CHECK(3);
 }

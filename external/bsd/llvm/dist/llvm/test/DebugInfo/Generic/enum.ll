@@ -1,7 +1,7 @@
 ; REQUIRES: object-emission
 
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s > %t
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -v %t | FileCheck %s
 
 ; IR generated from the following code compiled with clang -g:
 ; enum e1 { I, J = 0xffffffffU, K = 0xf000000000000000ULL } a;
@@ -55,7 +55,7 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!8}
 !llvm.module.flags = !{!15, !16}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "a", scope: null, file: !2, line: 1, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "enum.cpp", directory: "/tmp")
 !3 = !DICompositeType(tag: DW_TAG_enumeration_type, name: "e1", file: !2, line: 1, size: 64, align: 64, elements: !4)
@@ -72,7 +72,7 @@ attributes #1 = { nounwind readnone }
 !14 = !{!0}
 !15 = !{i32 2, !"Dwarf Version", i32 3}
 !16 = !{i32 1, !"Debug Info Version", i32 3}
-!17 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcv", scope: !2, file: !2, line: 3, type: !18, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !8, variables: !13)
+!17 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcv", scope: !2, file: !2, line: 3, type: !18, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !8, retainedNodes: !13)
 !18 = !DISubroutineType(types: !19)
 !19 = !{null}
 !20 = !DILocalVariable(name: "b", scope: !17, file: !2, line: 4, type: !21)

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -216,6 +216,7 @@ struct dhcp_state {
 
 	int bpf_fd;
 	unsigned int bpf_flags;
+	int udp_fd;
 	struct ipv4_addr *addr;
 	uint8_t added;
 
@@ -228,6 +229,7 @@ struct dhcp_state {
 #endif
 };
 
+#ifdef INET
 #define D_STATE(ifp)							       \
 	((struct dhcp_state *)(ifp)->if_data[IF_DATA_DHCP])
 #define D_CSTATE(ifp)							       \
@@ -243,7 +245,6 @@ struct dhcp_state {
 #include "dhcpcd.h"
 #include "if-options.h"
 
-#ifdef INET
 char *decode_rfc3361(const uint8_t *, size_t);
 ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
 
@@ -266,15 +267,6 @@ void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
 int dhcp_dump(struct interface *);
-#else
-#define dhcp_start(a) {}
-#define dhcp_abort(a) {}
-#define dhcp_renew(a) {}
-#define dhcp_reboot(a, b) (b = b)
-#define dhcp_reboot_newopts(a, b) (b = b)
-#define dhcp_close(a) {}
-#define dhcp_free(a) {}
-#define dhcp_dump(a) (-1)
-#endif
+#endif /* INET */
 
-#endif
+#endif /* DHCP_H */

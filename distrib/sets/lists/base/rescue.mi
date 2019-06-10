@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.41 2018/04/11 00:26:38 rin Exp $
+# $NetBSD: rescue.mi,v 1.41.2.1 2019/06/10 21:42:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,7 +58,7 @@
 ./rescue/init					base-rescue-root
 ./rescue/init.bak				base-rescue-root
 ./rescue/installboot				base-rescue-root
-./rescue/ipppctl				base-rescue-root
+./rescue/ipppctl				base-obsolete	obsolete
 ./rescue/kdump					base-rescue-root
 ./rescue/kill					base-rescue-root
 ./rescue/ksh					base-rescue-root
@@ -67,7 +67,7 @@
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
 ./rescue/lfs_cleanerd				base-rescue-root
-./rescue/lmcconfig				base-rescue-root
+./rescue/lmcconfig				base-obsolete	obsolete
 ./rescue/lmcctl					base-obsolete	obsolete
 ./rescue/ln					base-rescue-root
 ./rescue/ls					base-rescue-root
@@ -152,6 +152,7 @@
 ./rescue/tetris					base-rescue-root
 ./rescue/ttyflags				base-rescue-root
 ./rescue/tunefs					base-rescue-root
+./rescue/umbctl					base-rescue-root
 ./rescue/umount					base-rescue-root
 ./rescue/veriexecctl				base-rescue-root
 ./rescue/vi					base-rescue-root

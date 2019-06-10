@@ -69,6 +69,8 @@ WithSpecializedBase<int> definedLocally4;
 
 void foo() {
   anon.i = GlobalStruct.i = GlobalUnion.i = GlobalEnum;
+  A a;
+  Virtual virt;
 }
 
 // CHECK: ![[CPP:.*]] = !DIFile(filename: {{.*}}ExtDebugInfo.cpp"
@@ -185,7 +187,7 @@ void foo() {
 
 // CHECK: !DIGlobalVariable(name: "anon_enum", {{.*}}, type: ![[ANON_ENUM:[0-9]+]]
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, scope: ![[NS]],
-// CHECK-SAME:             line: 16
+// CHECK-SAME:             line: 19
 
 // CHECK: !DIGlobalVariable(name: "GlobalUnion",
 // CHECK-SAME:              type: ![[GLOBAL_UNION:[0-9]+]]
@@ -210,3 +212,10 @@ void foo() {
 // CHECK-SAME:           dwoId:
 // CHECK-PCH: !DICompileUnit({{.*}}splitDebugFilename:
 // CHECK-PCH:                dwoId: 18446744073709551614
+
+// CHECK: !DICompositeType(tag: DW_TAG_class_type, name: "A",
+// CHECK-SAME:             DIFlagFwdDecl, identifier: "_ZTS1A")
+
+// There is a full definition of the type available in the module.
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "Virtual",
+// CHECK-SAME:             DIFlagFwdDecl, identifier: "_ZTS7Virtual")

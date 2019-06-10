@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.174 2018/06/24 09:38:46 leot Exp $
+.\"	$NetBSD: contents,v 1.174.2.1 2019/06/10 21:42:27 christos Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,7 @@ kernel containing code for everything supported in this release.
 .if \n[amd64] \{\
 .			It Pa netbsd-INSTALL.gz
 The installation kernel.
+.			It Pa netbsd-GENERIC_KASLR.gz
 .			It Pa netbsd-INSTALL_XEN3_DOMU.gz
 .			It Pa netbsd-XEN3_DOM0.gz
 .			It Pa netbsd-XEN3_DOMU.gz
@@ -92,10 +93,8 @@ The monolithic kernel which doesn't use kernel modules.
 .			It Pa netbsd-INSTALL.gz
 The installation kernel.
 .			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
-.			It Pa netbsd-INSTALL_XEN3_DOMU.gz
+.			It Pa netbsd-XEN3PAE_DOM0.gz
 .			It Pa netbsd-XEN3PAE_DOMU.gz
-.			It Pa netbsd-XEN3_DOM0.gz
-.			It Pa netbsd-XEN3_DOMU.gz
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
@@ -316,7 +315,7 @@ Method), below.
 .\}
 .
 .if !\n[alpha]:\n[bebox]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\
-\n[sgimips]:\n[sandpoint]:\n[sparc]:\n[xen] \{\
+\n[sgimips]:\n[sandpoint]:\n[sparc] \{\
 .		It Pa misc/
 .
 Miscellaneous \*M installation utilities; see
@@ -820,9 +819,6 @@ and the same kernel in the format needed by the bootloader as
 These kernels are specific to the IBM 405GP based Walnut evaluation board.
 .\}
 .el \{\
-.ie \n[xen] \{\
-.\}
-.el \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -838,7 +834,6 @@ This set also contains an a.out kernel named
 .Pa /netbsd.aout
 that your system may need to boot.
 .\}
-.\} \" !\n[xen]
 .\} \" !\n[evbppc]
 .\} \" !\n[sparc64]
 .\} \" !\n[sparc]

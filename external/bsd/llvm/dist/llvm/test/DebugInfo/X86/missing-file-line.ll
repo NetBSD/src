@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -mtriple=x86_64-linux-gnu -filetype=obj %s -o - | llvm-dwarfdump -debug-dump=all - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux-gnu -filetype=obj %s -o - | llvm-dwarfdump -all - | FileCheck %s
 
 ; Test that we accept and generate DWARF entities for DW_TAG_structure_type,
 ; DW_TAG_member and DW_TAG_typedef with no source location. These can come up
@@ -39,7 +39,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "file.c", directory: "/dir")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: false, unit: !0, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: false, unit: !0, retainedNodes: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

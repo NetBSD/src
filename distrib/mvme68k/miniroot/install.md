@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.6 2010/03/10 23:13:09 abs Exp $
+#	$NetBSD: install.md,v 1.6.48.1 2019/06/10 21:42:26 christos Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,41 +48,28 @@ md_set_term() {
 	# XXX call tset?
 }
 
-__mount_kernfs() {
-	# Make sure kernfs is mounted.
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
-	fi
-}
-
 md_makerootwritable() {
 	# Just remount the root device read-write.
-	__mount_kernfs
+	mi_mount_kernfs
 	echo "Remounting root read-write..."
 	mount -t ffs -u /kern/rootdev /
 }
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^sd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^sd[0-9] /s/ .*//p'
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	__mount_kernfs
-	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^cd[0-9] /s/ .*//p'
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	__mount_kernfs
-	sed -n -e '/^le[0-9] /s/ .*//p' \
-	       -e '/^ie[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_filter_msgbuf | sed -ne '/^[il]e[0-9] /s/ .*//p'
 }
 
 md_get_partition_range() {
@@ -161,10 +148,10 @@ Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. Make sure these size/offset
 pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
+given in the 'sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
+It's probably also wisest not to touch the '8 partitions:' line, even
 in case you have defined less than eight partitions.
 
 [Example]

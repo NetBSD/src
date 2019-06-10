@@ -1,11 +1,11 @@
 ; REQUIRES: object-emission
 
 ; RUN: llc < %s -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
-; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=SINGLE %s
+; RUN: llvm-dwarfdump -v %t | FileCheck --check-prefix=CHECK --check-prefix=SINGLE %s
 ; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_SINGLE %s
 
 ; RUN: llc < %s -split-dwarf-file=foo.dwo -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
-; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
+; RUN: llvm-dwarfdump -v %t | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
 ; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_FISSION %s
 
 ; Generated from bar.cpp:
@@ -74,8 +74,7 @@
 ; CHECK-NEXT: DW_AT_signature {{.*}} (0xfd756cee88f8a118)
 
 ; SINGLE-LABEL: .debug_types contents:
-; FISSION-NOT: .debug_types contents:
-; FISSION-LABEL: .debug_types.dwo contents:
+; FISSION: .debug_types.dwo contents:
 
 ; Check that we generate a hash for bar and the value.
 ; CHECK-NOT: type_signature
@@ -123,18 +122,23 @@
 ; CHECK-LABEL: .debug_line contents:
 ; CHECK: Line table prologue
 ; CHECK-NOT: file_names[
-; SINGLE: file_names{{.*}} bar.h
-; CHECK: file_names{{.*}} bar.cpp
+; SINGLE: file_names[
+; SINGLE-NEXT: name: "bar.h"
+; CHECK: file_names[
+; CHECK-NEXT: name: "bar.cpp"
 ; CHECK-NOT: file_names[
 
-; CHECK-LABEL: .debug_line.dwo contents:
+; FISSION: .debug_line.dwo contents:
+; CHECK-NOT: .debug_line.dwo contents:
 ; FISSION: Line table prologue
 ; FISSION: opcode_base: 1
 ; FISSION-NOT: standard_opcode_lengths
 ; FISSION-NOT: include_directories
 ; FISSION-NOT: file_names[
-; FISSION: file_names{{.*}} bar.h
-; FISSION: file_names{{.*}} bar.cpp
+; FISSION: file_names[
+; FISSION-NEXT: name: "bar.h"
+; FISSION: file_names[
+; FISSION-NEXT: name: "bar.cpp"
 ; FISSION-NOT: file_names[
 
 ; CHECK-LABEL: .debug_str contents:
@@ -219,13 +223,13 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!37, !38}
 !llvm.ident = !{!39}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "b", scope: null, file: !2, line: 3, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
 !3 = !DICompositeType(tag: DW_TAG_structure_type, name: "bar", file: !4, line: 1, size: 8, align: 8, elements: !5, identifier: "_ZTS3bar")
 !4 = !DIFile(filename: "bar.h", directory: "/tmp/dbginfo")
 !5 = !{}
-!6 = !DIGlobalVariableExpression(var: !7)
+!6 = !DIGlobalVariableExpression(var: !7, expr: !DIExpression())
 !7 = !DIGlobalVariable(name: "animal", linkageName: "_ZN7echidna8capybara8mongoose6animalE", scope: !8, file: !2, line: 18, type: !11, isLocal: false, isDefinition: true)
 !8 = !DINamespace(name: "mongoose", scope: !9)
 !9 = !DINamespace(name: "capybara", scope: !10)
@@ -235,7 +239,7 @@ attributes #1 = { nounwind readnone }
 !13 = !DIDerivedType(tag: DW_TAG_member, name: "a", scope: !11, file: !2, line: 14, baseType: !14, size: 32, align: 32, flags: DIFlagPrivate)
 !14 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !15 = !DIDerivedType(tag: DW_TAG_member, name: "b", scope: !11, file: !2, line: 15, baseType: !14, size: 32, align: 32, offset: 32, flags: DIFlagPrivate)
-!16 = !DIGlobalVariableExpression(var: !17)
+!16 = !DIGlobalVariableExpression(var: !17, expr: !DIExpression())
 !17 = !DIGlobalVariable(name: "w", scope: null, file: !2, line: 29, type: !18, isLocal: true, isDefinition: true)
 !18 = !DICompositeType(tag: DW_TAG_structure_type, name: "walrus", scope: !19, file: !2, line: 24, size: 8, align: 8, elements: !20)
 !19 = !DINamespace(scope: null)
@@ -244,7 +248,7 @@ attributes #1 = { nounwind readnone }
 !22 = !DISubroutineType(types: !23)
 !23 = !{null, !24}
 !24 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !18, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer)
-!25 = !DIGlobalVariableExpression(var: !26)
+!25 = !DIGlobalVariableExpression(var: !26, expr: !DIExpression())
 !26 = !DIGlobalVariable(name: "wom", scope: null, file: !2, line: 38, type: !27, isLocal: false, isDefinition: true)
 !27 = !DICompositeType(tag: DW_TAG_structure_type, name: "wombat", file: !2, line: 31, size: 64, align: 32, elements: !28, identifier: "_ZTS6wombat")
 !28 = !{!29}
@@ -259,7 +263,7 @@ attributes #1 = { nounwind readnone }
 !37 = !{i32 2, !"Dwarf Version", i32 4}
 !38 = !{i32 1, !"Debug Info Version", i32 3}
 !39 = !{!"clang version 3.5 "}
-!40 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", scope: !2, file: !2, line: 5, type: !41, isLocal: false, isDefinition: true, scopeLine: 5, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, variables: !5)
+!40 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", scope: !2, file: !2, line: 5, type: !41, isLocal: false, isDefinition: true, scopeLine: 5, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, retainedNodes: !5)
 !41 = !DISubroutineType(types: !42)
 !42 = !{null}
 !43 = !DILocalVariable(name: "b", scope: !40, file: !2, line: 7, type: !44)
@@ -267,14 +271,14 @@ attributes #1 = { nounwind readnone }
 !45 = !DIExpression()
 !46 = !DILocation(line: 7, scope: !40)
 !47 = !DILocation(line: 8, scope: !40)
-!48 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 29, type: !41, isLocal: true, isDefinition: true, scopeLine: 29, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, variables: !5)
+!48 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 29, type: !41, isLocal: true, isDefinition: true, scopeLine: 29, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, retainedNodes: !5)
 !49 = !DILocation(line: 29, scope: !48)
-!50 = distinct !DISubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", scope: !18, file: !2, line: 25, type: !22, isLocal: true, isDefinition: true, scopeLine: 25, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, declaration: !21, variables: !5)
+!50 = distinct !DISubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", scope: !18, file: !2, line: 25, type: !22, isLocal: true, isDefinition: true, scopeLine: 25, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !34, declaration: !21, retainedNodes: !5)
 !51 = !DILocalVariable(name: "this", arg: 1, scope: !50, type: !52, flags: DIFlagArtificial | DIFlagObjectPointer)
 !52 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !18, size: 64, align: 64)
 !53 = !DILocation(line: 0, scope: !50)
 !54 = !DILocation(line: 25, scope: !50)
-!55 = distinct !DISubprogram(linkageName: "_GLOBAL__I_a", scope: !2, file: !2, line: 25, type: !56, isLocal: true, isDefinition: true, scopeLine: 25, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, unit: !34, variables: !5)
+!55 = distinct !DISubprogram(linkageName: "_GLOBAL__I_a", scope: !2, file: !2, line: 25, type: !56, isLocal: true, isDefinition: true, scopeLine: 25, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, unit: !34, retainedNodes: !5)
 !56 = !DISubroutineType(types: !5)
 !57 = !DILocation(line: 25, scope: !55)
 

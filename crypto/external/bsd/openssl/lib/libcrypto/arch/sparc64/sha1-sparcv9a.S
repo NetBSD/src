@@ -1487,7 +1487,7 @@ sha1_block_data_order:
 	mov		%o2,%l2
 	mov		%o3,%l3
 	mov		%o4,%l4
-	.word	0x81b0031b !alignaddr	%g0,%i3,%g0	
+	.word	0x81b0031b !alignaddr	%g0,%i3,%g0
 	dec		1,%i2
 	ba		.Loop
 	mov		%g5,%o5

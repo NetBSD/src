@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.162 2018/01/09 03:31:14 christos Exp $
+#	$NetBSD: special,v 1.162.4.1 2019/06/10 21:42:45 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -63,9 +63,6 @@
 ./etc/defaults/rc.conf		type=file mode=0444
 ./etc/defaults/security.conf	type=file mode=0444
 ./etc/defaults/weekly.conf	type=file mode=0444
-./etc/dhclient-enter-hooks	type=file mode=0644 optional
-./etc/dhclient-exit-hooks	type=file mode=0644 optional
-./etc/dhclient.conf		type=file mode=0644 optional
 ./etc/dhcpcd.conf		type=file mode=0644
 ./etc/dhcpcd.duid		type=file mode=0644 optional
 ./etc/dhcpcd.hook		type=file mode=0644 optional
@@ -208,7 +205,6 @@
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
 ./etc/rc.d/devpubd		type=file mode=0555
-./etc/rc.d/dhclient		type=file mode=0555
 ./etc/rc.d/dhcpcd		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
 ./etc/rc.d/dhcpd6		type=file mode=0555
@@ -234,7 +230,6 @@
 ./etc/rc.d/irdaattach		type=file mode=0555
 ./etc/rc.d/iscsi_target		type=file mode=0555
 ./etc/rc.d/iscsid		type=file mode=0555
-./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/isibootd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555
@@ -291,6 +286,7 @@
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
+./etc/rc.d/smtoff		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/staticroute		type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555
@@ -319,6 +315,7 @@
 ./etc/rc.subr			type=file mode=0644
 ./etc/remote			type=file mode=0644
 ./etc/resolv.conf		type=file mode=0644 optional
+./etc/route.conf		type=file mode=0644 optional
 ./etc/rpc			type=file mode=0644
 ./etc/rtadvd.conf		type=file mode=0644 optional
 ./etc/saslc.d			type=dir  mode=0755
@@ -405,25 +402,25 @@
 ./var/chroot/named		type=dir  mode=0755
 ./var/chroot/named/dev		type=dir  mode=0755
 ./var/chroot/named/etc		type=dir  mode=0755
-./var/chroot/named/etc/namedb	type=dir  mode=0755
+./var/chroot/named/etc/namedb	type=dir  mode=0755 uname=named gname=named
 ./var/chroot/named/etc/namedb/cache	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/usr		type=dir  mode=0755
 ./var/chroot/named/usr/libexec	type=dir  mode=0755
 ./var/chroot/named/var		type=dir  mode=0755
-./var/chroot/named/var/run	type=dir  mode=0775 gname=named
-./var/chroot/named/var/tmp	type=dir  mode=01775 gname=named
+./var/chroot/named/var/run	type=dir  mode=0775 uname=named gname=named
+./var/chroot/named/var/tmp	type=dir  mode=01775 uname=named gname=named
 ./var/chroot/ntpd		type=dir  mode=0755
 ./var/chroot/ntpd/dev		type=dir  mode=0755
 ./var/chroot/ntpd/etc		type=dir  mode=0755
 ./var/chroot/ntpd/var		type=dir  mode=0755
-./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
-./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
+./var/chroot/ntpd/var/db	type=dir  mode=0775 uname=ntpd gname=ntpd
+./var/chroot/ntpd/var/run	type=dir  mode=0775 uname=ntpd gname=ntpd
 ./var/chroot/pflogd		type=dir  mode=0755
-./var/chroot/rtadvd		type=dir  mode=0755
-./var/chroot/rtadvd/etc		type=dir  mode=0755
-./var/chroot/rtadvd/var		type=dir  mode=0755
-./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
+./var/chroot/rtadvd		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/etc		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/var		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 uname=_rtadvd gname=_rtadvd
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/chroot/tcpdump		type=dir  mode=0755
 ./var/chroot/tftp-proxy		type=dir  mode=0755

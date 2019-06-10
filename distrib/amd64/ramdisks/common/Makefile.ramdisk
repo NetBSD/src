@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.12 2018/06/21 11:48:05 kamil Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.12.2.1 2019/06/10 21:42:18 christos Exp $
 
 NOSANITIZER=	# defined
 

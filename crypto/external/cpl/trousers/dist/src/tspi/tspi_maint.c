@@ -256,7 +256,6 @@ Tspi_TPM_CheckMaintenancePubKey(TSS_HTPM hTPM,				/* in */
 		if ((pValidationData->rgbValidationData = calloc_tspi(tspContext,
 								      TCPA_SHA1_160_HASH_LEN))
 		     == NULL) {
-			free_tspi(tspContext, pubBlob);
 			return TSPERR(TSS_E_OUTOFMEMORY);
 		}
 

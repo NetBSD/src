@@ -1,6 +1,8 @@
-#	$NetBSD: link.mk,v 1.5 2013/09/29 12:11:59 joerg Exp $
+#	$NetBSD: link.mk,v 1.5.26.1 2019/06/10 21:45:03 christos Exp $
 
 .include <bsd.own.mk>
+
+LLVM_TOPLEVEL:=	${.PARSEDIR}
 
 .if defined(HOSTPROG)
 LIB_BASE=	${NETBSDSRCDIR}/tools/llvm-lib
@@ -36,6 +38,12 @@ DPADD+=	${LLD_OBJDIR.${l}}/lib${l}.a
 LLVM_OBJDIR.${l}!=	cd ${LIB_BASE}/libLLVM${l} && ${PRINTOBJDIR}
 LDADD+=	-L${LLVM_OBJDIR.${l}} -lLLVM${l}
 DPADD+=	${LLVM_OBJDIR.${l}}/libLLVM${l}.a
+.endfor
+
+.for l in ${LLVMRT_LIBS}
+LLVMRT_OBJDIR.${l}!=	cd ${LLVM_TOPLEVEL}/librt/libLLVM${l} && ${PRINTOBJDIR}
+LDADD+=	${LLVMRT_OBJDIR.${l}}/libLLVM${l}_pic.a
+DPADD+=	${LLVMRT_OBJDIR.${l}}/libLLVM${l}_pic.a
 .endfor
 
 .if defined(HOSTPROG)

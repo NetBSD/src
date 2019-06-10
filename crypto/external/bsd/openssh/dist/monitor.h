@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: monitor.h,v 1.20 2016/09/28 16:33:07 djm Exp $ */
+/*	$NetBSD: monitor.h,v 1.9.12.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: monitor.h,v 1.23 2019/01/19 21:43:56 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -76,6 +76,8 @@ enum monitor_reqtype {
 
 };
 
+struct ssh;
+
 struct monitor {
 	int			 m_recvfd;
 	int			 m_sendfd;
@@ -89,15 +91,17 @@ struct monitor *monitor_init(void);
 void monitor_reinit(struct monitor *);
 
 struct Authctxt;
-void monitor_child_preauth(struct Authctxt *, struct monitor *);
-__dead void monitor_child_postauth(struct monitor *);
+void monitor_child_preauth(struct ssh *, struct monitor *);
+void monitor_child_postauth(struct ssh *, struct monitor *)
+    __attribute__((__noreturn__));
 
-struct mon_table;
-int monitor_read(struct monitor*, struct mon_table *, struct mon_table **);
+void monitor_clear_keystate(struct ssh *, struct monitor *);
+void monitor_apply_keystate(struct ssh *, struct monitor *);
 
 /* Prototypes for request sending and receiving */
-void mm_request_send(int, enum monitor_reqtype, Buffer *);
-void mm_request_receive(int, Buffer *);
-void mm_request_receive_expect(int, enum monitor_reqtype, Buffer *);
+void mm_request_send(int, enum monitor_reqtype, struct sshbuf *);
+void mm_request_receive(int, struct sshbuf *);
+void mm_request_receive_expect(int, enum monitor_reqtype, struct sshbuf *);
+void mm_get_keystate(struct ssh *, struct monitor *);
 
 #endif /* _MONITOR_H_ */

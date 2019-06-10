@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -O1 < %s -march=ppc64 -mcpu=pwr7 | FileCheck %s
+; RUN: llc -verify-machineinstrs -O1 < %s -mcpu=pwr7 | FileCheck %s
 
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
@@ -24,8 +24,7 @@ entry:
   ret void
 }
 ; CHECK-LABEL: @caller1
-; CHECK: mr [[REG:[0-9]+]], 3
-; CHECK: mr 7, [[REG]]
+; CHECK: mr 7, 3
 ; CHECK: bl test1
 
 define i64 @callee2(%struct.pad* byval nocapture readnone %x, i32 signext %y, %struct.test* byval align 16 nocapture readonly %z) {

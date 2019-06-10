@@ -13,6 +13,7 @@ IPV4LL=
 INET6=
 ARC4RANDOM=
 CLOSEFROM=
+CONSTTIME_MEMEQUAL=
 STRLCPY=
 UDEV=
 OS=
@@ -91,6 +92,7 @@ for x do
 	--without-sha256) SHA2=no;;
 	--without-hmac) HMAC=no;;
 	--without-dev) DEV=no;;
+	--with-udev) DEV=yes; UDEV=yes;;
 	--without-udev) UDEV=no;;
 	--with-poll) POLL="$var";;
 	--serviceexists) SERVICEEXISTS=$var;;
@@ -98,7 +100,7 @@ for x do
 	--servicestatus) SERVICESTATUS=$var;;
 	--small) SMALL=yes;;
 	--statusarg) STATUSARG=$var;;
-	--infodir|--includedir) ;; # ignore autotools
+	--infodir) ;; # ignore autotools
 	--disable-maintainer-mode|--disable-dependency-tracking) ;;
 	--disable-silent-rules) ;;
 	-V|--version)
@@ -453,7 +455,7 @@ sunos*)
 	echo "CPPFLAGS+=	-D_XPG4_2 -D__EXTENSIONS__ -DBSD_COMP" \
 	    >>$CONFIG_MK
 	echo "DHCPCD_SRCS+=	if-sun.c" >>$CONFIG_MK
-	echo "LDADD+=		-ldlpi" >>$CONFIG_MK
+	echo "LDADD+=		-ldlpi -lkstat" >>$CONFIG_MK
 	;;
 *)
 	echo "DHCPCD_SRCS+=	if-bsd.c" >>$CONFIG_MK
@@ -713,7 +715,7 @@ EOF
 fi
 if [ "$ARC4RANDOM" = no ]; then
 	echo "COMPAT_SRCS+=	compat/arc4random.c" >>$CONFIG_MK
-	echo "#include		\"compat/arc4random.h\"" >>$CONFIG_H
+	echo "#include			\"compat/arc4random.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$ARC4RANDOM_UNIFORM" ]; then
@@ -735,7 +737,7 @@ EOF
 fi
 if [ "$ARC4RANDOM_UNIFORM" = no ]; then
 	echo "COMPAT_SRCS+=	compat/arc4random_uniform.c" >>$CONFIG_MK
-	echo "#include		\"compat/arc4random_uniform.h\"" >>$CONFIG_H
+	echo "#include			\"compat/arc4random_uniform.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$STRLCPY" ]; then
@@ -759,7 +761,7 @@ EOF
 fi
 if [ "$STRLCPY" = no ]; then
 	echo "COMPAT_SRCS+=	compat/strlcpy.c" >>$CONFIG_MK
-	echo "#include		\"compat/strlcpy.h\"" >>$CONFIG_H
+	echo "#include			\"compat/strlcpy.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$PIDFILE_LOCK" ]; then
@@ -791,7 +793,7 @@ EOF
 fi
 if [ "$PIDFILE_LOCK" = no ]; then
 	echo "COMPAT_SRCS+=	compat/pidfile.c" >>$CONFIG_MK
-	echo "#include		\"compat/pidfile.h\"" >>$CONFIG_H
+	echo "#include			\"compat/pidfile.h\"" >>$CONFIG_H
 else
 	echo "#define	HAVE_UTIL_H" >>$CONFIG_H
 	if [ -n "$LIBUTIL" ]; then
@@ -842,7 +844,28 @@ EOF
 fi
 if [ "$STRTOI" = no ]; then
 	echo "COMPAT_SRCS+=	compat/strtoi.c compat/strtou.c" >>$CONFIG_MK
-	echo "#include		\"compat/strtoi.h\"" >>$CONFIG_H
+	echo "#include			\"compat/strtoi.h\"" >>$CONFIG_H
+fi
+
+if [ -z "$CONSTTIME_MEMEQUAL" ]; then
+	printf "Testing for consttime_memequal ... "
+	cat <<EOF >_consttime_memequal.c
+#include <string.h>
+int main(void) {
+	return consttime_memequal("deadbeef", "deadbeef", 8);
+}
+EOF
+	if $XCC _consttime_memequal.c -o _consttime_memequal 2>&3; then
+		CONSTTIME_MEMEQUAL=yes
+	else
+		CONSTTIME_MEMEQUAL=no
+	fi
+	echo "$CONSTTIME_MEMEQUAL"
+	rm -f _consttime_memequal.c _consttime_memequal
+fi
+if [ "$CONSTTIME_MEMEQUAL" = no ]; then
+	echo "#include			\"compat/consttime_memequal.h\"" \
+	    >>$CONFIG_H
 fi
 
 if [ -z "$DPRINTF" ]; then
@@ -863,7 +886,7 @@ EOF
 fi
 if [ "$DPRINTF" = no ]; then
 	echo "COMPAT_SRCS+=	compat/dprintf.c" >>$CONFIG_MK
-	echo "#include		\"compat/dprintf.h\"" >>$CONFIG_H
+	echo "#include			\"compat/dprintf.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$TAILQ_FOREACH_SAFE" ]; then
@@ -937,7 +960,7 @@ if [ "$TAILQ_FOREACH_SAFE" = no -o "$TAILQ_CONCAT" = no ]; then
 	if [ "$TAILQ_FOREACH" = yes ]; then
 		echo "#include		<sys/queue.h>">>$CONFIG_H
 	fi
-	echo "#include		\"compat/queue.h\"">>$CONFIG_H
+	echo "#include			\"compat/queue.h\"">>$CONFIG_H
 else
 	echo "#define	HAVE_SYS_QUEUE_H" >>$CONFIG_H
 fi
@@ -962,7 +985,7 @@ EOF
 fi
 if [ "$REALLOCARRAY" = no ]; then
 	echo "COMPAT_SRCS+=	compat/reallocarray.c" >>$CONFIG_MK
-	echo "#include		\"compat/reallocarray.h\"">>$CONFIG_H
+	echo "#include			\"compat/reallocarray.h\"">>$CONFIG_H
 fi
 # Set this for eloop
 echo "#define	HAVE_REALLOCARRAY" >>$CONFIG_H
@@ -1091,7 +1114,7 @@ EOF
 	rm -f _be64enc.c _be64enc
 fi
 if [ "$BE64ENC" = no ]; then
-	echo "#include		\"compat/endian.h\"" >>$CONFIG_H
+	echo "#include			\"compat/endian.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$FLS64" ]; then
@@ -1145,7 +1168,7 @@ EOF
 	rm -f _md5.c _md5
 fi
 if [ "$MD5" = no ]; then
-	echo "#include		\"compat/crypt/md5.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/md5.h\"" >>$CONFIG_H
 	echo "MD5_SRC=	compat/crypt/md5.c" >>$CONFIG_MK
 else
 	echo "MD5_SRC=" >>$CONFIG_MK
@@ -1236,7 +1259,7 @@ EOF
 	fi
 fi
 if [ "$SHA2" = no ]; then
-	echo "#include		\"compat/crypt/sha256.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/sha256.h\"" >>$CONFIG_H
 	echo "SHA256_SRC=	compat/crypt/sha256.c" >>$CONFIG_MK
 else
 	echo "SHA256_SRC=" >>$CONFIG_MK
@@ -1284,7 +1307,7 @@ EOF
 	rm -f _hmac.c _hmac
 fi
 if [ "$HMAC" = no ]; then
-	echo "#include		\"compat/crypt/hmac.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/hmac.h\"" >>$CONFIG_H
 	echo "HMAC_SRC=	compat/crypt/hmac.c" >>$CONFIG_MK
 else
 	# echo "#define	HAVE_HMAC_H" >>$CONFIG_H
@@ -1344,6 +1367,10 @@ EOF
 	rm -f _udev.c _udev
 elif [ "$DEV" != no -a "$UDEV" != no ]; then
 	echo "no"
+	if [ -n "$UDEV" ]; then
+		echo "udev has been explicity requested ... aborting" >&2
+		exit 1
+	fi
 fi
 
 if [ "$DEV" = yes ]; then

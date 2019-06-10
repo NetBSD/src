@@ -38,6 +38,9 @@ tcs_wrap_GetRandom(struct tcsd_thread_data *data)
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
+
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
 	if (getData(TCSD_PACKET_TYPE_UINT32, 1, &bytesRequested, 0, &data->comm))
@@ -61,7 +64,7 @@ tcs_wrap_GetRandom(struct tcsd_thread_data *data)
 		}
 		free(randomBytes);
 	} else
-		initData(&data->comm, 0);
+done:		initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;
 	return TSS_SUCCESS;
@@ -77,6 +80,9 @@ tcs_wrap_StirRandom(struct tcsd_thread_data *data)
 
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
+
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
 
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
@@ -99,7 +105,7 @@ tcs_wrap_StirRandom(struct tcsd_thread_data *data)
 
 	MUTEX_UNLOCK(tcsp_lock);
 	free(inData);
-
+done:
 	initData(&data->comm, 0);
 	data->comm.hdr.u.result = result;
 

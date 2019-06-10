@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.255 2018/06/28 10:14:01 christos Exp $
+# $NetBSD: mi,v 1.255.2.1 2019/06/10 21:42:30 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -85,6 +85,7 @@
 ./usr/lib/libisccfg_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libiscsi_g.a				comp-c-debuglib		debuglib,compatfile,iscsi
 ./usr/lib/libisns_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libjemalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libkadm5clnt_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libkadm5srv_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libkafs_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -97,7 +98,7 @@
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/liblwres_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblzma_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libm_g.a				comp-c-debuglib		debuglib,compatfile
@@ -109,6 +110,7 @@
 ./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libns_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
 ./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
@@ -124,7 +126,6 @@
 ./usr/lib/libposix_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libppath_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile,dtrace
-./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/libprop_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_dbg_g.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
@@ -201,6 +202,7 @@
 ./usr/lib/librumphijack_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpkern_crypto_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete,compatfile
+./usr/lib/librumpkern_nv_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_sljit_g.a			comp-c-debuglib		debuglib,rump,sljit
 ./usr/lib/librumpkern_solaris_g.a		comp-c-debuglib		debuglib,rump,zfs
 ./usr/lib/librumpkern_sysproxy_g.a		comp-c-debuglib		debuglib,rump
@@ -265,8 +267,8 @@
 ./usr/lib/libwrap_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liby_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libz_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzfs_core_g.a			comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzpool_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -319,7 +321,7 @@
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/devpubd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
+./usr/libdata/debug/sbin/dhclient.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
@@ -375,6 +377,7 @@
 ./usr/libdata/debug/sbin/mount_procfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ptyfs.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_puffs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/mount_qemufwcfg.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_smbfs.debug	comp-smbfs-debug	debug
 ./usr/libdata/debug/sbin/mount_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_tmpfs.debug	comp-miscfs-debug	debug
@@ -430,6 +433,7 @@
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
 ./usr/libdata/debug/sbin/ttyflags.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tunefs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/umbctl.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/umount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/veriexecctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug
@@ -463,6 +467,7 @@
 ./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/awk.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/banner.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/base64.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/basename.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bdes.debug		comp-crypto-debug	debug
@@ -543,8 +548,8 @@
 ./usr/libdata/debug/usr/bin/g77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
+./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
-./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug,gcc=6
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
@@ -803,7 +808,7 @@
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/tpfmt.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tpfmt.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/tpm_sealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_unsealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_version.debug	comp-tpm-debug		tpm,debug
@@ -1039,7 +1044,7 @@
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
-./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/daicctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
@@ -1054,7 +1059,7 @@
 ./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
@@ -1101,11 +1106,11 @@
 ./usr/libdata/debug/usr/sbin/irdaattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iscsi-initiator.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/sbin/iscsi-target.debug	comp-iscsi-debug	iscsi,debug
-./usr/libdata/debug/usr/sbin/isdnd.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntel.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/isdnd.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntel.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/isibootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug
@@ -1119,7 +1124,7 @@
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ldpd.debug		comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
@@ -1206,8 +1211,8 @@
 ./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/pwd_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotacheck.debug	comp-sysutil-debug	debug
@@ -1582,16 +1587,16 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-obsolete	openssl=11,obsolete
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,compattestfile
@@ -1727,6 +1732,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_kauth_pr_47598.debug		tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_ksem.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lockf.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete,compattestfile
@@ -1736,6 +1742,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_pollts.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_proccwd.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ptrace.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ptrace_wait.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ptrace_wait3.debug		tests-obsolete		obsolete,compattestfile
@@ -1874,6 +1881,7 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini_array.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_get.debug		tests-lib-debug		debug,atf,compattestfile
@@ -1883,6 +1891,21 @@
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_add.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_and.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_compare_and_swap.debug	tests-lib-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_lock.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_nand.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_or.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_sub.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_xor.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_add.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_and.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_cas.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_dec.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_inc.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_or.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_swap.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf,compattestfile
@@ -1978,6 +2001,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctype.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile
@@ -1986,6 +2011,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_ether_aton.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_getprotoent.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/net/t_if_nametoindex.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/t_exhaust.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2122,6 +2148,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_recvmmsg.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendmmsg.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendrecv.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2175,6 +2203,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_acos.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_asin.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_atan.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libm/t_bit.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_cabsl.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_casinh.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_cbrt.debug			tests-lib-debug		debug,atf,compattestfile
@@ -2216,11 +2245,13 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dso_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_main_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_atexit.debug		tests-lib-tests		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_thread_local_dtor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_call_once.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_cnd.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_condwait.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_detach.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2229,6 +2260,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_fpu.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_join.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_kill.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_mtx.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_mutex.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_name.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_once.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2242,6 +2274,8 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_timedmutex.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_tss.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_dummy.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_threads.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse/t_refuse_opt.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2325,6 +2359,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_signals.debug		tests-syscall-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_threadpool.debug		tests-sys-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf,rump
@@ -2332,15 +2367,15 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf,rump
-./usr/libdata/debug/usr/tests/sys					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-syys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete,compattestfile
