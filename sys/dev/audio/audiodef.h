@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.3 2019/05/23 12:20:27 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.4 2019/06/10 13:49:39 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -62,12 +62,6 @@
  * For now, there are no user interfaces to get/set it.
  */
 /* #define AUDIO_SUPPORT_TRACK_VOLUME */
-
-/*
- * Whether use C language's "implementation defined" behavior (note that
- * it's not "undefined" behavior).  It improves performance well.
- */
-#define AUDIO_USE_C_IMPLEMENTATION_DEFINED_BEHAVIOR
 
 /* conversion stage */
 typedef struct {
