@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.103 2018/05/05 19:58:08 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.103.2.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.103 2018/05/05 19:58:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.103.2.1 2019/06/10 22:09:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -472,6 +472,7 @@ sockaddr_format(const struct sockaddr *sa, char *buf, size_t len)
 static void
 sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 {
+	const bool allowaddr = get_expose_address(curproc);
 	struct unpcb *unp = sotounpcb(so);
 	struct sockaddr_un *un = unp->unp_addr;
 
@@ -482,9 +483,9 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	pcb->ki_protocol = so->so_proto->pr_protocol;
 	pcb->ki_pflags = unp->unp_flags;
 
-	pcb->ki_pcbaddr = PTRTOUINT64(unp);
+	COND_SET_VALUE(pcb->ki_pcbaddr, PTRTOUINT64(unp), allowaddr);
 	/* pcb->ki_ppcbaddr = unp has no ppcb... */
-	pcb->ki_sockaddr = PTRTOUINT64(so);
+	COND_SET_VALUE(pcb->ki_sockaddr, PTRTOUINT64(so), allowaddr);
 
 	pcb->ki_sostate = so->so_state;
 	/* pcb->ki_prstate = unp has no state... */
@@ -504,7 +505,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 		 * makeun().
 		 */
 		memcpy(un, unp->unp_addr,
-		    min(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
+		    uimin(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
 	}
 	else {
 		un->sun_len = offsetof(struct sockaddr_un, sun_path);
@@ -514,7 +515,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 		un = (struct sockaddr_un *)pcb->ki_dpad;
 		if (unp->unp_conn->unp_addr != NULL) {
 			memcpy(un, unp->unp_conn->unp_addr,
-			    min(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
+			    uimin(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
 		}
 		else {
 			un->sun_len = offsetof(struct sockaddr_un, sun_path);
@@ -523,16 +524,17 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	}
 
 	pcb->ki_inode = unp->unp_ino;
-	pcb->ki_vnode = PTRTOUINT64(unp->unp_vnode);
-	pcb->ki_conn = PTRTOUINT64(unp->unp_conn);
-	pcb->ki_refs = PTRTOUINT64(unp->unp_refs);
-	pcb->ki_nextref = PTRTOUINT64(unp->unp_nextref);
+	COND_SET_VALUE(pcb->ki_vnode, PTRTOUINT64(unp->unp_vnode), allowaddr);
+	COND_SET_VALUE(pcb->ki_conn, PTRTOUINT64(unp->unp_conn), allowaddr);
+	COND_SET_VALUE(pcb->ki_refs, PTRTOUINT64(unp->unp_refs), allowaddr);
+	COND_SET_VALUE(pcb->ki_nextref, PTRTOUINT64(unp->unp_nextref),
+	    allowaddr);
 }
 
 static int
 sysctl_unpcblist(SYSCTLFN_ARGS)
 {
-	struct file *fp, *dfp;
+	struct file *fp, *np, *dfp;
 	struct socket *so;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -581,7 +583,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * to walk the file list looking for them.  :-/
 	 */
 	mutex_enter(&filelist_lock);
-	LIST_FOREACH(fp, &filehead, f_list) {
+	LIST_FOREACH_SAFE(fp, &filehead, f_list, np) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
 		    fp->f_socket == NULL)
 			continue;
@@ -613,6 +615,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			error = copyout(&pcb, dp, out_size);
 			closef(fp);
 			mutex_enter(&filelist_lock);
+			np = LIST_NEXT(dfp, f_list);
 			LIST_REMOVE(dfp, f_list);
 			if (error)
 				break;

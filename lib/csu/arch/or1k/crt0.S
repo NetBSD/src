@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.1 2014/09/03 19:34:25 matt Exp $	*/
+/*	$NetBSD: crt0.S,v 1.1.16.1 2019/06/10 22:05:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
 
 #include <or1k/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2014/09/03 19:34:25 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.1.16.1 2019/06/10 22:05:14 christos Exp $")
 
 STRONG_ALIAS(_start,__start)
 
 _ENTRY(__start)
 	/*
-	 * void ___start(void (*cleanup)(void), const Obj_Entry *obj,
+	 * void ___start(void (*cleanup)(void),
 	 *    struct ps_strings *ps_strings);
 	 */
 	l.jal	___start

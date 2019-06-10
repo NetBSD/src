@@ -1,5 +1,5 @@
 /* Output generating routines for GDB CLI.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -35,24 +35,27 @@ public:
 protected:
 
   virtual void do_table_begin (int nbrofcols, int nr_rows,
-				  const char *tblid) override;
+			       const char *tblid) override;
   virtual void do_table_body () override;
   virtual void do_table_end () override;
   virtual void do_table_header (int width, ui_align align,
-			     const std::string &col_name,
-			     const std::string &col_hdr) override;
+				const std::string &col_name,
+				const std::string &col_hdr) override;
   /* Note: level 0 is the top-level so LEVEL is always greater than
      zero.  */
   virtual void do_begin (ui_out_type type, const char *id) override;
   virtual void do_end (ui_out_type type) override;
   virtual void do_field_int (int fldno, int width, ui_align align,
-			  const char *fldname, int value) override;
+			     const char *fldname, int value) override;
   virtual void do_field_skip (int fldno, int width, ui_align align,
-			   const char *fldname) override;
+			      const char *fldname) override;
   virtual void do_field_string (int fldno, int width, ui_align align,
-			     const char *fldname, const char *string) override;
+				const char *fldname,
+				const char *string,
+				ui_out_style_kind style) override;
   virtual void do_field_fmt (int fldno, int width, ui_align align,
-			  const char *fldname, const char *format, va_list args)
+			     const char *fldname, const char *format,
+			     va_list args)
     override ATTRIBUTE_PRINTF (6,0);
   virtual void do_spaces (int numspaces) override;
   virtual void do_text (const char *string) override;
@@ -68,8 +71,6 @@ protected:
 private:
 
   void field_separator ();
-  void out_field_fmt (int fldno, const char *fldname, const char *format, ...)
-    ATTRIBUTE_PRINTF (4, 5);
 
   std::vector<ui_file *> m_streams;
   bool m_suppress_output;

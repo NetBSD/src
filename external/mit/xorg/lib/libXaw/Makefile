@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2015/07/19 07:55:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.16.1 2019/06/10 22:02:39 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c \
 	SimpleMenu.c Sme.c SmeBSB.c SmeLine.c StripChart.c \
 	Text.c TextSink.c TextSrc.c TextAction.c TextPop.c \
 	TextTr.c Tip.c Toggle.c Tree.c Vendor.c Viewport.c \
-	XawIm.c XawInit.c XawI18n.c sharedlib.c
+	XawIm.c XawInit.c XawI18n.c
 
 .PATH:	${X11SRCDIR.Xaw}/man
 MAN=	Xaw.3
@@ -68,6 +68,9 @@ LIBDPLIBS=\
 
 PKGCONFIG=	xaw7
 PKGDIST=	${LIBOLD}
+
+X11EXTRAMANTRANSFORMS+= \
+	__docdir__		${X11LIBDIR}/doc
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

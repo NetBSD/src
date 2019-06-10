@@ -1,5 +1,5 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -161,8 +161,9 @@ m68hc12_add_stub (const char *stub_name, asection *section,
                                          TRUE, FALSE);
   if (stub_entry == NULL)
     {
-      (*_bfd_error_handler) (_("%B: cannot create stub entry %s"),
-			     section->owner, stub_name);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: cannot create stub entry %s"),
+			  section->owner, stub_name);
       return NULL;
     }
 
@@ -1166,6 +1167,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
               && m68hc11_addr_is_banked (pinfo, insn_addr)
               && phys_page != insn_page && !(e_flags & E_M68HC11_NO_BANK_WARNING))
             {
+	      /* xgettext:c-format */
               msg = _("banked address [%lx:%04lx] (%lx) is not in the same bank "
                       "as current banked address [%lx:%04lx] (%lx)");
               buf = xmalloc (strlen (msg) + 128);
@@ -1181,6 +1183,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
           if (phys_page != 0 && insn_page == 0)
             {
+	      /* xgettext:c-format */
               msg = _("reference to a banked address [%lx:%04lx] in the "
                       "normal address space at %04lx");
               buf = xmalloc (strlen (msg) + 128);
@@ -1308,14 +1311,15 @@ _bfd_m68hc11_elf_set_private_flags (bfd *abfd, flagword flags)
    object file when linking.  */
 
 bfd_boolean
-_bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+_bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags;
   flagword new_flags;
   bfd_boolean ok = TRUE;
 
   /* Check if we have the same endianness */
-  if (!_bfd_generic_verify_endian_match (ibfd, obfd))
+  if (!_bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
@@ -1347,14 +1351,14 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   /* Check ABI compatibility.  */
   if ((new_flags & E_M68HC11_I32) != (old_flags & E_M68HC11_I32))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("%B: linking files compiled for 16-bit integers (-mshort) "
            "and others for 32-bit integers"), ibfd);
       ok = FALSE;
     }
   if ((new_flags & E_M68HC11_F64) != (old_flags & E_M68HC11_F64))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("%B: linking files compiled for 32-bit double (-fshort-double) "
            "and others for 64-bit double"), ibfd);
       ok = FALSE;
@@ -1363,7 +1367,7 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   /* Processor compatibility.  */
   if (!EF_M68HC11_CAN_MERGE_MACH (new_flags, old_flags))
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
 	(_("%B: linking files compiled for HCS12 with "
            "others compiled for HC12"), ibfd);
       ok = FALSE;
@@ -1379,7 +1383,8 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   /* Warn about any other mismatches */
   if (new_flags != old_flags)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"),
 	 ibfd, (unsigned long) new_flags, (unsigned long) old_flags);
       ok = FALSE;

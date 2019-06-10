@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_amrr.c,v 1.3.18.5 2019/06/10 22:09:46 christos Exp $ */
 
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
@@ -21,8 +21,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.3.18.5 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*-
@@ -33,7 +33,9 @@ __FBSDID("$FreeBSD$");
  *  INRIA Sophia - Projet Planete
  *  http://www-sop.inria.fr/rapports/sophia/RR-5208.html
  */
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +59,9 @@ __FBSDID("$FreeBSD$");
 
 #ifdef INET
 #include <netinet/in.h>
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#endif
 #endif
 
 #include <net80211/ieee80211_var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.58 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: dir.c,v 1.58.12.1 2019/06/10 22:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.58 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: dir.c,v 1.58.12.1 2019/06/10 22:05:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ struct	odirtemplate odirhead = {
 };
 
 static int chgino(struct  inodesc *);
-static int dircheck(struct inodesc *, struct direct *);
+static int dircheck(struct inodesc *, struct direct *, struct bufarea *);
 static int expanddir(union dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct inodesc *);
@@ -144,6 +144,23 @@ reparent(ino_t inumber, ino_t parent)
 	propagate(inumber);
 }
 
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+# define NEEDSWAP	(!needswap)
+#else
+# define NEEDSWAP	(needswap)
+#endif
+
+static void
+dirswap(void *dbuf)
+{
+	struct direct *tdp = (struct direct *)dbuf;
+	u_char tmp;
+
+	tmp = tdp->d_namlen;
+	tdp->d_namlen = tdp->d_type;
+	tdp->d_type = tmp;
+}
+
 /*
  * Scan each entry in a directory block.
  */
@@ -172,7 +189,7 @@ dirscan(struct inodesc *idesc)
 	}
 
 	/*
-	 * If we are are swapping byte order in directory entries, just swap
+	 * If we are swapping byte order in directory entries, just swap
 	 * this block and return.
 	 */
 	if (do_dirswap) {
@@ -201,33 +218,12 @@ dirscan(struct inodesc *idesc)
 		if (dsize > (int)sizeof dbuf)
 			dsize = sizeof dbuf;
 		memmove(dbuf, dp, (size_t)dsize);
-#		if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (!newinofmt && !needswap) {
-#		else
-			if (!newinofmt && needswap) {
-#		endif
-				struct direct *tdp = (struct direct *)dbuf;
-				u_char tmp;
-
-				tmp = tdp->d_namlen;
-				tdp->d_namlen = tdp->d_type;
-				tdp->d_type = tmp;
-			}
+		if (!newinofmt && NEEDSWAP)
+			dirswap(dbuf);
 		idesc->id_dirp = (struct direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
-#			if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (!newinofmt && !doinglevel2 && !needswap) {
-#			else
-				if (!newinofmt && !doinglevel2 && needswap) {
-#			endif
-					struct direct *tdp;
-					u_char tmp;
-
-					tdp = (struct direct *)dbuf;
-					tmp = tdp->d_namlen;
-					tdp->d_namlen = tdp->d_type;
-					tdp->d_type = tmp;
-				}
+			if (!newinofmt && !doinglevel2 && NEEDSWAP)
+				dirswap(dbuf);
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			memmove(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
@@ -255,7 +251,7 @@ fsck_readdir(struct inodesc *idesc)
 	if (idesc->id_loc % dirblksiz == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
-		if (dircheck(idesc, dp))
+		if (dircheck(idesc, dp, bp))
 			goto dpok;
 		if (idesc->id_fix == IGNORE)
 			return (0);
@@ -286,7 +282,7 @@ dpok:
 		return (dp);
 	ndp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
-	    dircheck(idesc, ndp) == 0) {
+	    dircheck(idesc, ndp, bp) == 0) {
 		size = dirblksiz - (idesc->id_loc % dirblksiz);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
@@ -307,46 +303,110 @@ dpok:
 /*
  * Verify that a directory entry is valid.
  * This is a superset of the checks made in the kernel.
+ * Returns:
+ *	1: good
+ *	0: bad
  */
 static int
-dircheck(struct inodesc *idesc, struct direct *dp)
+dircheck(struct inodesc *idesc, struct direct *dp, struct bufarea *bp) 
 {
-	int size;
+	uint8_t namlen, type;
+	uint16_t reclen;
+	uint32_t ino;
 	char *cp;
-	u_char namlen, type;
-	int spaceleft;
+	int size, spaceleft, modified, unused, i;
 
+	modified = 0;
 	spaceleft = dirblksiz - (idesc->id_loc % dirblksiz);
-	if (iswap32(dp->d_ino) >= maxino ||
-	    dp->d_reclen == 0 ||
-	    iswap16(dp->d_reclen) > spaceleft ||
-	    (iswap16(dp->d_reclen) & 0x3) != 0) 
-		return (0);
-	if (dp->d_ino == 0)
-		return (1);
+
+	/* fill in the correct info for our fields */
+	ino = iswap32(dp->d_ino);
+	reclen = iswap16(dp->d_reclen);
+	if (!newinofmt && NEEDSWAP) {
+		type = dp->d_namlen;
+		namlen = dp->d_type;
+	} else {
+		namlen = dp->d_namlen;
+		type = dp->d_type;
+	}
+
+	if (ino >= maxino ||
+	    reclen == 0 || reclen > spaceleft || (reclen & 0x3) != 0)
+		goto bad;
+
 	size = UFS_DIRSIZ(!newinofmt, dp, needswap);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (!newinofmt && !needswap) {
-#	else
-		if (!newinofmt && needswap) {
-#	endif
-			type = dp->d_namlen;
-			namlen = dp->d_type;
-		} else {
-			namlen = dp->d_namlen;
-			type = dp->d_type;
+	if (ino == 0) {
+		/*
+		 * Special case of an unused directory entry. Normally
+		 * the kernel would coalesce unused space with the previous
+		 * entry by extending its d_reclen, but there are situations
+		 * (e.g. fsck) where that doesn't occur.
+		 * If we're clearing out directory cruft (-z flag), then make
+		 * sure this entry gets fully cleared as well.
+		 */
+		if (!zflag || fswritefd < 0)
+			return 1;
+
+		if (dp->d_type != 0) {
+			dp->d_type = 0;
+			modified = 1;
 		}
-	if (iswap16(dp->d_reclen) < size ||
-	    idesc->id_filesize < size ||
+		if (dp->d_namlen != 0) {
+			dp->d_namlen = 0;
+			modified = 1;
+		}
+		if (dp->d_name[0] != '\0') {
+			dp->d_name[0] = '\0';
+			modified = 1;
+		}
+		goto good;
+	}
+
+	if (reclen < size || idesc->id_filesize < size ||
 	    /* namlen > MAXNAMLEN || */
 	    type > 15)
-		return (0);
-	for (cp = dp->d_name, size = 0; size < namlen; size++)
+		goto bad;
+
+	for (cp = dp->d_name, i = 0; i < namlen; i++)
 		if (*cp == '\0' || (*cp++ == '/'))
-			return (0);
+			goto bad;
+
 	if (*cp != '\0')
-		return (0);
-	return (1);
+		goto bad;
+
+	if (!zflag || fswritefd < 0)
+		return 1;
+good:
+	/*
+	 * Clear unused directory entry space, including the d_name
+	 * padding.
+	 */
+	/* First figure the number of pad bytes. */
+	unused = UFS_NAMEPAD(namlen);
+
+	/* Add in the free space to the end of the record. */
+	unused += iswap16(dp->d_reclen) - size;
+
+	/*
+	 * Now clear out the unused space, keeping track if we actually
+	 * changed anything.
+	 */
+	for (cp = &dp->d_name[namlen]; unused > 0; unused--, cp++) {
+		if (*cp == '\0')
+			continue;
+		*cp = '\0';
+		modified = 1;
+	}
+
+	/* mark dirty so we update the zeroed space */
+	if (modified)
+		dirty(bp);
+	return 1;
+bad:
+	if (debug)
+		printf("Bad dir: ino %d reclen %d namlen %d type %d name %s\n",
+		    ino, reclen, namlen, type, dp->d_name);
+	return 0;
 }
 
 void
@@ -469,23 +529,14 @@ mkentry(struct inodesc *idesc)
 		dirp->d_type = 0;
 	dirp->d_namlen = newent.d_namlen;
 	memmove(dirp->d_name, idesc->id_name, (size_t)newent.d_namlen + 1);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		/*
-		 * If the entry was split, dirscan() will only reverse the byte
-		 * order of the original entry, and not the new one, before
-		 * writing it back out.  So, we reverse the byte order here if
-		 * necessary.
-		 */
-		if (oldlen != 0 && !newinofmt && !doinglevel2 && !needswap) {
-#	else
-		if (oldlen != 0 && !newinofmt && !doinglevel2 && needswap) {
-#	endif
-			u_char tmp;
-
-			tmp = dirp->d_namlen;
-			dirp->d_namlen = dirp->d_type;
-			dirp->d_type = tmp;
-		}
+	/*
+	 * If the entry was split, dirscan() will only reverse the byte
+	 * order of the original entry, and not the new one, before
+	 * writing it back out.  So, we reverse the byte order here if
+	 * necessary.
+	 */
+	if (oldlen != 0 && !newinofmt && !doinglevel2 && NEEDSWAP)
+		dirswap(dirp);
 	return (ALTERED|STOP);
 }
 

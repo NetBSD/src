@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 2015/03/27 06:57:21 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.2.20.1 2019/06/10 22:06:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #endif
 
 #ifdef __PIC__
-#define	PLT(x)	x##@
+#define	PLT(x)	x##@plt
 #else
 #define PLT(x)	x
 #endif

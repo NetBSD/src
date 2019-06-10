@@ -1,10 +1,10 @@
-This is mpc.info, produced by makeinfo version 5.2 from mpc.texi.
+This is mpc.info, produced by makeinfo version 6.5 from mpc.texi.
 
 This manual is for GNU MPC, a library for multiple precision complex
-arithmetic, version 1.0.3 of February 2015.
+arithmetic, version 1.1.0 of January 2018.
 
    Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-2011, 2012 INRIA
+2011, 2012, 2013, 2016 INRIA
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -23,7 +23,7 @@ GNU MPC
 *******
 
 This manual documents how to install and use the GNU Multiple Precision
-Complex Library, version 1.0.3
+Complex Library, version 1.1.0
 
 * Menu:
 
@@ -84,8 +84,8 @@ File: mpc.info,  Node: Installing GNU MPC,  Next: Reporting Bugs,  Prev: Introdu
 2 Installing GNU MPC
 ********************
 
-To build GNU MPC, you first have to install GNU MP (version 4.3.2 or
-higher) and GNU MPFR (version 2.4.2 or higher) on your computer.  You
+To build GNU MPC, you first have to install GNU MP (version 5.0.0 or
+higher) and GNU MPFR (version 3.0.0 or higher) on your computer.  You
 need a C compiler; GCC version 4.4 or higher is recommended, since GNU
 MPC may trigger a bug in previous versions, see the thread at
 <http://lists.gforge.inria.fr/pipermail/mpc-discuss/2011-February/000823.html>.
@@ -94,9 +94,9 @@ Unix utility programs.
 
    Here are the steps needed to install the library on Unix systems:
 
-  1. 'tar xzf mpc-1.0.3.tar.gz'
+  1. 'tar xzf mpc-1.1.0.tar.gz'
 
-  2. 'cd mpc-1.0.3'
+  2. 'cd mpc-1.1.0'
 
   3. './configure'
 
@@ -307,23 +307,23 @@ floating-point multiplication, 'mpc_mul', can be used like this:
 'mpc_mul (x, x, x, rnd_mode)'.  This computes the square of X with
 rounding mode 'rnd_mode' and puts the result back in X.
 
-   Before you can assign to an GNU MPC variable, you need to initialize
+   Before you can assign to an GNU MPC variable, you need to initialise
 it by calling one of the special initialization functions.  When you are
 done with a variable, you need to clear it out, using one of the
 functions for that purpose.
 
-   A variable should only be initialized once, or at least cleared out
-between each initialization.  After a variable has been initialized, it
+   A variable should only be initialised once, or at least cleared out
+between each initialization.  After a variable has been initialised, it
 may be assigned to any number of times.
 
-   For efficiency reasons, avoid to initialize and clear out a variable
-in loops.  Instead, initialize it before entering the loop, and clear it
+   For efficiency reasons, avoid to initialise and clear out a variable
+in loops.  Instead, initialise it before entering the loop, and clear it
 out after the loop has exited.
 
    You do not need to be concerned about allocating additional space for
 GNU MPC variables, since each of its real and imaginary part has a
 mantissa of fixed size.  Hence unless you change its precision, or clear
-and reinitialize it, a complex variable will have the same allocated
+and reinitialise it, a complex variable will have the same allocated
 space during all its life.
 
 4.4 Rounding Modes
@@ -417,18 +417,18 @@ File: mpc.info,  Node: Initializing Complex Numbers,  Next: Assigning Complex Nu
 5.1 Initialization Functions
 ============================
 
-An 'mpc_t' object must be initialized before storing the first value in
+An 'mpc_t' object must be initialised before storing the first value in
 it.  The functions 'mpc_init2' and 'mpc_init3' are used for that
 purpose.
 
  -- Function: void mpc_init2 (mpc_t Z, mpfr_prec_t PREC)
-     Initialize Z to precision PREC bits and set its real and imaginary
-     parts to NaN. Normally, a variable should be initialized once only
+     Initialise Z to precision PREC bits and set its real and imaginary
+     parts to NaN. Normally, a variable should be initialised once only
      or at least be cleared, using 'mpc_clear', between initializations.
 
  -- Function: void mpc_init3 (mpc_t Z, mpfr_prec_t PREC_R, mpfr_prec_t
           PREC_I)
-     Initialize Z with the precision of its real part being PREC_R bits
+     Initialise Z with the precision of its real part being PREC_R bits
      and the precision of its imaginary part being PREC_I bits, and set
      the real and imaginary parts to NaN.
 
@@ -436,7 +436,7 @@ purpose.
      Free the space occupied by Z.  Make sure to call this function for
      all 'mpc_t' variables when you are done with them.
 
-   Here is an example on how to initialize complex variables:
+   Here is an example on how to initialise complex variables:
      {
        mpc_t x, y;
        mpc_init2 (x, 256);		/* precision _exactly_ 256 bits */
@@ -475,7 +475,7 @@ File: mpc.info,  Node: Assigning Complex Numbers,  Next: Converting Complex Numb
 5.2 Assignment Functions
 ========================
 
-These functions assign new values to already initialized complex numbers
+These functions assign new values to already initialised complex numbers
 (*note Initializing Complex Numbers::).  When using any functions with
 'intmax_t' or 'uintmax_t' parameters, you must include '<stdint.h>' or
 '<inttypes.h>' _before_ 'mpc.h', to allow 'mpc.h' to define prototypes
@@ -672,7 +672,7 @@ include 'stdio.h' _before_ 'mpc.h'.
      For instance, upon input of '"nan(13 1)"', the function
      'mpc_inp_str' starts to recognise a value of NaN followed by an
      n-char-sequence indicated by the opening parenthesis; as soon as
-     the space is reached, it becocmes clear that the expression in
+     the space is reached, it becomes clear that the expression in
      parentheses is not an n-char-sequence, and the error flag -1 is
      returned after 6 characters have been consumed from the stream (the
      whitespace itself remaining in the stream).  The function
@@ -712,6 +712,15 @@ File: mpc.info,  Node: Complex Comparison,  Next: Projection & Decomposing,  Pre
 
      The storage of the return value is such that equality can be simply
      checked with 'mpc_cmp (op1, op2) == 0'.
+
+ -- Function: int mpc_cmp_abs (mpc_t OP1, mpc_t OP2)
+
+     Compare the absolute values of OP1 and OP2.  The return value is 0
+     if both are the same (including infinity), positive if the absolute
+     value of OP1 is greater than that of OP2, and negative if it is
+     smaller.  If OP1 or OP2 has a real or imaginary part which is NaN,
+     the function behaves like 'mpfr_cmp' on two real numbers of which
+     at least one is NaN.
 
 
 File: mpc.info,  Node: Projection & Decomposing,  Next: Basic Arithmetic,  Prev: Complex Comparison,  Up: Complex Functions
@@ -893,6 +902,12 @@ File: mpc.info,  Node: Power Functions and Logarithm,  Next: Trigonometric Funct
      that the imaginary part of the result lies in ]-\pi , \pi] and
      ]-\pi/log(10) , \pi/log(10)] respectively.
 
+ -- Function: int mpc_rootofunity (mpc_t ROP, unsigned long int N,
+          unsigned long int K, mpc_rnd_t RND)
+     Set ROP to the standard primitive N-th root of unity raised to the
+     power K, that is, \exp (2 \pi i k / n), rounded according to RND
+     with the precision of ROP.
+
 
 File: mpc.info,  Node: Trigonometric Functions,  Next: Miscellaneous Complex Functions,  Prev: Power Functions and Logarithm,  Up: Complex Functions
 
@@ -1072,7 +1087,7 @@ Concept Index
                                                                (line  6)
 * Miscellaneous complex functions:       Miscellaneous Complex Functions.
                                                                (line  6)
-* 'mpc.h':                               GNU MPC Basics.       (line  6)
+* mpc.h:                                 GNU MPC Basics.       (line  6)
 * Power functions:                       Power Functions and Logarithm.
                                                                (line  6)
 * Precision:                             GNU MPC Basics.       (line 19)
@@ -1118,6 +1133,7 @@ Function Index
 * mpc_clear:                             Initializing Complex Numbers.
                                                               (line  21)
 * mpc_cmp:                               Complex Comparison.  (line   6)
+* mpc_cmp_abs:                           Complex Comparison.  (line  23)
 * mpc_cmp_si:                            Complex Comparison.  (line   9)
 * mpc_cmp_si_si:                         Complex Comparison.  (line   7)
 * mpc_conj:                              Basic Arithmetic.    (line  76)
@@ -1192,7 +1208,9 @@ Function Index
                                                               (line   6)
 * mpc_realref:                           Projection & Decomposing.
                                                               (line  14)
-* 'mpc_rnd_t':                           GNU MPC Basics.      (line  24)
+* mpc_rnd_t:                             GNU MPC Basics.      (line  24)
+* mpc_rootofunity:                       Power Functions and Logarithm.
+                                                              (line  44)
 * mpc_set:                               Assigning Complex Numbers.
                                                               (line  16)
 * mpc_set_d:                             Assigning Complex Numbers.
@@ -1262,7 +1280,7 @@ Function Index
 * mpc_sub_ui:                            Basic Arithmetic.    (line  25)
 * mpc_swap:                              Assigning Complex Numbers.
                                                               (line  82)
-* 'mpc_t':                               GNU MPC Basics.      (line  15)
+* mpc_t:                                 GNU MPC Basics.      (line  15)
 * mpc_tan:                               Trigonometric Functions.
                                                               (line  20)
 * mpc_tanh:                              Trigonometric Functions.
@@ -1284,7 +1302,7 @@ Function Index
                                                               (line  20)
 * MPC_VERSION_STRING:                    Miscellaneous Complex Functions.
                                                               (line  21)
-* 'mpfr_prec_t':                         GNU MPC Basics.      (line  19)
+* mpfr_prec_t:                           GNU MPC Basics.      (line  19)
 
 
 File: mpc.info,  Node: GNU Free Documentation License,  Prev: Function Index,  Up: Top
@@ -1771,29 +1789,29 @@ their use in free software.
 
 
 Tag Table:
-Node: Top736
-Node: Copying1443
-Node: Introduction to GNU MPC2215
-Node: Installing GNU MPC2934
-Node: Reporting Bugs8019
-Node: GNU MPC Basics9363
-Ref: return-value13040
-Node: Complex Functions14491
-Node: Initializing Complex Numbers15651
-Node: Assigning Complex Numbers18038
-Node: Converting Complex Numbers22438
-Node: String and Stream Input and Output23063
-Node: Complex Comparison29620
-Node: Projection & Decomposing30695
-Node: Basic Arithmetic32072
-Node: Power Functions and Logarithm36645
-Node: Trigonometric Functions38712
-Node: Miscellaneous Complex Functions40937
-Node: Advanced Functions43113
-Node: Internals44186
-Node: References44637
-Node: Concept Index45540
-Node: Function Index47854
-Node: GNU Free Documentation License61638
+Node: Top747
+Node: Copying1454
+Node: Introduction to GNU MPC2226
+Node: Installing GNU MPC2945
+Node: Reporting Bugs8030
+Node: GNU MPC Basics9374
+Ref: return-value13051
+Node: Complex Functions14502
+Node: Initializing Complex Numbers15662
+Node: Assigning Complex Numbers18049
+Node: Converting Complex Numbers22449
+Node: String and Stream Input and Output23074
+Node: Complex Comparison29630
+Node: Projection & Decomposing31143
+Node: Basic Arithmetic32520
+Node: Power Functions and Logarithm37093
+Node: Trigonometric Functions39448
+Node: Miscellaneous Complex Functions41673
+Node: Advanced Functions43849
+Node: Internals44922
+Node: References45373
+Node: Concept Index46276
+Node: Function Index48590
+Node: GNU Free Documentation License62592
 
 End Tag Table

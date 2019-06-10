@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.28 2015/05/05 09:22:33 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.28.18.1 2019/06/10 22:07:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28 2015/05/05 09:22:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.18.1 2019/06/10 22:07:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -307,7 +307,7 @@ sysmonkqfilter(dev_t dev, struct knote *kn)
 	return (error);
 }
 
-MODULE(MODULE_CLASS_DRIVER, sysmon, "");
+MODULE(MODULE_CLASS_DRIVER, sysmon, NULL);
 
 static int
 sm_init_once(void)

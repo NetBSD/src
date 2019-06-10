@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Renesas RL78 processors.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -21,71 +21,34 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "df.h"
+#include "tm_p.h"
+#include "stringpool.h"
+#include "optabs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
 #include "varasm.h"
 #include "stor-layout.h"
 #include "calls.h"
-#include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
 #include "output.h"
 #include "insn-attr.h"
-#include "flags.h"
-#include "function.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "libfuncs.h"
-#include "recog.h"
-#include "diagnostic-core.h"
-#include "toplev.h"
 #include "reload.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "ggc.h"
-#include "tm_p.h"
-#include "debug.h"
-#include "target.h"
-#include "target-def.h"
 #include "langhooks.h"
-#include "rl78-protos.h"
-#include "dumpfile.h"
 #include "tree-pass.h"
 #include "context.h"
 #include "tm-constrs.h" /* for satisfies_constraint_*().  */
-#include "insn-flags.h" /* for gen_*().  */
 #include "builtins.h"
-#include "stringpool.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 static inline bool is_interrupt_func (const_tree decl);
 static inline bool is_brk_interrupt_func (const_tree decl);
@@ -373,10 +336,55 @@ rl78_option_override (void)
 
   if (TARGET_ES0
       && strcmp (lang_hooks.name, "GNU C")
+      && strcmp (lang_hooks.name, "GNU C11")
+      && strcmp (lang_hooks.name, "GNU C89")
+      && strcmp (lang_hooks.name, "GNU C99")
       /* Compiling with -flto results in a language of GNU GIMPLE being used... */
       && strcmp (lang_hooks.name, "GNU GIMPLE"))
     /* Address spaces are currently only supported by C.  */
     error ("-mes0 can only be used with C");
+
+  switch (rl78_cpu_type)
+    {
+    case CPU_UNINIT:
+      rl78_cpu_type = CPU_G14;
+      if (rl78_mul_type == MUL_UNINIT)
+	rl78_mul_type = MUL_NONE;
+      break;
+
+    case CPU_G10:
+      switch (rl78_mul_type)
+	{
+	case MUL_UNINIT: rl78_mul_type = MUL_NONE; break;
+	case MUL_NONE:   break;
+	case MUL_G13:  	 error ("-mmul=g13 cannot be used with -mcpu=g10"); break;
+	case MUL_G14:  	 error ("-mmul=g14 cannot be used with -mcpu=g10"); break;
+	}
+      break;
+
+    case CPU_G13:
+      switch (rl78_mul_type)
+	{
+	case MUL_UNINIT: rl78_mul_type = MUL_G13; break;
+	case MUL_NONE:   break;
+	case MUL_G13:  	break;
+	  /* The S2 core does not have mul/div instructions.  */
+	case MUL_G14: 	error ("-mmul=g14 cannot be used with -mcpu=g13"); break;
+	}
+      break;
+
+    case CPU_G14:
+      switch (rl78_mul_type)
+	{
+	case MUL_UNINIT: rl78_mul_type = MUL_G14; break;
+	case MUL_NONE:   break;
+	case MUL_G14:  	break;
+	/* The G14 core does not have the hardware multiply peripheral used by the
+	   G13 core, hence you cannot use G13 multipliy routines on G14 hardware.  */
+	case MUL_G13: 	error ("-mmul=g13 cannot be used with -mcpu=g14"); break;
+	}
+      break;
+    }
 }
 
 /* Most registers are 8 bits.  Some are 16 bits because, for example,
@@ -579,13 +587,6 @@ rl78_force_nonfar_3 (rtx *operands, rtx (*gen)(rtx,rtx,rtx))
   int did = 0;
   rtx temp_reg = NULL;
 
-  /* As an exception, we allow two far operands if they're identical
-     and the third operand is not a MEM.  This allows global variables
-     to be incremented, for example.  */
-  if (rtx_equal_p (operands[0], operands[1])
-      && ! MEM_P (operands[2]))
-    return 0;
-
   /* FIXME: Likewise.  */
   if (rl78_far_p (operands[1]))
     {
@@ -607,6 +608,24 @@ rl78_force_nonfar_3 (rtx *operands, rtx (*gen)(rtx,rtx,rtx))
   if (temp_reg)
     emit_move_insn (temp_reg, operands[0]);
   return 1;
+}
+
+int
+rl78_one_far_p (rtx *operands, int n)
+{
+  rtx which = NULL;
+  int i, c = 0;
+
+  for (i = 0; i < n; i ++)
+    if (rl78_far_p (operands[i]))
+      {
+	if (which == NULL)
+	  which = operands[i];
+	else if (rtx_equal_p (operands[i], which))
+	  continue;
+	c ++;
+      }
+  return c <= 1;
 }
 
 #undef  TARGET_CAN_ELIMINATE
@@ -636,8 +655,10 @@ need_to_save (unsigned int regno)
 
       /* If the handler is a non-leaf function then it may call
 	 non-interrupt aware routines which will happily clobber
-	 any call_used registers, so we have to preserve them.  */
-      if (!crtl->is_leaf && call_used_regs[regno])
+	 any call_used registers, so we have to preserve them.
+         We do not have to worry about the frame pointer register
+	 though, as that is handled below.  */
+      if (!crtl->is_leaf && call_used_regs[regno] && regno < 22)
 	return true;
 
       /* Otherwise we only have to save a register, call_used
@@ -645,7 +666,8 @@ need_to_save (unsigned int regno)
       return df_regs_ever_live_p (regno);
     }
 
-  if (regno == FRAME_POINTER_REGNUM && frame_pointer_needed)
+  if (regno == FRAME_POINTER_REGNUM
+      && (frame_pointer_needed || df_regs_ever_live_p (regno)))
     return true;
   if (fixed_regs[regno])
     return false;
@@ -1322,10 +1344,10 @@ rl78_expand_prologue (void)
 
 	  emit_move_insn (ax, sp);
 	  emit_insn (gen_subhi3 (ax, ax, GEN_INT (fs)));
-	  insn = emit_move_insn (sp, ax);
+	  insn = F (emit_move_insn (sp, ax));
 	  add_reg_note (insn, REG_FRAME_RELATED_EXPR,
-			gen_rtx_SET (SImode, sp,
-				     gen_rtx_PLUS (HImode, sp, GEN_INT (-fs))));
+			gen_rtx_SET (sp, gen_rtx_PLUS (HImode, sp,
+						       GEN_INT (-fs))));
 	}
       else
 	{
@@ -1570,6 +1592,7 @@ rl78_function_arg_boundary (machine_mode mode ATTRIBUTE_UNUSED,
    e - third QI of an SI (i.e. where the ES register gets values from)
    E - fourth QI of an SI (i.e. MSB)
 
+   p - Add +0 to a zero-indexed HL based address.
 */
 
 /* Implements the bulk of rl78_print_operand, below.  We do it this
@@ -1644,13 +1667,16 @@ rl78_print_operand_1 (FILE * file, rtx op, int letter)
 	      rl78_print_operand_1 (file, XEXP (XEXP (op, 0), 1), 'u');
 	      fprintf (file, "[");
 	      rl78_print_operand_1 (file, XEXP (XEXP (op, 0), 0), 0);
+	      if (letter == 'p' && GET_CODE (XEXP (op, 0)) == REG)
+		fprintf (file, "+0");
 	      fprintf (file, "]");
 	    }
 	  else
 	    {
+	      op = XEXP (op, 0);
 	      fprintf (file, "[");
-	      rl78_print_operand_1 (file, XEXP (op, 0), letter);
-	      if (letter == 'p' && GET_CODE (XEXP (op, 0)) == REG)
+	      rl78_print_operand_1 (file, op, letter);
+	      if (letter == 'p' && REG_P (op) && REGNO (op) == 6)
 		fprintf (file, "+0");
 	      fprintf (file, "]");
 	    }
@@ -1772,15 +1798,41 @@ rl78_print_operand_1 (FILE * file, rtx op, int letter)
 
       if (GET_CODE (XEXP (op, 0)) == ZERO_EXTEND)
 	{
-	  rl78_print_operand_1 (file, XEXP (op, 1), letter);
-	  fprintf (file, "+");
-	  rl78_print_operand_1 (file, XEXP (op, 0), letter);
+	  if (GET_CODE (XEXP (op, 1)) == SYMBOL_REF
+	      && SYMBOL_REF_DECL (XEXP (op, 1))
+	      && TREE_CODE (SYMBOL_REF_DECL (XEXP (op, 1))) == FUNCTION_DECL)
+	    {
+	      fprintf (file, "%%code(");
+	      assemble_name (file, rl78_strip_nonasm_name_encoding (XSTR (XEXP (op, 1), 0)));
+	      fprintf (file, "+");
+	      rl78_print_operand_1 (file, XEXP (op, 0), letter);
+	      fprintf (file, ")");
+	    }
+	  else
+	    {
+	      rl78_print_operand_1 (file, XEXP (op, 1), letter);
+	      fprintf (file, "+");
+	      rl78_print_operand_1 (file, XEXP (op, 0), letter);
+	    }
 	}
       else
 	{
-	  rl78_print_operand_1 (file, XEXP (op, 0), letter);
-	  fprintf (file, "+");
-	  rl78_print_operand_1 (file, XEXP (op, 1), letter);
+	  if (GET_CODE (XEXP (op, 0)) == SYMBOL_REF
+	      && SYMBOL_REF_DECL (XEXP (op, 0))
+	      && TREE_CODE (SYMBOL_REF_DECL (XEXP (op, 0))) == FUNCTION_DECL)
+	    {
+	      fprintf (file, "%%code(");
+	      assemble_name (file, rl78_strip_nonasm_name_encoding (XSTR (XEXP (op, 0), 0)));
+	      fprintf (file, "+");
+	      rl78_print_operand_1 (file, XEXP (op, 1), letter);
+	      fprintf (file, ")");
+	    }
+	  else
+	    {
+	      rl78_print_operand_1 (file, XEXP (op, 0), letter);
+	      fprintf (file, "+");
+	      rl78_print_operand_1 (file, XEXP (op, 1), letter);
+	    }
 	}
       if (need_paren)
 	fprintf (file, ")");
@@ -3190,7 +3242,7 @@ rl78_alloc_physical_registers_cmp (rtx_insn * insn)
 {
   int tmp_id;
   rtx saved_op1;
-  rtx prev = prev_nonnote_nondebug_insn (insn);
+  rtx_insn *prev = prev_nonnote_nondebug_insn (insn);
   rtx first;
 
   OP (1) = transcode_memory_rtx (OP (1), DE, insn);
@@ -3281,7 +3333,7 @@ rl78_alloc_physical_registers_cmp (rtx_insn * insn)
 static void
 rl78_alloc_physical_registers_umul (rtx_insn * insn)
 {
-  rtx prev = prev_nonnote_nondebug_insn (insn);
+  rtx_insn *prev = prev_nonnote_nondebug_insn (insn);
   rtx first;
   int tmp_id;
   rtx saved_op1;
@@ -3484,6 +3536,18 @@ rl78_alloc_physical_registers (void)
 	  record_content (BC, NULL_RTX);
 	  record_content (DE, NULL_RTX);
 	}
+      else if (valloc_method == VALLOC_DIVHI)
+	{
+	  record_content (AX, NULL_RTX);
+	  record_content (BC, NULL_RTX);
+	}
+      else if (valloc_method == VALLOC_DIVSI)
+	{
+	  record_content (AX, NULL_RTX);
+	  record_content (BC, NULL_RTX);
+	  record_content (DE, NULL_RTX);
+	  record_content (HL, NULL_RTX);
+	}
 
       if (insn_ok_now (insn))
 	continue;
@@ -3511,6 +3575,7 @@ rl78_alloc_physical_registers (void)
 	  break;
 	case VALLOC_UMUL:
 	  rl78_alloc_physical_registers_umul (insn);
+	  record_content (AX, NULL_RTX);
 	  break;
 	case VALLOC_MACAX:
 	  /* Macro that clobbers AX.  */
@@ -3518,6 +3583,18 @@ rl78_alloc_physical_registers (void)
 	  record_content (AX, NULL_RTX);
 	  record_content (BC, NULL_RTX);
 	  record_content (DE, NULL_RTX);
+	  break;
+	case VALLOC_DIVSI:
+	  rl78_alloc_address_registers_div (insn);
+	  record_content (AX, NULL_RTX);
+	  record_content (BC, NULL_RTX);
+	  record_content (DE, NULL_RTX);
+	  record_content (HL, NULL_RTX);
+	  break;
+	case VALLOC_DIVHI:
+	  rl78_alloc_address_registers_div (insn);
+	  record_content (AX, NULL_RTX);
+	  record_content (BC, NULL_RTX);
 	  break;
 	default:
 	  gcc_unreachable ();
@@ -3833,6 +3910,37 @@ set_origin (rtx pat, rtx_insn * insn, int * origins, int * age)
 	    age[i] = 0;
 	  }
     }
+  else if (get_attr_valloc (insn) == VALLOC_DIVHI)
+    {
+      if (dump_file)
+	fprintf (dump_file, "Resetting origin of AX/DE for DIVHI pattern.\n");
+
+      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
+	if (i == A_REG
+	    || i == X_REG
+	    || i == D_REG
+	    || i == E_REG
+	    || origins[i] == A_REG
+	    || origins[i] == X_REG
+	    || origins[i] == D_REG
+	    || origins[i] == E_REG)
+	  {
+	    origins[i] = i;
+	    age[i] = 0;
+	  }
+    }
+  else if (get_attr_valloc (insn) == VALLOC_DIVSI)
+    {
+      if (dump_file)
+	fprintf (dump_file, "Resetting origin of AX/BC/DE/HL for DIVSI pattern.\n");
+
+      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
+	if (i <= 7 || origins[i] <= 7)
+	  {
+	    origins[i] = i;
+	    age[i] = 0;
+	  }
+    }
 
   if (GET_CODE (src) == ASHIFT
       || GET_CODE (src) == ASHIFTRT
@@ -4038,30 +4146,58 @@ rl78_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
 #undef  TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS rl78_rtx_costs
 
-static bool rl78_rtx_costs (rtx   x,
-			    int   code,
-			    int   outer_code ATTRIBUTE_UNUSED,
-			    int   opno ATTRIBUTE_UNUSED,
-			    int * total,
-			    bool  speed ATTRIBUTE_UNUSED)
+static bool
+rl78_rtx_costs (rtx          x,
+		machine_mode mode,
+		int          outer_code ATTRIBUTE_UNUSED,
+		int          opno ATTRIBUTE_UNUSED,
+		int *        total,
+		bool         speed ATTRIBUTE_UNUSED)
 {
+  int code = GET_CODE (x);
+
   if (code == IF_THEN_ELSE)
-    return COSTS_N_INSNS (10);
-  if (GET_MODE (x) == SImode)
+    {
+      *total = COSTS_N_INSNS (10);
+      return true;
+    }
+
+  if (mode == HImode)
+    {
+      if (code == MULT && ! speed)
+	{
+	  * total = COSTS_N_INSNS (8);
+	  return true;
+	}
+      return false;
+    }
+
+  if (mode == SImode)
     {
       switch (code)
 	{
 	case MULT:
-	  if (RL78_MUL_RL78)
+	  if (! speed)
+	    /* If we are compiling for space then we do not want to use the
+	       inline SImode multiplication patterns or shift sequences.
+	       The cost is not set to 1 or 5 however as we have to allow for
+	       the possibility that we might be converting a leaf function
+	       into a non-leaf function.  (There is no way to tell here).
+	       A value of 13 seems to be a reasonable compromise for the
+	       moment.  */
+	    * total = COSTS_N_INSNS (13);
+	  else if (RL78_MUL_G14)
 	    *total = COSTS_N_INSNS (14);
 	  else if (RL78_MUL_G13)
 	    *total = COSTS_N_INSNS (29);
 	  else
 	    *total = COSTS_N_INSNS (500);
 	  return true;
+
 	case PLUS:
 	  *total = COSTS_N_INSNS (8);
 	  return true;
+
 	case ASHIFT:
 	case ASHIFTRT:
 	case LSHIFTRT:
@@ -4087,6 +4223,9 @@ static bool rl78_rtx_costs (rtx   x,
 	  else
 	    *total = COSTS_N_INSNS (10+4*16);
 	  return true;
+
+	default:
+	  break;
 	}
     }
   return false;
@@ -4249,8 +4388,8 @@ rl78_asm_init_sections (void)
 
 static section *
 rl78_select_section (tree decl,
-		     int reloc ATTRIBUTE_UNUSED,
-		     unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED)
+		     int reloc,
+		     unsigned HOST_WIDE_INT align)
 {
   int readonly = 1;
 
@@ -4292,9 +4431,17 @@ rl78_select_section (tree decl,
     }
 
   if (readonly)
-    return readonly_data_section;
+    return TARGET_ES0 ? frodata_section : readonly_data_section;
 
-  return data_section;
+  switch (categorize_decl_for_section (decl, reloc))
+    {
+    case SECCAT_TEXT:   return text_section;
+    case SECCAT_DATA:   return data_section;
+    case SECCAT_BSS:    return bss_section;
+    case SECCAT_RODATA: return TARGET_ES0 ? frodata_section : readonly_data_section;
+    default:
+      return default_select_section (decl, reloc, align);
+    }
 }
 
 void
@@ -4372,7 +4519,7 @@ rl78_insert_attributes (tree decl, tree *attributes ATTRIBUTE_UNUSED)
       tree type = TREE_TYPE (decl);
       tree attr = TYPE_ATTRIBUTES (type);
       int q = TYPE_QUALS_NO_ADDR_SPACE (type) | ENCODE_QUAL_ADDR_SPACE (ADDR_SPACE_FAR);
-      
+
       TREE_TYPE (decl) = build_type_attribute_qual_variant (type, attr, q);
     }
 }
@@ -4468,7 +4615,7 @@ rl78_flags_already_set (rtx op, rtx operand)
     {
       if (LABEL_P (insn))
 	break;
-      
+
       if (! INSN_P (insn))
 	continue;
 
@@ -4508,6 +4655,46 @@ rl78_flags_already_set (rtx op, rtx operand)
 
   return res;
 }
+
+const char *
+rl78_addsi3_internal (rtx * operands, unsigned int alternative)
+{
+  /* If we are adding in a constant symbolic address when -mes0
+     is active then we know that the address must be <64K and
+     that it is invalid to access anything above 64K relative to
+     this address.  So we can skip adding in the high bytes.  */
+  if (TARGET_ES0
+      && GET_CODE (operands[2]) == SYMBOL_REF
+      && TREE_CODE (SYMBOL_REF_DECL (operands[2])) == VAR_DECL
+      && TREE_READONLY (SYMBOL_REF_DECL (operands[2]))
+      && ! TREE_SIDE_EFFECTS (SYMBOL_REF_DECL (operands[2])))
+    return "movw ax, %h1\n\taddw ax, %h2\n\tmovw %h0, ax";
+
+  switch (alternative)
+    {
+    case 0:
+    case 1:
+      return "movw ax, %h1\n\taddw ax, %h2\n\tmovw %h0, ax\n\tmovw ax, %H1\n\tsknc\n\tincw ax\n\taddw ax, %H2\n\tmovw %H0, ax";
+    case 2:
+      return "movw ax, %h1\n\taddw ax,%h2\n\tmovw bc, ax\n\tmovw ax, %H1\n\tsknc\n\tincw ax\n\taddw ax, %H2\n\tmovw %H0, ax\n\tmovw ax, bc\n\tmovw %h0, ax";
+    default:
+      gcc_unreachable ();
+    }
+}
+
+
+#undef  TARGET_PREFERRED_RELOAD_CLASS
+#define TARGET_PREFERRED_RELOAD_CLASS rl78_preferred_reload_class
+
+static reg_class_t
+rl78_preferred_reload_class (rtx x ATTRIBUTE_UNUSED, reg_class_t rclass)
+{
+  if (rclass == NO_REGS)
+    rclass = V_REGS;
+
+  return rclass;
+}
+
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

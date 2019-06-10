@@ -1,5 +1,5 @@
 /* Subroutines used by or related to instruction recognition.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -181,9 +182,9 @@ struct change_t
 {
   rtx object;
   int old_code;
+  bool unshare;
   rtx *loc;
   rtx old;
-  bool unshare;
 };
 
 static change_t *changes;
@@ -1470,22 +1471,34 @@ extract_asm_operands (rtx body)
 
 /* If BODY is an insn body that uses ASM_OPERANDS,
    return the number of operands (both input and output) in the insn.
+   If BODY is an insn body that uses ASM_INPUT with CLOBBERS in PARALLEL,
+   return 0.
    Otherwise return -1.  */
 
 int
 asm_noperands (const_rtx body)
 {
   rtx asm_op = extract_asm_operands (CONST_CAST_RTX (body));
-  int n_sets = 0;
+  int i, n_sets = 0;
 
   if (asm_op == NULL)
-    return -1;
+    {
+      if (GET_CODE (body) == PARALLEL && XVECLEN (body, 0) >= 2
+	  && GET_CODE (XVECEXP (body, 0, 0)) == ASM_INPUT)
+	{
+	  /* body is [(asm_input ...) (clobber (reg ...))...].  */
+	  for (i = XVECLEN (body, 0) - 1; i > 0; i--)
+	    if (GET_CODE (XVECEXP (body, 0, i)) != CLOBBER)
+	      return -1;
+	  return 0;
+	}
+      return -1;
+    }
 
   if (GET_CODE (body) == SET)
     n_sets = 1;
   else if (GET_CODE (body) == PARALLEL)
     {
-      int i;
       if (GET_CODE (XVECEXP (body, 0, 0)) == SET)
 	{
 	  /* Multiple output operands, or 1 output plus some clobbers:
@@ -1540,9 +1553,12 @@ asm_noperands (const_rtx body)
    the locations of the operands within the insn into the vector OPERAND_LOCS,
    and the constraints for the operands into CONSTRAINTS.
    Write the modes of the operands into MODES.
+   Write the location info into LOC.
    Return the assembler-template.
+   If BODY is an insn body that uses ASM_INPUT with CLOBBERS in PARALLEL,
+   return the basic assembly string.
 
-   If MODES, OPERAND_LOCS, CONSTRAINTS or OPERANDS is 0,
+   If LOC, MODES, OPERAND_LOCS, CONSTRAINTS or OPERANDS is 0,
    we don't store that info.  */
 
 const char *
@@ -1602,6 +1618,12 @@ decode_asm_operands (rtx body, rtx *operands, rtx **operand_locs,
 		  modes[i] = GET_MODE (SET_DEST (XVECEXP (body, 0, i)));
 	      }
 	    nbase = i;
+	  }
+	else if (GET_CODE (asmop) == ASM_INPUT)
+	  {
+	    if (loc)
+	      *loc = ASM_INPUT_SOURCE_LOCATION (asmop);
+	    return XSTR (asmop, 0);
 	  }
 	break;
       }
@@ -1771,6 +1793,7 @@ asm_operand_ok (rtx op, const char *constraint, const char **constraints)
 
 	     Match any memory and hope things are resolved after reload.  */
 	  incdec_ok = true;
+	  /* FALLTHRU */
 	default:
 	  cn = lookup_constraint (constraint);
 	  switch (get_constraint_type (cn))
@@ -2245,7 +2268,8 @@ extract_insn (rtx_insn *insn)
     case PARALLEL:
       if ((GET_CODE (XVECEXP (body, 0, 0)) == SET
 	   && GET_CODE (SET_SRC (XVECEXP (body, 0, 0))) == ASM_OPERANDS)
-	  || GET_CODE (XVECEXP (body, 0, 0)) == ASM_OPERANDS)
+	  || GET_CODE (XVECEXP (body, 0, 0)) == ASM_OPERANDS
+	  || GET_CODE (XVECEXP (body, 0, 0)) == ASM_INPUT)
 	goto asm_insn;
       else
 	goto normal_insn;
@@ -2913,11 +2937,10 @@ split_insn (rtx_insn *insn)
 void
 split_all_insns (void)
 {
-  sbitmap blocks;
   bool changed;
   basic_block bb;
 
-  blocks = sbitmap_alloc (last_basic_block_for_fn (cfun));
+  auto_sbitmap blocks (last_basic_block_for_fn (cfun));
   bitmap_clear (blocks);
   changed = false;
 
@@ -2967,8 +2990,6 @@ split_all_insns (void)
     find_many_sub_basic_blocks (blocks);
 
   checking_verify_flow_info ();
-
-  sbitmap_free (blocks);
 }
 
 /* Same as split_all_insns, but do not expect CFG to be available.
@@ -3881,17 +3902,6 @@ make_pass_split_all_insns (gcc::context *ctxt)
   return new pass_split_all_insns (ctxt);
 }
 
-static unsigned int
-rest_of_handle_split_after_reload (void)
-{
-  /* If optimizing, then go ahead and split insns now.  */
-#ifndef STACK_REGS
-  if (optimize > 0)
-#endif
-    split_all_insns ();
-  return 0;
-}
-
 namespace {
 
 const pass_data pass_data_split_after_reload =
@@ -3915,9 +3925,23 @@ public:
   {}
 
   /* opt_pass methods: */
+  virtual bool gate (function *)
+    {
+      /* If optimizing, then go ahead and split insns now.  */
+      if (optimize > 0)
+	return true;
+
+#ifdef STACK_REGS
+      return true;
+#else
+      return false;
+#endif
+    }
+
   virtual unsigned int execute (function *)
     {
-      return rest_of_handle_split_after_reload ();
+      split_all_insns ();
+      return 0;
     }
 
 }; // class pass_split_after_reload

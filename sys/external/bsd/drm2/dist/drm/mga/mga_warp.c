@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_warp.c,v 1.1.1.1.38.1 2019/06/10 22:08:06 christos Exp $	*/
+
 /* mga_warp.c -- Matrox G200/G400 WARP engine management -*- linux-c -*-
  * Created: Thu Jan 11 21:29:32 2001 by gareth@valinux.com
  *
@@ -26,6 +28,9 @@
  * Authors:
  *    Gareth Hughes <gareth@valinux.com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_warp.c,v 1.1.1.1.38.1 2019/06/10 22:08:06 christos Exp $");
 
 #include <linux/firmware.h>
 #include <linux/ihex.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_rndblock.c,v 1.1 2012/12/10 00:32:24 rmind Exp $	*/
+/*	$NetBSD: npfext_rndblock.c,v 1.1.36.1 2019/06/10 22:05:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_rndblock.c,v 1.1 2012/12/10 00:32:24 rmind Exp $");
+__RCSID("$NetBSD: npfext_rndblock.c,v 1.1.36.1 2019/06/10 22:05:28 christos Exp $");
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>

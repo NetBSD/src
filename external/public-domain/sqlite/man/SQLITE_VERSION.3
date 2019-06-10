@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_VERSION 3
 .Os
 .Sh NAME
@@ -29,7 +29,9 @@ configuration management system</a>.
 The SQLITE_SOURCE_ID macro evaluates to a string which identifies a
 particular check-in of SQLite within its configuration management system.
 The SQLITE_SOURCE_ID string contains the date and time of the check-in
-(UTC) and an SHA1 hash of the entire source tree.
+(UTC) and a SHA1 or SHA3-256 hash of the entire source tree.
+If the source code has been edited in any way since it was last checked
+in, then the last four hexadecimal digits of the hash may be modified.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3_version 3 ,

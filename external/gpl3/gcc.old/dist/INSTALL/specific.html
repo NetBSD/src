@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -19,7 +19,7 @@ A GNU Manual
 You have freedom to copy and modify this GNU Manual, like GNU
      software.  Copies published by the Free Software Foundation raise
      funds for GNU development. -->
-<!-- Created by GNU Texinfo 6.1, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.4, http://www.gnu.org/software/texinfo/ -->
 <head>
 <title>Installing GCC</title>
 
@@ -259,6 +259,10 @@ require GNU binutils 2.13 or newer.  Such subtargets include:
 <code>arm-*-netbsdelf</code>, <code>arm-*-*linux-*</code>
 and <code>arm-*-rtemseabi</code>.
 </p>
+<p>Building the Ada frontend commonly fails (an infinite loop executing
+<code>xsinfo</code>) if the host compiler is GNAT 4.8.  Host compilers built from the
+GNAT 4.6, 4.9 or 5 release branches are known to succeed.
+</p>
 <hr />
 <a name="avr"></a><a name="avr-1"></a>
 <h3 class="heading">avr</h3>
@@ -390,6 +394,12 @@ been known to enable additional features and improve overall testsuite
 results.  However, it is currently known that boehm-gc (which itself
 is required for java) may not configure properly on FreeBSD prior to
 the FreeBSD 7.0 release with GNU binutils after 2.16.1.
+</p>
+<hr />
+<a name="ft32_002dx_002delf"></a><a name="ft32_002d_002a_002delf"></a>
+<h3 class="heading">ft32-*-elf</h3>
+<p>The FT32 processor.
+This configuration is intended for embedded systems.
 </p>
 <hr />
 <a name="h8300_002dhms"></a><a name="h8300_002dhms-1"></a>
@@ -598,18 +608,23 @@ with GCC 4.7, there is also a 64-bit &lsquo;<samp>amd64-*-solaris2.1[0-9]*</samp
 &lsquo;<samp>x86_64-*-solaris2.1[0-9]*</samp>&rsquo; configuration that corresponds to
 &lsquo;<samp>sparcv9-sun-solaris2*</samp>&rsquo;.
 </p>
-<p>It is recommended that you configure GCC to use the GNU assembler, in
-<samp>/usr/sfw/bin/gas</samp>.  The versions included in Solaris 10, from GNU
-binutils 2.15, and Solaris 11, from GNU binutils 2.19, work fine,
-although the current version, from GNU binutils
-2.22, is known to work, too.  Recent versions of the Sun assembler in
-<samp>/usr/ccs/bin/as</samp> work almost as well, though.
+<p>It is recommended that you configure GCC to use the GNU assembler.  The
+versions included in Solaris 10, from GNU binutils 2.15 (in
+<samp>/usr/sfw/bin/gas</samp>), and Solaris 11, from GNU binutils 2.19 or
+newer (also available as <samp>/usr/bin/gas</samp> and
+<samp>/usr/gnu/bin/as</samp>), work fine.  Please note that the current
+version, from GNU binutils 2.26, only works on Solaris 12 when using the
+Solaris linker.  On Solaris 10 and 11, you either have to wait for GNU
+binutils 2.26.1 or newer, or stay with GNU binutils 2.25.1.  Recent
+versions of the Solaris assembler in <samp>/usr/ccs/bin/as</samp> work almost
+as well, though.
 </p>
-<p>For linking, the Sun linker, is preferred.  If you want to use the GNU
-linker instead, which is available in <samp>/usr/sfw/bin/gld</samp>, note that
-due to a packaging bug the version in Solaris 10, from GNU binutils
-2.15, cannot be used, while the version in Solaris 11, from GNU binutils
-2.19, works, as does the latest version, from GNU binutils 2.22.
+<p>For linking, the Solaris linker, is preferred.  If you want to use the GNU
+linker instead, note that due to a packaging bug the version in Solaris
+10, from GNU binutils 2.15 (in <samp>/usr/sfw/bin/gld</samp>), cannot be used,
+while the version in Solaris 11, from GNU binutils 2.19 or newer (also
+in <samp>/usr/gnu/bin/ld</samp> and <samp>/usr/bin/gld</samp>), works, as does the
+latest version, from GNU binutils 2.26.
 </p>
 <p>To use GNU <code>as</code>, configure with the options
 <samp>--with-gnu-as --with-as=/usr/sfw/bin/gas</samp>.  It may be necessary
@@ -659,6 +674,10 @@ Support for AIX version 4.2 and older was discontinued in GCC 4.5.
 process resource limits (ulimit).  Hard limits are configured in the
 <samp>/etc/security/limits</samp> system configuration file.
 </p>
+<p>GCC 4.9 and above require a C++ compiler for bootstrap.  IBM VAC++ / xlC
+cannot bootstrap GCC.  xlc can bootstrap an older version of GCC and
+G++ can bootstrap recent releases of GCC.
+</p>
 <p>GCC can bootstrap with recent versions of IBM XLC, but bootstrapping
 with an earlier release of GCC is recommended.  Bootstrapping with XLC
 requires a larger data segment, which can be enabled through the
@@ -706,6 +725,12 @@ bootstrapping on AIX.  The GNU Assembler, GNU Linker, and GNU
 Binutils version 2.20 is the minimum level that supports bootstrap on
 AIX 5.  The GNU Assembler has not been updated to support AIX 6&nbsp;or
 AIX 7.  The native AIX tools do interoperate with GCC.
+</p>
+<p>AIX 7.1 added partial support for DWARF debugging, but full support
+requires AIX 7.1 TL03 SP7 that supports additional DWARF sections and
+fixes a bug in the assembler.  AIX 7.1 TL03 SP5 distributed a version
+of libm.a missing important symbols; a fix for IV77796 will be
+included in SP6.
 </p>
 <p>AIX 5.3 TL10, AIX 6.1 TL05 and AIX 7.1 TL00 introduced an AIX
 assembler change that sometimes produces corrupt assembly files
@@ -1088,7 +1113,8 @@ in GCC 4.6.
 <p>Sun does not ship a C compiler with Solaris 2 before Solaris 10, though
 you can download the Sun Studio compilers for free.  In Solaris 10 and
 11, GCC 3.4.3 is available as <code>/usr/sfw/bin/gcc</code>.  Solaris 11
-also provides GCC 4.5.2 as <code>/usr/gcc/4.5/bin/gcc</code>.  Alternatively,
+also provides GCC 4.5.2, 4.7.3, and 4.8.2 as
+<code>/usr/gcc/4.5/bin/gcc</code> or similar.  Alternatively,
 you can install a pre-built GCC to bootstrap and install GCC.  See the
 <a href="binaries.html">binaries page</a> for details.
 </p>
@@ -1105,17 +1131,21 @@ recommend using the following initial sequence of commands
 In addition we strongly recommend specifying an absolute path to invoke
 <code><var>srcdir</var>/configure</code>.
 </p>
-<p>Solaris 2 comes with a number of optional OS packages.  Some of these
+<p>Solaris 10 comes with a number of optional OS packages.  Some of these
 are needed to use GCC fully, namely <code>SUNWarc</code>,
 <code>SUNWbtool</code>, <code>SUNWesu</code>, <code>SUNWhea</code>, <code>SUNWlibm</code>,
 <code>SUNWsprot</code>, and <code>SUNWtoo</code>.  If you did not install all
-optional packages when installing Solaris 2, you will need to verify that
+optional packages when installing Solaris 10, you will need to verify that
 the packages that GCC needs are installed.
-</p>
-<p>To check whether an optional package is installed, use
+To check whether an optional package is installed, use
 the <code>pkginfo</code> command.  To add an optional package, use the
-<code>pkgadd</code> command.  For further details, see the Solaris 2
+<code>pkgadd</code> command.  For further details, see the Solaris 10
 documentation.
+</p>
+<p>Starting with Solaris 11, the package management has changed, so you
+need to check for <code>system/header</code>, <code>system/linker</code>, and
+<code>developer/assembler</code> packages.  Checking for and installing
+packages is done with the <code>pkg</code> command now.
 </p>
 <p>Trying to use the linker and other tools in
 <samp>/usr/ucb</samp> to install GCC has been observed to cause trouble.
@@ -1126,36 +1156,34 @@ For example, the linker may hang indefinitely.  The fix is to remove
 have <samp>/usr/xpg4/bin</samp> in your <code>PATH</code>, we recommend that you place
 <samp>/usr/bin</samp> before <samp>/usr/xpg4/bin</samp> for the duration of the build.
 </p>
-<p>We recommend the use of the Sun assembler or the GNU assembler, in
-conjunction with the Sun linker.  The GNU <code>as</code>
-versions included in Solaris 10, from GNU binutils 2.15, and Solaris 11,
-from GNU binutils 2.19, are known to work.  They can be found in
-<samp>/usr/sfw/bin/gas</samp>.  Current versions of GNU binutils (2.22)
-are known to work as well.  Note that your mileage may vary
-if you use a combination of the GNU tools and the Sun tools: while the
+<p>We recommend the use of the Solaris assembler or the GNU assembler, in
+conjunction with the Solaris linker.  The GNU <code>as</code>
+versions included in Solaris 10, from GNU binutils 2.15 (in
+<samp>/usr/sfw/bin/gas</samp>), and Solaris 11,
+from GNU binutils 2.19 or newer (also in <samp>/usr/bin/gas</samp> and
+<samp>/usr/gnu/bin/as</samp>), are known to work.
+Current versions of GNU binutils (2.26)
+are known to work as well, with the caveat mentioned in
+<a href="#ix86-x-solaris210">i?86-*-solaris2.10</a> .  Note that your mileage may vary
+if you use a combination of the GNU tools and the Solaris tools: while the
 combination GNU <code>as</code> + Sun <code>ld</code> should reasonably work,
 the reverse combination Sun <code>as</code> + GNU <code>ld</code> may fail to
 build or cause memory corruption at runtime in some cases for C++ programs.
 GNU <code>ld</code> usually works as well, although the version included in
 Solaris 10 cannot be used due to several bugs.  Again, the current
-version (2.22) is known to work, but generally lacks platform specific
-features, so better stay with Sun <code>ld</code>.  To use the LTO linker
+version (2.26) is known to work, but generally lacks platform specific
+features, so better stay with Solaris <code>ld</code>.  To use the LTO linker
 plugin (<samp>-fuse-linker-plugin</samp>) with GNU <code>ld</code>, GNU
 binutils <em>must</em> be configured with <samp>--enable-largefile</samp>.
 </p>
-<p>To enable symbol versioning in &lsquo;<samp>libstdc++</samp>&rsquo; with the Sun linker,
+<p>To enable symbol versioning in &lsquo;<samp>libstdc++</samp>&rsquo; with the Solaris linker,
 you need to have any version of GNU <code>c++filt</code>, which is part of
 GNU binutils.  &lsquo;<samp>libstdc++</samp>&rsquo; symbol versioning will be disabled if no
-appropriate version is found.  Sun <code>c++filt</code> from the Sun Studio
-compilers does <em>not</em> work.
+appropriate version is found.  Solaris <code>c++filt</code> from the Solaris
+Studio compilers does <em>not</em> work.
 </p>
 <p>GNU <code>make</code> version 3.81 or later is required to build libjava
-with the Sun linker.
-</p>
-<p>Sun bug 4296832 turns up when compiling X11 headers with GCC 2.95 or
-newer: <code>g++</code> will complain that types are missing.  These headers
-assume that omitting the type means <code>int</code>; this assumption worked for
-C90 but is wrong for C++, and is now wrong for C99 also.
+with the Solaris linker.
 </p>
 <p>Sun bug 4927647 sometimes causes random spurious testsuite failures
 related to missing diagnostic output.  This bug doesn&rsquo;t affect GCC
@@ -1192,39 +1220,6 @@ However, if all you want is code tuned for the UltraSPARC CPU, you
 should try the <samp>-mtune=ultrasparc</samp> option instead, which produces
 code that, unlike full 64-bit code, can still run on non-UltraSPARC
 machines.
-</p>
-<p>When configuring on a Solaris 7 or later system that is running a kernel
-that supports only 32-bit binaries, one must configure with
-<samp>--disable-multilib</samp>, since we will not be able to build the
-64-bit target libraries.
-</p>
-<p>GCC 3.3 and GCC 3.4 trigger code generation bugs in earlier versions of
-the GNU compiler (especially GCC 3.0.x versions), which lead to the
-miscompilation of the stage1 compiler and the subsequent failure of the
-bootstrap process.  A workaround is to use GCC 3.2.3 as an intermediary
-stage, i.e. to bootstrap that compiler with the base compiler and then
-use it to bootstrap the final compiler.
-</p>
-<p>GCC 3.4 triggers a code generation bug in versions 5.4 (Sun ONE Studio 7)
-and 5.5 (Sun ONE Studio 8) of the Sun compiler, which causes a bootstrap
-failure in form of a miscompilation of the stage1 compiler by the Sun
-compiler.  This is Sun bug 4974440.  This is fixed with patch 112760-07.
-</p>
-<p>GCC 3.4 changed the default debugging format from Stabs to DWARF-2 for
-32-bit code on Solaris 7 and later.  If you use the Sun assembler, this
-change apparently runs afoul of Sun bug 4910101 (which is referenced as
-an x86-only problem by Sun, probably because they do not use DWARF-2).
-A symptom of the problem is that you cannot compile C++ programs like
-<code>groff</code> 1.19.1 without getting messages similar to the following:
-</p>
-<div class="smallexample">
-<pre class="smallexample">ld: warning: relocation error: R_SPARC_UA32: &hellip;
-  external symbolic relocation against non-allocatable section
-  .debug_info cannot be processed at runtime: relocation ignored.
-</pre></div>
-
-<p>To work around this problem, compile with <samp>-gstabs+</samp> instead of
-plain <samp>-g</samp>.
 </p>
 <p>When configuring the GNU Multiple Precision Library (GMP), the MPFR
 library or the MPC library on a Solaris 7 or later system, the canonical
@@ -1270,16 +1265,6 @@ on a Solaris 9 system:
 <pre class="smallexample">% ./configure --build=sparc64-sun-solaris2.9 --prefix=xxx
 </pre></div>
 
-<p>The following compiler flags must be specified in the configure
-step in order to bootstrap this target with the Sun compiler:
-</p>
-<div class="smallexample">
-<pre class="smallexample">% CC=&quot;cc -xarch=v9 -xildoff&quot; <var>srcdir</var>/configure [<var>options</var>] [<var>target</var>]
-</pre></div>
-
-<p><samp>-xarch=v9</samp> specifies the SPARC-V9 architecture to the Sun toolchain
-and <samp>-xildoff</samp> turns off the incremental linker.
-</p>
 <hr />
 <a name="sparcv9_002dx_002dsolaris2"></a><a name="sparcv9_002d_002a_002dsolaris2_002a"></a>
 <h3 class="heading">sparcv9-*-solaris2*</h3>
@@ -1364,7 +1349,7 @@ processor (&lsquo;<samp>amd64-*-*</samp>&rsquo; is an alias for &lsquo;<samp>x86
 Solaris 10 or later.  Unlike other systems, without special options a
 bi-arch compiler is built which generates 32-bit code by default, but
 can generate 64-bit x86-64 code with the <samp>-m64</samp> switch.  Since
-GCC 4.7, there is also configuration that defaults to 64-bit code, but
+GCC 4.7, there is also a configuration that defaults to 64-bit code, but
 can generate 32-bit code with <samp>-m32</samp>.  To configure and build
 this way, you have to provide all support libraries like <samp>libgmp</samp>
 as 64-bit code, configure with <samp>--target=x86_64-pc-solaris2.1x</samp>

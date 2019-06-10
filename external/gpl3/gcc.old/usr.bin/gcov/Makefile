@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2017/07/23 01:12:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2019/06/10 21:58:17 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 PROG=           gcov
 SRCS=		${G_GCOV_OBJS:.o=.c}

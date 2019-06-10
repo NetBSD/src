@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.95 2015/11/06 02:26:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.95.18.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.95 2015/11/06 02:26:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.95.18.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -101,7 +101,7 @@ void semundo_clear(int, int);
 static ONCE_DECL(exithook_control);
 static int seminit_exithook(void);
 
-void
+int
 seminit(struct sysctllog **clog)
 {
 	int i, sz;
@@ -120,8 +120,10 @@ seminit(struct sysctllog **clog)
 	    ALIGN(seminfo.semmnu * seminfo.semusz);
 	sz = round_page(sz);
 	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
-	if (v == 0)
-		panic("sysv_sem: cannot allocate memory");
+	if (v == 0) {
+		printf("sysv_sem: cannot allocate memory");
+		return ENOMEM;
+	}
 	sema = (void *)v;
 	sem = (void *)((uintptr_t)sema +
 	    ALIGN(seminfo.semmni * sizeof(struct semid_ds)));
@@ -147,6 +149,7 @@ seminit(struct sysctllog **clog)
 	if (clog)
 		sysctl_ipc_sem_setup(clog);
 #endif
+	return 0;
 }
 
 static int
@@ -593,8 +596,12 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			break;
 		KASSERT(sembuf != NULL);
-		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
+		memset(sembuf, 0, sizeof *sembuf);
+		sembuf->sem_perm = semaptr->sem_perm;
 		sembuf->sem_perm.mode &= 0777;
+		sembuf->sem_nsems = semaptr->sem_nsems;
+		sembuf->sem_otime = semaptr->sem_otime;
+		sembuf->sem_ctime = semaptr->sem_ctime;
 		break;
 
 	case GETNCNT:

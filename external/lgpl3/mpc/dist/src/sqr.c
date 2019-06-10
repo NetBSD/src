@@ -36,8 +36,8 @@ mpfr_fsss (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr c, mpfr_rnd_t rnd)
    /* u=a^2, v=c^2 exactly */
    mpfr_init2 (u, 2*mpfr_get_prec (a));
    mpfr_init2 (v, 2*mpfr_get_prec (c));
-   mpfr_sqr (u, a, GMP_RNDN);
-   mpfr_sqr (v, c, GMP_RNDN);
+   mpfr_sqr (u, a, MPFR_RNDN);
+   mpfr_sqr (v, c, MPFR_RNDN);
 
    /* tentatively compute z as u-v; here we need z to be distinct
       from a and c to not lose the latter */
@@ -45,7 +45,7 @@ mpfr_fsss (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr c, mpfr_rnd_t rnd)
 
    if (mpfr_inf_p (z)) {
       /* replace by "correctly rounded overflow" */
-      mpfr_set_si (z, (mpfr_signbit (z) ? -1 : 1), GMP_RNDN);
+      mpfr_set_si (z, (mpfr_signbit (z) ? -1 : 1), MPFR_RNDN);
       inex = mpfr_mul_2ui (z, z, mpfr_get_emax (), rnd);
    }
    else if (mpfr_zero_p (u) && !mpfr_zero_p (v)) {
@@ -81,11 +81,11 @@ mpfr_fsss (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr c, mpfr_rnd_t rnd)
       mpz_mul_2exp (ev, ev, 1);
 
       /* recompute u and v and move exponents to eu and ev */
-      mpfr_sqr (u, a, GMP_RNDN);
+      mpfr_sqr (u, a, MPFR_RNDN);
       /* exponent of u is non-positive */
       mpz_sub_ui (eu, eu, (unsigned long int) (-mpfr_get_exp (u)));
       mpfr_set_exp (u, (mpfr_prec_t) 0);
-      mpfr_sqr (v, c, GMP_RNDN);
+      mpfr_sqr (v, c, MPFR_RNDN);
       mpz_sub_ui (ev, ev, (unsigned long int) (-mpfr_get_exp (v)));
       mpfr_set_exp (v, (mpfr_prec_t) 0);
       if (mpfr_nan_p (z)) {
@@ -210,7 +210,7 @@ mpc_sqr (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
    if (mpfr_zero_p (mpc_imagref(op))) {
       int same_sign = mpfr_signbit (mpc_realref (op)) == mpfr_signbit (mpc_imagref (op));
       inex_re = mpfr_sqr (mpc_realref(rop), mpc_realref(op), MPC_RND_RE(rnd));
-      inex_im = mpfr_set_ui (mpc_imagref(rop), 0ul, GMP_RNDN);
+      inex_im = mpfr_set_ui (mpc_imagref(rop), 0ul, MPFR_RNDN);
       if (!same_sign)
         mpc_conj (rop, rop, MPC_RNDNN);
       return MPC_INEX(inex_re, inex_im);
@@ -218,8 +218,8 @@ mpc_sqr (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
    if (mpfr_zero_p (mpc_realref(op))) {
       int same_sign = mpfr_signbit (mpc_realref (op)) == mpfr_signbit (mpc_imagref (op));
       inex_re = -mpfr_sqr (mpc_realref(rop), mpc_imagref(op), INV_RND (MPC_RND_RE(rnd)));
-      mpfr_neg (mpc_realref(rop), mpc_realref(rop), GMP_RNDN);
-      inex_im = mpfr_set_ui (mpc_imagref(rop), 0ul, GMP_RNDN);
+      mpfr_neg (mpc_realref(rop), mpc_realref(rop), MPFR_RNDN);
+      inex_im = mpfr_set_ui (mpc_imagref(rop), 0ul, MPFR_RNDN);
       if (!same_sign)
         mpc_conj (rop, rop, MPC_RNDNN);
       return MPC_INEX(inex_re, inex_im);
@@ -228,7 +228,7 @@ mpc_sqr (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
    if (rop == op)
    {
       mpfr_init2 (x, MPC_PREC_RE (op));
-      mpfr_set (x, op->re, GMP_RNDN);
+      mpfr_set (x, op->re, MPFR_RNDN);
    }
    else
       x [0] = op->re [0];
@@ -266,23 +266,20 @@ mpc_sqr (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
          /* The error is bounded above by 1 ulp.                             */
          /* We first let inexact be 1 if the real part is not computed       */
          /* exactly and determine the sign later.                            */
-         inexact =  ROUND_AWAY (mpfr_add (u, x, mpc_imagref (op), MPFR_RNDA), u)
-                  | ROUND_AWAY (mpfr_sub (v, x, mpc_imagref (op), MPFR_RNDA), v);
+         inexact =   mpfr_add (u, x, mpc_imagref (op), MPFR_RNDA)
+                   | mpfr_sub (v, x, mpc_imagref (op), MPFR_RNDA);
 
          /* compute the real part as u*v, rounded away                    */
          /* determine also the sign of inex_re                            */
 
          if (mpfr_sgn (u) == 0 || mpfr_sgn (v) == 0) {
             /* as we have rounded away, the result is exact */
-            mpfr_set_ui (mpc_realref (rop), 0, GMP_RNDN);
+            mpfr_set_ui (mpc_realref (rop), 0, MPFR_RNDN);
             inex_re = 0;
             ok = 1;
          }
          else {
-            mpfr_rnd_t rnd_away;
-               /* FIXME: can be replaced by MPFR_RNDA in mpfr >= 3 */
-            rnd_away = (mpfr_sgn (u) * mpfr_sgn (v) > 0 ? GMP_RNDU : GMP_RNDD);
-            inexact |= ROUND_AWAY (mpfr_mul (u, u, v, MPFR_RNDA), u); /* error 5 */
+            inexact |= mpfr_mul (u, u, v, MPFR_RNDA); /* error 5 */
             if (mpfr_get_exp (u) == emin || mpfr_inf_p (u)) {
                /* under- or overflow */
                inex_re = mpfr_fsss (rop->re, x, op->im, MPC_RND_RE (rnd));
@@ -290,8 +287,8 @@ mpc_sqr (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
             }
             else {
                ok = (!inexact) | mpfr_can_round (u, prec - 3,
-                     rnd_away, GMP_RNDZ,
-                     MPC_PREC_RE (rop) + (MPC_RND_RE (rnd) == GMP_RNDN));
+                     MPFR_RNDA, MPFR_RNDZ,
+                     MPC_PREC_RE (rop) + (MPC_RND_RE (rnd) == MPFR_RNDN));
                if (ok) {
                   inex_re = mpfr_set (mpc_realref (rop), u, MPC_RND_RE (rnd));
                   if (inex_re == 0)

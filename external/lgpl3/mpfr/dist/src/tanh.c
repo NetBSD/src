@@ -1,6 +1,6 @@
 /* mpfr_tanh -- hyperbolic tangent
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -84,7 +84,7 @@ mpfr_tanh (mpfr_ptr y, mpfr_srcptr xt , mpfr_rnd_t rnd_mode)
        For x > 0, exp(2*x) > 2^(2*x)
        If 2 ^(2*x) > 2^emax or x>emax/2, there is an overflow */
     if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emax/2) >= 0)) {
-      /* initialise of intermediary variables
+      /* initialize of intermediary variables
          since 'set_one' label assumes the variables have been
          initialize */
       MPFR_GROUP_INIT_2 (group, MPFR_PREC_MIN, t, te);
@@ -98,50 +98,62 @@ mpfr_tanh (mpfr_ptr y, mpfr_srcptr xt , mpfr_rnd_t rnd_mode)
     if (MPFR_GET_EXP (x) < 0)
       Nt += -MPFR_GET_EXP (x);
 
-    /* initialise of intermediary variable */
+    /* The error analysis in algorithms.tex assumes that x is exactly
+       representable with working precision Nt.
+       FIXME: adapt the error analysis for the case Nt < PREC(x). */
+    if (Nt < MPFR_PREC(x))
+      Nt = MPFR_PREC(x);
+
+    /* initialize of intermediary variable */
     MPFR_GROUP_INIT_2 (group, Nt, t, te);
 
     MPFR_ZIV_INIT (loop, Nt);
-    for (;;) {
-      /* tanh = (exp(2x)-1)/(exp(2x)+1) */
-      mpfr_mul_2ui (te, x, 1, MPFR_RNDN);  /* 2x */
-      /* since x > 0, we can only have an overflow */
-      mpfr_exp (te, te, MPFR_RNDN);        /* exp(2x) */
-      if (MPFR_UNLIKELY (MPFR_IS_INF (te))) {
-      set_one:
-        inexact = MPFR_FROM_SIGN_TO_INT (sign);
-        mpfr_set4 (y, __gmpfr_one, MPFR_RNDN, sign);
-        if (MPFR_IS_LIKE_RNDZ (rnd_mode, MPFR_IS_NEG_SIGN (sign)))
+    for (;;)
+      {
+        /* tanh = (exp(2x)-1)/(exp(2x)+1) */
+        inexact = mpfr_mul_2ui (te, x, 1, MPFR_RNDN);  /* 2x */
+        MPFR_ASSERTD(inexact == 0); /* see FIXME above */
+        /* since x > 0, we can only have an overflow */
+        mpfr_exp (te, te, MPFR_RNDN);        /* exp(2x) */
+        if (MPFR_UNLIKELY (MPFR_IS_INF (te)))
           {
-            inexact = -inexact;
-            mpfr_nexttozero (y);
+          set_one:
+            inexact = MPFR_FROM_SIGN_TO_INT (sign);
+            mpfr_set4 (y, __gmpfr_one, MPFR_RNDN, sign);
+            if (MPFR_IS_LIKE_RNDZ (rnd_mode, MPFR_IS_NEG_SIGN (sign)))
+              {
+                inexact = -inexact;
+                mpfr_nexttozero (y);
+              }
+            break;
           }
-        break;
+        d = MPFR_GET_EXP (te);               /* For Error calculation */
+        mpfr_add_ui (t, te, 1, MPFR_RNDD);   /* exp(2x) + 1 */
+        mpfr_sub_ui (te, te, 1, MPFR_RNDU);  /* exp(2x) - 1 */
+        d = d - MPFR_GET_EXP (te);
+        mpfr_div (t, te, t, MPFR_RNDN);      /* (exp(2x)-1)/(exp(2x)+1) */
+
+        /* Calculation of the error, see algorithms.tex; the current value
+           of d is k in algorithms.tex. */
+        d = MAX(3, d + 1);  /* d = exponent in 2^(max(3,k+1)) */
+        err = Nt - (d + 1);
+
+        /* The inequality is the condition max(3,k+1) <= floor(p/2). */
+        if (MPFR_LIKELY (d <= Nt / 2 &&
+                         MPFR_CAN_ROUND (t, err, Ny, rnd_mode)))
+          {
+            inexact = mpfr_set4 (y, t, rnd_mode, sign);
+            break;
+          }
+
+        /* if t=1, we still can round since |sinh(x)| < 1 */
+        if (MPFR_GET_EXP (t) == 1)
+          goto set_one;
+
+        /* Actualisation of the precision */
+        MPFR_ZIV_NEXT (loop, Nt);
+        MPFR_GROUP_REPREC_2 (group, Nt, t, te);
       }
-      d = MPFR_GET_EXP (te);              /* For Error calculation */
-      mpfr_add_ui (t, te, 1, MPFR_RNDD);   /* exp(2x) + 1*/
-      mpfr_sub_ui (te, te, 1, MPFR_RNDU);  /* exp(2x) - 1*/
-      d = d - MPFR_GET_EXP (te);
-      mpfr_div (t, te, t, MPFR_RNDN);      /* (exp(2x)-1)/(exp(2x)+1)*/
-
-      /* Calculation of the error */
-      d = MAX(3, d + 1);
-      err = Nt - (d + 1);
-
-      if (MPFR_LIKELY ((d <= Nt / 2) && MPFR_CAN_ROUND (t, err, Ny, rnd_mode)))
-        {
-          inexact = mpfr_set4 (y, t, rnd_mode, sign);
-          break;
-        }
-
-      /* if t=1, we still can round since |sinh(x)| < 1 */
-      if (MPFR_GET_EXP (t) == 1)
-        goto set_one;
-
-      /* Actualisation of the precision */
-      MPFR_ZIV_NEXT (loop, Nt);
-      MPFR_GROUP_REPREC_2 (group, Nt, t, te);
-    }
     MPFR_ZIV_FREE (loop);
     MPFR_GROUP_CLEAR (group);
   }

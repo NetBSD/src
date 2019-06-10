@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.23 2018/06/18 09:11:03 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.23.2.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -64,7 +64,7 @@
 #define	BMCR_S100	BMCR_SPEED0	/* 100 Mb/s */
 #define	BMCR_S1000	BMCR_SPEED1	/* 1000 Mb/s */
 
-#define	BMCR_SPEED(x)	((x) & (BMCR_SPEED0|BMCR_SPEED1))
+#define	BMCR_SPEED(x)	((x) & (BMCR_SPEED0 | BMCR_SPEED1))
 
 #define	MII_BMSR	0x01	/* Basic mode status register (ro) */
 #define	BMSR_100T4	0x8000	/* 100 base T4 capable */
@@ -90,8 +90,8 @@
  * states that all 1000 Mb/s capable PHYs will set this bit to 1.
  */
 
-#define	BMSR_MEDIAMASK	(BMSR_100T4|BMSR_100TXFDX|BMSR_100TXHDX| \
-			 BMSR_10TFDX|BMSR_10THDX|BMSR_100T2FDX|BMSR_100T2HDX)
+#define	BMSR_MEDIAMASK	(BMSR_100T4 | BMSR_100TXFDX | BMSR_100TXHDX | \
+	    BMSR_10TFDX | BMSR_10THDX | BMSR_100T2FDX | BMSR_100T2HDX)
 
 /*
  * Convert BMSR media capabilities to ANAR bits for autonegotiation.
@@ -217,8 +217,11 @@
 #define ANLPRNP_TOGGLE	0x0800	/* Toggle */
 #define ANLPRNP_MSGUNF_MASK 0x07ff /* Message(Anx28C)/Unformatted Code Field */
 
-			/* This is also the 1000baseT control register */
-#define	MII_100T2CR	0x09	/* 100base-T2 control register */
+#define	MII_GTCR	0x09	/*
+				 * Master-Slave control register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2CR	MII_GTCR /* alias */
 #define	GTCR_TEST_MASK	0xe000	/* see 802.3ab ss. 40.6.1.1.2 */
 #define	GTCR_MAN_MS	0x1000	/* enable manual master/slave control */
 #define	GTCR_ADV_MS	0x0800	/* 1 = adv. master, 0 = adv. slave */
@@ -226,8 +229,23 @@
 #define	GTCR_ADV_1000TFDX 0x0200 /* adv. 1000baseT FDX */
 #define	GTCR_ADV_1000THDX 0x0100 /* adv. 1000baseT HDX */
 
-			/* This is also the 1000baseT status register */
-#define	MII_100T2SR	0x0a	/* 100base-T2 status register */
+#define T2CR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define T2CR_TEST_RX		(1 << 13) /* RX test */
+#define T2CR_TEST_TX_WAVEFORM	(1 << 14) /* Mode 1. TX waveform test */
+#define T2CR_TEST_TX_JITTER	(2 << 14) /* Mode 2. TX jitter test */
+#define T2CR_TEST_TX_IDLE	(3 << 14) /* Mode 3. TX idle test */
+
+#define GTCR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define GTCR_TEST_TX_WAVEFORM	(1 << 13) /* Mode 1. TX waveform test */
+#define GTCR_TEST_TX_JITTER_M	(2 << 13) /* Mode 2. TX jitter test (Master) */
+#define GTCR_TEST_TX_JITTER_S	(3 << 13) /* Mode 3. TX jitter test (Slave) */
+#define GTCR_TEST_TX_DISTORTION	(4 << 13) /* Mode 4. TX distortion test */
+
+#define	MII_GTSR	0x0a	/*
+				 * Master-Slave status register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2SR	MII_GTSR /* alias */
 #define	GTSR_MAN_MS_FLT	0x8000	/* master/slave config fault */
 #define	GTSR_MS_RES	0x4000	/* result: 1 = master, 0 = slave */
 #define	GTSR_LRS	0x2000	/* local rx status, 1 = ok */
@@ -274,9 +292,9 @@
 #define	MMDACR_FUNCMASK	0xc000	/* function */
 #define	MMDACR_DADDRMASK 0x001f	/* device address */
 #define	MMDACR_FN_ADDRESS	(0 << 14) /* address */
-#define	MMDACR_FN_DATANPI	(1 << 14) /* data, no post increment */
-#define	MMDACR_FN_DATAPIRW	(2 << 14) /* data, post increment on r/w */
-#define	MMDACR_FN_DATAPIW	(3 << 14) /* data, post increment on wr only */
+#define	MMDACR_FN_DATA		(1 << 14) /* data, no post increment */
+#define	MMDACR_FN_DATA_INC_RW	(2 << 14) /* data, post increment on r/w */
+#define	MMDACR_FN_DATA_INC_W	(3 << 14) /* data, post increment on wr only */
 
 #define	MII_MMDAADR	0x0e	/* MMD access address data register */
 
@@ -286,7 +304,7 @@
 #define	EXTSR_1000TFDX	0x2000	/* 1000T full-duplex capable */
 #define	EXTSR_1000THDX	0x1000	/* 1000T half-duplex capable */
 
-#define	EXTSR_MEDIAMASK	(EXTSR_1000XFDX|EXTSR_1000XHDX| \
-			 EXTSR_1000TFDX|EXTSR_1000THDX)
+#define	EXTSR_MEDIAMASK	(EXTSR_1000XFDX | EXTSR_1000XHDX | \
+	    EXTSR_1000TFDX | EXTSR_1000THDX)
 
 #endif /* _DEV_MII_MII_H_ */

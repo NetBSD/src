@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2016 Free Software Foundation, Inc.
+# Copyright 2004-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,4 +63,33 @@ gdb_test "step" "thread_function.*" "step to the thread_function"
 gdb_test "up" ".*in main.*" "go up in the stack frame" 
 gdb_test "thread apply all print 1"  "Thread ..*\\\$\[0-9]+ = 1.*Thread ..*\\\$\[0-9]+ = 1.*Thread ..*\\\$\[0-9]+ = 1.*Thread ..*\\\$\[0-9]+ = 1.*Thread ..*\\\$\[0-9]+ = 1.*Thread ..*\\\$\[0-9]+ = 1" "run a simple print command on all threads"
 gdb_test "down" "#0.*thread_function.*" "go down and check selected frame"
-gdb_test "thread apply all detach" "Thread .*"
+
+# Make sure that GDB doesn't crash when the previously selected thread
+# exits due to the command run via thread apply.  Regression test for
+# PR threads/13217.
+
+proc thr_apply_detach {thread_set} {
+    with_test_prefix "thread apply $thread_set" {
+	global binfile
+	global break_line
+
+	clean_restart ${binfile}
+
+	if ![runto_main] {
+	    fail "can't run to main"
+	    return -1
+	}
+
+	gdb_breakpoint "$break_line"
+	gdb_continue_to_breakpoint "all threads started"
+
+	gdb_test "thread apply $thread_set detach" "Thread .*"
+	gdb_test "thread" "No thread selected" "switched to no thread selected"
+    }
+}
+
+# Test both "all" and a thread list, because those are implemented as
+# different commands in GDB.
+foreach thread_set {"all" "1.1 1.2 1.3"} {
+    thr_apply_detach $thread_set
+}

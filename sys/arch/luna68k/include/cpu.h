@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.34 2017/06/16 18:17:41 jdolecek Exp $ */
+/* $NetBSD: cpu.h,v 1.34.6.1 2019/06/10 22:06:25 christos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,12 +106,6 @@ extern int	astpending;	/* need to trap before returning to user mode */
 #endif /* _KERNEL */
 
 /*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_MAXID		2	/* number of valid machdep ids */
-
-/*
  * Values for machtype
  */
 #define LUNA_I		1
@@ -126,7 +120,6 @@ extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 void	dumpsys(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 /* machdep.c functions */

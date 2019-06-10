@@ -1,3 +1,25 @@
+2016-08-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-base.h (sim_state_base): Add prog_syms_count.
+	(STATE_PROG_SYMS_COUNT): Define.
+	* sim-trace.c (trace_uninstall): Free STATE_PROG_SYMS memory.
+	(trace_load_symbols): New function.
+	(trace_sym_value): Likewise.
+	(trace_prefix): Change STATE_CPU(cpu) to sd.  Replace symbol
+	loading logic with a call to trace_load_symbols.
+	* sim-trace.h (trace_load_symbols, trace_sym_value): New
+	prototypes.
+
+2016-08-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-types.h (mode_names): Mark const.
+	* cgen-utils.c (mode_names): Likewise.
+
+2016-08-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-defs.h (struct cgen_state): Delete argv and envp.
+	(STATE_ARGV, STATE_ENVP): Delete.
+
 2016-02-04  Nick Clifton  <nickc@redhat.com>
 
 	* cgen-scache.c (scache_option_handler): Prevent possible

@@ -1,6 +1,6 @@
 /* mpc_norm -- Square of the norm of a complex number.
 
-Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011 INRIA
+Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -77,8 +77,8 @@ mpc_norm (mpfr_ptr a, mpc_srcptr b, mpfr_rnd_t rnd)
          mpfr_set_prec (u, prec_u);
          mpfr_set_prec (v, prec_v);
 
-         inexact  = mpfr_sqr (u, mpc_realref(b), GMP_RNDD); /* err <= 1 ulp in prec */
-         inexact |= mpfr_sqr (v, mpc_imagref(b), GMP_RNDD); /* err <= 1 ulp in prec */
+         inexact  = mpfr_sqr (u, mpc_realref(b), MPFR_RNDD); /* err <= 1 ulp in prec */
+         inexact |= mpfr_sqr (v, mpc_imagref(b), MPFR_RNDD); /* err <= 1 ulp in prec */
 
          /* If loops = max_loops, inexact should be 0 here, except in case
                of underflow or overflow.
@@ -86,12 +86,12 @@ mpc_norm (mpfr_ptr a, mpc_srcptr b, mpfr_rnd_t rnd)
             while-loop since it only remains to add u and v into a. */
          if (inexact) {
              mpfr_set_prec (res, prec);
-             mpfr_add (res, u, v, GMP_RNDD); /* err <= 3 ulp in prec */
+             mpfr_add (res, u, v, MPFR_RNDD); /* err <= 3 ulp in prec */
          }
 
       } while (loops < max_loops && inexact != 0
-               && !mpfr_can_round (res, prec - 2, GMP_RNDD, GMP_RNDU,
-                                   mpfr_get_prec (a) + (rnd == GMP_RNDN)));
+               && !mpfr_can_round (res, prec - 2, MPFR_RNDD, MPFR_RNDU,
+                                   mpfr_get_prec (a) + (rnd == MPFR_RNDN)));
 
       if (!inexact)
          /* squarings were exact, neither underflow nor overflow */
@@ -100,7 +100,7 @@ mpc_norm (mpfr_ptr a, mpc_srcptr b, mpfr_rnd_t rnd)
          since the norm is larger, there is an overflow for the norm */
       else if (mpfr_overflow_p ()) {
          /* replace by "correctly rounded overflow" */
-         mpfr_set_ui (a, 1ul, GMP_RNDN);
+         mpfr_set_ui (a, 1ul, MPFR_RNDN);
          inexact = mpfr_mul_2ui (a, a, mpfr_get_emax (), rnd);
       }
       else if (mpfr_underflow_p ()) {
@@ -123,14 +123,14 @@ mpc_norm (mpfr_ptr a, mpc_srcptr b, mpfr_rnd_t rnd)
              && mpfr_get_exp (u) - 2 * (mpfr_exp_t) prec_u > emin
              && mpfr_get_exp (u) > -10) {
                mpfr_set_prec (v, MPFR_PREC_MIN);
-               mpfr_set_ui_2exp (v, 1, emin - 1, GMP_RNDZ);
+               mpfr_set_ui_2exp (v, 1, emin - 1, MPFR_RNDZ);
                inexact = mpfr_add (a, u, v, rnd);
          }
          else if (!mpfr_zero_p (v)
              && mpfr_get_exp (v) - 2 * (mpfr_exp_t) prec_v > emin
              && mpfr_get_exp (v) > -10) {
                mpfr_set_prec (u, MPFR_PREC_MIN);
-               mpfr_set_ui_2exp (u, 1, emin - 1, GMP_RNDZ);
+               mpfr_set_ui_2exp (u, 1, emin - 1, MPFR_RNDZ);
                inexact = mpfr_add (a, u, v, rnd);
          }
          else {
@@ -145,17 +145,17 @@ mpc_norm (mpfr_ptr a, mpc_srcptr b, mpfr_rnd_t rnd)
                   integer overflow                                  */
             if (mpfr_zero_p (u)) {
                /* recompute the scaled value exactly */
-               mpfr_mul_2ui (u, mpc_realref (b), scale, GMP_RNDN);
-               mpfr_sqr (u, u, GMP_RNDN);
+               mpfr_mul_2ui (u, mpc_realref (b), scale, MPFR_RNDN);
+               mpfr_sqr (u, u, MPFR_RNDN);
             }
             else /* just scale */
-               mpfr_mul_2ui (u, u, 2*scale, GMP_RNDN);
+               mpfr_mul_2ui (u, u, 2*scale, MPFR_RNDN);
             if (mpfr_zero_p (v)) {
-               mpfr_mul_2ui (v, mpc_imagref (b), scale, GMP_RNDN);
-               mpfr_sqr (v, v, GMP_RNDN);
+               mpfr_mul_2ui (v, mpc_imagref (b), scale, MPFR_RNDN);
+               mpfr_sqr (v, v, MPFR_RNDN);
             }
             else
-               mpfr_mul_2ui (v, v, 2*scale, GMP_RNDN);
+               mpfr_mul_2ui (v, v, 2*scale, MPFR_RNDN);
 
             inexact = mpfr_add (a, u, v, rnd);
             mpfr_clear_underflow ();

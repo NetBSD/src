@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.53.4.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,16 +71,16 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_execfmt.h"
+#include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
-#include "opt_arm_debug.h"
-#include "opt_multiprocessor.h"
+#include "opt_execfmt.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.53.4.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -295,18 +295,6 @@ cpu_intr_p(void)
 		return false;
 #endif
 	return ci->ci_intr_depth != 0;
-}
-
-void
-ucas_ras_check(trapframe_t *tf)
-{
-	extern char ucas_32_ras_start[];
-	extern char ucas_32_ras_end[];
-
-	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
-	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
-		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
-	}
 }
 
 #ifdef MODULAR

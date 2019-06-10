@@ -205,15 +205,7 @@ if ((n)									\
     goto around;							\
   }
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  31
-
-extern void i386_align_code (fragS *, int);
-
-#define HANDLE_ALIGN(fragP)						\
-if (fragP->fr_type == rs_align_code) 					\
-  i386_align_code (fragP, (fragP->fr_next->fr_address			\
-			   - fragP->fr_address				\
-			   - fragP->fr_fix));
+#define MAX_MEM_FOR_RS_ALIGN_CODE 4095
 
 void i386_print_statistics (FILE *);
 #define tc_print_statistics i386_print_statistics
@@ -274,12 +266,23 @@ struct i386_tc_frag_data
    }								\
  while (0)
 
-#ifdef SCO_ELF
-#define tc_init_after_args() sco_id ()
-extern void sco_id (void);
-#endif
-
 #define WORKING_DOT_WORD 1
+
+/* How to generate NOPs for .nop direct directive.  */
+extern void i386_generate_nops (fragS *, char *, offsetT, int);
+#define md_generate_nops(frag, where, amount, control) \
+  i386_generate_nops ((frag), (where), (amount), (control))
+
+#define HANDLE_ALIGN(fragP)						\
+if (fragP->fr_type == rs_align_code) 					\
+  {									\
+    offsetT __count = (fragP->fr_next->fr_address			\
+		       - fragP->fr_address				\
+		       - fragP->fr_fix);				\
+    if (__count > 0 && __count <= MAX_MEM_FOR_RS_ALIGN_CODE)		\
+      md_generate_nops (fragP, fragP->fr_literal + fragP->fr_fix,	\
+			__count, 0);					\
+  }
 
 /* We want .cfi_* pseudo-ops for generating unwind info.  */
 #define TARGET_USE_CFIPOP 1

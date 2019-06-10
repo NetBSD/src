@@ -1,6 +1,6 @@
 /* mpfr_strtofr -- set a floating-point number from a string
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,7 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdlib.h> /* For strtol */
 #include <ctype.h>  /* For isspace */
 
 #define MPFR_NEED_LONGLONG_H
@@ -220,7 +219,7 @@ fast_casecmp (const char *s1, const char *s2)
    It returns:
       -1 if invalid string,
       0 if special string (like nan),
-      1 if the string is ok.
+      1 if the string is OK.
       2 if overflows
    So it doesn't return the ternary value
    BUT if it returns 0 (NAN or INF), the ternary value is also '0'
@@ -324,7 +323,7 @@ parse_string (mpfr_t x, struct parsed_string *pstr,
 
   /* Alloc mantissa */
   pstr->alloc = (size_t) strlen (str) + 1;
-  pstr->mantissa = (unsigned char*) (*__gmp_allocate_func) (pstr->alloc);
+  pstr->mantissa = (unsigned char*) mpfr_allocate_func (pstr->alloc);
 
   /* Read mantissa digits */
  parse_begin:
@@ -436,7 +435,7 @@ parse_string (mpfr_t x, struct parsed_string *pstr,
   *string = str;
  end:
   if (pstr->mantissa != NULL && res != 1)
-    (*__gmp_free_func) (pstr->mantissa, pstr->alloc);
+    mpfr_free_func (pstr->mantissa, pstr->alloc);
   return res;
 }
 
@@ -533,7 +532,7 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
           if (real_ysize != ysize)
             {
               if (count == 0)
-                MPN_COPY_DECR (y + ysize - real_ysize, y, real_ysize);
+                mpn_copyd (y + ysize - real_ysize, y, real_ysize);
               MPN_ZERO (y, ysize - real_ysize);
             }
           /* for each bit shift decrease exponent of y */
@@ -743,11 +742,14 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
          of the pstr_size most significant digits of pstr->mant, with
          equality in case exact is non-zero. */
 
-      /* test if rounding is possible, and if so exit the loop */
-      if (exact || mpfr_can_round_raw (result, ysize,
-                                       (pstr->negative) ? -1 : 1,
-                                       ysize_bits - err - 1,
-                                       MPFR_RNDN, rnd, MPFR_PREC(x)))
+      /* test if rounding is possible, and if so exit the loop.
+         Note: we also need to be able to determine the correct ternary value,
+         thus we use the MPFR_PREC(x) + (rnd == MPFR_RNDN) trick.
+         For example if result = xxx...xxx111...111 and rnd = RNDN,
+         then we know the correct rounding is xxx...xx(x+1), but we cannot know
+         the correct ternary value. */
+      if (exact || mpfr_round_p (result, ysize, ysize_bits - err - 1,
+                                 MPFR_PREC(x) + (rnd == MPFR_RNDN)))
         break;
 
     next_loop:
@@ -805,7 +807,7 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
 static void
 free_parsed_string (struct parsed_string *pstr)
 {
-  (*__gmp_free_func) (pstr->mantissa, pstr->alloc);
+  mpfr_free_func (pstr->mantissa, pstr->alloc);
 }
 
 int
@@ -818,11 +820,11 @@ mpfr_strtofr (mpfr_t x, const char *string, char **end, int base,
   /* For base <= 36, parsing is case-insensitive. */
   MPFR_ASSERTN (base == 0 || (base >= 2 && base <= 62));
 
-  /* If an error occured, it must return 0 */
+  /* If an error occurred, it must return 0. */
   MPFR_SET_ZERO (x);
   MPFR_SET_POS (x);
 
-  MPFR_ASSERTN (MPFR_MAX_BASE >= 62);
+  MPFR_STAT_STATIC_ASSERT (MPFR_MAX_BASE >= 62);
   res = parse_string (x, &pstr, &string, base);
   /* If res == 0, then it was exact (NAN or INF),
      so it is also the ternary value */

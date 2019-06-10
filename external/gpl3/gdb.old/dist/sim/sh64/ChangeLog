@@ -1,3 +1,8 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* decode-compact.c (sh64_compact_init_idesc_table): Use ARRAY_SIZE.
+	* decode-media.c (sh64_media_init_idesc_table): Likewise.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

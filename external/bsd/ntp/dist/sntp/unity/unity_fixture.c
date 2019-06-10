@@ -1,5 +1,3 @@
-/*	$NetBSD: unity_fixture.c,v 1.1.1.5 2016/11/22 01:35:10 christos Exp $	*/
-
 //- Copyright (c) 2010 James Grenning and Contributed to Unity Project
 /* ==========================================
     Unity Project - A Test Framework for C

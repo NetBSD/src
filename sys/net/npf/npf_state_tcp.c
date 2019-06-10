@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.18 2016/12/26 23:10:46 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.18 2016/12/26 23:10:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.18.16.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

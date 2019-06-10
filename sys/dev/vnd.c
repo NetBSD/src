@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.4.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.4.1 2019/06/10 22:07:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -114,11 +114,13 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h>
 
 #include <net/zlib.h>
 
@@ -158,6 +160,7 @@ struct vndxfer {
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 #define	VND_MAXPENDING(vnd)	((vnd)->sc_maxactive * 4)
+#define	VND_MAXPAGES(vnd)	(1024 * 1024 / PAGE_SIZE)
 
 
 static void	vndclear(struct vnd_softc *, int);
@@ -573,20 +576,18 @@ vnode_has_strategy(struct vnd_softc *vnd)
 	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
 }
 
+/* Verify that I/O requests cannot be smaller than the
+ * smallest I/O size supported by the backend.
+ */
 static bool
 vnode_has_large_blocks(struct vnd_softc *vnd)
 {
-	u_int32_t vnd_secsize, mnt_secsize;
-	uint64_t numsec;
-	unsigned secsize;
+	u_int32_t vnd_secsize, iosize;
 
-	if (getdisksize(vnd->sc_vp, &numsec, &secsize))
-		return true;
-
+	iosize = vnd->sc_iosize;
 	vnd_secsize = vnd->sc_geom.vng_secsize;
-	mnt_secsize = secsize;
 
-	return vnd_secsize % mnt_secsize != 0;
+	return vnd_secsize % iosize != 0;
 }
 
 /* XXX this function needs a reliable check to detect
@@ -733,11 +734,16 @@ vndthread(void *arg)
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
+		/* Make sure the request succeeds while suspending this fs. */
+		fstrans_start_lazy(vnd->sc_vp->v_mount);
+
 		/* Handle the request using the appropriate operations. */
 		if ((vnd->sc_flags & VNF_USE_VN_RDWR) == 0)
 			handle_with_strategy(vnd, obp, bp);
 		else
 			handle_with_rdwr(vnd, obp, bp);
+
+		fstrans_done(vnd->sc_vp->v_mount);
 
 		s = splbio();
 		continue;
@@ -808,12 +814,22 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
 	    vp, bp->b_data, len, offset, UIO_SYSSPACE,
-	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE), vnd->sc_cred, &resid, NULL);
+	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE) | IO_DIRECT,
+		vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
 
+	/*
+	 * Avoid caching too many pages, the vnd user
+	 * is usually a filesystem and caches itself.
+	 * We need some amount of caching to not hinder
+	 * read-ahead and write-behind operations.
+	 */
 	mutex_enter(vp->v_interlock);
-	(void) VOP_PUTPAGES(vp, 0, 0,
-	    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
+	if (vp->v_uobj.uo_npages > VND_MAXPAGES(vnd))
+		(void) VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE);
+	else
+		mutex_exit(vp->v_interlock);
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
@@ -1135,30 +1151,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	/* Do the get's first; they don't need initialization or verification */
 	switch (cmd) {
-#ifdef COMPAT_30
-	case VNDIOCGET30: {
-		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
-			return error;
-
-		struct vnd_user30 *vnu = data;
-		vnu->vnu_dev = vattr.va_fsid;
-		vnu->vnu_ino = vattr.va_fileid;
-		return 0;
-	}
-#endif
-#ifdef COMPAT_50
-	case VNDIOCGET50: {
-		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
-			return error;
-
-		struct vnd_user50 *vnu = data;
-		vnu->vnu_dev = vattr.va_fsid;
-		vnu->vnu_ino = vattr.va_fileid;
-		return 0;
-	}
-#endif
-
-	case VNDIOCGET: {
+	case VNDIOCGET:
 		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
 			return error;
 
@@ -1166,9 +1159,35 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		vnu->vnu_dev = vattr.va_fsid;
 		vnu->vnu_ino = vattr.va_fileid;
 		return 0;
-	}
+
 	default:
-		break;
+		/* First check for COMPAT_50 hook */
+		MODULE_HOOK_CALL(compat_vndioctl_50_hook,
+		    (cmd, l, data, unit, &vattr, vndioctl_get),
+		    enosys(), error);
+
+		/*
+		 * If not present, then COMPAT_30 hook also not
+		 * present, so just continue with checks for the
+		 * "write" commands
+		 */
+		if (error == ENOSYS) {
+			error = 0;
+			break;
+		}
+
+		/* If not already handled, try the COMPAT_30 hook */
+		if (error == EPASSTHROUGH)
+			MODULE_HOOK_CALL(compat_vndioctl_30_hook,
+			    (cmd, l, data, unit, &vattr, vndioctl_get),
+			    enosys(), error);
+
+		/* If no COMPAT_30 module, or not handled, check writes */
+		if (error == ENOSYS || error == EPASSTHROUGH) {
+			error = 0;
+			break;
+		}
+		return error;
 	}
 
 	vnd = device_lookup_private(&vnd_cd, unit);
@@ -1178,12 +1197,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
-	case VNDIOCSET:
-	case VNDIOCCLR:
-#ifdef COMPAT_50
 	case VNDIOCSET50:
 	case VNDIOCCLR50:
-#endif
+		if (!compat_vndioctl_50_hook.hooked)
+			return EINVAL;
+		/* FALLTHROUGH */
+	case VNDIOCSET:
+	case VNDIOCCLR:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1199,9 +1219,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
-#ifdef VNDIOCCLR50
 	case VNDIOCCLR50:
-#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1226,9 +1244,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 
 	switch (cmd) {
-#ifdef VNDIOCSET50
 	case VNDIOCSET50:
-#endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return EBUSY;
@@ -1239,6 +1255,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
+		if ((vio->vnd_flags & VNDIOF_FILEIO) != 0)
+			vnd->sc_flags |= VNF_USE_VN_RDWR;
 		error = pathbuf_copyin(vio->vnd_file, &pb);
 		if (error) {
 			goto unlock_and_exit;
@@ -1262,7 +1280,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* If using a compressed file, initialize its info */
 		/* (or abort with an error if kernel has no compression) */
-		if (vio->vnd_flags & VNF_COMP) {
+		if (vio->vnd_flags & VNDIOF_COMP) {
 #ifdef VND_COMPRESSION
 			struct vnd_comp_header *ch;
 			int i;
@@ -1401,6 +1419,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
+		/* get smallest I/O size for underlying device, fall back to
+		 * fundamental I/O size of underlying filesystem
+		 */
+		error = bdev_ioctl(vattr.va_fsid, DIOCGSECTORSIZE, &vnd->sc_iosize, FKIOCTL, l);
+		if (error)
+			vnd->sc_iosize = vnd->sc_vp->v_mount->mnt_stat.f_frsize;
+
 		/*
 		 * Use pseudo-geometry specified.  If none was provided,
 		 * use "standard" Adaptec fictitious geometry.
@@ -1414,12 +1439,19 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * Sanity-check the sector size.
 			 */
 			if (!DK_DEV_BSIZE_OK(vnd->sc_geom.vng_secsize) ||
-			    vnd->sc_geom.vng_ncylinders == 0 ||
 			    vnd->sc_geom.vng_ntracks == 0 ||
 			    vnd->sc_geom.vng_nsectors == 0) {
 				error = EINVAL;
 				goto close_and_exit;
 			}
+
+			/*
+			 * Compute missing cylinder count from size
+			 */
+			if (vnd->sc_geom.vng_ncylinders == 0)
+				vnd->sc_geom.vng_ncylinders = vnd->sc_size /
+					(vnd->sc_geom.vng_ntracks *
+					vnd->sc_geom.vng_nsectors);
 
 			/*
 			 * Compute the size (in DEV_BSIZE blocks) specified
@@ -1465,9 +1497,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_osize = dbtob(vnd->sc_size);
-#ifdef VNDIOCSET50
 		if (cmd != VNDIOCSET50)
-#endif
 			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 
@@ -1527,9 +1557,7 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
-#ifdef VNDIOCCLR50
 	case VNDIOCCLR50:
-#endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
 		pmask = (1 << part);
@@ -1646,7 +1674,7 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
+	aiov.iov_len = uimin(DEV_BSIZE, dbtob(vnd->sc_size));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;

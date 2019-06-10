@@ -48,11 +48,6 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type, bfd_vma, bfd_vma,
 				     bfd_vma, bfd_boolean);
 
 extern bfd_boolean
-_bfd_aarch64_elf_add_symbol_hook (bfd *, struct bfd_link_info *,
-				  Elf_Internal_Sym *, const char **,
-				  flagword *, asection **, bfd_vma *);
-
-extern bfd_boolean
 _bfd_aarch64_elf_grok_prstatus (bfd *, Elf_Internal_Note *);
 
 extern bfd_boolean
@@ -61,7 +56,6 @@ _bfd_aarch64_elf_grok_psinfo (bfd *, Elf_Internal_Note *);
 extern char *
 _bfd_aarch64_elf_write_core_note (bfd *, char *, int *, int, ...);
 
-#define elf_backend_add_symbol_hook	_bfd_aarch64_elf_add_symbol_hook
 #define elf_backend_grok_prstatus	_bfd_aarch64_elf_grok_prstatus
 #define elf_backend_grok_psinfo		_bfd_aarch64_elf_grok_psinfo
 #define elf_backend_write_core_note	_bfd_aarch64_elf_write_core_note

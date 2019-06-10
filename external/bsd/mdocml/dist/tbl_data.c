@@ -1,7 +1,7 @@
-/*	Id: tbl_data.c,v 1.41 2015/10/06 18:32:20 schwarze Exp  */
+/*	Id: tbl_data.c,v 1.52 2019/02/09 16:00:39 schwarze Exp  */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,14 +21,16 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mandoc.h"
+#include "tbl.h"
 #include "libmandoc.h"
-#include "libroff.h"
+#include "tbl_int.h"
 
 static	void		 getdata(struct tbl_node *, struct tbl_span *,
 				int, const char *, int *);
@@ -40,9 +42,19 @@ static void
 getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		int ln, const char *p, int *pos)
 {
-	struct tbl_dat	*dat;
+	struct tbl_dat	*dat, *pdat;
 	struct tbl_cell	*cp;
+	struct tbl_span	*pdp;
 	int		 sv;
+
+	/*
+	 * Determine the length of the string in the cell
+	 * and advance the parse point to the end of the cell.
+	 */
+
+	sv = *pos;
+	while (p[*pos] != '\0' && p[*pos] != tbl->opts.tab)
+		(*pos)++;
 
 	/* Advance to the next layout cell, skipping spanners. */
 
@@ -51,38 +63,81 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		cp = cp->next;
 
 	/*
-	 * Stop processing when we reach the end of the available layout
-	 * cells.  This means that we have extra input.
+	 * If the current layout row is out of cells, allocate
+	 * a new cell if another row of the table has at least
+	 * this number of columns, or discard the input if we
+	 * are beyond the last column of the table as a whole.
 	 */
 
 	if (cp == NULL) {
-		mandoc_msg(MANDOCERR_TBLDATA_EXTRA, tbl->parse,
-		    ln, *pos, p + *pos);
-		/* Skip to the end... */
-		while (p[*pos])
-			(*pos)++;
-		return;
+		if (dp->layout->last->col + 1 < dp->opts->cols) {
+			cp = mandoc_calloc(1, sizeof(*cp));
+			cp->pos = TBL_CELL_LEFT;
+			dp->layout->last->next = cp;
+			cp->col = dp->layout->last->col + 1;
+			dp->layout->last = cp;
+		} else {
+			mandoc_msg(MANDOCERR_TBLDATA_EXTRA,
+			    ln, sv, "%s", p + sv);
+			while (p[*pos] != '\0')
+				(*pos)++;
+			return;
+		}
 	}
 
-	dat = mandoc_calloc(1, sizeof(*dat));
+	dat = mandoc_malloc(sizeof(*dat));
 	dat->layout = cp;
+	dat->next = NULL;
+	dat->string = NULL;
+	dat->hspans = 0;
+	dat->vspans = 0;
+	dat->block = 0;
 	dat->pos = TBL_DATA_NONE;
-	dat->spans = 0;
+
+	/*
+	 * Increment the number of vertical spans in a data cell above,
+	 * if this cell vertically extends one or more cells above.
+	 * The iteration must be done over data rows,
+	 * not over layout rows, because one layout row
+	 * can be reused for more than one data row.
+	 */
+
+	if (cp->pos == TBL_CELL_DOWN ||
+	    (*pos - sv == 2 && p[sv] == '\\' && p[sv + 1] == '^')) {
+		pdp = dp;
+		while ((pdp = pdp->prev) != NULL) {
+			pdat = pdp->first;
+			while (pdat != NULL &&
+			    pdat->layout->col < dat->layout->col)
+				pdat = pdat->next;
+			if (pdat == NULL)
+				break;
+			if (pdat->layout->pos != TBL_CELL_DOWN &&
+			    strcmp(pdat->string, "\\^") != 0) {
+				pdat->vspans++;
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Count the number of horizontal spans to the right of this cell.
+	 * This is purely a matter of the layout, independent of the data.
+	 */
+
 	for (cp = cp->next; cp != NULL; cp = cp->next)
 		if (cp->pos == TBL_CELL_SPAN)
-			dat->spans++;
+			dat->hspans++;
 		else
 			break;
+
+	/* Append the new data cell to the data row. */
 
 	if (dp->last == NULL)
 		dp->first = dat;
 	else
 		dp->last->next = dat;
 	dp->last = dat;
-
-	sv = *pos;
-	while (p[*pos] && p[*pos] != tbl->opts.tab)
-		(*pos)++;
 
 	/*
 	 * Check for a continued-data scope opening.  This consists of a
@@ -97,7 +152,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 
 	dat->string = mandoc_strndup(p + sv, *pos - sv);
 
-	if (p[*pos])
+	if (p[*pos] != '\0')
 		(*pos)++;
 
 	if ( ! strcmp(dat->string, "_"))
@@ -116,10 +171,10 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	    dat->layout->pos == TBL_CELL_DOWN) &&
 	    dat->pos == TBL_DATA_DATA && *dat->string != '\0')
 		mandoc_msg(MANDOCERR_TBLDATA_SPAN,
-		    tbl->parse, ln, sv, dat->string);
+		    ln, sv, "%s", dat->string);
 }
 
-int
+void
 tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
 	struct tbl_dat	*dat;
@@ -134,16 +189,17 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 			pos++;
 			while (p[pos] != '\0')
 				getdata(tbl, tbl->last_span, ln, p, &pos);
-			return 1;
+			return;
 		} else if (p[pos] == '\0') {
 			tbl->part = TBL_PART_DATA;
-			return 1;
+			return;
 		}
 
 		/* Fallthrough: T} is part of a word. */
 	}
 
 	dat->pos = TBL_DATA_DATA;
+	dat->block = 1;
 
 	if (dat->string != NULL) {
 		sz = strlen(p + pos) + strlen(dat->string) + 2;
@@ -154,10 +210,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 		dat->string = mandoc_strdup(p + pos);
 
 	if (dat->layout->pos == TBL_CELL_DOWN)
-		mandoc_msg(MANDOCERR_TBLDATA_SPAN, tbl->parse,
-		    ln, pos, dat->string);
-
-	return 0;
+		mandoc_msg(MANDOCERR_TBLDATA_SPAN,
+		    ln, pos, "%s", dat->string);
 }
 
 static struct tbl_span *
@@ -184,58 +238,63 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 void
 tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
-	struct tbl_span	*dp;
 	struct tbl_row	*rp;
+	struct tbl_cell	*cp;
+	struct tbl_span	*sp;
 
-	/*
-	 * Choose a layout row: take the one following the last parsed
-	 * span's.  If that doesn't exist, use the last parsed span's.
-	 * If there's no last parsed span, use the first row.  Lastly,
-	 * if the last span was a horizontal line, use the same layout
-	 * (it doesn't "consume" the layout).
-	 */
+	rp = (sp = tbl->last_span) == NULL ? tbl->first_row :
+	    sp->pos == TBL_SPAN_DATA && sp->layout->next != NULL ?
+	    sp->layout->next : sp->layout;
 
-	if (tbl->last_span != NULL) {
-		if (tbl->last_span->pos == TBL_SPAN_DATA) {
-			for (rp = tbl->last_span->layout->next;
-			     rp != NULL && rp->first != NULL;
-			     rp = rp->next) {
-				switch (rp->first->pos) {
-				case TBL_CELL_HORIZ:
-					dp = newspan(tbl, ln, rp);
-					dp->pos = TBL_SPAN_HORIZ;
-					continue;
-				case TBL_CELL_DHORIZ:
-					dp = newspan(tbl, ln, rp);
-					dp->pos = TBL_SPAN_DHORIZ;
-					continue;
-				default:
-					break;
-				}
-				break;
-			}
-		} else
-			rp = tbl->last_span->layout;
+	assert(rp != NULL);
 
-		if (rp == NULL)
-			rp = tbl->last_span->layout;
-	} else
-		rp = tbl->first_row;
-
-	assert(rp);
-
-	dp = newspan(tbl, ln, rp);
-
-	if ( ! strcmp(p, "_")) {
-		dp->pos = TBL_SPAN_HORIZ;
-		return;
-	} else if ( ! strcmp(p, "=")) {
-		dp->pos = TBL_SPAN_DHORIZ;
-		return;
+	if (p[1] == '\0') {
+		switch (p[0]) {
+		case '.':
+			/*
+			 * Empty request lines must be handled here
+			 * and cannot be discarded in roff_parseln()
+			 * because in the layout section, they
+			 * are significant and end the layout.
+			 */
+			return;
+		case '_':
+			sp = newspan(tbl, ln, rp);
+			sp->pos = TBL_SPAN_HORIZ;
+			return;
+		case '=':
+			sp = newspan(tbl, ln, rp);
+			sp->pos = TBL_SPAN_DHORIZ;
+			return;
+		default:
+			break;
+		}
 	}
 
-	dp->pos = TBL_SPAN_DATA;
+	/*
+	 * If the layout row contains nothing but horizontal lines,
+	 * allocate an empty span for it and assign the current span
+	 * to the next layout row accepting data.
+	 */
 
+	while (rp->next != NULL) {
+		if (rp->last->col + 1 < tbl->opts.cols)
+			break;
+		for (cp = rp->first; cp != NULL; cp = cp->next)
+			if (cp->pos != TBL_CELL_HORIZ &&
+			    cp->pos != TBL_CELL_DHORIZ)
+				break;
+		if (cp != NULL)
+			break;
+		sp = newspan(tbl, ln, rp);
+		sp->pos = TBL_SPAN_DATA;
+		rp = rp->next;
+	}
+
+	/* Process a real data row. */
+
+	sp = newspan(tbl, ln, rp);
+	sp->pos = TBL_SPAN_DATA;
 	while (p[pos] != '\0')
-		getdata(tbl, dp, ln, p, &pos);
+		getdata(tbl, sp, ln, p, &pos);
 }

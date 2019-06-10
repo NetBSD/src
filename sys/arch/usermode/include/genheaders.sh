@@ -23,6 +23,7 @@ HDRS="$HDRS wchar_limits.h"
 HDRS="$HDRS cdefs.h"
 HDRS="$HDRS mcontext.h"
 HDRS="$HDRS frame_regs.h"
+HDRS="$HDRS cpufunc.h"
 
 for hdr in ${HDRS}; do
 	G="_USERMODE_$(echo ${hdr} | sed 's/\./_/g' | tr [a-z] [A-Z])"

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.119 2017/10/07 21:16:06 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.119.4.1 2019/06/10 22:05:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ extern size_t __mb_cur_max;
 __BEGIN_DECLS
 __dead	 void _Exit(int);
 __dead	 void abort(void);
-__pure	 int abs(int);
+__constfunc	int abs(int);
 int	 atexit(void (*)(void));
 double	 atof(const char *);
 int	 atoi(const char *);
@@ -111,7 +111,7 @@ div_t	 div(int, int);
 __dead	 void exit(int);
 void	 free(void *);
 __aconst char *getenv(const char *);
-__pure long
+__constfunc long
 	 labs(long);
 ldiv_t	 ldiv(long, long);
 void	*malloc(size_t);
@@ -205,6 +205,8 @@ char	*realpath(const char * __restrict, char * __restrict);
 int	 ttyslot(void);
 
 void	*valloc(size_t);		/* obsoleted by malloc() */
+
+int	 getsubopt(char **, char * const *, char **);
 
 int	 grantpt(int);
 int	 unlockpt(int);

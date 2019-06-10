@@ -46,7 +46,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
         at the target precision */
   const int im_sgn = mpfr_signbit (mpc_imagref (b)) == 0 ? 0 : -1;
      /* we need to know the sign of Im(b) when it is +/-0 */
-  const mpfr_rnd_t r = im_sgn ? GMP_RNDD : GMP_RNDU;
+  const mpfr_rnd_t r = im_sgn ? MPFR_RNDD : MPFR_RNDU;
      /* rounding mode used when computing t */
 
   /* special values */
@@ -68,7 +68,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                {
                /* sqrt(-Inf +i*y) = +0 +i*Inf, when y positive */
                /* sqrt(-Inf +i*y) = +0 -i*Inf, when y positive */
-               mpfr_set_ui (mpc_realref (a), 0, GMP_RNDN);
+               mpfr_set_ui (mpc_realref (a), 0, MPFR_RNDN);
                mpfr_set_inf (mpc_imagref (a), im_sgn);
                return MPC_INEX (0, 0);
                }
@@ -87,7 +87,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                /* sqrt(+Inf +i*y) = +Inf +i*0, when y positive */
                /* sqrt(+Inf +i*y) = +Inf -i*0, when y positive */
                mpfr_set_inf (mpc_realref (a), +1);
-               mpfr_set_ui (mpc_imagref (a), 0, GMP_RNDN);
+               mpfr_set_ui (mpc_imagref (a), 0, MPFR_RNDN);
                if (im_sgn)
                   mpc_conj (a, a, MPC_RNDNN);
                return MPC_INEX (0, 0);
@@ -125,7 +125,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       else if (re_cmp > 0)
         {
           inex_w = mpfr_sqrt (mpc_realref (a), mpc_realref (b), MPC_RND_RE (rnd));
-          mpfr_set_ui (mpc_imagref (a), 0, GMP_RNDN);
+          mpfr_set_ui (mpc_imagref (a), 0, MPFR_RNDN);
           if (im_sgn)
             mpc_conj (a, a, MPC_RNDNN);
           return MPC_INEX (inex_w, 0);
@@ -133,16 +133,16 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       else
         {
           mpfr_init2 (w, MPC_PREC_RE (b));
-          mpfr_neg (w, mpc_realref (b), GMP_RNDN);
+          mpfr_neg (w, mpc_realref (b), MPFR_RNDN);
           if (im_sgn)
             {
               inex_w = -mpfr_sqrt (mpc_imagref (a), w, INV_RND (MPC_RND_IM (rnd)));
-              mpfr_neg (mpc_imagref (a), mpc_imagref (a), GMP_RNDN);
+              mpfr_neg (mpc_imagref (a), mpc_imagref (a), MPFR_RNDN);
             }
           else
             inex_w = mpfr_sqrt (mpc_imagref (a), w, MPC_RND_IM (rnd));
 
-          mpfr_set_ui (mpc_realref (a), 0, GMP_RNDN);
+          mpfr_set_ui (mpc_realref (a), 0, MPFR_RNDN);
           mpfr_clear (w);
           return MPC_INEX (0, inex_w);
         }
@@ -155,7 +155,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
 
       y[0] = mpc_imagref (b)[0];
       /* If y/2 underflows, so does sqrt(y/2) */
-      mpfr_div_2ui (y, y, 1, GMP_RNDN);
+      mpfr_div_2ui (y, y, 1, MPFR_RNDN);
       if (im_cmp > 0)
         {
           inex_w = mpfr_sqrt (mpc_realref (a), y, MPC_RND_RE (rnd));
@@ -163,10 +163,10 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
         }
       else
         {
-          mpfr_neg (y, y, GMP_RNDN);
+          mpfr_neg (y, y, MPFR_RNDN);
           inex_w = mpfr_sqrt (mpc_realref (a), y, MPC_RND_RE (rnd));
           inex_t = -mpfr_sqrt (mpc_imagref (a), y, INV_RND (MPC_RND_IM (rnd)));
-          mpfr_neg (mpc_imagref (a), mpc_imagref (a), GMP_RNDN);
+          mpfr_neg (mpc_imagref (a), mpc_imagref (a), MPFR_RNDN);
         }
       return MPC_INEX (inex_w, inex_t);
     }
@@ -180,9 +180,9 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       rnd_w = MPC_RND_RE (rnd);
       prec_w = MPC_PREC_RE (a);
       rnd_t = MPC_RND_IM(rnd);
-      if (rnd_t == GMP_RNDZ)
-         /* force GMP_RNDD or GMP_RNDUP, using sign(t) = sign(y) */
-         rnd_t = (im_cmp > 0 ? GMP_RNDD : GMP_RNDU);
+      if (rnd_t == MPFR_RNDZ)
+         /* force MPFR_RNDD or MPFR_RNDUP, using sign(t) = sign(y) */
+         rnd_t = (im_cmp > 0 ? MPFR_RNDD : MPFR_RNDU);
       prec_t = MPC_PREC_IM (a);
    }
    else {
@@ -191,14 +191,14 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       if (im_cmp > 0) {
          rnd_w = MPC_RND_IM(rnd);
          rnd_t = MPC_RND_RE(rnd);
-         if (rnd_t == GMP_RNDZ)
-            rnd_t = GMP_RNDD;
+         if (rnd_t == MPFR_RNDZ)
+            rnd_t = MPFR_RNDD;
       }
       else {
          rnd_w = INV_RND(MPC_RND_IM (rnd));
          rnd_t = INV_RND(MPC_RND_RE (rnd));
-         if (rnd_t == GMP_RNDZ)
-            rnd_t = GMP_RNDU;
+         if (rnd_t == MPFR_RNDZ)
+            rnd_t = MPFR_RNDU;
       }
    }
 
@@ -211,30 +211,30 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       /* let b = x + iy */
       /* w = sqrt ((|x| + sqrt (x^2 + y^2)) / 2), rounded down */
       /* total error bounded by 3 ulps */
-      inex_w = mpc_abs (w, b, GMP_RNDD);
+      inex_w = mpc_abs (w, b, MPFR_RNDD);
       if (re_cmp < 0)
-        inex_w |= mpfr_sub (w, w, mpc_realref (b), GMP_RNDD);
+        inex_w |= mpfr_sub (w, w, mpc_realref (b), MPFR_RNDD);
       else
-        inex_w |= mpfr_add (w, w, mpc_realref (b), GMP_RNDD);
-      inex_w |= mpfr_div_2ui (w, w, 1, GMP_RNDD);
-      inex_w |= mpfr_sqrt (w, w, GMP_RNDD);
+        inex_w |= mpfr_add (w, w, mpc_realref (b), MPFR_RNDD);
+      inex_w |= mpfr_div_2ui (w, w, 1, MPFR_RNDD);
+      inex_w |= mpfr_sqrt (w, w, MPFR_RNDD);
 
       repr_w = mpfr_min_prec (w) <= prec_w;
       if (!repr_w)
          /* use the usual trick for obtaining the ternary value */
-         ok_w = mpfr_can_round (w, prec - 2, GMP_RNDD, GMP_RNDU,
-                                prec_w + (rnd_w == GMP_RNDN));
+         ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDU,
+                                prec_w + (rnd_w == MPFR_RNDN));
       else {
             /* w is representable in the target precision and thus cannot be
                rounded up */
-         if (rnd_w == GMP_RNDN)
+         if (rnd_w == MPFR_RNDN)
             /* If w can be rounded to nearest, then actually no rounding
                occurs, and the ternary value is known from inex_w. */
-            ok_w = mpfr_can_round (w, prec - 2, GMP_RNDD, GMP_RNDN, prec_w);
+            ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDN, prec_w);
          else
             /* If w can be rounded down, then any direct rounding and the
                ternary flag can be determined from inex_w. */
-            ok_w = mpfr_can_round (w, prec - 2, GMP_RNDD, GMP_RNDD, prec_w);
+            ok_w = mpfr_can_round (w, prec - 2, MPFR_RNDD, MPFR_RNDD, prec_w);
       }
 
       if (!inex_w || ok_w) {
@@ -249,11 +249,11 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          if (!repr_t)
              /* As for w; since t was rounded away, we check whether rounding to 0
                 is possible. */
-            ok_t = mpfr_can_round (t, prec - 3, r, GMP_RNDZ,
-                                   prec_t + (rnd_t == GMP_RNDN));
+            ok_t = mpfr_can_round (t, prec - 3, r, MPFR_RNDZ,
+                                   prec_t + (rnd_t == MPFR_RNDN));
          else {
-            if (rnd_t == GMP_RNDN)
-               ok_t = mpfr_can_round (t, prec - 3, r, GMP_RNDN, prec_t);
+            if (rnd_t == MPFR_RNDN)
+               ok_t = mpfr_can_round (t, prec - 3, r, MPFR_RNDN, prec_t);
             else
                ok_t = mpfr_can_round (t, prec - 3, r, r, prec_t);
          }
@@ -275,7 +275,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
    }
 
    if (repr_w && inex_w) {
-      if (rnd_w == GMP_RNDN) {
+      if (rnd_w == MPFR_RNDN) {
          /* w has not been rounded with mpfr_set/mpfr_neg, determine ternary
             value from inex_w instead */
          if (re_cmp > 0)
@@ -289,7 +289,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          /* determine ternary value, but also potentially add 1 ulp; can only
             be done now when we are in the target precision */
          if (re_cmp > 0) {
-            if (rnd_w == GMP_RNDU) {
+            if (rnd_w == MPFR_RNDU) {
                MPFR_ADD_ONE_ULP (mpc_realref (a));
                inex_re = +1;
             }
@@ -297,7 +297,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_re = -1;
          }
          else if (im_cmp > 0) {
-            if (rnd_w == GMP_RNDU) {
+            if (rnd_w == MPFR_RNDU) {
                MPFR_ADD_ONE_ULP (mpc_imagref (a));
                inex_im = +1;
             }
@@ -305,7 +305,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_im = -1;
          }
          else {
-            if (rnd_w == GMP_RNDU) {
+            if (rnd_w == MPFR_RNDU) {
                MPFR_ADD_ONE_ULP (mpc_imagref (a));
                inex_im = -1;
             }
@@ -315,7 +315,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       }
    }
    if (repr_t && inex_t) {
-      if (rnd_t == GMP_RNDN) {
+      if (rnd_t == MPFR_RNDN) {
          if (re_cmp > 0)
             inex_im = inex_t;
          else if (im_cmp > 0)
@@ -330,9 +330,9 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
             else {
                inex_im = -inex_t;
                /* im_cmp > 0 implies that Im(b) > 0, thus im_sgn = 0
-                  and r = GMP_RNDU.
+                  and r = MPFR_RNDU.
                   im_cmp < 0 implies that Im(b) < 0, thus im_sgn = -1
-                  and r = GMP_RNDD. */
+                  and r = MPFR_RNDD. */
                MPFR_SUB_ONE_ULP (mpc_imagref (a));
             }
          }
@@ -341,7 +341,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_re = inex_t;
             else {
                inex_re = -inex_t;
-               /* im_cmp > 0 implies r = GMP_RNDU (see above) */
+               /* im_cmp > 0 implies r = MPFR_RNDU (see above) */
                MPFR_SUB_ONE_ULP (mpc_realref (a));
             }
          }
@@ -350,7 +350,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_re = -inex_t;
             else {
                inex_re = inex_t;
-               /* im_cmp < 0 implies r = GMP_RNDD (see above) */
+               /* im_cmp < 0 implies r = MPFR_RNDD (see above) */
                MPFR_SUB_ONE_ULP (mpc_realref (a));
             }
          }

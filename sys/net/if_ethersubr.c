@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.270 2018/06/14 07:54:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.270.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.270 2018/06/14 07:54:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.270.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -376,7 +376,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef MPLS
 	{
 		struct m_tag *mtag;
-		mtag = m_tag_find(m, PACKET_TAG_MPLS, NULL);
+		mtag = m_tag_find(m, PACKET_TAG_MPLS);
 		if (mtag != NULL) {
 			/* Having the tag itself indicates it's MPLS */
 			etype = htons(ETHERTYPE_MPLS);
@@ -790,9 +790,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			/* unknown subtype */
 			break;
 		}
-		/* FALLTHROUGH */
 	}
-
+	/* FALLTHROUGH */
 	default:
 		if (m->m_flags & M_PROMISC) {
 			m_freem(m);
@@ -998,6 +997,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	ec->ec_flags = 0;
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
@@ -1372,6 +1372,48 @@ ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 	ec->ec_ifflags_cb = cb;
 }
 
+static int
+ether_ioctl_reinit(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	int error;
+
+	switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+	case IFF_RUNNING:
+		/*
+		 * If interface is marked down and it is running,
+		 * then stop and disable it.
+		 */
+		(*ifp->if_stop)(ifp, 1);
+		break;
+	case IFF_UP:
+		/*
+		 * If interface is marked up and it is stopped, then
+		 * start it.
+		 */
+		return (*ifp->if_init)(ifp);
+	case IFF_UP | IFF_RUNNING:
+		error = 0;
+		if (ec->ec_ifflags_cb != NULL) {
+			error = (*ec->ec_ifflags_cb)(ec);
+			if (error == ENETRESET) {
+				/*
+				 * Reset the interface to pick up
+				 * changes in any other flags that
+				 * affect the hardware state.
+				 */
+				return (*ifp->if_init)(ifp);
+			}
+		} else
+			error = (*ifp->if_init)(ifp);
+		return error;
+	case 0:
+		break;
+	}
+
+	return 0;
+}
+
 /*
  * Common ioctls for Ethernet interfaces.  Note, we must be
  * called at splnet().
@@ -1379,7 +1421,7 @@ ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 int
 ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ethercom *ec = (void *) ifp;
+	struct ethercom *ec = (void *)ifp;
 	struct eccapreq *eccr;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *iflr = data;
@@ -1428,53 +1470,47 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			return error;
-		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
-		case IFF_RUNNING:
-			/*
-			 * If interface is marked down and it is running,
-			 * then stop and disable it.
-			 */
-			(*ifp->if_stop)(ifp, 1);
-			break;
-		case IFF_UP:
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			return (*ifp->if_init)(ifp);
-		case IFF_UP | IFF_RUNNING:
-			error = 0;
-			if (ec->ec_ifflags_cb != NULL) {
-				error = (*ec->ec_ifflags_cb)(ec);
-				if (error == ENETRESET) {
-					/*
-					 * Reset the interface to pick up
-					 * changes in any other flags that
-					 * affect the hardware state.
-					 */
-					return (*ifp->if_init)(ifp);
-				}
-			} else
-				error = (*ifp->if_init)(ifp);
-			return error;
-		case 0:
-			break;
+		return ether_ioctl_reinit(ec);
+	case SIOCGIFFLAGS:
+		error = ifioctl_common(ifp, cmd, data);
+		if (error == 0) {
+			/* Set IFF_ALLMULTI for backcompat */
+			ifr->ifr_flags |= (ec->ec_flags & ETHER_F_ALLMULTI) ?
+			    IFF_ALLMULTI : 0;
 		}
-		return 0;
+		return error;
 	case SIOCGETHERCAP:
 		eccr = (struct eccapreq *)data;
 		eccr->eccr_capabilities = ec->ec_capabilities;
 		eccr->eccr_capenable = ec->ec_capenable;
 		return 0;
+	case SIOCSETHERCAP:
+		eccr = (struct eccapreq *)data;
+		if ((eccr->eccr_capenable & ~ec->ec_capabilities) != 0)
+			return EINVAL;
+		if (eccr->eccr_capenable == ec->ec_capenable)
+			return 0;
+#if 0 /* notyet */
+		ec->ec_capenable = (ec->ec_capenable & ETHERCAP_CANTCHANGE)
+		    | (eccr->eccr_capenable & ~ETHERCAP_CANTCHANGE);
+#else
+		ec->ec_capenable = eccr->eccr_capenable;
+#endif
+		return ether_ioctl_reinit(ec);
 	case SIOCADDMULTI:
 		return ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCDELMULTI:
 		return ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		if (ec->ec_mii == NULL)
+		if (ec->ec_mii != NULL)
+			return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
+			    cmd);
+		else if (ec->ec_ifmedia != NULL)
+			return ifmedia_ioctl(ifp, ifr, ec->ec_ifmedia, cmd);
+		else
 			return ENOTTY;
-		return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media, cmd);
+		break;
 	case SIOCALIFADDR:
 		sdl = satocsdl(sstocsa(&iflr->addr));
 		if (sdl->sdl_family != AF_LINK)

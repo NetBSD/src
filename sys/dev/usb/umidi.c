@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.74 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.74.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74 2018/01/21 13:57:12 skrll Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#include <dev/auconv.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/umidi_quirks.h>
 #include <dev/midi_if.h>
@@ -314,7 +313,7 @@ void umidi_attach(device_t, device_t, void *);
 void umidi_childdet(device_t, device_t);
 int umidi_detach(device_t, int);
 int umidi_activate(device_t, enum devact);
-extern struct cfdriver umidi_cd;
+
 CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
     umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 
@@ -462,7 +461,8 @@ umidi_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = 1;
 	if (--sc->sc_refcnt >= 0)
-		usb_detach_wait(sc->sc_dev, &sc->sc_detach_cv, &sc->sc_lock);
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(self, ": didn't detach\n");
 	mutex_exit(&sc->sc_lock);
 
 	detach_all_mididevs(sc, flags);
@@ -549,7 +549,7 @@ umidi_close(void *addr)
 		close_in_jack(mididev->in_jack);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 
 	mididev->opened = 0;
 	mididev->closing = 0;
@@ -1228,7 +1228,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 
 	err =
 	    alloc_all_mididevs(sc,
-			       max(sc->sc_out_num_jacks, sc->sc_in_num_jacks));
+			       uimax(sc->sc_out_num_jacks, sc->sc_in_num_jacks));
 	if (err!=USBD_NORMAL_COMPLETION)
 		return err;
 
@@ -1786,7 +1786,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	}
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 
 	return 0;
 }

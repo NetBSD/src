@@ -1,6 +1,6 @@
 /* Symbol manipulating routines for the remote server for GDB.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
-#include "symbol.h"
+#include "common/symbol.h"
 
 /* See common/symbol.h.  */
 

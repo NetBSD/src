@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This test only works on GNU/Linux.
-if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] || [skip_shlib_tests]} {
     continue
 }
@@ -258,7 +258,7 @@ proc test_attach_gdb {file pid displacement prefix} {
 	# Print the "PIE (Position Independent Executable) displacement" message.
 	gdb_test_no_output "set verbose on"
 
-	gdb_test "file $file" "Reading symbols from .*done\\." "file"
+	gdb_test "file $file" "Reading symbols from .*" "file"
 
 	set test "attach"
 	gdb_test_multiple "attach $pid" $test {
@@ -625,7 +625,8 @@ foreach ldprelink {NO YES} {
 				lappend opts {debug}
 			    }
 			    if {$binpie != "NO"} {
-				lappend opts {additional_flags=-fPIE -pie}
+				lappend opts {additional_flags=-fPIE}
+				lappend opts {ldflags=-pie}
 			    }
 
 			    set dir ${exec}.d

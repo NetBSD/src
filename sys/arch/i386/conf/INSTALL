@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.333 2017/12/25 06:39:00 rin Exp $
+# $NetBSD: INSTALL,v 1.333.4.1 2019/06/10 22:06:20 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,7 +7,7 @@
 
 include	"arch/i386/conf/MONOLITHIC"
 
-#ident 		"INSTALL-$Revision: 1.333 $"
+#ident 		"INSTALL-$Revision: 1.333.4.1 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk

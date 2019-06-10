@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.80 2018/06/24 13:35:33 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.80.2.1 2019/06/10 22:06:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80 2018/06/24 13:35:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80.2.1 2019/06/10 22:06:56 christos Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -256,6 +256,7 @@ void
 events_init(void)
 {
 	mutex_init(&evtchn_lock, MUTEX_DEFAULT, IPL_NONE);
+#ifdef XENPV
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
 
 	KASSERT(debug_port != -1);
@@ -269,8 +270,11 @@ events_init(void)
 	 */
 	evtsource[debug_port] = (void *)-1;
 	xen_atomic_set_bit(&curcpu()->ci_evtmask[0], debug_port);
-	hypervisor_enable_event(debug_port);
-
+	hypervisor_unmask_event(debug_port);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(debug_port);
+#endif /* NPCI > 0 || NISA > 0 */
+#endif /* XENPV */
 	x86_enable_intr();		/* at long last... */
 }
 
@@ -331,7 +335,10 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	 */
 	if (__predict_false(evtch == debug_port)) {
 		xen_debug_handler(NULL);
-		hypervisor_enable_event(evtch);
+		hypervisor_unmask_event(debug_port);
+#if NPCI > 0 || NISA > 0
+		hypervisor_ack_pirq_event(debug_port);
+#endif /* NPCI > 0 || NISA > 0 */		
 		return 0;
 	}
 
@@ -361,13 +368,13 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
-	sti();
+	x86_enable_intr();
 	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
-			iplmask &= ~IUNMASK(ci, ih->ih_level);
+			iplmask &= ~XUNMASK(ci, ih->ih_level);
 			ih = ih->ih_evt_next;
 			continue;
 		}
@@ -376,47 +383,51 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
-			cli();
+			x86_disable_intr();
 			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
 			mutex_spin_exit(&evtlock[evtch]);
 			goto splx;
 		}
-		iplmask &= ~IUNMASK(ci, ih->ih_level);
+		iplmask &= ~XUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
 	}
 	mutex_spin_exit(&evtlock[evtch]);
-	cli();
-	hypervisor_enable_event(evtch);
+	x86_disable_intr();
+	hypervisor_unmask_event(evtch);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(evtch);
+#endif /* NPCI > 0 || NISA > 0 */		
+
 splx:
 	/*
 	 * C version of spllower(). ASTs will be checked when
 	 * hypevisor_callback() exits, so no need to check here.
 	 */
-	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+	iplmask = (XUNMASK(ci, ilevel) & ci->ci_xpending);
 	while (iplmask != 0) {
 		iplbit = 1 << (NIPL - 1);
 		i = (NIPL - 1);
 		while (iplmask != 0 && i > ilevel) {
 			while (iplmask & iplbit) {
-				ci->ci_ipending &= ~iplbit;
+				ci->ci_xpending &= ~iplbit;
 				ci->ci_ilevel = i;
-				for (ih = ci->ci_isources[i]->is_handlers;
+				for (ih = ci->ci_xsources[i]->is_handlers;
 				    ih != NULL; ih = ih->ih_next) {
 					KASSERT(ih->ih_cpu == ci);
-					sti();
+					x86_enable_intr();
 					ih_fun = (void *)ih->ih_fun;
 					ih_fun(ih->ih_arg, regs);
-					cli();
+					x86_disable_intr();
 				}
 				hypervisor_enable_ipl(i);
 				/* more pending IPLs may have been registered */
 				iplmask =
-				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
+				    (XUNMASK(ci, ilevel) & ci->ci_xpending);
 			}
 			i--;
 			iplbit >>= 1;
@@ -737,7 +748,6 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
     const char *intrname, const char *xname)
 {
 	struct pintrhand *ih;
-	physdev_op_t physdev_op;
 
 	ih = kmem_zalloc(sizeof(struct pintrhand),
 	    cold ? KM_NOSLEEP : KM_SLEEP);
@@ -759,18 +769,9 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		return NULL;
 	}
 
-	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
-	physdev_op.u.irq_status_query.irq = pirq;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
-	if (physdev_op.u.irq_status_query.flags &
-	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
-		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
-#ifdef IRQ_DEBUG
-		printf("pirq %d needs notify\n", pirq);
-#endif
-	}
-	hypervisor_enable_event(evtch);
+	hypervisor_prime_pirq_event(pirq, evtch);
+	hypervisor_unmask_event(evtch);
+	hypervisor_ack_pirq_event(evtch);
 	return ih;
 }
 
@@ -939,17 +940,18 @@ event_set_iplhandler(struct cpu_info *ci,
 	struct intrsource *ipls;
 
 	KASSERT(ci == ih->ih_cpu);
-	if (ci->ci_isources[level] == NULL) {
+	if (ci->ci_xsources[level] == NULL) {
 		ipls = kmem_zalloc(sizeof (struct intrsource),
 		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
+		ipls->is_recurse = xenev_stubs[level].ist_entry;
 		ipls->is_recurse = xenev_stubs[level].ist_recurse;
 		ipls->is_resume = xenev_stubs[level].ist_resume;
 		ipls->is_handlers = ih;
-		ci->ci_isources[level] = ipls;
+		ci->ci_xsources[level] = ipls;
 	} else {
-		ipls = ci->ci_isources[level];
+		ipls = ci->ci_xsources[level];
 		ih->ih_next = ipls->is_handlers;
 		ipls->is_handlers = ih;
 	}
@@ -982,7 +984,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	ci = ih->ih_cpu;
 	*ihp = ih->ih_evt_next;
 
-	ipls = ci->ci_isources[ih->ih_level];
+	ipls = ci->ci_xsources[ih->ih_level];
 	for (ihp = &ipls->is_handlers, ih = ipls->is_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_next, ih = ih->ih_next) {
@@ -1005,16 +1007,32 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	return 0;
 }
 
+#if NPCI > 0 || NISA > 0
 void
-hypervisor_enable_event(unsigned int evtch)
+hypervisor_prime_pirq_event(int pirq, unsigned int evtch)
+{
+	physdev_op_t physdev_op;
+	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
+	physdev_op.u.irq_status_query.irq = pirq;
+	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
+		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
+	if (physdev_op.u.irq_status_query.flags &
+	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
+		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
+#ifdef IRQ_DEBUG
+		printf("pirq %d needs notify\n", pirq);
+#endif
+	}
+}
+
+void
+hypervisor_ack_pirq_event(unsigned int evtch)
 {
 #ifdef IRQ_DEBUG
 	if (evtch == IRQ_DEBUG)
-		printf("hypervisor_enable_evtch: evtch %d\n", evtch);
+		printf("%s: evtch %d\n", __func__, evtch);
 #endif
 
-	hypervisor_unmask_event(evtch);
-#if NPCI > 0 || NISA > 0
 	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
 #ifdef  IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
@@ -1022,8 +1040,8 @@ hypervisor_enable_event(unsigned int evtch)
 #endif
 		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
 	}
-#endif /* NPCI > 0 || NISA > 0 */
 }
+#endif /* NPCI > 0 || NISA > 0 */
 
 int
 xen_debug_handler(void *arg)
@@ -1031,7 +1049,7 @@ xen_debug_handler(void *arg)
 	struct cpu_info *ci = curcpu();
 	int i;
 	int xci_ilevel = ci->ci_ilevel;
-	int xci_ipending = ci->ci_ipending;
+	int xci_xpending = ci->ci_xpending;
 	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
 	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
@@ -1048,8 +1066,8 @@ xen_debug_handler(void *arg)
 
 	__insn_barrier();
 	printf("debug event\n");
-	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
-	    xci_ilevel, xci_ipending, xci_idepth);
+	printf("ci_ilevel 0x%x ci_xpending 0x%x ci_idepth %d\n",
+	    xci_ilevel, xci_xpending, xci_idepth);
 	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);
@@ -1064,6 +1082,7 @@ xen_debug_handler(void *arg)
 	return 0;
 }
 
+#ifdef XENPV
 static struct evtsource *
 event_get_handler(const char *intrid)
 {
@@ -1191,3 +1210,4 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 
 	return ii_handler;
 }
+#endif /* XENPV */

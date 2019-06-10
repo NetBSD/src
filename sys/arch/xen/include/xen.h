@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.37 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: xen.h,v 1.37.18.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
  *
@@ -44,7 +44,7 @@ struct xen_netinfo {
 };
 
 union xen_cmdline_parseinfo {
-	char			xcp_bootdev[16]; /* sizeof(dv_xname) */
+	char			xcp_bootdev[144];
 	struct xen_netinfo	xcp_netinfo;
 	char			xcp_console[16];
 	char			xcp_pcidevs[64];
@@ -75,12 +75,8 @@ void	idle_block(void);
 /* xen_machdep.c */
 void	sysctl_xen_suspend_setup(void);
 
-#if defined(XENDEBUG) || 1 /* XXX */
 #include <sys/stdarg.h>
-
 void printk(const char *, ...);
-void vprintk(const char *, va_list);
-#endif
 
 #endif
 
@@ -126,61 +122,18 @@ void vprintk(const char *, va_list);
 /* Everything below this point is not included by assembler (.S) files. */
 #ifndef _LOCORE
 
+/* Version Specific Glue */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030203
+#define console_mfn    console.domU.mfn
+#define console_evtchn console.domU.evtchn
+#endif
+
 /* some function prototypes */
 void trap_init(void);
 void xpq_flush_cache(void);
 
 #define xendomain_is_dom0()		(xen_start_info.flags & SIF_INITDOMAIN)
 #define xendomain_is_privileged()	(xen_start_info.flags & SIF_PRIVILEGED)
-
-/*
- * STI/CLI equivalents. These basically set and clear the virtual
- * event_enable flag in the shared_info structure. Note that when
- * the enable bit is set, there may be pending events to be handled.
- * We may therefore call into do_hypervisor_callback() directly.
- */
-
-#define __save_flags(x)							\
-do {									\
-	(x) = curcpu()->ci_vcpu->evtchn_upcall_mask;			\
-} while (0)
-
-#define __restore_flags(x)						\
-do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
-	__insn_barrier();						\
-	if ((_vci->evtchn_upcall_mask = (x)) == 0) {			\
-		x86_lfence();						\
-		if (__predict_false(_vci->evtchn_upcall_pending))	\
-			hypervisor_force_callback();			\
-	}								\
-} while (0)
-
-#define __cli()								\
-do {									\
-	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;			\
-	x86_lfence();							\
-} while (0)
-
-#define __sti()								\
-do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
-	__insn_barrier();						\
-	_vci->evtchn_upcall_mask = 0;					\
-	x86_lfence(); /* unmask then check (avoid races) */		\
-	if (__predict_false(_vci->evtchn_upcall_pending))		\
-		hypervisor_force_callback();				\
-} while (0)
-
-#define cli()			__cli()
-#define sti()			__sti()
-#define save_flags(x)		__save_flags(x)
-#define restore_flags(x)	__restore_flags(x)
-#define save_and_cli(x)	do {					\
-	__save_flags(x);					\
-	__cli();						\
-} while (/* CONSTCOND */ 0)
-#define save_and_sti(x)		__save_and_sti(x)
 
 /*
  * always assume we're on multiprocessor. We don't know how many CPU the
@@ -252,7 +205,7 @@ xen_atomic_clearbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {
 static __inline XATOMIC_T
 xen_atomic_test_and_clear_bit(volatile void *ptr, unsigned long bitno)
 {
-	int result;
+	long result;
 
 	__asm volatile(__LOCK_PREFIX
 #ifdef __x86_64__
@@ -345,7 +298,7 @@ xen_atomic_clear_bit(volatile void *ptr, unsigned long bitno)
 
 void	wbinvd(void);
 
-#include <xen/xen-public/features.h>
+#include <xen/include/public/features.h>
 #include <sys/systm.h>
 
 extern bool xen_feature_tables[];

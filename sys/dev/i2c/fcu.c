@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: fcu.c,v 1.6.2.1 2019/06/10 22:07:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6.2.1 2019/06/10 22:07:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			} else if (strstr(descr, "INTAKE") != NULL) {
 				KASSERT(eeprom != NULL);
 				memcpy(&rmin, &eeprom[0x4c], 2);
-				memcpy(&rmax, &eeprom[0x5e], 2);
+				memcpy(&rmax, &eeprom[0x4e], 2);
 				fan->base_rpm = rmin;
 				fan->max_rpm = rmax;
 				fan->step = (rmax - rmin) / 30;
@@ -276,6 +276,8 @@ fcu_attach(device_t parent, device_t self, void *aux)
 				fan->max_rpm = 3000;
 				fan->step = 100;
 			}
+			DPRINTF("fan %s: %d - %d rpm, step %d\n",
+			   descr, fan->base_rpm, fan->max_rpm, fan->step);
 
 			/* now stuff them into zones */
 			if (strstr(descr, "CPU A") != NULL) {
@@ -429,10 +431,10 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 		diff = data - speed;
 		DPRINTF("d %d s %d t %d diff %d ", f->duty, data, speed, diff);
 		if (diff > 100) {
-			nduty = max(20, nduty - 1);
+			nduty = uimax(20, nduty - 1);
 		}
 		if (diff < -100) {
-			nduty = min(0xd0, nduty + 1);
+			nduty = uimin(0xd0, nduty + 1);
 		}
 		cmd = f->reg;
 		DPRINTF("%s nduty %d", __func__, nduty);
@@ -503,7 +505,7 @@ fcu_adjust(void *cookie)
 		sc->sc_pwm = FALSE;
 		for (i = 0; i < FCU_ZONE_COUNT; i++)
 			fcu_adjust_zone(sc, i);
-		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 2000 : 30000), NULL);
+		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 5000), NULL);
 	}
 	kthread_exit(0);
 }

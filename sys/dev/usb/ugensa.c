@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.35 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.35.16.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.35 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.35.16.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -68,19 +68,10 @@ struct ugensa_softc {
 	device_t		sc_subdev;
 	int			sc_numcon;
 
-	u_char			sc_dying;
+	bool			sc_dying;
 };
 
-struct ucom_methods ugensa_methods = {
-	.ucom_get_status = NULL,
-	.ucom_set = NULL,
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
-	.ucom_open = NULL,
-	.ucom_close = NULL,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
-};
+struct ucom_methods ugensa_methods = { 0 };
 
 #define UGENSA_CONFIG_INDEX	0
 #define UGENSA_IFACE_INDEX	0
@@ -107,23 +98,22 @@ static const struct ugensa_type ugensa_devs[] = {
 
 	{{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
-	{{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },
+	{{ USB_VENDOR_LG, USB_PRODUCT_LG_MSM_HSDPA }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD875 }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },
 };
 #define ugensa_lookup(v, p) \
 	((const struct ugensa_type *)usb_lookup(ugensa_devs, v, p))
 
-int ugensa_match(device_t, cfdata_t, void *);
-void ugensa_attach(device_t, device_t, void *);
-void ugensa_childdet(device_t, device_t);
-int ugensa_detach(device_t, int);
-int ugensa_activate(device_t, enum devact);
-extern struct cfdriver ugensa_cd;
-CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
-    ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
+static int	ugensa_match(device_t, cfdata_t, void *);
+static void	ugensa_attach(device_t, device_t, void *);
+static void	ugensa_childdet(device_t, device_t);
+static int	ugensa_detach(device_t, int);
 
-int
+CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
+    ugensa_attach, ugensa_detach, NULL, NULL, ugensa_childdet);
+
+static int
 ugensa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -135,7 +125,7 @@ ugensa_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 ugensa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugensa_softc *sc = device_private(self);
@@ -153,6 +143,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(10,("\nugensa_attach: sc=%p\n", sc));
 
 	sc->sc_dev = self;
+	sc->sc_dying = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -247,11 +238,11 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 
 bad:
 	DPRINTF(("ugensa_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return;
 }
 
-void
+static void
 ugensa_childdet(device_t self, device_t child)
 {
 	struct ugensa_softc *sc = device_private(self);
@@ -260,23 +251,7 @@ ugensa_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
-ugensa_activate(device_t self, enum devact act)
-{
-	struct ugensa_softc *sc = device_private(self);
-
-	DPRINTF(("ugensa_activate: sc=%p\n", sc));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-int
+static int
 ugensa_detach(device_t self, int flags)
 {
 	struct ugensa_softc *sc = device_private(self);
@@ -284,13 +259,16 @@ ugensa_detach(device_t self, int flags)
 
 	DPRINTF(("ugensa_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
-	pmf_device_deregister(self);
+	sc->sc_dying = true;
 
-	if (sc->sc_subdev != NULL)
+	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+
+	pmf_device_deregister(self);
 
 	return rv;
 }

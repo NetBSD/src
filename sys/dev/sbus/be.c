@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.88 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.88.2.1 2019/06/10 22:07:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88.2.1 2019/06/10 22:07:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -94,11 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88 2018/06/26 06:48:02 msaitoh Exp $");
 #include <sys/intr.h>
 #include <machine/autoconf.h>
 
-#include <dev/sbus/sbusvar.h>
-
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <dev/sbus/sbusvar.h>
 #include <dev/sbus/qecreg.h>
 #include <dev/sbus/qecvar.h>
 #include <dev/sbus/bereg.h>
@@ -139,7 +138,7 @@ struct be_softc {
 	int	sc_channel;		/* channel number */
 	int	sc_burst;
 
-	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
+	struct	qec_ring	sc_rb;	/* Packet Ring Buffer */
 
 	/* MAC address */
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
@@ -178,8 +177,8 @@ static int	be_ifmedia_upd(struct ifnet *);
 static void	be_mcreset(struct be_softc *);
 
 /* MII methods & callbacks */
-static int	be_mii_readreg(device_t, int, int);
-static void	be_mii_writereg(device_t, int, int, int);
+static int	be_mii_readreg(device_t, int, int, uint16_t *);
+static int	be_mii_writereg(device_t, int, int, uint16_t);
 static void	be_mii_statchg(struct ifnet *);
 
 /* MII helpers */
@@ -314,7 +313,7 @@ beattach(device_t parent, device_t self, void *aux)
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
-	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self, "DMA buffer map error %d\n", error);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
 		return;
@@ -338,6 +337,7 @@ beattach(device_t parent, device_t self, void *aux)
 	mii->mii_writereg = be_mii_writereg;
 	mii->mii_statchg = be_mii_statchg;
 
+	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
 
 	/*
@@ -441,8 +441,7 @@ beattach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = bewatchdog;
 	ifp->if_init = beinit;
 	ifp->if_stop = bestop;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* claim 802.1q capability */
@@ -524,7 +523,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), bp + boff, len);
 		boff += len;
 		totlen -= len;
@@ -934,9 +933,10 @@ berint(struct be_softc *sc)
 int
 beioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+#ifdef BEDEBUG
 	struct be_softc *sc = ifp->if_softc;
+#endif
 	struct ifaddr *ifa = data;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -960,7 +960,7 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -993,10 +993,6 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		break;
 
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
@@ -1150,6 +1146,7 @@ be_mcreset(struct be_softc *sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1165,6 +1162,7 @@ be_mcreset(struct be_softc *sc)
 			 */
 			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -1175,6 +1173,7 @@ be_mcreset(struct be_softc *sc)
 		hash[crc >> 4] |= 1 << (crc & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -1288,10 +1287,11 @@ be_mii_sendbits(struct be_softc *sc, int phy, uint32_t data, int nbits)
 }
 
 static int
-be_mii_readreg(device_t self, int phy, int reg)
+be_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct be_softc *sc = device_private(self);
-	int val = 0, i;
+	int i;
+	uint16_t data = 0;
 
 	/*
 	 * Read the PHY register by manually driving the MII control lines.
@@ -1306,17 +1306,18 @@ be_mii_readreg(device_t self, int phy, int reg)
 	(void)be_tcvr_read_bit(sc, phy);
 
 	for (i = 15; i >= 0; i--)
-		val |= (be_tcvr_read_bit(sc, phy) << i);
+		data |= (be_tcvr_read_bit(sc, phy) << i);
 
 	(void)be_tcvr_read_bit(sc, phy);
 	(void)be_tcvr_read_bit(sc, phy);
 	(void)be_tcvr_read_bit(sc, phy);
 
-	return val;
+	*val = data;
+	return 0;
 }
 
-void
-be_mii_writereg(device_t self, int phy, int reg, int val)
+int
+be_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct be_softc *sc = device_private(self);
 	int i;
@@ -1335,6 +1336,8 @@ be_mii_writereg(device_t self, int phy, int reg, int val)
 
 	for (i = 15; i >= 0; i--)
 		be_tcvr_write_bit(sc, phy, (val >> i) & 1);
+
+	return 0;
 }
 
 int
@@ -1347,7 +1350,9 @@ be_mii_reset(struct be_softc *sc, int phy)
 	be_mii_writereg(self, phy, MII_BMCR, BMCR_RESET);
 
 	for (n = 16; n >= 0; n--) {
-		int bmcr = be_mii_readreg(self, phy, MII_BMCR);
+		uint16_t bmcr;
+
+		be_mii_readreg(self, phy, MII_BMCR, &bmcr);
 		if ((bmcr & BMCR_RESET) == 0)
 			break;
 		DELAY(20);
@@ -1440,7 +1445,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	device_t self = sc->sc_dev;
-	int bmcr, bmsr;
+	uint16_t bmcr, bmsr;
 	int error;
 
 	switch (cmd) {
@@ -1460,7 +1465,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
-			bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+			be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 			be_mii_writereg(self,
 			    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 			sc->sc_mii_flags &= ~MIIF_HAVELINK;
@@ -1472,7 +1477,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		if ((error = be_mii_reset(sc, BE_PHY_INTERNAL)) != 0)
 			return error;
 
-		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 
 		/*
 		 * Select the new mode and take out of isolation
@@ -1522,17 +1527,16 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		 */
 
 		/* Read twice in case the register is latched */
-		bmsr =
-		    be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR) |
-		    be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR);
+		be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
+		be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
 
 		if ((bmsr & BMSR_LINK) != 0) {
 			/* We have a carrier */
-			bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+			be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 
 			if ((sc->sc_mii_flags & MIIF_DOINGAUTO) != 0) {
-				bmcr = be_mii_readreg(self,
-				    BE_PHY_INTERNAL, MII_BMCR);
+				be_mii_readreg(self,
+				    BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 
 				sc->sc_mii_flags |= MIIF_HAVELINK;
 				sc->sc_intphy_curspeed = (bmcr & BMCR_S100);
@@ -1561,7 +1565,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 
 		sc->sc_mii_ticks = 0;
-		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 		/* Just flip the fast speed bit */
 		bmcr ^= BMCR_S100;
 		be_mii_writereg(self, BE_PHY_INTERNAL, MII_BMCR, bmcr);
@@ -1570,7 +1574,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 
 	case MII_DOWN:
 		/* Isolate this phy */
-		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 		be_mii_writereg(self,
 		    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 		return 0;
@@ -1596,7 +1600,7 @@ be_intphy_status(struct be_softc *sc)
 	struct mii_data *mii = &sc->sc_mii;
 	device_t self = sc->sc_dev;
 	int media_active, media_status;
-	int bmcr, bmsr;
+	uint16_t bmcr, bmsr;
 
 	media_status = IFM_AVALID;
 	media_active = 0;
@@ -1604,7 +1608,7 @@ be_intphy_status(struct be_softc *sc)
 	/*
 	 * Internal transceiver; do the work here.
 	 */
-	bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+	be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR, &bmcr);
 
 	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
 	case (BMCR_S100 | BMCR_FDX):
@@ -1622,11 +1626,10 @@ be_intphy_status(struct be_softc *sc)
 	}
 
 	/* Read twice in case the register is latched */
-	bmsr =
-	    be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR) |
-	    be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR);
+	be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
+	be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
-		media_status |=  IFM_ACTIVE;
+		media_status |= IFM_ACTIVE;
 
 	mii->mii_media_status = media_status;
 	mii->mii_media_active = media_active;

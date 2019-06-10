@@ -1,6 +1,6 @@
 /* mpfr_expm1 -- Compute exp(x)-1
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -82,14 +82,12 @@ mpfr_expm1 (mpfr_ptr y, mpfr_srcptr x , mpfr_rnd_t rnd_mode)
 
   if (MPFR_IS_NEG (x) && ex > 5)  /* x <= -32 */
     {
-      mpfr_t minus_one, t;
+      mp_limb_t t_limb[(64 - 1) / GMP_NUMB_BITS + 1];
+      mpfr_t t;
       mpfr_exp_t err;
 
-      mpfr_init2 (minus_one, 2);
-      mpfr_init2 (t, 64);
-      mpfr_set_si (minus_one, -1, MPFR_RNDN);
-      mpfr_const_log2 (t, MPFR_RNDU); /* round upward since x is negative */
-      mpfr_div (t, x, t, MPFR_RNDU); /* > x / ln(2) */
+      MPFR_TMP_INIT1(t_limb, t, 64);
+      mpfr_div (t, x, __gmpfr_const_log2_RNDU, MPFR_RNDU); /* > x / ln(2) */
       err = mpfr_cmp_si (t, MPFR_EMIN_MIN >= -LONG_MAX ?
                          MPFR_EMIN_MIN : -LONG_MAX) <= 0 ?
         - (MPFR_EMIN_MIN >= -LONG_MAX ? MPFR_EMIN_MIN : -LONG_MAX) :
@@ -97,10 +95,8 @@ mpfr_expm1 (mpfr_ptr y, mpfr_srcptr x , mpfr_rnd_t rnd_mode)
       /* exp(x) = 2^(x/ln(2))
                <= 2^max(MPFR_EMIN_MIN,-LONG_MAX,ceil(x/ln(2)+epsilon))
          with epsilon > 0 */
-      mpfr_clear (t);
-      MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, minus_one, err, 0, 0, rnd_mode,
-                                        expo, { mpfr_clear (minus_one); });
-      mpfr_clear (minus_one);
+      MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, __gmpfr_mone, err, 0, 0,
+                                        rnd_mode, expo, {});
     }
 
   /* General case */

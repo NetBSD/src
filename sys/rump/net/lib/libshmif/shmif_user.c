@@ -1,4 +1,4 @@
-/*      $NetBSD: shmif_user.c,v 1.2 2018/04/04 09:19:33 martin Exp $	*/
+/*      $NetBSD: shmif_user.c,v 1.2.2.1 2019/06/10 22:09:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifdef __KERNEL_RCSID
+__KERNEL_RCSID(0, "$NetBSD: shmif_user.c,v 1.2.2.1 2019/06/10 22:09:55 christos Exp $");
+#endif
+
 #ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/mman.h>

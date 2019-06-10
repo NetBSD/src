@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.204 2018/05/19 06:44:08 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.204.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.204 2018/05/19 06:44:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.204.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -342,18 +342,20 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
+	if (!ipsec_used || !ipsec_skip_pfil(m))
 #else
 	if (1)
 #endif
 	{
 		struct in6_addr odst;
+		int error;
 
 		odst = ip6->ip6_dst;
-		if (pfil_run_hooks(inet6_pfil_hook, &m, rcvif, PFIL_IN) != 0)
+		error = pfil_run_hooks(inet6_pfil_hook, &m, rcvif, PFIL_IN);
+		if (error != 0 || m == NULL) {
+			IP6_STATINC(IP6_STAT_PFILDROP_IN);
 			return;
-		if (m == NULL)
-			return;
+		}
 		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
@@ -739,7 +741,7 @@ hbhcheck:
 			 * header. Note that we do not visit this with
 			 * protocols with pcb layer code - like udp/tcp/raw ip.
 			 */
-			if ((inet6sw[ip_protox[nxt]].pr_flags
+			if ((inet6sw[ip6_protox[nxt]].pr_flags
 			    & PR_LASTHDR) != 0) {
 				int error;
 
@@ -1483,7 +1485,7 @@ ip6_addaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	if (!mtag) {
 		mtag = m_tag_get(PACKET_TAG_INET6, sizeof(struct ip6aux),
 		    M_NOWAIT);
@@ -1500,7 +1502,7 @@ ip6_findaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	return mtag;
 }
 
@@ -1509,7 +1511,7 @@ ip6_delaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	if (mtag)
 		m_tag_delete(m, mtag);
 }

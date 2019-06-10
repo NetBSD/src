@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.126 2018/02/25 00:27:16 mrg Exp $
+#	$NetBSD: files.mac68k,v 1.126.4.1 2019/06/10 22:06:26 christos Exp $
 
 # mac68k-specific configuration info
 
@@ -176,6 +176,7 @@ file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
@@ -199,9 +200,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

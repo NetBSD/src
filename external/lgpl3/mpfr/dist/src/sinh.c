@@ -1,6 +1,6 @@
 /* mpfr_sinh -- hyperbolic sine
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -84,7 +84,7 @@ mpfr_sinh (mpfr_ptr y, mpfr_srcptr xt, mpfr_rnd_t rnd_mode)
     if (MPFR_GET_EXP (x) < 0)
       Nt -= 2*MPFR_GET_EXP (x);
 
-    /* initialise of intermediary variables */
+    /* initialize of intermediary variables */
     MPFR_GROUP_INIT_2 (group, Nt, t, ti);
 
     /* First computation of sinh */
@@ -170,7 +170,7 @@ mpfr_sinh (mpfr_ptr y, mpfr_srcptr xt, mpfr_rnd_t rnd_mode)
               }
           }
 
-        /* actualisation of the precision */
+        /* actualization of the precision */
         Nt += err;
         MPFR_ZIV_NEXT (loop, Nt);
         MPFR_GROUP_REPREC_2 (group, Nt, t, ti);

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/01 12:38:39 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2019/06/10 22:10:14 christos Exp $
 
-HOSTPROGNAME=	nbgpt
+HOSTPROGNAME=	${_TOOL_PREFIX}gpt
 HOST_SRCDIR=	sbin/gpt
 HOST_CPPFLAGS+=	-I${.CURDIR}
 

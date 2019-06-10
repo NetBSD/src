@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2019/06/10 22:10:13 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -13,7 +13,7 @@ BRANDING?=	\
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--disable-werror \
+		--disable-werror --disable-initfini-array \
 		${BRANDING}
 
 build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
@@ -67,6 +67,7 @@ native-binutils: .native/.configure_done
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM} \
+			--disable-initfini-array \
 			${BRANDING} \
 		)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \

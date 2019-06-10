@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2018/05/15 01:07:06 thorpej Exp $
+# $NetBSD: GENERIC,v 1.99.2.1 2019/06/10 22:06:42 christos Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.99.2.1 $"
 
 maxusers	32
 
@@ -48,7 +48,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -123,10 +123,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -260,7 +256,6 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB scanners
 #uscanner* at uhub? port ?
@@ -303,12 +298,10 @@ pseudo-device	vnd
 # network pseudo-devices
 pseudo-device	loop
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	ipfilter
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
@@ -341,18 +334,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

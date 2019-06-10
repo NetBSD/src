@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * NS7
+ *
+ * NOTE: This named instance is used to reproduce a scenario which involves a
+ * number of functions getting called in a very specific order which results in
+ * an infinite loop while iterating over NSEC3 red-black tree.  Ensuring this
+ * happens requires carefully setting the number of signing keys, NSEC3
+ * parameters (number of iterations and salt value), zone data and named
+ * configuration.  Changing any of these and/or influencing this instance's
+ * behavior (e.g. by sending extra queries to it) might render this test moot
+ * as it will no longer be able to reproduce the exact scenario it attempts to.
+ *
+ * Given the above, please do not use this instance for any other test than the
+ * one it was meant for.
+ */
+
+include "../../common/rndc.key";
+
+controls {
+	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.7;
+	notify-source 10.53.0.7;
+	transfer-source 10.53.0.7;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.7; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	try-tcp-refresh no;
+	allow-new-zones yes;
+	sig-signing-nodes 100;
+	sig-signing-signatures 10;
+};

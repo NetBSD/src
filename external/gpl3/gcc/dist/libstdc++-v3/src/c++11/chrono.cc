@@ -1,6 +1,6 @@
 // chrono -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -75,7 +75,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 #endif
     }
 
-    
+
     constexpr bool steady_clock::is_steady;
 
     steady_clock::time_point

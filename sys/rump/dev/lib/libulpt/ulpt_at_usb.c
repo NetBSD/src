@@ -1,4 +1,7 @@
-/*	$NetBSD: ulpt_at_usb.c,v 1.6 2016/01/26 23:12:16 pooka Exp $	*/
+/*	$NetBSD: ulpt_at_usb.c,v 1.6.18.1 2019/06/10 22:09:51 christos Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ulpt_at_usb.c,v 1.6.18.1 2019/06/10 22:09:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

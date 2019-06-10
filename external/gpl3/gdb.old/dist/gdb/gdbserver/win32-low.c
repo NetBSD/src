@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -1495,16 +1495,12 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
       current_process_handle = current_event.u.CreateProcessInfo.hProcess;
       main_thread_id = current_event.dwThreadId;
 
-      ourstatus->kind = TARGET_WAITKIND_EXECD;
-      ourstatus->value.execd_pathname = "Main executable";
-
       /* Add the main thread.  */
       child_add_thread (current_event.dwProcessId,
 			main_thread_id,
 			current_event.u.CreateProcessInfo.hThread,
 			current_event.u.CreateProcessInfo.lpThreadLocalBase);
 
-      ourstatus->value.related_pid = debug_event_ptid (&current_event);
 #ifdef _WIN32_WCE
       if (!attaching)
 	{
@@ -1632,7 +1628,6 @@ win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 	  OUTMSG (("Ignoring unknown internal event, %d\n", ourstatus->kind));
 	  /* fall-through */
 	case TARGET_WAITKIND_SPURIOUS:
-	case TARGET_WAITKIND_EXECD:
 	  /* do nothing, just continue */
 	  child_continue (DBG_CONTINUE, -1);
 	  break;

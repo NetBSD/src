@@ -1,6 +1,6 @@
 // Low-level functions for atomic operations: sh version  -*- C++ -*-
 
-// Copyright (C) 1999-2016 Free Software Foundation, Inc.
+// Copyright (C) 1999-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,6 @@
 // set in the environment.  This makes it impossible to enable the proper
 // atomic model on SH without modifying GCC itself, because libstdc++ always
 // thinks the target doesn't do any atomics and uses the default mutex based
-// implementation from cpu/generic/atomicity/mutex.
+// implementation from cpu/generic/atomicity_mutex.
 
 #include <ext/atomicity.h>

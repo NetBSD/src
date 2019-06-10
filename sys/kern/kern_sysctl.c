@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.261 2018/01/27 00:00:26 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.261.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.261 2018/01/27 00:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.261.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -945,8 +945,7 @@ sysctl_create(SYSCTLFN_ARGS)
 				 * we want a rough idea of what the
 				 * size is now
 				 */
-				vp = malloc(PAGE_SIZE, M_SYSCTLDATA,
-					     M_WAITOK|M_CANFAIL);
+				vp = malloc(PAGE_SIZE, M_SYSCTLDATA, M_WAITOK);
 				if (vp == NULL)
 					return (ENOMEM);
 				e = nnode.sysctl_data;
@@ -1015,8 +1014,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	if (type != CTLTYPE_NODE) {
 		if (sz != 0) {
 			if (flags & CTLFLAG_OWNDATA) {
-				own = malloc(sz, M_SYSCTLDATA,
-					     M_WAITOK|M_CANFAIL);
+				own = malloc(sz, M_SYSCTLDATA, M_WAITOK);
 				if (own == NULL)
 					return ENOMEM;
 				if (nnode.sysctl_data == NULL)
@@ -1579,7 +1577,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * temporary copy of new inbound string
 		 */
 		len = MIN(sz, newlen);
-		newbuf = malloc(len, M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+		newbuf = malloc(len, M_SYSCTLDATA, M_WAITOK);
 		if (newbuf == NULL) {
 			DPRINTF(("%s: oomem %zu\n", __func__, len));
 			return ENOMEM;
@@ -1709,7 +1707,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 	 * get ready...
 	 */
 	error = 0;
-	d = bf = malloc(MAXDESCLEN, M_TEMP, M_WAITOK|M_CANFAIL);
+	d = bf = malloc(MAXDESCLEN, M_TEMP, M_WAITOK);
 	if (bf == NULL)
 		return ENOMEM;
 	tot = 0;
@@ -1807,8 +1805,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 			    dnode.sysctl_flags & CTLFLAG_OWNDESC) {
 				char *nd, *k;
 
-				k = malloc(MAXDESCLEN, M_TEMP,
-				    M_WAITOK|M_CANFAIL);
+				k = malloc(MAXDESCLEN, M_TEMP, M_WAITOK);
 				if (k == NULL) {
 					error = ENOMEM;
 					goto out;
@@ -1819,8 +1816,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 					free(k, M_TEMP);
 					goto out;
 				}
-				nd = malloc(sz, M_SYSCTLDATA,
-					    M_WAITOK|M_CANFAIL);
+				nd = malloc(sz, M_SYSCTLDATA, M_WAITOK);
 				if (nd == NULL) {
 					free(k, M_TEMP);
 					error = ENOMEM;
@@ -2134,7 +2130,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 */
 		if (error == 0) {
 			KASSERTMSG(pnode->sysctl_parent == snode,
-			    "sysctl parent mis-match");
+			    "sysctl parent mis-match pnode %s, snode %s",
+			    pnode->sysctl_name, snode->sysctl_name);
 			if (log != NULL)
 				sysctl_log_add(log, pnode);
 			if (cnode != NULL)
@@ -2153,7 +2150,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				else if (flags & CTLFLAG_OWNDESC) {
 					size_t l = strlen(descr) + 1;
 					char *d = malloc(l, M_SYSCTLDATA,
-							 M_WAITOK|M_CANFAIL);
+							 M_WAITOK);
 					if (d != NULL) {
 						memcpy(d, descr, l);
 						dnode->sysctl_desc = d;
@@ -2280,7 +2277,7 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 			char *d;
 
 			sz = strlen(node->sysctl_desc) + 1;
-			d = malloc(sz, M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+			d = malloc(sz, M_SYSCTLDATA, M_WAITOK);
 			if (d != NULL) {
 				/*
 				 * discard const so that we can
@@ -2423,13 +2420,13 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 
 	if (*logp == NULL) {
 		log = malloc(sizeof(struct sysctllog),
-		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+		       M_SYSCTLDATA, M_WAITOK);
 		if (log == NULL) {
 			/* XXX print error message? */
 			return (-1);
 		}
 		log->log_num = malloc(size0 * sizeof(int),
-		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+		       M_SYSCTLDATA, M_WAITOK);
 		if (log->log_num == NULL) {
 			/* XXX print error message? */
 			free(log, M_SYSCTLDATA);
@@ -2659,10 +2656,10 @@ sysctl_alloc(struct sysctlnode *p, int x)
 
 	if (x == 1)
 		n = malloc(sizeof(struct sysctlnode),
-		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
+		       M_SYSCTLNODE, M_WAITOK);
 	else
 		n = malloc(SYSCTL_DEFSIZE * sizeof(struct sysctlnode),
-		       M_SYSCTLNODE, M_WAITOK|M_CANFAIL);
+		       M_SYSCTLNODE, M_WAITOK);
 	if (n == NULL)
 		return (ENOMEM);
 
@@ -2695,7 +2692,7 @@ sysctl_realloc(struct sysctlnode *p)
 	 */
 	olen = p->sysctl_clen;
 	n = malloc(2 * olen * sizeof(struct sysctlnode), M_SYSCTLNODE,
-		   M_WAITOK|M_CANFAIL);
+		   M_WAITOK);
 	if (n == NULL)
 		return (ENOMEM);
 
@@ -2736,7 +2733,7 @@ sysctl_log_realloc(struct sysctllog *log)
 	s = log->log_size * 2;
 	d = log->log_size;
 
-	n = malloc(s * sizeof(int), M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+	n = malloc(s * sizeof(int), M_SYSCTLDATA, M_WAITOK);
 	if (n == NULL)
 		return (-1);
 

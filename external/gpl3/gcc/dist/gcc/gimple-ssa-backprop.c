@@ -1,5 +1,5 @@
 /* Back-propagation of usage information to definitions.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -258,7 +258,12 @@ private:
 
   /* A bitmap of blocks that we have finished processing in the initial
      post-order walk.  */
-  sbitmap m_visited_blocks;
+  auto_sbitmap m_visited_blocks;
+
+  /* A bitmap of phis that we have finished processing in the initial
+     post-order walk, excluding those from blocks mentioned in
+     M_VISITED_BLOCKS.  */
+  auto_bitmap m_visited_phis;
 
   /* A worklist of SSA names whose definitions need to be reconsidered.  */
   auto_vec <tree, 64> m_worklist;
@@ -272,7 +277,7 @@ private:
 backprop::backprop (function *fn)
   : m_fn (fn),
     m_info_pool ("usage_info"),
-    m_visited_blocks (sbitmap_alloc (last_basic_block_for_fn (m_fn))),
+    m_visited_blocks (last_basic_block_for_fn (m_fn)),
     m_worklist_names (BITMAP_ALLOC (NULL))
 {
   bitmap_clear (m_visited_blocks);
@@ -281,7 +286,6 @@ backprop::backprop (function *fn)
 backprop::~backprop ()
 {
   BITMAP_FREE (m_worklist_names);
-  sbitmap_free (m_visited_blocks);
   m_info_pool.release ();
 }
 
@@ -501,8 +505,11 @@ backprop::intersect_uses (tree var, usage_info *info)
     {
       if (is_gimple_debug (stmt))
 	continue;
-      if (is_a <gphi *> (stmt)
-	  && !bitmap_bit_p (m_visited_blocks, gimple_bb (stmt)->index))
+      gphi *phi = dyn_cast <gphi *> (stmt);
+      if (phi
+	  && !bitmap_bit_p (m_visited_blocks, gimple_bb (phi)->index)
+	  && !bitmap_bit_p (m_visited_phis,
+			    SSA_NAME_VERSION (gimple_phi_result (phi))))
 	{
 	  /* Skip unprocessed phis.  */
 	  if (dump_file && (dump_flags & TDF_DETAILS))
@@ -510,7 +517,7 @@ backprop::intersect_uses (tree var, usage_info *info)
 	      fprintf (dump_file, "[BACKEDGE] ");
 	      print_generic_expr (dump_file, var, 0);
 	      fprintf (dump_file, " in ");
-	      print_gimple_stmt (dump_file, stmt, 0, TDF_SLIM);
+	      print_gimple_stmt (dump_file, phi, 0, TDF_SLIM);
 	    }
 	}
       else
@@ -634,7 +641,12 @@ backprop::process_block (basic_block bb)
     }
   for (gphi_iterator gpi = gsi_start_phis (bb); !gsi_end_p (gpi);
        gsi_next (&gpi))
-    process_var (gimple_phi_result (gpi.phi ()));
+    {
+      tree result = gimple_phi_result (gpi.phi ());
+      process_var (result);
+      bitmap_set_bit (m_visited_phis, SSA_NAME_VERSION (result));
+    }
+  bitmap_clear (m_visited_phis);
 }
 
 /* Delete the definition of VAR, which has no uses.  */
@@ -729,6 +741,7 @@ backprop::prepare_change (tree var)
 {
   if (MAY_HAVE_DEBUG_STMTS)
     insert_debug_temp_for_var_def (NULL, var);
+  reset_flow_sensitive_info (var);
 }
 
 /* STMT has been changed.  Give the fold machinery a chance to simplify

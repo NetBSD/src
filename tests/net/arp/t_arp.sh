@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.36 2018/04/06 09:23:36 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.36.2.1 2019/06/10 22:10:08 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -464,7 +464,7 @@ test_proxy_arp()
 	local type=$1
 
 	rump_server_start $SOCKSRC
-	rump_server_start $SOCKDST tap
+	rump_server_fs_start $SOCKDST tap
 
 	setup_dst_server
 	setup_src_server

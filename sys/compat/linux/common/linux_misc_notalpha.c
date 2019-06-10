@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.109 2014/11/09 17:48:08 maxv Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.109.20.1 2019/06/10 22:07:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.109 2014/11/09 17:48:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.109.20.1 2019/06/10 22:07:00 christos Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -161,6 +161,7 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 		if (spare == NULL) {
 			mutex_spin_exit(&timer_lock);
 			spare = pool_get(&ptimer_pool, PR_WAITOK);
+			memset(spare, 0, sizeof(*spare));
 			goto retry;
 		}
 		ptp = spare;

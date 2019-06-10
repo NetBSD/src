@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_SNAPSHOT 3
 .Os
 .Sh NAME
@@ -23,13 +23,5 @@ The sqlite3_snapshot object records state information about an historical
 version of the database file so that it is possible to later open a
 new read transaction that sees that historical version of the database
 rather than the most recent version.
-.Pp
-The constructor for this object is sqlite3_snapshot_get().
-The sqlite3_snapshot_open() method causes a
-fresh read transaction to refer to an historical snapshot (if possible).
-The destructor for sqlite3_snapshot objects is sqlite3_snapshot_free().
 .Sh SEE ALSO
-.Xr sqlite3 3 ,
-.Xr sqlite3_snapshot_free 3 ,
-.Xr sqlite3_snapshot_get 3 ,
-.Xr sqlite3_snapshot_open 3
+.Xr sqlite3 3

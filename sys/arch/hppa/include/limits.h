@@ -1,8 +1,8 @@
-/*	$NetBSD: limits.h,v 1.15 2013/04/11 00:57:34 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.15.36.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -89,16 +89,16 @@
 #define	LONG_MAX	0x7fffffffL	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
 
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
-    defined(_NETBSD_SOURCE)
-#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
-
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
     defined(_NETBSD_SOURCE)
 #define ULLONG_MAX      0xffffffffffffffffULL   /* max unsigned long long */
 #define LLONG_MAX       0x7fffffffffffffffLL    /* max signed long long */
 #define LLONG_MIN       (-0x7fffffffffffffffLL-1) /* min signed long long */
 #endif
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
 #if defined(_NETBSD_SOURCE)
 #define	SSIZE_MIN	INT_MIN		/* min value for a ssize_t */
@@ -151,7 +151,7 @@
 #ifdef __FLT_MAX__
 #define FLT_MAX		__FLT_MAX__
 #else
-#define FLT_MAX		3.40282347E+38F 
+#define FLT_MAX		3.40282347E+38F
 #endif
 #endif
 
@@ -159,7 +159,7 @@
 #ifdef __FLT_MIN__
 #define FLT_MIN		__FLT_MIN__
 #else
-#define FLT_MIN		1.17549435E-38F 
+#define FLT_MIN		1.17549435E-38F
 #endif
 #endif
 

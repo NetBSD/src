@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:40 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,8 +44,15 @@
 #define	PART_RAW	PART_C
 #define	PART_USR	PART_G
 
+
+/* Megs for the / partition, if separate */
+#define	DEFROOTSIZE	60
+
 /* Megs required for a full X installation. */
-#define XNEEDMB 35	/* XXXTHORPEJ */
+#define XNEEDMB		256
+
+/* Megs required for debug sets */
+#define	DEBNEEDMB	900
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
@@ -55,6 +62,8 @@
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
+#define SET_KERNEL_3_NAME	"kern-GENERIC_601"
 
 /*
  * Machine-specific command to write a new label to a disk.

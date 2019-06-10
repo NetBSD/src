@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/08/12 01:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.14.1 2019/06/10 22:02:48 christos Exp $
 
 PROG=	cvt
 SRCS=	cvt.c xf86cvt.c xprintf.c
@@ -6,7 +6,7 @@ MAN=	cvt.1
 
 .include "../Makefile.utils"
 
-CPPFLAGS+=	${X11FLAGS.DIX} -DHAVE_XORG_CONFIG_H \
+CPPFLAGS+=	${X11FLAGS.DIX} \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/Xext \

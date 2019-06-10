@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $ */
+/* $NetBSD: if_gpn.c,v 1.9.2.1 2019/06/10 22:05:53 christos Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9.2.1 2019/06/10 22:05:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
 
 #include <sys/bus.h>
@@ -112,7 +111,7 @@ struct gpn_softc {
 	struct mbuf *sc_rxmbuf;
 	struct gpn_txinfo sc_txinfo[MAX_TXACTIVE];
 	uint8_t sc_lastid;
-	bool sc_remoteup;		/* remote side up? */ 
+	bool sc_remoteup;		/* remote side up? */
 };
 
 CTASSERT((GPN_SOF | GPN_EOF) == GPN_FRAME);
@@ -145,7 +144,7 @@ m_crc32_le(struct mbuf *m)
 		}
 	}
 
-	return (crc);
+	return crc;
 }
 #endif
 
@@ -174,8 +173,8 @@ gpn_alloc_dmamaps(struct gpn_softc *sc)
 		if (ti->ti_map != NULL)
 			continue;
 		error = bus_dmamap_create(sc->sc_dmat,
-		    10000, 2, 8192, 0, 
-		    BUS_DMA_ALLOCNOW|BUS_DMA_WAITOK,
+		    10000, 2, 8192, 0,
+		    BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK,
 		    &ti->ti_map);
 		if (error)
 			break;
@@ -333,7 +332,6 @@ gpn_free_txid(struct gpn_softc *sc, size_t txid)
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		gpn_ifstart(&sc->sc_if);
 	}
-	
 }
 
 static void
@@ -443,7 +441,7 @@ gpn_ifstart(struct ifnet *ifp)
 			map = ti->ti_map;
 			error = bus_dmamap_load(sc->sc_dmat, map,
 			    mtod(m, void *), m->m_len, NULL,
-			    BUS_DMA_READ|BUS_DMA_NOWAIT);
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error) {
 				ifp->if_oerrors++;
 				m_freem(m);
@@ -488,7 +486,7 @@ gpn_ipm_ifup(struct gpn_softc *sc)
 {
 	sc->sc_remoteup = true;
 	if (sc->sc_if.if_flags & IFF_UP)
-		ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX);
 }
 
 static void
@@ -514,7 +512,7 @@ gpn_ipm_ifdown(struct gpn_softc *sc)
 		ti->ti_mbuf = NULL;
 	}
 	sc->sc_lastid = 0;
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_NONE);
+	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_NONE);
 	sc->sc_remoteup = false;
 }
 
@@ -581,7 +579,7 @@ gpn_ifinit(struct ifnet *ifp)
 	gemini_ipm_produce(&gd, 1);
 
 	if (sc->sc_remoteup)
-		ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX);
 
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -619,18 +617,14 @@ gpn_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
-		break;
 	case SIOCSIFPHYADDR: {
 		const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
-                
+
 		if (sdl->sdl_family != AF_LINK) {
 			error = EINVAL;
 			break;
 		}
-                
+
 		if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN, false);
 		error = 0;
 		break;
@@ -671,7 +665,7 @@ gpn_attach(device_t parent, device_t self, void *aux)
 	struct gpn_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_if;
 	char enaddr[6];
-	
+
 	enaddr[0] = 2;
 	enaddr[1] = 0;
 	enaddr[2] = 0;
@@ -690,13 +684,13 @@ gpn_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &gemini_bus_dma_tag;
 
-	/*
-	 * Pretend we are full-duplex gigabit ethernet.
-	 */
+	/* Setup ifmedia interface */
+	sc->sc_ec.ec_ifmedia = &sc->sc_im;
 	ifmedia_init(&sc->sc_im, 0, gpn_mediachange, gpn_mediastatus);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_NONE, 0, NULL);
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_NONE);
+	/* Pretend we are full-duplex gigabit ethernet. */
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_NONE);
 
 	strlcpy(ifp->if_xname, device_xname(self), sizeof(ifp->if_xname));
 	ifp->if_softc = sc;

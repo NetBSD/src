@@ -65,7 +65,7 @@ update_ids(struct memory_file *file)
 			errx(2, "user %s unknown", file->owner);
 		file->st.st_uid = uid;
 	} else {
-		file->owner = user_from_uid(file->st.st_uid, 1);
+		file->owner = xstrdup(user_from_uid(file->st.st_uid, 1));
 	}
 
 	if (file->group != NULL) {
@@ -73,10 +73,9 @@ update_ids(struct memory_file *file)
 
 		if (gid_from_group(file->group, &gid) == -1)
 			errx(2, "group %s unknown", file->group);
-		file->group = file->group;
 		file->st.st_gid = gid;
 	} else {
-		file->group = group_from_gid(file->st.st_gid, 1);
+		file->group = xstrdup(group_from_gid(file->st.st_gid, 1));
 	}
 }
 
@@ -88,8 +87,8 @@ make_memory_file(const char *archive_name, void *data, size_t len,
 
 	file = xmalloc(sizeof(*file));
 	file->name = archive_name;
-	file->owner = owner;
-	file->group = group;
+	file->owner = (owner != NULL) ? xstrdup(owner) : NULL;
+	file->group = (group != NULL) ? xstrdup(group) : NULL;
 	file->data = data;
 	file->len = len;
 
@@ -116,8 +115,8 @@ load_memory_file(const char *disk_name,
 
 	file = xmalloc(sizeof(*file));
 	file->name = archive_name;
-	file->owner = owner;
-	file->group = group;
+	file->owner = (owner != NULL) ? xstrdup(owner) : NULL;
+	file->group = (group != NULL) ? xstrdup(group) : NULL;
 	file->mode = mode;
 
 	fd = open(disk_name, O_RDONLY);
@@ -148,6 +147,8 @@ void
 free_memory_file(struct memory_file *file)
 {
 	if (file != NULL) {
+		free(__UNCONST(file->owner));
+		free(__UNCONST(file->group));
 		free(file->data);
 		free(file);
 	}

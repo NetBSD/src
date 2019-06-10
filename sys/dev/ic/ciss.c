@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.38 2018/02/12 23:11:00 joerg Exp $	*/
+/*	$NetBSD: ciss.c,v 1.38.4.1 2019/06/10 22:07:10 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.38 2018/02/12 23:11:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.38.4.1 2019/06/10 22:07:10 christos Exp $");
 
 #include "bio.h"
 
@@ -380,7 +380,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
-	sc->sc_adapter.adapt_max_periph = min(sc->sc_adapter.adapt_openings, 256);
+	sc->sc_adapter.adapt_max_periph = uimin(sc->sc_adapter.adapt_openings, 256);
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
 	sc->sc_adapter.adapt_minphys = cissminphys;
 	sc->sc_adapter.adapt_ioctl = ciss_scsi_ioctl;
@@ -1390,8 +1390,6 @@ ciss_ioctl(device_t dev, u_long cmd, void *addr)
 		}
 		break;
 
-	case BIOCALARM:
-	case BIOCSETSTATE:
 	default:
 		error = EINVAL;
 	}

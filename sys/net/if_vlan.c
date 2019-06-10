@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.130 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.130.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.130 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.130.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,6 +161,7 @@ struct ifvlan {
 					 * instead of direct dereference
 					 */
 	kmutex_t ifv_lock;		/* writer lock for ifv_mib */
+	pserialize_t ifv_psz;
 
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
@@ -292,6 +293,7 @@ vlaninit(void)
 	if_clone_attach(&vlan_cloner);
 
 	vlan_hash_init();
+	MODULE_HOOK_SET(if_vlan_vlan_input_hook, "vlan_inp", vlan_input);
 }
 
 static int
@@ -317,6 +319,7 @@ vlandetach(void)
 	mutex_destroy(&ifv_hash.lock);
 	mutex_destroy(&ifv_list.lock);
 
+	MODULE_HOOK_UNSET(if_vlan_vlan_input_hook);
 	return 0;
 }
 
@@ -355,6 +358,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	psref_target_init(&mib->ifvm_psref, ifvm_psref_class);
 
 	mutex_init(&ifv->ifv_lock, MUTEX_DEFAULT, IPL_NONE);
+	ifv->ifv_psz = pserialize_create();
 	ifv->ifv_mib = mib;
 
 	mutex_enter(&ifv_list.lock);
@@ -413,6 +417,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
 	kmem_free(ifv->ifv_mib, sizeof(struct ifvlan_linkmib));
+	pserialize_destroy(ifv->ifv_psz);
 	mutex_destroy(&ifv->ifv_lock);
 	free(ifv, M_DEVBUF);
 
@@ -632,6 +637,9 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 		IFNET_LOCK(ifp);
 		mutex_enter(&ifv->ifv_lock);
 
+		/* if_free_sadl must be called with IFNET_LOCK */
+		if_free_sadl(ifp, 1);
+
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */
 		ifp->if_ioctl = vlan_ioctl;
 		vlan_reset_linkname(ifp);
@@ -792,7 +800,7 @@ vlan_linkmib_update(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	membar_producer();
 	ifv->ifv_mib = nmib;
 
-	pserialize_perform(vlan_psz);
+	pserialize_perform(ifv->ifv_psz);
 	psref_target_destroy(&omib->ifvm_psref, ifvm_psref_class);
 }
 
@@ -1189,9 +1197,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	mib = ifv->ifv_mib;
 
 	KERNEL_LOCK_UNLESS_IFP_MPSAFE(mib->ifvm_p);
-	IFNET_LOCK(mib->ifvm_p);
 	error = if_mcast_op(mib->ifvm_p, SIOCADDMULTI, sa);
-	IFNET_UNLOCK(mib->ifvm_p);
 	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(mib->ifvm_p);
 
 	if (error != 0)
@@ -1247,9 +1253,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
 	/* We no longer use this multicast address.  Tell parent so. */
 	mib = ifv->ifv_mib;
-	IFNET_LOCK(mib->ifvm_p);
 	error = if_mcast_op(mib->ifvm_p, SIOCDELMULTI, sa);
-	IFNET_UNLOCK(mib->ifvm_p);
 
 	if (error == 0) {
 		/* And forget about this address. */
@@ -1279,10 +1283,8 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	}
 
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
-		IFNET_LOCK(mib->ifvm_p);
 		(void)if_mcast_op(mib->ifvm_p, SIOCDELMULTI,
 		    sstocsa(&mc->mc_addr));
-		IFNET_UNLOCK(mib->ifvm_p);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
 	}
@@ -1641,4 +1643,4 @@ out:
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, vlan, "")
+IF_MODULE(MODULE_CLASS_DRIVER, vlan, NULL)

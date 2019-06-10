@@ -1,5 +1,5 @@
 /* D10V-specific support for 32-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -230,6 +230,7 @@ d10v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_D10V_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid D10V reloc number: %d"), abfd, r_type);
       r_type = 0;
     }

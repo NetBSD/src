@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.29 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.29.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.29 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.29.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,6 +243,7 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 
 	sc->l2tp_var = var;
 	mutex_init(&sc->l2tp_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->l2tp_psz = pserialize_create();
 	PSLIST_ENTRY_INIT(sc, l2tp_hash);
 
 	sc->l2tp_ro_percpu = percpu_alloc(sizeof(struct l2tp_ro));
@@ -337,6 +338,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
 
 	kmem_free(var, sizeof(struct l2tp_variant));
+	pserialize_destroy(sc->l2tp_psz);
 	mutex_destroy(&sc->l2tp_lock);
 	kmem_free(sc, sizeof(struct l2tp_softc));
 
@@ -424,9 +426,12 @@ l2tpintr(struct l2tp_variant *var)
 	}
 
 	for (;;) {
+		int len;
+
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+		len = m->m_pkthdr.len;
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		switch (var->lv_psrc->sa_family) {
@@ -450,13 +455,9 @@ l2tpintr(struct l2tp_variant *var)
 			ifp->if_oerrors++;
 		else {
 			ifp->if_opackets++;
-			/*
-			 * obytes is incremented at ether_output() or
-			 * bridge_enqueue().
-			 */
+			ifp->if_obytes += len;
 		}
 	}
-
 }
 
 void
@@ -504,7 +505,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 			m_freem(m);
 			return;
 		}
-		M_MOVE_PKTHDR(m_head, m);
+		m_move_pkthdr(m_head, m);
 
 		/*
 		 * m_head should be:
@@ -516,7 +517,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		 *                          ^              ^
 		 *                          m_data         4 byte aligned
 		 */
-		MH_ALIGN(m_head, L2TP_COPY_LENGTH + roundup(pad, 4));
+		m_align(m_head, L2TP_COPY_LENGTH + roundup(pad, 4));
 		m_head->m_data += pad;
 
 		memcpy(mtod(m_head, void *), mtod(m, void *), copy_length);
@@ -568,6 +569,7 @@ int
 l2tp_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int error;
+	int len;
 	struct psref psref;
 	struct l2tp_variant *var;
 	struct l2tp_softc *sc = container_of(ifp, struct l2tp_softc,
@@ -585,6 +587,7 @@ l2tp_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
+	len = m->m_pkthdr.len;
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	bpf_mtap(ifp, m, BPF_D_OUT);
 	switch (var->lv_psrc->sa_family) {
@@ -608,9 +611,7 @@ l2tp_transmit(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_oerrors++;
 	else {
 		ifp->if_opackets++;
-		/*
-		 * obytes is incremented at ether_output() or bridge_enqueue().
-		 */
+		ifp->if_obytes += len;
 	}
 
 out:
@@ -1194,7 +1195,7 @@ l2tp_variant_update(struct l2tp_softc *sc, struct l2tp_variant *nvar)
 	KASSERT(mutex_owned(&sc->l2tp_lock));
 
 	sc->l2tp_var = nvar;
-	pserialize_perform(l2tp_psz);
+	pserialize_perform(sc->l2tp_psz);
 	psref_target_destroy(&ovar->lv_psref, lv_psref_class);
 
 	/*
@@ -1369,7 +1370,7 @@ l2tp_check_nesting(struct ifnet *ifp, struct mbuf *m)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, l2tp, "")
+IF_MODULE(MODULE_CLASS_DRIVER, l2tp, NULL)
 
 
 /* TODO: IP_TCPMSS support */

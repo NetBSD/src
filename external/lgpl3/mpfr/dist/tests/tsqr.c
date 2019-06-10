@@ -1,6 +1,6 @@
 /* Test file for mpfr_sqr.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -70,7 +67,7 @@ check_random (mpfr_prec_t p)
     {
       mpfr_urandomb (x, RANDS);
       if (MPFR_IS_PURE_FP(x))
-        for (r = 0 ; r < MPFR_RND_MAX ; r++)
+        RND_LOOP_NO_RNDF (r)
           {
             inexact1 = mpfr_mul (y, x, x, (mpfr_rnd_t) r);
             inexact2 = mpfr_sqr (z, x, (mpfr_rnd_t) r);
@@ -121,6 +118,41 @@ check_special (void)
   mpfr_clear (x);
 }
 
+/* check ax < __gmpfr_emin with rnd_mode == MPFR_RNDN, rb = 0 and sb <> 0 */
+static void
+test_underflow (void)
+{
+  mpfr_t x, y;
+  mpfr_exp_t emin;
+
+  emin = mpfr_get_emin ();
+  mpfr_set_emin (0);
+
+  mpfr_init2 (x, 24);
+  mpfr_init2 (y, 24);
+
+  mpfr_set_ui_2exp (x, 11863283, -24, MPFR_RNDN);
+  /* x^2 = 0.011111111111111111111111101101100111111010101001*2^(-48)
+     thus we have an underflow */
+  mpfr_clear_underflow ();
+  mpfr_sqr (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (y, 1, -1) == 0);
+  MPFR_ASSERTN(mpfr_underflow_p ());
+
+  mpfr_set_prec (x, 69);
+  mpfr_set_prec (y, 69);
+  mpfr_set_str_binary (x, "0.101101010000010011110011001100111111100111011110011001001000010001011");
+  mpfr_clear_underflow ();
+  mpfr_sqr (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (y, 1, -1) == 0);
+  MPFR_ASSERTN(mpfr_underflow_p ());
+
+  mpfr_clear (y);
+  mpfr_clear (x);
+
+  mpfr_set_emin (emin);
+}
+
 /* Test of a bug seen with GCC 4.5.2 and GMP 5.0.1 on m68k (m68000 target).
      https://sympa.inria.fr/sympa/arc/mpfr/2011-05/msg00003.html
      https://sympa.inria.fr/sympa/arc/mpfr/2011-05/msg00041.html
@@ -164,12 +196,13 @@ main (void)
   tests_start_mpfr ();
 
   check_mpn_sqr ();
-
   check_special ();
-  for (p = 2; p < 200; p++)
+  test_underflow ();
+
+  for (p = MPFR_PREC_MIN; p < 200; p++)
     check_random (p);
 
-  test_generic (2, 200, 15);
+  test_generic (MPFR_PREC_MIN, 200, 15);
   data_check ("data/sqr", mpfr_sqr, "mpfr_sqr");
   bad_cases (mpfr_sqr, mpfr_sqrt, "mpfr_sqr", 8, -256, 255, 4, 128, 800, 50);
 

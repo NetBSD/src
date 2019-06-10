@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.58 2017/05/22 17:17:25 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.58.10.1 2019/06/10 22:06:51 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.58 2017/05/22 17:17:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.58.10.1 2019/06/10 22:06:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ static volatile int u;
 #define	HDC_RSTAT	*(volatile char *)(sc->sc_regs + 4)
 
 /*
- * new-config's hdcmatch() is similiar to old-config's hdcprobe(), 
+ * new-config's hdcmatch() is similar to old-config's hdcprobe(), 
  * thus we probe for the existence of the controller and reset it.
  * NB: we can't initialize the controller yet, since space for hdcsoftc 
  *     is not yet allocated. Thus we do this in hdcattach()...
@@ -297,7 +297,7 @@ hdcattach(device_t parent, device_t self, void *aux)
 	sc->sc_dmabase = (void *)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
 	sc->sc_intbit = va->va_maskno;
-	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
+	rd_dmasize = uimin(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
 
 	sc->sc_vd.vd_go = hdc_qstart;
 	sc->sc_vd.vd_arg = sc;

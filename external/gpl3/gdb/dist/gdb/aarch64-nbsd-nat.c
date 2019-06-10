@@ -22,7 +22,9 @@
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <machine/reg.h>
+
+#include <machine/frame.h>
+#include <machine/pcb.h>
 
 #include "nbsd-nat.h"
 #include "aarch64-tdep.h"
@@ -33,6 +35,14 @@
 #include "inf-ptrace.h"
 
 /* Determine if PT_GETREGS fetches REGNUM.  */
+
+struct aarch64_nbsd_nat_target final : public nbsd_nat_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static aarch64_nbsd_nat_target the_aarch64_nbsd_nat_target;
 
 static bool
 getregs_supplies (struct gdbarch *gdbarch, int regnum)
@@ -48,23 +58,19 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
   return (regnum >= AARCH64_V0_REGNUM && regnum <= AARCH64_FPCR_REGNUM);
 }
 
-/* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
-   for all registers.  */
-
-static void
-aarch64_nbsd_fetch_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regnum)
+void
+aarch64_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-  ptid_t ptid = regcache_get_ptid (regcache);
-  pid_t pid = ptid_get_pid (ptid);
-  int tid = ptid_get_lwp (ptid);
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, tid) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       regcache_supply_regset (&aarch64_nbsd_gregset, regcache, regnum, &regs,
@@ -75,7 +81,7 @@ aarch64_nbsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, tid) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       regcache_supply_regset (&aarch64_nbsd_fpregset, regcache, regnum, &fpregs,
@@ -86,26 +92,25 @@ aarch64_nbsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers.  */
 
-static void
-aarch64_nbsd_store_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regnum)
+void
+aarch64_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  ptid_t ptid = regcache_get_ptid (regcache);
-  pid_t pid = ptid_get_pid (ptid);
-  int tid = ptid_get_lwp (ptid);
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, tid) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       regcache_collect_regset (&aarch64_nbsd_gregset, regcache,regnum, &regs,
 			       sizeof (regs));
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, tid) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't write registers"));
     }
 
@@ -113,24 +118,66 @@ aarch64_nbsd_store_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, tid) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       regcache_collect_regset (&aarch64_nbsd_fpregset, regcache,regnum, &fpregs,
 				sizeof (fpregs));
 
-      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, tid) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
+}
+
+static int
+aarch64_nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct trapframe tf;
+  int i;
+
+  /* The following is true for NetBSD/arm64:
+
+     The pcb contains the frame pointer at the point of the context
+     switch in cpu_switchto().  At that point we have a stack frame as
+     described by `struct trapframe', which has the following layout:
+
+     x0..x30
+     sp
+     pc
+     spsr
+     tpidr
+
+     This accounts for all callee-saved registers specified by the psABI.
+     From this information we reconstruct the register state as it would
+     look when we just returned from cpu_switchto().
+
+     For kernel core dumps, dumpsys() builds a fake trapframe for us. */
+
+  /* The trapframe pointer shouldn't be zero.  */
+  if (pcb->pcb_tf == 0)
+    return 0;
+
+  /* Read the stack frame, and check its validity.  */
+  read_memory ((uintptr_t)pcb->pcb_tf, (gdb_byte *) &tf, sizeof tf);
+
+  for (i = 0; i <= 30; i++)
+    {
+      regcache->raw_supply (AARCH64_X0_REGNUM + i, &tf.tf_reg[i]);
+    }
+  regcache->raw_supply (AARCH64_SP_REGNUM, &tf.tf_sp);
+  regcache->raw_supply (AARCH64_PC_REGNUM, &tf.tf_pc);
+
+  regcache->raw_supply (AARCH64_FPCR_REGNUM, &pcb->pcb_fpregs.fpcr);
+  regcache->raw_supply (AARCH64_FPSR_REGNUM, &pcb->pcb_fpregs.fpsr);
+
+  return 1;
 }
 
 void
 _initialize_aarch64_nbsd_nat (void)
 {
-  struct target_ops *t;
+  add_inf_child_target (&the_aarch64_nbsd_nat_target);
 
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = aarch64_nbsd_fetch_inferior_registers;
-  t->to_store_registers = aarch64_nbsd_store_inferior_registers;
-  nbsd_nat_add_target (t);
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (aarch64_nbsd_supply_pcb);
 }

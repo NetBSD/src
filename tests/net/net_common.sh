@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.28 2018/04/07 12:36:58 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.28.2.1 2019/06/10 22:10:08 christos Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -172,11 +172,12 @@ stop_nc_server()
 	fi
 }
 
-BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
-FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
-CRYPTO_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_opencrypto \
+BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+FS_LIBS="$BASIC_LIBS -lrumpdev -lrumpvfs -lrumpfs_ffs"
+CRYPTO_LIBS="$BASIC_LIBS -lrumpdev -lrumpdev_opencrypto \
     -lrumpkern_z -lrumpkern_crypto"
-NPF_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
+NPF_LIBS="$BASIC_LIBS -lrumpdev -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
+CRYPTO_NPF_LIBS="$CRYPTO_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
 
 # We cannot keep variables between test phases, so need to store in files
 _rump_server_socks=./.__socks
@@ -293,6 +294,24 @@ rump_server_npf_start()
 	return 0
 }
 
+rump_server_crypto_npf_start()
+{
+	local sock=$1
+	local lib=
+	local libs="$CRYPTO_NPF_LIBS"
+
+	shift 1
+
+	for lib
+	do
+		libs="$libs -lrumpnet_$lib"
+	done
+
+	_rump_server_start_common $sock $libs
+
+	return 0
+}
+
 rump_server_add_iface()
 {
 	local sock=$1
@@ -365,29 +384,42 @@ rump_server_halt_servers()
 	return 0
 }
 
+extract_rump_server_core()
+{
+
+	if [ -f rump_server.core ]; then
+		gdb -ex bt /usr/bin/rump_server rump_server.core
+		strings rump_server.core |grep panic
+	fi
+}
+
+dump_kernel_stats()
+{
+	local sock=$1
+
+	echo "### Dumping $sock"
+	export RUMP_SERVER=$sock
+	rump.ifconfig -av
+	rump.netstat -nr
+	# XXX still need hijacking
+	$HIJACKING rump.netstat -nai
+	rump.arp -na
+	rump.ndp -na
+	$HIJACKING ifmcstat
+	$HIJACKING dmesg
+}
+
 rump_server_dump_servers()
 {
 	local backup=$RUMP_SERVER
 
 	$DEBUG && cat $_rump_server_socks
 	for sock in $(cat $_rump_server_socks); do
-		echo "### Dumping $sock"
-		export RUMP_SERVER=$sock
-		rump.ifconfig -av
-		rump.netstat -nr
-		# XXX still need hijacking
-		$HIJACKING rump.netstat -nai
-		rump.arp -na
-		rump.ndp -na
-		$HIJACKING ifmcstat
-		$HIJACKING dmesg
+		dump_kernel_stats $sock
 	done
 	export RUMP_SERVER=$backup
 
-	if [ -f rump_server.core ]; then
-		gdb -ex bt /usr/bin/rump_server rump_server.core
-		strings rump_server.core |grep panic
-	fi
+	extract_rump_server_core
 	return 0
 }
 

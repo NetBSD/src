@@ -1,0 +1,2 @@
+get /nic/update HTTP/1.1
+Host:

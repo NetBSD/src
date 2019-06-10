@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ if {!$result} then {
 
 # 3) Add the library's symbols using 'add-symbol-file'.
 set result [gdb_test "add-symbol-file ${lib_syms} addr" \
-		     "Reading symbols from .*${lib_syms}\\.\\.\\.done\\." \
+		     "Reading symbols from .*${lib_syms}\\.\\.\\." \
 		     "add-symbol-file ${lib_basename}.so addr" \
 		     "add symbol table from file \".*${lib_basename}\\.so\"\
  at.*\\(y or n\\) " \
@@ -177,7 +177,7 @@ with_test_prefix "stale bkpts" {
 
     # Load the library's symbols.
     gdb_test "add-symbol-file ${lib_syms} addr" \
-	"Reading symbols from .*${lib_syms}\\.\\.\\.done\\." \
+	"Reading symbols from .*${lib_syms}\\.\\.\\." \
 	"add-symbol-file ${lib_basename}.so addr" \
 	"add symbol table from file \".*${lib_syms}\"\
 at.*\\(y or n\\) " \

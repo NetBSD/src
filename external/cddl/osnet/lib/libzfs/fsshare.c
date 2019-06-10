@@ -1,4 +1,4 @@
-/*	$NetBSD: fsshare.c,v 1.3 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: fsshare.c,v 1.3.2.1 2019/06/10 21:52:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: head/cddl/compat/opensolaris/misc/fsshare.c 299342 2016-05-10 07:50:57Z bapt $"); */
 
-__RCSID("$NetBSD: fsshare.c,v 1.3 2018/05/28 21:05:09 chs Exp $");
+__RCSID("$NetBSD: fsshare.c,v 1.3.2.1 2019/06/10 21:52:03 christos Exp $");
 
 #include <sys/param.h>
 

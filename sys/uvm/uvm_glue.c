@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.163.18.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.1 2019/06/10 22:09:58 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
+#include "opt_kasan.h"
 
 /*
  * uvm_glue.c: glue functions
@@ -83,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $");
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/lwp.h>
+#include <sys/asan.h>
 
 #include <uvm/uvm.h>
 
@@ -240,23 +242,24 @@ static pool_cache_t uvm_uarea_system_cache;
 static void *
 uarea_poolpage_alloc(struct pool *pp, int flags)
 {
+
+	KASSERT((flags & PR_WAITOK) != 0);
+
 #if defined(PMAP_MAP_POOLPAGE)
-	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
+	while (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
 		struct vm_page *pg;
 		vaddr_t va;
-
 #if defined(PMAP_ALLOC_POOLPAGE)
-		pg = PMAP_ALLOC_POOLPAGE(
-		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
+		pg = PMAP_ALLOC_POOLPAGE(0);
 #else
-		pg = uvm_pagealloc(NULL, 0, NULL,
-		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
+		pg = uvm_pagealloc(NULL, 0, NULL, 0);
 #endif
-		if (pg == NULL)
-			return NULL;
+		if (pg == NULL) {
+			uvm_wait("uarea");
+			continue;
+		}
 		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-		if (va == 0)
-			uvm_pagefree(pg);
+		KASSERT(va != 0);
 		return (void *)va;
 	}
 #endif
@@ -266,9 +269,7 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 		return (void *)va;
 #endif
 	return (void *)uvm_km_alloc(kernel_map, pp->pr_alloc->pa_pagesz,
-	    USPACE_ALIGN, UVM_KMF_WIRED |
-	    ((flags & PR_WAITOK) ? UVM_KMF_WAITVA :
-	    (UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)));
+	    USPACE_ALIGN, UVM_KMF_WIRED | UVM_KMF_WAITVA);
 }
 
 static void
@@ -384,6 +385,7 @@ void
 uvm_uarea_free(vaddr_t uaddr)
 {
 
+	kasan_mark((void *)uaddr, USPACE, USPACE, 0);
 	pool_cache_put(uvm_uarea_cache, (void *)uaddr);
 }
 
@@ -391,6 +393,7 @@ void
 uvm_uarea_system_free(vaddr_t uaddr)
 {
 
+	kasan_mark((void *)uaddr, USPACE, USPACE, 0);
 	pool_cache_put(uvm_uarea_system_cache, (void *)uaddr);
 }
 

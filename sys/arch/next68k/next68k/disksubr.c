@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.18.1 2019/06/10 22:06:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.18.1 2019/06/10 22:06:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,11 @@ parse_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp, str
 	if (sizeof (lp->d_typename) > sizeof (ondisk->cd_name))
 		lp->d_typename[sizeof (ondisk->cd_name)] = '\0';
 	memcpy (lp->d_typename, ondisk->cd_name,
-		min (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
+		uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
 	if (sizeof (lp->d_packname) > sizeof (ondisk->cd_label))
 		lp->d_packname[sizeof (ondisk->cd_label)] = '\0';
 	memcpy (lp->d_packname, ondisk->cd_label,
-		 min (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
+		 uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
 	if (lp->d_secsize == 0)
 		lp->d_secsize = ondisk->cd_secsize;
 	KASSERT(ondisk->cd_secsize >= lp->d_secsize);
@@ -191,17 +191,17 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 	KASSERT(ondisk->cd_secsize >= lp->d_secsize);
 
 	if (memcmp (ondisk->cd_name, lp->d_typename,
-		     min (sizeof (lp->d_typename), sizeof (ondisk->cd_name))) &&
+		     uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name))) &&
 	    sizeof (ondisk->cd_name) > sizeof (lp->d_typename))
 		ondisk->cd_name[sizeof (lp->d_typename)] = '\0';
 	memcpy (ondisk->cd_name, lp->d_typename,
-		min (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
+		uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
 	if (memcmp (lp->d_packname, ondisk->cd_label,
-		    min (sizeof (lp->d_packname), sizeof (ondisk->cd_label))) &&
+		    uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label))) &&
 	    sizeof (ondisk->cd_label) > sizeof (lp->d_packname))
 		ondisk->cd_label[sizeof (lp->d_packname)] = '\0';
 	memcpy (ondisk->cd_label, lp->d_packname,
-		min (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
+		uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
 
 	ondisk->cd_nsectors = lp->d_nsectors;
 	ondisk->cd_ntracks = lp->d_ntracks;
@@ -394,44 +394,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	}
 	brelse(bp, 0);
 	return (msg);
-}
-
-/*
- * Check new disk label for sensibility before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
-		return (EINVAL);
-	while ((i = ffs(openmask)) != 0) {
-		i--;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return (EBUSY);
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
-		/*
-		 * Copy internally-set partition information
-		 * if new label doesn't include it.		XXX
-		 */
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
-			npp->p_cpg = opp->p_cpg;
-		}
-	}
-	nlp->d_checksum = 0;
-	nlp->d_checksum = dkcksum(nlp);
-	*olp = *nlp;
-	return (0);
 }
 
 /*

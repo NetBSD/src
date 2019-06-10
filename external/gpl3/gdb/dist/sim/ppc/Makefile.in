@@ -548,8 +548,8 @@ $(TARGETLIB): tmp-igen tmp-dgen tmp-hw tmp-pk tmp-defines $(LIB_OBJ) $(GDB_OBJ)
 	$(AR) $(AR_FLAGS) $(TARGETLIB) $(LIB_OBJ) $(GDB_OBJ)
 	$(RANLIB) $(TARGETLIB)
 
-version.c: Makefile $(srcroot)/gdb/version.in $(srcroot)/bfd/version.h $(srcroot)/gdb/common/create-version.sh
-	$(SHELL) $(srcroot)/gdb/common/create-version.sh $(srcroot)/gdb \
+version.c: Makefile $(srcroot)/gdb/version.in $(srcroot)/bfd/version.h $(srcroot)/sim/common/create-version.sh
+	$(SHELL) $(srcroot)/sim/common/create-version.sh $(srcroot)/gdb \
 	    $(host_alias) $(target_alias) version.c
 version.o: version.c $(version_h)
 

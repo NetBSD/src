@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.24 2011/06/30 20:09:19 wiz Exp $
+#	$NetBSD: majors.arc,v 1.24.54.1 2019/06/10 22:05:49 christos Exp $
 #
 # Device majors for arc
 #
@@ -39,13 +39,15 @@ device-major	rnd		char 33			rnd
 device-major	ss		char 34			ss
 device-major	ses		char 35			ses
 device-major	ch		char 36			ch
-device-major	isdn		char 37			isdn
-device-major	isdnctl		char 38			isdnctl
-device-major	isdnbchan	char 39			isdnbchan
-device-major	isdntrc		char 40			isdntrc
-device-major	isdntel		char 41			isdntel
+#device-major	obsolete	char 37			obsolete (isdn)
+#device-major	obsolete	char 38			obsolete (isdnctl)
+#device-major	obsolete	char 39			obsolete (isdnbchan)
+#device-major	obsolete	char 40			obsolete (isdntrc)
+#device-major	obsolete	char 41			obsolete (isdntel)
 
+#device-major	obsolete	char 51			obsolete (lkm)
 device-major	clockctl	char 52			clockctl
+#device-major	obsolete	char 53			obsolete (systrace)
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
 device-major	wsfont		char 56			wsfont

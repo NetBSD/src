@@ -1,6 +1,6 @@
 /* Target dependent code for GDB on TI C6x systems.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -36,7 +36,6 @@
 #include "value.h"
 #include "symfile.h"
 #include "arch-utils.h"
-#include "floatformat.h"
 #include "glibc-tdep.h"
 #include "infcall.h"
 #include "regset.h"
@@ -49,10 +48,6 @@
 #include "language.h"
 #include "target-descriptions.h"
 #include <algorithm>
-
-#include "features/tic6x-c64xp.c"
-#include "features/tic6x-c64x.c"
-#include "features/tic6x-c62x.c"
 
 #define TIC6X_OPCODE_SIZE 4
 #define TIC6X_FETCH_PACKET_SIZE 32
@@ -152,7 +147,6 @@ tic6x_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR start_pc,
 			struct tic6x_unwind_cache *cache,
 			struct frame_info *this_frame)
 {
-  unsigned long inst;
   unsigned int src_reg, base_reg, dst_reg;
   int i;
   CORE_ADDR pc = start_pc;
@@ -247,7 +241,7 @@ tic6x_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR start_pc,
     }
   /* Step 2: Skip insn on setting up dsbt if it is.  Usually, it looks like,
      ldw .D2T2 *+b14(0),b14 */
-  inst = tic6x_fetch_instruction (gdbarch, pc);
+  unsigned long inst = tic6x_fetch_instruction (gdbarch, pc);
   /* The s bit determines which file dst will be loaded into, same effect as
      other places.  */
   dst_reg = tic6x_register_number ((inst >> 23) & 0x1f, (inst >> 1) & 1, 0);
@@ -344,14 +338,6 @@ tic6x_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
     }
   else
     return tdep->breakpoint;
-}
-
-/* This is the implementation of gdbarch method print_insn.  */
-
-static int
-tic6x_print_insn (bfd_vma memaddr, disassemble_info *info)
-{
-  return print_insn_tic6x (memaddr, info);
 }
 
 static void
@@ -606,7 +592,7 @@ tic6x_extract_signed_field (int value, int low_bit, int bits)
 static CORE_ADDR
 tic6x_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   unsigned long inst;
   int register_number;
   int last = 0;
@@ -699,15 +685,12 @@ tic6x_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 
 /* This is the implementation of gdbarch method software_single_step.  */
 
-static VEC (CORE_ADDR) *
+static std::vector<CORE_ADDR>
 tic6x_software_single_step (struct regcache *regcache)
 {
   CORE_ADDR next_pc = tic6x_get_next_pc (regcache, regcache_read_pc (regcache));
-  VEC (CORE_ADDR) *next_pcs = NULL;
 
-  VEC_safe_push (CORE_ADDR, next_pcs, next_pc);
-
-  return next_pcs;
+  return {next_pc};
 }
 
 /* This is the implementation of gdbarch method frame_align.  */
@@ -738,10 +721,9 @@ tic6x_extract_return_value (struct type *valtype, struct regcache *regcache,
 	 register and the second byte occupies byte 0.
 	 so, we read the contents in VAL from the LSBs of register.  */
       if (len < 3 && byte_order == BFD_ENDIAN_BIG)
-	regcache_cooked_read_part (regcache, TIC6X_A4_REGNUM, 4 - len, len,
-				   valbuf);
+	regcache->cooked_read_part (TIC6X_A4_REGNUM, 4 - len, len, valbuf);
       else
-	regcache_cooked_read (regcache, TIC6X_A4_REGNUM, valbuf);
+	regcache->cooked_read (TIC6X_A4_REGNUM, valbuf);
     }
   else if (len <= 8)
     {
@@ -752,13 +734,13 @@ tic6x_extract_return_value (struct type *valtype, struct regcache *regcache,
 	 lower (even) register.  */
       if (byte_order == BFD_ENDIAN_BIG)
 	{
-	  regcache_cooked_read (regcache, TIC6X_A4_REGNUM, valbuf + 4);
-	  regcache_cooked_read (regcache, TIC6X_A5_REGNUM, valbuf);
+	  regcache->cooked_read (TIC6X_A4_REGNUM, valbuf + 4);
+	  regcache->cooked_read (TIC6X_A5_REGNUM, valbuf);
 	}
       else
 	{
-	  regcache_cooked_read (regcache, TIC6X_A4_REGNUM, valbuf);
-	  regcache_cooked_read (regcache, TIC6X_A5_REGNUM, valbuf + 4);
+	  regcache->cooked_read (TIC6X_A4_REGNUM, valbuf);
+	  regcache->cooked_read (TIC6X_A5_REGNUM, valbuf + 4);
 	}
     }
 }
@@ -777,22 +759,21 @@ tic6x_store_return_value (struct type *valtype, struct regcache *regcache,
   if (len <= 4)
     {
       if (len < 3 && byte_order == BFD_ENDIAN_BIG)
-	regcache_cooked_write_part (regcache, TIC6X_A4_REGNUM, 4 - len, len,
-				    valbuf);
+	regcache->cooked_write_part (TIC6X_A4_REGNUM, 4 - len, len, valbuf);
       else
-	regcache_cooked_write (regcache, TIC6X_A4_REGNUM, valbuf);
+	regcache->cooked_write (TIC6X_A4_REGNUM, valbuf);
     }
   else if (len <= 8)
     {
       if (byte_order == BFD_ENDIAN_BIG)
 	{
-	  regcache_cooked_write (regcache, TIC6X_A4_REGNUM, valbuf + 4);
-	  regcache_cooked_write (regcache, TIC6X_A5_REGNUM, valbuf);
+	  regcache->cooked_write (TIC6X_A4_REGNUM, valbuf + 4);
+	  regcache->cooked_write (TIC6X_A5_REGNUM, valbuf);
 	}
       else
 	{
-	  regcache_cooked_write (regcache, TIC6X_A4_REGNUM, valbuf);
-	  regcache_cooked_write (regcache, TIC6X_A5_REGNUM, valbuf + 4);
+	  regcache->cooked_write (TIC6X_A4_REGNUM, valbuf);
+	  regcache->cooked_write (TIC6X_A5_REGNUM, valbuf + 4);
 	}
     }
 }
@@ -894,13 +875,13 @@ static CORE_ADDR
 tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		       struct regcache *regcache, CORE_ADDR bp_addr,
 		       int nargs, struct value **args, CORE_ADDR sp,
-		       int struct_return, CORE_ADDR struct_addr)
+		       function_call_return_method return_method,
+		       CORE_ADDR struct_addr)
 {
   int argreg = 0;
   int argnum;
   int stack_offset = 4;
   int references_offset = 4;
-  CORE_ADDR func_addr = find_function_addr (function, NULL);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct type *func_type = value_type (function);
   /* The first arg passed on stack.  Mostly the first 10 args are passed by
@@ -914,7 +895,7 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* The caller must pass an argument in A3 containing a destination address
      for the returned value.  The callee returns the object by copying it to
      the address in A3.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     regcache_cooked_write_unsigned (regcache, 3, struct_addr);
 
   /* Determine the type of this function.  */
@@ -974,10 +955,10 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		     so, we write the contents in VAL to the lsp of
 		     register.  */
 		  if (len < 3 && byte_order == BFD_ENDIAN_BIG)
-		    regcache_cooked_write_part (regcache, arg_regs[argreg],
-						4 - len, len, val);
+		    regcache->cooked_write_part (arg_regs[argreg], 4 - len, len,
+						 val);
 		  else
-		    regcache_cooked_write (regcache, arg_regs[argreg], val);
+		    regcache->cooked_write (arg_regs[argreg], val);
 		}
 	      else
 		{
@@ -1004,19 +985,15 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		         padding in the LSBs of the lower (even) register.  */
 		      if (byte_order == BFD_ENDIAN_BIG)
 			{
-			  regcache_cooked_write (regcache,
-						 arg_regs[argreg] + 1, val);
-			  regcache_cooked_write_part (regcache,
-						      arg_regs[argreg], 0,
-						      len - 4, val + 4);
+			  regcache->cooked_write (arg_regs[argreg] + 1, val);
+			  regcache->cooked_write_part (arg_regs[argreg], 0,
+						       len - 4, val + 4);
 			}
 		      else
 			{
-			  regcache_cooked_write (regcache, arg_regs[argreg],
-						 val);
-			  regcache_cooked_write_part (regcache,
-						      arg_regs[argreg] + 1, 0,
-						      len - 4, val + 4);
+			  regcache->cooked_write (arg_regs[argreg], val);
+			  regcache->cooked_write_part (arg_regs[argreg] + 1, 0,
+						       len - 4, val + 4);
 			}
 		    }
 		  else
@@ -1090,7 +1067,6 @@ tic6x_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      if (typecode == TYPE_CODE_COMPLEX)
 		{
 		  /* The argument is being passed by reference on stack.  */
-		  CORE_ADDR addr;
 		  references_offset = align_up (references_offset, 8);
 
 		  addr = sp + references_offset;
@@ -1321,8 +1297,6 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Single stepping.  */
   set_gdbarch_software_single_step (gdbarch, tic6x_software_single_step);
 
-  set_gdbarch_print_insn (gdbarch, tic6x_print_insn);
-
   /* Call dummy code.  */
   set_gdbarch_frame_align (gdbarch, tic6x_frame_align);
 
@@ -1349,15 +1323,8 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_tic6x_tdep;
-
 void
 _initialize_tic6x_tdep (void)
 {
   register_gdbarch_init (bfd_arch_tic6x, tic6x_gdbarch_init);
-
-  initialize_tdesc_tic6x_c64xp ();
-  initialize_tdesc_tic6x_c64x ();
-  initialize_tdesc_tic6x_c62x ();
 }

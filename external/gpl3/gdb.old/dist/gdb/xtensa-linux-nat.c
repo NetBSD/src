@@ -1,6 +1,6 @@
 /* Xtensa GNU/Linux native support.
 
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -82,6 +82,10 @@ fill_gregset (const struct regcache *regcache,
     regcache_raw_collect (regcache,
 			  gdbarch_tdep (gdbarch)->sar_regnum,
 			  &regs->sar);
+  if (regnum == gdbarch_tdep (gdbarch)->threadptr_regnum || regnum == -1)
+    regcache_raw_collect (regcache,
+			  gdbarch_tdep (gdbarch)->threadptr_regnum,
+			  &regs->threadptr);
   if (regnum >=gdbarch_tdep (gdbarch)->ar_base
       && regnum < gdbarch_tdep (gdbarch)->ar_base
 		    + gdbarch_tdep (gdbarch)->num_aregs)
@@ -93,6 +97,20 @@ fill_gregset (const struct regcache *regcache,
 	regcache_raw_collect (regcache,
 			      gdbarch_tdep (gdbarch)->ar_base + i,
 			      &regs->ar[i]);
+    }
+  if (regnum >= gdbarch_tdep (gdbarch)->a0_base
+      && regnum < gdbarch_tdep (gdbarch)->a0_base + C0_NREGS)
+    regcache_raw_collect (regcache, regnum,
+			  &regs->ar[(4 * regs->windowbase + regnum
+				     - gdbarch_tdep (gdbarch)->a0_base)
+			  % gdbarch_tdep (gdbarch)->num_aregs]);
+  else if (regnum == -1)
+    {
+      for (i = 0; i < C0_NREGS; ++i)
+	regcache_raw_collect (regcache,
+			      gdbarch_tdep (gdbarch)->a0_base + i,
+			      &regs->ar[(4 * regs->windowbase + i)
+			      % gdbarch_tdep (gdbarch)->num_aregs]);
     }
 }
 
@@ -134,6 +152,10 @@ supply_gregset_reg (struct regcache *regcache,
     regcache_raw_supply (regcache,
 			  gdbarch_tdep (gdbarch)->sar_regnum,
 			  &regs->sar);
+  if (regnum == gdbarch_tdep (gdbarch)->threadptr_regnum || regnum == -1)
+    regcache_raw_supply (regcache,
+			  gdbarch_tdep (gdbarch)->threadptr_regnum,
+			  &regs->threadptr);
   if (regnum >=gdbarch_tdep (gdbarch)->ar_base
       && regnum < gdbarch_tdep (gdbarch)->ar_base
 		    + gdbarch_tdep (gdbarch)->num_aregs)
@@ -145,6 +167,20 @@ supply_gregset_reg (struct regcache *regcache,
 	regcache_raw_supply (regcache,
 			      gdbarch_tdep (gdbarch)->ar_base + i,
 			      &regs->ar[i]);
+    }
+  if (regnum >= gdbarch_tdep (gdbarch)->a0_base
+      && regnum < gdbarch_tdep (gdbarch)->a0_base + C0_NREGS)
+    regcache_raw_supply (regcache, regnum,
+			 &regs->ar[(4 * regs->windowbase + regnum
+				    - gdbarch_tdep (gdbarch)->a0_base)
+			 % gdbarch_tdep (gdbarch)->num_aregs]);
+  else if (regnum == -1)
+    {
+      for (i = 0; i < C0_NREGS; ++i)
+	regcache_raw_supply (regcache,
+			     gdbarch_tdep (gdbarch)->a0_base + i,
+			     &regs->ar[(4 * regs->windowbase + i)
+			     % gdbarch_tdep (gdbarch)->num_aregs]);
     }
 }
 
@@ -174,8 +210,8 @@ supply_fpregset (struct regcache *regcache,
 static void
 fetch_gregs (struct regcache *regcache, int regnum)
 {
-  int tid = ptid_get_lwp (inferior_ptid);
-  const gdb_gregset_t regs;
+  int tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  gdb_gregset_t regs;
   int areg;
   
   if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
@@ -193,7 +229,7 @@ fetch_gregs (struct regcache *regcache, int regnum)
 static void
 store_gregs (struct regcache *regcache, int regnum)
 {
-  int tid = ptid_get_lwp (inferior_ptid);
+  int tid = ptid_get_lwp (regcache_get_ptid (regcache));
   gdb_gregset_t regs;
   int areg;
 
@@ -221,7 +257,7 @@ static int xtreg_high;
 static void
 fetch_xtregs (struct regcache *regcache, int regnum)
 {
-  int tid = ptid_get_lwp (inferior_ptid);
+  int tid = ptid_get_lwp (regcache_get_ptid (regcache));
   const xtensa_regtable_t *ptr;
   char xtregs [XTENSA_ELF_XTREG_SIZE];
 
@@ -237,7 +273,7 @@ fetch_xtregs (struct regcache *regcache, int regnum)
 static void
 store_xtregs (struct regcache *regcache, int regnum)
 {
-  int tid = ptid_get_lwp (inferior_ptid);
+  int tid = ptid_get_lwp (regcache_get_ptid (regcache));
   const xtensa_regtable_t *ptr;
   char xtregs [XTENSA_ELF_XTREG_SIZE];
 

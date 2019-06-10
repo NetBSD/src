@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145.4.1 2019/06/10 22:06:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2017/11/06 03:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.4.1 2019/06/10 22:06:44 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -244,12 +244,12 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	vaddr_t kernend;
 	u_int i;
 	int rv;
-#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = NULL;
 	char *esym = NULL;
 	struct btinfo_symtab *bi_syms;
-#endif
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 #ifdef _LP64
 	char *argv[20];
 
@@ -307,7 +307,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	} else
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
-#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -317,7 +317,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 		esym = (char *)bi_syms->esym;
 		kernend = mips_round_page(esym);
 	} else
-#endif
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
 		kernend = mips_round_page(end);
 	}
@@ -332,6 +332,25 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	 * use the RTC to get a better estimate later.
 	 */
 	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
+
+	/*
+	 * Also initialize ci members for delay and clock by the temporary
+	 * ci_cpu_freq value for early use of delay(9).
+	 * These values will be calibrated later in MD code:
+	 *  - int_attach() in dev/int.c for IP6/10/12/20/22
+	 *  - crime_attach() in dev/crime.c for IP32
+	 *
+	 * XXX: ci_divisor_delay is for mips3_delay() in mips/mips3_clock.c
+	 *      but sgimips abuse it as "instructions per microsecond"
+	 *      for traditional delay(9) implementation derived from
+	 *      4.4BSD/mips (also used in pmax and news3400).
+	 *	(see sys/arch/mips/mips/mips_mcclock.c etc.)
+	 *
+	 * Note ci_cycles_per_hz is for mips3_clockintr.c for MIPS3 so
+	 * there is no early use, but initialize it as a sane default.
+	 */
+	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
+	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
 
 	/*
 	 * Check machine (IPn) type.

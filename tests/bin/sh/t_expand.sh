@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.19 2018/04/21 21:28:35 kre Exp $
+# $NetBSD: t_expand.sh,v 1.19.2.1 2019/06/10 22:09:59 christos Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@ delim_argv() {
 
 atf_test_case dollar_at
 dollar_at_head() {
-	atf_set "descr" "Somewhere between 2.0.2 and 3.0 the expansion" \
+	atf_set descr "Somewhere between 2.0.2 and 3.0 the expansion" \
 	                "of the \$@ variable had been broken.  Check for" \
 			"this behavior."
 }
@@ -63,9 +63,31 @@ dollar_at_body() {
 		'set -- -; shift; n_arg() { echo $#; }; n_arg "$@"'
 }
 
+atf_test_case dollar_at_unquoted_or_conditional
+dollar_at_unquoted_or_conditional_head() {
+	atf_set descr 'Sometime during 2013 the expansion of "${1+$@}"' \
+			' (where $1 and $2 (and maybe more) are set)' \
+			' seems to have broken.  Check for this bug.'
+}
+dollar_at_unquoted_or_conditional_body() {
+
+	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n $@'
+	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n ${1+$@}'
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "$@"'
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n ${1+"$@"}'
+
+	# This is the one that fails when the bug is present
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "${1+$@}"'
+}
+
 atf_test_case dollar_at_with_text
 dollar_at_with_text_head() {
-	atf_set "descr" "Test \$@ expansion when it is surrounded by text" \
+	atf_set descr "Test \$@ expansion when it is surrounded by text" \
 	                "within the quotes.  PR bin/33956."
 }
 dollar_at_with_text_body() {
@@ -106,29 +128,234 @@ EOF
 	for f in 1 2
 	do
 		atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv $@'
+		atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "$@"'
 		atf_check -s exit:0 -o inline:'>foobar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "foo$@bar"'
+		atf_check -s exit:0 -o inline:'>foobar<\n' -e empty \
+			${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv foo"$@"bar'
 		atf_check -s exit:0 -o inline:'>foo  bar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "foo $@ bar"'
+		atf_check -s exit:0 -o inline:'>foo  bar<\n' -e empty \
+			${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv foo" $@ "bar'
 
 		atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "$@"'
+
 		atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "foo$@bar"'
+
 		atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "foo $@ bar"'
 	done
 }
 
+atf_test_case dollar_at_empty_and_conditional
+dollar_at_empty_and_conditional_head() {
+	atf_set descr 'Test $@ expansion when there are no args, and ' \
+	                'when conditionally expanded.'
+}
+dollar_at_empty_and_conditional_body() {
+
+	# same task, implementation different from previous,
+	# that these work is also a test...
+
+	cat <<'EOF' > h-f3
+
+delim_argv() {
+	str=
+	for Arg; do
+		str="${str:+${str} }>${Arg}<"
+	done
+	printf '%s\n' "${str}"
+}
+
+EOF
+
+	chmod +x h-f3
+
+	# in these we give printf a first arg of "", which makes
+	# the first output char be \n, then the $@ produces anything else
+	# (we need to make sure we don't end up with:
+	#	printf %s\\n
+	# -- that is, no operands for the %s, that's unspecified)
+
+	atf_check -s exit:0 -o inline:'\na a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "" "$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n "" "$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """${1+$@}"'
+
+	# in these we prefix (concat) the $@ expansion with "" to make
+	# sure there is always at least one arg for the %s in printf
+	# If there is anything else there, the prepended nothing vanishes
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n """$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """${1+$@}"'
+
+	atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty ${TEST_SH} -c \
+		'. ./h-f3; set -- a b c; delim_argv "${1+$@}"'
+	atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty ${TEST_SH} -c \
+		'. ./h-f3; set -- a b c; delim_argv ${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
+		${TEST_SH} -c \
+		    '. ./h-f3; set -- a b c; delim_argv "foo${1+$@}bar"'
+	atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
+		${TEST_SH} -c \
+		    '. ./h-f3; set -- a b c; delim_argv foo${1+"$@"}bar'
+	atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
+		${TEST_SH} -c \
+		     '. ./h-f3; set -- a b c; delim_argv "foo ${1+$@} bar"'
+	atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
+		${TEST_SH} -c \
+		     '. ./h-f3; set -- a b c; delim_argv "foo "${1+"$@"}" bar"'
+
+	# since $1 is not set, we get nothing ($@ is irrelevant)
+	# (note here we are not using printf, don't need to guarantee an arg)
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv ${1+"$@"}'
+
+	# here since $1 is not set we get "" as the special $@ properties
+	# do not apply, and ${foo+anything} generates nothing if foo is unset
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv "${1+$@}"'
+
+	# in this one we get the initial "" followed by nothing
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv ""${1+"$@"}'
+	# which we verify by changing the "" to X, and including Y
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv X${1+"$@"Y}'
+	# and again, done differently (the ${1+...} produces nothing at all
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv X ${1+"$@"}'
+	# in these two we get the initial "" and then nothing
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv """${1+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv "" "${1+$@}"'
+
+	# now we repeat all those with $1 set (so we eval the $@)
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>XaY<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv X${1+"$@"Y}'
+	atf_check -s exit:0 -o inline:'>X< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv X ${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv """${1+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv "" "${1+$@}"'
+
+	# now we do all of those again, but testing $X instead of $1 (X set)
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv "${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv "" "${X+$@}"'
+
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>Xa<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv "" "${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv "" "${X+$@}"'
+
+	# and again, but testing $X where X is unset
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv "${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv "" "${X+$@}"'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a b; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a; delim_argv "" "${X+$@}"'
+
+	# a few that stretch belief...
+
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv ${X+${1+"$@"}}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ${X+${1+"$@"}}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a b ; delim_argv ${X+${1+"$@"}}'
+
+	# and now for something completely different
+
+	atf_check -s exit:0 -o inline:'>a< >b< >ca< >b< >c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$@$@"'
+	atf_check -s exit:0 -o inline:'>a< >b< >ca b c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$@$*"'
+	atf_check -s exit:0 -o inline:'>a b ca< >b< >c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$*$@"'
+	atf_check -s exit:0 -o inline:'>a a++b + ca a< >< >b < > c<\n'	\
+		-e empty ${TEST_SH} -c					\
+		'. ./h-f3; set -- "a a" "" "b " " c"; IFS=+; delim_argv "$*$@"'
+	atf_check -s exit:0 -o inline:'>a< >a< >< >b < > ca+a< >< >b < > c<\n' \
+		-e empty ${TEST_SH} -c					       \
+		'. ./h-f3; set -- "a+a" "" "b " " c"; IFS=+; delim_argv $*"$@"'
+}
+
 atf_test_case strip
 strip_head() {
-	atf_set "descr" "Checks that the %% operator works and strips" \
+	atf_set descr "Checks that the %% operator works and strips" \
 	                "the contents of a variable from the given point" \
 			"to the end"
 }
@@ -158,7 +385,7 @@ strip_body() {
 
 atf_test_case wrap_strip
 wrap_strip_head() {
-	atf_set "descr" "Checks that the %% operator works and strips" \
+	atf_set descr "Checks that the %% operator works and strips" \
 	                "the contents of a variable from the given point" \
 			'to the end, and that \ \n sequences do not break it'
 }
@@ -202,7 +429,7 @@ ne%\
 
 atf_test_case tilde
 tilde_head() {
-	atf_set "descr" "Checks that the ~ expansions work"
+	atf_set descr "Checks that the ~ expansions work"
 }
 tilde_body() {
 	for HOME in '' / /home/foo \
@@ -262,7 +489,7 @@ ${U4:=~/:~/}\t'"${HOME}"'/:'"${HOME}"'/\n' \
 
 atf_test_case varpattern_backslashes
 varpattern_backslashes_head() {
-	atf_set "descr" "Tests that protecting wildcards with backslashes" \
+	atf_set descr "Tests that protecting wildcards with backslashes" \
 	                "works in variable patterns."
 }
 varpattern_backslashes_body() {
@@ -274,7 +501,7 @@ varpattern_backslashes_body() {
 
 atf_test_case arithmetic
 arithmetic_head() {
-	atf_set "descr" "POSIX requires shell arithmetic to use signed" \
+	atf_set descr "POSIX requires shell arithmetic to use signed" \
 	                "long or a wider type.  We use intmax_t, so at" \
 			"least 64 bits should be available.  Make sure" \
 			"this is true."
@@ -291,7 +518,7 @@ arithmetic_body() {
 
 atf_test_case iteration_on_null_parameter
 iteration_on_null_parameter_head() {
-	atf_set "descr" "Check iteration of \$@ in for loop when set to null;" \
+	atf_set descr "Check iteration of \$@ in for loop when set to null;" \
 	                "the error \"sh: @: parameter not set\" is incorrect." \
 	                "PR bin/48202."
 }
@@ -302,7 +529,7 @@ iteration_on_null_parameter_body() {
 
 atf_test_case iteration_on_quoted_null_parameter
 iteration_on_quoted_null_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 		'Check iteration of "$@" in for loop when set to null;'
 }
 iteration_on_quoted_null_parameter_body() {
@@ -312,7 +539,7 @@ iteration_on_quoted_null_parameter_body() {
 
 atf_test_case iteration_on_null_or_null_parameter
 iteration_on_null_or_null_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 		'Check expansion of null parameter as default for another null'
 }
 iteration_on_null_or_null_parameter_body() {
@@ -322,7 +549,7 @@ iteration_on_null_or_null_parameter_body() {
 
 atf_test_case iteration_on_null_or_missing_parameter
 iteration_on_null_or_missing_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 	    'Check expansion of missing parameter as default for another null'
 }
 iteration_on_null_or_missing_parameter_body() {
@@ -439,7 +666,7 @@ results()
 
 atf_test_case shell_params
 shell_params_head() {
-	atf_set "descr" "Test correct operation of the numeric parameters"
+	atf_set descr "Test correct operation of the numeric parameters"
 }
 shell_params_body() {
 	atf_require_prog mktemp
@@ -498,7 +725,7 @@ shell_params_body() {
 
 atf_test_case var_with_embedded_cmdsub
 var_with_embedded_cmdsub_head() {
-	atf_set "descr" "Test expansion of vars with embedded cmdsub"
+	atf_set descr "Test expansion of vars with embedded cmdsub"
 }
 var_with_embedded_cmdsub_body() {
 
@@ -555,7 +782,7 @@ var_with_embedded_cmdsub_body() {
 
 atf_test_case dollar_hash
 dollar_hash_head() {
-	atf_set "descr" 'Test expansion of various aspects of $#'
+	atf_set descr 'Test expansion of various aspects of $#'
 }
 dollar_hash_body() {
 
@@ -767,7 +994,7 @@ dollar_hash_body() {
 
 atf_test_case dollar_star
 dollar_star_head() {
-	atf_set "descr" 'Test expansion of various aspects of $*'
+	atf_set descr 'Test expansion of various aspects of $*'
 }
 dollar_star_body() {
 
@@ -811,7 +1038,7 @@ dollar_star_body() {
 
 atf_test_case dollar_star_in_word
 dollar_star_in_word_head() {
-	atf_set "descr" 'Test expansion $* occurring in word of ${var:-word}'
+	atf_set descr 'Test expansion $* occurring in word of ${var:-word}'
 }
 dollar_star_in_word_body() {
 
@@ -863,7 +1090,7 @@ dollar_star_in_word_body() {
 
 atf_test_case dollar_star_with_empty_ifs
 dollar_star_with_empty_ifs_head() {
-	atf_set "descr" 'Test expansion of $* with IFS=""'
+	atf_set descr 'Test expansion of $* with IFS=""'
 }
 dollar_star_with_empty_ifs_body() {
 
@@ -897,7 +1124,7 @@ dollar_star_with_empty_ifs_body() {
 
 atf_test_case dollar_star_in_word_empty_ifs
 dollar_star_in_word_empty_ifs_head() {
-	atf_set "descr" 'Test expansion of ${unset:-$*} with IFS=""'
+	atf_set descr 'Test expansion of ${unset:-$*} with IFS=""'
 }
 dollar_star_in_word_empty_ifs_body() {
 
@@ -939,7 +1166,7 @@ dollar_star_in_word_empty_ifs_body() {
 
 atf_test_case dollar_star_in_quoted_word
 dollar_star_in_quoted_word_head() {
-	atf_set "descr" 'Test expansion $* occurring in word of ${var:-"word"}'
+	atf_set descr 'Test expansion $* occurring in word of ${var:-"word"}'
 }
 dollar_star_in_quoted_word_body() {
 
@@ -997,9 +1224,65 @@ dollar_star_in_quoted_word_body() {
 	results	  # FIXED: 'PR bin/52090 - 2 of 26 subtests expected to fail'
 }
 
+atf_test_case dollar_at_in_field_split_context
+dollar_at_in_field_split_context_head() {
+	atf_set descr 'Test "$@" wth field splitting -- PR bin/54112'
+}
+dollar_at_in_field_split_context_body() {
+	reset dollar_at_in_field_split_context
+
+		# the simple case (no field split) which always worked
+	check 'set -- ""; set -- ${0+"$@"}; echo $#'		1	0   #1
+
+		# The original failure case from the bash-bug list
+	check 'set -- ""; set -- ${0+"$@" "$@"}; echo $#'	2	0   #2
+
+		# slightly simpler cases that triggered the same issue
+	check 'set -- ""; set -- ${0+"$@" }; echo $#'		1	0   #3
+	check 'set -- ""; set -- ${0+ "$@"}; echo $#'		1	0   #4
+	check 'set -- ""; set -- ${0+ "$@" }; echo $#'		1	0   #5
+
+		# and the bizarre
+	check 'set -- ""; set -- ${0+"$@" "$@" "$@"}; echo $#'	3	0   #6
+
+	# repeat tests when there is more than one set empty numeric param
+
+	check 'set -- "" ""; set -- ${0+"$@"}; echo $#'		2	0   #7
+	check 'set -- "" ""; set -- ${0+"$@" "$@"}; echo $#'	4	0   #8
+	check 'set -- "" ""; set -- ${0+"$@" }; echo $#'	2	0   #9
+	check 'set -- "" ""; set -- ${0+ "$@"}; echo $#'	2	0   #10
+	check 'set -- "" ""; set -- ${0+ "$@" }; echo $#'	2	0   #11
+	check 'set -- "" ""; set -- ${0+"$@" "$@" "$@"}; echo $#' \
+								6	0   #12
+
+		# Next some checks of the way the NetBSD shell
+		# interprets some expressions that are POSIX unspecified.
+		# Other shells might fail these tests, without that
+		# being a problem.   We retain these tests so accidental
+		# changes in our behaviour can be detected.
+
+	check 'set --; X=; set -- "$X$@"; echo $#'		0	0   #13
+	check 'set --; X=; set -- "$@$X"; echo $#'		0	0   #14
+	check 'set --; X=; set -- "$X$@$X"; echo $#'		0	0   #15
+	check 'set --; X=; set -- "$@$@"; echo $#'		0	0   #16
+
+	check 'set -- ""; X=; set -- "$X$@"; echo $#'		1	0   #17
+	check 'set -- ""; X=; set -- "$@$X"; echo $#'		1	0   #19
+	check 'set -- ""; X=; set -- "$X$@$X"; echo $#'		1	0   #19
+	check 'set -- ""; X=; set -- "$@$@"; echo $#'		1	0   #20
+
+	check 'set -- "" ""; X=; set -- "$X$@"; echo $#'	2	0   #21
+	check 'set -- "" ""; X=; set -- "$@$X"; echo $#'	2	0   #22
+	check 'set -- "" ""; X=; set -- "$X$@$X"; echo $#'	2	0   #23
+		# Yes, this next one really is (and should be) 3...
+	check 'set -- "" ""; X=; set -- "$@$@"; echo $#'	3	0   #24
+
+	results
+}
+
 atf_test_case embedded_nl
 embedded_nl_head() {
-	atf_set "descr" 'Test literal \n in xxx string in ${var-xxx}'
+	atf_set descr 'Test literal \n in xxx string in ${var-xxx}'
 }
 embedded_nl_body() {
 
@@ -1049,11 +1332,287 @@ embedded_nl_body() {
 		EOF
 }
 
+check3()
+{
+	check "X=foo; ${1}"		"$2" 0
+	check "X=; ${1}"		"$3" 0
+	check "unset X; ${1}"		"$4" 0
+}
+
+atf_test_case alternative
+alternative_head() {
+	atf_set descr 'Test various possibilities for ${var+xxx}'
+}
+alternative_body() {
+	reset alternative
+
+	# just to verify (validate) that the test method works as expected
+	# (this is currently the very first test performed in this test set)
+	check	'printf %s a b'				ab	0	#  1
+
+	check3	'set -- ${X+bar}; echo "$#:$1"'		1:bar 1:bar 0:  #  4
+	check3	'set -- ${X+}; echo "$#:$1"'		0: 0: 0:	#  7
+	check3	'set -- ${X+""}; echo "$#:$1"'		1: 1: 0:	# 10
+	check3	'set -- "${X+}"; echo "$#:$1"'		1: 1: 1:	# 13
+	check3	'set -- "${X+bar}"; echo "$#:$1"'	1:bar 1:bar 1:	# 16
+
+	check3	'set -- ${X+a b c}; echo "$#:$1"'	3:a 3:a 0:	# 19
+	check3	'set -- ${X+"a b c"}; echo "$#:$1"'	'1:a b c' '1:a b c' 0:
+	check3	'set -- "${X+a b c}"; echo "$#:$1"'	'1:a b c' '1:a b c' 1:
+	check3	'set -- ${X+a b\ c}; echo "$#:$1"'	2:a 2:a 0:	# 28
+	check3	'set -- ${X+"a b" c}; echo "$#:$1"'	'2:a b' '2:a b' 0:
+
+	check3	'printf %s "" ${X+}'			''  ''  ''	# 34
+	check3	'printf %s ""${X+bar}'			bar bar ''	# 37
+
+	check3	'Y=bar; printf %s ${X+x}${Y+y}'		xy  xy  y	# 40
+	check3	'Y=bar; printf %s ""${X+${Y+z}}'	z   z   ''	# 43
+	check3	'Y=; printf %s ""${X+${Y+z}}'		z   z   ''	# 46
+	check3	'unset Y; printf %s ""${X+${Y+z}}'	''  ''  ''	# 49
+	check3	'Y=1; printf %s a ${X+"${Y+z}"}'	az  az	a	# 52
+
+	check3	'printf %s ${X+}x}'			x}  x}  x}	# 55
+	check3	'printf %s ${X+}}'			 }   }   }	# 58
+	check3	'printf %s "" ${X+"}"x}'		}x  }x  ''	# 61
+	check3	'printf %s "" ${X+\}x}'			}x  }x  ''	# 64
+	check3	'printf %s "${X+\}x}"'			}x  }x  ''	# 67
+	check3	'printf %s "${X+\}}"'			 }  }   ''	# 70
+
+	check3	'set -- ${X:+bar}; echo "$#:$1"'	1:bar 0: 0:	# 73
+	check3	'set -- ${X:+}; echo "$#:$1"'		0: 0: 0:	# 76
+	check3	'set -- ${X:+""}; echo "$#:$1"'		1: 0: 0:	# 79
+	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 80
+	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 83
+
+	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 86
+	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 89
+	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 92
+	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 95
+	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	# 98
+
+	check3	'printf %s "" ${X:+}'			''  ''  ''	#101
+	check3	'printf %s ""${X:+bar}'			bar ''  ''	#104
+
+	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#107
+	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#110
+	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#113
+	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#116
+	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#119
+	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#122
+
+	check3	'printf %s ${X:+}x}'			x}  x}  x}	#125
+	check3	'printf %s ${X:+}}'			 }   }   }	#128
+	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#131
+	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#134
+	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#137
+	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#140
+
+	results
+}
+
+atf_test_case default
+default_head() {
+	atf_set descr 'Test various possibilities for ${var-xxx}'
+}
+default_body() {
+	reset default
+
+	check3	'set -- ${X-bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
+	check3	'set -- ${X-}; echo "$#:$1"'		1:foo 0: 0:	#  6
+	check3	'set -- ${X-""}; echo "$#:$1"'		1:foo 0: 1:	#  9
+	check3	'set -- "${X-}"; echo "$#:$1"'		1:foo 1: 1:	# 12
+	check3	'set -- "${X-bar}"; echo "$#:$1"'	1:foo 1: 1:bar	# 15
+
+	check3	'set -- ${X-a b c}; echo "$#:$1"'	1:foo 0: 3:a	# 18
+	check3	'set -- ${X-"a b c"}; echo "$#:$1"'	1:foo 0: '1:a b c' #21
+	check3	'set -- "${X-a b c}"; echo "$#:$1"'	1:foo 1: '1:a b c' #24
+	check3	'set -- ${X-a b\ c}; echo "$#:$1"'	1:foo 0: 2:a	# 27
+	check3	'set -- ${X-"a b" c}; echo "$#:$1"'	1:foo 0: '2:a b'   #30
+
+	check3	'printf %s "" ${X-}'			foo '' ''	# 33
+	check3	'printf %s ""${X-bar}'			foo '' bar	# 36
+
+	check3	'Y=bar; printf %s ${X-x}${Y-y}'		foobar bar xbar	# 39
+	check3	'Y=bar; printf %s ""${X-${Y-z}}'	foo '' bar	# 42
+	check3	'Y=; printf %s ""${X-${Y-z}}'		foo '' ''	# 45
+	check3	'unset Y; printf %s ""${X-${Y-z}}'	foo '' z	# 48
+	check3	'Y=1; printf %s a ${X-"${Y-z}"}'	afoo a a1	# 51
+
+	check3	'printf %s ${X-}x}'			foox} x} x}	# 54
+	check3	'printf %s ${X-}}'			 foo}  }  }	# 57
+	check3	'printf %s ${X-{}}'			 foo}  } {}	# 60
+	check3	'printf %s "" ${X-"}"x}'		foo ''  }x	# 63
+	check3	'printf %s "" ${X-\}x}'			foo ''  }x	# 66
+	check3	'printf %s "${X-\}x}"'			foo ''  }x	# 69
+	check3	'printf %s "${X-\}}"'			foo ''  }	# 72
+
+	check3	'set -- ${X:-bar}; echo "$#:$1"'	1:foo 1:bar 1:bar  #75
+	check3	'set -- ${X:-}; echo "$#:$1"'		1:foo 0: 0:	# 78
+	check3	'set -- ${X:-""}; echo "$#:$1"'		1:foo 1: 1:	# 81
+	check3	'set -- "${X:-}"; echo "$#:$1"'		1:foo 1: 1:	# 84
+	check3	'set -- "${X:-bar}"; echo "$#:$1"'	1:foo 1:bar 1:bar  #87
+
+	check3	'set -- ${X:-a b c}; echo "$#:$1"'	1:foo 3:a 3:a	# 90
+	check3	'set -- ${X:-"a b c"}; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- "${X:-a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- ${X:-a b\ c}; echo "$#:$1"'	1:foo 2:a 2:a	# 99
+	check3	'set -- ${X:-"a b" c}; echo "$#:$1"'	1:foo '2:a b' '2:a b'
+
+	check3	'printf %s "" ${X:-}'			foo ''  ''	#105
+	check3	'printf %s ""${X:-bar}'			foo bar bar	#108
+
+	check3	'Y=bar; printf %s ${X:-x}${Y:-y}'	foobar xbar xbar #111
+	check3	'Y=bar; printf %s ""${X:-${Y:-z}}'	foo  bar bar	#114
+	check3	'Y=; printf %s ""${X:-${Y-z}}'		foo  ''  ''	#117
+	check3	'Y=; printf %s ""${X:-${Y:-z}}'		foo  z   z	#120
+	check3	'unset Y; printf %s ""${X:-${Y:-z}}'	foo  z   z	#123
+	check3	'Y=1; printf %s a ${X:-"${Y:-z}"}'	afoo a1	 a1	#126
+
+	check3	'printf %s ${X:-}x}'			foox} x}  x}	#129
+	check3	'printf %s ${X:-}}'			 foo}  }   }	#132
+	check3	'printf %s ${X:-{}}'			 foo} {}  {}	#135
+	check3	'printf %s "" ${X:-"}"x}'		 foo  }x  }x	#138
+	check3	'printf %s "" ${X:-\}x}'		 foo  }x  }x	#141
+	check3	'printf %s "${X:-\}x}"'			 foo  }x  }x	#144
+	check3	'printf %s "${X:-\}}"'			 foo  }   }	#147
+
+	results
+}
+
+atf_test_case assign
+assign_head() {
+	atf_set descr 'Test various possibilities for ${var=xxx}'
+}
+assign_body() {
+	reset assign
+
+	check3	'set -- ${X=bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
+	check3	'set -- ${X=}; echo "$#:$1"'		1:foo 0: 0:	#  6
+	check3	'set -- ${X=""}; echo "$#:$1"'		1:foo 0: 0:	#  9
+	check3	'set -- "${X=}"; echo "$#:$1"'		1:foo 1: 1:	# 12
+	check3	'set -- "${X=bar}"; echo "$#:$1"'	1:foo 1: 1:bar	# 15
+
+	check3	'set -- ${X=a b c}; echo "$#:$1"'	1:foo 0: 3:a	# 18
+	check3	'set -- ${X="a b c"}; echo "$#:$1"'	1:foo 0: 3:a	# 21
+	check3	'set -- "${X=a b c}"; echo "$#:$1"'	1:foo 1: '1:a b c' #24
+	check3	'set -- ${X=a b\ c}; echo "$#:$1"'	1:foo 0: 3:a	# 27
+	check3	'set -- ${X="a b" c}; echo "$#:$1"'	1:foo 0: 3:a	# 30
+
+	check3	'printf %s "" ${X=}'			foo '' ''	# 33
+	check3	'printf %s ""${X=bar}'			foo '' bar	# 36
+
+	check3	'Y=bar; printf %s ${X=x}${Y=y}'		foobar bar xbar	# 39
+	check3	'Y=bar; printf %s ""${X=${Y=z}}'	foo '' bar	# 42
+	check3	'Y=; printf %s ""${X=${Y=z}}'		foo '' ''	# 45
+	check3	'unset Y; printf %s ""${X=${Y=z}}'	foo '' z	# 48
+	check3	'Y=1; printf %s a ${X="${Y=z}"}'	afoo a a1	# 51
+
+	check3	'printf %s ${X=}x}'			foox} x} x}	# 54
+	check3	'printf %s ${X=}}'			 foo}  }  }	# 57
+	check3	'printf %s ${X={}}'			 foo}  } {}	# 60
+	check3	'printf %s "" ${X="}"x}'		foo ''  }x	# 63
+	check3	'printf %s "" ${X=\}x}'			foo ''  }x	# 66
+	check3	'printf %s "${X=\}x}"'			foo ''  }x	# 69
+	check3	'printf %s "${X=\}}"'			foo ''  }	# 72
+
+	check3	'set -- ${X=a b c}; echo "$#:$1:$X"'  1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- ${X="a b c"}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- "${X=a b c}"; echo "$#:$1:$X"' \
+						1:foo:foo 1:: '1:a b c:a b c'
+	check3	'set -- ${X=a b\ c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- ${X="a b" c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+
+	check3	'printf %s ${X=}x}; printf :%s "${X-U}"' foox}:foo x}: x}: #90
+	check3	'printf %s ${X=}}; printf :%s "${X-U}"'  foo}:foo }:  }:   #93
+	check3	'printf %s ${X={}}; printf :%s "${X-U}"' foo}:foo }: {}:{  #96
+
+	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar # 99	
+	check3	'set -- ${X:=}; echo "$#:$1"'		1:foo 0: 0:	#102
+	check3	'set -- ${X:=""}; echo "$#:$1"'		1:foo 0: 0:	#105
+	check3	'set -- "${X:=}"; echo "$#:$1"'		1:foo 1: 1:	#108
+	check3	'set -- "${X:=bar}"; echo "$#:$1"'	1:foo 1:bar 1:bar #111
+
+	check3	'set -- ${X:=a b c}; echo "$#:$1"'	1:foo 3:a 3:a	#114
+	check3	'set -- ${X:="a b c"}; echo "$#:$1"' 1:foo 3:a 3:a	#117
+	check3	'set -- "${X:=a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- ${X:=a b\ c}; echo "$#:$1"'	1:foo 3:a 3:a	#123
+	check3	'set -- ${X:="a b" c}; echo "$#:$1"'	1:foo 3:a 3:a	#126
+
+	check3	'printf %s "" ${X:=}'			foo ''  ''	#129
+	check3	'printf %s ""${X:=bar}'			foo bar bar	#132
+
+	check3	'Y=bar; printf %s ${X:=x}${Y:=y}'	foobar xbar xbar #135
+	check3	'Y=bar; printf %s ""${X:=${Y:=z}}'	foo  bar bar	#138
+	check3	'Y=; printf %s ""${X:=${Y=z}}'		foo  ''  ''	#141
+	check3	'Y=; printf %s ""${X:=${Y:=z}}'		foo  z   z	#144
+	check3	'unset Y; printf %s ""${X:=${Y:=z}}'	foo  z   z	#147
+	check3	'Y=1; printf %s a ${X:="${Y:=z}"}'	afoo a1	 a1	#150
+
+	check3	'printf %s ${X:=}x}'			foox} x}  x}	#153
+	check3	'printf %s ${X:=}}'			 foo}  }   }	#156
+	check3	'printf %s ${X:={}}'			 foo} {}  {}	#159
+	check3	'printf %s "" ${X:="}"x}'		 foo  }x  }x	#162
+	check3	'printf %s "" ${X:=\}x}'		 foo  }x  }x	#165
+	check3	'printf %s "${X:=\}x}"'			 foo  }x  }x	#168
+	check3	'printf %s "${X:=\}}"'			 foo  }   }	#171
+
+	check3	'set -- ${X:=a b c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#174
+	check3	'set -- ${X:="a b c"}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#177
+	check3	'set -- "${X:=a b c}"; echo "$#:$1:$X"' \
+				1:foo:foo '1:a b c:a b c' '1:a b c:a b c' #180
+	check3	'set -- ${X:=a b\ c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#183
+	check3	'set -- ${X:="a b" c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#186
+
+	check3	'printf %s ${X:=}x}; printf :%s "${X-U}"' foox}:foo x}: x}:
+	check3	'printf %s ${X:=}}; printf :%s "${X-U}"'  foo}:foo }:  }:
+	check3	'printf %s ${X:=\}}; printf :%s "${X-U}"' foo:foo }:}  }:}
+	check3	'printf %s ${X:={}}; printf :%s "${X-U}"' foo}:foo {}:{ {}:{
+									#198
+
+	results
+}
+
+atf_test_case error
+error_head() {
+	atf_set descr 'Test various possibilities for ${var?xxx}'
+}
+error_body() {
+	reset error
+
+	check 'X=foo; printf %s ${X?X is not set}'	foo	0	#1
+	check 'X=; printf %s ${X?X is not set}'		''	0	#2
+	check 'unset X; printf %s ${X?X is not set}'	''	2	#3
+
+	check 'X=foo; printf %s ${X?}'			foo	0	#4
+	check 'X=; printf %s ${X?}'			''	0	#5
+	check 'unset X; printf %s ${X?}'		''	2	#6
+
+	check 'X=foo; printf %s ${X:?X is not set}'	foo	0	#7
+	check 'X=; printf %s ${X:?X is not set}'	''	2	#8
+	check 'unset X; printf %s ${X:?X is not set}'	''	2	#9
+
+	check 'X=foo; printf %s ${X:?}'			foo	0	#10
+	check 'X=; printf %s ${X:?}'			''	2	#11
+	check 'unset X; printf %s ${X:?}'		''	2	#12
+
+	results
+}
+
 atf_init_test_cases() {
 	# Listed here in the order ATF runs them, not the order from above
 
+	atf_add_test_case alternative
 	atf_add_test_case arithmetic
+	atf_add_test_case assign
+	atf_add_test_case default
 	atf_add_test_case dollar_at
+	atf_add_test_case dollar_at_empty_and_conditional
+	atf_add_test_case dollar_at_in_field_split_context
+	atf_add_test_case dollar_at_unquoted_or_conditional
 	atf_add_test_case dollar_at_with_text
 	atf_add_test_case dollar_hash
 	atf_add_test_case dollar_star
@@ -1062,6 +1621,7 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_star_in_word_empty_ifs
 	atf_add_test_case dollar_star_with_empty_ifs
 	atf_add_test_case embedded_nl
+	atf_add_test_case error
 	atf_add_test_case iteration_on_null_parameter
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter

@@ -1,5 +1,5 @@
 /* Single entry single exit control flow regions.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Jan Sjodin <jan.sjodin@amd.com> and
    Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -199,11 +199,11 @@ free_sese_info (sese_info_p region)
   region->loop_nest.release ();
 
   for (rename_map_t::iterator it = region->rename_map->begin ();
-       it != region->rename_map->begin (); ++it)
+       it != region->rename_map->end (); ++it)
     (*it).second.release ();
 
   for (bb_map_t::iterator it = region->copied_bb_map->begin ();
-       it != region->copied_bb_map->begin (); ++it)
+       it != region->copied_bb_map->end (); ++it)
     (*it).second.release ();
 
   delete region->rename_map;

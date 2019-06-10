@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.30 2018/06/26 06:48:02 msaitoh Exp $ */
+/* $NetBSD: if_plip.c,v 1.30.2.1 2019/06/10 22:07:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.30 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.30.2.1 2019/06/10 22:07:30 christos Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -375,8 +375,10 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 	/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
+		if (cmd == SIOCSIFFLAGS) {
+			if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+				break;
+		}
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
 			if ((error = ppbus_request_bus(ppbus, dev, 0, 0)))
 				break;
@@ -523,9 +525,13 @@ lptap(struct ifnet *ifp, struct mbuf *m, u_int direction)
 	u_int32_t af = AF_INET;
 	struct mbuf m0;
 
+	m0.m_type = MT_DATA;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_len = sizeof(u_int32_t);
 	m0.m_data = (char *)&af;
+	m0.m_flags = 0;
 	bpf_mtap(ifp, &m0, direction);
 }
 
@@ -600,7 +606,7 @@ lp_intr(void *arg)
 		if (len <= CLPIPHDRLEN)
 			goto err;
 		len -= CLPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp);
 	}
 	/* FreeBSD protocol receiving */
 	else {
@@ -636,7 +642,7 @@ end:
 		if (len <= LPIPHDRLEN)
 			goto err;
 		len -= LPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp);
 	}
 
 	if (top == NULL) {

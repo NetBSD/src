@@ -948,11 +948,12 @@ riscv_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 }
 
 reloc_howto_type *
-riscv_elf_rtype_to_howto (unsigned int r_type)
+riscv_elf_rtype_to_howto (bfd *abfd, unsigned int r_type)
 {
   if (r_type >= ARRAY_SIZE (howto_table))
     {
-      (*_bfd_error_handler) (_("unrecognized relocation (0x%x)"), r_type);
+      (*_bfd_error_handler) (_("%pB: unsupported relocation type %#x"),
+			     abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }

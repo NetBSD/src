@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.59 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.59.2.1 2019/06/10 22:09:45 christos Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.59 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.59.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -334,4 +334,4 @@ faithprefix(struct in6_addr *in6)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, faith, "")
+IF_MODULE(MODULE_CLASS_DRIVER, faith, NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.49 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.49.18.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.49 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.49.18.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,11 +92,8 @@ static const struct mii_phy_funcs qsphy_funcs = {
 };
 
 static const struct mii_phydesc qsphys[] = {
-	{ MII_OUI_xxQUALSEMI,		MII_MODEL_xxQUALSEMI_QS6612,
-	  MII_STR_xxQUALSEMI_QS6612 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxQUALSEMI, QS6612),
+	MII_PHY_END,
 };
 
 static int
@@ -105,9 +102,9 @@ qsphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, qsphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -132,7 +129,8 @@ qsphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -145,7 +143,7 @@ static int
 qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -153,7 +151,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not polling our PHY instance, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -162,9 +160,9 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -181,15 +179,15 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -197,7 +195,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -205,17 +203,17 @@ qsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, pctl;
+	uint16_t bmsr, bmcr, pctl;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) |
-	    PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -231,23 +229,23 @@ qsphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-		pctl = PHY_READ(sc, MII_QSPHY_PCTL) |
-		    PHY_READ(sc, MII_QSPHY_PCTL);
+		PHY_READ(sc, MII_QSPHY_PCTL, &pctl);
+		PHY_READ(sc, MII_QSPHY_PCTL, &pctl);
 		switch (pctl & PCTL_OPMASK) {
 		case PCTL_10_T:
-			mii->mii_media_active |= IFM_10_T|IFM_HDX;
+			mii->mii_media_active |= IFM_10_T | IFM_HDX;
 			break;
 		case PCTL_10_T_FDX:
-			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			mii->mii_media_active |= IFM_10_T | IFM_FDX;
 			break;
 		case PCTL_100_TX:
-			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_HDX;
 			break;
 		case PCTL_100_TX_FDX:
-			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_FDX;
 			break;
 		case PCTL_100_T4:
-			mii->mii_media_active |= IFM_100_T4|IFM_HDX;
+			mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
 			break;
 		default:
 			/* Erg... this shouldn't happen. */

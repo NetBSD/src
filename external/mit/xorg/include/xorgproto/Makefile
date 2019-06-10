@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/03/14 08:55:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2019/06/10 22:02:37 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ PKGCONFIG= bigreqsproto \
 	dri3proto \
 	evieproto \
 	fixesproto \
-	fontcacheproto \
 	fontsproto \
 	glproto \
 	inputproto \

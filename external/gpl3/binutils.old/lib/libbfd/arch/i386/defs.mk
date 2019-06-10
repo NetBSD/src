@@ -2,8 +2,8 @@
 # Generated from: NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp 
 # Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp 
 #
-G_libbfd_la_DEPENDENCIES=elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo elf.lo elflink.lo elf-attrs.lo elf-strtab.lo elf-eh-frame.lo dwarf1.lo dwarf2.lo i386netbsd.lo aout32.lo elf32-gen.lo plugin.lo cpu-i386.lo cpu-iamcu.lo cpu-plugin.lo netbsd-core.lo ofiles
+G_libbfd_la_DEPENDENCIES=elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo elf.lo elflink.lo elf-attrs.lo elf-strtab.lo elf-eh-frame.lo dwarf1.lo dwarf2.lo i386netbsd.lo aout32.lo coff-i386.lo cofflink.lo coffgen.lo pei-i386.lo peigen.lo elf32-gen.lo plugin.lo cpu-i386.lo cpu-iamcu.lo cpu-plugin.lo netbsd-core.lo ofiles
 G_libbfd_la_OBJECTS=archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo  cache.lo coff-bfd.lo compress.lo corefile.lo format.lo hash.lo  init.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo  section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo  binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
 G_DEFS=-DHAVE_CONFIG_H
-G_INCLUDES=-DNETBSD_CORE    -I. -I${GNUHOSTDIST}/bfd -I${GNUHOSTDIST}/bfd/../include   -DHAVE_i386_elf32_vec -DHAVE_i386_aout_nbsd_vec -DHAVE_iamcu_elf32_vec -DHAVE_elf32_le_vec -DHAVE_elf32_be_vec -DHAVE_plugin_vec -I./../intl
-G_TDEFAULTS=-DDEFAULT_VECTOR=i386_elf32_vec -DSELECT_VECS='&i386_elf32_vec,&i386_aout_nbsd_vec,&iamcu_elf32_vec,&elf32_le_vec,&elf32_be_vec,&plugin_vec' -DSELECT_ARCHITECTURES='&bfd_i386_arch,&bfd_iamcu_arch,&bfd_plugin_arch'
+G_INCLUDES=-DNETBSD_CORE    -I. -I${GNUHOSTDIST}/bfd -I${GNUHOSTDIST}/bfd/../include   -DHAVE_i386_elf32_vec -DHAVE_i386_aout_nbsd_vec -DHAVE_iamcu_elf32_vec -DHAVE_i386_coff_vec -DHAVE_i386_pei_vec -DHAVE_elf32_le_vec -DHAVE_elf32_be_vec -DHAVE_plugin_vec -I./../intl
+G_TDEFAULTS=-DDEFAULT_VECTOR=i386_elf32_vec -DSELECT_VECS='&i386_elf32_vec,&i386_aout_nbsd_vec,&iamcu_elf32_vec,&elf32_le_vec,&i386_coff_vec,&i386_pei_vec,&elf32_be_vec,&plugin_vec' -DSELECT_ARCHITECTURES='&bfd_i386_arch,&bfd_iamcu_arch,&bfd_plugin_arch'

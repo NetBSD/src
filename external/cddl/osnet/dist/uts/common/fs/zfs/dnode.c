@@ -107,9 +107,6 @@ dnode_cons(void *arg, void *unused, int kmflag)
 	dnode_t *dn = arg;
 	int i;
 
-#ifdef __NetBSD__
-	dn = unused;
-#endif
 	rw_init(&dn->dn_struct_rwlock, NULL, RW_DEFAULT, NULL);
 	mutex_init(&dn->dn_mtx, NULL, MUTEX_DEFAULT, NULL);
 	mutex_init(&dn->dn_dbufs_mtx, NULL, MUTEX_DEFAULT, NULL);
@@ -171,9 +168,6 @@ dnode_dest(void *arg, void *unused)
 	int i;
 	dnode_t *dn = arg;
 
-#ifdef __NetBSD__
-	dn = unused;
-#endif
 	rw_destroy(&dn->dn_struct_rwlock);
 	mutex_destroy(&dn->dn_mtx);
 	mutex_destroy(&dn->dn_dbufs_mtx);

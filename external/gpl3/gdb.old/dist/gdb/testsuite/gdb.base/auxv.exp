@@ -1,6 +1,6 @@
 # Test `info auxv' and related functionality.
 
-# Copyright (C) 1992-2016 Free Software Foundation, Inc.
+# Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 		  {debug additional_flags=-DUSE_RLIMIT}] != ""
      && [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 		  {debug}] != "" } {
-    untested "couldn't compile ${srcdir}/${subdir}/${srcfile}"
+    untested "failed to compile"
     return -1
 }
 

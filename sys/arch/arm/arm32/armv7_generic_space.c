@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.8.2.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8.2.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

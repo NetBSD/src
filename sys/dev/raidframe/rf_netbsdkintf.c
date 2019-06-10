@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356.4.1 2019/06/10 22:07:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,12 +101,11 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.4.1 2019/06/10 22:07:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 #include "opt_raid_autoconfig.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/param.h>
@@ -128,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyett
 #include <sys/reboot.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h>
 
 #include <prop/proplib.h>
 
@@ -148,18 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyett
 #include "rf_driver.h"
 #include "rf_parityscan.h"
 #include "rf_threadstuff.h"
-
-#ifdef COMPAT_50
-#include "rf_compat50.h"
-#endif
-
-#ifdef COMPAT_80
-#include "rf_compat80.h"
-#endif
-
-#ifdef COMPAT_NETBSD32
-#include "rf_compat32.h"
-#endif
 
 #include "ioconf.h"
 
@@ -194,7 +182,6 @@ static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
     dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
     void *, int, struct proc *);
-struct raid_softc;
 static void raidinit(struct raid_softc *);
 static int raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp);
 static int rf_get_component_caches(RF_Raid_t *raidPtr, int *);
@@ -261,26 +248,6 @@ static struct dkdriver rf_dkdriver = {
 	.d_lastclose = raid_lastclose,
 	.d_minphys = minphys
 };
-
-struct raid_softc {
-	struct dk_softc sc_dksc;
-	int	sc_unit;
-	int     sc_flags;	/* flags */
-	int     sc_cflags;	/* configuration flags */
-	kmutex_t sc_mutex;	/* interlock mutex */
-	kcondvar_t sc_cv;	/* and the condvar */
-	uint64_t sc_size;	/* size of the raid device */
-	char    sc_xname[20];	/* XXX external name */
-	RF_Raid_t sc_r;
-	LIST_ENTRY(raid_softc) sc_link;
-};
-/* sc_flags */
-#define RAIDF_INITED		0x01	/* unit has been initialized */
-#define RAIDF_SHUTDOWN		0x02	/* unit is being shutdown */
-#define RAIDF_DETACH  		0x04	/* detach after final close */
-#define RAIDF_WANTED		0x08	/* someone waiting to obtain a lock */
-#define RAIDF_LOCKED		0x10	/* unit is locked */
-#define RAIDF_UNIT_CHANGED	0x20	/* unit is being changed */
 
 #define	raidunit(x)	DISKUNIT(x)
 #define	raidsoftc(dev)	(((struct raid_softc *)device_private(dev))->sc_r.softc)
@@ -467,10 +434,32 @@ rf_autoconfig(device_t self)
 	return 1;
 }
 
+int
+rf_inited(const struct raid_softc *rs) {
+	return (rs->sc_flags & RAIDF_INITED) != 0;
+}
+
+RF_Raid_t *
+rf_get_raid(struct raid_softc *rs) {
+	return &rs->sc_r;
+}
+
+int
+rf_get_unit(const struct raid_softc *rs) {
+	return rs->sc_unit;
+}
+
 static int
 rf_containsboot(RF_Raid_t *r, device_t bdv) {
-	const char *bootname = device_xname(bdv);
-	size_t len = strlen(bootname);
+	const char *bootname;
+	size_t len;
+
+	/* if bdv is NULL, the set can't contain it. exit early. */
+	if (bdv == NULL)
+		return 0;
+
+	bootname = device_xname(bdv);
+	len = strlen(bootname);
 
 	for (int col = 0; col < r->numCol; col++) {
 		const char *devname = r->Disks[col].devname;
@@ -509,8 +498,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure == 1) {
 			sc = rf_auto_config_set(cset);
 			if (sc != NULL) {
-				aprint_debug("raid%d: configured ok\n",
-				    sc->sc_unit);
+				aprint_debug("raid%d: configured ok, rootable %d\n",
+				    sc->sc_unit, cset->rootable);
 				if (cset->rootable) {
 					rsc = sc;
 					num_root++;
@@ -534,8 +523,10 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
 
-	if (rootspec != NULL)
+	if (rootspec != NULL) {
+		DPRINTF("%s: rootspec %s\n", __func__, rootspec);
 		return;
+	}
 
 	/* we found something bootable... */
 
@@ -577,9 +568,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			candidate_root = dksc->sc_dev;
 		DPRINTF("%s: candidate root=%p\n", __func__, candidate_root);
 		DPRINTF("%s: booted_device=%p root_partition=%d "
-		   "contains_boot=%d\n", __func__, booted_device,
-		   rsc->sc_r.root_partition,
-		   rf_containsboot(&rsc->sc_r, booted_device));
+			"contains_boot=%d",
+		    __func__, booted_device, rsc->sc_r.root_partition,
+			   rf_containsboot(&rsc->sc_r, booted_device));
+		/* XXX the check for booted_device == NULL can probably be
+		 * dropped, now that rf_containsboot handles that case.
+		 */
 		if (booted_device == NULL ||
 		    rsc->sc_r.root_partition == 1 ||
 		    rf_containsboot(&rsc->sc_r, booted_device)) {
@@ -1040,235 +1034,399 @@ raid_detach_unlocked(struct raid_softc *rs)
 	return 0;
 }
 
-static int
-raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+static bool
+rf_must_be_initialized(const struct raid_softc *rs, u_long cmd)
 {
-	int     unit = raidunit(dev);
-	int     error = 0;
-	int     part, pmask;
-	struct raid_softc *rs;
-	struct dk_softc *dksc;
-	RF_Config_t *k_cfg, *u_cfg;
-	RF_Raid_t *raidPtr;
-	RF_RaidDisk_t *diskPtr;
-	RF_AccTotals_t *totals;
-	RF_DeviceConfig_t *d_cfg, *ucfgp;
-	u_char *specific_buf;
-	int retcode = 0;
-	int column;
-/*	int raidid; */
-	struct rf_recon_req *rr;
-	struct rf_recon_req_internal *rrint;
-	RF_ComponentLabel_t *clabel;
-	RF_ComponentLabel_t *ci_label;
-	RF_SingleComponent_t *sparePtr,*componentPtr;
-	RF_SingleComponent_t component;
-	int d;
-
-	if ((rs = raidget(unit, false)) == NULL)
-		return ENXIO;
-	dksc = &rs->sc_dksc;
-	raidPtr = &rs->sc_r;
-
-	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
-		(int) DISKPART(dev), (int) unit, cmd));
-
-	/* Must be initialized for these... */
 	switch (cmd) {
-	case RAIDFRAME_REWRITEPARITY:
-	case RAIDFRAME_GET_INFO:
-	case RAIDFRAME_RESET_ACCTOTALS:
-	case RAIDFRAME_GET_ACCTOTALS:
-	case RAIDFRAME_KEEP_ACCTOTALS:
-	case RAIDFRAME_GET_SIZE:
-	case RAIDFRAME_FAIL_DISK:
-	case RAIDFRAME_COPYBACK:
-	case RAIDFRAME_CHECK_RECON_STATUS:
-	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
-	case RAIDFRAME_GET_COMPONENT_LABEL:
-	case RAIDFRAME_SET_COMPONENT_LABEL:
 	case RAIDFRAME_ADD_HOT_SPARE:
-	case RAIDFRAME_REMOVE_HOT_SPARE:
-	case RAIDFRAME_INIT_LABELS:
-	case RAIDFRAME_REBUILD_IN_PLACE:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
 	case RAIDFRAME_CHECK_PARITY:
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
-	case RAIDFRAME_SET_AUTOCONFIG:
-	case RAIDFRAME_SET_ROOT:
+	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
+	case RAIDFRAME_COPYBACK:
 	case RAIDFRAME_DELETE_COMPONENT:
+	case RAIDFRAME_FAIL_DISK:
+	case RAIDFRAME_GET_ACCTOTALS:
+	case RAIDFRAME_GET_COMPONENT_LABEL:
+	case RAIDFRAME_GET_INFO:
+	case RAIDFRAME_GET_SIZE:
 	case RAIDFRAME_INCORPORATE_HOT_SPARE:
-	case RAIDFRAME_PARITYMAP_STATUS:
+	case RAIDFRAME_INIT_LABELS:
+	case RAIDFRAME_KEEP_ACCTOTALS:
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
-#ifdef COMPAT_50
-	case RAIDFRAME_GET_INFO50:
-#endif
-#ifdef COMPAT_80
-	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
-	case RAIDFRAME_GET_INFO80:
-	case RAIDFRAME_GET_COMPONENT_LABEL80:
-#endif
-#ifdef COMPAT_NETBSD32
-#ifdef _LP64
-	case RAIDFRAME_GET_INFO32:
-#endif
-#endif
-		if ((rs->sc_flags & RAIDF_INITED) == 0)
-			return (ENXIO);
+	case RAIDFRAME_PARITYMAP_STATUS:
+	case RAIDFRAME_REBUILD_IN_PLACE:
+	case RAIDFRAME_REMOVE_HOT_SPARE:
+	case RAIDFRAME_RESET_ACCTOTALS:
+	case RAIDFRAME_REWRITEPARITY:
+	case RAIDFRAME_SET_AUTOCONFIG:
+	case RAIDFRAME_SET_COMPONENT_LABEL:
+	case RAIDFRAME_SET_ROOT:
+		return (rs->sc_flags & RAIDF_INITED) == 0;
+	}
+	return false;
+}
+
+int
+rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
+{
+	struct rf_recon_req_internal *rrint;
+
+	if (raidPtr->Layout.map->faultsTolerated == 0) {
+		/* Can't do this on a RAID 0!! */
+		return EINVAL;
 	}
 
-	switch (cmd) {
-#ifdef COMPAT_50
-	case RAIDFRAME_GET_INFO50:
-		return rf_get_info50(raidPtr, data);
+	if (rr->col < 0 || rr->col >= raidPtr->numCol) {
+		/* bad column */
+		return EINVAL;
+	}
 
-	case RAIDFRAME_CONFIGURE50:
-		if ((retcode = rf_config50(raidPtr, unit, data, &k_cfg)) != 0)
-			return retcode;
-		goto config;
-#endif
+	rf_lock_mutex2(raidPtr->mutex);
+	if (raidPtr->status == rf_rs_reconstructing) {
+		/* you can't fail a disk while we're reconstructing! */
+		/* XXX wrong for RAID6 */
+		goto out;
+	}
+	if ((raidPtr->Disks[rr->col].status == rf_ds_optimal) &&
+	    (raidPtr->numFailures > 0)) {
+		/* some other component has failed.  Let's not make
+		   things worse. XXX wrong for RAID6 */
+		goto out;
+	}
+	if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
+		/* Can't fail a spared disk! */
+		goto out;
+	}
+	rf_unlock_mutex2(raidPtr->mutex);
 
-#ifdef COMPAT_80
-	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
-		return rf_check_recon_status_ext80(raidPtr, data);
+	/* make a copy of the recon request so that we don't rely on
+	 * the user's buffer */
+	rrint = RF_Malloc(sizeof(*rrint));
+	if (rrint == NULL)
+		return(ENOMEM);
+	rrint->col = rr->col;
+	rrint->flags = rr->flags;
+	rrint->raidPtr = raidPtr;
 
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
-		return rf_check_parityrewrite_status_ext80(raidPtr, data);
+	return RF_CREATE_THREAD(raidPtr->recon_thread, rf_ReconThread,
+	    rrint, "raid_recon");
+out:
+	rf_unlock_mutex2(raidPtr->mutex);
+	return EINVAL;
+}
 
-	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
-		return rf_check_copyback_status_ext80(raidPtr, data);
+static int
+rf_copyinspecificbuf(RF_Config_t *k_cfg)
+{
+	/* allocate a buffer for the layout-specific data, and copy it in */
+	if (k_cfg->layoutSpecificSize == 0)
+		return 0;
 
-	case RAIDFRAME_GET_INFO80:
-		return rf_get_info80(raidPtr, data);
+	if (k_cfg->layoutSpecificSize > 10000) {
+	    /* sanity check */
+	    return EINVAL;
+	}
 
-	case RAIDFRAME_GET_COMPONENT_LABEL80:
-		return rf_get_component_label80(raidPtr, data);
+	u_char *specific_buf;
+	specific_buf =  RF_Malloc(k_cfg->layoutSpecificSize);
+	if (specific_buf == NULL)
+		return ENOMEM;
 
-	case RAIDFRAME_CONFIGURE80:
-		if ((retcode = rf_config80(raidPtr, unit, data, &k_cfg)) != 0)
-			return retcode;
-		goto config;
-#endif
+	int retcode = copyin(k_cfg->layoutSpecific, specific_buf,
+	    k_cfg->layoutSpecificSize);
+	if (retcode) {
+		RF_Free(specific_buf, k_cfg->layoutSpecificSize);
+		db1_printf(("%s: retcode=%d copyin.2\n", __func__, retcode));
+		return retcode;
+	}
 
-		/* configure the system */
-	case RAIDFRAME_CONFIGURE:
-#ifdef COMPAT_NETBSD32
-#ifdef _LP64
-	case RAIDFRAME_CONFIGURE32:
-#endif
-#endif
+	k_cfg->layoutSpecific = specific_buf;
+	return 0;
+}
 
-		if (raidPtr->valid) {
-			/* There is a valid RAID set running on this unit! */
-			printf("raid%d: Device already configured!\n",unit);
-			return(EINVAL);
-		}
+static int
+rf_getConfiguration(struct raid_softc *rs, void *data, RF_Config_t **k_cfg)
+{
+	RF_Config_t *u_cfg = *((RF_Config_t **) data);
 
-		/* copy-in the configuration information */
-		/* data points to a pointer to the configuration structure */
+	if (rs->sc_r.valid) {
+		/* There is a valid RAID set running on this unit! */
+		printf("raid%d: Device already configured!\n", rs->sc_unit);
+		return EINVAL;
+	}
 
-		RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
-		if (k_cfg == NULL) {
-			return (ENOMEM);
-		}
-#ifdef COMPAT_NETBSD32
-#ifdef _LP64
-		if (cmd == RAIDFRAME_CONFIGURE32 &&
-		    (l->l_proc->p_flag & PK_32) != 0)
-			retcode = rf_config_netbsd32(data, k_cfg);
-		else
-#endif
-#endif
-		{
-			u_cfg = *((RF_Config_t **) data);
-			retcode = copyin(u_cfg, k_cfg, sizeof(RF_Config_t));
-		}
-		if (retcode) {
-			RF_Free(k_cfg, sizeof(RF_Config_t));
-			db1_printf(("rf_ioctl: retcode=%d copyin.1\n",
-				retcode));
-			goto no_config;
-		}
-		goto config;
-	config:
-		rs->sc_flags &= ~RAIDF_SHUTDOWN;
+	/* copy-in the configuration information */
+	/* data points to a pointer to the configuration structure */
+	*k_cfg = RF_Malloc(sizeof(**k_cfg));
+	if (*k_cfg == NULL) {
+		return ENOMEM;
+	}
+	int retcode = copyin(u_cfg, *k_cfg, sizeof(RF_Config_t));
+	if (retcode == 0)
+		return 0;
+	RF_Free(*k_cfg, sizeof(RF_Config_t));
+	db1_printf(("%s: retcode=%d copyin.1\n", __func__, retcode));
+	rs->sc_flags |= RAIDF_SHUTDOWN;
+	return retcode;
+}
 
-		/* allocate a buffer for the layout-specific data, and copy it
-		 * in */
-		if (k_cfg->layoutSpecificSize) {
-			if (k_cfg->layoutSpecificSize > 10000) {
-				/* sanity check */
-				RF_Free(k_cfg, sizeof(RF_Config_t));
-				retcode = EINVAL;
-				goto no_config;
-			}
-			RF_Malloc(specific_buf, k_cfg->layoutSpecificSize,
-			    (u_char *));
-			if (specific_buf == NULL) {
-				RF_Free(k_cfg, sizeof(RF_Config_t));
-				retcode = ENOMEM;
-				goto no_config;
-			}
-			retcode = copyin(k_cfg->layoutSpecific, specific_buf,
-			    k_cfg->layoutSpecificSize);
-			if (retcode) {
-				RF_Free(k_cfg, sizeof(RF_Config_t));
-				RF_Free(specific_buf,
-					k_cfg->layoutSpecificSize);
-				db1_printf(("rf_ioctl: retcode=%d copyin.2\n",
-					retcode));
-				goto no_config;
-			}
-		} else
-			specific_buf = NULL;
-		k_cfg->layoutSpecific = specific_buf;
+int
+rf_construct(struct raid_softc *rs, RF_Config_t *k_cfg)
+{
+	int retcode;
+	RF_Raid_t *raidPtr = &rs->sc_r;
 
-		/* should do some kind of sanity check on the configuration.
-		 * Store the sum of all the bytes in the last byte? */
+	rs->sc_flags &= ~RAIDF_SHUTDOWN;
 
-		/* configure the system */
+	if ((retcode = rf_copyinspecificbuf(k_cfg)) != 0)
+		goto out;
 
-		/*
-		 * Clear the entire RAID descriptor, just to make sure
-		 *  there is no stale data left in the case of a
-		 *  reconfiguration
-		 */
-		memset(raidPtr, 0, sizeof(*raidPtr));
-		raidPtr->softc = rs;
-		raidPtr->raidid = unit;
+	/* should do some kind of sanity check on the configuration.
+	 * Store the sum of all the bytes in the last byte? */
 
-		retcode = rf_Configure(raidPtr, k_cfg, NULL);
+	/* configure the system */
 
-		if (retcode == 0) {
+	/*
+	 * Clear the entire RAID descriptor, just to make sure
+	 *  there is no stale data left in the case of a
+	 *  reconfiguration
+	 */
+	memset(raidPtr, 0, sizeof(*raidPtr));
+	raidPtr->softc = rs;
+	raidPtr->raidid = rs->sc_unit;
 
-			/* allow this many simultaneous IO's to
-			   this RAID device */
-			raidPtr->openings = RAIDOUTSTANDING;
+	retcode = rf_Configure(raidPtr, k_cfg, NULL);
 
-			raidinit(rs);
-			raid_wakeup(raidPtr);
-			rf_markalldirty(raidPtr);
-		}
-		/* free the buffers.  No return code here. */
-		if (k_cfg->layoutSpecificSize) {
-			RF_Free(specific_buf, k_cfg->layoutSpecificSize);
-		}
-		RF_Free(k_cfg, sizeof(RF_Config_t));
+	if (retcode == 0) {
+		/* allow this many simultaneous IO's to
+		   this RAID device */
+		raidPtr->openings = RAIDOUTSTANDING;
 
-	no_config:
+		raidinit(rs);
+		raid_wakeup(raidPtr);
+		rf_markalldirty(raidPtr);
+	}
+
+	/* free the buffers.  No return code here. */
+	if (k_cfg->layoutSpecificSize) {
+		RF_Free(k_cfg->layoutSpecific, k_cfg->layoutSpecificSize);
+	}
+out:
+	RF_Free(k_cfg, sizeof(RF_Config_t));
+	if (retcode) {
 		/*
 		 * If configuration failed, set sc_flags so that we
 		 * will detach the device when we close it.
 		 */
-		if (retcode != 0)
-			rs->sc_flags |= RAIDF_SHUTDOWN;
-		return (retcode);
+		rs->sc_flags |= RAIDF_SHUTDOWN;
+	}
+	return retcode;
+}
+
+#if RF_DISABLED
+static int
+rf_set_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
+{
+
+	/* XXX check the label for valid stuff... */
+	/* Note that some things *should not* get modified --
+	   the user should be re-initing the labels instead of
+	   trying to patch things.
+	   */
+#ifdef DEBUG
+	int raidid = raidPtr->raidid;
+	printf("raid%d: Got component label:\n", raidid);
+	printf("raid%d: Version: %d\n", raidid, clabel->version);
+	printf("raid%d: Serial Number: %d\n", raidid, clabel->serial_number);
+	printf("raid%d: Mod counter: %d\n", raidid, clabel->mod_counter);
+	printf("raid%d: Column: %d\n", raidid, clabel->column);
+	printf("raid%d: Num Columns: %d\n", raidid, clabel->num_columns);
+	printf("raid%d: Clean: %d\n", raidid, clabel->clean);
+	printf("raid%d: Status: %d\n", raidid, clabel->status);
+#endif	/* DEBUG */
+	clabel->row = 0;
+	int column = clabel->column;
+
+	if ((column < 0) || (column >= raidPtr->numCol)) {
+		return(EINVAL);
+	}
+
+	/* XXX this isn't allowed to do anything for now :-) */
+
+	/* XXX and before it is, we need to fill in the rest
+	   of the fields!?!?!?! */
+	memcpy(raidget_component_label(raidPtr, column),
+	    clabel, sizeof(*clabel));
+	raidflush_component_label(raidPtr, column);
+	return 0;
+}
+#endif
+
+static int
+rf_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
+{
+	/*
+	   we only want the serial number from
+	   the above.  We get all the rest of the information
+	   from the config that was used to create this RAID
+	   set.
+	   */
+
+	raidPtr->serial_number = clabel->serial_number;
+
+	for (int column = 0; column < raidPtr->numCol; column++) {
+		RF_RaidDisk_t *diskPtr = &raidPtr->Disks[column];
+		if (RF_DEAD_DISK(diskPtr->status))
+			continue;
+		RF_ComponentLabel_t *ci_label = raidget_component_label(
+		    raidPtr, column);
+		/* Zeroing this is important. */
+		memset(ci_label, 0, sizeof(*ci_label));
+		raid_init_component_label(raidPtr, ci_label);
+		ci_label->serial_number = raidPtr->serial_number;
+		ci_label->row = 0; /* we dont' pretend to support more */
+		rf_component_label_set_partitionsize(ci_label,
+		    diskPtr->partitionSize);
+		ci_label->column = column;
+		raidflush_component_label(raidPtr, column);
+		/* XXXjld what about the spares? */
+	}
+	
+	return 0;
+}
+
+static int
+rf_rebuild_in_place(RF_Raid_t *raidPtr, RF_SingleComponent_t *componentPtr)
+{
+
+	if (raidPtr->Layout.map->faultsTolerated == 0) {
+		/* Can't do this on a RAID 0!! */
+		return EINVAL;
+	}
+
+	if (raidPtr->recon_in_progress == 1) {
+		/* a reconstruct is already in progress! */
+		return EINVAL;
+	}
+
+	RF_SingleComponent_t component;
+	memcpy(&component, componentPtr, sizeof(RF_SingleComponent_t));
+	component.row = 0; /* we don't support any more */
+	int column = component.column;
+
+	if ((column < 0) || (column >= raidPtr->numCol)) {
+		return EINVAL;
+	}
+
+	rf_lock_mutex2(raidPtr->mutex);
+	if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
+	    (raidPtr->numFailures > 0)) {
+		/* XXX 0 above shouldn't be constant!!! */
+		/* some component other than this has failed.
+		   Let's not make things worse than they already
+		   are... */
+		printf("raid%d: Unable to reconstruct to disk at:\n",
+		       raidPtr->raidid);
+		printf("raid%d:     Col: %d   Too many failures.\n",
+		       raidPtr->raidid, column);
+		rf_unlock_mutex2(raidPtr->mutex);
+		return EINVAL;
+	}
+
+	if (raidPtr->Disks[column].status == rf_ds_reconstructing) {
+		printf("raid%d: Unable to reconstruct to disk at:\n",
+		       raidPtr->raidid);
+		printf("raid%d:    Col: %d   "
+		    "Reconstruction already occurring!\n",
+		    raidPtr->raidid, column);
+
+		rf_unlock_mutex2(raidPtr->mutex);
+		return EINVAL;
+	}
+
+	if (raidPtr->Disks[column].status == rf_ds_spared) {
+		rf_unlock_mutex2(raidPtr->mutex);
+		return EINVAL;
+	}
+
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	struct rf_recon_req_internal *rrint;
+	rrint = RF_Malloc(sizeof(*rrint));
+	if (rrint == NULL)
+		return ENOMEM;
+
+	rrint->col = column;
+	rrint->raidPtr = raidPtr;
+
+	return RF_CREATE_THREAD(raidPtr->recon_thread,
+	    rf_ReconstructInPlaceThread, rrint, "raid_reconip");
+}
+
+static int
+rf_check_recon_status(RF_Raid_t *raidPtr, int *data)
+{
+	/*
+	 * This makes no sense on a RAID 0, or if we are not reconstructing
+	 * so tell the user it's done.
+	 */
+	if (raidPtr->Layout.map->faultsTolerated == 0 ||
+	    raidPtr->status != rf_rs_reconstructing) {
+		*data = 100;
+		return 0;
+	}
+	if (raidPtr->reconControl->numRUsTotal == 0) {
+		*data = 0;
+		return 0;
+	}
+	*data = (raidPtr->reconControl->numRUsComplete * 100
+	    / raidPtr->reconControl->numRUsTotal);
+	return 0;
+}
+
+static int
+raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	int     unit = raidunit(dev);
+	int     part, pmask;
+	struct raid_softc *rs;
+	struct dk_softc *dksc;
+	RF_Config_t *k_cfg;
+	RF_Raid_t *raidPtr;
+	RF_AccTotals_t *totals;
+	RF_SingleComponent_t component;
+	RF_DeviceConfig_t *d_cfg, *ucfgp;
+	int retcode = 0;
+	int column;
+	RF_ComponentLabel_t *clabel;
+	RF_SingleComponent_t *sparePtr,*componentPtr;
+	int d;
+
+	if ((rs = raidget(unit, false)) == NULL)
+		return ENXIO;
+
+	dksc = &rs->sc_dksc;
+	raidPtr = &rs->sc_r;
+
+	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
+	    (int) DISKPART(dev), (int) unit, cmd));
+
+	/* Must be initialized for these... */
+	if (rf_must_be_initialized(rs, cmd))
+		return ENXIO;
+
+	switch (cmd) {
+		/* configure the system */
+	case RAIDFRAME_CONFIGURE:
+		if ((retcode = rf_getConfiguration(rs, data, &k_cfg)) != 0)
+			return retcode;
+		return rf_construct(rs, k_cfg);
 
 		/* shutdown the system */
 	case RAIDFRAME_SHUTDOWN:
@@ -1276,8 +1434,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		part = DISKPART(dev);
 		pmask = (1 << part);
 
-		if ((error = raidlock(rs)) != 0)
-			return (error);
+		if ((retcode = raidlock(rs)) != 0)
+			return retcode;
 
 		if (DK_BUSY(dksc, pmask) ||
 		    raidPtr->recon_in_progress != 0 ||
@@ -1292,92 +1450,31 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		raidunlock(rs);
 
-		return (retcode);
+		return retcode;
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 		return rf_get_component_label(raidPtr, data);
 
-#if 0
+#if RF_DISABLED
 	case RAIDFRAME_SET_COMPONENT_LABEL:
-		clabel = (RF_ComponentLabel_t *) data;
-
-		/* XXX check the label for valid stuff... */
-		/* Note that some things *should not* get modified --
-		   the user should be re-initing the labels instead of
-		   trying to patch things.
-		   */
-
-		raidid = raidPtr->raidid;
-#ifdef DEBUG
-		printf("raid%d: Got component label:\n", raidid);
-		printf("raid%d: Version: %d\n", raidid, clabel->version);
-		printf("raid%d: Serial Number: %d\n", raidid, clabel->serial_number);
-		printf("raid%d: Mod counter: %d\n", raidid, clabel->mod_counter);
-		printf("raid%d: Column: %d\n", raidid, clabel->column);
-		printf("raid%d: Num Columns: %d\n", raidid, clabel->num_columns);
-		printf("raid%d: Clean: %d\n", raidid, clabel->clean);
-		printf("raid%d: Status: %d\n", raidid, clabel->status);
-#endif
-		clabel->row = 0;
-		column = clabel->column;
-
-		if ((column < 0) || (column >= raidPtr->numCol)) {
-			return(EINVAL);
-		}
-
-		/* XXX this isn't allowed to do anything for now :-) */
-
-		/* XXX and before it is, we need to fill in the rest
-		   of the fields!?!?!?! */
-		memcpy(raidget_component_label(raidPtr, column),
-		    clabel, sizeof(*clabel));
-		raidflush_component_label(raidPtr, column);
-		return (0);
+		return rf_set_component_label(raidPtr, data);
 #endif
 
 	case RAIDFRAME_INIT_LABELS:
-		clabel = (RF_ComponentLabel_t *) data;
-		/*
-		   we only want the serial number from
-		   the above.  We get all the rest of the information
-		   from the config that was used to create this RAID
-		   set.
-		   */
+		return rf_init_component_label(raidPtr, data);
 
-		raidPtr->serial_number = clabel->serial_number;
-
-		for(column=0;column<raidPtr->numCol;column++) {
-			diskPtr = &raidPtr->Disks[column];
-			if (!RF_DEAD_DISK(diskPtr->status)) {
-				ci_label = raidget_component_label(raidPtr,
-				    column);
-				/* Zeroing this is important. */
-				memset(ci_label, 0, sizeof(*ci_label));
-				raid_init_component_label(raidPtr, ci_label);
-				ci_label->serial_number = 
-				    raidPtr->serial_number;
-				ci_label->row = 0; /* we dont' pretend to support more */
-				rf_component_label_set_partitionsize(ci_label,
-				    diskPtr->partitionSize);
-				ci_label->column = column;
-				raidflush_component_label(raidPtr, column);
-			}
-			/* XXXjld what about the spares? */
-		}
-		
-		return (retcode);
 	case RAIDFRAME_SET_AUTOCONFIG:
 		d = rf_set_autoconfig(raidPtr, *(int *) data);
 		printf("raid%d: New autoconfig value is: %d\n",
 		       raidPtr->raidid, d);
 		*(int *) data = d;
-		return (retcode);
+		return retcode;
 
 	case RAIDFRAME_SET_ROOT:
 		d = rf_set_rootpartition(raidPtr, *(int *) data);
 		printf("raid%d: New rootpartition value is: %d\n",
 		       raidPtr->raidid, d);
 		*(int *) data = d;
-		return (retcode);
+		return retcode;
 
 		/* initialize all parity */
 	case RAIDFRAME_REWRITEPARITY:
@@ -1385,141 +1482,58 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* Parity for RAID 0 is trivially correct */
 			raidPtr->parity_good = RF_RAID_CLEAN;
-			return(0);
+			return 0;
 		}
 
 		if (raidPtr->parity_rewrite_in_progress == 1) {
 			/* Re-write is already in progress! */
-			return(EINVAL);
+			return EINVAL;
 		}
 
-		retcode = RF_CREATE_THREAD(raidPtr->parity_rewrite_thread,
-					   rf_RewriteParityThread,
-					   raidPtr,"raid_parity");
-		return (retcode);
-
+		return RF_CREATE_THREAD(raidPtr->parity_rewrite_thread,
+		    rf_RewriteParityThread, raidPtr,"raid_parity");
 
 	case RAIDFRAME_ADD_HOT_SPARE:
 		sparePtr = (RF_SingleComponent_t *) data;
-		memcpy( &component, sparePtr, sizeof(RF_SingleComponent_t));
-		retcode = rf_add_hot_spare(raidPtr, &component);
-		return(retcode);
+		memcpy(&component, sparePtr, sizeof(RF_SingleComponent_t));
+		return rf_add_hot_spare(raidPtr, &component);
 
 	case RAIDFRAME_REMOVE_HOT_SPARE:
-		return(retcode);
+		return retcode;
 
 	case RAIDFRAME_DELETE_COMPONENT:
 		componentPtr = (RF_SingleComponent_t *)data;
-		memcpy( &component, componentPtr,
-			sizeof(RF_SingleComponent_t));
-		retcode = rf_delete_component(raidPtr, &component);
-		return(retcode);
+		memcpy(&component, componentPtr, sizeof(RF_SingleComponent_t));
+		return rf_delete_component(raidPtr, &component);
 
 	case RAIDFRAME_INCORPORATE_HOT_SPARE:
 		componentPtr = (RF_SingleComponent_t *)data;
-		memcpy( &component, componentPtr,
-			sizeof(RF_SingleComponent_t));
-		retcode = rf_incorporate_hot_spare(raidPtr, &component);
-		return(retcode);
+		memcpy(&component, componentPtr, sizeof(RF_SingleComponent_t));
+		return rf_incorporate_hot_spare(raidPtr, &component);
 
 	case RAIDFRAME_REBUILD_IN_PLACE:
-
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* Can't do this on a RAID 0!! */
-			return(EINVAL);
-		}
-
-		if (raidPtr->recon_in_progress == 1) {
-			/* a reconstruct is already in progress! */
-			return(EINVAL);
-		}
-
-		componentPtr = (RF_SingleComponent_t *) data;
-		memcpy( &component, componentPtr,
-			sizeof(RF_SingleComponent_t));
-		component.row = 0; /* we don't support any more */
-		column = component.column;
-
-		if ((column < 0) || (column >= raidPtr->numCol)) {
-			return(EINVAL);
-		}
-
-		rf_lock_mutex2(raidPtr->mutex);
-		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
-		    (raidPtr->numFailures > 0)) {
-			/* XXX 0 above shouldn't be constant!!! */
-			/* some component other than this has failed.
-			   Let's not make things worse than they already
-			   are... */
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:     Col: %d   Too many failures.\n",
-			       raidPtr->raidid, column);
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[column].status ==
-		    rf_ds_reconstructing) {
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:    Col: %d   Reconstruction already occurring!\n", raidPtr->raidid, column);
-
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[column].status == rf_ds_spared) {
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		rf_unlock_mutex2(raidPtr->mutex);
-
-		RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
-		if (rrint == NULL)
-			return(ENOMEM);
-
-		rrint->col = column;
-		rrint->raidPtr = raidPtr;
-
-		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
-					   rf_ReconstructInPlaceThread,
-					   rrint, "raid_reconip");
-		return(retcode);
+		return rf_rebuild_in_place(raidPtr, data);
 
 	case RAIDFRAME_GET_INFO:
-#ifdef COMPAT_NETBSD32
-#ifdef _LP64
-	case RAIDFRAME_GET_INFO32:
-#endif
-#endif
-		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
-			  (RF_DeviceConfig_t *));
+		ucfgp = *(RF_DeviceConfig_t **)data;
+		d_cfg = RF_Malloc(sizeof(*d_cfg));
 		if (d_cfg == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
-#ifdef COMPAT_NETBSD32
-#ifdef _LP64
-			if (cmd == RAIDFRAME_GET_INFO32)
-				ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
-			else
-#endif
-#endif
-				ucfgp = *(RF_DeviceConfig_t **)data;
-			retcode = copyout(d_cfg, ucfgp, sizeof(RF_DeviceConfig_t));
+			retcode = copyout(d_cfg, ucfgp, sizeof(*d_cfg));
 		}
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
-
-		return (retcode);
+		return retcode;
 
 	case RAIDFRAME_CHECK_PARITY:
 		*(int *) data = raidPtr->parity_good;
-		return (0);
+		return 0;
 
 	case RAIDFRAME_PARITYMAP_STATUS:
 		if (rf_paritymap_ineligible(raidPtr))
 			return EINVAL;
-		rf_paritymap_status(raidPtr->parity_map,
-		    (struct rf_pmstat *)data);
+		rf_paritymap_status(raidPtr->parity_map, data);
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
@@ -1527,8 +1541,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EINVAL;
 		if (raidPtr->parity_map == NULL)
 			return ENOENT; /* ??? */
-		if (0 != rf_paritymap_set_params(raidPtr->parity_map, 
-			(struct rf_pmparams *)data, 1))
+		if (rf_paritymap_set_params(raidPtr->parity_map, data, 1) != 0)
 			return EINVAL;
 		return 0;
 
@@ -1547,70 +1560,23 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_RESET_ACCTOTALS:
 		memset(&raidPtr->acc_totals, 0, sizeof(raidPtr->acc_totals));
-		return (0);
+		return 0;
 
 	case RAIDFRAME_GET_ACCTOTALS:
 		totals = (RF_AccTotals_t *) data;
 		*totals = raidPtr->acc_totals;
-		return (0);
+		return 0;
 
 	case RAIDFRAME_KEEP_ACCTOTALS:
 		raidPtr->keep_acc_totals = *(int *)data;
-		return (0);
+		return 0;
 
 	case RAIDFRAME_GET_SIZE:
 		*(int *) data = raidPtr->totalSectors;
-		return (0);
+		return 0;
 
-		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
-#ifdef COMPAT_80
-	case RAIDFRAME_FAIL_DISK80:
-#endif
-
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* Can't do this on a RAID 0!! */
-			return(EINVAL);
-		}
-
-		rr = (struct rf_recon_req *) data;
-		if (rr->col < 0 || rr->col >= raidPtr->numCol)
-			return (EINVAL);
-
-		rf_lock_mutex2(raidPtr->mutex);
-		if (raidPtr->status == rf_rs_reconstructing) {
-			/* you can't fail a disk while we're reconstructing! */
-			/* XXX wrong for RAID6 */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if ((raidPtr->Disks[rr->col].status ==
-		     rf_ds_optimal) && (raidPtr->numFailures > 0)) {
-			/* some other component has failed.  Let's not make
-			   things worse. XXX wrong for RAID6 */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
-			/* Can't fail a spared disk! */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		rf_unlock_mutex2(raidPtr->mutex);
-
-		/* make a copy of the recon request so that we don't rely on
-		 * the user's buffer */
-		RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
-		if (rrint == NULL)
-			return(ENOMEM);
-		rrint->col = rr->col;
-		rrint->flags = rr->flags;
-		rrint->raidPtr = raidPtr;
-
-		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
-					   rf_ReconThread,
-					   rrint, "raid_recon");
-		return (0);
+		return rf_fail_disk(raidPtr, data);
 
 		/* invoke a copyback operation after recon on whatever disk
 		 * needs it, if any */
@@ -1618,47 +1584,31 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0!! */
-			return(EINVAL);
+			return EINVAL;
 		}
 
 		if (raidPtr->copyback_in_progress == 1) {
 			/* Copyback is already in progress! */
-			return(EINVAL);
+			return EINVAL;
 		}
 
-		retcode = RF_CREATE_THREAD(raidPtr->copyback_thread,
-					   rf_CopybackThread,
-					   raidPtr,"raid_copyback");
-		return (retcode);
+		return RF_CREATE_THREAD(raidPtr->copyback_thread,
+		    rf_CopybackThread, raidPtr, "raid_copyback");
 
 		/* return the percentage completion of reconstruction */
 	case RAIDFRAME_CHECK_RECON_STATUS:
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0, so tell the
-			   user it's done. */
-			*(int *) data = 100;
-			return(0);
-		}
-		if (raidPtr->status != rf_rs_reconstructing)
-			*(int *) data = 100;
-		else {
-			if (raidPtr->reconControl->numRUsTotal > 0) {
-				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
-			} else {
-				*(int *) data = 0;
-			}
-		}
-		return (0);
+		return rf_check_recon_status(raidPtr, data);
+
 	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 		rf_check_recon_status_ext(raidPtr, data);
-		return (0);
+		return 0;
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0, so tell the
 			   user it's done. */
 			*(int *) data = 100;
-			return(0);
+			return 0;
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
 			*(int *) data = 100 *
@@ -1667,17 +1617,17 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		} else {
 			*(int *) data = 100;
 		}
-		return (0);
+		return 0;
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
 		rf_check_parityrewrite_status_ext(raidPtr, data);
-		return (0);
+		return 0;
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
 			*(int *) data = 100;
-			return(0);
+			return 0;
 		}
 		if (raidPtr->copyback_in_progress == 1) {
 			*(int *) data = 100 * raidPtr->copyback_stripes_done /
@@ -1685,7 +1635,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		} else {
 			*(int *) data = 100;
 		}
-		return (0);
+		return 0;
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
 		rf_check_copyback_status_ext(raidPtr, data);
@@ -1711,12 +1661,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * -- I should either compute the spare table in the kernel,
 		 * or have a different -- XXX XXX -- interface (a different
 		 * character device) for delivering the table     -- XXX */
-#if 0
+#if RF_DISABLED
 	case RAIDFRAME_SPARET_WAIT:
 		rf_lock_mutex2(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
 			rf_wait_cond2(rf_sparet_wait_cv, rf_sparet_wait_mutex);
-		waitreq = rf_sparet_wait_queue;
+		RF_SparetWait_t *waitreq = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = rf_sparet_wait_queue->next;
 		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
@@ -1724,19 +1674,19 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		*((RF_SparetWait_t *) data) = *waitreq;
 
 		RF_Free(waitreq, sizeof(*waitreq));
-		return (0);
+		return 0;
 
 		/* wakes up a process waiting on SPARET_WAIT and puts an error
 		 * code in it that will cause the dameon to exit */
 	case RAIDFRAME_ABORT_SPARET_WAIT:
-		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
+		waitreq = RF_Malloc(sizeof(*waitreq));
 		waitreq->fcol = -1;
 		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = waitreq;
-		rf_broadcast_conf2(rf_sparet_wait_cv);
+		rf_broadcast_cond2(rf_sparet_wait_cv);
 		rf_unlock_mutex2(rf_sparet_wait_mutex);
-		return (0);
+		return 0;
 
 		/* used by the spare table daemon to deliver a spare table
 		 * into the kernel */
@@ -1747,7 +1697,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* respond to the requestor.  the return status of the spare
 		 * table installation is passed in the "fcol" field */
-		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
+		waitred = RF_Malloc(sizeof(*waitreq));
 		waitreq->fcol = retcode;
 		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_resp_queue;
@@ -1755,10 +1705,37 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		rf_broadcast_cond2(rf_sparet_resp_cv);
 		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
-		return (retcode);
+		return retcode;
 #endif
-
 	default:
+		/*
+		 * Don't bother trying to load compat modules
+		 * if it is not our ioctl. This is more efficient
+		 * and makes rump tests not depend on compat code
+		 */
+		if (IOCGROUP(cmd) != 'r')
+			break;
+#ifdef _LP64
+		if ((l->l_proc->p_flag & PK_32) != 0) {
+			module_autoload("compat_netbsd32_raid",
+			    MODULE_CLASS_EXEC);
+			MODULE_HOOK_CALL(raidframe_netbsd32_ioctl_hook,
+			    (rs, cmd, data), enosys(), retcode);
+			if (retcode != EPASSTHROUGH)
+				return retcode;
+		}
+#endif
+		module_autoload("compat_raid_80", MODULE_CLASS_EXEC);
+		MODULE_HOOK_CALL(raidframe_ioctl_80_hook,
+		    (rs, cmd, data), enosys(), retcode);
+		if (retcode != EPASSTHROUGH)
+			return retcode;
+
+		module_autoload("compat_raid_50", MODULE_CLASS_EXEC);
+		MODULE_HOOK_CALL(raidframe_ioctl_50_hook,
+		    (rs, cmd, data), enosys(), retcode);
+		if (retcode != EPASSTHROUGH)
+			return retcode;
 		break; /* fall through to the os-specific code below */
 
 	}
@@ -2683,7 +2660,9 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 
 	/* Anyone waiting for us to stop?  If so, inform them... */
 	if (raidPtr->waitShutdown) {
-		wakeup(&raidPtr->parity_rewrite_in_progress);
+		rf_lock_mutex2(raidPtr->rad_lock);
+		cv_broadcast(&raidPtr->parity_rewrite_cv);
+		rf_unlock_mutex2(raidPtr->rad_lock);
 	}
 
 	/* That's all... */
@@ -2859,6 +2838,7 @@ rf_find_raid_components(void)
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 
 			if (error) {
@@ -2879,7 +2859,6 @@ rf_find_raid_components(void)
 					printf("RAIDframe: can't get disk size"
 					    " for dev %s (%d)\n",
 					    device_xname(dv), error);
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 				vput(vp);
 				continue;
@@ -2891,19 +2870,18 @@ rf_find_raid_components(void)
 				if (error) {
 					printf("RAIDframe: can't get wedge info for "
 					    "dev %s (%d)\n", device_xname(dv), error);
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 
 				if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 					
+				VOP_UNLOCK(vp);
 				ac_list = rf_get_component(ac_list, dev, vp,
 				    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 				rf_part_found = 1; /*There is a raid component on this disk*/
@@ -2924,7 +2902,6 @@ rf_find_raid_components(void)
 
 			/* don't need this any more.  We'll allocate it again
 			   a little later if we really do... */
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 
@@ -2943,12 +2920,14 @@ rf_find_raid_components(void)
 				if (bdevvp(dev, &vp))
 					panic("RAID can't alloc vnode");
 
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_OPEN(vp, FREAD, NOCRED);
 				if (error) {
 					/* Whatever... */
 					vput(vp);
 					continue;
 				}
+				VOP_UNLOCK(vp);
 				snprintf(cname, sizeof(cname), "%s%c",
 				    device_xname(dv), 'a' + i);
 				ac_list = rf_get_component(ac_list, dev, vp, cname,
@@ -2970,12 +2949,15 @@ rf_find_raid_components(void)
 				if (bdevvp(dev, &vp))
 					panic("RAID can't alloc vnode");
 
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
 				error = VOP_OPEN(vp, FREAD, NOCRED);
 				if (error) {
 					/* Whatever... */
 					vput(vp);
 					continue;
 				}
+				VOP_UNLOCK(vp);
 				snprintf(cname, sizeof(cname), "%s%c",
 				    device_xname(dv), 'a' + RAW_PART);
 				ac_list = rf_get_component(ac_list, dev, vp, cname,

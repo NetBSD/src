@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsreg.h,v 1.9 2017/11/06 21:07:17 blymn Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.9.4.1 2019/06/10 22:07:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -45,6 +45,7 @@
 #define	SYNAPTICS_READ_MODEL_ID		0x3
 #define	SYNAPTICS_EXTENDED_QUERY	0x9
 #define	SYNAPTICS_CONTINUED_CAPABILITIES 0x0c
+#define	SYNAPTICS_WRITE_DELUXE_3	0xc8 /* 6.2.3. Deluxe mode setting sequence */
 
 /* Synaptics special commands */
 #define	SYNAPTICS_CMD_SET_MODE2		0x14
@@ -55,15 +56,38 @@
 #define	SYNAPTICS_MAGIC_BYTE		0x47
 
 /* Capability bits. */
+/* (byte[0] << 8) | byte[2] */
+#define SYNAPTICS_CAP_VALUE(b)	(((b)[0] << 8) | (b)[2])
 #define	SYNAPTICS_CAP_EXTENDED		(1 << 15)
 #define	SYNAPTICS_CAP_EXTNUM		(1 << 14 | 1 << 13 | 1 << 12)
 #define	SYNAPTICS_CAP_MBUTTON		(1 << 10)
 #define	SYNAPTICS_CAP_PASSTHROUGH	(1 << 7)
+#define	SYNAPTICS_CAP_LOWPOWER		(1 << 6)
 #define	SYNAPTICS_CAP_MULTIFINGERREPORT (1 << 5)
 #define	SYNAPTICS_CAP_SLEEP		(1 << 4)
 #define	SYNAPTICS_CAP_4BUTTON		(1 << 3)
 #define	SYNAPTICS_CAP_MULTIDETECT	(1 << 1)
 #define	SYNAPTICS_CAP_PALMDETECT	(1 << 0)
+
+/* Continued Capability bits */
+/* (byte[0] << 8) | byte[1] */
+#define SYN_CCAP_VALUE(b)	(((b)[0] << 8) | (b)[1])
+#define SYN_CCAP_COVERED_PAD		__BIT(15)
+#define SYN_CCAP_MULTIFINGER_MODE	__BITS(13,14)
+#define SYN_CCAP_CLICKPAD_BIT_0		__BIT(12) /* one-button clickpad */
+#define SYN_CCAP_HAS_ADV_GESTURE_MODE	__BIT(11)
+#define SYN_CCAP_CLEARPAD		__BIT(10)
+#define SYN_CCAP_REPORT_MAX		__BIT(9)
+#define SYN_CCAP_ADJ_THRESHOLD		__BIT(8)
+#define SYN_CCAP_REPORT_MIN		__BIT(5)
+#define SYN_CCAP_UNIFORM_CLICKPAD	__BIT(4)
+#define SYN_CCAP_IMAGE_SENSOR		__BIT(3)  /* reports V */
+#define SYN_CCAP_REDUCED_FILTERING	__BIT(2)
+#define SYN_CCAP_DELUX_LED_CONTROLS	__BIT(1)
+#define SYN_CCAP_CLICKPAD_BIT_1		__BIT(0)  /* two-button clickpad */
+#define SYN_CCAP_CLICKPAD_TYPE(v)	\
+	((__SHIFTOUT((v), SYN_CCAP_CLICKPAD_BIT_1) << 1) | \
+ 	  __SHIFTOUT((v), SYN_CCAP_CLICKPAD_BIT_0))
 
 /* Mode bits. */
 #define	SYNAPTICS_MODE_ABSOLUTE		(1 << 7)
@@ -72,11 +96,17 @@
 #define	SYNAPTICS_MODE_EXTENDED_W	(1 << 2) /* double meaning */
 #define	SYNAPTICS_MODE_GEST		(1 << 2)
 #define	SYNAPTICS_MODE_4BYTE_CLIENT	(1 << 1)
-#define	SYNAPTICS_MODE_W		(1)
+#define	SYNAPTICS_MODE_W		(1 << 0)
 
 /* Extended mode button masks. */
 #define	SYN_1BUTMASK			0x1
 #define	SYN_2BUTMASK			0x1
+#define	SYN_3BUTMASK			0x2
+#define	SYN_4BUTMASK			0x2
+#define	SYN_5BUTMASK			0x4
+#define	SYN_6BUTMASK			0x4
+#define	SYN_7BUTMASK			0x8
+#define	SYN_8BUTMASK			0x8
 
 /* Touchpad edge boundaries (Recommended values from Synaptics documentation) */
 #define	SYNAPTICS_EDGE_LEFT		1632

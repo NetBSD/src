@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.64 2017/12/31 08:29:38 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.64.4.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,19 +89,19 @@
  */
 
 #define ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#ifndef XEN
+#ifndef XENPV
 #define SEL_KPL		0		/* kernel privilege level */
 #else
 #define SEL_XEN		0		/* Xen privilege level */
 #define SEL_KPL		1		/* kernel privilege level */
-#endif /* XEN */
+#endif /* XENPV */
 #define SEL_UPL		3		/* user privilege level */
 #define SEL_RPL		3		/* requester's privilege level mask */
-#ifdef XEN
+#ifdef XENPV
 #define CHK_UPL		2		/* user privilege level mask */
 #else
 #define CHK_UPL		SEL_RPL
-#endif /* XEN */
+#endif /* XENPV */
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
 
@@ -191,14 +191,22 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
+#ifdef XENPV
+typedef struct trap_info idt_descriptor_t;
+#else
+typedef struct gate_descriptor idt_descriptor_t; 
+#endif /* XENPV */
+extern idt_descriptor_t *idt;
 extern union descriptor *gdtstore, *ldtstore;
-extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
+void set_idtgate(idt_descriptor_t *, void *, int, int, int, int);
+void unset_idtgate(idt_descriptor_t *);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
 void unsetgate(struct gate_descriptor *);
+
 void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);
 

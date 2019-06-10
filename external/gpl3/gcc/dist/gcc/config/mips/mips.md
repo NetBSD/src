@@ -1,5 +1,5 @@
 ;;  Mips.md	     Machine Description for MIPS based processors
-;;  Copyright (C) 1989-2016 Free Software Foundation, Inc.
+;;  Copyright (C) 1989-2017 Free Software Foundation, Inc.
 ;;  Contributed by   A. Lichnewsky, lich@inria.inria.fr
 ;;  Changes by       Michael Meissner, meissner@osf.org
 ;;  64-bit r4000 support by Ian Lance Taylor, ian@cygnus.com, and
@@ -120,6 +120,8 @@
 
   ;; MIPS16 constant pools.
   UNSPEC_ALIGN
+  UNSPEC_CONSTTABLE
+  UNSPEC_CONSTTABLE_END
   UNSPEC_CONSTTABLE_INT
   UNSPEC_CONSTTABLE_FLOAT
 
@@ -151,6 +153,9 @@
 
   ;; Stack checking.
   UNSPEC_PROBE_STACK_RANGE
+
+  ;; The `.insn' pseudo-op.
+  UNSPEC_INSN_PSEUDO
 ])
 
 (define_constants
@@ -225,11 +230,12 @@
    shift_shift"
   (const_string "unknown"))
 
-(define_attr "alu_type" "unknown,add,sub,not,nor,and,or,xor"
+(define_attr "alu_type" "unknown,add,sub,not,nor,and,or,xor,simd_add"
   (const_string "unknown"))
 
 ;; Main data type used by the insn
-(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF,FPSW"
+(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF,FPSW,
+  V2DI,V4SI,V8HI,V16QI,V2DF,V4SF"
   (const_string "unknown"))
 
 ;; True if the main data type is twice the size of a word.
@@ -240,6 +246,13 @@
 
 	 (and (eq_attr "mode" "TI,TF")
 	      (match_test "TARGET_64BIT"))
+	 (const_string "yes")]
+	(const_string "no")))
+
+;; True if the main data type is four times of the size of a word.
+(define_attr "qword_mode" "no,yes"
+  (cond [(and (eq_attr "mode" "TI,TF")
+	      (not (match_test "TARGET_64BIT")))
 	 (const_string "yes")]
 	(const_string "no")))
 
@@ -365,7 +378,12 @@
    shift,slt,signext,clz,pop,trap,imul,imul3,imul3nc,imadd,idiv,idiv3,move,
    fmove,fadd,fmul,fmadd,fdiv,frdiv,frdiv1,frdiv2,fabs,fneg,fcmp,fcvt,fsqrt,
    frsqrt,frsqrt1,frsqrt2,dspmac,dspmacsat,accext,accmod,dspalu,dspalusat,
-   multi,atomic,syncloop,nop,ghost,multimem"
+   multi,atomic,syncloop,nop,ghost,multimem,
+   simd_div,simd_fclass,simd_flog2,simd_fadd,simd_fcvt,simd_fmul,simd_fmadd,
+   simd_fdiv,simd_bitins,simd_bitmov,simd_insert,simd_sld,simd_mul,simd_fcmp,
+   simd_fexp2,simd_int_arith,simd_bit,simd_shift,simd_splat,simd_fill,
+   simd_permute,simd_shf,simd_sat,simd_pcnt,simd_copy,simd_branch,simd_cmsa,
+   simd_fminmax,simd_logic,simd_move,simd_load,simd_store"
   (cond [(eq_attr "jal" "!unset") (const_string "call")
 	 (eq_attr "got" "load") (const_string "load")
 
@@ -398,6 +416,11 @@
 
 	 ;; These types of move are always split.
 	 (eq_attr "move_type" "constN,shift_shift")
+	   (const_string "multi")
+
+	 ;; These types of move are split for quadword modes only.
+	 (and (eq_attr "move_type" "move,const")
+	      (eq_attr "qword_mode" "yes"))
 	   (const_string "multi")
 
 	 ;; These types of move are split for doubleword modes only.
@@ -486,6 +509,12 @@
 	      (eq_attr "dword_mode" "yes"))
 	 (const_int 2)
 
+	 ;; Check for quadword moves that are decomposed into four
+	 ;; instructions.
+	 (and (eq_attr "move_type" "mtc,mfc,move")
+	      (eq_attr "qword_mode" "yes"))
+	 (const_int 4)
+
 	 ;; Constants, loads and stores are handled by external routines.
 	 (and (eq_attr "move_type" "const,constN")
 	      (eq_attr "dword_mode" "yes"))
@@ -527,7 +556,7 @@
 	 (const_int 2)
 
 	 (eq_attr "type" "idiv,idiv3")
-	 (symbol_ref "mips_idiv_insns ()")
+	 (symbol_ref "mips_idiv_insns (GET_MODE (PATTERN (insn)))")
 
 	 (not (eq_attr "sync_mem" "none"))
 	 (symbol_ref "mips_sync_loop_insns (insn, operands)")]
@@ -884,8 +913,10 @@
 (define_mode_attr fmt [(SF "s") (DF "d") (V2SF "ps")])
 
 ;; This attribute gives the upper-case mode name for one unit of a
-;; floating-point mode.
-(define_mode_attr UNITMODE [(SF "SF") (DF "DF") (V2SF "SF")])
+;; floating-point mode or vector mode.
+(define_mode_attr UNITMODE [(SF "SF") (DF "DF") (V2SF "SF") (V4SF "SF")
+			    (V16QI "QI") (V8HI "HI") (V4SI "SI") (V2DI "DI")
+			    (V2DF "DF")])
 
 ;; This attribute gives the integer mode that has the same size as a
 ;; fixed-point mode.
@@ -940,6 +971,10 @@
 ;; This code iterator allows unsigned and signed modulus to be generated
 ;; from the same template.
 (define_code_iterator any_mod [mod umod])
+
+;; This code iterator allows addition and subtraction to be generated
+;; from the same template.
+(define_code_iterator addsub [plus minus])
 
 ;; This code iterator allows all native floating-point comparisons to be
 ;; generated from the same template.
@@ -6366,7 +6401,7 @@
 (define_insn "casesi_internal_mips16_<mode>"
   [(set (pc)
      (if_then_else
-       (leu (match_operand:SI 0 "register_operand" "d")
+       (ltu (match_operand:SI 0 "register_operand" "d")
 	    (match_operand:SI 1 "arith_operand" "dI"))
        (unspec:P
         [(match_dup 0)
@@ -6389,14 +6424,14 @@
     {
     case HImode:
       output_asm_insn ("sll\t%5, %0, 1", operands);
-      output_asm_insn ("la\t%4, %2", operands);
+      output_asm_insn ("<d>la\t%4, %2", operands);
       output_asm_insn ("<d>addu\t%5, %4, %5", operands);
       output_asm_insn ("lh\t%5, 0(%5)", operands);
       break;
-    
+
     case SImode:
       output_asm_insn ("sll\t%5, %0, 2", operands);
-      output_asm_insn ("la\t%4, %2", operands);
+      output_asm_insn ("<d>la\t%4, %2", operands);
       output_asm_insn ("<d>addu\t%5, %4, %5", operands);
       output_asm_insn ("lw\t%5, 0(%5)", operands);
       break;
@@ -6404,12 +6439,18 @@
     default:
       gcc_unreachable ();
     }
-  
-  output_asm_insn ("addu\t%4, %4, %5", operands);
-  
-  return "j\t%4";
+
+  output_asm_insn ("<d>addu\t%4, %4, %5", operands);
+
+  if (GENERATE_MIPS16E)
+    return "jrc\t%4";
+  else
+    return "jr\t%4";
 }
-  [(set_attr "insn_count" "16")])
+  [(set (attr "insn_count")
+	(if_then_else (match_test "GENERATE_MIPS16E")
+		      (const_string "10")
+		      (const_string "11")))])
 
 ;; For TARGET_USE_GOT, we save the gp in the jmp_buf as well.
 ;; While it is possible to either pull it off the stack (in the
@@ -6544,7 +6585,6 @@
    (use (match_operand 0 "pmode_register_operand" ""))]
   ""
   {
-    operands[0] = gen_rtx_REG (Pmode, RETURN_ADDR_REGNUM);
     return mips_output_jump (operands, 0, -1, false);
   }
   [(set_attr "type"	"jump")
@@ -7144,6 +7184,14 @@
       return "#nop";
   }
   [(set_attr "type"	"nop")])
+
+;; The `.insn' pseudo-op.
+(define_insn "insn_pseudo"
+  [(unspec_volatile [(const_int 0)] UNSPEC_INSN_PSEUDO)]
+  ""
+  ".insn"
+  [(set_attr "mode" "none")
+   (set_attr "insn_count" "0")])
 
 ;; MIPS4 Conditional move instructions.
 
@@ -7277,6 +7325,22 @@
 ;;
 ;;  ....................
 ;;
+
+(define_insn "consttable"
+  [(unspec_volatile [(match_operand 0 "const_int_operand" "")]
+		    UNSPEC_CONSTTABLE)]
+  ""
+  ""
+  [(set_attr "mode" "none")
+   (set_attr "insn_count" "0")])
+
+(define_insn "consttable_end"
+  [(unspec_volatile [(match_operand 0 "const_int_operand" "")]
+		    UNSPEC_CONSTTABLE_END)]
+  ""
+  ""
+  [(set_attr "mode" "none")
+   (set_attr "insn_count" "0")])
 
 (define_insn "consttable_tls_reloc"
   [(unspec_volatile [(match_operand 0 "tls_reloc_operand" "")
@@ -7633,6 +7697,9 @@
 
 ; ST-Microelectronics Loongson-2E/2F-specific patterns.
 (include "loongson.md")
+
+; The MIPS MSA Instructions.
+(include "mips-msa.md")
 
 (define_c_enum "unspec" [
   UNSPEC_ADDRESS_FIRST

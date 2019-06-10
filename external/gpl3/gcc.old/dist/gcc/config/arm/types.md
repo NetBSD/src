@@ -1,6 +1,6 @@
 ;; Instruction Classification for ARM for GNU compiler.
 
-;; Copyright (C) 1991-2015 Free Software Foundation, Inc.
+;; Copyright (C) 1991-2016 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -70,6 +70,7 @@
 ; f_rint[d,s]        double/single floating point rount to integral.
 ; f_store[d,s]       double/single store to memory.  Used for VFP unit.
 ; fadd[d,s]          double/single floating-point scalar addition.
+; fccmp[d,s]         From ARMv8-A: floating-point conditional compare.
 ; fcmp[d,s]          double/single floating-point compare.
 ; fconst[d,s]        double/single load immediate.
 ; fcsel              From ARMv8-A: Floating-point conditional select.
@@ -120,6 +121,7 @@
 ;                    final output, thus having no impact on scheduling.
 ; rbit               reverse bits.
 ; rev                reverse bytes.
+; rotate_imm         rotate by immediate.
 ; sdiv               signed division.
 ; shift_imm          simple shift operation (LSL, LSR, ASR, ROR) with an
 ;                    immediate.
@@ -375,6 +377,8 @@
 ; neon_from_gp
 ; neon_from_gp_q
 ; neon_ldr
+; neon_ldp
+; neon_ldp_q
 ; neon_load1_1reg
 ; neon_load1_1reg_q
 ; neon_load1_2reg
@@ -408,6 +412,8 @@
 ; neon_load4_one_lane
 ; neon_load4_one_lane_q
 ; neon_str
+; neon_stp
+; neon_stp_q
 ; neon_store1_1reg
 ; neon_store1_1reg_q
 ; neon_store1_2reg
@@ -577,6 +583,8 @@
   f_stores,\
   faddd,\
   fadds,\
+  fccmpd,\
+  fccmps,\
   fcmpd,\
   fcmps,\
   fconstd,\
@@ -627,6 +635,7 @@
   nop,\
   rbit,\
   rev,\
+  rotate_imm,\
   sdiv,\
   shift_imm,\
   shift_reg,\
@@ -887,6 +896,8 @@
   neon_from_gp_q,\
 \
   neon_ldr,\
+  neon_ldp,\
+  neon_ldp_q,\
   neon_load1_1reg,\
   neon_load1_1reg_q,\
   neon_load1_2reg,\
@@ -924,6 +935,8 @@
   neon_load4_one_lane_q,\
 \
   neon_str,\
+  neon_stp,\
+  neon_stp_q,\
   neon_store1_1reg,\
   neon_store1_1reg_q,\
   neon_store1_2reg,\
@@ -1126,7 +1139,8 @@
           neon_sat_mla_s_long, neon_sat_mla_h_scalar_long,\
           neon_sat_mla_s_scalar_long,\
           neon_to_gp, neon_to_gp_q, neon_from_gp, neon_from_gp_q,\
-          neon_ldr, neon_load1_1reg, neon_load1_1reg_q, neon_load1_2reg,\
+	   neon_ldr, neon_ldp, neon_ldp_q,\
+	   neon_load1_1reg, neon_load1_1reg_q, neon_load1_2reg,\
           neon_load1_2reg_q, neon_load1_3reg, neon_load1_3reg_q,\
           neon_load1_4reg, neon_load1_4reg_q, neon_load1_all_lanes,\
           neon_load1_all_lanes_q, neon_load1_one_lane, neon_load1_one_lane_q,\
@@ -1137,7 +1151,8 @@
           neon_load3_all_lanes_q, neon_load3_one_lane, neon_load3_one_lane_q,\
           neon_load4_4reg, neon_load4_4reg_q, neon_load4_all_lanes,\
           neon_load4_all_lanes_q, neon_load4_one_lane, neon_load4_one_lane_q,\
-          neon_str, neon_store1_1reg, neon_store1_1reg_q, neon_store1_2reg,\
+	   neon_str, neon_stp, neon_stp_q,\
+	   neon_store1_1reg, neon_store1_1reg_q, neon_store1_2reg,\
           neon_store1_2reg_q, neon_store1_3reg, neon_store1_3reg_q,\
           neon_store1_4reg, neon_store1_4reg_q, neon_store1_one_lane,\
           neon_store1_one_lane_q, neon_store2_2reg, neon_store2_2reg_q,\
@@ -1146,10 +1161,12 @@
           neon_store3_one_lane, neon_store3_one_lane_q, neon_store4_4reg,\
           neon_store4_4reg_q, neon_store4_one_lane, neon_store4_one_lane_q,\
           neon_fp_abd_s, neon_fp_abd_s_q, neon_fp_abd_d, neon_fp_abd_d_q,\
+          neon_fp_abs_s, neon_fp_abs_s_q, neon_fp_abs_d, neon_fp_abs_d_q,\
           neon_fp_addsub_s, neon_fp_addsub_s_q, neon_fp_addsub_d,\
           neon_fp_addsub_d_q, neon_fp_compare_s, neon_fp_compare_s_q,\
           neon_fp_compare_d, neon_fp_compare_d_q, neon_fp_minmax_s,\
           neon_fp_minmax_s_q, neon_fp_minmax_d, neon_fp_minmax_d_q,\
+          neon_fp_neg_s, neon_fp_neg_s_q, neon_fp_neg_d, neon_fp_neg_d_q,\
           neon_fp_reduc_add_s, neon_fp_reduc_add_s_q, neon_fp_reduc_add_d,\
           neon_fp_reduc_add_d_q, neon_fp_reduc_minmax_s,
           neon_fp_reduc_minmax_s_q, neon_fp_reduc_minmax_d,\
@@ -1157,6 +1174,8 @@
           neon_fp_cvt_narrow_s_q, neon_fp_cvt_narrow_d_q,\
           neon_fp_cvt_widen_h, neon_fp_cvt_widen_s, neon_fp_to_int_s,\
           neon_fp_to_int_s_q, neon_int_to_fp_s, neon_int_to_fp_s_q,\
+          neon_fp_to_int_d, neon_fp_to_int_d_q,\
+          neon_int_to_fp_d, neon_int_to_fp_d_q,\
           neon_fp_round_s, neon_fp_round_s_q, neon_fp_recpe_s,\
           neon_fp_recpe_s_q,\
           neon_fp_recpe_d, neon_fp_recpe_d_q, neon_fp_recps_s,\

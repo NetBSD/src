@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.81 2018/05/03 07:01:08 maxv Exp $	*/
+/*	$NetBSD: pf.c,v 1.81.2.1 2019/06/10 22:07:37 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.81 2018/05/03 07:01:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.81.2.1 2019/06/10 22:07:37 christos Exp $");
 
 #include "pflog.h"
 
@@ -2980,18 +2980,18 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	rtalloc_noclone(rop, NO_CLONING);
 	if ((rt = ro->ro_rt) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
-		mss = max(tcp_mssdflt, mss);
+		mss = uimax(tcp_mssdflt, mss);
 	}
 #else
 	if ((rt = rtcache_init_noclone(rop)) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
-		mss = max(tcp_mssdflt, mss);
+		mss = uimax(tcp_mssdflt, mss);
 		rtcache_unref(rt, rop);
 	}
 	rtcache_free(rop);
 #endif
-	mss = min(mss, offer);
-	mss = max(mss, 64);		/* sanity - at least max opt space */
+	mss = uimin(mss, offer);
+	mss = uimax(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
 }
 
@@ -5353,7 +5353,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 #ifdef __NetBSD__
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m0);
+		in_undefer_cksum_tcpudp(m0);
 		m0->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 #else

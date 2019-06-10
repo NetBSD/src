@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.263 2018/06/21 10:37:49 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.263.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 #include <sys/pslist.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
+#include <sys/module_hook.h>
 #endif
 
 /*
@@ -412,7 +413,7 @@ typedef struct ifnet {
 #define	IFF_DEBUG	0x0004		/* turn on debugging */
 #define	IFF_LOOPBACK	0x0008		/* is a loopback net */
 #define	IFF_POINTOPOINT	0x0010		/* interface is point-to-point link */
-#define	IFF_NOTRAILERS	0x0020		/* avoid use of trailers */
+/*			0x0020		   was IFF_NOTRAILERS */
 #define	IFF_RUNNING	0x0040		/* resources allocated */
 #define	IFF_NOARP	0x0080		/* no address resolution protocol */
 #define	IFF_PROMISC	0x0100		/* receive all packets */
@@ -572,7 +573,7 @@ if_is_link_state_changeable(struct ifnet *ifp)
 #endif /* _KERNEL */
 
 #define	IFFBITS \
-    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
+    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT" \
     "\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX" \
     "\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
@@ -870,14 +871,14 @@ struct ifdatareq {
 };
 
 struct ifmediareq {
-	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	int	ifm_current;			/* current media options */
-	int	ifm_mask;			/* don't care mask */
-	int	ifm_status;			/* media status */
-	int	ifm_active;			/* active options */
-	int	ifm_count;			/* # entries in ifm_ulist
-						   array */
-	int	*ifm_ulist;			/* media words */
+	char	ifm_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	int	ifm_current;		/* IFMWD: current media options */
+	int	ifm_mask;		/* IFMWD: don't care mask */
+	int	ifm_status;		/* media status */
+	int	ifm_active;		/* IFMWD: active options */
+	int	ifm_count;		/* # entries in ifm_ulist
+					   array */
+	int	*ifm_ulist;		/* array of ifmedia word */
 };
 
 
@@ -938,11 +939,11 @@ struct if_addrprefreq {
 #define IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq)))					\
+	if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_ENQUEUE((ifq), (m), (err));			\
 	else {								\
-		if (IF_QFULL((ifq))) {					\
-			m_freem((m));					\
+		if (IF_QFULL(ifq)) {					\
+			m_freem(m);					\
 			(err) = ENOBUFS;				\
 		} else {						\
 			IF_ENQUEUE((ifq), (m));				\
@@ -957,9 +958,9 @@ do {									\
 #define IFQ_DEQUEUE(ifq, m)						\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (TBR_IS_ENABLED((ifq)))					\
+	if (TBR_IS_ENABLED(ifq))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
+	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
@@ -969,9 +970,9 @@ do {									\
 #define	IFQ_POLL(ifq, m)						\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (TBR_IS_ENABLED((ifq)))					\
+	if (TBR_IS_ENABLED(ifq))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
+	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
@@ -981,10 +982,10 @@ do {									\
 #define	IFQ_PURGE(ifq)							\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq)))					\
-		ALTQ_PURGE((ifq));					\
+	if (ALTQ_IS_ENABLED(ifq))					\
+		ALTQ_PURGE(ifq);					\
 	else								\
-		IF_PURGE((ifq));					\
+		IF_PURGE(ifq);						\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
@@ -995,14 +996,14 @@ do {									\
 
 #define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
-	KASSERT((m->m_flags & M_PKTHDR) != 0);				\
+	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq))) {					\
-		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			m->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
+	if (ALTQ_IS_ENABLED(ifq)) {					\
+		if (ALTQ_NEEDS_CLASSIFY(ifq))				\
+			(m)->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
 				((ifq)->altq_clfier, (m), (af));	\
-		m->m_pkthdr.pattr_af = (af);				\
-		m->m_pkthdr.pattr_hdr = mtod((m), void *);		\
+		(m)->m_pkthdr.pattr_af = (af);				\
+		(m)->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
@@ -1010,14 +1011,14 @@ do {									\
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (IF_QFULL((ifq))) {						\
-		m_freem((m));						\
+	if (IF_QFULL(ifq)) {						\
+		m_freem(m);						\
 		(err) = ENOBUFS;					\
 	} else {							\
 		IF_ENQUEUE((ifq), (m));					\
 		(err) = 0;						\
 	}								\
-	if ((err))							\
+	if (err)							\
 		(ifq)->ifq_drops++;					\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
@@ -1039,7 +1040,7 @@ do {									\
 #define	IFQ_PURGE(ifq)							\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	IF_PURGE((ifq));						\
+	IF_PURGE(ifq);							\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
@@ -1055,7 +1056,7 @@ do {									\
 #define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
 #define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
-#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
+#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY(ifq)
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
 #define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
@@ -1075,6 +1076,7 @@ void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
+void	if_free_sadl(struct ifnet *, int);
 int	if_initialize(struct ifnet *);
 void	if_register(struct ifnet *);
 int	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
@@ -1090,6 +1092,7 @@ void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);
+void	ifinit_post(void);
 int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
 extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
@@ -1248,7 +1251,7 @@ __END_DECLS
 	                     ifa_pslist_entry) == NULL)
 #define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
 	do {								\
-		if (IFADDR_WRITER_EMPTY((__ifp))) {			\
+		if (IFADDR_WRITER_EMPTY(__ifp)) {			\
 			IFADDR_WRITER_INSERT_HEAD((__ifp), (__new));	\
 		} else {						\
 			struct ifaddr *__ifa;				\
@@ -1291,7 +1294,7 @@ __END_DECLS
 #define IFNET_WRITER_INSERT_TAIL(__new)					\
 	do {								\
 		if (IFNET_WRITER_EMPTY()) {				\
-			IFNET_WRITER_INSERT_HEAD((__new));		\
+			IFNET_WRITER_INSERT_HEAD(__new);		\
 		} else {						\
 			struct ifnet *__ifp;				\
 			IFNET_WRITER_FOREACH(__ifp) {			\
@@ -1323,24 +1326,16 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 		       size_t *oldlenp, void *newp, size_t newlen,
 		       struct ifqueue *ifq);
 /* symbolic names for terminal (per-protocol) CTL_IFQ_ nodes */
-#define IFQCTL_LEN 1
-#define IFQCTL_MAXLEN 2
-#define IFQCTL_PEAK 3
-#define IFQCTL_DROPS 4
-#define IFQCTL_MAXID 5
+#define IFQCTL_LEN	1
+#define IFQCTL_MAXLEN	2
+#define IFQCTL_PEAK	3
+#define IFQCTL_DROPS	4
+
+/* 
+ * Hook for if_vlan - needed by if_agr
+ */
+MODULE_HOOK(if_vlan_vlan_input_hook, void, (struct ifnet *, struct mbuf *));
 
 #endif /* _KERNEL */
 
-#ifdef _NETBSD_SOURCE
-/*
- * sysctl for ifq (per-protocol packet input queue variant of ifqueue)
- */
-#define CTL_IFQ_NAMES  { \
-	{ 0, 0 }, \
-	{ "len", CTLTYPE_INT }, \
-	{ "maxlen", CTLTYPE_INT }, \
-	{ "peak", CTLTYPE_INT }, \
-	{ "drops", CTLTYPE_INT }, \
-}
-#endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */

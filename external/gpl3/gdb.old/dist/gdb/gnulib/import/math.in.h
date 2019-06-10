@@ -1,6 +1,6 @@
 /* A GNU-like <math.h>.
 
-   Copyright (C) 2002-2003, 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2003, 2007-2016 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@ _gl_cxx_ ## func ## l (long double l)                               \
   return func (l);                                                  \
 }
 # define _GL_MATH_CXX_REAL_FLOATING_DECL_2(func) \
+_GL_BEGIN_NAMESPACE                                                 \
 inline int                                                          \
 func (float f)                                                      \
 {                                                                   \
@@ -77,7 +78,8 @@ inline int                                                          \
 func (long double l)                                                \
 {                                                                   \
   return _gl_cxx_ ## func ## l (l);                                 \
-}
+}                                                                   \
+_GL_END_NAMESPACE
 #endif
 
 /* Helper macros to define a portability warning for the
@@ -406,6 +408,7 @@ _GL_WARN_ON_USE (ceilf, "ceilf is unportable - "
 #if @GNULIB_CEIL@
 # if @REPLACE_CEIL@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef ceil
 #   define ceil rpl_ceil
 #  endif
 _GL_FUNCDECL_RPL (ceil, double, (double x));
@@ -753,6 +756,7 @@ _GL_WARN_ON_USE (floorf, "floorf is unportable - "
 #if @GNULIB_FLOOR@
 # if @REPLACE_FLOOR@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef floor
 #   define floor rpl_floor
 #  endif
 _GL_FUNCDECL_RPL (floor, double, (double x));
@@ -973,6 +977,7 @@ _GL_WARN_ON_USE (frexpf, "frexpf is unportable - "
 #if @GNULIB_FREXP@
 # if @REPLACE_FREXP@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef frexp
 #   define frexp rpl_frexp
 #  endif
 _GL_FUNCDECL_RPL (frexp, double, (double x, int *expptr) _GL_ARG_NONNULL ((2)));
@@ -980,7 +985,7 @@ _GL_CXXALIAS_RPL (frexp, double, (double x, int *expptr));
 # else
 _GL_CXXALIAS_SYS (frexp, double, (double x, int *expptr));
 # endif
-_GL_CXXALIASWARN (frexp);
+_GL_CXXALIASWARN1 (frexp, double, (double x, int *expptr));
 #elif defined GNULIB_POSIXCHECK
 # undef frexp
 /* Assume frexp is always declared.  */
@@ -1958,6 +1963,7 @@ _GL_WARN_ON_USE (tanhf, "tanhf is unportable - "
 #if @GNULIB_TRUNCF@
 # if @REPLACE_TRUNCF@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef truncf
 #   define truncf rpl_truncf
 #  endif
 _GL_FUNCDECL_RPL (truncf, float, (float x));
@@ -1980,6 +1986,7 @@ _GL_WARN_ON_USE (truncf, "truncf is unportable - "
 #if @GNULIB_TRUNC@
 # if @REPLACE_TRUNC@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef trunc
 #   define trunc rpl_trunc
 #  endif
 _GL_FUNCDECL_RPL (trunc, double, (double x));
@@ -2039,7 +2046,7 @@ _GL_EXTERN_C int gl_isfinitel (long double x);
     gl_isfinitef (x))
 # endif
 # ifdef __cplusplus
-#  ifdef isfinite
+#  if defined isfinite || defined GNULIB_NAMESPACE
 _GL_MATH_CXX_REAL_FLOATING_DECL_1 (isfinite)
 #   undef isfinite
 _GL_MATH_CXX_REAL_FLOATING_DECL_2 (isfinite)
@@ -2066,7 +2073,7 @@ _GL_EXTERN_C int gl_isinfl (long double x);
     gl_isinff (x))
 # endif
 # ifdef __cplusplus
-#  ifdef isinf
+#  if defined isinf || defined GNULIB_NAMESPACE
 _GL_MATH_CXX_REAL_FLOATING_DECL_1 (isinf)
 #   undef isinf
 _GL_MATH_CXX_REAL_FLOATING_DECL_2 (isinf)
@@ -2184,7 +2191,7 @@ _GL_EXTERN_C int rpl_isnanl (long double x) _GL_ATTRIBUTE_CONST;
     __builtin_isnanf ((float)(x)))
 # endif
 # ifdef __cplusplus
-#  ifdef isnan
+#  if defined isnan || defined GNULIB_NAMESPACE
 _GL_MATH_CXX_REAL_FLOATING_DECL_1 (isnan)
 #   undef isnan
 _GL_MATH_CXX_REAL_FLOATING_DECL_2 (isnan)
@@ -2205,7 +2212,8 @@ _GL_WARN_REAL_FLOATING_DECL (isnan);
 
 
 #if @GNULIB_SIGNBIT@
-# if @REPLACE_SIGNBIT_USING_GCC@
+# if (@REPLACE_SIGNBIT_USING_GCC@ \
+      && (!defined __cplusplus || __cplusplus < 201103))
 #  undef signbit
    /* GCC 4.0 and newer provides three built-ins for signbit.  */
 #  define signbit(x) \
@@ -2258,7 +2266,7 @@ _GL_EXTERN_C int gl_signbitl (long double arg);
     gl_signbitf (x))
 # endif
 # ifdef __cplusplus
-#  ifdef signbit
+#  if defined signbit || defined GNULIB_NAMESPACE
 _GL_MATH_CXX_REAL_FLOATING_DECL_1 (signbit)
 #   undef signbit
 _GL_MATH_CXX_REAL_FLOATING_DECL_2 (signbit)

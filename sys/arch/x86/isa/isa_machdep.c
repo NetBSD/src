@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.39 2018/06/24 13:35:33 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.39.2.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39 2018/06/24 13:35:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39.2.1 2019/06/10 22:06:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39 2018/06/24 13:35:33 jdolecek Ex
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 
@@ -143,7 +142,11 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
+#if !defined(XENPV)
 		isp = ci->ci_isources[i];
+#else
+		isp = ci->ci_xsources[i];
+#endif
 		if (isp == NULL) {
 			/* if nothing's using the irq, just return it */
 			*irq = i;
@@ -210,8 +213,8 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 {
 	struct pic *pic;
 	int pin;
-	intr_handle_t mpih = 0;
 #if NIOAPIC > 0
+	intr_handle_t mpih = 0;
 	struct ioapic_softc *ioapic = NULL;
 #endif
 
@@ -237,38 +240,15 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-#if defined(XEN)
-	KASSERT(APIC_IRQ_ISLEGACY(irq));
-
-	int evtch;
-	const char *intrstr;
-	char intrstr_buf[INTRIDBUF];
-
-	mpih |= APIC_IRQ_LEGACY_IRQ(irq);
-
-	evtch = xen_pirq_alloc(&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
-	if (evtch == -1)
-		return NULL;
-
-	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
-	    sizeof(intrstr_buf));
-
-	aprint_debug("irq: %d requested on pic: %s.\n", irq, pic->pic_name);
-
-	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
-	    intrstr, xname);
-#else /* defined(XEN) */
 	return intr_establish_xname(irq, pic, pin, type, level, ih_fun, ih_arg,
 	    false, xname);
-#endif
-
 }
 
 /* Deregister an interrupt handler. */
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
-#if !defined(XEN)
+#if !defined(XENPV)
 	struct intrhand *ih = arg;
 
 	if (!LEGAL_IRQ(ih->ih_pin))

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.24.16.1 2019/06/10 22:06:06 christos Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,12 +129,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24.16.1 2019/06/10 22:06:06 christos Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_gemini.h"
@@ -237,10 +238,7 @@ unsigned long gemini_ipmq_vbase = GEMINI_IPMQ_VBASE;
  */
 #define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
 
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE + GEMINI_DRAM_BASE))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - GEMINI_DRAM_BASE + KERNEL_BASE))
+u_long kern_vtopdiff;
 
 /* Prototypes */
 
@@ -632,6 +630,8 @@ initarm(void *arg)
 	bootconfig.dram[0].address = physical_start;
 	bootconfig.dram[0].pages = physmem;
 
+	kern_vtopdiff = KERNEL_BASE + GEMINI_DRAM_BASE;
+
 	/*
 	 * Our kernel is at the beginning of memory, so set our free space to
 	 * all the memory after the kernel.
@@ -725,7 +725,7 @@ initarm(void *arg)
 	    atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
@@ -733,13 +733,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #if defined(MEMORY_DISK_DYNAMIC)
@@ -1152,16 +1145,16 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
 	    (int)physmem);
 	printf(mem_fmt, "text section",
-	       KERN_VTOPHYS(KERNEL_BASE_virt), KERN_VTOPHYS(etext-1),
+	       KERN_VTOPHYS((vaddr_t)KERNEL_BASE_virt), KERN_VTOPHYS((vaddr_t)etext-1),
 	       (vaddr_t)KERNEL_BASE_virt, (vaddr_t)etext-1,
 	       (int)(textsize / PAGE_SIZE));
 	printf(mem_fmt, "data section",
-	       KERN_VTOPHYS(__data_start), KERN_VTOPHYS(_edata),
+	       KERN_VTOPHYS((vaddr_t)__data_start), KERN_VTOPHYS((vaddr_t)_edata),
 	       (vaddr_t)__data_start, (vaddr_t)_edata,
 	       (int)((round_page((vaddr_t)_edata)
 		      - trunc_page((vaddr_t)__data_start)) / PAGE_SIZE));
 	printf(mem_fmt, "bss section",
-	       KERN_VTOPHYS(__bss_start), KERN_VTOPHYS(__bss_end__),
+	       KERN_VTOPHYS((vaddr_t)__bss_start), KERN_VTOPHYS((vaddr_t)__bss_end__),
 	       (vaddr_t)__bss_start, (vaddr_t)__bss_end__,
 	       (int)((round_page((vaddr_t)__bss_end__)
 		      - trunc_page((vaddr_t)__bss_start)) / PAGE_SIZE));

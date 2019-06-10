@@ -1,5 +1,5 @@
 /* Name mangling for the 3.0 C++ ABI.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Written by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -47,34 +47,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "tree-hasher.h"
-#include "stor-layout.h"
-#include "stringpool.h"
-#include "tm_p.h"
-#include "cp-tree.h"
-#include "obstack.h"
-#include "flags.h"
 #include "target.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "ipa-ref.h"
+#include "vtable-verify.h"
+#include "cp-tree.h"
+#include "stringpool.h"
 #include "cgraph.h"
-#include "wide-int.h"
+#include "stor-layout.h"
+#include "flags.h"
+#include "attribs.h"
 
 /* Debugging support.  */
 
@@ -106,8 +86,13 @@ along with GCC; see the file COPYING3.  If not see
        || (CLASSTYPE_TEMPLATE_INFO (NODE) != NULL			\
 	   && (PRIMARY_TEMPLATE_P (CLASSTYPE_TI_TEMPLATE (NODE))))))
 
+/* For deciding whether to set G.need_abi_warning, we need to consider both
+   warn_abi_version and flag_abi_compat_version.  */
+#define abi_warn_or_compat_version_crosses(N) \
+  (abi_version_crosses (N) || abi_compat_version_crosses (N))
+
 /* Things we only need one of.  This module is not reentrant.  */
-typedef struct GTY(()) globals {
+struct GTY(()) globals {
   /* An array of the current substitution candidates, in the order
      we've seen them.  */
   vec<tree, va_gc> *substitutions;
@@ -121,7 +106,7 @@ typedef struct GTY(()) globals {
   /* True if the mangling will be different in a future version of the
      ABI.  */
   bool need_abi_warning;
-} globals;
+};
 
 static GTY (()) globals G;
 
@@ -238,6 +223,7 @@ static void write_local_name (tree, const tree, const tree);
 static void dump_substitution_candidates (void);
 static tree mangle_decl_string (const tree);
 static int local_class_index (tree);
+static void maybe_check_abi_tags (tree, tree = NULL_TREE);
 
 /* Control functions.  */
 
@@ -278,9 +264,9 @@ static void write_java_integer_type_codes (const tree);
 #define write_unsigned_number(NUMBER)					\
   write_number ((NUMBER), /*unsigned_p=*/1, 10)
 
-/* If DECL is a template instance, return nonzero and, if
-   TEMPLATE_INFO is non-NULL, set *TEMPLATE_INFO to its template info.
-   Otherwise return zero.  */
+/* If DECL is a template instance (including the uninstantiated template
+   itself), return nonzero and, if TEMPLATE_INFO is non-NULL, set
+   *TEMPLATE_INFO to its template info.  Otherwise return zero.  */
 
 static int
 decl_is_template_id (const tree decl, tree* const template_info)
@@ -304,7 +290,8 @@ decl_is_template_id (const tree decl, tree* const template_info)
     {
       /* Check if this is a primary template.  */
       if (DECL_LANG_SPECIFIC (decl) != NULL
-	  && DECL_USE_TEMPLATE (decl)
+	  && VAR_OR_FUNCTION_DECL_P (decl)
+	  && DECL_TEMPLATE_INFO (decl)
 	  && PRIMARY_TEMPLATE_P (DECL_TI_TEMPLATE (decl))
 	  && TREE_CODE (decl) != TEMPLATE_DECL)
 	{
@@ -407,20 +394,19 @@ add_substitution (tree node)
 	     get_tree_code_name (TREE_CODE (node)), (void *) node);
   node = c;
 
-#if ENABLE_CHECKING
   /* Make sure NODE isn't already a candidate.  */
-  {
-    int i;
-    tree candidate;
+  if (flag_checking)
+    {
+      int i;
+      tree candidate;
 
-    FOR_EACH_VEC_SAFE_ELT (G.substitutions, i, candidate)
-      {
-	gcc_assert (!(DECL_P (node) && node == candidate));
-	gcc_assert (!(TYPE_P (node) && TYPE_P (candidate)
+      FOR_EACH_VEC_SAFE_ELT (G.substitutions, i, candidate)
+	{
+	  gcc_assert (!(DECL_P (node) && node == candidate));
+	  gcc_assert (!(TYPE_P (node) && TYPE_P (candidate)
 		      && same_type_p (node, candidate)));
-      }
-  }
-#endif /* ENABLE_CHECKING */
+	}
+    }
 
   /* Put the decl onto the varray of substitution candidates.  */
   vec_safe_push (G.substitutions, node);
@@ -841,7 +827,7 @@ write_name (tree decl, const int ignore_local_scope)
 
   gcc_assert (context != NULL_TREE);
 
-  if (abi_version_crosses (7)
+  if (abi_warn_or_compat_version_crosses (7)
       && ignore_local_scope
       && TREE_CODE (context) == PARM_DECL)
     G.need_abi_warning = 1;
@@ -996,7 +982,8 @@ write_nested_name (const tree decl)
       write_template_prefix (decl);
       write_template_args (TI_ARGS (template_info));
     }
-  else if (TREE_CODE (TREE_TYPE (decl)) == TYPENAME_TYPE)
+  else if ((!abi_version_at_least (10) || TREE_CODE (decl) == TYPE_DECL)
+	   && TREE_CODE (TREE_TYPE (decl)) == TYPENAME_TYPE)
     {
       tree name = TYPENAME_TYPE_FULLNAME (TREE_TYPE (decl));
       if (TREE_CODE (name) == TEMPLATE_ID_EXPR)
@@ -1916,16 +1903,26 @@ write_type (tree type)
        candidates.  */
     {
       tree t = TYPE_MAIN_VARIANT (type);
+      if (TYPE_ATTRIBUTES (t) && !OVERLOAD_TYPE_P (t))
+	{
+	  tree attrs = NULL_TREE;
+	  if (tx_safe_fn_type_p (type))
+	    attrs = tree_cons (get_identifier ("transaction_safe"),
+			       NULL_TREE, attrs);
+	  t = cp_build_type_attribute_variant (t, attrs);
+	}
+      gcc_assert (t != type);
       if (TREE_CODE (t) == FUNCTION_TYPE
 	  || TREE_CODE (t) == METHOD_TYPE)
 	{
 	  t = build_ref_qualified_type (t, type_memfn_rqual (type));
-	  if (abi_version_at_least (8))
+	  if (abi_version_at_least (8)
+	      || type == TYPE_MAIN_VARIANT (type))
 	    /* Avoid adding the unqualified function type as a substitution.  */
 	    write_function_type (t);
 	  else
 	    write_type (t);
-	  if (abi_version_crosses (8))
+	  if (abi_warn_or_compat_version_crosses (8))
 	    G.need_abi_warning = 1;
 	}
       else
@@ -2034,7 +2031,7 @@ write_type (tree type)
 		   but you can't have a pointer/reference to such a type.  */
 		if (TREE_CODE (target) == FUNCTION_TYPE)
 		  {
-		    if (abi_version_crosses (5)
+		    if (abi_warn_or_compat_version_crosses (5)
 			&& TYPE_QUALS (target) != TYPE_UNQUALIFIED)
 		      G.need_abi_warning = 1;
 		    if (abi_version_at_least (5))
@@ -2080,7 +2077,7 @@ write_type (tree type)
 		}
 	      else
 		write_string ("U8__vector");
-	      if (abi_version_crosses (4))
+	      if (abi_warn_or_compat_version_crosses (4))
 		G.need_abi_warning = 1;
 	      write_type (TREE_TYPE (type));
 	      break;
@@ -2117,7 +2114,7 @@ write_type (tree type)
 
 		  if (etype && !type_uses_auto (etype))
 		    {
-		      if (abi_version_crosses (5))
+		      if (abi_warn_or_compat_version_crosses (5))
 			G.need_abi_warning = 1;
 		      if (!abi_version_at_least (5))
 			{
@@ -2142,7 +2139,7 @@ write_type (tree type)
 	      write_string ("Dn");
 	      if (abi_version_at_least (7))
 		++is_builtin_type;
-	      if (abi_version_crosses (7))
+	      if (abi_warn_or_compat_version_crosses (7))
 		G.need_abi_warning = 1;
 	      break;
 
@@ -2168,6 +2165,20 @@ write_type (tree type)
     add_substitution (type);
 }
 
+/* qsort callback for sorting a vector of attribute entries.  */
+
+static int
+attr_strcmp (const void *p1, const void *p2)
+{
+  tree a1 = *(const tree*)p1;
+  tree a2 = *(const tree*)p2;
+
+  const attribute_spec *as1 = lookup_attribute_spec (get_attribute_name (a1));
+  const attribute_spec *as2 = lookup_attribute_spec (get_attribute_name (a2));
+
+  return strcmp (as1->name, as2->name);
+}
+
 /* Non-terminal <CV-qualifiers> for type nodes.  Returns the number of
    CV-qualifiers written for TYPE.
 
@@ -2182,9 +2193,57 @@ write_CV_qualifiers_for_type (const tree type)
 
        "In cases where multiple order-insensitive qualifiers are
        present, they should be ordered 'K' (closest to the base type),
-       'V', 'r', and 'U' (farthest from the base type) ..."
+       'V', 'r', and 'U' (farthest from the base type) ..."  */
 
-     Note that we do not use cp_type_quals below; given "const
+  /* Mangle attributes that affect type identity as extended qualifiers.
+
+     We don't do this with classes and enums because their attributes
+     are part of their definitions, not something added on.  */
+
+  if (!OVERLOAD_TYPE_P (type))
+    {
+      auto_vec<tree> vec;
+      for (tree a = TYPE_ATTRIBUTES (type); a; a = TREE_CHAIN (a))
+	{
+	  tree name = get_attribute_name (a);
+	  const attribute_spec *as = lookup_attribute_spec (name);
+	  if (as && as->affects_type_identity
+	      && !is_attribute_p ("transaction_safe", name)
+	      && !is_attribute_p ("abi_tag", name))
+	    vec.safe_push (a);
+	}
+      if (abi_warn_or_compat_version_crosses (10) && !vec.is_empty ())
+	G.need_abi_warning = true;
+      if (abi_version_at_least (10))
+	{
+	  vec.qsort (attr_strcmp);
+	  while (!vec.is_empty())
+	    {
+	      tree a = vec.pop();
+	      const attribute_spec *as
+		= lookup_attribute_spec (get_attribute_name (a));
+
+	      write_char ('U');
+	      write_unsigned_number (strlen (as->name));
+	      write_string (as->name);
+	      if (TREE_VALUE (a))
+		{
+		  write_char ('I');
+		  for (tree args = TREE_VALUE (a); args;
+		       args = TREE_CHAIN (args))
+		    {
+		      tree arg = TREE_VALUE (args);
+		      write_template_arg (arg);
+		    }
+		  write_char ('E');
+		}
+
+	      ++num_qualifiers;
+	    }
+	}
+    }
+
+  /* Note that we do not use cp_type_quals below; given "const
      int[3]", the "const" is emitted with the "int", not with the
      array.  */
   cp_cv_quals quals = TYPE_QUALS (type);
@@ -2410,6 +2469,9 @@ write_function_type (const tree type)
       tree this_type = class_of_this_parm (type);
       write_CV_qualifiers_for_type (this_type);
     }
+
+  if (tx_safe_fn_type_p (type))
+    write_string ("Dx");
 
   write_char ('F');
   /* We don't track whether or not a type is `extern "C"'.  Note that
@@ -2693,7 +2755,7 @@ write_expression (tree expr)
 	      write_char ('L');
 	      write_unsigned_number (delta - 1);
 	    }
-	  if (abi_version_crosses (5))
+	  if (abi_warn_or_compat_version_crosses (5))
 	    G.need_abi_warning = true;
 	}
       write_char ('p');
@@ -2710,6 +2772,39 @@ write_expression (tree expr)
     {
       write_string ("st");
       write_type (TREE_TYPE (TREE_OPERAND (expr, 0)));
+    }
+  else if (TREE_CODE (expr) == SIZEOF_EXPR
+	   && ARGUMENT_PACK_P (TREE_OPERAND (expr, 0)))
+    {
+      tree args = ARGUMENT_PACK_ARGS (TREE_OPERAND (expr, 0));
+      int length = TREE_VEC_LENGTH (args);
+      if (abi_warn_or_compat_version_crosses (10))
+	G.need_abi_warning = true;
+      if (abi_version_at_least (10))
+	{
+	  /* sP <template-arg>* E # sizeof...(T), size of a captured
+	     template parameter pack from an alias template */
+	  write_string ("sP");
+	  for (int i = 0; i < length; ++i)
+	    write_template_arg (TREE_VEC_ELT (args, i));
+	  write_char ('E');
+	}
+      else
+	{
+	  /* In GCC 5 we represented this sizeof wrong, with the effect
+	     that we mangled it as the last element of the pack.  */
+	  tree arg = TREE_VEC_ELT (args, length-1);
+	  if (TYPE_P (arg))
+	    {
+	      write_string ("st");
+	      write_type (arg);
+	    }
+	  else
+	    {
+	      write_string ("sz");
+	      write_expression (arg);
+	    }
+	}
     }
   else if (TREE_CODE (expr) == SIZEOF_EXPR
 	   && TYPE_P (TREE_OPERAND (expr, 0)))
@@ -2935,7 +3030,7 @@ write_expression (tree expr)
       if (code == CONST_CAST_EXPR
 	  || code == STATIC_CAST_EXPR)
 	{
-	  if (abi_version_crosses (6))
+	  if (abi_warn_or_compat_version_crosses (6))
 	    G.need_abi_warning = 1;
 	  if (!abi_version_at_least (6))
 	    name = operator_name_info[CAST_EXPR].mangled_name;
@@ -3009,7 +3104,7 @@ write_expression (tree expr)
 	case PREDECREMENT_EXPR:
 	  if (abi_version_at_least (6))
 	    write_char ('_');
-	  if (abi_version_crosses (6))
+	  if (abi_warn_or_compat_version_crosses (6))
 	    G.need_abi_warning = 1;
 	  /* Fall through.  */
 
@@ -3031,6 +3126,29 @@ write_expression (tree expr)
 		  error ("omitted middle operand to %<?:%> operand "
 			 "cannot be mangled");
 		  continue;
+		}
+	      else if (FOLD_EXPR_P (expr))
+		{
+		  /* The first 'operand' of a fold-expression is the operator
+		     that it folds over.  */
+		  if (i == 0)
+		    {
+		      int fcode = TREE_INT_CST_LOW (operand);
+		      write_string (operator_name_info[fcode].mangled_name);
+		      continue;
+		    }
+		  else if (code == BINARY_LEFT_FOLD_EXPR)
+		    {
+		      /* The order of operands of the binary left and right
+			 folds is the same, but we want to mangle them in
+			 lexical order, i.e. non-pack first.  */
+		      if (i == 1)
+			operand = FOLD_EXPR_INIT (expr);
+		      else
+			operand = FOLD_EXPR_PACK (expr);
+		    }
+		  if (PACK_EXPANSION_P (operand))
+		    operand = PACK_EXPANSION_PATTERN (operand);
 		}
 	      write_expression (operand);
 	    }
@@ -3146,7 +3264,7 @@ write_template_arg (tree node)
     {
       if (abi_version_at_least (6))
 	node = BASELINK_FUNCTIONS (node);
-      if (abi_version_crosses (6))
+      if (abi_warn_or_compat_version_crosses (6))
 	/* We wrongly wrapped a class-scope function in X/E.  */
 	G.need_abi_warning = 1;
     }
@@ -3160,7 +3278,7 @@ write_template_arg (tree node)
 	write_char ('J');
       else
 	write_char ('I');
-      if (abi_version_crosses (6))
+      if (abi_warn_or_compat_version_crosses (6))
 	G.need_abi_warning = 1;
       for (i = 0; i < length; ++i)
         write_template_arg (TREE_VEC_ELT (args, i));
@@ -3184,7 +3302,7 @@ write_template_arg (tree node)
 	write_char ('Z');
       else
 	write_string ("_Z");
-      if (abi_version_crosses (3))
+      if (abi_warn_or_compat_version_crosses (3))
 	G.need_abi_warning = 1;
       write_encoding (node);
       write_char ('E');
@@ -3220,8 +3338,10 @@ write_template_template_arg (const tree decl)
 		  ::= A <expression> _ </element/ type>
 
      "Array types encode the dimension (number of elements) and the
-     element type. For variable length arrays, the dimension (but not
-     the '_' separator) is omitted."  */
+     element type.  For variable length arrays, the dimension (but not
+     the '_' separator) is omitted."
+     Note that for flexible array members, like for other arrays of
+     unspecified size, the dimension is also omitted.  */
 
 static void
 write_array_type (const tree type)
@@ -3230,29 +3350,31 @@ write_array_type (const tree type)
   if (TYPE_DOMAIN (type))
     {
       tree index_type;
-      tree max;
 
       index_type = TYPE_DOMAIN (type);
-      /* The INDEX_TYPE gives the upper and lower bounds of the
-	 array.  */
-      max = TYPE_MAX_VALUE (index_type);
-      if (TREE_CODE (max) == INTEGER_CST)
+      /* The INDEX_TYPE gives the upper and lower bounds of the array.
+	 It's null for flexible array members which have no upper bound
+	 (this is a change from GCC 5 and prior where such members were
+	 incorrectly mangled as zero-length arrays).  */
+      if (tree max = TYPE_MAX_VALUE (index_type))
 	{
-	  /* The ABI specifies that we should mangle the number of
-	     elements in the array, not the largest allowed index.  */
-	  offset_int wmax = wi::to_offset (max) + 1;
-	  /* Truncate the result - this will mangle [0, SIZE_INT_MAX]
-	     number of elements as zero.  */
-	  wmax = wi::zext (wmax, TYPE_PRECISION (TREE_TYPE (max)));
-	  gcc_assert (wi::fits_uhwi_p (wmax));
-	  write_unsigned_number (wmax.to_uhwi ());
+	  if (TREE_CODE (max) == INTEGER_CST)
+	    {
+	      /* The ABI specifies that we should mangle the number of
+		 elements in the array, not the largest allowed index.  */
+	      offset_int wmax = wi::to_offset (max) + 1;
+	      /* Truncate the result - this will mangle [0, SIZE_INT_MAX]
+		 number of elements as zero.  */
+	      wmax = wi::zext (wmax, TYPE_PRECISION (TREE_TYPE (max)));
+	      gcc_assert (wi::fits_uhwi_p (wmax));
+	      write_unsigned_number (wmax.to_uhwi ());
+	    }
+	  else
+	    {
+	      max = TREE_OPERAND (max, 0);
+	      write_expression (max);
+	    }
 	}
-      else
-	{
-	  max = TREE_OPERAND (max, 0);
-	  write_expression (max);
-	}
-
     }
   write_char ('_');
   write_type (TREE_TYPE (type));
@@ -3481,8 +3603,7 @@ decl_implicit_alias_p (tree decl)
   if (DECL_P (decl) && DECL_ARTIFICIAL (decl)
       && DECL_IGNORED_P (decl)
       && (TREE_CODE (decl) == FUNCTION_DECL
-	  || (TREE_CODE (decl) == VAR_DECL
-	      && TREE_STATIC (decl))))
+	  || (VAR_P (decl) && TREE_STATIC (decl))))
     {
       symtab_node *n = symtab_node::get (decl);
       if (n && n->cpp_implicit_alias)
@@ -3524,7 +3645,23 @@ mangle_decl (const tree decl)
   if (dep)
     return;
 
-  id = get_mangled_id (decl);
+  /* During LTO we keep mangled names of TYPE_DECLs for ODR type merging.
+     It is not needed to assign names to anonymous namespace, but we use the
+     "<anon>" marker to be able to tell if type is C++ ODR type or type
+     produced by other language.  */
+  if (TREE_CODE (decl) == TYPE_DECL
+      && TYPE_STUB_DECL (TREE_TYPE (decl))
+      && !TREE_PUBLIC (TYPE_STUB_DECL (TREE_TYPE (decl))))
+    id = get_identifier ("<anon>");
+  else
+    {
+      gcc_assert (TREE_CODE (decl) != TYPE_DECL
+		  || !no_linkage_check (TREE_TYPE (decl), true));
+      if (abi_version_at_least (10))
+	if (tree fn = decl_function_context (decl))
+	  maybe_check_abi_tags (fn, decl);
+      id = get_mangled_id (decl);
+    }
   SET_DECL_ASSEMBLER_NAME (decl, id);
 
   if (id != DECL_NAME (decl)
@@ -3561,30 +3698,41 @@ mangle_decl (const tree decl)
 	}
 
       save_ver = flag_abi_version;
+
       flag_abi_version = flag_abi_compat_version;
       id2 = mangle_decl_string (decl);
       id2 = targetm.mangle_decl_assembler_name (decl, id2);
-      flag_abi_version = save_ver;
 
-      if (id2 == id)
-	return;
+      if (id2 != id)
+	note_mangling_alias (decl, id2);
 
       if (warn_abi)
 	{
-	  if (flag_abi_compat_version != 0
-	      && abi_version_at_least (flag_abi_compat_version))
-	    warning (OPT_Wabi, "the mangled name of %q+D changed between "
-		     "-fabi-version=%d (%D) and -fabi-version=%d (%D)",
-		     G.entity, flag_abi_compat_version, id2,
-		     flag_abi_version, id);
+	  if (flag_abi_compat_version != warn_abi_version)
+	    {
+	      flag_abi_version = warn_abi_version;
+	      id2 = mangle_decl_string (decl);
+	      id2 = targetm.mangle_decl_assembler_name (decl, id2);
+	    }
+
+	  if (id2 == id)
+	    /* OK.  */;
+	  else if (warn_abi_version != 0
+		   && abi_version_at_least (warn_abi_version))
+	    warning_at (DECL_SOURCE_LOCATION (G.entity), OPT_Wabi,
+			"the mangled name of %qD changed between "
+			"-fabi-version=%d (%D) and -fabi-version=%d (%D)",
+			G.entity, save_ver, id2,
+			warn_abi_version, id);
 	  else
-	    warning (OPT_Wabi, "the mangled name of %q+D changes between "
-		     "-fabi-version=%d (%D) and -fabi-version=%d (%D)",
-		     G.entity, flag_abi_version, id,
-		     flag_abi_compat_version, id2);
+	    warning_at (DECL_SOURCE_LOCATION (G.entity), OPT_Wabi,
+			"the mangled name of %qD changes between "
+			"-fabi-version=%d (%D) and -fabi-version=%d (%D)",
+			G.entity, save_ver, id,
+			warn_abi_version, id2);
 	}
 
-      note_mangling_alias (decl, id2);
+      flag_abi_version = save_ver;
     }
 }
 
@@ -3778,7 +3926,7 @@ mangle_thunk (tree fn_decl, const int this_adjusting, tree fixed_offset,
   return result;
 }
 
-struct conv_type_hasher : ggc_hasher<tree>
+struct conv_type_hasher : ggc_ptr_hash<tree_node>
 {
   static hashval_t hash (tree);
   static bool equal (tree, tree);
@@ -3848,6 +3996,43 @@ mangle_conv_op_name_for_type (const tree type)
   return identifier;
 }
 
+/* Handle ABI backwards compatibility for past bugs where we didn't call
+   check_abi_tags in places where it's needed: call check_abi_tags and warn if
+   it makes a difference.  If FOR_DECL is non-null, it's the declaration
+   that we're actually trying to mangle; if it's null, we're mangling the
+   guard variable for T.  */
+
+static void
+maybe_check_abi_tags (tree t, tree for_decl)
+{
+  if (DECL_ASSEMBLER_NAME_SET_P (t))
+    return;
+
+  tree attr = lookup_attribute ("abi_tag", DECL_ATTRIBUTES (t));
+  tree oldtags = NULL_TREE;
+  if (attr)
+    oldtags = TREE_VALUE (attr);
+
+  mangle_decl (t);
+
+  if (!attr)
+    attr = lookup_attribute ("abi_tag", DECL_ATTRIBUTES (t));
+  if (attr && TREE_VALUE (attr) != oldtags
+      && abi_version_crosses (10))
+    {
+      if (for_decl)
+	warning_at (DECL_SOURCE_LOCATION (for_decl), OPT_Wabi,
+		    "the mangled name of %qD changes between "
+		    "-fabi-version=%d and -fabi-version=%d",
+		    for_decl, flag_abi_version, warn_abi_version);
+      else
+	warning_at (DECL_SOURCE_LOCATION (t), OPT_Wabi,
+		    "the mangled name of the initialization guard variable for"
+		    "%qD changes between -fabi-version=%d and -fabi-version=%d",
+		    t, flag_abi_version, warn_abi_version);
+    }
+}
+
 /* Write out the appropriate string for this variable when generating
    another mangled name based on this one.  */
 
@@ -3869,6 +4054,8 @@ write_guarded_var_name (const tree variable)
 tree
 mangle_guard_variable (const tree variable)
 {
+  if (abi_version_at_least (10))
+    maybe_check_abi_tags (variable);
   start_mangling (variable);
   write_string ("_ZGV");
   write_guarded_var_name (variable);
@@ -3926,6 +4113,7 @@ mangle_ref_init_variable (const tree variable)
 {
   start_mangling (variable);
   write_string ("_ZGR");
+  check_abi_tags (variable);
   write_name (variable, /*ignore_local_scope=*/0);
   /* Avoid name clashes with aggregate initialization of multiple
      references at once.  */
@@ -3976,6 +4164,13 @@ get_mangled_vtable_map_var_name (tree class_type)
   gcc_assert (TREE_CODE (class_type) == RECORD_TYPE);
 
   tree class_id = DECL_ASSEMBLER_NAME (TYPE_NAME (class_type));
+
+  if (strstr (IDENTIFIER_POINTER (class_id), "<anon>") != NULL)
+    {
+      class_id = get_mangled_id (TYPE_NAME (class_type));
+      vtbl_register_mangled_name (TYPE_NAME (class_type), class_id);
+    }
+
   unsigned int len = strlen (IDENTIFIER_POINTER (class_id)) +
                      strlen (prefix) +
                      strlen (postfix) + 1;

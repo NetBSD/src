@@ -1,6 +1,6 @@
 /* tatan -- test file for mpc_atan.
 
-Copyright (C) 2009, 2012 INRIA
+Copyright (C) 2009, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -30,10 +30,10 @@ test_underflow (void)
 
   mpfr_set_emin (-10);
   mpc_init2 (z, 21);
-  mpfr_set_si (mpc_realref(z), -1, GMP_RNDZ);
-  mpfr_set_ui_2exp (mpc_imagref(z), 1, 20, GMP_RNDZ);
-  mpfr_add_ui (mpc_imagref(z), mpc_imagref(z), 1, GMP_RNDZ);
-  mpfr_div_2exp (mpc_imagref(z), mpc_imagref(z), 20, GMP_RNDZ);
+  mpfr_set_si (mpc_realref(z), -1, MPFR_RNDZ);
+  mpfr_set_ui_2exp (mpc_imagref(z), 1, 20, MPFR_RNDZ);
+  mpfr_add_ui (mpc_imagref(z), mpc_imagref(z), 1, MPFR_RNDZ);
+  mpfr_div_2exp (mpc_imagref(z), mpc_imagref(z), 20, MPFR_RNDZ);
   mpc_atan (z, z, MPC_RNDNN);
   if (mpfr_cmp_si_2exp (mpc_realref(z), -1066635, 20) != 0 ||
       mpfr_cmp_si_2exp (mpc_imagref(z), 1687619, 22))
@@ -50,16 +50,22 @@ test_underflow (void)
 }
 #endif
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_atan (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_atan (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_atan);
-
   test_start ();
 
-  data_check (f, "atan.dat");
-  tgeneric (f, 2, 512, 5, 128);
+  data_check_template ("atan.dsc", "atan.dat");
+
+  tgeneric_template ("atan.dsc", 2, 512, 5, 128);
 
   test_end ();
 

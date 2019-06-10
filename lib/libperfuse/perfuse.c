@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.40 2016/10/19 01:30:35 christos Exp $ */
+/*  $NetBSD: perfuse.c,v 1.40.14.1 2019/06/10 22:05:26 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -199,7 +199,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that enough FUSE packets
+	 * Set a buffer length large enough so that enough FUSE packets
 	 * will fit.
 	 */
 	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
@@ -231,7 +231,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that enough FUSE packets
+	 * Set a buffer length large enough so that enough FUSE packets
 	 * will fit.
 	 */
 	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
@@ -512,6 +512,7 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	PUFFSOP_SET(pops, perfuse, node, readdir);
 	PUFFSOP_SET(pops, perfuse, node, readlink);
 	PUFFSOP_SET(pops, perfuse, node, reclaim);
+	PUFFSOP_SET(pops, perfuse, node, reclaim2);
 	PUFFSOP_SET(pops, perfuse, node, inactive);
 	PUFFSOP_SET(pops, perfuse, node, print);
 	PUFFSOP_SET(pops, perfuse, node, pathconf);

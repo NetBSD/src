@@ -155,8 +155,9 @@ struct bfd
 
   /* Flags bits to be saved in bfd_preserve_save.  */
 #define BFD_FLAGS_SAVED \
-  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
+   | BFD_PLUGIN | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON \
+   | BFD_USE_ELF_STT_COMMON)
 
   /* Flags bits which are for BFD use only.  */
 #define BFD_FLAGS_FOR_BFD_USE_MASK \
@@ -433,12 +434,12 @@ Some BFD functions want to print messages describing the
 problem.  They call a BFD error handler function.  This
 function may be overridden by the program.
 
-The BFD error handler acts like printf.
+The BFD error handler acts like vprintf.
 
 
 @example
 
-typedef void (*bfd_error_handler_type) (const char *, ...);
+typedef void (*bfd_error_handler_type) (const char *, va_list);
 
 @end example
 @findex bfd_set_error_handler
@@ -462,15 +463,6 @@ Set the program name to use when printing a BFD error.  This
 is printed before the error message followed by a colon and
 space.  The string must not be changed after it is passed to
 this function.
-
-@findex bfd_get_error_handler
-@subsubsection @code{bfd_get_error_handler}
-@strong{Synopsis}
-@example
-bfd_error_handler_type bfd_get_error_handler (void);
-@end example
-@strong{Description}@*
-Return the BFD error handler function.
 
 @subsection BFD assert handler
 If BFD finds an internal inconsistency, the bfd assert
@@ -499,15 +491,6 @@ bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
 @strong{Description}@*
 Set the BFD assert handler function.  Returns the previous
 function.
-
-@findex bfd_get_assert_handler
-@subsubsection @code{bfd_get_assert_handler}
-@strong{Synopsis}
-@example
-bfd_assert_handler_type bfd_get_assert_handler (void);
-@end example
-@strong{Description}@*
-Return the BFD assert handler function.
 
 @node Miscellaneous, Memory Usage, Error reporting, BFD front end
 @section Miscellaneous
@@ -714,29 +697,6 @@ Not enough memory exists to create private data for @var{obfd}.
 @example
 #define bfd_copy_private_bfd_data(ibfd, obfd) \
      BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
-               (ibfd, obfd))
-@end example
-
-@findex bfd_merge_private_bfd_data
-@subsubsection @code{bfd_merge_private_bfd_data}
-@strong{Synopsis}
-@example
-bfd_boolean bfd_merge_private_bfd_data (bfd *ibfd, bfd *obfd);
-@end example
-@strong{Description}@*
-Merge private BFD information from the BFD @var{ibfd} to the
-the output file BFD @var{obfd} when linking.  Return @code{TRUE}
-on success, @code{FALSE} on error.  Possible error returns are:
-
-@itemize @bullet
-
-@item
-@code{bfd_error_no_memory} -
-Not enough memory exists to create private data for @var{obfd}.
-@end itemize
-@example
-#define bfd_merge_private_bfd_data(ibfd, obfd) \
-     BFD_SEND (obfd, _bfd_merge_private_bfd_data, \
                (ibfd, obfd))
 @end example
 

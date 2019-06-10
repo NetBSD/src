@@ -87,7 +87,7 @@ gld${EMULATION_NAME}_handle_option (int optc)
 	}
       else
 	{
-	  einfo (_("%P%F: invalid COFF format version %s\n"), optarg);
+	  einfo (_("%F%P: invalid COFF format version %s\n"), optarg);
 	}
       break;
     }

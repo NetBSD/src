@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/04/01 17:48:39 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.36.1 2019/06/10 22:09:10 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,8 +7,6 @@
 KMOD=	apple_smc_temp
 IOCONF=	apple_smc_temp.ioconf
 SRCS=	apple_smc_temp.c
-
-WARNS=	4
 
 CPPFLAGS+=	-DDIAGNOSTIC
 

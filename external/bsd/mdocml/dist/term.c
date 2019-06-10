@@ -1,7 +1,7 @@
-/*	Id: term.c,v 1.259 2017/01/08 18:16:58 schwarze Exp  */
+/*	Id: term.c,v 1.280 2019/01/15 12:16:18 schwarze Exp  */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,17 +33,35 @@
 #include "main.h"
 
 static	size_t		 cond_width(const struct termp *, int, int *);
-static	void		 adjbuf(struct termp *p, size_t);
+static	void		 adjbuf(struct termp_col *, size_t);
 static	void		 bufferc(struct termp *, char);
 static	void		 encode(struct termp *, const char *, size_t);
 static	void		 encode1(struct termp *, int);
+static	void		 endline(struct termp *);
+static	void		 term_field(struct termp *, size_t, size_t,
+				size_t, size_t);
+static	void		 term_fill(struct termp *, size_t *, size_t *,
+				size_t);
 
+
+void
+term_setcol(struct termp *p, size_t maxtcol)
+{
+	if (maxtcol > p->maxtcol) {
+		p->tcols = mandoc_recallocarray(p->tcols,
+		    p->maxtcol, maxtcol, sizeof(*p->tcols));
+		p->maxtcol = maxtcol;
+	}
+	p->lasttcol = maxtcol - 1;
+	p->tcol = p->tcols;
+}
 
 void
 term_free(struct termp *p)
 {
-
-	free(p->buf);
+	for (p->tcol = p->tcols; p->tcol < p->tcols + p->maxtcol; p->tcol++)
+		free(p->tcol->buf);
+	free(p->tcols);
 	free(p->fontq);
 	free(p);
 }
@@ -69,239 +88,346 @@ term_end(struct termp *p)
  * Flush a chunk of text.  By default, break the output line each time
  * the right margin is reached, and continue output on the next line
  * at the same offset as the chunk itself.  By default, also break the
- * output line at the end of the chunk.
- * The following flags may be specified:
- *
- *  - TERMP_NOBREAK: Do not break the output line at the right margin,
- *    but only at the max right margin.  Also, do not break the output
- *    line at the end of the chunk, such that the next call can pad to
- *    the next column.  However, if less than p->trailspace blanks,
- *    which can be 0, 1, or 2, remain to the right margin, the line
- *    will be broken.
- *  - TERMP_BRTRSP: Consider trailing whitespace significant
- *    when deciding whether the chunk fits or not.
- *  - TERMP_BRIND: If the chunk does not fit and the output line has
- *    to be broken, start the next line at the right margin instead
- *    of at the offset.  Used together with TERMP_NOBREAK for the tags
- *    in various kinds of tagged lists.
- *  - TERMP_DANGLE: Do not break the output line at the right margin,
- *    append the next chunk after it even if this one is too long.
- *    To be used together with TERMP_NOBREAK.
- *  - TERMP_HANG: Like TERMP_DANGLE, and also suppress padding before
- *    the next chunk if this column is not full.
+ * output line at the end of the chunk.  There are many flags modifying
+ * this behaviour, see the comments in the body of the function.
  */
 void
 term_flushln(struct termp *p)
 {
-	size_t		 i;     /* current input position in p->buf */
-	int		 ntab;	/* number of tabs to prepend */
-	size_t		 vis;   /* current visual position on output */
-	size_t		 vbl;   /* number of blanks to prepend to output */
-	size_t		 vend;	/* end of word visual position on output */
-	size_t		 bp;    /* visual right border position */
-	size_t		 dv;    /* temporary for visual pos calculations */
-	size_t		 j;     /* temporary loop index for p->buf */
-	size_t		 jhy;	/* last hyph before overflow w/r/t j */
-	size_t		 maxvis; /* output position of visible boundary */
+	size_t	 vbl;      /* Number of blanks to prepend to the output. */
+	size_t	 vbr;      /* Actual visual position of the end of field. */
+	size_t	 vfield;   /* Desired visual field width. */
+	size_t	 vtarget;  /* Desired visual position of the right margin. */
+	size_t	 ic;       /* Character position in the input buffer. */
+	size_t	 nbr;      /* Number of characters to print in this field. */
 
 	/*
-	 * First, establish the maximum columns of "visible" content.
-	 * This is usually the difference between the right-margin and
-	 * an indentation, but can be, for tagged lists or columns, a
-	 * small set of values.
-	 *
-	 * The following unsigned-signed subtractions look strange,
-	 * but they are actually correct.  If the int p->overstep
-	 * is negative, it gets sign extended.  Subtracting that
-	 * very large size_t effectively adds a small number to dv.
+	 * Normally, start writing at the left margin, but with the
+	 * NOPAD flag, start writing at the current position instead.
 	 */
-	dv = p->rmargin > p->offset ? p->rmargin - p->offset : 0;
-	maxvis = (int)dv > p->overstep ? dv - (size_t)p->overstep : 0;
 
-	if (p->flags & TERMP_NOBREAK) {
-		dv = p->maxrmargin > p->offset ?
-		     p->maxrmargin - p->offset : 0;
-		bp = (int)dv > p->overstep ?
-		     dv - (size_t)p->overstep : 0;
-	} else
-		bp = maxvis;
+	vbl = (p->flags & TERMP_NOPAD) || p->tcol->offset < p->viscol ?
+	    0 : p->tcol->offset - p->viscol;
+	if (p->minbl && vbl < p->minbl)
+		vbl = p->minbl;
 
-	/*
-	 * Calculate the required amount of padding.
-	 */
-	vbl = p->offset + p->overstep > p->viscol ?
-	      p->offset + p->overstep - p->viscol : 0;
+	if ((p->flags & TERMP_MULTICOL) == 0)
+		p->tcol->col = 0;
 
-	vis = vend = 0;
-	i = 0;
+	/* Loop over output lines. */
 
-	while (i < p->col) {
+	for (;;) {
+		vfield = p->tcol->rmargin > p->viscol + vbl ?
+		    p->tcol->rmargin - p->viscol - vbl : 0;
+
 		/*
-		 * Handle literal tab characters: collapse all
-		 * subsequent tabs into a single huge set of spaces.
+		 * Normally, break the line at the the right margin
+		 * of the field, but with the NOBREAK flag, only
+		 * break it at the max right margin of the screen,
+		 * and with the BRNEVER flag, never break it at all.
 		 */
-		ntab = 0;
-		while (i < p->col && '\t' == p->buf[i]) {
-			vend = (vis / p->tabwidth + 1) * p->tabwidth;
-			vbl += vend - vis;
-			vis = vend;
-			ntab++;
-			i++;
+
+		vtarget = p->flags & TERMP_BRNEVER ? SIZE_MAX :
+		    (p->flags & TERMP_NOBREAK) == 0 ? vfield :
+		    p->maxrmargin > p->viscol + vbl ?
+		    p->maxrmargin - p->viscol - vbl : 0;
+
+		/*
+		 * Figure out how much text will fit in the field.
+		 * If there is whitespace only, print nothing.
+		 */
+
+		term_fill(p, &nbr, &vbr, vtarget);
+		if (nbr == 0)
+			break;
+
+		/*
+		 * With the CENTER or RIGHT flag, increase the indentation
+		 * to center the text between the left and right margins
+		 * or to adjust it to the right margin, respectively.
+		 */
+
+		if (vbr < vtarget) {
+			if (p->flags & TERMP_CENTER)
+				vbl += (vtarget - vbr) / 2;
+			else if (p->flags & TERMP_RIGHT)
+				vbl += vtarget - vbr;
 		}
 
+		/* Finally, print the field content. */
+
+		term_field(p, vbl, nbr, vbr, vtarget);
+
 		/*
-		 * Count up visible word characters.  Control sequences
-		 * (starting with the CSI) aren't counted.  A space
-		 * generates a non-printing word, which is valid (the
-		 * space is printed according to regular spacing rules).
+		 * If there is no text left in the field, exit the loop.
+		 * If the BRTRSP flag is set, consider trailing
+		 * whitespace significant when deciding whether
+		 * the field fits or not.
 		 */
 
-		for (j = i, jhy = 0; j < p->col; j++) {
-			if (' ' == p->buf[j] || '\t' == p->buf[j])
-				break;
-
-			/* Back over the last printed character. */
-			if (8 == p->buf[j]) {
-				assert(j);
-				vend -= (*p->width)(p, p->buf[j - 1]);
+		for (ic = p->tcol->col; ic < p->tcol->lastcol; ic++) {
+			switch (p->tcol->buf[ic]) {
+			case '\t':
+				if (p->flags & TERMP_BRTRSP)
+					vbr = term_tab_next(vbr);
 				continue;
+			case ' ':
+				if (p->flags & TERMP_BRTRSP)
+					vbr += (*p->width)(p, ' ');
+				continue;
+			case '\n':
+			case ASCII_BREAK:
+				continue;
+			default:
+				break;
 			}
+			break;
+		}
+		if (ic == p->tcol->lastcol)
+			break;
 
-			/* Regular word. */
-			/* Break at the hyphen point if we overrun. */
-			if (vend > vis && vend < bp &&
-			    (ASCII_HYPH == p->buf[j] ||
-			     ASCII_BREAK == p->buf[j]))
-				jhy = j;
+		/*
+		 * At the location of an automtic line break, input
+		 * space characters are consumed by the line break.
+		 */
 
+		while (p->tcol->col < p->tcol->lastcol &&
+		    p->tcol->buf[p->tcol->col] == ' ')
+			p->tcol->col++;
+
+		/*
+		 * In multi-column mode, leave the rest of the text
+		 * in the buffer to be handled by a subsequent
+		 * invocation, such that the other columns of the
+		 * table can be handled first.
+		 * In single-column mode, simply break the line.
+		 */
+
+		if (p->flags & TERMP_MULTICOL)
+			return;
+
+		endline(p);
+		p->viscol = 0;
+
+		/*
+		 * Normally, start the next line at the same indentation
+		 * as this one, but with the BRIND flag, start it at the
+		 * right margin instead.  This is used together with
+		 * NOBREAK for the tags in various kinds of tagged lists.
+		 */
+
+		vbl = p->flags & TERMP_BRIND ?
+		    p->tcol->rmargin : p->tcol->offset;
+	}
+
+	/* Reset output state in preparation for the next field. */
+
+	p->col = p->tcol->col = p->tcol->lastcol = 0;
+	p->minbl = p->trailspace;
+	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE | TERMP_NOPAD);
+
+	if (p->flags & TERMP_MULTICOL)
+		return;
+
+	/*
+	 * The HANG flag means that the next field
+	 * always follows on the same line.
+	 * The NOBREAK flag means that the next field
+	 * follows on the same line unless the field was overrun.
+	 * Normally, break the line at the end of each field.
+	 */
+
+	if ((p->flags & TERMP_HANG) == 0 &&
+	    ((p->flags & TERMP_NOBREAK) == 0 ||
+	     vbr + term_len(p, p->trailspace) > vfield))
+		endline(p);
+}
+
+/*
+ * Store the number of input characters to print in this field in *nbr
+ * and their total visual width to print in *vbr.
+ * If there is only whitespace in the field, both remain zero.
+ * The desired visual width of the field is provided by vtarget.
+ * If the first word is longer, the field will be overrun.
+ */
+static void
+term_fill(struct termp *p, size_t *nbr, size_t *vbr, size_t vtarget)
+{
+	size_t	 ic;        /* Character position in the input buffer. */
+	size_t	 vis;       /* Visual position of the current character. */
+	size_t	 vn;        /* Visual position of the next character. */
+	int	 breakline; /* Break at the end of this word. */
+	int	 graph;     /* Last character was non-blank. */
+
+	*nbr = *vbr = vis = 0;
+	breakline = graph = 0;
+	for (ic = p->tcol->col; ic < p->tcol->lastcol; ic++) {
+		switch (p->tcol->buf[ic]) {
+		case '\b':  /* Escape \o (overstrike) or backspace markup. */
+			assert(ic > 0);
+			vis -= (*p->width)(p, p->tcol->buf[ic - 1]);
+			continue;
+
+		case '\t':  /* Normal ASCII whitespace. */
+		case ' ':
+		case ASCII_BREAK:  /* Escape \: (breakpoint). */
+			switch (p->tcol->buf[ic]) {
+			case '\t':
+				vn = term_tab_next(vis);
+				break;
+			case ' ':
+				vn = vis + (*p->width)(p, ' ');
+				break;
+			case ASCII_BREAK:
+				vn = vis;
+				break;
+			default:
+				abort();
+			}
+			/* Can break at the end of a word. */
+			if (breakline || vn > vtarget)
+				break;
+			if (graph) {
+				*nbr = ic;
+				*vbr = vis;
+				graph = 0;
+			}
+			vis = vn;
+			continue;
+
+		case '\n':  /* Escape \p (break at the end of the word). */
+			breakline = 1;
+			continue;
+
+		case ASCII_HYPH:  /* Breakable hyphen. */
+			graph = 1;
 			/*
-			 * Hyphenation now decided, put back a real
+			 * We are about to decide whether to break the
+			 * line or not, so we no longer need this hyphen
+			 * to be marked as breakable.  Put back a real
 			 * hyphen such that we get the correct width.
 			 */
-			if (ASCII_HYPH == p->buf[j])
-				p->buf[j] = '-';
-
-			vend += (*p->width)(p, p->buf[j]);
-		}
-
-		/*
-		 * Find out whether we would exceed the right margin.
-		 * If so, break to the next line.
-		 */
-		if (vend > bp && 0 == jhy && vis > 0) {
-			vend -= vis;
-			(*p->endline)(p);
-			p->viscol = 0;
-			if (TERMP_BRIND & p->flags) {
-				vbl = p->rmargin;
-				vend += p->rmargin;
-				vend -= p->offset;
-			} else
-				vbl = p->offset;
-
-			/* use pending tabs on the new line */
-
-			if (0 < ntab)
-				vbl += ntab * p->tabwidth;
-
-			/*
-			 * Remove the p->overstep width.
-			 * Again, if p->overstep is negative,
-			 * sign extension does the right thing.
-			 */
-
-			bp += (size_t)p->overstep;
-			p->overstep = 0;
-		}
-
-		/* Write out the [remaining] word. */
-		for ( ; i < p->col; i++) {
-			if (vend > bp && jhy > 0 && i > jhy)
-				break;
-			if ('\t' == p->buf[i])
-				break;
-			if (' ' == p->buf[i]) {
-				j = i;
-				while (i < p->col && ' ' == p->buf[i])
-					i++;
-				dv = (i - j) * (*p->width)(p, ' ');
-				vbl += dv;
-				vend += dv;
+			p->tcol->buf[ic] = '-';
+			vis += (*p->width)(p, '-');
+			if (vis > vtarget) {
+				ic++;
 				break;
 			}
-			if (ASCII_NBRSP == p->buf[i]) {
-				vbl += (*p->width)(p, ' ');
-				continue;
-			}
-			if (ASCII_BREAK == p->buf[i])
-				continue;
+			*nbr = ic + 1;
+			*vbr = vis;
+			continue;
 
-			/*
-			 * Now we definitely know there will be
-			 * printable characters to output,
-			 * so write preceding white space now.
-			 */
-			if (vbl) {
-				(*p->advance)(p, vbl);
-				p->viscol += vbl;
-				vbl = 0;
-			}
-
-			(*p->letter)(p, p->buf[i]);
-			if (8 == p->buf[i])
-				p->viscol -= (*p->width)(p, p->buf[i-1]);
-			else
-				p->viscol += (*p->width)(p, p->buf[i]);
+		case ASCII_NBRSP:  /* Non-breakable space. */
+			p->tcol->buf[ic] = ' ';
+			/* FALLTHROUGH */
+		default:  /* Printable character. */
+			graph = 1;
+			vis += (*p->width)(p, p->tcol->buf[ic]);
+			if (vis > vtarget && *nbr > 0)
+				return;
+			continue;
 		}
-		vis = vend;
+		break;
 	}
 
 	/*
-	 * If there was trailing white space, it was not printed;
-	 * so reset the cursor position accordingly.
+	 * If the last word extends to the end of the field without any
+	 * trailing whitespace, the loop could not check yet whether it
+	 * can remain on this line.  So do the check now.
 	 */
-	if (vis > vbl)
-		vis -= vbl;
-	else
-		vis = 0;
 
-	p->col = 0;
-	p->overstep = 0;
-	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE);
-
-	if ( ! (TERMP_NOBREAK & p->flags)) {
-		p->viscol = 0;
-		(*p->endline)(p);
-		return;
+	if (graph && (vis <= vtarget || *nbr == 0)) {
+		*nbr = ic;
+		*vbr = vis;
 	}
+}
 
-	if (TERMP_HANG & p->flags) {
-		p->overstep += (int)(p->offset + vis - p->rmargin +
-		    p->trailspace * (*p->width)(p, ' '));
+/*
+ * Print the contents of one field
+ * with an indentation of	 vbl	  visual columns,
+ * an input string length of	 nbr	  characters,
+ * an output width of		 vbr	  visual columns,
+ * and a desired field width of	 vtarget  visual columns.
+ */
+static void
+term_field(struct termp *p, size_t vbl, size_t nbr, size_t vbr, size_t vtarget)
+{
+	size_t	 ic;	/* Character position in the input buffer. */
+	size_t	 vis;	/* Visual position of the current character. */
+	size_t	 dv;	/* Visual width of the current character. */
+	size_t	 vn;	/* Visual position of the next character. */
+
+	vis = 0;
+	for (ic = p->tcol->col; ic < nbr; ic++) {
 
 		/*
-		 * If we have overstepped the margin, temporarily move
-		 * it to the right and flag the rest of the line to be
-		 * shorter.
-		 * If there is a request to keep the columns together,
-		 * allow negative overstep when the column is not full.
+		 * To avoid the printing of trailing whitespace,
+		 * do not print whitespace right away, only count it.
 		 */
-		if (p->trailspace && p->overstep < 0)
-			p->overstep = 0;
-		return;
 
-	} else if (TERMP_DANGLE & p->flags)
-		return;
+		switch (p->tcol->buf[ic]) {
+		case '\n':
+		case ASCII_BREAK:
+			continue;
+		case '\t':
+			vn = term_tab_next(vis);
+			vbl += vn - vis;
+			vis = vn;
+			continue;
+		case ' ':
+		case ASCII_NBRSP:
+			dv = (*p->width)(p, ' ');
+			vbl += dv;
+			vis += dv;
+			continue;
+		default:
+			break;
+		}
 
-	/* Trailing whitespace is significant in some columns. */
-	if (vis && vbl && (TERMP_BRTRSP & p->flags))
-		vis += vbl;
+		/*
+		 * We found a non-blank character to print,
+		 * so write preceding white space now.
+		 */
 
-	/* If the column was overrun, break the line. */
-	if (maxvis < vis + p->trailspace * (*p->width)(p, ' ')) {
-		(*p->endline)(p);
-		p->viscol = 0;
+		if (vbl > 0) {
+			(*p->advance)(p, vbl);
+			p->viscol += vbl;
+			vbl = 0;
+		}
+
+		/* Print the character and adjust the visual position. */
+
+		(*p->letter)(p, p->tcol->buf[ic]);
+		if (p->tcol->buf[ic] == '\b') {
+			dv = (*p->width)(p, p->tcol->buf[ic - 1]);
+			p->viscol -= dv;
+			vis -= dv;
+		} else {
+			dv = (*p->width)(p, p->tcol->buf[ic]);
+			p->viscol += dv;
+			vis += dv;
+		}
 	}
+	p->tcol->col = nbr;
+}
+
+static void
+endline(struct termp *p)
+{
+	if ((p->flags & (TERMP_NEWMC | TERMP_ENDMC)) == TERMP_ENDMC) {
+		p->mc = NULL;
+		p->flags &= ~TERMP_ENDMC;
+	}
+	if (p->mc != NULL) {
+		if (p->viscol && p->maxrmargin >= p->viscol)
+			(*p->advance)(p, p->maxrmargin - p->viscol + 1);
+		p->flags |= TERMP_NOBUF | TERMP_NOSPACE;
+		term_word(p, p->mc);
+		p->flags &= ~(TERMP_NOBUF | TERMP_NEWMC);
+	}
+	p->viscol = 0;
+	p->minbl = 0;
+	(*p->endline)(p);
 }
 
 /*
@@ -314,7 +440,7 @@ term_newln(struct termp *p)
 {
 
 	p->flags |= TERMP_NOSPACE;
-	if (p->col || p->viscol)
+	if (p->tcol->lastcol || p->viscol)
 		term_flushln(p);
 }
 
@@ -330,6 +456,7 @@ term_vspace(struct termp *p)
 
 	term_newln(p);
 	p->viscol = 0;
+	p->minbl = 0;
 	if (0 < p->skipvsp)
 		p->skipvsp--;
 	else
@@ -397,30 +524,31 @@ term_fontpop(struct termp *p)
 void
 term_word(struct termp *p, const char *word)
 {
+	struct roffsu	 su;
 	const char	 nbrsp[2] = { ASCII_NBRSP, 0 };
 	const char	*seq, *cp;
 	int		 sz, uc;
-	size_t		 ssz;
+	size_t		 csz, lsz, ssz;
 	enum mandoc_esc	 esc;
 
-	if ( ! (TERMP_NOSPACE & p->flags)) {
-		if ( ! (TERMP_KEEP & p->flags)) {
-			bufferc(p, ' ');
-			if (TERMP_SENTENCE & p->flags)
+	if ((p->flags & TERMP_NOBUF) == 0) {
+		if ((p->flags & TERMP_NOSPACE) == 0) {
+			if ((p->flags & TERMP_KEEP) == 0) {
 				bufferc(p, ' ');
-		} else
-			bufferc(p, ASCII_NBRSP);
+				if (p->flags & TERMP_SENTENCE)
+					bufferc(p, ' ');
+			} else
+				bufferc(p, ASCII_NBRSP);
+		}
+		if (p->flags & TERMP_PREKEEP)
+			p->flags |= TERMP_KEEP;
+		if (p->flags & TERMP_NONOSPACE)
+			p->flags |= TERMP_NOSPACE;
+		else
+			p->flags &= ~TERMP_NOSPACE;
+		p->flags &= ~(TERMP_SENTENCE | TERMP_NONEWLINE);
+		p->skipvsp = 0;
 	}
-	if (TERMP_PREKEEP & p->flags)
-		p->flags |= TERMP_KEEP;
-
-	if ( ! (p->flags & TERMP_NONOSPACE))
-		p->flags &= ~TERMP_NOSPACE;
-	else
-		p->flags |= TERMP_NOSPACE;
-
-	p->flags &= ~(TERMP_SENTENCE | TERMP_NONEWLINE);
-	p->skipvsp = 0;
 
 	while ('\0' != *word) {
 		if ('\\' != *word) {
@@ -440,9 +568,6 @@ term_word(struct termp *p, const char *word)
 
 		word++;
 		esc = mandoc_escape(&word, &seq, &sz);
-		if (ESCAPE_ERROR == esc)
-			continue;
-
 		switch (esc) {
 		case ESCAPE_UNICODE:
 			uc = mchars_num2uc(seq + 1, sz - 1);
@@ -463,6 +588,9 @@ term_word(struct termp *p, const char *word)
 					encode1(p, uc);
 			}
 			continue;
+		case ESCAPE_UNDEF:
+			uc = *seq;
+			break;
 		case ESCAPE_FONTBOLD:
 			term_fontrepl(p, TERMFONT_BOLD);
 			continue;
@@ -473,17 +601,107 @@ term_word(struct termp *p, const char *word)
 			term_fontrepl(p, TERMFONT_BI);
 			continue;
 		case ESCAPE_FONT:
+		case ESCAPE_FONTCW:
 		case ESCAPE_FONTROMAN:
 			term_fontrepl(p, TERMFONT_NONE);
 			continue;
 		case ESCAPE_FONTPREV:
 			term_fontlast(p);
 			continue;
+		case ESCAPE_BREAK:
+			bufferc(p, '\n');
+			continue;
 		case ESCAPE_NOSPACE:
 			if (p->flags & TERMP_BACKAFTER)
 				p->flags &= ~TERMP_BACKAFTER;
 			else if (*word == '\0')
 				p->flags |= (TERMP_NOSPACE | TERMP_NONEWLINE);
+			continue;
+		case ESCAPE_DEVICE:
+			if (p->type == TERMTYPE_PDF)
+				encode(p, "pdf", 3);
+			else if (p->type == TERMTYPE_PS)
+				encode(p, "ps", 2);
+			else if (p->enc == TERMENC_ASCII)
+				encode(p, "ascii", 5);
+			else
+				encode(p, "utf8", 4);
+			continue;
+		case ESCAPE_HORIZ:
+			if (*seq == '|') {
+				seq++;
+				uc = -p->col;
+			} else
+				uc = 0;
+			if (a2roffsu(seq, &su, SCALE_EM) == NULL)
+				continue;
+			uc += term_hen(p, &su);
+			if (uc > 0)
+				while (uc-- > 0)
+					bufferc(p, ASCII_NBRSP);
+			else if (p->col > (size_t)(-uc))
+				p->col += uc;
+			else {
+				uc += p->col;
+				p->col = 0;
+				if (p->tcol->offset > (size_t)(-uc)) {
+					p->ti += uc;
+					p->tcol->offset += uc;
+				} else {
+					p->ti -= p->tcol->offset;
+					p->tcol->offset = 0;
+				}
+			}
+			continue;
+		case ESCAPE_HLINE:
+			if ((cp = a2roffsu(seq, &su, SCALE_EM)) == NULL)
+				continue;
+			uc = term_hen(p, &su);
+			if (uc <= 0) {
+				if (p->tcol->rmargin <= p->tcol->offset)
+					continue;
+				lsz = p->tcol->rmargin - p->tcol->offset;
+			} else
+				lsz = uc;
+			if (*cp == seq[-1])
+				uc = -1;
+			else if (*cp == '\\') {
+				seq = cp + 1;
+				esc = mandoc_escape(&seq, &cp, &sz);
+				switch (esc) {
+				case ESCAPE_UNICODE:
+					uc = mchars_num2uc(cp + 1, sz - 1);
+					break;
+				case ESCAPE_NUMBERED:
+					uc = mchars_num2char(cp, sz);
+					break;
+				case ESCAPE_SPECIAL:
+					uc = mchars_spec2cp(cp, sz);
+					break;
+				case ESCAPE_UNDEF:
+					uc = *seq;
+					break;
+				default:
+					uc = -1;
+					break;
+				}
+			} else
+				uc = *cp;
+			if (uc < 0x20 || (uc > 0x7E && uc < 0xA0))
+				uc = '_';
+			if (p->enc == TERMENC_ASCII) {
+				cp = ascii_uc2str(uc);
+				csz = term_strlen(p, cp);
+				ssz = strlen(cp);
+			} else
+				csz = (*p->width)(p, uc);
+			while (lsz >= csz) {
+				if (p->enc == TERMENC_ASCII)
+					encode(p, cp, ssz);
+				else
+					encode1(p, uc);
+				lsz -= csz;
+			}
 			continue;
 		case ESCAPE_SKIPCHAR:
 			p->flags |= TERMP_BACKAFTER;
@@ -504,10 +722,12 @@ term_word(struct termp *p, const char *word)
 				}
 			}
 			/* Trim trailing backspace/blank pair. */
-			if (p->col > 2 &&
-			    (p->buf[p->col - 1] == ' ' ||
-			     p->buf[p->col - 1] == '\t'))
-				p->col -= 2;
+			if (p->tcol->lastcol > 2 &&
+			    (p->tcol->buf[p->tcol->lastcol - 1] == ' ' ||
+			     p->tcol->buf[p->tcol->lastcol - 1] == '\t'))
+				p->tcol->lastcol -= 2;
+			if (p->col > p->tcol->lastcol)
+				p->col = p->tcol->lastcol;
 			continue;
 		default:
 			continue;
@@ -532,25 +752,28 @@ term_word(struct termp *p, const char *word)
 }
 
 static void
-adjbuf(struct termp *p, size_t sz)
+adjbuf(struct termp_col *c, size_t sz)
 {
-
-	if (0 == p->maxcols)
-		p->maxcols = 1024;
-	while (sz >= p->maxcols)
-		p->maxcols <<= 2;
-
-	p->buf = mandoc_reallocarray(p->buf, p->maxcols, sizeof(int));
+	if (c->maxcols == 0)
+		c->maxcols = 1024;
+	while (c->maxcols <= sz)
+		c->maxcols <<= 2;
+	c->buf = mandoc_reallocarray(c->buf, c->maxcols, sizeof(*c->buf));
 }
 
 static void
 bufferc(struct termp *p, char c)
 {
-
-	if (p->col + 1 >= p->maxcols)
-		adjbuf(p, p->col + 1);
-
-	p->buf[p->col++] = c;
+	if (p->flags & TERMP_NOBUF) {
+		(*p->letter)(p, c);
+		return;
+	}
+	if (p->col + 1 >= p->tcol->maxcols)
+		adjbuf(p->tcol, p->col + 1);
+	if (p->tcol->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
+		p->tcol->buf[p->col] = c;
+	if (p->tcol->lastcol < ++p->col)
+		p->tcol->lastcol = p->col;
 }
 
 /*
@@ -563,31 +786,40 @@ encode1(struct termp *p, int c)
 {
 	enum termfont	  f;
 
-	if (p->col + 7 >= p->maxcols)
-		adjbuf(p, p->col + 7);
+	if (p->flags & TERMP_NOBUF) {
+		(*p->letter)(p, c);
+		return;
+	}
+
+	if (p->col + 7 >= p->tcol->maxcols)
+		adjbuf(p->tcol, p->col + 7);
 
 	f = (c == ASCII_HYPH || c > 127 || isgraph(c)) ?
 	    p->fontq[p->fonti] : TERMFONT_NONE;
 
 	if (p->flags & TERMP_BACKBEFORE) {
-		if (p->buf[p->col - 1] == ' ' || p->buf[p->col - 1] == '\t')
+		if (p->tcol->buf[p->col - 1] == ' ' ||
+		    p->tcol->buf[p->col - 1] == '\t')
 			p->col--;
 		else
-			p->buf[p->col++] = 8;
+			p->tcol->buf[p->col++] = '\b';
 		p->flags &= ~TERMP_BACKBEFORE;
 	}
-	if (TERMFONT_UNDER == f || TERMFONT_BI == f) {
-		p->buf[p->col++] = '_';
-		p->buf[p->col++] = 8;
+	if (f == TERMFONT_UNDER || f == TERMFONT_BI) {
+		p->tcol->buf[p->col++] = '_';
+		p->tcol->buf[p->col++] = '\b';
 	}
-	if (TERMFONT_BOLD == f || TERMFONT_BI == f) {
-		if (ASCII_HYPH == c)
-			p->buf[p->col++] = '-';
+	if (f == TERMFONT_BOLD || f == TERMFONT_BI) {
+		if (c == ASCII_HYPH)
+			p->tcol->buf[p->col++] = '-';
 		else
-			p->buf[p->col++] = c;
-		p->buf[p->col++] = 8;
+			p->tcol->buf[p->col++] = c;
+		p->tcol->buf[p->col++] = '\b';
 	}
-	p->buf[p->col++] = c;
+	if (p->tcol->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
+		p->tcol->buf[p->col] = c;
+	if (p->tcol->lastcol < ++p->col)
+		p->tcol->lastcol = p->col;
 	if (p->flags & TERMP_BACKAFTER) {
 		p->flags |= TERMP_BACKBEFORE;
 		p->flags &= ~TERMP_BACKAFTER;
@@ -599,15 +831,24 @@ encode(struct termp *p, const char *word, size_t sz)
 {
 	size_t		  i;
 
-	if (p->col + 2 + (sz * 5) >= p->maxcols)
-		adjbuf(p, p->col + 2 + (sz * 5));
+	if (p->flags & TERMP_NOBUF) {
+		for (i = 0; i < sz; i++)
+			(*p->letter)(p, word[i]);
+		return;
+	}
+
+	if (p->col + 2 + (sz * 5) >= p->tcol->maxcols)
+		adjbuf(p->tcol, p->col + 2 + (sz * 5));
 
 	for (i = 0; i < sz; i++) {
 		if (ASCII_HYPH == word[i] ||
 		    isgraph((unsigned char)word[i]))
 			encode1(p, word[i]);
 		else {
-			p->buf[p->col++] = word[i];
+			if (p->tcol->lastcol <= p->col ||
+			    (word[i] != ' ' && word[i] != ASCII_NBRSP))
+				p->tcol->buf[p->col] = word[i];
+			p->col++;
 
 			/*
 			 * Postpone the effect of \z while handling
@@ -621,6 +862,8 @@ encode(struct termp *p, const char *word, size_t sz)
 			}
 		}
 	}
+	if (p->tcol->lastcol < p->col)
+		p->tcol->lastcol = p->col;
 }
 
 void
@@ -644,7 +887,7 @@ term_setwidth(struct termp *p, const char *wstr)
 		default:
 			break;
 		}
-		if (a2roffsu(wstr, &su, SCALE_MAX))
+		if (a2roffsu(wstr, &su, SCALE_MAX) != NULL)
 			width = term_hspan(p, &su);
 		else
 			iop = 0;
@@ -696,12 +939,8 @@ term_strlen(const struct termp *p, const char *cp)
 		switch (*cp) {
 		case '\\':
 			cp++;
-			esc = mandoc_escape(&cp, &seq, &ssz);
-			if (ESCAPE_ERROR == esc)
-				continue;
-
 			rhs = NULL;
-
+			esc = mandoc_escape(&cp, &seq, &ssz);
 			switch (esc) {
 			case ESCAPE_UNICODE:
 				uc = mchars_num2uc(seq + 1, ssz - 1);
@@ -722,6 +961,24 @@ term_strlen(const struct termp *p, const char *cp)
 						sz += cond_width(p, uc, &skip);
 				}
 				continue;
+			case ESCAPE_UNDEF:
+				uc = *seq;
+				break;
+			case ESCAPE_DEVICE:
+				if (p->type == TERMTYPE_PDF) {
+					rhs = "pdf";
+					rsz = 3;
+				} else if (p->type == TERMTYPE_PS) {
+					rhs = "ps";
+					rsz = 2;
+				} else if (p->enc == TERMENC_ASCII) {
+					rhs = "ascii";
+					rsz = 5;
+				} else {
+					rhs = "utf8";
+					rsz = 4;
+				}
+				break;
 			case ESCAPE_SKIPCHAR:
 				skip = 1;
 				continue;
@@ -833,11 +1090,25 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 }
 
 /*
- * Convert a scaling width to basic units, rounding down.
+ * Convert a scaling width to basic units, rounding towards 0.
  */
 int
 term_hspan(const struct termp *p, const struct roffsu *su)
 {
 
 	return (*p->hspan)(p, su);
+}
+
+/*
+ * Convert a scaling width to basic units, rounding to closest.
+ */
+int
+term_hen(const struct termp *p, const struct roffsu *su)
+{
+	int bu;
+
+	if ((bu = (*p->hspan)(p, su)) >= 0)
+		return (bu + 11) / 24;
+	else
+		return -((-bu + 11) / 24);
 }

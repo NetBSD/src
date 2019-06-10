@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.203 2018/04/07 13:42:42 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.203.2.1 2019/06/10 22:09:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.203 2018/04/07 13:42:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.203.2.1 2019/06/10 22:09:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,25 +159,26 @@ static const struct proc_target {
 	{ DT_DIR, N("."),	PFSproc,	NULL },
 	{ DT_DIR, N(".."),	PFSroot,	NULL },
 	{ DT_DIR, N("fd"),	PFSfd,		NULL },
-	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
+	{ DT_DIR, N("task"),	PFStask,	procfs_validfile_linux },
+	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
+	{ DT_LNK, N("emul"),	PFSemul,	NULL },
+	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_REG, N("auxv"),	PFSauxv,	procfs_validauxv },
-	{ DT_REG, N("mem"),	PFSmem,		NULL },
-	{ DT_REG, N("regs"),	PFSregs,	procfs_validregs },
-	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
-	{ DT_REG, N("stat"),	PFSstat,	procfs_validfile_linux },
-	{ DT_REG, N("status"),	PFSstatus,	NULL },
-	{ DT_REG, N("note"),	PFSnote,	NULL },
-	{ DT_REG, N("notepg"),	PFSnotepg,	NULL },
-	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
-	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("cmdline"), PFScmdline,	NULL },
 	{ DT_REG, N("environ"), PFSenviron,	NULL },
 	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile },
-	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
-	{ DT_LNK, N("root"),	PFSchroot,	NULL },
-	{ DT_LNK, N("emul"),	PFSemul,	NULL },
+	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
+	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
+	{ DT_REG, N("limit"),	PFSlimit,	NULL },
+	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
+	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
+	{ DT_REG, N("mem"),	PFSmem,		NULL },
+	{ DT_REG, N("note"),	PFSnote,	NULL },
+	{ DT_REG, N("notepg"),	PFSnotepg,	NULL },
+	{ DT_REG, N("regs"),	PFSregs,	procfs_validregs },
+	{ DT_REG, N("stat"),	PFSstat,	procfs_validfile_linux },
 	{ DT_REG, N("statm"),	PFSstatm,	procfs_validfile_linux },
-	{ DT_DIR, N("task"),	PFStask,	procfs_validfile_linux },
+	{ DT_REG, N("status"),	PFSstatus,	NULL },
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_DEFNS
 #endif
@@ -664,7 +665,7 @@ procfs_getattr(void *v)
 		/*FALLTHROUGH*/
 	case PFScwd:
 	case PFSchroot:
-		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
+		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK);
 		if (path == NULL && procp != NULL) {
 			procfs_proc_unlock(procp);
 			return (ENOMEM);
@@ -745,6 +746,7 @@ procfs_getattr(void *v)
 
 	case PFSmap:
 	case PFSmaps:
+	case PFSlimit:
 	case PFSauxv:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
@@ -884,6 +886,7 @@ procfs_getattr(void *v)
 	case PFSversion:
 		vap->va_bytes = vap->va_size = 0;
 		break;
+	case PFSlimit:
 	case PFSmap:
 	case PFSmaps:
 		/*
@@ -1332,7 +1335,7 @@ procfs_readdir(void *v)
 			break;
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nproc_targets - i));
+			ncookies = uimin(ncookies, (nproc_targets - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -1384,14 +1387,14 @@ procfs_readdir(void *v)
 
 		nfd = p->p_fd->fd_dt->dt_nfiles;
 
-		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+		lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
 		    	procfs_proc_unlock(p);
 			return 0;
 		}
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nfd + 2 - i));
+			ncookies = uimin(ncookies, (nfd + 2 - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -1444,7 +1447,7 @@ procfs_readdir(void *v)
 		nfd = 3;	/* ., .., pid */
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nfd + 2 - i));
+			ncookies = uimin(ncookies, (nfd + 2 - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -1629,7 +1632,7 @@ procfs_readlink(void *v)
 	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1)) {
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
-		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
+		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK);
 		if (path == NULL) {
 			procfs_proc_unlock(pown);
 			return (ENOMEM);

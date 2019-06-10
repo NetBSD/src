@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.82.4.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.82.4.1 2019/06/10 22:07:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $");
 #include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/usbdevs.h>
+
+#include "ioconf.h"
 
 #ifdef USCANNER_DEBUG
 #define DPRINTF(x)	if (uscannerdebug) printf x
@@ -269,7 +271,7 @@ int	uscanner_match(device_t, cfdata_t, void *);
 void	uscanner_attach(device_t, device_t, void *);
 int	uscanner_detach(device_t, int);
 int	uscanner_activate(device_t, enum devact);
-extern struct cfdriver uscanner_cd;
+
 CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match,
     uscanner_attach, uscanner_detach, uscanner_activate);
 
@@ -506,7 +508,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	while ((n = min(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
+	while ((n = uimin(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("uscannerread: start transfer %d bytes\n",n));
 		tn = n;
 
@@ -559,7 +561,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	while ((n = min(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
+	while ((n = uimin(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
 		error = uiomove(sc->sc_bulkout_buffer, n, uio);
 		if (error)
 			break;

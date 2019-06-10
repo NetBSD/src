@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.67 2018/06/24 20:28:58 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -52,7 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67 2018/06/24 20:28:58 jdolecek
 #include <xen/xen_shm.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
-#include <xen/xen-public/io/protocols.h>
+#include <xen/xenring.h>
+#include <xen/include/public/io/protocols.h>
 
 /* #define XENDEBUG_VBD */
 #ifdef XENDEBUG_VBD
@@ -644,7 +645,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	xbdi->xbdi_ih = intr_establish_xname(0, &xen_pic, xbdi->xbdi_evtchn,
+	xbdi->xbdi_ih = xen_intr_establish_xname(-1, &xen_pic, xbdi->xbdi_evtchn,
 	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, false,
 	    xbdi->xbdi_name);
 	KASSERT(xbdi->xbdi_ih != NULL);
@@ -654,7 +655,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 
 	/* enable the xbdback event handler machinery */
 	xbdi->xbdi_status = WAITING;
-	hypervisor_enable_event(xbdi->xbdi_evtchn);
+	hypervisor_unmask_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
@@ -691,7 +692,7 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		return;
 	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
-	intr_disestablish(xbdi->xbdi_ih);
+	xen_intr_disestablish(xbdi->xbdi_ih);
 
 	/* signal thread that we want to disconnect, then wait for it */
 	xbdi->xbdi_status = DISCONNECTING;
@@ -1500,8 +1501,8 @@ xbdback_co_io_gotfrag2(struct xbdback_instance *xbdi, void *obj)
 	}
 
 	xbd_io->xio_buf.b_bcount += (daddr_t)(seg_size * VBD_BSIZE);
-	XENPRINTF(("xbdback_io domain %d: start sect %d size %d\n",
-	    xbdi->xbdi_domid, (int)xbdi->xbdi_next_sector, seg_size));
+	XENPRINTF(("xbdback_io domain %d: start sect %ld size %d\n",
+	    xbdi->xbdi_domid, (long)xbdi->xbdi_next_sector, seg_size));
 	
 	/* Finally, the end of the segment loop! */
 	xbdi->xbdi_next_sector += seg_size;
@@ -1662,7 +1663,7 @@ xbdback_iodone(struct buf *bp)
 		    : BLKIF_RSP_OKAY;
 
 		XENPRINTF(("xbdback_io domain %d: end request %"PRIu64
-		    "error=%d\n",
+		    " error=%d\n",
 		    xbdi->xbdi_domid, xbd_req->rq_id, error));
 		xbdback_send_reply(xbdi, xbd_req->rq_id,
 		    xbd_req->rq_operation, error);

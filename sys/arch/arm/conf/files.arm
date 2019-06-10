@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.139 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.arm,v 1.139.2.1 2019/06/10 22:05:52 christos Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,8 +8,7 @@ defflag	opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
 defflag	opt_cputypes.h		CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARMV2: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARMV3: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARMV3: CPU_PRE_ARMV6
 defflag	opt_cputypes.h		CPU_ARMV4: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARMV4T: CPU_ARMV4
 defflag	opt_cputypes.h		CPU_ARMV5T: CPU_ARMV4T
@@ -17,9 +16,6 @@ defflag	opt_cputypes.h		CPU_ARMV5TE: CPU_ARMV5T
 defflag	opt_cputypes.h		CPU_XSCALE: CPU_ARMV5TE
 defflag	opt_cputypes.h		CPU_ARMV6: ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag	opt_cputypes.h		CPU_ARMV7: ARM32_DISABLE_ALIGNMENT_FAULTS
-defflag	opt_cputypes.h		CPU_ARM2: CPU_ARMV2
-defflag	opt_cputypes.h		CPU_ARM250: CPU_ARMV2
-defflag	opt_cputypes.h		CPU_ARM3: CPU_ARMV2
 defflag	opt_cputypes.h		CPU_ARM6: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARM7: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARM8: CPU_ARMV4
@@ -78,8 +74,9 @@ defparam opt_cpuoptions.h	ARM_CBAR
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # ARM-specific debug options
-defflag	opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
-defflag	opt_arm_debug.h		VERBOSE_INIT_ARM
+defflag  opt_arm_debug.h	ARM_LOCK_CAS_DEBUG
+defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
+defparam opt_arm_debug.h	EARLYCONS
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
@@ -90,8 +87,17 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
 
+# Start code option
+defflag opt_arm_start.h		__HAVE_GENERIC_START
+
+# Console options
+defparam opt_console.h		CONSADDR
+defparam opt_console.h		CONSPEED
+defparam opt_console.h		CONMODE
+defparam opt_console.h		CONADDR
+
 # Floating point emulator
-obsolete defflag				ARMFPE
+obsolete defflag		ARMFPE
 
 # VFP support
 file	arch/arm/vfp/vfp_init.c			arm32
@@ -101,6 +107,10 @@ file	arch/arm/vfp/vfp_init.c			arm32
 device	psci
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
+
+# EFI support
+defflag	opt_efi.h		EFI_RUNTIME
+file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
@@ -156,7 +166,6 @@ file	arch/arm/arm/core_machdep.c
 file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
-file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm2 | cpu_arm250 | cpu_arm3
 file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
 file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
@@ -232,6 +241,11 @@ file	arch/arm/arm32/bcopy_page.S		arm32
 #
 include "compat/netbsd32/files.netbsd32"
 file	arch/arm/arm32/netbsd32_machdep.c	arm32 & compat_netbsd32
+file	arch/arm/arm32/netbsd32_machdep_16.c	arm32 & compat_netbsd32 &
+							compat_16
+file	arch/arm/arm32/netbsd32_machdep_13.c	arm32 & compat_netbsd32 &
+							compat_13
+
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/ossaudio/files.ossaudio"
@@ -240,3 +254,6 @@ include "compat/linux/arch/arm/files.linux_arm"
 file	arch/arm/arm/linux_sigcode.S		compat_linux
 file	arch/arm/arm/linux_syscall.c		compat_linux
 file	arch/arm/arm/linux_trap.c		compat_linux
+
+# profiling support
+file	dev/tprof/tprof_armv7.c			tprof

@@ -28,7 +28,7 @@ extern int nextchar;
 extern char *pathname;
 
 /* names of rounding modes */
-extern const char *rnd_mode[];
+extern const char *mpc_rnd_mode[];
 
 static void
 check_file (const char* file_name)
@@ -103,7 +103,7 @@ check_file (const char* file_name)
         {
           printf ("mpc_strtoc(str) failed (line %lu)\nwith base=%d and "
                   "rounding mode %s\n", test_line_number, base,
-                  rnd_mode[rnd]);
+                  mpc_rnd_mode[rnd]);
           if (inex != MPC_INEX (inex_re, inex_im))
             printf ("ternary value: got %s, expected (%s, %s)\n",
                     MPC_INEX_STR (inex),

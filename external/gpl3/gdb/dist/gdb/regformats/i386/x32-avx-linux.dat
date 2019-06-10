@@ -1,6 +1,7 @@
 # THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
 # Generated from: i386/x32-avx-linux.xml
 name:x32_avx_linux
+feature:1
 xmltarget:x32-avx-linux.xml
 expedite:rbp,rsp,rip
 64:rax

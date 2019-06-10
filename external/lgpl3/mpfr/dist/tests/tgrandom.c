@@ -1,6 +1,6 @@
 /* Test file for mpfr_grandom
 
-Copyright 2011-2016 Free Software Foundation, Inc.
+Copyright 2011-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,9 +20,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
+#define _MPFR_NO_DEPRECATED_GRANDOM
 #include "mpfr-test.h"
 
 static void
@@ -34,19 +32,19 @@ test_special (mpfr_prec_t p)
   mpfr_init2 (x, p);
 
   inexact = mpfr_grandom (x, NULL, RANDS, MPFR_RNDN);
-  if ((inexact & 3) == 0)
+  if (((unsigned int) inexact & 3) == 0)
     {
       printf ("Error: mpfr_grandom() returns a zero ternary value.\n");
       exit (1);
     }
-  if ((inexact & (3 << 2)) != 0)
+  if (((unsigned int) inexact & (3 << 2)) != 0)
     {
       printf ("Error: the second ternary value of mpfr_grandom(x, NULL, ...)"
               " must be 0.\n");
       exit (1);
     }
 
-  mpfr_clear(x);
+  mpfr_clear (x);
 }
 
 
@@ -55,7 +53,6 @@ test_grandom (long nbtests, mpfr_prec_t prec, mpfr_rnd_t rnd,
               int verbose)
 {
   mpfr_t *t;
-  mpfr_t av, va, tmp;
   int i, inexact;
 
   nbtests = (nbtests & 1) ? (nbtests + 1) : nbtests;
@@ -67,7 +64,8 @@ test_grandom (long nbtests, mpfr_prec_t prec, mpfr_rnd_t rnd,
   for (i = 0; i < nbtests; i += 2)
     {
       inexact = mpfr_grandom (t[i], t[i + 1], RANDS, MPFR_RNDN);
-      if ((inexact & 3) == 0 || (inexact & (3 << 2)) == 0)
+      if (((unsigned int) inexact & 3) == 0 ||
+          ((unsigned int) inexact & (3 << 2)) == 0)
         {
           /* one call in the loop pretended to return an exact number! */
           printf ("Error: mpfr_grandom() returns a zero ternary value.\n");
@@ -75,9 +73,11 @@ test_grandom (long nbtests, mpfr_prec_t prec, mpfr_rnd_t rnd,
         }
     }
 
-#ifdef HAVE_STDARG
+#if defined(HAVE_STDARG) && !defined(MPFR_USE_MINI_GMP)
   if (verbose)
     {
+      mpfr_t av, va, tmp;
+
       mpfr_init2 (av, prec);
       mpfr_init2 (va, prec);
       mpfr_init2 (tmp, prec);
@@ -114,6 +114,7 @@ main (int argc, char *argv[])
 {
   long nbtests;
   int verbose;
+
   tests_start_mpfr ();
 
   verbose = 0;

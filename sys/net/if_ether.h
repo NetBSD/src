@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.75 2018/06/14 08:00:24 yamaguchi Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.75.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,6 +64,14 @@
 #define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
 #define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
 #define	ETHER_PPPOE_ENCAP_LEN	8	/* length of PPPoE encapsulation */
+
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
+ * receive so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ */
+#define	ETHER_ALIGN	2	/* driver adjust for IP hdr alignment */
 
 /*
  * Ethernet address - 6 octets
@@ -175,28 +183,35 @@ struct ethercom {
 	int	ec_nvlans;			/* # VLANs on this interface */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
+	struct ifmedia				*ec_ifmedia;
 	/* Called after a change to ec_if.if_flags.  Returns
 	 * ENETRESET if the device should be reinitialized with
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
 	ether_cb_t				ec_ifflags_cb;
 	kmutex_t				*ec_lock;
+	/* Flags used only by the kernel */
+	int					ec_flags;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
 #endif
 };
 
-#define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
-#define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
-#define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
-#define	ETHERCAP_MASK		0x00000007
+#define	ETHERCAP_VLAN_MTU	0x00000001 /* VLAN-compatible MTU */
+#define	ETHERCAP_VLAN_HWTAGGING	0x00000002 /* hardware VLAN tag support */
+#define	ETHERCAP_JUMBO_MTU	0x00000004 /* 9000 byte MTU supported */
+#define	ETHERCAP_VLAN_HWFILTER	0x00000008 /* iface hw can filter vlan tag */
+#define	ETHERCAP_EEE		0x00000010 /* Energy Efficiency Ethernet */
+#define	ETHERCAP_MASK		0x0000001f
 
 #define	ECCAPBITS		\
 	"\020"			\
 	"\1VLAN_MTU"		\
 	"\2VLAN_HWTAGGING"	\
-	"\3JUMBO_MTU"
+	"\3JUMBO_MTU"		\
+	"\4VLAN_HWFILTER"	\
+	"\5EEE"
 
 /* ioctl() for Ethernet capabilities */
 struct eccapreq {
@@ -213,6 +228,12 @@ struct ether_multi_sysctl {
 };
 
 #ifdef	_KERNEL
+/*
+ * Flags for ec_flags
+ */
+/* Store IFF_ALLMULTI in ec_flags instead of if_flags to avoid data races. */
+#define ETHER_F_ALLMULTI	__BIT(0)
+
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];

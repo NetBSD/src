@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_ifaddr.c,v 1.3 2017/12/11 03:25:46 ozaki-r Exp $	*/
-
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,8 +31,9 @@
  * NPF network interface handling module.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3 2017/12/11 03:25:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3.4.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3 2017/12/11 03:25:46 ozaki-r Exp $
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
+#endif
 
 #include "npf_impl.h"
 
@@ -74,7 +74,7 @@ lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
 	tid = npf_table_getid(t);
 
 	/* Create a new NPF table for the interface. */
-	t = npf_table_create(tname, tid, NPF_TABLE_HASH, NULL, 16);
+	t = npf_table_create(tname, tid, NPF_TABLE_IFADDR, NULL, 0);
 	if (!t) {
 		goto out;
 	}
@@ -177,5 +177,3 @@ npf_ifaddr_syncall(npf_t *npf)
 	IFNET_GLOBAL_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
 }
-
-

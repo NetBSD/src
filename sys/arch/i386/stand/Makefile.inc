@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.15 2018/06/02 14:30:06 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.1 2019/06/10 22:06:21 christos Exp $
 
+NOLIBCSANITIZER=
 NOSANITIZER=
 NOPIE=
 NOMAN=

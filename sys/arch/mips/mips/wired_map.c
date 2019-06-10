@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.6 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.6.18.1 2019/06/10 22:06:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -57,13 +57,13 @@
  */
 
 /*
- * This code is derived from similiar code in the ARC port of NetBSD, but
+ * This code is derived from similar code in the ARC port of NetBSD, but
  * it now bears little resemblence to it owing to quite different needs
  * from the mapping logic.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.6 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.6.18.1 2019/06/10 22:06:30 christos Exp $");
 
 #define __PMAP_PRIVATE
 

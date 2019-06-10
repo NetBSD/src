@@ -1,5 +1,5 @@
 /* Data structures associated with breakpoints in GDB.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,18 +26,19 @@
 #include "command.h"
 #include "break-common.h"
 #include "probe.h"
+#include "location.h"
+#include <vector>
 
 struct value;
 struct block;
 struct gdbpy_breakpoint_object;
 struct gdbscm_breakpoint_object;
-struct get_number_or_range_state;
+struct number_or_range_parser;
 struct thread_info;
 struct bpstats;
 struct bp_location;
 struct linespec_result;
 struct linespec_sals;
-struct event_location;
 
 /* Why are we removing the breakpoint from the target?  */
 
@@ -260,21 +261,17 @@ struct bp_target_info
   /* The length of the data cached in SHADOW_CONTENTS.  */
   int shadow_len;
 
-  /* The size of the placed breakpoint, according to
-     gdbarch_breakpoint_from_pc, when the breakpoint was inserted.
-     This is generally the same as SHADOW_LEN, unless we did not need
-     to read from the target to implement the memory breakpoint
-     (e.g. if a remote stub handled the details).  We may still need
-     the size to remove the breakpoint safely.  */
-  int placed_size;
+  /* The breakpoint's kind.  It is used in 'kind' parameter in Z
+     packets.  */
+  int kind;
 
-  /* Vector of conditions the target should evaluate if it supports target-side
-     breakpoint conditions.  */
-  VEC(agent_expr_p) *conditions;
+  /* Conditions the target should evaluate if it supports target-side
+     breakpoint conditions.  These are non-owning pointers.  */
+  std::vector<agent_expr *> conditions;
 
-  /* Vector of commands the target should evaluate if it supports
-     target-side breakpoint commands.  */
-  VEC(agent_expr_p) *tcommands;
+  /* Commands the target should evaluate if it supports target-side
+     breakpoint commands.  These are non-owning pointers.  */
+  std::vector<agent_expr *> tcommands;
 
   /* Flag that is true if the breakpoint should be left in place even
      when GDB is not connected.  */
@@ -343,12 +340,12 @@ struct bp_location
      different for different locations.  Only valid for real
      breakpoints; a watchpoint's conditional expression is stored in
      the owner breakpoint object.  */
-  struct expression *cond;
+  expression_up cond;
 
   /* Conditional expression in agent expression
      bytecode form.  This is used for stub-side breakpoint
      condition evaluation.  */
-  struct agent_expr *cond_bytecode;
+  agent_expr_up cond_bytecode;
 
   /* Signals that the condition has changed since the last time
      we updated the global location list.  This means the condition
@@ -365,7 +362,7 @@ struct bp_location
 
   enum condition_status condition_changed;
 
-  struct agent_expr *cmd_bytecode;
+  agent_expr_up cmd_bytecode;
 
   /* Signals that breakpoint conditions and/or commands need to be
      re-synched with the target.  This has no use other than
@@ -677,110 +674,109 @@ extern int target_exact_watchpoints;
 /* This is for all kinds of breakpoints.  */
 
 struct breakpoint
-  {
-    /* Methods associated with this breakpoint.  */
-    const struct breakpoint_ops *ops;
+{
+  /* Methods associated with this breakpoint.  */
+  const struct breakpoint_ops *ops;
 
-    struct breakpoint *next;
-    /* Type of breakpoint.  */
-    enum bptype type;
-    /* Zero means disabled; remember the info but don't break here.  */
-    enum enable_state enable_state;
-    /* What to do with this breakpoint after we hit it.  */
-    enum bpdisp disposition;
-    /* Number assigned to distinguish breakpoints.  */
-    int number;
+  struct breakpoint *next;
+  /* Type of breakpoint.  */
+  enum bptype type;
+  /* Zero means disabled; remember the info but don't break here.  */
+  enum enable_state enable_state;
+  /* What to do with this breakpoint after we hit it.  */
+  enum bpdisp disposition;
+  /* Number assigned to distinguish breakpoints.  */
+  int number;
 
-    /* Location(s) associated with this high-level breakpoint.  */
-    struct bp_location *loc;
+  /* Location(s) associated with this high-level breakpoint.  */
+  struct bp_location *loc;
 
-    /* Non-zero means a silent breakpoint (don't print frame info
-       if we stop here).  */
-    unsigned char silent;
-    /* Non-zero means display ADDR_STRING to the user verbatim.  */
-    unsigned char display_canonical;
-    /* Number of stops at this breakpoint that should
-       be continued automatically before really stopping.  */
-    int ignore_count;
+  /* Non-zero means a silent breakpoint (don't print frame info if we
+     stop here).  */
+  unsigned char silent;
+  /* Non-zero means display ADDR_STRING to the user verbatim.  */
+  unsigned char display_canonical;
+  /* Number of stops at this breakpoint that should be continued
+     automatically before really stopping.  */
+  int ignore_count;
 
-    /* Number of stops at this breakpoint before it will be
-       disabled.  */
-    int enable_count;
+  /* Number of stops at this breakpoint before it will be
+     disabled.  */
+  int enable_count;
 
-    /* Chain of command lines to execute when this breakpoint is
-       hit.  */
-    struct counted_command_line *commands;
-    /* Stack depth (address of frame).  If nonzero, break only if fp
-       equals this.  */
-    struct frame_id frame_id;
+  /* Chain of command lines to execute when this breakpoint is
+     hit.  */
+  struct counted_command_line *commands;
+  /* Stack depth (address of frame).  If nonzero, break only if fp
+     equals this.  */
+  struct frame_id frame_id;
 
-    /* The program space used to set the breakpoint.  This is only set
-       for breakpoints which are specific to a program space; for
-       non-thread-specific ordinary breakpoints this is NULL.  */
-    struct program_space *pspace;
+  /* The program space used to set the breakpoint.  This is only set
+     for breakpoints which are specific to a program space; for
+     non-thread-specific ordinary breakpoints this is NULL.  */
+  struct program_space *pspace;
 
-    /* Location we used to set the breakpoint (malloc'd).  */
-    struct event_location *location;
+  /* Location we used to set the breakpoint.  */
+  event_location_up location;
 
-    /* The filter that should be passed to decode_line_full when
-       re-setting this breakpoint.  This may be NULL, but otherwise is
-       allocated with xmalloc.  */
-    char *filter;
+  /* The filter that should be passed to decode_line_full when
+     re-setting this breakpoint.  This may be NULL, but otherwise is
+     allocated with xmalloc.  */
+  char *filter;
 
-    /* For a ranged breakpoint, the location we used to find
-       the end of the range (malloc'd).  */
-    struct event_location *location_range_end;
+  /* For a ranged breakpoint, the location we used to find the end of
+     the range.  */
+  event_location_up location_range_end;
 
-    /* Architecture we used to set the breakpoint.  */
-    struct gdbarch *gdbarch;
-    /* Language we used to set the breakpoint.  */
-    enum language language;
-    /* Input radix we used to set the breakpoint.  */
-    int input_radix;
-    /* String form of the breakpoint condition (malloc'd), or NULL if
-       there is no condition.  */
-    char *cond_string;
+  /* Architecture we used to set the breakpoint.  */
+  struct gdbarch *gdbarch;
+  /* Language we used to set the breakpoint.  */
+  enum language language;
+  /* Input radix we used to set the breakpoint.  */
+  int input_radix;
+  /* String form of the breakpoint condition (malloc'd), or NULL if
+     there is no condition.  */
+  char *cond_string;
 
-    /* String form of extra parameters, or NULL if there are none.
+  /* String form of extra parameters, or NULL if there are none.
      Malloc'd.  */
-    char *extra_string;
+  char *extra_string;
 
-    /* Holds the address of the related watchpoint_scope breakpoint
-       when using watchpoints on local variables (might the concept of
-       a related breakpoint be useful elsewhere, if not just call it
-       the watchpoint_scope breakpoint or something like that.
-       FIXME).  */
-    struct breakpoint *related_breakpoint;
+  /* Holds the address of the related watchpoint_scope breakpoint when
+     using watchpoints on local variables (might the concept of a
+     related breakpoint be useful elsewhere, if not just call it the
+     watchpoint_scope breakpoint or something like that.  FIXME).  */
+  struct breakpoint *related_breakpoint;
 
-    /* Thread number for thread-specific breakpoint, 
-       or -1 if don't care.  */
-    int thread;
+  /* Thread number for thread-specific breakpoint, or -1 if don't
+     care.  */
+  int thread;
 
-    /* Ada task number for task-specific breakpoint, 
-       or 0 if don't care.  */
-    int task;
+  /* Ada task number for task-specific breakpoint, or 0 if don't
+     care.  */
+  int task;
 
-    /* Count of the number of times this breakpoint was taken, dumped
-       with the info, but not used for anything else.  Useful for
-       seeing how many times you hit a break prior to the program
-       aborting, so you can back up to just before the abort.  */
-    int hit_count;
+  /* Count of the number of times this breakpoint was taken, dumped
+     with the info, but not used for anything else.  Useful for seeing
+     how many times you hit a break prior to the program aborting, so
+     you can back up to just before the abort.  */
+  int hit_count;
 
-    /* Is breakpoint's condition not yet parsed because we found
-       no location initially so had no context to parse
-       the condition in.  */
-    int condition_not_parsed;
+  /* Is breakpoint's condition not yet parsed because we found no
+     location initially so had no context to parse the condition
+     in.  */
+  int condition_not_parsed;
 
-    /* With a Python scripting enabled GDB, store a reference to the
-       Python object that has been associated with this breakpoint.
-       This is always NULL for a GDB that is not script enabled.  It
-       can sometimes be NULL for enabled GDBs as not all breakpoint
-       types are tracked by the scripting language API.  */
-    struct gdbpy_breakpoint_object *py_bp_object;
+  /* With a Python scripting enabled GDB, store a reference to the
+     Python object that has been associated with this breakpoint.
+     This is always NULL for a GDB that is not script enabled.  It can
+     sometimes be NULL for enabled GDBs as not all breakpoint types
+     are tracked by the scripting language API.  */
+  struct gdbpy_breakpoint_object *py_bp_object;
 
-    /* Same as py_bp_object, but for Scheme.  */
-    struct gdbscm_breakpoint_object *scm_bp_object;
-  };
+  /* Same as py_bp_object, but for Scheme.  */
+  struct gdbscm_breakpoint_object *scm_bp_object;
+};
 
 /* An instance of this type is used to represent a watchpoint.  It
    includes a "struct breakpoint" as a kind of base class; users
@@ -798,12 +794,12 @@ struct watchpoint
   char *exp_string_reparse;
 
   /* The expression we are watching, or NULL if not a watchpoint.  */
-  struct expression *exp;
+  expression_up exp;
   /* The largest block within which it is valid, or NULL if it is
      valid anywhere (e.g. consists just of global symbols).  */
   const struct block *exp_valid_block;
   /* The conditional expression if any.  */
-  struct expression *cond_exp;
+  expression_up cond_exp;
   /* The largest block within which it is valid, or NULL if it is
      valid anywhere (e.g. consists just of global symbols).  */
   const struct block *cond_exp_valid_block;
@@ -1278,7 +1274,7 @@ extern void initialize_breakpoint_ops (void);
    function.  */
 
 extern void
-  add_catch_command (char *name, char *docstring,
+  add_catch_command (const char *name, const char *docstring,
 		     cmd_sfunc_ftype *sfunc,
 		     completer_ftype *completer,
 		     void *user_data_catch,
@@ -1298,7 +1294,7 @@ extern void
 
 extern void init_catchpoint (struct breakpoint *b,
 			     struct gdbarch *gdbarch, int tempflag,
-			     char *cond_string,
+			     const char *cond_string,
 			     const struct breakpoint_ops *ops);
 
 /* Add breakpoint B on the breakpoint list, and notify the user, the
@@ -1456,7 +1452,7 @@ extern void enable_breakpoints_after_startup (void);
    after they've already read the commands into a struct
    command_line.  */
 extern enum command_control_type commands_from_control_command
-  (char *arg, struct command_line *cmd);
+  (const char *arg, struct command_line *cmd);
 
 extern void clear_breakpoint_hit_counts (void);
 
@@ -1478,7 +1474,7 @@ extern void disable_breakpoint (struct breakpoint *);
 extern void enable_breakpoint (struct breakpoint *);
 
 extern void breakpoint_set_commands (struct breakpoint *b, 
-				     struct command_line *commands);
+				     command_line_up &&commands);
 
 extern void breakpoint_set_silent (struct breakpoint *b, int silent);
 
@@ -1520,7 +1516,7 @@ extern int is_catchpoint (struct breakpoint *);
 
 /* Shared helper function (MI and CLI) for creating and installing
    a shared object event catchpoint.  */
-extern void add_solib_catchpoint (char *arg, int is_load, int is_temp,
+extern void add_solib_catchpoint (const char *arg, int is_load, int is_temp,
                                   int enabled);
 
 /* Enable breakpoints and delete when hit.  Called with ARG == NULL
@@ -1534,6 +1530,12 @@ extern void delete_command (char *arg, int from_tty);
 extern void insert_single_step_breakpoint (struct gdbarch *,
 					   struct address_space *, 
 					   CORE_ADDR);
+
+/* Insert all software single step breakpoints for the current frame.
+   Return true if any software single step breakpoints are inserted,
+   otherwise, return false.  */
+extern int insert_single_step_breakpoints (struct gdbarch *);
+
 /* Check if any hardware watchpoints have triggered, according to the
    target.  */
 int watchpoints_triggered (struct target_waitstatus *);
@@ -1587,8 +1589,8 @@ extern struct tracepoint *get_tracepoint_by_number_on_target (int num);
 
 /* Find a tracepoint by parsing a number in the supplied string.  */
 extern struct tracepoint *
-     get_tracepoint_by_number (char **arg, 
-			       struct get_number_or_range_state *state);
+  get_tracepoint_by_number (char **arg,
+			    number_or_range_parser *parser);
 
 /* Return a vector of all tracepoints currently defined.  The vector
    is newly allocated; the caller should free when done with it.  */
@@ -1638,7 +1640,7 @@ extern struct gdbarch *get_sal_arch (struct symtab_and_line sal);
 
 extern void breakpoint_free_objfile (struct objfile *objfile);
 
-extern char *ep_parse_optional_if_clause (char **arg);
+extern const char *ep_parse_optional_if_clause (const char **arg);
 
 /* Print the "Thread ID hit" part of "Thread ID hit Breakpoint N" to
    UIOUT iff debugging multiple threads.  */

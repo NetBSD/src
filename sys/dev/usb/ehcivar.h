@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.44 2018/04/09 16:21:11 jakllsch Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.44.2.1 2019/06/10 22:07:33 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@ typedef struct ehci_soft_itd {
 
 struct ehci_xfer {
 	struct usbd_xfer ex_xfer;
-	struct usb_task ex_aborttask;
 	TAILQ_ENTRY(ehci_xfer) ex_next; /* list of active xfers */
 	enum {
 		EX_NONE,
@@ -183,6 +182,16 @@ typedef struct ehci_softc {
 	u_int sc_npcomp;
 	device_t sc_comps[EHCI_COMPANION_MAX];
 
+	/* This chunk to handle early RB_ASKNAME hand over. */
+	callout_t sc_compcallout;
+	kmutex_t sc_complock;
+	kcondvar_t sc_compcv;
+	enum {
+		CO_EARLY,
+		CO_SCHED,
+		CO_DONE,
+	} sc_comp_state;
+
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;
 	u_int sc_flsize;
@@ -208,8 +217,6 @@ typedef struct ehci_softc {
 	uint8_t sc_istthreshold;	/* ISOC Scheduling Threshold (uframes) */
 	struct usbd_xfer *sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
-	char sc_softwake;
-	kcondvar_t sc_softwake_cv;
 
 	uint32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;

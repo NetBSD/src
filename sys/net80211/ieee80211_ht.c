@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ht.c,v 1.1.56.4 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_ht.c,v 1.1.56.5 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,16 +28,18 @@
  */
 
 #include <sys/cdefs.h>
-#if __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ht.c,v 1.1.56.5 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
  * IEEE 802.11n protocol support.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -615,7 +617,7 @@ ampdu_rx_start(struct ieee80211_node *ni, struct ieee80211_rx_ampdu *rap,
 	}
 	memset(rap, 0, sizeof(*rap));
 	rap->rxa_wnd = (bufsiz == 0) ?
-	    IEEE80211_AGGR_BAWMAX : min(bufsiz, IEEE80211_AGGR_BAWMAX);
+	    IEEE80211_AGGR_BAWMAX : uimin(bufsiz, IEEE80211_AGGR_BAWMAX);
 	rap->rxa_start = MS(baseqctl, IEEE80211_BASEQ_START);
 	rap->rxa_flags |=  IEEE80211_AGGR_RUNNING | IEEE80211_AGGR_XCHGPEND;
 
@@ -644,7 +646,7 @@ ieee80211_ampdu_rx_start_ext(struct ieee80211_node *ni, int tid, int seq, int ba
 
 	memset(rap, 0, sizeof(*rap));
 	rap->rxa_wnd = (baw== 0) ?
-	    IEEE80211_AGGR_BAWMAX : min(baw, IEEE80211_AGGR_BAWMAX);
+	    IEEE80211_AGGR_BAWMAX : uimin(baw, IEEE80211_AGGR_BAWMAX);
 	if (seq == -1) {
 		/* Wait for the first RX frame, use that as BAW */
 		rap->rxa_start = 0;
@@ -2128,7 +2130,7 @@ ieee80211_addba_request(struct ieee80211_node *ni,
 	tap->txa_flags |= IEEE80211_AGGR_IMMEDIATE;
 	bufsiz = MS(baparamset, IEEE80211_BAPS_BUFSIZ);
 	tap->txa_wnd = (bufsiz == 0) ?
-	    IEEE80211_AGGR_BAWMAX : min(bufsiz, IEEE80211_AGGR_BAWMAX);
+	    IEEE80211_AGGR_BAWMAX : uimin(bufsiz, IEEE80211_AGGR_BAWMAX);
 	addba_start_timeout(tap);
 	return 1;
 }
@@ -2205,7 +2207,7 @@ ieee80211_addba_response(struct ieee80211_node *ni,
 		bufsiz = MS(baparamset, IEEE80211_BAPS_BUFSIZ);
 		/* XXX override our request? */
 		tap->txa_wnd = (bufsiz == 0) ?
-		    IEEE80211_AGGR_BAWMAX : min(bufsiz, IEEE80211_AGGR_BAWMAX);
+		    IEEE80211_AGGR_BAWMAX : uimin(bufsiz, IEEE80211_AGGR_BAWMAX);
 #if __FreeBSD__
 		/* XXX AC/TID */
 		tid = MS(baparamset, IEEE80211_BAPS_TID);

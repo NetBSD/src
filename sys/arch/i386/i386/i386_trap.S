@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.14 2018/05/16 08:16:36 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.14.2.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.14 2018/05/16 08:16:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.14.2.1 2019/06/10 22:06:20 christos Exp $");
 #endif
 
 /*
@@ -95,7 +95,7 @@ IDTVEC_END(trap00)
  * without restoring the segregs, because we could fault while doing that.
  */
 IDTVEC(trap01)
-#ifndef XEN
+#ifndef XENPV
 	pushl	$0
 	pushl	$T_TRCTRAP
 	INTRENTRY
@@ -248,7 +248,7 @@ IDTVEC(trap0d)
 IDTVEC_END(trap0d)
 
 IDTVEC(trap0e)
-#ifndef XEN
+#ifndef XENPV
 	pushl	$T_PAGEFLT
 	INTRENTRY
 	STI(%eax)
@@ -345,13 +345,8 @@ IDTVEC_END(trap17)
 IDTVEC_END(trap16)
 IDTVEC_END(trap15)
 IDTVEC_END(trap14)
-#ifndef XEN
 IDTVEC_END(trap13)
 IDTVEC_END(trap12)
-#else
-IDTVEC_END(trap13)
-IDTVEC_END(trap12)
-#endif
 IDTVEC_END(trap11)
 
 IDTVEC(exceptions)
@@ -403,7 +398,7 @@ LABEL(trap_return_fault_return)
 END(trap_return_fault_return)
 
 /* LINTSTUB: Ignore */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 	STI(%eax)
 calltrap:
@@ -447,12 +442,12 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
 	jz	7f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(IPENDING)
-	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 7:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	_C_LABEL(trapreturn)

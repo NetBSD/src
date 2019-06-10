@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.11 2018/05/30 17:48:13 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.11.2.1 2019/06/10 22:10:05 christos Exp $	*/
 
 /*-
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -375,6 +375,34 @@ await_zombie(pid_t process)
 	await_zombie_raw(process, 1000);
 }
 
+static void __used
+await_stopped(pid_t process)
+{
+	struct kinfo_proc2 p;
+	size_t len = sizeof(p);
+
+	const int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_PID,
+		[3] = process,
+		[4] = sizeof(p),
+		[5] = 1
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process becoming a zombie */
+	while(1) {
+		ATF_REQUIRE(sysctl(name, namelen, &p, &len, NULL, 0) == 0);
+
+		if (p.p_stat == LSSTOP)
+			break;
+
+		ATF_REQUIRE(usleep(1000) == 0);
+	}
+}
+
 static pid_t __used
 await_stopped_child(pid_t process)
 {
@@ -475,6 +503,26 @@ check_happy(unsigned n)
 	}
 }
 
+static void * __used
+infinite_thread(void *arg __unused)
+{
+
+        while (true)
+                continue;
+
+        __unreachable();
+}
+
+static int __used
+clone_func(void *arg)
+{
+	int ret;
+
+	ret = (int)(intptr_t)arg;
+
+	return ret;
+}
+
 #if defined(HAVE_DBREGS)
 static bool __used
 can_we_set_dbregs(void)
@@ -503,6 +551,26 @@ can_we_set_dbregs(void)
 		return false;
 }
 #endif
+
+static bool __used
+get_user_va0_disable(void)
+{
+	static int user_va0_disable = -1;
+	size_t user_va0_disable_len = sizeof(user_va0_disable);
+
+	if (user_va0_disable == -1) {
+		if (sysctlbyname("vm.user_va0_disable",
+			&user_va0_disable, &user_va0_disable_len, NULL, 0)
+			== -1) {
+			return true;
+		}
+	}
+
+	if (user_va0_disable > 0)
+		return true;
+	else
+		return false;
+}
 
 static bool __used
 can_we_write_to_text(pid_t pid)
@@ -554,11 +622,30 @@ trigger_ill(void)
 #endif
 }
 
+static bool __used
+are_fpu_exceptions_supported(void)
+{
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+	/*
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
+	 * Skip these tests if running on them and compiled for
+	 * hard float.
+	 */
+	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
+		return false;
+#endif
+	return true;
+}
+
 static void __used
 trigger_fpe(void)
 {
 	volatile int a = getpid();
 	volatile int b = atoi("0");
+
+#ifdef __HAVE_FENV
+	feenableexcept(FE_ALL_EXCEPT);
+#endif
 
 	/* Division by zero causes CPU trap, translated to SIGFPE */
 	usleep(a / b);

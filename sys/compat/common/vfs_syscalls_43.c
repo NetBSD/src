@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.62.4.1 2019/06/10 22:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62.4.1 2019/06/10 22:06:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,13 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christo
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
-#include <sys/sysctl.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
 
@@ -77,6 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christo
 
 static void cvttimespec(struct timespec *, struct timespec50 *);
 static void cvtstat(struct stat *, struct stat43 *);
+
+static struct syscall_package vfs_syscalls_43_syscalls[] = {
+	{ SYS_compat_43_oquota, 0, (sy_call_t *)compat_43_sys_quota },
+	{ 0, 0, NULL }
+};
 
 /*
  * Convert from an old to a new timespec structure.
@@ -417,7 +422,7 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 
 	loff = fp->f_offset;
 	nbytes = SCARG(uap, count);
-	buflen = min(MAXBSIZE, nbytes);
+	buflen = uimin(MAXBSIZE, nbytes);
 	if (buflen < va.va_blocksize)
 		buflen = va.va_blocksize;
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
@@ -520,62 +525,16 @@ out1:
 	return copyout(&loff, SCARG(uap, basep), sizeof(long));
 }
 
-/*
- * sysctl helper routine for vfs.generic.conf lookups.
- */
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-
-static int
-sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
-{
-        struct vfsconf vfc;
-	struct sysctlnode node;
-	struct vfsops *vfsp;
-	u_int vfsnum;
-
-	if (namelen != 1)
-		return (ENOTDIR);
-	vfsnum = name[0];
-	if (vfsnum >= nmountcompatnames ||
-	    mountcompatnames[vfsnum] == NULL)
-		return (EOPNOTSUPP);
-	vfsp = vfs_getopsbyname(mountcompatnames[vfsnum]);
-	if (vfsp == NULL)
-		return (EOPNOTSUPP);
-
-	vfc.vfc_vfsops = vfsp;
-	strncpy(vfc.vfc_name, vfsp->vfs_name, sizeof(vfc.vfc_name));
-	vfc.vfc_typenum = vfsnum;
-	vfc.vfc_refcount = vfsp->vfs_refcount;
-	vfc.vfc_flags = 0;
-	vfc.vfc_mountroot = vfsp->vfs_mountroot;
-	vfc.vfc_next = NULL;
-	vfs_delref(vfsp);
-
-	node = *rnode;
-	node.sysctl_data = &vfc;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
-/*
- * Top level filesystem related information gathering.
- */
-void
-compat_sysctl_vfs(struct sysctllog **clog)
+int
+vfs_syscalls_43_init(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "maxtypenum",
-		       SYSCTL_DESCR("Highest valid filesystem type number"),
-		       NULL, nmountcompatnames, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "conf",
-		       SYSCTL_DESCR("Filesystem configuration information"),
-		       sysctl_vfs_generic_conf, 0, NULL,
-		       sizeof(struct vfsconf),
-		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
+	return syscall_establish(NULL, vfs_syscalls_43_syscalls);
 }
-#endif
+
+int
+vfs_syscalls_43_fini(void)
+{
+
+	return syscall_disestablish(NULL, vfs_syscalls_43_syscalls);
+}

@@ -1,5 +1,5 @@
 /* Generate code from machine description to recognize rtl as insns.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -35,10 +35,10 @@
 #include "gensupport.h"
 
 
-extern int main (int, char **);
+extern int main (int, const char **);
 
 int
-main (int argc, char **argv)
+main (int argc, const char **argv)
 {
   progname = "genmddump";
 
@@ -57,4 +57,3 @@ main (int argc, char **argv)
   fflush (stdout);
   return (ferror (stdout) != 0 ? FATAL_EXIT_CODE : SUCCESS_EXIT_CODE);
 }
-

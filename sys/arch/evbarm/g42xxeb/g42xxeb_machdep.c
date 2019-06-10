@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.30 2016/12/22 14:47:55 cherry Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.30.16.1 2019/06/10 22:06:06 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -107,6 +107,8 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -833,7 +835,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef	VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.12.18.1 2018/07/12 16:35:33 phil Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.12.18.2 2019/06/10 22:07:16 christos Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12.18.1 2018/07/12 16:35:33 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12.18.2 2019/06/10 22:07:16 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -207,8 +207,8 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
-	    athn_intr, sc);
+	psc->psc_ih = pci_intr_establish_xname(psc->psc_pc, psc->psc_pih,
+	    IPL_NET, athn_intr, sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		goto fail1;
@@ -304,8 +304,9 @@ athn_pci_resume(device_t self, const pmf_qual_t *qual)
 	if (reg & 0xff00)
 		pci_conf_write(psc->psc_pc, psc->psc_tag, 0x40, reg & ~0xff00);
 
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
-	    athn_intr, sc);
+	/* XXX re-establishing interrupt shouldn't be needed */
+	psc->psc_ih = pci_intr_establish_xname(psc->psc_pc, psc->psc_pih,
+	    IPL_NET, athn_intr, sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return false;

@@ -1,5 +1,5 @@
 /* Routines for performing Temporary Expression Replacement (TER) in SSA trees.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod  <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -187,8 +187,6 @@ extern void debug_ter (FILE *, temp_expr_table *);
 static temp_expr_table *
 new_temp_expr_table (var_map map)
 {
-  unsigned x;
-
   temp_expr_table *t = XNEW (struct temp_expr_table);
   t->map = map;
 
@@ -203,12 +201,13 @@ new_temp_expr_table (var_map map)
 
   t->replaceable_expressions = NULL;
   t->num_in_part = XCNEWVEC (int, num_var_partitions (map));
-  for (x = 1; x < num_ssa_names; x++)
+
+  unsigned x;
+  tree name;
+
+  FOR_EACH_SSA_NAME (x, name, cfun)
     {
       int p;
-      tree name = ssa_name (x);
-      if (!name)
-        continue;
       p = var_to_partition (map, name);
       if (p != NO_PARTITION)
         t->num_in_part[p]++;

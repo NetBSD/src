@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon-bozo.c,v 1.17 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.17.16.1 2019/06/10 22:05:29 christos Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,9 @@ static pid_t pidfile_pid = 0;
 static void
 sigchild(int signo)
 {
-	while (waitpid(-1, NULL, WNOHANG) > 0) {
-	}
+
+	while (waitpid(-1, NULL, WNOHANG) > 0)
+		/* nothing */;
 }
 
 /* Signal handler to exit in a controlled manner.  This ensures that
@@ -204,7 +205,7 @@ daemon_runchild(bozohttpd_t *httpd, int fd)
 }
 
 static int
-daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
+daemon_poll_err(bozohttpd_t *httpd, int idx)
 {
 	if ((httpd->fds[idx].revents & (POLLNVAL|POLLERR|POLLHUP)) == 0)
 		return 0;
@@ -283,7 +284,7 @@ again:
 		}
 
 		for (i = 0; i < httpd->nsock; i++) {
-			if (daemon_poll_err(httpd, fd, i))
+			if (daemon_poll_err(httpd, i))
 				break;
 			if (httpd->fds[i].revents == 0)
 				continue;

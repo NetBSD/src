@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperr.h,v 1.7 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: rumperr.h,v 1.7.2.1 2019/06/10 22:09:52 christos Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.

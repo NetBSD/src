@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, FreeBSD/arm version.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -34,7 +34,7 @@
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC \
   "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=5} " TARGET_FIX_V4BX_SPEC " \
-  %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+  %{" FPIE_OR_FPIC_SPEC ":-k}"
 
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #ifdef TARGET_FREEBSD_ARM_HARD_FLOAT
@@ -112,7 +112,10 @@
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE BITS_PER_WORD
 
-#if defined (TARGET_FREEBSD_ARMv6)
+#if defined (TARGET_FREEBSD_ARMv7)
+#undef  SUBTARGET_CPU_DEFAULT
+#define SUBTARGET_CPU_DEFAULT TARGET_CPU_genericv7a
+#elif defined (TARGET_FREEBSD_ARMv6)
 #undef  SUBTARGET_CPU_DEFAULT
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm1176jzs
 #else
@@ -123,10 +126,12 @@
 /* FreeBSD 10 does not support unaligned access for armv6 and up.
    Unaligned access support was added in FreeBSD 11.  */
 #if FBSD_MAJOR < 11
-#define SUBTARGET_OVERRIDE_OPTIONS		\
-do {						\
-    if (unaligned_access)			\
-	unaligned_access = 0;			\
+#define SUBTARGET_OVERRIDE_INTERNAL_OPTIONS				\
+do {									\
+    if (opts_set->x_unaligned_access == 1)				\
+        warning (0, "target OS does not support unaligned accesses");	\
+    if (opts->x_unaligned_access)					\
+	opts->x_unaligned_access = 0;					\
 } while (0)
 #endif
 

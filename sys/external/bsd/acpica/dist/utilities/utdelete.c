@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -304,6 +304,11 @@ AcpiUtDeleteInternalObj (
 
             AcpiUtDeleteObjectDesc (SecondDesc);
         }
+        if (Object->Field.InternalPccBuffer)
+        {
+            ACPI_FREE(Object->Field.InternalPccBuffer);
+        }
+
         break;
 
     case ACPI_TYPE_BUFFER_FIELD:
@@ -412,6 +417,7 @@ AcpiUtUpdateRefCount (
     UINT16                  OriginalCount;
     UINT16                  NewCount = 0;
     ACPI_CPU_FLAGS          LockFlags;
+    const char              *Message;
 
 
     ACPI_FUNCTION_NAME (UtUpdateRefCount);
@@ -452,6 +458,7 @@ AcpiUtUpdateRefCount (
             "Obj %p Type %.2X [%s] Refs %.2X [Incremented]\n",
             Object, Object->Common.Type,
             AcpiUtGetObjectTypeName (Object), NewCount));
+        Message = "Incremement";
         break;
 
     case REF_DECREMENT:
@@ -483,6 +490,7 @@ AcpiUtUpdateRefCount (
         {
             AcpiUtDeleteInternalObj (Object);
         }
+        Message = "Decrement";
         break;
 
     default:
@@ -500,8 +508,8 @@ AcpiUtUpdateRefCount (
     if (NewCount > ACPI_MAX_REFERENCE_COUNT)
     {
         ACPI_WARNING ((AE_INFO,
-            "Large Reference Count (0x%X) in object %p, Type=0x%.2X",
-            NewCount, Object, Object->Common.Type));
+            "Large Reference Count (0x%X) in object %p, Type=0x%.2X Operation=%s",
+            NewCount, Object, Object->Common.Type, Message));
     }
 }
 

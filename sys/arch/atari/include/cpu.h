@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2013/10/19 19:20:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70.30.1 2019/06/10 22:05:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,15 +139,7 @@ extern int	astpending;	/* need trap before returning to user mode */
 
 #if defined(_KERNEL)
 extern int machineid;
-#endif /* _KERNEL */
 
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV	1	/* dev_t: console terminal device */
-#define CPU_MAXID	2	/* number of valid machdep ids */
-
-#ifdef _KERNEL
 /*
  * Prototypes from atari_init.c
  */
@@ -172,7 +164,6 @@ void	doboot(void);
 void	loadustp(int);
 void	physcopyseg(paddr_t, paddr_t);
 u_int	probeva(u_int, u_int);
-int	suline(void *, void *);
 
 /*
  * Prototypes from machdep.c:

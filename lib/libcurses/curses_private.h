@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.62 2017/01/31 09:17:53 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.62.12.1 2019/06/10 22:05:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -133,6 +133,7 @@ struct __window {		/* Window structure. */
 #define __ISDERWIN	0x00100000	/* "window" is derived from parent */
 #define __IMMEDOK	0x00200000	/* refreshed when changed */
 #define __SYNCOK	0x00400000	/* sync when changed */
+#define __HALFDELAY	0x00800000	/* In half delay mode */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -150,6 +151,8 @@ struct __window {		/* Window structure. */
 	nschar_t *bnsp;			/* Background non-spacing char list */
 #endif /* HAVE_WCHAR */
 	FILE	*fp;			/* for window formatted printf */
+	char	*buf;			/* buffer for window formatted printf */
+	size_t	 buflen;		/* length of above buffer */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
@@ -278,7 +281,6 @@ struct __screen {
 	char padchar;
 	int endwin;
 	int notty;
-	int half_delay;
 	int resized;
 	wchar_t *unget_list;
 	int unget_len, unget_pos;
@@ -289,6 +291,7 @@ struct __screen {
 	bool		 is_term_slk;
 	WINDOW		*slk_window;
 	int		 slk_format;
+#define	SLK_FMT_INVAL	-1
 #define	SLK_FMT_3_2_3	0
 #define	SLK_FMT_4_4	1
 	int		 slk_nlabels;
@@ -331,7 +334,6 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #define __CTRACE_ERASE		0x00000800
 #define __CTRACE_FILEIO		0x00001000
 #define __CTRACE_ALL		0x7fffffff
-void	 __CTRACE_init(void);
 void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
 #endif
 
@@ -365,9 +367,10 @@ void	__cursesi_win_free_nsp(WINDOW *);
 void	__cursesi_putnsp(nschar_t *, const int, const int);
 void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 #endif /* HAVE_WCHAR */
+int	 __fgetc_resize(FILE *);
 int	 __unget(wint_t);
 int	 __mvcur(int, int, int, int, int);
-WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
+WINDOW  *__newwin(SCREEN *, int, int, int, int, int, int);
 int	 __nodelay(void);
 int	 __notimeout(void);
 void	 __restartwin(void);
@@ -377,9 +380,10 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
-int	 __ripoffscreen(SCREEN *, int *);
-void	 __ripoffresize(SCREEN *);
-int	 __rippedlines(const SCREEN *);
+int	 __ripoffscreen(SCREEN *);
+int	 __ripoffresize(SCREEN *);
+void	 __ripofftouch(SCREEN *);
+int	 __rippedlines(const SCREEN *, int);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.28 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.28.18.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -88,15 +88,6 @@
 #define	UDP6CTL_RECVSPACE	2	/* default recv buffer */
 #define	UDP6CTL_LOOPBACKCKSUM	3	/* do UDP checksum on loopback? */
 #define	UDP6CTL_STATS		4	/* udp6 statistics */
-#define	UDP6CTL_MAXID		5
-
-#define UDP6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "sendspace", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 
@@ -112,7 +103,7 @@ int	udp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	udp6_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 int	udp6_realinput(int, struct sockaddr_in6 *, struct sockaddr_in6 *,
-    struct mbuf *, int);
+    struct mbuf **, int);
 int	udp6_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 
 void	udp6_statinc(u_int);

@@ -1,5 +1,5 @@
 /* Coalesce spilled pseudos.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -45,47 +45,15 @@ along with GCC; see the file COPYING3.	If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
 #include "rtl.h"
-#include "tm_p.h"
-#include "insn-config.h"
-#include "recog.h"
-#include "output.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "flags.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "symtab.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "alias.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
 #include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "except.h"
-#include "timevar.h"
-#include "ira.h"
-#include "lra-int.h"
 #include "df.h"
+#include "insn-config.h"
+#include "regs.h"
+#include "ira.h"
+#include "recog.h"
+#include "lra-int.h"
 
 /* Arrays whose elements represent the first and the next pseudo
    (regno) in the coalesced pseudos group to which given pseudo (its
@@ -256,13 +224,10 @@ lra_coalesce (void)
   rtx_insn *mv, *insn, *next, **sorted_moves;
   rtx set;
   int i, mv_num, sregno, dregno;
-  unsigned int regno;
   int coalesced_moves;
   int max_regno = max_reg_num ();
   bitmap_head involved_insns_bitmap;
-  bitmap_head result_pseudo_vals_bitmap;
-  bitmap_iterator bi;
-
+  
   timevar_push (TV_LRA_COALESCE);
 
   if (lra_dump_file != NULL)
@@ -359,7 +324,7 @@ lra_coalesce (void)
     }
   /* If we have situation after inheritance pass:
 
-     r1 <- ...  insn originally setting p1
+     r1 <- p1   insn originally setting p1
      i1 <- r1   setting inheritance i1 from reload r1
        ...
      ... <- ... p2 ... dead p2
@@ -371,20 +336,18 @@ lra_coalesce (void)
      And we are coalescing p1 and p2 using p1.  In this case i1 and p1
      should have different values, otherwise they can get the same
      hard reg and this is wrong for insn using p2 before coalescing.
-     So invalidate such inheritance pseudo values.  */
-  bitmap_initialize (&result_pseudo_vals_bitmap, &reg_obstack);
-  EXECUTE_IF_SET_IN_BITMAP (&coalesced_pseudos_bitmap, 0, regno, bi)
-    bitmap_set_bit (&result_pseudo_vals_bitmap,
-		    lra_reg_info[first_coalesced_pseudo[regno]].val);
-  EXECUTE_IF_SET_IN_BITMAP (&lra_inheritance_pseudos, 0, regno, bi)
-    if (bitmap_bit_p (&result_pseudo_vals_bitmap, lra_reg_info[regno].val))
+     The situation even can be more complicated when new reload
+     pseudos occur after the inheriatnce.  So invalidate the result
+     pseudos.  */
+  for (i = 0; i < max_regno; i++)
+    if (first_coalesced_pseudo[i] == i
+	&& first_coalesced_pseudo[i] != next_coalesced_pseudo[i])
       {
-	lra_set_regno_unique_value (regno);
+	lra_set_regno_unique_value (i);
 	if (lra_dump_file != NULL)
 	  fprintf (lra_dump_file,
-		   "	 Make unique value for inheritance r%d\n", regno);
+		   "	 Make unique value for coalescing result r%d\n", i);
       }
-  bitmap_clear (&result_pseudo_vals_bitmap);
   bitmap_clear (&used_pseudos_bitmap);
   bitmap_clear (&involved_insns_bitmap);
   bitmap_clear (&coalesced_pseudos_bitmap);

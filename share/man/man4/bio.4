@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.13 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: bio.4,v 1.13.6.1 2019/06/10 22:05:39 christos Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Sep 27, 2014
+.Dd May 9, 2019
 .Dt BIO 4
 .Os
 .Sh NAME
@@ -36,6 +36,8 @@
 .Nd Block IO ioctl tunnel pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device bio"
+.Pp
+.In dev/biovar.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,17 +58,23 @@ The following device drivers register with
 .Nm
 for volume management:
 .Pp
-.Bl -tag -width ciss(4)XX -offset indent -compact
+.Bl -tag -width ataraid(4)XX -offset indent -compact
 .\" .It Xr ami 4
 .\" American Megatrends Inc. MegaRAID PATA/SATA/SCSI RAID controller
 .It Xr arcmsr 4
 Areca Technology Corporation SATA RAID controller
+.It Xr ataraid 4
+Software BIOS RAID
 .It Xr cac 4
 Compaq RAID array controller
 .It Xr ciss 4
 Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller
 .It Xr mfi 4
 LSI Logic & Dell MegaRAID SAS RAID controller
+.It Xr mfii 4
+LSI Logic MegaRAID SAS Fusion RAID controller
+.It Xr mpii 4
+LSI Logic Fusion-MPT Message Passing Interface II
 .It Xr mpt 4
 LSI Fusion-MPT RAID controller
 .El
@@ -88,11 +96,24 @@ vendor name, serial number, and processor device (ses).
 .\" or safte
 .It Dv BIOCDISK_NOVOL
 Is just the same as
-.Em BIOCDISK
+.Dv BIOCDISK
 but doesn't require the disks to be in volume sets, so this
 applies to any physical disk connected to the controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
+It is a
+.Nx
+extension of
+.Nm .
+It is supported by
+.Xr arcmsr 4 ,
+.Xr ciss 4 ,
+and
+.Xr mpt 4 .
+It is also supported by
+.Xr cac 4 ,
+but handled exactly the same as
+.Dv BIOCDISK .
 .It Dv BIOCVOL
 Retrieve detailed information for the specified volume.
 Information returned can include status, size, RAID level, number of disks,
@@ -103,6 +124,11 @@ Supported states are: disable alarm, enable alarm, silence alarm, status and
 test alarm.
 .Pp
 Note: These options might not be supported on all hardware.
+It is supported by
+.Xr arcmsr 4 ,
+.Xr mfi 4 ,
+and
+.Xr mfii 4 .
 .It Dv BIOCBLINK
 Blink an LED of the specified physical disk.
 Supported blink states are: blink LED, unblink LED and blink alarm LED.
@@ -112,27 +138,82 @@ Note: This option is only supported if the disk is governed by
 .\" or
 .\" .Xr safte 4
 and the hardware supports hardware blinking.
+It is supported by
+.Xr ciss 4 ,
+.Xr mfi 4 ,
+and
+.Xr mfii 4 .
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
 Supported states are: create/remove hot-spare, create/remove pass through
-disk, start/stop consistency check in a volume, online disk and offline disk.
+disk, start/stop consistency check in a volume, online disk and offline disk,
+and a manual rebuild kick-off designation.
 .Pp
 Note: These options might not be supported on all hardware.
+Some of these options are supported by
+.Xr arcmsr 4 ,
+.Xr mfi 4 ,
+and
+.Xr mfii 4 .
+.Pp
+Online, offline and hotspare designations are supported by
+.Xr mfi 4
+and
+.Xr mfii 4 ,
+plus a rebuild designation is supported by
+.Xr mfii 4 ;
+all four of these state options are the original states from
+.Ox ,
+the other options, including hotspare unmarking, being
+.Nx
+extensions of
+.Nm .
+.Pp
+Hotspare, pass through and consistency check options are supported by
+.Xr arcmsr 4 .
 .It Dv BIOCVOLOPS
 For operations in volume sets.
 It's able to create and remove a volume
 set in a supported RAID controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
+It is a
+.Nx
+extension of
+.Nm ,
+and is supported by
+.Xr arcmsr 4 .
 .El
+.Pp
+The
+.Xr bioctl 8
+utility can be used to perform the above controls from the userland.
+Additionally, since
+.Dv BIOCVOL
+volume status is normally duplicated into
+.Xr sysmon_envsys 9
+sensors of
+.Dv ENVSYS_DRIVE
+type, it is also available through
+.Xr envsys 4 ,
+and can be monitored with
+.Xr envstat 8
+and
+.Xr powerd 8 .
 .Sh FILES
-.Bl -tag -width /dev/bio -compact
+.Bl -tag -width Ds -compact
 .It Pa /dev/bio
 ioctl tunnel device
+.It Pa /etc/powerd/scripts/sensor_drive
+powerd script for drive sensors
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr bioctl 8
+.Xr envsys 4 ,
+.Xr bioctl 8 ,
+.Xr envstat 8 ,
+.Xr powerd 8 ,
+.Xr sysmon_envsys 9
 .Sh HISTORY
 The
 .Nm

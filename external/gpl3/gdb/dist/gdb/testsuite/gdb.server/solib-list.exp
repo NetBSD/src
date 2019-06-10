@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,7 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     # but before "target remote" below so that qSymbol data get already
     # initialized from BINFILE (and not from ld.so first needing a change to
     # BINFILE later).
-    gdb_test "file ${binfile}" {Reading symbols from .*\.\.\.done\..*} "file binfile" \
+    gdb_test "file ${binfile}" {Reading symbols from .*\.\.\..*} "file binfile" \
 	     {(Are you sure you want to change the file|Load new symbol table from ".*")\? \(y or n\) } "y"
 
     set test "target $gdbserver_protocol"

@@ -1,5 +1,5 @@
 /* S390 native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -28,6 +28,7 @@
 #include "gregset.h"
 #include "regset.h"
 #include "nat/linux-ptrace.h"
+#include "gdbcmd.h"
 
 #include "s390-linux-tdep.h"
 #include "elf/common.h"
@@ -38,6 +39,8 @@
 #include <sys/procfs.h>
 #include <sys/ucontext.h>
 #include <elf.h>
+#include <algorithm>
+#include "inf-ptrace.h"
 
 /* Per-thread arch-specific data.  */
 
@@ -91,6 +94,18 @@ static const struct regset s390_64_gregset =
 #define S390_PSWM_OFFSET 0
 #define S390_PSWA_OFFSET 8
 #endif
+
+/* PER-event mask bits and PER control bits (CR9).  */
+
+#define PER_BIT(n)			(1UL << (63 - (n)))
+#define PER_EVENT_BRANCH		PER_BIT (32)
+#define PER_EVENT_IFETCH		PER_BIT (33)
+#define PER_EVENT_STORE			PER_BIT (34)
+#define PER_EVENT_NULLIFICATION		PER_BIT (39)
+#define PER_CONTROL_BRANCH_ADDRESS	PER_BIT (40)
+#define PER_CONTROL_SUSPENSION		PER_BIT (41)
+#define PER_CONTROL_ALTERATION		PER_BIT (42)
+
 
 /* Fill GDB's register array with the general-purpose register values
    in *REGP.
@@ -356,7 +371,7 @@ static void
 s390_linux_fetch_inferior_registers (struct target_ops *ops,
 				     struct regcache *regcache, int regnum)
 {
-  int tid = s390_inferior_tid ();
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regnum == -1 || S390_IS_GREGSET_REGNUM (regnum))
     fetch_regs (regcache, tid);
@@ -399,7 +414,7 @@ static void
 s390_linux_store_inferior_registers (struct target_ops *ops,
 				     struct regcache *regcache, int regnum)
 {
-  int tid = s390_inferior_tid ();
+  pid_t tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regnum == -1 || S390_IS_GREGSET_REGNUM (regnum))
     store_regs (regcache, tid, regnum);
@@ -430,30 +445,190 @@ s390_linux_store_inferior_registers (struct target_ops *ops,
 
 /* Hardware-assisted watchpoint handling.  */
 
-/* We maintain a list of all currently active watchpoints in order
-   to properly handle watchpoint removal.
+/* For each process we maintain a list of all currently active
+   watchpoints, in order to properly handle watchpoint removal.
 
    The only thing we actually need is the total address space area
    spanned by the watchpoints.  */
 
-struct watch_area
+typedef struct watch_area
 {
-  struct watch_area *next;
   CORE_ADDR lo_addr;
   CORE_ADDR hi_addr;
+} s390_watch_area;
+
+DEF_VEC_O (s390_watch_area);
+
+/* Hardware debug state.  */
+
+struct s390_debug_reg_state
+{
+  VEC_s390_watch_area *watch_areas;
+  VEC_s390_watch_area *break_areas;
 };
 
-static struct watch_area *watch_base = NULL;
+/* Per-process data.  */
+
+struct s390_process_info
+{
+  struct s390_process_info *next;
+  pid_t pid;
+  struct s390_debug_reg_state state;
+};
+
+static struct s390_process_info *s390_process_list = NULL;
+
+/* Find process data for process PID.  */
+
+static struct s390_process_info *
+s390_find_process_pid (pid_t pid)
+{
+  struct s390_process_info *proc;
+
+  for (proc = s390_process_list; proc; proc = proc->next)
+    if (proc->pid == pid)
+      return proc;
+
+  return NULL;
+}
+
+/* Add process data for process PID.  Returns newly allocated info
+   object.  */
+
+static struct s390_process_info *
+s390_add_process (pid_t pid)
+{
+  struct s390_process_info *proc = XCNEW (struct s390_process_info);
+
+  proc->pid = pid;
+  proc->next = s390_process_list;
+  s390_process_list = proc;
+
+  return proc;
+}
+
+/* Get data specific info for process PID, creating it if necessary.
+   Never returns NULL.  */
+
+static struct s390_process_info *
+s390_process_info_get (pid_t pid)
+{
+  struct s390_process_info *proc;
+
+  proc = s390_find_process_pid (pid);
+  if (proc == NULL)
+    proc = s390_add_process (pid);
+
+  return proc;
+}
+
+/* Get hardware debug state for process PID.  */
+
+static struct s390_debug_reg_state *
+s390_get_debug_reg_state (pid_t pid)
+{
+  return &s390_process_info_get (pid)->state;
+}
+
+/* Called whenever GDB is no longer debugging process PID.  It deletes
+   data structures that keep track of hardware debug state.  */
+
+static void
+s390_forget_process (pid_t pid)
+{
+  struct s390_process_info *proc, **proc_link;
+
+  proc = s390_process_list;
+  proc_link = &s390_process_list;
+
+  while (proc != NULL)
+    {
+      if (proc->pid == pid)
+	{
+	  VEC_free (s390_watch_area, proc->state.watch_areas);
+	  VEC_free (s390_watch_area, proc->state.break_areas);
+	  *proc_link = proc->next;
+	  xfree (proc);
+	  return;
+	}
+
+      proc_link = &proc->next;
+      proc = *proc_link;
+    }
+}
+
+/* linux_nat_new_fork hook.   */
+
+static void
+s390_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
+{
+  pid_t parent_pid;
+  struct s390_debug_reg_state *parent_state;
+  struct s390_debug_reg_state *child_state;
+
+  /* NULL means no watchpoint has ever been set in the parent.  In
+     that case, there's nothing to do.  */
+  if (lwp_arch_private_info (parent) == NULL)
+    return;
+
+  /* GDB core assumes the child inherits the watchpoints/hw breakpoints of
+     the parent.  So copy the debug state from parent to child.  */
+
+  parent_pid = ptid_get_pid (parent->ptid);
+  parent_state = s390_get_debug_reg_state (parent_pid);
+  child_state = s390_get_debug_reg_state (child_pid);
+
+  child_state->watch_areas = VEC_copy (s390_watch_area,
+				       parent_state->watch_areas);
+  child_state->break_areas = VEC_copy (s390_watch_area,
+				       parent_state->break_areas);
+}
+
+/* Dump PER state.  */
+
+static void
+s390_show_debug_regs (int tid, const char *where)
+{
+  per_struct per_info;
+  ptrace_area parea;
+
+  parea.len = sizeof (per_info);
+  parea.process_addr = (addr_t) &per_info;
+  parea.kernel_addr = offsetof (struct user_regs_struct, per_info);
+
+  if (ptrace (PTRACE_PEEKUSR_AREA, tid, &parea, 0) < 0)
+    perror_with_name (_("Couldn't retrieve debug regs"));
+
+  debug_printf ("PER (debug) state for %d -- %s\n"
+		"  cr9-11: %lx %lx %lx\n"
+		"  start, end: %lx %lx\n"
+		"  code/ATMID: %x  address: %lx  PAID: %x\n",
+		tid,
+		where,
+		per_info.control_regs.words.cr[0],
+		per_info.control_regs.words.cr[1],
+		per_info.control_regs.words.cr[2],
+		per_info.starting_addr,
+		per_info.ending_addr,
+		per_info.lowcore.words.perc_atmid,
+		per_info.lowcore.words.address,
+		per_info.lowcore.words.access_id);
+}
 
 static int
 s390_stopped_by_watchpoint (struct target_ops *ops)
 {
+  struct s390_debug_reg_state *state
+    = s390_get_debug_reg_state (ptid_get_pid (inferior_ptid));
   per_lowcore_bits per_lowcore;
   ptrace_area parea;
   int result;
 
+  if (show_debug_regs)
+    s390_show_debug_regs (s390_inferior_tid (), "stop");
+
   /* Speed up common case.  */
-  if (!watch_base)
+  if (VEC_empty (s390_watch_area, state->watch_areas))
     return 0;
 
   parea.len = sizeof (per_lowcore);
@@ -482,65 +657,115 @@ static void
 s390_prepare_to_resume (struct lwp_info *lp)
 {
   int tid;
+  pid_t pid = ptid_get_pid (ptid_of_lwp (lp));
 
   per_struct per_info;
   ptrace_area parea;
 
   CORE_ADDR watch_lo_addr = (CORE_ADDR)-1, watch_hi_addr = 0;
-  struct watch_area *area;
+  unsigned ix;
+  s390_watch_area *area;
+  struct arch_lwp_info *lp_priv = lwp_arch_private_info (lp);
+  struct s390_debug_reg_state *state = s390_get_debug_reg_state (pid);
+  int step = lwp_is_stepping (lp);
 
-  if (lp->arch_private == NULL
-      || !lp->arch_private->per_info_changed)
+  /* Nothing to do if there was never any PER info for this thread.  */
+  if (lp_priv == NULL)
     return;
 
-  lp->arch_private->per_info_changed = 0;
-
-  tid = ptid_get_lwp (lp->ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (lp->ptid);
-
-  for (area = watch_base; area; area = area->next)
+  /* If PER info has changed, update it.  When single-stepping, disable
+     hardware breakpoints (if any).  Otherwise we're done.  */
+  if (!lp_priv->per_info_changed)
     {
-      watch_lo_addr = min (watch_lo_addr, area->lo_addr);
-      watch_hi_addr = max (watch_hi_addr, area->hi_addr);
+      if (!step || VEC_empty (s390_watch_area, state->break_areas))
+	return;
     }
+
+  lp_priv->per_info_changed = 0;
+
+  tid = ptid_get_lwp (ptid_of_lwp (lp));
+  if (tid == 0)
+    tid = pid;
 
   parea.len = sizeof (per_info);
   parea.process_addr = (addr_t) & per_info;
   parea.kernel_addr = offsetof (struct user_regs_struct, per_info);
-  if (ptrace (PTRACE_PEEKUSR_AREA, tid, &parea, 0) < 0)
-    perror_with_name (_("Couldn't retrieve watchpoint status"));
 
-  if (watch_base)
+  /* Clear PER info, but adjust the single_step field (used by older
+     kernels only).  */
+  memset (&per_info, 0, sizeof (per_info));
+  per_info.single_step = (step != 0);
+
+  if (!VEC_empty (s390_watch_area, state->watch_areas))
     {
-      per_info.control_regs.bits.em_storage_alteration = 1;
-      per_info.control_regs.bits.storage_alt_space_ctl = 1;
+      for (ix = 0;
+	   VEC_iterate (s390_watch_area, state->watch_areas, ix, area);
+	   ix++)
+	{
+	  watch_lo_addr = std::min (watch_lo_addr, area->lo_addr);
+	  watch_hi_addr = std::max (watch_hi_addr, area->hi_addr);
+	}
+
+      /* Enable storage-alteration events.  */
+      per_info.control_regs.words.cr[0] |= (PER_EVENT_STORE
+					    | PER_CONTROL_ALTERATION);
     }
-  else
+
+  if (!VEC_empty (s390_watch_area, state->break_areas))
     {
-      per_info.control_regs.bits.em_storage_alteration = 0;
-      per_info.control_regs.bits.storage_alt_space_ctl = 0;
+      /* Don't install hardware breakpoints while single-stepping, since
+	 our PER settings (e.g. the nullification bit) might then conflict
+	 with the kernel's.  But re-install them afterwards.  */
+      if (step)
+	lp_priv->per_info_changed = 1;
+      else
+	{
+	  for (ix = 0;
+	       VEC_iterate (s390_watch_area, state->break_areas, ix, area);
+	       ix++)
+	    {
+	      watch_lo_addr = std::min (watch_lo_addr, area->lo_addr);
+	      watch_hi_addr = std::max (watch_hi_addr, area->hi_addr);
+	    }
+
+	  /* If there's just one breakpoint, enable instruction-fetching
+	     nullification events for the breakpoint address (fast).
+	     Otherwise stop after any instruction within the PER area and
+	     after any branch into it (slow).  */
+	  if (watch_hi_addr == watch_lo_addr)
+	    per_info.control_regs.words.cr[0] |= (PER_EVENT_NULLIFICATION
+						  | PER_EVENT_IFETCH);
+	  else
+	    {
+	      /* The PER area must include the instruction before the
+		 first breakpoint address.  */
+	      watch_lo_addr = watch_lo_addr > 6 ? watch_lo_addr - 6 : 0;
+	      per_info.control_regs.words.cr[0]
+		|= (PER_EVENT_BRANCH
+		    | PER_EVENT_IFETCH
+		    | PER_CONTROL_BRANCH_ADDRESS);
+	    }
+	}
     }
   per_info.starting_addr = watch_lo_addr;
   per_info.ending_addr = watch_hi_addr;
 
   if (ptrace (PTRACE_POKEUSR_AREA, tid, &parea, 0) < 0)
     perror_with_name (_("Couldn't modify watchpoint status"));
+
+  if (show_debug_regs)
+    s390_show_debug_regs (tid, "resume");
 }
 
-/* Make sure that LP is stopped and mark its PER info as changed, so
-   the next resume will update it.  */
+/* Mark the PER info as changed, so the next resume will update it.  */
 
 static void
-s390_refresh_per_info (struct lwp_info *lp)
+s390_mark_per_info_changed (struct lwp_info *lp)
 {
-  if (lp->arch_private == NULL)
-    lp->arch_private = XCNEW (struct arch_lwp_info);
+  if (lwp_arch_private_info (lp) == NULL)
+    lwp_set_arch_private_info (lp, XCNEW (struct arch_lwp_info));
 
-  lp->arch_private->per_info_changed = 1;
-
-  if (!lp->stopped)
-    linux_stop_lwp (lp);
+  lwp_arch_private_info (lp)->per_info_changed = 1;
 }
 
 /* When attaching to a new thread, mark its PER info as changed.  */
@@ -548,8 +773,30 @@ s390_refresh_per_info (struct lwp_info *lp)
 static void
 s390_new_thread (struct lwp_info *lp)
 {
-  lp->arch_private = XCNEW (struct arch_lwp_info);
-  lp->arch_private->per_info_changed = 1;
+  s390_mark_per_info_changed (lp);
+}
+
+/* Iterator callback for s390_refresh_per_info.  */
+
+static int
+s390_refresh_per_info_cb (struct lwp_info *lp, void *arg)
+{
+  s390_mark_per_info_changed (lp);
+
+  if (!lwp_is_stopped (lp))
+    linux_stop_lwp (lp);
+  return 0;
+}
+
+/* Make sure that threads are stopped and mark PER info as changed.  */
+
+static int
+s390_refresh_per_info (void)
+{
+  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (current_lwp_ptid ()));
+
+  iterate_over_lwps (pid_ptid, s390_refresh_per_info_cb, NULL);
+  return 0;
 }
 
 static int
@@ -557,21 +804,15 @@ s390_insert_watchpoint (struct target_ops *self,
 			CORE_ADDR addr, int len, enum target_hw_bp_type type,
 			struct expression *cond)
 {
-  struct lwp_info *lp;
-  struct watch_area *area = XNEW (struct watch_area);
+  s390_watch_area area;
+  struct s390_debug_reg_state *state
+    = s390_get_debug_reg_state (ptid_get_pid (inferior_ptid));
 
-  if (!area)
-    return -1;
+  area.lo_addr = addr;
+  area.hi_addr = addr + len - 1;
+  VEC_safe_push (s390_watch_area, state->watch_areas, &area);
 
-  area->lo_addr = addr;
-  area->hi_addr = addr + len - 1;
-
-  area->next = watch_base;
-  watch_base = area;
-
-  ALL_LWPS (lp)
-    s390_refresh_per_info (lp);
-  return 0;
+  return s390_refresh_per_info ();
 }
 
 static int
@@ -579,35 +820,82 @@ s390_remove_watchpoint (struct target_ops *self,
 			CORE_ADDR addr, int len, enum target_hw_bp_type type,
 			struct expression *cond)
 {
-  struct lwp_info *lp;
-  struct watch_area *area, **parea;
+  unsigned ix;
+  s390_watch_area *area;
+  struct s390_debug_reg_state *state
+    = s390_get_debug_reg_state (ptid_get_pid (inferior_ptid));
 
-  for (parea = &watch_base; *parea; parea = &(*parea)->next)
-    if ((*parea)->lo_addr == addr
-	&& (*parea)->hi_addr == addr + len - 1)
-      break;
-
-  if (!*parea)
+  for (ix = 0;
+       VEC_iterate (s390_watch_area, state->watch_areas, ix, area);
+       ix++)
     {
-      fprintf_unfiltered (gdb_stderr,
-			  "Attempt to remove nonexistent watchpoint.\n");
-      return -1;
+      if (area->lo_addr == addr && area->hi_addr == addr + len - 1)
+	{
+	  VEC_unordered_remove (s390_watch_area, state->watch_areas, ix);
+	  return s390_refresh_per_info ();
+	}
     }
 
-  area = *parea;
-  *parea = area->next;
-  xfree (area);
-
-  ALL_LWPS (lp)
-    s390_refresh_per_info (lp);
-  return 0;
+  fprintf_unfiltered (gdb_stderr,
+		      "Attempt to remove nonexistent watchpoint.\n");
+  return -1;
 }
+
+/* Implement the "can_use_hw_breakpoint" target_ops method. */
 
 static int
 s390_can_use_hw_breakpoint (struct target_ops *self,
 			    enum bptype type, int cnt, int othertype)
 {
-  return type == bp_hardware_watchpoint;
+  if (type == bp_hardware_watchpoint || type == bp_hardware_breakpoint)
+    return 1;
+  return 0;
+}
+
+/* Implement the "insert_hw_breakpoint" target_ops method.  */
+
+static int
+s390_insert_hw_breakpoint (struct target_ops *self,
+			   struct gdbarch *gdbarch,
+			   struct bp_target_info *bp_tgt)
+{
+  s390_watch_area area;
+  struct s390_debug_reg_state *state;
+
+  area.lo_addr = bp_tgt->placed_address = bp_tgt->reqstd_address;
+  area.hi_addr = area.lo_addr;
+  state = s390_get_debug_reg_state (ptid_get_pid (inferior_ptid));
+  VEC_safe_push (s390_watch_area, state->break_areas, &area);
+
+  return s390_refresh_per_info ();
+}
+
+/* Implement the "remove_hw_breakpoint" target_ops method.  */
+
+static int
+s390_remove_hw_breakpoint (struct target_ops *self,
+			   struct gdbarch *gdbarch,
+			   struct bp_target_info *bp_tgt)
+{
+  unsigned ix;
+  struct watch_area *area;
+  struct s390_debug_reg_state *state;
+
+  state = s390_get_debug_reg_state (ptid_get_pid (inferior_ptid));
+  for (ix = 0;
+       VEC_iterate (s390_watch_area, state->break_areas, ix, area);
+       ix++)
+    {
+      if (area->lo_addr == bp_tgt->placed_address)
+	{
+	  VEC_unordered_remove (s390_watch_area, state->break_areas, ix);
+	  return s390_refresh_per_info ();
+	}
+    }
+
+  fprintf_unfiltered (gdb_stderr,
+		      "Attempt to remove nonexistent breakpoint.\n");
+  return -1;
 }
 
 static int
@@ -730,6 +1018,8 @@ _initialize_s390_nat (void)
 
   /* Add our watchpoint methods.  */
   t->to_can_use_hw_breakpoint = s390_can_use_hw_breakpoint;
+  t->to_insert_hw_breakpoint = s390_insert_hw_breakpoint;
+  t->to_remove_hw_breakpoint = s390_remove_hw_breakpoint;
   t->to_region_ok_for_hw_watchpoint = s390_region_ok_for_hw_watchpoint;
   t->to_have_continuable_watchpoint = 1;
   t->to_stopped_by_watchpoint = s390_stopped_by_watchpoint;
@@ -744,4 +1034,19 @@ _initialize_s390_nat (void)
   linux_nat_add_target (t);
   linux_nat_set_new_thread (t, s390_new_thread);
   linux_nat_set_prepare_to_resume (t, s390_prepare_to_resume);
+  linux_nat_set_forget_process (t, s390_forget_process);
+  linux_nat_set_new_fork (t, s390_linux_new_fork);
+
+  /* A maintenance command to enable showing the PER state.  */
+  add_setshow_boolean_cmd ("show-debug-regs", class_maintenance,
+			   &show_debug_regs, _("\
+Set whether to show the PER (debug) hardware state."), _("\
+Show whether to show the PER (debug) hardware state."), _("\
+Use \"on\" to enable, \"off\" to disable.\n\
+If enabled, the PER state is shown after it is changed by GDB,\n\
+and when the inferior triggers a breakpoint or watchpoint."),
+			   NULL,
+			   NULL,
+			   &maintenance_set_cmdlist,
+			   &maintenance_show_cmdlist);
 }

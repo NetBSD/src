@@ -1,9 +1,13 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.16.2.1 2019/06/10 22:06:58 christos Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16.2.1 2019/06/10 22:06:58 christos Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 /*
  * System call interface to the socket abstraction.
@@ -15,21 +19,22 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christ
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
+#include <compat/common/compat_mod.h>
+
 /*
- * Return interface configuration
- * of system.  List may be used
- * in later ioctl's (above) to get
- * other information.
+ * Return interface configuration of system.  List may be used in later
+ * ioctl's (above) to get other information.
  */
 /*ARGSUSED*/
 static int
-compat_ifconf(struct lwp *l, u_long cmd, void *data)
+compat_ifconf(u_long cmd, void *data)
 {
 	struct oifconf *ifc = data;
 	struct ifnet *ifp;
@@ -49,6 +54,7 @@ compat_ifconf(struct lwp *l, u_long cmd, void *data)
 		return ENOSYS;
 	}
 
+	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
@@ -150,7 +156,7 @@ compat_ifconf(struct lwp *l, u_long cmd, void *data)
 		ifc->ifc_len -= space;
 	else
 		ifc->ifc_len = -space;
-	return (0);
+	return 0;
 
 release_exit:
 	if_release(ifp, &psref);
@@ -158,14 +164,16 @@ release_exit:
 	return error;
 }
 
-void
+void      
 uipc_syscalls_40_init(void)
 {
-	vec_compat_ifconf = compat_ifconf;
+ 
+	MODULE_HOOK_SET(uipc_syscalls_40_hook, "uipc40", compat_ifconf);
 }
-
+ 
 void
 uipc_syscalls_40_fini(void)
 {
-	vec_compat_ifconf = (void *)enosys;
+ 
+	MODULE_HOOK_UNSET(uipc_syscalls_40_hook);
 }

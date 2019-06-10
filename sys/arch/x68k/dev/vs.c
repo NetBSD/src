@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.49.4.1 2019/06/10 22:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.49.4.1 2019/06/10 22:06:52 christos Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -42,8 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $");
 #include <sys/kmem.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -75,11 +74,11 @@ static int  vs_dmaerrintr(void *);
 /* MI audio layer interface */
 static int  vs_open(void *, int);
 static void vs_close(void *);
-static int  vs_query_encoding(void *, struct audio_encoding *);
-static int  vs_set_params(void *, int, int, audio_params_t *,
-	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-static int  vs_init_output(void *, void *, int);
-static int  vs_init_input(void *, void *, int);
+static int  vs_query_format(void *, audio_format_query_t *);
+static int  vs_set_format(void *, int,
+	const audio_params_t *, const audio_params_t *,
+	audio_filter_reg_t *, audio_filter_reg_t *);
+static int  vs_commit_settings(void *);
 static int  vs_start_input(void *, void *, int, void (*)(void *), void *);
 static int  vs_start_output(void *, void *, int, void (*)(void *), void *);
 static int  vs_halt_output(void *);
@@ -99,8 +98,7 @@ static void vs_get_locks(void *, kmutex_t **, kmutex_t **);
 
 /* lower functions */
 static int vs_round_sr(u_long);
-static void vs_set_sr(struct vs_softc *, int);
-static inline void vs_set_po(struct vs_softc *, u_long);
+static inline void vs_set_panout(struct vs_softc *, u_long);
 
 extern struct cfdriver vs_cd;
 
@@ -110,40 +108,42 @@ CFATTACH_DECL_NEW(vs, sizeof(struct vs_softc),
 static int vs_attached;
 
 static const struct audio_hw_if vs_hw_if = {
-	vs_open,
-	vs_close,
-	NULL,			/* drain */
-	vs_query_encoding,
-	vs_set_params,
-	NULL,			/* round_blocksize */
-	NULL,			/* commit_settings */
-	vs_init_output,
-	vs_init_input,
-	vs_start_output,
-	vs_start_input,
-	vs_halt_output,
-	vs_halt_input,
-	NULL,			/* speaker_ctl */
-	vs_getdev,
-	NULL,			/* setfd */
-	vs_set_port,
-	vs_get_port,
-	vs_query_devinfo,
-	vs_allocm,
-	vs_freem,
-	vs_round_buffersize,
-	NULL,			/* mappage */
-	vs_get_props,
-	NULL,			/* trigger_output */
-	NULL,			/* trigger_input */
-	NULL,
-	vs_get_locks,
+	.open			= vs_open,
+	.close			= vs_close,
+	.query_format		= vs_query_format,
+	.set_format		= vs_set_format,
+	.commit_settings	= vs_commit_settings,
+	.start_output		= vs_start_output,
+	.start_input		= vs_start_input,
+	.halt_output		= vs_halt_output,
+	.halt_input		= vs_halt_input,
+	.getdev			= vs_getdev,
+	.set_port		= vs_set_port,
+	.get_port		= vs_get_port,
+	.query_devinfo		= vs_query_devinfo,
+	.allocm			= vs_allocm,
+	.freem			= vs_freem,
+	.round_buffersize	= vs_round_buffersize,
+	.get_props		= vs_get_props,
+	.get_locks		= vs_get_locks,
 };
 
 static struct audio_device vs_device = {
 	"OKI MSM6258",
 	"",
 	"vs"
+};
+
+static const struct audio_format vs_formats = {
+	.mode		= AUMODE_PLAY | AUMODE_RECORD,
+	.encoding	= AUDIO_ENCODING_ADPCM,
+	.validbits	= 4,
+	.precision	= 4,
+	.channels	= 1,
+	.channel_mask	= AUFMT_MONAURAL,
+	.frequency_type	= 5,
+	.frequency	= { VS_RATE_3K, VS_RATE_5K, VS_RATE_7K,
+	                    VS_RATE_10K, VS_RATE_15K },
 };
 
 struct {
@@ -222,7 +222,7 @@ vs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_prev_vd = NULL;
 	sc->sc_active = 0;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/* XXX */
 	bus_space_map(iot, PPI_ADDR, PPI_MAPSIZE, BUS_SPACE_MAP_SHIFTED,
@@ -307,169 +307,84 @@ vs_close(void *hdl)
 }
 
 static int
-vs_query_encoding(void *hdl, struct audio_encoding *fp)
+vs_query_format(void *hdl, audio_format_query_t *afp)
 {
 
-	DPRINTF(1, ("vs_query_encoding\n"));
-
-	if (fp->index == 0) {
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	}
-	if (fp->index == 1) {
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	}
-	return EINVAL;
+	return audio_query_format(&vs_formats, 1, afp);
 }
 
 static int
 vs_round_sr(u_long rate)
 {
 	int i;
-	int diff;
-	int nearest;
 
-	diff = rate;
-	nearest = 0;
 	for (i = 0; i < NUM_RATE; i++) {
-		if (rate >= vs_l2r[i].rate) {
-			if (rate - vs_l2r[i].rate < diff) {
-				diff = rate - vs_l2r[i].rate;
-				nearest = i;
-			}
-		} else {
-			if (vs_l2r[i].rate - rate < diff) {
-				diff = vs_l2r[i].rate - rate;
-				nearest = i;
-			}
-		}
+		if (rate == vs_l2r[i].rate)
+			return i;
 	}
-	if (diff * 100 / rate > 15)
-		return -1;
-	else
-		return nearest;
+	return -1;
 }
 
 static int
-vs_set_params(void *hdl, int setmode, int usemode,
-	audio_params_t *play, audio_params_t *rec,
-	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+vs_set_format(void *hdl, int setmode,
+	const audio_params_t *play, const audio_params_t *rec,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct vs_softc *sc;
-	audio_params_t hw;
-	stream_filter_factory_t *pconv;
-	stream_filter_factory_t *rconv;
 	int rate;
 
 	sc = hdl;
 
-	DPRINTF(1, ("vs_set_params: mode=%d enc=%d rate=%d prec=%d ch=%d: ",
-		setmode, play->encoding, play->sample_rate,
-		play->precision, play->channels));
+	DPRINTF(1, ("%s: mode=%d %s/%dbit/%dch/%dHz: ", __func__,
+	    setmode, audio_encoding_name(play->encoding),
+	    play->precision, play->channels, play->sample_rate));
 
 	/* *play and *rec are identical because !AUDIO_PROP_INDEPENDENT */
 
-	if (play->channels != 1) {
-		DPRINTF(1, ("channels not matched\n"));
-		return EINVAL;
-	}
-
 	rate = vs_round_sr(play->sample_rate);
-	if (rate < 0) {
-		DPRINTF(1, ("rate not matched\n"));
-		return EINVAL;
-	}
-
-	if (play->precision == 8 && play->encoding == AUDIO_ENCODING_SLINEAR) {
-		pconv = msm6258_linear8_to_adpcm;
-		rconv = msm6258_adpcm_to_linear8;
-	} else if (play->precision == 16 &&
-	           play->encoding == AUDIO_ENCODING_SLINEAR_BE) {
-		pconv = msm6258_slinear16_to_adpcm;
-		rconv = msm6258_adpcm_to_slinear16;
-	} else {
-		DPRINTF(1, ("prec/enc not matched\n"));
-		return EINVAL;
-	}
-
+	KASSERT(rate >= 0);
 	sc->sc_current.rate = rate;
 
-	/* pfil and rfil are independent even if !AUDIO_PROP_INDEPENDENT */
-
 	if ((setmode & AUMODE_PLAY) != 0) {
-		hw = *play;
-		hw.encoding = AUDIO_ENCODING_ADPCM;
-		hw.precision = 4;
-		hw.validbits = 4;
-		pfil->prepend(pfil, pconv, &hw);
+		pfil->codec = msm6258_internal_to_adpcm;
+		pfil->context = &sc->sc_codecvar;
 	}
 	if ((setmode & AUMODE_RECORD) != 0) {
-		hw = *rec;
-		hw.encoding = AUDIO_ENCODING_ADPCM;
-		hw.precision = 4;
-		hw.validbits = 4;
-		rfil->prepend(rfil, rconv, &hw);
+		rfil->codec = msm6258_adpcm_to_internal;
+		rfil->context = &sc->sc_codecvar;
 	}
 
 	DPRINTF(1, ("accepted\n"));
 	return 0;
 }
 
-static void
-vs_set_sr(struct vs_softc *sc, int rate)
+static int
+vs_commit_settings(void *hdl)
 {
+	struct vs_softc *sc;
+	int rate;
 
-	DPRINTF(1, ("setting sample rate to %d, %d\n",
+	sc = hdl;
+	rate = sc->sc_current.rate;
+
+	DPRINTF(1, ("commit_settings: sample rate to %d, %d\n",
 		 rate, (int)vs_l2r[rate].rate));
 	bus_space_write_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC,
 			  (bus_space_read_1 (sc->sc_iot, sc->sc_ppi,
 					     PPI_PORTC) & 0xf0)
 			  | vs_l2r[rate].den);
 	adpcm_chgclk(vs_l2r[rate].clk);
+
+	return 0;
 }
 
 static inline void
-vs_set_po(struct vs_softc *sc, u_long po)
+vs_set_panout(struct vs_softc *sc, u_long po)
 {
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC,
 			  (bus_space_read_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC)
 			   & 0xfc) | po);
-}
-
-static int
-vs_init_output(void *hdl, void *buffer, int size)
-{
-	struct vs_softc *sc;
-
-	DPRINTF(1, ("%s\n", __func__));
-	sc = hdl;
-
-	/* Set rate and pan */
-	vs_set_sr(sc, sc->sc_current.rate);
-	vs_set_po(sc, VS_PANOUT_LR);
-
-	return 0;
-}
-
-static int
-vs_init_input(void *hdl, void *buffer, int size)
-{
-	struct vs_softc *sc;
-
-	DPRINTF(1, ("%s\n", __func__));
-	sc = hdl;
-
-	/* Set rate */
-	vs_set_sr(sc, sc->sc_current.rate);
-
-	return 0;
 }
 
 static int
@@ -510,6 +425,7 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	    (int)block - (int)KVADDR(vd), blksize);
 
 	if (sc->sc_active == 0) {
+		vs_set_panout(sc, VS_PANOUT_LR);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			MSM6258_CMD, MSM6258_CMD_PLAY_START);
 		sc->sc_active = 1;
@@ -743,36 +659,12 @@ vs_round_buffersize(void *hdl, int direction, size_t bufsize)
 	return bufsize;
 }
 
-#if 0
-paddr_t
-vs_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct vs_softc *sc;
-	struct vs_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = addr;
-	for (p = sc->sc_dmas; p != NULL && KVADDR(p) != mem;
-	     p = p->vd_next)
-		continue;
-	if (p == NULL) {
-		printf("%s: mappage: bad addr %p\n",
-		    device_xname(sc->sc_dev), start);
-		return -1;
-	}
-
-	return bus_dmamem_mmap(sc->sc_dmat, p->vd_segs, p->vd_nsegs,
-			       off, prot, BUS_DMA_WAITOK);
-}
-#endif
-
 static int
 vs_get_props(void *hdl)
 {
 
 	DPRINTF(1, ("vs_get_props\n"));
-	return 0 /* | dependent | half duplex | no mmap */;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 static void

@@ -1,6 +1,6 @@
 /* tacosh.c --  test file for mpc_acosh.
 
-Copyright (C) 2009 INRIA
+Copyright (C) 2009, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -39,17 +39,24 @@ bug20091120 (void)
   mpc_clear (y);
 }
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_acosh (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_acosh (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_acosh);
-
   test_start ();
 
   bug20091120 ();
 
-  data_check (f, "acosh.dat");
-  tgeneric (f, 2, 512, 7, 7);
+  data_check_template ("acosh.dsc", "acosh.dat");
+
+  tgeneric_template ("acosh.dsc", 2, 512, 7, 7);
 
   test_end ();
 

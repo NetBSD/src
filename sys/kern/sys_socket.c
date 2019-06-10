@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.76.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ const struct fileops socketops = {
 	.fo_read = soo_read,
 	.fo_write = soo_write,
 	.fo_ioctl = soo_ioctl,
-	.fo_fcntl = soo_fcntl,
+	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = soo_poll,
 	.fo_stat = soo_stat,
 	.fo_close = soo_close,
@@ -192,6 +192,12 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		*(int *)data = (so->so_state&SS_RCVATMARK) != 0;
 		break;
 
+	case SIOCPEELOFF:
+		solock(so);
+		error = do_sys_peeloff(so, data);
+		sounlock(so);
+		break;
+
 	default:
 		/*
 		 * Interface/routing/protocol specific ioctls:
@@ -215,16 +221,6 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 
 
 	return error;
-}
-
-int
-soo_fcntl(file_t *fp, u_int cmd, void *data)
-{
-
-	if (cmd == F_SETFL)
-		return 0;
-	else
-		return EOPNOTSUPP;
 }
 
 int

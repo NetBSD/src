@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.18 2017/07/28 15:34:06 riastradh Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.18.4.1 2019/06/10 22:07:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.18 2017/07/28 15:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.18.4.1 2019/06/10 22:07:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,10 +139,10 @@ linux32_sys_getdents(struct lwp *l, const struct linux32_sys_getdents_args *uap,
 	nbytes = SCARG(uap, count);
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
 		nbytes = sizeof (idb);
-		buflen = max(va.va_blocksize, nbytes);
+		buflen = uimax(va.va_blocksize, nbytes);
 		oldcall = 1;
 	} else {
-		buflen = min(MAXBSIZE, nbytes);
+		buflen = uimin(MAXBSIZE, nbytes);
 		if (buflen < va.va_blocksize)
 			buflen = va.va_blocksize;
 		oldcall = 0;

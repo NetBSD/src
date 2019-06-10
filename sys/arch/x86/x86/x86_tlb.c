@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.2 2018/05/19 16:51:32 jakllsch Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.2.2.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.2 2018/05/19 16:51:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.2.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.2 2018/05/19 16:51:32 jakllsch Exp $")
 #include <uvm/uvm.h>
 
 #include <machine/cpuvar.h>
-#ifdef XEN
+#ifdef XENPV
 #include <xen/xenpmap.h>
-#endif /* XEN */
+#endif /* XENPV */
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
 
@@ -199,11 +199,11 @@ pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 
 	/* Find out what we need to invalidate. */
 	if (tp->tp_count == (uint16_t)-1) {
-		if (tp->tp_pte & PG_G) {
-			/* Invalidating user and kernel TLB entries. */
+		if (tp->tp_pte & PTE_G) {
+			/* Invalidating all TLB entries. */
 			tlbflushg();
 		} else {
-			/* Invalidating user TLB entries only. */
+			/* Invalidating non-global TLB entries only. */
 			tlbflush();
 		}
 	} else {
@@ -223,9 +223,14 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	pmap_tlb_packet_t *tp;
 	int s;
 
-#ifndef XEN
-	KASSERT((pte & PG_G) == 0 || pm == pmap_kernel());
+#ifndef XENPV
+	KASSERT((pte & PTE_G) == 0 || pm == pmap_kernel());
 #endif
+
+	if (__predict_false(pm->pm_tlb_flush != NULL)) {
+		(*pm->pm_tlb_flush)(pm);
+		return;
+	}
 
 	/*
 	 * If tearing down the pmap, do nothing.  We will flush later
@@ -235,8 +240,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 		return;
 	}
 
-	if ((pte & PG_PS) != 0) {
-		va &= PG_LGFRAME;
+	if ((pte & PTE_PS) != 0) {
+		va &= PTE_LGFRAME;
 	}
 
 	/*
@@ -245,8 +250,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	s = splvm();
 	tp = (pmap_tlb_packet_t *)curcpu()->ci_pmap_data;
 
-	/* Whole address flush will be needed if PG_G is set. */
-	CTASSERT(PG_G == (uint16_t)PG_G);
+	/* Whole address flush will be needed if PTE_G is set. */
+	CTASSERT(PTE_G == (uint16_t)PTE_G);
 	tp->tp_pte |= (uint16_t)pte;
 
 	if (tp->tp_count == (uint16_t)-1) {
@@ -276,7 +281,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 }
 
 #ifdef MULTIPROCESSOR
-#ifdef XEN
+#ifdef XENPV
 
 static inline void
 pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
@@ -324,7 +329,7 @@ pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 	KASSERT(err == 0);
 }
 
-#endif /* XEN */
+#endif /* XENPV */
 #endif /* MULTIPROCESSOR */
 
 /*

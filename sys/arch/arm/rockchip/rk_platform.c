@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_platform.c,v 1.1.4.1 2019/06/10 22:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,10 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.1.4.1 2019/06/10 22:05:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp
 #include <dev/ic/comreg.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <libfdt.h>
 
@@ -79,7 +79,7 @@ rk_platform_bootstrap(void)
 {
 	void *fdt_data = __UNCONST(fdtbus_get_data());
 
-	psci_fdt_bootstrap();
+	arm_fdt_cpu_bootstrap();
 
 	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
 	if (chosen_off < 0)
@@ -145,16 +145,74 @@ rk3328_platform_uart_freq(void)
 }
 
 static const struct arm_platform rk3328_platform = {
-	.devmap = rk3328_platform_devmap,
-	.bootstrap = rk_platform_bootstrap,
-	.init_attach_args = rk_platform_init_attach_args,
-	.early_putchar = rk3328_platform_early_putchar,
-	.device_register = rk_platform_device_register,
-	.reset = psci_fdt_reset,
-	.delay = gtmr_delay,
-	.uart_freq = rk3328_platform_uart_freq,
+	.ap_devmap = rk3328_platform_devmap,
+	.ap_bootstrap = rk_platform_bootstrap,
+	.ap_init_attach_args = rk_platform_init_attach_args,
+	.ap_device_register = rk_platform_device_register,
+	.ap_reset = psci_fdt_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = rk3328_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(rk3328, "rockchip,rk3328", &rk3328_platform);
 
 #endif /* SOC_RK3328 */
+
+
+#ifdef SOC_RK3399
+
+#include <arm/rockchip/rk3399_platform.h>
+
+static const struct pmap_devmap *
+rk3399_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(RK3399_CORE_VBASE,
+			     RK3399_CORE_PBASE,
+			     RK3399_CORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+void rk3399_platform_early_putchar(char);
+
+void
+rk3399_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA	((CONSADDR - RK3399_CORE_PBASE) + RK3399_CORE_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = htole32(c);
+#undef CONSADDR_VA
+#endif
+}
+
+static u_int
+rk3399_platform_uart_freq(void)
+{
+	return RK3399_UART_FREQ;
+}
+
+static const struct arm_platform rk3399_platform = {
+	.ap_devmap = rk3399_platform_devmap,
+	.ap_bootstrap = rk_platform_bootstrap,
+	.ap_init_attach_args = rk_platform_init_attach_args,
+	.ap_device_register = rk_platform_device_register,
+	.ap_reset = psci_fdt_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = rk3399_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
+};
+
+ARM_PLATFORM(rk3399, "rockchip,rk3399", &rk3399_platform);
+
+#endif /* SOC_RK3399 */

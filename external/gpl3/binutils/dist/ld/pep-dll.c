@@ -40,10 +40,8 @@
 				    pep_use_coff_long_section_names
 #define pe_leading_underscore	    pep_leading_underscore
 
-/* External globals.  */
-#define pe_data_import_dll          pep_data_import_dll
-
 /* Unique global name for functions to avoid double defined symbols.  */
+#define pe_find_data_imports        pep_find_data_imports
 #define pe_create_import_fixup      pep_create_import_fixup
 #define pe_dll_generate_def_file    pep_dll_generate_def_file
 #define pe_process_import_defs      pep_process_import_defs
@@ -55,7 +53,6 @@
 #define pe_exe_fill_sections        pep_exe_fill_sections
 #define pe_dll_generate_implib      pep_dll_generate_implib
 #define pe_dll_add_excludes         pep_dll_add_excludes
-#define pe_walk_relocs_of_symbol    pep_walk_relocs_of_symbol
 #define pe_bfd_is_dll		    pep_bfd_is_dll
 #define pe_output_file_set_long_section_names \
 				    pep_output_file_set_long_section_names

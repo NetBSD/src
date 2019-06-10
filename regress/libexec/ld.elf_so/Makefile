@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2007/05/18 21:41:38 christos Exp $
+#	$NetBSD: Makefile,v 1.2.76.1 2019/06/10 22:05:31 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= expand origin
+SUBDIR+= origin
 
 .include <bsd.subdir.mk>

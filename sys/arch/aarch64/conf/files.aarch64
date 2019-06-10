@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.3 2018/04/01 04:35:03 ryo Exp $
+#	$NetBSD: files.aarch64,v 1.3.2.1 2019/06/10 22:05:43 christos Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -10,13 +10,15 @@ defflag	opt_cputypes.h		CPU_CORTEX: CPU_ARMV8
 defflag	opt_cputypes.h		CPU_CORTEXA35: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA53: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_THUNDERX: CPU_ARMV8
 
 # Interrupt implementation header definition
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # ARM-specific debug options (for compat arch/arm/*)
-defflag opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
-defflag opt_arm_debug.h		VERBOSE_INIT_ARM
+defflag  opt_arm_debug.h	ARM_LOCK_CAS_DEBUG
+defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
+defparam opt_arm_debug.h	EARLYCONS
 
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
@@ -27,16 +29,26 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 
+# Console options
+defparam opt_console.h		CONSADDR
+defparam opt_console.h		CONSPEED
+defparam opt_console.h		CONMODE
+defparam opt_console.h		CONADDR
+
+# Power State Coordination Interface (PSCI)
 # FP support
 file	arch/aarch64/aarch64/fpu.c
 
 file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm32/bus_dma.c
 
-# Power State Coordination Interface (PSCI)
 device	psci
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
+
+# EFI support
+defflag	opt_efi.h		EFI_RUNTIME
+file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
@@ -99,8 +111,12 @@ file	arch/aarch64/aarch64/vm_machdep.c
 
 # pmap
 file	arch/aarch64/aarch64/pmap.c
+file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
 #file	uvm/pmap/pmap_pvt.c
+
+# EFI runtime (machdep)
+file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime
 
 # cyclecounter
 #file	arch/aarch64/aarch64/cctr_machdep.c
@@ -110,10 +126,7 @@ file	arch/aarch64/aarch64/pmap_page.S
 # NetBSD 32-bit binary compatibility
 include "compat/netbsd32/files.netbsd32"
 file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
-#file	arch/aarch64/aarch32/aarch32_oabi_machdep.c	compat_aarch32_oabi
-#file	arch/aarch64/aarch32/aarch32_eabi_machdep.c	compat_aarch32_eabi
-#file	arch/aarch64/aarch32/compat_13_machdep.c	compat_13 & compat_netbsd32
-#file	arch/aarch64/aarch32/compat_16_machdep.c	compat_16 & compat_netbsd32
+file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 
 # Linux binary compatibility (COMPAT_LINUX)
 #include "compat/ossaudio/files.ossaudio"
@@ -122,3 +135,6 @@ file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
 #file	arch/aarch64/aarch64/linux_sigcode.S	compat_linux
 #file	arch/aarch64/aarch64/linux_syscall.c	compat_linux
 #file	arch/aarch64/aarch64/linux_trap.c	compat_linux
+
+# profiling support
+file	dev/tprof/tprof_armv8.c			tprof	needs-flag

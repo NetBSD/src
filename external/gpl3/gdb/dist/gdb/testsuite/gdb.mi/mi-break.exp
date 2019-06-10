@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Free Software Foundation, Inc.
+# Copyright 1999-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,9 @@ set fullname "fullname=\"${fullname_syntax}${srcfile}\""
 proc test_tbreak_creation_and_listing {} {
     global srcfile
     global line_callee4_head
+    global line_callee4_body
     global line_callee3_head
+    global line_callee3_body
     global line_callee2_body
     global line_main_body
 
@@ -75,7 +77,7 @@ proc test_tbreak_creation_and_listing {} {
     lappend bps [mi_create_breakpoint "-t basics.c:$line_callee3_head" \
 		     "insert temp breakpoint at basics.c:\$line_callee3_head" \
 		     -number 3 -disp del -func callee3 -file ".*basics.c" \
-		     -line $line_callee3_head]
+		     -line $line_callee3_body]
 
     # Getting the quoting right is tricky.
     # That is "\"<file>\":$line_callee4_head"
@@ -83,7 +85,7 @@ proc test_tbreak_creation_and_listing {} {
 		     "-t \"\\\"${srcfile}\\\":$line_callee4_head\"" \
 		     "insert temp breakpoint at \"<fullfilename>\":\$line_callee4_head" \
 		     -number 4 -disp del -func callee4 -file ".*basics.c" \
-		     -line $line_callee4_head]
+		     -line $line_callee4_body]
 
     mi_gdb_test "666-break-list" \
 	"666\\\^done,[mi_make_breakpoint_table $bps]" \
@@ -277,7 +279,7 @@ proc test_breakpoint_commands {} {
 	-number 9 -disp keep -func callee2 -file ".*basics.c" \
 	-line $line_callee2_body
 
-    mi_gdb_test "-break-commands 9 \"set \$i=0\" \"while \$i<10\" \"print \$i\" \"set \$i=\$i+1\" \"end\" \"continue\" " \
+    mi_gdb_test "-break-commands 9 \"bt\" \"set \$i=0\" \"while \$i<10\" \"print \$i\" \"set \$i=\$i+1\" \"end\" \"continue\" " \
         "\\^done" \
         "breakpoint commands: set commands"
 
@@ -291,7 +293,7 @@ proc test_breakpoint_commands {} {
     set test "intermediate stop and continue, bp commands"
     gdb_expect {
 	-i $gdb_main_spawn_id
-	-re ".*\\\$1 = 0.*\\\$10 = 9" {
+	-re ".*callee2.*callee1.*main.*\\\$1 = 0.*\\\$10 = 9" {
 	    pass $test
 	}
 	timeout {
@@ -319,6 +321,7 @@ proc test_breakpoint_commands {} {
 proc test_explicit_breakpoints {} {
     global srcfile
     global line_callee3_head line_callee4_head
+    global line_callee3_body line_callee4_body
     global line_callee2_body line_main_body
 
     mi_delete_breakpoints
@@ -349,13 +352,13 @@ proc test_explicit_breakpoints {} {
     lappend bps \
 	[mi_create_breakpoint "-t --source $srcfile --line $line_callee3_head" \
 	     "insert temp explicit breakpoint at $srcfile:$line_callee3_head" \
-	     -func callee3 -file ".*$srcfile" -line $line_callee3_head]
+	     -func callee3 -file ".*$srcfile" -line $line_callee3_body]
 
     lappend bps \
 	[mi_create_breakpoint \
 	     "-t --source \"$srcfile\" --line  $line_callee4_head" \
 	     "insert temp explicit breakpoint at \"$srcfile\":$line_callee4_head" \
-	     -func callee4 -file ".*$srcfile" -line $line_callee4_head]
+	     -func callee4 -file ".*$srcfile" -line $line_callee4_body]
 
     mi_gdb_test "-break-list" "\\^done,[mi_make_breakpoint_table $bps]" \
 	"list of explicit breakpoints"

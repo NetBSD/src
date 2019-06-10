@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.103 2017/09/14 07:58:39 mrg Exp $
+#	$NetBSD: INSTALL,v 1.103.4.1 2019/06/10 22:05:59 christos Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -84,7 +84,7 @@ include 	"conf/compat_netbsd13.config"
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4800	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=5000	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
@@ -231,7 +231,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 #uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI network interfaces
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -246,7 +245,6 @@ sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #de*	at pci? dev ? function ?	# DECchip 21x4x and clones
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
@@ -258,6 +256,8 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 #nsphyter* at mii? phy ?		# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#rgephy*	at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
+#rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
 #tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -318,6 +318,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
+#ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Generic driver
@@ -431,7 +433,7 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP

@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.4 2003/08/07 16:42:23 agc Exp $	*/
+/*	$NetBSD: fabs.S,v 1.4.98.1 2019/06/10 22:05:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,15 +40,17 @@
 #if 0
 	.asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fabs.S,v 1.4 2003/08/07 16:42:23 agc Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.4.98.1 2019/06/10 22:05:18 christos Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* fabs - floating absolute value */
 
+STRONG_ALIAS(fabsl, fabs)
 
 ENTRY(fabs)
 	std	%o0, [%sp + 32]		! return value => %f0:f1
 	ldd	[%sp + 32], %f0		! (via kernel %o0/%o1 slot)
 	retl
 	 fabss	%f0, %f0		! return absolute value
+END(fabs)

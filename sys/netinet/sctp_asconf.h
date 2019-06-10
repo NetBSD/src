@@ -1,5 +1,5 @@
 /*	$KAME: sctp_asconf.h,v 1.8 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp_asconf.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.h,v 1.1.22.1 2019/06/10 22:09:47 christos Exp $ */
 
 #ifndef _NETINET_SCTP_ASCONF_H_
 #define _NETINET_SCTP_ASCONF_H_
@@ -36,29 +36,36 @@
 
 #if defined(_KERNEL)
 
-extern void sctp_asconf_cleanup(struct sctp_tcb *, struct sctp_nets *);
+struct sctp_tcb;
+struct sctp_nets;
+struct sctp_asconf_chunk;
+struct sockaddr;
+struct sctp_inpcb;
+struct sctp_asconf_ack_chunk;
 
-extern struct mbuf *sctp_compose_asconf(struct sctp_tcb *);
+void sctp_asconf_cleanup(struct sctp_tcb *, struct sctp_nets *);
 
-extern void sctp_handle_asconf(struct mbuf *, unsigned int, struct sctp_asconf_chunk *,
+struct mbuf *sctp_compose_asconf(struct sctp_tcb *);
+
+void sctp_handle_asconf(struct mbuf *, unsigned int, struct sctp_asconf_chunk *,
 	struct sctp_tcb *, struct sctp_nets *);
 
-extern void sctp_handle_asconf_ack(struct mbuf *, int,
+void sctp_handle_asconf_ack(struct mbuf *, int,
 	struct sctp_asconf_ack_chunk *, struct sctp_tcb *, struct sctp_nets *);
 
-extern uint32_t sctp_addr_mgmt_ep_sa(struct sctp_inpcb *, struct sockaddr *,
+uint32_t sctp_addr_mgmt_ep_sa(struct sctp_inpcb *, struct sockaddr *,
 	uint16_t);
 
-extern void sctp_add_ip_address(struct ifaddr *);
+void sctp_add_ip_address(struct ifaddr *);
 
-extern void sctp_delete_ip_address(struct ifaddr *);
+void sctp_delete_ip_address(struct ifaddr *);
 
-extern int32_t sctp_set_primary_ip_address_sa(struct sctp_tcb *,
+int32_t sctp_set_primary_ip_address_sa(struct sctp_tcb *,
 	struct sockaddr *);
 
-extern void sctp_set_primary_ip_address(struct ifaddr *);
+void sctp_set_primary_ip_address(struct ifaddr *);
 
-extern void sctp_check_address_list(struct sctp_tcb *, struct mbuf *, int, int,
+void sctp_check_address_list(struct sctp_tcb *, struct mbuf *, int, int,
 	struct sockaddr *, uint16_t, uint16_t, uint16_t, uint16_t);
 
 #endif /* _KERNEL */

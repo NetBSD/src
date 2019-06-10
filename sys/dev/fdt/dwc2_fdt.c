@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.2 2018/06/16 23:44:26 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.2.4.1 2019/06/10 22:07:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2 2018/06/16 23:44:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2.4.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2 2018/06/16 23:44:26 jmcneill Exp $"
 #include <sys/mutex.h>
 #include <sys/bus.h>
 #include <sys/workqueue.h>
-
-#include <arm/broadcom/bcm2835reg.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -66,6 +64,7 @@ static int dwc2_fdt_match(device_t, struct cfdata *, void *);
 static void dwc2_fdt_attach(device_t, device_t, void *);
 static void dwc2_fdt_deferred(device_t);
 
+static void dwc2_fdt_amlogic_params(struct dwc2_fdt_softc *, struct dwc2_core_params *);
 static void dwc2_fdt_rockchip_params(struct dwc2_fdt_softc *, struct dwc2_core_params *);
 
 struct dwc2_fdt_config {
@@ -76,10 +75,16 @@ static const struct dwc2_fdt_config dwc2_fdt_rk3066_config = {
 	.params = dwc2_fdt_rockchip_params,
 };
 
+static const struct dwc2_fdt_config dwc2_fdt_meson8b_config = {
+	.params = dwc2_fdt_amlogic_params,
+};
+
 static const struct dwc2_fdt_config dwc2_fdt_generic_config = {
 };
 
 static const struct of_compat_data compat_data[] = {
+	{ "amlogic,meson8b-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
+	{ "amlogic,meson-gxbb-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
 	{ "rockchip,rk3066-usb",	(uintptr_t)&dwc2_fdt_rk3066_config },
 	{ "snps,dwc2",			(uintptr_t)&dwc2_fdt_generic_config },
 	{ NULL }
@@ -196,6 +201,27 @@ dwc2_fdt_deferred(device_t self)
 	}
 	sc->sc_dwc2.sc_child = config_found(sc->sc_dwc2.sc_dev,
 	    &sc->sc_dwc2.sc_bus, usbctlprint);
+}
+
+static void
+dwc2_fdt_amlogic_params(struct dwc2_fdt_softc *sc, struct dwc2_core_params *params)
+{
+	dwc2_set_all_params(params, -1);
+
+	params->otg_cap = DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE;
+	params->speed = DWC2_SPEED_PARAM_HIGH;
+	params->dma_enable = 1;
+	params->enable_dynamic_fifo = 1,
+	params->host_rx_fifo_size = 512;
+	params->host_nperio_tx_fifo_size = 500;
+	params->host_perio_tx_fifo_size = 500;
+	params->host_channels = 16;
+	params->phy_type = DWC2_PHY_TYPE_PARAM_UTMI;
+	params->reload_ctl = 1,
+	params->ahbcfg = GAHBCFG_HBSTLEN_INCR8 << GAHBCFG_HBSTLEN_SHIFT;
+#ifdef DWC2_POWER_DOWN_PARAM_NONE
+	params->power_down = DWC2_POWER_DOWN_PARAM_NONE;
+#endif
 }
 
 static void

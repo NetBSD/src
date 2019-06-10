@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.51 2015/06/11 05:22:55 matt Exp $	*/
+/*	$NetBSD: mii.c,v 1.51.18.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.51 2015/06/11 05:22:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.51.18.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,9 +63,11 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
-	int bmsr, offset = 0;
+	int offset = 0;
+	uint16_t bmsr;
 	int phymin, phymax;
 	int locs[MIICF_NLOCS];
+	int rv;
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
@@ -103,9 +105,11 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 		 * many braindead PHYs report 0/0 in their ID registers,
 		 * so we test for media in the BMSR.
 		 */
-		bmsr = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR);
-		if (bmsr == 0 || bmsr == 0xffff ||
-		    (bmsr & (BMSR_EXTSTAT|BMSR_MEDIAMASK)) == 0) {
+		bmsr = 0;
+		rv = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR,
+		    &bmsr);
+		if ((rv != 0) || bmsr == 0 || bmsr == 0xffff ||
+		    (bmsr & (BMSR_EXTSTAT | BMSR_MEDIAMASK)) == 0) {
 			/* Assume no PHY at this address. */
 			continue;
 		}
@@ -124,10 +128,13 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 		 * the `ukphy' driver, as we have no ID information to
 		 * match on.
 		 */
-		ma.mii_id1 = (*mii->mii_readreg)(parent, ma.mii_phyno,
-		    MII_PHYIDR1);
-		ma.mii_id2 = (*mii->mii_readreg)(parent, ma.mii_phyno,
-		    MII_PHYIDR2);
+		ma.mii_id1 = ma.mii_id2 = 0;
+		rv = (*mii->mii_readreg)(parent, ma.mii_phyno,
+		    MII_PHYIDR1, &ma.mii_id1);
+		rv |= (*mii->mii_readreg)(parent, ma.mii_phyno,
+		    MII_PHYIDR2, &ma.mii_id2);
+		if (rv != 0)
+			continue;
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
@@ -138,9 +145,7 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 		child = device_private(config_found_sm_loc(parent, "mii",
 			locs, &ma, mii_print, config_stdsubmatch));
 		if (child) {
-			/*
-			 * Link it up in the parent's MII data.
-			 */
+			/* Link it up in the parent's MII data. */
 			callout_init(&child->mii_nway_ch, 0);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
@@ -187,12 +192,13 @@ mii_print(void *aux, const char *pnp)
 		    MII_REV(ma->mii_id2), pnp);
 
 	aprint_normal(" phy %d", ma->mii_phyno);
-	return (UNCONF);
+	return UNCONF;
 }
 
 static inline int
 phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
+
 	if (!device_is_active(sc->mii_dev))
 		return ENXIO;
 	return PHY_SERVICE(sc, mii, cmd);
@@ -219,9 +225,9 @@ mii_mediachg(struct mii_data *mii)
 	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 		rv = phy_service(child, mii, MII_MEDIACHG);
 		if (rv)
-			return (rv);
+			return rv;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -274,7 +280,7 @@ bitreverse(unsigned char x)
 }
 
 u_int
-mii_oui(u_int id1, u_int id2)
+mii_oui(uint16_t id1, uint16_t id2)
 {
 	u_int h;
 

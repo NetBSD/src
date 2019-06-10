@@ -1,4 +1,4 @@
-/*	$NetBSD: pathname.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: pathname.h,v 1.4.2.1 2019/06/10 21:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -46,8 +46,6 @@ typedef struct pathname {
 #define	NO_FOLLOW	NOFOLLOW
 
 int lookupname(char *, enum uio_seg, enum symfollow, vnode_t **, vnode_t **);
-int lookupnameat(char *, enum uio_seg, enum symfollow, vnode_t **, vnode_t **,
-    vnode_t *);
 
 #endif	/* _KERNEL */
 

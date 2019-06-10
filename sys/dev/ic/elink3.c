@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.142 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.142.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.142 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.142.2.1 2019/06/10 22:07:10 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -135,23 +135,23 @@ struct ep_media {
  * MII and real PHYs attached; no `native' media.
  */
 const struct ep_media ep_vortex_media[] = {
-	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER | IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
+	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER | IFM_10_T | IFM_FDX,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER | IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER | IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER | IFM_100_TX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER|IFM_100_TX|IFM_FDX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER | IFM_100_TX|IFM_FDX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
+	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER | IFM_100_FX,
 	  ELINKMEDIA_100BASE_FX },
-	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER|IFM_MANUAL,
+	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER | IFM_MANUAL,
 	  ELINKMEDIA_MII },
-	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
+	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER | IFM_100_T4,
 	  ELINKMEDIA_100BASE_T4 },
 	{ 0,			NULL,		0,
 	  0 },
@@ -162,11 +162,11 @@ const struct ep_media ep_vortex_media[] = {
  * in the 3c509, 3c579, and 3c589.
  */
 const struct ep_media ep_509_media[] = {
-	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER | IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER | IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_W0_CC_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	{ ELINK_W0_CC_BNC,	"10base2",	IFM_ETHER | IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
 	{ 0,			NULL,		0,
 	  0 },
@@ -198,8 +198,8 @@ int	ep_media_change(struct ifnet *ifp);
 void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 
 /* MII callbacks */
-int	ep_mii_readreg(device_t, int, int);
-void	ep_mii_writereg(device_t, int, int, int);
+int	ep_mii_readreg(device_t, int, int, uint16_t *);
+int	ep_mii_writereg(device_t, int, int, uint16_t);
 void	ep_statchg(struct ifnet *);
 
 void	ep_tick(void *);
@@ -319,6 +319,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct mii_data *mii = &sc->sc_mii;
 	u_int16_t i;
 	u_int8_t myla[ETHER_ADDR_LEN];
 
@@ -363,7 +364,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, ELINK_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
-	switch (i)  {
+	switch (i) {
 	case ELINK_LARGEWIN_PROBE:
 	case (ELINK_LARGEWIN_PROBE & ELINK_LARGEWIN_MASK):
 		sc->ep_pktlenshift = 0;
@@ -396,8 +397,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	ifp->if_watchdog = epwatchdog;
 	ifp->if_init = epinit;
 	ifp->if_stop = epstop;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -427,11 +427,12 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	 * Initialize our media structures and MII info.  We'll
 	 * probe the MII if we discover that we have one.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ep_mii_readreg;
-	sc->sc_mii.mii_writereg = ep_mii_writereg;
-	sc->sc_mii.mii_statchg = ep_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ep_media_change,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ep_mii_readreg;
+	mii->mii_writereg = ep_mii_writereg;
+	mii->mii_statchg = ep_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ep_media_change,
 	    ep_media_status);
 
 	/*
@@ -459,16 +460,16 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
-			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(sc->sc_dev, mii, 0xffffffff,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
-			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-				ifmedia_add(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE, 0, NULL);
-				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE);
+			if (LIST_FIRST(&mii->mii_phys) == NULL) {
+				ifmedia_add(&mii->mii_media,
+				    IFM_ETHER | IFM_NONE, 0, NULL);
+				ifmedia_set(&mii->mii_media,
+				    IFM_ETHER | IFM_NONE);
 			} else {
-				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_AUTO);
+				ifmedia_set(&mii->mii_media,
+				    IFM_ETHER | IFM_AUTO);
 			}
 			break;
 		}
@@ -573,8 +574,8 @@ ep_509_probemedia(struct ep_softc *sc)
 	/* Sanity check that there are any media! */
 	if ((ep_w0_config & ELINK_W0_CC_MEDIAMASK) == 0) {
 		aprint_error("no media present!\n");
-		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
 		return;
 	}
 
@@ -644,8 +645,8 @@ ep_vortex_probemedia(struct ep_softc *sc)
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
 		aprint_error("no media present!\n");
-		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
 		return;
 	}
 
@@ -878,16 +879,16 @@ ep_roadrunner_mii_enable(struct ep_softc *sc)
 
 	GO_WINDOW(3);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_ENABLE_MII);
 	delay(1000);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_MII_RESET|
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_MII_RESET |
 	    ELINK_RUNNER_ENABLE_MII);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	delay(1000);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_ENABLE_MII);
 }
 
 /*
@@ -1046,7 +1047,7 @@ ep_media_status(struct ifnet *ifp, struct ifmediareq *req)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->enabled == 0) {
-		req->ifm_active = IFM_ETHER|IFM_NONE;
+		req->ifm_active = IFM_ETHER | IFM_NONE;
 		req->ifm_status = 0;
 		return;
 	}
@@ -1179,9 +1180,9 @@ startagain:
 	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
 	if (ELINK_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m;) {
-			if (m->m_len > 3)  {
+			if (m->m_len > 3) {
 				/* align our reads from core */
-				if (mtod(m, u_long) & 3)  {
+				if (mtod(m, u_long) & 3) {
 					u_long count =
 					    4 - (mtod(m, u_long) & 3);
 					bus_space_write_multi_1(iot, ioh,
@@ -1196,7 +1197,7 @@ startagain:
 					(u_long)(m->m_len & ~3));
 				m->m_len -= m->m_len & ~3;
 			}
-			if (m->m_len)  {
+			if (m->m_len) {
 				bus_space_write_multi_1(iot, ioh,
 				    txreg, mtod(m, u_int8_t *), m->m_len);
 			}
@@ -1204,8 +1205,8 @@ startagain:
 		}
 	} else {
 		for (m = m0; m;) {
-			if (m->m_len > 1)  {
-				if (mtod(m, u_long) & 1)  {
+			if (m->m_len > 1) {
+				if (mtod(m, u_long) & 1) {
 					bus_space_write_1(iot, ioh,
 					    txreg, *(mtod(m, u_int8_t *)));
 					m->m_data =
@@ -1216,7 +1217,7 @@ startagain:
 				    txreg, mtod(m, u_int16_t *),
 				    m->m_len >> 1);
 			}
-			if (m->m_len & 1)  {
+			if (m->m_len & 1) {
 				bus_space_write_1(iot, ioh, txreg,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
 			}
@@ -1341,7 +1342,7 @@ eptxstat(struct ep_softc *sc)
 				       device_xname(sc->sc_dev), i,
 				       sc->tx_start_thresh);
 			if (sc->tx_succ_ok < 100)
-				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
+				    sc->tx_start_thresh = uimin(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
 			epreset(sc);
@@ -1614,7 +1615,7 @@ epget(struct ep_softc *sc, int totlen)
 		 * (We can align to 4 bytes, rather than ALIGNBYTES,
 		 * here because we're later reading 4-byte chunks.)
 		 */
-		if ((remaining > 3) && (offset & 3))  {
+		if ((remaining > 3) && (offset & 3)) {
 			int count = (4 - (offset & 3));
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, count);
@@ -1628,12 +1629,12 @@ epget(struct ep_softc *sc, int totlen)
 			offset += remaining & ~3;
 			remaining &= 3;
 		}
-		if (remaining)  {
+		if (remaining) {
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, remaining);
 		}
 	} else {
-		if ((remaining > 1) && (offset & 1))  {
+		if ((remaining > 1) && (offset & 1)) {
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, 1);
 			remaining -= 1;
@@ -1645,7 +1646,7 @@ epget(struct ep_softc *sc, int totlen)
 			    remaining >> 1);
 			offset += remaining & ~1;
 		}
-		if (remaining & 1)  {
+		if (remaining & 1) {
 				bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, remaining & 1);
 		}
@@ -1664,18 +1665,11 @@ int
 epioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ep_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if (sc->enabled == 0) {
@@ -1683,6 +1677,7 @@ epioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 
@@ -2042,30 +2037,33 @@ ep_mii_bitbang_write(device_t self, u_int32_t val)
 }
 
 int
-ep_mii_readreg(device_t self, int phy, int reg)
+ep_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct ep_softc *sc = device_private(self);
-	int val;
+	int rv;
 
 	GO_WINDOW(4);
 
-	val = mii_bitbang_readreg(self, &ep_mii_bitbang_ops, phy, reg);
+	rv = mii_bitbang_readreg(self, &ep_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
 
-	return (val);
+	return rv;
 }
 
-void
-ep_mii_writereg(device_t self, int phy, int reg, int val)
+int
+ep_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct ep_softc *sc = device_private(self);
+	int rv;
 
 	GO_WINDOW(4);
 
-	mii_bitbang_writereg(self, &ep_mii_bitbang_ops, phy, reg, val);
+	rv = mii_bitbang_writereg(self, &ep_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
+
+	return rv;
 }
 
 void

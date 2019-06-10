@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $ */
+/*	$NetBSD: genfb.c,v 1.63.2.1 2019/06/10 22:07:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63.2.1 2019/06/10 22:07:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $");
 
 #include <dev/wsfb/genfbvar.h>
 
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
+
 #ifdef GENFB_DISABLE_TEXT
 #include <sys/reboot.h>
 #define DISABLESPLASH (boothowto & (RB_SINGLE | RB_USERCONF | RB_ASKNAME | \
@@ -58,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $");
 #ifdef _KERNEL_OPT
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
+#include "opt_rasops.h"
 #endif
 
 #ifdef GENFB_DEBUG
@@ -67,12 +71,15 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $");
 #endif
 
 #define GENFB_BRIGHTNESS_STEP 15
+#define	GENFB_CHAR_WIDTH_MM 3
 
 static int	genfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	genfb_mmap(void *, void *, off_t, int);
 static void	genfb_pollc(void *, int);
 
 static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
+static int	genfb_calc_hsize(struct genfb_softc *);
+static int	genfb_calc_cols(struct genfb_softc *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
@@ -298,7 +305,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 #ifdef SPLASHSCREEN
 	j = 0;
-	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
+	for (i = 0; i < uimin(1 << sc->sc_depth, 256); i++) {
 		if (i >= SPLASH_CMAP_OFFSET &&
 		    i < SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE) {
 			splash_get_cmap(i,
@@ -530,6 +537,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct genfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
+	int wantcols;
 
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
@@ -583,8 +591,9 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 
+	wantcols = genfb_calc_cols(sc);
 
-	rasops_init(ri, 0, 0);
+	rasops_init(ri, 0, wantcols);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
 		  WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -597,6 +606,36 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (scr == &sc->sc_console_screen && !DISABLESPLASH)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
+}
+
+/* Returns the width of the display in millimeters, or 0 if not known. */
+static int
+genfb_calc_hsize(struct genfb_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_data_t edid_data;
+	struct edid_info edid;
+	const char *edid_ptr;
+
+	edid_data = prop_dictionary_get(dict, "EDID");
+	if (edid_data == NULL || prop_data_size(edid_data) < 128)
+		return 0;
+
+	edid_ptr = prop_data_data_nocopy(edid_data);
+	if (edid_parse(__UNCONST(edid_ptr), &edid) != 0)
+		return 0;
+
+	return (int)edid.edid_max_hsize * 10;
+}
+
+/* Return the minimum number of character columns based on DPI */
+static int
+genfb_calc_cols(struct genfb_softc *sc)
+{
+	const int hsize = genfb_calc_hsize(sc);
+
+	return MAX(RASOPS_DEFAULT_WIDTH, hsize / GENFB_CHAR_WIDTH_MM);
 }
 
 static int

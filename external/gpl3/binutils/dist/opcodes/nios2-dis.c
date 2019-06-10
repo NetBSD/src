@@ -22,6 +22,7 @@
 
 #include "sysdep.h"
 #include "disassemble.h"
+#include "opintl.h"
 #include "opcode/nios2.h"
 #include "libiberty.h"
 #include <string.h>
@@ -130,9 +131,9 @@ nios2_init_opcode_hash (nios2_disassembler_state *state)
 	      (nios2_opcode_hash *) malloc (sizeof (nios2_opcode_hash));
 	    if (new_hash == NULL)
 	      {
-		fprintf (stderr,
-			 "error allocating memory...broken disassembler\n");
-		abort ();
+		/* xgettext:c-format */
+		opcodes_error_handler (_("out of memory"));
+		exit (1);
 	      }
 	    new_hash->opcode = op;
 	    new_hash->next = NULL;
@@ -257,8 +258,10 @@ nios2_control_regs (void)
 static void
 bad_opcode (const struct nios2_opcode *op)
 {
-  fprintf (stderr, "Internal error: broken opcode descriptor for `%s %s'\n",
-	   op->name, op->args);
+  opcodes_error_handler
+    /* xgettext:c-format */
+    (_("internal error: broken opcode descriptor for `%s %s'"),
+     op->name, op->args);
   abort ();
 }
 

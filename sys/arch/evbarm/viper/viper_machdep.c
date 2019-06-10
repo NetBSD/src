@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.25 2016/12/22 14:47:56 cherry Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.25.16.1 2019/06/10 22:06:11 christos Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,8 +112,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.25 2016/12/22 14:47:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.25.16.1 2019/06/10 22:06:11 christos Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -751,7 +753,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 	printf("pmap ");
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 

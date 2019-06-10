@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.42 2018/05/25 15:33:56 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.42.2.1 2019/06/10 22:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  * handler.
  */
 
-#ifdef	XEN
+#ifdef	XENPV
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
@@ -179,7 +179,7 @@ IDTVEC_END(trap00)
  * to contain secrets.
  */
 IDTVEC(trap01)
-#ifndef XEN
+#ifndef XENPV
 	subq	$(TF_REGSIZE+16),%rsp
 
 	/* We clobber only RDX, RCX and RAX. */
@@ -192,7 +192,7 @@ IDTVEC(trap01)
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	cmpl	$VM_SPACE_SEP_HIGH32,%edx
 	jae	.Lkern_dbentry
 
 	/* SS shadow, ignore the exception. */
@@ -247,14 +247,18 @@ IDTVEC_END(trap01)
  * running in kernel mode with a userland %gs.
  */
 IDTVEC(trap02)
-#if defined(XEN)
+#if defined(XENPV)
 	ZTRAP(T_NMI)
 #else
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
 	IBRS_ENTER
-	SVS_ENTER_ALTSTACK
+1:
+
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
@@ -262,16 +266,17 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 
+	SVS_ENTER_NMI
+
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	cmpl	$VM_SPACE_SEP_HIGH32,%edx
 	jae	.Lnoswapgs
 
 	swapgs
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
 	swapgs
 	jmp	.Lnmileave
 
@@ -279,10 +284,15 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	MDS_LEAVE
 	IBRS_LEAVE
+1:
+
+	SVS_LEAVE_NMI
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
@@ -346,18 +356,21 @@ IDTVEC_END(trap07)
  * of it. So don't enable interrupts.
  */
 IDTVEC(trap08)
-#if defined(XEN)
+#if defined(XENPV)
 	TRAP(T_DOUBLEFLT)
 #else
 	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
-	IBRS_ENTER
-	SVS_ENTER_ALTSTACK
+
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1f
+	IBRS_ENTER
 	swapgs
 1:
+
+	SVS_ENTER_ALTSTACK
+
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
@@ -369,14 +382,15 @@ IDTVEC(trap08)
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(doubletrap)
 
-	SVS_LEAVE_ALTSTACK
-	IBRS_LEAVE
-	INTR_RESTORE_GPRS
-
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1f
+	MDS_LEAVE
+	SVS_LEAVE_ALTSTACK
+	IBRS_LEAVE
 	swapgs
 1:
+
+	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif
@@ -390,7 +404,7 @@ IDTVEC(trap10)
 	TRAP(T_TSSFLT)
 IDTVEC_END(trap10)
 
-#ifdef XEN
+#ifdef XENPV
 /*
  * I don't believe XEN generates in-kernel traps for the
  * equivalent of iret, if it does this code would be needed
@@ -626,7 +640,7 @@ END(kernuser_reenter)
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 .Lalltraps_noentry:
 	STI(si)

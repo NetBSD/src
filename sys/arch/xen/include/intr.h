@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.46 2018/06/24 13:35:32 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.46.2.1 2019/06/10 22:06:54 christos Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -36,7 +36,8 @@
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
 #include <x86/intr.h>
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
@@ -61,9 +62,10 @@ struct evtsource {
 	char ev_xname[64];		/* handler device list */
 };
 
+#define XMASK(ci,level) (ci)->ci_xmask[(level)]
+#define XUNMASK(ci,level) (ci)->ci_xunmask[(level)]
+
 extern struct intrstub xenev_stubs[];
-extern int irq2vect[256];
-extern int vect2irq[256];
 extern int irq2port[NR_EVENT_CHANNELS]; /* actually port + 1, so that 0 is invaid */
 
 #ifdef MULTIPROCESSOR
@@ -71,7 +73,8 @@ int xen_intr_biglock_wrapper(void *);
 #endif
 
 #if defined(DOM0OPS) || NPCI > 0
-int xen_pirq_alloc(intr_handle_t *, int);
+int xen_vec_alloc(int);
+int xen_pic_to_gsi(struct pic *, int);
 #endif /* defined(DOM0OPS) || NPCI > 0 */
 
 #ifdef MULTIPROCESSOR
@@ -83,6 +86,13 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
+
+void *xen_intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool, const char *);
+void *xen_intr_establish(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool);
+void xen_intr_disestablish(struct intrhand *);
+
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */

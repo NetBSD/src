@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,7 @@
 #include <sgidefs.h>
 #include "nat/gdb_ptrace.h"
 #include <asm/ptrace.h>
+#include "inf-ptrace.h"
 
 #include "nat/mips-linux-watch.h"
 
@@ -244,9 +245,7 @@ mips64_linux_regsets_fetch_registers (struct target_ops *ops,
   else
     is_dsp = 0;
 
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regno == -1 || (!is_fp && !is_dsp))
     {
@@ -332,9 +331,7 @@ mips64_linux_regsets_store_registers (struct target_ops *ops,
   else
     is_dsp = 0;
 
-  tid = ptid_get_lwp (inferior_ptid);
-  if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid);
+  tid = get_ptrace_pid (regcache_get_ptid (regcache));
 
   if (regno == -1 || (!is_fp && !is_dsp))
     {
@@ -627,14 +624,13 @@ write_watchpoint_regs (void)
 static void
 mips_linux_new_thread (struct lwp_info *lp)
 {
-  int tid;
+  long tid = lp->ptid.lwp ();
 
-  if (!mips_linux_read_watch_registers (ptid_get_lwp (inferior_ptid),
+  if (!mips_linux_read_watch_registers (tid,
 					&watch_readback,
 					&watch_readback_valid, 0))
     return;
 
-  tid = ptid_get_lwp (lp->ptid);
   if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror, NULL) == -1)
     perror_with_name (_("Couldn't write debug register"));
 }

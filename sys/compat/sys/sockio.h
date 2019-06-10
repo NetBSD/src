@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.12 2018/04/15 22:13:36 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.12.2.1 2019/06/10 22:07:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -32,29 +32,7 @@
 #ifndef _COMPAT_SYS_SOCKIO_H_
 #define	_COMPAT_SYS_SOCKIO_H_
 
-#ifdef _KERNEL_OPT
-
-#include "opt_compat_netbsd.h"
-#include "opt_modular.h"
-
 #include <sys/ioccom.h>
-
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40) || defined(MODULAR)
-#define COMPAT_OIFREQ
-#endif
-
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40) || defined(COMPAT_50) || \
-    defined(MODULAR)
-#define COMPAT_OIFDATA
-#endif
-
-#endif /* _KERNEL_OPT */
 
 #define OIFNAMSIZ	16
 
@@ -134,63 +112,50 @@ struct oifdatareq {
 #define	OSIOCGIFCONF	 _IOWR('i', 36, struct ifconf)	/* get ifnet list */
 #define	OSIOCADDMULTI	 _IOW('i', 49, struct oifreq)	/* add m'cast addr */
 #define	OSIOCDELMULTI	 _IOW('i', 50, struct oifreq)	/* del m'cast addr */
-#define	OSIOCSIFMEDIA	 _IOWR('i', 53, struct oifreq)	/* set net media */
+#define	SIOCSIFMEDIA_43	 _IOWR('i', 53, struct oifreq)	/* set net media */
+#define	SIOCSIFMEDIA_80	 _IOWR('i', 53, struct ifreq)	/* set net media */
+#define	SIOCGIFMEDIA_80	 _IOWR('i', 54, struct ifmediareq) /* set net media */
 #define	OSIOCGIFMTU	 _IOWR('i', 126, struct oifreq)	/* get ifnet mtu */
 #define	OSIOCGIFDATA	 _IOWR('i', 128, struct oifdatareq) /* get if_data */
 #define	OSIOCZIFDATA	 _IOWR('i', 129, struct oifdatareq) /* get if_data then
 							     zero ctrs*/
 
 
-
-
 #define	OBIOCGETIF	 _IOR('B', 107, struct oifreq)
 #define	OBIOCSETIF	 _IOW('B', 108, struct oifreq)
 #define	OTAPGIFNAME	 _IOR('e', 0, struct oifreq)
 
-#define ifreqn2o(oi, ni) \
-	do { \
-		(void)memcpy((oi)->ifr_name, (ni)->ifr_name, \
-		    sizeof((oi)->ifr_name)); \
-		(void)memcpy(&(oi)->ifr_ifru, &(ni)->ifr_ifru, \
-		    sizeof((oi)->ifr_ifru)); \
+#define IFREQN2O_43(oi, ni)					\
+	do {							\
+		(void)memcpy((oi)->ifr_name, (ni)->ifr_name,	\
+		    sizeof((oi)->ifr_name));			\
+		(void)memcpy(&(oi)->ifr_ifru, &(ni)->ifr_ifru,	\
+		    sizeof((oi)->ifr_ifru));			\
 	} while (/*CONSTCOND*/0)
 
-#define ifreqo2n(oi, ni) \
-	do { \
-		(void)memcpy((ni)->ifr_name, (oi)->ifr_name, \
-		    sizeof((oi)->ifr_name)); \
-		(void)memcpy(&(ni)->ifr_ifru, &(oi)->ifr_ifru, \
-		    sizeof((oi)->ifr_ifru)); \
+#define IFREQO2N_43(oi, ni)					\
+	do {							\
+		(void)memcpy((ni)->ifr_name, (oi)->ifr_name,	\
+		    sizeof((oi)->ifr_name));			\
+		(void)memcpy(&(ni)->ifr_ifru, &(oi)->ifr_ifru,	\
+		    sizeof((oi)->ifr_ifru));			\
 	} while (/*CONSTCOND*/0)
 
-#define ifdatan2o(oi, ni) \
-	do { \
-		(void)memcpy((oi), (ni),  sizeof(*(oi))); \
-		(oi)->ifi_lastchange.tv_sec = \
-		    (int32_t)(ni)->ifi_lastchange.tv_sec; \
-		(oi)->ifi_lastchange.tv_usec = \
-		    (ni)->ifi_lastchange.tv_nsec / 1000; \
+#define ifdatan2o(oi, ni)					\
+	do {							\
+		(void)memcpy((oi), (ni),  sizeof(*(oi)));	\
+		(oi)->ifi_lastchange.tv_sec =			\
+		    (int32_t)(ni)->ifi_lastchange.tv_sec;	\
+		(oi)->ifi_lastchange.tv_usec =			\
+		    (ni)->ifi_lastchange.tv_nsec / 1000;	\
 	} while (/*CONSTCOND*/0)
 
-#define ifdatao2n(oi, ni) \
-	do { \
-		(void)memcpy((ni), (oi),  sizeof(*(oi))); \
-		    sizeof((oi)->ifr_name)); \
+#define ifdatao2n(oi, ni)						   \
+	do {								   \
+		(void)memcpy((ni), (oi),  sizeof(*(oi)));		   \
 		(ni)->ifi_lastchange.tv_sec = (oi)->ifi_lastchange.tv_sec; \
-		(ni)->ifi_lastchange.tv_nsec = \
-		    (oi)->ifi_lastchange.tv_usec * 1000; \
+		(ni)->ifi_lastchange.tv_nsec =				   \
+		    (oi)->ifi_lastchange.tv_usec * 1000;		   \
 	} while (/*CONSTCOND*/0)
-
-#ifdef _KERNEL
-
-extern int (*vec_compat_ifconf)(struct lwp *, u_long, void *);
-extern int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *);
-
-void uipc_syscalls_40_init(void);
-void uipc_syscalls_40_fini(void);
-void uipc_syscalls_50_init(void);
-void uipc_syscalls_50_fini(void);
-
-#endif
 
 #endif /* _COMPAT_SYS_SOCKIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.108 2018/04/27 07:53:07 maxv Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.108.2.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.108 2018/04/27 07:53:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.108.2.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -796,7 +796,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
     bool readonly_p)
 {
 
-#ifdef ARM_MMU_EXTENDED
+#if defined(ARM_MMU_EXTENDED) || defined(CPU_CORTEX)
 	/*
 	 * No optimisations are available for readonly mbufs on armv6+, so
 	 * assume it's not readonly from here on.
@@ -905,7 +905,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		}
 
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
-		size_t seglen = min(len, ds->ds_len - offset);
+		size_t seglen = uimin(len, ds->ds_len - offset);
 
 		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
 			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops,
@@ -941,7 +941,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		 * Now at the first mbuf to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
+		vsize_t seglen = uimin(len, uimin(m->m_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = mtod(m, vaddr_t) + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
@@ -1005,7 +1005,7 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * Now at the first iovec to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
+		vsize_t seglen = uimin(len, uimin(iov->iov_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
@@ -1021,9 +1021,6 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
- *
- * This version works for the Virtually Indexed Virtually Tagged
- * cache found on 32-bit ARM processors.
  *
  * XXX Should have separate versions for write-through vs.
  * XXX write-back caches.  We currently assume write-back
@@ -1496,7 +1493,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	for (i = 0; i < nsegs; i++) {
 		KASSERTMSG((off & PAGE_MASK) == 0,
-		    "off %#qx (%#x)", off, (int)off & PAGE_MASK);
+		    "off %#jx (%#x)", (uintmax_t)off, (int)off & PAGE_MASK);
 		KASSERTMSG((segs[i].ds_addr & PAGE_MASK) == 0,
 		    "ds_addr %#lx (%#x)", segs[i].ds_addr,
 		    (int)segs[i].ds_addr & PAGE_MASK);
@@ -1686,7 +1683,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			 * Beginning of region intersects with this range.
 			 */
 			*pap = trunc_page(pa);
-			*sizep = round_page(min(pa + size,
+			*sizep = round_page(uimin(pa + size,
 			    dr->dr_sysbase + dr->dr_len) - pa);
 			return 1;
 		}
@@ -1695,7 +1692,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			 * End of region intersects with this range.
 			 */
 			*pap = trunc_page(dr->dr_sysbase);
-			*sizep = round_page(min((pa + size) - dr->dr_sysbase,
+			*sizep = round_page(uimin((pa + size) - dr->dr_sysbase,
 			    dr->dr_len));
 			return 1;
 		}

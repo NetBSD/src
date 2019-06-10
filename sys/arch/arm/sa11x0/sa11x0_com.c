@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.55 2015/04/13 21:18:41 riastradh Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.55.18.1 2019/06/10 22:05:56 christos Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,9 +64,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.55 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.55.18.1 2019/06/10 22:05:56 christos Exp $");
 
 #include "opt_com.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"

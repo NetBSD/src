@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.121 2018/05/14 17:15:54 joerg Exp $	*/
+/*	$NetBSD: armreg.h,v 1.121.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -282,6 +282,20 @@
 #define PJ4B_AUXFMC0_DCSLFD	__BIT(2)  /* Disable DC Speculative linefill */
 #define PJ4B_AUXFMC0_FW		__BIT(8)  /* alias of PJ4B_AUXCTL_FW*/
 
+/* Cortex-A5 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA5_ACTLR_FW	__BIT(0)
+#define	CORTEXA5_ACTLR_SMP	__BIT(6)  /* Inner Cache Shared is cacheable */
+#define	CORTEXA5_ACTLR_EXCL	__BIT(7)  /* Exclusive L1/L2 cache control */
+
+/* Cortex-A7 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA7_ACTLR_L1ALIAS	__BIT(0)  /* Enables L1 cache alias checks */
+#define	CORTEXA7_ACTLR_L2EN	__BIT(1)  /* Enables L2 cache */
+#define	CORTEXA7_ACTLR_SMP	__BIT(6)  /* SMP */
+
+/* Cortex-A8 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA8_ACTLR_L1ALIAS	__BIT(0)  /* Enables L1 cache alias checks */
+#define	CORTEXA8_ACTLR_L2EN	__BIT(1)  /* Enables L2 cache */
+
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
 #define	CORTEXA9_AUXCTL_L2PE	0x00000002 /* Prefetch hint enable */
@@ -296,6 +310,7 @@
 #define	CORTEXA15_ACTLR_BTB	__BIT(0)  /* Cache and TLB updates broadcast */
 #define	CORTEXA15_ACTLR_SMP	__BIT(6)  /* SMP */
 #define	CORTEXA15_ACTLR_IOBEU	__BIT(15) /* In order issue in Branch Exec Unit */
+#define	CORTEXA15_ACTLR_SDEH	__BIT(31) /* snoop-delayed exclusive handling */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
@@ -508,12 +523,12 @@
 #define TTBCR_L_EPD0	__BIT(7)	// Don't use TTBR0
 #define TTBCR_L_T0SZ	__BITS(2,0)	// TTBR0 size offset
 
-#define NRRR_ORn(n)	__BITS(17+2*(n),16+2*(n)) // Outer Cacheable mappings
-#define NRRR_IRn(n)	__BITS(1+2*(n),0+2*(n)) // Inner Cacheable mappings
-#define NRRR_NC		0		// non-cacheable
-#define NRRR_WB_WA	1		// write-back write-allocate
-#define NRRR_WT		2		// write-through
-#define NRRR_WB		3		// write-back
+#define NMRR_ORn(n)	__BITS(17+2*(n),16+2*(n)) // Outer Cacheable mappings
+#define NMRR_IRn(n)	__BITS(1+2*(n),0+2*(n)) // Inner Cacheable mappings
+#define NMRR_NC		0		// non-cacheable
+#define NMRR_WBWA	1		// write-back write-allocate
+#define NMRR_WT		2		// write-through
+#define NMRR_WB		3		// write-back
 #define PRRR_NOSn(n)	__BITS(24+2*(n))// Memory region is Inner Shareable
 #define PRRR_NS1	__BIT(19)	// Normal Shareable S=1 is Shareable
 #define PRRR_NS0	__BIT(18)	// Normal Shareable S=0 is Shareable
@@ -835,8 +850,16 @@ ARMREG_READ_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
 ARMREG_WRITE_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
 ARMREG_READ_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
 ARMREG_WRITE_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_READ_INLINE(pmselr, "p15,0,%0,c9,c12,5") /* PMC Event Counter Selection */
+ARMREG_WRITE_INLINE(pmselr, "p15,0,%0,c9,c12,5") /* PMC Event Counter Selection */
+ARMREG_READ_INLINE(pmceid0, "p15,0,%0,c9,c12,6") /* PMC Event ID 0 */
+ARMREG_READ_INLINE(pmceid1, "p15,0,%0,c9,c12,7") /* PMC Event ID 1 */
 ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+ARMREG_READ_INLINE(pmxevtyper, "p15,0,%0,c9,c13,1") /* PMC Event Type Select */
+ARMREG_WRITE_INLINE(pmxevtyper, "p15,0,%0,c9,c13,1") /* PMC Event Type Select */
+ARMREG_READ_INLINE(pmxevcntr, "p15,0,%0,c9,c13,2") /* PMC Event Count */
+ARMREG_WRITE_INLINE(pmxevcntr, "p15,0,%0,c9,c13,2") /* PMC Event Count */
 ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_READ_INLINE(pmintenset, "p15,0,%0,c9,c14,1") /* PMC Interrupt Enable Set */
@@ -847,8 +870,8 @@ ARMREG_READ_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
 /* cp10 c10 registers */
 ARMREG_READ_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
 ARMREG_WRITE_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
-ARMREG_READ_INLINE(nrrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
-ARMREG_WRITE_INLINE(nrrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
+ARMREG_READ_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Memory Remap Register */
+ARMREG_WRITE_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Memory Remap Register */
 /* cp15 c13 registers */
 ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
@@ -899,6 +922,15 @@ ARMREG_WRITE_INLINE(tlbdataop, "p15,3,%0,c15,c4,2") /* TLB Data Read Operation (
 
 ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
+
+#if defined(_KERNEL)
+
+static inline uint64_t
+cpu_mpidr_aff_read(void)
+{
+
+	return armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+}
 
 /*
  * GENERIC TIMER register access
@@ -994,7 +1026,15 @@ gtmr_cntv_cval_read(void)
 	return armreg_cntv_cval_read();
 }
 
-#endif /* !__ASSEMBLER__ */
+static inline void
+gtmr_cntv_cval_write(uint64_t val)
+{
+
+	armreg_cntv_cval_write(val);
+}
+
+#endif /* _KERNEL */
+#endif /* !__ASSEMBLER && !_RUMPKERNEL */
 
 #elif defined(__aarch64__)
 

@@ -1,5 +1,5 @@
 /* Post reload partially redundant load elimination
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,54 +20,23 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "diagnostic-core.h"
-
-#include "hash-table.h"
-#include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "tm_p.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "flags.h"
-#include "insn-config.h"
-#include "recog.h"
-#include "predict.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "basic-block.h"
-#include "profile.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "except.h"
-#include "intl.h"
-#include "obstack.h"
-#include "params.h"
+#include "backend.h"
 #include "target.h"
+#include "rtl.h"
+#include "tree.h"
+#include "predict.h"
+#include "df.h"
+#include "tm_p.h"
+#include "insn-config.h"
+#include "emit-rtl.h"
+#include "recog.h"
+
+#include "cfgrtl.h"
+#include "profile.h"
+#include "expr.h"
+#include "params.h"
 #include "tree-pass.h"
 #include "dbgcnt.h"
-#include "df.h"
 #include "gcse-common.h"
 
 /* The following code implements gcse after reload, the purpose of this
@@ -132,12 +101,10 @@ struct expr
 
 /* Hashtable helpers.  */
 
-struct expr_hasher : typed_noop_remove <expr>
+struct expr_hasher : nofree_ptr_hash <expr>
 {
-  typedef expr value_type;
-  typedef expr compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const expr *);
+  static inline bool equal (const expr *, const expr *);
 };
 
 
@@ -159,7 +126,7 @@ hash_expr (rtx x, int *do_not_record_p)
    here, we just return the cached hash value.  */
 
 inline hashval_t
-expr_hasher::hash (const value_type *exp)
+expr_hasher::hash (const expr *exp)
 {
   return exp->hash;
 }
@@ -168,7 +135,7 @@ expr_hasher::hash (const value_type *exp)
    Return nonzero if exp1 is equivalent to exp2.  */
 
 inline bool
-expr_hasher::equal (const value_type *exp1, const compare_type *exp2)
+expr_hasher::equal (const expr *exp1, const expr *exp2)
 {
   int equiv_p = exp_equiv_p (exp1->expr, exp2->expr, 0, true);
 
@@ -381,6 +348,8 @@ free_mem (void)
   BITMAP_FREE (blocks_with_calls);
   BITMAP_FREE (modify_mem_list_set);
   free (reg_avail_info);
+  free (modify_mem_list);
+  free (canon_modify_mem_list);
 }
 
 
@@ -551,7 +520,7 @@ reg_changed_after_insn_p (rtx x, int cuid)
   unsigned int regno, end_regno;
 
   regno = REGNO (x);
-  end_regno = END_HARD_REGNO (x);
+  end_regno = END_REGNO (x);
   do
     if (reg_avail_info[regno] > cuid)
       return true;
@@ -720,7 +689,7 @@ record_last_reg_set_info (rtx_insn *insn, rtx reg)
   unsigned int regno, end_regno;
 
   regno = REGNO (reg);
-  end_regno = END_HARD_REGNO (reg);
+  end_regno = END_REGNO (reg);
   do
     reg_avail_info[regno] = INSN_CUID (insn);
   while (++regno < end_regno);
@@ -1115,8 +1084,8 @@ eliminate_partially_redundant_load (basic_block bb, rtx_insn *insn,
 
 	  /* Make sure we can generate a move from register avail_reg to
 	     dest.  */
-	  rtx_insn *move = as_a <rtx_insn *>
-	    (gen_move_insn (copy_rtx (dest), copy_rtx (avail_reg)));
+	  rtx_insn *move = gen_move_insn (copy_rtx (dest),
+					  copy_rtx (avail_reg));
 	  extract_insn (move);
 	  if (! constrain_operands (1, get_preferred_alternatives (insn,
 								   pred_bb))

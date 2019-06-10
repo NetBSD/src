@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.17.16.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17.16.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -54,12 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $");
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbcdc.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 
@@ -74,7 +72,6 @@ int	uchcomdebug = 0;
 #define	UCHCOM_IFACE_INDEX	0
 #define	UCHCOM_CONFIG_INDEX	0
 
-#define UCHCOM_REV_CH340	0x0250
 #define UCHCOM_INPUT_BUF_SIZE	8
 
 #define UCHCOM_REQ_GET_VERSION	0x5F
@@ -87,33 +84,32 @@ int	uchcomdebug = 0;
 #define UCHCOM_REG_STAT2	0x07
 #define UCHCOM_REG_BPS_PRE	0x12
 #define UCHCOM_REG_BPS_DIV	0x13
-#define UCHCOM_REG_BPS_MOD	0x14
-#define UCHCOM_REG_BPS_PAD	0x0F
-#define UCHCOM_REG_BREAK1	0x05
-#define UCHCOM_REG_BREAK2	0x18
-#define UCHCOM_REG_LCR1		0x18
+#define UCHCOM_REG_BREAK	0x05
+#define UCHCOM_REG_LCR		0x18
 #define UCHCOM_REG_LCR2		0x25
 
 #define UCHCOM_VER_20		0x20
 #define UCHCOM_VER_30		0x30
 
-#define UCHCOM_BASE_UNKNOWN	0
-#define UCHCOM_BPS_MOD_BASE	20000000
-#define UCHCOM_BPS_MOD_BASE_OFS	1100
+#define UCHCOM_BPS_PRE_IMM	0x80	/* CH341: immediate RX forwarding */
 
 #define UCHCOM_DTR_MASK		0x20
 #define UCHCOM_RTS_MASK		0x40
 
-#define UCHCOM_BRK1_MASK	0x01
-#define UCHCOM_BRK2_MASK	0x40
+#define UCHCOM_BREAK_MASK	0x01
 
-#define UCHCOM_LCR1_MASK	0xAF
-#define UCHCOM_LCR2_MASK	0x07
-#define UCHCOM_LCR1_PARENB	0x80
-#define UCHCOM_LCR2_PAREVEN	0x07
-#define UCHCOM_LCR2_PARODD	0x06
-#define UCHCOM_LCR2_PARMARK	0x05
-#define UCHCOM_LCR2_PARSPACE	0x04
+#define UCHCOM_LCR_CS5		0x00
+#define UCHCOM_LCR_CS6		0x01
+#define UCHCOM_LCR_CS7		0x02
+#define UCHCOM_LCR_CS8		0x03
+#define UCHCOM_LCR_STOPB	0x04
+#define UCHCOM_LCR_PARENB	0x08
+#define UCHCOM_LCR_PARODD	0x00
+#define UCHCOM_LCR_PAREVEN	0x10
+#define UCHCOM_LCR_PARMARK	0x20
+#define UCHCOM_LCR_PARSPACE	0x30
+#define UCHCOM_LCR_TXE		0x40
+#define UCHCOM_LCR_RXE		0x80
 
 #define UCHCOM_INTR_STAT1	0x02
 #define UCHCOM_INTR_STAT2	0x03
@@ -122,13 +118,16 @@ int	uchcomdebug = 0;
 #define UCHCOMIBUFSIZE 256
 #define UCHCOMOBUFSIZE 256
 
+#define UCHCOM_RESET_VALUE	0x501F
+#define UCHCOM_RESET_INDEX	0xD90A
+
 struct uchcom_softc
 {
 	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 	device_t		sc_subdev;
 	struct usbd_interface *	sc_iface;
-	int			sc_dying;
+	bool			sc_dying;
 	/* */
 	int			sc_intr_endpoint;
 	int			sc_intr_size;
@@ -140,8 +139,6 @@ struct uchcom_softc
 	int			sc_rts;
 	u_char			sc_lsr;
 	u_char			sc_msr;
-	int			sc_lcr1;
-	int			sc_lcr2;
 };
 
 struct uchcom_endpoints
@@ -156,41 +153,29 @@ struct uchcom_divider
 {
 	uint8_t		dv_prescaler;
 	uint8_t		dv_div;
-	uint8_t		dv_mod;
 };
 
-struct uchcom_divider_record
-{
-	uint32_t		dvr_high;
-	uint32_t		dvr_low;
-	uint32_t		dvr_base_clock;
-	struct uchcom_divider	dvr_divider;
+static const uint32_t rates4x[8] = {
+	[0] = 4 * 12000000 / 1024,
+	[1] = 4 * 12000000 / 128,
+	[2] = 4 * 12000000 / 16,
+	[3] = 4 * 12000000 / 2,
+	[7] = 4 * 12000000,
 };
-
-static const struct uchcom_divider_record dividers[] =
-{
-	{  307200, 307200, UCHCOM_BASE_UNKNOWN, { 7, 0xD9, 0 } },
-	{  921600, 921600, UCHCOM_BASE_UNKNOWN, { 7, 0xF3, 0 } },
-	{ 2999999,  23530,             6000000, { 3,    0, 0 } },
-	{   23529,   2942,              750000, { 2,    0, 0 } },
-	{    2941,    368,               93750, { 1,    0, 0 } },
-	{     367,      1,               11719, { 0,    0, 0 } },
-};
-#define NUM_DIVIDERS	(sizeof (dividers) / sizeof (dividers[0]))
 
 static const struct usb_devno uchcom_devs[] = {
-	{ USB_VENDOR_WINCHIPHEAD, USB_PRODUCT_WINCHIPHEAD_CH341SER },
-	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341 },
-	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341_2 },
+	{ USB_VENDOR_QINHENG2, USB_PRODUCT_QINHENG2_CH341SER },
+	{ USB_VENDOR_QINHENG, USB_PRODUCT_QINHENG_CH340 },
+	{ USB_VENDOR_QINHENG, USB_PRODUCT_QINHENG_CH341_ASP },
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
-Static void	uchcom_get_status(void *, int, u_char *, u_char *);
-Static void	uchcom_set(void *, int, int, int);
-Static int	uchcom_param(void *, int, struct termios *);
-Static int	uchcom_open(void *, int);
-Static void	uchcom_close(void *, int);
-Static void	uchcom_intr(struct usbd_xfer *, void *,
+static void	uchcom_get_status(void *, int, u_char *, u_char *);
+static void	uchcom_set(void *, int, int, int);
+static int	uchcom_param(void *, int, struct termios *);
+static int	uchcom_open(void *, int);
+static void	uchcom_close(void *, int);
+static void	uchcom_intr(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static int	set_config(struct uchcom_softc *);
@@ -204,27 +189,21 @@ struct	ucom_methods uchcom_methods = {
 	.ucom_get_status	= uchcom_get_status,
 	.ucom_set		= uchcom_set,
 	.ucom_param		= uchcom_param,
-	.ucom_ioctl		= NULL,
 	.ucom_open		= uchcom_open,
 	.ucom_close		= uchcom_close,
-	.ucom_read		= NULL,
-	.ucom_write		= NULL,
 };
 
-int uchcom_match(device_t, cfdata_t, void *);
-void uchcom_attach(device_t, device_t, void *);
-void uchcom_childdet(device_t, device_t);
-int uchcom_detach(device_t, int);
-int uchcom_activate(device_t, enum devact);
-
-extern struct cfdriver uchcom_cd;
+static int	uchcom_match(device_t, cfdata_t, void *);
+static void	uchcom_attach(device_t, device_t, void *);
+static void	uchcom_childdet(device_t, device_t);
+static int	uchcom_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uchcom,
     sizeof(struct uchcom_softc),
     uchcom_match,
     uchcom_attach,
     uchcom_detach,
-    uchcom_activate,
+    NULL,
     NULL,
     uchcom_childdet);
 
@@ -232,7 +211,7 @@ CFATTACH_DECL2_NEW(uchcom,
  * driver entry points
  */
 
-int
+static int
 uchcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -241,7 +220,7 @@ uchcom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+static void
 uchcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -259,8 +238,8 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-        sc->sc_udev = dev;
-	sc->sc_dying = 0;
+	sc->sc_udev = dev;
+	sc->sc_dying = false;
 	sc->sc_dtr = sc->sc_rts = -1;
 	sc->sc_lsr = sc->sc_msr = 0;
 
@@ -268,15 +247,6 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 
 	if (set_config(sc))
 		goto failed;
-
-	switch (uaa->uaa_release) {
-	case UCHCOM_REV_CH340:
-		aprint_normal_dev(self, "CH340 detected\n");
-		break;
-	default:
-		aprint_normal_dev(self, "CH341 detected\n");
-		break;
-	}
 
 	if (find_ifaces(sc, &sc->sc_iface))
 		goto failed;
@@ -309,11 +279,11 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	return;
 
 failed:
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return;
 }
 
-void
+static void
 uchcom_childdet(device_t self, device_t child)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -322,7 +292,7 @@ uchcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+static int
 uchcom_detach(device_t self, int flags)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -332,29 +302,16 @@ uchcom_detach(device_t self, int flags)
 
 	close_intr_pipe(sc);
 
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 
-	if (sc->sc_subdev != NULL)
+	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
-}
-
-int
-uchcom_activate(device_t self, enum devact act)
-{
-	struct uchcom_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		close_intr_pipe(sc);
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 static int
@@ -491,7 +448,8 @@ static __inline usbd_status
 write_reg(struct uchcom_softc *sc,
 	  uint8_t reg1, uint8_t val1, uint8_t reg2, uint8_t val2)
 {
-	DPRINTF(("uchcom: write reg 0x%02X<-0x%02X, 0x%02X<-0x%02X\n",
+	DPRINTF(("%s: write reg 0x%02X<-0x%02X, 0x%02X<-0x%02X\n",
+		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)val1,
 		 (unsigned)reg2, (unsigned)val2));
 	return generic_control_out(
@@ -513,7 +471,8 @@ read_reg(struct uchcom_softc *sc,
 	if (err)
 		return err;
 
-	DPRINTF(("uchcom: read reg 0x%02X->0x%02X, 0x%02X->0x%02X\n",
+	DPRINTF(("%s: read reg 0x%02X->0x%02X, 0x%02X->0x%02X\n",
+		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)buf[0],
 		 (unsigned)reg2, (unsigned)buf[1]));
 
@@ -570,7 +529,7 @@ update_version(struct uchcom_softc *sc)
 
 	err = get_version(sc, &sc->sc_version);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot get version: %s\n",
+		device_printf(sc->sc_dev, "cannot get version: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -597,7 +556,7 @@ update_status(struct uchcom_softc *sc)
 
 	err = get_status(sc, &cur);
 	if (err) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "cannot update status: %s\n", usbd_errstr(err));
 		return EIO;
 	}
@@ -622,7 +581,7 @@ set_dtrrts(struct uchcom_softc *sc, int dtr, int rts)
 		err = set_dtrrts_20(sc, ~val);
 
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot set DTR/RTS: %s\n",
+		device_printf(sc->sc_dev, "cannot set DTR/RTS: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -634,21 +593,21 @@ static int
 set_break(struct uchcom_softc *sc, int onoff)
 {
 	usbd_status err;
-	uint8_t brk1, brk2;
+	uint8_t brk, lcr;
 
-	err = read_reg(sc, UCHCOM_REG_BREAK1, &brk1, UCHCOM_REG_BREAK2, &brk2);
+	err = read_reg(sc, UCHCOM_REG_BREAK, &brk, UCHCOM_REG_LCR, &lcr);
 	if (err)
 		return EIO;
 	if (onoff) {
 		/* on - clear bits */
-		brk1 &= ~UCHCOM_BRK1_MASK;
-		brk2 &= ~UCHCOM_BRK2_MASK;
+		brk &= ~UCHCOM_BREAK_MASK;
+		lcr &= ~UCHCOM_LCR_TXE;
 	} else {
 		/* off - set bits */
-		brk1 |= UCHCOM_BRK1_MASK;
-		brk2 |= UCHCOM_BRK2_MASK;
+		brk |= UCHCOM_BREAK_MASK;
+		lcr |= UCHCOM_LCR_TXE;
 	}
-	err = write_reg(sc, UCHCOM_REG_BREAK1, brk1, UCHCOM_REG_BREAK2, brk2);
+	err = write_reg(sc, UCHCOM_REG_BREAK, brk, UCHCOM_REG_LCR, lcr);
 	if (err)
 		return EIO;
 
@@ -658,38 +617,41 @@ set_break(struct uchcom_softc *sc, int onoff)
 static int
 calc_divider_settings(struct uchcom_divider *dp, uint32_t rate)
 {
-	int i;
-	const struct uchcom_divider_record *rp;
-	uint32_t div, rem, mod;
+	size_t i;
+	uint32_t best, div, pre;
+	const uint32_t rate4x = rate * 4U;
 
-	/* find record */
-	for (i=0; i<NUM_DIVIDERS; i++) {
-		if (dividers[i].dvr_high >= rate &&
-		    dividers[i].dvr_low <= rate) {
-			rp = &dividers[i];
-			goto found;
+	if (rate == 0 || rate > 3000000)
+		return -1;
+
+	pre = __arraycount(rates4x);
+	best = UINT32_MAX;
+
+	for (i = 0; i < __arraycount(rates4x); i++) {
+		uint32_t score, try;
+		try = rates4x[i] * 2 / rate4x;
+		try = (try / 2) + (try & 1);
+		if (try < 2)
+			continue;
+		if (try > 255)
+			try = 255;
+		score = abs((int)rate4x - rates4x[i] / try);
+		if (score < best) {
+			best = score;
+			pre = i;
+			div = try;
 		}
 	}
-	return -1;
 
-found:
-	dp->dv_prescaler = rp->dvr_divider.dv_prescaler;
-	if (rp->dvr_base_clock == UCHCOM_BASE_UNKNOWN)
-		dp->dv_div = rp->dvr_divider.dv_div;
-	else {
-		div = rp->dvr_base_clock / rate;
-		rem = rp->dvr_base_clock % rate;
-		if (div==0 || div>=0xFF)
-			return -1;
-		if ((rem<<1) >= rate)
-			div += 1;
-		dp->dv_div = (uint8_t)-div;
-	}
+	if (pre >= __arraycount(rates4x))
+		return -1;
+	if ((rates4x[pre] / div / 4) < (rate * 99 / 100))
+		return -1;
+	if ((rates4x[pre] / div / 4) > (rate * 101 / 100))
+		return -1;
 
-	mod = UCHCOM_BPS_MOD_BASE/rate + UCHCOM_BPS_MOD_BASE_OFS;
-	mod = mod + mod/2;
-
-	dp->dv_mod = mod / 0x100;
+	dp->dv_prescaler = pre;
+	dp->dv_div = (uint8_t)-div;
 
 	return 0;
 }
@@ -704,12 +666,10 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 		return EINVAL;
 
 	if ((err = write_reg(sc,
-			     UCHCOM_REG_BPS_PRE, dv.dv_prescaler,
-			     UCHCOM_REG_BPS_DIV, dv.dv_div)) ||
-	    (err = write_reg(sc,
-			     UCHCOM_REG_BPS_MOD, dv.dv_mod,
-			     UCHCOM_REG_BPS_PAD, 0))) {
-		aprint_error_dev(sc->sc_dev, "cannot set DTE rate: %s\n",
+			     UCHCOM_REG_BPS_PRE,
+			     dv.dv_prescaler | UCHCOM_BPS_PRE_IMM,
+			     UCHCOM_REG_BPS_DIV, dv.dv_div))) {
+		device_printf(sc->sc_dev, "cannot set DTE rate: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -720,52 +680,48 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 static int
 set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
-	if (sc->sc_version < UCHCOM_VER_30) {
-		usbd_status err;
-		uint8_t lcr1val = 0, lcr2val = 0;
+	usbd_status err;
+	uint8_t lcr = 0, lcr2 = 0;
 
-		err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
-		if (err) {
-			aprint_error_dev(sc->sc_dev, "cannot get LCR: %s\n",
-			    usbd_errstr(err));
-			return EIO;
-		}
+	err = read_reg(sc, UCHCOM_REG_LCR, &lcr, UCHCOM_REG_LCR2, &lcr2);
+	if (err) {
+		device_printf(sc->sc_dev, "cannot get LCR: %s\n",
+		    usbd_errstr(err));
+		return EIO;
+	}
 
-		lcr1val &= ~UCHCOM_LCR1_MASK;
-		lcr2val &= ~UCHCOM_LCR2_MASK;
+	lcr = UCHCOM_LCR_RXE | UCHCOM_LCR_TXE;
 
-		/*
-		 * XXX: it is difficult to handle the line control appropriately:
-		 *   - CS8, !CSTOPB and any parity mode seems ok, but
-		 *   - the chip doesn't have the function to calculate parity
-		 *     in !CS8 mode.
-		 *   - it is unclear that the chip supports CS5,6 mode.
-		 *   - it is unclear how to handle stop bits.
-		 */
+	switch (ISSET(cflag, CSIZE)) {
+	case CS5:
+		lcr |= UCHCOM_LCR_CS5;
+		break;
+	case CS6:
+		lcr |= UCHCOM_LCR_CS6;
+		break;
+	case CS7:
+		lcr |= UCHCOM_LCR_CS7;
+		break;
+	case CS8:
+		lcr |= UCHCOM_LCR_CS8;
+		break;
+	}
 
-		switch (ISSET(cflag, CSIZE)) {
-		case CS5:
-		case CS6:
-		case CS7:
-			return EINVAL;
-		case CS8:
-			break;
-		}
+	if (ISSET(cflag, PARENB)) {
+		lcr |= UCHCOM_LCR_PARENB;
+		if (!ISSET(cflag, PARODD))
+			lcr |= UCHCOM_LCR_PAREVEN;
+	}
 
-		if (ISSET(cflag, PARENB)) {
-			lcr1val |= UCHCOM_LCR1_PARENB;
-			if (ISSET(cflag, PARODD))
-				lcr2val |= UCHCOM_LCR2_PARODD;
-			else
-				lcr2val |= UCHCOM_LCR2_PAREVEN;
-		}
+	if (ISSET(cflag, CSTOPB)) {
+		lcr |= UCHCOM_LCR_STOPB;
+	}
 
-		err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
-		if (err) {
-			aprint_error_dev(sc->sc_dev, "cannot set LCR: %s\n",
-			    usbd_errstr(err));
-			return EIO;
-		}
+	err = write_reg(sc, UCHCOM_REG_LCR, lcr, UCHCOM_REG_LCR2, lcr2);
+	if (err) {
+		device_printf(sc->sc_dev, "cannot set LCR: %s\n",
+		    usbd_errstr(err));
+		return EIO;
 	}
 
 	return 0;
@@ -779,7 +735,7 @@ clear_chip(struct uchcom_softc *sc)
 	DPRINTF(("%s: clear\n", device_xname(sc->sc_dev)));
 	err = generic_control_out(sc, UCHCOM_REQ_RESET, 0, 0);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot clear: %s\n",
+		device_printf(sc->sc_dev, "cannot clear: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -791,36 +747,9 @@ static int
 reset_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
-	uint8_t lcr1val, lcr2val, pre, div, mod;
-	uint16_t val=0, idx=0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
-	if (err)
-		goto failed;
-
-	err = read_reg(sc, UCHCOM_REG_BPS_PRE, &pre, UCHCOM_REG_BPS_DIV, &div);
-	if (err)
-		goto failed;
-
-	err = read_reg(sc, UCHCOM_REG_BPS_MOD, &mod, UCHCOM_REG_BPS_PAD, NULL);
-	if (err)
-		goto failed;
-
-	val |= (uint16_t)(lcr1val&0xF0) << 8;
-	val |= 0x01;
-	val |= (uint16_t)(lcr2val&0x0F) << 8;
-	val |= 0x02;
-	idx |= pre & 0x07;
-	val |= 0x04;
-	idx |= (uint16_t)div << 8;
-	val |= 0x08;
-	idx |= mod & 0xF8;
-	val |= 0x10;
-
-	DPRINTF(("%s: reset v=0x%04X, i=0x%04X\n",
-		 device_xname(sc->sc_dev), val, idx));
-
-	err = generic_control_out(sc, UCHCOM_REQ_RESET, val, idx);
+	err = generic_control_out(sc, UCHCOM_REQ_RESET,
+	    UCHCOM_RESET_VALUE, UCHCOM_RESET_INDEX);
 	if (err)
 		goto failed;
 
@@ -888,7 +817,7 @@ setup_intr_pipe(struct uchcom_softc *sc)
 					  sc->sc_intr_size,
 					  uchcom_intr, USBD_DEFAULT_INTERVAL);
 		if (err) {
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "cannot open interrupt pipe: %s\n",
 			    usbd_errstr(err));
 			return EIO;
@@ -900,24 +829,15 @@ setup_intr_pipe(struct uchcom_softc *sc)
 static void
 close_intr_pipe(struct uchcom_softc *sc)
 {
-	usbd_status err;
-
-	if (sc->sc_dying)
-		return;
 
 	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			aprint_error_dev(sc->sc_dev,
-			    "abort interrupt pipe failed: %s\n",
-			    usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_intr_pipe);
-		if (err)
-			aprint_error_dev(sc->sc_dev,
-			    "close interrupt pipe failed: %s\n",
-			    usbd_errstr(err));
-		kmem_free(sc->sc_intr_buf, sc->sc_intr_size);
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
+	}
+	if (sc->sc_intr_buf != NULL) {
+		kmem_free(sc->sc_intr_buf, sc->sc_intr_size);
+		sc->sc_intr_buf = NULL;
 	}
 }
 
@@ -925,7 +845,7 @@ close_intr_pipe(struct uchcom_softc *sc)
 /* ----------------------------------------------------------------------
  * methods for ucom
  */
-void
+static void
 uchcom_get_status(void *arg, int portno, u_char *rlsr, u_char *rmsr)
 {
 	struct uchcom_softc *sc = arg;
@@ -937,7 +857,7 @@ uchcom_get_status(void *arg, int portno, u_char *rlsr, u_char *rmsr)
 	*rmsr = sc->sc_msr;
 }
 
-void
+static void
 uchcom_set(void *arg, int portno, int reg, int onoff)
 {
 	struct uchcom_softc *sc = arg;
@@ -960,14 +880,14 @@ uchcom_set(void *arg, int portno, int reg, int onoff)
 	}
 }
 
-int
+static int
 uchcom_param(void *arg, int portno, struct termios *t)
 {
 	struct uchcom_softc *sc = arg;
 	int ret;
 
 	if (sc->sc_dying)
-		return 0;
+		return EIO;
 
 	ret = set_line_control(sc, t->c_cflag);
 	if (ret)
@@ -980,7 +900,7 @@ uchcom_param(void *arg, int portno, struct termios *t)
 	return 0;
 }
 
-int
+static int
 uchcom_open(void *arg, int portno)
 {
 	int ret;
@@ -1000,7 +920,7 @@ uchcom_open(void *arg, int portno)
 	return 0;
 }
 
-void
+static void
 uchcom_close(void *arg, int portno)
 {
 	struct uchcom_softc *sc = arg;
@@ -1015,7 +935,7 @@ uchcom_close(void *arg, int portno)
 /* ----------------------------------------------------------------------
  * callback when the modem status is changed.
  */
-void
+static void
 uchcom_intr(struct usbd_xfer *xfer, void * priv,
 	    usbd_status status)
 {

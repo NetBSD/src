@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.17 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.17.2.1 2019/06/10 22:07:11 christos Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -139,6 +139,8 @@ struct nvme_softc {
 
 	uint32_t		sc_quirks;
 #define	NVME_QUIRK_DELAY_B4_CHK_RDY	__BIT(0)
+
+	char			sc_modelname[81];
 };
 
 #define	lemtoh16(p)	le16toh(*((uint16_t *)(p)))
@@ -152,6 +154,7 @@ struct nvme_attach_args {
 	uint16_t	naa_nsid;
 	uint32_t	naa_qentries;	/* total number of queue slots */
 	uint32_t	naa_maxphys;	/* maximum device transfer size */
+	const char	*naa_typename;	/* identifier */
 };
 
 int	nvme_attach(struct nvme_softc *);
@@ -186,3 +189,4 @@ int	nvme_ns_dobio(struct nvme_softc *, uint16_t, void *,
     struct buf *, void *, size_t, int, daddr_t, int, nvme_nnc_done);
 int	nvme_ns_sync(struct nvme_softc *, uint16_t, int);
 int	nvme_admin_getcache(struct nvme_softc *, int *);
+int	nvme_admin_setcache(struct nvme_softc *, int);

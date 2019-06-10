@@ -1,6 +1,6 @@
 /* tsub -- test file for mpc_sub.
 
-Copyright (C) 2008, 2011 INRIA
+Copyright (C) 2008, 2011, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,15 +20,24 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_sub (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_sub (P[1].mpc, P[1].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_sub (P[1].mpc, P[2].mpc, P[1].mpc, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (C_CC, f, mpc_sub);
-
   test_start ();
 
-  data_check (f, "sub.dat");
-  tgeneric (f, 2, 1024, 7, -1);
+  data_check_template ("sub.dsc", "sub.dat");
+
+  tgeneric_template ("sub.dsc", 2, 1024, 7, 128);
 
   test_end ();
 

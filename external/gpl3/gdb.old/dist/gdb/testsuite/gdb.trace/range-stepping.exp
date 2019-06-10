@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@ load_lib "range-stepping-support.exp"
 standard_testfile
 set executable $testfile
 
-if [prepare_for_testing $testfile.exp $executable $srcfile \
+if [prepare_for_testing "failed to prepare" $executable $srcfile \
 	{debug nowarnings}] {
     return -1
 }
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -71,20 +71,20 @@ set remote_libipa [gdb_load_shlib $libipa]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug nowarnings shlib=$libipa] ] != "" } {
-    untested "failed to compile ftrace tests"
+    untested "failed to compile"
     return -1
 }
 
 clean_restart ${executable}
 
 if ![runto_main] {
-    fail "Can't run to main for ftrace tests"
+    fail "can't run to main for ftrace tests"
     return 0
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
 if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
-    untested "Could not find IPA lib loaded"
+    untested "could not find IPA lib loaded"
 } else {
     range_stepping_with_tracepoint "ftrace"
 }

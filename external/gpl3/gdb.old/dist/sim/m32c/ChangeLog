@@ -1,3 +1,8 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* srcdest.c: Include libiberty.h.
+	(decode_sd23): Use ARRAY_SIZE.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

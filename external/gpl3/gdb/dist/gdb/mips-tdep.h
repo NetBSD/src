@@ -1,6 +1,6 @@
 /* Target-dependent header for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -163,7 +163,8 @@ enum
 };
 
 /* Single step based on where the current instruction will take us.  */
-extern VEC (CORE_ADDR) *mips_software_single_step (struct regcache *regcache);
+extern std::vector<CORE_ADDR> mips_software_single_step
+  (struct regcache *regcache);
 
 /* Strip the ISA (compression) bit off from ADDR.  */
 extern CORE_ADDR mips_unmake_compact_addr (CORE_ADDR addr);

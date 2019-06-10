@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.27 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.27.18.1 2019/06/10 22:07:11 christos Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.27 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.27.18.1 2019/06/10 22:07:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -567,7 +567,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 		 * discovery. If we don't have a link-level address,
 		 * just stick the thing on the broadcast channel.
 		 */
-		mtag = m_tag_find(m, MTAG_FIREWIRE_HWADDR, 0);
+		mtag = m_tag_find(m, MTAG_FIREWIRE_HWADDR);
 		if (mtag == NULL)
 			destfw = 0;
 		else
@@ -648,7 +648,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 
 			fp->mode.wreqb = sc->sc_last_hdr.mode.wreqb;
 			fp->mode.wreqb.len = m->m_pkthdr.len;
-			xfer->send.spd = min(destfw->sspd, fc->speed);
+			xfer->send.spd = uimin(destfw->sspd, fc->speed);
 		}
 
 		xfer->send.pay_len = m->m_pkthdr.len;

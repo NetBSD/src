@@ -1,6 +1,6 @@
 /* Declarations for variables relating to reading the source file.
    Used by parsers, lexical analyzers, and error message routines.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -38,7 +38,7 @@ extern char builtins_location_check[(BUILTINS_LOCATION
 
 extern bool is_location_from_builtin_token (source_location);
 extern expanded_location expand_location (source_location);
-extern const char *location_get_source_line (expanded_location xloc,
+extern const char *location_get_source_line (const char *file_path, int line,
 					     int *line_size);
 extern expanded_location expand_location_to_spelling_point (source_location);
 extern source_location expansion_point_location_if_in_system_header (source_location);
@@ -70,8 +70,14 @@ extern location_t input_location;
    header, but expanded in a non-system file.  */
 #define in_system_header_at(LOC) \
   (linemap_location_in_system_header_p (line_table, LOC))
+/* Return a positive value if LOCATION is the locus of a token that
+   comes from a macro expansion, O otherwise.  */
+#define from_macro_expansion_at(LOC) \
+  ((linemap_location_from_macro_expansion_p (line_table, LOC)))
 
 void dump_line_table_statistics (void);
+
+void dump_location_info (FILE *stream);
 
 void diagnostics_file_cache_fini (void);
 

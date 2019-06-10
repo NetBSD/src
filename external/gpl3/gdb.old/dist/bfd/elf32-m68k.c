@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -348,8 +348,9 @@ rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 
   if (indx >= (unsigned int) R_68K_max)
     {
-      (*_bfd_error_handler) (_("%B: invalid relocation type %d"),
-			     abfd, (int) indx);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: invalid relocation type %d"),
+			  abfd, (int) indx);
       indx = R_68K_NONE;
     }
   cache_ptr->howto = &howto_table[indx];
@@ -507,7 +508,8 @@ static const bfd_byte elf_m68k_plt_entry[PLT_ENTRY_SIZE] =
   0, 0, 0, 0		  /* + .plt - . */
 };
 
-static const struct elf_m68k_plt_info elf_m68k_plt_info = {
+static const struct elf_m68k_plt_info elf_m68k_plt_info =
+{
   PLT_ENTRY_SIZE,
   elf_m68k_plt0_entry, { 4, 12 },
   elf_m68k_plt_entry, { 4, 16 }, 8
@@ -541,7 +543,8 @@ static const bfd_byte elf_isab_plt_entry[ISAB_PLT_ENTRY_SIZE] =
   0, 0, 0, 0              /* + .plt - . */
 };
 
-static const struct elf_m68k_plt_info elf_isab_plt_info = {
+static const struct elf_m68k_plt_info elf_isab_plt_info =
+{
   ISAB_PLT_ENTRY_SIZE,
   elf_isab_plt0_entry, { 2, 12 },
   elf_isab_plt_entry, { 2, 20 }, 12
@@ -575,7 +578,8 @@ static const bfd_byte elf_isac_plt_entry[ISAC_PLT_ENTRY_SIZE] =
   0, 0, 0, 0 		  /* replaced with .plt - . */
 };
 
-static const struct elf_m68k_plt_info elf_isac_plt_info = {
+static const struct elf_m68k_plt_info elf_isac_plt_info =
+{
   ISAC_PLT_ENTRY_SIZE,
   elf_isac_plt0_entry, { 2, 12},
   elf_isac_plt_entry, { 2, 20 }, 12
@@ -606,7 +610,8 @@ static const bfd_byte elf_cpu32_plt_entry[CPU32_PLT_ENTRY_SIZE] =
   0, 0
 };
 
-static const struct elf_m68k_plt_info elf_cpu32_plt_info = {
+static const struct elf_m68k_plt_info elf_cpu32_plt_info =
+{
   CPU32_PLT_ENTRY_SIZE,
   elf_cpu32_plt0_entry, { 4, 12 },
   elf_cpu32_plt_entry, { 4, 18 }, 10
@@ -1117,8 +1122,9 @@ elf32_m68k_set_private_flags (bfd *abfd, flagword flags)
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 static bfd_boolean
-elf32_m68k_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+elf32_m68k_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword out_flags;
   flagword in_flags;
   flagword out_isa;
@@ -1670,17 +1676,19 @@ elf_m68k_add_entry_to_got (struct elf_m68k_got *got,
     /* This BFD has too many relocation.  */
     {
       if (got->n_slots[R_8] > ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
-	(*_bfd_error_handler) (_("%B: GOT overflow: "
-				 "Number of relocations with 8-bit "
-				 "offset > %d"),
-			       abfd,
-			       ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info));
+	/* xgettext:c-format */
+	_bfd_error_handler (_("%B: GOT overflow: "
+			      "Number of relocations with 8-bit "
+			      "offset > %d"),
+			    abfd,
+			    ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info));
       else
-	(*_bfd_error_handler) (_("%B: GOT overflow: "
-				 "Number of relocations with 8- or 16-bit "
-				 "offset > %d"),
-			       abfd,
-			       ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info));
+	/* xgettext:c-format */
+	_bfd_error_handler (_("%B: GOT overflow: "
+			      "Number of relocations with 8- or 16-bit "
+			      "offset > %d"),
+			    abfd,
+			    ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info));
 
       return NULL;
     }
@@ -2426,7 +2434,7 @@ elf_m68k_partition_multi_got (struct bfd_link_info *info)
     {
       asection *s;
 
-      s = bfd_get_linker_section (elf_hash_table (info)->dynobj, ".got");
+      s = elf_hash_table (info)->sgot;
       if (s != NULL)
 	s->size = arg_.offset;
       else
@@ -2435,7 +2443,7 @@ elf_m68k_partition_multi_got (struct bfd_link_info *info)
       BFD_ASSERT (arg_.slots_relas_diff <= arg_.n_slots);
       arg_.n_slots -= arg_.slots_relas_diff;
 
-      s = bfd_get_linker_section (elf_hash_table (info)->dynobj, ".rela.got");
+      s = elf_hash_table (info)->srelgot;
       if (s != NULL)
 	s->size = arg_.n_slots * sizeof (Elf32_External_Rela);
       else
@@ -2549,8 +2557,6 @@ elf_m68k_check_relocs (bfd *abfd,
   struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
-  asection *sgot;
-  asection *srelgot;
   asection *sreloc;
   struct elf_m68k_got *got;
 
@@ -2561,8 +2567,6 @@ elf_m68k_check_relocs (bfd *abfd,
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
 
-  sgot = NULL;
-  srelgot = NULL;
   sreloc = NULL;
 
   got = NULL;
@@ -2632,30 +2636,6 @@ elf_m68k_check_relocs (bfd *abfd,
 	      elf_hash_table (info)->dynobj = dynobj = abfd;
 	      if (!_bfd_elf_create_got_section (dynobj, info))
 		return FALSE;
-	    }
-
-	  if (sgot == NULL)
-	    {
-	      sgot = bfd_get_linker_section (dynobj, ".got");
-	      BFD_ASSERT (sgot != NULL);
-	    }
-
-	  if (srelgot == NULL
-	      && (h != NULL || bfd_link_pic (info)))
-	    {
-	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
-	      if (srelgot == NULL)
-		{
-		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				    | SEC_READONLY);
-		  srelgot = bfd_make_section_anyway_with_flags (dynobj,
-								".rela.got",
-								flags);
-		  if (srelgot == NULL
-		      || !bfd_set_section_alignment (dynobj, srelgot, 2))
-		    return FALSE;
-		}
 	    }
 
 	  if (got == NULL)
@@ -3097,7 +3077,7 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
   asection *s;
 
   htab = elf_m68k_hash_table (info);
-  dynobj = elf_hash_table (info)->dynobj;
+  dynobj = htab->root.dynobj;
 
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (dynobj != NULL
@@ -3140,7 +3120,7 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
 	    return FALSE;
 	}
 
-      s = bfd_get_linker_section (dynobj, ".plt");
+      s = htab->root.splt;
       BFD_ASSERT (s != NULL);
 
       /* If this is the first .plt entry, make room for the special
@@ -3167,12 +3147,12 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
 
       /* We also need to make an entry in the .got.plt section, which
 	 will be placed in the .got section by the linker script.  */
-      s = bfd_get_linker_section (dynobj, ".got.plt");
+      s = htab->root.sgotplt;
       BFD_ASSERT (s != NULL);
       s->size += 4;
 
       /* We also need to make an entry in the .rela.plt section.  */
-      s = bfd_get_linker_section (dynobj, ".rela.plt");
+      s = htab->root.srelplt;
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf32_External_Rela);
 
@@ -3272,7 +3252,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 not actually use these entries.  Reset the size of .rela.got,
 	 which will cause it to get stripped from the output file
 	 below.  */
-      s = bfd_get_linker_section (dynobj, ".rela.got");
+      s = elf_hash_table (info)->srelgot;
       if (s != NULL)
 	s->size = 0;
     }
@@ -3609,7 +3589,6 @@ elf_m68k_relocate_section (bfd *output_bfd,
 			   Elf_Internal_Sym *local_syms,
 			   asection **local_sections)
 {
-  bfd *dynobj;
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
   asection *sgot;
@@ -3620,7 +3599,6 @@ elf_m68k_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  dynobj = elf_hash_table (info)->dynobj;
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
 
@@ -3698,21 +3676,16 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		  bfd_vma sgot_output_offset;
 		  bfd_vma got_offset;
 
-		  if (sgot == NULL)
-		    {
-		      sgot = bfd_get_linker_section (dynobj, ".got");
+		  sgot = elf_hash_table (info)->sgot;
 
-		      if (sgot != NULL)
-			sgot_output_offset = sgot->output_offset;
-		      else
-			/* In this case we have a reference to
-			   _GLOBAL_OFFSET_TABLE_, but the GOT itself is
-			   empty.
-			   ??? Issue a warning?  */
-			sgot_output_offset = 0;
-		    }
-		  else
+		  if (sgot != NULL)
 		    sgot_output_offset = sgot->output_offset;
+		  else
+		    /* In this case we have a reference to
+		       _GLOBAL_OFFSET_TABLE_, but the GOT itself is
+		       empty.
+		       ??? Issue a warning?  */
+		    sgot_output_offset = 0;
 
 		  if (got == NULL)
 		    {
@@ -3773,11 +3746,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	    bfd_vma *off_ptr;
 	    bfd_vma off;
 
-	    if (sgot == NULL)
-	      {
-		sgot = bfd_get_linker_section (dynobj, ".got");
-		BFD_ASSERT (sgot != NULL);
-	      }
+	    sgot = elf_hash_table (info)->sgot;
+	    BFD_ASSERT (sgot != NULL);
 
 	    if (got == NULL)
 	      {
@@ -3846,11 +3816,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		else if (bfd_link_pic (info)) /* && h == NULL */
 		  /* Process local symbol during dynamic link.  */
 		  {
-		    if (srela == NULL)
-		      {
-			srela = bfd_get_linker_section (dynobj, ".rela.got");
-			BFD_ASSERT (srela != NULL);
-		      }
+		    srela = elf_hash_table (info)->srelgot;
+		    BFD_ASSERT (srela != NULL);
 
 		    elf_m68k_init_got_entry_local_shared (info,
 							  output_bfd,
@@ -3918,7 +3885,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	case R_68K_TLS_LE8:
 	  if (bfd_link_dll (info))
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext:c-format */
 		(_("%B(%A+0x%lx): R_68K_TLS_LE32 relocation not permitted "
 		   "in shared object"),
 		 input_bfd, input_section, (long) rel->r_offset, howto->name);
@@ -3950,11 +3918,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	      break;
 	    }
 
-	  if (splt == NULL)
-	    {
-	      splt = bfd_get_linker_section (dynobj, ".plt");
-	      BFD_ASSERT (splt != NULL);
-	    }
+	  splt = elf_hash_table (info)->splt;
+	  BFD_ASSERT (splt != NULL);
 
 	  relocation = (splt->output_section->vma
 			+ splt->output_offset
@@ -3969,11 +3934,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	     the procedure linkage table.  */
 	  BFD_ASSERT (h != NULL && h->plt.offset != (bfd_vma) -1);
 
-	  if (splt == NULL)
-	    {
-	      splt = bfd_get_linker_section (dynobj, ".plt");
-	      BFD_ASSERT (splt != NULL);
-	    }
+	  splt = elf_hash_table (info)->splt;
+	  BFD_ASSERT (splt != NULL);
 
 	  relocation = h->plt.offset;
 	  unresolved_reloc = FALSE;
@@ -4117,7 +4079,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     input_section,
@@ -4151,9 +4114,11 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		    name = bfd_section_name (input_bfd, sec);
 		}
 
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
 		((sym_type == STT_TLS
+		  /* xgettext:c-format */
 		  ? _("%B(%A+0x%lx): %s used with TLS symbol %s")
+		  /* xgettext:c-format */
 		  : _("%B(%A+0x%lx): %s used with non-TLS symbol %s")),
 		 input_bfd,
 		 input_section,
@@ -4190,7 +4155,8 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext:c-format */
 		(_("%B(%A+0x%lx): reloc against `%s': error %d"),
 		 input_bfd, input_section,
 		 (long) rel->r_offset, name, (int) r);
@@ -4247,9 +4213,9 @@ elf_m68k_finish_dynamic_symbol (bfd *output_bfd,
       BFD_ASSERT (h->dynindx != -1);
 
       plt_info = elf_m68k_hash_table (info)->plt_info;
-      splt = bfd_get_linker_section (dynobj, ".plt");
-      sgot = bfd_get_linker_section (dynobj, ".got.plt");
-      srela = bfd_get_linker_section (dynobj, ".rela.plt");
+      splt = elf_hash_table (info)->splt;
+      sgot = elf_hash_table (info)->sgotplt;
+      srela = elf_hash_table (info)->srelplt;
       BFD_ASSERT (splt != NULL && sgot != NULL && srela != NULL);
 
       /* Get the index in the procedure linkage table which
@@ -4314,8 +4280,8 @@ elf_m68k_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbol has an entry in the global offset table.  Set it
 	 up.  */
 
-      sgot = bfd_get_linker_section (dynobj, ".got");
-      srela = bfd_get_linker_section (dynobj, ".rela.got");
+      sgot = elf_hash_table (info)->sgot;
+      srela = elf_hash_table (info)->srelgot;
       BFD_ASSERT (sgot != NULL && srela != NULL);
 
       got_entry = elf_m68k_hash_entry (h)->glist;
@@ -4464,7 +4430,7 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 
   dynobj = elf_hash_table (info)->dynobj;
 
-  sgot = bfd_get_linker_section (dynobj, ".got.plt");
+  sgot = elf_hash_table (info)->sgotplt;
   BFD_ASSERT (sgot != NULL);
   sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
@@ -4473,7 +4439,7 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       asection *splt;
       Elf32_External_Dyn *dyncon, *dynconend;
 
-      splt = bfd_get_linker_section (dynobj, ".plt");
+      splt = elf_hash_table (info)->splt;
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       dyncon = (Elf32_External_Dyn *) sdyn->contents;
@@ -4481,7 +4447,6 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       for (; dyncon < dynconend; dyncon++)
 	{
 	  Elf_Internal_Dyn dyn;
-	  const char *name;
 	  asection *s;
 
 	  bfd_elf32_swap_dyn_in (dynobj, dyncon, &dyn);
@@ -4492,33 +4457,18 @@ elf_m68k_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got.plt";
+	      s = elf_hash_table (info)->sgotplt;
 	      goto get_vma;
 	    case DT_JMPREL:
-	      name = ".rela.plt";
+	      s = elf_hash_table (info)->srelplt;
 	    get_vma:
-	      s = bfd_get_linker_section (dynobj, name);
 	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
+	      s = elf_hash_table (info)->srelplt;
 	      dyn.d_un.d_val = s->size;
-	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-	      break;
-
-	    case DT_RELASZ:
-	      /* The procedure linkage table relocs (DT_JMPREL) should
-		 not be included in the overall relocs (DT_RELA).
-		 Therefore, we override the DT_RELASZ entry here to
-		 make it not include the JMPREL relocs.  Since the
-		 linker script arranges for .rela.plt to follow all
-		 other relocation sections, we don't have to worry
-		 about changing the DT_RELA entry.  */
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
-	      if (s != NULL)
-		dyn.d_un.d_val -= s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }
@@ -4890,5 +4840,6 @@ elf_m68k_add_symbol_hook (bfd *abfd,
 #define elf_backend_want_plt_sym 0
 #define elf_backend_got_header_size	12
 #define elf_backend_rela_normal		1
+#define elf_backend_dtrel_excludes_plt	1
 
 #include "elf32-target.h"

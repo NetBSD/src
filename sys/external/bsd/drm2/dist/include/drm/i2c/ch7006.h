@@ -1,3 +1,5 @@
+/*	$NetBSD: ch7006.h,v 1.1.1.1.38.1 2019/06/10 22:08:30 christos Exp $	*/
+
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.

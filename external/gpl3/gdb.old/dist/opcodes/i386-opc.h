@@ -1,5 +1,5 @@
 /* Declarations for Intel 80386 opcode table
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -188,12 +188,16 @@ enum
   CpuSE1,
   /* CLWB instruction required */
   CpuCLWB,
-  /* PCOMMIT instruction required */
-  CpuPCOMMIT,
   /* Intel AVX-512 IFMA Instructions support required.  */
   CpuAVX512IFMA,
   /* Intel AVX-512 VBMI Instructions support required.  */
   CpuAVX512VBMI,
+  /* Intel AVX-512 4FMAPS Instructions support required.  */
+  CpuAVX512_4FMAPS,
+  /* Intel AVX-512 4VNNIW Instructions support required.  */
+  CpuAVX512_4VNNIW,
+  /* Intel AVX-512 VPOPCNTDQ Instructions support required.  */
+  CpuAVX512_VPOPCNTDQ,
   /* mwaitx instruction required */
   CpuMWAITX,
   /* Clzero instruction required */
@@ -202,6 +206,10 @@ enum
   CpuOSPKE,
   /* RDPID instruction required */
   CpuRDPID,
+  /* PTWRITE instruction required */
+  CpuPTWRITE,
+  /* CET instruction support required */
+  CpuCET,
   /* MMX register support required */
   CpuRegMMX,
   /* XMM register support required */
@@ -227,7 +235,9 @@ enum
 
 /* If you get a compiler error for zero width of the unused field,
    comment it out.  */
+#if 0
 #define CpuUnused	(CpuMax + 1)
+#endif
 
 /* We can check if an instruction is available with array instead
    of bitfield. */
@@ -313,13 +323,17 @@ typedef union i386_cpu_flags
       unsigned int cpuprefetchwt1:1;
       unsigned int cpuse1:1;
       unsigned int cpuclwb:1;
-      unsigned int cpupcommit:1;
       unsigned int cpuavx512ifma:1;
       unsigned int cpuavx512vbmi:1;
+      unsigned int cpuavx512_4fmaps:1;
+      unsigned int cpuavx512_4vnniw:1;
+      unsigned int cpuavx512_vpopcntdq:1;
       unsigned int cpumwaitx:1;
       unsigned int cpuclzero:1;
       unsigned int cpuospke:1;
       unsigned int cpurdpid:1;
+      unsigned int cpuptwrite:1;
+      unsigned int cpucet:1;
       unsigned int cpuregmmx:1;
       unsigned int cpuregxmm:1;
       unsigned int cpuregymm:1;
@@ -342,9 +356,8 @@ enum
   D = 0,
   /* set if operands can be words or dwords encoded the canonical way */
   W,
-  /* Skip the current insn and use the next insn in i386-opc.tbl to swap
-     operand in encoding.  */
-  S,
+  /* load form instruction. Must be placed before store form.  */
+  Load,
   /* insn has a modrm byte. */
   Modrm,
   /* register is in low 3 bits of opcode */
@@ -559,6 +572,11 @@ enum
   /* Default mask isn't allowed.  */
   NoDefMask,
 
+  /* The second operand must be a vector register, {x,y,z}mmN, where N is a multiple of 4.
+     It implicitly denotes the register group of {x,y,z}mmN - {x,y,z}mm(N + 3).
+   */
+  ImplicitQuadGroup,
+
   /* Compatible with old (<= 2.8.1) versions of gcc  */
   OldGcc,
   /* AT&T mnemonic.  */
@@ -579,7 +597,7 @@ typedef struct i386_opcode_modifier
 {
   unsigned int d:1;
   unsigned int w:1;
-  unsigned int s:1;
+  unsigned int load:1;
   unsigned int modrm:1;
   unsigned int shortform:1;
   unsigned int jump:1;
@@ -635,6 +653,7 @@ typedef struct i386_opcode_modifier
   unsigned int sae:1;
   unsigned int disp8memshift:3;
   unsigned int nodefmask:1;
+  unsigned int implicitquadgroup:1;
   unsigned int oldgcc:1;
   unsigned int attmnemonic:1;
   unsigned int attsyntax:1;

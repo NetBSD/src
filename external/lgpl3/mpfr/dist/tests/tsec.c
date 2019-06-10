@@ -1,6 +1,6 @@
 /* Test file for mpfr_sec.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -99,7 +96,7 @@ overflowed_sec0 (void)
       mpfr_nextbelow (y);
       set_emax (emax);  /* 1 is not representable. */
       for (i = -1; i <= 1; i++)
-        RND_LOOP (rnd)
+        RND_LOOP_NO_RNDF (rnd)
           {
             mpfr_set_si_2exp (x, i, -512 * ABS (i), MPFR_RNDN);
             mpfr_clear_flags ();
@@ -123,9 +120,10 @@ overflowed_sec0 (void)
                 if (! mpfr_equal_p (x, y))
                   {
                     printf ("Error in overflowed_sec0 (i = %d, rnd = %s):\n"
-                            "  Got ", i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                    mpfr_print_binary (x);
-                    printf (" instead of 0.11111111E%d.\n", emax);
+                            "  Got        ", i,
+                            mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                    mpfr_dump (x);
+                    printf ("  instead of 0.11111111E%d.\n", emax);
                     err = 1;
                   }
               }
@@ -138,12 +136,13 @@ overflowed_sec0 (void)
                             i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
                     err = 1;
                   }
-                if (! (mpfr_inf_p (x) && MPFR_SIGN (x) > 0))
+                if (! (mpfr_inf_p (x) && MPFR_IS_POS (x)))
                   {
                     printf ("Error in overflowed_sec0 (i = %d, rnd = %s):\n"
-                            "  Got ", i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                    mpfr_print_binary (x);
-                    printf (" instead of +Inf.\n");
+                            "  Got        ", i,
+                            mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                    mpfr_dump (x);
+                    printf ("  instead of +Inf.\n");
                     err = 1;
                   }
               }
@@ -164,7 +163,7 @@ main (int argc, char *argv[])
 
   check_specials ();
 
-  test_generic (2, 200, 10);
+  test_generic (MPFR_PREC_MIN, 200, 10);
   overflowed_sec0 ();
 
   tests_end_mpfr ();

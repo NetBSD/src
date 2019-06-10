@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.138 2018/05/09 03:50:51 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.138.2.1 2019/06/10 22:07:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -671,8 +671,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_MDATA64		0xc	/* 64-bit Message Data Register
 					 * offset
 					 */
-#define	PCI_MSI_MASK		0x10	/* Vector Mask register */
-#define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
+
+#define	PCI_MSI_MASK		0x0c	/* Vector Mask register */
+#define	PCI_MSI_MASK64		0x10	/* 64-bit Vector Mask register */
+
+#define	PCI_MSI_PENDING		0x10	/* Vector Pending register */
+#define	PCI_MSI_PENDING64	0x14	/* 64-bit Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
 #define	PCI_MSI_CTL_EXTMDATA_EN	__SHIFTIN(__BIT(10), PCI_MSI_CTL_MASK)
@@ -1150,6 +1154,18 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
 
 /*
+ * Other than Root Complex Integrated Endpoint and Root Complex Event Collector
+ * have link related registers.
+ */
+#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_ROOT_INTEP) && \
+	    ((type) != PCIE_XCAP_TYPE_ROOT_EVNTC))
+
+/* Only root port and root complex event collector have PCIE_RCR & PCIE_RSR */
+#define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_ROOT) || \
+	    ((type) == PCIE_XCAP_TYPE_ROOT_EVNTC))
+
+
+/*
  * Capability ID: 0x11
  * MSIX
  */
@@ -1186,8 +1202,8 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_vector_control;
 };
 #define	PCI_MSIX_VECTCTL_MASK	__BIT(0)
-#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)
-#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)
+#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)	/* ST lower */
+#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)	/* ST upper */
 
  /* Max number of MSI-X vectors. See PCI-SIG specification. */
 #define	PCI_MSIX_MAX_VECTORS	2048
@@ -1274,67 +1290,85 @@ typedef u_int8_t pci_intr_line_t;
 
 /* Header Type 1 (Bridge) configuration registers */
 #define PCI_BRIDGE_BUS_REG		0x18
-#define   PCI_BRIDGE_BUS_EACH_MASK		0xff
-#define   PCI_BRIDGE_BUS_PRIMARY_SHIFT		0
-#define   PCI_BRIDGE_BUS_SECONDARY_SHIFT	8
-#define   PCI_BRIDGE_BUS_SUBORDINATE_SHIFT	16
-#define   PCI_BRIDGE_BUS_SEC_LATTIMER_SHIFT	24
-#define   PCI_BRIDGE_BUS_PRIMARY(reg) \
-	(((reg) >> PCI_BRIDGE_BUS_PRIMARY_SHIFT) & PCI_BRIDGE_BUS_EACH_MASK)
-#define   PCI_BRIDGE_BUS_SECONDARY(reg) \
-	(((reg) >> PCI_BRIDGE_BUS_SECONDARY_SHIFT) & PCI_BRIDGE_BUS_EACH_MASK)
-#define   PCI_BRIDGE_BUS_SUBORDINATE(reg) \
-	(((reg) >> PCI_BRIDGE_BUS_SUBORDINATE_SHIFT) &PCI_BRIDGE_BUS_EACH_MASK)
-#define   PCI_BRIDGE_BUS_SEC_LATTIMER(reg) \
-	(((reg) >> PCI_BRIDGE_BUS_SEC_LATTIMER_SHIFT)&PCI_BRIDGE_BUS_EACH_MASK)
+#define   PCI_BRIDGE_BUS_PRIMARY	__BITS(0, 7)
+#define   PCI_BRIDGE_BUS_SECONDARY	__BITS(8, 15)
+#define   PCI_BRIDGE_BUS_SUBORDINATE	__BITS(16, 23)
+#define   PCI_BRIDGE_BUS_SEC_LATTIMER	__BITS(24, 31)
+#define   PCI_BRIDGE_BUS_NUM_PRIMARY(reg)			\
+	((uint32_t)__SHIFTOUT((reg), PCI_BRIDGE_BUS_PRIMARY))
+#define   PCI_BRIDGE_BUS_NUM_SECONDARY(reg)			\
+	((uint32_t)__SHIFTOUT((reg), PCI_BRIDGE_BUS_SECONDARY))
+#define   PCI_BRIDGE_BUS_NUM_SUBORDINATE(reg)				\
+	((uint32_t)__SHIFTOUT((reg), PCI_BRIDGE_BUS_SUBORDINATE))
+#define   PCI_BRIDGE_BUS_SEC_LATTIMER_VAL(reg)				\
+	((uint32_t)__SHIFTOUT((reg), PCI_BRIDGE_BUS_SEC_LATTIMER))
 
+/* Minimum size of the window */
+#define  PCI_BRIDGE_IO_MIN	0x00001000UL
+#define  PCI_BRIDGE_MEM_MIN	0x00100000UL
 
-#define PCI_BRIDGE_STATIO_REG		0x1C
-#define	  PCI_BRIDGE_STATIO_IOBASE_SHIFT	0
-#define	  PCI_BRIDGE_STATIO_IOLIMIT_SHIFT	8
-#define	  PCI_BRIDGE_STATIO_STATUS_SHIFT	16
-#define	  PCI_BRIDGE_STATIO_IOBASE_MASK		0xf0
-#define	  PCI_BRIDGE_STATIO_IOLIMIT_MASK	0xf0
-#define	  PCI_BRIDGE_STATIO_STATUS_MASK		0xffff
-#define	  PCI_BRIDGE_IO_32BITS(reg)		(((reg) & 0xf) == 1)
+#define PCI_BRIDGE_STATIO_REG		0x1c
+#define	  PCI_BRIDGE_STATIO_IOBASE	__BITS(0, 7)
+#define	  PCI_BRIDGE_STATIO_IOLIMIT	__BITS(8, 15)
+#define	  PCI_BRIDGE_STATIO_STATUS	__BITS(16, 31)
+#define	  PCI_BRIDGE_STATIO_IOADDR	0xf0
+#define	  PCI_BRIDGE_STATIO_IOADDR_TYPE	0x0f	/* Read only */
+#define	  PCI_BRIDGE_STATIO_IOADDR_32	0x01
+#define	  PCI_BRIDGE_STATIO_IOBASE_ADDR(reg)		\
+	((__SHIFTOUT((reg), PCI_BRIDGE_STATIO_IOBASE)	\
+	    & PCI_BRIDGE_STATIO_IOADDR) << 8)
+#define	  PCI_BRIDGE_STATIO_IOLIMIT_ADDR(reg)				\
+	(((__SHIFTOUT((reg), PCI_BRIDGE_STATIO_IOLIMIT)			\
+		& PCI_BRIDGE_STATIO_IOADDR) << 8) | (PCI_BRIDGE_IO_MIN - 1))
+#define	  PCI_BRIDGE_IO_32BITS(reg)	\
+	(((reg) & PCI_BRIDGE_STATIO_IOADDR_TYPE) == PCI_BRIDGE_STATIO_IOADDR_32)
 
 #define PCI_BRIDGE_MEMORY_REG		0x20
-#define	  PCI_BRIDGE_MEMORY_BASE_SHIFT		4
-#define	  PCI_BRIDGE_MEMORY_LIMIT_SHIFT		20
-#define	  PCI_BRIDGE_MEMORY_BASE_MASK		0x0fff
-#define	  PCI_BRIDGE_MEMORY_LIMIT_MASK		0x0fff
+#define	  PCI_BRIDGE_MEMORY_BASE		__BITS(0, 15)
+#define	  PCI_BRIDGE_MEMORY_LIMIT		__BITS(16, 31)
+#define	  PCI_BRIDGE_MEMORY_ADDR		0xfff0
+#define	  PCI_BRIDGE_MEMORY_BASE_ADDR(reg)		\
+	((__SHIFTOUT((reg), PCI_BRIDGE_MEMORY_BASE)	\
+	    & PCI_BRIDGE_MEMORY_ADDR) << 16)
+#define	  PCI_BRIDGE_MEMORY_LIMIT_ADDR(reg)			\
+	(((__SHIFTOUT((reg), PCI_BRIDGE_MEMORY_LIMIT)		\
+		& PCI_BRIDGE_MEMORY_ADDR) << 16) | 0x000fffff)
 
 #define PCI_BRIDGE_PREFETCHMEM_REG	0x24
-#define	  PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT	4
-#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT	20
-#define	  PCI_BRIDGE_PREFETCHMEM_BASE_MASK	0x0fff
-#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK	0x0fff
+#define	  PCI_BRIDGE_PREFETCHMEM_BASE		__BITS(0, 15)
+#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT		__BITS(16, 31)
+#define	  PCI_BRIDGE_PREFETCHMEM_ADDR		0xfff0
+#define	  PCI_BRIDGE_PREFETCHMEM_BASE_ADDR(reg)		\
+	((__SHIFTOUT((reg), PCI_BRIDGE_PREFETCHMEM_BASE)	\
+	    & PCI_BRIDGE_PREFETCHMEM_ADDR) << 16)
+#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_ADDR(reg)		\
+	(((__SHIFTOUT((reg), PCI_BRIDGE_PREFETCHMEM_LIMIT)	\
+		& PCI_BRIDGE_PREFETCHMEM_ADDR) << 16) | 0x000fffff)
 #define	  PCI_BRIDGE_PREFETCHMEM_64BITS(reg)	((reg) & 0xf)
 
-#define PCI_BRIDGE_PREFETCHBASE32_REG	0x28
-#define PCI_BRIDGE_PREFETCHLIMIT32_REG	0x2c
+#define PCI_BRIDGE_PREFETCHBASEUP32_REG	0x28
+#define PCI_BRIDGE_PREFETCHLIMITUP32_REG 0x2c
 
 #define PCI_BRIDGE_IOHIGH_REG		0x30
-#define	  PCI_BRIDGE_IOHIGH_BASE_SHIFT		0
-#define	  PCI_BRIDGE_IOHIGH_LIMIT_SHIFT		16
-#define	  PCI_BRIDGE_IOHIGH_BASE_MASK		0xffff
-#define	  PCI_BRIDGE_IOHIGH_LIMIT_MASK		0xffff
+#define	  PCI_BRIDGE_IOHIGH_BASE	__BITS(0, 15)
+#define	  PCI_BRIDGE_IOHIGH_LIMIT	__BITS(16, 31)
 
-#define PCI_BRIDGE_CONTROL_REG		0x3c
-#define	  PCI_BRIDGE_CONTROL_SHIFT		16
-#define	  PCI_BRIDGE_CONTROL_MASK		0xffff
-#define   PCI_BRIDGE_CONTROL_PERE		(1 <<  0)
-#define   PCI_BRIDGE_CONTROL_SERR		(1 <<  1)
-#define   PCI_BRIDGE_CONTROL_ISA		(1 <<  2)
-#define   PCI_BRIDGE_CONTROL_VGA		(1 <<  3)
-#define   PCI_BRIDGE_CONTROL_VGA16		(1 <<  3)
-#define   PCI_BRIDGE_CONTROL_MABRT		(1 <<  5)
-#define   PCI_BRIDGE_CONTROL_SECBR		(1 <<  6)
-#define   PCI_BRIDGE_CONTROL_SECFASTB2B		(1 <<  7)
-#define   PCI_BRIDGE_CONTROL_PRI_DISC_TIMER	(1 <<  8)
-#define   PCI_BRIDGE_CONTROL_SEC_DISC_TIMER	(1 <<  9)
-#define   PCI_BRIDGE_CONTROL_DISC_TIMER_STAT	(1 << 10)
-#define   PCI_BRIDGE_CONTROL_DISC_TIMER_SERR	(1 << 11)
+#define PCI_BRIDGE_EXPROMADDR_REG	0x38
+
+#define PCI_BRIDGE_CONTROL_REG		0x3c /* Upper 16 bit */
+#define	  PCI_BRIDGE_CONTROL		__BITS(16, 31)
+#define   PCI_BRIDGE_CONTROL_PERE		__BIT(16)
+#define   PCI_BRIDGE_CONTROL_SERR		__BIT(17)
+#define   PCI_BRIDGE_CONTROL_ISA		__BIT(18)
+#define   PCI_BRIDGE_CONTROL_VGA		__BIT(19)
+#define   PCI_BRIDGE_CONTROL_VGA16		__BIT(20)
+#define   PCI_BRIDGE_CONTROL_MABRT		__BIT(21)
+#define   PCI_BRIDGE_CONTROL_SECBR		__BIT(22)
+#define   PCI_BRIDGE_CONTROL_SECFASTB2B		__BIT(23)
+#define   PCI_BRIDGE_CONTROL_PRI_DISC_TIMER	__BIT(24)
+#define   PCI_BRIDGE_CONTROL_SEC_DISC_TIMER	__BIT(25)
+#define   PCI_BRIDGE_CONTROL_DISC_TIMER_STAT	__BIT(26)
+#define   PCI_BRIDGE_CONTROL_DISC_TIMER_SERR	__BIT(27)
 /* Reserved					(1 << 12) - (1 << 15) */
 
 /*
@@ -1699,7 +1733,10 @@ struct pci_rom {
  * Extended capability ID: 0x0007
  * Root Complex Event Collector Association
  */
-#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04
+#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04	/* Association Bitmap */
+#define	PCI_RCEC_ASSOC_ASSOCBUSNUM 0x08	/* Associcated Bus Number */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECNEXT __BITS(15, 8)	/* RCEC Next Bus */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECLAST __BITS(23, 16)	/* RCEC Last Bus */
 
 /*
  * Extended capability ID: 0x0008
@@ -1770,6 +1807,7 @@ struct pci_rom {
 #define	PCI_ATS_CAP_INVQDEPTH	__BITS(4, 0)	/* Invalidate Queue Depth */
 #define	PCI_ATS_CAP_PALIGNREQ	__BIT(5)	/* Page Aligned Request */
 #define	PCI_ATS_CAP_GLOBALINVL	__BIT(6)	/* Global Invalidate Support */
+#define	PCI_ATS_CAP_RELAXORD	__BIT(7)	/* Relaxed Ordering */
 #define	PCI_ATS_CTL	0x04	/* Control Register */
 #define	PCI_ATS_CTL_STU		__BITS(20, 16)	/* Smallest Translation Unit */
 #define	PCI_ATS_CTL_EN		__BIT(31)	/* Enable */
@@ -1862,6 +1900,54 @@ struct pci_rom {
  * Extended capability ID: 0x0014
  * Enhanced Allocation
  */
+#define	PCI_EA_CAP1	0x00	/* Capability First */
+#define	PCI_EA_CAP1_NUMENTRIES	__BITS(21, 16)	/* Num Entries */
+#define	PCI_EA_CAP2	0x04	/* Capability Second (for type1) */
+#define	PCI_EA_CAP2_SECONDARY	__BITS(7, 0)   /* Fixed Secondary Bus No. */
+#define	PCI_EA_CAP2_SUBORDINATE	__BITS(15, 8)  /* Fixed Subordinate Bus No. */
+
+/* Bit definitions for the first DW of each entry */
+#define PCI_EA_ES	__BITS(2, 0)	/* Entry Size */
+#define PCI_EA_BEI	__BITS(7, 4)	/* BAR Equivalent Indicator */
+#define PCI_EA_BEI_BAR0		0	/* BAR0 (10h) */
+#define PCI_EA_BEI_BAR1		1	/* BAR1 (14h) */
+#define PCI_EA_BEI_BAR2		2	/* BAR2 (18h) */
+#define PCI_EA_BEI_BAR3		3	/* BAR3 (1ch) */
+#define PCI_EA_BEI_BAR4		4	/* BAR4 (20h) */
+#define PCI_EA_BEI_BAR5		5	/* BAR5 (24h) */
+#define PCI_EA_BEI_BEHIND	6	/* Behind the function (for type1) */
+#define PCI_EA_BEI_NOTIND	7	/* Not Indicated */
+#define PCI_EA_BEI_EXPROM	8	/* Expansion ROM */
+#define PCI_EA_BEI_VFBAR0	9	/* VF BAR0 */
+#define PCI_EA_BEI_VFBAR1	10	/* VF BAR1 */
+#define PCI_EA_BEI_VFBAR2	11	/* VF BAR2 */
+#define PCI_EA_BEI_VFBAR3	12	/* VF BAR3 */
+#define PCI_EA_BEI_VFBAR4	13	/* VF BAR4 */
+#define PCI_EA_BEI_VFBAR5	14	/* VF BAR5 */
+#define PCI_EA_BEI_RESERVED	15	/* Reserved (treat as Not Indicated) */
+
+#define PCI_EA_PP	__BITS(15, 8)	/* Primary Properties */
+#define PCI_EA_SP	__BITS(23, 16)	/* Secondary Properties */
+/* PP and SP's values */
+#define PCI_EA_PROP_MEM_NONPREF	0x00	/* Memory Space, Non-Prefetchable */
+#define PCI_EA_PROP_MEM_PREF	0x01	/* Memory Space, Prefetchable */
+#define PCI_EA_PROP_IO		0x02	/* I/O Space */
+#define PCI_EA_PROP_VF_MEM_NONPREF 0x03	/* Resorce for VF use. Mem. Non-Pref */
+#define PCI_EA_PROP_VF_MEM_PREF	0x04	/* Resorce for VF use. Mem. Prefetch */
+#define PCI_EA_PROP_BB_MEM_NONPREF 0x05	/* Behind Bridge: MEM. Non-Pref */
+#define PCI_EA_PROP_BB_MEM_PREF 0x06	/* Behind Bridge: MEM. Prefetch */
+#define PCI_EA_PROP_BB_IO	0x07	/* Behind Bridge: I/O Space */
+#define PCI_EA_PROP_MEM_UNAVAIL	0xfd	/* Memory Space Unavailable */
+#define PCI_EA_PROP_IO_UNAVAIL	0xfe	/* IO Space Unavailable */
+#define PCI_EA_PROP_UNAVAIL	0xff	/* Entry Unavailable for use */
+
+#define PCI_EA_W	__BIT(30)	/* Writable */
+#define PCI_EA_E	__BIT(31)	/* Enable for this entry */
+
+#define PCI_EA_LOWMASK	__BITS(31, 2)	/* Low register's mask */
+#define PCI_EA_BASEMAXOFFSET_S	__BIT(1)	/* Field Size */
+#define PCI_EA_BASEMAXOFFSET_64BIT __BIT(1)	/* 64bit */
+#define PCI_EA_BASEMAXOFFSET_32BIT 0		/* 32bit */
 
 /*
  * Extended capability ID: 0x0015

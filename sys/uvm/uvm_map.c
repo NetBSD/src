@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.354.4.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.4.1 2019/06/10 22:09:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1063,15 +1063,6 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	int error;
 
 	KASSERT((size & PAGE_MASK) == 0);
-
-#ifndef __USER_VA0_IS_SAFE
-	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
-	    !VM_MAP_IS_KERNEL(map) && user_va0_disable) {
-		uprintf("%s: process wants to map virtual address 0; see "
-		    "vm.user_va0_disable in sysctl(7).\n", __func__);
-		return EACCES;
-	}
-#endif
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
@@ -3107,7 +3098,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			/* update pmap! */
 			uvm_map_lock_entry(current);
 			pmap_protect(map->pmap, current->start, current->end,
-			    current->protection & MASK(entry));
+			    current->protection & MASK(current));
 			uvm_map_unlock_entry(current);
 
 			/*
@@ -3133,11 +3124,22 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 
 		if ((map->flags & VM_MAP_WIREFUTURE) != 0 &&
-		    VM_MAPENT_ISWIRED(entry) == 0 &&
+		    VM_MAPENT_ISWIRED(current) == 0 &&
 		    old_prot == VM_PROT_NONE &&
 		    new_prot != VM_PROT_NONE) {
-			if (uvm_map_pageable(map, entry->start,
-			    entry->end, false,
+
+			/*
+			 * We must call pmap_update() here because the
+			 * pmap_protect() call above might have removed some
+			 * pmap entries and uvm_map_pageable() might create
+			 * some new pmap entries that rely on the prior
+			 * removals being completely finished.
+			 */
+
+			pmap_update(map->pmap);
+
+			if (uvm_map_pageable(map, current->start,
+			    current->end, false,
 			    UVM_LK_ENTER|UVM_LK_EXIT) != 0) {
 
 				/*
@@ -3367,6 +3369,14 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return EFAULT;
 	}
 	entry = start_entry;
+
+	if (start == end) {		/* nothing required */
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
+
+		UVMHIST_LOG(maphist,"<- done (nothing)",0,0,0,0);
+		return 0;
+	}
 
 	/*
 	 * handle wiring and unwiring separately.
@@ -4972,7 +4982,7 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		return EINVAL;
 
 	if (oldp) {
-		if (*oldlenp > 1024 * 1024)
+		if (*oldlenp > 10UL * 1024UL * 1024UL)
 			return E2BIG;
 		count = *oldlenp / elem_size;
 		if (count == 0)
@@ -5013,7 +5023,7 @@ out:
 	if (pid != -1)
 		mutex_exit(p->p_lock);
 	if (error == 0) {
-		const u_int esize = min(sizeof(*vme), elem_size);
+		const u_int esize = uimin(sizeof(*vme), elem_size);
 		dp = oldp;
 		for (size_t i = 0; i < count; i++) {
 			if (oldp && (dp - (char *)oldp) < vmesize) {

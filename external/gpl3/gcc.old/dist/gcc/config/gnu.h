@@ -1,7 +1,7 @@
 /* Configuration common to all targets running the GNU system.  */
 
 /*
-Copyright (C) 1994-2015 Free Software Foundation, Inc.
+Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,14 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-/* Provide GCC options for standard feature-test macros.  */
-#undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
-
-/* Default C library spec.  */
-#undef LIB_SPEC
-#define LIB_SPEC "%{pthread:-lpthread} %{pg|p|profile:-lc_p;:-lc}"
 
 #undef GNU_USER_TARGET_OS_CPP_BUILTINS
 #define GNU_USER_TARGET_OS_CPP_BUILTINS()		\

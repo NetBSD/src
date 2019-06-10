@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -414,6 +414,7 @@ AcpiDbWalkAndMatchName (
     }
     else
     {
+        Info.Count = 0;
         Info.OwnerId = ACPI_OWNER_ID_MAX;
         Info.DebugLevel = ACPI_UINT32_MAX;
         Info.DisplayType = ACPI_DISPLAY_SUMMARY | ACPI_DISPLAY_SHORT;
@@ -448,7 +449,7 @@ AcpiDbFindNameInNamespace (
     char                    *AcpiNamePtr = AcpiName;
 
 
-    if (strlen (NameArg) > ACPI_NAME_SIZE)
+    if (strlen (NameArg) > ACPI_NAMESEG_SIZE)
     {
         AcpiOsPrintf ("Name must be no longer than 4 characters\n");
         return (AE_OK);
@@ -1066,7 +1067,7 @@ AcpiDbBusWalk (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Display info about system busses.
+ * DESCRIPTION: Display info about system buses.
  *
  ******************************************************************************/
 

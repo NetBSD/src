@@ -1,5 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -836,6 +836,7 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 		  fprintf_fn (stream, "xd%d", rn & ~1);
 		  break;
 		}
+	      /* Fall through.  */
 	    case D_REG_N:
 	      fprintf_fn (stream, "dr%d", rn);
 	      break;
@@ -845,6 +846,7 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 		  fprintf_fn (stream, "xd%d", rm & ~1);
 		  break;
 		}
+	      /* Fall through.  */
 	    case D_REG_M:
 	      fprintf_fn (stream, "dr%d", rm);
 	      break;

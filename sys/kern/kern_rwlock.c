@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.50.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/lock.h>
+#include <sys/pserialize.h>
 
 #include <dev/lockstat.h>
 
@@ -72,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_DASSERT(rw, cond)						\
 do {									\
-	if (!(cond))							\
+	if (__predict_false(!(cond)))					\
 		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0);
 
@@ -93,7 +94,7 @@ do {									\
 
 #define	RW_ASSERT(rw, cond)						\
 do {									\
-	if (!(cond))							\
+	if (__predict_false(!(cond)))					\
 		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0)
 
@@ -112,7 +113,7 @@ do {									\
 #endif /* defined(LOCKDEBUG) */
 
 static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
-static void	rw_dump(const volatile void *);
+static void	rw_dump(const volatile void *, lockop_printer_t);
 static lwp_t	*rw_owner(wchan_t);
 
 static inline uintptr_t
@@ -167,11 +168,11 @@ syncobj_t rw_syncobj = {
  *	Dump the contents of a rwlock structure.
  */
 static void
-rw_dump(const volatile void *cookie)
+rw_dump(const volatile void *cookie, lockop_printer_t pr)
 {
 	const volatile krwlock_t *rw = cookie;
 
-	printf_nolog("owner/count  : %#018lx flags    : %#018x\n",
+	pr("owner/count  : %#018lx flags    : %#018x\n",
 	    (long)RW_OWNER(rw), (int)RW_FLAGS(rw));
 }
 
@@ -291,6 +292,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	RW_WANTLOCK(rw, op);
 
 	if (panicstr == NULL) {
+		KDASSERT(pserialize_not_in_read_section());
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	}
 

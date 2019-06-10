@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/08/29 09:02:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 22:02:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,12 +22,13 @@ CONFIGFILES= \
 	20-unhint-small-vera.conf \
 	25-unhint-nonlatin.conf \
 	30-metric-aliases.conf \
-	30-urw-aliases.conf \
 	40-nonlatin.conf \
+	45-generic.conf \
 	45-latin.conf \
 	49-sansserif.conf \
 	50-user.conf \
 	51-local.conf \
+	60-generic.conf \
 	60-latin.conf \
 	65-fonts-persian.conf \
 	65-khmer.conf \

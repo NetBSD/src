@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12 2017/04/12 18:17:59 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.12.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -63,6 +63,8 @@
 #define PTRACE_REG_SP(r)	(r)->regs[_REG_RSP]
 #define PTRACE_REG_INTRV(r)	(r)->regs[_REG_RAX]
 
+#define PTRACE_ILLEGAL_ASM	__asm __volatile ("ud2" : : : "memory")
+
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xcc })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile ("int3" : : : "memory")
 #define PTRACE_BREAKPOINT_SIZE	1
@@ -85,6 +87,8 @@
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32
 #define process_dbreg32		struct dbreg32
+
+#define PTRACE_TRANSLATE_REQUEST32(x) netbsd32_ptrace_translate_request(x)
 #endif	/* COMPAT_NETBSD32 */
 #endif	/* _KERNEL_OPT */
 

@@ -1,6 +1,6 @@
 /* tadd -- test file for mpc_add.
 
-Copyright (C) 2008, 2010, 2011, 2012 INRIA
+Copyright (C) 2008, 2010, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -52,17 +52,28 @@ check_ternary_value (void)
   mpc_clear (z);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_add (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_SYMMETRIC                                     \
+  P[0].mpc_inex = mpc_add (P[1].mpc, P[3].mpc, P[2].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_add (P[1].mpc, P[1].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_add (P[1].mpc, P[2].mpc, P[1].mpc, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (C_CC, f, mpc_add);
-  f.properties = FUNC_PROP_SYMETRIC;
-
   test_start ();
 
   check_ternary_value();
-  data_check (f, "add.dat");
-  tgeneric (f, 2, 1024, 7, -1);
+
+  data_check_template ("add.dsc", "add.dat");
+
+  tgeneric_template ("add.dsc", 2, 1024, 7, 128);
 
   test_end ();
 

@@ -1,5 +1,5 @@
 /* Header file for GDB compile command and supporting functions.
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,15 +14,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_COMPILE_INTERNAL_H
-#define GDB_COMPILE_INTERNAL_H
+#ifndef COMPILE_COMPILE_INTERNAL_H
+#define COMPILE_COMPILE_INTERNAL_H
 
-#include "hashtab.h"
 #include "gcc-c-interface.h"
-#include "common/enum-flags.h"
-
-/* enum-flags wrapper.  */
-DEF_ENUM_FLAGS_TYPE (enum gcc_qualifiers, gcc_qualifiers_flags);
 
 /* Debugging flag for the "compile" family of commands.  */
 
@@ -30,55 +25,131 @@ extern int compile_debug;
 
 struct block;
 
+/* An object that maps a gdb type to a gcc type.  */
+
+struct type_map_instance
+{
+  /* The gdb type.  */
+
+  struct type *type;
+
+  /* The corresponding gcc type handle.  */
+
+  gcc_type gcc_type_handle;
+};
+
 /* An object of this type holds state associated with a given
    compilation job.  */
 
-struct compile_instance
+class compile_instance
 {
-  /* The GCC front end.  */
+public:
+  compile_instance (struct gcc_base_context *gcc_fe, const char *options);
 
-  struct gcc_base_context *fe;
+  virtual ~compile_instance ()
+  {
+    m_gcc_fe->ops->destroy (m_gcc_fe);
+  }
+
+  /* Returns the GCC options to be passed during compilation.  */
+  const std::string &gcc_target_options () const
+  {
+    return m_gcc_target_options;
+  }
+
+  /* Query the type cache for TYPE, returning the compiler's
+     type for it in RET.  */
+  bool get_cached_type (struct type *type, gcc_type *ret) const;
+
+  /* Insert GCC_TYPE into the type cache for TYPE.
+
+     It is ok for a given type to be inserted more than once, provided that
+     the exact same association is made each time.  */
+  void insert_type (struct type *type, gcc_type gcc_type);
+
+  /* Associate SYMBOL with some error text.  */
+  void insert_symbol_error (const struct symbol *sym, const char *text);
+
+  /* Emit the error message corresponding to SYM, if one exists, and
+     arrange for it not to be emitted again.  */
+  void error_symbol_once (const struct symbol *sym);
+
+  /* These currently just forward to the underlying ops
+     vtable.  */
+
+  /* Set the plug-in print callback.  */
+  void set_print_callback (void (*print_function) (void *, const char *),
+			   void *datum);
+
+  /* Return the plug-in's front-end version.  */
+  unsigned int version () const;
+
+  /* Set the plug-in's verbosity level.  Nop for GCC_FE_VERSION_0.  */
+  void set_verbose (int level);
+
+  /* Set the plug-in driver program.  Nop for GCC_FE_VERSION_0.  */
+  void set_driver_filename (const char *filename);
+
+  /* Set the regular expression used to match the configury triplet
+     prefix to the compiler.  Nop for GCC_FE_VERSION_0.  */
+  void set_triplet_regexp (const char *regexp);
+
+  /* Set compilation arguments.  REGEXP is only used for protocol
+     version GCC_FE_VERSION_0.  */
+  char *set_arguments (int argc, char **argv, const char *regexp = NULL);
+
+  /* Set the filename of the program to compile.  Nop for GCC_FE_VERSION_0.  */
+  void set_source_file (const char *filename);
+
+  /* Compile the previously specified source file to FILENAME.
+     VERBOSE_LEVEL is only used for protocol version GCC_FE_VERSION_0.  */
+  bool compile (const char *filename, int verbose_level = -1);
+
+  /* Set the scope type for this compile.  */
+  void set_scope (enum compile_i_scope_types scope)
+  {
+    m_scope = scope;
+  }
+
+  /* Return the scope type.  */
+  enum compile_i_scope_types scope () const
+  {
+    return m_scope;
+  }
+
+  /* Set the block to be used for symbol searches.  */
+  void set_block (const struct block *block)
+  {
+    m_block = block;
+  }
+
+  /* Return the search block.  */
+  const struct block *block () const
+  {
+    return m_block;
+  }
+
+protected:
+
+  /* The GCC front end.  */
+  struct gcc_base_context *m_gcc_fe;
 
   /* The "scope" of this compilation.  */
-
-  enum compile_i_scope_types scope;
+  enum compile_i_scope_types m_scope;
 
   /* The block in which an expression is being parsed.  */
-
-  const struct block *block;
+  const struct block *m_block;
 
   /* Specify "-std=gnu11", "-std=gnu++11" or similar.  These options are put
      after CU's DW_AT_producer compilation options to override them.  */
-
-  const char *gcc_target_options;
-
-  /* How to destroy this object.  */
-
-  void (*destroy) (struct compile_instance *);
-};
-
-/* A subclass of compile_instance that is specific to the C front
-   end.  */
-struct compile_c_instance
-{
-  /* Base class.  Note that the base class vtable actually points to a
-     gcc_c_fe_vtable.  */
-
-  struct compile_instance base;
+  std::string m_gcc_target_options;
 
   /* Map from gdb types to gcc types.  */
-
-  htab_t type_map;
+  htab_up m_type_map;
 
   /* Map from gdb symbols to gcc error messages to emit.  */
-
-  htab_t symbol_err_map;
+  htab_up m_symbol_err_map;
 };
-
-/* A helper macro that takes a compile_c_instance and returns its
-   corresponding gcc_c_context.  */
-
-#define C_CTX(I) ((struct gcc_c_context *) ((I)->base.fe))
 
 /* Define header and footers for different scopes.  */
 
@@ -93,13 +164,16 @@ struct compile_c_instance
 #define COMPILE_I_EXPR_VAL "__gdb_expr_val"
 #define COMPILE_I_EXPR_PTR_TYPE "__gdb_expr_ptr_type"
 
+/* A "type" to indicate a NULL type.  */
+
+const gcc_type GCC_TYPE_NONE = (gcc_type) -1;
+
 /* Call gdbarch_register_name (GDBARCH, REGNUM) and convert its result
    to a form suitable for the compiler source.  The register names
-   should not clash with inferior defined macros.  Returned pointer is
-   never NULL.  Returned pointer needs to be deallocated by xfree.  */
+   should not clash with inferior defined macros. */
 
-extern char *compile_register_name_mangled (struct gdbarch *gdbarch,
-					    int regnum);
+extern std::string compile_register_name_mangled (struct gdbarch *gdbarch,
+						  int regnum);
 
 /* Convert compiler source register name to register number of
    GDBARCH.  Returned value is always >= 0, function throws an error
@@ -107,50 +181,6 @@ extern char *compile_register_name_mangled (struct gdbarch *gdbarch,
 
 extern int compile_register_name_demangle (struct gdbarch *gdbarch,
 					   const char *reg_name);
-
-/* Convert a gdb type, TYPE, to a GCC type.  CONTEXT is used to do the
-   actual conversion.  The new GCC type is returned.  */
-
-struct type;
-extern gcc_type convert_type (struct compile_c_instance *context,
-			      struct type *type);
-
-/* A callback suitable for use as the GCC C symbol oracle.  */
-
-extern gcc_c_oracle_function gcc_convert_symbol;
-
-/* A callback suitable for use as the GCC C address oracle.  */
-
-extern gcc_c_symbol_address_function gcc_symbol_address;
-
-/* Instantiate a GDB object holding state for the GCC context FE.  The
-   new object is returned.  */
-
-extern struct compile_instance *new_compile_instance (struct gcc_c_context *fe);
-
-/* Emit code to compute the address for all the local variables in
-   scope at PC in BLOCK.  Returns a malloc'd vector, indexed by gdb
-   register number, where each element indicates if the corresponding
-   register is needed to compute a local variable.  */
-
-extern unsigned char *generate_c_for_variable_locations
-     (struct compile_c_instance *compiler,
-      string_file &stream,
-      struct gdbarch *gdbarch,
-      const struct block *block,
-      CORE_ADDR pc);
-
-/* Get the GCC mode attribute value for a given type size.  */
-
-extern const char *c_get_mode_for_size (int size);
-
-/* Given a dynamic property, return an xmallocd name that is used to
-   represent its size.  The result must be freed by the caller.  The
-   contents of the resulting string will be the same each time for
-   each call with the same argument.  */
-
-struct dynamic_prop;
-extern char *c_get_range_decl_name (const struct dynamic_prop *prop);
 
 /* Type used to hold and pass around the source and object file names
    to use for compilation.  */
@@ -177,4 +207,4 @@ private:
   std::string m_object_file;
 };
 
-#endif /* GDB_COMPILE_INTERNAL_H */
+#endif /* COMPILE_COMPILE_INTERNAL_H */

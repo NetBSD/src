@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.47 2015/05/13 02:37:41 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.47.18.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.47 2015/05/13 02:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.47.18.1 2019/06/10 22:06:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1146,7 +1146,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 	else
 		pte = vtopte((vaddr_t)loc);
 	pde = vtopte((vaddr_t)pte);
-	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
+	if ((*pde & PTE_P) == 0 || (*pte & PTE_P) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
 	}

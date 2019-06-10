@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.compiler-rt,v 1.5 2014/08/10 05:57:31 matt Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.5.30.1 2019/06/10 22:09:04 christos Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -72,7 +72,7 @@ GENERIC_SRCS+= \
 	umodsi3.c
 .endif
 
-.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+.if ${MACHINE_CPU} != "aarch64"
 GENERIC_SRCS+= \
 	clzdi2.c \
 	ctzdi2.c \
@@ -126,3 +126,10 @@ COPTS.${src}+=	-Wno-missing-prototypes \
 .endfor
 
 CPPFLAGS.int_util.c+=	-DKERNEL_USE
+
+# XXX Explicit divide by zero in udivmoddi4.c -> abort().
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+. if ${MACHINE_CPU} != "arm"
+COPTS.udivmoddi4.c+=	-fnon-call-exceptions
+. endif
+.endif

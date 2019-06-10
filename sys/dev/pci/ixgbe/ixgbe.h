@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.50 2018/06/25 05:06:10 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.50.2.1 2019/06/10 22:07:28 christos Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -417,6 +417,9 @@ struct rx_ring {
 #endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
+	u16	                last_rx_mbuf_sz;
+	u32                	last_num_rx_desc;
+	ixgbe_extmem_head_t	jcl_head;
 
 	u64			bytes; /* Used for AIM calc */
 	u64			packets;
@@ -446,6 +449,14 @@ struct ixgbe_vf {
 	uint16_t default_vlan;
 	uint16_t vlan_tag;
 	uint16_t api_ver;
+};
+
+/*
+ * NetBSD: For trafic class
+ * Crrently, the following structure is only for statistics.
+ */
+struct ixgbe_tc {
+	char             evnamebuf[32];
 };
 
 /* Our adapter structure */
@@ -481,7 +492,7 @@ struct adapter {
 	/* Info about the interface */
 	int			advertise;  /* link speeds */
 	bool			enable_aim; /* adaptive interrupt moderation */
-	bool			link_active;
+	int			link_active; /* Use LINK_STATE_* value */
 	u16			max_frame_size;
 	u16			num_segs;
 	u32			link_speed;
@@ -563,6 +574,10 @@ struct adapter {
 	void 			(*init_locked)(struct adapter *);
 	void 			(*stop_locked)(void *);
 
+	/* Firmware error check */
+	u_int                   recovery_mode;
+	struct callout          recovery_mode_timer;
+
 	/* Misc stats maintained by the driver */
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt   		mbuf_defrag_failed;
@@ -600,9 +615,11 @@ struct adapter {
 	u32                     feat_cap;
 	u32                     feat_en;
 
+	/* Traffic classes */
+	struct ixgbe_tc tcs[IXGBE_DCB_MAX_TRAFFIC_CLASS];
+
 	struct sysctllog	*sysctllog;
 	const struct sysctlnode *sysctltop;
-	ixgbe_extmem_head_t jcl_head;
 };
 
 /* Precision Time Sync (IEEE 1588) defines */
@@ -732,6 +749,18 @@ ixv_check_ether_addr(u8 *addr)
 	return (status);
 }
 
+/*
+ * This checks the adapter->recovery_mode software flag which is
+ * set by ixgbe_fw_recovery_mode().
+ *
+ */
+static inline bool
+ixgbe_fw_recovery_mode_swflag(struct adapter *adapter)
+{
+	return (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) &&
+	    atomic_load_acq_uint(&adapter->recovery_mode);
+}
+
 /* Shared Prototypes */
 void ixgbe_legacy_start(struct ifnet *);
 int  ixgbe_legacy_start_locked(struct ifnet *, struct tx_ring *);
@@ -752,7 +781,8 @@ bool ixgbe_rxeof(struct ix_queue *);
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 /* For NetBSD */
-void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, int, size_t);
+void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
+    int, size_t);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"

@@ -1,6 +1,6 @@
 /* Target-dependent code for Cygwin running on i386's, for GDB.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -183,9 +183,9 @@ i386_windows_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 {
   static char buf[80];
 
-  if (ptid_get_lwp (ptid) != 0)
+  if (ptid.lwp () != 0)
     {
-      snprintf (buf, sizeof (buf), "Thread 0x%lx", ptid_get_lwp (ptid));
+      snprintf (buf, sizeof (buf), "Thread 0x%lx", ptid.lwp ());
       return buf;
     }
 
@@ -251,9 +251,6 @@ i386_cygwin_osabi_sniffer (bfd *abfd)
 
   return GDB_OSABI_UNKNOWN;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386_cygwin_tdep (void);
 
 void
 _initialize_i386_cygwin_tdep (void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.49 2018/01/21 16:55:25 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.49 2018/01/21 16:55:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,6 +568,12 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	return SCAN_CONTINUE;
 }
 
+static bool
+check_label_magic(const struct disklabel *dlp, uint32_t diskmagic)
+{
+	return memcmp(&dlp->d_magic, &diskmagic, sizeof(diskmagic)) == 0 &&
+	    memcmp(&dlp->d_magic2, &diskmagic, sizeof(diskmagic)) == 0;
+}
 
 #ifdef DISKLABEL_EI
 /*
@@ -617,11 +623,10 @@ validate_label(mbr_args_t *a, uint label_sector)
 			dlp = (void *)dlp_byte;
 			break;
 		}
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
+		if (!check_label_magic(dlp, DISKMAGIC))
 #ifdef DISKLABEL_EI
 		{
-			if (bswap32(dlp->d_magic)  != DISKMAGIC ||
-			    bswap32(dlp->d_magic2) != DISKMAGIC)
+			if (!check_label_magic(dlp, bswap32(DISKMAGIC)))
 				continue;
 
 			/*
@@ -692,59 +697,6 @@ corrupted:
 		return SCAN_ERROR;
 	}
 }
-
-/*
- * Check new disk label for sensibility
- * before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-		|| (nlp->d_secsize % DEV_BSIZE) != 0)
-			return (EINVAL);
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return (0);
-	}
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    nlp->d_npartitions > MAXPARTITIONS || dkcksum(nlp) != 0)
-		return (EINVAL);
-
-	/* XXX missing check if other dos partitions will be overwritten */
-
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
-		openmask &= ~(1 << i);
-		if (i >= nlp->d_npartitions)
-			return (EBUSY);
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		/*
-		 * Copy internally-set partition information
-		 * if new label doesn't include it.		XXX
-		 */
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			*npp = *opp;
-			continue;
-		}
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
-	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
-	*olp = *nlp;
-	return (0);
-}
-
 
 /*
  * Write disk label back to device after modification.

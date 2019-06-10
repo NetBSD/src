@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Free Software Foundation, Inc.
+# Copyright 1999-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,12 +46,23 @@ proc test_disassembly_only {} {
     # Test disassembly more only for the current function.
     # Tests:
     # -data-disassemble -s $pc -e "$pc+8" -- 0
+    # -data-disassemble -a $pc -- 0
+    # -data-disassemble -a callee4 -- 0
     # -data-disassembly -f basics.c -l $line_main_body -- 0
+
 
     mi_gdb_test "print/x \$pc" "" ""
     mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" -- 0" \
 	    "111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
              "data-disassemble from pc to pc+12 assembly only"
+
+    mi_gdb_test "112-data-disassemble -a \$pc -- 0" \
+	    "112\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
+             "data-disassemble function around pc assembly only"
+
+    mi_gdb_test "113-data-disassemble -a callee4 -- 0" \
+	    "113\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
+             "data-disassemble function callee4 assembly only"
 
     mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body -- 0" \
 	    "222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}\\\]" \
@@ -207,6 +218,7 @@ proc test_disassembly_bogus_args {} {
     # Tests:
     # -data-disassembly -f foo -l abc -n 0 -- 0
     # -data-disassembly -s foo -e bar -- 0
+    # -data-disassembly -a foo -- 0
     # -data-disassembly -s $pc -f basics.c -- 0
     # -data-disassembly -f basics.c -l 32 -- 9
 
@@ -216,10 +228,14 @@ proc test_disassembly_bogus_args {} {
 
     mi_gdb_test "321-data-disassemble -s foo -e bar -- 0" \
              "321\\^error,msg=\"No symbol \\\\\"foo\\\\\" in current context.\"" \
-             "data-disassemble bogus address"
+             "data-disassemble bogus address, -s -e"
+
+    mi_gdb_test "322-data-disassemble -a foo -- 0" \
+             "322\\^error,msg=\"No symbol \\\\\"foo\\\\\" in current context.\"" \
+             "data-disassemble bogus address, -a"
 
     mi_gdb_test "456-data-disassemble -s \$pc -f basics.c -- 0" \
-             "456\\^error,msg=\"-data-disassemble: Usage: \\( .-f filename -l linenum .-n howmany.. \\| .-s startaddr -e endaddr.\\) .--. mode.\"" \
+             "456\\^error,msg=\"-data-disassemble: Usage: \\( .-f filename -l linenum .-n howmany.. \\| .-s startaddr -e endaddr. \\| .-a addr. \\) .--. mode.\"" \
              "data-disassemble mix different args"
 
     mi_gdb_test "789-data-disassemble -f basics.c -l $line_main_body -- 9" \

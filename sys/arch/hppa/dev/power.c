@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.2 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: power.c,v 1.2.10.1 2019/06/10 22:06:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -277,7 +277,7 @@ pwr_sw_init(struct power_softc *sc)
 
 	if (error)
 		goto err_sysctl;
-	
+
 	error = sysctl_createv(&sysctl_log, 0, NULL, &pwr_sw_node, 0,
 	    CTLTYPE_NODE, "power_switch", NULL, NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);

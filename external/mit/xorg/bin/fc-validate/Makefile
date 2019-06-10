@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.34.1 2019/06/10 22:02:34 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fc-validate
 
 CPPFLAGS+=	-I${X11SRCDIR.fontconfig} -I. -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-DHAVE_GETOPT_LONG=1
 
 LDADD+=	-lfontconfig -lfreetype -lexpat
 DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}

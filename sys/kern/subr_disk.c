@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.122.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,6 +196,17 @@ disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
 	diskp->dk_name = name;
 	diskp->dk_driver = driver;
+}
+
+/*
+ * Rename a disk.
+ */
+void
+disk_rename(struct disk *diskp, const char *name)
+{
+
+	diskp->dk_name = name;
+	iostat_rename(diskp->dk_stats, diskp->dk_name);
 }
 
 /*
@@ -643,6 +654,13 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 			return EBADF;
 
 		dkwedge_discover(dk);
+		return 0;
+
+	case DIOCRMWEDGES:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		dkwedge_delall(dk);
 		return 0;
 
 	default:

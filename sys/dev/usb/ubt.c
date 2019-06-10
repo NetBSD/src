@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.61 2018/04/18 15:01:03 maxv Exp $	*/
+/*	$NetBSD: ubt.c,v 1.61.2.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.61 2018/04/18 15:01:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.61.2.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -293,7 +293,7 @@ int	ubt_match(device_t, cfdata_t, void *);
 void	ubt_attach(device_t, device_t, void *);
 int	ubt_detach(device_t, int);
 int	ubt_activate(device_t, enum devact);
-extern struct cfdriver ubt_cd;
+
 CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach,
     ubt_detach, ubt_activate);
 

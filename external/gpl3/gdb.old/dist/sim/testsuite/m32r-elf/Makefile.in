@@ -1,5 +1,5 @@
 # Makefile for regression testing the m32r simulator.
-# Copyright (C) 1998-2016 Free Software Foundation, Inc.
+# Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 

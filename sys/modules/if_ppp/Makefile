@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2017/09/17 20:37:17 christos Exp $
+# $NetBSD: Makefile,v 1.2.6.1 2019/06/10 22:09:28 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -12,5 +12,7 @@ CPPFLAGS+=	-DINET -DINET6
 CPPFLAGS+=	-DPPP_FILTER
 CPPFLAGS+=	-DPPP_DEFLATE
 CPPFLAGS+=	-DPPP_BSDCOMP
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

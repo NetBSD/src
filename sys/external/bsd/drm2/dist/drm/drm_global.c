@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_global.c,v 1.3.34.1 2019/06/10 22:07:57 christos Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2008-2009 VMware, Inc., Palo Alto, CA., USA
@@ -27,6 +29,9 @@
 /*
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_global.c,v 1.3.34.1 2019/06/10 22:07:57 christos Exp $");
 
 #include <linux/mutex.h>
 #include <linux/slab.h>

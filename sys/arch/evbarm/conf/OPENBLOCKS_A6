@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.30 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.30.4.1 2019/06/10 22:06:04 christos Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -80,10 +80,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT	# Compat for IP-Filter
-options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	NFS_BOOT_BOOTP
@@ -127,7 +123,6 @@ options 	USBVERBOSE	# Verbose USB device auto configuration messages
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -158,7 +153,13 @@ mvsata* at mvsoc? offset ? irq ?
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
+# MII/PHY support
 makphy* at mii? phy ?
+rgephy* at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
@@ -227,7 +228,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
@@ -250,7 +250,9 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
@@ -336,7 +338,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -353,8 +355,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -377,19 +377,8 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
-#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

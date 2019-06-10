@@ -1,5 +1,5 @@
 /* Inferior process information for the remote server for GDB.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -154,6 +154,11 @@ struct inferior_list_entry *find_inferior
       void *arg);
 struct inferior_list_entry *find_inferior_id (struct inferior_list *list,
 					      ptid_t id);
+struct inferior_list_entry *
+  find_inferior_in_random (struct inferior_list *,
+			   int (*func) (struct inferior_list_entry *,
+					void *),
+			   void *arg);
 
 void *inferior_target_data (struct thread_info *);
 void set_inferior_target_data (struct thread_info *, void *);

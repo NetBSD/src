@@ -1,6 +1,6 @@
 /* mpfr_gamma -- gamma function
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,7 +27,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "lngamma.c"
 #undef IS_GAMMA
 
-/* return a sufficient precision such that 2-x is exact, assuming x < 0 */
+/* return a sufficient precision such that 2-x is exact, assuming x < 0
+   and x is not an integer */
 static mpfr_prec_t
 mpfr_gamma_2_minus_x_exact (mpfr_srcptr x)
 {
@@ -38,13 +39,16 @@ mpfr_gamma_2_minus_x_exact (mpfr_srcptr x)
      carry can occur, or ULP(y) > 2, and we need w >= EXP(y)-1:
      (a) if EXP(y) <= 1, w = PREC(y) + 2 - EXP(y)
      (b) if EXP(y) > 1 and EXP(y)-PREC(y) <= 1, w = PREC(y) + 1
-     (c) if EXP(y) > 1 and EXP(y)-PREC(y) > 1, w = EXP(y) - 1 */
+     (c) if EXP(y) > 1 and EXP(y)-PREC(y) > 1, w = EXP(y) - 1.
+
+     Note: case (c) cannot happen in practice since this would imply that
+     y is integer, thus x is negative integer */
   return (MPFR_GET_EXP(x) <= 1) ? MPFR_PREC(x) + 2 - MPFR_GET_EXP(x)
-    : ((MPFR_GET_EXP(x) <= MPFR_PREC(x) + 1) ? MPFR_PREC(x) + 1
-       : MPFR_GET_EXP(x) - 1);
+    : MPFR_PREC(x) + 1;
 }
 
-/* return a sufficient precision such that 1-x is exact, assuming x < 1 */
+/* return a sufficient precision such that 1-x is exact, assuming x < 1
+   and x is not an integer */
 static mpfr_prec_t
 mpfr_gamma_1_minus_x_exact (mpfr_srcptr x)
 {
@@ -52,10 +56,9 @@ mpfr_gamma_1_minus_x_exact (mpfr_srcptr x)
     return MPFR_PREC(x) - MPFR_GET_EXP(x);
   else if (MPFR_GET_EXP(x) <= 0)
     return MPFR_PREC(x) + 1 - MPFR_GET_EXP(x);
-  else if (MPFR_PREC(x) >= MPFR_GET_EXP(x))
+  else /* necessarily MPFR_PREC(x) > MPFR_GET_EXP(x) since otherwise
+          x would be an integer */
     return MPFR_PREC(x) + 1;
-  else
-    return MPFR_GET_EXP(x);
 }
 
 /* returns a lower bound of the number of significant bits of n!
@@ -72,6 +75,8 @@ bits_fac (unsigned long n)
   unsigned long r, k;
   MPFR_SAVE_EXPO_DECL (expo);
 
+  MPFR_ASSERTD (n >= 1);
+
   MPFR_SAVE_EXPO_MARK (expo);
   mpfr_init2 (x, 38);
   mpfr_init2 (y, 38);
@@ -84,9 +89,14 @@ bits_fac (unsigned long n)
   mpfr_sqrt (y, y, MPFR_RNDZ);
   mpfr_mul (x, x, y, MPFR_RNDZ);
   mpfr_log2 (x, x, MPFR_RNDZ);
-  r = mpfr_get_ui (x, MPFR_RNDU);
+  r = mpfr_get_ui (x, MPFR_RNDU);  /* lower bound on ceil(x) */
   for (k = 2; k <= n; k *= 2)
-    r -= n / k;
+    {
+      /* Note: the approximation is accurate enough so that the
+         subtractions do not wrap. */
+      MPFR_ASSERTD (r >= n / k);
+      r -= n / k;
+    }
   mpfr_clear (x);
   mpfr_clear (y);
   MPFR_SAVE_EXPO_FREE (expo);
@@ -143,19 +153,30 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           MPFR_ASSERTD(MPFR_IS_ZERO(x));
           MPFR_SET_INF(gamma);
           MPFR_SET_SAME_SIGN(gamma, x);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET (0);  /* exact */
         }
     }
 
-  /* Check for tiny arguments, where gamma(x) ~ 1/x - euler + ....
+  /* Check for tiny arguments, where gamma(x) ~ 1/x - euler + ... can be
+     approximated by 1/x, with some error term ~= - euler.
+     We need to make sure that there are no breakpoints (discontinuity
+     points of the rounding function) between gamma(x) and 1/x (included),
+     where the possible breakpoints (for all rounding modes) are the numbers
+     that fit on PREC(gamma)+1 bits. There will be a special case when |x|
+     is a power of two, since such values are breakpoints. We will choose n
+     minimum such that x fits on n bits and the breakpoints fit on n+1 bits,
+     thus
+       n = MAX(MPFR_PREC(x), MPFR_PREC(gamma)).
      We know from "Bound on Runs of Zeros and Ones for Algebraic Functions",
      Proceedings of Arith15, T. Lang and J.-M. Muller, 2001, that the maximal
-     number of consecutive zeroes or ones after the round bit is n-1 for an
-     input of n bits. But we need a more precise lower bound. Assume x has
-     n bits, and 1/x is near a floating-point number y of n+1 bits. We can
-     write x = X*2^e, y = Y/2^f with X, Y integers of n and n+1 bits.
-     Thus X*Y^2^(e-f) is near from 1, i.e., X*Y is near from 2^(f-e).
+     number of consecutive zeroes or ones after the round bit for 1/x is n-1
+     for an input x of n bits [this is an actually much older result!].
+     But we need a more precise lower bound. Assume that 1/x is near a
+     breakpoint y. From the definition of n, the input x fits on n bits
+     and the breakpoint y fits on of n+1 bits. We can write x = X*2^e,
+     y = Y/2^f with X, Y integers of n and n+1 bits respectively.
+     Thus X*Y^2^(e-f) is near 1, i.e., X*Y is near the integer 2^(f-e).
      Two cases can happen:
      (i) either X*Y is exactly 2^(f-e), but this can happen only if X and Y
          are themselves powers of two, i.e., x is a power of two;
@@ -163,13 +184,21 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           |xy-1| >= 2^(e-f), or |y-1/x| >= 2^(e-f)/x = 2^(-f)/X >= 2^(-f-n).
           Since ufp(y) = 2^(n-f) [ufp = unit in first place], this means
           that the distance |y-1/x| >= 2^(-2n) ufp(y).
-          Now assuming |gamma(x)-1/x| <= 1, which is true for x <= 1,
-          if 2^(-2n) ufp(y) >= 2, the error is at most 2^(-2n-1) ufp(y),
-          and round(1/x) with precision >= 2n+2 gives the correct result.
-          If x < 2^E, then y > 2^(-E), thus ufp(y) > 2^(-E-1).
-          A sufficient condition is thus EXP(x) + 2 <= -2 MAX(PREC(x),PREC(Y)).
+          Now, assuming |gamma(x)-1/x| < 1, which is true for 0 < x <= 1,
+          if 2^(-2n) ufp(y) >= 1, then gamma(x) and 1/x round in the same
+          way, so that rounding 1/x gives the correct result and correct
+          (nonzero) ternary value.
+          If x < 2^E, then y >= 2^(-E), thus ufp(y) >= 2^(-E).
+          A sufficient condition is thus EXP(x) <= -2n, where
+          n = MAX(MPFR_PREC(x), MPFR_PREC(gamma)).
   */
-  if (MPFR_GET_EXP (x) + 2
+  /* TODO: The above proof uses the same precision for input and output.
+     Without this assumption, one might obtain a bound like
+     PREC(x) + PREC(y) instead of 2 MAX(PREC(x),PREC(y)). */
+  /* TODO: Handle the very small arguments that do not satisfy the condition,
+     by using the approximation 1/x - euler and a Ziv loop. Otherwise, after
+     some tests, even Gamma(1+x)/x would be faster than the generic code. */
+  if (MPFR_GET_EXP (x)
       <= -2 * (mpfr_exp_t) MAX(MPFR_PREC(x), MPFR_PREC(gamma)))
     {
       int sign = MPFR_SIGN (x); /* retrieve sign before possible override */
@@ -187,7 +216,7 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         mpfr_powerof2_raw (x);
 
       MPFR_BLOCK (flags, inex = mpfr_ui_div (gamma, 1, x, rnd_mode));
-      if (inex == 0) /* x is a power of two */
+      if (inex == 0) /* |x| is a power of two */
         {
           /* return RND(1/x - euler) = RND(+/- 2^k - eps) with eps > 0 */
           if (rnd_mode == MPFR_RNDN || MPFR_IS_LIKE_RNDU (rnd_mode, sign))
@@ -239,6 +268,7 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       unsigned long int u;
       mpfr_prec_t p = MPFR_PREC(gamma);
       u = mpfr_get_ui (x, MPFR_RNDN);
+      MPFR_ASSERTD (u >= 2);
       if (u < 44787929UL && bits_fac (u - 1) <= p + (rnd_mode == MPFR_RNDN))
         /* bits_fac: lower bound on the number of bits of m,
            where gamma(x) = (u-1)! = m*2^e with m odd. */
@@ -256,26 +286,31 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
               >= 2 * (x/e)^x / x for x >= 1 */
   if (compared > 0)
     {
-      mpfr_t yp;
+      mpfr_t yp, zp;
       mpfr_exp_t expxp;
       MPFR_BLOCK_DECL (flags);
+      MPFR_GROUP_DECL (group);
 
+      /* quick test for the default exponent range */
+      if (mpfr_get_emax () >= 1073741823UL && MPFR_GET_EXP(x) <= 25)
+        {
+          MPFR_SAVE_EXPO_FREE (expo);
+          return mpfr_gamma_aux (gamma, x, rnd_mode);
+        }
+
+      MPFR_GROUP_INIT_3 (group, 53, xp, yp, zp);
       /* 1/e rounded down to 53 bits */
-#define EXPM1_STR "0.010111100010110101011000110110001011001110111100111"
-      mpfr_init2 (xp, 53);
-      mpfr_init2 (yp, 53);
-      mpfr_set_str_binary (xp, EXPM1_STR);
-      mpfr_mul (xp, x, xp, MPFR_RNDZ);
+      mpfr_set_str_binary (zp,
+        "0.010111100010110101011000110110001011001110111100111");
+      mpfr_mul (xp, x, zp, MPFR_RNDZ);
       mpfr_sub_ui (yp, x, 2, MPFR_RNDZ);
       mpfr_pow (xp, xp, yp, MPFR_RNDZ); /* (x/e)^(x-2) */
-      mpfr_set_str_binary (yp, EXPM1_STR);
-      mpfr_mul (xp, xp, yp, MPFR_RNDZ); /* x^(x-2) / e^(x-1) */
-      mpfr_mul (xp, xp, yp, MPFR_RNDZ); /* x^(x-2) / e^x */
+      mpfr_mul (xp, xp, zp, MPFR_RNDZ); /* x^(x-2) / e^(x-1) */
+      mpfr_mul (xp, xp, zp, MPFR_RNDZ); /* x^(x-2) / e^x */
       mpfr_mul (xp, xp, x, MPFR_RNDZ); /* lower bound on x^(x-1) / e^x */
       MPFR_BLOCK (flags, mpfr_mul_2ui (xp, xp, 1, MPFR_RNDZ));
       expxp = MPFR_GET_EXP (xp);
-      mpfr_clear (xp);
-      mpfr_clear (yp);
+      MPFR_GROUP_CLEAR (group);
       MPFR_SAVE_EXPO_FREE (expo);
       return MPFR_OVERFLOW (flags) || expxp > __gmpfr_emax ?
         mpfr_overflow (gamma, rnd_mode, 1) :
@@ -316,8 +351,8 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       w += 17; /* to get tmp2 small enough */
       mpfr_set_prec (tmp, w);
       mpfr_set_prec (tmp2, w);
-      ck = mpfr_ui_sub (tmp, 2, x, MPFR_RNDN);
-      MPFR_ASSERTD (ck == 0);  (void) ck; /* use ck to avoid a warning */
+      MPFR_DBGRES (ck = mpfr_ui_sub (tmp, 2, x, MPFR_RNDN));
+      MPFR_ASSERTD (ck == 0); /* tmp = 2-x exactly */
       mpfr_const_pi (tmp2, MPFR_RNDN);
       mpfr_mul (tmp2, tmp2, tmp, MPFR_RNDN); /* Pi*(2-x) */
       mpfr_sin (tmp, tmp2, MPFR_RNDN); /* sin(Pi*(2-x)) */

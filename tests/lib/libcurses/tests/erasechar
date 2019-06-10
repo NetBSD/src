@@ -1,0 +1,2 @@
+include start
+call 0x08 erasechar

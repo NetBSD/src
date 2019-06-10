@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.10 2006/08/19 22:44:58 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.10.150.1 2019/06/10 22:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -102,7 +102,7 @@ ENTRY(xosargs_read)
 	sub	fp, ip, #4
 	mov	r3, r2
 	swi	XOS_Args
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r3, #0
 	strne	r2, [r3]
 	mov	r0, #0
@@ -161,7 +161,7 @@ ENTRY(xosfind_open)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	XOS_Find
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r3, #0
 	strne	r0, [r3]
 	mov	r0, #0
@@ -212,7 +212,7 @@ ENTRY(xosmodule_alloc)
 	mov	r3, r0
 	mov	r0, #OSModule_Alloc
 	swi	XOS_Module
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r1, #0
 	strne	r2, [r1]
 	mov	r0, #0
@@ -238,7 +238,7 @@ ENTRY(xosmodule_lookup)
 	mov	r1, r0
 	mov	r0, #OSModule_Lookup
 	swi	XOS_Module
-	ldmvsdb	fp, {r4-r8, fp, sp, pc}
+	ldmdbvs	fp, {r4-r8, fp, sp, pc}
 	teq	r6, #0
 	strne	r1, [r6]
 	teq	r7, #0
@@ -253,6 +253,36 @@ ENTRY(xosmodule_lookup)
 	strne	r5, [r8]
 	mov	r0, #0
 	ldmdb	fp, {r4-r8, fp, sp, pc}	
+
+ENTRY(xosmodule_enumeratewithversion)
+	mov	ip, sp
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r7, r0
+	mov	r8, r1
+	mov	r9, r2
+	mov	r10, r3
+	ldr	r1, [r7]
+	ldr	r2, [r8]
+	mov	r0, #OSModule_EnumerateWithVersion
+	swi	XOS_Module
+	ldmdbvs	fp, {r4-r10, fp, sp, pc}
+	str	r1, [r7]
+	str	r2, [r8]
+	teq	r9, #0
+	strne	r3, [r9]
+	teq	r9, #0
+	strne	r3, [r9]
+	teq	r10, #0
+	strne	r4, [r10]
+	ldr	r10, [fp, #4]
+	teq	r10, #0
+	strne	r5, [r10]
+	ldr	r10, [fp, #8]
+	teq	r10, #0
+	strne	r6, [r10]
+	mov	r0, #0
+	ldmdb	fp, {r4-r10, fp, sp, pc}	
 
 ENTRY(xosfscontrol_shutdown)
 	mov	ip, sp
@@ -285,7 +315,7 @@ ENTRY(xos_swi_number_from_string)
 	mov	r2, r1
 	mov	r1, r0
 	swi	XOS_SWINumberFromString
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	str	r0, [r2]
 	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
@@ -363,7 +393,7 @@ ENTRY(xosmemory_read_arrangement_table_size)
 	mov	r4, r1
 	mov	r0, #OSMemory_ReadArrangementTableSize
 	swi	XOS_Memory
-	ldmvsdb	fp, {r4, fp, sp, pc}
+	ldmdbvs	fp, {r4, fp, sp, pc}
 	cmp	r3, #0
 	strne	r1, [r3]
 	cmp	r4, #0
@@ -403,7 +433,7 @@ ENTRY(xcache_control)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	XCache_Control
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r2, #0
 	strne	r0, [r2]
 	mov	r0, #0
@@ -419,7 +449,7 @@ ENTRY(xfilecorediscop_read_sectors)
 	orr	r1, r0, #FileCoreDiscOp_ReadSectors
 	ldr	r8, [fp, #4]
 	swi	XFileCore_DiscOp
-	ldmvsdb	fp, {r4, r8, fp, sp, pc}
+	ldmdbvs	fp, {r4, r8, fp, sp, pc}
 	ldr	r0, [fp, #8]
 	teq	r0, #0
 	strne	r2, [r0]
@@ -441,7 +471,7 @@ ENTRY(xfilecore_drives)
 	mov	r3, r1
 	mov	r8, r0
 	swi	XFileCore_Drives
-	ldmvsdb	fp, {r4-r5, r8, fp, sp, pc}
+	ldmdbvs	fp, {r4-r5, r8, fp, sp, pc}
 	teq	r3, #0
 	strne	r0, [r3]
 	teq	r4, #0
@@ -461,7 +491,7 @@ ENTRY(xfilecoresectorop_read_sectors)
 	orr	r1, r0, #FileCoreDiscOp_ReadSectors
 	ldr	r8, [fp, #4]
 	swi	XFileCore_SectorOp
-	ldmvsdb	fp, {r4, r8, fp, sp, pc}
+	ldmdbvs	fp, {r4, r8, fp, sp, pc}
 	ldr	r0, [fp, #8]
 	teq	r0, #0
 	strne	r2, [r0]
@@ -485,7 +515,7 @@ ENTRY(xfilecorediscop64_read_sectors)
 	ldr	r5, [fp, #4]
 	ldr	r8, [fp, #8]
 	swi	XFileCore_DiscOp64
-	ldmvsdb	fp, {r4, r5, r8, fp, sp, pc}
+	ldmdbvs	fp, {r4, r5, r8, fp, sp, pc}
 	ldr	r0, [fp, #12]
 	teq	r0, #0
 	strne	r2, [r0]

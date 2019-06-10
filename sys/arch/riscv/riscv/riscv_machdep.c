@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.2 2017/03/16 16:13:21 chs Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.2.16.1 2019/06/10 22:06:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,15 +116,13 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp * const l = arg;
 	struct trapframe * const tf = l->l_md.md_utf;
 
 	tf->tf_a0 = 0;
 	tf->tf_a1 = 1;
 	tf->tf_sr &= ~SR_EF;		/* Disable FP as we can't be them. */
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 void

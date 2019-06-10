@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/08/16 06:53:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.14.1 2019/06/10 22:02:43 christos Exp $
 
 WARNS?=		2
 
@@ -21,6 +21,8 @@ PKGDIST.xorg-mouse=	${X11SRCDIR.${DRIVER}}
 
 .PATH:  ${X11SRCDIR.${DRIVER}}/include
 .PATH:  ${X11SRCDIR.${DRIVER}}
+
+COPTS.mouse.c+=		-Wno-error	# XXX deprecated
 
 XORG_PKG_VER_PROG=	${DRIVER}
 .include "../../../xorg-pkg-ver.mk"

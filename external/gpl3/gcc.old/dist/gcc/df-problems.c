@@ -1,5 +1,5 @@
 /* Standard problems for dataflow support routines.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Originally contributed by Michael P. Hayes
              (m.hayes@elec.canterbury.ac.nz, mhayes@redhat.com)
    Major rewrite contributed by Danny Berlin (dberlin@dberlin.org)
@@ -24,32 +24,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
+#include "df.h"
 #include "tm_p.h"
 #include "insn-config.h"
-#include "recog.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "regs.h"
-#include "alloc-pool.h"
-#include "flags.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfganal.h"
-#include "basic-block.h"
-#include "sbitmap.h"
-#include "bitmap.h"
-#include "target.h"
-#include "timevar.h"
-#include "df.h"
-#include "except.h"
 #include "dce.h"
 #include "valtrack.h"
 #include "dumpfile.h"
@@ -536,10 +517,7 @@ df_rd_transfer_function (int bb_index)
       bitmap_ior_into (&tmp, gen);
       changed = !bitmap_equal_p (&tmp, out);
       if (changed)
-	{
-	  bitmap_clear (out);
-	  bb_info->out = tmp;
-	}
+	bitmap_move (out, &tmp);
       else
 	bitmap_clear (&tmp);
     }
@@ -933,12 +911,11 @@ df_lr_local_compute (bitmap all_blocks ATTRIBUTE_UNUSED)
 	 reference of the frame pointer.  */
       bitmap_set_bit (&df->hardware_regs_used, FRAME_POINTER_REGNUM);
 
-#if FRAME_POINTER_REGNUM != ARG_POINTER_REGNUM
       /* Pseudos with argument area equivalences may require
 	 reloading via the argument pointer.  */
-      if (fixed_regs[ARG_POINTER_REGNUM])
+      if (FRAME_POINTER_REGNUM != ARG_POINTER_REGNUM
+	  && fixed_regs[ARG_POINTER_REGNUM])
 	bitmap_set_bit (&df->hardware_regs_used, ARG_POINTER_REGNUM);
-#endif
 
       /* Any constant, or pseudo with constant equivalences, may
 	 require reloading from memory using the pic register.  */
@@ -1863,6 +1840,409 @@ df_live_verify_transfer_functions (void)
 }
 
 /*----------------------------------------------------------------------------
+   MUST-INITIALIZED REGISTERS.
+----------------------------------------------------------------------------*/
+
+/* Private data used to verify the solution for this problem.  */
+struct df_mir_problem_data
+{
+  bitmap_head *in;
+  bitmap_head *out;
+  /* An obstack for the bitmaps we need for this problem.  */
+  bitmap_obstack mir_bitmaps;
+};
+
+
+/* Free basic block info.  */
+
+static void
+df_mir_free_bb_info (basic_block bb ATTRIBUTE_UNUSED,
+		     void *vbb_info)
+{
+  struct df_mir_bb_info *bb_info = (struct df_mir_bb_info *) vbb_info;
+  if (bb_info)
+    {
+      bitmap_clear (&bb_info->gen);
+      bitmap_clear (&bb_info->kill);
+      bitmap_clear (&bb_info->in);
+      bitmap_clear (&bb_info->out);
+    }
+}
+
+
+/* Allocate or reset bitmaps for DF_MIR blocks. The solution bits are
+   not touched unless the block is new.  */
+
+static void
+df_mir_alloc (bitmap all_blocks)
+{
+  unsigned int bb_index;
+  bitmap_iterator bi;
+  struct df_mir_problem_data *problem_data;
+
+  if (df_mir->problem_data)
+    problem_data = (struct df_mir_problem_data *) df_mir->problem_data;
+  else
+    {
+      problem_data = XNEW (struct df_mir_problem_data);
+      df_mir->problem_data = problem_data;
+
+      problem_data->out = NULL;
+      problem_data->in = NULL;
+      bitmap_obstack_initialize (&problem_data->mir_bitmaps);
+    }
+
+  df_grow_bb_info (df_mir);
+
+  EXECUTE_IF_SET_IN_BITMAP (all_blocks, 0, bb_index, bi)
+    {
+      struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb_index);
+
+      /* When bitmaps are already initialized, just clear them.  */
+      if (bb_info->kill.obstack)
+	{
+	  bitmap_clear (&bb_info->kill);
+	  bitmap_clear (&bb_info->gen);
+	}
+      else
+	{
+	  bitmap_initialize (&bb_info->kill, &problem_data->mir_bitmaps);
+	  bitmap_initialize (&bb_info->gen, &problem_data->mir_bitmaps);
+	  bitmap_initialize (&bb_info->in, &problem_data->mir_bitmaps);
+	  bitmap_initialize (&bb_info->out, &problem_data->mir_bitmaps);
+	  bitmap_set_range (&bb_info->in, 0, DF_REG_SIZE (df));
+	  bitmap_set_range (&bb_info->out, 0, DF_REG_SIZE (df));
+	}
+    }
+
+  df_mir->optional_p = 1;
+}
+
+
+/* Reset the global solution for recalculation.  */
+
+static void
+df_mir_reset (bitmap all_blocks)
+{
+  unsigned int bb_index;
+  bitmap_iterator bi;
+
+  EXECUTE_IF_SET_IN_BITMAP (all_blocks, 0, bb_index, bi)
+    {
+      struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb_index);
+
+      gcc_assert (bb_info);
+
+      bitmap_clear (&bb_info->in);
+      bitmap_set_range (&bb_info->in, 0, DF_REG_SIZE (df));
+      bitmap_clear (&bb_info->out);
+      bitmap_set_range (&bb_info->out, 0, DF_REG_SIZE (df));
+    }
+}
+
+
+/* Compute local uninitialized register info for basic block BB.  */
+
+static void
+df_mir_bb_local_compute (unsigned int bb_index)
+{
+  basic_block bb = BASIC_BLOCK_FOR_FN (cfun, bb_index);
+  struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb_index);
+  rtx_insn *insn;
+  int luid = 0;
+
+  /* Ignoring artificial defs is intentional: these often pretend that some
+     registers carry incoming arguments (when they are FUNCTION_ARG_REGNO) even
+     though they are not used for that.  As a result, conservatively assume
+     they may be uninitialized.  */
+
+  FOR_BB_INSNS (bb, insn)
+    {
+      unsigned int uid = INSN_UID (insn);
+      struct df_insn_info *insn_info = DF_INSN_UID_GET (uid);
+
+      /* Inserting labels does not always trigger the incremental
+	 rescanning.  */
+      if (!insn_info)
+	{
+	  gcc_assert (!INSN_P (insn));
+	  insn_info = df_insn_create_insn_record (insn);
+	}
+
+      DF_INSN_INFO_LUID (insn_info) = luid;
+      if (!INSN_P (insn))
+	continue;
+
+      luid++;
+      df_mir_simulate_one_insn (bb, insn, &bb_info->kill, &bb_info->gen);
+    }
+}
+
+
+/* Compute local uninitialized register info.  */
+
+static void
+df_mir_local_compute (bitmap all_blocks)
+{
+  unsigned int bb_index;
+  bitmap_iterator bi;
+
+  df_grow_insn_info ();
+
+  EXECUTE_IF_SET_IN_BITMAP (all_blocks, 0, bb_index, bi)
+    {
+      df_mir_bb_local_compute (bb_index);
+    }
+}
+
+
+/* Initialize the solution vectors.  */
+
+static void
+df_mir_init (bitmap all_blocks)
+{
+  df_mir_reset (all_blocks);
+}
+
+
+/* Initialize IN sets for blocks with no predecessors: when landing on such
+   blocks, assume all registers are uninitialized.  */
+
+static void
+df_mir_confluence_0 (basic_block bb)
+{
+  struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb->index);
+
+  bitmap_clear (&bb_info->in);
+}
+
+
+/* Forward confluence function that ignores fake edges.  */
+
+static bool
+df_mir_confluence_n (edge e)
+{
+  bitmap op1 = &df_mir_get_bb_info (e->dest->index)->in;
+  bitmap op2 = &df_mir_get_bb_info (e->src->index)->out;
+
+  if (e->flags & EDGE_FAKE)
+    return false;
+
+  /* A register is must-initialized at the entry of a basic block iff it is
+     must-initialized at the exit of all the predecessors.  */
+  return bitmap_and_into (op1, op2);
+}
+
+
+/* Transfer function for the forwards must-initialized problem.  */
+
+static bool
+df_mir_transfer_function (int bb_index)
+{
+  struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb_index);
+  bitmap in = &bb_info->in;
+  bitmap out = &bb_info->out;
+  bitmap gen = &bb_info->gen;
+  bitmap kill = &bb_info->kill;
+
+  return bitmap_ior_and_compl (out, gen, in, kill);
+}
+
+
+/* Free all storage associated with the problem.  */
+
+static void
+df_mir_free (void)
+{
+  struct df_mir_problem_data *problem_data
+    = (struct df_mir_problem_data *) df_mir->problem_data;
+  if (df_mir->block_info)
+    {
+      df_mir->block_info_size = 0;
+      free (df_mir->block_info);
+      df_mir->block_info = NULL;
+      bitmap_obstack_release (&problem_data->mir_bitmaps);
+      free (problem_data);
+      df_mir->problem_data = NULL;
+    }
+  free (df_mir);
+}
+
+
+/* Debugging info at top of bb.  */
+
+static void
+df_mir_top_dump (basic_block bb, FILE *file)
+{
+  struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb->index);
+
+  if (!bb_info)
+    return;
+
+  fprintf (file, ";; mir   in  \t");
+  df_print_regset (file, &bb_info->in);
+  fprintf (file, ";; mir   kill\t");
+  df_print_regset (file, &bb_info->kill);
+  fprintf (file, ";; mir   gen \t");
+  df_print_regset (file, &bb_info->gen);
+}
+
+/* Debugging info at bottom of bb.  */
+
+static void
+df_mir_bottom_dump (basic_block bb, FILE *file)
+{
+  struct df_mir_bb_info *bb_info = df_mir_get_bb_info (bb->index);
+
+  if (!bb_info)
+    return;
+
+  fprintf (file, ";; mir   out \t");
+  df_print_regset (file, &bb_info->out);
+}
+
+
+/* Build the datastructure to verify that the solution to the dataflow
+   equations is not dirty.  */
+
+static void
+df_mir_verify_solution_start (void)
+{
+  basic_block bb;
+  struct df_mir_problem_data *problem_data;
+  if (df_mir->solutions_dirty)
+    return;
+
+  /* Set it true so that the solution is recomputed.  */
+  df_mir->solutions_dirty = true;
+
+  problem_data = (struct df_mir_problem_data *) df_mir->problem_data;
+  problem_data->in = XNEWVEC (bitmap_head, last_basic_block_for_fn (cfun));
+  problem_data->out = XNEWVEC (bitmap_head, last_basic_block_for_fn (cfun));
+  bitmap_obstack_initialize (&problem_data->mir_bitmaps);
+
+  FOR_ALL_BB_FN (bb, cfun)
+    {
+      bitmap_initialize (&problem_data->in[bb->index], &problem_data->mir_bitmaps);
+      bitmap_initialize (&problem_data->out[bb->index], &problem_data->mir_bitmaps);
+      bitmap_copy (&problem_data->in[bb->index], DF_MIR_IN (bb));
+      bitmap_copy (&problem_data->out[bb->index], DF_MIR_OUT (bb));
+    }
+}
+
+
+/* Compare the saved datastructure and the new solution to the dataflow
+   equations.  */
+
+static void
+df_mir_verify_solution_end (void)
+{
+  struct df_mir_problem_data *problem_data;
+  basic_block bb;
+
+  problem_data = (struct df_mir_problem_data *) df_mir->problem_data;
+  if (!problem_data->out)
+    return;
+
+  FOR_ALL_BB_FN (bb, cfun)
+    {
+      if ((!bitmap_equal_p (&problem_data->in[bb->index], DF_MIR_IN (bb)))
+	  || (!bitmap_equal_p (&problem_data->out[bb->index], DF_MIR_OUT (bb))))
+	gcc_unreachable ();
+    }
+
+  /* Cannot delete them immediately because you may want to dump them
+     if the comparison fails.  */
+  FOR_ALL_BB_FN (bb, cfun)
+    {
+      bitmap_clear (&problem_data->in[bb->index]);
+      bitmap_clear (&problem_data->out[bb->index]);
+    }
+
+  free (problem_data->in);
+  free (problem_data->out);
+  bitmap_obstack_release (&problem_data->mir_bitmaps);
+  free (problem_data);
+  df_mir->problem_data = NULL;
+}
+
+
+/* All of the information associated with every instance of the problem.  */
+
+static struct df_problem problem_MIR =
+{
+  DF_MIR,                       /* Problem id.  */
+  DF_FORWARD,                   /* Direction.  */
+  df_mir_alloc,                 /* Allocate the problem specific data.  */
+  df_mir_reset,                 /* Reset global information.  */
+  df_mir_free_bb_info,          /* Free basic block info.  */
+  df_mir_local_compute,         /* Local compute function.  */
+  df_mir_init,                  /* Init the solution specific data.  */
+  df_worklist_dataflow,         /* Worklist solver.  */
+  df_mir_confluence_0,          /* Confluence operator 0.  */
+  df_mir_confluence_n,          /* Confluence operator n.  */
+  df_mir_transfer_function,     /* Transfer function.  */
+  NULL,                         /* Finalize function.  */
+  df_mir_free,                  /* Free all of the problem information.  */
+  df_mir_free,                  /* Remove this problem from the stack of dataflow problems.  */
+  NULL,                         /* Debugging.  */
+  df_mir_top_dump,              /* Debugging start block.  */
+  df_mir_bottom_dump,           /* Debugging end block.  */
+  NULL,                         /* Debugging start insn.  */
+  NULL,                         /* Debugging end insn.  */
+  df_mir_verify_solution_start, /* Incremental solution verify start.  */
+  df_mir_verify_solution_end,   /* Incremental solution verify end.  */
+  NULL,                         /* Dependent problem.  */
+  sizeof (struct df_mir_bb_info),/* Size of entry of block_info array.  */
+  TV_DF_MIR,                    /* Timing variable.  */
+  false                         /* Reset blocks on dropping out of blocks_to_analyze.  */
+};
+
+
+/* Create a new DATAFLOW instance and add it to an existing instance
+   of DF.  */
+
+void
+df_mir_add_problem (void)
+{
+  df_add_problem (&problem_MIR);
+  /* These will be initialized when df_scan_blocks processes each
+     block.  */
+  df_mir->out_of_date_transfer_functions = BITMAP_ALLOC (&df_bitmap_obstack);
+}
+
+
+/* Apply the effects of the gen/kills in INSN to the corresponding bitmaps.  */
+
+void
+df_mir_simulate_one_insn (basic_block bb ATTRIBUTE_UNUSED, rtx_insn *insn,
+			  bitmap kill, bitmap gen)
+{
+  df_ref def;
+
+  FOR_EACH_INSN_DEF (def, insn)
+    {
+      unsigned int regno = DF_REF_REGNO (def);
+
+      /* The order of GENs/KILLs matters, so if this def clobbers a reg, any
+	 previous gen is irrelevant (and reciprocally).  Also, claim that a
+	 register is GEN only if it is in all cases.  */
+      if (DF_REF_FLAGS_IS_SET (def, DF_REF_MUST_CLOBBER | DF_REF_MAY_CLOBBER))
+	{
+	  bitmap_set_bit (kill, regno);
+	  bitmap_clear_bit (gen, regno);
+	}
+      /* In the worst case, partial and conditional defs can leave bits
+	 uninitialized, so assume they do not change anything.  */
+      else if (!DF_REF_FLAGS_IS_SET (def, DF_REF_PARTIAL | DF_REF_CONDITIONAL))
+	{
+	  bitmap_set_bit (gen, regno);
+	  bitmap_clear_bit (kill, regno);
+	}
+    }
+}
+
+/*----------------------------------------------------------------------------
    CREATE DEF_USE (DU) and / or USE_DEF (UD) CHAINS
 
    Link either the defs to the uses and / or the uses to the defs.
@@ -1881,7 +2261,7 @@ struct df_link *
 df_chain_create (df_ref src, df_ref dst)
 {
   struct df_link *head = DF_REF_CHAIN (src);
-  struct df_link *link = (struct df_link *) pool_alloc (df_chain->block_pool);
+  struct df_link *link = df_chain->block_pool->allocate ();
 
   DF_REF_CHAIN (src) = link;
   link->next = head;
@@ -1906,7 +2286,7 @@ df_chain_unlink_1 (df_ref ref, df_ref target)
 	    prev->next = chain->next;
 	  else
 	    DF_REF_CHAIN (ref) = chain->next;
-	  pool_free (df_chain->block_pool, chain);
+	  df_chain->block_pool->remove (chain);
 	  return;
 	}
       prev = chain;
@@ -1926,7 +2306,7 @@ df_chain_unlink (df_ref ref)
       struct df_link *next = chain->next;
       /* Delete the other side if it exists.  */
       df_chain_unlink_1 (chain->ref, ref);
-      pool_free (df_chain->block_pool, chain);
+      df_chain->block_pool->remove (chain);
       chain = next;
     }
   DF_REF_CHAIN (ref) = NULL;
@@ -1958,7 +2338,7 @@ df_chain_remove_problem (void)
 
   /* Wholesale destruction of the old chains.  */
   if (df_chain->block_pool)
-    free_alloc_pool (df_chain->block_pool);
+    delete df_chain->block_pool;
 
   EXECUTE_IF_SET_IN_BITMAP (df_chain->out_of_date_transfer_functions, 0, bb_index, bi)
     {
@@ -2012,8 +2392,7 @@ static void
 df_chain_alloc (bitmap all_blocks ATTRIBUTE_UNUSED)
 {
   df_chain_remove_problem ();
-  df_chain->block_pool = create_alloc_pool ("df_chain_block pool",
-					 sizeof (struct df_link), 50);
+  df_chain->block_pool = new object_allocator<df_link> ("df_chain_block pool");
   df_chain->optional_p = true;
 }
 
@@ -2148,7 +2527,7 @@ df_chain_finalize (bitmap all_blocks)
 static void
 df_chain_free (void)
 {
-  free_alloc_pool (df_chain->block_pool);
+  delete df_chain->block_pool;
   BITMAP_FREE (df_chain->out_of_date_transfer_functions);
   free (df_chain);
 }
@@ -2865,7 +3244,7 @@ df_remove_dead_eq_notes (rtx_insn *insn, bitmap live)
 /* Set a NOTE_TYPE note for REG in INSN.  */
 
 static inline void
-df_set_note (enum reg_note note_type, rtx insn, rtx reg)
+df_set_note (enum reg_note note_type, rtx_insn *insn, rtx reg)
 {
   gcc_checking_assert (!DEBUG_INSN_P (insn));
   add_reg_note (insn, note_type, reg);
@@ -3119,12 +3498,12 @@ df_note_bb_compute (unsigned int bb_index,
 
   FOR_BB_INSNS_REVERSE (bb, insn)
     {
+      if (!INSN_P (insn))
+	continue;
+
       df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
       df_mw_hardreg *mw;
       int debug_insn;
-
-      if (!INSN_P (insn))
-	continue;
 
       debug_insn = DEBUG_INSN_P (insn);
 
@@ -3575,12 +3954,7 @@ df_simulate_one_insn_forwards (basic_block bb, rtx_insn *insn, bitmap live)
 	case REG_UNUSED:
 	  {
 	    rtx reg = XEXP (link, 0);
-	    int regno = REGNO (reg);
-	    if (HARD_REGISTER_NUM_P (regno))
-	      bitmap_clear_range (live, regno,
-				  hard_regno_nregs[regno][GET_MODE (reg)]);
-	    else
-	      bitmap_clear_bit (live, regno);
+	    bitmap_clear_range (live, REGNO (reg), REG_NREGS (reg));
 	  }
 	  break;
 	default:
@@ -3598,7 +3972,7 @@ df_simulate_one_insn_forwards (basic_block bb, rtx_insn *insn, bitmap live)
 /* Return an OR of MEMREF_NORMAL or MEMREF_VOLATILE for the MEMs in X.  */
 
 static int
-find_memory (rtx insn)
+find_memory (rtx_insn *insn)
 {
   int flags = 0;
   subrtx_iterator::array_type array;
@@ -3821,9 +4195,7 @@ can_move_insns_across (rtx_insn *from, rtx_insn *to,
 	  if (bitmap_intersect_p (merge_set, test_use)
 	      || bitmap_intersect_p (merge_use, test_set))
 	    break;
-#ifdef HAVE_cc0
-	  if (!sets_cc0_p (insn))
-#endif
+	  if (!HAVE_cc0 || !sets_cc0_p (insn))
 	    max_to = insn;
 	}
       next = NEXT_INSN (insn);
@@ -3862,10 +4234,7 @@ can_move_insns_across (rtx_insn *from, rtx_insn *to,
       if (NONDEBUG_INSN_P (insn))
 	{
 	  if (!bitmap_intersect_p (test_set, local_merge_live)
-#ifdef HAVE_cc0
-	      && !sets_cc0_p (insn)
-#endif
-	      )
+	      && (!HAVE_cc0 || !sets_cc0_p (insn)))
 	    {
 	      max_to = insn;
 	      break;

@@ -1,7 +1,7 @@
 /* mpfr_inits2 -- initialize several floating-point numbers with given
    precision
 
-Copyright 2003-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,8 +22,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-#undef HAVE_STDARG
-#include "config.h"     /* for a build within gmp */
+# undef HAVE_STDARG
+# include "config.h"
 #endif
 
 #if HAVE_STDARG

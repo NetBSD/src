@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_octeon.h,v 1.2 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cache_octeon.h,v 1.2.20.1 2019/06/10 22:06:29 christos Exp $	*/
 
 #define	CACHE_OCTEON_I			0
 #define	CACHE_OCTEON_D			1
@@ -13,7 +13,7 @@
 /*
  * cache_octeon_invalidate:
  *
- *	Invalidate all cahce blocks.
+ *	Invalidate all cache blocks.
  *	Argument "op" must be CACHE_OCTEON_I or CACHE_OCTEON_D.
  *	In Octeon specification, invalidate instruction works
  *	all cache blocks.

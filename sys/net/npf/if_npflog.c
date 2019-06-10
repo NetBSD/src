@@ -1,5 +1,3 @@
-/*	$NetBSD: if_npflog.c,v 1.5 2017/01/29 00:15:54 christos Exp $	*/
-
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.5 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.5.14.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>

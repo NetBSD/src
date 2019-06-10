@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.23 2018/06/21 16:47:06 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.23.2.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.23 2018/06/21 16:47:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.23.2.1 2019/06/10 22:07:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_virtio = vsc;
 
 	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
-	    NULL, virtio_vq_intr, 0,
+	    NULL, virtio_vq_intr, VIRTIO_F_PCI_INTR_MSIX,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
 	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
@@ -465,7 +465,7 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 		mutex_enter(&sc->sc_sync_wait_lock);
 		sc->sc_sync_status = vr->vr_status;
 		sc->sc_sync_use = SYNC_DONE;
-		cv_signal(&sc->sc_sync_wait);
+		cv_broadcast(&sc->sc_sync_wait);
 		mutex_exit(&sc->sc_sync_wait_lock);
 		virtio_dequeue_commit(vsc, vq, slot);
 		return;
@@ -716,7 +716,7 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 		r = EIO;
 
 	sc->sc_sync_use = SYNC_FREE;
-	cv_signal(&sc->sc_sync_wait);
+	cv_broadcast(&sc->sc_sync_wait);
 	mutex_exit(&sc->sc_sync_wait_lock);
 
 	return r;

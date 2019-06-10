@@ -84,6 +84,5 @@ typedef	int32_t		time32_t;
 #define	S_READ		UIO_READ
 #define	S_WRITE		UIO_WRITE
 struct aio_req;
-typedef void		*dev_info_t;
 
 #endif /* _OPENSOLARIS_SYS_OPENTYPES_H_ */

@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for PowerPC running System V.4
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GCC.
@@ -40,10 +40,8 @@
 #undef	ASM_DEFAULT_SPEC
 #define	ASM_DEFAULT_SPEC "-mppc"
 
-#define	TARGET_TOC		((rs6000_isa_flags & OPTION_MASK_64BIT)	\
-				 || ((rs6000_isa_flags			\
-				      & (OPTION_MASK_RELOCATABLE	\
-					 | OPTION_MASK_MINIMAL_TOC))	\
+#define	TARGET_TOC		(TARGET_64BIT				\
+				 || (TARGET_MINIMAL_TOC			\
 				     && flag_pic > 1)			\
 				 || DEFAULT_ABI != ABI_V4)
 
@@ -89,19 +87,13 @@ do {									\
   else if (!strcmp (rs6000_abi_name, "aixdesc"))			\
     rs6000_current_abi = ABI_AIX;					\
   else if (!strcmp (rs6000_abi_name, "freebsd")				\
+	   || !strcmp (rs6000_abi_name, "netbsd")			\
 	   || !strcmp (rs6000_abi_name, "linux"))			\
     {									\
       if (TARGET_64BIT)							\
 	rs6000_current_abi = ABI_AIX;					\
       else								\
 	rs6000_current_abi = ABI_V4;					\
-    }									\
-  else if (!strcmp (rs6000_abi_name, "netbsd"))				\
-    {									\
-      if (TARGET_64BIT)							\
-	rs6000_current_abi = ABI_AIX;					\
-      else								\
-  	rs6000_current_abi = ABI_V4;					\
     }									\
   else if (!strcmp (rs6000_abi_name, "openbsd"))			\
     rs6000_current_abi = ABI_V4;					\
@@ -197,16 +189,25 @@ do {									\
       error ("-msecure-plt not supported by your assembler");		\
     }									\
 									\
-  /* Treat -fPIC the same as -mrelocatable.  */				\
   if (flag_pic > 1 && DEFAULT_ABI == ABI_V4)				\
     {									\
-      rs6000_isa_flags |= OPTION_MASK_RELOCATABLE | OPTION_MASK_MINIMAL_TOC; \
+      /* Note: flag_pic should not change any option flags that would	\
+	 be invalid with or pessimise -fno-PIC code.  LTO turns off	\
+	 flag_pic when linking/recompiling a fixed position executable. \
+	 However, if the objects were originally compiled with -fPIC,	\
+	 then other target options forced on here by -fPIC are restored \
+	 when recompiling those objects without -fPIC.  In particular	\
+	 TARGET_RELOCATABLE must not be enabled here by flag_pic.  */	\
+      rs6000_isa_flags |= OPTION_MASK_MINIMAL_TOC;			\
       TARGET_NO_FP_IN_TOC = 1;						\
     }									\
 									\
-  else if (TARGET_RELOCATABLE)						\
-    if (!flag_pic)							\
-      flag_pic = 2;							\
+  if (TARGET_RELOCATABLE)						\
+    {									\
+      if (!flag_pic)							\
+	flag_pic = 2;							\
+      TARGET_NO_FP_IN_TOC = 1;						\
+    }									\
 } while (0)
 
 #ifndef RS6000_BI_ARCH
@@ -296,8 +297,8 @@ do {									\
 
 /* An expression for the alignment of a structure field FIELD if the
    alignment computed in the usual way is COMPUTED.  */
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)				      \
-	(rs6000_special_adjust_field_align_p ((FIELD), (COMPUTED))	      \
+#define ADJUST_FIELD_ALIGN(FIELD, TYPE, COMPUTED)			      \
+	(rs6000_special_adjust_field_align_p ((TYPE), (COMPUTED))	      \
 	 ? 128 : COMPUTED)
 
 #undef  BIGGEST_FIELD_ALIGNMENT
@@ -322,8 +323,7 @@ do {									\
 
 /* Put PC relative got entries in .got2.  */
 #define	MINIMAL_TOC_SECTION_ASM_OP \
-  (TARGET_RELOCATABLE || (flag_pic && DEFAULT_ABI == ABI_V4)		\
-   ? "\t.section\t\".got2\",\"aw\"" : "\t.section\t\".got1\",\"aw\"")
+  (flag_pic ? "\t.section\t\".got2\",\"aw\"" : "\t.section\t\".got1\",\"aw\"")
 
 #define	SDATA_SECTION_ASM_OP "\t.section\t\".sdata\",\"aw\""
 #define	SDATA2_SECTION_ASM_OP "\t.section\t\".sdata2\",\"a\""
@@ -357,7 +357,6 @@ do {									\
        || (GET_CODE (X) == CONST_INT 					\
 	   && GET_MODE_BITSIZE (MODE) <= GET_MODE_BITSIZE (Pmode))	\
        || (!TARGET_NO_FP_IN_TOC						\
-	   && !TARGET_RELOCATABLE					\
 	   && GET_CODE (X) == CONST_DOUBLE				\
 	   && SCALAR_FLOAT_MODE_P (GET_MODE (X))			\
 	   && BITS_PER_WORD == HOST_BITS_PER_INT)))
@@ -758,24 +757,34 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 #define CRTOFFLOADEND ""
 #endif
 
-#ifdef HAVE_LD_PIE
-#define	STARTFILE_LINUX_SPEC "\
-%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
-%{mnewlib:ecrti.o%s;:crti.o%s} \
-%{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
-" CRTOFFLOADBEGIN
-#else
-#define	STARTFILE_LINUX_SPEC "\
-%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
-%{mnewlib:ecrti.o%s;:crti.o%s} \
-%{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
-" CRTOFFLOADBEGIN
-#endif
+/* STARTFILE_LINUX_SPEC should be the same as GNU_USER_TARGET_STARTFILE_SPEC
+   but with the mnewlib ecrti.o%s selection substituted for crti.o%s.  */
+#define	STARTFILE_LINUX_SPEC \
+  "%{shared:; \
+     pg|p|profile:gcrt1.o%s; \
+     static:crt1.o%s; \
+     " PIE_SPEC ":Scrt1.o%s; \
+     :crt1.o%s} \
+   %{mnewlib:ecrti.o%s;:crti.o%s} \
+   %{static:crtbeginT.o%s; \
+     shared|" PIE_SPEC ":crtbeginS.o%s; \
+     :crtbegin.o%s} \
+   %{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_start_preinit.o%s; \
+     fvtable-verify=std:vtv_start.o%s} \
+   " CRTOFFLOADBEGIN
 
-#define	ENDFILE_LINUX_SPEC "\
-%{shared|pie:crtendS.o%s;:crtend.o%s} \
-%{mnewlib:ecrtn.o%s;:crtn.o%s} \
-" CRTOFFLOADEND
+/* ENDFILE_LINUX_SPEC should be the same as GNU_USER_TARGET_ENDFILE_SPEC
+   but with the mnewlib ecrtn.o%s selection substituted for crtn.o%s.  */
+#define ENDFILE_LINUX_SPEC \
+  "%{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_end_preinit.o%s; \
+     fvtable-verify=std:vtv_end.o%s} \
+   %{static:crtend.o%s; \
+     shared|" PIE_SPEC ":crtendS.o%s; \
+     :crtend.o%s} \
+   %{mnewlib:ecrtn.o%s;:crtn.o%s} \
+   " CRTOFFLOADEND
 
 #define LINK_START_LINUX_SPEC ""
 
@@ -954,9 +963,10 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 /* Select a format to encode pointers in exception handling data.  CODE
    is 0 for data, 1 for code labels, 2 for function pointers.  GLOBAL is
    true if the symbol may be affected by dynamic relocations.  */
-#define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL)			     \
-  ((flag_pic || TARGET_RELOCATABLE)					     \
-   ? (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4) \
+#define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL)			\
+  (flag_pic								\
+   ? (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel		\
+      | DW_EH_PE_sdata4)						\
    : DW_EH_PE_absptr)
 
 #define DOUBLE_INT_ASM_OP "\t.quad\t"

@@ -1,5 +1,5 @@
 #
-#   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,8 +71,6 @@ mips64*-*-freebsd* | mips64*-*-kfreebsd*-gnu) host64=true;;
 mips*-*-sysv4*)		;;
 mips*-*-sysv*)		HDEFINES="-G 4" ;;
 mips*-*-riscos*)	HDEFINES="-G 4" ;;
-
-m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
 
 # Some Solaris systems (osol0906 at least) have a libc that doesn't recognise
 # the "MS-ANSI" code page name, so we define an override for CP_ACP (sets the

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_ioconfig.c,v 1.1 2016/05/17 06:44:46 ryo Exp $	*/
+/*	$NetBSD: imx7_ioconfig.c,v 1.1.22.1 2019/06/10 22:06:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -26,17 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_ioconfig.c,v 1.1 2016/05/17 06:44:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_ioconfig.c,v 1.1.22.1 2019/06/10 22:06:07 christos Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/param.h>
+
+#include <arm/arm32/pte.h>
+
 #include <arm/imx/imx7reg.h>
 #include <arm/imx/imx7var.h>
 #include <arm/imx/imx7_iomuxreg.h>
 #include <arm/imx/imxgpioreg.h>
 #include <arm/imx/imxgpiovar.h>
+
 #include <evbarm/imx7/platform.h>
 
 void imx7_setup_iomux(void);

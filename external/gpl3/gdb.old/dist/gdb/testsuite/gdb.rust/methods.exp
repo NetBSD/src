@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Free Software Foundation, Inc.
+# Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@ if {[skip_rust_tests]} {
 }
 
 standard_testfile .rs
-if {[prepare_for_testing ${testfile}.exp $testfile $srcfile {debug rust}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {
     return -1
 }
 
 set line [gdb_get_line_number "set breakpoint 1 here"]
 if {![runto ${srcfile}:$line]} {
-    untested $testfile
+    untested "could not run to breakpoint"
     return -1
 }
 

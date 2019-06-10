@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.98 2017/01/14 01:02:08 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.98.16.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -50,44 +50,44 @@
 
 #include <sys/ansi.h>
 
-#ifndef	int8_t
+#ifndef	_BSD_INT8_T_
 typedef	__int8_t	int8_t;
-#define	int8_t		__int8_t
+#define	_BSD_INT8_T_
 #endif
 
-#ifndef	uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef	__uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef	int16_t
+#ifndef	_BSD_INT16_T_
 typedef	__int16_t	int16_t;
-#define	int16_t		__int16_t
+#define	_BSD_INT16_T_
 #endif
 
-#ifndef	uint16_t
+#ifndef	_BSD_UINT16_T_
 typedef	__uint16_t	uint16_t;
-#define	uint16_t	__uint16_t
+#define	_BSD_UINT16_T_
 #endif
 
-#ifndef	int32_t
+#ifndef	_BSD_INT32_T_
 typedef	__int32_t	int32_t;
-#define	int32_t		__int32_t
+#define	_BSD_INT32_T_
 #endif
 
-#ifndef	uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef	__uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
-#ifndef	int64_t
+#ifndef	_BSD_INT64_T_
 typedef	__int64_t	int64_t;
-#define	int64_t		__int64_t
+#define	_BSD_INT64_T_
 #endif
 
-#ifndef	uint64_t
+#ifndef	_BSD_UINT64_T_
 typedef	__uint64_t	uint64_t;
-#define	uint64_t	__uint64_t
+#define	_BSD_UINT64_T_
 #endif
 
 typedef	uint8_t		u_int8_t;
@@ -342,7 +342,7 @@ struct	tty;
 struct	uio;
 #endif
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define SET(t, f)	((t) |= (f))
 #define	ISSET(t, f)	((t) & (f))
 #define	CLR(t, f)	((t) &= ~(f))

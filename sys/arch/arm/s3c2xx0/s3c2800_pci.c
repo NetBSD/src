@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.23.12.1 2019/06/10 22:05:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.23.12.1 2019/06/10 22:05:56 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -152,7 +152,7 @@ int	s3c2800_pci_intr_map(const struct pci_attach_args *,
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
-				  int (*) (void *), void *);
+				  int (*) (void *), void *, const char *);
 void	s3c2800_pci_intr_disestablish(void *, void *);
 
 #define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
@@ -197,24 +197,18 @@ CFATTACH_DECL_NEW(sspci, sizeof(struct sspci_softc), sspci_match, sspci_attach,
 
 
 struct arm32_pci_chipset sspci_chipset = {
-	NULL,		/* conf_v */
-	s3c2800_pci_attach_hook,
-	s3c2800_pci_bus_maxdevs,
-	s3c2800_pci_make_tag,
-	s3c2800_pci_decompose_tag,
-	s3c2800_pci_conf_read,
-	s3c2800_pci_conf_write,
-	NULL,		/* intr_v */
-	s3c2800_pci_intr_map,
-	s3c2800_pci_intr_string,
-	s3c2800_pci_intr_evcnt,
-	NULL,		/* intr_setattr */
-	s3c2800_pci_intr_establish,
-	s3c2800_pci_intr_disestablish,
-#ifdef __HAVE_PCI_CONF_HOOK
-	NULL,
-#endif
-	s3c2800_pci_conf_interrupt,
+	.pc_attach_hook = s3c2800_pci_attach_hook,
+	.pc_bus_maxdevs = s3c2800_pci_bus_maxdevs,
+	.pc_make_tag = s3c2800_pci_make_tag,
+	.pc_decompose_tag = s3c2800_pci_decompose_tag,
+	.pc_conf_read = s3c2800_pci_conf_read,
+	.pc_conf_write = s3c2800_pci_conf_write,
+	.pc_intr_map = s3c2800_pci_intr_map,
+	.pc_intr_string = s3c2800_pci_intr_string,
+	.pc_intr_evcnt = s3c2800_pci_intr_evcnt,
+	.pc_intr_establish = s3c2800_pci_intr_establish,
+	.pc_intr_disestablish = s3c2800_pci_intr_disestablish,
+	.pc_conf_interrupt = s3c2800_pci_conf_interrupt,
 };
 
 
@@ -514,7 +508,7 @@ s3c2800_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 
 void *
 s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
-			   int (*func) (void *), void *arg)
+			   int (*func) (void *), void *arg, const char *xname)
 {
 	struct sspci_softc *sc = pcv;
 	struct sspci_irq_handler *handler;
@@ -522,7 +516,7 @@ s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 
 #ifdef PCI_DEBUG
 	printf("s3c2800_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
-	    "func=%p, arg=%p)\n", pcv, ih, level, func, arg);
+	    "func=%p, arg=%p, xname=%s)\n", pcv, ih, level, func, arg, xname);
 #endif
 
 	handler = malloc(sizeof *handler, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);

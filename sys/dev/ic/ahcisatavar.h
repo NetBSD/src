@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.18 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.18.4.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -58,7 +58,6 @@ struct ahci_softc {
 #define AHCI_PCI_QUIRK_FORCE	__BIT(0)  /* force attach */
 #define AHCI_PCI_QUIRK_BAD64	__BIT(1)  /* broken 64-bit DMA */
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */
-#define AHCI_QUIRK_BADPMPRESET	__BIT(3)  /* broken PMP support for reset */
 #define AHCI_QUIRK_SKIP_RESET	__BIT(4)  /* skip drive reset sequence */
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
@@ -82,14 +81,13 @@ struct ahci_softc {
 		struct ahci_cmd_tbl *ahcic_cmd_tbl[AHCI_MAX_CMDS];
 		bus_addr_t ahcic_bus_cmd_tbl[AHCI_MAX_CMDS];
 		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
-		volatile uint32_t  ahcic_cmds_active;	/* active commands */
-		uint32_t  ahcic_cmds_hold; 	/* held commands */
-		bool ahcic_recovering;
 	} sc_channels[AHCI_MAX_PORTS];
 
 	void	(*sc_channel_start)(struct ahci_softc *, struct ata_channel *);
 	void	(*sc_channel_stop)(struct ahci_softc *, struct ata_channel *);
+	int	(*sc_intr_establish)(struct ahci_softc *, int);
 
+	bool sc_ghc_mrsm;
 	bool sc_save_init_data;
 	struct {
 		uint32_t cap;
@@ -120,7 +118,9 @@ struct ahci_softc {
 
 void ahci_attach(struct ahci_softc *);
 int  ahci_detach(struct ahci_softc *, int);
+void ahci_childdetached(struct ahci_softc *, device_t);
 void ahci_resume(struct ahci_softc *);
 
 int  ahci_intr(void *);
+int  ahci_intr_port(void *);
 

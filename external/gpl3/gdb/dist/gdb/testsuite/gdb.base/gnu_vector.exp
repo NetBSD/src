@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,12 +48,7 @@ if { ![runto main] } {
 }
 
 # Get endianess for the scalar->vector casts
-gdb_test_multiple "show endian" "show endian" {
-    -re ".* (big|little) endian.*$gdb_prompt $" { 
-	set endian $expect_out(1,string) 
-	pass "endianness: $endian"
-    }
-}
+set endian [get_endianness]
 
 # Test printing of character vector types
 gdb_test "print c4" "\\\$$decimal = \\{1, 2, 3, 4\\}"
@@ -99,6 +94,17 @@ gdb_test "print -f4a" "\\\$$decimal = \\{-2, -4, -8, -16\\}"
 # the total length of the vector.
 gdb_test "print (char4) 0x01010101" "\\\$$decimal = \\{1, 1, 1, 1\\}"
 gdb_test "print (int2) lla" "\\\$$decimal = \\{1, 1\\}"
+
+# Check that "whatis" doesn't peel off the destination type's typedef
+# by mistake, in expressions that involve a cast to typedef type.
+gdb_test "whatis (char4) 0x01010101" "type = char4"
+gdb_test "whatis (int2) lla" "type = int2"
+# Check that OTOH "ptype" does peel off the destination type's
+# typedef.
+gdb_test "ptype (char4) 0x01010101" \
+    "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype (int2) lla" \
+    "type = int __attribute__ \\(\\(vector_size\\(2\\)\\)\\)"
 
 if { ![string compare $endian big] } then {
     gdb_test "print (char4) ia" "\\\$$decimal = \\{0, 0, 0, 2\\}"
@@ -172,16 +178,30 @@ gdb_test "print (double2) f2" "Cannot convert between vector values of different
 gdb_test "print (int4) c4" "Cannot convert between vector values of different sizes"
 gdb_test "print (char4) i4a" "Cannot convert between vector values of different sizes"
 
-# Test ptype on vector types.
+# Test ptype/whatis on vector types/vars.
 gdb_test "ptype c4" "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis c4" "type = char4"
+
 gdb_test "ptype char4" "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis char4" "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+
 gdb_test "ptype i4a" "type = int __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis i4a" "type = int4"
+
 gdb_test "ptype int4" "type = int __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis int4" "type = int __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+
 gdb_test "ptype f4b" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis f4b" "type = float4"
+
 gdb_test "ptype float4" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "whatis float4" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
 
 gdb_test "ptype union_with_vector_1" "type = union {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n}"
+gdb_test "whatis union_with_vector_1" {type = union {...}}
+
 gdb_test "ptype struct_with_vector_1" "type = struct {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n\[\t \]+float4 f4;\r\n}"
+gdb_test "whatis struct_with_vector_1" {type = struct {...}}
 
 # Test inferior function calls with vector arguments and/or vector
 # return values.

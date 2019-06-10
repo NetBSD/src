@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.7 2018/08/15 17:07:02 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.8 2019/06/10 22:09:46 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,16 +29,18 @@
  */
 
 #include <sys/cdefs.h>
-#if __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.18.8 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
  * IEEE 802.11 ioctl support (FreeBSD-specific)
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_wlan.h"
+#endif
 
 #include <sys/endian.h>
 #include <sys/param.h>
@@ -50,6 +52,10 @@ __FBSDID("$FreeBSD$");
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/kauth.h>
+#include <sys/module.h>
+#include <sys/compat_stub.h>
  
 #include <net/if.h>
 #if __FreeBSD__
@@ -311,9 +317,9 @@ get_scan_result(void *arg, const struct ieee80211_scan_entry *se)
 	sr->isr_capinfo = se->se_capinfo;
 	sr->isr_erp = se->se_erp;
 	IEEE80211_ADDR_COPY(sr->isr_bssid, se->se_bssid);
-	nr = min(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
+	nr = uimin(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
 	memcpy(sr->isr_rates, se->se_rates+2, nr);
-	nxr = min(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
+	nxr = uimin(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
 	memcpy(sr->isr_rates+nr, se->se_xrates+2, nxr);
 	sr->isr_nrates = nr + nxr;
 
@@ -424,9 +430,9 @@ old_get_scan_result(void *arg, const struct ieee80211_scan_entry *se)
 	sr->isr_capinfo = se->se_capinfo;
 	sr->isr_erp = se->se_erp;
 	IEEE80211_ADDR_COPY(sr->isr_bssid, se->se_bssid);
-	nr = min(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
+	nr = uimin(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
 	memcpy(sr->isr_rates, se->se_rates+2, nr);
-	nxr = min(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
+	nxr = uimin(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
 	memcpy(sr->isr_rates+nr, se->se_xrates+2, nxr);
 	sr->isr_nrates = nr + nxr;
 	if (sr->isr_nrates > 15)
@@ -3758,6 +3764,14 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ieee80211_ioctl_set80211(vap, cmd,
 					(struct ieee80211req *) data);
 		break;
+#ifdef __NetBSD__
+	case OSIOCG80211STATS:
+	case OSIOCG80211ZSTATS:
+		(void)module_autoload("compat_20", MODULE_CLASS_EXEC);
+		MODULE_HOOK_CALL(ieee80211_ioctl_20_hook, (vap, cmd, data),
+		    enosys(), error);
+		break;
+#endif
 #ifdef SIOCG80211ZSTATS	
 	case SIOCG80211ZSTATS:
 #endif		
@@ -3767,9 +3781,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		copyout(&vap->iv_stats, ifr_data_get_ptr(ifr),
 		    sizeof (vap->iv_stats));
 #elif__NetBSD__
-		copyout(&vap->iv_stats, ifr->ifr_buf,
+		s = splnet();
+		error = copyout(&vap->iv_stats, ifr->ifr_buf,
 			sizeof (vap->iv_stats) <= ifr->ifr_buflen
 			? sizeof (vap->iv_stats) : ifr->ifr_buflen);
+		if (error == 0 && cmd == SIOCG80211ZSTATS)
+			(void)memset(&vap->iv_stats, 0, sizeof(vap->iv_stats));
+		splx(s);
 #endif
 		break;
 	case SIOCSIFMTU:
@@ -3777,8 +3795,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (!(IEEE80211_MTU_MIN <= ifr->ifr_mtu &&
 		    ifr->ifr_mtu <= IEEE80211_MTU_MAX))
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 	case SIOCSIFADDR:
 		/*

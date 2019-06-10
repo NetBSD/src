@@ -17,11 +17,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 
 #include <errno.h>
 #include <event.h>
@@ -278,10 +277,10 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	client_peer = proc_add_peer(client_proc, fd, client_dispatch, NULL);
 
 	/* Save these before pledge(). */
-	if ((cwd = getcwd(path, sizeof path)) == NULL) {
-		if ((cwd = find_home()) == NULL)
-			cwd = "/";
-	}
+	if ((cwd = getenv("PWD")) == NULL &&
+	    (cwd = getcwd(path, sizeof path)) == NULL &&
+	    (cwd = find_home()) == NULL)
+		cwd = "/";
 	if ((ttynam = ttyname(STDIN_FILENO)) == NULL)
 		ttynam = "";
 
@@ -338,6 +337,10 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 		size = 0;
 		for (i = 0; i < argc; i++)
 			size += strlen(argv[i]) + 1;
+		if (size > MAX_IMSGSIZE - (sizeof *data)) {
+			fprintf(stderr, "command too long\n");
+			return (1);
+		}
 		data = xmalloc((sizeof *data) + size);
 
 		/* Prepare command for server. */
@@ -449,6 +452,7 @@ client_write(int fd, const char *data, size_t size)
 {
 	ssize_t	used;
 
+	log_debug("%s: %.*s", __func__, (int)size, data);
 	while (size != 0) {
 		used = write(fd, data, size);
 		if (used == -1) {

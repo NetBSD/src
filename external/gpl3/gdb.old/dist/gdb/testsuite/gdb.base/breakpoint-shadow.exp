@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,7 @@
 
 standard_testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
-    untested $testfile.exp
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
@@ -41,8 +40,8 @@ gdb_test_multiple "disass main" $test {
     }
 }
 
-gdb_test "b [gdb_get_line_number "break-first"]" "Breakpoint \[0-9\] at .*" "First breakpoint placed"
-gdb_test "b [gdb_get_line_number "break-second"]" "Breakpoint \[0-9\] at .*" "Second breakpoint placed"
+gdb_test "b [gdb_get_line_number "break-first"]" "Breakpoint \[0-9\] at .*" "first breakpoint placed"
+gdb_test "b [gdb_get_line_number "break-second"]" "Breakpoint \[0-9\] at .*" "second breakpoint placed"
 
 # Disassemble main, and compare the output to the original output
 # before breakpoints were inserted.  TEST is used as test message.

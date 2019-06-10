@@ -16,13 +16,13 @@
 # the file 'backward'.
 
 # Although zones in this file may be of some use for analyzing
-# pre-1970 time stamps, they are less reliable, cover only a tiny
+# pre-1970 timestamps, they are less reliable, cover only a tiny
 # sliver of the pre-1970 era, and cannot feasibly be improved to cover
 # most of the era.  Because the zones are out of normal scope for the
 # database, less effort is put into maintaining this file.  Many of
 # the zones were formerly in other source files, but were removed or
 # replaced by links as their data entries were questionable and/or they
-# differed from other zones only in pre-1970 time stamps.
+# differed from other zones only in pre-1970 timestamps.
 
 # Unless otherwise specified, the source for data through 1990 is:
 # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
@@ -204,7 +204,7 @@ Zone	Africa/Maseru	1:50:00 -	LMT	1903 Mar
 			2:00	1:00	SAST	1944 Mar 19  2:00
 			2:00	-	SAST
 
-# Swaziland
+# Eswatini (formerly Swaziland)
 Zone	Africa/Mbabane	2:04:24 -	LMT	1903 Mar
 			2:00	-	SAST
 
@@ -625,7 +625,7 @@ Zone	Europe/Sarajevo	1:13:40	-	LMT	1884
 			1:00	-	CET	1982 Nov 27
 			1:00	EU	CE%sT
 
-# Macedonia
+# North Macedonia
 Zone	Europe/Skopje	1:25:44	-	LMT	1884
 			1:00	-	CET	1941 Apr 18 23:00
 			1:00	C-Eur	CE%sT	1945 May  8  2:00s

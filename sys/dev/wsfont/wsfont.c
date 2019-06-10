@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.62.4.1 2019/06/10 22:07:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.62.4.1 2019/06/10 22:07:37 christos Exp $");
 
 #include "opt_wsfont.h"
 
@@ -126,23 +126,58 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $");
 #endif
 
 #ifdef FONT_DEJAVU_SANS_MONO12x22
+#define HAVE_FONT 1
 #include <dev/wsfont/DejaVu_Sans_Mono_12x22.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO12x22
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_12x22.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO9x18
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_9x18.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO19x36
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_19x36.h>
 #endif
 
 #ifdef FONT_GO_MONO12x23
+#define HAVE_FONT 1
 #include <dev/wsfont/Go_Mono_12x23.h>
+#endif
+
+#ifdef FONT_SPLEEN12x24
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen12x24.h>
+#endif
+
+#ifdef FONT_SPLEEN16x32
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen16x32.h>
+#endif
+
+#ifdef FONT_SPLEEN32x64
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen32x64.h>
+#endif
+
+#ifdef FONT_SPLEEN5x8
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen5x8.h>
+#endif
+
+#ifdef FONT_SPLEEN8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen8x16.h>
+#endif
+
+#ifdef FONT_BOLD16x32
+#define HAVE_FONT 1
+#include <dev/wsfont/bold16x32.h>
 #endif
 
 /* Make sure we always have at least one bitmap font. */
@@ -179,6 +214,9 @@ struct font {
 static struct font builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
 	{ { NULL, NULL }, &bold8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
+#endif
+#ifdef FONT_BOLD16x32
+	{ { NULL, NULL }, &bold16x32, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
 #endif
 #ifdef FONT_ISO8x16
 	{ { NULL, NULL }, &iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
@@ -245,6 +283,21 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_GO_MONO12x23
 	{ { NULL, NULL }, &Go_Mono_12x23, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN12x24
+	{ { NULL, NULL }, &spleen12x24, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN16x32
+	{ { NULL, NULL }, &spleen16x32, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN32x64
+	{ { NULL, NULL }, &spleen32x64, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN5x8
+	{ { NULL, NULL }, &spleen5x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN8x16
+	{ { NULL, NULL }, &spleen8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
@@ -587,9 +640,9 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 				return (0);
 		} else {
 			if (font->fontwidth > width)
-				score -= 10000 + min(font->fontwidth - width, 9999);
+				score -= 10000 + uimin(font->fontwidth - width, 9999);
 			else
-				score -= min(width - font->fontwidth, 9999);
+				score -= uimin(width - font->fontwidth, 9999);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.129 2018/04/20 09:56:22 knakahara Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.129.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.129 2018/04/20 09:56:22 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.129.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -442,6 +442,12 @@ sltioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	switch (cmd) {
 	case SLIOCGUNIT:
@@ -946,7 +952,7 @@ slintr(void *arg)
 			int pktlen;
 
 			pktlen = m->m_pkthdr.len;
-			M_MOVE_PKTHDR(n, m);
+			m_move_pkthdr(n, m);
 			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);

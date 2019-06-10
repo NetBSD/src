@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.36.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * TODO:
@@ -37,21 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/disklabel.h>
-#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -64,6 +64,11 @@ int umass_wd_attach(struct umass_softc *);
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
+
+/*
+ * XXX This driver likely doesn't work after ATA NCQ changes.
+ * XXX Need to confirm if the ata_channel kludge works
+ */
 
 /* XXX move this */
 struct isd200_config {
@@ -134,6 +139,7 @@ const struct ata_bustype uisdata_bustype = {
 	uisdata_addref,
 	uisdata_delref,
 	uisdata_kill_pending,
+	NULL,
 };
 
 struct ata_cmd {
@@ -190,7 +196,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	struct uisdata_softc *scbus;
 	struct isd200_config *cf;
 
-	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = kmem_zalloc(sizeof(*scbus), KM_SLEEP);
 	sc->bus = &scbus->base;
 	cf = &scbus->sc_isd_config;
 
@@ -203,7 +209,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	err = usbd_do_request(sc->sc_udev, &req, cf);
 	if (err) {
 		sc->bus = NULL;
-		free(scbus, M_DEVBUF);
+		kmem_free(scbus, sizeof(*scbus));
 		return EIO;
 	}
 	DPRINTF(("umass_wd_attach info:\n  EventNotification=0x%02x "
@@ -238,6 +244,9 @@ umass_isdata_detach(struct umass_softc *sc)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	ata_channel_destroy(&scbus->sc_channel);
+
+	kmem_free(scbus, sizeof(*scbus));
+	sc->bus = NULL;
 }
 
 void
@@ -334,7 +343,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 	if (ata_bio->flags & ATA_SINGLE)
 		nblks = 1;
 	else
-		nblks = min(drv->multi, nbytes / drv->lp->d_secsize);
+		nblks = uimin(drv->multi, nbytes / drv->lp->d_secsize);
 	nbytes = nblks * drv->lp->d_secsize;
 	ata_bio->nblks = nblks;
 	ata_bio->nbytes = nbytes;
@@ -540,7 +549,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
 
-	xfer = ata_get_xfer(drvp->chnl_softc);
+	xfer = ata_get_xfer(drvp->chnl_softc, false);
 	if (!xfer) {
 		rv = CMD_AGAIN;
 		goto out;

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.262 2018/01/27 23:07:36 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.262.4.1 2019/06/10 22:05:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262 2018/01/27 23:07:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262.4.1 2019/06/10 22:05:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2126,6 +2126,14 @@ pmap_activate(struct lwp *l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
+	/*
+	 * Lock the pmap across the work we do here; although the
+	 * in-use mask is manipulated with an atomic op and the
+	 * ASN info is per-cpu, the lev1map pointer needs to remain
+	 * consistent across the entire call.
+	 */
+	PMAP_LOCK(pmap);
+
 	/* Mark the pmap in use by this processor. */
 	atomic_or_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
@@ -2133,6 +2141,8 @@ pmap_activate(struct lwp *l)
 	pmap_asn_alloc(pmap, cpu_id);
 
 	PMAP_ACTIVATE(pmap, l, cpu_id);
+
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -2140,10 +2150,6 @@ pmap_activate(struct lwp *l)
  *
  *	Mark that the pmap used by the specified process is no longer
  *	in use by the processor.
- *
- *	The comment above pmap_activate() wrt. locking applies here,
- *	as well.  Note that we use only a single `atomic' operation,
- *	so no locking is necessary.
  */
 void
 pmap_deactivate(struct lwp *l)
@@ -2156,7 +2162,8 @@ pmap_deactivate(struct lwp *l)
 #endif
 
 	/*
-	 * Mark the pmap no longer in use by this processor.
+	 * Mark the pmap no longer in use by this processor.  Because
+	 * this is all we're doing, no need to take the pmap lock.
 	 */
 	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
 }
@@ -2245,7 +2252,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  * pmap_pageidlezero:		[ INTERFACE ]
  *
  *	Page zero'er for the idle loop.  Returns true if the
- *	page was zero'd, FLASE if we aborted for some reason.
+ *	page was zero'd, FALSE if we aborted for some reason.
  */
 bool
 pmap_pageidlezero(paddr_t pa)
@@ -2635,7 +2642,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 		printf("*pte = 0x%lx\n", *pte);
 	}
 #endif
-#ifdef DEBUG				/* These checks are more expensive */
+#if 0/*DEBUG*/	/* These checks are, expensive, racy, and unreliable. */
 	if (!pmap_pte_v(pte))
 		panic("pmap_emulate_reference: invalid pte");
 	if (type == ALPHA_MMCSR_FOW) {

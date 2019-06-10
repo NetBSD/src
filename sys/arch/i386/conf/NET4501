@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.100 2017/11/06 02:57:18 rin Exp $
+# $NetBSD: NET4501,v 1.100.4.1 2019/06/10 22:06:20 christos Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.100 $"
+#ident 		"NET4501-$Revision: 1.100.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -23,7 +23,6 @@ makeoptions	COPTS="-Os"
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
-#options 	PMC		# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -125,8 +124,6 @@ options 	PIM		# Protocol Independent Multicast
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -242,7 +239,7 @@ pseudo-device 	crypto		# opencrypto framework
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

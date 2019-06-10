@@ -131,8 +131,15 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
      the resolved function may be used.  But in non-PIC executable,
      the address of its .plt slot may be used.  Pointer equality may
      not work correctly.  PIE or non-PLT reference should be used if
-     pointer equality is required here.  */
+     pointer equality is required here.
+
+     If STT_GNU_IFUNC symbol is defined in position-dependent executable,
+     backend should change it to the normal function and set its address
+     to its PLT entry which should be resolved by R_*_IRELATIVE at
+     run-time.  All external references should be resolved to its PLT in
+     executable.  */
   if (!need_dynreloc
+      && !(bfd_link_pde (info) && h->def_regular)
       && (h->dynindx != -1
 	  || info->export_dynamic)
       && h->pointer_equality_needed)
@@ -140,7 +147,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
       info->callbacks->einfo
 	/* xgettext:c-format */
 	(_("%F%P: dynamic STT_GNU_IFUNC symbol `%s' with pointer "
-	   "equality in `%B' can not be used when making an "
+	   "equality in `%pB' can not be used when making an "
 	   "executable; recompile with -fPIE and relink with -pie\n"),
 	 h->root.root.string,
 	 h->root.u.def.section->owner);

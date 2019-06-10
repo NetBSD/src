@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.51 2018/06/16 13:09:41 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.51.2.1 2019/06/10 22:10:34 christos Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ static void ifinfo(char *, int, char **);
 static void rtrlist(void);
 static void plist(void);
 static void pfx_flush(void);
-static void rtrlist(void);
 static void rtr_flush(void);
 static void harmonize_rtr(void);
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
@@ -479,6 +478,7 @@ delete_one(char *host)
 static int
 delete(struct rt_msghdr *rtm, char *host)
 {
+	char delete_host_buf[NI_MAXHOST];
 	struct sockaddr_in6 *mysin = &sin_m;
 	struct sockaddr_dl *sdl;
 
@@ -494,13 +494,13 @@ delete(struct rt_msghdr *rtm, char *host)
 	if (rtmsg(RTM_DELETE, rtm) == 0) {
 		struct sockaddr_in6 s6 = *mysin; /* XXX: for safety */
 
-		mysin->sin6_scope_id = 0;
-		inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
+		s6.sin6_scope_id = 0;
+		inet6_putscopeid(&s6, INET6_IS_ADDR_LINKLOCAL);
 		(void)getnameinfo((struct sockaddr *)(void *)&s6,
-		    (socklen_t)s6.sin6_len, host_buf,
-		    sizeof(host_buf), NULL, 0,
+		    (socklen_t)s6.sin6_len, delete_host_buf,
+		    sizeof(delete_host_buf), NULL, 0,
 		    (nflag ? NI_NUMERICHOST : 0));
-		(void)printf("%s (%s) deleted\n", host, host_buf);
+		(void)printf("%s (%s) deleted\n", host, delete_host_buf);
 	}
 
 	return 0;
@@ -1400,13 +1400,14 @@ plist(void)
 static void
 pfx_flush(void)
 {
-	char dummyif[IFNAMSIZ+8];
 	int s;
+	struct in6_ifreq ifr;
 
 	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	(void)strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (prog_ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummyif) < 0)
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "lo0");
+	if (prog_ioctl(s, SIOCSPFXFLUSH_IN6, &ifr) < 0)
 		err(1, "ioctl(SIOCSPFXFLUSH_IN6)");
 	(void)prog_close(s);
 }
@@ -1414,15 +1415,15 @@ pfx_flush(void)
 static void
 rtr_flush(void)
 {
-	char dummyif[IFNAMSIZ+8];
 	int s;
+	struct in6_ifreq ifr;
 
 	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	(void)strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (prog_ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummyif) < 0)
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "lo0");
+	if (prog_ioctl(s, SIOCSRTRFLUSH_IN6, &ifr) < 0)
 		err(1, "ioctl(SIOCSRTRFLUSH_IN6)");
-
 	(void)prog_close(s);
 }
 

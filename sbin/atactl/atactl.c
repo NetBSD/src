@@ -1,11 +1,11 @@
-/*	$NetBSD: atactl.c,v 1.77 2016/10/04 21:37:46 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.77.14.1 2019/06/10 22:05:31 christos Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ken Hornstein.
+ * by Ken Hornstein and Matthew R. Green.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.77 2016/10/04 21:37:46 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.77.14.1 2019/06/10 22:05:31 christos Exp $");
 #endif
 
 
@@ -53,6 +53,9 @@ __RCSID("$NetBSD: atactl.c,v 1.77 2016/10/04 21:37:46 mrg Exp $");
 
 #include <dev/ata/atareg.h>
 #include <sys/ataio.h>
+
+#include <dev/scsipi/scsi_spc.h>
+#include <sys/scsiio.h>
 
 struct ata_smart_error {
 	struct {
@@ -90,6 +93,53 @@ struct ata_smart_errorlog {
 	uint8_t			checksum;
 } __packed;
 
+#define SCSI_ATA_PASS_THROUGH_16	0x85
+struct scsi_ata_pass_through_16 {
+	uint8_t			opcode;
+	uint8_t			byte2;
+#define SATL_NODATA	0x06
+#define SATL_PIO_IN	0x08
+#define SATL_PIO_OUT	0x0a
+#define	SATL_EXTEND	0x01
+	uint8_t			byte3;
+#define SATL_CKCOND	0x20
+#define SATL_READ	0x08
+#define SATL_BLOCKS	0x04
+#define SATL_LEN(x)	((x) & 0x03)
+	uint8_t			features[2];
+	uint8_t			sector_count[2];
+	uint8_t			lba[6];
+	uint8_t			device;
+	uint8_t			ata_cmd;
+	uint8_t			control;
+} __packed;
+
+#define SCSI_ATA_PASS_THROUGH_12	0xa1
+struct scsi_ata_pass_through_12 {
+	uint8_t			opcode;
+	uint8_t			byte2;
+	uint8_t			byte3;
+	uint8_t			features[1];
+	uint8_t			sector_count[1];
+	uint8_t			lba[3];
+	uint8_t			device;
+	uint8_t			ata_cmd;
+	uint8_t			reserved;
+	uint8_t			control;
+} __packed;
+
+struct scsi_ata_return_descriptor {
+	uint8_t			descr;
+#define SCSI_ATA_RETURN_DESCRIPTOR	9
+	uint8_t			additional_length;
+	uint8_t			extend;
+	uint8_t			error;
+	uint8_t			sector_count[2];
+	uint8_t			lba[6];
+	uint8_t			device;
+	uint8_t			status;
+} __packed;
+
 struct command {
 	const char *cmd_name;
 	const char *arg_names;
@@ -103,25 +153,32 @@ struct bitinfo {
 
 __dead static void	usage(void);
 static void	ata_command(struct atareq *);
+static int	satl_command(struct atareq *, int);
+static const uint8_t *satl_return_desc(const uint8_t *, size_t, uint8_t);
 static void	print_bitinfo(const char *, const char *, u_int,
     const struct bitinfo *);
 static void	print_bitinfo2(const char *, const char *, u_int, u_int,
     const struct bitinfo *);
-static void	print_smart_status(void *, void *);
+static void	print_smart_status(void *, void *, const char *);
 static void	print_error_entry(int, const struct ata_smart_error *);
 static void	print_selftest_entry(int, const struct ata_smart_selftest *);
 
 static void	print_error(const void *);
 static void	print_selftest(const void *);
 
-static const struct ataparams *getataparams(void);
+static void	fillataparams(void);
 
 static int	is_smart(void);
 
 static int	fd;				/* file descriptor for device */
+static int	use_satl;			/* tunnel through SATL */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 static const	char *cmdname;			/* command user issued */
+static const	struct ataparams *inqbuf;	/* inquiry buffer */
+static char	model[sizeof(inqbuf->atap_model)+1];
+static char	revision[sizeof(inqbuf->atap_revision)+1];
+static char	serial[sizeof(inqbuf->atap_serial)+1];
 
 static void	device_identify(int, char *[]);
 static void	device_setidle(int, char *[]);
@@ -143,7 +200,7 @@ static const struct command device_commands[] = {
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
 	{ "smart",
-		"enable|disable|status|offline #|error-log|selftest-log",
+		"enable|disable|status [vendor]|offline #|error-log|selftest-log",
 						device_smart },
 	{ "security",
 		"status|freeze|[setpass|unlock|disable|erase] [user|master]",
@@ -255,8 +312,15 @@ static const struct bitinfo ata_sata_feat[] = {
 	{ 0, NULL },
 };
 
-static const struct {
-	const int	id;
+/*
+ * Global SMART attribute table.  All known attributes should be defined
+ * here with overrides outside of the standard in a vendor specific table.
+ *
+ * XXX Some of these should be duplicated to vendor-specific tables now that
+ * XXX they exist and have non generic names.
+ */
+static const struct attr_table {
+	const unsigned	id;
 	const char	*name;
 	void (*special)(const struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
@@ -279,7 +343,7 @@ static const struct {
 	{ 171,          "Program Fail Count", NULL },
 	{ 172,          "Erase Fail Count", NULL },
 	{ 173,          "Wear Leveller Worst Case Erase Count", NULL },
-	{ 174,          "Unexpected Power Loss", NULL },
+	{ 174,          "Unexpected Power Loss Count", NULL },
 	{ 175,          "Program Fail Count", NULL },
 	{ 176,          "Erase Fail Count", NULL },
 	{ 177,          "Wear Leveling Count", NULL },
@@ -288,11 +352,11 @@ static const struct {
 	{ 180,          "Unused Reserved Block Count", NULL },
 	{ 181,          "Program Fail Count", NULL },
 	{ 182,          "Erase Fail Count", NULL },
-	{ 183,          "SATA Downshift Error Count", NULL },
+	{ 183,          "Runtime Bad Block", NULL },
 	{ 184,          "End-to-end error", NULL },
 	{ 185,          "Head Stability", NULL },
 	{ 186,          "Induced Op-Vibration Detection", NULL },
-	{ 187,          "Reported uncorrect", NULL },
+	{ 187,          "Reported Uncorrectable Errors", NULL },
 	{ 188,          "Command Timeout", NULL },
 	{ 189,          "High Fly Writes", NULL },
 	{ 190,          "Airflow Temperature",		device_smart_temp },
@@ -334,11 +398,85 @@ static const struct {
 	{ 242,		"Total LBAs Read", NULL },
 	{ 246,		"Total Host Sector Writes", NULL },
 	{ 247,		"Host Program NAND Pages Count", NULL },
-	{ 248,		"FTL Program Pages Count ", NULL },
+	{ 248,		"FTL Program Pages Count", NULL },
 	{ 249,		"Total Raw NAND Writes (1GiB units)", NULL },
 	{ 250,		"Read error retry rate", NULL },
 	{ 254,		"Free Fall Sensor", NULL },
 	{   0,		"Unknown", NULL },
+};
+
+/*
+ * Micron specific SMART attributes published by Micron in:
+ * "TN-FD-22: Client SATA SSD SMART Attribute Reference"
+ */
+static const struct attr_table micron_smart_names[] = {
+	{   5,		"Reallocated NAND block count", NULL },
+	{ 173,          "Average block erase count", NULL },
+	{ 181,          "Non 4K aligned access count", NULL },
+	{ 183,          "SATA Downshift Error Count", NULL },
+	{ 184,          "Error correction count", NULL },
+	{ 189,          "Factory bad block count", NULL },
+	{ 197,		"Current pending ECC count", NULL },
+	{ 198,		"SMART offline scan uncorrectable error count", NULL },
+	{ 202,		"Percent lifetime remaining", NULL },
+	{ 206,		"Write error rate", NULL },
+	{ 247,		"Number of NAND pages of data written by the host", NULL },
+	{ 248,		"Number of NAND pages written by the FTL", NULL },
+	{   0,		"Unknown", NULL },
+};
+
+/*
+ * Intel specific SMART attributes.  Fill me in with more.
+ */
+static const struct attr_table intel_smart_names[] = {
+	{ 183,          "SATA Downshift Error Count", NULL },
+};
+
+/*
+ * Samsung specific SMART attributes.  Fill me in with more.
+ */
+static const struct attr_table samsung_smart_names[] = {
+	{ 235,          "POR Recovery Count", NULL },
+	{ 243,          "SATA Downshift Count", NULL },
+	{ 244,          "Thermal Throttle Status", NULL },
+	{ 245,          "Timed Workload Media Wear", NULL },
+	{ 251,          "NAND Writes", NULL },
+};
+
+
+/*
+ * Vendor-specific SMART attribute table.  Can be used to override
+ * a particular attribute name and special printer function, with the
+ * default is the main table.
+ */
+static const struct vendor_name_table {
+	const char *name;
+	const struct attr_table *table;
+} vendor_smart_names[] = {
+	{ "Micron",		micron_smart_names },
+	{ "Intel",		intel_smart_names },
+	{ "Samsung",		samsung_smart_names },
+};
+
+/*
+ * Global model -> vendor table.  Extend this to regexp.
+ */
+static const struct model_to_vendor_table {
+	const char *model;
+	const char *vendor;
+} model_to_vendor[] = {
+	{ "Crucial",		"Micron" },
+	{ "Micron",		"Micron" },
+	{ "C300-CT",		"Micron" },
+	{ "C400-MT",		"Micron" },
+	{ "M4-CT",		"Micron" },
+	{ "M500",		"Micron" },
+	{ "M510",		"Micron" },
+	{ "M550",		"Micron" },
+	{ "MTFDDA",		"Micron" },
+	{ "EEFDDA",		"Micron" },
+	{ "INTEL",		"Intel" },
+	{ "SAMSUNG",		"Samsung" },
 };
 
 static const struct bitinfo ata_sec_st[] = {
@@ -446,10 +584,25 @@ ata_command(struct atareq *req)
 {
 	int error;
 
-	error = ioctl(fd, ATAIOCCOMMAND, req);
-
-	if (error == -1)
-		err(1, "ATAIOCCOMMAND failed");
+	switch (use_satl) {
+	case 0:
+		error = ioctl(fd, ATAIOCCOMMAND, req);
+		if (error == 0)
+			break;
+		if (errno != ENOTTY)
+			err(1, "ATAIOCCOMMAND failed");
+		use_satl = 1;
+		/* FALLTHROUGH */
+	case 1:
+		error = satl_command(req, 16);
+		if (error == 0)
+			return;
+		use_satl = 2;
+		/* FALLTHROUGH */
+	case 2:
+		(void) satl_command(req, 12);
+		return;
+	}
 
 	switch (req->retsts) {
 
@@ -475,6 +628,191 @@ ata_command(struct atareq *req)
 		exit(1);
 	}
 }
+
+/*
+ * Wrapper that calls SCIOCCOMMAND for a tunneled ATA command
+ */
+static int
+satl_command(struct atareq *req, int cmdlen)
+{
+	scsireq_t sreq;
+	int error;
+	union {
+		struct scsi_ata_pass_through_12 cmd12;
+		struct scsi_ata_pass_through_16 cmd16;
+	} c;
+	uint8_t b2, b3;
+	const uint8_t *desc;
+
+	b2 = SATL_NODATA;
+	if (req->datalen > 0) {
+		if (req->flags & ATACMD_READ)
+			b2 = SATL_PIO_IN;
+		else
+			b2 = SATL_PIO_OUT;
+	}
+
+	b3 = SATL_BLOCKS;
+	if (req->datalen > 0) {
+		b3 |= 2; /* sector count holds count */
+	} else {
+		b3 |= SATL_CKCOND;
+	}
+	if (req->datalen == 0 || req->flags & ATACMD_READ)
+		b3 |= SATL_READ;
+
+	switch (cmdlen) {
+	case 16:
+		c.cmd16.opcode = SCSI_ATA_PASS_THROUGH_16;
+		c.cmd16.byte2 = b2;
+		c.cmd16.byte3 = b3;
+		c.cmd16.features[0] = 0;
+		c.cmd16.features[1] = req->features;
+		c.cmd16.sector_count[0] = 0;
+		c.cmd16.sector_count[1] = req->sec_count;
+		c.cmd16.lba[0] = 0;
+		c.cmd16.lba[1] = req->sec_num;
+		c.cmd16.lba[2] = 0;
+		c.cmd16.lba[3] = req->cylinder;
+		c.cmd16.lba[4] = 0;
+		c.cmd16.lba[5] = req->cylinder >> 8;
+		c.cmd16.device = 0;
+		c.cmd16.ata_cmd = req->command;
+		c.cmd16.control = 0;
+		break;
+	case 12:
+		c.cmd12.opcode = SCSI_ATA_PASS_THROUGH_12;
+		c.cmd12.byte2 = b2;
+		c.cmd12.byte3 = b3;
+		c.cmd12.features[0] = req->features;
+		c.cmd12.sector_count[0] = req->sec_count;
+		c.cmd12.lba[0] = req->sec_num;
+		c.cmd12.lba[1] = req->cylinder;
+		c.cmd12.lba[2] = req->cylinder >> 8;
+		c.cmd12.device = 0;
+		c.cmd12.reserved = 0;
+		c.cmd12.ata_cmd = req->command;
+		c.cmd12.control = 0;
+		break;
+	default:
+		fprintf(stderr, "ATA command with bad length\n");
+		exit(1);
+	}
+
+	memset(&sreq, 0, sizeof(sreq));
+	memcpy(sreq.cmd, &c, cmdlen);
+	sreq.cmdlen = cmdlen;
+	sreq.databuf = req->databuf;
+	sreq.datalen = req->datalen;
+	sreq.senselen = sizeof(sreq.sense);
+	sreq.timeout = req->timeout;
+
+	if (sreq.datalen > 0) {
+		if (req->flags & ATACMD_READ)
+			sreq.flags |= SCCMD_READ;
+		if (req->flags & ATACMD_WRITE)
+			sreq.flags |= SCCMD_WRITE;
+	}
+
+	error = ioctl(fd, SCIOCCOMMAND, &sreq);
+	if (error == -1)
+		err(1, "SCIOCCOMMAND failed");
+
+	req->datalen = sreq.datalen_used;
+	req->retsts = ATACMD_OK;
+	req->error = 0;
+
+	switch (sreq.retsts) {
+	case SCCMD_OK:
+		return 0;
+	case SCCMD_TIMEOUT:
+		fprintf(stderr, "SATL command timed out\n");
+		exit(1);
+	case SCCMD_BUSY:
+		fprintf(stderr, "SATL command returned busy\n");
+		exit(1);
+	case SCCMD_SENSE:
+		desc = NULL;
+		switch (SSD_RCODE(sreq.sense[0])) {
+		case 0x00:
+			return 0;
+		case 0x70:
+			if (sreq.sense[2] == SKEY_NO_SENSE)
+				return 0;
+			if (sreq.sense[2] == SKEY_ILLEGAL_REQUEST)
+				return 1;
+			break;
+		case 0x72:
+		case 0x73:
+			desc = satl_return_desc(sreq.sense, sreq.senselen_used,
+				SCSI_ATA_RETURN_DESCRIPTOR);
+			break;
+		default:
+			break;
+		}
+
+		if (desc && desc[1] >= 12) {
+			req->sec_count = desc[5];
+			req->sec_num = desc[7];
+			req->head = (desc[12] & 0xf0) |
+			            ((desc[7] >> 24) & 0x0f);
+			req->cylinder = desc[11] << 8 | desc[9];
+			req->retsts = desc[13];
+			req->error = desc[3];
+			return 0;
+		}
+
+		fprintf(stderr, "SATL command error: rcode %02x key %u\n",
+			SSD_RCODE(sreq.sense[0]),
+			SSD_SENSE_KEY(sreq.sense[2]));
+		if (desc) {
+			int i, n;
+			n = desc[1]+2;
+			printf("ATA Return Descriptor:");
+			for (i=0; i<n; ++i)
+				printf(" %02x",desc[i]);
+			printf("\n");
+		}
+		exit(1);
+	default:
+		fprintf(stderr, "SCSIIOCCOMMAND returned unknown result code "
+			"%d\n", sreq.retsts);
+		exit(1);
+	}
+}
+
+static const uint8_t *
+satl_return_desc(const uint8_t *sense, size_t len, uint8_t type)
+{
+	const uint8_t *p, *endp;
+	size_t l, extra;
+	
+	if (len < 8)
+		return NULL;
+	extra = sense[7];
+	len -= 8;
+	if (extra < len)
+		len = extra;
+	if (len < 2)
+		return NULL;
+
+	switch (sense[0]) {
+	case 0x72:
+	case 0x73:
+		p = &sense[8];
+		endp = &p[len-1];
+		while (p < endp) {
+			if (p[0] == type)
+				return p;
+			l = p[1];
+			p += l + 2;
+		}
+		break;
+	}
+
+	return NULL;
+}
+
 
 /*
  * Print out strings associated with particular bitmasks
@@ -516,22 +854,36 @@ device_smart_temp(const struct ata_smart_attr *attr, uint64_t raw_value)
 		    attr->raw[2], attr->raw[4]);
 }
 
-
 /*
  * Print out SMART attribute thresholds and values
  */
 
 static void
-print_smart_status(void *vbuf, void *tbuf)
+print_smart_status(void *vbuf, void *tbuf, const char *vendor)
 {
 	const struct ata_smart_attributes *value_buf = vbuf;
 	const struct ata_smart_thresholds *threshold_buf = tbuf;
 	const struct ata_smart_attr *attr;
 	uint64_t raw_value;
 	int flags;
-	int i, j;
-	int aid;
+	unsigned i, j;
+	unsigned aid, vid;
 	uint8_t checksum;
+	const struct attr_table *vendor_table = NULL;
+	void (*special)(const struct ata_smart_attr *, uint64_t);
+
+	if (vendor) {
+		for (i = 0; i < __arraycount(vendor_smart_names); i++) {
+			if (strcasecmp(vendor,
+			    vendor_smart_names[i].name) == 0) {
+				vendor_table = vendor_smart_names[i].table;
+				break;
+			}
+		}
+		if (vendor_table == NULL)
+			fprintf(stderr,
+			    "SMART vendor '%s' has no special table\n", vendor);
+	}
 
 	for (i = checksum = 0; i < 512; i++)
 		checksum += ((const uint8_t *) value_buf)[i];
@@ -551,6 +903,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	    "                 raw\n");
 	for (i = 0; i < 256; i++) {
 		int thresh = 0;
+		const char *name = NULL;
 
 		attr = NULL;
 
@@ -574,20 +927,34 @@ print_smart_status(void *vbuf, void *tbuf)
 		     aid++)
 			;
 
+		if (vendor_table) {
+			for (vid = 0;
+			     vendor_table[vid].id != i && vendor_table[vid].id != 0;
+			     vid++)
+				;
+			if (vendor_table[vid].id != 0) {
+				name = vendor_table[vid].name;
+				special = vendor_table[vid].special;
+			}
+		}
+		if (name == NULL) {
+			name = smart_attrs[aid].name;
+			special = smart_attrs[aid].special;
+		}
+
 		flags = le16toh(attr->flags);
 
 		printf("%3d %3d  %3d     %-3s %-7s %stive    %-27s ",
 		    i, attr->value, thresh,
 		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
 		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
-		    attr->value > thresh ? "posi" : "nega",
-		    smart_attrs[aid].name);
+		    attr->value > thresh ? "posi" : "nega", name);
 
 		for (j = 0, raw_value = 0; j < 6; j++)
 			raw_value += ((uint64_t)attr->raw[j]) << (8*j);
 
-		if (smart_attrs[aid].special)
-			(*smart_attrs[aid].special)(attr, raw_value);
+		if (special)
+			(*special)(attr, raw_value);
 		else
 			printf("%" PRIu64, raw_value);
 		printf("\n");
@@ -790,14 +1157,19 @@ print_selftest(const void *buf)
 		print_selftest_entry(i, &stlog->log_entries[i]);
 }
 
-static const struct ataparams *
-getataparams(void)
+static void
+fillataparams(void)
 {
 	struct atareq req;
 	static union {
 		unsigned char inbuf[DEV_BSIZE];
 		struct ataparams inqbuf;
 	} inbuf;
+	static int first = 1;
+
+	if (!first)
+		return;
+	first = 0;
 
 	memset(&inbuf, 0, sizeof(inbuf));
 	memset(&req, 0, sizeof(req));
@@ -810,7 +1182,7 @@ getataparams(void)
 
 	ata_command(&req);
 
-	return (&inbuf.inqbuf);
+	inqbuf = &inbuf.inqbuf;
 }
 
 /*
@@ -823,10 +1195,9 @@ static int
 is_smart(void)
 {
 	int retval = 0;
-	const struct ataparams *inqbuf;
 	const char *status;
 
-	inqbuf = getataparams();
+	fillataparams();
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
 		if (!(inqbuf->atap_cmd_set1 & WDC_CMD1_SMART)) {
@@ -886,8 +1257,7 @@ extract_string(char *buf, size_t bufmax,
 }
 
 static void
-compute_capacity(const struct ataparams *inqbuf, uint64_t *capacityp,
-    uint64_t *sectorsp, uint32_t *secsizep)
+compute_capacity(uint64_t *capacityp, uint64_t *sectorsp, uint32_t *secsizep)
 {
 	uint64_t capacity;
 	uint64_t sectors;
@@ -929,38 +1299,37 @@ compute_capacity(const struct ataparams *inqbuf, uint64_t *capacityp,
 }
 
 /*
- * DEVICE COMMANDS
+ * Inspect the inqbuf and guess what vendor to use.  This list is fairly
+ * basic, and probably should be converted into a regexp scheme.
  */
+static const char *
+guess_vendor(void)
+{
+
+	unsigned i;
+
+	for (i = 0; i < __arraycount(model_to_vendor); i++)
+		if (strncasecmp(model, model_to_vendor[i].model,
+				strlen(model_to_vendor[i].model)) == 0)
+			return model_to_vendor[i].vendor;
+
+	return NULL;
+}
 
 /*
- * device_identify:
- *
- *	Display the identity of the device
+ * identify_fixup() - Given an obtained ataparams, fix up the endian and
+ * other issues before using them.
  */
 static void
-device_identify(int argc, char *argv[])
+identify_fixup(void)
 {
-	const struct ataparams *inqbuf;
-	char model[sizeof(inqbuf->atap_model)+1];
-	char revision[sizeof(inqbuf->atap_revision)+1];
-	char serial[sizeof(inqbuf->atap_serial)+1];
-	char hnum[12];
-	uint64_t capacity;
-	uint64_t sectors;
-	uint32_t secsize;
-	int lb_per_pb;
 	int needswap = 0;
-	int i;
-	uint8_t checksum;
-
-	/* No arguments. */
-	if (argc != 0)
-		usage();
-
-	inqbuf = getataparams();
 
 	if ((inqbuf->atap_integrity & WDC_INTEGRITY_MAGIC_MASK) ==
 	    WDC_INTEGRITY_MAGIC) {
+		int i;
+		uint8_t checksum;
+
 		for (i = checksum = 0; i < 512; i++)
 			checksum += ((const uint8_t *)inqbuf)[i];
 		if (checksum != 0)
@@ -997,6 +1366,33 @@ device_identify(int argc, char *argv[])
 		inqbuf->atap_serial, sizeof(inqbuf->atap_serial),
 		needswap);
 
+}
+
+/*
+ * DEVICE COMMANDS
+ */
+
+/*
+ * device_identify:
+ *
+ *	Display the identity of the device
+ */
+static void
+device_identify(int argc, char *argv[])
+{
+	char hnum[12];
+	uint64_t capacity;
+	uint64_t sectors;
+	uint32_t secsize;
+	int lb_per_pb;
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	fillataparams();
+	identify_fixup();
+
 	printf("Model: %s, Rev: %s, Serial #: %s\n",
 		model, revision, serial);
 
@@ -1016,7 +1412,7 @@ device_identify(int argc, char *argv[])
 		 inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" : "removable");
 	printf("\n");
 
-	compute_capacity(inqbuf, &capacity, &sectors, &secsize);
+	compute_capacity(&capacity, &sectors, &secsize);
 
 	humanize_number(hnum, sizeof(hnum), capacity, "bytes",
 		HN_AUTOSCALE, HN_DIVISOR_1000);
@@ -1296,6 +1692,7 @@ device_smart(int argc, char *argv[])
 		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
 		int rv;
+		const char *vendor = argc > 1 ? argv[1] : NULL;
 
 		rv = is_smart();
 
@@ -1350,7 +1747,12 @@ device_smart(int argc, char *argv[])
 
 		ata_command(&req);
 
-		print_smart_status(inbuf, inbuf2);
+		if (!vendor || strcmp(vendor, "noauto") == 0) {
+			fillataparams();
+			identify_fixup();
+			vendor = guess_vendor();
+		}
+		print_smart_status(inbuf, inbuf2, vendor);
 
 	} else if (strcmp(argv[0], "offline") == 0) {
 		if (argc != 2)
@@ -1424,7 +1826,6 @@ static void
 device_security(int argc, char *argv[])
 {
 	struct atareq req;
-	const struct ataparams *inqbuf;
 	unsigned char data[DEV_BSIZE];
 	char *pass;
 
@@ -1434,7 +1835,7 @@ device_security(int argc, char *argv[])
 
 	memset(&req, 0, sizeof(req));
 	if (strcmp(argv[0], "status") == 0) {
-		inqbuf = getataparams();
+		fillataparams();
 		print_bitinfo("\t", "\n", inqbuf->atap_sec_st, ata_sec_st);
 	} else if (strcmp(argv[0], "freeze") == 0) {
 		req.command = WDCC_SECURITY_FREEZE;
@@ -1485,7 +1886,7 @@ device_security(int argc, char *argv[])
 		} else if (strcmp(argv[0], "erase") == 0) {
 			struct atareq prepare;
 
-			inqbuf = getataparams();
+			fillataparams();
 
 			/*
 			 * XXX Any way to lock the device to make sure
@@ -1523,7 +1924,7 @@ device_security(int argc, char *argv[])
 			 */
 			if (req.timeout == 30600000) {
 				uint64_t bytes, timeout;
-				compute_capacity(inqbuf, &bytes, NULL, NULL);
+				compute_capacity(&bytes, NULL, NULL);
 				timeout = (bytes / (16 * 1024 * 1024)) * 1000;
 				if (timeout > (uint64_t)INT_MAX)
 					req.timeout = INT_MAX;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.4.1 2019/06/10 22:06:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.4.1 2019/06/10 22:06:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $")
 #include <sys/resourcevar.h>
 #include <sys/mbuf.h>		/* for MLEN */
 #include <sys/protosw.h>
+#include <sys/compat_stub.h>
 
 #include <sys/syscallargs.h>
 
@@ -64,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $")
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if_gre.h>
-#include <net/if_atm.h>
 #include <net/if_tap.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <netinet6/in6_var.h>
@@ -73,12 +73,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $")
 #include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
-#include <compat/common/if_43.h>
+#include <compat/common/compat_mod.h>
 #include <uvm/uvm_extern.h>
 
-u_long 
-compat_cvtcmd(u_long cmd)
+#if defined(COMPAT_43)
+
+/* 
+ * Use a wrapper so that the compat_cvtcmd() can return a u_long
+ */
+static int 
+do_compat_cvtcmd(u_long *ncmd, u_long ocmd)
 { 
+
+	*ncmd = compat_cvtcmd(ocmd);
+	return 0;
+}
+
+u_long
+compat_cvtcmd(u_long cmd)
+{
 	u_long ncmd;
 
 	if (IOCPARM_LEN(cmd) != sizeof(struct oifreq))
@@ -113,8 +126,8 @@ compat_cvtcmd(u_long cmd)
 		return SIOCADDMULTI;
 	case OSIOCDELMULTI:
 		return SIOCDELMULTI;
-	case OSIOCSIFMEDIA:
-		return SIOCSIFMEDIA;
+	case SIOCSIFMEDIA_43:
+		return SIOCSIFMEDIA_80;
 	case OSIOCGIFMTU:
 		return SIOCGIFMTU;
 	case OSIOCGIFDATA:
@@ -146,10 +159,6 @@ compat_cvtcmd(u_long cmd)
 		case GRESADDRS:
 		case GRESPROTO:
 		case GRESSOCK:
-#ifdef COMPAT_20
-		case OSIOCG80211STATS:
-		case OSIOCG80211ZSTATS:
-#endif /* COMPAT_20 */
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 		case SIOCDIFADDR:
@@ -179,7 +188,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCGIFPSRCADDR_IN6:
 		case SIOCGIFSTAT_ICMP6:
 		case SIOCGIFSTAT_IN6:
-		case SIOCGPVCSIF:
 		case SIOCGVH:
 		case SIOCIFCREATE:
 		case SIOCIFDESTROY:
@@ -199,13 +207,19 @@ compat_cvtcmd(u_long cmd)
 		case SIOCSIFNETMASK_IN6:
 		case SIOCSNDFLUSH_IN6:
 		case SIOCSPFXFLUSH_IN6:
-		case SIOCSPVCSIF:
 		case SIOCSRTRFLUSH_IN6:
 		case SIOCSVH:
 		case TAPGIFNAME:
 			return ncmd;
 		default:
+		    {	int rv;
+
+			MODULE_HOOK_CALL(if43_cvtcmd_20_hook, (ncmd), enosys(),
+			    rv);
+			if (rv == 0)
+				return ncmd;
 			return cmd;
+		    }
 		}
 	}
 }
@@ -240,7 +254,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
+		IFREQO2N_43(oifr, ifr);
 	}
 
 	switch (ocmd) {
@@ -276,32 +290,26 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	}
 
 	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
+		IFREQN2O_43(oifr, ifr);
 
 	return error;
 }
 
-#if defined(COMPAT_43)
-static u_long (*orig_compat_cvtcmd)(u_long);
-static int (*orig_compat_ifioctl)(struct socket *, u_long, u_long,
-    void *, struct lwp *);
-
-void
+int
 if_43_init(void)
 {
 
-	orig_compat_cvtcmd = vec_compat_cvtcmd;
-	vec_compat_cvtcmd = compat_cvtcmd;
-
-	orig_compat_ifioctl = vec_compat_ifioctl;
-	vec_compat_ifioctl =  compat_ifioctl;
+	MODULE_HOOK_SET(if_cvtcmd_43_hook, "if_43", do_compat_cvtcmd);
+	MODULE_HOOK_SET(if_ifioctl_43_hook, "if_43", compat_ifioctl);
+	return 0;
 }
 
-void
+int
 if_43_fini(void)
 {
 
-	vec_compat_cvtcmd = orig_compat_cvtcmd;
-	vec_compat_ifioctl = orig_compat_ifioctl;
+	MODULE_HOOK_UNSET(if_cvtcmd_43_hook);
+	MODULE_HOOK_UNSET(if_ifioctl_43_hook);
+	return 0;
 }
 #endif /* defined(COMPAT_43) */

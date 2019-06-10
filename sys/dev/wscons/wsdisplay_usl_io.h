@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_usl_io.h,v 1.4 2015/09/06 06:01:01 dholland Exp $ */
+/* $NetBSD: wsdisplay_usl_io.h,v 1.4.18.1 2019/06/10 22:07:36 christos Exp $ */
 
 #ifndef _DEV_WSCONS_WSDISPLAY_USL_IO_H_
 #define _DEV_WSCONS_WSDISPLAY_USL_IO_H_
@@ -74,7 +74,7 @@ struct kbentry {
 #define KDSETRAD	_IO('K', 67)
 
 /* pcvt compatibility */
-#define VGAPCVTID	_IOWR('V',113, struct pcvtid)	/* get driver id */
+#define VGAPCVTID	_IOWR('V', 113, struct pcvtid)	/* get driver id */
 
 struct pcvtid {
 #define PCVTIDNAMELN  16		/* driver id - string length	*/

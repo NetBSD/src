@@ -1,5 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992-2017 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -689,17 +689,6 @@ dos_set_tty_state (struct serial *scb, serial_ttystate ttystate)
 }
 
 static int
-dos_noflush_set_tty_state (struct serial *scb, serial_ttystate new_ttystate,
-			   serial_ttystate old_ttystate)
-{
-  struct dos_ttystate *state;
-
-  state = (struct dos_ttystate *) new_ttystate;
-  dos_setbaudrate (scb, state->baudrate);
-  return 0;
-}
-
-static int
 dos_flush_input (struct serial *scb)
 {
   struct dos_ttystate *port = &ports[scb->fd];
@@ -882,7 +871,6 @@ static const struct serial_ops dos_ops =
   dos_copy_tty_state,
   dos_set_tty_state,
   dos_print_tty_state,
-  dos_noflush_set_tty_state,
   dos_setbaudrate,
   dos_setstopbits,
   dos_setparity,
@@ -899,7 +887,7 @@ gdb_pipe (int pdes[2])
 }
 
 static void
-dos_info (char *arg, int from_tty)
+info_serial_command (const char *arg, int from_tty)
 {
   struct dos_ttystate *port;
 #ifdef DOS_STATS
@@ -926,9 +914,6 @@ dos_info (char *arg, int from_tty)
       printf_filtered ("%s:\t%lu\n", cntnames[i], (unsigned long) cnts[i]);
 #endif
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_ser_dos;
 
 void
 _initialize_ser_dos (void)
@@ -999,6 +984,6 @@ Show COM4 interrupt request."), NULL,
 			    NULL, /* FIXME: i18n: */
 			    &setlist, &showlist);
 
-  add_info ("serial", dos_info,
+  add_info ("serial", info_serial_command,
 	    _("Print DOS serial port status."));
 }

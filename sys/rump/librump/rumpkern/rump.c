@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $	*/
+/*	$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $");
 #include <sys/sysctl.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
+#include <sys/threadpool.h>
 #include <sys/timetc.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
@@ -73,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $");
 #include <sys/cprng.h>
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
+#include <sys/psref.h>
 
 #include <rump-sys/kern.h>
 #include <rump-sys/dev.h>
@@ -110,6 +112,8 @@ static struct lwp *bootlwp;
 static  char rump_msgbuf[16*1024] __aligned(256);
 
 bool rump_ttycomponent = false;
+
+pool_cache_t pnbuf_cache;
 
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
@@ -340,6 +344,11 @@ rump_init(void)
 
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
+
+	/* Must be called after lwpinit_specificdata */
+	psref_init();
+
+	threadpools_init();
 
 	loginit();
 

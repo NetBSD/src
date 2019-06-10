@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166 2018/06/14 14:36:46 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.166.2.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -187,8 +187,8 @@
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
-/* 32bit version of PG_NX */
-#define PG_NX32	0x80000000
+/* 32bit version of PTE_NX */
+#define PTE_NX32	0x80000000
 
 #if L2_SLOT_KERNBASE > 0
 #define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
@@ -276,8 +276,11 @@
 
 #ifdef XEN
 #define __ASSEMBLY__
-#include <xen/xen-public/elfnote.h>
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/elfnote.h>
+#include <xen/include/public/xen.h>
+#endif	/* XEN */
+
+#ifdef XENPV	
 #define ELFNOTE(name, type, desctype, descdata...) \
 .pushsection .note.name			;	\
   .align 4				;	\
@@ -304,13 +307,13 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .quad,  HYPERVISOR_VIRT_START)
 	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "")
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
-	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PG_V, PG_V)\
+	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PTE_P, PTE_P)\
 	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
 	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
-#endif	/* XEN */
+#endif  /* XENPV */	
 
 /*
  * Initialization
@@ -378,7 +381,7 @@ END(biosextmem)
 LABEL(lwp0uarea)	.quad	0
 END(lwp0uarea)
 
-#ifndef XEN
+#ifndef XENPV
 	.globl	gdt64_lo
 	.globl	gdt64_hi
 
@@ -414,7 +417,7 @@ _C_LABEL(farjmp64):
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 END(farjmp64)
 
-#endif	/* !XEN */
+#endif	/* !XENPV */
 
 	/* Space for the temporary stack */
 	.size	tmpstk, tmpstk - .
@@ -431,7 +434,7 @@ tmpstk:
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
 ENTRY(start)
-#ifndef XEN
+#ifndef XENPV
 	.code32
 
 	/* Warm boot */
@@ -583,13 +586,13 @@ ENTRY(start)
 	movl	$RELOC(tmpstk),%esp
 
 	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 * Retrieve the NX/XD flag. We use the 32bit version of PTE_NX.
 	 */
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
 	jz	.Lno_NOX
-	movl	$PG_NX32,RELOC(nox_flag)
+	movl	$PTE_NX32,RELOC(nox_flag)
 .Lno_NOX:
 
 /*
@@ -677,7 +680,7 @@ ENTRY(start)
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -685,7 +688,7 @@ ENTRY(start)
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */
@@ -693,7 +696,7 @@ ENTRY(start)
 	movl	$RELOC(__kernel_end),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map [SYMS]+[PRELOADED MODULES] RW. */
@@ -701,21 +704,21 @@ ENTRY(start)
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
 	movl	$TABLESIZE,%ecx		/* length of BOOTSTRAP TABLES */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	orl	$(PTE_P|PTE_W/*|PTE_PCD*/),%eax
 	fillkpt_nox
 
 	/*
@@ -723,7 +726,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 
@@ -731,7 +734,7 @@ ENTRY(start)
 	/* If needed, set up level 2 entries for actual kernel mapping */
 	leal	(PROC0_PTP2_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 #endif
@@ -741,7 +744,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -749,7 +752,7 @@ ENTRY(start)
 	/* If needed, set up level 3 entries for actual kernel mapping */
 	leal	(PROC0_PTP3_OFF + L3_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 #endif
@@ -759,23 +762,16 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Set up L4 entries for actual kernel mapping */
 	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
-
-	/* Install recursive top level PDE (one entry) */
-	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
-	leal	(PROC0_PML4_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
-	movl	$1,%ecx
-	fillkpt_nox
 
 	/*
 	 * Startup checklist:
@@ -888,7 +884,7 @@ longmode_hi:
 	/* The first physical page available. */
 	leaq	(TABLESIZE)(%rsi),%rdi
 
-#else	/* XEN */
+#else	/* XENPV */
 	/* First, reset the PSL. */
 	pushq	$2
 	popfq
@@ -971,10 +967,11 @@ longmode_hi:
 	movq	%rsi,%rdi
 	addq	$(USPACE+PAGE_SIZE),%rdi
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
-#endif	/* XEN */
+#endif	/* XENPV */
 
 	pushq	%rdi
 	call	_C_LABEL(init_bootspace)
+	call	_C_LABEL(init_slotspace)
 	popq	%rdi
 	call	_C_LABEL(init_x86_64)
 	call 	_C_LABEL(main)
@@ -983,9 +980,12 @@ END(start)
 #if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
-.org HYPERCALL_PAGE_OFFSET
-ENTRY(hypercall_page)
-.skip 0x1000
+.align HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page) /* Returns -1, on HYPERVISOR_xen_version() */
+.skip	(__HYPERVISOR_xen_version*32), 0x90
+	movq	$-1, %rax
+	retq
+.align HYPERCALL_PAGE_OFFSET, 0x90
 END(hypercall_page)
 #endif /* XEN */
 
@@ -1088,38 +1088,6 @@ ENTRY(cpu_switchto)
 	movq	%rbp,PCB_RBP(%rax)
 .Lskip_save:
 
-#ifdef SVS
-	pushq	%rdx
-	movb	_C_LABEL(svs_enabled),%dl
-	testb	%dl,%dl
-	jz	.Lskip_svs
-	callq	_C_LABEL(svs_lwp_switch)
-.Lskip_svs:
-	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-#endif
-
-#ifndef XEN
-	pushq	%rdx
-	callq	_C_LABEL(speculation_barrier)
-	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-
-	pushq	%rdx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
-	callq	_C_LABEL(fpu_eagerswitch)
-.Lno_eagerfpu:
-	popq	%rdx
-#endif
-
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
@@ -1136,6 +1104,20 @@ ENTRY(cpu_switchto)
 	testb	%dl,%dl		/* returning = true ? */
 	jnz	.Lswitch_return
 
+#ifdef SVS
+	movb	_C_LABEL(svs_enabled),%dl
+	testb	%dl,%dl
+	jz	.Lskip_svs
+	callq	_C_LABEL(svs_lwp_switch)
+.Lskip_svs:
+#endif
+
+#ifndef XEN
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(speculation_barrier)
+#endif
+
 	/* Switch ring0 stack */
 #ifdef SVS
 	movb	_C_LABEL(svs_enabled),%al
@@ -1150,7 +1132,7 @@ ENTRY(cpu_switchto)
 .Lno_svs_switch:
 #endif
 
-#if !defined(XEN)
+#if !defined(XENPV)
 	movq	PCB_RSP0(%r14),%rax
 	movq	CPUVAR(TSS),%rdi
 	movq	%rax,TSS_RSP0(%rdi)
@@ -1159,6 +1141,19 @@ ENTRY(cpu_switchto)
 	callq	_C_LABEL(x86_64_switch_context)
 #endif
 .Lring0_switched:
+
+	/* Switch the dbregs. */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(x86_dbregs_switch)
+
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(fpu_eagerswitch)
+.Lno_eagerfpu:
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
@@ -1182,7 +1177,7 @@ ENTRY(cpu_switchto)
 	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
 	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
 	 */
-#ifndef XEN
+#ifndef XENPV
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
 	movq	%cr0,%rdx
@@ -1286,7 +1281,7 @@ END(savectx)
 /*
  * Syscall handler.
  */
-NENTRY(handle_syscall)
+ENTRY(handle_syscall)
 	STI(si)
 
 	movq	CPUVAR(CURLWP),%r14
@@ -1364,7 +1359,7 @@ END(handle_syscall)
  * This is a trampoline function pushed run by newly created LWPs
  * in order to do additional setup in their context.
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
@@ -1383,7 +1378,7 @@ END(lwp_trampoline)
 
 .macro	SYSCALL_ENTRY	name,is_svs
 IDTVEC(\name)
-#ifndef XEN
+#ifndef XENPV
 	/*
 	 * The user %rip is in %rcx and the user %rflags in %r11. The kernel %cs
 	 * and %ss are loaded, but nothing else is.
@@ -1468,7 +1463,7 @@ IDTVEC_END(syscall32)
  */
 	TEXT_USER_BEGIN
 IDTVEC(osyscall)
-#ifdef XEN
+#ifdef XENPV
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11
 	addq $0x10,%rsp
@@ -1486,11 +1481,12 @@ IDTVEC_END(osyscall)
 	TEXT_USER_BEGIN
 	_ALIGN_TEXT
 LABEL(syscall_sysret)
+	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	SWAPGS
-#ifndef XEN
+#ifndef XENPV
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
 	movq	TF_RSP(%rsp),%rsp
@@ -1575,43 +1571,46 @@ END(pagezero)
 #define TF_BACKW(val, reg)	(val - (TF_REGSIZE+16))(reg)
 
 	_ALIGN_TEXT
+	.type intrfastexit,@function
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	.Lkexit
+
+	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
+	SWAPGS
 
-	testb	$SEL_UPL,TF_BACKW(TF_CS, %rsp)
-	jz	.Lkexit
 	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
+	je	do_iret
 	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
-#ifdef XEN
+	je	do_iret
+#ifdef XENPV
 	cmpw	$FLAT_RING3_CS64,TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
+	je	do_iret
 #endif
 
-.Luexit32:
-	SWAPGS
 do_mov_es:
 	movw	TF_BACKW(TF_ES, %rsp),%es
 do_mov_ds:
 	movw	TF_BACKW(TF_DS, %rsp),%ds
 do_mov_fs:
 	movw	TF_BACKW(TF_FS, %rsp),%fs
-#ifndef XEN
+#ifndef XENPV
 do_mov_gs:
 	movw	TF_BACKW(TF_GS, %rsp),%gs
 #endif
-	jmp	.Lkexit
 
-.Luexit64:
-	SWAPGS
+do_iret:
+	iretq
 
 .Lkexit:
-do_iret:
+	INTR_RESTORE_GPRS
+	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
 	iretq
 END(intrfastexit)
 
@@ -1622,10 +1621,6 @@ END(intrfastexit)
 	.globl	svs_enter_altstack, svs_enter_altstack_end
 	.globl	svs_leave, svs_leave_end
 	.globl	svs_leave_altstack, svs_leave_altstack_end
-	.globl	nosvs_enter, nosvs_enter_end
-	.globl	nosvs_enter_altstack, nosvs_enter_altstack_end
-	.globl	nosvs_leave, nosvs_leave_end
-	.globl	nosvs_leave_altstack, nosvs_leave_altstack_end
 
 LABEL(svs_enter)
 	movabs	SVS_UTLS+UTLS_KPDIRPA,%rax
@@ -1641,13 +1636,17 @@ LABEL(svs_enter_altstack)
 1234:
 LABEL(svs_enter_altstack_end)
 
+LABEL(svs_enter_nmi)
+	movq	%cr3,%rax
+	movq	%rax,(FRAMESIZE+1*8)(%rsp)	/* nmistore->scratch */
+	movq	(FRAMESIZE+0*8)(%rsp),%rax	/* nmistore->cr3 */
+	movq	%rax,%cr3
+LABEL(svs_enter_nmi_end)
+
 LABEL(svs_leave)
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1234f
 	movq	CPUVAR(URSP0),%rsp
 	movq	CPUVAR(UPDIRPA),%rax
 	movq	%rax,%cr3
-1234:
 LABEL(svs_leave_end)
 
 LABEL(svs_leave_altstack)
@@ -1658,21 +1657,10 @@ LABEL(svs_leave_altstack)
 1234:
 LABEL(svs_leave_altstack_end)
 
-LABEL(nosvs_enter)
-	NOSVS_ENTER
-LABEL(nosvs_enter_end)
-
-LABEL(nosvs_enter_altstack)
-	NOSVS_ENTER_ALTSTACK
-LABEL(nosvs_enter_altstack_end)
-
-LABEL(nosvs_leave)
-	NOSVS_LEAVE
-LABEL(nosvs_leave_end)
-
-LABEL(nosvs_leave_altstack)
-	NOSVS_LEAVE_ALTSTACK
-LABEL(nosvs_leave_altstack_end)
+LABEL(svs_leave_nmi)
+	movq	(FRAMESIZE+1*8)(%rsp),%rax	/* nmistore->scratch */
+	movq	%rax,%cr3
+LABEL(svs_leave_nmi_end)
 #endif
 
 	.globl	ibrs_enter, ibrs_enter_end
@@ -1681,20 +1669,17 @@ LABEL(nosvs_leave_altstack_end)
 	/* IBRS <- 1 */
 LABEL(ibrs_enter)
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
-	movl	$IA32_SPEC_CTRL_IBRS,%eax
-	movl	$(IA32_SPEC_CTRL_IBRS >> 32),%edx
+	rdmsr
+	orl	$IA32_SPEC_CTRL_IBRS,%eax
 	wrmsr
 LABEL(ibrs_enter_end)
 
 	/* IBRS <- 0 */
 LABEL(ibrs_leave)
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1234f
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
-	xorl	%eax,%eax
-	xorl	%edx,%edx
+	rdmsr
+	andl	$~IA32_SPEC_CTRL_IBRS,%eax
 	wrmsr
-1234:
 LABEL(ibrs_leave_end)
 
 LABEL(noibrs_enter)
@@ -1704,3 +1689,15 @@ LABEL(noibrs_enter_end)
 LABEL(noibrs_leave)
 	NOIBRS_LEAVE
 LABEL(noibrs_leave_end)
+
+	.globl	mds_leave, mds_leave_end
+
+LABEL(mds_leave)
+	pushq	$GSEL(GDATA_SEL, SEL_KPL)
+	verw	(%rsp)
+	addq	$8,%rsp
+LABEL(mds_leave_end)
+
+LABEL(nomds_leave)
+	NOMDS_LEAVE
+LABEL(nomds_leave_end)

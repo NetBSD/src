@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.18 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.18.2.1 2019/06/10 22:07:30 christos Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18.2.1 2019/06/10 22:07:30 christos Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -173,7 +173,7 @@ malo_pcmcia_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
-        error = pcmcia_function_configure(pa->pf, malo_pcmcia_validate_config);
+	error = pcmcia_function_configure(pa->pf, malo_pcmcia_validate_config);
 	if (error) {
 		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
@@ -916,7 +916,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		for (i = 0; i < bsize / 2; i++)
 			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
-                MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
+		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
 		    MALO_VAL_CMD_DL_OVER);
 
 		/* poll for an acknowledgement */
@@ -1041,10 +1041,9 @@ cmalo_rx(struct malo_softc *sc)
 	memcpy(data + (ETHER_ADDR_LEN * 2), data + i, rxdesc->pkglen - i);
 	rxdesc->pkglen -= sizeof(struct llc);
 
-#define ETHER_ALIGN	2 /* XXX */
 	/* prepare mbuf */
 	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
-	    rxdesc->pkglen, ETHER_ALIGN, ifp, NULL);
+	    rxdesc->pkglen, ETHER_ALIGN, ifp);
 	if (m == NULL) {
 		DPRINTF(1, "RX m_devget failed\n");
 		ifp->if_ierrors++;

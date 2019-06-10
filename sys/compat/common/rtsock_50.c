@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.7 2018/05/10 09:33:46 nonaka Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.7.2.1 2019/06/10 22:06:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,23 +61,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7 2018/05/10 09:33:46 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7.2.1 2019/06/10 22:06:58 christos Exp $");
 
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#endif
+#define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
+			 * various other compat definitions - see
+			 * sys/net/rtsock_shared.c for details
+			 */
 
-/*
- * COMPAT_50 and COMPAT_RTSOCK must be defined for rtsock.c regardless of
- * the currently enabled options.
- */
-#ifndef COMPAT_50
-#define COMPAT_50
-#endif
+#include <net/rtsock_shared.c>
+#include <compat/net/route_50.h>
 
-#define	COMPAT_RTSOCK
-
-#include <net/rtsock.c>
+struct sysctllog *clog;
 
 void
 compat_50_rt_oifmsg(struct ifnet *ifp)
@@ -155,4 +149,42 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 		return error;
 	w->w_where = (char *)w->w_where + len;
 	return 0;
+}
+
+void
+rtsock_50_init(void)
+{
+ 
+	MODULE_HOOK_SET(rtsock_iflist_50_hook, "rts_50", compat_50_iflist);
+	MODULE_HOOK_SET(rtsock_oifmsg_50_hook, "rts_50", compat_50_rt_oifmsg);
+	MODULE_HOOK_SET(rtsock_rt_missmsg_50_hook, "rts_50",
+	    compat_50_rt_missmsg);
+	MODULE_HOOK_SET(rtsock_rt_ifmsg_50_hook, "rts_50", compat_50_rt_ifmsg);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_rt_50_hook, "rts_50",
+	    compat_50_rt_addrmsg_rt);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_src_50_hook, "rts_50",
+	    compat_50_rt_addrmsg_src);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_50_hook, "rts_50",
+	    compat_50_rt_addrmsg);
+	MODULE_HOOK_SET(rtsock_rt_ifannouncemsg_50_hook, "rts_50",
+	    compat_50_rt_ifannouncemsg);
+	MODULE_HOOK_SET(rtsock_rt_ieee80211msg_50_hook, "rts_50",
+	    compat_50_rt_ieee80211msg);
+	sysctl_net_route_setup(&clog, PF_OROUTE, "ortable");
+}
+ 
+void
+rtsock_50_fini(void)
+{  
+
+	sysctl_teardown(&clog);
+	MODULE_HOOK_UNSET(rtsock_iflist_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_oifmsg_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_missmsg_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_ifmsg_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_rt_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_src_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_ifannouncemsg_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_ieee80211msg_50_hook); 
 }

@@ -216,7 +216,7 @@ print_options (void)
     int max_len = 0;
     int cols;
 
-    for (i = 0; i < sizeof (defines) / sizeof (defines[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE (defines); i++) {
       int len = strlen (defines[i]);
       if (len > max_len)
 	max_len = len;
@@ -227,10 +227,10 @@ print_options (void)
       cols = 1;
 
     printf_filtered ("\n#defines:");
-    for (i = 0; i < sizeof (defines) / sizeof (defines[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE (defines); i++) {
       const char *const prefix = ((i % cols) == 0) ? "\n" : "";
       printf_filtered ("%s  %s%*s", prefix, defines[i],
-		       (((i == (sizeof (defines) / sizeof (defines[0])) - 1)
+		       (((i == ARRAY_SIZE (defines) - 1)
 			 || (((i + 1) % cols) == 0))
 			? 0
 			: max_len + 4 - strlen (defines[i])),

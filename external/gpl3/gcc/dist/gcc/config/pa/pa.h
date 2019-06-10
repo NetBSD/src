@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the HP Spectrum.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) of Cygnus Support
    and Tim Moore (moore@defmacro.cs.utah.edu) of the Center for
    Software Science at the University of Utah.
@@ -92,12 +92,6 @@ extern unsigned long total_code_bytes;
    allows a difference of two symbols in the same subspace, and it doesn't
    detect the sequence as a pc-relative call.  */
 #define TARGET_LONG_PIC_SDIFF_CALL (!TARGET_GAS && TARGET_HPUX)
-
-/* Define to a C expression evaluating to true to use long PIC
-   pc-relative calls.  Long PIC pc-relative calls are only used with
-   GAS.  Currently, they are usable for calls which bind local to a
-   module but not for external calls.  */
-#define TARGET_LONG_PIC_PCREL_CALL 0
 
 /* Define to a C expression evaluating to true to use SOM secondary
    definition symbols for weak support.  Linker support for secondary
@@ -1159,8 +1153,18 @@ do {									     \
    PREFIX is the class of label and NUM is the number within the class.
    This is suitable for output with `assemble_name'.  */
 
-#define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)	\
-  sprintf (LABEL, "*%c$%s%04ld", (PREFIX)[0], (PREFIX) + 1, (long)(NUM))
+#define ASM_GENERATE_INTERNAL_LABEL(LABEL, PREFIX, NUM)		\
+  do								\
+    {								\
+      char *__p;						\
+      (LABEL)[0] = '*';						\
+      (LABEL)[1] = (PREFIX)[0];					\
+      (LABEL)[2] = '$';						\
+      __p = stpcpy (&(LABEL)[3], &(PREFIX)[1]);			\
+      sprint_ul (__p, (unsigned long) (NUM));			\
+    }								\
+  while (0)
+
 
 /* Output the definition of a compiler-generated label named NAME.  */
 
@@ -1178,35 +1182,37 @@ do {									     \
 #define ASM_OUTPUT_ASCII(FILE, P, SIZE)  \
   pa_output_ascii ((FILE), (P), (SIZE))
 
-/* Jump tables are always placed in the text section.  Technically, it
-   is possible to put them in the readonly data section.  This has the
-   benefit of getting the table out of .text and reducing branch lengths
-   as a result.
+/* Jump tables are always placed in the text section.  We have to do
+   this for the HP-UX SOM target as we can't switch sections in the
+   middle of a function.
 
-   The downside is that an additional insn (addil) is needed to access
+   On ELF targets, it is possible to put them in the readonly-data section.
+   This would get the table out of .text and reduce branch lengths.
+
+   A downside is that an additional insn (addil) is needed to access
    the table when generating PIC code.  The address difference table
-   also has to use 32-bit pc-relative relocations.  Currently, GAS does
-   not support these relocations, although it is easily modified to do
-   this operation.
+   also has to use 32-bit pc-relative relocations.
 
    The table entries need to look like "$L1+(.+8-$L0)-$PIC_pcrel$0"
    when using ELF GAS.  A simple difference can be used when using
-   SOM GAS or the HP assembler.  The final downside is GDB complains
-   about the nesting of the label for the table when debugging.  */
+   the HP assembler.
+
+   The final downside is GDB complains about the nesting of the label
+   for the table.  */
 
 #define JUMP_TABLES_IN_TEXT_SECTION 1
 
 /* This is how to output an element of a case-vector that is absolute.  */
 
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)  \
-  fprintf (FILE, "\t.word L$%04d\n", VALUE)
+  fprintf (FILE, "\t.word L$%d\n", VALUE)
 
 /* This is how to output an element of a case-vector that is relative. 
    Since we always place jump tables in the text section, the difference
    is absolute and requires no relocation.  */
 
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
-  fprintf (FILE, "\t.word L$%04d-L$%04d\n", VALUE, REL)
+  fprintf (FILE, "\t.word L$%d-L$%d\n", VALUE, REL)
 
 /* This is how to output an absolute case-vector.  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.6 2018/05/23 10:42:05 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.6.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6 2018/05/23 10:42:05 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6.2.1 2019/06/10 22:05:54 christos Exp $");
 
 #include "opt_pci.h"
 
@@ -136,7 +136,8 @@ static const char *imx6pcie_intr_string(void *, pci_intr_handle_t,
 					  char *, size_t);
 const struct evcnt *imx6pcie_intr_evcnt(void *, pci_intr_handle_t);
 static void * imx6pcie_intr_establish(void *, pci_intr_handle_t,
-					 int, int (*)(void *), void *);
+					 int, int (*)(void *), void *,
+				         const char *);
 static void imx6pcie_intr_disestablish(void *, void *);
 
 CFATTACH_DECL_NEW(imxpcie, sizeof(struct imx6pcie_softc),
@@ -687,12 +688,11 @@ imx6pcie_setup(struct imx6pcie_softc * const sc)
 
 	/* Bus number */
 	v = PCIE_READ(sc, PCI_BRIDGE_BUS_REG);
-	v &= ~(PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT |
-	    PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_SECONDARY_SHIFT |
-	    PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_PRIMARY_SHIFT);
-	v |= PCI_BRIDGE_BUS_SUBORDINATE(1);
-	v |= PCI_BRIDGE_BUS_SECONDARY(1);
-	v |= PCI_BRIDGE_BUS_PRIMARY(0);
+	v &= ~(PCI_BRIDGE_BUS_SUBORDINATE | PCI_BRIDGE_BUS_SECONDARY |
+	    PCI_BRIDGE_BUS_PRIMARY);
+	v |= PCI_BRIDGE_BUS_NUM_SUBORDINATE(1);
+	v |= PCI_BRIDGE_BUS_NUM_SECONDARY(1);
+	v |= PCI_BRIDGE_BUS_NUM_PRIMARY(0);
 	PCIE_WRITE(sc, PCI_BRIDGE_BUS_REG, v);
 
 	/* Command register */
@@ -921,7 +921,7 @@ imx6pcie_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 static void *
 imx6pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*callback)(void *), void *arg)
+    int (*callback)(void *), void *arg, const char *xname)
 {
 	struct imx6pcie_softc *sc = v;
 	struct imx6pcie_ih *pcie_ih;

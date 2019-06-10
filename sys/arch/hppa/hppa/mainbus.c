@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.36.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.36.1 2019/06/10 22:06:19 christos Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -204,7 +204,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		spa = pa & HPPA_FLEX_MASK;
 		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
 
-		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+		size -= uimin(size, HPPA_FLEX_SIZE - (pa - spa));
 
 		/* do need a new mapping? */
 		if (bmm[flex / 32] & (1 << (flex % 32))) {
@@ -249,7 +249,7 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	error = extent_alloc_region(hppa_io_extent, bpa, size, EX_NOWAIT);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Map the region of I/O space.
@@ -301,7 +301,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	error = extent_alloc_subregion1(hppa_io_extent, rstart, rend, size,
 	    align, 0, boundary, EX_NOWAIT, &bpa);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Map the region of I/O space.
@@ -758,7 +758,7 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 	map = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	if (!map)
-		return (ENOMEM);
+		return ENOMEM;
 
 	memset(map, 0, mapsize);
 	map->_dm_size = size;
@@ -770,7 +770,7 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 	map->dm_nsegs = 0;
 
 	*dmamp = map;
-	return (0);
+	return 0;
 }
 
 /*
@@ -808,7 +808,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen,
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	if (p != NULL) {
 		vm = p->p_vmspace;
@@ -823,7 +823,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen,
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -846,7 +846,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	first = 1;
 	seg = 0;
@@ -862,7 +862,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -908,7 +908,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -960,7 +960,7 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 	map->dm_nsegs = seg + 1;
 	map->dm_mapsize = mapsize;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1000,7 +1000,7 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 	if ((offset + len) > map->dm_mapsize)
 		panic("mbus_dmamap_sync: bad length");
 #endif
-	
+
 	/*
 	 * For a virtually-indexed write-back cache, we need to do the
 	 * following things:
@@ -1070,7 +1070,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	if ((mlist = malloc(sizeof(*mlist), M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/*
 	 * Allocate physical pages from the VM system.
@@ -1085,7 +1085,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		    " failed", __func__, size, low, high, mlist, nsegs,
 		    (flags & BUS_DMA_NOWAIT) == 0));
 		free(mlist, M_DEVBUF);
-		return (error);
+		return error;
 	}
 
 	pa_next = 0;
@@ -1097,7 +1097,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 			if (++seg >= nsegs) {
 				uvm_pglistfree(mlist);
 				free(mlist, M_DEVBUF);
-				return (ENOMEM);
+				return ENOMEM;
 			}
 			segs[seg].ds_addr = pa;
 			segs[seg].ds_len = PAGE_SIZE;
@@ -1122,7 +1122,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 * We now have physical pages, but no kernel virtual addresses yet.
 	 * These may be allocated in bus_dmamap_map.
 	 */
-	return (0);
+	return 0;
 }
 
 void
@@ -1135,7 +1135,7 @@ mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 	mlist = segs[0]._ds_mlist;
 	if (mlist == NULL)
 		return;
-	
+
 	uvm_pglistfree(mlist);
 	free(mlist, M_DEVBUF);
 }
@@ -1161,7 +1161,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	/* Get a chunk of kernel virtual space. */
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 	if (__predict_false(va == 0))
-		return (ENOMEM);
+		return ENOMEM;
 
 	*kvap = (void *)va;
 
@@ -1180,7 +1180,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 		}
 	}
 	pmap_update(pmap_kernel());
-	return (0);
+	return 0;
 }
 
 /*
@@ -1219,11 +1219,11 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (btop((u_long)segs[i].ds_addr + off));
+		return btop((u_long)segs[i].ds_addr + off);
 	}
 
 	/* Page not found. */
-	return (-1);
+	return -1;
 }
 
 int
@@ -1304,8 +1304,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * Did we fit?
 	 */
 	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
-	return (0);
+		return EFBIG;		/* XXX better return value here? */
+	return 0;
 }
 
 const struct hppa_bus_dma_tag hppa_dmatag = {
@@ -1408,7 +1408,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
 	if (!err && nca.ca_pcl.enabled) {
 		nca.ca_name = "lcd";
-		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
+		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
 		nca.ca_irq = HPPACF_IRQ_UNDEF;
@@ -1417,7 +1417,7 @@ mbattach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &nca, mbprint);
 	}
-#endif	
+#endif
 
 	hppa_modules_scan();
 
@@ -1476,7 +1476,7 @@ mbprint(void *aux, const char *pnp)
 		}
 	}
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 int

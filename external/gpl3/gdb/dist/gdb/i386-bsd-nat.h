@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,25 @@
 #ifndef I386_BSD_NAT_H
 #define I386_BSD_NAT_H
 
-/* Create a prototype *BSD/i386 target.  The client can override it
-   with local methods.  */
+#include "x86-bsd-nat.h"
 
-extern struct target_ops *i386bsd_target (void);
+/* Helper functions.  See definitions.  */
+extern void i386bsd_fetch_inferior_registers (struct regcache *regcache,
+					      int regnum);
+extern void i386bsd_store_inferior_registers (struct regcache *regcache,
+					      int regnum);
+
+/* A prototype *BSD/i386 target.  */
+
+template<typename BaseTarget>
+class i386_bsd_nat_target : public x86bsd_nat_target<BaseTarget>
+{
+public:
+  void fetch_registers (struct regcache *regcache, int regnum) override
+  { i386bsd_fetch_inferior_registers (regcache, regnum); }
+
+  void store_registers (struct regcache *regcache, int regnum) override
+  { i386bsd_store_inferior_registers (regcache, regnum); }
+};
 
 #endif /* i386-bsd-nat.h */

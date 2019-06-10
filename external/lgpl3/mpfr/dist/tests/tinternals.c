@@ -1,6 +1,6 @@
 /* tinternals -- Test for internals.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-test.h"
@@ -70,7 +67,7 @@ test_round_near_x (void)
            mpfr_neg (x, x, MPFR_RNDN), p++, neg++)
         for (err = 2; err <= 6; err++)
           for (dir = 0; dir <= 1; dir++)
-            RND_LOOP(r)
+            RND_LOOP_NO_RNDF (r)
               {
                 inex = mpfr_round_near_x (y, x, err, dir, (mpfr_rnd_t) r);
 
@@ -147,11 +144,7 @@ main (int argc, char **argv)
 {
   tests_start_mpfr ();
 
-  /* The tested function and macro exist in MPFR 2.2.0, but with a
-     different (incorrect, but with no effect in 2.2.0) behavior. */
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,3,0)
   test_int_ceil_log2 ();
-#endif
 
   test_round_near_x ();
   test_set_prec_raw ();

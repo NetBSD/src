@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,8 +92,8 @@ pack_hex_byte (char *pkt, int byte)
 
 /* See rsp-low.h.  */
 
-char *
-unpack_varlen_hex (char *buff,	/* packet to parse */
+const char *
+unpack_varlen_hex (const char *buff,	/* packet to parse */
 		   ULONGEST *result)
 {
   int nibble;
@@ -132,6 +132,50 @@ hex2bin (const char *hex, gdb_byte *bin, int count)
 
 /* See rsp-low.h.  */
 
+gdb::byte_vector
+hex2bin (const char *hex)
+{
+  size_t bin_len = strlen (hex) / 2;
+  gdb::byte_vector bin (bin_len);
+
+  hex2bin (hex, bin.data (), bin_len);
+
+  return bin;
+}
+
+/* See rsp-low.h.  */
+
+std::string
+hex2str (const char *hex)
+{
+  return hex2str (hex, strlen (hex));
+}
+
+/* See rsp-low.h.  */
+
+std::string
+hex2str (const char *hex, int count)
+{
+  std::string ret;
+
+  ret.reserve (count);
+  for (size_t i = 0; i < count; ++i)
+    {
+      if (hex[0] == '\0' || hex[1] == '\0')
+	{
+	  /* Hex string is short, or of uneven length.  Return what we
+	     have so far.  */
+	  return ret;
+	}
+      ret += fromhex (hex[0]) * 16 + fromhex (hex[1]);
+      hex += 2;
+    }
+
+  return ret;
+}
+
+/* See rsp-low.h.  */
+
 int
 bin2hex (const gdb_byte *bin, char *hex, int count)
 {
@@ -144,6 +188,23 @@ bin2hex (const gdb_byte *bin, char *hex, int count)
     }
   *hex = 0;
   return i;
+}
+
+/* See rsp-low.h.  */
+
+std::string
+bin2hex (const gdb_byte *bin, int count)
+{
+  std::string ret;
+
+  ret.reserve (count * 2);
+  for (int i = 0; i < count; ++i)
+    {
+      ret += tohex ((*bin >> 4) & 0xf);
+      ret += tohex (*bin++ & 0xf);
+    }
+
+  return ret;
 }
 
 /* Return whether byte B needs escaping when sent as part of binary data.  */

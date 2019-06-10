@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ mi_gdb_test "-catch-exception -c \"i = 2\" -e constraint_error" \
 mi_run_cmd
 
 mi_expect_stop \
-    "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR" \
+    "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR(\",exception-message=\"foo\\.adb:$decimal explicit raise)?" \
     "foo" "" ".*" ".*" \
     ".*" \
     "run to exception catchpoint hit"

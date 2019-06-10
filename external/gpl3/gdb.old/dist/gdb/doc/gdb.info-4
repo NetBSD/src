@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -102,8 +102,8 @@ of the 'Type.fields' method for a description of the 'gdb.Field' class.
      attributes:
      'bitpos'
           This attribute is not available for 'enum' or 'static' (as in
-          C++ or Java) fields.  The value is the position, counting in
-          bits, from the start of the containing type.
+          C++) fields.  The value is the position, counting in bits,
+          from the start of the containing type.
 
      'enumval'
           This attribute is only available for 'enum' fields, and its
@@ -273,7 +273,7 @@ defined in the 'gdb' module:
      An unknown or erroneous type.
 
 'gdb.TYPE_CODE_METHOD'
-     A method type, as found in C++ or Java.
+     A method type, as found in C++.
 
 'gdb.TYPE_CODE_METHODPTR'
      A pointer-to-member-function.
@@ -283,6 +283,9 @@ defined in the 'gdb' module:
 
 'gdb.TYPE_CODE_REF'
      A reference type.
+
+'gdb.TYPE_CODE_RVALUE_REF'
+     A C++11 rvalue reference type.
 
 'gdb.TYPE_CODE_CHAR'
      A character type.
@@ -1746,8 +1749,8 @@ module:
      Read LENGTH addressable memory units from the inferior, starting at
      ADDRESS.  Returns a buffer object, which behaves much like an array
      or a string.  It can be modified and given to the
-     'Inferior.write_memory' function.  In 'Python' 3, the return value
-     is a 'memoryview' object.
+     'Inferior.write_memory' function.  In Python 3, the return value is
+     a 'memoryview' object.
 
  -- Function: Inferior.write_memory (address, buffer [, length])
      Write the contents of BUFFER to the inferior, starting at ADDRESS.
@@ -1837,7 +1840,7 @@ and details of the events they emit:
           inferior has returned.  (The exit code could be unavailable
           if, for example, GDB detaches from the inferior.)  If the exit
           code is unavailable, the attribute does not exist.
-      -- Variable: ExitedEvent inferior
+      -- Variable: ExitedEvent.inferior
           A reference to the inferior which triggered the 'exited'
           event.
 
@@ -1950,8 +1953,12 @@ and details of the events they emit:
      emitted, the 'gdb.Breakpoint' object will already be in its invalid
      state; that is, the 'is_valid' method will return 'False'.
 
+'events.before_prompt'
+     This event carries no payload.  It is emitted each time GDB
+     presents a prompt to the user.
+
 
-File: gdb.info,  Node: Threads In Python,  Next: Commands In Python,  Prev: Events In Python,  Up: Python API
+File: gdb.info,  Node: Threads In Python,  Next: Recordings In Python,  Prev: Events In Python,  Up: Python API
 
 23.2.2.18 Threads In Python
 ...........................
@@ -2022,9 +2029,216 @@ module:
      Return a Boolean indicating whether the thread is exited.
 
 
-File: gdb.info,  Node: Commands In Python,  Next: Parameters In Python,  Prev: Threads In Python,  Up: Python API
+File: gdb.info,  Node: Recordings In Python,  Next: Commands In Python,  Prev: Threads In Python,  Up: Python API
 
-23.2.2.19 Commands In Python
+23.2.2.19 Recordings In Python
+..............................
+
+The following recordings-related functions (*note Process Record and
+Replay::) are available in the 'gdb' module:
+
+ -- Function: gdb.start_recording ([method], [format])
+     Start a recording using the given METHOD and FORMAT.  If no FORMAT
+     is given, the default format for the recording method is used.  If
+     no METHOD is given, the default method will be used.  Returns a
+     'gdb.Record' object on success.  Throw an exception on failure.
+
+     The following strings can be passed as METHOD:
+
+        * '"full"'
+        * '"btrace"': Possible values for FORMAT: '"pt"', '"bts"' or
+          leave out for default format.
+
+ -- Function: gdb.current_recording ()
+     Access a currently running recording.  Return a 'gdb.Record' object
+     on success.  Return 'None' if no recording is currently active.
+
+ -- Function: gdb.stop_recording ()
+     Stop the current recording.  Throw an exception if no recording is
+     currently active.  All record objects become invalid after this
+     call.
+
+   A 'gdb.Record' object has the following attributes:
+
+ -- Variable: Record.method
+     A string with the current recording method, e.g. 'full' or
+     'btrace'.
+
+ -- Variable: Record.format
+     A string with the current recording format, e.g. 'bt', 'pts' or
+     'None'.
+
+ -- Variable: Record.begin
+     A method specific instruction object representing the first
+     instruction in this recording.
+
+ -- Variable: Record.end
+     A method specific instruction object representing the current
+     instruction, that is not actually part of the recording.
+
+ -- Variable: Record.replay_position
+     The instruction representing the current replay position.  If there
+     is no replay active, this will be 'None'.
+
+ -- Variable: Record.instruction_history
+     A list with all recorded instructions.
+
+ -- Variable: Record.function_call_history
+     A list with all recorded function call segments.
+
+   A 'gdb.Record' object has the following methods:
+
+ -- Function: Record.goto (instruction)
+     Move the replay position to the given INSTRUCTION.
+
+   The common 'gdb.Instruction' class that recording method specific
+instruction objects inherit from, has the following attributes:
+
+ -- Variable: Instruction.pc
+     An integer representing this instruction's address.
+
+ -- Variable: Instruction.data
+     A buffer with the raw instruction data.  In Python 3, the return
+     value is a 'memoryview' object.
+
+ -- Variable: Instruction.decoded
+     A human readable string with the disassembled instruction.
+
+ -- Variable: Instruction.size
+     The size of the instruction in bytes.
+
+   Additionally 'gdb.RecordInstruction' has the following attributes:
+
+ -- Variable: RecordInstruction.number
+     An integer identifying this instruction.  'number' corresponds to
+     the numbers seen in 'record instruction-history' (*note Process
+     Record and Replay::).
+
+ -- Variable: RecordInstruction.sal
+     A 'gdb.Symtab_and_line' object representing the associated symtab
+     and line of this instruction.  May be 'None' if no debug
+     information is available.
+
+ -- Variable: RecordInstruction.is_speculative
+     A boolean indicating whether the instruction was executed
+     speculatively.
+
+   If an error occured during recording or decoding a recording, this
+error is represented by a 'gdb.RecordGap' object in the instruction
+list.  It has the following attributes:
+
+ -- Variable: RecordGap.number
+     An integer identifying this gap.  'number' corresponds to the
+     numbers seen in 'record instruction-history' (*note Process Record
+     and Replay::).
+
+ -- Variable: RecordGap.error_code
+     A numerical representation of the reason for the gap.  The value is
+     specific to the current recording method.
+
+ -- Variable: RecordGap.error_string
+     A human readable string with the reason for the gap.
+
+   A 'gdb.RecordFunctionSegment' object has the following attributes:
+
+ -- Variable: RecordFunctionSegment.number
+     An integer identifying this function segment.  'number' corresponds
+     to the numbers seen in 'record function-call-history' (*note
+     Process Record and Replay::).
+
+ -- Variable: RecordFunctionSegment.symbol
+     A 'gdb.Symbol' object representing the associated symbol.  May be
+     'None' if no debug information is available.
+
+ -- Variable: RecordFunctionSegment.level
+     An integer representing the function call's stack level.  May be
+     'None' if the function call is a gap.
+
+ -- Variable: RecordFunctionSegment.instructions
+     A list of 'gdb.RecordInstruction' or 'gdb.RecordGap' objects
+     associated with this function call.
+
+ -- Variable: RecordFunctionSegment.up
+     A 'gdb.RecordFunctionSegment' object representing the caller's
+     function segment.  If the call has not been recorded, this will be
+     the function segment to which control returns.  If neither the call
+     nor the return have been recorded, this will be 'None'.
+
+ -- Variable: RecordFunctionSegment.prev
+     A 'gdb.RecordFunctionSegment' object representing the previous
+     segment of this function call.  May be 'None'.
+
+ -- Variable: RecordFunctionSegment.next
+     A 'gdb.RecordFunctionSegment' object representing the next segment
+     of this function call.  May be 'None'.
+
+   The following example demonstrates the usage of these objects and
+functions to create a function that will rewind a record to the last
+time a function in a different file was executed.  This would typically
+be used to track the execution of user provided callback functions in a
+library which typically are not visible in a back trace.
+
+     def bringback ():
+         rec = gdb.current_recording ()
+         if not rec:
+             return
+
+         insn = rec.instruction_history
+         if len (insn) == 0:
+             return
+
+         try:
+             position = insn.index (rec.replay_position)
+         except:
+             position = -1
+         try:
+             filename = insn[position].sal.symtab.fullname ()
+         except:
+             filename = None
+
+         for i in reversed (insn[:position]):
+     	try:
+                 current = i.sal.symtab.fullname ()
+     	except:
+                 current = None
+
+             if filename == current:
+                 continue
+
+             rec.goto (i)
+             return
+
+   Another possible application is to write a function that counts the
+number of code executions in a given line range.  This line range can
+contain parts of functions or span across several functions and is not
+limited to be contiguous.
+
+     def countrange (filename, linerange):
+         count = 0
+
+         def filter_only (file_name):
+             for call in gdb.current_recording ().function_call_history:
+                 try:
+                     if file_name in call.symbol.symtab.fullname ():
+                         yield call
+                 except:
+                     pass
+
+         for c in filter_only (filename):
+             for i in c.instructions:
+                 try:
+                     if i.sal.line in linerange:
+                         count += 1
+                         break;
+                 except:
+                         pass
+
+         return count
+
+
+File: gdb.info,  Node: Commands In Python,  Next: Parameters In Python,  Prev: Recordings In Python,  Up: Python API
+
+23.2.2.20 Commands In Python
 ............................
 
 You can implement new GDB CLI commands in Python.  A CLI command is
@@ -2242,7 +2456,7 @@ is read into GDB, you may need to import the 'gdb' module explicitly.
 
 File: gdb.info,  Node: Parameters In Python,  Next: Functions In Python,  Prev: Commands In Python,  Up: Python API
 
-23.2.2.20 Parameters In Python
+23.2.2.21 Parameters In Python
 ..............................
 
 You can implement new GDB parameters using Python.  A new parameter is
@@ -2373,7 +2587,7 @@ module:
 
 File: gdb.info,  Node: Functions In Python,  Next: Progspaces In Python,  Prev: Parameters In Python,  Up: Python API
 
-23.2.2.21 Writing new convenience functions
+23.2.2.22 Writing new convenience functions
 ...........................................
 
 You can implement new convenience functions (*note Convenience Vars::)
@@ -2429,7 +2643,7 @@ is read into GDB, you may need to import the 'gdb' module explicitly.
 
 File: gdb.info,  Node: Progspaces In Python,  Next: Objfiles In Python,  Prev: Functions In Python,  Up: Python API
 
-23.2.2.22 Program Spaces In Python
+23.2.2.23 Program Spaces In Python
 ..................................
 
 A program space, or "progspace", represents a symbolic view of an
@@ -2513,7 +2727,7 @@ will be loaded.
 
 File: gdb.info,  Node: Objfiles In Python,  Next: Frames In Python,  Prev: Progspaces In Python,  Up: Python API
 
-23.2.2.23 Objfiles In Python
+23.2.2.24 Objfiles In Python
 ............................
 
 GDB loads symbols for an inferior from various symbol-containing files
@@ -2647,7 +2861,7 @@ objfile.
 
 File: gdb.info,  Node: Frames In Python,  Next: Blocks In Python,  Prev: Objfiles In Python,  Up: Python API
 
-23.2.2.24 Accessing inferior stack frames from Python.
+23.2.2.25 Accessing inferior stack frames from Python.
 ......................................................
 
 When the debugged program stops, GDB is able to analyze its call stack
@@ -2820,7 +3034,7 @@ module:
 
 File: gdb.info,  Node: Blocks In Python,  Next: Symbols In Python,  Prev: Frames In Python,  Up: Python API
 
-23.2.2.25 Accessing blocks from Python.
+23.2.2.26 Accessing blocks from Python.
 .......................................
 
 In GDB, symbols are stored in blocks.  A block corresponds roughly to a
@@ -2935,7 +3149,7 @@ module:
 
 File: gdb.info,  Node: Symbols In Python,  Next: Symbol Tables In Python,  Prev: Blocks In Python,  Up: Python API
 
-23.2.2.26 Python representation of Symbols.
+23.2.2.27 Python representation of Symbols.
 ...........................................
 
 GDB represents every variable, function and type as an entry in a symbol
@@ -3129,7 +3343,7 @@ represented as constants in the 'gdb' module:
 
 File: gdb.info,  Node: Symbol Tables In Python,  Next: Line Tables In Python,  Prev: Symbols In Python,  Up: Python API
 
-23.2.2.27 Symbol table representation in Python.
+23.2.2.28 Symbol table representation in Python.
 ................................................
 
 Access to symbol table data maintained by GDB on the inferior is exposed
@@ -3210,7 +3424,7 @@ Examining the Symbol Table: Symbols, for more information.
 
 File: gdb.info,  Node: Line Tables In Python,  Next: Breakpoints In Python,  Prev: Symbol Tables In Python,  Up: Python API
 
-23.2.2.28 Manipulating line tables using Python
+23.2.2.29 Manipulating line tables using Python
 ...............................................
 
 Python code can request and inspect line table information from a symbol
@@ -3278,7 +3492,7 @@ the following direct access methods:
 
 File: gdb.info,  Node: Breakpoints In Python,  Next: Finish Breakpoints in Python,  Prev: Line Tables In Python,  Up: Python API
 
-23.2.2.29 Manipulating breakpoints using Python
+23.2.2.30 Manipulating breakpoints using Python
 ...............................................
 
 Python code can manipulate breakpoints via the 'gdb.Breakpoint' class.
@@ -3466,7 +3680,7 @@ in the 'gdb' module:
 
 File: gdb.info,  Node: Finish Breakpoints in Python,  Next: Lazy Strings In Python,  Prev: Breakpoints In Python,  Up: Python API
 
-23.2.2.30 Finish Breakpoints
+23.2.2.31 Finish Breakpoints
 ............................
 
 A finish breakpoint is a temporary breakpoint set at the return address
@@ -3512,7 +3726,7 @@ thread selected.
 
 File: gdb.info,  Node: Lazy Strings In Python,  Next: Architectures In Python,  Prev: Finish Breakpoints in Python,  Up: Python API
 
-23.2.2.31 Python representation of lazy strings.
+23.2.2.32 Python representation of lazy strings.
 ................................................
 
 A "lazy string" is a string whose contents is not retrieved or encoded
@@ -3554,15 +3768,15 @@ string is immediately retrieved and encoded on creation.
 
  -- Variable: LazyString.type
      This attribute holds the type that is represented by the lazy
-     string's type.  For a lazy string this will always be a pointer
-     type.  To resolve this to the lazy string's character type, use the
-     type's 'target' method.  *Note Types In Python::.  This attribute
-     is not writable.
+     string's type.  For a lazy string this is a pointer or array type.
+     To resolve this to the lazy string's character type, use the type's
+     'target' method.  *Note Types In Python::.  This attribute is not
+     writable.
 
 
 File: gdb.info,  Node: Architectures In Python,  Prev: Lazy Strings In Python,  Up: Python API
 
-23.2.2.32 Python representation of architectures
+23.2.2.33 Python representation of architectures
 ................................................
 
 GDB uses architecture specific parameters and artifacts in a number of
@@ -4941,7 +5155,7 @@ defined in the '(gdb)' module:
      An unknown or erroneous type.
 
 'TYPE_CODE_METHOD'
-     A method type, as found in C++ or Java.
+     A method type, as found in C++.
 
 'TYPE_CODE_METHODPTR'
      A pointer-to-member-function.
@@ -4998,7 +5212,7 @@ module:
 
  -- Scheme Procedure: field-bitpos field
      Return the bit position of '<gdb:field>' FIELD.  This attribute is
-     not available for 'static' fields (as in C++ or Java).
+     not available for 'static' fields (as in C++).
 
  -- Scheme Procedure: field-bitsize field
      If the field is packed, or is a bitfield, return the size of
@@ -6702,7 +6916,7 @@ creation.
 
  -- Scheme Procedure: lazy-string-type lazy-string
      Return the type that is represented by LAZY-STRING's type.  For a
-     lazy string this will always be a pointer type.  To resolve this to
+     lazy string this is a pointer or array type.  To resolve this to
      the lazy string's character type, use 'type-target-type'.  *Note
      Types In Guile::.
 
@@ -7106,325 +7320,4 @@ in using iterators.
  -- Scheme Procedure: iterator-until pred iterator
      Run ITERATOR until the result of '(pred element)' is true and
      return that as the result.  Otherwise return '#f'.
-
-
-File: gdb.info,  Node: Guile Auto-loading,  Next: Guile Modules,  Prev: Guile API,  Up: Guile
-
-23.3.4 Guile Auto-loading
--------------------------
-
-When a new object file is read (for example, due to the 'file' command,
-or because the inferior has loaded a shared library), GDB will look for
-Guile support scripts in two ways: 'OBJFILE-gdb.scm' and the
-'.debug_gdb_scripts' section.  *Note Auto-loading extensions::.
-
-   The auto-loading feature is useful for supplying application-specific
-debugging commands and scripts.
-
-   Auto-loading can be enabled or disabled, and the list of auto-loaded
-scripts can be printed.
-
-'set auto-load guile-scripts [on|off]'
-     Enable or disable the auto-loading of Guile scripts.
-
-'show auto-load guile-scripts'
-     Show whether auto-loading of Guile scripts is enabled or disabled.
-
-'info auto-load guile-scripts [REGEXP]'
-     Print the list of all Guile scripts that GDB auto-loaded.
-
-     Also printed is the list of Guile scripts that were mentioned in
-     the '.debug_gdb_scripts' section and were not found.  This is
-     useful because their names are not printed when GDB tries to load
-     them and fails.  There may be many of them, and printing an error
-     message for each one is problematic.
-
-     If REGEXP is supplied only Guile scripts with matching names are
-     printed.
-
-     Example:
-
-          (gdb) info auto-load guile-scripts
-          Loaded Script
-          Yes    scm-section-script.scm
-                 full name: /tmp/scm-section-script.scm
-          No     my-foo-pretty-printers.scm
-
-   When reading an auto-loaded file, GDB sets the "current objfile".
-This is available via the 'current-objfile' procedure (*note Objfiles In
-Guile::).  This can be useful for registering objfile-specific
-pretty-printers.
-
-
-File: gdb.info,  Node: Guile Modules,  Prev: Guile Auto-loading,  Up: Guile
-
-23.3.5 Guile Modules
---------------------
-
-GDB comes with several modules to assist writing Guile code.
-
-* Menu:
-
-* Guile Printing Module::  Building and registering pretty-printers
-* Guile Types Module::     Utilities for working with types
-
-
-File: gdb.info,  Node: Guile Printing Module,  Next: Guile Types Module,  Up: Guile Modules
-
-23.3.5.1 Guile Printing Module
-..............................
-
-This module provides a collection of utilities for working with
-pretty-printers.
-
-   Usage:
-
-     (use-modules (gdb printing))
-
- -- Scheme Procedure: prepend-pretty-printer! object printer
-     Add PRINTER to the front of the list of pretty-printers for OBJECT.
-     The OBJECT must either be a '<gdb:objfile>' object, or '#f' in
-     which case PRINTER is added to the global list of printers.
-
- -- Scheme Procecure: append-pretty-printer! object printer
-     Add PRINTER to the end of the list of pretty-printers for OBJECT.
-     The OBJECT must either be a '<gdb:objfile>' object, or '#f' in
-     which case PRINTER is added to the global list of printers.
-
-
-File: gdb.info,  Node: Guile Types Module,  Prev: Guile Printing Module,  Up: Guile Modules
-
-23.3.5.2 Guile Types Module
-...........................
-
-This module provides a collection of utilities for working with
-'<gdb:type>' objects.
-
-   Usage:
-
-     (use-modules (gdb types))
-
- -- Scheme Procedure: get-basic-type type
-     Return TYPE with const and volatile qualifiers stripped, and with
-     typedefs and C++ references converted to the underlying type.
-
-     C++ example:
-
-          typedef const int const_int;
-          const_int foo (3);
-          const_int& foo_ref (foo);
-          int main () { return 0; }
-
-     Then in gdb:
-
-          (gdb) start
-          (gdb) guile (use-modules (gdb) (gdb types))
-          (gdb) guile (define foo-ref (parse-and-eval "foo_ref"))
-          (gdb) guile (get-basic-type (value-type foo-ref))
-          int
-
- -- Scheme Procedure: type-has-field-deep? type field
-     Return '#t' if TYPE, assumed to be a type with fields (e.g., a
-     structure or union), has field FIELD.  Otherwise return '#f'.  This
-     searches baseclasses, whereas 'type-has-field?' does not.
-
- -- Scheme Procedure: make-enum-hashtable enum-type
-     Return a Guile hash table produced from ENUM-TYPE.  Elements in the
-     hash table are referenced with 'hashq-ref'.
-
-
-File: gdb.info,  Node: Auto-loading extensions,  Next: Multiple Extension Languages,  Prev: Guile,  Up: Extending GDB
-
-23.4 Auto-loading extensions
-============================
-
-GDB provides two mechanisms for automatically loading extensions when a
-new object file is read (for example, due to the 'file' command, or
-because the inferior has loaded a shared library): 'OBJFILE-gdb.EXT' and
-the '.debug_gdb_scripts' section of modern file formats like ELF.
-
-* Menu:
-
-* objfile-gdb.ext file: objfile-gdbdotext file.  The 'OBJFILE-gdb.EXT' file
-* .debug_gdb_scripts section: dotdebug_gdb_scripts section.  The '.debug_gdb_scripts' section
-* Which flavor to choose?::
-
-   The auto-loading feature is useful for supplying application-specific
-debugging commands and features.
-
-   Auto-loading can be enabled or disabled, and the list of auto-loaded
-scripts can be printed.  See the 'auto-loading' section of each
-extension language for more information.  For GDB command files see
-*note Auto-loading sequences::.  For Python files see *note Python
-Auto-loading::.
-
-   Note that loading of this script file also requires accordingly
-configured 'auto-load safe-path' (*note Auto-loading safe path::).
-
-
-File: gdb.info,  Node: objfile-gdbdotext file,  Next: dotdebug_gdb_scripts section,  Up: Auto-loading extensions
-
-23.4.1 The 'OBJFILE-gdb.EXT' file
----------------------------------
-
-When a new object file is read, GDB looks for a file named
-'OBJFILE-gdb.EXT' (we call it SCRIPT-NAME below), where OBJFILE is the
-object file's name and where EXT is the file extension for the extension
-language:
-
-'OBJFILE-gdb.gdb'
-     GDB's own command language
-'OBJFILE-gdb.py'
-     Python
-'OBJFILE-gdb.scm'
-     Guile
-
-   SCRIPT-NAME is formed by ensuring that the file name of OBJFILE is
-absolute, following all symlinks, and resolving '.' and '..' components,
-and appending the '-gdb.EXT' suffix.  If this file exists and is
-readable, GDB will evaluate it as a script in the specified extension
-language.
-
-   If this file does not exist, then GDB will look for SCRIPT-NAME file
-in all of the directories as specified below.
-
-   Note that loading of these files requires an accordingly configured
-'auto-load safe-path' (*note Auto-loading safe path::).
-
-   For object files using '.exe' suffix GDB tries to load first the
-scripts normally according to its '.exe' filename.  But if no scripts
-are found GDB also tries script filenames matching the object file
-without its '.exe' suffix.  This '.exe' stripping is case insensitive
-and it is attempted on any platform.  This makes the script filenames
-compatible between Unix and MS-Windows hosts.
-
-'set auto-load scripts-directory [DIRECTORIES]'
-     Control GDB auto-loaded scripts location.  Multiple directory
-     entries may be delimited by the host platform path separator in use
-     (':' on Unix, ';' on MS-Windows and MS-DOS).
-
-     Each entry here needs to be covered also by the security setting
-     'set auto-load safe-path' (*note set auto-load safe-path::).
-
-     This variable defaults to '$debugdir:$datadir/auto-load'.  The
-     default 'set auto-load safe-path' value can be also overriden by
-     GDB configuration option '--with-auto-load-dir'.
-
-     Any reference to '$debugdir' will get replaced by
-     DEBUG-FILE-DIRECTORY value (*note Separate Debug Files::) and any
-     reference to '$datadir' will get replaced by DATA-DIRECTORY which
-     is determined at GDB startup (*note Data Files::).  '$debugdir' and
-     '$datadir' must be placed as a directory component -- either alone
-     or delimited by '/' or '\' directory separators, depending on the
-     host platform.
-
-     The list of directories uses path separator (':' on GNU and Unix
-     systems, ';' on MS-Windows and MS-DOS) to separate directories,
-     similarly to the 'PATH' environment variable.
-
-'show auto-load scripts-directory'
-     Show GDB auto-loaded scripts location.
-
-'add-auto-load-scripts-directory [DIRECTORIES...]'
-     Add an entry (or list of entries) to the list of auto-loaded
-     scripts locations.  Multiple entries may be delimited by the host
-     platform path separator in use.
-
-   GDB does not track which files it has already auto-loaded this way.
-GDB will load the associated script every time the corresponding OBJFILE
-is opened.  So your '-gdb.EXT' file should be careful to avoid errors if
-it is evaluated more than once.
-
-
-File: gdb.info,  Node: dotdebug_gdb_scripts section,  Next: Which flavor to choose?,  Prev: objfile-gdbdotext file,  Up: Auto-loading extensions
-
-23.4.2 The '.debug_gdb_scripts' section
----------------------------------------
-
-For systems using file formats like ELF and COFF, when GDB loads a new
-object file it will look for a special section named
-'.debug_gdb_scripts'.  If this section exists, its contents is a list of
-null-terminated entries specifying scripts to load.  Each entry begins
-with a non-null prefix byte that specifies the kind of entry, typically
-the extension language and whether the script is in a file or inlined in
-'.debug_gdb_scripts'.
-
-   The following entries are supported:
-
-'SECTION_SCRIPT_ID_PYTHON_FILE = 1'
-'SECTION_SCRIPT_ID_SCHEME_FILE = 3'
-'SECTION_SCRIPT_ID_PYTHON_TEXT = 4'
-'SECTION_SCRIPT_ID_SCHEME_TEXT = 6'
-
-23.4.2.1 Script File Entries
-............................
-
-If the entry specifies a file, GDB will look for the file first in the
-current directory and then along the source search path (*note
-Specifying Source Directories: Source Path.), except that '$cdir' is not
-searched, since the compilation directory is not relevant to scripts.
-
-   File entries can be placed in section '.debug_gdb_scripts' with, for
-example, this GCC macro for Python scripts.
-
-     /* Note: The "MS" section flags are to remove duplicates.  */
-     #define DEFINE_GDB_PY_SCRIPT(script_name) \
-       asm("\
-     .pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n\
-     .byte 1 /* Python */\n\
-     .asciz \"" script_name "\"\n\
-     .popsection \n\
-     ");
-
-For Guile scripts, replace '.byte 1' with '.byte 3'.  Then one can
-reference the macro in a header or source file like this:
-
-     DEFINE_GDB_PY_SCRIPT ("my-app-scripts.py")
-
-   The script name may include directories if desired.
-
-   Note that loading of this script file also requires accordingly
-configured 'auto-load safe-path' (*note Auto-loading safe path::).
-
-   If the macro invocation is put in a header, any application or
-library using this header will get a reference to the specified script,
-and with the use of '"MS"' attributes on the section, the linker will
-remove duplicates.
-
-23.4.2.2 Script Text Entries
-............................
-
-Script text entries allow to put the executable script in the entry
-itself instead of loading it from a file.  The first line of the entry,
-everything after the prefix byte and up to the first newline ('0xa')
-character, is the script name, and must not contain any kind of space
-character, e.g., spaces or tabs.  The rest of the entry, up to the
-trailing null byte, is the script to execute in the specified language.
-The name needs to be unique among all script names, as GDB executes each
-script only once based on its name.
-
-   Here is an example from file 'py-section-script.c' in the GDB
-testsuite.
-
-     #include "symcat.h"
-     #include "gdb/section-scripts.h"
-     asm(
-     ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
-     ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
-     ".ascii \"gdb.inlined-script\\n\"\n"
-     ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
-     ".ascii \"  def __init__ (self):\\n\"\n"
-     ".ascii \"    super (test_cmd, self).__init__ ("
-         "\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
-     ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
-     ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
-     ".ascii \"test_cmd ()\\n\"\n"
-     ".byte 0\n"
-     ".popsection\n"
-     );
-
-   Loading of inlined scripts requires a properly configured 'auto-load
-safe-path' (*note Auto-loading safe path::).  The path to specify in
-'auto-load safe-path' is the path of the file containing the
-'.debug_gdb_scripts' section.
 

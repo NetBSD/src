@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.32 2017/06/10 15:13:18 jmcneill Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.32.6.1 2019/06/10 22:05:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32 2017/06/10 15:13:18 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32.6.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +76,8 @@ struct cpu_freq {
 
 
 #ifdef SOC_EXYNOS4
+int exynos4_l2cc_init(void);
+
 const struct cpu_freq cpu_freq_settings_exynos4[] = {
 	{ 200, 3, 100, 2},
 	{ 300, 4, 200, 2},
@@ -136,47 +139,6 @@ bus_space_handle_t exynos_sysreg_bsh;
 
 static int sysctl_cpufreq_target(SYSCTLFN_ARGS);
 static int sysctl_cpufreq_current(SYSCTLFN_ARGS);
-
-/*
- * the early serial console
- */
-#ifdef EXYNOS_CONSOLE_EARLY
-
-#include "opt_sscom.h"
-#include <arm/samsung/sscom_reg.h>
-#include <arm/samsung/sscom_var.h>
-#include <dev/cons.h>
-
-static volatile uint8_t *uart_base;
-
-#define CON_REG(a) (*((volatile uint32_t *)(uart_base + (a))))
-
-static int
-exynos_cngetc(dev_t dv)
-{
-        if ((CON_REG(SSCOM_UTRSTAT) & UTRSTAT_RXREADY) == 0)
-		return -1;
-
-	return CON_REG(SSCOM_URXH);
-}
-
-static void
-exynos_cnputc(dev_t dv, int c)
-{
-	int timo = 150000;
-
-	while ((CON_REG(SSCOM_UFSTAT) & UFSTAT_TXFULL) && --timo > 0);
-
-	CON_REG(SSCOM_UTXH) = c & 0xff;
-}
-
-static struct consdev exynos_earlycons = {
-	.cn_putc = exynos_cnputc,
-	.cn_getc = exynos_cngetc,
-	.cn_pollc = nullcnpollc,
-};
-#endif /* EXYNOS_CONSOLE_EARLY */
-
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
 int
@@ -439,6 +401,8 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 
 
 #ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+
 #define DUMP_PLL(v, var) \
 	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
 	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_bsh, reg); \
@@ -472,6 +436,8 @@ exynos_dump_clocks(void)
 #endif
 }
 #undef DUMP_PLL
+#else
+#define VPRINTF(...)	__nothing
 #endif
 
 
@@ -513,7 +479,7 @@ exynos_clocks_bootstrap(void)
 
 
 void
-exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
+exynos_bootstrap(int soc)
 {
 	int error;
 	size_t core_size, audiocore_size;
@@ -524,40 +490,40 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	bus_addr_t exynos_sysreg_offset;
 	bus_addr_t exynos_cmu_apll_offset;
 
-	/* set up early console so we can use printf() and friends */
-#ifdef EXYNOS_CONSOLE_EARLY
-	uart_base = (volatile uint8_t *) uartbase;
-	cn_tab = &exynos_earlycons;
-	printf("Exynos early console operational\n\n");
-#endif
-
+	switch (soc) {
 #ifdef SOC_EXYNOS4
-	core_size = EXYNOS4_CORE_SIZE;
-	audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
-	audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
-	audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
-	exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
-	exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
-	exynos_sysreg_offset = EXYNOS4_SYSREG_OFFSET;
-	exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
+	case 4:
+		core_size = EXYNOS4_CORE_SIZE;
+		audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
+		audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
+		exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
+		exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
+		exynos_sysreg_offset = EXYNOS4_SYSREG_OFFSET;
+		exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
 
-	cpu_freq_settings = cpu_freq_settings_exynos4;
-	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+		cpu_freq_settings = cpu_freq_settings_exynos4;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+		break;
 #endif
-
 #ifdef SOC_EXYNOS5
-	core_size = EXYNOS5_CORE_SIZE;
-	audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
-	audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
-	audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
-	exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
-	exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
-	exynos_sysreg_offset = EXYNOS5_SYSREG_OFFSET;
-	exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
+	case 5:
+		core_size = EXYNOS5_CORE_SIZE;
+		audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
+		audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
+		exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
+		exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
+		exynos_sysreg_offset = EXYNOS5_SYSREG_OFFSET;
+		exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
 
-	cpu_freq_settings = cpu_freq_settings_exynos5;
-	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+		cpu_freq_settings = cpu_freq_settings_exynos5;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+		break;
 #endif
+	default:
+		panic("%s: unknown soc version", __func__);
+	}
 
 	/* map in the exynos io registers */
 	error = bus_space_map(&armv7_generic_bs_tag, EXYNOS_CORE_PBASE,
@@ -565,7 +531,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	if (error)
 		panic("%s: failed to map in Exynos SFR registers: %d",
 			__func__, error);
-	KASSERT(exynos_core_bsh == iobase);
+	KASSERT(exynos_core_bsh == EXYNOS_CORE_VBASE);
 
 	error = bus_space_map(&armv7_generic_bs_tag, audiocore_pbase,
 		audiocore_size, 0, &exynos_audiocore_bsh);

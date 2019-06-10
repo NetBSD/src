@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_hwmp.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_hwmp.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $ */
 
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */ 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_hwmp.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
@@ -40,8 +40,10 @@ __FBSDID("$FreeBSD$");
  *
  * Based on March 2009, D3.0 802.11s draft spec.
  */
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

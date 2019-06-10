@@ -44,18 +44,9 @@ options 	MVSDIO_MAX_CLOCK="(19 * 1000)"
 xhci*		at pci? dev ? function ?	# eXtensible Host Controller
 usb*		at xhci?
 
-# If you plan to use your PogoPlug to do NAT / firewalling, uncomment this
-#   and either the ipfilter or the npf section.
-
 options	GATEWAY		# packet forwarding
 
-# Uncomment for ipfilter
-#options		IPFILTER_LOG		# ipmon(8) log support
-#options		IPFILTER_LOOKUP		# ippool(8) support
-#options		IPFILTER_COMPAT		# Compat for IP-Filter
-
 # Uncomment for npf
-no pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device		npf			# NPF packet filter
 options 		BPFJIT
 

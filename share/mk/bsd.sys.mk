@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.284 2018/06/24 19:35:12 kamil Exp $
+#	$NetBSD: bsd.sys.mk,v 1.284.2.1 2019/06/10 22:05:42 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -141,11 +141,17 @@ LDFLAGS+=	-Wl,-z,now
 .endif
 
 .if ${MKSANITIZER:Uno} == "yes"
-SANITIZERFLAGS+=	-fsanitize=${USE_SANITIZER}
+SANITIZERFLAGS:=	-fsanitize=${USE_SANITIZER} ${SANITIZERFLAGS}
 .else
 SANITIZERFLAGS=		# empty
 .endif
 
+.if ${MKLIBCSANITIZER:Uno} == "yes"
+LIBCSANITIZERFLAGS:=	-fsanitize=${USE_LIBCSANITIZER} ${LIBCSANITIZERFLAGS}
+LIBCSANITIZERFLAGS+=	-fno-sanitize=vptr	# Unsupported in micro-UBSan
+.else
+LIBCSANITIZERFLAGS=	# empty
+.endif
 
 CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 
@@ -226,6 +232,22 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
 
+.if ${KLEAK:U0} > 0
+KLEAKFLAGS=	-fsanitize-coverage=trace-pc
+.for f in subr_kleak.c
+KLEAKFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KLEAKFLAGS.${.IMPSRC:T}:U${KLEAKFLAGS}}
+.endif
+
+.if ${KCOV:U0} > 0
+KCOVFLAGS=	-fsanitize-coverage=trace-pc
+.for f in subr_kcov.c subr_lwp_specificdata.c subr_specificdata.c subr_asan.c
+KCOVFLAGS.${f}=		# empty
+.endfor
+CFLAGS+=	${KCOVFLAGS.${.IMPSRC:T}:U${KCOVFLAGS}}
+.endif
+
 .if !defined(NOPIE) && (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # Position Independent Executable flags
 PIE_CFLAGS?=        -fPIE
@@ -233,13 +255,16 @@ PIE_LDFLAGS?=       -pie ${${ACTIVE_CC} == "gcc":? -shared-libgcc :}
 PIE_AFLAGS?=	    -fPIE
 .endif
 
-ELF2ECOFF?=	elf2ecoff
+ARM_ELF2AOUT?=	elf2aout
+M68K_ELF2AOUT?=	elf2aout
+MIPS_ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
 MKDEPCXX?=	mkdep
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
+MV?=		mv -f
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
@@ -279,13 +304,13 @@ STRIP?=		strip
 .c.lo:
 	${_MKTARGET_COMPILE}
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-	mv ${.TARGET}.o ${.TARGET}
+	${MV} ${.TARGET}.o ${.TARGET}
 
 # C++
 .cc.lo .cpp.lo .cxx.lo .C.lo:
 	${_MKTARGET_COMPILE}
 	${HOST_COMPILE.cc} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-	mv ${.TARGET}.o ${.TARGET}
+	${MV} ${.TARGET}.o ${.TARGET}
 
 # Assembly
 .s.o:

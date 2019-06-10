@@ -1,0 +1,4 @@
+include start
+call OK mvaddch 5 8 `\002E`
+call OK refresh
+compare mvaddch.chk

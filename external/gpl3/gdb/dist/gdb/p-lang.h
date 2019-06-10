@@ -1,6 +1,6 @@
 /* Pascal language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef P_LANG_H
+#define P_LANG_H
+
 /* This file is derived from c-lang.h */
 
 struct value;
@@ -26,8 +29,6 @@ struct parser_state;
 extern const char *pascal_main_name (void);
 
 extern int pascal_parse (struct parser_state *); /* Defined in p-exp.y */
-
-extern void pascal_yyerror (const char *);	/* Defined in p-exp.y */
 
 /* Defined in p-typeprint.c */
 extern void pascal_print_type (struct type *, const char *, struct ui_file *,
@@ -59,7 +60,7 @@ extern void pascal_printstr (struct ui_file *, struct type *, const gdb_byte *,
 			     unsigned int, const char *, int,
 			     const struct value_print_options *);
 
-extern struct type **const (pascal_builtin_types[]);
+extern struct type **const pascal_builtin_types[];
 
 /* These are in p-typeprint.c: */
 
@@ -82,3 +83,5 @@ extern void pascal_object_print_value_fields (struct type *, const gdb_byte *,
 extern int pascal_object_is_vtbl_ptr_type (struct type *);
 
 extern int pascal_object_is_vtbl_member (struct type *);
+
+#endif /* P_LANG_H */

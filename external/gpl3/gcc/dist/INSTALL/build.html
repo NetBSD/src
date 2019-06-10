@@ -255,13 +255,6 @@ native compiler.  You can then use the native GCC compiler to build the
 cross compiler.  The installed native compiler needs to be GCC version
 2.95 or later.
 
-   <p>If the cross compiler is to be built with support for the Java
-programming language and the ability to compile .java source files is
-desired, the installed native compiler used to build the cross
-compiler needs to be the same GCC version as the cross compiler.  In
-addition the cross compiler needs to be configured with
-<samp><span class="option">--with-ecj-jar=...</span></samp>.
-
    <p>Assuming you have already installed a native copy of GCC and configured
 your cross compiler, issue the command <samp><span class="command">make</span></samp>, which performs the
 following steps:
@@ -369,6 +362,17 @@ Finally a <code>stagefeedback</code> compiler is built using the information col
    <p>Unlike standard bootstrap, several additional restrictions apply.  The
 compiler used to build <code>stage1</code> needs to support a 64-bit integral type. 
 It is recommended to only use GCC for this.
+
+   <p>On Linux/x86_64 hosts with some restrictions (no virtualization) it is
+also possible to do autofdo build with &lsquo;<samp><span class="samp">make
+autoprofiledback</span></samp>&rsquo;. This uses Linux perf to sample branches in the
+binary and then rebuild it with feedback derived from the profile. 
+Linux perf and the <code>autofdo</code> toolkit needs to be installed for
+this.
+
+   <p>Only the profile from the current build is used, so when an error
+occurs it is recommended to clean before restarting. Otherwise
+the code quality may be much worse.
 
    <p><hr />
 <p><a href="./index.html">Return to the GCC Installation page</a>

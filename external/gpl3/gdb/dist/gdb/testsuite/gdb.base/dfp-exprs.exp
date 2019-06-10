@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2017 Free Software Foundation, Inc.
+# Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,7 +113,10 @@ proc test_dfp_arithmetic_expressions {} {
     gdb_test "ptype 3 + 2.1dl" " = _Decimal128"
 
     # Reject operation with integral larger than 32-bits
-    gdb_test "p 1.2df + 2ll" "Conversion of large integer to a decimal floating type is not supported."
+    gdb_test "p 1.2dd + 2ll" "= 3.2"
+    gdb_test "p 1.2dd + 2147483648ll" "Conversion of large integer to a decimal floating type is not supported."
+    gdb_test "p 1.2dd + 2147483648ull" "= 2147483649.2"
+    gdb_test "p 1.2dd + 4294967296ull" "Conversion of large integer to a decimal floating type is not supported."
 
     # Reject operation with DFP and Binary FP
     gdb_test "p 1.2df + 1.2f" "Mixing decimal floating types with other floating types is not allowed."

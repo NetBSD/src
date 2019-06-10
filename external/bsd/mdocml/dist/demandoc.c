@@ -1,4 +1,4 @@
-/*	Id: demandoc.c,v 1.28 2017/01/10 13:47:00 schwarze Exp  */
+/*	Id: demandoc.c,v 1.33 2019/03/03 11:01:15 schwarze Exp  */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,10 +25,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "roff.h"
 #include "man.h"
 #include "mdoc.h"
-#include "mandoc.h"
+#include "mandoc_parse.h"
 
 static	void	 pline(int, int *, int *, int);
 static	void	 pman(const struct roff_node *, int *, int *, int);
@@ -78,7 +79,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	mchars_alloc();
-	mp = mparse_alloc(MPARSE_SO, MANDOCLEVEL_BADARG, NULL, NULL);
+	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1 |
+	    MPARSE_VALIDATE, MANDOC_OS_OTHER, NULL);
 	assert(mp);
 
 	if (argc < 1)
@@ -108,24 +110,19 @@ usage(void)
 static void
 pmandoc(struct mparse *mp, int fd, const char *fn, int list)
 {
-	struct roff_man	*man;
+	struct roff_meta	*meta;
 	int		 line, col;
 
 	mparse_readfd(mp, fd, fn);
 	close(fd);
-	mparse_result(mp, &man, NULL);
+	meta = mparse_result(mp);
 	line = 1;
 	col = 0;
 
-	if (man == NULL)
-		return;
-	if (man->macroset == MACROSET_MDOC) {
-		mdoc_validate(man);
-		pmdoc(man->first->child, &line, &col, list);
-	} else {
-		man_validate(man);
-		pman(man->first->child, &line, &col, list);
-	}
+	if (meta->macroset == MACROSET_MDOC)
+		pmdoc(meta->first->child, &line, &col, list);
+	else
+		pman(meta->first->child, &line, &col, list);
 
 	if ( ! list)
 		putchar('\n');

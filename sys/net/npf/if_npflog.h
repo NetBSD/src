@@ -1,5 +1,3 @@
-/*	$NetBSD: if_npflog.h,v 1.1 2017/01/29 00:15:54 christos Exp $	*/
-
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.

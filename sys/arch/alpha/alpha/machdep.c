@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.350 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.350.14.1 2019/06/10 22:05:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -63,12 +63,11 @@
 #include "opt_multiprocessor.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
-#include "opt_compat_osf1.h"
 #include "opt_execfmt.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350.14.1 2019/06/10 22:05:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350 2017/03/16 16:13:20 chs Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/mman.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
@@ -292,10 +292,10 @@ alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
 				    ((struct rpb *)HWRPB_ADDR)->rpb_size;
 			}
 			memcpy(bootinfo.boot_flags, v1p->boot_flags,
-			    min(sizeof v1p->boot_flags,
+			    uimin(sizeof v1p->boot_flags,
 			      sizeof bootinfo.boot_flags));
 			memcpy(bootinfo.booted_kernel, v1p->booted_kernel,
-			    min(sizeof v1p->booted_kernel,
+			    uimin(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
 			/* booted dev not provided in bootinfo */
 			init_prom_interface((struct rpb *)
@@ -794,6 +794,15 @@ nobootinfo:
 			hwrpb->rpb_intr_freq, hz);
 #endif
 }
+
+#ifdef MODULAR
+/* Push any modules loaded by the boot loader */
+void
+module_init_md(void)
+{
+	/* nada. */
+}
+#endif /* MODULAR */
 
 void
 consinit(void)
@@ -1467,12 +1476,11 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 
 	/* Build stack frame for signal trampoline. */
-
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);

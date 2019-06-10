@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: umodem.c,v 1.69.18.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.69.18.1 2019/06/10 22:07:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,21 +77,18 @@ Static struct ucom_methods umodem_methods = {
 	.ucom_ioctl = umodem_ioctl,
 	.ucom_open = umodem_open,
 	.ucom_close = umodem_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
-int	umodem_match(device_t, cfdata_t, void *);
-void	umodem_attach(device_t, device_t, void *);
-int	umodem_detach(device_t, int);
-int	umodem_activate(device_t, enum devact);
+static int	umodem_match(device_t, cfdata_t, void *);
+static void	umodem_attach(device_t, device_t, void *);
+static int	umodem_detach(device_t, int);
 
-extern struct cfdriver umodem_cd;
+
 
 CFATTACH_DECL_NEW(umodem, sizeof(struct umodem_softc), umodem_match,
-    umodem_attach, umodem_detach, umodem_activate);
+    umodem_attach, umodem_detach, NULL);
 
-int
+static int
 umodem_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -109,8 +106,8 @@ umodem_match(device_t parent, cfdata_t match, void *aux)
 
 	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 }
-//
-void
+
+static void
 umodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct umodem_softc *sc = device_private(self);
@@ -129,15 +126,7 @@ umodem_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
-umodem_activate(device_t self, enum devact act)
-{
-	struct umodem_softc *sc = device_private(self);
-
-	return umodem_common_activate(sc, act);
-}
-
-int
+static int
 umodem_detach(device_t self, int flags)
 {
 	struct umodem_softc *sc = device_private(self);

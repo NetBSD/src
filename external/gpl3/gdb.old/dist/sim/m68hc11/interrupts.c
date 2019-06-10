@@ -1,5 +1,5 @@
 /* interrupts.c -- 68HC11 Interrupts Emulation
-   Copyright 1999-2016 Free Software Foundation, Inc.
+   Copyright 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -91,7 +91,6 @@ struct interrupt_def idefs[] = {
 #endif
 };
 
-#define TableSize(X) (sizeof X / sizeof(X[0]))
 #define CYCLES_MAX ((((signed64) 1) << 62) - 1)
 
 enum
@@ -123,11 +122,11 @@ static const OPTION interrupt_options[] =
 
 /* Initialize the interrupts module.  */
 void
-interrupts_initialize (SIM_DESC sd, struct _sim_cpu *proc)
+interrupts_initialize (SIM_DESC sd, sim_cpu *cpu)
 {
-  struct interrupts *interrupts = &proc->cpu_interrupts;
+  struct interrupts *interrupts = &cpu->cpu_interrupts;
   
-  interrupts->cpu          = proc;
+  interrupts->cpu          = cpu;
 
   sim_add_option_table (sd, 0, interrupt_options);
 }
@@ -290,7 +289,7 @@ interrupts_update_pending (struct interrupts *interrupts)
   set_mask = 0;
   ioregs = &interrupts->cpu->ios[0];
   
-  for (i = 0; i < TableSize(idefs); i++)
+  for (i = 0; i < ARRAY_SIZE (idefs); i++)
     {
       struct interrupt_def *idef = &idefs[i];
       uint8 data;

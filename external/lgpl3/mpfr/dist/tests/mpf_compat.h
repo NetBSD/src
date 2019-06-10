@@ -1,6 +1,6 @@
 /* Test compatibility mpf-mpfr.
 
-Copyright 2003-2016 Free Software Foundation, Inc.
+Copyright 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,16 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#if defined (__cplusplus)
-#include <cstdio>
-#else
-#include <stdio.h>
-#endif
-#include <stdlib.h>
-#include <string.h>
-
-#include "gmp.h"
-#include "mpfr.h"
 #ifdef MPFR
 #include "mpf2mpfr.h"
 #endif
@@ -37,7 +27,14 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 main (void)
 {
-  unsigned long int prec;
+
+#if defined (MPFR) && _MPFR_EXP_FORMAT != 3 /* because exp is a long below */
+
+  return 77;
+
+#else
+
+  unsigned long int prec, old_prec;
   unsigned long int prec2;
   mpf_t x, y;
   mpz_t z;
@@ -50,6 +47,8 @@ main (void)
   int i;
   FILE *f;
   gmp_randstate_t state;
+
+  tests_start_mpfr ();
 
   /* Initialization Functions */
   prec = 53;
@@ -83,6 +82,7 @@ main (void)
       exit (1);
     }
 
+  old_prec = mpf_get_prec (x);
   mpf_set_prec_raw (x, prec);
   prec2 = mpf_get_prec (x);
   if (prec2 < prec)
@@ -92,6 +92,7 @@ main (void)
       mpf_clear (x);
       exit (1);
     }
+  mpf_set_prec_raw (x, old_prec);  /* needed with MPF (see GMP manual) */
 
   /* Assignment Functions */
 
@@ -109,7 +110,7 @@ main (void)
   mpf_set_q (x, q);
   mpq_clear (q);
 
-  mpf_set_str (x, "3.1415e1", 10);
+  mpf_set_str (x, "31415e-3", 10);
   mpf_swap (x, y);
 
   /* Combined Initialization and Assignment Functions */
@@ -123,7 +124,7 @@ main (void)
   mpf_clear (x);
   mpf_init_set_d (x, 17.0);
   mpf_clear (x);
-  mpf_init_set_str (x, "3.1415e1", 10);
+  mpf_init_set_str (x, "31415e-3", 10);
 
   /* Conversion Functions */
 
@@ -132,7 +133,7 @@ main (void)
   l = mpf_get_si (x);
   u = mpf_get_ui (x);
   s = mpf_get_str (NULL, &exp, 10, 10, x);
-  /* MPF doen't have mpf_free_str */
+  /* MPF doesn't have mpf_free_str */
   mpfr_free_str (s);
 
   /* Use d, l and u to avoid a warning with -Wunused-but-set-variable
@@ -181,20 +182,20 @@ main (void)
 
   mpf_set_prec (x, 15);
   mpf_set_prec (y, 15);
-  /* We may use src_fopen instead of fopen, but it is defined
-     in mpfr-test, and not in mpfr.h and gmp.h, and we want
-     to test theses includes files. */
-  f = fopen ("inp_str.data", "r");
-  if (f != NULL)
+
+  f = src_fopen ("inp_str.dat", "r");
+  if (f == NULL)
     {
-      i = mpf_inp_str (x, f, 10);
-      if ((i == 0) || mpf_cmp_ui (x, 31415))
-        {
-          printf ("Error in reading 1st line from file inp_str.data\n");
-          exit (1);
-        }
-      fclose (f);
+      printf ("cannot open file \"inp_str.dat\"\n");
+      exit (1);
     }
+  i = mpf_inp_str (x, f, 10);
+  if (i == 0 || mpf_cmp_si (x, -1700))
+    {
+      printf ("Error in reading 1st line from file \"inp_str.dat\"\n");
+      exit (1);
+    }
+  fclose (f);
 
   /* Miscellaneous Functions */
 
@@ -223,14 +224,28 @@ main (void)
   mpz_clear (z);
   if (mpf_cmp_ui (x, 17) != 0)
     {
-      fprintf (stderr, "Error in conversion to/from mpz\n");
-      fprintf (stderr, "expected 17, got %1.16e\n", mpf_get_d (x));
+      printf ("Error in conversion to/from mpz\n");
+      printf ("expected 17, got %1.16e\n", mpf_get_d (x));
       exit (1);
     }
+
+  /* non-regression tests for bugs fixed in revision 11565 */
+  mpf_set_si (x, -1);
+  MPFR_ASSERTN(mpf_fits_ulong_p (x) == 0);
+  MPFR_ASSERTN(mpf_fits_slong_p (x) != 0);
+  MPFR_ASSERTN(mpf_fits_uint_p (x) == 0);
+  MPFR_ASSERTN(mpf_fits_sint_p (x) != 0);
+  MPFR_ASSERTN(mpf_fits_ushort_p (x) == 0);
+  MPFR_ASSERTN(mpf_fits_sshort_p (x) != 0);
+  MPFR_ASSERTN(mpf_get_si (x) == -1);
 
   /* clear all variables */
   mpf_clear (y);
   mpf_clear (x);
 
+  tests_end_mpfr ();
   return 0;
+
+#endif
+
 }

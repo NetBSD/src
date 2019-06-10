@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -706,7 +706,7 @@ AcpiDmLoadDescendingOp (
 
         while (AcpiGbl_PreDefinedNames[PreDefineIndex].Name)
         {
-            if (ACPI_COMPARE_NAME (Node->Name.Ascii,
+            if (ACPI_COMPARE_NAMESEG (Node->Name.Ascii,
                 AcpiGbl_PreDefinedNames[PreDefineIndex].Name))
             {
                 PreDefined = TRUE;

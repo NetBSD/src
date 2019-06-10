@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: tropic.c,v 1.50.2.1 2019/06/10 22:07:11 christos Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.50.2.1 2019/06/10 22:07:11 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -329,7 +329,7 @@ tr_attach(struct tr_softc *sc)
 		ifp->if_start = tr_start;
 	else
 		ifp->if_start = tr_oldstart;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST;
 	ifp->if_watchdog = tr_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -396,6 +396,8 @@ tr_attach(struct tr_softc *sc)
 		}
 	}
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, tr_mediachange, tr_mediastatus);
 	if (mediaptr != NULL) {
 		for (i = 0; i < nmedia; i++)
@@ -1465,7 +1467,7 @@ tr_get(struct tr_softc *sc, int totlen, struct ifnet *ifp)
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		tr_bcopy(sc, mtod(m, char *), len);
 		totlen -= len;
 		if (totlen > 0) {
@@ -1546,10 +1548,6 @@ tr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			break;
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > sc->sc_maxmtu)

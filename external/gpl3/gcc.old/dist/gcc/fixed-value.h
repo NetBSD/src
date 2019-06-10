@@ -1,5 +1,5 @@
 /* Fixed-point arithmetic support.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,10 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_FIXED_VALUE_H
 #define GCC_FIXED_VALUE_H
-
-#include "machmode.h"
-#include "real.h"
-#include "double-int.h"
 
 struct GTY(()) fixed_value
 {

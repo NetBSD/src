@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.4.1 2019/06/10 22:07:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
@@ -101,17 +104,18 @@ rf_disk_to_disk50(RF_RaidDisk50_t *d50, const RF_RaidDisk_t *d)
         d50->dev = d->dev;
 }
 
-int
-rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
+static int
+rf_config50(struct raid_softc *rs, void *data)
 {
 	RF_Config50_t *u50_cfg, *k50_cfg;
 	RF_Config_t *k_cfg;
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
 	size_t i, j;
 	int error;
 
 	if (raidPtr->valid) {
 		/* There is a valid RAID set running on this unit! */
-		printf("raid%d: Device already configured!\n", unit);
+		printf("raid%d: Device already configured!\n", rf_get_unit(rs));
 		return EINVAL;
 	}
 
@@ -119,18 +123,18 @@ rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	/* data points to a pointer to the configuration structure */
 
 	u50_cfg = *((RF_Config50_t **) data);
-	RF_Malloc(k50_cfg, sizeof(RF_Config50_t), (RF_Config50_t *));
+	k50_cfg = RF_Malloc(sizeof(*k50_cfg));
 	if (k50_cfg == NULL)
 		return ENOMEM;
 
-	error = copyin(u50_cfg, k50_cfg, sizeof(RF_Config50_t));
+	error = copyin(u50_cfg, k50_cfg, sizeof(*k50_cfg));
 	if (error) {
-		RF_Free(k50_cfg, sizeof(RF_Config50_t));
+		RF_Free(k50_cfg, sizeof(*k50_cfg));
 		return error;
 	}
-	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	k_cfg = RF_Malloc(sizeof(*k_cfg));
 	if (k_cfg == NULL) {
-		RF_Free(k50_cfg, sizeof(RF_Config50_t));
+		RF_Free(k50_cfg, sizeof(*k50_cfg));
 		return ENOMEM;
 	}
 
@@ -167,12 +171,11 @@ rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	k_cfg->layoutSpecific = k50_cfg->layoutSpecific;
 	k_cfg->force = k50_cfg->force;
 
-	RF_Free(k50_cfg, sizeof(RF_Config50_t));
-	*k_cfgp = k_cfg;
-	return 0;
+	RF_Free(k50_cfg, sizeof(*k50_cfg));
+	return rf_construct(rs, k_cfg);
 }
 
-int
+static int
 rf_get_info50(RF_Raid_t *raidPtr, void *data)
 {
 	RF_DeviceConfig50_t **ucfgp = data, *d_cfg;
@@ -182,7 +185,7 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 	if (!raidPtr->valid)
 		return ENODEV;
 
-	RF_Malloc(d_cfg, sizeof(RF_DeviceConfig50_t), (RF_DeviceConfig50_t *));
+	d_cfg = RF_Malloc(sizeof(*d_cfg));
 
 	if (d_cfg == NULL)
 		return ENOMEM;
@@ -208,9 +211,59 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 	for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++)
 		rf_disk_to_disk50(&d_cfg->spares[i], &raidPtr->Disks[j]);
 
-	error = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig50_t));
+	error = copyout(d_cfg, *ucfgp, sizeof(**ucfgp));
 
 out:
-	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
+	RF_Free(d_cfg, sizeof(*d_cfg));
 	return error;
+}
+
+static int
+raidframe_ioctl_50(struct raid_softc *rs, u_long cmd, void *data)
+{
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
+
+	switch (cmd) {
+	case RAIDFRAME_GET_INFO50:
+		if (!rf_inited(rs))
+			return ENXIO;
+		return rf_get_info50(raidPtr, data);
+
+	case RAIDFRAME_CONFIGURE50:
+		return rf_config50(rs, data);
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
+static void
+raidframe_50_init(void)
+{
+
+	MODULE_HOOK_SET(raidframe_ioctl_50_hook, "raid50", raidframe_ioctl_50);
+}
+
+static void
+raidframe_50_fini(void)
+{
+
+	MODULE_HOOK_UNSET(raidframe_ioctl_50_hook);
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_raid_50, "raid,compat_50,compat_raid_80");
+
+static int
+compat_raid_50_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		raidframe_50_init();
+		return 0;
+	case MODULE_CMD_FINI:
+		raidframe_50_fini();
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

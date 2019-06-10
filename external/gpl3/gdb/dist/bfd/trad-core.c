@@ -1,5 +1,5 @@
 /* BFD back end for traditional Unix core files (U-area and raw sections)
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
    Written by John Gilmore of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
-#include "libaout.h"           /* BFD a.out internal data structures */
+#include "libaout.h"	       /* BFD a.out internal data structures */
 
 #include <sys/param.h>
 #ifdef HAVE_DIRENT_H
@@ -293,12 +293,16 @@ const bfd_target core_trad_vec =
       trad_unix_core_file_p		/* a core file */
     },
     {				/* bfd_set_format */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {				/* bfd_write_contents */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.115 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.115.18.1 2019/06/10 22:07:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.115 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.115.18.1 2019/06/10 22:07:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -252,7 +252,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_sensor == NULL)
 		return;
 
-	acpibat_init_envsys(self);
+	config_interrupts(self, acpibat_init_envsys);
 
 	/*
 	 * If this is ever seen, the driver should be extended.

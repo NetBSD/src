@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -27,7 +27,7 @@
   " crtend%O%s crtn%O%s " \
   "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s}"
 
-#ifdef TARGET_FIX_ERR_A53_835769_DEFAULT
+#if TARGET_FIX_ERR_A53_835769_DEFAULT
 #define CA53_ERR_835769_SPEC \
   " %{!mno-fix-cortex-a53-835769:--fix-cortex-a53-835769}"
 #else
@@ -35,7 +35,7 @@
   " %{mfix-cortex-a53-835769:--fix-cortex-a53-835769}"
 #endif
 
-#ifdef TARGET_FIX_ERR_A53_843419_DEFAULT
+#if TARGET_FIX_ERR_A53_843419_DEFAULT
 #define CA53_ERR_843419_SPEC \
   " %{!mno-fix-cortex-a53-843419:--fix-cortex-a53-843419}"
 #else

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2018/06/02 14:31:40 christos Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2019/06/10 22:05:47 christos Exp $
 
 PROG=		prekern
 SRCS=		locore.S trap.S prekern.c mm.c console.c elf.c prng.c
 
 NOSSP=		# defined
 NOPIE=		# defined
+NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 NOMAN=		1
 

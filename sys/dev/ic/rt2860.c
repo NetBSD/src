@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.32 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.32.2.1 2019/06/10 22:07:11 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32.2.1 2019/06/10 22:07:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -389,7 +389,7 @@ rt2860_attachhook(device_t self)
 	}
 
 	/* HW supports up to 255 STAs (0-254) in HostAP and IBSS modes */
-	ic->ic_max_aid = min(IEEE80211_AID_MAX, RT2860_WCID_MAX);
+	ic->ic_max_aid = uimin(IEEE80211_AID_MAX, RT2860_WCID_MAX);
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

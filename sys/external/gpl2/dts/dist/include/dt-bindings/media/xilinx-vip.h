@@ -1,5 +1,6 @@
-/*	$NetBSD: xilinx-vip.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: xilinx-vip.h,v 1.1.1.1.12.1 2019/06/10 22:08:56 christos Exp $	*/
 
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Xilinx Video IP Core
  *
@@ -8,10 +9,6 @@
  *
  * Contacts: Hyun Kwon <hyun.kwon@xilinx.com>
  *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef __DT_BINDINGS_MEDIA_XILINX_VIP_H__

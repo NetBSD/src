@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.48 2015/05/06 15:57:08 hannken Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.48.18.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.48 2015/05/06 15:57:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.48.18.1 2019/06/10 22:09:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.48 2015/05/06 15:57:08 hannken Exp $"
 #else
 #define DODEBUG(A)
 #endif
+
+pool_cache_t pnbuf_cache;
 
 /*
  * The global list of vnode operations.

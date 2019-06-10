@@ -1,6 +1,6 @@
 /* Test file for hyperbolic function : mpfr_cosh, mpfr_sinh, mpfr_tanh, mpfr_acosh, mpfr_asinh, mpfr_atanh.
 
-Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdlib.h>
-#include <stdio.h>
 
 #include "mpfr-test.h"
 
@@ -220,13 +217,13 @@ check_INF (void)
 
   MPFR_SET_INF(t);
 
-  if(MPFR_SIGN(t)<0)
+  if(MPFR_IS_NEG (t))
     MPFR_CHANGE_SIGN(t);
 
   /******cosh********/
 
   tester = mpfr_cosh(ch,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(ch) || MPFR_SIGN(ch) < 0 || tester!=0)
+  if (!MPFR_IS_INF(ch) || MPFR_IS_NEG (ch) || tester!=0)
     {
       printf("cosh(INF) \n");
       fail = 1;
@@ -236,7 +233,7 @@ check_INF (void)
   /******sinh********/
 
   tester=mpfr_sinh(sh,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(sh) || MPFR_SIGN(sh) < 0  || tester!=0)
+  if (!MPFR_IS_INF(sh) || MPFR_IS_NEG (sh)  || tester!=0)
     {
       printf("sinh(INF) \n");
       fail = 1;
@@ -256,7 +253,7 @@ check_INF (void)
   /******acosh********/
 
   tester=mpfr_acosh(ach,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(ach) || MPFR_SIGN(ach) < 0  || tester!=0)
+  if (!MPFR_IS_INF(ach) || MPFR_IS_NEG (ach)  || tester!=0)
     {
       printf("acosh(INF) \n");
       fail = 1;
@@ -266,7 +263,7 @@ check_INF (void)
   /******asinh********/
 
   tester=mpfr_asinh(ash,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(ash) || MPFR_SIGN(ash) < 0  || tester!=0)
+  if (!MPFR_IS_INF(ash) || MPFR_IS_NEG (ash)  || tester!=0)
     {
       printf("asinh(INF) \n");
       fail = 1;
@@ -288,7 +285,7 @@ check_INF (void)
   /******cosh********/
 
   tester=mpfr_cosh(ch,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(ch) || MPFR_SIGN(ch) < 0  || tester!=0)
+  if (!MPFR_IS_INF(ch) || MPFR_IS_NEG (ch)  || tester!=0)
     {
       printf("cosh(-INF) \n");
       fail = 1;
@@ -298,7 +295,7 @@ check_INF (void)
   /******sinh********/
 
   tester=mpfr_sinh(sh,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(sh)  || MPFR_SIGN(sh) > 0 || tester!=0)
+  if (!MPFR_IS_INF(sh)  || MPFR_IS_POS (sh) || tester!=0)
     {
       printf("sinh(-INF) \n");
       fail = 1;
@@ -328,7 +325,7 @@ check_INF (void)
   /******asinh********/
 
   tester=mpfr_asinh(ash,t,MPFR_RNDD);
-  if (!MPFR_IS_INF(ash) || MPFR_SIGN(ash) > 0  || tester!=0)
+  if (!MPFR_IS_INF(ash) || MPFR_IS_POS (ash)  || tester!=0)
     {
       printf("asinh(-INF) \n");
       fail = 1;

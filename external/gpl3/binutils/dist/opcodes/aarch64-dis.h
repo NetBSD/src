@@ -50,14 +50,17 @@ const aarch64_opcode* aarch64_find_next_alias_opcode (const aarch64_opcode *);
 
 /* Switch-table-based high-level operand extractor.  */
 
-int aarch64_extract_operand (const aarch64_operand *, aarch64_opnd_info *,
-			     const aarch64_insn, const aarch64_inst *);
+bfd_boolean
+aarch64_extract_operand (const aarch64_operand *, aarch64_opnd_info *,
+			 const aarch64_insn, const aarch64_inst *,
+			 aarch64_operand_error *);
 
 /* Operand extractors.  */
 
 #define AARCH64_DECL_OPD_EXTRACTOR(x)	\
-  int aarch64_##x (const aarch64_operand *, aarch64_opnd_info *, \
-		   const aarch64_insn, const aarch64_inst *)
+  bfd_boolean aarch64_##x (const aarch64_operand *, aarch64_opnd_info *, \
+			   const aarch64_insn, const aarch64_inst *, \
+			   aarch64_operand_error *)
 
 AARCH64_DECL_OPD_EXTRACTOR (ext_regno);
 AARCH64_DECL_OPD_EXTRACTOR (ext_regno_pair);

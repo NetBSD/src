@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.48 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.48.2.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.48 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.48.2.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -160,7 +160,7 @@ int zyd_match(device_t, cfdata_t, void *);
 void zyd_attach(device_t, device_t, void *);
 int zyd_detach(device_t, int);
 int zyd_activate(device_t, enum devact);
-extern struct cfdriver zyd_cd;
+
 
 CFATTACH_DECL_NEW(zyd, sizeof(struct zyd_softc), zyd_match,
     zyd_attach, zyd_detach, zyd_activate);
@@ -466,9 +466,9 @@ zyd_detach(device_t self, int flags)
 	s = splusb();
 
 	zyd_stop(ifp, 1);
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->sc_scan_ch);
-	callout_stop(&sc->sc_amrr_ch);
+	callout_halt(&sc->sc_scan_ch, NULL);
+	callout_halt(&sc->sc_amrr_ch, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	/* Abort, etc. done by zyd_stop */
 	zyd_close_pipes(sc);
@@ -761,6 +761,11 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	if (!sc->attached)
 		return ENXIO;
 
+	/*
+	 * XXXSMP: This does not wait for the task, if it is in flight,
+	 * to complete.  If this code works at all, it must rely on the
+	 * kernel lock to serialize with the USB task thread.
+	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);
@@ -2569,14 +2574,14 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 	addr = ZYD_FIRMWARE_START_ADDR;
 	while (size > 0) {
 #if 0
-		const int mlen = min(size, 4096);
+		const int mlen = uimin(size, 4096);
 #else
 		/*
 		 * XXXX: When the transfer size is 4096 bytes, it is not
 		 * likely to be able to transfer it.
 		 * The cause is port or machine or chip?
 		 */
-		const int mlen = min(size, 64);
+		const int mlen = uimin(size, 64);
 #endif
 
 		DPRINTF(("loading firmware block: len=%d, addr=0x%x\n", mlen,

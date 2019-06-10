@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.59 2018/06/26 06:47:57 msaitoh Exp $ */
+/*	$NetBSD: if_es.c,v 1.59.2.1 2019/06/10 22:05:48 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.59 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.59.2.1 2019/06/10 22:05:48 christos Exp $");
 
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ esmatch(device_t parent, cfdata_t cf, void *aux)
 
 	/* Ameristar A4066 ethernet card */
 	if (zap->manid == 1053 && zap->prodid == 10)
-		return(1);
+		return (1);
 
 	return (0);
 }
@@ -174,12 +174,13 @@ esattach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
+	/* Setup ifmedia interface */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, esmediachange, esmediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -683,7 +684,7 @@ esrint(struct es_softc *sc)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		m->m_len = len = min(pktlen, len);
+		m->m_len = len = uimin(pktlen, len);
 #ifdef USEPKTBUF
 		memcpy(mtod(m, void *), (void *)b, len);
 		b += len;
@@ -848,7 +849,7 @@ esstart(struct ifnet *ifp)
 		lbuf = (u_long *)(pktbuf);
 		ldata = (u_long *)data;
 		cnt = pktlen / 4;
-		while(cnt--)
+		while (cnt--)
 			*ldata = *lbuf++;
 		if (pktlen & 2) {
 			buf = (u_short *)lbuf;
@@ -944,7 +945,6 @@ esioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct es_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1017,11 +1017,6 @@ esioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

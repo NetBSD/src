@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -78,8 +78,8 @@ void	nfe_attach(device_t, device_t, void *);
 int	nfe_detach(device_t, int);
 void	nfe_power(int, void *);
 void	nfe_miibus_statchg(struct ifnet *);
-int	nfe_miibus_readreg(device_t, int, int);
-void	nfe_miibus_writereg(device_t, int, int, int);
+int	nfe_miibus_readreg(device_t, int, int, uint16_t *);
+int	nfe_miibus_writereg(device_t, int, int, uint16_t);
 int	nfe_intr(void *);
 int	nfe_ioctl(struct ifnet *, u_long, void *);
 void	nfe_txdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
@@ -120,10 +120,10 @@ CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc),
 #ifdef NFE_DEBUG
 int nfedebug = 0;
 #define DPRINTF(x)	do { if (nfedebug) printf x; } while (0)
-#define DPRINTFN(n,x)	do { if (nfedebug >= (n)) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (nfedebug >= (n)) printf x; } while (0)
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /* deal with naming differences */
@@ -219,6 +219,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_mii;
 	pcireg_t memtype, csr;
 	int mii_flags = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -246,7 +247,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, nfe_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -389,24 +391,22 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	}
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = nfe_miibus_readreg;
-	sc->sc_mii.mii_writereg = nfe_miibus_writereg;
-	sc->sc_mii.mii_statchg = nfe_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = nfe_miibus_readreg;
+	mii->mii_writereg = nfe_miibus_writereg;
+	mii->mii_statchg = nfe_miibus_statchg;
 
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, mii_flags);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, 0, mii_flags);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
-		    0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -493,7 +493,7 @@ nfe_miibus_statchg(struct ifnet *ifp)
 	seed = NFE_READ(sc, NFE_RNDSEED);
 	seed &= ~NFE_SEED_MASK;
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
+	if ((mii->mii_media_active & IFM_HDX) != 0) {
 		phy  |= NFE_PHY_HDX;	/* half-duplex */
 		misc |= NFE_MISC1_HDX;
 	}
@@ -523,10 +523,10 @@ nfe_miibus_statchg(struct ifnet *ifp)
 }
 
 int
-nfe_miibus_readreg(device_t dev, int phy, int reg)
+nfe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct nfe_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int ntries;
 
 	NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
@@ -546,27 +546,28 @@ nfe_miibus_readreg(device_t dev, int phy, int reg)
 	if (ntries == 1000) {
 		DPRINTFN(2, ("%s: timeout waiting for PHY\n",
 		    device_xname(sc->sc_dev)));
-		return 0;
+		return ETIMEDOUT;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
 		DPRINTFN(2, ("%s: could not read PHY\n",
 		    device_xname(sc->sc_dev)));
-		return 0;
+		return -1;
 	}
 
-	val = NFE_READ(sc, NFE_PHY_DATA);
-	if (val != 0xffffffff && val != 0)
+	data = NFE_READ(sc, NFE_PHY_DATA);
+	if (data != 0xffffffff && data != 0)
 		sc->mii_phyaddr = phy;
 
-	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n",
-	    device_xname(sc->sc_dev), phy, reg, val));
+	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x data 0x%x\n",
+	    device_xname(sc->sc_dev), phy, reg, data));
 
-	return val;
+	*val = data & 0x0000ffff;
+	return 0;
 }
 
-void
-nfe_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+nfe_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct nfe_softc *sc = device_private(dev);
 	uint32_t ctl;
@@ -588,10 +589,14 @@ nfe_miibus_writereg(device_t dev, int phy, int reg, int val)
 		if (!(NFE_READ(sc, NFE_PHY_CTL) & NFE_PHY_BUSY))
 			break;
 	}
+	if (ntries == 1000) {
 #ifdef NFE_DEBUG
-	if (nfedebug >= 2 && ntries == 1000)
-		printf("could not write to PHY\n");
+		if (nfedebug >= 2)
+			printf("could not write to PHY\n");
 #endif
+		return ETIMEDOUT;
+	}
+	return 0;
 }
 
 int
@@ -616,7 +621,7 @@ nfe_intr(void *arg)
 		handled = 1;
 		DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
-		if ((r & (NFE_IRQ_RXERR|NFE_IRQ_RX_NOBUF|NFE_IRQ_RX)) != 0) {
+		if ((r & (NFE_IRQ_RXERR |NFE_IRQ_RX_NOBUF |NFE_IRQ_RX)) != 0) {
 			/* check Rx ring */
 			nfe_rxeof(sc);
 		}
@@ -650,7 +655,7 @@ nfe_ifflags_cb(struct ethercom *ec)
 	 * don't do a full re-init of the chip, just update
 	 * the Rx filter.
 	 */
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
 	else if ((change & IFF_PROMISC) != 0)
 		nfe_setmulti(sc);
@@ -795,14 +800,14 @@ nfe_rxeof(struct nfe_softc *sc)
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->rxq.desc64[i];
 			nfe_rxdesc64_sync(sc, desc64,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc64->flags);
 			len = le16toh(desc64->length) & 0x3fff;
 		} else {
 			desc32 = &sc->rxq.desc32[i];
 			nfe_rxdesc32_sync(sc, desc32,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc32->flags);
 			len = le16toh(desc32->length) & 0x3fff;
@@ -964,13 +969,13 @@ skip:
 			desc64->flags = htole16(NFE_RX_READY);
 
 			nfe_rxdesc64_sync(sc, desc64,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		} else {
 			desc32->length = htole16(sc->rxq.bufsz);
 			desc32->flags = htole16(NFE_RX_READY);
 
 			nfe_rxdesc32_sync(sc, desc32,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		}
 	}
 	/* update current RX pointer */
@@ -994,13 +999,13 @@ nfe_txeof(struct nfe_softc *sc)
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->txq.desc64[i];
 			nfe_txdesc64_sync(sc, desc64,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc64->flags);
 		} else {
 			desc32 = &sc->txq.desc32[i];
 			nfe_txdesc32_sync(sc, desc32,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc32->flags);
 		}
@@ -1210,10 +1215,10 @@ nfe_start(struct ifnet *ifp)
 		/* packets are queued */
 		if (sc->sc_flags & NFE_40BIT_ADDR)
 			nfe_txdesc64_rsync(sc, old, sc->txq.cur,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		else
 			nfe_txdesc32_rsync(sc, old, sc->txq.cur,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* kick Tx */
 		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_KICKTX | sc->rxtxctl);
 
@@ -1892,12 +1897,14 @@ nfe_setmulti(struct nfe_softc *sc)
 	memcpy(addr, etherbroadcastaddr, ETHER_ADDR_LEN);
 	memcpy(mask, etherbroadcastaddr, ETHER_ADDR_LEN);
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			memset(addr, 0, ETHER_ADDR_LEN);
 			memset(mask, 0, ETHER_ADDR_LEN);
+			ETHER_UNLOCK(ec);
 			goto done;
 		}
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -1906,6 +1913,7 @@ nfe_setmulti(struct nfe_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		mask[i] |= addr[i];
 

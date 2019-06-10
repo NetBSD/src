@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.23.10.1 2019/06/10 22:09:03 christos Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.23.10.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,6 +177,18 @@ iostat_free(struct io_stats *stats)
 	iostat_count--;
 	rw_exit(&iostatlist_lock);
 	kmem_free(stats, sizeof(*stats));
+}
+
+/*
+ * Rename i/o stats.
+ */
+void
+iostat_rename(struct io_stats *stats, const char *name)
+{
+
+	rw_enter(&iostatlist_lock, RW_WRITER);
+	(void)strlcpy(stats->io_name, name, sizeof(stats->io_name));
+	rw_exit(&iostatlist_lock);
 }
 
 /*
@@ -452,7 +464,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 		sdrive.busy = stats->io_busy;
 
-		error = copyout(&sdrive, where, min(tocopy, sizeof(sdrive)));
+		error = copyout(&sdrive, where, uimin(tocopy, sizeof(sdrive)));
 		if (error)
 			break;
 		where += tocopy;

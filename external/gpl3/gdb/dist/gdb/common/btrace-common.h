@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BTRACE_COMMON_H
-#define BTRACE_COMMON_H
+#ifndef COMMON_BTRACE_COMMON_H
+#define COMMON_BTRACE_COMMON_H
 
 /* Branch tracing (btrace) is a per-thread control-flow execution trace of the
    inferior.  For presentation purposes, the branch trace is represented as a
@@ -164,7 +164,32 @@ struct btrace_data_pt
 /* The branch trace data.  */
 struct btrace_data
 {
-  enum btrace_format format;
+  btrace_data () = default;
+
+  ~btrace_data ()
+  {
+    fini ();
+  }
+
+  btrace_data &operator= (btrace_data &&other)
+  {
+    if (this != &other)
+      {
+	fini ();
+	format = other.format;
+	variant = other.variant;
+	other.format = BTRACE_FORMAT_NONE;
+      }
+    return *this;
+  }
+
+  /* Return true if this is empty; false otherwise.  */
+  bool empty () const;
+
+  /* Clear this object.  */
+  void clear ();
+
+  enum btrace_format format = BTRACE_FORMAT_NONE;
 
   union
   {
@@ -174,6 +199,12 @@ struct btrace_data
     /* Format == BTRACE_FORMAT_PT.  */
     struct btrace_data_pt pt;
   } variant;
+
+private:
+
+  DISABLE_COPY_AND_ASSIGN (btrace_data);
+
+  void fini ();
 };
 
 /* Target specific branch trace information.  */
@@ -217,22 +248,10 @@ extern const char *btrace_format_string (enum btrace_format format);
 /* Return an abbreviation string representation of FORMAT.  */
 extern const char *btrace_format_short_string (enum btrace_format format);
 
-/* Initialize DATA.  */
-extern void btrace_data_init (struct btrace_data *data);
-
-/* Cleanup DATA.  */
-extern void btrace_data_fini (struct btrace_data *data);
-
-/* Clear DATA.  */
-extern void btrace_data_clear (struct btrace_data *data);
-
-/* Return non-zero if DATA is empty; zero otherwise.  */
-extern int btrace_data_empty (struct btrace_data *data);
-
 /* Append the branch trace data from SRC to the end of DST.
    Both SRC and DST must use the same format.
    Returns zero on success; a negative number otherwise.  */
 extern int btrace_data_append (struct btrace_data *dst,
 			       const struct btrace_data *src);
 
-#endif /* BTRACE_COMMON_H */
+#endif /* COMMON_BTRACE_COMMON_H */

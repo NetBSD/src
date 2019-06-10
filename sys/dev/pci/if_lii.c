@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.18 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.18.2.1 2019/06/10 22:07:16 christos Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.18 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.18.2.1 2019/06/10 22:07:16 christos Exp $");
 
 
 #include <sys/param.h>
@@ -123,8 +123,8 @@ static void	lii_tick(void *);
 static int	lii_alloc_rings(struct lii_softc *);
 static int	lii_free_tx_space(struct lii_softc *);
 
-static int	lii_mii_readreg(device_t, int, int);
-static void	lii_mii_writereg(device_t, int, int, int);
+static int	lii_mii_readreg(device_t, int, int, uint16_t *);
+static int	lii_mii_writereg(device_t, int, int, uint16_t);
 static void	lii_mii_statchg(struct ifnet *);
 
 static int	lii_media_change(struct ifnet *);
@@ -145,17 +145,17 @@ CFATTACH_DECL_NEW(lii, sizeof(struct lii_softc),
 
 /* #define LII_DEBUG_REGS */
 #ifndef LII_DEBUG_REGS
-#define AT_READ_4(sc,reg) \
+#define AT_READ_4(sc, reg) \
     bus_space_read_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_READ_2(sc,reg) \
+#define AT_READ_2(sc, reg) \
     bus_space_read_2((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_READ_1(sc,reg) \
+#define AT_READ_1(sc, reg) \
     bus_space_read_1((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_WRITE_4(sc,reg,val) \
+#define AT_WRITE_4(sc, reg, val) \
     bus_space_write_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
-#define AT_WRITE_2(sc,reg,val) \
+#define AT_WRITE_2(sc, reg, val) \
     bus_space_write_2((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
-#define AT_WRITE_1(sc,reg,val) \
+#define AT_WRITE_1(sc, reg, val) \
     bus_space_write_1((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
 #else
 static inline uint32_t
@@ -237,6 +237,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t cmd;
@@ -293,7 +294,8 @@ lii_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, lii_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_NET, lii_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt");
 		if (intrstr != NULL)
@@ -309,15 +311,15 @@ lii_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, lii_tick, sc);
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = lii_mii_readreg;
-	sc->sc_mii.mii_writereg = lii_mii_writereg;
-	sc->sc_mii.mii_statchg = lii_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, lii_media_change,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = lii_mii_readreg;
+	mii->mii_writereg = lii_mii_writereg;
+	mii->mii_statchg = lii_mii_statchg;
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, lii_media_change,
 	    lii_media_status);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
-	    MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -470,17 +472,17 @@ lii_spi_configure(struct lii_softc *sc)
 
 #define MAKE_SFC(cssetup, clkhi, clklo, cshold, cshi, ins) \
     ( (((cssetup) & SFC_CS_SETUP_MASK)	\
-        << SFC_CS_SETUP_SHIFT)		\
+	<< SFC_CS_SETUP_SHIFT)		\
     | (((clkhi) & SFC_CLK_HI_MASK)	\
-        << SFC_CLK_HI_SHIFT)		\
+	<< SFC_CLK_HI_SHIFT)		\
     | (((clklo) & SFC_CLK_LO_MASK)	\
-        << SFC_CLK_LO_SHIFT)		\
+	<< SFC_CLK_LO_SHIFT)		\
     | (((cshold) & SFC_CS_HOLD_MASK)	\
-        << SFC_CS_HOLD_SHIFT)		\
+	<< SFC_CS_HOLD_SHIFT)		\
     | (((cshi) & SFC_CS_HI_MASK)	\
-        << SFC_CS_HI_SHIFT)		\
+	<< SFC_CS_HI_SHIFT)		\
     | (((ins) & SFC_INS_MASK)		\
-        << SFC_INS_SHIFT))
+	<< SFC_INS_SHIFT))
 
 /* Magic settings from the Linux driver */
 
@@ -501,7 +503,7 @@ lii_spi_read(struct lii_softc *sc, uint32_t reg, uint32_t *val)
 
 	v = SFC_WAIT_READY |
 	    MAKE_SFC(CUSTOM_SPI_CS_SETUP, CUSTOM_SPI_CLK_HI,
-	         CUSTOM_SPI_CLK_LO, CUSTOM_SPI_CS_HOLD, CUSTOM_SPI_CS_HI, 1);
+		 CUSTOM_SPI_CLK_LO, CUSTOM_SPI_CS_HOLD, CUSTOM_SPI_CS_HI, 1);
 
 	AT_WRITE_4(sc, ATL2_SFC, v);
 	v |= SFC_START;
@@ -578,62 +580,69 @@ lii_read_macaddr(struct lii_softc *sc, uint8_t *ea)
 }
 
 static int
-lii_mii_readreg(device_t dev, int phy, int reg)
+lii_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct lii_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int i;
 
-	val = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
+	data = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
 
-	val |= MDIOC_START | MDIOC_SUP_PREAMBLE;
-	val |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
+	data |= MDIOC_START | MDIOC_SUP_PREAMBLE;
+	data |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
 
-	val |= MDIOC_READ;
+	data |= MDIOC_READ;
 
-	AT_WRITE_4(sc, ATL2_MDIOC, val);
+	AT_WRITE_4(sc, ATL2_MDIOC, data);
 
 	for (i = 0; i < MDIO_WAIT_TIMES; ++i) {
 		DELAY(2);
-		val = AT_READ_4(sc, ATL2_MDIOC);
-		if ((val & (MDIOC_START | MDIOC_BUSY)) == 0)
+		data = AT_READ_4(sc, ATL2_MDIOC);
+		if ((data & (MDIOC_START | MDIOC_BUSY)) == 0)
 			break;
 	}
 
-	if (i == MDIO_WAIT_TIMES)
+	if (i == MDIO_WAIT_TIMES) {
 		aprint_error_dev(dev, "timeout reading PHY %d reg %d\n", phy,
 		    reg);
+		return ETIMEDOUT;
+	}
 
-	return (val & 0x0000ffff);
+	*val = data & 0x0000ffff;
+	return 0;
 }
 
-static void
-lii_mii_writereg(device_t dev, int phy, int reg, int data)
+static int
+lii_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct lii_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int i;
 
-	val = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
-	val |= (data & MDIOC_DATA_MASK) << MDIOC_DATA_SHIFT;
+	data = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
+	data |= (val & MDIOC_DATA_MASK) << MDIOC_DATA_SHIFT;
 
-	val |= MDIOC_START | MDIOC_SUP_PREAMBLE;
-	val |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
+	data |= MDIOC_START | MDIOC_SUP_PREAMBLE;
+	data |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
 
-	/* val |= MDIOC_WRITE; */
+	/* data |= MDIOC_WRITE; */
 
-	AT_WRITE_4(sc, ATL2_MDIOC, val);
+	AT_WRITE_4(sc, ATL2_MDIOC, data);
 
 	for (i = 0; i < MDIO_WAIT_TIMES; ++i) {
 		DELAY(2);
-		val = AT_READ_4(sc, ATL2_MDIOC);
-		if ((val & (MDIOC_START | MDIOC_BUSY)) == 0)
+		data = AT_READ_4(sc, ATL2_MDIOC);
+		if ((data & (MDIOC_START | MDIOC_BUSY)) == 0)
 			break;
 	}
 
-	if (i == MDIO_WAIT_TIMES)
+	if (i == MDIO_WAIT_TIMES) {
 		aprint_error_dev(dev, "timeout writing PHY %d reg %d\n", phy,
 		    reg);
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 static void
@@ -646,7 +655,7 @@ lii_mii_statchg(struct ifnet *ifp)
 
 	val = AT_READ_4(sc, ATL2_MACC);
 
-	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		val |= MACC_FDX;
 	else
 		val &= ~MACC_FDX;
@@ -862,7 +871,7 @@ lii_start(struct ifnet *ifp)
 
 	DPRINTF(("lii_start\n"));
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
@@ -916,6 +925,7 @@ lii_intr(void *v)
 {
 	struct lii_softc *sc = v;
 	uint32_t status;
+	uint16_t tmp;
 
 	status = AT_READ_4(sc, ATL2_ISR);
 	if (status == 0)
@@ -929,7 +939,7 @@ lii_intr(void *v)
 	if (status & (ISR_PHY | ISR_MANUAL)) {
 		/* Ack PHY interrupt.  Magic register */
 		if (status & ISR_PHY)
-			(void)lii_mii_readreg(sc->sc_dev, 1, 19);
+			(void)lii_mii_readreg(sc->sc_dev, 1, 19, &tmp);
 		mii_mediachg(&sc->sc_mii);
 	}
 
@@ -1024,7 +1034,7 @@ lii_txintr(struct lii_softc *sc)
 
 		txs->txps_update = 0;
 
-		txph =  (struct tx_pkt_header *)
+		txph =	(struct tx_pkt_header *)
 		    (sc->sc_txdbase + sc->sc_txd_ack);
 
 		if (txph->txph_size != txs->txps_size)
@@ -1134,23 +1144,9 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				lii_setmulti(sc);
-			error = 0;
-		}
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-		    &sc->sc_mii.mii_media, cmd);
-		break;
+	switch (cmd) {
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				lii_setmulti(sc);
 			error = 0;
@@ -1178,11 +1174,13 @@ lii_setmulti(struct lii_softc *sc)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			mht0 = mht1 = 0;
+			ETHER_UNLOCK(ec);
 			goto alldone;
 		}
 
@@ -1195,6 +1193,7 @@ lii_setmulti(struct lii_softc *sc)
 
 	     ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 alldone:
 	AT_WRITE_4(sc, ATL2_MHT, mht0);

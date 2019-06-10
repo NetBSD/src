@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.210.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210 2018/06/01 07:13:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -406,6 +406,11 @@ rt_ifa_connected(const struct rtentry *rt, const struct ifaddr *ifa)
 void
 rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
+	struct ifaddr *old;
+
+	if (rt->rt_ifa == ifa)
+		return;
+
 	if (rt->rt_ifa &&
 	    rt->rt_ifa != ifa &&
 	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
@@ -424,8 +429,9 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 	}
 
 	ifaref(ifa);
-	ifafree(rt->rt_ifa);
+	old = rt->rt_ifa;
 	rt_set_ifa1(rt, ifa);
+	ifafree(old);
 }
 
 static void
@@ -509,27 +515,27 @@ dump_rt(const struct rtentry *rt)
 {
 	char buf[512];
 
-	aprint_normal("rt: ");
-	aprint_normal("p=%p ", rt);
+	log(LOG_DEBUG, "rt: ");
+	log(LOG_DEBUG, "p=%p ", rt);
 	if (rt->_rt_key == NULL) {
-		aprint_normal("dst=(NULL) ");
+		log(LOG_DEBUG, "dst=(NULL) ");
 	} else {
 		sockaddr_format(rt->_rt_key, buf, sizeof(buf));
-		aprint_normal("dst=%s ", buf);
+		log(LOG_DEBUG, "dst=%s ", buf);
 	}
 	if (rt->rt_gateway == NULL) {
-		aprint_normal("gw=(NULL) ");
+		log(LOG_DEBUG, "gw=(NULL) ");
 	} else {
 		sockaddr_format(rt->_rt_key, buf, sizeof(buf));
-		aprint_normal("gw=%s ", buf);
+		log(LOG_DEBUG, "gw=%s ", buf);
 	}
-	aprint_normal("flags=%x ", rt->rt_flags);
+	log(LOG_DEBUG, "flags=%x ", rt->rt_flags);
 	if (rt->rt_ifp == NULL) {
-		aprint_normal("if=(NULL) ");
+		log(LOG_DEBUG, "if=(NULL) ");
 	} else {
-		aprint_normal("if=%s ", rt->rt_ifp->if_xname);
+		log(LOG_DEBUG, "if=%s ", rt->rt_ifp->if_xname);
 	}
-	aprint_normal("\n");
+	log(LOG_DEBUG, "\n");
 }
 #endif /* RT_DEBUG */
 
@@ -702,8 +708,8 @@ rt_free_work(struct work *wk, void *arg)
 		struct rtentry *rt;
 
 		mutex_enter(&rt_free_global.lock);
-		rt_free_global.enqueued = false;
 		if ((rt = SLIST_FIRST(&rt_free_global.queue)) == NULL) {
+			rt_free_global.enqueued = false;
 			mutex_exit(&rt_free_global.lock);
 			return;
 		}
@@ -726,7 +732,7 @@ rt_free(struct rtentry *rt)
 	}
 
 	mutex_enter(&rt_free_global.lock);
-	rt_ref(rt);
+	/* No need to add a reference here. */
 	SLIST_INSERT_HEAD(&rt_free_global.queue, rt, rt_free);
 	if (!rt_free_global.enqueued) {
 		workqueue_enqueue(rt_free_global.wq, &rt_free_global.wk, NULL);
@@ -1236,7 +1242,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if (rt == NULL)
 			senderr(ENOBUFS);
 		memset(rt, 0, sizeof(*rt));
-		rt->rt_flags = RTF_UP | flags;
+		rt->rt_flags = RTF_UP | (flags & ~RTF_DONTCHANGEIFA);
 		LIST_INIT(&rt->rt_timer);
 
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
@@ -1498,6 +1504,8 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 		}
 		if (new_ifa == NULL)
 			ifa_release(ifa, &psref_ifa);
+		/* To avoid ifa_release below */
+		ifa = NULL;
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
 	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp)) {
@@ -1519,6 +1527,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 	(void)ifp_changed; /* XXX gcc */
 #endif
 out:
+	ifa_release(ifa, &psref_ifa);
 	if_put(new_ifp, &psref_new_ifp);
 	if_put(ifp, &psref_ifp);
 
@@ -1599,7 +1608,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	}
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
-	info.rti_flags = flags | ifa->ifa_flags;
+	info.rti_flags = flags | ifa->ifa_flags | RTF_DONTCHANGEIFA;
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 
@@ -1630,40 +1639,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		rt_unref(rt);
 		break;
 	case RTM_ADD:
-		/*
-		 * XXX it looks just reverting rt_ifa replaced by ifa_rtrequest
-		 * called via rtrequest1. Can we just prevent the replacement
-		 * somehow and remove the following code? And also doesn't
-		 * calling ifa_rtrequest(RTM_ADD) replace rt_ifa again?
-		 */
-		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
-				rt->rt_ifa);
-#ifdef NET_MPSAFE
-			KASSERT(!cpu_softintr_p());
-
-			error = rt_update_prepare(rt);
-			if (error == 0) {
-#endif
-				if (rt->rt_ifa->ifa_rtrequest != NULL) {
-					rt->rt_ifa->ifa_rtrequest(RTM_DELETE,
-					    rt, &info);
-				}
-				rt_replace_ifa(rt, ifa);
-				rt->rt_ifp = ifa->ifa_ifp;
-				if (ifa->ifa_rtrequest != NULL)
-					ifa->ifa_rtrequest(RTM_ADD, rt, &info);
-#ifdef NET_MPSAFE
-				rt_update_finish(rt);
-			} else {
-				/*
-				 * If error != 0, the rtentry is being
-				 * destroyed, so doing nothing doesn't
-				 * matter.
-				 */
-			}
-#endif
-		}
+		KASSERT(rt->rt_ifa == ifa);
 		rt_newmsg(cmd, rt);
 		rt_unref(rt);
 		RT_REFCNT_TRACE(rt);
@@ -1695,17 +1671,16 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		struct rtentry *nrt;
 
 		memset(&info, 0, sizeof(info));
-		info.rti_flags = RTF_HOST | RTF_LOCAL;
+		info.rti_flags = RTF_HOST | RTF_LOCAL | RTF_DONTCHANGEIFA;
 		info.rti_info[RTAX_DST] = ifa->ifa_addr;
 		info.rti_info[RTAX_GATEWAY] =
 		    (const struct sockaddr *)ifa->ifa_ifp->if_sadl;
 		info.rti_ifa = ifa;
 		nrt = NULL;
 		e = rtrequest1(RTM_ADD, &info, &nrt);
-		if (nrt && ifa != nrt->rt_ifa)
-			rt_replace_ifa(nrt, ifa);
-		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
+		rt_addrmsg_rt(RTM_ADD, ifa, e, nrt);
 		if (nrt != NULL) {
+			KASSERT(nrt->rt_ifa == ifa);
 #ifdef RT_DEBUG
 			dump_rt(nrt);
 #endif
@@ -1714,7 +1689,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		}
 	} else {
 		e = 0;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 	}
 	if (rt != NULL)
 		rt_unref(rt);
@@ -1756,13 +1731,27 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 				rt_free(rt);
 				rt = NULL;
 			}
-			rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_DELADDR, ifa);
 		} else {
+#ifdef NET_MPSAFE
+			int error = rt_update_prepare(rt);
+			if (error == 0) {
+				rt_replace_ifa(rt, alt_ifa);
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
+			}
+#else
 			rt_replace_ifa(rt, alt_ifa);
+#endif
 			rt_newmsg(RTM_CHANGE, rt);
 		}
 	} else
-		rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_DELADDR, ifa);
 	if (rt != NULL)
 		rt_unref(rt);
 	return e;
@@ -2088,6 +2077,8 @@ rtcache_ref(struct rtentry *rt, struct route *ro)
 #ifdef NET_MPSAFE
 	RTCACHE_PSREF_TRACE(rt, ro);
 	ro->ro_bound = curlwp_bind();
+	/* XXX Use a real caller's address */
+	PSREF_DEBUG_FILL_RETURN_ADDRESS(&ro->ro_psref);
 	psref_acquire(&ro->ro_psref, &rt->rt_psref, rt_psref_class);
 #endif
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i_a80_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $ */
+/* $NetBSD: sun9i_a80_gpio.c,v 1.2.2.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun9i_a80_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun9i_a80_gpio.c,v 1.2.2.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,9 +213,11 @@ static const struct sunxi_gpio_pins a80_r_pins[] = {
 const struct sunxi_gpio_padconf sun9i_a80_padconf = {
 	.npins = __arraycount(a80_pins),
 	.pins = a80_pins,
+	.has_io_bias_config = true,
 };
 
 const struct sunxi_gpio_padconf sun9i_a80_r_padconf = {
 	.npins = __arraycount(a80_r_pins),
 	.pins = a80_r_pins,
+	.has_io_bias_config = true,
 };

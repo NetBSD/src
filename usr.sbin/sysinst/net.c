@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.24 2018/05/18 12:23:22 joerg Exp $	*/
+/*	$NetBSD: net.c,v 1.24.2.1 2019/06/10 22:10:38 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -849,6 +849,17 @@ done:
 	return network_up;
 }
 
+const char *
+url_proto(unsigned int xfer)
+{
+	switch (xfer) {
+	case XFER_FTP:	return "ftp";
+	case XFER_HTTP:	return "http";
+	}
+
+	return "";
+}
+
 void
 make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 {
@@ -892,29 +903,30 @@ make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 			ftp_dir_encoded + sizeof ftp_dir_encoded,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
-	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", f->xfer_type,
-	    ftp_user_encoded, f->host, ftp_dir_encoded);
+	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", url_proto(f->xfer),
+	    ftp_user_encoded, f->xfer_host[f->xfer], ftp_dir_encoded);
 }
 
 
 /* ftp_fetch() and pkgsrc_fetch() are essentially the same, with a different
- * ftpinfo var. */
-static int do_ftp_fetch(const char *, struct ftpinfo *);
+ * ftpinfo var and pkgsrc always using .tgz suffix, while for
+ * regular sets we only use .tgz for source sets on some architectures. */
+static int do_ftp_fetch(const char *, bool, struct ftpinfo *);
 
 static int
 ftp_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, &ftp);
+	return do_ftp_fetch(set_name, use_tgz_for_set(set_name), &ftp);
 }
 
 static int
 pkgsrc_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, &pkgsrc);
+	return do_ftp_fetch(set_name, true, &pkgsrc);
 }
 
 static int
-do_ftp_fetch(const char *set_name, struct ftpinfo *f)
+do_ftp_fetch(const char *set_name, bool force_tgz, struct ftpinfo *f)
 {
 	const char *ftp_opt;
 	char url[STRSIZE];
@@ -933,7 +945,8 @@ do_ftp_fetch(const char *set_name, struct ftpinfo *f)
 	make_url(url, f, set_dir_for_set(set_name));
 	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR,
 		    "/usr/bin/ftp %s%s/%s%s",
-		    ftp_opt, url, set_name, dist_postfix);
+		    ftp_opt, url, set_name,
+		    force_tgz ? dist_tgz_postfix : dist_postfix);
 
 	return rval ? SET_RETRY : SET_OK;
 }
@@ -959,12 +972,12 @@ get_pkgsrc(void)
 }
 
 int
-get_via_ftp(const char *xfer_type)
+get_via_ftp(unsigned int xfer)
 {
 	arg_rv arg;
 
 	arg.rv = -1;
-	arg.arg = __UNCONST(xfer_type);
+	arg.arg = (void*)(uintptr_t)(xfer);
 	process_menu(MENU_ftpsource, &arg);
 	
 	if (arg.rv == SET_RETRY)
@@ -972,7 +985,7 @@ get_via_ftp(const char *xfer_type)
 
 	/* We'll fetch each file just before installing it */
 	fetch_fn = ftp_fetch;
-	ftp.xfer_type = xfer_type;
+	ftp.xfer = xfer;
 	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", target_prefix(),
 	    xfer_dir + (*xfer_dir == '/'));
 	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", target_prefix(),

@@ -1,6 +1,6 @@
 /* tpow -- test file for mpc_pow.
 
-Copyright (C) 2009, 2011 INRIA
+Copyright (C) 2009, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -34,8 +34,8 @@ reuse_bug (void)
        mpc_init2 (y, prec);
        mpc_init2 (z, prec);
    
-       mpfr_set_ui (mpc_realref (x), 0ul, GMP_RNDN);
-       mpfr_set_ui_2exp (mpc_imagref (x), 3ul, -2, GMP_RNDN);
+       mpfr_set_ui (mpc_realref (x), 0ul, MPFR_RNDN);
+       mpfr_set_ui_2exp (mpc_imagref (x), 3ul, -2, MPFR_RNDN);
        mpc_set_ui (y, 8ul, MPC_RNDNN);
 
        mpc_pow (z, x, y, MPC_RNDNN);
@@ -52,18 +52,26 @@ reuse_bug (void)
      }
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_pow (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_pow (P[1].mpc, P[1].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_pow (P[1].mpc, P[2].mpc, P[1].mpc, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 
 int
 main (void)
 {
-  DECL_FUNC (C_CC, f, mpc_pow);
-
   test_start ();
 
   reuse_bug ();
 
-  data_check (f, "pow.dat");
-  tgeneric (f, 2, 1024, 7, 10);
+  data_check_template ("pow.dsc", "pow.dat");
+
+  tgeneric_template ("pow.dsc", 2, 1024, 7, 10);
 
   test_end ();
 

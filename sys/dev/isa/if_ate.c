@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.50 2008/04/12 06:27:01 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.50.92.1 2019/06/10 22:07:12 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.50 2008/04/12 06:27:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.50.92.1 2019/06/10 22:07:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 			*irq = irqmap[1][n];
 			break;
 		}
+		/* FALLTHROUGH */
 	default:
 		*irq = irqmap[0][n];
 		break;

@@ -1,6 +1,6 @@
 /* Native-dependent code for modern VAX BSD's.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,20 @@
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
 
+#ifdef __NetBSD__
+#include "nbsd-nat.h"
+struct vax_bsd_nat_target final : public nbsd_nat_target
+#else
+struct vax_bsd_nat_target final : public inf_ptrace_target
+#endif
+
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static vax_bsd_nat_target the_vax_bsd_nat_target;
+
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -41,7 +55,7 @@ vaxbsd_supply_gregset (struct regcache *regcache, const void *gregs)
   int regnum;
 
   for (regnum = 0; regnum < VAX_NUM_REGS; regnum++)
-    regcache_raw_supply (regcache, regnum, regs + regnum * 4);
+    regcache->raw_supply (regnum, regs + regnum * 4);
 }
 
 /* Collect the general-purpose registers from REGCACHE and store them
@@ -57,7 +71,7 @@ vaxbsd_collect_gregset (const struct regcache *regcache,
   for (i = 0; i <= VAX_NUM_REGS; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, i, regs + i * 4);
+	regcache->raw_collect (i, regs + i * 4);
     }
 }
 
@@ -65,14 +79,15 @@ vaxbsd_collect_gregset (const struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
 
-static void
-vaxbsd_fetch_inferior_registers (struct target_ops *ops,
-				 struct regcache *regcache, int regnum)
+void
+vax_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_supply_gregset (regcache, &regs);
@@ -81,19 +96,20 @@ vaxbsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers.  */
 
-static void
-vaxbsd_store_inferior_registers (struct target_ops *ops,
-				 struct regcache *regcache, int regnum)
+void
+vax_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_collect_gregset (regcache, &regs, regnum);
 
-  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
@@ -119,29 +135,20 @@ vaxbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   for (regnum = VAX_R0_REGNUM; regnum < VAX_AP_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, &pcb->R[regnum - VAX_R0_REGNUM]);
-  regcache_raw_supply (regcache, VAX_AP_REGNUM, &pcb->AP);
-  regcache_raw_supply (regcache, VAX_FP_REGNUM, &pcb->FP);
-  regcache_raw_supply (regcache, VAX_SP_REGNUM, &pcb->KSP);
-  regcache_raw_supply (regcache, VAX_PC_REGNUM, &pcb->PC);
-  regcache_raw_supply (regcache, VAX_PS_REGNUM, &pcb->PSL);
+    regcache->raw_supply (regnum, &pcb->R[regnum - VAX_R0_REGNUM]);
+  regcache->raw_supply (VAX_AP_REGNUM, &pcb->AP);
+  regcache->raw_supply (VAX_FP_REGNUM, &pcb->FP);
+  regcache->raw_supply (VAX_SP_REGNUM, &pcb->KSP);
+  regcache->raw_supply (VAX_PC_REGNUM, &pcb->PC);
+  regcache->raw_supply (VAX_PS_REGNUM, &pcb->PSL);
 
   return 1;
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_vaxbsd_nat (void);
 
 void
 _initialize_vaxbsd_nat (void)
 {
-  struct target_ops *t;
-
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = vaxbsd_fetch_inferior_registers;
-  t->to_store_registers = vaxbsd_store_inferior_registers;
-  add_target (t);
+  add_inf_child_target (&the_vax_bsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (vaxbsd_supply_pcb);

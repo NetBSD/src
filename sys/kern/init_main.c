@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.497 2018/04/16 14:51:59 kamil Exp $	*/
+/*	$NetBSD: init_main.c,v 1.497.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.497 2018/04/16 14:51:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.497.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -178,6 +178,7 @@ extern void *_binary_splash_image_end;
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
 #include <sys/bufq.h>
+#include <sys/threadpool.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -194,6 +195,7 @@ extern void *_binary_splash_image_end;
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 #include <sys/cprng.h>
+#include <sys/psref.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -392,6 +394,9 @@ main(void)
 	procinit();
 	lwpinit();
 
+	/* Must be called after lwpinit (lwpinit_specificdata) */
+	psref_init();
+
 	/* Initialize signal-related data structures. */
 	signal_init();
 
@@ -404,6 +409,9 @@ main(void)
 
 	/* Disable preemption during boot. */
 	kpreempt_disable();
+
+	/* Initialize the threadpool system. */
+	threadpools_init();
 
 	/* Initialize the UID hash table. */
 	uid_init();
@@ -462,11 +470,12 @@ main(void)
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
-	vfsinit();
-	lf_init();
 
 	/* Initialize fstrans. */
 	fstrans_init();
+
+	vfsinit();
+	lf_init();
 
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
@@ -572,6 +581,7 @@ main(void)
 	lltableinit();
 #endif
 	domaininit(true);
+	ifinit_post();
 	if_attachdomain();
 	splx(s);
 
@@ -610,6 +620,14 @@ main(void)
 	 */
 	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL))
 		panic("fork init");
+
+	/*
+	 * The initproc variable cannot be initialized in start_init as there
+	 * is a race between vfs_mountroot and start_init.
+	 */
+	mutex_enter(proc_lock);
+	initproc = proc_find_raw(1);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
@@ -662,7 +680,16 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	getnanotime(&time);
-	boottime = time;
+	{
+		struct timespec ut;
+		/*
+		 * was:
+		 *	boottime = time;
+		 * but we can do better
+		 */
+		nanouptime(&ut);
+		timespecsub(&time, &ut, &boottime);
+	}
 
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -888,12 +915,14 @@ check_console(struct lwp *l)
 
 	error = namei_simple_kernel("/dev/console",
 				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error == 0)
+	if (error == 0) {
 		vrele(vp);
-	else if (error == ENOENT)
-		printf("warning: no /dev/console\n");
-	else
+	} else if (error == ENOENT) {
+		if (boothowto & (AB_VERBOSE|AB_DEBUG))
+			printf("warning: no /dev/console\n");
+	} else {
 		printf("warning: lookup /dev/console: error %d\n", error);
+	}
 }
 
 /*
@@ -929,8 +958,6 @@ start_init(void *arg)
 	char *ucp, **uap, *arg0, *arg1, *argv[3];
 	char ipath[129];
 	int ipx, len;
-
-	initproc = p;
 
 	/*
 	 * Now in process 1.

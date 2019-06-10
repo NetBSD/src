@@ -4485,9 +4485,9 @@ static void
 s3_do_macro_bcmp (char *str)
 {
   int reg_a , reg_b;
-  char keep_data[s3_MAX_LITERAL_POOL_SIZE];
-  char* ptemp;
-  int i = 0;
+  char *keep_data;
+  size_t keep_data_size;
+  int i;
   struct s3_score_it inst_expand[2];
   struct s3_score_it inst_main;
 
@@ -4498,26 +4498,23 @@ s3_do_macro_bcmp (char *str)
       ||(reg_b = s3_reg_required_here (&str, 10, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL)
     return;
-  ptemp = str;
-  while (*ptemp != 0)
-    {
-      keep_data[i] = *ptemp;
-      i++;
-      ptemp++;
-    }
-  keep_data[i] = 0;
+
+  keep_data_size = strlen (str) + 1;
+  keep_data = xmalloc (keep_data_size * 2 + 14);
+  memcpy (keep_data, str, keep_data_size);
+
   if (s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL
       ||reg_b == 0
       || s3_end_of_line (str) == (int) s3_FAIL)
-    return;
+    goto out;
   else if (s3_inst.reloc.exp.X_add_symbol == 0)
     {
       s3_inst.error = _("lacking label  ");
-      return;
+      goto out;
     }
   else
     {
-      char append_str[s3_MAX_LITERAL_POOL_SIZE];
+      char *append_str = keep_data + keep_data_size;
       s3_SET_INSN_ERROR (NULL);
 
       s3_inst.reloc.type = BFD_RELOC_SCORE_BCMP;
@@ -4536,15 +4533,15 @@ s3_do_macro_bcmp (char *str)
           /* support bcmp --> cmp!+beq (bne) */
           if (s3_score_pic == s3_NO_PIC)
             {
-              sprintf (&append_str[0], "cmp! r%d, r%d", reg_a, reg_b);
-              if (s3_append_insn (&append_str[0], TRUE) == (int) s3_FAIL)
-                return;
-              if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
-                sprintf (&append_str[1], "beq %s", keep_data);
-              else
-                sprintf (&append_str[1], "bne %s", keep_data);
-              if (s3_append_insn (&append_str[1], TRUE) == (int) s3_FAIL)
-                return;
+	      sprintf (append_str, "cmp! r%d, r%d", reg_a, reg_b);
+	      if (s3_append_insn (append_str, TRUE) == (int) s3_FAIL)
+		goto out;
+	      if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
+		sprintf (append_str, "beq %s", keep_data);
+	      else
+		sprintf (append_str, "bne %s", keep_data);
+	      if (s3_append_insn (append_str, TRUE) == (int) s3_FAIL)
+		goto out;
 	    }
 	  else
 	    {
@@ -4552,7 +4549,7 @@ s3_do_macro_bcmp (char *str)
 	    }
 	  /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
 	  s3_inst.bwarn = -1;
-	  return;
+	  goto out;
         }
       else
         {
@@ -4567,18 +4564,18 @@ s3_do_macro_bcmp (char *str)
 
       if (s3_score_pic == s3_NO_PIC)
         {
-          sprintf (&append_str[0], "cmp! r%d, r%d", reg_a, reg_b);
-          if (s3_append_insn (&append_str[0], FALSE) == (int) s3_FAIL)
-            return;
-          memcpy (&inst_expand[0], &s3_inst, sizeof (struct s3_score_it));
+	  sprintf (append_str, "cmp! r%d, r%d", reg_a, reg_b);
+	  if (s3_append_insn (append_str, FALSE) == (int) s3_FAIL)
+	    goto out;
+	  memcpy (&inst_expand[0], &s3_inst, sizeof (struct s3_score_it));
 
-          if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
-            sprintf (&append_str[1], "beq %s", keep_data);
-          else
-            sprintf (&append_str[1], "bne %s", keep_data);
-          if (s3_append_insn (&append_str[1], FALSE) == (int) s3_FAIL)
-            return;
-          memcpy (&inst_expand[1], &s3_inst, sizeof (struct s3_score_it));
+	  if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
+	    sprintf (append_str, "beq %s", keep_data);
+	  else
+	    sprintf (append_str, "bne %s", keep_data);
+	  if (s3_append_insn (append_str, FALSE) == (int) s3_FAIL)
+	    goto out;
+	  memcpy (&inst_expand[1], &s3_inst, sizeof (struct s3_score_it));
         }
       else
         {
@@ -4634,6 +4631,8 @@ s3_do_macro_bcmp (char *str)
       /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
       s3_inst.bwarn = -1;
     }
+ out:
+  free (keep_data);
 }
 
 /* Handle bcmpeqz / bcmpnez  */
@@ -4641,9 +4640,9 @@ static void
 s3_do_macro_bcmpz (char *str)
 {
   int reg_a;
-  char keep_data[s3_MAX_LITERAL_POOL_SIZE];
-  char* ptemp;
-  int i = 0;
+  char *keep_data;
+  size_t keep_data_size;
+  int i;
   struct s3_score_it inst_expand[2];
   struct s3_score_it inst_main;
 
@@ -4652,27 +4651,22 @@ s3_do_macro_bcmpz (char *str)
   if (( reg_a = s3_reg_required_here (&str, 15, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL)
     return;
-  ptemp = str;
-  while (*ptemp != 0)
-    {
-      keep_data[i] = *ptemp;
-      i++;
-      ptemp++;
-    }
 
-  keep_data[i] = 0;
+  keep_data_size = strlen (str) + 1;
+  keep_data = xmalloc (keep_data_size * 2 + 13);
+  memcpy (keep_data, str, keep_data_size);
 
   if (s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL
       || s3_end_of_line (str) == (int) s3_FAIL)
-    return;
+    goto out;
   else if (s3_inst.reloc.exp.X_add_symbol == 0)
     {
       s3_inst.error = _("lacking label  ");
-      return;
+      goto out;
     }
   else
     {
-      char append_str[s3_MAX_LITERAL_POOL_SIZE];
+      char *append_str = keep_data + keep_data_size;
       s3_SET_INSN_ERROR (NULL);
       s3_inst.reloc.type = BFD_RELOC_SCORE_BCMP;
       s3_inst.reloc.pc_rel = 1;
@@ -4687,15 +4681,15 @@ s3_do_macro_bcmpz (char *str)
         {
           if (s3_score_pic == s3_NO_PIC)
             {
-              sprintf (&append_str[0], "cmpi! r%d,0", reg_a);
-              if (s3_append_insn (&append_str[0], TRUE) == (int) s3_FAIL)
-                return;
-              if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
-                sprintf (&append_str[1], "beq %s", keep_data);
-              else
-                sprintf (&append_str[1], "bne %s", keep_data);
-              if (s3_append_insn (&append_str[1], TRUE) == (int) s3_FAIL)
-                return;
+	      sprintf (append_str, "cmpi! r%d, 0", reg_a);
+	      if (s3_append_insn (append_str, TRUE) == (int) s3_FAIL)
+		goto out;
+	      if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
+		sprintf (append_str, "beq %s", keep_data);
+	      else
+		sprintf (append_str, "bne %s", keep_data);
+	      if (s3_append_insn (append_str, TRUE) == (int) s3_FAIL)
+		goto out;
             }
           else
             {
@@ -4703,7 +4697,7 @@ s3_do_macro_bcmpz (char *str)
             }
           /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
           s3_inst.bwarn = -1;
-          return;
+	  goto out;
         }
       else
         {
@@ -4718,17 +4712,17 @@ s3_do_macro_bcmpz (char *str)
 
       if (s3_score_pic == s3_NO_PIC)
         {
-          sprintf (&append_str[0], "cmpi! r%d, 0", reg_a);
-          if (s3_append_insn (&append_str[0], FALSE) == (int) s3_FAIL)
-            return;
-          memcpy (&inst_expand[0], &s3_inst, sizeof (struct s3_score_it));
-          if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
-            sprintf (&append_str[1], "beq %s", keep_data);
-          else
-            sprintf (&append_str[1], "bne %s", keep_data);
-          if (s3_append_insn (&append_str[1], FALSE) == (int) s3_FAIL)
-            return;
-          memcpy (&inst_expand[1], &s3_inst, sizeof (struct s3_score_it));
+	  sprintf (append_str, "cmpi! r%d, 0", reg_a);
+	  if (s3_append_insn (append_str, FALSE) == (int) s3_FAIL)
+	    goto out;
+	  memcpy (&inst_expand[0], &s3_inst, sizeof (struct s3_score_it));
+	  if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
+	    sprintf (append_str, "beq %s", keep_data);
+	  else
+	    sprintf (append_str, "bne %s", keep_data);
+	  if (s3_append_insn (append_str, FALSE) == (int) s3_FAIL)
+	    goto out;
+	  memcpy (&inst_expand[1], &s3_inst, sizeof (struct s3_score_it));
         }
       else
         {
@@ -4784,6 +4778,8 @@ s3_do_macro_bcmpz (char *str)
       /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
       s3_inst.bwarn = -1;
     }
+ out:
+  free (keep_data);
 }
 
 static int
@@ -6217,8 +6213,7 @@ s3_s_score_lcomm (int bytes_p)
   *p = c;
 
   if (
-#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT)	\
-     || defined (OBJ_BOUT) || defined (OBJ_MAYBE_BOUT))
+#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
 #ifdef BFD_ASSEMBLER
       (OUTPUT_FLAVOR != bfd_target_aout_flavour
        || (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0)) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.3 2018/05/25 15:52:11 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.3.2.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -95,15 +95,15 @@ IDTVEC(trap10)
 IDTVEC_END(trap10)
 
 IDTVEC(trap11)
-	ZTRAPENTRY(T_SEGNPFLT)
+	TRAPENTRY(T_SEGNPFLT)
 IDTVEC_END(trap11)
 
 IDTVEC(trap12)
-	ZTRAPENTRY(T_STKFLT)
+	TRAPENTRY(T_STKFLT)
 IDTVEC_END(trap12)
 
 IDTVEC(trap13)
-	ZTRAPENTRY(T_PROTFLT)
+	TRAPENTRY(T_PROTFLT)
 IDTVEC_END(trap13)
 
 IDTVEC(trap14)
@@ -167,7 +167,7 @@ IDTVEC_END(trap20)
  *  sf_rsp
  *  sf_ss
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	/* NOTREACHED */

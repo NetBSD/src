@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.177 2018/05/11 14:07:58 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.177.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.177 2018/05/11 14:07:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.177.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -162,21 +162,15 @@ rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
  * mbuf chain.
  */
 void
-rip_input(struct mbuf *m, ...)
+rip_input(struct mbuf *m, int off, int proto)
 {
-	int hlen, proto;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct inpcb *last = NULL;
 	struct mbuf *n;
 	struct sockaddr_in ripsrc;
-	va_list ap;
-
-	va_start(ap, m);
-	(void)va_arg(ap, int);		/* ignore value, advance ap */
-	proto = va_arg(ap, int);
-	va_end(ap);
+	int hlen;
 
 	sockaddr_in_init(&ripsrc, &ip->ip_src, 0);
 
@@ -505,6 +499,8 @@ rip_connect_pcb(struct inpcb *inp, struct sockaddr_in *addr)
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
+	if (addr->sin_len != sizeof(*addr))
+		return EINVAL;
 	inp->inp_faddr = addr->sin_addr;
 	return (0);
 }

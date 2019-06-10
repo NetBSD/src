@@ -1,6 +1,6 @@
 /* mpfr_const_log2 -- compute natural logarithm of 2
 
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,21 +25,11 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Declare the cache */
 #ifndef MPFR_USE_LOGGING
-MPFR_DECL_INIT_CACHE(__gmpfr_cache_const_log2, mpfr_const_log2_internal);
+MPFR_DECL_INIT_CACHE (__gmpfr_cache_const_log2, mpfr_const_log2_internal)
 #else
-MPFR_DECL_INIT_CACHE(__gmpfr_normal_log2, mpfr_const_log2_internal);
-MPFR_DECL_INIT_CACHE(__gmpfr_logging_log2, mpfr_const_log2_internal);
-MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_log2 = __gmpfr_normal_log2;
-#endif
-
-#ifdef MPFR_WIN_THREAD_SAFE_DLL
-# ifndef MPFR_USE_LOGGING
-mpfr_cache_t   * __gmpfr_cache_const_log2_f() { return &__gmpfr_cache_const_log2; }
-# else
-mpfr_cache_t   * __gmpfr_normal_log2_f()      { return &__gmpfr_normal_log2; }
-mpfr_cache_t   * __gmpfr_logging_log2_f()     { return &__gmpfr_logging_log2; }
-mpfr_cache_ptr * __gmpfr_cache_const_log2_f() { return &__gmpfr_cache_const_log2; }
-# endif
+MPFR_DECL_INIT_CACHE (__gmpfr_normal_log2, mpfr_const_log2_internal)
+MPFR_DECL_INIT_CACHE (__gmpfr_logging_log2, mpfr_const_log2_internal)
+MPFR_THREAD_VAR (mpfr_cache_ptr, __gmpfr_cache_const_log2, __gmpfr_normal_log2)
 #endif
 
 /* Set User interface */
@@ -127,33 +117,23 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
   mpz_t *T, *P, *Q;
   mpfr_t t, q;
   int inexact;
-  int ok = 1; /* ensures that the 1st try will give correct rounding */
   unsigned long lgN, i;
-  MPFR_ZIV_DECL (loop);
+  MPFR_GROUP_DECL(group);
+  MPFR_TMP_DECL(marker);
+  MPFR_ZIV_DECL(loop);
 
   MPFR_LOG_FUNC (
     ("rnd_mode=%d", rnd_mode),
     ("x[%Pu]=%.*Rg inex=%d", mpfr_get_prec(x), mpfr_log_prec, x, inexact));
 
-  mpfr_init2 (t, MPFR_PREC_MIN);
-  mpfr_init2 (q, MPFR_PREC_MIN);
-
-  if (n < 1253)
-    w = n + 10; /* ensures correct rounding for the four rounding modes,
+  if (n < 1069)
+    w = n + 9; /* ensures correct rounding for the four rounding modes,
                    together with N = w / 3 + 1 (see below). */
-  else if (n < 2571)
-    w = n + 11; /* idem */
-  else if (n < 3983)
-    w = n + 12;
-  else if (n < 4854)
-    w = n + 13;
-  else if (n < 26248)
-    w = n + 14;
   else
-    {
-      w = n + 15;
-      ok = 0;
-    }
+    w = n + 10; /* idem at least for prec < 300000 */
+
+  MPFR_TMP_MARK(marker);
+  MPFR_GROUP_INIT_2(group, w, t, q);
 
   MPFR_ZIV_INIT (loop, w);
   for (;;)
@@ -166,7 +146,7 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
       MPFR_ASSERTD(w >= 3 && N >= 2);
 
       lgN = MPFR_INT_CEIL_LOG2 (N) + 1;
-      T  = (mpz_t *) (*__gmp_allocate_func) (3 * lgN * sizeof (mpz_t));
+      T  = (mpz_t *) MPFR_TMP_ALLOC (3 * lgN * sizeof (mpz_t));
       P  = T + lgN;
       Q  = T + 2*lgN;
       for (i = 0; i < lgN; i++)
@@ -178,9 +158,6 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
 
       S (T, P, Q, 0, N, 0);
 
-      mpfr_set_prec (t, w);
-      mpfr_set_prec (q, w);
-
       mpfr_set_z (t, T[0], MPFR_RNDN);
       mpfr_set_z (q, Q[0], MPFR_RNDN);
       mpfr_div (t, t, q, MPFR_RNDN);
@@ -191,20 +168,21 @@ mpfr_const_log2_internal (mpfr_ptr x, mpfr_rnd_t rnd_mode)
           mpz_clear (P[i]);
           mpz_clear (Q[i]);
         }
-      (*__gmp_free_func) (T, 3 * lgN * sizeof (mpz_t));
 
-      if (MPFR_LIKELY (ok != 0
-                       || mpfr_can_round (t, w - 2, MPFR_RNDN, rnd_mode, n)))
+      /* for prec < 300000 and all rounding modes we checked by exhaustive
+         search that the rounding is correct */
+      if (MPFR_LIKELY (n < 300000 || MPFR_CAN_ROUND (t, w - 2, n, rnd_mode)))
         break;
 
       MPFR_ZIV_NEXT (loop, w);
+      MPFR_GROUP_REPREC_2(group, w, t, q);
     }
   MPFR_ZIV_FREE (loop);
 
   inexact = mpfr_set (x, t, rnd_mode);
 
-  mpfr_clear (t);
-  mpfr_clear (q);
+  MPFR_GROUP_CLEAR(group);
+  MPFR_TMP_FREE(marker);
 
   return inexact;
 }

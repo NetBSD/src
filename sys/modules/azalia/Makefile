@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/08/28 15:40:50 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2.54.1 2019/06/10 22:09:11 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -9,5 +9,7 @@ IOCONF=	azalia.ioconf
 
 SRCS=	azalia.c
 SRCS+=	azalia_codec.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

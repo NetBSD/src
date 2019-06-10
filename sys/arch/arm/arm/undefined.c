@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.62 2018/05/28 21:05:00 chs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.62.2.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.62 2018/05/28 21:05:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.62.2.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -343,12 +343,12 @@ undefinedinstruction(trapframe_t *tf)
 			return;
 		}
 	 	/*
-		 * Should use fuword() here .. but in the interests of
-		 * squeezing every  bit of speed we will just use
-		 * ReadWord(). We know the instruction can be read
+		 * Should use ufetch_32() here .. but in the interests of
+		 * squeezing every bit of speed we will just use
+		 * read_insn(). We know the instruction can be read
 		 * as was just executed so this will never fail unless
 		 * the kernel is screwed up in which case it does
-		 * not really matter does it ?
+		 * not really matter does it?
 		 */
 		fault_instruction = read_insn(fault_pc, user);
 	}
@@ -399,10 +399,13 @@ undefinedinstruction(trapframe_t *tf)
 		fault_code = 0;
 
 	/* OK this is were we do something about the instruction. */
-	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
-	    if (uh->uh_handler(fault_pc, fault_instruction, tf,
-			       fault_code) == 0)
-		    break;
+	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link) {
+		int ret = uh->uh_handler(fault_pc, fault_instruction, tf,
+		    fault_code);
+
+		if (ret == 0)
+			break;
+	}
 
 	if (uh == NULL) {
 		/* Fault has not been handled */

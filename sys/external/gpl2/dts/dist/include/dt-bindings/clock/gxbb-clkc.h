@@ -1,4 +1,4 @@
-/*	$NetBSD: gxbb-clkc.h,v 1.1.1.5 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: gxbb-clkc.h,v 1.1.1.5.2.1 2019/06/10 22:08:54 christos Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -129,5 +129,24 @@
 #define CLKID_VAPB		140
 #define CLKID_VDEC_1		153
 #define CLKID_VDEC_HEVC		156
+#define CLKID_GEN_CLK		159
+#define CLKID_VID_PLL		166
+#define CLKID_VCLK		175
+#define CLKID_VCLK2		176
+#define CLKID_VCLK_DIV1		185
+#define CLKID_VCLK_DIV2		186
+#define CLKID_VCLK_DIV4		187
+#define CLKID_VCLK_DIV6		188
+#define CLKID_VCLK_DIV12	189
+#define CLKID_VCLK2_DIV1	190
+#define CLKID_VCLK2_DIV2	191
+#define CLKID_VCLK2_DIV4	192
+#define CLKID_VCLK2_DIV6	193
+#define CLKID_VCLK2_DIV12	194
+#define CLKID_CTS_ENCI		199
+#define CLKID_CTS_ENCP		200
+#define CLKID_CTS_VDAC		201
+#define CLKID_HDMI_TX		202
+#define CLKID_HDMI		205
 
 #endif /* __GXBB_CLKC_H */

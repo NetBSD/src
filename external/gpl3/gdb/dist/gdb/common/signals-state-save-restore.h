@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,9 +28,10 @@
    back to what was originally inherited from gdb/gdbserver's parent,
    just before execing the target program to debug.  */
 
-/* Save the signal state of all signals.  */
+/* Save the signal state of all signals.  If !QUIET, warn if we detect
+   a custom signal handler preinstalled.  */
 
-extern void save_original_signals_state (void);
+extern void save_original_signals_state (bool quiet);
 
 /* Restore the signal state of all signals.  */
 

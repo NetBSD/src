@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.73.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -90,7 +90,7 @@ void uhidev_attach(device_t, device_t, void *);
 void uhidev_childdet(device_t, device_t);
 int uhidev_detach(device_t, int);
 int uhidev_activate(device_t, enum devact);
-extern struct cfdriver uhidev_cd;
+
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
@@ -395,7 +395,7 @@ uhidev_maxrepid(void *buf, int len)
 	maxid = -1;
 	h.report_ID = 0;
 	for (d = hid_start_parse(buf, len, hid_none); hid_get_item(d, &h); )
-		if (h.report_ID > maxid)
+		if ((int)h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
 	return maxid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.53.4.1 2019/06/10 22:10:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.53.4.1 2019/06/10 22:10:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $");
 
 #include "systat.h"
 #include "extern.h"
+#include "drvstats.h"
 
 static int     dellave;
 
@@ -66,7 +67,7 @@ char	*nlistf = NULL;
 sig_t	sigtstpdfl;
 double avenrun[3];
 int     col;
-double	naptime = 5;
+double	naptime = 1;
 int     verbose = 1;                    /* to report kvm read errs */
 int     hz, stathz, maxslp;
 char    c;
@@ -78,6 +79,8 @@ int     turns = 2;	/* stay how many refresh-turns in 'all' mode? */
 int     allflag;
 int     allcounter;
 sig_atomic_t needsredraw = 0;
+float	hertz;
+double	etime;
 
 static	WINDOW *wload;			/* one line window for load average */
 
@@ -173,10 +176,8 @@ main(int argc, char **argv)
 		(void)setegid(egid);
 
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
-	if (kd == NULL) {
-		error("%s", errbuf);
-		exit(1);
-	}
+	if (kd == NULL)
+		errx(1, "%s", errbuf);
 
 	/* Get rid of privs for now. */
 	if (nlistf == NULL && memf == NULL)
@@ -194,19 +195,24 @@ main(int argc, char **argv)
 	 * routines to minimize update work by curses.
 	 */
 	if (initscr() == NULL)
-	{
-		warnx("couldn't initialize screen");
-		exit(0);
-	}
+		errx(1, "couldn't initialize screen");
 
 	CMDLINE = LINES - 1;
 	wnd = (*curmode->c_open)();
 	if (wnd == NULL) {
+		move(CMDLINE, 0);
+		clrtoeol();
+		refresh();
+		endwin();
 		warnx("couldn't initialize display");
 		die(0);
 	}
 	wload = newwin(1, 0, 3, 20);
 	if (wload == NULL) {
+		move(CMDLINE, 0);
+		clrtoeol();
+		refresh();
+		endwin();
 		warnx("couldn't set up load average window");
 		die(0);
 	}
@@ -329,7 +335,6 @@ display(int signo)
 void
 redraw(void)
 {
-	resizeterm(LINES, COLS);
 	CMDLINE = LINES - 1;
 	labels();
 
@@ -411,7 +416,33 @@ nlisterr(struct nlist name_list[])
 	move(CMDLINE, 0);
 	clrtoeol();
 	refresh();
-	sleep(5);
 	endwin();
 	exit(1);
+}
+
+bool
+toofast(int *failcnt)
+{
+	static char pigs[] = "pigs";
+	etime = cur.cp_etime;
+	/* < 1 ticks - sleep for a tick */
+	/* this is often triggered by repeated SIGWINCH */
+	if ((etime * hertz) >= 1.0)
+		return false;
+
+	if ((*failcnt)++ <= MAXFAIL) {
+		struct timespec interval = { 0, 1000000000L / hertz };
+		while (nanosleep(&interval, &interval) == -1)
+			continue;
+		return true;
+	}
+	clear();
+	mvprintw(2, 10, "The alternate system clock has died!");
+	mvprintw(3, 10, "Reverting to ``pigs'' display.");
+	move(CMDLINE, 0);
+	refresh();
+	failcnt = 0;
+	sleep(5);
+	command(pigs);
+	return true;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.179 2018/03/06 06:04:21 spz Exp $
+#	$NetBSD: files.amiga,v 1.179.2.1 2019/06/10 22:05:48 christos Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -118,11 +118,11 @@ device	melody: audiobus, tms320av110
 attach	melody at zbus
 file	arch/amiga/dev/melody.c		melody
 
-device repulse: audiobus, ac97, mulaw
+device repulse: audiobus, ac97
 attach	repulse at zbus
 file	arch/amiga/dev/repulse.c	repulse
 
-device toccata: audiobus, ad1848, auconv
+device toccata: audiobus, ad1848
 attach	toccata at zbus
 file	arch/amiga/dev/toccata.c	toccata
 
@@ -313,14 +313,6 @@ file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
 
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
-
-# ISDN Blaster, ISDN Master
-device	aster: supio
-attach	aster at zbus
-file	arch/amiga/dev/aster.c		aster
-
-attach	isic at supio with isic_supio
-file	arch/amiga/dev/isic_supio.c isic_supio
 
 # handle gvp's odd autoconf info..
 device	gvpbus {}
@@ -513,9 +505,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

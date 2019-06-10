@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.89 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: MALTA,v 1.89.4.1 2019/06/10 22:06:12 christos Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.89 $"
+#ident 		"MALTA-$Revision: 1.89.4.1 $"
 
 maxusers	32
 
@@ -45,7 +45,6 @@ include         "conf/compat_netbsd16.config"
 
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems
@@ -77,6 +76,11 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
@@ -89,10 +93,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -214,7 +214,6 @@ wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
 ath*		at pci? dev ? function ?	# Atheros WLAN 
-#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[B]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -231,7 +230,6 @@ options 	SIP_EVENT_COUNTERS
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 #tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
@@ -297,7 +295,8 @@ pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
-pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
@@ -316,7 +315,10 @@ pseudo-device	bridge				# simple inter-network bridging
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer			# MIDI sequencer
 pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	drvctl				# user control of drive subsystem
 pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
+
+include "dev/veriexec.config"

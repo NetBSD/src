@@ -1,3 +1,5 @@
+/*	$NetBSD: rs400d.h,v 1.1.1.1.32.1 2019/06/10 22:08:27 christos Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.

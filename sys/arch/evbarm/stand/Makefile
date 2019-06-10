@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/04/01 04:35:05 ryo Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2019/06/10 22:06:10 christos Exp $
 
 .include <bsd.endian.mk>
 
@@ -10,6 +10,14 @@ SUBDIR+= boot2440
 # "The i.MX23 always operates in litle-endian mode."
 SUBDIR+= bootimx23
 .endif
+.endif
+
+.if ${MACHINE_CPU} == "aarch64"
+SUBDIR+= ../../../stand/efiboot/bootaa64
+.endif
+
+.if ${MACHINE_ARCH} == "earmv7hf"
+SUBDIR+= ../../../stand/efiboot/bootarm
 .endif
 
 .include <bsd.subdir.mk>

@@ -1,6 +1,6 @@
 /* mpfr_get_f -- convert a MPFR number to a GNU MPF number
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,8 +20,10 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+#define MPFR_NEED_MPF_INTERNALS
 #include "mpfr-impl.h"
 
+#ifndef MPFR_USE_MINI_GMP
 /* Since MPFR-3.0, return the usual inexact value.
    The erange flag is set if an error occurred in the conversion
    (y is NaN, +Inf, or -Inf that have no equivalent in mpf)
@@ -44,7 +46,7 @@ mpfr_get_f (mpf_ptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
         }
       else if (MPFR_IS_NAN (y))
         {
-          MPFR_SET_ERANGE ();
+          MPFR_SET_ERANGEFLAG ();
           return 0;
         }
       else /* y is plus infinity (resp. minus infinity), set x to the maximum
@@ -53,7 +55,7 @@ mpfr_get_f (mpf_ptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
           int i;
           mp_limb_t *xp;
 
-          MPFR_SET_ERANGE ();
+          MPFR_SET_ERANGEFLAG ();
 
           /* To this day, [mp_exp_t] and mp_size_t are #defined as the same
              type */
@@ -63,7 +65,7 @@ mpfr_get_f (mpf_ptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
           SIZ (x) = sx;
           xp = PTR (x);
           for (i = 0; i < sx; i++)
-            xp[i] = MP_LIMB_T_MAX;
+            xp[i] = MPFR_LIMB_MAX;
 
           if (MPFR_IS_POS (y))
             return -1;
@@ -146,3 +148,4 @@ mpfr_get_f (mpf_ptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
 
   return inex;
 }
+#endif

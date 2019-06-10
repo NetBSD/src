@@ -1,6 +1,6 @@
 /* mpfr_exp -- exponential of a floating-point number
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,7 +22,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-impl.h"
 
-/* #define DEBUG */
+/* Cache for emin and emax bounds.
+   Contrary to other caches, it uses a fixed size for the mantissa,
+   so there is no dynamic allocation, and no need to free them. */
+static MPFR_THREAD_ATTR mpfr_exp_t previous_emin;
+static MPFR_THREAD_ATTR mp_limb_t  bound_emin_limb[(32 - 1) / GMP_NUMB_BITS + 1];
+static MPFR_THREAD_ATTR mpfr_t     bound_emin;
+static MPFR_THREAD_ATTR mpfr_exp_t previous_emax;
+static MPFR_THREAD_ATTR mp_limb_t  bound_emax_limb[(32 - 1) / GMP_NUMB_BITS + 1];
+static MPFR_THREAD_ATTR mpfr_t     bound_emax;
 
 int
 mpfr_exp (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
@@ -61,81 +69,96 @@ mpfr_exp (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     }
 
   /* First, let's detect most overflow and underflow cases. */
-  {
-    mpfr_t e, bound;
+  /* emax bound is cached. Check if the value in cache is ok */
+  if (MPFR_UNLIKELY (mpfr_get_emax() != previous_emax))
+    {
+      /* Recompute the emax bound */
+      mp_limb_t e_limb[MPFR_EXP_LIMB_SIZE];
+      mpfr_t e;
 
-    /* We must extended the exponent range and save the flags now. */
-    MPFR_SAVE_EXPO_MARK (expo);
+      /* We extend the exponent range and save the flags. */
+      MPFR_SAVE_EXPO_MARK (expo);
 
-    mpfr_init2 (e, sizeof (mpfr_exp_t) * CHAR_BIT);
-    mpfr_init2 (bound, 32);
+      MPFR_TMP_INIT1(e_limb, e, sizeof (mpfr_exp_t) * CHAR_BIT);
+      MPFR_TMP_INIT1(bound_emax_limb, bound_emax, 32);
 
-    inexact = mpfr_set_exp_t (e, expo.saved_emax, MPFR_RNDN);
-    MPFR_ASSERTD (inexact == 0);
-    mpfr_const_log2 (bound, expo.saved_emax < 0 ? MPFR_RNDD : MPFR_RNDU);
-    mpfr_mul (bound, bound, e, MPFR_RNDU);
-    if (MPFR_UNLIKELY (mpfr_cmp (x, bound) >= 0))
-      {
-        /* x > log(2^emax), thus exp(x) > 2^emax */
-        mpfr_clears (e, bound, (mpfr_ptr) 0);
-        MPFR_SAVE_EXPO_FREE (expo);
-        return mpfr_overflow (y, rnd_mode, 1);
-      }
+      inexact = mpfr_set_exp_t (e, expo.saved_emax, MPFR_RNDN);
+      MPFR_ASSERTD (inexact == 0);
+      mpfr_mul (bound_emax, expo.saved_emax < 0 ?
+                __gmpfr_const_log2_RNDD : __gmpfr_const_log2_RNDU,
+                e, MPFR_RNDU);
+      previous_emax = expo.saved_emax;
+      MPFR_SAVE_EXPO_FREE (expo);
+    }
 
-    inexact = mpfr_set_exp_t (e, expo.saved_emin, MPFR_RNDN);
-    MPFR_ASSERTD (inexact == 0);
-    inexact = mpfr_sub_ui (e, e, 2, MPFR_RNDN);
-    MPFR_ASSERTD (inexact == 0);
-    mpfr_const_log2 (bound, expo.saved_emin < 0 ? MPFR_RNDU : MPFR_RNDD);
-    mpfr_mul (bound, bound, e, MPFR_RNDD);
-    if (MPFR_UNLIKELY (mpfr_cmp (x, bound) <= 0))
-      {
-        /* x < log(2^(emin - 2)), thus exp(x) < 2^(emin - 2) */
-        mpfr_clears (e, bound, (mpfr_ptr) 0);
-        MPFR_SAVE_EXPO_FREE (expo);
-        return mpfr_underflow (y, rnd_mode == MPFR_RNDN ? MPFR_RNDZ : rnd_mode,
-                               1);
-      }
+  /* mpfr_cmp works even in reduced emin,emax range */
+  if (MPFR_UNLIKELY (mpfr_cmp (x, bound_emax) >= 0))
+    {
+      /* x > log(2^emax), thus exp(x) > 2^emax */
+      return mpfr_overflow (y, rnd_mode, 1);
+    }
 
-    /* Other overflow/underflow cases must be detected
-       by the generic routines. */
-    mpfr_clears (e, bound, (mpfr_ptr) 0);
-    MPFR_SAVE_EXPO_FREE (expo);
-  }
+  /* emin bound is cached. Check if the value in cache is ok */
+  if (MPFR_UNLIKELY (mpfr_get_emin() != previous_emin))
+    {
+      mp_limb_t e_limb[MPFR_EXP_LIMB_SIZE];
+      mpfr_t e;
+
+      /* We extend the exponent range and save the flags. */
+      MPFR_SAVE_EXPO_MARK (expo);
+
+      /* avoid using a full limb since arithmetic might be slower */
+      MPFR_TMP_INIT1(e_limb, e, sizeof (mpfr_exp_t) * CHAR_BIT - 1);
+      MPFR_TMP_INIT1(bound_emin_limb, bound_emin, 32);
+
+      inexact = mpfr_set_exp_t (e, expo.saved_emin, MPFR_RNDN);
+      MPFR_ASSERTD (inexact == 0);
+      inexact = mpfr_sub_ui (e, e, 2, MPFR_RNDN);
+      MPFR_ASSERTD (inexact == 0);
+      mpfr_const_log2 (bound_emin, expo.saved_emin < 0 ? MPFR_RNDU : MPFR_RNDD);
+      mpfr_mul (bound_emin, bound_emin, e, MPFR_RNDD);
+      previous_emin = expo.saved_emin;
+      MPFR_SAVE_EXPO_FREE (expo);
+    }
+
+  if (MPFR_UNLIKELY (mpfr_cmp (x, bound_emin) <= 0))
+    {
+      /* x < log(2^(emin - 2)), thus exp(x) < 2^(emin - 2) */
+      return mpfr_underflow (y, rnd_mode == MPFR_RNDN ? MPFR_RNDZ : rnd_mode,
+                             1);
+    }
 
   expx  = MPFR_GET_EXP (x);
   precy = MPFR_PREC (y);
 
-  /* if x < 2^(-precy), then exp(x) i.e. gives 1 +/- 1 ulp(1) */
+  /* if x < 2^(-precy), then exp(x) gives 1 +/- 1 ulp(1) */
   if (MPFR_UNLIKELY (expx < 0 && (mpfr_uexp_t) (-expx) > precy))
     {
       mpfr_exp_t emin = __gmpfr_emin;
       mpfr_exp_t emax = __gmpfr_emax;
       int signx = MPFR_SIGN (x);
 
+      /* Make sure that the exponent range is large enough:
+       * [0,2] is sufficient in all precisions.
+       */
+      __gmpfr_emin = 0;
+      __gmpfr_emax = 2;
+
       MPFR_SET_POS (y);
       if (MPFR_IS_NEG_SIGN (signx) && (rnd_mode == MPFR_RNDD ||
                                        rnd_mode == MPFR_RNDZ))
         {
-          __gmpfr_emin = 0;
-          __gmpfr_emax = 0;
           mpfr_setmax (y, 0);  /* y = 1 - epsilon */
           inexact = -1;
         }
       else
         {
-          __gmpfr_emin = 1;
-          __gmpfr_emax = 1;
           mpfr_setmin (y, 1);  /* y = 1 */
           if (MPFR_IS_POS_SIGN (signx) && (rnd_mode == MPFR_RNDU ||
                                            rnd_mode == MPFR_RNDA))
             {
-              mp_size_t yn;
-              int sh;
-
-              yn = MPFR_LIMB_SIZE (y);
-              sh = (mpfr_prec_t) yn * GMP_NUMB_BITS - MPFR_PREC(y);
-              MPFR_MANT(y)[0] += MPFR_LIMB_ONE << sh;
+              /* Warning: should work for precision 1 bit too! */
+              mpfr_nextabove (y);
               inexact = 1;
             }
           else

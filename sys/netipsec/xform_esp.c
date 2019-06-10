@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.96 2018/05/31 06:14:18 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.96.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.96 2018/05/31 06:14:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.96.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

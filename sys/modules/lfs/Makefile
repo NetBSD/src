@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2015/05/31 15:48:02 hannken Exp $
+#	$NetBSD: Makefile,v 1.8.18.1 2019/06/10 22:09:31 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -15,5 +15,12 @@ SRCS=	lfs_vfsops.c lfs_vnops.c lfs_subr.c lfs_alloc.c lfs_balloc.c \
 
 SRCS+=	ulfs_bmap.c ulfs_dirhash.c ulfs_inode.c ulfs_lookup.c \
 	ulfs_snapshot.c ulfs_vfsops.c ulfs_vnops.c
+
+WARNS=	3
+
+.if ${MACHINE} == "vax"
+# GCC 6.5 and 7.4 cannot compile this with -DDIAGNOSTIC and -O2/-O1
+COPTS.lfs_inode.c+=	-O0
+.endif
 
 .include <bsd.kmodule.mk>

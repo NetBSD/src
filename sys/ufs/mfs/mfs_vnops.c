@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.58 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.58.10.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.58 2017/05/26 14:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.58.10.1 2019/06/10 22:09:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,8 +296,6 @@ mfs_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	int refcnt;
-
-	VOP_UNLOCK(vp);
 
 	mutex_enter(&mfs_lock);
 	vp->v_data = NULL;

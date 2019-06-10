@@ -1,6 +1,6 @@
 /* The CRIS interrupt framework for GDB, the GNU Debugger.
 
-   Copyright 2006-2017 Free Software Foundation, Inc.
+   Copyright 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

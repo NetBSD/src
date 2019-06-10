@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.38.16.1 2019/06/10 22:07:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.38.16.1 2019/06/10 22:07:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,6 +364,22 @@ static struct aac_ident {
 	{	PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
 		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_2445,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 2445"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_2805,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 2805"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_3405,
 		AAC_HWIF_I960RX,
 		0,
@@ -465,8 +481,8 @@ aac_pci_intr_set(struct aac_softc *sc, int (*hand)(void*), void *arg)
 	pcisc = (struct aac_pci_softc *) sc;
 
 	pci_intr_disestablish(pcisc->sc_pc, sc->sc_ih);
-	sc->sc_ih = pci_intr_establish(pcisc->sc_pc, pcisc->sc_ih,
-				       IPL_BIO, hand, arg);
+	sc->sc_ih = pci_intr_establish_xname(pcisc->sc_pc, pcisc->sc_ih,
+	    IPL_BIO, hand, arg, device_xname(sc->sc_dv));
 	if (sc->sc_ih == NULL) {
 		return ENXIO;
 	}
@@ -547,7 +563,8 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 		goto bail_out;
 	}
 	intrstr = pci_intr_string(pc, pcisc->sc_ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, pcisc->sc_ih, IPL_BIO, aac_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, pcisc->sc_ih, IPL_BIO,
+	    aac_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)

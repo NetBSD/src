@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.274 2018/05/25 00:31:07 riastradh Exp $
+$NetBSD: acronyms,v 1.274.2.1 2019/06/10 22:05:42 christos Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -31,9 +31,11 @@ AISE	as I see it
 AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
+ALPR	automatic license plate recognition
 AM	ante meridiem
 AMA	ask me anything
 AMOL	a mountain of love
+ANPR	automatic number plate recognition
 APM	alternative payment model
 ASAIC	as soon as I can
 ASAP	as soon as possible
@@ -42,6 +44,7 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
 ATW	around the world
+AVI	automatic vehicle identification
 AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
@@ -62,6 +65,7 @@ BBT	be back tomorrow
 BCNU	be seeing you
 BCNUL8R	be seeing you later
 BCP	best current practice
+BDFL	benevolent dictator for life
 BF	best friend
 BF	boyfriend
 BFF	best {friend,friends} forever
@@ -96,7 +100,9 @@ COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
 CPE	customer premises equipment
+CPR	car plate recognition
 CRM	customer relationship management
+CTF	capture the flag
 CTN	can't talk now
 CU	see you
 CUL	see you later
@@ -119,11 +125,13 @@ DND	do not disturb
 DNF	did not finish
 DNFT	do not feed troll
 DOA	dead on arrival
+DOTADIW	do one thing and do it well
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
+DYAC	damn you autocorrect
 DYK	do you know?
 EA	early adopter
 ECR	electronic cash register
@@ -178,6 +186,7 @@ GA	go ahead
 GAC	get a clue
 GAL	get a life
 GBTW	get back to work
+GCD	greatest common divisor
 GDPR	General Data Protection Regulation
 GF	girlfriend
 GFU	good for you
@@ -325,6 +334,8 @@ LMSO	laughing my socks off
 LOIC	low orbit ion cannon
 LOL	laughing out loud
 LP	long playing [record]
+LPR	license plate recognition
+LSD	lysergic acid diethylamide
 LTNS	long time no see
 LWYL	laugh with you later
 M&O	management & operations
@@ -333,6 +344,7 @@ MAD	mutually assured destruction
 MBA	master of business administration
 MFW	my face when
 MIA	missing in action
+MLPR	mobile license plate reader
 MMB	message me back
 MO	modus operandi
 MOTAS	member of the appropriate sex
@@ -372,6 +384,7 @@ NTBF	not to be fixed
 NTN	no thanks needed
 NUNP	no users, no problems
 NVM	never mind
+NVMM	never mind mate
 NW	no way
 NXT	next
 NYPA	not your personal army
@@ -442,6 +455,8 @@ PTO	{paid,personal} time off
 PTO	parent-teacher organization
 PTO	please turn over
 PTO	power takeoff
+PTT	push-to-talk
+PTT	post-telephone-telegraph
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
@@ -470,9 +485,11 @@ SCNR	sorry, could not resist
 SEP	someone else's problem
 SERP	search engine results page
 SFAICT	so far as I can tell
+SGTM	sounds good to me
 SHID	slaps head in disgust
 SIMCA	sitting in my chair amused
 SITD	still in the dark
+SJW	social justice warrior
 SMAP	Soil Moisture Active Passive
 SMH	shaking my head
 SMLSFB	so many losers, so few bullets
@@ -558,6 +575,8 @@ VCR	video cassette recorder
 VEG	very evil grin
 VIP	very important person
 VLA	variable length array
+VLPR	vehicle license plate recognition
+VRI	vehicle recognition identification
 W/	with
 W/E	whatever
 W/O	without

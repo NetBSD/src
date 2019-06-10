@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.163 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.163.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@
  * umass_*_reset.
  *
  * The reason for doing this is a) CAM performs a lot better this way and b) it
- * avoids using tsleep from interrupt context (for example after a failed
- * transfer).
+ * avoids sleeping in interrupt context which is prohibited (for example after a
+ * failed transfer).
  */
 
 /*
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -135,13 +135,13 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163 2018/01/21 13:57:12 skrll Exp $");
 #include "wd.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -219,7 +219,7 @@ void umass_attach(device_t, device_t, void *);
 int umass_detach(device_t, int);
 static void umass_childdet(device_t, device_t);
 int umass_activate(device_t, enum devact);
-extern struct cfdriver umass_cd;
+
 CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match,
     umass_attach, umass_detach, umass_activate, NULL, umass_childdet);
 
@@ -271,12 +271,9 @@ const struct umass_wire_methods umass_cbi_methods = {
 
 #ifdef UMASS_DEBUG
 /* General debugging functions */
-Static void umass_bbb_dump_cbw(struct umass_softc *sc,
-				umass_bbb_cbw_t *cbw);
-Static void umass_bbb_dump_csw(struct umass_softc *sc,
-				umass_bbb_csw_t *csw);
-Static void umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer,
-				int buflen, int printlen);
+Static void umass_bbb_dump_cbw(struct umass_softc *, umass_bbb_cbw_t *);
+Static void umass_bbb_dump_csw(struct umass_softc *, umass_bbb_csw_t *);
+Static void umass_dump_buffer(struct umass_softc *, uint8_t *, int, int);
 #endif
 
 
@@ -683,7 +680,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Record buffer pinters for data transfer (it's huge), command and
+	 * Record buffer pointers for data transfer (it's huge), command and
 	 * status data here
 	 */
 	switch (sc->sc_wire) {
@@ -751,7 +748,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	case UMASS_CPROTO_ISD_ATA:
-#if NWD > 0
+#if NWD > 0 && NATABUS > 0
 		error = umass_isdata_attach(sc);
 #else
 		aprint_error_dev(self, "isdata not configured\n");
@@ -801,7 +798,9 @@ umass_detach(device_t self, int flags)
 
 	DPRINTFM(UDMASS_USB, "sc %#jx detached", (uintptr_t)sc, 0, 0, 0);
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = true;
+	mutex_exit(&sc->sc_lock);
 
 	pmf_device_deregister(self);
 
@@ -818,7 +817,8 @@ umass_detach(device_t self, int flags)
 		aprint_normal_dev(self, "waiting for refcnt\n");
 #endif
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev, &sc->sc_detach_cv, &sc->sc_lock);
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(self, ": didn't detach\n");
 	}
 	mutex_exit(&sc->sc_lock);
 
@@ -828,6 +828,24 @@ umass_detach(device_t self, int flags)
 			rv = config_detach(scbus->sc_child, flags);
 
 		switch (sc->sc_cmd) {
+		case UMASS_CPROTO_RBC:
+		case UMASS_CPROTO_SCSI:
+#if NSCSIBUS > 0
+			umass_scsi_detach(sc);
+#else
+			aprint_error_dev(self, "scsibus not configured\n");
+#endif
+			break;
+
+		case UMASS_CPROTO_UFI:
+		case UMASS_CPROTO_ATAPI:
+#if NATAPIBUS > 0
+			umass_atapi_detach(sc);
+#else
+			aprint_error_dev(self, "atapibus not configured\n");
+#endif
+			break;
+
 		case UMASS_CPROTO_ISD_ATA:
 #if NWD > 0
 			umass_isdata_detach(sc);
@@ -841,8 +859,8 @@ umass_detach(device_t self, int flags)
 			break;
 		}
 
-		free(scbus, M_DEVBUF);
-		sc->bus = NULL;
+		/* protocol detach is expected to free sc->bus */
+		KASSERT(sc->bus == NULL);
 	}
 
 	if (rv != 0)
@@ -1179,9 +1197,6 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		   "sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
-		return;
-
 	/*
 	 * State handling for BBB transfers.
 	 *
@@ -1196,6 +1211,18 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 	DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx, transfer_state %jd dir %jd",
 	    (uintptr_t)sc, (uintptr_t)xfer, sc->transfer_state,
 	    sc->transfer_dir);
+
+	if (err == USBD_CANCELLED) {
+		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
+		    (uintptr_t)sc, (uintptr_t)xfer, 0, 0);
+
+		sc->transfer_state = TSTATE_IDLE;
+		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		return;
+	}
+
+	if (sc->sc_dying)
+		return;
 
 	switch (sc->transfer_state) {
 
@@ -1238,7 +1265,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			    (uintptr_t)sc, 0, 0, 0);
 		}
 
-		/* FALLTHROUGH if no data phase, err == 0 */
+		/* if no data phase, err == 0 */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_DATA:
 		/* Command transport phase error handling (ignored if no data
 		 * phase (fallthrough from previous state)) */
@@ -1271,7 +1299,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			}
 		}
 
-		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+		/* err == 0 (no data phase or successful) */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 		if (sc->transfer_dir == DIR_IN)
 			memcpy(sc->transfer_data, sc->datain_buffer,
@@ -1281,7 +1310,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_datalen, 48));
 
-		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+		/* err == 0 (no data phase or successful) */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
 		/* Reading of CSW after bulk stall condition in data phase
 		 * (TSTATE_BBB_DATA2) or bulk-in stall condition after
@@ -1635,6 +1665,14 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
 		   sc->sc_wire);
 
+	if (err == USBD_CANCELLED) {
+		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
+			(uintptr_t)sc, (uintptr_t)xfer, 0, 0);
+		sc->transfer_state = TSTATE_IDLE;
+		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		return;
+	}
+
 	if (sc->sc_dying)
 		return;
 
@@ -1700,7 +1738,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			    (uintptr_t)sc, 0, 0, 0);
 		}
 
-		/* FALLTHROUGH if no data phase, err == 0 */
+		/* if no data phase, err == 0 */
+		/* FALLTHROUGH */
 	case TSTATE_CBI_DATA:
 		/* Command transport phase error handling (ignored if no data
 		 * phase (fallthrough from previous state)) */

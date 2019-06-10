@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ssio.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: com_ssio.c,v 1.1.36.1 2019/06/10 22:06:18 christos Exp $	*/
 
 /*	$OpenBSD: com_ssio.c,v 1.2 2007/06/24 16:28:39 kettenis Exp $	*/
 
@@ -91,7 +91,7 @@ com_ssio_attach(device_t parent, device_t self, void *aux)
 	    PAGE0->mem_cons.pz_hpa == (struct iomod *)ioh) {
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 		if (comcnattach(iot, iobase, B9600, COM_SSIO_FREQ,
-		    COM_TYPE_NORMAL, 
+		    COM_TYPE_NORMAL,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0) {
 			aprint_error(": can't comcnattach\n");
 			hppa_pagezero_unmap(pagezero_cookie);
@@ -101,7 +101,7 @@ com_ssio_attach(device_t parent, device_t self, void *aux)
 	hppa_pagezero_unmap(pagezero_cookie);
 
 	sc->sc_frequency = COM_SSIO_FREQ;
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 	com_attach_subr(sc);
 
 	sc_ssio->sc_ih = ssio_intr_establish(IPL_TTY, saa->saa_irq,

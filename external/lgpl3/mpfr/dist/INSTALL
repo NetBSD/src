@@ -1,4 +1,4 @@
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -37,17 +37,17 @@ MPFR).
    not been done yet and if patches are available. You can check
    on the release page:
 
-     http://www.mpfr.org/mpfr-3.1.5/
+     http://www.mpfr.org/mpfr-4.0.1/
 
    which may have additional information. The patches can be applied
    with commands like:
 
-     wget http://www.mpfr.org/mpfr-3.1.5/allpatches
+     wget http://www.mpfr.org/mpfr-4.0.1/allpatches
      patch -N -Z -p1 < allpatches
 
    or
 
-     curl http://www.mpfr.org/mpfr-3.1.5/allpatches | patch -N -Z -p1
+     curl http://www.mpfr.org/mpfr-4.0.1/allpatches | patch -N -Z -p1
 
    (Those instructions are for the GNU patch command, for example
    /usr/bin/gpatch on Solaris.)
@@ -80,7 +80,17 @@ MPFR).
    running "make check", for instance by typing:
      VERBOSE=1 make check
 
-6. To install it (default "/usr/local" | see "--prefix" option), type:
+6. [Optional / experimental] Binary distributions may also want to run:
+     make check-gmp-symbols
+
+   This will check that MPFR does not use GMP internal symbols, which
+   could yield failures in case of GMP upgrade without a MPFR rebuild.
+   But note that this is a heuristic and might give false positives or
+   false negatives. Please report any problem to the MPFR developers.
+   End users may also be interested in this check, unless they have
+   allowed GMP internals with configure options (see below).
+
+7. To install it (default "/usr/local" | see "--prefix" option), type:
      make install
 
 If you installed MPFR (header and library) in directories that are
@@ -154,6 +164,8 @@ by Libtool's versioning system.
 Tuning MPFR
 ===========
 
+[For the current GMP version (6.1.0), a Unix-like OS is required.]
+
 For this, you need to build MPFR with a GMP build directory (see above).
 In the GMP build directory, you also need to go into the "tune" subdirectory
 and type "make speed". This will build the GMP speed library, which is used
@@ -218,6 +230,14 @@ specific architecture.
                         this option is used. Thus it must not be used in
                         binary distributions.
 
+--with-sysroot=DIR      Search for dependent libraries within DIR (which
+                        may be useful in cross-compilation). If you use
+                        this option, you need to have Libtool 2.4+ on
+                        the target system. See Libtool 2.4+'s NEWS file.
+                        Technical information can be found at [1].
+
+[1] http://permalink.gmane.org/gmane.comp.gnu.libtool.patches/10111
+
 Note: By default, the configure script tries to set CC/CFLAGS to GMP's
 ones (this feature needs GMP 4.3.0 or later, or the --with-gmp-build
 option). However this is not guaranteed to work as the configure script
@@ -226,7 +246,12 @@ the values obtained from GMP may be incorrect if GMP has been built
 on a different machine. In such a case, the user may need to specify
 CC/CFLAGS as explained below.
 
-Run "./configure --help" to see the other options (autoconf default options).
+Moreover, even without --with-gmp-build and --enable-gmp-internals,
+MPFR might use some GMP internals by mistake. This would be a bug,
+which should be reported to the MPFR developers.
+
+Run "./configure --help" to see the other options (default options
+from Autoconf and Automake).
 
 
 If 'gmp.h' and 'libgmp' do not match
@@ -338,7 +363,7 @@ Several documents may help you to solve the problem:
   * the FAQ (either the FAQ.html file distributed with MPFR, or the
     on-line version <http://www.mpfr.org/faq.html>, which may be more
     up-to-date);
-  * the MPFR web page for this version <http://www.mpfr.org/mpfr-3.1.5/>,
+  * the MPFR web page for this version <http://www.mpfr.org/mpfr-4.0.1/>,
     which lists bugs found in this version and provides some patches.
 
 If the "configure" fails, please check that the C compiler and its
@@ -379,7 +404,7 @@ optimizations by giving -O0 (letter O, digit 0) in CFLAGS. If the
 MPFR tests no longer fail, this was probably due to a compiler bug,
 though we cannot exclude a bug in MPFR. You may want to contact us
 (see below), possibly after looking at:
-  http://www.loria.fr/~zimmerma/software/compilerbugs.html
+  https://members.loria.fr/PZimmermann/software/compilerbugs.html
 
 On some platforms, try with "gmake" (GNU make) instead of "make".
 Problems have been reported with the Tru64 make.
@@ -441,6 +466,23 @@ For instance, under Unix, where paths are separated by a colon:
     setenv LIBRARY_PATH "/usr/local/lib:/other/path/lib"
     setenv LD_LIBRARY_PATH "$LIBRARY_PATH"
 
+If almost all the tests fail and the messages in the test-suite.log file
+(or in the output, when running individual tests from the command line)
+start with a line of the form:
+
+  Incorrect MPFR version! (xxx header vs yyy library)
+
+then this means that an installed MPFR version is tested instead of the
+one that has just been built. This is probably not a bug in MPFR, but a
+problem caused by the user or system configuration (particular options,
+environment variables, etc.) or a bug in the toolchain. In particular,
+if LD_LIBRARY_PATH overrides the run path (set up by libtool) and an
+installed ABI-compatible version of MPFR is in a directory listed in
+the LD_LIBRARY_PATH search path, then this will break. An example with
+GNU ld:
+
+  https://sourceware.org/bugzilla/show_bug.cgi?id=21476
+
 If you can't solve your problem, you should contact us via the MPFR
 mailing-list <mpfr@inria.fr>, indicating the machine and operating system
 used (uname -a), the compiler and version used (gcc -v if you use gcc),
@@ -449,10 +491,6 @@ CFLAGS), the version of GMP and MPFR used, and a description of the
 problem encountered, in particular the tests/test-suite.log file if
 "make check" failed. Please send us also the log of the "configure"
 (config.log).
-
-Note that even if you can build MPFR with a C++ compiler, you can't run
-the test suite: C and C++ are not the same language! You should use a C
-compiler instead.
 
 
 Notes about ABI
@@ -509,6 +547,19 @@ you should set the OBJECT_MODE environment variable to 64, e.g., with:
 line: AR="ar -X64" NM="nm -B -X64".
 
 
+Notes on Solaris
+================
+
+Do not put a -R<dir> option in the LD_OPTIONS environment variable, at least
+if the directory <dir> can contain an MPFR library. Otherwise this MPFR
+library may be chosen for the tests (make check) instead of the one that has
+just been built, in which case, either you will get errors due to unmatched
+versions or this problem may remain undetected. The reason is that this
+option will appear before the -R options added by libtool, such as the one
+to the src/.libs directory containing the MPFR library that has just been
+built, and will have the precedence.
+
+
 MPFR for use with Windows Applications
 ======================================
 
@@ -523,8 +574,22 @@ a. Using MinGW
     which is simpler and less demanding than Cygwin. Contrary to Cygwin,
     it also provides native Windows code.
 
+    If you also use MSYS, you should use "make" for MSYS instead of
+    the "make" utility from MinGW-W64 or from GCC, which causes the
+    following error:
+
+      libtool: warning: libobj name 'extract.Tpo -c -o extract.lo extract.lo'
+      may not contain shell special characters.
+      rm: unknown option -- c
+
+    References about this issue and solution:
+      https://sourceforge.net/p/msys2/tickets/223/
+      https://sympa.inria.fr/sympa/arc/mpfr/2016-07/msg00009.html
+
 2 - If you just want to make a binary with gcc, there is nothing to do:
-    GMP, MPFR and the program compile exactly as under Linux.
+    GMP, MPFR and the program compile exactly as under Linux. (It is
+    recommended to pass --build=xxx-yyy-mingw64 to the GMP configure command,
+    or --build=xxx with xxx containing mingw.)
 
 3 - To avoid using the Microsoft runtime (which might not be conform to ISO C),
     you can use the MinGW runtime package (which is an integral part of MinGW).
@@ -533,9 +598,27 @@ a. Using MinGW
     '-ansi', '-posix' or '-D__USE_MINGW_ANSI_STDIO'. In order to have the
     MPFR formatted output functions based on ISO-compliant printf(), you
     need to compile GMP (not MPFR) with CC="gcc -D__USE_MINGW_ANSI_STDIO"
-    (since the standard printf modifiers %Ld and %td are passed to GMP).
-    Building MPFR with -D__USE_MINGW_ANSI_STDIO is useless except for some
-    error messages in the test suite.
+    (since the standard printf modifiers %e, %Ld and %td are passed to GMP).
+    Not doing so may result in failures of some of the printf-related tests.
+    For instance, the following error on some Windows machine has been
+    reported:
+
+      https://sympa.inria.fr/sympa/arc/mpfr/2016-02/msg00053.html
+
+      Error in mpfr_vsprintf (s, "%e", ...);
+      expected: "-1.250000e+000"
+      got:      "-1.250000e+00"
+      FAIL tsprintf.exe (exit status: 1)
+
+    The cause is that here the C functions vsnprintf and vsprintf used
+    internally in GMP do not produce the same output:
+
+      https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00045.html
+      https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00051.html
+      https://sympa.inria.fr/sympa/arc/mpfr/2016-03/msg00053.html
+
+    Building MPFR with -D__USE_MINGW_ANSI_STDIO is currently useless except
+    for some error messages in the test suite.
 
 b. Using Cygwin
 ===============

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2018/06/05 00:58:17 christos Exp $
+#	$NetBSD: Makefile,v 1.64.2.1 2019/06/10 22:06:57 christos Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -26,6 +26,12 @@ libinstall::
 lib${LIB}.o:: ${OBJS:O} __buildstdlib
 
 lib${LIB}.po:: ${POBJS:O} __buildproflib
+
+.if NOTYET
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DCPU_UCODE
+.endif
+.endif
 
 showsources: ${SRCS}
 	@echo ${.ALLSRC}

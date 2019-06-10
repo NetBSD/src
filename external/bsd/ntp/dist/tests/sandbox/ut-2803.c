@@ -1,5 +1,3 @@
-/*	$NetBSD: ut-2803.c,v 1.1.1.4 2016/01/08 21:21:33 christos Exp $	*/
-
 //#include "bug-2803.h"
 #include "unity.h"
 //#include "code-2803.h"

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.61 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.61 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -234,7 +234,7 @@ static int rum_match(device_t, cfdata_t, void *);
 static void rum_attach(device_t, device_t, void *);
 static int rum_detach(device_t, int);
 static int rum_activate(device_t, enum devact);
-extern struct cfdriver rum_cd;
+
 CFATTACH_DECL_NEW(rum, sizeof(struct rum_softc), rum_match, rum_attach,
     rum_detach, rum_activate);
 
@@ -496,9 +496,9 @@ rum_detach(device_t self, int flags)
 	s = splusb();
 
 	rum_stop(ifp, 1);
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->sc_scan_ch);
-	callout_stop(&sc->sc_amrr_ch);
+	callout_halt(&sc->sc_scan_ch, NULL);
+	callout_halt(&sc->sc_amrr_ch, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);	/* free all nodes */
@@ -735,6 +735,11 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct rum_softc *sc = ic->ic_ifp->if_softc;
 
+	/*
+	 * XXXSMP: This does not wait for the task, if it is in flight,
+	 * to complete.  If this code works at all, it must rely on the
+	 * kernel lock to serialize with the USB task thread.
+	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);
@@ -2281,7 +2286,7 @@ rum_activate(device_t self, enum devact act)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_rum, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_rum, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

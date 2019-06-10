@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.9 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: bootp.h,v 1.9.66.1 2019/06/10 22:09:05 christos Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -62,7 +62,7 @@ struct bootp {
 /*
  * Vendor magic cookie (v_magic) for RFC1048
  */
-#define VM_RFC1048	{ 99, 130, 83, 99 }
+#define VM_RFC1048	{ 99, (char) 130, 83, 99 }
 
 
 /*

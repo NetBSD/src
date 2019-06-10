@@ -1,5 +1,5 @@
 ;; Constraint definitions for Synopsys DesignWare ARC.
-;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -21,7 +21,7 @@
 
 ; Most instructions accept arbitrary core registers for their inputs, even
 ; if the core register in question cannot be written to, like the multiply
-; result registers of the ARCtangent-A5 and ARC600 .
+; result registers of ARC600.
 ; First, define a class for core registers that can be read cheaply.  This
 ; is most or all core registers for ARC600, but only r0-r31 for ARC700
 (define_register_constraint "c" "CHEAP_CORE_REGS"
@@ -127,6 +127,12 @@
   (and (match_code "const_int")
        (match_test "UNSIGNED_INT6 (-ival)")))
 
+(define_constraint "C16"
+  "@internal
+   A 16-bit signed integer constant"
+  (and (match_code "const_int")
+       (match_test "SIGNED_INT16 (ival)")))
+
 (define_constraint "M"
   "@internal
    A 5-bit unsigned integer constant"
@@ -167,7 +173,7 @@
   "@internal
    Conditional or three-address add / sub constant"
   (and (match_code "const_int")
-       (match_test "ival == -1 << 31
+       (match_test "ival == (HOST_WIDE_INT)(HOST_WIDE_INT_M1U << 31)
 		    || (ival >= -0x1f8 && ival <= 0x1f8
 			&& ((ival >= 0 ? ival : -ival)
 			    <= 0x3f * (ival & -ival)))")))
@@ -195,7 +201,7 @@
   "@internal
    Unconditional two-address add / sub constant"
   (and (match_code "const_int")
-       (match_test "ival == -1 << 31
+       (match_test "ival == (HOST_WIDE_INT) (HOST_WIDE_INT_M1U << 31)
 		    || (ival >= -0x4000 && ival <= 0x4000
 			&& ((ival >= 0 ? ival : -ival)
 			    <= 0x7ff * (ival & -ival)))")))
@@ -211,6 +217,12 @@
   constant such that x+1 is a power of two, and x != 0"
   (and (match_code "const_int")
        (match_test "ival && IS_POWEROF2_P (ival + 1)")))
+
+(define_constraint "C3p"
+ "@internal
+  constant int used to select xbfu a,b,u6 instruction.  The values accepted are 1 and 2."
+  (and (match_code "const_int")
+       (match_test "((ival == 1) || (ival == 2))")))
 
 (define_constraint "Ccp"
  "@internal
@@ -335,7 +347,7 @@
    Cryptic q - for short insn generation while not affecting register allocation
    Registers usable in ARCompact 16-bit instructions: @code{r0}-@code{r3},
    @code{r12}-@code{r15}"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test "TARGET_Rcq
 		    && !arc_ccfsm_cond_exec_p ()
 		    && IN_RANGE (REGNO (op) ^ 4, 4, 11)")))
@@ -347,7 +359,7 @@
 (define_constraint "Rcw"
   "@internal
    Cryptic w - for use in early alternatives with matching constraint"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test
 	"TARGET_Rcw
 	 && REGNO (op) < FIRST_PSEUDO_REGISTER
@@ -357,7 +369,7 @@
 (define_constraint "Rcr"
   "@internal
    Cryptic r - for use in early alternatives with matching constraint"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test
 	"TARGET_Rcw
 	 && REGNO (op) < FIRST_PSEUDO_REGISTER
@@ -367,13 +379,13 @@
 (define_constraint "Rcb"
   "@internal
    Stack Pointer register @code{r28} - do not reload into its class"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test "REGNO (op) == 28")))
 
 (define_constraint "Rck"
   "@internal
    blink (usful for push_s / pop_s)"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test "REGNO (op) == 31")))
 
 (define_constraint "Rs5"
@@ -381,7 +393,7 @@
    sibcall register - only allow one of the five available 16 bit isnsn.
    Registers usable in ARCompact 16-bit instructions: @code{r0}-@code{r3},
    @code{r12}"
-  (and (match_code "REG")
+  (and (match_code "reg")
        (match_test "!arc_ccfsm_cond_exec_p ()")
        (ior (match_test "(unsigned) REGNO (op) <= 3")
 	    (match_test "REGNO (op) == 12"))))
@@ -389,7 +401,7 @@
 (define_constraint "Rcc"
   "@internal
   Condition Codes"
-  (and (match_code "REG") (match_test "cc_register (op, VOIDmode)")))
+  (and (match_code "reg") (match_test "cc_register (op, VOIDmode)")))
 
 
 (define_constraint "Q"
@@ -397,3 +409,21 @@
    Integer constant zero"
   (and (match_code "const_int")
        (match_test "IS_ZERO (ival)")))
+
+(define_constraint "Cm2"
+  "@internal
+   A signed 9-bit integer constant."
+  (and (match_code "const_int")
+       (match_test "(ival >= -256) && (ival <=255)")))
+
+(define_constraint "C62"
+  "@internal
+   An unsigned 6-bit integer constant, up to 62."
+  (and (match_code "const_int")
+       (match_test "UNSIGNED_INT6 (ival - 1)")))
+
+;; Memory constraint used for atomic ops.
+(define_memory_constraint "ATO"
+  "A memory with only a base register"
+  (match_operand 0 "mem_noofs_operand"))
+

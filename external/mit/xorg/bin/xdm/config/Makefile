@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/02/24 07:23:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.14.26.1 2019/06/10 22:02:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,32 +22,52 @@ DEFAULTVT=	# defined empty
 .endif
 
 UUDECODE_FILES=	NetBSD-flag.png
-CPPSCRIPTS=	Xresources Xreset Xservers.ws Xsession Xstartup xdm-config 
+SEDSCRIPTS=	Xresources Xreset Xservers.ws Xsession Xstartup xdm-config 
+.for f in ${SEDSCRIPTS}
+FILESBUILD_$f=yes
+.endfor
 
-CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11INCDIR}/X11/pixmaps \
-				-DXDM_PIXMAP=NetBSD.xpm \
-				-DXDM_BWPIXMAP=NetBSD-bw.xpm
-CPPSCRIPTFLAGS_Xreset=		-DBINDIR=${X11BINDIR} -DXDMCONFIGDIR=${XDMDIR}
-CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=${DEFAULTVT}
-CPPSCRIPTFLAGS_Xsession=	-DBINDIR=${X11BINDIR} \
-				-DMKTEMP_COMMAND=/usr/bin/mktemp \
-				-DSHELL_CMD=/bin/sh
-CPPSCRIPTFLAGS_Xstartup=	-DBINDIR=${X11BINDIR} -DXDMCONFIGDIR=${XDMDIR} \
-				-DUTMP_FILE=${XDMPIDDIR}/utmp \
-				-DWTMP_FILE=${XDMLOGDIR}/wtmp
-CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${XDMDIR} \
-				-DXDMXAUTHDIR=${XDMVARDIR} \
-				-DXDMLOGDIR=${XDMLOGDIR} \
-				-DXDMPIDDIR=${XDMPIDDIR} \
-				-DXPM \
-				-DSU="su -m"
+.SUFFIXES: .in
 
-CONFIGFILES=		GiveConsole TakeConsole \
-			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
-			${CPPSCRIPTS} 
-FILES=			xorg-bw.xpm xorg.xpm \
+.in:
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${TOOL_SED} \
+		-e '/ifdef XPM/d' -e '/endif \/\* XPM \*\//d' \
+		-e 's,BITMAPDIR,${X11INCDIR}/X11/pixmaps,' \
+		-e 's,XDM_PIXMAP,NetBSD.xpm,' \
+		-e 's,XDM_BWPIXMAP,NetBSD-bw.xpm,' \
+		-e 's,BINDIR,$(X11BINDIR),' \
+		-e 's,DEFAULTVT,$(DEFAULTVT),' \
+		-e 's,XDMDIR,$(XDMDIR),' \
+		-e 's,XDMLOGDIR,$(XDMLOGDIR),' \
+		-e 's,XDMXAUTHDIR,$(XDMVARDIR),' \
+		-e 's,XDMPIDDIR,$(XDMPIDDIR),' \
+		-e 's,XDMCONFIGDIR,$(XDMDIR),' \
+		-e 's,XDMSCRIPTDIR,$(XDMDIR),' \
+		-e 's,SU,su -m,' \
+		-e 's,CHOOSERPATH,$(XDMCHOOSERPATH),' \
+		-e 's,SHELL_CMD,/bin/sh,' \
+		-e 's,UTMP_FILE,$(XDMPIDDIR)/utmp,' \
+		-e 's,UTMP_FLAG,-u $(XDMPIDDIR)/utmp,' \
+		-e 's,WTMP_FILE,$(XDMLOGDIR)/wtmp,' \
+		-e 's,WTMP_FLAG,-w $(XDMLOGDIR)/wtmp,' \
+		-e 's,MKTEMP_COMMAND,/usr/bin/mktemp,' \
+		-e 's,XCOMM,\#,' \
+		-e 's,XHASH,\#,' \
+		-e 's,NLBS$$,\\n\\,' \
+		-e 's,BS$$,\\,' \
+		-e 's,/\*\*/,,g' \
+		< ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${SEDSCRIPTS} ${SEDSCRIPTS:=.tmp}
+
+CONFIGFILES+=		GiveConsole TakeConsole \
+			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling
+FILES+=			xorg-bw.xpm xorg.xpm \
 			NetBSD-bw.xpm NetBSD-inv.xpm NetBSD.xpm	\
-			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm
+			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm \
+			${SEDSCRIPTS} 
 FILESDIR=		${XDMDIR}
 FILESDIR_xorg.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_xorg-bw.xpm=	${X11INCDIR}/X11/pixmaps
@@ -70,8 +90,6 @@ CONFIGSYMLINKS=		Xservers.ws ${XDMDIR}/Xservers
 .PATH:		${X11SRCDIR.xdm}/config
 
 .include "../Makefile.xdm"
-
-CPPSCRIPTFLAGS_xdm-config+=	-DCHOOSERPATH=${XDMCHOOSERPATH}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

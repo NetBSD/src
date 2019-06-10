@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.10 2018/05/31 07:03:57 maxv Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.10.2.1 2019/06/10 22:09:48 christos Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.10 2018/05/31 07:03:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.10.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.10 2018/05/31 07:03:57 maxv Exp $");
 
 #include <net/if_ipsec.h>
 
+static int ipsecif_set_natt_ports(struct ipsec_variant *, struct mbuf *);
 static void ipsecif4_input(struct mbuf *, int, int, void *);
 static int ipsecif4_output(struct ipsec_variant *, int, struct mbuf *);
 static int ipsecif4_filter4(const struct ip *, struct ipsec_variant *,
@@ -101,6 +102,32 @@ static const struct encapsw ipsecif4_encapsw = {
 #ifdef INET6
 static const struct encapsw ipsecif6_encapsw;
 #endif
+
+static int
+ipsecif_set_natt_ports(struct ipsec_variant *var, struct mbuf *m)
+{
+
+	KASSERT(if_ipsec_heldref_variant(var));
+
+	if (var->iv_sport || var->iv_dport) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+		    sizeof(uint16_t) + sizeof(uint16_t), M_DONTWAIT);
+		if (mtag) {
+			uint16_t *natt_port;
+
+			natt_port = (uint16_t *)(mtag + 1);
+			natt_port[0] = var->iv_dport;
+			natt_port[1] = var->iv_sport;
+			m_tag_prepend(m, mtag);
+		} else {
+			return ENOBUFS;
+		}
+	}
+
+	return 0;
+}
 
 static struct mbuf *
 ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
@@ -257,7 +284,7 @@ ipsecif4_fragout(struct ipsec_variant *var, int family, struct mbuf *m, int mtu)
 
 	KASSERT(if_ipsec_heldref_variant(var));
 
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag)
 		m_tag_delete(m, mtag);
 
@@ -299,7 +326,7 @@ ipsecif4_encap_func(struct mbuf *m, struct ip *ip, struct ipsec_variant *var)
 
 	src = satosin(var->iv_psrc);
 	dst = satosin(var->iv_pdst);
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag) {
 		u_int16_t *ports;
 
@@ -364,10 +391,9 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	KASSERT(sp->policy != IPSEC_POLICY_ENTRUST);
 	KASSERT(sp->policy != IPSEC_POLICY_BYPASS);
 	if (sp->policy != IPSEC_POLICY_IPSEC) {
-		struct ifnet *ifp = &var->iv_softc->ipsec_if;
 		m_freem(m);
-		IF_DROP(&ifp->if_snd);
-		return 0;
+		error = ENETUNREACH;
+		goto done;
 	}
 
 	/* get flowinfo */
@@ -394,6 +420,13 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	mtu = ipsecif4_needfrag(m, sp->req);
 	if (mtu > 0)
 		return ipsecif4_fragout(var, family, m, mtu);
+
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto done;
+	}
 
 	/* IPsec output */
 	IP_STATINC(IP_STAT_LOCALOUT);
@@ -423,7 +456,7 @@ ipsecif6_encap_func(struct mbuf *m, struct ip6_hdr *ip6, struct ipsec_variant *v
 
 	src = satosin6(var->iv_psrc);
 	dst = satosin6(var->iv_pdst);
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag) {
 		u_int16_t *ports;
 
@@ -550,13 +583,13 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		return ENETUNREACH;
 	}
 #ifndef IPSEC_TX_TOS_CLEAR
+	if (!ip6_ipsec_copy_tos)
+		otos = 0;
+
 	if (ifp->if_flags & IFF_ECN)
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 	else
 		ip_ecn_ingress(ECN_NOCARE, &otos, &itos);
-
-	if (!ip6_ipsec_copy_tos)
-		otos = 0;
 #else
 	if (ip6_ipsec_copy_tos)
 		otos = itos;
@@ -587,6 +620,13 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	}
 	rtcache_unref(rt, &iro->ir_ro);
 
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto out;
+	}
+
 	/*
 	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
 	 * it is too painful to ask for resend of inner packet, to achieve
@@ -594,9 +634,10 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	 */
 	error = ip6_output(m, 0, &iro->ir_ro,
 	    ip6_ipsec_pmtu ? 0 : IPV6_MINMTU, 0, NULL, NULL);
+
+out:
 	if (error)
 		rtcache_free(&iro->ir_ro);
-
 	mutex_exit(iro->ir_lock);
 	percpu_putref(sc->ipsec_ro_percpu);
 
@@ -707,7 +748,7 @@ ipsecif4_input(struct mbuf *m, int off, int proto, void *eparg)
 }
 
 /*
- * validate and filter the pakcet
+ * validate and filter the packet
  */
 static int
 ipsecif4_filter4(const struct ip *ip, struct ipsec_variant *var,
@@ -880,16 +921,10 @@ ipsecif4_detach(struct ipsec_variant *var)
 int
 ipsecif6_attach(struct ipsec_variant *var)
 {
-	struct sockaddr_in6 mask6;
 	struct ipsec_softc *sc = var->iv_softc;
 
 	KASSERT(if_ipsec_variant_is_configured(var));
 	KASSERT(var->iv_encap_cookie6 == NULL);
-
-	memset(&mask6, 0, sizeof(mask6));
-	mask6.sin6_len = sizeof(struct sockaddr_in6);
-	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
-	mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;
 
 	var->iv_encap_cookie6 = encap_attach_func(AF_INET6, -1, if_ipsec_encap_func,
 	    &ipsecif6_encapsw, sc);

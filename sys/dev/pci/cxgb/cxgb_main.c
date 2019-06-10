@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.5 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.5.2.1 2019/06/10 22:07:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,8 +640,8 @@ cxgb_setup_msix(adapter_t *sc, int msix_count)
         printf("cxgb_setup_msix(%d): pci_intr_map() failed\n", __LINE__);
         return (EINVAL);
     }
-    sc->intr_cookie = pci_intr_establish(sc->pa.pa_pc, sc->intr_handle,
-                        IPL_NET, cxgb_async_intr, sc);
+    sc->intr_cookie = pci_intr_establish_xname(sc->pa.pa_pc, sc->intr_handle,
+                        IPL_NET, cxgb_async_intr, sc, device_xname(sc->dev));
     if (sc->intr_cookie == NULL)
     {
         printf("cxgb_setup_msix(%d): pci_intr_establish() failed\n", __LINE__);
@@ -1009,8 +1009,8 @@ setup_rss(adapter_t *adap)
 
         nq[pi->tx_chan] += pi->nqsets;
     }
-    nq[0] = max(nq[0], 1U);
-    nq[1] = max(nq[1], 1U);
+    nq[0] = uimax(nq[0], 1U);
+    nq[1] = uimax(nq[1], 1U);
     for (i = 0; i < RSS_TABLE_SIZE / 2; ++i) {
         rspq_map[i] = i % nq[0];
         rspq_map[i + RSS_TABLE_SIZE / 2] = (i % nq[1]) + nq[0];
@@ -1124,9 +1124,9 @@ cxgb_up(struct adapter *sc)
             goto out;
         }
         device_printf(sc->dev, "allocated intr_handle=%d\n", sc->intr_handle);
-        sc->intr_cookie = pci_intr_establish(sc->pa.pa_pc,
+        sc->intr_cookie = pci_intr_establish_xname(sc->pa.pa_pc,
                     sc->intr_handle, IPL_NET,
-                    sc->cxgb_intr, sc);
+                    sc->cxgb_intr, sc, device_xname(sc->dev));
         if (sc->intr_cookie == NULL)
         {
             device_printf(sc->dev, "Cannot establish interrupt\n");

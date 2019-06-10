@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.34 2018/06/26 06:47:58 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.34.2.1 2019/06/10 22:05:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.34 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.34.2.1 2019/06/10 22:05:57 christos Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -58,17 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.34 2018/06/26 06:47:58 msaitoh E
 #include <sys/endian.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
-
 #include <sys/bus.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
-
-#include <sys/rndsource.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
@@ -103,7 +100,7 @@ struct npe_softc {
 	struct ethercom	sc_ethercom;
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	struct mii_data	sc_mii;
-	bus_space_tag_t	sc_iot;		
+	bus_space_tag_t	sc_iot;
 	bus_dma_tag_t	sc_dt;
 	bus_space_handle_t sc_ioh;	/* MAC register window */
 	bus_space_handle_t sc_miih;	/* MII register window */
@@ -195,13 +192,13 @@ static int	npe_activate(struct npe_softc *);
 #if 0
 static void	npe_deactivate(struct npe_softc *);
 #endif
-static void	npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr);
-static void	npe_setmac(struct npe_softc *sc, const u_char *eaddr);
-static void	npe_getmac(struct npe_softc *sc);
-static void	npe_txdone(int qid, void *arg);
+static void	npe_ifmedia_status(struct ifnet *, struct ifmediareq *);
+static void	npe_setmac(struct npe_softc *, const u_char *);
+static void	npe_getmac(struct npe_softc *);
+static void	npe_txdone(int, void *);
 static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
 			struct mbuf *);
-static void	npe_rxdone(int qid, void *arg);
+static void	npe_rxdone(int, void *);
 static void	npeinit_macreg(struct npe_softc *);
 static int	npeinit(struct ifnet *);
 static void	npeinit_resetcb(void *);
@@ -209,19 +206,18 @@ static void	npeinit_locked(void *);
 static void	npestart(struct ifnet *);
 static void	npestop(struct ifnet *, int);
 static void	npewatchdog(struct ifnet *);
-static int	npeioctl(struct ifnet * ifp, u_long, void *);
+static int	npeioctl(struct ifnet *, u_long, void *);
 
-static int	npe_setrxqosentry(struct npe_softc *, int classix,
-			int trafclass, int qid);
+static int	npe_setrxqosentry(struct npe_softc *, int, int, int);
 static int	npe_updatestats(struct npe_softc *);
 #if 0
 static int	npe_getstats(struct npe_softc *);
 static uint32_t	npe_getimageid(struct npe_softc *);
-static int	npe_setloopback(struct npe_softc *, int ena);
+static int	npe_setloopback(struct npe_softc *, int);
 #endif
 
-static int	npe_miibus_readreg(device_t, int, int);
-static void	npe_miibus_writereg(device_t, int, int, int);
+static int	npe_miibus_readreg(device_t, int, int, uint16_t *);
+static int	npe_miibus_writereg(device_t, int, int, uint16_t);
 static void	npe_miibus_statchg(struct ifnet *);
 
 static int	npe_debug;
@@ -234,10 +230,6 @@ static int	npe_debug;
 
 #define	NPE_TXBUF	128
 #define	NPE_RXBUF	64
-
-#ifndef ETHER_ALIGN
-#define	ETHER_ALIGN	2	/* XXX: Ditch this */
-#endif
 
 #define MAC2UINT64(addr)	(((uint64_t)addr[0] << 40)	\
 				    + ((uint64_t)addr[1] << 32)	\
@@ -272,6 +264,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	struct ixpnpe_softc *isc = device_private(parent);
 	struct ixpnpe_attach_args *na = arg;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_mii;
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet co-processor\n");
@@ -284,7 +277,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	sc->sc_phy = na->na_phy;
 
 	memset(&sc->sc_ethercom, 0, sizeof(sc->sc_ethercom));
-	memset(&sc->sc_mii, 0, sizeof(sc->sc_mii));
+	memset(mii, 0, sizeof(*mii));
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -301,22 +294,22 @@ npe_attach(device_t parent, device_t self, void *arg)
 	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = npe_miibus_readreg;
-	sc->sc_mii.mii_writereg = npe_miibus_writereg;
-	sc->sc_mii.mii_statchg = npe_miibus_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = npe_miibus_readreg;
+	mii->mii_writereg = npe_miibus_writereg;
+	mii->mii_statchg = npe_miibus_statchg;
+	sc->sc_ethercom.ec_mii = mii;
 
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    npe_ifmedia_status);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp->if_softc = sc;
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
@@ -348,7 +341,8 @@ npe_attach(device_t parent, device_t self, void *arg)
 static void
 npe_setmcast(struct npe_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	uint8_t mask[ETHER_ADDR_LEN], addr[ETHER_ADDR_LEN];
 	uint32_t reg;
 	uint32_t msg[2];
@@ -375,10 +369,13 @@ npe_setmcast(struct npe_softc *sc)
 		memset(clr, 0, ETHER_ADDR_LEN);
 		memset(set, 0xff, ETHER_ADDR_LEN);
 
-		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
+				ETHER_UNLOCK(ec);
 				goto all_multi;
 			}
 
@@ -389,6 +386,7 @@ npe_setmcast(struct npe_softc *sc)
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			mask[i] = set[i] | ~clr[i];
@@ -473,7 +471,8 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	}
 
 	/* XXX M_TEMP */
-	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP, M_NOWAIT | M_ZERO);
+	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP,
+	    M_NOWAIT | M_ZERO);
 	if (dma->buf == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s %s buffers, error %u\n",
@@ -488,7 +487,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		struct npebuf *npe = &dma->buf[i];
 		struct npehwbuf *hw = &dma->hwbuf[i];
 
-		/* calculate offset to shared area */
+		/* Calculate offset to shared area */
 		npe->ix_neaddr = dma->buf_phys +
 			((uintptr_t)hw - (uintptr_t)dma->hwbuf);
 		KASSERT((npe->ix_neaddr & 0x1f) == 0);
@@ -754,7 +753,7 @@ npe_tick(void *xsc)
 	npe_updatestats(sc);
 	mii_tick(&sc->sc_mii);
 
-	/* schedule next poll */
+	/* Schedule next poll */
 	callout_reset(&sc->sc_tick_ch, hz, npe_tick, sc);
 #undef ACK
 }
@@ -873,7 +872,7 @@ npe_getcl(void)
 			m = NULL;
 		}
 	}
-	return (m);
+	return m;
 }
 
 static int
@@ -893,7 +892,7 @@ npe_rxbuf_init(struct npe_softc *sc, struct npebuf *npe, struct mbuf *m)
 	m->m_data = m->m_ext.ext_buf + (m->m_ext.ext_size
 	    - (NPE_FRAME_SIZE_DEFAULT + ETHER_ALIGN));
 	error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
 		m_freem(m);
 		return error;
@@ -960,7 +959,8 @@ npe_rxdone(int qid, void *arg)
 #if 1
 			if (mrx->m_pkthdr.len < sizeof(struct ether_header)) {
 				log(LOG_INFO, "%s: too short frame (len=%d)\n",
-				    device_xname(sc->sc_dev), mrx->m_pkthdr.len);
+				    device_xname(sc->sc_dev),
+				    mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
 				ifp->if_ierrors++;
@@ -977,10 +977,10 @@ npe_rxdone(int qid, void *arg)
 				 */
 				eh = mtod(mrx, struct ether_header *);
 				if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
-					/* unicast */
+					/* Unicast */
 
 					if (sc->sc_enaddr[5] != eh->ether_dhost[5]) {
-						/* discard it */
+						/* Discard it */
 #if 0
 						printf("discard it\n");
 #endif
@@ -1000,8 +1000,9 @@ npe_rxdone(int qid, void *arg)
 					struct ether_multistep step;
 					int match = 0;
 
-					/* multicast */
+					/* Multicast */
 
+					ETHER_LOCK(ec);
 					ETHER_FIRST_MULTI(step, ec, enm);
 					while (enm != NULL) {
 						uint64_t lowint, highint, dest;
@@ -1020,8 +1021,10 @@ npe_rxdone(int qid, void *arg)
 						}
 						ETHER_NEXT_MULTI(step, enm);
 					}
+					ETHER_UNLOCK(ec);
+
 					if (match == 0) {
-						/* discard it */
+						/* Discard it */
 #if 0
 						printf("discard it(M)\n");
 #endif
@@ -1102,7 +1105,7 @@ npe_startrecv(struct npe_softc *sc)
 	for (i = 0; i < dma->nbuf; i++) {
 		npe = &dma->buf[i];
 		npe_rxbuf_init(sc, npe, npe->ix_m);
-		/* set npe buf on rx free list */
+		/* Set npe buf on rx free list */
 		ixpqmgr_qwrite(sc->rx_freeqid, npe->ix_neaddr);
 	}
 }
@@ -1116,13 +1119,13 @@ npeinit_macreg(struct npe_softc *sc)
 	 */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_RESET);
 	DELAY(NPE_MAC_RESET_DELAY);
-	/* configure MAC to generate MDC clock */
+	/* Configure MAC to generate MDC clock */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_MDC_EN);
 
-	/* disable transmitter and reciver in the MAC */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Disable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) &~ NPE_TX_CNTRL1_TX_EN);
 
 	/*
@@ -1131,7 +1134,7 @@ npeinit_macreg(struct npe_softc *sc)
 	WR4(sc, NPE_MAC_INT_CLK_THRESH, 0x1);	/* clock ratio: for ipx4xx */
 	WR4(sc, NPE_MAC_TX_CNTRL2,	0xf);	/* max retries */
 	WR4(sc, NPE_MAC_RANDOM_SEED,	0x8);	/* LFSR back-off seed */
-	/* thresholds determined by NPE firmware FS */
+	/* Thresholds determined by NPE firmware FS */
 	WR4(sc, NPE_MAC_THRESH_P_EMPTY,	0x12);
 	WR4(sc, NPE_MAC_THRESH_P_FULL,	0x30);
 	WR4(sc, NPE_MAC_BUF_SIZE_TX, NPE_MAC_BUF_SIZE_TX_DEFAULT);
@@ -1195,10 +1198,10 @@ npeinit_locked(void *xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;		/* just in case */
 
-	/* enable transmitter and reciver in the MAC */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Enable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) | NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) | NPE_TX_CNTRL1_TX_EN);
 
 	callout_reset(&sc->sc_tick_ch, hz, npe_tick, sc);
@@ -1214,7 +1217,7 @@ npeinit(struct ifnet *ifp)
 	npeinit_locked(sc);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1231,21 +1234,21 @@ npe_defrag(struct mbuf *m0)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (NULL);
-	M_COPY_PKTHDR(m, m0);
+		return NULL;
+	m_copy_pkthdr(m, m0);
 
 	if ((m->m_len = m0->m_pkthdr.len) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			return (NULL);
+			return NULL;
 		}
 	}
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 	m_freem(m0);
 
-	return (m);
+	return m;
 }
 
 /*
@@ -1262,7 +1265,7 @@ npestart(struct ifnet *ifp)
 	int nseg, len, error, i;
 	uint32_t next;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	while (sc->tx_free != NULL) {
@@ -1271,7 +1274,7 @@ npestart(struct ifnet *ifp)
 			break;
 		npe = sc->tx_free;
 		error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error == EFBIG) {
 			n = npe_defrag(m);
 			if (n == NULL) {
@@ -1282,7 +1285,7 @@ npestart(struct ifnet *ifp)
 			}
 			m = n;
 			error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		}
 		if (error != 0) {
 			printf("%s: %s: error %u\n",
@@ -1374,10 +1377,10 @@ npestop(struct ifnet *ifp, int disable)
 {
 	struct npe_softc *sc = ifp->if_softc;
 
-	/*  disable transmitter and reciver in the MAC  */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Disable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) &~ NPE_TX_CNTRL1_TX_EN);
 
 	callout_stop(&sc->sc_tick_ch);
@@ -1389,7 +1392,7 @@ npestop(struct ifnet *ifp, int disable)
 
 	/*
 	 * The MAC core rx/tx disable may leave the MAC hardware in an
-	 * unpredictable state. A hw reset is executed before resetting 
+	 * unpredictable state. A hw reset is executed before resetting
 	 * all the MAC parameters to a known value.
 	 */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_RESET);
@@ -1425,7 +1428,6 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 #if 0 /* not yet */
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
@@ -1443,13 +1445,13 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_RUNNING) {
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+		} else if ((ifp->if_flags & (IFF_UP |IFF_RUNNING)) == IFF_UP) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1461,8 +1463,8 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* Up (AND RUNNING). */
 
 			diff = (ifp->if_flags ^ sc->sc_if_flags)
-			    & (IFF_PROMISC|IFF_ALLMULTI);
-			if ((diff & (IFF_PROMISC|IFF_ALLMULTI)) != 0) {
+			    & (IFF_PROMISC | IFF_ALLMULTI);
+			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
 				/*
 				 * If the difference bettween last flag and
 				 * new flag only IFF_PROMISC or IFF_ALLMULTI,
@@ -1612,45 +1614,50 @@ npe_mii_mdio_wait(struct npe_softc *sc)
 	for (i = 0; i < MAXTRIES; i++) {
 		v = npe_mii_mdio_read(sc, NPE_MAC_MDIO_CMD);
 		if ((v & NPE_MII_GO) == 0)
-			return 1;
+			return 0;
 	}
-	return 0;		/* NB: timeout */
+	return ETIMEDOUT;
 #undef MAXTRIES
 }
 
 static int
-npe_miibus_readreg(device_t self, int phy, int reg)
+npe_miibus_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
-		return 0xffff;
+		return -1;
 	v = (phy << NPE_MII_ADDR_SHL) | (reg << NPE_MII_REG_SHL)
 	  | NPE_MII_GO;
 	npe_mii_mdio_write(sc, NPE_MAC_MDIO_CMD, v);
-	if (npe_mii_mdio_wait(sc))
+	if (npe_mii_mdio_wait(sc) == 0)
 		v = npe_mii_mdio_read(sc, NPE_MAC_MDIO_STS);
 	else
 		v = 0xffff | NPE_MII_READ_FAIL;
-	return (v & NPE_MII_READ_FAIL) ? 0xffff : (v & 0xffff);
+
+	if ((v & NPE_MII_READ_FAIL) != 0)
+		return -1;
+
+	*val = v & 0xffff;
+	return 0;
 #undef MAXTRIES
 }
 
-static void
-npe_miibus_writereg(device_t self, int phy, int reg, int data)
+static int
+npe_miibus_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
-		return;
+		return -1;
 	v = (phy << NPE_MII_ADDR_SHL) | (reg << NPE_MII_REG_SHL)
-	  | data | NPE_MII_WRITE
+	  | val | NPE_MII_WRITE
 	  | NPE_MII_GO;
 	npe_mii_mdio_write(sc, NPE_MAC_MDIO_CMD, v);
-	/* XXX complain about timeout */
-	(void) npe_mii_mdio_wait(sc);
+
+	return npe_mii_mdio_wait(sc);
 }
 
 static void
@@ -1660,7 +1667,7 @@ npe_miibus_statchg(struct ifnet *ifp)
 	uint32_t tx1, rx1;
 	uint32_t randoff;
 
-	/* sync MAC duplex state */
+	/* Sync MAC duplex state */
 	tx1 = RD4(sc, NPE_MAC_TX_CNTRL1);
 	rx1 = RD4(sc, NPE_MAC_RX_CNTRL1);
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {

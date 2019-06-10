@@ -1,5 +1,5 @@
 /* aarch64-opc.h -- Header file for aarch64-opc.c and aarch64-opc-2.c.
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -67,7 +67,10 @@ enum aarch64_field_kind
   FLD_type,
   FLD_ldst_size,
   FLD_imm6,
+  FLD_imm6_2,
   FLD_imm4,
+  FLD_imm4_2,
+  FLD_imm4_3,
   FLD_imm5,
   FLD_imm7,
   FLD_imm8,
@@ -143,6 +146,8 @@ enum aarch64_field_kind
   FLD_rotate1,
   FLD_rotate2,
   FLD_rotate3,
+  FLD_SM3_imm2,
+  FLD_sz
 };
 
 /* Field description.  */
@@ -180,6 +185,10 @@ typedef struct aarch64_operand aarch64_operand;
 
 extern const aarch64_operand aarch64_operands[];
 
+enum err_type
+verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
+		    bfd_boolean, aarch64_operand_error *, aarch64_instr_sequence*);
+
 /* Operand flags.  */
 
 #define OPD_F_HAS_INSERTER	0x00000001
@@ -192,6 +201,38 @@ extern const aarch64_operand aarch64_operands[];
 #define OPD_F_OD_MASK		0x000000e0	/* Operand-dependent data.  */
 #define OPD_F_OD_LSB		5
 #define OPD_F_NO_ZR		0x00000100	/* ZR index not allowed.  */
+#define OPD_F_SHIFT_BY_4	0x00000200	/* Need to left shift the field
+						   value by 4 to get the value
+						   of an immediate operand.  */
+
+
+/* Register flags.  */
+
+#undef F_DEPRECATED
+#define F_DEPRECATED	(1 << 0)  /* Deprecated system register.  */
+
+#undef F_ARCHEXT
+#define F_ARCHEXT	(1 << 1)  /* Architecture dependent system register.  */
+
+#undef F_HASXT
+#define F_HASXT		(1 << 2)  /* System instruction register <Xt>
+				     operand.  */
+
+#undef F_REG_READ
+#define F_REG_READ	(1 << 3)  /* Register can only be used to read values
+				     out of.  */
+
+#undef F_REG_WRITE
+#define F_REG_WRITE	(1 << 4)  /* Register can only be written to but not
+				     read from.  */
+
+/* HINT operand flags.  */
+#define HINT_OPD_F_NOPRINT	(1 << 0)  /* Should not be printed.  */
+
+/* Encode 7-bit HINT #imm in the lower 8 bits.  Use higher bits for flags.  */
+#define HINT_ENCODE(flag, val) ((flag << 8) | val)
+#define HINT_FLAG(val) (val >> 8)
+#define HINT_VAL(val) (val & 0xff)
 
 static inline bfd_boolean
 operand_has_inserter (const aarch64_operand *operand)
@@ -215,6 +256,12 @@ static inline bfd_boolean
 operand_need_shift_by_two (const aarch64_operand *operand)
 {
   return (operand->flags & OPD_F_SHIFT_BY_2) ? TRUE : FALSE;
+}
+
+static inline bfd_boolean
+operand_need_shift_by_four (const aarch64_operand *operand)
+{
+  return (operand->flags & OPD_F_SHIFT_BY_4) ? TRUE : FALSE;
 }
 
 static inline bfd_boolean

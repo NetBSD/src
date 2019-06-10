@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.4 2018/06/16 00:12:35 jmcneill Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.4.2.1 2019/06/10 22:07:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.4 2018/06/16 00:12:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.4.2.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -43,10 +44,11 @@ struct fdtbus_clock_controller {
 	int cc_phandle;
 	const struct fdtbus_clock_controller_func *cc_funcs;
 
-	struct fdtbus_clock_controller *cc_next;
+	LIST_ENTRY(fdtbus_clock_controller) cc_next;
 };
 
-static struct fdtbus_clock_controller *fdtbus_cc = NULL;
+static LIST_HEAD(, fdtbus_clock_controller) fdtbus_clock_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_clock_controller);
 
 int
 fdtbus_register_clock_controller(device_t dev, int phandle,
@@ -59,8 +61,7 @@ fdtbus_register_clock_controller(device_t dev, int phandle,
 	cc->cc_phandle = phandle;
 	cc->cc_funcs = funcs;
 
-	cc->cc_next = fdtbus_cc;
-	fdtbus_cc = cc;
+	LIST_INSERT_HEAD(&fdtbus_clock_controllers, cc, cc_next);
 
 	fdtbus_clock_assign(phandle);
 
@@ -72,10 +73,9 @@ fdtbus_get_clock_controller(int phandle)
 {
 	struct fdtbus_clock_controller *cc;
 
-	for (cc = fdtbus_cc; cc; cc = cc->cc_next) {
-		if (cc->cc_phandle == phandle) {
+	LIST_FOREACH(cc, &fdtbus_clock_controllers, cc_next) {
+		if (cc->cc_phandle == phandle)
 			return cc;
-		}
 	}
 
 	return NULL;
@@ -103,7 +103,7 @@ fdtbus_clock_get_index_prop(int phandle, u_int index, const char *prop)
 			cc = fdtbus_get_clock_controller(cc_phandle);
 			if (cc == NULL)
 				break;
-			clk = cc->cc_funcs->decode(cc->cc_dev,
+			clk = cc->cc_funcs->decode(cc->cc_dev, cc_phandle,
 			    clock_cells > 0 ? &p[1] : NULL, clock_cells * 4);
 			break;
 		}
@@ -123,25 +123,14 @@ fdtbus_clock_get_index(int phandle, u_int index)
 static struct clk *
 fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 {
-	struct clk *clk = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	p = fdtbus_get_prop(phandle, prop, &len);
-	if (p == NULL)
+	err = fdtbus_get_index(phandle, prop, clkname, &index);
+	if (err != 0)
 		return NULL;
 
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, clkname) == 0) {
-			clk = fdtbus_clock_get_index(phandle, index);
-			break;
-		}
-		resid -= strlen(p);
-		p += strlen(p) + 1;
-	}
-
-	return clk;
+	return fdtbus_clock_get_index(phandle, index);
 }
 
 static u_int
@@ -182,25 +171,20 @@ struct clk *
 fdtbus_clock_byname(const char *clkname)
 {
 	struct fdtbus_clock_controller *cc;
-	u_int len, resid, index, clock_cells;
-	const char *p;
+	u_int index, clock_cells;
+	int err;
 
-	for (cc = fdtbus_cc; cc; cc = cc->cc_next) {
-		if (!of_hasprop(cc->cc_phandle, "clock-output-names"))
+	LIST_FOREACH(cc, &fdtbus_clock_controllers, cc_next) {
+		err = fdtbus_get_index(cc->cc_phandle, "clock-output-names", clkname, &index);
+		if (err != 0)
 			continue;
-		p = fdtbus_get_prop(cc->cc_phandle, "clock-output-names", &len);
-		for (index = 0, resid = len; resid > 0; index++) {
-			if (strcmp(p, clkname) == 0) {
-				if (of_getprop_uint32(cc->cc_phandle, "#clock-cells", &clock_cells))
-					break;
-				const u_int index_raw = htobe32(index);
-				return cc->cc_funcs->decode(cc->cc_dev,
-				    clock_cells > 0 ? &index_raw : NULL,
-				    clock_cells > 0 ? 4 : 0);
-			}
-			resid -= strlen(p) + 1;
-			p += strlen(p) + 1;
-		}
+		if (of_getprop_uint32(cc->cc_phandle, "#clock-cells", &clock_cells))
+			continue;
+		const u_int index_raw = htobe32(index);
+		return cc->cc_funcs->decode(cc->cc_dev,
+		    cc->cc_phandle,
+		    clock_cells > 0 ? &index_raw : NULL,
+		    clock_cells > 0 ? 4 : 0);
 	}
 
 	return NULL;

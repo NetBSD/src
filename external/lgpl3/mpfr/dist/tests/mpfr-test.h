@@ -1,6 +1,6 @@
 /* auxiliary functions for MPFR tests.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,13 +23,30 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifndef __MPFR_TEST_H__
 #define __MPFR_TEST_H__
 
-#include <stdio.h>
+/* Include config.h before using ANY configure macros if needed. */
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+/* The no assertion request doesn't apply to the tests */
+#if defined(MPFR_WANT_ASSERT)
+# if MPFR_WANT_ASSERT < 0
+#  undef MPFR_WANT_ASSERT
+# endif
+#endif
 
 #include "mpfr-impl.h"
 
+#define STRINGIZE(S) #S
+#define MAKE_STR(S) STRINGIZE(S)
+
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 /* generates a random long int, a random double,
    and corresponding seed initializing */
-#define DBL_RAND() ((double) randlimb() / (double) MP_LIMB_T_MAX)
+#define DBL_RAND() ((double) randlimb() / (double) MPFR_LIMB_MAX)
 
 #define MINNORM 2.2250738585072013831e-308 /* 2^(-1022), smallest normalized */
 #define MAXNORM 1.7976931348623157081e308 /* 2^(1023)*(2-2^(-52)) */
@@ -37,11 +54,18 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* Generates a random rounding mode */
 #define RND_RAND() ((mpfr_rnd_t) (randlimb() % MPFR_RND_MAX))
 
+/* Ditto, excluding RNDF, assumed to be the last rounding mode */
+#define RND_RAND_NO_RNDF() ((mpfr_rnd_t) (randlimb() % MPFR_RNDF))
+
 /* Generates a random sign */
-#define SIGN_RAND() ( (randlimb()%2) ? MPFR_SIGN_POS : MPFR_SIGN_NEG)
+#define RAND_SIGN() (randlimb() % 2 ? MPFR_SIGN_POS : MPFR_SIGN_NEG)
 
 /* Loop for all rounding modes */
 #define RND_LOOP(_r) for((_r) = 0 ; (_r) < MPFR_RND_MAX ; (_r)++)
+
+/* Loop for all rounding modes except RNDF (assumed to be the last one),
+   which must be excluded from tests that rely on deterministic results. */
+#define RND_LOOP_NO_RNDF(_r) for((_r) = 0 ; (_r) < MPFR_RNDF ; (_r)++)
 
 /* Test whether two floating-point data have the same value,
    seen as an element of the set of the floating-point data
@@ -61,58 +85,69 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define ABS(x) (((x)>0) ? (x) : -(x))
 
-#define FLIST mpfr_ptr, mpfr_srcptr, mpfr_rnd_t
-
-#if defined (__cplusplus)
-extern "C" {
+/* In the tests, mpfr_sgn was sometimes used incorrectly, for instance:
+ *
+ *   if (mpfr_cmp_ui (y, 0) || mpfr_sgn (y) < 0)
+ *
+ * to check that y is +0. This does not make sense since on 0, mpfr_sgn
+ * yields 0, so that -0 would not be detected as an error. To make sure
+ * that mpfr_sgn is not used incorrectly, we choose to fail when this
+ * macro is used on a datum whose mathematical sign is not +1 or -1.
+ * This feature is disabled when MPFR_TESTS_TSGN is defined, typically
+ * in tsgn (to test mpfr_sgn itself).
+ */
+#ifndef MPFR_TESTS_TSGN
+# undef mpfr_sgn
+# define mpfr_sgn(x)                   \
+  (MPFR_ASSERTN (! MPFR_IS_NAN (x)),   \
+   MPFR_ASSERTN (! MPFR_IS_ZERO (x)),  \
+   MPFR_SIGN (x))
 #endif
 
-int test_version _MPFR_PROTO ((void));
+#define FLIST mpfr_ptr, mpfr_srcptr, mpfr_rnd_t
 
-void tests_memory_start _MPFR_PROTO ((void));
-void tests_memory_end _MPFR_PROTO ((void));
+int test_version (void);
 
-void tests_start_mpfr _MPFR_PROTO ((void));
-void tests_end_mpfr _MPFR_PROTO ((void));
+/* Memory handling */
+#define DEFAULT_MEMORY_LIMIT (1UL << 22)
+extern size_t tests_memory_limit;
+void tests_memory_start (void);
+void tests_memory_end (void);
 
-int mpfr_set_machine_rnd_mode _MPFR_PROTO ((mpfr_rnd_t));
-void mpfr_test_init _MPFR_PROTO ((void));
-mp_limb_t randlimb _MPFR_PROTO ((void));
-void randseed _MPFR_PROTO ((unsigned int));
-void mpfr_random2 _MPFR_PROTO ((mpfr_ptr, mp_size_t, mpfr_exp_t, gmp_randstate_t));
-int ulp _MPFR_PROTO ((double, double));
-double dbl _MPFR_PROTO ((double, int));
-double Ulp _MPFR_PROTO ((double));
-int Isnan _MPFR_PROTO ((double));
-void d_trace _MPFR_PROTO ((const char *, double));
-void ld_trace _MPFR_PROTO ((const char *, long double));
+void tests_start_mpfr (void);
+void tests_end_mpfr (void);
 
-FILE *src_fopen _MPFR_PROTO ((const char *, const char *));
-void set_emin _MPFR_PROTO ((mpfr_exp_t));
-void set_emax _MPFR_PROTO ((mpfr_exp_t));
-void tests_default_random _MPFR_PROTO ((mpfr_ptr, int, mpfr_exp_t, mpfr_exp_t,
-                                        int));
-void data_check _MPFR_PROTO ((const char *, int (*) (FLIST), const char *));
-void bad_cases _MPFR_PROTO ((int (*)(FLIST), int (*)(FLIST),
-                             const char *, int, mpfr_exp_t, mpfr_exp_t,
-                             mpfr_prec_t, mpfr_prec_t, mpfr_prec_t, int));
-void flags_out _MPFR_PROTO ((unsigned int));
+void tests_expect_abort (void);
 
-int mpfr_cmp_str _MPFR_PROTO ((mpfr_srcptr x, const char *, int, mpfr_rnd_t));
+int mpfr_set_machine_rnd_mode (mpfr_rnd_t);
+void mpfr_test_init (void);
+mp_limb_t randlimb (void);
+void randseed (unsigned int);
+void mpfr_random2 (mpfr_ptr, mp_size_t, mpfr_exp_t, gmp_randstate_t);
+int ulp (double, double);
+double dbl (double, int);
+double Ulp (double);
+int Isnan (double);
+void d_trace (const char *, double);
+void ld_trace (const char *, long double);
+
+FILE *src_fopen (const char *, const char *);
+void set_emin (mpfr_exp_t);
+void set_emax (mpfr_exp_t);
+void tests_default_random (mpfr_ptr, int, mpfr_exp_t, mpfr_exp_t,
+                           int);
+void data_check (const char *, int (*) (FLIST), const char *);
+void bad_cases (int (*)(FLIST), int (*)(FLIST),
+                const char *, int, mpfr_exp_t, mpfr_exp_t,
+                mpfr_prec_t, mpfr_prec_t, mpfr_prec_t, int);
+void flags_out (unsigned int);
+
+int mpfr_cmp_str (mpfr_srcptr x, const char *, int, mpfr_rnd_t);
 #define mpfr_cmp_str1(x,s) mpfr_cmp_str(x,s,10,MPFR_RNDN)
 #define mpfr_set_str1(x,s) mpfr_set_str(x,s,10,MPFR_RNDN)
 
 #define mpfr_cmp0(x,y) (MPFR_ASSERTN (!MPFR_IS_NAN (x) && !MPFR_IS_NAN (y)), mpfr_cmp (x,y))
 #define mpfr_cmp_ui0(x,i) (MPFR_ASSERTN (!MPFR_IS_NAN (x)), mpfr_cmp_ui (x,i))
-
-/* Allocation */
-void *tests_allocate _MPFR_PROTO ((size_t));
-void *tests_reallocate _MPFR_PROTO ((void *, size_t, size_t));
-void tests_free _MPFR_PROTO ((void *, size_t));
-
-#if defined (__cplusplus)
-}
-#endif
 
 /* define CHECK_EXTERNAL if you want to check mpfr against another library
    with correct rounding. You'll probably have to modify mpfr_print_raw()
@@ -136,7 +171,7 @@ mpfr_print_raw (mpfr_srcptr x)
       return;
     }
 
-  if (MPFR_SIGN (x) < 0)
+  if (MPFR_IS_NEG (x))
     printf ("-");
 
   if (MPFR_IS_INF (x))
@@ -173,6 +208,39 @@ mpfr_print_raw (mpfr_srcptr x)
             }
         }
     }
+}
+#endif
+
+extern char *locale;
+
+/* Random */
+extern char             mpfr_rands_initialized;
+extern gmp_randstate_t  mpfr_rands;
+
+#undef RANDS
+#define RANDS                                   \
+  ((mpfr_rands_initialized ? 0                 \
+    : (mpfr_rands_initialized = 1,             \
+       gmp_randinit_default (mpfr_rands), 0)), \
+   mpfr_rands)
+
+#undef RANDS_CLEAR
+#define RANDS_CLEAR()                   \
+  do {                                  \
+    if (mpfr_rands_initialized)        \
+      {                                 \
+        mpfr_rands_initialized = 0;    \
+        gmp_randclear (mpfr_rands);    \
+      }                                 \
+  } while (0)
+
+/* Memory Allocation */
+extern int tests_memory_disabled;
+void *tests_allocate (size_t);
+void *tests_reallocate (void *, size_t, size_t);
+void tests_free (void *, size_t);
+
+#if defined (__cplusplus)
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.26 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.26.64.1 2019/06/10 22:07:31 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.26 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.26.64.1 2019/06/10 22:07:31 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -122,9 +122,5 @@ rf_FreeAllocList(RF_AllocListElem_t *l)
 RF_AllocListElem_t *
 rf_real_MakeAllocList(void)
 {
-	RF_AllocListElem_t *p;
-
-	p = pool_get(&rf_pools.alloclist, PR_WAITOK);
-	memset((char *) p, 0, sizeof(RF_AllocListElem_t));
-	return (p);
+	return pool_get(&rf_pools.alloclist, PR_WAITOK | PR_ZERO);
 }

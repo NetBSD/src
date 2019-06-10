@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.27 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: interactive.c,v 1.27.30.1 2019/06/10 22:05:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.27 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.27.30.1 2019/06/10 22:05:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,7 @@ loop:
 	case 'h':
 		if (strncmp(cmd, "help", strlen(cmd)) != 0)
 			goto bad;
+		/* FALLTHROUGH */
 	case '?':
 		fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 			"Available commands are:\n",

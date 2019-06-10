@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,13 @@
 #include "server.h"
 #include "win32-low.h"
 #include "x86-low.h"
+#include "common/x86-xstate.h"
+#ifdef __x86_64__
+#include "arch/amd64.h"
+#endif
+#include "arch/i386.h"
+#include "tdesc.h"
+#include "x86-tdesc.h"
 
 #ifndef CONTEXT_EXTENDED_REGISTERS
 #define CONTEXT_EXTENDED_REGISTERS 0
@@ -28,35 +35,16 @@
 
 #define FLAG_TRACE_BIT 0x100
 
-#ifdef __x86_64__
-/* Defined in auto-generated build-time file gdb/gdbserver/amd64.c.  */
-void init_registers_amd64 (void);
-extern const struct target_desc *tdesc_amd64;
-#else
-/* Defined in auto-generated build-time file gdb/gdbserver/i386.c.  */
-void init_registers_i386 (void);
-extern const struct target_desc *tdesc_i386;
-#endif
-
 static struct x86_debug_reg_state debug_reg_state;
 
-static int
-update_debug_registers_callback (struct inferior_list_entry *entry,
-				 void *pid_p)
+static void
+update_debug_registers (thread_info *thread)
 {
-  struct thread_info *thr = (struct thread_info *) entry;
-  win32_thread_info *th = (win32_thread_info *) inferior_target_data (thr);
-  int pid = *(int *) pid_p;
+  win32_thread_info *th = (win32_thread_info *) thread_target_data (thread);
 
-  /* Only update the threads of this process.  */
-  if (pid_of (thr) == pid)
-    {
-      /* The actual update is done later just before resuming the lwp,
-	 we just mark that the registers need updating.  */
-      th->debug_registers_changed = 1;
-    }
-
-  return 0;
+  /* The actual update is done later just before resuming the lwp,
+     we just mark that the registers need updating.  */
+  th->debug_registers_changed = 1;
 }
 
 /* Update the inferior's debug register REGNUM from STATE.  */
@@ -64,12 +52,10 @@ update_debug_registers_callback (struct inferior_list_entry *entry,
 static void
 x86_dr_low_set_addr (int regnum, CORE_ADDR addr)
 {
-  /* Only update the threads of this process.  */
-  int pid = pid_of (current_thread);
-
   gdb_assert (DR_FIRSTADDR <= regnum && regnum <= DR_LASTADDR);
 
-  find_inferior (&all_threads, update_debug_registers_callback, &pid);
+  /* Only update the threads of this process.  */
+  for_each_thread (current_thread->id.pid (), update_debug_registers);
 }
 
 /* Update the inferior's DR7 debug control register from STATE.  */
@@ -78,9 +64,7 @@ static void
 x86_dr_low_set_control (unsigned long control)
 {
   /* Only update the threads of this process.  */
-  int pid = pid_of (current_thread);
-
-  find_inferior (&all_threads, update_debug_registers_callback, &pid);
+  for_each_thread (current_thread->id.pid (), update_debug_registers);
 }
 
 /* Return the current value of a DR register of the current thread's
@@ -90,7 +74,7 @@ static DWORD64
 win32_get_current_dr (int dr)
 {
   win32_thread_info *th
-    = (win32_thread_info *) inferior_target_data (current_thread);
+    = (win32_thread_info *) thread_target_data (current_thread);
 
   win32_require_context (th);
 
@@ -448,13 +432,20 @@ static const unsigned char i386_win32_breakpoint = 0xcc;
 static void
 i386_arch_setup (void)
 {
+  struct target_desc *tdesc;
+
 #ifdef __x86_64__
-  init_registers_amd64 ();
-  win32_tdesc = tdesc_amd64;
+  tdesc = amd64_create_target_description (X86_XSTATE_SSE_MASK, false,
+					   false, false);
+  const char **expedite_regs = amd64_expedite_regs;
 #else
-  init_registers_i386 ();
-  win32_tdesc = tdesc_i386;
+  tdesc = i386_create_target_description (X86_XSTATE_SSE_MASK, false);
+  const char **expedite_regs = i386_expedite_regs;
 #endif
+
+  init_target_desc (tdesc, expedite_regs);
+
+  win32_tdesc = tdesc;
 }
 
 struct win32_target_ops the_low_target = {

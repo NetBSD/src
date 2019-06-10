@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2009/12/17 05:29:56 matt Exp $
+#	$NetBSD: Makefile,v 1.22.64.1 2019/06/10 22:06:35 christos Exp $
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
@@ -21,7 +21,8 @@ CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
-CPPFLAGS+= -DSUN_BOOTPARAMS
+#CPPFLAGS+= -DSUN_BOOTPARAMS
+CPPFLAGS+= -DSUPPORT_DHCP -DSUPPORT_BOOTP
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t

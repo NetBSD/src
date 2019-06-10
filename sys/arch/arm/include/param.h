@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2016/08/26 05:56:03 mlelstv Exp $	*/
+/*	$NetBSD: param.h,v 1.20.16.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -145,6 +145,8 @@
 # endif /* __ARMEB__ */
 #endif /* !_KERNEL */
 
+#define MAXCPUS		8
+
 #define	MID_MACHINE	MID_ARM6
 
 /* ARM-specific macro to align a stack pointer (downwards). */
@@ -153,14 +155,6 @@
 #define	ALIGNBYTES32	3
 #else
 #define	ALIGNBYTES32	7
-#endif
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-
-#ifndef MAXPHYS
-#define	MAXPHYS		65536		/* max I/O transfer size */
 #endif
 
 /*

@@ -1,6 +1,6 @@
 /* Code to go along with tests in breakpoint.exp.
    
-   Copyright 2004-2016 Free Software Foundation, Inc.
+   Copyright 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

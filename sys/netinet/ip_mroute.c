@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.160 2018/06/21 10:37:50 knakahara Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.160.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.160 2018/06/21 10:37:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.160.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.160 2018/06/21 10:37:50 knakahara Ex
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_offload.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
@@ -1723,7 +1724,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 
 	/* Take care of delayed checksums */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
@@ -2743,7 +2744,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
 
 	/* Take care of delayed checksums */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
@@ -2918,22 +2919,16 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
  * is passed to if_simloop().
  */
 void
-pim_input(struct mbuf *m, ...)
+pim_input(struct mbuf *m, int off, int proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct pim *pim;
 	int minlen;
 	int datalen;
 	int ip_tos;
-	int proto;
 	int iphlen;
-	va_list ap;
 
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
-
+	iphlen = off;
 	datalen = ntohs(ip->ip_len) - iphlen;
 
 	/* Keep statistics */

@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.38 2018/05/04 15:51:00 christos Exp $
-.Dd May 5, 2018
+.\"	$NetBSD: tzset.3,v 1.38.2.1 2019/06/10 22:05:22 christos Exp $
+.Dd April 18, 2019
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ functions.
 .Pp
 If
 .Ar tz
-is not a valid time zone description, or if the object cannot be allocated,
+is not a valid timezone description, or if the object cannot be allocated,
 .Fn tzalloc
 returns a
 .Dv NULL
@@ -89,6 +89,12 @@ is set to
 .Va 1
 the call is equivalent to
 .Va tzname[1] .
+The return values for both
+.Fn tzgetname
+and
+.Fn tzgmtoff
+correspond to the latest time for which data is available, even if that
+refers to a future time.
 Finally, the
 .Fn tzgetgmtoff
 function acts like
@@ -104,13 +110,13 @@ The
 .Fn tzset
 function acts like
 .Dv tzalloc(getenv("TZ")) ,
-except it saves any resulting time zone object into internal
+except it saves any resulting timezone object into internal
 storage that is accessed by
 .Fn localtime ,
 .Fn localtime_r ,
 and
 .Fn mktime .
-The anonymous shared time zone object is freed by the next call to
+The anonymous shared timezone object is freed by the next call to
 .Fn tzset .
 If the implied call to
 .Fn tzalloc
@@ -163,10 +169,7 @@ is used directly as a specification of the time conversion information,
 it must have the following syntax (spaces inserted for clarity):
 .Sm off
 .Bd -literal -offset indent
-.Cm std Cm offset Oo
-.Cm dst Oo
-.Cm offset Oc Oo
-.No , Cm rule Oc Oc
+.Cm std Cm offset Oo Cm dst Oo Cm offset Oc Oo , Cm rule Oc Oc
 .Ed
 .Sm on
 .Pp
@@ -176,9 +179,9 @@ where:
 Three or more bytes that are the designation for the standard
 .Cm ( std )
 or the alternative
-.Cm ( dst 
+.Cm ( dst
 such as daylight saving time)
-time zone.
+timezone.
 Only
 .Cm std
 is required; if
@@ -193,7 +196,7 @@ and
 .Dv > ;
 in this case, the designation can contain any characters other than
 .Dv >
-and 
+and
 .Dv NUL .
 .It Cm offset
 Indicates the value one must add to the local time to arrive at
@@ -230,10 +233,10 @@ daylight saving time is assumed to be one hour ahead of standard time.
 One or more digits may be used; the value is always interpreted as a
 decimal number.
 The hour must be between zero and 24, and the minutes (and
-seconds) \*(en if present \*(en between zero and 59.
+seconds) \(en if present \(en between zero and 59.
 If preceded by a
 .Dq -
-the time zone shall be east of the Prime Meridian; otherwise it shall be
+the timezone shall be east of the Prime Meridian; otherwise it shall be
 west (which may be indicated by an optional preceding
 .Dq + ) .
 .It Cm rule
@@ -245,7 +248,7 @@ has the form:
 .Bd -literal -offset indent
 .Xo
 .Cm date No /
-.Cm time No ,
+.Cm time ,
 .Cm date No /
 .Cm time
 .Xc
@@ -276,8 +279,8 @@ The Julian day
 (1 \*[Le]
 .Ar n
 \*[Le] 365).
-Leap days are not counted; that is, in all years \*(en including leap
-years \*(en February 28 is day 59 and March 1 is day 60.
+Leap days are not counted; that is, in all years \(en including leap
+years \(en February 28 is day 59 and March 1 is day 60.
 It is impossible to explicitly refer to the occasional February 29.
 .It Ar n
 The zero-based Julian day (0\ \*[Le]
@@ -286,7 +289,7 @@ The zero-based Julian day (0\ \*[Le]
 Leap days are counted, and it is possible to refer to
 February 29.
 .Sm off
-.It Cm M Ns Ar m No . Ar n No . Ar d
+.It Cm M Ns Ar m . Ar n . Ar d
 .Sm on
 The
 .Ar d Ns 'th
@@ -331,9 +334,9 @@ is not given, is
 .Pp
 Here are some examples of
 .Va TZ
-values that directly specify the time zone rules; they use some of the
+values that directly specify the timezone rules; they use some of the
 extensions to POSIX.
-.Bl -tag
+.Bl -tag -width 6n
 .It EST5
 stands for US Eastern Standard
 Time (EST), 5 hours behind UT, without daylight saving.
@@ -398,11 +401,11 @@ from the rest of the specification.
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime
-local time zone file
+local timezone file
 .It Pa /usr/share/zoneinfo
-time zone information directory
-\" .It Pa /usr/share/zoneinfo/localtime
-\" local time zone file
+local timezone information directory
+.\" .It Pa /usr/share/zoneinfo/localtime
+.\" local timezone file
 .It Pa /usr/share/zoneinfo/posixrules
 used with POSIX-style TZ's
 .It Pa /usr/share/zoneinfo/GMT
@@ -424,6 +427,13 @@ The
 .Fn tzset
 function conforms to
 .St -p1003.1-88 .
+.Sh BUGS
+Neither the
+.Fn tzgetname
+nor
+.Fn tzgmtoff
+functions have the ability to specify the point in time for which the
+requested data should be returned.
 .\" @(#)newtzset.3	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.

@@ -1,6 +1,6 @@
 /* mpfr_sub1 -- internal function to perform a "real" subtraction
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,24 +28,31 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    a positive value otherwise.
 */
 
+/* TODO: check the code in case exp_b == MPFR_EXP_MAX. */
+
 int
 mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 {
   int sign;
-  mpfr_uexp_t diff_exp;
+  mpfr_exp_t diff_exp, exp_a, exp_b;
   mpfr_prec_t cancel, cancel1;
   mp_size_t cancel2, an, bn, cn, cn0;
   mp_limb_t *ap, *bp, *cp;
   mp_limb_t carry, bb, cc;
+  mpfr_prec_t aq, bq;
   int inexact, shift_b, shift_c, add_exp = 0;
   int cmp_low = 0; /* used for rounding to nearest: 0 if low(b) = low(c),
-                      negative if low(b) < low(c), positive if low(b)>low(c) */
+                      negative if low(b) < low(c), positive if low(b) > low(c) */
   int sh, k;
   MPFR_TMP_DECL(marker);
 
   MPFR_TMP_MARK(marker);
   ap = MPFR_MANT(a);
   an = MPFR_LIMB_SIZE(a);
+
+  (void) MPFR_GET_PREC (a);
+  (void) MPFR_GET_PREC (b);
+  (void) MPFR_GET_PREC (c);
 
   sign = mpfr_cmp2 (b, c, &cancel);
   if (MPFR_UNLIKELY(sign == 0))
@@ -62,7 +69,7 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
    * If subtraction: sign(a) = sign * sign(b)
    * If addition: sign(a) = sign of the larger argument in absolute value.
    *
-   * Both cases can be simplidied in:
+   * Both cases can be simplified in:
    * if (sign>0)
    *    if addition: sign(a) = sign * sign(b) = sign(b)
    *    if subtraction, b is greater, so sign(a) = sign(b)
@@ -82,76 +89,106 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   else
     MPFR_SET_SAME_SIGN (a,b);
 
+  if (MPFR_UNLIKELY (MPFR_IS_UBF (b) || MPFR_IS_UBF (c)))
+    {
+      exp_b = MPFR_IS_UBF (b) ?
+        mpfr_ubf_zexp2exp (MPFR_ZEXP (b)) : MPFR_GET_EXP (b);
+      diff_exp = mpfr_ubf_diff_exp (b, c);
+    }
+  else
+    {
+      exp_b = MPFR_GET_EXP (b);
+      diff_exp = exp_b - MPFR_GET_EXP (c);
+    }
+  MPFR_ASSERTD (diff_exp >= 0);
+
+  aq = MPFR_GET_PREC (a);
+  bq = MPFR_GET_PREC (b);
+
   /* Check if c is too small.
      A more precise test is to replace 2 by
       (rnd == MPFR_RNDN) + mpfr_power2_raw (b)
       but it is more expensive and not very useful */
-  if (MPFR_UNLIKELY (MPFR_GET_EXP (c) <= MPFR_GET_EXP (b)
-                     - (mpfr_exp_t) MAX (MPFR_PREC (a), MPFR_PREC (b)) - 2))
+  if (MPFR_UNLIKELY (MAX (aq, bq) + 2 <= diff_exp))
     {
+      MPFR_LOG_MSG (("case c small\n", 0));
+
       /* Remember, we can't have an exact result! */
       /*   A.AAAAAAAAAAAAAAAAA
          = B.BBBBBBBBBBBBBBB
           -                     C.CCCCCCCCCCCCC */
       /* A = S*ABS(B) +/- ulp(a) */
-      MPFR_SET_EXP (a, MPFR_GET_EXP (b));
-      MPFR_RNDRAW_EVEN (inexact, a, MPFR_MANT (b), MPFR_PREC (b),
-                        rnd_mode, MPFR_SIGN (a), ++ MPFR_EXP (a));
+
+      /* since we can't have an exact result, for RNDF we can truncate b */
+      if (rnd_mode == MPFR_RNDF)
+        return mpfr_set4 (a, b, MPFR_RNDZ, MPFR_SIGN (a));
+
+      MPFR_EXP (a) = exp_b;  /* may be up to MPFR_EXP_MAX */
+      MPFR_RNDRAW_EVEN (inexact, a, MPFR_MANT (b), bq,
+                        rnd_mode, MPFR_SIGN (a),
+                        if (MPFR_EXP (a) != MPFR_EXP_MAX)
+                          ++ MPFR_EXP (a));
+      MPFR_LOG_MSG (("inexact=%d\n", inexact));
       if (inexact == 0)
         {
-          /* a = b (Exact)
-             But we know it isn't (Since we have to remove `c')
-             So if we round to Zero, we have to remove one ulp.
-             Otherwise the result is correctly rounded. */
-          /* An overflow is not possible. */
-          MPFR_ASSERTD (MPFR_EXP (a) <= __gmpfr_emax);
-          if (MPFR_IS_LIKE_RNDZ (rnd_mode, MPFR_IS_NEG (a)))
+          /* a = b, but the exact value of b - c is a bit below. Then,
+             except for directed rounding similar to toward zero and
+             before overflow checking: a is the correctly rounded value
+             and since |b| - |c| < |a|, the ternary value value is given
+             by the sign of a. */
+          if (! MPFR_IS_LIKE_RNDZ (rnd_mode, MPFR_IS_NEG (a)))
             {
-              mpfr_nexttozero (a);
-              MPFR_RET (- MPFR_INT_SIGN (a));
+              inexact = MPFR_INT_SIGN (a);
+              goto check_overflow;
             }
-          MPFR_RET (MPFR_INT_SIGN (a));
         }
-      else
+      else  /* inexact != 0 */
         {
           /*   A.AAAAAAAAAAAAAA
              = B.BBBBBBBBBBBBBBB
               -                   C.CCCCCCCCCCCCC */
-          /* It isn't exact so Prec(b) > Prec(a) and the last
-             Prec(b)-Prec(a) bits of `b' are not zeros.
-             Which means that removing c from b can't generate a carry
-             execpt in case of even rounding.
-             In all other case the result and the inexact flag should be
-             correct (We can't have an exact result).
-             In case of EVEN rounding:
+          /* It isn't exact, so PREC(b) > PREC(a) and the last
+             PREC(b)-PREC(a) bits of b are not all zeros.
+             Subtracting c from b will not have an effect on the rounding
+             except in case of a midpoint in the round-to-nearest mode,
+             when the even rounding was done away from zero instead of
+             toward zero.
+             In case of even rounding:
                1.BBBBBBBBBBBBBx10
              -                     1.CCCCCCCCCCCC
-             = 1.BBBBBBBBBBBBBx01  Rounded to Prec(b)
-             = 1.BBBBBBBBBBBBBx    Nearest / Rounded to Prec(a)
+             = 1.BBBBBBBBBBBBBx01  Rounded to PREC(b)
+             = 1.BBBBBBBBBBBBBx    Nearest / Rounded to PREC(a)
              Set gives:
                1.BBBBBBBBBBBBB0   if inexact == EVEN_INEX  (x == 0)
                1.BBBBBBBBBBBBB1+1 if inexact == -EVEN_INEX (x == 1)
-             which means we get a wrong rounded result if x==1,
-             i.e. inexact= MPFR_EVEN_INEX */
-          if (MPFR_UNLIKELY (inexact == MPFR_EVEN_INEX*MPFR_INT_SIGN (a)))
-            {
-              if (MPFR_UNLIKELY (MPFR_EXP (a) > __gmpfr_emax))
-                mpfr_setmax (a, __gmpfr_emax);
-              else
-                mpfr_nexttozero (a);
-              inexact = -MPFR_INT_SIGN (a);
-            }
-          else if (MPFR_UNLIKELY (MPFR_EXP (a) > __gmpfr_emax))
-            inexact = mpfr_overflow (a, rnd_mode, MPFR_SIGN (a));
-          MPFR_RET (inexact);
+             which means we get a wrong rounded result if x == 1,
+             i.e. inexact == MPFR_EVEN_INEX (for positive numbers). */
+          if (MPFR_LIKELY (inexact != MPFR_EVEN_INEX * MPFR_INT_SIGN (a)))
+            goto check_overflow;
         }
+      /* We need to take the value preceding |a|. We can't use
+         mpfr_nexttozero due to a possible out-of-range exponent.
+         But this will allow us to have more specific code. */
+      MPFR_LOG_MSG (("correcting the value of a\n", 0));
+      sh = (mpfr_prec_t) an * GMP_NUMB_BITS - aq;
+      mpn_sub_1 (ap, ap, an, MPFR_LIMB_ONE << sh);
+      if (MPFR_UNLIKELY (MPFR_LIMB_MSB (ap[an-1]) == 0))
+        {
+          MPFR_EXP (a) --;
+          /* The following is valid whether an = 1 or an > 1. */
+          ap[an-1] |= MPFR_LIMB_HIGHBIT;
+        }
+      inexact = - MPFR_INT_SIGN (a);
+    check_overflow:
+      if (MPFR_UNLIKELY (MPFR_EXP (a) > __gmpfr_emax))
+        return mpfr_overflow (a, rnd_mode, MPFR_SIGN (a));
+      else
+        MPFR_RET (inexact);
     }
-
-  diff_exp = (mpfr_uexp_t) MPFR_GET_EXP (b) - MPFR_GET_EXP (c);
 
   /* reserve a space to store b aligned with the result, i.e. shifted by
      (-cancel) % GMP_NUMB_BITS to the right */
-  bn      = MPFR_LIMB_SIZE (b);
+  bn = MPFR_LIMB_SIZE (b);
   MPFR_UNSIGNED_MINUS_MODULO (shift_b, cancel);
   cancel1 = (cancel + shift_b) / GMP_NUMB_BITS;
 
@@ -173,21 +210,21 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
     }
 
   /* reserve a space to store c aligned with the result, i.e. shifted by
-      (diff_exp-cancel) % GMP_NUMB_BITS to the right */
-  cn      = MPFR_LIMB_SIZE(c);
-  if ((UINT_MAX % GMP_NUMB_BITS) == (GMP_NUMB_BITS-1)
-      && ((-(unsigned) 1)%GMP_NUMB_BITS > 0))
+     (diff_exp-cancel) % GMP_NUMB_BITS to the right */
+  cn = MPFR_LIMB_SIZE (c);
+  if (IS_POW2 (GMP_NUMB_BITS))
     shift_c = ((mpfr_uexp_t) diff_exp - cancel) % GMP_NUMB_BITS;
   else
     {
+      /* The above operation does not work if diff_exp - cancel < 0. */
       shift_c = diff_exp - (cancel % GMP_NUMB_BITS);
       shift_c = (shift_c + GMP_NUMB_BITS) % GMP_NUMB_BITS;
     }
-  MPFR_ASSERTD( shift_c >= 0 && shift_c < GMP_NUMB_BITS);
+  MPFR_ASSERTD (shift_c >= 0 && shift_c < GMP_NUMB_BITS);
 
   if (MPFR_UNLIKELY(shift_c == 0))
     {
-       cp = MPFR_MANT(c);
+      cp = MPFR_MANT(c);
       /* Ensure ap != cp */
       if (ap == cp)
         {
@@ -201,10 +238,10 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
       cp[0] = mpn_rshift (cp + 1, MPFR_MANT(c), cn++, shift_c);
     }
 
-#ifdef DEBUG
-  printf ("rnd=%s shift_b=%d shift_c=%d diffexp=%lu\n",
-          mpfr_print_rnd_mode (rnd_mode), shift_b, shift_c,
-          (unsigned long) diff_exp);
+#if 0
+  MPFR_LOG_MSG (("rnd=%s shift_b=%d shift_c=%d diffexp=%" MPFR_EXP_FSPEC
+                 "d\n", mpfr_print_rnd_mode (rnd_mode), shift_b, shift_c,
+                 (mpfr_eexp_t) diff_exp));
 #endif
 
   MPFR_ASSERTD (ap != cp);
@@ -222,7 +259,7 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
      by the multiplication code), then the computation of cancel2 could
      be simplified to
        cancel2 = (cancel - (diff_exp - shift_c)) / GMP_NUMB_BITS;
-     because cancel, diff_exp and shift_c are all non-negative and
+     because cancel, diff_exp and shift_c are all nonnegative and
      these variables are signed. */
 
   MPFR_ASSERTD (cancel >= 0);
@@ -234,9 +271,9 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   else
     cancel2 = - (mp_size_t) ((diff_exp - cancel) / GMP_NUMB_BITS);
   /* the high cancel2 limbs from b should not be taken into account */
-#ifdef DEBUG
-  printf ("cancel=%lu cancel1=%lu cancel2=%ld\n",
-          (unsigned long) cancel, (unsigned long) cancel1, (long) cancel2);
+#if 0
+  MPFR_LOG_MSG (("cancel=%Pd cancel1=%Pd cancel2=%Pd\n",
+                 cancel, cancel1, cancel2));
 #endif
 
   /*               ap[an-1]        ap[0]
@@ -272,10 +309,6 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
       }
     else
       MPN_ZERO (ap, an);
-
-#ifdef DEBUG
-  printf("after copying high(b), a="); mpfr_print_binary(a); putchar('\n');
-#endif
 
   /* subtract high(c) */
   if (MPFR_LIKELY(an + cancel2 > 0)) /* otherwise c does not overlap with a */
@@ -318,19 +351,19 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
         }
     }
 
-#ifdef DEBUG
-  printf("after subtracting high(c), a=");
-  mpfr_print_binary(a);
-  putchar('\n');
-#endif
-
   /* now perform rounding */
-  sh = (mpfr_prec_t) an * GMP_NUMB_BITS - MPFR_PREC(a);
+  sh = (mpfr_prec_t) an * GMP_NUMB_BITS - aq;
   /* last unused bits from a */
   carry = ap[0] & MPFR_LIMB_MASK (sh);
   ap[0] -= carry;
 
-  if (MPFR_LIKELY(rnd_mode == MPFR_RNDN))
+  if (rnd_mode == MPFR_RNDF)
+    {
+      inexact = 0;
+      /* truncating is always correct since -1 ulp < low(b) - low(c) < 1 ulp */
+      goto truncate;
+    }
+  else if (rnd_mode == MPFR_RNDN)
     {
       if (MPFR_LIKELY(sh))
         {
@@ -371,9 +404,9 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   cn0 = cn;
   cn -= an + cancel2;
 
-#ifdef DEBUG
-  printf ("last sh=%d bits from a are %lu, bn=%ld, cn=%ld\n",
-          sh, (unsigned long) carry, (long) bn, (long) cn);
+#if 0
+  MPFR_LOG_MSG (("last sh=%d bits from a are %Mu, bn=%Pd, cn=%Pd\n",
+                 sh, carry, (mpfr_prec_t) bn, (mpfr_prec_t) cn));
 #endif
 
   /* for rounding to nearest, we couldn't conclude up to here in the following
@@ -464,10 +497,10 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
             }
         }
 
-#ifdef DEBUG
-      printf ("k=%u bb=%lu cc=%lu cmp_low=%d\n", k,
-              (unsigned long) bb, (unsigned long) cc, cmp_low);
+#if 0
+      MPFR_LOG_MSG (("k=%d bb=%Mu cc=%Mu cmp_low=%d\n", k, bb, cc, cmp_low));
 #endif
+
       if (cmp_low < 0) /* low(b) - low(c) < 0: either truncate or subtract
                           one ulp */
         {
@@ -619,42 +652,49 @@ mpfr_sub1 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   /* we have to set MPFR_EXP(a) to MPFR_EXP(b) - cancel + add_exp, taking
      care of underflows/overflows in that computation, and of the allowed
      exponent range */
+  MPFR_TMP_FREE (marker);
   if (MPFR_LIKELY(cancel))
     {
-      mpfr_exp_t exp_a;
-
       cancel -= add_exp; /* OK: add_exp is an int equal to 0 or 1 */
-      exp_a = MPFR_GET_EXP (b) - cancel;
-      if (MPFR_UNLIKELY(exp_a < __gmpfr_emin))
+      exp_a = exp_b - cancel;
+      /* The following assertion corresponds to a limitation of the MPFR
+         implementation. It may fail with a 32-bit ABI and huge precisions,
+         but this is practically impossible with a 64-bit ABI. This kind
+         of issue is not specific to this function. */
+      MPFR_ASSERTN (exp_b != MPFR_EXP_MAX || exp_a > __gmpfr_emax);
+      if (MPFR_UNLIKELY (exp_a < __gmpfr_emin))
         {
-          MPFR_TMP_FREE(marker);
+        underflow:
           if (rnd_mode == MPFR_RNDN &&
               (exp_a < __gmpfr_emin - 1 ||
                (inexact >= 0 && mpfr_powerof2_raw (a))))
             rnd_mode = MPFR_RNDZ;
           return mpfr_underflow (a, rnd_mode, MPFR_SIGN(a));
         }
-      MPFR_SET_EXP (a, exp_a);
+      if (MPFR_UNLIKELY (exp_a > __gmpfr_emax))
+        {
+          return mpfr_overflow (a, rnd_mode, MPFR_SIGN (a));
+        }
     }
   else /* cancel = 0: MPFR_EXP(a) <- MPFR_EXP(b) + add_exp */
     {
+
       /* in case cancel = 0, add_exp can still be 1, in case b is just
          below a power of two, c is very small, prec(a) < prec(b),
          and rnd=away or nearest */
-      mpfr_exp_t exp_b;
-
-      exp_b = MPFR_GET_EXP (b);
-      if (MPFR_UNLIKELY(add_exp && exp_b == __gmpfr_emax))
+      MPFR_ASSERTD (add_exp == 0 || add_exp == 1);
+      /* Overflow iff exp_b + add_exp > __gmpfr_emax in Z, but we do
+         a subtraction below to avoid a potential integer overflow in
+         the case exp_b == MPFR_EXP_MAX. */
+      if (MPFR_UNLIKELY (exp_b > __gmpfr_emax - add_exp))
         {
-          MPFR_TMP_FREE(marker);
-          return mpfr_overflow (a, rnd_mode, MPFR_SIGN(a));
+          return mpfr_overflow (a, rnd_mode, MPFR_SIGN (a));
         }
-      MPFR_SET_EXP (a, exp_b + add_exp);
+      exp_a = exp_b + add_exp;
+      if (MPFR_UNLIKELY (exp_a < __gmpfr_emin))
+        goto underflow;
     }
-  MPFR_TMP_FREE(marker);
-#ifdef DEBUG
-  printf ("result is a="); mpfr_print_binary(a); putchar('\n');
-#endif
+  MPFR_SET_EXP (a, exp_a);
   /* check that result is msb-normalized */
   MPFR_ASSERTD(ap[an-1] > ~ap[an-1]);
   MPFR_RET (inexact * MPFR_INT_SIGN (a));

@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.47 2017/01/06 14:25:41 roy Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.47.14.1 2019/06/10 22:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.47 2017/01/06 14:25:41 roy Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.47.14.1 2019/06/10 22:05:22 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -204,9 +204,9 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 /*
  * _cursesi_addbyte -
  *	Internal function to add a byte and update the row and column
- * positions as appropriate.  This function is only used in the narrow
- * character version of curses.  If update_cursor is non-zero then character
- * interpretation.
+ * positions as appropriate.  If char_interp is non-zero then
+ * character interpretation is done on the byte.  This function is
+ * only used in the narrow character version of curses.
  */
 int
 _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
@@ -564,6 +564,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	    lp->nsp);
 	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: add rest columns (%d:%d)\n",
 		sx + 1, sx + cw - 1);
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, win->maxx = %d\n", *x, win->maxx);
 #endif /* DEBUG */
 	for (tp = lp + 1, *x = sx + 1; *x - sx <= cw - 1; tp++, (*x)++) {
 		if (tp->nsp) {
@@ -577,12 +578,27 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	}
 
 	if (*x == win->maxx) {
-		(*lnp)->flags |= __ISPASTEOL;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: do line wrap\n");
+#endif /* DEBUG */
 		newx = win->maxx - 1 + win->ch_off;
 		if (newx > *(*lnp)->lastchp)
 			*(*lnp)->lastchp = newx;
 		__touchline(win, *y, sx, (int) win->maxx - 1);
-		win->curx = sx;
+		*x = sx = 0;
+		if (*y == win->scr_b) {
+			if (!(win->flags & __SCROLLOK))
+				return ERR;
+			PSYNCH_OUT;
+			scroll(win);
+			PSYNCH_IN;
+		} else {
+			(*y)++;
+		}
+		lp = &win->alines[*y]->line[0];
+		(*lnp) = win->alines[*y];
+		win->curx = *x;
+		win->cury = *y;
 	} else {
 		win->curx = *x;
 
@@ -612,7 +628,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	}
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INPUT, "add_wch: %d : 0x%x\n", lp->ch, lp->attr);
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: %d : 0x%x\n", lp->ch, lp->attr);
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, *y = %d, win->maxx = %d\n", *x, *y, win->maxx);
 #endif /* DEBUG */
 	__sync(win);
 	return OK;

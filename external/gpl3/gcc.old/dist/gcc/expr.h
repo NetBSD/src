@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -203,14 +203,16 @@ extern rtx store_by_pieces (rtx, unsigned HOST_WIDE_INT,
 
 /* Emit insns to set X from Y.  */
 extern rtx_insn *emit_move_insn (rtx, rtx);
-extern rtx gen_move_insn (rtx, rtx);
+extern rtx_insn *gen_move_insn (rtx, rtx);
 
 /* Emit insns to set X from Y, with no frills.  */
 extern rtx_insn *emit_move_insn_1 (rtx, rtx);
 
 extern rtx_insn *emit_move_complex_push (machine_mode, rtx, rtx);
 extern rtx_insn *emit_move_complex_parts (rtx, rtx);
+extern rtx read_complex_part (rtx, bool);
 extern void write_complex_part (rtx, rtx, bool);
+extern rtx read_complex_part (rtx, bool);
 extern rtx emit_move_resolve_push (machine_mode, rtx);
 
 /* Push a block of length SIZE (perhaps variable)
@@ -218,8 +220,12 @@ extern rtx emit_move_resolve_push (machine_mode, rtx);
 extern rtx push_block (rtx, int, int);
 
 /* Generate code to push something onto the stack, given its mode and type.  */
-extern void emit_push_insn (rtx, machine_mode, tree, rtx, unsigned int,
-			    int, rtx, int, rtx, rtx, int, rtx);
+extern bool emit_push_insn (rtx, machine_mode, tree, rtx, unsigned int,
+			    int, rtx, int, rtx, rtx, int, rtx, bool);
+
+/* Extract the accessible bit-range from a COMPONENT_REF.  */
+extern void get_bit_range (unsigned HOST_WIDE_INT *, unsigned HOST_WIDE_INT *,
+			   tree, HOST_WIDE_INT *, tree *);
 
 /* Expand an assignment that stores the value of FROM into TO.  */
 extern void expand_assignment (tree, tree, bool);
@@ -228,8 +234,8 @@ extern void expand_assignment (tree, tree, bool);
    and storing the value into TARGET.
    If SUGGEST_REG is nonzero, copy the value through a register
    and return that register, if that is possible.  */
-extern rtx store_expr_with_bounds (tree, rtx, int, bool, tree);
-extern rtx store_expr (tree, rtx, int, bool);
+extern rtx store_expr_with_bounds (tree, rtx, int, bool, bool, tree);
+extern rtx store_expr (tree, rtx, int, bool, bool);
 
 /* Given an rtx that may include add and multiply operations,
    generate them as insns and return a pseudo-reg containing the value.
@@ -280,18 +286,9 @@ rtx get_personality_function (tree);
 extern int can_move_by_pieces (unsigned HOST_WIDE_INT, unsigned int);
 
 extern unsigned HOST_WIDE_INT highest_pow2_factor (const_tree);
-bool array_at_struct_end_p (tree);
-
-/* Return a tree of sizetype representing the size, in bytes, of the element
-   of EXP, an ARRAY_REF or an ARRAY_RANGE_REF.  */
-extern tree array_ref_element_size (tree);
 
 extern bool categorize_ctor_elements (const_tree, HOST_WIDE_INT *,
 				      HOST_WIDE_INT *, bool *);
-
-/* Return a tree representing the offset, in bytes, of the field referenced
-   by EXP.  This does not include any offset in DECL_FIELD_BIT_OFFSET.  */
-extern tree component_ref_field_offset (tree);
 
 extern void expand_operands (tree, tree, rtx, rtx*, rtx*,
 			     enum expand_modifier);

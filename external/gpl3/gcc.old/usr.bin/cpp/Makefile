@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 21:58:10 christos Exp $
 
 PROG=		cpp
 SRCS=		cppspec.c ${G_GCC_OBJS:.o=.c}

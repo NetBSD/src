@@ -1,7 +1,7 @@
-/*	$NetBSD: svs.c,v 1.18 2018/04/26 18:54:09 alnsn Exp $	*/
+/*	$NetBSD: svs.c,v 1.18.2.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18 2018/04/26 18:54:09 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include "opt_svs.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18 2018/04/26 18:54:09 alnsn Exp $");
 #include <sys/kauth.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
+#include <sys/reboot.h>
 
 #include <x86/cputypes.h>
 #include <machine/cpuvar.h>
@@ -227,6 +228,10 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18 2018/04/26 18:54:09 alnsn Exp $");
  */
 
 bool svs_enabled __read_mostly = false;
+bool svs_pcid __read_mostly = false;
+
+static uint64_t svs_pcid_kcr3 __read_mostly;
+static uint64_t svs_pcid_ucr3 __read_mostly;
 
 struct svs_utls {
 	paddr_t kpdirpa;
@@ -239,17 +244,15 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 {
 	extern const vaddr_t ptp_masks[];
 	extern const int ptp_shifts[];
-	extern const long nbpd[];
 	pd_entry_t *dstpde;
-	size_t i, pidx, mod;
 	struct vm_page *pg;
+	size_t i, pidx;
 	paddr_t pa;
 
 	dstpde = ci->ci_svs_updir;
-	mod = (size_t)-1;
 
 	for (i = PTP_LEVELS; i > 1; i--) {
-		pidx = pl_i(va % mod, i);
+		pidx = pl_pi(va, i);
 
 		if (!pmap_valid_entry(dstpde[pidx])) {
 			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -258,19 +261,18 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 					__func__, cpu_index(ci));
 			pa = VM_PAGE_TO_PHYS(pg);
 
-			dstpde[pidx] = PG_V | PG_RW | pa;
+			dstpde[pidx] = PTE_P | PTE_W | pa;
 		}
 
-		pa = (paddr_t)(dstpde[pidx] & PG_FRAME);
+		pa = (paddr_t)(dstpde[pidx] & PTE_FRAME);
 		dstpde = (pd_entry_t *)PMAP_DIRECT_MAP(pa);
-		mod = nbpd[i-1];
 	}
 
 	return dstpde;
 }
 
 static void
-svs_page_add(struct cpu_info *ci, vaddr_t va)
+svs_page_add(struct cpu_info *ci, vaddr_t va, bool global)
 {
 	pd_entry_t *srcpde, *dstpde, pde;
 	size_t idx, pidx;
@@ -279,7 +281,7 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	/* Create levels L4, L3 and L2. */
 	dstpde = svs_tree_add(ci, va);
 
-	pidx = pl1_i(va % NBPD_L2);
+	pidx = pl1_pi(va);
 
 	/*
 	 * If 'va' is in a large page, we need to compute its physical
@@ -290,10 +292,11 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (!pmap_valid_entry(srcpde[idx])) {
 		panic("%s: L2 page not mapped", __func__);
 	}
-	if (srcpde[idx] & PG_PS) {
-		pa = srcpde[idx] & PG_2MFRAME;
+	if (srcpde[idx] & PTE_PS) {
+		KASSERT(!global);
+		pa = srcpde[idx] & PTE_2MFRAME;
 		pa += (paddr_t)(va % NBPD_L2);
-		pde = (srcpde[idx] & ~(PG_G|PG_PS|PG_2MFRAME)) | pa;
+		pde = (srcpde[idx] & ~(PTE_PS|PTE_2MFRAME)) | pa;
 
 		if (pmap_valid_entry(dstpde[pidx])) {
 			panic("%s: L1 page already mapped", __func__);
@@ -313,7 +316,17 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	dstpde[pidx] = srcpde[idx] & ~(PG_G);
+	dstpde[pidx] = srcpde[idx];
+
+	/*
+	 * If we want a global translation, mark both the src and dst with
+	 * PTE_G.
+	 */
+	if (global) {
+		srcpde[idx] |= PTE_G;
+		dstpde[pidx] |= PTE_G;
+		tlbflushg();
+	}
 }
 
 static void
@@ -369,11 +382,11 @@ svs_utls_init(struct cpu_info *ci)
 	if (pmap_valid_entry(L1_BASE[pl1_i(utlsva)])) {
 		panic("%s: local page already mapped", __func__);
 	}
-	pidx = pl1_i(utlsva % NBPD_L2);
+	pidx = pl1_pi(utlsva);
 	if (pmap_valid_entry(pd[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	pd[pidx] = PG_V | PG_RW | pmap_pg_nx | pa;
+	pd[pidx] = PTE_P | PTE_W | pmap_pg_nx | pa;
 
 	/*
 	 * Now, allocate a VA in the kernel map, that points to the UTLS
@@ -396,14 +409,27 @@ svs_utls_init(struct cpu_info *ci)
 }
 
 static void
-svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size)
+svs_pcid_init(struct cpu_info *ci)
+{
+	if (!svs_pcid) {
+		return;
+	}
+
+	svs_pcid_ucr3 = __SHIFTIN(PMAP_PCID_USER, CR3_PCID) | CR3_NO_TLB_FLUSH;
+	svs_pcid_kcr3 = __SHIFTIN(PMAP_PCID_KERN, CR3_PCID) | CR3_NO_TLB_FLUSH;
+
+	ci->ci_svs_updirpa |= svs_pcid_ucr3;
+}
+
+static void
+svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size, bool global)
 {
 	size_t i, n;
 
 	KASSERT(size % PAGE_SIZE == 0);
 	n = size / PAGE_SIZE;
 	for (i = 0; i < n; i++) {
-		svs_page_add(ci, va + i * PAGE_SIZE);
+		svs_page_add(ci, va + i * PAGE_SIZE, global);
 	}
 }
 
@@ -434,19 +460,19 @@ cpu_svs_init(struct cpu_info *ci)
 
 	pmap_update(pmap_kernel());
 
-	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap_kernel(), 0);
-
 	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
 
-	svs_page_add(ci, (vaddr_t)&pcpuarea->idt);
-	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt);
+	svs_page_add(ci, (vaddr_t)&pcpuarea->idt, true);
+	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt, true);
 	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
-	    offsetof(struct pcpu_entry, rsp0));
+	    offsetof(struct pcpu_entry, rsp0), true);
 	svs_range_add(ci, (vaddr_t)&__text_user_start,
-	    (vaddr_t)&__text_user_end - (vaddr_t)&__text_user_start);
+	    (vaddr_t)&__text_user_end - (vaddr_t)&__text_user_start, false);
 
 	svs_rsp0_init(ci);
 	svs_utls_init(ci);
+
+	svs_pcid_init(ci);
 }
 
 void
@@ -460,7 +486,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
-	KASSERT(index < 255);
+	KASSERT(index < PDIR_SLOT_USERLIM);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cid = cpu_index(ci);
@@ -516,11 +542,14 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	utls->scratch = 0;
 
 	/*
-	 * Enter the user rsp0. We don't need to flush the TLB here, since
-	 * the user page tables are not loaded.
+	 * Enter the user rsp0. If we're using PCID we must flush the user VA,
+	 * if we aren't it will be flushed during the next CR3 reload.
 	 */
 	pte = ci->ci_svs_rsp0_pte;
 	*pte = L1_BASE[pl1_i(va)];
+	if (svs_pcid) {
+		invpcid(INVPCID_ADDRESS, PMAP_PCID_USER, ci->ci_svs_rsp0);
+	}
 }
 
 static inline pt_entry_t
@@ -549,21 +578,23 @@ svs_pdir_switch(struct pmap *pmap)
 	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel());
 
-	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap, 0);
-
 	/* Update the info in the UTLS page */
 	utls = (struct svs_utls *)ci->ci_svs_utls;
-	utls->kpdirpa = ci->ci_svs_kpdirpa;
+	utls->kpdirpa = pmap_pdirpa(pmap, 0) | svs_pcid_kcr3;
 
 	mutex_enter(&ci->ci_svs_mtx);
 
 	/* User slots. */
-	for (i = 0; i < 255; i++) {
+	for (i = 0; i < PDIR_SLOT_USERLIM; i++) {
 		pte = svs_pte_atomic_read(pmap, i);
 		ci->ci_svs_updir[i] = pte;
 	}
 
 	mutex_exit(&ci->ci_svs_mtx);
+
+	if (svs_pcid) {
+		invpcid(INVPCID_CONTEXT, PMAP_PCID_USER, 0);
+	}
 }
 
 static void
@@ -571,8 +602,10 @@ svs_enable(void)
 {
 	extern uint8_t svs_enter, svs_enter_end;
 	extern uint8_t svs_enter_altstack, svs_enter_altstack_end;
+	extern uint8_t svs_enter_nmi, svs_enter_nmi_end;
 	extern uint8_t svs_leave, svs_leave_end;
 	extern uint8_t svs_leave_altstack, svs_leave_altstack_end;
+	extern uint8_t svs_leave_nmi, svs_leave_nmi_end;
 	u_long psl, cr0;
 	uint8_t *bytes;
 	size_t size;
@@ -590,6 +623,11 @@ svs_enable(void)
 	    (size_t)&svs_enter_altstack;
 	x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
 
+	bytes = &svs_enter_nmi;
+	size = (size_t)&svs_enter_nmi_end -
+	    (size_t)&svs_enter_nmi;
+	x86_hotpatch(HP_NAME_SVS_ENTER_NMI, bytes, size);
+
 	bytes = &svs_leave;
 	size = (size_t)&svs_leave_end - (size_t)&svs_leave;
 	x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
@@ -599,155 +637,12 @@ svs_enable(void)
 	    (size_t)&svs_leave_altstack;
 	x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
 
-	x86_patch_window_close(psl, cr0);
-}
-
-static void
-svs_disable_hotpatch(void)
-{
-	extern uint8_t nosvs_enter, nosvs_enter_end;
-	extern uint8_t nosvs_enter_altstack, nosvs_enter_altstack_end;
-	extern uint8_t nosvs_leave, nosvs_leave_end;
-	extern uint8_t nosvs_leave_altstack, nosvs_leave_altstack_end;
-	u_long psl, cr0;
-	uint8_t *bytes;
-	size_t size;
-
-	x86_patch_window_open(&psl, &cr0);
-
-	bytes = &nosvs_enter;
-	size = (size_t)&nosvs_enter_end - (size_t)&nosvs_enter;
-	x86_hotpatch(HP_NAME_SVS_ENTER, bytes, size);
-
-	bytes = &nosvs_enter_altstack;
-	size = (size_t)&nosvs_enter_altstack_end -
-	    (size_t)&nosvs_enter_altstack;
-	x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
-
-	bytes = &nosvs_leave;
-	size = (size_t)&nosvs_leave_end - (size_t)&nosvs_leave;
-	x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
-
-	bytes = &nosvs_leave_altstack;
-	size = (size_t)&nosvs_leave_altstack_end -
-	    (size_t)&nosvs_leave_altstack;
-	x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
+	bytes = &svs_leave_nmi;
+	size = (size_t)&svs_leave_nmi_end -
+	    (size_t)&svs_leave_nmi;
+	x86_hotpatch(HP_NAME_SVS_LEAVE_NMI, bytes, size);
 
 	x86_patch_window_close(psl, cr0);
-}
-
-static volatile unsigned long svs_cpu_barrier1 __cacheline_aligned;
-static volatile unsigned long svs_cpu_barrier2 __cacheline_aligned;
-typedef void (vector)(void);
-
-static void
-svs_disable_cpu(void *arg1, void *arg2)
-{
-	struct cpu_info *ci = curcpu();
-	extern vector Xsyscall;
-	u_long psl;
-
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	atomic_dec_ulong(&svs_cpu_barrier1);
-	while (atomic_cas_ulong(&svs_cpu_barrier1, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	/* cpu0 is the one that does the hotpatch job */
-	if (ci == &cpu_info_primary) {
-		svs_enabled = false;
-		svs_disable_hotpatch();
-	}
-
-	/* put back the non-SVS syscall entry point */
-	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
-
-	/* enable global pages */
-	if (cpu_feature[0] & CPUID_PGE)
-		lcr4(rcr4() | CR4_PGE);
-
-	atomic_dec_ulong(&svs_cpu_barrier2);
-	while (atomic_cas_ulong(&svs_cpu_barrier2, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-
-	x86_write_psl(psl);
-}
-
-static int
-svs_disable(void)
-{
-	struct cpu_info *ci = NULL;
-	CPU_INFO_ITERATOR cii;
-	uint64_t xc;
-
-	mutex_enter(&cpu_lock);
-
-	/*
-	 * We expect all the CPUs to be online.
-	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, SVS not disabled\n",
-			    cpu_index(ci));
-			mutex_exit(&cpu_lock);
-			return EOPNOTSUPP;
-		}
-	}
-
-	svs_cpu_barrier1 = ncpu;
-	svs_cpu_barrier2 = ncpu;
-
-	printf("[+] Disabling SVS...");
-	xc = xc_broadcast(0, svs_disable_cpu, NULL, NULL);
-	xc_wait(xc);
-	printf(" done!\n");
-
-	mutex_exit(&cpu_lock);
-
-	return 0;
-}
-
-int sysctl_machdep_svs_enabled(SYSCTLFN_ARGS);
-
-int
-sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	int error;
-	bool val;
-
-	val = *(bool *)rnode->sysctl_data;
-
-	node = *rnode;
-	node.sysctl_data = &val;
-
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error != 0 || newp == NULL)
-		return error;
-
-	if (val == 1) {
-		if (svs_enabled)
-			error = 0;
-		else
-			error = EOPNOTSUPP;
-	} else if (svs_enabled) {
-		error = kauth_authorize_machdep(kauth_cred_get(),
-		    KAUTH_MACHDEP_SVS_DISABLE, NULL, NULL, NULL, NULL);
-		if (!error)
-			error = svs_disable();
-	} else {
-		error = 0;
-	}
-
-	return error;
 }
 
 void
@@ -756,6 +651,9 @@ svs_init(void)
 	uint64_t msr;
 
 	if (cpu_vendor != CPUVENDOR_INTEL) {
+		return;
+	}
+	if (boothowto & RB_MD3) {
 		return;
 	}
 	if (cpu_info_primary.ci_feat_val[7] & CPUID_SEF_ARCH_CAP) {
@@ -767,6 +665,12 @@ svs_init(void)
 			 */
 			return;
 		}
+	}
+
+	if ((cpu_info_primary.ci_feat_val[1] & CPUID2_PCID) &&
+	    (cpu_info_primary.ci_feat_val[5] & CPUID_SEF_INVPCID)) {
+		svs_pcid = true;
+		lcr4(rcr4() | CR4_PCIDE);
 	}
 
 	svs_enable();

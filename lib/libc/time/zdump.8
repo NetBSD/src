@@ -1,45 +1,46 @@
-.\"	$NetBSD: zdump.8,v 1.17 2017/07/03 21:32:50 wiz Exp $
-.Dd March 11, 2017
+.\"	$NetBSD: zdump.8,v 1.17.6.1 2019/06/10 22:05:22 christos Exp $
+.Dd October 27, 2018
 .Dt ZDUMP 8
 .Os
 .Sh NAME
 .Nm zdump
-.Nd time zone dumper
+.Nd timezone dumper
 .Sh SYNOPSIS
 .Nm zdump
 .Op Fl \-version
 .Op Fl v
 .Op Fl V
 .Op Fl c Ar [loyear,]highyear
-.Op Ar zonename ...
+.Op Ar timezone ...
 .Nm zdump
 .Fl t
 .Ar [lotime,]hightime
 .Op Ar zonename ...
 .Sh DESCRIPTION
+The
 .Nm
-prints the current time in each
-.Ar zonename
+program prints the current time in each
+.Ar timezone
 named on the command line.
-.Pp
-These options are available:
+.SH OPTIONS
 .Bl -tag -width XXXXXXXXX -compact
 .It Fl \-version
 Output version information and exit.
+.It Fl \-help
+Output short usage message and exit.
 .It Fl i
-.Em This option is experimental: its behavior may change in future versions.
 Output a description of time intervals.
 For each
-.Ar zonename
+.Ar timezone
 on the command line, output an interval-format description of the
-zone.
+timezone.
 See
 .Sx "INTERVAL FORMAT"
 below.
 .It Fl v
 Output a verbose description of time intervals.
 For each
-.Ar zonename
+.Ar timezon
 on the command line,
 print the time at the lowest possible time value,
 the time one day after the lowest possible time value,
@@ -75,7 +76,7 @@ Cut off interval output at the given time(s),
 given in decimal seconds since 1970-01-01 00:00:00
 Coordinated Universal Time (UTC).
 The
-.Ar zonename
+.Ar timezone
 determines whether the count includes leap seconds.
 As with
 .Fl c ,
@@ -88,7 +89,6 @@ This generates output that is easier to compare to that of
 implementations with different time representations.
 .El
 .Sh "INTERVAL FORMAT"
-.Em This format is experimental: it may change in future versions.
 .Pp
 The interval format is a compact text representation that is intended
 to be both human- and machine-readable.
@@ -96,7 +96,7 @@ It consists of an empty line, then a line
 .Dq TZ=string
 where
 .Dv string
-is a double-quoted string giving the zone name, a second line
+is a double-quoted string giving the timezone, a second line
 .Dq \&- \&- interval
 describing the time interval before the first transition if any, and
 zero or more following lines
@@ -147,13 +147,14 @@ tabbed columns line up.)
 .Bd -literal
 TZ="Pacific/Honolulu"
 .Ed
-.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
-.It - Ta - Ta -10:31:26 Ta LMT Ta
-.It 1896-01-13 Ta 12:01:26 Ta -10:30 Ta HST Ta
-.It 1933-04-30 Ta 03 Ta -09:30 Ta HDT Ta 1
-.It 1933-05-21 Ta 11 Ta -10:30 Ta HST Ta
-.It 1942-02-09 Ta 03 Ta -09:30 Ta HDT Ta 1
-.It 1945-09-30 Ta 01 Ta -10:30 Ta HST Ta
+.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HHMMSS" "TZT" "X" -compact
+.It - Ta - Ta -103126 Ta LMT Ta
+.It 1896-01-13 Ta 12:01:26 Ta -1030 Ta HST Ta
+.It 1933-04-30 Ta 03 Ta -0930 Ta HDT Ta 1
+.It 1933-05-21 Ta 11 Ta -1030 Ta HST Ta
+.It 1942-02-09 Ta 03 Ta -0930 Ta HDT Ta 1
+.It 1945-08-14 Ta 13:30 Ta -0930 Ta HPT Ta 1
+.It 1945-09-30 Ta 01 Ta -1030 Ta HST Ta
 .It 1947-06-08 Ta 02:30 Ta -10 Ta HST Ta
 .El
 .Pp
@@ -174,7 +175,7 @@ Here are excerpts from another example:
 TZ="Europe/Astrakhan"
 .Ed
 .Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
-.It - Ta - Ta +03:12:12 Ta LMT Ta
+.It - Ta - Ta +031212 Ta LMT Ta
 .It 1924-04-30 Ta 23:47:48 Ta +03 Ta Ta
 .It 1930-06-21 Ta 01 Ta +04 Ta Ta
 .It 1981-04-01 Ta 01 Ta +05 Ta Ta 1
@@ -201,16 +202,15 @@ output,
 .Dq UT
 denotes the value returned by
 .Xr gmtime 3 ,
-which uses UTC for modern time stamps and some other UT flavor for
-time stamps that predate the introduction of UTC.
+which uses UTC for modern timestamps and some other UT flavor for
+timestamps that predate the introduction of UTC.
 No attempt is currently made to have the output use
 .Dq UTC
 for newer and
 .Dq UT
-for older time stamps, partly because the exact date of the
+for older timestamps, partly because the exact date of the
 introduction of UTC is problematic.
 .Sh SEE ALSO
-.Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
 .\" @(#)zdump.8	8.2

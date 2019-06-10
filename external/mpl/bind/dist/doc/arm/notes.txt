@@ -1,0 +1,108 @@
+Release Notes for BIND Version 9.14.1
+
+Introduction
+
+BIND 9.14 is a stable branch of BIND. This document summarizes significant
+changes since the last production release on that branch.
+
+Please see the file CHANGES for a more detailed list of changes and bug
+fixes.
+
+Note on Version Numbering
+
+As of BIND 9.13/9.14, BIND has adopted the "odd-unstable/even-stable"
+release numbering convention. BIND 9.14 contains new features added during
+the BIND 9.13 development process. Henceforth, the 9.14 branch will be
+limited to bug fixes and new feature development will proceed in the
+unstable 9.15 branch, and so forth.
+
+Supported Platforms
+
+Since 9.12, BIND has undergone substantial code refactoring and cleanup,
+and some very old code has been removed that was needed to support legacy
+platforms which are no longer supported by their vendors and for which ISC
+is no longer able to perform quality assurance testing. Specifically,
+workarounds for old versions of UnixWare, BSD/OS, AIX, Tru64, SunOS,
+TruCluster and IRIX have been removed.
+
+On UNIX-like systems, BIND now requires support for POSIX.1c threads (IEEE
+Std 1003.1c-1995), the Advanced Sockets API for IPv6 (RFC 3542), and
+standard atomic operations provided by the C compiler.
+
+More information can be found in the PLATFORM.md file that is included in
+the source distribution of BIND 9. If your platform compiler and system
+libraries provide the above features, BIND 9 should compile and run. If
+that isn't the case, the BIND development team will generally accept
+patches that add support for systems that are still supported by their
+respective vendors.
+
+As of BIND 9.14, the BIND development team has also made cryptography
+(i.e., TSIG and DNSSEC) an integral part of the DNS server. The OpenSSL
+cryptography library must be available for the target platform. A PKCS#11
+provider can be used instead for Public Key cryptography (i.e., DNSSEC
+signing and validation), but OpenSSL is still required for general
+cryptography operations such as hashing and random number generation.
+
+Download
+
+The latest versions of BIND 9 software can always be found at http://
+www.isc.org/downloads/. There you will find additional information about
+each release, source code, and pre-compiled versions for Microsoft Windows
+operating systems.
+
+Security Fixes
+
+  * In certain configurations, named could crash with an assertion failure
+    if nxdomain-redirect was in use and a redirected query resulted in an
+    NXDOMAIN from the cache. This flaw is disclosed in CVE-2019-6467. [GL
+    #880]
+
+  * The TCP client quota set using the tcp-clients option could be
+    exceeded in some cases. This could lead to exhaustion of file
+    descriptors. (CVE-2018-5743) [GL #615]
+
+New Features
+
+  * The new add-soa option specifies whether or not the response-policy
+    zone's SOA record should be included in the additional section of RPZ
+    responses. [GL #865]
+
+Feature Changes
+
+  * None.
+
+Bug Fixes
+
+  * The allow-update and allow-update-forwarding options were
+    inadvertently treated as configuration errors when used at the options
+    or view level. This has now been corrected. [GL #913]
+
+License
+
+BIND is open source software licenced under the terms of the Mozilla
+Public License, version 2.0 (see the LICENSE file for the full text).
+
+The license requires that if you make changes to BIND and distribute them
+outside your organization, those changes must be published under the same
+license. It does not require that you publish or disclose anything other
+than the changes you have made to our software. This requirement does not
+affect anyone who is using BIND, with or without modifications, without
+redistributing it, nor anyone redistributing BIND without changes.
+
+Those wishing to discuss license compliance may contact ISC at https://
+www.isc.org/mission/contact/.
+
+End of Life
+
+The end of life date for BIND 9.14 has not yet been determined. For those
+needing long term support, the current Extended Support Version (ESV) is
+BIND 9.11, which will be supported until at least December 2021. See
+https://www.isc.org/downloads/software-support-policy/ for details of
+ISC's software support policy.
+
+Thank You
+
+Thank you to everyone who assisted us in making this release possible. If
+you would like to contribute to ISC to assist us in continuing to make
+quality open source software, please visit our donations page at http://
+www.isc.org/donate/.

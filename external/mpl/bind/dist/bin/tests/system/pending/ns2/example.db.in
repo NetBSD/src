@@ -1,0 +1,24 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 30
+$ORIGIN example.
+@			IN SOA	mname1. . (
+				2009110300 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns2
+			MX	10 mail
+ns2			A	10.53.0.2
+mail			A	10.0.0.2
+bad			CNAME	nice.good.
+worse                   A       6.6.6.6

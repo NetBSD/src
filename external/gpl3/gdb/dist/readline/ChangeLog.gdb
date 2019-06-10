@@ -1,3 +1,9 @@
+2019-01-31  Alan Hayward  <alan.hayward@arm.com>
+
+	* config.h.in: Add SOURCE/EXTENSION macros.
+	* histfile.c (history_truncate_file): Check return of write.
+	* util.c (_rl_tropen): Ensure pid is long.
+
 2017-05-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* input.c [_WIN32]: Include <conio.h> to avoid compiler warning on

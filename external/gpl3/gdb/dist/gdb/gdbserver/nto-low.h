@@ -1,5 +1,5 @@
 /* Internal interfaces for the QNX Neutrino specific target code for gdbserver.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NTO_LOW_H
-#define NTO_LOW_H
+#ifndef GDBSERVER_NTO_LOW_H
+#define GDBSERVER_NTO_LOW_H
 
 struct target_desc;
 
@@ -46,5 +46,4 @@ extern struct nto_target_ops the_low_target;
    LynxOS ports support neither bi-arch nor multi-process.  */
 extern const struct target_desc *nto_tdesc;
 
-#endif
-
+#endif /* GDBSERVER_NTO_LOW_H */

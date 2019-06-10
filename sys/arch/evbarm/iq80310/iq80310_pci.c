@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.13 2014/03/29 19:28:27 christos Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.13.30.1 2019/06/10 22:06:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.13 2014/03/29 19:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.13.30.1 2019/06/10 22:06:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	iq80310_pci_intr_map(const struct pci_attach_args *,
 const char *iq80310_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *iq80310_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80310_pci_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *);
+	    int, int (*func)(void *), void *, const char *);
 void	iq80310_pci_intr_disestablish(void *, void *);
 
 void
@@ -95,8 +95,8 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * the i80312.
 	 */
 
-	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	if (pa->pa_bus != sbus) {
 		printf("iq80310_pci_intr_map: %d/%d/%d not on Secondary bus\n",
@@ -149,9 +149,9 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * and can determine if we're looking at that device.
 	 */
 
-	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_PRIMARY(reg);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	pbus = PCI_BRIDGE_BUS_NUM_PRIMARY(reg);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	/*
 	 * XXX We don't know how to map interrupts on the Primary
@@ -192,8 +192,8 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 
 	/* Now read the PPB's secondary bus number. */
-	reg = pci_conf_read(pa->pa_pc, tag, PPB_REG_BUSINFO);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = pci_conf_read(pa->pa_pc, tag, PCI_BRIDGE_BUS_REG);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	if (pa->pa_bus == sbus && pa->pa_device == 0 &&
 	    pa->pa_function == 0) {
@@ -232,7 +232,7 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 iq80310_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	snprintf(buf, len, "iq80310 irq %ld", ih);
+	snprintf(buf, len, "iq80310 irq %" PRIu64, ih);
 	return buf;
 }
 
@@ -246,7 +246,7 @@ iq80310_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 iq80310_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 
 	return (iq80310_intr_establish(ih, ipl, func, arg));

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/11/02 00:12:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2019/06/10 22:09:36 christos Exp $
 #
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ CPPFLAGS+=	-DPTRACE
 
 KMOD=	ptrace_common
 SRCS=	sys_ptrace_common.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

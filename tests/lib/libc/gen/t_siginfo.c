@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.32 2018/01/17 00:16:43 maya Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.32.4.1 2019/06/10 22:10:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -309,14 +309,14 @@ ATF_TC_BODY(sigfpe_flt, tc)
 
 	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under QEMU");
-#if defined(__arm__) && !__SOFTFP__
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus do not implement IEEE exception handling,
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * skip these tests if running on them and compiled for
 	 * hard float.
 	 */
 	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
-		atf_tc_skip("FPU does not implement exception handling");
+		atf_tc_skip("FPU does not implement traps on FP exceptions");
 #endif
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
@@ -464,8 +464,10 @@ ATF_TC_BODY(sigbus_adraln, tc)
 		atf_tc_skip("No SIGBUS signal for unaligned accesses");
 #endif
 
-	/* m68k (except sun2) never issue SIGBUS (PR lib/49653) */
-	if (strcmp(MACHINE_ARCH, "m68k") == 0)
+	/* m68k (except sun2) never issue SIGBUS (PR lib/49653),
+	 * same for armv8 or newer */
+	if (strcmp(MACHINE_ARCH, "m68k") == 0 ||
+	    strcmp(MACHINE_ARCH, "aarch64") == 0)
 		atf_tc_skip("No SIGBUS signal for unaligned accesses");
 
 	sa.sa_flags = SA_SIGINFO;

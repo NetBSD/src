@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.1 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: efinet.c,v 1.1.6.1 2019/06/10 22:06:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -39,10 +39,6 @@ __FBSDID("$FreeBSD: head/stand/efi/libefi/efinet.c 321621 2017-07-27 15:06:34Z a
 
 #include <bootinfo.h>
 #include "devopen.h"
-
-#ifndef ETHER_ALIGN
-#define ETHER_ALIGN	2
-#endif
 
 #define ETHER_EXT_LEN	(ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_ALIGN)
 
@@ -204,7 +200,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 		status = uefi_call_wrapper(net->Receive, 7, net, NULL, &rsz, ptr,
 		    NULL, NULL, NULL);
 		if (!EFI_ERROR(status)) {
-			rsz = min(rsz, len);
+			rsz = uimin(rsz, len);
 			memcpy(pkt, ptr, rsz);
 			ret = (int)rsz;
 			break;

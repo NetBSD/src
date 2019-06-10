@@ -1,5 +1,5 @@
-/*	$Id: at91pmc.c,v 1.6 2012/11/12 18:00:36 skrll Exp $	*/
-/*	$NetBSD: at91pmc.c,v 1.6 2012/11/12 18:00:36 skrll Exp $	*/
+/*	$Id: at91pmc.c,v 1.6.38.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: at91pmc.c,v 1.6.38.1 2019/06/10 22:05:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: at91pmc.c,v 1.6.38.1 2019/06/10 22:05:52 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

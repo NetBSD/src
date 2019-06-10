@@ -2,6 +2,90 @@
 XZ Utils Release Notes
 ======================
 
+5.2.4 (2018-04-29)
+
+    * liblzma:
+
+        - Allow 0 as memory usage limit instead of returning
+          LZMA_PROG_ERROR. Now 0 is treated as if 1 byte was specified,
+          which effectively is the same as 0.
+
+        - Use "noexcept" keyword instead of "throw()" in the public
+          headers when a C++11 (or newer standard) compiler is used.
+
+        - Added a portability fix for recent Intel C Compilers.
+
+        - Microsoft Visual Studio build files have been moved under
+          windows/vs2013 and windows/vs2017.
+
+    * xz:
+
+        - Fix "xz --list --robot missing_or_bad_file.xz" which would
+          try to print an unitialized string and thus produce garbage
+          output. Since the exit status is non-zero, most uses of such
+          a command won't try to interpret the garbage output.
+
+        - "xz --list foo.xz" could print "Internal error (bug)" in a
+          corner case where a specific memory usage limit had been set.
+
+
+5.2.3 (2016-12-30)
+
+    * xz:
+
+        - Always close a file before trying to delete it to avoid
+          problems on some operating system and file system combinations.
+
+        - Fixed copying of file timestamps on Windows.
+
+        - Added experimental (disabled by default) sandbox support using
+          Capsicum (FreeBSD >= 10). See --enable-sandbox in INSTALL.
+
+    * C99/C11 conformance fixes to liblzma. The issues affected at least
+      some builds using link-time optimizations.
+
+    * Fixed bugs in the rarely-used function lzma_index_dup().
+
+    * Use of external SHA-256 code is now disabled by default.
+      It can still be enabled by passing --enable-external-sha256
+      to configure. The reasons to disable it by default (see INSTALL
+      for more details):
+
+        - Some OS-specific SHA-256 implementations conflict with
+          OpenSSL and cause problems in programs that link against both
+          liblzma and libcrypto. At least FreeBSD 10 and MINIX 3.3.0
+          are affected.
+
+        - The internal SHA-256 is faster than the SHA-256 code in
+          some operating systems.
+
+    * Changed CPU core count detection to use sched_getaffinity() on
+      GNU/Linux and GNU/kFreeBSD.
+
+    * Fixes to the build-system and xz to make xz buildable even when
+      encoders, decoders, or threading have been disabled from libilzma
+      using configure options. These fixes added two new #defines to
+      config.h: HAVE_ENCODERS and HAVE_DECODERS.
+
+
+5.2.2 (2015-09-29)
+
+    * Fixed bugs in QNX-specific code.
+
+    * Omitted the use of pipe2() even if it is available to avoid
+      portability issues with some old Linux and glibc combinations.
+
+    * Updated German translation.
+
+    * Added project files to build static and shared liblzma (not the
+      whole XZ Utils) with Visual Studio 2013 update 2 or later.
+
+    * Documented that threaded decompression hasn't been implemented
+      yet. A 5.2.0 NEWS entry describing multi-threading support had
+      incorrectly said "decompression" when it should have said
+      "compression".
+
+
 5.2.1 (2015-02-26)
 
     * Fixed a compression-ratio regression in fast mode of LZMA1 and
@@ -66,8 +150,9 @@ XZ Utils Release Notes
           is non-trivial, so as of writing it is unknown if it will be
           backported to the v5.0 branch.
 
-        - Multi-threaded decompression can be enabled with the
+        - Multi-threaded compression can be enabled with the
           --threads (-T) option.
+          [Fixed: This originally said "decompression".]
 
         - New command line options in xz: --single-stream,
           --block-size=SIZE, --block-list=SIZES,

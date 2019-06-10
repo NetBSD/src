@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.362 2018/05/28 21:04:38 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.362.2.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.362 2018/05/28 21:04:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.362.2.1 2019/06/10 22:09:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.362 2018/05/28 21:04:38 chs Exp $")
 #include <sys/kthread.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -1756,7 +1755,7 @@ out:
  */
 int
 lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 	ino_t ino;
@@ -2166,7 +2165,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			/* 
 			 * All the LFS output is done by the segwriter.  It
 			 * will increment numoutput by one for all the bufs it
-			 * recieves.  However this buffer needs one extra to
+			 * receives.  However this buffer needs one extra to
 			 * account for aiodone.
 			 */
 			mutex_enter(vp->v_interlock);

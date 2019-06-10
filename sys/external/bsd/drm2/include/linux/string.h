@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.4 2015/02/25 14:55:57 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.4.18.1 2019/06/10 22:08:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,6 +82,15 @@ kstrndup(const char *src, size_t maxlen, gfp_t gfp)
 	dst[len] = '\0';
 
 	return dst;
+}
+
+static inline char *
+kstrdup(const char *src, gfp_t gfp)
+{
+
+	if (src == NULL)
+		return NULL;
+	return kstrndup(src, strlen(src), gfp);
 }
 
 #endif  /* _LINUX_STRING_H_ */

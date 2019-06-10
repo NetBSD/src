@@ -1,11 +1,8 @@
-/*	$NetBSD: maxim,max77802.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: maxim,max77802.h,v 1.1.1.1.12.1 2019/06/10 22:08:57 christos Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2014 Google, Inc
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  *
  * Device Tree binding constants for the Maxim 77802 PMIC regulators
  */

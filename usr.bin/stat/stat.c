@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.43 2017/09/21 22:53:19 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.43.4.1 2019/06/10 22:10:24 christos Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.43 2017/09/21 22:53:19 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.43.4.1 2019/06/10 22:10:24 christos Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -646,7 +646,7 @@ format1(const struct stat *st,
 	uint64_t data;
 	char *stmp, lfmt[24], tmp[20];
 	const char *sdata;
-	char smode[12], sid[12], path[PATH_MAX + 4], visbuf[PATH_MAX * 4 + 4];
+	char smode[12], sid[13], path[PATH_MAX + 4], visbuf[PATH_MAX * 4 + 4];
 	struct passwd *pw;
 	struct group *gr;
 	time_t secs;

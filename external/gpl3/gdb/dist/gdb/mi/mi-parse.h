@@ -1,5 +1,5 @@
 /* MI Command Set - MI Command Parser.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_PARSE_H
-#define MI_PARSE_H
+#ifndef MI_MI_PARSE_H
+#define MI_MI_PARSE_H
 
-#include "run-time-clock.h"
+#include "common/run-time-clock.h"
 #include <chrono>
 #include "mi-cmds.h"  /* For enum print_values.  */
 
@@ -44,8 +44,7 @@ struct mi_parse
     mi_parse ();
     ~mi_parse ();
 
-    mi_parse (const mi_parse &) = delete;
-    mi_parse &operator= (const mi_parse &) = delete;
+    DISABLE_COPY_AND_ASSIGN (mi_parse);
 
     enum mi_command_type op;
     char *command;
@@ -80,4 +79,4 @@ extern std::unique_ptr<struct mi_parse> mi_parse (const char *cmd,
 
 enum print_values mi_parse_print_values (const char *name);
 
-#endif
+#endif /* MI_MI_PARSE_H */

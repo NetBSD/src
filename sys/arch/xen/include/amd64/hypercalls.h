@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.8 2011/12/07 16:01:39 cegger Exp $ */
+/* $NetBSD: hypercalls.h,v 1.8.48.1 2019/06/10 22:06:54 christos Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -242,9 +242,14 @@ HYPERVISOR_update_va_mapping(
 }
 
 static inline int
-HYPERVISOR_event_channel_op(void *op)
+HYPERVISOR_event_channel_op(evtchn_op_t *op)
 {
+	KASSERT(op != NULL);
+#if __XEN_INTERFACE_VERSION__ < 0x00030202
 	return _hypercall1(int, event_channel_op, op);
+#else
+	return _hypercall2(int, event_channel_op, op->cmd, &op->u);
+#endif
 }
 
 static inline int
@@ -315,8 +320,18 @@ static inline int
 HYPERVISOR_suspend(
 	unsigned long srec)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_suspend,
+	};
+
+	return _hypercall3(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason, srec);
+#else
 	return _hypercall3(int, sched_op, SCHEDOP_shutdown,
 				 SHUTDOWN_suspend, srec);
+#endif
 }
 
 static inline long
@@ -337,21 +352,51 @@ static inline long
 HYPERVISOR_shutdown(
 	void)
 {
-	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_poweroff,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
+-	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
+#endif
 }
 
 static inline long
 HYPERVISOR_crash(
 	void)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_crash,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_crash);
+#endif
 }
 
 static inline long
 HYPERVISOR_reboot(
 	void)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_reboot,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_reboot);
+#endif
 }
 
 static inline int
@@ -361,11 +406,11 @@ HYPERVISOR_nmi_op(
 	return _hypercall2(int, nmi_op, op, arg);
 }
 
-static inline unsigned long
+static inline long
 HYPERVISOR_hvm_op(
     int op, void *arg)
 {
-    return _hypercall2(unsigned long, hvm_op, op, arg);
+    return _hypercall2(long, hvm_op, op, arg);
 }
 
 static inline int
@@ -399,7 +444,7 @@ HYPERVISOR_dom0_op(
 }
 #endif	/* __XEN_INTERFACE_VERSION__ */
 
-#include <xen/xen-public/arch-x86/xen-mca.h>
+#include <xen/include/public/arch-x86/xen-mca.h>
 
 static inline int
 HYPERVISOR_machine_check(struct xen_mc *mc)

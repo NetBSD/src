@@ -1,6 +1,6 @@
 // File based streams -*- C++ -*-
 
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -699,7 +699,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
  
  	   if (__n == 0)
  	     {
- 	       _M_set_buffer(0);
+	       // Set _M_reading. Buffer is already in initial 'read' mode.
  	       _M_reading = true;
  	     }
  	   else if (__len == 0)

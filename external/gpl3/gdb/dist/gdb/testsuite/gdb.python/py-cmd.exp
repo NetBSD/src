@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2017 Free Software Foundation, Inc.
+# Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -181,6 +181,72 @@ gdb_test "complete expr_test bar\." \
     "expr_test bar\.bc.*expr_test bar\.ij.*" \
     "test completion through complete command"
 
+# Test that the "python" command is correctly recognized as
+# inline/multi-line when entering a sequence of commands.
+#
+# This proc tests PR cli/21688.  The PR is not language-specific, but
+# the easiest way is just to test with Python.
+proc test_python_inline_or_multiline { } {
+    global gdb_prompt
+    set end "\r\n$gdb_prompt $"
+
+    set define_cmd_not_inline [ list \
+	[ list "if 1"                 " >$"            "multi-line if 1" ] \
+	[ list "python"               " >$"            "multi-line python command" ] \
+	[ list "print ('hello')"      "  >$"           "multi-line print" ] \
+	[ list "end"                  " >$"            "multi-line first end" ] \
+	[ list "end"                  "hello$end"      "multi-line last end" ] ]
+
+    # This also tests trailing whitespace on the command.
+    set define_cmd_alias_not_inline [ list \
+	[ list "if 1"                 " >$"            "multi-line if 1 alias" ] \
+	[ list "py    "               " >$"            "multi-line python command alias" ] \
+	[ list "print ('hello')"      "  >$"           "multi-line print alias" ] \
+	[ list "end"                  " >$"            "multi-line first end alias" ] \
+	[ list "end"                  "hello$end"      "multi-line last end alias" ] ]
+
+    set define_cmd_alias_foo_not_inline [ list \
+	[ list "alias foo=python"     "$end"           "multi-line alias foo" ] \
+	[ list "if 1"                 " >$"            "multi-line if 1 alias foo" ] \
+	[ list "foo    "              " >$"            "multi-line python command alias foo" ] \
+	[ list "print ('hello')"      "  >$"           "multi-line print alias foo" ] \
+	[ list "end"                  " >$"            "multi-line first end alias foo" ] \
+	[ list "end"                  "hello$end"      "multi-line last end alias foo" ] ]
+
+    set define_cmd_inline [ list \
+	[ list "if 1"                      " >$"          "inline if 1" ] \
+	[ list "python print ('hello')"    " >$"          "inline python command" ] \
+	[ list "end"                       "hello$end"    "inline end" ] ]
+
+    set define_cmd_alias_inline [ list \
+	[ list "if 1"                      " >$"          "inline if 1 alias" ] \
+	[ list "py print ('hello')"        " >$"          "inline python command alias" ] \
+	[ list "end"                       "hello$end"    "inline end alias" ] ]
+
+    set define_cmd_alias_foo_inline [ list \
+	[ list "if 1"                      " >$"          "inline if 1 alias foo" ] \
+	[ list "foo print ('hello')"       " >$"          "inline python command alias foo" ] \
+	[ list "end"                       "hello$end"    "inline end alias foo" ] ]
+
+    foreach t [list $define_cmd_not_inline \
+	       $define_cmd_alias_not_inline \
+	       $define_cmd_alias_foo_not_inline \
+	       $define_cmd_inline \
+	       $define_cmd_alias_inline \
+	       $define_cmd_alias_foo_inline] {
+	foreach l $t {
+	    lassign $l command regex testmsg
+	    gdb_test_multiple "$command" "$testmsg" {
+		-re "$regex" {
+		    pass "$testmsg"
+		}
+	    }
+	}
+    }
+}
+
+test_python_inline_or_multiline
+
 if { [readline_is_used] } {
     set test "complete 'expr_test bar.i'"
     send_gdb "expr_test bar\.i\t\t"
@@ -193,5 +259,45 @@ if { [readline_is_used] } {
 		}
 	    }
 	}
+    }
+}
+
+
+# Test that interrupting pagination throws a gdb quit.
+gdb_test_no_output "set height 10"
+
+gdb_py_test_multiple "input multi-line-output command" \
+  "python" "" \
+  "class test_mline (gdb.Command):" "" \
+  "  \"\"\"Docstring\"\"\"" "" \
+  "  def __init__ (self):" "" \
+  "    super (test_mline, self).__init__ (\"test_multiline\", gdb.COMMAND_USER)" "" \
+  "  def invoke (self, arg, from_tty):" "" \
+  "    for f in range(20):" "" \
+  "      print (\"test_multiline output\")" "" \
+  "test_mline ()" "" \
+  "end" ""
+
+set test "verify pagination from test_multiline"
+gdb_test_multiple "test_multiline" $test {
+    -re "--Type <RET>" {
+	exp_continue
+    }
+    -re " for more, q to quit" {
+	exp_continue
+    }
+    -re ", c to continue without paging--$" {
+	pass $test
+    }
+}
+
+send_gdb "q\n"
+set test "verify pagination from test_multiline: q"
+gdb_test_multiple "test_multiline" $test {
+    -re "Error occurred in Python" {
+	fail $test
+    }
+    -re "Quit" {
+	pass $test
     }
 }

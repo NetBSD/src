@@ -2,7 +2,7 @@
 ; Generated automatically by genopt.sh from arm-cores.def, arm-arches.def
 ; and arm-fpus.def.
 
-; Copyright (C) 2011-2015 Free Software Foundation, Inc.
+; Copyright (C) 2011-2016 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -286,6 +286,9 @@ EnumValue
 Enum(processor_type) String(cortex-r7) Value(cortexr7)
 
 EnumValue
+Enum(processor_type) String(cortex-r8) Value(cortexr8)
+
+EnumValue
 Enum(processor_type) String(cortex-m7) Value(cortexm7)
 
 EnumValue
@@ -304,6 +307,12 @@ EnumValue
 Enum(processor_type) String(cortex-a17.cortex-a7) Value(cortexa17cortexa7)
 
 EnumValue
+Enum(processor_type) String(cortex-a32) Value(cortexa32)
+
+EnumValue
+Enum(processor_type) String(cortex-a35) Value(cortexa35)
+
+EnumValue
 Enum(processor_type) String(cortex-a53) Value(cortexa53)
 
 EnumValue
@@ -314,6 +323,9 @@ Enum(processor_type) String(cortex-a72) Value(cortexa72)
 
 EnumValue
 Enum(processor_type) String(exynos-m1) Value(exynosm1)
+
+EnumValue
+Enum(processor_type) String(qdf24xx) Value(qdf24xx)
 
 EnumValue
 Enum(processor_type) String(xgene1) Value(xgene1)
@@ -371,46 +383,55 @@ EnumValue
 Enum(arm_arch) String(armv6z) Value(13)
 
 EnumValue
-Enum(arm_arch) String(armv6zk) Value(14)
+Enum(arm_arch) String(armv6kz) Value(14)
 
 EnumValue
-Enum(arm_arch) String(armv6t2) Value(15)
+Enum(arm_arch) String(armv6zk) Value(15)
 
 EnumValue
-Enum(arm_arch) String(armv6-m) Value(16)
+Enum(arm_arch) String(armv6t2) Value(16)
 
 EnumValue
-Enum(arm_arch) String(armv6s-m) Value(17)
+Enum(arm_arch) String(armv6-m) Value(17)
 
 EnumValue
-Enum(arm_arch) String(armv7) Value(18)
+Enum(arm_arch) String(armv6s-m) Value(18)
 
 EnumValue
-Enum(arm_arch) String(armv7-a) Value(19)
+Enum(arm_arch) String(armv7) Value(19)
 
 EnumValue
-Enum(arm_arch) String(armv7ve) Value(20)
+Enum(arm_arch) String(armv7-a) Value(20)
 
 EnumValue
-Enum(arm_arch) String(armv7-r) Value(21)
+Enum(arm_arch) String(armv7ve) Value(21)
 
 EnumValue
-Enum(arm_arch) String(armv7-m) Value(22)
+Enum(arm_arch) String(armv7-r) Value(22)
 
 EnumValue
-Enum(arm_arch) String(armv7e-m) Value(23)
+Enum(arm_arch) String(armv7-m) Value(23)
 
 EnumValue
-Enum(arm_arch) String(armv8-a) Value(24)
+Enum(arm_arch) String(armv7e-m) Value(24)
 
 EnumValue
-Enum(arm_arch) String(armv8-a+crc) Value(25)
+Enum(arm_arch) String(armv8-a) Value(25)
 
 EnumValue
-Enum(arm_arch) String(iwmmxt) Value(26)
+Enum(arm_arch) String(armv8-a+crc) Value(26)
 
 EnumValue
-Enum(arm_arch) String(iwmmxt2) Value(27)
+Enum(arm_arch) String(armv8.1-a) Value(27)
+
+EnumValue
+Enum(arm_arch) String(armv8.1-a+crc) Value(28)
+
+EnumValue
+Enum(arm_arch) String(iwmmxt) Value(29)
+
+EnumValue
+Enum(arm_arch) String(iwmmxt2) Value(30)
 
 Enum
 Name(arm_fpu) Type(int)

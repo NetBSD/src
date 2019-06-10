@@ -11,8 +11,11 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common \
 		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace
 
+WARNS=		4
+
 CPPFLAGS+=	-Wno-unknown-pragmas
 
 CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CPPFLAGS+=	${${ACTIVE_CC} == "clang" :? -Wno-incompatible-pointer-types-discards-qualifiers :}
 
 .include <bsd.kmodule.mk>

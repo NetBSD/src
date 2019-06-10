@@ -44,7 +44,10 @@ CPPFLAGS+=	-Wno-unknown-pragmas \
 		-Wno-unused-variable \
 		-Wno-unused-function
 
-CPPFLAGS+=	 ${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CPPFLAGS+=	${${ACTIVE_CC} == "clang" :? \
+			-Wno-sometimes-uninitialized \
+			-Wno-incompatible-pointer-types-discards-qualifiers :}
 
 COPTS.dis_tables.c+= \
 		-Wno-missing-field-initializers \
@@ -60,5 +63,7 @@ COPTS.dtrace_subr.c+= \
 EXPORT_SYMS=	dtrace_register \
 		dtrace_unregister \
 		dtrace_probe_lookup
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

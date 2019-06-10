@@ -6,10 +6,12 @@ SHLIB_TEXT_START_ADDR=0x5ffe0000
 COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 
 # IRIX6 defines these symbols.  0x34 is the size of the ELF header.
-EXECUTABLE_SYMBOLS="
+OTHER_SYMBOLS="
   __dso_displacement = 0;
-  __elf_header = ${TEXT_START_ADDR};
-  __program_header_table = ${TEXT_START_ADDR} + 0x34;
+  ${CREATE_SHLIB-${CREATE_PIE-__elf_header = ${TEXT_START_ADDR};}}
+  ${CREATE_SHLIB+__elf_header = ${SHLIB_TEXT_START_ADDR};}
+  ${CREATE_PIE+__elf_header = ${SHLIB_TEXT_START_ADDR};}
+  __program_header_table = __elf_header + 0x34;
 "
 
 # There are often dynamic relocations against the .rodata section.

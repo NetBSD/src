@@ -1,5 +1,5 @@
 /* MI Command Set - information commands.
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,10 +30,6 @@ mi_cmd_info_ada_exceptions (const char *command, char **argv, int argc)
   struct ui_out *uiout = current_uiout;
   struct gdbarch *gdbarch = get_current_arch ();
   char *regexp;
-  struct cleanup *old_chain;
-  VEC(ada_exc_info) *exceptions;
-  int ix;
-  struct ada_exc_info *info;
 
   switch (argc)
     {
@@ -48,27 +44,21 @@ mi_cmd_info_ada_exceptions (const char *command, char **argv, int argc)
       break;
     }
 
-  exceptions = ada_exceptions_list (regexp);
-  old_chain = make_cleanup (VEC_cleanup (ada_exc_info), &exceptions);
+  std::vector<ada_exc_info> exceptions = ada_exceptions_list (regexp);
 
-  make_cleanup_ui_out_table_begin_end
-    (uiout, 2, VEC_length (ada_exc_info, exceptions), "ada-exceptions");
+  ui_out_emit_table table_emitter (uiout, 2,
+				   exceptions.size (),
+				   "ada-exceptions");
   uiout->table_header (1, ui_left, "name", "Name");
   uiout->table_header (1, ui_left, "address", "Address");
   uiout->table_body ();
 
-  for (ix = 0; VEC_iterate(ada_exc_info, exceptions, ix, info); ix++)
+  for (const ada_exc_info &info : exceptions)
     {
-      struct cleanup *sub_chain;
-
-      sub_chain = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-      uiout->field_string ("name", info->name);
-      uiout->field_core_addr ("address", gdbarch, info->addr);
-
-      do_cleanups (sub_chain);
+      ui_out_emit_tuple tuple_emitter (uiout, NULL);
+      uiout->field_string ("name", info.name);
+      uiout->field_core_addr ("address", gdbarch, info.addr);
     }
-
-  do_cleanups (old_chain);
 }
 
 /* Implement the "-info-gdb-mi-command" GDB/MI command.  */
@@ -79,7 +69,6 @@ mi_cmd_info_gdb_mi_command (const char *command, char **argv, int argc)
   const char *cmd_name;
   struct mi_cmd *cmd;
   struct ui_out *uiout = current_uiout;
-  struct cleanup *old_chain;
 
   /* This command takes exactly one argument.  */
   if (argc != 1)
@@ -95,9 +84,8 @@ mi_cmd_info_gdb_mi_command (const char *command, char **argv, int argc)
 
   cmd = mi_lookup (cmd_name);
 
-  old_chain = make_cleanup_ui_out_tuple_begin_end (uiout, "command");
+  ui_out_emit_tuple tuple_emitter (uiout, "command");
   uiout->field_string ("exists", cmd != NULL ? "true" : "false");
-  do_cleanups (old_chain);
 }
 
 void

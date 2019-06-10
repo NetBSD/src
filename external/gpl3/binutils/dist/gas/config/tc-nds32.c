@@ -102,6 +102,13 @@ static int in_omit_fp = 0;
 extern struct nds32_keyword keyword_gpr[];
 /* Tag there is relax relocation having to link.  */
 static bfd_boolean relaxing = FALSE;
+/* ICT model.  */
+enum ict_option {
+  ICT_NONE = 0,
+  ICT_SMALL,
+  ICT_LARGE
+};
+static enum ict_option ict_flag = ICT_NONE;
 
 static struct hash_control *nds32_relax_info_hash;
 static relax_info_t relax_table[] =
@@ -3833,6 +3840,45 @@ nds32_flag (int ignore ATTRIBUTE_UNUSED)
   *input_line_pointer = saved_char;
   ignore_rest_of_line ();
 }
+static void
+ict_model (int ignore ATTRIBUTE_UNUSED)
+{
+  char *name;
+  char saved_char;
+  int i;
+  const char *possible_flags[] = { "small", "large" };
+
+  /* Skip whitespaces.  */
+  name = input_line_pointer;
+  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
+    input_line_pointer++;
+  saved_char = *input_line_pointer;
+  *input_line_pointer = 0;
+
+  for (i = 0; i < (int) ARRAY_SIZE (possible_flags); i++)
+    {
+      if (strcmp (name, possible_flags[i]) == 0)
+	{
+	  switch (i)
+	    {
+	    case 0:
+	      /* flag: verbatim  */
+	      ict_flag = ICT_SMALL;
+	      break;
+	    case 1:
+	      ict_flag = ICT_LARGE;
+	      break;
+	    default:
+	      break;
+	    }
+	  /* Already found the flag, no need to continue next loop.   */
+	  break;
+	}
+    }
+
+  *input_line_pointer = saved_char;
+  ignore_rest_of_line ();
+}
 
 static void
 nds32_n12hc (int ignore ATTRIBUTE_UNUSED)
@@ -3901,6 +3947,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"innermost_loop_begin", nds32_loop_begin, 1},
   {"innermost_loop_end", nds32_loop_begin, 0},
   {"relax_hint", nds32_relax_hint, 0},
+  {"ict_model", ict_model, 0},
   {NULL, NULL, 0}
 };
 
@@ -5162,7 +5209,7 @@ void
 md_assemble (char *str)
 {
   struct nds32_asm_insn insn;
-  expressionS expr;
+  expressionS insn_expr;
   char *out;
   struct nds32_pseudo_opcode *popcode;
   const struct nds32_field *fld = NULL;
@@ -5198,7 +5245,7 @@ md_assemble (char *str)
     }
 
   label_exist = 0;
-  insn.info = & expr;
+  insn.info = &insn_expr;
   asm_desc.result = NASM_OK;
   nds32_assemble (&asm_desc, &insn, str);
 
@@ -6209,7 +6256,7 @@ nds32_insert_relax_entry (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   for (fixp = seginfo->fix_root; fixp; fixp = fixp->fx_next)
     if (!fixp->fx_done)
       break;
-  if (!fixp && !enable_relax_ex9 && !verbatim)
+  if (!fixp && !enable_relax_ex9 && !verbatim && ict_flag == ICT_NONE)
     return;
 
   subseg_change (sec, 0);
@@ -6232,6 +6279,10 @@ nds32_insert_relax_entry (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
 	exp.X_add_number |= R_NDS32_RELAX_ENTRY_IFC_FLAG;
       if (verbatim)
 	exp.X_add_number |= R_NDS32_RELAX_ENTRY_VERBATIM_FLAG;
+      if (ict_flag == ICT_SMALL)
+	exp.X_add_number |= R_NDS32_RELAX_ENTRY_ICT_SMALL;
+      else if (ict_flag == ICT_LARGE)
+	exp.X_add_number |= R_NDS32_RELAX_ENTRY_ICT_LARGE;
     }
   if (optimize)
     exp.X_add_number |= R_NDS32_RELAX_ENTRY_OPTIMIZE_FLAG;

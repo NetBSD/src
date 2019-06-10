@@ -1,6 +1,6 @@
 /* __gmpfr_floor_log2 - returns floor(log(d)/log(2))
 
-Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,28 +26,32 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 long
 __gmpfr_floor_log2 (double d)
 {
-#if _GMP_IEEE_FLOATS
-  union ieee_double_extract x;
+  long exp;
+#if _MPFR_IEEE_FLOATS
+  union mpfr_ieee_double_extract x;
 
   x.d = d;
-  return (long) x.s.exp - 1023;
-#else
-  long exp;
+  /* The cast below is useless in theory, but let us not depend on the
+     integer promotion rules (for instance, tcc is currently wrong). */
+  exp = (long) x.s.exp - 1023;
+  MPFR_ASSERTN (exp < 1023);  /* fail on infinities */
+  return exp;
+#else /* _MPFR_IEEE_FLOATS */
   double m;
 
   MPFR_ASSERTD (d >= 0);
   if (d >= 1.0)
     {
       exp = -1;
-      for( m= 1.0 ; m <= d ; m *=2.0 )
+      for (m = 1.0; m <= d; m *= 2.0)
         exp++;
     }
   else
     {
       exp = 0;
-      for( m= 1.0 ; m > d ; m *= (1.0/2.0) )
+      for (m = 1.0; m > d; m *= 0.5)
         exp--;
     }
   return exp;
-#endif
+#endif /* _MPFR_IEEE_FLOATS */
 }

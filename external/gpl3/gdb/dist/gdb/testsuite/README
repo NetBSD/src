@@ -259,6 +259,40 @@ This make (not runtest) variable is used to specify whether the
 testsuite preloads the read1.so library into expect.  Any non-empty
 value means true.  See "Race detection" below.
 
+GDB_TEST_SOCKETHOST
+
+This variable can provide the hostname/address that should be used
+when performing GDBserver-related tests.  This is useful in some
+situations, e.g., when you want to test the IPv6 connectivity of GDB
+and GDBserver, or when using a different hostname/address is needed.
+For example, to make GDB and GDBserver use IPv6-only connections, you
+can do:
+
+	make check TESTS="gdb.server/*.exp" RUNTESTFLAGS='GDB_TEST_SOCKETHOST=tcp6:[::1]'
+
+Note that only a hostname/address can be provided, without a port
+number.
+
+TS
+
+This variable turns on the timestamp printing for each line of "make
+check".  Note that the timestamp will be printed on stdout output
+only.  In other words, there will be no timestamp output on either
+gdb.sum and gdb.log files.  If you would like to enable timestamp
+printing, you can do:
+
+	make check TS=1
+
+TS_FORMAT
+
+You can provide a custom format for timestamp printing with this
+variable.  The format must be a string compatible with "strftime".
+This variable is only useful when the TS variable is also provided.
+If you would like to change the output format of the timestamp, you
+can do:
+
+	make check TS=1 TS_FORMAT='[%b %H:%S]'
+
 Race detection
 **************
 
@@ -448,6 +482,11 @@ gdb,no_thread_names
 
   The target doesn't support thread names.
 
+gdb,nopie_flag
+
+  The flag required to force the compiler to produce non-position-independent
+  executables.
+
 Testsuite Organization
 **********************
 
@@ -579,3 +618,48 @@ Note that it is also acceptable, and often preferable, to avoid
 running the test at all.  This is the better option if the limitation
 is intrinsic to the environment, rather than a bug expected to be
 fixed in the near future.
+
+Local vs Remote vs Native
+*************************
+
+It's unfortunately easy to get confused in the testsuite about what's
+native and what's not, what's remote and what's not.  The confusion is
+caused by the overlap in vocabulary between DejaGnu and GDB.
+
+From a DejaGnu point of view:
+
+ - native: the host or target board is considered native if the its
+   triplet is the same as the build system's triplet,
+
+ - remote: the host or target board is considered remote if it's
+   running on a different machine, and thus require ssh, for example,
+   to run commands, versus simply running commands directly.
+
+Note that they are not mutually exclusive, as you can have a remote
+machine that has the same triplet as the build machine.
+
+From a GDB point of view:
+
+ - native: when GDB uses system calls such as ptrace to interact
+   directly with processes on the same system its running on,
+
+ - remote: when GDB speaks the RSP (Remote Serial Protocol) with
+   another program doing the ptrace stuff.
+
+Note that they are mutually exclusive.  An inferior can only be either
+debugged with the native target, or with the remote target a specific
+time.
+
+That means that there are cases where the target is not remote for
+DejaGnu, but is remote for GDB (e.g. running GDBserver on the same
+machine).
+
+You can also have a remote target for DejaGnu, but native for GDB
+(e.g.  building on x86 a GDB that runs on ARM and running the
+testsuite with a remote host).
+
+Therefore, care must be taken to check for the right kind of remote.
+Use [is_remote target] to check whether the DejaGnu target board is
+remote.  When what you really want to know is whether GDB is using the
+remote protocol, because feature X is only available when GDB debugs
+natively, check gdb_protocol instead.

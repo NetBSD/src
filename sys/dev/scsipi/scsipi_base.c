@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -83,6 +83,8 @@ static void	scsipi_channel_freeze_locked(struct scsipi_channel *, int);
 
 static void	scsipi_adapter_lock(struct scsipi_adapter *adapt);
 static void	scsipi_adapter_unlock(struct scsipi_adapter *adapt);
+
+static void	scsipi_update_timeouts(struct scsipi_xfer *xs);
 
 static struct pool scsipi_xfer_pool;
 
@@ -348,6 +350,8 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 	int bit, tag;
 	u_int word;
 
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
+
 	bit = 0;	/* XXX gcc */
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
 		bit = ffs(periph->periph_freetags[word]);
@@ -388,6 +392,8 @@ scsipi_put_tag(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int word, bit;
+
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 
 	word = xs->xs_tag_id >> 5;
 	bit = xs->xs_tag_id & 0x1f;
@@ -466,6 +472,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		    (periph->periph_flags & PERIPH_RECOVERING) != 0)
 			goto wait_for_opening;
 		periph->periph_active++;
+		KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 		break;
 
  wait_for_opening:
@@ -511,6 +518,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		if ((flags & XS_CTL_NOSLEEP) == 0)
 			mutex_enter(chan_mtx(periph->periph_channel));
 		TAILQ_INSERT_TAIL(&periph->periph_xferq, xs, device_q);
+		KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 		if ((flags & XS_CTL_NOSLEEP) == 0)
 			mutex_exit(chan_mtx(periph->periph_channel));
 	}
@@ -534,6 +542,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 	int flags = xs->xs_control;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_free_xs\n"));
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 
 	TAILQ_REMOVE(&periph->periph_xferq, xs, device_q);
 	callout_destroy(&xs->xs_callout);
@@ -853,7 +862,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	sense = &xs->sense.scsi_sense;
 #ifdef SCSIPI_DEBUG
 	if (periph->periph_flags & SCSIPI_DB1) {
-		int count;
+	        int count, len;
 		scsipi_printaddr(periph);
 		printf(" sense debug information:\n");
 		printf("\tcode 0x%x valid %d\n",
@@ -872,8 +881,9 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			sense->info[2],
 			sense->info[3],
 			sense->extra_len);
-		printf("\textra: ");
-		for (count = 0; count < SSD_ADD_BYTES_LIM(sense); count++)
+		len = SSD_ADD_BYTES_LIM(sense);
+		printf("\textra (up to %d bytes): ", len);
+		for (count = 0; count < len; count++)
 			printf("0x%x ", sense->csi[count]);
 		printf("\n");
 	}
@@ -940,6 +950,8 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				 */
 				xs->resid = 0;	/* not short read */
 			}
+			error = 0;
+			break;
 		case SKEY_EQUAL:
 			error = 0;
 			break;
@@ -1342,6 +1354,197 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
 
 	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
+}
+
+/*
+ * scsipi_get_opcodeinfo:
+ *
+ * query the device for supported commends and their timeout
+ * building a timeout lookup table if timeout information is available.
+ */
+void
+scsipi_get_opcodeinfo(struct scsipi_periph *periph)
+{
+	u_int8_t *data;
+	int len = 16*1024;
+	int rc;
+	struct scsi_repsuppopcode cmd;
+	
+	/* refrain from asking for supported opcodes */
+	if (periph->periph_quirks & PQUIRK_NOREPSUPPOPC ||
+	    periph->periph_type == T_PROCESSOR || /* spec. */
+	    periph->periph_type == T_CDROM) /* spec. */
+		return;
+
+	scsipi_free_opcodeinfo(periph);
+
+	/*
+	 * query REPORT SUPPORTED OPERATION CODES
+	 * if OK
+	 *   enumerate all codes
+	 *     if timeout exists insert maximum into opcode table
+	 */
+
+	data = malloc(len, M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (data == NULL) {
+		SC_DEBUG(periph, SCSIPI_DB3,
+			 ("unable to allocate data buffer "
+			  "for REPORT SUPPORTED OPERATION CODES\n"));
+		return;
+	}
+
+	memset(&cmd, 0, sizeof(cmd));
+	
+	cmd.opcode = SCSI_MAINTENANCE_IN;
+	cmd.svcaction = RSOC_REPORT_SUPPORTED_OPCODES;
+	cmd.repoption = RSOC_RCTD|RSOC_ALL;
+	_lto4b(len, cmd.alloclen);
+	
+	rc = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+			    (void *)data, len, 0, 1000, NULL,
+			    XS_CTL_DATA_IN|XS_CTL_SILENT);
+
+	if (rc == 0) {
+		int count;
+                int dlen = _4btol(data);
+                u_int8_t *c = data + 4;
+		
+		SC_DEBUG(periph, SCSIPI_DB3,
+			 ("supported opcode timeout-values loaded\n"));
+		SC_DEBUG(periph, SCSIPI_DB3,
+			 ("CMD  LEN  SA    spec  nom. time  cmd timeout\n"));
+
+		struct scsipi_opcodes *tot =
+		  (struct scsipi_opcodes *)malloc(sizeof(struct scsipi_opcodes),
+						  M_DEVBUF, M_NOWAIT|M_ZERO);
+
+		count = 0;
+                while (tot != NULL &&
+		       dlen >= (int)sizeof(struct scsi_repsupopcode_all_commands_descriptor)) {
+                        struct scsi_repsupopcode_all_commands_descriptor *acd
+				= (struct scsi_repsupopcode_all_commands_descriptor *)c;
+#ifdef SCSIPI_DEBUG
+                        int cdblen = _2btol((const u_int8_t *)&acd->cdblen);
+#endif
+                        dlen -= sizeof(struct scsi_repsupopcode_all_commands_descriptor);
+                        c += sizeof(struct scsi_repsupopcode_all_commands_descriptor);
+                        SC_DEBUG(periph, SCSIPI_DB3,
+				 ("0x%02x(%2d) ", acd->opcode, cdblen));
+			
+			tot->opcode_info[acd->opcode].ti_flags = SCSIPI_TI_VALID;
+			
+                        if (acd->flags & RSOC_ACD_SERVACTV) {
+                                SC_DEBUGN(periph, SCSIPI_DB3,
+					 ("0x%02x%02x ",
+					  acd->serviceaction[0],
+					  acd->serviceaction[1]));
+                        } else {
+				SC_DEBUGN(periph, SCSIPI_DB3, ("       "));
+                        }
+			
+                        if (acd->flags & RSOC_ACD_CTDP
+			    && dlen >= (int)sizeof(struct scsi_repsupopcode_timeouts_descriptor)) {
+                                struct scsi_repsupopcode_timeouts_descriptor *td
+					= (struct scsi_repsupopcode_timeouts_descriptor *)c;
+                                long nomto = _4btol(td->nom_process_timeout);
+                                long cmdto = _4btol(td->cmd_process_timeout);
+				long t = (cmdto > nomto) ? cmdto : nomto;
+
+                                dlen -= sizeof(struct scsi_repsupopcode_timeouts_descriptor);
+                                c += sizeof(struct scsi_repsupopcode_timeouts_descriptor);
+
+                                SC_DEBUGN(periph, SCSIPI_DB3,
+					  ("0x%02x %10ld %10ld",
+					   td->cmd_specific,
+					   nomto, cmdto));
+
+				if (t > tot->opcode_info[acd->opcode].ti_timeout) {
+					tot->opcode_info[acd->opcode].ti_timeout = t;
+					++count;
+				}
+                        }
+                        SC_DEBUGN(periph, SCSIPI_DB3,("\n"));
+                }
+
+		if (count > 0) {
+			periph->periph_opcs = tot;
+		} else {
+			free(tot, M_DEVBUF);
+			SC_DEBUG(periph, SCSIPI_DB3,
+			 	("no usable timeout values available\n"));
+		}
+	} else {
+		SC_DEBUG(periph, SCSIPI_DB3,
+			 ("SCSI_MAINTENANCE_IN"
+			  "[RSOC_REPORT_SUPPORTED_OPCODES] failed error=%d"
+			  " - no device provided timeout "
+			  "values available\n", rc));
+	}
+
+	free(data, M_DEVBUF);
+}
+
+/*
+ * scsipi_update_timeouts:
+ * 	Overide timeout value if device/config provided
+ *      timeouts are available.
+ */
+static void
+scsipi_update_timeouts(struct scsipi_xfer *xs)
+{
+	struct scsipi_opcodes *opcs;
+	u_int8_t cmd;
+	int timeout;
+	struct scsipi_opinfo *oi;
+	
+	if (xs->timeout <= 0) {
+		return;	
+	}
+	
+	opcs = xs->xs_periph->periph_opcs;
+	
+	if (opcs == NULL) {
+		return;
+	}
+	
+	cmd = xs->cmd->opcode;
+	oi = &opcs->opcode_info[cmd];
+	
+	timeout = 1000 * (int)oi->ti_timeout;
+
+
+	if (timeout > xs->timeout && timeout < 86400000) {
+		/*
+		 * pick up device configured timeouts if they
+		 * are longer than the requested ones but less
+		 * than a day
+		 */
+#ifdef SCSIPI_DEBUG
+		if ((oi->ti_flags & SCSIPI_TI_LOGGED) == 0) {
+			SC_DEBUG(xs->xs_periph, SCSIPI_DB3,
+				 ("Overriding command 0x%02x "
+				  "timeout of %d with %d ms\n",
+				  cmd, xs->timeout, timeout));
+			oi->ti_flags |= SCSIPI_TI_LOGGED;
+		}
+#endif
+		xs->timeout = timeout;
+	}
+}
+
+/*
+ * scsipi_free_opcodeinfo:
+ *
+ * free the opcode information table
+ */
+void
+scsipi_free_opcodeinfo(struct scsipi_periph *periph)
+{
+	if (periph->periph_opcs != NULL) {
+		free(periph->periph_opcs, M_DEVBUF);
+	}
+
+	periph->periph_opcs = NULL;
 }
 
 /*
@@ -1790,6 +1993,7 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	 * If the xfer is to be polled, and there are already jobs on
 	 * the queue, we can't proceed.
 	 */
+	KASSERT(mutex_owned(chan_mtx(chan)));
 	if ((xs->xs_control & XS_CTL_POLL) != 0 &&
 	    TAILQ_FIRST(&chan->chan_queue) != NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -1960,6 +2164,8 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 
 	KASSERT(!cold);
 
+	scsipi_update_timeouts(xs);
+	
 	(chan->chan_bustype->bustype_cmd)(xs);
 
 	xs->xs_status &= ~XS_STS_DONE;
@@ -2657,7 +2863,7 @@ show_scsipi_cmd(struct scsipi_xfer *xs)
 		}
 		printf("-[%d bytes]\n", xs->datalen);
 		if (xs->datalen)
-			show_mem(xs->data, min(64, xs->datalen));
+			show_mem(xs->data, uimin(64, xs->datalen));
 	} else
 		printf("-RESET-\n");
 }

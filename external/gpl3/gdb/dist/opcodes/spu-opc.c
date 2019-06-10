@@ -1,6 +1,6 @@
 /* SPU opcode list
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.112 2018/06/13 04:17:43 maya Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.112.2.1 2019/06/10 22:10:13 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -255,6 +255,10 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 #endif
 
+#if !HAVE_DECL_GETSUBOPT
+int getsubopt(char **, char * const *, char **);
+#endif
+
 #if !HAVE_DECL_DIRNAME
 char *dirname(char *);
 #endif
@@ -493,6 +497,12 @@ char		*strndup(const char *, size_t);
 #endif
 #if !HAVE_DECL_STRNLEN
 size_t		strnlen(const char *, size_t);
+#endif
+#if !HAVE_DECL_STRCASECMP
+int		strcasecmp(const char *, const char *);
+#endif
+#if !HAVE_DECL_STRNCASECMP
+int		strncasecmp(const char *, const char *, size_t);
 #endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);

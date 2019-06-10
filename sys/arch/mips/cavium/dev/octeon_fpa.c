@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.1.22.1 2019/06/10 22:06:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,9 +29,7 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.1.22.1 2019/06/10 22:06:29 christos Exp $");
 
 #include "opt_octeon.h"
 

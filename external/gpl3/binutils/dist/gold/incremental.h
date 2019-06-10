@@ -1368,6 +1368,9 @@ class Incremental_binary
     Input_reader()
     { }
 
+    Input_reader(const Input_reader&)
+    { }
+
     virtual
     ~Input_reader()
     { }
@@ -1706,6 +1709,10 @@ class Sized_incremental_binary : public Incremental_binary
    public:
     Sized_input_reader(Input_entry_reader r)
       : Input_reader(), reader_(r)
+    { }
+
+    Sized_input_reader(const Sized_input_reader& r)
+      : Input_reader(), reader_(r.reader_)
     { }
 
     virtual

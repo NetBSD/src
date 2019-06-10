@@ -1,6 +1,6 @@
 /* tpow_si -- test file for mpc_pow_si.
 
-Copyright (C) 2009, 2010, 2011 INRIA
+Copyright (C) 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -74,12 +74,19 @@ compare_mpc_pow (mpfr_prec_t pmax, int iter, unsigned long nbits)
   mpc_clear (y);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_pow_si (P[1].mpc, P[2].mpc, P[3].si, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_pow_si (P[1].mpc, P[1].mpc, P[3].si, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CCS, f, mpc_pow_si);
   test_start ();
-  data_check (f, "pow_si.dat");
+
+  data_check_template ("pow_si.dsc", "pow_si.dat");
 
   compare_mpc_pow (100, 5, 19);
 

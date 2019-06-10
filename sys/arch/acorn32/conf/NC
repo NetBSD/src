@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.73 2018/06/07 13:36:28 thorpej Exp $
+#	$NetBSD: NC,v 1.73.2.1 2019/06/10 22:05:43 christos Exp $
 #
 #	NC - with wscons
 #
@@ -249,7 +249,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
@@ -257,6 +257,7 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester

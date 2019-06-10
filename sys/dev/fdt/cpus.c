@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $ */
+/* $NetBSD: cpus.c,v 1.2.14.1 2019/06/10 22:07:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2.14.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $");
 
 static int	cpus_match(device_t, cfdata_t, void *);
 static void	cpus_attach(device_t, device_t, void *);
+
+static bool	cpus_cpu_enabled(int);
 
 CFATTACH_DECL_NEW(cpus, 0, cpus_match, cpus_attach, NULL, NULL);
 
@@ -63,16 +65,31 @@ cpus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
+		if (!cpus_cpu_enabled(child))
 			continue;
+		fdt_add_child(self, child, faa, 0);
+	}
+}
 
-		struct fdt_attach_args cfaa = *faa;
-		cfaa.faa_phandle = child;
-		cfaa.faa_name = "cpu";
-		cfaa.faa_quiet = 0;
+static bool
+cpus_cpu_enabled(int child)
+{
+	const char *s;
 
-		device_t cpu = config_found(self, &cfaa, fdtbus_print);
-		if (cpu)
-			config_found(cpu, &cfaa, NULL);
+	/* Only match nodes with device_type = "cpu" */
+	s = fdtbus_get_string(child, "device_type");
+	if (!s || strcmp(s, "cpu") != 0)
+		return false;
+
+	/* If status is set, it must be either "okay" or "disabled" */
+	s = fdtbus_get_string(child, "status");
+	if (s) {
+		if (strcmp(s, "okay") == 0)
+			return false;
+		if (strcmp(s, "disabled") == 0)
+			return of_hasprop(child, "enable-method");
+		return false;
+	} else {
+		return true;
 	}
 }

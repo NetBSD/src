@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.29 2018/01/06 16:41:23 kamil Exp $ */
+/* $NetBSD: systrace_args.c,v 1.29.4.1 2019/06/10 22:09:03 christos Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1367,6 +1367,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* sys_getsockopt2 */
+	case 193: {
+		const struct sys_getsockopt2_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		iarg[1] = SCARG(p, level); /* int */
+		iarg[2] = SCARG(p, name); /* int */
+		uarg[3] = (intptr_t) SCARG(p, val); /* void * */
+		uarg[4] = (intptr_t) SCARG(p, avalsize); /* socklen_t * */
+		*n_args = 5;
+		break;
+	}
 	/* sys_getrlimit */
 	case 194: {
 		const struct sys_getrlimit_args *p = params;
@@ -2414,24 +2425,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = (intptr_t) SCARG(p, tramp); /* const void * */
 		iarg[4] = SCARG(p, vers); /* int */
 		*n_args = 5;
-		break;
-	}
-	/* sys_pmc_get_info */
-	case 341: {
-		const struct sys_pmc_get_info_args *p = params;
-		iarg[0] = SCARG(p, ctr); /* int */
-		iarg[1] = SCARG(p, op); /* int */
-		uarg[2] = (intptr_t) SCARG(p, args); /* void * */
-		*n_args = 3;
-		break;
-	}
-	/* sys_pmc_control */
-	case 342: {
-		const struct sys_pmc_control_args *p = params;
-		iarg[0] = SCARG(p, ctr); /* int */
-		iarg[1] = SCARG(p, op); /* int */
-		uarg[2] = (intptr_t) SCARG(p, args); /* void * */
-		*n_args = 3;
 		break;
 	}
 	/* sys_rasctl */
@@ -5878,6 +5871,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_getsockopt2 */
+	case 193:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "void *";
+			break;
+		case 4:
+			p = "socklen_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* sys_getrlimit */
 	case 194:
 		switch(ndx) {
@@ -7615,38 +7630,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 4:
 			p = "int";
-			break;
-		default:
-			break;
-		};
-		break;
-	/* sys_pmc_get_info */
-	case 341:
-		switch(ndx) {
-		case 0:
-			p = "int";
-			break;
-		case 1:
-			p = "int";
-			break;
-		case 2:
-			p = "void *";
-			break;
-		default:
-			break;
-		};
-		break;
-	/* sys_pmc_control */
-	case 342:
-		switch(ndx) {
-		case 0:
-			p = "int";
-			break;
-		case 1:
-			p = "int";
-			break;
-		case 2:
-			p = "void *";
 			break;
 		default:
 			break;
@@ -10691,6 +10674,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "long";
 		break;
+	/* sys_getsockopt2 */
+	case 193:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* sys_getrlimit */
 	case 194:
 		if (ndx == 0 || ndx == 1)
@@ -11299,16 +11287,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys___sigaction_sigtramp */
 	case 340:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* sys_pmc_get_info */
-	case 341:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* sys_pmc_control */
-	case 342:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

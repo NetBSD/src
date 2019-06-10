@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.34 2017/05/24 20:23:58 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.34.10.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.34 2017/05/24 20:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.34.10.1 2019/06/10 22:07:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,11 +148,10 @@ struct u3g_softc {
 static int u3g_match(device_t, cfdata_t, void *);
 static void u3g_attach(device_t, device_t, void *);
 static int u3g_detach(device_t, int);
-static int u3g_activate(device_t, enum devact);
 static void u3g_childdet(device_t, device_t);
 
 CFATTACH_DECL2_NEW(u3g, sizeof(struct u3g_softc), u3g_match,
-    u3g_attach, u3g_detach, u3g_activate, NULL, u3g_childdet);
+    u3g_attach, u3g_detach, NULL, NULL, u3g_childdet);
 
 
 static void u3g_intr(struct usbd_xfer *, void *, usbd_status);
@@ -166,8 +165,6 @@ static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 struct ucom_methods u3g_methods = {
 	.ucom_get_status = u3g_get_status,
 	.ucom_set = u3g_set,
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
 	.ucom_open = u3g_open,
 	.ucom_close = u3g_close,
 	.ucom_read = u3g_read,
@@ -189,6 +186,8 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E171 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353 },
+	/* LG Electronics */
+	{ USB_VENDOR_LG, USB_PRODUCT_LG_NTT_DOCOMO_L02C_MODEM },
 	/* OEM: Merlin */
 	{ USB_VENDOR_MERLIN, USB_PRODUCT_MERLIN_V620 },
 	/* OEM: Novatel */
@@ -215,8 +214,6 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADPLUSUMTS },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_HSDPA },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTMAXHSUPA },
-	/* OEM: Qualcomm, Inc. */
-	{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM },
 
 	/* OEM: Sierra Wireless: */
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AC595U },
@@ -256,8 +253,8 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D },
 
 	/* 4G Systems */
-	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_P14 },
-	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_W14 },
+	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_P14 },
+	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_W14 },
 };
 
 /*
@@ -350,7 +347,6 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_portno = -1;
 	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
-
 	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	intr_address = -1;
 	intr_size = 0;
@@ -433,25 +429,13 @@ static int
 u3g_detach(device_t self, int flags)
 {
 	struct u3g_softc *sc = device_private(self);
-	int rv;
+	int rv = 0;
 
-	if (sc->sc_dying)
-		return 0;
-
-	pmf_device_deregister(self);
-
-	for (size_t i = 0; i < sc->sc_ncom; i++)
-		if (sc->sc_com[i].c_dev != NULL) {
-			rv = config_detach(sc->sc_com[i].c_dev, flags);
-			if (rv != 0) {
-				aprint_verbose_dev(self, "Can't deallocate "
-				    "port (%d)", rv);
-			}
-		}
+	sc->sc_dying = true;
 
 	if (sc->sc_intr_pipe != NULL) {
-		(void) usbd_abort_pipe(sc->sc_intr_pipe);
-		(void) usbd_close_pipe(sc->sc_intr_pipe);
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
 	}
 	if (sc->sc_intr_buff != NULL) {
@@ -459,7 +443,22 @@ u3g_detach(device_t self, int flags)
 		sc->sc_intr_buff = NULL;
 	}
 
-	return 0;
+	for (size_t i = 0; i < sc->sc_ncom; i++)
+		if (sc->sc_com[i].c_dev != NULL) {
+			int port_rv;
+
+			port_rv = config_detach(sc->sc_com[i].c_dev, flags);
+			if (port_rv != 0) {
+				aprint_verbose_dev(self, "Can't deallocate "
+				    "port (%d)", port_rv);
+			}
+			rv |= port_rv;
+			sc->sc_com[i].c_dev = NULL;
+		}
+
+	pmf_device_deregister(self);
+
+	return rv;
 }
 
 static void
@@ -470,29 +469,6 @@ u3g_childdet(device_t self, device_t child)
 	for (size_t i = 0; i < sc->sc_ncom; i++)
 		    if (sc->sc_com[i].c_dev == child)
 			    sc->sc_com[i].c_dev = NULL;
-}
-
-static int
-u3g_activate(device_t self, enum devact act)
-{
-	struct u3g_softc *sc = device_private(self);
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		for (size_t i = 0; i < sc->sc_ncom; i++)
-			if (sc->sc_com[i].c_dev != NULL &&
-			    config_deactivate(sc->sc_com[i].c_dev) && rv == 0)
-			rv = -1;
-		else
-			rv = 0;
-		break;
-
-	default:
-		break;
-	}
-
-	return rv;
 }
 
 static void
@@ -542,10 +518,8 @@ u3g_get_status(void *arg, int portno, u_char *lsr, u_char *msr)
 {
 	struct u3g_softc *sc = arg;
 
-	if (lsr != NULL)
-		*lsr = 0;	/* LSR isn't supported */
-	if (msr != NULL)
-		*msr = sc->sc_com[portno].c_msr;
+	*lsr = 0;	/* LSR isn't supported */
+	*msr = sc->sc_com[portno].c_msr;
 }
 
 /*ARGSUSED*/
@@ -606,7 +580,7 @@ u3g_open(void *arg, int portno)
 	int i, nin;
 
 	if (sc->sc_dying)
-		return 0;
+ 		return EIO;
 
 	err = usbd_device2interface_handle(sc->sc_udev, sc->sc_ifaceno, &ih);
 	if (err)

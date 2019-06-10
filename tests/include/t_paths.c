@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.16 2015/05/07 06:23:23 pgoyette Exp $ */
+/*	$NetBSD: t_paths.c,v 1.16.16.1 2019/06/10 22:10:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.16 2015/05/07 06:23:23 pgoyette Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.16.16.1 2019/06/10 22:10:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -163,6 +163,7 @@ ATF_TC_BODY(paths, tc)
 					     paths[i].path, errno);
 				}
 
+				/* FALLTHROUGH */
 			case EBUSY:	/* FALLTHROUGH */
 			case ENXIO:	/* FALLTHROUGH */
 			case ENOENT:	/* FALLTHROUGH */

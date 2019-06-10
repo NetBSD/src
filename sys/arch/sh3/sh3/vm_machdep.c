@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.77.16.1 2019/06/10 22:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77.16.1 2019/06/10 22:06:45 christos Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -174,7 +174,6 @@ sh3_setup_uarea(struct lwp *l)
 
 	pcb = lwp_getpcb(l);
 	pcb->pcb_onfault = NULL;
-	pcb->pcb_faultbail = 0;
 #ifdef SH3
 	/*
 	 * Accessing context store space must not cause exceptions.
@@ -240,16 +239,14 @@ sh3_setup_uarea(struct lwp *l)
  * When this function returns, new lwp returns to user mode.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
 	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */
 
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

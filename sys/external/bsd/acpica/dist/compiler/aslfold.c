@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -687,7 +687,7 @@ TrInstallReducedConstant (
     ACPI_PARSE_OBJECT       *DataOp;
 
 
-    TotalFolds++;
+    AslGbl_TotalFolds++;
     AslError (ASL_OPTIMIZATION, ASL_MSG_CONSTANT_FOLDED, Op,
         Op->Asl.ParseOpName);
 

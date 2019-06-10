@@ -1,6 +1,6 @@
-/* Test file for exceptions.
+/* Test file for features related to exceptions.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,12 +20,9 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
-#define ERROR(s) do { printf(s"\n"); exit(1); } while(0)
+#define PRINT_ERROR(s) do { printf ("%s\n", s); exit (1); } while (0)
 
 /* Test powerof2 */
 static void
@@ -55,15 +52,15 @@ check_default_rnd (void)
         {
           printf ("%s %s\n", mpfr_print_rnd_mode ((mpfr_rnd_t) r),
                   mpfr_print_rnd_mode (t));
-          ERROR("ERROR in setting / getting default rounding mode (1)");
+          PRINT_ERROR ("ERROR in setting / getting default rounding mode (1)");
         }
     }
   mpfr_set_default_rounding_mode ((mpfr_rnd_t) MPFR_RND_MAX);
-  if (mpfr_get_default_rounding_mode() != MPFR_RNDA)
-    ERROR("ERROR in setting / getting default rounding mode (2)");
+  if (mpfr_get_default_rounding_mode() != MPFR_RNDF)
+    PRINT_ERROR ("ERROR in setting / getting default rounding mode (2)");
   mpfr_set_default_rounding_mode((mpfr_rnd_t) -1);
-  if (mpfr_get_default_rounding_mode() != MPFR_RNDA)
-    ERROR("ERROR in setting / getting default rounding mode (3)");
+  if (mpfr_get_default_rounding_mode() != MPFR_RNDF)
+    PRINT_ERROR ("ERROR in setting / getting default rounding mode (3)");
 }
 
 static void
@@ -76,40 +73,40 @@ check_emin_emax (void)
 
   /* Check the functions not the macros ! */
   if ((mpfr_set_emin)(MPFR_EMIN_MIN) != 0)
-    ERROR("set_emin failed!");
+    PRINT_ERROR ("set_emin failed!");
   if ((mpfr_get_emin)() != MPFR_EMIN_MIN)
-    ERROR("get_emin FAILED!");
+    PRINT_ERROR ("get_emin FAILED!");
   if ((mpfr_set_emin)(MPFR_EMIN_MIN-1) == 0)
-    ERROR("set_emin failed! (2)");
+    PRINT_ERROR ("set_emin failed! (2)");
 
   if ((mpfr_set_emax)(MPFR_EMAX_MAX) != 0)
-    ERROR("set_emax failed!");
+    PRINT_ERROR ("set_emax failed!");
   if ((mpfr_get_emax)() != MPFR_EMAX_MAX)
-    ERROR("get_emax FAILED!");
+    PRINT_ERROR ("get_emax FAILED!");
   if ((mpfr_set_emax)(MPFR_EMAX_MAX+1) == 0)
-    ERROR("set_emax failed! (2)");
+    PRINT_ERROR ("set_emax failed! (2)");
 
   if ((mpfr_get_emin_min) () != MPFR_EMIN_MIN)
-    ERROR ("get_emin_min");
+    PRINT_ERROR ("get_emin_min");
   if ((mpfr_get_emin_max) () != MPFR_EMIN_MAX)
-    ERROR ("get_emin_max");
+    PRINT_ERROR ("get_emin_max");
   if ((mpfr_get_emax_min) () != MPFR_EMAX_MIN)
-    ERROR ("get_emax_min");
+    PRINT_ERROR ("get_emax_min");
   if ((mpfr_get_emax_max) () != MPFR_EMAX_MAX)
-    ERROR ("get_emax_max");
+    PRINT_ERROR ("get_emax_max");
 
   set_emin (old_emin);
   set_emax (old_emax);
 }
 
 static void
-check_set_get_prec (void)
+check_get_prec (void)
 {
   mpfr_t x;
 
   mpfr_init2 (x, 17);
   if (mpfr_get_prec (x) != 17 || (mpfr_get_prec)(x) != 17)
-    ERROR ("mpfr_get_prec");
+    PRINT_ERROR ("mpfr_get_prec");
   mpfr_clear (x);
 }
 
@@ -118,10 +115,10 @@ mpfr_set_double_range (void)
 {
   mpfr_set_default_prec (54);
   if (mpfr_get_default_prec () != 54)
-    ERROR ("get_default_prec failed (1)");
+    PRINT_ERROR ("get_default_prec failed (1)");
   mpfr_set_default_prec (53);
   if ((mpfr_get_default_prec) () != 53)
-    ERROR ("get_default_prec failed (2)");
+    PRINT_ERROR ("get_default_prec failed (2)");
 
   /* in double precision format, the unbiased exponent is between 0 and
      2047, where 0 is used for subnormal numbers, and 2047 for special
@@ -157,32 +154,32 @@ check_flags (void)
   (mpfr_clear_overflow)();
   mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
   if (!(mpfr_overflow_p)())
-    ERROR("ERROR: No overflow detected!\n");
+    PRINT_ERROR ("ERROR: No overflow detected!\n");
 
   (mpfr_clear_underflow)();
   mpfr_set_ui (x, 1, MPFR_RNDN);
   mpfr_div_2exp (x, x, 1025, MPFR_RNDN);
   if (!(mpfr_underflow_p)())
-    ERROR("ERROR: No underflow detected!\n");
+    PRINT_ERROR ("ERROR: No underflow detected!\n");
 
   (mpfr_clear_nanflag)();
   MPFR_SET_NAN(x);
   mpfr_add (x, x, x, MPFR_RNDN);
   if (!(mpfr_nanflag_p)())
-    ERROR("ERROR: No NaN flag!\n");
+    PRINT_ERROR ("ERROR: No NaN flag!\n");
 
   (mpfr_clear_inexflag)();
   mpfr_set_ui(x, 2, MPFR_RNDN);
   mpfr_cos(x, x, MPFR_RNDN);
   if (!(mpfr_inexflag_p)())
-    ERROR("ERROR: No inexact flag!\n");
+    PRINT_ERROR ("ERROR: No inexact flag!\n");
 
   (mpfr_clear_erangeflag) ();
   mpfr_set_ui (x, 1, MPFR_RNDN);
   mpfr_mul_2exp (x, x, 1024, MPFR_RNDN);
   mpfr_get_ui (x, MPFR_RNDN);
   if (!(mpfr_erangeflag_p)())
-    ERROR ("ERROR: No erange flag!\n");
+    PRINT_ERROR ("ERROR: No erange flag!\n");
 
   mpfr_clear (x);
   set_emin (old_emin);
@@ -213,7 +210,25 @@ test_set_underflow (void)
 
           j = s < 0 && i > 1 ? 5 - i : i;
           inex = mpfr_underflow (x, (mpfr_rnd_t) i, s);
-          if (mpfr_cmp (x, r[j]) || inex * t[j] <= 0)
+          /* for RNDF, inex has no meaning, just check that x is either
+             min or zero */
+          if (i == MPFR_RNDF)
+            {
+              if (mpfr_cmp (x, min) && mpfr_cmp (x, zero))
+                {
+                  printf ("Error in test_set_underflow, sign = %d,"
+                          " rnd_mode = %s\n", s, mpfr_print_rnd_mode ((mpfr_rnd_t) i));
+                  printf ("Got\n");
+                  mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
+                  printf ("\ninstead of\n");
+                  mpfr_out_str (stdout, 2, 0, zero, MPFR_RNDN);
+                  printf ("\nor\n");
+                  mpfr_out_str (stdout, 2, 0, min, MPFR_RNDN);
+                  printf ("\n");
+                  exit (1);
+                }
+            }
+          else if (mpfr_cmp (x, r[j]) || inex * t[j] <= 0)
             {
               printf ("Error in test_set_underflow, sign = %d,"
                       " rnd_mode = %s\n", s, mpfr_print_rnd_mode ((mpfr_rnd_t) i));
@@ -255,7 +270,25 @@ test_set_overflow (void)
 
           j = s < 0 && i > 1 ? 5 - i : i;
           inex = mpfr_overflow (x, (mpfr_rnd_t) i, s);
-          if (mpfr_cmp (x, r[j]) || inex * t[j] <= 0)
+          /* for RNDF, inex has no meaning, just check that x is either
+             max or inf */
+          if (i == MPFR_RNDF)
+            {
+              if (mpfr_cmp (x, max) && mpfr_cmp (x, inf))
+                {
+                  printf ("Error in test_set_overflow, sign = %d,"
+                          " rnd_mode = %s\n", s, mpfr_print_rnd_mode ((mpfr_rnd_t) i));
+                  printf ("Got\n");
+                  mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
+                  printf ("\ninstead of\n");
+                  mpfr_out_str (stdout, 2, 0, max, MPFR_RNDN);
+                  printf ("\nor\n");
+                  mpfr_out_str (stdout, 2, 0, inf, MPFR_RNDN);
+                  printf ("\n");
+                  exit (1);
+                }
+            }
+          else if (mpfr_cmp (x, r[j]) || inex * t[j] <= 0)
             {
               printf ("Error in test_set_overflow, sign = %d,"
                       " rnd_mode = %s\n", s, mpfr_print_rnd_mode ((mpfr_rnd_t) i));
@@ -339,6 +372,83 @@ check_set (void)
   MPFR_ASSERTN (__gmpfr_flags == 0);
 }
 
+/* Note: this test assumes that mpfr_flags_* can be implemented as both
+   a function and a macro. Thus in such a case, both implementations are
+   tested. */
+static void
+check_groups (void)
+{
+  int i, j;
+  for (i = 0; i < 200; i++)
+    {
+      mpfr_flags_t f1, f2, mask;
+
+      f1 = __gmpfr_flags;
+      MPFR_ASSERTN (mpfr_flags_save () == f1);
+      MPFR_ASSERTN ((mpfr_flags_save) () == f1);
+      MPFR_ASSERTN (__gmpfr_flags == f1);
+      mask = randlimb () & MPFR_FLAGS_ALL;
+      if (randlimb () & 1)
+        mpfr_flags_set (mask);
+      else
+        (mpfr_flags_set) (mask);
+      for (j = 1; j <= MPFR_FLAGS_ALL; j <<= 1)
+        if ((__gmpfr_flags & j) != ((mask & j) != 0 ? j : (f1 & j)))
+          {
+            printf ("mpfr_flags_set error: old = 0x%lx, group = 0x%lx, "
+                    "new = 0x%lx, j = 0x%lx\n",
+                    (unsigned long) f1, (unsigned long) mask,
+                    (unsigned long) __gmpfr_flags, (unsigned long) j);
+            exit (1);
+          }
+
+      f2 = __gmpfr_flags;
+      mask = randlimb () & MPFR_FLAGS_ALL;
+      if (randlimb () & 1)
+        mpfr_flags_clear (mask);
+      else
+        (mpfr_flags_clear) (mask);
+      for (j = 1; j <= MPFR_FLAGS_ALL; j <<= 1)
+        if ((__gmpfr_flags & j) != ((mask & j) != 0 ? 0 : (f2 & j)))
+          {
+            printf ("mpfr_flags_clear error: old = 0x%lx, group = 0x%lx, "
+                    "new = 0x%lx, j = 0x%lx\n",
+                    (unsigned long) f2, (unsigned long) mask,
+                    (unsigned long) __gmpfr_flags, (unsigned long) j);
+            exit (1);
+          }
+
+      mask = randlimb () & MPFR_FLAGS_ALL;
+      f2 = (randlimb () & 1) ?
+        mpfr_flags_test (mask) : (mpfr_flags_test) (mask);
+      for (j = 1; j <= MPFR_FLAGS_ALL; j <<= 1)
+        if ((f2 & j) != ((mask & j) != 0 ? (__gmpfr_flags & j) : 0))
+          {
+            printf ("mpfr_flags_test error: current = 0x%lx, mask = 0x%lx, "
+                    "res = 0x%lx, j = 0x%lx\n",
+                    (unsigned long) __gmpfr_flags, (unsigned long) mask,
+                    (unsigned long) f2, (unsigned long) j);
+            exit (1);
+          }
+
+      f2 = __gmpfr_flags;
+      if (randlimb () & 1)
+        mpfr_flags_restore (f1, mask);
+      else
+        (mpfr_flags_restore) (f1, mask);
+      for (j = 1; j <= MPFR_FLAGS_ALL; j <<= 1)
+        if ((__gmpfr_flags & j) != (((mask & j) != 0 ? f1 : f2) & j))
+          {
+            printf ("mpfr_flags_restore error: old = 0x%lx, flags = 0x%lx, "
+                    "mask = 0x%lx, new = 0x%lx, j = 0x%lx\n",
+                    (unsigned long) f2, (unsigned long) f1,
+                    (unsigned long) mask, (unsigned long) __gmpfr_flags,
+                    (unsigned long) j);
+            exit (1);
+          }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -390,7 +500,7 @@ main (int argc, char *argv[])
     {
       printf ("Error: x+x rounded to nearest for x=2^1023 should give +Inf\n");
       printf ("emax = %ld\n", (long) mpfr_get_emax ());
-      printf ("got "); mpfr_print_binary (x); puts ("");
+      printf ("got "); mpfr_dump (x);
       exit (1);
     }
 
@@ -412,7 +522,7 @@ main (int argc, char *argv[])
     {
       printf ("Error: y-x rounded to zero should give 0"
               " for y=3/2*2^(-1022), x=2^(-1022)\n");
-      printf ("y="); mpfr_print_binary (y); puts ("");
+      printf ("Got "); mpfr_dump (y);
       exit (1);
     }
 
@@ -437,9 +547,10 @@ main (int argc, char *argv[])
 
   check_emin_emax();
   check_flags();
-  check_set_get_prec ();
+  check_get_prec ();
   check_powerof2 ();
   check_set ();
+  check_groups ();
 
   tests_end_mpfr ();
   return 0;

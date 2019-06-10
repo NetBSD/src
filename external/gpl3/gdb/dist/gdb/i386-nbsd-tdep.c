@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -111,19 +111,41 @@ static const struct tramp_frame i386nbsd_sigtramp_sc16 =
   SIGTRAMP_FRAME,
   1,
   {
-    { 0x8d, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x10, -1 },
-			/* leal  0x10(%esp), %eax */
-    { 0x50, -1 },	/* pushl %eax */
-    { 0x50, -1 },	/* pushl %eax */
-    { 0xb8, -1 }, { 0x27, -1 }, {0x01, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x127, %eax		# __sigreturn14 */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x1, %eax		# exit */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { TRAMP_SENTINEL_INSN, -1 }
+   /* leal  0x10(%esp), %eax */
+   { 0x8d, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x10, ULONGEST_MAX },
+
+   /* pushl %eax */
+   { 0x50, ULONGEST_MAX },
+
+   /* pushl %eax */
+   { 0x50, ULONGEST_MAX },
+
+   /* movl  $0x127, %eax		# __sigreturn14 */
+   { 0xb8, ULONGEST_MAX },
+   { 0x27, ULONGEST_MAX },
+   {0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+
+   /* movl  $0x1, %eax		# exit */
+   { 0xb8, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+
+   { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   i386nbsd_sigtramp_cache_init
 };
@@ -133,21 +155,40 @@ static const struct tramp_frame i386nbsd_sigtramp_sc2 =
   SIGTRAMP_FRAME,
   1,
   {
-    { 0x8d, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x0c, -1 },
-			/* leal  0x0c(%esp), %eax */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x27, -1 }, {0x01, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x127, %eax		# __sigreturn14 */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x1, %eax */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { TRAMP_SENTINEL_INSN, -1 }
+   /* leal  0x0c(%esp), %eax */
+   { 0x8d, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x0c, ULONGEST_MAX },
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x127, %eax		# __sigreturn14 */
+   { 0xb8, ULONGEST_MAX },
+   { 0x27, ULONGEST_MAX },
+   {0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x1, %eax */
+   { 0xb8, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   i386nbsd_sigtramp_cache_init
 };
@@ -157,21 +198,40 @@ static const struct tramp_frame i386nbsd_sigtramp_si2 =
   SIGTRAMP_FRAME,
   1,
   {
-    { 0x8b, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x08, -1 },
-			/* movl  8(%esp),%eax */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* movl  $0x134, %eax            # setcontext */
-    { 0xcd, -1 }, { 0x80, -1 },
-			/* int   $0x80 */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* movl  $0x1, %eax */
-    { 0xcd, -1 }, { 0x80, -1 },
-			/* int   $0x80 */
-    { TRAMP_SENTINEL_INSN, -1 }
+   /* movl  8(%esp),%eax */
+   { 0x8b, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x08, ULONGEST_MAX },
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x134, %eax            # setcontext */
+   { 0xb8, ULONGEST_MAX },
+   { 0x34, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX },
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x1, %eax */
+   { 0xb8, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX },
+   { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   i386nbsd_sigtramp_cache_init
 };
@@ -181,22 +241,43 @@ static const struct tramp_frame i386nbsd_sigtramp_si31 =
   SIGTRAMP_FRAME,
   1,
   {
-    { 0x8d, -1 }, { 0x84, -1 }, { 0x24, -1 },
-        { 0x8c, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* leal  0x8c(%esp), %eax */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* movl  $0x134, %eax            # setcontext */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x1, %eax */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { TRAMP_SENTINEL_INSN, -1 }
+   /* leal  0x8c(%esp), %eax */
+   { 0x8d, ULONGEST_MAX },
+   { 0x84, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x8c, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x134, %eax            # setcontext */
+   { 0xb8, ULONGEST_MAX },
+   { 0x34, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x1, %eax */
+   { 0xb8, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   i386nbsd_sigtramp_cache_init
 };
@@ -206,23 +287,47 @@ static const struct tramp_frame i386nbsd_sigtramp_si4 =
   SIGTRAMP_FRAME,
   1,
   {
-    { 0x8d, -1 }, { 0x84, -1 }, { 0x24, -1 },
-        { 0x8c, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* leal  0x8c(%esp), %eax */
-    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-			/* movl  %eax, 0x4(%esp) */
-    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
-			/* movl  $0x134, %eax            # setcontext */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { 0xc7, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
-        { 0xff, -1 }, { 0xff, -1 }, { 0xff, -1 }, { 0xff, -1 },
-			/* movl   $0xffffffff,0x4(%esp) */
-    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
-			/* movl  $0x1, %eax */
-    { 0xcd, -1 }, { 0x80, -1},
-			/* int   $0x80 */
-    { TRAMP_SENTINEL_INSN, -1 }
+   /* leal  0x8c(%esp), %eax */
+   { 0x8d, ULONGEST_MAX },
+   { 0x84, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x8c, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* movl  %eax, 0x4(%esp) */
+   { 0x89, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   /* movl  $0x134, %eax            # setcontext */
+   { 0xb8, ULONGEST_MAX },
+   { 0x34, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   { 0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   /* movl   $0xffffffff,0x4(%esp) */
+   { 0xc7, ULONGEST_MAX },
+   { 0x44, ULONGEST_MAX },
+   { 0x24, ULONGEST_MAX },
+   { 0x04, ULONGEST_MAX },
+   { 0xff, ULONGEST_MAX },
+   { 0xff, ULONGEST_MAX },
+   { 0xff, ULONGEST_MAX },
+   { 0xff, ULONGEST_MAX },
+   /* movl  $0x1, %eax */
+   { 0xb8, ULONGEST_MAX },
+   { 0x01, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   {0x00, ULONGEST_MAX },
+   /* int   $0x80 */
+   { 0xcd, ULONGEST_MAX },
+   { 0x80, ULONGEST_MAX},
+   { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   i386nbsd_sigtramp_cache_init
 };
@@ -474,10 +579,6 @@ i386nbsdelf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->struct_return = pcc_struct_return;
 }
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_i386nbsd_tdep;
-
-
 void
 _initialize_i386nbsd_tdep (void)
 {

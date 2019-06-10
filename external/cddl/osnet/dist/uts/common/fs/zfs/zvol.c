@@ -315,29 +315,14 @@ zvol_size_changed(zvol_state_t *zv, uint64_t volsize)
 	}
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-	prop_dictionary_t disk_info, odisk_info, geom;
-	struct disk *disk;
+	struct disk_geom *dg = &zv->zv_dk.dk_geom;
 
-	disk = &zv->zv_dk;
+	zv->zv_volsize = volsize;
 
-	disk_info = prop_dictionary_create();
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", zv->zv_volsize);
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
-	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", zv->zv_volsize / 2048);
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	odisk_info = disk->dk_info;
-	disk->dk_info = disk_info;
-
-	if (odisk_info != NULL)
-		prop_object_release(odisk_info);
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secsize = DEV_BSIZE; /* XXX 512? */
+	dg->dg_secperunit = zv->zv_volsize / dg->dg_secsize;;
+	disk_set_info(NULL, &zv->zv_dk, "ZVOL");
 #endif
 }
 
@@ -676,7 +661,7 @@ zvol_create_minor(const char *name)
 	minor_t minor = 0;
 	vnode_t *vp = NULL;
 	char *devpath;
-	size_t devpathlen = strlen(ZVOL_FULL_DEV_DIR) + strlen(name) + 1;
+	size_t devpathlen = strlen(ZVOL_FULL_DEV_DIR) + strlen(name) + 2;
 #endif
 
 	mutex_enter(&zfsdev_state_lock);
@@ -870,7 +855,7 @@ zvol_create_minor(const char *name)
 
 	(void) strlcpy(zv->zv_name, name, MAXPATHLEN);
 	zv->zv_min_bs = DEV_BSHIFT;
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 	zv->zv_minor = minor;
 #endif
 	zv->zv_objset = os;
@@ -950,12 +935,17 @@ zvol_remove_zv(zvol_state_t *zv)
 	char nmbuf[20];
 	minor_t minor = zv->zv_minor;
 
-	/* XXXNETBSD needs changes here */
-	(void) snprintf(nmbuf, sizeof (nmbuf), "%u,raw", zv->zv_minor);
+	LIST_REMOVE(zv, zv_links);
+
+	(void) snprintf(nmbuf, sizeof (nmbuf), "%s", zv->zv_name);
 	ddi_remove_minor_node(zfs_dip, nmbuf);
 
-	(void) snprintf(nmbuf, sizeof (nmbuf), "%u", zv->zv_minor);
+	(void) snprintf(nmbuf, sizeof (nmbuf), "%s", zv->zv_name);
 	ddi_remove_minor_node(zfs_dip, nmbuf);
+
+	disk_detach(&zv->zv_dk);
+	disk_destroy(&zv->zv_dk);
+	mutex_destroy(&zv->zv_dklock);
 #endif
 
 	avl_destroy(&zv->zv_znode.z_range_avl);
@@ -983,6 +973,11 @@ zvol_remove_minor(const char *name)
 		mutex_exit(&zfsdev_state_lock);
 		return (SET_ERROR(ENXIO));
 	}
+#ifdef __NetBSD__
+	disk_detach(&zv->zv_dk);
+	disk_destroy(&zv->zv_dk);
+	mutex_destroy(&zv->zv_dklock);
+#endif
 	rc = zvol_remove_zv(zv);
 	mutex_exit(&zfsdev_state_lock);
 	return (rc);
@@ -1058,12 +1053,6 @@ zvol_last_close(zvol_state_t *zv)
 
 	dmu_objset_disown(zv->zv_objset, zvol_tag);
 	zv->zv_objset = NULL;
-#ifdef __NetBSD__xxx
-	/* the old code has this here, but it's in the wrong place. */
-	disk_detach(&zv->zv_dk);
-	disk_destroy(&zv->zv_dk);
-	mutex_destroy(&zv->zv_dklock);
-#endif
 }
 
 #ifdef illumos
@@ -1789,7 +1778,7 @@ zvol_strategy(buf_t *bp)
 	objset_t *os;
 	rl_t *rl;
 	int error = 0;
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 	boolean_t doread = bp->b_flags & B_READ;
 #else
 	boolean_t doread = 0;
@@ -2132,6 +2121,12 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 	}
 #endif
 
+#ifdef __NetBSD__
+	uint64_t resid = uio->uio_resid;
+	mutex_enter(&zv->zv_dklock);
+	disk_busy(&zv->zv_dk);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	rl = zfs_range_lock(&zv->zv_znode, uio->uio_loffset, uio->uio_resid,
 	    RL_READER);
 	while (uio->uio_resid > 0 && uio->uio_loffset < volsize) {
@@ -2150,6 +2145,11 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 		}
 	}
 	zfs_range_unlock(rl);
+#ifdef __NetBSD__
+	mutex_enter(&zv->zv_dklock);
+	disk_unbusy(&zv->zv_dk, resid - uio->uio_resid, 1);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	return (error);
 }
 
@@ -2201,6 +2201,12 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 #endif
 	    (zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS);
 
+#ifdef __NetBSD__
+	uint64_t resid = uio->uio_resid;
+	mutex_enter(&zv->zv_dklock);
+	disk_busy(&zv->zv_dk);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	rl = zfs_range_lock(&zv->zv_znode, uio->uio_loffset, uio->uio_resid,
 	    RL_WRITER);
 	while (uio->uio_resid > 0 && uio->uio_loffset < volsize) {
@@ -2228,6 +2234,11 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 	zfs_range_unlock(rl);
 	if (sync)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
+#ifdef __NetBSD__
+	mutex_enter(&zv->zv_dklock);
+	disk_unbusy(&zv->zv_dk, resid - uio->uio_resid, 0);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	return (error);
 }
 
@@ -3125,6 +3136,7 @@ zvol_geom_worker(void *arg)
 		}
 	}
 }
+#endif
 
 extern boolean_t dataset_name_hidden(const char *name);
 
@@ -3243,6 +3255,28 @@ zvol_create_minors(const char *name)
 	return (0);
 }
 
+#ifdef __NetBSD__
+void
+zvol_rename_minor(zvol_state_t *zv, const char *newname)
+{
+	char *nm;
+	minor_t minor = zv->zv_minor;
+
+	nm = PNBUF_GET();
+	strlcpy(nm, newname, MAXPATHLEN);
+	ddi_remove_minor_node(zfs_dip, zv->zv_name);
+	(void)ddi_create_minor_node(zfs_dip, nm, S_IFCHR, minor, DDI_PSEUDO, 0);
+	(void)ddi_create_minor_node(zfs_dip, nm, S_IFBLK, minor, DDI_PSEUDO, 0);
+	PNBUF_PUT(nm);
+
+	strlcpy(zv->zv_name, newname, sizeof(zv->zv_name));
+	mutex_enter(&zv->zv_dklock);
+	disk_rename(&zv->zv_dk, zv->zv_name);
+	mutex_exit(&zv->zv_dklock);
+}
+#endif
+
+#ifdef __FreeBSD__
 static void
 zvol_rename_minor(zvol_state_t *zv, const char *newname)
 {
@@ -3297,6 +3331,7 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 	}
 	strlcpy(zv->zv_name, newname, sizeof(zv->zv_name));
 }
+#endif
 
 void
 zvol_rename_minors(const char *oldname, const char *newname)
@@ -3337,6 +3372,7 @@ zvol_rename_minors(const char *oldname, const char *newname)
 	PICKUP_GIANT();
 }
 
+#ifdef __FreeBSD__
 static int
 zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 {
@@ -3541,42 +3577,33 @@ zvol_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 		return (ENXIO);
 	}
 
+	error = disk_ioctl(&zv->zv_dk, NODEV, cmd, (void *)arg, flag, curlwp);
+	if (error != EPASSTHROUGH) {
+		mutex_exit(&zfsdev_state_lock);
+		return error;
+	}
+
+	error = 0;
+
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) arg;
-
-		strlcpy(dkw->dkw_devname, zv->zv_name, 16);
-		strlcpy(dkw->dkw_wname, zv->zv_name, MAXPATHLEN);
-		strlcpy(dkw->dkw_parent, zv->zv_name, 16);
+		
+		memset(dkw, 0, sizeof(*dkw));
+		strlcpy(dkw->dkw_devname, zv->zv_name,
+		    sizeof(dkw->dkw_devname));
+		strlcpy(dkw->dkw_parent, "ZFS", sizeof(dkw->dkw_parent));
 		
 		dkw->dkw_offset = 0;
-		/* XXX NetBSD supports only DEV_BSIZE device block
-		   size zv_volblocksize >> DEV_BSIZE*/
-		dkw->dkw_size = (zv->zv_volsize / DEV_BSIZE);
-		dprintf("dkw %"PRIu64" volsize %"PRIu64" volblock %"PRIu64" \n",
-		    dkw->dkw_size, zv->zv_volsize, zv->zv_volblocksize);
+		dkw->dkw_size = zv->zv_volsize / DEV_BSIZE;
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		break;
 	}
 
-	case DIOCGDISKINFO:
-	{
-		struct plistref *pref = (struct plistref *) arg;
-
-		if (zv->zv_dk.dk_info == NULL) {
-			mutex_exit(&zfsdev_state_lock);
-			return ENOTSUP;
-		} else
-			prop_dictionary_copyout_ioctl(pref, cmd,
-			    zv->zv_dk.dk_info);
-		
-		break;
-	}
-	
 	default:
-		aprint_debug("unknown disk_ioctl called\n");
+		dprintf("unknown disk_ioctl called\n");
 		error = ENOTTY;
 		break; 
 	}

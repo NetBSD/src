@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.12 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.12.88.1 2019/06/10 22:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.12 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.12.88.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ static void
 mii_bitbang_sync(device_t sc, mii_bitbang_ops_t ops)
 {
 	int i;
-	u_int32_t v;
+	uint32_t v;
 
 	v = MDIRPHY | MDO;
 
@@ -87,7 +87,7 @@ mii_bitbang_sendbits(device_t sc, mii_bitbang_ops_t ops, uint32_t data,
     int nbits)
 {
 	int i;
-	u_int32_t v;
+	uint32_t v;
 
 	v = MDIRPHY;
 	WRITE(v);
@@ -109,9 +109,11 @@ mii_bitbang_sendbits(device_t sc, mii_bitbang_ops_t ops, uint32_t data,
  *	Read a PHY register by bit-bang'ing the MII.
  */
 int
-mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
+mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg,
+	uint16_t *val)
 {
-	int val = 0, err = 0, i;
+	int err = 0, i;
+	uint16_t data = 0;
 
 	mii_bitbang_sync(sc, ops);
 
@@ -135,10 +137,10 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
 	WRITE(MDIRHOST);
 
 	for (i = 0; i < 16; i++) {
-		val <<= 1;
+		data <<= 1;
 		/* Read data prior to clock low-high transition. */
 		if (err == 0 && (READ & MDI) != 0)
-			val |= 1;
+			data |= 1;
 
 		WRITE(MDIRHOST | MDC);
 		WRITE(MDIRHOST);
@@ -147,7 +149,12 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
 	/* Set direction to host->PHY, without a clock transition. */
 	WRITE(MDIRPHY);
 
-	return (err ? 0 : val);
+	if (err == 0)
+		*val = data;
+	else
+		err = -1;
+
+	return err;
 }
 
 /*
@@ -155,9 +162,9 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
  *
  *	Write a PHY register by bit-bang'ing the MII.
  */
-void
-mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy,
-	int reg, int val)
+int
+mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg,
+    uint16_t val)
 {
 
 	mii_bitbang_sync(sc, ops);
@@ -170,4 +177,6 @@ mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy,
 	mii_bitbang_sendbits(sc, ops, val, 16);
 
 	WRITE(MDIRPHY);
+
+	return 0;
 }

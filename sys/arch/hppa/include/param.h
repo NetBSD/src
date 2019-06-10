@@ -1,8 +1,8 @@
-/*	$NetBSD: param.h,v 1.21 2015/10/27 22:28:56 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.21.18.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -50,11 +50,6 @@
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
@@ -85,7 +80,7 @@
  * Size of kernel malloc arena in logical pages
  */
 #define NKMEMPAGES_MIN_DEFAULT  ((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MAX_DEFAULT  ((256 * 1024 * 1024) >> PAGE_SHIFT) 
+#define NKMEMPAGES_MAX_DEFAULT  ((256 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Mach derived conversion macros

@@ -1,6 +1,6 @@
 /* Target waitstatus implementations.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 #include "waitstatus.h"
 
 /* Return a pretty printed form of target_waitstatus.
    Space for the result is malloc'd, caller must free.  */
 
-char *
+std::string
 target_waitstatus_to_string (const struct target_waitstatus *ws)
 {
   const char *kind_str = "status->kind = ";
@@ -31,44 +31,44 @@ target_waitstatus_to_string (const struct target_waitstatus *ws)
   switch (ws->kind)
     {
     case TARGET_WAITKIND_EXITED:
-      return xstrprintf ("%sexited, status = %d",
-			 kind_str, ws->value.integer);
+      return string_printf ("%sexited, status = %d",
+			    kind_str, ws->value.integer);
     case TARGET_WAITKIND_STOPPED:
-      return xstrprintf ("%sstopped, signal = %s",
-			 kind_str,
-			 gdb_signal_to_symbol_string (ws->value.sig));
+      return string_printf ("%sstopped, signal = %s",
+			    kind_str,
+			    gdb_signal_to_symbol_string (ws->value.sig));
     case TARGET_WAITKIND_SIGNALLED:
-      return xstrprintf ("%ssignalled, signal = %s",
-			 kind_str,
-			 gdb_signal_to_symbol_string (ws->value.sig));
+      return string_printf ("%ssignalled, signal = %s",
+			    kind_str,
+			    gdb_signal_to_symbol_string (ws->value.sig));
     case TARGET_WAITKIND_LOADED:
-      return xstrprintf ("%sloaded", kind_str);
+      return string_printf ("%sloaded", kind_str);
     case TARGET_WAITKIND_FORKED:
-      return xstrprintf ("%sforked", kind_str);
+      return string_printf ("%sforked", kind_str);
     case TARGET_WAITKIND_VFORKED:
-      return xstrprintf ("%svforked", kind_str);
+      return string_printf ("%svforked", kind_str);
     case TARGET_WAITKIND_EXECD:
-      return xstrprintf ("%sexecd", kind_str);
+      return string_printf ("%sexecd", kind_str);
     case TARGET_WAITKIND_VFORK_DONE:
-      return xstrprintf ("%svfork-done", kind_str);
+      return string_printf ("%svfork-done", kind_str);
     case TARGET_WAITKIND_SYSCALL_ENTRY:
-      return xstrprintf ("%sentered syscall", kind_str);
+      return string_printf ("%sentered syscall", kind_str);
     case TARGET_WAITKIND_SYSCALL_RETURN:
-      return xstrprintf ("%sexited syscall", kind_str);
+      return string_printf ("%sexited syscall", kind_str);
     case TARGET_WAITKIND_SPURIOUS:
-      return xstrprintf ("%sspurious", kind_str);
+      return string_printf ("%sspurious", kind_str);
     case TARGET_WAITKIND_IGNORE:
-      return xstrprintf ("%signore", kind_str);
+      return string_printf ("%signore", kind_str);
     case TARGET_WAITKIND_NO_HISTORY:
-      return xstrprintf ("%sno-history", kind_str);
+      return string_printf ("%sno-history", kind_str);
     case TARGET_WAITKIND_NO_RESUMED:
-      return xstrprintf ("%sno-resumed", kind_str);
+      return string_printf ("%sno-resumed", kind_str);
     case TARGET_WAITKIND_THREAD_CREATED:
-      return xstrprintf ("%sthread created", kind_str);
+      return string_printf ("%sthread created", kind_str);
     case TARGET_WAITKIND_THREAD_EXITED:
-      return xstrprintf ("%sthread exited, status = %d",
-			 kind_str, ws->value.integer);
+      return string_printf ("%sthread exited, status = %d",
+			    kind_str, ws->value.integer);
     default:
-      return xstrprintf ("%sunknown???", kind_str);
+      return string_printf ("%sunknown???", kind_str);
     }
 }

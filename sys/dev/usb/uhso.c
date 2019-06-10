@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.28 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: uhso.c,v 1.28.2.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28.2.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28 2018/06/26 06:48:02 msaitoh Exp $");
 #include <dev/scsipi/scsi_disk.h>
 
 #include "usbdevs.h"
+#include "ioconf.h"
 
 #undef DPRINTF
 #ifdef UHSO_DEBUG
@@ -336,7 +337,7 @@ int uhso_match(device_t, cfdata_t, void *);
 void uhso_attach(device_t, device_t, void *);
 int uhso_detach(device_t, int);
 
-extern struct cfdriver uhso_cd;
+
 
 CFATTACH_DECL_NEW(uhso, sizeof(struct uhso_softc), uhso_match, uhso_attach,
     uhso_detach, NULL);
@@ -625,7 +626,7 @@ uhso_switch_mode(struct usbd_device *udev)
 	usbd_destroy_xfer(xfer);
 	usbd_close_pipe(pipe);
 
-	return (status == USBD_NORMAL_COMPLETION ? 0 : EIO);
+	return status == USBD_NORMAL_COMPLETION ? 0 : EIO;
 }
 
 Static int

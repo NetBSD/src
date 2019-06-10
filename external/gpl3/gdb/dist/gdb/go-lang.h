@@ -1,6 +1,6 @@
 /* Go language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,8 +59,6 @@ enum go_type
 /* Defined in go-exp.y.  */
 
 extern int go_parse (struct parser_state *);
-
-extern void go_yyerror (const char *);
 
 /* Defined in go-lang.c.  */
 

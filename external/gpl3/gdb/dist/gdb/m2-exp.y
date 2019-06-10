@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -65,7 +65,7 @@ int yyparse (void);
 
 static int yylex (void);
 
-void yyerror (const char *);
+static void yyerror (const char *);
 
 static int parse_number (int);
 
@@ -82,7 +82,7 @@ static int number_sign = 1;
   {
     LONGEST lval;
     ULONGEST ulval;
-    DOUBLEST dval;
+    gdb_byte val[16];
     struct symbol *sym;
     struct type *tval;
     struct stoken sval;
@@ -103,7 +103,7 @@ static int number_sign = 1;
 
 %token <lval> INT HEX ERROR
 %token <ulval> UINT M2_TRUE M2_FALSE CHAR
-%token <dval> FLOAT
+%token <val> FLOAT
 
 /* Both NAME and TYPENAME tokens represent symbols in the input,
    and both convey their data as strings.
@@ -125,7 +125,7 @@ static int number_sign = 1;
 /* The GDB scope operator */
 %token COLONCOLON
 
-%token <voidval> INTERNAL_VAR
+%token <voidval> DOLLAR_VARIABLE
 
 /* M2 tokens */
 %left ','
@@ -474,12 +474,12 @@ exp	:	CHAR
 
 
 exp	:	FLOAT
-			{ write_exp_elt_opcode (pstate, OP_DOUBLE);
+			{ write_exp_elt_opcode (pstate, OP_FLOAT);
 			  write_exp_elt_type (pstate,
 					      parse_m2_type (pstate)
 					      ->builtin_real);
-			  write_exp_elt_dblcst (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_DOUBLE); }
+			  write_exp_elt_floatcst (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_FLOAT); }
 	;
 
 exp	:	variable
@@ -535,7 +535,7 @@ variable:	fblock
 	;
 
 /* GDB internal ($foo) variable */
-variable:	INTERNAL_VAR
+variable:	DOLLAR_VARIABLE
 	;
 
 /* GDB scope operator */
@@ -548,12 +548,7 @@ variable:	block COLONCOLON NAME
 			    error (_("No symbol \"%s\" in specified context."),
 				   copy_name ($3));
 			  if (symbol_read_needs_frame (sym.symbol))
-			    {
-			      if (innermost_block == 0
-				  || contained_in (sym.block,
-						   innermost_block))
-				innermost_block = sym.block;
-			    }
+			    innermost_block.update (sym);
 
 			  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			  write_exp_elt_block (pstate, sym.block);
@@ -574,12 +569,7 @@ variable:	NAME
 			  if (sym.symbol)
 			    {
 			      if (symbol_read_needs_frame (sym.symbol))
-				{
-				  if (innermost_block == 0 ||
-				      contained_in (sym.block,
-						    innermost_block))
-				    innermost_block = sym.block;
-				}
+				innermost_block.update (sym);
 
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      write_exp_elt_block (pstate, sym.block);
@@ -650,7 +640,11 @@ parse_number (int olen)
     if (p[c] == '.' && base == 10)
       {
 	/* It's a float since it contains a point.  */
-	yylval.dval = atof (p);
+	if (!parse_float (p, len,
+			  parse_m2_type (pstate)->builtin_real,
+			  yylval.val))
+	  return ERROR;
+
 	lexptr += len;
 	return FLOAT;
       }
@@ -955,7 +949,7 @@ yylex (void)
   if (*tokstart == '$')
     {
       write_dollar_variable (pstate, yylval.sval);
-      return INTERNAL_VAR;
+      return DOLLAR_VARIABLE;
     }
 
   /* Use token-type BLOCKNAME for symbols that happen to be defined as
@@ -1036,24 +1030,19 @@ yylex (void)
 int
 m2_parse (struct parser_state *par_state)
 {
-  int result;
-  struct cleanup *c = make_cleanup_clear_parser_state (&pstate);
-
   /* Setting up the parser state.  */
+  scoped_restore pstate_restore = make_scoped_restore (&pstate);
   gdb_assert (par_state != NULL);
   pstate = par_state;
 
-  result = yyparse ();
-  do_cleanups (c);
-
-  return result;
+  return yyparse ();
 }
 
-void
+static void
 yyerror (const char *msg)
 {
   if (prev_lexptr)
     lexptr = prev_lexptr;
 
-  error (_("A %s in expression, near `%s'."), (msg ? msg : "error"), lexptr);
+  error (_("A %s in expression, near `%s'."), msg, lexptr);
 }

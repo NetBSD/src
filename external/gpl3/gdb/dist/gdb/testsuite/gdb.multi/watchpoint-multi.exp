@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ set executable ${testfile}
 
 # Multiple inferiors are needed, therefore both native and extended gdbserver
 # modes are supported.  Only non-extended gdbserver is not supported.
-if [target_info exists use_gdb_stub] {
+if [use_gdb_stub] {
     untested "using gdb stub"
     return
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.7 2017/08/24 13:06:23 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.7.8.1 2019/06/10 22:05:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,26 +29,27 @@
 #ifndef _ARM_ARM_FDTVAR_H
 #define _ARM_ARM_FDTVAR_H
 
+struct fdt_attach_args;
+
 /*
  * Platform-specific data
  */
 
-struct fdt_attach_args;
-
 struct arm_platform {
-	const struct pmap_devmap * (*devmap)(void);
-	void			(*bootstrap)(void);
-	void			(*init_attach_args)(struct fdt_attach_args *);
-	void			(*early_putchar)(char);
-	void			(*device_register)(device_t, void *);
-	void			(*reset)(void);
-	void			(*delay)(u_int);
-	u_int			(*uart_freq)(void);
+	const struct pmap_devmap * (*ap_devmap)(void);
+	void			(*ap_bootstrap)(void);
+	int			(*ap_mpstart)(void);
+	void			(*ap_startup)(void);
+	void			(*ap_init_attach_args)(struct fdt_attach_args *);
+	void			(*ap_device_register)(device_t, void *);
+	void			(*ap_reset)(void);
+	void			(*ap_delay)(u_int);
+	u_int			(*ap_uart_freq)(void);
 };
 
 struct arm_platform_info {
-	const char *			compat;
-	const struct arm_platform *	ops;
+	const char *			api_compat;
+	const struct arm_platform *	api_ops;
 };
 
 #define _ARM_PLATFORM_REGISTER(name)	\
@@ -56,15 +57,34 @@ struct arm_platform_info {
 
 #define ARM_PLATFORM(_name, _compat, _ops)				\
 static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
-	.compat = (_compat),						\
-	.ops = (_ops)							\
+	.api_compat = (_compat),					\
+	.api_ops = (_ops)						\
 };									\
 _ARM_PLATFORM_REGISTER(_name)
 
-TAILQ_HEAD(arm_platlist, arm_platform_info);
-
 const struct arm_platform *	arm_fdt_platform(void);
 
+/*
+ * CPU enable methods
+ */
+
+struct arm_cpu_method {
+	const char *		acm_compat;
+	int			(*acm_enable)(int);
+};
+
+#define	_ARM_CPU_METHOD_REGISTER(_name)	\
+	__link_set_add_rodata(arm_cpu_methods, __CONCAT(_name,_cpu_method));
+
+#define	ARM_CPU_METHOD(_name, _compat, _enable)				\
+static const struct arm_cpu_method __CONCAT(_name,_cpu_method) = {	\
+	.acm_compat = (_compat),					\
+	.acm_enable = (_enable)						\
+};									\
+_ARM_CPU_METHOD_REGISTER(_name)
+
+void	arm_fdt_cpu_bootstrap(void);
+int	arm_fdt_cpu_mpstart(void);
 void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
 void    arm_fdt_cpu_hatch(struct cpu_info *);
 

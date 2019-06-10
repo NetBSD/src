@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.125 2018/06/28 06:20:36 ozaki-r Exp $	*/
+/*      $NetBSD: hijack.c,v 1.125.2.1 2019/06/10 22:05:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.125 2018/06/28 06:20:36 ozaki-r Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.125.2.1 2019/06/10 22:05:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -89,7 +89,10 @@ __RCSID("$NetBSD: hijack.c,v 1.125 2018/06/28 06:20:36 ozaki-r Exp $");
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
-	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_PACCEPT,
+	DUALCALL_SOCKET, DUALCALL_ACCEPT,
+#ifndef __linux__
+	DUALCALL_PACCEPT,
+#endif
 	DUALCALL_BIND, DUALCALL_CONNECT,
 	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
 	DUALCALL_RECVFROM, DUALCALL_RECVMSG,
@@ -138,6 +141,7 @@ enum dualcall {
 
 #ifdef __NetBSD__
 	DUALCALL___SYSCTL,
+	DUALCALL_MODCTL,
 #endif
 
 #ifdef __NetBSD__
@@ -271,7 +275,9 @@ struct sysnames {
 } syscnames[] = {
 	{ DUALCALL_SOCKET,	S(REALSOCKET),	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
+#ifndef __linux__
 	{ DUALCALL_PACCEPT,	"paccept",	RSYS_NAME(PACCEPT)	},
+#endif
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
 	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
 	{ DUALCALL_GETPEERNAME,	"getpeername",	RSYS_NAME(GETPEERNAME)	},
@@ -351,6 +357,7 @@ struct sysnames {
 
 #ifdef __NetBSD__
 	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
+	{ DUALCALL_MODCTL,	"modctl",	RSYS_NAME(MODCTL)	},
 #endif
 
 #ifdef __NetBSD__
@@ -814,6 +821,30 @@ sysctlparser(char *buf)
 	errx(1, "sysctl value should be y(es)/n(o), gave: %s", buf);
 }
 
+static bool rumpmodctl = false;
+
+static void
+modctlparser(char *buf)
+{
+
+	if (buf == NULL) {
+		rumpmodctl = true;
+		return;
+	}
+
+	if (strcasecmp(buf, "y") == 0 || strcasecmp(buf, "yes") == 0 ||
+	    strcasecmp(buf, "yep") == 0 || strcasecmp(buf, "tottakai") == 0) {
+		rumpmodctl = true;
+		return;
+	}
+	if (strcasecmp(buf, "n") == 0 || strcasecmp(buf, "no") == 0) {
+		rumpmodctl = false;
+		return;
+	}
+
+	errx(1, "modctl value should be y(es)/n(o), gave: %s", buf);
+}
+
 static void
 fdoffparser(char *buf)
 {
@@ -841,6 +872,7 @@ static struct {
 	{ blanketparser, "blanket", true },
 	{ vfsparser, "vfs", true },
 	{ sysctlparser, "sysctl", false },
+	{ modctlparser, "modctl", false },
 	{ fdoffparser, "fdoff", true },
 	{ NULL, NULL, false },
 };
@@ -1355,6 +1387,7 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	return fd;
 }
 
+#ifndef __linux__
 int
 paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
     const sigset_t * restrict sigmask, int flags)
@@ -1383,6 +1416,7 @@ paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
 
 	return fd;
 }
+#endif
 
 /*
  * ioctl() and fcntl() are varargs calls and need special treatment.
@@ -2333,6 +2367,20 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
 	}
 
 	return op___sysctl(name, namelen, old, oldlenp, new, newlen);
+}
+int modctl(int, void *);
+int
+modctl(int operation, void *argp)
+{
+	int (*op_modctl)(int operation, void *argp);
+
+	if (rumpmodctl) {
+		op_modctl = GETSYSCALL(rump, MODCTL);
+	} else {
+		op_modctl = GETSYSCALL(host, MODCTL);
+	}
+
+	return op_modctl(operation, argp);
 }
 #endif
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: fileHandlingTest.c,v 1.1.1.4 2016/05/01 15:57:23 christos Exp $	*/
-
 
 #include "config.h"
 #include "stdlib.h"

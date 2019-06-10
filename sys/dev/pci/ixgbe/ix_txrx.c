@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.48 2018/06/26 06:48:01 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.48.2.1 2019/06/10 22:07:28 christos Exp $ */
 
 /******************************************************************************
 
@@ -136,7 +136,7 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 
 	IXGBE_TX_LOCK_ASSERT(txr);
 
-	if (!adapter->link_active) {
+	if (adapter->link_active != LINK_STATE_UP) {
 		/*
 		 * discard all packets buffered in IFQ to avoid
 		 * sending old packets at next link up timing.
@@ -202,7 +202,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct tx_ring	*txr;
-	int 		i, err = 0;
+	int 		i;
 #ifdef RSS
 	uint32_t bucket_id;
 #endif
@@ -230,7 +230,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			i = m->m_pkthdr.flowid % adapter->num_queues;
 	} else
 #endif /* 0 */
-		i = cpu_index(curcpu()) % adapter->num_queues;
+		i = (cpu_index(curcpu()) % ncpu) % adapter->num_queues;
 
 	/* Check for a hung queue and pick alternative */
 	if (((1 << i) & adapter->active_queues) == 0)
@@ -238,11 +238,10 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 
 	txr = &adapter->tx_rings[i];
 
-	err = pcq_put(txr->txr_interq, m);
-	if (err == false) {
+	if (__predict_false(!pcq_put(txr->txr_interq, m))) {
 		m_freem(m);
 		txr->pcq_drops.ev_count++;
-		return (err);
+		return ENOBUFS;
 	}
 	if (IXGBE_TX_TRYLOCK(txr)) {
 		ixgbe_mq_start_locked(ifp, txr);
@@ -283,7 +282,7 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 	struct mbuf    *next;
 	int            enqueued = 0, err = 0;
 
-	if (!txr->adapter->link_active) {
+	if (txr->adapter->link_active != LINK_STATE_UP) {
 		/*
 		 * discard all packets buffered in txr_interq to avoid
 		 * sending old packets at next link up timing.
@@ -1343,7 +1342,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 	while (j != limit) {
 		rxbuf = &rxr->rx_buffers[i];
 		if (rxbuf->buf == NULL) {
-			mp = ixgbe_getjcl(&adapter->jcl_head, M_NOWAIT,
+			mp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
 			    MT_DATA, M_PKTHDR, rxr->mbuf_sz);
 			if (mp == NULL) {
 				rxr->no_jmbuf.ev_count++;
@@ -1505,6 +1504,17 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Free current RX buffer structs and their mbufs */
 	ixgbe_free_receive_ring(rxr);
 
+	IXGBE_RX_UNLOCK(rxr);
+	/*
+	 * Now reinitialize our supply of jumbo mbufs.  The number
+	 * or size of jumbo mbufs may have changed.
+	 * Assume all of rxr->ptag are the same.
+	 */
+	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat, rxr,
+	    (2 * adapter->num_rx_desc), adapter->rx_mbuf_sz);
+
+	IXGBE_RX_LOCK(rxr);
+
 	/* Now replenish the mbufs */
 	for (int j = 0; j != rxr->num_desc; ++j) {
 		struct mbuf *mp;
@@ -1534,7 +1544,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 #endif /* DEV_NETMAP */
 
 		rxbuf->flags = 0;
-		rxbuf->buf = ixgbe_getjcl(&adapter->jcl_head, M_NOWAIT,
+		rxbuf->buf = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
 		    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
 		if (rxbuf->buf == NULL) {
 			error = ENOBUFS;
@@ -1610,15 +1620,6 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 {
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
-
-	/*
-	 * Now reinitialize our supply of jumbo mbufs.  The number
-	 * or size of jumbo mbufs may have changed.
-	 * Assume all of rxr->ptag are the same.
-	 */
-	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat,
-	    (2 * adapter->num_rx_desc) * adapter->num_queues,
-	    adapter->rx_mbuf_sz);
 
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))

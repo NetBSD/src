@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.1 2017/06/29 17:04:17 jmcneill Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.1.12.1 2019/06/10 22:07:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.1 2017/06/29 17:04:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.1.12.1 2019/06/10 22:07:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_phy_controller {
 	int pc_phandle;
 	const struct fdtbus_phy_controller_func *pc_funcs;
 
-	struct fdtbus_phy_controller *pc_next;
+	LIST_ENTRY(fdtbus_phy_controller) pc_next;
 };
 
-static struct fdtbus_phy_controller *fdtbus_pc = NULL;
+static LIST_HEAD(, fdtbus_phy_controller) fdtbus_phy_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_phy_controllers);
 
 int
 fdtbus_register_phy_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_phy_controller(device_t dev, int phandle,
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
-	pc->pc_next = fdtbus_pc;
-	fdtbus_pc = pc;
+	LIST_INSERT_HEAD(&fdtbus_phy_controllers, pc, pc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_phy_controller(int phandle)
 {
 	struct fdtbus_phy_controller *pc;
 
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next) {
-		if (pc->pc_phandle == phandle) {
+	LIST_FOREACH(pc, &fdtbus_phy_controllers, pc_next) {
+		if (pc->pc_phandle == phandle)
 			return pc;
-		}
 	}
 
 	return NULL;
@@ -131,36 +131,14 @@ done:
 struct fdtbus_phy *
 fdtbus_phy_get(int phandle, const char *phyname)
 {
-	struct fdtbus_phy *phy = NULL;
-	char *phy_names = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	len = OF_getproplen(phandle, "phy-names");
-	if (len <= 0)
+	err = fdtbus_get_index(phandle, "phy-names", phyname, &index);
+	if (err != 0)
 		return NULL;
 
-	phy_names = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "phy-names", phy_names, len) != len) {
-		kmem_free(phy_names, len);
-		return NULL;
-	}
-
-	p = phy_names;
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, phyname) == 0) {
-			phy = fdtbus_phy_get_index(phandle, index);
-			break;
-		}
-		resid -= strlen(p);
-		p += strlen(p) + 1;
-	}
-
-	if (phy_names)
-		kmem_free(phy_names, len);
-
-	return phy;
+	return fdtbus_phy_get_index(phandle, index);
 }
 
 void
@@ -170,6 +148,12 @@ fdtbus_phy_put(struct fdtbus_phy *phy)
 
 	pc->pc_funcs->release(pc->pc_dev, phy->phy_priv);
 	kmem_free(phy, sizeof(*phy));
+}
+
+device_t
+fdtbus_phy_device(struct fdtbus_phy *phy)
+{
+	return phy->phy_pc->pc_dev;
 }
 
 int

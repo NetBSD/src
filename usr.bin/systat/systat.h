@@ -61,4 +61,3 @@ struct	command {
 #define NVAL(indx)  namelist[(indx)].n_value
 #define NPTR(indx)  (void *)NVAL((indx))
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len), # indx)
-#define LONG	(sizeof (long))

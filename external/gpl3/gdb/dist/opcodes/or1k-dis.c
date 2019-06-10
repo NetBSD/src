@@ -1,10 +1,11 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 /* Disassembler interface for targets using CGEN. -*- C -*-
    CGEN: Cpu tools GENerator
 
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -28,7 +29,7 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "ansidecl.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "bfd.h"
 #include "symcat.h"
 #include "libiberty.h"
@@ -89,6 +90,9 @@ or1k_cgen_print_operand (CGEN_CPU_DESC cd,
 
   switch (opindex)
     {
+    case OR1K_OPERAND_DISP21 :
+      print_address (cd, info, fields->f_disp21, 0|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
+      break;
     case OR1K_OPERAND_DISP26 :
       print_address (cd, info, fields->f_disp26, 0|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
       break;
@@ -137,9 +141,10 @@ or1k_cgen_print_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while printing insn.\n"),
-	       opindex);
-    abort ();
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while printing insn"),
+	 opindex);
+      abort ();
   }
 }
 

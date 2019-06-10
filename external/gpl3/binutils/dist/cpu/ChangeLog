@@ -1,3 +1,22 @@
+2018-07-18  Nick Clifton  <nickc@redhat.com>
+
+	2.31.1 Release point.
+
+2018-07-14  Nick Clifton  <nickc@redhat.com>
+
+	2.31 Release point.
+
+2018-05-09  Sebastian Rasmussen  <sebras@gmail.com>
+
+	* or1kcommon.cpu (spr-reg-info): Typo fix.
+
+2018-03-03  Alan Modra  <amodra@gmail.com>
+
+	* frv.opc: Include opintl.h.
+	(add_next_to_vliw): Use opcodes_error_handler to print error.
+	Standardize error message.
+	(fr500_check_insn_major_constraints, frv_vliw_add_insn): Likewise.
+
 2018-01-13  Nick Clifton  <nickc@redhat.com>
 
 	2.30 branch created.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.230 2018/01/09 03:31:13 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.230.4.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -115,7 +115,6 @@
 					   as next argument */
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
-#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
 /* vfsquery flags for kqueue(2) */
 #define VQ_MOUNT	0x0001	/* new filesystem arrived */
@@ -151,7 +150,7 @@ struct mount {
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 	kmutex_t	mnt_updating;		/* to serialize updates */
-	struct wapbl_ops
+	const struct wapbl_ops
 			*mnt_wapbl_op;		/* logging ops */
 	struct wapbl	*mnt_wapbl;		/* log info */
 	struct wapbl_replay
@@ -162,45 +161,6 @@ struct mount {
 #endif /* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
 
 #ifdef _KERNEL
-
-/*
- * USE THE SAME NAMES AS MOUNT_*!
- *
- * Only need to add new entry here if the filesystem actually supports
- * sysctl(2).
- */
-#define	CTL_VFS_NAMES { \
-	{ "generic", CTLTYPE_NODE }, \
-	{ MOUNT_FFS, CTLTYPE_NODE }, \
-	{ MOUNT_NFS, CTLTYPE_NODE }, \
-	{ MOUNT_MFS, CTLTYPE_NODE }, \
-	{ MOUNT_MSDOS, CTLTYPE_NODE }, \
-	{ MOUNT_LFS, CTLTYPE_NODE }, \
-	{ 0, 0 }, 			/* MOUNT_LOFS */ \
-	{ MOUNT_FDESC, CTLTYPE_NODE }, \
-	{ MOUNT_NULL, CTLTYPE_NODE }, \
-	{ MOUNT_UMAP, CTLTYPE_NODE }, \
-	{ MOUNT_KERNFS, CTLTYPE_NODE }, \
-	{ MOUNT_PROCFS, CTLTYPE_NODE }, \
-	{ MOUNT_AFS, CTLTYPE_NODE }, \
-	{ MOUNT_CD9660, CTLTYPE_NODE }, \
-	{ MOUNT_UNION, CTLTYPE_NODE }, \
-	{ MOUNT_ADOSFS, CTLTYPE_NODE }, \
-	{ MOUNT_EXT2FS, CTLTYPE_NODE }, \
-	{ MOUNT_CODA, CTLTYPE_NODE }, \
-	{ MOUNT_FILECORE, CTLTYPE_NODE }, \
-	{ MOUNT_NTFS, CTLTYPE_NODE }, \
-}
-
-#define	VFS_MAXID	20		/* number of valid vfs ids */
-
-#define	CTL_VFSGENCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maxtypenum", CTLTYPE_INT }, \
-	{ "conf", CTLTYPE_NODE }, 	/* Special */ \
-	{ "usermount", CTLTYPE_INT }, \
-	{ "magiclinks", CTLTYPE_INT }, \
-}
 
 struct quotactl_args;		/* in sys/quotactl.h */
 struct quotastat;		/* in sys/quotactl.h */
@@ -229,7 +189,7 @@ struct vfsops {
 	int	(*vfs_loadvnode) (struct mount *, struct vnode *,
 				    const void *, size_t, const void **);
 	int	(*vfs_newvnode) (struct mount *, struct vnode *, struct vnode *,
-				    struct vattr *, kauth_cred_t,
+				    struct vattr *, kauth_cred_t, void *,
 				    size_t *, const void **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
@@ -255,8 +215,9 @@ struct vfsops {
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_LOADVNODE(MP, VP, KEY, KEY_LEN, NEW_KEY) \
 	(*(MP)->mnt_op->vfs_loadvnode)(MP, VP, KEY, KEY_LEN, NEW_KEY)
-#define VFS_NEWVNODE(MP, DVP, VP, VAP, CRED, NEW_LEN, NEW_KEY) \
-	(*(MP)->mnt_op->vfs_newvnode)(MP, DVP, VP, VAP, CRED, NEW_LEN, NEW_KEY)
+#define VFS_NEWVNODE(MP, DVP, VP, VAP, CRED, EXTRA, NEW_LEN, NEW_KEY) \
+	(*(MP)->mnt_op->vfs_newvnode)(MP, DVP, VP, VAP, CRED, EXTRA, \
+	    NEW_LEN, NEW_KEY)
 
 #define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
 #define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
@@ -293,7 +254,7 @@ int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
 int	fsname##_loadvnode(struct mount *, struct vnode *,		\
 		const void *, size_t, const void **);			\
 int	fsname##_newvnode(struct mount *, struct vnode *,		\
-		struct vnode *, struct vattr *, kauth_cred_t,		\
+		struct vnode *, struct vattr *, kauth_cred_t, void *,	\
 		size_t *, const void **);				\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
 int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
@@ -323,6 +284,7 @@ struct wapbl_ops {
 	int (*wo_wapbl_begin)(struct wapbl *, const char *, int);
 	void (*wo_wapbl_end)(struct wapbl *);
 	void (*wo_wapbl_junlock_assert)(struct wapbl *);
+	void (*wo_wapbl_jlock_assert)(struct wapbl *);
 	void (*wo_wapbl_biodone)(struct buf *);
 };
 #define WAPBL_DISCARD(MP)						\
@@ -349,6 +311,8 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_end)((MP)->mnt_wapbl)
 #define WAPBL_JUNLOCK_ASSERT(MP)					\
     (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
+#define WAPBL_JLOCK_ASSERT(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_jlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;

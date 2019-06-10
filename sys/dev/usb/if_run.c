@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.27 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_run.c,v 1.27.2.1 2019/06/10 22:07:33 christos Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.27 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.27.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -638,7 +638,7 @@ run_attach(device_t parent, device_t self, void *aux)
 	/* retrieve RF rev. no and various other things from EEPROM */
 	run_read_eeprom(sc);
 
-	aprint_error_dev(sc->sc_dev,
+	aprint_verbose_dev(sc->sc_dev,
 	    "MAC/BBP RT%04X (rev 0x%04X), RF %s (MIMO %dT%dR), address %s\n",
 	    sc->mac_ver, sc->mac_rev, run_get_rf(sc->rf_rev), sc->ntxchains,
 	    sc->nrxchains, ether_sprintf(ic->ic_myaddr));
@@ -759,8 +759,11 @@ run_detach(device_t self, int flags)
 	sc->sc_flags |= RUN_DETACHING;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		usb_rem_task(sc->sc_udev, &sc->sc_task);
 		run_stop(ifp, 0);
+		callout_halt(&sc->scan_to, NULL);
+		callout_halt(&sc->calib_to, NULL);
+		usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER,
+		    NULL);
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -912,12 +915,12 @@ run_load_microcode(struct run_softc *sc)
 		fwname = "run-rt2870";
 
 	if ((error = firmware_load("run", fwname, &ucode, &size)) != 0) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "error %d, could not read firmware %s\n", error, fwname);
 		return error;
 	}
 	if (size != 4096) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "invalid firmware size (should be 4KB)\n");
 		firmware_free(ucode, size);
 		return EINVAL;
@@ -952,7 +955,7 @@ run_load_microcode(struct run_softc *sc)
 		usbd_delay_ms(sc->sc_udev, 10);
 	}
 	if (ntries == 1000) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "timeout waiting for MCU to initialize\n");
 		return ETIMEDOUT;
 	}
@@ -1111,7 +1114,7 @@ run_efuse_read(struct run_softc *sc, uint16_t addr, uint16_t *val, int count)
 static int
 run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 {
-	return (run_efuse_read(sc, addr, val, 2));
+	return run_efuse_read(sc, addr, val, 2);
 }
 
 static int
@@ -2643,7 +2646,7 @@ run_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			aprint_error_dev(sc->sc_dev, "device timeout\n");
+			device_printf(sc->sc_dev, "device timeout\n");
 			/* run_init(ifp); XXX needs a process context! */
 			ifp->if_oerrors++;
 			return;
@@ -4101,7 +4104,7 @@ run_rt3593_rf_init(struct run_softc *sc)
 
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
-	return (0);
+	return 0;
 }
 
 static int
@@ -4166,7 +4169,7 @@ run_rt5390_rf_init(struct run_softc *sc)
 
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
-	return (0);
+	return 0;
 }
 
 static int
@@ -4487,7 +4490,7 @@ run_adjust_freq_offset(struct run_softc *sc)
 	if (tmp != rf)
 		run_mcu_cmd(sc, 0x74, (tmp << 8 ) | rf);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -4513,7 +4516,7 @@ run_init(struct ifnet *ifp)
 
 	if ((sc->sc_flags & RUN_FWLOADED) == 0 &&
 	    (error = run_load_microcode(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "could not load 8051 microcode\n");
 		goto fail;
 	}
@@ -4544,7 +4547,7 @@ run_init(struct ifnet *ifp)
 		usbd_delay_ms(sc->sc_udev, 10);
 	}
 	if (ntries == 100) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "timeout waiting for DMA engine\n");
 		error = ETIMEDOUT;
 		goto fail;
@@ -4562,7 +4565,7 @@ run_init(struct ifnet *ifp)
 	run_write(sc, RT2860_USB_DMA_CFG, 0);
 
 	if ((error = run_reset(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not reset chipset\n");
+		device_printf(sc->sc_dev, "could not reset chipset\n");
 		goto fail;
 	}
 
@@ -4622,7 +4625,7 @@ run_init(struct ifnet *ifp)
 	usbd_delay_ms(sc->sc_udev, 10);
 
 	if ((error = run_bbp_init(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not initialize BBP\n");
+		device_printf(sc->sc_dev, "could not initialize BBP\n");
 		goto fail;
 	}
 
@@ -4839,7 +4842,7 @@ run_setup_beacon(struct run_softc *sc)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, if_run, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_run, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

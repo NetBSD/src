@@ -1,0 +1,9 @@
+/*	$NetBSD: ioctl.h,v 1.2.6.2 2019/06/10 22:08:14 christos Exp $	*/
+
+#ifndef __NVKM_IOCTL_H__
+#define __NVKM_IOCTL_H__
+#include <core/os.h>
+struct nvkm_client;
+
+int nvkm_ioctl(struct nvkm_client *, bool, void *, u32, void **);
+#endif

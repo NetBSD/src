@@ -15,7 +15,7 @@ FILES="defaultdomain fstab ifconfig.* inetd.conf mrouted.conf \
 	rc.conf rc.conf.d resolv.conf"
 
 if [ $dir = init ] ; then
-	if [ -d /etc/etc.network -o -e /etc/etc.current ] ; then
+	if [ -d /etc/etc.network ] || [ -e /etc/etc.current ] ; then
 		echo "Error: multi-configuration already initialized"
 		exit 1
 	fi
@@ -25,7 +25,7 @@ if [ $dir = init ] ; then
 	ln -s $dir etc.current
 	ln -s $dir etc.default
 	for i in ${FILES}; do
-		if [ -f $i -o -d $i ] ; then
+		if [ -f $i ] || [ -d $i ] ; then
 			mv $i $dir
 			ln -s etc.current/$i .
 		fi
@@ -41,7 +41,7 @@ if [ $dir = revert ] ; then
 	fi
 	cd /etc
 	for i in ${FILES}; do
-		if [ -f $i -o -d $i ] ; then
+		if [ -f $i ] || [ -d $i ] ; then
 			stat="`ls -ld $i`"
 			case x"$stat" in
 				xl*) :;;

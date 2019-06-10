@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ratectl_none.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_ratectl_none.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,11 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ratectl_none.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +59,9 @@ __FBSDID("$FreeBSD$");
 
 #ifdef INET
 #include <netinet/in.h>
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#endif
 #endif
 
 #include <net80211/ieee80211_var.h>

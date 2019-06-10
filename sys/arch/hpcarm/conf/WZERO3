@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.44 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: WZERO3,v 1.44.4.1 2019/06/10 22:06:16 christos Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.44.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -122,6 +122,11 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 
 options 	FONT_VT220L8x16
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Development and Debugging options
 
 #options 	VERBOSE_INIT_ARM
@@ -215,7 +220,6 @@ uhid* at uhidev? reportid ?
 
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?
@@ -229,10 +233,13 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?	 	# Davicom DM9601 based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 acphy*	at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
+rgephy*	at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
 rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*  at mii? phy ?		# generic unknown PHYs
 urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
@@ -271,11 +278,12 @@ ugen*	at uhub? port ?
 # Pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -303,3 +311,5 @@ pseudo-device	putter			# for puffs and pud
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+include "dev/veriexec.config"

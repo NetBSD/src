@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,10 @@ AeHardwareInterfaces (
 
 static void
 AeTestSleepData (
+    void);
+
+static void
+AeGlobalAddressRangeCheck(
     void);
 
 
@@ -483,6 +487,62 @@ AeTestSleepData (
         if (Status != AE_NOT_FOUND)
         {
             ACPI_CHECK_OK (AcpiGetSleepTypeData, Status);
+        }
+    }
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeLateTest
+ *
+ * DESCRIPTION: Exercise tests that should be performed before shutdown.
+ *
+ *****************************************************************************/
+
+void
+AeLateTest (
+    void)
+{
+    AeGlobalAddressRangeCheck();
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeGlobalAddressRangeCheck
+ *
+ * DESCRIPTION: There have been some issues in the past with adding and
+ *              removing items to the global address list from
+ *              OperationRegions declared in control methods. This test loops
+ *              over the list to ensure that dangling pointers do not exist in
+ *              the global address list.
+ *
+ *****************************************************************************/
+
+static void
+AeGlobalAddressRangeCheck(
+    void)
+{
+    ACPI_STATUS             Status;
+    ACPI_ADDRESS_RANGE      *Current;
+    ACPI_BUFFER             ReturnBuffer;
+    UINT32                  i;
+
+
+    ReturnBuffer.Length = ACPI_ALLOCATE_BUFFER;
+    AcpiUtInitializeBuffer (&ReturnBuffer, ACPI_ALLOCATE_BUFFER);
+
+    for (i = 0; i < ACPI_ADDRESS_RANGE_MAX; i++)
+    {
+        Current = AcpiGbl_AddressRangeList[i];
+
+        while (Current)
+        {
+            Status = AcpiGetName (Current->RegionNode, ACPI_SINGLE_NAME, &ReturnBuffer);
+            ACPI_CHECK_OK (AcpiGetname, Status);
+
+            Current = Current->Next;
         }
     }
 }

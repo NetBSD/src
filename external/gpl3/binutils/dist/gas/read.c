@@ -417,6 +417,7 @@ static const pseudo_typeS potable[] = {
   {"noformat", s_ignore, 0},
   {"nolist", listing_list, 0},	/* Turn listing off.  */
   {"nopage", listing_nopage, 0},
+  {"nops", s_nops, 0},
   {"octa", cons, 16},
   {"offset", s_struct, 0},
   {"org", s_org, 0},
@@ -2971,81 +2972,10 @@ s_mri_sect (char *type ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 
 #else /* ! TC_M68K */
-#ifdef TC_I960
-
-  char *name;
-  char c;
-  segT seg;
-
-  SKIP_WHITESPACE ();
-
-  c = get_symbol_name (& name);
-
-  name = xstrdup (name);
-
-  c = restore_line_pointer (c);
-
-  seg = subseg_new (name, 0);
-
-  if (c != ',')
-    *type = 'C';
-  else
-    {
-      char *sectype;
-
-      ++input_line_pointer;
-      SKIP_WHITESPACE ();
-      c = get_symbol_name (& sectype);
-      if (*sectype == '\0')
-	*type = 'C';
-      else if (strcasecmp (sectype, "text") == 0)
-	*type = 'C';
-      else if (strcasecmp (sectype, "data") == 0)
-	*type = 'D';
-      else if (strcasecmp (sectype, "romdata") == 0)
-	*type = 'R';
-      else
-	as_warn (_("unrecognized section type `%s'"), sectype);
-      (void) restore_line_pointer (c);
-    }
-
-  if (*input_line_pointer == ',')
-    {
-      char *seccmd;
-
-      ++input_line_pointer;
-      SKIP_WHITESPACE ();
-      c = get_symbol_name (& seccmd);
-      if (strcasecmp (seccmd, "absolute") == 0)
-	{
-	  as_bad (_("absolute sections are not supported"));
-	  *input_line_pointer = c;
-	  ignore_rest_of_line ();
-	  return;
-	}
-      else if (strcasecmp (seccmd, "align") == 0)
-	{
-	  unsigned int align;
-
-	  (void) restore_line_pointer (c);
-	  align = get_absolute_expression ();
-	  record_alignment (seg, align);
-	}
-      else
-	{
-	  as_warn (_("unrecognized section command `%s'"), seccmd);
-	  (void) restore_line_pointer (c);
-	}
-    }
-
-  demand_empty_rest_of_line ();
-
-#else /* ! TC_I960 */
   /* The MRI assembler seems to use different forms of .sect for
      different targets.  */
   as_bad ("MRI mode not supported for this target");
   ignore_rest_of_line ();
-#endif /* ! TC_I960 */
 #endif /* ! TC_M68K */
 }
 
@@ -3508,6 +3438,58 @@ s_space (int mult)
     mri_comment_end (stop, stopc);
 }
 
+void
+s_nops (int ignore ATTRIBUTE_UNUSED)
+{
+  expressionS exp;
+  expressionS val;
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
+
+#ifdef md_cons_align
+  md_cons_align (1);
+#endif
+
+  expression (&exp);
+
+  if (*input_line_pointer == ',')
+    {
+      ++input_line_pointer;
+      expression (&val);
+    }
+  else
+    {
+      val.X_op = O_constant;
+      val.X_add_number = 0;
+    }
+
+  if (val.X_op == O_constant)
+    {
+      if (val.X_add_number < 0)
+	{
+	  as_warn (_("negative nop control byte, ignored"));
+	  val.X_add_number = 0;
+	}
+
+      if (!need_pass_2)
+	{
+	  /* Store the no-op instruction control byte in the first byte
+	     of frag.  */
+	  char *p;
+	  symbolS *sym = make_expr_symbol (&exp);
+	  p = frag_var (rs_space_nop, 1, 1, (relax_substateT) 0,
+			sym, (offsetT) 0, (char *) 0);
+	  *p = val.X_add_number;
+	}
+    }
+  else
+    as_bad (_("unsupported variable nop control in .nops directive"));
+
+  demand_empty_rest_of_line ();
+}
+
 /* This is like s_space, but the value is a floating point number with
    the given precision.  This is for the MRI dcb.s pseudo-op and
    friends.  */
@@ -3925,7 +3907,6 @@ pseudo_set (symbolS *symbolP)
 /* Some targets need to parse the expression in various fancy ways.
    You can define TC_PARSE_CONS_EXPRESSION to do whatever you like
    (for example, the HPPA does this).  Otherwise, you can define
-   BITFIELD_CONS_EXPRESSIONS to permit bitfields to be specified, or
    REPEAT_CONS_EXPRESSIONS to permit repeat counts.  If none of these
    are defined, which is the normal case, then only simple expressions
    are permitted.  */
@@ -3936,12 +3917,6 @@ parse_mri_cons (expressionS *exp, unsigned int nbytes);
 #endif
 
 #ifndef TC_PARSE_CONS_EXPRESSION
-#ifdef BITFIELD_CONS_EXPRESSIONS
-#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
-  (parse_bitfield_cons (EXP, NBYTES), TC_PARSE_CONS_RETURN_NONE)
-static void
-parse_bitfield_cons (expressionS *exp, unsigned int nbytes);
-#endif
 #ifdef REPEAT_CONS_EXPRESSIONS
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
   (parse_repeat_cons (EXP, NBYTES), TC_PARSE_CONS_RETURN_NONE)
@@ -4604,136 +4579,6 @@ emit_expr_fix (expressionS *exp, unsigned int nbytes, fragS *frag, char *p,
 	       exp, 0, r);
 #endif
 }
-
-#ifdef BITFIELD_CONS_EXPRESSIONS
-
-/* i960 assemblers, (eg, asm960), allow bitfields after ".byte" as
-   w:x,y:z, where w and y are bitwidths and x and y are values.  They
-   then pack them all together. We do a little better in that we allow
-   them in words, longs, etc. and we'll pack them in target byte order
-   for you.
-
-   The rules are: pack least significant bit first, if a field doesn't
-   entirely fit, put it in the next unit.  Overflowing the bitfield is
-   explicitly *not* even a warning.  The bitwidth should be considered
-   a "mask".
-
-   To use this function the tc-XXX.h file should define
-   BITFIELD_CONS_EXPRESSIONS.  */
-
-static void
-parse_bitfield_cons (expressionS *exp, unsigned int nbytes)
-{
-  unsigned int bits_available = BITS_PER_CHAR * nbytes;
-  char *hold = input_line_pointer;
-
-  (void) expression (exp);
-
-  if (*input_line_pointer == ':')
-    {
-      /* Bitfields.  */
-      long value = 0;
-
-      for (;;)
-	{
-	  unsigned long width;
-
-	  if (*input_line_pointer != ':')
-	    {
-	      input_line_pointer = hold;
-	      break;
-	    }			/* Next piece is not a bitfield.  */
-
-	  /* In the general case, we can't allow
-	     full expressions with symbol
-	     differences and such.  The relocation
-	     entries for symbols not defined in this
-	     assembly would require arbitrary field
-	     widths, positions, and masks which most
-	     of our current object formats don't
-	     support.
-
-	     In the specific case where a symbol
-	     *is* defined in this assembly, we
-	     *could* build fixups and track it, but
-	     this could lead to confusion for the
-	     backends.  I'm lazy. I'll take any
-	     SEG_ABSOLUTE. I think that means that
-	     you can use a previous .set or
-	     .equ type symbol.  xoxorich.  */
-
-	  if (exp->X_op == O_absent)
-	    {
-	      as_warn (_("using a bit field width of zero"));
-	      exp->X_add_number = 0;
-	      exp->X_op = O_constant;
-	    }			/* Implied zero width bitfield.  */
-
-	  if (exp->X_op != O_constant)
-	    {
-	      *input_line_pointer = '\0';
-	      as_bad (_("field width \"%s\" too complex for a bitfield"), hold);
-	      *input_line_pointer = ':';
-	      demand_empty_rest_of_line ();
-	      return;
-	    }			/* Too complex.  */
-
-	  if ((width = exp->X_add_number) > (BITS_PER_CHAR * nbytes))
-	    {
-	      as_warn (ngettext ("field width %lu too big to fit in %d byte:"
-				 " truncated to %d bits",
-				 "field width %lu too big to fit in %d bytes:"
-				 " truncated to %d bits",
-				 nbytes),
-		       width, nbytes, (BITS_PER_CHAR * nbytes));
-	      width = BITS_PER_CHAR * nbytes;
-	    }			/* Too big.  */
-
-	  if (width > bits_available)
-	    {
-	      /* FIXME-SOMEDAY: backing up and reparsing is wasteful.  */
-	      input_line_pointer = hold;
-	      exp->X_add_number = value;
-	      break;
-	    }			/* Won't fit.  */
-
-	  /* Skip ':'.  */
-	  hold = ++input_line_pointer;
-
-	  (void) expression (exp);
-	  if (exp->X_op != O_constant)
-	    {
-	      char cache = *input_line_pointer;
-
-	      *input_line_pointer = '\0';
-	      as_bad (_("field value \"%s\" too complex for a bitfield"), hold);
-	      *input_line_pointer = cache;
-	      demand_empty_rest_of_line ();
-	      return;
-	    }			/* Too complex.  */
-
-	  value |= ((~(-(1 << width)) & exp->X_add_number)
-		    << ((BITS_PER_CHAR * nbytes) - bits_available));
-
-	  if ((bits_available -= width) == 0
-	      || is_it_end_of_statement ()
-	      || *input_line_pointer != ',')
-	    {
-	      break;
-	    }			/* All the bitfields we're gonna get.  */
-
-	  hold = ++input_line_pointer;
-	  (void) expression (exp);
-	}
-
-      exp->X_add_number = value;
-      exp->X_op = O_constant;
-      exp->X_unsigned = 1;
-      exp->X_extrabit = 0;
-    }
-}
-
-#endif /* BITFIELD_CONS_EXPRESSIONS */
 
 /* Handle an MRI style string expression.  */
 

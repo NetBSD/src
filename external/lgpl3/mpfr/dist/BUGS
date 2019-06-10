@@ -1,4 +1,4 @@
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -48,9 +48,8 @@ Potential bugs:
   the MPFR_CAN_ROUND), the result should be correct (or MPFR gets into an
   infinite loop). TODO: check the code and the error analysis.
 
-* Possible integer overflows on some machines.
-
-* Possible bugs with huge precisions (> 2^30).
+* Possible bugs with huge precisions (> 2^30) and a 32-bit ABI, in particular
+  undetected integer overflows. TODO: use the MPFR_ADD_PREC macro.
 
 * Possible bugs if the chosen exponent range does not allow to represent
   the range [1/16, 16].

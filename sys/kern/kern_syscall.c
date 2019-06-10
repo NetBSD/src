@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.16 2017/03/24 17:40:44 christos Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.16.14.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.16 2017/03/24 17:40:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.16.14.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -123,7 +123,10 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	 * on error.
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
-		if (sy[sp[i].sp_code].sy_call != sys_nomodule) {
+		if (sp[i].sp_code >= SYS_NSYSENT)
+			return EINVAL;
+		if (sy[sp[i].sp_code].sy_call != sys_nomodule &&
+		    sy[sp[i].sp_code].sy_call != sys_nosys) {
 #ifdef DIAGNOSTIC
 			printf("syscall %d is busy\n", sp[i].sp_code);
 #endif
@@ -142,6 +145,7 @@ int
 syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 {
 	struct sysent *sy;
+	const uint32_t *sb;
 	uint64_t where;
 	lwp_t *l;
 	int i;
@@ -152,14 +156,17 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 		em = &emul_netbsd;
 	}
 	sy = em->e_sysent;
+	sb = em->e_nomodbits;
 
 	/*
-	 * First, patch the system calls to sys_nomodule to gate further
-	 * activity.
+	 * First, patch the system calls to sys_nomodule or sys_nosys
+	 * to gate further activity.
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
 		KASSERT(sy[sp[i].sp_code].sy_call == sp[i].sp_call);
-		sy[sp[i].sp_code].sy_call = sys_nomodule;
+		sy[sp[i].sp_code].sy_call =
+		    sb[sp[i].sp_code / 32] & (1 << (sp[i].sp_code % 32)) ?
+		      sys_nomodule : sys_nosys;
 	}
 
 	/*
@@ -248,7 +255,7 @@ trace_enter(register_t code, const struct sysent *sy, const void *args)
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED)) {
-		proc_stoptrace(TRAP_SCE);
+		proc_stoptrace(TRAP_SCE, code, args, NULL, 0);
 		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
 			/* tracer will emulate syscall for us */
 			error = EJUSTRETURN;
@@ -289,7 +296,7 @@ trace_exit(register_t code, const struct sysent *sy, const void *args,
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED|PSL_SYSCALLEMU)) ==
 	    (PSL_SYSCALL|PSL_TRACED)) {
-		proc_stoptrace(TRAP_SCX);
+		proc_stoptrace(TRAP_SCX, code, args, rval, error);
 	}
 	CLR(p->p_slflag, PSL_SYSCALLEMU);
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/03/09 14:05:58 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20.14.1 2019/06/10 22:06:25 christos Exp $
 
 INCSDIR= /usr/include/luna68k
 
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kcore.h \
 	lcd.h limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h reg.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h reg.h \
 	rwlock.h setjmp.h signal.h \
 	trap.h types.h \
 	vmparam.h \

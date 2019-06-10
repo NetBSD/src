@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.53 2011/05/05 06:04:09 mrg Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.53.56.1 2019/06/10 22:07:31 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.53 2011/05/05 06:04:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.53.56.1 2019/06/10 22:07:31 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -225,10 +225,9 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	}
 	raidPtr->qType = p;
 
-	RF_MallocAndAdd(diskQueues,
-			(raidPtr->numCol + RF_MAXSPARE) *
-			sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *),
-			raidPtr->cleanupList);
+	diskQueues = RF_MallocAndAdd(
+	    (raidPtr->numCol + RF_MAXSPARE) * sizeof(*diskQueues),
+	    raidPtr->cleanupList);
 	if (diskQueues == NULL)
 		return (ENOMEM);
 	raidPtr->Queues = diskQueues;
@@ -368,11 +367,10 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 {
 	RF_DiskQueueData_t *p;
 
-	p = pool_get(&rf_pools.dqd, waitflag);
+	p = pool_get(&rf_pools.dqd, waitflag | PR_ZERO);
 	if (p == NULL)
 		return (NULL);
 
-	memset(p, 0, sizeof(RF_DiskQueueData_t));
 	if (waitflag == PR_WAITOK) {
 		p->bp = getiobuf(NULL, true);
 	} else {

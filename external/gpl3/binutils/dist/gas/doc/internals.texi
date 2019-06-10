@@ -1096,11 +1096,6 @@ You may define this macro to parse an expression used in a data allocation
 pseudo-op such as @code{.word}.  You can use this to recognize relocation
 directives that may appear in such directives.
 
-@item BITFIELD_CONS_EXPRESSION
-@cindex BITFIELD_CONS_EXPRESSION
-If you define this macro, GAS will recognize bitfield instructions in data
-allocation pseudo-ops, as used on the i960.
-
 @item REPEAT_CONS_EXPRESSION
 @cindex REPEAT_CONS_EXPRESSION
 If you define this macro, GAS will recognize repeat counts in data allocation
@@ -1752,12 +1747,6 @@ resolved.  In order for the linker to avoid wasting space and having to insert
 no-op instructions, it must be able to expand or shrink the section contents
 while still preserving intra-section references and meeting alignment
 requirements.
-
-For the i960 using b.out format, no expansion is done; instead, each
-@samp{.align} directive causes extra space to be allocated, enough that when
-the linker is relaxing a section and removing unneeded space, it can discard
-some or all of this extra padding and cause the following data to be correctly
-aligned.
 
 For the H8/300, I think the linker expands calls that can't reach, and doesn't
 worry about alignment issues; the cpu probably never needs any significant

@@ -2,7 +2,7 @@
    - prototype declarations for operand predicates (tm-preds.h)
    - function definitions of operand predicates, if defined new-style
      (insn-preds.c)
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -32,16 +32,16 @@ along with GCC; see the file COPYING3.  If not see
 
 static char general_mem[] = { TARGET_MEM_CONSTRAINT, 0 };
 
-/* Given a predicate expression EXP, from form NAME at line LINENO,
+/* Given a predicate expression EXP, from form NAME at location LOC,
    verify that it does not contain any RTL constructs which are not
    valid in predicate definitions.  Returns true if EXP is
    INvalid; issues error messages, caller need not.  */
 static bool
-validate_exp (rtx exp, const char *name, int lineno)
+validate_exp (rtx exp, const char *name, file_location loc)
 {
   if (exp == 0)
     {
-      message_with_line (lineno, "%s: must give a predicate expression", name);
+      message_at (loc, "%s: must give a predicate expression", name);
       return true;
     }
 
@@ -49,16 +49,16 @@ validate_exp (rtx exp, const char *name, int lineno)
     {
       /* Ternary, binary, unary expressions: recurse into subexpressions.  */
     case IF_THEN_ELSE:
-      if (validate_exp (XEXP (exp, 2), name, lineno))
+      if (validate_exp (XEXP (exp, 2), name, loc))
 	return true;
       /* else fall through */
     case AND:
     case IOR:
-      if (validate_exp (XEXP (exp, 1), name, lineno))
+      if (validate_exp (XEXP (exp, 1), name, loc))
 	return true;
       /* else fall through */
     case NOT:
-      return validate_exp (XEXP (exp, 0), name, lineno);
+      return validate_exp (XEXP (exp, 0), name, loc);
 
       /* MATCH_CODE might have a syntax error in its path expression.  */
     case MATCH_CODE:
@@ -68,8 +68,8 @@ validate_exp (rtx exp, const char *name, int lineno)
 	  {
 	    if (!ISDIGIT (*p) && !ISLOWER (*p))
 	      {
-		error_with_line (lineno, "%s: invalid character in path "
-				 "string '%s'", name, XSTR (exp, 1));
+		error_at (loc, "%s: invalid character in path "
+			  "string '%s'", name, XSTR (exp, 1));
 		return true;
 	      }
 	  }
@@ -82,9 +82,8 @@ validate_exp (rtx exp, const char *name, int lineno)
       return false;
 
     default:
-      error_with_line (lineno,
-		       "%s: cannot use '%s' in a predicate expression",
-		       name, GET_RTX_NAME (GET_CODE (exp)));
+      error_at (loc, "%s: cannot use '%s' in a predicate expression",
+		name, GET_RTX_NAME (GET_CODE (exp)));
       return true;
     }
 }
@@ -92,9 +91,9 @@ validate_exp (rtx exp, const char *name, int lineno)
 /* Predicates are defined with (define_predicate) or
    (define_special_predicate) expressions in the machine description.  */
 static void
-process_define_predicate (rtx defn, int lineno)
+process_define_predicate (md_rtx_info *info)
 {
-  validate_exp (XEXP (defn, 1), XSTR (defn, 0), lineno);
+  validate_exp (XEXP (info->def, 1), XSTR (info->def, 0), info->loc);
 }
 
 /* Given a predicate, if it has an embedded C block, write the block
@@ -218,11 +217,11 @@ needs_variable (rtx exp, const char *var)
 
 /* Given an RTL expression EXP, find all subexpressions which we may
    assume to perform mode tests.  Normal MATCH_OPERAND does;
-   MATCH_CODE does if it applies to the whole expression and accepts
-   CONST_INT or CONST_DOUBLE; and we have to assume that MATCH_TEST
-   does not.  These combine in almost-boolean fashion - the only
-   exception is that (not X) must be assumed not to perform a mode
-   test, whether or not X does.
+   MATCH_CODE doesn't as such (although certain codes always have
+   VOIDmode); and we have to assume that MATCH_TEST does not.
+   These combine in almost-boolean fashion - the only exception is
+   that (not X) must be assumed not to perform a mode test, whether
+   or not X does.
 
    The mark is the RTL /v flag, which is true for subexpressions which
    do *not* perform mode tests.
@@ -244,10 +243,7 @@ mark_mode_tests (rtx exp)
       break;
 
     case MATCH_CODE:
-      if (XSTR (exp, 1)[0] != '\0'
-	  || (!strstr (XSTR (exp, 0), "const_int")
-	      && !strstr (XSTR (exp, 0), "const_double")))
-	NO_MODE_TEST (exp) = 1;
+      NO_MODE_TEST (exp) = 1;
       break;
 
     case MATCH_TEST:
@@ -313,6 +309,42 @@ add_mode_tests (struct pred_data *p)
   if (p->special)
     return;
 
+  /* Check whether the predicate accepts const scalar ints (which always
+     have a stored mode of VOIDmode, but logically have a real mode)
+     and whether it matches anything besides const scalar ints.  */
+  bool matches_const_scalar_int_p = false;
+  bool matches_other_p = false;
+  for (int i = 0; i < NUM_RTX_CODE; ++i)
+    if (p->codes[i])
+      switch (i)
+	{
+	case CONST_INT:
+	case CONST_WIDE_INT:
+	  /* Special handling for (VOIDmode) LABEL_REFs.  */
+	case LABEL_REF:
+	  matches_const_scalar_int_p = true;
+	  break;
+
+	case CONST_DOUBLE:
+	  if (!TARGET_SUPPORTS_WIDE_INT)
+	    matches_const_scalar_int_p = true;
+	  matches_other_p = true;
+	  break;
+
+	default:
+	  matches_other_p = true;
+	  break;
+	}
+
+  /* There's no need for a mode check if the predicate only accepts
+     constant integers.  The code checks in the predicate are enough
+     to establish that the mode is VOIDmode.
+
+     Note that the predicate itself should check whether a scalar
+     integer is in range of the given mode.  */
+  if (!matches_other_p)
+    return;
+
   mark_mode_tests (p->exp);
 
   /* If the whole expression already tests the mode, we're done.  */
@@ -320,7 +352,11 @@ add_mode_tests (struct pred_data *p)
     return;
 
   match_test_exp = rtx_alloc (MATCH_TEST);
-  XSTR (match_test_exp, 0) = "mode == VOIDmode || GET_MODE (op) == mode";
+  if (matches_const_scalar_int_p)
+    XSTR (match_test_exp, 0) = ("mode == VOIDmode || GET_MODE (op) == mode"
+				" || GET_MODE (op) == VOIDmode");
+  else
+    XSTR (match_test_exp, 0) = "mode == VOIDmode || GET_MODE (op) == mode";
   and_exp = rtx_alloc (AND);
   XEXP (and_exp, 1) = match_test_exp;
 
@@ -623,11 +659,11 @@ write_one_predicate_function (struct pred_data *p)
 
 /* Constraints fall into two categories: register constraints
    (define_register_constraint), and others (define_constraint,
-   define_memory_constraint, define_address_constraint).  We
-   work out automatically which of the various old-style macros
-   they correspond to, and produce appropriate code.  They all
-   go in the same hash table so we can verify that there are no
-   duplicate names.  */
+   define_memory_constraint, define_special_memory_constraint,
+   define_address_constraint).  We work out automatically which of the
+   various old-style macros they correspond to, and produce
+   appropriate code.  They all go in the same hash table so we can
+   verify that there are no duplicate names.  */
 
 /* All data from one constraint definition.  */
 struct constraint_data
@@ -636,15 +672,16 @@ struct constraint_data
   struct constraint_data *next_textual;
   const char *name;
   const char *c_name;    /* same as .name unless mangling is necessary */
+  file_location loc;     /* location of definition */
   size_t namelen;
   const char *regclass;  /* for register constraints */
   rtx exp;               /* for other constraints */
-  unsigned int lineno;   /* line of definition */
   unsigned int is_register	: 1;
   unsigned int is_const_int	: 1;
   unsigned int is_const_dbl	: 1;
   unsigned int is_extra		: 1;
   unsigned int is_memory	: 1;
+  unsigned int is_special_memory: 1;
   unsigned int is_address	: 1;
   unsigned int maybe_allows_reg : 1;
   unsigned int maybe_allows_mem : 1;
@@ -682,6 +719,7 @@ static const char const_dbl_constraints[] = "GH";
 static unsigned int constraint_max_namelen;
 static bool have_register_constraints;
 static bool have_memory_constraints;
+static bool have_special_memory_constraints;
 static bool have_address_constraints;
 static bool have_extra_constraints;
 static bool have_const_int_constraints;
@@ -692,6 +730,7 @@ static unsigned int register_start, register_end;
 static unsigned int satisfied_start;
 static unsigned int const_int_start, const_int_end;
 static unsigned int memory_start, memory_end;
+static unsigned int special_memory_start, special_memory_end;
 static unsigned int address_start, address_end;
 static unsigned int maybe_allows_none_start, maybe_allows_none_end;
 static unsigned int maybe_allows_reg_start, maybe_allows_reg_end;
@@ -716,49 +755,24 @@ mangle (const char *name)
   return XOBFINISH (rtl_obstack, const char *);
 }
 
-/* Return a bitmask, bit 1 if EXP maybe allows a REG/SUBREG, 2 if EXP
-   maybe allows a MEM.  Bits should be clear only when we are sure it
-   will not allow a REG/SUBREG or a MEM.  */
-static int
-compute_maybe_allows (rtx exp)
-{
-  switch (GET_CODE (exp))
-    {
-    case IF_THEN_ELSE:
-      /* Conservative answer is like IOR, of the THEN and ELSE branches.  */
-      return compute_maybe_allows (XEXP (exp, 1))
-	     | compute_maybe_allows (XEXP (exp, 2));
-    case AND:
-      return compute_maybe_allows (XEXP (exp, 0))
-	     & compute_maybe_allows (XEXP (exp, 1));
-    case IOR:
-      return compute_maybe_allows (XEXP (exp, 0))
-	     | compute_maybe_allows (XEXP (exp, 1));
-    case MATCH_CODE:
-      if (*XSTR (exp, 1) == '\0')
-	return (strstr (XSTR (exp, 0), "reg") != NULL ? 1 : 0)
-	       | (strstr (XSTR (exp, 0), "mem") != NULL ? 2 : 0);
-      /* FALLTHRU */
-    default:
-      return 3;
-    }
-}
-
 /* Add one constraint, of any sort, to the tables.  NAME is its name;
    REGCLASS is the register class, if any; EXP is the expression to
-   test, if any;  IS_MEMORY and IS_ADDRESS indicate memory and address
-   constraints, respectively; LINENO is the line number from the MD reader.
-   Not all combinations of arguments are valid; most importantly, REGCLASS
-   is mutually exclusive with EXP, and IS_MEMORY/IS_ADDRESS are only
-   meaningful for constraints with EXP.
+   test, if any; IS_MEMORY, IS_SPECIAL_MEMORY and IS_ADDRESS indicate
+   memory, special memory, and address constraints, respectively; LOC
+   is the .md file location.
+
+   Not all combinations of arguments are valid; most importantly,
+   REGCLASS is mutually exclusive with EXP, and
+   IS_MEMORY/IS_SPECIAL_MEMORY/IS_ADDRESS are only meaningful for
+   constraints with EXP.
 
    This function enforces all syntactic and semantic rules about what
    constraints can be defined.  */
 
 static void
 add_constraint (const char *name, const char *regclass,
-		rtx exp, bool is_memory, bool is_address,
-		int lineno)
+		rtx exp, bool is_memory, bool is_special_memory,
+		bool is_address, file_location loc)
 {
   struct constraint_data *c, **iter, **slot;
   const char *p;
@@ -770,7 +784,7 @@ add_constraint (const char *name, const char *regclass,
   if (strcmp (name, "TARGET_MEM_CONSTRAINT") == 0)
     name = general_mem;
 
-  if (exp && validate_exp (exp, name, lineno))
+  if (exp && validate_exp (exp, name, loc))
     return;
 
   for (p = name; *p; p++)
@@ -780,10 +794,8 @@ add_constraint (const char *name, const char *regclass,
 	  need_mangled_name = true;
 	else
 	  {
-	    error_with_line (lineno,
-			     "constraint name '%s' must be composed of "
-			     "letters, digits, underscores, and "
-			     "angle brackets", name);
+	    error_at (loc, "constraint name '%s' must be composed of letters,"
+		      " digits, underscores, and angle brackets", name);
 	    return;
 	  }
       }
@@ -791,12 +803,11 @@ add_constraint (const char *name, const char *regclass,
   if (strchr (generic_constraint_letters, name[0]))
     {
       if (name[1] == '\0')
-	error_with_line (lineno, "constraint letter '%s' cannot be "
-			 "redefined by the machine description", name);
+	error_at (loc, "constraint letter '%s' cannot be "
+		  "redefined by the machine description", name);
       else
-	error_with_line (lineno, "constraint name '%s' cannot be defined by "
-			 "the machine description, as it begins with '%c'",
-			 name, name[0]);
+	error_at (loc, "constraint name '%s' cannot be defined by the machine"
+		  " description, as it begins with '%c'", name, name[0]);
       return;
     }
 
@@ -815,22 +826,22 @@ add_constraint (const char *name, const char *regclass,
 
       if (!strcmp ((*iter)->name, name))
 	{
-	  error_with_line (lineno, "redefinition of constraint '%s'", name);
-	  message_with_line ((*iter)->lineno, "previous definition is here");
+	  error_at (loc, "redefinition of constraint '%s'", name);
+	  message_at ((*iter)->loc, "previous definition is here");
 	  return;
 	}
       else if (!strncmp ((*iter)->name, name, (*iter)->namelen))
 	{
-	  error_with_line (lineno, "defining constraint '%s' here", name);
-	  message_with_line ((*iter)->lineno, "renders constraint '%s' "
-			     "(defined here) a prefix", (*iter)->name);
+	  error_at (loc, "defining constraint '%s' here", name);
+	  message_at ((*iter)->loc, "renders constraint '%s' "
+		      "(defined here) a prefix", (*iter)->name);
 	  return;
 	}
       else if (!strncmp ((*iter)->name, name, namelen))
 	{
-	  error_with_line (lineno, "constraint '%s' is a prefix", name);
-	  message_with_line ((*iter)->lineno, "of constraint '%s' "
-			     "(defined here)", (*iter)->name);
+	  error_at (loc, "constraint '%s' is a prefix", name);
+	  message_at ((*iter)->loc, "of constraint '%s' (defined here)",
+		      (*iter)->name);
 	  return;
 	}
     }
@@ -851,36 +862,47 @@ add_constraint (const char *name, const char *regclass,
 		     GET_RTX_NAME (appropriate_code)))
 	{
 	  if (name[1] == '\0')
-	    error_with_line (lineno, "constraint letter '%c' is reserved "
-			     "for %s constraints",
-			     name[0], GET_RTX_NAME (appropriate_code));
+	    error_at (loc, "constraint letter '%c' is reserved "
+		      "for %s constraints", name[0],
+		      GET_RTX_NAME (appropriate_code));
 	  else
-	    error_with_line (lineno, "constraint names beginning with '%c' "
-			     "(%s) are reserved for %s constraints",
-			     name[0], name, GET_RTX_NAME (appropriate_code));
+	    error_at (loc, "constraint names beginning with '%c' "
+		      "(%s) are reserved for %s constraints",
+		      name[0], name, GET_RTX_NAME (appropriate_code));
 	  return;
 	}
 
       if (is_memory)
 	{
 	  if (name[1] == '\0')
-	    error_with_line (lineno, "constraint letter '%c' cannot be a "
-			     "memory constraint", name[0]);
+	    error_at (loc, "constraint letter '%c' cannot be a "
+		      "memory constraint", name[0]);
 	  else
-	    error_with_line (lineno, "constraint name '%s' begins with '%c', "
-			     "and therefore cannot be a memory constraint",
-			     name, name[0]);
+	    error_at (loc, "constraint name '%s' begins with '%c', "
+		      "and therefore cannot be a memory constraint",
+		      name, name[0]);
+	  return;
+	}
+      else if (is_special_memory)
+	{
+	  if (name[1] == '\0')
+	    error_at (loc, "constraint letter '%c' cannot be a "
+		      "special memory constraint", name[0]);
+	  else
+	    error_at (loc, "constraint name '%s' begins with '%c', "
+		      "and therefore cannot be a special memory constraint",
+		      name, name[0]);
 	  return;
 	}
       else if (is_address)
 	{
 	  if (name[1] == '\0')
-	    error_with_line (lineno, "constraint letter '%c' cannot be a "
-			     "memory constraint", name[0]);
+	    error_at (loc, "constraint letter '%c' cannot be an "
+		      "address constraint", name[0]);
 	  else
-	    error_with_line (lineno, "constraint name '%s' begins with '%c', "
-			     "and therefore cannot be a memory constraint",
-			     name, name[0]);
+	    error_at (loc, "constraint name '%s' begins with '%c', "
+		      "and therefore cannot be an address constraint",
+		      name, name[0]);
 	  return;
 	}
     }
@@ -889,7 +911,7 @@ add_constraint (const char *name, const char *regclass,
   c = XOBNEW (rtl_obstack, struct constraint_data);
   c->name = name;
   c->c_name = need_mangled_name ? mangle (name) : name;
-  c->lineno = lineno;
+  c->loc = loc;
   c->namelen = namelen;
   c->regclass = regclass;
   c->exp = exp;
@@ -898,13 +920,19 @@ add_constraint (const char *name, const char *regclass,
   c->is_const_dbl = is_const_dbl;
   c->is_extra = !(regclass || is_const_int || is_const_dbl);
   c->is_memory = is_memory;
+  c->is_special_memory = is_special_memory;
   c->is_address = is_address;
-  int maybe_allows = 3;
+  c->maybe_allows_reg = true;
+  c->maybe_allows_mem = true;
   if (exp)
-    maybe_allows = compute_maybe_allows (exp);
-  c->maybe_allows_reg = (maybe_allows & 1) != 0;
-  c->maybe_allows_mem = (maybe_allows & 2) != 0;
-
+    {
+      char codes[NUM_RTX_CODE];
+      compute_test_codes (exp, loc, codes);
+      if (!codes[REG] && !codes[SUBREG])
+	c->maybe_allows_reg = false;
+      if (!codes[MEM])
+	c->maybe_allows_mem = false;
+    }
   c->next_this_letter = *slot;
   *slot = c;
 
@@ -919,26 +947,30 @@ add_constraint (const char *name, const char *regclass,
   have_const_int_constraints |= c->is_const_int;
   have_extra_constraints |= c->is_extra;
   have_memory_constraints |= c->is_memory;
+  have_special_memory_constraints |= c->is_special_memory;
   have_address_constraints |= c->is_address;
   num_constraints += 1;
 }
 
-/* Process a DEFINE_CONSTRAINT, DEFINE_MEMORY_CONSTRAINT, or
-   DEFINE_ADDRESS_CONSTRAINT expression, C.  */
+/* Process a DEFINE_CONSTRAINT, DEFINE_MEMORY_CONSTRAINT,
+   DEFINE_SPECIAL_MEMORY_CONSTRAINT, or DEFINE_ADDRESS_CONSTRAINT
+   expression, C.  */
 static void
-process_define_constraint (rtx c, int lineno)
+process_define_constraint (md_rtx_info *info)
 {
-  add_constraint (XSTR (c, 0), 0, XEXP (c, 2),
-		  GET_CODE (c) == DEFINE_MEMORY_CONSTRAINT,
-		  GET_CODE (c) == DEFINE_ADDRESS_CONSTRAINT,
-		  lineno);
+  add_constraint (XSTR (info->def, 0), 0, XEXP (info->def, 2),
+		  GET_CODE (info->def) == DEFINE_MEMORY_CONSTRAINT,
+		  GET_CODE (info->def) == DEFINE_SPECIAL_MEMORY_CONSTRAINT,
+		  GET_CODE (info->def) == DEFINE_ADDRESS_CONSTRAINT,
+		  info->loc);
 }
 
 /* Process a DEFINE_REGISTER_CONSTRAINT expression, C.  */
 static void
-process_define_register_constraint (rtx c, int lineno)
+process_define_register_constraint (md_rtx_info *info)
 {
-  add_constraint (XSTR (c, 0), XSTR (c, 1), 0, false, false, lineno);
+  add_constraint (XSTR (info->def, 0), XSTR (info->def, 1),
+		  0, false, false, false, info->loc);
 }
 
 /* Put the constraints into enum order.  We want to keep constraints
@@ -972,6 +1004,12 @@ choose_enum_order (void)
       enum_order[next++] = c;
   memory_end = next;
 
+  special_memory_start = next;
+  FOR_ALL_CONSTRAINTS (c)
+    if (c->is_special_memory)
+      enum_order[next++] = c;
+  special_memory_end = next;
+
   address_start = next;
   FOR_ALL_CONSTRAINTS (c)
     if (c->is_address)
@@ -980,27 +1018,31 @@ choose_enum_order (void)
 
   maybe_allows_none_start = next;
   FOR_ALL_CONSTRAINTS (c)
-    if (!c->is_register && !c->is_const_int && !c->is_memory && !c->is_address
+    if (!c->is_register && !c->is_const_int && !c->is_memory
+	&& !c->is_special_memory && !c->is_address
 	&& !c->maybe_allows_reg && !c->maybe_allows_mem)
       enum_order[next++] = c;
   maybe_allows_none_end = next;
 
   maybe_allows_reg_start = next;
   FOR_ALL_CONSTRAINTS (c)
-    if (!c->is_register && !c->is_const_int && !c->is_memory && !c->is_address
+    if (!c->is_register && !c->is_const_int && !c->is_memory
+	&& !c->is_special_memory && !c->is_address
 	&& c->maybe_allows_reg && !c->maybe_allows_mem)
       enum_order[next++] = c;
   maybe_allows_reg_end = next;
 
   maybe_allows_mem_start = next;
   FOR_ALL_CONSTRAINTS (c)
-    if (!c->is_register && !c->is_const_int && !c->is_memory && !c->is_address
+    if (!c->is_register && !c->is_const_int && !c->is_memory
+	&& !c->is_special_memory && !c->is_address
 	&& !c->maybe_allows_reg && c->maybe_allows_mem)
       enum_order[next++] = c;
   maybe_allows_mem_end = next;
 
   FOR_ALL_CONSTRAINTS (c)
-    if (!c->is_register && !c->is_const_int && !c->is_memory && !c->is_address
+    if (!c->is_register && !c->is_const_int && !c->is_memory
+	&& !c->is_special_memory && !c->is_address
 	&& c->maybe_allows_reg && c->maybe_allows_mem)
       enum_order[next++] = c;
   gcc_assert (next == num_constraints);
@@ -1419,6 +1461,8 @@ write_tm_preds_h (void)
 			    register_start, register_end);
       write_range_function ("insn_extra_memory_constraint",
 			    memory_start, memory_end);
+      write_range_function ("insn_extra_special_memory_constraint",
+			    special_memory_start, special_memory_end);
       write_range_function ("insn_extra_address_constraint",
 			    address_start, address_end);
       write_allows_reg_mem_function ();
@@ -1467,6 +1511,7 @@ write_tm_preds_h (void)
 	    "  CT_REGISTER,\n"
 	    "  CT_CONST_INT,\n"
 	    "  CT_MEMORY,\n"
+	    "  CT_SPECIAL_MEMORY,\n"
 	    "  CT_ADDRESS,\n"
 	    "  CT_FIXED_FORM\n"
 	    "};\n"
@@ -1479,6 +1524,8 @@ write_tm_preds_h (void)
 	values.safe_push (std::make_pair (const_int_start, "CT_CONST_INT"));
       if (memory_start != memory_end)
 	values.safe_push (std::make_pair (memory_start, "CT_MEMORY"));
+      if (special_memory_start != special_memory_end)
+	values.safe_push (std::make_pair (special_memory_start, "CT_SPECIAL_MEMORY"));
       if (address_start != address_end)
 	values.safe_push (std::make_pair (address_start, "CT_ADDRESS"));
       if (address_end != num_constraints)
@@ -1511,40 +1558,25 @@ write_insn_preds_c (void)
 #include \"config.h\"\n\
 #include \"system.h\"\n\
 #include \"coretypes.h\"\n\
-#include \"tm.h\"\n\
-#include \"rtl.h\"\n\
-#include \"hash-set.h\"\n\
-#include \"machmode.h\"\n\
-#include \"vec.h\"\n\
-#include \"double-int.h\"\n\
-#include \"input.h\"\n\
-#include \"alias.h\"\n\
-#include \"symtab.h\"\n\
-#include \"wide-int.h\"\n\
-#include \"inchash.h\"\n\
+#include \"backend.h\"\n\
+#include \"predict.h\"\n\
 #include \"tree.h\"\n\
+#include \"rtl.h\"\n\
+#include \"alias.h\"\n\
 #include \"varasm.h\"\n\
 #include \"stor-layout.h\"\n\
 #include \"calls.h\"\n\
 #include \"tm_p.h\"\n\
-#include \"hashtab.h\"\n\
-#include \"hash-set.h\"\n\
-#include \"vec.h\"\n\
-#include \"machmode.h\"\n\
-#include \"hard-reg-set.h\"\n\
-#include \"input.h\"\n\
-#include \"function.h\"\n\
 #include \"insn-config.h\"\n\
 #include \"recog.h\"\n\
 #include \"output.h\"\n\
 #include \"flags.h\"\n\
-#include \"hard-reg-set.h\"\n\
-#include \"predict.h\"\n\
-#include \"basic-block.h\"\n\
+#include \"df.h\"\n\
 #include \"resource.h\"\n\
 #include \"diagnostic-core.h\"\n\
 #include \"reload.h\"\n\
 #include \"regs.h\"\n\
+#include \"emit-rtl.h\"\n\
 #include \"tm-constrs.h\"\n");
 
   FOR_ALL_PREDICATES (p)
@@ -1588,31 +1620,30 @@ parse_option (const char *opt)
 int
 main (int argc, char **argv)
 {
-  rtx defn;
-  int pattern_lineno, next_insn_code = 0;
-
   progname = argv[0];
   if (argc <= 1)
     fatal ("no input file name");
   if (!init_rtx_reader_args_cb (argc, argv, parse_option))
     return FATAL_EXIT_CODE;
 
-  while ((defn = read_md_rtx (&pattern_lineno, &next_insn_code)) != 0)
-    switch (GET_CODE (defn))
+  md_rtx_info info;
+  while (read_md_rtx (&info))
+    switch (GET_CODE (info.def))
       {
       case DEFINE_PREDICATE:
       case DEFINE_SPECIAL_PREDICATE:
-	process_define_predicate (defn, pattern_lineno);
+	process_define_predicate (&info);
 	break;
 
       case DEFINE_CONSTRAINT:
       case DEFINE_MEMORY_CONSTRAINT:
+      case DEFINE_SPECIAL_MEMORY_CONSTRAINT:
       case DEFINE_ADDRESS_CONSTRAINT:
-	process_define_constraint (defn, pattern_lineno);
+	process_define_constraint (&info);
 	break;
 
       case DEFINE_REGISTER_CONSTRAINT:
-	process_define_register_constraint (defn, pattern_lineno);
+	process_define_register_constraint (&info);
 	break;
 
       default:

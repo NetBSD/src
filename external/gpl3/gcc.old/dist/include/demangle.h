@@ -1,7 +1,6 @@
 /* Defs for interface to demanglers.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
-   
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public License
    as published by the Free Software Foundation; either version 2, or
@@ -144,10 +143,10 @@ cplus_mangle_opname (const char *opname, int options);
 extern void
 set_cplus_marker_for_demangling (int ch);
 
-extern enum demangling_styles 
+extern enum demangling_styles
 cplus_demangle_set_style (enum demangling_styles style);
 
-extern enum demangling_styles 
+extern enum demangling_styles
 cplus_demangle_name_to_style (const char *name);
 
 /* Callback typedef for allocation-less demangler interfaces. */
@@ -447,6 +446,8 @@ enum demangle_component_type
   DEMANGLE_COMPONENT_PACK_EXPANSION,
   /* A name with an ABI tag.  */
   DEMANGLE_COMPONENT_TAGGED_NAME,
+  /* A transaction-safe function type.  */
+  DEMANGLE_COMPONENT_TRANSACTION_SAFE,
   /* A cloned function.  */
   DEMANGLE_COMPONENT_CLONE
 };

@@ -1,5 +1,5 @@
 /* Nested function decomposition for GIMPLE.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -21,9 +21,11 @@
 #include "system.h"
 #include "coretypes.h"
 #include "backend.h"
+#include "target.h"
 #include "rtl.h"
 #include "tree.h"
 #include "gimple.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "cgraph.h"
@@ -103,6 +105,7 @@ struct nesting_info
 
   bool any_parm_remapped;
   bool any_tramp_created;
+  bool any_descr_created;
   char static_chain_added;
 };
 
@@ -192,7 +195,7 @@ insert_field_into_struct (tree type, tree field)
 
   /* Set correct alignment for frame struct type.  */
   if (TYPE_ALIGN (type) < DECL_ALIGN (field))
-    TYPE_ALIGN (type) = DECL_ALIGN (field);
+    SET_TYPE_ALIGN (type, DECL_ALIGN (field));
 }
 
 /* Build or return the RECORD_TYPE that describes the frame state that is
@@ -275,14 +278,14 @@ lookup_field_for_decl (struct nesting_info *info, tree decl,
       if (use_pointer_in_frame (decl))
 	{
 	  TREE_TYPE (field) = build_pointer_type (TREE_TYPE (decl));
-	  DECL_ALIGN (field) = TYPE_ALIGN (TREE_TYPE (field));
+	  SET_DECL_ALIGN (field, TYPE_ALIGN (TREE_TYPE (field)));
 	  DECL_NONADDRESSABLE_P (field) = 1;
 	}
       else
 	{
           TREE_TYPE (field) = TREE_TYPE (decl);
           DECL_SOURCE_LOCATION (field) = DECL_SOURCE_LOCATION (decl);
-          DECL_ALIGN (field) = DECL_ALIGN (decl);
+          SET_DECL_ALIGN (field, DECL_ALIGN (decl));
           DECL_USER_ALIGN (field) = DECL_USER_ALIGN (decl);
           TREE_ADDRESSABLE (field) = TREE_ADDRESSABLE (decl);
           DECL_NONADDRESSABLE_P (field) = !TREE_ADDRESSABLE (decl);
@@ -361,7 +364,7 @@ get_chain_field (struct nesting_info *info)
       field = make_node (FIELD_DECL);
       DECL_NAME (field) = get_identifier ("__chain");
       TREE_TYPE (field) = type;
-      DECL_ALIGN (field) = TYPE_ALIGN (type);
+      SET_DECL_ALIGN (field, TYPE_ALIGN (type));
       DECL_NONADDRESSABLE_P (field) = 1;
 
       insert_field_into_struct (get_frame_type (info), field);
@@ -474,7 +477,7 @@ get_trampoline_type (struct nesting_info *info)
   t = build_array_type (char_type_node, t);
   t = build_decl (DECL_SOURCE_LOCATION (info->context),
 		  FIELD_DECL, get_identifier ("__data"), t);
-  DECL_ALIGN (t) = align;
+  SET_DECL_ALIGN (t, align);
   DECL_USER_ALIGN (t) = 1;
 
   trampoline_type = make_node (RECORD_TYPE);
@@ -486,12 +489,42 @@ get_trampoline_type (struct nesting_info *info)
   return trampoline_type;
 }
 
-/* Given DECL, a nested function, find or create a field in the non-local
-   frame structure for a trampoline for this function.  */
+/* Build or return the type used to represent a nested function descriptor.  */
+
+static GTY(()) tree descriptor_type;
 
 static tree
-lookup_tramp_for_decl (struct nesting_info *info, tree decl,
-		       enum insert_option insert)
+get_descriptor_type (struct nesting_info *info)
+{
+  /* The base alignment is that of a function.  */
+  const unsigned align = FUNCTION_ALIGNMENT (FUNCTION_BOUNDARY);
+  tree t;
+
+  if (descriptor_type)
+    return descriptor_type;
+
+  t = build_index_type (integer_one_node);
+  t = build_array_type (ptr_type_node, t);
+  t = build_decl (DECL_SOURCE_LOCATION (info->context),
+		  FIELD_DECL, get_identifier ("__data"), t);
+  SET_DECL_ALIGN (t, MAX (TYPE_ALIGN (ptr_type_node), align));
+  DECL_USER_ALIGN (t) = 1;
+
+  descriptor_type = make_node (RECORD_TYPE);
+  TYPE_NAME (descriptor_type) = get_identifier ("__builtin_descriptor");
+  TYPE_FIELDS (descriptor_type) = t;
+  layout_type (descriptor_type);
+  DECL_CONTEXT (t) = descriptor_type;
+
+  return descriptor_type;
+}
+
+/* Given DECL, a nested function, find or create an element in the
+   var map for this function.  */
+
+static tree
+lookup_element_for_decl (struct nesting_info *info, tree decl,
+			 enum insert_option insert)
 {
   if (insert == NO_INSERT)
     {
@@ -501,19 +534,73 @@ lookup_tramp_for_decl (struct nesting_info *info, tree decl,
 
   tree *slot = &info->var_map->get_or_insert (decl);
   if (!*slot)
+    *slot = build_tree_list (NULL_TREE, NULL_TREE);
+
+  return (tree) *slot;
+} 
+
+/* Given DECL, a nested function, create a field in the non-local
+   frame structure for this function.  */
+
+static tree
+create_field_for_decl (struct nesting_info *info, tree decl, tree type)
+{
+  tree field = make_node (FIELD_DECL);
+  DECL_NAME (field) = DECL_NAME (decl);
+  TREE_TYPE (field) = type;
+  TREE_ADDRESSABLE (field) = 1;
+  insert_field_into_struct (get_frame_type (info), field);
+  return field;
+}
+
+/* Given DECL, a nested function, find or create a field in the non-local
+   frame structure for a trampoline for this function.  */
+
+static tree
+lookup_tramp_for_decl (struct nesting_info *info, tree decl,
+		       enum insert_option insert)
+{
+  tree elt, field;
+
+  elt = lookup_element_for_decl (info, decl, insert);
+  if (!elt)
+    return NULL_TREE;
+
+  field = TREE_PURPOSE (elt);
+
+  if (!field && insert == INSERT)
     {
-      tree field = make_node (FIELD_DECL);
-      DECL_NAME (field) = DECL_NAME (decl);
-      TREE_TYPE (field) = get_trampoline_type (info);
-      TREE_ADDRESSABLE (field) = 1;
-
-      insert_field_into_struct (get_frame_type (info), field);
-      *slot = field;
-
+      field = create_field_for_decl (info, decl, get_trampoline_type (info));
+      TREE_PURPOSE (elt) = field;
       info->any_tramp_created = true;
     }
 
-  return *slot;
+  return field;
+}
+
+/* Given DECL, a nested function, find or create a field in the non-local
+   frame structure for a descriptor for this function.  */
+
+static tree
+lookup_descr_for_decl (struct nesting_info *info, tree decl,
+		       enum insert_option insert)
+{
+  tree elt, field;
+
+  elt = lookup_element_for_decl (info, decl, insert);
+  if (!elt)
+    return NULL_TREE;
+
+  field = TREE_VALUE (elt);
+
+  if (!field && insert == INSERT)
+    {
+      field = create_field_for_decl (info, decl, get_descriptor_type (info));
+      TREE_VALUE (elt) = field;
+      info->any_descr_created = true;
+    }
+
+  return field;
 }
 
 /* Build or return the field within the non-local frame state that holds
@@ -548,7 +635,7 @@ get_nl_goto_field (struct nesting_info *info)
       field = make_node (FIELD_DECL);
       DECL_NAME (field) = get_identifier ("__nl_goto_buf");
       TREE_TYPE (field) = type;
-      DECL_ALIGN (field) = TYPE_ALIGN (type);
+      SET_DECL_ALIGN (field, TYPE_ALIGN (type));
       TREE_ADDRESSABLE (field) = 1;
 
       insert_field_into_struct (get_frame_type (info), field);
@@ -856,7 +943,7 @@ get_nonlocal_debug_decl (struct nesting_info *info, tree decl)
   DECL_SEEN_IN_BIND_EXPR_P (new_decl) = 1;
   if ((TREE_CODE (decl) == PARM_DECL
        || TREE_CODE (decl) == RESULT_DECL
-       || TREE_CODE (decl) == VAR_DECL)
+       || VAR_P (decl))
       && DECL_BY_REFERENCE (decl))
     DECL_BY_REFERENCE (new_decl) = 1;
 
@@ -1076,7 +1163,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_IS_DEVICE_PTR:
 	do_decl_clause:
 	  decl = OMP_CLAUSE_DECL (clause);
-	  if (TREE_CODE (decl) == VAR_DECL
+	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
 	  if (decl_function_context (decl) != info->context)
@@ -1175,7 +1262,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	    }
 	  /* Like do_decl_clause, but don't add any suppression.  */
 	  decl = OMP_CLAUSE_DECL (clause);
-	  if (TREE_CODE (decl) == VAR_DECL
+	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
 	  if (decl_function_context (decl) != info->context)
@@ -1191,6 +1278,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_DEFAULT:
 	case OMP_CLAUSE_COPYIN:
 	case OMP_CLAUSE_COLLAPSE:
+	case OMP_CLAUSE_TILE:
 	case OMP_CLAUSE_UNTIED:
 	case OMP_CLAUSE_MERGEABLE:
 	case OMP_CLAUSE_PROC_BIND:
@@ -1203,18 +1291,27 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_AUTO:
 	  break;
 
-	case OMP_CLAUSE_TILE:
-	  /* OpenACC tile clauses are discarded during gimplification, so we
-	     don't expect to see anything here.  */
-	  gcc_unreachable ();
-
+	  /* The following clause belongs to the OpenACC cache directive, which
+	     is discarded during gimplification.  */
 	case OMP_CLAUSE__CACHE_:
-	  /* These clauses belong to the OpenACC cache directive, which is
-	     discarded during gimplification, so we don't expect to see
-	     anything here.  */
-	  gcc_unreachable ();
-
-	case OMP_CLAUSE_DEVICE_RESIDENT:
+	  /* The following clauses are only allowed in the OpenMP declare simd
+	     directive, so not seen here.  */
+	case OMP_CLAUSE_UNIFORM:
+	case OMP_CLAUSE_INBRANCH:
+	case OMP_CLAUSE_NOTINBRANCH:
+	  /* The following clauses are only allowed on OpenMP cancel and
+	     cancellation point directives, which at this point have already
+	     been lowered into a function call.  */
+	case OMP_CLAUSE_FOR:
+	case OMP_CLAUSE_PARALLEL:
+	case OMP_CLAUSE_SECTIONS:
+	case OMP_CLAUSE_TASKGROUP:
+	  /* The following clauses are only added during OMP lowering; nested
+	     function decomposition happens before that.  */
+	case OMP_CLAUSE__LOOPTEMP_:
+	case OMP_CLAUSE__SIMDUID_:
+	case OMP_CLAUSE__GRIDDIM_:
+	  /* Anything else.  */
 	default:
 	  gcc_unreachable ();
 	}
@@ -1297,11 +1394,11 @@ note_nonlocal_vla_type (struct nesting_info *info, tree type)
       if (domain)
 	{
 	  t = TYPE_MIN_VALUE (domain);
-	  if (t && (TREE_CODE (t) == VAR_DECL || TREE_CODE (t) == PARM_DECL)
+	  if (t && (VAR_P (t) || TREE_CODE (t) == PARM_DECL)
 	      && decl_function_context (t) != info->context)
 	    get_nonlocal_debug_decl (info, t);
 	  t = TYPE_MAX_VALUE (domain);
-	  if (t && (TREE_CODE (t) == VAR_DECL || TREE_CODE (t) == PARM_DECL)
+	  if (t && (VAR_P (t) || TREE_CODE (t) == PARM_DECL)
 	      && decl_function_context (t) != info->context)
 	    get_nonlocal_debug_decl (info, t);
 	}
@@ -1317,7 +1414,7 @@ note_nonlocal_block_vlas (struct nesting_info *info, tree block)
   tree var;
 
   for (var = BLOCK_VARS (block); var; var = DECL_CHAIN (var))
-    if (TREE_CODE (var) == VAR_DECL
+    if (VAR_P (var)
 	&& variably_modified_type_p (TREE_TYPE (var), NULL)
 	&& DECL_HAS_VALUE_EXPR_P (var)
 	&& decl_function_context (var) != info->context)
@@ -1481,7 +1578,7 @@ convert_nonlocal_reference_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 
 	    FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (decls), i, decl)
 	      {
-		if (TREE_CODE (decl) == VAR_DECL
+		if (VAR_P (decl)
 		    && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 		  continue;
 		if (decl_function_context (decl) != info->context)
@@ -1543,7 +1640,7 @@ get_local_debug_decl (struct nesting_info *info, tree decl, tree field)
   DECL_SEEN_IN_BIND_EXPR_P (new_decl) = 1;
   if ((TREE_CODE (decl) == PARM_DECL
        || TREE_CODE (decl) == RESULT_DECL
-       || TREE_CODE (decl) == VAR_DECL)
+       || VAR_P (decl))
       && DECL_BY_REFERENCE (decl))
     DECL_BY_REFERENCE (new_decl) = 1;
 
@@ -1763,7 +1860,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_IS_DEVICE_PTR:
 	do_decl_clause:
 	  decl = OMP_CLAUSE_DECL (clause);
-	  if (TREE_CODE (decl) == VAR_DECL
+	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
 	  if (decl_function_context (decl) == info->context
@@ -1867,7 +1964,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	    }
 	  /* Like do_decl_clause, but don't add any suppression.  */
 	  decl = OMP_CLAUSE_DECL (clause);
-	  if (TREE_CODE (decl) == VAR_DECL
+	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
 	  if (decl_function_context (decl) == info->context
@@ -1888,6 +1985,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_DEFAULT:
 	case OMP_CLAUSE_COPYIN:
 	case OMP_CLAUSE_COLLAPSE:
+	case OMP_CLAUSE_TILE:
 	case OMP_CLAUSE_UNTIED:
 	case OMP_CLAUSE_MERGEABLE:
 	case OMP_CLAUSE_PROC_BIND:
@@ -1900,18 +1998,27 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_AUTO:
 	  break;
 
-	case OMP_CLAUSE_TILE:
-	  /* OpenACC tile clauses are discarded during gimplification, so we
-	     don't expect to see anything here.  */
-	  gcc_unreachable ();
-
+	  /* The following clause belongs to the OpenACC cache directive, which
+	     is discarded during gimplification.  */
 	case OMP_CLAUSE__CACHE_:
-	  /* These clauses belong to the OpenACC cache directive, which is
-	     discarded during gimplification, so we don't expect to see
-	     anything here.  */
-	  gcc_unreachable ();
-
-	case OMP_CLAUSE_DEVICE_RESIDENT:
+	  /* The following clauses are only allowed in the OpenMP declare simd
+	     directive, so not seen here.  */
+	case OMP_CLAUSE_UNIFORM:
+	case OMP_CLAUSE_INBRANCH:
+	case OMP_CLAUSE_NOTINBRANCH:
+	  /* The following clauses are only allowed on OpenMP cancel and
+	     cancellation point directives, which at this point have already
+	     been lowered into a function call.  */
+	case OMP_CLAUSE_FOR:
+	case OMP_CLAUSE_PARALLEL:
+	case OMP_CLAUSE_SECTIONS:
+	case OMP_CLAUSE_TASKGROUP:
+	  /* The following clauses are only added during OMP lowering; nested
+	     function decomposition happens before that.  */
+	case OMP_CLAUSE__LOOPTEMP_:
+	case OMP_CLAUSE__SIMDUID_:
+	case OMP_CLAUSE__GRIDDIM_:
+	  /* Anything else.  */
 	default:
 	  gcc_unreachable ();
 	}
@@ -2156,7 +2263,7 @@ convert_local_reference_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 
 	    FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (decls), i, decl)
 	      {
-		if (TREE_CODE (decl) == VAR_DECL
+		if (VAR_P (decl)
 		    && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 		  continue;
 		if (decl_function_context (decl) == info->context
@@ -2315,6 +2422,7 @@ convert_tramp_reference_op (tree *tp, int *walk_subtrees, void *data)
   struct walk_stmt_info *wi = (struct walk_stmt_info *) data;
   struct nesting_info *const info = (struct nesting_info *) wi->info, *i;
   tree t = *tp, decl, target_context, x, builtin;
+  bool descr;
   gcall *call;
 
   *walk_subtrees = 0;
@@ -2349,7 +2457,14 @@ convert_tramp_reference_op (tree *tp, int *walk_subtrees, void *data)
 	 we need to insert the trampoline.  */
       for (i = info; i->context != target_context; i = i->outer)
 	continue;
-      x = lookup_tramp_for_decl (i, decl, INSERT);
+
+      /* Decide whether to generate a descriptor or a trampoline. */
+      descr = FUNC_ADDR_BY_DESCRIPTOR (t) && !flag_trampolines;
+
+      if (descr)
+	x = lookup_descr_for_decl (i, decl, INSERT);
+      else
+	x = lookup_tramp_for_decl (i, decl, INSERT);
 
       /* Compute the address of the field holding the trampoline.  */
       x = get_frame_field (info, target_context, x, &wi->gsi);
@@ -2358,7 +2473,10 @@ convert_tramp_reference_op (tree *tp, int *walk_subtrees, void *data)
 
       /* Do machine-specific ugliness.  Normally this will involve
 	 computing extra alignment, but it can really be anything.  */
-      builtin = builtin_decl_implicit (BUILT_IN_ADJUST_TRAMPOLINE);
+      if (descr)
+	builtin = builtin_decl_implicit (BUILT_IN_ADJUST_DESCRIPTOR);
+      else
+	builtin = builtin_decl_implicit (BUILT_IN_ADJUST_TRAMPOLINE);
       call = gimple_build_call (builtin, 1, x);
       x = init_tmp_var_with_call (info, &wi->gsi, call);
 
@@ -2697,7 +2815,7 @@ nesting_copy_decl (tree decl, copy_body_data *id)
       return new_decl;
     }
 
-  if (TREE_CODE (decl) == VAR_DECL
+  if (VAR_P (decl)
       || TREE_CODE (decl) == PARM_DECL
       || TREE_CODE (decl) == RESULT_DECL)
     return decl;
@@ -2740,7 +2858,7 @@ remap_vla_decls (tree block, struct nesting_info *root)
     remap_vla_decls (subblock, root);
 
   for (var = BLOCK_VARS (block); var; var = DECL_CHAIN (var))
-    if (TREE_CODE (var) == VAR_DECL && DECL_HAS_VALUE_EXPR_P (var))
+    if (VAR_P (var) && DECL_HAS_VALUE_EXPR_P (var))
       {
 	val = DECL_VALUE_EXPR (var);
 	type = TREE_TYPE (var);
@@ -2764,7 +2882,7 @@ remap_vla_decls (tree block, struct nesting_info *root)
   id.root = root;
 
   for (; var; var = DECL_CHAIN (var))
-    if (TREE_CODE (var) == VAR_DECL && DECL_HAS_VALUE_EXPR_P (var))
+    if (VAR_P (var) && DECL_HAS_VALUE_EXPR_P (var))
       {
 	struct nesting_info *i;
 	tree newt, context;
@@ -2830,6 +2948,27 @@ fold_mem_refs (tree *const &e, void *data ATTRIBUTE_UNUSED)
   tree *ref_p = CONST_CAST2 (tree *, const tree *, (const tree *)e);
   *ref_p = fold (*ref_p);
   return true;
+}
+
+/* Given DECL, a nested function, build an initialization call for FIELD,
+   the trampoline or descriptor for DECL, using FUNC as the function.  */
+
+static gcall *
+build_init_call_stmt (struct nesting_info *info, tree decl, tree field,
+		      tree func)
+{
+  tree arg1, arg2, arg3, x;
+
+  gcc_assert (DECL_STATIC_CHAIN (decl));
+  arg3 = build_addr (info->frame_decl);
+
+  arg2 = build_addr (decl);
+
+  x = build3 (COMPONENT_REF, TREE_TYPE (field),
+	      info->frame_decl, field, NULL_TREE);
+  arg1 = build_addr (x);
+
+  return gimple_build_call (func, 3, arg1, arg2, arg3);
 }
 
 /* Do "everything else" to clean up or complete state collected by the various
@@ -2977,23 +3116,32 @@ finalize_nesting_tree_1 (struct nesting_info *root)
       struct nesting_info *i;
       for (i = root->inner; i ; i = i->next)
 	{
-	  tree arg1, arg2, arg3, x, field;
+	  tree field, x;
 
 	  field = lookup_tramp_for_decl (root, i->context, NO_INSERT);
 	  if (!field)
 	    continue;
 
-	  gcc_assert (DECL_STATIC_CHAIN (i->context));
-	  arg3 = build_addr (root->frame_decl);
-
-	  arg2 = build_addr (i->context);
-
-	  x = build3 (COMPONENT_REF, TREE_TYPE (field),
-		      root->frame_decl, field, NULL_TREE);
-	  arg1 = build_addr (x);
-
 	  x = builtin_decl_implicit (BUILT_IN_INIT_TRAMPOLINE);
-	  stmt = gimple_build_call (x, 3, arg1, arg2, arg3);
+	  stmt = build_init_call_stmt (root, i->context, field, x);
+	  gimple_seq_add_stmt (&stmt_list, stmt);
+	}
+    }
+
+  /* If descriptors were created, then we need to initialize them.  */
+  if (root->any_descr_created)
+    {
+      struct nesting_info *i;
+      for (i = root->inner; i ; i = i->next)
+	{
+	  tree field, x;
+
+	  field = lookup_descr_for_decl (root, i->context, NO_INSERT);
+	  if (!field)
+	    continue;
+
+	  x = builtin_decl_implicit (BUILT_IN_INIT_DESCRIPTOR);
+	  stmt = build_init_call_stmt (root, i->context, field, x);
 	  gimple_seq_add_stmt (&stmt_list, stmt);
 	}
     }

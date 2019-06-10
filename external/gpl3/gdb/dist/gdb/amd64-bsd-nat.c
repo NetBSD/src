@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64 BSD's.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,24 +38,50 @@
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers (including the floating-point registers).  */
 
-static void
-amd64bsd_fetch_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regnum)
+void
+amd64bsd_fetch_inferior_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       amd64_supply_native_gregset (regcache, &regs, -1);
       if (regnum != -1)
 	return;
     }
+
+#ifdef PT_GETFSBASE
+  if (regnum == -1 || regnum == AMD64_FSBASE_REGNUM)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register fs_base"));
+
+      regcache->raw_supply (AMD64_FSBASE_REGNUM, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_GETGSBASE
+  if (regnum == -1 || regnum == AMD64_GSBASE_REGNUM)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register gs_base"));
+
+      regcache->raw_supply (AMD64_GSBASE_REGNUM, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
 
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -66,7 +92,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
       if (x86bsd_xsave_len != 0)
 	{
 	  xstateregs = alloca (x86bsd_xsave_len);
-	  if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid))
+	  if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,  inferior_ptid.lwp ())
 	      == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
@@ -75,7 +101,7 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
 	}
 #endif
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       amd64_supply_fxsave (regcache, -1, &fpregs);
@@ -85,28 +111,54 @@ amd64bsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers (including the floating-point registers).  */
 
-static void
-amd64bsd_store_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regnum)
+void
+amd64bsd_store_inferior_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       amd64_collect_native_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regnum != -1)
 	return;
     }
+
+#ifdef PT_SETFSBASE
+  if (regnum == -1 || regnum == AMD64_FSBASE_REGNUM)
+    {
+      register_t base;
+
+      regcache->raw_collect (AMD64_FSBASE_REGNUM, &base);
+
+      if (ptrace (PT_SETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register fs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_SETGSBASE
+  if (regnum == -1 || regnum == AMD64_GSBASE_REGNUM)
+    {
+      register_t base;
+
+      regcache->raw_collect (AMD64_GSBASE_REGNUM, &base);
+
+      if (ptrace (PT_SETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register gs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
 
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -117,11 +169,11 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
       if (x86bsd_xsave_len != 0)
 	{
 	  xstateregs = alloca (x86bsd_xsave_len);
-	  if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid))
+	  if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,  inferior_ptid.lwp ())
 	      == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
-	  amd64_collect_xsave (regcache, regnum, xstateregs,  ptid_get_lwp (inferior_ptid));
+	  amd64_collect_xsave (regcache, regnum, xstateregs,  inferior_ptid.lwp ());
 
 	  if (ptrace (PT_SETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,
 		      x86bsd_xsave_len) == -1)
@@ -130,26 +182,12 @@ amd64bsd_store_inferior_registers (struct target_ops *ops,
 	}
 #endif
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       amd64_collect_fxsave (regcache, regnum, &fpregs);
 
-      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
-}
-
-/* Create a prototype *BSD/amd64 target.  The client can override it
-   with local methods.  */
-
-struct target_ops *
-amd64bsd_target (void)
-{
-  struct target_ops *t;
-
-  t = x86bsd_target ();
-  t->to_fetch_registers = amd64bsd_fetch_inferior_registers;
-  t->to_store_registers = amd64bsd_store_inferior_registers;
-  return t;
 }

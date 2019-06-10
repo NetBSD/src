@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.41 2017/09/07 10:23:33 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.41.4.1 2019/06/10 22:05:33 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -186,6 +186,24 @@ show(gpt_t gpt, int xshow)
 	return 0;
 }
 
+static void
+gpt_show_sec_num(const char *prompt, int64_t secsize, off_t num)
+{
+#ifdef HN_AUTOSCALE
+	char human_num[5];
+	if (humanize_number(human_num, sizeof(human_num),
+	    (int64_t)num*secsize,
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+#endif
+	printf("%s: %" PRIu64, prompt, (uint64_t)num);
+#ifdef HN_AUTOSCALE
+	if (human_num[0] != '\0')
+		printf(" (%s)", human_num);
+#endif
+	printf("\n");
+}
+
 static int
 show_one(gpt_t gpt, unsigned int entry)
 {
@@ -204,8 +222,8 @@ show_one(gpt_t gpt, unsigned int entry)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	gpt_show_num("Start", (uintmax_t)(m->map_start * gpt->secsz));
-	gpt_show_num("Size", (uintmax_t)(m->map_size * gpt->secsz));
+	gpt_show_sec_num("Start", gpt->secsz, m->map_start);
+	gpt_show_sec_num("Size", gpt->secsz, m->map_size);
 
 	gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
 	gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
@@ -317,8 +335,10 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 	int ch;
 	int xshow = 0;
 	unsigned int entry = 0;
+	off_t start = 0;
+	map_t m;
 
-	while ((ch = getopt(argc, argv, "gi:lua")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:b:lua")) != -1) {
 		switch(ch) {
 		case 'a':
 			xshow |= SHOW_ALL;
@@ -328,6 +348,10 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			break;
 		case 'i':
 			if (gpt_uint_get(gpt, &entry) == -1)
+				return usage();
+			break;
+		case 'b':
+			if (gpt_human_get(gpt, &start) == -1)
 				return usage();
 			break;
 		case 'l':
@@ -344,8 +368,23 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
+	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) == NULL)
+		printf("GPT not found, displaying data from MBR.\n\n");
+
 	if (xshow & SHOW_ALL)
 		return show_all(gpt);
+
+	if (start > 0) {
+		for (m = map_first(gpt); m != NULL; m = m->map_next) {
+			if (m->map_type != MAP_TYPE_GPT_PART ||
+			    m->map_index < 1)
+				continue;
+			if (start != m->map_start)
+				continue;
+			entry = m->map_index;
+			break;
+		}
+	}
 
 	return entry > 0 ? show_one(gpt, entry) : show(gpt, xshow);
 }

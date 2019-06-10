@@ -1,0 +1,20 @@
+How to import Lua x.y.z
+=======================
+
+1. Untar a new version to a directory called dist.work or even
+   somethere outside of the tree.
+2. Run lua2netbsd script inside that directory.
+3. Run 'cvs import src/external/mit/lua/dist LUA LUA_<<x_y_z>>'.
+   It's very important to run it from inside the right direcory!
+4. Move the dist directory away (is it optional?).
+5. Run 'cvs up -dP' to bring the new import to the tree.
+6. Run 'cvs up -j LUA_<<previous_version>> -j LUA_<<x_y_z>>'.
+   It will generate many conflicts.
+7. Resolve conflicts. Most (if not all) conflicts are around RCS
+   identifiers.
+8. Commit your changes.
+
+Vendor branches are usually named LUA_<<x_y_z>> but if there was a problem
+with cvs import, they can be named differently.
+
+The last imported vendor branch is called LUA_5_3_5_try2.

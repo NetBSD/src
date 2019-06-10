@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.92 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.92.2.1 2019/06/10 22:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.92 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.92.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,11 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.92 2018/06/26 06:48:02 msaitoh Exp $");
 
 #ifdef KUE_DEBUG
 #define DPRINTF(x)	if (kuedebug) printf x
-#define DPRINTFN(n,x)	if (kuedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (kuedebug >= (n)) printf x
 int	kuedebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -161,7 +161,7 @@ int kue_match(device_t, cfdata_t, void *);
 void kue_attach(device_t, device_t, void *);
 int kue_detach(device_t, int);
 int kue_activate(device_t, enum devact);
-extern struct cfdriver kue_cd;
+
 CFATTACH_DECL_NEW(kue, sizeof(struct kue_softc), kue_match, kue_attach,
     kue_detach, kue_activate);
 
@@ -315,6 +315,7 @@ kue_load_fw(struct kue_softc *sc)
 static void
 kue_setmulti(struct kue_softc *sc)
 {
+	struct ethercom		*ec = &sc->kue_ec;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -334,17 +335,21 @@ allmulti:
 	sc->kue_rxfilt &= ~KUE_RXFILT_ALLMULTI;
 
 	i = 0;
-	ETHER_FIRST_MULTI(step, &sc->kue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (i == KUE_MCFILTCNT(sc) ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		memcpy(KUE_MCFILT(sc, i), enm->enm_addrlo, ETHER_ADDR_LEN);
 		ETHER_NEXT_MULTI(step, enm);
 		i++;
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -957,7 +962,7 @@ static int
 kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
@@ -968,7 +973,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		kue_init(sc);

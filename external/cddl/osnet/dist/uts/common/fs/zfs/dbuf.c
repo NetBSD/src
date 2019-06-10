@@ -138,9 +138,6 @@ dbuf_cons(void *vdb, void *unused, int kmflag)
 {
 	dmu_buf_impl_t *db = vdb;
 
-#ifdef __NetBSD__
-	db = unused;
-#endif
 	bzero(db, sizeof (dmu_buf_impl_t));
 	mutex_init(&db->db_mtx, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&db->db_changed, NULL, CV_DEFAULT, NULL);
@@ -156,9 +153,6 @@ dbuf_dest(void *vdb, void *unused)
 {
 	dmu_buf_impl_t *db = vdb;
 
-#ifdef __NetBSD__
-	db = unused;
-#endif
 	mutex_destroy(&db->db_mtx);
 	cv_destroy(&db->db_changed);
 	ASSERT(!multilist_link_active(&db->db_cache_link));

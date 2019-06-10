@@ -1,6 +1,6 @@
 /* auxiliary data to generate special IEEE floats (NaN, +Inf, -Inf)
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,7 +28,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    on alphaev56-unknown-freebsd4.3 the NaN must be 8-bytes, since that
    compiler+system was seen incorrectly converting from a "float" NaN.  */
 
-#if _GMP_IEEE_FLOATS
+#if _MPFR_IEEE_FLOATS
 
 /* The "d" field guarantees alignment to a suitable boundary for a double.
    Could use a union instead, if we checked the compiler supports union
@@ -40,41 +40,38 @@ union dbl_bytes {
 
 #define MPFR_DBL_INFP  (dbl_infp.d)
 #define MPFR_DBL_INFM  (dbl_infm.d)
-#define MPFR_DBL_NAN   (dbl_nan.d)
+#define MPFR_DBL_NAN   DBL_NAN
 
-/* Warning! dbl_nan.d is not consistently the same NaN on all the
-   processors: it can be either a qNaN (quiet) or sNaN (signaling).
-   Processors are known to differ... */
+/* For NaN, we use DBL_NAN since the memory representation of a NaN depends
+   on the processor: a fixed memory representation could yield either a
+   quiet NaN (qNaN) or a signaling NaN (sNaN). For instance, HP PA-RISC
+   is known to do the opposite way of the usual choice recommended in
+   IEEE 754-2008; see:
+     http://grouper.ieee.org/groups/1788/email/msg03272.html
 
-#if HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
+   Moreover, the right choice is to generate a qNaN in particular because
+   signaling NaNs are not supported by all compilers (note that the support
+   must be in the compiler used to build the user-end application because
+   this is where the sNaN will be obtained). */
+
+#ifdef HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
 static const union dbl_bytes dbl_infp =
   { { 0, 0, 0, 0, 0, 0, 0xF0, 0x7F } };
 static const union dbl_bytes dbl_infm =
   { { 0, 0, 0, 0, 0, 0, 0xF0, 0xFF } };
-static const union dbl_bytes dbl_nan  =
-  { { 0, 0, 0, 0, 0, 0, 0xF8, 0x7F } };
 #endif
-#if HAVE_DOUBLE_IEEE_LITTLE_SWAPPED
-static const union dbl_bytes dbl_infp =
-  { { 0, 0, 0xF0, 0x7F, 0, 0, 0, 0 } };
-static const union dbl_bytes dbl_infm =
-  { { 0, 0, 0xF0, 0xFF, 0, 0, 0, 0 } };
-static const union dbl_bytes dbl_nan  =
-  { { 0, 0, 0xF8, 0x7F, 0, 0, 0, 0 } };
-#endif
-#if HAVE_DOUBLE_IEEE_BIG_ENDIAN
+
+#ifdef HAVE_DOUBLE_IEEE_BIG_ENDIAN
 static const union dbl_bytes dbl_infp =
   { { 0x7F, 0xF0, 0, 0, 0, 0, 0, 0 } };
 static const union dbl_bytes dbl_infm =
   { { 0xFF, 0xF0, 0, 0, 0, 0, 0, 0 } };
-static const union dbl_bytes dbl_nan  =
-  { { 0x7F, 0xF8, 0, 0, 0, 0, 0, 0 } };
 #endif
 
-#else /* _GMP_IEEE_FLOATS */
+#else /* _MPFR_IEEE_FLOATS */
 
 #define MPFR_DBL_INFP DBL_POS_INF
 #define MPFR_DBL_INFM DBL_NEG_INF
 #define MPFR_DBL_NAN DBL_NAN
 
-#endif /* _GMP_IEEE_FLOATS */
+#endif /* _MPFR_IEEE_FLOATS */

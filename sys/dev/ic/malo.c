@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.12 2018/06/26 06:48:00 msaitoh Exp $ */
+/*	$NetBSD: malo.c,v 1.12.2.1 2019/06/10 22:07:10 christos Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.12 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.12.2.1 2019/06/10 22:07:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -470,10 +470,9 @@ malo_detach(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 
-	/* remove channel scanning timer */
-	callout_stop(&sc->sc_scan_to);
-
 	malo_stop(ifp, 1);
+	/* remove channel scanning timer */
+	callout_destroy(&sc->sc_scan_to);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 	malo_free_cmd(sc);
@@ -1727,6 +1726,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	bus_space_write_region_1(sc->sc_mem1_bt, sc->sc_mem1_bh, 0xbf00,
 	    ucode, size);
 
+	firmware_free(ucode, size);
+
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
 	 * to fetch the code and execute it. The memory mapped via the
@@ -1743,10 +1744,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	}
 	if (i == 10) {
 		aprint_error_dev(sc->sc_dev, "timeout at boot firmware load!\n");
-		free(ucode, M_DEVBUF);
 		return (ETIMEDOUT);
 	}
-	firmware_free(ucode, size);
 
 	/* tell the card we're done and... */
 	malo_mem_write2(sc, 0xbef8, 0x001);
@@ -1884,7 +1883,7 @@ malo_hexdump(void *buf, int len)
 
 	for (i = 0; i < len; i += l) {
 		printf("%4i:", i);
-		l = min(sizeof(b), len - i);
+		l = uimin(sizeof(b), len - i);
 		memcpy(b, (char*)buf + i, l);
 		
 		for (j = 0; j < sizeof(b); j++) {

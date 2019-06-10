@@ -37,7 +37,10 @@
 #	define __USE_INLINE__
 #	include <proto/exec.h>
 
-// AIX
+#elif defined(__QNX__)
+#	include <sys/syspage.h>
+#	include <string.h>
+
 #elif defined(TUKLIB_PHYSMEM_AIX)
 #	include <sys/systemcfg.h>
 
@@ -83,7 +86,8 @@ tuklib_physmem(void)
 		// GlobalMemoryStatusEx() conditionally.
 		HMODULE kernel32 = GetModuleHandle("kernel32.dll");
 		if (kernel32 != NULL) {
-			BOOL (WINAPI *gmse)(LPMEMORYSTATUSEX) = GetProcAddress(
+			typedef BOOL (WINAPI *gmse_type)(LPMEMORYSTATUSEX);
+			gmse_type gmse = (gmse_type)GetProcAddress(
 					kernel32, "GlobalMemoryStatusEx");
 			if (gmse != NULL) {
 				MEMORYSTATUSEX meminfo;
@@ -125,6 +129,15 @@ tuklib_physmem(void)
 
 #elif defined(AMIGA) || defined(__AROS__)
 	ret = AvailMem(MEMF_TOTAL);
+
+#elif defined(__QNX__)
+	const struct asinfo_entry *entries = SYSPAGE_ENTRY(asinfo);
+	size_t count = SYSPAGE_ENTRY_SIZE(asinfo) / sizeof(struct asinfo_entry);
+	const char *strings = SYSPAGE_ENTRY(strings)->data;
+
+	for (size_t i = 0; i < count; ++i)
+		if (strcmp(strings + entries[i].name, "ram") == 0)
+			ret += entries[i].end - entries[i].start + 1;
 
 #elif defined(TUKLIB_PHYSMEM_AIX)
 	ret = _system_configuration.physmem;

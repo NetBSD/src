@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2017/03/22 23:11:07 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.35.12.1 2019/06/10 22:05:17 christos Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -18,7 +18,8 @@ SRCS+=	nanf.c
 SRCS+=	infinityl_dbl_ieee754.c
 .else
 SRCS+=	infinityl.c
-SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c signbitl.c
+SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c 
+SRCS+=	signbitl_ieee754.c
 .endif
 
 SRCS+=	ashlsi3.S ashrsi3.S \

@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -155,27 +155,49 @@ extern struct ui *current_ui;
 /* The list of all UIs.  */
 extern struct ui *ui_list;
 
-/* State for SWITCH_THRU_ALL_UIS.  Declared here because it is meant
-   to be created on the stack, but should be treated as opaque.  */
-struct switch_thru_all_uis
+/* State for SWITCH_THRU_ALL_UIS.  */
+class switch_thru_all_uis
 {
-  struct ui *iter;
-  struct cleanup *old_chain;
-};
+public:
 
-/* Functions to drive SWITCH_THRU_ALL_UIS.  Though declared here by
-   necessity, these functions should not be used other than via the
-   SWITCH_THRU_ALL_UIS macro defined below.  */
-extern void switch_thru_all_uis_init (struct switch_thru_all_uis *state);
-extern int switch_thru_all_uis_cond (struct switch_thru_all_uis *state);
-extern void switch_thru_all_uis_next (struct switch_thru_all_uis *state);
+  switch_thru_all_uis () : m_iter (ui_list), m_save_ui (&current_ui)
+  {
+    current_ui = ui_list;
+  }
+
+  /* If done iterating, return true; otherwise return false.  */
+  bool done () const
+  {
+    return m_iter == NULL;
+  }
+
+  /* Move to the next UI, setting current_ui if iteration is not yet
+     complete.  */
+  void next ()
+  {
+    m_iter = m_iter->next;
+    if (m_iter != NULL)
+      current_ui = m_iter;
+  }
+
+ private:
+
+  /* No need for these.  They are intentionally not defined
+     anywhere.  */
+  switch_thru_all_uis &operator= (const switch_thru_all_uis &);
+  switch_thru_all_uis (const switch_thru_all_uis &);
+
+  /* Used to iterate through the UIs.  */
+  struct ui *m_iter;
+
+  /* Save and restore current_ui.  */
+  scoped_restore_tmpl<struct ui *> m_save_ui;
+};
 
   /* Traverse through all UI, and switch the current UI to the one
      being iterated.  */
-#define SWITCH_THRU_ALL_UIS(STATE)		\
-  for (switch_thru_all_uis_init (&STATE);		\
-       switch_thru_all_uis_cond (&STATE);		\
-       switch_thru_all_uis_next (&STATE))
+#define SWITCH_THRU_ALL_UIS()		\
+  for (switch_thru_all_uis stau_state; !stau_state.done (); stau_state.next ())
 
 /* Traverse over all UIs.  */
 #define ALL_UIS(UI)				\
@@ -187,9 +209,6 @@ extern void delete_ui (struct ui *todel);
 
 /* Cleanup that deletes a UI.  */
 extern struct cleanup *make_delete_ui_cleanup (struct ui *ui);
-
-/* Make a cleanup that restores the current UI.  */
-extern struct cleanup *make_cleanup_restore_current_ui (void);
 
 /* Register the UI's input file descriptor in the event loop.  */
 extern void ui_register_input_event_handler (struct ui *ui);
@@ -212,7 +231,7 @@ extern void read_command_file (FILE *);
 extern void init_history (void);
 extern void command_loop (void);
 extern int quit_confirm (void);
-extern void quit_force (char *, int);
+extern void quit_force (int *, int);
 extern void quit_command (char *, int);
 extern void quit_cover (void);
 extern void execute_command (char *, int);
@@ -276,6 +295,6 @@ extern void do_restore_instream_cleanup (void *stream);
 
 extern char *handle_line_of_input (struct buffer *cmd_line_buffer,
 				   char *rl, int repeat,
-				   char *annotation_suffix);
+				   const char *annotation_suffix);
 
 #endif

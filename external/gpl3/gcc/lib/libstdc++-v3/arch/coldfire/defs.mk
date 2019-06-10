@@ -49,4 +49,4 @@ G_CSTDIO_H=config/io/c_io_stdio.h
 G_CLOCALE_H=config/locale/generic/c_locale.h
 G_CMESSAGES_H=config/locale/generic/messages_members.h
 G_CTIME_H=config/locale/generic/time_members.h
-G_CONFIGLINKS=${GNUHOSTDIST}/libgcc/enable-execute-stack-mprotect.c  enable-execute-stack.c ${GNUHOSTDIST}/libgcc/unwind-generic.h  unwind.h ${GNUHOSTDIST}/libgcc/config/no-unwind.h  md-unwind-support.h ${GNUHOSTDIST}/libgcc/config/no-sfp-machine.h  sfp-machine.h ${GNUHOSTDIST}/libgcc/gthr-posix.h  gthr-default.h 
+G_CONFIG_LINKS=${GNUHOSTDIST}/libgcc/enable-execute-stack-mprotect.c  enable-execute-stack.c ${GNUHOSTDIST}/libgcc/unwind-generic.h  unwind.h ${GNUHOSTDIST}/libgcc/config/no-unwind.h  md-unwind-support.h ${GNUHOSTDIST}/libgcc/config/no-sfp-machine.h  sfp-machine.h ${GNUHOSTDIST}/libgcc/gthr-posix.h  gthr-default.h 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interp_parse.c,v 1.5 2009/10/26 19:16:56 cegger Exp $	*/
+/*	$NetBSD: interp_parse.c,v 1.5.64.1 2019/06/10 22:06:23 christos Exp $	*/
 
 /*-
  * Redistribution and use in source and binary forms, with or without
@@ -153,7 +153,7 @@ parse(int *argc, char ***argv, char *str)
 		size_t len = strlen(val);
 
 		strncpy(buf + i, val, PARSE_BUFSIZE - (i + 1));
-		i += min(len, PARSE_BUFSIZE - 1);
+		i += uimin(len, PARSE_BUFSIZE - 1);
 	    }
 	    *q = tmp;	/* restore value */
 	    p = q + (token ? 1 : 0);

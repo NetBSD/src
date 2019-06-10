@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Free Software Foundation, Inc.
+# Copyright 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # This file was updated by Jan Kratochvil <jan.kratochvil@redhat.com>.
 
 # This test only works on Linux
-if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] } {
     continue
 }

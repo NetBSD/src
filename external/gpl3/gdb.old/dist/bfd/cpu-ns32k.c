@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -106,8 +106,10 @@ _bfd_ns32k_get_immediate (bfd_byte *buffer, int size)
     case 4:
       value = (value << 8) | (*buffer++ & 0xff);
       value = (value << 8) | (*buffer++ & 0xff);
+      /* Fall through.  */
     case 2:
       value = (value << 8) | (*buffer++ & 0xff);
+      /* Fall through.  */
     case 1:
       value = (value << 8) | (*buffer++ & 0xff);
       break;
@@ -126,8 +128,10 @@ _bfd_ns32k_put_immediate (bfd_vma value, bfd_byte *buffer, int size)
     case 4:
       *buffer-- = (value & 0xff); value >>= 8;
       *buffer-- = (value & 0xff); value >>= 8;
+      /* Fall through.  */
     case 2:
       *buffer-- = (value & 0xff); value >>= 8;
+      /* Fall through.  */
     case 1:
       *buffer-- = (value & 0xff); value >>= 8;
     }

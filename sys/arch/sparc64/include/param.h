@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58 2017/02/13 09:46:30 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.58.14.1 2019/06/10 22:06:48 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,11 +101,6 @@
 #if (defined(_KERNEL) || defined(_STANDALONE)) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)
 
 #ifdef __arch64__
 
@@ -229,8 +224,10 @@ extern int nbpg, pgofset, pgshift;
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#ifndef __HIDE_DELAY
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
+#endif /* __HIDE_DELAY */
 
 #ifdef	__arch64__
 /* If we're using a 64-bit kernel use 64-bit math */

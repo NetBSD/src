@@ -1,5 +1,5 @@
 /* Shared code for before and after reload gcse implementations.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -23,12 +23,8 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
 #include "rtl.h"
-#include "vec.h"
-#include "predict.h"
-#include "bitmap.h"
-#include "basic-block.h"
 #include "df.h"
 #include "gcse-common.h"
 
@@ -40,7 +36,7 @@
 void
 canon_list_insert (rtx dest, const_rtx x ATTRIBUTE_UNUSED, void *data)
 {
-  rtx dest_addr, insn;
+  rtx dest_addr;
   int bb;
   modify_pair pair;
 
@@ -58,7 +54,7 @@ canon_list_insert (rtx dest, const_rtx x ATTRIBUTE_UNUSED, void *data)
 
   dest_addr = get_addr (XEXP (dest, 0));
   dest_addr = canon_rtx (dest_addr);
-  insn = ((struct gcse_note_stores_info *)data)->insn;
+  rtx_insn *insn = ((struct gcse_note_stores_info *)data)->insn;
   bb = BLOCK_FOR_INSN (insn)->index;
 
   pair.dest = dest;

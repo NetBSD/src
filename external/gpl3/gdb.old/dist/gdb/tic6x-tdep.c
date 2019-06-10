@@ -1,6 +1,6 @@
 /* Target dependent code for GDB on TI C6x systems.
 
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -48,6 +48,7 @@
 #include "tic6x-tdep.h"
 #include "language.h"
 #include "target-descriptions.h"
+#include <algorithm>
 
 #include "features/tic6x-c64xp.c"
 #include "features/tic6x-c64x.c"
@@ -308,7 +309,7 @@ tic6x_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
       if (post_prologue_pc != 0)
-	return max (start_pc, post_prologue_pc);
+	return std::max (start_pc, post_prologue_pc);
     }
 
   /* Can't determine prologue from the symbol table, need to examine
@@ -317,15 +318,22 @@ tic6x_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 				 NULL);
 }
 
-/* This is the implementation of gdbarch method breakpiont_from_pc.  */
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+tic6x_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  return 4;
+}
+
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
 
 static const gdb_byte *
-tic6x_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *bp_addr,
-			  int *bp_size)
+tic6x_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  *bp_size = 4;
+  *size = kind;
 
   if (tdep == NULL || tdep->breakpoint == NULL)
     {
@@ -555,7 +563,7 @@ tic6x_fetch_instruction (struct gdbarch *gdbarch, CORE_ADDR pc)
    return 1 if INST is not a conditional instruction.  */
 
 static int
-tic6x_condition_true (struct frame_info *frame, unsigned long inst)
+tic6x_condition_true (struct regcache *regcache, unsigned long inst)
 {
   int register_number;
   int register_value;
@@ -565,7 +573,7 @@ tic6x_condition_true (struct frame_info *frame, unsigned long inst)
   if (register_number == -1)
     return 1;
 
-  register_value = get_frame_register_signed (frame, register_number);
+  register_value = regcache_raw_get_signed (regcache, register_number);
   if ((inst & 0x10000000) != 0)
     return register_value == 0;
   return register_value != 0;
@@ -596,9 +604,9 @@ tic6x_extract_signed_field (int value, int low_bit, int bits)
 /* Determine where to set a single step breakpoint.  */
 
 static CORE_ADDR
-tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
+tic6x_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   unsigned long inst;
   int register_number;
   int last = 0;
@@ -614,10 +622,10 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 	  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
 	  if (tdep->syscall_next_pc != NULL)
-	    return tdep->syscall_next_pc (frame);
+	    return tdep->syscall_next_pc (get_current_frame ());
 	}
 
-      if (tic6x_condition_true (frame, inst))
+      if (tic6x_condition_true (regcache, inst))
 	{
 	  if ((inst & 0x0000007c) == 0x00000010)
 	    {
@@ -633,7 +641,7 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 	      register_number = tic6x_register_number ((inst >> 18) & 0x1f,
 						       INST_S_BIT (inst),
 						       INST_X_BIT (inst));
-	      pc = get_frame_register_unsigned (frame, register_number);
+	      pc = regcache_raw_get_unsigned (regcache, register_number);
 	      break;
 	    }
 	  if ((inst & 0x00001ffc) == 0x00001020)
@@ -641,7 +649,7 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 	      /* BDEC */
 	      register_number = tic6x_register_number ((inst >> 23) & 0x1f,
 						       INST_S_BIT (inst), 0);
-	      if (get_frame_register_signed (frame, register_number) >= 0)
+	      if (regcache_raw_get_signed (regcache, register_number) >= 0)
 		{
 		  pc &= ~(TIC6X_FETCH_PACKET_SIZE - 1);
 		  pc += tic6x_extract_signed_field (inst, 7, 10) << 2;
@@ -660,7 +668,7 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 	      /* BNOP with register */
 	      register_number = tic6x_register_number ((inst >> 18) & 0x1f,
 						       1, INST_X_BIT (inst));
-	      pc = get_frame_register_unsigned (frame, register_number);
+	      pc = regcache_raw_get_unsigned (regcache, register_number);
 	      break;
 	    }
 	  if ((inst & 0x00001ffc) == 0x00000020)
@@ -668,7 +676,7 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 	      /* BPOS */
 	      register_number = tic6x_register_number ((inst >> 23) & 0x1f,
 						       INST_S_BIT (inst), 0);
-	      if (get_frame_register_signed (frame, register_number) >= 0)
+	      if (regcache_raw_get_signed (regcache, register_number) >= 0)
 		{
 		  pc &= ~(TIC6X_FETCH_PACKET_SIZE - 1);
 		  pc += tic6x_extract_signed_field (inst, 13, 10) << 2;
@@ -691,16 +699,15 @@ tic6x_get_next_pc (struct frame_info *frame, CORE_ADDR pc)
 
 /* This is the implementation of gdbarch method software_single_step.  */
 
-static int
-tic6x_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+tic6x_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR next_pc = tic6x_get_next_pc (frame, get_frame_pc (frame));
+  CORE_ADDR next_pc = tic6x_get_next_pc (regcache, regcache_read_pc (regcache));
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
-  insert_single_step_breakpoint (gdbarch, aspace, next_pc);
+  VEC_safe_push (CORE_ADDR, next_pcs, next_pc);
 
-  return 1;
+  return next_pcs;
 }
 
 /* This is the implementation of gdbarch method frame_align.  */
@@ -1294,7 +1301,10 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
   set_gdbarch_skip_prologue (gdbarch, tic6x_skip_prologue);
-  set_gdbarch_breakpoint_from_pc (gdbarch, tic6x_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       tic6x_breakpoint_kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       tic6x_sw_breakpoint_from_kind);
 
   set_gdbarch_unwind_pc (gdbarch, tic6x_unwind_pc);
   set_gdbarch_unwind_sp (gdbarch, tic6x_unwind_sp);

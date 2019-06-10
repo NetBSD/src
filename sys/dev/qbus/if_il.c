@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_il.c,v 1.29.18.1 2019/06/10 22:07:30 christos Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29.18.1 2019/06/10 22:07:30 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $");
 
 struct	il_softc {
 	device_t sc_dev;		/* Configuration common part */
-	struct	ethercom sc_ec;		/* Ethernet common part */
+	struct ethercom sc_ec;		/* Ethernet common part */
 #define	sc_if	sc_ec.ec_if		/* network-visible interface */
-	struct	evcnt sc_cintrcnt;	/* Command interrupts */
-	struct  evcnt sc_rintrcnt;	/* Receive interrupts */
+	struct evcnt sc_cintrcnt;	/* Command interrupts */
+	struct evcnt sc_rintrcnt;	/* Receive interrupts */
 	bus_space_tag_t sc_iot;
 	bus_addr_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
@@ -116,7 +116,7 @@ static	void ilattach(device_t, device_t, void *);
 static	void ilcint(void *);
 static	void ilrint(void *);
 static	void ilreset(device_t);
-static	int ilwait(struct il_softc *, char *);
+static	int ilwait(struct il_softc *, const char *);
 static	int ilinit(struct ifnet *);
 static	void ilstart(struct ifnet *);
 static	void ilwatch(struct ifnet *);
@@ -137,11 +137,11 @@ int
 ilmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	volatile int i;
 
-	bus_space_write_2(ua->ua_iot, ua->ua_ioh, IL_CSR, ILC_OFFLINE|IL_CIE);
+	bus_space_write_2(ua->ua_iot, ua->ua_ioh, IL_CSR,
+	    ILC_OFFLINE | IL_CIE);
 	DELAY(100000);
-	i = bus_space_read_2(ua->ua_iot, ua->ua_ioh, IL_CSR); /* clear CDONE */
+	bus_space_read_2(ua->ua_iot, ua->ua_ioh, IL_CSR); /* clear CDONE */
 
 	return 1;
 }
@@ -191,7 +191,7 @@ ilattach(device_t parent, device_t self, void *aux)
 
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 	IL_WCSR(IL_BCR, sizeof(struct il_stats));
-	IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
+	IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_STAT);
 	(void)ilwait(sc, "status");
 	ubfree(device_private(parent), &sc->sc_ui);
 	printf("%s: module=%s firmware=%s\n", device_xname(sc->sc_dev),
@@ -201,7 +201,7 @@ ilattach(device_t parent, device_t self, void *aux)
 
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = ilinit;
 	ifp->if_stop = ilstop;
 	ifp->if_ioctl = ether_ioctl;
@@ -223,7 +223,7 @@ ilstop(struct ifnet *ifp, int a)
 
 
 int
-ilwait(struct il_softc *sc, char *op)
+ilwait(struct il_softc *sc, const char *op)
 {
 
 	while ((IL_RCSR(IL_CSR)&IL_CDONE) == 0)
@@ -233,9 +233,9 @@ ilwait(struct il_softc *sc, char *op)
 
 		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
 		aprint_error_dev(sc->sc_dev, "%s failed, csr=%s\n", op, bits);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -276,7 +276,8 @@ ilinit(struct ifnet *ifp)
 		}
 		sc->sc_ui.ui_size = sizeof(sc->sc_isu);
 		sc->sc_ui.ui_vaddr = (void *)&sc->sc_isu;
-		uballoc(device_private(device_parent(sc->sc_dev)), &sc->sc_ui, 0);
+		uballoc(device_private(device_parent(sc->sc_dev)),
+		    &sc->sc_ui, 0);
 	}
 	sc->sc_scaninterval = ILWATCHINTERVAL;
 	ifp->if_timer = sc->sc_scaninterval;
@@ -307,12 +308,14 @@ ilinit(struct ifnet *ifp)
 		memcpy(&sc->sc_isu, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
-		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
+		IL_WCSR(IL_CSR,
+		    ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_LDPA);
 		if (ilwait(sc, "setaddr"))
 			goto out;
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, sizeof (struct il_stats));
-		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
+		IL_WCSR(IL_CSR,
+		    ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_STAT);
 		if (ilwait(sc, "verifying setaddr"))
 			goto out;
 		if (memcmp(sc->sc_stats.ils_addr,
@@ -321,19 +324,19 @@ ilinit(struct ifnet *ifp)
 			goto out;
 		}
 	}
-#ifdef MULTICAST
-	if (is->is_if.if_flags & IFF_PROMISC) {
-		addr->il_csr = ILC_PRMSC;
-		if (ilwait(ui, "all multi"))
+	if (sc->sc_if.if_flags & IFF_PROMISC) {
+		IL_WCSR(IL_CSR, ILC_PRMSC);
+		if (ilwait(sc, "all multi"))
 			goto out;
-	} else if (is->is_if.if_flags & IFF_ALLMULTI) {
-	too_many_multis:
-		addr->il_csr = ILC_ALLMC;
-		if (ilwait(ui, "all multi"))
+	} else if (sc->sc_if.if_flags & IFF_ALLMULTI) {
+too_many_multis:
+		IL_WCSR(IL_CSR, ILC_ALLMC);
+		if (ilwait(sc, "all multi"))
 			goto out;
 	} else {
 		int i;
-		register struct ether_addr *ep = is->is_maddrs;
+		struct ethercom *ec = &sc->sc_ec;
+		register struct ether_addr *ep = sc->sc_maddrs;
 		struct ether_multi *enm;
 		struct ether_multistep step;
 		/*
@@ -343,29 +346,30 @@ ilinit(struct ifnet *ifp)
 		 * multicasts.
 		 */
 		i = 0;
-		ETHER_FIRST_MULTI(step, &is->is_ac, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (++i > 63 && k != 0) {
+			if (++i > 63 /* && k != 0 */) {
 				break;
 			}
 			*ep++ = *(struct ether_addr *)enm->enm_addrlo;
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		if (i = 0) {
+		ETHER_UNLOCK(ec);
+		if (i == 0) {
 			/* no multicasts! */
 		} else if (i <= 63) {
-			addr->il_bar = is->is_ubaddr & 0xffff;
-			addr->il_bcr = i * sizeof (struct ether_addr);
-			addr->il_csr = ((is->is_ubaddr >> 2) & IL_EUA)|
-						LC_LDGRPS;
-			if (ilwait(ui, "load multi"))
+			IL_WCSR(IL_BAR, sc->sc_ubaddr & 0xffff);
+			IL_WCSR(IL_BCR, i * sizeof(struct ether_addr));
+			IL_WCSR(IL_CSR,
+			    ((sc->sc_ubaddr >> 2) & IL_EUA) | ILC_LDGRPS);
+			if (ilwait(sc, "load multi"))
 				goto out;
 		} else {
-		    is->is_if.if_flags |= IFF_ALLMULTI;
-		    goto too_many_multis;
+			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			goto too_many_multis;
 		}
 	}
-#endif /* MULTICAST */
 	/*
 	 * Set board online.
 	 * Hang receive buffer and start any pending
@@ -380,7 +384,7 @@ ilinit(struct ifnet *ifp)
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 	IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
 	IL_WCSR(IL_CSR,
-	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA)|ILC_RCV|IL_RIE);
+	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA) | ILC_RCV | IL_RIE);
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 		;
 	ifp->if_flags |= IFF_RUNNING | IFF_OACTIVE;
@@ -411,7 +415,8 @@ ilstart(struct ifnet *ifp)
 			return;
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, sizeof (struct il_stats));
-		csr = ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT|IL_RIE|IL_CIE;
+		csr = ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)
+		    | ILC_STAT | IL_RIE | IL_CIE;
 		sc->sc_flags &= ~ILF_STATPENDING;
 		goto startcmd;
 	}
@@ -422,8 +427,8 @@ ilstart(struct ifnet *ifp)
 #endif
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_w.ifrw_info));
 	IL_WCSR(IL_BCR, len);
-	csr =
-	  ((sc->sc_ifuba.ifu_w.ifrw_info >> 2) & IL_EUA)|ILC_XMIT|IL_CIE|IL_RIE;
+	csr = ((sc->sc_ifuba.ifu_w.ifrw_info >> 2) & IL_EUA)
+	    | ILC_XMIT | IL_CIE | IL_RIE;
 
 startcmd:
 	sc->sc_lastcmd = csr & IL_CMD;
@@ -460,8 +465,8 @@ ilcint(void *arg)
 
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 		IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
-		IL_WCSR(IL_CSR,
-		  ((sc->sc_ifuba.ifu_r.ifrw_info>>2) & IL_EUA)|ILC_RCV|IL_RIE);
+		IL_WCSR(IL_CSR, ((sc->sc_ifuba.ifu_r.ifrw_info>>2) & IL_EUA)
+		    | ILC_RCV | IL_RIE);
 		s = splhigh();
 		while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 			;
@@ -511,7 +516,7 @@ ilrint(void *arg)
 #endif
 	il = (struct il_rheader *)(sc->sc_ifuba.ifu_r.ifrw_addr);
 	len = il->ilr_length - sizeof(struct il_rheader);
-	if ((il->ilr_status&(ILFSTAT_A|ILFSTAT_C)) || len < 46 ||
+	if ((il->ilr_status&(ILFSTAT_A | ILFSTAT_C)) || len < 46 ||
 	    len > ETHERMTU) {
 		sc->sc_if.if_ierrors++;
 #ifdef notdef
@@ -547,7 +552,7 @@ setup:
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 	IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
 	IL_WCSR(IL_CSR,
-	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA)|ILC_RCV|IL_RIE);
+	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA) | ILC_RCV | IL_RIE);
 	s = splhigh();
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 		;
@@ -592,7 +597,8 @@ iltotal(struct il_softc *sc)
 	if ((sc->sc_flags & ILF_SETADDR) &&
 	    (memcmp(sc->sc_stats.ils_addr, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) != 0)) {
-		log(LOG_ERR, "%s: physaddr reverted\n", device_xname(sc->sc_dev));
+		log(LOG_ERR, "%s: physaddr reverted\n",
+		    device_xname(sc->sc_dev));
 		sc->sc_flags &= ~ILF_RUNNING;
 		ilinit(&sc->sc_if);
 	}

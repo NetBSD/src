@@ -1,6 +1,6 @@
 /* Test file for mpfr_asin.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -82,14 +79,14 @@ special (void)
   /* asin(+/-0) = +/-0 */
   mpfr_set_ui (x, 0, MPFR_RNDN);
   mpfr_asin (y, x, MPFR_RNDN);
-  if (mpfr_cmp_ui (y, 0) || mpfr_sgn (y) < 0)
+  if (MPFR_NOTZERO (y) || MPFR_IS_NEG (y))
     {
       printf ("Error: mpfr_asin (+0) <> +0\n");
       exit (1);
     }
   mpfr_neg (x, x, MPFR_RNDN);
   mpfr_asin (y, x, MPFR_RNDN);
-  if (mpfr_cmp_ui (y, 0) || mpfr_sgn (y) > 0)
+  if (MPFR_NOTZERO (y) || MPFR_IS_POS (y))
     {
       printf ("Error: mpfr_asin (-0) <> -0\n");
       exit (1);
@@ -144,8 +141,8 @@ special (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error: mpfr_asin (2)\n");
-      mpfr_print_binary (x); printf ("\n");
-      mpfr_print_binary (y); printf ("\n");
+      mpfr_dump (x);
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -245,7 +242,7 @@ reduced_expo_range (void)
   ex_inex = -1;
   ex_flags = MPFR_FLAGS_INEXACT;
 
-  if (SIGN (inex) != ex_inex || flags != ex_flags ||
+  if (VSIGN (inex) != ex_inex || flags != ex_flags ||
       ! mpfr_equal_p (y, ex_y))
     {
       printf ("Error in reduced_expo_range\non x = ");
@@ -255,7 +252,7 @@ reduced_expo_range (void)
       printf ("\n         inex = %d, flags = %u\n", ex_inex, ex_flags);
       printf ("Got      y = ");
       mpfr_out_str (stdout, 2, 0, y, MPFR_RNDN);
-      printf ("\n         inex = %d, flags = %u\n", SIGN (inex), flags);
+      printf ("\n         inex = %d, flags = %u\n", VSIGN (inex), flags);
       exit (1);
     }
 
@@ -271,7 +268,7 @@ main (void)
   special_overflow ();
   reduced_expo_range ();
 
-  test_generic (2, 100, 15);
+  test_generic (MPFR_PREC_MIN, 100, 15);
 
   tests_end_mpfr ();
 

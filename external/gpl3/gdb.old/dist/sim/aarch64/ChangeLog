@@ -1,3 +1,155 @@
+2017-04-08  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_FCVTL): New.
+	(do_vec_op1): Call do_vec_FCVTL.
+
+	* simulator.c (do_scalar_FCMGE_zero, do_scalar_FCMLE_zero,
+	do_scalar_FCMGT_zero, do_scalar_FCMEQ_zero, do_scalar_FCMLT_zero): New.
+	(do_scalar_vec): Add calls to new functions.
+
+2017-03-25  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (set_flags_for_add32): Cast result to uint32_t in carry
+	flag check.
+
+2017-03-03  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (mul64hi): Shift carry left by 32.
+	(smulh): Change signum to negate.  If negate, invert result, and add
+	carry bit if low part of multiply result is zero.
+
+2017-02-25  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_SMOV_into_scalar): New.
+	(do_vec_UMOV_into_scalar): Renamed from do_vec_MOV_into_scalar.
+	Rewritten.
+	(do_vec_UMOV): Merged into do_vec_UMOV_into_scalar and deleted.
+	(do_vec_op1): Move do_vec_TRN call and do_vec_UZP call.  Add
+	do_vec_SMOV_into_scalar call.  Delete do_vec_MOV_into_scalar and
+	do_vec_UMOV calls.  Add do_vec_UMOV_into_scalar call.
+
+	* simulator.c (popcount): New.
+	(do_vec_CNT): New.
+	(do_vec_op1): Add do_vec_CNT call.
+
+2017-02-19  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_ADDV): Mov val declaration inside each case,
+	with type set to input type size.
+	(do_vec_xtl): Change bias from 3 to 4 for byte case.
+
+2017-02-14  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_MLA): Rewrite switch body.
+
+	* simulator.c (do_vec_bit): Change loop limits from 16 and 8 to 4 and
+	2.  Move test_false if inside loop.  Fix logic for computing result
+	stored to vd.
+
+	* simulator.c: (LDn_STn_SINGLE_LANE_AND_SIZE): New.
+	(do_vec_LDn_single, do_vec_STn_single): New.
+	(do_vec_LDnR): Add and set new nregs var.  Replace switch on nregs with
+	loop over nregs using new var n.  Add n times size to address in loop.
+	Add n to vd in loop.
+	(do_vec_load_store): Add comment for instruction bit 24.  New var
+	single to hold instruction bit 24.  Add new code to use single.  Move
+	ldnr support inside single if statements.  Fix ldnr register counts
+	inside post if statement.  Change HALT_NYI calls to HALT_UNALLOC.
+
+2017-01-23  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_compare): Add case 0x23 for CMTST.
+
+2017-01-17  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_ADDV): Call aarch64_set_vec_u64 instead of
+	aarch64_set_reg_u64.  In case 2, call HALT_UNALLOC if not full.  In
+	case 3, call HALT_UNALLOC unconditionally.
+	(do_vec_XTN): Delete shifts.  In case 2, change index from i + 4 to
+	i + 2.  Delete if on bias, change index to i + bias * X.
+
+2017-01-09  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (do_vec_UZP): Rewrite.
+
+2017-01-04  Jim Wilson  <jim.wilson@linaro.org>
+
+	* cpustate.c: Include math.h.
+	(aarch64_set_FP_float): Use signbit to check for signed zero.
+	(aarch64_set_FP_double): Likewise.
+	* simulator.c (do_vec_MOV_immediate, case 0x8): Add missing break.
+	(do_vec_mul): In all DO_VEC_WIDENING_MUL calls, make second and fourth
+	args same size as third arg.
+	(fmaxnm): Use isnan instead of fpclassify.
+	(fminnm, dmaxnm, dminnm): Likewise.
+	(do_vec_MLS): Reverse order of subtraction operands.
+	(dexSimpleFPCondSelect): Call aarch64_get_FP_double or
+	aarch64_get_FP_float to get source register contents.
+	(UINT_MIN, ULONG_MIN, FLOAT_UINT_MAX, FLOAT_UINT_MIN,
+	DOUBLE_UINT_MAX, DOUBLE_UINT_MIN, FLOAT_ULONG_MAX, FLOAT_ULONG_MIN,
+	DOUBLE_ULONG_MAX, DOUBLE_ULONG_MIN): New.
+	(do_fcvtzu): Use ULONG instead of LONG, and UINT instead of INT in
+	raise_exception calls.
+
+2016-12-21  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (set_flags_for_float_compare): Add code to handle Inf.
+	Add comment to document NaN issue.
+	(set_flags_for_double_compare): Likewise.
+
+2016-12-13  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (NEG, POS): Move before set_flags_for_add64.
+	(set_flags_for_add64): Replace with a modified copy of
+	set_flags_for_sub64.
+
+2016-12-03  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (tbnz, tbz): Cast 1 to uint64_t before shifting.
+	(dexTestBranchImmediate): Shift high bit of pos by 5 not 4.
+
+2016-12-01  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (fsturs): Switch use of rn and st variables.
+	(fsturd, fsturq): Likewise
+
+2016-08-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Include bfd.h.
+	(symcount, symtab, aarch64_get_sym_value): Delete.
+	(remove_useless_symbols): Change count type to long.
+	(aarch64_get_func): Add SIM_DESC to arg list.  Add symcount
+	and symtab local variables.
+	(sim_create_inferior): Delete storage.  Replace symbol code
+	with a call to trace_load_symbols.
+	* memory.c: Delete bfd.h, elf/internal.h, and elf/common.h
+	includes.
+	(aarch64_get_heap_start): Change aarch64_get_sym_value to
+	trace_sym_value.
+	* memory.h: Delete bfd.h include.
+	(mem_add_blk): Delete unused prototype.
+	* simulator.c (bl, blr): Pass SIM_DESC to aarch64_get_func.
+	* simulator.c (aarch64_get_func): Add SIM_DESC to arg list.
+	(aarch64_get_sym_value): Delete.
+
+2016-08-12  Nick Clifton  <nickc@redhat.com>
+
+	* simulator.c (aarch64_step): Revert pervious delta.
+	(aarch64_run): Call sim_events_tick after each
+	instruction is simulated, and if necessary call
+	sim_events_process.
+	* simulator.h: Revert previous delta.
+
+2016-08-11  Nick Clifton  <nickc@redhat.com>
+
+	* interp.c (sim_create_inferior): Allow for being called with a
+	NULL abfd parameter.  If a bfd is provided, initialise the sim
+	with that start address.
+	* simulator.c (HALT_NYI): Just print out the numeric value of the
+	instruction when not tracing.
+	(aarch64_step): Change from static to global.
+	* simulator.h: Add a prototype for aarch64_step().
+
 2016-07-27  Alan Modra  <amodra@gmail.com>
 
 	* memory.c: Don't include libbfd.h.

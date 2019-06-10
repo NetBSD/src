@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 21:58:09 christos Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c

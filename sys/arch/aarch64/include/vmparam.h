@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.4 2018/05/12 15:14:49 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.4.2.1 2019/06/10 22:05:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #ifndef	MAXDSIZ32
-#define	MAXDSIZ32	(1536*1024*1024)	/* max data size */
+#define	MAXDSIZ32	(3U*1024*1024*1024)	/* max data size */
 #endif
 
 #ifndef	MAXSSIZ32
@@ -116,7 +116,7 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) (1L << 48) - PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
-#define VM_MAXUSER_ADDRESS32	((vaddr_t) 0x7ffff000)
+#define VM_MAXUSER_ADDRESS32	((vaddr_t) 0xfffff000)
 
 /*
  * Give ourselves 64GB of mappable kernel space.  That leaves the rest
@@ -131,10 +131,22 @@
  * see also aarch64/pmap.c:pmap_devmap_*
  */
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
+#define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
+
+/*
+ * Reserved space for EFI runtime services
+ */
+#define	EFI_RUNTIME_VA		0xffff800000000000L
+#define	EFI_RUNTIME_SIZE	0x0000000040000000L
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)
 #define VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
+
+#define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz) - user_stack_guard_size)
+#define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
+	round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
 /*
  * Since we have the address space, we map all of physical memory (RAM)
@@ -150,7 +162,7 @@
 #define AARCH64_KVA_TO_PA(va)	((paddr_t) ((va) & ~AARCH64_KSEG_MASK))
 
 /* */
-#define VM_PHYSSEG_MAX		16              /* XXX */
+#define VM_PHYSSEG_MAX		64              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
 #define VM_NFREELIST		3

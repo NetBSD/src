@@ -165,9 +165,10 @@ xstormy16_cgen_print_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while printing insn.\n"),
-	       opindex);
-    abort ();
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while printing insn"),
+	 opindex);
+      abort ();
   }
 }
 

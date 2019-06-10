@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_rssadapt.c,v 1.21.16.5 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -32,7 +32,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.21.16.5 2019/06/10 22:09:46 christos Exp $");
+#endif
+
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

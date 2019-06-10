@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.33.6.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33.6.1 2019/06/10 22:09:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
-#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +163,7 @@ sched_tick(struct cpu_info *ci)
 #define	ESTCPU_SHIFT	11
 #define	ESTCPU_MAX	((PRIO_MAX - 2) << ESTCPU_SHIFT)
 #define	ESTCPU_ACCUM	(1 << (ESTCPU_SHIFT - 1))
-#define	ESTCPULIM(e)	min((e), ESTCPU_MAX)
+#define	ESTCPULIM(e)	uimin((e), ESTCPU_MAX)
 
 /*
  * The main parameter used by this algorithm is 'l_estcpu'. It is an estimate

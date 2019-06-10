@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.9 2015/06/09 22:50:50 matt Exp $ */
+/* $NetBSD: athflash.c,v 1.9.18.1 2019/06/10 22:06:29 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.9 2015/06/09 22:50:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.9.18.1 2019/06/10 22:06:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -300,10 +300,10 @@ flashread(dev_t dev, struct uio *uio, int flag)
 	ioh = sc->sc_ioh;
 
 	off = uio->uio_offset;
-	total = min(sc->sc_size - off, uio->uio_resid);
+	total = uimin(sc->sc_size - off, uio->uio_resid);
 
 	while (total > 0) {
-		count = min(sc->sc_sector_size, uio->uio_resid);
+		count = uimin(sc->sc_sector_size, uio->uio_resid);
 		bus_space_read_region_1(iot, ioh, off, sc->sc_buf, count);
 		if ((error = uiomove(sc->sc_buf, count, uio)) != 0)
 			return error;

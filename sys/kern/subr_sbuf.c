@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_sbuf.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $	*/
+/*	$NetBSD: subr_sbuf.c,v 1.1.2.3 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -73,7 +73,7 @@ __FBSDID("$FreeBSD$");
 #ifdef _KERNEL
 static MALLOC_DEFINE(M_SBUF, "sbuf", "string buffers");
 #define	SBMALLOC(size)		malloc(size, M_SBUF, M_WAITOK|M_ZERO)
-#define	SBFREE(buf)		free(buf, M_SBUF)
+#define	SBFREE(buf, size)	free(buf, M_SBUF)
 #else /* _KERNEL */
 #define	KASSERT(e, m)
 #define	SBMALLOC(size)		calloc(1, size)
@@ -81,7 +81,7 @@ static MALLOC_DEFINE(M_SBUF, "sbuf", "string buffers");
 #endif /* _KERNEL */
 #elif __NetBSD__
 #define SBMALLOC(size)		kmem_zalloc(size,KM_SLEEP)
-#define	SBFREE(buf)		kmem_free(buf,sizeof(*buf))
+#define	SBFREE(buf, size)	kmem_free(buf, size)
 #undef KASSERT
 #define KASSERT(_cond, _complaint)            \
         do {                                  \
@@ -203,11 +203,7 @@ sbuf_extend(struct sbuf *s, int addlen)
 		return (-1);
 	memcpy(newbuf, s->s_buf, s->s_size);
 	if (SBUF_ISDYNAMIC(s))
-#if __FreeBSD__
-		SBFREE(s->s_buf);
-#elif __NetBSD__
-		kmem_free(s->s_buf, s->s_size);
-#endif
+		SBFREE(s->s_buf, s->s_size);
 	else
 		SBUF_SETFLAG(s, SBUF_DYNAMIC);
 	s->s_buf = newbuf;
@@ -270,7 +266,7 @@ sbuf_new(struct sbuf *s, char *buf, int length, int flags)
 	if (s == NULL)
 		return (NULL);
 	if (sbuf_newbuf(s, buf, length, flags) == NULL) {
-		SBFREE(s);
+		SBFREE(s, sizeof(*s));
 		return (NULL);
 	}
 	SBUF_SETFLAG(s, SBUF_DYNSTRUCT);
@@ -695,13 +691,8 @@ sbuf_vprintf(struct sbuf *s, const char *fmt, va_list ap)
 	if (SBUF_ISSECTION(s))
 		s->s_sect_len += len;
 
-#if __FreeBSD__
 	KASSERT(s->s_len < s->s_size,
-	    ("wrote past end of sbuf (%d >= %d)", s->s_len, s->s_size));
-#elif __NetBSD__
-	KASSERT(s->s_len < s->s_size,
-	    ("wrote past end of sbuf (%ld >= %ld)", s->s_len, s->s_size));
-#endif
+	    ("wrote past end of sbuf (%zd >= %zd)", s->s_len, s->s_size));
 
 	if (s->s_error != 0)
 		return (-1);
@@ -848,15 +839,11 @@ sbuf_delete(struct sbuf *s)
 	/* don't care if it's finished or not */
 
 	if (SBUF_ISDYNAMIC(s))
-#if __FreeBSD__
-		SBFREE(s->s_buf);
-#elif __NetBSD__
-		kmem_free(s->s_buf, s->s_size);
-#endif
+		SBFREE(s->s_buf, s->s_size);
 	isdyn = SBUF_ISDYNSTRUCT(s);
 	memset(s, 0, sizeof(*s));
 	if (isdyn)
-		SBFREE(s);
+		SBFREE(s, sizeof(*s));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.408 2018/05/18 18:58:51 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.408.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.408 2018/05/18 18:58:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.408.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1172,7 +1172,7 @@ drop:
  * TCP input routine, follows pages 65-76 of RFC 793 very closely.
  */
 void
-tcp_input(struct mbuf *m, ...)
+tcp_input(struct mbuf *m, int off, int proto)
 {
 	struct tcphdr *th;
 	struct ip *ip;
@@ -1183,7 +1183,7 @@ tcp_input(struct mbuf *m, ...)
 #endif
 	u_int8_t *optp = NULL;
 	int optlen = 0;
-	int len, tlen, toff, hdroptlen = 0;
+	int len, tlen, hdroptlen = 0;
 	struct tcpcb *tp = NULL;
 	int tiflags;
 	struct socket *so = NULL;
@@ -1194,8 +1194,7 @@ tcp_input(struct mbuf *m, ...)
 #endif
 	u_long tiwin;
 	struct tcp_opt_info opti;
-	int off, iphlen;
-	va_list ap;
+	int thlen, iphlen;
 	int af;		/* af on the wire */
 	struct mbuf *tcp_saveti = NULL;
 	uint32_t ts_rtt;
@@ -1206,10 +1205,6 @@ tcp_input(struct mbuf *m, ...)
 	vestige.valid = 0;
 
 	MCLAIM(m, &tcp_rx_mowner);
-	va_start(ap, m);
-	toff = va_arg(ap, int);
-	(void)va_arg(ap, int);		/* ignore value, advance ap */
-	va_end(ap);
 
 	TCP_STATINC(TCP_STAT_RCVTOTAL);
 
@@ -1237,7 +1232,7 @@ tcp_input(struct mbuf *m, ...)
 	}
 #endif
 
-	M_REGION_GET(th, struct tcphdr *, m, toff, sizeof(struct tcphdr));
+	M_REGION_GET(th, struct tcphdr *, m, off, sizeof(struct tcphdr));
 	if (th == NULL) {
 		TCP_STATINC(TCP_STAT_RCVSHORT);
 		return;
@@ -1262,7 +1257,7 @@ tcp_input(struct mbuf *m, ...)
 
 		/* We do the checksum after PCB lookup... */
 		len = ntohs(ip->ip_len);
-		tlen = len - toff;
+		tlen = len - off;
 		iptos = ip->ip_tos;
 		break;
 #ifdef INET6
@@ -1296,7 +1291,7 @@ tcp_input(struct mbuf *m, ...)
 
 		/* We do the checksum after PCB lookup... */
 		len = m->m_pkthdr.len;
-		tlen = len - toff;
+		tlen = len - off;
 		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 #endif
@@ -1310,7 +1305,7 @@ tcp_input(struct mbuf *m, ...)
 	 * some cases, see kern/50766 for details.
 	 */
 	if (TCP_HDR_ALIGNED_P(th) == 0) {
-		m = m_copyup(m, toff + sizeof(struct tcphdr), 0);
+		m = m_copyup(m, off + sizeof(struct tcphdr), 0);
 		if (m == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
@@ -1319,7 +1314,7 @@ tcp_input(struct mbuf *m, ...)
 #ifdef INET6
 		ip6 = mtod(m, struct ip6_hdr *);
 #endif
-		th = (struct tcphdr *)(mtod(m, char *) + toff);
+		th = (struct tcphdr *)(mtod(m, char *) + off);
 	}
 	KASSERT(TCP_HDR_ALIGNED_P(th));
 
@@ -1327,21 +1322,21 @@ tcp_input(struct mbuf *m, ...)
 	 * Check that TCP offset makes sense, pull out TCP options and
 	 * adjust length.
 	 */
-	off = th->th_off << 2;
-	if (off < sizeof(struct tcphdr) || off > tlen) {
+	thlen = th->th_off << 2;
+	if (thlen < sizeof(struct tcphdr) || thlen > tlen) {
 		TCP_STATINC(TCP_STAT_RCVBADOFF);
 		goto drop;
 	}
-	tlen -= off;
+	tlen -= thlen;
 
-	if (off > sizeof(struct tcphdr)) {
-		M_REGION_GET(th, struct tcphdr *, m, toff, off);
+	if (thlen > sizeof(struct tcphdr)) {
+		M_REGION_GET(th, struct tcphdr *, m, off, thlen);
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
 		KASSERT(TCP_HDR_ALIGNED_P(th));
-		optlen = off - sizeof(struct tcphdr);
+		optlen = thlen - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 
 		/*
@@ -1355,11 +1350,11 @@ tcp_input(struct mbuf *m, ...)
 		if ((optlen == TCPOLEN_TSTAMP_APPA ||
 		     (optlen > TCPOLEN_TSTAMP_APPA &&
 		      optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
-		    *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
+		    be32dec(optp) == TCPOPT_TSTAMP_HDR &&
 		    (th->th_flags & TH_SYN) == 0) {
 			opti.ts_present = 1;
-			opti.ts_val = ntohl(*(u_int32_t *)(optp + 4));
-			opti.ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
+			opti.ts_val = be32dec(optp + 4);
+			opti.ts_ecr = be32dec(optp + 8);
 			optp = NULL;	/* we've parsed the options */
 		}
 	}
@@ -1368,7 +1363,7 @@ tcp_input(struct mbuf *m, ...)
 	/*
 	 * Checksum extended TCP header and data
 	 */
-	if (tcp_input_checksum(af, m, th, toff, off, tlen))
+	if (tcp_input_checksum(af, m, th, off, thlen, tlen))
 		goto badcsum;
 
 	/*
@@ -1743,7 +1738,7 @@ nosave:;
 			 * state for it.
 			 */
 			if (so->so_qlen <= so->so_qlimit &&
-			    syn_cache_add(&src.sa, &dst.sa, th, toff,
+			    syn_cache_add(&src.sa, &dst.sa, th, off,
 			    so, m, optp, optlen, &opti))
 				m = NULL;
 		}
@@ -1773,7 +1768,7 @@ after_listen:
 #else
 	if (optp)
 #endif
-		if (tcp_dooptions(tp, optp, optlen, th, m, toff, &opti) < 0)
+		if (tcp_dooptions(tp, optp, optlen, th, m, off, &opti) < 0)
 			goto drop;
 
 	if (TCP_SACK_ENABLED(tp)) {
@@ -1822,7 +1817,7 @@ after_listen:
 		 * ts_rtt is increased by 1 to denote a valid sample,
 		 * with 0 indicating an invalid measurement.  This
 		 * extra 1 must be removed when ts_rtt is used, or
-		 * else an an erroneous extra 500 ms will result.
+		 * else an erroneous extra 500 ms will result.
 		 */
 		ts_rtt = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
 		if (ts_rtt > TCP_PAWS_IDLE)
@@ -1994,7 +1989,7 @@ after_listen:
 					    so->so_rcv.sb_hiwat <
 					    tcp_autorcvbuf_max) {
 						newsize =
-						    min(so->so_rcv.sb_hiwat +
+						    uimin(so->so_rcv.sb_hiwat +
 						    tcp_autorcvbuf_inc,
 						    tcp_autorcvbuf_max);
 					}
@@ -2020,7 +2015,7 @@ after_listen:
 					if (!sbreserve(&so->so_rcv,
 					    newsize, so))
 						so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
-				m_adj(m, toff + off);
+				m_adj(m, off + thlen);
 				sbappendstream(&so->so_rcv, m);
 			}
 			sorwakeup(so);
@@ -2039,7 +2034,7 @@ after_listen:
 	/*
 	 * Compute mbuf offset to TCP data segment.
 	 */
-	hdroptlen = toff + off;
+	hdroptlen = off + thlen;
 
 	/*
 	 * Calculate amount of space in receive window. Receive window is
@@ -3413,7 +3408,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    max(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
+	    uimax(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
 
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;

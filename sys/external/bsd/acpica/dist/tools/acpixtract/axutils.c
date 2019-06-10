@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -319,11 +319,12 @@ AxNormalizeSignature (
  *
  ******************************************************************************/
 
-size_t
+int
 AxConvertToBinary (
     char                    *InputLine,
     unsigned char           *OutputData)
 {
+    char                    *ColonDelimiter;
     int                     BytesConverted;
     int                     Converted[16];
     int                     i;
@@ -333,10 +334,17 @@ AxConvertToBinary (
      * Terminate input line immediately after the data. Otherwise, the
      * second line below will not scan correctly.
      *
+     * This handles varying lengths for the offset: line prefix. This support
+     * for tables larger than 1mb was added 05/2018.
+     *
      *    00b0: 03 00 00 00 43 48 41 36 0c 00 00 00 03 00 00 00  ....CHA6........
      *    00c0: 43 48 41 37                                      CHA7
+     *
+     *    012340b0: 03 00 00 00 43 48 41 36 0c 00 00 00 03 00 00 00  ....CHA6........
+     *    012340c0: 43 48 41 37                                      CHA7
      */
-    InputLine [AX_END_OF_HEX_DATA] = 0;
+    ColonDelimiter = strchr (InputLine, ':');
+    ColonDelimiter [AX_HEX_DATA_LENGTH] = 0;
 
     /*
      * Convert one line of table data, of the form:
@@ -352,14 +360,22 @@ AxConvertToBinary (
         &Converted[8],  &Converted[9],  &Converted[10], &Converted[11],
         &Converted[12], &Converted[13], &Converted[14], &Converted[15]);
 
-    /* Pack converted data into a byte array */
+    if (BytesConverted == EOF)
+    {
+        printf ("EOF while converting ASCII line to binary\n");
+        return (-1);
+    }
 
+    /*
+     * Pack converted data into a byte array.
+     * Note: BytesConverted == 0 is acceptable.
+     */
     for (i = 0; i < BytesConverted; i++)
     {
         OutputData[i] = (unsigned char) Converted[i];
     }
 
-    return ((size_t) BytesConverted);
+    return (BytesConverted);
 }
 
 
@@ -406,7 +422,7 @@ AxCountTableInstances (
         }
 
         AxNormalizeSignature (Gbl_InstanceBuffer);
-        if (ACPI_COMPARE_NAME (Gbl_InstanceBuffer, Signature))
+        if (ACPI_COMPARE_NAMESEG (Gbl_InstanceBuffer, Signature))
         {
             Instances++;
         }
@@ -487,7 +503,6 @@ AxGetNextInstance (
  *
  * PARAMETERS:  OutputFile              - Where to write the binary data
  *              ThisSignature           - Signature of current ACPI table
- *              ThisTableBytesWritten   - Total count of data written
  *
  * RETURN:      Length of the converted line
  *
@@ -500,26 +515,28 @@ AxGetNextInstance (
  *
  ******************************************************************************/
 
-long
+int
 AxConvertAndWrite (
     FILE                    *OutputFile,
-    char                    *ThisSignature,
-    unsigned int            ThisTableBytesWritten)
+    char                    *ThisSignature)
 {
-    size_t                  BytesWritten;
-    size_t                  BytesConverted;
+    int                     BytesWritten;
+    int                     BytesConverted;
 
 
     /* Convert one line of ascii hex data to binary */
 
     BytesConverted = AxConvertToBinary (Gbl_LineBuffer, Gbl_BinaryData);
-
-    /* Write the binary data */
-
+    if (BytesConverted == EOF)
+    {
+        return (EOF);
+    }
     if (!BytesConverted)
     {
         return (0);
     }
+
+    /* Write the binary data */
 
     BytesWritten = fwrite (Gbl_BinaryData, 1, BytesConverted, OutputFile);
     if (BytesWritten != BytesConverted)
@@ -578,7 +595,7 @@ AxDumpTableHeader (
 
     /* FACS has only signature and length */
 
-    if (ACPI_COMPARE_NAME (TableHeader->Signature, "FACS"))
+    if (ACPI_COMPARE_NAMESEG (TableHeader->Signature, "FACS"))
     {
         printf ("  0x%2.2X\n", Facs->Version);
         return;
@@ -620,7 +637,7 @@ AxCheckTableLengths (
     }
 
     if ((ByteCount < sizeof (ACPI_TABLE_HEADER)) &&
-        (ByteCount >= ACPI_NAME_SIZE))
+        (ByteCount >= ACPI_NAMESEG_SIZE))
     {
         printf ("  : (Table too short for an ACPI table)");
     }

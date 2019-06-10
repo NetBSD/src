@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.2.36.1 2019/06/10 22:08:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,10 @@
 #define	BUG()			panic("%s:%d: BUG!", __FILE__, __LINE__)
 #define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
 
+#define	BUILD_BUG()		do {} while (0)
 #define	BUILD_BUG_ON(CONDITION)	CTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_MSG(CONDITION,MSG)	CTASSERT(!(CONDITION))
+
 
 /* XXX Rate limit?  */
 #define WARN(CONDITION, FMT, ...)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3duart.c,v 1.3 2011/08/01 17:05:17 matt Exp $	*/
+/*	$NetBSD: pq3duart.c,v 1.3.54.1 2019/06/10 22:06:38 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.3 2011/08/01 17:05:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.3.54.1 2019/06/10 22:06:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -114,7 +114,7 @@ com_pq3duart_match(device_t parent, cfdata_t cfdata, void *aux)
 	if (bus_space_map(memt, addr, size, 0, &memh))
 		return 0;
 
-	COM_INIT_REGS(regs, memt, memh, addr);
+	com_init_regs(&regs, memt, memh, addr);
 
 	int rv = com_probe_subr(&regs);
 
@@ -165,7 +165,7 @@ pq3duart_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": %u ports\n", nports);
 
-	for (u_int port = 1; port <= min(2, nports); port++) {
+	for (u_int port = 1; port <= uimin(2, nports); port++) {
 		da.da_memt = cna->cna_memt;
 		da.da_port = port;
 		da.da_addr = cnl->cnl_addr + (port - 1) * DUART_SIZE;
@@ -212,7 +212,7 @@ com_pq3duart_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	COM_INIT_REGS(sc->sc_regs, memt, memh, addr);
+	com_init_regs(&sc->sc_regs, memt, memh, addr);
 	sc->sc_regs.cr_nports = size;
 
 	com_attach_subr(sc);

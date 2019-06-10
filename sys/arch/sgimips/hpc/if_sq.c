@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.49 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.49.2.1 2019/06/10 22:06:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.49 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.49.2.1 2019/06/10 22:06:43 christos Exp $");
 
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ static void	sq_txring_hpc1(struct sq_softc *);
 static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
 static int	sq_add_rxbuf(struct sq_softc *, int);
-static void	sq_dump_buffer(paddr_t addr, psize_t len);
+static void	sq_dump_buffer(paddr_t, psize_t);
 static void	sq_trace_dump(struct sq_softc *);
 
 CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
@@ -181,7 +181,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_hpct = haa->ha_st;
-	sc->hpc_regs = haa->hpc_regs;      /* HPC register definitions */
+	sc->hpc_regs = haa->hpc_regs;	   /* HPC register definitions */
 
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
 	    haa->ha_dmaoff, sc->hpc_regs->enet_regs_size,
@@ -320,7 +320,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -349,7 +349,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	}
  fail_4:
 	for (i = 0; i < SQ_NTXDESC; i++) {
-		if (sc->sc_txmap[i] !=  NULL)
+		if (sc->sc_txmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap[i]);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cdmap);
@@ -535,7 +535,7 @@ sq_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int err, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -1322,7 +1322,7 @@ sq_dump_buffer(paddr_t addr, psize_t len)
 
 	for (i = 0; i < len; i++) {
 		printf("%02x ", *(physaddr + i) & 0xff);
-		if ((i % 16) ==  15 && i != len - 1)
+		if ((i % 16) == 15 && i != len - 1)
 		    printf("\n%p: ", physaddr + i);
 	}
 

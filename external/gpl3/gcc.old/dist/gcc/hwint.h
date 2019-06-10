@@ -1,5 +1,5 @@
 /* HOST_WIDE_INT definitions for the GNU compiler.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -14,6 +14,7 @@
 #define HOST_BITS_PER_SHORT (CHAR_BIT * SIZEOF_SHORT)
 #define HOST_BITS_PER_INT   (CHAR_BIT * SIZEOF_INT)
 #define HOST_BITS_PER_LONG  (CHAR_BIT * SIZEOF_LONG)
+#define HOST_BITS_PER_PTR   (CHAR_BIT * SIZEOF_VOID_P)
 
 /* The string that should be inserted into a printf style format to
    indicate a "long" operand.  */
@@ -99,11 +100,9 @@ typedef HOST_WIDE_INT __gcc_host_wide_int__;
 #if INT64_T_IS_LONG
 # define HOST_WIDE_INT_PRINT HOST_LONG_FORMAT
 # define HOST_WIDE_INT_PRINT_C "L"
-# define HOST_WIDE_INT_CONSTANT(x) x ## L
 #else
 # define HOST_WIDE_INT_PRINT HOST_LONG_LONG_FORMAT
 # define HOST_WIDE_INT_PRINT_C "LL"
-# define HOST_WIDE_INT_CONSTANT(x) x ## LL
 #endif
 
 #define HOST_WIDE_INT_PRINT_DEC "%" PRId64
@@ -246,11 +245,27 @@ sext_hwi (HOST_WIDE_INT src, unsigned int prec)
   if (prec == HOST_BITS_PER_WIDE_INT)
     return src;
   else
+#if defined (__GNUC__)
     {
+      /* Take the faster path if the implementation-defined bits it's relying
+	 on are implemented the way we expect them to be.  Namely, conversion
+	 from unsigned to signed preserves bit pattern, and right shift of
+	 a signed value propagates the sign bit.
+	 We have to convert from signed to unsigned and back, because when left
+	 shifting signed values, any overflow is undefined behavior.  */
       gcc_checking_assert (prec < HOST_BITS_PER_WIDE_INT);
       int shift = HOST_BITS_PER_WIDE_INT - prec;
-      return (src << shift) >> shift;
+      return ((HOST_WIDE_INT) ((unsigned HOST_WIDE_INT) src << shift)) >> shift;
     }
+#else
+    {
+      /* Fall back to the slower, well defined path otherwise.  */
+      gcc_checking_assert (prec < HOST_BITS_PER_WIDE_INT);
+      HOST_WIDE_INT sign_mask = HOST_WIDE_INT_1 << (prec - 1);
+      HOST_WIDE_INT value_mask = (HOST_WIDE_INT_1U << prec) - HOST_WIDE_INT_1U;
+      return (((src & value_mask) ^ sign_mask) - sign_mask);
+    }
+#endif
 }
 
 /* Zero extend SRC starting from PREC.  */

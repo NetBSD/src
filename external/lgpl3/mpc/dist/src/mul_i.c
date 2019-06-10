@@ -1,6 +1,6 @@
 /* mpc_mul_i -- Multiply a complex number by plus or minus i.
 
-Copyright (C) 2005, 2009, 2010, 2011 INRIA
+Copyright (C) 2005, 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -35,8 +35,8 @@ mpc_mul_i (mpc_ptr a, mpc_srcptr b, int sign, mpc_rnd_t rnd)
         mpfr_swap (mpc_realref (a), mpc_imagref (a));
      else
      {
-        mpfr_set (mpc_realref (a), mpc_imagref (b), GMP_RNDN);
-        mpfr_set (mpc_imagref (a), mpc_realref (b), GMP_RNDN);
+        mpfr_set (mpc_realref (a), mpc_imagref (b), MPFR_RNDN);
+        mpfr_set (mpc_imagref (a), mpc_realref (b), MPFR_RNDN);
      }
      if (sign >= 0)
         MPFR_CHANGE_SIGN (mpc_realref (a));

@@ -44,10 +44,10 @@ TOPDIR = $(SRCDIR)/..
 
 CDIR = $(TOPDIR)/..
 FILES = boxdraw smbios console crc data debug dpath  \
-        error event guid hand hw init lock   \
-        misc print sread str \
+        error event exit guid hand hw init lock   \
+        misc print sread str cmdline \
 	runtime/rtlock runtime/efirtlib runtime/rtstr runtime/vm runtime/rtdata  \
-	$(ARCH)/initplat $(ARCH)/math 
+	$(ARCH)/initplat $(ARCH)/math $(ARCH)/setjmp
 
 ifeq ($(ARCH),ia64)
 FILES += $(ARCH)/salpal $(ARCH)/palproc
@@ -57,23 +57,36 @@ ifeq ($(ARCH),x86_64)
 FILES += $(ARCH)/callwrap $(ARCH)/efi_stub
 endif
 
+ifeq ($(ARCH),arm)
+FILES += $(ARCH)/uldiv $(ARCH)/ldivmod $(ARCH)/div $(ARCH)/llsl $(ARCH)/llsr \
+	 $(ARCH)/mullu
+endif
+
 OBJS  = $(FILES:%=%.o)
 
-SUBDIRS = ia32 x86_64 ia64 runtime
+SUBDIRS = ia32 x86_64 ia64 aarch64 arm mips64el runtime
+
+LIBDIRINSTALL = $(INSTALLROOT)$(LIBDIR)
 
 all: libsubdirs libefi.a
 
+.PHONY: libsubdirs
 libsubdirs:
 	for sdir in $(SUBDIRS); do mkdir -p $$sdir; done
 
-libefi.a: $(patsubst %,libefi.a(%),$(OBJS))
+libefi.a: $(OBJS)
+	$(AR) $(ARFLAGS) $@ $^
 
 clean:
 	rm -f libefi.a *~ $(OBJS) */*.o
 
-install: libefi.a
-	mkdir -p $(INSTALLROOT)/$(LIBDIR)
-	$(INSTALL) -m 644 libefi.a $(INSTALLROOT)/$(LIBDIR)
+$(LIBDIRINSTALL):
+	mkdir -p $@
+
+$(LIBDIRINSTALL)/libefi.a: libefi.a | $(LIBDIRINSTALL)
+	$(INSTALL) -m 644 $< $(dir $@)
+
+install: $(LIBDIRINSTALL)/libefi.a
 
 include $(SRCDIR)/../Make.rules
 

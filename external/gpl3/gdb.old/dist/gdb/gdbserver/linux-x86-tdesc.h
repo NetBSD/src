@@ -1,7 +1,7 @@
 /* Low level support for x86 (i386 and x86-64), shared between gdbserver
    and IPA.
 
-   Copyright (C) 2016 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,8 @@ enum x86_linux_tdesc {
   X86_TDESC_AVX = 2,
   X86_TDESC_MPX = 3,
   X86_TDESC_AVX_MPX = 4,
-  X86_TDESC_AVX512 = 5,
+  X86_TDESC_AVX_AVX512 = 5,
+  X86_TDESC_AVX_MPX_AVX512_PKU = 6,
 };
 
 #ifdef __x86_64__
@@ -42,9 +43,13 @@ extern const struct target_desc *tdesc_amd64_linux;
 void init_registers_amd64_avx_linux (void);
 extern const struct target_desc *tdesc_amd64_avx_linux;
 
-/* Defined in auto-generated file amd64-avx512-linux.c.  */
-void init_registers_amd64_avx512_linux (void);
-extern const struct target_desc *tdesc_amd64_avx512_linux;
+/* Defined in auto-generated file amd64-avx-avx512-linux.c.  */
+void init_registers_amd64_avx_avx512_linux (void);
+extern const struct target_desc *tdesc_amd64_avx_avx512_linux;
+
+/* Defined in auto-generated file amd64-avx-mpx-avx512-pku-linux.c.  */
+void init_registers_amd64_avx_mpx_avx512_pku_linux (void);
+extern const struct target_desc *tdesc_amd64_avx_mpx_avx512_pku_linux;
 
 /* Defined in auto-generated file amd64-avx-mpx-linux.c.  */
 void init_registers_amd64_avx_mpx_linux (void);
@@ -64,9 +69,9 @@ extern const struct target_desc *tdesc_x32_linux;
 void init_registers_x32_avx_linux (void);
 extern const struct target_desc *tdesc_x32_avx_linux;
 
-/* Defined in auto-generated file x32-avx512-linux.c.  */
-void init_registers_x32_avx512_linux (void);
-extern const struct target_desc *tdesc_x32_avx512_linux;
+/* Defined in auto-generated file x32-avx-avx512-linux.c.  */
+void init_registers_x32_avx_avx512_linux (void);
+extern const struct target_desc *tdesc_x32_avx_avx512_linux;
 #endif
 
 #endif
@@ -88,9 +93,13 @@ extern const struct target_desc *tdesc_i386_avx_linux;
 void init_registers_i386_avx_mpx_linux (void);
 extern const struct target_desc *tdesc_i386_avx_mpx_linux;
 
-/* Defined in auto-generated file i386-avx512-linux.c.  */
-void init_registers_i386_avx512_linux (void);
-extern const struct target_desc *tdesc_i386_avx512_linux;
+/* Defined in auto-generated file i386-avx-avx512-linux.c.  */
+void init_registers_i386_avx_avx512_linux (void);
+extern const struct target_desc *tdesc_i386_avx_avx512_linux;
+
+/* Defined in auto-generated file i386-avx-mpx-avx512-linux.c.  */
+void init_registers_i386_avx_mpx_avx512_pku_linux (void);
+extern const struct target_desc *tdesc_i386_avx_mpx_avx512_pku_linux;
 
 /* Defined in auto-generated file i386-mpx-linux.c.  */
 void init_registers_i386_mpx_linux (void);

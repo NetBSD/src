@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,6 +52,7 @@
 #include "xtensa-isa.h"
 #include "xtensa-tdep.h"
 #include "xtensa-config.h"
+#include <algorithm>
 
 
 static unsigned int xtensa_debug_level = 0;
@@ -227,7 +228,7 @@ extract_call_winsize (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 /* Find register by name.  */
 static int
-xtensa_find_register_by_name (struct gdbarch *gdbarch, char *name)
+xtensa_find_register_by_name (struct gdbarch *gdbarch, const char *name)
 {
   int i;
 
@@ -577,7 +578,8 @@ xtensa_pseudo_register_read (struct gdbarch *gdbarch,
   /* We have to find out how to deal with priveleged registers.
      Let's treat them as pseudo-registers, but we cannot read/write them.  */
      
-  else if (regnum < gdbarch_tdep (gdbarch)->a0_base)
+  else if (gdbarch_tdep (gdbarch)->call_abi == CallAbiCall0Only
+	   || regnum < gdbarch_tdep (gdbarch)->a0_base)
     {
       buffer[0] = (gdb_byte)0;
       buffer[1] = (gdb_byte)0;
@@ -941,7 +943,6 @@ typedef struct xtensa_windowed_frame_cache
 
 #define C0_MAXOPDS  3	/* Maximum number of operands for prologue
 			   analysis.  */
-#define C0_NREGS   16	/* Number of A-registers to track.  */
 #define C0_CLESV   12	/* Callee-saved registers are here and up.  */
 #define C0_SP	    1	/* Register used as SP.  */
 #define C0_FP	   15	/* Register used as FP.  */
@@ -1150,8 +1151,6 @@ xtensa_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR current_pc)
   if (start_addr == 0)
     return fp_regnum;
 
-  if (!xtensa_default_isa)
-    xtensa_default_isa = xtensa_isa_init (0, 0);
   isa = xtensa_default_isa;
   gdb_assert (XTENSA_ISA_BSZ >= xtensa_isa_maxlength (isa));
   ins = xtensa_insnbuf_alloc (isa);
@@ -1958,6 +1957,16 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
   return sp + SP_ALIGNMENT;
 }
 
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+xtensa_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  if (gdbarch_tdep (gdbarch)->isa_use_density_instructions)
+    return 2;
+  else
+    return 4;
+}
 
 /* Return a breakpoint for the current location of PC.  We always use
    the density version if we have density instructions (regardless of the
@@ -1968,42 +1977,33 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
 #define DENSITY_BIG_BREAKPOINT { 0xd2, 0x0f }
 #define DENSITY_LITTLE_BREAKPOINT { 0x2d, 0xf0 }
 
-static const unsigned char *
-xtensa_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			   int *lenptr)
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
+
+static const gdb_byte *
+xtensa_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
-  static unsigned char big_breakpoint[] = BIG_BREAKPOINT;
-  static unsigned char little_breakpoint[] = LITTLE_BREAKPOINT;
-  static unsigned char density_big_breakpoint[] = DENSITY_BIG_BREAKPOINT;
-  static unsigned char density_little_breakpoint[] = DENSITY_LITTLE_BREAKPOINT;
+  *size = kind;
 
-  DEBUGTRACE ("xtensa_breakpoint_from_pc (pc = 0x%08x)\n", (int) *pcptr);
-
-  if (gdbarch_tdep (gdbarch)->isa_use_density_instructions)
+  if (kind == 4)
     {
+      static unsigned char big_breakpoint[] = BIG_BREAKPOINT;
+      static unsigned char little_breakpoint[] = LITTLE_BREAKPOINT;
+
       if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	{
-	  *lenptr = sizeof (density_big_breakpoint);
-	  return density_big_breakpoint;
-	}
+	return big_breakpoint;
       else
-	{
-	  *lenptr = sizeof (density_little_breakpoint);
-	  return density_little_breakpoint;
-	}
+	return little_breakpoint;
     }
   else
     {
+      static unsigned char density_big_breakpoint[] = DENSITY_BIG_BREAKPOINT;
+      static unsigned char density_little_breakpoint[]
+	= DENSITY_LITTLE_BREAKPOINT;
+
       if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	{
-	  *lenptr = sizeof (big_breakpoint);
-	  return big_breakpoint;
-	}
+	return density_big_breakpoint;
       else
-	{
-	  *lenptr = sizeof (little_breakpoint);
-	  return little_breakpoint;
-	}
+	return density_little_breakpoint;
     }
 }
 
@@ -2399,7 +2399,7 @@ call0_analyze_prologue (struct gdbarch *gdbarch,
      arg was not supplied to avoid probing beyond the end of valid memory.
      If memory is full of garbage that classifies as c0opc_uninteresting.
      If this fails (eg. if no symbols) pc ends up 0 as it was.
-     Intialize the Call0 frame and register tracking info.
+     Initialize the Call0 frame and register tracking info.
      Assume it's Call0 until an 'entry' instruction is encountered.
      Assume we may be in the prologue until we hit a flow control instr.  */
 
@@ -2417,16 +2417,14 @@ call0_analyze_prologue (struct gdbarch *gdbarch,
   if (pc == 0)
     {
       find_pc_partial_function (start, 0, NULL, &end_pc);
-      body_pc = min (end_pc, body_pc);
+      body_pc = std::min (end_pc, body_pc);
     }
   else
-    body_pc = min (pc, body_pc);
+    body_pc = std::min (pc, body_pc);
 
   cache->call0 = 1;
   rtmp = (xtensa_c0reg_t*) alloca(nregs * sizeof(xtensa_c0reg_t));
 
-  if (!xtensa_default_isa)
-    xtensa_default_isa = xtensa_isa_init (0, 0);
   isa = xtensa_default_isa;
   gdb_assert (XTENSA_ISA_BSZ >= xtensa_isa_maxlength (isa));
   ins = xtensa_insnbuf_alloc (isa);
@@ -3061,48 +3059,38 @@ xtensa_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 static void
 xtensa_verify_config (struct gdbarch *gdbarch)
 {
-  struct ui_file *log;
-  struct cleanup *cleanups;
-  struct gdbarch_tdep *tdep;
-  long length;
-  char *buf;
-
-  tdep = gdbarch_tdep (gdbarch);
-  log = mem_fileopen ();
-  cleanups = make_cleanup_ui_file_delete (log);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  string_file log;
 
   /* Verify that we got a reasonable number of AREGS.  */
   if ((tdep->num_aregs & -tdep->num_aregs) != tdep->num_aregs)
-    fprintf_unfiltered (log, _("\
+    log.printf (_("\
 \n\tnum_aregs: Number of AR registers (%d) is not a power of two!"),
-			tdep->num_aregs);
+		tdep->num_aregs);
 
   /* Verify that certain registers exist.  */
 
   if (tdep->pc_regnum == -1)
-    fprintf_unfiltered (log, _("\n\tpc_regnum: No PC register"));
+    log.printf (_("\n\tpc_regnum: No PC register"));
   if (tdep->isa_use_exceptions && tdep->ps_regnum == -1)
-    fprintf_unfiltered (log, _("\n\tps_regnum: No PS register"));
+    log.printf (_("\n\tps_regnum: No PS register"));
 
   if (tdep->isa_use_windowed_registers)
     {
       if (tdep->wb_regnum == -1)
-	fprintf_unfiltered (log, _("\n\twb_regnum: No WB register"));
+	log.printf (_("\n\twb_regnum: No WB register"));
       if (tdep->ws_regnum == -1)
-	fprintf_unfiltered (log, _("\n\tws_regnum: No WS register"));
+	log.printf (_("\n\tws_regnum: No WS register"));
       if (tdep->ar_base == -1)
-	fprintf_unfiltered (log, _("\n\tar_base: No AR registers"));
+	log.printf (_("\n\tar_base: No AR registers"));
     }
 
   if (tdep->a0_base == -1)
-    fprintf_unfiltered (log, _("\n\ta0_base: No Ax registers"));
+    log.printf (_("\n\ta0_base: No Ax registers"));
 
-  buf = ui_file_xstrdup (log, &length);
-  make_cleanup (xfree, buf);
-  if (length > 0)
+  if (!log.empty ())
     internal_error (__FILE__, __LINE__,
-		    _("the following are invalid: %s"), buf);
-  do_cleanups (cleanups);
+		    _("the following are invalid: %s"), log.c_str ());
 }
 
 
@@ -3119,6 +3107,8 @@ xtensa_derive_tdep (struct gdbarch_tdep *tdep)
 
 /* Special registers 0..255 (core).  */
 #define XTENSA_DBREGN_SREG(n)  (0x0200+(n))
+/* User registers 0..255.  */
+#define XTENSA_DBREGN_UREG(n)  (0x0300+(n))
 
   for (rmap = tdep->regmap, n = 0; rmap->target_number != -1; n++, rmap++)
     {
@@ -3150,6 +3140,8 @@ xtensa_derive_tdep (struct gdbarch_tdep *tdep)
 	tdep->litbase_regnum = n;
       else if (rmap->target_number == XTENSA_DBREGN_SREG(230))
 	tdep->ps_regnum = n;
+      else if (rmap->target_number == XTENSA_DBREGN_UREG(231))
+	tdep->threadptr_regnum = n;
 #if 0
       else if (rmap->target_number == XTENSA_DBREGN_SREG(226))
 	tdep->interrupt_regnum = n;
@@ -3194,6 +3186,9 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   DEBUGTRACE ("gdbarch_init()\n");
 
+  if (!xtensa_default_isa)
+    xtensa_default_isa = xtensa_isa_init (0, 0);
+
   /* We have to set the byte order before we call gdbarch_alloc.  */
   info.byte_order = XCHAL_HAVE_BE ? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
 
@@ -3204,6 +3199,9 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Verify our configuration.  */
   xtensa_verify_config (gdbarch);
   xtensa_session_once_reported = 0;
+
+  set_gdbarch_wchar_bit (gdbarch, 2 * TARGET_CHAR_BIT);
+  set_gdbarch_wchar_signed (gdbarch, 0);
 
   /* Pseudo-Register read/write.  */
   set_gdbarch_pseudo_register_read (gdbarch, xtensa_pseudo_register_read);
@@ -3238,7 +3236,10 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
   /* Set breakpoints.  */
-  set_gdbarch_breakpoint_from_pc (gdbarch, xtensa_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       xtensa_breakpoint_kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       xtensa_sw_breakpoint_from_kind);
 
   /* After breakpoint instruction or illegal instruction, pc still
      points at break instruction, so don't decrement.  */

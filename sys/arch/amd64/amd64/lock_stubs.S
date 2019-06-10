@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.28 2018/01/07 13:43:23 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.28.4.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -136,10 +136,18 @@ ENTRY(mutex_spin_exit)
 	jnz	1f
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
+#if !defined(XENPV)
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
 	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
+#endif
+#if defined(XEN)
+	movl	CPU_INFO_XUNMASK(%r8,%rdi,4), %esi
+	CLI(ax)
+	testl	CPU_INFO_XPENDING(%r8), %esi
+	jnz	_C_LABEL(Xspllower)
+#endif
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
 	STI(ax)
 1:	rep					/* double byte ret as branch */
@@ -157,12 +165,22 @@ ENTRY(mutex_spin_exit)
 	cmpl	%edx,%ecx			/* new level is lower? */
 	jae	2f
 1:
+#if !defined(XENPV)
 	movl	CPU_INFO_IPENDING(%rsi),%eax
 	testl	%eax,CPU_INFO_IUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
 	jnz	3f
 	movl	%eax,%ebx
 	cmpxchg8b CPU_INFO_ISTATE(%rsi)		/* swap in new ilevel */
 	jnz	4f
+#endif
+#if defined(XEN)
+	movl	CPU_INFO_XPENDING(%rsi),%eax
+	testl	%eax,CPU_INFO_XUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
+	jnz	3f
+	movl	%edx, %eax
+	cmpxchgl %ecx, CPU_INFO_ILEVEL(%rsi)
+	jnz	4f
+#endif
 2:
 	popq	%rbx
 	ret
@@ -307,7 +325,7 @@ ENTRY(__cpu_simple_lock_init)
 	ret
 END(__cpu_simple_lock_init)
 
-NENTRY(__cpu_simple_lock)
+ENTRY(__cpu_simple_lock)
 	movl	$0x0100, %eax
 1:
 	LOCK(6)
@@ -324,7 +342,7 @@ NENTRY(__cpu_simple_lock)
 	jmp	2b
 END(__cpu_simple_lock)
 
-NENTRY(__cpu_simple_unlock)
+ENTRY(__cpu_simple_unlock)
 	movb	$0, (%rdi)
 	ret
 END(__cpu_simple_unlock)

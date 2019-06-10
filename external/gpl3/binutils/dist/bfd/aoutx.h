@@ -33,14 +33,13 @@ DESCRIPTION
 	The support is split into a basic support file @file{aoutx.h}
 	and other files which derive functions from the base. One
 	derivation file is @file{aoutf1.h} (for a.out flavour 1), and
-	adds to the basic a.out functions support for sun3, sun4, 386
-	and 29k a.out files, to create a target jump vector for a
-	specific target.
+	adds to the basic a.out functions support for sun3, sun4, and
+	386 a.out files, to create a target jump vector for a specific
+	target.
 
 	This information is further split out into more specific files
 	for each machine, including @file{sunos.c} for sun3 and sun4,
-	@file{newsos3.c} for the Sony NEWS, and @file{demo64.c} for a
-	demonstration of a 64 bit a.out format.
+	and @file{demo64.c} for a demonstration of a 64 bit a.out format.
 
 	The base file @file{aoutx.h} defines general mechanisms for
 	reading and writing records to and from disk and various
@@ -136,10 +135,9 @@ DESCRIPTION
 	The file @file{aoutx.h} provides for both the @emph{standard}
 	and @emph{extended} forms of a.out relocation records.
 
-	The standard records contain only an
-	address, a symbol index, and a type field. The extended records
-	(used on 29ks and sparcs) also have a full integer for an
-	addend.  */
+	The standard records contain only an address, a symbol index,
+	and a type field.  The extended records also have a full
+	integer for an addend.  */
 
 #ifndef CTOR_TABLE_RELOC_HOWTO
 #define CTOR_TABLE_RELOC_IDX 2
@@ -469,10 +467,7 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
   oldrawptr = abfd->tdata.aout_data;
   abfd->tdata.aout_data = rawptr;
 
-  /* Copy the contents of the old tdata struct.
-     In particular, we want the subformat, since for hpux it was set in
-     hp300hpux.c:swap_exec_header_in and will be used in
-     hp300hpux.c:callback.  */
+  /* Copy the contents of the old tdata struct.  */
   if (oldrawptr != NULL)
     *abfd->tdata.aout_data = *oldrawptr;
 
@@ -753,17 +748,6 @@ NAME (aout, machine_type) (enum bfd_architecture arch,
 	arch_flags = M_SPARCLET;
       break;
 
-    case bfd_arch_m68k:
-      switch (machine)
-	{
-	case 0:		      arch_flags = M_68010; break;
-	case bfd_mach_m68000: arch_flags = M_UNKNOWN; *unknown = FALSE; break;
-	case bfd_mach_m68010: arch_flags = M_68010; break;
-	case bfd_mach_m68020: arch_flags = M_68020; break;
-	default:	      arch_flags = M_UNKNOWN; break;
-	}
-      break;
-
     case bfd_arch_i386:
       if (machine == 0
 	  || machine == bfd_mach_i386_i386
@@ -840,10 +824,6 @@ NAME (aout, machine_type) (enum bfd_architecture arch,
     case bfd_arch_cris:
       if (machine == 0 || machine == 255)
 	arch_flags = M_CRIS;
-      break;
-
-    case bfd_arch_m88k:
-      *unknown = FALSE;
       break;
 
     default:
@@ -1281,7 +1261,7 @@ NAME (aout, set_section_contents) (bfd *abfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	   (_("%B: can not represent section `%A' in a.out object file format"),
+	   (_("%pB: can not represent section `%pA' in a.out object file format"),
 	     abfd, section);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return FALSE;
@@ -1363,7 +1343,7 @@ aout_get_external_symbols (bfd *abfd)
 #ifdef USE_MMAP
       if (stringsize >= BYTES_IN_WORD)
 	{
-	  if (! bfd_get_file_window (abfd, obj_str_filepos (abfd), stringsize,
+	  if (! bfd_get_file_window (abfd, obj_str_filepos (abfd), stringsize + 1,
 				     &obj_aout_string_window (abfd), TRUE))
 	    return FALSE;
 	  strings = (char *) obj_aout_string_window (abfd).data;
@@ -1371,7 +1351,7 @@ aout_get_external_symbols (bfd *abfd)
       else
 #endif
 	{
-	  strings = (char *) bfd_malloc (stringsize);
+	  strings = (char *) bfd_malloc (stringsize + 1);
 	  if (strings == NULL)
 	    return FALSE;
 
@@ -1390,7 +1370,8 @@ aout_get_external_symbols (bfd *abfd)
       /* Ensure that a zero index yields an empty string.  */
       strings[0] = '\0';
 
-      strings[stringsize - 1] = 0;
+      /* Ensure that the string buffer is NUL terminated.  */
+      strings[stringsize] = 0;
 
       obj_aout_external_strings (abfd) = strings;
       obj_aout_external_string_size (abfd) = stringsize;
@@ -1597,7 +1578,7 @@ translate_to_native_sym_flags (bfd *abfd,
 	 file.  */
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: can not represent section for symbol `%s' in a.out "
+	(_("%pB: can not represent section for symbol `%s' in a.out "
 	   "object file format"),
 	 abfd,
 	 cache_ptr->name != NULL ? cache_ptr->name : _("*unknown*"));
@@ -1633,7 +1614,7 @@ translate_to_native_sym_flags (bfd *abfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	   (_("%B: can not represent section `%A' in a.out object file format"),
+	   (_("%pB: can not represent section `%pA' in a.out object file format"),
 	     abfd, sec);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return FALSE;
@@ -1734,7 +1715,13 @@ NAME (aout, translate_symbol_table) (bfd *abfd,
       else if (x < strsize)
 	in->symbol.name = str + x;
       else
-	return FALSE;
+	{
+	  _bfd_error_handler
+	    (_("%pB: invalid string offset %" PRIu64 " >= %" PRIu64),
+	     abfd, (uint64_t) x, (uint64_t) strsize);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
+	}
 
       in->symbol.value = GET_SWORD (abfd,  ext->e_value);
       in->desc = H_GET_16 (abfd, ext->e_desc);
@@ -2283,10 +2270,12 @@ NAME (aout, swap_std_reloc_in) (bfd *abfd,
   if (r_baserel)
     r_extern = 1;
 
-  if (r_extern && r_index > symcount)
+  if (r_extern && r_index >= symcount)
     {
       /* We could arrange to return an error, but it might be useful
-	 to see the file even if it is bad.  */
+	 to see the file even if it is bad.  FIXME: Of course this
+	 means that objdump -r *doesn't* see the actual reloc, and
+	 objcopy silently writes a different reloc.  */
       r_extern = 0;
       r_index = N_ABS;
     }
@@ -2420,7 +2409,7 @@ NAME (aout, squirt_out_relocs) (bfd *abfd, asection *section)
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
 	      _bfd_error_handler (_("\
-%B: attempt to write out unknown reloc type"), abfd);
+%pB: attempt to write out unknown reloc type"), abfd);
 	      return FALSE;
 	    }
 	  MY_swap_ext_reloc_out (abfd, *generic,
@@ -2438,7 +2427,7 @@ NAME (aout, squirt_out_relocs) (bfd *abfd, asection *section)
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
 	      _bfd_error_handler (_("\
-%B: attempt to write out unknown reloc type"), abfd);
+%pB: attempt to write out unknown reloc type"), abfd);
 	      return FALSE;
 	    }
 	  MY_swap_std_reloc_out (abfd, *generic,
@@ -2735,7 +2724,10 @@ NAME (aout, find_nearest_line) (bfd *abfd,
 		  const char *symname;
 
 		  symname = q->symbol.name;
-		  if (strcmp (symname + strlen (symname) - 2, ".o") == 0)
+
+		  if (symname != NULL
+		      && strlen (symname) > 2
+		      && strcmp (symname + strlen (symname) - 2, ".o") == 0)
 		    {
 		      if (q->symbol.value > low_line_vma)
 			{
@@ -2800,8 +2792,8 @@ NAME (aout, find_nearest_line) (bfd *abfd,
 	    case N_FUN:
 	      {
 		/* We'll keep this if it is nearer than the one we have already.  */
-		if (q->symbol.value >= low_func_vma &&
-		    q->symbol.value <= offset)
+		if (q->symbol.value >= low_func_vma
+		    && q->symbol.value <= offset)
 		  {
 		    low_func_vma = q->symbol.value;
 		    func = (asymbol *)q;
@@ -4089,8 +4081,8 @@ aout_link_input_section_std (struct aout_final_link_info *flaginfo,
 
       if (howto == NULL)
 	{
-	  (*flaginfo->info->callbacks->einfo)
-	    (_("%P: %B: unexpected relocation type\n"), input_bfd);
+	  _bfd_error_handler (_("%pB: unsupported relocation type"),
+			      input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -4410,8 +4402,8 @@ aout_link_input_section_ext (struct aout_final_link_info *flaginfo,
 
       if (r_type >= TABLE_SIZE (howto_table_ext))
 	{
-	  (*flaginfo->info->callbacks->einfo)
-	    (_("%P: %B: unexpected relocation type\n"), input_bfd);
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      input_bfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -5437,7 +5429,7 @@ NAME (aout, final_link) (bfd *abfd,
 		 by the reloc size.  */
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: relocatable link from %s to %s not supported"),
+		(_("%pB: relocatable link from %s to %s not supported"),
 		 abfd, sub->xvec->name, abfd->xvec->name);
 	      bfd_set_error (bfd_error_invalid_operation);
 	      goto error_return;
@@ -5495,8 +5487,7 @@ NAME (aout, final_link) (bfd *abfd,
      FIXME: At this point we do not know how much space the symbol
      table will require.  This will not work for any (nonstandard)
      a.out target that needs to know the symbol table size before it
-     can compute the relocation file positions.  This may or may not
-     be the case for the hp300hpux target, for example.  */
+     can compute the relocation file positions.  */
   (*callback) (abfd, &aout_info.treloff, &aout_info.dreloff,
 	       &aout_info.symoff);
   obj_textsec (abfd)->rel_filepos = aout_info.treloff;

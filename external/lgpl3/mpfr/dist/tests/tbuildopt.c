@@ -1,7 +1,7 @@
 /* tbuildopt.c -- test file for mpfr_buildopt_tls_p and
    mpfr_buildopt_decimal_p.
 
-Copyright 2009-2016 Free Software Foundation, Inc.
+Copyright 2009-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,7 +21,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdlib.h>
 #include "mpfr-test.h"
 
 static void
@@ -81,9 +80,12 @@ check_gmpinternals_p (void)
 int
 main (void)
 {
+  tests_start_mpfr ();
+
   check_tls_p();
   check_decimal_p();
   check_gmpinternals_p();
 
+  tests_end_mpfr ();
   return 0;
 }

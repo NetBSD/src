@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.63 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.63.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.63 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.63.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -118,8 +118,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 */
 	unicast = !(m0->m_flags & (M_BCAST | M_MCAST));
 	if (unicast) {
-		mtag =
-		    m_tag_find(m0, MTAG_FIREWIRE_HWADDR, NULL);
+		mtag = m_tag_find(m0, MTAG_FIREWIRE_HWADDR);
 		if (!mtag) {
 			mtag = m_tag_get(MTAG_FIREWIRE_HWADDR,
 			    sizeof (struct ieee1394_hwaddr), M_NOWAIT);
@@ -290,7 +289,7 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 		if (m == NULL)
 			goto bad;
 		m->m_flags |= m0->m_flags & (M_BCAST|M_MCAST);	/* copy bcast */
-		MH_ALIGN(m, sizeof(struct ieee1394_fraghdr));
+		m_align(m, sizeof(struct ieee1394_fraghdr));
 		m->m_len = sizeof(struct ieee1394_fraghdr);
 		ifh = mtod(m, struct ieee1394_fraghdr *);
 		ifh->ifh_ft_size =
@@ -357,7 +356,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		struct m_tag *mtag;
 		const struct ieee1394_hwaddr *myaddr;
 
-		mtag = m_tag_find(m, MTAG_FIREWIRE_SENDER_EUID, 0);
+		mtag = m_tag_find(m, MTAG_FIREWIRE_SENDER_EUID);
 		if (mtag)
 			memcpy(h.ibh_shost, mtag + 1, 8);
 		else

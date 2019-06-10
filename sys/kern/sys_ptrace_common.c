@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.45 2018/06/23 03:32:48 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.45.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45 2018/06/23 03:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -163,6 +163,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45 2018/06/23 03:32:48 chris
 static kauth_listener_t ptrace_listener;
 static int process_auxv_offset(struct proc *, struct uio *);
 
+extern int user_va0_disable;
+
 #if 0
 static int ptrace_cbref;
 static kmutex_t ptrace_mtx;
@@ -206,7 +208,7 @@ static kcondvar_t ptrace_cv;
 #endif
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS) || \
-    defined(PT_SETFPREGS) || defined(PT_GETFOREGS) || \
+    defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
     defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
 # define PT_REGISTERS
 #endif
@@ -240,6 +242,7 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 			break;
 		}
 #endif
+		/* FALLTHROUGH */
 	case PT_TRACE_ME:
 	case PT_ATTACH:
 	case PT_WRITE_I:
@@ -570,6 +573,7 @@ ptrace_get_siginfo(struct proc *t, struct ptrace_methods *ptm, void *addr,
 {
 	struct ptrace_siginfo psi;
 
+	memset(&psi, 0, sizeof(psi));
 	psi.psi_siginfo._info = t->p_sigctx.ps_info;
 	psi.psi_lwpid = t->p_sigctx.ps_lwp;
 	DPRINTF(("%s: lwp=%d signal=%d\n", __func__, psi.psi_lwpid,
@@ -1104,6 +1108,15 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, true)) != 0)
 			break;
+		/*
+		 * For legacy reasons we treat here two results as success:
+		 *  - incomplete transfer  piod.piod_len < sizeof(tmp)
+		 *  - no transfer          piod.piod_len == 0
+		 *
+		 * This means that there is no way to determine whether
+		 * transfer operation was performed in PT_WRITE and PT_READ
+		 * calls.
+		 */
 		if (!write)
 			*retval = tmp;
 		break;
@@ -1111,8 +1124,17 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_IO:
 		if ((error = ptm->ptm_copyin_piod(&piod, addr, data)) != 0)
 			break;
+		if (piod.piod_len < 1) {
+			error = EINVAL;
+			break;
+		}
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, false)) != 0)
 			break;
+		/*
+		 * For legacy reasons we treat here two results as success:
+		 *  - incomplete transfer  piod.piod_len < sizeof(tmp)
+		 *  - no transfer          piod.piod_len == 0
+		 */
 		error = ptm->ptm_copyout_piod(&piod, addr, data);
 		break;
 
@@ -1232,6 +1254,20 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			}
 		}
 
+		/*
+		 * Reject setting program cunter to 0x0 if VA0 is disabled.
+		 *
+		 * Not all kernels implement this feature to set Program
+		 * Counter in one go in PT_CONTINUE and similar operations.
+		 * This causes portability issues as passing address 0x0
+		 * on these kernels is no-operation, but can cause failure
+		 * in most cases on NetBSD.
+		 */
+		if (user_va0_disable && addr == 0) {
+			error = EINVAL;
+			break;
+		}
+
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1) {
 			error = process_set_pc(lt, addr);
@@ -1294,6 +1330,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_SETSTEP:
 		write = 1;
 
+		/* FALLTHROUGH */
 	case PT_CLEARSTEP:
 		/* write = 0 done above. */
 		if ((error = ptrace_update_lwp(t, &lt, data)) != 0)
@@ -1573,7 +1610,7 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 }
 #endif /* PTRACE */
 
-MODULE(MODULE_CLASS_EXEC, ptrace_common, "");
+MODULE(MODULE_CLASS_EXEC, ptrace_common, NULL);
  
 static int
 ptrace_common_modcmd(modcmd_t cmd, void *arg)

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.22 2018/04/25 08:46:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.22.2.1 2019/06/10 22:07:28 christos Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -208,7 +208,6 @@ struct ixgbe_osdep
 	bus_size_t         mem_size;
 	bus_dma_tag_t      dmat;
 	u16                last_rx_mbuf_sz;
-	u32                last_num_rx_desc;
 	pci_intr_handle_t  *intrs;
 	int		   nintrs;
 	void               *ihs[IXG_MAX_NINTR];

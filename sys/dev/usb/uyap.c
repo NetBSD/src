@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.21 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: uyap.c,v 1.21.18.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21.18.1 2019/06/10 22:07:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ int	uyap_match(device_t, cfdata_t, void *);
 void	uyap_attach(device_t, device_t, void *);
 int	uyap_detach(device_t, int);
 int	uyap_activate(device_t, enum devact);
-extern struct cfdriver uyap_cd;
+
 CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach,
     uyap_detach, uyap_activate);
 
@@ -69,9 +69,9 @@ uyap_match(device_t parent, cfdata_t match, void *aux)
 	/* Match the boot device. */
 	if (uaa->uaa_vendor == USB_VENDOR_SILICONPORTALS &&
 	    uaa->uaa_product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -113,7 +113,7 @@ uyap_detach(device_t self, int flags)
 	struct uyap_softc *sc = device_private(self);
 #endif
 
-	return (0);
+	return 0;
 }
 
 int

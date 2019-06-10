@@ -1,6 +1,6 @@
 /* mpfr_csc - cosecant function.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -32,7 +32,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define ACTION_NAN(y) do { MPFR_SET_NAN(y); MPFR_RET_NAN; } while (1)
 #define ACTION_INF(y) do { MPFR_SET_NAN(y); MPFR_RET_NAN; } while (1)
 #define ACTION_ZERO(y,x) do { MPFR_SET_SAME_SIGN(y,x); MPFR_SET_INF(y); \
-                              mpfr_set_divby0 (); MPFR_RET(0); } while (1)
+                              MPFR_SET_DIVBY0 (); MPFR_RET(0); } while (1)
 /* near x=0, we have csc(x) = 1/x + x/6 + ..., more precisely we have
    |csc(x) - 1/x| <= 0.2 for |x| <= 1. The analysis is similar to that for
    gamma(x) near x=0 (see gamma.c), except here the error term has the same

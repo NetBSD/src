@@ -1,4 +1,4 @@
-/*	$NetBSD: pim_var.h,v 1.2 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: pim_var.h,v 1.2.164.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2000
@@ -65,17 +65,11 @@ struct pimstat {
  * Names for PIM sysctl objects
  */
 #define PIMCTL_STATS		1	/* statistics (read-only) */
-#define PIMCTL_MAXID		2
-
-#define PIMCTL_NAMES {			\
-	{ 0, 0 },			\
-	{ "stats", CTLTYPE_STRUCT },	\
-}
 
 #ifdef _KERNEL
 extern struct pimstat pimstat;
 
-void	pim_input(struct mbuf *, ...);
+void	pim_input(struct mbuf *, int, int);
 #endif
 
 #endif /* !_NETINET_PIM_VAR_H_ */

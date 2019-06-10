@@ -1,6 +1,6 @@
 /* mpfr_lngamma -- lngamma function
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -33,6 +33,10 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static void
 mpfr_gamma_alpha (mpfr_t s, mpfr_prec_t p)
 {
+  MPFR_LOG_FUNC
+    (("p=%Pu", p),
+     ("s[%Pu]=%.*Rg", mpfr_get_prec (s), mpfr_log_prec, s));
+
   if (p <= 100)
     mpfr_set_ui_2exp (s, 614, -10, MPFR_RNDN); /* about 0.6 */
   else if (p <= 500)
@@ -72,7 +76,7 @@ mpfr_explgamma (mpfr_ptr y, mpfr_srcptr x, mpfr_save_expo_t *pexpo,
   /* s1 = RNDD(lngamma(x)), inexact */
   if (MPFR_UNLIKELY (MPFR_OVERFLOW (flags1)))
     {
-      if (MPFR_SIGN (s1) > 0)
+      if (MPFR_IS_POS (s1))
         {
           MPFR_SAVE_EXPO_UPDATE_FLAGS (*pexpo, MPFR_FLAGS_OVERFLOW);
           return mpfr_overflow (y, rnd, sign);
@@ -141,6 +145,12 @@ unit_bit (mpfr_srcptr x)
 
 #endif
 
+/* FIXME: There is an internal overflow when z is very large.
+   Simple overflow detection with possible false negatives?
+   For the particular cases near the overflow boundary,
+   scaling by a power of two?
+*/
+
 /* lngamma(x) = log(gamma(x)).
    We use formula [6.1.40] from Abramowitz&Stegun:
    lngamma(z) = (z-1/2)*log(z) - z + 1/2*log(2*Pi)
@@ -161,16 +171,17 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
 {
   mpfr_prec_t precy, w; /* working precision */
   mpfr_t s, t, u, v, z;
-  unsigned long m, k, maxm;
-  mpz_t *INITIALIZED(B);  /* variable B declared as initialized */
-  int compared;
-  int inexact = 0;  /* 0 means: result y not set yet */
+  unsigned long m, k, maxm, l;
+  int compared, inexact;
   mpfr_exp_t err_s, err_t;
-  unsigned long Bm = 0; /* number of allocated B[] */
-  unsigned long oldBm;
   double d;
   MPFR_SAVE_EXPO_DECL (expo);
   MPFR_ZIV_DECL (loop);
+
+  MPFR_LOG_FUNC
+    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (z0), mpfr_log_prec, z0, rnd),
+     ("y[%Pu]=%.*Rg inexact=%d",
+      mpfr_get_prec (y), mpfr_log_prec, y, inexact));
 
   compared = mpfr_cmp_ui (z0, 1);
 
@@ -183,9 +194,52 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
       return mpfr_set_ui (y, 0, MPFR_RNDN);  /* lngamma(1 or 2) = +0 */
     }
 
+  /* Deal with very large inputs: according to [6.1.42], if we denote
+     R_n(z) = lngamma(z) - (z-1/2)*log(z) + z - 1/2*log(2*Pi), we have
+     |R_n(z)| <= B_2/2/z, thus for z >= 2 we have
+     |lngamma(z) - [z*(log(z) - 1)]| < 1/2*log(z) + 1. */
+  if (compared > 0 && MPFR_GET_EXP (z0) >= (mpfr_exp_t) MPFR_PREC(y) + 2)
+    {
+      /* Since PREC(y) >= 2, this ensures EXP(z0) >= 4, thus |z0| >= 8,
+         thus 1/2*log(z0) + 1 < log(z0).
+         Since the largest possible z is < 2^(2^62) on a 64-bit machine,
+         the largest value of log(z) is 2^62*log(2.) < 3.2e18 < 2^62,
+         thus if we use at least 62 bits of precision, then log(t)-1 will
+         be exact */
+      mpfr_init2 (t, MPFR_PREC(y) >= 52 ? MPFR_PREC(y) + 10 : 62);
+      mpfr_log (t, z0, MPFR_RNDU); /* error < 1 ulp */
+      inexact = mpfr_sub_ui (t, t, 1, MPFR_RNDU); /* err < 2 ulps, since the
+                                                     exponent of t might have
+                                                     decreased */
+      MPFR_ASSERTD(inexact == 0);
+      mpfr_mul (t, z0, t, MPFR_RNDU); /* err < 1+2*2=5 ulps according to
+                                        "Generic error on multiplication"
+                                        in algorithms.tex */
+      if (MPFR_IS_INF(t))
+        {
+          mpfr_clear (t);
+          MPFR_SAVE_EXPO_FREE (expo);
+          inexact = mpfr_overflow (y, rnd, 1);
+          return inexact;
+        }
+      if (MPFR_GET_EXP(t) - MPFR_PREC(t) >= 62)
+        {
+          /* then ulp(t) >= 2^62 > log(z0) thus the total error is bounded
+             by 6 ulp(t) */
+          if (MPFR_CAN_ROUND (t, MPFR_PREC(t) - 3, MPFR_PREC(y), rnd))
+            {
+              inexact = mpfr_set (y, t, rnd);
+              mpfr_clear (t);
+              MPFR_SAVE_EXPO_FREE (expo);
+              return mpfr_check_range (y, inexact, rnd);
+            }
+        }
+      mpfr_clear (t);
+    }
+
   /* Deal here with tiny inputs. We have for -0.3 <= x <= 0.3:
      - log|x| - gamma*x <= log|gamma(x)| <= - log|x| - gamma*x + x^2 */
-  if (MPFR_EXP(z0) <= - (mpfr_exp_t) MPFR_PREC(y))
+  if (MPFR_GET_EXP (z0) <= - (mpfr_exp_t) MPFR_PREC(y))
     {
       mpfr_t l, h, g;
       int ok, inex1, inex2;
@@ -250,7 +304,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
              which would need precision n. */
           MPFR_ZIV_NEXT (loop, prec);
         }
-      while (prec <= -MPFR_EXP(z0));
+      while (prec <= - MPFR_GET_EXP (z0));
       MPFR_ZIV_FREE (loop);
     }
 #endif
@@ -262,6 +316,8 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
   mpfr_init2 (u, MPFR_PREC_MIN);
   mpfr_init2 (v, MPFR_PREC_MIN);
   mpfr_init2 (z, MPFR_PREC_MIN);
+
+  inexact = 0; /* 0 means: result y not set yet */
 
   if (compared < 0)
     {
@@ -294,7 +350,10 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
              ulp(u)/2 + (2-z0)*max(1,log(2-z0))*2^(1-w)
              = (1/2 + (2-z0)*max(1,log(2-z0))*2^(1-E(u))) ulp(u) */
           d = (double) MPFR_GET_EXP(s) * 0.694; /* upper bound for log(2-z0) */
-          err_u = MPFR_GET_EXP(s) + __gmpfr_ceil_log2 (d) + 1 - MPFR_GET_EXP(u);
+          if (MPFR_IS_ZERO(u)) /* in that case the error on u is zero */
+            err_u = 0;
+          else
+            err_u = MPFR_GET_EXP(s) + __gmpfr_ceil_log2 (d) + 1 - MPFR_GET_EXP(u);
           err_u = (err_u >= 0) ? err_u + 1 : 0;
           /* now the error on u is bounded by 2^err_u ulps */
 
@@ -341,19 +400,22 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
             }
           else
             {
-              err_s += 1 - MPFR_GET_EXP(v);
+              /* if v = 0 here, it was 1 before the call to mpfr_log,
+                 thus the error on v was zero */
+              if (!MPFR_IS_ZERO(v))
+                err_s += 1 - MPFR_GET_EXP(v);
               err_s = (err_s >= 0) ? err_s + 1 : 0;
               /* the error on v is bounded by 2^err_s ulps */
               err_u += MPFR_GET_EXP(u); /* absolute error on u */
-              err_s += MPFR_GET_EXP(v); /* absolute error on v */
+              if (!MPFR_IS_ZERO(v)) /* same as above */
+                err_s += MPFR_GET_EXP(v); /* absolute error on v */
               mpfr_sub (s, v, u, MPFR_RNDN);
               /* the total error on s is bounded by ulp(s)/2 + 2^(err_u-w)
                  + 2^(err_s-w) <= ulp(s)/2 + 2^(max(err_u,err_s)+1-w) */
               err_s = (err_s >= err_u) ? err_s : err_u;
               err_s += 1 - MPFR_GET_EXP(s); /* error is 2^err_s ulp(s) */
               err_s = (err_s >= 0) ? err_s + 1 : 0;
-              if (mpfr_can_round (s, w - err_s, MPFR_RNDN, MPFR_RNDZ, precy
-                                  + (rnd == MPFR_RNDN)))
+              if (MPFR_CAN_ROUND (s, w - err_s, precy, rnd))
                 goto end;
             }
           MPFR_ZIV_NEXT (loop, w);
@@ -379,11 +441,14 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
          and we need k steps of argument reconstruction. Assuming k is large
          with respect to z0, and k = n, we get 1/(Pi*e)^(2n) ~ 2^(-w), i.e.,
          k ~ w*log(2)/2/log(Pi*e) ~ 0.1616 * w.
-         However, since the series is more expensive to compute, the optimal
-         value seems to be k ~ 4.5 * w experimentally. */
+         However, since the series is slightly more expensive to compute,
+         the optimal value seems to be k ~ 0.25 * w experimentally (with
+         caching of Bernoulli numbers).
+         For only one computation of gamma with large precision, it is better
+         to set k to a larger value, say k ~ w. */
       mpfr_set_prec (s, 53);
       mpfr_gamma_alpha (s, w);
-      mpfr_set_ui_2exp (s, 9, -1, MPFR_RNDU);
+      mpfr_set_ui_2exp (s, 4, -4, MPFR_RNDU);
       mpfr_mul_ui (s, s, w, MPFR_RNDU);
       if (mpfr_cmp (z0, s) < 0)
         {
@@ -431,15 +496,8 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
 
       mpfr_mul (u, u, u, MPFR_RNDN); /* 1/z^2 * (1+u)^3 */
 
-      if (Bm == 0)
-        {
-          B = mpfr_bernoulli_internal ((mpz_t *) 0, 0);
-          B = mpfr_bernoulli_internal (B, 1);
-          Bm = 2;
-        }
-
       /* m <= maxm ensures that 2*m*(2*m+1) <= ULONG_MAX */
-      maxm = 1UL << (GMP_NUMB_BITS / 2 - 1);
+      maxm = 1UL << (sizeof(unsigned long) * CHAR_BIT / 2 - 1);
 
       /* s:(1+u)^15, t:(1+u)^2, t <= 3/128 */
 
@@ -463,12 +521,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
             }
           /* (1+u)^(10m-8) */
           /* invariant: t=1/(2m)/(2m-1)/z^(2m-1)/(2m+1)! */
-          if (Bm <= m)
-            {
-              B = mpfr_bernoulli_internal (B, m); /* B[2m]*(2m+1)!, exact */
-              Bm ++;
-            }
-          mpfr_mul_z (v, t, B[m], MPFR_RNDN); /* (1+u)^(10m-7) */
+          mpfr_mul_z (v, t, mpfr_bernoulli_cache(m), MPFR_RNDN); /* (1+u)^(10m-7) */
           MPFR_ASSERTD(MPFR_GET_EXP(v) <= - (2 * m + 3));
           mpfr_add (s, s, v, MPFR_RNDN);
         }
@@ -492,22 +545,92 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
       /* add 1/2*log(2*Pi) and subtract log(z0*(z0+1)*...*(z0+k-1)) */
       mpfr_const_pi (v, MPFR_RNDN); /* v = Pi*(1+u) */
       mpfr_mul_2ui (v, v, 1, MPFR_RNDN); /* v = 2*Pi * (1+u) */
-      if (k)
+      /* k >= 3 */
+      mpfr_set (t, z0, MPFR_RNDN); /* t = z0*(1+u) */
+      l = 1;
+
+/* replace #if 1 by #if 0 for the naive argument reconstruction */
+#if 1
+
+      /* We multiply by (z0+1)*(z0+2)*...*(z0+k-1) by blocks of j consecutive
+         terms where j ~ sqrt(k).
+         If we multiply naively by z0+1, then by z0+2, ..., then by z0+j,
+         the multiplicative term for the rounding error is (1+u)^(2j).
+         The multiplicative term is not larger when we multiply by
+         Z[j] + c[j-1]*Z[j-1] + ... + c[2]*Z[2] + c[1]*z0 + c[0]
+         with c[p] integers, and Z[p] = z0^p * (1+u)^(p-1).
+         Note that all terms are positive.
+         Indeed, since c[1] is exact, c[1]*z0 corresponds to (1+u),
+         then c[1]*z0 + c[0] corresponds to (1+u)^2,
+         c[2]*Z[2] + c[1]*z0 + c[0] to (1+u)^3, ...,
+         c[j-1]*Z[j-1] + ... + c[0] to (1+u)^j,
+         and Z[j] + c[j-1]*Z[j-1] + ... + c[1]*z0 + c[0] to (1+u)^(j+1).
+         With the accumulation in t, we get (1+u)^(j+2) and j+2 <= 2j. */
+      {
+        unsigned long j, i, p;
+        mpfr_t *Z;
+        mpz_t *c;
+        for (j = 2; (j + 1) * (j + 1) < k; j++);
+        /* Z[i] stores z0^i for i <= j */
+        Z = (mpfr_t *) mpfr_allocate_func ((j + 1) * sizeof (mpfr_t));
+        for (i = 2; i <= j; i++)
+          mpfr_init2 (Z[i], w);
+        mpfr_sqr (Z[2], z0, MPFR_RNDN);
+        for (i = 3; i <= j; i++)
+          if ((i & 1) == 0)
+            mpfr_sqr (Z[i], Z[i >> 1], MPFR_RNDN);
+          else
+            mpfr_mul (Z[i], Z[i-1], z0, MPFR_RNDN);
+        c = (mpz_t *) mpfr_allocate_func ((j + 1) * sizeof (mpz_t));
+        for (i = 0; i <= j; i++)
+          mpz_init (c[i]);
+        for (; l + j <= k; l += j)
+          {
+            /* c[i] is the coefficient of x^i in (x+l)*...*(x+l+j-1) */
+            mpz_set_ui (c[0], 1);
+            for (i = 0; i < j; i++)
+              /* multiply (x+l)*(x+l+1)*...*(x+l+i-1) by x+l+i:
+                 (b[i]*x^i + b[i-1]*x^(i-1) + ... + b[0])*(x+l+i) =
+                 b[i]*x^(i+1) + (b[i-1]+(l+i)*b[i])*x^i + ...
+                 + (b[0]+(l+i)*b[1])*x + i*b[0] */
+              {
+                mpz_set (c[i+1], c[i]); /* b[i]*x^(i+1) */
+                for (p = i; p > 0; p--)
+                  {
+                    mpz_mul_ui (c[p], c[p], l + i);
+                    mpz_add (c[p], c[p], c[p-1]); /* b[p-1]+(l+i)*b[p] */
+                  }
+                mpz_mul_ui (c[0], c[0], l+i); /* i*b[0] */
+              }
+            /* now compute z0^j + c[j-1]*z0^(j-1) + ... + c[1]*z0 + c[0] */
+            mpfr_set_z (u, c[0], MPFR_RNDN);
+            for (i = 0; i < j; i++)
+              {
+                mpfr_mul_z (z, (i == 0) ? z0 : Z[i+1], c[i+1], MPFR_RNDN);
+                mpfr_add (u, u, z, MPFR_RNDN);
+              }
+            mpfr_mul (t, t, u, MPFR_RNDN);
+          }
+        for (i = 0; i <= j; i++)
+          mpz_clear (c[i]);
+        mpfr_free_func (c, (j + 1) * sizeof (mpz_t));
+        for (i = 2; i <= j; i++)
+          mpfr_clear (Z[i]);
+        mpfr_free_func (Z, (j + 1) * sizeof (mpfr_t));
+      }
+#endif /* end of fast argument reconstruction */
+
+      for (; l < k; l++)
         {
-          unsigned long l;
-          mpfr_set (t, z0, MPFR_RNDN); /* t = z0*(1+u) */
-          for (l = 1; l < k; l++)
-            {
-              mpfr_add_ui (u, z0, l, MPFR_RNDN); /* u = (z0+l)*(1+u) */
-              mpfr_mul (t, t, u, MPFR_RNDN);     /* (1+u)^(2l+1) */
-            }
-          /* now t: (1+u)^(2k-1) */
-          /* instead of computing log(sqrt(2*Pi)/t), we compute
-             1/2*log(2*Pi/t^2), which trades a square root for a square */
-          mpfr_mul (t, t, t, MPFR_RNDN); /* (z0*...*(z0+k-1))^2, (1+u)^(4k-1) */
-          mpfr_div (v, v, t, MPFR_RNDN);
-          /* 2*Pi/(z0*...*(z0+k-1))^2 (1+u)^(4k+1) */
+          mpfr_add_ui (u, z0, l, MPFR_RNDN); /* u = (z0+l)*(1+u) */
+          mpfr_mul (t, t, u, MPFR_RNDN);     /* (1+u)^(2l+1) */
         }
+      /* now t: (1+u)^(2k-1) */
+      /* instead of computing log(sqrt(2*Pi)/t), we compute
+         1/2*log(2*Pi/t^2), which trades a square root for a square */
+      mpfr_mul (t, t, t, MPFR_RNDN); /* (z0*...*(z0+k-1))^2, (1+u)^(4k-1) */
+      mpfr_div (v, v, t, MPFR_RNDN);
+      /* 2*Pi/(z0*...*(z0+k-1))^2 (1+u)^(4k+1) */
 #ifdef IS_GAMMA
       err_s = MPFR_GET_EXP(s);
       mpfr_exp (s, s, MPFR_RNDN);
@@ -524,7 +647,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
          |h| <= (2m+48)*ulp(s), thus exp(s0) = exp(s) * exp(-h).
          For |h| <= 1/4, we have |exp(h)-1| <= 1.2*|h| thus
          |exp(s) - exp(s0)| <= 1.2 * exp(s) * (2m+48)* 2^(EXP(s)-w). */
-      d = 1.2 * (2.0 * (double) m + 48.0);
+      /* d = 1.2 * (2.0 * (double) m + 48.0); */
       /* the error on s is bounded by d*2^err_s * 2^(-w) */
       mpfr_sqrt (t, v, MPFR_RNDN);
       /* let v0 be the exact value of v. We have v = v0*(1+u)^(4k+1),
@@ -533,7 +656,13 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
       /* the error on input s is bounded by (1+u)^(d*2^err_s),
          and that on t is (1+u)^(2k+3/2), thus the
          total error is (1+u)^(d*2^err_s+2k+5/2) */
-      err_s += __gmpfr_ceil_log2 (d);
+      /* err_s += __gmpfr_ceil_log2 (d); */
+      /* since d = 1.2 * (2m+48), ceil(log2(d)) = 2 + ceil(log2(0.6*m+14.4))
+         <= 2 + ceil(log2(0.6*m+15)) */
+      {
+        unsigned long mm = (1 + m / 5) * 3; /* 0.6*m <= mm */
+        err_s += 2 + __gmpfr_int_ceil_log2 (mm + 15);
+      }
       err_t = __gmpfr_ceil_log2 (2.0 * (double) k + 2.5);
       err_s = (err_s >= err_t) ? err_s + 1 : err_t + 1;
 #else
@@ -570,10 +699,6 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
 #ifdef IS_GAMMA
  end0:
 #endif
-  oldBm = Bm;
-  while (Bm--)
-    mpz_clear (B[Bm]);
-  (*__gmp_free_func) (B, oldBm * sizeof (mpz_t));
 
  end:
   if (inexact == 0)
@@ -614,7 +739,7 @@ mpfr_lngamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       else /* lngamma(+/-Inf) = lngamma(nonpositive integer) = +Inf */
         {
           if (!MPFR_IS_INF (x))
-            mpfr_set_divby0 ();
+            MPFR_SET_DIVBY0 ();
           MPFR_SET_INF (y);
           MPFR_SET_POS (y);
           MPFR_RET (0);  /* exact */
@@ -654,7 +779,7 @@ mpfr_lgamma (mpfr_ptr y, int *signp, mpfr_srcptr x, mpfr_rnd_t rnd)
       else
         {
           if (MPFR_IS_ZERO (x))
-            mpfr_set_divby0 ();
+            MPFR_SET_DIVBY0 ();
           *signp = MPFR_INT_SIGN (x);
           MPFR_SET_INF (y);
           MPFR_SET_POS (y);
@@ -668,7 +793,7 @@ mpfr_lgamma (mpfr_ptr y, int *signp, mpfr_srcptr x, mpfr_rnd_t rnd)
         {
           MPFR_SET_INF (y);
           MPFR_SET_POS (y);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET (0);
         }
 
@@ -693,6 +818,9 @@ mpfr_lgamma (mpfr_ptr y, int *signp, mpfr_srcptr x, mpfr_rnd_t rnd)
           int ok, inex2;
           mpfr_prec_t w = MPFR_PREC (y) + 14;
           mpfr_exp_t expl;
+          MPFR_SAVE_EXPO_DECL (expo);
+
+          MPFR_SAVE_EXPO_MARK (expo);
 
           while (1)
             {
@@ -722,13 +850,18 @@ mpfr_lgamma (mpfr_ptr y, int *signp, mpfr_srcptr x, mpfr_rnd_t rnd)
               mpfr_clear (l);
               mpfr_clear (h);
               if (ok)
-                return inex;
+                {
+                  MPFR_SAVE_EXPO_FREE (expo);
+                  return mpfr_check_range (y, inex, rnd);
+                }
               /* if ulp(log(-x)) <= |x| there is no reason to loop,
                  since the width of [l, h] will be at least |x| */
-              if (expl < MPFR_EXP(x) + (mpfr_exp_t) w)
+              if (expl < MPFR_EXP (x) + w)
                 break;
               w += MPFR_INT_CEIL_LOG2(w) + 3;
             }
+
+          MPFR_SAVE_EXPO_FREE (expo);
         }
     }
 

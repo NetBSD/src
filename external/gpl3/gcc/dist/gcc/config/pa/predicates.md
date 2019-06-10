@@ -1,5 +1,5 @@
 ;; Predicate definitions for HP PA-RISC.
-;; Copyright (C) 2005-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -276,6 +276,9 @@
     case QImode:
     case HImode:
       return true;
+
+    case VOIDmode:
+      return false;
 
     default:
       return (INTVAL (op) % GET_MODE_SIZE (mode)) == 0;

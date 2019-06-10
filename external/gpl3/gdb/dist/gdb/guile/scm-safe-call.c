@@ -1,6 +1,6 @@
 /* GDB/Scheme support for safe calls into the Guile interpreter.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "defs.h"
 #include "filenames.h"
 #include "guile-internal.h"
+#include "common/pathstuff.h"
 
 /* Struct to marshall args to scscm_safe_call_body.  */
 
@@ -392,9 +393,9 @@ scscm_eval_scheme_string (void *datap)
    and preventing continuation capture.
    The result is NULL if no exception occurred.  Otherwise, the exception is
    printed according to "set guile print-stack" and the result is an error
-   message allocated with malloc, caller must free.  */
+   message.  */
 
-char *
+gdb::unique_xmalloc_ptr<char>
 gdbscm_safe_eval_string (const char *string, int display_result)
 {
   struct eval_scheme_string_data data = { string, display_result };
@@ -403,7 +404,7 @@ gdbscm_safe_eval_string (const char *string, int display_result)
   result = gdbscm_with_guile (scscm_eval_scheme_string, (void *) &data);
 
   if (result != NULL)
-    return xstrdup (result);
+    return gdb::unique_xmalloc_ptr<char> (xstrdup (result));
   return NULL;
 }
 
@@ -438,19 +439,18 @@ gdbscm_safe_source_script (const char *filename)
      %load-path, but we don't want %load-path to be searched.  At least not
      by default.  This function is invoked by the "source" GDB command which
      already has its own path search support.  */
-  char *abs_filename = NULL;
+  gdb::unique_xmalloc_ptr<char> abs_filename;
   const char *result;
 
   if (!IS_ABSOLUTE_PATH (filename))
     {
       abs_filename = gdb_realpath (filename);
-      filename = abs_filename;
+      filename = abs_filename.get ();
     }
 
   result = gdbscm_with_guile (scscm_source_scheme_script,
 			      (void *) filename);
 
-  xfree (abs_filename);
   if (result != NULL)
     return xstrdup (result);
   return NULL;

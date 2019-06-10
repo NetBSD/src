@@ -1,7 +1,7 @@
 /* Target-dependent code for the S+core architecture, for GDB,
    the GNU Debugger.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    Contributed by Qinwei (qinwei@sunnorth.com.cn)
    Contributed by Ching-Peng Lin (cplin@sunplus.com)
@@ -125,15 +125,6 @@ score_register_sim_regno (struct gdbarch *gdbarch, int regnum)
   return regnum;
 }
 #endif
-
-static int
-score_print_insn (bfd_vma memaddr, struct disassemble_info *info)
-{
-  if (info->endian == BFD_ENDIAN_BIG)
-    return print_insn_big_score (memaddr, info);
-  else
-    return print_insn_little_score (memaddr, info);
-}
 
 static inst_t *
 score7_fetch_inst (struct gdbarch *gdbarch, CORE_ADDR addr, gdb_byte *memblock)
@@ -451,11 +442,11 @@ score_xfer_register (struct regcache *regcache, int regnum, int length,
     }
 
   if (readbuf != NULL)
-    regcache_cooked_read_part (regcache, regnum, reg_offset, length,
-                               readbuf + buf_offset);
+    regcache->cooked_read_part (regnum, reg_offset, length,
+				readbuf + buf_offset);
   if (writebuf != NULL)
-    regcache_cooked_write_part (regcache, regnum, reg_offset, length,
-                                writebuf + buf_offset);
+    regcache->cooked_write_part (regnum, reg_offset, length,
+				 writebuf + buf_offset);
 }
 
 static enum return_value_convention
@@ -520,7 +511,8 @@ static CORE_ADDR
 score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
                        struct regcache *regcache, CORE_ADDR bp_addr,
                        int nargs, struct value **args, CORE_ADDR sp,
-                       int struct_return, CORE_ADDR struct_addr)
+		       function_call_return_method return_method,
+		       CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int argnum;
@@ -544,7 +536,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   /* Step 3, Check if struct return then save the struct address to
      r4 and increase the stack_offset by 4.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     {
       regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
       stack_offset += SCORE_REGSIZE;
@@ -1437,9 +1429,8 @@ score7_linux_supply_gregset(const struct regset *regset,
      collect function will store the PC in that slot.  */
   if ((regnum == -1 || regnum == SCORE_EPC_REGNUM)
       && size >= SCORE7_LINUX_EPC_OFFSET + 4)
-    regcache_raw_supply (regcache, SCORE_EPC_REGNUM,
-			 (const gdb_byte *) buf
-			 + SCORE7_LINUX_EPC_OFFSET);
+    regcache->raw_supply
+      (SCORE_EPC_REGNUM, (const gdb_byte *) buf + SCORE7_LINUX_EPC_OFFSET);
 }
 
 static const struct regset score7_linux_gregset =
@@ -1457,8 +1448,8 @@ score7_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					   void *cb_data,
 					   const struct regcache *regcache)
 {
-  cb (".reg", SCORE7_LINUX_SIZEOF_GREGSET, &score7_linux_gregset,
-      NULL, cb_data);
+  cb (".reg", SCORE7_LINUX_SIZEOF_GREGSET, SCORE7_LINUX_SIZEOF_GREGSET,
+      &score7_linux_gregset, NULL, cb_data);
 }
 
 static struct gdbarch *
@@ -1491,7 +1482,6 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_unwind_sp (gdbarch, score_unwind_sp);
   set_gdbarch_unwind_pc (gdbarch, score_unwind_pc);
-  set_gdbarch_print_insn (gdbarch, score_print_insn);
 
   switch (target_mach)
     {
@@ -1540,8 +1530,6 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
-
-extern initialize_file_ftype _initialize_score_tdep;
 
 void
 _initialize_score_tdep (void)

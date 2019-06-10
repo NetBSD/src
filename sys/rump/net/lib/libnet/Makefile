@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2017/01/17 08:10:37 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.30.14.1 2019/06/10 22:09:54 christos Exp $
 #
 
 
@@ -15,6 +15,7 @@ SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c			\
 SRCS+=	if_43.c
 SRCS+=	if_llatbl.c
 SRCS+=	net_component.c
+SRCS+=	ether_sw_offload.c
 
 .include <bsd.init.mk>
 

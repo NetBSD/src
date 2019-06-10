@@ -1,6 +1,6 @@
 /* tfma -- test file for mpc_fma.
 
-Copyright (C) 2011, 2012 INRIA
+Copyright (C) 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -88,18 +88,32 @@ check_random (void)
    mpc_clear (c);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex =                                                       \
+    mpc_fma (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc, P[5].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex =                                                       \
+    mpc_fma (P[1].mpc, P[1].mpc, P[3].mpc, P[4].mpc, P[5].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex =                                                       \
+    mpc_fma (P[1].mpc, P[2].mpc, P[1].mpc, P[4].mpc, P[5].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP3                                     \
+  P[0].mpc_inex =                                                       \
+    mpc_fma (P[1].mpc, P[2].mpc, P[3].mpc, P[1].mpc, P[5].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 
 int
 main (void)
 {
-  DECL_FUNC (CCCC, f, mpc_fma);
-
   test_start ();
 
-  check_random ();
+  check_random (); /* Remove it? */
 
-  data_check (f, "fma.dat");
-  tgeneric (f, 2, 1024, 1, 256);
+  data_check_template ("fma.dsc", "fma.dat");
+
+  tgeneric_template ("fma.dsc", 2, 1024, 1, 256);
 
   test_end ();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.428.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,13 +90,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_atalk.h"
-#include "opt_natm.h"
 #include "opt_wlan.h"
 #include "opt_net_mpsafe.h"
 #include "opt_mrouting.h"
@@ -120,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $");
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -150,13 +151,17 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.428 2018/06/26 06:48:02 msaitoh Exp $");
 #include "fddi.h"
 #include "token.h"
 
+#include "bridge.h"
+#if NBRIDGE > 0
+#include <net/if_bridgevar.h>
+#endif
+
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
 
 #include <compat/sys/sockio.h>
-#include <compat/sys/socket.h>
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
@@ -202,7 +207,6 @@ static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo(void *);
-static void if_free_sadl(struct ifnet *, int);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
@@ -240,14 +244,12 @@ static void if_deferred_start_destroy(struct ifnet *);
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
 
-static void if_sysctl_setup(struct sysctllog **);
+/*
+ * Hook for if_vlan - needed by if_agr
+ */
+struct if_vlan_vlan_input_hook_t if_vlan_vlan_input_hook;
 
-/* Compatibility vector functions */
-u_long (*vec_compat_cvtcmd)(u_long) = NULL;
-int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
-	struct lwp *) = NULL;
-int (*vec_compat_ifconf)(struct lwp *, u_long, void *) = (void *)enosys;
-int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) = (void *)enosys;
+static void if_sysctl_setup(struct sysctllog **);
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -278,8 +280,6 @@ if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 void
 ifinit(void)
 {
-
-	if_sysctl_setup(NULL);
 
 #if (defined(INET) || defined(INET6))
 	encapinit();
@@ -321,6 +321,14 @@ ifinit1(void)
 #if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || NTOKEN > 0 || defined(WLAN)
 	etherinit();
 #endif
+}
+
+/* XXX must be after domaininit() */
+void
+ifinit_post(void)
+{
+
+	if_sysctl_setup(NULL);
 }
 
 ifnet_t *
@@ -444,7 +452,7 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	addrlen = ifp->if_addrlen;
 	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
-	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
+	ifa = malloc(ifasize, M_IFADDR, M_WAITOK | M_ZERO);
 
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
@@ -568,7 +576,7 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
  * Free the link level name for the specified interface.  This is
  * a detach helper.  This is called from if_detach().
  */
-static void
+void
 if_free_sadl(struct ifnet *ifp, int factory)
 {
 	struct ifaddr *ifa;
@@ -589,7 +597,7 @@ if_free_sadl(struct ifnet *ifp, int factory)
 	KASSERT(ifp->if_sadl != NULL);
 
 	s = splsoftnet();
-	rtinit(ifa, RTM_DELETE, 0);
+	KASSERT(ifa->ifa_addr->sa_family == AF_LINK);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
 	splx(s);
@@ -649,7 +657,7 @@ skip:
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK | M_ZERO);
 		if (ifindex2ifnet != NULL) {
 			memcpy(q, ifindex2ifnet, m);
 			free(ifindex2ifnet, M_IFADDR);
@@ -977,7 +985,7 @@ sysctl_percpuq_setup(struct sysctllog **clog, const char* ifname,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed input queue length"),
 		       sysctl_percpuq_maxlen_handler, 0, (void *)ipq, 0,
@@ -1036,6 +1044,7 @@ if_snd_is_used(struct ifnet *ifp)
 {
 
 	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
+	    ifp->if_transmit == if_transmit ||
 	    ALTQ_IS_ENABLED(&ifp->if_snd);
 }
 
@@ -1316,6 +1325,18 @@ if_detach(struct ifnet *ifp)
 	if_deactivate(ifp);
 	IFNET_UNLOCK(ifp);
 
+	/*
+	 * Unlink from the list and wait for all readers to leave
+	 * from pserialize read sections.  Note that we can't do
+	 * psref_target_destroy here.  See below.
+	 */
+	IFNET_GLOBAL_LOCK();
+	ifindex2ifnet[ifp->if_index] = NULL;
+	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
+	IFNET_WRITER_REMOVE(ifp);
+	pserialize_perform(ifnet_psz);
+	IFNET_GLOBAL_UNLOCK();
+
 	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
@@ -1447,14 +1468,10 @@ restart:
 		}
 	}
 
-	/* Wait for all readers to drain before freeing.  */
-	IFNET_GLOBAL_LOCK();
-	ifindex2ifnet[ifp->if_index] = NULL;
-	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
-	IFNET_WRITER_REMOVE(ifp);
-	pserialize_perform(ifnet_psz);
-	IFNET_GLOBAL_UNLOCK();
-
+	/*
+	 * Must be done after the above pr_purgeif because if_psref may be
+	 * still used in pr_purgeif.
+	 */
 	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
 	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
 
@@ -1626,7 +1643,7 @@ static bool
 if_is_unit(const char *name)
 {
 
-	while(*name != '\0') {
+	while (*name != '\0') {
 		if (*name < '0' || *name > '9')
 			return false;
 		name++;
@@ -1770,8 +1787,8 @@ ifa_psref_init(struct ifaddr *ifa)
 void
 ifaref(struct ifaddr *ifa)
 {
-	KASSERT(!ISSET(ifa->ifa_flags, IFA_DESTROYING));
-	ifa->ifa_refcnt++;
+
+	atomic_inc_uint(&ifa->ifa_refcnt);
 }
 
 void
@@ -1780,7 +1797,7 @@ ifafree(struct ifaddr *ifa)
 	KASSERT(ifa != NULL);
 	KASSERT(ifa->ifa_refcnt > 0);
 
-	if (--ifa->ifa_refcnt == 0) {
+	if (atomic_dec_uint_nv(&ifa->ifa_refcnt) == 0) {
 		free(ifa, M_IFADDR);
 	}
 }
@@ -1846,6 +1863,7 @@ void
 ifa_acquire(struct ifaddr *ifa, struct psref *psref)
 {
 
+	PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 	psref_acquire(psref, &ifa->ifa_psref, ifa_psref_class);
 }
 
@@ -2170,7 +2188,8 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct psref psref;
 
 	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
-	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL ||
+	    ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
 		return;
 	if ((ifa = ifaof_ifpforaddr_psref(dst, ifp, &psref)) != NULL) {
 		rt_replace_ifa(rt, ifa);
@@ -2319,6 +2338,7 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 	/* Ensure the change is still valid. */
 	if (ifp->if_link_state == link_state) {
 		IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+		splx(s);
 		return;
 	}
 
@@ -2422,6 +2442,9 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			break;
 
 		rt->rt_ifp = lo0ifp;
+
+		if (ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
+			break;
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
@@ -2717,6 +2740,7 @@ if_get(const char *name, struct psref *psref)
 		if (if_is_deactivated(ifp))
 			continue;
 		if (strcmp(ifp->if_xname, name) == 0) {
+			PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 			psref_acquire(psref, &ifp->if_psref,
 			    ifnet_psref_class);
 			goto out;
@@ -2780,8 +2804,10 @@ if_get_byindex(u_int idx, struct psref *psref)
 
 	s = pserialize_read_enter();
 	ifp = if_byindex(idx);
-	if (__predict_true(ifp != NULL))
+	if (__predict_true(ifp != NULL)) {
+		PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+	}
 	pserialize_read_exit(s);
 
 	return ifp;
@@ -2842,7 +2868,7 @@ if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
 	struct m_tag *mtag;
 	int *count;
 
-	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO);
 	if (mtag != NULL) {
 		count = (int *)(mtag + 1);
 		if (++(*count) > limit) {
@@ -2891,40 +2917,41 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		/* Pre-compute the checksum flags mask. */
 		ifp->if_csum_flags_tx = 0;
 		ifp->if_csum_flags_rx = 0;
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_IPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_IPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
-		}
+
+		if (ifp->if_capenable & IFCAP_TSOv4)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv4;
+		if (ifp->if_capenable & IFCAP_TSOv6)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv6;
+
+#if NBRIDGE > 0
+		if (ifp->if_bridge != NULL)
+			bridge_calc_csum_flags(ifp->if_bridge);
+#endif
+
 		if (ifp->if_flags & IFF_UP)
 			return ENETRESET;
 		return 0;
@@ -3108,17 +3135,15 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifnet *ifp;
 	struct ifreq *ifr;
 	int error = 0;
-#if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
 	u_long ocmd = cmd;
-#endif
 	short oif_flags;
-#ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
-#endif
 	int r;
 	struct psref psref;
 	int bound;
+	bool do_if43_post = false;
+	bool do_ifm80_post = false;
 
 	switch (cmd) {
 	case SIOCGIFCONF:
@@ -3126,26 +3151,29 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCINITIFADDR:
 		return EPERM;
 	default:
-		error = (*vec_compat_ifconf)(l, cmd, data);
+		MODULE_HOOK_CALL(uipc_syscalls_40_hook, (cmd, data), enosys(),
+		    error);
 		if (error != ENOSYS)
 			return error;
-		error = (*vec_compat_ifdatareq)(l, cmd, data);
+		MODULE_HOOK_CALL(uipc_syscalls_50_hook, (l, cmd, data),
+		    enosys(), error);
 		if (error != ENOSYS)
 			return error;
+		error = 0;
 		break;
 	}
 
 	ifr = data;
-#ifdef COMPAT_OIFREQ
-	if (vec_compat_cvtcmd) {
-		cmd = (*vec_compat_cvtcmd)(cmd);
-		if (cmd != ocmd) {
-			oifr = data;
-			data = ifr = &ifrb;
-			ifreqo2n(oifr, ifr);
-		}
+	/* Pre-conversion */
+	MODULE_HOOK_CALL(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), error);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		IFREQO2N_43(oifr, ifr);
+		do_if43_post = true;
 	}
-#endif
+	MODULE_HOOK_CALL(ifmedia_80_pre_hook, (ifr, &cmd, &do_ifm80_post),
+	    enosys(), error);
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -3206,6 +3234,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCSLIFPHYADDR:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCSETHERCAP:
 	case SIOCSIFMEDIA:
 	case SIOCSDRVSPEC:
 	case SIOCG80211:
@@ -3238,11 +3267,9 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
-#ifdef COMPAT_OSOCK
-		if (vec_compat_ifioctl != NULL)
-			error = (*vec_compat_ifioctl)(so, ocmd, cmd, data, l);
-		else
-#endif
+		MODULE_HOOK_CALL(if_ifioctl_43_hook,
+			     (so, ocmd, cmd, data, l), enosys(), error);
+		if (error == ENOSYS)
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 			    cmd, data, ifp);
 		KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
@@ -3255,10 +3282,13 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			splx(s);
 		}
 	}
-#ifdef COMPAT_OIFREQ
-	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
-#endif
+
+	/* Post-conversion */
+	if (do_ifm80_post && (error == 0))
+		MODULE_HOOK_CALL(ifmedia_80_post_hook, (ifr, cmd),
+		    enosys(), error);
+	if (do_if43_post)
+		IFREQN2O_43(oifr, ifr);
 
 	IFNET_UNLOCK(ifp);
 	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(ifp);
@@ -3311,6 +3341,7 @@ ifconf(u_long cmd, void *data)
 	int bound;
 	struct psref psref;
 
+	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
@@ -3393,31 +3424,29 @@ int
 ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
 	uint8_t len = sizeof(ifr->ifr_ifru.ifru_space);
-#ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
+	int hook;
 
-	if (vec_compat_cvtcmd) {
-		    cmd = (*vec_compat_cvtcmd)(cmd);
-		    if (cmd != ocmd) {
-			    oifr = (struct oifreq *)(void *)ifr;
-			    ifr = &ifrb;
-			    ifreqo2n(oifr, ifr);
-			    len = sizeof(oifr->ifr_addr);
-		    }
+	MODULE_HOOK_CALL(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), hook);
+	if (hook != ENOSYS) {
+		if (cmd != ocmd) {
+			oifr = (struct oifreq *)(void *)ifr;
+			ifr = &ifrb;
+			IFREQO2N_43(oifr, ifr);
+				len = sizeof(oifr->ifr_addr);
+		}
 	}
-#endif
+
 	if (len < sa->sa_len)
 		return EFBIG;
 
 	memset(&ifr->ifr_addr, 0, len);
 	sockaddr_copy(&ifr->ifr_addr, len, sa);
 
-#ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
-#endif
+		IFREQN2O_43(oifr, ifr);
 	return 0;
 }
 
@@ -3554,8 +3583,8 @@ if_do_dad(struct ifnet *ifp)
 		 * XXX: we should rather mark "tentative" on such addresses,
 		 * and do DAD after the interface becomes ready.
 		 */
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING))
 			return 0;
 
 		return 1;
@@ -3606,13 +3635,6 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
-	/* There remain some paths that don't hold IFNET_LOCK yet */
-#ifdef NET_MPSAFE
-	/* CARP and MROUTING still don't deal with the lock yet */
-#if (!defined(NCARP) || (NCARP == 0)) && !defined(MROUTING)
-	KASSERT(IFNET_LOCKED(ifp));
-#endif
-#endif
 	if (ifp->if_mcastop != NULL)
 		rc = (*ifp->if_mcastop)(ifp, cmd, sa);
 	else {
@@ -3662,7 +3684,7 @@ sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed output queue length"),
 		       NULL, 0, &ifq->ifq_maxlen, 0,
@@ -3761,19 +3783,19 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "len",
+		       CTLTYPE_QUAD, "len",
 		       SYSCTL_DESCR("Current input queue length"),
 		       len_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed input queue length"),
 		       maxlen_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops",
+		       CTLTYPE_QUAD, "drops",
 		       SYSCTL_DESCR("Packets dropped due to full input queue"),
 		       drops_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);

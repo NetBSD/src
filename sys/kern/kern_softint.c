@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.45 2017/12/28 03:39:48 msaitoh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.45.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.45 2017/12/28 03:39:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.45.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -595,11 +595,16 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		KASSERTMSG(curcpu()->ci_mtx_count == 0,
 		    "%s: ci_mtx_count (%d) != 0, sh_func %p\n",
 		    __func__, curcpu()->ci_mtx_count, sh->sh_func);
+		/* Diagnostic: check that psrefs have not leaked. */
+		KASSERTMSG(l->l_psrefs == 0, "%s: l_psrefs=%d, sh_func=%p\n",
+		    __func__, l->l_psrefs, sh->sh_func);
 
 		(void)splhigh();
 		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) != 0);
 		sh->sh_flags ^= SOFTINT_ACTIVE;
 	}
+
+	PSREF_DEBUG_BARRIER();
 
 	if (havelock) {
 		KERNEL_UNLOCK_ONE(l);

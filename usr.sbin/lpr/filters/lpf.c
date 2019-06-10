@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.14 2011/08/30 19:27:37 joerg Exp $	*/
+/*	$NetBSD: lpf.c,v 1.14.42.1 2019/06/10 22:10:32 christos Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.14 2011/08/30 19:27:37 joerg Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.14.42.1 2019/06/10 22:10:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 
 			case '\f':
 				lineno = length;
+				/* FALLTHROUGH */
 			case '\n':
 				if (crnl && prch != '\r')
 					need_cr = 1;
@@ -171,6 +172,7 @@ main(int argc, char *argv[])
 					ch = '\031';
 				}
 
+				/* FALLTHROUGH */
 			default:
 				if (col >= width || (!literal && ch < ' ')) {
 					col++;

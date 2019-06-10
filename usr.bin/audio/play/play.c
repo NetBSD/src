@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.55.16.1 2019/06/10 22:10:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.55.16.1 2019/06/10 22:10:17 christos Exp $");
 #endif
 
 
@@ -224,6 +224,7 @@ play(char *file)
 	off_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
+	int nw;
 
 	if (file[0] == '-' && file[1] == 0) {
 		play_fd("standard input", STDIN_FILENO);
@@ -248,7 +249,7 @@ play(char *file)
 	 * or if we failed to mmap the file, try to read it instead, so
 	 * that filesystems, etc, that do not support mmap() work
 	 */
-	if (S_ISREG(sb.st_rdev & S_IFMT) == 0 || 
+	if (!S_ISREG(sb.st_mode) || 
 	    ((off_t)sizet_filesize != filesize) ||
 	    (oaddr = addr = mmap(0, sizet_filesize, PROT_READ,
 	    MAP_SHARED, fd, 0)) == MAP_FAILED) {
@@ -283,13 +284,19 @@ play(char *file)
 	}
 
 	while ((uint64_t)datasize > bufsize) {
-		if ((size_t)write(audiofd, addr, bufsize) != bufsize)
+		nw = write(audiofd, addr, bufsize);
+		if (nw == -1)
 			err(1, "write failed");
+		if ((size_t)nw != bufsize)
+			errx(1, "write failed");
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
 	}
-	if ((off_t)write(audiofd, addr, datasize) != datasize)
+	nw = write(audiofd, addr, datasize);
+	if (nw == -1)
 		err(1, "final write failed");
+	if ((off_t)nw != datasize)
+		errx(1, "final write failed");
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
@@ -341,8 +348,10 @@ play_fd(const char *file, int fd)
 		if (datasize != 0 && dataout + nr > datasize)
 			nr = datasize - dataout;
 		nw = write(audiofd, buffer, nr);
+		if (nw == -1)
+			err(1, "audio device write failed");
 		if (nw != nr)
-			goto write_error;
+			errx(1, "audio device write failed");
 		dataout += nw;
 		nr = read(fd, buffer, bufsize);
 		if (nr == -1)
@@ -356,8 +365,6 @@ play_fd(const char *file, int fd)
 	return;
 read_error:
 	err(1, "read of standard input failed");
-write_error:
-	err(1, "audio device write failed");
 }
 
 /*

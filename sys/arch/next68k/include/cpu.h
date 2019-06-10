@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2016/12/17 14:36:30 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48.16.1 2019/06/10 22:06:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,7 +116,6 @@ extern	int	astpending;	/* need to trap before returning to user mode */
 extern	void (*vectab[])(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));

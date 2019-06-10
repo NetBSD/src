@@ -164,8 +164,10 @@ extern void obj_elf_text (int);
 extern void obj_elf_change_section
   (const char *, unsigned int, unsigned int, bfd_vma, int, const char *,
    int, int);
-extern struct fix *obj_elf_vtable_inherit (int);
-extern struct fix *obj_elf_vtable_entry (int);
+extern void obj_elf_vtable_inherit (int);
+extern void obj_elf_vtable_entry (int);
+extern struct fix * obj_elf_get_vtable_inherit (void);
+extern struct fix * obj_elf_get_vtable_entry (void);
 extern bfd_boolean obj_elf_seen_attribute
   (int, unsigned int);
 extern int obj_elf_vendor_attribute (int);

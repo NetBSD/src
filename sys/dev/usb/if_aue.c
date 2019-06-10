@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.143 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.143.2.1 2019/06/10 22:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,14 +71,13 @@
  * TODO:
  * better error messages from rxstat
  * split out if_auevar.h
- * add thread to avoid register reads from interrupt context
  * more error checks
  * investigate short rx problem
  * proper cleanup on errors
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.143 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.143.2.1 2019/06/10 22:07:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -125,11 +124,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.143 2018/06/26 06:48:02 msaitoh Exp $")
 
 #ifdef AUE_DEBUG
 #define DPRINTF(x)	if (auedebug) printf x
-#define DPRINTFN(n,x)	if (auedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (auedebug >= (n)) printf x
 int	auedebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -145,7 +144,7 @@ struct aue_type {
 
 Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_3COM,		USB_PRODUCT_3COM_3C460B},	  PII },
- {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1},	  PNA|PII },
+ {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1},	  PNA | PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2},	  PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE1000},	  LSYS },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX4},	  PNA },
@@ -168,15 +167,15 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBLP100}, PNA },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBEL100}, 0 },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBE100},  PII },
- {{ USB_VENDOR_COMPAQ,		USB_PRODUCT_COMPAQ_HNE200},       PII },
+ {{ USB_VENDOR_COMPAQ,		USB_PRODUCT_COMPAQ_HNE200},	  PII },
  {{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX}, 0 },
  {{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TXS},PII },
- {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX4},	  LSYS|PII },
+ {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX4},	  LSYS | PII },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX1},	  LSYS },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX},	  LSYS },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA},  PNA },
- {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX3},	  LSYS|PII },
- {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX2},	  LSYS|PII },
+ {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX3},	  LSYS | PII },
+ {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX2},	  LSYS | PII },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650},	  0 },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX0},	  0 },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX1},	  LSYS },
@@ -189,18 +188,18 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX},	  0 },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTXS},	  PII },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETXUS2},	  PII },
- {{ USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX},   0 },
- {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX1},	  LSYS|PII },
+ {{ USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX},	  0 },
+ {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX1},	  LSYS | PII },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10T},	  LSYS },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX},	  LSYS },
- {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1},	  LSYS|PNA },
+ {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1},	  LSYS | PNA },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA},	  LSYS },
- {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX2},	  LSYS|PII },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1}, 	  0 },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5}, 	  0 },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUA2TX5}, 	  PII },
+ {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX2},	  LSYS | PII },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUATX1},	  0 },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUATX5},	  0 },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUA2TX5},	  PII },
  {{ USB_VENDOR_MICROSOFT,	USB_PRODUCT_MICROSOFT_MN110},	  PII },
- {{ USB_VENDOR_NETGEAR,         USB_PRODUCT_NETGEAR_FA101},       PII },
+ {{ USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA101},	  PII },
  {{ USB_VENDOR_SIEMENS,		USB_PRODUCT_SIEMENS_SPEEDSTREAM}, PII },
  {{ USB_VENDOR_SMARTBRIDGES,	USB_PRODUCT_SMARTBRIDGES_SMARTNIC},PII },
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB},	  0 },
@@ -213,7 +212,7 @@ int aue_match(device_t, cfdata_t, void *);
 void aue_attach(device_t, device_t, void *);
 int aue_detach(device_t, int);
 int aue_activate(device_t, enum devact);
-extern struct cfdriver aue_cd;
+
 CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
     aue_detach, aue_activate);
 
@@ -239,8 +238,8 @@ Static int aue_ifmedia_upd(struct ifnet *);
 
 Static int aue_eeprom_getword(struct aue_softc *, int);
 Static void aue_read_mac(struct aue_softc *, u_char *);
-Static int aue_miibus_readreg(device_t, int, int);
-Static void aue_miibus_writereg(device_t, int, int, int);
+Static int aue_miibus_readreg(device_t, int, int, uint16_t *);
+Static int aue_miibus_writereg(device_t, int, int, uint16_t);
 Static void aue_miibus_statchg(struct ifnet *);
 
 Static void aue_lock_mii(struct aue_softc *);
@@ -431,17 +430,16 @@ aue_unlock_mii(struct aue_softc *sc)
 }
 
 Static int
-aue_miibus_readreg(device_t dev, int phy, int reg)
+aue_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct aue_softc *sc = device_private(dev);
-	int			i;
-	uint16_t		val;
+	int			i, rv = 0;
 
 	if (sc->aue_dying) {
 #ifdef DIAGNOSTIC
 		printf("%s: dying\n", device_xname(sc->aue_dev));
 #endif
-		return 0;
+		return -1;
 	}
 
 #if 0
@@ -458,7 +456,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
 		if (phy == 3)
-			return 0;
+			return -1;
 	}
 #endif
 
@@ -473,36 +471,39 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 
 	if (i == AUE_TIMEOUT) {
 		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
-	val = aue_csr_read_2(sc, AUE_PHY_DATA);
+	*val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04x\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, val));
+	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04hx\n",
+	    device_xname(sc->aue_dev), __func__, phy, reg, *val));
 
+out:
 	aue_unlock_mii(sc);
-	return val;
+	return rv;
 }
 
-Static void
-aue_miibus_writereg(device_t dev, int phy, int reg, int data)
+Static int
+aue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct aue_softc *sc = device_private(dev);
-	int			i;
+	int			i, rv = 0;
 
 #if 0
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
 		if (phy == 3)
-			return;
+			return -1;
 	}
 #endif
 
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04x\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, data));
+	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04hx\n",
+	    device_xname(sc->aue_dev), __func__, phy, reg, val));
 
 	aue_lock_mii(sc);
-	aue_csr_write_2(sc, AUE_PHY_DATA, data);
+	aue_csr_write_2(sc, AUE_PHY_DATA, val);
 	aue_csr_write_1(sc, AUE_PHY_ADDR, phy);
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_WRITE);
 
@@ -513,8 +514,11 @@ aue_miibus_writereg(device_t dev, int phy, int reg, int data)
 
 	if (i == AUE_TIMEOUT) {
 		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		rv = ETIMEDOUT;
 	}
 	aue_unlock_mii(sc);
+
+	return rv;
 }
 
 Static void
@@ -534,7 +538,7 @@ aue_miibus_statchg(struct ifnet *ifp)
 		AUE_CLRBIT(sc, AUE_CTL1, AUE_CTL1_SPEEDSEL);
 	}
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_DUPLEX);
 	else
 		AUE_CLRBIT(sc, AUE_CTL1, AUE_CTL1_DUPLEX);
@@ -549,7 +553,7 @@ aue_miibus_statchg(struct ifnet *ifp)
 	 */
 	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
 		uint16_t auxmode;
-		auxmode = aue_miibus_readreg(sc->aue_dev, 0, 0x1b);
+		aue_miibus_readreg(sc->aue_dev, 0, 0x1b, &auxmode);
 		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
 	DPRINTFN(5,("%s: %s: exit\n", device_xname(sc->aue_dev), __func__));
@@ -578,6 +582,7 @@ aue_crc(void *addrv)
 Static void
 aue_setmulti(struct aue_softc *sc)
 {
+	struct ethercom		*ec = &sc->aue_ec;
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -601,16 +606,20 @@ allmulti:
 		aue_csr_write_1(sc, AUE_MAR0 + i, 0);
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->aue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = aue_crc(enm->enm_addrlo);
 		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
@@ -869,6 +878,9 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev, sc->aue_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -886,13 +898,20 @@ aue_detach(device_t self, int flags)
 		return 0;
 	}
 
-	callout_stop(&sc->aue_stat_ch);
+	pmf_device_deregister(self);
+
 	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
-	 * in the same thread as detach.
+	 * XXX Halting callout guarantees no more tick tasks.  What
+	 * guarantees no more stop tasks?  What guarantees no more
+	 * calls to aue_send?  Don't we need to wait for if_detach or
+	 * something?  Should we set sc->aue_dying here?  Is device
+	 * deactivation guaranteed to have already happened?
 	 */
-	usb_rem_task(sc->aue_udev, &sc->aue_tick_task);
-	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
+	callout_halt(&sc->aue_stat_ch, NULL);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	sc->aue_closing = 1;
 	cv_signal(&sc->aue_domc);
@@ -1520,7 +1539,7 @@ Static int
 aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct aue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
@@ -1529,7 +1548,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		aue_init(sc);
@@ -1571,19 +1590,13 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		sc->aue_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				cv_signal(&sc->aue_domc);
 			}
 			error = 0;
 		}
-		break;
-	default:
-		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 

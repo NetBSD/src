@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.169 2018/01/02 00:25:35 christos Exp $
+#	$NetBSD: files.isa,v 1.169.4.1 2019/06/10 22:07:12 christos Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -290,7 +290,7 @@ define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audiobus, isadma, sbdsp, mulaw, auconv, midibus
+device	sb: audiobus, isadma, sbdsp, midibus
 file	dev/isa/sb.c			sb			needs-flag
 
 attach	sb at isa with sb_isa
@@ -303,7 +303,7 @@ attach	mpu at sbdsp with mpu_sb
 file	dev/isa/mpu_sb.c		mpu_sb
 
 # ProAudio Spectrum
-device	pas: audiobus, isadma, sbdsp, mulaw, auconv
+device	pas: audiobus, isadma, sbdsp
 attach	pas at isa
 file	dev/isa/pas.c			pas			needs-flag
 
@@ -315,7 +315,7 @@ define	ics2101
 file	dev/isa/ics2101.c		ics2101
 
 # Microsoft Windows Sound System
-device	wss { } : audiobus, isadma, ad1848, auconv
+device	wss { } : audiobus, isadma, ad1848
 file	dev/isa/wss.c			wss			needs-flag
 
 attach	wss at isa with wss_isa
@@ -325,7 +325,7 @@ attach	opl at wss with opl_wss
 file	dev/isa/opl_wss.c		opl_wss
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : audiobus, isadma, mulaw, auconv, midibus
+device	ess { } : audiobus, isadma, midibus
 file	dev/isa/ess.c			ess			needs-flag
 
 attach	ess at isa with ess_isa
@@ -342,7 +342,7 @@ attach	opl at isa with opl_isa
 file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
-device	ym { }: audiobus, isadma, ad1848, auconv
+device	ym { }: audiobus, isadma, ad1848
 file	dev/isa/ym.c			ym
 defparam opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
 
@@ -355,13 +355,13 @@ file	dev/isa/mpu_ym.c		mpu_ym			needs-flag
 # Gravis UltraSound & UltraSound MAX.
 # Use the "drq2" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation.
-device	gus: audiobus, isadma, ics2101, ad1848, mulaw, auconv
+device	gus: audiobus, isadma, ics2101, ad1848
 attach	gus at isa
 file	dev/isa/gus.c			gus			needs-flag
 
 # Sierra's Aria chipset.
 # (e.g. Prometheus Aria 16)
-device	aria: audiobus, mulaw, auconv
+device	aria: audiobus
 attach	aria at isa
 file	dev/isa/aria.c			aria
 
@@ -369,13 +369,6 @@ file	dev/isa/aria.c			aria
 device	cms: midibus
 attach	cms at isa
 file	dev/isa/cms.c			cms
-
-#
-# PlanetConnect satellite receiver driver.
-#
-device	satlink: isadma
-attach	satlink at isa
-file	dev/isa/satlink.c		satlink			needs-flag
 
 # ISA PC keyboard controller
 defflag opt_pckbc.h			PCKBCNOTEST
@@ -483,22 +476,6 @@ file	dev/isa/ug_isa.c		ug_isa
 device	aps: sysmon_envsys
 attach	aps at isa with aps
 file	dev/isa/aps.c 			aps
-
-# ISDN devices
-attach	isic at isa with isic_isa
-file	dev/isa/isic_isa.c		isic_isa
-#attach	daic at isa with daic_isa
-#file	dev/isa/daic_isa.c		daic_isa
-
-defflag	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
-			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1
-
-file	dev/isa/isic_isa_tel_s08.c	isic_isa
-file	dev/isa/isic_isa_tel_s016.c	isic_isa
-file	dev/isa/isic_isa_tel_s0163.c	isic_isa
-file	dev/isa/isic_isa_avm_a1.c	isic_isa
-file	dev/isa/isic_isa_usr_sti.c	isic_isa
-file	dev/isa/isic_isa_itk_ix1.c	isic_isa
 
 # Game adapter (joystick)
 attach	joy at isa with joy_isa

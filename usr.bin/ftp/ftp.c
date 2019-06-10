@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.167 2016/10/04 15:06:31 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.167.14.1 2019/06/10 22:10:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.167 2016/10/04 15:06:31 joerg Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.167.14.1 2019/06/10 22:10:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1553,8 +1553,8 @@ initconn(void)
 				result = COMPLETE + 1;
 				break;
 			}
-			/* FALLTHROUGH */
 #ifdef INET6
+			/* FALLTHROUGH */
 		case AF_INET6:
 			if (!epsv6 || epsv6bad) {
 				result = COMPLETE + 1;

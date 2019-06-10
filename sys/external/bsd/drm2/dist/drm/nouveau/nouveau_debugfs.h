@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_debugfs.h,v 1.1.1.1.32.1 2019/06/10 22:08:06 christos Exp $	*/
+
 #ifndef __NOUVEAU_DEBUGFS_H__
 #define __NOUVEAU_DEBUGFS_H__
 

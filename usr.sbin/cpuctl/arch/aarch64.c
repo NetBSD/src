@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.2.4.1 2019/06/10 22:10:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.2.4.1 2019/06/10 22:10:29 christos Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -74,7 +74,12 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA72R0 & CPU_PARTMASK, "Cortex-A72", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Cortex", "V8.2-A" },
-	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" }
+	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" },
+	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Cortex", "V8.2-A" },
+	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX2RX, "Cavium ThunderX2", "Cavium", "V8.1-A" },
 };
 
 const struct impltab implids[] = {
@@ -253,6 +258,32 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	{ .bitwidth = 0 }	/* end of table */
 };
 
+/* ID_AA64DFR0_EL1 - AArch64 Debug Feature Register 0 */
+struct fieldinfo id_aa64dfr0_fieldinfo[] = {
+	{
+		.bitpos = 0, .bitwidth = 4, .name = "DebugVer",
+		.info = (const char *[16]) { /* 16=4bit */
+			[6] = "v8-A debug architecture"
+		}
+	},
+	{
+		.bitpos = 4, .bitwidth = 4, .name = "TraceVer",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Trace supported",
+			[1] = "Trace not supported"
+		}
+	},
+	{
+		.bitpos = 8, .bitwidth = 4, .name = "PMUVer",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No Performance monitor",
+			[1] = "Performance monitor unit v3"
+		}
+	},
+	{ .bitwidth = 0 }	/* end of table */
+};
+
+
 /* MVFR0_EL1 - Media and VFP Feature Register 0 */
 struct fieldinfo mvfr0_fieldinfo[] = {
 	{
@@ -282,7 +313,7 @@ struct fieldinfo mvfr0_fieldinfo[] = {
 	{
 		.bitpos = 12, .bitwidth = 4, .name = "FPTrap",
 		.info = (const char *[16]) { /* 16=4bit */
-			[0] = "VFPv2 support exception trapping",
+			[0] = "No floating point exception trapping support",
 			[1] = "VFPv2/VFPv3/VFPv4 support exception trapping"
 		}
 	},
@@ -506,110 +537,95 @@ identify_mpidr(const char *cpuname, uint32_t mpidr)
 
 }
 
-static void *
-sysctlfetch(const char *sname, size_t *lenp)
+/* AA64DFR0 - Debug feature register 0 */
+static void
+identify_dfr0(const char *cpuname, uint64_t dfr0)
 {
-	size_t len;
-	void *data;
+	const char *setname = "debug feature 0";
 
-	if (sysctlbyname(sname, NULL, &len, NULL, 0) != 0) {
-		warn("sysctlbyname: %s", sname);
-		return NULL;
-	}
-
-	data = malloc(len);
-	if (data == NULL) {
-		warn("malloc");
-		return NULL;
-	}
-
-	if (sysctlbyname(sname, data, &len, NULL, 0) != 0) {
-		warn("sysctlbyname: %s", sname);
-		free(data);
-		return NULL;
-	}
-
-	*lenp = len;
-	return data;
+	printf("%s: %s: CTX_CMPs: %lu context-aware breakpoints\n",
+	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_CTX_CMPS) + 1);
+	printf("%s: %s: WRPs: %lu watchpoints\n",
+	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_WRPS) + 1);
+	printf("%s: %s: BRPs: %lu breakpoints\n",
+	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_BRPS) + 1);
+	print_fieldinfo(cpuname, setname,
+	    id_aa64dfr0_fieldinfo, dfr0);
 }
 
 void
 identifycpu(int fd, const char *cpuname)
 {
-	void *regs;
+	char path[128];
 	size_t len;
+#define SYSCTL_CPU_ID_MAXSIZE	64
+	uint64_t sysctlbuf[SYSCTL_CPU_ID_MAXSIZE];
+	struct aarch64_sysctl_cpu_id *id =
+	    (struct aarch64_sysctl_cpu_id *)sysctlbuf;
 
-	/* MIDR_EL1 */
-	regs = sysctlfetch("machdep.cpu_id", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			identify_midr(cpuname, ((uint32_t *)regs)[0]);
-		free(regs);
+	snprintf(path, sizeof path, "machdep.%s.cpu_id", cpuname);
+	len = sizeof(sysctlbuf);
+	if (sysctlbyname(path, id, &len, 0, 0) == -1)
+		err(1, "couldn't get %s", path);
+	if (len != sizeof(struct aarch64_sysctl_cpu_id))
+		fprintf(stderr, "Warning: kernel version bumped?\n");
+
+	if (verbose) {
+		printf("%s: MIDR_EL1: 0x%08"PRIx64"\n",
+		    cpuname, id->ac_midr);
+		printf("%s: MPIDR_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_mpidr);
+		printf("%s: ID_AA64DFR0_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64dfr0);
+		printf("%s: ID_AA64DFR1_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64dfr1);
+		printf("%s: ID_AA64ISAR0_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64isar0);
+		printf("%s: ID_AA64ISAR1_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64isar1);
+		printf("%s: ID_AA64MMFR0_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64mmfr0);
+		printf("%s: ID_AA64MMFR1_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64mmfr1);
+		printf("%s: ID_AA64MMFR2_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64mmfr2);
+		printf("%s: ID_AA64PFR0_EL1: 0x%08"PRIx64"\n",
+		    cpuname, id->ac_aa64pfr0);
+		printf("%s: ID_AA64PFR1_EL1: 0x%08"PRIx64"\n",
+		    cpuname, id->ac_aa64pfr1);
+		printf("%s: ID_AA64ZFR0_EL1: 0x%016"PRIx64"\n",
+		    cpuname, id->ac_aa64zfr0);
+		printf("%s: MVFR0_EL1: 0x%08"PRIx32"\n",
+		    cpuname, id->ac_mvfr0);
+		printf("%s: MVFR1_EL1: 0x%08"PRIx32"\n",
+		    cpuname, id->ac_mvfr1);
+		printf("%s: MVFR2_EL1: 0x%08"PRIx32"\n",
+		    cpuname, id->ac_mvfr2);
 	}
 
-	/* REVIDR_EL1 */
-	regs = sysctlfetch("machdep.id_revidr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			identify_revidr(cpuname, ((uint32_t *)regs)[0]);
-		free(regs);
-	}
+	identify_midr(cpuname, id->ac_midr);
+	identify_revidr(cpuname, id->ac_revidr);
+	identify_mpidr(cpuname, id->ac_mpidr);
+	print_fieldinfo(cpuname, "isa features 0",
+	    id_aa64isar0_fieldinfo, id->ac_aa64isar0);
+	print_fieldinfo(cpuname, "memory model 0",
+	    id_aa64mmfr0_fieldinfo, id->ac_aa64mmfr0);
+	print_fieldinfo(cpuname, "processor feature 0",
+	    id_aa64pfr0_fieldinfo, id->ac_aa64pfr0);
+	identify_dfr0(cpuname, id->ac_aa64dfr0);
 
-	/* MPIDR_EL1 */
-	regs = sysctlfetch("machdep.id_mpidr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			identify_mpidr(cpuname, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64ISAR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64isar", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "isa features 0",
-			    id_aa64isar0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64MMFR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64mmfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "memory model 0",
-			    id_aa64mmfr0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64PFR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64pfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "processor feature 0",
-			    id_aa64pfr0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* MVFR[012]_EL1 */
-	regs = sysctlfetch("machdep.id_mvfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			print_fieldinfo(cpuname, "media and VFP features 0",
-			    mvfr0_fieldinfo, ((uint32_t *)regs)[0]);
-		if (len >= sizeof(uint32_t) * 2)
-			print_fieldinfo(cpuname, "media and VFP features 1",
-			    mvfr1_fieldinfo, ((uint32_t *)regs)[1]);
-		if (len >= sizeof(uint32_t) * 3)
-			print_fieldinfo(cpuname, "media and VFP features 2",
-			    mvfr2_fieldinfo, ((uint32_t *)regs)[2]);
-		free(regs);
-	}
+	print_fieldinfo(cpuname, "media and VFP features 0",
+	    mvfr0_fieldinfo, id->ac_mvfr0);
+	print_fieldinfo(cpuname, "media and VFP features 1",
+	    mvfr1_fieldinfo, id->ac_mvfr1);
+	print_fieldinfo(cpuname, "media and VFP features 2",
+	    mvfr2_fieldinfo, id->ac_mvfr2);
 }
 
 bool
 identifycpu_bind(void)
 {
-	return true;
+	return false;
 }
 
 int

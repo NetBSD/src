@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -31,6 +31,7 @@
 
 #include "tui/tui.h"
 #include "tui/tui-data.h"
+#include "tui/tui-io.h"
 #include "tui/tui-stack.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
@@ -109,14 +110,13 @@ tui_update_source_window_as_is (struct tui_win_info *win_info,
       tui_update_exec_info (win_info);
       if (win_info->generic.type == SRC_WIN)
 	{
-	  struct symtab_and_line sal;
-	  
-	  init_sal (&sal);
+	  symtab_and_line sal;
+
 	  sal.line = line_or_addr.u.line_no +
 	    (win_info->generic.content_size - 2);
 	  sal.symtab = s;
 	  sal.pspace = SYMTAB_PSPACE (s);
-	  set_current_source_symtab_and_line (&sal);
+	  set_current_source_symtab_and_line (sal);
 	  /* If the focus was in the asm win, put it in the src win if
 	     we don't have a split layout.  */
 	  if (tui_win_with_focus () == TUI_DISASM_WIN
@@ -277,12 +277,13 @@ tui_show_source_line (struct tui_win_info *win_info, int lineno)
 
   line = win_info->generic.content[lineno - 1];
   if (line->which_element.source.is_exec_point)
-    wattron (win_info->generic.handle, A_STANDOUT);
+    tui_set_reverse_mode (win_info->generic.handle, true);
 
-  mvwaddstr (win_info->generic.handle, lineno, 1,
-             (char *) line->which_element.source.line);
+  wmove (win_info->generic.handle, lineno, 1);
+  tui_puts (line->which_element.source.line,
+	    win_info->generic.handle);
   if (line->which_element.source.is_exec_point)
-    wattroff (win_info->generic.handle, A_STANDOUT);
+    tui_set_reverse_mode (win_info->generic.handle, false);
 
   /* Clear to end of line but stop before the border.  */
   x = getcurx (win_info->generic.handle);
@@ -311,8 +312,32 @@ tui_show_source_content (struct tui_win_info *win_info)
   win_info->generic.content_in_use = TRUE;
 }
 
+/* Refill the source window's source cache and update it.  If WIN_INFO
+   is a disassembly window, then just update it.  */
+
+void
+tui_refill_source_window (struct tui_win_info *win_info)
+{
+  symtab *s = nullptr;
+
+  if (win_info->generic.type == SRC_WIN)
+    {
+      symtab_and_line cursal = get_current_source_symtab_and_line ();
+      s = (cursal.symtab == NULL
+	   ? find_pc_line_symtab (get_frame_pc (get_selected_frame (NULL)))
+	   : cursal.symtab);
+    }
+
+  tui_update_source_window_as_is (win_info,
+				  win_info->detail.source_info.gdbarch,
+				  s,
+				  win_info->generic.content[0]
+				    ->which_element.source.line_or_addr,
+				  FALSE);
+}
 
 /* Scroll the source forward or backward horizontally.  */
+
 void
 tui_horizontal_source_scroll (struct tui_win_info *win_info,
 			      enum tui_scroll_direction direction,
@@ -320,20 +345,7 @@ tui_horizontal_source_scroll (struct tui_win_info *win_info,
 {
   if (win_info->generic.content != NULL)
     {
-      struct gdbarch *gdbarch = win_info->detail.source_info.gdbarch;
       int offset;
-      struct symtab *s = NULL;
-
-      if (win_info->generic.type == SRC_WIN)
-	{
-	  struct symtab_and_line cursal
-	    = get_current_source_symtab_and_line ();
-
-	  if (cursal.symtab == NULL)
-	    s = find_pc_line_symtab (get_frame_pc (get_selected_frame (NULL)));
-	  else
-	    s = cursal.symtab;
-	}
 
       if (direction == LEFT_SCROLL)
 	offset = win_info->detail.source_info.horizontal_offset
@@ -346,13 +358,8 @@ tui_horizontal_source_scroll (struct tui_win_info *win_info,
 	    offset = 0;
 	}
       win_info->detail.source_info.horizontal_offset = offset;
-      tui_update_source_window_as_is (win_info, gdbarch, s,
-				      win_info->generic.content[0]
-					->which_element.source.line_or_addr,
-				      FALSE);
+      tui_refill_source_window (win_info);
     }
-
-  return;
 }
 
 
@@ -365,7 +372,7 @@ tui_set_is_exec_point_at (struct tui_line_or_address l,
 {
   int changed = 0;
   int i;
-  tui_win_content content = (tui_win_content) win_info->generic.content;
+  tui_win_content content = win_info->generic.content;
 
   i = 0;
   while (i < win_info->generic.content_size)
@@ -392,7 +399,7 @@ tui_set_is_exec_point_at (struct tui_line_or_address l,
       i++;
     }
   if (changed)
-    tui_refresh_win (&win_info->generic);
+    tui_refill_source_window (win_info);
 }
 
 /* Update the execution windows to show the active breakpoints.
@@ -608,7 +615,6 @@ tui_update_exec_info (struct tui_win_info *win_info)
 enum tui_status
 tui_alloc_source_buffer (struct tui_win_info *win_info)
 {
-  char *src_line_buf;
   int i, line_width, max_lines;
 
   /* The window width/height includes the highlight box.  Determine actual
@@ -616,20 +622,14 @@ tui_alloc_source_buffer (struct tui_win_info *win_info)
   max_lines = win_info->generic.height - 2;
   line_width = win_info->generic.width - 2 + 1;
 
-  /*
-   * Allocate the buffer for the source lines.  Do this only once
-   * since they will be re-used for all source displays.  The only
-   * other time this will be done is when a window's size changes.
-   */
+  /* Allocate the buffer for the source lines.  */
   if (win_info->generic.content == NULL)
     {
-      src_line_buf = (char *) 
-	xmalloc ((max_lines * line_width) * sizeof (char));
       /* Allocate the content list.  */
       win_info->generic.content = tui_alloc_content (max_lines, SRC_WIN);
       for (i = 0; i < max_lines; i++)
 	win_info->generic.content[i]->which_element.source.line
-	  = src_line_buf + (line_width * i);
+	  = (char *) xmalloc (line_width);
     }
 
   return TUI_SUCCESS;
@@ -658,7 +658,7 @@ tui_line_is_displayed (int line,
 	= win_info->generic.content[i]
 	    ->which_element.source.line_or_addr.loa == LOA_LINE
 	  && win_info->generic.content[i]
-	       ->which_element.source.line_or_addr.u.line_no == (int) line;
+	       ->which_element.source.line_or_addr.u.line_no == line;
       i++;
     }
 

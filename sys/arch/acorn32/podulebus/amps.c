@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.20 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: amps.c,v 1.20.38.1 2019/06/10 22:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.20 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.20.38.1 2019/06/10 22:05:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ com_amps_attach(device_t parent, device_t self, void *aux)
 	if (!com_is_console(iot, iobase, &ioh)
 	    && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = AMPS_FREQ;
 	com_attach_subr(sc);

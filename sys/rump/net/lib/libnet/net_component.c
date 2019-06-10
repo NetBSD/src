@@ -1,4 +1,4 @@
-/*	$NetBSD: net_component.c,v 1.9 2017/02/16 08:39:10 knakahara Exp $	*/
+/*	$NetBSD: net_component.c,v 1.9.14.1 2019/06/10 22:09:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.9 2017/02/16 08:39:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.9.14.1 2019/06/10 22:09:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -65,5 +65,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 
+	ifinit_post();
 	loopinit();
 }

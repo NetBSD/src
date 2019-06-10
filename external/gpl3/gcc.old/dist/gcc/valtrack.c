@@ -1,6 +1,6 @@
 /* Infrastructure for tracking user variable locations and values
    throughout compilation.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva <aoliva@redhat.com>.
 
 This file is part of GCC.
@@ -22,20 +22,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
 #include "rtl.h"
-#include "predict.h"
-#include "basic-block.h"
+#include "df.h"
 #include "valtrack.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
 #include "regs.h"
 #include "emit-rtl.h"
+#include "rtl-iter.h"
 
 /* gen_lowpart_no_emit hook implementation for DEBUG_INSNs.  In DEBUG_INSNs,
    all lowpart SUBREGs are valid, despite what the machine requires for
@@ -62,7 +55,9 @@ static rtx
 cleanup_auto_inc_dec (rtx src, machine_mode mem_mode ATTRIBUTE_UNUSED)
 {
   rtx x = src;
-#ifdef AUTO_INC_DEC
+  if (!AUTO_INC_DEC)
+    return copy_rtx (x);
+
   const RTX_CODE code = GET_CODE (x);
   int i;
   const char *fmt;
@@ -145,10 +140,6 @@ cleanup_auto_inc_dec (rtx src, machine_mode mem_mode ATTRIBUTE_UNUSED)
 	    = cleanup_auto_inc_dec (XVECEXP (src, i, j), mem_mode);
       }
 
-#else /* !AUTO_INC_DEC */
-  x = copy_rtx (x);
-#endif /* !AUTO_INC_DEC */
-
   return x;
 }
 
@@ -158,6 +149,7 @@ struct rtx_subst_pair
 {
   rtx to;
   bool adjusted;
+  rtx_insn *insn;
 };
 
 /* DATA points to an rtx_subst_pair.  Return the value that should be
@@ -175,6 +167,23 @@ propagate_for_debug_subst (rtx from, const_rtx old_rtx, void *data)
       pair->adjusted = true;
       pair->to = cleanup_auto_inc_dec (pair->to, VOIDmode);
       pair->to = make_compound_operation (pair->to, SET);
+      /* Avoid propagation from growing DEBUG_INSN expressions too much.  */
+      int cnt = 0;
+      subrtx_iterator::array_type array;
+      FOR_EACH_SUBRTX (iter, array, pair->to, ALL)
+	if (REG_P (*iter) && ++cnt > 1)
+	  {
+	    rtx dval = make_debug_expr_from_rtl (old_rtx);
+	    /* Emit a debug bind insn.  */
+	    rtx bind
+	      = gen_rtx_VAR_LOCATION (GET_MODE (old_rtx),
+				      DEBUG_EXPR_TREE_DECL (dval), pair->to,
+				      VAR_INIT_STATUS_INITIALIZED);
+	    rtx_insn *bind_insn = emit_debug_insn_before (bind, pair->insn);
+	    df_insn_rescan (bind_insn);
+	    pair->to = dval;
+	    break;
+	  }
       return pair->to;
     }
   return copy_rtx (pair->to);
@@ -195,6 +204,7 @@ propagate_for_debug (rtx_insn *insn, rtx_insn *last, rtx dest, rtx src,
   struct rtx_subst_pair p;
   p.to = src;
   p.adjusted = false;
+  p.insn = NEXT_INSN (insn);
 
   next = NEXT_INSN (insn);
   last = NEXT_INSN (last);
@@ -287,7 +297,7 @@ dead_debug_global_insert (struct dead_debug_global *global, rtx reg, rtx dtemp)
 }
 
 /* If UREGNO, referenced by USE, is a pseudo marked as used in GLOBAL,
-   replace it with with a USE of the debug temp recorded for it, and
+   replace it with a USE of the debug temp recorded for it, and
    return TRUE.  Otherwise, just return FALSE.
 
    If PTO_RESCAN is given, instead of rescanning modified INSNs right
@@ -671,9 +681,7 @@ dead_debug_insert_temp (struct dead_debug_local *debug, unsigned int uregno,
 	     the debug temp to.  ??? We could bind the debug_expr to a
 	     CONCAT or PARALLEL with the split multi-registers, and
 	     replace them as we found the corresponding sets.  */
-	  else if (REGNO (reg) < FIRST_PSEUDO_REGISTER
-		   && (hard_regno_nregs[REGNO (reg)][GET_MODE (reg)]
-		       != hard_regno_nregs[REGNO (reg)][GET_MODE (dest)]))
+	  else if (REG_NREGS (reg) != REG_NREGS (dest))
 	    breg = NULL;
 	  /* Ok, it's the same (hardware) REG, but with a different
 	     mode, so SUBREG it.  */
@@ -695,7 +703,7 @@ dead_debug_insert_temp (struct dead_debug_local *debug, unsigned int uregno,
 	     setting REG in its mode would, we won't know what to bind
 	     the debug temp to.  */
 	  else if (REGNO (reg) < FIRST_PSEUDO_REGISTER
-		   && (hard_regno_nregs[REGNO (reg)][GET_MODE (reg)]
+		   && (REG_NREGS (reg)
 		       != hard_regno_nregs[REGNO (reg)][GET_MODE (dest)]))
 	    breg = NULL;
 	  /* Yay, we can use SRC, just adjust its mode.  */

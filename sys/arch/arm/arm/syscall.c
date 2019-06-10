@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.65 2018/05/25 15:37:57 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.65.2.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.65 2018/05/25 15:37:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.65.2.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -284,16 +284,14 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	lwp_t * const l = arg;
 	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_r0 = 0;
 	tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*
@@ -305,4 +303,3 @@ cpu_spawn_return(struct lwp *l)
 
 	userret(l);
 }
-

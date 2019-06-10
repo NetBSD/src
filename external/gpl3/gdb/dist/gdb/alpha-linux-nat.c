@@ -1,5 +1,5 @@
 /* Low level Alpha GNU/Linux interface, for GDB when running native.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "defs.h"
 #include "target.h"
 #include "regcache.h"
-#include "linux-nat.h"
+#include "linux-nat-trad.h"
 
 #include "alpha-tdep.h"
 
@@ -32,6 +32,15 @@
 /* The address of UNIQUE for ptrace.  */
 #define ALPHA_UNIQUE_PTRACE_ADDR 65
 
+class alpha_linux_nat_target final : public linux_nat_trad_target
+{
+protected:
+  /* Override linux_nat_trad_target methods.  */
+  CORE_ADDR register_u_offset (struct gdbarch *gdbarch,
+			       int regno, int store_p) override;
+};
+
+static alpha_linux_nat_target the_alpha_linux_nat_target;
 
 /* See the comment in m68k-tdep.c regarding the utility of these
    functions.  */
@@ -77,9 +86,9 @@ fill_fpregset (const struct regcache *regcache,
   alpha_fill_fp_regs (regcache, regno, regp, regp + 31);
 }
 
-
-static CORE_ADDR
-alpha_linux_register_u_offset (struct gdbarch *gdbarch, int regno, int store_p)
+CORE_ADDR
+alpha_linux_nat_target::register_u_offset (struct gdbarch *gdbarch,
+					   int regno, int store_p)
 {
   if (regno == gdbarch_pc_regnum (gdbarch))
     return PC;
@@ -91,10 +100,9 @@ alpha_linux_register_u_offset (struct gdbarch *gdbarch, int regno, int store_p)
     return FPR_BASE + regno - gdbarch_fp0_regnum (gdbarch);
 }
 
-void _initialize_alpha_linux_nat (void);
-
 void
 _initialize_alpha_linux_nat (void)
 {
-  linux_nat_add_target (linux_trad_target (alpha_linux_register_u_offset));
+  linux_target = &the_alpha_linux_nat_target;
+  add_inf_child_target (&the_alpha_linux_nat_target);
 }

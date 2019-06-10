@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009-2015 Free Software Foundation, Inc.
+// Copyright (C) 2009-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1717,7 +1717,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   _RealType __b = _RealType(1))
 	: _M_a(__a), _M_b(__b)
 	{
-	  _GLIBCXX_DEBUG_ASSERT(_M_a <= _M_b);
+	  __glibcxx_assert(_M_a <= _M_b);
 	}
 
 	result_type
@@ -1935,7 +1935,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   _RealType __stddev = _RealType(1))
 	: _M_mean(__mean), _M_stddev(__stddev)
 	{
-	  _GLIBCXX_DEBUG_ASSERT(_M_stddev > _RealType(0));
+	  __glibcxx_assert(_M_stddev > _RealType(0));
 	}
 
 	_RealType
@@ -2353,7 +2353,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   _RealType __beta_val = _RealType(1))
 	: _M_alpha(__alpha_val), _M_beta(__beta_val)
 	{
-	  _GLIBCXX_DEBUG_ASSERT(_M_alpha > _RealType(0));
+	  __glibcxx_assert(_M_alpha > _RealType(0));
 	  _M_initialize();
 	}
 
@@ -2618,7 +2618,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        */
       void
       param(const param_type& __param)
-      { _M_param = __param; }
+      {
+	_M_param = __param;
+	typedef typename std::gamma_distribution<result_type>::param_type
+	  param_type;
+	_M_gd.param(param_type{__param.n() / 2});
+      }
 
       /**
        * @brief Returns the greatest lower bound value of the distribution.
@@ -3418,7 +3423,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       param_type(double __p = 0.5)
       : _M_p(__p)
       {
-	_GLIBCXX_DEBUG_ASSERT((_M_p >= 0.0) && (_M_p <= 1.0));
+	__glibcxx_assert((_M_p >= 0.0) && (_M_p <= 1.0));
       }
 
       double
@@ -3627,7 +3632,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	param_type(_IntType __t = _IntType(1), double __p = 0.5)
 	: _M_t(__t), _M_p(__p)
 	{
-	  _GLIBCXX_DEBUG_ASSERT((_M_t >= _IntType(0))
+	  __glibcxx_assert((_M_t >= _IntType(0))
 				&& (_M_p >= 0.0)
 				&& (_M_p <= 1.0));
 	  _M_initialize();
@@ -3858,7 +3863,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	param_type(double __p = 0.5)
 	: _M_p(__p)
 	{
-	  _GLIBCXX_DEBUG_ASSERT((_M_p > 0.0) && (_M_p < 1.0));
+	  __glibcxx_assert((_M_p > 0.0) && (_M_p < 1.0));
 	  _M_initialize();
 	}
 
@@ -4057,7 +4062,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	param_type(_IntType __k = 1, double __p = 0.5)
 	: _M_k(__k), _M_p(__p)
 	{
-	  _GLIBCXX_DEBUG_ASSERT((_M_k > 0) && (_M_p > 0.0) && (_M_p <= 1.0));
+	  __glibcxx_assert((_M_k > 0) && (_M_p > 0.0) && (_M_p <= 1.0));
 	}
 
 	_IntType
@@ -4280,7 +4285,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	param_type(double __mean = 1.0)
 	: _M_mean(__mean)
 	{
-	  _GLIBCXX_DEBUG_ASSERT(_M_mean > 0.0);
+	  __glibcxx_assert(_M_mean > 0.0);
 	  _M_initialize();
 	}
 
@@ -4495,7 +4500,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	param_type(_RealType __lambda = _RealType(1))
 	: _M_lambda(__lambda)
 	{
-	  _GLIBCXX_DEBUG_ASSERT(_M_lambda > _RealType(0));
+	  __glibcxx_assert(_M_lambda > _RealType(0));
 	}
 
 	_RealType
@@ -5859,13 +5864,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
   class seed_seq
   {
-
   public:
     /** The type of the seed vales. */
     typedef uint_least32_t result_type;
 
     /** Default constructor. */
-    seed_seq()
+    seed_seq() noexcept
     : _M_v()
     { }
 
@@ -5881,7 +5885,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       generate(_RandomAccessIterator __begin, _RandomAccessIterator __end);
 
     // property functions
-    size_t size() const
+    size_t size() const noexcept
     { return _M_v.size(); }
 
     template<typename OutputIterator>
@@ -5889,8 +5893,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       param(OutputIterator __dest) const
       { std::copy(_M_v.begin(), _M_v.end(), __dest); }
 
+    // no copy functions
+    seed_seq(const seed_seq&) = delete;
+    seed_seq& operator=(const seed_seq&) = delete;
+
   private:
-    ///
     std::vector<result_type> _M_v;
   };
 

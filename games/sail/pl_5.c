@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.25 2009/03/15 03:33:56 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.25.46.1 2019/06/10 22:05:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.25 2009/03/15 03:33:56 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.25.46.1 2019/06/10 22:05:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,7 @@ acceptmove(void)
 		switch (*p) {
 		case 'l':
 			dir -= 2;
+			/* FALLTHROUGH */
 		case 'r':
 			if (++dir == 0)
 				dir = 8;

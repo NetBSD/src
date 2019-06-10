@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.42 2018/06/01 07:22:33 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.42.2.1 2019/06/10 22:06:50 christos Exp $
 
 MKCTF?=				no
 USETOOLS?=			no
@@ -50,8 +50,7 @@ CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	library
-COMPAT_AS=	library
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -74,9 +73,9 @@ KERNLDSCRIPT?=	${USERMODE}/conf/kern.ldscript
 SYSTEM_LD=	@do_system_ld() { \
 		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Ttext ${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Wl,-Ttext,${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o netbsd.ldscript ${USERMODE_LIBS} $$@; \
 		${SYSTEM_LD_FIX} \
-		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Ttext ${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Wl,-Ttext,${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o netbsd.ldscript ${USERMODE_LIBS} $$@; \
 		}; \
 		do_system_ld
 NVFLAGS=	-n

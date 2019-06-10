@@ -474,6 +474,11 @@ class Target
   hash_entry_size() const
   { return this->pti_->hash_entry_size; }
 
+  // Return the section type to use for unwind sections.
+  unsigned int
+  unwind_section_type() const
+  { return this->pti_->unwind_section_type; }
+
   // Whether the target has a custom set_dynsym_indexes method.
   bool
   has_custom_set_dynsym_indexes() const
@@ -503,6 +508,11 @@ class Target
   bool
   should_include_section(elfcpp::Elf_Word sh_type) const
   { return this->do_should_include_section(sh_type); }
+
+  // Finalize the target-specific properties in the .note.gnu.property section.
+  void
+  finalize_gnu_properties(Layout* layout) const
+  { this->do_finalize_gnu_properties(layout); }
 
  protected:
   // This struct holds the constant information for a child class.  We
@@ -562,6 +572,9 @@ class Target
     // Size (in bits) of SHT_HASH entry. Always equal to 32, except for
     // 64-bit S/390.
     const int hash_entry_size;
+    // Processor-specific section type for ".eh_frame" (unwind) sections.
+    // SHT_PROGBITS if there is no special section type.
+    const unsigned int unwind_section_type;
   };
 
   Target(const Target_info* pti)
@@ -806,6 +819,11 @@ class Target
   virtual bool
   do_should_include_section(elfcpp::Elf_Word) const
   { return true; }
+
+  // Finalize the target-specific properties in the .note.gnu.property section.
+  virtual void
+  do_finalize_gnu_properties(Layout*) const
+  { }
 
  private:
   // The implementations of the four do_make_elf_object virtual functions are
@@ -1125,6 +1143,17 @@ class Sized_target : public Target
     elfcpp::Rel<size, big_endian> rel(preloc);
     return elfcpp::elf_r_sym<size>(rel.get_r_info());
   }
+
+  // Record a target-specific program property in the .note.gnu.property
+  // section.
+  virtual void
+  record_gnu_property(int, int, size_t, const unsigned char*, const Object*)
+  { }
+
+  // Merge the target-specific program properties from the current object.
+  virtual void
+  merge_gnu_properties(const Object*)
+  { }
 
  protected:
   Sized_target(const Target::Target_info* pti)

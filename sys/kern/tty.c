@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $	*/
+/*	$NetBSD: tty.c,v 1.276.2.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276.2.1 2019/06/10 22:09:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $");
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
 #include <sys/bitops.h>
+#include <sys/compat_stub.h>
 
 #ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
@@ -208,8 +209,8 @@ static void *tty_sigsih;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
-krwlock_t ttcompat_lock;
-int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+
+struct ptm_pty *ptm = NULL;
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -774,7 +775,7 @@ ttyinput_wlock(int c, struct tty *tp)
 			/*
 			 * Place the cursor over the '^' of the ^D.
 			 */
-			i = min(2, tp->t_column - i);
+			i = uimin(2, tp->t_column - i);
 			while (i > 0) {
 				(void)ttyoutput('\b', tp);
 				i--;
@@ -1408,25 +1409,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			break;
 		}
-#ifdef COMPAT_60
-		error = compat_60_ttioctl(tp, cmd, data, flag, l);
+
+		/* We may have to load the compat_60 module for this. */
+		(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
+		MODULE_HOOK_CALL(tty_ttioctl_60_hook,
+		    (tp, cmd, data, flag, l), enosys(), error);
 		if (error != EPASSTHROUGH)
 			return error;
-#endif /* COMPAT_60 */
-		/* We may have to load the compat module for this. */
-		for (;;) {
-			rw_enter(&ttcompat_lock, RW_READER);
-			if (ttcompatvec != NULL) {
-				break;
-			}
-			rw_exit(&ttcompat_lock);
-			(void)module_autoload("compat", MODULE_CLASS_ANY);
-			if (ttcompatvec == NULL) {
-				return EPASSTHROUGH;
-			}
-		}
-		error = (*ttcompatvec)(tp, cmd, data, flag, l);
-		rw_exit(&ttcompat_lock);
+
+		/* We may have to load the compat_43 module for this. */
+		(void)module_autoload("compat_43", MODULE_CLASS_EXEC);
+		MODULE_HOOK_CALL(tty_ttioctl_43_hook,
+		    (tp, cmd, data, flag, l), enosys(), error);
 		return error;
 	}
 	return (0);
@@ -2185,7 +2179,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		 * leftover from last time.
 		 */
 		if (cc == 0) {
-			cc = min(uio->uio_resid, OBUFSIZ);
+			cc = uimin(uio->uio_resid, OBUFSIZ);
 			cp = obuf;
 			error = uiomove(cp, cc, uio);
 			if (error) {
@@ -2926,7 +2920,6 @@ tty_init(void)
 {
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
-	rw_init(&ttcompat_lock);
 	tty_sigsih = softint_establish(SOFTINT_CLOCK, ttysigintr, NULL);
 	KASSERT(tty_sigsih != NULL);
 

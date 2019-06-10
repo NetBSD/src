@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.154.2.1 2019/06/10 22:07:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.154.2.1 2019/06/10 22:07:11 christos Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -163,11 +163,11 @@ static void re_watchdog(struct ifnet *);
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
 
-static int re_gmii_readreg(device_t, int, int);
-static void re_gmii_writereg(device_t, int, int, int);
+static int re_gmii_readreg(device_t, int, int, uint16_t *);
+static int re_gmii_writereg(device_t, int, int, uint16_t);
 
-static int re_miibus_readreg(device_t, int, int);
-static void re_miibus_writereg(device_t, int, int, int);
+static int re_miibus_readreg(device_t, int, int, uint16_t *);
+static int re_miibus_writereg(device_t, int, int, uint16_t);
 static void re_miibus_statchg(struct ifnet *);
 
 static void re_reset(struct rtk_softc *);
@@ -184,84 +184,87 @@ re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
 }
 
 static int
-re_gmii_readreg(device_t dev, int phy, int reg)
+re_gmii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct rtk_softc *sc = device_private(dev);
-	uint32_t rval;
+	uint32_t data;
 	int i;
 
 	if (phy != 7)
-		return 0;
+		return -1;
 
 	/* Let the rgephy driver read the GMEDIASTAT register */
 
 	if (reg == RTK_GMEDIASTAT) {
-		rval = CSR_READ_1(sc, RTK_GMEDIASTAT);
-		return rval;
+		*val = CSR_READ_1(sc, RTK_GMEDIASTAT);
+		return 0;
 	}
 
 	CSR_WRITE_4(sc, RTK_PHYAR, reg << 16);
 	DELAY(1000);
 
 	for (i = 0; i < RTK_TIMEOUT; i++) {
-		rval = CSR_READ_4(sc, RTK_PHYAR);
-		if (rval & RTK_PHYAR_BUSY)
+		data = CSR_READ_4(sc, RTK_PHYAR);
+		if (data & RTK_PHYAR_BUSY)
 			break;
 		DELAY(100);
 	}
 
 	if (i == RTK_TIMEOUT) {
 		printf("%s: PHY read failed\n", device_xname(sc->sc_dev));
-		return 0;
+		return ETIMEDOUT;
 	}
 
-	return rval & RTK_PHYAR_PHYDATA;
+	*val = data & RTK_PHYAR_PHYDATA;
+	return 0;
 }
 
-static void
-re_gmii_writereg(device_t dev, int phy, int reg, int data)
+static int
+re_gmii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct rtk_softc *sc = device_private(dev);
-	uint32_t rval;
+	uint32_t data;
 	int i;
 
 	CSR_WRITE_4(sc, RTK_PHYAR, (reg << 16) |
-	    (data & RTK_PHYAR_PHYDATA) | RTK_PHYAR_BUSY);
+	    (val & RTK_PHYAR_PHYDATA) | RTK_PHYAR_BUSY);
 	DELAY(1000);
 
 	for (i = 0; i < RTK_TIMEOUT; i++) {
-		rval = CSR_READ_4(sc, RTK_PHYAR);
-		if (!(rval & RTK_PHYAR_BUSY))
+		data = CSR_READ_4(sc, RTK_PHYAR);
+		if (!(data & RTK_PHYAR_BUSY))
 			break;
 		DELAY(100);
 	}
 
 	if (i == RTK_TIMEOUT) {
-		printf("%s: PHY write reg %x <- %x failed\n",
-		    device_xname(sc->sc_dev), reg, data);
+		printf("%s: PHY write reg %x <- %hx failed\n",
+		    device_xname(sc->sc_dev), reg, val);
+		return ETIMEDOUT;
 	}
+
+	return 0;
 }
 
 static int
-re_miibus_readreg(device_t dev, int phy, int reg)
+re_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct rtk_softc *sc = device_private(dev);
-	uint16_t rval = 0;
 	uint16_t re8139_reg = 0;
-	int s;
+	int s, rv = 0;
 
 	s = splnet();
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
-		rval = re_gmii_readreg(dev, phy, reg);
+		rv = re_gmii_readreg(dev, phy, reg, val);
 		splx(s);
-		return rval;
+		return rv;
 	}
 
 	/* Pretend the internal PHY is only at address 0 */
 	if (phy) {
 		splx(s);
-		return 0;
+		return -1;
 	}
 	switch (reg) {
 	case MII_BMCR:
@@ -281,6 +284,7 @@ re_miibus_readreg(device_t dev, int phy, int reg)
 		break;
 	case MII_PHYIDR1:
 	case MII_PHYIDR2:
+		*val = 0;
 		splx(s);
 		return 0;
 	/*
@@ -290,49 +294,49 @@ re_miibus_readreg(device_t dev, int phy, int reg)
 	 * us the results of parallel detection.
 	 */
 	case RTK_MEDIASTAT:
-		rval = CSR_READ_1(sc, RTK_MEDIASTAT);
+		*val = CSR_READ_1(sc, RTK_MEDIASTAT);
 		splx(s);
-		return rval;
+		return 0;
 	default:
 		printf("%s: bad phy register\n", device_xname(sc->sc_dev));
 		splx(s);
-		return 0;
+		return -1;
 	}
-	rval = CSR_READ_2(sc, re8139_reg);
+	*val = CSR_READ_2(sc, re8139_reg);
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0 && re8139_reg == RTK_BMCR) {
 		/* 8139C+ has different bit layout. */
-		rval &= ~(BMCR_LOOP | BMCR_ISO);
+		*val &= ~(BMCR_LOOP | BMCR_ISO);
 	}
 	splx(s);
-	return rval;
+	return 0;
 }
 
-static void
-re_miibus_writereg(device_t dev, int phy, int reg, int data)
+static int
+re_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct rtk_softc *sc = device_private(dev);
 	uint16_t re8139_reg = 0;
-	int s;
+	int s, rv;
 
 	s = splnet();
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
-		re_gmii_writereg(dev, phy, reg, data);
+		rv = re_gmii_writereg(dev, phy, reg, val);
 		splx(s);
-		return;
+		return rv;
 	}
 
 	/* Pretend the internal PHY is only at address 0 */
 	if (phy) {
 		splx(s);
-		return;
+		return -1;
 	}
 	switch (reg) {
 	case MII_BMCR:
 		re8139_reg = RTK_BMCR;
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0) {
 			/* 8139C+ has different bit layout. */
-			data &= ~(BMCR_LOOP | BMCR_ISO);
+			val &= ~(BMCR_LOOP | BMCR_ISO);
 		}
 		break;
 	case MII_BMSR:
@@ -350,16 +354,16 @@ re_miibus_writereg(device_t dev, int phy, int reg, int data)
 	case MII_PHYIDR1:
 	case MII_PHYIDR2:
 		splx(s);
-		return;
+		return 0;
 		break;
 	default:
 		printf("%s: bad phy register\n", device_xname(sc->sc_dev));
 		splx(s);
-		return;
+		return -1;
 	}
-	CSR_WRITE_2(sc, re8139_reg, data);
+	CSR_WRITE_2(sc, re8139_reg, val);
 	splx(s);
-	return;
+	return 0;
 }
 
 static void
@@ -556,6 +560,7 @@ re_attach(struct rtk_softc *sc)
 {
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp;
+	struct mii_data *mii = &sc->mii;
 	int error = 0, i;
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
@@ -846,16 +851,16 @@ re_attach(struct rtk_softc *sc)
 	callout_init(&sc->rtk_tick_ch, 0);
 
 	/* Do MII setup */
-	sc->mii.mii_ifp = ifp;
-	sc->mii.mii_readreg = re_miibus_readreg;
-	sc->mii.mii_writereg = re_miibus_writereg;
-	sc->mii.mii_statchg = re_miibus_statchg;
-	sc->ethercom.ec_mii = &sc->mii;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = re_miibus_readreg;
+	mii->mii_writereg = re_miibus_writereg;
+	mii->mii_statchg = re_miibus_statchg;
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * Call MI attach routine.
@@ -1934,19 +1939,50 @@ re_init(struct ifnet *ifp)
 	 * moderation, which dramatically improves TX frame rate.
 	 */
 
-	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
-		CSR_WRITE_4(sc, RTK_TIMERINT, 0x400);
-	else {
-		if ((sc->sc_quirk & RTKQ_IM_HW) == 0) {
-			if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
-				CSR_WRITE_4(sc, RTK_TIMERINT_8169, 15000);
-			} else {
-				CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0x800);
-			}
-		} else {
-			CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0);
-		}
+	unsigned defer;		/* timer interval / ns */
+	unsigned period;	/* busclock period / ns */
 
+	/*
+	 * Maximum frame rate
+	 * 1500 byte PDU -> 81274 Hz
+	 *   46 byte PDU -> 1488096 Hz
+	 *
+	 * Deferring interrupts by up to 128us needs descriptors for
+	 * 1500 byte PDU -> 10.4 frames
+	 *   46 byte PDU -> 190.4 frames
+	 *
+	 */
+	defer = 128000;
+
+	if ((sc->sc_quirk & RTKQ_IM_HW) != 0) {
+		period = 1;
+		defer = 0;
+	} else if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
+		period = 8;
+	} else {
+		switch (CSR_READ_1(sc, RTK_CFG2_BUSFREQ) & 0x7) {
+		case RTK_BUSFREQ_33MHZ:
+			period = 30;
+			break;
+		case RTK_BUSFREQ_66MHZ:
+			period = 15;
+			break;
+		default:
+			/* lowest possible clock */
+			period = 60;
+			break;
+		}
+	}
+
+	/* Timer Interrupt register address varies */
+	uint16_t re8139_reg;
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
+		re8139_reg = RTK_TIMERINT;
+	else
+		re8139_reg = RTK_TIMERINT_8169;
+	CSR_WRITE_4(sc, re8139_reg, defer / period);
+
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		/*
 		 * For 8169 gigE NICs, set the max allowed RX packet
 		 * size so we can receive jumbo frames.

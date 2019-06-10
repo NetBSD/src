@@ -1,6 +1,6 @@
 /* Test file for mpfr_sin.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,8 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -109,7 +107,7 @@ test_sign (void)
         mpfr_set_prec (x, p);
         mpfr_mul_ui (x, pid, k, MPFR_RNDD);
         test_sin (y, x, MPFR_RNDN);
-        if (MPFR_SIGN(y) > 0)
+        if (MPFR_IS_POS (y))
           {
             printf ("Error in test_sign for sin(%dpi-epsilon), prec = %d"
                     " for argument.\nResult should have been negative.\n",
@@ -118,7 +116,7 @@ test_sign (void)
           }
         mpfr_mul_ui (x, piu, k, MPFR_RNDU);
         test_sin (y, x, MPFR_RNDN);
-        if (MPFR_SIGN(y) < 0)
+        if (MPFR_IS_NEG (y))
           {
             printf ("Error in test_sign for sin(%dpi+epsilon), prec = %d"
                     " for argument.\nResult should have been positive.\n",
@@ -365,7 +363,7 @@ main (int argc, char *argv[])
   mpfr_clear (c);
   mpfr_clear (x);
 
-  test_generic (2, 100, 15);
+  test_generic (MPFR_PREC_MIN, 100, 15);
   test_generic (MPFR_SINCOS_THRESHOLD-1, MPFR_SINCOS_THRESHOLD+1, 2);
   test_sign ();
   check_tiny ();

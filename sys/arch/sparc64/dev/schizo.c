@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.39 2017/06/03 21:32:43 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.39.10.1 2019/06/10 22:06:47 christos Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.39 2017/06/03 21:32:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.39.10.1 2019/06/10 22:06:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -263,6 +263,8 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal_dev(sc->sc_dev, " ");
+	if (sc->sc_tomatillo)
+		is->is_flags |= IOMMU_SYNC_BEFORE_UNMAP;
 	schizo_init_iommu(sc, pbm);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
@@ -490,11 +492,16 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1 << ((x) + 23): tsbsize = (x); break
 		switch (vdma[1]) { 
-			TSBCASE(1); TSBCASE(2); TSBCASE(3);
-			TSBCASE(4); TSBCASE(5); TSBCASE(6);
+			TSBCASE(1);
+			TSBCASE(2);
+			TSBCASE(3);
+			TSBCASE(4);
+			TSBCASE(5);
+			TSBCASE(6);
+			TSBCASE(7);
 		default: 
 			printf("bogus tsb size %x, using 7\n", vdma[1]);
-			TSBCASE(7);
+			tsbsize = 7;
 		}
 #undef TSBCASE
 		DPRINTF(SDB_BUSMAP, ("schizo_init_iommu: iobase=0x%x\n", iobase));

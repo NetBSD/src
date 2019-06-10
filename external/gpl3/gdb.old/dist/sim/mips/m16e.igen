@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS16e instructions.
-// Copyright (C) 2005-2016 Free Software Foundation, Inc.
+// Copyright (C) 2005-2017 Free Software Foundation, Inc.
 // Contributed by Nigel Stephens (nigel@mips.com) and 
 //                David Ung (davidu@mips.com) of MIPS Technologies.
 //

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2018/01/09 16:18:35 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2019/06/10 22:09:11 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ SRCS=	autofs.c autofs_vfsops.c autofs_vnops.c
 
 CPPFLAGS+=	-DDIAGNOSTIC
 DBG+=		-DDEBUG -DLOCKDEBUG
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

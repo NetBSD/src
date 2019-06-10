@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.102 2018/05/12 10:33:06 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.102.2.1 2019/06/10 22:07:04 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.102 2018/05/12 10:33:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.102.2.1 2019/06/10 22:07:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,11 +460,11 @@ dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
 	if (lock)
 		mutex_enter(&dksc->sc_iolock);
 	disk_unbusy(dk, bp->b_bcount - bp->b_resid, (bp->b_flags & B_READ));
-	if (lock)
-		mutex_exit(&dksc->sc_iolock);
 
 	if ((dksc->sc_flags & DKF_NO_RND) == 0)
 		rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
+	if (lock)
+		mutex_exit(&dksc->sc_iolock);
 
 	biodone(bp);
 }
@@ -521,7 +521,7 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 		/* enough data to please the bounds checking code */
 		bp->b_dev = dev;
 		bp->b_blkno = (daddr_t)(pos / secsize);
-		bp->b_bcount = min(len, maxsz);
+		bp->b_bcount = uimin(len, maxsz);
 		bp->b_flags = B_WRITE;
 
 		error = dk_translate(dksc, bp);
@@ -617,6 +617,7 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 	case DIOCDWEDGE:
 	case DIOCLWEDGES:
 	case DIOCMWEDGES:
+	case DIOCRMWEDGES:
 	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -811,7 +812,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 			    p->p_fstype));
 			return ENXIO;
 		}
-		/* Check wether dump goes to a wedge */
+		/* Check whether dump goes to a wedge */
 		if (dksc->sc_dkdev.dk_nwedges == 0) {
 			DPRINTF(DKDB_DUMP, ("%s: dump to raw\n", __func__));
 			return ENXIO;
@@ -847,7 +848,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	/* Start dumping and return when done. */
 	maxblkcnt = howmany(maxxfer, lp->d_secsize);
 	while (towrt > 0) {
-		nblk = min(maxblkcnt, towrt);
+		nblk = uimin(maxblkcnt, towrt);
 
 		if ((rv = (*dkd->d_dumpblocks)(dksc->sc_dev, va, blkno, nblk))
 		    != 0) {
@@ -915,7 +916,7 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	struct	 cpu_disklabel *clp = dksc->sc_dkdev.dk_cpulabel;
 	struct   disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct	 partition *pp;
-	int	 i;
+	int	 i, lpratio, dgratio;
 	const char	*errstring;
 
 	memset(clp, 0x0, sizeof(*clp));
@@ -932,25 +933,37 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	if ((dksc->sc_flags & DKF_LABELSANITY) == 0)
 		return;
 
+	/* Convert sector counts to multiple of DEV_BSIZE for comparison */
+	lpratio = dgratio = 1;
+	if (lp->d_secsize > DEV_BSIZE)
+		lpratio = lp->d_secsize / DEV_BSIZE;
+	if (dg->dg_secsize > DEV_BSIZE)
+		dgratio = dg->dg_secsize / DEV_BSIZE;
+
 	/* Sanity check */
-	if (lp->d_secperunit > dg->dg_secperunit)
-		printf("WARNING: %s: total sector size in disklabel (%ju) "
-		    "!= the size of %s (%ju)\n", dksc->sc_xname,
-		    (uintmax_t)lp->d_secperunit, dksc->sc_xname,
-		    (uintmax_t)dg->dg_secperunit);
+	if ((uint64_t)lp->d_secperunit * lpratio > dg->dg_secperunit * dgratio)
+		printf("WARNING: %s: "
+		    "total unit size in disklabel (%" PRIu64 ") "
+		    "!= the size of %s (%" PRIu64 ")\n", dksc->sc_xname,
+		    (uint64_t)lp->d_secperunit * lpratio, dksc->sc_xname,
+		    dg->dg_secperunit * dgratio);
 	else if (lp->d_secperunit < UINT32_MAX &&
-	         lp->d_secperunit < dg->dg_secperunit)
-		printf("%s: %ju trailing sectors not covered by disklabel\n",
-		    dksc->sc_xname,
-		    (uintmax_t)dg->dg_secperunit - lp->d_secperunit);
+	    (uint64_t)lp->d_secperunit * lpratio < dg->dg_secperunit * dgratio)
+		printf("%s: %" PRIu64 " trailing sectors not covered"
+		    " by disklabel\n", dksc->sc_xname,
+		    (dg->dg_secperunit * dgratio)
+		    - (lp->d_secperunit * lpratio));
 
 	for (i=0; i < lp->d_npartitions; i++) {
+		uint64_t pend;
+
 		pp = &lp->d_partitions[i];
-		if (pp->p_offset + pp->p_size > dg->dg_secperunit)
+		pend = pp->p_offset + pp->p_size;
+		if (pend * lpratio > dg->dg_secperunit * dgratio)
 			printf("WARNING: %s: end of partition `%c' exceeds "
-			    "the size of %s (%ju)\n", dksc->sc_xname,
+			    "the size of %s (%" PRIu64 ")\n", dksc->sc_xname,
 			    'a' + i, dksc->sc_xname,
-			    (uintmax_t)dg->dg_secperunit);
+			    dg->dg_secperunit * dgratio);
 	}
 }
 

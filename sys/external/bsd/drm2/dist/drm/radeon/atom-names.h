@@ -1,3 +1,5 @@
+/*	$NetBSD: atom-names.h,v 1.2.32.1 2019/06/10 22:08:25 christos Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.8 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.8.18.1 2019/06/10 22:09:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_space.c,v 1.8.18.1 2019/06/10 22:09:50 christos Exp $");
+
 #include <sys/atomic.h>
 
 #include <sys/param.h>

@@ -1,6 +1,6 @@
 /* Test file for mpfr_add and mpfr_sub.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,14 +22,14 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #define N 30000
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <float.h>
 
 #include "mpfr-test.h"
 
 /* If the precisions are the same, we want to test both mpfr_add1sp
    and mpfr_add1. */
+
+/* FIXME: modify check() to test the ternary value and the flags. */
 
 static int usesp;
 
@@ -83,8 +83,8 @@ check (const char *xs, const char *ys, mpfr_rnd_t rnd_mode,
   if (mpfr_cmp_str1 (zz, zs) )
     {
       printf ("expected sum is %s, got ", zs);
-      mpfr_out_str(stdout, 10, 0, zz, MPFR_RNDN);
-      printf ("mpfr_add failed for x=%s y=%s with rnd_mode=%s\n",
+      mpfr_out_str (stdout, 10, 0, zz, MPFR_RNDN);
+      printf ("\nmpfr_add failed for x=%s y=%s with rnd_mode=%s\n",
               xs, ys, mpfr_print_rnd_mode (rnd_mode));
       exit (1);
     }
@@ -109,9 +109,9 @@ check2b (const char *xs, int px,
     {
       printf ("(2) x=%s,%d y=%s,%d pz=%d,rnd=%s\n",
               xs, px, ys, py, pz, mpfr_print_rnd_mode (rnd_mode));
-      printf ("got        "); mpfr_print_binary(zz); puts ("");
+      printf ("got        "); mpfr_dump (zz);
       mpfr_set_str(zz, rs, 2, MPFR_RNDN);
-      printf ("instead of "); mpfr_print_binary(zz); puts ("");
+      printf ("instead of "); mpfr_dump (zz);
       exit (1);
     }
   mpfr_clear(xx); mpfr_clear(yy); mpfr_clear(zz);
@@ -152,7 +152,7 @@ check64 (void)
   if (MPFR_MANT(u)[0] << 2)
     {
       printf ("result not normalized for prec=2\n");
-      mpfr_print_binary (u); puts ("");
+      mpfr_dump (u);
       exit (1);
     }
   mpfr_set_str_binary (t, "-1.0e-1");
@@ -207,7 +207,7 @@ check64 (void)
   mpfr_set_str_binary(t, "0.1011000101110010000101111111011100111111101010011011110110101011101000000100");
   if (mpfr_cmp(u,t))
     {
-      printf ("expect "); mpfr_print_binary(t); puts ("");
+      printf ("expect "); mpfr_dump (t);
       printf ("mpfr_add failed for precisions 53-76\n");
       exit (1);
     }
@@ -218,7 +218,7 @@ check64 (void)
   mpfr_set_str_binary(t, "0.101100010111001000010111111101110011111110101001101111011010101110100000001011000010101110011000000000111111");
   if (mpfr_cmp(u,t))
     {
-      printf ("expect "); mpfr_print_binary(t); puts ("");
+      printf ("expect "); mpfr_dump (t);
       printf ("mpfr_add failed for precisions 53-108\n");
       exit (1);
     }
@@ -250,8 +250,7 @@ check64 (void)
       printf ("Error in mpfr_sub: u=x-t and x=x-t give different results\n");
       exit (1);
     }
-  if ((MPFR_MANT(u)[(MPFR_PREC(u)-1)/mp_bits_per_limb] &
-       ((mp_limb_t)1<<(mp_bits_per_limb-1)))==0)
+  if (! MPFR_IS_NORMALIZED (u))
     {
       printf ("Error in mpfr_sub: result is not msb-normalized (1)\n");
       exit (1);
@@ -273,9 +272,9 @@ check64 (void)
   if ((MPFR_MANT(u)[0] & 1) != 1)
     {
       printf ("error in mpfr_add with rnd_mode=MPFR_RNDU\n");
-      printf ("b=  "); mpfr_print_binary(x); puts ("");
-      printf ("c=  "); mpfr_print_binary(t); puts ("");
-      printf ("b+c="); mpfr_print_binary(u); puts ("");
+      printf ("b=  "); mpfr_dump (x);
+      printf ("c=  "); mpfr_dump (t);
+      printf ("b+c="); mpfr_dump (u);
       exit (1);
     }
 
@@ -308,8 +307,7 @@ check64 (void)
   mpfr_set_str_binary(x, "0.10000000000000000000000000000000E1");
   mpfr_set_str_binary(t, "0.1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100000110001110100000100011110000101110110011101110100110110111111011010111100100000000000000000000000000E0");
   mpfr_sub(u, x, t, MPFR_RNDN);
-  if ((MPFR_MANT(u)[(MPFR_PREC(u)-1)/mp_bits_per_limb] &
-       ((mp_limb_t)1<<(mp_bits_per_limb-1)))==0)
+  if (! MPFR_IS_NORMALIZED (u))
     {
       printf ("Error in mpfr_sub: result is not msb-normalized (2)\n");
       exit (1);
@@ -322,8 +320,7 @@ check64 (void)
   mpfr_set_str_binary (x, "0.11100100101101001100111011111111110001101001000011101001001010010E-35");
   mpfr_set_str_binary (t, "0.10000000000000000000000000000000000001110010010110100110011110000E1");
   mpfr_sub (u, t, x, MPFR_RNDU);
-  if ((MPFR_MANT(u)[(MPFR_PREC(u)-1)/mp_bits_per_limb] &
-       ((mp_limb_t)1<<(mp_bits_per_limb-1)))==0)
+  if (! MPFR_IS_NORMALIZED (u))
     {
       printf ("Error in mpfr_sub: result is not msb-normalized (3)\n");
       exit (1);
@@ -336,8 +333,7 @@ check64 (void)
   mpfr_set_str_binary (x, "0.10111001001111010010001000000010111111011011011101000001001000101000000000000000000000000000000000000000000E315");
   mpfr_set_str_binary (t, "0.10000000000000000000000000000000000101110100100101110110000001100101011111001000011101111100100100111011000E350");
   mpfr_sub (u, x, t, MPFR_RNDU);
-  if ((MPFR_MANT(u)[(MPFR_PREC(u)-1)/mp_bits_per_limb] &
-       ((mp_limb_t)1<<(mp_bits_per_limb-1)))==0)
+  if (! MPFR_IS_NORMALIZED (u))
     {
       printf ("Error in mpfr_sub: result is not msb-normalized (4)\n");
       exit (1);
@@ -396,9 +392,9 @@ check_case_1b (void)
                 {
                   printf ("case (1b) failed for prec_a=%u, prec_b=%u,"
                           " prec_c=%u\n", prec_a, prec_b, prec_c);
-                  printf ("b="); mpfr_print_binary(b); puts ("");
-                  printf ("c="); mpfr_print_binary(c); puts ("");
-                  printf ("a="); mpfr_print_binary(a); puts ("");
+                  printf ("b="); mpfr_dump (b);
+                  printf ("c="); mpfr_dump (c);
+                  printf ("a="); mpfr_dump (a);
                   exit (1);
                 }
             }
@@ -481,9 +477,11 @@ check_inexact (void)
   mpfr_set_prec (u, 33);
   mpfr_set_str_binary (u, "0.101110100101101100000000111100000E-1");
   mpfr_set_prec (y, 31);
-  if ((inexact = test_add (y, x, u, MPFR_RNDN)))
+  inexact = test_add (y, x, u, MPFR_RNDN);
+
+  if (inexact != 0)
     {
-      printf ("Wrong inexact flag (2): expected 0, got %d\n", inexact);
+      printf ("Wrong ternary value (2): expected 0, got %d\n", inexact);
       exit (1);
     }
 
@@ -492,64 +490,70 @@ check_inexact (void)
   mpfr_set_prec (u, 33);
   mpfr_set_str_binary (u, "0.101110100101101100000000111100000E-1");
   mpfr_set_prec (y, 28);
-  if ((inexact = test_add (y, x, u, MPFR_RNDN)))
+  inexact = test_add (y, x, u, MPFR_RNDN);
+
+  if (inexact != 0)
     {
-      printf ("Wrong inexact flag (1): expected 0, got %d\n", inexact);
+      printf ("Wrong ternary value (1): expected 0, got %d\n", inexact);
       exit (1);
     }
 
-  for (px=2; px<MAX_PREC; px++)
+  for (px = 2; px < MAX_PREC; px++)
     {
       mpfr_set_prec (x, px);
+
       do
         {
           mpfr_urandomb (x, RANDS);
         }
       while (mpfr_cmp_ui (x, 0) == 0);
-      for (pu=2; pu<MAX_PREC; pu++)
+
+      for (pu = 2; pu < MAX_PREC; pu++)
         {
           mpfr_set_prec (u, pu);
+
           do
             {
               mpfr_urandomb (u, RANDS);
             }
           while (mpfr_cmp_ui (u, 0) == 0);
-          {
-              py = MPFR_PREC_MIN + (randlimb () % (MAX_PREC - 1));
-              mpfr_set_prec (y, py);
-              pz =  (mpfr_cmpabs (x, u) >= 0) ? MPFR_EXP(x) - MPFR_EXP(u)
-                : MPFR_EXP(u) - MPFR_EXP(x);
-              /* x + u is exactly representable with precision
-                 abs(EXP(x)-EXP(u)) + max(prec(x), prec(u)) + 1 */
-              pz = pz + MAX(MPFR_PREC(x), MPFR_PREC(u)) + 1;
-              mpfr_set_prec (z, pz);
-              rnd = RND_RAND ();
-              if (test_add (z, x, u, rnd))
-                {
-                  printf ("z <- x + u should be exact\n");
-                  printf ("x="); mpfr_print_binary (x); puts ("");
-                  printf ("u="); mpfr_print_binary (u); puts ("");
-                  printf ("z="); mpfr_print_binary (z); puts ("");
-                  exit (1);
-                }
-                {
-                  rnd = RND_RAND ();
-                  inexact = test_add (y, x, u, rnd);
-                  cmp = mpfr_cmp (y, z);
-                  if (((inexact == 0) && (cmp != 0)) ||
-                      ((inexact > 0) && (cmp <= 0)) ||
-                      ((inexact < 0) && (cmp >= 0)))
-                    {
-                      printf ("Wrong inexact flag for rnd=%s\n",
-                              mpfr_print_rnd_mode(rnd));
-                      printf ("expected %d, got %d\n", cmp, inexact);
-                      printf ("x="); mpfr_print_binary (x); puts ("");
-                      printf ("u="); mpfr_print_binary (u); puts ("");
-                      printf ("y=  "); mpfr_print_binary (y); puts ("");
-                      printf ("x+u="); mpfr_print_binary (z); puts ("");
-                      exit (1);
-                    }
-                }
+
+          py = MPFR_PREC_MIN + (randlimb () % (MAX_PREC - 1));
+          mpfr_set_prec (y, py);
+          pz = mpfr_cmpabs (x, u) >= 0 ?
+            MPFR_EXP(x) - MPFR_EXP(u) :
+            MPFR_EXP(u) - MPFR_EXP(x);
+          /* x + u is exactly representable with precision
+             abs(EXP(x)-EXP(u)) + max(prec(x), prec(u)) + 1 */
+          pz = pz + MAX(MPFR_PREC(x), MPFR_PREC(u)) + 1;
+          mpfr_set_prec (z, pz);
+
+          rnd = RND_RAND_NO_RNDF ();
+          inexact = test_add (z, x, u, rnd);
+          if (inexact != 0)
+            {
+              printf ("z <- x + u should be exact\n");
+              printf ("x="); mpfr_dump (x);
+              printf ("u="); mpfr_dump (u);
+              printf ("z="); mpfr_dump (z);
+              exit (1);
+            }
+
+          rnd = RND_RAND_NO_RNDF ();
+          inexact = test_add (y, x, u, rnd);
+          cmp = mpfr_cmp (y, z);
+          if ((inexact == 0 && cmp != 0) ||
+              (inexact > 0 && cmp <= 0) ||
+              (inexact < 0 && cmp >= 0))
+            {
+              printf ("Wrong ternary value for rnd=%s\n",
+                      mpfr_print_rnd_mode (rnd));
+              printf ("expected %d, got %d\n", cmp, inexact);
+              printf ("x="); mpfr_dump (x);
+              printf ("u="); mpfr_dump (u);
+              printf ("y=  "); mpfr_dump (y);
+              printf ("x+u="); mpfr_dump (z);
+              exit (1);
             }
         }
     }
@@ -627,37 +631,76 @@ static void
 check_overflow (void)
 {
   mpfr_t a, b, c;
-  mpfr_prec_t prec_a;
-  int r;
+  mpfr_prec_t prec_a, prec_b, prec_c;
+  int r, up;
 
-  mpfr_init2 (a, 256);
-  mpfr_init2 (b, 256);
-  mpfr_init2 (c, 256);
+  mpfr_init (a);
+  mpfr_init (b);
+  mpfr_init (c);
 
-  mpfr_set_ui (b, 1, MPFR_RNDN);
-  mpfr_setmax (b, mpfr_get_emax ());
-  mpfr_set_ui (c, 1, MPFR_RNDN);
-  mpfr_set_exp (c, mpfr_get_emax () - 192);
-  RND_LOOP(r)
-    for (prec_a = 128; prec_a < 512; prec_a += 64)
-      {
-        mpfr_set_prec (a, prec_a);
-        mpfr_clear_overflow ();
-        test_add (a, b, c, (mpfr_rnd_t) r);
-        if (!mpfr_overflow_p ())
+  RND_LOOP_NO_RNDF (r)
+    for (prec_a = 2; prec_a <= 128; prec_a += 2)
+      for (prec_b = 2; prec_b <= 128; prec_b += 2)
+        for (prec_c = 2; prec_c <= 128; prec_c += 2)
           {
-            printf ("No overflow in check_overflow\n");
-            exit (1);
-          }
-      }
+            mpfr_set_prec (a, prec_a);
+            mpfr_set_prec (b, prec_b);
+            mpfr_set_prec (c, prec_c);
 
+            mpfr_setmax (b, mpfr_get_emax ());
+
+            up = r == MPFR_RNDA || r == MPFR_RNDU || r == MPFR_RNDN;
+
+            /* set c with overlap with bits of b: will always overflow */
+            mpfr_set_ui_2exp (c, 1, mpfr_get_emax () - prec_b / 2, MPFR_RNDN);
+            mpfr_nextbelow (c);
+            mpfr_clear_overflow ();
+            test_add (a, b, c, (mpfr_rnd_t) r);
+            if (!mpfr_overflow_p () || (up && !mpfr_inf_p (a)))
+              {
+                printf ("No overflow (1) in check_overflow for rnd=%s\n",
+                        mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                printf ("b="); mpfr_dump (b);
+                printf ("c="); mpfr_dump (c);
+                printf ("a="); mpfr_dump (a);
+                exit (1);
+              }
+
+            if (r == MPFR_RNDZ || r == MPFR_RNDD || prec_a >= prec_b + prec_c)
+              continue;
+
+            /* set c to 111...111 so that ufp(c) = 1/2 ulp(b): will only overflow
+               when prec_a < prec_b + prec_c, and rounding up or to nearest */
+            mpfr_set_ui_2exp (c, 1, mpfr_get_emax () - prec_b, MPFR_RNDN);
+            mpfr_nextbelow (c);
+            mpfr_clear_overflow ();
+            test_add (a, b, c, (mpfr_rnd_t) r);
+            /* b + c is exactly representable iff prec_a >= prec_b + prec_c */
+            if (!mpfr_overflow_p () || !mpfr_inf_p (a))
+              {
+                printf ("No overflow (2) in check_overflow for rnd=%s\n",
+                        mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                printf ("b="); mpfr_dump (b);
+                printf ("c="); mpfr_dump (c);
+                printf ("a="); mpfr_dump (a);
+                exit (1);
+              }
+          }
+
+  mpfr_set_prec (b, 256);
+  mpfr_setmax (b, mpfr_get_emax ());
+  mpfr_set_prec (c, 256);
+  mpfr_set_ui (c, 1, MPFR_RNDN);
   mpfr_set_exp (c, mpfr_get_emax () - 512);
   mpfr_set_prec (a, 256);
   mpfr_clear_overflow ();
-  test_add (a, b, c, MPFR_RNDU);
+  mpfr_add (a, b, c, MPFR_RNDU);
   if (!mpfr_overflow_p ())
     {
-      printf ("No overflow in check_overflow\n");
+      printf ("No overflow (3) in check_overflow\n");
+      printf ("b="); mpfr_dump (b);
+      printf ("c="); mpfr_dump (c);
+      printf ("a="); mpfr_dump (a);
       exit (1);
     }
 
@@ -686,11 +729,13 @@ check_1111 (void)
 
       prec_a = MPFR_PREC_MIN + (randlimb () % m);
       prec_b = MPFR_PREC_MIN + (randlimb () % m);
-      prec_c = MPFR_PREC_MIN + (randlimb () % m);
+      /* we need prec_c > 1 so that % (prec_c - 1) is well defined below */
+      do prec_c = MPFR_PREC_MIN + (randlimb () % m); while (prec_c == 1);
       mpfr_init2 (a, prec_a);
       mpfr_init2 (b, prec_b);
       mpfr_init2 (c, prec_c);
-      sb = randlimb () % 3;
+      /* we need prec_b - (sb != 2) > 0 below */
+      do sb = randlimb () % 3; while (prec_b - (sb != 2) == 0);
       if (sb != 0)
         {
           tb = 1 + (randlimb () % (prec_b - (sb != 2)));
@@ -709,7 +754,7 @@ check_1111 (void)
       test_add (c, c, one, MPFR_RNDN);
       diff = (randlimb () % (2*m)) - m;
       mpfr_mul_2si (c, c, diff, MPFR_RNDN);
-      rnd_mode = RND_RAND ();
+      rnd_mode = RND_RAND_NO_RNDF ();
       inex_a = test_add (a, b, c, rnd_mode);
       mpfr_init2 (s, MPFR_PREC_MIN + 2*m);
       inex_s = test_add (s, b, c, MPFR_RNDN); /* exact */
@@ -731,8 +776,8 @@ check_1111 (void)
                   (int) tb, (int) tc, (int) diff,
                   mpfr_print_rnd_mode (rnd_mode));
           printf ("sb = %d, sc = %d\n", sb, sc);
-          printf ("a = "); mpfr_print_binary (a); puts ("");
-          printf ("s = "); mpfr_print_binary (s); puts ("");
+          printf ("a = "); mpfr_dump (a);
+          printf ("s = "); mpfr_dump (s);
           printf ("inex_a = %d, inex_s = %d\n", inex_a, inex_s);
           exit (1);
         }
@@ -759,7 +804,7 @@ check_1minuseps (void)
   mpfr_init2 (c, MPFR_PREC_MIN);
 
   for (ia = 0; ia < numberof (prec_a); ia++)
-    for (ib = 0; ib < numberof(supp_b); ib++)
+    for (ib = 0; ib < numberof (supp_b); ib++)
       {
         mpfr_prec_t prec_b;
         int rnd_mode;
@@ -773,11 +818,14 @@ check_1minuseps (void)
         mpfr_div_ui (b, c, prec_a[ia], MPFR_RNDN);
         mpfr_sub (b, c, b, MPFR_RNDN);  /* b = 1 - 2^(-prec_a) */
 
-        for (ic = 0; ic < numberof(supp_b); ic++)
+        for (ic = 0; ic < numberof (supp_b); ic++)
           for (rnd_mode = 0; rnd_mode < MPFR_RND_MAX; rnd_mode++)
             {
               mpfr_t s;
               int inex_a, inex_s;
+
+              if (rnd_mode == MPFR_RNDF)
+                continue; /* inex_a, inex_s make no sense */
 
               mpfr_set_ui (c, 1, MPFR_RNDN);
               mpfr_div_ui (c, c, prec_a[ia] + supp_b[ic], MPFR_RNDN);
@@ -1096,6 +1144,172 @@ tests (void)
   check_1minuseps ();
 }
 
+static void
+check_extreme (void)
+{
+  mpfr_t u, v, w, x, y;
+  int i, inex, r;
+
+  mpfr_inits2 (32, u, v, w, x, y, (mpfr_ptr) 0);
+  mpfr_setmin (u, mpfr_get_emax ());
+  mpfr_setmax (v, mpfr_get_emin ());
+  mpfr_setmin (w, mpfr_get_emax () - 40);
+  RND_LOOP (r)
+    for (i = 0; i < 2; i++)
+      {
+        mpfr_add (x, u, v, (mpfr_rnd_t) r);
+        mpfr_set_prec (y, 64);
+        inex = mpfr_add (y, u, w, MPFR_RNDN);
+        MPFR_ASSERTN (inex == 0);
+        mpfr_prec_round (y, 32, (mpfr_rnd_t) r);
+        /* for RNDF, the rounding directions are not necessarily consistent */
+        if (! mpfr_equal_p (x, y) && r != MPFR_RNDF)
+          {
+            printf ("Error in u + v (%s)\n",
+                    mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+            printf ("u = ");
+            mpfr_dump (u);
+            printf ("v = ");
+            mpfr_dump (v);
+            printf ("Expected ");
+            mpfr_dump (y);
+            printf ("Got      ");
+            mpfr_dump (x);
+            exit (1);
+          }
+        mpfr_neg (v, v, MPFR_RNDN);
+        mpfr_neg (w, w, MPFR_RNDN);
+      }
+  mpfr_clears (u, v, w, x, y, (mpfr_ptr) 0);
+}
+
+static void
+testall_rndf (mpfr_prec_t pmax)
+{
+  mpfr_t a, b, c, d;
+  mpfr_prec_t pa, pb, pc;
+  mpfr_exp_t eb;
+
+  for (pa = MPFR_PREC_MIN; pa <= pmax; pa++)
+    {
+      mpfr_init2 (a, pa);
+      mpfr_init2 (d, pa);
+      for (pb = MPFR_PREC_MIN; pb <= pmax; pb++)
+        {
+          mpfr_init2 (b, pb);
+          for (eb = 0; eb <= pmax + 3; eb ++)
+            {
+              mpfr_set_ui_2exp (b, 1, eb, MPFR_RNDN);
+              while (mpfr_cmp_ui_2exp (b, 1, eb + 1) < 0)
+                {
+                  for (pc = MPFR_PREC_MIN; pc <= pmax; pc++)
+                    {
+                      mpfr_init2 (c, pc);
+                      mpfr_set_ui (c, 1, MPFR_RNDN);
+                      while (mpfr_cmp_ui (c, 2) < 0)
+                        {
+                          mpfr_add (a, b, c, MPFR_RNDF);
+                          mpfr_add (d, b, c, MPFR_RNDD);
+                          if (!mpfr_equal_p (a, d))
+                            {
+                              mpfr_add (d, b, c, MPFR_RNDU);
+                              if (!mpfr_equal_p (a, d))
+                                {
+                                  printf ("Error: mpfr_add(a,b,c,RNDF) does not "
+                                          "match RNDD/RNDU\n");
+                                  printf ("b="); mpfr_dump (b);
+                                  printf ("c="); mpfr_dump (c);
+                                  printf ("a="); mpfr_dump (a);
+                                  exit (1);
+                                }
+                            }
+                          mpfr_nextabove (c);
+                        }
+                      mpfr_clear (c);
+                    }
+                  mpfr_nextabove (b);
+                }
+            }
+          mpfr_clear (b);
+        }
+      mpfr_clear (a);
+      mpfr_clear (d);
+    }
+}
+
+static void
+test_rndf_exact (mp_size_t pmax)
+{
+  mpfr_t a, b, c, d;
+  mpfr_prec_t pa, pb, pc;
+  mpfr_exp_t eb;
+
+  for (pa = MPFR_PREC_MIN; pa <= pmax; pa++)
+    {
+      /* only check pa mod GMP_NUMB_BITS = -2, -1, 0, 1, 2 */
+      if ((pa + 2) % GMP_NUMB_BITS > 4)
+        continue;
+      mpfr_init2 (a, pa);
+      mpfr_init2 (d, pa);
+      for (pb = MPFR_PREC_MIN; pb <= pmax; pb++)
+        {
+          if ((pb + 2) % GMP_NUMB_BITS > 4)
+            continue;
+          mpfr_init2 (b, pb);
+          for (eb = 0; eb <= pmax + 3; eb ++)
+            {
+              mpfr_urandomb (b, RANDS);
+              mpfr_mul_2exp (b, b, eb, MPFR_RNDN);
+              for (pc = MPFR_PREC_MIN; pc <= pmax; pc++)
+                {
+                  if ((pc + 2) % GMP_NUMB_BITS > 4)
+                    continue;
+                  mpfr_init2 (c, pc);
+                  mpfr_urandomb (c, RANDS);
+                  mpfr_add (a, b, c, MPFR_RNDF);
+                  mpfr_add (d, b, c, MPFR_RNDD);
+                  if (!mpfr_equal_p (a, d))
+                    {
+                      mpfr_add (d, b, c, MPFR_RNDU);
+                      if (!mpfr_equal_p (a, d))
+                        {
+                          printf ("Error: mpfr_add(a,b,c,RNDF) does not "
+                                  "match RNDD/RNDU\n");
+                          printf ("b="); mpfr_dump (b);
+                          printf ("c="); mpfr_dump (c);
+                          printf ("a="); mpfr_dump (a);
+                          exit (1);
+                        }
+                    }
+
+                  /* now make the low bits from c match those from b */
+                  mpfr_sub (c, b, d, MPFR_RNDN);
+                  mpfr_add (a, b, c, MPFR_RNDF);
+                  mpfr_add (d, b, c, MPFR_RNDD);
+                  if (!mpfr_equal_p (a, d))
+                    {
+                      mpfr_add (d, b, c, MPFR_RNDU);
+                      if (!mpfr_equal_p (a, d))
+                        {
+                          printf ("Error: mpfr_add(a,b,c,RNDF) does not "
+                                  "match RNDD/RNDU\n");
+                          printf ("b="); mpfr_dump (b);
+                          printf ("c="); mpfr_dump (c);
+                          printf ("a="); mpfr_dump (a);
+                          exit (1);
+                        }
+                    }
+
+                  mpfr_clear (c);
+                }
+            }
+          mpfr_clear (b);
+        }
+      mpfr_clear (a);
+      mpfr_clear (d);
+    }
+}
+
 #define TEST_FUNCTION test_add
 #define TWO_ARGS
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), randlimb () % 100, RANDS)
@@ -1113,7 +1327,12 @@ main (int argc, char *argv[])
   usesp = 1;
   tests ();
 #endif
-  test_generic (2, 1000, 100);
+
+  test_rndf_exact (200);
+  testall_rndf (7);
+  check_extreme ();
+
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   tests_end_mpfr ();
   return 0;

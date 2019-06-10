@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.47 2018/06/26 06:48:01 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.47.2.1 2019/06/10 22:07:16 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.47 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.47.2.1 2019/06/10 22:07:16 christos Exp $");
 
 #include "vlan.h"
 
@@ -174,8 +174,8 @@ static	void	bce_stop(struct ifnet *, int);
 static	void	bce_reset(struct bce_softc *);
 static	bool	bce_resume(device_t, const pmf_qual_t *);
 static	void	bce_set_filter(struct ifnet *);
-static	int	bce_mii_read(device_t, int, int);
-static	void	bce_mii_write(device_t, int, int, int);
+static	int	bce_mii_read(device_t, int, int, uint16_t *);
+static	int	bce_mii_write(device_t, int, int, uint16_t);
 static	void	bce_statchg(struct ifnet *);
 static	void	bce_tick(void *);
 
@@ -255,7 +255,9 @@ bce_attach(device_t parent, device_t self, void *aux)
 	void		*kva;
 	bus_dma_segment_t seg;
 	int             error, i, pmreg, rseg;
+	uint16_t	phyval;
 	struct ifnet   *ifp;
+	struct mii_data *mii = &sc->bce_mii;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->bce_dev = self;
@@ -296,6 +298,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 		if (pci_mapreg_map(pa, BCE_PCI_BAR0, memtype, 0, &sc->bce_btag,
 		    &sc->bce_bhandle, &memaddr, &memsize) == 0)
 			break;
+		/* FALLTHROUGH */
 	default:
 		aprint_error_dev(self, "unable to find mem space\n");
 		return;
@@ -326,7 +329,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
-	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc);
+	sc->bce_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bce_intr,
+	    sc, device_xname(self));
 
 	if (sc->bce_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
@@ -421,21 +425,20 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize our media structures and probe the MII. */
 
-	sc->bce_mii.mii_ifp = ifp;
-	sc->bce_mii.mii_readreg = bce_mii_read;
-	sc->bce_mii.mii_writereg = bce_mii_write;
-	sc->bce_mii.mii_statchg = bce_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = bce_mii_read;
+	mii->mii_writereg = bce_mii_write;
+	mii->mii_statchg = bce_statchg;
 
-	sc->ethercom.ec_mii = &sc->bce_mii;
-	ifmedia_init(&sc->bce_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(sc->bce_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG|MIIF_DOPAUSE);
-	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	/* get the phy */
 	sc->bce_phy = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_MAGIC_PHY) & 0x1f;
@@ -443,11 +446,13 @@ bce_attach(device_t parent, device_t self, void *aux)
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
+	bce_mii_read(sc->bce_dev, 1, 26, &phyval);
 	bce_mii_write(sc->bce_dev, 1, 26,	 /* MAGIC */
-	    bce_mii_read(sc->bce_dev, 1, 26) & 0x7fff);	 /* MAGIC */
+	    phyval & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
+	bce_mii_read(sc->bce_dev, 1, 27, &phyval);
 	bce_mii_write(sc->bce_dev, 1, 27,	 /* MAGIC */
-	    bce_mii_read(sc->bce_dev, 1, 27) | (1 << 6));	 /* MAGIC */
+	    phyval | (1 << 6));	 /* MAGIC */
 
 	/* Attach the interface */
 	if_attach(ifp);
@@ -1368,11 +1373,11 @@ bce_resume(device_t self, const pmf_qual_t *qual)
 
 /* Read a PHY register on the MII. */
 int
-bce_mii_read(device_t self, int phy, int reg)
+bce_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct bce_softc *sc = device_private(self);
 	int		i;
-	uint32_t	val;
+	uint32_t	data;
 
 	/* clear mii_int */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS, BCE_MIINTR);
@@ -1383,28 +1388,30 @@ bce_mii_read(device_t self, int phy, int reg)
 	    (MII_COMMAND_ACK << 16) | BCE_MIPHY(phy) | BCE_MIREG(reg));	/* MAGIC */
 
 	for (i = 0; i < BCE_TIMEOUT; i++) {
-		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS);
-		if (val & BCE_MIINTR)
+		data = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_MI_STS);
+		if (data & BCE_MIINTR)
 			break;
 		delay(10);
 	}
-	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
+	data = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
 		aprint_error_dev(sc->bce_dev,
 		    "PHY read timed out reading phy %d, reg %d, val = "
-		    "0x%08x\n", phy, reg, val);
-		return (0);
+		    "0x%08x\n", phy, reg, data);
+		return ETIMEDOUT;
 	}
-	return (val & BCE_MICOMM_DATA);
+	*val = data & BCE_MICOMM_DATA;
+	return 0;
 }
 
 /* Write a PHY register on the MII */
-void
-bce_mii_write(device_t self, int phy, int reg, int val)
+int
+bce_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct bce_softc *sc = device_private(self);
 	int		i;
-	uint32_t	rval;
+	uint32_t	data;
 
 	/* clear mii_int */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS,
@@ -1418,18 +1425,20 @@ bce_mii_write(device_t self, int phy, int reg, int val)
 
 	/* wait for write to complete */
 	for (i = 0; i < BCE_TIMEOUT; i++) {
-		rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		data = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
 		    BCE_MI_STS);
-		if (rval & BCE_MIINTR)
+		if (data & BCE_MIINTR)
 			break;
 		delay(10);
 	}
-	rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
 		aprint_error_dev(sc->bce_dev,
-		    "PHY timed out writing phy %d, reg %d, val = 0x%08x\n", phy,
-		    reg, val);
+		    "PHY timed out writing phy %d, reg %d, val = 0x%04hx\n",
+		    phy, reg, val);
+		return ETIMEDOUT;
 	}
+
+	return 0;
 }
 
 /* sync hardware duplex mode to software state */
@@ -1438,6 +1447,7 @@ bce_statchg(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	uint32_t	reg;
+	uint16_t	phyval;
 
 	/* if needed, change register to match duplex mode */
 	reg = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_CTL);
@@ -1452,11 +1462,13 @@ bce_statchg(struct ifnet *ifp)
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
+	bce_mii_read(sc->bce_dev, 1, 26, &phyval);
 	bce_mii_write(sc->bce_dev, 1, 26,	/* MAGIC */
-	    bce_mii_read(sc->bce_dev, 1, 26) & 0x7fff);	/* MAGIC */
+	    phyval & 0x7fff);	/* MAGIC */
 	/* enable traffic meter led mode */
+	bce_mii_read(sc->bce_dev, 1, 27, &phyval);
 	bce_mii_write(sc->bce_dev, 1, 26,	/* MAGIC */
-	    bce_mii_read(sc->bce_dev, 1, 27) | (1 << 6));	/* MAGIC */
+	    phyval | (1 << 6));	/* MAGIC */
 }
 
 /* One second timer, checks link status */

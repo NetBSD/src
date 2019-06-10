@@ -1,8 +1,0 @@
-#	$NetBSD: files.vexpress,v 1.3 2017/06/02 15:22:47 jmcneill Exp $
-#
-# Versatile Express board configuration info
-#
-
-include "arch/evbarm/conf/files.fdt"
-
-include "arch/arm/vexpress/files.vexpress"

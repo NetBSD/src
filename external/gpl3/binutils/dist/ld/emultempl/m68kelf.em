@@ -79,13 +79,8 @@ m68k_elf_after_open (void)
 	{
 	  asection *datasec;
 
-	  /* As first-order business, make sure that each input BFD is either
-	     COFF or ELF.  We need to call a special BFD backend function to
-	     generate the embedded relocs, and we have such functions only for
-	     COFF and ELF.  */
-	  if (bfd_get_flavour (abfd) != bfd_target_coff_flavour
-	      && bfd_get_flavour (abfd) != bfd_target_elf_flavour)
-	    einfo (_("%F%B: all input objects must be COFF or ELF "
+	  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+	    einfo (_("%F%P: %pB: all input objects must be ELF "
 		     "for --embedded-relocs\n"));
 
 	  datasec = bfd_get_section_by_name (abfd, ".data");
@@ -110,7 +105,7 @@ m68k_elf_after_open (void)
 		  || ! bfd_set_section_alignment (abfd, relsec, 2)
 		  || ! bfd_set_section_size (abfd, relsec,
 					     datasec->reloc_count * 12))
-		einfo (_("%F%B: can not create .emreloc section: %E\n"));
+		einfo (_("%F%P: %pB: can not create .emreloc section: %E\n"));
 	    }
 
 	  /* Double check that all other data sections are empty, as is
@@ -131,7 +126,7 @@ check_sections (bfd *abfd, asection *sec, void *datasec)
   if ((bfd_get_section_flags (abfd, sec) & SEC_DATA)
       && sec != datasec
       && sec->reloc_count != 0)
-    einfo (_("%B%X: section %s has relocs; can not use --embedded-relocs\n"),
+    einfo (_("%X%P: %pB: section %s has relocs; can not use --embedded-relocs\n"),
 	   abfd, bfd_get_section_name (abfd, sec));
 }
 
@@ -167,34 +162,18 @@ m68k_elf_after_allocation (void)
 	  relsec = bfd_get_section_by_name (abfd, ".emreloc");
 	  ASSERT (relsec != NULL);
 
-	  if (bfd_get_flavour (abfd) == bfd_target_coff_flavour)
-	    {
-	      if (! bfd_m68k_coff_create_embedded_relocs (abfd, &link_info,
-							  datasec, relsec,
-							  &errmsg))
-		{
-		  if (errmsg == NULL)
-		    einfo (_("%B%X: can not create "
-			     "runtime reloc information: %E\n"),
-			   abfd);
-		  else
-		    einfo (_("%X%B: can not create "
-			     "runtime reloc information: %s\n"),
-			   abfd, errmsg);
-		}
-	    }
-	  else if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
+	  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
 	    {
 	      if (! bfd_m68k_elf32_create_embedded_relocs (abfd, &link_info,
 							   datasec, relsec,
 							   &errmsg))
 		{
 		  if (errmsg == NULL)
-		    einfo (_("%B%X: can not create "
+		    einfo (_("%X%P: %pB: can not create "
 			     "runtime reloc information: %E\n"),
 			   abfd);
 		  else
-		    einfo (_("%X%B: can not create "
+		    einfo (_("%X%P: %pB: can not create "
 			     "runtime reloc information: %s\n"),
 			   abfd, errmsg);
 		}
@@ -243,7 +222,7 @@ PARSE_AND_LIST_ARGS_CASES='
       else if (strcmp (optarg, "multigot") == 0)
 	got_handling = 2;
       else
-	einfo (_("Unrecognized --got argument '\''%s'\''.\n"), optarg);
+	einfo (_("%P: unrecognized --got argument '\''%s'\''\n"), optarg);
       break;
 '
 

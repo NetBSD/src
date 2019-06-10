@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -584,8 +584,8 @@ AcpiInstallMethod (
 
     /* Table must be a DSDT or SSDT */
 
-    if (!ACPI_COMPARE_NAME (Table->Signature, ACPI_SIG_DSDT) &&
-        !ACPI_COMPARE_NAME (Table->Signature, ACPI_SIG_SSDT))
+    if (!ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT) &&
+        !ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_SSDT))
     {
         return (AE_BAD_HEADER);
     }

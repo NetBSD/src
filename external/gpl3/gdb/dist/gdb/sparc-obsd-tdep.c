@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "floatformat.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
@@ -153,7 +152,7 @@ static void
 sparc32obsd_supply_uthread (struct regcache *regcache,
 			    int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR fp, fp_addr = addr + SPARC32OBSD_UTHREAD_FP_OFFSET;
   gdb_byte buf[4];
@@ -164,7 +163,7 @@ sparc32obsd_supply_uthread (struct regcache *regcache,
   if (regnum == SPARC_SP_REGNUM || regnum == -1)
     {
       store_unsigned_integer (buf, 4, byte_order, fp);
-      regcache_raw_supply (regcache, SPARC_SP_REGNUM, buf);
+      regcache->raw_supply (SPARC_SP_REGNUM, buf);
 
       if (regnum == SPARC_SP_REGNUM)
 	return;
@@ -179,12 +178,12 @@ sparc32obsd_supply_uthread (struct regcache *regcache,
       if (regnum == SPARC32_PC_REGNUM || regnum == -1)
 	{
 	  store_unsigned_integer (buf, 4, byte_order, i7 + 8);
-	  regcache_raw_supply (regcache, SPARC32_PC_REGNUM, buf);
+	  regcache->raw_supply (SPARC32_PC_REGNUM, buf);
 	}
       if (regnum == SPARC32_NPC_REGNUM || regnum == -1)
 	{
 	  store_unsigned_integer (buf, 4, byte_order, i7 + 12);
-	  regcache_raw_supply (regcache, SPARC32_NPC_REGNUM, buf);
+	  regcache->raw_supply (SPARC32_NPC_REGNUM, buf);
 	}
 
       if (regnum == SPARC32_PC_REGNUM || regnum == SPARC32_NPC_REGNUM)
@@ -198,7 +197,7 @@ static void
 sparc32obsd_collect_uthread(const struct regcache *regcache,
 			    int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp;
   gdb_byte buf[4];
@@ -209,7 +208,7 @@ sparc32obsd_collect_uthread(const struct regcache *regcache,
     {
       CORE_ADDR fp_addr = addr + SPARC32OBSD_UTHREAD_FP_OFFSET;
 
-      regcache_raw_collect (regcache, SPARC_SP_REGNUM, buf);
+      regcache->raw_collect (SPARC_SP_REGNUM, buf);
       write_memory (fp_addr,buf, 4);
     }
 
@@ -217,7 +216,7 @@ sparc32obsd_collect_uthread(const struct regcache *regcache,
     {
       CORE_ADDR i7, i7_addr = addr + SPARC32OBSD_UTHREAD_PC_OFFSET;
 
-      regcache_raw_collect (regcache, SPARC32_PC_REGNUM, buf);
+      regcache->raw_collect (SPARC32_PC_REGNUM, buf);
       i7 = extract_unsigned_integer (buf, 4, byte_order) - 8;
       write_memory_unsigned_integer (i7_addr, 4, byte_order, i7);
 
@@ -225,7 +224,7 @@ sparc32obsd_collect_uthread(const struct regcache *regcache,
 	return;
     }
 
-  regcache_raw_collect (regcache, SPARC_SP_REGNUM, buf);
+  regcache->raw_collect (SPARC_SP_REGNUM, buf);
   sp = extract_unsigned_integer (buf, 4, byte_order);
   sparc_collect_rwindow (regcache, sp, regnum);
 }
@@ -245,10 +244,6 @@ sparc32obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_supply_uthread (gdbarch, sparc32obsd_supply_uthread);
   bsd_uthread_set_collect_uthread (gdbarch, sparc32obsd_collect_uthread);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparc32obsd_tdep (void);
 
 void
 _initialize_sparc32obsd_tdep (void)

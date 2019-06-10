@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.67.4.1 2019/06/10 22:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.67.4.1 2019/06/10 22:09:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ sysctl_vm_uvmexp(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	if (oldlenp)
-		node.sysctl_size = min(*oldlenp, node.sysctl_size);
+		node.sysctl_size = uimin(*oldlenp, node.sysctl_size);
 
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -184,7 +184,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	node.sysctl_data = &u;
 	node.sysctl_size = sizeof(u);
 	if (oldlenp)
-		node.sysctl_size = min(*oldlenp, node.sysctl_size);
+		node.sysctl_size = uimin(*oldlenp, node.sysctl_size);
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -295,6 +295,14 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       SYSCTL_DESCR("Guard size of other threads"),
 		       NULL, 0, &user_thread_stack_guard_size, 0,
 		       CTL_VM, VM_THREAD_GUARD_SIZE, CTL_EOL);
+#ifdef PMAP_DIRECT
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "ubc_direct",
+		       SYSCTL_DESCR("Use direct map for UBC I/O"),
+		       NULL, 0, &ubc_direct, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+#endif
 
 	uvmpdpol_sysctlsetup();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.23 2018/05/23 05:04:39 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.23.2.1 2019/06/10 22:06:54 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.23 2018/05/23 05:04:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.23.2.1 2019/06/10 22:06:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,14 @@ static const char * const x86_features[][32] = {
 	"hw_pstate", "proc_feedback", "sme", NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "ibrs", "ibpb", "stibp", NULL, NULL, NULL, NULL},
 
 	{ /* (8) Linux mapping */
 	"tpr_shadow", "vnmi", "flexpriority", "ept",
 	"vpid", "npt", "lbrv", "svm_lock",
 	"nrip_save", "tsc_scale", "vmcb_clean", "flushbyasid",
 	"decodeassists", "pausefilter", "pfthreshold", "vmmcall",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, "ept_ad", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (9) Intel-defined: 00000007 ebx */
@@ -153,9 +153,9 @@ static const char * const x86_features[][32] = {
 
 	{ /* (13) AMD 0x80000008 ebx */
 	"clzero", "irperf", "xsaveerptr", NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, "ibpb", NULL, "ibrs", "stibp",
+	NULL, "wbnoinvd", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "virt_ssbd", NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (14) 0x00000006 eax */
 	"dtherm", "ida", "arat", NULL, "pln", NULL, "pts", "hwp",
@@ -176,9 +176,9 @@ static const char * const x86_features[][32] = {
 	NULL, "avx512vbmi", "umip", "pku",
 	"ospke", NULL, "avx512_vbmi2", NULL,
 	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
-	"avx512_bitalg", NULL, "avx512_vpopcntdq", NULL,
+	"avx512_bitalg", "tme", "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, NULL, NULL},
 
 	{ /* (17) 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
@@ -188,9 +188,10 @@ static const char * const x86_features[][32] = {
 
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, "arch_capabilities", NULL, "ssbd"},
+	NULL, NULL, "md_clear", NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
@@ -234,7 +235,7 @@ procfs_getonefeatreg(uint32_t reg, const char * const *table, char *p,
 	size_t l;
 
 	for (size_t i = 0; i < 32; i++) {
-		if ((reg & (1 << i)) && table[i]) {
+		if ((reg & (1U << i)) && table[i]) {
 			l = snprintf(p, *left, "%s ", table[i]);
 			if (l < *left) {
 				*left -= l;
@@ -420,9 +421,9 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 		left = 0;
 
 	l = snprintf(p, left,
-	    "apicid\t\t: %d\n"
-	    "initial apicid\t: %d\n",
-	    ci->ci_acpiid,
+	    "apicid\t\t: %lu\n"
+	    "initial apicid\t: %u\n",
+	    ci->ci_cpuid,
 	    ci->ci_initapicid
 	);
 	size += l;

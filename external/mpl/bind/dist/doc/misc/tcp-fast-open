@@ -1,0 +1,32 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+Some systems (Linux, FreeBSD, OS X/macOS and Windows 10) support
+the TCP Fast Open (RFC 7413) mechanism in their recent versions.
+
+BIND 9 supports this on the server side.
+
+When the TCP_FASTOPEN socket option is defined after the listen()
+system call the socket code in the libisc set the option with
+the half of the listen backlog (so the fast open maximum queue length
+is the half of the pending connection queue length).
+Any failure is logged and ignored.
+
+System specific notes:
+ - FreeBSD doesn't interpret the argument as a queue length but
+  only as an on/off switch.
+
+ - Using TCP Fast Open on FreeBSD, as of versions 10.3 and 11.0, requires
+   compiling a custom kernel and setting the "net.inet.tcp.fastopen.enabled"
+   sysctl to 1.
+
+ - Apple OS X/macOS allows only 0 or 1 so the code puts 1 for this system.
+
+ - Windows 10 uses a 0/1 char flag? Note that TCP_FASTOPEN is defined
+  only in SDK 10.0.14393.0 or higher (Visual Studio 2015 requires
+  extra setting of the "Target Platform Version" in all project
+  properties).
+
+ - the only other system known to support this is Linux.
+

@@ -10,9 +10,9 @@ static void
 initialize_tdesc_s390x_linux64 (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-
   set_tdesc_architecture (result, bfd_scan_arch ("s390:64-bit"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.s390.core");
   tdesc_create_reg (feature, "pswm", 0, 1, "psw", 64, "uint64");

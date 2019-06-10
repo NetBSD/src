@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,10 +48,5 @@ extern void amd64_supply_native_gregset (struct regcache *regcache,
 
 extern void amd64_collect_native_gregset (const struct regcache *regcache,
 					  void *gregs, int regnum);
-
-/* Create a prototype *BSD/amd64 target.  The client can override it
-   with local methods.  */
-
-extern struct target_ops *amd64bsd_target (void);
 
 #endif /* amd64-nat.h */

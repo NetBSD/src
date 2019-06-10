@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.9 2014/08/10 18:01:29 joerg Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.9.28.1 2019/06/10 22:06:14 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,11 +37,10 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.9 2014/08/10 18:01:29 joerg Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.9.28.1 2019/06/10 22:06:14 christos Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"

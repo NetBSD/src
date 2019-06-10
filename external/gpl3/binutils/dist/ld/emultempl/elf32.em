@@ -110,6 +110,7 @@ gld${EMULATION_NAME}_before_parse (void)
   `if test -n "$CALL_NOP_BYTE" ; then echo link_info.call_nop_byte = $CALL_NOP_BYTE; fi`;
   link_info.check_relocs_after_open_input = TRUE;
   link_info.relro = DEFAULT_LD_Z_RELRO;
+  link_info.separate_code = DEFAULT_LD_Z_SEPARATE_CODE;
 }
 
 EOF
@@ -160,7 +161,7 @@ gld${EMULATION_NAME}_load_symbols (lang_input_statement_type *entry)
 
   if (entry->flags.just_syms
       && (bfd_get_file_flags (entry->the_bfd) & DYNAMIC) != 0)
-    einfo (_("%P%F: --just-symbols may not be used on DSO: %B\n"),
+    einfo (_("%F%P: %pB: --just-symbols may not be used on DSO\n"),
 	   entry->the_bfd);
 
   if (link_class == 0
@@ -283,7 +284,7 @@ gld${EMULATION_NAME}_stat_needed (lang_input_statement_type *s)
 
   if (bfd_stat (s->the_bfd, &st) != 0)
     {
-      einfo (_("%P:%B: bfd_stat failed: %E\n"), s->the_bfd);
+      einfo (_("%P: %pB: bfd_stat failed: %E\n"), s->the_bfd);
       return;
     }
 
@@ -323,7 +324,7 @@ gld${EMULATION_NAME}_stat_needed (lang_input_statement_type *s)
     soname = lbasename (s->filename);
 
   if (filename_ncmp (soname, global_needed->name, suffix - global_needed->name) == 0)
-    einfo (_("%P: warning: %s, needed by %B, may conflict with %s\n"),
+    einfo (_("%P: warning: %s, needed by %pB, may conflict with %s\n"),
 	   global_needed->name, global_needed->by, soname);
 }
 
@@ -385,7 +386,7 @@ gld${EMULATION_NAME}_try_needed (struct dt_needed *needed,
       struct bfd_link_needed_list *needs;
 
       if (! bfd_elf_get_bfd_needed_list (abfd, &needs))
-	einfo (_("%F%P:%B: bfd_elf_get_bfd_needed_list failed: %E\n"), abfd);
+	einfo (_("%F%P: %pB: bfd_elf_get_bfd_needed_list failed: %E\n"), abfd);
 
       if (needs != NULL)
 	{
@@ -445,7 +446,7 @@ fragment <<EOF
      can only check that using stat.  */
 
   if (bfd_stat (abfd, &global_stat) != 0)
-    einfo (_("%F%P:%B: bfd_stat failed: %E\n"), abfd);
+    einfo (_("%F%P: %pB: bfd_stat failed: %E\n"), abfd);
 
   /* First strip off everything before the last '/'.  */
   soname = lbasename (abfd->filename);
@@ -481,7 +482,7 @@ fragment <<EOF
 
   /* Add this file into the symbol table.  */
   if (! bfd_link_add_symbols (abfd, &link_info))
-    einfo (_("%F%B: error adding symbols: %E\n"), abfd);
+    einfo (_("%F%P: %pB: error adding symbols: %E\n"), abfd);
 
   return TRUE;
 }
@@ -1175,7 +1176,7 @@ write_build_id (bfd *abfd)
   if (bfd_is_abs_section (asec->output_section))
     {
       einfo (_("%P: warning: .note.gnu.build-id section discarded,"
-	       " --build-id ignored.\n"));
+	       " --build-id ignored\n"));
       return TRUE;
     }
   i_shdr = &elf_section_data (asec->output_section)->this_hdr;
@@ -1220,7 +1221,7 @@ setup_build_id (bfd *ibfd)
   size = id_note_section_size (ibfd);
   if (size == 0)
     {
-      einfo (_("%P: warning: unrecognized --build-id style ignored.\n"));
+      einfo (_("%P: warning: unrecognized --build-id style ignored\n"));
       return FALSE;
     }
 
@@ -1238,8 +1239,8 @@ setup_build_id (bfd *ibfd)
       return TRUE;
     }
 
-  einfo (_("%P: warning: Cannot create .note.gnu.build-id section,"
-	   " --build-id ignored.\n"));
+  einfo (_("%P: warning: cannot create .note.gnu.build-id section,"
+	   " --build-id ignored\n"));
   return FALSE;
 }
 
@@ -1268,7 +1269,7 @@ gld${EMULATION_NAME}_after_open (void)
 
       if (link_info.out_implib_bfd == NULL)
 	{
-	  einfo (_("%F%s: Can't open for writing: %E\n"),
+	  einfo (_("%F%P: %s: can't open for writing: %E\n"),
 		 command_line.out_implib_filename);
 	}
     }
@@ -1344,8 +1345,8 @@ gld${EMULATION_NAME}_after_open (void)
 		}
 	      else if (seen_type != type)
 		{
-		  einfo (_("%P%F: compact frame descriptions incompatible with"
-			   " DWARF2 .eh_frame from %B\n"),
+		  einfo (_("%F%P: compact frame descriptions incompatible with"
+			   " DWARF2 .eh_frame from %pB\n"),
 			 type == DWARF2_EH_HDR ? abfd : elfbfd);
 		  break;
 		}
@@ -1379,8 +1380,8 @@ gld${EMULATION_NAME}_after_open (void)
 	    }
 	}
       if (warn_eh_frame)
-	einfo (_("%P: warning: Cannot create .eh_frame_hdr section,"
-		 " --eh-frame-hdr ignored.\n"));
+	einfo (_("%P: warning: cannot create .eh_frame_hdr section,"
+		 " --eh-frame-hdr ignored\n"));
     }
 
   /* Get the list of files which appear in DT_NEEDED entries in
@@ -1434,7 +1435,7 @@ gld${EMULATION_NAME}_after_open (void)
       n.name = l->name;
       nn.by = l->by;
       if (verbose)
-	info_msg (_("%s needed by %B\n"), l->name, l->by);
+	info_msg (_("%s needed by %pB\n"), l->name, l->by);
 
       /* As-needed libs specified on the command line (or linker script)
 	 take priority over libs found in search dirs.  */
@@ -1571,14 +1572,14 @@ fragment <<EOF
       if (force < 2)
 	continue;
 
-      einfo (_("%P: warning: %s, needed by %B, not found "
+      einfo (_("%P: warning: %s, needed by %pB, not found "
 	       "(try using -rpath or -rpath-link)\n"),
 	     l->name, l->by);
     }
 
   if (link_info.eh_frame_hdr_type == COMPACT_EH_HDR)
     if (!bfd_elf_parse_eh_frame_entries (NULL, &link_info))
-      einfo (_("%P%F: Failed to parse EH frame entries.\n"));
+      einfo (_("%F%P: failed to parse EH frame entries\n"));
 }
 
 EOF
@@ -1613,7 +1614,7 @@ gld${EMULATION_NAME}_find_exp_assignment (etree_type *exp)
 					       &link_info,
 					       exp->assign.dst, provide,
 					       exp->assign.hidden))
-	    einfo (_("%P%F: failed to record assignment to %s: %E\n"),
+	    einfo (_("%F%P: failed to record assignment to %s: %E\n"),
 		   exp->assign.dst);
 	}
       gld${EMULATION_NAME}_find_exp_assignment (exp->assign.src);
@@ -1818,7 +1819,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 	  command_line.filter_shlib, audit, depaudit,
 	  (const char * const *) command_line.auxiliary_filters,
 	  &link_info, &sinterp)))
-    einfo (_("%P%F: failed to set dynamic section sizes: %E\n"));
+    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
 
 ${ELF_INTERPRETER_SET_DEFAULT}
   /* Let the user override the dynamic linker we are using.  */
@@ -1852,7 +1853,7 @@ ${ELF_INTERPRETER_SET_DEFAULT}
 	msg = (char *) xmalloc ((size_t) (sz + 1));
 	if (! bfd_get_section_contents (is->the_bfd, s,	msg,
 					(file_ptr) 0, sz))
-	  einfo (_("%F%B: Can't read contents of section .gnu.warning: %E\n"),
+	  einfo (_("%F%P: %pB: can't read contents of section .gnu.warning: %E\n"),
 		 is->the_bfd);
 	msg[sz] = '\0';
 	(*link_info.callbacks->warning) (&link_info, msg,
@@ -1880,7 +1881,7 @@ ${ELF_INTERPRETER_SET_DEFAULT}
   before_allocation_default ();
 
   if (!bfd_elf_size_dynsym_hash_dynstr (link_info.output_bfd, &link_info))
-    einfo (_("%P%F: failed to set dynamic section sizes: %E\n"));
+    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
 
   if (ehdr_start != NULL)
     {
@@ -2694,7 +2695,7 @@ gld${EMULATION_NAME}_handle_option (int optc)
       else if (strcasecmp (optarg, "zlib-gabi") == 0)
 	link_info.compress_debug = COMPRESS_DEBUG_GABI_ZLIB;
       else
-	einfo (_("%P%F: invalid --compress-debug-sections option: \`%s'\n"),
+	einfo (_("%F%P: invalid --compress-debug-sections option: \`%s'\n"),
 	       optarg);
       break;
 EOF
@@ -2749,7 +2750,7 @@ fragment <<EOF
 	  link_info.emit_gnu_hash = TRUE;
 	}
       else
-	einfo (_("%P%F: invalid hash style \`%s'\n"), optarg);
+	einfo (_("%F%P: invalid hash style \`%s'\n"), optarg);
       break;
 
 EOF
@@ -2768,7 +2769,7 @@ fragment <<EOF
 
 	  config.maxpagesize = strtoul (optarg + 14, &end, 0);
 	  if (*end || (config.maxpagesize & (config.maxpagesize - 1)) != 0)
-	    einfo (_("%P%F: invalid maxium page size \`%s'\n"),
+	    einfo (_("%F%P: invalid maximum page size \`%s'\n"),
 		   optarg + 14);
 	}
       else if (CONST_STRNEQ (optarg, "common-page-size="))
@@ -2777,7 +2778,7 @@ fragment <<EOF
 	  config.commonpagesize = strtoul (optarg + 17, &end, 0);
 	  if (*end
 	      || (config.commonpagesize & (config.commonpagesize - 1)) != 0)
-	    einfo (_("%P%F: invalid common page size \`%s'\n"),
+	    einfo (_("%F%P: invalid common page size \`%s'\n"),
 		   optarg + 17);
 	}
       else if (CONST_STRNEQ (optarg, "stack-size="))
@@ -2785,7 +2786,7 @@ fragment <<EOF
 	  char *end;
 	  link_info.stacksize = strtoul (optarg + 11, &end, 0);
 	  if (*end || link_info.stacksize < 0)
-	    einfo (_("%P%F: invalid stack size \`%s'\n"), optarg + 11);
+	    einfo (_("%F%P: invalid stack size \`%s'\n"), optarg + 11);
 	  if (!link_info.stacksize)
 	    /* Use -1 for explicit no-stack, because zero means
 	       'default'.   */
@@ -2875,7 +2876,7 @@ fi
 
 fragment <<EOF
       else
-	einfo (_("%P: warning: -z %s ignored.\n"), optarg);
+	einfo (_("%P: warning: -z %s ignored\n"), optarg);
       break;
 EOF
 

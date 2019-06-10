@@ -1,5 +1,5 @@
 /* Target definitions for GCC for Intel 80386 running Solaris 2
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Contributed by Fred Fish (fnf@cygnus.com).
 
 This file is part of GCC.
@@ -65,8 +65,16 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_CPU64_DEFAULT_SPEC "-xarch=generic64"
 #endif
 
+/* Since Studio 12.6, as needs -xbrace_comment=no so its AVX512 syntax is
+   fully compatible with gas.  */
+#ifdef HAVE_AS_XBRACE_COMMENT_OPTION
+#define ASM_XBRACE_COMMENT_SPEC "-xbrace_comment=no"
+#else
+#define ASM_XBRACE_COMMENT_SPEC ""
+#endif
+
 #undef ASM_CPU_SPEC
-#define ASM_CPU_SPEC "%(asm_cpu_default)"
+#define ASM_CPU_SPEC "%(asm_cpu_default) " ASM_XBRACE_COMMENT_SPEC
 
 /* Don't include ASM_PIC_SPEC.  While the Solaris 10+ assembler accepts -K PIC,
    it gives many warnings: 
@@ -184,15 +192,15 @@ along with GCC; see the file COPYING3.  If not see
 
 /* As in sparc/sol2.h, override the default from i386/x86-64.h to work
    around Sun as TLS bug.  */
-#undef  ASM_OUTPUT_ALIGNED_COMMON
-#define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGN)		\
+#undef  ASM_OUTPUT_ALIGNED_DECL_COMMON
+#define ASM_OUTPUT_ALIGNED_DECL_COMMON(FILE, DECL, NAME, SIZE, ALIGN)	\
   do									\
     {									\
       if (TARGET_SUN_TLS						\
 	  && in_section							\
 	  && ((in_section->common.flags & SECTION_TLS) == SECTION_TLS))	\
 	switch_to_section (bss_section);				\
-      x86_elf_aligned_common (FILE, NAME, SIZE, ALIGN);			\
+      x86_elf_aligned_decl_common (FILE, DECL, NAME, SIZE, ALIGN);	\
     }									\
   while  (0)
 
@@ -209,6 +217,14 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_ASM_NAMED_SECTION
 #define TARGET_ASM_NAMED_SECTION i386_solaris_elf_named_section
 
+/* Sun as requires "h" flag for large sections, GNU as can do without, but
+   accepts "l".  */
+#ifdef USE_GAS
+#define MACH_DEP_SECTION_ASM_FLAG 'l'
+#else
+#define MACH_DEP_SECTION_ASM_FLAG 'h'
+#endif
+
 #ifndef USE_GAS
 /* Emit COMDAT group signature symbols for Sun as.  */
 #undef TARGET_ASM_FILE_END
@@ -220,6 +236,10 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef USE_GLD
 #define CTORS_SECTION_ASM_OP	"\t.section\t.ctors, \"aw\""
 #define DTORS_SECTION_ASM_OP	"\t.section\t.dtors, \"aw\""
+#endif
+
+#ifndef USE_GAS
+#define LARGECOMM_SECTION_ASM_OP "\t.lbcomm\t"
 #endif
 
 #define USE_IX86_FRAME_POINTER 1

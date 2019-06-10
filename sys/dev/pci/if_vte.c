@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.20 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.20.2.1 2019/06/10 22:07:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.20 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.20.2.1 2019/06/10 22:07:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,9 @@ static int	vte_init_tx_ring(struct vte_softc *);
 static int	vte_intr(void *);
 static int	vte_ifioctl(struct ifnet *, u_long, void *);
 static void	vte_mac_config(struct vte_softc *);
-static int	vte_miibus_readreg(device_t, int, int);
+static int	vte_miibus_readreg(device_t, int, int, uint16_t *);
 static void	vte_miibus_statchg(struct ifnet *);
-static void	vte_miibus_writereg(device_t, int, int, int);
+static int	vte_miibus_writereg(device_t, int, int, uint16_t);
 static int	vte_mediachange(struct ifnet *);
 static int	vte_newbuf(struct vte_softc *, struct vte_rxdesc *);
 static void	vte_reset(struct vte_softc *);
@@ -165,6 +165,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	struct vte_softc *sc = device_private(self);
 	struct pci_attach_args * const pa = (struct pci_attach_args *)aux;
 	struct ifnet * const ifp = &sc->vte_if;
+	struct mii_data * const mii = &sc->vte_mii;
 	int h_valid;
 	pcireg_t reg, csr;
 	pci_intr_handle_t intrhandle;
@@ -225,8 +226,8 @@ vte_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
 	    sizeof(intrbuf));
-	sc->vte_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-	    vte_intr, sc);
+	sc->vte_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_NET,
+	    vte_intr, sc, device_xname(self));
 	if (sc->vte_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -237,46 +238,46 @@ vte_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->vte_if.if_softc = sc;
-	sc->vte_mii.mii_ifp = ifp;
-	sc->vte_mii.mii_readreg = vte_miibus_readreg;
-	sc->vte_mii.mii_writereg = vte_miibus_writereg;
-	sc->vte_mii.mii_statchg = vte_miibus_statchg;
-	sc->vte_ec.ec_mii = &sc->vte_mii;
-	ifmedia_init(&sc->vte_mii.mii_media, IFM_IMASK, vte_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = vte_miibus_readreg;
+	mii->mii_writereg = vte_miibus_writereg;
+	mii->mii_statchg = vte_miibus_statchg;
+	sc->vte_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, vte_mediachange,
 	    ether_mediastatus);
-	mii_attach(self, &sc->vte_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->vte_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->vte_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->vte_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->vte_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->vte_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-        strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
-        ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
-        ifp->if_ioctl = vte_ifioctl;
-        ifp->if_start = vte_ifstart;
-        ifp->if_watchdog = vte_ifwatchdog;
-        ifp->if_init = vte_init;
-        ifp->if_stop = vte_stop;
-        ifp->if_timer = 0;
-        IFQ_SET_READY(&ifp->if_snd);
-        if_attach(ifp);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = vte_ifioctl;
+	ifp->if_start = vte_ifstart;
+	ifp->if_watchdog = vte_ifwatchdog;
+	ifp->if_init = vte_init;
+	ifp->if_stop = vte_stop;
+	ifp->if_timer = 0;
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-        ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
+	ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
 
 	if (pmf_device_register1(self, vte_suspend, vte_resume, vte_shutdown))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-        rnd_attach_source(&sc->rnd_source, device_xname(self),
-            RND_TYPE_NET, RND_FLAG_DEFAULT);
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),
@@ -335,7 +336,7 @@ vte_detach(device_t dev, int flags __unused)
 }
 
 static int
-vte_miibus_readreg(device_t dev, int phy, int reg)
+vte_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct vte_softc *sc = device_private(dev);
 	int i;
@@ -350,14 +351,15 @@ vte_miibus_readreg(device_t dev, int phy, int reg)
 
 	if (i == 0) {
 		aprint_error_dev(sc->vte_dev, "phy read timeout : %d\n", reg);
-		return (0);
+		return ETIMEDOUT;
 	}
 
-	return (CSR_READ_2(sc, VTE_MMRD));
+	*val = CSR_READ_2(sc, VTE_MMRD);
+	return 0;
 }
 
-static void
-vte_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+vte_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct vte_softc *sc = device_private(dev);
 	int i;
@@ -371,9 +373,12 @@ vte_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
-	if (i == 0)
+	if (i == 0) {
 		aprint_error_dev(sc->vte_dev, "phy write timeout : %d\n", reg);
+		return ETIMEDOUT;
+	}
 
+	return 0;
 }
 
 static void
@@ -1560,6 +1565,7 @@ vte_init_rx_ring(struct vte_softc *sc)
 static void
 vte_rxfilter(struct vte_softc *sc)
 {
+	struct ethercom *ec = &sc->vte_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp;
@@ -1596,16 +1602,19 @@ vte_rxfilter(struct vte_softc *sc)
 		goto chipit;
 	}
 
-	ETHER_FIRST_MULTI(step, &sc->vte_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	nperf = 0;
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)
+		    != 0) {
 			sc->vte_if.if_flags |= IFF_ALLMULTI;
 			mcr |= MCR0_MULTICAST;
 			mchash[0] = 0xFFFF;
 			mchash[1] = 0xFFFF;
 			mchash[2] = 0xFFFF;
 			mchash[3] = 0xFFFF;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 		/*
@@ -1625,6 +1634,7 @@ vte_rxfilter(struct vte_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	if (mchash[0] != 0 || mchash[1] != 0 || mchash[2] != 0 ||
 	    mchash[3] != 0)
 		mcr |= MCR0_MULTICAST;

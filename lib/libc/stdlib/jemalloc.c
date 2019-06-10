@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.44 2017/12/01 22:47:06 mrg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.44.4.1 2019/06/10 22:05:21 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.44 2017/12/01 22:47:06 mrg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.44.4.1 2019/06/10 22:05:21 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -704,7 +704,9 @@ static chunk_tree_t	huge;
  * base_pages_alloc() also uses sbrk(), but cannot lock chunks_mtx (doing so
  * could cause recursive lock acquisition).
  */
+#ifdef _REENTRANT
 static malloc_mutex_t	brk_mtx;
+#endif
 /* Result of first sbrk(0) call. */
 static void		*brk_base;
 /* Current end of brk, or ((void *)-1) if brk is exhausted. */
@@ -1704,7 +1706,7 @@ arena_run_reg_alloc(arena_run_t *run, arena_bin_t *bin)
 		    + (bin->reg_size * regind));
 
 		/* Clear bit. */
-		mask ^= (1 << bit);
+		mask ^= (1U << bit);
 		run->regs_mask[i] = mask;
 
 		return (ret);
@@ -1721,7 +1723,7 @@ arena_run_reg_alloc(arena_run_t *run, arena_bin_t *bin)
 			    + (bin->reg_size * regind));
 
 			/* Clear bit. */
-			mask ^= (1 << bit);
+			mask ^= (1U << bit);
 			run->regs_mask[i] = mask;
 
 			/*
@@ -1836,8 +1838,8 @@ arena_run_reg_dalloc(arena_run_t *run, arena_bin_t *bin, void *ptr, size_t size)
 	if (elm < run->regs_minelm)
 		run->regs_minelm = elm;
 	bit = regind - (elm << (SIZEOF_INT_2POW + 3));
-	assert((run->regs_mask[elm] & (1 << bit)) == 0);
-	run->regs_mask[elm] |= (1 << bit);
+	assert((run->regs_mask[elm] & (1U << bit)) == 0);
+	run->regs_mask[elm] |= (1U << bit);
 #undef SIZE_INV
 #undef SIZE_INV_SHIFT
 }

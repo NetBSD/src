@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.59 2018/03/06 07:59:59 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.59.2.1 2019/06/10 22:07:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -116,6 +116,7 @@ struct netbsd32_bpf_dltlist {
 #define BIOCSTCPF32	_IOW('B',114, struct netbsd32_bpf_program)
 #define BIOCSUDPF32	_IOW('B',115, struct netbsd32_bpf_program)
 #define BIOCGDLTLIST32	_IOWR('B',119, struct netbsd32_bpf_dltlist)
+#define BIOCSRTIMEOUT32	_IOW('B',122, struct netbsd32_timeval)
 
 
 struct netbsd32_wsdisplay_addscreendata {
@@ -213,40 +214,7 @@ dev/wscons/wsconsio.h:241:#define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdispl
 net/if_ppp.h:110:#define PPPIOCSPASS	_IOW('t', 71, struct bpf_program) /* set pass filter */
 net/if_ppp.h:111:#define PPPIOCSACTIVE	_IOW('t', 70, struct bpf_program) /* set active filt */
 
-net/if_atm.h:88:#define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* enable */
-net/if_atm.h:89:#define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
-
 net/if_ppp.h:105:#define PPPIOCSCOMPRESS	_IOW('t', 77, struct ppp_option_data)
-
-netccitt/x25.h:157:#define	SIOCSIFCONF_X25	_IOW('i', 12, struct ifreq_x25)	/* set ifnet config */
-netccitt/x25.h:158:#define	SIOCGIFCONF_X25	_IOWR('i',13, struct ifreq_x25)	/* get ifnet config */
-
-netinet/ip_fil.h:46:#define	SIOCGETFS	_IOR('r', 64, struct friostat)
-netinet/ip_fil.h:56:#define	SIOCFRZST	_IOWR('r', 74, struct friostat)
-
-netinet/ip_fil.h:42:#define	SIOCADAFR	_IOW('r', 60, struct frentry)
-netinet/ip_fil.h:43:#define	SIOCRMAFR	_IOW('r', 61, struct frentry)
-netinet/ip_fil.h:49:#define	SIOCADIFR	_IOW('r', 67, struct frentry)
-netinet/ip_fil.h:50:#define	SIOCRMIFR	_IOW('r', 68, struct frentry)
-netinet/ip_fil.h:52:#define	SIOCINAFR	_IOW('r', 70, struct frentry)
-netinet/ip_fil.h:53:#define	SIOCINIFR	_IOW('r', 71, struct frentry)
-netinet/ip_fil.h:57:#define	SIOCZRLST	_IOWR('r', 75, struct frentry)
-
-netinet/ip_fil.h:78:#define	SIOCAUTHW	_IOWR(r, 76, struct fr_info)
-netinet/ip_fil.h:79:#define	SIOCAUTHR	_IOWR(r, 77, struct fr_info)
-
-netinet/ip_fil.h:60:#define	SIOCATHST	_IOWR('r', 78, struct fr_authstat)
-
-netinet/ip_nat.h:22:#define	SIOCADNAT	_IOW('r', 80, struct ipnat)
-netinet/ip_nat.h:23:#define	SIOCRMNAT	_IOW('r', 81, struct ipnat)
-
-netinet/ip_nat.h:24:#define	SIOCGNATS	_IOR('r', 82, struct natstat)
-
-netinet/ip_nat.h:25:#define	SIOCGNATL	_IOWR('r', 83, struct natlookup)
-
-netinet/ip_nat.h:26:#define SIOCGFRST	_IOR('r', 84, struct ipfrstat)
-
-netinet/ip_nat.h:27:#define SIOCGIPST	_IOR('r', 85, struct ips_stat)
 
 sys/module.h?
 
@@ -386,8 +354,9 @@ struct netbsd32_if_clonereq {
 #define	SIOCDELMULTI32	 _IOW('i', 50, struct netbsd32_ifreq)	/* del m'cast addr */
 #define	OSIOCDELMULTI32	 _IOW('i', 50, struct netbsd32_oifreq)	/* del m'cast addr */
 
-#define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
-#define	OSIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
+#define	SIOCSIFMEDIA32_80	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
+#define	SIOCSIFMEDIA32_43	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
+#define	SIOCSIFMEDIA32		_IOWR('i', 55, struct netbsd32_ifreq)	/* set net media */
 
 #define	SIOCSIFGENERIC32 _IOW('i', 57, struct netbsd32_ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC32 _IOWR('i', 58, struct netbsd32_ifreq)	/* generic IF get op */
@@ -435,7 +404,8 @@ struct netbsd32_ifmediareq {
 	netbsd32_intp	ifm_ulist;		/* media words */
 };
 /* from <sys/sockio.h> */
-#define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+#define	SIOCGIFMEDIA32_80 _IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+#define	SIOCGIFMEDIA32	_IOWR('i', 56, struct netbsd32_ifmediareq) /* get net media */
 
 /* from net/if_pppoe.h */
 struct netbsd32_pppoediscparms {
@@ -601,19 +571,20 @@ typedef struct netbsd32_npf_ioctl_buf {
 } netbsd32_npf_ioctl_buf_t;
 
 typedef struct netbsd32_npf_ioctl_table {
-	int			nct_cmd;
-	netbsd32_charp		nct_name;
-	union {
+        int			nct_cmd;  
+        netbsd32_charp		nct_name;
+        union {
 		npf_ioctl_ent_t ent;
 		netbsd32_npf_ioctl_buf_t buf;
-	} nct_data;
+        } nct_data;
 } netbsd32_npf_ioctl_table_t;
 
-#define IOC_NPF_LOAD32          _IOWR('N', 102, struct netbsd32_plistref)
-#define IOC_NPF_TABLE32         _IOW('N', 103, struct netbsd32_npf_ioctl_table)
-#define IOC_NPF_STATS32         _IOW('N', 104, netbsd32_voidp)
-#define IOC_NPF_SAVE32          _IOR('N', 105, struct netbsd32_plistref)
-#define IOC_NPF_RULE32          _IOWR('N', 107, struct netbsd32_plistref)
+#define IOC_NPF_LOAD32		_IOWR('N', 102, netbsd32_nvlist_ref_t)
+#define IOC_NPF_TABLE32		_IOW('N', 103, struct netbsd32_npf_ioctl_table)
+#define IOC_NPF_STATS32		_IOW('N', 104, netbsd32_voidp)
+#define IOC_NPF_SAVE32		_IOR('N', 105, netbsd32_nvlist_ref_t)
+#define IOC_NPF_RULE32		_IOWR('N', 107, netbsd32_nvlist_ref_t)
+#define IOC_NPF_CONN_LOOKUP32	_IOWR('N', 108, netbsd32_nvlist_ref_t)
 
 /* From sys/drvctlio.h */
 struct netbsd32_devlistargs {
@@ -637,11 +608,19 @@ struct netbsd32_devrescanargs {
 /* From sys/disk.h, sys/dkio.h */
 
 struct netbsd32_dkwedge_list {
-	void			*dkwl_buf;	/* storage for dkwedge_info array */
+	netbsd32_voidp		dkwl_buf; /* storage for dkwedge_info array */
 	netbsd32_size_t		dkwl_bufsize;	/* size	of that	buffer */
 	u_int			dkwl_nwedges;	/* total number	of wedges */
 	u_int			dkwl_ncopied;	/* number actually copied */
-};
+} __packed;
 
 #define DIOCLWEDGES32		_IOWR('d', 124, struct netbsd32_dkwedge_list)
 
+struct netbsd32_disk_strategy {
+	char dks_name[DK_STRATEGYNAMELEN];	/* name of strategy */
+	netbsd32_charp dks_param;		/* notyet; should be NULL */
+	netbsd32_size_t dks_paramlen;		/* notyet; should be 0 */
+} __packed;
+
+#define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
+#define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)

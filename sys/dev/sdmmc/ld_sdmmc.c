@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.34 2017/08/20 15:58:43 mlelstv Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.34.4.1 2019/06/10 22:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.34 2017/08/20 15:58:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.34.4.1 2019/06/10 22:07:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -78,6 +78,11 @@ struct ld_sdmmc_task {
 	struct buf *task_bp;
 	int task_retries; /* number of xfer retry */
 	struct callout task_restart_ch;
+
+	kmutex_t task_lock;
+	kcondvar_t task_cv;
+
+	uintptr_t task_data;
 };
 
 struct ld_sdmmc_softc {
@@ -87,10 +92,12 @@ struct ld_sdmmc_softc {
 	struct sdmmc_function *sc_sf;
 	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXTASKCNT];
 	pcq_t *sc_freeq;
+	char *sc_typename;
 
 	struct evcnt sc_ev_discard;	/* discard counter */
 	struct evcnt sc_ev_discarderr;	/* discard error counter */
 	struct evcnt sc_ev_discardbusy;	/* discard busy counter */
+	struct evcnt sc_ev_cachesyncbusy; /* cache sync busy counter */
 };
 
 static int ld_sdmmc_match(device_t, cfdata_t, void *);
@@ -140,6 +147,9 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
+	sc->sc_typename = kmem_asprintf("0x%02x:0x%04x:%s",
+	    sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm);
+
 	evcnt_attach_dynamic(&sc->sc_ev_discard, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "sdmmc discard count");
 	evcnt_attach_dynamic(&sc->sc_ev_discarderr, EVCNT_TYPE_MISC,
@@ -153,6 +163,8 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 		task = &sc->sc_task[i];
 		task->task_sc = sc;
 		callout_init(&task->task_restart_ch, CALLOUT_MPSAFE);
+		mutex_init(&task->task_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&task->task_cv, "ldsdmmctask");
 		pcq_put(sc->sc_freeq, task);
 	}
 
@@ -168,6 +180,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_sdmmc_start;
 	ld->sc_discard = ld_sdmmc_discard;
 	ld->sc_ioctl = ld_sdmmc_ioctl;
+	ld->sc_typename = sc->sc_typename;
 
 	/*
 	 * Defer attachment of ld + disk subsystem to a thread.
@@ -224,13 +237,17 @@ ld_sdmmc_detach(device_t dev, int flags)
 		return rv;
 	ldenddetach(ld);
 
-	for (i = 0; i < __arraycount(sc->sc_task); i++)
+	for (i = 0; i < __arraycount(sc->sc_task); i++) {
 		callout_destroy(&sc->sc_task[i].task_restart_ch);
+		mutex_destroy(&sc->sc_task[i].task_lock);
+		cv_destroy(&sc->sc_task[i].task_cv);
+	}
 
 	pcq_destroy(sc->sc_freeq);
 	evcnt_detach(&sc->sc_ev_discard);
 	evcnt_detach(&sc->sc_ev_discarderr);
 	evcnt_detach(&sc->sc_ev_discardbusy);
+	kmem_free(sc->sc_typename, strlen(sc->sc_typename) + 1);
 
 	return 0;
 }
@@ -379,15 +396,56 @@ ld_sdmmc_discard(struct ld_softc *ld, struct buf *bp)
 	return 0;
 }
 
+static void
+ld_sdmmc_docachesync(void *arg)
+{
+	struct ld_sdmmc_task *task = arg;
+	struct ld_sdmmc_softc *sc = task->task_sc;
+	const bool poll = (bool)task->task_data;
+
+	task->task_data = sdmmc_mem_flush_cache(sc->sc_sf, poll);
+
+	mutex_enter(&task->task_lock);
+	cv_signal(&task->task_cv);
+	mutex_exit(&task->task_lock);
+}
+
+static int
+ld_sdmmc_cachesync(struct ld_softc *ld, bool poll)
+{
+	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+	struct ld_sdmmc_task *task = pcq_get(sc->sc_freeq);
+	int error = 0;
+
+	if (task == NULL) {
+		sc->sc_ev_cachesyncbusy.ev_count++;
+		return EBUSY;
+	}
+
+	sdmmc_init_task(&task->task, ld_sdmmc_docachesync, task);
+	task->task_data = poll;
+
+	mutex_enter(&task->task_lock);
+	sdmmc_add_task(sc->sc_sf->sc, &task->task);
+	error = cv_wait_sig(&task->task_cv, &task->task_lock);
+	mutex_exit(&task->task_lock);
+
+	if (error == 0)
+		error = (int)task->task_data;
+
+	pcq_put(sc->sc_freeq, task);
+
+	return error;
+}
+
 static int
 ld_sdmmc_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag,
     bool poll)
 {
-	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
 
 	switch (cmd) {
 	case DIOCCACHESYNC:
-		return sdmmc_mem_flush_cache(sc->sc_sf, poll);
+		return ld_sdmmc_cachesync(ld, poll);
 	default:
 		return EPASSTHROUGH;
 	}

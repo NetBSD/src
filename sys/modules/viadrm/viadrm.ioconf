@@ -1,9 +1,0 @@
-#	$NetBSD: viadrm.ioconf,v 1.1 2011/02/18 02:00:36 jmcneill Exp $
-
-ioconf viadrm
-
-include "conf/files"
-
-pseudo-root drm*
-
-viadrm* at drm?

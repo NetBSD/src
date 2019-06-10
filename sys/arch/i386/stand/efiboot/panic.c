@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.4 2017/02/11 10:15:55 nonaka Exp $	*/
+/*	$NetBSD: panic.c,v 1.4.20.1 2019/06/10 22:06:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,9 +29,6 @@
 #include "efiboot.h"
 
 #include <efistdarg.h>
-
-/* from sys/external/bsd/gnu-efi/dist/lib/print.c */
-UINTN VPrint (IN CHAR16 *, va_list);
 
 __dead VOID
 Panic(

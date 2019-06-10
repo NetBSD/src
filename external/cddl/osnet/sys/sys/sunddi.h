@@ -1,4 +1,4 @@
-/*	$NetBSD: sunddi.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: sunddi.h,v 1.5.2.1 2019/06/10 21:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -70,7 +70,12 @@ int _ddi_log_sysevent(char *vendor, char *class_name, char *subclass_name,
 
 #define	DDI_PSEUDO	""
 
-typedef void	*dev_info_t;
+struct dev_info {
+	int di_cmajor;
+	int di_bmajor;
+};
+typedef struct dev_info dev_info_t;
+
 int	ddi_create_minor_node(dev_info_t *, char *, int,
                               minor_t, char *, int);
 void	ddi_remove_minor_node(dev_info_t *, char *);

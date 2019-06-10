@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -620,11 +620,7 @@ OpcEncodePldBuffer (
     UINT32                  Dword;
 
 
-    Buffer = ACPI_ALLOCATE_ZEROED (ACPI_PLD_BUFFER_SIZE);
-    if (!Buffer)
-    {
-        return (NULL);
-    }
+    Buffer = ACPI_CAST_PTR (UINT32, UtLocalCacheCalloc (ACPI_PLD_BUFFER_SIZE));
 
     /* First 32 bits */
 

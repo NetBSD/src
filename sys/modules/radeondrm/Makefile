@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/08/28 15:56:22 jmcneill Exp $
+# $NetBSD: Makefile,v 1.10.54.1 2019/06/10 22:09:37 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -20,5 +20,11 @@ SRCS+=	radeon_state.c
 
 CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
 		-I${S}/external/bsd/drm/dist/shared-core
+
+WARNS=	3
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.radeon_cs.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.kmodule.mk>

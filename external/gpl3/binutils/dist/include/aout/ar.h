@@ -28,7 +28,6 @@
    compatible with existing BSDish archives. */
 
 #define ARMAG  "!<arch>\012"	/* For COFF and a.out archives.  */
-#define ARMAGB "!<bout>\012"	/* For b.out archives.  */
 #define ARMAGT "!<thin>\012"	/* For thin archives.  */
 #define SARMAG 8
 #define ARFMAG "`\012"

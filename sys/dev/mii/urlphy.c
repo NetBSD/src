@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.31 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.31.18.1 2019/06/10 22:07:14 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31.18.1 2019/06/10 22:07:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,20 +77,16 @@ urlphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/*
-	 * RTL8150 reports OUI == 0, MODEL == 0
-	 */
+	/* RTL8150 reports OUI == 0, MODEL == 0 */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
 	    MII_MODEL(ma->mii_id2) != 0)
-		return (0);
+		return 0;
 
-	/*
-	 * Make sure the parent is an 'url' device.
-	 */
+	/* Make sure the parent is an 'url' device. */
 	if (!device_is_a(parent, "url"))
-		return(0);
+		return 0;
 
-	return (10);
+	return 10;
 }
 
 static void
@@ -110,7 +106,7 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	/* Don't do loopback on this PHY. */
@@ -125,7 +121,8 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	}
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -138,25 +135,21 @@ static int
 urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->mii_dev), __func__));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
@@ -166,15 +159,13 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		/* Just bail now if the interface is down. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
+			return 0;
 
 		/*
 		 * If we're not doing autonegotiation, we don't need to do
@@ -186,7 +177,8 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		/* Read the status register twice; MSR_LINK is latch-low. */
-		reg = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
+		PHY_READ(sc, URLPHY_MSR, &reg);
+		PHY_READ(sc, URLPHY_MSR, &reg);
 		if (reg & URLPHY_MSR_LINK) {
 			/*
 			 * Reset autonegotiation timer to 0 in case the link
@@ -205,23 +197,21 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every N seconds.
-		 */
+		/* Only retry autonegotiation every N seconds. */
 		KASSERT(sc->mii_anegticks != 0);
 		if (sc->mii_ticks <= sc->mii_anegticks)
-			return (0);
+			return 0;
 
 		PHY_RESET(sc);
 
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
-			return (0);
+			return 0;
 
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -230,7 +220,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -238,7 +228,7 @@ urlphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int msr, bmsr, bmcr;
+	uint16_t msr, bmsr, bmcr;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->mii_dev), __func__));
 
@@ -249,16 +239,18 @@ urlphy_status(struct mii_softc *sc)
 	 * The link status bit is not exist in the BMSR register,
 	 * so we need to read the MSR register to get link status.
 	 */
-	msr = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
+	PHY_READ(sc, URLPHY_MSR, &msr);
+	PHY_READ(sc, URLPHY_MSR, &msr);
 	if (msr & URLPHY_MSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	DPRINTF(("%s: %s: link %s\n", device_xname(sc->mii_dev), __func__,
 		 mii->mii_media_status & IFM_ACTIVE ? "up" : "down"));
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_AUTOEN) {
-		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		PHY_READ(sc, MII_BMSR, &bmsr);
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;

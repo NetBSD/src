@@ -1,5 +1,5 @@
 ;; Scheduling description for IBM POWER5 processor.
-;;   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+;;   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -322,7 +322,7 @@
 
 ; Basic FP latency is 6 cycles
 (define_insn_reservation "power5-fp" 6
-  (and (eq_attr "type" "fp,dmul")
+  (and (eq_attr "type" "fp,fpsimple,dmul")
        (eq_attr "cpu" "power5"))
   "fpq_power5")
 

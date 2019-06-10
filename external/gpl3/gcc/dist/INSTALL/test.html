@@ -59,7 +59,10 @@ separately.
 
    <p>Second, you must have the testing tools installed.  This includes
 <a href="http://www.gnu.org/software/dejagnu/">DejaGnu</a>, Tcl, and Expect;
-the DejaGnu site has links to these.
+the DejaGnu site has links to these. For running the BRIG frontend
+tests, a tool to assemble the binary BRIGs from HSAIL text,
+<a href="https://github.com/HSAFoundation/HSAIL-Tools/">HSAILasm</a> must
+be installed.
 
    <p>If the directories where <samp><span class="command">runtest</span></samp> and <samp><span class="command">expect</span></samp> were
 installed are not in the <samp><span class="env">PATH</span></samp>, you may need to set the following
@@ -89,7 +92,7 @@ on a simulator as described at <a href="http://gcc.gnu.org/simtest-howto.html">h
 
 <p>In order to run sets of tests selectively, there are targets
 &lsquo;<samp><span class="samp">make check-gcc</span></samp>&rsquo; and language specific &lsquo;<samp><span class="samp">make check-c</span></samp>&rsquo;,
-&lsquo;<samp><span class="samp">make check-c++</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-fortran</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-java</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">make check-c++</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-fortran</span></samp>&rsquo;,
 &lsquo;<samp><span class="samp">make check-ada</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-objc</span></samp>&rsquo;, &lsquo;<samp><span class="samp">make check-obj-c++</span></samp>&rsquo;,
 &lsquo;<samp><span class="samp">make check-lto</span></samp>&rsquo;
 in the <samp><span class="file">gcc</span></samp> subdirectory of the object directory.  You can also
@@ -169,20 +172,7 @@ ten combinations as described above.  Note that this is currently only
 supported in the <samp><span class="file">gcc</span></samp> subdirectory.  (To see how this works, try
 typing <samp><span class="command">echo</span></samp> before the example given here.)
 
-<h3 class="section"><a name="TOC2"></a>Additional testing for Java Class Libraries</h3>
-
-<p>The Java runtime tests can be executed via &lsquo;<samp><span class="samp">make check</span></samp>&rsquo;
-in the <samp><var>target</var><span class="file">/libjava/testsuite</span></samp> directory in
-the build tree.
-
-   <p>The <a href="http://sourceware.org/mauve/">Mauve Project</a> provides
-a suite of tests for the Java Class Libraries.  This suite can be run
-as part of libgcj testing by placing the Mauve tree within the libjava
-testsuite at <samp><span class="file">libjava/testsuite/libjava.mauve/mauve</span></samp>, or by
-specifying the location of that tree when invoking &lsquo;<samp><span class="samp">make</span></samp>&rsquo;, as in
-&lsquo;<samp><span class="samp">make MAUVEDIR=~/mauve check</span></samp>&rsquo;.
-
-<h3 class="section"><a name="TOC3"></a>How to interpret test results</h3>
+<h3 class="section"><a name="TOC2"></a>How to interpret test results</h3>
 
 <p>The result of running the testsuite are various <samp><span class="file">*.sum</span></samp> and <samp><span class="file">*.log</span></samp>
 files in the testsuite subdirectories.  The <samp><span class="file">*.log</span></samp> files contain a
@@ -205,7 +195,7 @@ current time the testing harness does not allow fine grained control
 over whether or not a test is expected to fail.  This problem should
 be fixed in future releases.
 
-<h3 class="section"><a name="TOC4"></a>Submitting test results</h3>
+<h3 class="section"><a name="TOC3"></a>Submitting test results</h3>
 
 <p>If you want to report the results to the GCC project, use the
 <samp><span class="file">contrib/test_summary</span></samp> shell script.  Start it in the <var>objdir</var> with

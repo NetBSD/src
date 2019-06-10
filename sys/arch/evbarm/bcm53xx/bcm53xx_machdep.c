@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.9 2015/07/17 20:29:29 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.9.18.1 2019/06/10 22:06:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,8 +33,10 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.9 2015/07/17 20:29:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.9.18.1 2019/06/10 22:06:04 christos Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
 #include "opt_kgdb.h"
@@ -81,19 +83,12 @@ extern int KERNEL_BASE_virt[];
 
 BootConfig bootconfig;
 static char bootargs[MAX_BOOT_STRING];
-char *boot_args = NULL;     
+char *boot_args = NULL;
 
-u_int uboot_args[4] = { 0 };
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 static void bcm53xx_system_reset(void);
-
-/*
- * Macros to translate between physical and virtual for a subset of the
- * kernel address space.  *Not* for general use.
- */
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
 
 #ifndef CONADDR
 #define CONADDR		(BCM53XX_IOREG_PBASE + CCA_UART0_BASE)
@@ -105,6 +100,9 @@ static void bcm53xx_system_reset(void);
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
+void bcm53xx_mpstart(void);
+void bcm53xx_platform_early_putchar(char);
+
 #if (NCOM > 0)
 static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
 
@@ -115,6 +113,24 @@ int comcnmode = CONMODE | CLOCAL;
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;
+}
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -143,6 +159,13 @@ static const struct pmap_devmap devmap[] = {
 		KERNEL_IO_ARMCORE_VBASE,
 		BCM53XX_ARMCORE_PBASE,		/* 0x19000000 */
 		BCM53XX_ARMCORE_SIZE,		/* 1MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	{
+		KERNEL_IO_ROM_REGION_VBASE,
+		BCM53XX_ROM_REGION_PBASE,	/* 0xfff00000 */
+		BCM53XX_ROM_REGION_SIZE,	/* 1MB */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
@@ -179,6 +202,71 @@ static const struct boot_physmem bp_first256 = {
 	.bp_flags = 0,
 };
 
+#define BCM53xx_ROM_CPU_ENTRY	0xffff0400
+
+void
+bcm53xx_mpstart(void)
+{
+#ifdef MULTIPROCESSOR
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t diagctl = bus_space_read_4(bcm53xx_armcore_bst,
+	   bcm53xx_armcore_bsh, ARMCORE_SCU_BASE + SCU_DIAG_CONTROL);
+	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_DIAG_CONTROL, diagctl);
+
+	uint32_t scu_ctl = bus_space_read_4(bcm53xx_armcore_bst,
+	    bcm53xx_armcore_bsh, ARMCORE_SCU_BASE + SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+
+	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+	bus_space_tag_t bcm53xx_rom_bst = &bcmgen_bs_tag;
+	bus_space_handle_t bcm53xx_rom_entry_bsh;
+
+	int error = bus_space_map(bcm53xx_rom_bst, BCM53xx_ROM_CPU_ENTRY,
+	    4, 0, &bcm53xx_rom_entry_bsh);
+
+	/*
+	 * Before we turn on the MMU, let's the other process out of the
+	 * SKU ROM but setting the magic LUT address to our own mp_start
+	 * routine.
+	 */
+	bus_space_write_4(bcm53xx_rom_bst, bcm53xx_rom_entry_bsh, mpstart);
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif /* MULTIPROCESSOR */
+}
+
 /*
  * u_int initarm(...)
  *
@@ -194,7 +282,17 @@ static const struct boot_physmem bp_first256 = {
 u_int
 initarm(void *arg)
 {
-	pmap_devmap_register(devmap);
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+	if (set_cpufuncs())		// starts PMC counter
+		panic("cpu not recognized!");
+
+	cn_tab = &earlycons;
+
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
 	bcm53xx_bootstrap(KERNEL_IO_IOREG_VBASE);
 
 #ifdef MULTIPROCESSOR
@@ -203,12 +301,6 @@ initarm(void *arg)
 	arm_cpu_max = 1 + (scu_cfg & SCU_CFG_CPUMAX);
 	membar_producer();
 #endif
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())		// starts PMC counter
-		panic("cpu not recognized!");
-
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 	consinit();
@@ -224,7 +316,7 @@ initarm(void *arg)
 #endif
 
 	printf("uboot arg = %#x, %#x, %#x, %#x\n",
-	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);      
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (" ___STRING(EVBARM_BOARDTYPE) ") booting ...\n");
@@ -248,7 +340,7 @@ initarm(void *arg)
 	if ((memsize >> 20) > MEMSIZE)
 		memsize = MEMSIZE*1024*1024;
 #endif
-	const bool bigmem_p = (memsize >> 20) > 256; 
+	const bool bigmem_p = (memsize >> 20) > 256;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
@@ -296,8 +388,15 @@ initarm(void *arg)
 	 * If we have more than 256MB of RAM, set aside the first 256MB for
 	 * non-default VM allocations.
 	 */
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
 	    (bigmem_p ? &bp_first256 : NULL), (bigmem_p ? 1 : 0));
+
+	/*
+	 * initarm_common flushes cache if required before AP start
+	 */
+	bcm53xx_mpstart();
+
+	return sp;
 }
 
 void

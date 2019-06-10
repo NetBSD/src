@@ -57,11 +57,9 @@ static bfd_reloc_status_type mips32_64bit_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static reloc_howto_type *mips_elf32_rtype_to_howto
-  (unsigned int, bfd_boolean);
-static void mips_info_to_howto_rel
+static bfd_boolean mips_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
-static void mips_info_to_howto_rela
+static bfd_boolean mips_info_to_howto_rela
   (bfd *, arelent *, Elf_Internal_Rela *);
 static bfd_boolean mips_elf_sym_is_global
   (bfd *, asymbol *);
@@ -2196,9 +2194,12 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* Given a MIPS Elf_Internal_Rel, fill in an arelent structure.  */
 
 static reloc_howto_type *
-mips_elf32_rtype_to_howto (unsigned int r_type,
+mips_elf32_rtype_to_howto (bfd *abfd,
+			   unsigned int r_type,
 			   bfd_boolean rela_p ATTRIBUTE_UNUSED)
 {
+  reloc_howto_type *howto = NULL;
+
   switch (r_type)
     {
     case R_MIPS_GNU_VTINHERIT:
@@ -2217,30 +2218,33 @@ mips_elf32_rtype_to_howto (unsigned int r_type,
       return &elf_mips_eh_howto;
     default:
       if (r_type >= R_MICROMIPS_min && r_type < R_MICROMIPS_max)
-	return &elf_micromips_howto_table_rel[r_type - R_MICROMIPS_min];
+	howto = &elf_micromips_howto_table_rel[r_type - R_MICROMIPS_min];
       if (r_type >= R_MIPS16_min && r_type < R_MIPS16_max)
-	return &elf_mips16_howto_table_rel[r_type - R_MIPS16_min];
-      if (r_type >= (unsigned int) R_MIPS_max)
-	{
-	  _bfd_error_handler (_("Unrecognised MIPS reloc number: %d"), r_type);
-	  bfd_set_error (bfd_error_bad_value);
-	  r_type = R_MIPS_NONE;
-	}
-      return &elf_mips_howto_table_rel[r_type];
+	howto = &elf_mips16_howto_table_rel[r_type - R_MIPS16_min];
+      if (r_type < R_MIPS_max)
+	howto = &elf_mips_howto_table_rel[r_type];
+      if (howto != NULL && howto->name != NULL)
+	return howto;
+
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
 }
 
 /* Given a MIPS Elf_Internal_Rel, fill in an arelent structure.  */
 
-static void
+static bfd_boolean
 mips_info_to_howto_rel (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
-  const struct elf_backend_data *bed;
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  bed = get_elf_backend_data (abfd);
-  cache_ptr->howto = bed->elf_backend_mips_rtype_to_howto (r_type, FALSE);
+  cache_ptr->howto = mips_elf32_rtype_to_howto (abfd, r_type, FALSE);
+
+  if (cache_ptr->howto == NULL)
+    return FALSE;
 
   /* The addend for a GPREL16 or LITERAL relocation comes from the GP
      value for the object file.  We get the addend now, rather than
@@ -2249,14 +2253,16 @@ mips_info_to_howto_rel (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
   if (((*cache_ptr->sym_ptr_ptr)->flags & BSF_SECTION_SYM) != 0
       && (gprel16_reloc_p (r_type) || literal_reloc_p (r_type)))
     cache_ptr->addend = elf_gp (abfd);
+
+  return TRUE;
 }
 
 /* Given a MIPS Elf_Internal_Rela, fill in an arelent structure.  */
 
-static void
+static bfd_boolean
 mips_info_to_howto_rela (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
-  mips_info_to_howto_rel (abfd, cache_ptr, dst);
+  return mips_info_to_howto_rel (abfd, cache_ptr, dst);
 
   /* If we ever need to do any extra processing with dst->r_addend
      (the field omitted in an Elf_Internal_Rel) we can do it here.  */
@@ -2414,6 +2420,17 @@ elf32_mips_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_type,
       }
     }
 }
+
+/* Remove the magic _gp_disp symbol from the symbol tables.  */
+
+static bfd_boolean
+elf32_mips_fixup_symbol (struct bfd_link_info *info,
+			 struct elf_link_hash_entry *h)
+{
+  if (strcmp (h->root.root.string, "_gp_disp") == 0)
+    _bfd_elf_link_hash_hide_symbol (info, h, TRUE);
+  return TRUE;
+}
 
 /* Depending on the target vector we generate some version of Irix
    executables or "normal" MIPS ELF ABI executables.  */
@@ -2517,6 +2534,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_gc_mark_hook	_bfd_mips_elf_gc_mark_hook
 #define elf_backend_copy_indirect_symbol \
 					_bfd_mips_elf_copy_indirect_symbol
+#define elf_backend_fixup_symbol	elf32_mips_fixup_symbol
 #define elf_backend_grok_prstatus	elf32_mips_grok_prstatus
 #define elf_backend_grok_psinfo		elf32_mips_grok_psinfo
 #define elf_backend_ecoff_debug_swap	&mips_elf32_ecoff_debug_swap

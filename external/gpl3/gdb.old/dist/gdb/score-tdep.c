@@ -1,7 +1,7 @@
 /* Target-dependent code for the S+core architecture, for GDB,
    the GNU Debugger.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    Contributed by Qinwei (qinwei@sunnorth.com.cn)
    Contributed by Ching-Peng Lin (cplin@sunplus.com)
@@ -306,69 +306,88 @@ score3_adjust_pc_and_fetch_inst (CORE_ADDR *pcptr, int *lenptr,
   return &inst;
 }
 
-static const gdb_byte *
-score7_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			   int *lenptr)
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+score7_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_byte buf[SCORE_INSTLEN] = { 0 };
   int ret;
   unsigned int raw;
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  gdb_byte buf[SCORE_INSTLEN] = { 0 };
 
   if ((ret = target_read_memory (*pcptr & ~0x3, buf, SCORE_INSTLEN)) != 0)
     {
       error (_("Error: target_read_memory in file:%s, line:%d!"),
-             __FILE__, __LINE__);
+	     __FILE__, __LINE__);
     }
   raw = extract_unsigned_integer (buf, SCORE_INSTLEN, byte_order);
 
-  if (byte_order == BFD_ENDIAN_BIG)
+  if (!(raw & 0x80008000))
     {
-      if (!(raw & 0x80008000))
-        {
-          /* 16bits instruction.  */
-          static gdb_byte big_breakpoint16[] = { 0x60, 0x02 };
-          *pcptr &= ~0x1;
-          *lenptr = sizeof (big_breakpoint16);
-          return big_breakpoint16;
-        }
-      else
-        {
-          /* 32bits instruction.  */
-          static gdb_byte big_breakpoint32[] = { 0x80, 0x00, 0x80, 0x06 };
-          *pcptr &= ~0x3;
-          *lenptr = sizeof (big_breakpoint32);
-          return big_breakpoint32;
-        }
+      /* 16bits instruction.  */
+      *pcptr &= ~0x1;
+      return 2;
     }
   else
     {
-      if (!(raw & 0x80008000))
-        {
-          /* 16bits instruction.  */
-          static gdb_byte little_breakpoint16[] = { 0x02, 0x60 };
-          *pcptr &= ~0x1;
-          *lenptr = sizeof (little_breakpoint16);
-          return little_breakpoint16;
-        }
-      else
-        {
-          /* 32bits instruction.  */
-          static gdb_byte little_breakpoint32[] = { 0x06, 0x80, 0x00, 0x80 };
-          *pcptr &= ~0x3;
-          *lenptr = sizeof (little_breakpoint32);
-          return little_breakpoint32;
-        }
+      /* 32bits instruction.  */
+      *pcptr &= ~0x3;
+      return 4;
     }
 }
 
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
+
 static const gdb_byte *
-score3_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
-			   int *lenptr)
+score7_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  CORE_ADDR adjust_pc = *pcptr; 
+
+  *size = kind;
+
+  if (kind == 4)
+    {
+      static gdb_byte big_breakpoint32[] = { 0x80, 0x00, 0x80, 0x06 };
+      static gdb_byte little_breakpoint32[] = { 0x06, 0x80, 0x00, 0x80 };
+
+      if (byte_order == BFD_ENDIAN_BIG)
+	return big_breakpoint32;
+      else
+	return little_breakpoint32;
+    }
+  else
+    {
+      static gdb_byte big_breakpoint16[] = { 0x60, 0x02 };
+      static gdb_byte little_breakpoint16[] = { 0x02, 0x60 };
+
+      if (byte_order == BFD_ENDIAN_BIG)
+	return big_breakpoint16;
+      else
+	return little_breakpoint16;
+    }
+}
+
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+score3_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int len;
+
+  score3_adjust_pc_and_fetch_inst (pcptr, &len, byte_order);
+
+  return len;
+}
+
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
+
+static const gdb_byte *
+score3_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
+{
+  int index = 0;
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   static gdb_byte score_break_insns[6][6] = {
     /* The following three instructions are big endian.  */
     { 0x00, 0x20 },
@@ -379,18 +398,10 @@ score3_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
     { 0x00, 0x80, 0x06, 0x00 },
     { 0x00, 0x80, 0x00, 0x80, 0x00, 0x00 }};
 
-  gdb_byte *p = NULL;
-  int index = 0;
+  *size = kind;
 
-  score3_adjust_pc_and_fetch_inst (&adjust_pc, &len, byte_order);
-
-  index = ((byte_order == BFD_ENDIAN_BIG) ? 0 : 3) + (len / 2 - 1);
-  p = score_break_insns[index];
-
-  *pcptr = adjust_pc;
-  *lenptr = len;
-
-  return p;
+  index = ((byte_order == BFD_ENDIAN_BIG) ? 0 : 3) + (kind / 2 - 1);
+  return score_break_insns[index];
 }
 
 static CORE_ADDR
@@ -1485,7 +1496,10 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   switch (target_mach)
     {
     case bfd_mach_score7:
-      set_gdbarch_breakpoint_from_pc (gdbarch, score7_breakpoint_from_pc);
+      set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+					   score7_breakpoint_kind_from_pc);
+      set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+					   score7_sw_breakpoint_from_kind);
       set_gdbarch_skip_prologue (gdbarch, score7_skip_prologue);
       set_gdbarch_stack_frame_destroyed_p (gdbarch,
 					   score7_stack_frame_destroyed_p);
@@ -1497,7 +1511,10 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       break;
 
     case bfd_mach_score3:
-      set_gdbarch_breakpoint_from_pc (gdbarch, score3_breakpoint_from_pc);
+      set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+					   score3_breakpoint_kind_from_pc);
+      set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+					   score3_sw_breakpoint_from_kind);
       set_gdbarch_skip_prologue (gdbarch, score3_skip_prologue);
       set_gdbarch_stack_frame_destroyed_p (gdbarch,
 					   score3_stack_frame_destroyed_p);

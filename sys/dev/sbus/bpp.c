@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.42 2017/10/25 08:12:38 maya Exp $ */
+/*	$NetBSD: bpp.c,v 1.42.4.1 2019/06/10 22:07:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.42 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.42.4.1 2019/06/10 22:07:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -345,7 +345,7 @@ bppwrite(dev_t dev, struct uio *uio, int flags)
 	 */
 	while (uio->uio_resid > 0) {
 		uint8_t *bp = sc->sc_buf;
-		size_t len = min(sc->sc_bufsz, uio->uio_resid);
+		size_t len = uimin(sc->sc_bufsz, uio->uio_resid);
 
 		if ((error = uiomove(bp, len, uio)) != 0)
 			break;

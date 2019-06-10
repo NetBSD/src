@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.32 2017/08/20 15:58:43 mlelstv Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.32.4.1 2019/06/10 22:07:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct ld_softc {
 	int		sc_secsize;	/* sector size in bytes */
 	int		sc_maxxfer;	/* max xfer size in bytes */
 	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
+	char		*sc_typename;	/* inquiry data */
 
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
 	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);

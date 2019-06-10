@@ -1679,7 +1679,7 @@ sifproxyarp(int unit, u_int32_t hisaddr)
     }
 
     arpmsg.hdr.rtm_type = RTM_ADD;
-    arpmsg.hdr.rtm_flags = RTF_ANNOUNCE | RTF_HOST | RTF_STATIC;
+    arpmsg.hdr.rtm_flags = RTF_ANNOUNCE | RTF_HOST | RTF_STATIC | RTF_LLDATA;
     arpmsg.hdr.rtm_version = RTM_VERSION;
     arpmsg.hdr.rtm_seq = ++rtm_seq;
     arpmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;

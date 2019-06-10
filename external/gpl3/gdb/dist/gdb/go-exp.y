@@ -1,6 +1,6 @@
 /* YACC parser for Go expressions, for GDB.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -81,7 +81,7 @@ int yyparse (void);
 
 static int yylex (void);
 
-void yyerror (const char *);
+static void yyerror (const char *);
 
 %}
 
@@ -97,7 +97,7 @@ void yyerror (const char *);
       struct type *type;
     } typed_val_int;
     struct {
-      DOUBLEST dval;
+      gdb_byte val[16];
       struct type *type;
     } typed_val_float;
     struct stoken sval;
@@ -115,8 +115,6 @@ void yyerror (const char *);
 /* YYSTYPE gets defined by %union.  */
 static int parse_number (struct parser_state *,
 			 const char *, int, int, YYSTYPE *);
-static int parse_go_float (struct gdbarch *gdbarch, const char *p, int len,
-			   DOUBLEST *d, struct type **t);
 %}
 
 %type <voidval> exp exp1 type_exp start variable lcurly
@@ -436,10 +434,10 @@ exp	:	NAME_OR_INT
 
 
 exp	:	FLOAT
-			{ write_exp_elt_opcode (pstate, OP_DOUBLE);
+			{ write_exp_elt_opcode (pstate, OP_FLOAT);
 			  write_exp_elt_type (pstate, $1.type);
-			  write_exp_elt_dblcst (pstate, $1.dval);
-			  write_exp_elt_opcode (pstate, OP_DOUBLE); }
+			  write_exp_elt_floatcst (pstate, $1.val);
+			  write_exp_elt_opcode (pstate, OP_FLOAT); }
 	;
 
 exp	:	variable
@@ -554,12 +552,7 @@ variable:	name_not_typename
 			  if (sym.symbol)
 			    {
 			      if (symbol_read_needs_frame (sym.symbol))
-				{
-				  if (innermost_block == 0
-				      || contained_in (sym.block,
-						       innermost_block))
-				    innermost_block = sym.block;
-				}
+				innermost_block.update (sym);
 
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      write_exp_elt_block (pstate, sym.block);
@@ -634,24 +627,6 @@ name_not_typename
 
 %%
 
-/* Wrapper on parse_c_float to get the type right for Go.  */
-
-static int
-parse_go_float (struct gdbarch *gdbarch, const char *p, int len,
-		DOUBLEST *d, struct type **t)
-{
-  int result = parse_c_float (gdbarch, p, len, d, t);
-  const struct builtin_type *builtin_types = builtin_type (gdbarch);
-  const struct builtin_go_type *builtin_go_types = builtin_go_type (gdbarch);
-
-  if (*t == builtin_types->builtin_float)
-    *t = builtin_go_types->builtin_float32;
-  else if (*t == builtin_types->builtin_double)
-    *t = builtin_go_types->builtin_float64;
-
-  return result;
-}
-
 /* Take care of parsing a number (anything that starts with a digit).
    Set yylval and return the token type; update lexptr.
    LEN is the number of characters in it.  */
@@ -688,10 +663,34 @@ parse_number (struct parser_state *par_state,
 
   if (parsed_float)
     {
-      if (! parse_go_float (parse_gdbarch (par_state), p, len,
-			    &putithere->typed_val_float.dval,
-			    &putithere->typed_val_float.type))
-	return ERROR;
+      const struct builtin_go_type *builtin_go_types
+	= builtin_go_type (parse_gdbarch (par_state));
+
+      /* Handle suffixes: 'f' for float32, 'l' for long double.
+	 FIXME: This appears to be an extension -- do we want this?  */
+      if (len >= 1 && tolower (p[len - 1]) == 'f')
+	{
+	  putithere->typed_val_float.type
+	    = builtin_go_types->builtin_float32;
+	  len--;
+	}
+      else if (len >= 1 && tolower (p[len - 1]) == 'l')
+	{
+	  putithere->typed_val_float.type
+	    = parse_type (par_state)->builtin_long_double;
+	  len--;
+	}
+      /* Default type for floating-point literals is float64.  */
+      else
+        {
+	  putithere->typed_val_float.type
+	    = builtin_go_types->builtin_float64;
+        }
+
+      if (!parse_float (p, len,
+			putithere->typed_val_float.type,
+			putithere->typed_val_float.val))
+        return ERROR;
       return FLOAT;
     }
 
@@ -1089,7 +1088,7 @@ lex_one_token (struct parser_state *par_state)
 	    last_was_structop = 1;
 	  goto symbol;		/* Nope, must be a symbol. */
 	}
-      /* FALL THRU into number case.  */
+      /* FALL THRU.  */
 
     case '0':
     case '1':
@@ -1280,24 +1279,22 @@ lex_one_token (struct parser_state *par_state)
 }
 
 /* An object of this type is pushed on a FIFO by the "outer" lexer.  */
-typedef struct
+struct token_and_value
 {
   int token;
   YYSTYPE value;
-} token_and_value;
-
-DEF_VEC_O (token_and_value);
+};
 
 /* A FIFO of tokens that have been read but not yet returned to the
    parser.  */
-static VEC (token_and_value) *token_fifo;
+static std::vector<token_and_value> token_fifo;
 
 /* Non-zero if the lexer should return tokens from the FIFO.  */
 static int popping;
 
 /* Temporary storage for yylex; this holds symbol names as they are
    built up.  */
-static struct obstack name_obstack;
+static auto_obstack name_obstack;
 
 /* Build "package.name" in name_obstack.
    For convenience of the caller, the name is NUL-terminated,
@@ -1309,7 +1306,7 @@ build_packaged_name (const char *package, int package_len,
 {
   struct stoken result;
 
-  obstack_free (&name_obstack, obstack_base (&name_obstack));
+  name_obstack.clear ();
   obstack_grow (&name_obstack, package, package_len);
   obstack_grow_str (&name_obstack, ".");
   obstack_grow (&name_obstack, name, name_len);
@@ -1486,10 +1483,10 @@ yylex (void)
 {
   token_and_value current, next;
 
-  if (popping && !VEC_empty (token_and_value, token_fifo))
+  if (popping && !token_fifo.empty ())
     {
-      token_and_value tv = *VEC_index (token_and_value, token_fifo, 0);
-      VEC_ordered_remove (token_and_value, token_fifo, 0);
+      token_and_value tv = token_fifo[0];
+      token_fifo.erase (token_fifo.begin ());
       yylval = tv.value;
       /* There's no need to fall through to handle package.name
 	 as that can never happen here.  In theory.  */
@@ -1542,13 +1539,11 @@ yylex (void)
 	    }
 	}
 
-      VEC_safe_push (token_and_value, token_fifo, &next);
-      VEC_safe_push (token_and_value, token_fifo, &name2);
+      token_fifo.push_back (next);
+      token_fifo.push_back (name2);
     }
   else
-    {
-      VEC_safe_push (token_and_value, token_fifo, &next);
-    }
+    token_fifo.push_back (next);
 
   /* If we arrive here we don't have a package-qualified name.  */
 
@@ -1560,38 +1555,30 @@ yylex (void)
 int
 go_parse (struct parser_state *par_state)
 {
-  int result;
-  struct cleanup *back_to;
-
   /* Setting up the parser state.  */
+  scoped_restore pstate_restore = make_scoped_restore (&pstate);
   gdb_assert (par_state != NULL);
   pstate = par_state;
 
-  back_to = make_cleanup (null_cleanup, NULL);
-
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
 							parser_debug);
-  make_cleanup_clear_parser_state (&pstate);
 
   /* Initialize some state used by the lexer.  */
   last_was_structop = 0;
   saw_name_at_eof = 0;
 
-  VEC_free (token_and_value, token_fifo);
+  token_fifo.clear ();
   popping = 0;
-  obstack_init (&name_obstack);
-  make_cleanup_obstack_free (&name_obstack);
+  name_obstack.clear ();
 
-  result = yyparse ();
-  do_cleanups (back_to);
-  return result;
+  return yyparse ();
 }
 
-void
+static void
 yyerror (const char *msg)
 {
   if (prev_lexptr)
     lexptr = prev_lexptr;
 
-  error (_("A %s in expression, near `%s'."), (msg ? msg : "error"), lexptr);
+  error (_("A %s in expression, near `%s'."), msg, lexptr);
 }

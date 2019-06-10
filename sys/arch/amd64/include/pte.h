@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2016/05/13 11:17:20 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.9.18.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -95,36 +95,52 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
 /*
- * PDE/PTE bits. These are no different from their i386 counterparts.
+ * x86 PTE/PDE bits.
  */
-#define PG_V		0x0000000000000001	/* valid */
-#define PG_RO		0x0000000000000000	/* read-only */
-#define PG_RW		0x0000000000000002	/* read-write */
-#define PG_u		0x0000000000000004	/* user accessible */
-#define PG_PROT		0x0000000000000006
-#define PG_WT		0x0000000000000008	/* write-through */
-#define PG_N		0x0000000000000010	/* non-cacheable */
-#define PG_U		0x0000000000000020	/* used */
-#define PG_M		0x0000000000000040	/* modified */
-#define PG_PAT		0x0000000000000080	/* PAT (on pte) */
-#define PG_PS		0x0000000000000080	/* 2MB page size (on pde) */
-#define PG_G		0x0000000000000100	/* not flushed */
-#define PG_AVAIL1	0x0000000000000200
-#define PG_AVAIL2	0x0000000000000400
-#define PG_AVAIL3	0x0000000000000800
-#define PG_LGPAT	0x0000000000001000	/* PAT on large pages */
-#define PG_FRAME	0x000ffffffffff000
-#define PG_NX		0x8000000000000000
+#define PTE_P		0x0000000000000001	/* Present */
+#define PTE_W		0x0000000000000002	/* Write */
+#define PTE_U		0x0000000000000004	/* User */
+#define PTE_PWT		0x0000000000000008	/* Write-Through */
+#define PTE_PCD		0x0000000000000010	/* Cache-Disable */
+#define PTE_A		0x0000000000000020	/* Accessed */
+#define PTE_D		0x0000000000000040	/* Dirty */
+#define PTE_PAT		0x0000000000000080	/* PAT on 4KB Pages */
+#define PTE_PS		0x0000000000000080	/* Large Page Size */
+#define PTE_G		0x0000000000000100	/* Global Translation */
+#define PTE_AVL1	0x0000000000000200	/* Ignored by Hardware */
+#define PTE_AVL2	0x0000000000000400	/* Ignored by Hardware */
+#define PTE_AVL3	0x0000000000000800	/* Ignored by Hardware */
+#define PTE_LGPAT	0x0000000000001000	/* PAT on Large Pages */
+#define PTE_NX		0x8000000000000000	/* No Execute */
 
-#define PG_2MFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
-#define PG_1GFRAME	0x000fffffc0000000	/* large (1G) page frame mask */
-#define PG_LGFRAME	PG_2MFRAME
+#define PTE_4KFRAME	0x000ffffffffff000
+#define PTE_2MFRAME	0x000fffffffe00000
+#define PTE_1GFRAME	0x000fffffc0000000
 
-/*
- * Short forms of protection codes.
- */
-#define PG_KR		0x0000000000000000	/* kernel read-only */
-#define PG_KW		0x0000000000000002	/* kernel read-write */
+#define PTE_FRAME	PTE_4KFRAME
+#define PTE_LGFRAME	PTE_2MFRAME
+
+/* XXX To be deleted. */
+#define PG_V		PTE_P
+#define PG_RW		PTE_W
+#define PG_u		PTE_U
+#define PG_WT		PTE_PWT
+#define PG_N		PTE_PCD
+#define PG_U		PTE_A
+#define PG_M		PTE_D
+#define PG_PAT		PTE_PAT
+#define PG_PS		PTE_PS
+#define PG_G		PTE_G
+#define PG_AVAIL1	PTE_AVL1
+#define PG_AVAIL2	PTE_AVL2
+#define PG_AVAIL3	PTE_AVL3
+#define PG_LGPAT	PTE_LGPAT
+#define PG_FRAME	PTE_FRAME
+#define PG_NX		PTE_NX
+#define PG_2MFRAME	PTE_2MFRAME
+#define PG_1GFRAME	PTE_1GFRAME
+#define PG_LGFRAME	PTE_LGFRAME
+#define PG_KW		PTE_W
 
 #include <x86/pte.h>
 

@@ -39,9 +39,10 @@ environment works.
 
 		objcopy --help
 
-	  and verify that the line "supported targets" contains the
-	  string "efi-app-ia32" and "efi-app-x86_64". The binutils release
-	  binutils-2.17.50.0.14 supports Intel64 EFI.
+	  Verify that the line "supported targets" contains the string
+	  "efi-app-ia32" and "efi-app-x86_64" and that the "-j" option
+	  accepts wildcards. The binutils release binutils-2.24
+	  supports Intel64 EFI and accepts wildcard section names.
 
 	- For debugging purposes, it's useful to have a version of
 	  "objdump" that supports EFI applications as well.  This
@@ -59,8 +60,8 @@ environment works.
 
 		objcopy --help
 
-	  and verify that the line "supported targets" contains the
-	  string "efi-app-ia64".
+	  Verify that the line "supported targets" contains the string
+	  "efi-app-ia64" and that the "-j" option accepts wildcards.
 
 	- For debugging purposes, it's useful to have a version of
 	  "objdump" that supports EFI applications as well.  This
@@ -230,10 +231,16 @@ and page sized.These eight sections are used to group together the much
 greater number of sections that are typically present in ELF object files.
 Specifically:
 
- .hash
+ .hash (and/or .gnu.hash)
 	Collects the ELF .hash info (this section _must_ be the first
 	section in order to build a shared object file; the section is
 	not actually loaded or used at runtime).
+
+	GNU binutils provides a mechanism to generate different hash info
+	via --hash-style=<sysv|gnu|both> option. In this case output
+	shared object will contain .hash section, .gnu.hash section or
+	both. In order to generate correct output linker script preserves
+	both types of hash sections.
 
  .text
 	Collects all sections containing executable code.
@@ -287,7 +294,7 @@ A couple of more points worth noting about the linker script:
    the EFI loader and once by the self-relocator; see below for a
    description of the latter).  Specifically, only the sections
    mentioned with the -j option in the final "objcopy" command are
-   retained in the EFI binary (see apps/Makefile).
+   retained in the EFI binary (see Make.rules).
 
 
 ** (2) Building Relocatable Binaries

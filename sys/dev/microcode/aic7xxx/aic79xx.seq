@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.11 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.11.20.1 2019/06/10 22:07:13 christos Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -1012,7 +1012,7 @@ mesgin_complete:
 	test	SEQ_FLAGS, NOT_IDENTIFIED jnz mesgin_proto_violation;
 
 	/*
-	 * If we recevied good status but never successfully sent the
+	 * If we received good status but never successfully sent the
 	 * cdb, abort the command.
 	 */
 	test	SCB_SCSI_STATUS,0xff	jnz complete_accepted;

@@ -55,6 +55,9 @@ static const char mri_pseudo[] = ".mri 0";
 static const char   symver_pseudo[] = ".symver";
 static const char * symver_state;
 #endif
+#ifdef TC_ARM
+static char last_char;
+#endif
 
 static char lex[256];
 static const char symbol_chars[] =
@@ -117,8 +120,7 @@ do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
     {
       lex['"'] = LEX_IS_STRINGQUOTE;
 
-#if ! defined (TC_HPPA) && ! defined (TC_I370)
-      /* I370 uses single-quotes to delimit integer, float constants.  */
+#if ! defined (TC_HPPA)
       lex['\''] = LEX_IS_ONECHAR_QUOTE;
 #endif
 
@@ -242,6 +244,9 @@ struct app_save
 #if defined TC_ARM && defined OBJ_ELF
   const char * symver_state;
 #endif
+#ifdef TC_ARM
+  char last_char;
+#endif
 };
 
 char *
@@ -270,6 +275,9 @@ app_push (void)
   saved->mri_last_ch = mri_last_ch;
 #if defined TC_ARM && defined OBJ_ELF
   saved->symver_state = symver_state;
+#endif
+#ifdef TC_ARM
+  saved->last_char = last_char;
 #endif
 
   /* do_scrub_begin() is not useful, just wastes time.  */
@@ -309,6 +317,9 @@ app_pop (char *arg)
   mri_last_ch = saved->mri_last_ch;
 #if defined TC_ARM && defined OBJ_ELF
   symver_state = saved->symver_state;
+#endif
+#ifdef TC_ARM
+  last_char = saved->last_char;
 #endif
 
   free (arg);
@@ -1041,7 +1052,6 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	  PUT (ch);
 	  break;
 
-#ifndef IEEE_STYLE
 	case LEX_IS_ONECHAR_QUOTE:
 #ifdef H_TICK_HEX
 	  if (state == 9 && enable_h_tick_hex)
@@ -1103,7 +1113,6 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	  out_string = out_buf;
 	  PUT (*out_string++);
 	  break;
-#endif
 
 	case LEX_IS_COLON:
 #ifdef KEEP_WHITE_AROUND_COLON
@@ -1285,7 +1294,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 #ifdef TC_ARM
 	  /* For the ARM, care is needed not to damage occurrences of \@
 	     by stripping the @ onwards.  Yuck.  */
-	  if (to > tostart && *(to - 1) == '\\')
+	  if ((to > tostart ? to[-1] : last_char) == '\\')
 	    /* Do not treat the @ as a start-of-comment.  */
 	    goto de_fault;
 #endif
@@ -1465,6 +1474,10 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 
  fromeof:
   /* We have reached the end of the input.  */
+#ifdef TC_ARM
+  if (to > tostart)
+    last_char = to[-1];
+#endif
   return to - tostart;
 
  tofull:
@@ -1478,5 +1491,9 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
   else
     saved_input = NULL;
 
+#ifdef TC_ARM
+  if (to > tostart)
+    last_char = to[-1];
+#endif
   return to - tostart;
 }

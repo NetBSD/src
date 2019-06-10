@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.20.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.20.2.1 2019/06/10 22:07:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_nvme_dump;
 	ld->sc_ioctl = ld_nvme_ioctl;
 	ld->sc_flags = LDF_ENABLED | LDF_NO_RND | LDF_MPSAFE;
+	ld->sc_typename = kmem_asprintf("%s", naa->naa_typename);
 	ldattach(ld, "fcfs");
 }
 
@@ -126,6 +127,8 @@ ld_nvme_detach(device_t self, int flags)
 	if ((rv = ldbegindetach(ld, flags)) != 0)
 		return rv;
 	ldenddetach(ld);
+
+	kmem_free(ld->sc_typename, strlen(ld->sc_typename) + 1);
 
 	nvme_ns_free(sc->sc_nvme, sc->sc_nsid);
 
@@ -200,6 +203,14 @@ ld_nvme_getcache(struct ld_softc *ld, int *addr)
 }
 
 static int
+ld_nvme_setcache(struct ld_softc *ld, int addr)
+{
+	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
+
+	return nvme_admin_setcache(sc->sc_nvme, addr);
+}
+
+static int
 ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
 {
 	int error;
@@ -211,6 +222,10 @@ ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool po
 
 	case DIOCGCACHE:
 		error = ld_nvme_getcache(ld, (int *)addr);
+		break;
+
+	case DIOCSCACHE:
+		error = ld_nvme_setcache(ld, *(int *)addr);
 		break;
 
 	default:

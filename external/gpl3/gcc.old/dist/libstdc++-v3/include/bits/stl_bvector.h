@@ -1,6 +1,6 @@
 // vector<bool> specialization -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -927,10 +927,7 @@ template<typename _Alloc>
     }
 
     void
-    swap(vector& __x)
-#if __cplusplus >= 201103L
-      noexcept(_Bit_alloc_traits::_S_nothrow_swap())
-#endif
+    swap(vector& __x) _GLIBCXX_NOEXCEPT
     {
       std::swap(this->_M_impl._M_start, __x._M_impl._M_start);
       std::swap(this->_M_impl._M_finish, __x._M_impl._M_finish);
@@ -1081,9 +1078,17 @@ template<typename _Alloc>
     void
     _M_initialize(size_type __n)
     {
-      _Bit_pointer __q = this->_M_allocate(__n);
-      this->_M_impl._M_end_of_storage = __q + _S_nword(__n);
-      this->_M_impl._M_start = iterator(std::__addressof(*__q), 0);
+      if (__n)
+	{
+	  _Bit_pointer __q = this->_M_allocate(__n);
+	  this->_M_impl._M_end_of_storage = __q + _S_nword(__n);
+	  this->_M_impl._M_start = iterator(std::__addressof(*__q), 0);
+	}
+      else
+	{
+	  this->_M_impl._M_end_of_storage = _Bit_pointer();
+	  this->_M_impl._M_start = iterator(0, 0);
+	}
       this->_M_impl._M_finish = this->_M_impl._M_start + difference_type(__n);
     }
 

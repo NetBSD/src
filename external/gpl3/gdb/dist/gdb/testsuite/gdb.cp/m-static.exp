@@ -1,4 +1,4 @@
-# Copyright 2002-2017 Free Software Foundation, Inc.
+# Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,11 +51,6 @@ gdb_continue_to_breakpoint "end of constructors"
 
 
 # One.
-
-# simple object, static const int, accessing via 'class::method::variable'
-# Regression test for PR c++/15203 and PR c++/15210
-gdb_test "print 'gnu_obj_1::method()::sintvar'" "\\$\[0-9\]+ = 4" \
-    "simple object, static const int, accessing via 'class::method::variable"
 
 # simple object, static const bool
 gdb_test "print test1.test" "\\$\[0-9\]* = true" "simple object, static const bool"
@@ -170,6 +165,8 @@ if {[test_compiler_info {gcc-[0-3]-*}]
     setup_xfail *-*-*
 }
 gdb_test "print test4.nowhere" "<optimized out>" "static const int initialized nowhere (print field)"
+gdb_test "ptype test4.nowhere" "type = const int"
+gdb_test "print test4.nowhere.nowhere" "Attempt to extract a component of a value that is not a structure."
 
 # Same, but print the whole struct.
 gdb_test "print test4" "static nowhere = <optimized out>.*" "static const int initialized nowhere (whole struct)"

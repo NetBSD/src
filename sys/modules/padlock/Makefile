@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/04 16:20:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.54.1 2019/06/10 22:09:36 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=	padlock
 IOCONF=	padlock.ioconf
 SRCS=	via_padlock.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

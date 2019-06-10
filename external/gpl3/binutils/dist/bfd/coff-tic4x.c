@@ -165,7 +165,8 @@ tic4x_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    Called after some initial checking by the tic4x_rtype_to_howto fn
    below.  */
 static void
-tic4x_lookup_howto (arelent *internal,
+tic4x_lookup_howto (bfd *abfd,
+		    arelent *internal,
 		    struct internal_reloc *dst)
 {
   unsigned int i;
@@ -180,13 +181,13 @@ tic4x_lookup_howto (arelent *internal,
 	}
     }
 
-  _bfd_error_handler (_("Unrecognized reloc type 0x%x"),
-		      (unsigned int) dst->r_type);
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+		      abfd, (unsigned int) dst->r_type);
   abort();
 }
 
 static reloc_howto_type *
-coff_tic4x_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+coff_tic4x_rtype_to_howto (bfd *abfd,
 			   asection *sec,
 			   struct internal_reloc *rel,
 			   struct coff_link_hash_entry *h ATTRIBUTE_UNUSED,
@@ -201,7 +202,7 @@ coff_tic4x_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
        in the output section.  */
     *addendp = (sec->output_section->vma + sec->output_offset) - sec->vma;
 
-  tic4x_lookup_howto (&genrel, rel);
+  tic4x_lookup_howto (abfd, &genrel, rel);
 
   return genrel.howto;
 }
@@ -224,7 +225,7 @@ tic4x_reloc_processing (arelent *relent,
 	{
 	  _bfd_error_handler
 	    /* xgettext: c-format */
-	    (_("%B: warning: illegal symbol index %ld in relocs"),
+	    (_("%pB: warning: illegal symbol index %ld in relocs"),
 	     abfd, reloc->r_symndx);
 	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 	  ptr = NULL;
@@ -256,7 +257,7 @@ tic4x_reloc_processing (arelent *relent,
   /* !!     relent->section = (asection *) NULL;  */
 
   /* Fill in the relent->howto field from reloc->r_type.  */
-  tic4x_lookup_howto (relent, reloc);
+  tic4x_lookup_howto (abfd, relent, reloc);
 }
 
 

@@ -984,10 +984,11 @@ print_operand_inserter (void)
     printf ("Enter print_operand_inserter\n");
 
   printf ("\n");
-  printf ("const char*\n");
+  printf ("bfd_boolean\n");
   printf ("aarch64_insert_operand (const aarch64_operand *self,\n\
 			   const aarch64_opnd_info *info,\n\
-			   aarch64_insn *code, const aarch64_inst *inst)\n");
+			   aarch64_insn *code, const aarch64_inst *inst,\n\
+			   aarch64_operand_error *errors)\n");
   printf ("{\n");
   printf ("  /* Use the index as the key.  */\n");
   printf ("  int key = self - aarch64_operands;\n");
@@ -1017,7 +1018,7 @@ print_operand_inserter (void)
 		  opnd2->processed = 1;
 		}
 	    }
-	  printf ("      return aarch64_%s (self, info, code, inst);\n",
+	  printf ("      return aarch64_%s (self, info, code, inst, errors);\n",
 		  opnd->inserter);
 	}
     }
@@ -1040,10 +1041,11 @@ print_operand_extractor (void)
     printf ("Enter print_operand_extractor\n");
 
   printf ("\n");
-  printf ("int\n");
+  printf ("bfd_boolean\n");
   printf ("aarch64_extract_operand (const aarch64_operand *self,\n\
 			   aarch64_opnd_info *info,\n\
-			   aarch64_insn code, const aarch64_inst *inst)\n");
+			   aarch64_insn code, const aarch64_inst *inst,\n\
+			   aarch64_operand_error *errors)\n");
   printf ("{\n");
   printf ("  /* Use the index as the key.  */\n");
   printf ("  int key = self - aarch64_operands;\n");
@@ -1073,7 +1075,7 @@ print_operand_extractor (void)
 		  opnd2->processed = 1;
 		}
 	    }
-	  printf ("      return aarch64_%s (self, info, code, inst);\n",
+	  printf ("      return aarch64_%s (self, info, code, inst, errors);\n",
 		  opnd->extractor);
 	}
     }

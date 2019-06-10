@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-de2.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-de2.h,v 1.1.1.1.6.1 2019/06/10 22:08:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2016 Icenowy Zheng <icenowy@aosc.io>
@@ -12,5 +12,6 @@
 #define RST_MIXER0	0
 #define RST_MIXER1	1
 #define RST_WB		2
+#define RST_ROT		3
 
 #endif /* _DT_BINDINGS_RESET_SUN8I_DE2_H_ */

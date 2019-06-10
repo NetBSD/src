@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2017/05/21 14:20:45 riastradh Exp $
+# $NetBSD: Makefile,v 1.4.10.1 2019/06/10 22:10:00 christos Exp $
 
 HELPER_NAME=	rc5test
 HELPER_DIR=	rc5
 
 .include <bsd.init.mk>
 
-LDADD= -lcrypto
 LDADD+=		-Wl,--no-fatal-warnings

@@ -1,5 +1,5 @@
 /* Definitions and declarations for stor-layout.c.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,7 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 
 extern void set_min_and_max_values_for_integral_type (tree, int, signop);
 extern void fixup_signed_type (tree);
-extern void internal_reference_types (void);
 extern unsigned int update_alignment_for_field (record_layout_info, tree,
                                                 unsigned int);
 extern record_layout_info start_record_layout (tree);

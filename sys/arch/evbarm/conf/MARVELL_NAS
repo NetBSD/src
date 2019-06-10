@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.29 2018/02/17 01:31:02 sevan Exp $
+#	$NetBSD: MARVELL_NAS,v 1.29.4.1 2019/06/10 22:06:04 christos Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -78,10 +78,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT	# Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP
@@ -214,7 +210,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB Serial
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
@@ -231,12 +226,10 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=0
@@ -275,7 +268,6 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -293,7 +285,6 @@ pseudo-device	tun			# network tunneling over tty
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	npf			# NPF packet filter
-#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -318,19 +309,8 @@ pseudo-device	wsfont
 pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options 	VERIFIED_EXEC_FP_SHA256
-options 	VERIFIED_EXEC_FP_SHA384
-options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

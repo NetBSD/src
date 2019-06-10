@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.276 2018/05/28 21:04:41 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.276.2.1 2019/06/10 22:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -43,6 +43,7 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_gprof.h"
+#include "opt_kleak.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
@@ -127,6 +128,7 @@ extern struct sysent {		/* system call table */
 	uint32_t sy_return;	/* DTrace return ID for systrace. */
 } sysent[];
 extern int nsysent;
+extern const uint32_t sysent_nomodbits[];
 #endif
 
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -183,6 +185,14 @@ enum hashtype {
 };
 
 #ifdef _KERNEL
+#define COND_SET_VALUE(dst, src, allow)	\
+	do {				\
+		if (allow)		\
+			dst = src;	\
+	} while (/*CONSTCOND*/0);
+
+
+bool	get_expose_address(struct proc *);
 void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
@@ -195,13 +205,13 @@ void	aprint_naive(const char *, ...) __printflike(1, 2);
 void	aprint_verbose(const char *, ...) __printflike(1, 2);
 void	aprint_debug(const char *, ...) __printflike(1, 2);
 
-void	device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
-
 void	aprint_normal_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_error_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_naive_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_verbose_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_debug_dev(device_t, const char *, ...) __printflike(2, 3);
+
+void	device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
 
 struct ifnet;
 
@@ -226,9 +236,15 @@ void	printf(const char *, ...) __printflike(1, 2);
 
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 
+int	vasprintf(char **, const char *, va_list) __printflike(2, 0);
+
 void	vprintf(const char *, va_list) __printflike(1, 0);
 
 int	vsnprintf(char *, size_t, const char *, va_list) __printflike(3, 0);
+
+void	vprintf_flags(int, const char *, va_list) __printflike(2, 0);
+
+void	printf_flags(int, const char *, ...) __printflike(2, 3);
 
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
@@ -246,7 +262,12 @@ int	format_bytes(char *, size_t, uint64_t);
 
 void	tablefull(const char *, const char *);
 
+#if defined(_KERNEL) && defined(KASAN)
+int	kasan_kcopy(const void *, void *, size_t);
+#define kcopy		kasan_kcopy
+#else
 int	kcopy(const void *, void *, size_t);
+#endif
 
 #ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
@@ -254,11 +275,34 @@ int	kcopy(const void *, void *, size_t);
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
 #endif /* KERNEL */
 
+#if defined(_KERNEL) && defined(KASAN)
+int	kasan_copystr(const void *, void *, size_t, size_t *);
+int	kasan_copyinstr(const void *, void *, size_t, size_t *);
+int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
+int	kasan_copyin(const void *, void *, size_t);
+#define copystr		kasan_copystr
+#define copyinstr	kasan_copyinstr
+#define copyoutstr	kasan_copyoutstr
+#define copyin		kasan_copyin
+#else
 int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
+#endif
 int	copyout(const void *, void *, size_t);
+
+#ifdef KLEAK
+#define copyout		kleak_copyout
+#define copyoutstr	kleak_copyoutstr
+int	kleak_copyout(const void *, void *, size_t);
+int	kleak_copyoutstr(const void *, void *, size_t, size_t *);
+void	kleak_fill_area(void *, size_t);
+void	kleak_fill_stack(void);
+#else
+#define kleak_fill_area(a, b)	__nothing
+#define kleak_fill_stack()	__nothing
+#endif
 
 #ifdef _KERNEL
 typedef	int	(*copyin_t)(const void *, void *, size_t);
@@ -274,24 +318,75 @@ int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
 
+int	ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		uint32_t *ret);
+#ifdef _LP64
+int	ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		uint64_t *ret);
+#endif /* _LP64 */
+
 int	ucas_ptr(volatile void *, void *, void *, void *);
-int	ucas_int(volatile int *, int, int, int *);
+int	ucas_int(volatile unsigned int *, unsigned int, unsigned int,
+		 unsigned int *);
 
-int	subyte(void *, int);
-int	suibyte(void *, int);
-int	susword(void *, short);
-int	suisword(void *, short);
-int	suswintr(void *, short);
-int	suword(void *, long);
-int	suiword(void *, long);
+#ifdef __UCAS_PRIVATE
+int	_ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		 uint32_t *ret);
+#ifdef __HAVE_UCAS_MP
+int	_ucas_32_mp(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		    uint32_t *ret);
+#endif /* __HAVE_UCAS_MP */
+#ifdef _LP64
+int	_ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		 uint64_t *ret);
+#ifdef __HAVE_UCAS_MP
+int	_ucas_64_mp(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		    uint64_t *ret);
+#endif /* __HAVE_UCAS_MP */
+#endif /* _LP64 */
+#endif /* __UCAS_PRIVATE */
 
-int	fubyte(const void *);
-int	fuibyte(const void *);
-int	fusword(const void *);
-int	fuisword(const void *);
-int	fuswintr(const void *);
-long	fuword(const void *);
-long	fuiword(const void *);
+int	ufetch_8(const uint8_t *uaddr, uint8_t *valp);
+int	ufetch_16(const uint16_t *uaddr, uint16_t *valp);
+int	ufetch_32(const uint32_t *uaddr, uint32_t *valp);
+#ifdef _LP64
+int	ufetch_64(const uint64_t *uaddr, uint64_t *valp);
+#endif
+
+int	ufetch_char(const unsigned char *uaddr, unsigned char *valp);
+int	ufetch_short(const unsigned short *uaddr, unsigned short *valp);
+int	ufetch_int(const unsigned int *uaddr, unsigned int *valp);
+int	ufetch_long(const unsigned long *uaddr, unsigned long *valp);
+int	ufetch_ptr(const void **uaddr, void **valp);
+
+int	ustore_8(uint8_t *uaddr, uint8_t val);
+int	ustore_16(uint16_t *uaddr, uint16_t val);
+int	ustore_32(uint32_t *uaddr, uint32_t val);
+#ifdef _LP64
+int	ustore_64(uint64_t *uaddr, uint64_t val);
+#endif
+
+int	ustore_char(unsigned char *uaddr, unsigned char val);
+int	ustore_short(unsigned short *uaddr, unsigned short val);
+int	ustore_int(unsigned int *uaddr, unsigned int val);
+int	ustore_long(unsigned long *uaddr, unsigned long val);
+int	ustore_ptr(void **uaddr, void *val);
+
+#ifdef __UFETCHSTORE_PRIVATE
+int	_ufetch_8(const uint8_t *uaddr, uint8_t *valp);
+int	_ufetch_16(const uint16_t *uaddr, uint16_t *valp);
+int	_ufetch_32(const uint32_t *uaddr, uint32_t *valp);
+#ifdef _LP64
+int	_ufetch_64(const uint64_t *uaddr, uint64_t *valp);
+#endif
+
+int	_ustore_8(uint8_t *uaddr, uint8_t val);
+int	_ustore_16(uint16_t *uaddr, uint16_t val);
+int	_ustore_32(uint32_t *uaddr, uint32_t val);
+#ifdef _LP64
+int	_ustore_64(uint64_t *uaddr, uint64_t val);
+#endif
+#endif /* __UFETCHSTORE_PRIVATE */
 
 void	hardclock(struct clockframe *);
 void	softclock(void *);

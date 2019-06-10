@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20 2018/06/26 10:00:25 msaitoh Exp $	*/
+/*	$NetBSD: misc.c,v 1.20.2.1 2019/06/10 22:10:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.20 2018/06/26 10:00:25 msaitoh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20.2.1 2019/06/10 22:10:19 christos Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: misc.c,v 1.20 2018/06/26 10:00:25 msaitoh Exp $");
 #include <sys/proc.h>
 #define _KERNEL
 #include <sys/file.h>
+#define copyin_t int
 #define copyout_t int
 #include <sys/ksem.h>
 #define _LIB_LIBKERN_LIBKERN_H_

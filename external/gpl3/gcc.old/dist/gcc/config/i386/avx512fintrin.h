@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -3312,7 +3312,7 @@ _mm512_maskz_fnmsub_round_ps (__mmask16 __U, __m512 __A, __m512 __B,
     (__m512d)__builtin_ia32_vfmaddsubpd512_mask(A, B, C, -1, R)
 
 #define _mm512_mask_fmaddsub_round_pd(A, U, B, C, R)    \
-    (__m512d)__builtin_ia32_vfmaddpd512_mask(A, B, C, U, R)
+    (__m512d)__builtin_ia32_vfmaddsubpd512_mask(A, B, C, U, R)
 
 #define _mm512_mask3_fmaddsub_round_pd(A, B, C, U, R)   \
     (__m512d)__builtin_ia32_vfmaddsubpd512_mask3(A, B, C, U, R)

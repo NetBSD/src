@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.6 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: usage.c,v 1.6.16.1 2019/06/10 21:51:32 christos Exp $	*/
 
 
 /*
@@ -764,7 +764,7 @@ prt_vendor_opts(tOptions * opts, char const * title)
         OPTST_NO_USAGE_MASK | OPTST_DOCUMENT;
 
     static char const vfmtfmt[] = "%%-%us %%s\n";
-    char vfmt[sizeof(vfmtfmt)];
+    char vfmt[sizeof(vfmtfmt)+10]; /* strlen(UINT_MAX) */
 
     /*
      *  Only handle client specified options.  The "vendor option" follows

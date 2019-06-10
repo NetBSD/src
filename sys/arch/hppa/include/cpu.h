@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2016/01/25 18:14:40 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.18.1 2019/06/10 22:06:19 christos Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -79,7 +79,7 @@ enum hppa_cpu_type {
 	hpcxtp,	/* PA7200 (t')		PA 1.1d */
 	hpcxl2,	/* PA7300LC (l2)	PA 1.1e */
 	hpcxu,	/* PA8000 (u)		PA 2.0 */
-	hpcxup,	/* PA8200 (u+)		PA 2.0 */	
+	hpcxup,	/* PA8200 (u+)		PA 2.0 */
 	hpcxw,	/* PA8500 (w)		PA 2.0 */
 	hpcxwp,	/* PA8600 (w+)		PA 2.0 */
 	hpcxw2, /* PA8700 (piranha)	PA 2.0 */
@@ -287,7 +287,7 @@ struct cpu_info {
 
 	struct hppa_interrupt_register	ci_ir;
 	struct hppa_interrupt_bit	ci_ib[HPPA_INTERRUPT_BITS];
-	
+
 #if defined(MULTIPROCESSOR)
 	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */
@@ -422,7 +422,6 @@ void	cpu_hatch(void);
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define	CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */
-#define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #ifdef _KERNEL
 #include <sys/queue.h>

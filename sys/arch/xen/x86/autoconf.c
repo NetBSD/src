@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.4.1 2019/06/10 22:06:56 christos Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.4.1 2019/06/10 22:06:56 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -86,6 +86,7 @@ static int is_valid_disk(device_t);
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
+int x86_found_console;
 
 #include "bios32.h"
 #if NBIOS32 > 0
@@ -99,6 +100,12 @@ extern void platform_init(void);
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
+#endif
+
+#ifdef DEBUG_GEOM
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
 #endif
 
 /*
@@ -133,6 +140,9 @@ cpu_configure(void)
 	intr_printconfig();
 #endif
 
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
 	/* resync cr0 after FPU configuration */
 	pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr0 = rcr0();
@@ -150,7 +160,8 @@ cpu_rootconf(void)
 	cpu_bootconf();
 
 	printf("boot device: %s\n",
-	    booted_device ? device_xname(booted_device) : "<unknown>");
+	    booted_device ? device_xname(booted_device) :
+	    bootspec ? bootspec : "<unknown>");
 	rootconf();
 }
 
@@ -164,9 +175,12 @@ cpu_bootconf(void)
 	device_t dv;
 	deviter_t di;
 	union xen_cmdline_parseinfo xcp;
+	static char bootspecbuf[sizeof(xcp.xcp_bootdev)];
 
-	if (booted_device)
+	if (booted_device) {
+		DPRINTF(("%s: preset booted_device: %s\n", __func__, device_xname(booted_device)));
 		return;
+	}
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
@@ -192,14 +206,33 @@ cpu_bootconf(void)
 			continue;
 
 		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
+			/* XXX check device_cfdata as in x86_autoconf.c? */
 			booted_partition = toupper(
 				xcp.xcp_bootdev[strlen(devname)]) - 'A';
+			DPRINTF(("%s: booted_partition: %d\n", __func__, booted_partition));
 		}
 
 		booted_device = dv;
+		booted_method = "bootinfo/bootdev";
 		break;
 	}
 	deviter_release(&di);
+
+	if (booted_device) {
+		DPRINTF(("%s: booted_device: %s\n", __func__, device_xname(booted_device)));
+		return;
+	}
+
+	/*
+	 * not a boot device name, pass through to MI code
+	 */
+	if (xcp.xcp_bootdev[0] != '\0') {
+		strlcpy(bootspecbuf, xcp.xcp_bootdev, sizeof(bootspecbuf));
+		bootspec = bootspecbuf;
+		booted_method = "bootinfo/bootspec";
+		DPRINTF(("%s: bootspec: %s\n", __func__, bootspec));
+		return;
+	}
 }
 
 #include "pci.h"
@@ -342,7 +375,6 @@ found:
 static int
 is_valid_disk(device_t dv)
 {
-
 	if (device_class(dv) != DV_DISK)
 		return (0);
 

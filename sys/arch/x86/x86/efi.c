@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.15 2018/05/19 17:18:57 jakllsch Exp $	*/
+/*	$NetBSD: efi.c,v 1.15.2.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15 2018/05/19 17:18:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15.2.1 2019/06/10 22:06:53 christos Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -40,7 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15 2018/05/19 17:18:57 jakllsch Exp $");
 #include <x86/efi.h>
 
 #include <dev/mm.h>
+#if NPCI > 0
 #include <dev/pci/pcivar.h> /* for pci_mapreg_map_enable_decode */
+#endif
 
 const struct uuid EFI_UUID_ACPI20 = EFI_TABLE_ACPI20;
 const struct uuid EFI_UUID_ACPI10 = EFI_TABLE_ACPI10;
@@ -48,13 +50,14 @@ const struct uuid EFI_UUID_SMBIOS = EFI_TABLE_SMBIOS;
 const struct uuid EFI_UUID_SMBIOS3 = EFI_TABLE_SMBIOS3;
 
 static vaddr_t 	efi_getva(paddr_t);
-static void 	efi_relva(vaddr_t);
+static void 	efi_relva(paddr_t, vaddr_t);
 struct efi_cfgtbl *efi_getcfgtblhead(void);
 void 		efi_aprintcfgtbl(void);
 void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
 static bool efi_is32x64 = false;
+static paddr_t efi_systbl_pa;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
@@ -72,8 +75,10 @@ efi_getva(paddr_t pa)
 	vaddr_t va;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	mm_md_direct_mapped_phys(pa, &va);
-#else
+	if (mm_md_direct_mapped_phys(pa, &va))
+		return va;
+#endif
+
 	/* XXX This code path is not tested. */
 	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
@@ -83,7 +88,7 @@ efi_getva(paddr_t pa)
 	}
 	pmap_kenter_pa(va, pa, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
-#endif
+
 	return va;
 }
 
@@ -91,14 +96,21 @@ efi_getva(paddr_t pa)
  * Free a virtual address (VA) allocated using efi_getva().
  */
 static void
-efi_relva(vaddr_t va)
+efi_relva(paddr_t pa, vaddr_t va)
 {
+
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	/* XXX Should we free the va? */
-#else
-	/* XXX This code path is not tested. */
-	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+	vaddr_t va0 __diagused;
+	if (mm_md_direct_mapped_phys(pa, &va0)) {
+		KASSERT(va0 == va);
+		return;
+	}
 #endif
+
+	/* XXX This code path is not tested. */
+	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
 /*
@@ -326,6 +338,7 @@ efi_getsystbl(void)
 		return NULL;
 
 	aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
+	efi_systbl_pa = pa;
 	va = efi_getva(pa);
 	aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
 
@@ -403,12 +416,14 @@ efi_init(void)
 	}
 	if (efi_getcfgtblhead() == NULL) {
 		aprint_debug("efi: missing or invalid cfgtbl\n");
-		efi_relva((vaddr_t) efi_systbl_va);
+		efi_relva(efi_systbl_pa, (vaddr_t) efi_systbl_va);
 		bootmethod_efi = false;
 		return;
 	}
 	bootmethod_efi = true;
+#if NPCI > 0	
 	pci_mapreg_map_enable_decode = true; /* PR port-amd64/53286 */
+#endif
 }
 
 bool

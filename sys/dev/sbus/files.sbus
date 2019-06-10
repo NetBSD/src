@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.42 2016/02/11 02:23:44 macallan Exp $
+#	$NetBSD: files.sbus,v 1.42.18.1 2019/06/10 22:07:31 christos Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -44,11 +44,6 @@ file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
 device	bpp {}: lsi64854
 attach	bpp at sbus
 file	dev/sbus/bpp.c			bpp	needs-flag
-
-# Efficient Networks, Inc. ATM interface
-# device declaration in sys/conf/files
-attach	en at sbus with en_sbus
-file	dev/sbus/if_en.c		en_sbus
 
 device	qec {}
 attach	qec at sbus
@@ -133,8 +128,8 @@ file	dev/sbus/p9100.c		pnozz needs-flag
 
 # SUNW,DBRI audio
 defflag	opt_sbus_dbri.h	DBRI_DEBUG
-defflag	opt_sbus_dbri.h	DBRI_BIG_BUFFER DBRI_SPIN
-device	dbri { }: audiobus, auconv, mulaw
+defflag	opt_sbus_dbri.h	DBRI_SPIN
+device	dbri { }: audiobus
 attach	dbri at sbus
 file	dev/sbus/dbri.c			dbri
 

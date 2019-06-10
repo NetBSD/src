@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2017/09/15 03:12:05 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197.4.1 2019/06/10 22:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2017/09/15 03:12:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.4.1 2019/06/10 22:06:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -327,8 +327,10 @@ identifycpu(void)
 {
 	/* there's alot of XXX in here... */
 	const char *cpu_type, *mach, *mmu, *fpu;
-	char clock[16];
+	char clock[20];
 	char emubuf[20];
+	char cpubuf[16];
+	uint32_t pcr;
 
 	/*
 	 * check machine type constant
@@ -360,31 +362,43 @@ identifycpu(void)
 		break;
 	}
 
+	clock[0] = '\0';
 	emubuf[0] = '\0';
 	check_emulator(emubuf, sizeof(emubuf));
 
-	cpuspeed = 2048 / delay_divisor;
-	snprintf(clock, sizeof(clock), "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
-		cpu_type = "m68060";
+		/* from amiga */
+		__asm(".word 0x4e7a,0x0808; movl %%d0,%0"
+		    : "=d"(pcr) : : "d0");
+		snprintf(cpubuf, sizeof(cpubuf), "m68%s060 rev.%d",
+		    (pcr & 0x10000) ? "LC/EC" : "", (pcr >> 8) & 0xff);
+		cpu_type = cpubuf;
 		mmu = "/MMU";
-		cpuspeed = 128 / delay_divisor;
-		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
+		/*
+		 * This delay_divisor method cannot get accurate cpuspeed
+		 * for 68060.
+		 */
+		clock[0] = '\0';
 		break;
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		cpuspeed = 759 / delay_divisor;
-		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
+		snprintf(clock, sizeof(clock), ", %d/%dMHz clock",
+		    cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
 		mmu = "/MMU";
+		cpuspeed = 2048 / delay_divisor;
+		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
 		break;
 	case CPU_68020:
 		cpu_type = "m68020";
 		mmu = ", m68851 MMU";
+		cpuspeed = 2048 / delay_divisor;
+		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
 		break;
 	default:
 		cpu_type = "unknown";
@@ -395,7 +409,7 @@ identifycpu(void)
 		fpu = fpu_descr[fputype];
 	else
 		fpu = ", unknown FPU";
-	cpu_setmodel("X68%s (%s CPU%s%s, %s clock)%s%s",
+	cpu_setmodel("X68%s (%s CPU%s%s%s)%s%s",
 	    mach, cpu_type, mmu, fpu, clock,
 		emubuf[0] ? " on " : "", emubuf);
 	printf("%s\n", cpu_getmodel());
@@ -833,18 +847,6 @@ initcpu(void)
 	extern uint8_t illinst;
 #endif
 	extern uint8_t fpfault;
-#endif
-
-#ifdef MAPPEDCOPY
-
-	/*
-	 * Initialize lower bound for doing copyin/copyout using
-	 * page mapping (if not already set).  We don't do this on
-	 * VAC machines as it loses big time.
-	 */
-	if ((int)mappedcopysize == -1) {
-		mappedcopysize = PAGE_SIZE;
-	}
 #endif
 
 #if defined(M68060)

@@ -1,6 +1,6 @@
 /* Target-dependent code for Morpho mt processor, for GDB.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -449,23 +449,32 @@ mt_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc;
 }
 
-/* The breakpoint instruction must be the same size as the smallest
-   instruction in the instruction set.
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
 
-   The BP for ms1 is defined as 0x68000000 (BREAK).
-   The BP for ms2 is defined as 0x69000000 (illegal).  */
+static int
+mt_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  return 4;
+}
+
+/* Implement the sw_breakpoint_from_kind gdbarch method.  */
 
 static const gdb_byte *
-mt_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *bp_addr,
-		       int *bp_size)
+mt_sw_breakpoint_from_kind (struct gdbarch *gdbarch, int kind, int *size)
 {
+  /* The breakpoint instruction must be the same size as the smallest
+     instruction in the instruction set.
+
+     The BP for ms1 is defined as 0x68000000 (BREAK).
+     The BP for ms2 is defined as 0x69000000 (illegal).  */
   static gdb_byte ms1_breakpoint[] = { 0x68, 0, 0, 0 };
   static gdb_byte ms2_breakpoint[] = { 0x69, 0, 0, 0 };
 
-  *bp_size = 4;
+  *size = kind;
+
   if (gdbarch_bfd_arch_info (gdbarch)->mach == bfd_mach_ms2)
     return ms2_breakpoint;
-  
+
   return ms1_breakpoint;
 }
 
@@ -703,11 +712,10 @@ mt_registers_info (struct gdbarch *gdbarch,
                || regnum == MT_COPRO_PSEUDOREG_REGNUM)
 	{
 	  /* Special output handling for the 'coprocessor' register.  */
-	  gdb_byte *buf;
 	  struct value_print_options opts;
+	  struct value *val;
 
-	  buf = (gdb_byte *) alloca (register_size (gdbarch, MT_COPRO_REGNUM));
-	  deprecated_frame_register_read (frame, MT_COPRO_REGNUM, buf);
+	  val = get_frame_register_value (frame, MT_COPRO_REGNUM);
 	  /* And print.  */
 	  regnum = MT_COPRO_PSEUDOREG_REGNUM;
 	  fputs_filtered (gdbarch_register_name (gdbarch, regnum),
@@ -717,8 +725,8 @@ mt_registers_info (struct gdbarch *gdbarch,
 				 file);
 	  get_no_prettyformat_print_options (&opts);
 	  opts.deref_ref = 1;
-	  val_print (register_type (gdbarch, regnum), buf,
-		     0, 0, file, 0, NULL,
+	  val_print (register_type (gdbarch, regnum),
+		     0, 0, file, 0, val,
 		     &opts, current_language);
 	  fputs_filtered ("\n", file);
 	}
@@ -1162,7 +1170,8 @@ mt_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pseudo_register_write (gdbarch, mt_pseudo_register_write);
   set_gdbarch_skip_prologue (gdbarch, mt_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, mt_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, mt_breakpoint_kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, mt_sw_breakpoint_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, 0);
   set_gdbarch_frame_args_skip (gdbarch, 0);
   set_gdbarch_print_insn (gdbarch, print_insn_mt);

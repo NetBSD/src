@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/02/16 08:19:57 jruoho Exp $
+# $NetBSD: Makefile,v 1.3.58.1 2019/06/10 22:09:44 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=   wmimsi
 IOCONF=	wmimsi.ioconf
 SRCS=	wmi_msi.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

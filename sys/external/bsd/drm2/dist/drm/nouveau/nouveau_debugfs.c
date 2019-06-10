@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_debugfs.c,v 1.1.1.1.32.1 2019/06/10 22:08:06 christos Exp $	*/
+
 /*
  * Copyright (C) 2009 Red Hat <bskeggs@redhat.com>
  *
@@ -27,6 +29,9 @@
  * Authors:
  *  Ben Skeggs <bskeggs@redhat.com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_debugfs.c,v 1.1.1.1.32.1 2019/06/10 22:08:06 christos Exp $");
 
 #include "nouveau_debugfs.h"
 #include "nouveau_drm.h"

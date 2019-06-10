@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RX for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -36,6 +36,7 @@
 
 #include "elf/rx.h"
 #include "elf-bfd.h"
+#include <algorithm>
 
 /* Certain important register numbers.  */
 enum
@@ -149,6 +150,66 @@ rx_register_name (struct gdbarch *gdbarch, int regnr)
   return reg_names[regnr];
 }
 
+/* Construct the flags type for PSW and BPSW.  */
+
+static struct type *
+rx_psw_type (struct gdbarch *gdbarch)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (tdep->rx_psw_type == NULL)
+    {
+      tdep->rx_psw_type = arch_flags_type (gdbarch, "rx_psw_type", 4);
+      append_flags_type_flag (tdep->rx_psw_type, 0, "C");
+      append_flags_type_flag (tdep->rx_psw_type, 1, "Z");
+      append_flags_type_flag (tdep->rx_psw_type, 2, "S");
+      append_flags_type_flag (tdep->rx_psw_type, 3, "O");
+      append_flags_type_flag (tdep->rx_psw_type, 16, "I");
+      append_flags_type_flag (tdep->rx_psw_type, 17, "U");
+      append_flags_type_flag (tdep->rx_psw_type, 20, "PM");
+      append_flags_type_flag (tdep->rx_psw_type, 24, "IPL0");
+      append_flags_type_flag (tdep->rx_psw_type, 25, "IPL1");
+      append_flags_type_flag (tdep->rx_psw_type, 26, "IPL2");
+      append_flags_type_flag (tdep->rx_psw_type, 27, "IPL3");
+    }
+  return tdep->rx_psw_type;
+}
+
+/* Construct flags type for FPSW.  */
+
+static struct type *
+rx_fpsw_type (struct gdbarch *gdbarch)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (tdep->rx_fpsw_type == NULL)
+    {
+      tdep->rx_fpsw_type = arch_flags_type (gdbarch, "rx_fpsw_type", 4);
+      append_flags_type_flag (tdep->rx_fpsw_type, 0, "RM0");
+      append_flags_type_flag (tdep->rx_fpsw_type, 1, "RM1");
+      append_flags_type_flag (tdep->rx_fpsw_type, 2, "CV");
+      append_flags_type_flag (tdep->rx_fpsw_type, 3, "CO");
+      append_flags_type_flag (tdep->rx_fpsw_type, 4, "CZ");
+      append_flags_type_flag (tdep->rx_fpsw_type, 5, "CU");
+      append_flags_type_flag (tdep->rx_fpsw_type, 6, "CX");
+      append_flags_type_flag (tdep->rx_fpsw_type, 7, "CE");
+      append_flags_type_flag (tdep->rx_fpsw_type, 8, "DN");
+      append_flags_type_flag (tdep->rx_fpsw_type, 10, "EV");
+      append_flags_type_flag (tdep->rx_fpsw_type, 11, "EO");
+      append_flags_type_flag (tdep->rx_fpsw_type, 12, "EZ");
+      append_flags_type_flag (tdep->rx_fpsw_type, 13, "EU");
+      append_flags_type_flag (tdep->rx_fpsw_type, 14, "EX");
+      append_flags_type_flag (tdep->rx_fpsw_type, 26, "FV");
+      append_flags_type_flag (tdep->rx_fpsw_type, 27, "FO");
+      append_flags_type_flag (tdep->rx_fpsw_type, 28, "FZ");
+      append_flags_type_flag (tdep->rx_fpsw_type, 29, "FU");
+      append_flags_type_flag (tdep->rx_fpsw_type, 30, "FX");
+      append_flags_type_flag (tdep->rx_fpsw_type, 31, "FS");
+    }
+
+  return tdep->rx_fpsw_type;
+}
+
 /* Implement the "register_type" gdbarch method.  */
 static struct type *
 rx_register_type (struct gdbarch *gdbarch, int reg_nr)
@@ -158,9 +219,9 @@ rx_register_type (struct gdbarch *gdbarch, int reg_nr)
   if (reg_nr == RX_PC_REGNUM)
     return builtin_type (gdbarch)->builtin_func_ptr;
   else if (reg_nr == RX_PSW_REGNUM || reg_nr == RX_BPSW_REGNUM)
-    return tdep->rx_psw_type;
+    return rx_psw_type (gdbarch);
   else if (reg_nr == RX_FPSW_REGNUM)
-    return tdep->rx_fpsw_type;
+    return rx_fpsw_type (gdbarch);
   else if (reg_nr == RX_ACC_REGNUM)
     return builtin_type (gdbarch)->builtin_unsigned_long_long;
   else
@@ -897,7 +958,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      && arg_size <= 4 * (RX_R4_REGNUM - arg_reg + 1)
 		      && arg_size % 4 == 0)
 		    {
-		      int len = min (arg_size, 4);
+		      int len = std::min (arg_size, (ULONGEST) 4);
 
 		      if (write_pass)
 			regcache_cooked_write_unsigned (regcache, arg_reg,
@@ -960,7 +1021,7 @@ rx_return_value (struct gdbarch *gdbarch,
 
       while (valtype_len > 0)
 	{
-	  int len = min (valtype_len, 4);
+	  int len = std::min (valtype_len, (ULONGEST) 4);
 
 	  regcache_cooked_read_unsigned (regcache, argreg, &u);
 	  store_unsigned_integer (readbuf + offset, len, byte_order, u);
@@ -978,7 +1039,7 @@ rx_return_value (struct gdbarch *gdbarch,
 
       while (valtype_len > 0)
 	{
-	  int len = min (valtype_len, 4);
+	  int len = std::min (valtype_len, (ULONGEST) 4);
 
 	  u = extract_unsigned_integer (writebuf + offset, len, byte_order);
 	  regcache_cooked_write_unsigned (regcache, argreg, u);
@@ -991,14 +1052,9 @@ rx_return_value (struct gdbarch *gdbarch,
   return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.  */
-static const gdb_byte *
-rx_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr, int *lenptr)
-{
-  static gdb_byte breakpoint[] = { 0x00 };
-  *lenptr = sizeof breakpoint;
-  return breakpoint;
-}
+constexpr gdb_byte rx_break_insn[] = { 0x00 };
+
+typedef BP_MANIPULATION (rx_break_insn) rx_breakpoint;
 
 /* Implement the dwarf_reg_to_regnum" gdbarch method.  */
 
@@ -1045,48 +1101,9 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
-
-  /* Initialize the flags type for PSW and BPSW.  */
-
-  tdep->rx_psw_type = arch_flags_type (gdbarch, "rx_psw_type", 4);
-  append_flags_type_flag (tdep->rx_psw_type, 0, "C");
-  append_flags_type_flag (tdep->rx_psw_type, 1, "Z");
-  append_flags_type_flag (tdep->rx_psw_type, 2, "S");
-  append_flags_type_flag (tdep->rx_psw_type, 3, "O");
-  append_flags_type_flag (tdep->rx_psw_type, 16, "I");
-  append_flags_type_flag (tdep->rx_psw_type, 17, "U");
-  append_flags_type_flag (tdep->rx_psw_type, 20, "PM");
-  append_flags_type_flag (tdep->rx_psw_type, 24, "IPL0");
-  append_flags_type_flag (tdep->rx_psw_type, 25, "IPL1");
-  append_flags_type_flag (tdep->rx_psw_type, 26, "IPL2");
-  append_flags_type_flag (tdep->rx_psw_type, 27, "IPL3");
-
-  /* Initialize flags type for FPSW.  */
-
-  tdep->rx_fpsw_type = arch_flags_type (gdbarch, "rx_fpsw_type", 4);
-  append_flags_type_flag (tdep->rx_fpsw_type, 0, "RM0");
-  append_flags_type_flag (tdep->rx_fpsw_type, 1, "RM1");
-  append_flags_type_flag (tdep->rx_fpsw_type, 2, "CV");
-  append_flags_type_flag (tdep->rx_fpsw_type, 3, "CO");
-  append_flags_type_flag (tdep->rx_fpsw_type, 4, "CZ");
-  append_flags_type_flag (tdep->rx_fpsw_type, 5, "CU");
-  append_flags_type_flag (tdep->rx_fpsw_type, 6, "CX");
-  append_flags_type_flag (tdep->rx_fpsw_type, 7, "CE");
-  append_flags_type_flag (tdep->rx_fpsw_type, 8, "DN");
-  append_flags_type_flag (tdep->rx_fpsw_type, 10, "EV");
-  append_flags_type_flag (tdep->rx_fpsw_type, 11, "EO");
-  append_flags_type_flag (tdep->rx_fpsw_type, 12, "EZ");
-  append_flags_type_flag (tdep->rx_fpsw_type, 13, "EU");
-  append_flags_type_flag (tdep->rx_fpsw_type, 14, "EX");
-  append_flags_type_flag (tdep->rx_fpsw_type, 26, "FV");
-  append_flags_type_flag (tdep->rx_fpsw_type, 27, "FO");
-  append_flags_type_flag (tdep->rx_fpsw_type, 28, "FZ");
-  append_flags_type_flag (tdep->rx_fpsw_type, 29, "FU");
-  append_flags_type_flag (tdep->rx_fpsw_type, 30, "FX");
-  append_flags_type_flag (tdep->rx_fpsw_type, 31, "FS");
 
   set_gdbarch_num_regs (gdbarch, RX_NUM_REGS);
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
@@ -1096,7 +1113,8 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sp_regnum (gdbarch, RX_SP_REGNUM);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_decr_pc_after_break (gdbarch, 1);
-  set_gdbarch_breakpoint_from_pc (gdbarch, rx_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, rx_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, rx_breakpoint::bp_from_kind);
   set_gdbarch_skip_prologue (gdbarch, rx_skip_prologue);
 
   set_gdbarch_print_insn (gdbarch, print_insn_rx);

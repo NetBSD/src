@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -24,7 +24,7 @@
    functions.  Beware; some of the information there is outdated.  */
 
 #define N_HEADER_IN_TEXT(x) 0
-#define N_TXTOFF(x)         32
+#define N_TXTOFF(x)	    32
 #define ENTRY_CAN_BE_ZERO
 #define TEXT_START_ADDR     0
 
@@ -197,7 +197,7 @@ MY (swap_ext_reloc_out) (bfd *abfd,
   if (r_type > 2)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: Invalid relocation type exported: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type exported: %#x"),
 			  abfd, r_type);
 
       bfd_set_error (bfd_error_wrong_format);
@@ -241,7 +241,7 @@ MY (swap_ext_reloc_in) (bfd *abfd,
   if (r_type > 2)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: Invalid relocation type imported: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type imported: %#x"),
 			  abfd, r_type);
 
       bfd_set_error (bfd_error_wrong_format);
@@ -253,7 +253,7 @@ MY (swap_ext_reloc_in) (bfd *abfd,
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-        (_("%B: Bad relocation record imported: %d"), abfd, r_index);
+	(_("%pB: bad relocation record imported: %d"), abfd, r_index);
 
       bfd_set_error (bfd_error_wrong_format);
 

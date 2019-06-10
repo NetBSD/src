@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -412,7 +412,7 @@ typedef UINT64                          ACPI_PHYSICAL_ADDRESS;
 
 /* Names within the namespace are 4 bytes long */
 
-#define ACPI_NAME_SIZE                  4
+#define ACPI_NAMESEG_SIZE               4           /* Fixed by ACPI spec */
 #define ACPI_PATH_SEGMENT_LENGTH        5           /* 4 chars for name + 1 char for separator */
 #define ACPI_PATH_SEPARATOR             '.'
 
@@ -540,6 +540,10 @@ typedef UINT64                          ACPI_INTEGER;
 
 #define ACPI_ARRAY_LENGTH(x)            (sizeof(x) / sizeof((x)[0]))
 
+/* Use a union to align  string s to type t */
+#define ACPI_ALIGNED_STR_UNION(t, s)	\
+    (&((const union { char _s[sizeof(t)]; t _t; }){ s }._t))
+
 /* Pointer manipulation */
 
 #define ACPI_CAST_PTR(t, p)             ((t *) (ACPI_UINTPTR_T) (p))
@@ -559,17 +563,21 @@ typedef UINT64                          ACPI_INTEGER;
 /* Optimizations for 4-character (32-bit) ACPI_NAME manipulation */
 
 #ifndef ACPI_MISALIGNMENT_NOT_SUPPORTED
-#define ACPI_COMPARE_NAME(a,b)          (*ACPI_CAST_PTR (UINT32, (a)) == *ACPI_CAST_PTR (UINT32, (b)))
-#define ACPI_MOVE_NAME(dest,src)        (*ACPI_CAST_PTR (UINT32, (dest)) = *ACPI_CAST_PTR (UINT32, (src)))
+#define ACPI_COMPARE_NAMESEG(a,b)       (*ACPI_CAST_PTR (UINT32, (a)) == *ACPI_CAST_PTR (UINT32, (b)))
+#define ACPI_COPY_NAMESEG(dest,src)     (*ACPI_CAST_PTR (UINT32, (dest)) = *ACPI_CAST_PTR (UINT32, (src)))
 #else
-#define ACPI_COMPARE_NAME(a,b)          (!strncmp (ACPI_CAST_PTR (char, (a)), ACPI_CAST_PTR (char, (b)), ACPI_NAME_SIZE))
-#define ACPI_MOVE_NAME(dest,src)        (strncpy (ACPI_CAST_PTR (char, (dest)), ACPI_CAST_PTR (char, (src)), ACPI_NAME_SIZE))
+#define ACPI_COMPARE_NAMESEG(a,b)       (!strncmp (ACPI_CAST_PTR (char, (a)), ACPI_CAST_PTR (char, (b)), ACPI_NAMESEG_SIZE))
+#define ACPI_COPY_NAMESEG(dest,src)     (strncpy (ACPI_CAST_PTR (char, (dest)), ACPI_CAST_PTR (char, (src)), ACPI_NAMESEG_SIZE))
 #endif
 
 /* Support for the special RSDP signature (8 characters) */
 
 #define ACPI_VALIDATE_RSDP_SIG(a)       (!strncmp (ACPI_CAST_PTR (char, (a)), ACPI_SIG_RSDP, 8))
 #define ACPI_MAKE_RSDP_SIG(dest)        (memcpy (ACPI_CAST_PTR (char, (dest)), ACPI_SIG_RSDP, 8))
+
+/* Support for OEMx signature (x can be any character) */
+#define ACPI_IS_OEM_SIG(a)        (!strncmp (ACPI_CAST_PTR (char, (a)), ACPI_OEM_NAME, 3) &&\
+                                      strnlen (a, ACPI_NAMESEG_SIZE) == ACPI_NAMESEG_SIZE)
 
 /*
  * Algorithm to obtain access bit width.
@@ -656,8 +664,9 @@ typedef UINT64                          ACPI_INTEGER;
 #define ACPI_NOTIFY_SHUTDOWN_REQUEST    (UINT8) 0x0C
 #define ACPI_NOTIFY_AFFINITY_UPDATE     (UINT8) 0x0D
 #define ACPI_NOTIFY_MEMORY_UPDATE       (UINT8) 0x0E
+#define ACPI_NOTIFY_DISCONNECT_RECOVER  (UINT8) 0x0F
 
-#define ACPI_GENERIC_NOTIFY_MAX         0x0E
+#define ACPI_GENERIC_NOTIFY_MAX         0x0F
 #define ACPI_SPECIFIC_NOTIFY_MAX        0x84
 
 /*
@@ -1405,6 +1414,8 @@ typedef enum
 #define ACPI_OSI_WIN_10_RS1             0x0E
 #define ACPI_OSI_WIN_10_RS2             0x0F
 #define ACPI_OSI_WIN_10_RS3             0x10
+#define ACPI_OSI_WIN_10_RS4             0x11
+#define ACPI_OSI_WIN_10_RS5             0x12
 
 
 /* Definitions of getopt */

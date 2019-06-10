@@ -1,4 +1,4 @@
-/* $NetBSD: _lwp.c,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: _lwp.c,v 1.1.26.1 2019/06/10 22:05:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.1 2014/08/10 05:47:36 matt Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.1.26.1 2019/06/10 22:05:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,7 +58,8 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 
 	u->uc_mcontext.__gregs[_REG_X0] = (__greg_t)(uintptr_t)arg;
 	u->uc_mcontext.__gregs[_REG_SP] = ((__greg_t)sp) & -16;
-	u->uc_mcontext.__gregs[_REG_X29] = (__greg_t)(uintptr_t)_lwp_exit;
+	u->uc_mcontext.__gregs[_REG_LR] = (__greg_t)(uintptr_t)_lwp_exit;
 	u->uc_mcontext.__gregs[_REG_PC] = (__greg_t)(uintptr_t)start;
 	u->uc_mcontext.__gregs[_REG_TPIDR] = (__greg_t)(uintptr_t)private;
+	u->uc_flags |= _UC_TLSBASE;
 }

@@ -1,5 +1,5 @@
 /* Check calls to formatted I/O functions (-Wformat).
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -253,6 +253,8 @@ struct format_kind_info
   /* Pointer to type of argument expected if '*' is used for a precision,
      or NULL if '*' not used for precisions.  */
   tree *precision_type;
+  /* A format type that is a subset of our format */
+  int	parent_format_type;
 };
 
 #define T_I	&integer_type_node

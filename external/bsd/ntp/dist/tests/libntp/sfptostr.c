@@ -1,5 +1,3 @@
-/*	$NetBSD: sfptostr.c,v 1.1.1.6 2016/11/22 01:35:19 christos Exp $	*/
-
 /* 
  * This file contains test for both fptoa and fptoms (which uses dofptoa),
  * since all these functions are very similar.

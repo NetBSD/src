@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/11/12 08:24:37 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14.4.1 2019/06/10 22:06:26 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -31,6 +31,8 @@ CFLAGS+=	-Wno-pointer-sign
 TEXTADDR=	700000
 LDSCRIPT=	${.CURDIR}/boot.ldscript
 LINKFORMAT=	-static -N -Ttext ${TEXTADDR} -T ${LDSCRIPT}
+
+ELF2AOUT_OPTS=	-O	# LUNA's firmware requires OMAGIC a.out
 
 SRCS=	locore.S
 SRCS+=	init_main.c autoconf.c
@@ -78,8 +80,9 @@ LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 .include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
-	${ELF2AOUT} ${PROG}.elf ${PROG}.aout
+	${M68K_ELF2AOUT} ${ELF2AOUT_OPTS} ${PROG}.elf ${PROG}.aout
 	mv ${PROG}.aout ${PROG}
 
 CLEANFILES+=	${PROG}.aout ${PROG}.elf

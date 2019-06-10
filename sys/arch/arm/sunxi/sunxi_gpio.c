@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.21 2018/05/31 20:52:53 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.21.2.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21 2018/05/31 20:52:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21.2.1 2019/06/10 22:05:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21 2018/05/31 20:52:53 jmcneill Exp
 
 #define	SUNXI_GPIO_MAX_EINT_BANK	5
 #define	SUNXI_GPIO_MAX_EINT		32
+
+#define	SUNXI_GPIO_MAX_BANK		26
 
 #define	SUNXI_GPIO_PORT(port)		(0x24 * (port))
 #define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + 0x00 + (0x4 * ((pin) / 8)))
@@ -70,6 +72,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21 2018/05/31 20:52:53 jmcneill Exp
 #define	  SUNXI_GPIO_INT_MODE_DOUBLE_EDGE	0x4
 #define	SUNXI_GPIO_INT_CTL(bank)	(0x210 + 0x20 * (bank))
 #define	SUNXI_GPIO_INT_STATUS(bank)	(0x214 + 0x20 * (bank))
+#define	SUNXI_GPIO_INT_DEBOUNCE(bank)	(0x218 + 0x20 * (bank))
+#define	  SUNXI_GPIO_INT_DEBOUNCE_CLK_PRESCALE	__BITS(6,4)
+#define	  SUNXI_GPIO_INT_DEBOUNCE_CLK_SEL	__BIT(0)
+#define	SUNXI_GPIO_GRP_CONFIG(bank)	(0x300 + 0x4 * (bank))
+#define	 SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK	0xf
 
 static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN4I_A10
@@ -116,7 +123,7 @@ static const struct of_compat_data compat_data[] = {
 struct sunxi_gpio_eint {
 	int (*eint_func)(void *);
 	void *eint_arg;
-	int eint_flags;
+	bool eint_mpsafe;
 	int eint_bank;
 	int eint_num;
 };
@@ -125,12 +132,15 @@ struct sunxi_gpio_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	int sc_phandle;
 	const struct sunxi_gpio_padconf *sc_padconf;
 	kmutex_t sc_lock;
 
 	struct gpio_chipset_tag sc_gp;
 	gpio_pin_t *sc_pins;
 	device_t sc_gpiodev;
+
+	struct fdtbus_regulator *sc_pin_supply[SUNXI_GPIO_MAX_BANK];
 
 	u_int sc_eint_bank_max;
 
@@ -422,11 +432,10 @@ sunxi_gpio_intr(void *priv)
 			eint = &sc->sc_eint[bank][bit - 1];
 			if (eint->eint_func == NULL)
 				continue;
-			const bool mpsafe = (eint->eint_flags & FDT_INTR_MPSAFE) != 0;
-			if (!mpsafe)
+			if (!eint->eint_mpsafe)
 				KERNEL_LOCK(1, curlwp);
 			ret |= eint->eint_func(eint->eint_arg);
-			if (!mpsafe)
+			if (!eint->eint_mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 		}
 	}
@@ -435,53 +444,13 @@ sunxi_gpio_intr(void *priv)
 }
 
 static void *
-sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
+sunxi_intr_enable(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def, u_int mode, bool mpsafe,
     int (*func)(void *), void *arg)
 {
-	struct sunxi_gpio_softc * const sc = device_private(dev);
-	const struct sunxi_gpio_pins *pin_def;
-	struct sunxi_gpio_eint *eint;
 	uint32_t val;
-	u_int mode;
-
-	if (ipl != IPL_VM) {
-		aprint_error_dev(dev, "%s: wrong IPL %d (expected %d)\n",
-		    __func__, ipl, IPL_VM);
-		return NULL;
-	}
-
-	/* 1st cell is the bank */
-	/* 2nd cell is the pin */
-	/* 3rd cell is flags */
-	const u_int port = be32toh(specifier[0]);
-	const u_int pin = be32toh(specifier[1]);
-	const u_int type = be32toh(specifier[2]) & 0xf;
-
-	switch (type) {
-	case 0x1:
-		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
-		break;
-	case 0x2:
-		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
-		break;
-	case 0x3:
-		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
-		break;
-	case 0x4:
-		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
-		break;
-	case 0x8:
-		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
-		break;
-	default:
-		aprint_error_dev(dev, "%s: unsupported irq type 0x%x\n",
-		    __func__, type);
-		return NULL;
-	}
-
-	pin_def = sunxi_gpio_lookup(sc, port, pin);
-	if (pin_def == NULL)
-		return NULL;
+	struct sunxi_gpio_eint *eint;
+	
 	if (pin_def->functions[pin_def->eint_func] == NULL ||
 	    strcmp(pin_def->functions[pin_def->eint_func], "irq") != 0)
 		return NULL;
@@ -504,7 +473,7 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	eint->eint_func = func;
 	eint->eint_arg = arg;
-	eint->eint_flags = flags;
+	eint->eint_mpsafe = mpsafe;
 	eint->eint_bank = pin_def->eint_bank;
 	eint->eint_num = pin_def->eint_num;
 
@@ -513,6 +482,9 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	val &= ~SUNXI_GPIO_INT_MODEMASK(eint->eint_num);
 	val |= __SHIFTIN(mode, SUNXI_GPIO_INT_MODEMASK(eint->eint_num));
 	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num), val);
+
+	val = SUNXI_GPIO_INT_DEBOUNCE_CLK_SEL;
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_DEBOUNCE(eint->eint_bank), val);
 
 	/* Enable eint */
 	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
@@ -525,10 +497,8 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 }
 
 static void
-sunxi_gpio_disestablish(device_t dev, void *ih)
+sunxi_intr_disable(struct sunxi_gpio_softc *sc, struct sunxi_gpio_eint *eint)
 {
-	struct sunxi_gpio_softc * const sc = device_private(dev);
-	struct sunxi_gpio_eint * const eint = ih;
 	uint32_t val;
 
 	KASSERT(eint->eint_func != NULL);
@@ -543,13 +513,73 @@ sunxi_gpio_disestablish(device_t dev, void *ih)
 
 	eint->eint_func = NULL;
 	eint->eint_arg = NULL;
-	eint->eint_flags = 0;
+	eint->eint_mpsafe = false;
 
 	mutex_exit(&sc->sc_lock);
 }
 
+static void *
+sunxi_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
+    int (*func)(void *), void *arg)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	bool mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
+	const struct sunxi_gpio_pins *pin_def;
+	u_int mode;
+
+	if (ipl != IPL_VM) {
+		aprint_error_dev(dev, "%s: wrong IPL %d (expected %d)\n",
+		    __func__, ipl, IPL_VM);
+		return NULL;
+	}
+
+	/* 1st cell is the bank */
+	/* 2nd cell is the pin */
+	/* 3rd cell is flags */
+	const u_int port = be32toh(specifier[0]);
+	const u_int pin = be32toh(specifier[1]);
+	const u_int type = be32toh(specifier[2]) & 0xf;
+
+	switch (type) {
+	case FDT_INTR_TYPE_POS_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
+		break;
+	case FDT_INTR_TYPE_NEG_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
+		break;
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
+		break;
+	case FDT_INTR_TYPE_HIGH_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
+		break;
+	case FDT_INTR_TYPE_LOW_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
+		break;
+	default:
+		aprint_error_dev(dev, "%s: unsupported irq type 0x%x\n",
+		    __func__, type);
+		return NULL;
+	}
+
+	pin_def = sunxi_gpio_lookup(sc, port, pin);
+	if (pin_def == NULL)
+		return NULL;
+
+	return sunxi_intr_enable(sc, pin_def, mode, mpsafe, func, arg);
+}
+
+static void
+sunxi_fdt_intr_disestablish(device_t dev, void *ih)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	struct sunxi_gpio_eint * const eint = ih;
+
+	sunxi_intr_disable(sc, eint);
+}
+
 static bool
-sunxi_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
+sunxi_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
 	const struct sunxi_gpio_pins *pin_def;
@@ -572,17 +602,80 @@ sunxi_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 }
 
 static struct fdtbus_interrupt_controller_func sunxi_gpio_intrfuncs = {
-	.establish = sunxi_gpio_establish,
-	.disestablish = sunxi_gpio_disestablish,
-	.intrstr = sunxi_gpio_intrstr,
+	.establish = sunxi_fdt_intr_establish,
+	.disestablish = sunxi_fdt_intr_disestablish,
+	.intrstr = sunxi_fdt_intrstr,
 };
+
+static void *
+sunxi_gpio_intr_establish(void *vsc, int pin, int ipl, int irqmode,
+    int (*func)(void *), void *arg)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	bool mpsafe = (irqmode & GPIO_INTR_MPSAFE) != 0;
+	int type = irqmode & GPIO_INTR_MODE_MASK;
+	const struct sunxi_gpio_pins *pin_def;
+	u_int mode;
+
+	switch (type) {
+	case GPIO_INTR_POS_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
+		break;
+	case GPIO_INTR_NEG_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
+		break;
+	case GPIO_INTR_DOUBLE_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
+		break;
+	case GPIO_INTR_HIGH_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
+		break;
+	case GPIO_INTR_LOW_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev, "%s: unsupported irq type 0x%x\n",
+				 __func__, type);
+		return NULL;
+	}
+
+	if (pin < 0 || pin >= sc->sc_padconf->npins)
+		return NULL;
+	pin_def = &sc->sc_padconf->pins[pin];
+
+	return sunxi_intr_enable(sc, pin_def, mode, mpsafe, func, arg);
+}
+
+static void
+sunxi_gpio_intr_disestablish(void *vsc, void *ih)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	struct sunxi_gpio_eint * const eint = ih;
+
+	sunxi_intr_disable(sc, eint);
+}
+
+static bool
+sunxi_gpio_intrstr(void *vsc, int pin, int irqmode, char *buf, size_t buflen)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	const struct sunxi_gpio_pins *pin_def;
+
+	if (pin < 0 || pin >= sc->sc_padconf->npins)
+		return NULL;
+	pin_def = &sc->sc_padconf->pins[pin];
+
+	snprintf(buf, buflen, "GPIO %s", pin_def->name);
+
+	return true;
+}
 
 static const char *
 sunxi_pinctrl_parse_function(int phandle)
 {
 	const char *function;
 
-	function = fdtbus_get_string(phandle, "function");
+	function = fdtbus_pinctrl_parse_function(phandle);
 	if (function != NULL)
 		return function;
 
@@ -592,18 +685,17 @@ sunxi_pinctrl_parse_function(int phandle)
 static const char *
 sunxi_pinctrl_parse_pins(int phandle, int *pins_len)
 {
+	const char *pins;
 	int len;
 
-	len = OF_getproplen(phandle, "pins");
-	if (len > 0) {
-		*pins_len = len;
-		return fdtbus_get_string(phandle, "pins");
-	}
+	pins = fdtbus_pinctrl_parse_pins(phandle, pins_len);
+	if (pins != NULL)
+		return pins;
 
 	len = OF_getproplen(phandle, "allwinner,pins");
 	if (len > 0) {
 		*pins_len = len;
-		return fdtbus_get_string(phandle, "allwinner,pins");
+		return fdtbus_get_prop(phandle, "allwinner,pins", pins_len);
 	}
 
 	return NULL;
@@ -613,15 +705,13 @@ static int
 sunxi_pinctrl_parse_bias(int phandle)
 {
 	u_int pull;
-	int bias = -1;
+	int bias;
 
-	if (of_hasprop(phandle, "bias-disable"))
-		bias = 0;
-	else if (of_hasprop(phandle, "bias-pull-up"))
-		bias = GPIO_PIN_PULLUP;
-	else if (of_hasprop(phandle, "bias-pull-down"))
-		bias = GPIO_PIN_PULLDOWN;
-	else if (of_getprop_uint32(phandle, "allwinner,pull", &pull) == 0) {
+	bias = fdtbus_pinctrl_parse_bias(phandle, NULL);
+	if (bias != -1)
+		return bias;
+
+	if (of_getprop_uint32(phandle, "allwinner,pull", &pull) == 0) {
 		switch (pull) {
 		case 0:
 			bias = 0;
@@ -643,13 +733,72 @@ sunxi_pinctrl_parse_drive_strength(int phandle)
 {
 	int val;
 
-	if (of_getprop_uint32(phandle, "drive-strength", &val) == 0)
+	val = fdtbus_pinctrl_parse_drive_strength(phandle);
+	if (val != -1)
 		return val;
 
 	if (of_getprop_uint32(phandle, "allwinner,drive", &val) == 0)
 		return (val + 1) * 10;
 
 	return -1;
+}
+
+static void
+sunxi_pinctrl_enable_regulator(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def)
+{
+	char supply_prop[16];
+	uint32_t val;
+	u_int uvol;
+	int error;
+
+	const char c = tolower(pin_def->name[1]);
+	if (c < 'a' || c > 'z')
+		return;
+	const int index = c - 'a';
+
+	if (sc->sc_pin_supply[index] != NULL) {
+		/* Already enabled */
+		return;
+	}
+
+	snprintf(supply_prop, sizeof(supply_prop), "vcc-p%c-supply", c);
+	sc->sc_pin_supply[index] = fdtbus_regulator_acquire(sc->sc_phandle, supply_prop);
+	if (sc->sc_pin_supply[index] == NULL)
+		return;
+
+	aprint_debug_dev(sc->sc_dev, "enable \"%s\"\n", supply_prop);
+	error = fdtbus_regulator_enable(sc->sc_pin_supply[index]);
+	if (error != 0)
+		aprint_error_dev(sc->sc_dev, "failed to enable %s: %d\n", supply_prop, error);
+
+	if (sc->sc_padconf->has_io_bias_config) {
+		error = fdtbus_regulator_get_voltage(sc->sc_pin_supply[index], &uvol);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev, "failed to get %s voltage: %d\n",
+			    supply_prop, error);
+			uvol = 0;
+		}
+		if (uvol != 0) {
+			if (uvol <= 1800000)
+				val = 0x0;	/* 1.8V */
+			else if (uvol <= 2500000)
+				val = 0x6;	/* 2.5V */
+			else if (uvol <= 2800000)
+				val = 0x9;	/* 2.8V */
+			else if (uvol <= 3000000)
+				val = 0xa;	/* 3.0V */
+			else
+				val = 0xd;	/* 3.3V */
+
+			aprint_debug_dev(sc->sc_dev, "set io bias config for port %d to 0x%x\n",
+			    pin_def->port, val);
+			val = GPIO_READ(sc, SUNXI_GPIO_GRP_CONFIG(pin_def->port));
+			val &= ~SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK;
+			val |= __SHIFTIN(val, SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK);
+			GPIO_WRITE(sc, SUNXI_GPIO_GRP_CONFIG(pin_def->port), val);
+		}
+	}
 }
 
 static int
@@ -696,6 +845,8 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 
 		if (drive_strength != -1)
 			sunxi_gpio_setdrv(sc, pin_def, drive_strength);
+
+		sunxi_pinctrl_enable_regulator(sc, pin_def);
 	}
 
 	mutex_exit(&sc->sc_lock);
@@ -775,6 +926,9 @@ sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
 	gp->gp_pin_read = sunxi_gpio_pin_read;
 	gp->gp_pin_write = sunxi_gpio_pin_write;
 	gp->gp_pin_ctl = sunxi_gpio_pin_ctl;
+	gp->gp_intr_establish = sunxi_gpio_intr_establish;
+	gp->gp_intr_disestablish = sunxi_gpio_intr_disestablish;
+	gp->gp_intr_str = sunxi_gpio_intrstr;
 
 	const u_int npins = sc->sc_padconf->npins;
 	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) * npins, KM_SLEEP);
@@ -784,6 +938,13 @@ sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
 		sc->sc_pins[pin].pin_num = pin;
 		sc->sc_pins[pin].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
 		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+		if (pin_def->functions[pin_def->eint_func] != NULL &&
+		    strcmp(pin_def->functions[pin_def->eint_func], "irq") == 0) {
+			sc->sc_pins[pin].pin_intrcaps =
+			    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
+			    GPIO_INTR_HIGH_LEVEL | GPIO_INTR_LOW_LEVEL |
+			    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_MPSAFE;
+		}
 		sc->sc_pins[pin].pin_state = sunxi_gpio_pin_read(sc, pin);
 		strlcpy(sc->sc_pins[pin].pin_defname, pin_def->name,
 		    sizeof(sc->sc_pins[pin].pin_defname));
@@ -835,6 +996,7 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 		}
 
 	sc->sc_dev = self;
+	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
@@ -849,7 +1011,10 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	fdtbus_register_gpio_controller(self, phandle, &sunxi_gpio_funcs);
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!of_hasprop(child, "function") || !of_hasprop(child, "pins"))
+		bool is_valid =
+		    (of_hasprop(child, "function") && of_hasprop(child, "pins")) ||
+		    (of_hasprop(child, "allwinner,function") && of_hasprop(child, "allwinner,pins"));
+		if (!is_valid)
 			continue;
 		fdtbus_register_pinctrl_config(self, child, &sunxi_pinctrl_funcs);
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.394 2018/05/23 07:45:35 maxv Exp $
+#	$NetBSD: files.i386,v 1.394.2.1 2019/06/10 22:06:20 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -17,9 +17,6 @@ defparam		CPURESET_DELAY
 
 # Obsolete Xbox support
 obsolete defflag	XBOX
-
-defflag			PMC
-defflag			KASLR
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -132,7 +129,8 @@ device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
 	cpubus, ioapicbus, apmbus, pnpbiosbus, ipmibus,
 	bioscall
 attach	mainbus at root
-file	arch/i386/i386/mainbus.c	mainbus
+file	arch/i386/i386/i386_mainbus.c	mainbus
+file	arch/x86/x86/mainbus.c		mainbus
 
 #
 # PCI-only drivers
@@ -327,9 +325,6 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
 
-# NDIS compatibilty (COMPAT_NDIS)
-include "compat/ndis/files.ndis"
-
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
@@ -409,6 +404,12 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
+
+# Microsoft Hyper-V
+include "dev/hyperv/files.hyperv"
+
+attach	vmbus at acpinodebus with vmbus_acpi
+file	dev/acpi/vmbus_acpi.c			vmbus_acpi
 
 # Obsolete vesabios/vesafb flags
 obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE

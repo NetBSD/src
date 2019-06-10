@@ -1,5 +1,5 @@
 /* Initialization of uninitialized regs.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,41 +20,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "backend.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hashtab.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
+#include "tree.h"
+#include "df.h"
 #include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
 #include "expr.h"
 #include "tree-pass.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "df.h"
 
 /* Check all of the uses of pseudo variables.  If any use that is MUST
    uninitialized, add a store of 0 immediately before it.  For

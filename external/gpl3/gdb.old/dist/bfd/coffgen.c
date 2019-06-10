@@ -1,5 +1,5 @@
 /* Support for the generic parts of COFF, for BFD.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -173,7 +173,8 @@ make_a_section_from_file (bfd *abfd,
 	case compress:
 	  if (!bfd_init_section_compress_status (abfd, return_section))
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext: c-format */
 		(_("%B: unable to initialize compress status for section %s"),
 		 abfd, name);
 	      return FALSE;
@@ -196,7 +197,8 @@ make_a_section_from_file (bfd *abfd,
 	case decompress:
 	  if (!bfd_init_section_decompress_status (abfd, return_section))
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext: c-format */
 		(_("%B: unable to initialize decompress status for section %s"),
 		 abfd, name);
 	      return FALSE;
@@ -1218,7 +1220,8 @@ coff_write_native_symbol (bfd *abfd,
 }
 
 static void
-null_error_handler (const char * fmt ATTRIBUTE_UNUSED, ...)
+null_error_handler (const char *fmt ATTRIBUTE_UNUSED,
+		    va_list ap ATTRIBUTE_UNUSED)
 {
 }
 
@@ -1640,7 +1643,12 @@ _bfd_coff_get_external_symbols (bfd *abfd)
 
   syms = bfd_malloc (size);
   if (syms == NULL)
-    return FALSE;
+    {
+      /* PR 21013: Provide an error message when the alloc fails.  */
+      _bfd_error_handler (_("%B: Not enough memory to allocate space for %lu symbols"),
+			  abfd, size);
+      return FALSE;
+    }
 
   if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
       || bfd_bread (syms, size, abfd) != size)
@@ -1703,7 +1711,8 @@ _bfd_coff_read_string_table (bfd *abfd)
 
   if (strsize < STRING_SIZE_SIZE)
     {
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext: c-format */
 	(_("%B: bad string table size %lu"), abfd, (unsigned long) strsize);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
@@ -2133,7 +2142,7 @@ coff_print_symbol (bfd *abfd,
 				 auxp->u.auxent.x_scn.x_comdat);
 		      break;
 		    }
-		    /* Otherwise fall through.  */
+		  /* Fall through.  */
 		case C_EXT:
 		case C_AIX_WEAKEXT:
 		  if (ISFCN (combined->u.syment.n_type))
@@ -2153,7 +2162,7 @@ coff_print_symbol (bfd *abfd,
 			       llnos, next);
 		      break;
 		    }
-		  /* Otherwise fall through.  */
+		  /* Fall through.  */
 		default:
 		  fprintf (file, "AUX lnno %d size 0x%x tagndx %ld",
 			   auxp->u.auxent.x_sym.x_misc.x_lnsz.x_lnno,
@@ -2250,6 +2259,8 @@ coff_find_nearest_line_with_names (bfd *abfd,
 				     &coff_data(abfd)->dwarf2_find_line_info))
     return TRUE;
 
+  sec_data = coff_section_data (abfd, section);
+
   /* If the DWARF lookup failed, but there is DWARF information available
      then the problem might be that the file has been rebased.  This tool
      changes the VMAs of all the sections, but it does not update the DWARF
@@ -2258,8 +2269,26 @@ coff_find_nearest_line_with_names (bfd *abfd,
     {
       bfd_signed_vma bias;
 
-      bias = _bfd_dwarf2_find_symbol_bias (symbols,
-					   & coff_data (abfd)->dwarf2_find_line_info);
+      /* Create a cache of the result for the next call.  */
+      if (sec_data == NULL && section->owner == abfd)
+	{
+	  amt = sizeof (struct coff_section_tdata);
+	  section->used_by_bfd = bfd_zalloc (abfd, amt);
+	  sec_data = (struct coff_section_tdata *) section->used_by_bfd;
+	}
+
+      if (sec_data != NULL && sec_data->saved_bias)
+	bias = sec_data->saved_bias;
+      else
+	{
+	  bias = _bfd_dwarf2_find_symbol_bias (symbols,
+					       & coff_data (abfd)->dwarf2_find_line_info);
+	  if (sec_data)
+	    {
+	      sec_data->saved_bias = TRUE;
+	      sec_data->bias = bias;
+	    }
+	}
 
       if (bias
 	  && _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section,
@@ -2354,10 +2383,16 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	}
     }
 
-  /* Now wander though the raw linenumbers of the section.  */
-  /* If we have been called on this section before, and the offset we
-     want is further down then we can prime the lookup loop.  */
-  sec_data = coff_section_data (abfd, section);
+  if (section->lineno_count == 0)
+    {
+      *functionname_ptr = NULL;
+      *line_ptr = 0;
+      return TRUE;
+    }
+
+  /* Now wander though the raw linenumbers of the section.
+     If we have been called on this section before, and the offset
+     we want is further down then we can prime the lookup loop.  */
   if (sec_data != NULL
       && sec_data->i > 0
       && offset >= sec_data->offset)
@@ -2386,6 +2421,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	      coff_symbol_type *coff = (coff_symbol_type *) (l->u.sym);
 	      if (coff->symbol.value > offset)
 		break;
+
 	      *functionname_ptr = coff->symbol.name;
 	      last_value = coff->symbol.value;
 	      if (coff->native)
@@ -2442,6 +2478,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
       section->used_by_bfd = bfd_zalloc (abfd, amt);
       sec_data = (struct coff_section_tdata *) section->used_by_bfd;
     }
+
   if (sec_data != NULL)
     {
       sec_data->offset = offset;
@@ -2748,8 +2785,22 @@ _bfd_coff_gc_mark_hook (asection *sec,
         case bfd_link_hash_common:
           return h->root.u.c.p->section;
 
-	case bfd_link_hash_undefined:
 	case bfd_link_hash_undefweak:
+	  if (h->symbol_class == C_NT_WEAK && h->numaux == 1)
+	    {
+	      /* PE weak externals.  A weak symbol may include an auxiliary
+		 record indicating that if the weak symbol is not resolved,
+		 another external symbol is used instead.  */
+	      struct coff_link_hash_entry *h2 =
+		h->auxbfd->tdata.coff_obj_data->sym_hashes[
+		    h->aux->x_sym.x_tagndx.l];
+
+	      if (h2 && h2->root.type != bfd_link_hash_undefined)
+		return  h2->root.u.def.section;
+	    }
+	  break;
+
+	case bfd_link_hash_undefined:
         default:
           break;
         }
@@ -2860,7 +2911,7 @@ _bfd_coff_gc_mark_extra_sections (struct bfd_link_info *info,
       asection *isec;
       bfd_boolean some_kept;
 
-      if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+      if (bfd_get_flavour (ibfd) != bfd_target_coff_flavour)
 	continue;
 
       /* Ensure all linker created sections are kept, and see whether
@@ -2952,7 +3003,9 @@ coff_gc_sweep (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 	  o->flags |= SEC_EXCLUDE;
 
 	  if (info->print_gc_sections && o->size != 0)
-            _bfd_error_handler (_("Removing unused section '%s' in file '%B'"), sub, o->name);
+	    /* xgettext: c-format */
+	    _bfd_error_handler (_("Removing unused section '%A' in file '%B'"),
+				o, sub);
 
 #if 0
 	  /* But we also have to update some of the relocation
@@ -3028,7 +3081,7 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
   if (!bed->can_gc_sections
       || !is_coff_hash_table (info->hash))
     {
-      (*_bfd_error_handler)(_("Warning: gc-sections option ignored"));
+      _bfd_error_handler(_("Warning: gc-sections option ignored"));
       return TRUE;
     }
 #endif

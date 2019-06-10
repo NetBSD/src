@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.197.4.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197.4.1 2019/06/10 22:09:04 christos Exp $");
 
 #include "veriexec.h"
 
@@ -297,6 +297,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 	int permbits = 0;
 	int error;
 
+	if (vp->v_type == VNON || vp->v_type == VBAD)
+		return ENXIO;
+
 	if ((fflags & O_DIRECTORY) != 0 && vp->v_type != VDIR)
 		return ENOTDIR;
 
@@ -482,7 +485,7 @@ vn_readdir(file_t *fp, char *bf, int segflg, u_int count, int *done,
 	int error, eofflag;
 
 	/* Limit the size on any kernel buffers used by VOP_READDIR */
-	count = min(MAXBSIZE, count);
+	count = uimin(MAXBSIZE, count);
 
 unionread:
 	if (vp->v_type != VDIR)
@@ -762,7 +765,7 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		}
 		if (com == FIONBIO || com == FIOASYNC)	/* XXX */
 			return (0);			/* XXX */
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case VFIFO:
 	case VCHR:
 	case VBLK:

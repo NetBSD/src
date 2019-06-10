@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.80 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.80.2.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.80 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.80.2.1 2019/06/10 22:07:17 christos Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -229,6 +229,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	}
 	mutex_init(&sc->sc_rsw_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_rsw_cv, "wpirsw");
+	sc->sc_rsw_suspend = false;
+	sc->sc_rsw_suspended = false;
 	if (kthread_create(PRI_NONE, 0, NULL,
 	    wpi_rsw_thread, sc, &sc->sc_rsw_lwp, "%s", device_xname(self))) {
 		aprint_error_dev(self, "couldn't create switch thread\n");
@@ -269,8 +271,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 
 	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
-	    wpi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, sc->sc_pihp[0],
+	    IPL_NET, wpi_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -657,6 +659,7 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 static void
 wpi_free_rpool(struct wpi_softc *sc)
 {
+	mutex_destroy(&sc->rxq.freelist_mtx);
 	wpi_dma_contig_free(&sc->rxq.buf_dma);
 }
 
@@ -2034,7 +2037,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			m_freem(m0);
 			return ENOMEM;
 		}
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
 			if (!(mnew->m_flags & M_EXT)) {
@@ -2631,7 +2634,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 	}
 
 	/* never exceed channel's maximum allowed Tx power */
-	pwr = min(pwr, sc->maxpwr[chan]);
+	pwr = uimin(pwr, sc->maxpwr[chan]);
 
 	/* retrieve power index into gain tables from samples */
 	for (sample = group->samples; sample < &group->samples[3]; sample++)
@@ -3267,6 +3270,10 @@ wpi_init(struct ifnet *ifp)
 		error = EBUSY;
 		goto fail1;
 	}
+	sc->sc_rsw_suspend = false;
+	cv_broadcast(&sc->sc_rsw_cv);
+	while (sc->sc_rsw_suspend)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
 	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* wait for thermal sensors to calibrate */
@@ -3316,6 +3323,14 @@ wpi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
+	/* suspend rfkill test thread */
+	mutex_enter(&sc->sc_rsw_mtx);
+	sc->sc_rsw_suspend = true;
+	cv_broadcast(&sc->sc_rsw_cv);
+	while (!sc->sc_rsw_suspended)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* disable interrupts */
 	WPI_WRITE(sc, WPI_MASK, 0);
@@ -3462,7 +3477,14 @@ wpi_rsw_thread(void *arg)
 			mutex_exit(&sc->sc_rsw_mtx);
 			kthread_exit(0);
 		}
+		if (sc->sc_rsw_suspend) {
+			sc->sc_rsw_suspended = true;
+			cv_broadcast(&sc->sc_rsw_cv);
+			while (sc->sc_rsw_suspend || sc->sc_dying)
+				cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+			sc->sc_rsw_suspended = false;
+			cv_broadcast(&sc->sc_rsw_cv);
+		}
 		wpi_getrfkill(sc);
 	}
 }
-

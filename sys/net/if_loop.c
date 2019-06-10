@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.103 2018/06/28 06:02:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.103.2.1 2019/06/10 22:09:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.103 2018/06/28 06:02:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.103.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -298,7 +298,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 #endif /* ALTQ */
 
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 
 #ifdef MPLS
 	if (rt != NULL && rt_gettag(rt) != NULL &&
@@ -320,7 +320,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		csum_flags = m->m_pkthdr.csum_flags;
 		KASSERT((csum_flags & ~(M_CSUM_IPv4|M_CSUM_UDPv4)) == 0);
 		if (csum_flags != 0 && IN_LOOPBACK_NEED_CHECKSUM(csum_flags)) {
-			ip_undefer_csum(m, 0, csum_flags);
+			in_undefer_cksum(m, 0, csum_flags);
 		}
 		m->m_pkthdr.csum_flags = 0;
 		pktq = ip_pktq;
@@ -332,7 +332,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		KASSERT((csum_flags & ~M_CSUM_UDPv6) == 0);
 		if (csum_flags != 0 &&
 		    IN6_LOOPBACK_NEED_CHECKSUM(csum_flags)) {
-			ip6_undefer_csum(m, 0, csum_flags);
+			in6_undefer_cksum(m, 0, csum_flags);
 		}
 		m->m_pkthdr.csum_flags = 0;
 		m->m_flags |= M_LOOP;
@@ -530,4 +530,4 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, loop, "")
+IF_MODULE(MODULE_CLASS_DRIVER, loop, NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: fault.c,v 1.105.4.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105.4.1 2019/06/10 22:05:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +113,11 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $")
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
 
-extern char fusubailout[];
-
 #ifdef DEBUG
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
 
-#if defined(CPU_ARM3) || defined(CPU_ARM6) || \
-    defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
 /* These CPUs may need data/prefetch abort fixups */
 #define	CPU_ABORT_FIXUP_REQUIRED
 #endif
@@ -303,13 +300,6 @@ data_abort_handler(trapframe_t *tf)
 	 * the MMU.
 	 */
 
-	/* fusubailout is used by [fs]uswintr to avoid page faulting */
-	if (__predict_false(pcb->pcb_onfault == fusubailout)) {
-		tf->tf_r0 = EFAULT;
-		tf->tf_pc = (intptr_t) pcb->pcb_onfault;
-		return;
-	}
-
 	KASSERTMSG(!user || tf == lwp_trapframe(l), "tf %p vs %p", tf,
 	    lwp_trapframe(l));
 
@@ -383,7 +373,7 @@ data_abort_handler(trapframe_t *tf)
 	     (read_insn(tf->tf_pc, false) & 0x05200000) != 0x04200000))) {
 		map = kernel_map;
 
-		/* Was the fault due to the FPE/IPKDB ? */
+		/* Was the fault due to the FPE ? */
 		if (__predict_false((tf->tf_spsr & PSR_MODE)==PSR_UND32_MODE)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;
@@ -486,8 +476,6 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_true(error == 0)) {
 		if (user)
 			uvm_grow(l->l_proc, va); /* Record any stack growth */
-		else
-			ucas_ras_check(tf);
 		UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}

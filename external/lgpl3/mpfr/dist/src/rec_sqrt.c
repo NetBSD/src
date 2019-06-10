@@ -1,6 +1,6 @@
 /* mpfr_rec_sqrt -- inverse square root
 
-Copyright 2008-2016 Free Software Foundation, Inc.
+Copyright 2008-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,20 +20,19 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #define MPFR_NEED_LONGLONG_H /* for umul_ppmm */
 #include "mpfr-impl.h"
 
 #define LIMB_SIZE(x) ((((x)-1)>>MPFR_LOG2_GMP_NUMB_BITS) + 1)
 
 #define MPFR_COM_N(x,y,n)                               \
-  {                                                     \
-    mp_size_t i;                                        \
-    for (i = 0; i < n; i++)                             \
-      *((x)+i) = ~*((y)+i);                             \
-  }
+  do                                                    \
+    {                                                   \
+      mp_size_t i;                                      \
+      for (i = 0; i < n; i++)                           \
+        *((x)+i) = ~*((y)+i);                           \
+    }                                                   \
+  while (0)
 
 /* Put in X a p-bit approximation of 1/sqrt(A),
    where X = {x, n}/B^n, n = ceil(p/GMP_NUMB_BITS),
@@ -68,7 +67,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
    References:
    [1] Modern Computer Algebra, Richard Brent and Paul Zimmermann,
-   http://www.loria.fr/~zimmerma/mca/pub226.html
+   https://members.loria.fr/PZimmermann/mca/pub226.html
 */
 static void
 mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
@@ -166,7 +165,7 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
   MPFR_ASSERTD((a[an - 1] & MPFR_LIMB_HIGHBIT) != 0);
   /* We should have enough bits in one limb and GMP_NUMB_BITS should be even.
      Since that does not depend on MPFR, we always check this. */
-  MPFR_ASSERTN((GMP_NUMB_BITS >= 12) && ((GMP_NUMB_BITS & 1) == 0));
+  MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS >= 12 && (GMP_NUMB_BITS & 1) == 0);
   /* {a, an} and {x, n} should not overlap */
   MPFR_ASSERTD((a + an <= x) || (x + n <= a));
   MPFR_ASSERTD(p >= 11);
@@ -424,7 +423,7 @@ mpfr_mpn_rec_sqrt (mpfr_limb_ptr x, mpfr_prec_t p,
         }
 
       /* cy can be 1 when A=1, i.e., {a, n} = B^n. In that case we should
-         have X = B^n, and setting X to 1-2^{-p} satisties the error bound
+         have X = B^n, and setting X to 1-2^{-p} satisfies the error bound
          of 1 ulp. */
       if (MPFR_UNLIKELY(cy != 0))
         {
@@ -459,10 +458,10 @@ mpfr_rec_sqrt (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
         }
       else if (MPFR_IS_ZERO(u)) /* 1/sqrt(+0) = 1/sqrt(-0) = +Inf */
         {
-          /* 0+ or 0- */
+          /* +0 or -0 */
           MPFR_SET_INF(r);
           MPFR_SET_POS(r);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET(0); /* Inf is exact */
         }
       else

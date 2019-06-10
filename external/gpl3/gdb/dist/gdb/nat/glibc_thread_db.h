@@ -16,8 +16,8 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _THREAD_DB_H
-#define _THREAD_DB_H	1
+#ifndef NAT_GLIBC_THREAD_DB_H
+#define NAT_GLIBC_THREAD_DB_H
 
 /* This is the debugger interface for the NPTL library.  It is
    modelled closely after the interface with same names in Solaris
@@ -455,4 +455,4 @@ extern td_err_e td_thr_dbsuspend (const td_thrhandle_t *__th);
 /* Resume execution of thread TH.  */
 extern td_err_e td_thr_dbresume (const td_thrhandle_t *__th);
 
-#endif	/* thread_db.h */
+#endif /* NAT_GLIBC_THREAD_DB_H */

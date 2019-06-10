@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.62 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: INSTALL,v 1.62.4.1 2019/06/10 22:06:16 christos Exp $
 #
 # INSTALL machine description file
 #
@@ -88,10 +88,6 @@ options 	INET		# Internet protocols
 #options 	USELEDS		# make the lights twinkle
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
-
-# This option enables a different copyin/copyout that uses page
-# mapping for large copies.
-#options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 # Debugging options
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
@@ -229,7 +225,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# loopback network interface
-#pseudo-device	ipfilter 		# IP Filter package
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f

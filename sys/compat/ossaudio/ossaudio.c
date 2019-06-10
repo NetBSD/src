@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.70 2017/03/24 14:32:29 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.70.14.1 2019/06/10 22:07:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70 2017/03/24 14:32:29 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.14.1 2019/06/10 22:07:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -230,7 +230,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, idat, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_RATE:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -372,7 +372,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_BITS:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -449,7 +449,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_CHANNELS:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -509,12 +509,12 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error) {
-			DPRINTF(("%s: DSP_SETFRAGMENT %d\n",
+			DPRINTF(("%s: SNDCTL_DSP_SETFRAGMENT %d\n",
 			     __func__, error));
 			goto out;
 		}
 		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17) {
-			DPRINTF(("%s: DSP_SETFRAGMENT bad ival%d\n",
+			DPRINTF(("%s: SNDCTL_DSP_SETFRAGMENT bad ival%d\n",
 			     __func__, idat));
 			error = EINVAL;
 			goto out;
@@ -619,11 +619,12 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
-		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
 		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETOSPACE = %d\n",
@@ -641,8 +642,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
-		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.fragstotal =
+		    tmpinfo.record.buffer_size / tmpinfo.blocksize;
+		bufinfo.bytes = tmpinfo.record.seek;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETISPACE %d %d %d %d = %d\n",
@@ -655,7 +657,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		idat = 1;
 		error = ioctlf(fp, FIONBIO, &idat);
 		if (error) {
-			DPRINTF(("%s: SENDCLT_DSP_NONBLOCK %d\n",
+			DPRINTF(("%s: FIONBIO %d\n",
 			     __func__, error));
 			goto out;
 		}

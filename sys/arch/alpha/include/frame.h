@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.9 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: frame.h,v 1.9.48.1 2019/06/10 22:05:46 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -92,7 +92,7 @@ struct trapframe {
 	unsigned long	tf_regs[FRAME_SIZE];	/* See above */
 };
 
-#if (defined(COMPAT_16) || defined(COMPAT_OSF1)) && defined(_KERNEL)
+#if defined(COMPAT_16) && defined(_KERNEL)
 struct sigframe_sigcontext {
 	/*  ra address of trampoline */
 	/*  a0 signum for handler */
@@ -115,7 +115,7 @@ struct sigframe_siginfo {
 void *getframe(const struct lwp *, int, int *);
 void buildcontext(struct lwp *, const void *, const void *, const void *);
 void sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
-#if defined(COMPAT_16) || defined(COMPAT_OSF1)
+#if defined(COMPAT_16)
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 #endif

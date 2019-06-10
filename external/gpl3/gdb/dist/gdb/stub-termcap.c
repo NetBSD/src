@@ -1,6 +1,6 @@
 /* A very minimal do-nothing termcap emulation stub.
 
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery, LLC.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.50 2018/06/26 06:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.50.2.1 2019/06/10 22:06:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.50 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.50.2.1 2019/06/10 22:06:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -115,8 +115,8 @@ void gmac_setladrf(struct gmac_softc *);
 int gmac_ioctl(struct ifnet *, u_long, void *);
 void gmac_watchdog(struct ifnet *);
 
-int gmac_mii_readreg(device_t, int, int);
-void gmac_mii_writereg(device_t, int, int, int);
+int gmac_mii_readreg(device_t, int, int, uint16_t *);
+int gmac_mii_writereg(device_t, int, int, uint16_t);
 void gmac_mii_statchg(struct ifnet *);
 void gmac_mii_tick(void *);
 
@@ -150,7 +150,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	int node, i;
 	char *p;
 	struct gmac_dma *dp;
-	u_int32_t reg[10];
+	uint32_t reg[10];
 	u_char laddr[6];
 	char buf[PCI_INTRSTR_LEN];
 
@@ -226,8 +226,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = gmac_ioctl;
 	ifp->if_start = gmac_start;
 	ifp->if_watchdog = gmac_watchdog;
-	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;
@@ -241,16 +240,16 @@ gmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, laddr);
 	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
-			  RND_FLAG_DEFAULT); 
+			  RND_FLAG_DEFAULT);
 }
 
 u_int
@@ -603,7 +602,7 @@ gmac_init_mac(struct gmac_softc *sc)
 	gmac_write_reg(sc, GMAC_MAXFRAMESIZE, ETHER_MAX_LEN);
 	gmac_write_reg(sc, GMAC_PASIZE, 7);
 	gmac_write_reg(sc, GMAC_JAMSIZE, 4);
-	gmac_write_reg(sc, GMAC_ATTEMPTLIMIT,0x10);
+	gmac_write_reg(sc, GMAC_ATTEMPTLIMIT, 0x10);
 	gmac_write_reg(sc, GMAC_MACCNTLTYPE, 0x8808);
 
 	gmac_write_reg(sc, GMAC_MACADDRESS0, (laddr[4] << 8) | laddr[5]);
@@ -647,8 +646,8 @@ gmac_setladrf(struct gmac_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ethercom *ec = &sc->sc_ethercom;
-	u_int32_t crc;
-	u_int32_t hash[16];
+	uint32_t crc;
+	uint32_t hash[16];
 	u_int v;
 	int i;
 
@@ -679,6 +678,7 @@ gmac_setladrf(struct gmac_softc *sc)
 	 * the word.
 	 */
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
@@ -693,6 +693,7 @@ gmac_setladrf(struct gmac_softc *sc)
 			for (i = 0; i < 16; i++)
 				hash[i] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -706,6 +707,7 @@ gmac_setladrf(struct gmac_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
@@ -802,10 +804,7 @@ gmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 #endif
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -817,9 +816,6 @@ gmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			}
 			error = 0;
 		}
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
@@ -840,7 +836,7 @@ gmac_watchdog(struct ifnet *ifp)
 }
 
 int
-gmac_mii_readreg(device_t self, int phy, int reg)
+gmac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct gmac_softc *sc = device_private(self);
 	int i;
@@ -855,14 +851,15 @@ gmac_mii_readreg(device_t self, int phy, int reg)
 	}
 	if (i < 0) {
 		aprint_error_dev(sc->sc_dev, "gmac_mii_readreg: timeout\n");
-		return 0;
+		return ETIMEDOUT;
 	}
 
-	return gmac_read_reg(sc, GMAC_MIFFRAMEOUTPUT) & 0xffff;
+	*val = gmac_read_reg(sc, GMAC_MIFFRAMEOUTPUT) & 0xffff;
+	return 0;
 }
 
-void
-gmac_mii_writereg(device_t self, int phy, int reg, int val)
+int
+gmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct gmac_softc *sc = device_private(self);
 	int i;
@@ -875,8 +872,12 @@ gmac_mii_writereg(device_t self, int phy, int reg, int val)
 			break;
 		delay(10);
 	}
-	if (i < 0)
+	if (i < 0) {
 		aprint_error_dev(sc->sc_dev, "gmac_mii_writereg: timeout\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.28 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.28.64.1 2019/06/10 22:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.28 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.28.64.1 2019/06/10 22:07:32 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -87,7 +87,7 @@ void	leattach_lebuffer(device_t, device_t, void *);
  * Media types supported.
  */
 static int lemedia[] = {
-	IFM_ETHER|IFM_10_T,
+	IFM_ETHER | IFM_10_T,
 };
 #define NLEMEDIA	__arraycount(lemedia)
 

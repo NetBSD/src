@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.91 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: ums.c,v 1.91.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -99,7 +99,7 @@ void ums_attach(device_t, device_t, void *);
 void ums_childdet(device_t, device_t);
 int ums_detach(device_t, int);
 int ums_activate(device_t, enum devact);
-extern struct cfdriver ums_cd;
+
 CFATTACH_DECL2_NEW(ums, sizeof(struct ums_softc), ums_match, ums_attach,
     ums_detach, ums_activate, NULL, ums_childdet);
 
@@ -171,6 +171,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 		switch (uha->uiaa->uiaa_product) {
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR10:
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR20:
+		case USB_PRODUCT_MICROSOFT_NATURAL_6000:
 			fixpos = 24;
 			break;
 		case USB_PRODUCT_MICROSOFT_CM6000:

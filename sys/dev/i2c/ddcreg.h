@@ -1,4 +1,4 @@
-/*	$NetBSD: ddcreg.h,v 1.2 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: ddcreg.h,v 1.2.162.1 2019/06/10 22:07:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,8 @@
 #ifndef _DEV_I2C_DDCREG_H_
 #define _DEV_I2C_DDCREG_H_
 
-#define	DDC_ADDR	0x50
-#define	DDC_EDID_START	0
+#define	DDC_ADDR		0x50
+#define	DDC_SEGMENT_ADDR	0x30
+#define	DDC_EDID_START		0
 
 #endif /* _DEV_I2C_DDCREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $ */
+/*	$NetBSD: twa.c,v 1.55.16.1 2019/06/10 22:07:27 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.16.1 2019/06/10 22:07:27 christos Exp $");
 
 //#define TWA_DEBUG
 
@@ -1603,7 +1603,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
-	sc->twa_ih = pci_intr_establish(pc, ih, IPL_BIO, twa_intr, sc);
+	sc->twa_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, twa_intr, sc,
+	    device_xname(self));
 	if (sc->twa_ih == NULL) {
 		aprint_error_dev(sc->twa_dv, "can't establish interrupt%s%s\n",
 			(intrstr) ? " at " : "",
@@ -2255,7 +2256,7 @@ fw_passthru_done:
 
 		/* Copy compatibility information to user space. */
 		copyout(&comp_pkt, user_buf->pdata,
-				min(sizeof(struct tw_cl_compatibility_packet),
+				uimin(sizeof(struct tw_cl_compatibility_packet),
 					user_buf->twa_drvr_pkt.buffer_length));
 		break;
 	}

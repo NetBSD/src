@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.27 2010/04/16 13:56:45 wiz Exp $
+.\" $NetBSD: ifwatchd.8,v 1.27.46.1 2019/06/10 22:10:30 christos Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 16, 2010
+.Dd February 17, 2019
 .Dt IFWATCHD 8
 .Os
 .Sh NAME
@@ -50,9 +50,7 @@ for address changes, and to monitor static interfaces for carrier
 changes.
 Sometimes these interfaces are accompanied by a daemon program,
 which can take care of running any necessary scripts (like
-.Xr pppd 8
-or
-.Xr isdnd 8 ) ,
+.Xr pppd 8 ) ,
 but sometimes the interfaces run completely autonomously (like
 .Xr pppoe 4 ) .
 .Pp
@@ -165,33 +163,6 @@ Use
 in your
 .Pa /etc/ifconfig.pppoe0
 file in the on-demand case.
-.Pp
-The next example is for dhclient users.
-.Bd -literal -offset indent
-# ifwatchd -i -c /etc/dhcp/carrier-detect tlp0
-.Ed
-.Pp
-With the above command, the carrier-detect script will be invoked when
-a carrier is detected on the interface
-.Ar tlp0 .
-Note that the
-.Fl i
-flag prevents any action based on the initial state.
-A script like the following should work for most users, although it
-will not work for machines with multiple interfaces running
-.Cm dhclient .
-.Bd -literal -offset indent
-#! /bin/sh
-# Arguments:  ifname tty speed address destination
-# If there is a dhclient already running, kill it.
-# (This step could be put in a distinct no-carrier script,
-# if desired.)
-if [ -f /var/run/dhclient.pid ]; then
-       /bin/kill `/bin/cat /var/run/dhclient.pid`
-fi
-# Start dhclient again on this interface
-/sbin/dhclient $1
-.Ed
 .Sh PARAMETERS PASSED TO SCRIPTS
 The invoked scripts get passed these parameters:
 .Bl -tag -width destination

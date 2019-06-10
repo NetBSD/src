@@ -1,6 +1,6 @@
 /* tsqr -- test file for mpc_sqr.
 
-Copyright (C) 2002, 2005, 2008, 2010, 2011 INRIA
+Copyright (C) 2002, 2005, 2008, 2010, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -148,9 +148,9 @@ reuse_bug (void)
   /* reuse bug found by Paul Zimmermann 20081021 */
   mpc_init2 (z1, 2);
   /* RE (z1^2) overflows, IM(z^2) = -0 */
-  mpfr_set_str (mpc_realref (z1), "0.11", 2, GMP_RNDN);
-  mpfr_mul_2si (mpc_realref (z1), mpc_realref (z1), mpfr_get_emax (), GMP_RNDN);
-  mpfr_set_ui (mpc_imagref (z1), 0, GMP_RNDN);
+  mpfr_set_str (mpc_realref (z1), "0.11", 2, MPFR_RNDN);
+  mpfr_mul_2si (mpc_realref (z1), mpc_realref (z1), mpfr_get_emax (), MPFR_RNDN);
+  mpfr_set_ui (mpc_imagref (z1), 0, MPFR_RNDN);
   mpc_conj (z1, z1, MPC_RNDNN);
   mpc_sqr (z1, z1, MPC_RNDNN);
   if (!mpfr_inf_p (mpc_realref (z1)) || mpfr_signbit (mpc_realref (z1))
@@ -164,10 +164,17 @@ reuse_bug (void)
   mpc_clear (z1);
 }
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_sqr (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_sqr (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_sqr);
   test_start ();
 
   testsqr (247, -65, 8, 24);
@@ -180,8 +187,9 @@ main (void)
   testsqr (0, 1816, 8, 24);
   testsqr (145, 0, 8, 24);
 
-  data_check (f, "sqr.dat");
-  tgeneric (f, 2, 1024, 1, 0);
+  data_check_template ("sqr.dsc", "sqr.dat");
+
+  tgeneric_template ("sqr.dsc", 2, 1024, 1, 1024);
 
   reuse_bug ();
 

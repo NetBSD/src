@@ -18,6 +18,7 @@
 # define SYS_getdents SYS___getdents30
 # define SYS_sigaltstack SYS___sigaltstack14
 # define SYS_sigprocmask SYS___sigprocmask14
+# define SYS_nanosleep SYS___nanosleep50
 #endif
 #if SANITIZER_FREEBSD || SANITIZER_NETBSD || SANITIZER_MAC
 # define SYSCALL(name) SYS_ ## name

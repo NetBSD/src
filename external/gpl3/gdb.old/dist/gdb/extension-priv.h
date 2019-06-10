@@ -1,7 +1,7 @@
 /* Private implementation details of interface between gdb and its
    extension languages.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -171,19 +171,19 @@ struct extension_language_ops
   void (*free_type_printers) (const struct extension_language_defn *,
 			      struct ext_lang_type_printers *);
 
-  /* Try to pretty-print a value of type TYPE located at VALADDR
-     + EMBEDDED_OFFSET, which came from the inferior at address ADDRESS
-     + EMBEDDED_OFFSET, onto stdio stream STREAM according to OPTIONS.
-     VAL is the whole object that came from ADDRESS.  VALADDR must point to
-     the head of VAL's contents buffer.
+  /* Try to pretty-print a value of type TYPE located at VAL's contents
+     buffer + EMBEDDED_OFFSET, which came from the inferior at address
+     ADDRESS + EMBEDDED_OFFSET, onto stdio stream STREAM according to
+     OPTIONS.
+     VAL is the whole object that came from ADDRESS.
      Returns EXT_LANG_RC_OK upon success, EXT_LANG_RC_NOP if the value
      is not recognized, and EXT_LANG_RC_ERROR if an error was encountered.  */
   enum ext_lang_rc (*apply_val_pretty_printer)
     (const struct extension_language_defn *,
-     struct type *type, const gdb_byte *valaddr,
+     struct type *type,
      LONGEST embedded_offset, CORE_ADDR address,
      struct ui_file *stream, int recurse,
-     const struct value *val, const struct value_print_options *options,
+     struct value *val, const struct value_print_options *options,
      const struct language_defn *language);
 
   /* GDB access to the "frame filter" feature.

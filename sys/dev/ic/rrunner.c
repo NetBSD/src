@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.87.2.1 2019/06/10 22:07:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.87.2.1 2019/06/10 22:07:11 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -405,7 +405,7 @@ eshconfig(struct esh_softc *sc)
 	ifp->if_start = eshstart;
 	ifp->if_ioctl = eshioctl;
 	ifp->if_watchdog = eshwatchdog;
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_NOARP;
+	ifp->if_flags = IFF_SIMPLEX | IFF_NOARP;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -2250,7 +2250,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 			 *      to do this kind of funky copy.
 			 */
 
-			len = min(MCLBYTES, write_len);
+			len = uimin(MCLBYTES, write_len);
 #ifdef DIAGNOSTIC
 			assert(n->m_len <= len);
 			assert(len <= MCLBYTES);

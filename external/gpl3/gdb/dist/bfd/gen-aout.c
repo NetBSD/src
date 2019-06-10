@@ -1,5 +1,5 @@
 /* Generate parameters for an a.out system.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -92,9 +92,6 @@ main (int argc, char** argv)
 
 #ifdef vax
   arch = "vax";
-#endif
-#ifdef m68k
-  arch = "m68k";
 #endif
   if (arch[0] == '1')
     {

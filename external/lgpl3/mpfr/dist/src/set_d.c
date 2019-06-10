@@ -1,7 +1,7 @@
 /* mpfr_set_d -- convert a machine double precision float to
                  a multiple precision floating-point number
 
-Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,71 +26,83 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
-/* extracts the bits of d in rp[0..n-1] where n=ceil(53/GMP_NUMB_BITS).
-   Assumes d is neither 0 nor NaN nor Inf. */
-static long
-__gmpfr_extract_double (mpfr_limb_ptr rp, double d)
-     /* e=0 iff GMP_NUMB_BITS=32 and rp has only one limb */
+/* Extracts the bits of |d| in rp[0..n-1] where n=ceil(53/GMP_NUMB_BITS).
+   Assumes d finite and <> 0.
+   Returns the corresponding exponent such that |d| = {rp, n} * 2^exp,
+   with the value of {rp, n} in [1/2, 1).
+   The int type should be sufficient for exp.
+*/
+static int
+extract_double (mpfr_limb_ptr rp, double d)
 {
-  long exp;
+  int exp;
   mp_limb_t manl;
 #if GMP_NUMB_BITS == 32
   mp_limb_t manh;
 #endif
 
-  /* BUGS
-     1. Should handle Inf and NaN in IEEE specific code.
-     2. Handle Inf and NaN also in default code, to avoid hangs.
-     3. Generalize to handle all GMP_NUMB_BITS.
-     4. This lits is incomplete and misspelled.
-   */
+  /* FIXME: Generalize to handle all GMP_NUMB_BITS. */
 
   MPFR_ASSERTD(!DOUBLE_ISNAN(d));
   MPFR_ASSERTD(!DOUBLE_ISINF(d));
   MPFR_ASSERTD(d != 0.0);
 
-#if _GMP_IEEE_FLOATS
+#if _MPFR_IEEE_FLOATS
 
   {
-    union ieee_double_extract x;
+    union mpfr_ieee_double_extract x;
     x.d = d;
 
     exp = x.s.exp;
     if (exp)
       {
 #if GMP_NUMB_BITS >= 64
-        manl = ((MPFR_LIMB_ONE << 63)
-                | ((mp_limb_t) x.s.manh << 43) | ((mp_limb_t) x.s.manl << 11));
+        manl = ((MPFR_LIMB_ONE << (GMP_NUMB_BITS - 1)) |
+                ((mp_limb_t) x.s.manh << (GMP_NUMB_BITS - 21)) |
+                ((mp_limb_t) x.s.manl << (GMP_NUMB_BITS - 53)));
 #else
+        MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 32);
         manh = (MPFR_LIMB_ONE << 31) | (x.s.manh << 11) | (x.s.manl >> 21);
         manl = x.s.manl << 11;
 #endif
+        exp -= 1022;
       }
     else /* subnormal number */
       {
+        int cnt;
+        exp = -1021;
 #if GMP_NUMB_BITS >= 64
-        manl = ((mp_limb_t) x.s.manh << 43) | ((mp_limb_t) x.s.manl << 11);
+        manl = (((mp_limb_t) x.s.manh << (GMP_NUMB_BITS - 21)) |
+                ((mp_limb_t) x.s.manl << (GMP_NUMB_BITS - 53)));
+        count_leading_zeros (cnt, manl);
 #else
+        MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 32);
         manh = (x.s.manh << 11) /* high 21 bits */
           | (x.s.manl >> 21); /* middle 11 bits */
         manl = x.s.manl << 11; /* low 21 bits */
+        if (manh == 0)
+          {
+            manh = manl;
+            manl = 0;
+            exp -= GMP_NUMB_BITS;
+          }
+        count_leading_zeros (cnt, manh);
+        manh = (manh << cnt) |
+          (cnt != 0 ? manl >> (GMP_NUMB_BITS - cnt) : 0);
 #endif
+        manl <<= cnt;
+        exp -= cnt;
       }
-
-    if (exp)
-      exp -= 1022;
-    else
-      exp = -1021;
   }
 
-#else /* _GMP_IEEE_FLOATS */
+#else /* _MPFR_IEEE_FLOATS */
 
   {
     /* Unknown (or known to be non-IEEE) double format.  */
     exp = 0;
+    d = ABS (d);
     if (d >= 1.0)
       {
-        MPFR_ASSERTN (d * 0.5 != d);
         while (d >= 32768.0)
           {
             d *= (1.0 / 65536.0);
@@ -118,21 +130,30 @@ __gmpfr_extract_double (mpfr_limb_ptr rp, double d)
 
     d *= MP_BASE_AS_DOUBLE;
 #if GMP_NUMB_BITS >= 64
+#ifndef __clang__
     manl = d;
 #else
+    /* clang produces an invalid exception when d >= 2^63,
+       see https://bugs.llvm.org//show_bug.cgi?id=17686.
+       Since this is always the case, here, we use the following patch. */
+    MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 64);
+    manl = 0x8000000000000000 + (mp_limb_t) (d - 0x8000000000000000);
+#endif /* __clang__ */
+#else
+    MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 32);
     manh = (mp_limb_t) d;
     manl = (mp_limb_t) ((d - manh) * MP_BASE_AS_DOUBLE);
 #endif
   }
 
-#endif /* _GMP_IEEE_FLOATS */
+#endif /* _MPFR_IEEE_FLOATS */
 
-#if GMP_NUMB_BITS >= 64
   rp[0] = manl;
-#else
+#if GMP_NUMB_BITS == 32
   rp[1] = manh;
-  rp[0] = manl;
 #endif
+
+  MPFR_ASSERTD((rp[MPFR_LIMBS_PER_DOUBLE - 1] & MPFR_LIMB_HIGHBIT) != 0);
 
   return exp;
 }
@@ -142,9 +163,7 @@ __gmpfr_extract_double (mpfr_limb_ptr rp, double d)
 int
 mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
 {
-  int signd, inexact;
-  unsigned int cnt;
-  mp_size_t i, k;
+  int inexact;
   mpfr_t tmp;
   mp_limb_t tmpmant[MPFR_LIMBS_PER_DOUBLE];
   MPFR_SAVE_EXPO_DECL (expo);
@@ -156,8 +175,8 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
     }
   else if (MPFR_UNLIKELY(d == 0))
     {
-#if _GMP_IEEE_FLOATS
-      union ieee_double_extract x;
+#if _MPFR_IEEE_FLOATS
+      union mpfr_ieee_double_extract x;
 
       MPFR_SET_ZERO(r);
       /* set correct sign */
@@ -166,16 +185,23 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
         MPFR_SET_NEG(r);
       else
         MPFR_SET_POS(r);
-#else /* _GMP_IEEE_FLOATS */
+#else /* _MPFR_IEEE_FLOATS */
       MPFR_SET_ZERO(r);
       {
         /* This is to get the sign of zero on non-IEEE hardware
-           Some systems support +0.0, -0.0 and unsigned zero.
-           We can't use d==+0.0 since it should be always true,
+           Some systems support +0.0, -0.0, and unsigned zero.
+           Some other systems may just have an unsigned zero.
+           We can't use d == +0.0 since it should be always true,
            so we check that the memory representation of d is the
-           same than +0.0. etc */
-        /* FIXME: consider the case where +0.0 or -0.0 may have several
-           representations. */
+           same than +0.0, etc.
+           Note: r is set to -0 only if d is detected as a negative zero
+           *and*, for the double type, -0 has a different representation
+           from +0. If -0.0 has several representations, the code below
+           may not work as expected, but this is hardly fixable in a
+           portable way (without depending on a math library) and only
+           the sign could be incorrect. Such systems should be taken
+           into account on a case-by-case basis. If the code is changed
+           here, set_d64.c code should be updated too. */
         double poszero = +0.0, negzero = DBL_NEG_ZERO;
         if (memcmp(&d, &poszero, sizeof(double)) == 0)
           MPFR_SET_POS(r);
@@ -184,7 +210,7 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
         else
           MPFR_SET_POS(r);
       }
-#endif
+#endif /* _MPFR_IEEE_FLOATS */
       return 0; /* 0 is exact */
     }
   else if (MPFR_UNLIKELY(DOUBLE_ISINF(d)))
@@ -207,45 +233,12 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
   MPFR_MANT(tmp) = tmpmant;
   MPFR_PREC(tmp) = IEEE_DBL_MANT_DIG;
 
-  signd = (d < 0) ? MPFR_SIGN_NEG : MPFR_SIGN_POS;
-  d = ABS (d);
-
   /* don't use MPFR_SET_EXP here since the exponent may be out of range */
-  MPFR_EXP(tmp) = __gmpfr_extract_double (tmpmant, d);
-
-#ifdef MPFR_WANT_ASSERT
-  /* Failed assertion if the stored value is 0 (e.g., if the exponent range
-     has been reduced at the wrong moment and an underflow to 0 occurred).
-     Probably a bug in the C implementation if this happens. */
-  i = 0;
-  while (tmpmant[i] == 0)
-    {
-      i++;
-      MPFR_ASSERTN(i < MPFR_LIMBS_PER_DOUBLE);
-    }
-#endif
-
-  /* determine the index i-1 of the most significant non-zero limb
-     and the number k of zero high limbs */
-  i = MPFR_LIMBS_PER_DOUBLE;
-  MPN_NORMALIZE_NOT_ZERO(tmpmant, i);
-  k = MPFR_LIMBS_PER_DOUBLE - i;
-
-  count_leading_zeros (cnt, tmpmant[i - 1]);
-
-  if (MPFR_LIKELY(cnt != 0))
-    mpn_lshift (tmpmant + k, tmpmant, i, cnt);
-  else if (k != 0)
-    MPN_COPY (tmpmant + k, tmpmant, i);
-
-  if (MPFR_UNLIKELY(k != 0))
-    MPN_ZERO (tmpmant, k);
-
-  /* don't use MPFR_SET_EXP here since the exponent may be out of range */
-  MPFR_EXP(tmp) -= (mpfr_exp_t) (cnt + k * GMP_NUMB_BITS);
+  MPFR_EXP(tmp) = extract_double (tmpmant, d);
 
   /* tmp is exact since PREC(tmp)=53 */
-  inexact = mpfr_set4 (r, tmp, rnd_mode, signd);
+  inexact = mpfr_set4 (r, tmp, rnd_mode,
+                       (d < 0) ? MPFR_SIGN_NEG : MPFR_SIGN_POS);
 
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (r, inexact, rnd_mode);

@@ -1,5 +1,5 @@
 /* Prints out tree in human readable form - GCC
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,38 +22,17 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "real.h"
-#include "fixed-value.h"
 #include "tree.h"
+#include "cgraph.h"
+#include "diagnostic.h"
 #include "varasm.h"
 #include "print-rtl.h"
 #include "stor-layout.h"
-#include "ggc.h"
 #include "langhooks.h"
 #include "tree-iterator.h"
-#include "diagnostic.h"
 #include "gimple-pretty-print.h" /* FIXME */
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "tree-cfg.h"
 #include "tree-dump.h"
-#include "dumpfile.h"
-#include "wide-int-print.h"
 
 /* Define the hash table of nodes already seen.
    Such nodes are not repeated; brief cross-references are used.  */
@@ -586,6 +565,13 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
       if (TYPE_NEEDS_CONSTRUCTING (node))
 	fputs (" needs-constructing", file);
 
+      if ((code == RECORD_TYPE
+	   || code == UNION_TYPE
+	   || code == QUAL_UNION_TYPE
+	   || code == ARRAY_TYPE)
+	  && TYPE_REVERSE_STORAGE_ORDER (node))
+	fputs (" reverse-storage-order", file);
+
       /* The transparent-union flag is used for different things in
 	 different nodes.  */
       if ((code == UNION_TYPE || code == RECORD_TYPE)
@@ -822,6 +808,7 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 
 	case TREE_VEC:
 	  len = TREE_VEC_LENGTH (node);
+	  fprintf (file, " length %d", len);
 	  for (i = 0; i < len; i++)
 	    if (TREE_VEC_ELT (node, i))
 	      {
@@ -926,6 +913,17 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 			    indent + 4);
 	  break;
 
+	case TREE_BINFO:
+	  fprintf (file, " bases %d",
+		   vec_safe_length (BINFO_BASE_BINFOS (node)));
+	  print_node_brief (file, "offset", BINFO_OFFSET (node), indent + 4);
+	  print_node_brief (file, "virtuals", BINFO_VIRTUALS (node),
+			    indent + 4);
+	  print_node_brief (file, "inheritance chain",
+			    BINFO_INHERITANCE_CHAIN (node),
+			    indent + 4);
+	  break;
+
 	default:
 	  if (EXCEPTIONAL_CLASS_P (node))
 	    lang_hooks.print_xnode (file, node, indent);
@@ -940,6 +938,27 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
       expanded_location xloc = expand_location (EXPR_LOCATION (node));
       indent_to (file, indent+4);
       fprintf (file, "%s:%d:%d", xloc.file, xloc.line, xloc.column);
+
+      /* Print the range, if any */
+      source_range r = EXPR_LOCATION_RANGE (node);
+      if (r.m_start)
+	{
+	  xloc = expand_location (r.m_start);
+	  fprintf (file, " start: %s:%d:%d", xloc.file, xloc.line, xloc.column);
+	}
+      else
+	{
+	  fprintf (file, " start: unknown");
+	}
+      if (r.m_finish)
+	{
+	  xloc = expand_location (r.m_finish);
+	  fprintf (file, " finish: %s:%d:%d", xloc.file, xloc.line, xloc.column);
+	}
+      else
+	{
+	  fprintf (file, " finish: unknown");
+	}
     }
 
   fprintf (file, ">");

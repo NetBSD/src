@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46 2015/11/09 20:26:15 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.46.18.1 2019/06/10 22:06:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2015/11/09 20:26:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46.18.1 2019/06/10 22:06:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,15 +365,13 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
 
 /*

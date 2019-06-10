@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.427 2018/06/03 12:54:51 gson Exp $
+#       $NetBSD: Makefile,v 1.427.2.1 2019/06/10 22:05:41 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
-	altq.9 arp.9 audio.9 audio_system.9 autoconf.9 \
+	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
 	bzero.9 \
@@ -19,7 +19,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	delay.9 devsw_attach.9 disk.9 ddc.9 disklabel.9 dksubr.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
-	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
+	file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
 	fork1.9 fsetown.9 fstrans.9 \
 	genfs.9 genfs_rename.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
@@ -28,7 +28,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 interrupt_distribute.9 intro.9 ioasic.9 \
-	ioctl.9 ipkdb.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
+	ioctl.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
 	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
@@ -41,7 +41,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
 	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pci_msi.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
-	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 pool.9 \
+	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmf.9 pool.9 \
 	pool_cache.9 powerhook_establish.9 ppsratecheck.9 preempt.9 \
 	proc_find.9 pserialize.9 pslist.9 psref.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rndsink.9 \
@@ -52,15 +52,17 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
-	splraiseipl.9 \
-	store.9 suspendsched.9 \
+	spi.9 splraiseipl.9 \
+	suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
+	tcp_congctl.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
+	ts2timo.9 tvtohz.9 \
 	ucas.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
-	ubc.9 usbd_status.9 usbdi.9 uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
+	ubc.9 ufetch.9 usbd_status.9 usbdi.9 ustore.9 uvm.9 uvm_hotplug.9 \
+	uvm_km.9 uvm_map.9 \
 	vmem.9 wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
@@ -320,8 +322,6 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_print.9 extent.9 extent_alloc1.9 \
 	extent.9 extent_alloc_subregion1.9
-MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
-	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 closef.9 \
 	file.9 ffree.9 \
 	file.9 FILE_IS_USABLE.9 \
@@ -357,6 +357,7 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fstrans_getstate.9 \
 	fstrans.9 fstrans_setstate.9 \
 	fstrans.9 fstrans_start.9 \
+	fstrans.9 fstrans_start_lazy.9 \
 	fstrans.9 fstrans_start_nowait.9 \
 	fstrans.9 fscow_establish.9 \
 	fstrans.9 fscow_disestablish.9 \
@@ -395,9 +396,6 @@ MLINKS+=ioasic.9 ioasic_intr_establish.9 \
 	ioasic.9 ioasic_intr_evcnt.9 \
 	ioasic.9 ioasic_attach_devs.9 \
 	ioasic.9 ioasic_submatch.9
-MLINKS+=ipkdb.9 ipkdb_init.9 ipkdb.9 ipkdb_connect.9 ipkdb.9 ipkdbinit.9 \
-	ipkdb.9 ipkdbcmds.9 ipkdb.9 ipkdb_trap.9 ipkdb.9 ipkdb_poll.9 \
-	ipkdb.9 ipkdbif_init.9 ipkdb.9 ipkdbfbyte.9 ipkdb.9 ipkdbsbyte.9
 MLINKS+=isa.9 isa_intr_alloc.9 \
 	isa.9 isa_intr_establish.9 \
 	isa.9 isa_intr_disestablish.9 \
@@ -499,9 +497,8 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
 	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
 	mbuf.9 MGET.9 mbuf.9 MGETHDR.9 mbuf.9 MEXTMALLOC.9 \
-	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 mbuf.9 M_COPY_PKTHDR.9 \
-	mbuf.9 M_MOVE_PKTHDR.9 \
-	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
+	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 \
+	mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MFREE.9
 MLINKS+=mca.9 mca_intr_establish.9 \
@@ -548,13 +545,9 @@ MLINKS+=m_tag.9 m_tag_copy.9 \
 	m_tag.9 m_tag_copy_chain.9 \
 	m_tag.9 m_tag_delete.9 \
 	m_tag.9 m_tag_delete_chain.9 \
-	m_tag.9 m_tag_delete_nonpersistent.9 \
 	m_tag.9 m_tag_find.9 \
-	m_tag.9 m_tag_first.9 \
 	m_tag.9 m_tag_free.9 \
 	m_tag.9 m_tag_get.9 \
-	m_tag.9 m_tag_init.9 \
-	m_tag.9 m_tag_next.9 \
 	m_tag.9 m_tag_prepend.9 \
 	m_tag.9 m_tag_unlink.9
 MLINKS+=namecache.9 cache_lookup.9 \
@@ -595,13 +588,6 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 pci_mapreg_type.9 \
 	pci.9 pci_mapreg_map.9 \
 	pci.9 pci_mapreg_info.9 \
-	pci.9 pci_intr_map.9 \
-	pci.9 pci_intr_string.9 \
-	pci.9 pci_intr_evcnt.9 \
-	pci.9 pci_intr_establish.9 \
-	pci.9 pci_intr_establish_xname.9 \
-	pci.9 pci_intr_disestablish.9 \
-	pci.9 pci_intr_setattr.9 \
 	pci.9 pci_get_powerstate.9 \
 	pci.9 pci_set_powerstate.9 \
 	pci.9 pci_vpd_read.9 \
@@ -613,6 +599,13 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 PCI_VENDOR.9 \
 	pci.9 PCI_PRODUCT.9 \
 	pci.9 PCI_REVISION.9
+MLINKS+=pci_intr.9 pci_intr_map.9 \
+	pci_intr.9 pci_intr_string.9 \
+	pci_intr.9 pci_intr_evcnt.9 \
+	pci_intr.9 pci_intr_establish.9 \
+	pci_intr.9 pci_intr_establish_xname.9 \
+	pci_intr.9 pci_intr_disestablish.9 \
+	pci_intr.9 pci_intr_setattr.9
 MLINKS+=pci_msi.9 pci_msix.9 \
 	pci_msi.9 pci_intr_alloc.9 \
 	pci_msi.9 pci_intr_release.9 \
@@ -715,22 +708,6 @@ MLINKS+=pmap.9 pmap_init.9 \
 	pmap.9 PMAP_MAP_POOLPAGE.9 \
 	pmap.9 PMAP_UNMAP_POOLPAGE.9 \
 	pmap.9 PMAP_PREFER.9
-MLINKS+=pmc.9 pmc_get_num_counters.9 \
-	pmc.9 pmc_get_counter_type.9 \
-	pmc.9 pmc_save_context.9 \
-	pmc.9 pmc_restore_context.9 \
-	pmc.9 pmc_enable_counter.9 \
-	pmc.9 pmc_disable_counter.9 \
-	pmc.9 pmc_counter_isrunning.9 \
-	pmc.9 pmc_counter_isconfigured.9 \
-	pmc.9 pmc_configure_counter.9 \
-	pmc.9 pmc_get_counter_value.9 \
-	pmc.9 pmc_accumulate.9 \
-	pmc.9 pmc_alloc_kernel_counter.9 \
-	pmc.9 pmc_free_kernel_counter.9 \
-	pmc.9 pmc_start_profiling.9 \
-	pmc.9 pmc_stop_profiling.9 \
-	pmc.9 PMC_ENABLED.9
 MLINKS+=pcq.9 pcq_create.9 \
 	pcq.9 pcq_destroy.9 \
 	pcq.9 pcq_get.9 \
@@ -895,8 +872,6 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9 \
 	spl.9 splsoftbio.9
-MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
-	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=sysctl.9 old_sysctl.9 \
 	sysctl.9 sysctl_create.9 \
 	sysctl.9 sysctl_createv.9 \
@@ -938,10 +913,31 @@ MLINKS+=tc.9 tc_intr_establish.9 \
 	tc.9 tc_badaddr.9 \
 	tc.9 TC_DENSE_TO_SPARSE.9 \
 	tc.9 TC_PHYS_TO_UNCACHED.9
+MLINKS+=threadpool.9 threadpool_get.9 \
+	threadpool.9 threadpool_put.9 \
+	threadpool.9 threadpool_percpu_get.9 \
+	threadpool.9 threadpool_percpu_put.9 \
+	threadpool.9 threadpool_percpu_ref.9 \
+	threadpool.9 threadpool_percpu_ref_remote.9 \
+	threadpool.9 threadpool_job_init.9 \
+	threadpool.9 threadpool_job_destroy.9 \
+	threadpool.9 threadpool_job_done.9 \
+	threadpool.9 threadpool_schedule_job.9 \
+	threadpool.9 threadpool_cancel_job.9 \
+	threadpool.9 threadpool_cancel_job_async.9
 MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 
 MLINKS+=ubc.9 ubc_uiomove.9 ubc.9 ubc_zerorange.9 ubc.9 ubc_purge.9
+
+MLINKS+=ufetch.9 ufetch_8.9 ufetch.9 ufetch_16.9 ufetch.9 ufetch_32.9 \
+	ufetch.9 ufetch_64.9 ufetch.9 ufetch_char.9 ufetch.9 ufetch_short.9 \
+	ufetch.9 ufetch_int.9 ufetch.9 ufetch_long.9 ufetch.9 ufetch_ptr.9
+
+MLINKS+=ustore.9 ustore_8.9 ustore.9 ustore_16.9 ustore.9 ustore_32.9 \
+	ustore.9 ustore_64.9 ustore.9 ustore_char.9 ustore.9 ustore_short.9 \
+	ustore.9 ustore_int.9 ustore.9 ustore_long.9 ustore.9 ustore_ptr.9
+
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \

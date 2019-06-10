@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.220 2018/05/27 01:14:51 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.220.2.1 2019/06/10 22:10:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.220 2018/05/27 01:14:51 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.220.2.1 2019/06/10 22:10:21 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.220 2018/05/27 01:14:51 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.220.2.1 2019/06/10 22:10:21 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -836,7 +836,8 @@ Var_UnExport(char *str)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	setenv(MAKE_LEVEL_ENV, cp, 1);
+	if (cp && *cp)
+	    setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
 	for (; *str != '\n' && isspace((unsigned char) *str); str++)
 	    continue;
@@ -2399,8 +2400,10 @@ VarHash(char *str)
 	    break;
 	case 3:
 	    k |= (ustr[2] << 16);
+	    /* FALLTHROUGH */
 	case 2:
 	    k |= (ustr[1] << 8);
+	    /* FALLTHROUGH */
 	case 1:
 	    k |= ustr[0];
 	    len = 0;

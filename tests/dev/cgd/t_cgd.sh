@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.11 2013/02/19 21:08:24 joerg Exp $
+#	$NetBSD: t_cgd.sh,v 1.11.30.1 2019/06/10 22:10:00 christos Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,13 +34,12 @@ atf_test_case basic cleanup
 basic_head()
 {
 
-	atf_set "descr" "Tests that encrypt/decrypt works"
-	atf_set "require.progs" "rump_server"
+	atf_set descr "Tests that encrypt/decrypt works"
+	atf_set require.progs rump_server
 }
 
 basic_body()
 {
-
 	d=$(atf_get_srcdir)
 	atf_check -s exit:0 \
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
@@ -57,7 +56,6 @@ basic_body()
 
 basic_cleanup()
 {
-
 	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
@@ -65,28 +63,27 @@ atf_test_case wrongpass cleanup
 wrongpass_head()
 {
 
-	atf_set "descr" "Tests that wrong password does not give original " \
-	    "plaintext"
-	atf_set "require.progs" "rump_server"
+	atf_set descr \
+	    "Tests that wrong password does not give original plaintext"
+	atf_set require.progs rump_server
 }
 
 wrongpass_body()
 {
-
 	d=$(atf_get_srcdir)
 	atf_check -s exit:0 \
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
-	atf_check -s exit:0 -x "echo 12345 | \
-	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -x \
+	    "echo 12345 | rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 	atf_check -s exit:0 -e ignore -x \
 	    "dd if=${d}/t_cgd | rump.dd of=${rawcgd} count=2"
 
 	# unconfig and reconfig cgd
 	atf_check -s exit:0 rump.cgdconfig -u cgd0
-	atf_check -s exit:0 -x "echo 54321 | \
-	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -x \
+	    "echo 54321 | rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
 	atf_check -s exit:0 -e ignore -o not-file:testfile \
@@ -95,7 +92,6 @@ wrongpass_body()
 
 wrongpass_cleanup()
 {
-
 	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
@@ -103,9 +99,8 @@ wrongpass_cleanup()
 atf_test_case unaligned_write cleanup
 unaligned_write_head()
 {
-
-	atf_set "descr" "Attempt unaligned writes to a raw cgd device"
-	atf_set "require.progs" "rump_server"
+	atf_set descr "Attempt unaligned writes to a raw cgd device"
+	atf_set require.progs rump_server
 }
 
 unaligned_write_body()
@@ -115,8 +110,8 @@ unaligned_write_body()
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
-	atf_check -s exit:0 -x "echo 12345 | \
-	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -x \
+	    "echo 12345 | rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 
 	# Check that cgd rejects writes of totally bogus lengths.
 	atf_check -s not-exit:0 -e ignore -x \
@@ -133,8 +128,8 @@ unaligned_write_body()
 	# packetizing the input on bogus boundaries and using the
 	# bizarre behaviour of `bs=N' in dd.
 	atf_check -s not-exit:0 -e ignore -x \
-	    "(echo -n x && sleep 1 && head -c 511 </dev/zero) \
-		| rump.dd of=${rawcgd} bs=512"
+	    "(echo -n x && sleep 1 && head -c 511 </dev/zero) |
+		rump.dd of=${rawcgd} bs=512"
 
 	# Check that cgd rejects sector-length writes if they are not
 	# on sector boundaries.  Doesn't work because dd can't be
@@ -150,10 +145,52 @@ unaligned_write_cleanup()
 	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
+vmeth_failure_body()
+{
+	local vmeth="$1"
+	local d=$(atf_get_srcdir)
+
+	atf_check -s exit:0 \
+	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+	export RUMP_SERVER=unix://csock
+	atf_check -s not-exit:0 -e ignore -x \
+	    "echo 12345 |
+	     rump.cgdconfig -V '${vmeth}' -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -o not-match:'(^| )cgd0( |$)' \
+	    rump.sysctl -n hw.disknames
+}
+
+test_case_vmeth_failure()
+{
+	local vmeth="${1}"
+	local name="vmeth_failure_${vmeth}"
+
+	atf_test_case "${name}" cleanup
+	eval "${name}_head() {
+		atf_set descr 'Tests verification method \"${vmeth}\" failure'
+		atf_set require.progs rump_server
+	}"
+	eval "${name}_body() {
+		vmeth_failure_body '${vmeth}'
+	}"
+	eval "${name}_cleanup() {
+		rump.cgdconfig -u cgd0 2>/dev/null
+		env RUMP_SERVER=unix://csock rump.halt || true
+	}"
+}
+
+test_case_vmeth_failure disklabel
+test_case_vmeth_failure ffs
+test_case_vmeth_failure gpt
+test_case_vmeth_failure mbr
+
 atf_init_test_cases()
 {
-
 	atf_add_test_case basic
 	atf_add_test_case wrongpass
 	atf_add_test_case unaligned_write
+	atf_add_test_case vmeth_failure_disklabel
+	atf_add_test_case vmeth_failure_ffs
+	atf_add_test_case vmeth_failure_gpt
+	atf_add_test_case vmeth_failure_mbr
 }

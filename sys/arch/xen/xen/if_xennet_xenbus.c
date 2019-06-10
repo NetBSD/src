@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.77.2.1 2019/06/10 22:06:56 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77.2.1 2019/06/10 22:06:56 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaito
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen-public/io/netif.h>
+#include <xen/include/public/io/netif.h>
 #include <xen/xenpmap.h>
 
 #include <xen/xenbus.h>
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaito
 
 #undef XENNET_DEBUG_DUMP
 #undef XENNET_DEBUG
+
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
 #define XEDB_INIT       0x02
@@ -144,6 +145,19 @@ int xennet_debug = 0xff;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#ifdef XENPVHVM
+/* Glue for p2m table stuff. Should be removed eventually */
+#define xpmap_mtop_masked(mpa) (mpa & ~PAGE_MASK)
+#define xpmap_mtop(mpa) (mpa & ~PG_FRAME)
+#define xpmap_ptom_masked(mpa) (mpa & ~PAGE_MASK)
+#define xpmap_ptom(mpa) (mpa & ~PG_FRAME)
+#define xpmap_ptom_map(ppa, mpa)
+#define xpmap_ptom_unmap(ppa)
+#define xpmap_ptom_isvalid 1 /* XXX: valid PA check */
+#define xpmap_pg_nx pmap_pg_nx /* We use the native setting */
+#define xpq_flush_queue() tlbflush()
+#endif /* XENPVHVM */
 
 extern pt_entry_t xpmap_pg_nx;
 
@@ -369,9 +383,9 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = xennet_watchdog;
 	ifp->if_init = xennet_init;
 	ifp->if_stop = xennet_stop;
-	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_timer = 0;
-	ifp->if_snd.ifq_maxlen = max(ifqmaxlen, NET_TX_RING_SIZE * 2);
+	ifp->if_snd.ifq_maxlen = uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
@@ -422,7 +436,7 @@ xennet_xenbus_detach(device_t self, int flags)
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
 	s0 = splnet();
 	xennet_stop(ifp, 1);
-	intr_disestablish(sc->sc_ih);
+	xen_intr_disestablish(sc->sc_ih);
 	/* wait for pending TX to complete, and collect pending RX packets */
 	xennet_handler(sc);
 	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
@@ -516,7 +530,7 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL,
+	sc->sc_ih = xen_intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
 	    IPL_NET, &xennet_handler, sc, false, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 	return true;
@@ -640,7 +654,7 @@ xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 	 */
 
 	sc->sc_backend_status = BEST_SUSPENDED;
-	intr_disestablish(sc->sc_ih);
+	xen_intr_disestablish(sc->sc_ih);
 
 	splx(s);
 
@@ -846,7 +860,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 				mmu[0].val = pa >> PAGE_SHIFT;
 				MULTI_update_va_mapping(&mcl[0], va,
-				    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
+				    (ma << PAGE_SHIFT) | PTE_P | PTE_W | xpmap_pg_nx,
 				    UVMF_TLB_FLUSH|UVMF_ALL);
 				xpmap_ptom_map(pa, ptoa(ma));
 				mcl[1].op = __HYPERVISOR_mmu_update;
@@ -1043,7 +1057,7 @@ again:
 			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 			mmu[0].val = pa >> PAGE_SHIFT;
 			MULTI_update_va_mapping(&mcl[0], va,
-			    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
+			    (ma << PAGE_SHIFT) | PTE_P | PTE_W | xpmap_pg_nx,
 			    UVMF_TLB_FLUSH|UVMF_ALL);
 			xpmap_ptom_map(pa, ptoa(ma));
 			mcl[1].op = __HYPERVISOR_mmu_update;
@@ -1171,7 +1185,7 @@ xennet_softstart(void *arg)
 	struct mbuf *m, *new_m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
-	paddr_t pa, pa2;
+	paddr_t pa;
 	struct xennet_txreq *req;
 	int notify;
 	int do_notify = 0;
@@ -1290,9 +1304,13 @@ xennet_softstart(void *arg)
 		    "mbuf %p, buf %p/%p/%p, size %d\n",
 		    req->txreq_id, m, mtod(m, void *), (void *)pa,
 		    (void *)xpmap_ptom_masked(pa), m->m_pkthdr.len));
+#ifdef XENNET_DEBUG
+		paddr_t pa2;
 		pmap_extract_ma(pmap_kernel(), mtod(m, vaddr_t), &pa2);
 		DPRINTFN(XEDB_MBUF, ("xennet_start pa %p ma %p/%p\n",
 		    (void *)pa, (void *)xpmap_ptom_masked(pa), (void *)pa2));
+#endif
+
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
 			       	req->txreq_id);
@@ -1381,7 +1399,7 @@ xennet_init(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		sc->sc_rx_ring.sring->rsp_event =
 		    sc->sc_rx_ring.rsp_cons + 1;
-		hypervisor_enable_event(sc->sc_evtchn);
+		hypervisor_unmask_event(sc->sc_evtchn);
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		xennet_reset(sc);
 	}

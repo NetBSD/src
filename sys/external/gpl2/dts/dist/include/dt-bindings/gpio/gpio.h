@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.h,v 1.1.1.5 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: gpio.h,v 1.1.1.5.2.1 2019/06/10 22:08:55 christos Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -34,5 +34,11 @@
 /* Bit 3 express GPIO suspend/resume and reset persistence */
 #define GPIO_PERSISTENT 0
 #define GPIO_TRANSITORY 8
+
+/* Bit 4 express pull up */
+#define GPIO_PULL_UP 16
+
+/* Bit 5 express pull down */
+#define GPIO_PULL_DOWN 32
 
 #endif

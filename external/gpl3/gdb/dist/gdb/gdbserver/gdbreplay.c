@@ -1,5 +1,5 @@
 /* Replay a remote debug session logfile for GDB.
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com) from pieces of gdbserver.
 
    This file is part of GDB.
@@ -17,11 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
-#include "build-gnulib-gdbserver/config.h"
-#include "version.h"
+#include "common/common-defs.h"
+#include "common/version.h"
 
-#include <stdio.h>
 #if HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
@@ -32,9 +30,6 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -49,11 +44,15 @@
 #include <netinet/tcp.h>
 #endif
 
-#include <alloca.h>
-
 #if USE_WIN32API
-#include <winsock2.h>
+#if _WIN32_WINNT < 0x0501
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0x0501
 #endif
+#include <ws2tcpip.h>
+#endif
+
+#include "common/netstuff.h"
 
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;
@@ -115,32 +114,6 @@ strerror (DWORD error)
 
 #endif /* __MINGW32CE__ */
 
-/* Print the system error message for errno, and also mention STRING
-   as the file name for which the error was encountered.
-   Then return to command level.  */
-
-static void
-perror_with_name (const char *string)
-{
-#ifndef STDC_HEADERS
-  extern int errno;
-#endif
-  const char *err;
-  char *combined;
-
-  err = strerror (errno);
-  if (err == NULL)
-    err = "unknown error";
-
-  combined = (char *) alloca (strlen (err) + strlen (string) + 3);
-  strcpy (combined, string);
-  strcat (combined, ": ");
-  strcat (combined, err);
-  fprintf (stderr, "\n%s.\n", combined);
-  fflush (stderr);
-  exit (1);
-}
-
 static void
 sync_error (FILE *fp, const char *desc, int expect, int got)
 {
@@ -175,56 +148,107 @@ remote_close (void)
 static void
 remote_open (char *name)
 {
-  if (!strchr (name, ':'))
+  char *last_colon = strrchr (name, ':');
+
+  if (last_colon == NULL)
     {
       fprintf (stderr, "%s: Must specify tcp connection as host:addr\n", name);
       fflush (stderr);
       exit (1);
     }
+
+#ifdef USE_WIN32API
+  static int winsock_initialized;
+#endif
+  int tmp;
+  int tmp_desc;
+  struct addrinfo hint;
+  struct addrinfo *ainfo;
+
+  memset (&hint, 0, sizeof (hint));
+  /* Assume no prefix will be passed, therefore we should use
+     AF_UNSPEC.  */
+  hint.ai_family = AF_UNSPEC;
+  hint.ai_socktype = SOCK_STREAM;
+  hint.ai_protocol = IPPROTO_TCP;
+
+  parsed_connection_spec parsed = parse_connection_spec (name, &hint);
+
+  if (parsed.port_str.empty ())
+    error (_("Missing port on hostname '%s'"), name);
+
+#ifdef USE_WIN32API
+  if (!winsock_initialized)
+    {
+      WSADATA wsad;
+
+      WSAStartup (MAKEWORD (1, 0), &wsad);
+      winsock_initialized = 1;
+    }
+#endif
+
+  int r = getaddrinfo (parsed.host_str.c_str (), parsed.port_str.c_str (),
+		       &hint, &ainfo);
+
+  if (r != 0)
+    {
+      fprintf (stderr, "%s:%s: cannot resolve name: %s\n",
+	       parsed.host_str.c_str (), parsed.port_str.c_str (),
+	       gai_strerror (r));
+      fflush (stderr);
+      exit (1);
+    }
+
+  scoped_free_addrinfo free_ainfo (ainfo);
+
+  struct addrinfo *p;
+
+  for (p = ainfo; p != NULL; p = p->ai_next)
+    {
+      tmp_desc = socket (p->ai_family, p->ai_socktype, p->ai_protocol);
+
+      if (tmp_desc >= 0)
+	break;
+    }
+
+  if (p == NULL)
+    perror_with_name ("Cannot open socket");
+
+  /* Allow rapid reuse of this port. */
+  tmp = 1;
+  setsockopt (tmp_desc, SOL_SOCKET, SO_REUSEADDR, (char *) &tmp,
+	      sizeof (tmp));
+
+  switch (p->ai_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *) p->ai_addr)->sin_addr.s_addr = INADDR_ANY;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *) p->ai_addr)->sin6_addr = in6addr_any;
+      break;
+    default:
+      fprintf (stderr, "Invalid 'ai_family' %d\n", p->ai_family);
+      exit (1);
+    }
+
+  if (bind (tmp_desc, p->ai_addr, p->ai_addrlen) != 0)
+    perror_with_name ("Can't bind address");
+
+  if (p->ai_socktype == SOCK_DGRAM)
+    remote_desc = tmp_desc;
   else
     {
-#ifdef USE_WIN32API
-      static int winsock_initialized;
-#endif
-      char *port_str;
-      int port;
-      struct sockaddr_in sockaddr;
-      socklen_t tmp;
-      int tmp_desc;
+      struct sockaddr_storage sockaddr;
+      socklen_t sockaddrsize = sizeof (sockaddr);
+      char orig_host[GDB_NI_MAX_ADDR], orig_port[GDB_NI_MAX_PORT];
 
-      port_str = strchr (name, ':');
+      if (listen (tmp_desc, 1) != 0)
+	perror_with_name ("Can't listen on socket");
 
-      port = atoi (port_str + 1);
+      remote_desc = accept (tmp_desc, (struct sockaddr *) &sockaddr,
+			    &sockaddrsize);
 
-#ifdef USE_WIN32API
-      if (!winsock_initialized)
-	{
-	  WSADATA wsad;
-
-	  WSAStartup (MAKEWORD (1, 0), &wsad);
-	  winsock_initialized = 1;
-	}
-#endif
-
-      tmp_desc = socket (PF_INET, SOCK_STREAM, 0);
-      if (tmp_desc == -1)
-	perror_with_name ("Can't open socket");
-
-      /* Allow rapid reuse of this port. */
-      tmp = 1;
-      setsockopt (tmp_desc, SOL_SOCKET, SO_REUSEADDR, (char *) &tmp,
-		  sizeof (tmp));
-
-      sockaddr.sin_family = PF_INET;
-      sockaddr.sin_port = htons (port);
-      sockaddr.sin_addr.s_addr = INADDR_ANY;
-
-      if (bind (tmp_desc, (struct sockaddr *) &sockaddr, sizeof (sockaddr))
-	  || listen (tmp_desc, 1))
-	perror_with_name ("Can't bind address");
-
-      tmp = sizeof (sockaddr);
-      remote_desc = accept (tmp_desc, (struct sockaddr *) &sockaddr, &tmp);
       if (remote_desc == -1)
 	perror_with_name ("Accept failed");
 
@@ -238,6 +262,16 @@ remote_open (char *name)
       tmp = 1;
       setsockopt (remote_desc, IPPROTO_TCP, TCP_NODELAY,
 		  (char *) &tmp, sizeof (tmp));
+
+      if (getnameinfo ((struct sockaddr *) &sockaddr, sockaddrsize,
+		       orig_host, sizeof (orig_host),
+		       orig_port, sizeof (orig_port),
+		       NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+	{
+	  fprintf (stderr, "Remote debugging from host %s, port %s\n",
+		   orig_host, orig_port);
+	  fflush (stderr);
+	}
 
 #ifndef USE_WIN32API
       close (tmp_desc);		/* No longer need this */
@@ -407,7 +441,7 @@ static void
 gdbreplay_version (void)
 {
   printf ("GNU gdbreplay %s%s\n"
-	  "Copyright (C) 2017 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2019 Free Software Foundation, Inc.\n"
 	  "gdbreplay is free software, covered by "
 	  "the GNU General Public License.\n"
 	  "This gdbreplay was configured as \"%s\"\n",
@@ -417,13 +451,16 @@ gdbreplay_version (void)
 static void
 gdbreplay_usage (FILE *stream)
 {
-  fprintf (stream, "Usage:\tgdbreplay <logfile> <host:port>\n");
+  fprintf (stream, "Usage:\tgdbreplay LOGFILE HOST:PORT\n");
   if (REPORT_BUGS_TO[0] && stream == stdout)
     fprintf (stream, "Report bugs to \"%s\".\n", REPORT_BUGS_TO);
 }
 
-int
-main (int argc, char *argv[])
+/* Main function.  This is called by the real "main" function,
+   wrapped in a TRY_CATCH that handles any uncaught exceptions.  */
+
+static void ATTRIBUTE_NORETURN
+captured_main (int argc, char *argv[])
 {
   FILE *fp;
   int ch;
@@ -470,4 +507,26 @@ main (int argc, char *argv[])
     }
   remote_close ();
   exit (0);
+}
+
+int
+main (int argc, char *argv[])
+{
+  TRY
+    {
+      captured_main (argc, argv);
+    }
+  CATCH (exception, RETURN_MASK_ALL)
+    {
+      if (exception.reason == RETURN_ERROR)
+	{
+	  fflush (stdout);
+	  fprintf (stderr, "%s\n", exception.message);
+	}
+
+      exit (1);
+    }
+  END_CATCH
+
+  gdb_assert_not_reached ("captured_main should never return");
 }

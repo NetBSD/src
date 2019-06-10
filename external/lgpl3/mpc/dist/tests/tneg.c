@@ -1,6 +1,6 @@
 /* tneg -- test file for mpc_neg.
 
-Copyright (C) 2008 INRIA
+Copyright (C) 2008, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,14 +20,22 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_neg (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_neg (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_neg);
   test_start ();
 
-  data_check (f, "neg.dat");
-  tgeneric (f, 2, 1024, 1, 0);
+  data_check_template ("neg.dsc", "neg.dat");
+
+  tgeneric_template ("neg.dsc", 2, 1024, 1, 0);
 
   test_end ();
 

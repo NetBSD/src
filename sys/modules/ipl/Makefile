@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/06/13 20:03:07 ryoon Exp $
+#	$NetBSD: Makefile,v 1.2.22.1 2019/06/10 22:09:30 christos Exp $
 #
 
 .include "../Makefile.inc"
@@ -53,6 +53,8 @@ SRCS+=	ip_state.c
 SRCS+=	ip_sync.c
 SRCS+=	ip_fil_compat.c
 SRCS+=	radix_ipf.c
+
+WARNS=	3
 
 CWARNFLAGS.clang+=	-Wno-self-assign
 

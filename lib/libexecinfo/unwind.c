@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.c,v 1.2 2014/03/24 21:26:01 joerg Exp $	*/
+/*	$NetBSD: unwind.c,v 1.2.26.1 2019/06/10 22:05:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ tracer(struct _Unwind_Context *ctx, void *arg)
 	}
 	if (t->n < t->len)
 		t->arr[t->n++] = (void *)_Unwind_GetIP(ctx);
+	else
+		return _URC_FOREIGN_EXCEPTION_CAUGHT;
 	return 0;
 }
 

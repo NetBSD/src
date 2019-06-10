@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.34 2017/12/31 08:29:38 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.34.4.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
  */
 
 #define ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#ifdef XEN
+#ifdef XENPV
 #define SEL_KPL		3		/* kernel privilege level */
 #define SEL_XPL		0		/* Xen Hypervisor privilege level */
 #else
@@ -107,7 +107,7 @@
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
 
-#ifdef XEN
+#ifdef XENPV
 #define IOPL_KPL	1
 #else
 #define IOPL_KPL	SEL_KPL
@@ -136,7 +136,7 @@
 #define LSEL(s,r)	((s) | r | SEL_LDT)
 
 #define USERMODE(c)		(ISPL(c) == SEL_UPL)
-#ifdef XEN
+#ifdef XENPV
 /*
  * As KPL == UPL, Xen emulate interrupt in kernel context by pushing
  * a fake CS with XPL privilege
@@ -233,16 +233,19 @@ struct region_descriptor {
 } __packed;
 
 #ifdef _KERNEL
-#ifdef XEN
-extern struct trap_info *idt;
+#ifdef XENPV
+typedef struct trap_info idt_descriptor_t;
 #else
-extern struct gate_descriptor *idt;
-#endif
+typedef struct gate_descriptor idt_descriptor_t; 
+#endif /* XENPV */
+extern idt_descriptor_t *idt;
 extern char *gdtstore;
 extern char *ldtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
+void set_idtgate(idt_descriptor_t *, void *, int, int, int, int);
+void unset_idtgate(idt_descriptor_t *);
 void setregion(struct region_descriptor *, void *, uint16_t);
 void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
     int, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.19 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.19.2.1 2019/06/10 22:07:13 christos Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.19 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.19.2.1 2019/06/10 22:07:13 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,8 +84,8 @@ STATIC void mvxpe_sc_lock(struct mvxpe_softc *);
 STATIC void mvxpe_sc_unlock(struct mvxpe_softc *);
 
 /* MII */
-STATIC int mvxpe_miibus_readreg(device_t, int, int);
-STATIC void mvxpe_miibus_writereg(device_t, int, int, int);
+STATIC int mvxpe_miibus_readreg(device_t, int, int, uint16_t *);
+STATIC int mvxpe_miibus_writereg(device_t, int, int, uint16_t);
 STATIC void mvxpe_miibus_statchg(struct ifnet *);
 
 /* Addres Decoding Window */
@@ -288,6 +288,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	struct mvxpe_softc *sc = device_private(self);
 	struct mii_softc *mii;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	struct marvell_attach_args *mva = aux;
 	prop_dictionary_t dict;
 	prop_data_t enaddrp = NULL;
@@ -333,7 +334,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	aprint_normal_dev(self,
-	    "Using Buffer Manager: %s\n", mvxpbm_xname(sc->sc_bm));	
+	    "Using Buffer Manager: %s\n", mvxpbm_xname(sc->sc_bm));
 	aprint_normal_dev(sc->sc_dev,
 	    "%zu kbytes managed buffer, %zu bytes * %u entries allocated.\n",
 	    mvxpbm_buf_size(sc->sc_bm) / 1024,
@@ -445,7 +446,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize struct ifnet
 	 */
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(MVXPE_TX_RING_CNT - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(MVXPE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), sizeof(ifp->if_xname));
 
@@ -471,29 +472,26 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 		mutex_init(&mii_mutex, MUTEX_DEFAULT, IPL_NET);
 		mii_init = 1;
 	}
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = mvxpe_miibus_readreg;
-	sc->sc_mii.mii_writereg = mvxpe_miibus_writereg;
-	sc->sc_mii.mii_statchg = mvxpe_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = mvxpe_miibus_readreg;
+	mii->mii_writereg = mvxpe_miibus_writereg;
+	mii->mii_statchg = mvxpe_miibus_statchg;
 
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0,
-	    mvxpe_mediachange, mvxpe_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, mvxpe_mediachange, mvxpe_mediastatus);
 	/*
 	 * XXX: phy addressing highly depends on Board Design.
-	 * we assume phyaddress == MAC unit number here, 
+	 * we assume phyaddress == MAC unit number here,
 	 * but some boards may not.
 	 */
-	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    MII_PHY_ANY, sc->sc_dev->dv_unit, 0);
-	mii = LIST_FIRST(&sc->sc_mii.mii_phys);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, sc->sc_dev->dv_unit, 0);
+	mii = LIST_FIRST(&mii->mii_phys);
 	if (mii == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		phyaddr = MVXPE_PHYADDR_PHYAD(mii->mii_phy);
 		MVXPE_WRITE(sc, MVXPE_PHYADDR, phyaddr);
 		DPRINTSC(sc, 1, "PHYADDR: %#x\n", MVXPE_READ(sc, MVXPE_PHYADDR));
@@ -568,7 +566,7 @@ mvxpe_evcnt_attach(struct mvxpe_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rreq, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "RxTx Rx resource erorr");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rpq, EVCNT_TYPE_INTR,
-	    NULL, device_xname(sc->sc_dev), "RxTx Rx pakcet");
+	    NULL, device_xname(sc->sc_dev), "RxTx Rx packet");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_tbrq, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "RxTx Tx complete");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rxtxth, EVCNT_TYPE_INTR,
@@ -692,12 +690,12 @@ mvxpe_sc_unlock(struct mvxpe_softc *sc)
  * MII
  */
 STATIC int
-mvxpe_miibus_readreg(device_t dev, int phy, int reg)
+mvxpe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct mvxpe_softc *sc = device_private(dev);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t smi, val;
-	int i;
+	uint32_t smi;
+	int i, rv = 0;
 
 	mutex_enter(&mii_mutex);
 
@@ -708,8 +706,8 @@ mvxpe_miibus_readreg(device_t dev, int phy, int reg)
 	}
 	if (i == MVXPE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&mii_mutex);
-		return -1;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi =
@@ -719,30 +717,32 @@ mvxpe_miibus_readreg(device_t dev, int phy, int reg)
 	for (i = 0; i < MVXPE_PHY_TIMEOUT; i++) {
 		DELAY(1);
 		smi = MVXPE_READ(sc, MVXPE_SMI);
-		if (smi & MVXPE_SMI_READVALID)
+		if (smi & MVXPE_SMI_READVALID) {
+			*val = smi & MVXPE_SMI_DATA_MASK;
 			break;
+		}
 	}
+	DPRINTDEV(dev, 9, "i=%d, timeout=%d\n", i, MVXPE_PHY_TIMEOUT);
+	if (i >= MVXPE_PHY_TIMEOUT)
+		rv = ETIMEDOUT;
 
+out:
 	mutex_exit(&mii_mutex);
 
-	DPRINTDEV(dev, 9, "i=%d, timeout=%d\n", i, MVXPE_PHY_TIMEOUT);
+	DPRINTDEV(dev, 9, "phy=%d, reg=%#x, val=%#hx\n", phy, reg, *val);
 
-	val = smi & MVXPE_SMI_DATA_MASK;
-
-	DPRINTDEV(dev, 9, "phy=%d, reg=%#x, val=%#x\n", phy, reg, val);
-
-	return val;
+	return rv;
 }
 
-STATIC void
-mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
+STATIC int
+mvxpe_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct mvxpe_softc *sc = device_private(dev);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi;
-	int i;
+	int i, rv = 0;
 
-	DPRINTDEV(dev, 9, "phy=%d reg=%#x val=%#x\n", phy, reg, val);
+	DPRINTDEV(dev, 9, "phy=%d reg=%#x val=%#hx\n", phy, reg, val);
 
 	mutex_enter(&mii_mutex);
 
@@ -753,8 +753,8 @@ mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
 	}
 	if (i == MVXPE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&mii_mutex);
-		return;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi = MVXPE_SMI_PHYAD(phy) | MVXPE_SMI_REGAD(reg) |
@@ -767,10 +767,15 @@ mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
+	if (i == MVXPE_PHY_TIMEOUT) {
+		aprint_error_ifnet(ifp, "phy write timed out\n");
+		rv = ETIMEDOUT;
+	}
+
+out:
 	mutex_exit(&mii_mutex);
 
-	if (i == MVXPE_PHY_TIMEOUT)
-		aprint_error_ifnet(ifp, "phy write timed out\n");
+	return rv;
 }
 
 STATIC void
@@ -915,7 +920,7 @@ mvxpe_initreg(struct ifnet *ifp)
 
 	/* Port MAC Control set 1 is only used for loop-back test */
 
-	/* Port MAC Control set 2 */ 
+	/* Port MAC Control set 2 */
 	reg = MVXPE_READ(sc, MVXPE_PMACC2);
 	reg &= (MVXPE_PMACC2_PCSEN | MVXPE_PMACC2_RGMIIEN);
 	reg |= MVXPE_PMACC2_MUSTSET;
@@ -1122,7 +1127,7 @@ mvxpe_ring_init_queue(struct mvxpe_softc *sc, int q)
 		if (bus_dmamap_create(sc->sc_dmat,
 		    mvxpbm_chunk_size(sc->sc_bm),
 		    MVXPE_TX_SEGLIMIT, mvxpbm_chunk_size(sc->sc_bm), 0,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &MVXPE_TX_MAP(sc, q, i))) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't create dma map (tx ring %d)\n", i);
@@ -1133,7 +1138,7 @@ mvxpe_ring_init_queue(struct mvxpe_softc *sc, int q)
 	tx->tx_queue_len = tx_default_queue_len[q];
 	if (tx->tx_queue_len > MVXPE_TX_RING_CNT)
 		tx->tx_queue_len = MVXPE_TX_RING_CNT;
-       	tx->tx_used = 0;
+	tx->tx_used = 0;
 	tx->tx_queue_th_free = tx->tx_queue_len / MVXPE_TXTH_RATIO;
 }
 
@@ -1170,7 +1175,7 @@ mvxpe_ring_flush_queue(struct mvxpe_softc *sc, int q)
 		m_freem(m);
 	}
 	tx->tx_dma = tx->tx_cpu = 0;
-       	tx->tx_used = 0;
+	tx->tx_used = 0;
 }
 
 STATIC void
@@ -1204,7 +1209,7 @@ mvxpe_ring_sync_tx(struct mvxpe_softc *sc, int q, int idx, int count, int ops)
 	KASSERT(idx >= 0 && idx < MVXPE_TX_RING_CNT);
 
 	wrap = (idx + count) - MVXPE_TX_RING_CNT;
-	if (wrap > 0)  {
+	if (wrap > 0) {
 		count -= wrap;
 		bus_dmamap_sync(sc->sc_dmat, MVXPE_TX_RING_MEM_MAP(sc, q),
 		    0, sizeof(struct mvxpe_tx_desc) * wrap, ops);
@@ -1657,7 +1662,7 @@ mvxpe_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int q;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING) {
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
 		DPRINTIFNET(ifp, 1, "not running\n");
 		return;
 	}
@@ -1684,7 +1689,7 @@ mvxpe_start(struct ifnet *ifp)
 		 * don't use IFQ_POLL().
 		 * there is lock problem between IFQ_POLL and IFQ_DEQUEUE
 		 * on SMP enabled networking stack.
-		 */ 
+		 */
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1720,18 +1725,9 @@ STATIC int
 mvxpe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mvxpe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int error = 0;
-	int s;
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTIFNET(ifp, 2, "mvxpe_ioctl MEDIA\n");
-		s = splnet(); /* XXX: is there suitable mutex? */
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		splx(s);
-		break;
 	default:
 		DPRINTIFNET(ifp, 2, "mvxpe_ioctl ETHER\n");
 		error = ether_ioctl(ifp, cmd, data);
@@ -1896,7 +1892,7 @@ mvxpe_stop(struct ifnet *ifp, int disable)
 
 		if (disable) {
 			/*
-			 * Hold Reset state of DMA Engine 
+			 * Hold Reset state of DMA Engine
 			 * (must write 0x0 to restart it)
 			 */
 			MVXPE_WRITE(sc, MVXPE_PRXINIT, 0x00000001);
@@ -1970,7 +1966,7 @@ mvxpe_ifflags_cb(struct ethercom *ec)
 	if (change != 0)
 		sc->sc_if_flags = ifp->if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0) {
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		mvxpe_sc_unlock(sc);
 		return ENETRESET;
 	}
@@ -2184,7 +2180,7 @@ mvxpe_tx_queue(struct mvxpe_softc *sc, struct mbuf *m, int q)
 		}
 #endif
 	mvxpe_ring_sync_tx(sc, q, start, used,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	while (used > 255) {
 		ptxsu = MVXPE_PTXSU_NOWD(255);
@@ -2220,8 +2216,7 @@ mvxpe_tx_set_csumflag(struct ifnet *ifp,
 	int csum_flags;
 	uint32_t iphl = 0, ipoff = 0;
 
-	
-       	csum_flags = ifp->if_csum_flags_tx & m->m_pkthdr.csum_flags;
+	csum_flags = ifp->if_csum_flags_tx & m->m_pkthdr.csum_flags;
 
 	eh = mtod(m, struct ether_header *);
 	switch (htons(eh->ether_type)) {
@@ -2234,11 +2229,11 @@ mvxpe_tx_set_csumflag(struct ifnet *ifp,
 		break;
 	}
 
-	if (csum_flags & (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+	if (csum_flags & (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 		t->command |= MVXPE_TX_CMD_L3_IP4;
 	}
-	else if (csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+	else if (csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
 		iphl = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 		t->command |= MVXPE_TX_CMD_L3_IP6;
 	}
@@ -2254,8 +2249,8 @@ mvxpe_tx_set_csumflag(struct ifnet *ifp,
 	}
 
 	/* L4 */
-	if ((csum_flags & 
-	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TCPv6|M_CSUM_UDPv6)) == 0) {
+	if ((csum_flags &
+	    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0) {
 		t->command |= MVXPE_TX_CMD_L4_CHECKSUM_NONE;
 	}
 	else if (csum_flags & M_CSUM_TCPv4) {
@@ -2322,7 +2317,7 @@ mvxpe_tx_queue_complete(struct mvxpe_softc *sc, int q)
 	    "tx complete queue %d, %d descriptors.\n", q, ndesc);
 
 	mvxpe_ring_sync_tx(sc, q, tx->tx_dma, ndesc,
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (i = 0; i < ndesc; i++) {
 		int error = 0;
@@ -2417,7 +2412,7 @@ mvxpe_rx_queue(struct mvxpe_softc *sc, int q, int npkt)
 	KASSERT_RX_MTX(sc, q);
 
 	mvxpe_ring_sync_rx(sc, q, rx->rx_dma, npkt,
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (i = 0; i < npkt; i++) {
 		/* get descriptor and packet */
@@ -2530,8 +2525,8 @@ mvxpe_rx_queue_select(struct mvxpe_softc *sc, uint32_t queues, int *queue)
 		if (npkt == 0)
 			continue;
 
-		DPRINTSC(sc, 2, 
-		    "queue %d selected: prxs=%#x, %u pakcet received.\n",
+		DPRINTSC(sc, 2,
+		    "queue %d selected: prxs=%#x, %u packet received.\n",
 		    q, prxs, npkt);
 		*queue = q;
 		mvxpe_rx_lockq(sc, q);
@@ -2635,7 +2630,7 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 {
 	uint32_t csum_flags = 0;
 
-	if ((r->status & (MVXPE_RX_IP_HEADER_OK|MVXPE_RX_L3_IP)) == 0)
+	if ((r->status & (MVXPE_RX_IP_HEADER_OK | MVXPE_RX_L3_IP)) == 0)
 		return; /* not a IP packet */
 
 	/* L3 */
@@ -2691,7 +2686,7 @@ mvxpe_crc8(const uint8_t *data, size_t size)
 	uint8_t crc = 0;
 	const uint8_t poly = 0x07;
 
-	while(size--)
+	while (size--)
 	  for (byte = *data++, bit = NBBY-1; bit >= 0; bit--)
 	    crc = (crc << 1) ^ ((((crc >> 7) ^ (byte >> bit)) & 1) ? poly : 0);
 
@@ -2718,14 +2713,16 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 	memset(dfsmt, 0, sizeof(dfsmt));
 	memset(dfomt, 0, sizeof(dfomt));
 
-	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
+	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
 		goto allmulti;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/* ranges are complex and somewhat rare */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		/* chip handles some IPv4 multicast specially */
@@ -2741,12 +2738,13 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	goto set;
 
 allmulti:
-	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
+	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
 		for (i = 0; i < MVXPE_NDFSMT; i++) {
-			dfsmt[i] = dfomt[i] = 
+			dfsmt[i] = dfomt[i] =
 			    MVXPE_DF(0, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
 			    MVXPE_DF(1, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
 			    MVXPE_DF(2, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS) |
@@ -2778,7 +2776,7 @@ set:
 		}
 	}
 	else {
-		i = sc->sc_enaddr[5] & 0xf;             /* last nibble */
+		i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
 		dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 	}
 	MVXPE_WRITE_REGION(sc, MVXPE_DFUT(0), dfut, MVXPE_NDFUT);
@@ -2830,7 +2828,7 @@ sysctl_read_mib(SYSCTLFN_ARGS)
 		return EINVAL;
 	if (arg->index < 0 || arg->index > __arraycount(mvxpe_mib_list))
 		return EINVAL;
-	
+
 	mvxpe_sc_lock(sc);
 	val = arg->counter;
 	mvxpe_sc_unlock(sc);
@@ -2934,9 +2932,9 @@ sysctl_set_queue_length(SYSCTLFN_ARGS)
 	case  MVXPE_SYSCTL_RX:
 		mvxpe_rx_lockq(sc, arg->queue);
 		rx->rx_queue_len = val;
-		rx->rx_queue_th_received = 
+		rx->rx_queue_th_received =
 		    rx->rx_queue_len / MVXPE_RXTH_RATIO;
-		rx->rx_queue_th_free = 
+		rx->rx_queue_th_free =
 		    rx->rx_queue_len / MVXPE_RXTH_REFILL_RATIO;
 
 		reg  = MVXPE_PRXDQTH_ODT(rx->rx_queue_th_received);
@@ -3102,7 +3100,7 @@ sysctl_mvxpe_init(struct mvxpe_softc *sc)
 		struct mvxpe_sysctl_mib *mib_arg = &sc->sc_sysctl_mib[i];
 
 		mib_arg->sc = sc;
-		mib_arg->index = i; 
+		mib_arg->index = i;
 		if (sysctl_createv(&sc->sc_mvxpe_clog, 0, NULL, &node,
 		    CTLFLAG_READONLY, CTLTYPE_QUAD, name, desc,
 		    sysctl_read_mib, 0, (void *)mib_arg, 0,

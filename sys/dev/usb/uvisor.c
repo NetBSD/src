@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.48 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.48.16.1 2019/06/10 22:07:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.48 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.48.16.1 2019/06/10 22:07:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,25 +142,19 @@ struct uvisor_softc {
 
 	uint16_t		sc_flags;
 
-	u_char			sc_dying;
+	bool			sc_dying;
 };
 
-Static usbd_status uvisor_init(struct uvisor_softc *,
+static usbd_status uvisor_init(struct uvisor_softc *,
 			       struct uvisor_connection_info *,
 			       struct uvisor_palm_connection_info *);
 
-Static void uvisor_close(void *, int);
-
+static int uvisor_open(void *, int);
+static void uvisor_close(void *, int);
 
 struct ucom_methods uvisor_methods = {
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
-	.ucom_open = NULL,
+	.ucom_open = uvisor_open,
 	.ucom_close = uvisor_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
-	.ucom_get_status = NULL,
-	.ucom_set = NULL,
 };
 
 struct uvisor_type {
@@ -193,16 +187,15 @@ static const struct uvisor_type uvisor_devs[] = {
 };
 #define uvisor_lookup(v, p) ((const struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 
-int uvisor_match(device_t, cfdata_t, void *);
-void uvisor_attach(device_t, device_t, void *);
-void uvisor_childdet(device_t, device_t);
-int uvisor_detach(device_t, int);
-int uvisor_activate(device_t, enum devact);
-extern struct cfdriver uvisor_cd;
-CFATTACH_DECL2_NEW(uvisor, sizeof(struct uvisor_softc), uvisor_match,
-    uvisor_attach, uvisor_detach, uvisor_activate, NULL, uvisor_childdet);
+static int	uvisor_match(device_t, cfdata_t, void *);
+static void	uvisor_attach(device_t, device_t, void *);
+static void	uvisor_childdet(device_t, device_t);
+static int	uvisor_detach(device_t, int);
 
-int
+CFATTACH_DECL2_NEW(uvisor, sizeof(struct uvisor_softc), uvisor_match,
+    uvisor_attach, uvisor_detach, NULL, NULL, uvisor_childdet);
+
+static int
 uvisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -214,7 +207,7 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uvisor_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvisor_softc *sc = device_private(self);
@@ -234,6 +227,7 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(10,("\nuvisor_attach: sc=%p\n", sc));
 
 	sc->sc_dev = self;
+	sc->sc_dying = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -375,25 +369,11 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 
 bad:
 	DPRINTF(("uvisor_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return;
 }
 
-int
-uvisor_activate(device_t self, enum devact act)
-{
-	struct uvisor_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-void
+static void
 uvisor_childdet(device_t self, device_t child)
 {
 	int i;
@@ -407,7 +387,7 @@ uvisor_childdet(device_t self, device_t child)
 	sc->sc_subdevs[i] = NULL;
 }
 
-int
+static int
 uvisor_detach(device_t self, int flags)
 {
 	struct uvisor_softc *sc = device_private(self);
@@ -415,21 +395,22 @@ uvisor_detach(device_t self, int flags)
 	int i;
 
 	DPRINTF(("uvisor_detach: sc=%p flags=%d\n", sc, flags));
-	sc->sc_dying = 1;
+
+	sc->sc_dying = true;
+
 	for (i = 0; i < sc->sc_numcon; i++) {
-		if (sc->sc_subdevs[i] != NULL)
+		if (sc->sc_subdevs[i] != NULL) {
 			rv |= config_detach(sc->sc_subdevs[i], flags);
+			sc->sc_subdevs[i] = NULL;
+		}
 	}
 
-	if (sc->sc_udev)
-		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-				   sc->sc_dev);
-
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
 
-usbd_status
+static usbd_status
 uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
     struct uvisor_palm_connection_info *cpi)
 {
@@ -477,6 +458,17 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 
 	DPRINTF(("uvisor_init: done\n"));
 	return err;
+}
+
+static int
+uvisor_open(void *arg, int portno)
+{
+	struct uvisor_softc *sc = arg;
+
+	if (sc->sc_dying)
+		return EIO;
+
+	return 0;
 }
 
 void

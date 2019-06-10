@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.31 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.31.84.1 2019/06/10 22:06:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.31 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.31.84.1 2019/06/10 22:06:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ eeprom_uio(struct uio *uio)
 	if ((off < 0) || (off > EEPROM_SIZE))
 		return EFAULT;
 
-	cnt = min(uio->uio_resid, (EEPROM_SIZE - off));
+	cnt = uimin(uio->uio_resid, (EEPROM_SIZE - off));
 	if (cnt == 0)
 		return 0;	/* EOF */
 

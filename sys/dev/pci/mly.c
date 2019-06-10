@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: mly.c,v 1.50.18.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50.18.1 2019/06/10 22:07:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,8 @@ mly_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	mly->mly_ih = pci_intr_establish(pc, ih, IPL_BIO, mly_intr, mly);
+	mly->mly_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, mly_intr, mly,
+	    device_xname(self));
 	if (mly->mly_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
@@ -1616,7 +1617,7 @@ mly_alloc_ccbs(struct mly_softc *mly)
 		mly->mly_ncmds = MLY_CCBS_RESV;
 	else {
 		i = le16toh(mly->mly_controllerinfo->maximum_parallel_commands);
-		mly->mly_ncmds = min(MLY_MAX_CCBS, i);
+		mly->mly_ncmds = uimin(MLY_MAX_CCBS, i);
 	}
 
 	/*
@@ -2382,14 +2383,14 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
 	/* Return the sense buffer to userspace. */
 	if (uc->RequestSenseLength > 0 && mc->mc_sense > 0) {
 		rv = copyout(mc->mc_packet, uc->RequestSenseBuffer,
-		    min(uc->RequestSenseLength, mc->mc_sense));
+		    uimin(uc->RequestSenseLength, mc->mc_sense));
 		if (rv != 0)
 			goto out;
 	}
 
 	/* Return command results to userspace (caller will copy out). */
 	uc->DataTransferLength = mc->mc_resid;
-	uc->RequestSenseLength = min(uc->RequestSenseLength, mc->mc_sense);
+	uc->RequestSenseLength = uimin(uc->RequestSenseLength, mc->mc_sense);
 	uc->CommandStatus = mc->mc_status;
 	rv = 0;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/02/11 02:12:29 christos Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2019/06/10 21:55:47 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -25,7 +25,7 @@ mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 CLEANFILES+=	mm_malloc.h
 .endif
 
-INCSDIR=	/usr/include/gcc-6
+INCSDIR=	${GCC_INCSDIR}
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>

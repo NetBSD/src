@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -30,7 +30,7 @@
 
 
 static inline long
-sys_futex0(int *addr, long op, int val)
+sys_futex0(int *addr, int op, int val)
 {
   register long out0 asm ("out0") = (long) addr;
   register long out1 asm ("out1") = op;

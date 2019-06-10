@@ -151,5 +151,9 @@ initialize_tdesc_x32_linux (void)
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.linux");
   tdesc_create_reg (feature, "orig_rax", 57, 1, NULL, 64, "int");
 
+  feature = tdesc_create_feature (result, "org.gnu.gdb.i386.segments");
+  tdesc_create_reg (feature, "fs_base", 58, 1, NULL, 64, "int");
+  tdesc_create_reg (feature, "gs_base", 59, 1, NULL, 64, "int");
+
   tdesc_x32_linux = result;
 }

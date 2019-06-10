@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2018/04/28 12:33:17 jmcneill Exp $ */
+/* $NetBSD: types.h,v 1.8.2.1 2019/06/10 22:05:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,14 +54,11 @@ typedef unsigned long	vsize_t;
 #define PRIxVSIZE	"lx"
 #define PRIuVSIZE	"lu"
 
-typedef unsigned long long int register_t;
-typedef unsigned int register32_t;
-#define PRIxREGISTER	"llx"
-#define PRIxREGISTER32	"lx"
+typedef __uint64_t register_t;
+typedef __uint32_t register32_t;
+#define PRIxREGISTER	PRIx64
+#define PRIxREGISTER32	PRIx32
 
-typedef unsigned long	pmc_evid_t;
-#define PMC_INVALID_EVID	(-1)
-typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
 
 #if defined(_KERNEL)
@@ -90,13 +87,14 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
  * This should have always been an 8-bit type.
  */
 typedef	unsigned char	__cpu_simple_lock_nv_t;
-typedef unsigned long long int __register_t;
+typedef __uint64_t __register_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
 
 #define __HAVE_FAST_SOFTINTS
 #define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define __HAVE_MM_MD_KERNACC
 #define __HAVE_CPU_COUNTER
 #define __HAVE_SYSCALL_INTERN
 #define __HAVE_NEW_STYLE_BUS_H

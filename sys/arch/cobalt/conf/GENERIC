@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2018/04/09 20:16:16 christos Exp $
+# $NetBSD: GENERIC,v 1.158.2.1 2019/06/10 22:06:00 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.158.2.1 $"
 
 maxusers	32
 
@@ -39,7 +39,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
@@ -99,10 +99,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -239,7 +235,6 @@ atabus* 	at ata?
 wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
-#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -254,7 +249,6 @@ ral*		at pci? dev ? function ?	# ralink wifi
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
@@ -317,8 +311,8 @@ pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	carp				# Common Address Redundancy Protocol
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
@@ -354,18 +348,5 @@ pseudo-device	nullcons			# no-op console
 pseudo-device	nsmb				# experimental - SMB requester
 
 pseudo-device	ksyms				# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

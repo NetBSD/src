@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2017/11/06 03:47:46 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.3.6.1 2019/06/10 22:06:13 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2017/11/06 03:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.6.1 2019/06/10 22:06:13 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -138,6 +138,19 @@ void	mach_init(long, long, long, long);
 
 extern void *esym;
 
+#ifdef _LP64
+/*
+ * We do this KSEG0 to PHYS to KSEG0 dance if running 64-bit because
+ * CFE passes in parameters as 32-bit addresses.  When used as a 64-bit
+ * address these CFE parameters are in user (XKUSEG) space and can't be
+ * accessed!  Convert these to a physical address and and then to the
+ * proper KSEG0 address so we can use them in the kernel.
+ */
+#define	CFE_TO_KERNEL_PTR(x)	MIPS_PHYS_TO_KSEG0(MIPS_KSEG0_TO_PHYS(x))
+#else
+#define	CFE_TO_KERNEL_PTR(x)	(x)
+#endif
+
 /*
  * Do all the stuff that locore normally does before calling main().
  */
@@ -179,8 +192,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	kernend = (void *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (magic == BOOTINFO_MAGIC) {
-		ksym_start = (void *)(intptr_t)bootinfo.ssym;
-		ksym_end   = (void *)(intptr_t)bootinfo.esym;
+		ksym_start = (void *)CFE_TO_KERNEL_PTR(bootinfo.ssym);
+		ksym_end   = (void *)CFE_TO_KERNEL_PTR(bootinfo.esym);
 		kernend = (void *)mips_round_page((vaddr_t)ksym_end);
 	}
 #endif
@@ -216,7 +229,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		int added;
 		uint64_t start, len, type;
 
-		cfe_init(bootinfo.fwhandle, bootinfo.fwentry);
+		cfe_init(CFE_TO_KERNEL_PTR(bootinfo.fwhandle),
+		    CFE_TO_KERNEL_PTR(bootinfo.fwentry));
 		cfe_present = 1;
 
 		idx = 0;
@@ -224,7 +238,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		mem_cluster_cnt = 0;
 		while (cfe_enummem(idx, 0, &start, &len, &type) == 0) {
 			added = 0;
-			printf("Memory Block #%d start %08"PRIx64"X len %08"PRIx64"X: %s: ",
+			printf("Memory Block #%d start %08"PRIx64" len %08"PRIx64": %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
 			    "Available" : "Reserved");
 			if ((type == CFE_MI_AVAILABLE) &&

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/11/16 16:59:04 skrll Exp $
+# $NetBSD: Makefile,v 1.1.36.1 2019/06/10 22:09:29 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,8 +7,6 @@
 KMOD=	if_smsc
 IOCONF=	if_smsc.ioconf
 SRCS=	if_smsc.c
-
-WARNS=	4
 
 CPPFLAGS+=	-DINET
 

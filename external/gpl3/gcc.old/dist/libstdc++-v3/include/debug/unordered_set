@@ -1,6 +1,6 @@
 // Debugging unordered_set/unordered_multiset implementation -*- C++ -*-
 
-// Copyright (C) 2003-2015 Free Software Foundation, Inc.
+// Copyright (C) 2003-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -182,7 +182,7 @@ namespace __debug
 
       void
       swap(unordered_set& __x)
-	noexcept( noexcept(declval<_Base>().swap(__x)) )
+	noexcept( noexcept(declval<_Base&>().swap(__x)) )
       {
 	_Safe::_M_swap(__x);
 	_Base::swap(__x);
@@ -355,10 +355,16 @@ namespace __debug
 	void
 	insert(_InputIterator __first, _InputIterator __last)
 	{
-	  __glibcxx_check_valid_range(__first, __last);
+	  typename __gnu_debug::_Distance_traits<_InputIterator>::__type __dist;
+	  __glibcxx_check_valid_range2(__first, __last, __dist);
 	  size_type __bucket_count = this->bucket_count();
-	  _Base::insert(__gnu_debug::__base(__first),
-			__gnu_debug::__base(__last));
+
+	  if (__dist.second >= __gnu_debug::__dp_sign)
+	    _Base::insert(__gnu_debug::__unsafe(__first),
+			  __gnu_debug::__unsafe(__last));
+	  else
+	    _Base::insert(__first, __last);
+
 	  _M_check_rehashed(__bucket_count);
 	}
 
@@ -474,6 +480,7 @@ namespace __debug
     inline void
     swap(unordered_set<_Value, _Hash, _Pred, _Alloc>& __x,
 	 unordered_set<_Value, _Hash, _Pred, _Alloc>& __y)
+    noexcept(noexcept(__x.swap(__y)))
     { __x.swap(__y); }
 
   template<typename _Value, typename _Hash, typename _Pred, typename _Alloc>
@@ -628,7 +635,7 @@ namespace __debug
 
       void
       swap(unordered_multiset& __x)
-	noexcept( noexcept(declval<_Base>().swap(__x)) )
+	noexcept( noexcept(declval<_Base&>().swap(__x)) )
       {
 	_Safe::_M_swap(__x);
 	_Base::swap(__x);
@@ -799,10 +806,16 @@ namespace __debug
 	void
 	insert(_InputIterator __first, _InputIterator __last)
 	{
-	  __glibcxx_check_valid_range(__first, __last);
+	  typename __gnu_debug::_Distance_traits<_InputIterator>::__type __dist;
+	  __glibcxx_check_valid_range2(__first, __last, __dist);
 	  size_type __bucket_count = this->bucket_count();
-	  _Base::insert(__gnu_debug::__base(__first),
-			__gnu_debug::__base(__last));
+
+	  if (__dist.second >= __gnu_debug::__dp_sign)
+	    _Base::insert(__gnu_debug::__unsafe(__first),
+			  __gnu_debug::__unsafe(__last));
+	  else
+	    _Base::insert(__first, __last);
+
 	  _M_check_rehashed(__bucket_count);
 	}
 
@@ -908,6 +921,7 @@ namespace __debug
     inline void
     swap(unordered_multiset<_Value, _Hash, _Pred, _Alloc>& __x,
 	 unordered_multiset<_Value, _Hash, _Pred, _Alloc>& __y)
+    noexcept(noexcept(__x.swap(__y)))
     { __x.swap(__y); }
 
   template<typename _Value, typename _Hash, typename _Pred, typename _Alloc>

@@ -1,6 +1,6 @@
 /* mpfr_acosh -- inverse hyperbolic cosine
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -62,7 +62,7 @@ mpfr_acosh (mpfr_ptr y, mpfr_srcptr x , mpfr_rnd_t rnd_mode)
     }
   else if (MPFR_UNLIKELY (comp == 0))
     {
-      MPFR_SET_ZERO (y); /* acosh(1) = 0 */
+      MPFR_SET_ZERO (y); /* acosh(1) = +0 */
       MPFR_SET_POS (y);
       MPFR_RET (0);
     }

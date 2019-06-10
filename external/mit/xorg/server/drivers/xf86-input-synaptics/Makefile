@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/29 02:32:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.46.1 2019/06/10 22:02:43 christos Exp $
 
 DRIVER=		xf86-input-synaptics
 DRIVER_NAME=	synaptics_drv
@@ -10,5 +10,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/include
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 
 MAN=		synaptics.4
+
+COPTS.synaptics.c+=		-Wno-error	# XXX deprecated
 
 .include "../Makefile.xf86-driver"

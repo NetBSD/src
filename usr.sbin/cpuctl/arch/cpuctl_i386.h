@@ -1,4 +1,4 @@
-/*      $NetBSD: cpuctl_i386.h,v 1.2 2013/01/07 23:20:42 dsl Exp $      */
+/*      $NetBSD: cpuctl_i386.h,v 1.2.36.1 2019/06/10 22:10:29 christos Exp $      */
 
 /* Interfaces to code in i386-asm.S */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.110 2018/06/06 01:49:09 maya Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.110.2.1 2019/06/10 22:09:45 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.110 2018/06/06 01:49:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.110.2.1 2019/06/10 22:09:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -640,6 +640,12 @@ striptioctl(struct tty *tp, u_long cmd, void *data, int flag,
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
+
 	switch (cmd) {
 	case SLIOCGUNIT:
 		*(int *)data = sc->sc_unit;
@@ -1005,8 +1011,7 @@ stripinput(int c, struct tty *tp)
 		if (sc->sc_mp - sc->sc_pktstart == 0)
 			break;
 
-	/* Fall through to */
-
+		/* FALLTHROUGH */
 	default:
 		if (sc->sc_mp < sc->sc_ep) {
 			*sc->sc_mp++ = c;
@@ -1238,7 +1243,7 @@ stripintr(void *arg)
 			int pktlen;
 
 			pktlen = m->m_pkthdr.len;
-			M_MOVE_PKTHDR(n, m);
+			m_move_pkthdr(n, m);
 			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
@@ -1737,6 +1742,7 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 			/* else, we only have one so far, so switch to Stuff_Diff code */
 			code = Stuff_Diff; /* and fall through to Stuff_Diff case below */
 
+			/* FALLTHROUGH */
 		case Stuff_Diff:	/* Stuff_Diff: We have at least two *different* bytes encoded */
 			/* If this is a zero, must encode a Stuff_DiffZero, and begin a new block */
 			if (*src == 0)

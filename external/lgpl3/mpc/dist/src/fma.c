@@ -51,10 +51,10 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   mpfr_init2 (ima_reb, mpfr_get_prec (mpc_imagref(a)) + mpfr_get_prec (mpc_realref(b)));
   mpfr_init2 (ima_imb, mpfr_get_prec (mpc_imagref(a)) + mpfr_get_prec (mpc_imagref(b)));
 
-  mpfr_mul (rea_reb, mpc_realref(a), mpc_realref(b), GMP_RNDZ); /* exact */
-  mpfr_mul (rea_imb, mpc_realref(a), mpc_imagref(b), GMP_RNDZ); /* exact */
-  mpfr_mul (ima_reb, mpc_imagref(a), mpc_realref(b), GMP_RNDZ); /* exact */
-  mpfr_mul (ima_imb, mpc_imagref(a), mpc_imagref(b), GMP_RNDZ); /* exact */
+  mpfr_mul (rea_reb, mpc_realref(a), mpc_realref(b), MPFR_RNDZ); /* exact */
+  mpfr_mul (rea_imb, mpc_realref(a), mpc_imagref(b), MPFR_RNDZ); /* exact */
+  mpfr_mul (ima_reb, mpc_imagref(a), mpc_realref(b), MPFR_RNDZ); /* exact */
+  mpfr_mul (ima_imb, mpc_imagref(a), mpc_imagref(b), MPFR_RNDZ); /* exact */
 
   /* Re(r) <- rea_reb - ima_imb + Re(c) */
 
@@ -67,7 +67,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   if (pre12 <= pre13 && pre12 <= pre23) /* (rea_reb - ima_imb) + Re(c) */
     {
       mpfr_init2 (tmp, pre12);
-      mpfr_sub (tmp, rea_reb, ima_imb, GMP_RNDZ); /* exact */
+      mpfr_sub (tmp, rea_reb, ima_imb, MPFR_RNDZ); /* exact */
       inex_re = mpfr_add (mpc_realref(r), tmp, mpc_realref(c), MPC_RND_RE(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the real part of both, it is ok */
@@ -75,7 +75,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   else if (pre13 <= pre23) /* (rea_reb + Re(c)) - ima_imb */
     {
       mpfr_init2 (tmp, pre13);
-      mpfr_add (tmp, rea_reb, mpc_realref(c), GMP_RNDZ); /* exact */
+      mpfr_add (tmp, rea_reb, mpc_realref(c), MPFR_RNDZ); /* exact */
       inex_re = mpfr_sub (mpc_realref(r), tmp, ima_imb, MPC_RND_RE(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the real part of both, it is ok */
@@ -83,7 +83,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   else /* rea_reb + (Re(c) - ima_imb) */
     {
       mpfr_init2 (tmp, pre23);
-      mpfr_sub (tmp, mpc_realref(c), ima_imb, GMP_RNDZ); /* exact */
+      mpfr_sub (tmp, mpc_realref(c), ima_imb, MPFR_RNDZ); /* exact */
       inex_re = mpfr_add (mpc_realref(r), tmp, rea_reb, MPC_RND_RE(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the real part of both, it is ok */
@@ -99,7 +99,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   if (pim12 <= pim13 && pim12 <= pim23) /* (rea_imb + ima_reb) + Im(c) */
     {
       mpfr_set_prec (tmp, pim12);
-      mpfr_add (tmp, rea_imb, ima_reb, GMP_RNDZ); /* exact */
+      mpfr_add (tmp, rea_imb, ima_reb, MPFR_RNDZ); /* exact */
       inex_im = mpfr_add (mpc_imagref(r), tmp, mpc_imagref(c), MPC_RND_IM(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the imaginary part of both, it is ok */
@@ -107,7 +107,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   else if (pim13 <= pim23) /* (rea_imb + Im(c)) + ima_reb */
     {
       mpfr_set_prec (tmp, pim13);
-      mpfr_add (tmp, rea_imb, mpc_imagref(c), GMP_RNDZ); /* exact */
+      mpfr_add (tmp, rea_imb, mpc_imagref(c), MPFR_RNDZ); /* exact */
       inex_im = mpfr_add (mpc_imagref(r), tmp, ima_reb, MPC_RND_IM(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the imaginary part of both, it is ok */
@@ -115,7 +115,7 @@ mpc_fma_naive (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rn
   else /* rea_imb + (Im(c) + ima_reb) */
     {
       mpfr_set_prec (tmp, pre23);
-      mpfr_add (tmp, mpc_imagref(c), ima_reb, GMP_RNDZ); /* exact */
+      mpfr_add (tmp, mpc_imagref(c), ima_reb, MPFR_RNDZ); /* exact */
       inex_im = mpfr_add (mpc_imagref(r), tmp, rea_imb, MPC_RND_IM(rnd));
       /* the only possible bad overlap is between r and c, but since we are
 	 only touching the imaginary part of both, it is ok */
@@ -167,11 +167,11 @@ mpc_fma (mpc_ptr r, mpc_srcptr a, mpc_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
       diffre = (diffre > 0 ? diffre + 1 : 1);
       diffim = (diffim > 0 ? diffim + 1 : 1);
       okre = diffre > (mpfr_exp_t) wpre ? 0 : mpfr_can_round (mpc_realref(ab),
-                                 wpre - diffre, GMP_RNDN, GMP_RNDZ,
-                                 pre + (MPC_RND_RE (rnd) == GMP_RNDN));
+                                 wpre - diffre, MPFR_RNDN, MPFR_RNDZ,
+                                 pre + (MPC_RND_RE (rnd) == MPFR_RNDN));
       okim = diffim > (mpfr_exp_t) wpim ? 0 : mpfr_can_round (mpc_imagref(ab),
-                                 wpim - diffim, GMP_RNDN, GMP_RNDZ,
-                                 pim + (MPC_RND_IM (rnd) == GMP_RNDN));
+                                 wpim - diffim, MPFR_RNDN, MPFR_RNDZ,
+                                 pim + (MPC_RND_IM (rnd) == MPFR_RNDN));
       if (okre && okim)
         {
           inex = mpc_set (r, ab, rnd);

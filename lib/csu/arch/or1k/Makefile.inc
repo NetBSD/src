@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2014/09/03 19:34:25 matt Exp $
+# $NetBSD: Makefile.inc,v 1.1.16.1 2019/06/10 22:05:14 christos Exp $
 
 CPPFLAGS+=	-I${ARCHDIR}
 CPPFLAGS+=	-DHAVE_INITFINI_ARRAY

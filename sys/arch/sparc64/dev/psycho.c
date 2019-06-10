@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.126 2017/03/26 12:51:42 martin Exp $	*/
+/*	$NetBSD: psycho.c,v 1.126.14.1 2019/06/10 22:06:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.126 2017/03/26 12:51:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.126.14.1 2019/06/10 22:06:47 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1068,11 +1068,16 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break
 		switch (vdma[1]) {
-			TSBCASE(1); TSBCASE(2); TSBCASE(3);
-			TSBCASE(4); TSBCASE(5); TSBCASE(6);
+			TSBCASE(1);
+			TSBCASE(2);
+			TSBCASE(3);
+			TSBCASE(4);
+			TSBCASE(5);
+			TSBCASE(6);
+			TSBCASE(7);
 		default:
 			printf("bogus tsb size %x, using 7\n", vdma[1]);
-			TSBCASE(7);
+			tsbsize = 7;
 		}
 #undef TSBCASE
 	}

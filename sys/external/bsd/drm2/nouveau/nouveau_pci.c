@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.11.2.1 2019/06/10 22:08:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11.2.1 2019/06/10 22:08:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $")
 
 #include <drm/drmP.h>
 
-#include <engine/device.h>
+#include <core/device.h>
+#include <core/pci.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
@@ -61,7 +62,7 @@ struct nouveau_pci_softc {
 	}			sc_task_u;
 	struct drm_device	*sc_drm_dev;
 	struct pci_dev		sc_pci_dev;
-	struct nouveau_device	*sc_nv_dev;
+	struct nvkm_device	*sc_nv_dev;
 };
 
 static int	nouveau_pci_match(device_t, cfdata_t, void *);
@@ -77,12 +78,15 @@ CFATTACH_DECL_NEW(nouveau_pci, sizeof(struct nouveau_pci_softc),
     nouveau_pci_match, nouveau_pci_attach, nouveau_pci_detach, NULL);
 
 /* Kludge to get this from nouveau_drm.c.  */
-extern struct drm_driver *const nouveau_drm_driver;
+extern struct drm_driver *const nouveau_drm_driver_pci;
 
 static int
 nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct pci_attach_args *const pa = aux;
+	struct pci_dev pdev;
+	struct nvkm_device *device;
+	int ret;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NVIDIA &&
 	    PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NVIDIA_SGS)
@@ -94,14 +98,7 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 #define IS_BETWEEN(x,y) \
 	(PCI_PRODUCT(pa->pa_id) >= (x) && PCI_PRODUCT(pa->pa_id) <= (y))
 	/*
-	 * NetBSD drm2 needs missing-so-far firmware for Maxwell-based cards:
-	 *   0x1380-0x13bf 	GM107
-	 */
-	if (IS_BETWEEN(0x1380, 0x13bf))
-		return 0;
-
-	/*
-	 * NetBSD drm2 doesn't support Pascal-based cards:
+	 * NetBSD drm2 doesn't support Pascal, Volta or Turing based cards:
 	 *   0x1580-0x15ff 	GP100
 	 *   0x1b00-0x1b7f 	GP102
 	 *   0x1b80-0x1bff 	GP104
@@ -109,6 +106,9 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	 *   0x1c80-0x1cff 	GP107
 	 *   0x1d00-0x1d7f 	GP108
 	 *   0x1d80-0x1dff 	GV100
+	 *   0x1e00-0x1e7f 	TU102
+	 *   0x1e80-0x1eff 	TU104
+	 *   0x1f00-0x1f7f 	TU106
 	 */
 	
 	if (IS_BETWEEN(0x1580, 0x15ff) ||
@@ -117,9 +117,21 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	    IS_BETWEEN(0x1c00, 0x1c7f) ||
 	    IS_BETWEEN(0x1c80, 0x1cff) ||
 	    IS_BETWEEN(0x1d00, 0x1d7f) ||
-	    IS_BETWEEN(0x1d80, 0x1dff))
+	    IS_BETWEEN(0x1d80, 0x1dff) ||
+	    IS_BETWEEN(0x1e00, 0x1e7f) ||
+	    IS_BETWEEN(0x1e80, 0x1eff) ||
+	    IS_BETWEEN(0x1f00, 0x1f7f))
 		return 0;
 #undef IS_BETWEEN
+
+	linux_pci_dev_init(&pdev, parent /* XXX bogus */, parent, pa, 0);
+	ret = nvkm_device_pci_new(&pdev, NULL, "error",
+	    /* detect */ true, /* mmio */ false, /* subdev_mask */ 0, &device);
+	if (ret == 0)		/* don't want to hang onto it */
+		nvkm_device_del(&device);
+	linux_pci_dev_destroy(&pdev);
+	if (ret)		/* failure */
+		return 0;
 
 	return 6;		/* XXX Beat genfb_pci...  */
 }
@@ -132,12 +144,14 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	uint64_t devname;
 	int error;
 
 	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_dev = self;
+
+	/* Initialize the Linux PCI device descriptor.  */
+	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
 
 	if (!pmf_device_register(self, &nouveau_pci_suspend,
 		&nouveau_pci_resume))
@@ -146,11 +160,10 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
-	devname = (uint64_t)device_unit(device_parent(self)) << 32;
-	devname |= pa->pa_bus << 16;
 	/* XXX errno Linux->NetBSD */
-	error = -nouveau_device_create(&sc->sc_pci_dev, NOUVEAU_BUS_PCI,
-	    devname, device_xname(self), nouveau_config, nouveau_debug,
+	error = -nvkm_device_pci_new(&sc->sc_pci_dev,
+	    nouveau_config, nouveau_debug,
+	    /* detect */ true, /* mmio */ true, /* subdev_mask */ ~0ULL,
 	    &sc->sc_nv_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to create nouveau device: %d\n",
@@ -159,8 +172,8 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, nouveau_drm_driver,
-	    0, &sc->sc_drm_dev);
+	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev,
+	    nouveau_drm_driver_pci, 0, &sc->sc_drm_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;
@@ -215,8 +228,9 @@ nouveau_pci_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out1:	nouveau_object_ref(NULL, (void *)&sc->sc_nv_dev);
-out0:	pmf_device_deregister(self);
+out1:	nvkm_device_del(&sc->sc_nv_dev);
+out0:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	pmf_device_deregister(self);
 	return 0;
 }
 
@@ -271,19 +285,19 @@ nouveau_pci_task_schedule(device_t self, struct nouveau_pci_task *task)
 	}
 }
 
+extern struct drm_driver *const nouveau_drm_driver_stub; /* XXX */
+extern struct drm_driver *const nouveau_drm_driver_pci;	 /* XXX */
+
 static int
 nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
 {
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = drm_pci_init(nouveau_drm_driver, NULL);
-		if (error) {
-			aprint_error("nouveau_pci: failed to init: %d\n",
-			    error);
-			return error;
-		}
+		*nouveau_drm_driver_pci = *nouveau_drm_driver_stub;
+		nouveau_drm_driver_pci->set_busid = drm_pci_set_busid;
+		nouveau_drm_driver_pci->request_irq = drm_pci_request_irq;
+		nouveau_drm_driver_pci->free_irq = drm_pci_free_irq;
 #if 0		/* XXX nouveau acpi */
 		nouveau_register_dsm_handler();
 #endif
@@ -292,7 +306,6 @@ nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
 #if 0		/* XXX nouveau acpi */
 		nouveau_unregister_dsm_handler();
 #endif
-		drm_pci_exit(nouveau_drm_driver, NULL);
 		break;
 	default:
 		return ENOTTY;

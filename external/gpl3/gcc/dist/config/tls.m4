@@ -104,7 +104,7 @@ AC_DEFUN([GCC_CHECK_CC_TLS], [
 		 gcc_cv_have_cc_tls, [
     AC_COMPILE_IFELSE([__thread int a; int b; int main() { return a = b; }],
       [gcc_cv_have_cc_tls=yes], [gcc_cv_have_cc_tls=no])]
-    )])
+    )
   if test "$enable_tls $gcc_cv_have_cc_tls" = "yes yes"; then
     AC_DEFINE(HAVE_CC_TLS, 1,
 	      [Define to 1 if the target assembler supports thread-local storage.])

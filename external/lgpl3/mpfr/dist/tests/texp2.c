@@ -1,6 +1,6 @@
 /* Test file for mpfr_exp2.
 
-Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,10 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "mpfr-test.h"
 
@@ -183,13 +179,14 @@ overflowed_exp2_0 (void)
                 if (! mpfr_equal_p (x, y))
                   {
                     printf ("Error in overflowed_exp2_0 (i = %d, rnd = %s):\n"
-                            "  Got ", i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                    mpfr_print_binary (x);
-                    printf (" instead of 0.11111111E%d.\n", emax);
+                            "  Got        ", i,
+                            mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                    mpfr_dump (x);
+                    printf ("  instead of 0.11111111E%d.\n", emax);
                     err = 1;
                   }
               }
-            else
+            else if (rnd != MPFR_RNDF)
               {
                 if (inex <= 0)
                   {
@@ -198,12 +195,13 @@ overflowed_exp2_0 (void)
                             i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
                     err = 1;
                   }
-                if (! (mpfr_inf_p (x) && MPFR_SIGN (x) > 0))
+                if (! (mpfr_inf_p (x) && MPFR_IS_POS (x)))
                   {
                     printf ("Error in overflowed_exp2_0 (i = %d, rnd = %s):\n"
-                            "  Got ", i, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                    mpfr_print_binary (x);
-                    printf (" instead of +Inf.\n");
+                            "  Got        ", i,
+                            mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                    mpfr_dump (x);
+                    printf ("  instead of +Inf.\n");
                     err = 1;
                   }
               }
@@ -217,6 +215,70 @@ overflowed_exp2_0 (void)
   mpfr_clear (y);
 }
 
+static void
+bug20171218 (void)
+{
+  mpfr_t x, y, z;
+  mpfr_exp_t emin;
+  int inex, i;
+  mpfr_flags_t flags, ex_flags;
+
+  emin = mpfr_get_emin ();
+
+  mpfr_init2 (x, 228);
+  mpfr_init2 (y, 11);
+  mpfr_init2 (z, 11);
+  mpfr_set_str_binary (x, "-0.110111010100001100000000000000111001100101011011101110101011000011011011001101111111110100110001110100111000111101010010100010001101100001010111101110100010000101011111001101011000011101000000001010001011110011110101010111000000E17");
+  mpfr_set_emin (-113285);
+  mpfr_clear_flags ();
+  inex = mpfr_exp2 (y, x, MPFR_RNDA);
+  /* exact result is 0.11111111111110110000001011...E-113286, which rounded away
+     gives 0.10000000000E-113285, i.e., no underflow (after rounding) */
+  mpfr_set_str_binary (z, "0.10000000000E-113285");
+  MPFR_ASSERTN(mpfr_equal_p (y, z));
+  MPFR_ASSERTN(inex > 0);
+  MPFR_ASSERTN(mpfr_inexflag_p ());
+  MPFR_ASSERTN(!mpfr_underflow_p ());
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+
+  mpfr_init2 (x, 256);
+  mpfr_init2 (y, 8);
+  mpfr_init2 (z, 8);
+
+  for (i = 0; i < 3; i++)
+    {
+      mpfr_set_emin (i == 0 ? -17 : i == 1 ? emin : MPFR_EMIN_MIN);
+      mpfr_set_exp_t (x, __gmpfr_emin - 2, MPFR_RNDN);
+      mpfr_nextabove (x);
+      mpfr_set_ui_2exp (z, 1, __gmpfr_emin - 1, MPFR_RNDN);
+      ex_flags = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
+      mpfr_clear_flags ();
+      inex = mpfr_exp2 (y, x, MPFR_RNDN);
+      flags = __gmpfr_flags;
+      if (! (flags == ex_flags && SAME_SIGN (inex, 1) && mpfr_equal_p (y, z)))
+        {
+          printf ("Error in bug20171218 for i=%d\n", i);
+          printf ("Expected ");
+          mpfr_dump (z);
+          printf ("  with inex = 1 and flags:");
+          flags_out (ex_flags);
+          printf ("Got      ");
+          mpfr_dump (y);
+          printf ("  with inex = %d and flags:", inex);
+          flags_out (flags);
+          exit (1);
+        }
+    }
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+
+  mpfr_set_emin (emin);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -225,6 +287,7 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
+  bug20171218 ();
   special_overflow ();
   emax_m_eps ();
   exp_range ();
@@ -290,11 +353,11 @@ main (int argc, char *argv[])
   set_emin (-10);
   mpfr_set_si (x, -12, MPFR_RNDN);
   mpfr_exp2 (y, x, MPFR_RNDN);
-  if (mpfr_cmp_ui (y, 0) || mpfr_sgn (y) < 0)
+  if (MPFR_NOTZERO (y) || MPFR_IS_NEG (y))
     {
       printf ("Error for x=emin-2, RNDN\n");
       printf ("Expected +0\n");
-      printf ("Got      "); mpfr_print_binary (y); puts ("");
+      printf ("Got      "); mpfr_dump (y);
       exit (1);
     }
   /* restore emin */
@@ -365,7 +428,7 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  test_generic (2, 100, 100);
+  test_generic (MPFR_PREC_MIN, 100, 100);
 
   mpfr_clear (x);
   mpfr_clear (y);

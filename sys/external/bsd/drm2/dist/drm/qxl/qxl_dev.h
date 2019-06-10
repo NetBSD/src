@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_dev.h,v 1.1.1.1.32.1 2019/06/10 22:08:24 christos Exp $	*/
+
 /*
    Copyright (C) 2009 Red Hat, Inc.
 

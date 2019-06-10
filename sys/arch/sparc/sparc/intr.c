@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.119 2017/12/02 00:48:05 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.119.4.1 2019/06/10 22:06:46 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119 2017/12/02 00:48:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119.4.1 2019/06/10 22:06:46 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
+#include "sx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119 2017/12/02 00:48:05 macallan Exp $");
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
 #include <machine/db_machdep.h>
+#endif
+
+#if NSX > 0
+#include <sys/bus.h>
+#include <sparc/dev/sxvar.h>
 #endif
 
 #if defined(MULTIPROCESSOR)
@@ -255,7 +261,10 @@ nmi_hard(void)
 	si = *((uint32_t *)ICR_SI_PEND);
 	snprintb(bits, sizeof(bits), SINTR_BITS, si);
 	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(), bits);
-		
+
+#if NSX > 0
+	sx_dump();
+#endif
 
 	if ((si & SINTR_M) != 0) {
 		/* ECC memory error */
@@ -366,10 +375,14 @@ xcallintr(void *v)
 	if (v != xcallintr)
 		cpuinfo.ci_sintrcnt[13].ev_count++;
 
+	/*
+	 * This happens when the remote CPU is slow at responding and the
+	 * caller gave up, and has given up the mutex.
+	 */
 	if (mutex_owned(&xpmsg_mutex) == 0) {
 		cpuinfo.ci_xpmsg_mutex_not_held.ev_count++;
 #ifdef DEBUG
-		printf("%s: mutex not held\n", __func__);
+		printf("%s: cpu%d mutex not held\n", __func__, cpu_number());
 #endif
 		cpuinfo.msg.complete = 1;
 		kpreempt_enable();

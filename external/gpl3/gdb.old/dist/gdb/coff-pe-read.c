@@ -2,7 +2,7 @@
    convert to internal format, for GDB. Used as a last resort if no
    debugging symbols recognized.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,7 +54,7 @@ struct read_pe_section_data
   enum minimal_symbol_type ms_type;	/* Type to assign symbols in
 					   section.  */
   unsigned int index;		/* BFD section number.  */
-  char *section_name;		/* Recorded section name.  */
+  const char *section_name;	/* Recorded section name.  */
 };
 
 #define IMAGE_SCN_CNT_CODE 0x20
@@ -150,7 +150,8 @@ get_section_vmas (bfd *abfd, asection *sectp, void *context)
    OBJFILE is the objfile struct of DLL_NAME.  */
 
 static void
-add_pe_exported_sym (const char *sym_name,
+add_pe_exported_sym (minimal_symbol_reader &reader,
+		     const char *sym_name,
 		     unsigned long func_rva,
 		     int ordinal,
 		     const struct read_pe_section_data *section_data,
@@ -176,13 +177,12 @@ add_pe_exported_sym (const char *sym_name,
 			" for entry \"%s\" in dll \"%s\"\n"),
 			section_data->section_name, sym_name, dll_name);
 
-  prim_record_minimal_symbol_and_info (qualified_name, vma,
-				       section_data->ms_type,
-				       section_data->index, objfile);
+  reader.record_with_info (qualified_name, vma, section_data->ms_type,
+			   section_data->index);
 
   /* Enter the plain name as well, which might not be unique.  */
-  prim_record_minimal_symbol_and_info (bare_name, vma, section_data->ms_type,
-				       section_data->index, objfile);
+  reader.record_with_info (bare_name, vma, section_data->ms_type,
+			   section_data->index);
   if (debug_coff_pe_read > 1)
     fprintf_unfiltered (gdb_stdlog, _("Adding exported symbol \"%s\""
 			" in dll \"%s\"\n"), sym_name, dll_name);
@@ -200,7 +200,8 @@ add_pe_exported_sym (const char *sym_name,
    OBJFILE is the objfile struct of DLL_NAME.  */
 
 static int
-add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
+add_pe_forwarded_sym (minimal_symbol_reader &reader,
+		      const char *sym_name, const char *forward_dll_name,
 		      const char *forward_func_name, int ordinal,
 		      const char *dll_name, struct objfile *objfile)
 {
@@ -266,12 +267,10 @@ add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
      code.  */
   baseaddr = ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
 
-  prim_record_minimal_symbol_and_info (qualified_name, vma - baseaddr,
-				       msymtype, section, objfile);
+  reader.record_with_info (qualified_name, vma - baseaddr, msymtype, section);
 
   /* Enter the plain name as well, which might not be unique.  */
-  prim_record_minimal_symbol_and_info (bare_name, vma - baseaddr, msymtype,
-				       section, objfile);
+  reader.record_with_info (bare_name, vma - baseaddr, msymtype, section);
   xfree (qualified_name);
   xfree (bare_name);
 
@@ -331,7 +330,8 @@ pe_as32 (void *ptr)
    pe_implied_import_dll in pe-dll.c.  */
 
 void
-read_pe_exported_syms (struct objfile *objfile)
+read_pe_exported_syms (minimal_symbol_reader &reader,
+		       struct objfile *objfile)
 {
   bfd *dll = objfile->obfd;
   unsigned long nbnormal, nbforward;
@@ -580,7 +580,7 @@ read_pe_exported_syms (struct objfile *objfile)
 	      forward_dll_name[len] = '\0';
 	      forward_func_name = ++sep;
 	    }
-	  if (add_pe_forwarded_sym (funcname, forward_dll_name,
+	  if (add_pe_forwarded_sym (reader, funcname, forward_dll_name,
 				    forward_func_name, ordinal,
 				    dll_name, objfile) != 0)
 	    ++nbforward;
@@ -595,7 +595,7 @@ read_pe_exported_syms (struct objfile *objfile)
 	      char *sym_name = (char *) (erva + name_rva);
 
 	      section_found = 1;
-	      add_pe_exported_sym (sym_name, func_rva, ordinal,
+	      add_pe_exported_sym (reader, sym_name, func_rva, ordinal,
 				   section_data + sectix, dll_name, objfile);
 	      ++nbnormal;
 	      break;
@@ -607,7 +607,7 @@ read_pe_exported_syms (struct objfile *objfile)
 
 	  if (name_rva == 0)
 	    {
-	      add_pe_exported_sym (NULL, func_rva, ordinal,
+	      add_pe_exported_sym (reader, NULL, func_rva, ordinal,
 				   section_data, dll_name, objfile);
 	      ++nbnormal;
 	    }

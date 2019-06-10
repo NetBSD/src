@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16 2017/08/12 07:21:57 maxv Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16.4.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2017/08/12 07:21:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16.4.1 2019/06/10 22:06:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,16 +57,14 @@ void		syscall_intern(struct proc *);
 static void	syscall(struct trapframe *);
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	X86_TF_RAX(tf) = 0;
 	X86_TF_RFLAGS(tf) &= ~PSL_C;
 
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*
@@ -174,4 +172,3 @@ syscall_intern(struct proc *p)
 
 	p->p_md.md_syscall = syscall;
 }
-

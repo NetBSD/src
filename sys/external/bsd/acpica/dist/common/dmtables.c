@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,7 +173,7 @@ AdCreateTableHeader (
 
         /* Revision of DSDT controls the ACPI integer width */
 
-        if (ACPI_COMPARE_NAME (Table->Signature, ACPI_SIG_DSDT))
+        if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_DSDT))
         {
             AcpiOsPrintf (" **** 32-bit table (V1), no 64-bit math support");
         }

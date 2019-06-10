@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.70 2018/05/18 19:02:49 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.70.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.70 2018/05/18 19:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.70.2.1 2019/06/10 22:09:48 christos Exp $");
 
 /*
  * IPsec input processing.
@@ -170,6 +170,18 @@ ipsec4_fixup_checksum(struct mbuf *m)
 	return m;
 }
 
+static void
+nat_t_ports_get(struct mbuf *m, uint16_t *dport, uint16_t *sport)
+{
+	struct m_tag *tag;
+
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS))) {
+		*sport = ((uint16_t *)(tag + 1))[0];
+		*dport = ((uint16_t *)(tag + 1))[1];
+	} else
+		*sport = *dport = 0;
+}
+
 /*
  * ipsec_common_input gets called when an IPsec-protected packet
  * is received by IPv4 or IPv6.  Its job is to find the right SA
@@ -295,18 +307,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
  * Common input handler for IPv4 AH, ESP, and IPCOMP.
  */
 void
-ipsec4_common_input(struct mbuf *m, ...)
+ipsec4_common_input(struct mbuf *m, int off, int proto)
 {
-	va_list ap;
-	int off, nxt;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	nxt = va_arg(ap, int);
-	va_end(ap);
-
 	(void)ipsec_common_input(m, off, offsetof(struct ip, ip_p),
-	    AF_INET, nxt);
+	    AF_INET, proto);
 }
 
 /*
@@ -382,6 +386,14 @@ cantpull:
 		error = EINVAL;
 		goto bad;
 	}
+
+	/*
+	 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+	 * so we cannot write filtering rule to the inner packet.
+	 */
+	if (saidx->mode == IPSEC_MODE_TUNNEL)
+		m->m_pkthdr.pkthdr_flags |= PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+
 	(*inetsw[ip_protox[prot]].pr_input)(m, skip, prot);
 	return 0;
 
@@ -529,6 +541,14 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 			error = EINVAL;
 			goto bad;
 		}
+
+		/*
+		 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+		 * so we cannot write filtering rule to the inner packet.
+		 */
+		if (saidx->mode == IPSEC_MODE_TUNNEL)
+			m->m_pkthdr.pkthdr_flags |= PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &skip, nxt);
 	}
 	return 0;

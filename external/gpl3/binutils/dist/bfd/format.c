@@ -103,6 +103,7 @@ struct bfd_preserve
   struct bfd_section *sections;
   struct bfd_section *section_last;
   unsigned int section_count;
+  unsigned int section_id;
   struct bfd_hash_table section_htab;
   const struct bfd_build_id *build_id;
 };
@@ -125,6 +126,7 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
   preserve->sections = abfd->sections;
   preserve->section_last = abfd->section_last;
   preserve->section_count = abfd->section_count;
+  preserve->section_id = _bfd_section_id;
   preserve->section_htab = abfd->section_htab;
   preserve->marker = bfd_alloc (abfd, 1);
   preserve->build_id = abfd->build_id;
@@ -138,12 +140,13 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
 /* Clear out a subset of BFD state.  */
 
 static void
-bfd_reinit (bfd *abfd)
+bfd_reinit (bfd *abfd, unsigned int section_id)
 {
   abfd->tdata.any = NULL;
   abfd->arch_info = &bfd_default_arch_struct;
   abfd->flags &= BFD_FLAGS_SAVED;
   bfd_section_list_clear (abfd);
+  _bfd_section_id = section_id;
 }
 
 /* Restores bfd state saved by bfd_preserve_save.  */
@@ -160,6 +163,7 @@ bfd_preserve_restore (bfd *abfd, struct bfd_preserve *preserve)
   abfd->sections = preserve->sections;
   abfd->section_last = preserve->section_last;
   abfd->section_count = preserve->section_count;
+  _bfd_section_id = preserve->section_id;
   abfd->build_id = preserve->build_id;
 
   /* bfd_release frees all memory more recently bfd_alloc'd than
@@ -214,6 +218,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
   const bfd_target *save_targ, *right_targ, *ar_right_targ, *match_targ;
   int match_count, best_count, best_match;
   int ar_match_index;
+  unsigned int initial_section_id = _bfd_section_id;
   struct bfd_preserve preserve;
 
   if (matching != NULL)
@@ -287,14 +292,13 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 
       /* Don't check the default target twice.  */
       if (*target == &binary_vec
-	  || (!abfd->target_defaulted && *target == save_targ)
-	  || (*target)->match_priority > best_match)
+	  || (!abfd->target_defaulted && *target == save_targ))
 	continue;
 
       /* If we already tried a match, the bfd is modified and may
 	 have sections attached, which will confuse the next
 	 _bfd_check_format call.  */
-      bfd_reinit (abfd);
+      bfd_reinit (abfd, initial_section_id);
 
       /* Change BFD's target temporarily.  */
       abfd->xvec = *target;
@@ -329,9 +333,6 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	      || (bfd_has_map (abfd)
 		  && bfd_get_error () != bfd_error_wrong_object_format))
 	    {
-	      /* This format checks out as ok!  */
-	      right_targ = temp;
-
 	      /* If this is the default target, accept it, even if
 		 other targets might match.  People who want those
 		 other targets have to set the GNUTARGET variable.  */
@@ -347,7 +348,12 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 		  best_match = match_priority;
 		  best_count = 0;
 		}
-	      best_count++;
+	      if (match_priority <= best_match)
+		{
+		  /* This format checks out as ok!  */
+		  right_targ = temp;
+		  best_count++;
+		}
 	    }
 	  else
 	    {
@@ -446,7 +452,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	 state (except possibly for XVEC).  */
       if (match_targ != right_targ)
 	{
-	  bfd_reinit (abfd);
+	  bfd_reinit (abfd, initial_section_id);
 	  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
 	    goto err_ret;
 	  match_targ = BFD_SEND_FMT (abfd, _bfd_check_format, (abfd));

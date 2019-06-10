@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.113 2016/03/07 00:28:36 christos Exp $	*/
+/*	$NetBSD: iommu.c,v 1.113.18.1 2019/06/10 22:06:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.113 2016/03/07 00:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.113.18.1 2019/06/10 22:06:47 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -591,7 +591,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
 		boundary = map->_dm_boundary;
-	align = max(map->dm_segs[0]._ds_align, PAGE_SIZE);
+	align = uimax(map->dm_segs[0]._ds_align, PAGE_SIZE);
 
 	/*
 	 * If our segment size is larger than the boundary we need to
@@ -640,7 +640,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/* Oops. We crossed a boundary or large seg. Split the xfer. */
 		len = map->dm_maxsegsz;
 		if ((sgstart & bmask) != (sgend & bmask))
-			len = min(len, boundary - (sgstart & (boundary - 1)));
+			len = uimin(len, boundary - (sgstart & (boundary - 1)));
 		map->dm_segs[seg].ds_len = len;
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 		    "seg %d start %lx size %lx\n", seg,
@@ -748,10 +748,21 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	/* Flush the iommu */
 	if (!map->_dm_dvmastart)
 		panic("%s: error dvmastart is zero!\n", __func__);
-	iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
 
-	/* Flush the caches */
-	bus_dmamap_unload(t->_parent, map);
+	if (is->is_flags & IOMMU_SYNC_BEFORE_UNMAP) {
+
+		/* Flush the caches */
+		bus_dmamap_unload(t->_parent, map);
+
+		iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
+
+	} else {
+
+		iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
+
+		/* Flush the caches */
+		bus_dmamap_unload(t->_parent, map);
+	}
 
 	mutex_enter(&is->is_lock);
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart,
@@ -803,7 +814,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
 
-	align = max(segs[0]._ds_align, pagesz);
+	align = uimax(segs[0]._ds_align, pagesz);
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -817,7 +828,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		if (round_page(pa) != round_page(segs[i].ds_addr))
 			sgsize = round_page(sgsize) +
 			    (segs[i].ds_addr & PGOFSET);
-		sgsize += min(left, segs[i].ds_len);
+		sgsize += uimin(left, segs[i].ds_len);
 		left -= segs[i].ds_len;
 		pa = segs[i].ds_addr + segs[i].ds_len;
 	}
@@ -875,7 +886,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			offset = (pa & PGOFSET);
 			pa = trunc_page(pa);
 			dvmaddr = trunc_page(dvmaddr);
-			left = min(len, segs[i].ds_len);
+			left = uimin(len, segs[i].ds_len);
 
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: converting "
 				"physseg %d start %lx size %lx\n", i,

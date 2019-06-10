@@ -4,14 +4,14 @@
 @macro copyleftnotice
 @noindent
 Copyright @copyright{} 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-                       2001, 2002, 2003, 2004, 2005
+                       2001, 2002, 2003, 2004, 2005, 2006
                        Free Software Foundation, Inc.
 
 @multitable @columnfractions .12 .88
 @item Portions
-@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005
-                                  Derek R. Price,
-@item @tab Copyright @copyright{} 2002, 2003, 2004, 2005
+@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+				  2006 Derek R. Price,
+@item @tab Copyright @copyright{} 2002, 2003, 2004, 2005, 2006
                                   Ximbiot @url{http://ximbiot.com},
 @item @tab Copyright @copyright{} 1992, 1993, 1999 Signum Support AB,
 @item @tab and Copyright @copyright{} others.
@@ -111,9 +111,9 @@ approved by the Free Software Foundation.
 @sp 4
 @comment The title is printed in a large font.
 @center @titlefont{Version Management}
-@sp
+@sp 1
 @center @titlefont{with}
-@sp
+@sp 1
 @center @titlefont{CVS}
 @sp 2
 @center for @sc{cvs} @value{VERSION}
@@ -1939,24 +1939,8 @@ possible to use @sc{cvs} to read from a repository
 which one only has read access to; @sc{cvs} needs to be
 able to create lock files (@pxref{Concurrency}).
 
-@cindex init (subcommand)
-To create a repository, run the @code{cvs init}
-command.  It will set up an empty repository in the
-@sc{cvs} root specified in the usual way
-(@pxref{Repository}).  For example,
-
-@example
-cvs -d /usr/local/cvsroot init
-@end example
-
-@code{cvs init} is careful to never overwrite any
-existing files in the repository, so no harm is done if
-you run @code{cvs init} on an already set-up
-repository.
-
-@code{cvs init} will enable history logging; if you
-don't want that, remove the history file after running
-@code{cvs init}.  @xref{history file}.
+To create a repository, run the @code{cvs init} 	 
+command (@pxref{init}).
 
 @node Backing up
 @section Backing up a repository
@@ -3316,7 +3300,7 @@ be done in a couple of different ways.
 @c -- The contributed scripts
 @menu
 * From files::                  This method is useful with old projects
-                                where files already exists.
+                                where files already exist.
 * From other version control systems::  Old projects where you want to
                                         preserve history from another system.
 * From scratch::                Creating a directory tree from scratch.
@@ -5052,7 +5036,7 @@ directory.
 @c changing right away.
 
 Unlike most other commands, the @code{add} command is
-not recursive.  You have to expcicitly name files and
+not recursive.  You have to explicitly name files and
 directories that you wish to add to the repository.
 However, each directory will need to be added
 separately before you will be able to add new files
@@ -5631,7 +5615,7 @@ Whenever you commit a file you specify a log message.
 @c greatly shrink the "log" node.
 To look through the log messages which have been
 specified for every revision which has been committed,
-use the @code{cvs log} command (@pxref{log}).
+use the @code{cvs log} command (@pxref{log & rlog}).
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node history database
@@ -8117,19 +8101,23 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * Global options::              Options you give to the left of cvs_command
 * Common options::              Options you give to the right of cvs_command
 * Date input formats::		Acceptable formats for date specifications
+* add::                         Add files and directories to the repository
 * admin::                       Administration
-* annotate::                    What revision modified each line of a file?
+* annotate & rannotate::        What revision modified each line of a file?
 * checkout::                    Checkout sources for editing
 * commit::                      Check files into the repository
 * diff::                        Show differences between revisions
 * export::                      Export sources from CVS, similar to checkout
 * history::                     Show status of files and users
 * import::                      Import sources into CVS, using vendor branches
-* log::                         Show log messages for files
+* init::                        Initialize a repository
+* log & rlog::                  Show log messages for files
 * ls & rls::                    List files in the repository
 * rdiff::                       'patch' format diffs between releases
 * release::                     Indicate that a directory is no longer in use
+* remove::                      Remove files from active development
 * server & pserver::            Act as a server for a client on stdin/stdout
+* tag & rtag::                  Mark project snapshot for later retrieval
 * update::                      Bring work tree in sync with repository
 @end menu
 
@@ -8764,6 +8752,98 @@ and @code{update}.
 @include getdate-cvs.texi
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node add
+@appendixsec add---Add files and directories to the repository
+@cindex add (subcommand)
+
+@itemize @bullet
+@item
+Synopsis: add [-k rcs-kflag] [-m message] files...
+@item
+Requires: repository, working directory.
+@item
+Changes: repository, working directory.
+@end itemize
+
+The @code{add} command is used to present new files
+and directories for addition into the @sc{cvs}
+repository.  When @code{add} is used on a directory,
+a new directory is created in the repository
+immediately.  When used on a file, only the working
+directory is updated.  Changes to the repository are
+not made until the @code{commit} command is used on
+the newly added file. 
+
+The @code{add} command also resurrects files that
+have been previously removed.  This can be done
+before or after the @code{commit} command is used
+to finalize the removal of files.  Resurrected files
+are restored into the working directory at the time
+the @code{add} command is executed.
+
+@menu
+* add options::             add options
+* add examples::            add examples
+@end menu
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node add options
+@appendixsubsec add options
+
+These standard options are supported by @code{add}
+(@pxref{Common options}, for a complete description of
+them):
+
+@table @code
+@item -k @var{kflag}
+Process keywords according to @var{kflag}.  See
+@ref{Keyword substitution}.
+This option is sticky; future updates of
+this file in this working directory will use the same
+@var{kflag}.  The @code{status} command can be viewed
+to see the sticky options.  For more information on
+the @code{status} command, @xref{Invoking CVS}.
+
+@item -m @var{message}
+Use @var{message} as the log message, instead of
+invoking an editor.
+@end table
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node add examples
+@appendixsubsec add examples
+
+@appendixsubsubsec Adding a directory
+
+@example
+$ mkdir doc
+$ cvs add doc
+Directory /path/to/repository/doc added to the repository
+@end example
+
+@appendixsubsubsec Adding a file
+
+@example
+
+$ >TODO
+$ cvs add TODO
+cvs add: scheduling file `TODO' for addition
+cvs add: use 'cvs commit' to add this file permanently
+@end example
+
+@appendixsubsubsec Undoing a @code{remove} command
+
+@example
+$ rm -f makefile
+$ cvs remove makefile
+cvs remove: scheduling `makefile' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+$ cvs add makefile
+U makefile
+cvs add: makefile, version 1.2, resurrected
+@end example
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node admin
 @appendixsec admin---Administration
 @cindex Admin (subcommand)
@@ -9058,7 +9138,7 @@ acceptable for @var{state}.  A useful set of states is
 stable), and @samp{Rel} (for released).  By default,
 the state of a new revision is set to @samp{Exp} when
 it is created.  The state is visible in the output from
-@var{cvs log} (@pxref{log}), and in the
+@var{cvs log} (@pxref{log & rlog}), and in the
 @samp{$@splitrcskeyword{Log}$} and @samp{$@splitrcskeyword{State}$} keywords
 (@pxref{Keyword substitution}).  Note that @sc{cvs}
 uses the @code{dead} state for its own purposes (@pxref{Attic}); to
@@ -9071,7 +9151,7 @@ Useful with @sc{cvs}.  Write descriptive text from the
 contents of the named @var{file} into the RCS file,
 deleting the existing text.  The @var{file} pathname
 may not begin with @samp{-}.  The descriptive text can be seen in the
-output from @samp{cvs log} (@pxref{log}).
+output from @samp{cvs log} (@pxref{log & rlog}).
 There can be no space between @samp{-t} and its argument.
 
 If @var{file} is omitted,
@@ -9129,9 +9209,10 @@ this option has never done anything useful.
 @end table
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node annotate
-@appendixsec annotate---What revision modified each line of a file?
+@node annotate & rannotate
+@appendixsec annotate & rannotate---What revision modified each line of a file?
 @cindex annotate (subcommand)
+@cindex rannotate (subcommand)
 
 @itemize @bullet
 @item
@@ -9184,6 +9265,8 @@ Annotate file as of specified date.
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node annotate example
 @appendixsubsec annotate example
+@cindex annotate (subcommand)
+@cindex rannotate (subcommand)
 
 For example:
 
@@ -9452,6 +9535,7 @@ $ cvs checkout -D yesterday tc
 @node commit
 @appendixsec commit---Check files into the repository
 @cindex commit (subcommand)
+@cindex ci (subcommand)
 
 @itemize @bullet
 @item
@@ -9493,7 +9577,7 @@ enter a log message that will be written to one or more
 logging programs (@pxref{modules}, and @pxref{loginfo})
 and placed in the @sc{rcs} file inside the
 repository.  This log message can be retrieved with the
-@code{log} command; see @ref{log}.  You can specify the
+@code{log} command (@pxref{log & rlog}).  You can specify the
 log message on the command line with the @samp{-m
 @var{message}} option, and thus avoid the editor invocation,
 or use the @samp{-F @var{file}} option to specify
@@ -9502,8 +9586,8 @@ that the argument file contains the log message.
 At @code{commit}, a unique commitid is placed in the @sc{rcs}
 file inside the repository. All files committed at once
 get the same commitid. The commitid can be retrieved with
-the @code{log} and @code{status} command; see @ref{log},
-@ref{File status}.
+the @code{log} and @code{status} command (@pxref{log & rlog},
+@pxref{File status}).
 
 @menu
 * commit options::              commit options
@@ -10478,7 +10562,7 @@ checkout
 @item E
 export
 @item T
-rtag
+tag and rtag
 @end table
 
 @noindent
@@ -10509,6 +10593,13 @@ A file was added for the first time.
 A file was modified.
 @item R
 A file was removed.
+@end table
+
+@noindent
+One record type results from the admin command:
+@table @code
+@item X
+The admin command.
 @end table
 @end table
 
@@ -10773,9 +10864,51 @@ to recreate symbolic links on checkout, update, etc.;
 See @ref{Tracking sources}, and @ref{From files}.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node log
-@appendixsec log---Print out log information for files
+@node init
+@appendixsec init---Initialize a repository
+@cindex init (subcommand)
+
+@itemize @bullet
+@item
+Synopsis: init
+@item
+Requires: working directory.
+@item
+Changes: repository, working directory.
+@end itemize
+
+The @code{init} command initializes a repository by adding the
+@file{CVSROOT} subdirectory and some default control files. You must
+use this command or initialize the repository in some other way before
+you can use it. Specify the root of the repository with the general
+@code{-d} option.  This will set up an empty repository in the
+@sc{cvs} root specified in the usual way (@pxref{Repository}).
+
+@code{init} is careful to never overwrite any existing files in the
+repository, so no harm is done if you run @code{init} on an already
+set-up repository. Note you may need to be a member of the group
+@code{cvsadmin} to do this.
+
+Note @code{init} will enable history logging; if you don't want that,
+remove the history file after running @code{init} (@pxref{history file}).
+
+@menu
+* init examples:              init examples
+@end menu
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node init examples
+@appendixsubsec init examples
+
+@example
+$ cvs -d /usr/local/cvsroot init
+@end example
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node log & rlog
+@appendixsec log & rlog---Print out log information for files
 @cindex log (subcommand)
+@cindex rlog (subcommand)
 
 @itemize @bullet
 @item
@@ -11100,7 +11233,7 @@ verifymsg
 
 @itemize @bullet
 @item
-rdiff [-flags] [-V vn] (-r tag1[:date1] | -D date1) [-r tag2[:date2] | -D date2] modules@dots{}
+rdiff [options] @{-r tag1[:date1] | -D date1@} [-r tag2[:date2] | -D date2] modules@dots{}
 @item
 Requires: repository.
 @item
@@ -11112,10 +11245,7 @@ Synonym: patch
 Builds a Larry Wall format patch(1) file between two
 releases, that can be fed directly into the @code{patch}
 program to bring an old release up-to-date with the new
-release.  (This is one of the few @sc{cvs} commands that
-operates directly from the repository, and doesn't
-require a prior checkout.) The diff output is sent to
-the standard output device.
+release.  The diff output is sent to the standard output device.
 
 You can specify (using the standard @samp{-r} and
 @samp{-D} options) any combination of one or two
@@ -11124,11 +11254,11 @@ specified, the patch file reflects differences between
 that revision or date and the current head revisions in
 the @sc{rcs} file.
 
-Note that if the software release affected is contained
-in more than one directory, then it may be necessary to
-specify the @samp{-p} option to the @code{patch} command when
-patching the old sources, so that @code{patch} is able to find
-the files that are located in other directories.
+Note that if the patch created by rdiff spans multiple directories,
+then it may be necessary to specify the @samp{-p} option when feeding
+the patch back to the @code{patch} command, so that @code{patch} is able
+to update files that are located in directories other than the one
+patch is run in.
 
 @menu
 * rdiff options::               rdiff options
@@ -11195,13 +11325,6 @@ Remember that old versions
 of the @code{patch} program can't handle the unidiff
 format, so if you plan to post this patch to the net
 you should probably not use @samp{-u}.
-
-@item -V @var{vn}
-Expand keywords according to the rules current in
-@sc{rcs} version @var{vn} (the expansion format changed with
-@sc{rcs} version 5).  Note that this option is no
-longer accepted.  @sc{cvs} will always expand keywords the
-way that @sc{rcs} version 5 does.
 @end table
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -11351,6 +11474,112 @@ $
 @end example
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node remove
+@appendixsec remove---Remove files from active use
+@cindex remove (subcommand)
+
+@itemize @bullet
+@item
+Synopsis: remove [-flR] [files...]
+@item
+Requires: repository, working directory.
+@item
+Changes: working directory.
+@end itemize
+
+The @code{remove} command is used to remove unwanted
+files from active use.  The user normally deletes the
+files from the working directory prior to invocation
+of the @code{remove} command.  Only the working
+directory is updated.  Changes to the repository are
+not made until the @code{commit} command is run.
+
+The @code{remove} command does not delete files from
+from the repository.  @sc{cvs} keeps all historical
+data in the repository so that it is possible to
+reconstruct previous states of the projects under
+revision control.
+
+To undo @sc{cvs} @code{remove} or to resurrect files
+that were previously removed, @xref{add}.
+
+@menu
+* remove options::             remove options
+* remove examples::            remove examples
+@end menu
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node remove options
+@appendixsubsec remove options
+
+These standard options are supported by @code{remove}
+(@pxref{Common options} for a complete description of
+them):
+
+@table @code
+@item -l
+Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Process directories recursively.  See @ref{Recursive behavior}.
+
+@end table
+
+In addition, these options are also supported:
+
+@table @code
+@item -f
+Note that this is not the standard behavior of
+the @samp{-f} option as defined in @ref{Common options}.
+
+Delete files before removing them.
+
+Entire directory hierarchies are easily removed
+using @samp{-f}, but take note that it is not as
+easy to resurrect directory hierarchies as it is
+to remove them.
+
+@end table
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node remove examples
+@appendixsubsec remove examples
+
+@appendixsubsubsec Removing a file
+
+@example
+$ cvs remove remove.me
+cvs remove: file `remove.me' still in working directory
+cvs remove: 1 file exists; remove it first
+$ rm -f remove.me
+$ cvs remove remove.me
+cvs remove: scheduling `remove.me' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+
+$ ls remove.it
+remove.it
+$ cvs remove -f remove.it
+cvs remove: scheduling `remove.it' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+@end example
+
+@appendixsubsubsec Removing entire directories
+@example
+$ tree -d a
+a
+|-- CVS
+`-- b
+    `-- CVS
+
+3 directories
+$ cvs remove -f a
+cvs remove: Removing a
+cvs remove: Removing a/b
+cvs remove: scheduling `a/b/c' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+@end example
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node server & pserver
 @appendixsec server & pserver---Act as a server for a client on stdin/stdout
 @cindex pserver (subcommand)
@@ -11389,20 +11618,154 @@ supported beginning with @sc{cvs} release 1.12.13.
 @end table
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node tag & rtag
+@appendixsec tag & rtag---Mark project snapshot for later retrieval.
+@cindex tag (subcommand)
+@cindex freeze (subcommand)
+@cindex rtag (subcommand)
+@cindex rfreeze (subcommand)
+
+@itemize @bullet
+@item
+tag [-bBcdFflR] [-r tag] [-D date] new_tag [files@dots{}]
+@item
+Requires: working directory, repository.
+@item
+Changes: repository.
+@item
+Synonym: ta, freeze
+@end itemize
+
+@noindent
+and
+
+@itemize @bullet
+@item
+rtag [-abBdFflnR] [-r tag | -D date] new_tag module@dots{}
+@item
+Requires: repository.
+@item
+Changes: repository.
+@item
+Synonym: rt, rfreeze
+@end itemize
+
+Use @code{tag} to assign symbolic tags to the revisions of files
+checked out into your sandbox.  The tags are applied immediately
+to the repository, with the revision numbers to attach the tag
+to supplied implicitly by the @sc{cvs} records of your working files.
+
+@code{rtag} works similarly, but does not need a sandbox to operate
+in, requiring an explicitly supplied tag or date instead (or assuming
+the tip of the trunk when one is not supplied explicitly).  @sc{cvs}
+uses this preexisting tag or date to determine which revisions of
+files in the repository to attach the new symbolic tag to.
+
+The symbolic tags are meant to permanently record which
+revisions of which files were used for some purpose.  The @code{checkout}
+and @code{update} commands allow you to extract an exact
+copy of a tagged release at any time in the future,
+regardless of whether files have been changed, added,
+or removed on the trunk or other branches since the release was tagged.
+For more, @xref{Branching and merging}.
+
+These commands may also be used to delete a symbolic tag,
+or to create a branch.  See the options section below.
+
+Note if you wish to run destructive commands such as tag deletion, you may
+need to be a member of the group @code{cvsadmin} to do this.
+
+If you attempt to create a tag that already exists,
+CVS will complain and not overwrite that tag.  Use
+the @samp{-F} option to move the tag to a new set of
+revisions.
+
+These standard options are supported by @code{tag} or @code{rtag}
+(@pxref{Common options}, for a complete description of them):
+
+@table @code
+@item -D @var{date}
+Tag the most recent revision no later than @var{date}.  This option is
+not valid when deleting tags (see @samp{-d} option, below).
+
+@item -l
+Local; run only in current working directory.  @xref{Recursive behavior}.
+
+@item -R
+Update directories recursively (default).  @xref{Recursive behavior}.
+
+@item -r @var{tag}[:@var{date}]
+Tag the revisions specified by @var{tag} or, when @var{date} is specified
+and @var{tag} is a branch tag, the version from the branch @var{tag} as it
+existed on @var{date}.  This option is not valid when deleting tags
+(see @samp{-d} option, below).
+@end table
+
+Several tag specific options are also available.  When an option is only
+available with one of @code{tag} or @code{rtag}, it is noted below:
+
+@table @code
+@item -a
+Clear @var{new_tag} from removed files that would not otherwise be tagged
+(@code{rtag} only).
+
+@item -B
+Allows @code{-d} or @code{-F} to delete or move branch tags.
+
+@strong{WARNING: Recovering the information stored by branch tags is
+a very hard problem, more so than regular tags.  Be absolutely sure you
+understand what you are doing before using this option.}
+
+@item -b
+The @code{-b} option makes the new tag a branch tag (@pxref{Branching and
+merging}), allowing concurrent, isolated development.  This is commonly used
+to create patches to a previously released software distribution.
+
+@item -c
+Abort if any tagged files are locally modified (@code{tag} only).
+
+@item -d
+Delete @var{new_tag}, instead of creating it.
+
+@strong{WARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.}
+
+@item -F
+When a tag already exists, move it to the new revision.  When the tag
+does not exist, create it as normal.  This option is new in @sc{cvs} 1.4.
+The pre-1.4 behavior is identical to @samp{cvs tag -F}.
+
+@strong{WARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.}
+
+@item -f
+With @code{-r @var{tag}} or @code{-d @var{date}}, force a head revision match
+if @var{tag} and @var{date} are not found (in other words, attach @var{new_tag}
+to the most recent trunk revision when @var{tag} and @var{date} do not
+resolve to an existing revision).
+
+@item -n
+Do not execute the tag program specified in the @file{modules} file
+(@code{rtag} only).  @xref{modules}, for more.
+@end table
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node update
 @appendixsec update---Bring work tree in sync with repository
 @cindex update (subcommand)
 
 @itemize @bullet
 @item
-update [-ACdflPpR] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files@dots{}
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] [files@dots{}]
 @item
 Requires: repository, working directory.
 @item
 Changes: working directory.
 @end itemize
 
-After you've run checkout to create your private copy
+After you've run @code{checkout} to create your private copy
 of source from the common repository, other developers
 will continue changing the central source.  From time
 to time, when it is convenient in your development
@@ -11466,6 +11829,16 @@ and @var{tag} is a branch tag, the version from the branch @var{tag} as it
 existed on @var{date}.  This option is sticky, and implies @samp{-P}.
 See @ref{Sticky tags}, for more information on sticky tags/dates. Also
 see @ref{Common options}.
+
+@item -t
+Preserve source timestamps.  Unlike @code{checkout}, where files are created
+using the original timestamp of the file in the repository, @code{update}
+updates files using the current time of the machine.  This is convenient
+because updated files appear newer than any other files on the system so
+@code{make(1)} knows that their corresponding built artifacts are out of date
+and they will get rebuilt.  The @samp{-t} flag instead preserves the timestamps
+of the original repository files, behaving exactly like @code{checkout}.
+This is useful for maintaining a tree in the original checked-out state.
 @end table
 
 @need 800
@@ -11824,7 +12197,7 @@ Unlock revision @var{rev}, or latest revision.
 @c ------------------------------------------------------------
 @item annotate [@var{options}] [@var{files}@dots{}]
 Show last revision where each line was modified.  See
-@ref{annotate}.
+@ref{annotate & rannotate}.
 
 @table @code
 @item -D @var{date}
@@ -12177,7 +12550,7 @@ See @ref{Kerberos authenticated}.
 
 @c ------------------------------------------------------------
 @item log [@var{options}] [@var{files}@dots{}]
-Print out history information for files.  See @ref{log}.
+Print out history information for files.  See @ref{log & rlog}.
 
 @table @code
 @item -b
@@ -12231,7 +12604,7 @@ See @ref{Password authentication server}.
 @c ------------------------------------------------------------
 @item rannotate [@var{options}] [@var{modules}@dots{}]
 Show last revision where each line was modified.  See
-@ref{annotate}.
+@ref{annotate & rannotate}.
 
 @table @code
 @item -D @var{date}
@@ -12328,7 +12701,7 @@ behavior}.
 
 @c ------------------------------------------------------------
 @item rlog [@var{options}] [@var{files}@dots{}]
-Print out history information for modules.  See @ref{log}.
+Print out history information for modules.  See @ref{log & rlog}.
 
 @table @code
 @item -b
@@ -14657,7 +15030,7 @@ repository with LockDir enabled.
 @cindex LogHistory, in CVSROOT/config
 @item LogHistory=@var{value}
 Control what is logged to the @file{CVSROOT/history} file (@pxref{history}).
-Default of @samp{TOEFWUPCGMAR} (or simply @samp{all}) will log
+Default of @samp{TOEFWUPCGMARX} (or simply @samp{all}) will log
 all transactions.  Any subset of the default is
 legal.  (For example, to only log transactions that modify the
 @file{*,v} files, use @samp{LogHistory=TMAR}.)  To disable history logging

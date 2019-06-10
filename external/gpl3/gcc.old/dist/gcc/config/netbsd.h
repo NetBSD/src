@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-5"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-6"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -119,7 +119,11 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
-   %{shared:-lc}		\
+   %{shared:			\
+     %{!p:			\
+       %{!pg:-lc}}		\
+     %{p:-lc_p}			\
+       %{pg:-lc_p}}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
@@ -133,7 +137,11 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
-   %{shared:-lc}		\
+   %{shared:			\
+     %{!p:			\
+       %{!pg:-lc}}		\
+     %{p:-lc_p}			\
+       %{pg:-lc_p}}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
@@ -144,6 +152,9 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
+
+#define LIBSTDCXX_PROFILE "stdc++_p"
+#define MATH_LIBRARY_PROFILE "m_p"
 
 #if 0 // XXXMRG
 #undef STATIC_LIBASAN_LIBS

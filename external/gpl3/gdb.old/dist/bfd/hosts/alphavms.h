@@ -1,5 +1,5 @@
 /* alphavms.h -- BFD definitions for an openVMS host
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Written by Klaus Kämpf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 

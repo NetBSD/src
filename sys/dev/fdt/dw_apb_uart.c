@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.2 2018/05/27 19:54:45 jmcneill Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.2.4.1 2019/06/10 22:07:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.2 2018/05/27 19:54:45 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.2.4.1 2019/06/10 22:07:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,11 +133,11 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIx64 ": %d", (uint64_t)addr, error);
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 

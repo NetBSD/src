@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.27 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.27.4.1 2019/06/10 22:07:05 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.27 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.27.4.1 2019/06/10 22:07:05 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -232,7 +236,11 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_power = 0xffff;
 	sc->sc_timestamp = 0;
 	sc->sc_emul_usb = FALSE;
+#ifdef ADBKBD_POWER_DDB
+	sc->sc_power_dbg = TRUE;
+#else
 	sc->sc_power_dbg = FALSE;
+#endif
 
 	aprint_normal(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -461,7 +469,12 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 		sc->sc_timestamp = now;
 		if (((diff > 1) && (diff < 5)) ||
 		     (sc->sc_power_button_delay == 0)) {
-
+#ifdef DDB
+			if (sc->sc_power_dbg) {
+				Debugger();
+				return;
+			}
+#endif
 			/* power button, report to sysmon */
 			sc->sc_pe = k1;
 			sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
@@ -479,17 +492,10 @@ adbkbd_powerbutton(void *cookie)
 {
 	struct adbkbd_softc *sc = cookie;
 
-	if (sc->sc_power_dbg) {
-#ifdef DDB
-		Debugger();
-#else
-		printf("kernel is not compiled with DDB support\n");
-#endif
-	} else {
-		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
-		    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
-		    PSWITCH_EVENT_RELEASED);
-	}
+	sysmon_pswitch_event(&sc->sc_sm_pbutton, 
+	    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
+	    PSWITCH_EVENT_RELEASED);
+
 }
 
 static inline void

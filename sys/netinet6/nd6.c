@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.249 2018/05/29 04:38:29 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.249.2.1 2019/06/10 22:09:48 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.249 2018/05/29 04:38:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.249.2.1 2019/06/10 22:09:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -653,8 +653,7 @@ nd6_timer_work(struct work *wk, void *arg)
 
 			if ((oldflags & IN6_IFF_DEPRECATED) == 0) {
 				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
-				rt_newaddrmsg(RTM_NEWADDR,
-				    (struct ifaddr *)ia6, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, (struct ifaddr *)ia6);
 			}
 
 			/*
@@ -689,8 +688,7 @@ nd6_timer_work(struct work *wk, void *arg)
 			 */
 			if (ia6->ia6_flags & IN6_IFF_DEPRECATED) {
 				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
-				rt_newaddrmsg(RTM_NEWADDR,
-				    (struct ifaddr *)ia6, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, (struct ifaddr *)ia6);
 			}
 		}
 		s = pserialize_read_enter();
@@ -1566,7 +1564,8 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				 * that the rt_ifa points to the address instead
 				 * of the loopback address.
 				 */
-				if (ifa != rt->rt_ifa)
+				if (!ISSET(info->rti_flags, RTF_DONTCHANGEIFA)
+				    && ifa != rt->rt_ifa)
 					rt_replace_ifa(rt, ifa);
 			}
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
@@ -1795,9 +1794,9 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 			if (duplicated_linklocal) {
 				ND.flags |= ND6_IFF_IFDISABLED;
-				log(LOG_ERR, "Cannot enable an interface"
+				log(LOG_ERR, "%s: Cannot enable an interface"
 				    " with a link-local address marked"
-				    " duplicate.\n");
+				    " duplicate.\n", if_name(ifp));
 			} else {
 				ND_IFINFO(ifp)->flags &= ~ND6_IFF_IFDISABLED;
 				if (ifp->if_flags & IFF_UP)
@@ -1883,6 +1882,10 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			struct in6_ifaddr *ia, *ia_next;
 			int _s;
 
+			/* Only flush prefixes for the given interface. */
+			if (ifp != lo0ifp && ifp != pfx->ndpr_ifp)
+				continue;
+
 			if (IN6_IS_ADDR_LINKLOCAL(&pfx->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
 
@@ -1952,8 +1955,15 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		struct nd_defrouter *drtr, *next;
 
 		ND6_WLOCK();
+#if 0
+		/* XXX Is this really needed? */
 		nd6_defrouter_reset();
+#endif
 		ND_DEFROUTER_LIST_FOREACH_SAFE(drtr, next) {
+			/* Only flush routers for the given interface. */
+			if (ifp != lo0ifp && ifp != drtr->ifp)
+				continue;
+
 			nd6_defrtrlist_del(drtr, NULL);
 		}
 		nd6_defrouter_select();
@@ -2510,7 +2520,7 @@ nd6_sysctl(
 		return 0;
 	}
 
-	ol = *oldlenp = min(ol, *oldlenp);
+	ol = *oldlenp = uimin(ol, *oldlenp);
 	if (ol == 0)
 		return 0;
 

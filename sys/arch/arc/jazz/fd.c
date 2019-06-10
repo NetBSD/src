@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.18.1 2019/06/10 22:05:50 christos Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.18.1 2019/06/10 22:05:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ static void fdctimeout(void *);
 static void fdcpseudointr(void *);
 static void fdcretry(struct fdc_softc *);
 static void fdfinish(struct fd_softc *, struct buf *);
-static inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 static void fd_mountroot_hook(device_t);
 
 /*
@@ -419,7 +419,7 @@ fd_nvtotype(char *fdc, int nvraminfo, int drive)
 }
 #endif
 
-static inline const struct fd_type *
+static const struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
@@ -861,8 +861,8 @@ fdcintr(void *arg)
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, fdc->sc_maxiosize / FDC_BSIZE);
+		nblks = uimin(nblks, fd->sc_bcount / FDC_BSIZE);
+		nblks = uimin(nblks, fdc->sc_maxiosize / FDC_BSIZE);
 		fd->sc_nblks = nblks;
 		fd->sc_nbytes = nblks * FDC_BSIZE;
 		head = sec / type->sectrac;

@@ -1,12 +1,12 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.17 $
+ *       $Revision: 1.17.2.1 $
  *
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -113,6 +113,10 @@
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
+
+#ifdef ACPI_REDUCED_HW
+#define ACPI_REDUCED_HARDWARE TRUE
+#endif /* ACPI_REDUCED_HW */
 
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 

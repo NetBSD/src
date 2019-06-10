@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.16.2.1 2019/06/10 22:06:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16.2.1 2019/06/10 22:06:56 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -65,10 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16 2018/06/24 20:28:58 jdolecek Ex
 #include <sys/timetc.h>
 #include <sys/sysctl.h>
 #include <sys/pmf.h>
+#include <sys/xcall.h>
 
 #include <xen/hypervisor.h>
 #include <xen/shutdown_xenbus.h>
-#include <xen/xen-public/version.h>
+#include <xen/include/public/version.h>
 
 #define DPRINTK(x) printk x
 #if 0
@@ -79,6 +80,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 
 bool xen_suspend_allow;
 
+#ifdef XENPV
 extern uint64_t tsc_freq;	/* XXX */
 
 static int sysctl_xen_suspend(SYSCTLFN_ARGS);
@@ -279,6 +281,9 @@ sysctl_xen_suspend(SYSCTLFN_ARGS)
 
 }
 
+static void xen_suspendclocks_xc(void *, void*);
+static void xen_resumeclocks_xc(void *, void*);
+
 /*
  * Last operations before suspending domain
  */
@@ -289,7 +294,7 @@ xen_prepare_suspend(void)
 	kpreempt_disable();
 
 	pmap_xen_suspend();
-	xen_suspendclocks(curcpu());
+	xc_wait(xc_broadcast(0, &xen_suspendclocks_xc, NULL, NULL));
 
 	/*
 	 * save/restore code does not translate these MFNs to their
@@ -312,6 +317,15 @@ xen_prepare_suspend(void)
 
 }
 
+static void
+xen_suspendclocks_xc(void *a, void *b)
+{
+
+	kpreempt_disable();
+	xen_suspendclocks(curcpu());
+	kpreempt_enable();
+}
+
 /*
  * First operations before restoring domain context
  */
@@ -320,7 +334,7 @@ xen_prepare_resume(void)
 {
 	/* map the new shared_info page */
 	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
-	    xen_start_info.shared_info | PG_RW | PG_V,
+	    xen_start_info.shared_info | PTE_W | PTE_P,
 	    UVMF_INVLPG)) {
 		DPRINTK(("could not map new shared info page"));
 		HYPERVISOR_crash();
@@ -342,10 +356,19 @@ xen_prepare_resume(void)
 
 	xen_suspend_allow = false;
 
-	xen_resumeclocks(curcpu());
+	xc_wait(xc_broadcast(0, xen_resumeclocks_xc, NULL, NULL));
 
 	kpreempt_enable();
 
+}
+
+static void
+xen_resumeclocks_xc(void *a, void *b)
+{
+
+	kpreempt_disable();
+	xen_resumeclocks(curcpu());
+	kpreempt_enable();
 }
 
 static void
@@ -396,6 +419,22 @@ xen_suspend_domain(void)
 	/* xencons is back online, we can print to console */
 	aprint_verbose("domain resumed\n");
 
+}
+#endif /* XENPV */
+
+#define PRINTK_BUFSIZE 1024
+void
+printk(const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	static char buf[PRINTK_BUFSIZE];
+
+	va_start(ap, fmt);
+	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
+	va_end(ap);
+	buf[ret] = 0;
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, ret, buf);
 }
 
 bool xen_feature_tables[XENFEAT_NR_SUBMAPS * 32];

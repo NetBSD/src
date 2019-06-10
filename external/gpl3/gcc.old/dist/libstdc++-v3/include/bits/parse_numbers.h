@@ -1,6 +1,6 @@
 // Components for compile-time parsing of numbers -*- C++ -*-
 
-// Copyright (C) 2013-2015 Free Software Foundation, Inc.
+// Copyright (C) 2013-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -197,6 +197,13 @@ namespace __parse_int
 		    "integer literal does not fit in unsigned long long");
     };
 
+  // Skip past digit separators:
+  template<unsigned _Base, unsigned long long _Pow, char _Dig, char..._Digs>
+    struct _Number_help<_Base, _Pow, '\'', _Dig, _Digs...>
+    : _Number_help<_Base, _Pow, _Dig, _Digs...>
+    { };
+
+  // Terminating case for recursion:
   template<unsigned _Base, unsigned long long _Pow, char _Dig>
     struct _Number_help<_Base, _Pow, _Dig>
     {

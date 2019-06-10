@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.72 2018/06/14 16:17:18 christos Exp $	*/
+/*	$NetBSD: route6d.c,v 1.72.2.1 2019/06/10 22:10:36 christos Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.72 2018/06/14 16:17:18 christos Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.72.2.1 2019/06/10 22:10:36 christos Exp $");
 #endif
 
 #include <stdbool.h>
@@ -2326,9 +2326,6 @@ do { \
 	IFFLAG("DEBUG", IFF_DEBUG);
 	IFFLAG("LOOPBACK", IFF_LOOPBACK);
 	IFFLAG("POINTOPOINT", IFF_POINTOPOINT);
-#ifdef IFF_NOTRAILERS
-	IFFLAG("NOTRAILERS", IFF_NOTRAILERS);
-#endif
 #ifdef IFF_SMART
 	IFFLAG("SMART", IFF_SMART);
 #endif

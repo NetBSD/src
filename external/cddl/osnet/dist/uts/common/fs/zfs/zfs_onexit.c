@@ -146,7 +146,8 @@ zfs_onexit_fd_hold(int fd, minor_t *minorp)
 	if (fp == NULL)
 		return (SET_ERROR(EBADF));
 
-	*minorp = getminor(fp->f_vnode->v_rdev);
+	ASSERT(strcmp(fp->f_ops->fo_name, "zfs") == 0);
+	*minorp = minor((dev_t)(uintptr_t)fp->f_data);
 #endif
 
 	return (zfs_onexit_minor_to_state(*minorp, &zo));

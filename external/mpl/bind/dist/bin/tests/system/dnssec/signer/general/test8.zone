@@ -1,0 +1,17 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+;	This is a zone which has two DNSKEY records, one of which,
+; the KSK, has a private key.  The resulting zone should be rejected as
+; it has no ZSK signatures.
+;
+$TTL 3600
+example.com.	IN	SOA ns hostmaster 00090000 1200 3600 604800 300
+$include Kexample.com.+005+23362.key
+$include bogus-zsk.key

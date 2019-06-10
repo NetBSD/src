@@ -1,3 +1,5 @@
+/*	$NetBSD: via_3d_reg.h,v 1.1.1.1.38.1 2019/06/10 22:08:28 christos Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.

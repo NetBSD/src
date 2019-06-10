@@ -1,6 +1,6 @@
 /* Memory ranges
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,58 +41,36 @@ address_in_mem_range (CORE_ADDR address, const struct mem_range *r)
 	  && (address - r->start) < r->length);
 }
 
-/* qsort comparison function, that compares mem_ranges.  Ranges are
-   sorted in ascending START order.  */
-
-static int
-compare_mem_ranges (const void *ap, const void *bp)
-{
-  const struct mem_range *r1 = (const struct mem_range *) ap;
-  const struct mem_range *r2 = (const struct mem_range *) bp;
-
-  if (r1->start > r2->start)
-    return 1;
-  else if (r1->start < r2->start)
-    return -1;
-  else
-    return 0;
-}
-
 void
-normalize_mem_ranges (VEC(mem_range_s) *ranges)
+normalize_mem_ranges (std::vector<mem_range> *memory)
 {
   /* This function must not use any VEC operation on RANGES that
      reallocates the memory block as that invalidates the RANGES
      pointer, which callers expect to remain valid.  */
 
-  if (!VEC_empty (mem_range_s, ranges))
+  if (!memory->empty ())
     {
-      struct mem_range *ra, *rb;
-      int a, b;
+      std::vector<mem_range> &m = *memory;
 
-      qsort (VEC_address (mem_range_s, ranges),
-	     VEC_length (mem_range_s, ranges),
-	     sizeof (mem_range_s),
-	     compare_mem_ranges);
+      std::sort (m.begin (), m.end ());
 
-      a = 0;
-      ra = VEC_index (mem_range_s, ranges, a);
-      for (b = 1; VEC_iterate (mem_range_s, ranges, b, rb); b++)
+      int a = 0;
+      for (int b = 1; b < m.size (); b++)
 	{
 	  /* If mem_range B overlaps or is adjacent to mem_range A,
 	     merge them.  */
-	  if (rb->start <= ra->start + ra->length)
+	  if (m[b].start <= m[a].start + m[a].length)
 	    {
-	      ra->length = std::max ((CORE_ADDR) ra->length,
-				(rb->start - ra->start) + rb->length);
+	      m[a].length = std::max ((CORE_ADDR) m[a].length,
+				      (m[b].start - m[a].start) + m[b].length);
 	      continue;		/* next b, same a */
 	    }
 	  a++;			/* next a */
-	  ra = VEC_index (mem_range_s, ranges, a);
 
 	  if (a != b)
-	    *ra = *rb;
+	    m[a] = m[b];
 	}
-      VEC_truncate (mem_range_s, ranges, a + 1);
+
+      m.resize (a + 1);
     }
 }

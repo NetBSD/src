@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_alg.c,v 1.16 2016/12/26 23:05:06 christos Exp $	*/
-
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16.16.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,6 +112,7 @@ npf_alg_construct(npf_t *npf, const char *name)
 	npf_config_enter(npf);
 	if ((alg = npf_alg_lookup(npf, name)) == NULL) {
 		char modname[NPF_EXT_PREFLEN + 64];
+
 		snprintf(modname, sizeof(modname), "%s%s", alg_prefix, name);
 		npf_config_exit(npf);
 
@@ -261,24 +260,24 @@ npf_alg_conn(npf_cache_t *npc, int di)
 	return con;
 }
 
-prop_array_t
-npf_alg_export(npf_t *npf)
+int
+npf_alg_export(npf_t *npf, nvlist_t *npf_dict)
 {
-	prop_array_t alglist = prop_array_create();
 	npf_algset_t *aset = npf->algset;
 
 	KASSERT(npf_config_locked_p(npf));
 
 	for (u_int i = 0; i < aset->alg_count; i++) {
 		const npf_alg_t *alg = &aset->alg_list[i];
+		nvlist_t *algdict;
 
 		if (alg->na_name == NULL) {
 			continue;
 		}
-		prop_dictionary_t algdict = prop_dictionary_create();
-		prop_dictionary_set_cstring(algdict, "name", alg->na_name);
-		prop_array_add(alglist, algdict);
-		prop_object_release(algdict);
+		algdict = nvlist_create(0);
+		nvlist_add_string(algdict, "name", alg->na_name);
+		nvlist_append_nvlist_array(npf_dict, "algs", algdict);
+		nvlist_destroy(algdict);
 	}
-	return alglist;
+	return 0;
 }

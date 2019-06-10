@@ -1,4 +1,4 @@
-/*	$NetBSD: static_edid.h,v 1.1 2011/07/13 22:54:33 macallan Exp $ */
+/*	$NetBSD: static_edid.h,v 1.1.54.1 2019/06/10 22:06:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Michael Lorenz
@@ -30,5 +30,6 @@
 #define STATIC_EDID_H
 
 extern uint8_t edid_pismo[128];
+extern uint8_t edid_clamshell[128];
 
 #endif /* STATIC_EDID_H */

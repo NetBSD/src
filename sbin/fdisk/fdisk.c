@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $ */
+/*	$NetBSD: fdisk.c,v 1.154.4.1 2019/06/10 22:05:33 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.154.4.1 2019/06/10 22:05:33 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -668,7 +668,7 @@ usage(void)
 		"[-s [id][/[start][/[size][/bootmenu]]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
 		"%*s[-c bootcode] "
-		"[-r|-w file] [device]\n"
+		"[-r|-w file] [-z sectorsize] [device]\n"
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
 		"\t-i initialise MBR code\n"
@@ -2685,7 +2685,7 @@ validate_bootsel(struct mbr_bootsel *mbs)
 {
 	unsigned int key = mbs->mbrbs_defkey;
 	unsigned int tmo;
-	size_t i;
+	size_t i, j;
 
 	if (v_flag)
 		return 0;
@@ -2717,8 +2717,9 @@ validate_bootsel(struct mbr_bootsel *mbs)
 
 	/* Check the menu strings are printable */
 	/* Unfortunately they aren't zero filled... */
-	for (i = 0; i < sizeof(mbs->mbrbs_nametab); i++) {
-		int c = (uint8_t)mbs->mbrbs_nametab[0][i];
+	for (j = 0; j < __arraycount(mbs->mbrbs_nametab); ++j)
+	for (i = 0; i < sizeof(mbs->mbrbs_nametab[j]); i++) {
+		int c = (uint8_t)mbs->mbrbs_nametab[j][i];
 		if (c == 0 || isprint(c))
 			continue;
 		return 3;

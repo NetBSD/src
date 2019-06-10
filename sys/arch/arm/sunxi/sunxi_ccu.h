@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.18 2018/05/08 22:05:25 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.18.2.1 2019/06/10 22:05:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -113,6 +113,7 @@ struct sunxi_ccu_nkmp {
 #define	SUNXI_CCU_NKMP_SCALE_CLOCK		__BIT(2)
 #define	SUNXI_CCU_NKMP_FACTOR_P_POW2		__BIT(3)
 #define	SUNXI_CCU_NKMP_FACTOR_N_ZERO_IS_ONE	__BIT(4)
+#define	SUNXI_CCU_NKMP_FACTOR_P_X4		__BIT(5)
 };
 
 int	sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *,
@@ -368,7 +369,11 @@ struct sunxi_ccu_fractional {
 	uint32_t	frac_sel;
 	uint32_t	frac[2];
 	uint32_t	prediv;
+	uint32_t	prediv_val;
 	uint32_t	enable;
+	uint32_t	flags;
+#define	SUNXI_CCU_FRACTIONAL_PLUSONE	__BIT(0)
+#define	SUNXI_CCU_FRACTIONAL_SET_ENABLE	__BIT(1)
 };
 
 int	sunxi_ccu_fractional_enable(struct sunxi_ccu_softc *,
@@ -383,7 +388,8 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *);
 
 #define	SUNXI_CCU_FRACTIONAL(_id, _name, _parent, _reg, _m, _m_min, _m_max, \
-		     _div_en, _frac_sel, _frac0, _frac1, _prediv, _enable) \
+		     _div_en, _frac_sel, _frac0, _frac1, _prediv, _prediv_val, \
+		     _enable, _flags)					\
 	[_id] = {							\
 		.type = SUNXI_CCU_FRACTIONAL,				\
 		.base.name = (_name),					\
@@ -393,6 +399,7 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 		.u.fractional.m_min = (_m_min),				\
 		.u.fractional.m_max = (_m_max),				\
 		.u.fractional.prediv = (_prediv),			\
+		.u.fractional.prediv_val = (_prediv_val),		\
 		.u.fractional.div_en = (_div_en),			\
 		.u.fractional.frac_sel = (_frac_sel),			\
 		.u.fractional.frac[0] = (_frac0),			\

@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.9 2017/11/03 19:49:23 maya Exp $ */
+/* $NetBSD: wsbell.c,v 1.9.6.1 2019/06/10 22:07:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.9 2017/11/03 19:49:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.9.6.1 2019/06/10 22:07:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -211,7 +211,7 @@ wsbell_match(device_t parent, cfdata_t match, void *aux)
 void
 wsbell_attach(device_t parent, device_t self, void *aux)
 {
-        struct wsbell_softc *sc = device_private(self);
+	struct wsbell_softc *sc = device_private(self);
 	struct wsbelldev_attach_args *ap = aux;
 #if NWSMUX > 0
 	int mux, error;
@@ -400,7 +400,7 @@ getbell:
 		spkr_audio_play(sc, d->pitch, d->period, d->volume);
 #undef d
 		return 0;
-	}	
+	}
 
 	return (EPASSTHROUGH);
 }
@@ -413,18 +413,22 @@ bell_thread(void *arg)
 	struct vbell_args *vb = &sc->sc_bell_args;
 	tone_t tone;
 	u_int vol;
-	
+
 	for (;;) {
 		mutex_enter(&sc->sc_bellock);
 		cv_wait_sig(&sc->sc_bellcv, &sc->sc_bellock);
-		
+
 		if (sc->sc_dying == true) {
 			mutex_exit(&sc->sc_bellock);
 			kthread_exit(0);
 		}
-		
+
 		tone.frequency = vb->pitch;
-		tone.duration = vb->period;
+		/*
+		 * period (derived from wskbd) is in msec.
+		 * duration (derived from spkr) is in units of 10msec.
+		 */
+		tone.duration = vb->period / 10;
 		vol = vb->volume;
 		mutex_exit(&sc->sc_bellock);
 
@@ -442,7 +446,7 @@ spkr_audio_play(struct wsbell_softc *sc, u_int pitch, u_int period, u_int volume
 
 	mutex_enter(&sc->sc_bellock);
 	sc->sc_bell_args.pitch = pitch;
-	sc->sc_bell_args.period = period / 5;
+	sc->sc_bell_args.period = period;
 	sc->sc_bell_args.volume = volume;
 
 	cv_broadcast(&sc->sc_bellcv);

@@ -1,5 +1,4 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.64)dnl
 AC_INIT(Makefile.in)
 sinclude(../common/acinclude.m4)
 
@@ -222,7 +221,7 @@ if test ${sim_gen} = MULTI; then
 
   cat << __EOF__ > multi-run.c
 /* Main entry point for MULTI simulators.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.65 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: SMDK2410,v 1.65.4.1 2019/06/10 22:06:04 christos Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -245,7 +245,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -262,11 +261,19 @@ irframe* at uirda?
 ustir* at uhub? port ?
 irframe* at ustir?
 
+# MII/PHY support
+rgephy*	at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
+ukphy*	at mii? phy ?		# generic unknown PHYs
+urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
@@ -324,8 +331,8 @@ ugen*	at uhub? port ?
 #pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
-#pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -345,6 +352,7 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

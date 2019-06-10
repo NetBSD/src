@@ -75,6 +75,7 @@
 183  sys_seteuid            seteuid            rump___sysimpl_seteuid
 191  sys_pathconf           pathconf           rump___sysimpl_pathconf
 192  sys_fpathconf          fpathconf          rump___sysimpl_fpathconf
+193  sys_getsockopt2        getsockopt2        rump___sysimpl_getsockopt2
 194  sys_getrlimit          getrlimit          rump___sysimpl_getrlimit
 195  sys_setrlimit          setrlimit          rump___sysimpl_setrlimit
 199  sys_lseek              lseek              rump___sysimpl_lseek

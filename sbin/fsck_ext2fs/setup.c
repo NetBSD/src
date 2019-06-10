@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $	*/
+/*	$NetBSD: setup.c,v 1.35.14.1 2019/06/10 22:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,18 +58,19 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $");
+__RCSID("$NetBSD: setup.c,v 1.35.14.1 2019/06/10 22:05:33 christos Exp $");
 #endif
 #endif /* not lint */
 
 #define FSTYPENAMES
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/bitops.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/file.h>
 
 #include <errno.h>
@@ -83,19 +84,31 @@ __RCSID("$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "partutil.h"
 #include "exitvalues.h"
 
 void badsb(int, const char *);
 int calcsb(const char *, int, struct m_ext2fs *);
-static struct disklabel *getdisklabel(const char *, int);
 static int readsb(int);
+
+/*    
+ * For file systems smaller than SMALL_FSSIZE we use the S_DFL_* defaults,
+ * otherwise if less than MEDIUM_FSSIZE use M_DFL_*, otherwise use 
+ * L_DFL_*.
+ */
+#define SMALL_FSSIZE    ((4 * 1024 * 1024) / secsize)        /* 4MB */  
+#define S_DFL_BSIZE     1024 
+#define MEDIUM_FSSIZE   ((512 * 1024 * 1024) / secsize)      /* 512MB */
+#define M_DFL_BSIZE     1024 
+#define L_DFL_BSIZE     4096
 
 int
 setup(const char *dev)
 {
 	long cg, asked, i;
 	long bmapsize;
-	struct disklabel *lp;
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
 	off_t sizepb;
 	struct stat statb;
 	struct m_ext2fs proto;
@@ -136,8 +149,8 @@ setup(const char *dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock");
-	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
-		dev_bsize = secsize = lp->d_secsize;
+	if (getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
+		dev_bsize = secsize = geo.dg_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
 	/*
@@ -320,8 +333,7 @@ readsb(int listerr)
 	sblock.e2fs_ncg =
 	    howmany(sblock.e2fs.e2fs_bcount - sblock.e2fs.e2fs_first_dblock,
 	    sblock.e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	sblock.e2fs_fsbtodb = sblock.e2fs.e2fs_log_bsize + 1;
+	sblock.e2fs_fsbtodb = sblock.e2fs.e2fs_log_bsize + ilog2(1024 / dev_bsize);
 	sblock.e2fs_bsize = 1024 << sblock.e2fs.e2fs_log_bsize;
 	sblock.e2fs_bshift = LOG_MINBSIZE + sblock.e2fs.e2fs_log_bsize;
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
@@ -378,6 +390,10 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGEFILE;
 	asblk.b_un.b_fs->e2fs_features_rocompat |=
 	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
+	memcpy(asblk.b_un.b_fs->e2fs_fsmnt, sblk.b_un.b_fs->e2fs_fsmnt,
+	    sizeof(asblk.b_un.b_fs->e2fs_fsmnt));
+	asblk.b_un.b_fs->e4fs_kbytes_written =
+	    sblk.b_un.b_fs->e4fs_kbytes_written;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK))) {
@@ -486,35 +502,27 @@ badsb(int listerr, const char *s)
 int
 calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 {
-	struct disklabel *lp;
-	struct partition *pp;
-	char *cp;
+	struct dkwedge_info dkw;
+	struct disk_geom geo;
 
-	cp = strchr(dev, '\0');
-	if (cp-- == dev ||
-	    ((*cp < 'a' || *cp > 'h') && !isdigit((unsigned char)*cp))) {
+	if (getdiskinfo(dev, devfd, NULL, &geo, &dkw) == -1)
+		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
+	if (dkw.dkw_parent[0] == '\0') {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return 0;
 	}
-	lp = getdisklabel(dev, devfd);
-	if (isdigit((unsigned char)*cp))
-		pp = &lp->d_partitions[0];
-	else
-		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_fstype != FS_EX2FS) {
-		pfatal("%s: NOT LABELED AS A EXT2 FILE SYSTEM (%s)\n",
-		    dev, pp->p_fstype < FSMAXTYPES ?
-		    fstypenames[pp->p_fstype] : "unknown");
-		return 0;
-	}
-	if (pp->p_fsize == 0) {
-		pfatal("%s: PARTITION SIZE IS 0\n", dev);
-		return 0;
-	}
+
 	memset(fs, 0, sizeof(struct m_ext2fs));
-	fs->e2fs_bsize = pp->p_fsize;
-	fs->e2fs.e2fs_log_bsize = pp->p_fsize / 1024;
-	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
+
+	if (dkw.dkw_size < (uint64_t)SMALL_FSSIZE)
+		fs->e2fs_bsize = S_DFL_BSIZE;
+	else if (dkw.dkw_size < (uint64_t)MEDIUM_FSSIZE)
+		fs->e2fs_bsize = M_DFL_BSIZE;
+	else
+		fs->e2fs_bsize = L_DFL_BSIZE;
+
+	fs->e2fs.e2fs_log_bsize = ilog2(fs->e2fs_bsize / 1024);
+	fs->e2fs.e2fs_bcount = (fs->e2fs_bsize * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;
 	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
@@ -528,20 +536,6 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 	    fs->e2fs_bsize / sizeof(struct ext2_gd));
 
 	return 1;
-}
-
-static struct disklabel *
-getdisklabel(const char *s, int fd)
-{
-	static struct disklabel lab;
-
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
-		if (s == NULL)
-			return NULL;
-		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
-		errexit("%s: can't read disk label", s);
-	}
-	return &lab;
 }
 
 daddr_t

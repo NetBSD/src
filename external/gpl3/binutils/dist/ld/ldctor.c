@@ -80,7 +80,7 @@ ldctor_add_set_entry (struct bfd_link_hash_entry *h,
     {
       if (p->reloc != reloc)
 	{
-	  einfo (_("%P%X: Different relocs used in set %s\n"),
+	  einfo (_("%X%P: different relocs used in set %s\n"),
 		 h->root.string);
 	  return;
 	}
@@ -98,7 +98,7 @@ ldctor_add_set_entry (struct bfd_link_hash_entry *h,
 	  && strcmp (bfd_get_target (section->owner),
 		     bfd_get_target (p->elements->section->owner)) != 0)
 	{
-	  einfo (_("%P%X: Different object file formats composing set %s\n"),
+	  einfo (_("%X%P: different object file formats composing set %s\n"),
 		 h->root.string);
 	  return;
 	}
@@ -276,7 +276,7 @@ ldctor_build_sets (void)
 	{
 	  if (bfd_link_relocatable (&link_info))
 	    {
-	      einfo (_("%P%X: %s does not support reloc %s for set %s\n"),
+	      einfo (_("%X%P: %s does not support reloc %s for set %s\n"),
 		     bfd_get_target (link_info.output_bfd),
 		     bfd_get_reloc_code_name (p->reloc),
 		     p->h->root.string);
@@ -292,12 +292,12 @@ ldctor_build_sets (void)
 	    {
 	      /* See PR 20911 for a reproducer.  */
 	      if (p->elements->section->owner == NULL)
-		einfo (_("%P%X: Special section %s does not support reloc %s for set %s\n"),
+		einfo (_("%X%P: special section %s does not support reloc %s for set %s\n"),
 		       bfd_get_section_name (link_info.output_bfd, p->elements->section),
 		       bfd_get_reloc_code_name (p->reloc),
 		       p->h->root.string);
 	      else
-		einfo (_("%P%X: %s does not support reloc %s for set %s\n"),
+		einfo (_("%X%P: %s does not support reloc %s for set %s\n"),
 		       bfd_get_target (p->elements->section->owner),
 		       bfd_get_reloc_code_name (p->reloc),
 		       p->h->root.string);
@@ -318,7 +318,7 @@ ldctor_build_sets (void)
 	    size = QUAD;
 	  break;
 	default:
-	  einfo (_("%P%X: Unsupported size %d for set %s\n"),
+	  einfo (_("%X%P: unsupported size %d for set %s\n"),
 		 bfd_get_reloc_size (howto), p->h->root.string);
 	  size = LONG;
 	  break;
@@ -360,7 +360,7 @@ ldctor_build_sets (void)
 		}
 
 	      if (e->name != NULL)
-		minfo ("%T\n", e->name);
+		minfo ("%pT\n", e->name);
 	      else
 		minfo ("%G\n", e->section->owner, e->section, e->value);
 	    }

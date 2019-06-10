@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.1 2013/04/16 06:57:06 jdc Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.1.40.1 2019/06/10 22:06:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -323,8 +323,8 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 
 	/* Secondary bus = startbus, subordinate bus = 0xff */
 	pci_conf_write(NULL, starttag, PCI_BRIDGE_BUS_REG,
-	    ((startbus & 0xff) << PCI_BRIDGE_BUS_SECONDARY_SHIFT) |
-	    (0xff << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
+	    __SHIFTIN(startbus & 0xff,  PCI_BRIDGE_BUS_SECONDARY) |
+	    __SHIFTIN(0xff, PCI_BRIDGE_BUS_SUBORDINATE));
 
 	/*
 	 * Fix up bus numbering, bus addresses, device addresses,
@@ -441,8 +441,8 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 
 	/* Secondary bus = startbus, subordinate bus = maxbus */
 	pci_conf_write(NULL, starttag, PCI_BRIDGE_BUS_REG,
-	    ((startbus & 0xff) << PCI_BRIDGE_BUS_SECONDARY_SHIFT) |
-	    ((*maxbus & 0xff) << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
+	    __SHIFTIN(startbus & 0xff,  PCI_BRIDGE_BUS_SECONDARY) |
+	    __SHIFTIN(*maxbus & 0xff, PCI_BRIDGE_BUS_SUBORDINATE));
 
 	/* 16-bit I/O range */
 	val = ((startio & 0xf000) >> 8) | ((*(io) - 1) & 0xf000);
@@ -479,10 +479,10 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 	/* 64-bit prefetchable range (if supported) - set it to 0 */
 	val = pci_conf_read(NULL, starttag, PCI_BRIDGE_PREFETCHMEM_REG);
 	if (val & 0x01) {
-		pci_conf_write(NULL, starttag, PCI_BRIDGE_PREFETCHBASE32_REG,
-		    (pcireg_t) ~0);
-		pci_conf_write(NULL, starttag, PCI_BRIDGE_PREFETCHLIMIT32_REG,
-		    (pcireg_t) 0);
+		pci_conf_write(NULL, starttag,
+		    PCI_BRIDGE_PREFETCHBASEUP32_REG, (pcireg_t) ~0);
+		pci_conf_write(NULL, starttag,
+		    PCI_BRIDGE_PREFETCHLIMITUP32_REG, (pcireg_t) 0);
 	}
 
 #ifdef SPARC_PCI_FIXUP_DEBUG

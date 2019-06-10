@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.38 2018/04/12 03:25:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.38.2.1 2019/06/10 22:07:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@
 	"\15" "PCIX"	"\16" "CSA"	"\17" "PCIE"	"\20" "SGMII"	\
 	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
 	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
-	"\31" "_B24"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA"
+	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\34" "CLSEMWA"
 
 /*
  * Variations of Intel gigabit Ethernet controller:
@@ -160,23 +160,45 @@ typedef enum {
 	WM_T_PCH_CNP,			/* (I219) */
 } wm_chip_type;
 
+/*
+ * Variations of internal or external PHYs
+ *
+ *  +- 82562 - 8254[17] - 8257[12] - 82566
+ *  |
+ * -+------------------------------------->
+ *
+ *
+ *	  +---------------------------- I347 ----- E1512 ---- E1543
+ *	  |					     |
+ *	  |	       +--------------------------- I210 - I211
+ *	  |	       |
+ *	  |	       |			+-------------+--- 82580 - I350
+ *	  |	       |			|	      |
+ *	  |	       |  +- 578 - 577 - 579 - I217 - I218 - I219
+ *	  |	       |  |
+ *   +- 56[34] -- 567 -- 573
+ *   |		(E1149) (E1111)
+ *   |
+ *  -+----------------------------------------------------------------------->
+ */
+
 typedef enum {
 	WMPHY_UNKNOWN = 0,
 	WMPHY_NONE,
-	WMPHY_M88,
-	WMPHY_IGP,
-	WMPHY_IGP_2,
-	WMPHY_GG82563,
-	WMPHY_IGP_3,
-	WMPHY_IFE,
-	WMPHY_BM,
-	WMPHY_82577,
-	WMPHY_82578,
-	WMPHY_82579,
-	WMPHY_I217,
-	WMPHY_82580,
+	WMPHY_M88,	/* 88E1000: 8254[34], E1011: 8254[056], E1111: 82573 */
+	WMPHY_IGP,	/* 8254[17] */
+	WMPHY_IGP_2,	/* 8257[12] */
+	WMPHY_GG82563,	/* 8256[34]: 80003 */
+	WMPHY_IGP_3,	/* 82566: 82575, 82576, ICH8, ICH9 */
+	WMPHY_IFE,	/* 82562: ICH8 ICH9 */
+	WMPHY_BM,	/* 82567: ICH8 ICH9 ICH10 */
+	WMPHY_82578,	/* 82578: PCH */
+	WMPHY_82577,	/* 82577: PCH (NOTE: functionality newer than 82578) */
+	WMPHY_82579,	/* 82579 : PCH2 */
+	WMPHY_I217,	/* I217:  _LPT, I218: _LPT, I219: _SPT _CNP */
+	WMPHY_82580,	/* 82580: 82580 or I350 */
 	WMPHY_VF,
-	WMPHY_I210
+	WMPHY_I210	/* I210: I210 I211 */
 } wm_phy_type;
 
 

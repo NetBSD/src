@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_tdma.c,v 1.1.2.3 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_tdma.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,18 +29,21 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD$");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_tdma.c,v 1.1.2.4 2019/06/10 22:09:46 christos Exp $");
 #endif
 
 /*
  * IEEE 802.11 TDMA mode support.
  */
+
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #ifdef notyet
 #include "opt_tdma.h"
 #endif
 #include "opt_wlan.h"
+#endif
 
 #ifdef	IEEE80211_SUPPORT_TDMA
 

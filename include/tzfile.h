@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.8 2015/07/11 16:40:53 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.8.16.1 2019/06/10 22:05:12 christos Exp $	*/
 
 #ifndef _TZFILE_H_
 #define _TZFILE_H_
@@ -31,6 +31,9 @@
 #ifndef TZDEFRULES
 #define TZDEFRULES	"posixrules"
 #endif /* !defined TZDEFRULES */
+
+
+/* See Internet RFC 8536 for more details about the following format.  */
 
 /*
 ** Each file begins with. . .

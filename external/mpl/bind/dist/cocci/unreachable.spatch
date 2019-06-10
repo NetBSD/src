@@ -1,0 +1,6 @@
+@@
+@@
+
+    INSIST(0);
++   ISC_UNREACHABLE();
+    ... when != ISC_UNREACHABLE();

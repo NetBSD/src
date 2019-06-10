@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.37 2018/06/07 13:36:29 thorpej Exp $
+# $NetBSD: INSTALL,v 1.37.2.1 2019/06/10 22:06:56 christos Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #

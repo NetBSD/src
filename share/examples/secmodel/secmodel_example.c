@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.26 2011/12/04 23:55:36 jym Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.26.40.1 2019/06/10 22:05:39 christos Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.26 2011/12/04 23:55:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.26.40.1 2019/06/10 22:05:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -298,12 +298,6 @@ secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
 		break;
 
 	case KAUTH_SYSTEM_PSET:
@@ -376,6 +370,7 @@ secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_ENV:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+		case KAUTH_REQ_PROCESS_CANSEE_EPROC:
 		default:
 			result = KAUTH_RESULT_DEFER;
 			break;

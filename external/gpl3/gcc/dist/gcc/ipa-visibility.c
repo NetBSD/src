@@ -1,5 +1,5 @@
 /* IPA visibility pass
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -91,13 +91,14 @@ non_local_p (struct cgraph_node *node, void *data ATTRIBUTE_UNUSED)
 {
   return !(node->only_called_directly_or_aliased_p ()
 	   /* i386 would need update to output thunk with local calling
-	      ocnvetions.  */
+	      convetions.  */
 	   && !node->thunk.thunk_p
 	   && node->definition
 	   && !DECL_EXTERNAL (node->decl)
 	   && !node->externally_visible
 	   && !node->used_from_other_partition
-	   && !node->in_other_partition);
+	   && !node->in_other_partition
+	   && node->get_availability () >= AVAIL_AVAILABLE);
 }
 
 /* Return true when function can be marked local.  */
@@ -367,8 +368,7 @@ static tree
 update_vtable_references (tree *tp, int *walk_subtrees,
 			  void *data ATTRIBUTE_UNUSED)
 {
-  if (TREE_CODE (*tp) == VAR_DECL
-      || TREE_CODE (*tp) == FUNCTION_DECL)
+  if (VAR_OR_FUNCTION_DECL_P (*tp))
     {
       if (can_replace_by_local_alias_in_vtable (symtab_node::get (*tp)))
 	*tp = symtab_node::get (*tp)->noninterposable_alias ()->decl;

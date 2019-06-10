@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.100.4.1 2019/06/10 22:09:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.100.4.1 2019/06/10 22:09:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -382,7 +382,7 @@ vfs_vnode_sysinit(void)
 
 	dead_rootmount = vfs_mountalloc(&dead_vfsops, NULL);
 	KASSERT(dead_rootmount != NULL);
-	dead_rootmount->mnt_iflag = IMNT_MPSAFE;
+	dead_rootmount->mnt_iflag |= IMNT_MPSAFE;
 
 	mutex_init(&vdrain_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&lru_free_list);
@@ -1030,8 +1030,7 @@ void
 vgone(vnode_t *vp)
 {
 
-	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
-	    fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
@@ -1162,6 +1161,8 @@ vcache_dealloc(vnode_impl_t *vip)
 	KASSERT(mutex_owned(&vcache_lock));
 
 	vp = VIMPL_TO_VNODE(vip);
+	vfs_ref(dead_rootmount);
+	vfs_insmntque(vp, dead_rootmount);
 	mutex_enter(vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
@@ -1375,7 +1376,7 @@ again:
  */
 int
 vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
-    kauth_cred_t cred, struct vnode **vpp)
+    kauth_cred_t cred, void *extra, struct vnode **vpp)
 {
 	int error;
 	uint32_t hash;
@@ -1393,7 +1394,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	vp = VIMPL_TO_VNODE(vip);
 
 	/* Create and load the fs node. */
-	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred,
+	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred, extra,
 	    &vip->vi_key.vk_key_len, &vip->vi_key.vk_key);
 	if (error) {
 		mutex_enter(&vcache_lock);
@@ -1682,8 +1683,7 @@ vcache_make_anon(vnode_t *vp)
 	bool recycle;
 
 	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
-	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
-	    fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 
 	/* Remove from vnode cache. */

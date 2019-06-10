@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/12/07 11:38:46 pgoyette Exp $
+# $NetBSD: Makefile,v 1.1.22.1 2019/06/10 22:09:22 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=		drvctl
 IOCONF=		drvctl.ioconf
 SRCS=		kern_drvctl.c
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

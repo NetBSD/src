@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2017 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -700,7 +700,7 @@ predicates used with @code{match_operand} have names that end in
 @samp{_operand}, and those used with @code{match_operator} have names
 that end in @samp{_operator}.
 
-All predicates are Boolean functions (in the mathematical sense) of
+All predicates are boolean functions (in the mathematical sense) of
 two arguments: the RTL expression that is being considered at that
 position in the instruction pattern, and the machine mode that the
 @code{match_operand} or @code{match_operator} specifies.  In this
@@ -2569,107 +2569,6 @@ Memory addressed using the small base register ($sb).
 $r1h
 @end table
 
-@item MeP---@file{config/mep/constraints.md}
-@table @code
-
-@item a
-The $sp register.
-
-@item b
-The $tp register.
-
-@item c
-Any control register.
-
-@item d
-Either the $hi or the $lo register.
-
-@item em
-Coprocessor registers that can be directly loaded ($c0-$c15).
-
-@item ex
-Coprocessor registers that can be moved to each other.
-
-@item er
-Coprocessor registers that can be moved to core registers.
-
-@item h
-The $hi register.
-
-@item j
-The $rpc register.
-
-@item l
-The $lo register.
-
-@item t
-Registers which can be used in $tp-relative addressing.
-
-@item v
-The $gp register.
-
-@item x
-The coprocessor registers.
-
-@item y
-The coprocessor control registers.
-
-@item z
-The $0 register.
-
-@item A
-User-defined register set A.
-
-@item B
-User-defined register set B.
-
-@item C
-User-defined register set C.
-
-@item D
-User-defined register set D.
-
-@item I
-Offsets for $gp-rel addressing.
-
-@item J
-Constants that can be used directly with boolean insns.
-
-@item K
-Constants that can be moved directly to registers.
-
-@item L
-Small constants that can be added to registers.
-
-@item M
-Long shift counts.
-
-@item N
-Small constants that can be compared to registers.
-
-@item O
-Constants that can be loaded into the top half of registers.
-
-@item S
-Signed 8-bit immediates.
-
-@item T
-Symbols encoded for $tp-rel or $gp-rel addressing.
-
-@item U
-Non-constant addresses for loading/saving coprocessor registers.
-
-@item W
-The top half of a symbol's value.
-
-@item Y
-A register indirect address without offset.
-
-@item Z
-Symbolic references to the control bus.
-
-@end table
-
 @item MicroBlaze---@file{config/microblaze/constraints.md}
 @table @code
 @item d
@@ -2683,8 +2582,8 @@ A status register (@code{rmsr}, @code{$fcc1} to @code{$fcc7}).
 @item MIPS---@file{config/mips/constraints.md}
 @table @code
 @item d
-An address register.  This is equivalent to @code{r} unless
-generating MIPS16 code.
+A general-purpose register.  This is equivalent to @code{r} unless
+generating MIPS16 code, in which case the MIPS16 register set is used.
 
 @item f
 A floating-point register (if available).
@@ -3098,7 +2997,7 @@ Floating point register (containing 32-bit value)
 Altivec vector register
 
 @item wa
-Any VSX register if the -mvsx option was used or NO_REGS.
+Any VSX register if the @option{-mvsx} option was used or NO_REGS.
 
 When using any of the register constraints (@code{wa}, @code{wd},
 @code{wf}, @code{wg}, @code{wh}, @code{wi}, @code{wj}, @code{wk},
@@ -3111,31 +3010,43 @@ is an operand of a VSX instruction that expects VSX register
 numbering.
 
 @smallexample
-asm ("xvadddp %x0,%x1,%x2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
+asm ("xvadddp %x0,%x1,%x2"
+     : "=wa" (v1)
+     : "wa" (v2), "wa" (v3));
 @end smallexample
 
+@noindent
 is correct, but:
 
 @smallexample
-asm ("xvadddp %0,%1,%2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
+asm ("xvadddp %0,%1,%2" 
+     : "=wa" (v1) 
+     : "wa" (v2), "wa" (v3));
 @end smallexample
 
+@noindent
 is not correct.
 
 If an instruction only takes Altivec registers, you do not want to use
 @code{%x<n>}.
 
 @smallexample
-asm ("xsaddqp %0,%1,%2" : "=v" (v1) : "v" (v2), "v" (v3));
+asm ("xsaddqp %0,%1,%2"
+     : "=v" (v1)
+     : "v" (v2), "v" (v3));
 @end smallexample
 
+@noindent
 is correct because the @code{xsaddqp} instruction only takes Altivec
 registers, while:
 
 @smallexample
-asm ("xsaddqp %x0,%x1,%x2" : "=v" (v1) : "v" (v2), "v" (v3));
+asm ("xsaddqp %x0,%x1,%x2" 
+     : "=v" (v1) 
+     : "v" (v2), "v" (v3));
 @end smallexample
 
+@noindent
 is incorrect.
 
 @item wb
@@ -3214,6 +3125,9 @@ Floating point register if the LFIWZX instruction is enabled or NO_REGS.
 @item wA
 Address base register if 64-bit instructions are enabled or NO_REGS.
 
+@item wB
+Signed 5-bit constant integer that can be loaded into an altivec register.
+
 @item wD
 Int constant that is the element number of the 64-bit scalar in a vector.
 
@@ -3225,6 +3139,18 @@ Memory operand suitable for power9 fusion load/stores.
 
 @item wG
 Memory operand suitable for TOC fusion memory references.
+
+@item wH
+Altivec register if @option{-mvsx-small-integer}.
+
+@item wI
+Floating point register if @option{-mvsx-small-integer}.
+
+@item wJ
+FP register if @option{-mvsx-small-integer} and @option{-mpower9-vector}.
+
+@item wK
+Altivec register if @option{-mvsx-small-integer} and @option{-mpower9-vector}.
 
 @item wL
 Int constant that is the element number that the MFVSRLD instruction.
@@ -3436,6 +3362,26 @@ The virtual registers.
 The @code{PSW} register.
 @item x
 The @code{X} register.
+
+@end table
+
+@item RISC-V---@file{config/riscv/constraints.md}
+@table @code
+
+@item f
+A floating-point register (if availiable).
+
+@item I
+An I-type 12-bit signed immediate.
+
+@item J
+Integer zero.
+
+@item K
+A 5-bit unsigned immediate for CSR access instructions.
+
+@item A
+An address that is held in a general-purpose register.
 
 @end table
 
@@ -3785,7 +3731,7 @@ Any kind of immediate operand, unless it matches the S0 constraint.
 Memory location with B base register, but not using a long offset.
 
 @item W
-A memory operand with an address that can't be used in an unaligned access.
+A memory operand with an address that cannot be used in an unaligned access.
 
 @end ifset
 @item Z
@@ -4375,7 +4321,7 @@ constraint.  Docstrings are explained further below.
 @end deffn
 
 Non-register constraints are more like predicates: the constraint
-definition gives a Boolean expression which indicates whether the
+definition gives a boolean expression which indicates whether the
 constraint matches.
 
 @deffn {MD Expression} define_constraint name docstring exp
@@ -4831,6 +4777,14 @@ value of all-zeros.
 @item @samp{vec_cmpu@var{m}@var{n}}
 Similar to @code{vec_cmp@var{m}@var{n}} but perform unsigned vector comparison.
 
+@cindex @code{vec_cmpeq@var{m}@var{n}} instruction pattern
+@item @samp{vec_cmpeq@var{m}@var{n}}
+Similar to @code{vec_cmp@var{m}@var{n}} but perform equality or non-equality
+vector comparison only.  If @code{vec_cmp@var{m}@var{n}}
+or @code{vec_cmpu@var{m}@var{n}} instruction pattern is supported,
+it will be preferred over @code{vec_cmpeq@var{m}@var{n}}, so there is
+no need to define this instruction pattern if the others are supported.
+
 @cindex @code{vcond@var{m}@var{n}} instruction pattern
 @item @samp{vcond@var{m}@var{n}}
 Output a conditional vector move.  Operand 0 is the destination to
@@ -4846,6 +4800,14 @@ comparison with a truth value of all-ones and a false value of all-zeros.
 @item @samp{vcondu@var{m}@var{n}}
 Similar to @code{vcond@var{m}@var{n}} but performs unsigned vector
 comparison.
+
+@cindex @code{vcondeq@var{m}@var{n}} instruction pattern
+@item @samp{vcondeq@var{m}@var{n}}
+Similar to @code{vcond@var{m}@var{n}} but performs equality or
+non-equality vector comparison only.  If @code{vcond@var{m}@var{n}}
+or @code{vcondu@var{m}@var{n}} instruction pattern is supported,
+it will be preferred over @code{vcondeq@var{m}@var{n}}, so there is
+no need to define this instruction pattern if the others are supported.
 
 @cindex @code{vcond_mask_@var{m}@var{n}} instruction pattern
 @item @samp{vcond_mask_@var{m}@var{n}}
@@ -5030,7 +4992,7 @@ it is unspecified which of the two operands is returned as the result.
 IEEE-conformant minimum and maximum operations.  If one operand is a quiet
 @code{NaN}, then the other operand is returned.  If both operands are quiet
 @code{NaN}, then a quiet @code{NaN} is returned.  In the case when gcc supports
-signalling @code{NaN} (-fsignaling-nans) an invalid floating point exception is
+signaling @code{NaN} (-fsignaling-nans) an invalid floating point exception is
 raised and a quiet @code{NaN} is returned.
 
 All operands have mode @var{m}, which is a scalar or vector
@@ -5557,7 +5519,9 @@ This pattern is not allowed to @code{FAIL}.
 @item @samp{floor@var{m}2}
 Store the largest integral value not greater than operand 1 in operand 0.
 Both operands have mode @var{m}, which is a scalar or vector
-floating-point mode.
+floating-point mode.  If @option{-ffp-int-builtin-inexact} is in
+effect, the ``inexact'' exception may be raised for noninteger
+operands; otherwise, it may not.
 
 This pattern is not allowed to @code{FAIL}.
 
@@ -5565,7 +5529,9 @@ This pattern is not allowed to @code{FAIL}.
 @item @samp{btrunc@var{m}2}
 Round operand 1 to an integer, towards zero, and store the result in
 operand 0.  Both operands have mode @var{m}, which is a scalar or
-vector floating-point mode.
+vector floating-point mode.  If @option{-ffp-int-builtin-inexact} is
+in effect, the ``inexact'' exception may be raised for noninteger
+operands; otherwise, it may not.
 
 This pattern is not allowed to @code{FAIL}.
 
@@ -5573,7 +5539,10 @@ This pattern is not allowed to @code{FAIL}.
 @item @samp{round@var{m}2}
 Round operand 1 to the nearest integer, rounding away from zero in the
 event of a tie, and store the result in operand 0.  Both operands have
-mode @var{m}, which is a scalar or vector floating-point mode.
+mode @var{m}, which is a scalar or vector floating-point mode.  If
+@option{-ffp-int-builtin-inexact} is in effect, the ``inexact''
+exception may be raised for noninteger operands; otherwise, it may
+not.
 
 This pattern is not allowed to @code{FAIL}.
 
@@ -5581,7 +5550,9 @@ This pattern is not allowed to @code{FAIL}.
 @item @samp{ceil@var{m}2}
 Store the smallest integral value not less than operand 1 in operand 0.
 Both operands have mode @var{m}, which is a scalar or vector
-floating-point mode.
+floating-point mode.  If @option{-ffp-int-builtin-inexact} is in
+effect, the ``inexact'' exception may be raised for noninteger
+operands; otherwise, it may not.
 
 This pattern is not allowed to @code{FAIL}.
 
@@ -6598,8 +6569,7 @@ function.
 @cindex @code{trap} instruction pattern
 @item @samp{trap}
 This pattern, if defined, signals an error, typically by causing some
-kind of signal to be raised.  Among other places, it is used by the Java
-front end to signal `invalid array index' exceptions.
+kind of signal to be raised.
 
 @cindex @code{ctrap@var{MM}4} instruction pattern
 @item @samp{ctrap@var{MM}4}
@@ -6923,6 +6893,33 @@ model to be used.
 The specific value that defines "set" is implementation defined, and
 is normally based on what is performed by the native atomic test and set
 instruction.
+
+@cindex @code{atomic_bit_test_and_set@var{mode}} instruction pattern
+@cindex @code{atomic_bit_test_and_complement@var{mode}} instruction pattern
+@cindex @code{atomic_bit_test_and_reset@var{mode}} instruction pattern
+@item @samp{atomic_bit_test_and_set@var{mode}}
+@itemx @samp{atomic_bit_test_and_complement@var{mode}}
+@itemx @samp{atomic_bit_test_and_reset@var{mode}}
+These patterns emit code for an atomic bitwise operation on memory with memory
+model semantics, and return the original value of the specified bit.
+Operand 0 is an output operand which contains the value of the specified bit
+from the memory location before the operation was performed.  Operand 1 is the
+memory on which the atomic operation is performed.  Operand 2 is the bit within
+the operand, starting with least significant bit.  Operand 3 is the memory model
+to be used by the operation.  Operand 4 is a flag - it is @code{const1_rtx}
+if operand 0 should contain the original value of the specified bit in the
+least significant bit of the operand, and @code{const0_rtx} if the bit should
+be in its original position in the operand.
+@code{atomic_bit_test_and_set@var{mode}} atomically sets the specified bit after
+remembering its original value, @code{atomic_bit_test_and_complement@var{mode}}
+inverts the specified bit and @code{atomic_bit_test_and_reset@var{mode}} clears
+the specified bit.
+
+If these patterns are not defined, attempts will be made to use
+@code{atomic_fetch_or@var{mode}}, @code{atomic_fetch_xor@var{mode}} or
+@code{atomic_fetch_and@var{mode}} instruction patterns, or their @code{sync}
+counterparts.  If none of these are available a compare-and-swap
+loop will be used.
 
 @cindex @code{mem_thread_fence@var{mode}} instruction pattern
 @item @samp{mem_thread_fence@var{mode}}

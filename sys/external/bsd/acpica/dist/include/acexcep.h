@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,13 @@ typedef struct acpi_exception_info
 #define ACPI_FAILURE(a)                 (a)
 
 #define AE_OK                           (ACPI_STATUS) 0x0000
+
+#define ACPI_ENV_EXCEPTION(Status)      (Status & AE_CODE_ENVIRONMENTAL)
+#define ACPI_AML_EXCEPTION(Status)      (Status & AE_CODE_AML)
+#define ACPI_PROG_EXCEPTION(Status)     (Status & AE_CODE_PROGRAMMER)
+#define ACPI_TABLE_EXCEPTION(Status)    (Status & AE_CODE_ACPI_TABLES)
+#define ACPI_CNTL_EXCEPTION(Status)     (Status & AE_CODE_CONTROL)
+
 
 /*
  * Environmental exceptions
@@ -205,8 +212,10 @@ typedef struct acpi_exception_info
 #define AE_AML_LOOP_TIMEOUT             EXCEP_AML (0x0021)
 #define AE_AML_UNINITIALIZED_NODE       EXCEP_AML (0x0022)
 #define AE_AML_TARGET_TYPE              EXCEP_AML (0x0023)
+#define AE_AML_PROTOCOL                 EXCEP_AML (0x0024)
+#define AE_AML_BUFFER_LENGTH            EXCEP_AML (0x0025)
 
-#define AE_CODE_AML_MAX                 0x0023
+#define AE_CODE_AML_MAX                 0x0025
 
 
 /*
@@ -317,7 +326,7 @@ static const ACPI_EXCEPTION_INFO    AcpiGbl_ExceptionNames_Aml[] =
     EXCEP_TXT ("AE_AML_DIVIDE_BY_ZERO",         "During execution of AML Divide operator"),
     EXCEP_TXT ("AE_AML_BAD_NAME",               "An ACPI name contains invalid character(s)"),
     EXCEP_TXT ("AE_AML_NAME_NOT_FOUND",         "Could not resolve a named reference"),
-    EXCEP_TXT ("AE_AML_INTERNAL",               "An internal error within the interprete"),
+    EXCEP_TXT ("AE_AML_INTERNAL",               "An internal error within the interpreter"),
     EXCEP_TXT ("AE_AML_INVALID_SPACE_ID",       "An Operation Region SpaceID is invalid"),
     EXCEP_TXT ("AE_AML_STRING_LIMIT",           "String is longer than 200 characters"),
     EXCEP_TXT ("AE_AML_NO_RETURN_VALUE",        "A method did not return a required value"),
@@ -337,7 +346,9 @@ static const ACPI_EXCEPTION_INFO    AcpiGbl_ExceptionNames_Aml[] =
     EXCEP_TXT ("AE_AML_ILLEGAL_ADDRESS",        "A memory, I/O, or PCI configuration address is invalid"),
     EXCEP_TXT ("AE_AML_LOOP_TIMEOUT",           "An AML While loop exceeded the maximum execution time"),
     EXCEP_TXT ("AE_AML_UNINITIALIZED_NODE",     "A namespace node is uninitialized or unresolved"),
-    EXCEP_TXT ("AE_AML_TARGET_TYPE",            "A target operand of an incorrect type was encountered")
+    EXCEP_TXT ("AE_AML_TARGET_TYPE",            "A target operand of an incorrect type was encountered"),
+    EXCEP_TXT ("AE_AML_PROTOCOL",               "Violation of a fixed ACPI protocol"),
+    EXCEP_TXT ("AE_AML_BUFFER_LENGTH",          "The length of the buffer is invalid/incorrect")
 };
 
 static const ACPI_EXCEPTION_INFO    AcpiGbl_ExceptionNames_Ctrl[] =

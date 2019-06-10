@@ -1124,8 +1124,7 @@ getreg_image (reg r)
 /* Issue a error message when register is illegal.  */
 #define IMAGE_ERR \
   as_bad (_("Illegal register (`%s') in Instruction: `%s'"), \
-            reg_name, ins_parse);                            \
-  break;
+	  reg_name, ins_parse);
 
   switch (rreg->type)
     {
@@ -1134,6 +1133,7 @@ getreg_image (reg r)
         return rreg->image;
       else
         IMAGE_ERR;
+      break;
 
     case CR16_P_REGTYPE:
       return rreg->image;
@@ -1141,6 +1141,7 @@ getreg_image (reg r)
 
     default:
       IMAGE_ERR;
+      break;
     }
 
   return 0;

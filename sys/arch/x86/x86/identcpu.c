@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.77.2.1 2019/06/10 22:06:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.1 2019/06/10 22:06:53 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -48,11 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77 2018/06/23 10:30:22 jdolecek Exp $
 #include <x86/cputypes.h>
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
-#include <x86/cpu_msr.h>
 #include <x86/fpu.h>
 
 #include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
 #include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
+
+#ifndef XEN
+#include "hyperv.h"
+#if NHYPERV > 0
+#include <x86/x86/hypervvar.h>
+#endif
+#endif
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
@@ -66,7 +72,7 @@ int cpu_vendor;
 char cpu_brand_string[49];
 
 int x86_fpu_save __read_mostly;
-unsigned int x86_fpu_save_size __read_mostly = 512;
+unsigned int x86_fpu_save_size __read_mostly = sizeof(struct save87);
 uint64_t x86_xsave_features __read_mostly = 0;
 
 /*
@@ -190,6 +196,24 @@ cpu_probe_intel_cache(struct cpu_info *ci)
 }
 
 static void
+cpu_probe_intel_errata(struct cpu_info *ci)
+{
+	u_int family, model, stepping;
+
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
+
+	if (family == 0x6 && model == 0x5C && stepping == 0x9) { /* Apollo Lake */
+		wrmsr(MSR_MISC_ENABLE,
+		    rdmsr(MSR_MISC_ENABLE) & ~IA32_MISC_MWAIT_EN);
+
+		cpu_feature[1] &= ~CPUID2_MONITOR;
+		ci->ci_feat_val[1] &= ~CPUID2_MONITOR;
+	}
+}
+
+static void
 cpu_probe_intel(struct cpu_info *ci)
 {
 
@@ -197,6 +221,7 @@ cpu_probe_intel(struct cpu_info *ci)
 		return;
 
 	cpu_probe_intel_cache(ci);
+	cpu_probe_intel_errata(ci);
 }
 
 static void
@@ -336,37 +361,47 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_k5(struct cpu_info *ci)
+cpu_probe_amd(struct cpu_info *ci)
 {
+	uint64_t val;
 	int flag;
 
-	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
+	if (cpu_vendor != CPUVENDOR_AMD)
+		return;
+	if (CPUID_TO_FAMILY(ci->ci_signature) < 5)
 		return;
 
-	if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
+	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+	case 0x05: /* K5 */
+		if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
+			/*
+			 * According to the AMD Processor Recognition App Note,
+			 * the AMD-K5 Model 0 uses the wrong bit to indicate
+			 * support for global PTEs, instead using bit 9 (APIC)
+			 * rather than bit 13 (i.e. "0x200" vs. 0x2000").
+			 */
+			flag = ci->ci_feat_val[0];
+			if ((flag & CPUID_APIC) != 0)
+				flag = (flag & ~CPUID_APIC) | CPUID_PGE;
+			ci->ci_feat_val[0] = flag;
+		}
+		break;
+
+	case 0x10: /* Family 10h */
 		/*
-		 * According to the AMD Processor Recognition App Note,
-		 * the AMD-K5 Model 0 uses the wrong bit to indicate
-		 * support for global PTEs, instead using bit 9 (APIC)
-		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 * On Family 10h, certain BIOSes do not enable WC+ support.
+		 * This causes WC+ to become CD, and degrades guest
+		 * performance at the NPT level.
+		 *
+		 * Explicitly enable WC+ if we're not a guest.
 		 */
-		flag = ci->ci_feat_val[0];
-		if ((flag & CPUID_APIC) != 0)
-			flag = (flag & ~CPUID_APIC) | CPUID_PGE;
-		ci->ci_feat_val[0] = flag;
+		if (!ISSET(ci->ci_feat_val[1], CPUID2_RAZ)) {
+			val = rdmsr(MSR_BU_CFG2);
+			val &= ~BU_CFG2_CWPLUS_DIS;
+			wrmsr(MSR_BU_CFG2, val);
+		}
+		break;
 	}
-
-	cpu_probe_amd_cache(ci);
-}
-
-static void
-cpu_probe_k678(struct cpu_info *ci)
-{
-
-	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
-		return;
 
 	cpu_probe_amd_cache(ci);
 }
@@ -464,32 +499,13 @@ static void
 cpu_probe_winchip(struct cpu_info *ci)
 {
 
-	if (cpu_vendor != CPUVENDOR_IDT)
+	if (cpu_vendor != CPUVENDOR_IDT ||
+	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
 	    	return;
 
-	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
-	case 5:
-		/* WinChip C6 */
-		if (CPUID_TO_MODEL(ci->ci_signature) == 4)
-			ci->ci_feat_val[0] &= ~CPUID_TSC;
-		break;
-	case 6:
-		/*
-		 * VIA Eden ESP 
-		 *
-		 * Quoting from page 3-4 of: "VIA Eden ESP Processor Datasheet"
-		 * http://www.via.com.tw/download/mainboards/6/14/Eden20v115.pdf
-		 * 
-		 * 1. The CMPXCHG8B instruction is provided and always enabled,
-		 *    however, it appears disabled in the corresponding CPUID
-		 *    function bit 0 to avoid a bug in an early version of
-		 *    Windows NT. However, this default can be changed via a
-		 *    bit in the FCR MSR.
-		 */
-		ci->ci_feat_val[0] |= CPUID_CX8;
-		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | 0x00000001);
-		break;
-	}
+	/* WinChip C6 */
+	if (CPUID_TO_MODEL(ci->ci_signature) == 4)
+		ci->ci_feat_val[0] &= ~CPUID_TSC;
 }
 
 static void
@@ -510,8 +526,25 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
+	if (family == 6) {
+		/*
+		 * VIA Eden ESP.
+		 *
+		 * Quoting from page 3-4 of: "VIA Eden ESP Processor Datasheet"
+		 * http://www.via.com.tw/download/mainboards/6/14/Eden20v115.pdf
+		 * 
+		 * 1. The CMPXCHG8B instruction is provided and always enabled,
+		 *    however, it appears disabled in the corresponding CPUID
+		 *    function bit 0 to avoid a bug in an early version of
+		 *    Windows NT. However, this default can be changed via a
+		 *    bit in the FCR MSR.
+		 */
+		ci->ci_feat_val[0] |= CPUID_CX8;
+		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | VIA_ACE_ECX8);
+	}
+
 	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
-		/* Nehemiah or Esther */
+		/* VIA Nehemiah or Esther. */
 		x86_cpuid(0xc0000000, descs);
 		lfunc = descs[0];
 		if (lfunc >= 0xc0000001) {	/* has ACE, RNG */
@@ -580,11 +613,16 @@ cpu_probe_c3(struct cpu_info *ci)
 
 		    if (ace_enable) {
 			msr = rdmsr(MSR_VIA_ACE);
-			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+			wrmsr(MSR_VIA_ACE, msr | VIA_ACE_ENABLE);
 		    }
-
 		}
 	}
+
+	/* Explicitly disable unsafe ALTINST mode. */
+	if (ci->ci_feat_val[4] & CPUID_VIA_DO_ACE) {
+		msr = rdmsr(MSR_VIA_ACE);
+		wrmsr(MSR_VIA_ACE, msr & ~VIA_ACE_ALTINST);
+	} 
 
 	/*
 	 * Determine L1 cache/TLB info.
@@ -699,7 +737,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 static void
 cpu_probe_old_fpu(struct cpu_info *ci)
 {
-#if defined(__i386__) && !defined(XEN)
+#if defined(__i386__) && !defined(XENPV)
 
 	clts();
 	fninit();
@@ -713,62 +751,15 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 #endif
 }
 
-#ifndef XEN
-static void
-cpu_probe_fpu_leak(struct cpu_info *ci)
-{
-	/*
-	 * INTEL-SA-00145. Affected CPUs are from Family 6.
-	 */
-	if (cpu_vendor != CPUVENDOR_INTEL) {
-		return;
-	}
-	if (CPUID_TO_FAMILY(ci->ci_signature) != 6) {
-		return;
-	}
-
-	switch (CPUID_TO_MODEL(ci->ci_signature)) {
-	/* Atom CPUs are not vulnerable. */
-	case 0x1c: /* Pineview */
-	case 0x26: /* Lincroft */
-	case 0x27: /* Penwell */
-	case 0x35: /* Cloverview */
-	case 0x36: /* Cedarview */
-	case 0x37: /* Baytrail / Valleyview (Silvermont) */
-	case 0x4d: /* Avaton / Rangely (Silvermont) */
-	case 0x4c: /* Cherrytrail / Brasswell */
-	case 0x4a: /* Merrifield */
-	case 0x5a: /* Moorefield */
-	case 0x5c: /* Goldmont */
-	case 0x5f: /* Denverton */
-	case 0x7a: /* Gemini Lake */
-		break;
-
-	/* Knights CPUs are not vulnerable. */
-	case 0x57: /* Knights Landing */
-	case 0x85: /* Knights Mill */
-		break;
-
-	/* The rest is vulnerable. */
-	default:
-		x86_fpu_eager = true;
-		break;
-	}
-}
-#endif
-
 static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
 
-#ifndef XEN
-	cpu_probe_fpu_leak(ci);
-#endif
-
+	x86_fpu_eager = true;
 	x86_fpu_save = FPU_SAVE_FSAVE;
 
-#ifdef i386 /* amd64 always has fxsave, sse and sse2 */
+#ifdef i386
 	/* If we have FXSAVE/FXRESTOR, use them. */
 	if ((ci->ci_feat_val[0] & CPUID_FXSR) == 0) {
 		i386_use_fxsave = 0;
@@ -789,26 +780,25 @@ cpu_probe_fpu(struct cpu_info *ci)
 #else
 	/*
 	 * For amd64 i386_use_fxsave, i386_has_sse and i386_has_sse2 are
-	 * #defined to 1.
+	 * #defined to 1, because fxsave/sse/sse2 are always present.
 	 */
-#endif	/* i386 */
+#endif
 
 	x86_fpu_save = FPU_SAVE_FXSAVE;
+	x86_fpu_save_size = sizeof(struct fxsave);
 
 	/* See if xsave (for AVX) is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
-#ifdef XEN
+#ifdef XENPV
 	/*
 	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
 	 * XSAVE instructions like xrstor become privileged and trigger
 	 * supervisor trap. OSXSAVE flag seems to be reliably set according
 	 * to whether XSAVE is actually available.
 	 */
-#ifdef XEN_USE_XSAVE
 	if ((ci->ci_feat_val[1] & CPUID2_OSXSAVE) == 0)
-#endif
 		return;
 #endif
 
@@ -822,7 +812,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
-	if (descs[2] > 512)
+	if (descs[2] > sizeof(struct fxsave))
 		x86_fpu_save_size = descs[2];
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
@@ -936,8 +926,7 @@ cpu_probe(struct cpu_info *ci)
 	}
 
 	cpu_probe_intel(ci);
-	cpu_probe_k5(ci);
-	cpu_probe_k678(ci);
+	cpu_probe_amd(ci);
 	cpu_probe_cyrix(ci);
 	cpu_probe_winchip(ci);
 	cpu_probe_c3(ci);
@@ -1011,7 +1000,7 @@ cpu_identify(struct cpu_info *ci)
 		aprint_error("WARNING: BUGGY CYRIX CACHE\n");
 	}
 
-#if !defined(XEN) || defined(DOM0OPS)       /* on Xen rdmsr is for Dom0 only */
+#if !defined(XENPV) || defined(DOM0OPS)       /* on Xen PV rdmsr is for Dom0 only */
 	if (cpu_vendor == CPUVENDOR_AMD     /* check enablement of an */
 	    && device_unit(ci->ci_dev) == 0 /* AMD feature only once */
 	    && ((cpu_feature[3] & CPUID_SVM) == CPUID_SVM)) {
@@ -1092,12 +1081,18 @@ identify_hypervisor(void)
 			memcpy(&hv_vendor[8], &regs[3], sizeof(*regs));
 			if (memcmp(hv_vendor, "VMwareVMware", 12) == 0)
 				vm_guest = VM_GUEST_VMWARE;
-			else if (memcmp(hv_vendor, "Microsoft Hv", 12) == 0)
+			else if (memcmp(hv_vendor, "Microsoft Hv", 12) == 0) {
 				vm_guest = VM_GUEST_HV;
-			else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
+#if NHYPERV > 0
+				hyperv_early_init();
+#endif
+			} else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
 				vm_guest = VM_GUEST_KVM;
+			else if (memcmp(hv_vendor, "XenVMMXenVMM", 12) == 0)
+				vm_guest = VM_GUEST_XEN;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
+			/* NetBSD nvmm:   "___ NVMM ___" */
 		}
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.134.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $
+ * $Id: aic7xxx.c,v 1.134.2.1 2019/06/10 22:07:10 christos Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.134 2018/04/02 10:44:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.134.2.1 2019/06/10 22:07:10 christos Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1107,7 +1107,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 					printf("\tCRC Value Mismatch\n");
 				if ((sstat2 & CRCENDERR) != 0)
 					printf("\tNo terminal CRC packet "
-					       "recevied\n");
+					       "received\n");
 				if ((sstat2 & CRCREQERR) != 0)
 					printf("\tIllegal CRC packet "
 					       "request\n");
@@ -5475,8 +5475,8 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 					printf("Inactive SCB in "
 					       "Waiting List\n");
 				ahc_done(ahc, scb);
-				/* FALLTHROUGH */
 			}
+			/* FALLTHROUGH */
 			case SEARCH_REMOVE:
 				next = ahc_rem_wscb(ahc, next, prev);
 				break;
@@ -6470,8 +6470,8 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 		}
 		address -= address_offset;
 		fmt3_ins->address = address;
-		/* FALLTHROUGH */
 	}
+	/* FALLTHROUGH */
 	case AIC_OP_OR:
 	case AIC_OP_AND:
 	case AIC_OP_XOR:

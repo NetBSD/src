@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_bpf.c,v 1.13 2017/12/10 00:07:36 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.13 2017/12/10 00:07:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.13.4.1 2019/06/10 22:09:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

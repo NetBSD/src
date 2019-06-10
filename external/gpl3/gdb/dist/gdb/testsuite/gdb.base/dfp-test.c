@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2007-2017 Free Software Foundation, Inc.
+   Copyright 2007-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -90,6 +90,23 @@ _Decimal128 dec128_val16 = 13.2dl;
 volatile _Decimal32 d32;
 volatile _Decimal64 d64;
 volatile _Decimal128 d128;
+
+/* Typedefs and typedefs of typedefs, for ptype/whatis testing.  */
+typedef _Decimal32 d32_t;
+typedef _Decimal64 d64_t;
+typedef _Decimal128 d128_t;
+
+typedef d32_t d32_t2;
+typedef d64_t d64_t2;
+typedef d128_t d128_t2;
+
+d32_t v_d32_t;
+d64_t v_d64_t;
+d128_t v_d128_t;
+
+d32_t2 v_d32_t2;
+d64_t2 v_d64_t2;
+d128_t2 v_d128_t2;
 
 struct decstruct
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_board.c,v 1.3 2018/06/05 08:03:28 hkenken Exp $	*/
+/*	$NetBSD: zynq7000_board.c,v 1.3.2.1 2019/06/10 22:05:58 christos Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.3 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.3.2.1 2019/06/10 22:05:58 christos Exp $");
 
 #include "opt_zynq.h"
 #include "arml2cc.h"
@@ -45,7 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.3 2018/06/05 08:03:28 hkenken E
 #include <arm/zynq/zynq7000_reg.h>
 
 /*
- * PERIPHCLK_N is an arm root clock divider for MPcore interupt controller.
+ * PERIPHCLK_N is an arm root clock divider for MPcore interrupt controller.
  * PERIPHCLK_N is equal to, or greater than two.
  * see "Cortex-A9 MPCore Technical Reference Manual" -
  *     Chapter 5: Clocks, Resets, and Power Management, 5.1: Clocks.
@@ -131,10 +131,3 @@ zynq7000_device_register(device_t self, void *aux)
 	}
 }
 
-#ifdef MULTIPROCESSOR
-void
-zynq7000_cpu_hatch(struct cpu_info *ci)
-{
-	a9tmr_init_cpu_clock(ci);
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: wrtvid.c,v 1.8 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: wrtvid.c,v 1.8.88.1 2019/06/10 22:06:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* mvme68k's boot block is 512 bytes long */
 #define SIZEOF_VID		0x200

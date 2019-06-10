@@ -4,8 +4,8 @@
 @settitle GNU MPC @value{VERSION}
 @synindex tp fn
 
-@set MINGMP 4.3.2
-@set MINMPFR 2.4.2
+@set MINGMP 5.0.0
+@set MINMPFR 3.0.0
 
 @set AUTHORS Andreas Enge, Philippe Th@'eveny, Paul Zimmermann
 
@@ -13,7 +13,7 @@
 This manual is for GNU MPC, a library for multiple precision complex arithmetic,
 version @value{VERSION} of @value{UPDATED-MONTH}.
 
-Copyright @copyright{} 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright @copyright{} 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016 INRIA
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -375,23 +375,23 @@ This
 computes the square of @var{x} with rounding mode @code{rnd_mode}
 and puts the result back in @var{x}.
 
-Before you can assign to an GNU MPC variable, you need to initialize it by calling
+Before you can assign to an GNU MPC variable, you need to initialise it by calling
 one of the special initialization functions.  When you are done with a
 variable, you need to clear it out, using one of the functions for that
 purpose.
 
-A variable should only be initialized once, or at least cleared out between
-each initialization.  After a variable has been initialized, it may be
+A variable should only be initialised once, or at least cleared out between
+each initialization.  After a variable has been initialised, it may be
 assigned to any number of times.
 
-For efficiency reasons, avoid to initialize and clear out a variable in loops.
-Instead, initialize it before entering the loop, and clear it out after the
+For efficiency reasons, avoid to initialise and clear out a variable in loops.
+Instead, initialise it before entering the loop, and clear it out after the
 loop has exited.
 
 You do not need to be concerned about allocating additional space for GNU MPC
 variables, since each of its real and imaginary part
 has a mantissa of fixed size.
-Hence unless you change its precision, or clear and reinitialize it,
+Hence unless you change its precision, or clear and reinitialise it,
 a complex variable will have the same allocated space during all its
 life.
 
@@ -486,19 +486,19 @@ different word size.
 @node Initializing Complex Numbers
 @section Initialization Functions
 
-An @code{mpc_t} object must be initialized before storing the first value in
+An @code{mpc_t} object must be initialised before storing the first value in
 it.  The functions @code{mpc_init2} and @code{mpc_init3}
 are used for that purpose.
 
 @deftypefun void mpc_init2 (mpc_t @var{z}, mpfr_prec_t @var{prec})
-Initialize @var{z} to precision @var{prec} bits
+Initialise @var{z} to precision @var{prec} bits
 and set its real and imaginary parts to NaN.
-Normally, a variable should be initialized once only
+Normally, a variable should be initialised once only
 or at least be cleared, using @code{mpc_clear}, between initializations.
 @end deftypefun
 
 @deftypefun void mpc_init3 (mpc_t @var{z}, mpfr_prec_t @var{prec_r}, mpfr_prec_t @var{prec_i})
-Initialize @var{z} with the precision of its real part being
+Initialise @var{z} with the precision of its real part being
 @var{prec_r} bits and the precision of its imaginary part being
 @var{prec_i} bits, and set the real and imaginary parts to NaN.
 @end deftypefun
@@ -509,7 +509,7 @@ Free the space occupied by @var{z}.  Make sure to call this function for all
 @end deftypefun
 
 @need 2000
-Here is an example on how to initialize complex variables:
+Here is an example on how to initialise complex variables:
 @example
 @{
   mpc_t x, y;
@@ -550,7 +550,7 @@ via @var{pi}.
 @section Assignment Functions
 @cindex Complex assignment functions
 
-These functions assign new values to already initialized complex numbers
+These functions assign new values to already initialised complex numbers
 (@pxref{Initializing Complex Numbers}).
 When using any functions with @code{intmax_t} or @code{uintmax_t}
 parameters, you must include
@@ -751,7 +751,7 @@ of ascii letters, digits or @code{'_'}.
 For instance, upon input of @code{"nan(13 1)"}, the function
 @code{mpc_inp_str} starts to recognise a value of NaN followed by an
 n-char-sequence indicated by the opening parenthesis; as soon as the
-space is reached, it becocmes clear that the expression in parentheses
+space is reached, it becomes clear that the expression in parentheses
 is not an n-char-sequence, and the error flag -1 is returned after 6
 characters have been consumed from the stream (the whitespace itself
 remaining in the stream).
@@ -794,6 +794,17 @@ It is not allowed that one of the operands has a NaN (Not-a-Number) part.
 
 The storage of the return value is such that equality can be simply checked
 with @code{mpc_cmp (op1, op2) == 0}.
+@end deftypefn
+
+@deftypefn Function int mpc_cmp_abs (mpc_t @var{op1}, mpc_t @var{op2})
+
+Compare the absolute values of @var{op1} and @var{op2}.
+The return value is 0 if both are the same (including infinity),
+positive if the absolute value of @var{op1} is greater than that of @var{op2},
+and negative if it is smaller.
+If @var{op1} or @var{op2} has a real or imaginary part which is NaN,
+the function behaves like @code{mpfr_cmp} on two real numbers of which at least
+one is NaN.
 @end deftypefn
 
 
@@ -968,6 +979,12 @@ rounded according to @var{rnd} with the precision of @var{rop}.
 The principal branch is chosen, with the branch cut on the negative real axis,
 so that the imaginary part of the result lies in
 @math{]-\pi , \pi]} and @math{]-\pi/log(10) , \pi/log(10)]} respectively.
+@end deftypefun
+
+@deftypefun int mpc_rootofunity (mpc_t @var{rop}, unsigned long int @var{n}, unsigned long int @var{k}, mpc_rnd_t @var{rnd})
+Set @var{rop} to the standard primitive @var{n}-th root of unity raised to the power @var{k}, that is,
+@math{\exp (2 \pi i k / n)},
+rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
 

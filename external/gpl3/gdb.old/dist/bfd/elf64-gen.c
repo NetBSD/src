@@ -1,5 +1,5 @@
 /* Generic support for 64-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -65,6 +65,7 @@ check_for_relocs (bfd * abfd, asection * o, void * failed)
       Elf_Internal_Ehdr *ehdrp;
 
       ehdrp = elf_elfheader (abfd);
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: Relocations in generic ELF (EM: %d)"),
 			  abfd, ehdrp->e_machine);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.13 2018/06/16 00:19:04 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.13.2.1 2019/06/10 22:05:55 christos Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -19,15 +19,28 @@ file	arch/arm/rockchip/rk_cru_pll.c		rk_cru
 attach	rkcru at fdt with rk3328_cru
 file	arch/arm/rockchip/rk3328_cru.c		rk3328_cru & soc_rk3328
 
+# RK3399 clock and reset unit
+attach	rkcru at fdt with rk3399_cru
+file	arch/arm/rockchip/rk3399_cru.c		rk3399_cru & soc_rk3399
+attach	rkcru at fdt with rk3399_pmucru
+file	arch/arm/rockchip/rk3399_pmucru.c	rk3399_pmucru & soc_rk3399
+
 # IOMUX control
 device	rkiomux { }
-attach	rkiomux at fdt with rk_iomux
-file	arch/arm/rockchip/rk_iomux.c		rk_iomux
+attach	rkiomux at fdt with rk3328_iomux
+file	arch/arm/rockchip/rk3328_iomux.c	rk3328_iomux & soc_rk3328
+attach	rkiomux at fdt with rk3399_iomux
+file	arch/arm/rockchip/rk3399_iomux.c	rk3399_iomux & soc_rk3399
 
 # GPIO
 device	rkgpio: gpiobus
 attach	rkgpio at rkiomux with rk_gpio
 file	arch/arm/rockchip/rk_gpio.c		rk_gpio
+
+# I2C
+device	rkiic: i2cbus, i2cexec
+attach	rkiic at fdt with rk_i2c
+file	arch/arm/rockchip/rk_i2c.c		rk_i2c
 
 # USB PHY
 device	rkusb { }
@@ -40,6 +53,32 @@ file	arch/arm/rockchip/rk_usb.c		rk_usb | rk_usbphy
 attach	awge at fdt with rk_gmac
 file	arch/arm/rockchip/rk_gmac.c		rk_gmac
 
+# PCIe PHY
+device	rkpciephy
+attach	rkpciephy at fdt
+file	arch/arm/rockchip/rk3399_pcie_phy.c	rkpciephy
+
+# PCIe host
+device	rkpcie: pcibus, pcihost_fdt
+attach	rkpcie at fdt
+file	arch/arm/rockchip/rk3399_pcie.c		rkpcie
+
+# eMMC PHY
+device	rkemmcphy
+attach	rkemmcphy at fdt
+file	arch/arm/rockchip/rk_emmcphy.c		rkemmcphy
+
+# TSADC temperature sensors
+device	rktsadc: sysmon_envsys
+attach	rktsadc at fdt with rk_tsadc
+file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
+
+# PWM
+device	rkpwm: pwm
+attach	rkpwm at fdt with rk_pwm
+file	arch/arm/rockchip/rk_pwm.c		rk_pwm
+
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3328: SOC_ROCKCHIP
+defflag	opt_soc.h			SOC_RK3399: SOC_ROCKCHIP

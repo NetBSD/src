@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include "tracepoint.h"
 #include "linux-x86-tdesc.h"
+#include "common/x86-xstate.h"
 
 /* Defined in auto-generated file amd64-linux.c.  */
 void init_registers_amd64_linux (void);
@@ -168,44 +169,45 @@ supply_static_tracepoint_registers (struct regcache *regcache,
 
 #endif /* HAVE_UST */
 
+#if !defined __ILP32__
+/* Map the tdesc index to xcr0 mask.  */
+static uint64_t idx2mask[X86_TDESC_LAST] = {
+  X86_XSTATE_X87_MASK,
+  X86_XSTATE_SSE_MASK,
+  X86_XSTATE_AVX_MASK,
+  X86_XSTATE_MPX_MASK,
+  X86_XSTATE_AVX_MPX_MASK,
+  X86_XSTATE_AVX_AVX512_MASK,
+  X86_XSTATE_AVX_MPX_AVX512_PKU_MASK,
+};
+#endif
+
 /* Return target_desc to use for IPA, given the tdesc index passed by
    gdbserver.  */
 
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
+  if (idx >= X86_TDESC_LAST)
+    {
+      internal_error (__FILE__, __LINE__,
+		      "unknown ipa tdesc index: %d", idx);
+    }
+
 #if defined __ILP32__
   switch (idx)
     {
     case X86_TDESC_SSE:
-      return tdesc_x32_linux;
+      return amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
     case X86_TDESC_AVX:
-      return tdesc_x32_avx_linux;
-    case X86_TDESC_AVX512:
-      return tdesc_x32_avx512_linux;
+      return amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
+    case X86_TDESC_AVX_AVX512:
+      return amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
     default:
       break;
     }
 #else
-  switch (idx)
-    {
-    case X86_TDESC_SSE:
-      return tdesc_amd64_linux;
-    case X86_TDESC_AVX:
-      return tdesc_amd64_avx_linux;
-    case X86_TDESC_MPX:
-      return tdesc_amd64_mpx_linux;
-    case X86_TDESC_AVX_MPX:
-      return tdesc_amd64_avx_mpx_linux;
-    case X86_TDESC_AVX_MPX_AVX512_PKU:
-      return tdesc_amd64_avx_mpx_avx512_pku_linux;
-    case X86_TDESC_AVX_AVX512:
-      return tdesc_amd64_avx_avx512_linux;
-    default:
-      internal_error (__FILE__, __LINE__,
-		      "unknown ipa tdesc index: %d", idx);
-      return tdesc_amd64_linux;
-    }
+  return amd64_linux_read_description (idx2mask[idx], false);
 #endif
 
   internal_error (__FILE__, __LINE__,
@@ -277,15 +279,11 @@ void
 initialize_low_tracepoint (void)
 {
 #if defined __ILP32__
-  init_registers_x32_linux ();
-  init_registers_x32_avx_linux ();
-  init_registers_x32_avx512_linux ();
+  amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
+  amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
+  amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
 #else
-  init_registers_amd64_linux ();
-  init_registers_amd64_avx_linux ();
-  init_registers_amd64_mpx_linux ();
-  init_registers_amd64_avx_mpx_linux ();
-  init_registers_amd64_avx_avx512_linux ();
-  init_registers_amd64_avx_mpx_avx512_pku_linux ();
+  for (auto i = 0; i < X86_TDESC_LAST; i++)
+    amd64_linux_read_description (idx2mask[i], false);
 #endif
 }

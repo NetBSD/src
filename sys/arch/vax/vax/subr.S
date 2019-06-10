@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.34 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.34.10.1 2019/06/10 22:06:51 christos Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,10 +32,6 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_syscall.h>
-#endif
 #include "opt_compat_ultrix.h"
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
@@ -175,21 +171,6 @@ _C_LABEL(sigcode):
 	chmk	$SYS_exit
 	halt	
 _C_LABEL(esigcode):
-
-#ifdef COMPAT_IBCS2
-	.align	2
-	.globl	_C_LABEL(ibcs2_sigcode),_C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_sigcode):
-	pushr	$0x3f
-	subl2	$0xc,%sp
-	movl	0x24(%sp),%r0
-	calls	$3,(%r0)
-	popr	$0x3f
-	chmk	$SYS_compat_16___sigreturn14
-	chmk	$SYS_exit
-	halt	
-_C_LABEL(ibcs2_esigcode):
-#endif /* COMPAT_IBCS2 */
 
 #ifdef COMPAT_ULTRIX
 	.align	2
@@ -521,53 +502,73 @@ ENTRY(copystr,0)
 	movl	$ENAMETOOLONG,%r0 # inform about too long string
 	brb	0b		# out of chars
 
-ENTRY(subyte,0)
-	movl	4(%ap),%r0
-	blss	3f		# illegal space
-	mfpr	$PR_ESP,%r1
-	movab	1f,(%r1)	# set pcb_onfault
-	movb	8(%ap),(%r0)
-	clrl	%r0
-1:	mfpr	$PR_ESP,%r1
-	clrl	(%r1)		# clear pcb_onfault
-	ret
-
-ENTRY(suword,0)
-	movl	4(%ap),%r0
-	blss	3f		# illegal space
-	mfpr	$PR_ESP,%r1
-	movab	3f,(%r1)	# set pcb_onfault
-	movl	8(%ap),(%r0)
-	clrl	%r0
-1:	mfpr	$PR_ESP,%r1
-	clrl	(%r1)		# clear pcb_onfault
-	ret
-
-ENTRY(suswintr,0)
-	movl	4(%ap),%r0
-	blss	3f		# illegal space
-	mfpr	$PR_ESP,%r1
-	movab	3f,(%r1)	# set pcb_onfault
-	movw	8(%ap),(%r0)
-	clrl	%r0
-1:	mfpr	$PR_ESP,%r1
-	clrl	(%r1)		# clear pcb_onfault
-	ret
-
-3:	mnegl	$1,%r0
-	brb	1b
+/**************************************************************************/
 
 	.align	2
-ALTENTRY(fusword)
-ENTRY(fuswintr,0)
-	movl	4(%ap),%r2
-	blss	3b
-	mfpr	$PR_ESP,%r1
-	movab	3b,(%r1)	# set pcb_onfault
-	movzwl	(%r2),%r0
-1:	mfpr	$PR_ESP,%r1
-	clrl	(%r1)		# clear pcb_onfault
-	ret
+
+#define	UFETCHSTORE_PROLOGUE						 \
+	tstl	4(%ap)			/* uaddr in userpsace? */	;\
+	blss	1f			/* nope, fault */		;\
+	mfpr	$PR_ESP,%r1		/* &pcb_onfault is in ESP */	;\
+	movab	2f,(%r1)		/* set pcb_onfault */
+
+#define	UFETCHSTORE_EPILOGUE						 \
+	mfpr	$PR_ESP,%r1		/* &pcb_onfault is in ESP */	;\
+	clrl	(%r1)			/* pcb_onfault = NULL */
+
+#define	UFETCHSTORE_RETURN						 \
+	clrl	%r0			/* return success */		;\
+	ret								;\
+1:	movl	$EFAULT,%r0						;\
+	ret				/* return EFAULT */		;\
+2:	UFETCHSTORE_EPILOGUE						;\
+	ret				/* error already in %r0 */
+
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8,0)
+	UFETCHSTORE_PROLOGUE
+	movb	*4(%ap),*8(%ap)		# *valp = *uaddr
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16,0)
+	UFETCHSTORE_PROLOGUE
+	movw	*4(%ap),*8(%ap)		# *valp = *uaddr
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32,0)
+	UFETCHSTORE_PROLOGUE
+	movl	*4(%ap),*8(%ap)		# *valp = *uaddr
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8,0)
+	UFETCHSTORE_PROLOGUE
+	movb	8(%ap),*4(%ap)		# *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16,0)
+	UFETCHSTORE_PROLOGUE
+	movw	8(%ap),*4(%ap)		# *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32,0)
+	UFETCHSTORE_PROLOGUE
+	movl	8(%ap),*4(%ap)		# *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN
+
+/**************************************************************************/
+
+	.align	2
 
 JSBENTRY(Slock)
 1:	bbssi	$0,(%r1),1b

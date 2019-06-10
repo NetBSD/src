@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.30 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: locore.h,v 1.30.2.1 2019/06/10 22:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -290,9 +290,6 @@ int	badaddr_read(void *, size_t, void *);
 
 /* syscall.c */
 void	swi_handler(trapframe_t *);
-
-/* arm_machdep.c */
-void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
 void	vfp_attach(struct cpu_info *);

@@ -1,5 +1,5 @@
 /* run front end support for arm
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of ARM SIM.
 
@@ -92,10 +92,12 @@ void
 print_insn (ARMword instr)
 {
   int size;
+  disassembler_ftype disassemble_fn;
 
   opbuf[0] = 0;
   info.application_data = & instr;
-  size = print_insn_little_arm (0, & info);
+  disassemble_fn = disassembler (bfd_arch_arm, 0, 0, NULL);
+  size = disassemble_fn (0, & info);
   fprintf (stderr, " %*s\n", size, opbuf);
 }
 

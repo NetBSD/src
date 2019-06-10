@@ -1,5 +1,5 @@
 /* Prototypes for Renesas RL78 processors
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -18,6 +18,7 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+const char *    rl78_addsi3_internal (rtx *, unsigned int);
 void		rl78_emit_eh_epilogue (rtx);
 void		rl78_expand_compare (rtx *);
 void		rl78_expand_movsi (rtx *);
@@ -53,3 +54,5 @@ int		rl78_saddr_p (rtx x);
 int		rl78_sfr_p (rtx x);
 void		rl78_output_aligned_common (FILE *, tree, const char *,
 					    int, int, int);
+
+int		rl78_one_far_p (rtx *operands, int num_operands);

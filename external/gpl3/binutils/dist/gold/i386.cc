@@ -925,6 +925,7 @@ const Target::Target_info Target_i386::i386_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // Get the GOT section, creating it if necessary.
@@ -4203,6 +4204,7 @@ const Target::Target_info Target_i386_nacl::i386_nacl_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 #define	NACLMASK	0xe0            // 32-byte alignment mask
@@ -4440,6 +4442,7 @@ const Target::Target_info Target_iamcu::iamcu_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 class Target_selector_iamcu : public Target_selector

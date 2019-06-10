@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.13 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.28.1 2019/06/10 22:02:33 christos Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cxpm editres \
-	fc-cache fc-cat fc-list fc-match fc-pattern fc-query fc-scan \
-	fc-validate \
+	fc-cache fc-cat fc-conflist fc-list fc-match fc-pattern \
+	fc-query fc-scan fc-validate \
 	fonttosfnt fslsfonts fstobdf glxgears glxinfo \
 	iceauth ico imake listres lndir luit makedepend \
 	makeg makestrs mergelib mkdirhier mkfontdir \
 	mkfontscale mkhtmlindex oclock proxymngr revpath \
 	rgb setxkbmap smproxy sxpm \
-	twm ucs2any viewres x11perf xauth xbiff xcalc \
+	transset twm ucs2any viewres x11perf xauth xbiff xcalc \
 	xclipboard xclock xcmsdb xconsole xcutsel xditview xdm \
 	xdpyinfo xedit xev xeyes xf86dga xfd xfindproxy xfontsel \
 	xfs xfsinfo xfwp xgamma xgc xhost xinit xinput xkbcomp \

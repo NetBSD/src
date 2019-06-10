@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ typedef struct osl_table_info
 {
     struct osl_table_info   *Next;
     UINT32                  Instance;
-    char                    Signature[ACPI_NAME_SIZE];
+    char                    Signature[ACPI_NAMESEG_SIZE];
 
 } OSL_TABLE_INFO;
 
@@ -376,7 +376,7 @@ OslAddTableToList (
         return (AE_NO_MEMORY);
     }
 
-    ACPI_MOVE_NAME (NewInfo->Signature, Signature);
+    ACPI_COPY_NAMESEG (NewInfo->Signature, Signature);
 
     if (!Gbl_TableListHead)
     {
@@ -387,7 +387,7 @@ OslAddTableToList (
         Next = Gbl_TableListHead;
         while (1)
         {
-            if (ACPI_COMPARE_NAME (Next->Signature, Signature))
+            if (ACPI_COMPARE_NAMESEG (Next->Signature, Signature))
             {
                 if (Next->Instance == Instance)
                 {
@@ -942,11 +942,11 @@ OslGetBiosTable (
 
     /* Handle special tables whose addresses are not in RSDT/XSDT */
 
-    if (ACPI_COMPARE_NAME (Signature, ACPI_RSDP_NAME) ||
-        ACPI_COMPARE_NAME (Signature, ACPI_SIG_RSDT) ||
-        ACPI_COMPARE_NAME (Signature, ACPI_SIG_XSDT) ||
-        ACPI_COMPARE_NAME (Signature, ACPI_SIG_DSDT) ||
-        ACPI_COMPARE_NAME (Signature, ACPI_SIG_FACS))
+    if (ACPI_COMPARE_NAMESEG (Signature, ACPI_RSDP_NAME) ||
+        ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_RSDT) ||
+        ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_XSDT) ||
+        ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_DSDT) ||
+        ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_FACS))
     {
 
 FindNextInstance:
@@ -958,7 +958,7 @@ FindNextInstance:
          * careful about the FADT length and validate table addresses.
          * Note: The 64-bit addresses have priority.
          */
-        if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_DSDT))
+        if (ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_DSDT))
         {
             if (CurrentInstance < 2)
             {
@@ -974,7 +974,7 @@ FindNextInstance:
                 }
             }
         }
-        else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_FACS))
+        else if (ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_FACS))
         {
             if (CurrentInstance < 2)
             {
@@ -990,7 +990,7 @@ FindNextInstance:
                 }
             }
         }
-        else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_XSDT))
+        else if (ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_XSDT))
         {
             if (!Gbl_Revision)
             {
@@ -1002,7 +1002,7 @@ FindNextInstance:
                     (ACPI_PHYSICAL_ADDRESS) Gbl_Rsdp.XsdtPhysicalAddress;
             }
         }
-        else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_RSDT))
+        else if (ACPI_COMPARE_NAMESEG (Signature, ACPI_SIG_RSDT))
         {
             if (CurrentInstance == 0)
             {
@@ -1098,7 +1098,7 @@ FindNextInstance:
 
             /* Does this table match the requested signature? */
 
-            if (!ACPI_COMPARE_NAME (MappedTable->Signature, Signature))
+            if (!ACPI_COMPARE_NAMESEG (MappedTable->Signature, Signature))
             {
                 OslUnmapTable (MappedTable);
                 MappedTable = NULL;
@@ -1169,7 +1169,7 @@ OslListCustomizedTables (
 {
     void                    *TableDir;
     UINT32                  Instance;
-    char                    TempName[ACPI_NAME_SIZE];
+    char                    TempName[ACPI_NAMESEG_SIZE];
     char                    *Filename;
     ACPI_STATUS             Status = AE_OK;
 
@@ -1269,7 +1269,7 @@ OslMapTable (
                 return (AE_BAD_SIGNATURE);
             }
         }
-        else if (!ACPI_COMPARE_NAME (Signature, MappedTable->Signature))
+        else if (!ACPI_COMPARE_NAMESEG (Signature, MappedTable->Signature))
         {
             AcpiOsUnmapMemory (MappedTable, sizeof (ACPI_TABLE_HEADER));
             return (AE_BAD_SIGNATURE);
@@ -1349,18 +1349,18 @@ OslTableNameFromFile (
 
     /* Ignore meaningless files */
 
-    if (strlen (Filename) < ACPI_NAME_SIZE)
+    if (strlen (Filename) < ACPI_NAMESEG_SIZE)
     {
         return (AE_BAD_SIGNATURE);
     }
 
     /* Extract instance number */
 
-    if (isdigit ((int) Filename[ACPI_NAME_SIZE]))
+    if (isdigit ((int) Filename[ACPI_NAMESEG_SIZE]))
     {
-        sscanf (&Filename[ACPI_NAME_SIZE], "%u", Instance);
+        sscanf (&Filename[ACPI_NAMESEG_SIZE], "%u", Instance);
     }
-    else if (strlen (Filename) != ACPI_NAME_SIZE)
+    else if (strlen (Filename) != ACPI_NAMESEG_SIZE)
     {
         return (AE_BAD_SIGNATURE);
     }
@@ -1371,7 +1371,7 @@ OslTableNameFromFile (
 
     /* Extract signature */
 
-    ACPI_MOVE_NAME (Signature, Filename);
+    ACPI_COPY_NAMESEG (Signature, Filename);
     return (AE_OK);
 }
 
@@ -1441,7 +1441,7 @@ OslReadTableFromFile (
                 goto Exit;
             }
         }
-        else if (!ACPI_COMPARE_NAME (Signature, Header.Signature))
+        else if (!ACPI_COMPARE_NAMESEG (Signature, Header.Signature))
         {
             fprintf (stderr, "Incorrect signature: Expecting %4.4s, found %4.4s\n",
                 Signature, Header.Signature);
@@ -1521,7 +1521,7 @@ OslGetCustomizedTable (
 {
     void                    *TableDir;
     UINT32                  CurrentInstance = 0;
-    char                    TempName[ACPI_NAME_SIZE];
+    char                    TempName[ACPI_NAMESEG_SIZE];
     char                    TableFilename[PATH_MAX];
     char                    *Filename;
     ACPI_STATUS             Status;
@@ -1541,7 +1541,7 @@ OslGetCustomizedTable (
     {
         /* Ignore meaningless files */
 
-        if (!ACPI_COMPARE_NAME (Filename, Signature))
+        if (!ACPI_COMPARE_NAMESEG (Filename, Signature))
         {
             continue;
         }

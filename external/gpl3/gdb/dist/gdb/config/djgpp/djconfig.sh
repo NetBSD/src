@@ -5,7 +5,7 @@
 # configuring other GNU programs for DJGPP.
 #
 #=====================================================================
-# Copyright (C) 1997-2017 Free Software Foundation, Inc.
+# Copyright (C) 1997-2019 Free Software Foundation, Inc.
 #
 # Originally written by Robert Hoehne, revised by Eli Zaretskii.
 # This file is part of GDB.
@@ -92,7 +92,7 @@ TMPFILE="${TMPDIR-.}/cfg.tmp"
 
 # We need to skip the build directory if it is a subdirectory of $srcdir,
 # otherwise we will have an infinite recursion on our hands...
-if test "`pwd`" == "${srcdir}" ; then
+if test "`pwd`" = "${srcdir}" ; then
   SKIPDIR=""
   SKIPFILES=""
 else

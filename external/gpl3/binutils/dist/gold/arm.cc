@@ -3062,6 +3062,7 @@ const Target::Target_info Target_arm<big_endian>::arm_info =
   "aeabi",		// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // Arm relocate functions class
@@ -12139,6 +12140,7 @@ Target_arm<big_endian>::scan_reloc_section_for_stubs(
       const Symbol_value<32> *psymval;
       bool is_defined_in_discarded_section;
       unsigned int shndx;
+      const Symbol* gsym = NULL;
       if (r_sym < local_count)
 	{
 	  sym = NULL;
@@ -12191,7 +12193,6 @@ Target_arm<big_endian>::scan_reloc_section_for_stubs(
 	}
       else
 	{
-	  const Symbol* gsym;
 	  gsym = arm_object->global_symbol(r_sym);
 	  gold_assert(gsym != NULL);
 	  if (gsym->is_forwarder())
@@ -12232,11 +12233,11 @@ Target_arm<big_endian>::scan_reloc_section_for_stubs(
       Symbol_value<32> symval2;
       if (is_defined_in_discarded_section)
 	{
+	  std::string name = arm_object->section_name(relinfo->data_shndx);
+
 	  if (comdat_behavior == CB_UNDETERMINED)
-	    {
-	      std::string name = arm_object->section_name(relinfo->data_shndx);
  	      comdat_behavior = default_comdat_behavior.get(name.c_str());
-	    }
+
 	  if (comdat_behavior == CB_PRETEND)
 	    {
 	      // FIXME: This case does not work for global symbols.
@@ -12246,7 +12247,7 @@ Target_arm<big_endian>::scan_reloc_section_for_stubs(
 	      // script.
 	      bool found;
 	      typename elfcpp::Elf_types<32>::Elf_Addr value =
-		arm_object->map_to_kept_section(shndx, &found);
+		arm_object->map_to_kept_section(shndx, name, &found);
 	      if (found)
 		symval2.set_output_value(value + psymval->input_value());
 	      else
@@ -12254,10 +12255,8 @@ Target_arm<big_endian>::scan_reloc_section_for_stubs(
 	    }
 	  else
 	    {
-	      if (comdat_behavior == CB_WARNING)
-		gold_warning_at_location(relinfo, i, offset,
-					 _("relocation refers to discarded "
-					   "section"));
+	      if (comdat_behavior == CB_ERROR)
+	        issue_discarded_error(relinfo, i, offset, r_sym, gsym);
 	      symval2.set_output_value(0);
 	    }
 	  symval2.set_no_output_symtab_entry();
@@ -13056,6 +13055,7 @@ const Target::Target_info Target_arm_nacl<big_endian>::arm_nacl_info =
   "aeabi",		// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<bool big_endian>

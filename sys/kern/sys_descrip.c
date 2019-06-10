@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.31.4.1 2019/06/10 22:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.31.4.1 2019/06/10 22:09:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,6 +257,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		flg |= F_WAIT;
 		/* Fall into F_SETLK */
 
+		/* FALLTHROUGH */
 	case F_SETLK:
 		switch (fl->l_type) {
 		case F_RDLCK:
@@ -480,16 +481,17 @@ sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 		syscallarg(int)	fd;
 	} */
 	int error;
+	int fd = SCARG(uap, fd);
 
-	if (fd_getfile(SCARG(uap, fd)) == NULL) {
+	if (fd_getfile(fd) == NULL) {
 		return EBADF;
 	}
 
-	error = fd_close(SCARG(uap, fd));
+	error = fd_close(fd);
 	if (error == ERESTART) {
 #ifdef DIAGNOSTIC
-		printf("pid %d: close returned ERESTART\n",
-		    (int)l->l_proc->p_pid);
+		printf("%s[%d]: close(%d) returned ERESTART\n",
+		    l->l_proc->p_comm, (int)l->l_proc->p_pid, fd);
 #endif
 		error = EINTR;
 	}

@@ -1,5 +1,5 @@
 ;; Scheduling description for Motorola PowerPC 750 and PowerPC 7400 processors.
-;;   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+;;   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 
@@ -113,7 +113,7 @@
   "ppc750_du,fpu_7xx")
 
 (define_insn_reservation "ppc750-fp" 3
-  (and (eq_attr "type" "fp")
+  (and (eq_attr "type" "fp,fpsimple")
        (eq_attr "cpu" "ppc750,ppc7400"))
   "ppc750_du,fpu_7xx")
 
@@ -165,7 +165,7 @@
 
 ;; Altivec
 (define_insn_reservation "ppc7400-vecsimple" 1
-  (and (eq_attr "type" "vecsimple,veccmp")
+  (and (eq_attr "type" "vecsimple,veclogical,vecmove,veccmp,veccmpfx")
        (eq_attr "cpu" "ppc7400"))
   "ppc750_du,ppc7400_vec_du,veccmplx_7xx")
 

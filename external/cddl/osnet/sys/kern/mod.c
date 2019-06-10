@@ -1,4 +1,4 @@
-/*	$NetBSD: mod.c,v 1.3 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: mod.c,v 1.3.2.1 2019/06/10 21:52:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.3 2018/05/28 21:05:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.3.2.1 2019/06/10 21:52:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.91 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.91.4.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.91 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.91.4.1 2019/06/10 22:06:20 christos Exp $");
 
 #include "opt_ptrace.h"
 
@@ -266,6 +266,7 @@ ptrace_machdep_dorequest(
 	case PT_SETXMMREGS:
 		write = 1;
 
+		/* FALLTHROUGH */
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
 		if (!process_machdep_validxmmregs(lt->l_proc))

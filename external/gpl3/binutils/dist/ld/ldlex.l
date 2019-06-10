@@ -727,5 +727,5 @@ lex_warn_invalid (char *where, char *what)
       what = buf;
     }
 
-  einfo (_("%P:%S: ignoring invalid character `%s'%s\n"), NULL, what, where);
+  einfo (_("%P:%pS: ignoring invalid character `%s'%s\n"), NULL, what, where);
 }

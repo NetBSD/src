@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.15 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -833,7 +833,7 @@ scale_motion(const struct uatp_softc *sc, int delta, int *remainder,
 
 	product = (delta * ((int) (*multiplier)));
 	*remainder = (product % ((int) (*divisor)));
-	return (product / ((int) (*divisor)));
+	return product / ((int) (*divisor));
 }
 
 static int
@@ -1362,7 +1362,8 @@ geyser34_finalize(struct uatp_softc *sc)
 {
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("finalizing\n"));
-	usb_rem_task(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task);
+	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task,
+	    USB_TASKQ_DRIVER, NULL);
 
 	return 0;
 }
@@ -1743,7 +1744,7 @@ interpret_input(struct uatp_softc *sc, int *dx, int *dy, int *dz, int *dw,
 		    ("pressure in only one dimension; ignoring\n"));
 		return true;
 	} else if ((x_pressure == 1) && (y_pressure == 1)) {
-		fingers = max(x_fingers, y_fingers);
+		fingers = uimax(x_fingers, y_fingers);
 		CHECK((0 < fingers), return false);
 		if (*buttons == 0)
 			tap_touched(sc, fingers);
@@ -2613,7 +2614,7 @@ motion_below_threshold(struct uatp_softc *sc, unsigned int threshold,
 	x_squared = (x * x);
 	y_squared = (y * y);
 
-	return ((x_squared + y_squared) < threshold);
+	return (x_squared + y_squared) < threshold;
 }
 
 static int

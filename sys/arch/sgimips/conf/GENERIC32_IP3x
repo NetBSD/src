@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.116 2018/03/18 11:33:58 jmcneill Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.116.2.1 2019/06/10 22:06:43 christos Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.116 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.116.2.1 $"
 
 maxusers	32
 
@@ -74,27 +74,7 @@ options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system 	PROCFS		# /proc
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	EFS		# Silicon Graphics Extent File System
+include "conf/filesystems.config"
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -120,9 +100,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -201,7 +178,6 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 # PCI network devices
 #an*     at pci? dev ? function ?        # Aironet PC4500/PC4800 (802.11)
 #bge*    at pci? dev ? function ?        # Broadcom 570x gigabit Ethernet
-#en*     at pci? dev ? function ?        # ENI/Adaptec ATM
 ep*     at pci? dev ? function ?        # 3Com 3c59x
 epic*   at pci? dev ? function ?        # SMC EPIC/100 Ethernet
 esh*    at pci? dev ? function ?        # Essential HIPPI card
@@ -211,7 +187,6 @@ fxp*    at pci? dev ? function ?        # Intel EtherExpress PRO 10+/100B
 gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
 #hme*   at pci? dev ? function ?        # Sun Microelectronics STP2002-STQ
 le*     at pci? dev ? function ?        # PCnet-PCI Ethernet
-lmc*    at pci? dev ? function ?        # Lan Media Corp SSI/HSSI/DS3
 mtd*    at pci? dev ? function ?        # Myson MTD803 3-in-1 Ethernet
 ne*     at pci? dev ? function ?        # NE2000-compatible Ethernet
 ntwoc*  at pci? dev ? function ?        # Riscom/N2 PCI Sync Serial
@@ -251,7 +226,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?                 # NS83843 PHYs
 pnaphy* at mii? phy ?                   # generic HomePNA PHYs
 qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
-rgephy* at mii? phy ?                   # Realtek 8169S/8110S internal PHYs
+rgephy* at mii? phy ?                   # Realtek 8169S/8110S/8211 PHYs
+rlphy* at mii? phy ?                    # Realtek 8139/8201L PHYs
 sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
 tlphy*  at mii? phy ?                   # ThunderLAN PHYs
 tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
@@ -292,109 +268,7 @@ usb*	at ehci?
 usb*    at ohci?
 usb*    at uhci?
 
-# USB Hubs
-uhub*   at usb?
-uhub*   at uhub? port ?
-
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*    at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB Keyboards
-ukbd*   at uhidev? reportid ?
-wskbd*  at ukbd? console ? mux 1
-
-# USB serial adapter
-ucycom*	at uhidev? reportid ?
-
-# USB Generic HID devices
-uhid*   at uhidev? reportid ?
-
-# USB Printer
-ulpt*   at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*   at umodem?
-
-# Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
-
-# USB Mass Storage
-umass*  at uhub? port ? configuration ? interface ?
-#wd* at umass?
-
-# USB audio
-uaudio* at uhub? port ? configuration ?
-
-# USB MIDI
-umidi* at uhub? port ? configuration ?
-
-# USB IrDA
-# USB-IrDA bridge spec
-uirda* at uhub? port ? configuration ? interface ?
-irframe* at uirda?
-
-# SigmaTel STIr4200 USB/IrDA Bridge
-ustir* at uhub? port ?
-irframe* at ustir?
-
-# USB Ethernet adapters
-aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
-axe*    at uhub? port ?         # ASIX AX88172 based adapters
-cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
-kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
-url*    at uhub? port ?         # Realtek RTL8150L based adapters
-udav*   at uhub? port ?         # Davicom DM9601 based adapters
-
-# Prolific PL2301/PL2302 host-to-host adapter
-upl*    at uhub? port ?
-
-# Serial adapters
-ubsa*   at uhub? port ?         # Belkin serial adapter
-ucom*   at ubsa? portno ?
-
-uftdi*  at uhub? port ?         # FTDI FT8U100AX serial adapter
-ucom*   at uftdi? portno ?
-
-umct*   at uhub? port ?         # MCT USB-RS232 serial adapter
-ucom*   at umct? portno ?
-
-uplcom* at uhub? port ?         # I/O DATA USB-RSAQ2 serial adapter
-ucom*   at uplcom? portno ?
-
-uvscom* at uhub? port ?         # SUNTAC Slipper U VS-10U serial adapter
-ucom*   at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-urio*   at uhub? port ?
-
-# USB Handspring Visor
-uvisor* at uhub? port ?
-ucom*   at uvisor?
-
-# Kyocera AIR-EDGE PHONE
-ukyopon* at uhub? port ?
-ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
-
-# D-Link DSB-R100 USB radio
-udsbr*  at uhub? port ?
-radio*  at udsbr?
-
-# USB Generic driver
-ugen*   at uhub? port ?
+include "dev/usb/usbdevices.config"
 
 # PCI IEEE1394 controllers
 fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -410,6 +284,8 @@ spkr*	at audio?			# PC speaker (synthesized)
 
 # MIDI support
 midi*   at midibus?
+
+include "dev/bluetooth/bluetoothdevices.config"
 
 # Pseudo-Devices
 
@@ -428,8 +304,8 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
@@ -444,8 +320,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
@@ -454,7 +328,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	putter			# for puffs and pud
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
@@ -463,18 +336,4 @@ pseudo-device	wsfont
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-# a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda			# coda minicache <-> venus comm.
-
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

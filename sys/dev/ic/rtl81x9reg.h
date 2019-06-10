@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.49 2017/04/19 02:21:53 jmcneill Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.49.12.1 2019/06/10 22:07:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -416,7 +416,7 @@
 /*
  * Config 2 register, 8139C+/8169/8169S/8110S only
  */
-#define RTK_CFG2_BUSFREQ		0x07
+#define RTK_CFG2_BUSFREQ	0x07
 #define RTK_CFG2_BUSWIDTH	0x08
 #define RTK_CFG2_AUXPWRSTS	0x10
 

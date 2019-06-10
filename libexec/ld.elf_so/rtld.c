@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.192 2018/04/03 21:10:27 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.192.2.1 2019/06/10 22:05:29 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.192 2018/04/03 21:10:27 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.192.2.1 2019/06/10 22:05:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -786,7 +786,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 */
 
 	((void **) osp)[0] = _rtld_exit;
-	((void **) osp)[1] = _rtld_objmain;
+	((void **) osp)[1] = __UNCONST(_rtld_compat_obj);
 	return (Elf_Addr) _rtld_objmain->entry;
 }
 
@@ -847,6 +847,10 @@ _rtld_initlist_tsort(Objlist* list, int rev)
 
 	Obj_Entry* obj;
 
+	/*
+	 * We don't include objmain here (starting from next)
+	 * because csu handles it
+	 */
 	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
 		obj->init_done = 0;
 	}
@@ -1741,4 +1745,23 @@ _rtld_exclusive_exit(sigset_t *mask)
 		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
 
 	sigprocmask(SIG_SETMASK, mask, NULL);
+}
+
+int
+_rtld_relro(const Obj_Entry *obj, bool wantmain)
+{
+#ifdef GNU_RELRO
+	if (obj->relro_size == 0)
+		return 0;
+	if (wantmain != (obj ==_rtld_objmain))
+		return 0;
+
+	dbg(("RELRO %s %p %lx\n", obj->path, obj->relro_page, obj->relro_size));
+	if (mprotect(obj->relro_page, obj->relro_size, PROT_READ) == -1) {
+		_rtld_error("%s: Cannot enforce relro " "protection: %s",
+		    obj->path, xstrerror(errno));
+		return -1;
+	}
+#endif
+	return 0;
 }

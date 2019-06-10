@@ -1,8 +1,3 @@
-/*	$NetBSD: ansi.h,v 1.1.1.1 1995/03/26 07:12:09 leo Exp $	*/
-
-#ifndef _MACHINE_ANSI_H_
-#define _MACHINE_ANSI_H_
+/*	$NetBSD: ansi.h,v 1.1.1.1.256.1 2019/06/10 22:05:58 christos Exp $	*/
 
 #include <m68k/ansi.h>
-
-#endif

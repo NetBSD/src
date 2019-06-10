@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.41 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.41.2.1 2019/06/10 22:06:34 christos Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.41 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.41.2.1 2019/06/10 22:06:34 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -109,7 +109,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	uint8_t	*pp;
 	int	i;
 
-	if (sc->space == NULL) {
+	if (sc->memory == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "memory allocation for descriptors failed\n");
 		return 1;
@@ -133,21 +133,21 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	 * a higher buffer address to a 16 bit offset--this will cause wrap
 	 * around problems near the end of 64k !!
 	 */
-	p = sc->space;
+	p = sc->memory;
 	pp = (uint8_t *)roundup((int)p, PAGE_SIZE);
 	p = pp;
 
 	for (i = 0; i < NRRA; i++) {
 		sc->p_rra[i] = (void *)p;
-		sc->v_rra[i] = SONIC_GETDMA(p);
+		sc->v_rra[i] = SONIC_GETDMA(sc, p);
 		p += RXRSRC_SIZE(sc);
 	}
-	sc->v_rea = SONIC_GETDMA(p);
+	sc->v_rea = SONIC_GETDMA(sc, p);
 
 	p = (uint8_t *)SOALIGN(sc, p);
 
 	sc->p_cda = (void *)(p);
-	sc->v_cda = SONIC_GETDMA(p);
+	sc->v_cda = SONIC_GETDMA(sc, p);
 	p += CDA_SIZE(sc);
 
 	p = (uint8_t *)SOALIGN(sc, p);
@@ -155,7 +155,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
 		mtdp->mtd_txp = (void *)p;
-		mtdp->mtd_vtxp = SONIC_GETDMA(p);
+		mtdp->mtd_vtxp = SONIC_GETDMA(sc, p);
 		p += TXP_SIZE(sc);
 	}
 
@@ -176,12 +176,12 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 
 	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
 	sc->p_rda = (void *)p;
-	sc->v_rda = SONIC_GETDMA(p);
+	sc->v_rda = SONIC_GETDMA(sc, p);
 
 	p = pp + PAGE_SIZE;
 
 	for (i = 0; i < NRBA; i++) {
-		sc->rbuf[i] = (void *)p;
+		sc->rbuf[i] = SONIC_BUFFER(sc, p);
 		p += PAGE_SIZE;
 	}
 
@@ -189,8 +189,8 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
 
-		mtdp->mtd_buf = p;
-		mtdp->mtd_vbuf = SONIC_GETDMA(p);
+		mtdp->mtd_buf = SONIC_BUFFER(sc, p);
+		mtdp->mtd_vbuf = SONIC_GETDMA(sc, p);
 		p += TXBSIZE;
 	}
 
@@ -210,8 +210,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -624,6 +623,7 @@ camentry(struct sn_softc *sc, int entry, const u_char *ea)
 static void 
 camprogram(struct sn_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp;
@@ -642,7 +642,8 @@ camprogram(struct sn_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* Loop through multicast addresses */
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (mcount == MAXCAM) {
 			 ifp->if_flags |= IFF_ALLMULTI;
@@ -668,6 +669,7 @@ camprogram(struct sn_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	NIC_PUT(sc, SNR_CDP, LOWER(sc->v_cda));
 	NIC_PUT(sc, SNR_CDC, MAXCAM);
@@ -738,6 +740,7 @@ initialise_tda(struct sn_softc *sc)
 
 	NIC_PUT(sc, SNR_UTDA, UPPER(sc->mtda[0].mtd_vtxp));
 	NIC_PUT(sc, SNR_CTDA, LOWER(sc->mtda[0].mtd_vtxp));
+	wbflush();
 }
 
 static void
@@ -789,7 +792,7 @@ initialise_rra(struct sn_softc *sc)
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
-		v = SONIC_GETDMA(sc->rbuf[i]);
+		v = SONIC_GETDMA(sc, sc->rbuf[i]);
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(PAGE_SIZE/2));
@@ -1106,7 +1109,7 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(datalen, len);
+		m->m_len = len = uimin(datalen, len);
 
 		memcpy(mtod(m, void *), pkt, (unsigned) len);
 		pkt = (char *)pkt + len;

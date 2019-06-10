@@ -1,8 +1,3 @@
-/*	$NetBSD: ansi.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
-
-#ifndef _LANDISK_ANSI_H_
-#define _LANDISK_ANSI_H_
+/*	$NetBSD: ansi.h,v 1.1.154.1 2019/06/10 22:06:25 christos Exp $	*/
 
 #include <sh3/ansi.h>
-
-#endif /* _LANDISK_ANSI_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.2.36.1 2019/06/10 22:08:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,9 @@
 
 #ifndef _LINUX_INTERRUPT_H_
 #define _LINUX_INTERRUPT_H_
+
+#include <sys/cpu.h>
+
+#define	in_interrupt()	(cpu_intr_p() || cpu_softintr_p())
 
 #endif  /* _LINUX_INTERRUPT_H_ */

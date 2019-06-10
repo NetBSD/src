@@ -1,5 +1,5 @@
 /* Base configuration file for all FreeBSD targets.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -134,14 +134,6 @@ is built with the --enable-threads configure-time option.}		\
 #define FBSD_DYNAMIC_LINKER "/libexec/ld-elf.so.1"
 #endif
 
-#if defined(HAVE_LD_EH_FRAME_HDR) && !defined(LINK_EH_SPEC)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
-#endif
-
-/* Use --as-needed -lgcc_s for eh support.  */
-#ifdef HAVE_LD_AS_NEEDED
-#define USE_LD_AS_NEEDED 1
-#endif
 /* NOTE: The freebsd-spec.h header is included also for various
    non-FreeBSD powerpc targets, thus it should never define macros
    other than FBSD_* prefixed ones, or USING_CONFIG_FREEBSD_SPEC.  */

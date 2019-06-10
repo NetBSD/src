@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.306 2018/06/02 11:56:57 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.306.2.1 2019/06/10 22:09:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.306 2018/06/02 11:56:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.306.2.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -616,16 +616,19 @@ sendit:
 		if (error || ipsec_done)
 			goto done;
 	}
-#endif
 
-	/*
-	 * Run through list of hooks for output packets.
-	 */
-	error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT);
-	if (error)
-		goto done;
-	if (m == NULL)
-		goto done;
+	if (!ipsec_used || !natt_frag)
+#endif
+	{
+		/*
+		 * Run through list of hooks for output packets.
+		 */
+		error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT);
+		if (error || m == NULL) {
+			IP_STATINC(IP_STAT_PFILDROP_OUT);
+			goto done;
+		}
+	}
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -707,7 +710,7 @@ sendit:
 			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 				if (IN_NEED_CHECKSUM(ifp,
 				    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
-					in_delayed_cksum(m);
+					in_undefer_cksum_tcpudp(m);
 				}
 				m->m_pkthdr.csum_flags &=
 				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
@@ -715,13 +718,14 @@ sendit:
 		}
 
 		sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
-		if (__predict_true(
-		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
-		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
-			error = ip_if_output(ifp, m, sa, rt);
-		} else {
+		if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
+			/*
+			 * TSO4 is required by a packet, but disabled for
+			 * the interface.
+			 */
 			error = ip_tso_output(ifp, m, sa, rt);
-		}
+		} else
+			error = ip_if_output(ifp, m, sa, rt);
 		goto done;
 	}
 
@@ -733,7 +737,7 @@ sendit:
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		if (IN_NEED_CHECKSUM(ifp,
 		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
-			in_delayed_cksum(m);
+			in_undefer_cksum_tcpudp(m);
 		}
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
@@ -776,7 +780,7 @@ sendit:
 		 * processing can occur.
 		 */
 		if (natt_frag) {
-			error = ip_output(m, opt, ro,
+			error = ip_output(m, opt, NULL,
 			    flags | IP_RAWOUTPUT | IP_NOIPNEWID,
 			    imo, inp);
 		} else {
@@ -960,31 +964,6 @@ sendorfree:
 }
 
 /*
- * Process a delayed payload checksum calculation.
- */
-void
-in_delayed_cksum(struct mbuf *m)
-{
-	struct ip *ip;
-	u_int16_t csum, offset;
-
-	ip = mtod(m, struct ip *);
-	offset = ip->ip_hl << 2;
-	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
-	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
-		csum = 0xffff;
-
-	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
-
-	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* This happens when ip options were inserted */
-		m_copyback(m, offset, sizeof(csum), (void *)&csum);
-	} else {
-		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
-	}
-}
-
-/*
  * Determine the maximum length of the options to be inserted;
  * we would far rather allocate too much space rather than too little.
  */
@@ -1023,7 +1002,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == NULL)
 			return m;
 		MCLAIM(n, m->m_owner);
-		M_MOVE_PKTHDR(n, m);
+		m_move_pkthdr(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;
@@ -1262,9 +1241,9 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				error = ipsec_set_policy(inp,
 				    sopt->sopt_data, sopt->sopt_size,
 				    curlwp->l_cred);
-				break;
-			}
-			/*FALLTHROUGH*/
+			} else 
+				error = ENOPROTOOPT;
+			break;
 #endif /* IPSEC */
 
 		default:
@@ -1861,9 +1840,7 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	 * Everything looks good; add a new record to the multicast
 	 * address list for the given interface.
 	 */
-	IFNET_LOCK(ifp);
 	imo->imo_membership[i] = in_addmulti(&ia, ifp);
-	IFNET_UNLOCK(ifp);
 	if (imo->imo_membership[i] == NULL) {
 		error = ENOBUFS;
 		goto out;
@@ -1923,10 +1900,7 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	 * Give up the multicast address record to which the
 	 * membership points.
 	 */
-	struct ifnet *inm_ifp = imo->imo_membership[i]->inm_ifp;
-	IFNET_LOCK(inm_ifp);
 	in_delmulti(imo->imo_membership[i]);
-	IFNET_UNLOCK(inm_ifp);
 
 	/*
 	 * Remove the gap in the membership array.
@@ -2121,11 +2095,8 @@ ip_freemoptions(struct ip_moptions *imo)
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
 			struct in_multi *inm = imo->imo_membership[i];
-			struct ifnet *ifp = inm->inm_ifp;
-			IFNET_LOCK(ifp);
 			in_delmulti(inm);
 			/* ifp should not leave thanks to solock */
-			IFNET_UNLOCK(ifp);
 		}
 
 		kmem_intr_free(imo, sizeof(*imo));
@@ -2157,7 +2128,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 	ip = mtod(copym, struct ip *);
 
 	if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(copym);
+		in_undefer_cksum_tcpudp(copym);
 		copym->m_pkthdr.csum_flags &=
 		    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}

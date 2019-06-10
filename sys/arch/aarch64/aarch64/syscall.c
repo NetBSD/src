@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 
 #include <sys/param.h>
@@ -62,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -72,9 +71,8 @@ cpu_spawn_return(struct lwp *l)
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp * const l = arg;
 	struct trapframe * const tf = l->l_md.md_utf;
 
 	tf->tf_reg[0] = 0;
@@ -82,8 +80,7 @@ child_return(void *arg)
 	tf->tf_spsr &= ~NZCV_C;
 	l->l_md.md_cpacr = CPACR_FPEN_NONE;
 
-	ktrsysret(SYS_fork, 0, 0);
-	/* Profiling? XXX */
+	userret(l);
 }
 #endif
 
@@ -103,7 +100,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	size_t code = tf->tf_esr & 0xffff;
-	register_t *params = tf->tf_reg;
+	register_t *params = (void *)tf->tf_reg;
 	size_t nargs = NARGREG;
 
 	switch (code) {

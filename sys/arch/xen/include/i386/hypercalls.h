@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.15 2012/06/27 00:37:09 jym Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.15.40.1 2019/06/10 22:06:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -163,7 +163,7 @@ HYPERVISOR_get_debugreg(int reg)
     return ret;
 }
 
-#include <xen/xen-public/arch-x86/xen-mca.h>
+#include <xen/include/public/arch-x86/xen-mca.h>
 
 static __inline int
 HYPERVISOR_machine_check(struct xen_mc *mc)
@@ -266,11 +266,7 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, pt_entry_t new_val,
     unsigned long pte_low, pte_hi;
 
     pte_low = new_val & 0xffffffff;
-#ifdef PAE
     pte_hi = new_val >> 32;
-#else
-    pte_hi = 0;
-#endif
 
     _hypercall(__HYPERVISOR_update_va_mapping,
 	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags)),
@@ -319,11 +315,7 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     unsigned long pte_low, pte_hi;
 
     pte_low = new_val & 0xffffffff;
-#ifdef PAE
     pte_hi = new_val >> 32;
-#else
-    pte_hi = 0;
-#endif
 
     _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
 	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags), "5" (domid)),
@@ -376,9 +368,21 @@ HYPERVISOR_shutdown(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_poweroff
+    };
+
     _hypercall(__HYPERVISOR_sched_op,
-	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
+     _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+ 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+#endif	
 
     return ret;
 }
@@ -389,9 +393,20 @@ HYPERVISOR_crash(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_crash
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_crash)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#endif
 
     return ret;
 }
@@ -402,9 +417,20 @@ HYPERVISOR_reboot(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_reboot
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_reboot)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#endif
 
     return ret;
 }
@@ -415,9 +441,20 @@ HYPERVISOR_suspend(unsigned long srec)
     long ret;
     unsigned long ign1, ign2, ign3;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_suspend
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason), "3" (srec)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_suspend), "3" (srec)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
+#endif
 
     return ret;
 }
@@ -465,14 +502,20 @@ HYPERVISOR_multicall(void *call_list, int nr_calls)
 
 
 static __inline int
-HYPERVISOR_event_channel_op(void *op)
+HYPERVISOR_event_channel_op(evtchn_op_t *op)
 {
     int ret;
     unsigned long ign1;
 
+#if __XEN_INTERFACE_VERSION__ < 0x00030202
     _hypercall(__HYPERVISOR_event_channel_op, _harg("1" (op)),
 	_harg("=a" (ret), "=b" (ign1)));
+#else
+    unsigned long ign2;
 
+    _hypercall(__HYPERVISOR_event_channel_op, _harg("1" (op->cmd), "2" (&op->u)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#endif
     return ret;
 }
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.4,v 1.2 2012/01/04 15:48:54 yamt Exp $
+.\"	$NetBSD: tprof.4,v 1.2.42.1 2019/06/10 22:05:40 christos Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 2, 2011
+.Dd December 12, 2018
 .Dt TPROF 4
 .Os
 .\" ------------------------------------------------------------
@@ -47,12 +47,14 @@ provide them to the userland consumer.
 .Pp
 The API/ABI is currently undocumented and will likely change in future
 without keeping compatibility.
+.Pp
+On x86, the tprof_x86 module must be loaded in addition to the
+.Nm
+driver.
 .\" ------------------------------------------------------------
 .\".Sh EXAMPLES
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr tprof_amdpmi 4 ,
-.Xr tprof_pmi 4 ,
 .Xr tprof 8
 .\" ------------------------------------------------------------
 .\".Sh HISTORY

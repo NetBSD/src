@@ -57,12 +57,13 @@
 #define IXGBE_FEATURE_EEE                       (u32)(1 << 11)
 #define IXGBE_FEATURE_LEGACY_IRQ                (u32)(1 << 12)
 #define IXGBE_FEATURE_NEEDS_CTXD                (u32)(1 << 13)
+#define IXGBE_FEATURE_RECOVERY_MODE             (u32)(1 << 15)
 
 #define IXGBE_FEATURE_FLAGS "\20" \
 	"\1" "VF"	"\2" "SRIOV"	"\3" "RSS"	"\4" "NETMAP"	\
 	"\5" "FAN_FAIL"	"\6" "TEMP_SENSOR" "\7" "BYPASS" "\10" "LEGACY_TX" \
 	"\11" "FDIR"	"\12" "MSI"	"\13" "MSIX"	"\14" "EEE"	\
-	"\15" "LEGACY_IRQ" "\16" "NEEDS_CTXD"
+	"\15" "LEGACY_IRQ" "\16" "NEEDS_CTXD"		"\20" "RECOVERY_MODE"
 
 /* Check for OS support.  Undefine features if not included in the OS */
 #ifndef PCI_IOV

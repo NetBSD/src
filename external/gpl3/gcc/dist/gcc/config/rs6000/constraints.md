@@ -1,5 +1,5 @@
 ;; Constraint definitions for RS6000
-;; Copyright (C) 2006-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -77,8 +77,6 @@
 (define_register_constraint "wh" "rs6000_constraints[RS6000_CONSTRAINT_wh]"
   "Floating point register if direct moves are available, or NO_REGS.")
 
-;; At present, DImode is not allowed in the Altivec registers.  If in the
-;; future it is allowed, wi/wj can be set to VSX_REGS instead of FLOAT_REGS.
 (define_register_constraint "wi" "rs6000_constraints[RS6000_CONSTRAINT_wi]"
   "FP or VSX register to hold 64-bit integers for VSX insns or NO_REGS.")
 
@@ -138,6 +136,13 @@
 (define_register_constraint "wA" "rs6000_constraints[RS6000_CONSTRAINT_wA]"
   "BASE_REGS if 64-bit instructions are enabled or NO_REGS.")
 
+;; wB needs ISA 2.07 VUPKHSW
+(define_constraint "wB"
+  "Signed 5-bit constant integer that can be loaded into an altivec register."
+  (and (match_code "const_int")
+       (and (match_test "TARGET_P8_VECTOR")
+	    (match_operand 0 "s5bit_cint_operand"))))
+
 (define_constraint "wD"
   "Int constant that is the element number of the 64-bit scalar in a vector."
   (and (match_code "const_int")
@@ -156,6 +161,18 @@
 (define_memory_constraint "wG"
   "Memory operand suitable for TOC fusion memory references"
   (match_operand 0 "toc_fusion_mem_wrapped"))
+
+(define_register_constraint "wH" "rs6000_constraints[RS6000_CONSTRAINT_wH]"
+  "Altivec register to hold 32-bit integers or NO_REGS.")
+
+(define_register_constraint "wI" "rs6000_constraints[RS6000_CONSTRAINT_wI]"
+  "FPR register to hold 32-bit integers or NO_REGS.")
+
+(define_register_constraint "wJ" "rs6000_constraints[RS6000_CONSTRAINT_wJ]"
+  "FPR register to hold 8/16-bit integers or NO_REGS.")
+
+(define_register_constraint "wK" "rs6000_constraints[RS6000_CONSTRAINT_wK]"
+  "Altivec register to hold 8/16-bit integers or NO_REGS.")
 
 (define_constraint "wL"
   "Int constant that is the element number mfvsrld accesses in a vector."

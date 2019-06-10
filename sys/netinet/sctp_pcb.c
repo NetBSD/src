@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.16 2018/02/27 14:44:10 maxv Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.16.4.1 2019/06/10 22:09:47 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.16 2018/02/27 14:44:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.16.4.1 2019/06/10 22:09:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1763,7 +1763,7 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 
 			/* unlock info */
 			SCTP_INP_INFO_WUNLOCK();
-			return (EADDRNOTAVAIL);
+			return EADDRINUSE;
 		}
 		SCTP_INP_WLOCK(inp);
 		if (bindall) {
@@ -1773,7 +1773,7 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 				SCTP_INP_DECR_REF(inp);
 				SCTP_INP_WUNLOCK(inp);
 				SCTP_INP_INFO_WUNLOCK();
-				return (EADDRNOTAVAIL);
+				return EADDRINUSE;
 			}
 		}
 	} else {
@@ -2554,7 +2554,7 @@ sctp_add_remote_addr(struct sctp_tcb *stcb, struct sockaddr *newaddr,
 	/* We take the max of the burst limit times a MTU or the INITIAL_CWND.
 	 * We then limit this to 4 MTU's of sending.
 	 */
- 	net->cwnd = min((net->mtu * 4), max((stcb->asoc.max_burst * net->mtu), SCTP_INITIAL_CWND));
+ 	net->cwnd = uimin((net->mtu * 4), uimax((stcb->asoc.max_burst * net->mtu), SCTP_INITIAL_CWND));
 
 	/* we always get at LEAST 2 MTU's */
 	if (net->cwnd < (2 * net->mtu)) {

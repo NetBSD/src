@@ -814,8 +814,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	      /* As the only 64-bit "insn", LDI32 needs special handling. */
 	      uint32_t insn1 = insn & 0xffffffff;
 	      uint32_t insn2 = insn >> 32;
-	      SET_INSN_FIELD (IMM16, insn1, fixup & 0xffff);
-	      SET_INSN_FIELD (IMM16, insn2, fixup >> 16);
+	      SET_INSN_FIELD (IMM16, insn1, fixup >> 16);
+	      SET_INSN_FIELD (IMM16, insn2, fixup & 0xffff);
+
+	      SET_INSN_FIELD (RDSEL, insn1, RSEL_31_16);
+	      SET_INSN_FIELD (RDSEL, insn2, RSEL_15_0);
 
 	      md_number_to_chars (buf, insn1, 4);
 	      md_number_to_chars (buf + 4, insn2, 4);
@@ -1086,6 +1089,8 @@ pru_assemble_arg_b (pru_insn_infoS *insn_info, const char *argstr)
   if (src2 == NULL)
     {
       unsigned long imm8 = pru_assemble_noreloc_expression (argstr);
+      if (imm8 >= 0x100)
+	as_bad (_("value %lu is too large for a byte operand"), imm8);
       SET_INSN_FIELD (IMM8, insn_info->insn_code, imm8);
       SET_INSN_FIELD (IO, insn_info->insn_code, 1);
     }
@@ -1141,7 +1146,8 @@ pru_assemble_arg_i (pru_insn_infoS *insn_info, const char *argstr)
 
   /* QUIRK: LDI must clear IO bit high, even though it has immediate arg. */
   SET_INSN_FIELD (IO, insn_info->insn_code, 0);
-  SET_INSN_FIELD (IMM16, insn_info->insn_code, imm32 & 0xffff);
+  SET_INSN_FIELD (RDSEL, insn_info->insn_code, RSEL_31_16);
+  SET_INSN_FIELD (IMM16, insn_info->insn_code, imm32 >> 16);
   insn_info->ldi32_imm32 = imm32;
 }
 
@@ -1475,11 +1481,13 @@ output_insn_ldi32 (pru_insn_infoS *insn)
   unsigned long insn2;
 
   f = frag_more (8);
+  SET_INSN_FIELD (IMM16, insn->insn_code, insn->ldi32_imm32 >> 16);
+  SET_INSN_FIELD (RDSEL, insn->insn_code, RSEL_31_16);
   md_number_to_chars (f, insn->insn_code, 4);
 
   insn2 = insn->insn_code;
-  SET_INSN_FIELD (IMM16, insn2, insn->ldi32_imm32 >> 16);
-  SET_INSN_FIELD (RDSEL, insn2, RSEL_31_16);
+  SET_INSN_FIELD (IMM16, insn2, insn->ldi32_imm32 & 0xffff);
+  SET_INSN_FIELD (RDSEL, insn2, RSEL_15_0);
   md_number_to_chars (f + 4, insn2, 4);
 
   /* Emit debug info.  */

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.22 2018/05/05 17:16:23 christos Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.22.2.1 2019/06/10 22:07:05 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.22 2018/05/05 17:16:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.22.2.1 2019/06/10 22:07:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,6 +56,14 @@ ACPI_MODULE_NAME	  ("acpi_pci")
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
+
+/*
+ * UUID for _DSM control method, from PCI Firmware Specification.
+ */
+static UINT8 acpi_pci_dsm_uuid[ACPI_UUID_LENGTH] = {
+	0xd0, 0x37, 0xc9, 0xe5, 0x53, 0x35, 0x7a, 0x4d,
+	0x91, 0x17, 0xea, 0x4d, 0x19, 0xc3, 0x43, 0x4d
+};
 
 /*
  * Regarding PCI Segment Groups (ACPI 4.0, p. 277):
@@ -346,8 +354,8 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
 		return AE_TYPE;
 
 	/* This is a PCI-to-PCI bridge.  Get its secondary bus#. */
-	val = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
-	*downbus = PPB_BUSINFO_SECONDARY(val);
+	val = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
+	*downbus = PCI_BRIDGE_BUS_NUM_SECONDARY(val);
 
 	return AE_OK;
 }
@@ -383,6 +391,33 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	return NULL;
 }
 
+/*
+ * acpi_pciroot_find:
+ *
+ *	Finds a PCI root bridge in the ACPI name space.
+ *
+ *	Returns an ACPI device node on success and NULL on failure.
+ */
+struct acpi_devnode *
+acpi_pciroot_find(uint16_t segment, uint16_t bus)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_devnode *ad;
+
+	if (sc == NULL)
+		return NULL;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_pciinfo != NULL &&
+		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) &&
+		    ad->ad_pciinfo->ap_segment == segment &&
+		    ad->ad_pciinfo->ap_bus == bus)
+			return ad;
+	}
+
+	return NULL;
+}
 
 /*
  * acpi_pcidev_find_dev:
@@ -431,4 +466,55 @@ acpi_pcidev_find_dev(struct acpi_devnode *ad)
 	deviter_release(&di);
 
 	return dv;
+}
+
+/*
+ * acpi_pci_ignore_boot_config:
+ *
+ *	Returns 1 if the operating system may ignore the boot configuration
+ *	of PCI resources.
+ */
+ACPI_INTEGER
+acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
+{
+	ACPI_OBJECT_LIST objs;
+	ACPI_OBJECT obj[4], *pobj;
+	ACPI_BUFFER buf;
+	ACPI_INTEGER ret;
+
+	objs.Count = 4;
+	objs.Pointer = obj;
+	obj[0].Type = ACPI_TYPE_BUFFER;
+	obj[0].Buffer.Length = ACPI_UUID_LENGTH;
+	obj[0].Buffer.Pointer = acpi_pci_dsm_uuid;
+	obj[1].Type = ACPI_TYPE_INTEGER;
+	obj[1].Integer.Value = 1;
+	obj[2].Type = ACPI_TYPE_INTEGER;
+	obj[2].Integer.Value = 5;
+	obj[3].Type = ACPI_TYPE_PACKAGE;
+	obj[3].Package.Count = 0;
+	obj[3].Package.Elements = NULL;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+
+	if (ACPI_FAILURE(AcpiEvaluateObject(handle, "_DSM", &objs, &buf)) || buf.Pointer == NULL)
+		return 0;
+
+	ret = 0;
+
+	pobj = buf.Pointer;
+	switch (pobj->Type) {
+	case ACPI_TYPE_INTEGER:
+		ret = pobj->Integer.Value;
+		break;
+	case ACPI_TYPE_PACKAGE:
+		if (pobj->Package.Count == 1 && pobj->Package.Elements[0].Type == ACPI_TYPE_INTEGER)
+			ret = pobj->Package.Elements[0].Integer.Value;
+		break;
+	}
+
+	ACPI_FREE(buf.Pointer);
+
+	return ret;
 }

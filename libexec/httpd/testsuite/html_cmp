@@ -22,6 +22,7 @@ h=`hostname || uname -n`
 sedcmd="s/^Date: .*/Date: nowish/;
 	s/^Last-Modified: .*/Last-Modified: nowish/;
 	s/[a-zA-Z0-9-]*\.eterna\.com\.au/$h/g;
+	s/[a-zA-Z0-9-]*\.eterna23\.net/$h/g;
 	s/^Server: .*/^Server: bozotic HTTP server version 5.08/;
 	s/^Content-Length: .*/Content-Length: 223/;"
 

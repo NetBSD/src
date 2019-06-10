@@ -387,6 +387,9 @@ read_uleb128 (unsigned char * data,
     }								\
   while (0)
 
+/* Read AMOUNT bytes from PTR and store them in VAL as an unsigned value.
+   Checks to make sure that the read will not reach or pass END
+   and that VAL is big enough to hold AMOUNT bytes.  */
 #define SAFE_BYTE_GET(VAL, PTR, AMOUNT, END)	\
   do						\
     {						\
@@ -415,6 +418,7 @@ read_uleb128 (unsigned char * data,
     }						\
   while (0)
 
+/* Like SAFE_BYTE_GET, but also increments PTR by AMOUNT.  */
 #define SAFE_BYTE_GET_AND_INC(VAL, PTR, AMOUNT, END)	\
   do							\
     {							\
@@ -423,6 +427,7 @@ read_uleb128 (unsigned char * data,
     }							\
   while (0)
 
+/* Like SAFE_BYTE_GET, but reads a signed value.  */
 #define SAFE_SIGNED_BYTE_GET(VAL, PTR, AMOUNT, END)	\
   do							\
     {							\
@@ -441,6 +446,7 @@ read_uleb128 (unsigned char * data,
     }							\
   while (0)
 
+/* Like SAFE_SIGNED_BYTE_GET, but also increments PTR by AMOUNT.  */
 #define SAFE_SIGNED_BYTE_GET_AND_INC(VAL, PTR, AMOUNT, END)	\
   do								\
     {								\
@@ -2168,19 +2174,28 @@ read_and_display_attr_value (unsigned long           attribute,
 	      debug_info_p->have_frame_base [num] = have_frame_base;
 	      if (attribute != DW_AT_GNU_locviews)
 		{
-		  debug_info_p->loc_offsets [num] = uvalue;
-		  debug_info_p->num_loc_offsets++;
-		  assert (debug_info_p->num_loc_offsets
-			  - debug_info_p->num_loc_views <= 1);
+		  /* Corrupt DWARF info can produce more offsets than views.
+		     See PR 23062 for an example.  */
+		  if (debug_info_p->num_loc_offsets
+		      > debug_info_p->num_loc_views)
+		    warn (_("More location offset attributes than DW_AT_GNU_locview attributes\n"));
+		  else
+		    {
+		      debug_info_p->loc_offsets [num] = uvalue;
+		      debug_info_p->num_loc_offsets++;
+		    }
 		}
 	      else
 		{
 		  assert (debug_info_p->num_loc_views <= num);
 		  num = debug_info_p->num_loc_views;
-		  debug_info_p->loc_views [num] = uvalue;
-		  debug_info_p->num_loc_views++;
-		  assert (debug_info_p->num_loc_views
-			  - debug_info_p->num_loc_offsets <= 1);
+		  if (num > debug_info_p->num_loc_offsets)
+		    warn (_("More DW_AT_GNU_locview attributes than location offset attributes\n"));
+		  else
+		    {
+		      debug_info_p->loc_views [num] = uvalue;
+		      debug_info_p->num_loc_views++;
+		    }
 		}
 	    }
 	  break;
@@ -2346,12 +2361,22 @@ read_and_display_attr_value (unsigned long           attribute,
 	  /* DWARF 4 values.  */
 	case DW_LANG_Python:		printf ("(Python)"); break;
 	  /* DWARF 5 values.  */
+	case DW_LANG_OpenCL:		printf ("(OpenCL)"); break;
 	case DW_LANG_Go:		printf ("(Go)"); break;
+	case DW_LANG_Modula3:		printf ("(Modula 3)"); break;
+	case DW_LANG_Haskell:		printf ("(Haskell)"); break;
+	case DW_LANG_C_plus_plus_03:	printf ("(C++03)"); break;
 	case DW_LANG_C_plus_plus_11:	printf ("(C++11)"); break;
+	case DW_LANG_OCaml:		printf ("(OCaml)"); break;
+	case DW_LANG_Rust:		printf ("(Rust)"); break;
 	case DW_LANG_C11:		printf ("(C11)"); break;
+	case DW_LANG_Swift:		printf ("(Swift)"); break;
+	case DW_LANG_Julia:		printf ("(Julia)"); break;
+	case DW_LANG_Dylan:		printf ("(Dylan)"); break;
 	case DW_LANG_C_plus_plus_14:	printf ("(C++14)"); break;
 	case DW_LANG_Fortran03:		printf ("(Fortran 03)"); break;
 	case DW_LANG_Fortran08:		printf ("(Fortran 08)"); break;
+	case DW_LANG_RenderScript:	printf ("(RenderScript)"); break;
 	  /* MIPS extension.  */
 	case DW_LANG_Mips_Assembler:	printf ("(MIPS assembler)"); break;
 	  /* UPC extension.  */
@@ -6543,6 +6568,7 @@ display_debug_ranges_list (unsigned char *start, unsigned char *finish,
 	break;
       SAFE_SIGNED_BYTE_GET_AND_INC (end, start, pointer_size, finish);
 
+      
       printf ("    %8.8lx ", offset);
 
       if (begin == 0 && end == 0)
@@ -6810,6 +6836,13 @@ display_debug_ranges (struct dwarf_section *section,
 	  continue;
 	}
 
+      if (next < section_begin || next >= finish)
+	{
+	  warn (_("Corrupt offset (%#8.8lx) in range entry %u\n"),
+		(unsigned long) offset, i);
+	  continue;
+	}
+
       if (dwarf_check != 0 && i > 0)
 	{
 	  if (start < next)
@@ -6825,6 +6858,7 @@ display_debug_ranges (struct dwarf_section *section,
 		    (unsigned long) (next - section_begin), section->name);
 	    }
 	}
+
       start = next;
       last_start = next;
 
@@ -7065,6 +7099,27 @@ init_dwarf_regnames_s390 (void)
   dwarf_regnames_count = ARRAY_SIZE (dwarf_regnames_s390);
 }
 
+static const char *const dwarf_regnames_riscv[] =
+{
+ "zero", "ra",   "sp",   "gp",  "tp",  "t0",  "t1",  "t2",  /* 0  - 7 */
+ "s0",   "s1",   "a0",   "a1",  "a2",  "a3",  "a4",  "a5",  /* 8  - 15 */
+ "a6",   "a7",   "s2",   "s3",  "s4",  "s5",  "s6",  "s7",  /* 16 - 23 */
+ "s8",   "s9",   "s10",  "s11", "t3",  "t4",  "t5",  "t6",  /* 24 - 31 */
+ "ft0",  "ft1",  "ft2",  "ft3", "ft4", "ft5", "ft6", "ft7", /* 32 - 39 */
+ "fs0",  "fs1",                                             /* 40 - 41 */
+ "fa0",  "fa1",  "fa2",  "fa3", "fa4", "fa5", "fa6", "fa7", /* 42 - 49 */
+ "fs2",  "fs3",  "fs4",  "fs5", "fs6", "fs7", "fs8", "fs9", /* 50 - 57 */
+ "fs10", "fs11",                                            /* 58 - 59 */
+ "ft8",  "ft9",  "ft10", "ft11"                             /* 60 - 63 */
+};
+
+void
+init_dwarf_regnames_riscv (void)
+{
+  dwarf_regnames = dwarf_regnames_riscv;
+  dwarf_regnames_count = ARRAY_SIZE (dwarf_regnames_riscv);
+}
+
 void
 init_dwarf_regnames (unsigned int e_machine)
 {
@@ -7090,6 +7145,10 @@ init_dwarf_regnames (unsigned int e_machine)
 
     case EM_S390:
       init_dwarf_regnames_s390 ();
+      break;
+
+    case EM_RISCV:
+      init_dwarf_regnames_riscv ();
       break;
 
     default:
@@ -9237,7 +9296,18 @@ process_cu_tu_index (struct dwarf_section *section, int do_display)
 		}
 
 	      if (!do_display)
-		memcpy (&this_set[row - 1].signature, ph, sizeof (uint64_t));
+		{
+		  size_t num_copy = sizeof (uint64_t);
+
+		  /* PR 23064: Beware of buffer overflow.  */
+		  if (ph + num_copy < limit)
+		    memcpy (&this_set[row - 1].signature, ph, num_copy);
+		  else
+		    {
+		      warn (_("Signature (%p) extends beyond end of space in section\n"), ph);
+		      return 0;
+		    }
+		}
 
 	      prow = poffsets + (row - 1) * ncols * 4;
 	      /* PR 17531: file: b8ce60a8.  */
@@ -9851,6 +9921,10 @@ load_dwo_file (const char * main_filename)
 void *
 load_separate_debug_file (void * file, const char * filename)
 {
+  /* Skip this operation if we are not interested in debug links.  */
+  if (! do_follow_links && ! do_debug_links)
+    return NULL;
+
   /* See if there is a dwo link.  */
   if (load_debug_section (str, file)
       && load_debug_section (abbrev, file)
@@ -9885,6 +9959,8 @@ load_separate_debug_file (void * file, const char * filename)
     }
 
   if (! do_follow_links)
+    /* The other debug links will be displayed by display_debug_links()
+       so we do not need to do any further processing here.  */
     return NULL;
 
   /* FIXME: We do not check for the presence of both link sections in the same file.  */

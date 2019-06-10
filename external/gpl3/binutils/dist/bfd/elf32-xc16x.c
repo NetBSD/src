@@ -212,9 +212,7 @@ xc16x_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 {
   unsigned int i;
 
-  for (i = 0;
-       i < sizeof (xc16x_elf_howto_table) / sizeof (xc16x_elf_howto_table[0]);
-       i++)
+  for (i = 0; i < ARRAY_SIZE (xc16x_elf_howto_table); i++)
     if (xc16x_elf_howto_table[i].name != NULL
 	&& strcasecmp (xc16x_elf_howto_table[i].name, r_name) == 0)
       return &xc16x_elf_howto_table[i];
@@ -225,8 +223,8 @@ xc16x_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* For a particular operand this function is
    called to finalise the type of relocation.  */
 
-static void
-elf32_xc16x_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
+static bfd_boolean
+elf32_xc16x_info_to_howto (bfd *abfd, arelent *bfd_reloc,
 			   Elf_Internal_Rela *elf_reloc)
 {
   unsigned int r;
@@ -237,9 +235,12 @@ elf32_xc16x_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
     if (xc16x_elf_howto_table[i].type == r)
       {
 	bfd_reloc->howto = &xc16x_elf_howto_table[i];
-	return;
+	return TRUE;
       }
-  abort ();
+  /* xgettext:c-format */
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r);
+  bfd_set_error (bfd_error_bad_value);
+  return FALSE;
 }
 
 static bfd_reloc_status_type

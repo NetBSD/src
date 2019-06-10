@@ -1,4 +1,4 @@
-#	$NetBSD: ZYXELKX,v 1.12 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: ZYXELKX,v 1.12.4.1 2019/06/10 22:06:12 christos Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -61,7 +61,6 @@ include         "conf/compat_netbsd50.config"
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems
@@ -91,6 +90,11 @@ file-system	TMPFS		# Efficient memory file-system
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and immutable) behave as system flags.
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
 # Networking options
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -103,9 +107,6 @@ options 	MROUTING	# IP multicast routing
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -224,11 +225,11 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
+pseudo-device	npf			# NPF packet filter
 pseudo-device	pppoe			# PPPoE protocol
 pseudo-device	vlan			# 802.1q
 
@@ -236,3 +237,5 @@ pseudo-device	vlan			# 802.1q
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# /dev/clockctl - user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms - kernel symbols
+
+include "dev/veriexec.config"

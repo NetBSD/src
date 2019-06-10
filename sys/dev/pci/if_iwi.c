@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.107 2018/06/26 06:48:01 msaitoh Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.107.2.1 2019/06/10 22:07:16 christos Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.107 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.107.2.1 2019/06/10 22:07:16 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -256,7 +256,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, ih, IPL_NET, iwi_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		softint_disestablish(sc->sc_soft_ih);
 		sc->sc_soft_ih = NULL;
@@ -1690,7 +1691,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 			return ENOMEM;
 		}
 
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 
 		/* If the data won't fit in the header, get a cluster */
 		if (m0->m_pkthdr.len > MHLEN) {
@@ -1879,7 +1880,7 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 		return copyout(buf, tbl, sizeof buf);
 	}
 
-	size = min(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
+	size = uimin(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
 	CSR_READ_REGION_4(sc, IWI_CSR_TABLE0_BASE, &buf[1], size);
 
 	return copyout(buf, tbl, sizeof buf);
@@ -1941,8 +1942,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = iwi_cache_firmware(sc);
 		if (error)
  			break;
- 		/* FALLTRHOUGH */
 
+		/* FALLTHROUGH */
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 
@@ -2146,14 +2147,14 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 			cl = GETLE32(p); p += 4; cs += 4; sl -= 4;
 		}
 		while (sl > 0 && cl > 0) {
-			int len = min(cl, sl);
+			int len = uimin(cl, sl);
 
 			sl -= len;
 			cl -= len;
 			p += len;
 
 			while (len > 0) {
-				int mlen = min(len, IWI_CB_MAXDATALEN);
+				int mlen = uimin(len, IWI_CB_MAXDATALEN);
 
 				ctl = IWI_CB_DEFAULT_CTL | mlen;
 				sum = ctl ^ cs ^ cd;

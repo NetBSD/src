@@ -945,8 +945,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an AVR ELF reloc.  */
 
-static void
-avr_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+avr_info_to_howto_rela (bfd *abfd,
 			arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
 {
@@ -956,10 +956,13 @@ avr_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_AVR_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid AVR reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_avr_howto_table[r_type];
+  return TRUE;
 }
 
 static bfd_boolean

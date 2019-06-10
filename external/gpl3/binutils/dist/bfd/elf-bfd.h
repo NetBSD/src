@@ -543,6 +543,9 @@ struct elf_link_hash_table
      when linking against or generating a shared object.  */
   bfd_boolean dynamic_sections_created;
 
+  /* Whether dynamic relocations are present.  */
+  bfd_boolean dynamic_relocs;
+
   /* True if this target has relocatable executables, so needs dynamic
      section symbols.  */
   bfd_boolean is_relocatable_executable;
@@ -864,6 +867,9 @@ struct elf_backend_data
   /* The common page size for this backend.  */
   bfd_vma commonpagesize;
 
+  /* The value of commonpagesize to use when -z relro for this backend.  */
+  bfd_vma relropagesize;
+
   /* The BFD flags applied to sections created for dynamic linking.  */
   flagword dynamic_sec_flags;
 
@@ -872,13 +878,13 @@ struct elf_backend_data
   const void *arch_data;
 
   /* A function to translate an ELF RELA relocation to a BFD arelent
-     structure.  */
-  void (*elf_info_to_howto)
+     structure.  Returns TRUE upon success, FALSE otherwise.  */
+  bfd_boolean (*elf_info_to_howto)
     (bfd *, arelent *, Elf_Internal_Rela *);
 
   /* A function to translate an ELF REL relocation to a BFD arelent
-     structure.  */
-  void (*elf_info_to_howto_rel)
+     structure.  Returns TRUE upon success, FALSE otherwise.  */
+  bfd_boolean (*elf_info_to_howto_rel)
     (bfd *, arelent *, Elf_Internal_Rela *);
 
   /* A function to determine whether a symbol is global when
@@ -1352,7 +1358,7 @@ struct elf_backend_data
     (bfd *);
 
   reloc_howto_type *(*elf_backend_mips_rtype_to_howto)
-    (unsigned int, bfd_boolean);
+    (bfd *, unsigned int, bfd_boolean);
 
   /* The swapping table to use when dealing with ECOFF information.
      Used for the MIPS ELF .mdebug section.  */
@@ -1668,6 +1674,7 @@ struct bfd_elf_section_data
 #define elf_linked_to_section(sec) (elf_section_data(sec)->linked_to)
 #define elf_section_type(sec)	(elf_section_data(sec)->this_hdr.sh_type)
 #define elf_section_flags(sec)	(elf_section_data(sec)->this_hdr.sh_flags)
+#define elf_section_info(sec)	(elf_section_data(sec)->this_hdr.sh_info)
 #define elf_group_name(sec)	(elf_section_data(sec)->group.name)
 #define elf_group_id(sec)	(elf_section_data(sec)->group.id)
 #define elf_next_in_group(sec)	(elf_section_data(sec)->next_in_group)
@@ -1692,17 +1699,20 @@ struct bfd_elf_section_data
 
 /* The value of an object attribute.  The type indicates whether the attribute
    holds and integer, a string, or both.  It can also indicate that there can
-   be no default (i.e. all values must be written to file, even zero).  */
+   be no default (i.e. all values must be written to file, even zero), or
+   that the value is in error and should not be written to file.  */
 
 typedef struct obj_attribute
 {
 #define ATTR_TYPE_FLAG_INT_VAL    (1 << 0)
 #define ATTR_TYPE_FLAG_STR_VAL    (1 << 1)
 #define ATTR_TYPE_FLAG_NO_DEFAULT (1 << 2)
+#define ATTR_TYPE_FLAG_ERROR	  (1 << 3)
 
 #define ATTR_TYPE_HAS_INT_VAL(TYPE)	((TYPE) & ATTR_TYPE_FLAG_INT_VAL)
 #define ATTR_TYPE_HAS_STR_VAL(TYPE)	((TYPE) & ATTR_TYPE_FLAG_STR_VAL)
 #define ATTR_TYPE_HAS_NO_DEFAULT(TYPE)	((TYPE) & ATTR_TYPE_FLAG_NO_DEFAULT)
+#define ATTR_TYPE_HAS_ERROR(TYPE)	((TYPE) & ATTR_TYPE_FLAG_ERROR)
 
   int type;
   unsigned int i;
@@ -2082,6 +2092,8 @@ extern void _bfd_elf_link_hash_copy_indirect
    struct elf_link_hash_entry *);
 extern void _bfd_elf_link_hash_hide_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *, bfd_boolean);
+extern void _bfd_elf_link_hide_symbol
+  (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *);
 extern bfd_boolean _bfd_elf_link_hash_fixup_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
 extern bfd_boolean _bfd_elf_link_hash_table_init
@@ -2180,8 +2192,11 @@ extern const struct bfd_elf_special_section *_bfd_elf_get_special_section
 extern const struct bfd_elf_special_section *_bfd_elf_get_sec_type_attr
   (bfd *, asection *);
 
+extern bfd_boolean _bfd_elf_link_hide_sym_by_version
+  (struct bfd_link_info *, struct elf_link_hash_entry *);
+
 /* If the target doesn't have reloc handling written yet:  */
-extern void _bfd_elf_no_info_to_howto
+extern bfd_boolean _bfd_elf_no_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
 
 extern bfd_boolean bfd_section_from_shdr
@@ -2270,7 +2285,9 @@ extern bfd_boolean _bfd_elf_validate_reloc
 
 extern bfd_boolean _bfd_elf_link_create_dynamic_sections
   (bfd *, struct bfd_link_info *);
-extern bfd_boolean _bfd_elf_link_omit_section_dynsym
+extern bfd_boolean _bfd_elf_omit_section_dynsym_default
+  (bfd *, struct bfd_link_info *, asection *);
+extern bfd_boolean _bfd_elf_omit_section_dynsym_all
   (bfd *, struct bfd_link_info *, asection *);
 extern bfd_boolean _bfd_elf_create_dynamic_sections
   (bfd *, struct bfd_link_info *);
@@ -2531,7 +2548,8 @@ extern unsigned int _bfd_elf_ppc_at_tprel_transform
 /* PowerPC elf_object_p tweak.  */
 extern bfd_boolean _bfd_elf_ppc_set_arch (bfd *);
 /* PowerPC .gnu.attributes handling common to both 32-bit and 64-bit.  */
-extern void _bfd_elf_ppc_merge_fp_attributes (bfd *, struct bfd_link_info *);
+extern bfd_boolean _bfd_elf_ppc_merge_fp_attributes
+  (bfd *, struct bfd_link_info *);
 
 /* Exported interface for writing elf corefile notes.  */
 extern char *elfcore_write_note

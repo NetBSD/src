@@ -1,0 +1,4 @@
+$TTL	600
+@	SOA	ns3.example. . 1 1200 1200 1814400 3600
+@	NS	ns3.example.
+@	DNAME	example.

@@ -6,18 +6,13 @@ extra field.
 
 Coff in all its varieties is implemented with a few common
 files and a number of implementation specific files. For
-example, The 88k bcs coff format is implemented in the file
-@file{coff-m88k.c}. This file @code{#include}s
-@file{coff/m88k.h} which defines the external structure of the
-coff format for the 88k, and @file{coff/internal.h} which
-defines the internal structure. @file{coff-m88k.c} also
-defines the relocations used by the 88k format
+example, the i386 coff format is implemented in the file
+@file{coff-i386.c}.  This file @code{#include}s
+@file{coff/i386.h} which defines the external structure of the
+coff format for the i386, and @file{coff/internal.h} which
+defines the internal structure. @file{coff-i386.c} also
+defines the relocations used by the i386 coff format
 @xref{Relocations}.
-
-The Intel i960 processor version of coff is implemented in
-@file{coff-i960.c}. This file has the same structure as
-@file{coff-m88k.c}, except that it includes @file{coff/i960.h}
-rather than @file{coff-m88k.h}.
 
 @subsection Porting to a new version of coff
 The recommended method is to select from the existing
@@ -66,15 +61,6 @@ then include @file{coffcode.h}.
 
 Some of the Coff targets then also have additional routines in
 the target source file itself.
-
-For example, @file{coff-i960.c} includes
-@file{coff/internal.h} and @file{coff/i960.h}.  It then
-defines a few constants, such as @code{I960}, and includes
-@file{coffcode.h}.  Since the i960 has complex relocation
-types, @file{coff-i960.c} also includes some code to
-manipulate the i960 relocs.  This code is not in
-@file{coffcode.h} because it would not be used by any other
-target.
 
 @subsubsection Coff long section names
 In the standard Coff object format, section names are limited to
@@ -689,8 +675,7 @@ routine and save the result if a canonicalization hasn't been done.
 @item
 The reloc index is turned into a pointer to a howto
 structure, in a back end specific way. For instance, the 386
-and 960 use the @code{r_type} to directly produce an index
-into a howto table vector; the 88k subtracts a number from the
-@code{r_type} field and creates an addend field.
+uses the @code{r_type} to directly produce an index
+into a howto table vector.
 @end itemize
 

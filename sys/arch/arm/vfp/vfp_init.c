@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.57 2018/04/08 09:19:27 bouyer Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.57.2.1 2019/06/10 22:05:57 christos Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -28,6 +28,11 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_cputypes.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.57.2.1 2019/06/10 22:05:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -220,7 +225,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	}
 
 	curcpu()->ci_vfp_evs[0].ev_count++;
-		
+
 	frame->tf_pc += INSN_SIZE;
 	return 0;
 }
@@ -255,7 +260,8 @@ vfp_attach(struct cpu_info *ci)
 		if ((nsacr & nsacr_vfp) != nsacr_vfp) {
 			aprint_normal_dev(ci->ci_dev,
 			    "VFP access denied (NSACR=%#x)\n", nsacr);
-			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+			if (CPU_IS_PRIMARY(ci))
+				install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
 			    EVCNT_TYPE_TRAP, NULL, ci->ci_cpuname,
@@ -285,7 +291,8 @@ vfp_attach(struct cpu_info *ci)
 		if (!vfp_p) {
 			aprint_normal_dev(ci->ci_dev,
 			    "VFP access denied (CPACR=%#x)\n", cpacr);
-			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+			if (CPU_IS_PRIMARY(ci))
+				install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
 			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
 			    EVCNT_TYPE_TRAP, NULL, ci->ci_cpuname,
@@ -304,7 +311,8 @@ vfp_attach(struct cpu_info *ci)
 
 	if (undefined_test != 0) {
 		aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
-		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		if (CPU_IS_PRIMARY(ci))
+			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 		ci->ci_vfp_id = 0;
 		return;
 	}
@@ -338,7 +346,8 @@ vfp_attach(struct cpu_info *ci)
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %#x\n",
 		    fpsid);
-		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		if (CPU_IS_PRIMARY(ci))
+			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 		vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM
 		    |VFP_FPSCR_RMODE;
 		vfp_fpscr_default = 0;
@@ -386,12 +395,14 @@ vfp_attach(struct cpu_info *ci)
 	    ci->ci_cpuname, "vfp coproc re-use");
 	evcnt_attach_dynamic(&ci->ci_vfp_evs[2], EVCNT_TYPE_TRAP, NULL,
 	    ci->ci_cpuname, "vfp coproc fault");
-	install_coproc_handler(VFP_COPROC, vfp_handler);
-	install_coproc_handler(VFP_COPROC2, vfp_handler);
+	if (CPU_IS_PRIMARY(ci)) {
+		install_coproc_handler(VFP_COPROC, vfp_handler);
+		install_coproc_handler(VFP_COPROC2, vfp_handler);
 #ifdef CPU_CORTEX
-	if (cpu_neon_present)
-		install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
+		if (cpu_neon_present)
+			install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
 #endif
+	}
 }
 
 /* The real handler for VFP bounces.  */

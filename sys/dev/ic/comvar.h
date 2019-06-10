@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.87 2018/05/27 17:05:06 jmcneill Exp $	*/
+/*	$NetBSD: comvar.h,v 1.87.2.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,13 +69,13 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
 #define	COM_HW_AFE	0x400
+#define	COM_HW_POLL	0x800
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
 #define	COM_RING_SIZE	2048
 #endif
 
-#ifdef	COM_REGMAP
 #define	COM_REG_RXDATA		0
 #define	COM_REG_TXDATA		1
 #define	COM_REG_DLBL		2
@@ -83,75 +83,33 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_IER		4
 #define	COM_REG_IIR		5
 #define	COM_REG_FIFO		6
-#define	COM_REG_TCR		6
-#define	COM_REG_EFR		7
-#define	COM_REG_TLR		7
-#define	COM_REG_LCR		8
-#define	COM_REG_MDR1		8
-#define	COM_REG_MCR		9
-#define	COM_REG_LSR		10
-#define	COM_REG_MSR		11
-#define	COM_REG_USR		31	/* 16750/DW APB */
-#define	COM_REG_TFL		com_tfl		/* DW APB */
-#define	COM_REG_RFL		com_rfl		/* DW APB */
-#define	COM_REG_HALT		com_halt	/* DW APB */
+#define	COM_REG_TCR		7
+#define	COM_REG_EFR		8
+#define	COM_REG_TLR		9
+#define	COM_REG_LCR		10
+#define	COM_REG_MCR		11
+#define	COM_REG_LSR		12
+#define	COM_REG_MSR		13
+#define	COM_REG_MDR1		14		/* TI OMAP */
+#define	COM_REG_USR		15		/* 16750/DW APB */
+#define	COM_REG_TFL		16		/* DW APB */
+#define	COM_REG_RFL		17		/* DW APB */
+#define	COM_REG_HALT		18		/* DW APB */
+
+#define	COM_REGMAP_NENTRIES	19
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
-	bus_size_t		cr_map[42];
+	bus_size_t		cr_map[COM_REGMAP_NENTRIES];
 };
 
-extern const bus_size_t com_std_map[42];
-
-#define	COM_INIT_REGS(regs, tag, hdl, addr)				\
-	do {								\
-		regs.cr_iot = tag;					\
-		regs.cr_ioh = hdl;					\
-		regs.cr_iobase = addr;					\
-		regs.cr_nports = COM_NPORTS;				\
-		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));	\
-	} while (0)
-
-#else
-#define	COM_REG_RXDATA		com_data
-#define	COM_REG_TXDATA		com_data
-#define	COM_REG_DLBL		com_dlbl
-#define	COM_REG_DLBH		com_dlbh
-#define	COM_REG_IER		com_ier
-#define	COM_REG_IIR		com_iir
-#define	COM_REG_FIFO		com_fifo
-#define	COM_REG_EFR		com_efr
-#define	COM_REG_LCR		com_lctl
-#define	COM_REG_MCR		com_mcr
-#define	COM_REG_LSR		com_lsr
-#define	COM_REG_MSR		com_msr
-#define	COM_REG_TCR		com_msr
-#define	COM_REG_TLR		com_scratch
-#define	COM_REG_MDR1		8
-#define COM_REG_USR		com_usr		/* 16750/DW APB */
-#define	COM_REG_TFL		com_tfl		/* DW APB */
-#define	COM_REG_RFL		com_rfl		/* DW APB */
-#define	COM_REG_HALT		com_halt	/* DW APB */
-
-struct com_regs {
-	bus_space_tag_t		cr_iot;
-	bus_space_handle_t	cr_ioh;
-	bus_addr_t		cr_iobase;
-	bus_size_t		cr_nports;
-};
-
-#define	COM_INIT_REGS(regs, tag, hdl, addr)		\
-	do {						\
-		regs.cr_iot = tag;			\
-		regs.cr_ioh = hdl;			\
-		regs.cr_iobase = addr;			\
-		regs.cr_nports = COM_NPORTS;		\
-	} while (0)
-
-#endif
+void	com_init_regs(struct com_regs *, bus_space_tag_t, bus_space_handle_t,
+		      bus_addr_t);
+void	com_init_regs_stride(struct com_regs *, bus_space_tag_t,
+			     bus_space_handle_t, bus_addr_t, u_int);
 
 struct comcons_info {
 	struct com_regs regs;
@@ -166,7 +124,8 @@ struct com_softc {
 	void *sc_si;
 	struct tty *sc_tty;
 
-	struct callout sc_diag_callout;
+	callout_t sc_diag_callout;
+	callout_t sc_poll_callout;
 
 	int sc_frequency;
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Directory Layout and Source Conventions</title><meta name="generator" content="DocBook XSL-NS Stylesheets V1.78.1" /><meta name="keywords" content="ISO C++, library" /><meta name="keywords" content="ISO C++, runtime, library" /><link rel="home" href="../index.html" title="The GNU C++ Library" /><link rel="up" href="appendix_contributing.html" title="Appendix A.  Contributing" /><link rel="prev" href="appendix_contributing.html" title="Appendix A.  Contributing" /><link rel="next" href="source_code_style.html" title="Coding Style" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Directory Layout and Source Conventions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="appendix_contributing.html">Prev</a> </td><th width="60%" align="center">Appendix A. 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Directory Layout and Source Conventions</title><meta name="generator" content="DocBook XSL Stylesheets Vsnapshot" /><meta name="keywords" content="ISO C++, library" /><meta name="keywords" content="ISO C++, runtime, library" /><link rel="home" href="../index.html" title="The GNU C++ Library" /><link rel="up" href="appendix_contributing.html" title="Appendix A.  Contributing" /><link rel="prev" href="appendix_contributing.html" title="Appendix A.  Contributing" /><link rel="next" href="source_code_style.html" title="Coding Style" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Directory Layout and Source Conventions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="appendix_contributing.html">Prev</a> </td><th width="60%" align="center">Appendix A. 
   Contributing
   
 </th><td width="20%" align="right"> <a accesskey="n" href="source_code_style.html">Next</a></td></tr></table><hr /></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="contrib.organization"></a>Directory Layout and Source Conventions</h2></div></div></div><p>
@@ -86,7 +86,9 @@ In addition, a subdirectory holds the convenience library libsupc++.
   </dd></dl></div><p>
 Note that glibc also has a <code class="filename">bits/</code>
 subdirectory.  We need to be careful not to collide with names in its
-<code class="filename">bits/</code> directory.
+<code class="filename">bits/</code> directory. For example
+<code class="filename">&lt;bits/std_mutex.h&gt;</code> has to be
+renamed from <code class="filename">&lt;bits/mutex.h&gt;</code>.
 Another solution would be to rename <code class="filename">bits</code>
 to (e.g.) <code class="filename">cppbits</code>.
 </p><p>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.138 2017/11/20 21:11:36 kre Exp $	*/
+/*	$NetBSD: cmds.c,v 1.138.4.1 2019/06/10 22:10:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.138 2017/11/20 21:11:36 kre Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.138.4.1 2019/06/10 22:10:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1776,6 +1776,18 @@ quit(int argc, char *argv[])
 	exit(0);
 }
 
+void __dead
+justquit(void)
+{
+
+	quit(0, NULL);
+	/*
+	 * quit is not __dead, but for our invocation it never will return,
+	 * but some compilers are not smart enough to find this out.
+	 */
+	exit(0);
+}
+
 /*
  * Terminate session, but don't exit.
  * May be called with 0, NULL.
@@ -2185,7 +2197,7 @@ LOOP:
 					}
 					break;
 				}
-				/* intentional drop through */
+				/* FALLTHROUGH */
 			default:
 				*cp2++ = *cp1;
 				break;

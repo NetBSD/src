@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_encoder_slave.c,v 1.1.1.2.30.1 2019/06/10 22:07:57 christos Exp $	*/
+
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.
@@ -23,6 +25,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.1.1.2.30.1 2019/06/10 22:07:57 christos Exp $");
 
 #include <linux/module.h>
 

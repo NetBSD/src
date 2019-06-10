@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.142 2018/05/10 01:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.142.2.1 2019/06/10 22:07:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.142 2018/05/10 01:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.142.2.1 2019/06/10 22:07:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1136,6 +1136,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
+	memset(&ifr, 0, sizeof(ifr));
 	docopy = ifc.ifc_req != NULL;
 	if (docopy) {
 		space = ifc.ifc_len;
@@ -1801,14 +1802,11 @@ linux_sys_sendmmsg(struct lwp *l, const struct linux_sys_sendmmsg_args *uap,
 	}
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
 
 	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
-	 * will catch it next time.
+	 * If we succeeded at least once, return 0.
 	 */
 	if (dg)
 		return 0;
@@ -1832,7 +1830,7 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 	struct msghdr *msg = &bmsg.msg_hdr;
 	int error, s;
 	struct mbuf *from, *control;
-	struct timespec ts, now;
+	struct timespec ts = {0}, now;
 	struct linux_timespec lts;
 	unsigned int vlen, flags, dg;
 
@@ -1848,6 +1846,16 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 	s = SCARG(uap, s);
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
+
+	/*
+	 * If so->so_rerror holds a deferred error return it now.
+	 */
+	if (so->so_rerror) {
+		error = so->so_rerror;
+		so->so_rerror = 0;
+		fd_putfile(s);
+		return error;
+	}
 
 	vlen = SCARG(uap, vlen);
 	if (vlen > 1024)
@@ -1919,17 +1927,17 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 		m_free(from);
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
-
-	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }

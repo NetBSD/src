@@ -1,5 +1,5 @@
 /* Predictive commoning.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -943,6 +943,17 @@ order_drefs (const void *a, const void *b)
   return (*da)->pos - (*db)->pos;
 }
 
+/* Compares two drefs A and B by their position.  Callback for qsort.  */
+
+static int
+order_drefs_by_pos (const void *a, const void *b)
+{
+  const dref *const da = (const dref *) a;
+  const dref *const db = (const dref *) b;
+
+  return (*da)->pos - (*db)->pos;
+}
+
 /* Returns root of the CHAIN.  */
 
 static inline dref
@@ -1365,11 +1376,16 @@ replace_ref_with (gimple *stmt, tree new_tree, bool set, bool in_lhs)
 /* Returns a memory reference to DR in the ITER-th iteration of
    the loop it was analyzed in.  Append init stmts to STMTS.  */
 
-static tree 
+static tree
 ref_at_iteration (data_reference_p dr, int iter, gimple_seq *stmts)
 {
   tree off = DR_OFFSET (dr);
   tree coff = DR_INIT (dr);
+  tree ref = DR_REF (dr);
+  enum tree_code ref_code = ERROR_MARK;
+  tree ref_type = NULL_TREE;
+  tree ref_op1 = NULL_TREE;
+  tree ref_op2 = NULL_TREE;
   if (iter == 0)
     ;
   else if (TREE_CODE (DR_STEP (dr)) == INTEGER_CST)
@@ -1378,28 +1394,50 @@ ref_at_iteration (data_reference_p dr, int iter, gimple_seq *stmts)
   else
     off = size_binop (PLUS_EXPR, off,
 		      size_binop (MULT_EXPR, DR_STEP (dr), ssize_int (iter)));
+  /* While data-ref analysis punts on bit offsets it still handles
+     bitfield accesses at byte boundaries.  Cope with that.  Note that
+     if the bitfield object also starts at a byte-boundary we can simply
+     replicate the COMPONENT_REF, but we have to subtract the component's
+     byte-offset from the MEM_REF address first.
+     Otherwise we simply build a BIT_FIELD_REF knowing that the bits
+     start at offset zero.  */
+  if (TREE_CODE (ref) == COMPONENT_REF
+      && DECL_BIT_FIELD (TREE_OPERAND (ref, 1)))
+    {
+      unsigned HOST_WIDE_INT boff;
+      tree field = TREE_OPERAND (ref, 1);
+      tree offset = component_ref_field_offset (ref);
+      ref_type = TREE_TYPE (ref);
+      boff = tree_to_uhwi (DECL_FIELD_BIT_OFFSET (field));
+      /* This can occur in Ada.  See the comment in get_bit_range.  */
+      if (boff % BITS_PER_UNIT != 0
+	  || !tree_fits_uhwi_p (offset))
+	{
+	  ref_code = BIT_FIELD_REF;
+	  ref_op1 = DECL_SIZE (field);
+	  ref_op2 = bitsize_zero_node;
+	}
+      else
+	{
+	  boff >>= LOG2_BITS_PER_UNIT;
+	  boff += tree_to_uhwi (offset);
+	  coff = size_binop (MINUS_EXPR, coff, ssize_int (boff));
+	  ref_code = COMPONENT_REF;
+	  ref_op1 = field;
+	  ref_op2 = TREE_OPERAND (ref, 2);
+	  ref = TREE_OPERAND (ref, 0);
+	}
+    }
   tree addr = fold_build_pointer_plus (DR_BASE_ADDRESS (dr), off);
   addr = force_gimple_operand_1 (unshare_expr (addr), stmts,
 				 is_gimple_mem_ref_addr, NULL_TREE);
-  tree alias_ptr = fold_convert (reference_alias_ptr_type (DR_REF (dr)), coff);
-  tree type = build_aligned_type (TREE_TYPE (DR_REF (dr)),
-				  get_object_alignment (DR_REF (dr)));
-  /* While data-ref analysis punts on bit offsets it still handles
-     bitfield accesses at byte boundaries.  Cope with that.  Note that
-     we cannot simply re-apply the outer COMPONENT_REF because the
-     byte-granular portion of it is already applied via DR_INIT and
-     DR_OFFSET, so simply build a BIT_FIELD_REF knowing that the bits
-     start at offset zero.  */
-  if (TREE_CODE (DR_REF (dr)) == COMPONENT_REF
-      && DECL_BIT_FIELD (TREE_OPERAND (DR_REF (dr), 1)))
-    {
-      tree field = TREE_OPERAND (DR_REF (dr), 1);
-      return build3 (BIT_FIELD_REF, TREE_TYPE (DR_REF (dr)),
-		     build2 (MEM_REF, type, addr, alias_ptr),
-		     DECL_SIZE (field), bitsize_zero_node);
-    }
-  else
-    return fold_build2 (MEM_REF, type, addr, alias_ptr);
+  tree alias_ptr = fold_convert (reference_alias_ptr_type (ref), coff);
+  tree type = build_aligned_type (TREE_TYPE (ref),
+				  get_object_alignment (ref));
+  ref = build2 (MEM_REF, type, addr, alias_ptr);
+  if (ref_type)
+    ref = build3 (ref_code, ref_type, ref, ref_op1, ref_op2);
+  return ref;
 }
 
 /* Get the initialization expression for the INDEX-th temporary variable
@@ -2250,7 +2288,6 @@ combine_chains (chain_p ch1, chain_p ch2)
   bool swap = false;
   chain_p new_chain;
   unsigned i;
-  gimple *root_stmt;
   tree rslt_type = NULL_TREE;
 
   if (ch1 == ch2)
@@ -2292,31 +2329,55 @@ combine_chains (chain_p ch1, chain_p ch2)
       new_chain->refs.safe_push (nw);
     }
 
-  new_chain->has_max_use_after = false;
-  root_stmt = get_chain_root (new_chain)->stmt;
-  for (i = 1; new_chain->refs.iterate (i, &nw); i++)
-    {
-      if (nw->distance == new_chain->length
-	  && !stmt_dominates_stmt_p (nw->stmt, root_stmt))
-	{
-	  new_chain->has_max_use_after = true;
-	  break;
-	}
-    }
-
   ch1->combined = true;
   ch2->combined = true;
   return new_chain;
 }
 
-/* Try to combine the CHAINS.  */
+/* Recursively update position information of all offspring chains to ROOT
+   chain's position information.  */
 
 static void
-try_combine_chains (vec<chain_p> *chains)
+update_pos_for_combined_chains (chain_p root)
+{
+  chain_p ch1 = root->ch1, ch2 = root->ch2;
+  dref ref, ref1, ref2;
+  for (unsigned j = 0; (root->refs.iterate (j, &ref)
+			&& ch1->refs.iterate (j, &ref1)
+			&& ch2->refs.iterate (j, &ref2)); ++j)
+    ref1->pos = ref2->pos = ref->pos;
+
+  if (ch1->type == CT_COMBINATION)
+    update_pos_for_combined_chains (ch1);
+  if (ch2->type == CT_COMBINATION)
+    update_pos_for_combined_chains (ch2);
+}
+
+/* Returns true if statement S1 dominates statement S2.  */
+
+static bool
+pcom_stmt_dominates_stmt_p (gimple *s1, gimple *s2)
+{
+  basic_block bb1 = gimple_bb (s1), bb2 = gimple_bb (s2);
+
+  if (!bb1 || s1 == s2)
+    return true;
+
+  if (bb1 == bb2)
+    return gimple_uid (s1) < gimple_uid (s2);
+
+  return dominated_by_p (CDI_DOMINATORS, bb2, bb1);
+}
+
+/* Try to combine the CHAINS in LOOP.  */
+
+static void
+try_combine_chains (struct loop *loop, vec<chain_p> *chains)
 {
   unsigned i, j;
   chain_p ch1, ch2, cch;
   auto_vec<chain_p> worklist;
+  bool combined_p = false;
 
   FOR_EACH_VEC_ELT (*chains, i, ch1)
     if (chain_can_be_combined_p (ch1))
@@ -2338,6 +2399,78 @@ try_combine_chains (vec<chain_p> *chains)
 	    {
 	      worklist.safe_push (cch);
 	      chains->safe_push (cch);
+	      combined_p = true;
+	      break;
+	    }
+	}
+    }
+  if (!combined_p)
+    return;
+
+  /* Setup UID for all statements in dominance order.  */
+  basic_block *bbs = get_loop_body (loop);
+  renumber_gimple_stmt_uids_in_blocks (bbs, loop->num_nodes);
+  free (bbs);
+
+  /* Re-association in combined chains may generate statements different to
+     order of references of the original chain.  We need to keep references
+     of combined chain in dominance order so that all uses will be inserted
+     after definitions.  Note:
+       A) This is necessary for all combined chains.
+       B) This is only necessary for ZERO distance references because other
+	  references inherit value from loop carried PHIs.
+
+     We first update position information for all combined chains.  */
+  dref ref;
+  for (i = 0; chains->iterate (i, &ch1); ++i)
+    {
+      if (ch1->type != CT_COMBINATION || ch1->combined)
+	continue;
+
+      for (j = 0; ch1->refs.iterate (j, &ref); ++j)
+	ref->pos = gimple_uid (ref->stmt);
+
+      update_pos_for_combined_chains (ch1);
+    }
+  /* Then sort references according to newly updated position information.  */
+  for (i = 0; chains->iterate (i, &ch1); ++i)
+    {
+      if (ch1->type != CT_COMBINATION && !ch1->combined)
+	continue;
+
+      /* Find the first reference with non-ZERO distance.  */
+      if (ch1->length == 0)
+	j = ch1->refs.length();
+      else
+	{
+	  for (j = 0; ch1->refs.iterate (j, &ref); ++j)
+	    if (ref->distance != 0)
+	      break;
+	}
+
+      /* Sort all ZERO distance references by position.  */
+      qsort (&ch1->refs[0], j, sizeof (ch1->refs[0]), order_drefs_by_pos);
+
+      if (ch1->combined)
+	continue;
+
+      /* For ZERO length chain, has_max_use_after must be true since root
+	 combined stmt must dominates others.  */
+      if (ch1->length == 0)
+	{
+	  ch1->has_max_use_after = true;
+	  continue;
+	}
+      /* Check if there is use at max distance after root for combined chains
+	 and set flag accordingly.  */
+      ch1->has_max_use_after = false;
+      gimple *root_stmt = get_chain_root (ch1)->stmt;
+      for (j = 1; ch1->refs.iterate (j, &ref); ++j)
+	{
+	  if (ref->distance == ch1->length
+	      && !pcom_stmt_dominates_stmt_p (ref->stmt, root_stmt))
+	    {
+	      ch1->has_max_use_after = true;
 	      break;
 	    }
 	}
@@ -2438,6 +2571,15 @@ tree_predictive_commoning_loop (struct loop *loop)
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "Processing loop %d\n",  loop->num);
 
+  /* Nothing for predicitive commoning if loop only iterates 1 time.  */
+  if (get_max_loop_iterations_int (loop) == 0)
+    {
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	fprintf (dump_file, "Loop iterates only 1 time, nothing to do.\n");
+
+      return false;
+    }
+
   /* Find the data references and split them into components according to their
      dependence relations.  */
   auto_vec<loop_p, 3> loop_nest;
@@ -2490,7 +2632,7 @@ tree_predictive_commoning_loop (struct loop *loop)
   prepare_initializers (loop, chains);
 
   /* Try to combine the chains that are always worked with together.  */
-  try_combine_chains (&chains);
+  try_combine_chains (loop, &chains);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.1.28.1 2019/06/10 22:10:40 christos Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.5 2000/12/03 01:54:48 minoura Exp */
 
@@ -53,3 +53,8 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message set_kernel_2
+{Kernel (GENERIC.MP)}
+
+message set_kernel_3
+{Kernel (GENERIC_601)}

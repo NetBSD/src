@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.26 2018/04/25 11:12:55 ragge Exp $
+# $NetBSD: VAX780,v 1.26.2.1 2019/06/10 22:06:51 christos Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -57,9 +57,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	CPU_IN_CKSUM	# optimized checksum routine
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -121,7 +118,6 @@ options 	SYSVSHM
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
 options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility.
-#options 	COMPAT_IBCS2	# DEC SVR.3 compatibility
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 
 options 	LKM
@@ -274,7 +270,7 @@ pseudo-device	loop
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	sl	
 #pseudo-device	ppp	
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -307,18 +303,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"

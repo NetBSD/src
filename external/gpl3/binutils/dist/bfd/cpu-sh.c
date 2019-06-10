@@ -43,8 +43,7 @@
 #define SH2A_NOFPU_OR_SH4_NOMMU_NOFPU_NEXT arch_info_struct + 16
 #define SH2A_NOFPU_OR_SH3_NOMMU_NEXT	   arch_info_struct + 17
 #define SH2A_OR_SH4_NEXT		   arch_info_struct + 18
-#define SH2A_OR_SH3E_NEXT		   arch_info_struct + 19
-#define SH64_NEXT			   NULL
+#define SH2A_OR_SH3E_NEXT		   NULL
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
@@ -332,21 +331,6 @@ static const bfd_arch_info_type arch_info_struct[] =
     bfd_default_scan,
     bfd_arch_default_fill,
     SH2A_OR_SH3E_NEXT
-  },
-  {
-    64,				/* 64 bits in a word.  */
-    64,				/* 64 bits in an address.  */
-    8,				/* 8 bits in a byte.  */
-    bfd_arch_sh,
-    bfd_mach_sh5,
-    "sh",			/* Architecture name.   */
-    "sh5",			/* Machine name.  */
-    1,
-    FALSE,			/* Not the default.  */
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    SH64_NEXT
   },
 };
 

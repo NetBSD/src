@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.280.6.1 2019/06/10 22:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280.6.1 2019/06/10 22:07:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ scsibusattach(device_t parent, device_t self, void *aux)
          * Create the discover thread
          */
         if (kthread_create(PRI_NONE, 0, NULL, scsibus_discover_thread, sc,
-            NULL, "%s-d", chan->chan_name)) {
+            &chan->chan_dthread, "%s-d", chan->chan_name)) {
                 aprint_error_dev(sc->sc_dev, "unable to create discovery "
 		    "thread for channel %d\n", chan->chan_channel);
                 return;
@@ -283,6 +283,7 @@ scsibus_discover_thread(void *arg)
 	struct scsibus_softc *sc = arg;
 
 	scsibus_config(sc);
+	sc->sc_channel->chan_dthread = NULL;
 	kthread_exit(0);
 }
 
@@ -334,6 +335,12 @@ scsibusdetach(device_t self, int flags)
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	int error;
+
+	/*
+	 * Defer while discovery thread is running
+	 */
+	while (chan->chan_dthread != NULL)
+		kpause("scsibusdet", false, hz, NULL);
 
 	/*
 	 * Detach all of the periphs.
@@ -415,6 +422,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		 */
 		scsipi_set_xfer_mode(chan, target, 1);
 	}
+
 	scsipi_adapter_delref(chan->chan_adapter);
 ret:
 	return (error);
@@ -492,9 +500,11 @@ scsibusprint(void *aux, const char *pnp)
 	strnvisx(revision, sizeof(revision), inqbuf->revision, 4,
 	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
-	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s",
-	    target, lun, vendor, product, revision, dtype,
-	    inqbuf->removable ? "removable" : "fixed");
+	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s%s",
+		      target, lun, vendor, product, revision, dtype,
+		      inqbuf->removable ? "removable" : "fixed",
+		      (sa->sa_periph->periph_opcs != NULL)
+		        ? " timeout-info" : "");
 
 	return (UNCONF);
 }
@@ -623,6 +633,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 ""	   , "DFRSS2F",		 ""},	  PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "Initio  ", "",		 ""},	  PQUIRK_NOBIGMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "JMicron ", "Generic         ", ""},	  PQUIRK_NOFUA},
 	{{T_DIRECT, T_REMOV,
 	 "MPL     ", "MC-DISK-        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -673,6 +685,12 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST318404LC      ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST336753LC      ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST336753LW      ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST336754LC      ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST39236LC       ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -1002,6 +1020,13 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	if ((cf = config_search_loc(config_stdsubmatch, sc->sc_dev,
 	     "scsibus", locs, &sa)) != NULL) {
 		scsipi_insert_periph(chan, periph);
+
+		/*
+		 * determine supported opcodes and
+		 * timeouts if available
+		 */
+		scsipi_get_opcodeinfo(periph);
+
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
 		 * XXX need it before config_attach() returns.  Must

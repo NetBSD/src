@@ -1,14 +1,18 @@
-/*	$NetBSD: param.h,v 1.25 2018/03/16 08:21:56 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.25.2.1 2019/06/10 22:05:47 christos Exp $	*/
 
 #ifdef __x86_64__
 
-#ifndef XEN
+#ifndef XENPV
 /* Must be defined before cpu.h */
 #define	MAXCPUS		256
 #endif
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#if defined(_KERNEL_OPT)
+#include "opt_kasan.h"
+#include "opt_kleak.h"
+#endif
 #endif
 
 #define	_MACHINE	amd64
@@ -18,6 +22,13 @@
 #define MID_MACHINE	MID_X86_64
 
 #define ALIGNED_POINTER(p,t)	1
+
+/*
+ * Align stack as required by AMD64 System V ABI. This is because
+ * (1) we want to bypass libc/csu in LLDB, and
+ * (2) rtld in glibc >= 2.23 for Linux/x86_64 requires it.
+ */
+#define STACK_ALIGNBYTES	(16 - 1)
 
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
@@ -48,16 +59,12 @@
 #define KERNBASE_HI	0xffffffff
 #define KERNBASE_LO	0x80000000
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#ifndef	MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#endif
-
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#ifdef DIAGNOSTIC
+
+#if defined(KASAN) || defined(KLEAK)
+#define	UPAGES		8
+#elif defined(DIAGNOSTIC)
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */
 #else
 #define	UPAGES		4		/* pages of u-area */

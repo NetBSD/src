@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $	*/
+/*	$NetBSD: emul.c,v 1.185.4.1 2019/06/10 22:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.4.1 2019/06/10 22:09:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -119,6 +119,7 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+	.e_nomodbits = rump_sysent_nomodbits,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = SYS_NSYSENT,
 #endif
@@ -255,6 +256,19 @@ void (*delay_func)(unsigned int) = rump_delay;
 __strong_alias(delay,rump_delay);
 __strong_alias(_delay,rump_delay);
 
+/* Weak alias for getcwd_common to be used unless librumpvfs is present. */
+
+int rump_getcwd_common(struct vnode *, struct vnode *, char **, char *,
+    int, int, struct lwp *);
+int
+rump_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
+    int limit, int flags, struct lwp *l)
+{
+
+	return ENOENT;
+}
+__weak_alias(getcwd_common,rump_getcwd_common);
+
 /* Weak aliases for fstrans to be used unless librumpvfs is present. */
 
 void rump_fstrans_start(struct mount *);
@@ -274,6 +288,15 @@ rump_fstrans_start_nowait(struct mount *mp)
 }
 __weak_alias(fstrans_start_nowait,rump_fstrans_start_nowait);
 
+void rump_fstrans_start_lazy(struct mount *);
+void
+rump_fstrans_start_lazy(struct mount *mp)
+{
+
+}
+__weak_alias(fstrans_start_lazy,rump_fstrans_start_lazy);
+
+
 void rump_fstrans_done(struct mount *);
 void
 rump_fstrans_done(struct mount *mp)
@@ -281,6 +304,15 @@ rump_fstrans_done(struct mount *mp)
 
 }
 __weak_alias(fstrans_done,rump_fstrans_done);
+
+
+void rump_fstrans_lwp_dtor(struct lwp *);
+void
+rump_fstrans_lwp_dtor(struct lwp *l)
+{
+
+}
+__weak_alias(fstrans_lwp_dtor,rump_fstrans_lwp_dtor);
 
 /*
  * Provide weak aliases for tty routines used by printf.

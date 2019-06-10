@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.65 2017/01/31 09:17:53 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.65.12.1 2019/06/10 22:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.65 2017/01/31 09:17:53 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.65.12.1 2019/06/10 22:05:22 christos Exp $");
 #endif
 #endif					/* not lint */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -46,7 +47,7 @@ __RCSID("$NetBSD: getch.c,v 1.65 2017/01/31 09:17:53 roy Exp $");
 #include "curses_private.h"
 #include "keymap.h"
 
-short	state;		/* state of the inkey function */
+short _cursesi_state;		/* state of the inkey function */
 
 static const struct tcdata tc[] = {
 	{TICODE_kSAV, KEY_SSAVE},
@@ -446,7 +447,7 @@ __init_getch(SCREEN *screen)
 #endif
 
 	/* init the inkey state variable */
-	state = INKEY_NORM;
+	_cursesi_state = INKEY_NORM;
 
 	/* init the base keymap */
 	screen->base_keymap = new_keymap();
@@ -556,13 +557,13 @@ inkey(int to, int delay)
 #endif
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
-		if (state == INKEY_NORM) {
+		if (_cursesi_state == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			c = fgetc(infd);
-			if (c == EOF) {
+			c = __fgetc_resize(infd);
+			if (c == ERR || c == KEY_RESIZE) {
 				clearerr(infd);
-				return ERR;
+				return c;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -578,9 +579,11 @@ reread:
 			inbuf[working] = k;
 			INC_POINTER(working);
 			end = working;
-			state = INKEY_ASSEMBLING;	/* go to the assembling
-							 * state now */
-		} else if (state == INKEY_BACKOUT) {
+
+			/* go to the assembling state now */
+			_cursesi_state = INKEY_ASSEMBLING;
+
+		} else if (_cursesi_state == INKEY_BACKOUT) {
 			k = inbuf[working];
 			INC_POINTER(working);
 			if (working == end) {	/* see if we have run
@@ -588,9 +591,9 @@ reread:
 						 * backlog */
 
 				/* if we have then switch to assembling */
-				state = INKEY_ASSEMBLING;
+				_cursesi_state = INKEY_ASSEMBLING;
 			}
-		} else if (state == INKEY_ASSEMBLING) {
+		} else if (_cursesi_state == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
 				if (__timeout(to ? (ESCDELAY / 100) : delay)
@@ -601,10 +604,10 @@ reread:
 					return ERR;
 			}
 
-			c = fgetc(infd);
+			c = __fgetc_resize(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				return ERR;
+				return c;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -622,7 +625,7 @@ reread:
 					goto reread;
 
 				k = inbuf[start];
-				state = INKEY_TIMEOUT;
+				_cursesi_state = INKEY_TIMEOUT;
 			} else {
 				k = (wchar_t) c;
 				inbuf[working] = k;
@@ -639,7 +642,7 @@ reread:
 		   * timed out and the key has not been disabled
 		   */
 		mapping = current->mapping[k];
-		if (((state == INKEY_TIMEOUT) || (mapping < 0))
+		if (((_cursesi_state == INKEY_TIMEOUT) || (mapping < 0))
 			|| ((current->key[mapping]->type == KEYMAP_LEAF)
 			    && (current->key[mapping]->enable == FALSE))) {
 			/* return the first key we know about */
@@ -649,10 +652,10 @@ reread:
 			working = start;
 
 			if (start == end) {	/* only one char processed */
-				state = INKEY_NORM;
+				_cursesi_state = INKEY_NORM;
 			} else {/* otherwise we must have more than one char
 				 * to backout */
-				state = INKEY_BACKOUT;
+				_cursesi_state = INKEY_BACKOUT;
 			}
 			return k;
 		} else {	/* must be part of a multikey sequence */
@@ -664,10 +667,10 @@ reread:
 				/* check if inbuf empty now */
 				if (start == end) {
 					/* if it is go back to normal */
-					state = INKEY_NORM;
+					_cursesi_state = INKEY_NORM;
 				} else {
 					/* otherwise go to backout state */
-					state = INKEY_BACKOUT;
+					_cursesi_state = INKEY_BACKOUT;
 				}
 
 				/* return the symbol */
@@ -817,12 +820,36 @@ wgetch(WINDOW *win)
 
 	if (is_wintouched(win))
 		wrefresh(win);
+	else {
+		if ((_cursesi_screen->curscr->cury != (win->begy + win->cury))
+		    || (_cursesi_screen->curscr->curx != (win->begx + win->curx))) {
+#ifdef DEBUG
+			__CTRACE(__CTRACE_INPUT, "wgetch: curscr cury %d cury %d curscr curx %d curx %d\n",
+			_cursesi_screen->curscr->cury, win->begy + win->cury,
+			_cursesi_screen->curscr->curx, win->begx + win->curx);
+#endif
+			/*
+			 * Just in case the window is not dirty but the
+			 * cursor was  moved, check and update the 
+			 * cursor location.
+			 */
+			mvcur(_cursesi_screen->curscr->cury,
+			    _cursesi_screen->curscr->curx,
+		      	    win->cury + win->begy, win->curx + win->begx);
+			_cursesi_screen->curscr->cury =
+			    win->cury + win->begy;
+			_cursesi_screen->curscr->curx =
+			    win->curx + win->begx;
+		}
+	}
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: __echoit = %d, "
 	    "__rawmode = %d, __nl = %d, flags = %#.4x, delay = %d\n",
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags, win->delay);
 #endif
 	if (_cursesi_screen->resized) {
+		resizeterm(LINES, COLS);
 		_cursesi_screen->resized = 0;
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wgetch returning KEY_RESIZE\n");
@@ -880,18 +907,11 @@ wgetch(WINDOW *win)
 			break;
 		}
 
-		c = fgetc(infd);
-		if (feof(infd)) {
+		inp = __fgetc_resize(infd);
+		if (inp == ERR || inp == KEY_RESIZE) {
 			clearerr(infd);
 			__restore_termios();
-			return ERR;	/* we have timed out */
-		}
-
-		if (ferror(infd)) {
-			clearerr(infd);
-			inp = ERR;
-		} else {
-			inp = c;
+			return inp;
 		}
 	}
 #ifdef DEBUG
@@ -997,4 +1017,28 @@ set_escdelay(int escdelay)
 	_cursesi_screen->ESCDELAY = escdelay;
 	ESCDELAY = escdelay;
 	return OK;
+}
+
+/*
+ * __fgetc_resize --
+ *    Any call to fgetc(3) should use this function instead
+ *    and test for the return value of KEY_RESIZE as well as ERR.
+ */
+int
+__fgetc_resize(FILE *infd)
+{
+	int c;
+
+	c = fgetc(infd);
+	if (c != EOF)
+		return c;
+
+	if (!ferror(infd) || errno != EINTR || !_cursesi_screen->resized)
+		return ERR;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__fgetc_resize returning KEY_RESIZE\n");
+#endif
+	resizeterm(LINES, COLS);
+	_cursesi_screen->resized = 0;
+	return KEY_RESIZE;
 }

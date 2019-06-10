@@ -1,14 +1,38 @@
-# $NetBSD: Makefile,v 1.12 2017/06/19 20:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.12.6.1 2019/06/10 21:51:09 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=		mandoc
 
-SRCS=		main.c out.c tree.c \
-		eqn_html.c eqn_term.c \
-		html.c man_html.c mdoc_html.c tbl_html.c \
-		manpath.c man_term.c mdoc_term.c term.c term_ascii.c \
-		term_ps.c tbl_term.c
+SRCS=	\
+eqn_html.c \
+eqn_term.c \
+html.c \
+dba.c \
+dba_array.c \
+dba_read.c \
+dba_write.c \
+dbm.c \
+dbm_map.c \
+main.c \
+man_html.c \
+man_term.c \
+mandocdb.c \
+manpath.c \
+mansearch.c \
+mdoc_html.c \
+mdoc_markdown.c \
+mdoc_term.c \
+out.c \
+roff_html.c \
+roff_term.c \
+tbl_html.c \
+tbl_term.c \
+term.c \
+term_ascii.c \
+term_ps.c \
+term_tab.c \
+tree.c
 
 .ifndef HOSTPROG
 DPADD+= 	${MDOCMLLIB.mandoc} ${LIBZ}
@@ -19,5 +43,7 @@ SRCS.libmandoc!=cd ${.PARSEDIR}/../../lib/libmandoc && ${MAKE} -v SRCS
 
 SRCS+=		${SRCS.libmandoc} compat_strtonum.c compat_reallocarray.c
 .endif
+
+COPTS.man_term.c+= -Wno-error=array-bounds
 
 .include <bsd.prog.mk>

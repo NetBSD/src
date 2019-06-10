@@ -24,7 +24,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 int
 mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
 {
-  int inex_re, inex_im, inex;
+  int inex_re, inex_im, inex, loop = 0;
   mpfr_prec_t p_re, p_im, p;
   mpc_t z1;
   mpfr_t pi_over_2;
@@ -67,7 +67,7 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
                 {
                   inex_re =
                     set_pi_over_2 (mpc_realref (rop), +1, MPC_RND_RE (rnd));
-                  mpfr_div_2ui (mpc_realref (rop), mpc_realref (rop), 1, GMP_RNDN);
+                  mpfr_div_2ui (mpc_realref (rop), mpc_realref (rop), 1, MPFR_RNDN);
                 }
               else
                 {
@@ -88,11 +88,11 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
                     {
                       p += mpc_ceil_log2 (p);
                       mpfr_set_prec (x, p);
-                      mpfr_const_pi (x, GMP_RNDD);
-                      mpfr_mul_ui (x, x, 3, GMP_RNDD);
+                      mpfr_const_pi (x, MPFR_RNDD);
+                      mpfr_mul_ui (x, x, 3, MPFR_RNDD);
                       ok =
-                        mpfr_can_round (x, p - 1, GMP_RNDD, MPC_RND_RE (rnd),
-                                        prec+(MPC_RND_RE (rnd) == GMP_RNDN));
+                        mpfr_can_round (x, p - 1, MPFR_RNDD, MPC_RND_RE (rnd),
+                                        prec+(MPC_RND_RE (rnd) == MPFR_RNDN));
 
                     } while (ok == 0);
                   inex_re =
@@ -103,7 +103,7 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
           else
             {
               if (mpfr_sgn (mpc_realref (op)) > 0)
-                mpfr_set_ui (mpc_realref (rop), 0, GMP_RNDN);
+                mpfr_set_ui (mpc_realref (rop), 0, MPFR_RNDN);
               else
                 inex_re = mpfr_const_pi (mpc_realref (rop), MPC_RND_RE (rnd));
             }
@@ -131,7 +131,7 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
             inex_im = -mpfr_acosh (mpc_imagref (rop), mpc_realref (op),
                                    INV_RND (MPC_RND_IM (rnd)));
 
-          mpfr_set_ui (mpc_realref (rop), 0, GMP_RNDN);
+          mpfr_set_ui (mpc_realref (rop), 0, MPFR_RNDN);
         }
       else if (mpfr_cmp_si (mpc_realref (op), -1) < 0)
         {
@@ -180,28 +180,29 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
   /* the imaginary part of asin(z) has the same sign as Im(z), thus if
      Im(z) > 0 and rnd_im = RNDZ, we want to round the Im(asin(z)) to -Inf
      so that -Im(asin(z)) is rounded to zero */
-  if (rnd_im == GMP_RNDZ)
-    rnd_im = mpfr_sgn (mpc_imagref(op)) > 0 ? GMP_RNDD : GMP_RNDU;
+  if (rnd_im == MPFR_RNDZ)
+    rnd_im = mpfr_sgn (mpc_imagref(op)) > 0 ? MPFR_RNDD : MPFR_RNDU;
   else
-    rnd_im = rnd_im == GMP_RNDU ? GMP_RNDD
-      : rnd_im == GMP_RNDD ? GMP_RNDU
+    rnd_im = rnd_im == MPFR_RNDU ? MPFR_RNDD
+      : rnd_im == MPFR_RNDD ? MPFR_RNDU
       : rnd_im; /* both RNDZ and RNDA map to themselves for -asin(z) */
-  rnd1 = MPC_RND (GMP_RNDN, rnd_im);
+  rnd1 = MPC_RND (MPFR_RNDN, rnd_im);
   mpfr_init2 (pi_over_2, p);
   for (;;)
     {
-      p += mpc_ceil_log2 (p) + 3;
+      loop ++;
+      p += (loop <= 2) ? mpc_ceil_log2 (p) + 3 : p / 2;
 
       mpfr_set_prec (mpc_realref(z1), p);
       mpfr_set_prec (pi_over_2, p);
 
-      set_pi_over_2 (pi_over_2, +1, GMP_RNDN);
+      set_pi_over_2 (pi_over_2, +1, MPFR_RNDN);
       e1 = 1; /* Exp(pi_over_2) */
       inex = mpc_asin (z1, op, rnd1); /* asin(z) */
       MPC_ASSERT (mpfr_sgn (mpc_imagref(z1)) * mpfr_sgn (mpc_imagref(op)) > 0);
       inex_im = MPC_INEX_IM(inex); /* inex_im is in {-1, 0, 1} */
       e2 = mpfr_get_exp (mpc_realref(z1));
-      mpfr_sub (mpc_realref(z1), pi_over_2, mpc_realref(z1), GMP_RNDN);
+      mpfr_sub (mpc_realref(z1), pi_over_2, mpc_realref(z1), MPFR_RNDN);
       if (!mpfr_zero_p (mpc_realref(z1)))
         {
           /* the error on x=Re(z1) is bounded by 1/2 ulp(x) + 2^(e1-p-1) +
@@ -212,10 +213,10 @@ mpc_acos (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
           /* the error on x is bounded by 1/2 ulp(x) [1 + 2^e1] */
           e1 = e1 <= 0 ? 0 : e1;
           /* the error on x is bounded by 2^e1 * ulp(x) */
-          mpfr_neg (mpc_imagref(z1), mpc_imagref(z1), GMP_RNDN); /* exact */
+          mpfr_neg (mpc_imagref(z1), mpc_imagref(z1), MPFR_RNDN); /* exact */
           inex_im = -inex_im;
-          if (mpfr_can_round (mpc_realref(z1), p - e1, GMP_RNDN, GMP_RNDZ,
-                              p_re + (MPC_RND_RE(rnd) == GMP_RNDN)))
+          if (mpfr_can_round (mpc_realref(z1), p - e1, MPFR_RNDN, MPFR_RNDZ,
+                              p_re + (MPC_RND_RE(rnd) == MPFR_RNDN)))
             break;
         }
     }

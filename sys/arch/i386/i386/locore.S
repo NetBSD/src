@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157 2018/06/14 17:58:22 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.1 2019/06/10 22:06:20 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157 2018/06/14 17:58:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157.2.1 2019/06/10 22:06:20 christos Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -153,22 +153,22 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157 2018/06/14 17:58:22 maxv Exp $");
 #include <machine/i82489reg.h>
 #include <machine/cputypes.h>
 
-#ifndef XEN
+#ifndef XENPV
 #include <machine/multiboot.h>
 #endif
 
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
-#ifndef XEN
+#ifndef XENPV
 #define	_RELOC(x)	((x) - KERNBASE)
 #else
 #define	_RELOC(x)	((x))
-#endif /* XEN */
+#endif /* XENPV */
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
-/* 32bit version of PG_NX */
-#define PG_NX32	0x80000000
+/* 32bit version of PTE_NX */
+#define PTE_NX32	0x80000000
 
 #ifndef PAE
 #define	PROC0_PDIR_OFF	0
@@ -244,6 +244,20 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157 2018/06/14 17:58:22 maxv Exp $");
 
 #ifdef XEN
 /*
+ * Unfortunately, the Xen codebase uses nonstandard preprocessing tools.
+ * See: https://xenbits.xen.org/gitweb/?p=xen.git&a=search&h=HEAD&st=grep&s=__UnDeF__
+ * for a fine selection of examples.
+ *
+ * What this means for us here is that we can't include the standard
+ * xen.h header in assembler code.
+ *
+ * So we have to manually define, and keep track of the values we need, ourselves.
+ */
+#define __HYPERVISOR_xen_version          17
+#endif	/* XEN */
+
+#ifdef XENPV
+/*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
@@ -253,15 +267,13 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157 2018/06/14 17:58:22 maxv Exp $");
 	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
 	.ascii	",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#ifdef PAE
 	.ascii	",PAE=yes[extended-cr3]"
-#endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
-#endif	/* XEN */
+#endif	/* XENPV */
 
 /*
  * Initialization
@@ -306,19 +318,19 @@ END(PDPpaddr)
 	.size	tmpstk, tmpstk - .
 	.space	512
 tmpstk:
-#ifdef XEN
+#ifdef XENPV
 	.align 		PAGE_SIZE, 0x0	/* Align on page boundary */
 LABEL(tmpgdt)
 	.space 		PAGE_SIZE	/* Xen expects a page */
 END(tmpgdt)
-#endif /* XEN */
+#endif /* XENPV */
 
 	.text
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
 ENTRY(start)
-#ifndef XEN
+#ifndef XENPV
 
 	/* Warm boot */
 	movw	$0x1234,0x472
@@ -539,13 +551,13 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,RELOC(cpuid_level)
 
 	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 * Retrieve the NX/XD flag. We use the 32bit version of PTE_NX.
 	 */
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
 	jz	no_NOX
-	movl	$PG_NX32,RELOC(nox_flag)
+	movl	$PTE_NX32,RELOC(nox_flag)
 no_NOX:
 
 2:
@@ -681,7 +693,7 @@ no_NOX:
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -689,7 +701,7 @@ no_NOX:
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */
@@ -697,7 +709,7 @@ no_NOX:
 	movl	$RELOC(__kernel_end),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map [SYMS]+[PRELOADED MODULES] RW. */
@@ -705,21 +717,21 @@ no_NOX:
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
 	movl	RELOC(tablesize),%ecx	/* length of BOOTSTRAP TABLES */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	orl	$(PTE_P|PTE_W/*|PTE_PCD*/),%eax
 	fillkpt_nox
 
 	/*
@@ -727,21 +739,21 @@ no_NOX:
 	 */
 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Set up L2 entries for actual kernel mapping */
 	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE */
 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt_nox
 
@@ -751,7 +763,7 @@ no_NOX:
 	 */
 	leal	(PROC0_L3_OFF)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt
 
@@ -844,7 +856,7 @@ begin:
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
 
 	call 	_C_LABEL(main)
-#else /* XEN */
+#else /* XENPV */
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -906,25 +918,27 @@ begin:
 	addl	$(USPACE+PAGE_SIZE),%esi
 	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
-#ifdef PAE
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
-#endif
 	pushl	%esi
 	call	_C_LABEL(init_bootspace)
 	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	call 	_C_LABEL(main)
-#endif /* XEN */
+#endif /* XENPV */
 END(start)
 
 #if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
-.org HYPERCALL_PAGE_OFFSET
-ENTRY(hypercall_page)
-.skip 0x1000
+.align HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page) /* Returns -1, on HYPERVISOR_xen_version() */
+.skip	(__HYPERVISOR_xen_version*32), 0x90
+	movl	$-1, %eax
+	retl
+.align HYPERCALL_PAGE_OFFSET, 0x90
 END(hypercall_page)
 
+#ifdef XENPV
 /*
  * void lgdt_finish(void);
  * Finish load a new GDT pointer (do any necessary cleanup).
@@ -934,7 +948,7 @@ END(hypercall_page)
  * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt_finish(void) */
-NENTRY(lgdt_finish)
+ENTRY(lgdt_finish)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%ds
 	movw	%ax,%es
@@ -949,6 +963,7 @@ NENTRY(lgdt_finish)
 	lret
 END(lgdt_finish)
 
+#endif /* XENPV */
 #endif /* XEN */
 
 /*
@@ -961,7 +976,7 @@ END(lgdt_finish)
  * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movl	%ebp,%edi	/* for .Lsyscall_checkast */
 	xorl	%ebp,%ebp
 	pushl	%edi
@@ -981,7 +996,7 @@ END(lwp_trampoline)
  * Signal trampoline; copied to top of user stack.  Used only for
  * compatibility with old releases of NetBSD.
  */
-NENTRY(sigcode)
+ENTRY(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
@@ -1065,7 +1080,7 @@ ENTRY(cpu_switchto)
 	pushl	%esi
 	pushl	%edi
 
-#if defined(DIAGNOSTIC) && !defined(XEN)
+#if defined(DIAGNOSTIC) && !defined(XENPV)
 	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jbe	0f
 	pushl	CPUVAR(ILEVEL)
@@ -1089,19 +1104,6 @@ ENTRY(cpu_switchto)
 	movl	%ebp,PCB_EBP(%eax)
 skip_save:
 
-#ifndef XEN
-	pushl	%edx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
-	pushl	%edi
-	pushl	%esi
-	call	_C_LABEL(fpu_eagerswitch)
-	addl	$8,%esp
-.Lno_eagerfpu:
-	popl	%edx
-#endif
-
 	/* Switch to newlwp's stack. */
 	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
@@ -1119,7 +1121,7 @@ skip_save:
 	jnz	switch_return
 
 	/* Switch ring0 stack */
-#ifdef XEN
+#ifdef XENPV
 	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
@@ -1129,11 +1131,28 @@ skip_save:
 	movl	%eax,TSS_ESP0(%ecx)
 #endif
 
+	/* Switch the dbregs. */
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(x86_dbregs_switch)
+	addl	$8,%esp
+
+	pushl	%edx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(fpu_eagerswitch)
+	addl	$8,%esp
+.Lno_eagerfpu:
+	popl	%edx
+
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	switch_return
 
-#ifndef XEN
+#ifndef XENPV
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	CPUVAR(GDT),%ecx
 	movl	PCB_FSD(%ebx),%eax
@@ -1144,7 +1163,7 @@ skip_save:
 	movl	PCB_GSD+4(%ebx),%edx
 	movl	%eax,(GUGS_SEL*8)(%ecx)
 	movl	%edx,(GUGS_SEL*8+4)(%ecx)
-#endif /* !XEN */
+#endif /* !XENPV */
 
 	/* Switch I/O bitmap */
 	movl	PCB_IOMAP(%ebx),%eax
@@ -1176,11 +1195,11 @@ no_RAS:
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-#ifdef XEN
+#ifdef XENPV
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
-#else /* !XEN */
+#else
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
@@ -1198,7 +1217,7 @@ skip_TS:
 	cmpl	%edx,%ecx
 	je	switch_return
 	movl	%ecx,%cr0
-#endif /* !XEN */
+#endif
 
 switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
@@ -1286,12 +1305,12 @@ IDTVEC(syscall)
 	movl	$.Lsyscall_resume, %esi /* address to resume loop at */
 .Lsyscall_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
 	jz	17f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(IPENDING)
-	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 17:	movl	%ebx, CPUVAR(ILEVEL)	/* restore cpl  */
 	jmp	.Lsyscall_checkast
@@ -1336,7 +1355,7 @@ IDTVEC_END(syscall)
  * Used when checking for the FDIV bug on first generations pentiums.
  * Anything 120MHz or above is fine.
  */
-NENTRY(npx586bug1)
+ENTRY(npx586bug1)
 	fildl	4(%esp)		/* x */
 	fildl	8(%esp)		/* y */
 	fld	%st(1)

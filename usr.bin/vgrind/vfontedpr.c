@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.17 2016/09/05 00:40:30 sevan Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.17.14.1 2019/06/10 22:10:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.17 2016/09/05 00:40:30 sevan Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.17.14.1 2019/06/10 22:10:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -660,6 +660,7 @@ putcp(int c)
 	default:
 		if (c < 040)
 			putchar('^'), c |= '@';
+		/* FALLTHROUGH */
 	case '\t':
 	case '\n':
 		putchar(c);

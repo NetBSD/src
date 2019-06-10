@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.9 2017/08/24 23:45:08 mrg Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.9.4.1 2019/06/10 22:06:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -594,7 +594,7 @@ bcemul_done:
 	REG_PROLOGUE
 	REG_L	a0, TF_REG_EPC(s0)
 	REG_EPILOGUE
-	jal	_C_LABEL(ufetch_uint32)
+	jal	_C_LABEL(mips_ufetch32)
 
 	/* Calculate branch destination */
 	sll	t0, v0, 16

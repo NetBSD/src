@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.13 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.13.4.1 2019/06/10 22:07:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -97,7 +97,7 @@ struct ahci_r_fis {
 /* class Mass storage, subclass SATA, interface AHCI */
 #define PCI_INTERFACE_SATA_AHCI	0x01
 
-#define AHCI_PCI_ABAR	0x24 /* native ACHI registers (memory mapped) */
+#define AHCI_PCI_ABAR	0x24 /* native AHCI registers (memory mapped) */
 
 /*  ABAR registers */
 /* Global registers */
@@ -208,7 +208,7 @@ struct ahci_r_fis {
 #define		AHCI_P_IX_PRCS	0x00400000 /* Phy Ready change */
 #define		AHCI_P_IX_DMPS	0x00000080 /* Device Mechanical Presence */
 #define		AHCI_P_IX_PCS	0x00000040 /* port Connect change */
-#define		AHCI_P_IX_DPS	0x00000020 /* dexcriptor processed */
+#define		AHCI_P_IX_DPS	0x00000020 /* descriptor processed */
 #define		AHCI_P_IX_UFS	0x00000010 /* Unknown FIS */
 #define		AHCI_P_IX_SDBS	0x00000008 /* Set device bit */
 #define		AHCI_P_IX_DSS	0x00000004 /* DMA setup FIS */

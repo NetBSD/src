@@ -1,5 +1,5 @@
 /* Definitions for PA_RISC with ELF-32 format
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -62,3 +62,12 @@ call_ ## FUNC (void)					\
 
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE BITS_PER_WORD
+
+/* Place jump tables in the text section except when generating non-PIC
+   code.  When generating non-PIC code, the relocations needed to load the
+   address of the jump table result in a text label in the final executable
+   if the jump table is placed in the text section.  This breaks the unwind
+   data for the function.  Thus, the jump table needs to be placed in
+   rodata when generating non-PIC code.  */
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION (flag_pic)

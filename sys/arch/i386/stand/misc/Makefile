@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2018/06/26 10:15:36 martin Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2019/06/10 22:06:22 christos Exp $
 
 .include <bsd.hostinit.mk>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.5 2017/04/12 18:17:59 kamil Exp $ */
+/* $NetBSD: ptrace.h,v 1.5.12.1 2019/06/10 22:05:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,18 +36,23 @@
 
 /*
  * AARCH64-dependent ptrace definitions.
- * Note that PT_STEP is _not_ supported.
  */
-#define PT_GETREGS      (PT_FIRSTMACH + 0)
-#define PT_SETREGS      (PT_FIRSTMACH + 1)
-#define PT_GETFPREGS    (PT_FIRSTMACH + 2)
-#define PT_SETFPREGS    (PT_FIRSTMACH + 3)
+#define PT_GETREGS	(PT_FIRSTMACH + 0)
+#define PT_SETREGS	(PT_FIRSTMACH + 1)
+#define PT_GETFPREGS	(PT_FIRSTMACH + 2)
+#define PT_SETFPREGS	(PT_FIRSTMACH + 3)
+#define PT_STEP		(PT_FIRSTMACH + 4)
+#define PT_SETSTEP	(PT_FIRSTMACH + 5)
+#define PT_CLEARSTEP	(PT_FIRSTMACH + 6)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_STEP", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 
 #include <machine/reg.h>
@@ -56,8 +61,8 @@
 #define PTRACE_REG_SP(r)	(r)->r_sp
 #define PTRACE_REG_INTRV(r)	(r)->r_reg[0]
 
-#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xd4, 0x20, 0x01, 0xa0 })
-#define PTRACE_BREAKPOINT_ASM	__asm __volatile(".word 0xa00120d4" ::: "memory")
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xa0, 0x01, 0x20, 0xd4 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("brk #13" ::: "memory")
 #define PTRACE_BREAKPOINT_SIZE	4
 
 #elif defined(__arm__)

@@ -1,5 +1,5 @@
 /* TILE-Gx ELF specific backend routines.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -96,4 +96,4 @@ extern bfd_boolean
 tilegx_elf_finish_dynamic_sections (bfd *, struct bfd_link_info *);
 
 extern bfd_boolean
-_bfd_tilegx_elf_merge_private_bfd_data (bfd *, bfd *);
+_bfd_tilegx_elf_merge_private_bfd_data (bfd *, struct bfd_link_info *);

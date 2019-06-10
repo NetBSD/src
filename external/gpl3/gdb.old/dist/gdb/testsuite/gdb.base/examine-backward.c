@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2016 Free Software Foundation, Inc.
+   Copyright 2015-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,6 +31,14 @@ literals.  The content of each array is the same as followings:
       "!!!!!!\0"
   };
 */
+
+/* This is here just to ensure we have a null character before
+   TestStrings, to avoid showing garbage when we look for strings
+   backwards from TestStrings.  */
+
+const char Barrier[] = {
+  0x00,
+};
 
 const char TestStrings[] = {
   0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,

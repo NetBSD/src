@@ -52,22 +52,6 @@
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>
 
-#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3)
-void	arm3_cache_flush	(void);
-#endif	/* CPU_ARM2 || CPU_ARM250 || CPU_ARM3 */
-
-#ifdef CPU_ARM2
-u_int	arm2_id			(void);
-#endif /* CPU_ARM2 */
-
-#ifdef CPU_ARM250
-u_int	arm250_id		(void);
-#endif
-
-#ifdef CPU_ARM3
-u_int	arm3_control		(u_int, u_int);
-#endif	/* CPU_ARM3 */
-
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 void	arm67_setttb		(u_int, bool);
 void	arm67_tlb_flush		(void);

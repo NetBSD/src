@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.7 2018/06/07 13:36:28 thorpej Exp $
+# $NetBSD: CUBOX,v 1.7.2.1 2019/06/10 22:06:04 christos Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -48,7 +48,6 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 
 #options 	DEBUG
@@ -64,7 +63,6 @@ options 	DDB			# in-kernel debugger
 options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DDB_VERBOSE_HELP
-#options 	IPKDB			# remote kernel debugging
 #options	KGDB
 #options 	KGDB_DEVRATE=115200
 makeoptions	DEBUG="-g"		# compile full symbol table
@@ -80,7 +78,6 @@ include 	"conf/compat_netbsd60.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-#options 	COMPAT_NDIS	# NDIS network driver
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
@@ -138,10 +135,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -284,7 +277,6 @@ wskbd*	at ukbd? console ? mux 1
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
@@ -329,7 +321,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ifmpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -347,9 +339,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-#pseudo-device	pfsync			# PF sync if
 #pseudo-device	npf			# NPF packet filter
 
 #
@@ -360,7 +349,6 @@ pseudo-device	accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -381,20 +369,8 @@ pseudo-device	wsfont
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-
 # Veriexec
-#
-# a pseudo device needed for veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.30 2016/12/27 21:52:35 christos Exp $ */
+/* $NetBSD: lint1.h,v 1.30.14.1 2019/06/10 22:10:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -95,7 +95,7 @@ typedef	struct strg {
  * qualifiers (only for lex/yacc interface)
  */
 typedef enum {
-	CONST, VOLATILE, RESTRICT
+	CONST, VOLATILE, RESTRICT, THREAD
 } tqual_t;
 
 /*

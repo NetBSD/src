@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperrno2host.h,v 1.4 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: rumperrno2host.h,v 1.4.2.1 2019/06/10 22:09:52 christos Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.

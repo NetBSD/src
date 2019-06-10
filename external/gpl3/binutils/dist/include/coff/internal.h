@@ -257,9 +257,6 @@ struct internal_aouthdr
   bfd_vma text_start;		/* base of text used for this file */
   bfd_vma data_start;		/* base of data used for this file */
 
-  /* i960 stuff */
-  unsigned long tagentries;	/* number of tag entries to follow */
-
   /* RS/6000 stuff */
   bfd_vma o_toc;		/* address of TOC			*/
   short o_snentry;		/* section number for entry point */
@@ -347,10 +344,6 @@ struct internal_aouthdr
 #define C_PRAGMA	111	/* Advice to compiler or linker	*/
 #define C_SEGMENT	112	/* 80960 segment name		*/
 
-  /* Storage classes for m88k */
-#define C_SHADOW        107     /* shadow symbol                */
-#define C_VERSION       108     /* coff version symbol          */
-
  /* New storage classes for RS/6000 */
 #define C_HIDEXT        107	/* Un-named external symbol */
 #define C_BINCL         108	/* Marks beginning of include file */
@@ -400,7 +393,7 @@ struct internal_aouthdr
 
 struct internal_scnhdr
 {
-  char s_name[SCNNMLEN];	/* section name			*/
+  char s_name[SCNNMLEN] ATTRIBUTE_NONSTRING;	/* section name	*/
 
   /* Physical address, aliased s_nlib.
      In the pei format, this field is the virtual section size
@@ -416,7 +409,6 @@ struct internal_scnhdr
   unsigned long s_nreloc;	/* number of relocation entries	*/
   unsigned long s_nlnno;	/* number of line number entries*/
   long s_flags;			/* flags			*/
-  long s_align;			/* used on I960			*/
   unsigned char s_page;         /* TI COFF load page            */
 };
 
@@ -474,7 +466,7 @@ struct internal_syment
 {
   union
   {
-    char _n_name[SYMNMLEN];	/* old COFF version		*/
+    char _n_name[SYMNMLEN] ATTRIBUTE_NONSTRING;	/* old COFF version	*/
     struct
     {
       bfd_hostptr_t _n_zeroes;	/* new == 0			*/
@@ -668,28 +660,6 @@ union internal_auxent
 /* 		14	??? */
 #define	XMC_TC0	15		/* Read-write TOC anchor */
 #define XMC_TD	16		/* Read-write data in TOC */
-
-  /******************************************
-   *  I960-specific *2nd* aux. entry formats
-   ******************************************/
-  struct
-  {
-    /* This is a very old typo that keeps getting propagated. */
-#define x_stdindx x_stindx
-    long x_stindx;		/* sys. table entry */
-  }      x_sc;			/* system call entry */
-
-  struct
-  {
-    unsigned long x_balntry;	/* BAL entry point */
-  }      x_bal;			/* BAL-callable function */
-
-  struct
-  {
-    unsigned long x_timestamp;	/* time stamp */
-    char x_idstring[20];	/* producer identity string */
-  }      x_ident;		/* Producer ident info */
-
 };
 
 /********************** RELOCATION DIRECTIVES **********************/
@@ -838,34 +808,5 @@ struct internal_reloc
 #define R_OFF8    0x32		/* 8 bit signed abs, for (i[xy]+d) */
 #define R_IMM24   0x33          /* 24 bit abs */
 /* R_JR, R_IMM8, R_IMM16, R_IMM32 - as for Z8k */
-
-/* H8500 modes */
-
-#define R_H8500_IMM8  	1		/*  8 bit immediate 	*/
-#define R_H8500_IMM16 	2		/* 16 bit immediate	*/
-#define R_H8500_PCREL8 	3		/*  8 bit pcrel 	*/
-#define R_H8500_PCREL16 4		/* 16 bit pcrel 	*/
-#define R_H8500_HIGH8  	5		/* high 8 bits of 24 bit address */
-#define R_H8500_LOW16 	7		/* low 16 bits of 24 bit immediate */
-#define R_H8500_IMM24	6		/* 24 bit immediate */
-#define R_H8500_IMM32   8               /* 32 bit immediate */
-#define R_H8500_HIGH16  9		/* high 16 bits of 32 bit immediate */
-
-/* W65 modes */
-
-#define R_W65_ABS8	1  /* addr & 0xff 		*/
-#define R_W65_ABS16	2  /* addr & 0xffff 		*/
-#define R_W65_ABS24	3  /* addr & 0xffffff 		*/
-
-#define R_W65_ABS8S8    4  /* (addr >> 8) & 0xff 	*/
-#define R_W65_ABS8S16   5  /* (addr >> 16) & 0xff 	*/
-
-#define R_W65_ABS16S8   6  /* (addr >> 8) & 0ffff 	*/
-#define R_W65_ABS16S16  7  /* (addr >> 16) & 0ffff 	*/
-
-#define R_W65_PCR8	8
-#define R_W65_PCR16	9
-
-#define R_W65_DP       10  /* direct page 8 bits only   */
 
 #endif /* GNU_COFF_INTERNAL_H */

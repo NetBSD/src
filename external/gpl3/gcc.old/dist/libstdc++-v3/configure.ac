@@ -150,7 +150,6 @@ GLIBCXX_ENABLE_HOSTED
 GLIBCXX_ENABLE_VERBOSE
 
 # Enable compiler support that doesn't require linking.
-GLIBCXX_ENABLE_SJLJ_EXCEPTIONS
 GLIBCXX_ENABLE_PCH($is_hosted)
 GLIBCXX_ENABLE_THREADS
 GLIBCXX_ENABLE_ATOMIC_BUILTINS
@@ -186,6 +185,7 @@ GLIBCXX_ENABLE_VTABLE_VERIFY([no])
 GLIBCXX_CHECK_STDIO_PROTO
 GLIBCXX_CHECK_MATH11_PROTO
 GLIBCXX_CHECK_SYSTEM_ERROR
+GLIBCXX_CHECK_UCHAR_H
 
 # For the streamoff typedef.
 GLIBCXX_CHECK_INT64_T
@@ -411,6 +411,9 @@ AC_CHECK_HEADERS([fcntl.h dirent.h sys/statvfs.h utime.h])
 GLIBCXX_ENABLE_FILESYSTEM_TS
 GLIBCXX_CHECK_FILESYSTEM_DEPS
 
+# For Transactional Memory TS
+GLIBCXX_CHECK_SIZE_T_MANGLING
+
 # Define documentation rules conditionally.
 
 # See if makeinfo has been installed and is modern enough
@@ -456,6 +459,12 @@ AM_CONDITIONAL(BUILD_PDF,
 	       test $ac_cv_prog_DBLATEX = "yes" &&
 	       test $ac_cv_prog_PDFLATEX = "yes")
 
+case "$build" in
+ *-*-darwin* ) glibcxx_include_dir_notparallel=yes ;;
+ * ) glibcxx_include_dir_notparallel=no ;;
+esac
+AM_CONDITIONAL(INCLUDE_DIR_NOTPARALLEL,
+               test $glibcxx_include_dir_notparallel = "yes")
 
 # Propagate the target-specific source directories through the build chain.
 ATOMICITY_SRCDIR=config/${atomicity_dir}

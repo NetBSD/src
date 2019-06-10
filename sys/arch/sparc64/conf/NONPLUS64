@@ -1,8 +1,8 @@
-#	$NetBSD: NONPLUS64,v 1.54 2018/02/05 15:18:11 maxv Exp $
+#	$NetBSD: NONPLUS64,v 1.54.4.1 2019/06/10 22:06:47 christos Exp $
 
 include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.54 $"
+#ident		"NONPLUS64-$Revision: 1.54.4.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -98,14 +98,11 @@ options 	SCSIVERBOSE
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	EXEC_ELF32	# Exec module for NetBSD/sparc 1.5 binaries.
 #options 	SYSCALL_DEBUG
@@ -148,8 +145,6 @@ options 	GATEWAY		# packet forwarding ("router switch")
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -338,9 +333,7 @@ pseudo-device	tun
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
 
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-pseudo-device	ipfilter
+pseudo-device	npf			# NPF packet filter
 
 
 #### Audio and video devices
@@ -388,5 +381,6 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud

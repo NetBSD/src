@@ -1,6 +1,6 @@
 /* Handle the hair of processing (but not expanding) inline functions.
    Also manage function and variable name overloading.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -169,7 +169,7 @@ finish_thunk (tree thunk)
     virtual_offset = BINFO_VPTR_FIELD (virtual_offset);
   function = THUNK_TARGET (thunk);
   name = mangle_thunk (function, DECL_THIS_THUNK_P (thunk),
-		       fixed_offset, virtual_offset);
+		       fixed_offset, virtual_offset, thunk);
 
   /* We can end up with declarations of (logically) different
      covariant thunks, that do identical adjustments.  The two thunks
@@ -493,6 +493,126 @@ forward_parm (tree parm)
   return exp;
 }
 
+/* Strip all inheriting constructors, if any, to return the original
+   constructor from a (possibly indirect) base class.  */
+
+tree
+strip_inheriting_ctors (tree dfn)
+{
+  if (!flag_new_inheriting_ctors)
+    return dfn;
+  tree fn = dfn;
+  while (tree inh = DECL_INHERITED_CTOR (fn))
+    {
+      inh = OVL_CURRENT (inh);
+      fn = inh;
+    }
+  if (TREE_CODE (fn) == TEMPLATE_DECL
+      && TREE_CODE (dfn) == FUNCTION_DECL)
+    fn = DECL_TEMPLATE_RESULT (fn);
+  return fn;
+}
+
+/* Find the binfo for the base subobject of BINFO being initialized by
+   inherited constructor FNDECL (a member of a direct base of BINFO).  */
+
+static tree inherited_ctor_binfo (tree, tree);
+static tree
+inherited_ctor_binfo_1 (tree binfo, tree fndecl)
+{
+  tree base = DECL_CONTEXT (fndecl);
+  tree base_binfo;
+  for (int i = 0; BINFO_BASE_ITERATE (binfo, i, base_binfo); i++)
+    if (BINFO_TYPE (base_binfo) == base)
+      return inherited_ctor_binfo (base_binfo, fndecl);
+
+  gcc_unreachable();
+}
+
+/* Find the binfo for the base subobject of BINFO being initialized by
+   inheriting constructor FNDECL (a member of BINFO), or BINFO if FNDECL is not
+   an inheriting constructor.  */
+
+static tree
+inherited_ctor_binfo (tree binfo, tree fndecl)
+{
+  tree inh = DECL_INHERITED_CTOR (fndecl);
+  if (!inh)
+    return binfo;
+
+  tree results = NULL_TREE;
+  for (; inh; inh = OVL_NEXT (inh))
+    {
+      tree one = inherited_ctor_binfo_1 (binfo, OVL_CURRENT (inh));
+      if (!results)
+	results = one;
+      else if (one != results)
+	results = tree_cons (NULL_TREE, one, results);
+    }
+  return results;
+}
+
+/* Find the binfo for the base subobject being initialized by inheriting
+   constructor FNDECL, or NULL_TREE if FNDECL is not an inheriting
+   constructor.  */
+
+tree
+inherited_ctor_binfo (tree fndecl)
+{
+  if (!DECL_INHERITED_CTOR (fndecl))
+    return NULL_TREE;
+  tree binfo = TYPE_BINFO (DECL_CONTEXT (fndecl));
+  return inherited_ctor_binfo (binfo, fndecl);
+}
+
+/* True if we should omit all user-declared parameters from constructor FN,
+   because it is a base clone of a ctor inherited from a virtual base.  */
+
+bool
+ctor_omit_inherited_parms (tree fn)
+{
+  if (!flag_new_inheriting_ctors)
+    /* We only optimize away the parameters in the new model.  */
+    return false;
+  if (!DECL_BASE_CONSTRUCTOR_P (fn)
+      || !CLASSTYPE_VBASECLASSES (DECL_CONTEXT (fn)))
+    return false;
+  if (FUNCTION_FIRST_USER_PARMTYPE (DECL_ORIGIN (fn)) == void_list_node)
+    /* No user-declared parameters to omit.  */
+    return false;
+  tree binfo = inherited_ctor_binfo (fn);
+  for (; binfo; binfo = BINFO_INHERITANCE_CHAIN (binfo))
+    if (BINFO_VIRTUAL_P (binfo))
+      return true;
+  return false;
+}
+
+/* True iff constructor(s) INH inherited into BINFO initializes INIT_BINFO.
+   This can be true for multiple virtual bases as well as one direct
+   non-virtual base.  */
+
+static bool
+binfo_inherited_from (tree binfo, tree init_binfo, tree inh)
+{
+  /* inh is an OVERLOAD if we inherited the same constructor along
+     multiple paths, check all of them.  */
+  for (; inh; inh = OVL_NEXT (inh))
+    {
+      tree fn = OVL_CURRENT (inh);
+      tree base = DECL_CONTEXT (fn);
+      tree base_binfo = NULL_TREE;
+      for (int i = 0; BINFO_BASE_ITERATE (binfo, i, base_binfo); i++)
+	if (BINFO_TYPE (base_binfo) == base)
+	  break;
+      if (base_binfo == init_binfo
+	  || (flag_new_inheriting_ctors
+	      && binfo_inherited_from (base_binfo, init_binfo,
+				       DECL_INHERITED_CTOR (fn))))
+	return true;
+    }
+  return false;
+}
+
 /* Subroutine of do_build_copy_constructor: Add a mem-initializer for BINFO
    given the parameter or parameters PARM, possibly inherited constructor
    base INH, or move flag MOVE_P.  */
@@ -506,7 +626,7 @@ add_one_base_init (tree binfo, tree parm, bool move_p, tree inh,
     {
       /* An inheriting constructor only has a mem-initializer for
 	 the base it inherits from.  */
-      if (BINFO_TYPE (binfo) != inh)
+      if (!binfo_inherited_from (TYPE_BINFO (current_class_type), binfo, inh))
 	return member_init_list;
 
       tree *p = &init;
@@ -538,19 +658,37 @@ do_build_copy_constructor (tree fndecl)
   tree parm = FUNCTION_FIRST_USER_PARM (fndecl);
   bool move_p = DECL_MOVE_CONSTRUCTOR_P (fndecl);
   bool trivial = trivial_fn_p (fndecl);
-  tree inh = DECL_INHERITED_CTOR_BASE (fndecl);
+  tree inh = DECL_INHERITED_CTOR (fndecl);
 
   if (!inh)
     parm = convert_from_reference (parm);
 
-  if (trivial
-      && is_empty_class (current_class_type))
-    /* Don't copy the padding byte; it might not have been allocated
-       if *this is a base subobject.  */;
-  else if (trivial)
+  if (trivial)
     {
-      tree t = build2 (INIT_EXPR, void_type_node, current_class_ref, parm);
-      finish_expr_stmt (t);
+      if (is_empty_class (current_class_type))
+	/* Don't copy the padding byte; it might not have been allocated
+	   if *this is a base subobject.  */;
+      else if (tree_int_cst_equal (TYPE_SIZE (current_class_type),
+				   CLASSTYPE_SIZE (current_class_type)))
+	{
+	  tree t = build2 (INIT_EXPR, void_type_node, current_class_ref, parm);
+	  finish_expr_stmt (t);
+	}
+      else
+	{
+	  /* We must only copy the non-tail padding parts.  */
+	  tree base_size = CLASSTYPE_SIZE_UNIT (current_class_type);
+	  base_size = size_binop (MINUS_EXPR, base_size, size_int (1));
+	  tree array_type = build_array_type (unsigned_char_type_node,
+					      build_index_type (base_size));
+	  tree alias_set = build_int_cst (TREE_TYPE (current_class_ptr), 0);
+	  tree lhs = build2 (MEM_REF, array_type,
+			     current_class_ptr, alias_set);
+	  tree rhs = build2 (MEM_REF, array_type,
+			     TREE_OPERAND (parm, 0), alias_set);
+	  tree t = build2 (INIT_EXPR, void_type_node, lhs, rhs);
+	  finish_expr_stmt (t);
+	}
     }
   else
     {
@@ -679,7 +817,7 @@ do_build_copy_assign (tree fndecl)
 	  parmvec = make_tree_vector_single (converted_parm);
 	  finish_expr_stmt
 	    (build_special_member_call (current_class_ref,
-					ansi_assopname (NOP_EXPR),
+					cp_assignment_operator_id (NOP_EXPR),
 					&parmvec,
 					base_binfo,
 					flags,
@@ -744,7 +882,7 @@ do_build_copy_assign (tree fndecl)
 	    init = move (init);
 
 	  if (DECL_NAME (field))
-	    init = cp_build_modify_expr (comp, NOP_EXPR, init, 
+	    init = cp_build_modify_expr (input_location, comp, NOP_EXPR, init,
 					 tf_warning_or_error);
 	  else
 	    init = build2 (MODIFY_EXPR, TREE_TYPE (comp), comp, init);
@@ -884,7 +1022,7 @@ locate_fn_flags (tree type, tree name, tree argtype, int flags,
     {
       if (TREE_CODE (argtype) == TREE_LIST)
 	{
-	  for (tree elt = argtype; elt != void_list_node;
+	  for (tree elt = argtype; elt && elt != void_list_node;
 	       elt = TREE_CHAIN (elt))
 	    {
 	      tree type = TREE_VALUE (elt);
@@ -972,27 +1110,8 @@ get_copy_assign (tree type)
   int quals = (TYPE_HAS_CONST_COPY_ASSIGN (type)
 	       ? TYPE_QUAL_CONST : TYPE_UNQUALIFIED);
   tree argtype = build_stub_type (type, quals, false);
-  tree fn = locate_fn_flags (type, ansi_assopname (NOP_EXPR), argtype,
+  tree fn = locate_fn_flags (type, cp_assignment_operator_id (NOP_EXPR), argtype,
 			     LOOKUP_NORMAL, tf_warning_or_error);
-  if (fn == error_mark_node)
-    return NULL_TREE;
-  return fn;
-}
-
-/* Locate the inherited constructor of constructor CTOR.  */
-
-tree
-get_inherited_ctor (tree ctor)
-{
-  gcc_assert (DECL_INHERITED_CTOR_BASE (ctor));
-
-  push_deferring_access_checks (dk_no_check);
-  tree fn = locate_fn_flags (DECL_INHERITED_CTOR_BASE (ctor),
-			     complete_ctor_identifier,
-			     FUNCTION_FIRST_USER_PARMTYPE (ctor),
-			     LOOKUP_NORMAL|LOOKUP_SPECULATIVE,
-			     tf_none);
-  pop_deferring_access_checks ();
   if (fn == error_mark_node)
     return NULL_TREE;
   return fn;
@@ -1005,12 +1124,8 @@ get_inherited_ctor (tree ctor)
 static tree
 check_nontriv (tree *tp, int *, void *)
 {
-  tree fn;
-  if (TREE_CODE (*tp) == CALL_EXPR)
-    fn = CALL_EXPR_FN (*tp);
-  else if (TREE_CODE (*tp) == AGGR_INIT_EXPR)
-    fn = AGGR_INIT_EXPR_FN (*tp);
-  else
+  tree fn = cp_get_callee (*tp);
+  if (fn == NULL_TREE)
     return NULL_TREE;
 
   if (TREE_CODE (fn) == ADDR_EXPR)
@@ -1030,7 +1145,7 @@ assignable_expr (tree to, tree from)
   ++cp_unevaluated_operand;
   to = build_stub_object (to);
   from = build_stub_object (from);
-  tree r = cp_build_modify_expr (to, NOP_EXPR, from, tf_none);
+  tree r = cp_build_modify_expr (input_location, to, NOP_EXPR, from, tf_none);
   --cp_unevaluated_operand;
   return r;
 }
@@ -1050,6 +1165,7 @@ constructible_expr (tree to, tree from)
     {
       tree ctype = to;
       vec<tree, va_gc> *args = NULL;
+      cp_unevaluated cp_uneval_guard;
       if (TREE_CODE (to) != REFERENCE_TYPE)
 	to = cp_build_reference_type (to, /*rval*/false);
       tree ob = build_stub_object (to);
@@ -1116,7 +1232,11 @@ process_subob_fn (tree fn, tree *spec_p, bool *trivial_p,
 		  bool diag, tree arg, bool dtor_from_ctor = false)
 {
   if (!fn || fn == error_mark_node)
-    goto bad;
+    {
+      if (deleted_p)
+	*deleted_p = true;
+      return;
+    }
 
   if (spec_p)
     {
@@ -1149,12 +1269,6 @@ process_subob_fn (tree fn, tree *spec_p, bool *trivial_p,
 	  explain_invalid_constexpr_fn (fn);
 	}
     }
-
-  return;
-
- bad:
-  if (deleted_p)
-    *deleted_p = true;
 }
 
 /* Subroutine of synthesized_method_walk to allow recursion into anonymous
@@ -1201,7 +1315,7 @@ walk_field_subobs (tree fields, tree fnname, special_function_kind sfk,
 	  if (bad && deleted_p)
 	    *deleted_p = true;
 	}
-      else if (sfk == sfk_constructor)
+      else if (sfk == sfk_constructor || sfk == sfk_inheriting_constructor)
 	{
 	  bool bad;
 
@@ -1308,25 +1422,94 @@ walk_field_subobs (tree fields, tree fnname, special_function_kind sfk,
     }
 }
 
-/* The caller wants to generate an implicit declaration of SFK for CTYPE
-   which is const if relevant and CONST_P is set.  If spec_p, trivial_p and
-   deleted_p are non-null, set their referent appropriately.  If diag is
-   true, we're either being called from maybe_explain_implicit_delete to
-   give errors, or if constexpr_p is non-null, from
-   explain_invalid_constexpr_fn.  */
+/* Base walker helper for synthesized_method_walk.  Inspect a direct
+   or virtual base.  BINFO is the parent type's binfo.  BASE_BINFO is
+   the base binfo of interests.  All other parms are as for
+   synthesized_method_walk, or its local vars.  */
+
+static tree
+synthesized_method_base_walk (tree binfo, tree base_binfo, 
+			      int quals, bool copy_arg_p,
+			      bool move_p, bool ctor_p,
+			      tree *inheriting_ctor, tree inherited_parms,
+			      tree fnname, int flags, bool diag,
+			      tree *spec_p, bool *trivial_p,
+			      bool *deleted_p, bool *constexpr_p)
+{
+  bool inherited_binfo = false;
+  tree argtype = NULL_TREE;
+  deferring_kind defer = dk_no_deferred;
+
+  if (copy_arg_p)
+    argtype = build_stub_type (BINFO_TYPE (base_binfo), quals, move_p);
+  else if (inheriting_ctor
+	   && (inherited_binfo
+	       = binfo_inherited_from (binfo, base_binfo, *inheriting_ctor)))
+    {
+      argtype = inherited_parms;
+      /* Don't check access on the inherited constructor.  */
+      if (flag_new_inheriting_ctors)
+	defer = dk_deferred;
+    }
+  /* To be conservative, ignore access to the base dtor that
+     DR1658 instructs us to ignore.  See the comment in
+     synthesized_method_walk.  */
+  else if (cxx_dialect >= cxx14 && fnname == complete_dtor_identifier
+	   && BINFO_VIRTUAL_P (base_binfo)
+	   && ABSTRACT_CLASS_TYPE_P (BINFO_TYPE (binfo)))
+    defer = dk_no_check;
+
+  if (defer != dk_no_deferred)
+    push_deferring_access_checks (defer);
+  tree rval = locate_fn_flags (base_binfo, fnname, argtype, flags,
+			       diag ? tf_warning_or_error : tf_none);
+  if (defer != dk_no_deferred)
+    pop_deferring_access_checks ();
+
+  /* Replace an inherited template with the appropriate specialization.  */
+  if (inherited_binfo && rval
+      && DECL_P (*inheriting_ctor) && DECL_P (rval)
+      && DECL_CONTEXT (*inheriting_ctor) == DECL_CONTEXT (rval))
+    *inheriting_ctor = DECL_CLONED_FUNCTION (rval);
+
+  process_subob_fn (rval, spec_p, trivial_p, deleted_p,
+		    constexpr_p, diag, BINFO_TYPE (base_binfo));
+  if (ctor_p &&
+      (!BINFO_VIRTUAL_P (base_binfo)
+       || TYPE_HAS_NONTRIVIAL_DESTRUCTOR (BINFO_TYPE (base_binfo))))
+    {
+      /* In a constructor we also need to check the subobject
+	 destructors for cleanup of partially constructed objects.  */
+      tree dtor = locate_fn_flags (base_binfo, complete_dtor_identifier,
+				   NULL_TREE, flags,
+				   diag ? tf_warning_or_error : tf_none);
+	  /* Note that we don't pass down trivial_p; the subobject
+	     destructors don't affect triviality of the constructor.  Nor
+	     do they affect constexpr-ness (a constant expression doesn't
+	     throw) or exception-specification (a throw from one of the
+	     dtors would be a double-fault).  */
+      process_subob_fn (dtor, NULL, NULL, deleted_p, NULL, false,
+			BINFO_TYPE (base_binfo), /*dtor_from_ctor*/true);
+    }
+
+  return rval;
+}
+
+/* The caller wants to generate an implicit declaration of SFK for
+   CTYPE which is const if relevant and CONST_P is set.  If SPEC_P,
+   TRIVIAL_P, DELETED_P or CONSTEXPR_P are non-null, set their
+   referent appropriately.  If DIAG is true, we're either being called
+   from maybe_explain_implicit_delete to give errors, or if
+   CONSTEXPR_P is non-null, from explain_invalid_constexpr_fn.  */
 
 static void
 synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
 			 tree *spec_p, bool *trivial_p, bool *deleted_p,
 			 bool *constexpr_p, bool diag,
-			 tree inherited_base, tree inherited_parms)
+			 tree *inheriting_ctor, tree inherited_parms)
 {
-  tree binfo, base_binfo, scope, fnname, rval, argtype;
-  bool move_p, copy_arg_p, assign_p, expected_trivial, check_vdtor;
-  vec<tree, va_gc> *vbases;
-  int i, quals, flags;
-  tsubst_flags_t complain;
-  bool ctor_p;
+  tree binfo, base_binfo, fnname;
+  int i;
 
   if (spec_p)
     *spec_p = (cxx_dialect >= cxx11 ? noexcept_true_spec : empty_except_spec);
@@ -1347,15 +1530,15 @@ synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
       *deleted_p = false;
     }
 
-  ctor_p = false;
-  assign_p = false;
-  check_vdtor = false;
+  bool ctor_p = false;
+  bool assign_p = false;
+  bool check_vdtor = false;
   switch (sfk)
     {
     case sfk_move_assignment:
     case sfk_copy_assignment:
       assign_p = true;
-      fnname = ansi_assopname (NOP_EXPR);
+      fnname = cp_assignment_operator_id (NOP_EXPR);
       break;
 
     case sfk_destructor:
@@ -1378,7 +1561,7 @@ synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
     }
 
   gcc_assert ((sfk == sfk_inheriting_constructor)
-	      == (inherited_base != NULL_TREE));
+	      == (inheriting_ctor && *inheriting_ctor != NULL_TREE));
 
   /* If that user-written default constructor would satisfy the
      requirements of a constexpr constructor (7.1.5), the
@@ -1389,24 +1572,24 @@ synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
       - the assignment operator selected to copy/move each direct base class
 	subobject is a constexpr function, and
       - for each non-static data member of X that is of class type (or array
-	thereof), the assignment operator selected to copy/move that member is a
-	constexpr function.  */
+	thereof), the assignment operator selected to copy/move that
+	member is a constexpr function.  */
   if (constexpr_p)
-    *constexpr_p = ctor_p
-      || (assign_p && cxx_dialect >= cxx14);
+    *constexpr_p = ctor_p || (assign_p && cxx_dialect >= cxx14);
 
-  move_p = false;
+  bool move_p = false;
+  bool copy_arg_p = false;
   switch (sfk)
     {
     case sfk_constructor:
     case sfk_destructor:
     case sfk_inheriting_constructor:
-      copy_arg_p = false;
       break;
 
     case sfk_move_constructor:
     case sfk_move_assignment:
       move_p = true;
+      /* FALLTHRU */
     case sfk_copy_constructor:
     case sfk_copy_assignment:
       copy_arg_p = true;
@@ -1416,7 +1599,7 @@ synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
       gcc_unreachable ();
     }
 
-  expected_trivial = type_has_trivial_fn (ctype, sfk);
+  bool expected_trivial = type_has_trivial_fn (ctype, sfk);
   if (trivial_p)
     *trivial_p = expected_trivial;
 
@@ -1450,102 +1633,77 @@ synthesized_method_walk (tree ctype, special_function_kind sfk, bool const_p,
   ++c_inhibit_evaluation_warnings;
   push_deferring_access_checks (dk_no_deferred);
 
-  scope = push_scope (ctype);
+  tree scope = push_scope (ctype);
 
-  flags = LOOKUP_NORMAL|LOOKUP_SPECULATIVE;
-  if (!inherited_base)
+  int flags = LOOKUP_NORMAL | LOOKUP_SPECULATIVE;
+  if (sfk != sfk_inheriting_constructor)
     flags |= LOOKUP_DEFAULTED;
 
-  complain = diag ? tf_warning_or_error : tf_none;
-
-  if (const_p)
-    quals = TYPE_QUAL_CONST;
-  else
-    quals = TYPE_UNQUALIFIED;
-  argtype = NULL_TREE;
+  tsubst_flags_t complain = diag ? tf_warning_or_error : tf_none;
+  int quals = const_p ? TYPE_QUAL_CONST : TYPE_UNQUALIFIED;
 
   for (binfo = TYPE_BINFO (ctype), i = 0;
        BINFO_BASE_ITERATE (binfo, i, base_binfo); ++i)
     {
-      tree basetype = BINFO_TYPE (base_binfo);
-
       if (!assign_p && BINFO_VIRTUAL_P (base_binfo))
 	/* We'll handle virtual bases below.  */
 	continue;
 
-      if (copy_arg_p)
-	argtype = build_stub_type (basetype, quals, move_p);
-      else if (basetype == inherited_base)
-	argtype = inherited_parms;
-      rval = locate_fn_flags (base_binfo, fnname, argtype, flags, complain);
-      if (inherited_base)
-	argtype = NULL_TREE;
-
-      process_subob_fn (rval, spec_p, trivial_p, deleted_p,
-			constexpr_p, diag, basetype);
-      if (ctor_p)
-	{
-	  /* In a constructor we also need to check the subobject
-	     destructors for cleanup of partially constructed objects.  */
-	  rval = locate_fn_flags (base_binfo, complete_dtor_identifier,
-				  NULL_TREE, flags, complain);
-	  /* Note that we don't pass down trivial_p; the subobject
-	     destructors don't affect triviality of the constructor.  Nor
-	     do they affect constexpr-ness (a constant expression doesn't
-	     throw) or exception-specification (a throw from one of the
-	     dtors would be a double-fault).  */
-	  process_subob_fn (rval, NULL, NULL,
-			    deleted_p, NULL, false,
-			    basetype, /*dtor_from_ctor*/true);
-	}
-
-      if (check_vdtor && type_has_virtual_destructor (basetype))
-	{
-	  rval = locate_fn_flags (ctype, ansi_opname (DELETE_EXPR),
-				  ptr_type_node, flags, complain);
-	  /* Unlike for base ctor/op=/dtor, for operator delete it's fine
-	     to have a null rval (no class-specific op delete).  */
-	  if (rval && rval == error_mark_node && deleted_p)
-	    *deleted_p = true;
-	  check_vdtor = false;
-	}
+      tree fn = synthesized_method_base_walk (binfo, base_binfo, quals,
+					      copy_arg_p, move_p, ctor_p,
+					      inheriting_ctor,
+					      inherited_parms,
+					      fnname, flags, diag,
+					      spec_p, trivial_p,
+					      deleted_p, constexpr_p);
 
       if (diag && assign_p && move_p
 	  && BINFO_VIRTUAL_P (base_binfo)
-	  && rval && TREE_CODE (rval) == FUNCTION_DECL
-	  && move_fn_p (rval) && !trivial_fn_p (rval)
-	  && vbase_has_user_provided_move_assign (basetype))
+	  && fn && TREE_CODE (fn) == FUNCTION_DECL
+	  && move_fn_p (fn) && !trivial_fn_p (fn)
+	  && vbase_has_user_provided_move_assign (BINFO_TYPE (base_binfo)))
 	warning (OPT_Wvirtual_move_assign,
 		 "defaulted move assignment for %qT calls a non-trivial "
 		 "move assignment operator for virtual base %qT",
-		 ctype, basetype);
+		 ctype, BINFO_TYPE (base_binfo));
+
+      if (check_vdtor && type_has_virtual_destructor (BINFO_TYPE (base_binfo)))
+	{
+	  fn = locate_fn_flags (ctype, cp_operator_id (DELETE_EXPR),
+				ptr_type_node, flags, complain);
+	  /* Unlike for base ctor/op=/dtor, for operator delete it's fine
+	     to have a null fn (no class-specific op delete).  */
+	  if (fn && fn == error_mark_node && deleted_p)
+	    *deleted_p = true;
+	  check_vdtor = false;
+	}
     }
 
-  vbases = CLASSTYPE_VBASECLASSES (ctype);
-  if (vec_safe_is_empty (vbases))
+  vec<tree, va_gc> *vbases = CLASSTYPE_VBASECLASSES (ctype);
+  if (assign_p)
+    /* Already examined vbases above.  */;
+  else if (vec_safe_is_empty (vbases))
     /* No virtual bases to worry about.  */;
-  else if (!assign_p)
+  else if (ABSTRACT_CLASS_TYPE_P (ctype) && cxx_dialect >= cxx14
+	   /* DR 1658 specifies that vbases of abstract classes are
+	      ignored for both ctors and dtors.  However, that breaks
+	      virtual dtor overriding when the ignored base has a
+	      throwing destructor.  So, ignore that piece of 1658.  A
+	      defect has been filed (no number yet).  */
+	   && sfk != sfk_destructor)
+    /* Vbase cdtors are not relevant.  */;
+  else
     {
       if (constexpr_p)
 	*constexpr_p = false;
-      FOR_EACH_VEC_ELT (*vbases, i, base_binfo)
-	{
-	  tree basetype = BINFO_TYPE (base_binfo);
-	  if (copy_arg_p)
-	    argtype = build_stub_type (basetype, quals, move_p);
-	  rval = locate_fn_flags (base_binfo, fnname, argtype, flags, complain);
 
-	  process_subob_fn (rval, spec_p, trivial_p, deleted_p,
-			    constexpr_p, diag, basetype);
-	  if (ctor_p && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (basetype))
-	    {
-	      rval = locate_fn_flags (base_binfo, complete_dtor_identifier,
-				      NULL_TREE, flags, complain);
-	      process_subob_fn (rval, NULL, NULL,
-				deleted_p, NULL, false,
-				basetype, /*dtor_from_ctor*/true);
-	    }
-	}
+      FOR_EACH_VEC_ELT (*vbases, i, base_binfo)
+	synthesized_method_base_walk (binfo, base_binfo, quals,
+				      copy_arg_p, move_p, ctor_p,
+				      inheriting_ctor, inherited_parms,
+				      fnname, flags, diag,
+				      spec_p, trivial_p,
+				      deleted_p, constexpr_p);
     }
 
   /* Now handle the non-static data members.  */
@@ -1581,9 +1739,9 @@ get_defaulted_eh_spec (tree decl)
   tree parm_type = TREE_VALUE (parms);
   bool const_p = CP_TYPE_CONST_P (non_reference (parm_type));
   tree spec = empty_except_spec;
+  tree inh = DECL_INHERITED_CTOR (decl);
   synthesized_method_walk (ctype, sfk, const_p, &spec, NULL, NULL,
-			   NULL, false, DECL_INHERITED_CTOR_BASE (decl),
-			   parms);
+			   NULL, false, &inh, parms);
   return spec;
 }
 
@@ -1641,6 +1799,17 @@ maybe_explain_implicit_delete (tree decl)
 		  decl, ctype);
 	  informed = true;
 	}
+      else if (sfk == sfk_inheriting_constructor)
+	{
+	  tree binfo = inherited_ctor_binfo (decl);
+	  if (TREE_CODE (binfo) != TREE_BINFO)
+	    {
+	      inform (DECL_SOURCE_LOCATION (decl),
+		      "%q#D inherits from multiple base subobjects",
+		      decl);
+	      informed = true;
+	    }
+	}
       if (!informed)
 	{
 	  tree parms = FUNCTION_FIRST_USER_PARMTYPE (decl);
@@ -1649,10 +1818,11 @@ maybe_explain_implicit_delete (tree decl)
 	  tree raises = NULL_TREE;
 	  bool deleted_p = false;
 	  tree scope = push_scope (ctype);
+	  tree inh = DECL_INHERITED_CTOR (decl);
 
 	  synthesized_method_walk (ctype, sfk, const_p,
 				   &raises, NULL, &deleted_p, NULL, false,
-				   DECL_INHERITED_CTOR_BASE (decl), parms);
+				   &inh, parms);
 	  if (deleted_p)
 	    {
 	      inform (DECL_SOURCE_LOCATION (decl),
@@ -1660,7 +1830,7 @@ maybe_explain_implicit_delete (tree decl)
 		      "definition would be ill-formed:", decl);
 	      synthesized_method_walk (ctype, sfk, const_p,
 				       NULL, NULL, NULL, NULL, true,
-				       DECL_INHERITED_CTOR_BASE (decl), parms);
+				       &inh, parms);
 	    }
 	  else if (!comp_except_specs
 		   (TYPE_RAISES_EXCEPTIONS (TREE_TYPE (decl)),
@@ -1689,11 +1859,12 @@ explain_implicit_non_constexpr (tree decl)
 {
   tree parm_type = TREE_VALUE (FUNCTION_FIRST_USER_PARMTYPE (decl));
   bool const_p = CP_TYPE_CONST_P (non_reference (parm_type));
+  tree inh = DECL_INHERITED_CTOR (decl);
   bool dummy;
   synthesized_method_walk (DECL_CLASS_CONTEXT (decl),
 			   special_function_p (decl), const_p,
 			   NULL, NULL, NULL, &dummy, true,
-			   DECL_INHERITED_CTOR_BASE (decl),
+			   &inh,
 			   FUNCTION_FIRST_USER_PARMTYPE (decl));
 }
 
@@ -1704,16 +1875,30 @@ explain_implicit_non_constexpr (tree decl)
 void
 deduce_inheriting_ctor (tree decl)
 {
-  gcc_assert (DECL_INHERITED_CTOR_BASE (decl));
+  decl = DECL_ORIGIN (decl);
+  gcc_assert (DECL_INHERITED_CTOR (decl));
   tree spec;
   bool trivial, constexpr_, deleted;
+  tree inh = DECL_INHERITED_CTOR (decl);
   synthesized_method_walk (DECL_CONTEXT (decl), sfk_inheriting_constructor,
 			   false, &spec, &trivial, &deleted, &constexpr_,
 			   /*diag*/false,
-			   DECL_INHERITED_CTOR_BASE (decl),
+			   &inh,
 			   FUNCTION_FIRST_USER_PARMTYPE (decl));
+  if (TREE_CODE (inherited_ctor_binfo (decl)) != TREE_BINFO)
+    /* Inherited the same constructor from different base subobjects.  */
+    deleted = true;
   DECL_DELETED_FN (decl) = deleted;
   TREE_TYPE (decl) = build_exception_variant (TREE_TYPE (decl), spec);
+  SET_DECL_INHERITED_CTOR (decl, inh);
+
+  tree clone;
+  FOR_EACH_CLONE (clone, decl)
+    {
+      DECL_DELETED_FN (clone) = deleted;
+      TREE_TYPE (clone) = build_exception_variant (TREE_TYPE (clone), spec);
+      SET_DECL_INHERITED_CTOR (clone, inh);
+    }
 }
 
 /* Implicitly declare the special function indicated by KIND, as a
@@ -1753,7 +1938,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
 
   type = TYPE_MAIN_VARIANT (type);
 
-  if (targetm.cxx.cdtor_returns_this () && !TYPE_FOR_JAVA (type))
+  if (targetm.cxx.cdtor_returns_this ())
     {
       if (kind == sfk_destructor)
 	/* See comment in check_special_function_return_type.  */
@@ -1787,7 +1972,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
 	  || kind == sfk_move_assignment)
 	{
 	  return_type = build_reference_type (type);
-	  name = ansi_assopname (NOP_EXPR);
+	  name = cp_assignment_operator_id (NOP_EXPR);
 	}
       else
 	name = constructor_name (type);
@@ -1812,15 +1997,12 @@ implicitly_declare_fn (special_function_kind kind, tree type,
       gcc_unreachable ();
     }
 
-  tree inherited_base = (inherited_ctor
-			 ? DECL_CONTEXT (inherited_ctor)
-			 : NULL_TREE);
   bool trivial_p = false;
 
-  if (inherited_ctor && TREE_CODE (inherited_ctor) == TEMPLATE_DECL)
+  if (inherited_ctor)
     {
-      /* For an inheriting constructor template, just copy these flags from
-	 the inherited constructor template for now.  */
+      /* For an inheriting constructor, just copy these flags from the
+	 inherited constructor until deduce_inheriting_ctor.  */
       raises = TYPE_RAISES_EXCEPTIONS (TREE_TYPE (inherited_ctor));
       deleted_p = DECL_DELETED_FN (inherited_ctor);
       constexpr_p = DECL_DECLARED_CONSTEXPR_P (inherited_ctor);
@@ -1830,12 +2012,12 @@ implicitly_declare_fn (special_function_kind kind, tree type,
       raises = unevaluated_noexcept_spec ();
       synthesized_method_walk (type, kind, const_p, NULL, &trivial_p,
 			       &deleted_p, &constexpr_p, false,
-			       inherited_base, inherited_parms);
+			       &inherited_ctor, inherited_parms);
     }
   else
     synthesized_method_walk (type, kind, const_p, &raises, &trivial_p,
 			     &deleted_p, &constexpr_p, false,
-			     inherited_base, inherited_parms);
+			     &inherited_ctor, inherited_parms);
   /* Don't bother marking a deleted constructor as constexpr.  */
   if (deleted_p)
     constexpr_p = false;
@@ -1868,7 +2050,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
       SET_OVERLOADED_OPERATOR_CODE (fn, NOP_EXPR);
     }
 
-  DECL_ALIGN (fn) = MINIMUM_METHOD_BOUNDARY;
+  SET_DECL_ALIGN (fn, MINIMUM_METHOD_BOUNDARY);
 
   /* Create the explicit arguments.  */
   if (rhs_parm_type)
@@ -1886,7 +2068,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
     {
       tree *p = &DECL_ARGUMENTS (fn);
       int index = 1;
-      for (tree parm = inherited_parms; parm != void_list_node;
+      for (tree parm = inherited_parms; parm && parm != void_list_node;
 	   parm = TREE_CHAIN (parm))
 	{
 	  *p = cp_build_parm_decl (NULL_TREE, TREE_VALUE (parm));
@@ -1896,7 +2078,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
 	  DECL_CONTEXT (*p) = fn;
 	  p = &DECL_CHAIN (*p);
 	}
-      SET_DECL_INHERITED_CTOR_BASE (fn, inherited_base);
+      SET_DECL_INHERITED_CTOR (fn, inherited_ctor);
       DECL_NONCONVERTING_P (fn) = DECL_NONCONVERTING_P (inherited_ctor);
       /* A constructor so declared has the same access as the corresponding
 	 constructor in X.  */
@@ -1917,12 +2099,6 @@ implicitly_declare_fn (special_function_kind kind, tree type,
   DECL_DEFAULTED_FN (fn) = 1;
   if (cxx_dialect >= cxx11)
     {
-      /* "The closure type associated with a lambda-expression has a deleted
-	 default constructor and a deleted copy assignment operator."  */
-      if ((kind == sfk_constructor
-	   || kind == sfk_copy_assignment)
-	  && LAMBDA_TYPE_P (type))
-	deleted_p = true;
       DECL_DELETED_FN (fn) = deleted_p;
       DECL_DECLARED_CONSTEXPR_P (fn) = constexpr_p;
     }
@@ -1957,7 +2133,7 @@ implicitly_declare_fn (special_function_kind kind, tree type,
       input_location = DECL_SOURCE_LOCATION (fn);
       synthesized_method_walk (type, kind, const_p,
 			       NULL, NULL, NULL, NULL, true,
-			       NULL_TREE, NULL_TREE);
+			       NULL, NULL_TREE);
       input_location = loc;
     }
 

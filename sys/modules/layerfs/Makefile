@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/26 12:56:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.56.1 2019/06/10 22:09:31 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,8 @@
 
 KMOD=	layerfs
 SRCS=	layer_subr.c layer_vfsops.c layer_vnops.c
+
+WARNS=	3
 
 CWARNFLAGS.clang=	-Wno-conversion
 

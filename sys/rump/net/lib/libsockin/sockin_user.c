@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin_user.c,v 1.1 2014/03/13 01:40:30 pooka Exp $	*/
+/*	$NetBSD: sockin_user.c,v 1.1.36.1 2019/06/10 22:09:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifdef __KERNEL_RCSID
+__KERNEL_RCSID(0, "$NetBSD: sockin_user.c,v 1.1.36.1 2019/06/10 22:09:55 christos Exp $");
+#endif
 
 /* for struct msghdr content visibility */
 #define _XOPEN_SOURCE 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.4 2017/10/10 13:47:27 maya Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.4.4.1 2019/06/10 22:06:18 christos Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.4 2017/10/10 13:47:27 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.4.4.1 2019/06/10 22:06:18 christos Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -302,7 +302,7 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 	iv->iv_pri = pri;
 	iv->iv_handler = handler;
 	iv->iv_arg = arg;
-	
+
 	if (irq < 8) {
 		imr = &sc->sc_ctrl->imr0;
 		pic = &sc->sc_ctrl->pic0;

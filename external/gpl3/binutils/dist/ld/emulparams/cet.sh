@@ -1,7 +1,9 @@
 PARSE_AND_LIST_OPTIONS_CET='
   fprintf (file, _("\
-  -z ibtplt                   Generate IBT-enabled PLT entries\n\
-  -z ibt                      Generate GNU_PROPERTY_X86_FEATURE_1_IBT\n\
+  -z ibtplt                   Generate IBT-enabled PLT entries\n"));
+  fprintf (file, _("\
+  -z ibt                      Generate GNU_PROPERTY_X86_FEATURE_1_IBT\n"));
+  fprintf (file, _("\
   -z shstk                    Generate GNU_PROPERTY_X86_FEATURE_1_SHSTK\n"));
 '
 PARSE_AND_LIST_ARGS_CASE_Z_CET='

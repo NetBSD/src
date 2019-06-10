@@ -1,6 +1,6 @@
 /* Header for skipping over uninteresting files and functions when debugging.
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 
 struct symtab_and_line;
 
-/* Returns 1 if the given FUNCTION_NAME is marked for skip and shouldn't be
-   stepped into.  Otherwise, returns 0.  */
-int function_name_is_marked_for_skip (const char *function_name,
-				    const struct symtab_and_line *function_sal);
+/* Returns true if the given FUNCTION_NAME is marked for skip and
+   shouldn't be stepped into.  Otherwise, returns false.  */
+bool function_name_is_marked_for_skip (const char *function_name,
+				       const symtab_and_line &function_sal);
 
 #endif /* !defined (SKIP_H) */

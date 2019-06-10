@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler for Renesas / SuperH SH.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com).
    Improved by Jim Wilson (wilson@cygnus.com).
 
@@ -160,6 +160,7 @@ extern int sh_eval_treg_value (rtx op);
 extern HOST_WIDE_INT sh_disp_addr_displacement (rtx mem_op);
 extern int sh_max_mov_insn_displacement (machine_mode mode, bool consider_sh2a);
 extern bool sh_movsf_ie_ra_split_p (rtx, rtx, rtx);
+extern void sh_expand_sym_label2reg (rtx, rtx, rtx, bool);
 
 /* Result value of sh_find_set_of_reg.  */
 struct set_of_reg
@@ -227,9 +228,13 @@ sh_find_set_of_reg (rtx reg, rtx_insn* insn, F stepfunc,
 	}
     }
 
-  if (result.set_src != NULL)
-    gcc_assert (result.insn != NULL && result.set_rtx != NULL);
-
+  /* If the searched reg is found inside a (mem (post_inc:SI (reg))), set_of
+     will return NULL and set_rtx will be NULL.
+     In this case report a 'not found'.  result.insn will always be non-null
+     at this point, so no need to check it.  */
+  if (result.set_src != NULL && result.set_rtx == NULL)
+    result.set_src = NULL;
+ 
   return result;
 }
 
@@ -376,7 +381,19 @@ extern void fpscr_set_from_mem (int, HARD_REG_SET);
 extern void sh_pr_interrupt (struct cpp_reader *);
 extern void sh_pr_trapa (struct cpp_reader *);
 extern void sh_pr_nosave_low_regs (struct cpp_reader *);
-extern rtx function_symbol (rtx, const char *, enum sh_function_kind);
+
+struct function_symbol_result
+{
+  function_symbol_result (void) : sym (NULL), lab (NULL) { }
+  function_symbol_result (rtx s, rtx l) : sym (s), lab (l) { }
+
+  rtx sym;
+  rtx lab;
+};
+
+extern function_symbol_result function_symbol (rtx, const char *,
+					       sh_function_kind);
+extern rtx sh_get_fdpic_reg_initial_val (void);
 extern rtx sh_get_pr_initial_val (void);
 
 extern void sh_init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree,
@@ -395,4 +412,5 @@ extern bool sh_hard_regno_mode_ok (unsigned int, machine_mode);
 extern machine_mode sh_hard_regno_caller_save_mode (unsigned int, unsigned int,
 						    machine_mode);
 extern bool sh_can_use_simple_return_p (void);
+extern rtx sh_load_function_descriptor (rtx);
 #endif /* ! GCC_SH_PROTOS_H */

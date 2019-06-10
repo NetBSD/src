@@ -1,6 +1,6 @@
 // <memory> -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -125,6 +125,26 @@ align(size_t __align, size_t __size, void*& __ptr, size_t& __space) noexcept
       return __ptr = reinterpret_cast<void*>(__aligned);
     }
 }
+
+// 20.7.4 [util.dynamic.safety], pointer safety
+
+enum class pointer_safety { relaxed, preferred, strict };
+
+inline void
+declare_reachable(void*) { }
+
+template <typename _Tp>
+  inline _Tp*
+  undeclare_reachable(_Tp* __p) { return __p; }
+
+inline void
+declare_no_pointers(char*, size_t) { }
+
+inline void
+undeclare_no_pointers(char*, size_t) { }
+
+inline pointer_safety
+get_pointer_safety() noexcept { return pointer_safety::relaxed; }
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

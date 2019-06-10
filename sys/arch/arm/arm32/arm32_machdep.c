@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.115.4.1 2019/06/10 22:05:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,14 +42,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115.4.1 2019/06/10 22:05:51 christos Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_arm_start.h"
+#include "opt_fdt.h"
 #include "opt_modular.h"
 #include "opt_md.h"
-#include "opt_pmap_debug.h"
 #include "opt_multiprocessor.h"
+#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
@@ -79,6 +83,28 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin E
 
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+
+#if defined(FDT)
+#include <arm/fdt/arm_fdtvar.h>
+#include <arch/evbarm/fdt/platform.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#ifdef __HAVE_GENERIC_START
+void generic_prints(const char *);
+void generic_printx(int);
+#define VPRINTS(s)	generic_prints(s)
+#define VPRINTX(x)	generic_printx(x)
+#else
+#define VPRINTS(s)	__nothing
+#define VPRINTX(x)	__nothing
+#endif
+#else
+#define VPRINTF(...)	__nothing
+#define VPRINTS(s)	__nothing
+#define VPRINTX(x)	__nothing
+#endif
 
 void (*cpu_reset_address)(void);	/* Used by locore */
 paddr_t cpu_reset_address_paddr;	/* Used by locore */
@@ -151,9 +177,7 @@ arm32_vector_init(vaddr_t va, int which)
 		vector_page = (vaddr_t)page0rel;
 		KASSERT((vector_page & 0x1f) == 0);
 		armreg_vbar_write(vector_page);
-#ifdef VERBOSE_INIT_ARM
-		printf(" vbar=%p", page0rel);
-#endif
+		VPRINTF(" vbar=%p", page0rel);
 		cpu_control(CPU_CONTROL_VECRELOC, 0);
 		return;
 #ifndef ARM_HAS_VBAR
@@ -259,15 +283,11 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	char pbuf[9];
 
-	/*
-	 * Until we better locking, we have to live under the kernel lock.
-	 */
-	//KERNEL_LOCK(1, NULL);
-
+#ifndef __HAVE_GENERIC_START
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
+#endif
 
 #ifndef ARM_HAS_VBAR
 	/* Lock down zero page */
@@ -279,6 +299,11 @@ cpu_startup(void)
 	 * is initialised
 	 */
 	pmap_postinit();
+
+#ifdef FDT
+	if (arm_fdt_platform()->ap_startup != NULL)
+		arm_fdt_platform()->ap_startup();
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -296,24 +321,13 @@ cpu_startup(void)
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
-	 * Identify ourselves for the msgbuf (everything printed earlier will
-	 * not be buffered).
-	 */
-	printf("%s%s", copyright, version);
-
-	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
 	 * Allocate a submap for physio
 	 */
+	minaddr = 0;
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	banner();
 
 	/*
 	 * This is actually done by initarm_common, but not all ports use it
@@ -690,26 +704,91 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 vaddr_t
 cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 {
-	const vaddr_t va = idlestack.pv_va + ci->ci_cpuid * USPACE;
+	const vaddr_t va = idlestack.pv_va + cpu_index(ci) * USPACE;
 	// printf("%s: %s: va=%lx\n", __func__, ci->ci_data.cpu_name, va);
 	return va;
 }
 #endif
 
 #ifdef MULTIPROCESSOR
+/*
+ * Initialise a secondary processor.
+ *
+ * printf isn't available to us for a number of reasons.
+ *
+ * -  kprint_init has been called and printf will try to take locks which we
+ *    can't  do just yet because bootstrap translation tables do not allowing
+ *    caching.
+ *
+ * -  kmutex(9) relies on curcpu which isn't setup yet.
+ *
+ */
+void
+cpu_init_secondary_processor(int cpuindex)
+{
+	// pmap_kernel has been sucessfully built and we can switch to it
+
+	cpu_domains(DOMAIN_DEFAULT);
+	cpu_idcache_wbinv_all();
+
+	VPRINTS("index: ");
+	VPRINTX(cpuindex);
+	VPRINTS(" ttb");
+
+	cpu_setup(boot_args);
+
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * TTBCR should have been initialized by the MD start code.
+	 */
+	KASSERT((armreg_contextidr_read() & 0xff) == 0);
+	KASSERT(armreg_ttbcr_read() == __SHIFTIN(1, TTBCR_S_N));
+	/*
+	 * Disable lookups via TTBR0 until there is an activated pmap.
+	 */
+
+	armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
+	cpu_setttb(pmap_kernel()->pm_l1_pa , KERNEL_PID);
+	arm_isb();
+#else
+	cpu_setttb(pmap_kernel()->pm_l1->l1_physaddr, true);
+#endif
+
+	cpu_tlb_flushID();
+
+	VPRINTS(" (TTBR0=");
+	VPRINTX(armreg_ttbr_read());
+	VPRINTS(")");
+
+#ifdef ARM_MMU_EXTENDED
+	VPRINTS(" (TTBR1=");
+	VPRINTX(armreg_ttbr1_read());
+	VPRINTS(")");
+	VPRINTS(" (TTBCR=");
+	VPRINTX(armreg_ttbcr_read());
+	VPRINTS(")");
+#endif
+
+	VPRINTS(" hatched=");
+	VPRINTX(arm_cpu_hatched | __BIT(cpuindex));
+	VPRINTS("\n\r");
+
+	atomic_or_uint(&arm_cpu_hatched, __BIT(cpuindex));
+
+	/* return to assembly to wait for cpu_boot_secondary_processors */
+}
+
 void
 cpu_boot_secondary_processors(void)
 {
-#ifdef VERBOSE_INIT_ARM
-	printf("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
-#endif
+	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
 	arm_cpu_mbox = arm_cpu_hatched;
 	membar_producer();
 #ifdef _ARM_ARCH_7
 	__asm __volatile("sev; sev; sev");
 #endif
-	while (arm_cpu_mbox) {
-		__asm("wfe");
+	while (membar_consumer(), arm_cpu_mbox) {
+		__asm __volatile("wfe" ::: "memory");
 	}
 }
 
@@ -759,3 +838,36 @@ mm_md_page_color(paddr_t pa, int *colorp)
 	return true;
 #endif
 }
+
+#if defined(FDT)
+extern char KERNEL_BASE_phys[];
+#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
+
+void
+cpu_kernel_vm_init(paddr_t memory_start, psize_t memory_size)
+{
+	const struct arm_platform *plat = arm_fdt_platform();
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		VPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (memory_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+#else
+	const bool mapallmem_p = false;
+#endif
+
+	VPRINTF("%s: kernel phys start %" PRIxPADDR " end %" PRIxPADDR "\n",
+	    __func__, memory_start, memory_start + memory_size);
+
+	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
+	    plat->ap_devmap(), mapallmem_p);
+}
+#endif
+

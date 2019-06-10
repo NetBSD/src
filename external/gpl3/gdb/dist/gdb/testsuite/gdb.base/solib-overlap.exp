@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -119,7 +119,7 @@ foreach prelink_lib1 {0x40000000 0x50000000} { with_test_prefix "$prelink_lib1" 
 
     # Detach the process.
 
-    gdb_test "detach" "Detaching from program: .*$escapedbinfile, process $testpid"
+    gdb_test "detach" "Detaching from program: .*$escapedbinfile, process $testpid\r\n\\\[Inferior $decimal \\(.*\\) detached\\\]"
 
     # Wait a bit for gdb to finish detaching
 

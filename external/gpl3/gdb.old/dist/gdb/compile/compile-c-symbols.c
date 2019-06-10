@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -584,7 +584,7 @@ symbol_seen (htab_t hashtab, struct symbol *sym)
 
 static void
 generate_vla_size (struct compile_c_instance *compiler,
-		   struct ui_file *stream,
+		   string_file &stream,
 		   struct gdbarch *gdbarch,
 		   unsigned char *registers_used,
 		   CORE_ADDR pc,
@@ -593,7 +593,7 @@ generate_vla_size (struct compile_c_instance *compiler,
 {
   type = check_typedef (type);
 
-  if (TYPE_CODE (type) == TYPE_CODE_REF)
+  if (TYPE_IS_REFERENCE (type))
     type = check_typedef (TYPE_TARGET_TYPE (type));
 
   switch (TYPE_CODE (type))
@@ -640,7 +640,7 @@ generate_vla_size (struct compile_c_instance *compiler,
 
 static void
 generate_c_for_for_one_variable (struct compile_c_instance *compiler,
-				 struct ui_file *stream,
+				 string_file &stream,
 				 struct gdbarch *gdbarch,
 				 unsigned char *registers_used,
 				 CORE_ADDR pc,
@@ -651,14 +651,14 @@ generate_c_for_for_one_variable (struct compile_c_instance *compiler,
     {
       if (is_dynamic_type (SYMBOL_TYPE (sym)))
 	{
-	  struct ui_file *size_file = mem_fileopen ();
-	  struct cleanup *cleanup = make_cleanup_ui_file_delete (size_file);
+	  /* We need to emit to a temporary buffer in case an error
+	     occurs in the middle.  */
+	  string_file local_file;
 
-	  generate_vla_size (compiler, size_file, gdbarch, registers_used, pc,
+	  generate_vla_size (compiler, local_file, gdbarch, registers_used, pc,
 			     SYMBOL_TYPE (sym), sym);
-	  ui_file_put (size_file, ui_file_write_for_put, stream);
 
-	  do_cleanups (cleanup);
+	  stream.write (local_file.c_str (), local_file.size ());
 	}
 
       if (SYMBOL_COMPUTED_OPS (sym) != NULL)
@@ -667,14 +667,13 @@ generate_c_for_for_one_variable (struct compile_c_instance *compiler,
 	  struct cleanup *cleanup = make_cleanup (xfree, generated_name);
 	  /* We need to emit to a temporary buffer in case an error
 	     occurs in the middle.  */
-	  struct ui_file *local_file = mem_fileopen ();
+	  string_file local_file;
 
-	  make_cleanup_ui_file_delete (local_file);
 	  SYMBOL_COMPUTED_OPS (sym)->generate_c_location (sym, local_file,
 							  gdbarch,
 							  registers_used,
 							  pc, generated_name);
-	  ui_file_put (local_file, ui_file_write_for_put, stream);
+	  stream.write (local_file.c_str (), local_file.size ());
 
 	  do_cleanups (cleanup);
 	}
@@ -719,13 +718,12 @@ generate_c_for_for_one_variable (struct compile_c_instance *compiler,
 
 unsigned char *
 generate_c_for_variable_locations (struct compile_c_instance *compiler,
-				   struct ui_file *stream,
+				   string_file &stream,
 				   struct gdbarch *gdbarch,
 				   const struct block *block,
 				   CORE_ADDR pc)
 {
-  struct cleanup *cleanup, *outer;
-  htab_t symhash;
+  struct cleanup *outer;
   const struct block *static_block = block_static_block (block);
   unsigned char *registers_used;
 
@@ -739,9 +737,8 @@ generate_c_for_variable_locations (struct compile_c_instance *compiler,
 
   /* Ensure that a given name is only entered once.  This reflects the
      reality of shadowing.  */
-  symhash = htab_create_alloc (1, hash_symname, eq_symname, NULL,
-			       xcalloc, xfree);
-  cleanup = make_cleanup_htab_delete (symhash);
+  htab_up symhash (htab_create_alloc (1, hash_symname, eq_symname, NULL,
+				      xcalloc, xfree));
 
   while (1)
     {
@@ -754,7 +751,7 @@ generate_c_for_variable_locations (struct compile_c_instance *compiler,
 	   sym != NULL;
 	   sym = block_iterator_next (&iter))
 	{
-	  if (!symbol_seen (symhash, sym))
+	  if (!symbol_seen (symhash.get (), sym))
 	    generate_c_for_for_one_variable (compiler, stream, gdbarch,
 					     registers_used, pc, sym);
 	}
@@ -766,7 +763,6 @@ generate_c_for_variable_locations (struct compile_c_instance *compiler,
       block = BLOCK_SUPERBLOCK (block);
     }
 
-  do_cleanups (cleanup);
   discard_cleanups (outer);
   return registers_used;
 }

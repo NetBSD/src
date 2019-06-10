@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $");
 
-#include "opt_kernhist.h"
-#include "opt_uvmhist.h"
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd32.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/intr.h>
 
@@ -51,23 +54,27 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2018/04/01 04:35:03 ryo Exp $");
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_run.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_user.h>
 
 #include <dev/cons.h>
 
 void db_md_cpuinfo_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_lwp_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef UVMHIST
-void db_md_pmaphist_cmd(db_expr_t, bool, db_expr_t, const char *);
-#endif
 void db_md_pte_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_tlbi_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_md_ttbr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_sysreg_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+void db_md_switch_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 const struct db_command db_machine_command_table[] = {
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
@@ -78,40 +85,32 @@ const struct db_command db_machine_command_table[] = {
 		    NULL, NULL)
 	},
 #endif
+#if defined(_KERNEL)
 	{
 		DDB_ADD_CMD(
 		    "cpuinfo", db_md_cpuinfo_cmd, 0,
-		    "Displays the cpuinfo",
+		    "Displays the current cpuinfo",
 		    NULL, NULL)
 	},
 	{
 		DDB_ADD_CMD(
 		    "frame", db_md_frame_cmd, 0,
 		    "Displays the contents of a trapframe",
-		    "<address>",
-		    "\taddress:\taddress of trapfame to display")
+		    "address",
+		    "\taddress:\taddress of trapframe to display")
 	},
 	{
 		DDB_ADD_CMD(
 		    "lwp", db_md_lwp_cmd, 0,
 		    "Displays the lwp",
-		    "<address>",
+		    "address",
 		    "\taddress:\taddress of lwp to display")
 	},
-#ifdef UVMHIST
-	{
-		DDB_ADD_CMD(
-		    "pmaphist", db_md_pmaphist_cmd, 0,
-		    "Dump the entire contents of the pmap history",
-		    "<param>",
-		    "\tparam: 0=clear")
-	},
-#endif /* UVMHIST */
 	{
 		DDB_ADD_CMD(
 		    "pte", db_md_pte_cmd, 0,
 		    "Display information of pte",
-		    "<address>",
+		    "address",
 		    "\taddress:\tvirtual address of page")
 	},
 	{
@@ -128,15 +127,26 @@ const struct db_command db_machine_command_table[] = {
 	},
 	{
 		DDB_ADD_CMD(
+		    "ttbr", db_md_ttbr_cmd, 0,
+		    "Dump or count TTBR table",
+		    "[/apc] address | pid",
+		    "\taddress:\taddress of pmap to display\n"
+		    "\tpid:\t\tpid of pmap to display")
+	},
+	{
+		DDB_ADD_CMD(
 		    "watch", db_md_watch_cmd, 0,
 		    "set or clear watchpoint",
-		    "<param>",
-		    "\tparam: <address> | <#>")
+		    "[/12345678] [address|#]",
+		    "\taddress: watchpoint address to set\n"
+		    "\t#: watchpoint number to remove"
+		    "\t/1..8: size of data\n")
 	},
+#endif
 	{
 		DDB_ADD_CMD(NULL, NULL, 0,
 		    NULL,
-		    NULL,NULL)
+		    NULL, NULL)
 	}
 };
 
@@ -186,6 +196,31 @@ db_regs_t ddb_regs;
 void
 dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 {
+#ifdef COMPAT_NETBSD32
+	if (tf->tf_spsr & SPSR_A32) {
+		(*pr)("    pc=%016"PRIxREGISTER",   spsr=%016"PRIxREGISTER
+		    " (AArch32)\n", tf->tf_pc, tf->tf_spsr);
+		(*pr)("   esr=%016"PRIxREGISTER",    far=%016"PRIxREGISTER"\n",
+		    tf->tf_esr, tf->tf_far);
+		(*pr)("    r0=%016"PRIxREGISTER",     r1=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[0], tf->tf_reg[1]);
+		(*pr)("    r2=%016"PRIxREGISTER",     r3=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[2], tf->tf_reg[3]);
+		(*pr)("    r4=%016"PRIxREGISTER",     r5=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[4], tf->tf_reg[5]);
+		(*pr)("    r6=%016"PRIxREGISTER",     r7=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[6], tf->tf_reg[7]);
+		(*pr)("    r8=%016"PRIxREGISTER",     r9=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[8], tf->tf_reg[9]);
+		(*pr)("   r10=%016"PRIxREGISTER",    r11=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[10], tf->tf_reg[11]);
+		(*pr)("   r12=%016"PRIxREGISTER", sp=r13=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[12], tf->tf_reg[13]);
+		(*pr)("lr=r14=%016"PRIxREGISTER", pc=r15=%016"PRIxREGISTER"\n",
+		    tf->tf_reg[14], tf->tf_pc);
+		return;
+	}
+#endif
 	(*pr)("    pc=%016"PRIxREGISTER",   spsr=%016"PRIxREGISTER"\n",
 	    tf->tf_pc, tf->tf_spsr);
 	(*pr)("   esr=%016"PRIxREGISTER",    far=%016"PRIxREGISTER"\n",
@@ -224,6 +259,7 @@ dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 	    tf->tf_reg[30],  tf->tf_sp);
 }
 
+#if defined(_KERNEL)
 void
 db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
@@ -233,7 +269,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	int i;
 
 	ci = curcpu();
-	db_read_bytes(ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
+	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
 	cpuid = cpuinfobuf.ci_cpuid;
 	db_printf("cpu_info=%p\n", ci);
@@ -245,7 +281,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_printf("%p cpu[%lu].ci_softlwps[%d] = %p\n",
 		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
 	}
-	db_printf("%p cpu[%lu].ci_lastintr     = %llu\n",
+	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
 	    &ci->ci_lastintr, cpuid, cpuinfobuf.ci_lastintr);
 	db_printf("%p cpu[%lu].ci_want_resched = %d\n",
 	    &ci->ci_want_resched, cpuid, cpuinfobuf.ci_want_resched);
@@ -266,7 +302,7 @@ db_md_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct trapframe *tf;
 
 	if (!have_addr) {
-		db_printf("frame: <address>\n");
+		db_printf("frame address must be specified\n");
 		return;
 	}
 
@@ -279,9 +315,10 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	lwp_t *l;
+	struct pcb *pcb;
 
 	if (!have_addr) {
-		db_printf("lwp: <address>\n");
+		db_printf("lwp address must be specified\n");
 		return;
 	}
 	l = (lwp_t *)addr;
@@ -295,10 +332,11 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_md.md_onfault=%p\n", l->l_md.md_onfault);
 	db_printf("\tl->l_md.md_utf    =%p\n", l->l_md.md_utf);
 	dump_trapframe(l->l_md.md_utf, db_printf);
-	db_printf("\tl->l_md.md_ktf    =%p\n", l->l_md.md_ktf);
-	if (l->l_md.md_ktf != l->l_md.md_utf)
-		dump_trapframe(l->l_md.md_ktf, db_printf);
-	db_printf("\tl->l_md.md_cpacr  =%016llx\n", l->l_md.md_cpacr);
+	pcb = l->l_addr;
+	db_printf("\tl->l_addr.pcb_tf    =%p\n", pcb->pcb_tf);
+	if (pcb->pcb_tf != l->l_md.md_utf)
+		dump_trapframe(pcb->pcb_tf, db_printf);
+	db_printf("\tl->l_md.md_cpacr  =%016" PRIx64 "\n", l->l_md.md_cpacr);
 	db_printf("\tl->l_md.md_flags  =%08x\n", l->l_md.md_flags);
 
 	db_printf("\tl->l_cpu          =%p\n", l->l_cpu);
@@ -308,112 +346,47 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_wmesg        =%s\n", SAFESTRPTR(l->l_wmesg));
 }
 
-#ifdef UVMHIST
-
-/* XXX: should be implement to kern_history.c */
 static void
-kernhist_entry_snprintf(char *buf, size_t buflen,
-    const struct kern_history_ent *e)
+db_par_print(uint64_t par, vaddr_t va)
 {
-	struct timeval tv;
-	int len, maxlen;
-	char *p;
+	paddr_t pa = (__SHIFTOUT(par, PAR_PA) << 12) + (va & 0xfff);
 
-	bintime2timeval(&e->bt, &tv);
-
-	maxlen = buflen;
-	p = buf;
-
-	len = snprintf(p, maxlen, "%06" PRIu64 ".%06d ",
-	    tv.tv_sec, tv.tv_usec);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	len = snprintf(p, maxlen, "%s#%" PRIu32 "@%" PRIu32 ": ",
-	    e->fn, e->call, e->cpunum);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	len = snprintf(p, maxlen, e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	snprintf(p, maxlen, "\n");
+	db_printf("%016"PRIx64": ATTR=0x%02lx, NS=%ld, S=%ld, SHA=%ld, PTW=%ld"
+	    ", FST=%ld, F=%ld, PA=%016"PRIxPADDR"\n",
+	    par,
+	    __SHIFTOUT(par, PAR_ATTR),
+	    __SHIFTOUT(par, PAR_NS),
+	    __SHIFTOUT(par, PAR_S),
+	    __SHIFTOUT(par, PAR_SHA),
+	    __SHIFTOUT(par, PAR_PTW),
+	    __SHIFTOUT(par, PAR_FST),
+	    __SHIFTOUT(par, PAR_F),
+	    pa);
 }
-
-static void
-kernhist_dump_iterate(struct kern_history *l, void (*func)(const char *))
-{
-	int lcv;
-	static char buf[512];	/* XXX */
-
-	lcv = l->f;
-	do {
-		if (l->e[lcv].fmt) {
-			kernhist_entry_snprintf(buf, sizeof(buf), &l->e[lcv]);
-			func(buf);
-		}
-		lcv = (lcv + 1) % l->n;
-	} while (lcv != l->f);
-}
-
-
-static const char *kernhist_match;
-
-static void
-print_pmaphist_func(const char *msg)
-{
-	if (strstr(msg, kernhist_match) != NULL)
-		db_printf("%s", msg);
-}
-
-void
-db_md_pmaphist_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
-{
-	UVMHIST_DECL(pmaphist);
-
-	if ((modif != NULL) && (*modif != '\0')) {
-		if (strcmp(modif, "h") == 0) {
-			db_printf("machine pmaphist[/<match>]\n");
-			return;
-		}
-
-		kernhist_match = modif;
-		db_printf("show pmaphist matched <%s>\n", kernhist_match);
-
-		kernhist_dump_iterate(&pmaphist, print_pmaphist_func);
-		return;
-	}
-
-
-	if (have_addr && (addr == 0)) {
-		/* XXX */
-		pmaphist.f = 0;
-		memset(pmaphist.e, 0,
-		    sizeof(struct kern_history_ent) * pmaphist.n);
-
-		db_printf("pmap history was cleared\n");
-	}
-
-	kernhist_dump(&pmaphist, db_printf);
-}
-#endif
 
 void
 db_md_pte_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+	uint64_t par;
+
 	if (!have_addr) {
-		db_printf("pte: <address>\n");
+		db_printf("pte address must be specified\n");
 		return;
 	}
+
+	reg_s1e0r_write(addr);
+	__asm __volatile ("isb");
+	par = reg_par_el1_read();
+	db_printf("Stage1 EL0 translation %016llx -> PAR_EL1 = ", addr);
+	db_par_print(par, addr);
+
+	reg_s1e1r_write(addr);
+	__asm __volatile ("isb");
+	par = reg_par_el1_read();
+	db_printf("Stage1 EL1 translation %016llx -> PAR_EL1 = ", addr);
+	db_par_print(par, addr);
+
 	pmap_db_pteinfo(addr, db_printf);
 }
 
@@ -425,13 +398,55 @@ db_md_tlbi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 void
+db_md_ttbr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	bool countmode = false, by_pid = true;
+
+	if (!have_addr) {
+		db_printf("usage: machine ttbr [/a] [/p] [/c] address|pid\n");
+		db_printf("\t/a == argument is an address of any pmap_t\n");
+		db_printf("\t/p == argument is a pid [default]\n");
+		db_printf("\t/c == count TLB entries\n");
+		return;
+	}
+
+	if (modif != NULL) {
+		for (; *modif != '\0'; modif++) {
+			switch (*modif) {
+			case 'c':
+				countmode = true;
+				break;
+			case 'a':
+				by_pid = false;
+				break;
+			case 'p':
+				by_pid = true;
+				break;
+			}
+		}
+	}
+
+	if (by_pid) {
+		proc_t *p = db_proc_find((pid_t)addr);
+		if (p == NULL) {
+			db_printf("bad address\n");
+			return;
+		}
+		addr = (db_addr_t)p->p_vmspace->vm_map.pmap;
+	}
+
+	pmap_db_ttbrdump(countmode, addr, db_printf);
+}
+
+void
 db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 #define SHOW_ARMREG(x)	\
-	db_printf("%-16s = %016llx\n", #x, reg_ ## x ## _read())
+	db_printf("%-16s = %016" PRIx64 "\n", #x, reg_ ## x ## _read())
 
-	SHOW_ARMREG(cbar_el1);
+//	SHOW_ARMREG(cbar_el1);	/* Cortex */
 	SHOW_ARMREG(ccsidr_el1);
 	SHOW_ARMREG(clidr_el1);
 	SHOW_ARMREG(cntfrq_el0);
@@ -471,7 +486,7 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	SHOW_ARMREG(id_aa64pfr0_el1);
 	SHOW_ARMREG(id_aa64pfr1_el1);
 	SHOW_ARMREG(isr_el1);
-	SHOW_ARMREG(l2ctlr_el1);
+//	SHOW_ARMREG(l2ctlr_el1);	/* Cortex */
 	SHOW_ARMREG(mair_el1);
 	SHOW_ARMREG(mdscr_el1);
 	SHOW_ARMREG(midr_el1);
@@ -491,6 +506,7 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	SHOW_ARMREG(spsr_el1);
 	SHOW_ARMREG(tcr_el1);
 	SHOW_ARMREG(tpidr_el0);
+	SHOW_ARMREG(tpidrro_el0);
 	SHOW_ARMREG(tpidr_el1);
 	SHOW_ARMREG(ttbr0_el1);
 	SHOW_ARMREG(ttbr1_el1);
@@ -689,11 +705,9 @@ db_machdep_init(void)
 	}
 
 	mdscr = reg_mdscr_el1_read();
-	mdscr |= __BIT(15);
-	mdscr |= __BIT(13);
+	mdscr |= MDSCR_MDE;	/* enable watchpoint and breakpoint */
 	reg_mdscr_el1_write(mdscr);
 	reg_oslar_el1_write(0);
-	daif_enable(DAIF_D);
 }
 
 static void
@@ -708,14 +722,14 @@ show_watchpoints(void)
 		if (wcr & DBGWCR_E) {
 			bas = __SHIFTOUT(wcr, DBGWCR_BAS);
 			if (bas == 0) {
-				db_printf("%d: disabled %016llx", i, addr);
+				db_printf("%d: disabled %016" PRIx64, i, addr);
 			} else {
 				offset = ffs(bas) - 1;
 				addr += offset;
 				bas >>= offset;
 				size = ffs(~bas) - 1;
 
-				db_printf("%d: watching %016llx, %d bytes", i,
+				db_printf("%d: watching %016" PRIx64 ", %d bytes", i,
 				    addr, size);
 
 				switch (__SHIFTOUT(wcr, DBGWCR_LSC)) {
@@ -816,16 +830,62 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	if (added >= 0)
-		db_printf("add watchpoint %d as %016llx\n", added, addr);
+		db_printf("add watchpoint %d as %016"DDB_EXPR_FMT"x\n", added, addr);
 	if (cleared >= 0)
 		db_printf("clear watchpoint %d\n", cleared);
 
 	show_watchpoints();
 }
+#endif
 
+#ifdef MULTIPROCESSOR
+volatile struct cpu_info *db_trigger;
+volatile struct cpu_info *db_onproc;
+volatile struct cpu_info *db_newcpu;
+
+#ifdef _KERNEL
+void
+db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	u_int cpuno = (u_int)addr;
+
+	if (!have_addr || (cpuno >= ncpu)) {
+		db_printf("cpu: 0..%d\n", ncpu - 1);
+		return;
+	}
+
+	struct cpu_info *new_ci = cpu_lookup(cpuno);
+	if (new_ci == NULL) {
+		db_printf("cpu %u does not exist", cpuno);
+		return;
+	}
+
+	if (new_ci == curcpu())
+		return;
+
+	/* XXX */
+	membar_consumer();
+	if (db_trigger == curcpu()) {
+		DDB_REGS->tf_pc -= 4;
+		db_trigger = NULL;
+		membar_producer();
+	}
+
+	db_newcpu = new_ci;
+	db_continue_cmd(0, false, 0, "");
+}
+
+#endif /* _KERNEL */
+#endif /* MULTIPROCESSOR */
+
+#ifdef DDB
 int
 kdb_trap(int type, struct trapframe *tf)
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const ci = curcpu();
+#endif
 	int s;
 
 	switch (type) {
@@ -843,18 +903,72 @@ kdb_trap(int type, struct trapframe *tf)
 		break;
 	}
 
-	/* Should switch to kdb`s own stack here. */
-	ddb_regs = *tf;
+#ifdef MULTIPROCESSOR
+	/*
+	 * Try to take ownership of DDB.
+	 * If we do, tell all other CPUs to enter DDB too.
+	 */
+	if ((ncpu > 1) &&
+	    (atomic_cas_ptr(&db_onproc, NULL, ci) == NULL)) {
+		intr_ipi_send(NULL, IPI_DDB);
+		db_trigger = ci;
+		membar_producer();
+	}
+#endif
 
-	s = splhigh();
-	db_active++;
-	cnpollc(true);
-	db_trap(type, 0/*code*/);
-	cnpollc(false);
-	db_active--;
-	splx(s);
+	for (;;) {
+#ifdef MULTIPROCESSOR
+		if (ncpu > 1) {
 
-	*tf = ddb_regs;
+			/* waiting my turn, or exit */
+			membar_consumer();
+			while (db_onproc != ci) {
+				__asm __volatile ("wfe");
+
+				membar_consumer();
+				if (db_onproc == NULL) {
+					return 1;
+				}
+			}
+			/* It's my turn! */
+		}
+#endif /* MULTIPROCESSOR */
+
+		/* Should switch to kdb`s own stack here. */
+		ddb_regs = *tf;
+
+		s = splhigh();
+		db_active++;
+		cnpollc(true);
+		db_trap(type, 0/*code*/);
+		cnpollc(false);
+		db_active--;
+		splx(s);
+
+		*tf = ddb_regs;
+
+#ifdef MULTIPROCESSOR
+		if ((ncpu > 1) && (db_newcpu != NULL)) {
+			db_onproc = db_newcpu;
+			db_newcpu = NULL;
+			membar_producer();
+			__asm __volatile ("sev; sev; sev");
+			continue;	/* redo DDB on new cpu */
+		}
+#endif /* MULTIPROCESSOR */
+
+		break;
+	}
+
+#ifdef MULTIPROCESSOR
+	if (ncpu > 1) {
+		db_onproc = NULL;
+		membar_producer();
+		__asm __volatile ("sev; sev; sev");
+	}
+	db_trigger = NULL;
+#endif
 
 	return 1;
 }
+#endif

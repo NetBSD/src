@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.67 2018/04/09 20:16:16 christos Exp $
+# $NetBSD: INSTALL,v 1.67.2.1 2019/06/10 22:06:00 christos Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.67 $"
+#ident 		"INSTALL-$Revision: 1.67.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -89,9 +89,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -228,7 +225,6 @@ atabus* 	at ata?
 wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
-#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -242,7 +238,6 @@ wd* 		at atabus? drive ? flags 0x0000
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
@@ -295,7 +290,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
-#pseudo-device	ipfilter			# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
@@ -322,5 +317,3 @@ pseudo-device	nullcons			# no-op console
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
 #pseudo-device	ksyms				# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if

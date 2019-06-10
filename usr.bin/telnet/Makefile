@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2018/02/25 00:16:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.53.4.1 2019/06/10 22:10:24 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -11,11 +11,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
+# 3. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
 #
@@ -34,8 +30,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-WARNS?=	4	# XXX -Wshadow etc.  fix asap
-CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format-security
+WARNS?=	5
 
 .include <bsd.own.mk>
 
@@ -50,7 +45,7 @@ LDADD+= -lterminfo ${LIBTELNETDIR}/libtelnet.a
 DPADD+=	${LIBTERMINFO} ${LIBTELNETDIR}/libtelnet.a
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
-	terminal.c tn3270.c utilities.c
+	terminal.c utilities.c
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-DIPSEC
@@ -81,5 +76,10 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .for f in commands telnet terminal utilities
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
+
+# Has fallthru comment that is missed
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.telnet.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>

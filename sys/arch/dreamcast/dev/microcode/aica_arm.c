@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm.c,v 1.5 2009/03/18 10:22:27 cegger Exp $	*/
+/*	$NetBSD: aica_arm.c,v 1.5.64.1 2019/06/10 22:06:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -267,7 +267,12 @@ aica_main(void)
 			break;
 
 		case AICA_COMMAND_PLAY:
+			aica_stop();
+			play_state = 0;
+
 			blksize = aicacmd->blocksize;
+
+			REG_WRITE_4(0x28b4, 0x0020);	/* INT Enable to SH4 */
 
 			CH_WRITE_4(0, 0x00, 0x8000);
 			CH_WRITE_4(1, 0x00, 0x8000);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2018/03/05 02:39:06 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249.4.1 2019/06/10 22:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2018/03/05 02:39:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249.4.1 2019/06/10 22:05:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,9 @@ cpu_reboot(register int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");
@@ -679,10 +681,9 @@ dumpsys(void)
 void
 initcpu(void)
 {
-	typedef void trapfun(void);
-
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
+	typedef void trapfun(void);
 	extern trapfun *vectab[256];
 #endif
 

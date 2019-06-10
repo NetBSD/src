@@ -1,5 +1,5 @@
 /* Semantics ops support for CGEN-based simulators.
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -631,6 +631,54 @@ SUBOFQI (QI a, QI b, BI c)
   return res;
 }
 
+SEMOPS_INLINE BI
+MUL2OFSI (SI a, SI b)
+{
+  DI tmp = MULDI (EXTSIDI (a), EXTSIDI (b));
+  BI res = tmp < -0x80000000LL || tmp > 0x7fffffffLL;
+  return res;
+}
+
+SEMOPS_INLINE BI
+MUL1OFSI (USI a, USI b)
+{
+  UDI tmp = MULDI (ZEXTSIDI (a), ZEXTSIDI (b));
+  BI res = (tmp > 0xFFFFFFFFULL);
+  return res;
+}
+
+SEMOPS_INLINE BI
+ADDCFDI (DI a, DI b, BI c)
+{
+  DI tmp = ADDDI (a, ADDDI (b, c));
+  BI res = ((UDI) tmp < (UDI) a) || (c && tmp == a);
+  return res;
+}
+
+SEMOPS_INLINE BI
+ADDOFDI (DI a, DI b, BI c)
+{
+  DI tmp = ADDDI (a, ADDDI (b, c));
+  BI res = (((a < 0) == (b < 0))
+	    && ((a < 0) != (tmp < 0)));
+  return res;
+}
+
+SEMOPS_INLINE BI
+SUBCFDI (DI a, DI b, BI c)
+{
+  BI res = ((UDI) a < (UDI) b) || (c && a == b);
+  return res;
+}
+
+SEMOPS_INLINE BI
+SUBOFDI (DI a, DI b, BI c)
+{
+  DI tmp = SUBDI (a, ADDSI (b, c));
+  BI res = (((a < 0) != (b < 0))
+	    && ((a < 0) != (tmp < 0)));
+  return res;
+}
 #else
 
 SI ADDCSI (SI, SI, BI);
@@ -651,6 +699,12 @@ UBI ADDOFQI (QI, QI, BI);
 QI SUBCQI (QI, QI, BI);
 UBI SUBCFQI (QI, QI, BI);
 UBI SUBOFQI (QI, QI, BI);
+BI MUL1OFSI (SI a, SI b);
+BI MUL2OFSI (SI a, SI b);
+BI ADDCFDI (DI a, DI b, BI c);
+BI ADDOFDI (DI a, DI b, BI c);
+BI SUBCFDI (DI a, DI b, BI c);
+BI SUBOFDI (DI a, DI b, BI c);
 
 #endif
 

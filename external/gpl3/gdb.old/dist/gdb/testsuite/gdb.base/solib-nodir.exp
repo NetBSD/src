@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ if { [get_compiler_info]
      || [gdb_gnu_strip_debug $binlibfile]
      || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object {debug}] != ""
      || [gdb_compile "${objfile} ${binlibfile}" "${binfile}" executable {}] != "" } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 

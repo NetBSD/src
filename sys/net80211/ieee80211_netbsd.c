@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.7 2018/08/15 17:07:03 phil Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.31.2.8 2019/06/10 22:09:46 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -28,14 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-/*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.7 2018/08/15 17:07:03 phil Exp $");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.8 2019/06/10 22:09:46 christos Exp $");
+#endif
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_wlan.h"
+#endif
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -330,7 +333,9 @@ static struct sysctllog *ieee80211_sysctllog;
 static void
 ieee80211_sysctl_setup(void)
 {
+#ifdef notyet
 	int rc;
+#endif
 	const struct sysctlnode *rnode;
 
 	if ((rnode = ieee80211_sysctl_treetop(&ieee80211_sysctllog)) == NULL)
@@ -357,8 +362,10 @@ ieee80211_sysctl_setup(void)
 #endif
 
 	return;
+#if defined(IEEE80211_DEBUG) || defined(notyet)
 err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+#endif
 }
 
 /*
@@ -605,7 +612,7 @@ ieee80211_getmgtframe(uint8_t **frm, int headroom, int pktlen)
 		 * frames which all fit in MHLEN.
 		 */
 		if (m != NULL)
-			MH_ALIGN(m, len);
+			m_align(m, len);
 	} else {
 		m = m_getcl(M_NOWAIT, MT_DATA, M_PKTHDR);
 		if (m != NULL)
@@ -702,8 +709,7 @@ ieee80211_get_xmit_params(struct mbuf *m,
 	struct m_tag *mtag;
 	struct ieee80211_tx_params *tx;
 
-	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_XMIT_PARAMS,
-	    NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_XMIT_PARAMS);
 	if (mtag == NULL)
 		return (-1);
 	tx = (struct ieee80211_tx_params *)(mtag + 1);
@@ -717,7 +723,7 @@ ieee80211_process_callback(struct ieee80211_node *ni,
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_CALLBACK, NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_CALLBACK);
 	if (mtag != NULL) {
 		struct ieee80211_cb *cb = (struct ieee80211_cb *)(mtag+1);
 		cb->func(ni, cb->arg, status);
@@ -752,8 +758,7 @@ ieee80211_get_rx_params(struct mbuf *m, struct ieee80211_rx_stats *rxs)
 	struct m_tag *mtag;
 	struct ieee80211_rx_params *rx;
 
-	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS,
-	    NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS);
 	if (mtag == NULL)
 		return (-1);
 	rx = (struct ieee80211_rx_params *)(mtag + 1);
@@ -767,8 +772,7 @@ ieee80211_get_rx_params_ptr(struct mbuf *m)
 	struct m_tag *mtag;
 	struct ieee80211_rx_params *rx;
 
-	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS,
-	    NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_RECV_PARAMS);
 	if (mtag == NULL)
 		return (NULL);
 	rx = (struct ieee80211_rx_params *)(mtag + 1);
@@ -802,8 +806,7 @@ ieee80211_get_toa_params(struct mbuf *m, struct ieee80211_toa_params *p)
 	struct m_tag *mtag;
 	struct ieee80211_toa_params *rp;
 
-	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_TOA_PARAMS,
-	    NULL);
+	mtag = m_tag_find(m, /*MTAG_ABI_NET80211,*/ NET80211_TAG_TOA_PARAMS);
 	if (mtag == NULL)
 		return (0);
 	rp = (struct ieee80211_toa_params *)(mtag + 1);
@@ -1284,27 +1287,6 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 }
 
 /*
- * Set the m_data pointer of a newly-allocated mbuf
- * to place an object of the specified size at the
- * end of the mbuf, longword aligned.
- */
-void
-m_align(struct mbuf *m, int len)
-{
-	int adjust;
-
-	KASSERT(len != M_COPYALL);
-
-	if (m->m_flags & M_EXT)
-		adjust = m->m_ext.ext_size - len;
-	else if (m->m_flags & M_PKTHDR)
-		adjust = MHLEN - len;
-	else
-		adjust = MLEN - len;
-	m->m_data += adjust &~ (sizeof(long)-1);
-}
-
-/*
  * Append the specified data to the indicated mbuf chain,
  * Extend the mbuf chain if the new data does not fit in
  * existing space.
@@ -1341,7 +1323,7 @@ m_append(struct mbuf *m0, int len, const void *cpv)
 		n = m_get(M_DONTWAIT, m->m_type);
 		if (n == NULL)
 			break;
-		n->m_len = min(MLEN, remainder);
+		n->m_len = uimin(MLEN, remainder);
 		memmove(mtod(n, void *), cp, n->m_len);
 		cp += n->m_len, remainder -= n->m_len;
 		m->m_next = n;
@@ -1446,7 +1428,7 @@ m_unshare(struct mbuf *m0, int how)
 		mfirst = n;
 		mlast = NULL;
 		for (;;) {
-			int cc = min(len, MCLBYTES);
+			int cc = uimin(len, MCLBYTES);
 			memcpy(mtod(n, __uint8_t *), mtod(m, __uint8_t *) + off, cc);
 			n->m_len = cc;
 			if (mlast != NULL)

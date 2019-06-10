@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.25 2017/12/22 14:41:55 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.25.4.1 2019/06/10 22:07:35 christos Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.25 2017/12/22 14:41:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.25.4.1 2019/06/10 22:07:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -103,7 +103,6 @@ static void uslsa_get_status(void *sc, int, u_char *, u_char *);
 static void uslsa_set(void *, int, int, int);
 static int uslsa_param(void *, int, struct termios *);
 static int uslsa_ioctl(void *, int, u_long, void *, int, proc_t *);
-
 static int uslsa_open(void *, int);
 static void uslsa_close(void *, int);
 
@@ -118,8 +117,6 @@ static const struct ucom_methods uslsa_methods = {
 	.ucom_ioctl = uslsa_ioctl,
 	.ucom_open = uslsa_open,
 	.ucom_close = uslsa_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 #define USLSA_CONFIG_INDEX	0
@@ -151,10 +148,9 @@ static int uslsa_match(device_t, cfdata_t, void *);
 static void uslsa_attach(device_t, device_t, void *);
 static void uslsa_childdet(device_t, device_t);
 static int uslsa_detach(device_t, int);
-static int uslsa_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
-    uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
+    uslsa_attach, uslsa_detach, NULL, NULL, uslsa_childdet);
 
 static int
 uslsa_match(device_t parent, cfdata_t match, void *aux)
@@ -184,6 +180,7 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = uiaa->uiaa_device;
 	sc->sc_iface = uiaa->uiaa_iface;
+	sc->sc_dying = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -248,20 +245,6 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-static int
-uslsa_activate(device_t self, enum devact act)
-{
-	struct uslsa_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = true;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
 static void
 uslsa_childdet(device_t self, device_t child)
 {
@@ -283,11 +266,12 @@ uslsa_detach(device_t self, int flags)
 
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 static int
@@ -315,9 +299,8 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF((sc->sc_dev, "%s(%p, %d, ....)\n", __func__, vsc, portno));
 
-	if (sc->sc_dying) {
+	if (sc->sc_dying)
 		return;
-	}
 
 	req.bmRequestType = UT_READ_VENDOR_INTERFACE;
 	req.bRequest = SLSA_R_GET_MDMSTS;
@@ -334,17 +317,12 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF((sc->sc_dev, "%s: GET_MDMSTS %#x\n", __func__, mdmsts));
 
-	if (lsr != NULL) {
-		*lsr = 0;
-	}
+	*lsr = 0;
 
-	if (msr != NULL) {
-		*msr = 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_CTS) ? UMSR_CTS : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_DSR) ? UMSR_DSR : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_RI) ? UMSR_RI : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_DCD) ? UMSR_DCD : 0;
-	}
+	*msr  = ISSET(mdmsts, SLSA_MDMSTS_CTS) ? UMSR_CTS : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_DSR) ? UMSR_DSR : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_RI) ? UMSR_RI : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_DCD) ? UMSR_DCD : 0;
 }
 
 static void
@@ -357,9 +335,8 @@ uslsa_set(void *vsc, int portno, int reg, int onoff)
 	DPRINTF((sc->sc_dev, "%s(%p, %d, %d, %d)\n", __func__, vsc, portno,
 	    reg, onoff));
 
-	if (sc->sc_dying) {
+	if (sc->sc_dying)
 		return;
-	}
 
 	switch (reg) {
 	case UCOM_SET_DTR:
@@ -402,9 +379,8 @@ uslsa_param(void *vsc, int portno, struct termios *t)
 
 	DPRINTF((sc->sc_dev, "%s(%p, %d, %p)\n", __func__, vsc, portno, t));
 
-	if (sc->sc_dying) {
+	if (sc->sc_dying)
 		return EIO;
-	}
 
 	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
 	req.bRequest = SLSA_R_SET_BAUDRATE;
@@ -484,6 +460,9 @@ uslsa_ioctl(void *vsc, int portno, u_long cmd, void *data, int flag, proc_t *p)
 
 	sc = vsc;
 
+	if (sc->sc_dying)
+		return EIO;
+
 	switch (cmd) {
 	case TIOCMGET:
 		ucom_status_change(device_private(sc->sc_subdev));
@@ -504,9 +483,8 @@ uslsa_open(void *vsc, int portno)
 
 	DPRINTF((sc->sc_dev, "%s(%p, %d)\n", __func__, vsc, portno));
 
-	if (sc->sc_dying) {
+	if (sc->sc_dying)
 		return EIO;
-	}
 
 	return uslsa_request_set(sc, SLSA_R_IFC_ENABLE,
 	    SLSA_RV_IFC_ENABLE_ENABLE);
@@ -521,12 +499,10 @@ uslsa_close(void *vsc, int portno)
 
 	DPRINTF((sc->sc_dev, "%s(%p, %d)\n", __func__, vsc, portno));
 
-	if (sc->sc_dying) {
+	if (sc->sc_dying)
 		return;
-	}
 
-	(void)uslsa_request_set(sc, SLSA_R_IFC_ENABLE,
-	    SLSA_RV_IFC_ENABLE_DISABLE);
+	uslsa_request_set(sc, SLSA_R_IFC_ENABLE, SLSA_RV_IFC_ENABLE_DISABLE);
 }
 
 static int

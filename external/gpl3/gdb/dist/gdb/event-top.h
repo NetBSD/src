@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -22,6 +22,8 @@
 #ifndef EVENT_TOP_H
 #define EVENT_TOP_H
 
+#include <signal.h>
+
 struct cmd_list_element;
 
 /* Exported functions from event-top.c.
@@ -33,17 +35,13 @@ extern void gdb_disable_readline (void);
 extern void async_init_signals (void);
 extern void change_line_handler (int);
 
-extern void command_line_handler (char *rl);
-extern void command_handler (char *command);
+extern void command_line_handler (gdb::unique_xmalloc_ptr<char> &&rl);
+extern void command_handler (const char *command);
 
-/* Signal to catch ^Z typed while reading a command: SIGTSTP or SIGCONT.  */
-#ifndef STOP_SIGNAL
-#include <signal.h>
 #ifdef SIGTSTP
-#define STOP_SIGNAL SIGTSTP
-extern void handle_stop_sig (int sig);
+extern void handle_sigtstp (int sig);
 #endif
-#endif
+
 extern void handle_sigint (int sig);
 extern void handle_sigterm (int sig);
 extern void async_request_quit (void *arg);

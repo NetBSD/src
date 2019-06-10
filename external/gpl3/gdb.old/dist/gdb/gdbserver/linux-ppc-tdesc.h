@@ -1,6 +1,6 @@
 /* Low level support for ppc, shared between gdbserver and IPA.
 
-   Copyright (C) 2016 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

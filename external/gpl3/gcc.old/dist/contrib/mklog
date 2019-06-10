@@ -104,7 +104,7 @@ sub get_clname ($) {
 	my $dirname = $_[0];
 	while ($dirname) {
 		my $clname = "$dirname/ChangeLog";
-		if (-f "$gcc_root/$clname") {
+		if (-f "$gcc_root/$clname" || -f "$clname") {
 			my $relname = substr ($_[0], length ($dirname) + 1);
 			return ($clname, $relname);
 		} else {
@@ -131,7 +131,6 @@ sub is_unified_hunk_start {
 }
 
 # Check if line is a top-level declaration.
-# TODO: ignore preprocessor directives except maybe #define ?
 sub is_top_level {
 	my ($function, $is_context_diff) = (@_);
 	if (is_unified_hunk_start ($function)
@@ -143,7 +142,7 @@ sub is_top_level {
 	} else {
 		$function =~ s/^.//;
 	}
-	return $function && $function !~ /^[\s{]/;
+	return $function && $function !~ /^[\s{#]/;
 }
 
 # Read contents of .diff file

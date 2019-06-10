@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Free Software Foundation, Inc.
+# Copyright 1999-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -504,7 +504,7 @@ proc mi_gdb_file_cmd { arg } {
 # output.  Queries are an error for mi.
     send_gdb "105-file-exec-and-symbols $arg\n"
     gdb_expect 120 {
-	-re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+	-re "Reading symbols from.*$mi_gdb_prompt$" {
 	    verbose "\t\tLoaded $arg into the $GDB"
 	    return 0
 	}
@@ -515,7 +515,7 @@ proc mi_gdb_file_cmd { arg } {
 	-re "Load new symbol table from \".*\".*y or n. $" {
 	    send_gdb "y\n"
 	    gdb_expect 120 {
-		-re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+		-re "Reading symbols from.*$mi_gdb_prompt$" {
 		    verbose "\t\tLoaded $arg with new symbol table into $GDB"
 		    # All OK
 		}
@@ -833,11 +833,6 @@ proc mi_gdb_test { args } {
 	    perror "Window too small."
 	     fail "$message"
 	}
-	 -re "\\(y or n\\) " {
-	    send_gdb "n\n"
-	    perror "Got interactive prompt."
-	     fail "$message"
-	}
 	 eof {
 	     perror "Process no longer exists"
 	     if { $message != "" } {
@@ -979,7 +974,11 @@ proc mi_run_cmd_full {use_mi_command args} {
 	send_gdb  "jump *$start\n"
 	warning "Using CLI jump command, expect run-to-main FAIL"
 	gdb_expect {
-	    -re "${run_match}&\"jump \\*${start}\\n\"\[\r\n\]+~\"Continuing at 0x\[0-9A-Fa-f\]+\\n.\"\[\r\n\]+\^running\[\r\n\]+\\*running,thread-id=\"\[^\"\]+\"\r\n${mi_gdb_prompt}" {}
+	    -re "&\"jump \\*${start}\\\\n\"\[\r\n\]+~\"Continuing at 0x\[0-9A-Fa-f\]+\.\\\\n\"\[\r\n\]+\\^running\[\r\n\]+\\*running,thread-id=\"\[^\"\]+\"\[\r\n\]+${mi_gdb_prompt}" {}
+	    timeout {
+		perror "Unable to start target"
+		return -1
+	    }
 	}
 	return 0
     }
@@ -1236,9 +1235,9 @@ proc mi_expect_stop { reason func args file line extra test } {
 
     set a $after_reason
 
-    verbose -log "mi_expect_stop: expecting: \\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re"
+    verbose -log "mi_expect_stop: expecting: \\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re"
     gdb_expect {
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
+	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
 	    pass "$test"
 	    if {[array names expect_out "2,string"] != ""} {
 		return $expect_out(2,string)
@@ -1246,7 +1245,7 @@ proc mi_expect_stop { reason func args file line extra test } {
 	    # No debug info available but $file does match.
 	    return 0
 	}
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
+	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\",arch=\"$any\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
 	    verbose -log "got $expect_out(buffer)"
 	    fail "$test (stopped at wrong place)"
 	    return -1

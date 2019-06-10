@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,4 +79,4 @@ gdb_continue_to_breakpoint "func"
 # Sanity check GDB has really found 2 locations
 gdb_test {info break $bpnum} "\r\n2\\.1\[ \t\]\[^\n\]*\r\n2\\.2\[ \t\]\[^\n\]*" "2 locations found"
 
-gdb_test "p v" " = 0" "no statement got executed"
+gdb_test "p (int) v" " = 0" "no statement got executed"
