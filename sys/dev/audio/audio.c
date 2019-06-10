@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.13 2019/06/08 08:20:10 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.14 2019/06/10 13:12:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  *	allocm 			-	- +	(*1)
  *	freem 			-	- +	(*1)
  *	round_buffersize 	-	x
- *	get_props 		-	x
+ *	get_props 		-	x	Called at attach time
  *	trigger_output 		x	x +
  *	trigger_input 		x	x +
  *	dev_ioctl 		-	x
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.13 2019/06/08 08:20:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.14 2019/06/10 13:12:51 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -550,7 +550,6 @@ static int audio_hw_set_format(struct audio_softc *, int,
 	audio_filter_reg_t *, audio_filter_reg_t *);
 static int audiogetinfo(struct audio_softc *, struct audio_info *, int,
 	audio_file_t *);
-static int audio_get_props(struct audio_softc *);
 static bool audio_can_playback(struct audio_softc *);
 static bool audio_can_capture(struct audio_softc *);
 static int audio_check_params(audio_format2_t *);
@@ -843,7 +842,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	bool has_indep;
 	bool has_fulldup;
 	int mode;
-	int props;
 	int error;
 
 	sc = device_private(self);
@@ -884,13 +882,16 @@ audioattach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_exlockcv, "audiolk");
 
 	mutex_enter(sc->sc_lock);
-	props = audio_get_props(sc);
+	sc->sc_props = hw_if->get_props(sc->hw_hdl);
 	mutex_exit(sc->sc_lock);
 
-	has_playback = (props & AUDIO_PROP_PLAYBACK);
-	has_capture  = (props & AUDIO_PROP_CAPTURE);
-	has_indep    = (props & AUDIO_PROP_INDEPENDENT);
-	has_fulldup  = (props & AUDIO_PROP_FULLDUPLEX);
+	/* MMAP is now supported by upper layer.  */
+	sc->sc_props |= AUDIO_PROP_MMAP;
+
+	has_playback = (sc->sc_props & AUDIO_PROP_PLAYBACK);
+	has_capture  = (sc->sc_props & AUDIO_PROP_CAPTURE);
+	has_indep    = (sc->sc_props & AUDIO_PROP_INDEPENDENT);
+	has_fulldup  = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
 
 	KASSERT(has_playback || has_capture);
 	/* Unidirectional device must have neither FULLDUP nor INDEPENDENT. */
@@ -1859,7 +1860,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		goto bad1;
 	}
 
-	fullduplex = (audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX);
+	fullduplex = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
 
 	/*
 	 * On half duplex hardware,
@@ -2652,16 +2653,14 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		 * it is full duplex.  Otherwise half duplex.
 		 */
 		mutex_enter(sc->sc_lock);
-		fd = (audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX)
+		fd = (sc->sc_props & AUDIO_PROP_FULLDUPLEX)
 		    && (sc->sc_pmixer && sc->sc_rmixer);
 		mutex_exit(sc->sc_lock);
 		*(int *)addr = fd;
 		break;
 
 	case AUDIO_GETPROPS:
-		mutex_enter(sc->sc_lock);
-		*(int *)addr = audio_get_props(sc);
-		mutex_exit(sc->sc_lock);
+		*(int *)addr = sc->sc_props;
 		break;
 
 	case AUDIO_QUERYFORMAT:
@@ -6296,7 +6295,6 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	audio_filter_reg_t pfil;
 	audio_filter_reg_t rfil;
 	int mode;
-	int props;
 	int error;
 
 	KASSERT(mutex_owned(sc->sc_lock));
@@ -6329,8 +6327,7 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	}
 
 	/* On non-independent devices, use the same format for both. */
-	props = audio_get_props(sc);
-	if ((props & AUDIO_PROP_INDEPENDENT) == 0) {
+	if ((sc->sc_props & AUDIO_PROP_INDEPENDENT) == 0) {
 		if (mode == AUMODE_RECORD) {
 			phwfmt = rhwfmt;
 		} else {
@@ -6340,9 +6337,9 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	}
 
 	/* Then, unset the direction not exist on the hardware. */
-	if ((props & AUDIO_PROP_PLAYBACK) == 0)
+	if ((sc->sc_props & AUDIO_PROP_PLAYBACK) == 0)
 		mode &= ~AUMODE_PLAY;
-	if ((props & AUDIO_PROP_CAPTURE) == 0)
+	if ((sc->sc_props & AUDIO_PROP_CAPTURE) == 0)
 		mode &= ~AUMODE_RECORD;
 
 	/* debug */
@@ -7159,26 +7156,6 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int need_mixerinfo,
 	}
 
 	return 0;
-}
-
-/*
- * Must be called with sc_lock held.
- */
-static int
-audio_get_props(struct audio_softc *sc)
-{
-	const struct audio_hw_if *hw;
-	int props;
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	hw = sc->hw_if;
-	props = hw->get_props(sc->hw_hdl);
-
-	/* MMAP is now supported by upper layer.  */
-	props |= AUDIO_PROP_MMAP;
-
-	return props;
 }
 
 /*
