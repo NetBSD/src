@@ -43,7 +43,7 @@
 ; }
 define void @TestUnionLD1(fp128 %s, i64 %n) #0 {
 ; CHECK-LABEL: TestUnionLD1:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
 ; CHECK-NEXT:    movabsq $281474976710655, %rcx # imm = 0xFFFFFFFFFFFF
@@ -78,7 +78,7 @@ entry:
 ; }
 define fp128 @TestUnionLD2(fp128 %s) #0 {
 ; CHECK-LABEL: TestUnionLD2:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
 ; CHECK-NEXT:    movq %rax, -{{[0-9]+}}(%rsp)
@@ -102,14 +102,14 @@ entry:
 ; }
 define fp128 @TestI128_1(fp128 %x) #0 {
 ; CHECK-LABEL: TestI128_1:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    subq $40, %rsp
 ; CHECK-NEXT:    movaps %xmm0, {{[0-9]+}}(%rsp)
-; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rax
-; CHECK-NEXT:    movabsq $9223372036854775807, %rcx # imm = 0x7FFFFFFFFFFFFFFF
-; CHECK-NEXT:    andq {{[0-9]+}}(%rsp), %rcx
-; CHECK-NEXT:    movq %rcx, {{[0-9]+}}(%rsp)
-; CHECK-NEXT:    movq %rax, (%rsp)
+; CHECK-NEXT:    movabsq $9223372036854775807, %rax # imm = 0x7FFFFFFFFFFFFFFF
+; CHECK-NEXT:    andq {{[0-9]+}}(%rsp), %rax
+; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; CHECK-NEXT:    movq %rax, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movq %rcx, (%rsp)
 ; CHECK-NEXT:    movaps (%rsp), %xmm0
 ; CHECK-NEXT:    movaps {{.*}}(%rip), %xmm1
 ; CHECK-NEXT:    callq __lttf2
@@ -140,11 +140,11 @@ entry:
 ; }
 define fp128 @TestI128_2(fp128 %x, fp128 %y) #0 {
 ; CHECK-LABEL: TestI128_2:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    cmpq $0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    jns .LBB3_2
-; CHECK-NEXT:  # BB#1: # %entry
+; CHECK-NEXT:  # %bb.1: # %entry
 ; CHECK-NEXT:    movaps %xmm1, %xmm0
 ; CHECK-NEXT:  .LBB3_2: # %entry
 ; CHECK-NEXT:    retq
@@ -168,14 +168,14 @@ entry:
 ; }
 define fp128 @TestI128_3(fp128 %x, i32* nocapture readnone %ex) #0 {
 ; CHECK-LABEL: TestI128_3:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    subq $56, %rsp
 ; CHECK-NEXT:    movaps %xmm0, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rax
 ; CHECK-NEXT:    movabsq $9223090561878065152, %rcx # imm = 0x7FFF000000000000
 ; CHECK-NEXT:    testq %rcx, %rax
 ; CHECK-NEXT:    je .LBB4_2
-; CHECK-NEXT:  # BB#1:
+; CHECK-NEXT:  # %bb.1:
 ; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
 ; CHECK-NEXT:    jmp .LBB4_3
 ; CHECK-NEXT:  .LBB4_2: # %if.then
@@ -224,10 +224,10 @@ if.end:                                           ; preds = %if.then, %entry
 ; }
 define fp128 @TestI128_4(fp128 %x) #0 {
 ; CHECK-LABEL: TestI128_4:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    subq $40, %rsp
 ; CHECK-NEXT:    movaps %xmm0, %xmm1
-; CHECK-NEXT:    movaps %xmm1, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movaps %xmm0, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rax
 ; CHECK-NEXT:    movq %rax, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq $0, (%rsp)
@@ -253,7 +253,7 @@ entry:
 ; }
 define void @TestShift128_2() #2 {
 ; CHECK-LABEL: TestShift128_2:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movq {{.*}}(%rip), %rax
 ; CHECK-NEXT:    shlq $32, %rax
 ; CHECK-NEXT:    movq {{.*}}(%rip), %rcx
@@ -272,10 +272,10 @@ entry:
 
 define fp128 @acosl(fp128 %x) #0 {
 ; CHECK-LABEL: acosl:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    subq $40, %rsp
 ; CHECK-NEXT:    movaps %xmm0, %xmm1
-; CHECK-NEXT:    movaps %xmm1, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movaps %xmm0, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq {{[0-9]+}}(%rsp), %rax
 ; CHECK-NEXT:    movq %rax, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq $0, (%rsp)
@@ -294,11 +294,11 @@ entry:
 ; Compare i128 values and check i128 constants.
 define fp128 @TestComp(fp128 %x, fp128 %y) #0 {
 ; CHECK-LABEL: TestComp:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    cmpq $0, -{{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    jns .LBB8_2
-; CHECK-NEXT:  # BB#1: # %entry
+; CHECK-NEXT:  # %bb.1: # %entry
 ; CHECK-NEXT:    movaps %xmm1, %xmm0
 ; CHECK-NEXT:  .LBB8_2: # %entry
 ; CHECK-NEXT:    retq
@@ -314,7 +314,7 @@ declare void @foo(fp128) #1
 ; Test logical operations on fp128 values.
 define fp128 @TestFABS_LD(fp128 %x) #0 {
 ; CHECK-LABEL: TestFABS_LD:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
 ; CHECK-NEXT:    retq
 entry:
@@ -329,23 +329,23 @@ declare fp128 @copysignl(fp128, fp128) #1
 ; Test more complicated logical operations generated from copysignl.
 define void @TestCopySign({ fp128, fp128 }* noalias nocapture sret %agg.result, { fp128, fp128 }* byval nocapture readonly align 16 %z) #0 {
 ; CHECK-LABEL: TestCopySign:
-; CHECK:       # BB#0: # %entry
+; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    pushq %rbp
 ; CHECK-NEXT:    pushq %rbx
 ; CHECK-NEXT:    subq $40, %rsp
 ; CHECK-NEXT:    movq %rdi, %rbx
 ; CHECK-NEXT:    movaps {{[0-9]+}}(%rsp), %xmm0
 ; CHECK-NEXT:    movaps {{[0-9]+}}(%rsp), %xmm1
-; CHECK-NEXT:    movaps %xmm1, {{[0-9]+}}(%rsp) # 16-byte Spill
+; CHECK-NEXT:    movaps %xmm1, {{[-0-9]+}}(%r{{[sb]}}p) # 16-byte Spill
 ; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
 ; CHECK-NEXT:    callq __gttf2
 ; CHECK-NEXT:    movl %eax, %ebp
-; CHECK-NEXT:    movaps {{[0-9]+}}(%rsp), %xmm0 # 16-byte Reload
+; CHECK-NEXT:    movaps {{[-0-9]+}}(%r{{[sb]}}p), %xmm0 # 16-byte Reload
 ; CHECK-NEXT:    movaps %xmm0, %xmm1
 ; CHECK-NEXT:    callq __subtf3
 ; CHECK-NEXT:    testl %ebp, %ebp
 ; CHECK-NEXT:    jle .LBB10_1
-; CHECK-NEXT:  # BB#2: # %if.then
+; CHECK-NEXT:  # %bb.2: # %if.then
 ; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
 ; CHECK-NEXT:    movaps %xmm0, %xmm1
 ; CHECK-NEXT:    movaps (%rsp), %xmm0 # 16-byte Reload
@@ -355,8 +355,8 @@ define void @TestCopySign({ fp128, fp128 }* noalias nocapture sret %agg.result, 
 ; CHECK-NEXT:    movaps (%rsp), %xmm2 # 16-byte Reload
 ; CHECK-NEXT:  .LBB10_3: # %cleanup
 ; CHECK-NEXT:    movaps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    andps {{[0-9]+}}(%rsp), %xmm1 # 16-byte Folded Reload
 ; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    andps {{[-0-9]+}}(%r{{[sb]}}p), %xmm1 # 16-byte Folded Reload
 ; CHECK-NEXT:    orps %xmm1, %xmm0
 ; CHECK-NEXT:    movaps %xmm2, (%rbx)
 ; CHECK-NEXT:    movaps %xmm0, 16(%rbx)

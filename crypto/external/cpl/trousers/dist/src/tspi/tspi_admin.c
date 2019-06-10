@@ -227,14 +227,24 @@ Tspi_TPM_SetStatus(TSS_HTPM hTPM,	/* in */
 							       TPM_PHYSICAL_PRESENCE_LIFETIME_LOCK);
 		break;
 	case TSS_TPMSTATUS_PHYSPRES_HWENABLE:
-		/* set the HW enable bit */
-		result = TCS_API(tspContext)->PhysicalPresence(tspContext,
+		/* HWENABLE, TRUE -> set the TPM_PHYSICAL_PRESENCE_HW_ENABLE bit
+		 * HWENABLE, FALSE -> set the TPM_PHYSICAL_PRESENCE_HW_DISABLE bit */
+		if (fTpmState)
+			result = TCS_API(tspContext)->PhysicalPresence(tspContext,
 							       TPM_PHYSICAL_PRESENCE_HW_ENABLE);
+		else
+			result = TCS_API(tspContext)->PhysicalPresence(tspContext,
+							       TPM_PHYSICAL_PRESENCE_HW_DISABLE);
 		break;
 	case TSS_TPMSTATUS_PHYSPRES_CMDENABLE:
-		/* set the command enable bit */
-		result = TCS_API(tspContext)->PhysicalPresence(tspContext,
+		/* CMDENABLE, TRUE -> set the TPM_PHYSICAL_PRESENCE_CMD_ENABLE bit
+		 * CMDENABLE, FALSE -> set the TPM_PHYSICAL_PRESENCE_CMD_DISABLE bit */
+		if (fTpmState)
+			result = TCS_API(tspContext)->PhysicalPresence(tspContext,
 							       TPM_PHYSICAL_PRESENCE_CMD_ENABLE);
+		else
+			result = TCS_API(tspContext)->PhysicalPresence(tspContext,
+							       TPM_PHYSICAL_PRESENCE_CMD_DISABLE);
 		break;
 	case TSS_TPMSTATUS_PHYSPRES_LOCK:
 		/* set the physical presence lock bit */

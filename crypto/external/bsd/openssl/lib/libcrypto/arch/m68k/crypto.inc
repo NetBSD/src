@@ -1,5 +1,5 @@
 .PATH.S: ${.PARSEDIR}
 
-CRYPTO_SRCS += libc-memequal.c
+#CRYPTO_SRCS += libc-memequal.c
 
 .include "../../crypto.inc"

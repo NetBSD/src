@@ -23,7 +23,7 @@
 
 
 ; X86-LABEL: _x:
-; X86:      # BB
+; X86:      # %bb.
 ; X86:      .cv_file 1 "D:\\source.c"
 ; X86:      .cv_loc 0 1 4 42 is_stmt 0 # source.c:4:42
 ; X86:      calll   _z
@@ -32,7 +32,7 @@
 ; X86:      [[END_OF_X:.?Lfunc_end.*]]:
 ;
 ; X86-LABEL: _y:
-; X86:      # BB
+; X86:      # %bb.
 ; X86:      .cv_loc 1 1 8 52 # source.c:8:52
 ; X86:      calll   _z
 ; X86:      .cv_loc 1 1 9 53 # source.c:9:53
@@ -40,7 +40,7 @@
 ; X86:      [[END_OF_Y:.?Lfunc_end.*]]:
 ;
 ; X86-LABEL: _f:
-; X86:      # BB
+; X86:      # %bb.
 ; X86:      .cv_loc 2 1 12 62 # source.c:12:62
 ; X86:      calll   _x
 ; X86:      .cv_loc 2 1 13 63 # source.c:13:63
@@ -61,6 +61,7 @@
 ; X86-NEXT: .short [[C1_END:.*]]-[[C1_START:.*]] #
 ; X86:      [[COMPILE_END]]:
 ; X86-NEXT: .p2align 2
+; X86-NEXT: .cv_fpo_data _x
 ; Symbol subsection for x
 ; X86-NEXT: .long   241
 ; X86-NEXT: .long [[F1_END:.*]]-[[F1_START:.*]] #
@@ -87,6 +88,7 @@
 ; Line table subsection for x
 ; X86: .cv_linetable 0, _x, [[END_OF_X]]
 ; Symbol subsection for y
+; X86-NEXT: .cv_fpo_data _y
 ; X86-NEXT: .long   241
 ; X86-NEXT: .long [[COMPILE_END:.*]]-[[COMPILE_START:.*]] #
 ; X86-NEXT: [[COMPILE_START]]:
@@ -112,6 +114,7 @@
 ; Line table subsection for y
 ; X86: .cv_linetable 1, _y, [[END_OF_Y]]
 ; Symbol subsection for f
+; X86-NEXT: .cv_fpo_data _f
 ; X86-NEXT: .long   241
 ; X86-NEXT: .long [[COMPILE_END:.*]]-[[COMPILE_START:.*]] #
 ; X86-NEXT: [[COMPILE_START]]:
@@ -145,6 +148,13 @@
 ; OBJ32:      ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   SubSectionType: Symbols (0xF1)
+; OBJ32: 	Compile3Sym
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   SubSectionType: FrameData (0xF5)
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   SubSectionType: Symbols (0xF1)
 ; OBJ32:        {{.*}}Proc{{.*}}Sym {
 ; OBJ32:          Kind: S_LPROC32_ID (0x1146)
 ; OBJ32:          CodeSize: 0x6
@@ -156,6 +166,9 @@
 ; OBJ32-NEXT: ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   SubSectionType: Lines (0xF2)
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   SubSectionType: FrameData (0xF5)
 ; OBJ32:      ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   SubSectionType: Symbols (0xF1)
@@ -170,6 +183,9 @@
 ; OBJ32-NEXT: ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   SubSectionType: Lines (0xF2)
+; OBJ32:      ]
+; OBJ32:      Subsection [
+; OBJ32-NEXT:   SubSectionType: FrameData (0xF5)
 ; OBJ32:      ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   SubSectionType: Symbols (0xF1)
@@ -271,7 +287,7 @@
 ; X64-NEXT: .L{{.*}}:
 ; X64:      .cv_file 1 "D:\\source.c"
 ; X64:      .cv_loc 0 1 3 0 is_stmt 0 # source.c:3:0
-; X64:      # BB
+; X64:      # %bb.
 ; X64:      subq    $40, %rsp
 ; X64:      .cv_loc 0 1 4 42 # source.c:4:42
 ; X64-NEXT: callq   z
@@ -283,7 +299,7 @@
 ; X64-LABEL: y:
 ; X64-NEXT: .L{{.*}}:
 ; X64:      .cv_loc 1 1 7 0 # source.c:7:0
-; X64:      # BB
+; X64:      # %bb.
 ; X64:      subq    $40, %rsp
 ; X64:      .cv_loc 1 1 8 52 # source.c:8:52
 ; X64-NEXT: callq   z
@@ -295,7 +311,7 @@
 ; X64-LABEL: f:
 ; X64-NEXT: .L{{.*}}:
 ; X64:      .cv_loc 2 1 11 0 # source.c:11:0
-; X64:      # BB
+; X64:      # %bb.
 ; X64:      subq    $40, %rsp
 ; X64:      .cv_loc 2 1 12 62 # source.c:12:62
 ; X64-NEXT: callq   x
@@ -596,13 +612,13 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "<unknown>", directory: "D:\5C")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "x", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !2)
+!4 = distinct !DISubprogram(name: "x", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !5, scope: !6, type: !7, retainedNodes: !2)
 !5 = !DIFile(filename: "source.c", directory: "D:\5C")
 !6 = !DIFile(filename: "source.c", directory: "D:C")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = distinct !DISubprogram(name: "y", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 7, file: !5, scope: !6, type: !7, variables: !2)
-!10 = distinct !DISubprogram(name: "f", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 11, file: !5, scope: !6, type: !7, variables: !2)
+!9 = distinct !DISubprogram(name: "y", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 7, file: !5, scope: !6, type: !7, retainedNodes: !2)
+!10 = distinct !DISubprogram(name: "f", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 11, file: !5, scope: !6, type: !7, retainedNodes: !2)
 !11 = !{i32 2, !"CodeView", i32 1}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.5 "}

@@ -125,7 +125,7 @@ bios_get_entries_by_pcr(FILE *handle, UINT32 pcr_index, UINT32 first,
 						   event->eventDataSize, 1, handle)) <= 0) {
 						LogError("read from event source failed: %s",
 							 strerror(errno));
-						return result;
+						goto free_list;
 					}
 				} else {
 					cur->event.rgbEvent = NULL;

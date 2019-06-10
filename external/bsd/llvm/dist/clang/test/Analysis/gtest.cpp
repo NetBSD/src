@@ -1,6 +1,5 @@
 //RUN: %clang_analyze_cc1 -cc1 -std=c++11  -analyzer-checker=core,apiModeling.google.GTest,debug.ExprInspection -analyzer-eagerly-assume %s -verify
 //RUN: %clang_analyze_cc1 -cc1 -std=c++11  -analyzer-checker=core,apiModeling.google.GTest,debug.ExprInspection -analyzer-eagerly-assume -DGTEST_VERSION_1_8_AND_LATER=1 %s -verify
-//RUN: %clang_analyze_cc1 -cc1 -std=c++11  -analyzer-checker=core,apiModeling.google.GTest,debug.ExprInspection -analyzer-eagerly-assume -analyzer-config cfg-temporary-dtors=true %s -verify
 
 void clang_analyzer_eval(int);
 void clang_analyzer_warnIfReached();
@@ -150,4 +149,16 @@ void testConstrainState(int p) {
 
   ASSERT_TRUE(false);
   clang_analyzer_warnIfReached(); // no-warning
+}
+
+void testAssertSymbolicPtr(const bool *b) {
+  ASSERT_TRUE(*b); // no-crash
+
+  clang_analyzer_eval(*b); // expected-warning{{TRUE}}
+}
+
+void testAssertSymbolicRef(const bool &b) {
+  ASSERT_TRUE(b); // no-crash
+
+  clang_analyzer_eval(b); // expected-warning{{TRUE}}
 }

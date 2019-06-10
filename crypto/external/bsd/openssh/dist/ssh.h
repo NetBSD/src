@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: ssh.h,v 1.87 2017/05/07 23:15:59 djm Exp $ */
+/*	$NetBSD: ssh.h,v 1.10.4.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: ssh.h,v 1.89 2018/12/27 03:25:25 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -30,13 +30,6 @@
  * in configuration files or on the command line.
  */
 #define SSH_MAX_IDENTITY_FILES		100
-
-/*
- * Maximum length of lines in authorized_keys file.
- * Current value permits 16kbit RSA keys and 8kbit DSA keys, with
- * some room for options and comments.
- */
-#define SSH_MAX_PUBKEY_BYTES		16384
 
 /*
  * Major protocol version.  Different version indicates major incompatibility
@@ -102,3 +95,7 @@
 
 /* Listen backlog for sshd, ssh-agent and forwarding sockets */
 #define SSH_LISTEN_BACKLOG		128
+
+/* Limits for banner exchange */
+#define SSH_MAX_BANNER_LEN		8192
+#define SSH_MAX_PRE_BANNER_LINES	1024

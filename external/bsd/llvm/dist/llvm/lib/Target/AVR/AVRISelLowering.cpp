@@ -44,6 +44,7 @@ AVRTargetLowering::AVRTargetLowering(AVRTargetMachine &tm)
   setBooleanVectorContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(Sched::RegPressure);
   setStackPointerRegisterToSaveRestore(AVR::SP);
+  setSupportsUnalignedAtomics(true);
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   setOperationAction(ISD::BlockAddress, MVT::i16, Custom);
@@ -343,6 +344,9 @@ SDValue AVRTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
     break;
   case MVT::i64:
     LC = IsSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64;
+    break;
+  case MVT::i128:
+    LC = IsSigned ? RTLIB::SDIVREM_I128 : RTLIB::UDIVREM_I128;
     break;
   }
 
@@ -724,7 +728,7 @@ void AVRTargetLowering::ReplaceNodeResults(SDNode *N,
 /// by AM is legal for this target, for a load/store of the specified type.
 bool AVRTargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                               const AddrMode &AM, Type *Ty,
-                                              unsigned AS) const {
+                                              unsigned AS, Instruction *I) const {
   int64_t Offs = AM.BaseOffs;
 
   // Allow absolute addresses.
@@ -866,10 +870,12 @@ bool AVRTargetLowering::isOffsetFoldingLegal(
 
 /// For each argument in a function store the number of pieces it is composed
 /// of.
-static void parseFunctionArgs(const Function *F, const DataLayout *TD,
+static void parseFunctionArgs(const SmallVectorImpl<ISD::InputArg> &Ins,
                               SmallVectorImpl<unsigned> &Out) {
-  for (Argument const &Arg : F->args()) {
-    unsigned Bytes = (TD->getTypeSizeInBits(Arg.getType()) + 7) / 8;
+  for (const ISD::InputArg &Arg : Ins) {
+    if(Arg.PartOffset > 0) continue;
+    unsigned Bytes = ((Arg.ArgVT.getSizeInBits()) + 7) / 8;
+
     Out.push_back((Bytes + 1) / 2);
   }
 }
@@ -937,7 +943,7 @@ static void analyzeStandardArguments(TargetLowering::CallLoweringInfo *CLI,
     parseExternFuncCallArgs(*Outs, Args);
   } else {
     assert(F != nullptr && "function should not be null");
-    parseFunctionArgs(F, TD, Args);
+    parseFunctionArgs(*Ins, Args);
   }
 
   unsigned RegsLeft = array_lengthof(RegList8), ValNo = 0;
@@ -1038,7 +1044,7 @@ SDValue AVRTargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
                  *DAG.getContext());
 
-  analyzeArguments(nullptr, MF.getFunction(), &DL, 0, &Ins, CallConv, ArgLocs, CCInfo,
+  analyzeArguments(nullptr, &MF.getFunction(), &DL, 0, &Ins, CallConv, ArgLocs, CCInfo,
                    false, isVarArg);
 
   SDValue ArgValue;
@@ -1390,7 +1396,7 @@ AVRTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 
   // Don't emit the ret/reti instruction when the naked attribute is present in
   // the function being compiled.
-  if (MF.getFunction()->getAttributes().hasAttribute(
+  if (MF.getFunction().getAttributes().hasAttribute(
           AttributeList::FunctionIndex, Attribute::Naked)) {
     return Chain;
   }
@@ -1471,7 +1477,7 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
 
   MachineFunction::iterator I;
-  for (I = F->begin(); I != F->end() && &(*I) != BB; ++I);
+  for (I = BB->getIterator(); I != F->end() && &(*I) != BB; ++I);
   if (I != F->end()) ++I;
 
   // Create loop block.

@@ -818,66 +818,66 @@ TPM_DAA_ISSUER *
 convert2issuer_settings(TSS_DAA_PK_internal *pk_internal)
 {
 	TPM_DAA_ISSUER *result = (TPM_DAA_ISSUER *)malloc(sizeof(TPM_DAA_ISSUER));
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	UINT32 length;
 	BYTE *array = (BYTE*)malloc((DAA_PARAM_SIZE_RSA_MODULUS+7)/8);
 
 	LogDebug("convert2issuer_settings");
-	EVP_MD_CTX_init(&mdctx);
+	EVP_MD_CTX_create(mdctx);
 	// TAG
 	result->tag = htons( TPM_TAG_DAA_ISSUER);
 	// capitalR0
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->capitalR0)+7)/8,
 			pk_internal->capitalR0);
 	LogDebug("capitalR0 length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_R0), NULL);
+	EVP_DigestUpdate(mdctx, array, length);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_R0), NULL);
 	// capitalR1
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->capitalR1)+7)/8,
 			pk_internal->capitalR1);
 	LogDebug("capitalR1 length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_R1), NULL);
+	EVP_DigestUpdate(mdctx, array, length);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_R1), NULL);
 	// capitalS (S0)
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->capitalS)+7)/8,
 			pk_internal->capitalS);
 	LogDebug("capitalS length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_S0), NULL);
+	EVP_DigestUpdate(mdctx, array, length);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_S0), NULL);
 	// capitalSprime (S1)
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->capitalSprime)+7)/8,
 			pk_internal->capitalSprime);
 	LogDebug("capitalSprime length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_S1), NULL);
+	EVP_DigestUpdate(mdctx, array, length);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_S1), NULL);
 	// modulus (n)
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->modulus)+7)/8,
 			pk_internal->modulus);
 	LogDebug("modulus length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_n), NULL);
+	EVP_DigestUpdate(mdctx, array, length);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_n), NULL);
 	// modulus (n)
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	bi_2_byte_array( array,
 			length = (bi_length( pk_internal->capitalGamma)+7)/8,
 			pk_internal->capitalGamma);
 	LogDebug("capitalGamma length=%d", length);
-	EVP_DigestUpdate(&mdctx, array, length);
+	EVP_DigestUpdate(mdctx, array, length);
 	free(array);
-	EVP_DigestFinal_ex(&mdctx, (BYTE *)&(result->DAA_digest_gamma), NULL);
-	EVP_MD_CTX_cleanup(&mdctx);
+	EVP_DigestFinal_ex(mdctx, (BYTE *)&(result->DAA_digest_gamma), NULL);
+	EVP_MD_CTX_destroy(mdctx);
 	// rho
 	bi_2_byte_array( (BYTE *)&(result->DAA_generic_q), 26, pk_internal->rho);
 	return result;

@@ -58,8 +58,8 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %iter.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   call void @llvm.lifetime.start(i64 4, i8* %0), !dbg !26
-  call void @llvm.dbg.value(metadata %struct.string* %str2.i, i64 0, metadata !16, metadata !DIExpression(DW_OP_deref)) #3, !dbg !26
-  call void @llvm.dbg.value(metadata %struct.string* %str2.i, i64 0, metadata !27, metadata !DIExpression(DW_OP_deref)) #3, !dbg !29
+  call void @llvm.dbg.value(metadata %struct.string* %str2.i, metadata !16, metadata !DIExpression(DW_OP_deref)) #3, !dbg !26
+  call void @llvm.dbg.value(metadata %struct.string* %str2.i, metadata !27, metadata !DIExpression(DW_OP_deref)) #3, !dbg !29
   call void @_Z4sinkPKv(i8* undef) #3, !dbg !29
   call void @_Z4sinkPKv(i8* %0) #3, !dbg !30
   call void @llvm.lifetime.end(i64 4, i8* %0), !dbg !31
@@ -80,7 +80,7 @@ for.end:                                          ; preds = %for.body
 declare void @_Z4sinkPKv(i8*) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 ; Function Attrs: nounwind
 declare void @llvm.lifetime.start(i64, i8* nocapture) #3
@@ -107,13 +107,13 @@ attributes #3 = { nounwind }
 !7 = !DIDerivedType(tag: DW_TAG_member, name: "mem", line: 8, size: 32, align: 32, file: !5, scope: !4, baseType: !8)
 !8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !9)
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
-!11 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 14, file: !5, scope: !12, type: !13, variables: !15)
+!11 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 14, file: !5, scope: !12, type: !13, retainedNodes: !15)
 !12 = !DIFile(filename: "repro.cpp", directory: "/tmp/dbginfo")
 !13 = !DISubroutineType(types: !14)
 !14 = !{null}
 !15 = !{!16}
 !16 = !DILocalVariable(name: "str2", line: 15, scope: !11, file: !12, type: !4)
-!17 = distinct !DISubprogram(name: "s2", linkageName: "_Z2s2P6string", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 13, file: !5, scope: !12, type: !18, variables: !21)
+!17 = distinct !DISubprogram(name: "s2", linkageName: "_Z2s2P6string", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 13, file: !5, scope: !12, type: !18, retainedNodes: !21)
 !18 = !DISubroutineType(types: !19)
 !19 = !{null, !20}
 !20 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !4)

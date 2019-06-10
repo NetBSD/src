@@ -42,7 +42,7 @@ RPC_CertifyKey_TP(struct host_table_entry *hte,
 	int i;
 
 	initData(&hte->comm, 6);
-	memset(&null_auth, 0, sizeof(TPM_AUTH));
+	__tspi_memset(&null_auth, 0, sizeof(TPM_AUTH));
 
 	hte->comm.hdr.u.ordinal = TCSD_ORD_CERTIFYKEY;
 	LogDebugFn("TCS Context: 0x%x", hte->tcsContext);

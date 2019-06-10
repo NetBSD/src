@@ -38,6 +38,9 @@ public:
   void printDynamicSymbols() override;
   void printUnwindInfo() override;
   void printStackMap() const override;
+  void printSectionAsHex(StringRef SectionName) override;
+
+  void printNeededLibraries() override;
 
   // MachO-specific.
   void printMachODataInCode() override;
@@ -667,12 +670,59 @@ void MachODumper::printStackMap() const {
       StackMapContents.size());
 
   if (Obj->isLittleEndian())
-     prettyPrintStackMap(
-                      llvm::outs(),
-                      StackMapV2Parser<support::little>(StackMapContentsArray));
+    prettyPrintStackMap(
+        W, StackMapV2Parser<support::little>(StackMapContentsArray));
   else
-     prettyPrintStackMap(llvm::outs(),
-                         StackMapV2Parser<support::big>(StackMapContentsArray));
+    prettyPrintStackMap(W,
+                        StackMapV2Parser<support::big>(StackMapContentsArray));
+}
+
+void MachODumper::printSectionAsHex(StringRef SectionName) {
+  char *StrPtr;
+  long SectionIndex = strtol(SectionName.data(), &StrPtr, 10);
+  SectionRef SecTmp;
+  const SectionRef *Sec = &SecTmp;
+  if (*StrPtr)
+    SecTmp = unwrapOrError(Obj->getSection(SectionName));
+  else
+    SecTmp = unwrapOrError(Obj->getSection((unsigned int)SectionIndex));
+
+  StringRef SecName;
+  error(Sec->getName(SecName));
+
+  StringRef Data;
+  error(Sec->getContents(Data));
+  const uint8_t *SecContent = reinterpret_cast<const uint8_t *>(Data.data());
+
+  SectionHexDump(SecName, SecContent, Data.size());
+}
+
+void MachODumper::printNeededLibraries() {
+  ListScope D(W, "NeededLibraries");
+
+  using LibsTy = std::vector<StringRef>;
+  LibsTy Libs;
+
+  for (const auto &Command : Obj->load_commands()) {
+    if (Command.C.cmd == MachO::LC_LOAD_DYLIB ||
+        Command.C.cmd == MachO::LC_ID_DYLIB ||
+        Command.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
+        Command.C.cmd == MachO::LC_REEXPORT_DYLIB ||
+        Command.C.cmd == MachO::LC_LAZY_LOAD_DYLIB ||
+        Command.C.cmd == MachO::LC_LOAD_UPWARD_DYLIB) {
+      MachO::dylib_command Dl = Obj->getDylibIDLoadCommand(Command);
+      if (Dl.dylib.name < Dl.cmdsize) {
+        auto *P = static_cast<const char*>(Command.Ptr) + Dl.dylib.name;
+        Libs.push_back(P);
+      }
+    }
+  }
+
+  std::stable_sort(Libs.begin(), Libs.end());
+
+  for (const auto &L : Libs) {
+    outs() << "  " << L << "\n";
+  }
 }
 
 void MachODumper::printMachODataInCode() {

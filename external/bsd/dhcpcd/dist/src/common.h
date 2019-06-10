@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,14 @@
 # endif
 #endif
 
+#ifndef __fallthrough
+# if __GNUC__ >= 7
+#  define __fallthrough __attribute__((fallthrough))
+# else
+#  define __fallthrough
+# endif
+#endif
+
 /*
  * Compile Time Assertion.
  */
@@ -173,6 +181,4 @@ ssize_t addvard(char ***, const char *, const char *, size_t);
 const char *hwaddr_ntoa(const void *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);
 size_t read_hwaddr_aton(uint8_t **, const char *);
-
-ssize_t recvmsg_realloc(int, struct msghdr *, int);
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.14.1 2019/06/10 21:50:54 christos Exp $
 
 LIB=	LLVMProfileData
 
@@ -6,7 +6,8 @@ LIB=	LLVMProfileData
 
 .PATH: ${LLVM_SRCDIR}/lib/ProfileData
 
-SRCS+=	InstrProf.cpp \
+SRCS+=	GCOV.cpp \
+	InstrProf.cpp \
 	InstrProfReader.cpp \
 	InstrProfWriter.cpp \
 	ProfileSummaryBuilder.cpp \

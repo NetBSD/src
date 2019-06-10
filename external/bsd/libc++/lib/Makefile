@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/06/06 12:02:43 kamil Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2019/06/10 21:44:58 christos Exp $
 
 LIB=		c++
 WARNS=		4
@@ -44,8 +44,15 @@ CWARNFLAGS.clang+=	-Wno-error=missing-prototypes -Wno-error=sometimes-uninitiali
 CWARNFLAGS.clang+=	-Wno-error=missing-field-initializers -Wno-error=switch
 CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
 
+# with SSP and FORTIFY, on earm...
+COPTS.rt_libelftc_dem_gnu3.c += ${${ACTIVE_CC} == "clang":? -Wno-error=builtin-memcpy-chk-size :}
+
 .if ${MKSANITIZER} != "yes"
 LDFLAGS+=	-Wl,-z,defs
+.endif
+
+.if !empty(MACHINE_ARCH:Marm*) || !empty(MACHINE_ARCH:Mearm*)
+CWARNFLAGS+=		-Wno-atomic-alignment
 .endif
 
 .include <bsd.lib.mk>

@@ -9,7 +9,7 @@ Name:			%{name}
 Summary:		Implementation of the TCG's Software Stack v1.1 Specification
 Version:		%{version}
 Release:		%{release}
-License:		CPL
+License:		BSD
 Group:			Development/Libraries
 Source:			%{name}-%{version}.tar.gz
 Url:			http://www.sf.net/projects/trousers

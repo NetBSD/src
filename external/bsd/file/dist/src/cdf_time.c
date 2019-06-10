@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.8 2017/05/25 00:11:26 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.8.10.1 2019/06/10 21:44:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.16 2017/03/29 15:57:48 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.19 2019/03/12 20:43:05 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.8 2017/05/25 00:11:26 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.8.10.1 2019/06/10 21:44:47 christos Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ cdf_getdays(int year)
 
 	for (y = CDF_BASE_YEAR; y < year; y++)
 		days += isleap(y) + 365;
-		
+
 	return days;
 }
 
@@ -74,7 +74,7 @@ cdf_getday(int year, int days)
 {
 	size_t m;
 
-	for (m = 0; m < sizeof(mdays) / sizeof(mdays[0]); m++) {
+	for (m = 0; m < __arraycount(mdays); m++) {
 		int sub = mdays[m] + (m == 1 && isleap(year));
 		if (days < sub)
 			return days;
@@ -83,7 +83,7 @@ cdf_getday(int year, int days)
 	return days;
 }
 
-/* 
+/*
  * Return the 0...11 month number.
  */
 static int
@@ -91,14 +91,14 @@ cdf_getmonth(int year, int days)
 {
 	size_t m;
 
-	for (m = 0; m < sizeof(mdays) / sizeof(mdays[0]); m++) {
+	for (m = 0; m < __arraycount(mdays); m++) {
 		days -= mdays[m];
 		if (m == 1 && isleap(year))
 			days--;
 		if (days <= 0)
-			return (int)m;
+			return CAST(int, m);
 	}
-	return (int)m;
+	return CAST(int, m);
 }
 
 int
@@ -114,22 +114,22 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 	ts->tv_nsec = (t % CDF_TIME_PREC) * 100;
 
 	t /= CDF_TIME_PREC;
-	tm.tm_sec = (int)(t % 60);
+	tm.tm_sec = CAST(int, t % 60);
 	t /= 60;
 
-	tm.tm_min = (int)(t % 60);
+	tm.tm_min = CAST(int, t % 60);
 	t /= 60;
 
-	tm.tm_hour = (int)(t % 24);
+	tm.tm_hour = CAST(int, t % 24);
 	t /= 24;
 
 	/* XXX: Approx */
-	tm.tm_year = (int)(CDF_BASE_YEAR + (t / 365));
+	tm.tm_year = CAST(int, CDF_BASE_YEAR + (t / 365));
 
 	rdays = cdf_getdays(tm.tm_year);
 	t -= rdays - 1;
-	tm.tm_mday = cdf_getday(tm.tm_year, (int)t);
-	tm.tm_mon = cdf_getmonth(tm.tm_year, (int)t);
+	tm.tm_mday = cdf_getday(tm.tm_year, CAST(int, t));
+	tm.tm_mon = cdf_getmonth(tm.tm_year, CAST(int, t));
 	tm.tm_wday = 0;
 	tm.tm_yday = 0;
 	tm.tm_isdst = 0;
@@ -178,7 +178,7 @@ cdf_ctime(const time_t *sec, char *buf)
 	if (ptr != NULL)
 		return buf;
 	(void)snprintf(buf, 26, "*Bad* %#16.16" INT64_T_FORMAT "x\n",
-	    (long long)*sec);
+	    CAST(long long, *sec));
 	return buf;
 }
 

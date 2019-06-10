@@ -109,5 +109,5 @@ static IDEA_INT inverse(unsigned int xin)
             }
         } while (r != 0);
     }
-    return ((IDEA_INT) b2);
+    return (IDEA_INT)b2;
 }

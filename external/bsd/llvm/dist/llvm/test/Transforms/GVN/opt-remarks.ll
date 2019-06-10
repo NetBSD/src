@@ -1,11 +1,17 @@
-; RUN: opt < %s -gvn -o /dev/null  -pass-remarks-output=%t -S -pass-remarks=gvn \
+; RUN: opt < %s -gvn -o /dev/null  -S -pass-remarks=gvn -pass-remarks-missed=gvn  \
 ; RUN:     2>&1 | FileCheck %s
+; RUN: opt < %s -gvn -o /dev/null  -pass-remarks-output=%t -S
+; RUN: cat %t | FileCheck -check-prefix=YAML %s
+
+; RUN: opt < %s -aa-pipeline=basic-aa -passes=gvn -o /dev/null -S -pass-remarks=gvn -pass-remarks-missed=gvn \
+; RUN:     2>&1 | FileCheck %s
+; RUN: opt < %s -aa-pipeline=basic-aa -passes=gvn -o /dev/null -pass-remarks-output=%t -S
 ; RUN: cat %t | FileCheck -check-prefix=YAML %s
 
 ; CHECK:      remark: <unknown>:0:0: load of type i32 eliminated{{$}}
 ; CHECK-NEXT: remark: <unknown>:0:0: load of type i32 eliminated{{$}}
 ; CHECK-NEXT: remark: <unknown>:0:0: load of type i32 eliminated{{$}}
-; CHECK-NOT:  remark:
+; CHECK-NEXT: remark: /tmp/s.c:3:3: load of type i32 not eliminated
 
 ; YAML:      --- !Passed
 ; YAML-NEXT: Pass:            gvn
@@ -98,7 +104,7 @@ entry:
 !4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{i32 1, !"PIC Level", i32 2}
 !6 = !{!"clang version 4.0.0 (trunk 282540) (llvm/trunk 282542)"}
-!7 = distinct !DISubprogram(name: "may_alias", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: true, unit: !0, variables: !2)
+!7 = distinct !DISubprogram(name: "may_alias", scope: !1, file: !1, line: 1, type: !8, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: true, unit: !0, retainedNodes: !2)
 !8 = !DISubroutineType(types: !2)
 !9 = !DILocation(line: 1, column: 13, scope: !7)
 !10 = !DILocation(line: 2, column: 10, scope: !7)

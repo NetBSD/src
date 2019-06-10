@@ -41,8 +41,8 @@ Tspi_TPM_CreateEndorsementKey(TSS_HTPM hTPM,			/* in */
 	TCPA_PUBKEY pubEK;
 	Trspi_HashCtx hashCtx;
 
-	memset(&pubEK, 0, sizeof(TCPA_PUBKEY));
-	memset(&dummyKey, 0, sizeof(TSS_KEY));
+	__tspi_memset(&pubEK, 0, sizeof(TCPA_PUBKEY));
+	__tspi_memset(&dummyKey, 0, sizeof(TSS_KEY));
 
 	if ((result = obj_tpm_get_tsp_context(hTPM, &tspContext)))
 		return result;
@@ -149,7 +149,7 @@ Tspi_TPM_GetPubEndorsementKey(TSS_HTPM hTPM,			/* in */
 	TCPA_PUBKEY pubKey;
 	Trspi_HashCtx hashCtx;
 
-	memset(&pubKey, 0, sizeof(TCPA_PUBKEY));
+	__tspi_memset(&pubKey, 0, sizeof(TCPA_PUBKEY));
 
 	if (phEndorsementPubKey == NULL)
 		return TSPERR(TSS_E_BAD_PARAMETER);
@@ -194,7 +194,7 @@ Tspi_TPM_GetPubEndorsementKey(TSS_HTPM hTPM,			/* in */
 			 * Atmel chips specifically.
 			 */
 			offset = 0;
-			memset(&pubKey, 0, sizeof(TCPA_PUBKEY));
+			__tspi_memset(&pubKey, 0, sizeof(TCPA_PUBKEY));
 			if ((result = Trspi_UnloadBlob_PUBKEY(&offset, pubEK, &pubKey)))
 				goto done;
 
@@ -281,9 +281,9 @@ Tspi_TPM_CreateRevocableEndorsementKey(TSS_HTPM hTPM,			/* in */
 	TPM_PUBKEY pubEK;
 	Trspi_HashCtx hashCtx;
 
-	memset(&pubEK, 0, sizeof(TPM_PUBKEY));
-	memset(&dummyKey, 0, sizeof(TSS_KEY));
-	memset(&eKResetAuth, 0xff, sizeof(eKResetAuth));
+	__tspi_memset(&pubEK, 0, sizeof(TPM_PUBKEY));
+	__tspi_memset(&dummyKey, 0, sizeof(TSS_KEY));
+	__tspi_memset(&eKResetAuth, 0xff, sizeof(eKResetAuth));
 
 	if (!pulEkResetDataLength || !prgbEkResetData)
 		return TSPERR(TSS_E_BAD_PARAMETER);

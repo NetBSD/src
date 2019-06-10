@@ -67,7 +67,7 @@ attributes #1 = { nounwind readnone }
 !llvm.ident = !{!13, !13}
 !llvm.module.flags = !{!18, !19, !20}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = distinct !DIGlobalVariable(name: "a", linkageName: "\01?a@@3TYYSTYPE@@A", scope: !2, file: !3, line: 2, type: !6, isLocal: false, isDefinition: true)
 !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "clang version 5.0.0 ", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !4, globals: !5)
 !3 = !DIFile(filename: "a.cpp", directory: "C:\5Csrc\5Cllvm-project\5Cbuild", checksumkind: CSK_MD5, checksum: "c0005139aa3df153c30d8c6953390a4b")
@@ -84,7 +84,7 @@ attributes #1 = { nounwind readnone }
 !18 = !{i32 2, !"CodeView", i32 1}
 !19 = !{i32 2, !"Debug Info Version", i32 3}
 !20 = !{i32 1, !"PIC Level", i32 2}
-!21 = distinct !DISubprogram(name: "fn1", linkageName: "\01?fn1@@YAXXZ", scope: !12, file: !12, line: 2, type: !22, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, unit: !11, variables: !4)
+!21 = distinct !DISubprogram(name: "fn1", linkageName: "\01?fn1@@YAXXZ", scope: !12, file: !12, line: 2, type: !22, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, unit: !11, retainedNodes: !4)
 !22 = !DISubroutineType(types: !23)
 !23 = !{null}
 !24 = !DILocalVariable(name: "a", scope: !21, file: !12, line: 2, type: !25)

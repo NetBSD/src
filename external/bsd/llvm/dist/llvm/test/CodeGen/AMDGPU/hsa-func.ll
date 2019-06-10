@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri | FileCheck --check-prefix=HSA %s
-; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri -mattr=-flat-for-global | FileCheck --check-prefix=HSA-CI %s
+; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri | FileCheck --check-prefix=HSA-CI %s
 ; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=carrizo  | FileCheck --check-prefix=HSA %s
-; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=carrizo -mattr=-flat-for-global | FileCheck --check-prefix=HSA-VI %s
+; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=carrizo | FileCheck --check-prefix=HSA-VI %s
 ; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri -filetype=obj | llvm-readobj -symbols -s -sd | FileCheck --check-prefix=ELF %s
 ; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri | llvm-mc -filetype=obj -triple amdgcn--amdhsa -mcpu=kaveri | llvm-readobj -symbols -s -sd | FileCheck %s --check-prefix=ELF
 
@@ -27,7 +27,7 @@
 
 ; ELF: Symbol {
 ; ELF: Name: simple
-; ELF: Size: 48
+; ELF: Size: 36
 ; ELF: Type: Function (0x2)
 ; ELF: }
 
@@ -41,12 +41,9 @@
 ; HSA: .p2align 2
 ; HSA: {{^}}simple:
 ; HSA-NOT: amd_kernel_code_t
-; HSA-NOT: s_load_dwordx2 s[{{[0-9]+:[0-9]+}}], s[4:5], 0x0
+; HSA: flat_load_dwordx2 v{{\[[0-9]+:[0-9]+\]}}, v[0:1]
 
 ; Make sure we are setting the ATC bit:
-; HSA-CI: s_mov_b32 s[[HI:[0-9]+]], 0x100f000
-; On VI+ we also need to set MTYPE = 2
-; HSA-VI: s_mov_b32 s[[HI:[0-9]+]], 0x1100f000
 ; Make sure we generate flat store for HSA
 ; HSA: flat_store_dword v{{\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}
 
@@ -54,9 +51,9 @@
 ; HSA: .size   simple, .Lfunc_end0-simple
 ; HSA: ; Function info:
 ; HSA-NOT: COMPUTE_PGM_RSRC2
-define void @simple(i32 addrspace(1)* addrspace(2)* %ptr.out) {
+define void @simple(i32 addrspace(1)* addrspace(4)* %ptr.out) {
 entry:
-  %out = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(2)* %ptr.out
+  %out = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(4)* %ptr.out
   store i32 0, i32 addrspace(1)* %out
   ret void
 }
@@ -64,9 +61,9 @@ entry:
 ; Ignore explicit alignment that is too low.
 ; HSA: .globl simple_align2
 ; HSA: .p2align 2
-define void @simple_align2(i32 addrspace(1)* addrspace(2)* %ptr.out) align 2 {
+define void @simple_align2(i32 addrspace(1)* addrspace(4)* %ptr.out) align 2 {
 entry:
-  %out = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(2)* %ptr.out
+  %out = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(4)* %ptr.out
   store i32 0, i32 addrspace(1)* %out
   ret void
 }

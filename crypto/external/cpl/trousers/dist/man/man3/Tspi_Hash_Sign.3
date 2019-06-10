@@ -48,7 +48,7 @@ Tspi_Hash_Sign \- sign the hash data of an object with a signing key
 \fBTspi_Hash_Sign\fR signs the hash data of an
 object with a given signing key. The data must be set at the hash
 instance associated with \fIhHash\fR by calling
-\fBTspi_Hash_SetHashValue\fR or \fBTspi_Hash_UpdateHash\fR. The
+\fBTspi_Hash_SetHashValue\fR or \fBTspi_Hash_UpdateHashValue\fR. The
 \fBTspi_Hash_Sign\fR method allocates a memory block for the
 \fIprgbSignature\fR data. This memory must be released using
 \fBTspi_Context_FreeMemory\fR.
@@ -103,6 +103,6 @@ Specification version 1.1 Golden
 .SH "SEE ALSO"
 
 .PP
-\fBTspi_Hash_UpdateHash\fR(3), \fBTspi_Hash_SetHashValue\fR(3),
+\fBTspi_Hash_UpdateHashValue\fR(3), \fBTspi_Hash_SetHashValue\fR(3),
 \fBTspi_Hash_VerifySignature\fR(3).
 

@@ -1,5 +1,5 @@
 ; RUN: llc -O0 -mtriple=x86_64-linux-gnu %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-info %t | FileCheck %s
 
 ; Verify that we've emitted template arguments for the union
 ; CHECK: DW_TAG_union_type
@@ -33,7 +33,7 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!15}
 !llvm.module.flags = !{!18}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "f", linkageName: "_ZN7PR156371fE", scope: !2, file: !3, line: 6, type: !4, isLocal: false, isDefinition: true)
 !2 = !DINamespace(name: "PR15637", scope: null)
 !3 = !DIFile(filename: "foo.cc", directory: "/usr/local/google/home/echristo/tmp")
@@ -52,7 +52,7 @@ attributes #1 = { nounwind readnone }
 !16 = !{}
 !17 = !{!0}
 !18 = !{i32 1, !"Debug Info Version", i32 3}
-!19 = distinct !DISubprogram(name: "g", linkageName: "_ZN7PR156371gEf", scope: !2, file: !3, line: 3, type: !20, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !15, variables: !16)
+!19 = distinct !DISubprogram(name: "g", linkageName: "_ZN7PR156371gEf", scope: !2, file: !3, line: 3, type: !20, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !15, retainedNodes: !16)
 !20 = !DISubroutineType(types: !21)
 !21 = !{null, !14}
 !22 = !DILocalVariable(name: "value", arg: 1, scope: !19, file: !3, line: 3, type: !14)

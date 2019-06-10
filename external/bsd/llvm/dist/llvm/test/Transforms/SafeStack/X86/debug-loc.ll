@@ -20,9 +20,9 @@ entry:
 
 ; dbg.declare for %zzz and %xxx are gone; replaced with dbg.declare based off the unsafe stack pointer
 ; CHECK-NOT: call void @llvm.dbg.declare
-; CHECK: call void @llvm.dbg.declare(metadata i8* %[[USP]], metadata ![[VAR_ARG:.*]], metadata ![[EXPR_ARG:.*]])
+; CHECK: call void @llvm.dbg.declare(metadata i8* %[[USP]], metadata ![[VAR_ARG:.*]], metadata !DIExpression(DW_OP_constu, 104, DW_OP_minus))
 ; CHECK-NOT: call void @llvm.dbg.declare
-; CHECK: call void @llvm.dbg.declare(metadata i8* %[[USP]], metadata ![[VAR_LOCAL:.*]], metadata ![[EXPR_LOCAL:.*]])
+; CHECK: call void @llvm.dbg.declare(metadata i8* %[[USP]], metadata ![[VAR_LOCAL:.*]], metadata !DIExpression(DW_OP_constu, 208, DW_OP_minus))
 ; CHECK-NOT: call void @llvm.dbg.declare
 
   call void @Capture(%struct.S* %zzz), !dbg !23
@@ -37,10 +37,8 @@ entry:
 
 ; CHECK-DAG: ![[VAR_ARG]] = !DILocalVariable(name: "zzz"
 ; 100 aligned up to 8
-; CHECK-DAG: ![[EXPR_ARG]] = !DIExpression(DW_OP_constu, 104, DW_OP_minus
 
 ; CHECK-DAG: ![[VAR_LOCAL]] = !DILocalVariable(name: "xxx"
-; CHECK-DAG: ![[EXPR_LOCAL]] = !DIExpression(DW_OP_constu, 208, DW_OP_minus
 
 ; Function Attrs: nounwind readnone
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
@@ -66,7 +64,7 @@ attributes #2 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-
 !8 = !DIBasicType(name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !9 = !{!10}
 !10 = !DISubrange(count: 100)
-!12 = distinct !DISubprogram(name: "f", linkageName: "_Z1f1S", scope: !1, file: !1, line: 10, type: !13, isLocal: false, isDefinition: true, scopeLine: 10, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!12 = distinct !DISubprogram(name: "f", linkageName: "_Z1f1S", scope: !1, file: !1, line: 10, type: !13, isLocal: false, isDefinition: true, scopeLine: 10, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null, !4}
 !15 = !{i32 2, !"Dwarf Version", i32 4}

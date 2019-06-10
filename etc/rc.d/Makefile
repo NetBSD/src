@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.97 2018/02/17 03:02:04 uwe Exp $
+# $NetBSD: Makefile,v 1.97.4.1 2019/06/10 21:42:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,32 +18,35 @@ CONFIGFILES=\
 		accounting altqd amd apmd automount automountd autounmountd \
 		bluetooth bootconf.sh bootparams \
 		ccd cgd cleartmp cron \
-		devpubd dhclient dhcpcd dhcpd dhcpd6 dhcrelay dmesg \
+		devpubd dhcpcd dhcpd dhcpd6 dhcrelay dmesg \
 		downinterfaces \
 		envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ip6addrctl ipfilter ipfs ipmon ipnat \
-		ipsec irdaattach iscsi_target iscsid isdnd isibootd \
+		ipsec irdaattach iscsi_target iscsid isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
 		mountcritlocal mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf npfd ntpd \
-		ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
+		npfd ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd resize_root rndctl root route6d routed rtadvd \
 		rtclocaltime rwho \
-		savecore screenblank securelevel sshd \
+		savecore screenblank securelevel smtoff sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
-		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		ypbind yppasswdd ypserv
+		veriexec virecover wdogctl wpa_supplicant wscons wsmoused
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
+
+.if ${MKYP} != "no"
+CONFIGFILES+=	ypbind yppasswdd ypserv
+.endif
 
 .if ${MKX11} != "no"
 CONFIGFILES+=	xdm xfs fccache

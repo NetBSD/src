@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.52 2017/06/28 13:46:06 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.52.6.1 2019/06/10 21:41:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.52 2017/06/28 13:46:06 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.52.6.1 2019/06/10 21:41:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,6 @@ History *hist;	/* history cookie */
 EditLine *el;	/* editline cookie */
 int displayhist;
 static FILE *el_in, *el_out;
-unsigned char _el_fn_complete(EditLine *, int);
 
 STATIC const char *fc_replace(const char *, char *, char *);
 
@@ -153,6 +152,7 @@ bad:
 			INTON;
 		}
 		if (el) {
+			INTOFF;
 			if (Vflag)
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
@@ -160,6 +160,7 @@ bad:
 			el_set(el, EL_BIND, "^I", 
 			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
 			el_source(el, lookupvar("EDITRC"));
+			INTON;
 		}
 	} else {
 		INTOFF;
@@ -190,17 +191,21 @@ set_prompt_lit(const char *lit_ch)
 
 	mbtowc(&wc, NULL, 1);		/* state init */
 
+	INTOFF;
 	if (mbtowc(&wc, lit_ch, strlen(lit_ch)) <= 0)
 		el_set(el, EL_PROMPT, getprompt);
 	else
 		el_set(el, EL_PROMPT_ESC, getprompt, (int)wc);
+	INTON;
 }
 
 void
 set_editrc(const char *fname)
 {
+	INTOFF;
 	if (iflag && editing && el)
 		el_source(el, fname);
+	INTON;
 }
 
 void
@@ -210,22 +215,26 @@ sethistsize(const char *hs)
 	HistEvent he;
 
 	if (hist != NULL) {
-		if (hs == NULL || *hs == '\0' ||
-		   (histsize = atoi(hs)) < 0)
+		if (hs == NULL || *hs == '\0' || *hs == '-' ||
+		   (histsize = number(hs)) < 0)
 			histsize = 100;
+		INTOFF;
 		history(hist, &he, H_SETSIZE, histsize);
 		history(hist, &he, H_SETUNIQUE, 1);
+		INTON;
 	}
 }
 
 void
 setterm(const char *term)
 {
+	INTOFF;
 	if (el != NULL && term != NULL)
 		if (el_set(el, EL_TERMINAL, term) != 0) {
 			outfmt(out2, "sh: Can't set terminal type %s\n", term);
 			outfmt(out2, "sh: Using dumb terminal settings.\n");
 		}
+	INTON;
 }
 
 int
@@ -236,11 +245,14 @@ inputrc(int argc, char **argv)
 		return 1;
 	}
 	if (el != NULL) {
+		INTOFF;
 		if (el_source(el, argv[1])) {
+			INTON;
 			out2str("inputrc: failed\n");
 			return 1;
-		} else
-			return 0;
+		}
+		INTON;
+		return 0;
 	} else {
 		out2str("sh: inputrc ignored, not editing\n");
 		return 1;
@@ -468,9 +480,10 @@ histcmd(volatile int argc, char ** volatile argv)
 		editcmd = stalloc(cmdlen);
 		snprintf(editcmd, cmdlen, "%s %s", editor, editfile);
 		evalstring(editcmd, 0);	/* XXX - should use no JC command */
-		INTON;
+		stunalloc(editcmd);
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */
 		unlink(editfile);
+		INTON;
 	}
 
 	if (lflg == 0 && active > 0)
@@ -529,7 +542,7 @@ str_to_event(const char *str, int last)
 		s++;
 	}
 	if (is_number(s)) {
-		i = atoi(s);
+		i = number(s);
 		if (relative) {
 			while (retval != -1 && i--) {
 				retval = history(hist, &he, H_NEXT);

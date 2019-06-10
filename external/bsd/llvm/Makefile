@@ -1,15 +1,19 @@
-#	$NetBSD: Makefile,v 1.10 2017/12/17 21:16:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2019/06/10 21:45:03 christos Exp $
 
 .include <bsd.init.mk>
 
 SUBDIR=	include \
-	.WAIT \
+
+.if ${MKLLVMRT} != "no"
+SUBDIR+= \
+	librt
+.endif
+
+.if ${MKLLVM} != "no"
+SUBDIR+= \
 	lib \
 	.WAIT \
 	bin
-
-.if ${MKCLANGRT:Uno} == "yes"
-SUBDIR+=	librt
 .endif
 
 .include "Makefile.inc"

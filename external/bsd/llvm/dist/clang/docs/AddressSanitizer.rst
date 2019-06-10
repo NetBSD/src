@@ -140,7 +140,8 @@ Memory leak detection
 ---------------------
 
 For more information on leak detector in AddressSanitizer, see
-:doc:`LeakSanitizer`. The leak detection is turned on by default on Linux;
+:doc:`LeakSanitizer`. The leak detection is turned on by default on Linux,
+and can be enabled using ``ASAN_OPTIONS=detect_leaks=1`` on OS X;
 however, it is not yet supported on other platforms.
 
 Issue Suppression
@@ -196,12 +197,16 @@ this purpose.
 Disabling Instrumentation with ``__attribute__((no_sanitize("address")))``
 --------------------------------------------------------------------------
 
-Some code should not be instrumented by AddressSanitizer. One may use the
-function attribute ``__attribute__((no_sanitize("address")))`` (which has
-deprecated synonyms `no_sanitize_address` and `no_address_safety_analysis`) to
-disable instrumentation of a particular function. This attribute may not be
-supported by other compilers, so we suggest to use it together with
+Some code should not be instrumented by AddressSanitizer. One may use
+the attribute ``__attribute__((no_sanitize("address")))`` (which has
+deprecated synonyms `no_sanitize_address` and
+`no_address_safety_analysis`) to disable instrumentation of a
+particular function. This attribute may not be supported by other
+compilers, so we suggest to use it together with
 ``__has_feature(address_sanitizer)``.
+
+The same attribute used on a global variable prevents AddressSanitizer
+from adding redzones around it and detecting out of bounds accesses.
 
 Suppressing Errors in Recompiled Code (Blacklist)
 -------------------------------------------------

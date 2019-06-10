@@ -1,5 +1,9 @@
 // RUN: %clang_cc1 %s -fsyntax-only -triple x86_64-unknown-unknown -verify
 // RUN: %clang_cc1 %s -fsyntax-only -triple arm64-unknown-unknown -verify
+// RUN: %clang_cc1 %s -fsyntax-only -triple x86_64-unknown-windows-msvc -verify
+// RUN: %clang_cc1 %s -fsyntax-only -triple aarch64-unknown-windows-msvc -verify
+// RUN: %clang_cc1 %s -fsyntax-only -triple thumbv7-unknown-windows-msvc -verify
+
 typedef void typedef_fun_t(int);
 
 void __attribute__((preserve_most)) foo(void *ptr) {

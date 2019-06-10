@@ -42,7 +42,7 @@ TCSP_EstablishTransport_Internal(TCS_CONTEXT_HANDLE      hContext,
 	TSS_RESULT result;
 	UINT32 paramSize;
 	UINT64 offset;
-	TPM_KEY_HANDLE keySlot;
+	TPM_KEY_HANDLE keySlot = TPM_KH_TRANSPORT;
 	BYTE txBlob[TSS_TPM_TXBLOB_SIZE];
 
 	if ((result = ctx_verify_context(hContext)))

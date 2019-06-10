@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1177 2018/05/31 05:27:45 mrg Exp $
+# $NetBSD: mi,v 1.1177.2.1 2019/06/10 21:42:29 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -479,8 +479,8 @@
 ./sbin/chown					base-sysutil-root
 ./sbin/clri					base-sysutil-root
 ./sbin/devpubd					base-sysutil-root
-./sbin/dhclient					base-dhclient-root
-./sbin/dhclient-script				base-dhclient-root
+./sbin/dhclient					base-obsolete		obsolete
+./sbin/dhclient-script				base-obsolete		obsolete
 ./sbin/dhcpcd					base-dhcpcd-root
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
@@ -509,7 +509,7 @@
 ./sbin/ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
-./sbin/ipppctl					base-netutil-root
+./sbin/ipppctl					base-obsolete		obsolete
 ./sbin/iscsictl					base-iscsi-bin		iscsi
 ./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
@@ -546,6 +546,7 @@
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_puffs				base-sysutil-root
+./sbin/mount_qemufwcfg				base-sysutil-root
 ./sbin/mount_smbfs				base-smbfs-root
 ./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
@@ -616,6 +617,7 @@
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
+./sbin/umbctl					base-netutil-root
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete
@@ -653,6 +655,7 @@
 ./usr/bin/audiorecord				base-audio-bin
 ./usr/bin/awk					base-util-bin
 ./usr/bin/banner				base-util-bin
+./usr/bin/base64				base-util-bin
 ./usr/bin/basename				base-util-bin
 ./usr/bin/batch					base-cron-bin
 ./usr/bin/bc					base-util-bin
@@ -948,6 +951,7 @@
 ./usr/bin/ssh					base-secsh-bin
 ./usr/bin/ssh-add				base-secsh-bin
 ./usr/bin/ssh-agent				base-secsh-bin
+./usr/bin/ssh-copy-id				base-secsh-bin
 ./usr/bin/ssh-keygen				base-secsh-bin
 ./usr/bin/ssh-keyscan				base-secsh-bin
 ./usr/bin/stat					base-util-bin
@@ -974,7 +978,7 @@
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
-./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpfmt					base-obsolete		obsolete
 ./usr/bin/tpm_sealdata				base-tpm-bin		tpm
 ./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
 ./usr/bin/tpm_version				base-tpm-bin		tpm
@@ -992,6 +996,7 @@
 ./usr/bin/units					base-util-bin
 ./usr/bin/unlzf					base-util-bin
 ./usr/bin/unlzma				base-util-bin
+./usr/bin/unpigz				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
 ./usr/bin/unzip					base-util-bin
@@ -1067,12 +1072,14 @@
 ./usr/include/clang-3.6				base-obsolete		obsolete
 ./usr/include/clang-3.8				base-obsolete		obsolete
 ./usr/include/clang-4.0				base-obsolete		obsolete
-./usr/include/clang-5.0				base-c-usr
+./usr/include/clang-5.0				base-obsolete		obsolete
+./usr/include/clang-7.0				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
 ./usr/include/dev/apm				base-c-usr
 ./usr/include/dev/ata				base-c-usr
+./usr/include/dev/bluetooth			comp-c-usr
 ./usr/include/dev/dec				base-c-usr
 ./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
@@ -1107,6 +1114,7 @@
 ./usr/include/dev/rcons				base-obsolete		obsolete
 ./usr/include/dev/sbus				base-c-usr
 ./usr/include/dev/scsipi			base-c-usr
+./usr/include/dev/spi				base-c-usr
 ./usr/include/dev/sun				base-c-usr
 ./usr/include/dev/tc				base-c-usr
 ./usr/include/dev/usb				base-c-usr
@@ -1169,11 +1177,13 @@
 ./usr/include/g++/tr2				base-cxx-usr
 ./usr/include/gcc-4.1				base-obsolete		obsolete
 ./usr/include/gcc-4.5				base-obsolete		obsolete
-./usr/include/gcc-4.8				base-c-usr		obsolete
-./usr/include/gcc-5				base-c-usr
-./usr/include/gcc-5/sanitizer			base-c-usr
+./usr/include/gcc-4.8				base-obsolete		obsolete
+./usr/include/gcc-5				base-obsolete		obsolete
+./usr/include/gcc-5/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-6				base-c-usr
 ./usr/include/gcc-6/sanitizer			base-c-usr
+./usr/include/gcc-7				base-c-usr
+./usr/include/gcc-7/sanitizer			base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr
@@ -1210,11 +1220,11 @@
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr
 ./usr/include/netipsec				base-c-usr
-./usr/include/netisdn				base-c-usr
+./usr/include/netisdn				base-obsolete		obsolete
 ./usr/include/netiso				base-obsolete		obsolete
-./usr/include/netkey				base-c-usr
+./usr/include/netkey				base-obsolete		obsolete
 ./usr/include/netmpls				base-c-usr
-./usr/include/netnatm				base-c-usr
+./usr/include/netnatm				base-obsolete		obsolete
 ./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netpgp				base-c-usr
 ./usr/include/netsmb				base-c-usr
@@ -1654,7 +1664,7 @@
 ./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
-./usr/sbin/daicctl				base-isdn-bin
+./usr/sbin/daicctl				base-obsolete		obsolete
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
@@ -1674,7 +1684,7 @@
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
-./usr/sbin/dtmfdecode				base-isdn-bin
+./usr/sbin/dtmfdecode				base-obsolete		obsolete
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
@@ -1737,11 +1747,11 @@
 ./usr/sbin/irdaattach				base-sysutil-bin
 ./usr/sbin/iscsi-initiator			base-iscsi-bin		iscsi
 ./usr/sbin/iscsi-target				base-iscsi-bin		iscsi
-./usr/sbin/isdnd				base-isdn-bin
-./usr/sbin/isdnmonitor				base-isdn-bin
-./usr/sbin/isdntel				base-isdn-bin
-./usr/sbin/isdntelctl				base-isdn-bin
-./usr/sbin/isdntrace				base-isdn-bin
+./usr/sbin/isdnd				base-obsolete		obsolete
+./usr/sbin/isdnmonitor				base-obsolete		obsolete
+./usr/sbin/isdntel				base-obsolete		obsolete
+./usr/sbin/isdntelctl				base-obsolete		obsolete
+./usr/sbin/isdntrace				base-obsolete		obsolete
 ./usr/sbin/isibootd				base-bootserver-bin
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
 ./usr/sbin/iwictl				base-sysutil-bin
@@ -1758,13 +1768,13 @@
 ./usr/sbin/ldpd					base-router-bin
 ./usr/sbin/link					base-sysutil-bin
 ./usr/sbin/linkfarm				base-obsolete		obsolete
-./usr/sbin/lmcconfig				base-netutil-bin
+./usr/sbin/lmcconfig				base-obsolete		obsolete
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lockstat				base-sysutil-bin
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
-./usr/sbin/lwresd				base-bind-bin
+./usr/sbin/lwresd				base-obsolete		obsolete
 ./usr/sbin/mailstats				base-obsolete		obsolete
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
@@ -1875,8 +1885,8 @@
 ./usr/sbin/procsystime				base-debug-bin		dtrace
 ./usr/sbin/psrset				base-sysutil-bin
 ./usr/sbin/pstat				base-sysutil-bin
-./usr/sbin/pvcsif				base-netutil-bin
-./usr/sbin/pvctxctl				base-netutil-bin
+./usr/sbin/pvcsif				base-obsolete		obsolete
+./usr/sbin/pvctxctl				base-obsolete		obsolete
 ./usr/sbin/pwd_mkdb				base-sysutil-bin
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
@@ -2213,8 +2223,8 @@
 ./usr/share/examples/emul			base-sys-examples
 ./usr/share/examples/emul/linux			base-sys-examples
 ./usr/share/examples/emul/linux/etc		base-sys-examples
-./usr/share/examples/emul/svr4			base-sys-examples
-./usr/share/examples/emul/svr4/etc		base-sys-examples
+./usr/share/examples/emul/svr4			base-obsolete	obsolete
+./usr/share/examples/emul/svr4/etc		base-obsolete	obsolete
 ./usr/share/examples/emul/ultrix		base-sys-examples
 ./usr/share/examples/emul/ultrix/etc		base-sys-examples
 ./usr/share/examples/fstab			base-fstab-examples
@@ -2222,7 +2232,7 @@
 ./usr/share/examples/getdate			base-sys-examples
 ./usr/share/examples/hostapd			base-netutil-examples
 ./usr/share/examples/ipf			base-netutil-examples
-./usr/share/examples/isdn			base-isdn-examples
+./usr/share/examples/isdn			base-obsolete	obsolete
 ./usr/share/examples/kerberos			base-krb5-examples
 ./usr/share/examples/lua			base-sys-examples
 ./usr/share/examples/lua/README			base-sys-examples	share
@@ -2245,6 +2255,7 @@
 ./usr/share/examples/racoon/roadwarrior/client	base-netutil-examples
 ./usr/share/examples/racoon/roadwarrior/server	base-netutil-examples
 ./usr/share/examples/rtadvd			base-router-examples
+./usr/share/examples/slip			base-slip-examples
 ./usr/share/examples/smbfs			base-sysutil-examples
 ./usr/share/examples/supfiles			base-sup-examples
 ./usr/share/examples/syslogd			base-sysutil-examples
@@ -3044,6 +3055,9 @@
 ./usr/share/i18n/iconv				base-sysutil-share
 ./usr/share/i18n/iconv/iconv.dir		base-sysutil-share	nls
 ./usr/share/info				base-texinfo-share
+./usr/share/installboot				base-sysutil-share
+./usr/share/installboot/evbarm			base-sysutil-share
+./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
@@ -5582,6 +5596,7 @@
 ./usr/share/zoneinfo/Asia/Pontianak		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Pyongyang		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Qatar			base-sys-share		share
+./usr/share/zoneinfo/Asia/Qostanay		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Qyzylorda		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Rangoon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Riyadh		base-sys-share		share
@@ -5967,11 +5982,12 @@
 ./var/chroot/named/etc/namedb			base-bind-root
 ./var/chroot/named/etc/namedb/cache		base-bind-root
 ./var/chroot/named/etc/namedb/keys		base-bind-root
+./var/chroot/named/etc/namedb/nta		base-bind-root
 ./var/chroot/named/usr				base-bind-root
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
 ./var/chroot/named/var/run			base-bind-root
-./var/chroot/named/var/run/lwresd		base-bind-root
+./var/chroot/named/var/run/lwresd		base-obsolete		obsolete
 ./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
 ./var/chroot/nsd				base-sys-root
@@ -5980,6 +5996,7 @@
 ./var/chroot/nsd/var				base-sys-root
 ./var/chroot/nsd/var/db				base-sys-root
 ./var/chroot/nsd/var/db/nsd			base-sys-root
+./var/chroot/nsd/var/run			base-sys-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
 ./var/chroot/ntpd/etc				base-ntp-root
@@ -6001,10 +6018,13 @@
 ./var/chroot/unbound				base-sys-root
 ./var/chroot/unbound/etc			base-sys-root
 ./var/chroot/unbound/etc/unbound		base-sys-root
+./var/chroot/unbound/var			base-sys-root
+./var/chroot/unbound/var/run			base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root
 ./var/db					base-sys-root
+./var/db/dhcpcd					base-dhcpcd-root
 ./var/db/ns					base-sys-root
 ./var/db/obsolete				base-sys-root
 ./var/db/obsolete/base				base-sys-root
@@ -6039,7 +6059,7 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
-./var/run/lwresd				base-bind-root
+./var/run/lwresd				base-obsolete		obsolete
 ./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
 ./var/shm					base-sys-root

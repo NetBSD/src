@@ -228,7 +228,7 @@ static BOOL confirmLifeLock(TSS_HCONTEXT hContext, TSS_HTPM hTpm)
 	scanCount = scanf("%5s", rsp);
 
 	 /* TRANSLATORS: this should be the affirmative letter that was  prompted for in the message corresponding to: "Are you sure you want to continue?[y/N]" */ 
-	if (strcmp(rsp, _("y")) == 0) { 
+	if (scanCount >= 1 && strcmp(rsp, _("y")) == 0) {
 		logMsg
 		    (_("Setting the lifetime lock was confirmed.\nContinuing.\n"));
 		bRc = TRUE;
@@ -349,12 +349,12 @@ int main(int argc, char **argv)
 		}
 	} while (flags[++i].name);
 
-      out_success:
+out_success:
 	logSuccess(argv[0]);
 	iRc = 0;
-      out_close:
+out_close:
 	contextClose(hContext);
-      out:
+out:
     if (szTpmPasswd && !isWellKnown)
 	shredPasswd( szTpmPasswd );
 	return iRc;

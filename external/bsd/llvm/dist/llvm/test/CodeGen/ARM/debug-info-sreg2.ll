@@ -1,21 +1,18 @@
-; RUN: llc < %s - -filetype=obj | llvm-dwarfdump -debug-dump=loc - | FileCheck %s
+; RUN: llc < %s - -filetype=obj | llvm-dwarfdump -debug-loc - | FileCheck %s
 ; Radar 9376013
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
 target triple = "thumbv7-apple-macosx10.6.7"
 
 ; Just making sure the first part of the location isn't a repetition
 ; of the size of the location description.
-;
-; 0x90   DW_OP_regx of super-register
 
-; CHECK: 0x00000000: Beginning address offset:
-; CHECK-NEXT:           Ending address offset:
-; CHECK-NEXT:            Location description: 90 {{.. .. $}}
+; CHECK: 0x00000000:
+; CHECK-NEXT:        [0x{{[0-9]*[a-f]*}}, 0x{{[0-9]*[a-f]*}}): DW_OP_regx D8
 
 define void @_Z3foov() optsize ssp !dbg !1 {
 entry:
   %call = tail call float @_Z3barv() optsize, !dbg !11
-  tail call void @llvm.dbg.value(metadata float %call, i64 0, metadata !5, metadata !DIExpression()), !dbg !11
+  tail call void @llvm.dbg.value(metadata float %call, metadata !5, metadata !DIExpression()), !dbg !11
   %call16 = tail call float @_Z2f2v() optsize, !dbg !12
   %cmp7 = fcmp olt float %call, %call16, !dbg !12
   br i1 %cmp7, label %for.body, label %for.end, !dbg !12
@@ -38,13 +35,13 @@ declare float @_Z2f2v() optsize
 
 declare float @_Z2f3f(float) optsize
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!20}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 130845)", isOptimized: true, emissionKind: FullDebug, file: !18, enums: !19, retainedTypes: !19, imports:  null)
-!1 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 5, file: !18, scope: !2, type: !3, variables: !17)
+!1 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 5, file: !18, scope: !2, type: !3, retainedNodes: !17)
 !2 = !DIFile(filename: "k.cc", directory: "/private/tmp")
 !3 = !DISubroutineType(types: !4)
 !4 = !{null}

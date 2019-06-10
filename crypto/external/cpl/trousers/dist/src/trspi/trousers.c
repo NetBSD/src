@@ -28,7 +28,7 @@
 #include "capabilities.h"
 #include "tsplog.h"
 #include "obj.h"
-
+#include "tcs_tsp.h"
 
 void
 Trspi_UnloadBlob_NONCE(UINT64 *offset, BYTE *blob, TPM_NONCE *n)
@@ -103,6 +103,7 @@ Trspi_LoadBlob(UINT64 *offset, size_t size, BYTE *to, BYTE *from)
 {
 	if (size == 0)
 		return;
+
 	if (to)
 		memcpy(&to[(*offset)], from, size);
 	(*offset) += size;
@@ -113,6 +114,7 @@ Trspi_UnloadBlob(UINT64 *offset, size_t size, BYTE *from, BYTE *to)
 {
 	if (size <= 0)
 		return;
+
 	if (to)
 		memcpy(to, &from[*offset], size);
 	(*offset) += size;
@@ -1592,6 +1594,7 @@ Trspi_UNICODE_To_Native(BYTE *string, unsigned *size)
 
 	if ((tmplen = hacky_strlen("UTF-16", string)) == 0) {
 		LogDebug("hacky_strlen returned 0");
+		iconv_close(cd);
 		return 0;
 	}
 
@@ -2185,7 +2188,7 @@ Trspi_UnloadBlob_CERTIFY_INFO(UINT64 *offset, BYTE *blob, TPM_CERTIFY_INFO *c)
         if (c->PCRInfoSize != 0) {
                 c->PCRInfo = malloc(sizeof(TPM_PCR_INFO));
                 if (c->PCRInfo == NULL) {
-                        LogError("malloc of %lu bytes failed.", sizeof(TPM_PCR_INFO));
+                        LogError("malloc of %zd bytes failed.", sizeof(TPM_PCR_INFO));
                         return TSPERR(TSS_E_OUTOFMEMORY);
                 }
         } else {

@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.28 2017/08/15 12:07:23 mlelstv Exp $
+#	$NetBSD: install.md,v 1.28.4.1 2019/06/10 21:42:18 christos Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -46,20 +46,10 @@ md_set_term() {
 	export TERM
 }
 
-__mount_kernfs() {
-	#
-	# Force kern_fs to be mounted
-	#
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
-	fi
-}
-
 md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
 	if ! cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then
-		__mount_kernfs
+		mi_mount_kernfs
 		# XXX: Use /kern/rootdev instead?
 		mount -t ffs -u /kern/rootdev / > /dev/null 2>&1
 	fi
@@ -67,16 +57,14 @@ md_makerootwritable() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^[sw]d[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed  -ne '/^[sw]d[0-9] /s/ .*//p'
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	__mount_kernfs
-	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^cd[0-9] /s/ .*//p'
 }
 
 md_get_partition_range() {
@@ -126,12 +114,12 @@ md_prep_disklabel() {
 
 md_view_labels_possible=1
 md_view_labels() {
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=$(md_get_diskdevs)
 	echo "If you like, you can now examine the labels of your disks."
 	echo ""
 	echo -n "Available are "${_DKDEVS}". Look at which? [skip this step] "
 	getresp	"done"
-	while [ "X$resp" != "Xdone" ]; do
+	while [ "${resp:-done}" != "done" ]; do
 		echo ""
 		disklabel ${resp}
 		echo ""
@@ -169,9 +157,9 @@ __welcome_banner_1
 This program is designed to help you upgrade your NetBSD system in a
 simple and rational way.
 
-As a reminder, installing the `etc' binary set is NOT recommended.
+As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 __welcome_banner_2
 	fi
@@ -194,7 +182,7 @@ __welcome_banner_3
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 Note: If you wish to have another try. Just type '^D' at the prompt. After
@@ -247,7 +235,7 @@ md_copy_kernel() {
 			echo -n "on the installation filesystem? (y/n) [n] "
 			resp="n"
 			getresp ""
-			if [ "${resp}" != "y" -a "${resp}" != "Y" ]; then
+			if [ "${resp}" != "y" ] && [ "${resp}" != "Y" ]; then
 				return
 			fi
 		fi
@@ -267,7 +255,7 @@ The following disk devices are installed on your system; please select
 the disk device containing the partition with the netbsd kernel:
 __md_copy_kernel_1
 
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=$(md_get_diskdevs)
 	echo    "$_DKDEVS"
 	echo	"fd0"
 	echo	""
@@ -280,14 +268,14 @@ __md_copy_kernel_1
 
 	# Get the directory where the file lives
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo "Enter the directory relative to the mount point that"
 		echo -n "contains the file. [${_directory}] "
 		getresp "${_directory}"
 	done
 	_directory=$resp
 
-	_sets=`(cd /mnt2/$_directory; ls netbsd* 2> /dev/null)`
+	_sets=$(cd /mnt2/$_directory; ls netbsd* 2> /dev/null)
 	if [ -z "$_sets" ]; then
 		echo "There are no NetBSD kernels available in \"$1\""
 		umount -f /mnt2 > /dev/null 2>&1
@@ -331,7 +319,7 @@ md_lib_is_aout() {
 	test -h $1 && return 1
 	test -f $1 || return 1
 
-	[ "`dd if=$1 bs=1 skip=1 count=3 2> /dev/null`" = "ELF" ] && return 1
+	[ "$(dd if=$1 bs=1 skip=1 count=3 2> /dev/null)" = "ELF" ] && return 1
 	return 0
 }
 

@@ -1,8 +1,8 @@
 // RUN: %clang -S -emit-llvm -target x86_64-unknown_unknown -g %s -o - -std=c++11 | FileCheck %s
 
-// CHECK: @tci = global %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &foo::g, 1, 2, 3>::nested" zeroinitializer, align 1, !dbg [[TCI:![0-9]+]]
-// CHECK: @tcn = global %struct.TC zeroinitializer, align 1, !dbg [[TCN:![0-9]+]]
-// CHECK: @nn = global %struct.NN zeroinitializer, align 1, !dbg [[NN:![0-9]+]]
+// CHECK: @tci = dso_local global %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &foo::g, 1, 2, 3>::nested" zeroinitializer, align 1, !dbg [[TCI:![0-9]+]]
+// CHECK: @tcn = dso_local global %struct.TC zeroinitializer, align 1, !dbg [[TCN:![0-9]+]]
+// CHECK: @nn = dso_local global %struct.NN zeroinitializer, align 1, !dbg [[NN:![0-9]+]]
 
 // CHECK: !DICompileUnit(
 // CHECK: [[EMPTY:![0-9]*]] = !{}
@@ -25,7 +25,7 @@ struct TC {
 int glb;
 void func();
 
-// CHECK: [[TCI]] = !DIGlobalVariableExpression(var: [[TCIV:.*]])
+// CHECK: [[TCI]] = !DIGlobalVariableExpression(var: [[TCIV:.*]], expr: !DIExpression())
 // CHECK: [[TCIV]] = distinct !DIGlobalVariable(name: "tci",
 // CHECK-SAME:                                  type: ![[TCNESTED:[0-9]+]]
 // CHECK: ![[TCNESTED]] ={{.*}}!DICompositeType(tag: DW_TAG_structure_type, name: "nested",
@@ -84,7 +84,7 @@ TC
 // CHECK: [[TCARG7_3]] = !DITemplateValueParameter(type: [[INT]], value: i32 3)
   3>::nested tci;
 
-// CHECK: [[TCN]] = !DIGlobalVariableExpression(var: [[TCNV:.*]])
+// CHECK: [[TCN]] = !DIGlobalVariableExpression(var: [[TCNV:.*]], expr: !DIExpression())
 // CHECK: [[TCNV]] = distinct !DIGlobalVariable(name: "tcn"
 // CHECK-SAME:                                  type: ![[TCNT:[0-9]+]]
 TC
@@ -125,7 +125,7 @@ template <template <typename> class tmpl, int &lvr, int &&rvr>
 struct NN {
 };
 
-// CHECK: [[NN]] = !DIGlobalVariableExpression(var: [[NNV:.*]])
+// CHECK: [[NN]] = !DIGlobalVariableExpression(var: [[NNV:.*]], expr: !DIExpression())
 // CHECK: [[NNV]] = distinct !DIGlobalVariable(name: "nn"
 // CHECK-SAME:                                 type: ![[NNT:[0-9]+]]
 

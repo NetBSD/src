@@ -15,11 +15,11 @@
 #include "ARMMacroFusion.h"
 #include "ARMSubtarget.h"
 #include "llvm/CodeGen/MacroFusion.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 
 namespace llvm {
 
-/// \brief Check if the instr pair, FirstMI and SecondMI, should be fused
+/// Check if the instr pair, FirstMI and SecondMI, should be fused
 /// together. Given SecondMI, when FirstMI is unspecified, then check if
 /// SecondMI may be part of a fused pair at all.
 static bool shouldScheduleAdjacent(const TargetInstrInfo &TII,
@@ -31,7 +31,7 @@ static bool shouldScheduleAdjacent(const TargetInstrInfo &TII,
   // Assume wildcards for unspecified instrs.
   unsigned FirstOpcode =
     FirstMI ? FirstMI->getOpcode()
-	    : static_cast<unsigned>(ARM::INSTRUCTION_LIST_END);
+            : static_cast<unsigned>(ARM::INSTRUCTION_LIST_END);
   unsigned SecondOpcode = SecondMI.getOpcode();
 
   if (ST.hasFuseAES())

@@ -328,7 +328,7 @@ struct Str {
 
 extern char externalvar[];
 constexpr bool constaddress = (void *)externalvar == (void *)0x4000UL; // expected-error {{must be initialized by a constant expression}} expected-note {{reinterpret_cast}}
-constexpr bool litaddress = "foo" == "foo"; // expected-error {{must be initialized by a constant expression}} expected-warning {{unspecified}}
+constexpr bool litaddress = "foo" == "foo"; // expected-error {{must be initialized by a constant expression}}
 static_assert(0 != "foo", "");
 
 }
@@ -364,7 +364,7 @@ void foo() {
   constexpr B b3 { { 1 }, { 2 } }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
 }
 
-constexpr B &&b4 = ((1, 2), 3, 4, B { {10}, {{20}} }); // expected-warning 4{{unused}}
+constexpr B &&b4 = ((1, 2), 3, 4, B { {10}, {{20}} });
 static_assert(&b4 != &b2, "");
 
 // Proposed DR: copy-elision doesn't trigger lifetime extension.
@@ -528,7 +528,7 @@ constexpr int xs6 = p[3]; // expected-error {{constant expression}} expected-not
 constexpr int xs0 = p[-3]; // ok
 constexpr int xs_1 = p[-4]; // expected-error {{constant expression}} expected-note {{cannot refer to element -1}}
 
-constexpr int zs[2][2][2][2] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+constexpr int zs[2][2][2][2] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }; // expected-note {{array 'zs' declared here}}
 static_assert(zs[0][0][0][0] == 1, "");
 static_assert(zs[1][1][1][1] == 16, "");
 static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
@@ -536,7 +536,10 @@ static_assert((&zs[0][0][0][2])[-1] == 2, "");
 static_assert(**(**(zs + 1) + 1) == 11, "");
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, ""); // expected-error {{constant expression}} expected-note {{cannot refer to element -1 of array of 2 elements in a constant expression}}
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][2] - 2) == 11, "");
-constexpr int err_zs_1_2_0_0 = zs[1][2][0][0]; // expected-error {{constant expression}} expected-note {{cannot access array element of pointer past the end}}
+constexpr int err_zs_1_2_0_0 = zs[1][2][0][0]; // \
+expected-error {{constant expression}} \
+expected-note {{cannot access array element of pointer past the end}} \
+expected-warning {{array index 2 is past the end of the array (which contains 2 elements)}}
 
 constexpr int fail(const int &p) {
   return (&p)[64]; // expected-note {{cannot refer to element 64 of array of 2 elements}}
@@ -602,6 +605,37 @@ struct NonAggregateTDC : TrivialDefCtor {};
 typedef NonAggregateTDC NATDCArray[2][2];
 static_assert(NATDCArray{}[1][1].n == 0, "");
 
+}
+
+// Per current CWG direction, we reject any cases where pointer arithmetic is
+// not statically known to be valid.
+namespace ArrayOfUnknownBound {
+  extern int arr[];
+  constexpr int *a = arr;
+  constexpr int *b = &arr[0];
+  static_assert(a == b, "");
+  constexpr int *c = &arr[1]; // expected-error {{constant}} expected-note {{indexing of array without known bound}}
+  constexpr int *d = &a[1]; // expected-error {{constant}} expected-note {{indexing of array without known bound}}
+  constexpr int *e = a + 1; // expected-error {{constant}} expected-note {{indexing of array without known bound}}
+
+  struct X {
+    int a;
+    int b[]; // expected-warning {{C99}}
+  };
+  extern X x;
+  constexpr int *xb = x.b; // expected-error {{constant}} expected-note {{not supported}}
+
+  struct Y { int a; };
+  extern Y yarr[];
+  constexpr Y *p = yarr;
+  constexpr int *q = &p->a;
+
+  extern const int carr[]; // expected-note {{here}}
+  constexpr int n = carr[0]; // expected-error {{constant}} expected-note {{non-constexpr variable}}
+
+  constexpr int local_extern[] = {1, 2, 3};
+  void f() { extern const int local_extern[]; }
+  static_assert(local_extern[1] == 2, "");
 }
 
 namespace DependentValues {
@@ -1904,6 +1938,22 @@ namespace Bitfields {
     };
     static_assert(X::f(3) == -1, "3 should truncate to -1");
   }
+
+  struct HasUnnamedBitfield {
+    unsigned a;
+    unsigned : 20;
+    unsigned b;
+
+    constexpr HasUnnamedBitfield() : a(), b() {}
+    constexpr HasUnnamedBitfield(unsigned a, unsigned b) : a(a), b(b) {}
+  };
+
+  void testUnnamedBitfield() {
+    const HasUnnamedBitfield zero{};
+    int a = 1 / zero.b; // expected-warning {{division by zero is undefined}}
+    const HasUnnamedBitfield oneZero{1, 0};
+    int b = 1 / oneZero.b; // expected-warning {{division by zero is undefined}}
+  }
 }
 
 namespace ZeroSizeTypes {
@@ -1949,7 +1999,7 @@ namespace NeverConstantTwoWays {
 
   constexpr int n = // expected-error {{must be initialized by a constant expression}}
       (int *)(long)&n == &n ? // expected-note {{reinterpret_cast}}
-        1 / 0 : // expected-warning {{division by zero}}
+        1 / 0 :
         0;
 }
 

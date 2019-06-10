@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207 2018/06/10 17:17:46 kamil Exp $
+# $NetBSD: mi,v 1.207.2.1 2019/06/10 21:42:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1369,9 +1369,9 @@
 ./usr/share/examples/dhcpcd/hooks/50-ypbind	misc-dhcpcd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/netconfig	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples	share
+./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-obsolete		obsolete
+./usr/share/examples/emul/svr4/etc/netconfig	misc-obsolete		obsolete
+./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-obsolete		obsolete
 ./usr/share/examples/emul/ultrix/etc/svc.conf	misc-sys-examples	share
 ./usr/share/examples/fstab/fstab.cdrom		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.md		misc-obsolete		obsolete
@@ -1423,13 +1423,13 @@
 ./usr/share/examples/ipf/nat.eg			misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/server			misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/tcpstate		misc-ipf-examples	ipfilter,share
-./usr/share/examples/isdn/holidays.D.SH		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.A		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.D		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.F		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.L		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
+./usr/share/examples/isdn/holidays.D.SH		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.A		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.D		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.F		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.L		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rc.sample	misc-obsolete		obsolete
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
 ./usr/share/examples/kyua-cli			misc-kyua-examples
 ./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
@@ -1603,13 +1603,14 @@
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
+./usr/share/examples/slip/slip.login		misc-slip-examples	share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.de.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples	share
-./usr/share/examples/supfiles/sup.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.no.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share

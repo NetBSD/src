@@ -1,10 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.8 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.8.12.1 2019/06/10 21:44:41 christos Exp $	*/
 
 #include "defs.h"
 /* Id: lalr.c,v 1.12 2016/06/07 00:28:03 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.8 2017/02/11 19:33:12 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.8.12.1 2019/06/10 21:44:41 christos Exp $");
 
 typedef struct shorts
 {

@@ -218,13 +218,13 @@ int FooBar();
 
 // rdar://14124644
 @interface test_vararg1
-/// @param[in] arg somthing
+/// @param[in] arg something
 /// @param[in] ... This is vararg
 - (void) VarArgMeth : (id)arg, ...;
 @end
 
 @implementation test_vararg1
-/// @param[in] arg somthing
+/// @param[in] arg something
 /// @param[in] ... This is vararg
 - (void) VarArgMeth : (id)arg, ... {}
 @end
@@ -299,3 +299,14 @@ void (^_Nullable blockPointerVariableThatLeadsNowhere)();
 @property void (^blockReturnsNothing)();
 
 @end
+
+/*!
+ * Block typedef with variadic params.
+ *
+ * @param a
+ * works
+ *
+ * @param ...
+ * now should work too.
+ */
+typedef void (^VariadicBlockType)(int a, ...);

@@ -1,5 +1,5 @@
-/*	$NetBSD: match.h,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: match.h,v 1.17 2017/02/03 23:01:19 djm Exp $ */
+/*	$NetBSD: match.h,v 1.8.12.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: match.h,v 1.19 2019/03/06 22:14:23 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,11 +17,13 @@
 
 int	 match_pattern(const char *, const char *);
 int	 match_pattern_list(const char *, const char *, int);
+int	 match_usergroup_pattern_list(const char *, const char *);
 int	 match_hostname(const char *, const char *);
 int	 match_host_and_ip(const char *, const char *, const char *);
 int	 match_user(const char *, const char *, const char *, const char *);
 char	*match_list(const char *, const char *, u_int *);
-char	*match_filter_list(const char *, const char *);
+char	*match_filter_blacklist(const char *, const char *);
+char	*match_filter_whitelist(const char *, const char *);
 
 /* addrmatch.c */
 int	 addr_match_list(const char *, const char *);

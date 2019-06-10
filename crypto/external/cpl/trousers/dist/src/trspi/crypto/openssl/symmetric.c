@@ -40,7 +40,6 @@
 #define DEBUG_print_openssl_errors()
 #endif
 
-
 /*
  * Hopefully this will make the code clearer since
  * OpenSSL returns 1 on success
@@ -52,7 +51,7 @@ Trspi_Encrypt_ECB(UINT16 alg, BYTE *key, BYTE *in, UINT32 in_len, BYTE *out,
 		  UINT32 *out_len)
 {
 	TSS_RESULT result = TSS_SUCCESS;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx = NULL;
 	UINT32 tmp;
 
 	switch (alg) {
@@ -64,33 +63,33 @@ Trspi_Encrypt_ECB(UINT16 alg, BYTE *key, BYTE *in, UINT32 in_len, BYTE *out,
 			break;
 	}
 
-	EVP_CIPHER_CTX_init(&ctx);
+	ctx = EVP_CIPHER_CTX_new();
 
-	if (!EVP_EncryptInit(&ctx, EVP_aes_256_ecb(), key, NULL)) {
+	if (!EVP_EncryptInit(ctx, EVP_aes_256_ecb(), key, NULL)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (*out_len < in_len + EVP_CIPHER_CTX_block_size(&ctx) - 1) {
+	if (*out_len < in_len + EVP_CIPHER_CTX_block_size(ctx) - 1) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		goto done;
 	}
 
-	if (!EVP_EncryptUpdate(&ctx, out, (int *)out_len, in, in_len)) {
+	if (!EVP_EncryptUpdate(ctx, out, (int *)out_len, in, in_len)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_EncryptFinal(&ctx, out + *out_len, (int *)&tmp)) {
+	if (!EVP_EncryptFinal(ctx, out + *out_len, (int *)&tmp)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 	*out_len += tmp;
 done:
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return result;
 }
 
@@ -99,7 +98,7 @@ Trspi_Decrypt_ECB(UINT16 alg, BYTE *key, BYTE *in, UINT32 in_len, BYTE *out,
 		  UINT32 *out_len)
 {
 	TSS_RESULT result = TSS_SUCCESS;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx = NULL;
 	UINT32 tmp;
 
 	switch (alg) {
@@ -111,28 +110,28 @@ Trspi_Decrypt_ECB(UINT16 alg, BYTE *key, BYTE *in, UINT32 in_len, BYTE *out,
 			break;
 	}
 
-	EVP_CIPHER_CTX_init(&ctx);
+	ctx = EVP_CIPHER_CTX_new();
 
-	if (!EVP_DecryptInit(&ctx, EVP_aes_256_ecb(), key, NULL)) {
+	if (!EVP_DecryptInit(ctx, EVP_aes_256_ecb(), key, NULL)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_DecryptUpdate(&ctx, out, (int *)out_len, in, in_len)) {
+	if (!EVP_DecryptUpdate(ctx, out, (int *)out_len, in, in_len)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_DecryptFinal(&ctx, out + *out_len, (int *)&tmp)) {
+	if (!EVP_DecryptFinal(ctx, out + *out_len, (int *)&tmp)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 	*out_len += tmp;
 done:
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return result;
 }
 
@@ -255,7 +254,7 @@ Trspi_SymEncrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 		 UINT32 *out_len)
 {
 	TSS_RESULT result = TSS_SUCCESS;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx = NULL;
 	EVP_CIPHER *cipher;
 	BYTE *def_iv = NULL, *outiv_ptr;
 	UINT32 tmp;
@@ -269,7 +268,7 @@ Trspi_SymEncrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 	if ((cipher = get_openssl_cipher(alg, mode)) == NULL)
 		return TSPERR(TSS_E_INTERNAL_ERROR);
 
-	EVP_CIPHER_CTX_init(&ctx);
+	ctx = EVP_CIPHER_CTX_new();
 
 	/* If the iv passed in is NULL, create a new random iv and prepend it to the ciphertext */
 	iv_len = EVP_CIPHER_iv_length(cipher);
@@ -289,25 +288,25 @@ Trspi_SymEncrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 		outiv_ptr = out;
 	}
 
-	if (!EVP_EncryptInit(&ctx, (const EVP_CIPHER *)cipher, key, def_iv)) {
+	if (!EVP_EncryptInit(ctx, (const EVP_CIPHER *)cipher, key, def_iv)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if ((UINT32)outiv_len < in_len + (EVP_CIPHER_CTX_block_size(&ctx) * 2) - 1) {
+	if ((UINT32)outiv_len < in_len + (EVP_CIPHER_CTX_block_size(ctx) * 2) - 1) {
 		LogDebug("Not enough space to do symmetric encryption");
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		goto done;
 	}
 
-	if (!EVP_EncryptUpdate(&ctx, outiv_ptr, &outiv_len, in, in_len)) {
+	if (!EVP_EncryptUpdate(ctx, outiv_ptr, &outiv_len, in, in_len)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_EncryptFinal(&ctx, outiv_ptr + outiv_len, (int *)&tmp)) {
+	if (!EVP_EncryptFinal(ctx, outiv_ptr + outiv_len, (int *)&tmp)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
@@ -320,7 +319,7 @@ done:
 		*out_len += iv_len;
 		free(def_iv);
 	}
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return result;
 }
 
@@ -329,7 +328,7 @@ Trspi_SymDecrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 		 UINT32 *out_len)
 {
 	TSS_RESULT result = TSS_SUCCESS;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx = NULL;
 	EVP_CIPHER *cipher;
 	BYTE *def_iv = NULL, *iniv_ptr;
 	UINT32 tmp;
@@ -341,7 +340,7 @@ Trspi_SymDecrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 	if ((cipher = get_openssl_cipher(alg, mode)) == NULL)
 		return TSPERR(TSS_E_INTERNAL_ERROR);
 
-	EVP_CIPHER_CTX_init(&ctx);
+	ctx = EVP_CIPHER_CTX_new();
 
 	/* If the iv is NULL, assume that its prepended to the ciphertext */
 	if (iv == NULL) {
@@ -361,19 +360,19 @@ Trspi_SymDecrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 		iniv_len = in_len;
 	}
 
-	if (!EVP_DecryptInit(&ctx, cipher, key, def_iv)) {
+	if (!EVP_DecryptInit(ctx, cipher, key, def_iv)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_DecryptUpdate(&ctx, out, (int *)out_len, iniv_ptr, iniv_len)) {
+	if (!EVP_DecryptUpdate(ctx, out, (int *)out_len, iniv_ptr, iniv_len)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
 	}
 
-	if (!EVP_DecryptFinal(&ctx, out + *out_len, (int *)&tmp)) {
+	if (!EVP_DecryptFinal(ctx, out + *out_len, (int *)&tmp)) {
 		result = TSPERR(TSS_E_INTERNAL_ERROR);
 		DEBUG_print_openssl_errors();
 		goto done;
@@ -383,6 +382,6 @@ Trspi_SymDecrypt(UINT16 alg, UINT16 mode, BYTE *key, BYTE *iv, BYTE *in, UINT32 
 done:
 	if (def_iv != iv)
 		free(def_iv);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return result;
 }

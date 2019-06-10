@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.47 2017/06/30 23:00:40 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.47.6.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.47 2017/06/30 23:00:40 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.47.6.1 2019/06/10 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,21 +67,6 @@ __RCSID("$NetBSD: show.c,v 1.47 2017/06/30 23:00:40 kre Exp $");
 #include "output.h"
 #include "var.h"
 #include "builtins.h"
-
-#if defined(DEBUG) && !defined(DBG_PID)
-/*
- * If this is compiled, it means this is being compiled in a shell that still
- * has an older shell.h (a simpler TRACE() mechanism than is coming soon.)
- *
- * Compensate for as much of that as is missing and is needed here
- * to compile and operate at all.   After the other changes have appeared,
- * this little block can (and should be) deleted (sometime).
- *
- * Try to avoid waiting 22 years...
- */
-#define	DBG_PID		1
-#define	DBG_NEST	2
-#endif
 
 #define DEFINE_NODENAMES
 #include "nodenames.h"		/* does almost nothing if !defined(DEBUG) */
@@ -614,8 +599,12 @@ shredir(union node *np, TFILE *fp, int first)
 			if (np->ndup.vname)
 				sharg(np->ndup.vname, fp);
 			else {
-				sprintf(buf, "%d", np->ndup.dupfd);
-				trace_puts(buf, fp);
+				if (np->ndup.dupfd < 0)
+					trace_puts("-", fp);
+				else {
+					sprintf(buf, "%d", np->ndup.dupfd);
+					trace_puts(buf, fp);
+				}
 			}
 		} else
 		    if (np->nfile.type == NHERE || np->nfile.type == NXHERE) {
@@ -656,7 +645,8 @@ sharg(union node *arg, TFILE *fp)
 	for (p = arg->narg.text ; *p ; p++) {
 		switch (*p) {
 		case CTLESC:
-			trace_putc('\\', fp);
+			if (BASESYNTAX[p[1]] != CCTL)
+				trace_putc('\\', fp);
 			trace_putc(*++p, fp);
 			break;
 
@@ -1070,9 +1060,11 @@ static struct debug_flag {
 	{ 'c',	DBG_CMDS	},	/* command searching, ... */
 	{ 'e',	DBG_EVAL	},	/* evaluation of the parse tree */
 	{ 'f',	DBG_REDIR	},	/* file descriptors & redirections */
+	{ 'g',	DBG_MATCH	},	/* pattern matching (glob) */
 	{ 'h',	DBG_HISTORY	},	/* history & cmd line editing */
 	{ 'i',	DBG_INPUT	},	/* shell input routines */
 	{ 'j',	DBG_JOBS	},	/* job control, structures */
+	{ 'l',	DBG_LEXER	},	/* lexical analysis */
 	{ 'm',	DBG_MEM		},	/* memory management */
 	{ 'o',	DBG_OUTPUT	},	/* output routines */
 	{ 'p',	DBG_PROCS	},	/* process management, fork, ... */
@@ -1087,20 +1079,21 @@ static struct debug_flag {
 	{ '0',	DBG_U0		},	/* ad-hoc temp debug flag #0 */
 	{ '1',	DBG_U1		},	/* ad-hoc temp debug flag #1 */
 	{ '2',	DBG_U2		},	/* ad-hoc temp debug flag #2 */
+	{ '3',	DBG_U3		},	/* ad-hoc temp debug flag #3 */
  
 	{ '@',	DBG_LINE	},	/* prefix trace lines with line# */
 	{ '$',	DBG_PID		},	/* prefix trace lines with sh pid */
 	{ '^',	DBG_NEST	},	/* show shell nesting level */
 
-			/* alpha options only */
-	{ '_',	DBG_PARSE | DBG_EVAL | DBG_EXPAND | DBG_JOBS |
+			/* alpha options only - but not DBG_LEXER */
+	{ '_',	DBG_PARSE | DBG_EVAL | DBG_EXPAND | DBG_JOBS | DBG_SIG |
 		    DBG_PROCS | DBG_REDIR | DBG_CMDS | DBG_ERRS |
-		    DBG_WAIT | DBG_TRAP | DBG_VARS | DBG_MEM |
+		    DBG_WAIT | DBG_TRAP | DBG_VARS | DBG_MEM | DBG_MATCH |
 		    DBG_INPUT | DBG_OUTPUT | DBG_ARITH | DBG_HISTORY },
 
    /*   { '*',	DBG_ALLVERBOSE	}, 	   is handled in the code */
 
-	{ '#',	DBG_U0 | DBG_U1 | DBG_U2 },
+	{ '#',	DBG_U0 | DBG_U1 | DBG_U2 | DBG_U3 },
 
 	{ 0,	0		}
 };

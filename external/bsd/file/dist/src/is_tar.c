@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.7 2018/04/15 19:32:48 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.7.2.1 2019/06/10 21:44:47 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -43,9 +43,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_tar.c,v 1.41 2017/11/02 20:25:39 christos Exp $")
+FILE_RCSID("@(#)$File: is_tar.c,v 1.44 2019/02/20 02:35:27 christos Exp $")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.7 2018/04/15 19:32:48 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.7.2.1 2019/06/10 21:44:47 christos Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ static const char tartype[][32] = {	/* should be equal to messages */
 protected int
 file_is_tar(struct magic_set *ms, const struct buffer *b)
 {
-	const unsigned char *buf = b->fbuf;
+	const unsigned char *buf = CAST(const unsigned char *, b->fbuf);
 	size_t nbytes = b->flen;
 	/*
 	 * Do the tar test first, because if the first file in the tar
@@ -84,9 +84,13 @@ file_is_tar(struct magic_set *ms, const struct buffer *b)
 	if (tar < 1 || tar > 3)
 		return 0;
 
+	if (mime == MAGIC_MIME_ENCODING)
+		return 1;
+
 	if (file_printf(ms, "%s", mime ? "application/x-tar" :
 	    tartype[tar - 1]) == -1)
 		return -1;
+
 	return 1;
 }
 
@@ -100,7 +104,8 @@ file_is_tar(struct magic_set *ms, const struct buffer *b)
 private int
 is_tar(const unsigned char *buf, size_t nbytes)
 {
-	const union record *header = (const union record *)(const void *)buf;
+	const union record *header = RCAST(const union record *,
+	    RCAST(const void *, buf));
 	size_t i;
 	int sum, recsum;
 	const unsigned char *p, *ep;
@@ -149,7 +154,7 @@ from_oct(const char *where, size_t digs)
 	if (digs == 0)
 		return -1;
 
-	while (isspace((unsigned char)*where)) {	/* Skip spaces */
+	while (isspace(CAST(unsigned char, *where))) {	/* Skip spaces */
 		where++;
 		if (digs-- == 0)
 			return -1;		/* All blank field */
@@ -160,7 +165,7 @@ from_oct(const char *where, size_t digs)
 		digs--;
 	}
 
-	if (digs > 0 && *where && !isspace((unsigned char)*where))
+	if (digs > 0 && *where && !isspace(CAST(unsigned char, *where)))
 		return -1;			/* Ended on non-(space/NUL) */
 
 	return value;

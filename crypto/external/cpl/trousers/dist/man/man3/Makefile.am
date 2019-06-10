@@ -73,18 +73,20 @@ man3_MANS = Tspi_ChangeAuth.3 \
 	    Tspi_TPM_SetStatus.3 \
 	    Tspi_TPM_StirRandom.3 \
 	    Tspi_TPM_TakeOwnership.3 \
-	    Tspi_DAA_IssueCredential.3 \
-	    Tspi_DAA_VerifySignature.3 \
-	    Tspi_DAA_IssueInit.3 \
-	    Tspi_TPM_DAA_JoinCreateDaaPubKey.3 \
-	    Tspi_DAA_IssuerKeyVerification.3 \
-	    Tspi_TPM_DAA_JoinInit.3 \
-	    Tspi_DAA_IssueSetup.3 \
-	    Tspi_TPM_DAA_JoinStoreCredential.3 \
-	    Tspi_DAA_VerifyInit.3 \
-	    Tspi_TPM_DAA_Sign.3 \
 	    Tspi_TPM_GetAuditDigest.3 \
 	    Tspi_TPM_OwnerGetSRKPubKey.3 \
-	    Tspi_TPM_Quote.3 \
+	    Tspi_TPM_Quote2.3 \
 	    Tspi_TPM_CMKSetRestrictions.3
+if TSS_BUILD_DAA
+man3_MANS += Tspi_DAA_IssueCredential.3 \
+	     Tspi_DAA_VerifySignature.3 \
+	     Tspi_DAA_IssueInit.3 \
+	     Tspi_TPM_DAA_JoinCreateDaaPubKey.3 \
+	     Tspi_DAA_IssuerKeyVerification.3 \
+	     Tspi_TPM_DAA_JoinInit.3 \
+	     Tspi_DAA_IssueSetup.3 \
+	     Tspi_TPM_DAA_JoinStoreCredential.3 \
+	     Tspi_DAA_VerifyInit.3 \
+	     Tspi_TPM_DAA_Sign.3
+endif
 EXTRA_DIST = $(man3_MANS)

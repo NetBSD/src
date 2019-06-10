@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/08/01 20:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2019/06/10 21:50:51 christos Exp $
 
 LIB=	LLVMBinaryFormat
 
@@ -7,7 +7,8 @@ LIB=	LLVMBinaryFormat
 .PATH: ${LLVM_SRCDIR}/lib/BinaryFormat
 
 SRCS+=	Dwarf.cpp \
-	Magic.cpp
+	Magic.cpp \
+	Wasm.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

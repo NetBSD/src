@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c++14 -verify -fexceptions -fcxx-exceptions %s
-// RUN: %clang_cc1 -std=c++1z -verify -fexceptions -fcxx-exceptions %s -Wno-dynamic-exception-spec
+// RUN: %clang_cc1 -std=c++17 -verify -fexceptions -fcxx-exceptions %s -Wno-dynamic-exception-spec
 // RUN: %clang_cc1 -std=c++14 -verify -fexceptions -fcxx-exceptions -Wno-c++1z-compat-mangling -DNO_COMPAT_MANGLING %s
 // RUN: %clang_cc1 -std=c++14 -verify -fexceptions -fcxx-exceptions -Wno-noexcept-type -DNO_COMPAT_MANGLING %s
 
@@ -10,7 +10,7 @@ template<typename T> void redecl1() noexcept(noexcept(T())); // ok, same type
 template<typename T> void redecl1() noexcept(noexcept(T())) {} // expected-error {{redefinition}}
 
 template<bool A, bool B> void redecl2() noexcept(A); // expected-note {{previous}}
-template<bool A, bool B> void redecl2() noexcept(B); // expected-error {{conflicting types}}
+template<bool A, bool B> void redecl2() noexcept(B); // expected-error {{does not match previous}}
 
 // These have the same canonical type, but are still different.
 template<typename A, typename B> void redecl3() throw(A); // expected-note {{previous}}

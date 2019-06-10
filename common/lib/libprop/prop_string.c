@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.12 2014/03/26 18:12:46 christos Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.12.26.1 2019/06/10 21:41:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/prop_string.h>
 #include "prop_object_impl.h"
+#include <prop/prop_string.h>
 
 struct _prop_string {
 	struct _prop_object	ps_obj;

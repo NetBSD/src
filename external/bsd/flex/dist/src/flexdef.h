@@ -1,4 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: flexdef.h,v 1.3.14.1 2019/06/10 21:44:50 christos Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -36,6 +36,16 @@
 #ifndef FLEXDEF_H
 #define FLEXDEF_H 1
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME 
+#undef PACKAGE_URL
+#undef PACKAGE_VERSION
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -58,23 +68,24 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-#ifdef HAVE_UNISTD_H
+/* Required: dup() and dup2() in <unistd.h> */
 #include <unistd.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 #ifdef HAVE_SYS_PARAMS_H
 #include <sys/params.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
+/* Required: stat() in <sys/stat.h> */
 #include <sys/stat.h>
-#endif
+/* Required: wait() in <sys/wait.h> */
 #include <sys/wait.h>
 #include <stdbool.h>
-#ifdef HAVE_REGEX_H
+#include <stdarg.h>
+/* Required: regcomp(), regexec() and regerror() in <regex.h> */
 #include <regex.h>
-#endif
+/* Required: strcasecmp() in <strings.h> */
+#include <strings.h>
 #include "flexint.h"
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
@@ -109,6 +120,8 @@
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif
 
+/* Whether an integer is a power of two */
+#define is_power_of_2(n) ((n) > 0 && ((n) & ((n) - 1)) == 0)
 
 #define unspecified -1
 
@@ -843,9 +856,6 @@ extern void flexfatal(const char *);
     }while(0)
 #endif /* ! HAVE_DECL___func__ */
 
-/* Convert a hexadecimal digit string to an integer value. */
-extern unsigned int htoui(unsigned char[]);
-
 /* Report an error message formatted  */
 extern void lerr(const char *, ...)
 #if defined(__GNUC__) && __GNUC__ >= 3
@@ -881,9 +891,6 @@ extern int myctoi(const char *);
 
 /* Return character corresponding to escape sequence. */
 extern unsigned char myesc(unsigned char[]);
-
-/* Convert an octal digit string to an integer value. */
-extern unsigned int otoui(unsigned char[]);
 
 /* Output a (possibly-formatted) string to the generated scanner. */
 extern void out(const char *);

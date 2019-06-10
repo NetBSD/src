@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -disable-llvm-passes -Os -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -disable-llvm-passes -Os -std=c99 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -disable-llvm-passes -Os -std=c99 -o - %s | FileCheck %s
 // CHECK: define signext i8 @f0(i32 %x) [[NUW:#[0-9]+]]
 // CHECK: define zeroext i8 @f1(i32 %x) [[NUW]]
 // CHECK: define void @f2(i8 signext %x) [[NUW]]
@@ -70,7 +71,7 @@ void f15(void) {
 
 // PR5254
 // CHECK-LABEL: define void @f16
-// CHECK: [[ALIGN:#[0-9]+]]
+// CHECK: [[SR:#[0-9]+]]
 // CHECK: {
 void __attribute__((force_align_arg_pointer)) f16(void) {
 }
@@ -111,7 +112,7 @@ void f20(void) {
 // CHECK: attributes [[NUW]] = { nounwind optsize{{.*}} }
 // CHECK: attributes [[AI]] = { alwaysinline nounwind optsize{{.*}} }
 // CHECK: attributes [[NUW_OS_RN]] = { nounwind optsize readnone{{.*}} }
-// CHECK: attributes [[ALIGN]] = { nounwind optsize alignstack=16{{.*}} }
+// CHECK: attributes [[SR]] = { nounwind optsize{{.*}} "stackrealign"{{.*}} }
 // CHECK: attributes [[RT]] = { nounwind optsize returns_twice{{.*}} }
 // CHECK: attributes [[NR]] = { noreturn optsize }
 // CHECK: attributes [[NUW_RN]] = { nounwind optsize readnone }

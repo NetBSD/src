@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -verify -fopenmp %s
+// RUN: %clang_cc1 -verify -fopenmp %s -Wno-openmp-target
+
+// RUN: %clang_cc1 -verify -fopenmp-simd %s -Wno-openmp-target
 
 void foo() {
 }
@@ -144,8 +146,9 @@ int main(int argc, char **argv) {
 #pragma omp teams distribute firstprivate(j)
   for (i = 0; i < argc; ++i) foo();
 
+// expected-error@+2 {{lastprivate variable cannot be firstprivate}} expected-note@+2 {{defined as lastprivate}}
 #pragma omp target
-#pragma omp teams distribute lastprivate(argc), firstprivate(argc) // OK
+#pragma omp teams distribute lastprivate(argc), firstprivate(argc)
   for (i = 0; i < argc; ++i) foo();
 
   return 0;

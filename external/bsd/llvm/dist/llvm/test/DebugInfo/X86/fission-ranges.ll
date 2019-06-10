@@ -1,6 +1,9 @@
 ; RUN: llc -split-dwarf-file=foo.dwo -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -v %t | FileCheck %s
 ; RUN: llvm-objdump -h %t | FileCheck --check-prefix=HDR %s
+
+; RUN: llc -dwarf-version=5 -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
+; RUN: llvm-dwarfdump -v %t | FileCheck --check-prefix=V5RNGLISTS %s
 
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
@@ -10,36 +13,28 @@
 ; CHECK-NEXT: DW_AT_GNU_dwo_id
 ; CHECK-NEXT: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
 
-
 ; CHECK: .debug_info.dwo contents:
-; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[A:0x[0-9a-z]*]])
-; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[E:0x[0-9a-z]*]])
-; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[B:0x[0-9a-z]*]])
-; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[D:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[A:0x[0-9a-z]*]]
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[E:0x[0-9a-z]*]]
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[B:0x[0-9a-z]*]]
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[D:0x[0-9a-z]*]]
 ; CHECK: DW_AT_ranges [DW_FORM_sec_offset]   (0x00000000
-; CHECK: .debug_loc contents:
+; CHECK-NOT: .debug_loc contents:
 ; CHECK-NOT: Beginning address offset
 ; CHECK: .debug_loc.dwo contents:
 
 ; Don't assume these locations are entirely correct - feel free to update them
 ; if they've changed due to a bugfix, change in register allocation, etc.
 
-; CHECK: [[A]]: Beginning address index: 2
-; CHECK-NEXT:                    Length: 169
-; CHECK-NEXT:      Location description: 11 00
-; CHECK-NEXT: {{^$}}
-; CHECK-NEXT:   Beginning address index: 3
-; CHECK-NEXT:                    Length: 25
-; CHECK-NEXT:      Location description: 50
-; CHECK: [[E]]: Beginning address index: 4
-; CHECK-NEXT:                    Length: 19
-; CHECK-NEXT:      Location description: 50
-; CHECK: [[B]]: Beginning address index: 5
-; CHECK-NEXT:                    Length: 17
-; CHECK-NEXT:      Location description: 50
-; CHECK: [[D]]: Beginning address index: 6
-; CHECK-NEXT:                    Length: 17
-; CHECK-NEXT:      Location description: 50
+; CHECK:      [[A]]:
+; CHECK-NEXT:   Addr idx 2 (w/ length 169): DW_OP_consts +0, DW_OP_stack_value
+; CHECK-NEXT:   Addr idx 3 (w/ length 25): DW_OP_reg0 RAX
+; CHECK:      [[E]]:
+; CHECK-NEXT:   Addr idx 4 (w/ length 19): DW_OP_reg0 RAX
+; CHECK:      [[B]]:
+; CHECK-NEXT:   Addr idx 5 (w/ length 17): DW_OP_reg0 RAX
+; CHECK:      [[D]]:
+; CHECK-NEXT:   Addr idx 6 (w/ length 17): DW_OP_reg0 RAX
 
 ; Make sure we don't produce any relocations in any .dwo section (though in particular, debug_info.dwo)
 ; HDR-NOT: .rela.{{.*}}.dwo
@@ -50,6 +45,22 @@
 
 ; HDR: .debug_addr 00000038
 ; HDR-NOT: .rela.{{.*}}.dwo
+
+; Check for the existence of a DWARF v5-style range list table in the .debug_rnglists
+; section and that the compile unit has a DW_AT_rnglists_base attribute.
+; The table should contain at least one rangelist with at least 2 individual ranges.
+
+; V5RNGLISTS:      .debug_info contents:
+; V5RNGLISTS:      DW_TAG_compile_unit
+; V5RNGLISTS-NOT:  DW_TAG
+; V5RNGLISTS:      DW_AT_rnglists_base [DW_FORM_sec_offset]  (0x0000000c)
+; V5RNGLISTS:      .debug_rnglists contents:
+; V5RNGLISTS-NEXT: 0x00000000: Range List Header: length = 0x00000014, version = 0x0005,
+; V5RNGLISTS-SAME: addr_size = 0x08, seg_size = 0x00, offset_entry_count = 0x00000000
+; V5RNGLISTS-NEXT: Ranges:
+; V5RNGLISTS-NEXT: 0x0000000c: [DW_RLE_offset_pair]:
+; V5RNGLISTS-NEXT: 0x0000000f: [DW_RLE_offset_pair]:
+; V5RNGLISTS:      0x{{[0-9a-f]+}}: [DW_RLE_end_of_list]
 
 ; From the code:
 
@@ -91,8 +102,8 @@ entry:
 ; Function Attrs: nounwind uwtable
 define internal fastcc void @foo() #0 !dbg !8 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !13, metadata !DIExpression()), !dbg !30
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !14, metadata !DIExpression()), !dbg !31
+  tail call void @llvm.dbg.value(metadata i32 1, metadata !13, metadata !DIExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32 0, metadata !14, metadata !DIExpression()), !dbg !31
   %c.promoted9 = load i32, i32* @c, align 4, !dbg !32, !tbaa !33
   br label %for.cond1.preheader, !dbg !31
 
@@ -114,28 +125,28 @@ for.cond7.preheader:                              ; preds = %for.inc10, %for.con
 for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
   %and2 = phi i32 [ %and.lcssa5, %for.cond7.preheader ], [ %and, %for.body9 ], !dbg !40
   %e.01 = phi i32 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
-  tail call void @llvm.dbg.value(metadata i32* @c, i64 0, metadata !19, metadata !DIExpression()), !dbg !40
+  tail call void @llvm.dbg.value(metadata i32* @c, metadata !19, metadata !DIExpression()), !dbg !40
   %and = and i32 %and2, 1, !dbg !32
   %inc = add i32 %e.01, 1, !dbg !39
-  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !18, metadata !DIExpression()), !dbg !39
+  tail call void @llvm.dbg.value(metadata i32 %inc, metadata !18, metadata !DIExpression()), !dbg !39
   %exitcond = icmp eq i32 %inc, 30, !dbg !39
   br i1 %exitcond, label %for.inc10, label %for.body9, !dbg !39
 
 for.inc10:                                        ; preds = %for.body9
   %inc11 = add nsw i32 %b.03, 1, !dbg !38
-  tail call void @llvm.dbg.value(metadata i32 %inc11, i64 0, metadata !15, metadata !DIExpression()), !dbg !38
+  tail call void @llvm.dbg.value(metadata i32 %inc11, metadata !15, metadata !DIExpression()), !dbg !38
   %exitcond11 = icmp eq i32 %inc11, 30, !dbg !38
   br i1 %exitcond11, label %for.inc13, label %for.cond7.preheader, !dbg !38
 
 for.inc13:                                        ; preds = %for.inc10
   %inc14 = add i32 %d.06, 1, !dbg !37
-  tail call void @llvm.dbg.value(metadata i32 %inc14, i64 0, metadata !16, metadata !DIExpression()), !dbg !37
+  tail call void @llvm.dbg.value(metadata i32 %inc14, metadata !16, metadata !DIExpression()), !dbg !37
   %exitcond12 = icmp eq i32 %inc14, 30, !dbg !37
   br i1 %exitcond12, label %for.inc16, label %for.cond4.preheader, !dbg !37
 
 for.inc16:                                        ; preds = %for.inc13
   %inc17 = add nsw i32 %a.08, 1, !dbg !31
-  tail call void @llvm.dbg.value(metadata i32 %inc17, i64 0, metadata !14, metadata !DIExpression()), !dbg !31
+  tail call void @llvm.dbg.value(metadata i32 %inc17, metadata !14, metadata !DIExpression()), !dbg !31
   %exitcond13 = icmp eq i32 %inc17, 30, !dbg !31
   br i1 %exitcond13, label %for.end18, label %for.cond1.preheader, !dbg !31
 
@@ -145,7 +156,7 @@ for.end18:                                        ; preds = %for.inc16
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }
@@ -156,11 +167,11 @@ attributes #1 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 191700) (llvm/trunk 191710)", isOptimized: true, splitDebugFilename: "small.dwo", emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "bar", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !0, scopeLine: 19, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !0, scopeLine: 19, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "foo", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !9, variables: !12)
+!8 = distinct !DISubprogram(name: "foo", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !9, retainedNodes: !12)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

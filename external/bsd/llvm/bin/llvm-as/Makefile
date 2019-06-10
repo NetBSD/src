@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/08/01 20:07:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2019/06/10 21:45:05 christos Exp $
 
 PROG_CXX=	llvm-as
 NOMAN=		yes
@@ -12,6 +12,7 @@ SRCS=	llvm-as.cpp
 LLVM_LIBS+= \
 	AsmParser \
 	BitWriter \
+	Analysis \
 	Object \
 	MCParser \
 	MC \

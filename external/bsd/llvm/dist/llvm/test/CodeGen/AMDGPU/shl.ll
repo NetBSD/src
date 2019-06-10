@@ -1,6 +1,6 @@
-; RUN:  llc -amdgpu-scalarize-global-loads=false  -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=SI -check-prefix=FUNC %s
-; XUN: llc -march=amdgcn -mcpu=tonga -mattr=-flat-for-global -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=VI -check-prefix=FUNC %s
-; RUN:  llc -amdgpu-scalarize-global-loads=false  -march=r600 -mcpu=redwood -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN:  llc -amdgpu-scalarize-global-loads=false  -march=amdgcn -mtriple=amdgcn---amdgiz -mcpu=verde -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefix=GCN -check-prefix=SI -check-prefix=FUNC %s
+; XUN: llc -march=amdgcn -mtriple=amdgcn---amdgiz -mcpu=tonga -mattr=-flat-for-global -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=VI -check-prefix=FUNC %s
+; RUN:  llc -amdgpu-scalarize-global-loads=false  -march=r600 -mtriple=r600---amdgiz -mcpu=redwood -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefix=EG -check-prefix=FUNC %s
 
 declare i32 @llvm.r600.read.tidig.x() #0
 
@@ -275,11 +275,11 @@ define amdgpu_kernel void @shl_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> add
 
 ; Make sure load width gets reduced to i32 load.
 ; GCN-LABEL: {{^}}s_shl_32_i64:
-; GCN-DAG: s_load_dword [[LO_A:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb{{$}}
+; GCN-DAG: s_load_dword [[LO_A:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x13{{$}}
 ; GCN-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], 0{{$}}
 ; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[LO_A]]
 ; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
-define amdgpu_kernel void @s_shl_32_i64(i64 addrspace(1)* %out, i64 %a) {
+define amdgpu_kernel void @s_shl_32_i64(i64 addrspace(1)* %out, [8 x i32], i64 %a) {
   %result = shl i64 %a, 32
   store i64 %result, i64 addrspace(1)* %out
   ret void
@@ -474,6 +474,30 @@ define amdgpu_kernel void @test_mul2(i32 %p) {
    %i = mul i32 %p, 2
    store volatile i32 %i, i32 addrspace(1)* undef
    ret void
+}
+
+; FUNC-LABEL: {{^}}shl_or_k:
+; SI: v_lshlrev_b32_e32 [[SHL:v[0-9]+]], 2, v{{[0-9]+}}
+; SI: v_or_b32_e32 [[OR:v[0-9]+]], 4, [[SHL]]
+; SI: buffer_store_dword [[OR]]
+define void @shl_or_k(i32 addrspace(1)* %out, i32 %in) {
+  %tmp0 = or i32 %in, 1
+  %tmp2 = shl i32 %tmp0, 2
+  store i32 %tmp2, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}shl_or_k_two_uses:
+; SI: v_or_b32_e32 [[OR:v[0-9]+]], 1, v{{[0-9]+}}
+; SI: v_lshlrev_b32_e32 [[SHL:v[0-9]+]], 2, [[OR]]
+; SI-DAG: buffer_store_dword [[OR]]
+; SI-DAG: buffer_store_dword [[SHL]]
+define void @shl_or_k_two_uses(i32 addrspace(1)* %out0, i32 addrspace(1)* %out1, i32 %in) {
+  %tmp0 = or i32 %in, 1
+  %tmp2 = shl i32 %tmp0, 2
+  store i32 %tmp2, i32 addrspace(1)* %out0
+  store i32 %tmp0, i32 addrspace(1)* %out1
+  ret void
 }
 
 attributes #0 = { nounwind readnone }

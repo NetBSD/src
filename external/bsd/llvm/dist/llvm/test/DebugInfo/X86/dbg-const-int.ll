@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin12 -filetype=obj < %s \
-; RUN:    | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN:    | llvm-dwarfdump -v -debug-info - | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-macosx10.6.7"
 ; Radar 9511391
@@ -12,17 +12,17 @@ target triple = "x86_64-apple-macosx10.6.7"
 
 define i32 @foo() nounwind uwtable readnone optsize ssp !dbg !1 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !6, metadata !DIExpression()), !dbg !9
+  tail call void @llvm.dbg.value(metadata i32 42, metadata !6, metadata !DIExpression()), !dbg !9
   ret i32 42, !dbg !10
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 132191)", isOptimized: true, emissionKind: FullDebug, file: !13, enums: !14, retainedTypes: !14, imports:  null)
-!1 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !0, file: !13, scope: !2, type: !3, variables: !12)
+!1 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, unit: !0, file: !13, scope: !2, type: !3, retainedNodes: !12)
 !2 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}

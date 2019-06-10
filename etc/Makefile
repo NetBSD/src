@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.433 2018/04/01 04:35:02 ryo Exp $
+#	$NetBSD: Makefile,v 1.433.2.1 2019/06/10 21:42:39 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -132,7 +132,7 @@ BIN2+=	motd
 FILESBUILD_motd=	YES
 
 # -rw-------
-BIN3+=	hosts.equiv
+BIN3+=	hosts.equiv wpa_supplicant.conf
 
 SYSPKG=	etc
 ETC_PKG=-T etc_pkg
@@ -410,6 +410,9 @@ install-obsolete-lists: .PHONY .MAKE
 distrib-dirs: .PHONY check_DESTDIR
 	cd ${NETBSDSRCDIR}/etc/mtree && ${MAKE} distrib-dirs
 
+COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
+XZ_OPT=-9
+TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
@@ -417,7 +420,7 @@ distrib-dirs: .PHONY check_DESTDIR
 release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets sets
 	${MAKESUMS} -A -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets \
-		${KERNEL_SETS:@.SETS.@kern-${.SETS.}.tgz@}
+		${KERNEL_SETS:@.SETS.@kern-${.SETS.}.${TAR_SUFF}@}
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel '*.gz'
 
 
@@ -540,10 +543,10 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 #
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
-#				kern-${kernel}.tgz.  These kernels
-#				are also placed in the binary/kernel
-#				area of the release package as
-#				netbsd-${kernel}.gz.
+#				kern-${kernel}.tgz (or .tar.xz).
+#				These kernels are also placed in the
+#				binary/kernel area of the release package
+#				as netbsd-${kernel}.gz.
 #
 #	EXTRA_KERNELS		Additional kernels to place in the
 #				binary/kernel area of the release
@@ -609,8 +612,8 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	@kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
-	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.${TAR_SUFF}; \
+	pax_cmd="GZIP=${GZIP_FLAGS:Q} XZ_OPT=${XZ_OPT:Q} ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program ${COMPRESS_PROGRAM:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \

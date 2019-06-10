@@ -55,8 +55,6 @@ Tspi_Context_Close(TSS_HCONTEXT tspContext)	/* in */
 	/* Destroy all objects */
 	obj_close_context(tspContext);
 
-	Tspi_Context_FreeMemory(tspContext, NULL);
-
 	/* close the ps file */
 	PS_close();
 
@@ -81,8 +79,11 @@ Tspi_Context_Connect(TSS_HCONTEXT tspContext,	/* in */
 			return result;
 
 		if ((result = RPC_OpenContext(tspContext, machine_name,
-					      CONNECTION_TYPE_TCP_PERSISTANT)))
+					      CONNECTION_TYPE_TCP_PERSISTANT))) {
+			free(machine_name);
 			return result;
+		}
+
 	} else {
 		if ((machine_name =
 		    Trspi_UNICODE_To_Native((BYTE *)wszDestination, NULL)) == NULL) {
@@ -91,13 +92,20 @@ Tspi_Context_Connect(TSS_HCONTEXT tspContext,	/* in */
 		}
 
 		if ((result = RPC_OpenContext(tspContext, machine_name,
-					      CONNECTION_TYPE_TCP_PERSISTANT)))
+					      CONNECTION_TYPE_TCP_PERSISTANT))) {
+			free(machine_name);
 			return result;
+		}
 
 		if ((result = obj_context_set_machine_name(tspContext, machine_name,
-						strlen((char *)machine_name)+1)))
+						strlen((char *)machine_name)+1))) {
+			free(machine_name);
 			return result;
+		}
+
 	}
+
+	free(machine_name);
 
         if ((obj_tpm_add(tspContext, &hTpm)))
                 return TSPERR(TSS_E_INTERNAL_ERROR);
@@ -358,6 +366,10 @@ Tspi_Context_CloseObject(TSS_HCONTEXT tspContext,	/* in */
 	} else if (obj_is_migdata(hObject)) {
 #ifdef TSS_BUILD_CMK
 		result = obj_migdata_remove(hObject, tspContext);
+#endif
+	} else if (obj_is_nvstore(hObject)) {
+#ifdef TSS_BUILD_NV
+		result = obj_nvstore_remove(hObject, tspContext);
 #endif
 	} else {
 		result = TSPERR(TSS_E_INVALID_HANDLE);

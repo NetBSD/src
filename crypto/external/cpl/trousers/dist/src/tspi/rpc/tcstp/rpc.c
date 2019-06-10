@@ -31,22 +31,20 @@
 #include "tcsd_wrap.h"
 #include "obj.h"
 #include "rpc_tcstp_tsp.h"
+#include "tsp_tcsi_param.h"
 
 
 void
 initData(struct tcsd_comm_data *comm, int parm_count)
 {
 	/* min packet size should be the size of the header */
-	memset(&comm->hdr, 0, sizeof(struct tcsd_packet_hdr));
+	__tspi_memset(&comm->hdr, 0, sizeof(struct tcsd_packet_hdr));
 	comm->hdr.packet_size = sizeof(struct tcsd_packet_hdr);
-	if (parm_count > 0) {
-		comm->hdr.type_offset = sizeof(struct tcsd_packet_hdr);
-		comm->hdr.parm_offset = comm->hdr.type_offset +
-					(sizeof(TCSD_PACKET_TYPE) * parm_count);
-		comm->hdr.packet_size = comm->hdr.parm_offset;
-	}
+	comm->hdr.type_offset = sizeof(struct tcsd_packet_hdr);
+	comm->hdr.parm_offset = comm->hdr.type_offset + (sizeof(TCSD_PACKET_TYPE) * parm_count);
+	comm->hdr.packet_size = comm->hdr.parm_offset;
 
-	memset(comm->buf, 0, comm->buf_size);
+	__tspi_memset(comm->buf, 0, comm->buf_size);
 }
 
 int
@@ -123,11 +121,11 @@ setData(TCSD_PACKET_TYPE dataType,
         offset = 0;
         if ((result = loadData(&offset, dataType, theData, theDataSize, NULL)))
                 return result;
-        if (((int)comm->hdr.packet_size + (int)offset) < 0) {
+        if ((comm->hdr.packet_size + offset) > TSS_TPM_TXBLOB_SIZE) {
                 LogError("Too much data to be transmitted!");
                 return TSPERR(TSS_E_INTERNAL_ERROR);
         }
-        if (((int)comm->hdr.packet_size + (int)offset) > comm->buf_size) {
+        if ((comm->hdr.packet_size + offset) > comm->buf_size) {
                 /* reallocate the buffer */
                 BYTE *buffer;
                 int buffer_size = comm->hdr.packet_size + offset;
@@ -345,42 +343,9 @@ send_init(struct host_table_entry *hte)
 	BYTE *buffer;
 	TSS_RESULT result;
 
-	struct sockaddr_in addr;
-	struct hostent *hEnt = NULL;
-
-	sd = socket(PF_INET, SOCK_STREAM, 0);
-	if (sd == -1) {
-		LogError("socket: %s", strerror(errno));
-		result = TSPERR(TSS_E_COMM_FAILURE);
+	result = get_socket(hte, &sd);
+	if (result != TSS_SUCCESS)
 		goto err_exit;
-	}
-
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(get_port());
-
-	LogDebug("Sending TSP packet to host %s.", hte->hostname);
-
-	/* try to resolve by hostname first */
-	hEnt = gethostbyname((char *)hte->hostname);
-	if (hEnt == NULL) {
-		/* if by hostname fails, try by dot notation */
-		if (inet_aton((char *)hte->hostname, &addr.sin_addr) == 0) {
-			LogError("hostname %s does not resolve to a valid address.", hte->hostname);
-			result = TSPERR(TSS_E_CONNECTION_FAILED);
-			goto err_exit;
-		}
-	} else {
-		memcpy(&addr.sin_addr, hEnt->h_addr_list[0], 4);
-	}
-
-	LogDebug("Connecting to %s", inet_ntoa(addr.sin_addr));
-
-	if (connect(sd, (struct sockaddr *) &addr, sizeof (addr))) {
-		LogError("connect: %s", strerror(errno));
-		result = TSPERR(TSS_E_COMM_FAILURE);
-		goto err_exit;
-	}
 
 	if (send_to_socket(sd, hte->comm.buf, hte->comm.hdr.packet_size) < 0) {
 		result = TSPERR(TSS_E_COMM_FAILURE);
@@ -389,7 +354,7 @@ send_init(struct host_table_entry *hte)
 
 	buffer = hte->comm.buf;
 	recv_size = sizeof(struct tcsd_packet_hdr);
-	if ((recv_size = recv_from_socket(sd, buffer, recv_size)) < 0) {
+	if (recv_from_socket(sd, buffer, recv_size) < 0) {
 		result = TSPERR(TSS_E_COMM_FAILURE);
 		goto err_exit;
 	}
@@ -404,7 +369,7 @@ send_init(struct host_table_entry *hte)
 		goto err_exit;
 	}
 
-	if (recv_size > hte->comm.buf_size ) {
+	if (recv_size > (int) hte->comm.buf_size ) {
 		BYTE *new_buffer;
 
 		LogDebug("Increasing communication buffer to %d bytes.", recv_size);
@@ -421,7 +386,7 @@ send_init(struct host_table_entry *hte)
 
 	/* get the rest of the packet */
 	recv_size -= sizeof(struct tcsd_packet_hdr);    /* already received the header */
-	if ((recv_size = recv_from_socket(sd, buffer, recv_size)) < 0) {
+	if (recv_from_socket(sd, buffer, recv_size) < 0) {
 		result = TSPERR(TSS_E_COMM_FAILURE);
 		goto err_exit;
 	}
@@ -464,7 +429,7 @@ tcs_sendit(struct host_table_entry *hte)
 		goto err_exit;
 	}
 
-	if (recv_size > hte->comm.buf_size ) {
+	if (recv_size > (int) hte->comm.buf_size ) {
 		BYTE *new_buffer;
 
 		LogDebug("Increasing communication buffer to %d bytes.", recv_size);
@@ -492,23 +457,61 @@ err_exit:
 	return result;
 }
 
-/* XXX this should be moved out of an RPC-specific file */
-short
-get_port(void)
+/* TODO: Future work - remove socket creation/manipulation from RPC-specific file */
+TSS_RESULT
+get_socket(struct host_table_entry *hte, int *sd)
 {
-	char *env_port;
-	int port = 0;
+	char port_str[TCP_PORT_STR_MAX_LEN]; // To accomodate string 65535
+	struct addrinfo hints, *p, *res=NULL;
+	int rv;
+	TSS_RESULT result = TSS_SUCCESS;
 
-	env_port = getenv("TSS_TCSD_PORT");
+	__tspi_memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICSERV;
 
-	if (env_port == NULL)
-		return TCSD_DEFAULT_PORT;
+	__tspi_memset(&port_str, 0, sizeof(port_str));
 
-	port = atoi(env_port);
+	if (get_tcsd_port(port_str) != TSS_SUCCESS) {
+		LogError("Could not retrieve TCP port information.");
+		goto exit;
+	}
 
-	if (port == 0 || port > 65535)
-		return TCSD_DEFAULT_PORT;
+	LogDebug("Retrieving address information from host: %s", (char *)hte->hostname);
+	rv = getaddrinfo((char *)hte->hostname, port_str,
+			&hints, &res);
+	if (rv != 0) {
+		LogError("hostname %s does not resolve to a valid address.", hte->hostname);
+		result = TSPERR(TSS_E_CONNECTION_FAILED);
+		res = NULL;
+		goto exit;
+	}
 
-	return (short)port;
+	LogWarn("Got a list of valid IPs");
+
+	for (p = res; p != NULL; p = p->ai_next) {
+
+		*sd = socket(p->ai_family, SOCK_STREAM, 0);
+		if (*sd == -1)
+			continue;
+
+		if (connect(*sd, p->ai_addr, p->ai_addrlen) != -1)
+			break; // Got a connection
+
+		LogWarn("Could not connect to machine: %s", (char*)hte->hostname);
+
+		close(*sd);
+	}
+
+	if (p == NULL) {
+		LogError("Could not connect to any machine in the list.");
+		result = TSPERR(TSS_E_COMM_FAILURE);
+		goto exit;
+	}
+
+exit:
+	if (res != NULL)
+		freeaddrinfo(res);
+
+	return result;
 }
-

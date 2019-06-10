@@ -454,6 +454,9 @@ main(int argc, char **argv)
 		netpgp_set_homedir(&netpgp, getenv("HOME"),
 			netpgp_getvar(&netpgp, "ssh keys") ? "/.ssh" : "/.gnupg", 1);
 	}
+	if (p.keyring[0] != '\0') {
+		netpgp_setvar(&netpgp, "pubring", p.keyring);
+	}
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp)) {
 		if (stat(netpgp_getvar(&netpgp, "homedir"), &st) < 0) {

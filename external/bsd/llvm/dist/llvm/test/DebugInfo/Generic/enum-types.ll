@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 ;
-; RUN: %llc_dwarf -filetype=obj -O0 -dwarf-linkage-names=All < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf -filetype=obj -O0 -dwarf-linkage-names=All < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 
 ; Make sure we can handle enums with the same identifier but in enum types of
 ; different compile units.
@@ -12,7 +12,7 @@
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_AT_MIPS_linkage_name {{.*}} "_Z4topA2EA"
 ; CHECK: DW_TAG_formal_parameter
-; CHECK: DW_AT_type [DW_FORM_ref4] (cu + 0x{{.*}} => {0x[[ENUM]]})
+; CHECK: DW_AT_type [DW_FORM_ref4] (cu + 0x{{.*}} => {0x[[ENUM]]}
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_TAG_subprogram
@@ -54,7 +54,7 @@ attributes #1 = { nounwind readnone }
 !3 = !DICompositeType(tag: DW_TAG_enumeration_type, name: "EA", line: 1, size: 32, align: 32, file: !1, elements: !4, identifier: "_ZTS2EA")
 !4 = !{!5}
 !5 = !DIEnumerator(name: "EA_0", value: 0) ; [ DW_TAG_enumerator ] [EA_0 :: 0]
-!7 = distinct !DISubprogram(name: "topA", linkageName: "_Z4topA2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !1, scope: !8, type: !9, variables: !11)
+!7 = distinct !DISubprogram(name: "topA", linkageName: "_Z4topA2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !1, scope: !8, type: !9, retainedNodes: !11)
 !8 = !DIFile(filename: "a.cpp", directory: "")
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !3}
@@ -63,7 +63,7 @@ attributes #1 = { nounwind readnone }
 !13 = !DIFile(filename: "b.cpp", directory: "")
 !14 = !{!15}
 !15 = !DICompositeType(tag: DW_TAG_enumeration_type, name: "EA", line: 1, size: 32, align: 32, file: !13, elements: !4, identifier: "_ZTS2EA")
-!17 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topB2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !12, scopeLine: 5, file: !13, scope: !18, type: !9, variables: !11)
+!17 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topB2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !12, scopeLine: 5, file: !13, scope: !18, type: !9, retainedNodes: !11)
 !18 = !DIFile(filename: "b.cpp", directory: "")
 !19 = !{i32 2, !"Dwarf Version", i32 2}
 !20 = !{i32 2, !"Debug Info Version", i32 3}

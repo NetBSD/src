@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++11 -Wall %s
 
 struct Bitfield {
-  int n : 3 = 7; // expected-error {{bit-field member cannot have an in-class initializer}}
+  int n : 3 = 7; // expected-warning {{C++2a extension}} expected-warning {{changes value from 7 to -1}}
 };
 
 int a;
@@ -101,7 +101,7 @@ namespace rdar14084171 {
   struct Sprite {
     Point location = Point(0,0); // expected-error {{no matching constructor for initialization of 'rdar14084171::Point'}}
   };
-  void f(Sprite& x) { x = x; }
+  void f(Sprite& x) { x = x; } // expected-warning {{explicitly assigning value of variable}}
 }
 
 namespace PR18560 {

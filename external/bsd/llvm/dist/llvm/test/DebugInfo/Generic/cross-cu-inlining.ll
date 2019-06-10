@@ -1,7 +1,7 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf -O0 -filetype=obj -dwarf-linkage-names=All < %s | llvm-dwarfdump -debug-dump=info - | FileCheck -implicit-check-not=DW_TAG %s
-; RUN: %llc_dwarf -dwarf-accel-tables=Enable -dwarf-linkage-names=All -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck --check-prefix=CHECK-ACCEL --check-prefix=CHECK %s
+; RUN: %llc_dwarf -O0 -filetype=obj -dwarf-linkage-names=All < %s | llvm-dwarfdump -v -debug-info - | FileCheck -implicit-check-not=DW_TAG %s
+; RUN: %llc_dwarf -accel-tables=Apple -dwarf-linkage-names=All -O0 -filetype=obj < %s | llvm-dwarfdump -v - | FileCheck --check-prefix=CHECK-ACCEL --check-prefix=CHECK %s
 
 ; Build from source:
 ; $ clang++ a.cpp b.cpp -g -c -emit-llvm
@@ -24,7 +24,7 @@
 ; CHECK: DW_TAG_compile_unit
 ; CHECK:   DW_AT_name {{.*}} "a.cpp"
 ; CHECK:   DW_TAG_subprogram
-; CHECK:     DW_AT_type [DW_FORM_ref_addr] (0x00000000[[INT:.*]])
+; CHECK:     DW_AT_type [DW_FORM_ref_addr] (0x00000000[[INT:[a-f0-9]+]]
 ; CHECK:     0x[[INLINED:[0-9a-f]*]]:{{.*}}DW_TAG_inlined_subroutine
 ; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]] "_Z4funci"
 ; CHECK:       DW_TAG_formal_parameter
@@ -57,10 +57,10 @@
 ; correctly referenced in the accelerator table. Before r221837, the one
 ; in the second compilation unit had a wrong offset
 ; CHECK-ACCEL: .apple_names contents:
-; CHECK-ACCEL: Name{{.*}}"func"
-; CHECK-ACCEL-NOT: Name
+; CHECK-ACCEL: String{{.*}}"func"
+; CHECK-ACCEL-NOT: String
 ; CHECK-ACCEL: Atom[0]{{.*}}[[INLINED]]
-; CHECK-ACCEL-NOT: Name
+; CHECK-ACCEL-NOT: String
 ; CHECK-ACCEL: Atom[0]{{.*}}[[FUNC]]
 
 @i = external global i32
@@ -115,14 +115,14 @@ attributes #3 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: FullDebug, file: !10, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !10 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
-!12 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !9, scopeLine: 1, file: !10, scope: !13, type: !14, variables: !2)
+!12 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !9, scopeLine: 1, file: !10, scope: !13, type: !14, retainedNodes: !2)
 !13 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !14 = !DISubroutineType(types: !15)
 !15 = !{!8, !8}

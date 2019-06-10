@@ -13,17 +13,15 @@ entry:
 for.cond:
 ; CHECK: %[[PHI:.*]] = phi i8 [ 0, %entry ], [ %0, %for.cond ]
   %entryN = load i8, i8* %entry1, align 8, !dbg !20
-; CHECK: call void @llvm.dbg.value(metadata i8 %[[PHI]], i64 0,
-; CHECK-SAME:                      metadata ![[EXPR:[0-9]+]])
+; CHECK: call void @llvm.dbg.value(metadata i8 %[[PHI]],
+; CHECK-SAME:                      metadata !DIExpression())
   %0 = add i8 %entryN, 1
 ; CHECK: %0 = add i8 %[[PHI]], 1
-; CHECK: call void @llvm.dbg.value(metadata i8 %0, i64 0,
-; CHECK-SAME:                      metadata ![[EXPR]])
+; CHECK: call void @llvm.dbg.value(metadata i8 %0,
+; CHECK-SAME:                      metadata !DIExpression())
   store i8 %0, i8* %entry1, align 8, !dbg !20
   br label %for.cond, !dbg !20
 }
-
-; CHECK: ![[EXPR]] = !DIExpression()
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
@@ -39,7 +37,7 @@ attributes #1 = { nounwind readnone }
 !4 = !DIBasicType(name: "char", size: 8, encoding: DW_ATE_signed_char)
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{i32 1, !"PIC Level", i32 2}
-!12 = distinct !DISubprogram(name: "scan", scope: !1, file: !1, line: 4, type: !13, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !15)
+!12 = distinct !DISubprogram(name: "scan", scope: !1, file: !1, line: 4, type: !13, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !15)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null, !4, !4}
 !15 = !{!18}

@@ -1,8 +1,9 @@
-# $NetBSD: md.vax,v 1.46 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: md.vax,v 1.46.4.1 2019/06/10 21:42:29 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
@@ -23,7 +24,7 @@
 ./usr/include/vax/endian_machdep.h		comp-c-include
 ./usr/include/vax/float.h			comp-c-include
 ./usr/include/vax/frame.h			comp-c-include
-./usr/include/vax/ibcs2_machdep.h		comp-c-include
+./usr/include/vax/ibcs2_machdep.h		comp-obsolete		obsolete
 ./usr/include/vax/int_const.h			comp-c-include
 ./usr/include/vax/int_fmtio.h			comp-c-include
 ./usr/include/vax/int_limits.h			comp-c-include
@@ -50,7 +51,7 @@
 ./usr/include/vax/param.h			comp-c-include
 ./usr/include/vax/pcb.h				comp-c-include
 ./usr/include/vax/pmap.h			comp-c-include
-./usr/include/vax/pmc.h				comp-c-include
+./usr/include/vax/pmc.h				comp-obsolete		obsolete
 ./usr/include/vax/proc.h			comp-c-include
 ./usr/include/vax/profile.h			comp-c-include
 ./usr/include/vax/psl.h				comp-c-include

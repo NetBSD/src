@@ -1,4 +1,4 @@
-/* $NetBSD: hist.c,v 1.20 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: hist.c,v 1.20.28.1 2019/06/10 21:41:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.20 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.20.28.1 2019/06/10 21:41:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ static void
 hfree(struct Hist *hp)
 {
     freelex(&hp->Hlex);
-    xfree((ptr_t) hp);
+    free(hp);
 }
 
 void

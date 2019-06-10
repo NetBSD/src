@@ -1,9 +1,12 @@
-; RUN: %llc_dwarf -split-dwarf-file=foo.dwo  %s -filetype=obj -o %T/a.o
-; RUN: %llc_dwarf -split-dwarf-file=bar.dwo  %s -filetype=obj -o %T/b.o
-; RUN: llvm-dwarfdump -debug-dump=info %T/a.o %T/b.o | FileCheck %s
+; RUN: rm -rf %t && mkdir -p %t
+; RUN: %llc_dwarf -split-dwarf-file=foo.dwo  %s -filetype=obj -o %t/a.o
+; RUN: %llc_dwarf -split-dwarf-file=bar.dwo  %s -filetype=obj -o %t/b.o
+; RUN: llvm-dwarfdump -debug-info %t/a.o %t/b.o | FileCheck %s
 
+; CHECK: .debug_info contents:
 ; CHECK: dwo_id {{.*}}([[HASH:.*]])
 ; CHECK-NOT: dwo_id {{.*}}([[HASH]])
+; CHECK: .debug_info.dwo contents:
 
 target triple = "x86_64-pc-linux"
 
@@ -34,9 +37,9 @@ attributes #0 = { noinline nounwind uwtable "correctly-rounded-divide-sqrt-fp-ma
 !6 = !{i32 2, !"Dwarf Version", i32 4}
 !7 = !{i32 2, !"Debug Info Version", i32 3}
 !8 = !{i32 1, !"wchar_size", i32 4}
-!9 = distinct !DISubprogram(name: "a", linkageName: "_Z1av", scope: !1, file: !1, line: 1, type: !10, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!9 = distinct !DISubprogram(name: "a", linkageName: "_Z1av", scope: !1, file: !1, line: 1, type: !10, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{null}
 !12 = !DILocation(line: 2, column: 1, scope: !9)
-!13 = distinct !DISubprogram(name: "b", linkageName: "_Z1bv", scope: !4, file: !4, line: 1, type: !10, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !3, variables: !2)
+!13 = distinct !DISubprogram(name: "b", linkageName: "_Z1bv", scope: !4, file: !4, line: 1, type: !10, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, unit: !3, retainedNodes: !2)
 !14 = !DILocation(line: 2, column: 1, scope: !13)

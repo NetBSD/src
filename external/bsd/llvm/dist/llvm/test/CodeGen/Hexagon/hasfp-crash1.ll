@@ -18,7 +18,7 @@ entry:
 ; Function Attrs: nounwind readnone speculatable
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
-attributes #0 = { nounwind "disable-tail-calls"="true" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" "target-cpu"="hexagonv5" "target-features"="-hvx-double,-long-calls" }
+attributes #0 = { nounwind "disable-tail-calls"="true" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" "target-cpu"="hexagonv5" "target-features"="-hvx,-long-calls" }
 attributes #1 = { nounwind readnone speculatable }
 
 !llvm.dbg.cu = !{!0}
@@ -58,7 +58,7 @@ attributes #1 = { nounwind readnone speculatable }
 !30 = !{!"foo1", !".text"}
 !31 = !{!"foo2", !".text"}
 !32 = !{!"foo3", !".text"}
-!33 = distinct !DISubprogram(name: "foo1", scope: !34, file: !34, line: 84, type: !35, isLocal: false, isDefinition: true, scopeLine: 85, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !44)
+!33 = distinct !DISubprogram(name: "foo1", scope: !34, file: !34, line: 84, type: !35, isLocal: false, isDefinition: true, scopeLine: 85, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !44)
 !34 = !DIFile(filename: "foo.c", directory: "/path")
 !35 = !DISubroutineType(types: !36)
 !36 = !{!37, !38, !39, !40, !41, !42, !43, !37}

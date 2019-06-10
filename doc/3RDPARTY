@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1531 2018/06/27 19:49:47 jmcneill Exp $
+#	$NetBSD: 3RDPARTY,v 1.1531.2.1 2019/06/10 21:42:38 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -30,6 +30,7 @@
 # Maintainer:	name and/or email address of upstream maintainer (required)
 # Archive Site:	URL to archive of upstream releases
 # Home Page:	URL to web page for upstream project
+# Date:		Date last checked
 # Mailing List:	email address or URL related to upstream mailing list
 # License:	description of license
 # Responsible:	comma-separated list of NetBSD developers
@@ -40,11 +41,12 @@
 #
 
 Package:	acpica
-Version:	20180427
-Current Vers:	20180427
+Version:	20190405
+Current Vers:	20190405
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
+Date:		2019-04-28
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho
@@ -59,6 +61,7 @@ Current Vers:	6.2
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
+Date:		2019-01-09
 Mailing List:	am-utils
 Responsible:	christos
 License:	BSD (4-clause)
@@ -75,6 +78,7 @@ Current Vers:	0.21
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	https://github.com/jmmv/atf/releases
 Home page:	https://github.com/jmmv/atf
+Date:		2019-01-09
 Mailing List:	atf-devel@NetBSD.org
 Responsible:	jmmv
 License:	The NetBSD Foundation's license (BSD 2-clause)
@@ -90,10 +94,11 @@ upfront.
 
 Package:	ath-hal
 Version:	FreeBSD SVN revision number 185521
-Current Vers:	FreeBSD SVN revision number 185521
+Current Vers:	FreeBSD SVN revision number 334197
 Maintainer:	Sam Leffler <sam@errno.com>
 Archive Site:	none
-Home Page:	none
+Home Page:	https://svnweb.freebsd.org/base/head/sys/dev/ath/ath_hal/
+Date:		2019-01-09
 Mailing List:	none
 Responsible:	sam, alc
 License:	BSD-like (2-clause), ISC
@@ -102,26 +107,28 @@ Notes:
 
 Package:	bc
 Version:	1.06
-Current Vers:	1.06
+Current Vers:	1.07.1
 Maintainer:	Phil Nelson <phil@cs.wwu.edu>
 Archive Site:	ftp://ftp.gnu.org/gnu/bc/
 Home Page:	http://www.gnu.org/software/bc/
+Date:		2019-01-09
 Mailing List:	bug-bc@gnu.org
 Responsible:	phil, simonb
 License:	GPLv2, LGPGv2.1
-Location:	gnu/dist/bc
+Location:	external/bsd/bc
 Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.7/BSD	9.12.1/MPL
-Current Vers:	9.10.7/BSD
-Maintainer:	Paul Vixie <vixie@vix.com>
+Version:	9.14.1/MPL
+Current Vers:	9.14.1/MPL
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
+Date:		2019-04-27
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
-Responsible:	vixie, christos
+Responsible:	christos
 License:	BSD-like (2-clause) / MPL
 Location:	external/bsd/bind/dist
 Notes:
@@ -131,12 +138,13 @@ Build bind to generate the include files.
 Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
 
-Package:	unbound 
-Version:	1.6.8
-Current Vers:	1.6.8
-Maintainer:	Christos Zoulas
+Package:	unbound
+Version:	1.9.1
+Current Vers:	1.9.1
+Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
+Date:		2019-05-23
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -145,13 +153,14 @@ Notes:
 Use cleantags to import
 run configure and update config files in include
 
-Package:	nsd 
-Version:	4.1.19
-Current Vers:	4.1.19
-Maintainer:	Christos Zoulas
+Package:	nsd
+Version:	4.1.27
+Current Vers:	4.1.27
+Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/	
+Date:		2019-05-25
+Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
 Location:	external/bsd/nsd/dist
@@ -162,11 +171,12 @@ run configure and update config files in include
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
 Current Vers:	libbind-6.0
-Maintainer:	Paul Vixie <vixie@vix.com>
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/libbind/
 Home Page:	http://www.isc.org/software/libbind/
+Date:		2019-01-09
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-workers
-Responsible:	vixie, christos
+Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/libbind/dist
 Notes:
@@ -184,24 +194,13 @@ Todo[3]: net/base64.c is imported from bind but should be moved from net
 Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
 
-Package:	binutils
-Version:	2.27
-Current Vers:	2.30
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
-Home Page:	http://www.gnu.org/software/binutils/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	thorpej, mrg
-License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
-Location:	external/gpl3/binutils/dist
-Notes:
-
 Package:	bozohttpd
-Version:	20100617
-Current Vers:	20100617
+Version:	20170201
+Current Vers:	20170201
 Maintainer:	mrg@eterna.com.au
 Archive Site:	ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/
 Home Page:	http://eterna.com.au/bozohttpd/
+Date:		2019-01-09
 Mailing List:
 Responsible:	mrg
 License:	BSD
@@ -210,11 +209,12 @@ Notes:
 Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
-Version:	1.151
-Current Vers:	1.156
+Version:	336757
+Current Vers:	342397
 Maintainer:	The FreeBSD Project
-Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
-Home Page:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
+Archive Site:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
+Home Page:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
+Date:		2019-01-09
 Mailing List:
 Responsible:
 License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
@@ -225,11 +225,12 @@ is a FreeBSD committer who has been helpful with incorporating changes
 in the past.
 
 Package:	byacc
-Version:	20170430
-Current Vers:	20170430
+Version:	20180609
+Current Vers:	20180609
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
 License:	Public Domain
@@ -241,8 +242,9 @@ Package:	bzip2
 Version:	1.0.6
 Current Vers:	1.0.6
 Maintainer:	Julian Seward <jseward@acm.org>
-Archive Site:	http://sources.redhat.com/bzip2/
+Archive Site:	http://sources.redhat.com/bzip2/files/
 Home Page:	http://www.bzip.org/
+Date:		2019-01-09
 Mailing List:
 Responsible:
 License:	BSD (4-clause)
@@ -251,11 +253,12 @@ Notes:
 See /usr/src/external/bsd/bzip2/bzip2netbsd for update instructions.
 
 Package:	Citrus XPG4DL
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Citrus
 Archive Site:	http://citrus.bsdclub.org/
 Home Page:	http://citrus.bsdclub.org/
+Date:		2019-01-09
 Mailing List:	bsd-locale@hauN.org
 Responsible:	tshiozak
 License:	Ambiguous. Either BSD or Perl Artistic License
@@ -274,9 +277,10 @@ main trunc has Citrus code in the following places:
 Package:	cron
 Version:	4.1
 Current Vers:	4.1
-Maintainer:	Paul Vixie <vixie@vix.com>
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
+Date:		2019-01-09
 Mailing List:
 Responsible:
 License:	BSD-like
@@ -289,6 +293,7 @@ Current Vers:	1.12.13
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
+Date:		2019-01-09
 Mailing List:	bug-cvs@gnu.org
 Responsible:	christos
 License:	GPLv1, LGPLv2
@@ -305,6 +310,7 @@ Current Vers:	1.86/4.7.25
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.oracle.com/technology/software/products/berkeley-db/
 Home Page:	http://www.oracle.com/database/berkeley-db/
+Date:		2019-01-09
 Mailing List:
 Responsible:
 License:	BSD or Oracle Commercial License
@@ -323,6 +329,7 @@ Current Vers:	4.4.1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
+Date:		2019-01-09
 Mailing List:	dhcp-server@isc.org
 Mailing List:	dhcp-client@isc.org
 Mailing List:	dhcp-announce@isc.org
@@ -334,11 +341,12 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.6
-Current Vers:	7.0.6
+Version:	7.2.2
+Current Vers:	7.2.2
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
+Date:		2019-04-26
 Mailing List: 	dhcpcd-discuss@marples.name
 License:	BSD (2-clause)
 Location:	external/bsd/dhcpcd/dist
@@ -373,31 +381,6 @@ I neglected to add RCSIDs in the last import (except for nouveau, for
 which nouveau2netbsd adds them).  For the next import, remember to add
 them!
 
-Package:	gmake
-Version:	3.81 (Last GPlv2+ version)
-Current Vers:	4.0
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/make/
-Home Page:	http://www.gnu.org/software/make/
-Mailing List:	bug-make@gnu.org
-Responsible:	
-License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
-Location:	external/gpl2/gmake
-Notes:
-
-Package:	diffutils
-Version:	2.8.1 (Last GPLv2+ version)
-Current Vers:	3.3
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
-Home Page:	http://www.gnu.org/software/diffutils/
-Mailing List:	bug-diffutils@gnu.org
-Responsible:	
-License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
-Location:	external/gpl2/diffutils
-Notes:
-Use external/gpl2/diffutils/diffutils2netbsd for preparing the source tree
-for the import.
 
 Package:	ekermit
 Version:	1.7
@@ -405,6 +388,7 @@ Current Vers:	1.7
 Maintainer:	Kermit Project
 Archive Site:	ftp://ftp.kermitproject.org/kermit/ekermit/
 Home Page:	http://www.kermitproject.org/ek.html
+Date:		2019-01-09
 Mailing List:
 Responsible:	apb
 License:	BSD (3 clause)
@@ -413,10 +397,11 @@ Notes:
 
 Package:	expat
 Version:	2.2.1
-Current Vers:	2.2.4
+Current Vers:	2.2.6
 Maintainer:	Expat Project
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
 Home Page:	http://www.libexpat.org/
+Date:		2019-01-09
 Mailing List:	expat-discuss@libexpat.org
 Responsible:	mrg
 License:	MIT
@@ -425,12 +410,13 @@ Notes:
 Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
-Version:	5.33
-Current Vers:	5.33
+Version:	5.37
+Current Vers:	5.37
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
-Mailing List:	file@mx.gw.com
+Date:		2019-05-22
+Mailing List:	file@astron.com
 Responsible:	christos, pooka
 License:	BSD (2-clause)
 Location:	external/bsd/file/dist
@@ -438,11 +424,12 @@ Notes:
 use file2netbsd
 
 Package:	flex
-Version:	2.6.3
-Current Vers:	2.6.3
+Version:	2.6.4
+Current Vers:	2.6.4
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	https://github.com/westes/flex/releases
 Home Page:	https://github.com/westes/flex
+Date:		2019-01-09
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like
@@ -451,15 +438,15 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	5.5
-Current Vers:	5.5/6.4/7.2/8.1
+Version:	6.5
+Current Vers:	6.5/7.4/8.2/9.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
+Date:		2019-01-09
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
-Location:	gnu/dist/gcc4
 Location:	external/gpl3/gcc.old/dist
 Location:	external/gpl3/gcc/dist
 Notes:
@@ -473,7 +460,7 @@ When importing a new version of external/gpl3/gcc.old:
 Before importing a new version of external/gpl3/gcc:
 	- delete all .cvsignore and .gitignore files
 	- delete java ada fortran their libraries and testsuites
-	- delete libffi zlib boehm-gc 
+	- delete libffi zlib boehm-gc
 	- update gcc/version.c for the NetBSD GCC date
 	- use core/c++/objc/testsuite tarballs
 	- you can use the gcc2netbsd script for the above (except version)
@@ -482,11 +469,12 @@ Before importing a new version of external/gpl3/gcc:
 	  into gcc/dist/gcc/doc: cpp.1 cpp.info gcc.1 gcc.info gcov.1
 
 Package:	gdb
-Version:	8.0.1
-Current Vers:	8.1
+Version:	8.3
+Current Vers:	8.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
+Date:		2019-01-09
 Mailing List:	bug-gdb@gnu.org
 Responsible:	christos
 License:	GPLv3, LGPLv3.1
@@ -497,12 +485,41 @@ When updating GDB, it is imperative to test that:
 	- Support for our kernel's remote serial debugging protocol
 	  ("options KGDB") works correctly.
 
+Package:	binutils
+Version:	2.31.1
+Current Vers:	2.31.1
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
+Home Page:	http://www.gnu.org/software/binutils/
+Date:		2019-01-09
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	thorpej, mrg
+License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
+Location:	external/gpl3/binutils/dist
+Notes:
+
+Package:	autoconf
+Version:	2.69
+Current Vers:	2.69
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
+Home Page:	http://www.gnu.org/software/autoconf/
+Date:		2019-01-09
+Mailing List:	bug-autoconf@gnu.org
+Responsible:	christos
+License:	GPLv3+
+Location:	external/gpl3/autoconf
+Notes:
+This is only used to re-generate the configure files in tools/compat.
+It is not part of the regular build.
+
 Package:	gdtoa
-Version:	2011-03-19
+Version:	2016-02-19
 Current Vers:	$(date)
 Maintainer:	David M. Gay <dmg@acm.org>
 Archive Site:	http://www.netlib.org/fp/
 Home Page:	http://www.netlib.org/fp/
+Date:		2019-01-09
 Mailing List:	none
 Responsible:	kleink
 License:	BSD-like
@@ -512,62 +529,14 @@ Test suite integrated at this time, but not built (and fails to run).
 No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
-Package:	gettext
-Version:	0.16.1 (Last GPLv2+ version)
-Current Vers:	0.19.7
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
-Home Page:	http://www.gnu.org/software/gettext/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	christos
-License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
-Location:	external/gpl2/gettext
-Notes:
-GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
-we use BSD-licensed implementation from Citrus project (see entry for
-"Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
-
-Package:	grep
-Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	2.23
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/grep/
-Home Page:	http://www.gnu.org/software/grep/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	simonb
-License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
-Location:	external/gpl2/grep
-Notes:
-Use external/gpl2/grep//grep2netbsd for preparing the source tree
-for the import.
-On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
-see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
-was imported into src/usr.bin/grep;
-on 16 Feb 2011, the BSD grep implementation from FreeBSD was imported
-in src/usr.bin/grep, replacing FreeGrep
-(http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
-
-Package:	groff
-Version:	1.19.2 (last GPLv2+ version)
-Current Vers:	1.22.3
-Maintainer:	Werner Lemberg/FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/groff/
-Home Page:	http://www.gnu.org/software/groff/
-Mailing List:	bug-groff@gnu.org
-Responsible:	
-License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
-Location:	external/gpl2/groff
-Notes:
-Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
-distribution for import.
-Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	heimdal
 Version:	7.1.0 (HEAD-2017-01-28)
-Current Vers:	7.1.0
+Current Vers:	7.5.0
 Maintainer:	Heimdal <heimdal@h5l.org>
 Archive Site:	ftp://ftp.h5l.org/pub/heimdal/src/
 Home Page:	http://www.h5l.org/
+Date:		2019-01-09
 Mailing List:	heimdal-discuss@sics.se
 Responsible:	joda, lha
 License:	BSD
@@ -578,8 +547,9 @@ Package:	hunt
 Version:	2003-04-16
 Current Vers:	2003-04-16
 Maintainer:	Greg Couch <gregc@cgl.ucsf.edu>
-Archive Site:	ftp://ftp.cgl.ucsf.edu/pub/hunt.shar.Z
+Archive Site:
 Home Page:	http://www.cgl.ucsf.edu/home/gregc/oss.html
+Date:		2019-01-09
 Responsible:	mrg
 License:	BSD (3-clause)
 Location:	games/hunt
@@ -589,8 +559,9 @@ Package:	ipf
 Version:	5.1.1
 Current Vers:	5.1.2
 Maintainer:	Darren Reed
-Archive Site:	http://coombs.anu.edu.au/~avalon/
-Home Page:	http://coombs.anu.edu.au/~avalon/
+Archive Site:
+Home Page:
+Date:		2019-01-09
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, christos
 License:	BSD-based; see src/external/ipf/dist/IPFILTER.LICENCE
@@ -603,6 +574,7 @@ Version:	(ipsec-tools head is NetBSD-current head)
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
+Date:		2019-01-09
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
 Responsible:	manu, vanhu, mgrooms
 License:	BSD (3-clause)
@@ -627,12 +599,26 @@ ipsec-tools has stable branches (e.g.: ipsec-tools-0_7-branch), which
 are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
 sync with ipsec-tools-0_7-branch)
 
+Package:	jemalloc
+Version:	5.1.0
+Current Vers:	5.1.0
+Maintainer:	Jason Evans
+Archive Site:	https://github.com/jemalloc/jemalloc
+Home Page:	https://jemalloc.net
+Date:		2019-03-04
+Mailing List:	
+Responsible:	christos
+License:	BSD
+Location:	external/bsd/jemalloc
+Notes:
+
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit
 Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
 Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
 Home Page:	http://www.kame.net/
+Date:		2019-01-09
 Mailing List:	snap-users@kame.net
 Responsible:
 License:	BSD (3-clause)
@@ -651,10 +637,11 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	kyua-atf-compat
 Version:	0.1
-Current Vers:	0.1
+Current Vers:	0.13
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
+Date:		2019-01-09
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -666,10 +653,11 @@ directory.
 
 Package:	kyua-cli
 Version:	0.7
-Current Vers:	0.7
+Current Vers:	0.9
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
+Date:		2019-01-09
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -680,10 +668,11 @@ Use external/bsd/kyua-cli/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	kyua-testers
 Version:	0.1
-Current Vers:	0.1
+Current Vers:	0.3
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
+Date:		2019-01-09
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -695,10 +684,11 @@ directory.
 
 Package:	less
 Version:	less-458
-Current Vers:	less-481
+Current Vers:	less-530
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
+Date:		2019-01-09
 Mailing List:	less-announce-request@greenwoodsoftware.com
 Responsible:	mrg
 License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less-418)
@@ -711,10 +701,11 @@ Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	3.3.2pre
-Current Vers:	3.3.1
+Current Vers:	3.3.2
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/downloads
-Home Page: 	http://libarchive.github.com/
+Home Page: 	http://www.libarchive.org
+Date:		2019-01-09
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
@@ -723,10 +714,11 @@ Distribution is stripped down to the relevant part.
 
 Package:	libdevmapper
 Version:	1.02.40
-Current Vers:	2.02.98
+Current Vers:	2.2.03.02
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
+Date:		2019-01-09
 Responsible:	haad
 License:	LGPLv2.1
 Location:	external/gpl2/lvm2/dist/libdm
@@ -740,7 +732,8 @@ Current Vers:	2.1.8-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Responsible:	
+Date:		2019-01-09
+Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
 Notes:
@@ -750,10 +743,11 @@ Notes:
   .so'ing only. Copy the rest to man.
 
 Package:	llvm
-Version:	5.0.0RC1+ (r309604)
-Current Vers.:	6.0.0svn
+Version:	7.0.0svn (r337282)
+Current Vers.:	8.0.0
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
+Date:		2019-01-09
 Responsible:	joerg
 License:	BSD/MIT
 Location:	external/bsd/llvm/dist
@@ -763,10 +757,11 @@ All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
-Current Vers:	2.02.177
+Current Vers:	2.03.02
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
+Date:		2019-01-09
 Responsible:	haad
 License:	GPLv2
 Location:	external/gpl2/lvm2/dist
@@ -778,11 +773,12 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.8.1
-Current Vers:	1.8.1
+Version:	1.9.0
+Current Vers:	1.9.0
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
+Date:		2019-01-09
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -791,12 +787,28 @@ Notes:
 Use the src/external/bsd/libpcap/libpcap2netbsd script to prepare source
 tree. sys/net/dlt.h is a copy of the dlt constants from pcap.h
 
+Package:	tcpdump
+Version:	4.9.2
+Current Vers:	4.9.2
+Maintainer:	tcpdump-workers@lists.tcpdump.org
+Archive Site:	http://www.tcpdump.org/release/
+Home Page:	http://www.tcpdump.org/
+Date:		2019-01-09
+Mailing List:	tcpdump-workers@lists.tcpdump.org
+Responsible:
+License:	BSD (3-clause)
+Location:	external/bsd/tcpdump/dist
+Notes:
+Use the src/external/bsd/tcpdump/tcpdump2netbsd script to prepare source
+tree.
+
 Package:	libwrap
 Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
 Current Vers:	tcp_wrappers 7.6-ipv6.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
+Date:		2019-01-09
 Mailing List:
 Responsible:	cjs
 License:	BSD-like
@@ -807,12 +819,13 @@ under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
-Version:	Lua 5.3.4
-Current Vers:	Lua 5.3.4
+Version:	Lua 5.3.5
+Current Vers:	Lua 5.3.5
 Maintainer:	PUC Rio
 Home Page:	http://www.lua.org/
+Date:		2019-01-09
 Mailing List:
-Responsible:	mbalmer, lneto, salazar
+Responsible:	mbalmer, lneto, salazar, alnsn
 License:	MIT
 Location:	external/mit/lua/dist
 Notes:
@@ -825,6 +838,7 @@ Current Vers:	0.4
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	https://github.com/jmmv/lutok/releases
 Home page:	https://github.com/jmmv/lutok
+Date:		2019-01-09
 Mailing List:	lutok-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -835,11 +849,12 @@ Use external/bsd/lutok/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	m4
 Version:	20091026
-Current Vers:	20091026
+Current Vers:	20161231
 Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
 Home Page:	http://www.openbsd.org/
-Mailing List:	
+Date:		2019-01-09
+Mailing List:
 License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
 Location:	usr.bin/m4
@@ -860,12 +875,13 @@ Location:	external/apache2/mDNSResponder/dist
 Notes:
 
 Package:	mandoc
-Version:	1.14.1
-Current Vers:	1.14.3
-Maintainer:	Kristaps Džonsons
-Archive Site:	http://mdocml.bsd.lv/snapshots/
-Home Page:	http://mdocml.bsd.lv/
-Mailing List:	
+Version:	1.14.5
+Current Vers:	1.14.5
+Maintainer:	Kristaps Džonsons/Ingo Schwarze
+Archive Site:	http://mandoc.bsd.lv/snapshots/
+Home Page:	http://mandoc.bsd.lv/
+Date:		2019-03-10
+Mailing List:
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/mdocml/dist
@@ -873,14 +889,15 @@ Notes:
 
 Package:	mesa-demos
 Version:	8.1.0
-Current Vers:	8.2.0
+Current Vers:	8.4.0
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/demos/
 Home Page:	http://www.mesa3d.org/
+Date:		2019-01-09
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
-Location:	xsrc/external/mit/MesaDemos/dist
+Location:	xsrc/external/mit/mesa-demos/dist
 Notes:
 We use only glxinfo and glxgears.  Delete all else on import.
 Vendor tag:	xorg
@@ -892,6 +909,7 @@ Current Vers:
 Maintainer:	mesa-git@?
 Archive Site:	git://anongit.freedesktop.org/git/mesa/drm
 Home Page:	http://cgit.freedesktop.org/mesa/drm/
+Date:		2019-01-09
 Mailing List:
 Responsible:	mrg, bjs
 License:	BSD
@@ -899,11 +917,12 @@ Location:	sys/external/bsd/drm/dist
 Notes:
 
 Package:	MesaLib
-Version:	7.11.2
-Current Vers:	13.0.4
+Version:	18.3.4
+Current Vers:	19.0.1
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
+Date:		2019-04-05
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
@@ -918,6 +937,7 @@ Current Vers:	2.5.3
 Maintainer:	Mats O Jansson <maja@celsiustech.se>
 Archive Site:	http://www.stacken.kth.se/~moj/mopd.html
 Home Page:	http://www.stacken.kth.se/~moj/mopd.html
+Date:		2019-01-09
 Mailing List:
 Responsible:	cjs
 License:	BSD (4-clause)
@@ -929,8 +949,9 @@ Package:	nawk
 Version:	2012-12-20
 Current Vers:	2012-12-20
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
-Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
+Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
+Date:		2019-01-09
 Mailing List:
 Responsible:	jdolecek
 License:	BSD-like
@@ -946,6 +967,7 @@ Current Vers:	0.5
 Maintainer:	Matt Fredette <fredette@alum.mit.edu>
 Archive Site:
 Home Page:
+Date:		2019-01-09
 Responsible:	fredette
 License:	BSD (4-clause)
 Location:	usr.sbin/ndbootd
@@ -955,11 +977,12 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.8p11
-Current Vers:	4.2.8p11
+Version:	4.2.8p12
+Current Vers:	4.2.8p12
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
+Date:		2019-01-09
 Mailing List:
 Responsible:	simonb, jonathan, kardel
 License:	BSD-like
@@ -971,8 +994,9 @@ Package:	nvi
 Version:	1.81.6, HEAD as of 2013-11-20
 Current Vers:	1.81.6
 Maintainer:	Sven Verdoolaege <skimo@kotnet.org>, Keith Bostic
-Archive Site:	git://repo.or.cz/nvi.git, ftp://ftp.bostic.com/pub/
+Archive Site:	git://repo.or.cz/nvi.git
 Home Page:	https://repo.or.cz/w/nvi.git http://www.bostic.com/vi/
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
 License:	BSD (3/4-clause)
@@ -982,12 +1006,13 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.45
-Current Vers:	2.4.45
+Current Vers:	2.4.47
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
+Date:		2019-01-09
 Mailing List:
-Responsible:	
+Responsible:
 License:	BSD (3-clause)
 Location:	external/bsd/openldap/dist
 Notes:
@@ -998,6 +1023,7 @@ Current Vers:	20170430 (Resedacea)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -1010,6 +1036,7 @@ Current Vers:	3.9.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/openresolv/
 Home Page:	http://roy.marples.name/projects/openresolv/
+Date:		2019-01-09
 Mailing List: 	openresolv-discuss@marples.name
 License:	BSD (2-clause)
 Location:	external/bsd/openresolv/dist
@@ -1020,21 +1047,23 @@ Package:	HPN-SSH
 Version:	6.1p1 13 v14
 Current Vers:	6.3p1 v14
 Maintainer:	www.psc.edu
-Archive Site:	No direct link anymore, @#$#$ psc.
+Archive Site:
 Home Page:	http://www.psc.edu/index.php/hpn-ssh
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
-License:	
+License:
 Location:	crypto/external/bsd/openssh/dist
 Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	7.7
-Current Vers:	7.7 / portable 7.7p1
+Version:	8.0
+Current Vers:	8.0 / portable 8.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
+Date:		2019-04-20
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
@@ -1069,13 +1098,15 @@ markus is very cooperative about it):
 - add all missing functions
 - always bump major when importing to avoid api problems.
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
+- adjust the DEFAULT_PKCS11_WHITELIST for ssh-agent
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.0h
-Current Vers:	1.0.2k/1.1.0h
+Version:	1.0.2o/1.1.1c
+Current Vers:	1.0.2r/1.1.1c
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
+Date:		2019-06-09
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	OpenSSL and SSLeay license (both BSD-like)
@@ -1088,11 +1119,12 @@ Notes:
   to regen assembly files
 
 Package:	pcc
-Version:	1.1.0.DEVEL 20120325
-Current Vers:	1.1.0.DEVEL 20120325
+Version:	1.1.0.DEVEL 20160208
+Current Vers:	1.1.0 20141210
 Maintainer:	Anders Magnusson <ragge@NetBSD.org>
 Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
 Home Page:	http://pcc.ludd.ltu.se/
+Date:		2019-01-09
 Mailing List:	pcc-list@ludd.ltu.se
 Responsible:	plunky
 License:	BSD
@@ -1108,6 +1140,7 @@ Current Vers:	0.8a2
 Maintainer:	Eryk Vershen <eryk@cfcl.com>
 Archive Site:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
 Home Page:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
+Date:		2019-01-09
 Mailing List:
 Responsible:	dbj
 License:	BSD-like
@@ -1120,8 +1153,9 @@ Package:	pdksh
 Version:	5.2.14p2
 Current Vers:	5.2.14p2
 Maintainer:	Michael Rendell <michael@cs.mun.ca>
-Archive Site:	ftp://ftp.cs.mun.ca/pub/pdksh/
-Home Page:	http://www.cs.mun.ca/~michael/pdksh/
+Archive Site:
+Home Page:
+Date:		2019-01-09
 Mailing List:
 Responsible:	jdolecek
 License:	Public domain
@@ -1131,10 +1165,11 @@ pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 4.2
-Current Vers:	OpenBSD 6.1-current
+Current Vers:	OpenBSD 6.3-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
+Date:		2019-01-09
 Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
 Responsible:	peter, yamt
 License:	BSD (2-clause)
@@ -1145,10 +1180,11 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20170419
-Current Vers:	20170419
+Version:	20190405
+Current Vers:	20190405
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
+Date:		2019-01-09
 Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
@@ -1160,8 +1196,9 @@ Package:	ping
 Version:	980911
 Current Vers:	980911
 Maintainer:	Mike Muuss
-Archive Site:	
+Archive Site:
 Home Page:	http://ftp.arl.mil/mike/ping.html
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -1174,9 +1211,9 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.1.4
-Current Vers:	3.1.6/3.2.6/3.3.1
+Current Vers:	3.1.9/3.2.6/3.3.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
-Archive Site:	ftp://postfix.cloud9.net/official/
+Archive Site:
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
@@ -1192,7 +1229,7 @@ Package:	ppp
 Version:	2.4.7
 Current Vers:	2.4.7
 Maintainer:	Paul Mackerras <paulus@samba.org>
-Archive Site:	ftp://ftp.samba.org/pub/ppp/
+Archive Site:
 Home Page:
 GIT root:	git://ozlabs.org/~paulus/ppp.git
 Mailing List:
@@ -1210,25 +1247,13 @@ as an example.
 TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
 using the version found in 2.4.1.
 
-Package:	rcs
-Version:	5.7 (Last GPLv2+ version)
-Current Vers:	5.9.4
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
-Mailing List:	bug-gnu-utils@gnu.org
-Home Page:	http://www.gnu.org/software/rcs/
-Responsible:	agc
-License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
-Location:	external/gpl2/rcs
-Notes:
-Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
-
 Package:	root.cache
-Version:	2016102001 (October 20, 2016)
-Current Vers:	2016102001 (October 20, 2016)
+Version:	2018111402 (November 14, 2018)
+Current Vers:	2018111402 (November 14, 2018)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
+Date:		2019-01-09
 Mailing List:
 Responsible:	thorpej
 License:	Public domain
@@ -1241,8 +1266,9 @@ Package:	routed
 Version:	2.32
 Current Vers:	2.32
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
-Archive Site:	ftp://ftp.rhyolite.com/src/
-Home Page:	http://www.rhyolite.com/src/
+Archive Site:
+Home Page:
+Date:		2019-01-09
 Mailing List:
 Responsible:	christos
 License:	BSD (4-clause)
@@ -1270,7 +1296,7 @@ to be installed and many more changes. It is not worth the hassle.
 
 Package:	SoftFloat
 Version:	2a
-Current Vers:	3c
+Current Vers:	3e
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/SoftFloat.html
@@ -1284,8 +1310,8 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	sqlite
-Version:	3.17.0
-Current Vers:	3.24
+Version:	3.26.0
+Current Vers:	3.26.0 (2018-12-01)
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1294,23 +1320,10 @@ Location:	external/public-domain/sqlite/dist
 Notes:
 Run cleantags before importing because sqlite3.c has an RCSID
 
-Package:	tcpdump
-Version:	4.9.2
-Current Vers:	4.9.2
-Maintainer:	tcpdump-workers@lists.tcpdump.org
-Archive Site:	http://www.tcpdump.org/release/
-Home Page:	http://www.tcpdump.org/
-Mailing List:	tcpdump-workers@lists.tcpdump.org
-Responsible:	
-License:	BSD (3-clause)
-Location:	external/bsd/tcpdump/dist
-Notes:
-Use the src/external/bsd/tcpdump/tcpdump2netbsd script to prepare source
-tree.
 
 Package:	TestFloat
 Version:	2a
-Current Vers:	3c
+Current Vers:	3e
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/TestFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/TestFloat.html
@@ -1320,35 +1333,8 @@ License:	BSD (4-clause)
 Location:	regress/lib/libc/ieeefp/testfloat
 Notes:
 
-Package:	texinfo
-Version:	4.8a (Last GPLv2+ version)
-Current Vers:	6.1
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
-Home Page:	http://www.gnu.org/software/texinfo/
-Mailing List:	bug-texinfo@gnu.org
-Responsible:	
-License:	GPLv2+ (4.8a), GPLv3+ (4.9 and later)
-Location:	external/gpl2/texinfo
-Notes:
-Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
-for the import.
 
-Package:	autoconf 
-Version:	2.69
-Current Vers:	2.69
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
-Home Page:	http://www.gnu.org/software/autoconf/
-Mailing List:	bug-autoconf@gnu.org
-Responsible:	christos
-License:	GPLv3+
-Location:	external/gpl3/autoconf
-Notes:
-This is only used to re-generate the configure files in tools/compat.
-It is not part of the regular build.
-
-Package:	malloc 
+Package:	malloc
 Version:	1995-01-15
 Current Vers:	1995-01-15
 Maintainer:	FSF
@@ -1372,8 +1358,8 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	2.6
-Current Vers:	2.6
+Version:	2.8
+Current Vers:	2.8
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
@@ -1411,8 +1397,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2018e / tzdata2018e
-Current Vers:	tzcode2018e / tzdata2018e
+Version:	tzcode2019a / tzdata2019a
+Current Vers:	tzcode2019a / tzdata2019a
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1430,8 +1416,8 @@ is too much inertia to apply them. Check for .gitignore files.
 For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
-Version:	2.6
-Current Vers:	2.6
+Version:	2.7
+Current Vers:	2.7
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
@@ -1457,8 +1443,8 @@ Imported to src/common/dist/zlib and shared by the kernel and userland.
 Remember to run cleantags
 
 Package:	services, protocols
-Version:	2013-02-21 (services), 2013-02-17 (protocols)
-Current Vers:	2013-11-27 (services), 2013-11-12 (protocols)
+Version:	2018-12-19 (services), 2017-10-13 (protocols)
+Current Vers:	2018-12-19 (services), 2017-10-13 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
@@ -1480,10 +1466,12 @@ Notes:
    - protocol 84 is defined for as ttp and iptm, merge the two entries since
      libc getprotoent() does not read the whole file and merge in the "files"
      implementation.
+   - add alias carp to vrrp
+   - put back 240 (pfsync), splitting the unassigned entries
 
 Package:	pigz
 Version:	2.3.1
-Current Vers:	2.3.1
+Current Vers:	2.4
 Maintainer:	Mark Adler <madler@alumni.caltech.edu>
 Archive Site:	http://zlib.net/pigz/
 Home Page:	http://zlib.net/pigz/
@@ -1494,8 +1482,8 @@ Location:	external/zlib/pigz/dist
 Notes:
 
 Package:	xz
-Version:	5.2.1
-Current Vers:	5.2.1
+Version:	5.2.4
+Current Vers:	5.2.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
@@ -1504,13 +1492,14 @@ License:	public-domain
 Location:	external/public-domain/xz/dist
 Notes:
 1. See prepare-import script for stripping down the distribution.
-2. Update configure.ac and use it to generate include/config.h.
-3. Carefully check for GPL components leaked into the dist area.
+2. Use run-configure and double check that the stripped down configure works
+   for tools.
+3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.0.3
-Current Vers:	1.0.3
-Maintainer:	
+Version:	1.1.0
+Current Vers:	1.1.0
+Maintainer:
 Archive Site:	http://www.multiprecision.org/mpc/download/
 Home Page:	http://www.multiprecision.org/mpc/
 Mailing List:	http://www.multiprecision.org/index.php?prog=mpc&page=development
@@ -1520,9 +1509,9 @@ Location:	external/lgpl3/mpc/dist
 Notes:
 
 Package:	mpfr
-Version:	3.1.5
-Current Vers:	3.1.5
-Maintainer:	
+Version:	4.0.1
+Current Vers:	4.0.1
+Maintainer:
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
 Mailing List:	http://websympa.loria.fr/wwsympa/arc/mpfr-announce
@@ -1556,8 +1545,8 @@ Location:	external/cddl/osnet
 Notes:
 
 Package:	sljit
-Version:	svn revision 313
-Current Vers:	svn revision 381
+Version:	0.93 (svn revision 333)
+Current Vers:	0.93
 Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
 Archive Site:	http://sourceforge.net/projects/sljit/
 Home Page:	http://sljit.sourceforge.net/
@@ -1582,8 +1571,8 @@ Notes:
 		Need to feed back local changes
 
 Package:	TrouSerS
-Version:	0.3.8
-Current Vers:	0.3.8
+Version:	0.3.14
+Current Vers:	0.3.14
 Maintainer:	http://trousers.sourceforge.net
 Archive Site:	http://trousers.sourceforge.net
 Home Page:	http://trousers.sourceforge.net
@@ -1595,8 +1584,8 @@ Notes:
 		Need to feed back local changes
 
 Package:	tpm-tools
-Version:	1.3.7.1
-Current Vers:	1.3.7.1
+Version:	1.3.9.1
+Current Vers:	1.3.9.1
 Maintainer:	http://trousers.sourceforge.net
 Archive Site:	http://trousers.sourceforge.net
 Home Page:	http://trousers.sourceforge.net
@@ -1609,10 +1598,10 @@ Notes:
 
 Package:	elftoolchain (libelf/libdwarf)
 Version:	FreeBSD-2016-02-19-r295822
-Current Vers:	FreeBSD-XXXX-YY-ZZ
+Current Vers:	0.7.1
 Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
 Archive Site:	none
-Home Page:	none
+Home Page:	http://elftoolchain.sourceforge.net
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
@@ -1622,12 +1611,10 @@ Notes:
 
 Package:	smbfs
 Version:	smbfs-1.4.1.tar.gz + FreeBSD-2003-02-16
-Current Vers:	FreeBSD-XXXX-YY-ZZ
+Current Vers:	smbfs-1.4.5.tar.gz
 Maintainer:	Boris Popov <bp@FreeBSD.org>
-Archive Site:	none
-Home Page:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
-Mailing List:	?
-Responsible:	christos
+Archive Site:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
+Home Page:	http://people.freebsd.org/~bp/pub/smbfs/
 License:	BSD-like (4-clause)
 Location:	external/bsd/smbfs
 Notes:
@@ -1636,11 +1623,11 @@ Notes:
 		external, but this is just make-work.
 
 Package:	timeout
-Version:	FreeBSD-2014-08-01
-Current Vers:	FreeBSD-XXXX-YY-ZZ
+Version:	FreeBSD-2014-07-16 r268763
+Current Vers:	FreeBSD-2016-05-01 r331720
 Maintainer:	Baptiste Daroussin <bapt@FreeBSD.org>
 Archive Site:	none
-Home Page:	none
+Home Page:	https://svnweb.freebsd.org/base/head/usr.bin/timeout/
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
@@ -1648,10 +1635,10 @@ Location:	usr.bin/timeout
 
 Package:        libproc
 Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-XXXX-YY-ZZ
+Current Vers:   FreeBSD-2018-07-27 r336782
 Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
 Archive Site:   none
-Home Page:      none
+Home Page:      https://svnweb.freebsd.org/base/head/lib/libproc/
 Mailing List:   none
 Responsible:    christos
 License:        BSD-like (2-clause)
@@ -1659,10 +1646,10 @@ Location:       external/bsd/libproc/dist
 
 Package:        librtld_db
 Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-XXXX-YY-ZZ
+Current Vers:   FreeBSD-2017-11-26 r326219
 Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
 Archive Site:   none
-Home Page:      none
+Home Page:      https://svnweb.freebsd.org/base/head/lib/librtld_db/
 Mailing List:   none
 Responsible:    christos
 License:        BSD-like (2-clause)
@@ -1670,9 +1657,9 @@ Location:       external/bsd/librtld_db/dist
 
 Package:        netcat
 Version:        OpenBSD-2017-02-06
-Current Vers:   OpenBSD-XXXX-YY-ZZ
+Current Vers:   OpenBSD-2018-08-10
 Maintainer:     OpenBSD
-Archive Site:   none
+Archive Site:   http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/nc/
 Home Page:      none
 Mailing List:   none
 Responsible:    christos
@@ -1680,8 +1667,8 @@ License:        BSD-like (3-clause)
 Location:       usr.bin/nc
 
 Package:	gnu-efi
-Version:	3.0u
-Current Vers:	3.0.6
+Version:	3.0.8
+Current Vers:	3.0.8
 Maintainer:	https://sourceforge.net/projects/gnu-efi/
 Archive Site:	https://sourceforge.net/projects/gnu-efi/
 Home Page:	https://sourceforge.net/projects/gnu-efi/
@@ -1692,11 +1679,11 @@ Location:	sys/external/bsd/gnu-efi
 
 Package:	dc
 Version:	20170410
-Current Vers:	20170410
+Current Vers:	20171217
 Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/dc
 Home Page:	http://www.openbsd.org/
-Mailing List:	
+Mailing List:
 License:	BSD
 Responsible:	christos
 Location:	usr.bin/dc
@@ -1705,7 +1692,7 @@ Notes:
 
 Package:	dtc,libfdt
 Version:	1.4.4
-Current Vers:	1.4.5
+Current Vers:	1.4.7
 Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
 Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
@@ -1717,8 +1704,8 @@ Notes:
 external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
-Version:	4.18-rc2
-Current Vers:	4.18-rc2
+Version:	5.1.4
+Current Vers:	5.1.4
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/
@@ -1740,254 +1727,254 @@ Location:	external/bsd/iscsi
 Notes:
 
 Package:	rpi-firmware
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Broadcom, Raspberry Pi (Trading) Ltd
-Responsible:	
+Responsible:
 Location:	external/broadcom/rpi-firmware
 Notes:
 
 Package:	rtwn
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Realtek Semiconductor Corporation
-Responsible:	
+Responsible:
 Location:	external/realtek/rtwn
 Notes:
 
 Package:	urtwn
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Realtek Semiconductor Corporation
-Responsible:	
+Responsible:
 Location:	external/realtek/urtwn/
 Notes:
 
 Package:	repulse
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	ALiENDESiGN GbR
-Responsible:	
+Responsible:
 Location:	sys/arch/amiga/dev/repulse_firmware.h
 Notes:
 
 Package:	cxgb
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Chelsio Inc.
-Responsible:	
+Responsible:
 Location:	sys/dev/pci/cxgb/cxgb_firmware_exports.h
 Notes:
 
 Package:	athn
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Atheros Communicatios, Inc.
-Responsible:	
+Responsible:
 Location:	external/atheros/athn
 Notes:
 
 Package:	otus
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Atheros Communicatios, Inc.
-Responsible:	
+Responsible:
 Location:	external/atheros/otus
 Notes:
 
 Package:	intel-fw-eula
-Version:	
-Current Vers:	
-Maintainer:	
-Archive Site:
-Home Page:
-Mailing List:
-License:	Intel Corporation
-Responsible:	
-Location:	external/intel-fw-eula
-Notes:
-
-Package:	intel-fw-public
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Intel Corporation
-Responsible:	
+Responsible:
+Location:	external/intel-fw-eula
+Notes:
+
+Package:	intel-fw-public
+Version:
+Current Vers:
+Maintainer:
+Archive Site:
+Home Page:
+Mailing List:
+License:	Intel Corporation
+Responsible:
 Location:	external/intel-fw-public
 Notes:
 
 Package:	aic7xxx
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Justin T. Gibbs
 Archive Site:
 Home Page:
 Mailing List:
 License:	Adaptec Inc or LGPL2
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/aic7xxx
 Notes:
 
 Package:	atmel
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Atmel Corporation
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/atmel
 Notes:
 
 Package:	bge
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Broadcom Corporation
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/bge
 Notes:
 
 Package:	bnx
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	David Christensen <davidch@broadcom.com>
 Archive Site:
 Home Page:
 Mailing List:
 License:	Broadcom Corporation
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/bnx
 Notes:
 
 Package:	cylades-z
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Cyclades Corp
 Archive Site:
 Home Page:
 Mailing List:
 License:	unknown
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/cyclades-z
 Notes:
 
 Package:	i8255x
 Version:	3.28
-Current Vers:	
+Current Vers:
 Maintainer:	Patrick J Luhmann (PJL)
 Archive Site:
 Home Page:
 Mailing List:
 License:	Intel Corporation
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/i8255x
 Notes:
 
 Package:	isp
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	QLogic, Inc.
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/isp
 Notes:
 
 Package:	radeon
-Version:	
-Current Vers:	
-Maintainer:	
+Version:
+Current Vers:
+Maintainer:
 Archive Site:
 Home Page:
 Mailing List:
 License:	Advanced Micro Devices, Inc.
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/radeon
 Notes:
 
 Package:	ral
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:
 Archive Site:	http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git
 Home Page:
 Mailing List:
 License:	Ralink Technology Corp
-Responsible:	
+Responsible:
 Location:	external/realtek/ral
 Notes:
 
 Package:	rum
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Paul Lin <paul_lin@ralinktech.com.tw>
 Archive Site:
 Home Page:
 Mailing List:
 License:	Ralink Technology Corp
-Responsible:	
+Responsible:
 Location:	external/realtek/rum
 Notes:
 
 Package:	run
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Paul Lin <paul_lin@ralinktech.com.tw>
 Archive Site:
 Home Page:
 Mailing List:
 License:	Ralink Technology Corp
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/run
 Notes:
 
 Package:	siop
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Manuel Bouyer, Shuichiro URATA, Michael L. Hitch
 Archive Site:
 Home Page:
 Mailing List:
 License:	BSD-like (2-clause, 3-clause)
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/siop
 Notes:
 
@@ -1999,57 +1986,189 @@ Archive Site:   https://people.freebsd.org/~wpaul/Alteon/
 Home Page:	http://www.alteon.com/support/openkits (extinct)
 Mailing List:
 License:	Alteon WebSystems, Inc.
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/tigon
 Notes:
 See https://lists.debian.org/debian-legal/2011/10/msg00001.html
 
 
 Package:	typhoon
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	3Com Corporation
 Archive Site:
 Home Page:
 Mailing List:
 License:	BSD-like (3-clause)
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/typhoon
 Notes:
 
 Package:	wi
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Symbol Technologies Inc.
 Archive Site:
 Home Page:	http://www.symbol.com
 Mailing List:
 License:	BSD-like (3-clause)
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/wi
 Notes:
 
 Package:	yds
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Yamaha Corporation
 Archive Site:
 Home Page:
 Mailing List:
 License:	unknown
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/yds
 Notes:
 
 Package:	zyd
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	ZyDAS Technology Corporation
 Archive Site:
 Home Page:
 Mailing List:
 License:	BSD-like (3-clause)
-Responsible:	
+Responsible:
 Location:	sys/dev/microcode/zyd
 Notes:
 
+Package:	libnv
+Version:	20180906
+Current Vers:	$(date)
+Maintainer:	christos
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (2-clause)
+Responsible:
+Location:	sys/external/bsd/libnv/dist
+Notes:
+To be used only for npf (library and headers are private)
+Copied from FreeBSD:
+/usr/src/sys/sys/{d,c,}nv.h
+/usr/src/lib/libnv/
+/usr/src/contrib/lib/libnv/
+/usr/src/share/man/man9/{d,c,}nv.9
+
+Package:	gettext
+Version:	0.16.1 (Last GPLv2+ version)
+Current Vers:	0.19.8
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
+Home Page:	http://www.gnu.org/software/gettext/
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	christos
+License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
+Location:	external/gpl2/gettext
+Notes:
+GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
+we use BSD-licensed implementation from Citrus project (see entry for
+"Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
+
+Package:	grep
+Version:	2.5.1a (last GPLv2+ version)
+Current Vers:	3.1
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/grep/
+Home Page:	http://www.gnu.org/software/grep/
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	simonb
+License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
+Location:	external/gpl2/grep
+Notes:
+Use external/gpl2/grep/grep2netbsd for preparing the source tree
+for the import.
+On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
+see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
+was imported into src/usr.bin/grep;
+on 16 Feb 2011, the BSD grep implementation from FreeBSD was imported
+in src/usr.bin/grep, replacing FreeGrep
+(http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
+
+Package:	groff
+Version:	1.19.2 (last GPLv2+ version)
+Current Vers:	1.22.4
+Maintainer:	Werner Lemberg/FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/groff/
+Home Page:	http://www.gnu.org/software/groff/
+Mailing List:	bug-groff@gnu.org
+Responsible:
+License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
+Location:	external/gpl2/groff
+Notes:
+Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
+distribution for import.
+Update MDATE in src/external/gpl2/groff/Makefile.inc.
+Package:	gmake
+Version:	3.81 (Last GPlv2+ version)
+Current Vers:	4.2
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/make/
+Home Page:	http://www.gnu.org/software/make/
+Mailing List:	bug-make@gnu.org
+Responsible:
+License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
+Location:	external/gpl2/gmake
+Notes:
+
+Package:	diffutils
+Version:	2.8.1 (Last GPLv2+ version)
+Current Vers:	3.6
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
+Home Page:	http://www.gnu.org/software/diffutils/
+Mailing List:	bug-diffutils@gnu.org
+Responsible:
+License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
+Location:	external/gpl2/diffutils
+Notes:
+Use external/gpl2/diffutils/diffutils2netbsd for preparing the source tree
+for the import.
+
+Package:	rcs
+Version:	5.7 (Last GPLv2+ version)
+Current Vers:	5.9.4
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
+Mailing List:	bug-gnu-utils@gnu.org
+Home Page:	http://www.gnu.org/software/rcs/
+Responsible:	agc
+License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
+Location:	external/gpl2/rcs
+Notes:
+Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
+
+Package:	texinfo
+Version:	4.8a (Last GPLv2+ version)
+Current Vers:	6.5
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
+Home Page:	http://www.gnu.org/software/texinfo/
+Mailing List:	bug-texinfo@gnu.org
+Responsible:
+License:	GPLv2+ (4.8a), GPLv3+ (4.9 and later)
+Location:	external/gpl2/texinfo
+Notes:
+Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
+for the import.
+
+Package:	indent
+Version:	FreeBSD-2018-11-04 r340138
+Current Vers:	FreeBSD-2018-11-04 r340138
+Maintainer:	The FreeBSD Project
+Archive Site:	none
+Home Page:	https://svnweb.freebsd.org/base/head/usr.bin/indent/
+Mailing List:	none
+Responsible:
+License:	BSD-like (4-clause)
+Location:	usr.bin/indent
+Notes:
+Tests are stored in tests/usr.bin/indent.

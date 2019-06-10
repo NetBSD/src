@@ -32,7 +32,7 @@ target triple = "x86_64-pc-windows-msvc18.0.0"
 ; Function Attrs: nounwind uwtable
 define void @"\01?constant_var@@YAXXZ"() #0 !dbg !4 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !8, metadata !14), !dbg !15
+  tail call void @llvm.dbg.value(metadata i32 42, metadata !8, metadata !14), !dbg !15
   tail call void @"\01?useint@@YAXH@Z"(i32 42) #3, !dbg !16
   tail call void @"\01?useint@@YAXH@Z"(i32 42) #3, !dbg !17
   ret void, !dbg !18
@@ -41,7 +41,7 @@ entry:
 declare void @"\01?useint@@YAXH@Z"(i32) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -55,7 +55,7 @@ attributes #3 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "clang version 3.9.0 (trunk 260957)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
 !1 = !DIFile(filename: "t.cpp", directory: "D:\5Csrc\5Cllvm\5Cbuild")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "constant_var", linkageName: "\01?constant_var@@YAXXZ", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !7)
+!4 = distinct !DISubprogram(name: "constant_var", linkageName: "\01?constant_var@@YAXXZ", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !7)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{!8}

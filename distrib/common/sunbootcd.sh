@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: sunbootcd.sh,v 1.6 2012/02/22 16:12:34 martin Exp $
+# $NetBSD: sunbootcd.sh,v 1.6.34.1 2019/06/10 21:42:19 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,11 +59,13 @@ _USAGE_
 	exit 1
 }
 
-if [ $# -lt 2 -o $# -gt 6 ]; then
-	usage
-fi
+case "$#" in
+([23456])	;;
+(*)		usage;;
+esac
 
-for curfile in $*; do
+for curfile
+do
 	[ "$curfile" = "-" ] && continue
 	if [ ! -f "$curfile" ]; then
 		echo 1>&2 "${PROGNAME}: ${curfile}: No such file."
@@ -81,7 +83,8 @@ printf "${FORMAT}" "fsimage:" 0 ${ISOCYLS} "${ISOIMAGE}"
 
 ENDCYL=${ISOCYLS}
 curpart=0
-for curfile in $*; do
+for curfile
+do
 	curpart=$(( ${curpart} + 1 ))
 	[ "$curfile" = "-" ] && continue
 

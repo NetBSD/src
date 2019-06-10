@@ -1,9 +1,10 @@
-; RUN: echo '!10 = !{!"%/T/aaa.gcno", !"%/T/bbb.gcda", !0}' > %t1
-; RUN: cat %s %t1 > %t2
-; RUN: opt -insert-gcov-profiling -S -o %t3 < %t2
-; RUN: grep _Z3foov %T/aaa.gcno
-; RUN: grep bbb.gcda %t3
-; RUN: rm %T/aaa.gcno
+; RUN: rm -rf %t && mkdir -p %t
+; RUN: echo '!10 = !{!"%/t/aaa.gcno", !"%/t/bbb.gcda", !0}' > %t/1
+; RUN: cat %s %t/1 > %t/2
+; RUN: opt -insert-gcov-profiling -S -o %t/3 < %t/2
+; RUN: grep _Z3foov %t/aaa.gcno
+; RUN: grep bbb.gcda %t/3
+; RUN: rm %t/aaa.gcno
 
 define void @_Z3foov() !dbg !5 {
 entry:
@@ -18,7 +19,7 @@ entry:
 !1 = !DIFile(filename: "hello.cc", directory: "/home/nlewycky")
 !2 = !DIFile(filename: "hello.cc", directory: "/home/nlewycky")
 !3 = !{}
-!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 1, file: !1, scope: !1, type: !6, variables: !3)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 1, file: !1, scope: !1, type: !6, retainedNodes: !3)
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !DILocation(line: 1, scope: !5)

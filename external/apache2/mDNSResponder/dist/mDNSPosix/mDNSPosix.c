@@ -977,7 +977,9 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
     assert(m != NULL);
     debugf("SetupInterfaceList");
 
+#if 0
     if (intfList == NULL) err = ENOENT;
+#endif
 
 #if HAVE_IPV6
     if (err == 0)       /* Link the IPv6 list to the end of the IPv4 list */

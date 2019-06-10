@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.59 2018/04/07 22:39:53 christos Exp $
+#	$NetBSD: Makefile,v 1.59.2.1 2019/06/10 21:42:47 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	acpica am-utils bc bind byacc cron dhcpcd ekermit elftosb \
-	fetch file flex less \
+SUBDIR=	acpica am-utils bc byacc cron dhcpcd ekermit elftosb \
+	fetch file flex jemalloc less \
 	libarchive libevent liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre wpa
 
@@ -27,7 +27,7 @@ SUBDIR+= openldap
 .if (${MKLIBCXX} != "no")
 SUBDIR+= libc++
 .endif
-.if (${MKLLVM} != "no")
+.if (${MKLLVM} != "no" || ${MKLLVMRT} != "no")
 SUBDIR+= llvm
 .endif
 .if (${MKNSD} != "no")
@@ -44,6 +44,6 @@ SUBDIR+= librtld_db
 SUBDIR+= unbound
 .endif
 
-SUBDIR+= blacklist pdisk nvi ppp smbfs
+SUBDIR+= blacklist pdisk nvi ppp smbfs libnv
 
 .include <bsd.subdir.mk>

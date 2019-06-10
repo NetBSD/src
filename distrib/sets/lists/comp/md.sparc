@@ -1,11 +1,13 @@
-# $NetBSD: md.sparc,v 1.93 2018/03/29 13:23:39 joerg Exp $
+# $NetBSD: md.sparc,v 1.93.2.1 2019/06/10 21:42:29 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-4.8/visintrin.h		comp-c-include		obsolete
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-5/visintrin.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/visintrin.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-4.8/visintrin.h		comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/visintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-6/visintrin.h			comp-c-include		gcc=6
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
+./usr/include/gcc-7/visintrin.h			comp-c-include		gcc=7
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -53,7 +55,7 @@
 ./usr/include/sparc/param.h			comp-c-include
 ./usr/include/sparc/pcb.h			comp-c-include
 ./usr/include/sparc/pmap.h			comp-c-include
-./usr/include/sparc/pmc.h			comp-c-include
+./usr/include/sparc/pmc.h			comp-obsolete		obsolete
 ./usr/include/sparc/proc.h			comp-c-include
 ./usr/include/sparc/profile.h			comp-c-include
 ./usr/include/sparc/psl.h			comp-c-include
@@ -126,7 +128,7 @@
 ./usr/include/sparc64/param.h			comp-c-include
 ./usr/include/sparc64/pcb.h			comp-c-include
 ./usr/include/sparc64/pmap.h			comp-c-include
-./usr/include/sparc64/pmc.h			comp-c-include
+./usr/include/sparc64/pmc.h			comp-obsolete		obsolete
 ./usr/include/sparc64/proc.h			comp-c-include
 ./usr/include/sparc64/profile.h			comp-c-include
 ./usr/include/sparc64/psl.h			comp-c-include
@@ -141,7 +143,7 @@
 ./usr/include/sparc64/sljit_machdep.h		comp-c-include
 ./usr/include/sparc64/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
-./usr/include/sparc64/svr4_machdep.h		comp-c-include
+./usr/include/sparc64/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/sparc64/trap.h			comp-c-include
 ./usr/include/sparc64/types.h			comp-c-include
 ./usr/include/sparc64/varargs.h			comp-obsolete		obsolete

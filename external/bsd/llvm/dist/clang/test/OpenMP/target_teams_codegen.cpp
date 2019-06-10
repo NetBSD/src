@@ -1,28 +1,46 @@
 // Test host codegen.
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - | FileCheck %s --check-prefix CHECK --check-prefix CHECK-64
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix CHECK --check-prefix CHECK-64
 // RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CHECK --check-prefix CHECK-64
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -o - | FileCheck %s --check-prefix CHECK --check-prefix CHECK-32
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix CHECK --check-prefix CHECK-64
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix CHECK --check-prefix CHECK-32
 // RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix CHECK --check-prefix CHECK-32
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix CHECK --check-prefix CHECK-32
+
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY0 %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -std=c++11 -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY0 %s
+// SIMD-ONLY0-NOT: {{__kmpc|__tgt}}
 
 // Test target codegen - host bc file has to be created first.
 // RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -o - | FileCheck %s --check-prefix TCHECK --check-prefix TCHECK-64
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix TCHECK --check-prefix TCHECK-64
 // RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-pch -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -o %t %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix TCHECK --check-prefix TCHECK-64
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix TCHECK --check-prefix TCHECK-64
 // RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm-bc %s -o %t-x86-host.bc
-// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -o - | FileCheck %s --check-prefix TCHECK --check-prefix TCHECK-32
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix TCHECK --check-prefix TCHECK-32
 // RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-pch -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -o %t %s
-// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s --check-prefix TCHECK --check-prefix TCHECK-32
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  %s --check-prefix TCHECK --check-prefix TCHECK-32
+
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm-bc %s -o %t-ppc-host.bc
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY1 %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -std=c++11 -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -emit-pch -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -o %t %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -triple powerpc64le-unknown-unknown -fopenmp-targets=powerpc64le-ibm-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-ppc-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY1 %s
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm-bc %s -o %t-x86-host.bc
+// RUN: %clang_cc1 -verify -fopenmp-simd -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-llvm %s -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY1 %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -std=c++11 -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -emit-pch -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -o %t %s
+// RUN: %clang_cc1 -fopenmp-simd -fopenmp-version=45 -x c++ -triple i386-unknown-unknown -fopenmp-targets=i386-pc-linux-gnu -std=c++11 -fopenmp-is-device -fopenmp-host-ir-file-path %t-x86-host.bc -include-pch %t -verify %s -emit-llvm -o - | FileCheck -allow-deprecated-dag-overlap  --check-prefix SIMD-ONLY1 %s
+// SIMD-ONLY1-NOT: {{__kmpc|__tgt}}
 
 // expected-no-diagnostics
 #ifndef HEADER
 #define HEADER
 
-// CHECK-DAG: %ident_t = type { i32, i32, i32, i32, i8* }
+// CHECK-DAG: %struct.ident_t = type { i32, i32, i32, i32, i8* }
 // CHECK-DAG: [[STR:@.+]] = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
-// CHECK-DAG: [[DEF_LOC:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
+// CHECK-DAG: [[DEF_LOC:@.+]] = private unnamed_addr constant %struct.ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
 
 // CHECK-DAG: [[TT:%.+]] = type { i64, i8 }
 // CHECK-DAG: [[S1:%.+]] = type { double }
@@ -38,32 +56,34 @@
 // code, only 6 will have mapped arguments, and only 4 have all-constant map
 // sizes.
 
-// CHECK-DAG: [[SIZET2:@.+]] = private unnamed_addr constant [1 x i{{32|64}}] [i[[SZ:32|64]] 2]
-// CHECK-DAG: [[MAPT2:@.+]] = private unnamed_addr constant [1 x i32] [i32 288]
+// CHECK-DAG: [[SIZET:@.+]] = private unnamed_addr constant [3 x i[[SZ]]] [i[[SZ]] 2, i[[SZ]] 4, i[[SZ]] 4]
+// CHECK-DAG: [[MAPT:@.+]] = private unnamed_addr constant [3 x i64] [i64 288, i64 288, i64 288]
+// CHECK-DAG: [[SIZET2:@.+]] = private unnamed_addr constant [1 x i[[SZ]]] [i[[SZ]] 2]
+// CHECK-DAG: [[MAPT2:@.+]] = private unnamed_addr constant [1 x i64] [i64 288]
 // CHECK-DAG: [[SIZET3:@.+]] = private unnamed_addr constant [2 x i[[SZ]]] [i[[SZ]] 4, i[[SZ]] 2]
-// CHECK-DAG: [[MAPT3:@.+]] = private unnamed_addr constant [2 x i32] [i32 288, i32 288]
-// CHECK-DAG: [[MAPT4:@.+]] = private unnamed_addr constant [9 x i32] [i32 288, i32 35, i32 288, i32 35, i32 35, i32 288, i32 288, i32 35, i32 35]
+// CHECK-DAG: [[MAPT3:@.+]] = private unnamed_addr constant [2 x i64] [i64 288, i64 288]
+// CHECK-DAG: [[MAPT4:@.+]] = private unnamed_addr constant [9 x i64] [i64 288, i64 547, i64 288, i64 547, i64 547, i64 288, i64 288, i64 547, i64 547]
 // CHECK-DAG: [[SIZET5:@.+]] = private unnamed_addr constant [3 x i[[SZ]]] [i[[SZ]] 4, i[[SZ]] 2, i[[SZ]] 40]
-// CHECK-DAG: [[MAPT5:@.+]] = private unnamed_addr constant [3 x i32] [i32 288, i32 288, i32 35]
+// CHECK-DAG: [[MAPT5:@.+]] = private unnamed_addr constant [3 x i64] [i64 288, i64 288, i64 547]
 // CHECK-DAG: [[SIZET6:@.+]] = private unnamed_addr constant [4 x i[[SZ]]] [i[[SZ]] 4, i[[SZ]] 2, i[[SZ]] 1, i[[SZ]] 40]
-// CHECK-DAG: [[MAPT6:@.+]] = private unnamed_addr constant [4 x i32] [i32 288, i32 288, i32 288, i32 35]
-// CHECK-DAG: [[MAPT7:@.+]] = private unnamed_addr constant [5 x i32] [i32 35, i32 288, i32 288, i32 288, i32 35]
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
-// CHECK-DAG: @{{.*}} = private constant i8 0
+// CHECK-DAG: [[MAPT6:@.+]] = private unnamed_addr constant [4 x i64] [i64 288, i64 288, i64 288, i64 547]
+// CHECK-DAG: [[MAPT7:@.+]] = private unnamed_addr constant [5 x i64] [i64 547, i64 288, i64 288, i64 288, i64 547]
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
+// CHECK-DAG: @{{.*}} = weak constant i8 0
 
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK: @{{.+}} = constant [[ENTTY]]
-// TCHECK-NOT: @{{.+}} = constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK: @{{.+}} = weak constant [[ENTTY]]
+// TCHECK-NOT: @{{.+}} = weak constant [[ENTTY]]
 
 // Check if offloading descriptor is created.
 // CHECK: [[ENTBEGIN:@.+]] = external constant [[ENTTY]]
@@ -74,7 +94,7 @@
 // CHECK: [[DESC:@.+]] = internal constant [[DSCTY]] { i32 1, [[DEVTY]]* getelementptr inbounds ([1 x [[DEVTY]]], [1 x [[DEVTY]]]* [[IMAGES]], i32 0, i32 0), [[ENTTY]]* [[ENTBEGIN]], [[ENTTY]]* [[ENTEND]] }, comdat($[[REGFN]])
 
 // Check target registration is registered as a Ctor.
-// CHECK: appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* bitcast (void (i8*)* @[[REGFN]] to void ()*), i8* bitcast (void (i8*)* @[[REGFN]] to i8*) }]
+// CHECK: appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @[[REGFN]], i8* bitcast (void ()* @[[REGFN]] to i8*) }]
 
 
 template<typename tx, typename ty>
@@ -82,6 +102,8 @@ struct TT{
   tx X;
   ty Y;
 };
+
+int global;
 
 // CHECK: define {{.*}}[[FOO:@.+]](
 int foo(int n) {
@@ -93,30 +115,44 @@ int foo(int n) {
   double cn[5][n];
   TT<long long, char> d;
 
-  // CHECK:       [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 0, i8** null, i8** null, i[[SZ]]* null, i32* null, i32 0, i32 0)
-  // CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-  // CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams_nowait(i64 -1, i8* @{{[^,]+}}, i32 3, i8** [[BP:%[^,]+]], i8** [[P:%[^,]+]], i[[SZ]]* getelementptr inbounds ([3 x i[[SZ]]], [3 x i[[SZ]]]* [[SIZET]], i32 0, i32 0), i64* getelementptr inbounds ([3 x i64], [3 x i64]* [[MAPT]], i32 0, i32 0), i32 {{[^,]+}}, i32 {{[^)]+}})
+  // CHECK-DAG:   [[BP]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[BPR:%[^,]+]], i32 0, i32 0
+  // CHECK-DAG:   [[P]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[PR:%[^,]+]], i32 0, i32 0
+  // CHECK-DAG:   [[BPADDR0:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[BPR]], i32 0, i32 [[IDX0:[0-9]+]]
+  // CHECK-DAG:   [[PADDR0:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[PR]], i32 0, i32 [[IDX0]]
+  // CHECK-DAG:   [[CBPADDR0:%.+]] = bitcast i8** [[BPADDR0]] to i[[SZ]]*
+  // CHECK-DAG:   [[CPADDR0:%.+]] = bitcast i8** [[PADDR0]] to i[[SZ]]*
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CBPADDR0]]
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CPADDR0]]
+  // CHECK-DAG:   [[BPADDR1:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[BPR]], i32 0, i32 [[IDX1:[0-9]+]]
+  // CHECK-DAG:   [[PADDR1:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[PR]], i32 0, i32 [[IDX1]]
+  // CHECK-DAG:   [[CBPADDR1:%.+]] = bitcast i8** [[BPADDR1]] to i[[SZ]]*
+  // CHECK-DAG:   [[CPADDR1:%.+]] = bitcast i8** [[PADDR1]] to i[[SZ]]*
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CBPADDR1]]
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CPADDR1]]
+  // CHECK-DAG:   [[BPADDR2:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[BPR]], i32 0, i32 [[IDX1:[0-9]+]]
+  // CHECK-DAG:   [[PADDR2:%.+]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[PR]], i32 0, i32 [[IDX1]]
+  // CHECK-DAG:   [[CBPADDR2:%.+]] = bitcast i8** [[BPADDR2]] to i[[SZ]]*
+  // CHECK-DAG:   [[CPADDR2:%.+]] = bitcast i8** [[PADDR2]] to i[[SZ]]*
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CBPADDR2]]
+  // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CPADDR2]]
+  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
   // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:[^,]+]], label %[[END:[^,]+]]
   // CHECK:       [[FAIL]]
-  // CHECK:       call void [[HVT0:@.+]]()
+  // CHECK:       call void [[HVT0:@.+]](i[[SZ]] {{[^,]+}}, i[[SZ]] {{[^,]+}}, i[[SZ]] {{[^)]+}})
   // CHECK-NEXT:  br label %[[END]]
   // CHECK:       [[END]]
-  #pragma omp target teams
+  #pragma omp target teams num_teams(a) thread_limit(a) firstprivate(aa) nowait
   {
   }
 
-  // CHECK:       store i32 0, i32* [[RHV:%.+]], align 4
-  // CHECK:       store i32 -1, i32* [[RHV]], align 4
-  // CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
   // CHECK:       call void [[HVT1:@.+]](i[[SZ]] {{[^,]+}})
   #pragma omp target teams if(target: 0)
   {
     a += 1;
   }
 
-  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 1, i8** [[BP:%[^,]+]], i8** [[P:%[^,]+]], i[[SZ]]* getelementptr inbounds ([1 x i[[SZ]]], [1 x i[[SZ]]]* [[SIZET2]], i32 0, i32 0), i32* getelementptr inbounds ([1 x i32], [1 x i32]* [[MAPT2]], i32 0, i32 0), i32 0, i32 0)
+  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 1, i8** [[BP:%[^,]+]], i8** [[P:%[^,]+]], i[[SZ]]* getelementptr inbounds ([1 x i[[SZ]]], [1 x i[[SZ]]]* [[SIZET2]], i32 0, i32 0), i64* getelementptr inbounds ([1 x i64], [1 x i64]* [[MAPT2]], i32 0, i32 0), i32 0, i32 0)
   // CHECK-DAG:   [[BP]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[BPR:%[^,]+]], i32 0, i32 0
   // CHECK-DAG:   [[P]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[PR:%[^,]+]], i32 0, i32 0
   // CHECK-DAG:   [[BPADDR0:%.+]] = getelementptr inbounds [1 x i8*], [1 x i8*]* [[BPR]], i32 0, i32 [[IDX0:[0-9]+]]
@@ -126,9 +162,7 @@ int foo(int n) {
   // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CBPADDR0]]
   // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CPADDR0]]
 
-  // CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-  // CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
   // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:[^,]+]], label %[[END:[^,]+]]
   // CHECK:       [[FAIL]]
   // CHECK:       call void [[HVT2:@.+]](i[[SZ]] {{[^,]+}})
@@ -142,7 +176,7 @@ int foo(int n) {
   // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 10
   // CHECK:       br i1 [[IF]], label %[[IFTHEN:[^,]+]], label %[[IFELSE:[^,]+]]
   // CHECK:       [[IFTHEN]]
-  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 2, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([2 x i[[SZ]]], [2 x i[[SZ]]]* [[SIZET3]], i32 0, i32 0), i32* getelementptr inbounds ([2 x i32], [2 x i32]* [[MAPT3]], i32 0, i32 0), i32 0, i32 0)
+  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 2, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([2 x i[[SZ]]], [2 x i[[SZ]]]* [[SIZET3]], i32 0, i32 0), i64* getelementptr inbounds ([2 x i64], [2 x i64]* [[MAPT3]], i32 0, i32 0), i32 0, i32 0)
   // CHECK-DAG:   [[BPR]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[BP:%[^,]+]], i32 0, i32 0
   // CHECK-DAG:   [[PR]] = getelementptr inbounds [2 x i8*], [2 x i8*]* [[P:%[^,]+]], i32 0, i32 0
 
@@ -159,21 +193,17 @@ int foo(int n) {
   // CHECK-DAG:   [[CPADDR1:%.+]] = bitcast i8** [[PADDR1]] to i[[SZ]]*
   // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CBPADDR1]]
   // CHECK-DAG:   store i[[SZ]] %{{.+}}, i[[SZ]]* [[CPADDR1]]
-  // CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-  // CHECK-NEXT:  br label %[[IFEND:.+]]
-
-  // CHECK:       [[IFELSE]]
-  // CHECK:       store i32 -1, i32* [[RHV]], align 4
-  // CHECK-NEXT:  br label %[[IFEND:.+]]
-
-  // CHECK:       [[IFEND]]
-  // CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-  // CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+  // CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
   // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:.+]], label %[[END:[^,]+]]
   // CHECK:       [[FAIL]]
   // CHECK:       call void [[HVT3:@.+]]({{[^,]+}}, {{[^,]+}})
   // CHECK-NEXT:  br label %[[END]]
   // CHECK:       [[END]]
+  // CHECK-NEXT:  br label %[[IFEND:.+]]
+  // CHECK:       [[IFELSE]]
+  // CHECK:       call void [[HVT3]]({{[^,]+}}, {{[^,]+}})
+  // CHECK-NEXT:  br label %[[IFEND]]
+  // CHECK:       [[IFEND]]
   #pragma omp target teams if(target: n>10)
   {
     a += 1;
@@ -190,14 +220,14 @@ int foo(int n) {
   // CHECK-32:       store i32 [[A_VAL]], i32* [[A_CADDR:%.+]],
   // CHECK-32:       [[A_CVAL:%.+]] = load i[[SZ]], i[[SZ]]* [[A_CADDR]],
 
+  // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 20
+  // CHECK:       br i1 [[IF]], label %[[TRY:[^,]+]], label %[[FAIL:[^,]+]]
+  // CHECK:       [[TRY]]
   // CHECK:       [[BNSIZE:%.+]] = mul nuw i[[SZ]] [[VLA0:%.+]], 4
   // CHECK:       [[CNELEMSIZE2:%.+]] = mul nuw i[[SZ]] 5, [[VLA1:%.+]]
   // CHECK:       [[CNSIZE:%.+]] = mul nuw i[[SZ]] [[CNELEMSIZE2]], 8
 
-  // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 20
-  // CHECK:       br i1 [[IF]], label %[[TRY:[^,]+]], label %[[FAIL:[^,]+]]
-  // CHECK:       [[TRY]]
-  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 9, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* [[SR:%[^,]+]], i32* getelementptr inbounds ([9 x i32], [9 x i32]* [[MAPT4]], i32 0, i32 0), i32 0, i32 0)
+  // CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 9, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* [[SR:%[^,]+]], i64* getelementptr inbounds ([9 x i64], [9 x i64]* [[MAPT4]], i32 0, i32 0), i32 0, i32 0)
   // CHECK-DAG:   [[BPR]] = getelementptr inbounds [9 x i8*], [9 x i8*]* [[BP:%[^,]+]], i32 0, i32 0
   // CHECK-DAG:   [[PR]] = getelementptr inbounds [9 x i8*], [9 x i8*]* [[P:%[^,]+]], i32 0, i32 0
   // CHECK-DAG:   [[SR]] = getelementptr inbounds [9 x i[[SZ]]], [9 x i[[SZ]]]* [[S:%[^,]+]], i32 0, i32 0
@@ -286,9 +316,7 @@ int foo(int n) {
   // CHECK-DAG:   [[CPADDR8]] = bitcast i8** {{%[^,]+}} to [[TT]]**
   // CHECK-DAG:   store i[[SZ]] {{12|16}}, i[[SZ]]* {{%[^,]+}}
 
-  // CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-  // CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+  // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
   // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:[^,]+]], label %[[END:[^,]+]]
 
   // CHECK:       [[FAIL]]
@@ -312,11 +340,13 @@ int foo(int n) {
 // Check that the offloading functions are emitted and that the arguments are
 // correct and loaded correctly for the target regions in foo().
 
-// CHECK:       define internal void [[HVT0]]()
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 0, void (i32*, i32*, ...)* bitcast (void (i32*, i32*)* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*))
+// CHECK:       define internal void [[HVT0]](i[[SZ]] {{[^,]+}}, i[[SZ]] {{[^,]+}}, i[[SZ]] {{[^)]+}})
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]])* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] {{[^)]+}})
 //
 //
-// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid.)
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] {{[^)]+}})
+// CHECK:       alloca i[[SZ]],
+// CHECK:       bitcast i[[SZ]]* {{.+}} to i16*
 // CHECK:       ret void
 // CHECK-NEXT:  }
 
@@ -333,7 +363,7 @@ int foo(int n) {
 // CHECK-64:    store i32 [[AA]], i32* [[AA_C]], align
 // CHECK-32:    store i32 [[AA]], i32* [[AA_CASTED]], align
 // CHECK:       [[PARAM:%.+]] = load i[[SZ]], i[[SZ]]* [[AA_CASTED]], align
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]])* [[OMP_OUTLINED1:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]])* [[OMP_OUTLINED1:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM]])
 //
 //
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED1]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}})
@@ -355,7 +385,7 @@ int foo(int n) {
 // CHECK:       [[AA_C:%.+]] = bitcast i[[SZ]]* [[AA_CASTED]] to i16*
 // CHECK:       store i16 [[AA]], i16* [[AA_C]], align
 // CHECK:       [[PARAM:%.+]] = load i[[SZ]], i[[SZ]]* [[AA_CASTED]], align
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]])* [[OMP_OUTLINED2:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]])* [[OMP_OUTLINED2:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM]])
 //
 //
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED2]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}})
@@ -386,7 +416,7 @@ int foo(int n) {
 // CHECK-DAG:   store i16 [[AA]], i16* [[AA_C]], align
 // CHECK-DAG:   [[PARAM1:%.+]] = load i[[SZ]], i[[SZ]]* [[A_CASTED]], align
 // CHECK-DAG:   [[PARAM2:%.+]] = load i[[SZ]], i[[SZ]]* [[AA_CASTED]], align
-// CHECK-DAG:   call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 2, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]])* [[OMP_OUTLINED3:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM1]], i[[SZ]] [[PARAM2]])
+// CHECK-DAG:   call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 2, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]])* [[OMP_OUTLINED3:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[PARAM1]], i[[SZ]] [[PARAM2]])
 //
 //
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED3]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}})
@@ -438,10 +468,10 @@ int foo(int n) {
 // CHECK-32-DAG:store i32 [[LOCAL_AV]], i32* [[LOCAL_A_CASTED]], align
 // CHECK-DAG:   [[REF_A:%.+]] = load i[[SZ]], i[[SZ]]* [[LOCAL_A_CASTED]],
 
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 9, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], [10 x float]*, i[[SZ]], float*, [5 x [10 x double]]*, i[[SZ]], i[[SZ]], double*, [[TT]]*)* [[OMP_OUTLINED4:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], [10 x float]* [[REF_B]], i[[SZ]] [[VAL_VLA1]], float* [[REF_BN]], [5 x [10 x double]]* [[REF_C]], i[[SZ]] [[VAL_VLA2]], i[[SZ]] [[VAL_VLA3]], double* [[REF_CN]], [[TT]]* [[REF_D]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 9, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], [10 x float]*, i[[SZ]], float*, [5 x [10 x double]]*, i[[SZ]], i[[SZ]], double*, [[TT]]*)* [[OMP_OUTLINED4:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], [10 x float]* [[REF_B]], i[[SZ]] [[VAL_VLA1]], float* [[REF_BN]], [5 x [10 x double]]* [[REF_C]], i[[SZ]] [[VAL_VLA2]], i[[SZ]] [[VAL_VLA3]], double* [[REF_CN]], [[TT]]* [[REF_D]])
 //
 //
-// CHECK:       define internal {{.*}}void [[OMP_OUTLINED4]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}}, [10 x float]* {{.+}}, i[[SZ]] %{{.+}}, float* %{{.+}}, [5 x [10 x double]]* {{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, double* %{{.+}}, [[TT]]* {{.+}})
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED4]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}}, [10 x float]* {{.+}}, i[[SZ]] %{{.+}}, float* {{.+}}, [5 x [10 x double]]* {{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, double* {{.+}}, [[TT]]* {{.+}})
 // To reduce complexity, we're only going as far as validating the signature of the outlined parallel function.
 
 template<typename tx>
@@ -523,17 +553,18 @@ int bar(int n){
 // CHECK-64:       store i32 %{{.+}}, i32* [[B_ADDR]],
 // CHECK-64:       [[B_CVAL:%.+]] = load i[[SZ]], i[[SZ]]* [[B_CADDR]],
 
+// CHECK-32:       store i32 %{{.+}}, i32* %__vla_expr
 // CHECK-32:       store i32 %{{.+}}, i32* [[B_ADDR:%.+]],
 // CHECK-32:       [[B_CVAL:%.+]] = load i[[SZ]], i[[SZ]]* [[B_ADDR]],
-
-// We capture 2 VLA sizes in this target region
-// CHECK:       [[CELEMSIZE2:%.+]] = mul nuw i[[SZ]] 2, [[VLA0:%.+]]
-// CHECK:       [[CSIZE:%.+]] = mul nuw i[[SZ]] [[CELEMSIZE2]], 2
 
 // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 60
 // CHECK:       br i1 [[IF]], label %[[TRY:[^,]+]], label %[[FAIL:[^,]+]]
 // CHECK:       [[TRY]]
-// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 5, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* [[SR:%[^,]+]], i32* getelementptr inbounds ([5 x i32], [5 x i32]* [[MAPT7]], i32 0, i32 0), i32 0, i32 0)
+// We capture 2 VLA sizes in this target region
+// CHECK:       [[CELEMSIZE2:%.+]] = mul nuw i[[SZ]] 2, [[VLA0:%.+]]
+// CHECK:       [[CSIZE:%.+]] = mul nuw i[[SZ]] [[CELEMSIZE2]], 2
+
+// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 5, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* [[SR:%[^,]+]], i64* getelementptr inbounds ([5 x i64], [5 x i64]* [[MAPT7]], i32 0, i32 0), i32 0, i32 0)
 // CHECK-DAG:   [[BPR]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[BP:%.+]], i32 0, i32 0
 // CHECK-DAG:   [[PR]] = getelementptr inbounds [5 x i8*], [5 x i8*]* [[P:%.+]], i32 0, i32 0
 // CHECK-DAG:   [[SR]] = getelementptr inbounds [5 x i[[SZ]]], [5 x i[[SZ]]]* [[S:%.+]], i32 0, i32 0
@@ -582,9 +613,7 @@ int bar(int n){
 // CHECK-DAG:   [[CPADDR4]] = bitcast i8** {{%[^,]+}} to i16**
 // CHECK-DAG:   store i[[SZ]] [[CSIZE]], i[[SZ]]* {{%[^,]+}}
 
-// CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-// CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-// CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+// CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
 // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:[^,]+]], label %[[END:[^,]+]]
 
 // CHECK:       [[FAIL]]
@@ -598,7 +627,7 @@ int bar(int n){
 // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 50
 // CHECK:       br i1 [[IF]], label %[[IFTHEN:[^,]+]], label %[[IFELSE:[^,]+]]
 // CHECK:       [[IFTHEN]]
-// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 4, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([4 x i[[SZ]]], [4 x i[[SZ]]]* [[SIZET6]], i32 0, i32 0), i32* getelementptr inbounds ([4 x i32], [4 x i32]* [[MAPT6]], i32 0, i32 0), i32 0, i32 0)
+// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 4, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([4 x i[[SZ]]], [4 x i[[SZ]]]* [[SIZET6]], i32 0, i32 0), i64* getelementptr inbounds ([4 x i64], [4 x i64]* [[MAPT6]], i32 0, i32 0), i32 0, i32 0)
 // CHECK-DAG:   [[BPR]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[BP:%.+]], i32 0, i32 0
 // CHECK-DAG:   [[PR]] = getelementptr inbounds [4 x i8*], [4 x i8*]* [[P:%.+]], i32 0, i32 0
 
@@ -630,21 +659,17 @@ int bar(int n){
 // CHECK-DAG:   [[CBPADDR3]] = bitcast i8** {{%[^,]+}} to [10 x i32]**
 // CHECK-DAG:   [[CPADDR3]] = bitcast i8** {{%[^,]+}} to [10 x i32]**
 
-// CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-// CHECK-NEXT:  br label %[[IFEND:.+]]
-
-// CHECK:       [[IFELSE]]
-// CHECK:       store i32 -1, i32* [[RHV]], align 4
-// CHECK-NEXT:  br label %[[IFEND:.+]]
-
-// CHECK:       [[IFEND]]
-// CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-// CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+// CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
 // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:.+]], label %[[END:[^,]+]]
 // CHECK:       [[FAIL]]
 // CHECK:       call void [[HVT6:@.+]]({{[^,]+}}, {{[^,]+}}, {{[^,]+}}, {{[^,]+}})
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
+// CHECK-NEXT:  br label %[[IFEND:.+]]
+// CHECK:       [[IFELSE]]
+// CHECK:       call void [[HVT6]]({{[^,]+}}, {{[^,]+}}, {{[^,]+}}, {{[^,]+}})
+// CHECK-NEXT:  br label %[[IFEND]]
+// CHECK:       [[IFEND]]
 
 //
 // CHECK: define {{.*}}[[FTEMPLATE]]
@@ -652,7 +677,7 @@ int bar(int n){
 // CHECK:       [[IF:%.+]] = icmp sgt i32 {{[^,]+}}, 40
 // CHECK:       br i1 [[IF]], label %[[IFTHEN:[^,]+]], label %[[IFELSE:[^,]+]]
 // CHECK:       [[IFTHEN]]
-// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i32 -1, i8* @{{[^,]+}}, i32 3, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([3 x i[[SZ]]], [3 x i[[SZ]]]* [[SIZET5]], i32 0, i32 0), i32* getelementptr inbounds ([3 x i32], [3 x i32]* [[MAPT5]], i32 0, i32 0), i32 0, i32 0)
+// CHECK-DAG:   [[RET:%.+]] = call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** [[BPR:%[^,]+]], i8** [[PR:%[^,]+]], i[[SZ]]* getelementptr inbounds ([3 x i[[SZ]]], [3 x i[[SZ]]]* [[SIZET5]], i32 0, i32 0), i64* getelementptr inbounds ([3 x i64], [3 x i64]* [[MAPT5]], i32 0, i32 0), i32 0, i32 0)
 // CHECK-DAG:   [[BPR]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[BP:%.+]], i32 0, i32 0
 // CHECK-DAG:   [[PR]] = getelementptr inbounds [3 x i8*], [3 x i8*]* [[P:%.+]], i32 0, i32 0
 
@@ -677,21 +702,17 @@ int bar(int n){
 // CHECK-DAG:   [[CBPADDR2]] = bitcast i8** {{%[^,]+}} to [10 x i32]**
 // CHECK-DAG:   [[CPADDR2]] = bitcast i8** {{%[^,]+}} to [10 x i32]**
 
-// CHECK:       store i32 [[RET]], i32* [[RHV:%.+]], align 4
-// CHECK-NEXT:  br label %[[IFEND:.+]]
-
-// CHECK:       [[IFELSE]]
-// CHECK:       store i32 -1, i32* [[RHV]], align 4
-// CHECK-NEXT:  br label %[[IFEND:.+]]
-
-// CHECK:       [[IFEND]]
-// CHECK:       [[RET2:%.+]] = load i32, i32* [[RHV]], align 4
-// CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET2]], 0
+// CHECK:       [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
 // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:.+]], label %[[END:[^,]+]]
 // CHECK:       [[FAIL]]
 // CHECK:       call void [[HVT5:@.+]]({{[^,]+}}, {{[^,]+}}, {{[^,]+}})
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
+// CHECK-NEXT:  br label %[[IFEND:.+]]
+// CHECK:       [[IFELSE]]
+// CHECK:       call void [[HVT5]]({{[^,]+}}, {{[^,]+}}, {{[^,]+}})
+// CHECK-NEXT:  br label %[[IFEND]]
+// CHECK:       [[IFEND]]
 
 
 
@@ -725,10 +746,10 @@ int bar(int n){
 // CHECK-32-DAG:store i32 [[LOCAL_BV]], i32* [[LOCAL_B_CASTED]], align
 // CHECK-DAG:   [[REF_B:%.+]] = load i[[SZ]], i[[SZ]]* [[LOCAL_B_CASTED]],
 
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 5, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, [[S1]]*, i[[SZ]], i[[SZ]], i[[SZ]], i16*)* [[OMP_OUTLINED5:@.+]] to void (i32*, i32*, ...)*), [[S1]]* [[REF_THIS]], i[[SZ]] [[REF_B]], i[[SZ]] [[VAL_VLA1]], i[[SZ]] [[VAL_VLA2]], i16* [[REF_C]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 5, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, [[S1]]*, i[[SZ]], i[[SZ]], i[[SZ]], i16*)* [[OMP_OUTLINED5:@.+]] to void (i32*, i32*, ...)*), [[S1]]* [[REF_THIS]], i[[SZ]] [[REF_B]], i[[SZ]] [[VAL_VLA1]], i[[SZ]] [[VAL_VLA2]], i16* [[REF_C]])
 //
 //
-// CHECK:       define internal {{.*}}void [[OMP_OUTLINED5]](i32* noalias %.global_tid., i32* noalias %.bound_tid., [[S1]]* %{{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, i16* %{{.+}})
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED5]](i32* noalias %.global_tid., i32* noalias %.bound_tid., [[S1]]* %{{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, i16* {{.+}})
 // To reduce complexity, we're only going as far as validating the signature of the outlined parallel function.
 
 
@@ -768,7 +789,7 @@ int bar(int n){
 // CHECK-DAG:   store i8 [[CONV_AAA]], i8* [[CONV]], align
 // CHECK-DAG:   [[REF_AAA:%.+]] = load i[[SZ]], i[[SZ]]* [[LOCAL_AAA_CASTED]],
 
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 4, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]], i[[SZ]], [10 x i32]*)* [[OMP_OUTLINED6:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], i[[SZ]] [[REF_AA]], i[[SZ]] [[REF_AAA]], [10 x i32]* [[REF_B]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 4, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]], i[[SZ]], [10 x i32]*)* [[OMP_OUTLINED6:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], i[[SZ]] [[REF_AA]], i[[SZ]] [[REF_AAA]], [10 x i32]* [[REF_B]])
 //
 //
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED6]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, [10 x i32]* {{.+}})
@@ -801,7 +822,7 @@ int bar(int n){
 // CHECK-DAG:   store i16 [[CONV_AA]], i16* [[CONV]], align
 // CHECK-DAG:   [[REF_AA:%.+]] = load i[[SZ]], i[[SZ]]* [[LOCAL_AA_CASTED]],
 
-// CHECK:       call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%ident_t* [[DEF_LOC]], i32 3, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]], [10 x i32]*)* [[OMP_OUTLINED7:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], i[[SZ]] [[REF_AA]], [10 x i32]* [[REF_B]])
+// CHECK:       call {{.*}}void (%struct.ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_teams(%struct.ident_t* [[DEF_LOC]], i32 3, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, i[[SZ]], i[[SZ]], [10 x i32]*)* [[OMP_OUTLINED7:@.+]] to void (i32*, i32*, ...)*), i[[SZ]] [[REF_A]], i[[SZ]] [[REF_AA]], [10 x i32]* [[REF_B]])
 //
 //
 // CHECK:       define internal {{.*}}void [[OMP_OUTLINED7]](i32* noalias %.global_tid., i32* noalias %.bound_tid., i[[SZ]] %{{.+}}, i[[SZ]] %{{.+}}, [10 x i32]* {{.+}})

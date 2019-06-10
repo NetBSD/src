@@ -343,16 +343,16 @@ int main(int argc, char **argv)
 	BIO_puts(bdata, TPMSEAL_ENC_STRING); 
 	bdata = BIO_push(b64, bdata);
 
-	EVP_CIPHER_CTX ctx;
-	EVP_EncryptInit(&ctx, EVP_aes_256_cbc(), randKey, (unsigned char *)TPMSEAL_IV);
+	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+	EVP_EncryptInit(ctx, EVP_aes_256_cbc(), randKey, (unsigned char *)TPMSEAL_IV);
 
 	while ((lineLen = BIO_read(bin, line, sizeof(line))) > 0) {
-		EVP_EncryptUpdate(&ctx, encData, &encDataLen,
+		EVP_EncryptUpdate(ctx, encData, &encDataLen,
 				  line, lineLen);
 		BIO_write(bdata, encData, encDataLen);
 	}
 
-	EVP_EncryptFinal(&ctx, encData, &encDataLen);
+	EVP_EncryptFinal(ctx, encData, &encDataLen);
 	BIO_write(bdata, encData, encDataLen);
 	if (BIO_flush(bdata) != 1) {
 		logError(_("Unable to flush output\n"));

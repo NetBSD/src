@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.327 2018/05/02 07:34:44 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.327.2.1 2019/06/10 21:41:02 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -494,7 +494,7 @@ level of source directory"
 	uname_m=$(uname -m 2>/dev/null)
 	uname_p=$(uname -p 2>/dev/null || echo "unknown")
 	case "${uname_p}" in
-	''|unknown|*[^-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
+	''|unknown|*[!-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
 	esac
 
 	id_u=$(id -u 2>/dev/null || /usr/xpg4/bin/id -u 2>/dev/null)
@@ -537,6 +537,7 @@ level of source directory"
 	do_rebuildmake=false
 	do_removedirs=false
 	do_tools=false
+	do_libs=false
 	do_cleandir=false
 	do_obj=false
 	do_build=false
@@ -615,6 +616,7 @@ level of source directory"
 #
 valid_MACHINE_ARCH='
 MACHINE=acorn32		MACHINE_ARCH=arm
+MACHINE=acorn32		MACHINE_ARCH=earmv4	ALIAS=eacorn32 DEFAULT
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=alpha		MACHINE_ARCH=alpha
@@ -633,25 +635,26 @@ MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
 MACHINE=epoc32		MACHINE_ARCH=arm
+MACHINE=epoc32		MACHINE_ARCH=earmv4	ALIAS=eepoc32 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evboarm-el
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evboarm-eb
-MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el DEFAULT
-MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
-MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
-MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el
-MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el
-MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
-MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el	ALIAS=evbarm-el DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb	ALIAS=evbarm-eb
+MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el	ALIAS=evbarmhf-el
+MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb	ALIAS=evbarmhf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el	ALIAS=evbarmv4-el
+MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb	ALIAS=evbarmv4-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el	ALIAS=evbarmv5-el
+MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb	ALIAS=evbarmv5-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el	ALIAS=evbarmv6-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el	ALIAS=evbarmv6hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb	ALIAS=evbarmv6-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb	ALIAS=evbarmv6hf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el	ALIAS=evbarmv7-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb	ALIAS=evbarmv7-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el	ALIAS=evbarmv7hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb	ALIAS=evbarmv7hf-eb
+MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el	ALIAS=evbarm64 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
 MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
@@ -1288,7 +1291,7 @@ parseoptions()
 				safe_setmakeenv "${OPTARG}" ""
 				;;
 			*)
-				usage "-V argument must be of the form 'var=[value]'"
+				usage "-V argument must be of the form 'var[=value]'"
 				;;
 			esac
 			;;
@@ -1380,6 +1383,7 @@ parseoptions()
 		iso-image-source|\
 		iso-image|\
 		kernels|\
+		libs|\
 		live-image|\
 		makewrapper|\
 		modules|\
@@ -1412,6 +1416,7 @@ parseoptions()
 		[ "${uname_s}" = "NetBSD" ] ||
 		    bomb "MACHINE must be set, or -m must be used, for cross builds."
 		MACHINE=${uname_m}
+		MACHINE_ARCH=${uname_p}
 	fi
 	if $opt_m && ! $opt_a; then
 		# Settings implied by the command line -m option
@@ -1932,7 +1937,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.327 2018/05/02 07:34:44 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.327.2.1 2019/06/10 21:41:02 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -1984,6 +1989,21 @@ buildtools()
 	fi
 	make_in_dir tools build_install
 	statusmsg "Tools built to ${TOOLDIR}"
+}
+
+buildlibs()
+{
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		${runcmd} "${makewrapper}" ${parallel} obj ||
+		    bomb "Failed to make obj"
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir lib cleandir
+	fi
+	make_in_dir . do-distrib-dirs
+	make_in_dir . includes
+	make_in_dir . do-lib
+	statusmsg "libs built"
 }
 
 getkernelconf()
@@ -2290,6 +2310,9 @@ main()
 
 		tools)
 			buildtools
+			;;
+		libs)
+			buildlibs
 			;;
 
 		sets)

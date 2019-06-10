@@ -85,9 +85,9 @@ entry:
 ; Crasher for llc.
 ; REQUIRES: object-emission
 ; RUN: %llc_dwarf -filetype=obj -O0 %t1 -o %t1.o
-; RUN: llvm-dwarfdump %t1.o -debug-dump=all | FileCheck %s -check-prefix=DWLW -check-prefix=DW
+; RUN: llvm-dwarfdump %t1.o --all | FileCheck %s -check-prefix=DWLW -check-prefix=DW
 ; RUN: %llc_dwarf -filetype=obj -O0 %t2 -o %t2.o
-; RUN: llvm-dwarfdump %t2.o -debug-dump=all | FileCheck %s -check-prefix=DWWL -check-prefix=DW
+; RUN: llvm-dwarfdump %t2.o --all | FileCheck %s -check-prefix=DWWL -check-prefix=DW
 ; Check that the debug info for the discarded linkonce version of @foo doesn't
 ; reference any code, and that the other subprograms look correct.
 
@@ -147,14 +147,18 @@ entry:
 ; DW-LABEL:   .debug_line contents:
 ; Check that we have the right things in the line table as well.
 
-; DWLW-LABEL: file_names[{{ *}}1]{{.*}} bar.c
+; DWLW-LABEL: file_names[ 1]:
+; DWLW-NEXT: name: "bar.c"
 ; DWLW:        2 0 1 0 0 is_stmt prologue_end
-; DWLW-LABEL: file_names[{{ *}}1]{{.*}} foo.c
+; DWLW-LABEL: file_names[ 1]:
+; DWLW-NEXT: name: "foo.c"
 ; DWLW:       52 0 1 0 0 is_stmt prologue_end
 ; DWLW-NOT:                      prologue_end
 
-; DWWL-LABEL: file_names[{{ *}}1]{{.*}} foo.c
+; DWWL-LABEL: file_names[ 1]:
+; DWWL-NEXT: name: "foo.c"
 ; DWWL:       52 0 1 0 0 is_stmt prologue_end
-; DWWL-LABEL: file_names[{{ *}}1]{{.*}} bar.c
+; DWWL-LABEL: file_names[ 1]:
+; DWWL-NEXT: name: "bar.c"
 ; DWWL:        2 0 1 0 0 is_stmt prologue_end
 ; DWWL-NOT:                      prologue_end

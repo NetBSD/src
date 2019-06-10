@@ -23,6 +23,11 @@
 #include "obj.h"
 #include "authsess.h"
 
+#define TPM_STORE_ASYMKEY_LEN 214 /* Entire TPM_STORE_ASYMKEY length */
+#define USAGE_MIG_DIGEST_FLD_LEN 20 /* Usage, Migration and Digest lengths for
+                                       TPM_STORE_ASYMKEY */
+#define TPM_STORE_PRIVKEY_LEN 151 /* Extracted directly from TPM_STORE_ASYMKEY
+                                     field */
 
 TSS_RESULT
 Tspi_Key_UnloadKey(TSS_HKEY hKey)	/* in */
@@ -343,9 +348,11 @@ Tspi_Key_WrapKey(TSS_HKEY hKey,			/* in */
 	TSS_RESULT result;
 	BYTE *keyPrivBlob = NULL, *wrappingPubKey = NULL, *keyBlob = NULL;
 	UINT32 keyPrivBlobLen, wrappingPubKeyLen, keyBlobLen;
-	BYTE newPrivKey[214]; /* its not magic, see TPM 1.1b spec p.71 */
+	BYTE newPrivKey[TPM_STORE_ASYMKEY_LEN]; /* This reflects the size of the
+                                               TPM_STORE_ASYMKEY structure
+                                               in both TPM 1.1b and 1.2 */
 	BYTE encPrivKey[256];
-	UINT32 newPrivKeyLen = 214, encPrivKeyLen = 256;
+	UINT32 newPrivKeyLen = TPM_STORE_ASYMKEY_LEN, encPrivKeyLen = 256;
 	UINT64 offset;
 	TSS_KEY keyContainer;
 	TCPA_DIGEST digest;
@@ -363,6 +370,10 @@ Tspi_Key_WrapKey(TSS_HKEY hKey,			/* in */
 	/* get the key to be wrapped's private key */
 	if ((result = obj_rsakey_get_priv_blob(hKey, &keyPrivBlobLen, &keyPrivBlob)))
 		goto done;
+    /* verify if its under the maximum size, according to the
+     * TPM_STORE_ASYMKEY specification */
+    if (keyPrivBlobLen > TPM_STORE_PRIVKEY_LEN)
+        return TSPERR(TSS_E_ENC_INVALID_LENGTH);
 
 	/* get the key to be wrapped's blob */
 	if ((result = obj_rsakey_get_blob(hKey, &keyBlobLen, &keyBlob)))
@@ -385,7 +396,7 @@ Tspi_Key_WrapKey(TSS_HKEY hKey,			/* in */
 	if ((result = obj_policy_get_secret(hMigPolicy, TR_SECRET_CTX_NEW, &migration)))
 		goto done;
 
-	memset(&keyContainer, 0, sizeof(TSS_KEY));
+	__tspi_memset(&keyContainer, 0, sizeof(TSS_KEY));
 
 	/* unload the key to be wrapped's blob */
 	offset = 0;
@@ -400,12 +411,16 @@ Tspi_Key_WrapKey(TSS_HKEY hKey,			/* in */
 
 	free_key_refs(&keyContainer);
 
-	/* create the plaintext private key blob */
+	/* create the plaintext private key blob. This is the point where the
+     * TPM structure TPM_STORE_ASYMKEY is crafted in the buffer */
 	offset = 0;
 	Trspi_LoadBlob_BYTE(&offset, TCPA_PT_ASYM, newPrivKey);
-	Trspi_LoadBlob(&offset, 20, newPrivKey, usage.authdata);
-	Trspi_LoadBlob(&offset, 20, newPrivKey, migration.authdata);
-	Trspi_LoadBlob(&offset, 20, newPrivKey, digest.digest);
+	Trspi_LoadBlob(&offset, USAGE_MIG_DIGEST_FLD_LEN,
+                   newPrivKey, usage.authdata);
+	Trspi_LoadBlob(&offset, USAGE_MIG_DIGEST_FLD_LEN,
+                   newPrivKey, migration.authdata);
+	Trspi_LoadBlob(&offset, USAGE_MIG_DIGEST_FLD_LEN,
+                   newPrivKey, digest.digest);
 	Trspi_LoadBlob_UINT32(&offset, keyPrivBlobLen, newPrivKey);
 	Trspi_LoadBlob(&offset, keyPrivBlobLen, newPrivKey, keyPrivBlob);
 	newPrivKeyLen = offset;

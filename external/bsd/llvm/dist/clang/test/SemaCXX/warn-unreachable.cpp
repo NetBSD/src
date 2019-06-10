@@ -49,22 +49,26 @@ void test3() {
       (halt()); // expected-warning {{will never be executed}}
 }
 
-void test4() {
+namespace Test4 {
   struct S {
     int mem;
   } s;
   S &foor();
-  halt(), foor()// expected-warning {{will never be executed}}
-    .mem;       
+  void test4() {
+    halt(), foor()// expected-warning {{will never be executed}}
+      .mem;       
+  }
 }
 
-void test5() {
+namespace Test5 {
   struct S {
     int mem;
   } s;
   S &foonr() __attribute__((noreturn));
-  foonr()
-    .mem;       // expected-warning {{will never be executed}}
+  void test5() {
+    foonr()
+      .mem;       // expected-warning {{will never be executed}}
+  }
 }
 
 void test6() {
@@ -98,7 +102,7 @@ void test_unreachable_templates_harness() {
   test_unreachable_templates<TestUnreachableB>(); 
 }
 
-// Do warn about explict template specializations, as they represent
+// Do warn about explicit template specializations, as they represent
 // actual concrete functions that somebody wrote.
 
 template <typename T> void funcToSpecialize() {}

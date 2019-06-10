@@ -21,16 +21,18 @@ using namespace llvm;
 /// initializeCodeGen - Initialize all passes linked into the CodeGen library.
 void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeAtomicExpandPass(Registry);
-  initializeBranchCoalescingPass(Registry);
   initializeBranchFolderPassPass(Registry);
   initializeBranchRelaxationPass(Registry);
+  initializeCFIInstrInserterPass(Registry);
   initializeCodeGenPreparePass(Registry);
-  initializeCountingFunctionInserterPass(Registry);
   initializeDeadMachineInstructionElimPass(Registry);
   initializeDetectDeadLanesPass(Registry);
   initializeDwarfEHPreparePass(Registry);
   initializeEarlyIfConverterPass(Registry);
+  initializeEarlyMachineLICMPass(Registry);
+  initializeEarlyTailDuplicatePass(Registry);
   initializeExpandISelPseudosPass(Registry);
+  initializeExpandMemCmpPassPass(Registry);
   initializeExpandPostRAPass(Registry);
   initializeFEntryInserterPass(Registry);
   initializeFinalizeMachineBundlesPass(Registry);
@@ -39,6 +41,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeGCModuleInfoPass(Registry);
   initializeIfConverterPass(Registry);
   initializeImplicitNullChecksPass(Registry);
+  initializeIndirectBrExpandPassPass(Registry);
   initializeInterleavedAccessPass(Registry);
   initializeLiveDebugValuesPass(Registry);
   initializeLiveDebugVariablesPass(Registry);
@@ -74,11 +77,12 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializePeepholeOptimizerPass(Registry);
   initializePostMachineSchedulerPass(Registry);
   initializePostRAHazardRecognizerPass(Registry);
+  initializePostRAMachineSinkingPass(Registry);
   initializePostRASchedulerPass(Registry);
   initializePreISelIntrinsicLoweringLegacyPassPass(Registry);
   initializeProcessImplicitDefsPass(Registry);
   initializeRABasicPass(Registry);
-  initializeRAFastPass(Registry);
+  initializeRegAllocFastPass(Registry);
   initializeRAGreedyPass(Registry);
   initializeRegisterCoalescerPass(Registry);
   initializeRenameIndependentSubregsPass(Registry);
@@ -90,7 +94,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeStackMapLivenessPass(Registry);
   initializeStackProtectorPass(Registry);
   initializeStackSlotColoringPass(Registry);
-  initializeTailDuplicatePassPass(Registry);
+  initializeTailDuplicatePass(Registry);
   initializeTargetPassConfigPass(Registry);
   initializeTwoAddressInstructionPassPass(Registry);
   initializeUnpackMachineBundlesPass(Registry);
@@ -98,8 +102,10 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeUnreachableMachineBlockElimPass(Registry);
   initializeVirtRegMapPass(Registry);
   initializeVirtRegRewriterPass(Registry);
+  initializeWasmEHPreparePass(Registry);
   initializeWinEHPreparePass(Registry);
   initializeXRayInstrumentationPass(Registry);
+  initializeMIRCanonicalizerPass(Registry);
 }
 
 void LLVMInitializeCodeGen(LLVMPassRegistryRef R) {

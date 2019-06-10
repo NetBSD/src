@@ -1,5 +1,6 @@
-/*	$NetBSD: log.c,v 1.17 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.50 2017/05/17 01:24:17 djm Exp $ */
+/*	$NetBSD: log.c,v 1.17.4.1 2019/06/10 21:41:12 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.51 2018/07/27 12:03:17 markus Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.17 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.17.4.1 2019/06/10 21:41:12 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -98,6 +99,12 @@ static struct {
 	{ "DEBUG3",	SYSLOG_LEVEL_DEBUG3 },
 	{ NULL,		SYSLOG_LEVEL_NOT_SET }
 };
+
+LogLevel
+log_level_get(void)
+{
+	return log_level;
+}
 
 SyslogFacility
 log_facility_number(char *name)
@@ -176,7 +183,7 @@ logdie(const char *fmt,...)
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_INFO, fmt, args);
 	va_end(args);
-	cleanup_exit(255);
+	cleanup_exit(254);
 }
 
 /* Log this message (information that usually should go to the log). */

@@ -8,7 +8,7 @@
 
 ; VECTORIZED: remark: vectorization-remarks.c:17:8: vectorized loop (vectorization width: 4, interleaved count: 1)
 ; UNROLLED: remark: vectorization-remarks.c:17:8: interleaved loop (interleaved count: 4)
-; NONE: remark: vectorization-remarks.c:17:8: loop not vectorized: vectorization and interleaving are explicitly disabled, or vectorize width and interleave count are both set to 1
+; NONE: remark: vectorization-remarks.c:17:8: loop not vectorized: vectorization and interleaving are explicitly disabled, or the loop has already been vectorized
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
@@ -50,7 +50,7 @@ declare void @ibar(i32*) #1
 !1 = !DIFile(filename: "vectorization-remarks.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !24, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !24, scopeLine: 6, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "vectorization-remarks.c", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

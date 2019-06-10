@@ -1,9 +1,13 @@
-; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -disable-wasm-explicit-locals | FileCheck %s
+; RUN: llc < %s -mattr=+atomics -asm-verbose=false -disable-wasm-fallthrough-return-opt -disable-wasm-explicit-locals | FileCheck %s
 
 ; Test loads and stores with custom alignment values.
 
 target datalayout = "e-m:e-p:32:32-i64:64-n32:64-S128"
-target triple = "wasm32-unknown-unknown-wasm"
+target triple = "wasm32-unknown-unknown"
+
+;===----------------------------------------------------------------------------
+; Loads
+;===----------------------------------------------------------------------------
 
 ; CHECK-LABEL: ldi32_a1:
 ; CHECK-NEXT: .param i32{{$}}
@@ -61,7 +65,9 @@ define i32 @ldi32_a8(i32 *%p) {
   ret i32 %v
 }
 
-; Extending loads.
+;===----------------------------------------------------------------------------
+; Extending loads
+;===----------------------------------------------------------------------------
 
 ; CHECK-LABEL: ldi8_a1:
 ; CHECK-NEXT: .param i32{{$}}
@@ -113,7 +119,9 @@ define i16 @ldi16_a4(i16 *%p) {
   ret i16 %v
 }
 
-; Stores.
+;===----------------------------------------------------------------------------
+; Stores
+;===----------------------------------------------------------------------------
 
 ; CHECK-LABEL: sti32_a1:
 ; CHECK-NEXT: .param i32, i32{{$}}
@@ -164,7 +172,9 @@ define void @sti32_a8(i32 *%p, i32 %v) {
   ret void
 }
 
-; Truncating stores.
+;===----------------------------------------------------------------------------
+; Truncating stores
+;===----------------------------------------------------------------------------
 
 ; CHECK-LABEL: sti8_a1:
 ; CHECK-NEXT: .param i32, i32{{$}}
@@ -209,4 +219,57 @@ define void @sti16_a2(i16 *%p, i16 %v) {
 define void @sti16_a4(i16 *%p, i16 %v) {
   store i16 %v, i16* %p, align 4
   ret void
+}
+
+;===----------------------------------------------------------------------------
+; Atomic loads
+;===----------------------------------------------------------------------------
+
+; Wasm atomics have the alignment field, but it must always have the type's
+; natural alignment.
+
+; CHECK-LABEL: ldi32_atomic_a4:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: i32.atomic.load $push[[NUM:[0-9]+]]=, 0($0){{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define i32 @ldi32_atomic_a4(i32 *%p) {
+  %v = load atomic i32, i32* %p seq_cst, align 4
+  ret i32 %v
+}
+
+; 8 is greater than the default alignment so it is ignored.
+
+; CHECK-LABEL: ldi32_atomic_a8:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: i32.atomic.load $push[[NUM:[0-9]+]]=, 0($0){{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define i32 @ldi32_atomic_a8(i32 *%p) {
+  %v = load atomic i32, i32* %p seq_cst, align 8
+  ret i32 %v
+}
+
+;===----------------------------------------------------------------------------
+; Atomic stores
+;===----------------------------------------------------------------------------
+
+; CHECK-LABEL: sti32_atomic_a4:
+; CHECK-NEXT: .param i32, i32{{$}}
+; CHECK-NEXT: i32.atomic.store 0($0), $1{{$}}
+; CHECK-NEXT: return{{$}}
+define void @sti32_atomic_a4(i32 *%p, i32 %v) {
+ store atomic i32 %v, i32* %p seq_cst, align 4
+ ret void
+}
+
+; 8 is greater than the default alignment so it is ignored.
+
+; CHECK-LABEL: sti32_atomic_a8:
+; CHECK-NEXT: .param i32, i32{{$}}
+; CHECK-NEXT: i32.atomic.store 0($0), $1{{$}}
+; CHECK-NEXT: return{{$}}
+define void @sti32_atomic_a8(i32 *%p, i32 %v) {
+ store atomic i32 %v, i32* %p seq_cst, align 8
+ ret void
 }

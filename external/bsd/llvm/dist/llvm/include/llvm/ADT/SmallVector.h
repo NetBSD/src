@@ -18,7 +18,9 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/MemAlloc.h"
 #include "llvm/Support/type_traits.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -237,7 +239,7 @@ void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   size_t NewCapacity = size_t(NextPowerOf2(CurCapacity+2));
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
-  T *NewElts = static_cast<T*>(malloc(NewCapacity*sizeof(T)));
+  T *NewElts = static_cast<T*>(llvm::safe_malloc(NewCapacity*sizeof(T)));
 
   // Move the elements over.
   this->uninitialized_move(this->begin(), this->end(), NewElts);
@@ -336,9 +338,7 @@ public:
   SmallVectorImpl(const SmallVectorImpl &) = delete;
 
   ~SmallVectorImpl() {
-    // Destroy the constructed elements in the vector.
-    this->destroy_range(this->begin(), this->end());
-
+    // Subclass has already destructed this vector's elements.
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!this->isSmall())
       free(this->begin());
@@ -858,12 +858,14 @@ template <typename T> struct SmallVectorStorage<T, 0> {};
 /// Note that this does not attempt to be exception safe.
 ///
 template <typename T, unsigned N>
-class SmallVector : public SmallVectorImpl<T> {
-  /// Inline space for elements which aren't stored in the base class.
-  SmallVectorStorage<T, N> Storage;
-
+class SmallVector : public SmallVectorImpl<T>, SmallVectorStorage<T, N> {
 public:
   SmallVector() : SmallVectorImpl<T>(N) {}
+
+  ~SmallVector() {
+    // Destroy the constructed elements in the vector.
+    this->destroy_range(this->begin(), this->end());
+  }
 
   explicit SmallVector(size_t Size, const T &Value = T())
     : SmallVectorImpl<T>(N) {
@@ -924,8 +926,8 @@ public:
   }
 };
 
-template<typename T, unsigned N>
-static inline size_t capacity_in_bytes(const SmallVector<T, N> &X) {
+template <typename T, unsigned N>
+inline size_t capacity_in_bytes(const SmallVector<T, N> &X) {
   return X.capacity_in_bytes();
 }
 

@@ -1,6 +1,6 @@
 ; RUN: llc -march=amdgcn -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=SICIVI -check-prefix=SI %s
 ; RUN: llc -march=amdgcn -mcpu=tonga -mattr=-flat-for-global -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=SICIVI -check-prefix=VI %s
-; RUN: llc -march=amdgcn -mcpu=gfx901 -mattr=-flat-for-global -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=GFX9 %s
+; RUN: llc -march=amdgcn -mcpu=gfx900 -mattr=-flat-for-global -verify-machineinstrs < %s | FileCheck -check-prefix=GCN -check-prefix=GFX9 %s
 
 declare i32 @llvm.amdgcn.workitem.id.x() #0
 
@@ -368,7 +368,7 @@ bb:
 ; GCN: s_and_b32
 ; GCN: s_and_b32
 ; GCN: v_med3_u32 v{{[0-9]+}}, s{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
-define amdgpu_kernel void @s_test_umed3_i16_pat_0(i16 addrspace(1)* %arg, i16 %x, i16 %y, i16 %z) #1 {
+define amdgpu_kernel void @s_test_umed3_i16_pat_0(i16 addrspace(1)* %arg, [8 x i32], i16 %x, [8 x i32], i16 %y, [8 x i32], i16 %z) #1 {
 bb:
   %tmp0 = call i16 @umin16(i16 %x, i16 %y)
   %tmp1 = call i16 @umax16(i16 %x, i16 %y)
@@ -383,7 +383,7 @@ bb:
 ; GCN: s_and_b32
 ; GCN: s_and_b32
 ; GCN: v_med3_u32 v{{[0-9]+}}, s{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
-define amdgpu_kernel void @s_test_umed3_i8_pat_0(i8 addrspace(1)* %arg, i8 %x, i8 %y, i8 %z) #1 {
+define amdgpu_kernel void @s_test_umed3_i8_pat_0(i8 addrspace(1)* %arg, [8 x i32], i8 %x, [8 x i32], i8 %y, [8 x i32], i8 %z) #1 {
 bb:
   %tmp0 = call i8 @umin8(i8 %x, i8 %y)
   %tmp1 = call i8 @umax8(i8 %x, i8 %y)

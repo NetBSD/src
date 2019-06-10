@@ -185,6 +185,11 @@ int tpmUnsealFile( char* fname, unsigned char** tss_data, int* tss_size,
 	BIO_free(b64);
 	b64 = NULL;
 	bioRc = BIO_reset(bmem);
+	if (bioRc != 1) {
+		tpm_errno = EIO;
+		rc = TPMSEAL_STD_ERROR;
+		goto out;
+	}
 
 	/* Check for EVP Key Type Header */
 	BIO_gets(bdata, data, sizeof(data));
@@ -252,6 +257,11 @@ int tpmUnsealFile( char* fname, unsigned char** tss_data, int* tss_size,
 	BIO_free(b64);
 	b64 = NULL;
 	bioRc = BIO_reset(bmem);
+	if (bioRc != 1) {
+		tpm_errno = EIO;
+		rc = TPMSEAL_STD_ERROR;
+		goto out;
+	}
 
 	/* Read the base64 encrypted data into the memory BIO */
 	while ((rcLen = BIO_gets(bdata, data, sizeof(data))) > 0) {
@@ -398,8 +408,8 @@ int tpmUnsealFile( char* fname, unsigned char** tss_data, int* tss_size,
 	}
 
 	/* Decode and decrypt the encrypted data */
-	EVP_CIPHER_CTX ctx;
-	EVP_DecryptInit(&ctx, EVP_aes_256_cbc(), symKey, (unsigned char *)TPMSEAL_IV);
+	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+	EVP_DecryptInit(ctx, EVP_aes_256_cbc(), symKey, (unsigned char *)TPMSEAL_IV);
 
 	/* Create a base64 BIO to decode the encrypted data */
 	if ((b64 = BIO_new(BIO_f_base64())) == NULL) {
@@ -410,16 +420,17 @@ int tpmUnsealFile( char* fname, unsigned char** tss_data, int* tss_size,
 
 	bmem = BIO_push( b64, bmem );
 	while ((rcLen = BIO_read(bmem, data, sizeof(data))) > 0) {
-		EVP_DecryptUpdate(&ctx, res_data+res_size,
+		EVP_DecryptUpdate(ctx, res_data+res_size,
 					&rcLen, (unsigned char *)data, rcLen);
 		res_size += rcLen;
 	}
-	EVP_DecryptFinal(&ctx, res_data+res_size, &rcLen);
+	EVP_DecryptFinal(ctx, res_data+res_size, &rcLen);
 	res_size += rcLen;
 	bmem = BIO_pop(b64);
 	BIO_free(b64);
 	b64 = NULL;
-	bioRc = BIO_reset(bmem);
+	/* a BIO_reset failure shouldn't have an affect at this point */
+	BIO_reset(bmem);
 
 tss_out:
 	Tspi_Context_Close(hContext);
@@ -433,7 +444,7 @@ out:
 	if ( b64 )
 		BIO_free(b64);
 	if ( bmem ) {
-		bioRc = BIO_set_close(bmem, BIO_CLOSE);
+		BIO_set_close(bmem, BIO_CLOSE);
 		BIO_free(bmem);
 	}
 
@@ -454,7 +465,7 @@ out:
 void tpmUnsealShred(unsigned char* data, int size) {
 
 	if ( data != NULL ) {
-		memset( data, 0, size);
+		__memset( data, 0, size);
 		free(data);
 	}
 

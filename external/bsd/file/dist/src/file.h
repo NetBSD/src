@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.19 2018/04/18 01:17:42 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.19.2.1 2019/06/10 21:44:47 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.191 2018/02/21 21:26:00 christos Exp $
+ * @(#)$File: file.h,v 1.206 2019/05/07 02:27:11 christos Exp $
  */
 
 #ifndef __file_h__
@@ -41,6 +41,9 @@
 #ifdef HAVE_STDINT_H
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
+#endif
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
 #endif
 
 #ifdef WIN32
@@ -381,7 +384,7 @@ struct mlist {
 #define CCAST(T, b)	const_cast<T>(b)
 #else
 #define CAST(T, b)	((T)(b))
-#define RCAST(T, b)	((T)(b))
+#define RCAST(T, b)	((T)(uintptr_t)(b))
 #define CCAST(T, b)	((T)(uintptr_t)(b))
 #endif
 
@@ -415,6 +418,7 @@ struct magic_set {
 #define 		EVENT_HAD_ERR		0x01
 	const char *file;
 	size_t line;			/* current magic line number */
+	mode_t mode;			/* copy of current stat mode */
 
 	/* data for searches */
 	struct {
@@ -451,12 +455,14 @@ struct stat;
 protected const char *file_fmttime(uint64_t, int, char *);
 protected struct magic_set *file_ms_alloc(int);
 protected void file_ms_free(struct magic_set *);
-protected int file_buffer(struct magic_set *, int, const char *, const void *,
-    size_t);
+protected int file_default(struct magic_set *, size_t);
+protected int file_buffer(struct magic_set *, int, struct stat *, const char *,
+    const void *, size_t);
 protected int file_fsmagic(struct magic_set *, const char *, struct stat *);
 protected int file_pipe2file(struct magic_set *, int, const void *, size_t);
 protected int file_vprintf(struct magic_set *, const char *, va_list)
     __attribute__((__format__(__printf__, 2, 0)));
+protected int file_separator(struct magic_set *);
 protected size_t file_printedlen(const struct magic_set *);
 protected int file_replace(struct magic_set *, const char *, const char *);
 protected int file_printf(struct magic_set *, const char *, ...)
@@ -474,6 +480,7 @@ protected int file_ascmagic_with_encoding(struct magic_set *,
     const struct buffer *, unichar *, size_t, const char *, const char *, int);
 protected int file_encoding(struct magic_set *, const struct buffer *,
     unichar **, size_t *, const char **, const char **, const char **);
+protected int file_is_json(struct magic_set *, const struct buffer *);
 protected int file_is_tar(struct magic_set *, const struct buffer *);
 protected int file_softmagic(struct magic_set *, const struct buffer *,
     uint16_t *, uint16_t *, int, int);
@@ -502,19 +509,18 @@ protected int file_looks_utf8(const unsigned char *, size_t, unichar *,
     size_t *);
 protected size_t file_pstring_length_size(const struct magic *);
 protected size_t file_pstring_get_length(const struct magic *, const char *);
-protected char * file_printable(char *, size_t, const char *);
+protected char * file_printable(char *, size_t, const char *, size_t);
 #ifdef __EMX__
 protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
 #endif /* __EMX__ */
 
-protected void buffer_init(struct buffer *, int, const void *, size_t);
+protected void buffer_init(struct buffer *, int, const struct stat *,
+    const void *, size_t);
 protected void buffer_fini(struct buffer *);
 protected int buffer_fill(const struct buffer *);
 
-#if defined(HAVE_LOCALE_H)
 #include <locale.h>
-#endif
 #if defined(HAVE_XLOCALE_H)
 #include <xlocale.h>
 #endif
@@ -549,17 +555,6 @@ protected char  *file_pop_buffer(struct magic_set *, file_pushbuf_t *);
 #ifndef COMPILE_ONLY
 extern const char *file_names[];
 extern const size_t file_nnames;
-#endif
-
-#ifndef HAVE_STRERROR
-extern int sys_nerr;
-extern char *sys_errlist[];
-#define strerror(e) \
-	(((e) >= 0 && (e) < sys_nerr) ? sys_errlist[(e)] : "Unknown error")
-#endif
-
-#ifndef HAVE_STRTOUL
-#define strtoul(a, b, c)	strtol(a, b, c)
 #endif
 
 #ifndef HAVE_PREAD
@@ -601,17 +596,17 @@ struct tm *gmtime_r(const time_t *, struct tm *);
 struct tm *localtime_r(const time_t *, struct tm *);
 #endif
 #ifndef HAVE_FMTCHECK
-const char *fmtcheck(const char *, const char *) 
+const char *fmtcheck(const char *, const char *)
      __attribute__((__format_arg__(2)));
 #endif
 
 #ifdef HAVE_LIBSECCOMP
-// basic filter 
+// basic filter
 // this mode should not interfere with normal operations
 // only some dangerous syscalls are blacklisted
 int enable_sandbox_basic(void);
 
-// enhanced filter 
+// enhanced filter
 // this mode allows only the necessary syscalls used during normal operation
 // extensive testing required !!!
 int enable_sandbox_full(void);
@@ -634,6 +629,9 @@ protected void file_warnx(const char *, ...)
 
 #ifndef O_BINARY
 #define O_BINARY	0
+#endif
+#ifndef O_NONBLOCK
+#define O_NONBLOCK	0
 #endif
 
 #ifndef __cplusplus

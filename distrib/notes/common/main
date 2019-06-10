@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.547 2018/06/26 10:49:54 martin Exp $
+.\"	$NetBSD: main,v 1.547.2.1 2019/06/10 21:42:27 christos Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .as MACHINE_LIST " i386 ibmnws iyonix landisk luna68k mac68k macppc mipsco
 .as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
 .as MACHINE_LIST " ofppc playstation2 pmax prep rs6000 sandpoint sbmips
-.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
+.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k zaurus .
 .so \*[.CURDIR]/../common/macros
 .
 .Dd May 9, 2015
@@ -157,8 +157,7 @@ The default kernel on CD-ROMs has ACPI enabled.
 This is known to cause issues on a few machines which have buggy ACPI
 implementations.
 .Pp
-To boot with ACPI disabled, choose the "no ACPI" option from the boot menu,
-or interrupt the menu and enter the
+To boot with ACPI disabled, interrupt the menu and enter the
 .Nx
 boot prompt.
 Type
@@ -381,6 +380,24 @@ kernel is called
 You may want to read the section below on
 .Sx Open Firmware boot syntax
 .\}
+.if \n[macppc] \{\
+.It
+.Pp
+PowerPC 601 machines need to use separate boot floppies 
+.Pa macppc/installation/floppy/boot601_1.fs
+and
+.Pa macppc/installation/floppy/boot602_2.fs ,
+a different kernel set
+.Pa kern-GENERIC_601.tgz ,
+and a different install kernel
+.Pa netbsd-INSTALL_601.gz .
+The same boot CD can be used but at the boot prompt you must specify
+the 601 kernel, i.e., replace
+.Ic netbsd.macppc
+with
+.Ic netbsd.601
+.
+.\}
 .if \n[sparc]:\n[sparc64] \{\
 .It
 You will need to get to the
@@ -511,10 +528,6 @@ The following features are to be removed from
 .Nx
 in the future:
 .(bullet
-.Xr dhclient 8
-in favor of
-.Xr dhcpcd 8 .
-.It
 .Xr groff 1 .
 Man pages are now handled with
 .Xr mandoc 1 ,
@@ -681,12 +694,6 @@ own checksum files, just as the source distribution does.
 .
 .so hardware -----------------------------------------------
 .br_ne 7P
-.
-.if \n[xen] \{.Ss "Installation options"
-.br_ne 7P
-.
-.so instopt -----------------------------------------------
-.\}
 .
 .Ss "Getting the NetBSD System on to Useful Media"
 .

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2017/08/01 21:40:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2019/06/10 21:45:05 christos Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -21,6 +21,7 @@ LLVM_LIBS+= \
 	ARMMCTargetDesc \
 	ARMAsmPrinter \
 	ARMTargetInfo \
+	ARMUtils \
 	MipsAsmParser \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \

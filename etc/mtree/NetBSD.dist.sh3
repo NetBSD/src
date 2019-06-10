@@ -1,0 +1,3 @@
+#	$NetBSD: NetBSD.dist.sh3,v 1.1.2.2 2019/06/10 21:42:45 christos Exp $
+
+./usr/include/sh3

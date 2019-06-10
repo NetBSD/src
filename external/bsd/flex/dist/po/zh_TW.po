@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flex 2.5.37\n"
 "Report-Msgid-Bugs-To: flex-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2016-12-30 12:48-0500\n"
+"POT-Creation-Date: 2017-05-06 10:49-0400\n"
 "PO-Revision-Date: 2013-02-12 23:23+0800\n"
 "Last-Translator: Wei-Lun Chao <bluebat@member.fsf.org>\n"
 "Language-Team: Chinese (traditional) <zh-l10n@linux.org.tw>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: src/buf.c:79
@@ -78,20 +79,20 @@ msgstr ""
 " DFA 傾印：\n"
 "\n"
 
-#: src/dfa.c:592
+#: src/dfa.c:587
 msgid "could not create unique end-of-buffer state"
 msgstr "無法建立獨一的緩衝區結尾狀態"
 
-#: src/dfa.c:613
+#: src/dfa.c:608
 #, c-format
 msgid "state # %d:\n"
 msgstr "狀態 # %d：\n"
 
-#: src/dfa.c:773
+#: src/dfa.c:768
 msgid "Could not write yynxt_tbl[][]"
 msgstr "無法寫入 yynxt_tbl[][]"
 
-#: src/dfa.c:1033
+#: src/dfa.c:1028
 msgid "bad transition character detected in sympartition()"
 msgstr "在 sympartition() 偵測到不當的轉換字元"
 
@@ -107,29 +108,29 @@ msgstr ""
 "等價類別：\n"
 "\n"
 
-#: src/gen.c:665 src/gen.c:694 src/gen.c:1214
+#: src/gen.c:669 src/gen.c:698 src/gen.c:1218
 #, c-format
 msgid "state # %d accepts: [%d]\n"
 msgstr "狀態 # %d 接受：[%d]\n"
 
-#: src/gen.c:1111
+#: src/gen.c:1115
 #, c-format
 msgid "state # %d accepts: "
 msgstr "狀態 # %d 接受："
 
-#: src/gen.c:1158
+#: src/gen.c:1162
 msgid "Could not write yyacclist_tbl"
 msgstr "無法寫入 yyacclist_tbl"
 
-#: src/gen.c:1232
+#: src/gen.c:1236
 msgid "Could not write yyacc_tbl"
 msgstr "無法寫入 yyacc_tbl"
 
-#: src/gen.c:1247 src/gen.c:1619 src/gen.c:1642
+#: src/gen.c:1251 src/gen.c:1623 src/gen.c:1646
 msgid "Could not write ecstbl"
 msgstr "無法寫入 ecstbl"
 
-#: src/gen.c:1267
+#: src/gen.c:1271
 msgid ""
 "\n"
 "\n"
@@ -139,39 +140,39 @@ msgstr ""
 "\n"
 " 後設等價類別：\n"
 
-#: src/gen.c:1289
+#: src/gen.c:1293
 msgid "Could not write yymeta_tbl"
 msgstr "無法寫入 yymeta_tbl"
 
-#: src/gen.c:1348
+#: src/gen.c:1352
 msgid "Could not write yybase_tbl"
 msgstr "無法寫入 yybase_tbl"
 
-#: src/gen.c:1380
+#: src/gen.c:1384
 msgid "Could not write yydef_tbl"
 msgstr "無法寫入 yydef_tbl"
 
-#: src/gen.c:1418
+#: src/gen.c:1422
 msgid "Could not write yynxt_tbl"
 msgstr "無法寫入 yynxt_tbl"
 
-#: src/gen.c:1452
+#: src/gen.c:1456
 msgid "Could not write yychk_tbl"
 msgstr "無法寫入 yychk_tbl"
 
-#: src/gen.c:1604 src/gen.c:1633
+#: src/gen.c:1608 src/gen.c:1637
 msgid "Could not write ftbl"
 msgstr "無法寫入 ftbl"
 
-#: src/gen.c:1610
+#: src/gen.c:1614
 msgid "Could not write ssltbl"
 msgstr "無法寫入 ssltbl"
 
-#: src/gen.c:1661
+#: src/gen.c:1665
 msgid "Could not write eoltbl"
 msgstr "無法寫入 eoltbl"
 
-#: src/gen.c:1718
+#: src/gen.c:1722
 msgid "Could not write yynultrans_tbl"
 msgstr "無法寫入 yynultrans_tbl"
 
@@ -228,308 +229,308 @@ msgstr "選項 -+ 和 --reentrant 是互斥的。"
 msgid "bison bridge not supported for the C++ scanner."
 msgstr "bison 橋接器不受 C++ 掃描程式支援。"
 
-#: src/main.c:336 src/main.c:418
+#: src/main.c:336 src/main.c:419
 #, c-format
 msgid "could not create %s"
 msgstr "無法建立 %s"
 
-#: src/main.c:430
+#: src/main.c:431
 msgid "could not write tables header"
 msgstr "無法寫入表頭"
 
-#: src/main.c:434
+#: src/main.c:435
 #, c-format
 msgid "can't open skeleton file %s"
 msgstr "無法開啟架構檔案 %s"
 
-#: src/main.c:449
+#: src/main.c:450
 msgid "Prefix cannot include '[' or ']'"
 msgstr ""
 
-#: src/main.c:473
+#: src/main.c:474
 msgid "allocation of macro definition failed"
 msgstr "給予巨集定義配額時失敗"
 
-#: src/main.c:520
+#: src/main.c:521
 #, c-format
 msgid "input error reading skeleton file %s"
 msgstr "讀取架構檔案 %s 時輸入錯誤"
 
-#: src/main.c:524
+#: src/main.c:525
 #, c-format
 msgid "error closing skeleton file %s"
 msgstr "關閉架構檔案 %s 時發生錯誤"
 
-#: src/main.c:708
+#: src/main.c:709
 #, c-format
 msgid "error creating header file %s"
 msgstr "建立標頭檔案 %s 時發生錯誤"
 
-#: src/main.c:716
+#: src/main.c:717
 #, c-format
 msgid "error writing output file %s"
 msgstr "寫入輸出檔案 %s 時發生錯誤"
 
-#: src/main.c:720
+#: src/main.c:721
 #, c-format
 msgid "error closing output file %s"
 msgstr "關閉輸出檔案 %s 時發生錯誤"
 
-#: src/main.c:724
+#: src/main.c:725
 #, c-format
 msgid "error deleting output file %s"
 msgstr "刪除輸出檔案 %s 時發生錯誤"
 
-#: src/main.c:731
+#: src/main.c:732
 #, c-format
 msgid "No backing up.\n"
 msgstr "沒有備份。\n"
 
-#: src/main.c:735
+#: src/main.c:736
 #, c-format
 msgid "%d backing up (non-accepting) states.\n"
 msgstr "%d 備份 (非接受) 狀態。\n"
 
-#: src/main.c:739
+#: src/main.c:740
 #, c-format
 msgid "Compressed tables always back up.\n"
 msgstr "壓縮過的表格自動備份。\n"
 
-#: src/main.c:742
+#: src/main.c:743
 #, c-format
 msgid "error writing backup file %s"
 msgstr "寫入備份檔案 %s 時發生錯誤"
 
-#: src/main.c:746
+#: src/main.c:747
 #, c-format
 msgid "error closing backup file %s"
 msgstr "關閉備份檔案 %s 時發生錯誤"
 
-#: src/main.c:751
+#: src/main.c:752
 #, c-format
 msgid "%s version %s usage statistics:\n"
 msgstr "%s 版本 %s 用法統計：\n"
 
-#: src/main.c:754
+#: src/main.c:755
 #, c-format
 msgid "  scanner options: -"
 msgstr "  掃描程式選項：-"
 
-#: src/main.c:833
+#: src/main.c:834
 #, c-format
 msgid "  %d/%d NFA states\n"
 msgstr "  %d/%d NFA 狀態\n"
 
-#: src/main.c:835
+#: src/main.c:836
 #, c-format
 msgid "  %d/%d DFA states (%d words)\n"
 msgstr "  %d/%d DFA 狀態 (%d 個字詞)\n"
 
-#: src/main.c:837
+#: src/main.c:838
 #, c-format
 msgid "  %d rules\n"
 msgstr "  %d 條規則\n"
 
-#: src/main.c:842
+#: src/main.c:843
 #, c-format
 msgid "  No backing up\n"
 msgstr "  沒有備份\n"
 
-#: src/main.c:846
+#: src/main.c:847
 #, c-format
 msgid "  %d backing-up (non-accepting) states\n"
 msgstr "  %d 備份 (非接受) 狀態\n"
 
-#: src/main.c:851
+#: src/main.c:852
 #, c-format
 msgid "  Compressed tables always back-up\n"
 msgstr "  壓縮過的表格自動備份\n"
 
-#: src/main.c:855
+#: src/main.c:856
 #, c-format
 msgid "  Beginning-of-line patterns used\n"
 msgstr "  列首式樣已使用\n"
 
-#: src/main.c:857
+#: src/main.c:858
 #, c-format
 msgid "  %d/%d start conditions\n"
 msgstr "  %d/%d 起始條件\n"
 
-#: src/main.c:861
+#: src/main.c:862
 #, c-format
 msgid "  %d epsilon states, %d double epsilon states\n"
 msgstr "  %d ε狀態，%d 雙倍ε狀態\n"
 
-#: src/main.c:865
+#: src/main.c:866
 #, c-format
 msgid "  no character classes\n"
 msgstr "  無字元類別\n"
 
-#: src/main.c:869
+#: src/main.c:870
 #, c-format
 msgid "  %d/%d character classes needed %d/%d words of storage, %d reused\n"
 msgstr "  %d/%d 字元類別所需 %d/%d 字詞的儲存體，%d 重新使用\n"
 
-#: src/main.c:874
+#: src/main.c:875
 #, c-format
 msgid "  %d state/nextstate pairs created\n"
 msgstr "  %d 狀態/下一狀態對已建立\n"
 
-#: src/main.c:877
+#: src/main.c:878
 #, c-format
 msgid "  %d/%d unique/duplicate transitions\n"
 msgstr "  %d/%d 獨一/重複轉換\n"
 
-#: src/main.c:882
+#: src/main.c:883
 #, c-format
 msgid "  %d table entries\n"
 msgstr "  %d 表格項目\n"
 
-#: src/main.c:890
+#: src/main.c:891
 #, c-format
 msgid "  %d/%d base-def entries created\n"
 msgstr "  %d/%d base-def 項目已建立\n"
 
-#: src/main.c:894
+#: src/main.c:895
 #, c-format
 msgid "  %d/%d (peak %d) nxt-chk entries created\n"
 msgstr "  %d/%d (尖峰 %d) nxt-chk 項目已建立\n"
 
-#: src/main.c:898
+#: src/main.c:899
 #, c-format
 msgid "  %d/%d (peak %d) template nxt-chk entries created\n"
 msgstr "  %d/%d (尖峰 %d) 模板 nxt-chk 項目已建立\n"
 
-#: src/main.c:902
+#: src/main.c:903
 #, c-format
 msgid "  %d empty table entries\n"
 msgstr "  %d 清空表格項目\n"
 
-#: src/main.c:904
+#: src/main.c:905
 #, c-format
 msgid "  %d protos created\n"
 msgstr "  %d 原型已建立\n"
 
-#: src/main.c:907
+#: src/main.c:908
 #, c-format
 msgid "  %d templates created, %d uses\n"
 msgstr "  %d 範本已建立，%d 使用\n"
 
-#: src/main.c:915
+#: src/main.c:916
 #, c-format
 msgid "  %d/%d equivalence classes created\n"
 msgstr "  %d/%d 等價類別已建立\n"
 
-#: src/main.c:923
+#: src/main.c:924
 #, c-format
 msgid "  %d/%d meta-equivalence classes created\n"
 msgstr "  %d/%d 後設等價類別已建立\n"
 
-#: src/main.c:929
+#: src/main.c:930
 #, c-format
 msgid "  %d (%d saved) hash collisions, %d DFAs equal\n"
 msgstr "  %d (%d 已儲存) 雜湊碰撞，%d DFAs 相等\n"
 
-#: src/main.c:931
+#: src/main.c:932
 #, c-format
 msgid "  %d sets of reallocations needed\n"
 msgstr "  需要 %d 組重新配置\n"
 
-#: src/main.c:933
+#: src/main.c:934
 #, c-format
 msgid "  %d total table entries needed\n"
 msgstr "  總計需要 %d 表格項目\n"
 
-#: src/main.c:1007
+#: src/main.c:1008
 #, c-format
 msgid "Internal error. flexopts are malformed.\n"
 msgstr "內部錯誤。flexopts 功能異常。\n"
 
-#: src/main.c:1017
+#: src/main.c:1018
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "嘗試「%s --help」以獲得更多資訊。\n"
 
-#: src/main.c:1074
+#: src/main.c:1075
 #, c-format
 msgid "unknown -C option '%c'"
 msgstr "不明 -C 選項「%c」"
 
-#: src/main.c:1203
+#: src/main.c:1204
 #, c-format
 msgid "%s %s\n"
 msgstr "%s %s\n"
 
-#: src/main.c:1475
+#: src/main.c:1476
 msgid "fatal parse error"
 msgstr "嚴重的解析錯誤"
 
-#: src/main.c:1507
+#: src/main.c:1508
 #, c-format
 msgid "could not create backing-up info file %s"
 msgstr "無法建立備份資訊檔案 %s"
 
-#: src/main.c:1528
+#: src/main.c:1529
 #, c-format
 msgid "-l AT&T lex compatibility option entails a large performance penalty\n"
 msgstr "-l AT&T lex 相容性選項會導致大幅效能減退\n"
 
-#: src/main.c:1531
+#: src/main.c:1532
 #, c-format
 msgid " and may be the actual source of other reported performance penalties\n"
 msgstr " 同時也許是其他回報效能減退的實際來源\n"
 
-#: src/main.c:1537
+#: src/main.c:1538
 #, c-format
 msgid ""
 "%%option yylineno entails a performance penalty ONLY on rules that can match "
 "newline characters\n"
 msgstr "%%option yylineno 導致效能減退，只有當該規則該吻合新列字元時才會\n"
 
-#: src/main.c:1544
+#: src/main.c:1545
 #, c-format
 msgid "-I (interactive) entails a minor performance penalty\n"
 msgstr "-I (互動式) 導致小幅效能減退\n"
 
-#: src/main.c:1549
+#: src/main.c:1550
 #, c-format
 msgid "yymore() entails a minor performance penalty\n"
 msgstr "yymore() 導致小幅效能減退\n"
 
-#: src/main.c:1555
+#: src/main.c:1556
 #, c-format
 msgid "REJECT entails a large performance penalty\n"
 msgstr "REJECT 導致大幅效能減退\n"
 
-#: src/main.c:1560
+#: src/main.c:1561
 #, c-format
 msgid "Variable trailing context rules entail a large performance penalty\n"
 msgstr "變數末尾內文規則導致大幅效能減退\n"
 
-#: src/main.c:1572
+#: src/main.c:1573
 msgid "REJECT cannot be used with -f or -F"
 msgstr "REJECT 無法與 -f 或 -F 共同使用"
 
-#: src/main.c:1575
+#: src/main.c:1576
 #, c-format
 msgid "%option yylineno cannot be used with REJECT"
 msgstr "%option yylineno 無法與 REJECT 共同使用"
 
-#: src/main.c:1578
+#: src/main.c:1579
 msgid "variable trailing context rules cannot be used with -f or -F"
 msgstr "變數末尾內文規則無法與 -f 或 -F 共同使用"
 
-#: src/main.c:1703
+#: src/main.c:1704
 #, c-format
 msgid "%option yyclass only meaningful for C++ scanners"
 msgstr "%option yyclass 只對於 C++ 掃描程式有意義"
 
-#: src/main.c:1790
+#: src/main.c:1791
 #, c-format
 msgid "Usage: %s [OPTIONS] [FILE]...\n"
 msgstr "用法：%s [選項] [檔案]…\n"
 
-#: src/main.c:1793
+#: src/main.c:1794
 #, fuzzy, c-format
 msgid ""
 "Generates programs that perform pattern-matching on text.\n"
@@ -655,48 +656,48 @@ msgstr ""
 "  -h, --help              產生這個說明訊息\n"
 "  -V, --version           報告 %s 版本\n"
 
-#: src/misc.c:65
+#: src/misc.c:64
 msgid "allocation of sko_stack failed"
 msgstr "給予 sko_stack 配額時失敗"
 
-#: src/misc.c:101
+#: src/misc.c:100
 #, c-format
 msgid "name \"%s\" ridiculously long"
 msgstr "名稱「%s」有荒謬的長度"
 
-#: src/misc.c:151
+#: src/misc.c:155
 msgid "memory allocation failed in allocate_array()"
 msgstr "在 allocatearray() 中記憶體配置失敗"
 
-#: src/misc.c:201
+#: src/misc.c:205
 #, c-format
 msgid "bad character '%s' detected in check_char()"
 msgstr "在 checkchar() 中偵測到不當的字元「%s」"
 
-#: src/misc.c:206
+#: src/misc.c:210
 #, c-format
 msgid "scanner requires -8 flag to use the character %s"
 msgstr "掃描程式需要 -8 旗標以使用字元 %s"
 
-#: src/misc.c:225
+#: src/misc.c:229
 #, fuzzy
 msgid "memory allocation failure in xstrdup()"
 msgstr "在 allocatearray() 中記憶體配置失敗"
 
-#: src/misc.c:299
+#: src/misc.c:303
 #, c-format
 msgid "%s: fatal internal error, %s\n"
 msgstr "%s：嚴重內部錯誤，%s\n"
 
-#: src/misc.c:689
+#: src/misc.c:671
 msgid "attempt to increase array size failed"
 msgstr "試圖增加陣列大小時失敗"
 
-#: src/misc.c:816
+#: src/misc.c:795
 msgid "bad line in skeleton file"
 msgstr "架構檔案中不當的列"
 
-#: src/misc.c:866
+#: src/misc.c:845
 msgid "memory allocation failed in yy_flex_xmalloc()"
 msgstr "在 yy_flex_xmalloc() 中的記憶體配置失敗"
 
@@ -793,7 +794,7 @@ msgstr "在大小寫不須相符的掃描程式中，[:^lower:] 是模稜兩可�
 msgid "[:^upper:] ambiguous in case insensitive scanner"
 msgstr "在大小寫不須相符的掃描程式中，[:^upper:] 是模稜兩可的"
 
-#: src/scan.l:82 src/scan.l:645 src/scan.l:703
+#: src/scan.l:82 src/scan.l:644 src/scan.l:702
 msgid "Input line too long\n"
 msgstr "輸入列太長\n"
 
@@ -811,77 +812,77 @@ msgstr "無法辨識的「%」指令"
 msgid "Definition name too long\n"
 msgstr "定義名稱太長\n"
 
-#: src/scan.l:310
+#: src/scan.l:309
 msgid "Unmatched '{'"
 msgstr "不成對的「{」"
 
-#: src/scan.l:326
+#: src/scan.l:325
 #, c-format
 msgid "Definition value for {%s} too long\n"
 msgstr "{%s} 的定義值太長\n"
 
-#: src/scan.l:343
+#: src/scan.l:342
 msgid "incomplete name definition"
 msgstr "不完整的名稱定義"
 
-#: src/scan.l:468
+#: src/scan.l:467
 msgid "Option line too long\n"
 msgstr "選項列太長\n"
 
-#: src/scan.l:476
+#: src/scan.l:475
 #, c-format
 msgid "unrecognized %%option: %s"
 msgstr "無法辨識的 %%option：%s"
 
-#: src/scan.l:660 src/scan.l:833
+#: src/scan.l:659 src/scan.l:832
 msgid "bad character class"
 msgstr "不當的字元類別"
 
-#: src/scan.l:710
+#: src/scan.l:709
 #, c-format
 msgid "undefined definition {%s}"
 msgstr "未定義的定義 {%s}"
 
-#: src/scan.l:773
+#: src/scan.l:772
 msgid "unbalanced parenthesis"
 msgstr ""
 
-#: src/scan.l:788
+#: src/scan.l:787
 #, c-format
 msgid "bad <start condition>: %s"
 msgstr "不當的 <起始條件>：%s"
 
-#: src/scan.l:801
+#: src/scan.l:800
 msgid "missing quote"
 msgstr "缺少引號"
 
-#: src/scan.l:867
+#: src/scan.l:866
 #, c-format
 msgid "bad character class expression: %s"
 msgstr "不當的字元類別運算式：%s"
 
-#: src/scan.l:889
+#: src/scan.l:888
 msgid "bad character inside {}'s"
 msgstr "不當字元於 {} 內部"
 
-#: src/scan.l:895
+#: src/scan.l:894
 msgid "missing }"
 msgstr "缺少 }"
 
-#: src/scan.l:973
+#: src/scan.l:972
 msgid "EOF encountered inside an action"
 msgstr "在動作之內遇到檔案結束"
 
-#: src/scan.l:978
+#: src/scan.l:977
 msgid "EOF encountered inside pattern"
 msgstr "在式樣之內遇到檔案結束"
 
-#: src/scan.l:1011
+#: src/scan.l:1010
 #, c-format
 msgid "bad character: %s"
 msgstr "不當的字元：%s"
 
-#: src/scan.l:1039
+#: src/scan.l:1038
 #, c-format
 msgid "can't open %s"
 msgstr "無法開啟 %s"

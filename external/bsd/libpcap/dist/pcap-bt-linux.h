@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bt-linux.h,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
+/*	$NetBSD: pcap-bt-linux.h,v 1.3.16.1 2019/06/10 21:44:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -36,5 +36,5 @@
 /*
  * Prototypes for Bluetooth-related functions
  */
-int bt_findalldevs(pcap_if_t **alldevsp, char *err_str);
+int bt_findalldevs(pcap_if_list_t *devlistp, char *err_str);
 pcap_t *bt_create(const char *device, char *ebuf, int *is_ours);

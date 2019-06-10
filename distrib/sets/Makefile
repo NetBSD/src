@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2016/08/16 01:05:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.103.14.1 2019/06/10 21:42:29 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -15,8 +15,10 @@ all:
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-COMPRESS_PROGRAM=${TOOL_GZIP}
-GZIP_FLAGS= ${GZIP_N_FLAG}
+COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
+TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
+XZ_OPT=		-9
+GZIP_FLAGS=	${GZIP_N_FLAG}
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
@@ -32,6 +34,8 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		PAX=${TOOL_PAX:Q} \
 		COMPRESS_PROGRAM=${COMPRESS_PROGRAM:Q} \
 		GZIP=${GZIP_FLAGS:Q} \
+		XZ_OPT=${XZ_OPT:Q} \
+		TAR_SUFF=${TAR_SUFF:Q} \
 		PKG_CREATE=${TOOL_PKG_CREATE:Q} \
 		SED=${TOOL_SED:Q} \
 		TSORT=${TSORT:Q}
@@ -69,6 +73,9 @@ MAKETARSETS!= ${SETSCMD} ./makeflist -l ${MAKEFLIST_FLAGS}
 
 print_have_xorg_server_ver: .PHONY
 	@echo ${HAVE_XORG_SERVER_VER}
+
+print_have_mesa_ver: .PHONY
+	@echo ${HAVE_MESA_VER}
 
 print_have_gcc: .PHONY
 	@echo ${HAVE_GCC}
@@ -232,11 +239,11 @@ makesetfiles: .PHONY sanitise_METALOG
 
 .for tar in ${MAKETARSETS}
 do-${tar}: .PHONY sanitise_METALOG
-	${_MKMSG_CREATE} "${tar}.tgz"
+	${_MKMSG_CREATE} "${tar}.${TAR_SUFF}"
 	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
 	    ${METALOG.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc -t ${TARDIR} ${tar} \
-	|| { rm -f ${TARDIR}/${tar}.tgz; false; }
+	|| { rm -f ${TARDIR}/${tar}.${TAR_SUFF}; false; }
 .endfor
 
 
@@ -257,7 +264,7 @@ makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 .for tar in ${MAKETARSETS}
 do-sum-${tar}: .PHONY do-${tar}
 	${_MKMSG_CREATE} "${tar} checksums"
-	${MAKESUMS} -t ${TARDIR} ${tar}.tgz
+	${MAKESUMS} -t ${TARDIR} ${tar}.${TAR_SUFF}
 	for i in MD5 SHA512; do \
 		${TOOL_CAT} ${TARDIR}/$$i >> ${TARDIR}/$$i.tmp; \
 	done

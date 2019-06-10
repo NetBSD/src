@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -83,4 +84,18 @@ TEST(StringExtrasTest, to_float) {
   EXPECT_FALSE(to_float("foo", F));
   EXPECT_FALSE(to_float("7.4 foo", F));
   EXPECT_FLOAT_EQ(4.7f, F); // F should be unchanged
+}
+
+TEST(StringExtrasTest, printLowerCase) {
+  std::string str;
+  raw_string_ostream OS(str);
+  printLowerCase("ABCdefg01234.,&!~`'}\"", OS);
+  EXPECT_EQ("abcdefg01234.,&!~`'}\"", OS.str());
+}
+
+TEST(StringExtrasTest, printHTMLEscaped) {
+  std::string str;
+  raw_string_ostream OS(str);
+  printHTMLEscaped("ABCdef123&<>\"'", OS);
+  EXPECT_EQ("ABCdef123&amp;&lt;&gt;&quot;&apos;", OS.str());
 }

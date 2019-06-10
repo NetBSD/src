@@ -37,19 +37,23 @@
 .hsa_code_object_isa 7,0,0,"AMD","AMDGPU"
 // ASM: .hsa_code_object_isa 7,0,0,"AMD","AMDGPU"
 
-.amdgpu_code_object_metadata
+.amd_amdgpu_hsa_metadata
   Version: [ 3, 0 ]
   Kernels:
-    - Name: amd_kernel_code_t_test_all
-    - Name: amd_kernel_code_t_minimal
-.end_amdgpu_code_object_metadata
+    - Name:       amd_kernel_code_t_test_all
+      SymbolName: amd_kernel_code_t_test_all@kd
+    - Name:       amd_kernel_code_t_minimal
+      SymbolName: amd_kernel_code_t_minimal@kd
+.end_amd_amdgpu_hsa_metadata
 
-// ASM: .amdgpu_code_object_metadata
+// ASM: .amd_amdgpu_hsa_metadata
 // ASM:    Version: [ 3, 0 ]
 // ASM:    Kernels:
-// ASM:      - Name: amd_kernel_code_t_test_all
-// ASM:      - Name: amd_kernel_code_t_minimal
-// ASM: .end_amdgpu_code_object_metadata
+// ASM:      - Name:       amd_kernel_code_t_test_all
+// ASM:        SymbolName: 'amd_kernel_code_t_test_all@kd'
+// ASM:      - Name:       amd_kernel_code_t_minimal
+// ASM:        SymbolName: 'amd_kernel_code_t_minimal@kd'
+// ASM: .end_amd_amdgpu_hsa_metadata
 
 .amdgpu_hsa_kernel amd_kernel_code_t_test_all
 .amdgpu_hsa_kernel amd_kernel_code_t_minimal
@@ -131,7 +135,6 @@ amd_kernel_code_t_test_all:
 // ASM: amd_machine_version_stepping = 5
 // ASM: kernel_code_entry_byte_offset = 512
 // ASM: kernel_code_prefetch_byte_size = 1
-// ASM: max_scratch_backing_memory_byte_size = 1
 // ASM: granulated_workitem_vgpr_count = 1
 // ASM: granulated_wavefront_sgpr_count = 1
 // ASM: priority = 1
@@ -208,14 +211,13 @@ amd_kernel_code_t_minimal:
 // ASM-LABEL: {{^}}amd_kernel_code_t_minimal:
 // ASM: .amd_kernel_code_t
 // ASM:	amd_code_version_major = 1
-// ASM:	amd_code_version_minor = 1
+// ASM:	amd_code_version_minor = 2
 // ASM:	amd_machine_kind = 1
 // ASM:	amd_machine_version_major = 7
 // ASM:	amd_machine_version_minor = 0
 // ASM:	amd_machine_version_stepping = 0
 // ASM:	kernel_code_entry_byte_offset = 256
 // ASM:	kernel_code_prefetch_byte_size = 0
-// ASM:	max_scratch_backing_memory_byte_size = 0
 // ASM: granulated_workitem_vgpr_count = 1
 // ASM: granulated_wavefront_sgpr_count = 1
 // ASM: priority = 0

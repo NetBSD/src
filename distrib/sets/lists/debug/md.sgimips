@@ -1,2 +1,2 @@
-# $NetBSD: md.sgimips,v 1.2 2013/01/16 21:11:09 christos Exp $
-./usr/libdata/debug/usr/mdec/sgivol.debug	-unknown-		debug
+# $NetBSD: md.sgimips,v 1.2.36.1 2019/06/10 21:42:30 christos Exp $
+./usr/libdata/debug/usr/mdec/sgivol.debug	comp-sysutil-debug		debug

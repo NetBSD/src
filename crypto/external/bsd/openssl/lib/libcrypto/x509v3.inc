@@ -1,4 +1,4 @@
-#	$NetBSD: x509v3.inc,v 1.3 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: x509v3.inc,v 1.3.4.1 2019/06/10 21:41:55 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -16,6 +16,7 @@ pcy_map.c \
 pcy_node.c \
 pcy_tree.c \
 v3_addr.c \
+v3_admis.c \
 v3_akey.c \
 v3_akeya.c \
 v3_alt.c \

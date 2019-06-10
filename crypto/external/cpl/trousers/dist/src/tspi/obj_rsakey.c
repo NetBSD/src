@@ -87,7 +87,7 @@ obj_rsakey_add(TSS_HCONTEXT tspContext, TSS_FLAG initFlags, TSS_HOBJECT *phObjec
 	if (initFlags == TSS_KEY_EMPTY_KEY)
 		goto add_key;
 
-	memset(&rsaKeyParms, 0, sizeof(TCPA_RSA_KEY_PARMS));
+	__tspi_memset(&rsaKeyParms, 0, sizeof(TCPA_RSA_KEY_PARMS));
 
 	rsakey->key.algorithmParms.algorithmID = TCPA_ALG_RSA;
 	rsakey->key.algorithmParms.parmSize = sizeof(TCPA_RSA_KEY_PARMS);
@@ -1722,14 +1722,14 @@ done:
 TSS_RESULT
 obj_rsakey_set_srk_pubkey(BYTE *pubkey)
 {
-	struct tsp_object *obj, *prev = NULL;
+	struct tsp_object *obj;
 	struct obj_list *list = &rsakey_list;
 	struct tr_rsakey_obj *rsakey;
 	TSS_RESULT result;
 
 	MUTEX_LOCK(list->lock);
 
-	for (obj = list->head; obj; prev = obj, obj = obj->next) {
+	for (obj = list->head; obj; obj = obj->next) {
 		rsakey = (struct tr_rsakey_obj *)obj->data;
 
 		/* we found the SRK, set this data as its public key */
@@ -1896,13 +1896,13 @@ done:
 void
 obj_rsakey_remove_policy_refs(TSS_HPOLICY hPolicy, TSS_HCONTEXT tspContext)
 {
-	struct tsp_object *obj, *prev = NULL;
+	struct tsp_object *obj;
 	struct obj_list *list = &rsakey_list;
 	struct tr_rsakey_obj *rsakey;
 
 	MUTEX_LOCK(list->lock);
 
-	for (obj = list->head; obj; prev = obj, obj = obj->next) {
+	for (obj = list->head; obj; obj = obj->next) {
 		if (obj->tspContext != tspContext)
 			continue;
 

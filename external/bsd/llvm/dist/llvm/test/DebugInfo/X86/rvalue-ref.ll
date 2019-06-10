@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj -O0
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-info %t | FileCheck %s
 
 ; CHECK: DW_TAG_rvalue_reference_type
 
@@ -25,7 +25,7 @@ declare i32 @printf(i8*, ...)
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.2 (trunk 157054) (llvm/trunk 157060)", isOptimized: false, emissionKind: FullDebug, file: !16, enums: !1, retainedTypes: !1, globals: !1, imports:  !1)
 !1 = !{}
-!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooOi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !16, scope: !6, type: !7, variables: !1)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooOi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !16, scope: !6, type: !7, retainedNodes: !1)
 !6 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}

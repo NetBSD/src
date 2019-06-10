@@ -16,7 +16,7 @@
 # CHECK-NEXT: line 2: failed test output on stdout
 # CHECK: Command Output (stderr):
 # CHECK-NEXT: --
-# CHECK-NEXT: cat: does-not-exist: No such file or directory
+# CHECK-NEXT: cat{{(\.exe)?}}: does-not-exist: No such file or directory
 # CHECK: --
 
 # CHECK: FAIL: shtest-format :: external_shell/fail_with_bad_encoding.txt
@@ -39,6 +39,7 @@
 #
 # CHECK: Command Output (stdout):
 # CHECK-NEXT: --
+# CHECK-NEXT: $ ":" "RUN: at line 1"
 # CHECK-NEXT: $ "printf"
 # CHECK-NEXT: # command output:
 # CHECK-NEXT: line 1: failed test output on stdout

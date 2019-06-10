@@ -23,22 +23,47 @@ local_label:
         break 7, 1024     # CHECK: :[[@LINE]]:18: error: expected 10-bit unsigned immediate
         break 1024, 1024  # CHECK: :[[@LINE]]:15: error: expected 10-bit unsigned immediate
         dati $2, $3, 1    # CHECK: :[[@LINE]]:9: error: source and destination must match
-        lh  $33, 8($4)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lhe $34, 8($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lhu $35, 8($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lhue $36, 8($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lh  $2, 8($34)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lhe $4, 8($33)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
-        lhu $4, 8($35)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lhue $4, 8($37)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
-        lh  $2, -65536($4) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lh  $2, 65536($4)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lhe $4, -512($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
-        lhe $4, 512($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
-        lhu $4, -65536($2) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lhu $4, 65536($2)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lhue $4, -512($2)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
-        lhue $4, 512($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 9-bit signed offset
+        dext $2, $3, -1, 1   # CHECK: :[[@LINE]]:22: error: expected 6-bit unsigned immediate
+        dext $2, $3, 64, 1   # CHECK: :[[@LINE]]:22: error: expected 6-bit unsigned immediate
+        dext $2, $3, 1, 0    # CHECK: :[[@LINE]]:25: error: expected immediate in range 1 .. 32
+        dext $2, $3, 32, 33  # CHECK: :[[@LINE]]:26: error: expected immediate in range 1 .. 32
+        dextm $2, $3, -1, 1  # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dextm $2, $3, 32, 1  # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dextm $2, $3, -1, 33 # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dextm $2, $3, 32, 33 # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dextm $2, $3, 1, 32  # CHECK: :[[@LINE]]:26: error: expected immediate in range 33 .. 64
+        dextm $2, $3, 1, 65  # CHECK: :[[@LINE]]:26: error: expected immediate in range 33 .. 64
+        dextm $3, $4, 31, 34 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: size plus position are not in the range 33 .. 64
+        dextu $2, $3, 31, 1  # CHECK: :[[@LINE]]:23: error: expected immediate in range 32 .. 63
+        dextu $2, $3, 64, 1  # CHECK: :[[@LINE]]:23: error: expected immediate in range 32 .. 63
+        dextu $2, $3, 32, 0  # CHECK: :[[@LINE]]:27: error: expected immediate in range 1 .. 32
+        dextu $2, $3, 32, 33 # CHECK: :[[@LINE]]:27: error: expected immediate in range 1 .. 32
+        dextu $3, $4, 33, 32 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: size plus position are not in the range 33 .. 64
+        dins $2, $3, -1, 1   # CHECK: :[[@LINE]]:22: error: expected 6-bit unsigned immediate
+        dins $2, $3, 64, 1   # CHECK: :[[@LINE]]:22: error: expected 6-bit unsigned immediate
+        dins $2, $3, 1, -1   # CHECK: :[[@LINE]]:25: error: expected immediate in range 1 .. 32
+        dinsm $2, $3, -1, 1  # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dinsm $2, $3, 32, 1  # CHECK: :[[@LINE]]:23: error: expected 5-bit unsigned immediate
+        dinsm $2, $3, 0, 1   # CHECK: :[[@LINE]]:26: error: expected immediate in range 2 .. 64
+        dinsm $2, $3, 0, 65  # CHECK: :[[@LINE]]:26: error: expected immediate in range 2 .. 64
+        dinsm $4, $5, 31, 34 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: size plus position are not in the range 33 .. 64
+        dinsu $2, $3, 31, 1  # CHECK: :[[@LINE]]:23: error: expected immediate in range 32 .. 63
+        dinsu $2, $3, 64, 1  # CHECK: :[[@LINE]]:23: error: expected immediate in range 32 .. 63
+        dinsu $2, $3, 32, 0  # CHECK: :[[@LINE]]:27: error: expected immediate in range 1 .. 32
+        dinsu $2, $3, 32, 33 # CHECK: :[[@LINE]]:27: error: expected immediate in range 1 .. 32
+        dinsu $4, $5, 33, 32 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: size plus position are not in the range 33 .. 64
+        lh  $33, 8($4)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhe $34, 8($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhu $35, 8($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhue $36, 8($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lh  $2, 8($34)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhe $4, 8($33)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhu $4, 8($35)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhue $4, 8($37)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lhe $4, -512($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        lhe $4, 512($2)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        lhue $4, -512($2)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        lhue $4, 512($2)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         // FIXME: Following tests are temporarily disabled, until "PredicateControl not in hierarchy" problem is resolved
         bltl  $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         bltul $7, $8, local_label  # -CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
@@ -137,6 +162,10 @@ local_label:
         evp 3                # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         jalr.hb $31          # CHECK: :[[@LINE]]:{{[0-9]+}}: error: source and destination must be different
         jalr.hb $31, $31     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: source and destination must be different
+        lapc $7, 1048576     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 19-bit signed immediate and multiple of 4
+        lapc $6, -1048580    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 19-bit signed immediate and multiple of 4
+        lapc $3, 3           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 19-bit signed immediate and multiple of 4
+        lapc $3, -1          # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected both 19-bit signed immediate and multiple of 4
         lsa     $2, $3, $4, 0     # CHECK: :[[@LINE]]:29: error: expected immediate in range 1 .. 4
         lsa     $2, $3, $4, 5     # CHECK: :[[@LINE]]:29: error: expected immediate in range 1 .. 4
         pref -1, 255($7)     # CHECK: :[[@LINE]]:14: error: expected 5-bit unsigned immediate
@@ -145,55 +174,45 @@ local_label:
         dmtc0  $4, $3, 8     # CHECK: :[[@LINE]]:24: error: expected 3-bit unsigned immediate
         dmfc0  $4, $3, -1    # CHECK: :[[@LINE]]:24: error: expected 3-bit unsigned immediate
         dmfc0  $4, $3, 8     # CHECK: :[[@LINE]]:24: error: expected 3-bit unsigned immediate
-        ld $2, 65536($4)     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        ld  $2, -65536($4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        ld $32, 65536($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lld  $2, -65536($4)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lld  $2, 65536($4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        sd  $2, -65536($4)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        lld $32, 4096($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        sd  $2, 65536($4)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected memory with 16-bit signed offset
-        sd $32, 65536($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        ld $32, 65536($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lld $32, 4096($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        sd $32, 65536($32)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
         dsrl $2, $4, 64      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected 6-bit unsigned immediate
         dsrl $2, $4, -2      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected 6-bit unsigned immediate
-        dsrl $32, $32, 32    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        dsrl $32, $32, 32    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
         dsrl32 $2, $4, 32    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: expected 5-bit unsigned immediate
-        dsrl32 $32, $32, 32  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        dsrl32 $32, $32, 32  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
         dsrlv $2, $4, 2      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        dsrlv $32, $32, $32  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
-        lb $32, 8($5)        # CHECK: :[[@LINE]]:12: error: invalid operand for instruction
-        lb $4, -32769($5)    # CHECK: :[[@LINE]]:16: error: expected memory with 16-bit signed offset
-        lb $4, 32768($5)     # CHECK: :[[@LINE]]:16: error: expected memory with 16-bit signed offset
-        lb $4, 8($32)        # CHECK: :[[@LINE]]:16: error: expected memory with 16-bit signed offset
-        lbu $32, 8($5)       # CHECK: :[[@LINE]]:13: error: invalid operand for instruction
-        lbu $4, -32769($5)   # CHECK: :[[@LINE]]:17: error: expected memory with 16-bit signed offset
-        lbu $4, 32768($5)    # CHECK: :[[@LINE]]:17: error: expected memory with 16-bit signed offset
-        lbu $4, 8($32)       # CHECK: :[[@LINE]]:17: error: expected memory with 16-bit signed offset
+        dsrlv $32, $32, $32  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid register number
+        lb $32, 8($5)        # CHECK: :[[@LINE]]:12: error: invalid register number
+        lb $4, 8($32)        # CHECK: :[[@LINE]]:18: error: invalid register number
+        lbu $32, 8($5)       # CHECK: :[[@LINE]]:13: error: invalid register number
+        lbu $4, 8($32)       # CHECK: :[[@LINE]]:19: error: invalid register number
         ldc1 $f32, 300($10)   # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
         ldc1 $f7, -32769($10) # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
         ldc1 $f7, 32768($10)  # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
-        ldc1 $f7, 300($32)    # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
+        ldc1 $f7, 300($32)    # CHECK: :[[@LINE]]:23: error: invalid register number
         sdc1 $f32, 64($10)    # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
         sdc1 $f7, -32769($10) # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
         sdc1 $f7, 32768($10)  # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
-        sdc1 $f7, 64($32)     # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
+        sdc1 $f7, 64($32)     # CHECK: :[[@LINE]]:22: error: invalid register number
         lwc1 $f32, 32($5)     # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
         lwc1 $f2, -32769($5)  # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
         lwc1 $f2, 32768($5)   # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
-        lwc1 $f2, 32($32)     # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
+        lwc1 $f2, 32($32)     # CHECK: :[[@LINE]]:22: error: invalid register number
         swc1 $f32, 369($13)   # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
         swc1 $f6, -32769($13) # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
         swc1 $f6, 32768($13)  # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
-        swc1 $f6, 369($32)    # CHECK: :[[@LINE]]:19: error: expected memory with 16-bit signed offset
-        ldc2 $32, 1023($12)  # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
+        swc1 $f6, 369($32)    # CHECK: :[[@LINE]]:23: error: invalid register number
+        ldc2 $32, 1023($12)  # CHECK: :[[@LINE]]:14: error: invalid register number
         ldc2 $11, -1025($12) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         ldc2 $11, 1024($12)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
-        sdc2 $32, 8($16)     # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
+        sdc2 $32, 8($16)     # CHECK: :[[@LINE]]:14: error: invalid register number
         sdc2 $11, -1025($12) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         sdc2 $11, 1024($12)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
-        lwc2 $32, 16($4)     # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
+        lwc2 $32, 16($4)     # CHECK: :[[@LINE]]:14: error: invalid register number
         lwc2 $11, -1025($12) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         lwc2 $11, 1024($12)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
-        swc2 $32, 777($17)   # CHECK: :[[@LINE]]:14: error: invalid operand for instruction
+        swc2 $32, 777($17)   # CHECK: :[[@LINE]]:14: error: invalid register number
         swc2 $11, -1025($12) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         swc2 $11, 1024($12)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled

@@ -55,13 +55,15 @@
 ; Next we break out of the main Function passes inside the CGSCC pipeline with
 ; a barrier pass.
 ; CHECK-O2: A No-Op Barrier Pass
-; Reduce the size of the IR ASAP after the inliner.
 ; CHECK-O2-NEXT: Eliminate Available Externally
 ; Inferring function attribute should be right after the CGSCC pipeline, before
 ; any other optimizations/analyses.
 ; CHECK-O2-NEXT: CallGraph
 ; CHECK-O2-NEXT: Deduce function attributes in RPO
 ; CHECK-O2-NOT: Manager
+; Reduce the size of the IR ASAP after the inliner.
+; CHECK-O2-NEXT: Global Variable Optimizer
+; CHECK-O2: Dead Global Elimination
 ; Next is the late function pass pipeline.
 ; CHECK-O2: FunctionPass Manager
 ; CHECK-O2-NOT: Manager
@@ -91,7 +93,7 @@
 ; FIXME: There really shouldn't be another pass manager, especially one that
 ; just builds the domtree. It doesn't even run the verifier.
 ; CHECK-O2: Pass Arguments:
-; CHECK-O2-NEXT: FunctionPass Manager
+; CHECK-O2: FunctionPass Manager
 ; CHECK-O2-NEXT: Dominator Tree Construction
 
 define void @foo() {

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.190 2018/05/20 14:08:33 thorpej Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.190.2.1 2019/06/10 21:42:39 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,7 +45,6 @@
 #	lua	Lua device
 #	wscons	make wscons devices
 #	usbs	make USB devices
-#	isdns	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -187,14 +186,6 @@
 #	ttyU*	USB modems
 #	ttyY*	USB serial adapters
 #
-# ISDN devices:
-#	isdn	communication between userland isdnd and kernel
-#	isdnctl	control device
-#	isdnbchan* raw b-channel access
-#	isdntel*	telephony device
-#	isdnteld*	telephony dialout device
-#	isdntrc*	trace device
-#
 # Video devices:
 #	bwtwo*	monochromatic frame buffer
 #	cgtwo*	8-bit color frame buffer
@@ -251,6 +242,7 @@
 #	iic*	IIC bus device
 #	io	x86 IOPL access for COMPAT_10, COMPAT_FREEBSD
 #	iop*	I2O IOP control interface
+#	ipmi*	OpenIPMI compatible interface
 #	ipl	IP Filter
 #	irframe* IrDA physical frame
 #	ite*	terminal emulator interface to HP300 graphics devices
@@ -267,6 +259,7 @@
 #	nsmb*	SMB requester
 #	nvme*	Non-Volatile Memory Host Controller Interface device driver
 #	nvme*ns* Non-Volatile Memory namespace
+#	nvmm	NetBSD Virtual Machine Monitor
 #	openfirm OpenFirmware accessor
 #	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
@@ -276,16 +269,18 @@
 #	radio*	radio devices
 #	random	Random number generator
 #	rtc*	RealTimeClock
-#	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses
 #	se*	SCSI Ethernet
 #	ses*	SES/SAF-TE SCSI Devices
 #	speaker	PC speaker		(XXX - installed)
+#	spi*	SPI bus device
 #	sram	battery backuped memory (x68k)
+#	srt*	source-address based routing
 #	ss*	SCSI scanner
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
 #	tap*	virtual Ethernet device
+#	tprof	task profiler
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
 #	twe	3ware Escalade control interface
@@ -815,6 +810,8 @@ all)
 	makedev std fd ptm
 	makedev dk0 dk1 dk2 dk3 dk4 dk5 dk6 dk7
 	makedev dk8 dk9 dk10 dk11 dk12 dk13 dk14 dk15
+	makedev dk16 dk17 dk18 dk19 dk20 dk21 dk22 dk23
+	makedev dk24 dk25 dk26 dk27 dk28 dk29 dk30 dk31
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev filemon
@@ -828,6 +825,7 @@ all)
 	makedev ipl pf crypto random
 	makedev lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3 atabus4 atabus5 atabus6 atabus7
+	makedev srt0 srt1 srt2 srt3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev gpiopps0
@@ -845,6 +843,7 @@ all)
 	makedev dtrace
 	makedev veriexec
 	makedev autofs
+	makedev fw0 fw1 fw2 fw3
 	makedev local # do this last
 	;;
 
@@ -915,7 +914,9 @@ ramdisk)
 
 usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
-	makedev uhid0 uhid1 uhid2 uhid3
+	makedev uhid0 uhid1 uhid2 uhid3 uhid4 uhid5
+	makedev uhid6 uhid7 uhid8 uhid9 uhid10 uhid11
+	makedev uhid12 uhid13 uhid14 uhid15
 	makedev ulpt0 ulpt1
 	makedev ttyU0 ttyU1 ttyU2 ttyU3 ttyU4 ttyU5 ttyU6 ttyU7
 	makedev ttyY0 ttyY1
@@ -924,10 +925,6 @@ usbs)
 	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
 	makedev ugen0 ugen1 ugen2 ugen3
-	;;
-
-isdns)
-	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdnteld0 isdnteld1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -940,7 +937,7 @@ std)
 	mkdev		full	c %mem_chr% 11	666
 	mkdev		zero	c %mem_chr% 12	666
 	mkdev		klog	c %log_chr% 0	600
-	mkdev		ksyms	c %ksyms_chr% 0 444
+	mkdev		ksyms	c %ksyms_chr% 0 440 $g_kmem
 	mkdev		random	c %rnd_chr% 0	444
 	mkdev		urandom	c %rnd_chr% 1	644
 	if ! $fdesc_mounted; then
@@ -1250,6 +1247,10 @@ dk[0-9]*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
 	mkdev r$name$unit c $chr $unit 0640 $g_operator
 	mkdev $name$unit b $blk  $unit 0640 $g_operator
+	;;
+
+tprof)
+	mkdev tprof c %tprof_chr% 0
 	;;
 
 ttyCY[0-9]*)
@@ -1591,6 +1592,12 @@ iic[0-9]*)
 	mkdev iic$unit c %iic_chr% $unit 600
 	;;
 
+spi[0-9]*)
+	unit=${i#spi}
+	: ${unit:-0}
+	mkdev spi$unit c %spi_chr% $unit 600
+	;;
+
 amr[0-9]*)
 	unit=${i#amr}
 	mkdev amr$unit c %amr_chr% $unit
@@ -1605,11 +1612,6 @@ apm)
 		# hpcmips uses `apmdev_chr' instead of `apm_chr'
 	mkdev apm	c %apmdev_chr% 0 644
 	mkdev apmctl	c %apmdev_chr% 8 644
-	;;
-
-satlink[0-9]*)
-	unit=${i#satlink}
-	mkdev satlink$unit c %satlink_chr% $unit 444
 	;;
 
 random)
@@ -1721,34 +1723,6 @@ altq)
 		mkdev altq/$dev c %altq_chr% $unit 644
 		unit=$(($unit + 1))
 	done
-	;;
-
-isdn)
-	mkdev isdn c %isdn_chr% 0
-	;;
-
-isdnctl)
-	mkdev isdnctl c %isdnctl_chr% 0
-	;;
-
-isdnbchan[0-9]*)
-	unit=${i#isdnbchan}
-	mkdev isdnbchan$unit c %isdnbchan_chr% $unit
-	;;
-
-isdnteld[0-9]*)
-	unit=${i#isdnteld}
-	mkdev isdnteld$unit c %isdntel_chr% $(($unit + 64))
-	;;
-
-isdntel[0-9]*)
-	unit=${i#isdntel}
-	mkdev isdntel$unit c %isdntel_chr% $unit
-	;;
-
-isdntrc[0-9]*)
-	unit=${i#isdntrc}
-	mkdev isdntrc$unit c %isdntrc_chr% $unit
 	;;
 
 wsfont)
@@ -2181,6 +2155,11 @@ tap|tap[0-9]*)
 	esac
 	;;
 
+srt[0-9]*)
+	unit=${i#srt}
+	mkdev srt$unit c %srt_chr% $unit 600
+	;;
+
 tpm)
 	mkdev tpm c %tpm_chr% 0 600
 	;;
@@ -2217,7 +2196,7 @@ zfs)
 
 iscsi[0-9]*)
 	unit=${i#iscsi}
-	mkdev iscsi${unit} c %iscsi_chr% 0 600
+	mkdev iscsi${unit} c %iscsi_chr% $unit 600
 	;;
 
 vchiq)
@@ -2228,7 +2207,7 @@ nvme[0-9]*ns[0-9]*)
 	unit=${i#nvme}
 	unit=${unit%ns*}
 	subunit=${i#nvme${unit}ns}
-	if [ 0$subunit -le 0 -o 0$subunit -ge 65536 ]; then
+	if [ 0$subunit -le 0 ] || [ 0$subunit -ge 65536 ]; then
 		warn "bad nsid for $i: $subunit"
 		break
 	fi
@@ -2240,8 +2219,21 @@ nvme[0-9]*)
 	mkdev nvme$unit c %nvme_chr% $(($unit * 65536))
 	;;
 
+nvmm)
+	mkdev nvmm c %nvmm_chr% 0
+	;;
+
 autofs)
 	mkdev autofs c %autofs_chr% 0 600
+	;;
+
+kcov)
+        mkdev kcov c %kcov_chr% 0
+        ;;
+
+ipmi[0-9]*)
+	unit=${i#ipmi}
+	mkdev ipmi${unit} c %ipmi_chr% $unit 600
 	;;
 
 midevend)

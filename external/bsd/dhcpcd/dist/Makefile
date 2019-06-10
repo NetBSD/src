@@ -22,10 +22,10 @@ CLEANFILES+=	*.tar.xz
 .SUFFIXES:	.in
 
 all: config.h
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 depend: config.h
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 tests:
 	cd $@; ${MAKE} $@
@@ -36,17 +36,17 @@ hooks:
 	cd $@; ${MAKE}
 
 eginstall:
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 install:
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 proginstall:
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 clean:
 	rm -rf cov-int dhcpcd.xz
-	for x in ${SUBDIRS} tests; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS} tests; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 distclean: clean
 	rm -f config.h config.mk config.log \

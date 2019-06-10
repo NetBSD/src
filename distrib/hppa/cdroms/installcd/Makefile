@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2014/02/24 07:23:38 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2019/06/10 21:42:22 christos Exp $
 
 .include "${.CURDIR}/../Makefile.cdrom"
 
 CDBASE=		hppacd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE_NODEBUG=	true
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"

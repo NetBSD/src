@@ -46,7 +46,7 @@ void compute_prime( bi_ptr e, int length, int interval) {
 */
 TSS_RESULT verify_authentificity(TSS_DAA_CREDENTIAL_REQUEST *credentialRequest,
 						TSS_DAA_JOIN_ISSUER_SESSION *joinSession) {
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	BYTE *modulus_N0_bytes;
 	BYTE *digest_n0;
 	BYTE *contextHash;
@@ -82,21 +82,22 @@ TSS_RESULT verify_authentificity(TSS_DAA_CREDENTIAL_REQUEST *credentialRequest,
 			 TPM_DAA_SIZE_issuerModulus*8, DAA_PARAM_KEY_SIZE);
 		return TSS_E_INTERNAL_ERROR;
 	}
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 	// digestN0 = hash( modulus_N0) see Appendix B of spec. and TPM join stage 7 and 8
-	EVP_DigestUpdate(&mdctx,  modulus_N0_bytes, TPM_DAA_SIZE_issuerModulus);
-	digest_n0Length = EVP_MD_CTX_size(&mdctx);
+	EVP_DigestUpdate(mdctx,  modulus_N0_bytes, TPM_DAA_SIZE_issuerModulus);
+	digest_n0Length = EVP_MD_CTX_size(mdctx);
 	digest_n0 = (BYTE *)malloc( digest_n0Length);
 	if (digest_n0 == NULL) {
 		LogError("malloc of %d bytes failed", digest_n0Length);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal(&mdctx, digest_n0, NULL);
+	EVP_DigestFinal(mdctx, digest_n0, NULL);
 
 	// test if credentialRequest->authenticationProof =
 	//				H( H( U, daaCount, H(n0), joinSession->nonceEncrypted))
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 	// enlarge capitalU to 256 (TPM_DAA_SIZE_issuerModulus)
 	 // allocation
 	capitalUPrime = bi_set_as_nbin( joinSession->capitalUprimeLength, joinSession->capitalUprime);
@@ -107,36 +108,36 @@ TSS_RESULT verify_authentificity(TSS_DAA_CREDENTIAL_REQUEST *credentialRequest,
 		goto close;
 	}
 	bi_2_byte_array( capitalUPrime_bytes, TPM_DAA_SIZE_issuerModulus, capitalUPrime);
-	EVP_DigestUpdate(&mdctx,  capitalUPrime_bytes, TPM_DAA_SIZE_issuerModulus);
+	EVP_DigestUpdate(mdctx,  capitalUPrime_bytes, TPM_DAA_SIZE_issuerModulus);
 	bi_free_ptr( capitalUPrime);
 	daaCount = htonl( joinSession->daaCounter);
-	EVP_DigestUpdate(&mdctx,  &daaCount, sizeof(UINT32));
-	EVP_DigestUpdate(&mdctx,  digest_n0, digest_n0Length);
-	contextHashLength = EVP_MD_CTX_size(&mdctx);
+	EVP_DigestUpdate(mdctx,  &daaCount, sizeof(UINT32));
+	EVP_DigestUpdate(mdctx,  digest_n0, digest_n0Length);
+	contextHashLength = EVP_MD_CTX_size(mdctx);
 	contextHash = (BYTE *)malloc( contextHashLength);
 	if (contextHash == NULL) {
 		LogError("malloc of %d bytes failed", contextHashLength);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal(&mdctx, contextHash, NULL);
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+	EVP_DigestFinal(mdctx, contextHash, NULL);
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 	LogDebug("PK(0).n=%s", dump_byte_array( TPM_DAA_SIZE_issuerModulus, modulus_N0_bytes));
 	LogDebug("digestN0h=%s", dump_byte_array( digest_n0Length, digest_n0));
 	LogDebug("UPrime=%s", dump_byte_array( TPM_DAA_SIZE_issuerModulus, capitalUPrime_bytes));
 	LogDebug("daaCount=%4x", daaCount);
 
 	LogDebug("contextHash[%d]=%s", contextHashLength, dump_byte_array( contextHashLength, contextHash));
-	EVP_DigestUpdate(&mdctx,  contextHash, contextHashLength);
-	EVP_DigestUpdate(&mdctx,  joinSession->nonceEncrypted, joinSession->nonceEncryptedLength);
-	hashLength = EVP_MD_CTX_size(&mdctx);
+	EVP_DigestUpdate(mdctx,  contextHash, contextHashLength);
+	EVP_DigestUpdate(mdctx,  joinSession->nonceEncrypted, joinSession->nonceEncryptedLength);
+	hashLength = EVP_MD_CTX_size(mdctx);
 	hash = (BYTE *)malloc( hashLength);
 	if (hash == NULL) {
 		LogError("malloc of %d bytes failed", hashLength);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal(&mdctx, hash, NULL);
+	EVP_DigestFinal(mdctx, hash, NULL);
 	if( credentialRequest->authenticationProofLength != hashLength ||
 		memcmp( credentialRequest->authenticationProof, hash, hashLength) != 0) {
 		LogError("Verification of authenticationProof failed - Step 2.b");
@@ -153,6 +154,7 @@ TSS_RESULT verify_authentificity(TSS_DAA_CREDENTIAL_REQUEST *credentialRequest,
 		LogDebug("verify_authenticity Done:%s",
 			dump_byte_array( hashLength, hash));
 close:
+	EVP_MD_CTX_destroy(mdctx);
 	free( contextHash);
 	free( digest_n0);
 	free( capitalUPrime_bytes);
@@ -169,7 +171,7 @@ compute_join_challenge_issuer( TSS_DAA_PK_internal *pk_intern,
 							BYTE *nonceReceiver,
 							UINT32 *c_primeLength,
 							BYTE **c_prime) { // out allocation
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	BYTE *encoded_pk;
 	BYTE *byte_array;
 	UINT32 encoded_pkLength;
@@ -179,12 +181,13 @@ compute_join_challenge_issuer( TSS_DAA_PK_internal *pk_intern,
 		LogError("malloc of %d bytes failed", DAA_PARAM_SIZE_RND_VALUE_CERTIFICATE / 8);
 		return TSPERR(TSS_E_OUTOFMEMORY);
 	}
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 	encoded_pk = encoded_DAA_PK_internal( &encoded_pkLength, pk_intern);
-	EVP_DigestUpdate(&mdctx,  encoded_pk, encoded_pkLength);
+	EVP_DigestUpdate(mdctx,  encoded_pk, encoded_pkLength);
 	LogDebug( "issuerPk: %s", dump_byte_array( encoded_pkLength, encoded_pk));
 	bi_2_byte_array( byte_array, DAA_PARAM_SIZE_RND_VALUE_CERTIFICATE / 8, v_prime_prime);
-	EVP_DigestUpdate(&mdctx, byte_array, DAA_PARAM_SIZE_RND_VALUE_CERTIFICATE / 8);
+	EVP_DigestUpdate(mdctx, byte_array, DAA_PARAM_SIZE_RND_VALUE_CERTIFICATE / 8);
 	LogDebug( "vPrimePrime: %s",
 			dump_byte_array( DAA_PARAM_SIZE_RND_VALUE_CERTIFICATE / 8, byte_array));
 	free( byte_array);
@@ -195,16 +198,16 @@ compute_join_challenge_issuer( TSS_DAA_PK_internal *pk_intern,
 		return TSPERR(TSS_E_OUTOFMEMORY);
 	}
 	bi_2_byte_array( byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8, capitalA);
-	EVP_DigestUpdate(&mdctx, byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8);
+	EVP_DigestUpdate(mdctx, byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8);
 	LogDebug( "capitalA: %s", dump_byte_array( DAA_PARAM_SIZE_RSA_MODULUS / 8, byte_array));
 	bi_2_byte_array( byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8, capital_Atilde);
-	EVP_DigestUpdate(&mdctx, byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8);
+	EVP_DigestUpdate(mdctx, byte_array, DAA_PARAM_SIZE_RSA_MODULUS / 8);
 	LogDebug( "capital_Atilde: %s",
 			dump_byte_array( DAA_PARAM_SIZE_RSA_MODULUS / 8, byte_array));
-	EVP_DigestUpdate(&mdctx, nonceReceiver, nonceReceiverLength);
+	EVP_DigestUpdate(mdctx, nonceReceiver, nonceReceiverLength);
 	LogDebug( "nonceReceiver: %s",
 			dump_byte_array( nonceReceiverLength, nonceReceiver));
-	*c_primeLength = EVP_MD_CTX_size(&mdctx);
+	*c_primeLength = EVP_MD_CTX_size(mdctx);
 	*c_prime = (BYTE *)malloc( *c_primeLength);
 	if (*c_prime == NULL) {
 		LogError("malloc of %d bytes failed", *c_primeLength);
@@ -212,7 +215,8 @@ compute_join_challenge_issuer( TSS_DAA_PK_internal *pk_intern,
 		return TSPERR(TSS_E_OUTOFMEMORY);
 	}
 	LogDebug( "c_prime: %s", dump_byte_array( *c_primeLength, *c_prime));
-	EVP_DigestFinal(&mdctx, *c_prime, NULL);
+	EVP_DigestFinal(mdctx, *c_prime, NULL);
+	EVP_MD_CTX_destroy(mdctx);
 	free( byte_array);
 	return TSS_SUCCESS;
 }
@@ -306,7 +310,7 @@ TSPICALL Tspi_DAA_IssueCredential_internal
 	TSS_DAA_PK_internal *pk_intern;
 	TSS_DAA_PRIVATE_KEY *private_key;
 	UINT32 i, chLength, challengeLength, length, interval;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	BYTE *ch = NULL, *challenge = NULL;
 
 	tmp1 = bi_new_ptr();
@@ -515,17 +519,18 @@ TSPICALL Tspi_DAA_IssueCredential_internal
 							&ch);		// out allocation
 	if( result != TSS_SUCCESS) goto close;
 	LogDebug("JoinChallengeHost: %s", dump_byte_array( chLength, ch));
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
-	EVP_DigestUpdate(&mdctx,  ch, chLength);
-	challengeLength = EVP_MD_CTX_size( &mdctx);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
+	EVP_DigestUpdate(mdctx,  ch, chLength);
+	challengeLength = EVP_MD_CTX_size(mdctx);
 	challenge = (BYTE *)malloc( challengeLength);
 	if( challenge == NULL) {
 		LogError("malloc of %d bytes failed", challengeLength);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestUpdate(&mdctx,  credentialRequest.nonceTpm, credentialRequest.nonceTpmLength);
-	EVP_DigestFinal(&mdctx, challenge, NULL);
+	EVP_DigestUpdate(mdctx,  credentialRequest.nonceTpm, credentialRequest.nonceTpmLength);
+	EVP_DigestFinal(mdctx, challenge, NULL);
 	// checks
 	if( credentialRequest.challengeLength != challengeLength ||
 		memcmp( credentialRequest.challenge, challenge, challengeLength)!=0) {
@@ -751,6 +756,7 @@ TSPICALL Tspi_DAA_IssueCredential_internal
 	bi_2_nbin1( &(credIssuer->sELength), credIssuer->sE, s_e);
 
 close:
+	EVP_MD_CTX_destroy(mdctx);
 	//free_TSS_DAA_PK( daa_pk_extern);
 	if( ch != NULL) free( ch);
 	if( challenge != NULL) free( challenge);

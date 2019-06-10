@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.59.4.1 2019/06/10 21:41:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.59.4.1 2019/06/10 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,17 @@ __RCSID("$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $");
 # define PIPESIZE 4096		/* amount of buffering in a pipe */
 #else
 # define PIPESIZE PIPE_BUF
+#endif
+
+#ifndef FD_CLOEXEC
+# define FD_CLOEXEC	1	/* well known from before there was a name */
+#endif
+
+#ifndef F_DUPFD_CLOEXEC
+#define F_DUPFD_CLOEXEC	F_DUPFD
+#define CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
+#else
+#define CLOEXEC(fd)
 #endif
 
 
@@ -148,11 +159,17 @@ free_rl(struct redirtab *rt, int reset)
 		rn = rl->next;
 		if (rl->orig == 0)
 			fd0_redirected--;
+		VTRACE(DBG_REDIR, ("popredir %d%s: %s",
+		    rl->orig, rl->orig==0 ? " (STDIN)" : "",
+		    reset ? "" : "no reset\n"));
 		if (reset) {
-			if (rl->into < 0)
+			if (rl->into < 0) {
+				VTRACE(DBG_REDIR, ("closed\n"));
 				close(rl->orig);
-			else
+			} else {
+				VTRACE(DBG_REDIR, ("from %d\n", rl->into));
 				movefd(rl->into, rl->orig);
+			}
 		}
 		ckfree(rl);
 	}
@@ -162,6 +179,7 @@ free_rl(struct redirtab *rt, int reset)
 STATIC void
 fd_rename(struct redirtab *rt, int from, int to)
 {
+	/* XXX someday keep a short list (8..10) of freed renamelists XXX */
 	struct renamelist *rl = ckmalloc(sizeof(struct renamelist));
 
 	rl->next = rt->renamed;
@@ -188,11 +206,13 @@ redirect(union node *redir, int flags)
 	int fd;
 	char memory[10];	/* file descriptors to write to memory */
 
+	CTRACE(DBG_REDIR, ("redirect(F=0x%x):%s\n", flags, redir?"":" NONE"));
 	for (i = 10 ; --i >= 0 ; )
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
 	if (flags & REDIR_PUSH) {
-		/* We don't have to worry about REDIR_VFORK here, as
+		/*
+		 * We don't have to worry about REDIR_VFORK here, as
 		 * flags & REDIR_PUSH is never true if REDIR_VFORK is set.
 		 */
 		sv = ckmalloc(sizeof (struct redirtab));
@@ -202,6 +222,7 @@ redirect(union node *redir, int flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		VTRACE(DBG_REDIR, ("redir %d (max=%d) ", fd, max_user_fd));
 		if (fd > max_user_fd)
 			max_user_fd = fd;
 		renumber_sh_fd(sh_fd(fd));
@@ -211,6 +232,7 @@ redirect(union node *redir, int flags)
 			/* make sure it stays open */
 			if (fcntl(fd, F_SETFD, 0) < 0)
 				error("fd %d: %s", fd, strerror(errno));
+			VTRACE(DBG_REDIR, ("!cloexec\n"));
 			continue;
 		}
 
@@ -232,7 +254,6 @@ redirect(union node *redir, int flags)
 					/* FALLTHRU */
 				default:
 					i = errno;
-					INTON;    /* XXX not needed here ? */
 					error("%d: %s", fd, strerror(i));
 					/* NOTREACHED */
 				}
@@ -240,8 +261,10 @@ redirect(union node *redir, int flags)
 			if (i >= 0)
 				(void)fcntl(i, F_SETFD, FD_CLOEXEC);
 			fd_rename(sv, fd, i);
+			VTRACE(DBG_REDIR, ("saved as %d ", i));
 			INTON;
 		}
+		VTRACE(DBG_REDIR, ("%s\n", fd == 0 ? "STDIN" : ""));
 		if (fd == 0)
 			fd0_redirected++;
 		openredirect(n, memory, flags);
@@ -286,7 +309,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		break;
 	case NFROMTO:
 		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
+		if ((f = open(fname, O_RDWR|O_CREAT, 0666)) < 0)
 			goto ecreate;
 		VTRACE(DBG_REDIR, ("openredirect(<> '%s') -> %d", fname, f));
 		break;
@@ -307,6 +330,8 @@ openredirect(union node *redir, char memory[10], int flags)
 				errno = EEXIST;
 				goto ecreate;
 			}
+			VTRACE(DBG_REDIR, ("openredirect(>| '%s') -> %d",
+			    fname, f));
 			break;
 		}
 		/* FALLTHROUGH */
@@ -343,8 +368,8 @@ openredirect(union node *redir, char memory[10], int flags)
 		return;
 	case NHERE:
 	case NXHERE:
-		f = openhere(redir);
 		VTRACE(DBG_REDIR, ("openredirect: %d<<...", fd));
+		f = openhere(redir);
 		break;
 	default:
 		abort();
@@ -367,10 +392,10 @@ openredirect(union node *redir, char memory[10], int flags)
 
 	INTON;
 	return;
-ecreate:
+ ecreate:
 	exerrno = 1;
 	error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-eopen:
+ eopen:
 	exerrno = 1;
 	error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
 }
@@ -397,6 +422,7 @@ openhere(const union node *redir)
 			goto out;
 		}
 	}
+	VTRACE(DBG_REDIR, (" forking [%d,%d]\n", pip[0], pip[1]));
 	if (forkshell(NULL, NULL, FORK_NOJOB) == 0) {
 		close(pip[0]);
 		signal(SIGINT, SIG_IGN);
@@ -410,10 +436,13 @@ openhere(const union node *redir)
 			xwrite(pip[1], redir->nhere.doc->narg.text, len);
 		else
 			expandhere(redir->nhere.doc, pip[1]);
+		VTRACE(DBG_PROCS|DBG_REDIR, ("wrote here doc.  exiting\n"));
 		_exit(0);
 	}
-out:
+	VTRACE(DBG_REDIR, ("openhere (closing %d)", pip[1]));
+ out:
 	close(pip[1]);
+	VTRACE(DBG_REDIR, (" (pipe fd=%d)", pip[0]));
 	return pip[0];
 }
 
@@ -493,9 +522,14 @@ copyfd(int from, int to, int cloexec)
 {
 	int newfd;
 
-	if (cloexec && to > 2)
+	if (cloexec && to > 2) {
+#ifdef O_CLOEXEC
 		newfd = dup3(from, to, O_CLOEXEC);
-	else
+#else
+		newfd = dup2(from, to);
+		fcntl(newfd, F_SETFD, fcntl(newfd,F_GETFD) | FD_CLOEXEC);
+#endif
+	} else
 		newfd = dup2(from, to);
 
 	return newfd;
@@ -505,7 +539,7 @@ copyfd(int from, int to, int cloexec)
  * rename fd from to be fd to (closing from).
  * close-on-exec is never set on 'to' (unless
  * from==to and it was set on from) - ie: a no-op
- * returns to (or errors() if an error occurs).  
+ * returns to (or errors() if an error occurs).
  *
  * This is mostly used for rearranging the
  * results from pipe().
@@ -640,13 +674,6 @@ renumber_sh_fd(struct shell_fds *fp)
 	if (fp == NULL)
 		return;
 
-#ifndef	F_DUPFD_CLOEXEC
-#define	F_DUPFD_CLOEXEC	F_DUPFD
-#define	CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
-#else
-#define	CLOEXEC(fd)
-#endif
-
 	/*
 	 * if we have had a collision, and the sh fd was a "big" one
 	 * try moving the sh fd base to a higher number (if possible)
@@ -684,41 +711,114 @@ static const struct flgnames {
 } nv[] = {
 #ifdef O_APPEND
 	{ "append",	2,	O_APPEND 	},
+#else
+# define O_APPEND 0
 #endif
 #ifdef O_ASYNC
 	{ "async",	2,	O_ASYNC		},
+#else
+# define O_ASYNC 0
 #endif
 #ifdef O_SYNC
 	{ "sync",	2,	O_SYNC		},
+#else
+# define O_SYNC 0
 #endif
 #ifdef O_NONBLOCK
 	{ "nonblock",	3,	O_NONBLOCK	},
+#else
+# define O_NONBLOCK 0
 #endif
 #ifdef O_FSYNC
 	{ "fsync",	2,	O_FSYNC		},
+#else
+# define O_FSYNC 0
 #endif
 #ifdef O_DSYNC
 	{ "dsync",	2,	O_DSYNC		},
+#else
+# define O_DSYNC 0
 #endif
 #ifdef O_RSYNC
 	{ "rsync",	2,	O_RSYNC		},
+#else
+# define O_RSYNC 0
 #endif
-#ifdef O_ALTIO
+#ifdef O_ALT_IO
 	{ "altio",	2,	O_ALT_IO	},
+#else
+# define O_ALT_IO 0
 #endif
 #ifdef O_DIRECT
 	{ "direct",	2,	O_DIRECT	},
+#else
+# define O_DIRECT 0
 #endif
 #ifdef O_NOSIGPIPE
 	{ "nosigpipe",	3,	O_NOSIGPIPE	},
+#else
+# define O_NOSIGPIPE 0
 #endif
-#ifdef O_CLOEXEC
+
+#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
+    O_ALT_IO|O_DIRECT|O_NOSIGPIPE)
+
+#ifndef	O_CLOEXEC
+# define O_CLOEXEC	((~ALLFLAGS) ^ ((~ALLFLAGS) & ((~ALLFLAGS) - 1)))
+#endif
+
+	/* for any system we support, close on exec is always defined */
 	{ "cloexec",	2,	O_CLOEXEC	},
-#endif
 	{ 0, 0, 0 }
 };
-#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
-    O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
+
+#ifndef O_ACCMODE
+# define O_ACCMODE	0
+#endif
+#ifndef O_RDONLY
+# define O_RDONLY	0
+#endif
+#ifndef O_WRONLY
+# define O_WRONLY	0
+#endif
+#ifndef O_RWDR
+# define O_RWDR		0
+#endif
+#ifndef O_SHLOCK
+# define O_SHLOCK	0
+#endif
+#ifndef O_EXLOCK
+# define O_EXLOCK	0
+#endif
+#ifndef O_NOFOLLOW
+# define O_NOFOLLOW	0
+#endif
+#ifndef O_CREAT
+# define O_CREAT	0
+#endif
+#ifndef O_TRUNC
+# define O_TRUNC	0
+#endif
+#ifndef O_EXCL
+# define O_EXCL		0
+#endif
+#ifndef O_NOCTTY
+# define O_NOCTTY	0
+#endif
+#ifndef O_DIRECTORY
+# define O_DIRECTORY	0
+#endif
+#ifndef O_REGULAR
+# define O_REGULAR	0
+#endif
+/*
+ * flags that F_GETFL might return that we want to ignore
+ *
+ * F_GETFL should not actually return these, they're all just open()
+ * modifiers, rather than state, but just in case...
+ */
+#define IGNFLAGS (O_ACCMODE|O_RDONLY|O_WRONLY|O_RDWR|O_SHLOCK|O_EXLOCK| \
+    O_NOFOLLOW|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY|O_DIRECTORY|O_REGULAR)
 
 static int
 getflags(int fd, int p)
@@ -742,9 +842,10 @@ getflags(int fd, int p)
 			return -1;
 		error("Can't get flags for fd=%d (%s)", fd, strerror(errno));
 	}
+	f &= ~IGNFLAGS;		/* clear anything we know about, but ignore */
 	if (c & FD_CLOEXEC)
 		f |= O_CLOEXEC;
-	return f & ALLFLAGS;
+	return f;
 }
 
 static void
@@ -796,7 +897,7 @@ parseflags(char *s, int *p, int *n)
 		default:
 			error("Missing +/- indicator before flag %s", s-1);
 		}
-			
+
 		len = strlen(s);
 		for (fn = nv; fn->name; fn++)
 			if (len >= fn->minch && strncmp(s,fn->name,len) == 0) {

@@ -1,12 +1,11 @@
-; RUN: llc -disable-fp-elim -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: llc -disable-fp-elim -O0 -fast-isel -filetype=obj < %s | llvm-dwarfdump -v - | FileCheck %s
 ; Test that a variable with multiple entries in the MMI table makes it into the
 ; debug info.
 ;
 ; CHECK: DW_TAG_inlined_subroutine
 ; CHECK:    "_Z3f111A"
 ; CHECK: DW_TAG_formal_parameter
-; CHECK: DW_AT_location [DW_FORM_block1]    (<0x0c> 93 01 91 51 93 0f 93 01 91 4a 93 07 )
-;  -- piece 0x00000001, fbreg -47, piece 0x0000000f, piece 0x00000001, fbreg -54, piece 0x00000007 ------^
+; CHECK: DW_AT_location [DW_FORM_block1]    (DW_OP_piece 0x1, DW_OP_fbreg -47, DW_OP_piece 0xf, DW_OP_piece 0x1, DW_OP_fbreg -54, DW_OP_piece 0x7)
 ; CHECK: DW_AT_abstract_origin {{.*}} "p1"
 ;
 ; long a;
@@ -52,7 +51,7 @@ entry:
   store i8* %call, i8** bitcast (i32** @b to i8**), align 8, !dbg !45, !tbaa !46
   %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp, i64 0, i32 0, !dbg !48
   %2 = getelementptr inbounds %struct.A, %struct.A* %p1, i64 0, i32 0, !dbg !48
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 24, i32 8, i1 false), !dbg !48, !tbaa.struct !49
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %1, i8* align 8 %2, i64 24, i1 false), !dbg !48, !tbaa.struct !49
   call void @_Z2f91A(%struct.A* %agg.tmp), !dbg !52
   ret void, !dbg !53
 }
@@ -66,7 +65,7 @@ declare noalias i8* @_Znwm(i64) #1
 declare void @_Z2f91A(%struct.A*)
 
 ; Function Attrs: argmemonly nounwind
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i32, i1) #2
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i1) #2
 
 define void @_Z3f111A(%struct.A* nocapture readonly %p1) !dbg !54 {
 entry:
@@ -78,7 +77,7 @@ entry:
   %2 = load i64, i64* @a, align 8, !dbg !61, !tbaa !40
   %call.i = tail call noalias i8* @_Znwm(i64 %2) #4, !dbg !62
   store i8* %call.i, i8** bitcast (i32** @b to i8**), align 8, !dbg !63, !tbaa !46
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %0, i64 24, i32 8, i1 false), !dbg !64
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %1, i8* align 8 %0, i64 24, i1 false), !dbg !64
   call void @_Z2f91A(%struct.A* %agg.tmp.i), !dbg !65
   call void @llvm.lifetime.end(i64 24, i8* %1), !dbg !66
   ret void, !dbg !67
@@ -94,12 +93,12 @@ entry:
   tail call void @llvm.dbg.declare(metadata [7 x i8]* %agg.tmp.sroa.4, metadata !56, metadata !77), !dbg !75
   tail call void @llvm.dbg.declare(metadata %struct.A* undef, metadata !72, metadata !37), !dbg !78
   %0 = load i64, i64* @a, align 8, !dbg !79, !tbaa !40
-  tail call void @llvm.dbg.value(metadata %struct.B* %d, i64 0, metadata !73, metadata !37), !dbg !80
+  tail call void @llvm.dbg.value(metadata %struct.B* %d, metadata !73, metadata !37), !dbg !80
   %call = call %struct.B* @_ZN1BC1El(%struct.B* %d, i64 %0), !dbg !80
-  call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !72, metadata !81), !dbg !78
-  call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !72, metadata !82), !dbg !78
-  call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !56, metadata !81), !dbg !75
-  call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !56, metadata !82), !dbg !75
+  call void @llvm.dbg.value(metadata i8 1, metadata !72, metadata !81), !dbg !78
+  call void @llvm.dbg.value(metadata i8 1, metadata !72, metadata !82), !dbg !78
+  call void @llvm.dbg.value(metadata i8 1, metadata !56, metadata !81), !dbg !75
+  call void @llvm.dbg.value(metadata i8 1, metadata !56, metadata !82), !dbg !75
   call void @llvm.dbg.declare(metadata %struct.A* undef, metadata !56, metadata !37), !dbg !75
   %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i.i, i64 0, i32 0, !dbg !83
   call void @llvm.lifetime.start(i64 24, i8* %1), !dbg !83
@@ -113,24 +112,24 @@ call.i.i.noexc:                                   ; preds = %entry
   store i8* %call.i.i5, i8** bitcast (i32** @b to i8**), align 8, !dbg !88, !tbaa !46
   store i8 1, i8* %1, align 8, !dbg !89
   %agg.tmp.sroa.2.0..sroa_raw_idx = getelementptr inbounds i8, i8* %1, i64 1, !dbg !89
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.2.0..sroa_raw_idx, i8* %agg.tmp.sroa.2.1..sroa_idx, i64 15, i32 1, i1 false), !dbg !89
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.2.0..sroa_raw_idx, i8* %agg.tmp.sroa.2.1..sroa_idx, i64 15, i1 false), !dbg !89
   %agg.tmp.sroa.3.0..sroa_idx = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i.i, i64 0, i32 2, !dbg !89
   store i8 1, i8* %agg.tmp.sroa.3.0..sroa_idx, align 8, !dbg !89
   %agg.tmp.sroa.4.0..sroa_raw_idx = getelementptr inbounds i8, i8* %1, i64 17, !dbg !89
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.4.0..sroa_raw_idx, i8* %agg.tmp.sroa.4.17..sroa_idx, i64 7, i32 1, i1 false), !dbg !89
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.4.0..sroa_raw_idx, i8* %agg.tmp.sroa.4.17..sroa_idx, i64 7, i1 false), !dbg !89
   invoke void @_Z2f91A(%struct.A* %agg.tmp.i.i)
           to label %invoke.cont unwind label %lpad, !dbg !90
 
 invoke.cont:                                      ; preds = %call.i.i.noexc
   call void @llvm.lifetime.end(i64 24, i8* %1), !dbg !91
-  call void @llvm.dbg.value(metadata %struct.B* %d, i64 0, metadata !73, metadata !37), !dbg !80
+  call void @llvm.dbg.value(metadata %struct.B* %d, metadata !73, metadata !37), !dbg !80
   %call1 = call %struct.B* @_ZN1BD1Ev(%struct.B* %d) #3, !dbg !92
   ret void, !dbg !92
 
 lpad:                                             ; preds = %call.i.i.noexc, %entry
   %3 = landingpad { i8*, i32 }
           cleanup, !dbg !92
-  call void @llvm.dbg.value(metadata %struct.B* %d, i64 0, metadata !73, metadata !37), !dbg !80
+  call void @llvm.dbg.value(metadata %struct.B* %d, metadata !73, metadata !37), !dbg !80
   %call2 = call %struct.B* @_ZN1BD1Ev(%struct.B* %d) #3, !dbg !92
   resume { i8*, i32 } %3, !dbg !92
 }
@@ -143,7 +142,7 @@ declare i32 @__gxx_personality_v0(...)
 declare %struct.B* @_ZN1BD1Ev(%struct.B*) #3
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #0
+declare void @llvm.dbg.value(metadata, metadata, metadata) #0
 
 ; Function Attrs: argmemonly nounwind
 declare void @llvm.lifetime.start(i64, i8* nocapture) #2
@@ -161,11 +160,11 @@ attributes #4 = { builtin }
 !llvm.module.flags = !{!29, !30}
 !llvm.ident = !{!31}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "a", scope: null, file: !2, line: 1, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "test.cpp", directory: "")
 !3 = !DIBasicType(name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
-!4 = !DIGlobalVariableExpression(var: !5)
+!4 = !DIGlobalVariableExpression(var: !5, expr: !DIExpression())
 !5 = !DIGlobalVariable(name: "b", scope: null, file: !2, line: 7, type: !6, isLocal: false, isDefinition: true)
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !7, size: 64, align: 64)
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
@@ -193,7 +192,7 @@ attributes #4 = { builtin }
 !29 = !{i32 2, !"Dwarf Version", i32 2}
 !30 = !{i32 2, !"Debug Info Version", i32 3}
 !31 = !{!"clang version 3.7.0 "}
-!32 = distinct !DISubprogram(name: "f13", linkageName: "_Z3f131A", scope: !2, file: !2, line: 13, type: !33, isLocal: false, isDefinition: true, scopeLine: 13, flags: DIFlagPrototyped, isOptimized: true, unit: !8, variables: !35)
+!32 = distinct !DISubprogram(name: "f13", linkageName: "_Z3f131A", scope: !2, file: !2, line: 13, type: !33, isLocal: false, isDefinition: true, scopeLine: 13, flags: DIFlagPrototyped, isOptimized: true, unit: !8, retainedNodes: !35)
 !33 = !DISubroutineType(types: !34)
 !34 = !{null, !12}
 !35 = !{!36}
@@ -215,7 +214,7 @@ attributes #4 = { builtin }
 !51 = !{!"bool", !42, i64 0}
 !52 = !DILocation(line: 15, column: 3, scope: !32)
 !53 = !DILocation(line: 16, column: 1, scope: !32)
-!54 = distinct !DISubprogram(name: "f11", linkageName: "_Z3f111A", scope: !2, file: !2, line: 17, type: !33, isLocal: false, isDefinition: true, scopeLine: 17, flags: DIFlagPrototyped, isOptimized: true, unit: !8, variables: !55)
+!54 = distinct !DISubprogram(name: "f11", linkageName: "_Z3f111A", scope: !2, file: !2, line: 17, type: !33, isLocal: false, isDefinition: true, scopeLine: 17, flags: DIFlagPrototyped, isOptimized: true, unit: !8, retainedNodes: !55)
 !55 = !{!56}
 !56 = !DILocalVariable(name: "p1", arg: 1, scope: !54, file: !2, line: 17, type: !12)
 !57 = !DILocation(line: 17, column: 12, scope: !54)
@@ -229,7 +228,7 @@ attributes #4 = { builtin }
 !65 = !DILocation(line: 15, column: 3, scope: !32, inlinedAt: !60)
 !66 = !DILocation(line: 16, column: 1, scope: !32, inlinedAt: !60)
 !67 = !DILocation(line: 17, column: 27, scope: !54)
-!68 = distinct !DISubprogram(name: "f16", linkageName: "_Z3f16v", scope: !2, file: !2, line: 18, type: !69, isLocal: false, isDefinition: true, scopeLine: 18, flags: DIFlagPrototyped, isOptimized: true, unit: !8, variables: !71)
+!68 = distinct !DISubprogram(name: "f16", linkageName: "_Z3f16v", scope: !2, file: !2, line: 18, type: !69, isLocal: false, isDefinition: true, scopeLine: 18, flags: DIFlagPrototyped, isOptimized: true, unit: !8, retainedNodes: !71)
 !69 = !DISubroutineType(types: !70)
 !70 = !{null}
 !71 = !{!72, !73}

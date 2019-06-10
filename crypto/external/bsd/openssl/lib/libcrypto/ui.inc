@@ -1,4 +1,4 @@
-#	$NetBSD: ui.inc,v 1.1 2009/07/19 23:30:45 christos Exp $
+#	$NetBSD: ui.inc,v 1.1.48.1 2019/06/10 21:41:55 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,14 @@
 .PATH:	${OPENSSLSRC}/crypto/ui
 
 
-UI_SRCS = ui_err.c ui_lib.c ui_openssl.c ui_util.c $(COMPATSRC)
+UI_SRCS += \
+ui_err.c \
+ui_null.c \
+ui_lib.c \
+ui_openssl.c \
+ui_util.c \
+$(COMPATSRC)
+
 SRCS += ${UI_SRCS}
 
 .for cryptosrc in ${UI_SRCS}

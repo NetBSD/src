@@ -45,7 +45,7 @@ RPC_CreateMigrationBlob_TP(struct host_table_entry *hte,
 	UINT32 i;
 
 	initData(&hte->comm, 9);
-	memset(&null_auth, 0, sizeof(TPM_AUTH));
+	__tspi_memset(&null_auth, 0, sizeof(TPM_AUTH));
 
 	hte->comm.hdr.u.ordinal = TCSD_ORD_CREATEMIGRATIONBLOB;
 	LogDebugFn("TCS Context: 0x%x", hte->tcsContext);

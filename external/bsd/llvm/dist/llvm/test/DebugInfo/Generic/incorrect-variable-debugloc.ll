@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf -O2 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf -O2 -filetype=obj < %s | llvm-dwarfdump -v -debug-info - | FileCheck %s
 
 ; This is a test case that's as reduced as I can get it, though I haven't fully
 ; understood the mechanisms by which this bug occurs, so perhaps there's further
@@ -110,7 +110,7 @@ entry:
 
 ; <label>:30                                      ; preds = %24, %5
   store i32 0, i32* %i.i, align 4, !dbg !39, !tbaa !41
-  tail call void @llvm.dbg.value(metadata %struct.C* %8, i64 0, metadata !27, metadata !DIExpression(DW_OP_deref)), !dbg !46
+  tail call void @llvm.dbg.value(metadata %struct.C* %8, metadata !27, metadata !DIExpression(DW_OP_deref)), !dbg !46
   call void @_ZN1C5m_fn3Ev(%struct.C* %8), !dbg !47
   unreachable, !dbg !47
 }
@@ -145,7 +145,7 @@ entry:
   %16 = add i64 %15, 0, !dbg !48
   %17 = inttoptr i64 %16 to i64*, !dbg !48
   store i64 -868083113472691727, i64* %17, !dbg !48
-  tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !30, metadata !DIExpression()), !dbg !48
+  tail call void @llvm.dbg.value(metadata %struct.C* %this, metadata !30, metadata !DIExpression()), !dbg !48
   %call = call i32 @_ZN1A5m_fn1Ev(%struct.A* %8), !dbg !49
   %i.i = getelementptr inbounds %struct.C, %struct.C* %this, i64 0, i32 1, i32 0, !dbg !50
   %18 = ptrtoint i32* %i.i to i64, !dbg !50
@@ -198,7 +198,7 @@ entry:
 declare i32 @_ZN1A5m_fn1Ev(%struct.A*) #2
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #3
+declare void @llvm.dbg.value(metadata, metadata, metadata) #3
 
 define internal void @asan.module_ctor() {
   tail call void @__asan_init_v3()
@@ -357,17 +357,17 @@ attributes #3 = { nounwind readnone }
 !18 = !DISubroutineType(types: !19)
 !19 = !{null, !20}
 !20 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !14)
-!22 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 16, file: !5, scope: !23, type: !24, variables: !26)
+!22 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 16, file: !5, scope: !23, type: !24, retainedNodes: !26)
 !23 = !DIFile(filename: "incorrect-variable-debug-loc.cpp", directory: "/tmp/dbginfo")
 !24 = !DISubroutineType(types: !25)
 !25 = !{!8}
 !26 = !{!27}
 !27 = !DILocalVariable(name: "A", line: 17, scope: !22, file: !23, type: !4)
-!28 = distinct !DISubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 21, file: !5, scope: !4, type: !11, declaration: !10, variables: !29)
+!28 = distinct !DISubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 21, file: !5, scope: !4, type: !11, declaration: !10, retainedNodes: !29)
 !29 = !{!30}
 !30 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !28, type: !31)
 !31 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
-!32 = distinct !DISubprogram(name: "m_fn2", linkageName: "_ZN1B5m_fn2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 6, file: !5, scope: !14, type: !18, declaration: !17, variables: !33)
+!32 = distinct !DISubprogram(name: "m_fn2", linkageName: "_ZN1B5m_fn2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 6, file: !5, scope: !14, type: !18, declaration: !17, retainedNodes: !33)
 !33 = !{!34}
 !34 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !32, type: !35)
 !35 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !14)

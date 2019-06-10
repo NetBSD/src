@@ -1,68 +1,89 @@
-#	$NetBSD: Makefile,v 1.42 2018/04/29 18:29:29 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.42.2.1 2019/06/10 21:50:49 christos Exp $
 
 .include <bsd.init.mk>
 
+.if ${MKLLVM} != "no"
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	__wmmintrin_aes.h \
-	__wmmintrin_pclmul.h \
-	adxintrin.h \
+INCS=	adxintrin.h \
 	ammintrin.h \
 	avx2intrin.h \
+	avx512bitalgintrin.h \
 	avx512bwintrin.h \
 	avx512cdintrin.h \
 	avx512dqintrin.h \
-	avx512fintrin.h \
 	avx512erintrin.h \
+	avx512fintrin.h \
 	avx512ifmaintrin.h \
 	avx512ifmavlintrin.h \
 	avx512pfintrin.h \
+	avx512vbmi2intrin.h \
 	avx512vbmiintrin.h \
 	avx512vbmivlintrin.h \
+	avx512vlbitalgintrin.h \
 	avx512vlbwintrin.h \
 	avx512vlcdintrin.h \
 	avx512vldqintrin.h \
 	avx512vlintrin.h \
+	avx512vlvbmi2intrin.h \
+	avx512vlvnniintrin.h \
+	avx512vnniintrin.h \
 	avx512vpopcntdqintrin.h \
+	avx512vpopcntdqvlintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
+	cetintrin.h \
+	cldemoteintrin.h \
 	clflushoptintrin.h \
+	clwbintrin.h \
 	clzerointrin.h \
 	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
-	fmaintrin.h \
 	fma4intrin.h \
+	fmaintrin.h \
 	fxsrintrin.h \
+	gfniintrin.h \
 	ia32intrin.h \
 	immintrin.h \
+	invpcidintrin.h \
 	lwpintrin.h \
 	lzcntintrin.h \
 	mm3dnow.h \
 	mmintrin.h \
 	mm_malloc.h \
+	movdirintrin.h \
 	mwaitxintrin.h \
 	nmmintrin.h \
+	pconfigintrin.h \
 	pkuintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
 	prfchwintrin.h \
+	ptwriteintrin.h \
 	rdseedintrin.h \
 	rtmintrin.h \
+	sgxintrin.h \
 	shaintrin.h \
 	smmintrin.h \
 	tbmintrin.h \
 	tmmintrin.h \
+	vaesintrin.h \
+	vpclmulqdqintrin.h \
+	waitpkgintrin.h \
+	wbnoinvdintrin.h \
 	wmmintrin.h \
+	__wmmintrin_aes.h \
+	__wmmintrin_pclmul.h \
 	x86intrin.h \
 	xmmintrin.h \
 	xopintrin.h \
-	xsavesintrin.h \
+	xsavecintrin.h \
 	xsaveintrin.h \
 	xsaveoptintrin.h \
-	xsavecintrin.h \
+	xsavesintrin.h \
 	xtestintrin.h
 
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
@@ -72,29 +93,45 @@ INCS=	altivec.h \
 .elif ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "aarch64"
 INCS=	arm_acle.h \
 	arm_neon.h
+.  if ${MACHINE_CPU} == "aarch64"
+INCS+=	arm64intr.h
+.  endif
 .elif ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "mips64"
 INCS=	msa.h
 .endif
 INCS+=	stdatomic.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
+.endif # MKLLVM
 
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
-	${CLANG_SRCDIR}/include/clang/AST \
-	${CLANG_SRCDIR}/include/clang/Basic \
-	${CLANG_SRCDIR}/include/clang/Driver \
-	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 
 TABLEGEN_SRC=	Attributes.td Intrinsics.td Options.td
 
 TABLEGEN_OUTPUT.Attributes.td= \
-	llvm/IR/Attributes.gen|-gen-attrs
+	llvm/IR/Attributes.inc|-gen-attrs
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
-	llvm/IR/Intrinsics.gen|-gen-intrinsic
+	llvm/IR/IntrinsicEnums.inc|-gen-intrinsic-enums \
+	llvm/IR/IntrinsicImpl.inc|-gen-intrinsic-impl
 
-CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
-	CommentNodes.td CommentHTMLNamedCharacterReferences.td DeclNodes.td \
-	StmtNodes.td Diagnostic.td arm_neon.td Checkers.td
+.if ${MKLLVM} != "no"
+.PATH:	${CLANG_SRCDIR}/include/clang/AST \
+	${CLANG_SRCDIR}/include/clang/Basic \
+	${CLANG_SRCDIR}/include/clang/Driver \
+	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
+CLANG_TABLEGEN_SRC=	\
+	arm_fp16.td \
+	arm_neon.td \
+	Attr.td \
+	Checkers.td \
+	CommentCommands.td \
+	CommentHTMLNamedCharacterReferences.td \
+	CommentHTMLTags.td \
+	CommentNodes.td \
+	DeclNodes.td \
+	Diagnostic.td \
+	StmtDataCollectors.td \
+	StmtNodes.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
@@ -117,6 +154,9 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 
 CLANG_TABLEGEN_OUTPUT.StmtNodes.td= \
 	clang/AST/StmtNodes.inc|-gen-clang-stmt-nodes
+
+CLANG_TABLEGEN_OUTPUT.StmtDataCollectors.td= \
+	clang/AST/StmtDataCollectors.inc|-gen-clang-data-collectors
 
 CLANG_TABLEGEN_OUTPUT.DeclNodes.td= \
 	clang/AST/DeclNodes.inc|-gen-clang-decl-nodes
@@ -141,31 +181,52 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticASTKinds.inc|-gen-clang-diags-defs^-clang-component=AST \
 	clang/Basic/DiagnosticCommentKinds.inc|-gen-clang-diags-defs^-clang-component=Comment \
 	clang/Basic/DiagnosticCommonKinds.inc|-gen-clang-diags-defs^-clang-component=Common \
+	clang/Basic/DiagnosticCrossTUKinds.inc|-gen-clang-diags-defs^-clang-component=CrossTU \
 	clang/Basic/DiagnosticDriverKinds.inc|-gen-clang-diags-defs^-clang-component=Driver \
 	clang/Basic/DiagnosticFrontendKinds.inc|-gen-clang-diags-defs^-clang-component=Frontend \
+	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
+	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name \
 	clang/Basic/DiagnosticLexKinds.inc|-gen-clang-diags-defs^-clang-component=Lex \
 	clang/Basic/DiagnosticParseKinds.inc|-gen-clang-diags-defs^-clang-component=Parse \
+	clang/Basic/DiagnosticRefactoringKinds.inc|-gen-clang-diags-defs^-clang-component=Refactoring \
 	clang/Basic/DiagnosticSemaKinds.inc|-gen-clang-diags-defs^-clang-component=Sema \
-	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization \
-	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
-	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
+	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization
 
+
+CLANG_TABLEGEN_INCLUDES.arm_neon.td=	-I${CLANG_SRCDIR}/include/clang/Basic
 CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
 	arm_neon.h|-gen-arm-neon
 
-CLANG_TABLEGEN_INCLUDES.Checkers.td=	-I${CLANG_SRCDIR}/include
+CLANG_TABLEGEN_INCLUDES.arm_fp16.td=	-I${CLANG_SRCDIR}/include/clang/Basic
+CLANG_TABLEGEN_OUTPUT.arm_fp16.td= \
+	clang/Basic/arm_fp16.inc|-gen-arm-neon-sema
+
+CLANG_TABLEGEN_INCLUDES.Checkers.td=	\
+	-I${CLANG_SRCDIR}/include \
+	-I${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 CLANG_TABLEGEN_OUTPUT.Checkers.td= \
 	clang/StaticAnalyzer/Checkers/Checkers.inc|-gen-clang-sa-checkers
 
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
+.endif # MKLLVM
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
-DPSRCS+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
-CLEANFILES+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
+DPSRCS+=	llvm/Support/VCSRevision.h
+DPSRC+=		llvm/Support/VCSRevision.h
+
+llvm/Support/VCSRevision.h: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_REVISION "svn-r${LLVM_REVISION}"\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+.if ${MKLLVM} != "no"
+DPSRCS+=	clang/Basic/Version.inc
+CLEANFILES+=	clang/Basic/Version.inc
 
 clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	mkdir -p ${.TARGET:H}
@@ -175,12 +236,7 @@ clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#define CLANG_VERSION_PATCHLEVEL ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
-
-llvm/Support/VCSRevision.h: ${LLVM_TOPLEVEL}/Makefile.inc
-	mkdir -p ${.TARGET:H}
-	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_REVISION "svn-r${LLVM_REVISION}"\n' >> ${.TARGET}.tmp
-	mv ${.TARGET}.tmp ${.TARGET}
+.endif # MKLLVM
 
 .if ${MKLLD} != "no"
 DPSRCS+=	lld/Config/Version.inc
@@ -203,13 +259,59 @@ CLEANFILES+=	llvm/Config/config.h llvm/Config/llvm-config.h
 
 NATIVE_LIBS=	-lm -lexecinfo
 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+NATIVE_LLVM_ARCH=		X86
+.endif
+
+.if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "aarch64eb"
+NATIVE_LLVM_ARCH=		AArch64
+.endif
+
+.if !empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*)
+NATIVE_LLVM_ARCH=		ARM
+.endif
+
+.if !empty(MACHINE_ARCH:Mmips*)
+NATIVE_LLVM_ARCH=		Mips
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
+NATIVE_LLVM_ARCH=		PowerPC
+.endif
+
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
+NATIVE_LLVM_ARCH=		Sparc
+.endif
+
+.if defined(NATIVE_LLVM_ARCH)
+NATIVE_LLVM_ASMPARSER=		LLVMInitialize${NATIVE_LLVM_ARCH}AsmParser
+NATIVE_LLVM_ASMPRINTER=		LLVMInitialize${NATIVE_LLVM_ARCH}AsmPrinter
+NATIVE_LLVM_DISASSEMBLER=	LLVMInitialize${NATIVE_LLVM_ARCH}Disassembler
+NATIVE_LLVM_TARGET=		LLVMInitialize${NATIVE_LLVM_ARCH}Target
+NATIVE_LLVM_TARGETINFO=		LLVMInitialize${NATIVE_LLVM_ARCH}TargetInfo
+NATIVE_LLVM_TARGETMC=		LLVMInitialize${NATIVE_LLVM_ARCH}TargetMC
+.endif
+
 llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in
 	mkdir -p ${.TARGET:H}
-	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d \
+		    -e /LLVM_HOST_TRIPLE/d \
+		    -e /LLVM_NATIVE_/d \
+		    -e /LLVM_VERSION_/d \
+		    -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_HOST_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+.if defined(NATIVE_LLVM_ARCH)
+	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPRINTER ${NATIVE_LLVM_ASMPRINTER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_DISASSEMBLER ${NATIVE_LLVM_DISASSEMBLER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGET ${NATIVE_LLVM_TARGET}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETINFO ${NATIVE_LLVM_TARGETINFO}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETMC ${NATIVE_LLVM_TARGETMC}\n' >> ${.TARGET}.tmp
+.endif
 	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
@@ -220,11 +322,24 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 
 llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in
 	mkdir -p ${.TARGET:H}
-	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d \
+		    -e /LLVM_HOST_TRIPLE/d \
+		    -e /LLVM_NATIVE_/d \
+		    -e /LLVM_VERSION_/d \
+		    -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_HOST_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+.if defined(NATIVE_LLVM_ARCH)
+	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPRINTER ${NATIVE_LLVM_ASMPRINTER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_DISASSEMBLER ${NATIVE_LLVM_DISASSEMBLER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGET ${NATIVE_LLVM_TARGET}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETINFO ${NATIVE_LLVM_TARGETINFO}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETMC ${NATIVE_LLVM_TARGETMC}\n' >> ${.TARGET}.tmp
+.endif
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_PATCH ${LLVM_VERSION:E}\n' >> ${.TARGET}.tmp
@@ -248,6 +363,6 @@ run-configure:
 	    ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h.in
 .endif
 
-depend dependall all: ${DPSRCS}
+includes depend dependall all: ${DPSRCS}
 
 .include <bsd.prog.mk>

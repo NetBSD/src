@@ -3,10 +3,8 @@
 ; Test that SROA updates the debug info correctly if an alloca was rewritten but
 ; not partitioned into multiple allocas.
 ;
-; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, i64 0, metadata ![[VAR:[0-9]+]], metadata ![[EXPR:[0-9]+]])
+; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, metadata ![[VAR:[0-9]+]], metadata !DIExpression())
 ; CHECK: ![[VAR]] = !DILocalVariable(name: "s",{{.*}} line: 3,
-; CHECK: ![[EXPR]] = !DIExpression(
-; CHECK-NOT:                       DW_OP_LLVM_fragment
 
 ;
 ; struct S { float f; };
@@ -44,7 +42,7 @@ attributes #1 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 3, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

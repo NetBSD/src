@@ -1,4 +1,4 @@
-/*	$NetBSD: libyywrap.c,v 1.3 2018/03/11 18:32:10 christos Exp $	*/
+/*	$NetBSD: libyywrap.c,v 1.3.2.1 2019/06/10 21:44:50 christos Exp $	*/
 
 /* libyywrap - flex run-time support library "yywrap" function */
 
@@ -25,7 +25,7 @@
 #ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: libyywrap.c,v 1.3 2018/03/11 18:32:10 christos Exp $");
+__RCSID("$NetBSD: libyywrap.c,v 1.3.2.1 2019/06/10 21:44:50 christos Exp $");
 #endif
 #endif
 

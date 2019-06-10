@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2015/02/02 16:18:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7.16.1 2019/06/10 21:42:47 christos Exp $
 
 .ifndef AMU_MAKEFILE_INC
 AMU_MAKEFILE_INC=
@@ -30,7 +30,7 @@ CPPFLAGS+=-DLDAP_DEPRECATED=1	# OpenLDAP 2.2 deprecated ldap_unbind()
 .endif
 
 .if (${USE_YP} != "no")
-CPPFLAGS+=-DHAVE_MAP_NIS=1
+CPPFLAGS+=-DHAVE_MAP_NIS=1 -DYP
 .endif
 
 .if !defined(LIB) || empty(LIB)

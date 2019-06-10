@@ -2,6 +2,10 @@
 ; RUN: opt < %s -loop-vectorize -o /dev/null -pass-remarks-output=%t.yaml
 ; RUN: cat %t.yaml | FileCheck -check-prefix=YAML %s
 
+; RUN: opt < %s -passes=loop-vectorize -S -pass-remarks-missed='loop-vectorize' -pass-remarks-analysis='loop-vectorize' 2>&1 | FileCheck %s
+; RUN: opt < %s -passes=loop-vectorize -o /dev/null -pass-remarks-output=%t.yaml
+; RUN: cat %t.yaml | FileCheck -check-prefix=YAML %s
+
 ; C/C++ code for tests
 ; void test(int *A, int Length) {
 ; #pragma clang loop vectorize(enable) interleave(enable)
@@ -20,7 +24,7 @@
 ;   for (int i = 0; i < Length; i++)
 ;     A[i] = i;
 ; }
-; CHECK: remark: source.cpp:13:5: loop not vectorized: vectorization and interleaving are explicitly disabled, or vectorize width and interleave count are both set to 1
+; CHECK: remark: source.cpp:13:5: loop not vectorized: vectorization and interleaving are explicitly disabled, or the loop has already been vectorized
 
 ; void test_array_bounds(int *A, int *B, int Length) {
 ; #pragma clang loop vectorize(enable)
@@ -67,7 +71,7 @@
 ; YAML-NEXT: DebugLoc:        { File: source.cpp, Line: 13, Column: 5 }
 ; YAML-NEXT: Function:        _Z13test_disabledPii
 ; YAML-NEXT: Args:
-; YAML-NEXT:   - String:          'loop not vectorized: vectorization and interleaving are explicitly disabled, or vectorize width and interleave count are both set to 1'
+; YAML-NEXT:   - String:          'loop not vectorized: vectorization and interleaving are explicitly disabled, or the loop has already been vectorized
 ; YAML-NEXT: ...
 ; YAML-NEXT: --- !Analysis
 ; YAML-NEXT: Pass:            ''
@@ -265,11 +269,11 @@ attributes #0 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0", isOptimized: true, runtimeVersion: 6, emissionKind: LineTablesOnly, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "source.cpp", directory: ".")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 1, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "source.cpp", directory: ".")
 !6 = !DISubroutineType(types: !2)
-!7 = distinct !DISubprogram(name: "test_disabled", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !2)
-!8 = distinct !DISubprogram(name: "test_array_bounds", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 16, file: !1, scope: !5, type: !6, variables: !2)
+!7 = distinct !DISubprogram(name: "test_disabled", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 10, file: !1, scope: !5, type: !6, retainedNodes: !2)
+!8 = distinct !DISubprogram(name: "test_array_bounds", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 16, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !9 = !{i32 2, !"Dwarf Version", i32 2}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5.0"}
@@ -307,4 +311,4 @@ attributes #0 = { nounwind }
 !43 = !DILocation(line: 27, column: 32, scope: !37)
 !44 = !DILocation(line: 27, column: 30, scope: !37)
 !45 = !DILocation(line: 27, column: 21, scope: !37)
-!46 = distinct !DISubprogram(name: "test_multiple_failures", line: 26, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 26, file: !1, scope: !5, type: !6, variables: !2)
+!46 = distinct !DISubprogram(name: "test_multiple_failures", line: 26, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 26, file: !1, scope: !5, type: !6, retainedNodes: !2)

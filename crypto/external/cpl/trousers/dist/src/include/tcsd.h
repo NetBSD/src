@@ -46,6 +46,8 @@ struct tcsd_config
 	struct platform_class *host_platform_class; /* Host platform class of this TCS System */
 	struct platform_class *all_platform_classes;	/* List of platform classes
 							of this TCS System */
+	int disable_ipv4;
+	int disable_ipv6;
 };
 
 #define TCSD_DEFAULT_CONFIG_FILE	ETC_PREFIX "/tcsd.conf"
@@ -66,6 +68,8 @@ extern char *tcsd_config_file;
 #define TCSD_DEFAULT_KERNEL_LOG_FILE	"/sys/kernel/security/ima/binary_runtime_measurements"
 #define TCSD_DEFAULT_FIRMWARE_PCRS	0x00000000
 #define TCSD_DEFAULT_KERNEL_PCRS	0x00000000
+#define TCSD_DEFAULT_DISABLE_IPV4 0
+#define TCSD_DEFAULT_DISABLE_IPV6 0
 
 /* This will change when a system with more than 32 PCR's exists */
 #define TCSD_MAX_PCRS			32
@@ -102,6 +106,8 @@ struct tcg_platform_spec {
 #define TCSD_OPTION_REMOTE_OPS		0x0400
 #define TCSD_OPTION_EXCLUSIVE_TRANSPORT	0x0800
 #define TCSD_OPTION_HOST_PLATFORM_CLASS	0x1000
+#define TCSD_OPTION_DISABLE_IPV4 0x2000
+#define TCSD_OPTION_DISABLE_IPV6 0x4000
 
 #define TSS_TCP_RPC_MAX_DATA_LEN	1048576
 #define TSS_TCP_RPC_BAD_PACKET_TYPE	0x10000000
@@ -120,7 +126,9 @@ enum tcsd_config_option_code {
 	opt_remote_ops,
 	opt_exclusive_transport,
 	opt_host_platform_class,
-	opt_all_platform_classes
+	opt_all_platform_classes,
+	opt_disable_ipv4,
+	opt_disable_ipv6
 };
 
 struct tcsd_config_options {
@@ -162,7 +170,9 @@ void	   *tcsd_thread_run(void *);
 void	   thread_signal_init();
 
 /* signal handling */
+#ifndef __APPLE__
 struct sigaction tcsd_sa_int;
 struct sigaction tcsd_sa_chld;
+#endif
 
 #endif

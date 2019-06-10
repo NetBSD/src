@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/01/23 21:22:45 christos Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2019/06/10 21:44:50 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -101,5 +101,12 @@ ipf_l.h: lexer.h
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
+
+# Ugh. Generates too large offsets with -O2.
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+. if ${MACHINE_CPU} == "m68k" && empty(CFLAGS:M-O0)
+COPTS.ipf_y.c+=	-O1
+. endif
+.endif
 
 .include <bsd.prog.mk>

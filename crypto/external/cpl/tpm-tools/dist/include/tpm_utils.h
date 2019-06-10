@@ -65,6 +65,14 @@
 #define LOG_DEBUG               _("debug")
 #define LOG_LEVEL_DEBUG         3
 
+#ifdef __GNUC__
+#define __no_optimize __attribute__((optimize("O0")))
+#else
+#define __no_optimize
+#endif
+
+void * __no_optimize __memset(void *s, int c, size_t n);
+
 typedef int (*CmdOptParser)( const int aOpt, const char *aOptArg );
 typedef void (*CmdHelpFunction)( const char *aCmd );
 

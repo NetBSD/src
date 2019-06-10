@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2016/05/29 05:10:34 nakayama Exp $
+#	$NetBSD: Makefile.inc,v 1.22.16.1 2019/06/10 21:41:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SRCS+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c atomic_and_32_cas.c \
 .  if ${LIB} == "c"
 SRCS+=	atomic_nand_16_cas.c atomic_nand_8_cas.c	\
 	atomic_and_16_cas.c atomic_and_8_cas.c		\
+	atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c	\
 	atomic_xor_16_cas.c atomic_xor_8_cas.c		\
 	atomic_add_16_cas.c atomic_add_8_cas.c		\
 	atomic_cas_16_cas.c atomic_cas_8_cas.c		\

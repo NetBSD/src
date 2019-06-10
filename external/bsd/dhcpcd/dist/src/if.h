@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +111,7 @@ int if_getifaddrs(struct ifaddrs **);
 #define	getifaddrs	if_getifaddrs
 #endif
 
+int if_getflags(struct interface *ifp);
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
 bool if_valid_hwaddr(const uint8_t *, size_t);
@@ -128,6 +129,12 @@ int if_domtu(const struct interface *, short int);
 #define if_getmtu(ifp) if_domtu((ifp), 0)
 #define if_setmtu(ifp, mtu) if_domtu((ifp), (mtu))
 int if_carrier(struct interface *);
+
+#ifdef ALIAS_ADDR
+int if_makealias(char *, size_t, const char *, int);
+#endif
+
+int if_mtu_os(const struct interface *);
 
 /*
  * Helper to decode an interface name of bge0:1 to
@@ -197,6 +204,7 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #else
 #define ip6_use_tempaddr(a) (0)
 #endif
+int ip6_forwarding(const char *ifname);
 
 int if_address6(unsigned char, const struct ipv6_addr *);
 int if_addrflags6(const struct interface *, const struct in6_addr *,
@@ -208,5 +216,7 @@ int if_getlifetime6(struct ipv6_addr *);
 #endif
 
 int if_machinearch(char *, size_t);
+struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *,
+    struct msghdr *, int *);
 int xsocket(int, int, int);
 #endif

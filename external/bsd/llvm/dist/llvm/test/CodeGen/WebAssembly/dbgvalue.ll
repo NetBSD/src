@@ -1,12 +1,12 @@
-; RUN: llc < %s -O0 -verify-machineinstrs -mtriple=wasm32-unknown-unknown-wasm | FileCheck %s
+; RUN: llc < %s -O0 -verify-machineinstrs | FileCheck %s
 
-; CHECK: BB#0
-; CHECK: #DEBUG_VALUE: usage:self <- %vreg4
-; CHECK: BB#1
+; CHECK: %bb.0
+; CHECK: #DEBUG_VALUE: usage:self <- %4
+; CHECK: %bb.1
 ; CHECK: DW_TAG_variable
 source_filename = "test/CodeGen/WebAssembly/dbgvalue.ll"
 target datalayout = "e-m:e-p:32:32-i64:64-n32:64-S128"
-target triple = "wasm32-unknown-unknown-wasm"
+target triple = "wasm32-unknown-unknown"
 
 @key = external local_unnamed_addr global [15 x i8], align 1
 @.str = external unnamed_addr constant [33 x i8], align 1
@@ -45,7 +45,7 @@ attributes #0 = { nounwind readnone }
 !1 = !DIFile(filename: "crash.c", directory: "wasm/tests")
 !2 = !{}
 !3 = !{!4}
-!4 = !DIGlobalVariableExpression(var: !5)
+!4 = !DIGlobalVariableExpression(var: !5, expr: !DIExpression())
 !5 = !DIGlobalVariable(name: "key", scope: !0, file: !1, line: 7, type: !6, isLocal: false, isDefinition: true)
 !6 = !DICompositeType(tag: DW_TAG_array_type, baseType: !7, size: 120, align: 8, elements: !10)
 !7 = !DIDerivedType(tag: DW_TAG_typedef, name: "uint8_t", file: !8, line: 185, baseType: !9)
@@ -56,7 +56,7 @@ attributes #0 = { nounwind readnone }
 !12 = !{i32 2, !"Dwarf Version", i32 4}
 !13 = !{i32 2, !"Debug Info Version", i32 3}
 !14 = !{!"clang version 3.9.0 (trunk 273884) (llvm/trunk 273897)"}
-!15 = distinct !DISubprogram(name: "usage", scope: !1, file: !1, line: 15, type: !16, isLocal: false, isDefinition: true, scopeLine: 15, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !21)
+!15 = distinct !DISubprogram(name: "usage", scope: !1, file: !1, line: 15, type: !16, isLocal: false, isDefinition: true, scopeLine: 15, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !21)
 !16 = !DISubroutineType(types: !17)
 !17 = !{!18, !19}
 !18 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

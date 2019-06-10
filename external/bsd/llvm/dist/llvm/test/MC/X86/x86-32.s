@@ -65,8 +65,8 @@
 	skinit %eax
 // CHECK: skinit %eax
 // CHECK: encoding: [0x0f,0x01,0xde]
-	invlpga %ecx, %eax
-// CHECK: invlpga %ecx, %eax
+	invlpga %eax, %ecx
+// CHECK: invlpga %eax, %ecx
 // CHECK: encoding: [0x0f,0x01,0xdf]
 
 	rdtscp
@@ -355,12 +355,12 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x66,0x8c,0xc8]
         movw %cs, %ax
 
-// CHECK: movl	%cs, (%eax)
+// CHECK: movw	%cs, (%eax)
 // CHECK:  encoding: [0x8c,0x08]
-        movl %cs, (%eax)
+        mov %cs, (%eax)
 
 // CHECK: movw	%cs, (%eax)
-// CHECK:  encoding: [0x66,0x8c,0x08]
+// CHECK:  encoding: [0x8c,0x08]
         movw %cs, (%eax)
 
 // CHECK: movl	%eax, %cs
@@ -379,12 +379,12 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x8e,0xc8]
         mov %ax, %cs
 
-// CHECK: movl	(%eax), %cs
+// CHECK: movw	(%eax), %cs
 // CHECK:  encoding: [0x8e,0x08]
-        movl (%eax), %cs
+        mov (%eax), %cs
 
 // CHECK: movw	(%eax), %cs
-// CHECK:  encoding: [0x66,0x8e,0x08]
+// CHECK:  encoding: [0x8e,0x08]
         movw (%eax), %cs
 
 // radr://8033374
@@ -528,9 +528,9 @@ sysretl
 
 // rdar://8018260
 testl	%ecx, -24(%ebp)
-// CHECK: testl	-24(%ebp), %ecx
+// CHECK: testl	%ecx, -24(%ebp)
 testl	-24(%ebp), %ecx
-// CHECK: testl	-24(%ebp), %ecx
+// CHECK: testl	%ecx, -24(%ebp)
 
 
 // rdar://8407242
@@ -644,8 +644,6 @@ inl	(%dx), %eax
 
 //PR15455
 
-outs	(%esi), (%dx)
-// CHECK: outsw	(%esi), %dx
 outsb	(%esi), (%dx)
 // CHECK: outsb	(%esi), %dx
 outsw	(%esi), (%dx)
@@ -653,8 +651,6 @@ outsw	(%esi), (%dx)
 outsl	(%esi), (%dx)
 // CHECK: outsl	(%esi), %dx
 
-ins 	(%dx), %es:(%edi)
-// CHECK: insw	%dx, %es:(%edi)
 insb	(%dx), %es:(%edi)
 // CHECK: insb	%dx, %es:(%edi)
 insw	(%dx), %es:(%edi)
@@ -770,13 +766,13 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0x66,0xca,0xce,0x7a]
         	lretw	$0x7ace
 
-// CHECK: bound	2(%eax), %bx
+// CHECK: bound	%bx, 2(%eax)
 // CHECK:  encoding: [0x66,0x62,0x58,0x02]
-        	bound	2(%eax),%bx
+        	bound	%bx,2(%eax)
 
-// CHECK: bound	4(%ebx), %ecx
+// CHECK: bound	%ecx, 4(%ebx)
 // CHECK:  encoding: [0x62,0x4b,0x04]
-        	bound	4(%ebx),%ecx
+        	bound	%ecx,4(%ebx)
 
 // CHECK: arpl	%bx, %bx
 // CHECK:  encoding: [0x63,0xdb]
@@ -1097,3 +1093,15 @@ data16
 // CHECK: lgdtl 4(%eax)
 // CHECK:  encoding: [0x0f,0x01,0x50,0x04]
 data16 lgdt 4(%eax)
+
+// CHECK: rdpid %eax
+// CHECK: encoding: [0xf3,0x0f,0xc7,0xf8]
+rdpid %eax
+
+// CHECK: ptwritel 3735928559(%ebx,%ecx,8)
+// CHECK:  encoding: [0xf3,0x0f,0xae,0xa4,0xcb,0xef,0xbe,0xad,0xde]
+ptwritel 0xdeadbeef(%ebx,%ecx,8)
+
+// CHECK: ptwritel %eax
+// CHECK:  encoding: [0xf3,0x0f,0xae,0xe0]
+ptwritel %eax

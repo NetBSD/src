@@ -1,5 +1,5 @@
 ; RUN: llc -split-dwarf-file=foo.dwo -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llvm-dwarfdump -all %t | FileCheck %s
 ; RUN: llvm-readobj --relocations %t | FileCheck --check-prefix=CHECK-RELOCS %s
 
 ; From:
@@ -63,7 +63,7 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!15, !16}
 !llvm.ident = !{!17}
 
-!0 = !DIGlobalVariableExpression(var: !1)
+!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())
 !1 = !DIGlobalVariable(name: "a", scope: null, file: !2, line: 8, type: !3, isLocal: false, isDefinition: true)
 !2 = !DIFile(filename: "baz.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !3 = !DICompositeType(tag: DW_TAG_class_type, name: "A", file: !2, line: 1, size: 32, align: 32, elements: !4, identifier: "_ZTS1A")
@@ -81,18 +81,18 @@ attributes #1 = { nounwind readnone }
 !15 = !{i32 2, !"Dwarf Version", i32 4}
 !16 = !{i32 1, !"Debug Info Version", i32 3}
 !17 = !{!"clang version 3.5 (trunk 199923) (llvm/trunk 199940)"}
-!18 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 8, type: !19, isLocal: true, isDefinition: true, scopeLine: 8, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !11, variables: !12)
+!18 = distinct !DISubprogram(name: "__cxx_global_var_init", scope: !2, file: !2, line: 8, type: !19, isLocal: true, isDefinition: true, scopeLine: 8, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !11, retainedNodes: !12)
 !19 = !DISubroutineType(types: !20)
 !20 = !{null}
 !21 = !DILocation(line: 8, scope: !18)
-!22 = distinct !DISubprogram(name: "A", linkageName: "_ZN1AC2Ei", scope: !3, file: !2, line: 3, type: !8, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !11, declaration: !7, variables: !12)
+!22 = distinct !DISubprogram(name: "A", linkageName: "_ZN1AC2Ei", scope: !3, file: !2, line: 3, type: !8, isLocal: false, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !11, declaration: !7, retainedNodes: !12)
 !23 = !DILocalVariable(name: "this", arg: 1, scope: !22, type: !24, flags: DIFlagArtificial | DIFlagObjectPointer)
 !24 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !3, size: 64, align: 64)
 !25 = !DIExpression()
 !26 = !DILocation(line: 0, scope: !22)
 !27 = !DILocalVariable(name: "i", arg: 2, scope: !22, file: !2, line: 3, type: !6)
 !28 = !DILocation(line: 3, scope: !22)
-!29 = distinct !DISubprogram(linkageName: "_GLOBAL__I_a", scope: !2, file: !2, line: 3, type: !30, isLocal: true, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, unit: !11, variables: !12)
+!29 = distinct !DISubprogram(linkageName: "_GLOBAL__I_a", scope: !2, file: !2, line: 3, type: !30, isLocal: true, isDefinition: true, scopeLine: 3, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, unit: !11, retainedNodes: !12)
 !30 = !DISubroutineType(types: !12)
 !31 = !DILocation(line: 3, scope: !29)
 

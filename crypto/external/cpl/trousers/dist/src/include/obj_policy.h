@@ -178,7 +178,7 @@ TSS_RESULT obj_policy_get_delegate_public(struct tsp_object *, TPM_DELEGATE_PUBL
 
 #define POLICY_LIST_DECLARE		struct obj_list policy_list
 #define POLICY_LIST_DECLARE_EXTERN	extern struct obj_list policy_list
-#define POLICY_LIST_INIT()		list_init(&policy_list)
+#define POLICY_LIST_INIT()		tspi_list_init(&policy_list)
 #define POLICY_LIST_CONNECT(a,b)	obj_connectContext_list(&policy_list, a, b)
 #define POLICY_LIST_CLOSE(a)		obj_list_close(&policy_list, &__tspi_policy_free, a)
 

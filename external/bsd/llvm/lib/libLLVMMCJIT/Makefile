@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/02/27 21:47:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.8.16.1 2019/06/10 21:50:53 christos Exp $
 
 LIB=	LLVMMCJIT
 
@@ -8,4 +8,8 @@ LIB=	LLVMMCJIT
 
 SRCS+=	MCJIT.cpp
 
+.if defined(HOSTLIB)
+.include <bsd.hostlib.mk>
+.else
 .include <bsd.lib.mk>
+.endif

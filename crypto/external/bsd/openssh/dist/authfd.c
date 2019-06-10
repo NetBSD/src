@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.15 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.108 2018/02/23 15:58:37 markus Exp $ */
+/*	$NetBSD: authfd.c,v 1.15.2.1 2019/06/10 21:41:11 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.113 2018/12/27 23:02:11 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.15 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.15.2.1 2019/06/10 21:41:11 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -94,7 +94,7 @@ ssh_get_authentication_socket(int *fdp)
 		*fdp = -1;
 
 	authsocket = getenv(SSH_AUTHSOCKET_ENV_NAME);
-	if (!authsocket)
+	if (authsocket == NULL || *authsocket == '\0')
 		return SSH_ERR_AGENT_NOT_PRESENT;
 
 	memset(&sunaddr, 0, sizeof(sunaddr));
@@ -133,7 +133,7 @@ ssh_request_reply(int sock, struct sshbuf *request, struct sshbuf *reply)
 
 	/* Send the length and then the packet to the agent. */
 	if (atomicio(vwrite, sock, buf, 4) != 4 ||
-	    atomicio(vwrite, sock, __UNCONST(sshbuf_ptr(request)),
+	    atomicio(vwrite, sock, sshbuf_mutable_ptr(request),
 	    sshbuf_len(request)) != sshbuf_len(request))
 		return SSH_ERR_AGENT_COMMUNICATION;
 	/*
@@ -323,14 +323,16 @@ ssh_free_identitylist(struct ssh_identitylist *idl)
  */
 
 
-/* encode signature algoritm in flag bits, so we can keep the msg format */
+/* encode signature algorithm in flag bits, so we can keep the msg format */
 static u_int
 agent_encode_alg(const struct sshkey *key, const char *alg)
 {
-	if (alg != NULL && key->type == KEY_RSA) {
-		if (strcmp(alg, "rsa-sha2-256") == 0)
+	if (alg != NULL && sshkey_type_plain(key->type) == KEY_RSA) {
+		if (strcmp(alg, "rsa-sha2-256") == 0 ||
+		    strcmp(alg, "rsa-sha2-256-cert-v01@openssh.com") == 0)
 			return SSH_AGENT_RSA_SHA2_256;
-		else if (strcmp(alg, "rsa-sha2-512") == 0)
+		if (strcmp(alg, "rsa-sha2-512") == 0 ||
+		    strcmp(alg, "rsa-sha2-512-cert-v01@openssh.com") == 0)
 			return SSH_AGENT_RSA_SHA2_512;
 	}
 	return 0;
@@ -343,8 +345,8 @@ ssh_agent_sign(int sock, const struct sshkey *key,
     const u_char *data, size_t datalen, const char *alg, u_int compat)
 {
 	struct sshbuf *msg;
-	u_char *blob = NULL, type;
-	size_t blen = 0, len = 0;
+	u_char *sig = NULL, type = 0;
+	size_t len = 0;
 	u_int flags = 0;
 	int r = SSH_ERR_INTERNAL_ERROR;
 
@@ -355,11 +357,9 @@ ssh_agent_sign(int sock, const struct sshkey *key,
 		return SSH_ERR_INVALID_ARGUMENT;
 	if ((msg = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
-	if ((r = sshkey_to_blob(key, &blob, &blen)) != 0)
-		goto out;
 	flags |= agent_encode_alg(key, alg);
 	if ((r = sshbuf_put_u8(msg, SSH2_AGENTC_SIGN_REQUEST)) != 0 ||
-	    (r = sshbuf_put_string(msg, blob, blen)) != 0 ||
+	    (r = sshkey_puts(key, msg)) != 0 ||
 	    (r = sshbuf_put_string(msg, data, datalen)) != 0 ||
 	    (r = sshbuf_put_u32(msg, flags)) != 0)
 		goto out;
@@ -374,15 +374,19 @@ ssh_agent_sign(int sock, const struct sshkey *key,
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
-	if ((r = sshbuf_get_string(msg, sigp, &len)) != 0)
+	if ((r = sshbuf_get_string(msg, &sig, &len)) != 0)
 		goto out;
+	/* Check what we actually got back from the agent. */
+	if ((r = sshkey_check_sigtype(sig, len, alg)) != 0)
+		goto out;
+	/* success */
+	*sigp = sig;
 	*lenp = len;
+	sig = NULL;
+	len = 0;
 	r = 0;
  out:
-	if (blob != NULL) {
-		explicit_bzero(blob, blen);
-		free(blob);
-	}
+	freezero(sig, len);
 	sshbuf_free(msg);
 	return r;
 }

@@ -13,14 +13,17 @@
 ; }
 ;
 ; RUN: llc -filetype=asm %s -o - | FileCheck %s
-; Test that we only emit register-indirect locations for the array array.
-; rdar://problem/14874886
-;
-; CHECK-NOT: ##DEBUG_VALUE: main:array <- %R{{.*}}
+; RUN: llc -filetype=obj %s -o - | llvm-dwarfdump -v - ---debug-info | FileCheck %s --check-prefix=DWARF
+
+; CHECK-LABEL: _main:
+; CHECK: movaps {{.*}}, (%rsp)
 ; CHECK: movq    %rsp, %rdi
-; CHECK-NOT: ##DEBUG_VALUE: main:array <- %R{{.*}}
-; CHECK:     ##DEBUG_VALUE: main:array <- [%RDI+0]
-; CHECK-NOT: ##DEBUG_VALUE: main:array <- %R{{.*}}
+; CHECK: callq _f
+
+; DWARF: DW_TAG_variable
+; DWARF-NEXT:              DW_AT_location [DW_FORM_exprloc]      (DW_OP_fbreg +0)
+; DWARF-NEXT:              DW_AT_name [DW_FORM_strp]     ( {{.*}} = "array")
+
 ; ModuleID = '/tmp/array.c'
 source_filename = "/tmp/array.c"
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
@@ -31,7 +34,7 @@ target triple = "x86_64-apple-macosx10.12.0"
 ; Function Attrs: nounwind ssp uwtable
 define void @f(i32* nocapture %p) local_unnamed_addr #0 !dbg !8 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !14, metadata !15), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32* %p, metadata !14, metadata !15), !dbg !16
   store i32 42, i32* %p, align 4, !dbg !17, !tbaa !18
   ret void, !dbg !22
 }
@@ -43,12 +46,12 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) local_unnamed_addr #0 !dbg !23 {
 entry:
   %array = alloca [4 x i32], align 16
-  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !30, metadata !15), !dbg !36
-  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !31, metadata !15), !dbg !37
+  tail call void @llvm.dbg.value(metadata i32 %argc, metadata !30, metadata !15), !dbg !36
+  tail call void @llvm.dbg.value(metadata i8** %argv, metadata !31, metadata !15), !dbg !37
   %0 = bitcast [4 x i32]* %array to i8*, !dbg !38
   call void @llvm.lifetime.start.p0i8(i64 16, i8* nonnull %0) #3, !dbg !38
   tail call void @llvm.dbg.declare(metadata [4 x i32]* %array, metadata !32, metadata !15), !dbg !39
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %0, i8* bitcast ([4 x i32]* @main.array to i8*), i64 16, i32 16, i1 false), !dbg !39
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 nonnull %0, i8* align 16 bitcast ([4 x i32]* @main.array to i8*), i64 16, i1 false), !dbg !39
   %arraydecay = getelementptr inbounds [4 x i32], [4 x i32]* %array, i64 0, i64 0, !dbg !40
   call void @f(i32* nonnull %arraydecay), !dbg !41
   %1 = load i32, i32* %arraydecay, align 16, !dbg !42, !tbaa !18
@@ -60,13 +63,13 @@ entry:
 declare void @llvm.lifetime.start.p0i8(i64, i8* nocapture) #2
 
 ; Function Attrs: argmemonly nounwind
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i32, i1) #2
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i1) #2
 
 ; Function Attrs: argmemonly nounwind
 declare void @llvm.lifetime.end.p0i8(i64, i8* nocapture) #2
 
 ; Function Attrs: nounwind readnone speculatable
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone speculatable }
@@ -85,7 +88,7 @@ attributes #3 = { nounwind }
 !5 = !{i32 1, !"wchar_size", i32 4}
 !6 = !{i32 7, !"PIC Level", i32 2}
 !7 = !{!"clang version 5.0.0 (trunk 303873) (llvm/trunk 303875)"}
-!8 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !9, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !13)
+!8 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !9, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !13)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !12, size: 64)
@@ -100,7 +103,7 @@ attributes #3 = { nounwind }
 !20 = !{!"omnipotent char", !21, i64 0}
 !21 = !{!"Simple C/C++ TBAA"}
 !22 = !DILocation(line: 3, column: 1, scope: !8)
-!23 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 5, type: !24, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !29)
+!23 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 5, type: !24, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !29)
 !24 = !DISubroutineType(types: !25)
 !25 = !{!12, !12, !26}
 !26 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !27, size: 64)

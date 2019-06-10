@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.319 2018/06/28 10:14:01 christos Exp $
+# $NetBSD: shl.mi,v 1.319.2.1 2019/06/10 21:42:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -70,6 +70,7 @@
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		compatfile,picinstall,iscsi
 ./usr/lib/libisns_pic.a				comp-isns-piclib	compatfile,picinstall
+./usr/lib/libjemalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
@@ -86,7 +87,7 @@
 ./usr/lib/liblsan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/liblua_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/liblutok_pic.a			comp-c-piclib		compatfile,picinstall,kyua
-./usr/lib/liblwres_pic.a			comp-bind-piclib	compatfile,picinstall
+./usr/lib/liblwres_pic.a			comp-obsolete		obsolete
 ./usr/lib/liblzf_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/liblzma_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libm_pic.a				comp-c-piclib		compatfile,picinstall
@@ -112,15 +113,12 @@
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libnetpgpverify_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		compatfile,picinstall,npf
+./usr/lib/libns_pic.a				comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
-./usr/lib/libopcodes.so.8			comp-c-shlib		compatfile,binutils=227
-./usr/lib/libopcodes.so.8.0			comp-c-shlib		compatfile,binutils=227
-./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=230
-./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=230
-./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
-./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
@@ -212,6 +210,7 @@
 ./usr/lib/librumphijack_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
+./usr/lib/librumpkern_nv_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_sljit_pic.a		comp-c-piclib		picinstall,rump,sljit
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		picinstall,rump,zfs
 ./usr/lib/librumpkern_sysproxy_pic.a		comp-c-piclib		picinstall,rump
@@ -277,8 +276,8 @@
 ./usr/lib/libwind_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libwrap_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libz_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libzfs_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libzfs_core_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
+./usr/lib/libzfs_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libzpool_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/libexec/liblto_plugin.so			comp-c-bin              gcc
 ./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc

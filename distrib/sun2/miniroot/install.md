@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 2008/04/30 13:10:49 martin Exp $
+#	$NetBSD: install.md,v 1.3.64.1 2019/06/10 21:42:34 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,19 +47,11 @@ md_set_term() {
 	export TERM
 }
 
-__mount_kernfs() {
-	# Make sure kernfs is mounted.
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern
-	fi
-}
-
 md_makerootwritable() {
 	# Just remount the root device read-write.
 	if [ ! -e /tmp/root_writable ]; then
 		echo "Remounting root read-write..."
-		__mount_kernfs
+		mi_mount_kernfs
 		mount -u -t ffs /kern/rootdev /
 		swapctl -a /kern/rootdev
 		cp /dev/null /tmp/root_writable
@@ -68,26 +60,21 @@ md_makerootwritable() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^sd[0-9] /s/ .*//p' \
-	       -e '/^xd[0-9] /s/ .*//p' \
-	       -e '/^xy[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^[xs]d[0-9] /s/ .*//p' \
+	       -e '/^xy[0-9] /s/ .*//p'
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	__mount_kernfs
-	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^cd[0-9] /s/ .*//p'
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	__mount_kernfs
-	sed -n -e '/^ie[0-9] /s/ .*//p' \
-	       -e '/^le[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^[il]e[0-9] /s/ .*//p'
 }
 
 md_get_partition_range() {
@@ -176,9 +163,9 @@ __welcome_banner_1
 This program is designed to help you upgrade your NetBSD system in a
 simple and rational way.
 
-As a reminder, installing the `etc' binary set is NOT recommended.
+As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 __welcome_banner_2
 	fi
@@ -201,7 +188,7 @@ __welcome_banner_3
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 __not_going_to_install_1

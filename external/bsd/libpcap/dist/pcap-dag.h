@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-dag.h,v 1.3 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: pcap-dag.h,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $	*/
 
 /*
  * pcap-dag.c: Packet capture interface for Endace DAG card.
@@ -11,4 +11,4 @@
  */
 
 pcap_t *dag_create(const char *, char *, int *);
-int dag_findalldevs(pcap_if_t **devlistp, char *errbuf);
+int dag_findalldevs(pcap_if_list_t *devlistp, char *errbuf);

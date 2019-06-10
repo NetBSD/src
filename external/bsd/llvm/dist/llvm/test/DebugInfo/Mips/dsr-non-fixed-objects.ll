@@ -1,7 +1,5 @@
 ; RUN: llc -march=mips -mcpu=mips32r2 -O0 -filetype=obj -fast-isel=0 <%s | \
-; RUN:    llvm-dwarfdump -debug-dump=all - | FileCheck %s -check-prefix=F2
-; RUN: llc -march=mips -mcpu=mips32r2 -O0 -filetype=obj -fast-isel=0 <%s | \
-; RUN:    llvm-dwarfdump -debug-dump=all - | FileCheck %s -check-prefix=F3
+; RUN:    llvm-dwarfdump -v -all - | FileCheck %s
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata)
 
@@ -22,9 +20,9 @@ declare void @foo(i32*)
 ;   return w;
 ; }
 
-; c -> DW_OP_breg29(r29): 16
-; F2: DW_AT_location [DW_FORM_exprloc]      (<0x2> 8d 10 )
-; F2: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000065] = "c")
+; CHECK: DW_TAG_subprogram
+; CHECK: DW_AT_location [DW_FORM_exprloc]      (DW_OP_breg29 SP_64+36)
+; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000065] = "c")
 
 ; Function Attrs: nounwind
 define i32 @f2(i32 signext %a, i32 signext %b) !dbg !4 {
@@ -46,9 +44,9 @@ entry:
   ret i32 %2, !dbg !27
 }
 
-; c -> DW_OP_breg23(r23): 16
-; F3: DW_AT_location [DW_FORM_exprloc]      (<0x2> 87 10 )
-; F3: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000065] = "c")
+; CHECK: DW_TAG_subprogram
+; CHECK: DW_AT_location [DW_FORM_exprloc]      (DW_OP_breg23 S7_64+32)
+; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000065] = "c")
 
 define i32* @f3(i32 signext %a, i32 signext %b) !dbg !8 {
 entry:
@@ -82,11 +80,11 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.8.0 (trunk 251783) (llvm/trunk 251781)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
 !1 = !DIFile(filename: "test.c", directory: "/home/vk/repos/tmp/dwarf")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "f2", scope: !1, file: !1, line: 20, type: !5, isLocal: false, isDefinition: true, scopeLine: 20, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!4 = distinct !DISubprogram(name: "f2", scope: !1, file: !1, line: 20, type: !5, isLocal: false, isDefinition: true, scopeLine: 20, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7, !7, !7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = distinct !DISubprogram(name: "f3", scope: !1, file: !1, line: 27, type: !9, isLocal: false, isDefinition: true, scopeLine: 27, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!8 = distinct !DISubprogram(name: "f3", scope: !1, file: !1, line: 27, type: !9, isLocal: false, isDefinition: true, scopeLine: 27, flags: DIFlagPrototyped, isOptimized: false, unit: !0, retainedNodes: !2)
 !9 = !DISubroutineType(types: !10)
 !10 = !{!11, !7, !7}
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !7, size: 32, align: 32)

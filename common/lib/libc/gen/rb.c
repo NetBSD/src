@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $	*/
+/*	$NetBSD: rb.c,v 1.13.16.1 2019/06/10 21:41:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,6 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/types.h>
 #include <stddef.h>
@@ -36,13 +40,20 @@
 #include <stdbool.h>
 #ifdef RBDEBUG
 #define	KASSERT(s)	assert(s)
+#define	__rbt_unused
 #else
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
+#define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $");
+__RCSID("$NetBSD: rb.c,v 1.13.16.1 2019/06/10 21:41:07 christos Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.13.16.1 2019/06/10 21:41:07 christos Exp $");
+#ifndef DIAGNOSTIC
+#define	__rbt_unused	__unused
+#else
+#define	__rbt_unused
+#endif
 #endif
 
 #ifdef _LIBC
@@ -313,10 +324,9 @@ rb_tree_insert_node(struct rb_tree *rbt, void *object)
  * removal since rotation almost always involves the exchanging of colors
  * as a separate step.
  */
-/*ARGSUSED*/
 static void
-rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
-	const unsigned int which)
+rb_tree_reparent_nodes(__rbt_unused struct rb_tree *rbt,
+	struct rb_node *old_father, const unsigned int which)
 {
 	const unsigned int other = which ^ RB_DIR_OTHER;
 	struct rb_node * const grandpa = RB_FATHER(old_father);
