@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.9 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.10 2019/06/10 05:56:15 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.9 2019/04/06 03:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.10 2019/06/10 05:56:15 ryo Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -171,6 +171,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 
 	if ((eclass == ESR_EC_INSN_ABT_EL0) || (eclass == ESR_EC_INSN_ABT_EL1))
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+	else if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_CM))
+		ftype = VM_PROT_READ;
 	else
 		ftype = (rw == 0) ? VM_PROT_READ : VM_PROT_WRITE;
 
