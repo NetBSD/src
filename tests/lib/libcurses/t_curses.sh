@@ -765,7 +765,7 @@ atf_init_test_cases()
 #	atf_add_test_case delay_output # not working
 	atf_add_test_case derwin
 	atf_add_test_case doupdate
-#	atf_add_test_case dupwin # not working
+	atf_add_test_case dupwin
 	atf_add_test_case erasechar
 	atf_add_test_case flash
 	atf_add_test_case getattrs
