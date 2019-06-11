@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.124 2019/06/10 22:16:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.125 2019/06/11 23:30:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.124 2019/06/10 22:16:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.125 2019/06/11 23:30:05 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2947,6 +2947,8 @@ eventmask_preserved(int event)
 	    ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
 	SYSCALL_REQUIRE(
 	    ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	DPRINTF("set_event=%#x get_event=%#x\n", set_event.pe_set_event,
+	    get_event.pe_set_event);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
 	DPRINTF("Before resuming the child process where it left off and "
@@ -2982,15 +2984,16 @@ EVENTMASK_PRESERVED(eventmask_preserved_vfork, PTRACE_VFORK)
 EVENTMASK_PRESERVED(eventmask_preserved_vfork_done, PTRACE_VFORK_DONE)
 EVENTMASK_PRESERVED(eventmask_preserved_lwp_create, PTRACE_LWP_CREATE)
 EVENTMASK_PRESERVED(eventmask_preserved_lwp_exit, PTRACE_LWP_EXIT)
+EVENTMASK_PRESERVED(eventmask_preserved_posix_spawn, PTRACE_POSIX_SPAWN)
 
 /// ----------------------------------------------------------------------------
 
 static void
-fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
+fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
     bool trackvforkdone)
 {
 	const int exitval = 5;
-	const int exitval2 = 15;
+	const int exitval2 = 0; /* This matched exit status from /bin/echo */
 	const int sigval = SIGSTOP;
 	pid_t child, child2 = 0, wpid;
 #if defined(TWAIT_HAVE_STATUS)
@@ -3003,9 +3006,6 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 
 	char * const arg[] = { __UNCONST("/bin/echo"), NULL };
 
-	if (spawn)
-		atf_tc_skip("posix_spawn() is not supported");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -3015,11 +3015,15 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		if (spawn) {
+		if (strcmp(fn, "spawn") == 0) {
 			FORKEE_ASSERT_EQ(posix_spawn(&child2,
 			    arg[0], NULL, NULL, arg, NULL), 0);
-		} else if (fn == fork || fn == vfork) {
-			FORKEE_ASSERT((child2 = (fn)()) != -1);
+		} else {
+			if (strcmp(fn, "fork") == 0) {
+				FORKEE_ASSERT((child2 = fork()) != -1);
+			} else if (strcmp(fn, "vfork") == 0) {
+				FORKEE_ASSERT((child2 = vfork()) != -1);
+			}
 
 			if (child2 == 0)
 				_exit(exitval2);
@@ -3039,11 +3043,14 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 
 	validate_status_stopped(status, sigval);
 
-	DPRINTF("Set 0%s%s%s in EVENT_MASK for the child %d\n",
+	DPRINTF("Set 0%s%s%s%s in EVENT_MASK for the child %d\n",
+	    trackspawn ? "|PTRACE_POSIX_SPAWN" : "",
 	    trackfork ? "|PTRACE_FORK" : "",
 	    trackvfork ? "|PTRACE_VFORK" : "",
 	    trackvforkdone ? "|PTRACE_VFORK_DONE" : "", child);
 	event.pe_set_event = 0;
+	if (trackspawn)
+		event.pe_set_event |= PTRACE_POSIX_SPAWN;
 	if (trackfork)
 		event.pe_set_event |= PTRACE_FORK;
 	if (trackvfork)
@@ -3057,7 +3064,9 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 #if defined(TWAIT_HAVE_PID)
-	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
+	if ((trackspawn && strcmp(fn, "spawn") == 0) ||
+	    (trackfork && strcmp(fn, "fork") == 0) ||
+	    (trackvfork && strcmp(fn, "vfork") == 0)) {
 		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
 		    child);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
@@ -3067,11 +3076,16 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 
 		SYSCALL_REQUIRE(
 		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-		if (trackfork && fn == fork) {
+		if (trackspawn && strcmp(fn, "spawn") == 0) {
+			ATF_REQUIRE_EQ(
+			    state.pe_report_event & PTRACE_POSIX_SPAWN,
+			       PTRACE_POSIX_SPAWN);
+		}
+		if (trackfork && strcmp(fn, "fork") == 0) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
 			       PTRACE_FORK);
 		}
-		if (trackvfork && fn == vfork) {
+		if (trackvfork && strcmp(fn, "vfork") == 0) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
 			       PTRACE_VFORK);
 		}
@@ -3088,11 +3102,16 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 
 		SYSCALL_REQUIRE(
 		    ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
-		if (trackfork && fn == fork) {
+		if (trackspawn && strcmp(fn, "spawn") == 0) {
+			ATF_REQUIRE_EQ(
+			    state.pe_report_event & PTRACE_POSIX_SPAWN,
+			       PTRACE_POSIX_SPAWN);
+		}
+		if (trackfork && strcmp(fn, "fork") == 0) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_FORK,
 			       PTRACE_FORK);
 		}
-		if (trackvfork && fn == vfork) {
+		if (trackvfork && strcmp(fn, "vfork") == 0) {
 			ATF_REQUIRE_EQ(state.pe_report_event & PTRACE_VFORK,
 			       PTRACE_VFORK);
 		}
@@ -3110,7 +3129,7 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 	}
 #endif
 
-	if (trackvforkdone && fn == vfork) {
+	if (trackvforkdone && strcmp(fn, "vfork") == 0) {
 		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
 		    child);
 		TWAIT_REQUIRE_SUCCESS(
@@ -3132,7 +3151,9 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 	}
 
 #if defined(TWAIT_HAVE_PID)
-	if ((trackfork && fn == fork) || (trackvfork && fn == vfork)) {
+	if ((trackspawn && strcmp(fn, "spawn") == 0) ||
+	    (trackfork && strcmp(fn, "fork") == 0) ||
+	    (trackvfork && strcmp(fn, "vfork") == 0)) {
 		DPRINTF("Before calling %s() for the forkee - expected exited"
 		    "\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(
@@ -3168,12 +3189,13 @@ fork_body(pid_t (*fn)(void), bool spawn, bool trackfork, bool trackvfork,
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define FORK_TEST(name,fun,spawn,tfork,tvfork,tvforkdone)		\
+#define FORK_TEST(name,fun,tspawn,tfork,tvfork,tvforkdone)		\
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
-	atf_tc_set_md_var(tc, "descr", "Verify " #fun "(2) "		\
-	    "called with 0%s%s%s in EVENT_MASK",			\
+	atf_tc_set_md_var(tc, "descr", "Verify " fun "() "		\
+	    "called with 0%s%s%s%s in EVENT_MASK",			\
+	    tspawn ? "|PTRACE_FORK" : "",				\
 	    tfork ? "|PTRACE_FORK" : "",				\
 	    tvfork ? "|PTRACE_VFORK" : "",				\
 	    tvforkdone ? "|PTRACE_VFORK_DONE" : "");			\
@@ -3182,49 +3204,78 @@ ATF_TC_HEAD(name, tc)							\
 ATF_TC_BODY(name, tc)							\
 {									\
 									\
-	fork_body(fun, spawn, tfork, tvfork, tvforkdone);		\
+	fork_body(fun, tspawn, tfork, tvfork, tvforkdone);		\
 }
 
-FORK_TEST(fork1, fork, false, false, false, false)
+FORK_TEST(fork1, "fork", false, false, false, false)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(fork2, fork, false, true, false, false)
-FORK_TEST(fork3, fork, false, false, true, false)
-FORK_TEST(fork4, fork, false, true, true, false)
+FORK_TEST(fork2, "fork", false, true, false, false)
+FORK_TEST(fork3, "fork", false, false, true, false)
+FORK_TEST(fork4, "fork", false, true, true, false)
 #endif
-FORK_TEST(fork5, fork, false, false, false, true)
+FORK_TEST(fork5, "fork", false, false, false, true)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(fork6, fork, false, true, false, true)
-FORK_TEST(fork7, fork, false, false, true, true)
-FORK_TEST(fork8, fork, false, true, true, true)
+FORK_TEST(fork6, "fork", false, true, false, true)
+FORK_TEST(fork7, "fork", false, false, true, true)
+FORK_TEST(fork8, "fork", false, true, true, true)
+#endif
+FORK_TEST(fork9, "fork", true, false, false, false)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(fork10, "fork", true, true, false, false)
+FORK_TEST(fork11, "fork", true, false, true, false)
+FORK_TEST(fork12, "fork", true, true, true, false)
+#endif
+FORK_TEST(fork13, "fork", true, false, false, true)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(fork14, "fork", true, true, false, true)
+FORK_TEST(fork15, "fork", true, false, true, true)
+FORK_TEST(fork16, "fork", true, true, true, true)
 #endif
 
 #if TEST_VFORK_ENABLED
-FORK_TEST(vfork1, vfork, false, false, false, false)
+FORK_TEST(vfork1, "vfork", false, false, false, false)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(vfork2, vfork, false, true, false, false)
-FORK_TEST(vfork3, vfork, false, false, true, false)
-FORK_TEST(vfork4, vfork, false, true, true, false)
+FORK_TEST(vfork2, "vfork", false, true, false, false)
+FORK_TEST(vfork3, "vfork", false, false, true, false)
+FORK_TEST(vfork4, "vfork", false, true, true, false)
 #endif
-FORK_TEST(vfork5, vfork, false, false, false, true)
+FORK_TEST(vfork5, "vfork", false, false, false, true)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(vfork6, vfork, false, true, false, true)
-FORK_TEST(vfork7, vfork, false, false, true, true)
-FORK_TEST(vfork8, vfork, false, true, true, true)
+FORK_TEST(vfork6, "vfork", false, true, false, true)
+FORK_TEST(vfork7, "vfork", false, false, true, true)
+FORK_TEST(vfork8, "vfork", false, true, true, true)
+#endif
+FORK_TEST(vfork9, "vfork", true, false, false, false)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(vfork10, "vfork", true, true, false, false)
+FORK_TEST(vfork11, "vfork", true, false, true, false)
+FORK_TEST(vfork12, "vfork", true, true, true, false)
+#endif
+FORK_TEST(vfork13, "vfork", true, false, false, true)
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST(vfork14, "vfork", true, true, false, true)
+FORK_TEST(vfork15, "vfork", true, false, true, true)
+FORK_TEST(vfork16, "vfork", true, true, true, true)
 #endif
 #endif
 
-/* It's ugly, but passing posix_spawn as 'bool' avoids function pointer cast */
-FORK_TEST(posix_spawn1, fork, true, false, false, false)
+FORK_TEST(posix_spawn1, "spawn", false, false, false, false)
+FORK_TEST(posix_spawn2, "spawn", false, true, false, false)
+FORK_TEST(posix_spawn3, "spawn", false, false, true, false)
+FORK_TEST(posix_spawn4, "spawn", false, true, true, false)
+FORK_TEST(posix_spawn5, "spawn", false, false, false, true)
+FORK_TEST(posix_spawn6, "spawn", false, true, false, true)
+FORK_TEST(posix_spawn7, "spawn", false, false, true, true)
+FORK_TEST(posix_spawn8, "spawn", false, true, true, true)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(posix_spawn2, fork, true, true, false, false)
-FORK_TEST(posix_spawn3, fork, true, false, true, false)
-FORK_TEST(posix_spawn4, fork, true, true, true, false)
-#endif
-FORK_TEST(posix_spawn5, fork, true, false, false, true)
-#if defined(TWAIT_HAVE_PID)
-FORK_TEST(posix_spawn6, fork, true, true, false, true)
-FORK_TEST(posix_spawn7, fork, true, false, true, true)
-FORK_TEST(posix_spawn8, fork, true, true, true, true)
+FORK_TEST(posix_spawn9, "spawn", true, false, false, false)
+FORK_TEST(posix_spawn10, "spawn", true, true, false, false)
+FORK_TEST(posix_spawn11, "spawn", true, false, true, false)
+FORK_TEST(posix_spawn12, "spawn", true, true, true, false)
+FORK_TEST(posix_spawn13, "spawn", true, false, false, true)
+FORK_TEST(posix_spawn14, "spawn", true, true, false, true)
+FORK_TEST(posix_spawn15, "spawn", true, false, true, true)
+FORK_TEST(posix_spawn16, "spawn", true, true, true, true)
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -7736,6 +7787,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, eventmask_preserved_vfork_done);
 	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_create);
 	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_exit);
+	ATF_TP_ADD_TC(tp, eventmask_preserved_posix_spawn);
 
 	ATF_TP_ADD_TC(tp, fork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork2);
@@ -7745,6 +7797,14 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork6);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork8);
+	ATF_TP_ADD_TC(tp, fork9);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork10);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork11);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork12);
+	ATF_TP_ADD_TC(tp, fork13);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork14);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork15);
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork16);
 
 #if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, vfork1);
@@ -7755,16 +7815,32 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
+	ATF_TP_ADD_TC(tp, vfork9);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork10);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork11);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork12);
+	ATF_TP_ADD_TC(tp, vfork13);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork14);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork15);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork16);
 #endif
 
 	ATF_TP_ADD_TC(tp, posix_spawn1);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn2);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn3);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn4);
+	ATF_TP_ADD_TC(tp, posix_spawn2);
+	ATF_TP_ADD_TC(tp, posix_spawn3);
+	ATF_TP_ADD_TC(tp, posix_spawn4);
 	ATF_TP_ADD_TC(tp, posix_spawn5);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn6);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn7);
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn8);
+	ATF_TP_ADD_TC(tp, posix_spawn6);
+	ATF_TP_ADD_TC(tp, posix_spawn7);
+	ATF_TP_ADD_TC(tp, posix_spawn8);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn9);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn10);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn11);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn12);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn13);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn14);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn15);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn16);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_detach_forker);
 #if TEST_VFORK_ENABLED
