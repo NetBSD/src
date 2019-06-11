@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.134 2019/04/08 11:32:49 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.135 2019/06/11 15:20:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.134 2019/04/08 11:32:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.135 2019/06/11 15:20:57 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1239,7 +1239,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		filedict = NULL;
 	}
 	if (error != 0) {
-		module_error("modcmd function failed for `%s', error %d",
+		module_error("modcmd(CMD_INIT) failed for `%s', error %d",
 		    mi->mi_name, error);
 		goto fail;
 	}
