@@ -1,4 +1,4 @@
-.\"	$NetBSD: creds_msdos.8,v 1.1 2019/06/11 10:50:57 mrg Exp $
+.\"	$NetBSD: creds_msdos.8,v 1.2 2019/06/11 11:57:14 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -38,10 +38,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-rc.d script allows automatic addition of login credential during boot
+rc.d script allows automatic addition of login credentials during boot
 using a special file found on the MSDOS partition of a bootable image.
 This script is not distributed with the normal system and is only
-be included with pre-installed bootable images.
+included with pre-installed bootable images.
 The goal is to allow remote access of the system without having to
 edit the primary root file system (which may not be accessible from
 the host the image is being written from), but place this information
@@ -51,46 +51,50 @@ Typically, an installable image (such as
 .Pa arm64.img )
 is written to an SD card or similar media, and has both a native FFS
 partition as well as an MSDOS partition for booting.
-If this script is enabled and has been pointed the boot partition
+If this script is enabled and has been pointed at the boot partition
 it will inspect the file
 .Pa creds.txt
 for any credentials to be added to the system.
 .Pp
-These are the supported option in the credentials files:
-.Bl -tag -compact -width "sshkeyfilepl"
-.Pp
-.It Sy sshkeyfile
-<user> <keyfile>
-.It Sy sshkey
-<user> <keystring>
-.It Sy useraddpwhash
-<user> <pwhash>
-.It Sy useradd
-<user> <password>
+These are the supported options in the credentials files:
+.Bl -tag -compact -width "sshkeyfilepl" -offset indent
+.It Sy sshkeyfile Ar user Ar keyfile
+.It Sy sshkey Ar user Ar keystring
+.It Sy useraddpwhash Ar user Ar pwhash
+.It Sy useradd Ar user Ar password
 .El
 .Pp
-In all cases <user> is the username added, and the user will be
+In all cases
+.Ar user
+is the username to be added, and the user will be
 added to the
 .Dq wheel
 group.
 .Pp
 The sshkeyfile method looks in the MSDOS boot partition for
 the specified file and merges ssh keys from this file into
-<user>'s
+.Ar user Ap s
 .Pa ~/.ssh/authorized_keys
 file.
 .Pp
-The sshkey method adds the <keystring> to the
-<user>'s
+The sshkey method adds the
+.Ar keystring
+to the
+.Ar user Ap s
 .Pa ~/.ssh/authorized_keys
 file.
 .Pp
-The useraddpwhash method uses <pwhash> as the users's password hash.
+The useraddpwhash method uses
+.Ar pwhash
+as the
+.Ar users Ap s
+password hash.
 .Pp
 The above three methods are the preferred methods.
 .Pp
-For the useradd method <password> is an unencrypted raw password
-that will be hashed and added to the system.
+For the useradd method
+.Ar password
+is an unencrypted raw password that will be hashed and added to the system.
 This method is not recommended as it leaves unencrypted passwords
 around until such time that the script runs.
 If this method is used then the
