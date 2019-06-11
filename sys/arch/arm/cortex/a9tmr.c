@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.19 2018/11/22 21:08:19 aymeric Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.20 2019/06/11 12:48:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.19 2018/11/22 21:08:19 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.20 2019/06/11 12:48:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -238,7 +238,7 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	    a9tmr_gettime(sc));
 	splx(s);
 #elif 0
-	delay(1000000 / hz + 1000); 
+	delay(1000000 / hz + 1000);
 #endif
 }
 
@@ -331,7 +331,7 @@ a9tmr_intr(void *arg)
 	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* Ack the interrupt */
 
 #if 0
-	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
+	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n",
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
 	KASSERTMSG(delta > sc->sc_autoinc / 64,
