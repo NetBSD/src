@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.263 2019/06/08 13:13:01 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.264 2019/06/11 17:26:09 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -932,6 +932,7 @@ MPS	memory pool system
 MPS	multiprocessor specification
 MQTT	Message Queuing Telemetry Transport
 MR	modem ready
+MRO	method resolution order
 MRU	most recently used
 MS	Microsoft
 MSAN	Memory Sanitizer
