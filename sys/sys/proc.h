@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.352 2019/04/06 11:54:21 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.353 2019/06/11 23:18:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -316,6 +316,7 @@ struct proc {
 	pid_t 		p_vfpid_done;	/* :: vforked done pid */
 	lwpid_t		p_lwp_created;	/* :: lwp created */
 	lwpid_t		p_lwp_exited;	/* :: lwp exited */
+	pid_t 		p_pspid;	/* :: posix_spawn pid */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
@@ -411,6 +412,8 @@ struct proc {
 			0x00000008 /* traced process wants LWP create events */
 #define	PSL_TRACELWP_EXIT	\
 			0x00000010 /* traced process wants LWP exit events */
+#define	PSL_TRACEPOSIX_SPAWN	\
+			0x00000020 /* traced process wants posix_spawn events */
 
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */

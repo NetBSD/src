@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.54 2019/05/25 03:20:43 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.55 2019/06/11 23:18:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.54 2019/05/25 03:20:43 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.55 2019/06/11 23:18:55 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -627,6 +627,8 @@ ptrace_get_event_mask(struct proc *t, void *addr, size_t data)
 	    PTRACE_LWP_CREATE : 0;
 	pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACELWP_EXIT) ?
 	    PTRACE_LWP_EXIT : 0;
+	pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACEPOSIX_SPAWN) ?
+	    PTRACE_POSIX_SPAWN : 0;
 	DPRINTF(("%s: lwp=%d event=%#x\n", __func__,
 	    t->p_sigctx.ps_lwp, pe.pe_set_event));
 	return copyout(&pe, addr, sizeof(pe));
@@ -671,6 +673,12 @@ ptrace_set_event_mask(struct proc *t, void *addr, size_t data)
 		SET(t->p_slflag, PSL_TRACELWP_EXIT);
 	else
 		CLR(t->p_slflag, PSL_TRACELWP_EXIT);
+
+	if (pe.pe_set_event & PTRACE_POSIX_SPAWN)
+		SET(t->p_slflag, PSL_TRACEPOSIX_SPAWN);
+	else
+		CLR(t->p_slflag, PSL_TRACEPOSIX_SPAWN);
+
 	return 0;
 }
 
@@ -700,6 +708,9 @@ ptrace_get_process_state(struct proc *t, void *addr, size_t data)
 	} else if (t->p_lwp_exited) {
 		ps.pe_report_event = PTRACE_LWP_EXIT;
 		ps.pe_lwp = t->p_lwp_exited;
+	} else if (t->p_pspid) {
+		ps.pe_report_event = PTRACE_POSIX_SPAWN;
+		ps.pe_other_pid = t->p_pspid;
 	}
 	DPRINTF(("%s: lwp=%d event=%#x pid=%d lwp=%d\n", __func__,
 	    t->p_sigctx.ps_lwp, ps.pe_report_event,
@@ -885,6 +896,7 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 	t->p_vfpid_done = 0;
 	t->p_lwp_created = 0;
 	t->p_lwp_exited = 0;
+	t->p_pspid = 0;
 
 	/* Finally, deliver the requested signal (or none). */
 	if (t->p_stat == SSTOP) {
