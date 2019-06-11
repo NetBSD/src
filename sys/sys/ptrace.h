@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.64 2019/05/06 08:05:03 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.65 2019/06/11 23:18:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -108,6 +108,7 @@ typedef struct ptrace_state {
 #define	PTRACE_VFORK_DONE	0x0004	/* Report parent resumed from vforks */
 #define	PTRACE_LWP_CREATE	0x0008	/* Report LWP creation */
 #define	PTRACE_LWP_EXIT		0x0010	/* Report LWP termination */
+#define	PTRACE_POSIX_SPAWN	0x0020	/* Report posix_spawn */
 
 /*
  * Argument structure for PT_IO.
