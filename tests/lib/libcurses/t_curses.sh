@@ -763,7 +763,7 @@ atf_init_test_cases()
 	atf_add_test_case curs_set
 	atf_add_test_case define_key
 #	atf_add_test_case delay_output # not working
-#	atf_add_test_case derwin # not working
+	atf_add_test_case derwin
 	atf_add_test_case doupdate
 #	atf_add_test_case dupwin # not working
 	atf_add_test_case erasechar
