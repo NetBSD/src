@@ -1,12 +1,11 @@
 #! /bin/sh
-#	$NetBSD: msg_cmp.sh,v 1.1 2019/06/11 13:01:14 martin Exp $
+#	$NetBSD: msg_cmp.sh,v 1.2 2019/06/11 15:31:19 martin Exp $
 
 #-
 # Copyright (c) 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
-# This code is derived from software contributed to The NetBSD Foundation
-# by David Laight.
+# This code is derived from software contributed to The NetBSD Foundation.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -82,7 +81,7 @@ exec 4< $TMP2
 # Compare lines
 IFS=''
 NUM=0
-HDR="Messages identical to the english version:"
+HDR="Messages identical to the English version:"
 
 while
 	read -r l1 <&3 && read -r l2 <&4
