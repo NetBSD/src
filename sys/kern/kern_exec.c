@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.465 2019/05/09 20:50:14 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.466 2019/06/11 23:18:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.465 2019/05/09 20:50:14 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.466 2019/06/11 23:18:55 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.465 2019/05/09 20:50:14 kamil Exp $"
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/mount.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
@@ -1269,7 +1270,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	mutex_enter(proc_lock);
 
-	if (p->p_slflag & PSL_TRACED) {
+	/* posix_spawn(3) reports a single event with implied exec(3) */
+	if ((p->p_slflag & PSL_TRACED) && !is_spawn) {
 		mutex_enter(p->p_lock);
 		eventswitch(TRAP_EXEC);
 		mutex_enter(proc_lock);
@@ -1984,6 +1986,7 @@ spawn_return(void *arg)
 {
 	struct spawn_exec_data *spawn_data = arg;
 	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int error, newfd;
 	int ostat;
 	size_t i;
@@ -2013,7 +2016,7 @@ spawn_return(void *arg)
 	}
 
 	/* don't allow debugger access yet */
-	rw_enter(&l->l_proc->p_reflock, RW_WRITER);
+	rw_enter(&p->p_reflock, RW_WRITER);
 	have_reflock = true;
 
 	error = 0;
@@ -2072,16 +2075,16 @@ spawn_return(void *arg)
 		 * parent's p_nstopchild here.  For safety, just make
 		 * we're on the good side of SDEAD before we adjust.
 		 */
-		ostat = l->l_proc->p_stat;
+		ostat = p->p_stat;
 		KASSERT(ostat < SSTOP);
-		l->l_proc->p_stat = SSTOP;
-		l->l_proc->p_waited = 0;
-		l->l_proc->p_pptr->p_nstopchild++;
+		p->p_stat = SSTOP;
+		p->p_waited = 0;
+		p->p_pptr->p_nstopchild++;
 		mutex_exit(proc_lock);
 
 		/* Set process group */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
-			pid_t mypid = l->l_proc->p_pid,
+			pid_t mypid = p->p_pid,
 			     pgrp = spawn_data->sed_attrs->sa_pgroup;
 
 			if (pgrp == 0)
@@ -2095,7 +2098,7 @@ spawn_return(void *arg)
 
 		/* Set scheduler policy */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSCHEDULER)
-			error = do_sched_setparam(l->l_proc->p_pid, 0,
+			error = do_sched_setparam(p->p_pid, 0,
 			    spawn_data->sed_attrs->sa_schedpolicy,
 			    &spawn_data->sed_attrs->sa_schedparam);
 		else if (spawn_data->sed_attrs->sa_flags
@@ -2122,10 +2125,10 @@ spawn_return(void *arg)
 
 		/* Set signal masks/defaults */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGMASK) {
-			mutex_enter(l->l_proc->p_lock);
+			mutex_enter(p->p_lock);
 			error = sigprocmask1(l, SIG_SETMASK,
 			    &spawn_data->sed_attrs->sa_sigmask, NULL);
-			mutex_exit(l->l_proc->p_lock);
+			mutex_exit(p->p_lock);
 			if (error)
 				goto report_error_stopped;
 		}
@@ -2149,8 +2152,8 @@ spawn_return(void *arg)
 			}
 		}
 		mutex_enter(proc_lock);
-		l->l_proc->p_stat = ostat;
-		l->l_proc->p_pptr->p_nstopchild--;
+		p->p_stat = ostat;
+		p->p_pptr->p_nstopchild--;
 		mutex_exit(proc_lock);
 	}
 
@@ -2172,6 +2175,19 @@ spawn_return(void *arg)
 	/* release our refcount on the data */
 	spawn_exec_data_release(spawn_data);
 
+	if (p->p_slflag & PSL_TRACED) {
+		/* Paranoid check */
+		mutex_enter(proc_lock);
+		if (!(p->p_slflag & PSL_TRACED)) {
+			mutex_exit(proc_lock);
+			goto cpu_return;
+		}
+
+		mutex_enter(p->p_lock);
+		eventswitch(TRAP_CHLD);
+	}
+
+ cpu_return:
 	/* and finally: leave to userland for the first time */
 	cpu_spawn_return(l);
 
@@ -2180,8 +2196,8 @@ spawn_return(void *arg)
 
  report_error_stopped:
 	mutex_enter(proc_lock);
-	l->l_proc->p_stat = ostat;
-	l->l_proc->p_pptr->p_nstopchild--;
+	p->p_stat = ostat;
+	p->p_pptr->p_nstopchild--;
 	mutex_exit(proc_lock);
  report_error:
 	if (have_reflock) {
@@ -2191,7 +2207,7 @@ spawn_return(void *arg)
 		 * taken ownership of the sed_exec part of spawn_data,
 		 * so release/free both here.
 		 */
-		rw_exit(&l->l_proc->p_reflock);
+		rw_exit(&p->p_reflock);
 		execve_free_data(&spawn_data->sed_exec);
 	}
 
@@ -2209,7 +2225,7 @@ spawn_return(void *arg)
 	spawn_exec_data_release(spawn_data);
 
 	/* done, exit */
-	mutex_enter(l->l_proc->p_lock);
+	mutex_enter(p->p_lock);
 	/*
 	 * Posix explicitly asks for an exit code of 127 if we report
 	 * errors from the child process - so, unfortunately, there
@@ -2545,6 +2561,13 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	p2->p_exitsig = SIGCHLD;	/* signal for parent on exit */
 
+	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
+	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
+		proc_changeparent(p2, p1->p_pptr);
+		p1->p_pspid = p2->p_pid;
+		p2->p_pspid = p1->p_pid;
+	}
+
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
@@ -2582,7 +2605,23 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	have_exec_lock = false;
 
 	*pid_res = pid;
-	return error;
+
+	if (error)
+		return error;
+
+	if (p1->p_slflag & PSL_TRACED) {
+		/* Paranoid check */
+		mutex_enter(proc_lock);
+		if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) !=
+		    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
+			mutex_exit(proc_lock);
+			return 0;
+		}
+
+		mutex_enter(p1->p_lock);
+		eventswitch(TRAP_CHLD);
+	}
+	return 0;
 
  error_exit:
 	if (have_exec_lock) {
