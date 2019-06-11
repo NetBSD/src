@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.70 2019/05/25 04:25:14 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.71 2019/06/11 23:27:46 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd May 25, 2019
+.Dd June 12, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -458,17 +458,16 @@ Report parent resumed after
 Report thread birth.
 .It PTRACE_LWP_EXIT
 Report thread termination.
+.It PTRACE_POSIX_SPAWN
+Report posix_spawn(3).
 .El
 .Pp
 The
 .Xr fork 2
 and
 .Xr vfork 2
-events can occur with similar operations,
-like
-.Xr clone 2
-or
-.Xr posix_spawn 3 .
+events can occur with
+.Xr clone 2 .
 The
 .Dv PTRACE_FORK
 value means that process gives birth to its child
@@ -488,6 +487,21 @@ but the parent blocks after giving birth to the child.
 The
 .Dv PTRACE_VFORK_DONE
 event can be used to report unblocking of the parent.
+.Pp
+The
+.Xr posix_spawn 3
+operation implements
+.Xr vfork 2
+and
+.Xr exec 3
+as a single syscall in the kernel.
+The
+.Dv PTRACE_POSIX_SPAWN
+event semantics are the same as
+.Dv PTRACE_FORK ,
+but the child is reported with implied
+.Xr exec 3
+operation.
 .Pp
 A pointer to this structure is passed in
 .Fa addr .
