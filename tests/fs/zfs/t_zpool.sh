@@ -1,4 +1,4 @@
-#	$NetBSD: t_zpool.sh,v 1.4 2018/12/16 14:04:14 hannken Exp $
+#	$NetBSD: t_zpool.sh,v 1.5 2019/06/11 14:00:16 hannken Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-server='rump_server -lrumpvfs -lrumpkern_solaris -lrumpfs_zfs -lrumpdev -lrumpdev_rnd -d key=/dk,hostpath=zfs.img,size=100m'
+server='rump_server -lrumpvfs -lrumpdev_disk -lrumpkern_solaris -lrumpfs_zfs -lrumpdev -lrumpdev_rnd -d key=/dk,hostpath=zfs.img,size=100m'
 
 export RUMP_SERVER=unix://zsuck
 
