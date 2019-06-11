@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.14 2015/01/04 20:19:46 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.15 2019/06/11 10:22:35 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1239,12 +1239,12 @@ validate_return(const char *expected, const char *value, int check)
 {
 	if (((check == 0) && strcmp(expected, value) != 0) ||
 	    ((check == 1) && strcmp(expected, value) == 0))
-		errx(1, "Validate expected %s %s %s line %zu of file %s",
+		errx(1, "Validate expected >%s< %s >%s< line %zu of file %s",
 		    expected,
 		    (check == 0)? "matching" : "not matching", value,
 		    line, cur_file);
 	if (verbose) {
-		fprintf(stderr, "Validated expected value %s %s %s "
+		fprintf(stderr, "Validated expected value >%s< %s >%s< "
 		    "at line %zu of file %s\n", expected,
 		    (check == 0)? "matches" : "does not match",
 		    value, line, cur_file);
