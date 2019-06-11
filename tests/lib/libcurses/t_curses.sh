@@ -785,7 +785,7 @@ atf_init_test_cases()
 	atf_add_test_case innstr
 	atf_add_test_case is_linetouched
 	atf_add_test_case is_wintouched
-#	atf_add_test_case keyname # not working
+	atf_add_test_case keyname
 	atf_add_test_case keyok
 	atf_add_test_case killchar
 	atf_add_test_case meta
