@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.37 2019/06/06 22:41:02 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.38 2019/06/11 13:01:48 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -147,6 +147,20 @@ makeoptions	DTS="
 	tegra124-venice2.dts
 
 	vexpress-v2p-ca15-tc1.dts
+
+	zynq-cc108.dts
+	zynq-microzed.dts
+	zynq-parallella.dts
+	zynq-zc702.dts
+	zynq-zc706.dts
+	zynq-zc770-xm010.dts
+	zynq-zc770-xm011.dts
+	zynq-zc770-xm012.dts
+	zynq-zc770-xm013.dts
+	zynq-zed.dts
+	zynq-zturn.dts
+	zynq-zybo.dts
+	zynq-zybo-z7.dts
 "
 
 options 	CPU_CORTEXA5
@@ -177,6 +191,8 @@ options 	SOC_SUN9I_A80
 options 	SOC_TEGRA124
 
 options 	SOC_VIRT
+
+options 	SOC_ZYNQ7000
 
 options 	MULTIPROCESSOR
 
@@ -214,6 +230,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
+
+#options 	EARLYCONS=zynq, CONSADDR=0xe0001000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -275,6 +293,7 @@ sunxisramc*     at fdt? pass 4          # SRAM controller
 
 # System Controller
 syscon*		at fdt? pass 1		# Generic System Controller
+#zynqslcr*	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
 a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
@@ -372,6 +391,7 @@ pci*		at ppb?
 
 # Ethernet
 awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
+cemac*		at fdt?			# Cadence EMAC/GEM ethernet controller
 emac*		at fdt?			# Allwinner Fast/Gigabit Ethernet (EMAC)
 smsh*		at fdt?			# SMSC LAN9118
 
@@ -414,6 +434,7 @@ com*		at fdt?			# UART
 exuart*		at fdt?			# SSCOM UART
 plcom*		at fdt?			# ARM PL011 UART
 mesonuart*	at fdt?			# Amlogic Meson UART
+zynquart*	at fdt?			# Cadence UART
 
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
