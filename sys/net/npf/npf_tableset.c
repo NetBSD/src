@@ -39,7 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.29 2019/01/19 21:19:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.30 2019/06/12 14:36:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -365,7 +365,7 @@ npf_table_create(const char *name, u_int tid, int type,
 
 	switch (type) {
 	case NPF_TABLE_LPM:
-		t->t_lpm = lpm_create();
+		t->t_lpm = lpm_create(KM_NOSLEEP);
 		if (t->t_lpm == NULL) {
 			goto out;
 		}
@@ -398,7 +398,7 @@ npf_table_create(const char *name, u_int tid, int type,
 	default:
 		KASSERT(false);
 	}
-	mutex_init(&t->t_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&t->t_lock, MUTEX_DEFAULT, IPL_NET);
 	t->t_type = type;
 	t->t_id = tid;
 	return t;
