@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.7.4.2 2019/06/12 10:32:00 martin Exp $
 #	$eterna: Makefile,v 1.14 2009/05/22 21:51:39 mrg Exp $
 
 SIMPLETESTS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t12 t13 t14 t15
@@ -9,7 +10,6 @@ BOZOHTTPD?=	../debug/bozohttpd-debug
 WGET?=		wget
 DATA?=		$(.CURDIR)/data 
 VERBOSE?=	yes
-HOST?=		test.eterna
 
 .if ${VERBOSE} != "yes"
 SILENT=		@
@@ -28,17 +28,17 @@ check: check-simple check-cgi check-bigfile
 
 check-simple:
 .for a in $(SIMPLETESTS)
-	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" "${HOST}"
+	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}"
 .endfor
 
 check-cgi:
 .for a in $(CGITESTS)
-	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" "${HOST}" -c "${.CURDIR}/cgi-bin"
+	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" -c "${.CURDIR}/cgi-bin"
 .endfor
 
 check-bigfile:
 .for a in $(BIGFILETESTS)
-	${SILENT}$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "${DATA}" "${VERBOSE}" "${HOST}"
+	${SILENT}$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "${DATA}" "${VERBOSE}"
 .endfor
 
 .include <bsd.obj.mk>

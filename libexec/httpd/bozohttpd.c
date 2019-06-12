@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.86.4.3 2018/11/28 19:50:37 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.86.4.4 2019/06/12 10:32:00 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181125"
+#define SERVER_SOFTWARE		"bozohttpd/20190228"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -137,10 +137,9 @@
 #include <netdb.h>
 #include <pwd.h>
 #include <grp.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <strings.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
@@ -148,6 +147,9 @@
 
 #include "bozohttpd.h"
 
+#ifndef SSL_TIMEOUT
+#define	SSL_TIMEOUT		"30"	/* wait for 30 seconds for ssl handshake  */
+#endif
 #ifndef INITIAL_TIMEOUT
 #define	INITIAL_TIMEOUT		"30"	/* wait for 30 seconds initially */
 #endif
@@ -183,39 +185,27 @@ struct {
 	{ NULL,               NULL },
 };
 
-volatile sig_atomic_t	timeout_hit;
+volatile sig_atomic_t	bozo_timeout_hit;
 
 /*
  * check there's enough space in the prefs and names arrays.
  */
 static int
-size_arrays(bozoprefs_t *bozoprefs, size_t needed)
+size_arrays(bozohttpd_t *httpd, bozoprefs_t *bozoprefs, size_t needed)
 {
-	char	**temp;
+	size_t	len = sizeof(char *) * needed;
 
 	if (bozoprefs->size == 0) {
 		/* only get here first time around */
-		bozoprefs->name = calloc(sizeof(char *), needed);
-		if (bozoprefs->name == NULL)
-			return 0;
-		bozoprefs->value = calloc(sizeof(char *), needed);
-		if (bozoprefs->value == NULL) {
-			free(bozoprefs->name);
-			return 0;
-		}
-		bozoprefs->size = needed;
+		bozoprefs->name = bozomalloc(httpd, len);
+		bozoprefs->value = bozomalloc(httpd, len);
 	} else if (bozoprefs->count == bozoprefs->size) {
 		/* only uses 'needed' when filled array */
-		temp = realloc(bozoprefs->name, sizeof(char *) * needed);
-		if (temp == NULL)
-			return 0;
-		bozoprefs->name = temp;
-		temp = realloc(bozoprefs->value, sizeof(char *) * needed);
-		if (temp == NULL)
-			return 0;
-		bozoprefs->value = temp;
-		bozoprefs->size += needed;
+		bozoprefs->name = bozorealloc(httpd, bozoprefs->name, len);
+		bozoprefs->value = bozorealloc(httpd, bozoprefs->value, len);
 	}
+
+	bozoprefs->size = needed;
 	return 1;
 }
 
@@ -238,16 +228,13 @@ bozo_set_pref(bozohttpd_t *httpd, bozoprefs_t *bozoprefs,
 
 	if ((i = findvar(bozoprefs, name)) < 0) {
 		/* add the element to the array */
-		if (!size_arrays(bozoprefs, bozoprefs->size + 15))
+		if (!size_arrays(httpd, bozoprefs, bozoprefs->size + 15))
 			return 0;
 		i = bozoprefs->count++;
 		bozoprefs->name[i] = bozostrdup(httpd, NULL, name);
 	} else {
 		/* replace the element in the array */
-		if (bozoprefs->value[i]) {
-			free(bozoprefs->value[i]);
-			bozoprefs->value[i] = NULL;
-		}
+		free(bozoprefs->value[i]);
 	}
 	bozoprefs->value[i] = bozostrdup(httpd, NULL, value);
 	return 1;
@@ -296,7 +283,7 @@ parse_request(bozohttpd_t *httpd, char *in, char **method, char **file,
 
 	len = (ssize_t)strlen(in);
 	val = bozostrnsep(&in, " \t\n\r", &len);
-	if (len < 1 || val == NULL)
+	if (len < 1 || val == NULL || in == NULL)
 		return;
 	*method = val;
 
@@ -386,18 +373,19 @@ bozo_clean_request(bozo_httpreq_t *request)
 static void
 alarmer(int sig)
 {
-	timeout_hit = 1;
+	bozo_timeout_hit = 1;
 }
 
 
 /*
- * set a timeout for "initial", "header", or "request".
+ * set a timeout for "ssl", "initial", "header", or "request".
  */
 int
 bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 		 const char *target, const char *val)
 {
-	const char *cur, *timeouts[] = {
+	const char **cur, *timeouts[] = {
+		"ssl timeout",
 		"initial timeout",
 		"header timeout",
 		"request timeout",
@@ -407,9 +395,9 @@ bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 	const size_t minlen = 1;
 	size_t len = strlen(target);
 
-	for (cur = timeouts[0]; len >= minlen && *cur; cur++) {
-		if (strncmp(target, cur, len) == 0) {
-			bozo_set_pref(httpd, prefs, cur, val);
+	for (cur = timeouts; len >= minlen && *cur; cur++) {
+		if (strncmp(target, *cur, len) == 0) {
+			bozo_set_pref(httpd, prefs, *cur, val);
 			return 0;
 		}
 	}
@@ -585,12 +573,14 @@ process_method(bozo_httpreq_t *request, const char *method)
 static int
 bozo_got_header_length(bozo_httpreq_t *request, size_t len)
 {
-	request->hr_header_bytes += len;
-	if (request->hr_header_bytes < BOZO_HEADERS_MAX_SIZE)
-		return 0;
 
-	return bozo_http_error(request->hr_httpd, 413, request,
-		"too many headers");
+	if (len > BOZO_HEADERS_MAX_SIZE - request->hr_header_bytes)
+		return bozo_http_error(request->hr_httpd, 413, request,
+			"too many headers");
+
+	request->hr_header_bytes += len;
+
+	return 0;
 }
 
 /*
@@ -615,13 +605,9 @@ bozo_read_request(bozohttpd_t *httpd)
 	/*
 	 * if we're in daemon mode, bozo_daemon_fork() will return here twice
 	 * for each call.  once in the child, returning 0, and once in the
-	 * parent, returning 1.  for each child, then we can setup SSL, and
-	 * the parent can signal the caller there was no request to process
-	 * and it will wait for another.
+	 * parent, returning 1 for each child.
 	 */
 	if (bozo_daemon_fork(httpd))
-		return NULL;
-	if (bozo_ssl_accept(httpd))
 		return NULL;
 
 	request = bozomalloc(httpd, sizeof(*request));
@@ -698,6 +684,14 @@ bozo_read_request(bozohttpd_t *httpd)
 		goto cleanup;
 	}
 
+	/*
+	 * now to try to setup SSL, and upon failure parent can signal the
+	 * caller there was no request to process and it will wait for
+	 * another.
+	 */
+	if (bozo_ssl_accept(httpd))
+		return NULL;
+
 	alarm(httpd->initial_timeout);
 	while ((str = bozodgetln(httpd, STDIN_FILENO, &len, bozo_read)) != NULL) {
 		alarm(0);
@@ -720,9 +714,9 @@ bozo_read_request(bozohttpd_t *httpd)
 		if (ts.tv_sec > ots.tv_sec &&
 		    ts.tv_sec > httpd->request_timeout &&
 		    ts.tv_sec - httpd->request_timeout > ots.tv_sec)
-			timeout_hit = 1;
+			bozo_timeout_hit = 1;
 
-		if (timeout_hit) {
+		if (bozo_timeout_hit) {
 			bozo_http_error(httpd, 408, NULL, "request timed out");
 			goto cleanup;
 		}
@@ -993,7 +987,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		buf = bozorealloc(httpd, buf, buflen);
 	}
 
-	for (len = 0, s = url, d = buf; *s;) {
+	for (s = url, d = buf; *s;) {
 		if (*s & 0x80)
 			goto encode_it;
 		switch (*s) {
@@ -1023,18 +1017,16 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		case '\r':
 		case ' ':
 		encode_it:
-			snprintf(d, 4, "%%%02X", *s++);
+			snprintf(d, 4, "%%%02X", (unsigned char)*s++);
 			d += 3;
-			len += 3;
 			break;
 		default:
 		leave_it:
 			*d++ = *s++;
-			len++;
 			break;
 		}
 	}
-	buf[len] = 0;
+	*d = 0;
 
 	return buf;
 }
@@ -1192,7 +1184,7 @@ check_remap(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *file = request->hr_file, *newfile;
 	void *fmap;
-	const char *replace, *map_to, *p;
+	const char *replace = NULL, *map_to = NULL, *p;
 	struct stat st;
 	int mapfile;
 	size_t avail, len, rlen, reqlen, num_esc = 0;
@@ -1321,6 +1313,9 @@ check_virtual(bozo_httpreq_t *request)
 	debug((httpd, DEBUG_OBESE,
 	       "checking for http:// virtual host in '%s'", file));
 	if (strncasecmp(file, "http://", 7) == 0) {
+		/* bozostrdup() might access it. */
+		char *old_file = request->hr_file;
+
 		/* we would do virtual hosting here? */
 		file += 7;
 		/* RFC 2616 (HTTP/1.1), 5.2: URI takes precedence over Host: */
@@ -1329,8 +1324,8 @@ check_virtual(bozo_httpreq_t *request)
 		if ((s = strchr(request->hr_host, '/')) != NULL)
 			*s = '\0';
 		s = strchr(file, '/');
-		free(request->hr_file);
 		request->hr_file = bozostrdup(httpd, request, s ? s : "/");
+		free(old_file);
 		debug((httpd, DEBUG_OBESE, "got host '%s' file is now '%s'",
 		    request->hr_host, request->hr_file));
 	} else if (!request->hr_host)
@@ -1354,7 +1349,10 @@ check_virtual(bozo_httpreq_t *request)
 		if (request->hr_host) {
 			s = strrchr(request->hr_host, ':');
 			if (s != NULL)
-				/* truncate Host: as we want to copy it without port part */
+				/*
+				 * truncate Host: as we want to copy it
+				 * without port part
+				 */
 				*s = '\0';
 			request->hr_virthostname = bozostrdup(httpd, request,
 			  request->hr_host);
@@ -1441,7 +1439,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
 	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1],
-	    path[MAXPATHLEN];
+	    path[MAXPATHLEN + 1];
 	char *basename, *finalredir;
 	int rv, absolute;
 
@@ -1464,12 +1462,12 @@ check_bzredirect(bozo_httpreq_t *request)
 	} else if (basename == NULL) {
 		strcpy(path, ".");
 		strcpy(dir, "");
-		basename = dir;
+		basename = request->hr_file + 1;
 	} else {
 		*basename++ = '\0';
 		strcpy(path, dir);
 	}
-	if (bozo_check_special_files(request, basename))
+	if (bozo_check_special_files(request, basename, true))
 		return -1;
 
 	debug((httpd, DEBUG_FAT, "check_bzredirect: path %s", path));
@@ -1921,17 +1919,24 @@ bozo_process_request(bozo_httpreq_t *request)
 
 /* make sure we're not trying to access special files */
 int
-bozo_check_special_files(bozo_httpreq_t *request, const char *name)
+bozo_check_special_files(bozo_httpreq_t *request, const char *name, bool doerror)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	size_t i;
+	int error = 0;
 
-	for (i = 0; specials[i].file; i++)
-		if (strcmp(name, specials[i].file) == 0)
-			return bozo_http_error(httpd, 403, request,
+	for (i = 0; specials[i].file; i++) {
+		if (strcmp(name, specials[i].file) == 0) {
+			if (doerror) {
+				error = bozo_http_error(httpd, 403, request,
 					       specials[i].name);
+			} else {
+				error = -1;
+			}
+		}
+	}
 
-	return 0;
+	return error;
 }
 
 /* generic header printing routine */
@@ -2076,6 +2081,9 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			j += 5;
 			break;
+		case '"':
+			j += 6;
+			break;
 		}
 	}
 
@@ -2105,6 +2113,10 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			memcpy(tmp + j, "&amp;", 5);
 			j += 5;
+			break;
+		case '"':
+			memcpy(tmp + j, "&quot;", 6);
+			j += 6;
 			break;
 		default:
 			tmp[j++] = url[i];
@@ -2250,7 +2262,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	if (request && request->hr_allow)
 		bozo_printf(httpd, "Allow: %s\r\n", request->hr_allow);
 	/* RFC 7231 (HTTP/1.1) 6.5.7 */
-	if (code == 408 && request->hr_proto == httpd->consts.http_11)
+	if (code == 408 && request &&
+	    request->hr_proto == httpd->consts.http_11)
 		bozo_printf(httpd, "Connection: close\r\n");
 	bozo_printf(httpd, "\r\n");
 	/* According to the RFC 2616 sec. 9.4 HEAD method MUST NOT return a
@@ -2458,6 +2471,8 @@ bozo_init_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
 		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "public_html", PUBLIC_HTML))
 		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "ssl timeout", SSL_TIMEOUT))
+		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "initial timeout", INITIAL_TIMEOUT))
 		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "header timeout", HEADER_WAIT_TIME))
@@ -2557,6 +2572,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	}
 	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
 		httpd->public_html = bozostrdup(httpd, NULL, cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "ssl timeout")) != NULL) {
+		httpd->ssl_timeout = atoi(cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "initial timeout")) != NULL) {
 		httpd->initial_timeout = atoi(cp);

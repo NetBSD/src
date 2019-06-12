@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.47.4.2 2018/11/28 19:50:37 martin Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.47.4.3 2019/06/12 10:32:00 martin Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@
 #define BOZOHTTOPD_H_	1
 
 #include "netbsd_queue.h"
+
+#include <stdbool.h>
+#include <signal.h>
 
 #include <sys/stat.h>
 
@@ -117,6 +120,7 @@ typedef struct bozohttpd_t {
 	int		 hide_dots;	/* hide .* */
 	int		 process_cgi;	/* use the cgi handler */
 	char		*cgibin;	/* cgi-bin directory */
+	unsigned	ssl_timeout;	/* ssl timeout */
 	unsigned	initial_timeout;/* first line timeout */
 	unsigned	header_timeout;	/* header lines timeout */
 	unsigned	request_timeout;/* total session timeout */
@@ -195,6 +199,16 @@ typedef struct bozoprefs_t {
 	char		**value;	/* values for the name entries */
 } bozoprefs_t;
 
+/* sun2 has a tiny VA range */
+#ifdef __mc68010__
+#ifndef BOZO_WRSZ
+#define BOZO_WRSZ	(16 * 1024)
+#endif
+#ifndef BOZO_MMAPSZ
+#define BOZO_MMAPSZ	(BOZO_WRSZ * 4)
+#endif
+#endif
+
 /* by default write in upto 64KiB chunks, and mmap in upto 64MiB chunks */
 #ifndef BOZO_WRSZ
 #define BOZO_WRSZ	(64 * 1024)
@@ -259,7 +273,7 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 /* be sure to always return this error up */
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
-int	bozo_check_special_files(bozo_httpreq_t *, const char *) BOZO_CHECKRET;
+int	bozo_check_special_files(bozo_httpreq_t *, const char *, bool) BOZO_CHECKRET;
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);
@@ -431,5 +445,7 @@ int bozo_set_pref(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 char *bozo_get_pref(bozoprefs_t *, const char *);
 
 int bozo_get_version(char */*buf*/, size_t /*size*/);
+
+extern volatile sig_atomic_t	bozo_timeout_hit;
 
 #endif	/* BOZOHTTOPD_H_ */
