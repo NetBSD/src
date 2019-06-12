@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.14 2019/06/12 10:02:17 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.15 2019/06/12 10:03:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.14 2019/06/12 10:02:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.15 2019/06/12 10:03:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -178,6 +178,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			gicr_write_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4), ipriority);
 		}
 	} else {
+#if notyet
 		if (is->is_mpsafe) {
 			/* Route MP-safe interrupts to all participating PEs */
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
@@ -185,6 +186,10 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			/* Route non-MP-safe interrupts to the primary PE only */
 			irouter = sc->sc_irouter[0];
 		}
+#else
+		/* Route interrupts to the primary PE by default */
+		irouter = sc->sc_irouter[0];
+#endif
 		gicd_write_8(sc, GICD_IROUTER(is->is_irq), irouter);
 
 		/* Update interrupt configuration */
