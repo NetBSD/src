@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.8 2019/02/28 00:47:10 jakllsch Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.9 2019/06/12 10:13:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.8 2019/02/28 00:47:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.9 2019/06/12 10:13:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,6 +136,13 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_type = of_search_compatible(sc->sc_phandle, compat_data)->data;
 
+#ifdef __HAVE_PCI_MSI_MSIX
+	if (sc->sc_type == PCIHOST_ECAM) {
+		sc->sc_pci_flags |= PCI_FLAGS_MSI_OKAY;
+		sc->sc_pci_flags |= PCI_FLAGS_MSIX_OKAY;
+	}
+#endif
+
 	aprint_naive("\n");
 	aprint_normal(": Generic PCI host controller\n");
 
@@ -178,14 +185,7 @@ pcihost_init2(struct pcihost_softc *sc)
 	pba.pba_flags = PCI_FLAGS_MRL_OKAY |
 			PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY |
-			PCI_FLAGS_IO_OKAY |
-			PCI_FLAGS_MEM_OKAY;
-#ifdef __HAVE_PCI_MSI_MSIX
-	if (sc->sc_type == PCIHOST_ECAM) {
-		pba.pba_flags |= PCI_FLAGS_MSI_OKAY |
-				 PCI_FLAGS_MSIX_OKAY;
-	}
-#endif
+			sc->sc_pci_flags;
 	pba.pba_iot = &sc->sc_io.bst;
 	pba.pba_memt = &sc->sc_mem.bst;
 	pba.pba_dmat = sc->sc_dmat;
@@ -228,6 +228,7 @@ pcihost_config(struct pcihost_softc *sc)
 	const u_int *ranges;
 	u_int probe_only;
 	int error, len;
+	bool swap;
 
 	struct pcih_bus_space * const pibs = &sc->sc_io;
 	pibs->bst = *sc->sc_bst;
@@ -249,10 +250,17 @@ pcihost_config(struct pcihost_softc *sc)
 	if (probe_only)
 		return 0;
 
-	ranges = fdtbus_get_prop(sc->sc_phandle, "ranges", &len);
-	if (ranges == NULL) {
-		aprint_error_dev(sc->sc_dev, "missing 'ranges' property\n");
-		return EINVAL;
+	if (sc->sc_pci_ranges != NULL) {
+		ranges = sc->sc_pci_ranges;
+		len = sc->sc_pci_ranges_cells * 4;
+		swap = false;
+	} else {
+		ranges = fdtbus_get_prop(sc->sc_phandle, "ranges", &len);
+		if (ranges == NULL) {
+			aprint_error_dev(sc->sc_dev, "missing 'ranges' property\n");
+			return EINVAL;
+		}
+		swap = true;
 	}
 
 	/*
@@ -263,10 +271,14 @@ pcihost_config(struct pcihost_softc *sc)
 	 * Total size for each entry is 28 bytes (7 cells).
 	 */
 	while (len >= 28) {
-		const uint32_t phys_hi = be32dec(&ranges[0]);
-		const uint64_t bus_phys = be64dec(&ranges[1]);
-		const uint64_t cpu_phys = be64dec(&ranges[3]);
-		const uint64_t size = be64dec(&ranges[5]);
+#define	DECODE32(x,o)	(swap ? be32dec(&(x)[o]) : (x)[o])
+#define	DECODE64(x,o)	(swap ? be64dec(&(x)[o]) : (((uint64_t)((x)[(o)+0]) << 32) + (x)[(o)+1]))
+		const uint32_t phys_hi = DECODE32(ranges, 0);
+		const uint64_t bus_phys = DECODE64(ranges, 1);
+		const uint64_t cpu_phys = DECODE64(ranges, 3);
+		const uint64_t size = DECODE64(ranges, 5);
+#undef	DECODE32
+#undef	DECODE64
 
 		len -= 28;
 		ranges += 7;
@@ -294,6 +306,7 @@ pcihost_config(struct pcihost_softc *sc)
 			/* reserve a PC-like legacy IO ports range, perhaps for access to VGA registers */
 			if (bus_phys == 0 && size >= 0x10000)
 				extent_alloc_region(ioext, 0, 0x1000, EX_WAITOK);
+			sc->sc_pci_flags |= PCI_FLAGS_IO_OKAY;
 			break;
 		case PHYS_HI_SPACE_MEM64:
 			/* FALLTHROUGH */
@@ -327,6 +340,7 @@ pcihost_config(struct pcihost_softc *sc)
 				    "MMIO (%d-bit non-prefetchable): 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 				    is64 ? 64 : 32, bus_phys, size, cpu_phys);
 			}
+			sc->sc_pci_flags |= PCI_FLAGS_MEM_OKAY;
 			break;
 		default:
 			break;

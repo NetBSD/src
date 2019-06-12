@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.5 2019/05/01 10:43:55 jmcneill Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.6 2019/06/12 10:13:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -35,8 +35,50 @@
 		pwms = <&pwm1 0 40000 0>;
 		cooling-levels = <0 150 195 240>;
 	};
+
+	vcc3v3_pcie: vcc3v3-pcie-regulator {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+		gpio = <&gpio1 RK_PD0 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pcie_pwr_en>;
+		regulator-name = "vcc3v3_pcie";
+	};
+};
+
+&pinctrl {
+	pcie {
+		pcie_pwr_en: pcie-pwr-en {
+			rockchip,pins =
+				<1 RK_PD0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		pcie_clkreqn: pci-clkreqn {
+			rockchip,pins =
+				<2 RK_PD2 RK_FUNC_2 &pcfg_pull_none>;
+		};
+	};
 };
 
 &pwm1 {
+	status = "okay";
+};
+
+&pcie_phy {
+	status = "okay";
+};
+
+&pcie0 {
+	assigned-clocks = <&cru SCLK_PCIEPHY_REF>;
+	assigned-clock-parents = <&cru SCLK_PCIEPHY_REF100M>;
+	assigned-clock-rates = <100000000>;
+
+	ep-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
+	num-lanes = <4>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie_clkreqn>;
+	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
 };
