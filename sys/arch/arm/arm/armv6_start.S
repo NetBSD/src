@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.12 2019/04/08 07:35:32 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.13 2019/06/12 06:51:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ generic_savevars:
 	ldr	R_TMP2, =uboot_args
 	sub	R_TMP2, R_VTOPDIFF
 
-	VPRINTF("\n\ruboot : @")
+	VPRINTF("\n\ruboot : ")
 	VPRINTX(R_TMP2)
 	str	r4, [R_TMP2, #(4*0)]
 	str	r5, [R_TMP2, #(4*1)]
