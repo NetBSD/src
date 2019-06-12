@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.264 2019/06/11 17:26:09 sevan Exp $
+$NetBSD: acronyms.comp,v 1.265 2019/06/12 16:49:48 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -61,6 +61,7 @@ AOL	Alert-on-LAN
 AOS	add or subtract
 AP	access point
 AP	application processor
+APFS	Apple file system
 API	application programming interface
 APEI	ACPI platform error interface
 APIC	advanced programmable interrupt controller
@@ -97,6 +98,7 @@ ASP	auxiliary storage pool
 ASPM	active state power management
 ASQ	automated software quality
 ASR	address space register
+ASR	Apple software restore
 AST	abstract syntax tree
 AST	asynchronous system trap
 AT	access time
@@ -239,7 +241,9 @@ CISC	complex instruction set {computer,computing}
 CJK	Chinese, Japanese, [and] Korean
 CLF	common log format
 CLI	command line interface
+CLI	common language infrastructure
 CLR	common language runtime
+CLS	common language specification
 CLTT	closed loop thermal throttling
 CLUT	color look-up table
 CLV	constant linear velocity
@@ -309,6 +313,7 @@ CTF	compact c type format
 CTM	close to metal
 CTR	counter [mode]
 CTS	clear to send
+CTS	common type system
 CUA	common user access
 CUT	coordinated universal time
 CV	control voltage
@@ -1601,6 +1606,7 @@ VCM	virtual channel memory
 VCO	voltage-controlled oscillator
 VCP	virtual chassis port
 VCS	version control system
+VES	virtual execution system
 VESA	Video Electronics Standards Association
 VFO	variable-frequency oscillator
 VFS	virtual file system
@@ -1681,6 +1687,7 @@ XOR	exclusive or
 XP	extreme programming
 XSI	X/Open System Interface
 XSL	extensible stylesheet language
+XSLT	extensible stylesheet language transformations
 XSS	cross site scripting
 XT	extended technology
 XTI	X/Open transport interface
