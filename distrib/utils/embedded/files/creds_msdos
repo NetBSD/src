@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: creds_msdos,v 1.2 2019/06/12 00:28:56 mrg Exp $
+# $NetBSD: creds_msdos,v 1.3 2019/06/12 03:06:48 mrg Exp $
 #
 # Copyright (c) 2019 Matthew R. Green
 # All rights reserved.
@@ -46,35 +46,35 @@ $_rc_subr_loaded . /etc/rc.subr
 name="creds_msdos"
 start_cmd="creds_msdos_start"
 stop_cmd=":"
-fstab_file=/etc/fstab
 
 fail() {
 	echo "$@" 1>&2
 	exit 1
 }
 
+# This uses $ssh_userkeys global
 sshkey_setup() {
 	local user="$1"
 	local group="wheel"
 
 	# don't create existing users
-	id=$(id -u $user 2>/dev/null)
-	if [ $? -ne 0 ]; then
-		useradd -m -G "${group}" "$user" || fail "Useradd failed."
+	if ! id -u "${user}" > /dev/null 2>&1; then
+		useradd -m -G "${group}" "${user}" || fail "Useradd failed."
 	fi
 
-	eval sshdir=~"${user}/.ssh"
-	eval mkdir -p -m 755 "${sshdir}" || fail "mkdir ~/.ssh failed."
-	chown "${user}" "${sshdir}"
-	eval userkeys="${sshdir}/authorized_keys"
+	eval ssh_userdir=~"${user}/.ssh"
+	mkdir -p -m 755 "${ssh_userdir}" || fail "mkdir ~/.ssh failed."
+	chmod 755 "${ssh_userdir}"
+	chown "${user}" "${ssh_userdir}"
+
+	ssh_userkeys="${ssh_userdir}/authorized_keys"
 }
 
 sshkey_finish() {
 	local user="$1"
-	local userkeys="$2"
 
-	chmod 644 "${userkeys}"
-	chown "${user}" "${userkeys}"
+	chmod 644 "${ssh_userkeys}"
+	chown "${user}" "${ssh_userkeys}"
 }
 
 do_sshkeyfile() {
@@ -85,28 +85,28 @@ do_sshkeyfile() {
 		return
 	fi
 
-	sshkey_setup "$user"
+	sshkey_setup "${user}"
 
 	# check entry is not present
 	while read type keydata name; do
-		if fgrep -q "${keydata}" "${userkeys}" 2>/dev/null; then
+		if fgrep -q "${keydata}" "${ssh_userkeys}" 2>/dev/null; then
 			continue
 		fi
-		echo "${type} ${keydata} ${name}" >> "${userkeys}"
+		echo "${type} ${keydata} ${name}" >> "${ssh_userkeys}"
 	done < "${newkeys}"
 
-	sshkey_finish "$user" "${userkeys}"
+	sshkey_finish "${user}"
 }
 
 do_sshkey() {
 	local user="$1"
 	local newkey="$2"
 
-	sshkey_setup "$user"
+	sshkey_setup "${user}"
 
-	echo "${newkey}" >> "${userkeys}"
+	echo "${newkey}" >> "${ssh_userkeys}"
 
-	sshkey_finish "$user" "${userkeys}"
+	sshkey_finish "${user}"
 }
 
 do_useraddpwhash() {
@@ -115,8 +115,7 @@ do_useraddpwhash() {
 	local group="wheel"
 
 	# don't add to existing users
-	id=$(id -u "${user}" 2>/dev/null)
-	if [ $? -eq 0 ]; then
+	if id -u "${user}" > /dev/null 2>&1; then
 		return
 	fi
 
@@ -133,48 +132,49 @@ do_useradd() {
 
 creds_msdos_start()
 {
+	local fstab_file=/etc/fstab
+
 	if [ -z "${creds_msdos_partition}" ]; then
 		echo "Not looking for credientials on msdos"
-		return;
+		return
 	fi
-	check_fs=
 	while read junk1 mp fstype junk2; do
 		if [ "${mp}" != "${creds_msdos_partition}" ]; then
 			continue
 		fi
 		if [ "${fstype}" != "msdos" ]; then
 			echo "Not checking for creds on ${creds_msdos_partition}: not an msdos file system"
-			return;
+			return
 		fi
 		break
 	done < "${fstab_file}"
 
-	delete_creds=no
-	creds_file="${creds_msdos_partition}/creds.txt"
+	local delete_creds=no
+	local creds_file="${creds_msdos_partition}/creds.txt"
 
 	if [ -f "${creds_file}" ]; then
-		while read type user arg1; do
+		while read type user args; do
 			# strip cr
-			arg1=$(echo "$arg1" | tr -d '\015')
+			local clean_args=$(echo "$args" | tr -d '\015')
 			case "$type" in
 			\#*|'')
 				continue
 				;;
 			sshkeyfile)
 				echo "Added user ${user} via ssh key file method."
-				do_sshkeyfile "${user}" "${arg1}"
+				do_sshkeyfile "${user}" "${clean_args}"
 				;;
 			sshkey)
 				echo "Added user ${user} via ssh key string method."
-				do_sshkey "${user}" "${arg1}"
+				do_sshkey "${user}" "${clean_args}"
 				;;
 			useraddpwhash)
 				echo "Added user ${user} via password hash method."
-				do_useraddpwhash "${user}" "${arg1}"
+				do_useraddpwhash "${user}" "${clean_args}"
 				;;
 			useradd)
 				echo "Added user ${user} via password method, shredding credentials file."
-				do_useradd "${user}" "${arg1}"
+				do_useradd "${user}" "${clean_args}"
 				delete_creds=yes
 				;;
 			*)
