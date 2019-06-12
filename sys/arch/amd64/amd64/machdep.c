@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.331 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.332 2019/06/12 14:28:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.331 2019/05/19 08:46:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2019/06/12 14:28:38 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2161,6 +2161,8 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	for (i = 0; i < BTSPACE_NSEGS; i++) {
 		kva = bootspace.segs[i].va;
 		kva_end = kva + bootspace.segs[i].sz;
+		if (v < kva || v >= kva_end)
+			continue;
 		*handled = true;
 		if (bootspace.segs[i].type == BTSEG_TEXT ||
 		    bootspace.segs[i].type == BTSEG_RODATA) {
@@ -2180,8 +2182,9 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= bootspace.smodule && v < bootspace.emodule) {
 		*handled = true;
-		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
+		if (!uvm_map_checkprot(module_map, v, v + 1, prot)) {
 			return EFAULT;
+		}
 	} else {
 		*handled = false;
 	}
