@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.1 2019/03/07 00:35:22 jakllsch Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.2 2019/06/12 10:13:44 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.1 2019/03/07 00:35:22 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.2 2019/06/12 10:13:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,17 @@ struct rkpcie_softc {
 	struct extent		*sc_regionex;
 };
 
+/*
+ * XXX ignore DT ranges and use our own for now
+ */
+static const uint32_t rk3399_pcie_bus_range[] = { 0, 3 };
+static const uint32_t rk3399_pcie_ranges[] = {
+	0xc3000000, 0x0, 0xf8000000, 0x0, 0xf8000000, 0x0, 0x2000000,	/* 32M region 0, prefmem */
+	0x82000000, 0x0, 0xfa000000, 0x0, 0xfa000000, 0x0, 0x1c00000,	/* 28M regions 1-28, mem */
+	0x81000000, 0x0, 0x00000000, 0x0, 0xfbc00000, 0x0, 0x0100000,	/*  1M region 29, i/o */
+	0x00010000, 0x0, 0x00000000, 0x0, 0xfbd00000, 0x0, 0x0300000,	/*  3M regions 30-32, config */
+};
+
 static int rkpcie_match(device_t, cfdata_t, void *);
 static void rkpcie_attach(device_t, device_t, void *);
 
@@ -163,22 +174,6 @@ static void	rkpcie_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	rkpcie_conf_hook(void *, int, int, int, pcireg_t);
 
 static struct fdtbus_interrupt_controller_func rkpcie_intrfuncs;
-
-static inline int
-OF_getpropintarray(int handle, const char *prop, uint32_t *buf, int buflen)
-{
-	int len;
-	int i;
-
-	len = OF_getprop(handle, prop, buf, buflen);
-	if (len < 0 || (len % sizeof(uint32_t)))
-		return -1;
-
-	for (i = 0; i < len / sizeof(uint32_t); i++)
-		buf[i] = be32toh(buf[i]);
-
-	return len;
-}
 
 static inline void
 clock_enable_all(int phandle)
@@ -428,14 +423,23 @@ again:
 	/* Create extents for our address space. */
 	sc->sc_regionex = extent_create("rkpcie", sc->sc_axi_addr,
 	    sc->sc_axi_addr - 1 + 64 * 1048576, NULL, 0, EX_WAITOK);
+	if (sc->sc_regionex == NULL) {
+		aprint_error_dev(self, "extent_create failed\n");
+		return;
+	}
 
 	/* Set up bus range. */
+#if notyet
 	if (OF_getpropintarray(phandle, "bus-range", bus_range,
 	    sizeof(bus_range)) != sizeof(bus_range) ||
 	    bus_range[0] >= 32 || bus_range[1] >= 32) {
 		bus_range[0] = 0;
 		bus_range[1] = 31;
 	}
+#else
+	bus_range[0] = rk3399_pcie_bus_range[0];
+	bus_range[1] = rk3399_pcie_bus_range[1];
+#endif
 	sc->sc_phsc.sc_bus_min = bus_range[0];
 	sc->sc_phsc.sc_bus_max = bus_range[1];
 
@@ -444,6 +448,9 @@ again:
 		return;
 	}
 
+	sc->sc_phsc.sc_pci_ranges = rk3399_pcie_ranges;
+	sc->sc_phsc.sc_pci_ranges_cells = __arraycount(rk3399_pcie_ranges);
+
 	/* Configure Address Translation. */
 	rkpcie_atr_init(sc);
 
@@ -451,6 +458,9 @@ again:
 	            &rkpcie_intrfuncs);
 
 	sc->sc_phsc.sc_type = PCIHOST_ECAM;
+#if notyet
+	sc->sc_phsc.sc_pci_flags |= PCI_FLAGS_MSI_OKAY;
+#endif
 	pcihost_init(&sc->sc_phsc.sc_pc, sc);
 	sc->sc_phsc.sc_pc.pc_bus_maxdevs = rkpcie_bus_maxdevs;
 	sc->sc_phsc.sc_pc.pc_make_tag = rkpcie_make_tag;
@@ -464,25 +474,20 @@ again:
 static void
 rkpcie_atr_init(struct rkpcie_softc *sc)
 {
-	uint32_t *ranges = NULL;
 	struct extent * const ex = sc->sc_regionex;
 	bus_addr_t aaddr;
 	bus_addr_t addr;
 	bus_size_t size, offset;
 	uint32_t type;
-	int len, region;
-	int i;
+	int region, i;
 
 	/* get root bus's config space out of the APB space */
 	bus_space_subregion(sc->sc_iot, sc->sc_ioh, PCIE_RC_NORMAL_BASE, PCI_EXTCONF_SIZE * 8, &sc->sc_bus_cfgh[0]);
 
-	len = OF_getproplen(sc->sc_phsc.sc_phandle, "ranges");
-	if (len <= 0 || (len % (7 * sizeof(uint32_t))) != 0)
-		goto fail;
-	ranges = kmem_zalloc(len, KM_SLEEP);
-	OF_getpropintarray(sc->sc_phsc.sc_phandle, "ranges", ranges, len);
+	const uint32_t *ranges = sc->sc_phsc.sc_pci_ranges;
+	const int ranges_cells = sc->sc_phsc.sc_pci_ranges_cells;
 
-	for (i = 0; i < len / sizeof(uint32_t); i += 7) {
+	for (i = 0; i < ranges_cells; i += 7) {
 		/* Handle IO and MMIO. */
 		switch (ranges[i] & 0x03000000) {
 		case 0x00000000:
@@ -556,7 +561,6 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 			size -= regionsize;
 		}
 	}
-	kmem_free(ranges, len);
 
 	/* Passthrought inbound translations unmodified. */
 	HWRITE4(sc, PCIE_ATR_IB_ADDR0(2), 32 - 1);
@@ -567,7 +571,6 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 fail:
 	extent_print(ex);
 	device_printf(sc->sc_phsc.sc_dev, "can't map ranges\n");
-	kmem_free(ranges, len);
 }
 
 int
