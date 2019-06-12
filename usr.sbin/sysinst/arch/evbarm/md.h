@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2019/06/12 06:20:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,10 +38,9 @@
 #include "mbr.h"
 
 /* Constants and defines */
-#define PART_BOOT		PART_E
-#define PART_BOOT_MSDOS		PART_BOOT
-#define PART_BOOT_PI_MOUNT	"/boot"
-#define PART_BOOT_PI_FLAGS	PIF_MOUNT
+#define PART_BOOT		(16*MEG)
+#define PART_BOOT_TYPE		FS_MSDOS
+#define PART_BOOT_MOUNT		"/boot"
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
@@ -80,3 +79,10 @@
 #define BOARD_TYPE_NORMAL	0
 #define BOARD_TYPE_RPI		1
 int boardtype;
+
+/*
+ * Size limit for the initial GPT part, in bytes. This allows us to
+ * dd u-boot at 8k into the image for allwinner SoCs.
+ */
+#define	MD_GPT_INITIAL_SIZE		(8*1024)
+

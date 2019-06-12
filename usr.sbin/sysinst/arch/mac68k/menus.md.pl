@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.4 2015/05/11 21:07:56 martin Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.5 2019/06/12 06:20:21 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -65,7 +65,7 @@ menu nodiskmap, title "Wybierz opcje", y=16;
        };
 
 menu editparttable, title  "Wybierz swoje partycje", exit, y=14;
-	display action  { msg_display (MSG_editparttable);
+	display action  { msg_display (MSG_mac68k_editparttable);
 			  sortmerge();
 			  if (map.selected >= map.usable_cnt)
 				map.selected = 0;
