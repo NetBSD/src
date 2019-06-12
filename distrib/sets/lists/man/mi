@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1647 2019/06/06 05:32:29 mrg Exp $
+# $NetBSD: mi,v 1.1648 2019/06/12 09:03:32 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1131,9 +1131,9 @@
 ./usr/share/man/cat4/gpib.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpioiic.0			man-sys-catman		.cat
+./usr/share/man/cat4/gpioirq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiolock.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpioow.0			man-sys-catman		.cat
-./usr/share/man/cat4/gpioirq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiopps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiopwm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
@@ -2290,8 +2290,8 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
-./usr/share/man/cat7/audio.0			man-obsolete		obsolete
 ./usr/share/man/cat7/atf.0			man-atf-catman		.cat,atf
+./usr/share/man/cat7/audio.0			man-obsolete		obsolete
 ./usr/share/man/cat7/c.0			man-reference-catman	.cat
 ./usr/share/man/cat7/c78.0			man-reference-catman	.cat
 ./usr/share/man/cat7/c89.0			man-reference-catman	.cat
@@ -2468,6 +2468,7 @@
 ./usr/share/man/cat8/comsat.0			man-man-catman		.cat
 ./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/crash.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/creds_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	binutils,.cat
 ./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		.cat
@@ -4297,9 +4298,9 @@
 ./usr/share/man/html4/gpib.html			man-sys-htmlman		html
 ./usr/share/man/html4/gpio.html			man-sys-htmlman		html
 ./usr/share/man/html4/gpioiic.html		man-sys-htmlman		html
+./usr/share/man/html4/gpioirq.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiolock.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpioow.html		man-sys-htmlman		html
-./usr/share/man/html4/gpioirq.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiopps.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiopwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
@@ -5358,8 +5359,8 @@
 ./usr/share/man/html5/wtmp.html			man-sys-htmlman		html
 ./usr/share/man/html5/wtmpx.html		man-sys-htmlman		html
 ./usr/share/man/html7/ascii.html		man-reference-htmlman	html
-./usr/share/man/html7/audio.html		man-obsolete		obsolete
 ./usr/share/man/html7/atf.html			man-atf-htmlman		html,atf
+./usr/share/man/html7/audio.html		man-obsolete		obsolete
 ./usr/share/man/html7/c.html			man-reference-htmlman	html
 ./usr/share/man/html7/c78.html			man-reference-htmlman	html
 ./usr/share/man/html7/c89.html			man-reference-htmlman	html
@@ -5494,6 +5495,7 @@
 ./usr/share/man/html8/comsat.html		man-man-htmlman		html
 ./usr/share/man/html8/cpuctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/crash.html		man-sysutil-htmlman	html
+./usr/share/man/html8/creds_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
 ./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	html
@@ -6746,7 +6748,6 @@
 ./usr/share/man/man1/xmlwf.1			man-util-man		.man
 ./usr/share/man/man1/xz.1			man-util-man		.man
 ./usr/share/man/man1/xzcat.1			man-util-man		.man
-./usr/share/man/man1/ztest.1			man-zfs-man		zfs,.man
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man
@@ -6762,6 +6763,7 @@
 ./usr/share/man/man1/zless.1			man-util-man		.man
 ./usr/share/man/man1/zmore.1			man-util-man		.man
 ./usr/share/man/man1/znew.1			man-util-man		.man
+./usr/share/man/man1/ztest.1			man-zfs-man		zfs,.man
 ./usr/share/man/man3/atari/ahdi_buildlabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/atari/ahdi_checklabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/atari/ahdi_readlabel.3	man-obsolete		obsolete
@@ -7237,9 +7239,9 @@
 ./usr/share/man/man4/gpib.4			man-sys-man		.man
 ./usr/share/man/man4/gpio.4			man-sys-man		.man
 ./usr/share/man/man4/gpioiic.4			man-sys-man		.man
+./usr/share/man/man4/gpioirq.4			man-sys-man		.man
 ./usr/share/man/man4/gpiolock.4			man-sys-man		.man
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
-./usr/share/man/man4/gpioirq.4			man-sys-man		.man
 ./usr/share/man/man4/gpiopps.4			man-sys-man		.man
 ./usr/share/man/man4/gpiopwm.4			man-sys-man		.man
 ./usr/share/man/man4/gpiosim.4			man-sys-man		.man
@@ -8396,8 +8398,8 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man		.man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
-./usr/share/man/man7/audio.7			man-obsolete		obsolete
 ./usr/share/man/man7/atf.7			man-atf-man		.man,atf
+./usr/share/man/man7/audio.7			man-obsolete		obsolete
 ./usr/share/man/man7/c.7			man-reference-man	.man
 ./usr/share/man/man7/c78.7			man-reference-man	.man
 ./usr/share/man/man7/c89.7			man-reference-man	.man
@@ -8573,6 +8575,7 @@
 ./usr/share/man/man8/comsat.8			man-man-man		.man
 ./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/crash.8			man-crash-man		.man
+./usr/share/man/man8/creds_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		binutils,.man
 ./usr/share/man/man8/ddns-confgen.8		man-bind-man		.man
