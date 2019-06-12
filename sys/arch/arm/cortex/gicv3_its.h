@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.4 2018/11/28 22:54:11 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.5 2019/06/12 10:00:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ struct gicv3_its {
 	uint32_t		its_id;
 	uint64_t		its_base;
 	uint64_t		its_rdbase[MAXCPUS];
+	bool			its_cpuonline[MAXCPUS];
 
 	struct gicv3_softc	*its_gic;
 	struct gicv3_lpi_callback its_cb;
