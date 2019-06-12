@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.72 2019/06/12 10:09:26 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.73 2019/06/12 12:30:42 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd June 12, 2019
@@ -489,20 +489,15 @@ The
 .Dv PTRACE_VFORK_DONE
 event can be used to report unblocking of the parent.
 .Pp
-The
-.Xr posix_spawn 3
-operation implements
-.Xr vfork 2
-and
-.Xr exec 3
-as a single syscall in the kernel.
+.Fn posix_spawn
+on
+.Nx
+directly creates the child process without intermediant fork.
 The
 .Dv PTRACE_POSIX_SPAWN
 event semantics are the same as
 .Dv PTRACE_FORK ,
-but the child is reported with implied
-.Xr exec 3
-operation.
+but the child is reported with implied execution of a file.
 .Pp
 A pointer to this structure is passed in
 .Fa addr .
