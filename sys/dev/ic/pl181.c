@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.6 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: pl181.c,v 1.7 2019/06/12 10:16:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.6 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.7 2019/06/12 10:16:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,7 +290,7 @@ plmmc_pio_transfer(struct plmmc_softc *sc, struct sdmmc_command *cmd,
 
 	return error;
 }
-				     
+
 static int
 plmmc_host_reset(sdmmc_chipset_handle_t sch)
 {
