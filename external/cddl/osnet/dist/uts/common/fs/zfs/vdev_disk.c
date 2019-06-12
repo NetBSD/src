@@ -224,7 +224,7 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 		dvd->vd_maxphys = (pdk ? disk_maxphys(pdk) : MACHINE_MAXPHYS);
 	*/
 	{
-		struct buf buf = { b_bcount: MAXPHYS };
+		struct buf buf = { .b_bcount = MAXPHYS };
 		const char *dev_name;
 
 		dev_name = devsw_blk2name(major(vp->v_rdev));
