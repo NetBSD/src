@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2017/12/14 14:12:39 skrll Exp $ */
+/*	$NetBSD: md.c,v 1.6 2019/06/12 06:20:19 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include <util.h>
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 
@@ -49,7 +48,7 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-int boardtype = 0, rpi_bootpart = PART_A;
+int boardtype = 0;
 
 void
 md_prelim_menu(void)
@@ -70,124 +69,80 @@ md_init_set_status(int flags)
 		set_kernel_set(SET_KERNEL_RPI);
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
-	struct disklabel disklabel;
-	int fd;
-	char dev_name[100];
 
 	if (boardtype == BOARD_TYPE_RPI)
-		return set_bios_geom_with_mbr_guess();
+		return set_bios_geom_with_mbr_guess(pm->parts);
 
-	if (pm->no_mbr)
-		return 1;
-
-	if (read_mbr(pm->diskdev, &mbr) < 0)
-		memset(&mbr.mbr, 0, sizeof(mbr.mbr)-2);
-
-	if (edit_mbr(&mbr) == 0)
-		return 0;
-
-	if (strncmp(pm->diskdev, "wd", 2) == 0)
-		pm->disktype = "ST506";
-	else
-		pm->disktype = "SCSI";
-
-	snprintf(dev_name, 100, "/dev/r%sc", pm->diskdev);
-
-	fd = open(dev_name, O_RDONLY, 0);
-	if (fd < 0) {
-		endwin();
-		fprintf(stderr, "Can't open %s\n", dev_name);
-		exit(1);
-	}
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		endwin();
-		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
-		close(fd);
-		exit(1);
-	}
-	close(fd);
-
-	pm->dlcyl = disklabel.d_ncylinders;
-	pm->dlhead = disklabel.d_ntracks;
-	pm->dlsec = disklabel.d_nsectors;
-	pm->sectorsize = disklabel.d_secsize;
-	pm->dlcylsize = disklabel.d_secpercyl;
-
-	/*
-	 * Compute whole disk size. Take max of (pm->dlcyl*pm->dlhead*pm->dlsec)
-	 * and secperunit,  just in case the disk is already labelled.
-	 * (If our new label's RAW_PART size ends up smaller than the
-	 * in-core RAW_PART size  value, updating the label will fail.)
-	 */
-	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
-	if (disklabel.d_secperunit > pm->dlsize)
-		pm->dlsize = disklabel.d_secperunit;
-
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	int part;
+	size_t i;
 
 	if (boardtype == BOARD_TYPE_NORMAL)
-		return 1;
+		return true;
 	if (boardtype == BOARD_TYPE_RPI) {
-		for (part = PART_A; part < MAXPARTITIONS; part++)
-			if (pm->bsdlabel[part].pi_fstype == FS_MSDOS) {
-				rpi_bootpart = part;
-				return 1;
-			}
+		for (i = 0; i < install->num; i++)
+			if (install->infos[i].fs_type == FS_MSDOS)
+				return true;
 
 		msg_display(MSG_nomsdospart);
 		process_menu(MENU_ok, NULL);
 	}
-	return 0;
+	return false;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	if (pm->no_mbr)
-		return 0;
 
-	msg_display(MSG_dofdisk);
+	if (parts->parent == NULL)
+		return true;	/* no outer partitions */
 
-	/* write edited MBR onto disk. */
-	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
+	parts = parts->parent;
+
+	msg_display_subst(MSG_dofdisk, 3, parts->disk,
+	    msg_string(parts->pscheme->name),
+	    msg_string(parts->pscheme->short_name));
+
+	/* write edited "MBR" onto disk. */
+	if (!parts->pscheme->write_to_disk(parts)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
-		return 1;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -196,13 +151,13 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	char kernelbin[100];
 
@@ -223,7 +178,7 @@ md_post_extract(void)
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -233,27 +188,27 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_check_mbr(mbr_info_t *mbri)
+md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 {
 	mbr_info_t *ext;
 	struct mbr_partition *part;
@@ -274,51 +229,89 @@ md_check_mbr(mbr_info_t *mbri)
 			}
 		}
 		if (!hasboot) {
+			if (quiet)
+				return 2;
 			msg_display(MSG_nomsdospart);
-			msg_display_add(MSG_reeditpart, 0);
-			if (!ask_yesno(NULL))
-				return 0;
-			return 1;
+			return ask_reedit(parts);
 		}
 	}
 	return 2;
 }
 
-int
-md_mbr_use_wholedisk(mbr_info_t *mbri)
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
 {
-	struct mbr_sector *mbrs = &mbri->mbr;
-	struct mbr_partition *part;
-	int offset;
+	part_id nbsd, boot;
+	struct disk_part_info info;
+	daddr_t offset;
+
+	/*
+	 * XXX - set (U)EFI install depending on boardtype
+	 */
 
 	if (boardtype == BOARD_TYPE_NORMAL) {
 		/* this keeps it from creating /boot as msdos */
 		pm->bootsize = 0;
-		return mbr_use_wholedisk(mbri);
+		return parts_use_wholedisk(parts, 0, NULL);
 	}
 
 	/* raspi code */
 	if (boardtype == BOARD_TYPE_RPI) {
-		part = &mbrs->mbr_parts[0];
-		if (part[0].mbrp_type != MBR_PTYPE_FAT16L &&
-		    part[0].mbrp_type != MBR_PTYPE_FAT32L) {
+
+		for (boot = 0; boot < parts->num_part; boot++) {
+			if (!parts->pscheme->get_part_info(parts, boot, &info))
+				continue;
+			if (info.nat_type == NULL)
+				continue;
+			if (info.nat_type->generic_ptype == PT_FAT)
+				break;
+		}
+
+		if (boot >= parts->num_part) {
 			/* It's hopelessly corrupt, punt for now */
 			msg_display(MSG_nomsdospart);
 			process_menu(MENU_ok, NULL);
-			return 0;
+			return false;
 		}
-		offset = part[0].mbrp_start + part[0].mbrp_size;
-		part[1].mbrp_type = MBR_PTYPE_NETBSD;
-		part[1].mbrp_size = pm->dlsize - offset;
-		part[1].mbrp_start = offset;
-		part[1].mbrp_flag = 0;
+		pm->bootstart = info.start;
+		pm->bootsize = info.size;
+		offset = info.start + info.size + 1;
+		memset(&info, 0, sizeof info);
+		info.start = offset;
+		info.size = parts->pscheme->max_free_space_at(parts, offset);
+		info.nat_type = parts->pscheme->get_generic_part_type(PT_root);
+		info.fs_type = FS_BSDFFS;
+		info.fs_sub_type = 2;    
 
-		pm->ptstart = part[1].mbrp_start;
-		pm->ptsize = part[1].mbrp_size;
-		pm->bootstart = part[0].mbrp_start;
-		pm->bootsize = part[0].mbrp_size;
-		return 1;
+		nbsd = parts->pscheme->add_partition(parts, &info, NULL);
+		if (nbsd == NO_PART)
+			return false;
+
+		parts->pscheme->get_part_info(parts, nbsd, &info);
+		pm->ptstart = info.start;
+		pm->ptsize = info.size;
+		return true;
 	}
 
-	return mbr_use_wholedisk(mbri);
+	return parts_use_wholedisk(parts, 0, NULL);
 }
+
+/* returns false if no write-back of parts is required */
+bool
+md_mbr_update_check(struct disk_partitions *parts, mbr_info_t *mbri)
+{
+	return false;
+}
+
+#ifdef HAVE_GPT
+/*
+ * New GPT partitions have been written, update bootloader or remember
+ * data untill needed in md_post_newfs
+ */
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	return true;
+}
+#endif

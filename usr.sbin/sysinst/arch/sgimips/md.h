@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:05 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2019/06/12 06:20:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,14 +39,7 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_BOOT	PART_D
-#define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_F
-
-#define BOOT_SIZE	(4 * MEG)	/* Enough for a GENERIC kernel */
+#define PART_BOOT	(4 * MEG)	/* Enough for a GENERIC kernel */
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
