@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.75 2016/09/21 00:00:07 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.75.8.1 2019/06/12 10:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.75 2016/09/21 00:00:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.75.8.1 2019/06/12 10:17:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,13 +56,20 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.75 2016/09/21 00:00:07 jmcneill E
 
 #include "acpica.h"
 #include "wsdisplay.h"
+#ifndef XEN
+#include "hyperv.h"
+#endif
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #endif
+#if NHYPERV > 0
+#include <x86/x86/hypervvar.h>
+#endif
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
+int x86_found_console;
 
 #ifdef DEBUG_GEOM
 #define DPRINTF(a) printf a
@@ -546,6 +553,9 @@ device_register(device_t dev, void *aux)
 
 	isaboot = device_isa_register(dev, aux);
 	pciboot = device_pci_register(dev, aux);
+#if NHYPERV > 0
+	(void)device_hyperv_register(dev, aux);
+#endif
 
 	if (isaboot == NULL && pciboot == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv_common.c,v 1.1.2.2 2019/03/09 17:10:19 martin Exp $	*/
+/*	$NetBSD: hyperv_common.c,v 1.1.2.3 2019/06/12 10:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.1.2.2 2019/03/09 17:10:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.1.2.3 2019/06/12 10:17:32 martin Exp $");
 
 #include "hyperv.h"
 
@@ -51,6 +51,7 @@ uint64_t	hyperv_hypercall_error(uint64_t, paddr_t, paddr_t);
 __weak_alias(hyperv_hypercall, hyperv_hypercall_error);
 __weak_alias(hyperv_hypercall_enabled, hyperv_nullop);
 __weak_alias(hyperv_synic_supported, hyperv_nullop);
+__weak_alias(hyperv_is_gen1, hyperv_nullop);
 __weak_alias(hyperv_set_event_proc, hyperv_voidop);
 __weak_alias(hyperv_set_message_proc, hyperv_voidop);
 __weak_alias(hyperv_send_eom, hyperv_voidop);

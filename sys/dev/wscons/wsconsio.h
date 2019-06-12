@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.118 2017/06/03 14:49:42 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.118.2.1 2019/06/12 10:17:33 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -109,6 +109,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
 #define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
 #define	WSKBD_TYPE_EPOC		25	/* Psion EPOC machine keyboard */
+#define	WSKBD_TYPE_HYPERV	26	/* Hyper-V synthetic keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79.2.1 2018/04/11 14:53:50 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.2.2 2019/06/12 10:17:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.2.1 2018/04/11 14:53:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.2.2 2019/06/12 10:17:33 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1020,7 +1020,6 @@ x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 device_t
 device_pci_register(device_t dev, void *aux)
 {
-	static bool found_console = false;
 	device_t parent = device_parent(dev);
 
 	device_pci_props_register(dev, aux);
@@ -1074,7 +1073,7 @@ device_pci_register(device_t dev, void *aux)
 		}
 	}
 	if (parent && device_is_a(parent, "pci") &&
-	    found_console == false) {
+	    x86_found_console == false) {
 		struct btinfo_framebuffer *fbinfo;
 		struct pci_attach_args *pa = aux;
 		prop_dictionary_t dict;
@@ -1177,7 +1176,7 @@ device_pci_register(device_t dev, void *aux)
 			vga_posth = vga_post_init(pa->pa_bus, pa->pa_device,
 			    pa->pa_function);
 #endif
-			found_console = true;
+			x86_found_console = true;
 			return NULL;
 		}
 	}

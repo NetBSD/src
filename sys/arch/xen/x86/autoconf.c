@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.2.1 2018/10/13 17:16:12 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.2 2019/06/12 10:17:33 martin Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.1 2018/10/13 17:16:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.2 2019/06/12 10:17:33 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -90,6 +90,7 @@ static int is_valid_disk(device_t);
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
+int x86_found_console;
 
 #include "bios32.h"
 #if NBIOS32 > 0
