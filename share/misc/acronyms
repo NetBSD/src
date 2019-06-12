@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.284 2019/06/07 13:37:35 sevan Exp $
+$NetBSD: acronyms,v 1.285 2019/06/12 16:49:10 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -164,6 +164,7 @@ FNO	from now on
 FOC	free of charge
 FPS	first person shooter
 FPS	frames per second
+FRAND	fair, reasonable, and non-discriminatory
 FSDO	for some definition of
 FSVO	for some value of
 FTBFS	fails to build from source
@@ -461,6 +462,7 @@ PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
 RA	residential advisor
+RAND	reasonable and non-discriminatory
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
