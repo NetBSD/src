@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn.3,v 1.9 2019/06/12 00:05:48 kamil Exp $
+.\" $NetBSD: posix_spawn.3,v 1.10 2019/06/12 12:26:24 kamil Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -315,11 +315,10 @@ had been called by the child process to execute the new process image.
 This implementation does not run
 .Xr pthread_atfork 3
 callbacks.
-The
-.Xr vfork 2
-and
-.Xr exec 3
-operations are implemented as a single syscall.
+.Fn posix_spawn
+on
+.Nx
+directly creates the child process without intermediant fork.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn posix_spawn
