@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.16 2019/06/10 13:49:39 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.17 2019/06/12 13:53:25 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.16 2019/06/10 13:49:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.17 2019/06/12 13:53:25 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5140,6 +5140,9 @@ audio_pmixer_mix_track(audio_trackmixer_t *mixer, audio_track_t *track,
 				*d++ = ((aint2_t)*s++);
 			}
 		}
+		/* Fill silence if the first track is not filled. */
+		for (; i < mixer->frames_per_block * mixer->mixfmt.channels; i++)
+			*d++ = 0;
 	} else {
 		/* If this is the second or later, add it. */
 #if defined(AUDIO_SUPPORT_TRACK_VOLUME)
