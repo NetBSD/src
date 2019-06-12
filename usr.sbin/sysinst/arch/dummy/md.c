@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/06 12:34:42 joerg Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2019/06/12 06:20:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,10 +49,10 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
+bool
 md_get_info(void)
 {
-	return 1;
+	return true;
 }
 
 int
@@ -76,7 +76,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	return 0;
+	return true;
 }
 
 int

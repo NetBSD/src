@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2018/11/16 19:54:03 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2019/06/12 06:20:20 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,13 +48,7 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_BOOT	PART_D
 #define BOOT_SIZE	hp300_boot_size()
-#define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_F
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	40	/* Default root size */

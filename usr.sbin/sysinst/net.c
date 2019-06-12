@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.26 2018/10/06 18:45:37 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.27 2019/06/12 06:20:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -503,13 +503,13 @@ config_network(void)
 
 	if (num_devs < 1) {
 		/* No network interfaces found! */
-		msg_display(MSG_nonet);
-		process_menu(MENU_ok, NULL);
+		hit_enter_to_continue(NULL, MSG_nonet);
 		return (-1);
 	}
 
 	for (i = 0; i < num_devs; i++) {
 		net_menu[i].opt_name = net_devs[i].if_dev;
+		net_menu[i].opt_exp_name = NULL;
 		net_menu[i].opt_menu = OPT_NOMENU;
 		net_menu[i].opt_flags = OPT_EXIT;
 		net_menu[i].opt_action = set_menu_select;
