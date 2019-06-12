@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.96 2019/06/06 22:41:02 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.97 2019/06/12 10:14:05 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -272,6 +272,8 @@ tegra210xphy*	at tegra210xpad?
 # PCIE
 pcihost*	at fdt?			# Generic PCI host controller
 acpipchb*	at acpi?		# ACPI PCIe host bridge
+rkpcie*		at fdt?			# Rockchip AXI PCIE
+rkpciephy*	at fdt? pass 9		# Rockchip AXI PCIE PHY
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
 pci*		at pcibus?
 ppb*		at pci? dev ? function ?
