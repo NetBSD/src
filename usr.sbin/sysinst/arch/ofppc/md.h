@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:04 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2019/06/12 06:20:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,19 +51,19 @@
 #define MIN_FAT12_BOOT	2097152		/* 2MB absoule minimum */
 #define MIN_PREP_BOOT	1048576
 #define MIN_BINFO_BOOT	13312
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_BSD	PART_D
-#define PART_BOOT_FAT12	PART_E
-#define PART_BOOT_BINFO	PART_F
-#define PART_BOOT_PREP	PART_G
-#define PART_USR	PART_H	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_I
 
-/* We want the boot MSDOS partition mounted on /boot */
-#define PART_BOOT_FAT12_PI_FLAGS	(PIF_MOUNT)
-#define PART_BOOT_FAT12_PI_MOUNT	"/boot"
+/* we use three boot partitions: FAT12, BINFO and PREP */
+#define	PART_BOOT	FAT12_BOOT_SIZE
+#define	PART_BOOT_TYPE	FS_MSDOS
+#define	PART_BOOT_SUBT	MBR_PTYPE_FAT12
+#define	PART_BOOT_MOUNT	"/boot"
+
+#define	PART_BOOT1	BINFO_BOOT_SIZE
+#define	PART_BOOT1_TYPE	FS_OTHER
+
+#define	PART_BOOT2	PREP_BOOT_SIZE
+#define	PART_BOOT2_TYPE	FS_BOOT
+
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFSWAPSIZE	128
