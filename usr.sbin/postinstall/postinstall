@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.226 2019/05/11 19:31:03 maxv Exp $
+# $NetBSD: postinstall,v 1.227 2019/06/12 17:45:23 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1367,157 +1367,6 @@ do_pwd_mkdb()
 #	rc
 #
 
-# XXX Generate these from ../../distrib/sets/lists
-rc_644_files="
-rc
-rc.subr
-rc.shutdown
-"
-rc_555_files="
-DAEMON
-DISKS
-LOGIN
-NETWORKING
-SERVERS
-accounting
-altqd
-amd
-apmd
-bluetooth
-bootconf.sh
-bootparams
-ccd
-cgd
-cleartmp
-cron
-devpubd
-dhcpcd
-dhcpd
-dhcpd6
-dhcrelay
-dmesg
-downinterfaces
-envsys
-fsck
-fsck_root
-ftp_proxy
-ftpd
-gpio
-hostapd
-httpd
-identd
-ifwatchd
-inetd
-ip6addrctl
-ipfilter
-ipfs
-ipmon
-ipnat
-ipsec
-irdaattach
-iscsi_target
-iscsid
-isibootd
-kdc
-ldconfig
-ldpd
-local
-lpd
-lvm
-makemandb
-mdnsd
-mixerctl
-modules
-mopd
-motd
-mountall
-mountcritlocal
-mountcritremote
-mountd
-moused
-mrouted
-named
-ndbootd
-network
-newsyslog
-nfsd
-nfslocking
-npf
-npfd
-ntpd
-ntpdate
-perusertmp
-pf
-pf_boot
-pflogd
-postfix
-powerd
-ppp
-pwcheck
-quota
-racoon
-raidframe
-raidframeparity
-random_seed
-rarpd
-rbootd
-resize_root
-rndctl
-root
-route6d
-routed
-rpcbind
-rtadvd
-rtclocaltime
-rwho
-savecore
-screenblank
-securelevel
-smtoff
-sshd
-staticroute
-swap1
-swap2
-sysctl
-sysdb
-syslogd
-timed
-tpctl
-ttys
-veriexec
-virecover
-wdogctl
-wpa_supplicant
-wscons
-wsmoused
-ypbind
-yppasswdd
-ypserv
-"
-rc_obsolete_files="
-NETWORK
-btattach
-btconfig
-btcontrol
-btdevctl
-bthcid
-btuartd
-daemon
-fsck.sh
-gated
-isdnd
-kerberos
-login
-nfsiod
-poffd
-portmap
-rtsold
-sdpd
-servers
-sunndd
-systemfs
-xntpd
-"
 rc_obsolete_vars="
 amd amd_master
 btcontrol btcontrol_devices
@@ -1551,21 +1400,46 @@ update_rc()
 	return $?
 }
 
+exclude()
+{
+	eval ${GREP} -v -E "'($(echo $* | sed -e 's/ /|/'g))'"
+}
+
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_rc  fix|check"
-	op="$1"
-	failed=0
-	generated_scripts=""
+	local op="$1"
+	local failed=0
+	local generated_scripts=""
 	if [ "${MKX11}" != "no" ]; then
 		generated_scripts="${generated_scripts} xdm xfs"
 	fi
+
+	# Directories of external programs that have rc files (in bsd)
+	local rc_external_files="blacklist nsd unbound"
+
+	# rc* files in /etc/
+	local rc_444_files="$(${SED} -n -e /obsolete/d -e '/^\.\/etc\/rc\.d/d' \
+	    -e '/^\.\/etc\/rc/s@./etc/\([^[:space:]]*\)[[:space:]].*@\1@p' \
+	    ${SRC_DIR}/distrib/sets/lists/etc/mi)"
+
+	# no-obsolete rc files in /etc/rc.d
+	local rc_555_files="$(${SED} -n -e /obsolete/d \
+	    -e 's@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
+	    ${SRC_DIR}/distrib/sets/lists/etc/mi | \
+	    exclude ${rc_external_files})"
+
+	# obsolete rc file in /etc/rc.d
+	local rc_obsolete_files="$(${SED} -n \
+	    -e '/obsolete/s@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
+	    ${SRC_DIR}/distrib/sets/lists/etc/mi)"
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		${rc_644_files}
 	failed=$(( ${failed} + $? ))
 
+	local extra_scripts
 	if ! $SOURCEMODE; then
 		extra_scripts="${generated_scripts}"
 	else
@@ -1577,17 +1451,17 @@ do_rc()
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
-	update_rc "${op}" "${dir}" blacklistd /sbin \
-	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d"
-	failed=$(( ${failed} + $? ))
-
-	update_rc "${op}" "${dir}" unbound /usr/sbin \
-	    "${SRC_DIR}/external/bsd/unbound/etc/rc.d"
-	failed=$(( ${failed} + $? ))
-
-	update_rc "${op}" "${dir}" nsd /usr/sbin \
-	    "${SRC_DIR}/external/bsd/nsd/etc/rc.d"
-	failed=$(( ${failed} + $? ))
+	for i in ${rc_external_files}; do
+	    local rc_file 
+	    case $i in
+	    *d) rc_file=${i};;
+	    *)	rc_file=${i}d;;
+	    esac
+		
+	    update_rc "${op}" "${dir}" ${rc_file} /sbin \
+		"${SRC_DIR}/external/bsd/$i/etc/rc.d"
+	    failed=$(( ${failed} + $? ))
+	done
 
 	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
 		# generate scripts
@@ -1605,7 +1479,7 @@ do_rc()
 
 		# check for obsolete rc.d files
 	for f in ${rc_obsolete_files}; do
-		fd="/etc/rc.d/${f}"
+		local fd="/etc/rc.d/${f}"
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
