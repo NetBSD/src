@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:05 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2019/06/12 06:20:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,10 @@
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
+
+/* XXX - this is a lie! for testing only! */
+/* have support for booting from GPT disks */
+#define	HAVE_GPT_BOOT
 
 /* allow using tmpfs for /tmp instead of mfs */
 #define HAVE_TMPFS

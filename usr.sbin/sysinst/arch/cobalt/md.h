@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:03 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2019/06/12 06:20:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,22 +44,11 @@
 /* cobalt uses the mbr code. */
 #include "mbr.h"
 
-/* constants and defines */
-#define EXT2FS_BOOT_SIZE	(5 * 1024 * 1024)	/* 5MB boot partition */
-#define MIN_EXT2FS_BOOT		(1 * 1024 * 1024)	/* 1MB minimum */
-
-#define PART_ROOT		PART_A
-#define PART_SWAP		PART_B
-#define PART_BSD		PART_C
-#define PART_RAW		PART_D
-#define PART_BOOT_EXT2FS	PART_E
-#define PART_USR		PART_F
-#define PART_FIRST_FREE		PART_G
-
-/* We want the boot MSDOS partition mounted on /boot */
-#define USE_EXT2FS
-#define PART_BOOT_EXT2FS_PI_FLAGS	(PIF_NEWFS|PIF_MOUNT)
-#define PART_BOOT_EXT2FS_PI_MOUNT	"/stand"
+/* boot partition size and type */
+#define PART_BOOT		(5 * 1024 * 1024)	/* 5MB boot partition */
+#define PART_BOOT_MIN		(1 * 1024 * 1024)	/* 1MB minimum */
+#define	PART_BOOT_TYPE		FS_EX2FS
+#define	PART_BOOT_MOUNT		"/stand"
 
 /* default partition size */
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */

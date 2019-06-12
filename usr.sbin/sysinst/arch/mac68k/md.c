@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2016/05/31 02:49:50 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.6 2019/06/12 06:20:21 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,8 +131,8 @@ md_init_set_status(int flags)
 		set_kernel_set(SET_KERNEL_1);
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	struct disklabel disklabel;
 	int fd, i;
@@ -236,14 +236,6 @@ md_get_info(void)
 	    read(fd, map.blk, map.size * blk_size);
 	}
 	close(fd);
-	/*
-	 * Setup the disktype so /etc/disktab gets proper info
-	 */
-	if (strncmp(pm->diskdev, "sd", 2) == 0) {
-		pm->disktype = "SCSI";
-		pm->doessf = "sf:";
-	} else
-		pm->disktype = "IDE";
 
 	return edit_diskmap();
 }
@@ -251,12 +243,15 @@ md_get_info(void)
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
+	int rv;
+#if 0	// XXX
 	FILE *f;
-	int i, j, pl, rv;
+	int i, j, pl;
 	EBZB *bzb;
+#endif
 
 	/*
 	 * Scan for any problems and report them before continuing.
@@ -268,7 +263,7 @@ md_make_bsd_partitions(void)
 	    if (check_for_errors()) {
 	        process_menu (MENU_sanity, &rv);
 	        if (rv < 0)
-		    return 0;
+		    return false;
 	        else if (rv)
 		    break;
 	        edit_diskmap();
@@ -276,6 +271,7 @@ md_make_bsd_partitions(void)
 		break;
 	}
 
+#if 0	// XXX
 	/* Build standard partitions */
 	memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);
 
@@ -363,25 +359,27 @@ md_make_bsd_partitions(void)
 			(void)fprintf (f, "\n");
 	}
 	fclose (f);
+#endif
 
 	/* Everything looks OK. */
-	return 1;
+	return true;
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
     int fd;
     char dev_name[100];
@@ -464,15 +462,17 @@ md_pre_disklabel(void)
     ioctl(fd, DIOCWDINFO, &lp);    /* Write it out again */
 
     close (fd);
-    return 0;
+    return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
+#if 0	// XXX
     struct disklabel updated_label;
     int fd, i, no_match;
     char dev_name[100], buf[80];
@@ -486,7 +486,7 @@ md_post_disklabel(void)
      * Open the disk as a raw device
      */
     if ((fd = open(dev_name, O_RDONLY, 0)) < 0)
-       return 0;
+       return false;
     /*
      * Get the "new" label to see if we were successful.  If we aren't
      *  we'll return an error to keep from destroying the user's disk.
@@ -530,7 +530,10 @@ md_post_disklabel(void)
        }
        process_menu(MENU_ok2, NULL);
     }
-    return no_match;
+    return no_match == 0;
+#else
+	return true;
+#endif
 }
 
 /*
@@ -539,19 +542,19 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -559,16 +562,16 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
@@ -1056,7 +1059,7 @@ disp_selected_part(sel)
 	char fstyp[16], use[16], name[32];
 	EBZB *bzb;
 
-	msg_table_add(MSG_part_header);
+	msg_table_add(MSG_mac68k_part_header);
 	for (i=0;i<map.usable_cnt;i++) {
 	    if (i == sel) msg_standout();
 	    j = map.mblk[i];
@@ -1146,7 +1149,7 @@ edit_diskmap(void)
     int i;
 
 	/* Ask full/part */
-	msg_display (MSG_fullpart, pm->diskdev);
+	msg_display (MSG_mac68k_fullpart, pm->diskdev);
 	process_menu (MENU_fullpart, NULL);
 
 	map.selected = 0;
@@ -1156,7 +1159,7 @@ edit_diskmap(void)
 	 *  are any active disk partitions */
 	if (usefull) {
 	    if (map.usable_cnt > (map.root_cnt+map.swap_cnt+map.usr_cnt)) {
-		msg_display (MSG_ovrwrite);
+		msg_display (MSG_mac68k_ovrwrite);
 		if (!ask_noyes(NULL)) {
 			endwin();
 			return 0;
@@ -1210,7 +1213,24 @@ md_debug_dump(title)
 #endif /* MD_DEBUG_SORT_MERGE */
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install)
 {
 	return 0;
 }
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+

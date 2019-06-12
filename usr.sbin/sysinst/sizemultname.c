@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.3 2019/06/12 06:20:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,17 +49,36 @@
 #include "menu_defs.h"
 
 void
-set_sizemultname_cyl(void)
+set_sizemult(uint secs)
 {
+	if (secs == 0)
+		return;
 
-	sizemult = pm->dlcylsize;
-	multname = msg_string(MSG_cylname);
+	sizemult = secs;
+
+	if (secs == 1)
+		multname = msg_string(MSG_secname);
+	else if (secs == MEG/512)
+		multname = msg_string(MSG_megname);
+	else if (secs == GIG/512)
+		multname = msg_string(MSG_gigname);
+	else
+		multname = msg_string(MSG_cylname);
 }
 
+/*
+ * Only first call sets it
+ */
 void
-set_sizemultname_meg(void)
+set_default_sizemult(uint secs)
 {
+	static bool default_done;
 
-	sizemult = MEG / pm->sectorsize;
-	multname = msg_string(MSG_megname);
+	if (default_done)
+		return;
+
+	default_done = true;
+	set_sizemult(secs);
 }
+
+

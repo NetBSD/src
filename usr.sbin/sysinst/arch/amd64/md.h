@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2018/11/18 10:34:45 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2019/06/12 06:20:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,9 @@
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
 
+/* have support for booting from GPT disks */
+#define	HAVE_GPT_BOOT
+
 /* allow using tmpfs for /tmp instead of mfs */
 #define HAVE_TMPFS
 
@@ -107,5 +110,3 @@ extern struct mbr_bootsel *mbs;
 /*
  *  prototypes for MD code.
  */
-
-

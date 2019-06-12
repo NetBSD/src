@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/26 19:30:46 dholland Exp $
+#	$NetBSD: Makefile,v 1.2 2019/06/12 06:20:22 martin Exp $
 #
 # Makefile for ofppc
 #
 
-MENUS_MD=	menus.md.${SYSINSTLANG} menus.mbr
+MENUS_MD=	menus.md.${SYSINSTLANG}
 MSG_MD=		msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
 LANGUAGES=	en pl de
+NO_MBR=no
 
 .include "../../Makefile.inc"

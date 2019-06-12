@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.4 2018/11/09 15:20:36 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.5 2019/06/12 06:20:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.4 2018/11/09 15:20:36 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.5 2019/06/12 06:20:18 martin Exp $");
 #endif
 
 /*
@@ -152,17 +152,46 @@ backtowin(void)
 int
 target_already_root(void)
 {
+	char dev[PATH_MAX];
+	int rootpart = -1;
+	static struct pm_devs *last_pm;
+	static int last_res;
+	part_id ptn;
+	struct disk_partitions *parts;
+	struct disk_part_info info;
 
-	if (pm == NULL)
-		return TRUE;
+	if (pm == last_pm)
+		return last_res;
 
-	if (strcmp(pm->diskdev, "") == 0)
-		/* No root partition was ever selected.
-		 * Assume that the currently mounted one should be used
-		 */
-		return 1;
+	last_pm = pm;
+	last_res = 1;
 
-	return is_active_rootpart(pm->diskdev, pm->rootpart);
+	parts = pm->parts;
+	if (pm->no_part || parts == NULL) {
+		last_res = 0;
+		return 0;
+	}
+	if (pm->parts->pscheme->secondary_partitions != NULL)
+		parts = pm->parts->pscheme->secondary_partitions(parts,
+		    pm->ptstart);
+
+	for (ptn = 0; ptn < parts->num_part; ptn++) {
+		if (!parts->pscheme->get_part_info(parts, ptn, &info))
+			continue;
+		if (info.nat_type->generic_ptype != PT_root)
+			continue;
+		if (strcmp(info.last_mounted, "/") != 0)
+			continue;
+
+		if (!parts->pscheme->get_part_device(parts, ptn,
+		    dev, sizeof dev, &rootpart, plain_name, false))
+			continue;
+
+		last_res = is_active_rootpart(dev, rootpart);
+		return last_res;
+	}
+
+	return 1;
 }
 
 
@@ -304,11 +333,13 @@ do_target_chdir(const char *dir, int must_succeed)
 	}
 
 	if (error && must_succeed) {
-		fprintf(stderr, msg_string(MSG_realdir),
-		       target_prefix(), strerror(error));
+		const char *args[] = { target_prefix(), strerror(error) };
+		char *err = str_arg_subst(msg_string(MSG_realdir),
+		    __arraycount(args), args);
+		fprintf(stderr, "%s\n", err);
 		if (logfp)
-			fprintf(logfp, msg_string(MSG_realdir),
-			       target_prefix(), strerror(error));
+			fprintf(logfp, "%s\n", err);
+		free(err);
 		exit(1);
 	}
 	errno = error;
@@ -433,16 +464,9 @@ target_mount_do(const char *opts, const char *from, const char *on)
 }
 
 int
-target_mount(const char *opts, const char *from, int ptn, const char *on)
+target_mount(const char *opts, const char *from, const char *on)
 {
-	int error;
-	char *frompath;
-	asprintf (&frompath, "/dev/%s%c", from, (ptn < 0)? 0 : 'a' + ptn);
-	if (frompath == 0)
-		return (ENOMEM);
-	error = target_mount_do(opts, frompath, on);
-	free(frompath);
-	return error;
+	return target_mount_do(opts, from, on);
 }
 
 /*

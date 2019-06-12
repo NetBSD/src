@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.6 2015/08/28 12:04:08 joerg Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.7 2019/06/12 06:20:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@ static int merge_X(const char *);
 void
 do_upgrade(void)
 {
+	struct install_partition_desc install;
 	int retcode = 0;
 	partman_go = 0;
 
@@ -66,31 +67,41 @@ do_upgrade(void)
 	if (find_disks(msg_string(MSG_upgrade)) < 0)
 		return;
 
-	if (set_swap_if_low_ram(pm->diskdev, NULL) < 0)
+	/* XXX - build install_partition_desc from existing partitions
+	 * and pass that here and below instead of NULL */
+	if (set_swap_if_low_ram(NULL) < 0)
 		return;
 
-	if (md_pre_update() < 0)
-		return;
+	if (pm->parts->pscheme->pre_update_verify) {
+		if (pm->parts->pscheme->pre_update_verify(pm->parts))
+			pm->parts->pscheme->write_to_disk(pm->parts);
+	}
 
-	if (mount_disks() != 0)
-		return;
+	install_desc_from_parts(&install, pm->parts);
+
+	if (md_pre_update(&install) < 0)
+		goto free_install;
+
+	if (mount_disks(&install) != 0)
+		goto free_install;
 
 
 	/*
 	 * Save X symlink, ...
 	 */
 	if (save_X("/usr/X11R6"))
-		return;
+		goto free_install;
 	if (save_X("/usr/X11R7"))
-		return;
+		goto free_install;
 
 #ifdef AOUT2ELF
 	move_aout_libs();
 #endif
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
-	if (!md_update())
-		return;
+	/* XXX pass install here too */
+	if (!md_update(&install))
+		goto free_install;
 
 	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
@@ -100,18 +111,21 @@ do_upgrade(void)
 	/* Done with disks. Ready to get and unpack tarballs. */
 	process_menu(MENU_distset, &retcode);
 	if (retcode == 0)
-		return;
+		goto free_install;
 	if (get_and_unpack_sets(1, MSG_disksetupdoneupdate,
 	    MSG_upgrcomplete, MSG_abortupgr) != 0)
-		return;
+		goto free_install;
 
-	if (md_post_extract())
-		return;
+	if (md_post_extract(&install))
+		goto free_install;
 
 	merge_X("/usr/X11R6");
 	merge_X("/usr/X11R7");
 
 	sanity_check();
+
+free_install:
+	free_install_desc(&install);
 }
 
 /*
@@ -133,7 +147,7 @@ save_X(const char *xroot)
 			msg_display(MSG_X_oldexists, xroot, xroot, xroot,
 			    xroot, xroot, xroot, xroot, xroot, xroot, xroot,
 			    xroot);
-			process_menu(MENU_ok, NULL);
+			hit_enter_to_continue(NULL, NULL);
 			return EEXIST;
 		}
 
@@ -175,7 +189,7 @@ merge_X(const char *xroot)
  * Unpacks sets,  clobbering existing contents.
  */
 void
-do_reinstall_sets(void)
+do_reinstall_sets(struct install_partition_desc *install)
 {
 	int retcode = 0;
 
@@ -187,7 +201,9 @@ do_reinstall_sets(void)
 	if (find_disks(msg_string(MSG_reinstall)) < 0)
 		return;
 
-	if (mount_disks() != 0)
+	/* XXX find proper pm pointer and pass it here, make sure we have
+	 * read partitions and provide "infos" in there */
+	if (mount_disks(install) != 0)
 		return;
 
 	/* Unpack the distribution. */
