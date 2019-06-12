@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus_acpi.c,v 1.1.2.2 2019/03/09 17:10:21 martin Exp $	*/
+/*	$NetBSD: vmbus_acpi.c,v 1.1.2.3 2019/06/12 10:17:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.1.2.2 2019/03/09 17:10:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus_acpi.c,v 1.1.2.3 2019/06/12 10:17:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,6 +82,8 @@ vmbus_acpi_attach(device_t parent, device_t self, void *opaque)
 	struct acpi_attach_args *aa = opaque;
 
 	sc->sc.sc_dev = self;
+	sc->sc.sc_iot = aa->aa_iot;
+	sc->sc.sc_memt = aa->aa_memt;
 	sc->sc.sc_dmat = aa->aa_dmat64 ? aa->aa_dmat64 : aa->aa_dmat;
 
 	if (vmbus_attach(&sc->sc))

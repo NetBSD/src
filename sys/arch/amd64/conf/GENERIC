@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459.2.14 2019/03/09 17:10:20 martin Exp $
+# $NetBSD: GENERIC,v 1.459.2.15 2019/06/12 10:17:33 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.459.2.14 $"
+#ident		"GENERIC-$Revision: 1.459.2.15 $"
 
 maxusers	64		# estimated number of users
 
@@ -1059,6 +1059,9 @@ vioscsi* at virtio?			# Virtio SCSI device
 
 # Hyper-V devices
 vmbus*		at acpi?		# Hyper-V VMBus
+genfb*		at vmbus?		# Hyper-V Synthetic Video Framebuffer
+hvkbd*		at vmbus?		# Hyper-V Synthetic Keyboard
+wskbd*		at hvkbd? console ? mux 1
 hvn*		at vmbus?		# Hyper-V NetVSC
 hvs*		at vmbus?		# Hyper-V StorVSC
 hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
