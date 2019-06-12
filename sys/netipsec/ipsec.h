@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.87 2019/01/17 02:47:15 knakahara Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.88 2019/06/12 22:23:50 christos Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -237,13 +237,17 @@ extern int crypto_support;
 
 #include <sys/syslog.h>
 
-#define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
+#define	DPRINTF(fmt, args...) 						\
+	do {								\
+		if (ipsec_debug)					\
+			log(LOG_DEBUG, "%s: " fmt, __func__, ##args);	\
+	} while (/*CONSTCOND*/0)
 
 #define IPSECLOG(level, fmt, args...) 					\
 	do {								\
 		if (ipsec_debug)					\
 			log(level, "%s: " fmt, __func__, ##args);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ipsec_indone(m)	\
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
