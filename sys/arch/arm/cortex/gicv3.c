@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.13 2018/11/23 11:49:04 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.14 2019/06/12 10:02:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13 2018/11/23 11:49:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.14 2019/06/12 10:02:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -155,7 +155,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint64_t irouter;
 	u_int n;
 
-	const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+	const u_int ipriority_val = 0x80 | (IPL_TO_PRIORITY(is->is_ipl) >> 1);
 	const u_int ipriority_shift = (is->is_irq & 0x3) * 8;
 	const u_int icfg_shift = (is->is_irq & 0xf) * 2;
 
@@ -206,7 +206,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
-	icc_pmr_write(IPL_TO_PRIORITY(ipl) << 1);
+	icc_pmr_write(IPL_TO_PRIORITY(ipl));
 }
 
 static void
@@ -271,7 +271,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 			if (is == NULL)
 				priority |= 0xff << byte_shift;
 			else {
-				const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+				const u_int ipriority_val = 0x80 | (IPL_TO_PRIORITY(is->is_ipl) >> 1);
 				priority |= ipriority_val << byte_shift;
 			}
 		}
@@ -545,7 +545,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 
-	sc->sc_lpiconf.base[is->is_irq] = 0x80 | IPL_TO_PRIORITY(is->is_ipl) | GIC_LPICONF_Res1;
+	sc->sc_lpiconf.base[is->is_irq] = 0x80 | (IPL_TO_PRIORITY(is->is_ipl) >> 1) | GIC_LPICONF_Res1;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, is->is_irq, 1, BUS_DMASYNC_PREWRITE);
 }
