@@ -32,7 +32,7 @@ __BEGIN_DECLS
 typedef struct lpm lpm_t;
 typedef void (*lpm_dtor_t)(void *, const void *, size_t, void *);
 
-lpm_t *		lpm_create(void);
+lpm_t *		lpm_create(int);
 void		lpm_destroy(lpm_t *);
 void		lpm_clear(lpm_t *, lpm_dtor_t, void *);
 
