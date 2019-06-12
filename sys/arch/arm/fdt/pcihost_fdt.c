@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.9 2019/06/12 10:13:44 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.10 2019/06/12 22:47:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.9 2019/06/12 10:13:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.10 2019/06/12 22:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -345,6 +345,11 @@ pcihost_config(struct pcihost_softc *sc)
 		default:
 			break;
 		}
+	}
+
+	if (memext == NULL && pmemext != NULL) {
+		memext = pmemext;
+		pmemext = NULL;
 	}
 
 	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, sc->sc_bus_min, PCIHOST_CACHELINE_SIZE);
