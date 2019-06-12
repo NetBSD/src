@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.261 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: key.c,v 1.262 2019/06/12 01:32:30 christos Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.261 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.262 2019/06/12 01:32:30 christos Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -5753,7 +5753,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 
 	error = key_setsaval(newsav, m, mhp);
 	if (error) {
-		key_delsav(newsav);
+		kmem_free(newsav, sizeof(*newsav));
 		goto error;
 	}
 
