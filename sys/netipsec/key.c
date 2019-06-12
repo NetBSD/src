@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.262 2019/06/12 01:32:30 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.263 2019/06/12 22:23:06 christos Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.262 2019/06/12 01:32:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.263 2019/06/12 22:23:06 christos Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -3276,7 +3276,7 @@ key_destroy_sah(struct secashead *sah)
  * When SAD message type is GETSPI:
  *	to set sequence number from acq_seq++,
  *	to set zero to SPI.
- *	not to call key_setsava().
+ *	not to call key_setsaval().
  * OUT:	NULL	: fail
  *	others	: pointer to new secasvar.
  *
@@ -3700,10 +3700,13 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	case SADB_X_SATYPE_TCPSIGNATURE:
 		error = xform_init(sav, XF_TCPSIGNATURE);
 		break;
+	default:
+		error = EOPNOTSUPP;
+		break;
 	}
 	if (error) {
-		IPSECLOG(LOG_DEBUG, "unable to initialize SA type %u.\n",
-		    mhp->msg->sadb_msg_satype);
+		IPSECLOG(LOG_DEBUG, "unable to initialize SA type %u (%d)\n",
+		    mhp->msg->sadb_msg_satype, error);
 		goto fail;
 	}
 
