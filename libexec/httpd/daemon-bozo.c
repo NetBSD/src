@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon-bozo.c,v 1.17.8.1 2018/11/24 17:13:51 martin Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.17.8.2 2019/06/12 10:32:00 martin Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -205,7 +205,7 @@ daemon_runchild(bozohttpd_t *httpd, int fd)
 }
 
 static int
-daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
+daemon_poll_err(bozohttpd_t *httpd, int idx)
 {
 	if ((httpd->fds[idx].revents & (POLLNVAL|POLLERR|POLLHUP)) == 0)
 		return 0;
@@ -284,7 +284,7 @@ again:
 		}
 
 		for (i = 0; i < httpd->nsock; i++) {
-			if (daemon_poll_err(httpd, fd, i))
+			if (daemon_poll_err(httpd, i))
 				break;
 			if (httpd->fds[i].revents == 0)
 				continue;
