@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.71 2019/06/11 23:27:46 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.72 2019/06/12 10:09:26 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd June 12, 2019
@@ -459,7 +459,8 @@ Report thread birth.
 .It PTRACE_LWP_EXIT
 Report thread termination.
 .It PTRACE_POSIX_SPAWN
-Report posix_spawn(3).
+Report
+.Xr posix_spawn 3 .
 .El
 .Pp
 The
