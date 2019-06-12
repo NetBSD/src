@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.13 2019/06/12 06:51:31 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.14 2019/06/12 06:53:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -1012,7 +1012,7 @@ armv6_mmuinit:
 	VPRINTF(" ")
 
 	.align 5
-	@ turn mmu on!
+	/* turn mmu on! */
 	mov	r0, r6
 	mcr	p15, 0, r0, c1, c0, 0
 
