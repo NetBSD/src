@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.72 2019/06/13 05:19:40 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.73 2019/06/13 07:42:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.72 2019/06/13 05:19:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.73 2019/06/13 07:42:45 msaitoh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -954,7 +954,9 @@ lapic_dump(void)
 	struct cpu_info *ci = curcpu();
 	const char *xname = device_xname(ci->ci_dev);
 
+	apic_format_redir(xname, "cmci", 0, 0, lapic_readreg(LAPIC_LVT_CMCI));
 	apic_format_redir(xname, "timer", 0, 0, lapic_readreg(LAPIC_LVTT));
+	apic_format_redir(xname, "thermal", 0, 0, lapic_readreg(LAPIC_TMINT));
 	apic_format_redir(xname, "pcint", 0, 0, lapic_readreg(LAPIC_PCINT));
 	apic_format_redir(xname, "lint", 0, 0, lapic_readreg(LAPIC_LVINT0));
 	apic_format_redir(xname, "lint", 1, 0, lapic_readreg(LAPIC_LVINT1));
