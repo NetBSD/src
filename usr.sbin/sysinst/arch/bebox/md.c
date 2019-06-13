@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2019/06/12 06:20:19 martin Exp $ */
+/*	$NetBSD: md.c,v 1.4 2019/06/13 09:36:54 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,6 +58,29 @@ md_init_set_status(int flags)
 bool
 md_get_info(struct install_partition_desc *install)
 {
+
+	if (pm->no_mbr || pm->no_part)
+		return true;
+
+	if (pm->parts == NULL) {
+
+		const struct disk_partitioning_scheme *ps =
+		    select_part_scheme(pm, NULL, true, NULL);
+
+		if (!ps)
+			return true;
+
+		struct disk_partitions *parts =
+		   (*ps->create_new_for_disk)(pm->diskdev,
+		   0, pm->dlsize, pm->dlsize, true);
+		if (!parts)
+			return false;
+
+		pm->parts = parts;
+		if (ps->size_limit > 0 && pm->dlsize > ps->size_limit)
+			pm->dlsize = ps->size_limit;
+	}
+
 	return set_bios_geom_with_mbr_guess(pm->parts);
 }
 
