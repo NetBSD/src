@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.466 2019/06/11 23:18:55 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.467 2019/06/13 20:20:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.466 2019/06/11 23:18:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.467 2019/06/13 20:20:18 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1207,10 +1207,17 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
+		lwp_t *lp;
+
 		mutex_enter(proc_lock);
+		lp = p->p_vforklwp;
+		p->p_vforklwp = NULL;
+
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
-		cv_broadcast(&p->p_pptr->p_waitcv);
+		lp->l_vforkwaiting = false;
+
+		cv_broadcast(&lp->l_waitcv);
 		mutex_exit(proc_lock);
 	}
 
