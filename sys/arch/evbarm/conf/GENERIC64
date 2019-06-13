@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.97 2019/06/12 10:14:05 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.98 2019/06/13 13:35:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -382,6 +382,7 @@ ld*		at sdmmc?
 # SATA
 ahcisata*	at fdt?			# AHCI SATA
 ahcisata*	at acpi?
+ahcisata*	at pci? dev ? function ?
 atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
