@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.69 2019/06/13 17:20:25 maxv Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.70 2019/06/13 17:33:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.69 2019/06/13 17:20:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.70 2019/06/13 17:33:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,10 @@ struct ehci_pci_softc {
 	pcitag_t		sc_tag;
 	pci_intr_handle_t	*sc_pihp;
 	void 			*sc_ih;		/* interrupt vectoring */
+	enum {
+		EHCI_INIT_NONE,
+		EHCI_INIT_INITED
+	} sc_init_state;
 };
 
 static int ehci_sb700_match(const struct pci_attach_args *);
@@ -120,6 +124,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	int ncomp, quirk;
 	pcireg_t csr;
 
+	sc->sc_init_state = EHCI_INIT_NONE;
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.ub_hcpriv = sc;
 
@@ -243,6 +248,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
+	sc->sc_init_state = EHCI_INIT_INITED;
 
 	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
 	    ehci_shutdown))
@@ -270,9 +276,11 @@ ehci_pci_detach(device_t self, int flags)
 	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
 
-	rv = ehci_detach(&sc->sc, flags);
-	if (rv)
-		return rv;
+	if (sc->sc_init_state >= EHCI_INIT_INITED) {
+		rv = ehci_detach(&sc->sc, flags);
+		if (rv)
+			return rv;
+	}
 
 	pmf_device_deregister(self);
 	ehci_shutdown(self, flags);
@@ -300,10 +308,12 @@ ehci_pci_detach(device_t self, int flags)
 
 #if 1
 	/* XXX created in ehci.c */
-	mutex_destroy(&sc->sc.sc_lock);
-	mutex_destroy(&sc->sc.sc_intr_lock);
-	softint_disestablish(sc->sc.sc_doorbell_si);
-	softint_disestablish(sc->sc.sc_pcd_si);
+	if (sc->sc_init_state >= EHCI_INIT_INITED) {
+		mutex_destroy(&sc->sc.sc_lock);
+		mutex_destroy(&sc->sc.sc_intr_lock);
+		softint_disestablish(sc->sc.sc_doorbell_si);
+		softint_disestablish(sc->sc.sc_pcd_si);
+	}
 #endif
 
 	return 0;
