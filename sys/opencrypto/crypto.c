@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.106 2018/06/06 01:49:09 maya Exp $ */
+/*	$NetBSD: crypto.c,v 1.107 2019/06/13 02:07:31 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.106 2018/06/06 01:49:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.107 2019/06/13 02:07:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -746,6 +746,7 @@ crypto_select_driver_lock(struct cryptoini *cri, int hard)
 	u_int32_t hid;
 	int accept;
 	struct cryptocap *cap, *best;
+	int error = 0;
 
 	best = NULL;
 	/*
@@ -808,6 +809,14 @@ again:
 	    && (accept & CRYPTO_ACCEPT_SOFTWARE) == 0) {
 		accept = CRYPTO_ACCEPT_SOFTWARE;
 		goto again;
+	}
+
+	if (best == NULL && hard == 0 && error == 0) {
+		error = module_autoload("swcrypto", MODULE_CLASS_DRIVER);
+		if (error == 0) {
+			error = EINVAL;
+			goto again;
+		}
 	}
 
 	return best;
