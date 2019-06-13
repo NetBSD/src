@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.229 2019/06/13 00:24:43 christos Exp $
+# $NetBSD: postinstall,v 1.230 2019/06/13 19:30:30 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -847,21 +847,23 @@ additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_defaults  fix|check"
-	op="$1"
-	failed=0
+	local op="$1"
+	local failed=0
+	local etcsets=$(getetcsets)
 
-	# Except for i386 and amd64, rc.conf(5) should be the same as the
-	# one obtained from a source directory
-	extra_scripts="rc.conf"
-	if [ "$MACHINE" = "i386" -o "$MACHINE" = "amd64" ]; then
-		if $SOURCEMODE; then
-			extra_scripts=	# clear
+	local rc_exclude_scripts=""
+	if $SOURCEMODE; then
+		# For most architectures rc.conf(5) should be the same as the
+		# one obtained from a source directory, except for the ones
+		# that have an append file for it.
+		local rc_conf_app="${SRC_DIR}/etc/etc.${MACHINE}/rc.conf.append"
+		if [ -f "${rc_conf_app}" ]; then
+			rc_exclude_scripts="rc.conf"
 
 			# Generate and compare the correct rc.conf(5) file
 			mkdir "${SCRATCHDIR}/defaults"
 
-			cat "${SRC_DIR}/etc/defaults/rc.conf" \
-			    "${SRC_DIR}/etc/etc.${MACHINE}/rc.conf.append" \
+			cat "${SRC_DIR}/etc/defaults/rc.conf" "${rc_conf_app}" \
 			    > "${SCRATCHDIR}/defaults/rc.conf"
 
 			compare_dir "${op}" "${SCRATCHDIR}/defaults" \
@@ -872,18 +874,23 @@ do_defaults()
 		fi
 	fi
 
-	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
-		444 \
-		daily.conf monthly.conf npf.boot.conf pkgpath.conf \
-		security.conf weekly.conf ${extra_scripts}
-	failed=$(( ${failed} + $? ))
-
 	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
 	    "${SRC_DIR}/usr.sbin/pf/etc/defaults" "${SRC_DIR}/etc/defaults" \
 	    || return 1
-			# ${dir} is set by find_file_in_dirlist()
+	# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$op" "${dir}" "${DEST_DIR}/etc/defaults" 444 pf.boot.conf
 	failed=$(( ${failed} + $? ))
+
+	rc_exclude_scripts="${rc_exclude_scripts} pf.boot.conf"
+
+	local rc_default_conf_files="$(select_set_files /etc/defaults/ \
+	    "/etc/defaults/\([^[:space:]]*\.conf\)" ${etcsets} | \
+	    exclude ${rc_exclude_scripts})"
+	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
+		444 \
+		${rc_default_conf_files}
+	failed=$(( ${failed} + $? ))
+
 
 	return ${failed}
 }
@@ -1400,9 +1407,33 @@ update_rc()
 	return $?
 }
 
+# select non-obsolete files in a sets file
+# $1: directory pattern
+# $2: file pattern
+# $3: filename
+select_set_files()
+{
+	local qdir="$(echo $1 | ${SED} -e s@/@\\\\/@g -e s/\\./\\\\./g)"
+	${SED} -n -e /obsolete/d \
+	    -e "/^\.${qdir}/s@^.$2[[:space:]].*@\1@p" $3
+}
+
 exclude()
 {
-	eval ${GREP} -v -E "'($(echo $* | sed -e 's/ /|/'g))'"
+	if [ -z "$*" ]; then
+		cat
+	else
+		eval ${GREP} -v -E "'($(echo $* | sed -e 's/ /|/'g))'"
+	fi
+}
+
+getetcsets()
+{
+	if $SOURCEMODE; then
+		echo "${SRC_DIR}/distrib/sets/lists/etc/mi"
+	else
+		echo "${SRC_DIR}/etc/mtree/set.etc"
+	fi
 }
 
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
@@ -1412,12 +1443,7 @@ do_rc()
 	local op="$1"
 	local failed=0
 	local generated_scripts=""
-	local etcsets=
-	if $SOURCEMODE; then
-		etcsets="${SRC_DIR}/distrib/sets/lists/etc/mi"
-	else
-		etcsets="${SRC_DIR}/etc/mtree/set.etc"
-	fi
+	local etcsets=$(getetcsets)
 	if [ "${MKX11}" != "no" ]; then
 		generated_scripts="${generated_scripts} xdm xfs"
 	fi
@@ -1426,14 +1452,12 @@ do_rc()
 	local rc_external_files="blacklist nsd unbound"
 
 	# rc* files in /etc/
-	local rc_444_files="$(${SED} -n -e /obsolete/d -e '/^\.\/etc\/rc\.d/d' \
-	    -e '/^\.\/etc\/rc/s@./etc/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${etcsets})"
+	local rc_444_files="$(select_set_files /etc/rc \
+	    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
 
 	# no-obsolete rc files in /etc/rc.d
-	local rc_555_files="$(${SED} -n -e /obsolete/d \
-	    -e 's@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${etcsets} | \
+	local rc_555_files="$(select_set_files /etc/rc.d/ \
+	    "/etc/rc\.d/\([^[:space:]]*\)" ${etcsets} | \
 	    exclude ${rc_external_files})"
 
 	# obsolete rc file in /etc/rc.d
