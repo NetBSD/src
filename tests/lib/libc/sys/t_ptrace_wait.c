@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.126 2019/06/12 17:07:11 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.127 2019/06/13 20:26:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.126 2019/06/12 17:07:11 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.127 2019/06/13 20:26:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +100,7 @@ static int debug = 0;
     while (/*CONSTCOND*/0)
 
 #ifndef TEST_VFORK_ENABLED
-#define TEST_VFORK_ENABLED 0
+#define TEST_VFORK_ENABLED 1
 #endif
 
 /// ----------------------------------------------------------------------------
