@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.9 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.10 2019/06/13 12:31:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1081,7 +1081,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 
 	daddr_t align = parts->pscheme->get_part_alignment(parts);
 
-	if (root < wanted->num) {
+	if (root < wanted->num && wanted->infos[root].cur_part_id == NO_PART) {
 		daddr_t max_root_size = parts->disk_start + parts->disk_size;
 		if (root_limit > 0) {
 			/* Bah - bios can not read all the disk, limit root */
@@ -1093,15 +1093,20 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	if (have_x11_by_default()) {
 		daddr_t xsize = XNEEDMB * (MEG / 512);
 		if (usr < wanted->num) {
-			wanted->infos[usr].size += xsize;
-			wanted->infos[usr].def_size += xsize;
+			if (wanted->infos[usr].cur_part_id == NO_PART) {
+				wanted->infos[usr].size += xsize;
+				wanted->infos[usr].def_size += xsize;
+			}
 		} else if (root < wanted->num &&
+		    wanted->infos[root].cur_part_id == NO_PART &&
+		    (wanted->infos[root].limit == 0 ||
 		    (wanted->infos[root].size + xsize) <=
-		    wanted->infos[root].limit) {
+		    wanted->infos[root].limit)) {
 			wanted->infos[root].size += xsize;
 		}
 	}
-	if (wanted->infos[root].size > wanted->infos[root].limit) {
+	if (wanted->infos[root].limit > 0 &&
+	    wanted->infos[root].size > wanted->infos[root].limit) {
 		if (usr < wanted->num) {
 			/* move space from root to usr */
 			daddr_t spill = wanted->infos[root].size -
