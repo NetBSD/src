@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.228 2019/06/12 21:08:33 christos Exp $
+# $NetBSD: postinstall,v 1.229 2019/06/13 00:24:43 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1412,6 +1412,12 @@ do_rc()
 	local op="$1"
 	local failed=0
 	local generated_scripts=""
+	local etcsets=
+	if $SOURCEMODE; then
+		etcsets="${SRC_DIR}/distrib/sets/lists/etc/mi"
+	else
+		etcsets="${SRC_DIR}/etc/mtree/set.etc"
+	fi
 	if [ "${MKX11}" != "no" ]; then
 		generated_scripts="${generated_scripts} xdm xfs"
 	fi
@@ -1422,18 +1428,18 @@ do_rc()
 	# rc* files in /etc/
 	local rc_444_files="$(${SED} -n -e /obsolete/d -e '/^\.\/etc\/rc\.d/d' \
 	    -e '/^\.\/etc\/rc/s@./etc/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${SRC_DIR}/distrib/sets/lists/etc/mi)"
+	    ${etcsets})"
 
 	# no-obsolete rc files in /etc/rc.d
 	local rc_555_files="$(${SED} -n -e /obsolete/d \
 	    -e 's@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${SRC_DIR}/distrib/sets/lists/etc/mi | \
+	    ${etcsets} | \
 	    exclude ${rc_external_files})"
 
 	# obsolete rc file in /etc/rc.d
 	local rc_obsolete_files="$(${SED} -n \
 	    -e '/obsolete/s@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${SRC_DIR}/distrib/sets/lists/etc/mi)"
+	    ${etcsets})"
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		${rc_644_files}
