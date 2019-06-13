@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.10 2019/06/13 12:31:28 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.11 2019/06/13 12:44:20 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -932,6 +932,9 @@ merge_part_with_wanted(struct disk_partitions *parts, part_id pno,
 		wanted->infos[i].size = info->size;
 		wanted->infos[i].cur_start = info->start;
 		wanted->infos[i].flags &= ~PUIFLAG_EXTEND;
+		if (wanted->infos[i].fs_type != FS_UNUSED &&
+		    wanted->infos[i].type != PT_swap)
+			wanted->infos[i].instflags |= PUIINST_MOUNT;
 		if (is_outer)
 			wanted->infos[i].flags |= PUIFLG_IS_OUTER;
 		return;
