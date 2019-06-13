@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.212 2019/05/03 22:34:21 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.213 2019/06/13 20:20:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.212 2019/05/03 22:34:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.213 2019/06/13 20:20:18 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -413,11 +413,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (flags & FORK_PPWAIT) {
 		/* Mark ourselves as waiting for a child. */
-		l1->l_pflag |= LP_VFORKWAIT;
 		p2->p_lflag = PL_PPWAIT;
+		l1->l_vforkwaiting = true;
 		p2->p_vforklwp = l1;
 	} else {
 		p2->p_lflag = 0;
+		l1->l_vforkwaiting = false;
 	}
 	p2->p_sflag = 0;
 	p2->p_slflag = 0;
@@ -610,10 +611,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
+	 * child to exec or exit, sleep until it clears p_vforkwaiting.
 	 */
-	while (p2->p_lflag & PL_PPWAIT) // XXX: p2 can go invalid
-		cv_wait(&p1->p_waitcv, proc_lock);
+	while (l1->l_vforkwaiting)
+		cv_wait(&l1->l_waitcv, proc_lock);
 
 	/*
 	 * Let the parent know that we are tracing its child.
