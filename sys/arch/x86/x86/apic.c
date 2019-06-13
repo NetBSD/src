@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.8 2008/12/16 22:35:28 christos Exp $ */
+/* $NetBSD: apic.c,v 1.9 2019/06/13 07:28:17 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.8 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.9 2019/06/13 07:28:17 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,6 @@ apic_format_redir(const char *where1, const char *where2, int idx,
 		snprintb(buf, sizeof(buf), redirhifmt, redirhi);
 		printf(" %s", buf);
 	}
-		    
 
 	printf("\n");
 }
