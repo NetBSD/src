@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.16 2017/04/28 01:23:58 nonaka Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.17 2019/06/13 07:44:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #define LAPIC_IRR	0x200		/* Interrupt Req RO */
 #define LAPIC_ESR	0x280		/* Err status. RW */
 
-#define LAPIC_LVT_CMCI	0x2f0		/* LVT CMCI RW */
+#define LAPIC_LVT_CMCI	0x2f0		/* Loc.vec (CMCI) RW */
 
 #define LAPIC_ICRLO	0x300		/* Int. cmd. (xAPIC: RW, x2APIC: RW64) */
 #	define LAPIC_DLMODE_MASK	0x00000700	/* Delivery Mode */
