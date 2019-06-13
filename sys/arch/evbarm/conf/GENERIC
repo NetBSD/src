@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.38 2019/06/11 13:01:48 skrll Exp $
+#	$NetBSD: GENERIC,v 1.39 2019/06/13 13:35:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -537,6 +537,7 @@ flash*          at nand? dynamic 1
 
 # SATA
 ahcisata*	at fdt?			# AHCI SATA
+ahcisata*	at pci? dev ? function ?
 atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
