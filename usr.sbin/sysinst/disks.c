@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.30 2019/06/12 06:20:17 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.31 2019/06/13 19:13:05 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-#define DEBUG_VERBOSE	1
+/* #define DEBUG_VERBOSE	1 */
 
 /* Disk descriptions */
 struct disk_desc {
