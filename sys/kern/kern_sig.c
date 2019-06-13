@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.359 2019/06/04 11:54:03 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.360 2019/06/13 00:07:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.359 2019/06/04 11:54:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.360 2019/06/13 00:07:19 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1654,7 +1654,7 @@ sigswitch(int ppmask, int signo, bool relock)
 	 */
 	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
 		mutex_exit(p->p_lock);
-		if (relock) {
+		if (!relock) {
 			mutex_exit(proc_lock);
 		}
 		lwp_exit(l);
