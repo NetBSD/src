@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.23 2019/01/21 07:47:30 skrll Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.24 2019/06/13 04:20:23 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.23 2019/01/21 07:47:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.24 2019/06/13 04:20:23 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -163,6 +163,8 @@ static char bootargs[MAX_BOOT_STRING] = BOOT_ARGS;
 char *boot_args = NULL;
 
 extern char KERNEL_BASE_phys[];
+
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 extern int cpu_do_powersave;
 
