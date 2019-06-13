@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.49 2019/06/13 13:37:56 christos Exp $
+# $NetBSD: shl.mi,v 1.50 2019/06/13 19:37:36 christos Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	xorg,obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	xorg,obsolete		xorg,obsolete
@@ -105,7 +105,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxkbui.so.2.0.debug		-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxshmfence.so.1.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/modules/libglamoregl.so.0.debug	-unknown-		xorg,debug_glamor
+./usr/libdata/debug/usr/X11R7/lib/modules/libglamoregl.so.0.debug	-unknown-		xorg,debug,xorg_glamor
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,obsolete,machine=amd64,mesa_ver=18
