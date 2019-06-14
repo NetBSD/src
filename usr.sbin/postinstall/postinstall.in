@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.1 2019/06/14 01:06:33 christos Exp $
+# $NetBSD: postinstall.in,v 1.2 2019/06/14 01:54:16 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2187,11 +2187,17 @@ do_obsolete_stand()
 	return ${failed}
 }
 
-getarchsubdirs() {
+listarchsubdirs() {
 	if ! $SOURCEMODE; then
 		echo "@ARCHSUBDIRS@"
-		return
+	else
+		${SED} -n -e '/ARCHDIR_SUBDIR/s/[[:space:]]//gp' \
+		    ${SRC_DIR}/compat/archdirs.mk 
 	fi
+}
+
+
+getarchsubdirs() {
 	local m
 	case ${MACHINE_ARCH} in
 	*arm*|*aarch64*)	m=arm;;
@@ -2199,12 +2205,14 @@ getarchsubdirs() {
 	*)			m=${MACHINE_ARCH};;
 	esac
 
-	${SED} -n -e "/[=[:space:]]${m}/s@.*[=[:space:]]${m}/\(.*\)@\1@p" \
-	    ${SRC_DIR}/compat/archdirs.mk | ${SORT} -u
+	for i in $(listarchsubdirs); do
+		echo $i
+	done | ${SORT} -u | ${SED} -n -e "/=${m}/s@.*=${m}/\(.*\)@\1@p"
 }
 
 getcompatlibdirs() {
 	for i in $(getarchsubdirs); do
+		echo $i 1>&2
 		if [ -d /usr/lib/$i ]; then
 			echo /usr/lib/$i
 		fi
@@ -2538,6 +2546,11 @@ _Fix_me_
 
 	esac
 }
+
+if [ -n "$POSTINSTALL_FUNCTION" ]; then
+	eval "$POSTINSTALL_FUNCTION"
+	exit 0
+fi
 
 # defaults
 #
