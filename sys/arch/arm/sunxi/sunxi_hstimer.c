@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hstimer.c,v 1.1 2019/06/14 21:26:36 tnn Exp $ */
+/* $NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $ */
 
 /*-
  * Copyright (c) 2019 Tobias Nygren <tnn@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.1 2019/06/14 21:26:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hstimer.c,v 1.2 2019/06/14 21:48:43 tnn Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ sunxi_hstimer_attach(device_t parent, device_t self, void *aux)
 
 	/* Timecounter setup */
 	tc->tc_get_timecount = sunxi_hstimer_get_timecount;
-	tc->tc_counter_mask = ~0u,
+	tc->tc_counter_mask = ~0u;
 	tc->tc_frequency = clk_get_rate(clk);
 	tc->tc_name = "hstimer";
 	tc->tc_quality = 300;
