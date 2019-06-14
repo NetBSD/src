@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.2 2019/06/14 01:54:16 christos Exp $
+# $NetBSD: postinstall.in,v 1.3 2019/06/14 14:17:45 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -972,17 +972,21 @@ additem envsys "envsys configuration is up to date"
 do_envsys()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_envsys fix|check"
-	op="$1"
-	failed=0
+	local op="$1"
+	local failed=0
+	local etcsets=$(getetcsets)
 
 	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		envsys.conf
 	failed=$(( ${failed} + $? ))
 
+	local powerd_scripts="$(select_set_files /etc/powerd/scripts/ \
+	    "/etc/powerd/scripts/\([^[:space:]/]*\)" ${etcsets})"
+
 	populate_dir "$op" true "${SRC_DIR}/etc/powerd/scripts" \
-		"${DEST_DIR}/etc/powerd/scripts" 555 sensor_battery \
-		sensor_drive sensor_fan sensor_indicator sensor_power \
-		sensor_resistance sensor_temperature sensor_voltage
+		"${DEST_DIR}/etc/powerd/scripts" \
+		555 \
+		${powerd_scripts}
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
