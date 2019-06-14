@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.326 2019/06/06 14:51:43 martin Exp $
+#	$NetBSD: Makefile,v 1.327 2019/06/14 09:12:42 martin Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -169,7 +169,8 @@ afterinstall: .PHONY .MAKE
 	${MAKEDIRTARGET} . postinstall-check
 .endif
 
-_POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall \
+_POSTINSTALL=	${:!cd ${.CURDIR}/usr.sbin/postinstall && \
+			${MAKE} print-objdir!}/postinstall  \
 		-m ${MACHINE} -a ${MACHINE_ARCH}
 _POSTINSTALL_ENV= \
 	AWK=${TOOL_AWK:Q}		\
