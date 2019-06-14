@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.3 2019/05/29 17:09:17 maxv Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.4 2019/06/14 11:50:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.3 2019/05/29 17:09:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.4 2019/06/14 11:50:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ tprof_amd_start_cpu(void *arg1, void *arg2)
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
 	wrmsr(PERFEVTSEL(ctrno), pesr);
 
-	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
-	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_LVT_PCINT);
+	lapic_writereg(LAPIC_LVT_PCINT, LAPIC_DLMODE_NMI);
 
 	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
 }
@@ -148,7 +148,7 @@ tprof_amd_stop_cpu(void *arg1, void *arg2)
 
 	wrmsr(PERFEVTSEL(ctrno), 0);
 
-	lapic_writereg(LAPIC_PCINT, amd_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_LVT_PCINT, amd_lapic_saved[cpu_index(ci)]);
 }
 
 static int
