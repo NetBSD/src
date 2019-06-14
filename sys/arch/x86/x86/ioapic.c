@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.60 2019/06/13 07:28:17 msaitoh Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.61 2019/06/14 09:23:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.60 2019/06/13 07:28:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.61 2019/06/14 09:23:42 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -238,8 +238,8 @@ ioapic_print_redir(struct ioapic_softc *sc, const char *why, int pin)
 	uint32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
 	uint32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));
 
-	apic_format_redir(device_xname(sc->sc_dev), why, pin, redirhi,
-	    redirlo);
+	apic_format_redir(device_xname(sc->sc_dev), why, pin,
+	    APIC_VECTYPE_IOAPIC, redirhi, redirlo);
 }
 
 CFATTACH_DECL_NEW(ioapic, sizeof(struct ioapic_softc),
