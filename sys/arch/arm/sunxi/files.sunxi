@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.64 2019/05/28 21:56:04 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.65 2019/06/14 21:26:36 tnn Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -203,6 +203,11 @@ file	arch/arm/sunxi/sunxi_gmac.c		sunxi_gmac
 device	sunxitimer
 attach	sunxitimer at fdt with sunxi_timer
 file	arch/arm/sunxi/sunxi_timer.c		sunxi_timer
+
+# High Speed Timer
+device	sunxihstimer
+attach	sunxihstimer at fdt with sunxi_hstimer
+file	arch/arm/sunxi/sunxi_hstimer.c		sunxi_hstimer
 
 # Watchdog
 device	sunxiwdt: sysmon_wdog
