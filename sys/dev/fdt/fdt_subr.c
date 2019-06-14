@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.29 2019/02/27 16:56:00 jakllsch Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.30 2019/06/14 11:08:18 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.29 2019/02/27 16:56:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.30 2019/06/14 11:08:18 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -127,6 +127,42 @@ fdtbus_get_phandle(int phandle, const char *prop)
 	phandle_ref = be32dec(buf);
 
 	return fdtbus_get_phandle_from_native(phandle_ref);
+}
+
+int
+fdtbus_get_phandle_with_data(int phandle, const char *prop, const char *cells,
+    int index, struct fdt_phandle_data *data)
+{
+	int len;
+	const int offset = 1;
+
+	const u_int *p = fdtbus_get_prop(phandle, prop, &len);
+	if (p == NULL || len <= 0)
+		return EINVAL;
+
+	for (int i = 0; len > 0; i++) {
+		u_int phandle_ref = be32toh(*p);
+		const u_int iparent = fdtbus_get_phandle_from_native(phandle_ref);
+		uint32_t cells_num;
+		of_getprop_uint32(iparent, cells, &cells_num);
+
+		if (index == i) {
+			if (data != NULL) {
+				data->phandle = iparent;
+				data->count = cells_num;
+				data->values = p + offset;
+			}
+			goto done;
+		}
+
+		const u_int reclen = offset + cells_num;
+		len -= reclen * sizeof(u_int);
+		p += reclen;
+	}
+	return EINVAL;
+
+done:
+	return 0;
 }
 
 int

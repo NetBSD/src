@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.21 2019/02/27 17:01:57 jakllsch Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.22 2019/06/14 11:08:18 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.21 2019/02/27 17:01:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.22 2019/06/14 11:08:18 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -322,11 +322,30 @@ done:
 	return result;
 }
 
+
+static const u_int *
+get_specifier_from_extended(int phandle, int pindex, int *piphandle)
+{
+	const u_int *result = NULL;
+	struct fdt_phandle_data data;
+
+	if (fdtbus_get_phandle_with_data(phandle, "interrupts-extended",
+		"#interrupt-cells", pindex, &data) == 0) {
+		*piphandle = data.phandle;
+		result = data.values;
+	}
+
+	return result;
+}
+
 static const u_int *
 get_specifier_by_index(int phandle, int pindex, int *piphandle)
 {
 	const u_int *node_specifier;
 	int interrupt_parent, interrupt_cells, len;
+
+	if (of_hasprop(phandle, "interrupts-extended"))
+		return get_specifier_from_extended(phandle, pindex, piphandle);
 
 	interrupt_parent = fdtbus_get_interrupt_parent(phandle);
 	if (interrupt_parent <= 0)
