@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.74 2019/06/14 05:59:39 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.75 2019/06/14 09:23:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.74 2019/06/14 05:59:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.75 2019/06/14 09:23:42 msaitoh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -422,10 +422,10 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir(device_xname(ci->ci_dev), "prelint", 0, 0,
-		    lapic_readreg(LAPIC_LVT_LINT0));
-		apic_format_redir(device_xname(ci->ci_dev), "prelint", 1, 0,
-		    lapic_readreg(LAPIC_LVT_LINT1));
+		apic_format_redir(device_xname(ci->ci_dev), "prelint", 0,
+		    APIC_VECTYPE_LAPIC_LVT, 0, lapic_readreg(LAPIC_LVT_LINT0));
+		apic_format_redir(device_xname(ci->ci_dev), "prelint", 1,
+		    APIC_VECTYPE_LAPIC_LVT, 0, lapic_readreg(LAPIC_LVT_LINT1));
 	}
 #endif
 
@@ -956,9 +956,9 @@ lapic_dump(void)
 	struct cpu_info *ci = curcpu();
 
 #define APIC_LVT_PRINT(ci, where, idx, lvtreg)				\
-	apic_format_redir(device_xname(ci->ci_dev), where, (idx), 0,	\
-	    lapic_readreg(lvtreg))
-	
+	apic_format_redir(device_xname(ci->ci_dev), where, (idx),	\
+	    APIC_VECTYPE_LAPIC_LVT, 0, lapic_readreg(lvtreg))
+
 	APIC_LVT_PRINT(ci, "cmci", 0, LAPIC_LVT_CMCI);
 	APIC_LVT_PRINT(ci, "timer", 0, LAPIC_LVT_TIMER);
 	APIC_LVT_PRINT(ci, "thermal", 0, LAPIC_LVT_THERM);
