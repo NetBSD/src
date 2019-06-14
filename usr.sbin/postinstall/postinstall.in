@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.3 2019/06/14 14:17:45 christos Exp $
+# $NetBSD: postinstall.in,v 1.4 2019/06/14 14:39:49 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1013,38 +1013,42 @@ do_fontconfig()
 		msg "${FONTCONFIG_DIR} is not a directory; skipping check"
 		return 0
 	fi
-
-	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
-		10-autohint.conf \
-		10-no-sub-pixel.conf \
-		10-scale-bitmap-fonts.conf \
-		10-sub-pixel-bgr.conf \
-		10-sub-pixel-rgb.conf \
-		10-sub-pixel-vbgr.conf \
-		10-sub-pixel-vrgb.conf \
-		10-unhinted.conf \
-		11-lcdfilter-default.conf \
-		11-lcdfilter-legacy.conf \
-		11-lcdfilter-light.conf \
-		20-unhint-small-vera.conf \
-		25-unhint-nonlatin.conf \
-		30-metric-aliases.conf \
-		40-nonlatin.conf \
-		45-generic.conf \
-		45-latin.conf \
-		49-sansserif.conf \
-		50-user.conf \
-		51-local.conf \
-		60-generic.conf \
-		60-latin.conf \
-		65-fonts-persian.conf \
-		65-khmer.conf \
-		65-nonlatin.conf \
-		69-unifont.conf \
-		70-no-bitmaps.conf \
-		70-yes-bitmaps.conf \
-		80-delicious.conf \
-		90-synthetic.conf
+	local regular_fonts="
+10-autohint.conf
+10-no-sub-pixel.conf
+10-scale-bitmap-fonts.conf
+10-sub-pixel-bgr.conf
+10-sub-pixel-rgb.conf
+10-sub-pixel-vbgr.conf
+10-sub-pixel-vrgb.conf
+10-unhinted.conf
+11-lcdfilter-default.conf
+11-lcdfilter-legacy.conf
+11-lcdfilter-light.conf
+20-unhint-small-vera.conf
+25-unhint-nonlatin.conf
+30-metric-aliases.conf
+40-nonlatin.conf
+45-generic.conf
+45-latin.conf
+49-sansserif.conf
+50-user.conf
+51-local.conf
+60-generic.conf
+60-latin.conf
+65-fonts-persian.conf
+65-khmer.conf
+65-nonlatin.conf
+69-unifont.conf
+70-no-bitmaps.conf
+70-yes-bitmaps.conf
+80-delicious.conf
+90-synthetic.conf
+"
+	populate_dir "$op" false "${FONTCONFIG_DIR}" \
+	    "${DEST_DIR}/etc/fonts/conf.avail" \
+	    444 \
+	    ${regular_fonts}
 	failed=$(( ${failed} + $? ))
 
 	if ! $SOURCEMODE; then
@@ -1059,31 +1063,33 @@ do_fontconfig()
 
 	# We can't modify conf.d easily; someone might have removed a file.
 
-	conf_d_failed=0
 	# Look for old files that need to be deleted.
-	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
-	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
-		conf_d_failed=1
-		failed=$(( ${failed} + 1 ))
-	fi
+	obsolete_fonts="
+10-autohint.conf
+10-no-sub-pixel.conf
+10-sub-pixel-bgr.conf
+10-sub-pixel-rgb.conf
+10-sub-pixel-vbgr.conf
+10-sub-pixel-vrgb.conf
+10-unhinted.conf
+25-unhint-nonlatin.conf
+65-khmer.conf
+70-no-bitmaps.conf
+70-yes-bitmaps.conf
+"
+	failed_fonts=""
+	for i in ${obsolete_fonts}; do
+	    if [ -f "${DEST_DIR}/etc/fonts/conf.d/$i" ]; then
+		    conf_d_failed=1
+		    failed_fonts="$failed_fonts $i"
+	    fi
+	done
 
-	if [ "$conf_d_failed" = 1 ]; then
+	if [ -n "$failed_fonts" ]; then
 		msg \
-    "Broken fontconfig configuration found; please delete these files"
-		msg \
-    "in the ${DEST_DIR}/etc/fonts/conf.d/ subdirectory:"
-		msg \
-    "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
-		msg \
-    "   10-sub-pixel-rgb.conf 10-sub-pixel-vbgr.conf"
-		msg \
-    "   10-sub-pixel-vrgb.conf 10-unhinted.conf 25-unhint-nonlatin.conf"
-		msg \
-    "   65-khmer.conf 70-no-bitmaps.conf 70-yes-bitmaps.conf"
-		msg \
-    "(This warning only appears if both the 10-unhinted.conf and"
-		msg \
-    "10-autohint.conf files are present."
+    "Broken fontconfig configuration found; please delete these files:"
+		msg "[$failed_fonts]"
+		failed=$(( ${failed} + 1 ))
 	fi
 
 	return ${failed}
@@ -1422,6 +1428,15 @@ select_set_files()
 	    -e "/^\.${qdir}/s@^.$2[[:space:]].*@\1@p" $3
 }
 
+# select obsolete files in a sets file
+# $1: directory pattern
+# $2: file pattern
+# $3: filename
+select_obsolete_files()
+{
+	${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" $3
+}
+
 exclude()
 {
 	if [ -z "$*" ]; then
@@ -1465,9 +1480,8 @@ do_rc()
 	    exclude ${rc_external_files})"
 
 	# obsolete rc file in /etc/rc.d
-	local rc_obsolete_files="$(${SED} -n \
-	    -e '/obsolete/s@./etc/rc.d/\([^[:space:]]*\)[[:space:]].*@\1@p' \
-	    ${etcsets})"
+	local rc_obsolete_files="$(select_obsolete_files /etc/rc.d/ \
+	    "\([^[:space:]]*\)" ${etcsets})"
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		${rc_644_files}
