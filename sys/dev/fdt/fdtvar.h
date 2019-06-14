@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.51 2019/05/08 13:40:18 isaki Exp $ */
+/* $NetBSD: fdtvar.h,v 1.52 2019/06/14 11:08:18 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -232,6 +232,12 @@ struct fdt_console_info {
 	const struct fdt_console *ops;
 };
 
+struct fdt_phandle_data {
+	int phandle;
+	int count;
+	const u_int *values;
+};
+
 #define	_FDT_CONSOLE_REGISTER(name)	\
 	__link_set_add_rodata(fdt_consoles, __CONCAT(name,_consinfo));
 
@@ -278,6 +284,8 @@ int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,
 		    bus_size_t *);
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
 int		fdtbus_get_phandle(int, const char *);
+int		fdtbus_get_phandle_with_data(int, const char *, const char *,
+		    int, struct fdt_phandle_data *);
 int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
