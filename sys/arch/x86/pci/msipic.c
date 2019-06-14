@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.12 2019/04/01 06:20:40 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.13 2019/06/14 05:59:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.12 2019/04/01 06:20:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.13 2019/06/14 05:59:40 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -384,8 +384,8 @@ msi_addroute(struct pic *pic, struct cpu_info *ci,
 	addr = LAPIC_MSIADDR_BASE | __SHIFTIN(ci->ci_cpuid,
 	    LAPIC_MSIADDR_DSTID_MASK);
 	/* If trigger mode is edge, it don't care level for trigger mode. */
-	data = __SHIFTIN(idt_vec, LAPIC_MSIDATA_VECTOR_MASK)
-		| LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_DM_FIXED;
+	data = __SHIFTIN(idt_vec, LAPIC_VECTOR_MASK)
+		| LAPIC_TRIGMODE_EDGE | LAPIC_DLMODE_FIXED;
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
@@ -550,8 +550,8 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	addr = LAPIC_MSIADDR_BASE | __SHIFTIN(ci->ci_cpuid,
 	    LAPIC_MSIADDR_DSTID_MASK);
 	/* If trigger mode is edge, it don't care level for trigger mode. */
-	data = __SHIFTIN(idt_vec, LAPIC_MSIDATA_VECTOR_MASK)
-		| LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_DM_FIXED;
+	data = __SHIFTIN(idt_vec, LAPIC_VECTOR_MASK)
+		| LAPIC_TRIGMODE_EDGE | LAPIC_DLMODE_FIXED;
 
 	bstag = pic->pic_msipic->mp_bstag;
 	bshandle = pic->pic_msipic->mp_bshandle;
