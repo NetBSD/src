@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2019/06/14 01:06:33 christos Exp $
+# $NetBSD: Makefile,v 1.3 2019/06/14 01:54:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ FILESDIR=	/usr/sbin
 FILESMODE=	${BINMODE}
 FILESBUILD=	yes
 
-ARCHSUBDIRS	!= ${MAKE} -f ${NETBSDSRCDIR}/compat/archdirs.mk \
-	ACTIVE_CC=clang -V ARCHDIR_SUBDIR | ${TOOL_SED} -e 's@[a-z0-9_]*/@@g'
+ARCHSUBDIRS	!= ${TOOL_SED} -n '/ARCHDIR_SUBDIR/s/[[:space:]]//gp' \
+	${NETBSDSRCDIR}/compat/archdirs.mk
 
 .SUFFIXES: .in
 .in:
