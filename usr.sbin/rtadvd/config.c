@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.40 2018/04/20 15:57:23 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.41 2019/06/14 09:06:45 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -701,9 +701,7 @@ getconfig(const char *intface, int exithard)
 
 		makeentry(entbuf, sizeof(entbuf), i, "rdnssltime");
 		MAYHAVE(val64, entbuf, tmp->maxinterval * 3 / 2);
-		if (val64 < tmp->maxinterval ||
-		    val64 > tmp->maxinterval * 2)
-		{
+		if (val64 < 0 || val64 > 0xffffffff) {
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
 			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
@@ -737,9 +735,7 @@ getconfig(const char *intface, int exithard)
 
 		makeentry(entbuf, sizeof(entbuf), i, "dnsslltime");
 		MAYHAVE(val64, entbuf, tmp->maxinterval * 3 / 2);
-		if (val64 < tmp->maxinterval ||
-		    val64 > tmp->maxinterval * 2)
-		{
+		if (val64 < 0 || val64 > 0xffffffff) {
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
 			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
