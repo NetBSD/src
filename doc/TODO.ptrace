@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.30 2018/08/05 13:07:33 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.31 2019/06/14 16:11:11 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -13,12 +13,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
    GUI toolkits (and perhaps other libraries) - this is long term wishlist in
    GDB for Linux - the current approach is to fork and debug through GDB remote
    protocol (this is how it is done in LLDB)
- - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
-   in all ports
  - add ATF tests for SIGCHLD
- - fix more calls for netbsd32 compat
  - research kgdb(4)
- - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
 
 and of course: fix as many bugs as possible.
 
