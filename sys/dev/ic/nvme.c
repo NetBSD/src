@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.42 2019/04/24 23:39:23 mlelstv Exp $	*/
+/*	$NetBSD: nvme.c,v 1.43 2019/06/14 04:48:34 mrg Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.42 2019/04/24 23:39:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.43 2019/06/14 04:48:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mps = 1 << mps;
 	sc->sc_mdts = MAXPHYS;
-	sc->sc_max_sgl = 2;
+	sc->sc_max_sgl = btoc(round_page(sc->sc_mdts));
 
 	if (nvme_disable(sc) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to disable controller\n");
@@ -1870,7 +1870,7 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 
 	ndm->ndm_size = size;
 
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	if (bus_dmamap_create(sc->sc_dmat, size, btoc(round_page(size)), size, 0,
 	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
 		goto ndmfree;
 
