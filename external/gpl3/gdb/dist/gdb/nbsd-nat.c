@@ -233,12 +233,13 @@ nbsd_enable_proc_events (pid_t pid)
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
   events |= PTRACE_FORK;
-#ifdef notyet
   events |= PTRACE_VFORK;
   events |= PTRACE_VFORK_DONE;
-#endif
   events |= PTRACE_LWP_CREATE;
   events |= PTRACE_LWP_EXIT;
+#if notyet
+  events |= PTRACE_POSIX_SPAWN;
+#endif
   if (ptrace (PT_SET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
@@ -381,11 +382,11 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
           break;
         case TRAP_SCE:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_ENTRY;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_SCX:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_RETURN;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_EXEC:
           ourstatus->kind = TARGET_WAITKIND_EXECD;
