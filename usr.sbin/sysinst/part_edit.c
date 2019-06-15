@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.1 2019/06/12 06:20:18 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.2 2019/06/15 08:20:33 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -870,6 +870,11 @@ parts_use_wholedisk(struct disk_partitions *parts,
 
 	if (!parts->pscheme->get_part_info(parts, nbsd, &info))
 		return false;
+
+	if (parts->pscheme->secondary_scheme != NULL) {
+		/* force empty secondary partitions */
+		parts->pscheme->secondary_partitions(parts, info.start, true);
+	}
 
 	pm->ptstart = info.start;
 	pm->ptsize = info.size;

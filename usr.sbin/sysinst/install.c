@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.6 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.7 2019/06/15 08:20:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -185,7 +185,7 @@ do_install(void)
 			if (parts->pscheme->secondary_scheme != NULL &&
 			    parts->pscheme->secondary_partitions != NULL) {
 				parts = parts->pscheme->secondary_partitions(
-				    parts, pm->ptstart);
+				    parts, pm->ptstart, false);
 				if (parts == NULL)
 					parts = pm->parts;
 			}

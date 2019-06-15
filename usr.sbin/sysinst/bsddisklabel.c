@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.11 2019/06/13 12:44:20 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.12 2019/06/15 08:20:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1458,7 +1458,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	if (pscheme->secondary_partitions) {
 		struct disk_partitions *p;
 
-		p = pscheme->secondary_partitions(parts, pm->ptstart);
+		p = pscheme->secondary_partitions(parts, pm->ptstart, false);
 		if (p) {
 			parts = p;
 			pscheme = parts->pscheme;

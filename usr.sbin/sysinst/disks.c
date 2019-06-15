@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.31 2019/06/13 19:13:05 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.32 2019/06/15 08:20:33 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -777,7 +777,7 @@ convert_copy(struct disk_partitions *old_parts,
 				struct disk_partitions *sec_part =
 					old_parts->pscheme->
 					    secondary_partitions(
-					    old_parts, oinfo.start);
+					    old_parts, oinfo.start, false);
 				if (sec_part)
 					convert_copy(sec_part, new_parts);
 			}
@@ -946,7 +946,7 @@ again:
 			if (pm->parts->pscheme->secondary_partitions) {
 				const struct disk_partitions *sparts =
 				    pm->parts->pscheme->secondary_partitions(
-				    pm->parts, pm->ptstart);
+				    pm->parts, pm->ptstart, false);
 				if (sparts != NULL)
 					dump_parts(sparts);
 			}
