@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.13.2.2.4.1 2018/11/24 17:23:20 martin Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.13.2.2.4.2 2019/06/15 15:56:21 martin Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		strcpy(dir, ".");
 	else {
 		*basename++ = '\0';
-		if (bozo_check_special_files(request, basename))
+		if (bozo_check_special_files(request, basename, true))
 			return 1;
 	}
 	request->hr_authrealm = bozostrdup(httpd, request, dir);
