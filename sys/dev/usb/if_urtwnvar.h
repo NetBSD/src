@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.12 2019/02/01 03:20:35 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.13 2019/06/15 04:00:17 msaitoh Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -198,6 +198,7 @@ struct urtwn_softc {
 	bool				sc_running;
 
 	struct ieee80211_beacon_offsets sc_bo;
+	krndsource_t rnd_source;	/* random source */
 };
 
 #endif /* _IF_URTWNVAR_H_ */
