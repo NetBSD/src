@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1236 2019/05/17 03:34:26 ozaki-r Exp $
+#	$NetBSD: files,v 1.1237 2019/06/15 06:40:34 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -30,6 +30,7 @@ defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
 defflag				KASAN
+defflag opt_kasan.h		KASAN_PANIC
 defflag				KLEAK
 defflag				KCOV
 defflag opt_pool.h		POOL_QUARANTINE
