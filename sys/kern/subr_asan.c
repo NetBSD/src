@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.9 2019/05/04 17:19:10 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.10 2019/06/15 06:40:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.9 2019/05/04 17:19:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.10 2019/06/15 06:40:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.9 2019/05/04 17:19:10 maxv Exp $");
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
+
+#ifdef KASAN_PANIC
+#define REPORT panic
+#else
+#define REPORT printf
+#endif
 
 /* ASAN constants. Part of the compiler ABI. */
 #define KASAN_SHADOW_SCALE_SHIFT	3
@@ -185,7 +191,7 @@ static void
 kasan_report(unsigned long addr, size_t size, bool write, unsigned long pc,
     uint8_t code)
 {
-	printf("ASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s,"
+	REPORT("ASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s,"
 	    " %s]\n",
 	    (void *)pc, (void *)addr, size, (size > 1 ? "s" : ""),
 	    (write ? "write" : "read"), kasan_code_name(code));
