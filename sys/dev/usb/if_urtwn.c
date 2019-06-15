@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.69 2019/03/07 14:55:49 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.70 2019/06/15 04:00:17 msaitoh Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.69 2019/03/07 14:55:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.70 2019/06/15 04:00:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.69 2019/03/07 14:55:49 christos Exp $
 #include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -512,6 +513,8 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	ieee80211_announce(ic);
 
@@ -545,6 +548,8 @@ urtwn_detach(device_t self, int flags)
 
 	callout_halt(&sc->sc_scan_to, NULL);
 	callout_halt(&sc->sc_calib_to, NULL);
+
+	pmf_device_deregister(self);
 
 	if (ISSET(sc->sc_flags, URTWN_FLAG_ATTACHED)) {
 		urtwn_stop(ifp, 0);
@@ -2504,6 +2509,9 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	npkts = MS(le32toh(stat->rxdw2), R92C_RXDW2_PKTCNT);
 	DPRINTFN(DBG_RX, ("%s: %s: Rx %d frames in one chunk\n",
 	    device_xname(sc->sc_dev), __func__, npkts));
+
+	if (npkts != 0)
+		rnd_add_uint32(&sc->rnd_source, npkts);
 
 	/* Process all of them. */
 	while (npkts-- > 0) {
