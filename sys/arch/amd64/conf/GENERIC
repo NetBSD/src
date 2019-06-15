@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.528 2019/05/24 14:28:48 nonaka Exp $
+# $NetBSD: GENERIC,v 1.529 2019/06/15 06:40:34 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.528 $"
+#ident		"GENERIC-$Revision: 1.529 $"
 
 maxusers	64		# estimated number of users
 
@@ -123,10 +123,12 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Kernel Address Sanitizer (kASan). You need to disable SVS to use it.
 # The quarantine is optional and can help KASAN find more use-after-frees.
-#makeoptions 	KASAN=1		# Kernel Address Sanitizer
-#options 	KASAN
-#no options	SVS
-#options	POOL_QUARANTINE
+# Use KASAN_PANIC if you want panics instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#no options	SVS		# mandatory
+#options	POOL_QUARANTINE	# optional
+#options	KASAN_PANIC	# optional
 
 # Kernel Info Leak Detector.
 #makeoptions 	KLEAK=1
