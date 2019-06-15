@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.145 2019/05/31 08:15:50 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.146 2019/06/15 15:58:02 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5824,4 +5824,34 @@ sys/dev/scsipi/scsipi_ioctl.c			1.72 (patch)
 
 	Use correct size when copying outgoing sense data.
 	[mlelstv, ticket #1698]
+
+libexec/httpd/CHANGES				1.31-1.40
+libexec/httpd/Makefile				1.28
+libexec/httpd/auth-bozo.c			1.23-1.24
+libexec/httpd/bozohttpd.8			1.75-1.79
+libexec/httpd/bozohttpd.c			1.100-1.113
+libexec/httpd/bozohttpd.h			1.58-1.60
+libexec/httpd/cgi-bozo.c			1.46-1.48
+libexec/httpd/daemon-bozo.c			1.20-1.21
+libexec/httpd/dir-index-bozo.c			1.29-1.32
+libexec/httpd/ssl-bozo.c			1.26
+libexec/httpd/testsuite/Makefile		1.12-1.13
+libexec/httpd/testsuite/t11.out			1.2
+libexec/httpd/testsuite/test-bigfile		1.6
+libexec/httpd/testsuite/test-simple		1.6
+
+	Don't display special files in the directory index.
+	Use html tables for directory index.
+	Don't include "index.html" in html headers.
+	Fix CGI '+' param and error handling.
+	Remove unused parameter to daemon_poll_err().
+	Avoid sign extension in % handling
+	Fix a few problems pointed out by clang static analyzer.
+	Add ssl specific timeout value (30s).---
+	Fix handling of bozo_set_timeout() timeouts (and `-T' option parsing).
+	Avoid .htpasswd exposure to authenticated users when .htpasswd is
+	in the slashdir too.
+	Avoid possible NULL dereference when sending a big request that timeout.
+	Avoid an assertion failure when using cgihandler (-C option).
+	[mrg, ticket #1699}
 
