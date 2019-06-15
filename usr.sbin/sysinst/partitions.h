@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.2 2019/06/15 08:20:33 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -379,12 +379,18 @@ struct disk_partitioning_scheme {
 	 * Schemes that NEVER use a secondary scheme set this
 	 * function pointer to NULL.
 	 *
+	 * If force_empty = true, ignore all on-disk contents and just
+	 * create a new disk_partitons structure for the secondary scheme
+	 * (this is used after deleting all partitions and setting up
+	 * things for "use whole disk").
+	 *
 	 * The returned pointer is always owned by the primary partitions,
 	 * caller MUST never free it, but otherwise can manipulate it
 	 * arbitrarily.
 	 */
 	struct disk_partitions *
-	    (*secondary_partitions)(struct disk_partitions *, daddr_t start);
+	    (*secondary_partitions)(struct disk_partitions *, daddr_t start,
+	        bool force_empty);
 
 	/*
 	 * Write the whole set (in new_state) back to disk.
