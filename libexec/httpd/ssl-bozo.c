@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.18.4.2 2018/11/24 17:23:47 martin Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.18.4.3 2019/06/15 15:57:32 martin Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -263,6 +263,8 @@ bozo_ssl_accept(bozohttpd_t *httpd)
 	if (sslinfo == NULL || !sslinfo->ssl_context)
 		return 0;
 
+	alarm(httpd->ssl_timeout);
+
 	sslinfo->bozossl = SSL_new(sslinfo->ssl_context);
 	if (sslinfo->bozossl == NULL)
 		bozoerr(httpd, 1, "SSL_new failed");
@@ -272,6 +274,14 @@ bozo_ssl_accept(bozohttpd_t *httpd)
 
 	const int ret = SSL_accept(sslinfo->bozossl);
 	bozo_check_error_queue(httpd, "accept", ret);
+
+	alarm(0);
+
+	if (bozo_timeout_hit) {
+		SSL_free(sslinfo->bozossl);
+		sslinfo->bozossl = NULL;
+		return 1;
+	}
 
 	return ret != 1;
 }
