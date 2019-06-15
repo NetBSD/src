@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.11 2019/06/12 06:20:17 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.12 2019/06/15 07:57:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1684,6 +1684,15 @@ mbr_delete_all(struct disk_partitions *arg)
 #ifdef BOOTSEL
 	memset(&mbri->mbrb, 0, sizeof mbri->mbrb);
 #endif
+
+	/*
+	 * We may have changed alignment settings due to partitions
+	 * ending on an MB boundary - undo that, now that the partitions
+	 * are gone.
+	 */
+	mbr_change_disk_geom(arg, myparts->geo_cyl, myparts->geo_head,
+	    myparts->geo_sec);
+
 	return true;
 }
 
