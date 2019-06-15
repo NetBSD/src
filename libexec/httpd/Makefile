@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1.2.2 2018/11/24 17:23:47 martin Exp $
+#	$NetBSD: Makefile,v 1.22.2.1.2.3 2019/06/15 15:57:32 martin Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -76,6 +76,9 @@ bozohttpd.8.txt: bozohttpd.8
 	$(NROFF) -mdoc -Tascii $> | $(TXTFROB) > $@
 
 CLEANFILES+=	bozohttpd.8.html bozohttpd.8.txt
+
+check:
+	cd ${.CURDIR}/testsuite && ${MAKE} check
 
 # Create a distfile: uses /tmp
 BASE=bozohttpd-${BOZOVER}
