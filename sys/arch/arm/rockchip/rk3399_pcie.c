@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.3 2019/06/12 22:44:53 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.4 2019/06/15 00:08:25 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.3 2019/06/12 22:44:53 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.4 2019/06/15 00:08:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,16 +174,6 @@ clock_enable_all(int phandle)
 	}
 }
 
-static inline void
-clock_enable(int phandle, const char *name)
-{
-	struct clk * clk = fdtbus_clock_get(phandle, name);
-	if (clk == NULL)
-		return;
-	if (clk_enable(clk) != 0)
-		return;
-}
-
 static void
 reset_assert(int phandle, const char *name)
 {
@@ -210,13 +200,12 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 	struct rkpcie_softc *sc = device_private(self);
 	struct pcihost_softc * const phsc = &sc->sc_phsc;
 	struct fdt_attach_args *faa = aux;
-	//struct pcibus_attach_args pba;
 	struct fdtbus_gpio_pin *ep_gpio;
+	u_int max_link_speed, num_lanes;
+	struct fdtbus_phy *phy[4];
 	const u_int *bus_range;
-	int len;
 	uint32_t status;
-	bool retry = false;
-	int timo;
+	int timo, len;
 
 	phsc->sc_dev = self;
 	phsc->sc_bst = faa->faa_bst;
@@ -255,7 +244,12 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 	clock_enable_all(phandle);
 
 	ep_gpio = fdtbus_gpio_acquire(phandle, "ep-gpios", GPIO_PIN_OUTPUT);
-	//retry = true;
+
+	if (of_getprop_uint32(phandle, "max-link-speed", &max_link_speed) != 0)
+		max_link_speed = 2;
+	if (of_getprop_uint32(phandle, "num-lanes", &num_lanes) != 0)
+		num_lanes = 1;
+
 again:
 	fdtbus_gpio_write(ep_gpio, 0);
 
@@ -263,16 +257,11 @@ again:
 	reset_assert(phandle, "pclk");
 	reset_assert(phandle, "pm");
 
-	//device_printf(self, "%s phy0\n", __func__);
-	struct fdtbus_phy *phy[4];
 	memset(phy, 0, sizeof(phy));
 	phy[0] = fdtbus_phy_get(phandle, "pcie-phy-0");
-	//device_printf(self, "%s phy1 %p\n", __func__, phy[0]);
 	if (phy[0] == NULL) {
 		phy[0] = fdtbus_phy_get(phandle, "pcie-phy");
-		device_printf(self, "%s phy2 %p\n", __func__, phy);
 	} else {
-		/* XXX */
 		phy[1] = fdtbus_phy_get(phandle, "pcie-phy-1");
 		phy[2] = fdtbus_phy_get(phandle, "pcie-phy-2");
 		phy[3] = fdtbus_phy_get(phandle, "pcie-phy-3");
@@ -289,15 +278,14 @@ again:
 	reset_deassert(phandle, "aclk");
 	reset_deassert(phandle, "pclk");
 
-	if (retry)
+	if (max_link_speed == 1)
 		HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCBSC_PGS_GEN1);
 	else
 		HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCBSC_PGS_GEN2);
 
 	/* Switch into Root Complex mode. */
 	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF,
-	    PCBSC_MS_ROOTPORT | PCBSC_CONF_EN | PCBSC_LC(4));
-	//printf("%s PCBSC %x\n", __func__, HREAD4(sc, PCIE_CLIENT_BASIC_STRAP_CONF));
+	    PCBSC_MS_ROOTPORT | PCBSC_CONF_EN | PCBSC_LC(num_lanes));
 
 	if (phy[3] && fdtbus_phy_enable(phy[3], true) != 0) {
 		aprint_error(": couldn't enable phy3\n");
@@ -317,16 +305,6 @@ again:
 	reset_deassert(phandle, "mgmt");
 	reset_deassert(phandle, "pipe");
 
-	/* FTS count */
-	HWRITE4(sc, PCIE_LM_PLC1, HREAD4(sc, PCIE_LM_PLC1) | PCIE_LM_PLC1_FTS_MASK);
-
-	/* XXX Advertise power limits? */
-
-	/* common clock */
-	HWRITE4(sc, PCIE_RC_CONFIG_LCSR, HREAD4(sc, PCIE_RC_CONFIG_LCSR) | PCIE_LCSR_COMCLKCFG);
-	/* 128 RCB */
-	HWRITE4(sc, PCIE_RC_CONFIG_LCSR, HREAD4(sc, PCIE_RC_CONFIG_LCSR) | PCIE_LCSR_RCB);
-
 	/* Start link training. */
 	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCBSC_LINK_TRAIN_EN);
 
@@ -341,14 +319,14 @@ again:
 	if (timo == 0) {
 		device_printf(self, "link training timeout (link_st %u)\n",
 		    PCBS1_LINK_ST(status));
-		if (!retry) {
-			retry = true;
+		if (max_link_speed > 1) {
+			--max_link_speed;
 			goto again;
 		}
 		return;
 	}
 
-	if (!retry) {
+	if (max_link_speed == 2) {
 		HWRITE4(sc, PCIE_RC_CONFIG_LCSR, HREAD4(sc, PCIE_RC_CONFIG_LCSR) | PCIE_LCSR_RETRAIN);
 		for (timo = 500; timo > 0; timo--) {
 			status = HREAD4(sc, PCIE_LM_CORE_CTRL);
@@ -358,26 +336,10 @@ again:
 		}
 		if (timo == 0) {
 			device_printf(self, "Gen2 link training timeout\n");
-			retry = true;
+			--max_link_speed;
 			goto again;
 		}
 	}
-
-#if 0
-	printf("%s CBS0 %x\n", __func__, HREAD4(sc, PCIE_CLIENT_BASIC_STATUS1));
-	HWRITE4(sc, PCIE_LM_DEBUG_MUX_CONTROL, (HREAD4(sc, PCIE_LM_DEBUG_MUX_CONTROL) & ~0xf) | 0);
-	printf("%s CDO0 %x\n", __func__, HREAD4(sc, PCIE_CLIENT_DEBUG_OUT_0));
-	HWRITE4(sc, PCIE_LM_DEBUG_MUX_CONTROL, (HREAD4(sc, PCIE_LM_DEBUG_MUX_CONTROL) & ~0xf) | 1);
-	printf("%s CDO0 %x\n", __func__, HREAD4(sc, PCIE_CLIENT_DEBUG_OUT_0));
-	HWRITE4(sc, PCIE_LM_DEBUG_MUX_CONTROL, (HREAD4(sc, PCIE_LM_DEBUG_MUX_CONTROL) & ~0xf) | 4);
-	printf("%s CDO0 %x\n", __func__, HREAD4(sc, PCIE_CLIENT_DEBUG_OUT_0));
-	HWRITE4(sc, PCIE_LM_DEBUG_MUX_CONTROL, (HREAD4(sc, PCIE_LM_DEBUG_MUX_CONTROL) & ~0xf) | 5);
-	printf("%s CDO0 %x\n", __func__, HREAD4(sc, PCIE_CLIENT_DEBUG_OUT_0));
-	printf("%s LINKWIDTH %x\n", __func__, HREAD4(sc, PCIE_LM_LINKWIDTH));
-	//HWRITE4(sc, PCIE_LM_LINKWIDTH, 0x1000f);
-	//printf("%s LINKWIDTH %x\n", __func__, HREAD4(sc, PCIE_LM_LINKWIDTH));
-	printf("%s LANEMAP %x\n", __func__, HREAD4(sc, PCIE_LM_LANEMAP));
-#endif
 
 	fdtbus_gpio_release(ep_gpio);
 
@@ -390,23 +352,18 @@ again:
 	HWRITE4(sc, PCIE_RC_BASE + PCI_CLASS_REG,
 	    PCI_CLASS_BRIDGE << PCI_CLASS_SHIFT |
 	    PCI_SUBCLASS_BRIDGE_PCI << PCI_SUBCLASS_SHIFT);
-	HWRITE4(sc, PCIE_LM_RCBAR, PCIE_LM_RCBARPIE | PCIE_LM_RCBARPIS | PCIE_LM_RCBARPME | PCIE_LM_RCBARPMS);
+	HWRITE4(sc, PCIE_LM_RCBAR, PCIE_LM_RCBARPIE | PCIE_LM_RCBARPIS);
 
 	/* remove L1 substate cap */
 	status = HREAD4(sc, PCIE_RC_CONFIG_THP_CAP);
 	status &= ~PCIE_RC_CONFIG_THP_CAP_NEXT_MASK;
 	HWRITE4(sc, PCIE_RC_CONFIG_THP_CAP, status);
 
-	if (OF_getproplen(phandle, "aspm-no-l0s") == 0) {
+	if (of_hasprop(phandle, "aspm-no-l0s")) {
 		status = HREAD4(sc, PCIE_RC_PCIE_LCAP);
 		status &= ~__SHIFTIN(1, PCIE_LCAP_ASPM);
 		HWRITE4(sc, PCIE_RC_PCIE_LCAP, status);
 	}
-
-	status = HREAD4(sc, PCIE_RC_CONFIG_DCSR);
-	status &= ~PCIE_DCSR_MAX_PAYLOAD;
-	status |= __SHIFTIN(1, PCIE_DCSR_MAX_PAYLOAD);
-	HWRITE4(sc, PCIE_RC_CONFIG_DCSR, status);
 
 	/* Default bus ranges */
 	sc->sc_phsc.sc_bus_min = 0;
@@ -450,15 +407,14 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 	const u_int *ranges;
 	bus_addr_t aaddr;
 	bus_addr_t addr;
-	bus_size_t size, offset;
+	bus_size_t size, resid, offset;
 	uint32_t type;
 	int region, i, ranges_len;
 
 	/* Use region 0 to map PCI configuration space */
 	HWRITE4(sc, PCIE_ATR_OB_ADDR0(0), 25 - 1);
 	HWRITE4(sc, PCIE_ATR_OB_ADDR1(0), 0);
-	HWRITE4(sc, PCIE_ATR_OB_DESC0(0),
-	    PCIE_ATR_HDR_CFG_TYPE0 | PCIE_ATR_HDR_RID);
+	HWRITE4(sc, PCIE_ATR_OB_DESC0(0), PCIE_ATR_HDR_CFG_TYPE0 | PCIE_ATR_HDR_RID);
 	HWRITE4(sc, PCIE_ATR_OB_DESC1(0), 0);
 
 	ranges = fdtbus_get_prop(sc->sc_phsc.sc_phandle, "ranges", &ranges_len);
@@ -482,7 +438,7 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 
 		addr = ((uint64_t)be32toh(ranges[i + 1]) << 32) + be32toh(ranges[i + 2]);
 		aaddr = ((uint64_t)be32toh(ranges[i + 3]) << 32) + be32toh(ranges[i + 4]);
-		size = (uint64_t)be32toh(ranges[i + 5]) << 32 | be32toh(ranges[i + 6]);
+		size = be32toh(ranges[i + 6]);
 
 		/* Only support mappings aligned on a region boundary. */
 		if (addr & (PCIE_ATR_OB_REGION_SIZE - 1))
@@ -500,15 +456,15 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 
 		offset = addr - sc->sc_axi_addr - PCIE_ATR_OB_REGION0_SIZE;
 		region = 1 + (offset / PCIE_ATR_OB_REGION_SIZE);
-		while (size > 0) {
+		resid = size;
+		while (resid > 0) {
 			HWRITE4(sc, PCIE_ATR_OB_ADDR0(region), 32 - 1);
 			HWRITE4(sc, PCIE_ATR_OB_ADDR1(region), 0);
-			HWRITE4(sc, PCIE_ATR_OB_DESC0(region),
-			    type | PCIE_ATR_HDR_RID);
+			HWRITE4(sc, PCIE_ATR_OB_DESC0(region), type | PCIE_ATR_HDR_RID);
 			HWRITE4(sc, PCIE_ATR_OB_DESC1(region), 0);
 
 			addr += PCIE_ATR_OB_REGION_SIZE;
-			size -= PCIE_ATR_OB_REGION_SIZE;
+			resid -= PCIE_ATR_OB_REGION_SIZE;
 			region++;
 		}
 	}
@@ -618,8 +574,9 @@ rkpcie_intx_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	struct rkpcie_softc *sc = device_private(dev);
 	void *cookie;
 
+#if notyet
 	const u_int pin = be32toh(specifier[0]);
-	device_printf(sc->sc_phsc.sc_dev, "%s pin %u\n", __func__, pin);
+#endif
 
 	/* Unmask legacy interrupts. */
 	HWRITE4(sc, PCIE_CLIENT_INT_MASK,
