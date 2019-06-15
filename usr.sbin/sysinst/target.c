@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.5 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.6 2019/06/15 08:20:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.5 2019/06/12 06:20:18 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.6 2019/06/15 08:20:33 martin Exp $");
 #endif
 
 /*
@@ -173,7 +173,7 @@ target_already_root(void)
 	}
 	if (pm->parts->pscheme->secondary_partitions != NULL)
 		parts = pm->parts->pscheme->secondary_partitions(parts,
-		    pm->ptstart);
+		    pm->ptstart, false);
 
 	for (ptn = 0; ptn < parts->num_part; ptn++) {
 		if (!parts->pscheme->get_part_info(parts, ptn, &info))

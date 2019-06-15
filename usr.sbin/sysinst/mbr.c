@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.12 2019/06/15 07:57:38 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.13 2019/06/15 08:20:33 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1603,11 +1603,14 @@ mbr_find_netbsd(const struct mbr_info_t *m, uint start,
 }
 
 static struct disk_partitions *
-mbr_read_disklabel(struct disk_partitions *arg, daddr_t start)
+mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 {
 	struct mbr_disk_partitions *myparts =
 	    (struct mbr_disk_partitions*)arg;
 	struct disk_part_info part;
+
+	if (force_empty && myparts->dlabel) 
+		myparts->dlabel->pscheme->delete_all_partitions(myparts->dlabel);
 
 	if (myparts->dlabel == NULL) {
 		/*
@@ -1616,8 +1619,9 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start)
 		if (!mbr_find_netbsd(&myparts->mbr, start, &part))
 			return NULL;
 
-		myparts->dlabel = disklabel_parts.read_from_disk(
-		    myparts->dp.disk, part.start, part.size);
+		if (!force_empty)
+			myparts->dlabel = disklabel_parts.read_from_disk(
+			    myparts->dp.disk, part.start, part.size);
 
 		if (myparts->dlabel == NULL && part.size > 0) {
 			/* we just created the outer partitions? */
