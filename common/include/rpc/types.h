@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2019/06/05 16:25:43 hannken Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2019/06/16 16:01:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -65,8 +65,6 @@ typedef   int32_t rpc_inline_t;
 #if defined(_KERNEL) || defined(_STANDALONE)
 
 #define warn(msg,...) /**/
-
-typedef __caddr_t caddr_t;
 
 #include <sys/kmem.h>
 
