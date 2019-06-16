@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.24 2019/03/20 07:16:07 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.25 2019/06/16 15:16:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1056,6 +1056,7 @@ AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 
 #define	icc_sre_read		reg_icc_sre_el1_read
 #define	icc_sre_write		reg_icc_sre_el1_write
+#define	icc_pmr_read		reg_icc_pmr_el1_read
 #define	icc_pmr_write		reg_icc_pmr_el1_write
 #define	icc_bpr0_write		reg_icc_bpr0_el1_write
 #define	icc_bpr1_write		reg_icc_bpr1_el1_write
