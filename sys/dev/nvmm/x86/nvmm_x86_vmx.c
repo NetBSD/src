@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.35 2019/05/18 08:55:59 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36 2019/06/16 18:30:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.35 2019/05/18 08:55:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36 2019/06/16 18:30:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2892,6 +2892,9 @@ vmx_ident(void)
 
 	msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
 	if ((msr & IA32_FEATURE_CONTROL_LOCK) == 0) {
+		return false;
+	}
+	if ((msr & IA32_FEATURE_CONTROL_OUT_SMX) == 0) {
 		return false;
 	}
 
