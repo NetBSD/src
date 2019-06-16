@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.39 2019/01/30 02:01:58 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.40 2019/06/16 10:57:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.39 2019/01/30 02:01:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.40 2019/06/16 10:57:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,6 +268,9 @@ gtmr_intr(void *arg)
 	if ((ctl & CNTCTL_ISTATUS) == 0)
 		return 0;
 
+	arm_isb();
+	gtmr_cntv_ctl_write(0);
+
 	const uint64_t now = gtmr_read_cntvct(sc);
 	uint64_t delta = now - ci->ci_lastintr;
 
@@ -299,11 +302,15 @@ gtmr_intr(void *arg)
 		delta = 0;
 	}
 
+	arm_isb();
 	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
 		gtmr_cntv_cval_write(now + sc->sc_autoinc - delta);
 	} else {
 		gtmr_cntv_tval_write(sc->sc_autoinc - delta);
 	}
+
+	arm_isb();
+	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
 
 	ci->ci_lastintr = now;
 
