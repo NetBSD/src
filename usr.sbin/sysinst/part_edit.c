@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.2 2019/06/15 08:20:33 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.3 2019/06/16 13:02:29 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1127,7 +1127,7 @@ edit_outer_parts(struct disk_partitions *parts)
 		    *sec_short = msg_string(sec->short_name);
 
 		humanize_number(min_size, sizeof(min_size),
-		    2 * m_size * MEG,
+		    m_size * MEG,
 		    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 		humanize_number(build_size, sizeof(build_size),
 		     SYSTEM_BUILD_SIZE * MEG, "", HN_AUTOSCALE,
