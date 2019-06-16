@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.2 2019/06/05 16:25:43 hannken Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.3 2019/06/16 16:01:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.2 2019/06/05 16:25:43 hannken Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.3 2019/06/16 16:01:44 christos Exp $");
 #endif
 #endif
 
@@ -85,11 +85,11 @@ __weak_alias(xdr_vector,_xdr_vector)
  * xdr procedure to call to handle each element of the array.
  */
 bool_t
-xdr_array(XDR *xdrs, caddr_t *addrp, u_int *sizep, u_int maxsize, u_int elsize,
+xdr_array(XDR *xdrs, char **addrp, u_int *sizep, u_int maxsize, u_int elsize,
     xdrproc_t elproc)
 {
 	u_int i;
-	caddr_t target = *addrp;
+	char *target = *addrp;
 	u_int c;  /* the actual element count */
 	bool_t stat = TRUE;
 	u_int nodesize;
