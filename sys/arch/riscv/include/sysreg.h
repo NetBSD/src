@@ -1,5 +1,6 @@
-/* $NetBSD: sysreg.h,v 1.3 2015/03/31 01:14:02 matt Exp $ */
-/*-
+/* $NetBSD: sysreg.h,v 1.4 2019/06/16 07:42:52 maxv Exp $ */
+
+/*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -189,32 +190,32 @@ riscvreg_cycle_read(void)
 #endif
 }
 
-static inline uintptr_t
-riscvreg_ptbr_read(void)
-{
-	uintptr_t __ptbr;
-	__asm("csrr\t%0, sptbr" : "=r"(__ptbr));
-	return __ptbr;
-}
-
-static inline void
-riscvreg_ptbr_write(uint32_t __ptbr)
-{
-	__asm("csrw\tsptbr, %0" :: "r"(__ptbr));
-}
+#ifdef _LP64
+#define SATP_MODE	__BITS(63,60)
+#define SATP_ASID	__BITS(59,44)
+#define SATP_PPN	__BITS(43,0)
+#else
+#define SATP_MODE	__BIT(31)
+#define SATP_ASID	__BITS(30,22)
+#define SATP_PPN	__BITS(21,0)
+#endif
 
 static inline uint32_t
 riscvreg_asid_read(void)
 {
-	uint32_t __asid;
-	__asm __volatile("csrr\t%0, sasid" : "=r"(__asid));
-	return __asid;
+	uintptr_t satp;
+	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+	return __SHIFTOUT(satp, SATP_ASID);
 }
 
 static inline void
-riscvreg_asid_write(uint32_t __asid)
+riscvreg_asid_write(uint32_t asid)
 {
-	__asm __volatile("csrw\tsasid, %0" :: "r"(__asid));
+	uintptr_t satp;
+	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+	satp &= ~SATP_ASID;
+	satp |= __SHIFTIN((uintptr_t)asid, SATP_ASID);
+	__asm __volatile("csrw	satp, %0" :: "r" (satp));
 }
 
 #endif /* _RISCV_SYSREG_H_ */

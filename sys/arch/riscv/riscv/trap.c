@@ -30,8 +30,9 @@
 #include <sys/cdefs.h>
 
 #define __PMAP_PRIVATE
+#define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.2 2019/04/06 03:06:27 thorpej Exp $");
+__RCSID("$NetBSD: trap.c,v 1.3 2019/06/16 07:42:52 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +248,7 @@ static bool
 trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
     intptr_t addr)
 {
-	pt_entry_t * const ptep = pmap_pte_lookup(pmap, addr, NULL);
+	pt_entry_t * const ptep = pmap_pte_lookup(pmap, addr);
 	struct vm_page *pg;
 
 	if (ptep == NULL)
@@ -270,6 +271,7 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 			npte |= PTE_V;
 			attr |= VM_PAGEMD_REFERENCED;
 		}
+#if 0		/* XXX Outdated */
 		if (cause == CAUSE_FAULT_STORE) {
 			if ((npte & PTE_NW) != 0) {
 				npte &= ~PTE_NW;
@@ -281,7 +283,7 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 				attr |= VM_PAGEMD_EXECPAGE;
 			}
 		}
-
+#endif
 		if (attr == 0)
 			return false;
 
