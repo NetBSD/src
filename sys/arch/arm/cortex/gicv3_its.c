@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.12 2019/06/12 21:02:07 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.13 2019/06/16 11:05:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.12 2019/06/12 21:02:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.13 2019/06/16 11:05:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -336,7 +336,7 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 }
 
 static void
-gicv3_its_msi_enable(struct gicv3_its *its, int lpi)
+gicv3_its_msi_enable(struct gicv3_its *its, int lpi, int count)
 {
 	const struct pci_attach_args *pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -346,6 +346,15 @@ gicv3_its_msi_enable(struct gicv3_its *its, int lpi)
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL))
 		panic("gicv3_its_msi_enable: device is not MSI-capable");
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+	ctl &= ~PCI_MSI_CTL_MSI_ENABLE;
+	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+	ctl &= ~PCI_MSI_CTL_MME_MASK;
+	ctl |= __SHIFTIN(ilog2(count), PCI_MSI_CTL_MME_MASK);
+	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
 
 	const uint64_t addr = its->its_base + GITS_TRANSLATER;
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
@@ -393,6 +402,10 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL))
 		panic("gicv3_its_msix_enable: device is not MSI-X-capable");
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
+	ctl &= ~PCI_MSIX_CTL_ENABLE;
+	pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
 
 	const uint64_t addr = its->its_base + GITS_TRANSLATER;
 	const uint64_t entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
@@ -453,7 +466,8 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
 		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
 
-		gicv3_its_msi_enable(its, lpi);
+		if (n == 0)
+			gicv3_its_msi_enable(its, lpi, *count);
 
 		/*
 		 * Record target PE
