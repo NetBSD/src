@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2019/06/12 06:20:21 martin Exp $ */
+/*	$NetBSD: md.c,v 1.16 2019/06/17 14:18:32 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -269,14 +269,15 @@ md_post_newfs(struct install_partition_desc *install)
 		    boottype.bp_conspeed);
                	ret = run_program(RUN_DISPLAY,
                 	    "/usr/sbin/installboot -o %s %s %s",
-			    boot_options, rdev, bootxx_filename); 
+			    boot_options, rdev, bootxx_filename);
                 free(bootxx_filename);
-        } else                                                                  
-                ret = -1;                                                     
-                                                                                
-        if (ret != 0)                                                         
-                process_menu(MENU_ok,                                           
-                    __UNCONST("Warning: disk is probably not bootable"));         
+        } else {
+                ret = -1;
+	}
+
+        if (ret != 0)
+                process_menu(MENU_ok,
+                    __UNCONST("Warning: disk is probably not bootable"));
 
 	return ret;
 }
