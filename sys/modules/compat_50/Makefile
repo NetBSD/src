@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/04/15 02:07:11 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2019/06/17 14:57:57 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,7 @@
 KMOD=	compat_50
 
 CPPFLAGS+=	-DCOMPAT_50 -DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
+CPPFLAGS+=	-DQUOTA
 
 SRCS+=	compat_50_mod.c
 SRCS+=	kern_50.c kern_time_50.c kern_select_50.c
