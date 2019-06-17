@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2019/06/12 06:20:17 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2019/06/17 18:36:39 martin Exp $
 #
 # Makefile for sysinst
 
@@ -117,6 +117,8 @@ DBG +=-g -O0 ${O0TRACKING}
 .if empty(DBG:M-g)
 COPTS += -Os
 .endif
+
+COPTS.msg_defs.c+=	-Wno-format-nonliteral
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
