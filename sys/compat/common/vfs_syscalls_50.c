@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.19 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.20 2019/06/17 12:27:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,10 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.19 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.20 2019/06/17 12:27:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -68,9 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.19 2019/01/27 02:08:39 pgoyett
 
 #include <ufs/lfs/lfs_extern.h>
 
+#ifdef QUOTA
 #include <sys/quota.h>
 #include <sys/quotactl.h>
 #include <ufs/ufs/quota1.h>
+#endif
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
@@ -341,6 +344,7 @@ compat_50_sys_mknod(struct lwp *l,
 	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
+#ifdef QUOTA
 /* ARGSUSED */
 int   
 compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *uap, register_t *retval)
@@ -450,6 +454,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	vrele(vp);
 	return error;
 }
+#endif
 
 int             
 vfs_syscalls_50_init(void)
