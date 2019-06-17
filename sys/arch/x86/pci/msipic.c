@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.13 2019/06/14 05:59:40 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.14 2019/06/17 05:45:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.13 2019/06/14 05:59:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.14 2019/06/17 05:45:46 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -250,7 +250,8 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	}
 
 	memcpy(pic, pic_tmpl, sizeof(*pic));
-	pic->pic_edge_stubs = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs,
+	pic->pic_edge_stubs
+	    = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs;
 	pic->pic_msipic = msipic;
 	msipic->mp_pic = pic;
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag,
