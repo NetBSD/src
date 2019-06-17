@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.21 2019/05/07 08:49:59 hannken Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.22 2019/06/17 08:08:51 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -777,7 +777,6 @@ vsprintf(char * __restrict buf, const char * __restrict fmt, va_list ap)
 
 void zfs_netbsd_setsize(vnode_t *, off_t);
 #define vnode_pager_setsize(vp, size) zfs_netbsd_setsize(vp, size)
-#define vn_pages_remove(a, b, c)
 
 #define getf		fd_getfile
 #define releasef	fd_putfile
