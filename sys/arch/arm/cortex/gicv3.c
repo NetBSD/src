@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.17 2019/06/12 11:35:17 mrg Exp $ */
+/* $NetBSD: gicv3.c,v 1.18 2019/06/17 10:15:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.17 2019/06/12 11:35:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.18 2019/06/17 10:15:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.17 2019/06/12 11:35:17 mrg Exp $");
 #define	LPITOSOFTC(lpi) \
 	((void *)((uintptr_t)(lpi) - offsetof(struct gicv3_softc, sc_lpi)))
 
-#define	IPL_TO_PRIORITY(ipl)	((IPL_HIGH - (ipl)) << 4)
+#define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
+#define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
+#define	IPL_TO_LPIPRIO(sc, ipl)		(((0xff - (ipl)) << 4) & 0xff)
 
 static struct gicv3_softc *gicv3_softc;
 
@@ -155,7 +157,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint64_t irouter;
 	u_int n;
 
-	const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+	const u_int ipriority_val = IPL_TO_PRIORITY(sc, is->is_ipl);
 	const u_int ipriority_shift = (is->is_irq & 0x3) * 8;
 	const u_int icfg_shift = (is->is_irq & 0xf) * 2;
 
@@ -206,7 +208,9 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
-	icc_pmr_write(IPL_TO_PRIORITY(ipl) << 1);
+	struct gicv3_softc * const sc = PICTOSOFTC(pic);
+
+	icc_pmr_write(IPL_TO_PMR(sc, ipl));
 }
 
 static void
@@ -246,6 +250,8 @@ gicv3_dist_enable(struct gicv3_softc *sc)
 
 	/* Enable Affinity routing and G1NS interrupts */
 	gicd_ctrl = GICD_CTRL_EnableGrp1A | GICD_CTRL_Enable | GICD_CTRL_ARE_NS;
+	if (ISSET(sc->sc_flags, GICV3_F_SECURE))
+		gicd_ctrl = (gicd_ctrl & ~GICD_CTRL_EnableGrp1A) << 1;
 	gicd_write_4(sc, GICD_CTRL, gicd_ctrl);
 }
 
@@ -271,7 +277,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 			if (is == NULL)
 				priority |= 0xff << byte_shift;
 			else {
-				const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+				const u_int ipriority_val = IPL_TO_PRIORITY(sc, is->is_ipl);
 				priority |= ipriority_val << byte_shift;
 			}
 		}
@@ -303,19 +309,11 @@ gicv3_cpu_identity(void)
 {
 	u_int aff3, aff2, aff1, aff0;
 
-#ifdef __aarch64__
-	const register_t mpidr = reg_mpidr_el1_read();
+	const register_t mpidr = cpu_mpidr_aff_read();
 	aff0 = __SHIFTOUT(mpidr, MPIDR_AFF0);
 	aff1 = __SHIFTOUT(mpidr, MPIDR_AFF1);
 	aff2 = __SHIFTOUT(mpidr, MPIDR_AFF2);
 	aff3 = __SHIFTOUT(mpidr, MPIDR_AFF3);
-#else
-	const register_t mpidr = armreg_mpidr_read();
-	aff0 = __SHIFTOUT(mpidr, MPIDR_AFF0);
-	aff1 = __SHIFTOUT(mpidr, MPIDR_AFF1);
-	aff2 = __SHIFTOUT(mpidr, MPIDR_AFF2);
-	aff3 = 0;
-#endif
 
 	return __SHIFTIN(aff0, GICR_TYPER_Affinity_Value_Aff0) |
 	       __SHIFTIN(aff1, GICR_TYPER_Affinity_Value_Aff1) |
@@ -545,7 +543,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 
-	sc->sc_lpiconf.base[is->is_irq] = 0x80 | IPL_TO_PRIORITY(is->is_ipl) | GIC_LPICONF_Res1;
+	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_LPIPRIO(sc, is->is_ipl) | GIC_LPICONF_Res1;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, is->is_irq, 1, BUS_DMASYNC_PREWRITE);
 }
@@ -719,6 +717,7 @@ int
 gicv3_init(struct gicv3_softc *sc)
 {
 	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
+	const uint32_t gicd_ctrl = gicd_read_4(sc, GICD_CTRL);
 	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -727,6 +726,31 @@ gicv3_init(struct gicv3_softc *sc)
 
 	for (n = 0; n < MAXCPUS; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
+
+	sc->sc_priority_shift = 4;
+	const uint32_t oldnsacr = gicd_read_4(sc, GICD_NSACRn(2));
+	gicd_write_4(sc, GICD_NSACRn(2), oldnsacr ^ 0xffffffff);
+	if (gicd_read_4(sc, GICD_NSACRn(2)) != oldnsacr) {
+		gicd_write_4(sc, GICD_NSACRn(2), oldnsacr);
+		sc->sc_priority_shift--;
+		SET(sc->sc_flags, GICV3_F_SECURE);
+	}
+	aprint_verbose_dev(sc->sc_dev, "access is %ssecure\n",
+	    ISSET(sc->sc_flags, GICV3_F_SECURE) ? "" : "in");
+
+	sc->sc_pmr_shift = 4;
+	if ((gicd_ctrl & GICD_CTRL_DS) == 0) {
+		const uint32_t icc_ctlr = icc_ctlr_read();
+		const u_int nbits = __SHIFTOUT(icc_ctlr, ICC_CTLR_EL1_PRIbits) + 1;
+		const u_int oldpmr = icc_pmr_read();
+		icc_pmr_write(0xff);
+		const u_int pmr = icc_pmr_read();
+		icc_pmr_write(oldpmr);
+		if (nbits == 8 - (ffs(pmr) - 1))
+			sc->sc_pmr_shift--;
+	}
+	aprint_verbose_dev(sc->sc_dev, "priority shift %d, pmr shift %d\n",
+	    sc->sc_priority_shift, sc->sc_pmr_shift);
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
