@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.20 2019/06/17 12:27:40 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.21 2019/06/17 14:13:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.20 2019/06/17 12:27:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.21 2019/06/17 14:13:13 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -86,16 +86,16 @@ static void cvtstat(struct stat30 *, const struct stat *);
 
 static const struct syscall_package vfs_syscalls_50_syscalls[] = {
 	{ SYS_compat_50___stat30, 0, (sy_call_t *)compat_50_sys___stat30 },
-        { SYS_compat_50___fstat30, 0, (sy_call_t *)compat_50_sys___fstat30 },
-        { SYS_compat_50___lstat30, 0, (sy_call_t *)compat_50_sys___lstat30 },
-        { SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
+	{ SYS_compat_50___fstat30, 0, (sy_call_t *)compat_50_sys___fstat30 },
+	{ SYS_compat_50___lstat30, 0, (sy_call_t *)compat_50_sys___lstat30 },
+	{ SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
 	{ SYS_compat_50_utimes, 0, (sy_call_t *)compat_50_sys_utimes },
-        { SYS_compat_50_lfs_segwait, 0,
+	{ SYS_compat_50_lfs_segwait, 0,
 	    (sy_call_t *)compat_50_sys_lfs_segwait } ,
-        { SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
-        { SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
+	{ SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
+	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
 	{ SYS_compat_50_mknod, 0, (sy_call_t *)compat_50_sys_mknod },
-        { SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
+	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
 	{ 0, 0, NULL }
 };
 
