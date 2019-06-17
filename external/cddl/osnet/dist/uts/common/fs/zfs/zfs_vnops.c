@@ -5759,7 +5759,7 @@ zfs_netbsd_reclaim(void *v)
 	/*
 	 * Process a deferred atime update.
 	 */
-	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
+	if (zp->z_atime_dirty && zp->z_unlinked == 0 && zp->z_sa_hdl != NULL) {
 		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
 
 		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
