@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -168,7 +168,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		}
 #define FMTSTR(sb, f) 							\
 	do { 								\
-		f_len = snprintf(bp, buflen - t_len, sb, (int)f);	\
+		f_len = snprintf(bp, buflen - t_len, sb, f);		\
 		if (f_len < 0) 						\
 			goto internal; 					\
 		t_len += f_len; 					\
