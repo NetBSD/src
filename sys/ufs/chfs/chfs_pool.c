@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_pool.c,v 1.3 2018/01/29 15:48:50 sevan Exp $	*/
+/*	$NetBSD: chfs_pool.c,v 1.4 2019/06/17 17:14:56 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -62,7 +62,7 @@ void
 chfs_pool_init(struct chfs_pool *chpp, size_t size, const char *what,
     struct chfs_mount *chmp)
 {
-	int cnt;
+	int cnt __diagused;
 
 	cnt = snprintf(chpp->chp_name, sizeof(chpp->chp_name),
 	    "%s_chfs_%p", what, chmp);
