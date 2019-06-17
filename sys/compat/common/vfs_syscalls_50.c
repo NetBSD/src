@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.21 2019/06/17 14:13:13 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.22 2019/06/17 14:59:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.21 2019/06/17 14:13:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.22 2019/06/17 14:59:15 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -95,7 +95,9 @@ static const struct syscall_package vfs_syscalls_50_syscalls[] = {
 	{ SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
 	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
 	{ SYS_compat_50_mknod, 0, (sy_call_t *)compat_50_sys_mknod },
+#ifdef QUOTA
 	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
+#endif
 	{ 0, 0, NULL }
 };
 
