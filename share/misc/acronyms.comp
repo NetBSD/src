@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.265 2019/06/12 16:49:48 sevan Exp $
+$NetBSD: acronyms.comp,v 1.266 2019/06/17 15:53:20 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -228,6 +228,7 @@ CGA	Color Graphics Adapter
 CGI	common gateway interface
 CGN	Carrier-Grade NAT
 CHAP	Challenge-Handshake Authentication Protocol
+CHFS	chip file system
 CHS	cylinder/head/sector
 CI	continuous integration
 CI	{common,component} interface
