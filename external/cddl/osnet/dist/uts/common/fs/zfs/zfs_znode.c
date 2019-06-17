@@ -1560,10 +1560,14 @@ zfs_rezget(znode_t *zp)
 
 	zp->z_unlinked = (zp->z_links == 0);
 	zp->z_blksz = doi.doi_data_block_size;
+#ifdef __NetBSD__
+	mutex_enter(vp->v_interlock);
+	(void)VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO);
+#else
 	vn_pages_remove(vp, 0, 0);
+#endif
 	if (zp->z_size != size)
 		vnode_pager_setsize(vp, zp->z_size);
-
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 
 	return (0);
