@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.5 2018/12/07 17:56:41 jakllsch Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.6 2019/06/17 00:49:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.5 2018/12/07 17:56:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.6 2019/06/17 00:49:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
+#include <sys/bitops.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -90,7 +91,7 @@ gic_v2m_msi_available_spi(struct gic_v2m_frame *frame)
 }
 
 static void
-gic_v2m_msi_enable(struct gic_v2m_frame *frame, int spi)
+gic_v2m_msi_enable(struct gic_v2m_frame *frame, int spi, int count)
 {
 	const struct pci_attach_args *pa = frame->frame_pa[spi];
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -100,6 +101,15 @@ gic_v2m_msi_enable(struct gic_v2m_frame *frame, int spi)
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL))
 		panic("gic_v2m_msi_enable: device is not MSI-capable");
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+	ctl &= ~PCI_MSI_CTL_MSI_ENABLE;
+	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+	ctl &= ~PCI_MSI_CTL_MME_MASK;
+	ctl |= __SHIFTIN(ilog2(count), PCI_MSI_CTL_MME_MASK);
+	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
 
 	const uint64_t addr = frame->frame_reg + GIC_MSI_SETSPI;
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
@@ -147,6 +157,10 @@ gic_v2m_msix_enable(struct gic_v2m_frame *frame, int spi, int msix_vec,
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL))
 		panic("gic_v2m_msix_enable: device is not MSI-X-capable");
+
+	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
+	ctl &= ~PCI_MSIX_CTL_ENABLE;
+	pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
 
 	const uint64_t addr = frame->frame_reg + GIC_MSI_SETSPI;
 	const uint64_t entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
@@ -210,9 +224,9 @@ gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
 		    __SHIFTIN(spi, ARM_PCI_INTR_IRQ) |
 		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
 		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
-
-		gic_v2m_msi_enable(frame, spi);
 	}
+
+	gic_v2m_msi_enable(frame, spi_base, *count);
 
 	return vectors;
 }
