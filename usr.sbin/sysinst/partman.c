@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.32 2019/06/12 06:20:18 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.33 2019/06/17 17:53:41 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -292,6 +292,7 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 	void *dev_ptr, int dev_ptr_delta, structinfo_t *s)
 {
 	int i, ok = 0;
+	menu_ent *menu_entries;
 
 	if (dev_ptr == NULL) {
 		/* We should create new device */
@@ -308,7 +309,7 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 		}
 	}
 
-	menu_ent menu_entries[menu_entries_count];
+	menu_entries = calloc(menu_entries_count, sizeof *menu_entries);
 	for (i = 0; i < menu_entries_count - 1; i++)
 		menu_entries[i] = (menu_ent) {	.opt_menu=OPT_NOMENU,
 						.opt_action=action };
@@ -324,6 +325,7 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 	
 	process_menu(menu_no, dev_ptr);
 	free_menu(menu_no);
+	free(menu_entries);
 
 	return check_fun(dev_ptr);
 }
