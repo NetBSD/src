@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.49 2017/09/23 10:38:59 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.50 2019/06/17 16:34:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49 2017/09/23 10:38:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.50 2019/06/17 16:34:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, acpi_wakeup_paddr);
+	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, 0);
 
 	s = splhigh();
 	fpusave_cpu(true);
