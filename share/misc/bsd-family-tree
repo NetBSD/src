@@ -363,21 +363,27 @@ FreeBSD 5.2           |      |                 |                       |
  |   11.1  FreeBSD    |     |      |           |                       |
  |     |    10.4      |     |      |      OpenBSD 6.2          DragonFly 5.0.1
  |     |              |     |      |           |                       |
- |     |              |     |  NetBSD 7.1.1    |               DragonFly 5.0.2
- |     |              |     |      |           |                       |
- |     |              |     |  NetBSD 7.1.2    |                       |
- |     |              |     |      |           |                       |
- |     |              |     |      |      OpenBSD 6.3                  |
- |     |              |  NetBSD    |           |               DragonFly 5.2.0
- |     |              |    8.0     |           |                       |
- |     |              |     |      |           |               DragonFly 5.2.1
- |     |              |     |      |           |                       |
- |     |              |     |      |           |               DragonFly 5.2.2
- |  FreeBSD           |     |  NetBSD 7.2      |                       |
- |   11.2             |     |      |           |                       |
- |     v              |     |      |           |                       |
- |                    |     |      v           |                       |
-FreeBSD 12 -current   | NetBSD -current   OpenBSD -current    DragonFly -current
+ |     `------.       |     |  NetBSD 7.1.1    |               DragonFly 5.0.2
+ |            |       |     |      |           |                       |
+ |            |       |     |  NetBSD 7.1.2    |                       |
+ |            |       |     |      |           |                       |
+ |            |       |     |      |      OpenBSD 6.3                  |
+ |            |       |  NetBSD    |           |               DragonFly 5.2.0
+ |            |       |    8.0     |           |                       |
+ |            |       |     |      |           |               DragonFly 5.2.1
+ |            |       |     |      |           |                       |
+ |            |       |     |      |           |               DragonFly 5.2.2
+ |         FreeBSD    |     |  NetBSD 7.2      |                       |
+ |           11.2   macOS   |      |           |                       |
+ |                  10.14   |      |      OpenBSD 6.4                  |
+ |                    |     |      |           |               DragonFly 5.4.0
+ *--FreeBSD           |     |      v           |                       |
+ |   12.0             |     |                  |               DragonFly 5.4.1
+ |                    |     |             OpenBSD 6.5                  |
+ |                    |  NetBSD                |                       |
+ |                    |    8.1                 |               DragonFly 5.6
+ |                    |     |                  |                       |
+FreeBSD 13 -current   | NetBSD -current   OpenBSD -current    DragonFly -current
  |                    |     |                  |                       |
  v                    v     v                  v                       v
 
@@ -753,6 +759,14 @@ DragonFly 5.2.2		2018-06-18 [DFB]
 FreeBSD 11.2		2018-06-27 [FBD]
 NetBSD 8.0		2018-07-17 [NBD]
 NetBSD 7.2		2018-08-29 [NBD]
+macOS 10.14		2018-09-24 [APL]
+OpenBSD 6.4		2018-10-18 [OBD]
+DragonFly 5.4.0		2018-12-03 [DFB]
+FreeBSD 12.0		2018-12-11 [FBD]
+DragonFly 5.4.1		2018-12-24 [DFB]
+OpenBSD 6.5		2019-05-01 [OBD]
+NetBSD 8.1		2019-06-04 [NBD]
+DragonFly 5.6		2019-06-17 [DFB]
 
 Bibliography
 ------------------------
@@ -817,5 +831,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 336757 2018-07-27 10:40:48Z eadler $
-$NetBSD: bsd-family-tree,v 1.72 2018/09/05 04:01:32 eadler Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 349157 2019-06-17 21:46:13Z sevan $
+$NetBSD: bsd-family-tree,v 1.73 2019/06/17 21:51:56 sevan Exp $
