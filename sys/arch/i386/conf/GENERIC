@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1207 2019/05/24 14:28:48 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1208 2019/06/17 19:01:17 kamil Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1207 $"
+#ident		"GENERIC-$Revision: 1.1208 $"
 
 maxusers	64		# estimated number of users
 
@@ -121,6 +121,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #options	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
+#options	UBSAN_ALWAYS_FATAL	# (optional) Panic on all kUBSan reports
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
