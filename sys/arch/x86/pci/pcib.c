@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.17 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: pcib.c,v 1.18 2019/06/17 06:38:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18 2019/06/17 06:38:29 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ pcibmatch(device_t parent, cfdata_t match, void *aux)
 				clock_broken_latch = 0;
 			}
 #endif
-			return(1);
+			return (1);
 		}
 		break;
 	}

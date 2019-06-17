@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.14 2019/06/17 05:45:46 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.15 2019/06/17 06:38:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.14 2019/06/17 05:45:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.15 2019/06/17 06:38:29 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -203,7 +203,7 @@ msipic_find_msi_pic_locked(int devid)
 	KASSERT(mutex_owned(&msipic_list_lock));
 
 	LIST_FOREACH(mpp, &msipic_list, mp_list) {
-		if(mpp->mp_devid == devid)
+		if (mpp->mp_devid == devid)
 			return mpp->mp_pic;
 	}
 	return NULL;
@@ -645,7 +645,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 	tbl = pci_conf_read(pc, tag, off + PCI_MSIX_TBLOFFSET);
 	table_offset = tbl & PCI_MSIX_TBLOFFSET_MASK;
 	bir = tbl & PCI_MSIX_PBABIR_MASK;
-	switch(bir) {
+	switch (bir) {
 	case 0:
 		bar = PCI_BAR0;
 		break;
@@ -665,18 +665,19 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 		bar = PCI_BAR5;
 		break;
 	default:
-		aprint_error("detect an illegal device! The device use reserved BIR values.\n");
+		aprint_error("detect an illegal device! "
+		    "The device use reserved BIR values.\n");
 		msipic_destruct_common_msi_pic(msix_pic);
 		return NULL;
 	}
 	memtype = pci_mapreg_type(pc, tag, bar);
-	 /*
-	  * PCI_MSIX_TABLE_ENTRY_SIZE consists below
-	  *     - Vector Control (32bit)
-	  *     - Message Data (32bit)
-	  *     - Message Upper Address (32bit)
-	  *     - Message Lower Address (32bit)
-	  */
+	/*
+	 * PCI_MSIX_TABLE_ENTRY_SIZE consists below
+	 *     - Vector Control (32bit)
+	 *     - Message Data (32bit)
+	 *     - Message Upper Address (32bit)
+	 *     - Message Lower Address (32bit)
+	 */
 	table_size = table_nentry * PCI_MSIX_TABLE_ENTRY_SIZE;
 #if 0
 	err = pci_mapreg_submap(pa, bar, memtype, BUS_SPACE_MAP_LINEAR,

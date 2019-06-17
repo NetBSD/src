@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.145 2019/06/05 04:31:37 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.146 2019/06/17 06:38:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.145 2019/06/05 04:31:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.146 2019/06/17 06:38:30 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -361,12 +361,13 @@ intr_calculatemasks(struct cpu_info *ci)
  * by MI code and intrctl(8).
  */
 const char *
-intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
+intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf,
+    size_t len)
 {
 	int ih = 0;
 
 #if NPCI > 0
-#if defined(__HAVE_PCI_MSI_MSIX)	
+#if defined(__HAVE_PCI_MSI_MSIX)
 	if ((pic->pic_type == PIC_MSI) || (pic->pic_type == PIC_MSIX)) {
 		uint64_t pih;
 		int dev, vec;
@@ -383,7 +384,7 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 
 		return x86_pci_msi_string(NULL, pih, buf, len);
 	}
-#endif /* __HAVE_PCI_MSI_MSIX */	
+#endif /* __HAVE_PCI_MSI_MSIX */
 #endif
 
 	if (pic->pic_type == PIC_XEN) {
@@ -958,10 +959,10 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	mutex_exit(&cpu_lock);
 
 	if (bootverbose || cpu_index(ci) != 0)
-		aprint_verbose("allocated pic %s type %s pin %d level %d to %s slot %d "
-		    "idt entry %d\n",
-		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-		    device_xname(ci->ci_dev), slot, idt_vec);
+		aprint_verbose("allocated pic %s type %s pin %d level %d to "
+		    "%s slot %d idt entry %d\n",
+		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin,
+		    level, device_xname(ci->ci_dev), slot, idt_vec);
 
 	return (ih);
 }
@@ -1033,7 +1034,8 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	 *
 	 */
 	if (source->is_handlers == NULL)
-		(*pic->pic_delroute)(pic, ci, ih->ih_pin, idtvec, source->is_type);
+		(*pic->pic_delroute)(pic, ci, ih->ih_pin, idtvec,
+		    source->is_type);
 	else
 		(*pic->pic_hwunmask)(pic, ih->ih_pin);
 
@@ -1279,7 +1281,7 @@ cpu_intr_init(struct cpu_info *ci)
 	 */
 	istack = uvm_km_alloc(kernel_map,
 	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (redzone_const_or_false(true)) {
 		pmap_kremove(istack, PAGE_SIZE);
 		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
@@ -1334,9 +1336,10 @@ intr_printconfig(void)
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
 				continue;
-			(*pr)("%s source %d is pin %d from pic %s type %d maxlevel %d\n",
-			    device_xname(ci->ci_dev), i, isp->is_pin,
-			    isp->is_pic->pic_name, isp->is_type, isp->is_maxlevel);
+			(*pr)("%s source %d is pin %d from pic %s type %d "
+			    "maxlevel %d\n", device_xname(ci->ci_dev), i,
+			    isp->is_pin, isp->is_pic->pic_name, isp->is_type,
+			    isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)
 				(*pr)("\thandler %p level %d\n",
@@ -1843,8 +1846,8 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 
 	err = intr_find_unused_slot(newci, &newslot);
 	if (err) {
-		DPRINTF(("failed to allocate interrupt slot for PIC %s intrid %s\n",
-			isp->is_pic->pic_name, isp->is_intrid));
+		DPRINTF(("failed to allocate interrupt slot for PIC %s intrid "
+			"%s\n", isp->is_pic->pic_name, isp->is_intrid));
 		return err;
 	}
 
@@ -2123,7 +2126,8 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		return 0;
 
 	/*
-	 * Count the number of interrupts which affinity to any cpu of "cpuset".
+	 * Count the number of interrupts which affinity to any cpu of
+	 * "cpuset".
 	 */
 	count = 0;
 	mutex_enter(&cpu_lock);
