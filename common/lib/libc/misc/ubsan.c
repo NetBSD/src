@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -77,6 +77,12 @@ __RCSID("$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $");
 #define SET(t, f)	((t) |= (f))
 #define ISSET(t, f)	((t) & (f))
 #define CLR(t, f)	((t) &= ~(f))
+#endif
+
+#ifdef UBSAN_ALWAYS_FATAL
+static const bool alwaysFatal = true;
+#else
+static const bool alwaysFatal = false;
 #endif
 
 #define REINTERPRET_CAST(__dt, __st)	((__dt)(__st))
@@ -1122,7 +1128,7 @@ Report(bool isFatal, const char *pFormat, ...)
 
 	va_start(ap, pFormat);
 #if defined(_KERNEL)
-	if (isFatal)
+	if (isFatal || alwaysFatal)
 		vpanic(pFormat, ap);
 	else
 		vprintf(pFormat, ap);
@@ -1190,7 +1196,7 @@ Report(bool isFatal, const char *pFormat, ...)
 		ubsan_vsyslog(LOG_DEBUG | LOG_USER, &SyslogData, pFormat, tmp);
 		va_end(tmp);
 	}
-	if (isFatal || ISSET(ubsan_flags, UBSAN_ABORT)) {
+	if (isFatal || alwaysFatal || ISSET(ubsan_flags, UBSAN_ABORT)) {
 		abort();
 		__unreachable();
 		/* NOTREACHED */
