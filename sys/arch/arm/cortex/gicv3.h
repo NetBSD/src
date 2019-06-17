@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.4 2018/11/10 11:46:31 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.5 2019/06/17 10:15:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -59,6 +59,12 @@ struct gicv3_softc {
 	bus_space_handle_t	sc_bsh_d;	/* GICD */
 	bus_space_handle_t	*sc_bsh_r;	/* GICR */
 	u_int			sc_bsh_r_count;
+
+	u_int			sc_flags;
+#define	GICV3_F_SECURE		0x01
+
+	u_int			sc_priority_shift;
+	u_int			sc_pmr_shift;
 
 	uint32_t		sc_enabled_sgippi;
 	uint64_t		sc_irouter[MAXCPUS];
