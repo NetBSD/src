@@ -5892,6 +5892,7 @@ zfs_netbsd_getpages(void *v)
 	kmutex_t * const mtx = uobj->vmobjlock;
 	znode_t *zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
+	vfs_t *mp;
 	struct vm_page *pg;
 	caddr_t va;
 	int npages, found, err = 0;
@@ -5910,10 +5911,22 @@ zfs_netbsd_getpages(void *v)
 		return EBUSY;
 	}
 
+	mp = vp->v_mount;
+	fstrans_start(mp);
+	if (vp->v_mount != mp) {
+		fstrans_done(mp);
+		return ENOENT;
+	}
 	ZFS_ENTER(zfsvfs);
 	ZFS_VERIFY_ZP(zp);
 
 	mutex_enter(mtx);
+	if (offset >= vp->v_size) {
+		mutex_exit(mtx);
+		ZFS_EXIT(zfsvfs);
+		fstrans_done(mp);
+		return EINVAL;
+	}
 	npages = 1;
 	pg = NULL;
 	uvn_findpages(uobj, offset, &npages, &pg, UFP_ALL);
@@ -5943,6 +5956,7 @@ zfs_netbsd_getpages(void *v)
 	ap->a_m[ap->a_centeridx] = pg;
 
 	ZFS_EXIT(zfsvfs);
+	fstrans_done(mp);
 
 	return (err);
 }
