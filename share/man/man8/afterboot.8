@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.61 2019/06/18 13:27:25 maya Exp $
+.\"	$NetBSD: afterboot.8,v 1.62 2019/06/18 23:11:05 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -412,7 +412,7 @@ You can scan for nearby wireless networks using:
 To connect to a wireless network using WPA and DHCP:
 .Bd -literal -offset indent
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
-.Ic servpce wpa_supplicant onestart
+.Ic service wpa_supplicant onestart
 .Ic service dhcpcd onestart
 .Ed
 .Pp
