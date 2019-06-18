@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.294 2019/01/27 02:08:43 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.295 2019/06/18 16:06:45 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -314,8 +314,8 @@
 146	COMPAT_43 MODULAR compat_43	\
 		{ int|sys||killpg(int pgid, int signum); } okillpg
 147	STD 	RUMP 	{ int|sys||setsid(void); }
-148	COMPAT_50 MODULAR XXX { int|sys||quotactl(const char *path, int cmd, \
-			    int uid, void *arg); }
+148	COMPAT_50 MODULAR compat_50 { int|sys||quotactl(const char *path, \
+			  int cmd, int uid, void *arg); }
 149	COMPAT_43 MODULAR compat_43 { int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR compat_43 { int|sys||getsockname(int fdec,	\
 			    void *asa, socklen_t *alen); } ogetsockname
