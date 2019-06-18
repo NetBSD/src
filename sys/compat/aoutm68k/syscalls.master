@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2019/06/18 01:38:07 christos Exp $
+	$NetBSD: syscalls.master,v 1.44 2019/06/18 01:39:01 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -422,7 +422,7 @@
 150	NOARGS		{ int|compat_43_sys||getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname
 #else
-149	EXCL		compat_43_sys_quota
+150	EXCL		compat_43_sys_getsockname
 #endif
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
