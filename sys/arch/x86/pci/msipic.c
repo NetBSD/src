@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.15 2019/06/17 06:38:29 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.16 2019/06/18 10:06:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.15 2019/06/17 06:38:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.16 2019/06/18 10:06:49 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -388,6 +388,15 @@ msi_addroute(struct pic *pic, struct cpu_info *ci,
 	data = __SHIFTIN(idt_vec, LAPIC_VECTOR_MASK)
 		| LAPIC_TRIGMODE_EDGE | LAPIC_DLMODE_FIXED;
 
+	/*
+	 * The size of the message data register is 16bit if the extended
+	 * message data is not implemented. If it's 16bit and the per-vector
+	 * masking is not capable, the location of the upper 16bit is out of
+	 * the MSI capability structure's range. The PCI spec says the upper
+	 * 16bit is driven to 0 if the message data register is 16bit. It's the
+	 * spec, so it's OK just to write it regardless of the value of the
+	 * upper 16bit.
+	 */
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_LO, addr);
