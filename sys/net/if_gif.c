@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.146 2019/04/22 08:09:59 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.147 2019/06/18 07:50:43 msaitoh Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.146 2019/04/22 08:09:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.147 2019/06/18 07:50:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,7 +169,7 @@ gif_sysctl_setup(void)
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
 
 	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifttl",
 		       SYSCTL_DESCR("Default TTL for a gif tunnel datagram"),
 		       NULL, 0, &ip_gif_ttl, 0,
@@ -194,7 +194,7 @@ gif_sysctl_setup(void)
 		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_EOL);
 
 	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifhlim",
 		       SYSCTL_DESCR("Default hop limit for a gif tunnel datagram"),
 		       NULL, 0, &ip6_gif_hlim, 0,
@@ -473,7 +473,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 	/* XXX should we check if our outer source is legal? */
 
-	m->m_flags &= ~(M_BCAST|M_MCAST);
+	m->m_flags &= ~(M_BCAST | M_MCAST);
 
 	/* use DLT_NULL encapsulation here to pass inner af type */
 	M_PREPEND(m, sizeof(int), M_DONTWAIT);
@@ -1037,7 +1037,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		/* can't configure same pair of address onto two gifs */
 		if (sockaddr_cmp(var2->gv_pdst, dst) == 0 &&
 		    sockaddr_cmp(var2->gv_psrc, src) == 0) {
-			/* continue to use the old configureation. */
+			/* continue to use the old configuration. */
 			gif_putref_variant(var2, &psref);
 			mutex_exit(&gif_softcs.lock);
 			error =  EADDRNOTAVAIL;
