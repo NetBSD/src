@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.126 2019/06/18 01:36:50 christos Exp $
+	$NetBSD: syscalls.master,v 1.127 2019/06/18 16:23:24 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -50,6 +50,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 %%
@@ -1124,8 +1125,12 @@
 			    int flag); }
 472	STD  		{ int|netbsd32||futimens(int fd, \
 			    const netbsd32_timespecp_t tptr); }
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp args); }
+#else
+473	EXCL		netbsd32___quotactl
+#endif
 474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
 			    const netbsd32_charp path, \
 			    const netbsd32_posix_spawn_file_actionsp \
