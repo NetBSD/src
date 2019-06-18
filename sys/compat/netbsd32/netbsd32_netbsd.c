@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.225 2019/06/18 16:22:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.226 2019/06/18 16:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.225 2019/06/18 16:22:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.226 2019/06/18 16:46:03 christos Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -46,15 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.225 2019/06/18 16:22:54 christ
  */
 
 #if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#include "opt_ntp.h"
-#include "opt_ktrace.h"
-#include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
-#include "opt_sysv.h"
+#include "opt_compat_netbsd.h"
+#include "opt_ddb.h"
+#include "opt_ktrace.h"
+#include "opt_ntp.h"
 #include "opt_quota.h"
 #include "opt_syscall_debug.h"
-#include "opt_quota.h"
+#include "opt_sysv.h"
 #endif
 
 #include <sys/param.h>
