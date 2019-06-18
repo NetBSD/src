@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.23 2019/06/18 10:46:51 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2032,7 +2032,37 @@ bool
 install_desc_from_parts(struct install_partition_desc *install,
     struct disk_partitions *parts)
 {
+	struct disk_partitions *inner_parts;
+	daddr_t start, size;
+	part_id pno;
+	struct disk_part_info info;
+
 	memset(install, 0, sizeof(*install));
+
+	if (parts->pscheme->secondary_scheme != NULL) {
+		start = -1;
+		size = -1;
+		if (parts->pscheme->guess_install_target != NULL &&
+		    parts->pscheme->guess_install_target(parts,
+			&start, &size)) {
+		} else {
+			for (pno = 0; pno < parts->num_part; pno++) {
+				if (!parts->pscheme->get_part_info(parts, pno,
+				    &info))
+					continue;
+				if (!(info.flags & PTI_SEC_CONTAINER))
+					continue;
+				start = info.start;
+				size = info.size;
+			}
+		}
+		if (size > 0) {
+			inner_parts = parts->pscheme->secondary_partitions(
+			    parts, start, false);
+			if (inner_parts != NULL)
+				parts = inner_parts;
+		}
+	}
 
 	return usage_info_list_from_parts(&install->infos, &install->num,
 	    parts);
