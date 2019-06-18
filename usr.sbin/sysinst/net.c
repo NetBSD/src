@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.27 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.28 2019/06/18 10:45:27 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -793,7 +793,7 @@ done:
 			    net_dev, net_ip, net_srv_ip);
 			strcpy(sl_flags, "-s 115200 -l /dev/tty00");
 			msg_prompt_win(MSG_slattach, -1, 12, 70, 0,
-				sl_flags, sl_flags, 255);
+				sl_flags, sl_flags, sizeof sl_flags);
 
 			/* XXX: wtf isn't run_program() used here? */
 			pid = fork();
