@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.528 2019/05/13 08:17:30 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.529 2019/06/18 22:34:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.528 2019/05/13 08:17:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.529 2019/06/18 22:34:25 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2164,8 +2164,8 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev;
 	} */
-	return do_sys_mknodat(l, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval, UIO_USERSPACE);
+	return do_sys_mknodat(l, AT_FDCWD, SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev), UIO_SYSSPACE);
 }
 
 int
@@ -2180,20 +2180,20 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 
-	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path), 
-	    SCARG(uap, mode), SCARG(uap, dev), retval, UIO_USERSPACE);
+	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev), UIO_SYSSPACE);
 }
 
 int
 do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
-    register_t *retval, enum uio_seg seg)
+    enum uio_seg seg)
 {
-	return do_sys_mknodat(l, AT_FDCWD, pathname, mode, dev, retval, seg);
+	return do_sys_mknodat(l, AT_FDCWD, pathname, mode, dev, seg);
 }
 
 int
 do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
-    dev_t dev, register_t *retval, enum uio_seg seg)
+    dev_t dev, enum uio_seg seg)
 {
 	struct proc *p = l->l_proc;
 	struct vnode *vp;

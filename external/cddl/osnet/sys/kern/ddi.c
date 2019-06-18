@@ -613,7 +613,6 @@ ddi_create_minor_node(dev_info_t *dip, char *name, int spec_type,
 	char *pn;
 	dev_t dev;
 	int error;
-	register_t ret;
 
 	pn = PNBUF_GET();
 	if (spec_type == S_IFCHR) {
@@ -649,7 +648,7 @@ ddi_create_minor_node(dev_info_t *dip, char *name, int spec_type,
 		(void)do_sys_unlink(pn, UIO_SYSSPACE);
 	}
 
-	error = do_sys_mknod(l, pn, spec_type, dev, &ret, UIO_SYSSPACE);
+	error = do_sys_mknod(l, pn, spec_type, dev, UIO_SYSSPACE);
 
 exit:
 	PNBUF_PUT(pn);
