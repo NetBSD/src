@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.125 2019/01/27 02:08:40 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.126 2019/06/18 01:36:50 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -40,6 +40,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_ntp.h"
 #include "opt_compat_43.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -354,11 +355,16 @@
 146	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||killpg(int pgid, int signum); }
 147	NOARGS		{ int|sys||setsid(void); }
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 148	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
 149	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|sys||quota(void); } oquota
+#else
+148	EXCL 		compat_netbsd32_quotactl
+149	EXCL 		compat_netbsd32_quota
+#endif
 150	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetsockname(int fdec, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
