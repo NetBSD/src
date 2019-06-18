@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.360 2019/06/13 00:07:19 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.361 2019/06/18 23:53:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.360 2019/06/13 00:07:19 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.361 2019/06/18 23:53:55 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1621,9 +1621,12 @@ eventswitch(int code)
 
 	sigswitch(0, signo, false);
 
-	/* XXX: hangs for VFORK */
-	if (code == TRAP_CHLD)
-		return;
+	if (code == TRAP_CHLD) {
+		mutex_enter(proc_lock);
+		while (l->l_vforkwaiting)
+			cv_wait(&l->l_waitcv, proc_lock);
+		mutex_exit(proc_lock);
+	}
 
 	if (ktrpoint(KTR_PSIG)) {
 		if (p->p_emul->e_ktrpsig)

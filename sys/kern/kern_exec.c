@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.467 2019/06/13 20:20:18 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.468 2019/06/18 23:53:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.467 2019/06/13 20:20:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.468 2019/06/18 23:53:55 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2470,6 +2470,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	}
 
 	p2->p_lflag = 0;
+	l1->l_vforkwaiting = false;
 	p2->p_sflag = 0;
 	p2->p_slflag = 0;
 	p2->p_pptr = p1;
