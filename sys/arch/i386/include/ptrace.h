@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21 2019/06/17 14:31:51 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.22 2019/06/18 21:18:12 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -107,6 +107,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_eip
+#define PTRACE_REG_FP(r)	(r)->r_ebp
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_eip = (v)
 #define PTRACE_REG_SP(r)	(r)->r_esp
 #define PTRACE_REG_INTRV(r)	(r)->r_eax
