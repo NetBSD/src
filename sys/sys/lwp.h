@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.184 2019/06/13 20:20:18 kamil Exp $	*/
+/*	$NetBSD: lwp.h,v 1.185 2019/06/18 22:40:09 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -287,8 +287,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LSSLEEP		3	/* Sleeping on an address. */
 #define	LSSTOP		4	/* Process debugging or suspension. */
 #define	LSZOMB		5	/* Awaiting collection by parent. */
-/* unused, for source compatibility with NetBSD 4.0 and earlier. */
-#define	LSDEAD		6	/* Process is almost a zombie. */
+/* define	LSDEAD	6	Process is almost a zombie. (removed in 5.0) */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
