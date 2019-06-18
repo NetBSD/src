@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2019/03/23 03:04:57 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.25 2019/06/18 01:40:29 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -8,7 +8,7 @@ KMOD=	compat_netbsd32
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DCOREDUMP -DNTP -DVMSWAP
-CPPFLAGS+=	-DKTRACE -DMODULAR
+CPPFLAGS+=	-DKTRACE -DMODULAR -DQUOTA
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .PATH:	${S}/compat/netbsd32
