@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_quota.c,v 1.1 2018/12/24 20:44:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_quota.c,v 1.2 2019/06/18 16:22:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.1 2018/12/24 20:44:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.2 2019/06/18 16:22:54 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_quota.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.1 2018/12/24 20:44:39 mrg Exp $
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
+#ifdef QUOTA
 int
 netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, register_t *retval)
 {
@@ -135,3 +140,4 @@ netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, r
 
 	return do_sys_quotactl(SCARG_P32(uap, path), &args);
 }
+#endif
