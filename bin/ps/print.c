@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.130 2018/09/19 15:20:39 maxv Exp $	*/
+/*	$NetBSD: print.c,v 1.131 2019/06/18 02:23:29 kamil Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.130 2018/09/19 15:20:39 maxv Exp $");
+__RCSID("$NetBSD: print.c,v 1.131 2019/06/18 02:23:29 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -586,7 +586,9 @@ lstate(struct pinfo *pi, VARENT *ve, enum mode mode)
 		break;
 
 	case LSZOMB:
+#ifdef LSDEAD
 	case LSDEAD:
+#endif
 		*cp = 'Z';
 		break;
 
