@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.115 2015/03/01 13:19:39 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.116 2019/06/18 22:34:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.115 2015/03/01 13:19:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.116 2019/06/18 22:34:25 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,8 +675,7 @@ linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, regis
 		 */
 
 		return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
-		    SCARG(uap, mode), SCARG(uap, dev) & 0xffff, retval,
-		    UIO_USERSPACE);
+		    SCARG(uap, mode), SCARG(uap, dev) & 0xffff, UIO_USERSPACE);
 	}
 }
 
