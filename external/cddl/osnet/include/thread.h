@@ -1,5 +1,3 @@
-/*	$NetBSD: thread.h,v 1.4 2018/05/28 21:05:08 chs Exp $	*/
-
 /*
  * CDDL HEADER START
  *
@@ -22,6 +20,8 @@
  */
 
 /*
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ *
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -29,9 +29,12 @@
 #ifndef	_THREAD_H
 #define	_THREAD_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <pthread.h>
+
+#ifndef __NetBSD__
+#include <pthread_np.h>
+#endif
+
 #include <assert.h>
 
 /*
@@ -49,12 +52,8 @@ typedef pthread_rwlock_t rwlock_t;
 #define	thr_equal(a,b)		pthread_equal(a,b)
 #define	thr_join(t,d,s)		pthread_join(t,s)
 #define	thr_exit(r)		pthread_exit(r)
-#define	thr_main()		(1)
 #define	_mutex_init(l,f,a)	pthread_mutex_init(l,NULL)
 #define	_mutex_destroy(l)	pthread_mutex_destroy(l)
-#if 0
-#define _mutex_held(l)		pthread_mutex_held_np(l)
-#endif
 #define	mutex_lock(l)		pthread_mutex_lock(l)
 #define	mutex_trylock(l)	pthread_mutex_trylock(l)
 #define	mutex_unlock(l)		pthread_mutex_unlock(l)
@@ -81,6 +80,7 @@ static __inline int
 thr_create(void *stack_base, size_t stack_size, void *(*start_func) (void*),
     void *arg, long flags, thread_t *new_thread_ID)
 {
+	pthread_t dummy;
 	int ret;
 
 	assert(stack_base == NULL);
@@ -90,19 +90,15 @@ thr_create(void *stack_base, size_t stack_size, void *(*start_func) (void*),
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 
-	if(flags & THR_DETACHED)
+	if (flags & THR_DETACHED)
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	thread_t th_id;
-	thread_t *t_id;
-	if(new_thread_ID != NULL)
-		t_id = new_thread_ID;
-	else
-		t_id = &th_id;
+	if (new_thread_ID == NULL)
+		new_thread_ID = &dummy;
 
 	/* This function ignores the THR_BOUND flag, since NPTL doesn't seem to support PTHREAD_SCOPE_PROCESS */
 
-	ret = pthread_create(t_id, &attr, start_func, arg);
+	ret = pthread_create(new_thread_ID, &attr, start_func, arg);
 
 	pthread_attr_destroy(&attr);
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: sysmacros.h,v 1.9 2018/06/03 05:55:08 chs Exp $	*/
-
 /*
  * CDDL HEADER START
  *
@@ -32,18 +30,14 @@
 #ifndef _SYS_SYSMACROS_H
 #define	_SYS_SYSMACROS_H
 
-/*
- * Linux includes <sys/sysmacros.h> from <sys/types.h> with
- * __SYSMACROS_DEPRECATED_INCLUSION defined during the include,
- * but some of the definitions here break in that context,
- * so if that symbol is defined then only define the few macros
- * that we need there.
- */
-
-#ifndef __SYSMACROS_DEPRECATED_INCLUSION
-
 #include <sys/param.h>
-#include <sys/opentypes.h>
+#include <sys/isa_defs.h>
+#if defined(__FreeBSD__) && defined(_KERNEL)
+#include <sys/libkern.h>
+#endif
+#if defined(__NetBSD__) && defined(_KERNEL)
+#include <lib/libkern/libkern.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -55,14 +49,10 @@ extern "C" {
 /*
  * Disk blocks (sectors) and bytes.
  */
-#ifndef dtob
 #define	dtob(DD)	((DD) << DEV_BSHIFT)
-#endif
 #define	btod(BB)	(((BB) + DEV_BSIZE - 1) >> DEV_BSHIFT)
 #define	btodt(BB)	((BB) >> DEV_BSHIFT)
 #define	lbtod(BB)	(((offset_t)(BB) + DEV_BSIZE - 1) >> DEV_BSHIFT)
-
-#endif /* __SYSMACROS_DEPRECATED_INCLUSION */
 
 /* common macros */
 #ifndef MIN
@@ -77,8 +67,6 @@ extern "C" {
 #ifndef	SIGNOF
 #define	SIGNOF(a)	((a) < 0 ? -1 : (a) > 0)
 #endif
-
-#ifndef __SYSMACROS_DEPRECATED_INCLUSION
 
 #ifdef _KERNEL
 
@@ -132,6 +120,7 @@ extern unsigned char bcd_to_byte[256];
 #define	L_MAXMIN	L_MAXMIN32
 #endif
 
+#ifdef illumos
 #ifdef _KERNEL
 
 /* major part of a device internal to the kernel */
@@ -155,18 +144,16 @@ extern unsigned char bcd_to_byte[256];
 
 /* major part of a device external from the kernel (same as emajor below) */
 
-#undef major
 #define	major(x)	(major_t)((((unsigned)(x)) >> O_BITSMINOR) & O_MAXMAJ)
 
 /* minor part of a device external from the kernel  (same as eminor below) */
-#undef minor
+
 #define	minor(x)	(minor_t)((x) & O_MAXMIN)
 
 #endif	/* _KERNEL */
 
 /* create old device number */
 
-#undef makedev
 #define	makedev(x, y) (unsigned short)(((x) << O_BITSMINOR) | ((y) & O_MAXMIN))
 
 /* make an new device number */
@@ -193,6 +180,7 @@ extern unsigned char bcd_to_byte[256];
 #define	getemajor(x)	(major_t)((((dev_t)(x) >> L_BITSMINOR) > L_MAXMAJ) ? \
 			    NODEV : (((dev_t)(x) >> L_BITSMINOR) & L_MAXMAJ))
 #define	geteminor(x)	(minor_t)((x) & L_MAXMIN)
+#endif /* illumos */
 
 /*
  * These are versions of the kernel routines for compressing and
@@ -241,9 +229,7 @@ extern unsigned char bcd_to_byte[256];
 /*
  * Macros for counting and rounding.
  */
-#undef howmany
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
-#undef roundup
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 
 #endif	/* !__NetBSD__ */
@@ -361,7 +347,8 @@ extern unsigned char bcd_to_byte[256];
  * because if a field crosses a byte boundary it's not likely to be meaningful
  * without reassembly in its nonnative endianness.
  */
-#ifdef notdef
+#ifndef __NetBSD__
+
 #if defined(_BIT_FIELDS_LTOH)
 #define	DECL_BITFIELD2(_a, _b)				\
 	uint8_t _a, _b
@@ -395,7 +382,8 @@ extern unsigned char bcd_to_byte[256];
 #else
 #error	One of _BIT_FIELDS_LTOH or _BIT_FIELDS_HTOL must be defined
 #endif  /* _BIT_FIELDS_LTOH */
-#endif
+
+#endif /* ! __NetBSD__ */
 
 #if defined(_KERNEL) && !defined(_KMEMUSER) && !defined(offsetof)
 
@@ -403,6 +391,19 @@ extern unsigned char bcd_to_byte[256];
 
 #define	offsetof(s, m)	((size_t)(&(((s *)0)->m)))
 #endif
+
+#ifdef __NetBSD__
+
+#include <sys/bitops.h>
+
+#ifdef _LP64
+#define highbit(i)	fls64((i))
+#else
+#define highbit(i)	fls32((i))
+#endif
+#define highbit64(i)	fls64((i))
+
+#else /* __NetBSD__ */
 
 /*
  * Find highest one bit set.
@@ -424,19 +425,19 @@ highbit(ulong_t i)
 		h += 32; i >>= 32;
 	}
 #endif
-	if (i & 0xffff0000ul) {
+	if (i & 0xffff0000) {
 		h += 16; i >>= 16;
 	}
-	if (i & 0xff00ul) {
+	if (i & 0xff00) {
 		h += 8; i >>= 8;
 	}
-	if (i & 0xf0ul) {
+	if (i & 0xf0) {
 		h += 4; i >>= 4;
 	}
-	if (i & 0xcul) {
+	if (i & 0xc) {
 		h += 2; i >>= 2;
 	}
-	if (i & 0x2ul) {
+	if (i & 0x2) {
 		h += 1;
 	}
 	return (h);
@@ -479,10 +480,10 @@ highbit64(uint64_t i)
 #endif
 }
 
+#endif /* __NetBSD__ */
+
 #ifdef	__cplusplus
 }
 #endif
-
-#endif	/* __SYSMACROS_DEPRECATED_INCLUSION */
 
 #endif	/* _SYS_SYSMACROS_H */

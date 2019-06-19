@@ -1,42 +1,107 @@
-/*	$NetBSD: libintl.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
-
-/*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
- * All rights reserved.
+/*
+ * CDDL HEADER START
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ */
+/*
+ * Copyright 2014 Garrett D'Amore <garrett@damore.org>
+ *
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Use is subject to license terms.
  */
 
-#ifndef	_LIBINTL_H_
-#define	_LIBINTL_H_
 
-#include <sys/cdefs.h>
-#include <stdio.h>
+#ifndef	_LIBINTL_H
+#define	_LIBINTL_H
+
+#ifdef __NetBSD__
 
 #define	textdomain(domain)	0
 #define	gettext(...)		(__VA_ARGS__)
 #define	dgettext(domain, ...)	(__VA_ARGS__)
 
-#endif	/* !_SOLARIS_H_ */
+#else /* __NetBSD__ */
+
+#include <sys/isa_defs.h>
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*
+ * wchar_t is a built-in type in standard C++ and as such is not
+ * defined here when using standard C++. However, the GNU compiler
+ * fixincludes utility nonetheless creates its own version of this
+ * header for use by gcc and g++. In that version it adds a redundant
+ * guard for __cplusplus. To avoid the creation of a gcc/g++ specific
+ * header we need to include the following magic comment:
+ *
+ * we must use the C++ compiler's type
+ *
+ * The above comment should not be removed or changed until GNU
+ * gcc/fixinc/inclhack.def is updated to bypass this header.
+ */
+#if !defined(__cplusplus) || (__cplusplus < 199711L && !defined(__GNUG__))
+#ifndef _WCHAR_T
+#define	_WCHAR_T
+#if defined(_LP64)
+typedef int	wchar_t;
+#else
+typedef long	wchar_t;
+#endif
+#endif	/* !_WCHAR_T */
+#endif	/* !defined(__cplusplus) ... */
+
+#define	TEXTDOMAINMAX	256
+
+#define	__GNU_GETTEXT_SUPPORTED_REVISION(m)	\
+	((((m) == 0) || ((m) == 1)) ? 1 : -1)
+
+extern char *dcgettext(const char *, const char *, const int);
+extern char *dgettext(const char *, const char *);
+extern char *gettext(const char *);
+extern char *textdomain(const char *);
+extern char *bindtextdomain(const char *, const char *);
+
+/*
+ * LI18NUX 2000 Globalization Specification Version 1.0
+ * with Amendment 2
+ */
+extern char *dcngettext(const char *, const char *,
+	const char *, unsigned long int, int);
+extern char *dngettext(const char *, const char *,
+	const char *, unsigned long int);
+extern char *ngettext(const char *, const char *, unsigned long int);
+extern char *bind_textdomain_codeset(const char *, const char *);
+
+/* Word handling functions --- requires dynamic linking */
+/* Warning: these are experimental and subject to change. */
+extern int wdinit(void);
+extern int wdchkind(wchar_t);
+extern int wdbindf(wchar_t, wchar_t, int);
+extern wchar_t *wddelim(wchar_t, wchar_t, int);
+extern wchar_t mcfiller(void);
+extern int mcwrap(void);
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif /* __NetBSD__ */
+
+#endif /* _LIBINTL_H */
