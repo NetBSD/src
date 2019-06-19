@@ -4228,6 +4228,43 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_type "$LINENO" "uchar_t" "ac_cv_type_uchar_t" "$ac_includes_default"
+if test "x$ac_cv_type_uchar_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UCHAR_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "ushort_t" "ac_cv_type_ushort_t" "$ac_includes_default"
+if test "x$ac_cv_type_ushort_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_USHORT_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "uint_t" "ac_cv_type_uint_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UINT_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "ulong_t" "ac_cv_type_ulong_t" "$ac_includes_default"
+if test "x$ac_cv_type_ulong_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ULONG_T 1
+_ACEOF
+
+
+fi
+
 ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "#include <sys/types.h>
 #ifdef HAVE_RPC_TYPES_H
 #include <rpc/types.h>
