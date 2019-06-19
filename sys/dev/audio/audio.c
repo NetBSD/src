@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.17 2019/06/12 13:53:25 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.18 2019/06/19 12:49:49 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.17 2019/06/12 13:53:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.18 2019/06/19 12:49:49 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4296,7 +4296,6 @@ audio_track_play(audio_track_t *track)
 	int count;
 	int framesize;
 	int bytes;
-	u_int dropcount;
 
 	KASSERT(track);
 	KASSERT(track->lock);
@@ -4315,7 +4314,6 @@ audio_track_play(audio_track_t *track)
 
 	usrbuf = &track->usrbuf;
 	input = track->input;
-	dropcount = 0;
 
 	/*
 	 * framesize is always 1 byte or more since all formats supported as
@@ -4335,21 +4333,6 @@ audio_track_play(audio_track_t *track)
 	 */
 	count = uimin(usrbuf->used, track->usrbuf_blksize) / framesize;
 	bytes = count * framesize;
-
-	/*
-	 * If bytes is less than one block,
-	 *  if not draining, buffer is not filled so return.
-	 *  if draining, fall through.
-	 */
-	if (count < track->usrbuf_blksize / framesize) {
-		dropcount = track->usrbuf_blksize / framesize - count;
-
-		if (track->pstate != AUDIO_STATE_DRAINING) {
-			/* Wait until filled. */
-			TRACET(4, track, "not enough; return");
-			return;
-		}
-	}
 
 	track->usrbuf_stamp += bytes;
 
@@ -4412,7 +4395,7 @@ audio_track_play(audio_track_t *track)
 		}
 	}
 
-	if (dropcount != 0) {
+	if (bytes < track->usrbuf_blksize) {
 		/*
 		 * Clear all conversion buffer pointer if the conversion was
 		 * not exactly one block.  These conversion stage buffers are
