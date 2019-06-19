@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.529 2019/06/18 22:34:25 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.530 2019/06/19 14:16:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.529 2019/06/18 22:34:25 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.530 2019/06/19 14:16:06 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2165,7 +2165,7 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 	return do_sys_mknodat(l, AT_FDCWD, SCARG(uap, path),
-	    SCARG(uap, mode), SCARG(uap, dev), UIO_SYSSPACE);
+	    SCARG(uap, mode), SCARG(uap, dev), UIO_USERSPACE);
 }
 
 int
@@ -2181,7 +2181,7 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 	} */
 
 	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
-	    SCARG(uap, mode), SCARG(uap, dev), UIO_SYSSPACE);
+	    SCARG(uap, mode), SCARG(uap, dev), UIO_USERSPACE);
 }
 
 int
