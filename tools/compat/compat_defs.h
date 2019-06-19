@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.114 2018/08/30 12:05:34 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.115 2019/06/19 03:40:15 kamil Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -50,6 +50,17 @@ typedef unsigned int id_t;
  * define it.
  */
 typedef int socklen_t;
+#endif
+
+#if !HAVE_ENUM_UIO_RW
+enum uio_rw { UIO_READ, UIO_WRITE };
+#endif
+
+#if !HAVE_ENUM_UIO_SEG
+enum uio_seg {
+	UIO_USERSPACE,		/* from user data space */
+	UIO_SYSSPACE		/* from system space */
+};
 #endif
 
 #if !HAVE_U_LONG
@@ -111,6 +122,10 @@ typedef unsigned short u_short;
 
 #if HAVE_RPC_TYPES_H
 #include <rpc/types.h>
+#endif
+
+#if HAVE_SYS_UIO_H
+#include <sys/uio.h>
 #endif
 
 #ifdef _NETBSD_SOURCE
