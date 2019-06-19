@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.13 2019/06/15 08:20:33 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.14 2019/06/19 17:32:31 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -243,7 +243,7 @@ set_bios_geom_with_mbr_guess(struct disk_partitions *parts)
 	msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
 	if (guess_biosgeom_from_parts(parts, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
-	set_bios_geom(parts, cyl, head, sec);
+	set_bios_geom(parts, &cyl, &head, &sec);
 	if (parts->pscheme->change_disk_geom)
 		parts->pscheme->change_disk_geom(parts, cyl, head, sec);
 
@@ -267,7 +267,7 @@ mbr_init_chs(struct mbr_disk_partitions *parts, int ncyl, int nhead, int nsec)
  * store in globals.
  */
 void
-set_bios_geom(struct disk_partitions *parts, int cyl, int head, int sec)
+set_bios_geom(struct disk_partitions *parts, int *cyl, int *head, int *sec)
 {
 	char res[80];
 	int bsec, bhead, bcyl;
@@ -279,13 +279,13 @@ set_bios_geom(struct disk_partitions *parts, int cyl, int head, int sec)
 	msg_display_add(MSG_setbiosgeom);
 
 	do {
-		snprintf(res, 80, "%d", sec);
+		snprintf(res, 80, "%d", *sec);
 		msg_prompt_add(MSG_sectors, res, res, 80);
 		bsec = atoi(res);
 	} while (bsec <= 0 || bsec > MAXSECTOR);
 
 	do {
-		snprintf(res, 80, "%d", head);
+		snprintf(res, 80, "%d", *head);
 		msg_prompt_add(MSG_heads, res, res, 80);
 		bhead = atoi(res);
 	} while (bhead <= 0 || bhead > MAXHEAD);
@@ -297,7 +297,10 @@ set_bios_geom(struct disk_partitions *parts, int cyl, int head, int sec)
 		bcyl = MAXCYL;
 	pm->max_chs = (unsigned long)bcyl * bhead * bsec;
 	pm->current_cylsize = bhead * bsec;
-	parts->pscheme->change_disk_geom(parts, cyl, head, sec);
+	parts->pscheme->change_disk_geom(parts, bcyl, bhead, bsec);
+	*cyl = bcyl;
+	*head = bhead;
+	*sec = bsec;
 }
 
 static int
@@ -915,12 +918,19 @@ mbr_write_to_disk(struct disk_partitions *new_state)
 {
 	struct mbr_disk_partitions *parts =
 	    (struct mbr_disk_partitions *)new_state;
-	unsigned long bsec = parts->geo_sec,
-	    bhead = parts->ext_ptn_alignment / bsec,
-	    bcyl;
+	unsigned long bsec, bhead, bcyl;
 	daddr_t t;
 
+	assert(parts->geo_sec != 0);
+	if (parts->geo_sec != 0) {
+		bsec = parts->geo_sec;
+		bhead = parts->ext_ptn_alignment / bsec;
+	} else {
+		bsec = MAXSECTOR;
+		bhead = MAXHEAD;
+	}
 	t = bsec * bhead;
+	assert(t != 0);
 	if ((daddr_t)(1UL<<10) * t <= parts->dp.disk_size)
 		bcyl = (1UL<<10) - 1;
 	else

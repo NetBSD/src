@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.2 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: mbr.h,v 1.3 2019/06/19 17:32:31 martin Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -99,7 +99,7 @@ int 	partsoverlap(struct mbr_partition *, int, int);
 
 int	guess_biosgeom_from_parts(struct disk_partitions*, int *, int *, int *);
 bool	set_bios_geom_with_mbr_guess(struct disk_partitions*);
-void	set_bios_geom(struct disk_partitions *, int cyl, int head, int sec);
+void	set_bios_geom(struct disk_partitions *, int *cyl, int *head, int *sec);
 int	otherpart(int);
 int	ourpart(int);
 void	edit_ptn_bounds(void);

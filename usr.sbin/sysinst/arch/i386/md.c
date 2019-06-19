@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2019/06/17 14:18:32 martin Exp $ */
+/*	$NetBSD: md.c,v 1.17 2019/06/19 17:32:31 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -533,7 +533,8 @@ get_bios_info(const char *dev, struct disk_partitions *parts, int *bcyl,
 	if (nip == NULL || nip->ni_nmatches == 0) {
 nogeom:
 		if (nip != NULL)
-			msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
+			msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead,
+			    pm->dlsec);
 		if (guess_biosgeom_from_parts(parts, &cyl, &head, &sec) >= 0
 		    && nip != NULL)
 			msg_display_add(MSG_biosguess, cyl, head, sec);
@@ -571,13 +572,11 @@ nogeom:
 		}
 	}
 	if (biosdisk == NULL) {
-		if (nip != NULL) {
-			set_bios_geom(parts, cyl, head, sec);
-		} else {
-			*bcyl = cyl;
-			*bhead = head;
-			*bsec = sec;
-		}
+		*bcyl = cyl;
+		*bhead = head;
+		*bsec = sec;
+		if (nip != NULL)
+			set_bios_geom(parts, bcyl, bhead, bsec);
 	} else {
 		*bcyl = biosdisk->bi_cyl;
 		*bhead = biosdisk->bi_head;
