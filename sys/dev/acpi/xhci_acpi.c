@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.3 2019/02/16 23:28:56 tron Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.4 2019/06/19 13:40:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.3 2019/02/16 23:28:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.4 2019/06/19 13:40:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,6 +89,7 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
+	uint32_t hccparams;
 	ACPI_STATUS rv;
 	int error;
 	void *ih;
@@ -97,7 +98,6 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
-	sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_quirks = 0;
 	sc->sc_vendor_init = xhci_acpi_init;
@@ -125,6 +125,15 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
+	}
+
+	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
+	if (XHCI_HCC_AC64(hccparams)) {
+		aprint_verbose_dev(self, "using 64-bit DMA\n");
+		sc->sc_bus.ub_dmatag = aa->aa_dmat64;
+	} else {
+		aprint_verbose_dev(self, "using 32-bit DMA\n");
+		sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	}
 
         ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
