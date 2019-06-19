@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.12 2018/07/18 10:44:17 msaitoh Exp $ */
+/* $NetBSD: xhcireg.h,v 1.13 2019/06/19 15:10:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -61,7 +61,7 @@
 #define	XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
 #define	 XHCI_HCS2_IST(x)	((x) & 0xF)
 #define	 XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xF)
-#define	 XHCI_HCS2_SPR(x)	(((x) >> 24) & 0x1)
+#define	 XHCI_HCS2_SPR(x)	(((x) >> 26) & 0x1)
 #define  XHCI_HCS2_SPBUFLO	__BITS(31, 27)
 #define  XHCI_HCS2_SPBUFHI	__BITS(25, 21)
 #define	 XHCI_HCS2_MAXSPBUF(x)	\
