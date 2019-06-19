@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2019/02/04 13:06:39 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.27 2019/06/19 09:53:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -53,9 +53,8 @@
 #endif
 #endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
+#define	PGOFSET		(NBPG - 1)	/* byte offset into page */
+#define	NPTEPG		(NBPG / sizeof(pt_entry_t))	/* PTEs per Page */
 
 #define SSIZE		1		/* initial stack size/NBPG */
 #define SINCR		1		/* increment of stack/NBPG */
