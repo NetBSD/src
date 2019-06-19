@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2019/06/09 01:56:49 mrg Exp $
+# $NetBSD: Makefile,v 1.33 2019/06/19 05:17:05 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -97,6 +97,15 @@ BUILD_RADEON=1
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
 BUILD_NOUVEAU=1
 BUILD_VDPAU=1
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "powerpc64" || \
+    !empty(MACHINE_ARCH:Mmips*) || \
+    !empty(MACHINE_ARCH:Mearm*) || \
+    !empty(MACHINE_ARCH:Marm*)
 . if ${MKLLVMRT} != "no"
 BUILD_LLVMPIPE=1
 . endif
@@ -998,7 +1007,6 @@ LLVMRT_LIBS+=	\
 .endif
 
 .if ${MACHINE_CPU} == "aarch64"
-# XXX duplicates
 LLVMRT_LIBS+=	\
 		AArch64AsmParser \
 		AArch64CodeGen \
@@ -1010,7 +1018,6 @@ LLVMRT_LIBS+=	\
 .endif
 
 .if ${MACHINE_CPU} == "arm"
-# XXX duplicates
 LLVMRT_LIBS+=	\
 		ARMCodeGen \
 		ARMDisassembler \
@@ -1019,6 +1026,26 @@ LLVMRT_LIBS+=	\
 		ARMAsmParser \
 		ARMAsmPrinter \
 		ARMUtils
+.endif
+
+.if ${MACHINE_CPU} == "mips"
+LLVMRT_LIBS+=	\
+		MipsCodeGen \
+		MipsDisassembler \
+		MipsAsmParser \
+		MipsMCTargetDesc \
+		MipsAsmPrinter \
+		MipsTargetInfo
+.endif
+
+.if ${MACHINE_CPU} == "powerpc"
+LLVMRT_LIBS+=	\
+		PowerPCCodeGen \
+		PowerPCDisassembler \
+		PowerPCTargetInfo \
+		PowerPCMCTargetDesc \
+		PowerPCAsmParser \
+		PowerPCAsmPrinter
 .endif
 
 LLVMRT_LIBS+=	\
