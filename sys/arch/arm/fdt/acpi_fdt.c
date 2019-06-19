@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.9 2018/11/12 12:56:05 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.10 2019/06/19 13:39:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.9 2018/11/12 12:56:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.10 2019/06/19 13:39:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,9 @@ static int	acpi_fdt_efi_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 #endif
 
 static void	acpi_fdt_sysctl_init(void);
+
+extern struct arm32_bus_dma_tag acpi_coherent32_dma_tag;
+extern struct arm32_bus_dma_tag acpi_coherent64_dma_tag;
 
 #if NPCI > 0
 static struct acpi_pci_context acpi_fdt_pci_context;
@@ -134,9 +137,9 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	aa.aa_memt = faa->faa_bst;
-	aa.aa_dmat = faa->faa_dmat;
+	aa.aa_dmat = &acpi_coherent32_dma_tag;
 #ifdef _PCI_HAVE_DMA64
-	aa.aa_dmat64 = faa->faa_dmat;
+	aa.aa_dmat64 = &acpi_coherent64_dma_tag;
 #endif
 	config_found_ia(self, "acpibus", &aa, 0);
 
