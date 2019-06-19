@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.7 2018/11/19 10:45:47 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.8 2019/06/19 13:39:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.7 2018/11/19 10:45:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.8 2019/06/19 13:39:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,15 +82,6 @@ struct acpipchb_softc {
 	struct acpipchb_bus_space sc_pciio_bst;
 };
 
-static struct arm32_dma_range ahcipchb_coherent_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0,
-		.dr_busbase = 0,
-		.dr_len = UINTPTR_MAX,
-		.dr_flags = _BUS_DMAMAP_COHERENT,
-	}
-};
-
 static int	acpipchb_match(device_t, cfdata_t, void *);
 static void	acpipchb_attach(device_t, device_t, void *);
 
@@ -133,16 +124,14 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 		seg = 0;
 
 	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_CCA", &cca)))
-		cca = 0;
+		cca = 1;
 
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
 
 	sc->sc_dmat = *aa->aa_dmat;
-	if (cca) {
-		sc->sc_dmat._ranges = ahcipchb_coherent_ranges;
-		sc->sc_dmat._nranges = __arraycount(ahcipchb_coherent_ranges);
-	}
+	if (cca == 0)
+		sc->sc_dmat._nranges = 0;
 
 	sc->sc_ap.ap_pc = *aa->aa_pc;
 	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
