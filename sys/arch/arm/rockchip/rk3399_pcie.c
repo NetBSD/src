@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.4 2019/06/15 00:08:25 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.5 2019/06/19 05:33:14 mrg Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.4 2019/06/15 00:08:25 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.5 2019/06/19 05:33:14 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,13 @@ __KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.4 2019/06/15 00:08:25 jmcneill Exp
 #define PCIE_ATR_OB_REGION_SIZE		(1 * 1024 * 1024)
 
 #define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
 #define HWRITE4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define AXIREAD4(sc, reg)						\
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_axi_ioh, (reg))
+#define AXIWRITE4(sc, reg, val)						\
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_axi_ioh, (reg), (val))
 
 struct rkpcie_softc {
 	struct pcihost_softc	sc_phsc;
@@ -508,6 +512,15 @@ rkpcie_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 12) & 0x7;
 }
 
+/* Only one device on root port and the first subordinate port. */
+static bool
+rkpcie_conf_ok(int bus, int dev, int fn, int bus_min)
+{
+	if (dev != 0 && (bus == bus_min || bus == bus_min + 1))
+		return false;
+	return true;
+}
+
 pcireg_t
 rkpcie_conf_read(void *v, pcitag_t tag, int offset)
 {
@@ -520,18 +533,14 @@ rkpcie_conf_read(void *v, pcitag_t tag, int offset)
 	KASSERT(offset < PCI_EXTCONF_SIZE);
 
 	rkpcie_decompose_tag(sc, tag, &bus, &dev, &fn);
+	if (!rkpcie_conf_ok(bus, dev, fn, phsc->sc_bus_min))
+		return 0xffffffff;
 	reg = (bus << 20) | (dev << 15) | (fn << 12) | offset;
 
-	if (bus == phsc->sc_bus_min) {
-		KASSERT(dev == 0);
+	if (bus == phsc->sc_bus_min)
 		return HREAD4(sc, PCIE_RC_NORMAL_BASE + reg);
-	}
-	if (bus == phsc->sc_bus_min + 1) {
-		KASSERT(dev == 0);
-		return bus_space_read_4(sc->sc_iot, sc->sc_axi_ioh, reg);
-	}
-
-	return 0xffffffff;
+	else
+		return AXIREAD4(sc, reg);
 }
 
 void
@@ -546,18 +555,14 @@ rkpcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 	KASSERT(offset < PCI_EXTCONF_SIZE);
 
 	rkpcie_decompose_tag(sc, tag, &bus, &dev, &fn);
+	if (!rkpcie_conf_ok(bus, dev, fn, phsc->sc_bus_min))
+		return;
 	reg = (bus << 20) | (dev << 15) | (fn << 12) | offset;
 
-	if (bus == phsc->sc_bus_min) {
-		KASSERT(dev == 0);
+	if (bus == phsc->sc_bus_min)
 		HWRITE4(sc, PCIE_RC_NORMAL_BASE + reg, data);
-		return;
-	}
-	if (bus == phsc->sc_bus_min + 1) {
-		KASSERT(dev == 0);
-		bus_space_write_4(sc->sc_iot, sc->sc_axi_ioh, reg, data);
-		return;
-	}
+	else
+		AXIWRITE4(sc, reg, data);
 }
 
 static int
