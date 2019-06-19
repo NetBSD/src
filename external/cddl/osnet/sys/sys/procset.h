@@ -1,5 +1,3 @@
-/*	$NetBSD: procset.h,v 1.2 2018/05/28 21:05:10 chs Exp $	*/
-
 /*
  * CDDL HEADER START
  *
@@ -33,6 +31,10 @@
 #ifndef _SYS_PROCSET_H
 #define	_SYS_PROCSET_H
 
+#ifndef __NetBSD__
+#pragma ident	"%Z%%M%	%I%	%E% SMI"	/* SVr4.0 1.6 */
+#endif
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -51,7 +53,48 @@ extern "C" {
 #define	P_INITUID	0
 #define	P_INITPGID	0
 
+#ifdef __NetBSD__
+
 #include <sys/idtype.h>
+
+#else /* __NetBSD__ */
+
+#ifndef _IDTYPE_T_DECLARED
+
+/*
+ *	The following defines the values for an identifier type.  It
+ *	specifies the interpretation of an id value.  An idtype and
+ *	id together define a simple set of processes.
+ */
+typedef enum
+#if !defined(_XPG4_2) || defined(__EXTENSIONS__)
+	idtype		/* pollutes XPG4.2 namespace */
+#endif
+		{
+	P_PID,		/* A process identifier.		*/
+	P_PPID,		/* A parent process identifier.		*/
+	P_PGID,		/* A process group (job control group)	*/
+			/* identifier.				*/
+	P_SID,		/* A session identifier.		*/
+	P_CID,		/* A scheduling class identifier.	*/
+	P_UID,		/* A user identifier.			*/
+	P_GID,		/* A group identifier.			*/
+	P_ALL,		/* All processes.			*/
+	P_LWPID,	/* An LWP identifier.			*/
+	P_TASKID,	/* A task identifier.			*/
+	P_PROJID,	/* A project identifier.		*/
+	P_POOLID,	/* A pool identifier.			*/
+	P_ZONEID,	/* A zone identifier.			*/
+	P_CTID,		/* A (process) contract identifier.	*/
+	P_CPUID,	/* CPU identifier.			*/
+	P_PSETID	/* Processor set identifier		*/
+} idtype_t;
+
+#define	_IDTYPE_T_DECLARED
+
+#endif
+
+#endif /* __NetBSD__ */
 
 /*
  *	The following defines the operations which can be performed to
