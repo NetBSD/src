@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.50 2019/06/19 03:40:15 kamil Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.51 2019/06/19 23:35:55 kamil Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -786,14 +786,26 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* Define to 1 if the system has the type `uchar_t'. */
+#undef HAVE_UCHAR_T
+
 /* Define to 1 if you have the `uid_from_user' function. */
 #undef HAVE_UID_FROM_USER
+
+/* Define to 1 if the system has the type `uint_t'. */
+#undef HAVE_UINT_T
+
+/* Define to 1 if the system has the type `ulong_t'. */
+#undef HAVE_ULONG_T
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Define to 1 if you have the `user_from_uid' function. */
 #undef HAVE_USER_FROM_UID
+
+/* Define to 1 if the system has the type `ushort_t'. */
+#undef HAVE_USHORT_T
 
 /* Define to 1 if you have the <util.h> header file. */
 #undef HAVE_UTIL_H
