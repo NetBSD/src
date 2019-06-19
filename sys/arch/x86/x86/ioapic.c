@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.62 2019/06/17 06:38:30 msaitoh Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.63 2019/06/19 06:32:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.62 2019/06/17 06:38:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.63 2019/06/19 06:32:46 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -611,7 +611,7 @@ ioapic_dump_raw(void)
 			printf(" %08x", (u_int)reg);
 			if (++i % 0x08 == 0)
 				printf("\n");
-		} while (i < 0x40);
+		} while (i < IOAPIC_REDTBL + (sc->sc_apic_sz * 2));
 	}
 }
 #endif
