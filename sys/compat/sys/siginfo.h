@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.4 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.5 2019/06/19 16:14:07 maya Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,13 @@ struct __ksiginfo32 {
 			int32_t _band;
 			int _fd;
 		} _poll;
+
+		struct {
+			int	_sysnum;
+			int	_retval[2];
+			int	_error;
+			uint64_t _args[8]; /* SYS_MAXSYSARGS */
+		} _syscall;
 	} _reason;
 };
 
