@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2017/10/30 03:25:14 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2019/06/19 09:56:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2017/10/30 03:25:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2019/06/19 09:56:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -434,7 +434,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
  * memory system has been bootstrapped.  After that point, either kmem_alloc
  * or malloc should be used.  This function works by stealing pages from the
  * (to be) managed page pool, then implicitly mapping the pages (by using
- * their k0seg addresses) and zeroing them.
+ * their direct mapped addresses) and zeroing them.
  *
  * It may be used once the physical memory segments have been pre-loaded
  * into the vm_physmem[] array.  Early memory allocation MUST use this
