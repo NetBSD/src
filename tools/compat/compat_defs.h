@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.115 2019/06/19 03:40:15 kamil Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.116 2019/06/19 23:33:07 kamil Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -77,6 +77,22 @@ typedef unsigned int u_int;
 
 #if !HAVE_U_SHORT
 typedef unsigned short u_short;
+#endif
+
+#if !HAVE_UCHAR_T
+typedef unsigned char uchar_t;
+#endif
+
+#if !HAVE_USHORT_T
+typedef unsigned short ushort_t;
+#endif
+
+#if !HAVE_UINT_T
+typedef unsigned int uint_t;
+#endif
+
+#if !HAVE_ULONG_T
+typedef unsigned long ulong_t;
 #endif
 
 /* System headers needed for (re)definitions below. */
