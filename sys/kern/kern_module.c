@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.135 2019/06/11 15:20:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.136 2019/06/19 15:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.135 2019/06/11 15:20:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.136 2019/06/19 15:01:01 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1214,12 +1214,21 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * We loaded all needed modules successfully: perform global
 	 * relocations and initialize.
 	 */
-	error = kobj_affix(mod->mod_kobj, mi->mi_name);
-	if (error != 0) {
-		/* Cannot touch 'mi' as the module is now gone. */
-		module_error("unable to affix module `%s', error %d", name,
-		    error);
-		goto fail2;
+	{
+		char xname[MAXMODNAME];
+
+		/*
+		 * In case of error the entire module is gone, so we
+		 * need to save its name for possible error report.
+		 */
+
+		strlcpy(xname, mi->mi_name, MAXMODNAME);
+		error = kobj_affix(mod->mod_kobj, mi->mi_name);
+		if (error != 0) {
+			module_error("unable to affix module `%s', error %d",
+			    xname, error);
+			goto fail2;
+		}
 	}
 
 	if (filedict) {
