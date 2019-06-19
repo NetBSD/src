@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.6 2019/05/09 07:38:44 mrg Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.7 2019/06/19 05:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -142,6 +142,8 @@
 #define CPU_ID_ARM1156T2S	0x4107b560 /* MPU only */
 #define CPU_ID_ARM1176JZS	0x410fb760
 #define CPU_ID_ARM11_P(n)	((n & 0xff07f000) == 0x4107b000)
+
+/* ARMv7 CPUs */
 #define CPU_ID_CORTEXA5R0	0x410fc050
 #define CPU_ID_CORTEXA7R0	0x410fc070
 #define CPU_ID_CORTEXA8R1	0x411fc080
@@ -155,15 +157,22 @@
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
 #define CPU_ID_CORTEXA15R4	0x414fc0f0
 #define CPU_ID_CORTEXA17R1	0x411fc0e0
+
+/* ARMv8 CPUS */
+#define CPU_ID_CORTEXA32R1	0x411fd010
 #define CPU_ID_CORTEXA35R0	0x410fd040
+#define CPU_ID_CORTEXA35R1	0x411fd040
 #define CPU_ID_CORTEXA53R0	0x410fd030
 #define CPU_ID_CORTEXA55R1	0x411fd050
 #define CPU_ID_CORTEXA57R0	0x410fd070
 #define CPU_ID_CORTEXA57R1	0x411fd070
+#define CPU_ID_CORTEXA65R0	0x410fd060
 #define CPU_ID_CORTEXA72R0	0x410fd080
 #define CPU_ID_CORTEXA73R0	0x410fd090
 #define CPU_ID_CORTEXA75R2	0x412fd0a0
+#define CPU_ID_CORTEXA76AER1	0x411fd0e0
 #define CPU_ID_CORTEXA76R3	0x413fd0b0
+#define CPU_ID_CORTEXA77R0	0x410fd0d0
 
 #define CPU_ID_CORTEX_P(n)	((n & 0xff0fe000) == 0x410fc000)
 #define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
@@ -171,14 +180,18 @@
 #define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
 #define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
 #define CPU_ID_CORTEX_A15_P(n)	((n & 0xff0ff0f0) == 0x410fc0f0)
+#define CPU_ID_CORTEX_A32_P(n)	((n & 0xff0ff0f0) == 0x410fd010)
 #define CPU_ID_CORTEX_A35_P(n)	((n & 0xff0ff0f0) == 0x410fd040)
 #define CPU_ID_CORTEX_A53_P(n)	((n & 0xff0ff0f0) == 0x410fd030)
 #define CPU_ID_CORTEX_A55_P(n)	((n & 0xff0ff0f0) == 0x410fd050)
 #define CPU_ID_CORTEX_A57_P(n)	((n & 0xff0ff0f0) == 0x410fd070)
+#define CPU_ID_CORTEX_A65_P(n)	((n & 0xff0ff0f0) == 0x410fd060)
 #define CPU_ID_CORTEX_A72_P(n)	((n & 0xff0ff0f0) == 0x410fd080)
 #define CPU_ID_CORTEX_A73_P(n)	((n & 0xff0ff0f0) == 0x410fd090)
 #define CPU_ID_CORTEX_A75_P(n)	((n & 0xff0ff0f0) == 0x410fd0a0)
 #define CPU_ID_CORTEX_A76_P(n)	((n & 0xff0ff0f0) == 0x410fd0b0)
+#define CPU_ID_CORTEX_A76AE_P(n) ((n & 0xff0ff0f0) == 0x410fd0e0)
+#define CPU_ID_CORTEX_A77_P(n)	((n & 0xff0ff0f0) == 0x410fd0f0)
 
 #define CPU_ID_THUNDERXRX	0x43000a10
 #define CPU_ID_THUNDERXP1d0	0x43000a10
