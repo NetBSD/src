@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.10 2019/06/19 10:04:40 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.11 2019/06/19 12:55:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ struct vm_page_md {
 #if defined(MULTIPROCESSOR) || defined(MODULAR)
 #define	VM_PAGEMD_PVLIST_LOCK_INIT(mdpg) 	(mdpg)->mdpg_lock = NULL
 #else
-#define	VM_PAGEMD_PVLIST_LOCK_INIT(mdpg)	do { } while (/*CONSTCOND*/ 0)
+#define	VM_PAGEMD_PVLIST_LOCK_INIT(mdpg)	__nothing
 #endif /* MULTIPROCESSOR || MODULAR */
 
 #define	VM_PAGEMD_PVLIST_LOCK(mdpg)		pmap_pvlist_lock(mdpg, 1)
