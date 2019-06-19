@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.185 2019/06/18 22:40:09 kamil Exp $	*/
+/*	$NetBSD: lwp.h,v 1.186 2019/06/19 21:39:53 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -281,6 +281,8 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
  * runnable but *not* yet running, i.e. is on a run queue.  LSONPROC
  * indicates that the process is actually executing on a CPU, i.e.
  * it is no longer on a run queue.
+ *
+ * These values are set in stone and must not be reused with future changes.
  */
 #define	LSIDL		1	/* Process being created by fork. */
 #define	LSRUN		2	/* Currently runnable. */
