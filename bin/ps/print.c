@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.131 2019/06/18 02:23:29 kamil Exp $	*/
+/*	$NetBSD: print.c,v 1.132 2019/06/19 21:25:50 kamil Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.131 2019/06/18 02:23:29 kamil Exp $");
+__RCSID("$NetBSD: print.c,v 1.132 2019/06/19 21:25:50 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,11 @@ static void  strprintorsetwidth(VAR *, const char *, enum mode);
 static time_t now;
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
+
+/* pre-NetBSD 5.x support. */
+#ifndef LSDEAD
+#define LSDEAD 6
+#endif
 
 static int
 iwidth(u_int64_t v)
@@ -586,9 +591,7 @@ lstate(struct pinfo *pi, VARENT *ve, enum mode mode)
 		break;
 
 	case LSZOMB:
-#ifdef LSDEAD
 	case LSDEAD:
-#endif
 		*cp = 'Z';
 		break;
 
