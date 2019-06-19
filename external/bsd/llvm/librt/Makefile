@@ -1,4 +1,11 @@
+#	$NetBSD: Makefile,v 1.5 2019/06/19 05:24:13 mrg Exp $
+
 .include <bsd.own.mk>
+
+BUILD_RADEON=0
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+BUILD_RADEON=1
+.endif
 
 SUBDIR=	libLLVMAnalysis \
 	libLLVMAsmParser \
@@ -30,8 +37,12 @@ SUBDIR=	libLLVMAnalysis \
 	libLLVMTransformsAggressiveInstCombine \
 	libLLVMTransformsCoroutines \
 	libLLVMTransformsUtils \
-	libLLVMVectorize \
-	libLLVMAMDGPUCodeGen \
+	libLLVMVectorize
+
+.if ${BUILD_RADEON} == 1
+SUBDIR+= \
+	libLLVMAMDGPUCodeGen
+.endif
 
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "aarch64eb"
 SUBDIR+= \
@@ -59,6 +70,7 @@ SUBDIR+= \
 	libLLVMX86CodeGen
 .endif
 
+.if ${BUILD_RADEON} == 1
 SUBDIR+= \
 	.WAIT \
 	libLLVMAMDGPUMCTargetDesc \
@@ -66,6 +78,7 @@ SUBDIR+= \
 	libLLVMAMDGPUTargetInfo \
 	libLLVMAMDGPUAsmParser \
 	libLLVMAMDGPUUtils
+.endif
 
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "aarch64eb"
 SUBDIR+= \
