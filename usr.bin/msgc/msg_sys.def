@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.45 2019/06/20 00:45:18 christos Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.46 2019/06/20 11:31:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -288,6 +288,7 @@ void
 msg_display(msg msg_no)
 {
 
+	msg_clear();
 	msg_printf("%s", msg_string(msg_no));
 }
 
