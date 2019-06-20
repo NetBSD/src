@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.33 2019/06/20 00:43:55 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.34 2019/06/20 15:49:20 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1101,8 +1101,6 @@ make_filesystems(struct install_partition_desc *install)
 		make_target_dir("/");
 
 		snprintf(devdev, sizeof devdev, _PATH_DEV "%s", pm->diskdev);
-		if (devdev == NULL)
-			return (ENOMEM);
 		error = target_mount_do("-o async", devdev, "/");
 		if (error) {
 			msg_display_subst(MSG_mountfail, 2, devdev, "/");
