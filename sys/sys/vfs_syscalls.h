@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.24 2019/06/18 22:34:26 kamil Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.25 2019/06/20 03:31:54 kamil Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 int	do_sys_linkat(struct lwp *, int, const char *, int, const char *, int, register_t *);
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
+int	do_posix_mknodat(struct lwp *, int, const char *, mode_t, dev_t);
 int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, enum uio_seg);
 int	do_sys_mknodat(struct lwp *, int, const char *, mode_t, dev_t, enum uio_seg);
 int	do_sys_chmodat(struct lwp *, int, const char *, int, int);
