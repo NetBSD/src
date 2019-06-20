@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.69 2017/10/07 10:26:38 maxv Exp $	 */
+/*	$NetBSD: exec.c,v 1.70 2019/06/20 17:33:31 maxv Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -275,6 +275,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 {
 	paddr_t kernpa_start, kernpa_end;
 	char prekernpath[] = "/prekern";
+	u_long prekern_start;
 	int fd, flags;
 
 	*extmem = getextmem();
@@ -283,13 +284,17 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	marks[MARK_START] = loadaddr;
 
 	/* Load the prekern (static) */
-	flags = LOAD_KERNEL & ~(LOAD_HDR|COUNT_HDR|LOAD_SYM|COUNT_SYM);
+	flags = LOAD_KERNEL & ~(LOAD_HDR|LOAD_SYM);
 	if ((fd = loadfile(prekernpath, marks, flags)) == -1)
 		return EIO;
 	close(fd);
 
-	marks[MARK_END] = (1UL << 21); /* the kernel starts at 2MB XXX */
-	kernpa_start = marks[MARK_END];
+	prekern_start = marks[MARK_START];
+
+	/* The kernel starts at 2MB. */
+	marks[MARK_START] = loadaddr;
+	marks[MARK_END] = loadaddr + (1UL << 21);
+	kernpa_start = (1UL << 21);
 
 	/* Load the kernel (dynamic) */
 	flags = (LOAD_KERNEL | LOAD_DYN) & ~(floppy ? LOAD_BACKWARDS : 0);
@@ -297,7 +302,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 		return EIO;
 	close(fd);
 
-	kernpa_end = marks[MARK_END];
+	kernpa_end = marks[MARK_END] - loadaddr;
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
@@ -319,6 +324,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	bi_getmemmap();
 #endif
 
+	marks[MARK_START] = prekern_start;
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
@@ -518,7 +524,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	}
 
 	efi_kernel_start = marks[MARK_START];
-	efi_kernel_size = image_end - efi_loadaddr - efi_kernel_start;
+	efi_kernel_size = image_end - (efi_loadaddr + efi_kernel_start);
 #endif
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
@@ -540,6 +546,15 @@ count_netbsd(const char *file, u_long *rsz)
 	boot_module_t *bm;
 	u_long sz;
 	int err, fd;
+
+	if (has_prekern) {
+		/*
+		 * Hardcoded for now. Need to count both the prekern and the
+		 * kernel. 128MB is enough in all cases, so use that.
+		 */
+		*rsz = (128UL << 20);
+		return 0;
+	}
 
 	howto = AB_SILENT;
 
