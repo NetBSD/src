@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.2 2019/06/13 06:20:34 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.3 2019/06/20 16:57:25 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -687,13 +687,11 @@ disklabel_get_free_spaces_internal(const struct
 	size_t cnt = 0, i;
 	daddr_t s, e, from, size, end_of_disk;
 
-	if (start <= LABELSECTOR)
-		start = LABELSECTOR+1;
-	if (parts->dp.disk_start != 0 && parts->dp.disk_start > start)
+	if (start < parts->dp.disk_start)
 		start = parts->dp.disk_start;
 	if (min_space_size < 1)
 		min_space_size = 1;
-	if (align > 1)
+	if (align > 1 && (start % align) != 0)
 		start = max(roundup(start, align), align);
 	end_of_disk = parts->dp.disk_start + parts->dp.disk_size;
 	from = start;
