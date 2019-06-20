@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2019/06/12 06:20:22 martin Exp $ */
+/*	$NetBSD: md.c,v 1.4 2019/06/20 00:43:57 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,7 +86,8 @@ md_get_info(struct install_partition_desc *install)
 			pm->dlsize = ps->size_limit;
 	}
 
-	msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead, pm->dlsec);
+	msg_fmt_display(MSG_nobiosgeom, "%d%d%d",
+	    pm->dlcyl, pm->dlhead, pm->dlsec);
 
 	if (guess_biosgeom_from_parts(pm->parts, &cyl, &head, &sec) >= 0
 	    && pm->parts->pscheme->change_disk_geom != NULL)

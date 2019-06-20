@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2019/06/13 09:36:55 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2019/06/20 00:43:57 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -176,7 +176,7 @@ rdb_edit_check:
 	ptend = pm->ptstart + pm->ptsize;
 
 	/* Ask for layout type -- standard or special */
-	msg_display(MSG_layout,
+	msg_fmt_display(MSG_layout, "%d%d%d",
 		    pm->ptsize / (MEG / pm->sectorsize),
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
@@ -395,7 +395,7 @@ md_post_disklabel(struct install_partition_desc *install,
 		return 0;
 
 	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
-	    'a'+bootpart_fat12);
+	    (char)('a'+bootpart_fat12));
 	run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s", bootdev);
 
 	return 0;
@@ -501,7 +501,8 @@ md_pre_update(struct install_partition_desc *install)
 			if (part->mbrp_type == MBR_PTYPE_RESERVED_x21 &&
 			    part->mbrp_size < (MIN_FAT12_BOOT/512)) {
 				msg_display(MSG_boottoosmall);
-				msg_display_add(MSG_nobootpartdisklabel, 0);
+				msg_fmt_display_add(MSG_nobootpartdisklabel,
+				    "%d", 0);
 				if (!ask_yesno(NULL))
 					return 0;
 				nobootfix = 1;
