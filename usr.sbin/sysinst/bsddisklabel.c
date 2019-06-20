@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.13 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.14 2019/06/20 15:52:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -316,7 +316,7 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		    getfslabelname(pset->infos[opt].fs_type,
 		    pset->infos[opt].fs_version));
 		mount = swap;
-	} else if (pset->infos[opt].mount && pset->infos[opt].mount[0]) {
+	} else if (pset->infos[opt].mount[0]) {
 		mount = pset->infos[opt].mount;
 	} else {
 		mount = getfslabelname(pset->infos[opt].fs_type,
