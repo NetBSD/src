@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.33 2019/06/17 17:53:41 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.34 2019/06/20 00:43:55 christos Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -982,8 +982,8 @@ pm_vnd_set_value(menudesc *m, void *arg)
 	
 	switch (m->cursel) {
 		case PMV_MENU_FILEPATH:
-			msg_prompt_win(MSG_vnd_path_ask, -1, 18, 0, 0, dev_ptr->filepath,
-				dev_ptr->filepath, STRSIZE);
+			msg_prompt_win(MSG_vnd_path_ask, -1, 18, 0, 0,
+			    dev_ptr->filepath, dev_ptr->filepath, STRSIZE);
 			if (dev_ptr->filepath[0] != '/') {
 				strlcpy(buf, dev_ptr->filepath, MOUNTLEN);
 				snprintf(dev_ptr->filepath, MOUNTLEN, "/%s", buf);
@@ -1609,7 +1609,8 @@ pm_lvm_set_value(menudesc *m, void *arg)
 			process_menu(menu_disk_adddel, arg);
 			return 0;
 		case PML_MENU_NAME:
-			msg_prompt_win(MSG_lvm_name_ask, -1, 18, 0, 0, dev_ptr->name, dev_ptr->name, SSTRSIZE);
+			msg_prompt_win(MSG_lvm_name_ask, -1, 18, 0, 0,
+			    dev_ptr->name, dev_ptr->name, SSTRSIZE);
 			return 0;
 		case PML_MENU_MAXLOGICALVOLUMES:
 			msg_to_show = MSG_lvm_maxlv_ask;
@@ -1798,7 +1799,7 @@ pm_lvmlv_set_value(menudesc *m, void *arg)
 			return 0;
 		case PMLV_MENU_EXTENTS:
 			msg_prompt_win(MSG_lvmlv_extnum_ask, -1, 18, 0, 0,
-				dev_ptr->extents, dev_ptr->extents, SSTRSIZE);
+			    dev_ptr->extents, dev_ptr->extents, SSTRSIZE);
 			return 0;
 		case PMLV_MENU_MINOR:
 			msg_to_show = MSG_lvmlv_minor_ask;
@@ -2058,7 +2059,7 @@ pm_partusage(struct pm_devs *pm_cur, int part_num, int do_del)
 			cgds[i].pm_part == id) {
 			if (do_del) {
 				cgds[i].pm = NULL;
-				strcpy(cgds[i].pm_name, "");
+				cgds[i].pm_name[0] = '\0';
 			}
 			return 1;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2019/06/19 17:32:31 martin Exp $ */
+/*	$NetBSD: md.c,v 1.18 2019/06/20 00:43:56 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,7 +244,7 @@ md_post_newfs(struct install_partition_desc *install)
 		}
 
 		process_menu(MENU_getboottype, &boottype);
-		msg_display(MSG_dobootblks, pm->diskdev);
+		msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 		if (boottype.bp_consdev == ~0u)
 			/* Use existing bootblocks */
 			return 0;
@@ -490,7 +490,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 		return 2;
 
 	/* This shouldn't happen since the files are in the floppy fs... */
-	msg_display("Can't find %s", bootcode);
+	msg_fmt_display("Can't find %s", "%s", bootcode);
 	return ask_reedit(parts);
 }
 
@@ -533,11 +533,14 @@ get_bios_info(const char *dev, struct disk_partitions *parts, int *bcyl,
 	if (nip == NULL || nip->ni_nmatches == 0) {
 nogeom:
 		if (nip != NULL)
-			msg_display(MSG_nobiosgeom, pm->dlcyl, pm->dlhead,
-			    pm->dlsec);
+			msg_fmt_display(MSG_nobiosgeom, "%d%d%d",
+			    pm->dlcyl, pm->dlhead, pm->dlsec);
 		if (guess_biosgeom_from_parts(parts, &cyl, &head, &sec) >= 0
 		    && nip != NULL)
-			msg_display_add(MSG_biosguess, cyl, head, sec);
+		{
+			msg_fmt_display_add(MSG_biosguess, "%d%d%d",
+			    cyl, head, sec);
+		}
 		biosdisk = NULL;
 	} else {
 		guess_biosgeom_from_parts(parts, &cyl, &head, &sec);
@@ -545,8 +548,8 @@ nogeom:
 			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
 			msg_display(MSG_onebiosmatch);
 			msg_table_add(MSG_onebiosmatch_header);
-			msg_table_add(MSG_onebiosmatch_row, bip->bi_dev,
-			    bip->bi_cyl, bip->bi_head, bip->bi_sec,
+			msg_fmt_table_add(MSG_onebiosmatch_row, "%d%d%d%d%u%u",
+			    bip->bi_dev, bip->bi_cyl, bip->bi_head, bip->bi_sec,
 			    (unsigned)bip->bi_lbasecs,
 			    (unsigned)(bip->bi_lbasecs / (1000000000 / 512)));
 			msg_display_add(MSG_biosgeom_advise);
@@ -558,7 +561,8 @@ nogeom:
 			for (i = 0; i < nip->ni_nmatches; i++) {
 				bip = &disklist->dl_biosdisks[
 							nip->ni_biosmatches[i]];
-				msg_table_add(MSG_biosmultmatch_row, i,
+				msg_fmt_table_add(MSG_biosmultmatch_row, 
+				    "%d%d%d%d%d%u%u", i,
 				    bip->bi_dev, bip->bi_cyl, bip->bi_head,
 				    bip->bi_sec, (unsigned)bip->bi_lbasecs,
 				    (unsigned)bip->bi_lbasecs/(1000000000/512));

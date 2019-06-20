@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2019/06/12 06:20:22 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2019/06/20 00:43:57 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,7 +163,7 @@ md_post_newfs(struct install_partition_desc *install)
 		return 0;
 	}
 
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
 	bootxx = bootxx_name(install);
 	if (bootxx != NULL) {
