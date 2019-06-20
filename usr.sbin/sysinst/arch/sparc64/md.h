@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2019/06/13 06:25:03 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2019/06/20 18:32:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,10 @@
 #define DEFUSRSIZE	1200	/* Default /usr size, if /home */
 #define XNEEDMB		300	/* Extra megs for full X installation */
 #define DEBNEEDMB	1200	/* Extra megs for debug sets */
+
+/* sunlabels force track alignment (true = no further processing) */
+#define	MD_DISKLABEL_SET_ALIGN_PRE(align, track)	\
+	(align) = (track), true
 
 /* use UFS2 by default for ffs */
 #define	DEFAULT_UFS2
