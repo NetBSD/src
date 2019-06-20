@@ -39,7 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.30 2019/06/12 14:36:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.31 2019/06/20 17:08:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -513,7 +513,7 @@ table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 		toalloc = roundup2(allocated + 1, NPF_IFADDR_STEP);
 		newsize = toalloc * sizeof(npf_tblent_t *);
 
-		elements = kmem_zalloc(newsize, KM_SLEEP);
+		elements = kmem_zalloc(newsize, KM_NOSLEEP);
 		for (unsigned i = 0; i < used; i++) {
 			elements[i] = old_elements[i];
 		}
