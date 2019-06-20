@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.34 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.35 2019/06/20 15:56:41 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -735,7 +735,7 @@ int	sanity_check(void);
 int	set_timezone(void);
 void	scripting_fprintf(FILE *, const char *, ...) __printflike(2, 3);
 void	scripting_vfprintf(FILE *, const char *, va_list) __printflike(2, 0);
-void	add_rc_conf(const char *, ...);
+void	add_rc_conf(const char *, ...) __printflike(1, 2);
 int	del_rc_conf(const char *);
 void	add_sysctl_conf(const char *, ...) __printflike(1, 2);
 void	enable_rc_conf(void);
@@ -748,7 +748,7 @@ void	umount_mnt2(void);
 int 	set_is_source(const char *);
 const char *set_dir_for_set(const char *);
 const char *ext_dir_for_set(const char *);
-void	replace(const char *, const char *, ...);
+void	replace(const char *, const char *, ...) __printflike(2, 3);
 void	get_tz_default(void);
 int	extract_file(distinfo *, int);
 void	do_coloring (unsigned int, unsigned int);
@@ -773,8 +773,6 @@ bool	needs_expanding(const char *, size_t);
 void	make_target_dir(const char *);
 void	append_to_target_file(const char *, const char *);
 void	echo_to_target_file(const char *, const char *);
-void	sprintf_to_target_file(const char *, const char *, ...)
-    __printflike(2, 3);
 void	trunc_target_file(const char *);
 const	char *target_prefix(void);
 int	target_chdir(const char *);
