@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.4 2019/06/20 08:16:19 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.4 2019/06/20 08:16:19 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $")
 #include <arm/imx/imx6_ocotpvar.h>
 #include <arm/imx/if_enetreg.h>
 #include <arm/imx/if_enetvar.h>
+
+static int enet_init_clocks(struct enet_softc *);
 
 int
 enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
@@ -108,27 +110,8 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enaddr[5] = eaddr + sc->sc_unit;
 #endif
 
-#if NIMXCCM > 0
-	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-	    CCM_ANALOG_PLL_ENET_ENABLE) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-		return;
-	}
-
 	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL) {
 		uint32_t v;
-
-		/* iMX6UL */
-		if ((imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		    CCM_ANALOG_PLL_ENET_ENET_25M_REF_EN) != 0) ||
-		    (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		    CCM_ANALOG_PLL_ENET_ENET2_125M_EN) != 0)) {
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-			return;
-		}
 
 		v = iomux_read(IMX6UL_IOMUX_GPR1);
 		switch (sc->sc_unit) {
@@ -144,11 +127,42 @@ enet_attach(device_t parent, device_t self, void *aux)
 		iomux_write(IMX6UL_IOMUX_GPR1, v);
 	}
 
-	sc->sc_pllclock = imx6_get_clock(IMX6CLK_PLL6);
-#else
-	sc->sc_pllclock = 50000000;
-#endif
+	sc->sc_clk_enet = imx6_get_clock("enet");
+	if (sc->sc_clk_enet == NULL) {
+		aprint_error(": couldn't get clock enet\n");
+		return;
+	}
+	sc->sc_clk_enet_ref = imx6_get_clock("enet_ref");
+	if (sc->sc_clk_enet_ref == NULL) {
+		aprint_error(": couldn't get clock enet_ref\n");
+		return;
+	}
+	if (enet_init_clocks(sc) != 0) {
+		aprint_error_dev(self, "couldn't init clocks\n");
+		return;
+	}
+
+	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet_ref);
 
 	enet_attach_common(self, aa->aa_iot, aa->aa_dmat, aa->aa_addr,
 	    aa->aa_size, aa->aa_irq);
+}
+
+static int
+enet_init_clocks(struct enet_softc *sc)
+{
+	int error;
+
+	error = clk_enable(sc->sc_clk_enet);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable enet: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_enet_ref);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable enet-ref: %d\n", error);
+		return error;
+	}
+
+	return 0;
 }
