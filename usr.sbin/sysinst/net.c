@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.28 2019/06/18 10:45:27 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.29 2019/06/20 00:43:55 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -453,7 +453,8 @@ handle_license(const char *dev)
 			if (sysctlbyname(buf, &val, &len, NULL, 0) != -1
 			    && val != 0)
 				return 1;
-			msg_display(MSG_license, dev, licdev[i].lic);
+			msg_fmt_display(MSG_license, "%s%s",
+			    dev, licdev[i].lic);
 			if (ask_yesno(NULL)) {
 				val = 1;
 				if (sysctlbyname(buf, NULL, NULL, &val,
@@ -520,7 +521,7 @@ again:
 		net_menu, num_devs, -1, 4, 0, 0,
 		MC_SCROLL,
 		NULL, NULL, NULL, NULL, NULL);
-	msg_display(MSG_asknetdev, "");
+	msg_display(MSG_asknetdev);
 	process_menu(menu_no, &selected_net);
 	free_menu(menu_no);
 	
@@ -724,7 +725,9 @@ again:
 
 	/* confirm the setting */
 	if (slip)
-		msg_display(MSG_netok_slip, net_domain, net_host,
+		msg_fmt_display(MSG_netok_slip, "%s%s%s%s%s%s%s%s%s",
+		    net_domain,
+		    net_host,
 		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
 		    net_dev,
 		    *net_media == '\0' ? "<default>" : net_media,
@@ -733,7 +736,9 @@ again:
 		    *net_mask == '\0' ? "<none>" : net_mask,
 		    *net_defroute == '\0' ? "<none>" : net_defroute);
 	else
-		msg_display(MSG_netok, net_domain, net_host,
+		msg_fmt_display(MSG_netok, "%s%s%s%s%s%s%s%s",
+		    net_domain,
+		    net_host,
 		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
 		    net_dev,
 		    *net_media == '\0' ? "<default>" : net_media,
@@ -741,7 +746,7 @@ again:
 		    *net_mask == '\0' ? "<none>" : net_mask,
 		    *net_defroute == '\0' ? "<none>" : net_defroute);
 #ifdef INET6
-	msg_display_add(MSG_netokv6,
+	msg_fmt_display_add(MSG_netokv6, "%s",
 		     !is_v6kernel() ? "<not supported>" : net_ip6);
 #endif
 done:

@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.7 2019/06/15 08:20:33 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.8 2019/06/20 00:43:55 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,7 @@ do_install(void)
 		/* Last chance ... do you really want to do this? */
 		clear();
 		refresh();
-		msg_display(MSG_lastchance, pm->diskdev);
+		msg_fmt_display(MSG_lastchance, "%s", pm->diskdev);
 		if (!ask_noyes(NULL))
 			return;
 
