@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2019/06/20 17:33:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -62,6 +62,7 @@ static const char * const names[][2] = {
 void	command_help(char *);
 void	command_quit(char *);
 void	command_boot(char *);
+void	command_pkboot(char *);
 void	command_consdev(char *);
 void	command_dev(char *);
 void	command_devpath(char *);
@@ -84,6 +85,7 @@ const struct bootblk_command commands[] = {
 	{ "?",		command_help },
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "pkboot",	command_pkboot },
 	{ "consdev",	command_consdev },
 	{ "dev",	command_dev },
 	{ "devpath",	command_devpath },
@@ -362,7 +364,8 @@ command_help(char *arg)
 
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
-	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+	       "     (ex. \"hd0a:netbsd.old -s\")\n"
+	       "pkboot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "dev [xd[N[x]]:]\n"
 	       "consdev {pc|com[0123][,{speed}]|com,{ioport}[,{speed}]}\n"
 	       "devpath\n"
@@ -432,6 +435,15 @@ command_boot(char *arg)
 			bootit(names[i][1], howto);
 		}
 	}
+}
+
+void
+command_pkboot(char *arg)
+{
+	extern int has_prekern;
+	has_prekern = 1;
+	command_boot(arg);
+	has_prekern = 0;
 }
 
 void
