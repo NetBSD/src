@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.3 2019/06/16 13:02:29 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.4 2019/06/20 00:43:55 christos Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -97,8 +97,8 @@ err_msg_win(const char *errmsg)
 	if (l < l1)
 		l = l1;
 
-	msg_prompt_win("%s.\n%s", -1, 18, l + 5, 2+lines,
-			NULL, NULL, 1, errmsg, cont);
+	msg_fmt_prompt_win("%s.\n%s", -1, 18, l + 5, 2+lines,
+			NULL, NULL, 1, "%s%s", errmsg, cont);
 	return 0;
 }
 

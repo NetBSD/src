@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/13 09:36:54 martin Exp $ */
+/*	$NetBSD: md.c,v 1.7 2019/06/20 00:43:55 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,7 +169,8 @@ int
 md_post_newfs(struct install_partition_desc *install)
 {
 	if (!nobootfs) {
-		msg_display(msg_string(MSG_copybootloader), pm->diskdev);
+		msg_fmt_display(msg_string(MSG_copybootloader), "%s",
+		    pm->diskdev);
 		cp_to_target("/usr/mdec/boot", PART_BOOT_MOUNT);
 	}
 
@@ -206,7 +207,7 @@ md_pre_update(struct install_partition_desc *install)
 		if (install->infos[i].size/512 >= PART_BOOT_MIN)
 			break;
 		msg_display(MSG_boottoosmall);
-		msg_display_add(MSG_nobootpart, 0);
+		msg_fmt_display_add(MSG_nobootpart, "%d", 0);
 		if (!ask_yesno(NULL))
 			return false;
 		nobootfs = 1;
