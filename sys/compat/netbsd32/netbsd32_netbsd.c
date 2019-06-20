@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.227 2019/06/18 22:34:25 kamil Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.228 2019/06/20 03:31:54 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.227 2019/06/18 22:34:25 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.228 2019/06/20 03:31:54 kamil Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -297,8 +297,8 @@ netbsd32___mknod50(struct lwp *l, const struct netbsd32___mknod50_args *uap, reg
 		syscallarg(netbsd32_dev_t) dev;
 	} */
 
-	return do_sys_mknod(l, SCARG_P32(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), UIO_USERSPACE);
+	return do_posix_mknodat(l, AT_FDCWD, SCARG_P32(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev));
 }
 
 int

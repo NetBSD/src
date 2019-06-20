@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.530 2019/06/19 14:16:06 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.531 2019/06/20 03:31:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.530 2019/06/19 14:16:06 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.531 2019/06/20 03:31:54 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2151,6 +2151,20 @@ sys___fhstatvfs140(struct lwp *l, const struct sys___fhstatvfs140_args *uap, reg
 	return error;
 }
 
+int
+do_posix_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
+    dev_t dev)
+{
+
+	if ((mode & S_IFIFO) && dev == 0)
+		return do_sys_mkfifoat(l, fdat, pathname, mode);
+	else if (mode & (S_IFCHR | S_IFBLK))
+		return do_sys_mknodat(l, fdat, pathname, mode, dev,
+		    UIO_USERSPACE);
+	else
+		return EINVAL;
+}
+
 /*
  * Create a special file.
  */
@@ -2164,8 +2178,8 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev;
 	} */
-	return do_sys_mknodat(l, AT_FDCWD, SCARG(uap, path),
-	    SCARG(uap, mode), SCARG(uap, dev), UIO_USERSPACE);
+	return do_posix_mknodat(l, AT_FDCWD, SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev));
 }
 
 int
@@ -2180,8 +2194,8 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 
-	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
-	    SCARG(uap, mode), SCARG(uap, dev), UIO_USERSPACE);
+	return do_posix_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev));
 }
 
 int
