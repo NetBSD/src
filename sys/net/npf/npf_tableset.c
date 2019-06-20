@@ -39,7 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.31 2019/06/20 17:08:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.32 2019/06/20 17:12:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -495,7 +495,7 @@ table_cidr_check(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 	return 0;
 }
 
-static void
+static int
 table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 {
 	const unsigned aidx = NPF_ADDRLEN2IDX(alen);
@@ -514,6 +514,9 @@ table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 		newsize = toalloc * sizeof(npf_tblent_t *);
 
 		elements = kmem_zalloc(newsize, KM_NOSLEEP);
+		if (elements == NULL) {
+			return ENOMEM;
+		}
 		for (unsigned i = 0; i < used; i++) {
 			elements[i] = old_elements[i];
 		}
@@ -527,6 +530,7 @@ table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 	}
 	t->t_elements[aidx][used] = ent;
 	t->t_used[aidx]++;
+	return 0;
 }
 
 /*
@@ -590,7 +594,9 @@ npf_table_insert(npf_table_t *t, const int alen,
 		error = EINVAL;
 		break;
 	case NPF_TABLE_IFADDR:
-		table_ifaddr_insert(t, alen, ent);
+		if ((error = table_ifaddr_insert(t, alen, ent)) != 0) {
+			break;
+		}
 		LIST_INSERT_HEAD(&t->t_list, ent, te_listent);
 		t->t_nitems++;
 		break;
