@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.53 2018/08/23 17:35:42 jmcneill Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.54 2019/06/20 17:33:30 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ ELFNAMEEND(readfile_global)(int fd, u_long offset, Elf_Off elfoff,
 static int
 ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
-	const u_long offset = 0;
+	const u_long offset = marks[MARK_START];
 	Elf_Shdr *shdr;
 	Elf_Addr shpp, addr;
 	int i, j, loaded;
@@ -348,7 +348,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	Elf_Addr maxp, elfp = 0;
 	int ret;
 
-	maxp = marks[MARK_END];
+	maxp = marks[MARK_END] - offset;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 
