@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2019/06/12 06:20:18 martin Exp $ */
+/*	$NetBSD: md.c,v 1.5 2019/06/20 00:43:55 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@ md_get_info(struct install_partition_desc *install)
 bool
 md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	msg_display(MSG_infoahdilabel, pm->diskdev);
+	msg_fmt_display(MSG_infoahdilabel, "%s", pm->diskdev);
 	if (ask_noyes(NULL)) {
 		run_program(RUN_DISPLAY, "ahdilabel /dev/r%sc", pm->diskdev);
 	}
@@ -130,7 +130,7 @@ md_post_newfs(struct install_partition_desc *install)
 	free(cpu_model);
 
 	/* copy tertiary boot and install boot blocks */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	snprintf(bootpath, sizeof(bootpath), "/usr/mdec/%s/boot.atari",
 	    milan ? "milan" : "std");
 	rv = cp_to_target(bootpath, "/");

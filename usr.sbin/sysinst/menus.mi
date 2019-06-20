@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.17 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.18 2019/06/20 00:43:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -368,7 +368,8 @@ menu distset, title MSG_Select_your_distribution, exit,
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
-	display action { msg_display(MSG_ftpsource, url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
+	display action { msg_fmt_display(MSG_ftpsource, "%s",
+	    url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
 	option {src_legend(menu, MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]);},
 		action { src_prompt(MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg], sizeof ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},

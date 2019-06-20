@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.32 2019/06/15 08:20:33 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.33 2019/06/20 00:43:55 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -880,7 +880,7 @@ find_disks(const char *doingwhat)
 				NULL, NULL, NULL, NULL, NULL);
 			if (menu_no == -1)
 				return -1;
-			msg_display(MSG_ask_disk, doingwhat);
+			msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
 			process_menu(menu_no, &selected_disk);
 			free_menu(menu_no);
 		}
@@ -1432,7 +1432,7 @@ foundffs(struct data *list, size_t num)
 
 	error = target_mount("", list[0].u.s_val, list[1].u.s_val);
 	if (error != 0) {
-		msg_display(MSG_mount_failed, list[0].u.s_val);
+		msg_fmt_display(MSG_mount_failed, "%s", list[0].u.s_val);
 		if (!ask_noyes(NULL))
 			return error;
 	}
@@ -1613,7 +1613,7 @@ mount_disks(struct install_partition_desc *install)
 	/* Check the target /etc/fstab exists before trying to parse it. */
 	if (target_dir_exists_p("/etc") == 0 ||
 	    target_file_exists_p("/etc/fstab") == 0) {
-		msg_display(MSG_noetcfstab, pm->diskdev);
+		msg_fmt_display(MSG_noetcfstab, "%s", pm->diskdev);
 		hit_enter_to_continue(NULL, NULL);
 		return -1;
 	}
@@ -1623,7 +1623,7 @@ mount_disks(struct install_partition_desc *install)
 	fstabsize = target_collect_file(T_FILE, &fstab, "/etc/fstab");
 	if (fstabsize < 0) {
 		/* error ! */
-		msg_display(MSG_badetcfstab, pm->diskdev);
+		msg_fmt_display(MSG_badetcfstab, "%s", pm->diskdev);
 		hit_enter_to_continue(NULL, NULL);
 		return -2;
 	}
