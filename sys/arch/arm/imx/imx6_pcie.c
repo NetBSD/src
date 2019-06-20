@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.9 2019/06/20 08:16:19 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.9 2019/06/20 08:16:19 hkenken Exp $");
 
 #include "opt_pci.h"
 
@@ -104,6 +104,10 @@ struct imx6pcie_softc {
 	int32_t sc_gpio_reset_active;
 	int32_t sc_gpio_pwren;
 	int32_t sc_gpio_pwren_active;
+
+	struct clk *sc_clk_pcie_axi;
+	struct clk *sc_clk_lvds1_gate;
+	struct clk *sc_clk_pcie_ref;
 };
 
 #define PCIE_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
@@ -160,41 +164,28 @@ imx6pcie_valid_device(struct imx6pcie_softc *sc, int bus, int dev)
 	return 1;
 }
 
-static void
-imx6pcie_clock_enable(struct imx6pcie_softc *sc)
+static int
+imx6pcie_init_clocks(struct imx6pcie_softc *sc)
 {
-	uint32_t v;
+	int error;
 
-	v = imx6_ccm_analog_read(CCM_ANALOG_MISC1);
-	v &= ~CCM_ANALOG_MISC1_LVDS_CLK1_IBEN;
-	v &= ~CCM_ANALOG_MISC1_LVDS_CLK1_SRC;
-	v |= CCM_ANALOG_MISC1_LVDS_CLK1_OBEN;
-	v |= CCM_ANALOG_MISC1_LVDS_CLK1_SRC_SATA;
-	imx6_ccm_analog_write(CCM_ANALOG_MISC1, v);
-
-	/* select PCIe clock source from axi */
-	v = imx6_ccm_read(CCM_CBCMR);
-	v &= ~CCM_CBCMR_PCIE_AXI_CLK_SEL;
-	imx6_ccm_write(CCM_CBCMR, v);
-
-	/* AHCISATA clock enable */
-	v = imx6_ccm_read(CCM_CCGR5);
-	v |= __SHIFTIN(3, CCM_CCGR5_SATA_CLK_ENABLE);
-	imx6_ccm_write(CCM_CCGR5, v);
-
-	/* PCIe clock enable */
-	v = imx6_ccm_read(CCM_CCGR4);
-	v |= __SHIFTIN(3, CCM_CCGR4_PCIE_ROOT_ENABLE);
-	imx6_ccm_write(CCM_CCGR4, v);
-
-	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		CCM_ANALOG_PLL_ENET_ENABLE_125M |
-		CCM_ANALOG_PLL_ENET_ENABLE_100M) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-		return;
+	error = clk_enable(sc->sc_clk_pcie_axi);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable pcie_axi: %d\n", error);
+		return error;
 	}
+	error = clk_enable(sc->sc_clk_lvds1_gate);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable lvds1_gate: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_pcie_ref);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable pcie_ref: %d\n", error);
+		return error;
+	}
+
+	return 0;
 }
 
 static int
@@ -375,8 +366,6 @@ imx6pcie_deassert_core_reset(struct imx6pcie_softc *sc)
 	}
 #endif
 
-	imx6pcie_clock_enable(sc);
-
 	v = iomux_read(IOMUX_GPR1);
 
 #if defined(IMX6DQP)
@@ -545,6 +534,8 @@ imx6pcie_match(device_t parent, cfdata_t cf, void *aux)
 	switch (aa->aa_addr) {
 	case (IMX6_PCIE_BASE):
 		return 1;
+	default:
+		break;
 	}
 
 	return 0;
@@ -582,6 +573,24 @@ imx6pcie_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_gpio_reset_active, GPIO_DIR_OUT);
 	imx6_set_gpio(self, "imx6pcie-pwren-gpio", &sc->sc_gpio_pwren,
 	    &sc->sc_gpio_pwren_active, GPIO_DIR_OUT);
+
+	sc->sc_clk_pcie_axi = imx6_get_clock("pcie_axi");
+	if (sc->sc_clk_pcie_axi == NULL) {
+		aprint_error(": couldn't get clock pcie_axi\n");
+		return;
+	}
+	sc->sc_clk_lvds1_gate = imx6_get_clock("lvds1_gate");
+	if (sc->sc_clk_lvds1_gate == NULL) {
+		aprint_error(": couldn't get clock lvds1_gate\n");
+		return;
+	}
+	sc->sc_clk_pcie_ref = imx6_get_clock("pcie_ref_125m");
+	if (sc->sc_clk_pcie_ref == NULL) {
+		aprint_error(": couldn't get clock pcie_ref\n");
+		return;
+	}
+
+	imx6pcie_init_clocks(sc);
 
 	imx6pcie_linkup(sc);
 
