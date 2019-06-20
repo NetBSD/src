@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.6 2019/06/12 06:20:17 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.7 2019/06/20 00:43:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -391,8 +391,8 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 	}
 
 	if (!(fp = fopen(target_expand("/etc/rc.conf"), "r"))) {
-		msg_display(MSG_openfail, target_expand("/etc/rc.conf"),
-		    strerror(errno));
+		msg_fmt_display(MSG_openfail, "%s%s",
+		    target_expand("/etc/rc.conf"), strerror(errno));
 		hit_enter_to_continue(NULL, NULL);
 		return 0;
 	}

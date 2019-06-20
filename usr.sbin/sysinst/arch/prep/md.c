@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/13 09:36:55 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2019/06/20 00:43:57 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,8 +184,10 @@ md_post_extract(struct install_partition_desc *install)
 	else
 		snprintf(bootloader, 100, "/usr/mdec/boot");
 
-	snprintf(rawdev, 100, "/dev/r%s%c", pm->diskdev, 'a' + getrawpartition());
-	snprintf(bootpart, 100, "/dev/r%s%c", pm->diskdev, 'a' + prep_bootpart);
+	snprintf(rawdev, 100, "/dev/r%s%c", pm->diskdev,
+		(char)('a' + getrawpartition()));
+	snprintf(bootpart, 100, "/dev/r%s%c", pm->diskdev,
+		(char)('a' + prep_bootpart));
 	if (prep_rawdevfix)
 		run_program(RUN_DISPLAY|RUN_CHROOT,
 		    "/usr/mdec/mkbootimage -b %s -k /netbsd "
@@ -218,9 +220,9 @@ md_pre_update(struct install_partition_desc *install)
 	for (i = 0; i < install->num; i++) {
 		if (install->infos[i].fs_type != PART_BOOT_TYPE)
 			continue;
-		if (install->infos[i].size < (MIN_PREP_BOOT/512)) {
+		if (install->infos[i].size < (int)(MIN_PREP_BOOT/512)) {
 			msg_display(MSG_preptoosmall);
-			msg_display_add(MSG_prepnobootpart, 0);
+			msg_fmt_display_add(MSG_prepnobootpart, "%d", 0);
 			if (!ask_yesno(NULL))
 				return 0;
 			prep_nobootfix = 1;
@@ -258,7 +260,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 			break;
 		}
 	}
-	if (pm->bootsize < (MIN_PREP_BOOT/512)) {
+	if (pm->bootsize < (int)(MIN_PREP_BOOT/512)) {
 		msg_display(MSG_preptoosmall);
 		return ask_reedit(parts);
 	}

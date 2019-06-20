@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/12 06:20:21 martin Exp $ */
+/*	$NetBSD: md.c,v 1.7 2019/06/20 00:43:56 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,7 +203,8 @@ md_get_info(struct install_partition_desc *install)
 #endif /* 0 - broken */
 	pm->dlsize = disklabel.d_secperunit;
 #if 0
-	msg_display(MSG_dldebug, blk_size, pm->dlcyl, pm->dlhead, pm->dlsec, pm->dlsize);
+	msg_fmt_display(MSG_dldebug, "%d%d%d%d%d",
+	    blk_size, pm->dlcyl, pm->dlhead, pm->dlsec, pm->dlsize);
 	process_menu(MENU_ok, NULL);
 #endif
 	map.size = 0;
@@ -517,16 +518,17 @@ md_post_disklabel(struct install_partition_desc *install,
     if (no_match) {
        msg_clear();
        msg_display(MSG_label_error);
-       msg_table_add(MSG_dump_line,
+       msg_fmt_table_add(MSG_dump_line, "%s",
            " in-core: offset      size type on-disk: offset      size type");
        for (i=0;i<MAXPARTITIONS;i++) {
-           sprintf(buf, " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
+           snprintf(buf, sizeof(buf),
+	      " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
               pm->bsdlabel[i].pi_offset, pm->bsdlabel[i].pi_size,
               fst[pm->bsdlabel[i].pi_fstype],
               updated_label.d_partitions[i].p_offset,
               updated_label.d_partitions[i].p_size,
               fst[updated_label.d_partitions[i].p_fstype]);
-           msg_table_add(MSG_dump_line, buf);
+           msg_fmt_table_add(MSG_dump_line, "%s", buf);
        }
        process_menu(MENU_ok2, NULL);
     }
@@ -1067,7 +1069,8 @@ disp_selected_part(sel)
 	    getUse(&map.blk[j], sizeof(use), use);
 	    getName(&map.blk[j], sizeof(name), name);
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_table_add(MSG_part_row, pm->diskdev,
+	    msg_fmt_table_add(MSG_part_row, "%s%c%d%d%s%s%s",
+		pm->diskdev,
 		bzb->flags.part, map.blk[j].pmPyPartStart,
                  map.blk[j].pmPartBlkCnt, fstyp, use, name);
 	    if (i == sel) msg_standend();
@@ -1127,13 +1130,13 @@ report_errors()
 	j = map.mblk[i];
 	if (map.blk[j].pmPyPartStart > pm->dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_display_add(MSG_disksetup_part_beginning,
+	    msg_fmt_display_add(MSG_disksetup_part_beginning, "%s%c",
 		pm->diskdev, bzb->flags.part);
 	    errs++;
 	}
 	if ((map.blk[j].pmPyPartStart + map.blk[j].pmPartBlkCnt) > pm->dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_display_add(MSG_disksetup_part_size,
+	    msg_fmt_display_add(MSG_disksetup_part_size, "%s%c",
 		pm->diskdev, bzb->flags.part);
 	    errs++;
 	}
@@ -1149,7 +1152,7 @@ edit_diskmap(void)
     int i;
 
 	/* Ask full/part */
-	msg_display (MSG_mac68k_fullpart, pm->diskdev);
+	msg_fmt_display (MSG_mac68k_fullpart, "%s", pm->diskdev);
 	process_menu (MENU_fullpart, NULL);
 
 	map.selected = 0;
@@ -1190,8 +1193,8 @@ md_debug_dump(title)
 
 	msg_clear();
 	sprintf(buf, "Apple Disk Partition Map: %s", title);
-	msg_table_add(MSG_dump_line, buf);
-	msg_table_add(MSG_dump_line,
+	msg_fmt_table_add(MSG_dump_line, "%s", buf);
+	msg_fmt_table_add(MSG_dump_line, "%s",
            "slot      base   fstype        use name");
 	for (i=0;i<map.in_use_cnt;i++) {
 	   j = whichType(&map.blk[i]);
@@ -1204,7 +1207,7 @@ md_debug_dump(title)
 	   if (j == 0) strcpy (name, "reserved for Apple");
            sprintf(buf, " %02d:%c %08x %8s %10s %s", i+1,  type,
 		map.blk[i].pmPyPartStart, fstyp, use, name);
-           msg_table_add(MSG_dump_line, buf);
+           msg_fmt_table_add(MSG_dump_line, "%s", buf);
 	}
 	process_menu(MENU_okabort, &rv);
 	msg_clear();

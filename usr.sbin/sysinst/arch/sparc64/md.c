@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2019/06/12 06:20:23 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2019/06/20 00:43:58 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -155,7 +155,7 @@ static void
 install_bootblocks(void)
 {
 	/* Install boot blocks before mounting the target disk */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", pm->diskdev);
 	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sc"
 	    " /usr/mdec/bootblk", pm->diskdev);
@@ -166,7 +166,7 @@ static void
 install_ofwboot(void)
 {
 	/* copy secondary bootstrap now that the target is mounted */
-	msg_display(MSG_doofwboot, targetroot_mnt);
+	msg_fmt_display(MSG_doofwboot, "%s", targetroot_mnt);
 	run_program(RUN_DISPLAY, "/bin/cp -p /usr/mdec/ofwboot %s",
 	    targetroot_mnt);
 }

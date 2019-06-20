@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.23 2019/06/18 10:46:51 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.24 2019/06/20 00:43:55 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,7 +319,7 @@ floppy_fetch(const char *set_name)
 	for (;;) {
 		umount_mnt2();
 		msg_display(errmsg);
-		msg_display_add(MSG_fdmount, set_name, post);
+		msg_fmt_display_add(MSG_fdmount, "%s%s", set_name, post);
 		process_menu(menu, &status);
 		if (status != SET_CONTINUE)
 			return status;
@@ -970,7 +970,7 @@ extract_file(distinfo *dist, int update)
 	/* Check rval for errors and give warning. */
 	if (rval != 0) {
 		tarstats.nerror++;
-		msg_display(MSG_tarerror, path);
+		msg_fmt_display(MSG_tarerror, "%s", path);
 		hit_enter_to_continue(NULL, NULL);
 		return SET_RETRY;
 	}
@@ -1053,7 +1053,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			/* Sort out the location of the set files */
 			do {
 				umount_mnt2();
-				msg_display(MSG_distmedium, tarstats.nselected,
+				msg_fmt_display(MSG_distmedium, "%d%d%s",
+				    tarstats.nselected,
 				    tarstats.nsuccess + tarstats.nskipped,
 				    dist->name);
 				fetch_fn = NULL;
@@ -1087,7 +1088,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		sleep(1);
 	} else {
 		/* We encountered errors. Let the user know. */
-		msg_display(MSG_endtar,
+		msg_fmt_display(MSG_endtar, "%d%d%d%d%d%d",
 		    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
 		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
 		hit_enter_to_continue(NULL, NULL);
@@ -1208,7 +1209,7 @@ check_for(unsigned int mode, const char *pathname)
 
 	found = (target_test(mode, pathname) == 0);
 	if (found == 0)
-		msg_display(MSG_rootmissing, pathname);
+		msg_fmt_display(MSG_rootmissing, "%s", pathname);
 	return found;
 }
 
@@ -1271,7 +1272,7 @@ set_tz_select(menudesc *m, void *arg)
 	/* Update displayed time */
 	t = time(NULL);
 	tm = localtime(&t);
-	msg_display(MSG_choose_timezone,
+	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
 		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
 		    "?");
 	return 0;
@@ -1443,9 +1444,8 @@ set_timezone(void)
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	tm = localtime(&t);
-	msg_display(MSG_choose_timezone,
-		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
-		    "?");
+	msg_fmt_display(MSG_choose_timezone, "%s%s%s%s",
+	    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone : "?");
 
 	signal(SIGALRM, timezone_sig);
 	alarm(60);
@@ -1532,13 +1532,13 @@ del_rc_conf(const char *value)
 			free(rcconf);
 		if (tempname)
 			free(tempname);
-		msg_display(MSG_rcconf_delete_failed, value);
+		msg_fmt_display(MSG_rcconf_delete_failed, "%s", value);
 		hit_enter_to_continue(NULL, NULL);
 		return -1;
 	}
 
 	if ((fd = mkstemp(bakname)) < 0) {
-		msg_display(MSG_rcconf_delete_failed, value);
+		msg_fmt_display(MSG_rcconf_delete_failed, "%s", value);
 		hit_enter_to_continue(NULL, NULL);
 		return -1;
 	}
@@ -1547,7 +1547,7 @@ del_rc_conf(const char *value)
 	if (!(fp = fopen(rcconf, "r+")) || (fd = mkstemp(tempname)) < 0) {
 		if (fp)
 			fclose(fp);
-		msg_display(MSG_rcconf_delete_failed, value);
+		msg_fmt_display(MSG_rcconf_delete_failed, "%s", value);
 		hit_enter_to_continue(NULL, NULL);
 		return -1;
 	}
@@ -1556,7 +1556,7 @@ del_rc_conf(const char *value)
 	if (!nfp) {
 		fclose(fp);
 		close(fd);
-		msg_display(MSG_rcconf_delete_failed, value);
+		msg_fmt_display(MSG_rcconf_delete_failed, "%s", value);
 		hit_enter_to_continue(NULL, NULL);
 		return -1;
 	}
@@ -1887,13 +1887,13 @@ needs_expanding(const char *src, size_t argc)
  * with the result.
  */
 static void
-msg_display_subst_internal(void (*outfunc)(msg,...), const char *master,
-    size_t argc, va_list ap)
+msg_display_subst_internal(void (*outfunc)(msg),
+    const char *master, size_t argc, va_list ap)
 {
 	const char **args, **arg;
 	char *out;
 
-	args = malloc(sizeof(const char *)*argc);
+	args = calloc(argc, sizeof(*args));
 	if (args == NULL)
 		return;
 

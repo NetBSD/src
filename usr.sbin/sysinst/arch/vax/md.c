@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2019/06/12 06:20:23 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2019/06/20 00:43:58 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,7 @@ md_post_disklabel(struct install_partition_desc *install,
 int
 md_post_newfs(struct install_partition_desc *install)
 {
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	run_program(0, "/usr/sbin/installboot /dev/r%s%c /usr/mdec/%.2sboot",
 	    pm->diskdev, 'a' + getrawpartition(), pm->diskdev);
 	return 0;

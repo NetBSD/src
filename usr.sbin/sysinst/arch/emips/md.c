@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2019/06/12 06:20:19 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2019/06/20 00:43:56 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,7 +168,7 @@ md_post_extract(struct install_partition_desc *install)
 
 	strlcpy(ldr_path, target_expand("/boot.emips"), sizeof ldr_path);
 
-	msg_display(MSG_dobootblks, "");
+	msg_display(MSG_dobootblks);
 
 	if (ask_noyes(NULL)) {
 		if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,

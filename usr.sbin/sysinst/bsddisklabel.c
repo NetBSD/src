@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.12 2019/06/15 08:20:33 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.13 2019/06/20 00:43:55 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -524,9 +524,8 @@ set_ptn_size(menudesc *m, void *arg)
 	    size, p->flags & PUIFLAG_EXTEND ? "+" : "");
 
 	for (;;) {
-		msg_prompt_win(MSG_askfssize, -1, 18, 0, 0,
-			dflt, answer, sizeof answer,
-			p->mount, multname);
+		msg_fmt_prompt_win(MSG_askfssize, -1, 18, 0, 0,
+		    dflt, answer, sizeof answer, "%s%s", p->mount, multname);
 
 		/* cp will be checked below */
 		mult = sizemult;

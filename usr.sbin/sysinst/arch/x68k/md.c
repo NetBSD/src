@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/12 06:20:23 martin Exp $ */
+/*	$NetBSD: md.c,v 1.7 2019/06/20 00:43:58 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,7 +168,7 @@ md_check_partitions(struct install_partition_desc *install)
 				snprintf(desc, sizeof desc,
 				    "%zu (%s)", i,
 				    install->infos[i].mount);
-				msg_display(MSG_ordering, desc);
+				msg_fmt_display(MSG_ordering, "%s", desc);
 				if (ask_yesno(NULL))
 					return false;
 			}
@@ -219,7 +219,7 @@ md_check_partitions(void)
 		j++;
 	}
 	if (j > 6) {
-		msg_display(MSG_nofreepart, pm->diskdev);
+		msg_fmt_display(MSG_nofreepart, "%s" pm->diskdev);
 		return 0;
 	}
 	md_nfreepart = 8 - j;
@@ -227,7 +227,7 @@ md_check_partitions(void)
 	/* check for free space */
 	fspm->ptsize = pm->bsdlabel[A].pi_offset - 64;
 	if (fpm->ptsize <= 0) {	/* XXX: should not be 0; minfsdb?  */
-		msg_display(MSG_notfirst, pm->diskdev);
+		msg_fmt_display(MSG_notfirst, "%s", pm->diskdev);
 		process_menu(MENU_ok);
 		exit(1);
 	}
@@ -269,7 +269,7 @@ int
 md_post_newfs(struct install_partition_desc *install)
 {
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/mdec/installboot.new /usr/mdec/sdboot_ufs /dev/r%sa",
@@ -310,7 +310,7 @@ md_update(struct install_partition_desc *install)
 static int
 md_newdisk(void)
 {
-	msg_display(MSG_newdisk, pm->diskdev, pm->diskdev);
+	msg_fmt_display(MSG_newdisk, "%s%s", pm->diskdev, pm->diskdev);
 
 	return run_program(RUN_FATAL|RUN_DISPLAY,
 	    "/usr/mdec/newdisk -v %s", pm->diskdev);

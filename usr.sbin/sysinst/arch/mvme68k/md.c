@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/12 06:20:21 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2019/06/20 00:43:57 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,7 +140,7 @@ md_check_partitions(struct install_partition_desc *install)
 				snprintf(desc, sizeof desc,
 				    "%zu (%s)", i,
 				    install->infos[i].mount);
-				msg_display(MSG_ordering, desc);
+				msg_fmt_display(MSG_ordering, "%s", desc);
 				if (!ask_yesno(NULL))
 					return false;
 			}
@@ -183,7 +183,7 @@ md_post_newfs(struct install_partition_desc *install)
 {
 
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	cp_to_target("/usr/mdec/bootsd", "/.bootsd");
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/mdec/installboot %s /usr/mdec/bootxx /dev/r%sa",

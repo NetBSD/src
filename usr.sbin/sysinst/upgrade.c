@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.7 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.8 2019/06/20 00:43:55 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,9 +144,10 @@ save_X(const char *xroot)
 	/* Only care for X if it's a symlink */
 	if (target_symlink_exists_p(newx)) {
 		if (target_symlink_exists_p(oldx)) {
-			msg_display(MSG_X_oldexists, xroot, xroot, xroot,
+			msg_fmt_display(MSG_X_oldexists,
+			    "%s%s%s%s%s%s%s%s%s%s%s",
 			    xroot, xroot, xroot, xroot, xroot, xroot, xroot,
-			    xroot);
+			    xroot, xroot, xroot, xroot);
 			hit_enter_to_continue(NULL, NULL);
 			return EEXIST;
 		}

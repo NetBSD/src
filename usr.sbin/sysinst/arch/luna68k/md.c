@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2019/06/12 06:20:21 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2019/06/20 00:43:56 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,7 +164,7 @@ copy_bootloader(const char *diskdev)
 {
 	const char *mntdir = "/mnt2";
 
-	msg_display(MSG_copybootloader, diskdev);
+	msg_fmt_display(MSG_copybootloader, "%s", diskdev);
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
 	    "mount %s %s", diskdev, mntdir)) {
 		mnt2_mounted = 1;

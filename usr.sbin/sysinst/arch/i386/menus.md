@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: menus.md,v 1.2 2019/06/20 00:43:56 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 		case 1: case 2: case 3: case 4:
 			if (menu->cursel == 0)
 			    menu->cursel = ((struct x86_boot_params *)arg)->bp_consdev;
-			msg_display_add(MSG_console_com,
+			msg_fmt_display_add(MSG_console_com, "%u%u",
 			    ((struct x86_boot_params *)arg)->bp_consdev - 1,
 			    ((struct x86_boot_params *)arg)->bp_conspeed);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2019/06/12 06:20:23 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2019/06/20 00:43:57 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,7 +132,7 @@ md_pre_disklabel(struct install_partition_desc *install,
 	char diskpath[MAXPATHLEN];
 
 	if (clear_mbr(pm->diskdev, diskpath, sizeof(diskpath)) == -1) {
-		msg_display(MSG_badclearmbr, diskpath);
+		msg_fmt_display(MSG_badclearmbr, "%s", diskpath);
 		process_menu(MENU_ok, NULL);
 	}
 
