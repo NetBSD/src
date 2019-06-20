@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.14 2019/06/20 15:52:07 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.15 2019/06/20 19:26:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -987,8 +987,8 @@ static void
 fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
     daddr_t ptstart, daddr_t ptsize)
 {
-	size_t i, root = ~0U, usr = ~0U, swap = ~0U;
-	daddr_t free_space, dump_space;
+	size_t i, root = ~0U, usr = ~0U, swap = ~0U, def_usr = ~0U;
+	daddr_t free_space, dump_space, required;
 #if defined(DEFAULT_UFS2) && !defined(HAVE_UFS2_BOOT)
 	size_t boot = ~0U;
 #endif
@@ -1017,12 +1017,16 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 		if (wanted->infos[i].instflags & PUIINST_BOOT)
 			boot = i;
 #endif
-		if (wanted->infos[i].type == PT_root
-		    && wanted->infos[i].size > 0) {
-			if (strcmp(wanted->infos[i].mount, "/") == 0)
+		if (wanted->infos[i].type == PT_root) {
+			if (strcmp(wanted->infos[i].mount, "/") == 0) {
 				root = i;
-			else if (strcmp(wanted->infos[i].mount, "/usr") == 0)
-				usr = i;
+			} else if (
+			    strcmp(wanted->infos[i].mount, "/usr") == 0) {
+				if (wanted->infos[i].size > 0)
+					usr = i;
+				else
+					def_usr = i;
+			}
 			wanted->infos[i].fs_type = FS_BSDFFS;
 #ifdef DEFAULT_UFS2
 #ifndef HAVE_UFS2_BOOT
@@ -1130,8 +1134,20 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	 * impossible defaults.
 	 */
 	free_space = parts->free_space;
+	required = 0;
+	if (root < wanted->num)
+		required += wanted->infos[root].size;
+	if (usr < wanted->num)
+		required += wanted->infos[usr].size;
+	else if (def_usr < wanted->num)
+			required += wanted->infos[def_usr].def_size;
+	free_space -= required;
 	for (i = 0; i < wanted->num; i++) {
+		if (i == root || i == usr)
+			continue;	/* already accounted above */
 		if (wanted->infos[i].cur_part_id != NO_PART)
+			continue;
+		if (wanted->infos[i].size == 0)
 			continue;
 		if (wanted->infos[i].flags
 		    & (PUIFLG_IS_OUTER|PUIFLG_JUST_MOUNTPOINT))
@@ -1147,7 +1163,6 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 		free_space += inc;
 		wanted->infos[swap].size -= inc;
 	}
-
 	if (root < wanted->num) {
 		/* Add space for 2 system dumps to / (traditional) */
 		dump_space = get_ramsize() * (MEG/512);
