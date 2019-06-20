@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.7 2019/06/20 00:43:55 christos Exp $ */
+/* $NetBSD: configmenu.c,v 1.8 2019/06/20 15:58:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -295,7 +295,6 @@ set_binpkg(struct menudesc *menu, void *arg)
 {
 	configinfo **confp = arg;
 	char additional_pkgs[STRSIZE] = {0};
-	char pattern[STRSIZE];
 	int allok = 0;
 	arg_rv parm;
 
@@ -316,8 +315,8 @@ set_binpkg(struct menudesc *menu, void *arg)
 	} while (allok == 0);
 
 	/* configure pkgin to use $pkgpath as a repository */
-	snprintf(pattern, STRSIZE, "s,^[^#].*$,%s,", pkgpath);
-	replace("/usr/pkg/etc/pkgin/repositories.conf", pattern);
+	replace("/usr/pkg/etc/pkgin/repositories.conf", "s,^[^#].*$,%s,",
+	    pkgpath);
 
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 		"/usr/pkg/bin/pkgin -y update");
@@ -425,7 +424,7 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 			fprintf(logfp, "replacement pattern is %s\n", pattern);
 			fflush(logfp);
 		}
-		replace("/etc/rc.conf", pattern);
+		replace("/etc/rc.conf", "%s", pattern);
 	}
 
 	return 0;
