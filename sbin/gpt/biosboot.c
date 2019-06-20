@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.31 2019/04/04 13:55:40 martin Exp $ */
+/*	$NetBSD: biosboot.c,v 1.32 2019/06/20 10:56:38 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.31 2019/04/04 13:55:40 martin Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.32 2019/06/20 10:56:38 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -312,7 +312,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 		start = dkw.dkw_offset;
 		size = dkw.dkw_size;
 		ngpt = gpt_open(dkw.dkw_parent, gpt->flags, gpt->verbose,
-		    gpt->mediasz, gpt->secsz, gpt->timestamp);
+		    0, 0, 0);
 		if (ngpt == NULL)
 			goto cleanup;
 	}
