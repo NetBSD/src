@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.29 2018/07/03 03:41:24 jnemeth Exp $");
+__RCSID("$NetBSD: label.c,v 1.30 2019/06/21 02:14:59 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ struct gpt_cmd c_label = {
 #define usage() gpt_usage(NULL, &c_label)
 
 static void
-change(struct gpt_ent *ent, void *v)
+change(struct gpt_ent *ent, void *v, int backup)
 {
 	uint8_t *name = v;
 	utf8_to_utf16(name, ent->ent_name, __arraycount(ent->ent_name));
