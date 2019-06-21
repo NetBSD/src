@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.531 2019/06/20 03:31:54 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.532 2019/06/21 14:58:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.531 2019/06/20 03:31:54 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.532 2019/06/21 14:58:32 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2156,13 +2156,18 @@ do_posix_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
     dev_t dev)
 {
 
+	/*
+	 * The POSIX mknod(2) call is an alias for mkfifo(2) for S_IFIFO
+	 * in mode and dev=0.
+	 *
+	 * In all the other cases it's implementation defined behavior.
+	 */
+
 	if ((mode & S_IFIFO) && dev == 0)
 		return do_sys_mkfifoat(l, fdat, pathname, mode);
-	else if (mode & (S_IFCHR | S_IFBLK))
+	else
 		return do_sys_mknodat(l, fdat, pathname, mode, dev,
 		    UIO_USERSPACE);
-	else
-		return EINVAL;
 }
 
 /*
