@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.2 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: geom.c,v 1.3 2019/06/21 21:54:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -39,13 +39,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdint.h>
 #include <errno.h>
 #include "partutil.h"
 
 #include "defs.h"
 
-static int
-get_label(const char *disk, struct disklabel *l, unsigned long cmd)
+bool
+disk_ioctl(const char *disk, unsigned long cmd, void *d)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
@@ -53,40 +54,69 @@ get_label(const char *disk, struct disklabel *l, unsigned long cmd)
 
 	/* Open the disk. */
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0) 
-		return 0;
+	if (fd == -1) 
+		return false;
 
-	if (ioctl(fd, cmd, l) < 0) {
+	if (ioctl(fd, cmd, d) == -1) {
 		sv_errno = errno;
 		(void)close(fd);
 		errno = sv_errno;
-		return 0;
+		return false;
 	}
 	(void)close(fd);
-	return 1;
+	return true;
 }
 
-int
+bool
+get_wedge_list(const char *disk, struct dkwedge_list *dkwl)
+{
+	struct dkwedge_info *dkw;
+	memset(dkwl, 0, sizeof(*dkwl));
+
+	for (;;) {
+		if (!disk_ioctl(disk, DIOCLWEDGES, dkwl))
+			goto out;
+		if (dkwl->dkwl_nwedges == dkwl->dkwl_ncopied)
+			return true;
+		dkwl->dkwl_bufsize = dkwl->dkwl_nwedges * sizeof(*dkw);
+		dkw = realloc(dkwl->dkwl_buf, dkwl->dkwl_bufsize);
+		if (dkw == NULL)
+			goto out;
+		dkwl->dkwl_buf = dkw;
+	}
+out:
+	free(dkwl->dkwl_buf);
+	return false;
+}
+
+bool
+get_wedge_info(const char *disk, struct dkwedge_info *dkw)
+{
+
+	return disk_ioctl(disk, DIOCGWEDGEINFO, dkw);
+}
+
+bool
 get_disk_geom(const char *disk, struct disk_geom *d)
 {
 	char buf[MAXPATHLEN];
 	int fd, error;
 	    
 	if ((fd = opendisk(disk, O_RDONLY, buf, sizeof(buf), 0)) == -1)
-		return 0;
+		return false;
   
 	error = getdiskinfo(disk, fd, NULL, d, NULL);
 	close(fd);
 	if (error < 0) {
 		errno = error;
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
-int
+bool
 get_label_geom(const char *disk, struct disklabel *l)
 {
 
-	return get_label(disk, l, DIOCGDINFO);
+	return disk_ioctl(disk, DIOCGDINFO, l);
 }

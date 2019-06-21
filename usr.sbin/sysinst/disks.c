@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.34 2019/06/20 15:49:20 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.35 2019/06/21 21:54:39 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -205,7 +205,7 @@ scsi_strvis(char *sdst, size_t dlen, const char *ssrc, size_t slen)
 
 
 static int
-get_descr_scsi(struct disk_desc *dd, int fd)
+get_descr_scsi(struct disk_desc *dd)
 {
 	struct scsipi_inquiry_data inqbuf;
 	struct scsipi_inquiry cmd;
@@ -215,7 +215,6 @@ get_descr_scsi(struct disk_desc *dd, int fd)
 	     product[(sizeof(inqbuf.product) * 4) + 1],
 	     revision[(sizeof(inqbuf.revision) * 4) + 1];
 	char size[5];
-	int error;
 
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	memset(&cmd, 0, sizeof(cmd));
@@ -231,8 +230,8 @@ get_descr_scsi(struct disk_desc *dd, int fd)
 	req.flags = SCCMD_READ;
 	req.senselen = SENSEBUFLEN;
 
-	error = ioctl(fd, SCIOCCOMMAND, &req);
-	if (error == -1 || req.retsts != SCCMD_OK)
+	if (!disk_ioctl(dd->dd_name, SCIOCCOMMAND, &req)
+	    || req.retsts != SCCMD_OK)
 		return 0;
 
 	scsi_strvis(vendor, sizeof(vendor), inqbuf.vendor,
@@ -254,7 +253,7 @@ get_descr_scsi(struct disk_desc *dd, int fd)
 }
 
 static int
-get_descr_ata(struct disk_desc *dd, int fd)
+get_descr_ata(struct disk_desc *dd)
 {
 	struct atareq req;
 	static union {
@@ -264,7 +263,7 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	struct ataparams *inqbuf = &inbuf.inqbuf;
 	char model[sizeof(inqbuf->atap_model)+1];
 	char size[5];
-	int error, needswap = 0;
+	int needswap = 0;
 
 	memset(&inbuf, 0, sizeof(inbuf));
 	memset(&req, 0, sizeof(req));
@@ -275,8 +274,8 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	req.datalen = sizeof(inbuf);
 	req.timeout = 1000;
 
-	error = ioctl(fd, ATAIOCCOMMAND, &req);
-	if (error == -1 || req.retsts != ATACMD_OK)
+	if (!disk_ioctl(dd->dd_name, ATAIOCCOMMAND, &req)
+	    || req.retsts != ATACMD_OK)
 		return 0;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -311,26 +310,20 @@ get_descr_ata(struct disk_desc *dd, int fd)
 static void
 get_descr(struct disk_desc *dd)
 {
-	char diskpath[MAXPATHLEN], size[5];
-	int fd = -1;
-
-	fd = opendisk(dd->dd_name, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0)
-		goto done;
-
+	char size[5];
 	dd->dd_descr[0] = '\0';
 
 	/* try ATA */
-	if (get_descr_ata(dd, fd))
+	if (get_descr_ata(dd))
 		goto done;
 	/* try SCSI */
-	if (get_descr_scsi(dd, fd))
+	if (get_descr_scsi(dd))
 		goto done;
 
 	/* XXX: identify for ld @ NVME or microSD */
 
 	/* XXX: get description from raid, cgd, vnd... */
-
+done:
 	/* punt, just give some generic info */
 	humanize_number(size, sizeof(size),
 	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
@@ -338,10 +331,6 @@ get_descr(struct disk_desc *dd)
 
 	snprintf(dd->dd_descr, sizeof(dd->dd_descr),
 	    "%s (%s)", dd->dd_name, size);
-
-done:
-	if (fd >= 0)
-		close(fd);
 }
 
 /*
@@ -396,80 +385,39 @@ static bool
 get_wedge_descr(struct disk_desc *dd)
 {
 	struct dkwedge_info dkw;
-	char buf[MAXPATHLEN];
-	int fd;
-	bool ok = false;
 
-	fd = opendisk(dd->dd_name, O_RDONLY, buf, sizeof(buf), 0);
-	if (fd == -1)
+	if (!get_wedge_info(dd->dd_name, &dkw))
 		return false;
 
-	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
-		sprintf(dd->dd_descr, "%s (%s@%s)",
-		    dkw.dkw_wname, dkw.dkw_devname, dkw.dkw_parent);
-		ok = true;
-	}
-	close(fd);
-	return ok;
+	snprintf(dd->dd_descr, sizeof(dd->dd_descr), "%s (%s@%s)",
+	    dkw.dkw_wname, dkw.dkw_devname, dkw.dkw_parent);
+	return true;
 }
 
 static bool
 get_name_and_parent(const char *dev, char *name, char *parent)
 {
 	struct dkwedge_info dkw;
-	char buf[MAXPATHLEN];
-	int fd;
-	bool res = false;
 
-	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
-	if (fd == -1)
+	if (!get_wedge_info(dev, &dkw))
 		return false;
-
-	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
-		strcpy(name, (const char *)dkw.dkw_wname);
-		strcpy(parent, dkw.dkw_parent);
-		res = true;
-	}
-	close(fd);
-	return res;
+	strcpy(name, (const char *)dkw.dkw_wname);
+	strcpy(parent, dkw.dkw_parent);
+	return true;
 }
 
 static bool
 find_swap_part_on(const char *dev, char *swap_name)
 {
-	struct dkwedge_info *dkw;
 	struct dkwedge_list dkwl;
-	char buf[MAXPATHLEN];
-	size_t bufsize;
-	int fd;
+	struct dkwedge_info *dkw;
 	u_int i;
 	bool res = false;
 
-	dkw = NULL;
-	dkwl.dkwl_buf = dkw;
-	dkwl.dkwl_bufsize = 0;
-
-	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
-	if (fd == -1)
+	if (!get_wedge_list(dev, &dkwl))
 		return false;
 
-	for (;;) {
-		if (ioctl(fd, DIOCLWEDGES, &dkwl) == -1) {
-			dkwl.dkwl_ncopied = 0;
-			break;
-		}
-		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
-			break;
-		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
-		if (dkwl.dkwl_bufsize < bufsize) {
-			dkw = realloc(dkwl.dkwl_buf, bufsize);
-			if (dkw == NULL)
-				break;
-			dkwl.dkwl_buf = dkw;
-			dkwl.dkwl_bufsize = bufsize;
-		}
-	}
-
+	dkw = dkwl.dkwl_buf;
 	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
 		res = strcmp(dkw[i].dkw_ptype, DKW_PTYPE_SWAP) == 0;
 		if (res) {
@@ -477,8 +425,7 @@ find_swap_part_on(const char *dev, char *swap_name)
 			break;
 		}
 	}
-
-	close(fd);
+	free(dkwl.dkwl_buf);
 
 	return res;
 }
@@ -487,21 +434,11 @@ static bool
 is_ffs_wedge(const char *dev)
 {
 	struct dkwedge_info dkw;
-	char buf[MAXPATHLEN];
-	int fd;
-	bool res;
 
-	fd = opendisk(dev, O_RDONLY, buf, sizeof(buf), 0);
-	if (fd == -1)
+	if (!get_wedge_info(dev, &dkw))
 		return false;
 
-	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1)
-		return false;
-
-	res = strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS) == 0;
-	close(fd);
-
-	return res;
+	return strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS) == 0;
 }
 
 /*
@@ -1775,36 +1712,16 @@ get_dkwedges_sort(const void *a, const void *b)
 int
 get_dkwedges(struct dkwedge_info **dkw, const char *diskdev)
 {
-	int fd;
-	char buf[STRSIZE];
-	size_t bufsize;
 	struct dkwedge_list dkwl;
 
 	*dkw = NULL;
-	dkwl.dkwl_buf = *dkw;
-	dkwl.dkwl_bufsize = 0;
-	fd = opendisk(diskdev, O_RDONLY, buf, STRSIZE, 0);
-	if (fd < 0)
+	if (!get_wedge_list(diskdev, &dkwl))
 		return -1;
 
-	for (;;) {
-		if (ioctl(fd, DIOCLWEDGES, &dkwl) == -1)
-			return -2;
-		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
-			break;
-		bufsize = dkwl.dkwl_nwedges * sizeof(**dkw);
-		if (dkwl.dkwl_bufsize < bufsize) {
-			*dkw = realloc(dkwl.dkwl_buf, bufsize);
-			if (*dkw == NULL)
-				return -3;
-			dkwl.dkwl_buf = *dkw;
-			dkwl.dkwl_bufsize = bufsize;
-		}
+	if (dkwl.dkwl_nwedges > 0 && *dkw != NULL) {
+		qsort(*dkw, dkwl.dkwl_nwedges, sizeof(**dkw),
+		    get_dkwedges_sort);
 	}
 
-	if (dkwl.dkwl_nwedges > 0 && *dkw != NULL)
-		qsort(*dkw, dkwl.dkwl_nwedges, sizeof(**dkw), get_dkwedges_sort);
-
-	close(fd);
 	return dkwl.dkwl_nwedges;
 }
