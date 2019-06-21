@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.35 2019/06/20 15:56:41 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.36 2019/06/21 21:54:39 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -658,8 +658,11 @@ void	get_disk_info(char *);
 void	set_disk_info(char *);
 
 /* from geom.c */
-int	get_disk_geom(const char *, struct disk_geom *);
-int	get_label_geom(const char *, struct disklabel *);
+bool	disk_ioctl(const char *, unsigned long, void *);
+bool	get_wedge_list(const char *, struct dkwedge_list *);
+bool	get_wedge_info(const char *, struct dkwedge_info *);
+bool	get_disk_geom(const char *, struct disk_geom *);
+bool	get_label_geom(const char *, struct disklabel *);
 
 /* from net.c */
 extern int network_up;
