@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2019/06/20 00:43:56 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2019/06/21 16:57:12 martin Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -156,7 +156,7 @@ md_post_newfs(struct install_partition_desc *install)
 	bootxx = bootxx_name(install);
 	if (bootxx != NULL) {
 		error = run_program(RUN_DISPLAY,
-		    "/usr/sbin/installboot -v /dev/r%sa %s", pm->diskdev, bootxx);
+		    "/usr/sbin/installboot -v /dev/r%sd %s", pm->diskdev, bootxx);
 		free(bootxx);
 	} else
 		error = -1;
