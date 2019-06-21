@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.7 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.8 2019/06/21 09:34:30 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.7 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.8 2019/06/21 09:34:30 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 #ifdef SPKRDEBUG
 	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
-	audiobell(sc->sc_audiodev, xhz, ticks * (1000 / hz),
+	audiobell(sc->sc_audiodev, xhz, hztoms(ticks),
 	    sc->sc_spkr.sc_vol, 0);
 }
 
@@ -83,7 +83,7 @@ spkr_audio_rest(device_t self, int ticks)
 	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
 	if (ticks > 0)
-		audiobell(sc->sc_audiodev, 0, ticks * (1000 / hz),
+		audiobell(sc->sc_audiodev, 0, hztoms(ticks),
 		    sc->sc_spkr.sc_vol, 0);
 }
 
