@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.22 2018/07/03 03:41:24 jnemeth Exp $");
+__RCSID("$NetBSD: remove.c,v 1.23 2019/06/21 02:14:59 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ struct gpt_cmd c_remove = {
 #define usage() gpt_usage(NULL, &c_remove)
 
 static void
-change(struct gpt_ent *ent, void *v)
+change(struct gpt_ent *ent, void *v, int backup)
 {
 	/* Remove the primary entry by clearing the partition type. */
 	gpt_uuid_copy(ent->ent_type, gpt_uuid_nil);

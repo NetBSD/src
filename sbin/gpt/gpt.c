@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.78 2019/06/20 10:41:58 martin Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.79 2019/06/21 02:14:59 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1015,7 +1015,7 @@ gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch)
 
 int
 gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
-    void (*cfn)(struct gpt_ent *, void *), void *v)
+    void (*cfn)(struct gpt_ent *, void *, int), void *v)
 {
 	map_t m;
 	struct gpt_hdr *hdr;
@@ -1058,14 +1058,14 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 			continue;
 
 		/* Change the primary entry. */
-		(*cfn)(ent, v);
+		(*cfn)(ent, v, 0);
 
 		if (gpt_write_primary(gpt) == -1)
 			return -1;
 
 		ent = gpt_ent_backup(gpt, i);
 		/* Change the secondary entry. */
-		(*cfn)(ent, v);
+		(*cfn)(ent, v, 1);
 
 		if (gpt_write_backup(gpt) == -1)
 			return -1;
