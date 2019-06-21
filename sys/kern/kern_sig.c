@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.361 2019/06/18 23:53:55 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.362 2019/06/21 01:03:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.361 2019/06/18 23:53:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.362 2019/06/21 01:03:51 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1534,7 +1534,7 @@ proc_stop_lwps(struct proc *p)
 /*
  * Finish stopping of a process.  Mark it stopped and notify the parent.
  *
- * Drop p_lock briefly if PS_NOTIFYSTOP is set and ppsig is true.
+ * Drop p_lock briefly if ppsig is true.
  */
 static void
 proc_stop_done(struct proc *p, int ppmask)
@@ -1549,11 +1549,10 @@ proc_stop_done(struct proc *p, int ppmask)
 	p->p_stat = SSTOP;
 	p->p_waited = 0;
 	p->p_pptr->p_nstopchild++;
-	if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
-		/* child_psignal drops p_lock briefly. */
-		child_psignal(p, ppmask);
-		cv_broadcast(&p->p_pptr->p_waitcv);
-	}
+
+	/* child_psignal drops p_lock briefly. */
+	child_psignal(p, ppmask);
+	cv_broadcast(&p->p_pptr->p_waitcv);
 }
 
 /*
@@ -2251,7 +2250,7 @@ proc_stop(struct proc *p, int signo)
 	 * LWPs to a halt so they are included in p->p_nrlwps.  We musn't
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
-	p->p_sflag |= PS_STOPPING | PS_NOTIFYSTOP;
+	p->p_sflag |= PS_STOPPING;
 	membar_producer();
 
 	proc_stop_lwps(p);
@@ -2325,16 +2324,13 @@ proc_stop_callout(void *cookie)
 				 * We brought the process to a halt.
 				 * Mark it as stopped and notify the
 				 * parent.
+				 *
+				 * Note that proc_stop_done() will
+				 * drop p->p_lock briefly.
+				 * Arrange to restart and check
+				 * all processes again.
 				 */
-				if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
-					/*
-					 * Note that proc_stop_done() will
-					 * drop p->p_lock briefly.
-					 * Arrange to restart and check
-					 * all processes again.
-					 */
-					restart = true;
-				}
+				restart = true;
 				proc_stop_done(p, PS_NOCLDSTOP);
 			} else
 				more = true;

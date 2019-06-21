@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.353 2019/06/11 23:18:55 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.354 2019/06/21 01:03:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -395,7 +395,6 @@ struct proc {
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
-#define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_COREDUMP	0x20000000 /* Process core-dumped */
 #define	PS_CONTINUED	0x40000000 /* Process is continued */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
