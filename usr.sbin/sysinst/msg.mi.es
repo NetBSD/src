@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.12 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.13 2019/06/21 15:59:14 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1319,8 +1319,8 @@ message	other_fs_type	{Other type}
 message	editpack	{Edit name of the disk}
 message	edit_disk_pack_hdr
 {The name of the disk is arbitrary. 
-It is usefull to tell various disks apart. 
-It may alse be used when auto-crating dk(4) "wedges" for this disk. 
+It is useful for distinguishing between multiple disks.
+It may also be used when auto-creating dk(4) "wedges" for this disk.
 
 Enter disk name}
 
