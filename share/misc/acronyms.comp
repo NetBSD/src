@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.266 2019/06/17 15:53:20 sevan Exp $
+$NetBSD: acronyms.comp,v 1.267 2019/06/21 22:04:26 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -129,6 +129,7 @@ BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error {rate,ratio}
 BERT	boot error record table
+BFB	bidirectional forwarding detection
 BFD	binary {file,format} descriptor
 BFKL	big fscking kernel lock
 BFS	breadth-first search
@@ -261,6 +262,7 @@ CMYK	cyan magenta yellow black
 CN	{common,canonical} name
 CNC	computer numerical control
 CNR	carrier-to-noise ratio
+COA	change of authority
 COF	current operating frequency
 COFDM	coded orthogonal frequency division multiplexing
 COFF	common object file format
@@ -309,6 +311,7 @@ CSP	cryptographic service provider
 CSR	control [and] status registers
 CSRG	Computer Systems Research Group
 CSS	cascading style sheets
+CST	common spanning tree
 CSV	comma-separated values
 CTF	compact c type format
 CTM	close to metal
@@ -420,9 +423,11 @@ DRI	direct rendering infrastructure
 DRM	digital rights management
 DRRS	display refresh rate switching
 DS	debug store
+DS	differentiated services
 DSA	digital signature algorithm
 DSAP	destination service access point
 DSB	double-sideband modulation
+DSCP	differentiated services code point
 DSDT	differentiated system descriptor table
 DSF	device special file
 DSL	dataset and snapshot layer
@@ -740,6 +745,7 @@ ISOC	Internet Society
 ISP	Internet service provider
 ISR	in-service register
 ISR	interrupt service routine
+IST	internal spanning tree
 IST	interrupt stack table
 ISV	independent software vendor
 IT	information technology
@@ -855,6 +861,7 @@ LVDS	Low-Voltage Differential Signaling
 LWP	light-weight process
 LZSS	Lempel Ziv Storer Szymanski
 LZW	Lempel Ziv Welch
+MAB	MAC authentication bypass
 MAC	mandatory access control
 MAC	{media,medium} access control
 MAC	message authentication {check,code}
@@ -871,6 +878,7 @@ MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	Multi-Color Graphics Array
 MCH	memory controller hub
+MCLAG	multi-chassis link aggregation
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
@@ -1491,6 +1499,7 @@ TDM	time division multiplexing
 TDMA	time division multiple access
 TDOA	time difference of arrival
 TDP	thermal design {point,power}
+TDR	time-domain reflectometry
 TECO	Text Editor and Corrector
 TFT	thin film transistor
 TFTP	Trivial File Transfer Protocol
