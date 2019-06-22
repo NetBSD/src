@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.96 2019/06/19 23:33:07 kamil Exp $
+#	$NetBSD: configure.ac,v 1.97 2019/06/22 13:42:53 hannken Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -79,13 +79,21 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h \
-	sys/uio.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	libgen.h stdint.h util.h resolv.h arpa/nameser.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
-AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
+AC_CHECK_HEADERS(rpc/types.h,,
+	[echo '#include "nbtool_config.h"' >include/$ac_header.new
+	echo '#include "'$srcdir/../../common/include/$ac_header'"' \
+		>>include/$ac_header.new
+	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
+		rm -f include/$ac_header.new
+	else
+		mv -f include/$ac_header.new include/$ac_header
+	fi])
+AC_CHECK_HEADERS(netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' \
 		>>include/$ac_header.new
