@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.81 2019/02/04 04:09:13 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.82 2019/06/22 23:40:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -243,7 +243,14 @@ void	user(int, char **);
 int	ftp_connect(int, const struct sockaddr *, socklen_t, int);
 int	ftp_listen(int, int);
 int	ftp_poll(struct pollfd *, int, int);
+#ifndef SMALL
 void   *ftp_malloc(size_t);
 StringList *ftp_sl_init(void);
 void	ftp_sl_add(StringList *, char *);
 char   *ftp_strdup(const char *);
+#else
+#define	ftp_malloc(a)	malloc(a);
+#define ftp_sl_init()	sl_init()
+#define ftp_sl_add(a, b)	sl_add((a), (b))
+#define ftp_strdup(a)	strdup(a)
+#endif
