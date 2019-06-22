@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1629 2019/06/18 21:08:34 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1630 2019/06/22 22:49:18 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -209,12 +209,12 @@ Notes:
 Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
-Version:	349177
-Current Vers:	349177
+Version:	349295
+Current Vers:	349295
 Maintainer:	The FreeBSD Project
 Archive Site:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 Home Page:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
-Date:		2019-06-18
+Date:		2019-06-22
 Mailing List:
 Responsible:
 License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
