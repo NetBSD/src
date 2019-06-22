@@ -135,7 +135,7 @@ FreeBSD 4.0  |      |  |  |  | NetBSD 1.4.2    |             |
  |   FreeBSD 3.5.1  |  |  |  |    |            |             |
  |                  |  |  |  |    |            |             |
  *---FreeBSD 4.1    |  |  |  |    |            |             |
- |      |           |  | (?) |    |            |             |
+ |      |           |  |  |  |    |            |             |
  |   FreeBSD 4.1.1  |  |  /  |    |            |             |
  |      |           |  | /   |    |            |             |
  |   FreeBSD 4.2   Darwin/   | NetBSD 1.4.3    |             |
@@ -372,7 +372,7 @@ FreeBSD 5.2           |      |                 |                       |
  |     |      |     10.13    |   |    |    OpenBSD 6.1                 |
  |  FreeBSD   |       |      |   |    |        |               DragonFly 5.0.0
  |   11.1  FreeBSD    |      |   |    |        |                       |
- |     |    10.4      |      |   |    |    OpenBSD 6.2          DragonFly 5.0.1
+ |     |    10.4      |      |   |    |    OpenBSD 6.2         DragonFly 5.0.1
  |     |              |      |   |    |        |                       |
  |     `------.       |      |   | NetBSD      |               DragonFly 5.0.2
  |            |       |      |   |  7.1.1      |                       |
@@ -381,7 +381,7 @@ FreeBSD 5.2           |      |                 |                       |
  |            |       |      |   |  7.1.2      `--.                    |
  |            |       |      |   |                |                    |
  |            |       |      |   `-----.      OpenBSD 6.3              |
- |            |       |      *--NetBSD |          |             DragonFly 5.2.0
+ |            |       |      *--NetBSD |          |            DragonFly 5.2.0
  |            |       |      |   8.0   |          |                    |
  |            |       |      |   |     |          |            DragonFly 5.2.1
  |            |       |      |   |     |          |                    |
@@ -398,6 +398,8 @@ FreeBSD 5.2           |      |                 |                       |
  |                    |      |   |                |                    |
  |                    |      |  NetBSD            |                    |
  |                    |      |   8.1              |            DragonFly 5.6
+ |                    |      |                    |                    |
+ |                    |      |                    |            DragonFly 5.6.1
  |                    |      |                    |                    |
 FreeBSD 13 -current   |  NetBSD -current   OpenBSD -current   DragonFly -current
  |                    |      |                    |                    |
@@ -783,6 +785,7 @@ DragonFly 5.4.1		2018-12-24 [DFB]
 OpenBSD 6.5		2019-05-01 [OBD]
 NetBSD 8.1		2019-06-04 [NBD]
 DragonFly 5.6		2019-06-17 [DFB]
+DragonFly 5.6.1		2019-06-19 [DFB]
 
 Bibliography
 ------------------------
@@ -847,5 +850,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 349177 2019-06-18 21:02:40Z sevan $
-$NetBSD: bsd-family-tree,v 1.74 2019/06/18 21:07:21 sevan Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 349295 2019-06-22 22:43:40Z sevan $
+$NetBSD: bsd-family-tree,v 1.75 2019/06/22 22:47:01 sevan Exp $
