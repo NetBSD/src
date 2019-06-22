@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.40 2019/06/14 21:28:10 tnn Exp $
+#	$NetBSD: GENERIC,v 1.41 2019/06/22 07:58:55 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -310,7 +310,7 @@ tegratimer*	at fdt?			# Timers
 dwcwdt* 	at fdt?			# DesignWare watchdog
 mesonwdt*	at fdt?			# Amlogic Meson watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
-watchdog*	at fdt?			# Broadcom BCM283x watchdog
+bcmpmwdog*	at fdt?			# Broadcom BCM283x watchdog
 
 # Interrupt controller
 gic*		at fdt? pass 1		# ARM GIC
@@ -515,13 +515,13 @@ audio*		at audiobus?
 spkr*		at audio?
 
 # SDMMC
+bcmsdhost*	at fdt?			# Broadcom BCM283x SD Host Interface
 dwcmmc*		at fdt?			# DesignWare SDMMC
 mesonsdio*	at fdt?			# Amlogic Meson SDIO controller
 mesonsdhc*	at fdt?			# Amlogic Meson SDHC controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
-sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0

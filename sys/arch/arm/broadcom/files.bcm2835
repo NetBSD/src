@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.33 2019/05/08 13:40:14 isaki Exp $
+#	$NetBSD: files.bcm2835,v 1.34 2019/06/22 07:58:55 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -25,8 +25,8 @@ attach	bcmtmr at fdt with bcmtmr_fdt
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !soc_bcm2836
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	watchdog: sysmon_wdog
-attach	watchdog at fdt with bcmpmwdog_fdt
+device	bcmpmwdog: sysmon_wdog
+attach	bcmpmwdog at fdt with bcmpmwdog_fdt
 file	arch/arm/broadcom/bcm2835_pmwdog.c	bcmpmwdog_fdt
 
 # Random number generator (BCM2835_RNG_BASE)
@@ -48,8 +48,8 @@ attach	sdhc at fdt with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
-device	sdhost: sdmmcbus
-attach	sdhost at fdt with bcmsdhost
+device	bcmsdhost: sdmmcbus
+attach	bcmsdhost at fdt with bcmsdhost
 file	arch/arm/broadcom/bcm2835_sdhost.c	bcmsdhost	needs-flag
 
 # DMA Controller (BCM2835_DMA0_BASE)
