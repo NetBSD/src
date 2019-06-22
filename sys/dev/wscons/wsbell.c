@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.11 2019/04/18 14:01:28 isaki Exp $ */
+/* $NetBSD: wsbell.c,v 1.12 2019/06/22 08:03:01 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.11 2019/04/18 14:01:28 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.12 2019/06/22 08:03:01 isaki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -396,9 +396,9 @@ getbell:
 			return (EACCES);
 		if (data == NULL)
 			return 0;
-#define d ((struct wskbd_bell_data *)data)
-		spkr_audio_play(sc, d->pitch, d->period, d->volume);
-#undef d
+		ubdp = (struct wskbd_bell_data *)data;
+		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
+		spkr_audio_play(sc, ubdp->pitch, ubdp->period, ubdp->volume);
 		return 0;
 	}
 
