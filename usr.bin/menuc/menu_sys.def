@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.69 2019/04/12 15:59:34 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.70 2019/06/22 20:44:54 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -764,7 +764,7 @@ process_menu(int num, void *arg)
 				break;
 		}
 
-		if (opt->opt_menu != -1) {
+		if (opt->opt_menu != OPT_NOMENU) {
 			if (!(opt->opt_flags & OPT_SUB)) {
 				num = opt->opt_menu;
 				wclear(m->mw);
