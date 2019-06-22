@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.29 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.30 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -510,8 +510,6 @@ config_network(void)
 
 	for (i = 0; i < num_devs; i++) {
 		net_menu[i].opt_name = net_devs[i].if_dev;
-		net_menu[i].opt_exp_name = NULL;
-		net_menu[i].opt_menu = OPT_NOMENU;
 		net_menu[i].opt_flags = OPT_EXIT;
 		net_menu[i].opt_action = set_menu_select;
 	}
