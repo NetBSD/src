@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.12 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,8 +79,8 @@ static int script_flip (menudesc *, void *);
 #define BUFSIZE 4096
 
 menu_ent logmenu [2] = {
-	{ .opt_menu=OPT_NOMENU, .opt_action=log_flip},
-	{ .opt_menu=OPT_NOMENU, .opt_action=script_flip}
+	{ .opt_action=log_flip},
+	{ .opt_action=script_flip}
 };
 
 static void

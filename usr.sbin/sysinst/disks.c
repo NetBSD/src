@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.35 2019/06/21 21:54:39 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.36 2019/06/22 20:46:07 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -800,13 +800,11 @@ find_disks(const char *doingwhat)
 			for (i = 0; i < numdisks; i++) {
 				dsk_menu[i].opt_name =
 				    disks[i].dd_descr;
-				dsk_menu[i].opt_menu = OPT_NOMENU;
 				dsk_menu[i].opt_flags = OPT_EXIT;
 				dsk_menu[i].opt_action = set_menu_select;
 			}
 			if (partman_go < 0) {
 				dsk_menu[i].opt_name = MSG_partman;
-				dsk_menu[i].opt_menu = OPT_NOMENU;
 				dsk_menu[i].opt_flags = OPT_EXIT;
 				dsk_menu[i].opt_action = set_menu_select;
 			}
