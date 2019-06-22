@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.15 2019/06/20 19:26:41 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.16 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -414,17 +414,14 @@ fill_ptn_menu(struct partition_usage_set *pset)
 	memset(pset->menu_opts, 0, (pset->num+3)*sizeof(*pset->menu_opts));
 	for (m = pset->menu_opts, p = pset->infos, i = 0; i < pset->num;
 	    m++, p++, i++) {
-		m->opt_menu = OPT_NOMENU;
 		m->opt_action = set_ptn_size;
 	}
 
 	m->opt_name = size_separator;
-	m->opt_menu = OPT_NOMENU;
 	m->opt_flags = OPT_IGNORE|OPT_NOSHORT;
 	m++;
 
 	m->opt_name = MSG_add_another_ptn;
-	m->opt_menu = OPT_NOMENU;
 	m->opt_action = add_other_ptn_size;
 	m++;
 
@@ -874,24 +871,18 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 
 	if (have_existing) {
 		opt->opt_name = MSG_Keep_existing_partitions;
-		opt->opt_exp_name = NULL;
-		opt->opt_menu = OPT_NOMENU;
 		opt->opt_flags = OPT_EXIT;
 		opt->opt_action = set_keep_existing;
 		opt++;
 		num_opts++;
 	}
 	opt->opt_name = MSG_Set_Sizes;
-	opt->opt_exp_name = NULL;
-	opt->opt_menu = OPT_NOMENU;
 	opt->opt_flags = OPT_EXIT;
 	opt->opt_action = set_edit_part_sizes;
 	opt++;
 	num_opts++;
 
 	opt->opt_name = MSG_Use_Default_Parts;
-	opt->opt_exp_name = NULL;
-	opt->opt_menu = OPT_NOMENU;
 	opt->opt_flags = OPT_EXIT;
 	opt->opt_action = set_use_default_sizes;
 	opt++;

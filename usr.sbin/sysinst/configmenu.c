@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.8 2019/06/20 15:58:59 christos Exp $ */
+/* $NetBSD: configmenu.c,v 1.9 2019/06/22 20:46:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -181,10 +181,7 @@ init_config_menu(configinfo *conf, menu_ent *me, configinfo **ce)
 		if (opt == CONFIGOPT_LAST)
 			break;
 		*ce = conf;
-		me->opt_menu = OPT_NOMENU;
-		me->opt_flags = 0;
-		me->opt_name = NULL;  /* NULL so set_config will draw */
-		me->opt_exp_name = NULL;
+		memset(me, 0, sizeof(*me));
 		me->opt_action = conf->action;
 		configopts++;
 		ce++;

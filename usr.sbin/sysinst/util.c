@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.24 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.25 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -565,6 +565,7 @@ get_via_cdrom(void)
 		return SET_OK;
 	}
 
+	memset(cd_menu, 0, sizeof(cd_menu));
 	num_cds = get_available_cds();
 	if (num_cds <= 0) {
 		silent = true;
@@ -576,8 +577,6 @@ get_via_cdrom(void)
 	} else {
 		for (i = 0; i< num_cds; i++) {
 			cd_menu[i].opt_name = cds[i].menu;
-			cd_menu[i].opt_exp_name = NULL;
-			cd_menu[i].opt_menu = OPT_NOMENU;
 			cd_menu[i].opt_flags = OPT_EXIT;
 			cd_menu[i].opt_action = set_menu_select;
 		}
@@ -809,10 +808,7 @@ initialise_set_menu(distinfo *dist, menu_ent *me, distinfo **de, int all_none)
 		if (!(set_status[set] & SET_VALID))
 			continue;
 		*de = dist;
-		me->opt_menu = OPT_NOMENU;
-		me->opt_flags = 0;
-		me->opt_name = NULL;
-		me->opt_exp_name = NULL;
+		memset(me, 0, sizeof(*me));
 		if (set != SET_GROUP)
 			me->opt_action = set_toggle;
 		else {
@@ -830,16 +826,10 @@ initialise_set_menu(distinfo *dist, menu_ent *me, distinfo **de, int all_none)
 	}
 
 	if (all_none) {
-		me->opt_menu = OPT_NOMENU;
-		me->opt_flags = 0;
 		me->opt_name = MSG_select_all;
-		me->opt_exp_name = NULL;
 		me->opt_action = set_all;
 		me++;
-		me->opt_menu = OPT_NOMENU;
-		me->opt_flags = 0;
 		me->opt_name = MSG_select_none;
-		me->opt_exp_name = NULL;
 		me->opt_action = set_none;
 		sets += 2;
 	}
@@ -856,6 +846,7 @@ set_sublist(menudesc *menu, void *arg)
 	int menu_no;
 	int sets;
 
+	memset(me, 0, sizeof(me));
 	sets = initialise_set_menu(dist[menu->cursel] + 1, me, de, 1);
 
 	menu_no = new_menu(NULL, me, sets, 20, 10, 0, select_menu_width,
@@ -880,6 +871,7 @@ customise_sets(void)
 	msg_display(MSG_cur_distsets);
 	msg_table_add(MSG_cur_distsets_header);
 
+	memset(me, 0, sizeof(me));
 	sets = initialise_set_menu(dist_list, me, de, 0);
 
 	menu_no = new_menu(NULL, me, sets, 0, 5, 0, select_menu_width,
@@ -1334,7 +1326,7 @@ tzm_set_names(menudesc *m, void *arg)
 	struct stat sb;
 
 	if (tz_menu == NULL)
-		tz_menu = malloc(maxfiles * sizeof *tz_menu);
+		tz_menu = calloc(maxfiles, sizeof *tz_menu);
 	if (tz_names == NULL)
 		tz_names = malloc(maxfiles * sizeof *tz_names);
 	if (tz_menu == NULL || tz_names == NULL)
@@ -1347,9 +1339,6 @@ tzm_set_names(menudesc *m, void *arg)
 	if (fp != zoneinfo_dir + zonerootlen) {
 		tz_names[0] = 0;
 		tz_menu[0].opt_name = msg_string(MSG_tz_back);
-		tz_menu[0].opt_exp_name = NULL;
-		tz_menu[0].opt_menu = OPT_NOMENU;
-		tz_menu[0].opt_flags = 0;
 		tz_menu[0].opt_action = set_tz_back;
 		nfiles = 1;
 	}
@@ -1382,9 +1371,6 @@ tzm_set_names(menudesc *m, void *arg)
 				continue;
 			tz_names[nfiles] = strdup(zoneinfo_dir + zonerootlen);
 			tz_menu[nfiles].opt_name = tz_names[nfiles];
-			tz_menu[nfiles].opt_exp_name = NULL;
-			tz_menu[nfiles].opt_menu = OPT_NOMENU;
-			tz_menu[nfiles].opt_flags = 0;
 			nfiles++;
 		}
 		closedir(dir);
