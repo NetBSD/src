@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.2 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.3 2019/06/22 20:46:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.2 2019/06/12 06:20:18 martin Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.3 2019/06/22 20:46:07 christos Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -107,7 +107,6 @@ get_kb_encoding(void)
 				if (strcmp(kb_types[i].kb_name, dflt) == 0)
 					kb_default = i;
 			}
-			opt[i].opt_menu = OPT_NOMENU;
 			opt[i].opt_action = set_kb_encoding;
 		}
 		kb_menu = new_menu(MSG_Keyboard_type, opt, __arraycount(opt),

@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.7 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.8 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.7 2019/06/12 06:20:17 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.8 2019/06/22 20:46:07 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -541,11 +541,9 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 
 	ndx = 0;
 	opts[ndx].opt_name = msg_string(MSG_fs_type_ffsv2);
-	opts[ndx].opt_menu = OPT_NOMENU;
 	opts[ndx].opt_action = set_fstype_ext;
 	ndx++;
 	opts[ndx].opt_name = msg_string(MSG_fs_type_ffs);
-	opts[ndx].opt_menu = OPT_NOMENU;
 	opts[ndx].opt_action = set_fstype_ext;
 	ndx++;
 	for (i = 0; i < FSMAXTYPES && ndx < cnt; i++) {
@@ -556,7 +554,6 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 		if (fstypenames[i] == NULL)
 			continue;
 		opts[ndx].opt_name = fstypenames[i];
-		opts[ndx].opt_menu = OPT_NOMENU;
 		opts[ndx].opt_action = set_fstype_ext;
 		ndx++;
 	}
@@ -666,7 +663,6 @@ edit_fs_type(menudesc *menu, void *arg)
 	/* special case entry 0: two FFS entries */
 	for (i = 0; i < __arraycount(edit_fs_common_types); i++) {
 		opts[i+1].opt_name = getfslabelname(edit_fs_common_types[i], 0);
-		opts[i+1].opt_menu = OPT_NOMENU;
 		opts[i+1].opt_action = set_fstype;
 	}
 	/* duplicate FFS (at offset 1) into first entry */
@@ -676,7 +672,6 @@ edit_fs_type(menudesc *menu, void *arg)
 	/* add secondary sub-menu */
 	assert(i+1 < (size_t)cnt);
 	opts[i+1].opt_name = msg_string(MSG_other_fs_type);
-	opts[i+1].opt_menu = OPT_NOMENU;
 	opts[i+1].opt_action = edit_fs_type_ext;
 
 	m = new_menu(MSG_Select_the_type, opts, cnt,
@@ -708,30 +703,30 @@ edit_ptn(menudesc *menu, void *arg)
 	bool is_new_part, with_inst_opt = pset->parts->parent == NULL;
 
 	static const menu_ent edit_ptn_fields_head[] = {
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_type },
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_start },
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_size },
-		{ .opt_menu=OPT_NOMENU, .opt_flags=OPT_IGNORE },
+		{ .opt_action=edit_fs_type },
+		{ .opt_action=edit_fs_start },
+		{ .opt_action=edit_fs_size },
+		{ .opt_flags=OPT_IGNORE },
 	};
 
 	static const menu_ent edit_ptn_fields_head_add[] = {
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_install },
+		{ .opt_action=edit_install },
 	};
 
 	static const menu_ent edit_ptn_fields_head2[] = {
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_preserve },
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_mount },
+		{ .opt_action=edit_fs_preserve },
+		{ .opt_action=edit_fs_mount },
 		{ .opt_menu=MENU_mountoptions, .opt_flags=OPT_SUB },
-		{ .opt_menu=OPT_NOMENU, .opt_action=edit_fs_mountpt },
+		{ .opt_action=edit_fs_mountpt },
 	};
 	static const menu_ent edit_ptn_fields_tail[] = {
 		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
 		  .opt_flags=OPT_SUB },
-		{ .opt_name=MSG_restore, .opt_menu=OPT_NOMENU,
+		{ .opt_name=MSG_restore,
 		  .opt_action=edit_restore},
-		{ .opt_name=MSG_Delete_partition, .opt_menu=OPT_NOMENU,
+		{ .opt_name=MSG_Delete_partition,
 		  .opt_action=edit_delete_ptn},
-		{ .opt_name=MSG_cancel, .opt_menu=OPT_NOMENU,
+		{ .opt_name=MSG_cancel,
 		  .opt_action=edit_cancel},
 	};
 
@@ -773,7 +768,6 @@ edit_ptn(menudesc *menu, void *arg)
 		for (size_t i = 0;
 		    i < pset->parts->pscheme->custom_attribute_count;
 		    i++, popt++) {
-			popt->opt_menu = OPT_NOMENU;
 			popt->opt_action = edit_ptn_custom_type;
 		}
 	}
@@ -1291,7 +1285,6 @@ edit_fspart_add(menudesc *m, void *arg)
 	memmove(nmenopts+off+1, nmenopts+off,
 	    (m->numopts-off)*sizeof(*nmenopts));
 	memset(&nmenopts[off], 0, sizeof(nmenopts[off]));
-	nmenopts[off].opt_menu = OPT_NOMENU;
 	nmenopts[off].opt_action = edit_ptn;
 	pset->menu_opts = m->opts = nmenopts;
 	m->numopts++;
@@ -1331,7 +1324,6 @@ add_partition_adder(menudesc *m, struct partition_usage_set *pset)
 	memset(&nmenopts[off], 0, sizeof(nmenopts[off]));
 
 	nmenopts[off].opt_name = MSG_addpart;
-	nmenopts[off].opt_menu = OPT_NOMENU;
 	nmenopts[off].opt_flags = OPT_SUB;
 	nmenopts[off].opt_action = edit_fspart_add;
 
@@ -1410,20 +1402,17 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 
 	op = pset->menu_opts;
 	for (i = 0; i < pset->parts->num_part; i++) {
-		op->opt_menu = OPT_NOMENU;
 		op->opt_action = edit_ptn;
 		op++;
 	}
 	/* separator line between partitions and actions */
 	op->opt_name = fspart_separator;
-	op->opt_menu = OPT_NOMENU;
 	op->opt_flags = OPT_IGNORE|OPT_NOSHORT;
 	op++;
 
 	/* followed by new partition adder */
 	if (may_add) {
 		op->opt_name = MSG_addpart;
-		op->opt_menu = OPT_NOMENU;
 		op->opt_flags = OPT_SUB;
 		op->opt_action = edit_fspart_add;
 		op++;
@@ -1438,7 +1427,6 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 
 	if (may_edit_pack) {
 		op->opt_name = MSG_editpack;
-		op->opt_menu = OPT_NOMENU;
 		op->opt_flags = OPT_SUB;
 		op->opt_action = edit_fspart_pack;
 		op++;
@@ -1446,7 +1434,6 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 	        
 	/* and abort option */
 	op->opt_name = MSG_cancel;
-	op->opt_menu = OPT_NOMENU;
 	op->opt_flags = OPT_EXIT;
 	op->opt_action = edit_fspart_abort;
 	op++;
