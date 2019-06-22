@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.13 2019/06/19 13:39:18 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.14 2019/06/22 19:47:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.13 2019/06/19 13:39:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.14 2019/06/22 19:47:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,18 +94,8 @@ extern struct bus_space arm_generic_a4x_bs_tag;
 static struct plcom_instance plcom_console;
 #endif
 
-struct arm32_bus_dma_tag acpi_coherent32_dma_tag;
-static struct arm32_dma_range acpi_coherent32_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0,
-		.dr_busbase = 0,
-		.dr_len = 0xffffffffU,
-	  	.dr_flags = _BUS_DMAMAP_COHERENT,
-	}
-};
-
-struct arm32_bus_dma_tag acpi_coherent64_dma_tag;
-static struct arm32_dma_range acpi_coherent64_ranges[] = {
+struct arm32_bus_dma_tag acpi_coherent_dma_tag;
+static struct arm32_dma_range acpi_coherent_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0,
 		.dr_busbase = 0,
@@ -129,13 +119,9 @@ acpi_platform_bootstrap(void)
 {
 	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
-	acpi_coherent32_dma_tag = arm_generic_dma_tag;
-	acpi_coherent32_dma_tag._ranges = acpi_coherent32_ranges;
-	acpi_coherent32_dma_tag._nranges = __arraycount(acpi_coherent32_ranges);
-
-	acpi_coherent64_dma_tag = arm_generic_dma_tag;
-	acpi_coherent64_dma_tag._ranges = acpi_coherent64_ranges;
-	acpi_coherent64_dma_tag._nranges = __arraycount(acpi_coherent64_ranges);
+	acpi_coherent_dma_tag = arm_generic_dma_tag;
+	acpi_coherent_dma_tag._ranges = acpi_coherent_ranges;
+	acpi_coherent_dma_tag._nranges = __arraycount(acpi_coherent_ranges);
 }
 
 static void
@@ -256,7 +242,7 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 
 	faa->faa_bst = &arm_generic_bs_tag;
 	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
-	faa->faa_dmat = &acpi_coherent64_dma_tag;
+	faa->faa_dmat = &acpi_coherent_dma_tag;
 }
 
 static void
