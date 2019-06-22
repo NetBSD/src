@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.3 2017/04/27 10:01:53 msaitoh Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.4 2019/06/22 12:57:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.3 2017/04/27 10:01:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.4 2019/06/22 12:57:41 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,27 +56,22 @@ tpm_isa_match(device_t parent, cfdata_t match, void *aux)
 	if (tpm_cd.cd_devs && tpm_cd.cd_devs[0])
 		return 0;
 
-	if (tpm_legacy_probe(ia->ia_iot, ia->ia_io[0].ir_addr)) {
-		ia->ia_io[0].ir_size = 2;
-		return 1;
-	}
-
 	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
 		return 0;
 
 	/* XXX: integer locator sign extension */
-	if (bus_space_map(bt, (unsigned int)ia->ia_iomem[0].ir_addr, TPM_SIZE,
+	if (bus_space_map(bt, (unsigned int)ia->ia_iomem[0].ir_addr, TPM_SPACE_SIZE,
 	    0, &bh))
 		return 0;
 
 	if ((rv = tpm_tis12_probe(bt, bh))) {
 		ia->ia_nio = 0;
 		ia->ia_io[0].ir_size = 0;
-		ia->ia_iomem[0].ir_size = TPM_SIZE;
+		ia->ia_iomem[0].ir_size = TPM_SPACE_SIZE;
 	}
 	ia->ia_ndrq = 0;
 
-	bus_space_unmap(bt, bh, TPM_SIZE);
+	bus_space_unmap(bt, bh, TPM_SPACE_SIZE);
 	return rv;
 }
 
@@ -90,35 +85,23 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 	int rv;
 
 	sc->sc_dev = self;
+	sc->sc_ver = TPM_1_2;
 
-	if (tpm_legacy_probe(ia->ia_iot, ia->ia_io[0].ir_addr)) {
-		sc->sc_bt = ia->ia_iot;
-		iobase = (unsigned int)ia->ia_io[0].ir_addr;
-		size = ia->ia_io[0].ir_size;
-		sc->sc_batm = ia->ia_iot;
-		sc->sc_init = tpm_legacy_init;
-		sc->sc_start = tpm_legacy_start;
-		sc->sc_read = tpm_legacy_read;
-		sc->sc_write = tpm_legacy_write;
-		sc->sc_end = tpm_legacy_end;
-	} else {
-		sc->sc_bt = ia->ia_memt;
-		iobase = (unsigned int)ia->ia_iomem[0].ir_addr;
-		size = TPM_SIZE;
-		sc->sc_init = tpm_tis12_init;
-		sc->sc_start = tpm_tis12_start;
-		sc->sc_read = tpm_tis12_read;
-		sc->sc_write = tpm_tis12_write;
-		sc->sc_end = tpm_tis12_end;
-	}
+	sc->sc_bt = ia->ia_memt;
+	iobase = (unsigned int)ia->ia_iomem[0].ir_addr;
+	size = TPM_SPACE_SIZE;
+	sc->sc_init = tpm_tis12_init;
+	sc->sc_start = tpm_tis12_start;
+	sc->sc_read = tpm_tis12_read;
+	sc->sc_write = tpm_tis12_write;
+	sc->sc_end = tpm_tis12_end;
 
 	if (bus_space_map(sc->sc_bt, iobase, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
 		return;
 	}
 
-	if ((rv = (*sc->sc_init)(sc, ia->ia_irq[0].ir_irq,
-	    device_xname(sc->sc_dev))) != 0) {
+	if ((rv = (*sc->sc_init)(sc, ia->ia_irq[0].ir_irq)) != 0) {
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, size);
 		return;
 	}
@@ -132,11 +115,11 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 	    (sc->sc_ih = isa_intr_establish_xname(ia->ia_ic,
 	     ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY, tpm_intr, sc,
 	     device_xname(sc->sc_dev))) == NULL) {
-		bus_space_unmap(sc->sc_bt, sc->sc_bh, TPM_SIZE);
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, TPM_SPACE_SIZE);
 		aprint_error_dev(sc->sc_dev, "cannot establish interrupt\n");
 		return;
 	}
 
-	if (!pmf_device_register(sc->sc_dev, tpm_suspend, tpm_resume))
-		aprint_error_dev(sc->sc_dev, "Cannot set power mgmt handler\n");
+	if (!pmf_device_register(sc->sc_dev, tpm12_suspend, tpm12_resume))
+		aprint_error_dev(sc->sc_dev, "cannot set power mgmt handler\n");
 }
