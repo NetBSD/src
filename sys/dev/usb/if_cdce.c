@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.48 2019/06/22 04:35:46 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.49 2019/06/22 04:45:04 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.48 2019/06/22 04:35:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.49 2019/06/22 04:45:04 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -126,20 +126,20 @@ struct cdce_softc {
 	kmutex_t		 cdce_start_lock;
 };
 
-Static int	 cdce_tx_list_init(struct cdce_softc *);
-Static int	 cdce_rx_list_init(struct cdce_softc *);
-Static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
+static int	 cdce_tx_list_init(struct cdce_softc *);
+static int	 cdce_rx_list_init(struct cdce_softc *);
+static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
 		    struct mbuf *);
-Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-Static void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
-Static void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
-Static void	 cdce_start(struct ifnet *);
-Static int	 cdce_ioctl(struct ifnet *, u_long, void *);
-Static void	 cdce_init(void *);
-Static void	 cdce_watchdog(struct ifnet *);
-Static void	 cdce_stop(struct cdce_softc *);
+static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
+static void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
+static void	 cdce_start(struct ifnet *);
+static int	 cdce_ioctl(struct ifnet *, u_long, void *);
+static void	 cdce_init(void *);
+static void	 cdce_watchdog(struct ifnet *);
+static void	 cdce_stop(struct cdce_softc *);
 
-Static const struct cdce_type cdce_devs[] = {
+static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
   {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, CDCE_NO_UNION },
   {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, CDCE_NO_UNION },
@@ -377,7 +377,7 @@ cdce_detach(device_t self, int flags)
 	return 0;
 }
 
-Static void
+static void
 cdce_start(struct ifnet *ifp)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -404,7 +404,7 @@ cdce_start(struct ifnet *ifp)
 	ifp->if_timer = 6;
 }
 
-Static int
+static int
 cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 {
 	struct cdce_chain	*c;
@@ -437,7 +437,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	return 0;
 }
 
-Static void
+static void
 cdce_stop(struct cdce_softc *sc)
 {
 	usbd_status	 err;
@@ -503,7 +503,7 @@ cdce_stop(struct cdce_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
-Static int
+static int
 cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -565,7 +565,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 	return error;
 }
 
-Static void
+static void
 cdce_watchdog(struct ifnet *ifp)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -577,7 +577,7 @@ cdce_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", device_xname(sc->cdce_dev));
 }
 
-Static void
+static void
 cdce_init(void *xsc)
 {
 	struct cdce_softc	*sc = xsc;
@@ -637,7 +637,7 @@ cdce_init(void *xsc)
 	splx(s);
 }
 
-Static int
+static int
 cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 {
 	struct mbuf	*m_new = NULL;
@@ -666,7 +666,7 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 	return 0;
 }
 
-Static int
+static int
 cdce_rx_list_init(struct cdce_softc *sc)
 {
 	struct cdce_cdata	*cd;
@@ -692,7 +692,7 @@ cdce_rx_list_init(struct cdce_softc *sc)
 	return 0;
 }
 
-Static int
+static int
 cdce_tx_list_init(struct cdce_softc *sc)
 {
 	struct cdce_cdata	*cd;
@@ -718,7 +718,7 @@ cdce_tx_list_init(struct cdce_softc *sc)
 	return 0;
 }
 
-Static void
+static void
 cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;
@@ -782,7 +782,7 @@ done:
 	usbd_transfer(c->cdce_xfer);
 }
 
-Static void
+static void
 cdce_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
