@@ -4098,8 +4098,7 @@ fi
 fi
 
 for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h \
-	sys/uio.h
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4129,13 +4128,33 @@ fi
 
 done
 
-for ac_header in rpc/types.h netconfig.h
+for ac_header in rpc/types.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "rpc/types.h" "ac_cv_header_rpc_types_h" "$ac_includes_default"
+if test "x$ac_cv_header_rpc_types_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_RPC_TYPES_H 1
+_ACEOF
+
+else
+  echo '#include "nbtool_config.h"' >include/$ac_header.new
+	echo '#include "'$srcdir/../../common/include/$ac_header'"' \
+		>>include/$ac_header.new
+	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
+		rm -f include/$ac_header.new
+	else
+		mv -f include/$ac_header.new include/$ac_header
+	fi
+fi
+
+done
+
+for ac_header in netconfig.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "netconfig.h" "ac_cv_header_netconfig_h" "$ac_includes_default"
+if test "x$ac_cv_header_netconfig_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_NETCONFIG_H 1
 _ACEOF
 
 else
@@ -5111,8 +5130,6 @@ else
 # ifdef _MSC_VER
 #  include <malloc.h>
 #  define alloca _alloca
-# elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-#   include <stdlib.h>
 # else
 #  ifdef HAVE_ALLOCA_H
 #   include <alloca.h>
@@ -7502,3 +7519,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
