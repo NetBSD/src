@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2019/06/22 20:46:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -368,8 +368,6 @@ select_language(void)
 
 	for (lang = 0; lang < num_lang; lang++) {
 		opt[lang].opt_name = lang_msg[lang];
-		opt[lang].opt_exp_name = NULL;
-		opt[lang].opt_menu = OPT_NOMENU;
 		opt[lang].opt_action = set_language;
 	}
 

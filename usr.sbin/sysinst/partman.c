@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.34 2019/06/20 00:43:55 christos Exp $ */
+/*	$NetBSD: partman.c,v 1.35 2019/06/22 20:46:07 christos Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -311,10 +311,8 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 
 	menu_entries = calloc(menu_entries_count, sizeof *menu_entries);
 	for (i = 0; i < menu_entries_count - 1; i++)
-		menu_entries[i] = (menu_ent) {	.opt_menu=OPT_NOMENU,
-						.opt_action=action };
+		menu_entries[i] = (menu_ent) { .opt_action=action };
 	menu_entries[i] = (menu_ent) {	.opt_name=MSG_fremove,
-					.opt_menu=OPT_NOMENU,
 					.opt_flags=OPT_EXIT,
 					.opt_action=action };
 
@@ -383,7 +381,6 @@ pm_dev_list(int type)
 			menu_entries[num_devs] = (struct menu_ent) {
 				.opt_name = disk_entries[num_devs].fullname,					
 				.opt_action = set_menu_select,
-				.opt_menu = OPT_NOMENU,
 				.opt_flags = OPT_EXIT,
 			};
 			num_devs++;
@@ -581,9 +578,9 @@ pm_raid_set_value(menudesc *m, void *arg)
 	struct raid_desc *dev_ptr = arg;
 
 	static menu_ent menuent_disk_adddel[] = {
-	    { .opt_name=MSG_add, .opt_menu=OPT_NOMENU, .opt_flags=OPT_EXIT,
+	    { .opt_name=MSG_add, .opt_flags=OPT_EXIT,
 	      .opt_action=pm_raid_disk_add },
-	    { .opt_name=MSG_remove, .opt_menu=OPT_NOMENU, .opt_flags=OPT_EXIT,
+	    { .opt_name=MSG_remove, .opt_flags=OPT_EXIT,
 	      .opt_action=pm_raid_disk_del }
 	};
 	static int menu_disk_adddel = -1;
@@ -756,7 +753,6 @@ pm_raid_disk_del(menudesc *m, void *arg)
 		menu_entries[num_devs] = (struct menu_ent) {
 			.opt_name = dev_ptr->comp[i].name,
 			.opt_action = set_menu_select,
-			.opt_menu = OPT_NOMENU,
 			.opt_flags = OPT_EXIT,
 		};
 		submenu_args[num_devs].dev_ptr = dev_ptr;
@@ -1484,7 +1480,6 @@ pm_lvm_disk_del(menudesc *m, void *arg)
 		menu_entries[num_devs] = (struct menu_ent) {
 			.opt_name = dev_ptr->pv[i].pm_name,
 			.opt_action = set_menu_select,
-			.opt_menu = OPT_NOMENU,
 			.opt_flags = OPT_EXIT,
 		};
 		submenu_args[num_devs].index = i;
@@ -1591,9 +1586,9 @@ pm_lvm_set_value(menudesc *m, void *arg)
 	lvms_t *dev_ptr = arg;
 
 	static menu_ent menuent_disk_adddel[] = {
-	    { .opt_name=MSG_add, .opt_menu=OPT_NOMENU, .opt_flags=OPT_EXIT,
+	    { .opt_name=MSG_add, .opt_flags=OPT_EXIT,
 	      .opt_action=pm_lvm_disk_add },
-	    { .opt_name=MSG_remove, .opt_menu=OPT_NOMENU, .opt_flags=OPT_EXIT,
+	    { .opt_name=MSG_remove, .opt_flags=OPT_EXIT,
 	      .opt_action=pm_lvm_disk_del }
 	};
 	static int menu_disk_adddel = -1;
@@ -2840,7 +2835,6 @@ pm_upddevlist(menudesc *m, void *arg)
 		.opt_action = pm_commit,
 	};
 	for (ii = 0; ii <= (size_t)i; ii++) {
-		m->opts[ii].opt_menu = OPT_NOMENU;
 		m->opts[ii].opt_flags = OPT_EXIT;
 	}
 
