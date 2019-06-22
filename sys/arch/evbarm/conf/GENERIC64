@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.99 2019/06/15 06:40:34 maxv Exp $
+#	$NetBSD: GENERIC64,v 1.100 2019/06/22 07:58:55 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -196,10 +196,10 @@ armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+bcmpmwdog*	at fdt?			# Broadcom BCM283x watchdog
 mesongxwdt*	at fdt?			# Amlogic Meson GX watchdog
 sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
-watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
 # Interrupt controller
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
@@ -369,12 +369,12 @@ sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
+bcmsdhost*	at fdt?			# Broadcom BCM283x SD Host Interface
 dwcmmc*		at fdt?			# Designware SD/MMC
 mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
-sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
