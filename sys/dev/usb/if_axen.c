@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.47 2019/06/22 09:53:56 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.48 2019/06/22 10:58:39 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.47 2019/06/22 09:53:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.48 2019/06/22 10:58:39 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -432,7 +432,7 @@ axen_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static void
-axen_iff(struct axen_softc *sc)
+axen_iff_locked(struct axen_softc *sc)
 {
 	struct ifnet *ifp = GET_IFP(sc);
 	struct ethercom *ec = &sc->axen_ec;
@@ -493,6 +493,15 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE_FILTER, 8, AXEN_FILTER_MULTI, hashtbl);
 	wval = htole16(rxmode);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
+}
+
+static void
+axen_iff(struct axen_softc *sc)
+{
+
+	axen_lock_mii(sc);
+	axen_iff_locked(sc);
+	axen_unlock_mii(sc);
 }
 
 static void
@@ -1405,8 +1414,10 @@ axen_tick_task(void *xsc)
 
 	ifp = GET_IFP(sc);
 	mii = GET_MII(sc);
-	if (mii == NULL)
+	if (mii == NULL) {
+		mutex_exit(&sc->axen_lock);
 		return;
+	}
 
 	sc->axen_refcnt++;
 	mutex_exit(&sc->axen_lock);
@@ -1578,7 +1589,7 @@ axen_init_locked(struct ifnet *ifp)
 	axen_setcoe(sc);
 
 	/* Program promiscuous mode and multicast filters. */
-	axen_iff(sc);
+	axen_iff_locked(sc);
 
 	/* Enable receiver, set RX mode */
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
@@ -1674,9 +1685,7 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		case IFF_UP | IFF_RUNNING:
 			if ((ifp->if_flags ^ sc->axen_if_flags) == IFF_PROMISC) {
-				axen_lock_mii(sc);
 				axen_iff(sc);
-				axen_unlock_mii(sc);
 			} else
 				axen_init(ifp);
 			break;
@@ -1697,9 +1706,7 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (cmd) {
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
-			axen_lock_mii(sc);
 			axen_iff(sc);
-			axen_unlock_mii(sc);
 			break;
 		case SIOCSIFCAP:
 			mutex_enter(&sc->axen_lock);
