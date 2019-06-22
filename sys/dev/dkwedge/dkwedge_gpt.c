@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.22 2019/04/10 15:19:15 mlelstv Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.23 2019/06/22 06:45:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.22 2019/04/10 15:19:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.23 2019/06/22 06:45:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 
 	entries = le32toh(hdr->hdr_entries);
 	entsz = roundup(le32toh(hdr->hdr_entsz), 8);
-	if (entsz > roundup(sizeof(struct gpt_ent), 8)) {
+	if (entsz != sizeof(struct gpt_ent)) {
 		aprint_error("%s: bogus GPT entry size: %u\n",
 		    pdk->dk_name, le32toh(hdr->hdr_entsz));
 		error = EINVAL;
