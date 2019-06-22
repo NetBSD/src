@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.267 2019/06/21 22:04:26 sevan Exp $
+$NetBSD: acronyms.comp,v 1.268 2019/06/22 12:45:55 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -458,6 +458,8 @@ EAI	Email Address Internationalization
 EAI	Enterprise Application Integration
 EAP	Extensible Authentication Protocol
 EAPOL	EAP over Lan
+EAV	entity-attribute-value model
+EAV	ethernet audio/video bridging
 EBCDIC	Extended Binary Coded Decimal Interchange Code
 EBDA	Extended BIOS Data Area
 EBNF	extended backus-naur form
@@ -727,6 +729,7 @@ IPS	intrusion prevention system
 IPSEC	Internet Protocol Security
 IRC	Internet Relay Chat
 IRDA	infrared data association
+IRDP	ICMP Router Discovery Protocol
 IRQ	interrupt request
 IRQL	interrupt request level
 IRR	interrupt request register
