@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.4 2019/06/20 00:43:55 christos Exp $ */
+/*	$NetBSD: part_edit.c,v 1.5 2019/06/22 20:46:07 christos Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -173,7 +173,6 @@ edit_part_type(menudesc *m, void *arg)
 	popt_cnt =  info->parts->pscheme->get_part_types_count() + 2;
 	type_opts = calloc(popt_cnt, sizeof(*type_opts));
 	for (i = 0; i < popt_cnt; i++) {
-		type_opts[i].opt_menu = OPT_NOMENU;
 		type_opts[i].opt_action = set_part_type;
 	}
 	type_menu = new_menu(NULL, type_opts, popt_cnt,
@@ -278,20 +277,20 @@ part_rollback(menudesc *m, void *arg)
 
 static menu_ent common_ptn_edit_opts[] = {
 #define PTN_OPT_TYPE		0
-	{ .opt_menu=OPT_NOMENU, .opt_action=edit_part_type },
+	{ .opt_action=edit_part_type },
 #define PTN_OPT_START		1
-	{ .opt_menu=OPT_NOMENU, .opt_action=edit_part_start },
+	{ .opt_action=edit_part_start },
 #define PTN_OPT_SIZE		2
-	{ .opt_menu=OPT_NOMENU, .opt_action=edit_part_size },
+	{ .opt_action=edit_part_size },
 #define PTN_OPT_END		3
-	{ .opt_menu=OPT_NOMENU, .opt_flags=OPT_IGNORE }, /* read only "end" */
+	{ .opt_flags=OPT_IGNORE }, /* read only "end" */
 
 	/*
 	 * Only the part upto here will be used when adding a new partition
 	 */
 
 #define PTN_OPT_INSTALL		4
-	{ .opt_menu=OPT_NOMENU, .opt_action=edit_part_install },
+	{ .opt_action=edit_part_install },
 
 #define	PTN_OPTS_COMMON		PTN_OPT_INSTALL	/* cut off from here for add */
 };
@@ -328,10 +327,10 @@ static menu_ent ptn_edit_opts[] = {
 	{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
 	  .opt_flags=OPT_SUB },
 
-	{ .opt_name=MSG_Delete_partition, .opt_menu=OPT_NOMENU,
+	{ .opt_name=MSG_Delete_partition,
 	  .opt_action = delete_part, .opt_flags = OPT_EXIT },
 
-	{ .opt_name=MSG_cancel, .opt_menu=OPT_NOMENU,
+	{ .opt_name=MSG_cancel,
 	  .opt_action = part_rollback, .opt_flags = OPT_EXIT },
 };
 
@@ -339,7 +338,7 @@ static menu_ent ptn_add_opts[] = {
 	{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
 	  .opt_flags=OPT_SUB },
 
-	{ .opt_name=MSG_cancel, .opt_menu=OPT_NOMENU,
+	{ .opt_name=MSG_cancel,
 	  .opt_action = part_rollback, .opt_flags = OPT_EXIT },
 };
 
@@ -376,7 +375,6 @@ fill_part_edit_menu_opts(struct disk_partitions *parts,
 	p = opts + hdr_cnt;
 	if (with_custom_attrs) {
 		for (i = 0; i < parts->pscheme->custom_attribute_count; i++) {
-			p->opt_menu = OPT_NOMENU;
 			p->opt_action = edit_custom_opt;
 			p++;
 		}
@@ -708,9 +706,6 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 	/* add all exisiting partitions */
 	for (op = opts, i = 0; i < parts->num_part && i < (num_opts-2);
 	    op++, i++) {
-		op->opt_name = NULL;
-		op->opt_exp_name = NULL;
-		op->opt_menu = OPT_NOMENU;
 		op->opt_flags = OPT_SUB;
 		op->opt_action = edit_part_entry;
 	}
@@ -718,24 +713,18 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 	/* if empty, hint that partitions are missing */
 	if (parts->num_part == 0) {
 		op->opt_name = MSG_nopart;
-		op->opt_exp_name = NULL;
-		op->opt_menu = OPT_NOMENU;
 		op->opt_flags = OPT_IGNORE|OPT_NOSHORT;
 		op++;
 	}
 
 	/* separator line between partitions and actions */
 	op->opt_name = outer_part_sep_line;
-	op->opt_exp_name = NULL;
-	op->opt_menu = OPT_NOMENU;
 	op->opt_flags = OPT_IGNORE|OPT_NOSHORT;
 	op++;
 
 	/* followed by new partition adder */
 	if (may_add) {
 		op->opt_name = MSG_addpart;
-		op->opt_exp_name = NULL;
-		op->opt_menu = OPT_NOMENU;
 		op->opt_flags = OPT_SUB;
 		op->opt_action = add_part_entry;
 		op++;
@@ -743,7 +732,6 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 
 	/* and unit changer */
 	op->opt_name = MSG_askunits;
-	op->opt_exp_name = NULL;
 	op->opt_menu = MENU_sizechoice;
 	op->opt_flags = OPT_SUB;
 	op->opt_action = NULL;
@@ -751,8 +739,6 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 
 	/* and abort option */
 	op->opt_name = MSG_cancel;
-	op->opt_exp_name = NULL;
-	op->opt_menu = OPT_NOMENU;
 	op->opt_flags = OPT_EXIT;
 	op->opt_action = part_edit_abort;
 	op++;
@@ -924,24 +910,18 @@ ask_fullpart(struct disk_partitions *parts)
 	if (parts->pscheme->guess_install_target != NULL &&
 	    parts->pscheme->guess_install_target(parts, &start, &size)) {
 		opt->opt_name = MSG_Keep_existing_partitions;
-		opt->opt_exp_name = NULL;
-		opt->opt_menu = OPT_NOMENU;
 		opt->opt_flags = OPT_EXIT;
 		opt->opt_action = set_keep_existing;
 		opt++;
 		num_opts++;
 	}
 	opt->opt_name = MSG_Use_only_part_of_the_disk;
-	opt->opt_exp_name = NULL;
-	opt->opt_menu = OPT_NOMENU;
 	opt->opt_flags = OPT_EXIT;
 	opt->opt_action = set_use_only_part;
 	opt++;
 	num_opts++;
 
 	opt->opt_name = MSG_Use_the_entire_disk;
-	opt->opt_exp_name = NULL;
-	opt->opt_menu = OPT_NOMENU;
 	opt->opt_flags = OPT_EXIT;
 	opt->opt_action = set_use_entire_disk;
 	opt++;
@@ -1251,8 +1231,6 @@ select_part_scheme(
 			goto out;
 
 		opt[used].opt_name = str[used];
-		opt[used].opt_exp_name = NULL;
-		opt[used].opt_menu = OPT_NOMENU;
 		opt[used].opt_action = set_part_scheme;
 		options[used] = p;
 		used++;
