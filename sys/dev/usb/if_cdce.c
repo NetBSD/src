@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.48 2019/06/22 04:35:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.48 2019/06/22 04:35:46 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -68,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-
-
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
@@ -77,6 +76,55 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/if_cdcereg.h>
+
+struct cdce_type {
+	struct usb_devno	 cdce_dev;
+	uint16_t		 cdce_flags;
+#define CDCE_ZAURUS	1
+#define CDCE_NO_UNION	2
+};
+
+struct cdce_softc;
+
+struct cdce_chain {
+	struct cdce_softc	*cdce_sc;
+	struct usbd_xfer	*cdce_xfer;
+	char			*cdce_buf;
+	struct mbuf		*cdce_mbuf;
+	int			 cdce_accum;
+	int			 cdce_idx;
+};
+
+struct cdce_cdata {
+	struct cdce_chain	 cdce_rx_chain[CDCE_RX_LIST_CNT];
+	struct cdce_chain	 cdce_tx_chain[CDCE_TX_LIST_CNT];
+	int			 cdce_tx_prod;
+	int			 cdce_tx_cons;
+	int			 cdce_tx_cnt;
+	int			 cdce_rx_prod;
+};
+
+struct cdce_softc {
+	device_t cdce_dev;
+	struct ethercom		 cdce_ec;
+	krndsource_t	 rnd_source;
+#define GET_IFP(sc) (&(sc)->cdce_ec.ec_if)
+	struct usbd_device *	 cdce_udev;
+	struct usbd_interface *	 cdce_ctl_iface;
+	struct usbd_interface *	 cdce_data_iface;
+	int			 cdce_bulkin_no;
+	struct usbd_pipe *	 cdce_bulkin_pipe;
+	int			 cdce_bulkout_no;
+	struct usbd_pipe *	 cdce_bulkout_pipe;
+	char			 cdce_dying;
+	int			 cdce_unit;
+	struct cdce_cdata	 cdce_cdata;
+	int			 cdce_rxeof_errors;
+	uint16_t		 cdce_flags;
+	char			 cdce_attached;
+
+	kmutex_t		 cdce_start_lock;
+};
 
 Static int	 cdce_tx_list_init(struct cdce_softc *);
 Static int	 cdce_rx_list_init(struct cdce_softc *);
