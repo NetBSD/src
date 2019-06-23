@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.10 2019/06/12 22:47:03 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.11 2019/06/23 22:06:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.10 2019/06/12 22:47:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.11 2019/06/23 22:06:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,9 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.10 2019/06/12 22:47:03 jmcneill Ex
 
 #include <arm/pci/pci_msi_machdep.h>
 #include <arm/fdt/pcihost_fdtvar.h>
-
-#define	IH_INDEX_MASK			0x0000ffff
-#define	IH_MPSAFE			0x80000000
 
 #define	PCIHOST_DEFAULT_BUS_MIN		0
 #define	PCIHOST_DEFAULT_BUS_MAX		255
@@ -572,7 +569,7 @@ pcihost_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 	} else if (ih & ARM_PCI_INTR_MSI) {
 		snprintf(buf, len, "irq %d (MSI vec %d)", irq, vec);
 	} else {
-		specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
+		specifier = pcihost_find_intr(sc, ih & ARM_PCI_INTR_IRQ, &ihandle);
 		if (specifier == NULL)
 			return NULL;
 
@@ -595,9 +592,9 @@ pcihost_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data)
 	switch (attr) {
 	case PCI_INTR_MPSAFE:
 		if (data)
-			*ih |= IH_MPSAFE;
+			*ih |= ARM_PCI_INTR_MPSAFE;
 		else
-			*ih &= ~IH_MPSAFE;
+			*ih &= ~ARM_PCI_INTR_MPSAFE;
 		return 0;
 	default:
 		return ENODEV;
@@ -609,14 +606,14 @@ pcihost_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg, const char *xname)
 {
 	struct pcihost_softc *sc = v;
-	const int flags = (ih & IH_MPSAFE) ? FDT_INTR_MPSAFE : 0;
+	const int flags = (ih & ARM_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 	const u_int *specifier;
 	int ihandle;
 
 	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
 		return arm_pci_msi_intr_establish(&sc->sc_pc, ih, ipl, callback, arg, xname);
 
-	specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
+	specifier = pcihost_find_intr(sc, ih & ARM_PCI_INTR_IRQ, &ihandle);
 	if (specifier == NULL)
 		return NULL;
 
