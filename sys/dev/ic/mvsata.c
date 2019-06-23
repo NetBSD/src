@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.47 2019/06/23 06:29:22 tsutsui Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.48 2019/06/23 06:33:17 tsutsui Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.47 2019/06/23 06:29:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.48 2019/06/23 06:33:17 tsutsui Exp $");
 
 #include "opt_mvsata.h"
 
@@ -3283,7 +3283,7 @@ mvsata_dma_bufload(struct mvsata_port *mvport, int index, void *databuf,
 	rv = bus_dmamap_load(mvport->port_dmat, data_dmamap, databuf, datalen,
 	    NULL, BUS_DMA_NOWAIT | lop);
 	if (rv) {
-		aprint_error("%s:%d:%d: buffer load failed: error=%d",
+		aprint_error("%s:%d:%d: buffer load failed: error=%d\n",
 		    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 		    mvport->port, rv);
 		return rv;
