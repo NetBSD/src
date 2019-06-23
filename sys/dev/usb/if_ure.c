@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ure.c,v 1.10 2019/06/16 21:04:08 christos Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.11 2019/06/23 02:14:14 mrg Exp $	*/
+
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.10 2019/06/16 21:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.11 2019/06/23 02:14:14 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -312,8 +313,12 @@ ure_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct ure_softc *sc = device_private(dev);
 
-	if (sc->ure_dying || sc->ure_phyno != phy) /* XXX */
+	mutex_enter(&sc->ure_lock);
+	if (sc->ure_dying || sc->ure_phyno != phy) {
+		mutex_exit(&sc->ure_lock);
 		return -1;
+	}
+	mutex_exit(&sc->ure_lock);
 
 	/* Let the rgephy driver read the URE_PLA_PHYSTATUS register. */
 	if (reg == RTK_GMEDIASTAT) {
@@ -333,8 +338,12 @@ ure_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct ure_softc *sc = device_private(dev);
 
-	if (sc->ure_dying || sc->ure_phyno != phy) /* XXX */
+	mutex_enter(&sc->ure_lock);
+	if (sc->ure_dying || sc->ure_phyno != phy) {
+		mutex_exit(&sc->ure_lock);
 		return -1;
+	}
+	mutex_exit(&sc->ure_lock);
 
 	ure_lock_mii(sc);
 	ure_ocp_reg_write(sc, URE_OCP_BASE_MII + reg * 2, val);
@@ -410,7 +419,7 @@ ure_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static void
-ure_iff(struct ure_softc *sc)
+ure_iff_locked(struct ure_softc *sc)
 {
 	struct ethercom *ec = &sc->ure_ec;
 	struct ifnet *ifp = GET_IFP(sc);
@@ -419,6 +428,8 @@ ure_iff(struct ure_softc *sc)
 	uint32_t hashes[2] = { 0, 0 };
 	uint32_t hash;
 	uint32_t rxmode;
+
+	KASSERT(mutex_owned(&sc->ure_lock));
 
 	if (sc->ure_dying)
 		return;
@@ -472,9 +483,20 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 }
 
 static void
+ure_iff(struct ure_softc *sc)
+{
+
+	mutex_enter(&sc->ure_lock);
+	ure_iff_locked(sc);
+	mutex_exit(&sc->ure_lock);
+}
+
+static void
 ure_reset(struct ure_softc *sc)
 {
 	int i;
+
+	KASSERT(mutex_owned(&sc->ure_lock));
 
 	ure_write_1(sc, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RST);
 
@@ -489,15 +511,18 @@ ure_reset(struct ure_softc *sc)
 }
 
 static int
-ure_init(struct ifnet *ifp)
+ure_init_locked(struct ifnet *ifp)
 {
-	struct ure_softc *sc = ifp->if_softc;
+	struct ure_softc * const sc = ifp->if_softc;
 	struct ure_chain *c;
 	usbd_status err;
-	int s, i;
+	int i;
 	uint8_t eaddr[8];
 
-	s = splnet();
+	KASSERT(mutex_owned(&sc->ure_lock));
+
+	if (sc->ure_stopping || sc->ure_dying)
+		return EIO;
 
 	/* Cancel pending I/O. */
 	if (ifp->if_flags & IFF_RUNNING)
@@ -529,36 +554,36 @@ ure_init(struct ifnet *ifp)
 	    ~URE_RXDY_GATED_EN);
 
 	/* Load the multicast filter. */
-	ure_iff(sc);
+	ure_iff_locked(sc);
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->ure_iface, sc->ure_ed[URE_ENDPT_RX],
-	    USBD_EXCLUSIVE_USE, &sc->ure_ep[URE_ENDPT_RX]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->ure_ep[URE_ENDPT_RX]);
 	if (err) {
 		URE_PRINTF(sc, "open rx pipe failed: %s\n", usbd_errstr(err));
-		splx(s);
 		return EIO;
 	}
 
 	err = usbd_open_pipe(sc->ure_iface, sc->ure_ed[URE_ENDPT_TX],
-	    USBD_EXCLUSIVE_USE, &sc->ure_ep[URE_ENDPT_TX]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->ure_ep[URE_ENDPT_TX]);
 	if (err) {
 		URE_PRINTF(sc, "open tx pipe failed: %s\n", usbd_errstr(err));
-		splx(s);
 		return EIO;
 	}
 
 	if (ure_rx_list_init(sc)) {
 		URE_PRINTF(sc, "rx list init failed\n");
-		splx(s);
 		return ENOBUFS;
 	}
 
 	if (ure_tx_list_init(sc)) {
 		URE_PRINTF(sc, "tx list init failed\n");
-		splx(s);
 		return ENOBUFS;
 	}
+
+	mutex_enter(&sc->ure_rxlock);
+	mutex_enter(&sc->ure_txlock);
+	sc->ure_stopping = false;
 
 	/* Start up the receive pipe. */
 	for (i = 0; i < URE_RX_LIST_CNT; i++) {
@@ -568,26 +593,40 @@ ure_init(struct ifnet *ifp)
 		usbd_transfer(c->uc_xfer);
 	}
 
+	mutex_exit(&sc->ure_txlock);
+	mutex_exit(&sc->ure_rxlock);
+
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	splx(s);
 
 	callout_reset(&sc->ure_stat_ch, hz, ure_tick, sc);
 
 	return 0;
 }
 
+static int
+ure_init(struct ifnet *ifp)
+{
+	struct ure_softc * const sc = ifp->if_softc;
+
+	mutex_enter(&sc->ure_lock);
+	int ret = ure_init_locked(ifp);
+	mutex_exit(&sc->ure_lock);
+
+	return ret;
+}
+
 static void
-ure_start(struct ifnet *ifp)
+ure_start_locked(struct ifnet *ifp)
 {
 	struct ure_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	struct ure_cdata *cd = &sc->ure_cdata;
 	int idx;
 
-	if ((sc->ure_flags & URE_FLAG_LINK) == 0 ||
+	if (sc->ure_dying || sc->ure_stopping ||
+	    (sc->ure_flags & URE_FLAG_LINK) == 0 ||
 	    (ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING) {
 		return;
 	}
@@ -617,6 +656,16 @@ ure_start(struct ifnet *ifp)
 }
 
 static void
+ure_start(struct ifnet *ifp)
+{
+	struct ure_softc * const sc = ifp->if_softc;
+
+	mutex_enter(&sc->ure_txlock);
+	ure_start_locked(ifp);
+	mutex_exit(&sc->ure_txlock);
+}
+
+static void
 ure_tick(void *xsc)
 {
 	struct ure_softc *sc = xsc;
@@ -624,14 +673,16 @@ ure_tick(void *xsc)
 	if (sc == NULL)
 		return;
 
-	if (sc->ure_dying)
-		return;
-
-	usb_add_task(sc->ure_udev, &sc->ure_tick_task, USB_TASKQ_DRIVER);
+	mutex_enter(&sc->ure_lock);
+	if (!sc->ure_stopping && !sc->ure_dying) {
+		/* Perform periodic stuff in process context */
+		usb_add_task(sc->ure_udev, &sc->ure_tick_task, USB_TASKQ_DRIVER);
+	}
+	mutex_exit(&sc->ure_lock);
 }
 
 static void
-ure_stop(struct ifnet *ifp, int disable __unused)
+ure_stop_locked(struct ifnet *ifp, int disable __unused)
 {
 	struct ure_softc *sc = ifp->if_softc;
 	struct ure_chain *c;
@@ -691,6 +742,16 @@ ure_stop(struct ifnet *ifp, int disable __unused)
 			    usbd_errstr(err));
 		sc->ure_ep[URE_ENDPT_TX] = NULL;
 	}
+}
+
+static void
+ure_stop(struct ifnet *ifp, int disable __unused)
+{
+	struct ure_softc * const sc = ifp->if_softc;
+
+	mutex_enter(&sc->ure_lock);
+	ure_stop_locked(ifp, disable);
+	mutex_exit(&sc->ure_lock);
 }
 
 static void
@@ -1018,9 +1079,7 @@ int
 ure_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ure_softc *sc = ifp->if_softc;
-	int s, error = 0, oflags = ifp->if_flags;
-
-	s = splnet();
+	int error = 0, oflags = ifp->if_flags;
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -1056,8 +1115,6 @@ ure_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 	}
 
-	splx(s);
-
 	return error;
 }
 
@@ -1080,7 +1137,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct ifnet *ifp;
 	struct mii_data *mii;
-	int error, i, s;
+	int error, i;
 	uint16_t ver;
 	uint8_t eaddr[8]; /* 2byte padded */
 	char *devinfop;
@@ -1095,9 +1152,13 @@ ure_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	callout_init(&sc->ure_stat_ch, 0);
-	usb_init_task(&sc->ure_tick_task, ure_tick_task, sc, 0);
+	callout_init(&sc->ure_stat_ch, CALLOUT_MPSAFE);
+	usb_init_task(&sc->ure_tick_task, ure_tick_task, sc, USB_TASKQ_MPSAFE);
 	mutex_init(&sc->ure_mii_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->ure_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->ure_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->ure_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->ure_detachcv, "uredet");
 
 	/*
 	 * ure_phyno is set to 0 below when configuration has succeeded.
@@ -1143,8 +1204,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	s = splnet();
-
 	sc->ure_phyno = 0;
 
 	ver = ure_read_2(sc, URE_PLA_TCR1, URE_MCU_TYPE_PLA) & URE_VERSION_MASK;
@@ -1176,6 +1235,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	    (sc->ure_chip != 0) ? "" : "unknown ",
 	    ver);
 
+	mutex_enter(&sc->ure_lock);
 	if (sc->ure_flags & URE_FLAG_8152)
 		ure_rtl8152_init(sc);
 	else
@@ -1187,6 +1247,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_read_mem(sc, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
+	mutex_exit(&sc->ure_lock);
 
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
@@ -1194,6 +1255,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, device_xname(sc->ure_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_init = ure_init;
 	ifp->if_ioctl = ure_ioctl;
 	ifp->if_start = ure_start;
@@ -1243,8 +1305,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->ure_rnd_source, device_xname(sc->ure_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
-	splx(s);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->ure_udev, sc->ure_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -1256,23 +1316,30 @@ ure_detach(device_t self, int flags)
 {
 	struct ure_softc *sc = device_private(self);
 	struct ifnet *ifp = GET_IFP(sc);
-	int s;
 
 	pmf_device_deregister(self);
 
+	mutex_enter(&sc->ure_lock);
 	sc->ure_dying = true;
+	mutex_exit(&sc->ure_lock);
 
 	callout_halt(&sc->ure_stat_ch, NULL);
+
+	usb_rem_task_wait(sc->ure_udev, &sc->ure_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (sc->ure_ep[URE_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->ure_ep[URE_ENDPT_TX]);
 	if (sc->ure_ep[URE_ENDPT_RX] != NULL)
 		usbd_abort_pipe(sc->ure_ep[URE_ENDPT_RX]);
 
-	usb_rem_task_wait(sc->ure_udev, &sc->ure_tick_task, USB_TASKQ_DRIVER,
-	    NULL);
-
-	s = splusb();
+	mutex_enter(&sc->ure_lock);
+	sc->ure_refcnt--;
+	while (sc->ure_refcnt > 0) {
+		/* Wait for processes to go away */
+		cv_wait(&sc->ure_detachcv, &sc->ure_lock);
+	}
+	mutex_exit(&sc->ure_lock);
 
 	/* partial-attach, below items weren't configured. */
 	if (sc->ure_phyno != -1) {
@@ -1288,16 +1355,14 @@ ure_detach(device_t self, int flags)
 		}
 	}
 
-	if (--sc->ure_refcnt >= 0) {
-		/* Wait for processes to go away. */
-		usb_detach_waitold(sc->ure_dev);
-	}
-	splx(s);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->ure_udev, sc->ure_dev);
 
 	callout_destroy(&sc->ure_stat_ch);
+	cv_destroy(&sc->ure_detachcv);
+	mutex_destroy(&sc->ure_lock);
+	mutex_destroy(&sc->ure_rxlock);
+	mutex_destroy(&sc->ure_txlock);
 	mutex_destroy(&sc->ure_mii_lock);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->ure_udev, sc->ure_dev);
 
 	return 0;
 }
@@ -1311,7 +1376,17 @@ ure_activate(device_t self, enum devact act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		if_deactivate(ifp);
+
+		mutex_enter(&sc->ure_lock);
 		sc->ure_dying = true;
+		mutex_exit(&sc->ure_lock);
+
+		mutex_enter(&sc->ure_rxlock);
+		mutex_enter(&sc->ure_txlock);
+		sc->ure_stopping = true;
+		mutex_exit(&sc->ure_txlock);
+		mutex_exit(&sc->ure_rxlock);
+
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -1323,31 +1398,49 @@ static void
 ure_tick_task(void *xsc)
 {
 	struct ure_softc *sc = xsc;
-	struct ifnet *ifp = GET_IFP(sc);
+	struct ifnet *ifp;
 	struct mii_data *mii;
-	int s;
 
 	if (sc == NULL)
 		return;
 
-	if (sc->ure_dying)
+	mutex_enter(&sc->ure_lock);
+	if (sc->ure_stopping || sc->ure_dying) {
+		mutex_exit(&sc->ure_lock);
 		return;
+	}
 
+	ifp = GET_IFP(sc);
 	mii = GET_MII(sc);
+	if (mii == NULL) {
+		mutex_exit(&sc->ure_lock);
+		return;
+	}
 
-	s = splnet();
+	sc->ure_refcnt++;
+	mutex_exit(&sc->ure_lock);
+
 	mii_tick(mii);
+
 	if ((sc->ure_flags & URE_FLAG_LINK) == 0)
 		ure_miibus_statchg(ifp);
-	callout_reset(&sc->ure_stat_ch, hz, ure_tick, sc);
-	splx(s);
+
+	mutex_enter(&sc->ure_lock);
+	if (--sc->ure_refcnt < 0)
+		cv_broadcast(&sc->ure_detachcv);
+	if (!sc->ure_stopping && !sc->ure_dying)
+		callout_schedule(&sc->ure_stat_ch, hz);
+	mutex_exit(&sc->ure_lock);
 }
 
 static void
 ure_lock_mii(struct ure_softc *sc)
 {
 
+	mutex_enter(&sc->ure_lock);
 	sc->ure_refcnt++;
+	mutex_exit(&sc->ure_lock);
+
 	mutex_enter(&sc->ure_mii_lock);
 }
 
@@ -1356,8 +1449,10 @@ ure_unlock_mii(struct ure_softc *sc)
 {
 
 	mutex_exit(&sc->ure_mii_lock);
+	mutex_enter(&sc->ure_lock);
 	if (--sc->ure_refcnt < 0)
-		usb_detach_wakeupold(sc->ure_dev);
+		cv_broadcast(&sc->ure_detachcv);
+	mutex_exit(&sc->ure_lock);
 }
 
 static void
@@ -1370,20 +1465,18 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint32_t total_len;
 	uint16_t pktlen = 0;
 	struct mbuf *m;
-	int s;
 	struct ure_rxpkt rxhdr;
 
-	if (sc->ure_dying)
-		return;
+	mutex_enter(&sc->ure_rxlock);
 
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (sc->ure_dying || sc->ure_stopping ||
+	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
+	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING)) {
+		mutex_exit(&sc->ure_rxlock);
 		return;
+	}
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_INVAL)
-			return;	/* XXX plugged out or down */
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
-			return;
 		if (usbd_ratecheck(&sc->ure_rx_notice))
 			URE_PRINTF(sc, "usb errors on rx: %s\n",
 			    usbd_errstr(status));
@@ -1431,12 +1524,21 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		m->m_pkthdr.csum_flags = ure_rxcsum(ifp, &rxhdr);
 
-		s = splnet();
+		mutex_exit(&sc->ure_rxlock);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		splx(s);
+		mutex_enter(&sc->ure_rxlock);
+
+		if (sc->ure_stopping) {
+			mutex_exit(&sc->ure_rxlock);
+			return;
+		}
+		
 	} while (total_len > 0);
 
 done:
+	mutex_exit(&sc->ure_rxlock);
+
+	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, c, c->uc_buf, sc->ure_bufsz,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ure_rxeof);
 	usbd_transfer(xfer);
@@ -1488,23 +1590,34 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ure_softc *sc = c->uc_sc;
 	struct ure_cdata *cd = &sc->ure_cdata;
 	struct ifnet *ifp = GET_IFP(sc);
-	int s;
 
-	if (sc->ure_dying)
+	mutex_enter(&sc->ure_txlock);
+	if (sc->ure_stopping || sc->ure_dying) {
+		mutex_exit(&sc->ure_txlock);
 		return;
+	}
 
 	DPRINTFN(2, ("tx completion\n"));
-
-	s = splnet();
 
 	KASSERT(cd->tx_cnt > 0);
 	cd->tx_cnt--;
 
-	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
-			splx(s);
-			return;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	switch (status) {
+	case USBD_NOT_STARTED:
+	case USBD_CANCELLED:
+		break;
+
+	case USBD_NORMAL_COMPLETION:
+		ifp->if_opackets++;
+
+		if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+			ure_start_locked(ifp);
 		}
+		break;
+
+	default:
 		ifp->if_oerrors++;
 		if (usbd_ratecheck(&sc->ure_tx_notice))
 			URE_PRINTF(sc, "usb error on tx: %s\n",
@@ -1512,18 +1625,10 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(
 			    sc->ure_ep[URE_ENDPT_TX]);
-		splx(s);
-		return;
+		break;
 	}
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_opackets++;
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
-		ure_start(ifp);
-	}
-
-	splx(s);
+	mutex_exit(&sc->ure_txlock);
 }
 
 static int
@@ -1582,6 +1687,8 @@ ure_encap(struct ure_softc *sc, struct mbuf *m, int idx)
 	struct ure_txpkt txhdr;
 	uint32_t frm_len = 0;
 	uint8_t *buf;
+
+	KASSERT(mutex_owned(&sc->ure_txlock));
 
 	c = &sc->ure_cdata.tx_chain[idx];
 	buf = c->uc_buf;
