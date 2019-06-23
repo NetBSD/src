@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.5 2019/06/19 05:33:14 mrg Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.6 2019/06/23 16:15:43 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.5 2019/06/19 05:33:14 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.6 2019/06/23 16:15:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,9 +392,8 @@ again:
 	            &rkpcie_intrfuncs);
 
 	sc->sc_phsc.sc_type = PCIHOST_ECAM;
-#if notyet
 	sc->sc_phsc.sc_pci_flags |= PCI_FLAGS_MSI_OKAY;
-#endif
+	sc->sc_phsc.sc_pci_flags |= PCI_FLAGS_MSIX_OKAY;
 	pcihost_init(&sc->sc_phsc.sc_pc, sc);
 	sc->sc_phsc.sc_pc.pc_bus_maxdevs = rkpcie_bus_maxdevs;
 	sc->sc_phsc.sc_pc.pc_make_tag = rkpcie_make_tag;
