@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.18 2019/06/19 12:49:49 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.19 2019/06/23 01:46:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.18 2019/06/19 12:49:49 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.19 2019/06/23 01:46:56 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1271,6 +1271,9 @@ audiodetach(device_t self, int flags)
 	if (sc->sc_rmixer)
 		cv_broadcast(&sc->sc_rmixer->outcv);
 	mutex_exit(sc->sc_lock);
+
+	/* delete sysctl nodes */
+	sysctl_teardown(&sc->sc_log);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&audio_cdevsw);
