@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.46 2018/11/12 20:54:03 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.47 2019/06/23 06:29:22 tsutsui Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.46 2018/11/12 20:54:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.47 2019/06/23 06:29:22 tsutsui Exp $");
 
 #include "opt_mvsata.h"
 
@@ -113,7 +113,8 @@ int	mvsata_debug = 0;
 					   sending a cmd */
 #define ATAPI_MODE_DELAY	1000	/* 1s, timeout for SET_FEATURE cmds */
 
-#define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * (MAXPHYS / PAGE_SIZE))
+#define MVSATA_MAX_SEGS		(MAXPHYS / PAGE_SIZE + 1)
+#define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * MVSATA_MAX_SEGS)
 
 
 static void mvsata_probe_drive(struct ata_channel *);
@@ -3110,7 +3111,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	}
 	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
 		rv = bus_dmamap_create(mvport->port_dmat, MAXPHYS,
-		    MAXPHYS / PAGE_SIZE, MAXPHYS, 0, BUS_DMA_NOWAIT,
+		    MVSATA_MAX_SEGS, MAXPHYS, 0, BUS_DMA_NOWAIT,
 		    &mvport->port_reqtbl[i].data_dmamap);
 		if (rv != 0) {
 			aprint_error("%s:%d:%d:"
