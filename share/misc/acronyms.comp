@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.268 2019/06/22 12:45:55 sevan Exp $
+$NetBSD: acronyms.comp,v 1.269 2019/06/23 16:04:34 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -41,6 +41,7 @@ AL	access list
 AL	active link
 ALE	address latch enable
 ALS	ambient light sensor
+ALSA	advanced Linux sound architecture
 ALU	arithmetic and logical unit
 ALUA	asymmetric logical unit access
 AM	access method
@@ -358,6 +359,7 @@ DCT	discrete cosine transform
 DCU	data cache unit
 DDC	display data channel
 DDE	dynamic data exchange
+DDI	device drivers interface
 DDK	device driver kit
 DDL	data description language
 DDR	double data rate
@@ -385,6 +387,7 @@ DHCP	Dynamic Host Configuration Protocol
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
+DKI	driver/kernel interface
 DL	diode logic
 DL	discrete logarithm
 DL	download
@@ -483,6 +486,8 @@ EDGE	explicit data graph execution
 EDID	extended display identification data
 EDO	extended data out
 EDS	electronical data sheet
+EDSAC	electronic delay storage automatic calculator
+EDVAC	electronic discrete variable automatic computer
 EEE	energy efficient ethernet
 EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
@@ -501,6 +506,7 @@ EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
 EMACS	Editor MACroS
+ENIAC	electronic numerical integrator and computer
 EOF	end of file
 EOI	end of interrupt
 EOIS	end of interactive support
@@ -989,6 +995,7 @@ NCSI	network connectivity status indicator
 NCQ	native command queuing
 ND	neighbor discovery
 NDFA	nondeterministic finite automaton
+NDIS	network driver interface specification
 NE	numeric error
 NEWS	Network extensible Window System
 NFA	nondeterministic finite automaton
@@ -1031,6 +1038,7 @@ OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
 ODE	offline device environment
+ODI	open data-link interface
 ODM	object data manager
 ODCM	on-demand clock modulation
 ODT	on-die termination
@@ -1572,6 +1580,7 @@ UC	uncacheable
 UCS	uniform-cost search
 UCS	unified computing system
 UCS	universal coded character set
+UDI	uniform driver interface
 UDMA	ultra DMA
 UDO	ultra density optical
 UDP	User Datagram Protocol
