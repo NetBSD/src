@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.16 2019/06/23 16:04:52 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.17 2019/06/23 16:19:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.16 2019/06/23 16:04:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.17 2019/06/23 16:19:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -579,7 +579,7 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 	pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	KASSERT(pa != NULL);
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
-	gits_command_inv(its, devid, lpi);
+	gits_command_inv(its, devid, lpi - its->its_pic->pic_irqbase);
 
 	return intrh;
 }
@@ -757,7 +757,7 @@ gicv3_its_cpu_init(void *priv, struct cpu_info *ci)
 		KASSERT(pa != NULL);
 
 		const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
-		gits_command_movi(its, devid, irq + its->its_pic->pic_irqbase, cpu_index(ci));
+		gits_command_movi(its, devid, irq, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 
@@ -796,7 +796,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 
 	if (its->its_cpuonline[cpu_index(ci)] == true) {
 		const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
-		gits_command_movi(its, devid, irq + its->its_pic->pic_irqbase, cpu_index(ci));
+		gits_command_movi(its, devid, irq, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 
