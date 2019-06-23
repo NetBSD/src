@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.1 2019/06/12 06:20:17 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.2 2019/06/23 11:47:08 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -333,6 +333,12 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 		}
 	}
 	free(textbuf);
+
+	/* If the GPT was not complete (e.g. truncated image), barf */
+	if (disk_size <= 0) {
+		free(parts);
+		return NULL;
+	}
 
 	parts->dp.pscheme = &gpt_parts;
 	parts->dp.disk = dev;
