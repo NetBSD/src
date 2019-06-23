@@ -1,4 +1,5 @@
-/*	$NetBSD: if_urevar.h,v 1.2 2019/02/07 10:36:20 mlelstv Exp $	*/
+/*	$NetBSD: if_urevar.h,v 1.3 2019/06/23 02:14:14 mrg Exp $	*/
+
 /*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -110,7 +111,12 @@ struct ure_softc {
 #define GET_IFP(sc)		(&(sc)->ure_ec.ec_if)
 	struct mii_data		ure_mii;
 #define GET_MII(sc)		(&(sc)->ure_mii)
+
 	kmutex_t		ure_mii_lock;
+	kmutex_t		ure_lock;
+	kmutex_t		ure_rxlock;
+	kmutex_t		ure_txlock;
+	kcondvar_t		ure_detachcv;
 	int			ure_refcnt;
 
 	struct ure_cdata	ure_cdata;
@@ -135,5 +141,8 @@ struct ure_softc {
 #define	URE_CHIP_VER_5C30	0x20
 
 	krndsource_t            ure_rnd_source;
+
 	bool			ure_dying;
+	bool			ure_stopping;
+	bool			ure_attached;
 };
