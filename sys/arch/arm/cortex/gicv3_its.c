@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.14 2019/06/16 19:19:30 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.15 2019/06/23 16:03:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.14 2019/06/16 19:19:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.15 2019/06/23 16:03:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -148,16 +148,17 @@ gits_command_mapd(struct gicv3_its *its, uint32_t deviceid, uint64_t itt_addr, u
 }
 
 static inline void
-gits_command_mapi(struct gicv3_its *its, uint32_t deviceid, uint32_t eventid, uint16_t icid)
+gits_command_mapti(struct gicv3_its *its, uint32_t deviceid, uint32_t eventid, uint32_t pintid, uint16_t icid)
 {
 	struct gicv3_its_command cmd;
 
 	/*
-	 * Map the event defined by EventID and DeviceID into an ITT entry with ICID and pINTID = EventID
+	 * Map the event defined by EventID and DeviceID to its associated ITE, defined by ICID and pINTID
+	 * in the ITT associated with DeviceID.
 	 */
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.dw[0] = GITS_CMD_MAPI | ((uint64_t)deviceid << 32);
-	cmd.dw[1] = eventid;
+	cmd.dw[0] = GITS_CMD_MAPTI | ((uint64_t)deviceid << 32);
+	cmd.dw[1] = eventid | ((uint64_t)pintid << 32);
 	cmd.dw[2] = icid;
 
 	gits_command(its, &cmd);
@@ -329,7 +330,8 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	/*
 	 * Map the device to the ITT
 	 */
-	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits - 1, true);
+	const u_int size = ilog2(vectors) - 1;
+	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, size, true);
 	gits_wait(its);
 
 	return 0;
@@ -363,11 +365,13 @@ gicv3_its_msi_enable(struct gicv3_its *its, int lpi, int count)
 		    addr & 0xffffffff);
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_HI,
 		    (addr >> 32) & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64, lpi);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64,
+		    lpi - its->its_pic->pic_irqbase);
 	} else {
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR,
 		    addr & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA, lpi);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA,
+		    lpi - its->its_pic->pic_irqbase);
 	}
 	ctl |= PCI_MSI_CTL_MSI_ENABLE;
 	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
@@ -411,7 +415,7 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 	const uint64_t entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO, (uint32_t)addr);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, (uint32_t)(addr >> 32));
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, lpi);
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, lpi - its->its_pic->pic_irqbase);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, 0);
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
@@ -477,7 +481,7 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 		/*
 		 * Map event
 		 */
-		gits_command_mapi(its, devid, lpi, cpu_index(ci));
+		gits_command_mapti(its, devid, lpi - its->its_pic->pic_irqbase, lpi, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
@@ -546,7 +550,7 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 		/*
 		 * Map event
 		 */
-		gits_command_mapi(its, devid, lpi, cpu_index(ci));
+		gits_command_mapti(its, devid, lpi - its->its_pic->pic_irqbase, lpi, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
