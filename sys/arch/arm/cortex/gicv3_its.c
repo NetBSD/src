@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.15 2019/06/23 16:03:30 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.16 2019/06/23 16:04:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.15 2019/06/23 16:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.16 2019/06/23 16:04:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -312,7 +312,6 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 		vectors++;
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
-	const u_int id_bits = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	const u_int itt_entry_size = __SHIFTOUT(typer, GITS_TYPER_ITT_entry_size) + 1;
 	const u_int itt_size = roundup(vectors * itt_entry_size, GITS_ITT_ALIGN);
 
