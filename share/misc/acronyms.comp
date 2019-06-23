@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.269 2019/06/23 16:04:34 sevan Exp $
+$NetBSD: acronyms.comp,v 1.270 2019/06/23 17:17:18 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -130,7 +130,7 @@ BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error {rate,ratio}
 BERT	boot error record table
-BFB	bidirectional forwarding detection
+BFD	bidirectional forwarding detection
 BFD	binary {file,format} descriptor
 BFKL	big fscking kernel lock
 BFS	breadth-first search
