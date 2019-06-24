@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.70 2019/06/20 17:33:31 maxv Exp $	 */
+/*	$NetBSD: exec.c,v 1.71 2019/06/24 02:48:51 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <sys/reboot.h>
 
 #include <i386/multiboot.h>
