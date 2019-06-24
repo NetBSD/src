@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.42 2017/03/12 05:33:48 nonaka Exp $	*/
+/*	$NetBSD: libi386.h,v 1.43 2019/06/24 13:58:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -145,6 +145,7 @@ void splash_add(char *);
 void rnd_add(char *);
 void fs_add(char *);
 void userconf_add(char *);
+void module_add_split(const char *, uint8_t);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);
