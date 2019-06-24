@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/06/22 09:48:39 hannken Exp $
+#	$NetBSD: Makefile,v 1.5 2019/06/24 08:27:21 hannken Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ COPTS.zfs.c+=	-Wno-strict-prototypes
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/include
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
+COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/head
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/lib/libzpool/common
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 COPTS.zfs.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/fs/zfs
