@@ -1,9 +1,9 @@
-#	$NetBSD: files.nouveau,v 1.26 2019/02/04 08:18:08 mrg Exp $
+#	$NetBSD: files.nouveau,v 1.27 2019/06/24 13:36:07 wiz Exp $
 
 version	20180827
 
 define	nouveaufbbus	{ }
-device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
+device	nouveau: drmkms, drmkms_ttm, nouveaufbbus, firmload
 
 attach	nouveau at pci with nouveau_pci: drmkms_pci
 file	external/bsd/drm2/nouveau/nouveau_pci.c			nouveau_pci
