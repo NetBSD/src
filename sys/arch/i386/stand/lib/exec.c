@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.71 2019/06/24 02:48:51 pgoyette Exp $	 */
+/*	$NetBSD: exec.c,v 1.72 2019/06/24 13:58:24 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@
 
 #define MODULE_WARNING_SEC	5
 
+#define MAXMODNAME	32	/* from <sys/module.h> */
+
 extern struct btinfo_console btinfo_console;
 
 boot_module_t *boot_modules;
@@ -188,6 +190,42 @@ void
 fs_add(char *name)
 {
 	return module_add_common(name, BM_TYPE_FS);
+}
+
+/*
+ * Add a /-separated list of module names to the boot list
+ */
+void
+module_add_split(const char *name, uint8_t type)
+{
+	char mod_name[MAXMODNAME];
+	int i;
+	const char *mp = name;
+	char *ep;
+
+	while (*mp) {				/* scan list of module names */
+		i = MAXMODNAME;
+		ep = mod_name;
+		while (--i) {			/* scan for end of first name */
+			*ep = *mp;
+			if (*ep == '/')		/* NUL-terminate the name */
+				*ep = '\0';
+
+			if (*ep == 0 ) {	/* add non-empty name */
+				if (ep != mod_name)
+					module_add_common(mod_name, type);
+				break;
+			}
+			ep++; mp++;
+		}
+		if (*ep != 0) {
+			printf("module name too long\n");
+			return;
+		}
+		if  (*mp == '/') {		/* skip separator if more */
+			mp++;
+		}
+	}
 }
 
 static void
@@ -305,7 +343,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add_common(fsmod, BM_TYPE_KMOD);
+		module_add_split(fsmod, BM_TYPE_KMOD);
 
 	bi_prekern.kernpa_start = kernpa_start;
 	bi_prekern.kernpa_end = kernpa_end;
@@ -383,7 +421,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add_common(fsmod, BM_TYPE_KMOD);
+		module_add_split(fsmod, BM_TYPE_KMOD);
 
 	/*
 	 * Gather some information for the kernel. Do this after the
@@ -572,7 +610,7 @@ count_netbsd(const char *file, u_long *rsz)
 
 		/* If the root fs type is unusual, load its module. */
 		if (fsmod != NULL)
-			module_add_common(fsmod, BM_TYPE_KMOD);
+			module_add_split(fsmod, BM_TYPE_KMOD);
 
 		for (bm = boot_modules; bm; bm = bm->bm_next) {
 			fd = module_open(bm, 0, kdev, base_path, false);
