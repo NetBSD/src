@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.11 2019/06/23 02:14:14 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.12 2019/06/24 04:42:06 mrg Exp $	*/
 
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.11 2019/06/23 02:14:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.12 2019/06/24 04:42:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -521,7 +521,7 @@ ure_init_locked(struct ifnet *ifp)
 
 	KASSERT(mutex_owned(&sc->ure_lock));
 
-	if (sc->ure_stopping || sc->ure_dying)
+	if (sc->ure_dying)
 		return EIO;
 
 	/* Cancel pending I/O. */
@@ -688,6 +688,13 @@ ure_stop_locked(struct ifnet *ifp, int disable __unused)
 	struct ure_chain *c;
 	usbd_status err;
 	int i;
+
+	KASSERT(mutex_owned(&sc->ure_lock));
+	mutex_enter(&sc->ure_rxlock);
+	mutex_enter(&sc->ure_txlock);
+	sc->ure_stopping = true;
+	mutex_exit(&sc->ure_txlock);
+	mutex_exit(&sc->ure_rxlock);
 
 	ure_reset(sc);
 
