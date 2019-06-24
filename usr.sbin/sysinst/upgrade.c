@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.8 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.9 2019/06/24 18:48:08 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,17 +67,15 @@ do_upgrade(void)
 	if (find_disks(msg_string(MSG_upgrade)) < 0)
 		return;
 
-	/* XXX - build install_partition_desc from existing partitions
-	 * and pass that here and below instead of NULL */
-	if (set_swap_if_low_ram(NULL) < 0)
-		return;
-
 	if (pm->parts->pscheme->pre_update_verify) {
 		if (pm->parts->pscheme->pre_update_verify(pm->parts))
 			pm->parts->pscheme->write_to_disk(pm->parts);
 	}
 
 	install_desc_from_parts(&install, pm->parts);
+
+	if (set_swap_if_low_ram(&install) < 0)
+		return;
 
 	if (md_pre_update(&install) < 0)
 		goto free_install;
