@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.272 2019/05/10 06:53:42 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.273 2019/06/24 06:24:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ typedef unsigned short if_index_t;
  * a:	if_afdata_lock
  * 6:	in6_multilock (global lock)
  * ::	unlocked, stable
- * ?:	unkown, maybe unsafe
+ * ?:	unknown, maybe unsafe
  *
  * Lock order: IFNET_LOCK => in6_multilock => if_afdata_lock => ifq_lock
  *   Note that currently if_afdata_lock and ifq_lock aren't held
