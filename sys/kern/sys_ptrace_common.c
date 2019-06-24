@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.55 2019/06/11 23:18:55 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.56 2019/06/24 20:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.55 2019/06/11 23:18:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.56 2019/06/24 20:29:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1483,9 +1483,13 @@ process_doregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_reg32);
 		r = (regrfunc_t)process_read_regs32;
 		w = (regwfunc_t)process_write_regs32;
@@ -1524,9 +1528,13 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_fpreg32);
 		r = (regrfunc_t)process_read_fpregs32;
 		w = (regwfunc_t)process_write_fpregs32;
@@ -1565,9 +1573,13 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_dbreg32);
 		r = (regrfunc_t)process_read_dbregs32;
 		w = (regwfunc_t)process_write_dbregs32;
