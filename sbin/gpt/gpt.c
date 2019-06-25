@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.79 2019/06/21 02:14:59 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.80 2019/06/25 03:50:18 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1072,6 +1072,33 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 
 		gpt_msg(gpt, "Partition %d %s", m->map_index, find->msg);
 	}
+	return 0;
+}
+
+int
+gpt_change_hdr(gpt_t gpt, const struct gpt_find *find,
+    void (*cfn)(struct gpt_hdr *, void *, int), void *v)
+{
+	struct gpt_hdr *hdr;
+
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
+
+	/* Change the primary header. */
+	(*cfn)(hdr, v, 0);
+
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
+
+	hdr = gpt->tpg->map_data;
+	/* Change the secondary header. */
+	(*cfn)(hdr, v, 1);
+
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
+
+	gpt_msg(gpt, "Header %s", find->msg);
+
 	return 0;
 }
 
