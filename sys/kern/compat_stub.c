@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.12 2019/05/17 07:37:12 msaitoh Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.13 2019/06/25 15:33:55 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #endif
 
 #ifdef SCTP
-#include <netinet/sctp_asconf.h>
+#include <netinet/sctp_route.h>
 #endif
 
 /*
