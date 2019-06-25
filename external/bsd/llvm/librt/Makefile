@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/06/19 05:24:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2019/06/25 10:30:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -70,9 +70,11 @@ SUBDIR+= \
 	libLLVMX86CodeGen
 .endif
 
+# All subdirs below here can build together, and all are optional.
+SUBDIR+= .WAIT 
+
 .if ${BUILD_RADEON} == 1
 SUBDIR+= \
-	.WAIT \
 	libLLVMAMDGPUMCTargetDesc \
 	libLLVMAMDGPUAsmPrinter \
 	libLLVMAMDGPUTargetInfo \
