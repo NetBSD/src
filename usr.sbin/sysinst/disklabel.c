@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.4 2019/06/20 18:32:32 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.5 2019/06/25 07:14:45 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -271,6 +271,8 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	const struct partition *lp;
 	char *d;
 	size_t n;
+
+	assert(parts->l.d_secsize != 0);
 
 	sprintf(fname, "/tmp/disklabel.%u", getpid());
 	f = fopen(fname, "w");
