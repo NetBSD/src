@@ -1,8 +1,7 @@
-/*	$KAME: sctp_asconf.h,v 1.8 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp_asconf.h,v 1.4 2019/06/25 15:33:56 rjs Exp $ */
+/*	$NetBSD: sctp_route.h,v 1.1 2019/06/25 15:33:56 rjs Exp $ */
 
-#ifndef _NETINET_SCTP_ASCONF_H_
-#define _NETINET_SCTP_ASCONF_H_
+#ifndef _NETINET_SCTP_ROUTE_H_
+#define _NETINET_SCTP_ROUTE_H_
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -32,31 +31,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <sys/malloc.h>
 
 #if defined(_KERNEL)
 
-void sctp_asconf_cleanup(struct sctp_tcb *, struct sctp_nets *);
+void sctp_add_ip_address(struct ifaddr *);
 
-struct mbuf *sctp_compose_asconf(struct sctp_tcb *);
-
-void sctp_handle_asconf(struct mbuf *, unsigned int, struct sctp_asconf_chunk *,
-	struct sctp_tcb *, struct sctp_nets *);
-
-void sctp_handle_asconf_ack(struct mbuf *, int,
-	struct sctp_asconf_ack_chunk *, struct sctp_tcb *, struct sctp_nets *);
-
-uint32_t sctp_addr_mgmt_ep_sa(struct sctp_inpcb *, struct sockaddr *,
-	uint16_t);
-
-int32_t sctp_set_primary_ip_address_sa(struct sctp_tcb *,
-	struct sockaddr *);
-
-void sctp_set_primary_ip_address(struct ifaddr *);
-
-void sctp_check_address_list(struct sctp_tcb *, struct mbuf *, int, int,
-	struct sockaddr *, uint16_t, uint16_t, uint16_t, uint16_t);
+void sctp_delete_ip_address(struct ifaddr *);
 
 #endif /* _KERNEL */
 
-#endif /* !_NETINET_SCTP_ASCONF_H_ */
+#endif /* !_NETINET_SCTP_ROUTE_H_ */
