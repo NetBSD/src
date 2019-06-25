@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.21 2019/03/14 03:52:40 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.22 2019/06/25 12:30:50 msaitoh Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.21 2019/03/14 03:52:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.22 2019/06/25 12:30:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,9 +139,8 @@ static int if_ipsec_set_addr_port(struct sockaddr *, struct sockaddr *,
  */
 
 /* This list is used in ioctl context only. */
-LIST_HEAD(ipsec_sclist, ipsec_softc);
 static struct {
-	struct ipsec_sclist list;
+	LIST_HEAD(ipsec_sclist, ipsec_softc) list;
 	kmutex_t lock;
 } ipsec_softcs __cacheline_aligned;
 
