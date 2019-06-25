@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.471 2019/06/25 19:47:35 wiz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.472 2019/06/25 21:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.471 2019/06/25 19:47:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.472 2019/06/25 21:32:58 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -630,9 +630,8 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 		error = copyinstr(upath, path, MAXPATHLEN, &len);
 	}
 	if (error) {
-		PNBUF_PUT(path);
 		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
-		return error;
+		goto err;
 	}
 
 	if (path[0] == '/') {
@@ -657,7 +656,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	if (error) {
 		DPRINTF(("%s: getcwd_common path %s %d\n", __func__, path,
 		    error));
-		goto out;
+		goto err;
 	}
 	tlen = path + MAXPATHLEN - bp;
 
@@ -668,6 +667,9 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 out:
 	*pbp = pathbuf_assimilate(path);
 	return 0;
+err:
+	PNBUF_PUT(path);
+	return error;
 }
 
 vaddr_t
