@@ -802,7 +802,7 @@ atf_init_test_cases()
 	atf_add_test_case mvhline
 	atf_add_test_case mvinchnstr
 	atf_add_test_case mvprintw
-#	atf_add_test_case mvscanw # not working
+#	atf_add_test_case mvscanw # disable for now - return is wrong
 	atf_add_test_case mvvline
 #	atf_add_test_case pad # not working
 	atf_add_test_case nocbreak
