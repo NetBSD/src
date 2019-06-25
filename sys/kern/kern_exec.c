@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.470 2019/06/25 18:06:29 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.471 2019/06/25 19:47:35 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.470 2019/06/25 18:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.471 2019/06/25 19:47:35 wiz Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -611,7 +611,7 @@ exec_autoload(void)
 /*
  * Copy the user or kernel supplied upath to the allocated pathbuffer pbp
  * making it absolute in the process, by prepending the current working
- * direct if it is not. If offs is supplied it will contain the offset
+ * directory if it is not. If offs is supplied it will contain the offset
  * where the original supplied copy of upath starts.
  */
 int
