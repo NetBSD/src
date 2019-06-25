@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.137 2019/06/18 08:36:52 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.138 2019/06/25 12:30:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.137 2019/06/18 08:36:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.138 2019/06/25 12:30:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -215,10 +215,9 @@ static void	vlan_linkmib_update(struct ifvlan *, struct ifvlan_linkmib *);
 static struct ifvlan_linkmib*	vlan_lookup_tag_psref(struct ifnet *,
     uint16_t, struct psref *);
 
-LIST_HEAD(vlan_ifvlist, ifvlan);
 static struct {
 	kmutex_t lock;
-	struct vlan_ifvlist list;
+	LIST_HEAD(vlan_ifvlist, ifvlan) list;
 } ifv_list __cacheline_aligned;
 
 

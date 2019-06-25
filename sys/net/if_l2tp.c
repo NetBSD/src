@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.34 2019/04/26 11:51:56 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.35 2019/06/25 12:30:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.34 2019/04/26 11:51:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.35 2019/06/25 12:30:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,9 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.34 2019/04/26 11:51:56 pgoyette Exp $"
 /*
  * l2tp global variable definitions
  */
-LIST_HEAD(l2tp_sclist, l2tp_softc);
 static struct {
-	struct l2tp_sclist list;
+	LIST_HEAD(l2tp_sclist, l2tp_softc) list;
 	kmutex_t lock;
 } l2tp_softcs __cacheline_aligned;
 

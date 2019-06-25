@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.147 2019/06/18 07:50:43 msaitoh Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.148 2019/06/25 12:30:50 msaitoh Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.147 2019/06/18 07:50:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.148 2019/06/25 12:30:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -97,9 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.147 2019/06/18 07:50:43 msaitoh Exp $")
 /*
  * gif global variable definitions
  */
-LIST_HEAD(gif_sclist, gif_softc);
 static struct {
-	struct gif_sclist list;
+	LIST_HEAD(gif_sclist, gif_softc) list;
 	kmutex_t lock;
 } gif_softcs __cacheline_aligned;
 

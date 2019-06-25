@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.164 2019/01/25 08:51:29 knakahara Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.165 2019/06/25 12:30:50 msaitoh Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.164 2019/01/25 08:51:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.165 2019/06/25 12:30:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -206,9 +206,8 @@ static int ppp_clone_destroy(struct ifnet *);
 
 static struct ppp_softc *ppp_create(const char *, int);
 
-LIST_HEAD(ppp_sclist, ppp_softc);
 static struct {
-	struct ppp_sclist list;
+	LIST_HEAD(ppp_sclist, ppp_softc) list;
 	kmutex_t lock;
 } ppp_softcs __cacheline_aligned;
 
