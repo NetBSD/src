@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.4 2019/06/10 13:49:39 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.5 2019/06/25 13:07:48 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -187,7 +187,11 @@ struct audio_trackmixer {
 
 	int		frames_per_block; /* number of frames in a block */
 
-	u_int		volume;		/* software master volume (0..256) */
+	/*
+	 * software master volume (0..256)
+	 * Must be protected by sc_intr_lock.
+	 */
+	u_int		volume;
 
 	audio_format2_t	mixfmt;
 	void		*mixsample;	/* mixing buf in double-sized int */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.19 2019/06/23 01:46:56 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.20 2019/06/25 13:07:48 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.19 2019/06/23 01:46:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.20 2019/06/25 13:07:48 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -587,7 +587,6 @@ static int audio_hw_validate_format(struct audio_softc *, int,
 static int audio_mixers_set_format(struct audio_softc *,
 	const struct audio_info *);
 static void audio_mixers_get_format(struct audio_softc *, struct audio_info *);
-static int audio_sysctl_volume(SYSCTLFN_PROTO);
 static int audio_sysctl_blk_ms(SYSCTLFN_PROTO);
 static int audio_sysctl_multiuser(SYSCTLFN_PROTO);
 #if defined(AUDIO_DEBUG)
@@ -1011,13 +1010,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	    CTL_CREATE, CTL_EOL);
 
 	if (node != NULL) {
-		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-		    CTLFLAG_READWRITE,
-		    CTLTYPE_INT, "volume",
-		    SYSCTL_DESCR("software volume test"),
-		    audio_sysctl_volume, 0, (void *)sc, 0,
-		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
-
 		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
 		    CTLFLAG_READWRITE,
 		    CTLTYPE_INT, "blk_ms",
@@ -2159,6 +2151,13 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 
 		KASSERT(sc->sc_popens > 0);
 		sc->sc_popens--;
+
+		/* Restore mixing volume if all tracks are gone. */
+		if (sc->sc_popens == 0) {
+			mutex_enter(sc->sc_intr_lock);
+			sc->sc_pmixer->volume = 256;
+			mutex_exit(sc->sc_intr_lock);
+		}
 	}
 	if (file->rtrack) {
 		/* Call hw halt_input if this is the last recording track. */
@@ -5016,8 +5015,8 @@ audio_pmixer_process(struct audio_softc *sc)
 				if (mixer->volume > 128) {
 					mixer->volume =
 					    (mixer->volume * 95) / 100;
-					device_printf(sc->sc_dev,
-					    "auto volume adjust: volume %d\n",
+					TRACE(2,
+					    "auto volume adjust: volume %d",
 					    mixer->volume);
 				}
 			}
@@ -7263,38 +7262,6 @@ audio_indexof_format(const struct audio_format *formats, int nformats,
 
 	/* Not matched.  This should not be happened. */
 	panic("%s: cannot find matched format\n", __func__);
-}
-
-/*
- * Get or set software master volume: 0..256
- * XXX It's for debug.
- */
-static int
-audio_sysctl_volume(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	struct audio_softc *sc;
-	int t, error;
-
-	node = *rnode;
-	sc = node.sysctl_data;
-
-	if (sc->sc_pmixer)
-		t = sc->sc_pmixer->volume;
-	else
-		t = -1;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
-
-	if (sc->sc_pmixer == NULL)
-		return EINVAL;
-	if (t < 0)
-		return EINVAL;
-
-	sc->sc_pmixer->volume = t;
-	return 0;
 }
 
 /*
