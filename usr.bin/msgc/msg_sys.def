@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.46 2019/06/20 11:31:12 martin Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.47 2019/06/25 21:09:33 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -592,7 +592,8 @@ msg_fmt_prompt_win(msg msg_no, int x, int y, int w, int h,
 	}
 
 	va_start(ap, fmt);
-	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, val_buf_len, ap);
+	_msg_vprompt(fmtcheck(msg_string(msg_no), fmt), msg_flags, def, val,
+	    val_buf_len, ap);
 	va_end(ap);
 
 	if (win != NULL) {
