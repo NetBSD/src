@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.468 2019/06/18 23:53:55 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.469 2019/06/25 16:58:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.468 2019/06/18 23:53:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.469 2019/06/25 16:58:02 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -656,7 +656,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	tlen = path + MAXPATHLEN - bp;
 
 	memmove(path, bp, tlen);
-	path[tlen] = '\0';
+	path[tlen-1] = '\0';
 	if (offs)
 		*offs = tlen - len;
 out:
