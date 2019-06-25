@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2548 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2549 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -393,3 +393,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	evbarm: Add support for the Banana Pi BPI-P2 Zero. [thorpej 20190604]
 	mac68k: Switch page size to 8KB. [jklos 20190606]
 	OpenSSL: Imported 1.1.1c. [christos 20190609]
+	gpt(8): added uuid subcommand to generate new UUIDS.
+		[jnemeth 20190624]
