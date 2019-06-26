@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.18 2019/06/17 10:15:08 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.19 2019/06/26 23:00:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.18 2019/06/17 10:15:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.19 2019/06/26 23:00:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -249,9 +249,7 @@ gicv3_dist_enable(struct gicv3_softc *sc)
 		;
 
 	/* Enable Affinity routing and G1NS interrupts */
-	gicd_ctrl = GICD_CTRL_EnableGrp1A | GICD_CTRL_Enable | GICD_CTRL_ARE_NS;
-	if (ISSET(sc->sc_flags, GICV3_F_SECURE))
-		gicd_ctrl = (gicd_ctrl & ~GICD_CTRL_EnableGrp1A) << 1;
+	gicd_ctrl = GICD_CTRL_EnableGrp1A | GICD_CTRL_ARE_NS;
 	gicd_write_4(sc, GICD_CTRL, gicd_ctrl);
 }
 
@@ -713,6 +711,28 @@ gicv3_irq_handler(void *frame)
 		pic_set_priority(ci, oldipl);
 }
 
+static int
+gicv3_detect_pmr_bits(struct gicv3_softc *sc)
+{
+	const uint32_t opmr = icc_pmr_read();
+	icc_pmr_write(0xff);
+	const uint32_t npmr = icc_pmr_read();
+	icc_pmr_write(opmr);
+
+	return NBBY - (ffs(npmr) - 1);
+}
+
+static int
+gicv3_detect_ipriority_bits(struct gicv3_softc *sc)
+{
+	const uint32_t oipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr | 0xff);
+	const uint32_t nipriorityr = gicd_read_4(sc, GICD_IPRIORITYRn(8));
+	gicd_write_4(sc, GICD_IPRIORITYRn(8), oipriorityr);
+
+	return NBBY - (ffs(nipriorityr & 0xff) - 1);
+}
+
 int
 gicv3_init(struct gicv3_softc *sc)
 {
@@ -728,27 +748,21 @@ gicv3_init(struct gicv3_softc *sc)
 		sc->sc_irouter[n] = UINT64_MAX;
 
 	sc->sc_priority_shift = 4;
-	const uint32_t oldnsacr = gicd_read_4(sc, GICD_NSACRn(2));
-	gicd_write_4(sc, GICD_NSACRn(2), oldnsacr ^ 0xffffffff);
-	if (gicd_read_4(sc, GICD_NSACRn(2)) != oldnsacr) {
-		gicd_write_4(sc, GICD_NSACRn(2), oldnsacr);
-		sc->sc_priority_shift--;
-		SET(sc->sc_flags, GICV3_F_SECURE);
-	}
-	aprint_verbose_dev(sc->sc_dev, "access is %ssecure\n",
-	    ISSET(sc->sc_flags, GICV3_F_SECURE) ? "" : "in");
-
 	sc->sc_pmr_shift = 4;
+
 	if ((gicd_ctrl & GICD_CTRL_DS) == 0) {
-		const uint32_t icc_ctlr = icc_ctlr_read();
-		const u_int nbits = __SHIFTOUT(icc_ctlr, ICC_CTLR_EL1_PRIbits) + 1;
-		const u_int oldpmr = icc_pmr_read();
-		icc_pmr_write(0xff);
-		const u_int pmr = icc_pmr_read();
-		icc_pmr_write(oldpmr);
-		if (nbits == 8 - (ffs(pmr) - 1))
-			sc->sc_pmr_shift--;
+		const int pmr_bits = gicv3_detect_pmr_bits(sc);
+		const int ipriority_bits = gicv3_detect_ipriority_bits(sc);
+
+		if (ipriority_bits != pmr_bits)
+			--sc->sc_priority_shift;
+
+		aprint_verbose_dev(sc->sc_dev, "%d pmr bits, %d ipriority bits\n",
+		    pmr_bits, ipriority_bits);
+	} else {
+		aprint_verbose_dev(sc->sc_dev, "security disabled\n");
 	}
+
 	aprint_verbose_dev(sc->sc_dev, "priority shift %d, pmr shift %d\n",
 	    sc->sc_priority_shift, sc->sc_pmr_shift);
 
