@@ -235,7 +235,6 @@ void dhcp6_handleifa(int, struct ipv6_addr *, pid_t);
 int dhcp6_dadcompleted(const struct interface *);
 void dhcp6_abort(struct interface *);
 void dhcp6_drop(struct interface *, const char *);
-void dhcp6_dropnondelegates(struct interface *ifp);
 int dhcp6_dump(struct interface *);
 #endif /* DHCP6 */
 

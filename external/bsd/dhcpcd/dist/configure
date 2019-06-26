@@ -1368,7 +1368,7 @@ EOF
 elif [ "$DEV" != no -a "$UDEV" != no ]; then
 	echo "no"
 	if [ -n "$UDEV" ]; then
-		echo "udev has been explicity requested ... aborting" >&2
+		echo "udev has been explicitly requested ... aborting" >&2
 		exit 1
 	fi
 fi
