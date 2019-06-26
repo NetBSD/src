@@ -1081,8 +1081,7 @@ dhcpcd_handlelink(void *arg)
 			dhcpcd_linkoverflow(ctx);
 			return;
 		}
-		if (errno != ENOTSUP)
-			logerr(__func__);
+		logerr(__func__);
 	}
 }
 
