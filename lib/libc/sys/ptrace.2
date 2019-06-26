@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.75 2019/06/26 12:30:12 mgorny Exp $
+.\"	$NetBSD: ptrace.2,v 1.76 2019/06/26 13:31:48 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd June 26, 2019
@@ -193,7 +193,7 @@ This call does not stop the process neither emit
 to parent.
 .It Dv PT_READ_I , Dv PT_READ_D
 These requests read a single
-.Li int
+.Vt int
 of data from the traced process' address space.
 Traditionally,
 .Fn ptrace
@@ -295,7 +295,7 @@ This request is a more general interface that can be used instead of
 and
 .Dv PT_WRITE_I .
 The I/O request is encoded in a
-.Dq Li "struct ptrace_io_desc"
+.Vt struct ptrace_io_desc
 defined as:
 .Bd -literal -offset indent
 struct ptrace_io_desc {
@@ -350,9 +350,7 @@ field in the I/O descriptor will be updated with the actual number of
 bytes transferred.
 If the requested I/O could not be successfully performed,
 .Fn ptrace
-will return
-.Li \-1
-and set
+will return \-1 and set
 .Va errno .
 .Pp
 This interface returns success for partial and cancelled byte transfers.
@@ -381,7 +379,7 @@ argument.
 The
 .Fa addr
 argument should contain a
-.Dq Li "struct ptrace_lwpinfo"
+.Vt struct ptrace_lwpinfo
 defined as:
 .Bd -literal -offset indent
 struct ptrace_lwpinfo {
@@ -415,7 +413,7 @@ Possible values are:
 The
 .Fa data
 argument should contain
-.Dq Li "sizeof(struct ptrace_lwpinfo)" .
+.Dq Li sizeof(struct ptrace_lwpinfo) .
 .It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
 Otherwise this operation is the same as
@@ -433,7 +431,7 @@ shall be used.
 This request can be used to specify which events in the traced process
 should be reported to the tracing process.
 These events are specified in a
-.Dq Li "struct ptrace_event"
+.Vt struct ptrace_event
 defined as:
 .Bd -literal -offset indent
 typedef struct ptrace_event {
@@ -509,7 +507,7 @@ argument should be set to
 This request can be used to determine which events in the traced
 process will be reported.
 The information is read into the
-.Dq Li struct ptrace_event
+.Vt struct ptrace_event
 pointed to by
 .Fa addr .
 The
@@ -520,7 +518,7 @@ argument should be set to
 This request reads the state information associated with the event
 that stopped the traced process.
 The information is reported in a
-.Dq Li "struct ptrace_state"
+.Vt struct ptrace_state
 defined as:
 .Bd -literal -offset indent
 typedef struct ptrace_state {
@@ -538,7 +536,7 @@ argument should be set to
 .It Dv PT_SET_SIGINFO
 This request can be used to specify signal information emitted to tracee.
 This signal information is specified in
-.Dq Li "struct ptrace_siginfo"
+.Vt struct ptrace_siginfo
 defined as:
 .Bd -literal -offset indentq
 typedef struct ptrace_siginfo {
@@ -578,7 +576,7 @@ see
 .Xr siginfo 2
 .Pc .
 The information is read into the
-.Dq Li struct ptrace_siginfo
+.Vt struct ptrace_siginfo
 pointed to by
 .Fa addr .
 The
@@ -639,7 +637,7 @@ This request will turn on single stepping of the specified process.
 This request will turn off single stepping of the specified process.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
-.Dq Li "struct reg"
+.Vt struct reg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -653,7 +651,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETREGS ;
 it loads the traced process' machine registers from the
-.Dq Li "struct reg"
+.Vt struct reg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -666,7 +664,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETFPREGS
 This request reads the traced process' floating-point registers into
 the
-.Dq Li "struct fpreg"
+.Vt struct fpreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -680,7 +678,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
-.Dq Li "struct fpreg"
+.Vt struct fpreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -693,7 +691,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETDBREGS
 This request reads the traced process' debug registers into
 the
-.Dq Li "struct dbreg"
+.Vt struct dbreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -707,7 +705,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETDBREGS ;
 it loads the traced process' debug registers from the
-.Dq Li "struct dbreg"
+.Vt struct dbreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -720,7 +718,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETXMMREGS
 This request reads the traced process' XMM registers into
 the
-.Dq Li "struct xmmregs"
+.Vt struct xmmregs
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -734,7 +732,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETXMMREGS ;
 it loads the traced process' XMM registers from the
-.Dq Li "struct xmmregs"
+.Vt struct xmmregs
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -747,7 +745,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETVECREGS
 This request reads the traced process' vector registers into
 the
-.Dq Li "struct vreg"
+.Vt struct vreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -761,7 +759,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETVECREGS ;
 it loads the traced process' vector registers from the
-.Dq Li "struct vreg"
+.Vt struct vreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -774,12 +772,12 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETXSTATE
 This request reads the traced process' FPU extended state into
 the
-.Dq Li "struct xstate"
+.Vt struct xstate
 (defined in
 .In machine/cpu_extended_state.h ) .
 .Fa addr
 should be a pointer to
-.Dq Li "struct iovec"
+.Vt struct iovec
 (defined in
 .In sys/uio.h )
 specifying the pointer to the aforementioned struct as
@@ -793,7 +791,7 @@ be read.
 If zero is supplied, the first thread of the process is read.
 The struct will be filled up to the specified
 .Fa iov_len .
-The caller needs to check
+The caller needs to check the
 .Fa xs_rfbm
 bitmap in order to determine which fields were provided by the CPU,
 and may check
@@ -803,12 +801,12 @@ to determine which component states were changed from the initial state.
 This request is the converse of
 .Dv PT_GETXSTATE ;
 it loads the traced process' extended FPU state from the
-.Dq Li "struct xstate"
+.Vt struct xstate
 (defined in
 .In machine/cpu_extended_state.h ) .
 .Fa addr
 should be a pointer to
-.Dq Li "struct iovec"
+.Vt struct iovec
 (defined in
 .In sys/uio.h )
 specifying the pointer to the aforementioned struct as
@@ -823,24 +821,24 @@ If zero is supplied, the first thread of the process is written.
 The
 .Fa xs_rfbm
 field of the supplied xstate specifies which state components are to
-be updated.  Other components (fields) will be ignored.  The
+be updated.
+Other components (fields) will be ignored.
+The
 .Fa xs_xstate_bv
-specifies whether component state should be set to provided values
-(when 1) or reset to unitialized (when 0).  The request
-will fail if
+field specifies whether component state should be set to provided
+values (when 1) or reset to unitialized (when 0).
+The request will fail if
 .Fa xs_xstate_bv
 is not a subset of
 .Fa xs_rfbm ,
 or any of the specified components is not supported by the CPU or kernel
-(i.e. not returned by
-.Dv PT_GETXSTATE .
+(i.e., not returned by
+.Dv PT_GETXSTATE ) .
 .El
 .Sh ERRORS
 Some requests can cause
 .Fn ptrace
-to return
-.Li \-1
-as a non-error value; to disambiguate,
+to return \-1 as a non-error value; to disambiguate,
 .Va errno
 can be set to 0 before the call and checked afterwards.
 The possible errors are:
