@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.473 2019/06/26 00:30:39 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.474 2019/06/26 20:28:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.473 2019/06/26 00:30:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.474 2019/06/26 20:28:59 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -629,10 +629,8 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	} else {
 		error = copyinstr(upath, path, MAXPATHLEN, &len);
 	}
-	if (error) {
-		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
+	if (error)
 		goto err;
-	}
 
 	if (path[0] == '/') {
 		if (offs)
@@ -653,11 +651,8 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	    GETCWD_CHECK_ACCESS, l);
 	rw_exit(&cwdi->cwdi_lock);
 
-	if (error) {
-		DPRINTF(("%s: getcwd_common path %s %d\n", __func__, path,
-		    error));
+	if (error)
 		goto err;
-	}
 	tlen = path + MAXPATHLEN - bp;
 
 	memmove(path, bp, tlen);
