@@ -80,7 +80,7 @@ need_hostname()
 	set_hostname_vars
 
 	if [ -n "$old_fqdn" ]; then
-		if ${hfqdn} || ! ${hsort}; then
+		if ${hfqdn} || ! ${hshort}; then
 			[ "$hostname" = "$old_fqdn" ]
 		else
 			[ "$hostname" = "${old_fqdn%%.*}" ]

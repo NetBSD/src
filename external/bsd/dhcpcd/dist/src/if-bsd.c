@@ -1063,7 +1063,7 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 		return 0;
 
 	if (if_copyrt(ctx, &rt, rtm) == -1)
-		return -1;
+		return errno == ENOTSUP ? 0 : -1;
 
 #ifdef INET6
 	/*
@@ -1305,7 +1305,8 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 		return if_ifa(ctx, (const void *)rtm);
 #ifdef RTM_DESYNC
 	case RTM_DESYNC:
-		return dhcpcd_linkoverflow(ctx);
+		dhcpcd_linkoverflow(ctx);
+		return 0;
 #endif
 	}
 
@@ -1325,7 +1326,9 @@ if_handlelink(struct dhcpcd_ctx *ctx)
 		return -1;
 	if (len == 0)
 		return 0;
-	if (len < rtm.hdr.rtm_msglen) {
+	if ((size_t)len < offsetof(struct rt_msghdr, rtm_index) ||
+	    len < rtm.hdr.rtm_msglen)
+	{
 		errno = EINVAL;
 		return -1;
 	}
