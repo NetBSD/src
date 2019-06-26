@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.26 2019/06/26 15:21:52 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.27 2019/06/26 15:26:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.26 2019/06/26 15:21:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.27 2019/06/26 15:26:57 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -7282,11 +7282,6 @@ ipf_resolvedest(ipf_main_softc_t *softc, char *base, frdest_t *fdp, int v)
 			}
 		} else {
 			ifp = GETIFP(base + fdp->fd_name, v);
-			if (ifp == NULL)
-				ifp = (void *)-1;
-			if ((ifp != NULL) && (ifp != (void *)-1))
-				fdp->fd_local = ipf_deliverlocal(softc, v, ifp,
-								 &fdp->fd_ip6);
 		}
 	}
 	fdp->fd_ptr = ifp;
