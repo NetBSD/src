@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.62 2019/06/26 11:53:15 isaki Exp $ */
+/* $NetBSD: pad.c,v 1.63 2019/06/26 12:21:40 isaki Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.62 2019/06/26 11:53:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.63 2019/06/26 12:21:40 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.62 2019/06/26 11:53:15 isaki Exp $");
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/condvar.h>
 #include <sys/select.h>
@@ -453,7 +454,7 @@ static int
 fops_pad_poll(struct file *fp, int events)
 {
 
-	return ENODEV;
+	return POLLERR;
 }
 
 static int
