@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.30 2019/06/26 00:54:04 pgoyette Exp $ */
+/* $NetBSD: main.c,v 1.31 2019/06/26 22:04:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ char module_base[80];
 uint32_t kmodloadp;
 int modules_enabled = 0;
 
+#define MAXMODNAME 32
 void module_add(const char *);
 void module_add_split(const char *);
 void module_load(const char *);
@@ -427,7 +428,7 @@ bi_add(void *new, int type, int size)
 /*
  * Add a /-separated list of module names to the boot list
  */
-static void
+void
 module_add_split(const char *name)
 {
 	char mod_name[MAXMODNAME];
