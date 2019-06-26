@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.20 2019/06/25 13:07:48 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.21 2019/06/26 06:57:45 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.20 2019/06/25 13:07:48 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.21 2019/06/26 06:57:45 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -458,28 +458,6 @@ audio_track_bufstat(audio_track_t *track, struct audio_track_debugbuf *buf)
 #define SPECIFIED(x)	((x) != ~0)
 #define SPECIFIED_CH(x)	((x) != (u_char)~0)
 
-/*
- * AUDIO_SCALEDOWN()
- * This macro should be used for audio wave data only.
- *
- * The arithmetic shift right (ASR) (in other words, floor()) is good for
- * this purpose, and will be faster than division on the most platform.
- * The division (in other words, truncate()) is not so bad alternate for
- * this purpose, and will be fast enough.
- * (Using ASR is 1.9 times faster than division on my amd64, and 1.3 times
- * faster on my m68k.  -- isaki 201801.)
- *
- * However, the right shift operator ('>>') for negative integer is
- * "implementation defined" behavior in C (note that it's not "undefined"
- * behavior).  So only if implementation defines '>>' as ASR, we use it.
- */
-#if defined(__GNUC__)
-/* gcc defines '>>' as ASR. */
-#define AUDIO_SCALEDOWN(value, bits)	((value) >> (bits))
-#else
-#define AUDIO_SCALEDOWN(value, bits)	((value) / (1 << (bits)))
-#endif
-
 /* Device timeout in msec */
 #define AUDIO_TIMEOUT	(3000)
 
@@ -539,7 +517,7 @@ static void filt_audioread_detach(struct knote *);
 static int  filt_audioread_event(struct knote *, long);
 
 static int audio_open(dev_t, struct audio_softc *, int, int, struct lwp *,
-	struct audiobell_arg *);
+	audio_file_t **);
 static int audio_close(struct audio_softc *, audio_file_t *);
 static int audio_read(struct audio_softc *, struct uio *, int, audio_file_t *);
 static int audio_write(struct audio_softc *, struct uio *, int, audio_file_t *);
@@ -1782,14 +1760,11 @@ audiommap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 
 /*
  * Open for audiobell.
- * sample_rate, encoding, precision and channels in arg are in-parameter
- * and indicates input encoding.
- * Stores allocated file to arg->file.
- * Stores blocksize to arg->blocksize.
+ * It stores allocated file to *filep.
  * If successful returns 0, otherwise errno.
  */
 int
-audiobellopen(dev_t dev, struct audiobell_arg *arg)
+audiobellopen(dev_t dev, audio_file_t **filep)
 {
 	struct audio_softc *sc;
 	int error;
@@ -1804,7 +1779,7 @@ audiobellopen(dev_t dev, struct audiobell_arg *arg)
 		return error;
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
-	error = audio_open(dev, sc, FWRITE, 0, curlwp, arg);
+	error = audio_open(dev, sc, FWRITE, 0, curlwp, filep);
 
 	audio_exit_exclusive(sc);
 	return error;
@@ -1830,6 +1805,28 @@ audiobellclose(audio_file_t *file)
 	return error;
 }
 
+/* Set sample rate for audiobell */
+int
+audiobellsetrate(audio_file_t *file, u_int sample_rate)
+{
+	struct audio_softc *sc;
+	struct audio_info ai;
+	int error;
+
+	sc = file->sc;
+
+	AUDIO_INITINFO(&ai);
+	ai.play.sample_rate = sample_rate;
+
+	error = audio_enter_exclusive(sc);
+	if (error)
+		return error;
+	error = audio_file_setinfo(sc, file, &ai);
+	audio_exit_exclusive(sc);
+
+	return error;
+}
+
 /* Playback for audiobell */
 int
 audiobellwrite(audio_file_t *file, struct uio *uio)
@@ -1848,7 +1845,7 @@ audiobellwrite(audio_file_t *file, struct uio *uio)
  */
 int
 audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
-	struct lwp *l, struct audiobell_arg *bell)
+	struct lwp *l, audio_file_t **bellfile)
 {
 	struct audio_info ai;
 	struct file *fp;
@@ -1912,11 +1909,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	/* Set parameters */
 	AUDIO_INITINFO(&ai);
-	if (bell) {
-		ai.play.sample_rate   = bell->sample_rate;
-		ai.play.encoding      = bell->encoding;
-		ai.play.channels      = bell->channels;
-		ai.play.precision     = bell->precision;
+	if (bellfile) {
+		/* If audiobell, only sample_rate will be set later. */
+		ai.play.sample_rate   = audio_default.sample_rate;
+		ai.play.encoding      = AUDIO_ENCODING_SLINEAR_NE;
+		ai.play.channels      = 1;
+		ai.play.precision     = 16;
 		ai.play.pause         = false;
 	} else if (ISDEVAUDIO(dev)) {
 		/* If /dev/audio, initialize everytime. */
@@ -2041,7 +2039,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		}
 	}
 
-	if (bell == NULL) {
+	if (bellfile == NULL) {
 		error = fd_allocfile(&fp, &fd);
 		if (error)
 			goto bad3;
@@ -2059,8 +2057,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	SLIST_INSERT_HEAD(&sc->sc_files, af, entry);
 	mutex_exit(sc->sc_intr_lock);
 
-	if (bell) {
-		bell->file = af;
+	if (bellfile) {
+		*bellfile = af;
 	} else {
 		error = fd_clone(fp, fd, flags, &audio_fileops, af);
 		KASSERT(error == EMOVEFD);
