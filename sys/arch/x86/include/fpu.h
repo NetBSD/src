@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.16 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.17 2019/06/26 12:30:13 mgorny Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -37,6 +37,10 @@ void process_write_fpregs_s87(struct lwp *, const struct save87 *);
 
 void process_read_fpregs_xmm(struct lwp *, struct fxsave *);
 void process_read_fpregs_s87(struct lwp *, struct save87 *);
+
+int process_read_xstate(struct lwp *, struct xstate *);
+int process_verify_xstate(const struct xstate *);
+int process_write_xstate(struct lwp *, const struct xstate *);
 
 #endif
 

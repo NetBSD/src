@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.53 2019/05/25 21:02:32 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.54 2019/06/26 12:30:13 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.53 2019/05/25 21:02:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.54 2019/06/26 12:30:13 mgorny Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -910,6 +910,165 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 	} else {
 		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
 	}
+}
+
+int
+process_read_xstate(struct lwp *l, struct xstate *xstate)
+{
+	union savefpu *fpu_save;
+
+	fpusave_lwp(l, true);
+	fpu_save = lwp_fpuarea(l);
+
+	if (x86_fpu_save == FPU_SAVE_FSAVE) {
+		/* Convert from legacy FSAVE format. */
+		memset(&xstate->xs_fxsave, 0, sizeof(xstate->xs_fxsave));
+		process_s87_to_xmm(&fpu_save->sv_87, &xstate->xs_fxsave);
+
+		/* We only got x87 data. */
+		xstate->xs_rfbm = XCR0_X87;
+		xstate->xs_xstate_bv = XCR0_X87;
+		return 0;
+	}
+
+	/* Copy the legacy area. */
+	memcpy(&xstate->xs_fxsave, fpu_save->sv_xsave_hdr.xsh_fxsave,
+	    sizeof(xstate->xs_fxsave));
+
+	if (x86_fpu_save == FPU_SAVE_FXSAVE) {
+		/* FXSAVE means we've got x87 + SSE data. */
+		xstate->xs_rfbm = XCR0_X87 | XCR0_SSE;
+		xstate->xs_xstate_bv = XCR0_X87 | XCR0_SSE;
+		return 0;
+	}
+
+	/* Copy the bitmap indicating which states are available. */
+	xstate->xs_rfbm = x86_xsave_features & XCR0_FPU;
+	xstate->xs_xstate_bv = fpu_save->sv_xsave_hdr.xsh_xstate_bv;
+	KASSERT(!(xstate->xs_xstate_bv & ~xstate->xs_rfbm));
+
+#define COPY_COMPONENT(xcr0_val, xsave_val, field)				\
+	if (xstate->xs_xstate_bv & xcr0_val) {					\
+		KASSERT(x86_xsave_offsets[xsave_val]				\
+		    >= sizeof(struct xsave_header));				\
+		KASSERT(x86_xsave_sizes[xsave_val]				\
+		    >= sizeof(xstate -> field));				\
+										\
+		memcpy(&xstate -> field,					\
+		    (char*)fpu_save + x86_xsave_offsets[xsave_val],		\
+		    sizeof(xstate -> field));					\
+	}
+
+	COPY_COMPONENT(XCR0_YMM_Hi128, XSAVE_YMM_Hi128, xs_ymm_hi128);
+	COPY_COMPONENT(XCR0_Opmask, XSAVE_Opmask, xs_opmask);
+	COPY_COMPONENT(XCR0_ZMM_Hi256, XSAVE_ZMM_Hi256, xs_zmm_hi256);
+	COPY_COMPONENT(XCR0_Hi16_ZMM, XSAVE_Hi16_ZMM, xs_hi16_zmm);
+
+#undef COPY_COMPONENT
+
+	return 0;
+}
+
+int
+process_verify_xstate(const struct xstate *xstate)
+{
+	/* xstate_bv must be a subset of RFBM */
+	if (xstate->xs_xstate_bv & ~xstate->xs_rfbm)
+		return EINVAL;
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		if ((xstate->xs_rfbm & ~XCR0_X87))
+			return EINVAL;
+		break;
+	case FPU_SAVE_FXSAVE:
+		if ((xstate->xs_rfbm & ~(XCR0_X87 | XCR0_SSE)))
+			return EINVAL;
+		break;
+	default:
+		/* Verify whether no unsupported features are enabled */
+		if ((xstate->xs_rfbm & ~(x86_xsave_features & XCR0_FPU)) != 0)
+			return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+process_write_xstate(struct lwp *l, const struct xstate *xstate)
+{
+	union savefpu *fpu_save;
+
+	fpusave_lwp(l, true);
+	fpu_save = lwp_fpuarea(l);
+
+	/* Convert data into legacy FSAVE format. */
+	if (x86_fpu_save == FPU_SAVE_FSAVE) {
+		if (xstate->xs_xstate_bv & XCR0_X87)
+			process_xmm_to_s87(&xstate->xs_fxsave, &fpu_save->sv_87);
+		return 0;
+	}
+
+	/* If XSAVE is supported, make sure that xstate_bv is set correctly. */
+	if (x86_fpu_save >= FPU_SAVE_XSAVE) {
+		/*
+		 * Bit-wise xstate->xs_rfbm ? xstate->xs_xstate_bv
+		 *                          : fpu_save->sv_xsave_hdr.xsh_xstate_bv
+		 */
+		fpu_save->sv_xsave_hdr.xsh_xstate_bv =
+		    (fpu_save->sv_xsave_hdr.xsh_xstate_bv & ~xstate->xs_rfbm) |
+		    xstate->xs_xstate_bv;
+	}
+
+	if (xstate->xs_xstate_bv & XCR0_X87) {
+		/*
+		 * X87 state is split into two areas, interspersed with SSE
+		 * data.
+		 */
+		memcpy(&fpu_save->sv_xmm, &xstate->xs_fxsave, 24);
+		memcpy(fpu_save->sv_xmm.fx_87_ac, xstate->xs_fxsave.fx_87_ac,
+		    sizeof(xstate->xs_fxsave.fx_87_ac));
+	}
+
+	/*
+	 * Copy MXCSR if either SSE or AVX state is requested, to match the XSAVE
+	 * behavior for those flags.
+	 */
+	if (xstate->xs_xstate_bv & (XCR0_SSE|XCR0_YMM_Hi128)) {
+		/*
+		 * Invalid bits in mxcsr or mxcsr_mask will cause faults.
+		 */
+		fpu_save->sv_xmm.fx_mxcsr_mask = xstate->xs_fxsave.fx_mxcsr_mask
+		    & x86_fpu_mxcsr_mask;
+		fpu_save->sv_xmm.fx_mxcsr = xstate->xs_fxsave.fx_mxcsr &
+		    fpu_save->sv_xmm.fx_mxcsr_mask;
+	}
+
+	if (xstate->xs_xstate_bv & XCR0_SSE) {
+		memcpy(&fpu_save->sv_xsave_hdr.xsh_fxsave[160],
+		    xstate->xs_fxsave.fx_xmm,
+		    sizeof(xstate->xs_fxsave.fx_xmm));
+	}
+
+#define COPY_COMPONENT(xcr0_val, xsave_val, field)				\
+	if (xstate->xs_xstate_bv & xcr0_val) {					\
+		KASSERT(x86_xsave_offsets[xsave_val]				\
+		    >= sizeof(struct xsave_header));				\
+		KASSERT(x86_xsave_sizes[xsave_val]				\
+		    >= sizeof(xstate -> field));				\
+										\
+		memcpy((char*)fpu_save + x86_xsave_offsets[xsave_val],		\
+		    &xstate -> field, sizeof(xstate -> field));		\
+	}
+
+	COPY_COMPONENT(XCR0_YMM_Hi128, XSAVE_YMM_Hi128, xs_ymm_hi128);
+	COPY_COMPONENT(XCR0_Opmask, XSAVE_Opmask, xs_opmask);
+	COPY_COMPONENT(XCR0_ZMM_Hi256, XSAVE_ZMM_Hi256, xs_zmm_hi256);
+	COPY_COMPONENT(XCR0_Hi16_ZMM, XSAVE_Hi16_ZMM, xs_hi16_zmm);
+
+#undef COPY_COMPONENT
+
+	return 0;
 }
 
 /* -------------------------------------------------------------------------- */

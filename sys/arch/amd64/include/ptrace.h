@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.15 2019/06/18 21:18:11 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.16 2019/06/26 12:30:12 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -45,6 +45,11 @@
 #define	PT_SETDBREGS		(PT_FIRSTMACH + 6)
 #define	PT_SETSTEP		(PT_FIRSTMACH + 7)
 #define	PT_CLEARSTEP		(PT_FIRSTMACH + 8)
+#define	PT_GETXSTATE		(PT_FIRSTMACH + 9)
+#define	PT_SETXSTATE		(PT_FIRSTMACH + 10)
+
+/* We have machine-dependent process tracing needs. */
+#define	__HAVE_PTRACE_MACHDEP
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
@@ -55,7 +60,9 @@
 	"PT_GETDBREGS", \
 	"PT_SETDBREGS", \
 	"PT_SETSTEP", \
-	"PT_CLEARSTEP",
+	"PT_CLEARSTEP", \
+	"PT_GETXSTATE", \
+	"PT_SETXSTATE"
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
@@ -70,6 +77,20 @@
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile ("int3" : : : "memory")
 #define PTRACE_BREAKPOINT_SIZE	1
 #define PTRACE_BREAKPOINT_ADJ	1
+
+#ifdef _KERNEL
+
+/*
+ * These are used in sys_ptrace() to find good ptrace(2) requests.
+ */
+#define	PTRACE_MACHDEP_REQUEST_CASES					\
+	case PT_GETXSTATE:						\
+	case PT_SETXSTATE:
+
+int process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
+int process_machdep_validxstate(struct proc *);
+
+#endif /* _KERNEL */
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"

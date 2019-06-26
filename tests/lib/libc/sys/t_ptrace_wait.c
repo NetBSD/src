@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.128 2019/06/18 21:14:26 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.129 2019/06/26 12:30:13 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.128 2019/06/18 21:14:26 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.129 2019/06/26 12:30:13 mgorny Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.128 2019/06/18 21:14:26 kamil Exp $");
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
+#include <sys/uio.h>
 #include <sys/wait.h>
 #include <machine/reg.h>
 #include <elf.h>
@@ -62,6 +63,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.128 2019/06/18 21:14:26 kamil Exp $");
 #if defined(__i386__) || defined(__x86_64__)
 #include <cpuid.h>
 #include <x86/cpu_extended_state.h>
+#include <x86/specialreg.h>
 #endif
 
 #include <atf-c.h>

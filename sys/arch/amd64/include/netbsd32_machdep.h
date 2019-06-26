@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.23 2019/06/04 16:29:53 mgorny Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.24 2019/06/26 12:30:12 mgorny Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -22,6 +22,8 @@
 #define	PT32_SETDBREGS		(PT_FIRSTMACH + 8)
 #define	PT32_SETSTEP		(PT_FIRSTMACH + 9)
 #define	PT32_CLEARSTEP		(PT_FIRSTMACH + 10)
+#define	PT32_GETXSTATE		(PT_FIRSTMACH + 11)
+#define	PT32_SETXSTATE		(PT_FIRSTMACH + 12)
 
 #define NETBSD32_POINTER_TYPE uint32_t
 typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;

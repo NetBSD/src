@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.39 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.40 2019/06/26 12:30:12 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2019/06/26 12:30:12 mgorny Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -84,6 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2019/02/11 14:59:32 cherry 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <compat/netbsd32/netbsd32.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
@@ -288,3 +291,131 @@ process_set_pc(struct lwp *l, void *addr)
 
 	return 0;
 }
+
+#ifdef __HAVE_PTRACE_MACHDEP
+static int
+process_machdep_read_xstate(struct lwp *l, struct xstate *regs)
+{
+	return process_read_xstate(l, regs);
+}
+
+static int
+process_machdep_write_xstate(struct lwp *l, const struct xstate *regs)
+{
+	int error;
+
+	/*
+	 * Check for security violations.
+	 */
+	error = process_verify_xstate(regs);
+	if (error != 0)
+		return error;
+
+	return process_write_xstate(l, regs);
+}
+
+int
+ptrace_machdep_dorequest(
+    struct lwp *l,
+    struct lwp *lt,
+    int req,
+    void *addr,
+    int data
+)
+{
+	struct uio uio;
+	struct iovec iov;
+	struct vmspace *vm;
+	int error;
+	int write = 0;
+
+	switch (req) {
+	case PT_SETXSTATE:
+		write = 1;
+
+		/* FALLTHROUGH */
+	case PT_GETXSTATE:
+		/* write = 0 done above. */
+		if (!process_machdep_validxstate(lt->l_proc))
+			return EINVAL;
+		if (__predict_false(l->l_proc->p_flag & PK_32)) {
+			struct netbsd32_iovec *user_iov;
+			user_iov = (struct netbsd32_iovec*)addr;
+			iov.iov_base = NETBSD32PTR64(user_iov->iov_base);
+			iov.iov_len = user_iov->iov_len;
+		} else {
+			struct iovec *user_iov;
+			user_iov = (struct iovec*)addr;
+			iov.iov_base = user_iov->iov_base;
+			iov.iov_len = user_iov->iov_len;
+		}
+
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error)
+			return error;
+		if (iov.iov_len > sizeof(struct xstate))
+			iov.iov_len = sizeof(struct xstate);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = iov.iov_len;
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = vm;
+		error = process_machdep_doxstate(l, lt, &uio);
+		uvmspace_free(vm);
+		return error;
+	}
+
+#ifdef DIAGNOSTIC
+	panic("ptrace_machdep: impossible");
+#endif
+
+	return 0;
+}
+
+/*
+ * The following functions are used by both ptrace(2) and procfs.
+ */
+
+int
+process_machdep_doxstate(struct lwp *curl, struct lwp *l, struct uio *uio)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	int error;
+	struct xstate r;
+	char *kv;
+	ssize_t kl;
+
+	memset(&r, 0, sizeof(r));
+	kl = MIN(uio->uio_iov->iov_len, sizeof(r));
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_machdep_read_xstate(l, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE)
+		error = process_machdep_write_xstate(l, &r);
+
+	uio->uio_offset = 0;
+	return error;
+}
+
+int
+process_machdep_validxstate(struct proc *p)
+{
+
+	if (p->p_flag & PK_SYSTEM)
+		return 0;
+
+	return 1;
+}
+#endif /* __HAVE_PTRACE_MACHDEP */

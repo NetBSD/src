@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.22 2019/06/18 21:18:12 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.23 2019/06/26 12:30:12 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -90,6 +90,8 @@
 #define	PT_SETDBREGS		(PT_FIRSTMACH + 8)
 #define	PT_SETSTEP		(PT_FIRSTMACH + 9)
 #define	PT_CLEARSTEP		(PT_FIRSTMACH + 10)
+#define	PT_GETXSTATE		(PT_FIRSTMACH + 11)
+#define	PT_SETXSTATE		(PT_FIRSTMACH + 12)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
@@ -102,8 +104,9 @@
 	"PT_GETDBREGS", \
 	"PT_SETDBREGS", \
 	"PT_SETSTEP", \
-	"PT_CLEARSTEP",
-
+	"PT_CLEARSTEP", \
+	"PT_GETXSTATE", \
+	"PT_SETXSTATE"
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_eip
@@ -126,7 +129,9 @@
  */
 #define	PTRACE_MACHDEP_REQUEST_CASES					\
 	case PT_GETXMMREGS:						\
-	case PT_SETXMMREGS:
+	case PT_SETXMMREGS:						\
+	case PT_GETXSTATE:						\
+	case PT_SETXSTATE:
 
 /*
  * These are used to define machine-dependent procfs node types.
@@ -159,6 +164,8 @@ struct xmmregs;
 /* Functions used by both ptrace(2) and procfs. */
 int	process_machdep_doxmmregs(struct lwp *, struct lwp *, struct uio *);
 int	process_machdep_validxmmregs(struct proc *);
+int	process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
+int	process_machdep_validxstate(struct proc *);
 
 /* Functions used by procfs. */
 struct mount;
