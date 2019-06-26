@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.91 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.92 2019/06/26 12:29:01 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.91 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.92 2019/06/26 12:29:01 mgorny Exp $");
 
 #include "opt_xen.h"
 
@@ -74,6 +74,8 @@ char cpu_brand_string[49];
 int x86_fpu_save __read_mostly;
 unsigned int x86_fpu_save_size __read_mostly = sizeof(struct save87);
 uint64_t x86_xsave_features __read_mostly = 0;
+size_t x86_xsave_offsets[XSAVE_MAX_COMPONENT+1] __read_mostly;
+size_t x86_xsave_sizes[XSAVE_MAX_COMPONENT+1] __read_mostly;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -755,6 +757,7 @@ static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
+	int i;
 
 	x86_fpu_eager = true;
 	x86_fpu_save = FPU_SAVE_FSAVE;
@@ -816,6 +819,15 @@ cpu_probe_fpu(struct cpu_info *ci)
 		x86_fpu_save_size = descs[2];
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
+
+	/* Get component offsets and sizes for the save area */
+	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
+		if (x86_xsave_features & __BIT(i)) {
+			x86_cpuid2(0xd, i, descs);
+			x86_xsave_offsets[i] = descs[1];
+			x86_xsave_sizes[i] = descs[0];
+		}
+	}
 }
 
 void

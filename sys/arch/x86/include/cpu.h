@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106 2019/05/27 17:32:36 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.107 2019/06/26 12:29:00 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -459,6 +459,8 @@ extern int x86_fpu_save;
 #define	FPU_SAVE_XSAVEOPT	3
 extern unsigned int x86_fpu_save_size;
 extern uint64_t x86_xsave_features;
+extern size_t x86_xsave_offsets[];
+extern size_t x86_xsave_sizes[];
 extern uint32_t x86_fpu_mxcsr_mask;
 extern bool x86_fpu_eager;
 

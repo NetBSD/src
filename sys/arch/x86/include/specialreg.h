@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.147 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.148 2019/06/26 12:29:00 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -145,6 +145,26 @@
  */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
+
+/*
+ * XSAVE component indices.
+ */
+#define XSAVE_X87	0
+#define XSAVE_SSE	1
+#define XSAVE_YMM_Hi128	2
+#define XSAVE_BNDREGS	3
+#define XSAVE_BNDCSR	4
+#define XSAVE_Opmask	5
+#define XSAVE_ZMM_Hi256	6
+#define XSAVE_Hi16_ZMM	7
+#define XSAVE_PT	8
+#define XSAVE_PKRU	9
+#define XSAVE_HDC	10
+
+/*
+ * Highest XSAVE component enabled by XCR0_FPU.
+ */
+#define XSAVE_MAX_COMPONENT XSAVE_Hi16_ZMM
 
 /*
  * CPUID "features" bits
