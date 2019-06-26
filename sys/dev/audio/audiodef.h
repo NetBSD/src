@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.5 2019/06/25 13:07:48 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.6 2019/06/26 06:57:45 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -62,6 +62,28 @@
  * For now, there are no user interfaces to get/set it.
  */
 /* #define AUDIO_SUPPORT_TRACK_VOLUME */
+
+/*
+ * AUDIO_SCALEDOWN()
+ * This macro should be used for audio wave data only.
+ *
+ * The arithmetic shift right (ASR) (in other words, floor()) is good for
+ * this purpose, and will be faster than division on the most platform.
+ * The division (in other words, truncate()) is not so bad alternate for
+ * this purpose, and will be fast enough.
+ * (Using ASR is 1.9 times faster than division on my amd64, and 1.3 times
+ * faster on my m68k.  -- isaki 201801.)
+ *
+ * However, the right shift operator ('>>') for negative integer is
+ * "implementation defined" behavior in C (note that it's not "undefined"
+ * behavior).  So only if implementation defines '>>' as ASR, we use it.
+ */
+#if defined(__GNUC__)
+/* gcc defines '>>' as ASR. */
+#define AUDIO_SCALEDOWN(value, bits)	((value) >> (bits))
+#else
+#define AUDIO_SCALEDOWN(value, bits)	((value) / (1 << (bits)))
+#endif
 
 /* conversion stage */
 typedef struct {
