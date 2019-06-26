@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.123 2019/06/04 16:30:19 mgorny Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.124 2019/06/26 12:30:12 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.123 2019/06/04 16:30:19 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.124 2019/06/26 12:30:12 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -353,6 +353,8 @@ netbsd32_ptrace_translate_request(int req)
 	case PT32_SETDBREGS:		return PT_SETDBREGS;
 	case PT32_SETSTEP:		return PT_SETSTEP;
 	case PT32_CLEARSTEP:		return PT_CLEARSTEP;
+	case PT32_GETXSTATE:		return PT_GETXSTATE;
+	case PT32_SETXSTATE:		return PT_SETXSTATE;
 	default:			return -1;
 	}
 }
