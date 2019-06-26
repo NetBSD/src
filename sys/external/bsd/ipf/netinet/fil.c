@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.25 2019/02/04 07:59:01 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.26 2019/06/26 15:21:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.25 2019/02/04 07:59:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.26 2019/06/26 15:21:52 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -1725,25 +1725,22 @@ ipf_pr_ipv4hdr(fr_info_t *fin)
 		int morefrag = off & IP_MF;
 
 		fi->fi_flx |= FI_FRAG;
-		off &= IP_OFFMASK;
-		if (off != 0) {
-			fin->fin_flx |= FI_FRAGBODY;
-			off <<= 3;
-			if ((off + fin->fin_dlen > 65535) ||
-			    (fin->fin_dlen == 0) ||
-			    ((morefrag != 0) && ((fin->fin_dlen & 7) != 0))) {
-				/*
-				 * The length of the packet, starting at its
-				 * offset cannot exceed 65535 (0xffff) as the
-				 * length of an IP packet is only 16 bits.
-				 *
-				 * Any fragment that isn't the last fragment
-				 * must have a length greater than 0 and it
-				 * must be an even multiple of 8.
-				 */
-				fi->fi_flx |= FI_BAD;
-				DT1(ipf_fi_bad_fragbody_gt_65535, fr_info_t *, fin);
-			}
+		fin->fin_flx |= FI_FRAGBODY;
+		off <<= 3;
+		if ((off + fin->fin_dlen > 65535) ||
+		    (fin->fin_dlen == 0) ||
+		    ((morefrag != 0) && ((fin->fin_dlen & 7) != 0))) {
+			/*
+			 * The length of the packet, starting at its
+			 * offset cannot exceed 65535 (0xffff) as the
+			 * length of an IP packet is only 16 bits.
+			 *
+			 * Any fragment that isn't the last fragment
+			 * must have a length greater than 0 and it
+			 * must be an even multiple of 8.
+			 */
+			fi->fi_flx |= FI_BAD;
+			DT1(ipf_fi_bad_fragbody_gt_65535, fr_info_t *, fin);
 		}
 	}
 	fin->fin_off = off;
