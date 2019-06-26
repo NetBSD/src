@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.7 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.8 2019/06/26 16:51:29 phil Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.7 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.8 2019/06/26 16:51:29 phil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -529,8 +529,8 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 #else
 	urtwn_getradiocaps(ic, IEEE80211_CHAN_MAX, &ic->ic_nchans, 
 	    ic->ic_channels);
-#endif	
-
+#endif
+	/* XXX issues here ...  Figure out proper attach and vap creation */
 	ieee80211_ifattach(ic);
 
 	/* override default methods NNN Need more here? */
@@ -547,9 +547,24 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	ic->ic_raw_xmit = urtwn_raw_xmit;
 	ic->ic_getradiocaps = urtwn_getradiocaps;
 	
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(URTWN_RX_RADIOTAP_PRESENT);
 
-	/* How should this get called the first time?  Not here? */
-	// uint8_t bssid[IEEE80211_ADDR_LEN] = {0};
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(URTWN_TX_RADIOTAP_PRESENT);
+
+	ieee80211_announce(ic);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	SET(sc->sc_flags, URTWN_FLAG_ATTACHED);
+
+	/* Should be called via an IOCTL.  Temp call here for now. */
 
 	struct ieee80211vap *vap =
 	    urtwn_vap_create(ic, device_xname(sc->sc_dev),
@@ -562,34 +577,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 		ieee80211_ifdetach(ic);
 		goto fail;
 	}
-
-	/* Debug all! NNN */
-	// vap->iv_debug = IEEE80211_MSG_ANY;
-
-	bpf_attach2(vap->iv_ifp, DLT_IEEE802_11_RADIO,
-	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
-	    &sc->sc_drvbpf);
-
-	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
-	sc->sc_rxtap.wr_ihdr.it_present = htole32(URTWN_RX_RADIOTAP_PRESENT);
-
-	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
-	sc->sc_txtap.wt_ihdr.it_present = htole32(URTWN_TX_RADIOTAP_PRESENT);
-
-	struct ifnet *ifp = vap->iv_ifp;
-	ifp->if_percpuq = if_percpuq_create(ifp);
-	if_register(ifp);
-
-	ieee80211_announce(ic);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	SET(sc->sc_flags, URTWN_FLAG_ATTACHED);
+	
 	return;
 
  fail:
@@ -3403,6 +3391,7 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	vap->iv_reset = urtwn_reset;
 
 	ifp = vap->iv_ifp;
+        if_initialize(ifp);
 	ifp->if_init = urtwn_init;
 	ifp->if_ioctl = urtwn_ioctl;
 	ifp->if_start = urtwn_start;
@@ -3410,6 +3399,8 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	ifp->if_extflags |= IFEF_MPSAFE;
 	// IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
 
 	/* Override state transition machine. */
 	/* NNN --- many possible newstate machines ... issue! */
@@ -3420,6 +3411,11 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	ieee80211_vap_attach(vap, urtwn_media_change,
 	    ieee80211_media_status, macaddr);
 	ic->ic_opmode = opmode;
+
+	/* Attach the packet filter */
+	bpf_attach2(vap->iv_ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
 	return vap;
 }
@@ -3610,7 +3606,7 @@ urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
 
-	KASSERT(vap != NULL);  // NNN need these?
+	KASSERT(vap != NULL);   /*  NNN need these? */
 	KASSERT(ic != NULL);
 	KASSERT(sc != NULL);
 	KASSERT(m != NULL);
@@ -3628,8 +3624,8 @@ urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
 
 	error = urtwn_tx(sc, m, ni, data);
 	if (error != 0) {
-			printf("ERROR3\n");
-			vap->iv_ifp->if_oerrors++;
+		printf("ERROR3\n");
+		vap->iv_ifp->if_oerrors++;
 	} else {
 		sc->tx_timer = 5;
 		vap->iv_ifp->if_timer = 1;
