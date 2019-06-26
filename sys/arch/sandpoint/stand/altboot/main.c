@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.29 2018/02/08 09:05:18 dholland Exp $ */
+/* $NetBSD: main.c,v 1.30 2019/06/26 00:54:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ uint32_t kmodloadp;
 int modules_enabled = 0;
 
 void module_add(const char *);
+void module_add_split(const char *);
 void module_load(const char *);
 int module_open(struct boot_module *);
 
@@ -367,7 +368,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 
 		if (modules_enabled) {
 			if (fsmod != NULL)
-				module_add(fsmod);
+				module_add_split(fsmod);
 			kmodloadp = marks[MARK_END];
 			btinfo_modulelist = NULL;
 			module_load(bname);
@@ -421,6 +422,42 @@ bi_add(void *new, int type, int size)
 	bi->type = type;
 	memcpy(bi_next, new, size);
 	bi_next += size;
+}
+
+/*
+ * Add a /-separated list of module names to the boot list
+ */
+static void
+module_add_split(const char *name)
+{
+	char mod_name[MAXMODNAME];
+	int i;
+	const char *mp = name;
+	char *ep;
+
+	while (*mp) {				/* scan list of module names */
+		i = MAXMODNAME;
+		ep = mod_name;
+		while (--i) {			/* scan for end of first name */
+			*ep = *mp;
+			if (*ep == '/')		/* NUL-terminate the name */
+				*ep = '\0';
+
+			if (*ep == 0 ) {	/* add non-empty name */
+				if (ep != mod_name)
+					module_add(mod_name);
+				break;
+			}
+			ep++; mp++;
+		}
+		if (*ep != 0) {
+			printf("module name too long\n");
+			return;
+		}
+		if  (*mp == '/') {		/* skip separator if more */
+			mp++;
+		}
+	}
 }
 
 void
