@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.21 2019/06/26 06:57:45 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.22 2019/06/26 07:47:25 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.21 2019/06/26 06:57:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.22 2019/06/26 07:47:25 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1858,8 +1858,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	KASSERT(mutex_owned(sc->sc_lock));
 	KASSERT(sc->sc_exlock);
 
-	TRACE(1, "%sflags=0x%x po=%d ro=%d",
+	TRACE(1, "%sdev=%s flags=0x%x po=%d ro=%d",
 	    (audiodebug >= 3) ? "start " : "",
+	    ISDEVSOUND(dev) ? "sound" : "audio",
 	    flags, sc->sc_popens, sc->sc_ropens);
 
 	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
@@ -2235,8 +2236,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	if ((file->mode & AUMODE_RECORD) == 0) {
 		return EBADF;
 	}
-
-	TRACET(3, track, "resid=%zd", uio->uio_resid);
 
 	usrbuf = &track->usrbuf;
 	input = track->input;
