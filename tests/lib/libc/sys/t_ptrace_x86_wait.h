@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.15 2019/06/04 12:17:42 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.16 2019/06/26 12:30:13 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2802,6 +2802,890 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+ATF_TC(x86_xstate_mm_read);
+ATF_TC_HEAD(x86_xstate_mm_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set MMX (mm0..mm7) reg values from debugged program and read "
+		"them via PT_GETXSTATE, comparing values against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_mm_read, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct iovec iov;
+	struct xstate xst;
+
+	const uint64_t mm[] = {
+		0x0001020304050607,
+		0x1011121314151617,
+		0x2021222324252627,
+		0x3031323334353637,
+		0x4041424344454647,
+		0x5051525354555657,
+		0x6061626364656667,
+		0x7071727374757677,
+	};
+
+	/* verify whether MMX is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_MMX))
+			atf_tc_skip("MMX is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		set_mm_regs(mm);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_X87);
+	ATF_REQUIRE(xst.xs_xstate_bv & XCR0_X87);
+
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[0].r.f87_mantissa, mm[0]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[1].r.f87_mantissa, mm[1]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[2].r.f87_mantissa, mm[2]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[3].r.f87_mantissa, mm[3]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[4].r.f87_mantissa, mm[4]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[5].r.f87_mantissa, mm[5]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[6].r.f87_mantissa, mm[6]);
+	ATF_CHECK_EQ(xst.xs_fxsave.fx_87_ac[7].r.f87_mantissa, mm[7]);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(x86_xstate_mm_write);
+ATF_TC_HEAD(x86_xstate_mm_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set mm0..mm7 reg values into a debugged program via "
+		"PT_SETXSTATE and compare the result against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_mm_write, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct iovec iov;
+	struct xstate xst;
+
+	const uint64_t mm[] = {
+		0x0001020304050607,
+		0x1011121314151617,
+		0x2021222324252627,
+		0x3031323334353637,
+		0x4041424344454647,
+		0x5051525354555657,
+		0x6061626364656667,
+		0x7071727374757677,
+	};
+
+	/* verify whether MMX is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_MMX))
+			atf_tc_skip("MMX is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		uint64_t v_mm[8];
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		get_mm_regs(v_mm);
+
+		DPRINTF("Before comparing results\n");
+		FORKEE_ASSERT_EQ(v_mm[0], mm[0]);
+		FORKEE_ASSERT_EQ(v_mm[1], mm[1]);
+		FORKEE_ASSERT_EQ(v_mm[2], mm[2]);
+		FORKEE_ASSERT_EQ(v_mm[3], mm[3]);
+		FORKEE_ASSERT_EQ(v_mm[4], mm[4]);
+		FORKEE_ASSERT_EQ(v_mm[5], mm[5]);
+		FORKEE_ASSERT_EQ(v_mm[6], mm[6]);
+		FORKEE_ASSERT_EQ(v_mm[7], mm[7]);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_X87);
+
+	xst.xs_rfbm = XCR0_X87;
+	xst.xs_xstate_bv = XCR0_X87;
+
+	xst.xs_fxsave.fx_87_ac[0].r.f87_mantissa = mm[0];
+	xst.xs_fxsave.fx_87_ac[1].r.f87_mantissa = mm[1];
+	xst.xs_fxsave.fx_87_ac[2].r.f87_mantissa = mm[2];
+	xst.xs_fxsave.fx_87_ac[3].r.f87_mantissa = mm[3];
+	xst.xs_fxsave.fx_87_ac[4].r.f87_mantissa = mm[4];
+	xst.xs_fxsave.fx_87_ac[5].r.f87_mantissa = mm[5];
+	xst.xs_fxsave.fx_87_ac[6].r.f87_mantissa = mm[6];
+	xst.xs_fxsave.fx_87_ac[7].r.f87_mantissa = mm[7];
+
+	DPRINTF("Call SETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_SETXSTATE, child, &iov, 0) != -1);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(x86_xstate_xmm_read);
+ATF_TC_HEAD(x86_xstate_xmm_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set xmm0..xmm15 (..xmm7 on i386) reg values from debugged program "
+		"and read them via PT_GETXSTATE, comparing values against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_xmm_read, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct xstate xst;
+	struct iovec iov;
+
+	const struct {
+		uint64_t a, b;
+	} xmm[] __aligned(16) = {
+		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908, },
+		{ 0x0807060504030201, 0x100F0E0D0C0B0A09, },
+		{ 0x0908070605040302, 0x11100F0E0D0C0B0A, },
+		{ 0x0A09080706050403, 0x1211100F0E0D0C0B, },
+		{ 0x0B0A090807060504, 0x131211100F0E0D0C, },
+		{ 0x0C0B0A0908070605, 0x14131211100F0E0D, },
+		{ 0x0D0C0B0A09080706, 0x1514131211100F0E, },
+		{ 0x0E0D0C0B0A090807, 0x161514131211100F, },
+#if defined(__x86_64__)
+		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110, },
+		{ 0x100F0E0D0C0B0A09, 0x1817161514131211, },
+		{ 0x11100F0E0D0C0B0A, 0x1918171615141312, },
+		{ 0x1211100F0E0D0C0B, 0x1A19181716151413, },
+		{ 0x131211100F0E0D0C, 0x1B1A191817161514, },
+		{ 0x14131211100F0E0D, 0x1C1B1A1918171615, },
+		{ 0x1514131211100F0E, 0x1D1C1B1A19181716, },
+		{ 0x161514131211100F, 0x1E1D1C1B1A191817, },
+#endif
+	};
+
+	/* verify whether SSE is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_SSE))
+			atf_tc_skip("SSE is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		set_xmm_regs(xmm);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_SSE);
+	ATF_REQUIRE(xst.xs_xstate_bv & XCR0_SSE);
+
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[0], &xmm[0], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[1], &xmm[1], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[2], &xmm[2], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[3], &xmm[3], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[4], &xmm[4], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[5], &xmm[5], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[6], &xmm[6], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[7], &xmm[7], sizeof(*xmm)));
+#if defined(__x86_64__)
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[8], &xmm[8], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[9], &xmm[9], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[10], &xmm[10], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[11], &xmm[11], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[12], &xmm[12], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[13], &xmm[13], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[14], &xmm[14], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[15], &xmm[15], sizeof(*xmm)));
+#endif
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(x86_xstate_xmm_write);
+ATF_TC_HEAD(x86_xstate_xmm_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set xmm0..xmm15 (..xmm7 on i386) reg values into a debugged "
+		"program via PT_SETXSTATE and compare the result against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_xmm_write, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct xstate xst;
+	struct iovec iov;
+
+	const struct {
+		uint64_t a, b;
+	} xmm[] __aligned(16) = {
+		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908, },
+		{ 0x0807060504030201, 0x100F0E0D0C0B0A09, },
+		{ 0x0908070605040302, 0x11100F0E0D0C0B0A, },
+		{ 0x0A09080706050403, 0x1211100F0E0D0C0B, },
+		{ 0x0B0A090807060504, 0x131211100F0E0D0C, },
+		{ 0x0C0B0A0908070605, 0x14131211100F0E0D, },
+		{ 0x0D0C0B0A09080706, 0x1514131211100F0E, },
+		{ 0x0E0D0C0B0A090807, 0x161514131211100F, },
+#if defined(__x86_64__)
+		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110, },
+		{ 0x100F0E0D0C0B0A09, 0x1817161514131211, },
+		{ 0x11100F0E0D0C0B0A, 0x1918171615141312, },
+		{ 0x1211100F0E0D0C0B, 0x1A19181716151413, },
+		{ 0x131211100F0E0D0C, 0x1B1A191817161514, },
+		{ 0x14131211100F0E0D, 0x1C1B1A1918171615, },
+		{ 0x1514131211100F0E, 0x1D1C1B1A19181716, },
+		{ 0x161514131211100F, 0x1E1D1C1B1A191817, },
+#endif
+	};
+
+	/* verify whether SSE is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_SSE))
+			atf_tc_skip("SSE is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		struct {
+			uint64_t a, b;
+		} v_xmm[16] __aligned(16);
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		get_xmm_regs(v_xmm);
+
+		DPRINTF("Before comparing results\n");
+		FORKEE_ASSERT(!memcmp(&v_xmm[0], &xmm[0], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[1], &xmm[1], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[2], &xmm[2], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[3], &xmm[3], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[4], &xmm[4], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[5], &xmm[5], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[6], &xmm[6], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[7], &xmm[7], sizeof(*xmm)));
+#if defined(__x86_64__)
+		FORKEE_ASSERT(!memcmp(&v_xmm[8], &xmm[8], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[9], &xmm[9], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[10], &xmm[10], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[11], &xmm[11], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[12], &xmm[12], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[13], &xmm[13], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[14], &xmm[14], sizeof(*xmm)));
+		FORKEE_ASSERT(!memcmp(&v_xmm[15], &xmm[15], sizeof(*xmm)));
+#endif
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_SSE);
+
+	xst.xs_rfbm = XCR0_SSE;
+	xst.xs_xstate_bv = XCR0_SSE;
+
+	memcpy(&xst.xs_fxsave.fx_xmm[0], &xmm[0], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[1], &xmm[1], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[2], &xmm[2], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[3], &xmm[3], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[4], &xmm[4], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[5], &xmm[5], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[6], &xmm[6], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[7], &xmm[7], sizeof(*xmm));
+#if defined(__x86_64__)
+	memcpy(&xst.xs_fxsave.fx_xmm[8], &xmm[8], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[9], &xmm[9], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[10], &xmm[10], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[11], &xmm[11], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[12], &xmm[12], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[13], &xmm[13], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[14], &xmm[14], sizeof(*xmm));
+	memcpy(&xst.xs_fxsave.fx_xmm[15], &xmm[15], sizeof(*xmm));
+#endif
+
+	DPRINTF("Call SETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_SETXSTATE, child, &iov, 0) != -1);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+__attribute__((target("avx")))
+static __inline void set_ymm_regs(const void* ymm)
+{
+	__asm__ __volatile__(
+		"vmovaps  0x000(%0), %%ymm0\n\t"
+		"vmovaps  0x020(%0), %%ymm1\n\t"
+		"vmovaps  0x040(%0), %%ymm2\n\t"
+		"vmovaps  0x060(%0), %%ymm3\n\t"
+		"vmovaps  0x080(%0), %%ymm4\n\t"
+		"vmovaps  0x0A0(%0), %%ymm5\n\t"
+		"vmovaps  0x0C0(%0), %%ymm6\n\t"
+		"vmovaps  0x0E0(%0), %%ymm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  0x100(%0), %%ymm8\n\t"
+		"vmovaps  0x120(%0), %%ymm9\n\t"
+		"vmovaps  0x140(%0), %%ymm10\n\t"
+		"vmovaps  0x160(%0), %%ymm11\n\t"
+		"vmovaps  0x180(%0), %%ymm12\n\t"
+		"vmovaps  0x1A0(%0), %%ymm13\n\t"
+		"vmovaps  0x1C0(%0), %%ymm14\n\t"
+		"vmovaps  0x1E0(%0), %%ymm15\n\t"
+#endif
+		"int3\n\t"
+		:
+		: "b"(ymm)
+		: "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6",
+		"%ymm7"
+#if defined(__x86_64__)
+		, "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13",
+		"%ymm14", "%ymm15"
+#endif
+	);
+}
+
+ATF_TC(x86_xstate_ymm_read);
+ATF_TC_HEAD(x86_xstate_ymm_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set ymm0..ymm15 (..ymm7 on i386) reg values from debugged program "
+		"and read them via PT_GETXSTATE, comparing values against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_ymm_read, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct xstate xst;
+	struct iovec iov;
+
+	const struct {
+		uint64_t a, b, c, d;
+	} ymm[] __aligned(32) = {
+		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908,
+		  0x1716151413121110, 0x1F1E1D1C1B1A1918, },
+		{ 0x0807060504030201, 0x100F0E0D0C0B0A09,
+		  0x1817161514131211, 0x201F1E1D1C1B1A19, },
+		{ 0x0908070605040302, 0x11100F0E0D0C0B0A,
+		  0x1918171615141312, 0x21201F1E1D1C1B1A, },
+		{ 0x0A09080706050403, 0x1211100F0E0D0C0B,
+		  0x1A19181716151413, 0x2221201F1E1D1C1B, },
+		{ 0x0B0A090807060504, 0x131211100F0E0D0C,
+		  0x1B1A191817161514, 0x232221201F1E1D1C, },
+		{ 0x0C0B0A0908070605, 0x14131211100F0E0D,
+		  0x1C1B1A1918171615, 0x24232221201F1E1D, },
+		{ 0x0D0C0B0A09080706, 0x1514131211100F0E,
+		  0x1D1C1B1A19181716, 0x2524232221201F1E, },
+		{ 0x0E0D0C0B0A090807, 0x161514131211100F,
+		  0x1E1D1C1B1A191817, 0x262524232221201F, },
+#if defined(__x86_64__)
+		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110,
+		  0x1F1E1D1C1B1A1918, 0x2726252423222120, },
+		{ 0x100F0E0D0C0B0A09, 0x1817161514131211,
+		  0x201F1E1D1C1B1A19, 0x2827262524232221, },
+		{ 0x11100F0E0D0C0B0A, 0x1918171615141312,
+		  0x21201F1E1D1C1B1A, 0x2928272625242322, },
+		{ 0x1211100F0E0D0C0B, 0x1A19181716151413,
+		  0x2221201F1E1D1C1B, 0x2A29282726252423, },
+		{ 0x131211100F0E0D0C, 0x1B1A191817161514,
+		  0x232221201F1E1D1C, 0x2B2A292827262524, },
+		{ 0x14131211100F0E0D, 0x1C1B1A1918171615,
+		  0x24232221201F1E1D, 0x2C2B2A2928272625, },
+		{ 0x1514131211100F0E, 0x1D1C1B1A19181716,
+		  0x2524232221201F1E, 0x2D2C2B2A29282726, },
+		{ 0x161514131211100F, 0x1E1D1C1B1A191817,
+		  0x262524232221201F, 0x2E2D2C2B2A292827, },
+#endif
+	};
+
+	/* verify whether AVX is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: ECX = %08x\n", ecx);
+
+		if (!(ecx & bit_AVX))
+			atf_tc_skip("AVX is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		set_ymm_regs(ymm);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_SSE);
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_YMM_Hi128);
+	ATF_REQUIRE(xst.xs_xstate_bv & XCR0_SSE);
+	ATF_REQUIRE(xst.xs_xstate_bv & XCR0_YMM_Hi128);
+
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[0], &ymm[0].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[0], &ymm[0].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[1], &ymm[1].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[1], &ymm[1].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[2], &ymm[2].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[2], &ymm[2].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[3], &ymm[3].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[3], &ymm[3].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[4], &ymm[4].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[4], &ymm[4].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[5], &ymm[5].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[5], &ymm[5].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[6], &ymm[6].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[6], &ymm[6].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[7], &ymm[7].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[7], &ymm[7].c, sizeof(*ymm)/2));
+#if defined(__x86_64__)
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[8], &ymm[8].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[8], &ymm[8].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[9], &ymm[9].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[9], &ymm[9].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[10], &ymm[10].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[10], &ymm[10].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[11], &ymm[11].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[11], &ymm[11].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[12], &ymm[12].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[12], &ymm[12].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[13], &ymm[13].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[13], &ymm[13].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[14], &ymm[14].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[14], &ymm[14].c, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_fxsave.fx_xmm[15], &ymm[15].a, sizeof(*ymm)/2));
+	ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[15], &ymm[15].c, sizeof(*ymm)/2));
+#endif
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+__attribute__((target("avx")))
+static __inline void get_ymm_regs(void* v_ymm)
+{
+	const struct {
+		uint64_t a, b, c, d;
+	} fill __aligned(32) = {
+		0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+		0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F
+	};
+
+	__asm__ __volatile__(
+		/* fill registers with clobber pattern */
+		"vmovaps  %1, %%ymm0\n\t"
+		"vmovaps  %1, %%ymm1\n\t"
+		"vmovaps  %1, %%ymm2\n\t"
+		"vmovaps  %1, %%ymm3\n\t"
+		"vmovaps  %1, %%ymm4\n\t"
+		"vmovaps  %1, %%ymm5\n\t"
+		"vmovaps  %1, %%ymm6\n\t"
+		"vmovaps  %1, %%ymm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  %1, %%ymm8\n\t"
+		"vmovaps  %1, %%ymm9\n\t"
+		"vmovaps  %1, %%ymm10\n\t"
+		"vmovaps  %1, %%ymm11\n\t"
+		"vmovaps  %1, %%ymm12\n\t"
+		"vmovaps  %1, %%ymm13\n\t"
+		"vmovaps  %1, %%ymm14\n\t"
+		"vmovaps  %1, %%ymm15\n\t"
+#endif
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"vmovaps %%ymm0,  0x000(%0)\n\t"
+		"vmovaps %%ymm1,  0x020(%0)\n\t"
+		"vmovaps %%ymm2,  0x040(%0)\n\t"
+		"vmovaps %%ymm3,  0x060(%0)\n\t"
+		"vmovaps %%ymm4,  0x080(%0)\n\t"
+		"vmovaps %%ymm5,  0x0A0(%0)\n\t"
+		"vmovaps %%ymm6,  0x0C0(%0)\n\t"
+		"vmovaps %%ymm7,  0x0E0(%0)\n\t"
+#if defined(__x86_64__)
+		"vmovaps %%ymm8,  0x100(%0)\n\t"
+		"vmovaps %%ymm9,  0x120(%0)\n\t"
+		"vmovaps %%ymm10, 0x140(%0)\n\t"
+		"vmovaps %%ymm11, 0x160(%0)\n\t"
+		"vmovaps %%ymm12, 0x180(%0)\n\t"
+		"vmovaps %%ymm13, 0x1A0(%0)\n\t"
+		"vmovaps %%ymm14, 0x1C0(%0)\n\t"
+		"vmovaps %%ymm15, 0x1E0(%0)\n\t"
+#endif
+		:
+		: "a"(v_ymm), "m"(fill)
+		: "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7"
+#if defined(__x86_64__)
+		, "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14",
+		"%ymm15"
+#endif
+	);
+}
+
+ATF_TC(x86_xstate_ymm_write);
+ATF_TC_HEAD(x86_xstate_ymm_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set ymm0..ymm15 (..ymm7 on i386) reg values into a debugged "
+		"program via PT_SETXSTATE and compare the result against expected.");
+}
+
+ATF_TC_BODY(x86_xstate_ymm_write, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+	struct xstate xst;
+	struct iovec iov;
+
+	const struct {
+		uint64_t a, b, c, d;
+	} ymm[] __aligned(32) = {
+		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908,
+		  0x1716151413121110, 0x1F1E1D1C1B1A1918, },
+		{ 0x0807060504030201, 0x100F0E0D0C0B0A09,
+		  0x1817161514131211, 0x201F1E1D1C1B1A19, },
+		{ 0x0908070605040302, 0x11100F0E0D0C0B0A,
+		  0x1918171615141312, 0x21201F1E1D1C1B1A, },
+		{ 0x0A09080706050403, 0x1211100F0E0D0C0B,
+		  0x1A19181716151413, 0x2221201F1E1D1C1B, },
+		{ 0x0B0A090807060504, 0x131211100F0E0D0C,
+		  0x1B1A191817161514, 0x232221201F1E1D1C, },
+		{ 0x0C0B0A0908070605, 0x14131211100F0E0D,
+		  0x1C1B1A1918171615, 0x24232221201F1E1D, },
+		{ 0x0D0C0B0A09080706, 0x1514131211100F0E,
+		  0x1D1C1B1A19181716, 0x2524232221201F1E, },
+		{ 0x0E0D0C0B0A090807, 0x161514131211100F,
+		  0x1E1D1C1B1A191817, 0x262524232221201F, },
+#if defined(__x86_64__)
+		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110,
+		  0x1F1E1D1C1B1A1918, 0x2726252423222120, },
+		{ 0x100F0E0D0C0B0A09, 0x1817161514131211,
+		  0x201F1E1D1C1B1A19, 0x2827262524232221, },
+		{ 0x11100F0E0D0C0B0A, 0x1918171615141312,
+		  0x21201F1E1D1C1B1A, 0x2928272625242322, },
+		{ 0x1211100F0E0D0C0B, 0x1A19181716151413,
+		  0x2221201F1E1D1C1B, 0x2A29282726252423, },
+		{ 0x131211100F0E0D0C, 0x1B1A191817161514,
+		  0x232221201F1E1D1C, 0x2B2A292827262524, },
+		{ 0x14131211100F0E0D, 0x1C1B1A1918171615,
+		  0x24232221201F1E1D, 0x2C2B2A2928272625, },
+		{ 0x1514131211100F0E, 0x1D1C1B1A19181716,
+		  0x2524232221201F1E, 0x2D2C2B2A29282726, },
+		{ 0x161514131211100F, 0x1E1D1C1B1A191817,
+		  0x262524232221201F, 0x2E2D2C2B2A292827, },
+#endif
+	};
+
+	/* verify whether AVX is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: ECX = %08x\n", ecx);
+
+		if (!(ecx & bit_AVX))
+			atf_tc_skip("AVX is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		struct {
+			uint64_t a, b, c, d;
+		} v_ymm[16] __aligned(32);
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		get_ymm_regs(v_ymm);
+
+		DPRINTF("Before comparing results\n");
+		FORKEE_ASSERT(!memcmp(&v_ymm[0], &ymm[0], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[1], &ymm[1], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[2], &ymm[2], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[3], &ymm[3], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[4], &ymm[4], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[5], &ymm[5], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[6], &ymm[6], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[7], &ymm[7], sizeof(*ymm)));
+#if defined(__x86_64__)
+		FORKEE_ASSERT(!memcmp(&v_ymm[8], &ymm[8], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[9], &ymm[9], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[10], &ymm[10], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[11], &ymm[11], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[12], &ymm[12], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[13], &ymm[13], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[14], &ymm[14], sizeof(*ymm)));
+		FORKEE_ASSERT(!memcmp(&v_ymm[15], &ymm[15], sizeof(*ymm)));
+#endif
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	iov.iov_base = &xst;
+	iov.iov_len = sizeof(xst);
+
+	DPRINTF("Call GETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
+
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_SSE);
+	ATF_REQUIRE(xst.xs_rfbm & XCR0_YMM_Hi128);
+
+	xst.xs_rfbm = XCR0_SSE | XCR0_YMM_Hi128;
+	xst.xs_xstate_bv = XCR0_SSE | XCR0_YMM_Hi128;
+
+	memcpy(&xst.xs_fxsave.fx_xmm[0], &ymm[0].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[0], &ymm[0].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[1], &ymm[1].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[1], &ymm[1].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[2], &ymm[2].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[2], &ymm[2].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[3], &ymm[3].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[3], &ymm[3].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[4], &ymm[4].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[4], &ymm[4].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[5], &ymm[5].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[5], &ymm[5].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[6], &ymm[6].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[6], &ymm[6].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[7], &ymm[7].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[7], &ymm[7].c, sizeof(*ymm)/2);
+#if defined(__x86_64__)
+	memcpy(&xst.xs_fxsave.fx_xmm[8], &ymm[8].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[8], &ymm[8].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[9], &ymm[9].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[9], &ymm[9].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[10], &ymm[10].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[10], &ymm[10].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[11], &ymm[11].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[11], &ymm[11].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[12], &ymm[12].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[12], &ymm[12].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[13], &ymm[13].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[13], &ymm[13].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[14], &ymm[14].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[14], &ymm[14].c, sizeof(*ymm)/2);
+	memcpy(&xst.xs_fxsave.fx_xmm[15], &ymm[15].a, sizeof(*ymm)/2);
+	memcpy(&xst.xs_ymm_hi128.xs_ymm[15], &ymm[15].c, sizeof(*ymm)/2);
+#endif
+
+	DPRINTF("Call SETXSTATE for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_SETXSTATE, child, &iov, 0) != -1);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
 /// ----------------------------------------------------------------------------
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86() \
@@ -2870,7 +3754,13 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_mm_read); \
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_mm_write); \
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_read); \
-	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_write);
+	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_write);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86()
 #endif
