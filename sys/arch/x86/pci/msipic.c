@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.16 2019/06/18 10:06:49 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.17 2019/06/26 10:20:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.16 2019/06/18 10:06:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.17 2019/06/26 10:20:06 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.16 2019/06/18 10:06:49 msaitoh Exp $");
 #include <sys/errno.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/bitops.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -753,6 +754,25 @@ msipic_set_msi_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs,
 {
 
 	KASSERT(msipic_is_msi_pic(msi_pic));
+
+	if (msi_pic->pic_type == PIC_MSI) {
+		pci_chipset_tag_t pc;
+		struct pci_attach_args *pa;
+		pcitag_t tag;
+		int off, err __diagused;
+		pcireg_t ctl;
+
+		pc = NULL;
+		pa = &msi_pic->pic_msipic->mp_pa;
+		tag = pa->pa_tag;
+		err = pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL);
+		KASSERT(err != 0);
+
+		ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+		ctl &= ~PCI_MSI_CTL_MME_MASK;
+		ctl |= __SHIFTIN(ilog2(count), PCI_MSI_CTL_MME_MASK);
+		pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
+	}
 
 	msi_pic->pic_msipic->mp_veccnt = count;
 	return 0;
