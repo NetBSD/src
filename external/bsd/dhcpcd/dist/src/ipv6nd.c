@@ -382,9 +382,6 @@ ipv6nd_sendrsprobe(void *arg)
 	else {
 		logwarnx("%s: no IPv6 Routers available", ifp->name);
 		ipv6nd_drop(ifp);
-#ifdef DHCP6
-		dhcp6_dropnondelegates(ifp);
-#endif
 	}
 }
 
@@ -1525,9 +1522,6 @@ ipv6nd_expirera(void *arg)
 	struct timespec now, lt, expire, next;
 	bool expired, valid, validone;
 	struct ipv6_addr *ia;
-#ifdef DHCP6
-	bool anyvalid = false;
-#endif
 
 	ifp = arg;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -1603,10 +1597,6 @@ ipv6nd_expirera(void *arg)
 		 * as well punt it. */
 		if (!valid && !validone)
 			ipv6nd_free_ra(rap);
-#ifdef DHCP6
-		else
-			anyvalid = true;
-#endif
 	}
 
 	if (timespecisset(&next))
@@ -1616,12 +1606,6 @@ ipv6nd_expirera(void *arg)
 		rt_build(ifp->ctx, AF_INET6);
 		script_runreason(ifp, "ROUTERADVERT");
 	}
-
-#ifdef DHCP6
-	/* No valid routers? Kill any DHCPv6. */
-	if (!anyvalid)
-		dhcp6_dropnondelegates(ifp);
-#endif
 }
 
 void

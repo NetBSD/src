@@ -3783,6 +3783,8 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 			/* No DHCPv6 config, no existing state
 			 * so nothing to do. */
 			return 0;
+		case DH6S_INFORM:
+			break;
 		default:
 			init_state = DH6S_INIT;
 			break;
@@ -3932,21 +3934,6 @@ dhcp6_free(struct interface *ifp)
 {
 
 	dhcp6_freedrop(ifp, 0, NULL);
-}
-
-void
-dhcp6_dropnondelegates(struct interface *ifp)
-{
-
-#ifndef SMALL
-	if (dhcp6_hasprefixdelegation(ifp))
-		return;
-#endif
-	if (D6_CSTATE(ifp) == NULL)
-		return;
-
-	loginfox("%s: dropping DHCPv6 due to no valid routers", ifp->name);
-	dhcp6_drop(ifp, "EXPIRE6");
 }
 
 void
