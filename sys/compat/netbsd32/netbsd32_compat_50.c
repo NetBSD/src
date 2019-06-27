@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.38 2019/06/18 22:34:25 kamil Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.39 2019/06/27 02:36:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,10 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.38 2019/06/18 22:34:25 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.39 2019/06/27 02:36:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
 #include "opt_ntp.h"
 #include "opt_quota.h"
 #endif
