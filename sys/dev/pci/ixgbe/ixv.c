@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.115 2019/05/29 10:07:30 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.116 2019/06/27 09:56:39 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2000,11 +2000,11 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
 
-#if 1
-	/* XXX dirty hack. Enable all VIDs */
+	/* XXX dirty hack. Enable all VIDs if any VLAN is attached */
 	for (int i = 0; i < IXGBE_VFTA_SIZE; i++)
-	  adapter->shadow_vfta[i] = 0xffffffff;
-#endif
+		adapter->shadow_vfta[i]
+		    = VLAN_ATTACHED(&adapter->osdep.ec) ? 0xffffffff : 0;
+
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
