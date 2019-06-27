@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.38 2019/03/05 09:42:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.39 2019/06/27 05:55:40 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -877,6 +877,10 @@ struct ixgbe_dmac_config {
 #define IXGBE_RTTDQSEL		0x04904
 #define IXGBE_RTTDT1C		0x04908
 #define IXGBE_RTTDT1S		0x0490C
+#define IXGBE_RTTQCNCR		0x08B00
+#define IXGBE_RTTQCNTG		0x04A90
+#define IXGBE_RTTBCNRD		0x0498C
+#define IXGBE_RTTQCNRR		0x0498C
 #define IXGBE_RTTDTECC		0x04990
 #define IXGBE_RTTDTECC_NO_BCN	0x00000100
 
@@ -887,6 +891,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_RTTBCNRC_RF_INT_MASK \
 	(IXGBE_RTTBCNRC_RF_DEC_MASK << IXGBE_RTTBCNRC_RF_INT_SHIFT)
 #define IXGBE_RTTBCNRM	0x04980
+#define IXGBE_RTTQCNRM	0x04980
 
 /* BCN (for DCB) Registers */
 #define IXGBE_RTTBCNRS	0x04988
@@ -4050,6 +4055,7 @@ struct ixgbe_mac_operations {
 	s32 (*init_uta_tables)(struct ixgbe_hw *);
 	void (*set_mac_anti_spoofing)(struct ixgbe_hw *, bool, int);
 	void (*set_vlan_anti_spoofing)(struct ixgbe_hw *, bool, int);
+	s32 (*toggle_txdctl)(struct ixgbe_hw *hw, u32 vf_index);
 
 	/* Flow Control */
 	s32 (*fc_enable)(struct ixgbe_hw *);
@@ -4209,6 +4215,7 @@ struct ixgbe_mbx_operations {
 	s32  (*check_for_msg)(struct ixgbe_hw *, u16);
 	s32  (*check_for_ack)(struct ixgbe_hw *, u16);
 	s32  (*check_for_rst)(struct ixgbe_hw *, u16);
+	s32  (*clear)(struct ixgbe_hw *hw, u16 vf_number);
 };
 
 struct ixgbe_mbx_stats {
@@ -4508,5 +4515,17 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD_SHIFT 3
 #define IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD	\
 				(0x1F << IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD_SHIFT)
+
+/* Code Command (Flash I/F Interface) */
+#define IXGBE_HOST_INTERFACE_FLASH_READ_CMD			0x30
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_READ_CMD		0x31
+#define IXGBE_HOST_INTERFACE_FLASH_WRITE_CMD			0x32
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_WRITE_CMD		0x33
+#define IXGBE_HOST_INTERFACE_FLASH_MODULE_UPDATE_CMD		0x34
+#define IXGBE_HOST_INTERFACE_FLASH_BLOCK_EREASE_CMD		0x35
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_DUMP_CMD		0x36
+#define IXGBE_HOST_INTERFACE_FLASH_INFO_CMD			0x37
+#define IXGBE_HOST_INTERFACE_APPLY_UPDATE_CMD			0x38
+#define IXGBE_HOST_INTERFACE_MASK_CMD				0x000000FF
 
 #endif /* _IXGBE_TYPE_H_ */
