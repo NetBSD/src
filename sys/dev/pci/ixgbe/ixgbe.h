@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.54 2019/02/22 06:49:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.55 2019/06/27 05:55:40 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -240,7 +240,7 @@
 #endif
 
 /*
- * Interrupt Moderation parameters 
+ * Interrupt Moderation parameters
  */
 #define IXGBE_LOW_LATENCY	128
 #define IXGBE_AVE_LATENCY	400
@@ -348,7 +348,7 @@ struct ix_queue {
  * The transmit ring, one per queue
  */
 struct tx_ring {
-        struct adapter		*adapter;
+	struct adapter		*adapter;
 	kmutex_t		tx_mtx;
 	u32			me;
 	u32			tail;
@@ -396,7 +396,7 @@ struct tx_ring {
  * The Receive ring, one per rx queue
  */
 struct rx_ring {
-        struct adapter		*adapter;
+	struct adapter		*adapter;
 	kmutex_t		rx_mtx;
 	u32			me;
 	u32			tail;
@@ -408,8 +408,8 @@ struct rx_ring {
 	bool			lro_enabled;
 	bool			hw_rsc;
 	bool			vtag_strip;
-        u16			next_to_refresh;
-        u16 			next_to_check;
+	u16			next_to_refresh;
+	u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
 #if 0
@@ -678,11 +678,11 @@ struct adapter {
 	"\nControl advertised link speed using these flags:\n" \
 	"\t0x01 - advertise 100M\n" \
 	"\t0x02 - advertise 1G\n" \
-        "\t0x04 - advertise 10G\n" \
-        "\t0x08 - advertise 10M\n" \
-        "\t0x10 - advertise 2.5G\n" \
-        "\t0x20 - advertise 5G\n\n" \
-        "\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
+	"\t0x04 - advertise 10G\n" \
+	"\t0x08 - advertise 10M\n" \
+	"\t0x10 - advertise 2.5G\n" \
+	"\t0x20 - advertise 5G\n\n" \
+	"\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
 
 #define IXGBE_SYSCTL_DESC_SET_FC \
 	"\nSet flow control mode using these values:\n" \
