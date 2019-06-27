@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_rndpseudo_50.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_rndpseudo_50.c,v 1.3 2019/06/27 02:36:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_rndpseudo_50.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_rndpseudo_50.c,v 1.3 2019/06/27 02:36:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_rndpseudo_50.c,v 1.2 2019/01/27 02:08:40 pg
 #include <sys/file.h>
 
 #include <sys/rnd.h>
+
+#include <compat/netbsd32/netbsd32.h>
 #include <compat/sys/rnd.h>
 
 /*
