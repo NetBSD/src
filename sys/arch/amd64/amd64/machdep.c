@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.332 2019/06/12 14:28:38 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.333 2019/06/27 01:59:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2019/06/12 14:28:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.333 2019/06/27 01:59:30 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2095,44 +2095,50 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-	struct proc *p __diagused = l->l_proc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr;
 	uint16_t sel;
+	const bool pk32 = (p->p_flag & PK_32) != 0;
 
-	KASSERT((p->p_flag & PK_32) == 0);
 	gr = mcp->__gregs;
 
 	if (((gr[_REG_RFLAGS] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
+#define VUD(sel) (pk32 ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUF(sel) (pk32 ? (VALID_USER_DSEL32(sel) || VALID_USER_FSEL32(sel)) \
+    : VALID_USER_DSEL(sel))
+#define VUG(sel) (pk32 ? (VALID_USER_DSEL32(sel) || VALID_USER_GSEL32(sel)) \
+    : VALID_USER_DSEL(sel))
+#define VUC(sel) (pk32 ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
 
 	sel = gr[_REG_ES] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
+	if (sel != 0 && !VUD(sel))
 		return EINVAL;
 
 	sel = gr[_REG_FS] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
+	if (sel != 0 && !VUF(sel))
 		return EINVAL;
 
 	sel = gr[_REG_GS] & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
+	if (sel != 0 && !VUG(sel))
 		return EINVAL;
 
 	sel = gr[_REG_DS] & 0xffff;
-	if (!VALID_USER_DSEL(sel))
+	if (!VUD(sel))
 		return EINVAL;
 
 #ifndef XENPV
 	sel = gr[_REG_SS] & 0xffff;
-	if (!VALID_USER_DSEL(sel))
+	if (!VUD(sel))
 		return EINVAL;
 
 	sel = gr[_REG_CS] & 0xffff;
-	if (!VALID_USER_CSEL(sel))
+	if (!VUC(sel))
 		return EINVAL;
 #endif
 
-	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
+	if (gr[_REG_RIP] >= (pk32 ? VM_MAXUSER_ADDRESS32 : VM_MAXUSER_ADDRESS))
 		return EINVAL;
 
 	return 0;
