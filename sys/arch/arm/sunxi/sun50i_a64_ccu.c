@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.12 2019/06/27 14:51:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.12 2019/06/27 14:51:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	PLL_PERIPH1_CTRL_REG	0x02c
 #define	PLL_VIDEO1_CTRL_REG	0x030
+#define	PLL_GPU_CTRL_REG	0x038
 #define	PLL_DE_CTRL_REG		0x048
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
@@ -67,6 +68,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill
 #define	AC_DIG_CLK_REG		0x140
 #define	HDMI_CLK_REG		0x150
 #define	HDMI_SLOW_CLK_REG	0x154
+#define	GPU_CLK_REG		0x1a0
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
 #define	BUS_SOFT_RST_REG2	0x2c8
@@ -153,6 +155,7 @@ static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
 static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
+static const char *gpu_parents[] = { "gpu" };
 
 static const struct sunxi_ccu_nkmp_tbl sun50i_a64_cpux_table[] = {
 	{ 60000000, 9, 0, 0, 2 },
@@ -310,6 +313,19 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
 
+	SUNXI_CCU_FRACTIONAL(A64_CLK_PLL_GPU, "pll_gpu", "hosc",
+	    PLL_GPU_CTRL_REG,		/* reg */
+	    __BITS(14,8),		/* m */
+	    1,				/* m_min */
+	    128,			/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    4,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
+
 	SUNXI_CCU_PREDIV(A64_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
 	    __BITS(7,6),	/* prediv */
@@ -395,6 +411,13 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    TCON1_CLK_REG,	/* reg */
 	    __BITS(3,0),	/* div */
 	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_GPU, "gpu", gpu_parents,
+	    GPU_CLK_REG,	/* reg */
+	    __BITS(2,0),	/* div */
+	    0,			/* sel */
 	    __BIT(31),		/* enable */
 	    0),
 
