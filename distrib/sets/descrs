@@ -843,3 +843,10 @@ text-groff-share		Swedish language;
 text-groff-share		ms - the Manuscript macros, set of macros for writing manuscripts;
 text-texinfo-bin	the GNU texinfo software
 text-texinfo-share	shared files for the GNU texinfo software
+xbase-i810-lib	Intel i810 video driver
+xbase-libdrm-amdgpu	AMD RADEON GPU video driver
+xbase-libdrm-intel	Intel integrated graphics chipsets
+xbase-libdrm-nouveau	NVIDIA video driver
+xbase-libvdpau-lib	Video Decode and Presentation API for Unix
+xbase-openchrome-lib	video driver for VIA Unichromes
+xbase-xvmc-lib	X-VideoMotion Compensation
