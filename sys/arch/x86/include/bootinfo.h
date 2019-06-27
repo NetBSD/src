@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.26.6.1 2018/04/14 10:41:15 martin Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.26.6.2 2019/06/27 13:17:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -244,7 +244,7 @@ struct btinfo_efimemmap {
 
 #ifdef _KERNEL
 
-#define BOOTINFO_MAXSIZE 8192
+#define BOOTINFO_MAXSIZE 16384
 
 #ifndef _LOCORE
 /*
