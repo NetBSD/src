@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.6 2019/06/27 01:58:49 christos Exp $	*/
+/*	$NetBSD: rnd.h,v 1.7 2019/06/27 02:44:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997,2011 The NetBSD Foundation, Inc.
@@ -33,8 +33,17 @@
 #ifndef _COMPAT_SYS_RND_H_
 #define	_COMPAT_SYS_RND_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
+
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#endif /* COMPAT_NETBSD32 */
 
 #include <sys/rndio.h>
 
@@ -57,7 +66,7 @@ typedef struct {
 	void		*unused_state;	/* was: internal state */
 } rndsource50_t;
 
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 typedef struct {
 	char		name[16];	/* device name */
 	uint32_t	unused_time;	/* was: last time recorded */
@@ -68,7 +77,7 @@ typedef struct {
 	uint32_t	flags;		/* flags */
 	netbsd32_voidp	unused_state;	/* was: internal state */
 } rndsource50_32_t;
-#endif /* _LP64 */
+#endif /* COMPAT_NETBSD32 */
 
 /*
  * NetBSD-5 defined RND_MAXSTATCOUNT as 10.  We define RND_MAXSTATCOUNT50
@@ -88,13 +97,13 @@ typedef struct {
 	rndsource50_t source[RND_MAXSTATCOUNT50];
 } rndstat50_t;
 
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 typedef struct {
 	uint32_t	start;
 	uint32_t	count;
 	rndsource50_32_t source[RND_MAXSTATCOUNT50];
 } rndstat50_32_t;
-#endif /* _LP64 */
+#endif /* COMPAT_NETBSD32 */
 
 /*
  * return information on a specific source by name
@@ -104,12 +113,12 @@ typedef struct {
 	rndsource50_t source;
 } rndstat_name50_t;
 
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 typedef struct {
 	char		name[16];
 	rndsource50_32_t source;
 } rndstat_name50_32_t;
-#endif /* _LP64 */
+#endif /* COMPAT_NETBSD32 */
 
 /*
  * NetBSD-5 defined RND_POOLWORDS as 128.  In NetBSD-6, the value
@@ -134,9 +143,9 @@ int compat32_50_rnd_ioctl(struct file *, u_long, void *);
 #define	RNDGETSRCNUM50		_IOWR('R', 102, rndstat50_t)
 #define	RNDGETSRCNAME50		_IOWR('R', 103, rndstat_name50_t)
 
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 #define	RNDGETSRCNUM50_32	_IOWR('R', 102, rndstat50_32_t)
 #define	RNDGETSRCNAME50_32	_IOWR('R', 103, rndstat_name50_32_t)
-#endif
+#endif /* COMPAT_NETBSD32 */
 
 #endif /* !_COMPAT_SYS_RND_H_ */
