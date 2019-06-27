@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.40 2019/06/26 12:30:12 mgorny Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.41 2019/06/27 01:59:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2019/06/26 12:30:12 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2019/06/27 01:59:30 christos Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -339,8 +339,7 @@ ptrace_machdep_dorequest(
 		if (!process_machdep_validxstate(lt->l_proc))
 			return EINVAL;
 		if (__predict_false(l->l_proc->p_flag & PK_32)) {
-			struct netbsd32_iovec *user_iov;
-			user_iov = (struct netbsd32_iovec*)addr;
+			struct netbsd32_iovec *user_iov = addr;
 			iov.iov_base = NETBSD32PTR64(user_iov->iov_base);
 			iov.iov_len = user_iov->iov_len;
 		} else {
