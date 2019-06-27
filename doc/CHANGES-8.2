@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.3 2019/06/12 10:40:13 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.4 2019/06/27 13:18:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -68,4 +68,10 @@ libexec/httpd/testsuite/test-simple		1.6
 	Avoid possible NULL dereference when sending a big request that timeout.
 	Avoid an assertion failure when using cgihandler (-C option).
 	[mrg, ticket #1281}
+
+sys/arch/x86/include/bootinfo.h			1.30
+
+	Increase BOOTINFO_MAXSIZE to 16Kib.
+	Some systems require a larger bootinfo size for memory descriptors.
+	[nonaka, ticket #1282]
 
