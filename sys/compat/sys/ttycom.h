@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.4 2019/01/28 15:46:49 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.5 2019/06/27 01:58:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/types.h>
