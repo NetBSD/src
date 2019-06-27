@@ -466,5 +466,5 @@ xbase-libdrm-amdgpu AMD RADEON GPU video driver
 xbase-libdrm-intel Intel integrated graphics chipsets
 xbase-libdrm-nouveau NVIDIA video driver
 xbase-libvdpau-lib Video Decode and Presentation API for Unix
-xbase-openchrome-lib video driver for VIA Unichromes
+xbase-openchrome-lib video driver for VIA Unichrome
 xbase-xvmc-lib X-Video Motion Compensation
