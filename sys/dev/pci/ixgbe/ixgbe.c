@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.188 2019/06/04 09:43:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.189 2019/06/27 05:55:40 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -81,7 +81,7 @@
  * Driver version
  ************************************************************************/
 static const char ixgbe_driver_version[] = "4.0.1-k";
-/* XXX NetBSD: + 3.3.6 */
+/* XXX NetBSD: + 3.3.8 */
 
 /************************************************************************
  * PCI Device ID Table
@@ -4019,7 +4019,7 @@ ixgbe_init_locked(struct adapter *adapter)
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 		    (ifp->if_capenable & IFCAP_NETMAP)) {
 			struct netmap_adapter *na = NA(adapter->ifp);
-			struct netmap_kring *kring = &na->rx_rings[i];
+			struct netmap_kring *kring = na->rx_rings[i];
 			int t = na->num_rx_desc - 1 - nm_kr_rxspace(kring);
 
 			IXGBE_WRITE_REG(hw, IXGBE_RDT(rxr->me), t);
