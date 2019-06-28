@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.108 2019/04/21 11:45:08 maya Exp $ */
+/* $NetBSD: dksubr.c,v 1.109 2019/06/28 14:56:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.108 2019/04/21 11:45:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109 2019/06/28 14:56:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,6 +381,7 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	mutex_enter(&dksc->sc_iolock);
 
 	if (bp != NULL) {
+		bp->b_ci = curcpu();
 		disk_wait(&dksc->sc_dkdev);
 		bufq_put(dksc->sc_bufq, bp);
 	}
