@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2017/02/02 21:53:54 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 2019/06/28 15:17:44 tsutsui Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -53,8 +53,9 @@
  */
 
 /*
- * We use 4K pages on the NeXT.  Override the PAGE_* definitions
- * to be compile-time constants.
+ * hp300 pmap derived m68k ports can use 4K or 8K pages.
+ * The page size is specified by PGSHIFT in <machine/param.h>.
+ * Override the PAGE_* definitions to be compile-time constants.
  */
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
