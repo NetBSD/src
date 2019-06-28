@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.48 2019/06/22 10:58:39 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.49 2019/06/28 01:57:43 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.48 2019/06/22 10:58:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.49 2019/06/28 01:57:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -455,12 +455,14 @@ axen_iff_locked(struct axen_softc *sc)
 	rxmode = le16toh(wval);
 	rxmode &= ~(AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_PROMISC |
 	    AXEN_RXCTL_ACPT_MCAST);
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		DPRINTF(("%s: promisc\n", device_xname(sc->axen_dev)));
 		rxmode |= AXEN_RXCTL_PROMISC;
-allmulti:	ifp->if_flags |= IFF_ALLMULTI;
+allmulti:
+		ETHER_LOCK(ec);
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		rxmode |= AXEN_RXCTL_ACPT_ALL_MCAST
 		/* | AXEN_RXCTL_ACPT_PHY_MCAST */;
 	} else {
@@ -468,6 +470,8 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 		DPRINTF(("%s: initializing hash table\n",
 		    device_xname(sc->axen_dev)));
 		ETHER_LOCK(ec);
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -979,8 +983,11 @@ axen_detach(device_t self, int flags)
 	usb_rem_task_wait(sc->axen_udev, &sc->axen_tick_task,
 	    USB_TASKQ_DRIVER, NULL);
 
-	if (ifp->if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING) {
+		IFNET_LOCK(ifp);
 		axen_stop(ifp, 1);
+		IFNET_UNLOCK(ifp);
+	}
 
 	mutex_enter(&sc->axen_lock);
 	sc->axen_refcnt--;
@@ -1256,7 +1263,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		if_percpuq_enqueue((ifp)->if_percpuq, (m));
 
 		mutex_enter(&sc->axen_rxlock);
-		if (sc->axen_stopping) {
+		if (sc->axen_dying || sc->axen_stopping) {
 			mutex_exit(&sc->axen_rxlock);
 			return;
 		}
@@ -1274,6 +1281,11 @@ nextpkt:
 	} while (pkt_count > 0);
 
 done:
+	if (sc->axen_dying || sc->axen_stopping) {
+		mutex_exit(&sc->axen_rxlock);
+		return;
+	}
+
 	mutex_exit(&sc->axen_rxlock);
 
 	/* Setup new transfer. */
@@ -1351,7 +1363,6 @@ axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	cd->axen_tx_cnt--;
 
 	sc->axen_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	switch (status) {
 	case USBD_NOT_STARTED:
@@ -1489,6 +1500,7 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 	/* Transmit */
 	err = usbd_transfer(c->axen_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		/* XXXSMP IFNET_LOCK */
 		axen_stop(ifp, 0);
 		return EIO;
 	}
@@ -1505,11 +1517,9 @@ axen_start_locked(struct ifnet *ifp)
 	int idx;
 
 	KASSERT(mutex_owned(&sc->axen_txlock));
+	KASSERT(cd->axen_tx_cnt <= AXEN_TX_LIST_CNT);
 
-	if (sc->axen_link == 0)
-		return;
-
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if (sc->axen_link == 0 || (ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	idx = cd->axen_tx_prod;
@@ -1519,7 +1529,6 @@ axen_start_locked(struct ifnet *ifp)
 			break;
 
 		if (axen_encap(sc, m, idx)) {
-			ifp->if_flags |= IFF_OACTIVE; /* XXX */
 			ifp->if_oerrors++;
 			break;
 		}
@@ -1536,9 +1545,6 @@ axen_start_locked(struct ifnet *ifp)
 		cd->axen_tx_cnt++;
 	}
 	cd->axen_tx_prod = idx;
-
-	if (cd->axen_tx_cnt >= AXEN_TX_LIST_CNT)
-		ifp->if_flags |= IFF_OACTIVE;
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1646,8 +1652,8 @@ axen_init_locked(struct ifnet *ifp)
 	mutex_exit(&sc->axen_rxlock);
 
 	/* Indicate we are up and running. */
+	KASSERT(IFNET_LOCKED(ifp));
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_schedule(&sc->axen_stat_ch, hz);
 	return 0;
@@ -1771,8 +1777,15 @@ axen_stop_locked(struct ifnet *ifp, int disable)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
 	axen_unlock_mii_sc_locked(sc);
 
+	/*
+	 * XXXSMP Would like to
+	 *	KASSERT(IFNET_LOCKED(ifp))
+	 * here but the locking order is:
+	 *	ifnet -> sc lock -> rxlock -> txlock
+	 * and sc lock is already held.
+	 */
+	ifp->if_flags &= ~IFF_RUNNING;
 	sc->axen_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	callout_stop(&sc->axen_stat_ch);
 	sc->axen_link = 0;
