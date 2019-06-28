@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.12 2019/06/24 04:42:06 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.13 2019/06/28 01:57:43 mrg Exp $	*/
 
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.12 2019/06/24 04:42:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.13 2019/06/28 01:57:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -436,7 +436,6 @@ ure_iff_locked(struct ure_softc *sc)
 
 	rxmode = ure_read_4(sc, URE_PLA_RCR, URE_MCU_TYPE_PLA);
 	rxmode &= ~URE_RCR_ACPT_ALL;
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * Always accept frames destined to our station address.
@@ -446,13 +445,18 @@ ure_iff_locked(struct ure_softc *sc)
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		rxmode |= URE_RCR_AAP;
-allmulti:	ifp->if_flags |= IFF_ALLMULTI;
+allmulti:	
+		ETHER_LOCK(ec);
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		rxmode |= URE_RCR_AM;
 		hashes[0] = hashes[1] = 0xffffffff;
 	} else {
 		rxmode |= URE_RCR_AM;
 
 		ETHER_LOCK(ec);
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -597,8 +601,8 @@ ure_init_locked(struct ifnet *ifp)
 	mutex_exit(&sc->ure_rxlock);
 
 	/* Indicate we are up and running. */
+	KASSERT(IFNET_LOCKED(ifp));
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_reset(&sc->ure_stat_ch, hz, ure_tick, sc);
 
@@ -625,9 +629,12 @@ ure_start_locked(struct ifnet *ifp)
 	struct ure_cdata *cd = &sc->ure_cdata;
 	int idx;
 
+	KASSERT(cd->tx_cnt <= URE_TX_LIST_CNT);
+
 	if (sc->ure_dying || sc->ure_stopping ||
 	    (sc->ure_flags & URE_FLAG_LINK) == 0 ||
-	    (ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING) {
+	    (ifp->if_flags & IFF_RUNNING) == 0 ||
+	    cd->tx_cnt == URE_TX_LIST_CNT) {
 		return;
 	}
 
@@ -650,9 +657,6 @@ ure_start_locked(struct ifnet *ifp)
 		cd->tx_cnt++;
 	}
 	cd->tx_prod = idx;
-
-	if (cd->tx_cnt >= URE_TX_LIST_CNT)
-		ifp->if_flags |= IFF_OACTIVE;
 }
 
 static void
@@ -698,7 +702,14 @@ ure_stop_locked(struct ifnet *ifp, int disable __unused)
 
 	ure_reset(sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	/*
+	 * XXXSMP Would like to
+	 *	KASSERT(IFNET_LOCKED(ifp))
+	 * here but the locking order is:
+	 *	ifnet -> sc lock -> rxlock -> txlock
+	 * and sc lock is already held.
+	 */
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	callout_stop(&sc->ure_stat_ch);
 
@@ -1350,8 +1361,11 @@ ure_detach(device_t self, int flags)
 
 	/* partial-attach, below items weren't configured. */
 	if (sc->ure_phyno != -1) {
-		if (ifp->if_flags & IFF_RUNNING)
+		if (ifp->if_flags & IFF_RUNNING) {
+			IFNET_LOCK(ifp);
 			ure_stop(ifp, 1);
+			IFNET_UNLOCK(ifp);
+		}
 
 		rnd_detach_source(&sc->ure_rnd_source);
 		mii_detach(&sc->ure_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -1535,7 +1549,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		mutex_enter(&sc->ure_rxlock);
 
-		if (sc->ure_stopping) {
+		if (sc->ure_dying || sc->ure_stopping) {
 			mutex_exit(&sc->ure_rxlock);
 			return;
 		}
@@ -1543,6 +1557,10 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	} while (total_len > 0);
 
 done:
+	if (sc->ure_dying || sc->ure_stopping) {
+		mutex_exit(&sc->ure_rxlock);
+		return;
+	}
 	mutex_exit(&sc->ure_rxlock);
 
 	/* Setup new transfer. */
@@ -1608,8 +1626,6 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	KASSERT(cd->tx_cnt > 0);
 	cd->tx_cnt--;
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	switch (status) {
 	case USBD_NOT_STARTED:
@@ -1721,6 +1737,7 @@ ure_encap(struct ure_softc *sc, struct mbuf *m, int idx)
 
 	err = usbd_transfer(c->uc_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		/* XXXSMP IFNET_LOCK */
 		ure_stop(ifp, 0);
 		return EIO;
 	}
