@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.43 2019/06/14 04:48:34 mrg Exp $	*/
+/*	$NetBSD: nvme.c,v 1.44 2019/06/28 15:08:47 jmcneill Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.43 2019/06/14 04:48:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44 2019/06/28 15:08:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +645,7 @@ nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
     struct buf *bp, void *data, size_t datasize,
     int secsize, daddr_t blkno, int flags, nvme_nnc_done nnc_done)
 {
-	struct nvme_queue *q = nvme_get_q(sc);
+	struct nvme_queue *q = nvme_get_q(sc, bp, false);
 	struct nvme_ccb *ccb;
 	bus_dmamap_t dmap;
 	int i, error;
@@ -787,7 +787,7 @@ nvme_ns_sync_finished(void *cookie)
 int
 nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, int flags)
 {
-	struct nvme_queue *q = nvme_get_q(sc);
+	struct nvme_queue *q = nvme_get_q(sc, NULL, true);
 	struct nvme_ccb *ccb;
 	int result = 0;
 
@@ -797,8 +797,7 @@ nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, int flags)
 	}
 
 	ccb = nvme_ccb_get(q, true);
-	if (ccb == NULL)
-		return EAGAIN;
+	KASSERT(ccb != NULL);
 
 	ccb->ccb_done = nvme_ns_sync_done;
 	ccb->ccb_cookie = &result;
@@ -1155,7 +1154,7 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	    (pt->buf != NULL && (pt->len == 0 || pt->len > sc->sc_mdts)))
 		return EINVAL;
 
-	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc);
+	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc, NULL, true);
 	ccb = nvme_ccb_get(q, true);
 	KASSERT(ccb != NULL);
 
