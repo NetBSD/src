@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.254 2019/05/13 02:03:07 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.255 2019/06/28 06:45:16 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.254 2019/05/13 02:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.255 2019/06/28 06:45:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2319,8 +2319,8 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	/* Look up the neighbor cache for the nexthop */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, false);
 
-	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0) {
-		KASSERT(ln->ln_state > ND6_LLINFO_INCOMPLETE);
+	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0 &&
+	    ln->ln_state == ND6_LLINFO_REACHABLE) {
 		/* Fast path */
 		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
 		LLE_RUNLOCK(ln);
@@ -2380,6 +2380,18 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		ln->ln_asked = 0;
 		ln->ln_state = ND6_LLINFO_DELAY;
 		nd6_llinfo_settimer(ln, nd6_delay * hz);
+	}
+
+	/*
+	 * If the neighbor cache entry has a state other than INCOMPLETE
+	 * (i.e. its link-layer address is already resolved), just
+	 * send the packet.
+	 */
+	if (ln->ln_state > ND6_LLINFO_INCOMPLETE) {
+		KASSERT((ln->la_flags & LLE_VALID) != 0);
+		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
+		LLE_WUNLOCK(ln);
+		return 0;
 	}
 
 	/*
