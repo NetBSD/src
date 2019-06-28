@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.129 2017/06/08 01:23:01 chs Exp $ */
+/*     $NetBSD: buf.h,v 1.130 2019/06/28 14:56:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ struct buf {
 						      (volume relative) */
 	struct proc		*b_proc;	/* b: proc if BB_PHYS */
 	void			*b_saveaddr;	/* b: saved b_data for physio */
+	struct cpu_info		*b_ci;		/* b: originating CPU */
 
 	/*
 	 * b: private data for owner.
