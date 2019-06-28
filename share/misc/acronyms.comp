@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.270 2019/06/23 17:17:18 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.271 2019/06/28 10:47:12 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1238,6 +1238,7 @@ RA	remote assistance
 RA	resource affinity
 RA	router advertisement
 RAD	rapid application development
+RADIUS	remote authentication dial-in user service
 RAID	redundant array of {independent,inexpensive} disks
 RAM	random access memory
 RAS	reliability, availability and serviceability
@@ -1346,6 +1347,7 @@ SCA	source code analyzer
 SCADA	supervisory control and data acquisition
 SCC	single chip cloud
 SCC	source code control
+SCCP	skinny call control protocol
 SCCS	Source Code Control System
 SCI	scalable coherent interface
 SCI	system control interrupt
@@ -1490,6 +1492,7 @@ SWIG	simplified wrapper [and] interface generator
 SYR	symbol timing recovery
 TA	test assertion
 TA	transmitter address
+TACACS	terminal access controller access-control system
 TAI	international atomic time
 TAO	track at once
 TAOCP	The Art of Computer Programming
@@ -1712,6 +1715,7 @@ XSL	extensible stylesheet language
 XSLT	extensible stylesheet language transformations
 XSS	cross site scripting
 XT	extended technology
+XTACACS	extended terminal access controller access-control system
 XTI	X/Open transport interface
 XUL	XML user interface language
 YACC	yet another compiler compiler
