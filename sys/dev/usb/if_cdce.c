@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.51 2019/06/28 01:57:43 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.52 2019/06/29 07:46:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.51 2019/06/28 01:57:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.52 2019/06/29 07:46:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -136,19 +136,19 @@ struct cdce_softc {
 	kmutex_t		 cdce_txlock;
 };
 
-static int	 cdce_tx_list_init(struct cdce_softc *);
-static int	 cdce_rx_list_init(struct cdce_softc *);
-static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
+static int	cdce_tx_list_init(struct cdce_softc *);
+static int	cdce_rx_list_init(struct cdce_softc *);
+static int	cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
 		    struct mbuf *);
-static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-static void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
-static void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
-static void	 cdce_start(struct ifnet *);
-static int	 cdce_ioctl(struct ifnet *, u_long, void *);
-static void	 cdce_init(void *);
-static void	 cdce_stop(struct cdce_softc *);
-static void	 cdce_tick(void *);
-static void	 cdce_tick_task(void *);
+static int	cdce_encap(struct cdce_softc *, struct mbuf *, int);
+static void	cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	cdce_txeof(struct usbd_xfer *, void *, usbd_status);
+static void	cdce_start(struct ifnet *);
+static int	cdce_ioctl(struct ifnet *, u_long, void *);
+static void	cdce_init(void *);
+static void	cdce_stop(struct cdce_softc *);
+static void	cdce_tick(void *);
+static void	cdce_tick_task(void *);
 
 static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
