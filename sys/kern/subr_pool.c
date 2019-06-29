@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.251 2019/06/13 01:13:12 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.252 2019/06/29 11:13:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.251 2019/06/13 01:13:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252 2019/06/29 11:13:23 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1959,6 +1959,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 			int bigidx = pool_bigidx(size);
 
 			palloc = &pool_allocator_big[bigidx];
+			flags |= PR_NOALIGN;
 		} else
 			palloc = &pool_allocator_nointr;
 	}
