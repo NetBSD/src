@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178 2019/06/29 03:10:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2019/06/29 03:10:51 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -172,8 +172,8 @@ consinit(void)
 	}
 #endif
 #if defined (DDB)
-        if (boothowto & RB_KDB)
-                Debugger();
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
@@ -235,7 +235,7 @@ cpu_startup(void)
 static void
 identifycpu(void)
 {
-       const char *mach, *mmu, *fpu, *cpu;
+	const char *mach, *mmu, *fpu, *cpu;
 
 	switch (machineid & ATARI_ANYMACH) {
 	case ATARI_TT:
@@ -260,7 +260,6 @@ identifycpu(void)
 	fpu     = fpu_describe(fputype);
 
 	switch (cputype) {
- 
 	case CPU_68060:
 		{
 			uint32_t	pcr;
@@ -597,7 +596,7 @@ badbaddr(void *addr, int size)
 /*
  * this is a handy package to have asynchronously executed
  * function calls executed at very low interrupt priority.
- * Example for use is keyboard repeat, where the repeat 
+ * Example for use is keyboard repeat, where the repeat
  * handler running at splclock() triggers such a (hardware
  * aided) software interrupt.
  * Note: the installed functions are currently called in a
