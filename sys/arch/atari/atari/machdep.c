@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 2019/06/29 03:10:51 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.179 2019/06/29 03:19:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2019/06/29 03:10:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2019/06/29 03:19:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -236,6 +236,8 @@ static void
 identifycpu(void)
 {
 	const char *mach, *mmu, *fpu, *cpu;
+	uint32_t pcr;
+	char cputxt[30];
 
 	switch (machineid & ATARI_ANYMACH) {
 	case ATARI_TT:
@@ -261,17 +263,12 @@ identifycpu(void)
 
 	switch (cputype) {
 	case CPU_68060:
-		{
-			uint32_t	pcr;
-			char		cputxt[30];
-
-			__asm(".word 0x4e7a,0x0808;"
-			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-			snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
-			    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
-			cpu = cputxt;
-			mmu = "/MMU";
-		}
+		__asm(".word 0x4e7a,0x0808;"
+		    "movl %%d0,%0" : "=d"(pcr) : : "d0");
+		snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
+		    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
+		cpu = cputxt;
+		mmu = "/MMU";
 		break;
 	case CPU_68040:
 		cpu = "m68040";
