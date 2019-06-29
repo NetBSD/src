@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.17 2019/06/23 16:19:51 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.18 2019/06/29 13:30:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.17 2019/06/23 16:19:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.18 2019/06/29 13:30:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -821,6 +821,7 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	its->its_dmat = sc->sc_dmat;
 	its->its_base = its_base;
 	its->its_pic = &sc->sc_lpi;
+	snprintf(its->its_pic->pic_name, sizeof(its->its_pic->pic_name), "gicv3-its");
 	KASSERT(its->its_pic->pic_maxsources > 0);
 	its->its_pa = kmem_zalloc(sizeof(struct pci_attach_args *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_targets = kmem_zalloc(sizeof(struct cpu_info *) * its->its_pic->pic_maxsources, KM_SLEEP);
