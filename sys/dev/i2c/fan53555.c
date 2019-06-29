@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.2 2018/08/29 11:08:30 jmcneill Exp $ */
+/* $NetBSD: fan53555.c,v 1.3 2019/06/29 14:45:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.2 2018/08/29 11:08:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.3 2019/06/29 14:45:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,8 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 		return ENXIO;
 	}
 
-	of_getprop_uint32(sc->sc_phandle, "suspend_voltage_selector",
+	sc->sc_suspend_voltage_selector = -1;
+	of_getprop_uint32(sc->sc_phandle, "fcs,suspend-voltage-selector",
 	    &sc->sc_suspend_voltage_selector);
 	switch (sc->sc_suspend_voltage_selector) {
 	case 0:
