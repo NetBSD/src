@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.56 2019/06/24 20:29:41 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.57 2019/06/29 11:37:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.56 2019/06/24 20:29:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.57 2019/06/29 11:37:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -367,14 +367,19 @@ ptrace_find(struct lwp *l, int req, pid_t pid)
 }
 
 static int
-ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
+ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
+    bool *locked)
 {
+	*locked = false;
+
 	/*
 	 * Grab a reference on the process to prevent it from execing or
 	 * exiting.
 	 */
 	if (!rw_tryenter(&t->p_reflock, RW_READER))
 		return EBUSY;
+
+	*locked = true;
 
 	/* Make sure we can operate on it. */
 	switch (req) {
@@ -1045,6 +1050,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	int error, write, tmp, pheld;
 	int signo = 0;
 	int resume_all;
+	bool locked;
 	error = 0;
 
 	/*
@@ -1060,7 +1066,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	}
 
 	pheld = 1;
-	if ((error = ptrace_allowed(l, req, t, p)) != 0)
+	if ((error = ptrace_allowed(l, req, t, p, &locked)) != 0)
 		goto out;
 
 	if ((error = kauth_authorize_process(l->l_cred,
@@ -1427,7 +1433,8 @@ out:
 	}
 	if (lt != NULL)
 		lwp_delref(lt);
-	rw_exit(&t->p_reflock);
+	if (locked)
+		rw_exit(&t->p_reflock);
 
 	return error;
 }
