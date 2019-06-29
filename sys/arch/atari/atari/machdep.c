@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2019/06/29 03:19:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2019/06/29 03:22:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2019/06/29 03:19:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2019/06/29 03:22:52 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -70,13 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2019/06/29 03:19:49 tsutsui Exp $"
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/cpu.h>
-#if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
-#endif
 
-#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
-
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -163,12 +158,8 @@ consinit(void)
 		extern int end;
 		extern int *esym;
 
-#ifndef __ELF__
-		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
-#else
 		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
-#endif
 	}
 #endif
 #if defined (DDB)
