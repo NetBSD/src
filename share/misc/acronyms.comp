@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.271 2019/06/28 10:47:12 sevan Exp $
+$NetBSD: acronyms.comp,v 1.272 2019/06/29 10:34:59 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -589,6 +589,7 @@ FUS	fast user switching
 FWH	firmware hub
 FWS	folding white space
 GAL	generic array logic
+GARP	generic attribute registration protocol
 GAS	generic address structure
 GC	garbage collector
 GCM	Galois counter mode
@@ -935,6 +936,7 @@ MMF	multi-mode fiber
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
 MMORPG	massive multiplayer online role playing game
+MMRP	multiple MAC registration protocol
 MMU	memory management unit
 MMX	matrix math extension
 MMX	multimedia extension
@@ -956,6 +958,7 @@ MPS	multiprocessor specification
 MQTT	Message Queuing Telemetry Transport
 MR	modem ready
 MRO	method resolution order
+MRP	multiple registration protocol
 MRU	most recently used
 MS	Microsoft
 MSAN	Memory Sanitizer
@@ -978,6 +981,8 @@ MTU	maximum transmission unit
 MUA	mail user agent
 MUD	multi-user domain
 MVCC	multiversion concurrency control
+MVR	multicast VLAN registration
+MVRP	multiple VLAN registration protocol
 MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
@@ -1086,6 +1091,7 @@ PA	physical address
 PAAS	platform as a service
 PAC	phase-amplitude converter
 PAE	physical address extension
+PAGP	port aggregation protocol
 PAL	phase alternating line
 PAL	programmable array logic
 PAM	pluggable authentication modules
@@ -1219,6 +1225,7 @@ PV	physical volume
 PVC	permanent virtual circuit
 PVG	physical volume group
 PVI	protected-mode virtual interrupt
+PVRST	Per-VLAN rapid spanning tree
 PVST	Per-VLAN Spanning Tree
 PWM	pulse width modulation
 PXE	preboot execution environment
@@ -1326,8 +1333,10 @@ SA	security association
 SA	source address
 SA	structured analysis
 SAAS	software as a service
+SABRE	Semi-automated business research environment
 SACD	super audio compact disc
 SAD	security association database
+SAGE	Semi-automated ground environment
 SAL	{service,system} abstraction layer
 SAM	serial access memory
 SAM	sum addressed memory
@@ -1458,6 +1467,7 @@ SQL	Structured Query Language
 SRAM	static random access memory
 SRC	sample rate conversion
 SRP	SCSI RDMA protocol
+SRR	shaped round robin
 SS	self-snoop
 SS	stack segment
 SSA	static single assignment
@@ -1476,6 +1486,7 @@ STD	state transition diagram
 STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
 STP	shielded twisted pair
+STRG	spanning tree root guard
 SUN	Stanford University Network
 SUS	Single Unix Specification
 SUT	system under test
@@ -1695,6 +1706,7 @@ WPS	Wi-Fi Protected Setup
 WRAM	window random access memory
 WS	web services
 WTC	write through caching
+WTD	weighted tail drop
 WWAN	wireless wide area network
 WWW	world wide web
 WYSIAYG	what you see is all you get
