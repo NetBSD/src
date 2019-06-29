@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.84 2019/02/08 08:47:35 mrg Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.85 2019/06/29 16:41:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.84 2019/02/08 08:47:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.85 2019/06/29 16:41:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,9 +202,9 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int	fdcprobe(device_t, cfdata_t, void *);
-int	fdprint(void *, const char *);
-void	fdcattach(device_t, device_t, void *);
+static int	fdcprobe(device_t, cfdata_t, void *);
+static int	fdprint(void *, const char *);
+static void	fdcattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
@@ -279,8 +279,8 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdprobe(device_t, cfdata_t, void *);
-void	fdattach(device_t, device_t, void *);
+static int	fdprobe(device_t, cfdata_t, void *);
+static void	fdattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(hdfd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
@@ -337,7 +337,7 @@ static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *, int);
 
 static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
-int
+static int
 fdcprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	fdc_matched = 0;
@@ -402,7 +402,7 @@ struct fdc_attach_args {
  * Return QUIET (config_find ignores this if the device was configured) to
  * avoid printing `fdN not configured' messages.
  */
-int
+static int
 fdprint(void *aux, const char *fdc)
 {
 	register struct fdc_attach_args *fa = aux;
@@ -412,7 +412,7 @@ fdprint(void *aux, const char *fdc)
 	return QUIET;
 }
 
-void
+static void
 fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct fdc_softc	*fdc = device_private(self);
@@ -468,7 +468,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 fdprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdc_softc	*fdc = device_private(parent);
@@ -521,7 +521,7 @@ fdprobe(device_t parent, cfdata_t cf, void *aux)
 /*
  * Controller is working, and drive responded.  Attach it.
  */
-void
+static void
 fdattach(device_t parent, device_t self, void *aux)
 {
 	struct fdc_softc	*fdc  = device_private(parent);

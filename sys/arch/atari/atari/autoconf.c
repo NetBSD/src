@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 2019/05/03 01:08:28 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2019/06/29 16:41:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2019/05/03 01:08:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2019/06/29 16:41:18 tsutsui Exp $");
 
 #include "opt_md.h"
 
@@ -55,10 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2019/05/03 01:08:28 tsutsui Exp $"
 #include "ioconf.h"
 
 static void findroot(void);
-int mbmatch(device_t, cfdata_t, void *);
-void mbattach(device_t, device_t, void *);
+static int mbmatch(device_t, cfdata_t, void *);
+static void mbattach(device_t, device_t, void *);
 #if 0
-int mbprint(void *, const char *);
+static int mbprint(void *, const char *);
 #endif
 
 int atari_realconfig;
@@ -293,7 +293,7 @@ CFATTACH_DECL_NEW(mainbus, 0,
 
 static int mb_attached;
 
-int
+static int
 mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
@@ -308,7 +308,7 @@ mbmatch(device_t parent, cfdata_t cf, void *aux)
 /*
  * "find" all the things that should be there.
  */
-void
+static void
 mbattach(device_t parent, device_t self, void *aux)
 {
 
@@ -332,7 +332,7 @@ mbattach(device_t parent, device_t self, void *aux)
 }
 
 #if 0
-int
+static int
 mbprint(void *aux, const char *pnp)
 {
 
