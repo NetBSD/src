@@ -1,3 +1,5 @@
+/*	$NetBSD: rtutil.h,v 1.4 2019/06/30 11:38:16 sevan Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.

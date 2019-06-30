@@ -1,3 +1,5 @@
+/*	$NetBSD: env.h,v 1.4 2019/06/30 11:38:16 sevan Exp $	*/
+
 #ifndef _IFCONFIG_ENV_H
 #define _IFCONFIG_ENV_H
 
