@@ -804,7 +804,7 @@ atf_init_test_cases()
 	atf_add_test_case mvprintw
 	atf_add_test_case mvscanw
 	atf_add_test_case mvvline
-#	atf_add_test_case pad # not working
+	atf_add_test_case pad
 	atf_add_test_case nocbreak
 	atf_add_test_case nodelay
 }
