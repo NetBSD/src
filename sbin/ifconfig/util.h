@@ -1,3 +1,5 @@
+/*	$NetBSD: util.h,v 1.13 2019/06/30 11:38:16 sevan Exp $	*/
+
 #ifndef _IFCONFIG_UTIL_H
 #define _IFCONFIG_UTIL_H
 
