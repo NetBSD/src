@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.19 2019/06/29 16:48:07 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.20 2019/06/30 10:10:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.19 2019/06/29 16:48:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.20 2019/06/30 10:10:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -627,7 +627,8 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 
 	/* devbits and innercache defaults */
 	u_int devbits = __SHIFTOUT(typer, GITS_TYPER_Devbits) + 1;
-	u_int innercache = GITS_Cache_NORMAL_NC;
+	u_int innercache = GITS_Cache_NORMAL_WA_WB;
+	u_int share = GITS_Shareability_IS;
 
 	uint32_t iidr = gits_read_4(its, GITS_IIDR);
 	const uint32_t ctx =
@@ -697,10 +698,18 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 		baser &= ~GITS_BASER_InnerCache;
 		baser |= __SHIFTIN(innercache, GITS_BASER_InnerCache);
 		baser &= ~GITS_BASER_Shareability;
-		baser |= __SHIFTIN(GITS_Shareability_NS, GITS_BASER_Shareability);
+		baser |= __SHIFTIN(share, GITS_BASER_Shareability);
 		baser |= GITS_BASER_Valid;
 
 		gits_write_8(its, GITS_BASERn(tab), baser);
+
+		baser = gits_read_8(its, GITS_BASERn(tab));
+		if (__SHIFTOUT(baser, GITS_BASER_Shareability) == GITS_Shareability_NS) {
+			baser &= ~GITS_BASER_InnerCache;
+			baser |= __SHIFTIN(GITS_Cache_NORMAL_NC, GITS_BASER_InnerCache);
+
+			gits_write_8(its, GITS_BASERn(tab), baser);
+		}
 	}
 }
 
