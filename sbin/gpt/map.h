@@ -1,3 +1,5 @@
+/*	$NetBSD: map.h,v 1.7 2019/06/30 11:38:16 sevan Exp $	*/
+
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
  * All rights reserved.
