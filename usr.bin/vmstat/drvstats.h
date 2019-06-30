@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.h,v 1.5 2017/07/04 21:19:33 mlelstv Exp $	*/
+/*	$NetBSD: drvstats.h,v 1.6 2019/06/30 19:57:24 he Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -45,6 +45,7 @@ struct _drive {
 	u_int64_t	 *seek;	/* # of seeks (currently unused). */
 	u_int64_t	 *rbytes;	/* # of bytes read. */
 	u_int64_t	 *wbytes;	/* # of bytes written. */
+	int		 *scale;	/* Sticky scale for bytes */
 	struct timeval	 *time;		/* Time spent in disk i/o. */
 	struct timeval	 *wait;		/* Time spent in queue waiting. */
 	struct timeval	 *busysum;	/* Time busy * queue length */
