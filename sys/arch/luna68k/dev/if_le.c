@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -152,7 +152,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
-	return (val);
+	return val;
 }
 
 static int
@@ -161,9 +161,9 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	if (strcmp(ma->ma_name, le_cd.cd_name))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
