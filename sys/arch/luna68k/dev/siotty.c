@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.44 2015/08/21 10:48:06 christos Exp $ */
+/* $NetBSD: siotty.c,v 1.45 2019/06/30 02:11:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.44 2015/08/21 10:48:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.45 2019/06/30 02:11:56 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -602,7 +602,7 @@ siopoll(dev_t dev, int events, struct lwp *l)
 
 	sc = device_lookup_private(&siotty_cd, minor(dev));
 	tp = sc->sc_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 int

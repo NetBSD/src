@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $ */
+/* $NetBSD: lcd.c,v 1.10 2019/06/30 02:11:56 tsutsui Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.10 2019/06/30 02:11:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $");
 #define LCD_MAXBUFLEN	80
 
 struct pio {
-	volatile u_int8_t portA;
-	volatile u_int8_t portB;
-	volatile u_int8_t portC;
-	volatile u_int8_t cntrl;
+	volatile uint8_t portA;
+	volatile uint8_t portB;
+	volatile uint8_t portC;
+	volatile uint8_t cntrl;
 };
 
 /* Autoconf stuff */
@@ -344,6 +344,7 @@ lcdshow(char *s)
 void
 greeting(void)
 {
+
 	lcdctrl(LCD_INIT);
 	lcdctrl(LCD_ENTRY);
 	lcdctrl(LCD_ON);
