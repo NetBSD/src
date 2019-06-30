@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.h,v 1.8 2019/06/30 11:38:16 sevan Exp $	*/
+
 #ifndef _IFCONFIG_PARSE_H
 #define _IFCONFIG_PARSE_H
 

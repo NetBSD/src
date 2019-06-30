@@ -1,3 +1,5 @@
+/*	$NetBSD: gpt_uuid.h,v 1.9 2019/06/30 11:38:16 sevan Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
