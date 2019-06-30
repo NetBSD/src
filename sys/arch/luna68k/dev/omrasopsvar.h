@@ -1,4 +1,4 @@
-/* $NetBSD: omrasopsvar.h,v 1.3 2014/10/04 16:58:17 tsutsui Exp $ */
+/* $NetBSD: omrasopsvar.h,v 1.4 2019/06/30 05:04:48 tsutsui Exp $ */
 /*
  * Copyright (c) 2013 Kenji Aoyama
  *
@@ -20,10 +20,12 @@
  * XXX: We consider only 1bpp and 4bpp for now
  */
 
-#define OMFB_PLANEMASK	0xB1040000	/* BMSEL register */
-#define OMFB_FB_WADDR	0xB1080008	/* common plane */
-#define OMFB_FB_RADDR	0xB10C0008	/* plane #0 */
-#define OMFB_ROPFUNC	0xB12C0000	/* common ROP function */
+#include <machine/board.h>
+
+#define OMFB_PLANEMASK	BMAP_BMSEL	/* BMSEL register */
+#define OMFB_FB_WADDR	(BMAP_BMP + 8)	/* common plane */
+#define OMFB_FB_RADDR	(BMAP_BMAP0 + 8)/* plane #0 */
+#define OMFB_ROPFUNC	BMAP_FN		/* common ROP function */
 
 /*
  * Helper macros

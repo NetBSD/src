@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.9 2019/06/30 05:04:48 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.9 2019/06/30 05:04:48 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $");
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 
 #include <luna68k/luna68k/isr.h>
 
@@ -103,6 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2019/06/30 02:11:56 tsutsui Exp $");
 #include <dev/ic/am7990var.h>
 
 #include "ioconf.h"
+
+#define TRI_PORT_RAM_LANCE_OFFSET	0x10000 /* first 64KB is used by XP */
+#define TRI_PORT_RAM_LANCE_SIZE		0x10000	/* 64KB */
 
 /*
  * LANCE registers.
@@ -178,10 +182,10 @@ le_attach(device_t parent, device_t self, void *aux)
 	/* Map control registers. */
 	lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;	/* LANCE */
 
-	sc->sc_mem = (void *)0x71010000;		/* SRAM */
+	sc->sc_mem = (void *)(TRI_PORT_RAM + TRI_PORT_RAM_LANCE_OFFSET);
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
-	sc->sc_memsize = 64 * 1024;			/* 64KB */
+	sc->sc_memsize = TRI_PORT_RAM_LANCE_SIZE;
 
 	myetheraddr(sc->sc_enaddr);
 
