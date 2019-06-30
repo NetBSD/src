@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.6 2019/06/27 01:58:49 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.7 2019/06/30 08:49:21 martin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef	_COMPAT_SYS_SIGINFO_H_
 #define	_COMPAT_SYS_SIGINFO_H_
 
-#if defined(_LP64) && defined(_KERNEL)
+#ifdef _KERNEL
 
 typedef union sigval32 {
 	int sival_int;
@@ -83,6 +83,6 @@ typedef union siginfo32 {
 	struct __ksiginfo32 _info;
 } siginfo32_t;
 
-#endif /* _LP64 && _KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_COMPAT_SYS_SIGINFO_H_ */
