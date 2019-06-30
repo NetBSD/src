@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.3 2019/06/27 01:58:49 christos Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.4 2019/06/30 14:37:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -63,7 +63,7 @@ struct sigaltstack13 {
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
 
-#if defined(_LP64) && defined(_KERNEL)
+#ifdef _KERNEL
 
 struct __sigaltstack32 {
 	uint32_t	ss_sp;
@@ -73,7 +73,7 @@ struct __sigaltstack32 {
 
 typedef struct __sigaltstack32 stack32_t;
 
-#endif /* _LP64 && _KERNEL */
+#endif /* _KERNEL */
 
 
 #endif	/* !_COMPAT_SYS_SIGTYPES_H_ */

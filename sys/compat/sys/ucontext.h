@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.7 2019/06/27 01:58:49 christos Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.8 2019/06/30 14:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <compat/sys/sigtypes.h>
 
-#if defined(_LP64) && defined(_KERNEL)
+#ifdef _KERNEL
 
 typedef struct __ucontext32       ucontext32_t;
 
@@ -61,6 +61,6 @@ int	cpu_mcontext32_validate(struct lwp *, const mcontext32_t *);
 void	cpu_getmcontext32(struct lwp *, mcontext32_t *, unsigned int *);
 int	cpu_setmcontext32(struct lwp *, const mcontext32_t *, unsigned int);
 
-#endif /* _LP64 && _KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_COMPAT_SYS_UCONTEXT_H_ */
