@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.19 2019/06/26 23:00:09 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.20 2019/06/30 11:11:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.19 2019/06/26 23:00:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.20 2019/06/30 11:11:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.19 2019/06/26 23:00:09 jmcneill Exp $");
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+
+#include <machine/cpufunc.h>
 
 #include <arm/locore.h>
 #include <arm/armreg.h>
@@ -516,10 +518,13 @@ gicv3_lpi_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 
 	while ((bit = ffs(mask)) != 0) {
 		sc->sc_lpiconf.base[irqbase + bit - 1] |= GIC_LPICONF_Enable;
+		if (sc->sc_lpiconf_flush)
+			cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
 		mask &= ~__BIT(bit - 1);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, irqbase, 32, BUS_DMASYNC_PREWRITE);
+	if (!sc->sc_lpiconf_flush)
+		__asm __volatile ("dsb ishst");
 }
 
 static void
@@ -530,10 +535,13 @@ gicv3_lpi_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 
 	while ((bit = ffs(mask)) != 0) {
 		sc->sc_lpiconf.base[irqbase + bit - 1] &= ~GIC_LPICONF_Enable;
+		if (sc->sc_lpiconf_flush)
+			cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[irqbase + bit - 1], 1);
 		mask &= ~__BIT(bit - 1);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, irqbase, 32, BUS_DMASYNC_PREWRITE);
+	if (!sc->sc_lpiconf_flush)
+		__asm __volatile ("dsb ishst");
 }
 
 static void
@@ -543,7 +551,10 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 
 	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_LPIPRIO(sc, is->is_ipl) | GIC_LPICONF_Res1;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, is->is_irq, 1, BUS_DMASYNC_PREWRITE);
+	if (sc->sc_lpiconf_flush)
+		cpu_dcache_wb_range((vaddr_t)&sc->sc_lpiconf.base[is->is_irq], 1);
+	else
+		__asm __volatile ("dsb ishst");
 }
 
 static void
@@ -551,6 +562,7 @@ gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 	struct gicv3_lpi_callback *cb;
+	uint64_t propbase, pendbase;
 	uint32_t ctlr;
 
 	/* If physical LPIs are not supported on this redistributor, just return. */
@@ -568,18 +580,36 @@ gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	arm_dsb();
 
 	/* Setup the LPI configuration table */
-	const uint64_t propbase = sc->sc_lpiconf.segs[0].ds_addr |
+	propbase = sc->sc_lpiconf.segs[0].ds_addr |
 	    __SHIFTIN(ffs(pic->pic_maxsources) - 1, GICR_PROPBASER_IDbits) |
-	    __SHIFTIN(GICR_Shareability_NS, GICR_PROPBASER_Shareability) |
-	    __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PROPBASER_InnerCache);
+	    __SHIFTIN(GICR_Shareability_IS, GICR_PROPBASER_Shareability) |
+	    __SHIFTIN(GICR_Cache_NORMAL_RA_WA_WB, GICR_PROPBASER_InnerCache);
 	gicr_write_8(sc, ci->ci_gic_redist, GICR_PROPBASER, propbase);
+	propbase = gicr_read_8(sc, ci->ci_gic_redist, GICR_PROPBASER);
+	if (__SHIFTOUT(propbase, GICR_PROPBASER_Shareability) != GICR_Shareability_IS) {
+		if (__SHIFTOUT(propbase, GICR_PROPBASER_Shareability) == GICR_Shareability_NS) {
+			propbase &= ~GICR_PROPBASER_Shareability;
+			propbase |= __SHIFTIN(GICR_Shareability_NS, GICR_PROPBASER_Shareability);
+			propbase &= ~GICR_PROPBASER_InnerCache;
+			propbase |= __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PROPBASER_InnerCache);
+			gicr_write_8(sc, ci->ci_gic_redist, GICR_PROPBASER, propbase);
+		}
+		sc->sc_lpiconf_flush = true;
+	}
 
 	/* Setup the LPI pending table */
-	const uint64_t pendbase = sc->sc_lpipend[cpu_index(ci)].segs[0].ds_addr |
-	    __SHIFTIN(GICR_Shareability_NS, GICR_PENDBASER_Shareability) |
-	    __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PENDBASER_InnerCache) |
-	    GICR_PENDBASER_PTZ;
+	pendbase = sc->sc_lpipend[cpu_index(ci)].segs[0].ds_addr |
+	    __SHIFTIN(GICR_Shareability_IS, GICR_PENDBASER_Shareability) |
+	    __SHIFTIN(GICR_Cache_NORMAL_RA_WA_WB, GICR_PENDBASER_InnerCache);
 	gicr_write_8(sc, ci->ci_gic_redist, GICR_PENDBASER, pendbase);
+	pendbase = gicr_read_8(sc, ci->ci_gic_redist, GICR_PENDBASER);
+	if (__SHIFTOUT(pendbase, GICR_PENDBASER_Shareability) == GICR_Shareability_NS) {
+		pendbase &= ~GICR_PENDBASER_Shareability;
+		pendbase |= __SHIFTIN(GICR_Shareability_NS, GICR_PENDBASER_Shareability);
+		pendbase &= ~GICR_PENDBASER_InnerCache;
+		pendbase |= __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PENDBASER_InnerCache);
+		gicr_write_8(sc, ci->ci_gic_redist, GICR_PENDBASER, pendbase);
+	}
 
 	/* Enable LPIs */
 	ctlr = gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR);
@@ -666,7 +696,7 @@ gicv3_lpi_init(struct gicv3_softc *sc)
 	/*
 	 * Allocate LPI pending tables
 	 */
-	const bus_size_t lpipend_sz = sc->sc_lpi.pic_maxsources / NBBY;
+	const bus_size_t lpipend_sz = (8192 + sc->sc_lpi.pic_maxsources) / NBBY;
 	for (int cpuindex = 0; cpuindex < ncpu; cpuindex++) {
 		gicv3_dma_alloc(sc, &sc->sc_lpipend[cpuindex], lpipend_sz, 0x10000);
 		KASSERT((sc->sc_lpipend[cpuindex].segs[0].ds_addr & ~GICR_PENDBASER_Physical_Address) == 0);

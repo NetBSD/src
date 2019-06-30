@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.6 2019/06/26 23:10:42 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.7 2019/06/30 11:11:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -68,6 +68,7 @@ struct gicv3_softc {
 
 	/* LPI configuration table */
 	struct gicv3_dma	sc_lpiconf;
+	bool			sc_lpiconf_flush;
 
 	/* LPI pending tables */
 	struct gicv3_dma	sc_lpipend[MAXCPUS];
