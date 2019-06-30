@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.56 2019/04/26 20:41:10 maya Exp $
+# $NetBSD: Makefile,v 1.57 2019/06/30 21:20:04 mgorny Exp $
 
 MKMAN=	no
 
@@ -88,12 +88,12 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
 
-LDADD.t_ptrace_wait+=		-pthread -lm
-LDADD.t_ptrace_wait3+=		-pthread -lm
-LDADD.t_ptrace_wait4+=		-pthread -lm
-LDADD.t_ptrace_wait6+=		-pthread -lm
-LDADD.t_ptrace_waitid+=		-pthread -lm
-LDADD.t_ptrace_waitpid+=	-pthread -lm
+LDADD.t_ptrace_wait+=		-pthread -lm -lelf
+LDADD.t_ptrace_wait3+=		-pthread -lm -lelf
+LDADD.t_ptrace_wait4+=		-pthread -lm -lelf
+LDADD.t_ptrace_wait6+=		-pthread -lm -lelf
+LDADD.t_ptrace_waitid+=		-pthread -lm -lelf
+LDADD.t_ptrace_waitpid+=	-pthread -lm -lelf
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 CPPFLAGS.t_posix_fadvise.c += -D_KERNTYPES
