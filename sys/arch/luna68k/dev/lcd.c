@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.10 2019/06/30 02:11:56 tsutsui Exp $ */
+/* $NetBSD: lcd.c,v 1.11 2019/06/30 05:04:48 tsutsui Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.10 2019/06/30 02:11:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.11 2019/06/30 05:04:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.10 2019/06/30 02:11:56 tsutsui Exp $");
 #include <sys/errno.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/lcd.h>
 
@@ -280,7 +281,7 @@ lcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 void
 lcdbusywait(void)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int msb, s;
 
 	s = splhigh();
@@ -301,7 +302,7 @@ lcdbusywait(void)
 void
 lcdput(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();
@@ -318,7 +319,7 @@ lcdput(int cc)
 void
 lcdctrl(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();
