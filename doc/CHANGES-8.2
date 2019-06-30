@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.4 2019/06/27 13:18:28 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.5 2019/06/30 19:00:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -74,4 +74,9 @@ sys/arch/x86/include/bootinfo.h			1.30
 	Increase BOOTINFO_MAXSIZE to 16Kib.
 	Some systems require a larger bootinfo size for memory descriptors.
 	[nonaka, ticket #1282]
+
+sys/dev/ic/mvsata.c				1.47-1.48
+
+	PR/54205: fix "mvsata:0:0:1: buffer load failed: error=27" failure.
+	[tsutsui, ticket #1283]
 
