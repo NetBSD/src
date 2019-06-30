@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.272 2019/06/29 10:34:59 sevan Exp $
+$NetBSD: acronyms.comp,v 1.273 2019/06/30 11:22:54 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1449,6 +1449,7 @@ SOM	system on module
 SP	service pack
 SP	stack pointer
 SPA	storage pool allocator
+SPAN	switched port analyzer
 SPARC	scalable processor architecture
 SPARQL	SPARQL Protocol and RDF Query Language
 SPD	security policy database
