@@ -1,3 +1,5 @@
+/*	$NetBSD: newfs_udf.h,v 1.6 2019/06/30 11:38:16 sevan Exp $	*/
+
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.
