@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.130 2019/06/30 21:20:04 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131 2019/07/01 02:04:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.130 2019/06/30 21:20:04 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131 2019/07/01 02:04:37 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7706,7 +7706,7 @@ static ssize_t core_find_note(const char *core_path,
 			    note_hdr.n_namesz <= sizeof(name_buf)) {
 				SYSCALL_REQUIRE(pread(core_fd, name_buf,
 				    note_hdr.n_namesz, offset)
-				    == note_hdr.n_namesz);
+				    == (ssize_t)(size_t)note_hdr.n_namesz);
 
 				if (!strncmp(note_name, name_buf, name_len) &&
 				    note_hdr.n_type == note_type)
