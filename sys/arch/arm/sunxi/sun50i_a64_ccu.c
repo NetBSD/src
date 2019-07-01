@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.12 2019/06/27 14:51:33 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.13 2019/07/01 21:06:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.12 2019/06/27 14:51:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13 2019/07/01 21:06:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -155,7 +155,7 @@ static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
 static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
-static const char *gpu_parents[] = { "gpu" };
+static const char *gpu_parents[] = { "pll_gpu" };
 
 static const struct sunxi_ccu_nkmp_tbl sun50i_a64_cpux_table[] = {
 	{ 60000000, 9, 0, 0, 2 },
