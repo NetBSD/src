@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.67 2019/05/03 22:34:21 kamil Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.68 2019/07/01 17:15:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.67 2019/05/03 22:34:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.68 2019/07/01 17:15:43 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -839,6 +839,7 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
 	} */
 	char name[MAXCOMLEN];
 	lwpid_t target;
+	size_t len;
 	proc_t *p;
 	lwp_t *t;
 
@@ -859,7 +860,9 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
 	lwp_unlock(t);
 	mutex_exit(p->p_lock);
 
-	return copyoutstr(name, SCARG(uap, name), SCARG(uap, len), NULL);
+	len = uimin(SCARG(uap, len), sizeof(name));
+
+	return copyoutstr(name, SCARG(uap, name), len, NULL);
 }
 
 int
