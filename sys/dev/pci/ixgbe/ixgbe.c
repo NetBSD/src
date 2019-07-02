@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.190 2019/07/02 08:32:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.191 2019/07/02 08:38:48 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -6540,7 +6540,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			goto err_out;
 		}
 		que->msix = vector;
-		adapter->active_queues |= (u64)(1 << que->msix);
+		adapter->active_queues |= 1ULL << que->msix;
 
 		if (adapter->feat_en & IXGBE_FEATURE_RSS) {
 #ifdef	RSS
