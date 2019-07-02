@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.275 2019/07/02 15:53:50 sevan Exp $
+$NetBSD: acronyms.comp,v 1.276 2019/07/02 16:10:15 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -910,6 +910,7 @@ MFC	Microsoft Foundation Classes
 MFM	modified frequency modulation
 MFU	most frequently used
 MGCP	media gateway control protocol
+MHU	message handling unit
 MI	machine-independent
 MI	machine interface
 MIB	management information base
@@ -1369,6 +1370,8 @@ SCM	source code management
 SCM	storage-class memory
 SCO	synchronous connection orientated
 SCP	secure copy
+SCP	system control processor
+SCPI	system control and power interface
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
 SDEI	software delegated exception interface
