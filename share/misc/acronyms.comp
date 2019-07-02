@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.273 2019/06/30 11:22:54 sevan Exp $
+$NetBSD: acronyms.comp,v 1.274 2019/07/02 15:46:06 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1350,6 +1350,7 @@ SASL	simple authentication [and] security layer
 SATA	serial advanced technology attachment
 SAX	simple API for XML
 SB	sound blaster
+SBSA	server base system architecture
 SBU	standard build unit
 SC	store conditional
 SCA	source code analyzer
