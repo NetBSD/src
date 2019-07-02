@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.68 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.69 2019/07/02 16:23:47 mlelstv Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,37 +41,52 @@
 .Sh SYNOPSIS
 .\" disklabel: read label
 .Nm
-.Op Fl ACDFmrtv
+.Op Fl ACDFmnrtv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -e: read/modify/write using $EDITOR
 .Nm
 .Fl e
-.Op Fl CDFImrv
+.Op Fl CDFImnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -i: read/modify/write using builtin commands
 .Nm
 .Fl i
-.Op Fl DFImrv
+.Op Fl DFImnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -R: write from edited output
 .Nm
 .Fl R
-.Op Fl DFmrv
+.Op Fl DFmnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk Ar protofile
 .\" disklabel -w: write from disctab entry
 .Nm
 .Fl w
-.Op Fl DFmrv
+.Op Fl DFmnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -189,8 +204,23 @@ Specify the name of a file to use instead of
 .It Fl M Ar machine
 Specify the machine to generate a label for.
 Defaults to the current machine it is compiled for.
+Specific details can be overridden via environment
+and with the options
+.Fl B, L, O, p, m
+and
+.Fl n.
+.It Fl L
+num specify the relative sector number of the disklabel
+similar to the environment variable DISKLABELSECTOR.
+.It Fl O
+num specify the relative byte offset of the disklabel.
+similar to the environment variable DISKLABELOFFSET.
+.It Fl P
+num specify the size of the partition table.
 .It Fl m
 expect the label to have an MBR.
+.It Fl n
+expect the label not to have an MBR.
 .It Fl r
 Read/write the disk directly rather than using
 .Xr ioctl 2
@@ -368,3 +398,12 @@ flag causes
 to write directly to disk, and bypass the format translation.
 This will result in a disk label that the PROMs will not recognize,
 and that therefore cannot be booted from.
+.Pp
+The
+.Fl m
+flag previously toggled between using an MBR and not using an MBR,
+with the default being implied by the machine type.
+It now always enables MBR mode, independent of the machine default.
+Use the
+.Fl n
+flag to disable MBR mode.
