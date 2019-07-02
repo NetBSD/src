@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1375 2019/06/04 09:09:47 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1376 2019/07/02 07:52:58 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6861,12 +6861,12 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product QUICKLOGIC PCWATCHDOG	0x5030	PC Watchdog
 
 /* Qumranet products */
-product QUMRANET VIRTIO_1000	0x1000	Virtio
-product QUMRANET VIRTIO_1001	0x1001	Virtio
-product QUMRANET VIRTIO_1002	0x1002	Virtio
-product QUMRANET VIRTIO_1003	0x1003	Virtio
-product QUMRANET VIRTIO_1004	0x1004	Virtio
-product QUMRANET VIRTIO_1005	0x1005	Virtio
+product QUMRANET VIRTIO_1000	0x1000	Virtio Network
+product QUMRANET VIRTIO_1001	0x1001	Virtio Storage
+product QUMRANET VIRTIO_1002	0x1002	Virtio Memory Balloon
+product QUMRANET VIRTIO_1003	0x1003	Virtio Console
+product QUMRANET VIRTIO_1004	0x1004	Virtio SCSI
+product QUMRANET VIRTIO_1005	0x1005	Virtio RNG
 product QUMRANET VIRTIO_1006	0x1006	Virtio
 product QUMRANET VIRTIO_1007	0x1007	Virtio
 product QUMRANET VIRTIO_1008	0x1008	Virtio
