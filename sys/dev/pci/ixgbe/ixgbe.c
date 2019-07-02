@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.189 2019/06/27 05:55:40 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.190 2019/07/02 08:32:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -81,7 +81,7 @@
  * Driver version
  ************************************************************************/
 static const char ixgbe_driver_version[] = "4.0.1-k";
-/* XXX NetBSD: + 3.3.8 */
+/* XXX NetBSD: + 3.3.10 */
 
 /************************************************************************
  * PCI Device ID Table
@@ -4464,7 +4464,7 @@ ixgbe_local_timer1(void *arg)
 	for (i = 0; i < adapter->num_queues; i++, que++) {
 		/* Keep track of queues with work for soft irq */
 		if (que->txr->busy)
-			queues |= ((u64)1 << que->me);
+			queues |= 1ULL << que->me;
 		/*
 		 * Each time txeof runs without cleaning, but there
 		 * are uncleaned descriptors it increments busy. If
@@ -4473,12 +4473,12 @@ ixgbe_local_timer1(void *arg)
 		if (que->busy == IXGBE_QUEUE_HUNG) {
 			++hung;
 			/* Mark the queue as inactive */
-			adapter->active_queues &= ~((u64)1 << que->me);
+			adapter->active_queues &= ~(1ULL << que->me);
 			continue;
 		} else {
 			/* Check if we've come back from hung */
-			if ((adapter->active_queues & ((u64)1 << que->me)) == 0)
-				adapter->active_queues |= ((u64)1 << que->me);
+			if ((adapter->active_queues & (1ULL << que->me)) == 0)
+				adapter->active_queues |= 1ULL << que->me;
 		}
 		if (que->busy >= IXGBE_MAX_TX_BUSY) {
 			device_printf(dev,
