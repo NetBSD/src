@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.116 2019/06/27 09:56:39 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.117 2019/07/02 07:20:07 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -47,6 +47,7 @@
  * Driver version
  ************************************************************************/
 static const char ixv_driver_version[] = "2.0.1-k";
+/* XXX NetBSD: + 1.5.17 */
 
 /************************************************************************
  * PCI Device ID Table
@@ -107,7 +108,7 @@ static int	ixv_negotiate_api(struct adapter *);
 static void	ixv_initialize_transmit_units(struct adapter *);
 static void	ixv_initialize_receive_units(struct adapter *);
 static void	ixv_initialize_rss_mapping(struct adapter *);
-static void	ixv_check_link(struct adapter *);
+static s32	ixv_check_link(struct adapter *);
 
 static void	ixv_enable_intr(struct adapter *);
 static void	ixv_disable_intr(struct adapter *);
@@ -1203,7 +1204,10 @@ ixv_local_timer_locked(void *arg)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	ixv_check_link(adapter);
+	if (ixv_check_link(adapter)) {
+		ixv_init_locked(adapter);
+		return;
+	}
 
 	/* Stats Update */
 	ixv_update_stats(adapter);
@@ -1740,7 +1744,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 	struct	rx_ring	*rxr = adapter->rx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct ifnet	*ifp = adapter->ifp;
-	u32		bufsz, rxcsum, psrtype;
+	u32		bufsz, psrtype;
 
 	if (ifp->if_mtu > ETHERMTU)
 		bufsz = 4096 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
@@ -1834,7 +1838,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 		    (ifp->if_capenable & IFCAP_NETMAP)) {
 			struct netmap_adapter *na = NA(adapter->ifp);
-			struct netmap_kring *kring = &na->rx_rings[i];
+			struct netmap_kring *kring = na->rx_rings[i];
 			int t = na->num_rx_desc - 1 - nm_kr_rxspace(kring);
 
 			IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me), t);
@@ -1844,22 +1848,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 			    adapter->num_rx_desc - 1);
 	}
 
-	rxcsum = IXGBE_READ_REG(hw, IXGBE_RXCSUM);
-
 	ixv_initialize_rss_mapping(adapter);
-
-	if (adapter->num_queues > 1) {
-		/* RSS and RX IPP Checksum are mutually exclusive */
-		rxcsum |= IXGBE_RXCSUM_PCSD;
-	}
-
-	if (ifp->if_capenable & IFCAP_RXCSUM)
-		rxcsum |= IXGBE_RXCSUM_PCSD;
-
-	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
-		rxcsum |= IXGBE_RXCSUM_IPPCSE;
-
-	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
 } /* ixv_initialize_receive_units */
 
 /************************************************************************
@@ -2616,16 +2605,12 @@ static void
 ixv_print_debug_info(struct adapter *adapter)
 {
 	device_t	dev = adapter->dev;
-	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
 	struct rx_ring	*rxr;
 	struct tx_ring	*txr;
 #ifdef LRO
 	struct lro_ctrl *lro;
 #endif /* LRO */
-
-	device_printf(dev, "Error Byte Count = %u \n",
-	    IXGBE_READ_REG(hw, IXGBE_ERRBC));
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 		txr = que->txr;
@@ -2640,10 +2625,10 @@ ixv_print_debug_info(struct adapter *adapter)
 		device_printf(dev, "RX(%d) Bytes Received: %lu\n",
 		    rxr->me, (long)rxr->rx_bytes.ev_count);
 #ifdef LRO
-		device_printf(dev, "RX(%d) LRO Queued= %lld\n",
-		    rxr->me, (long long)lro->lro_queued);
-		device_printf(dev, "RX(%d) LRO Flushed= %lld\n",
-		    rxr->me, (long long)lro->lro_flushed);
+		device_printf(dev, "RX(%d) LRO Queued= %ju\n",
+		    rxr->me, (uintmax_t)lro->lro_queued);
+		device_printf(dev, "RX(%d) LRO Flushed= %ju\n",
+		    rxr->me, (uintmax_t)lro->lro_flushed);
 #endif /* LRO */
 		device_printf(dev, "TX(%d) Packets Sent: %lu\n",
 		    txr->me, (long)txr->total_packets.ev_count);
@@ -3147,15 +3132,18 @@ ixv_handle_link(void *context)
 /************************************************************************
  * ixv_check_link - Used in the local timer to poll for link changes
  ************************************************************************/
-static void
+static s32
 ixv_check_link(struct adapter *adapter)
 {
+	s32 error;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	adapter->hw.mac.get_link_status = TRUE;
 
-	adapter->hw.mac.ops.check_link(&adapter->hw, &adapter->link_speed,
-	    &adapter->link_up, FALSE);
+	error = adapter->hw.mac.ops.check_link(&adapter->hw,
+	    &adapter->link_speed, &adapter->link_up, FALSE);
 	ixv_update_link_status(adapter);
+
+	return error;
 } /* ixv_check_link */
