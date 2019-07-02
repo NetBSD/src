@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.39 2019/06/27 05:55:40 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.40 2019/07/02 08:32:18 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -210,6 +210,10 @@
 #define IXGBE_FLA_X550EM_x	IXGBE_FLA
 #define IXGBE_FLA_X550EM_a	0x15F68
 #define IXGBE_FLA_BY_MAC(_hw)	IXGBE_BY_MAC((_hw), FLA)
+#define IXGBE_FLA_FL_SIZE_SHIFT_X540	17
+#define IXGBE_FLA_FL_SIZE_SHIFT_X550	12
+#define IXGBE_FLA_FL_SIZE_MASK_X540	(0x7 << IXGBE_FLA_FL_SIZE_SHIFT_X540)
+#define IXGBE_FLA_FL_SIZE_MASK_X550	(0x7 << IXGBE_FLA_FL_SIZE_SHIFT_X550)
 
 #define IXGBE_EEMNGCTL	0x10110
 #define IXGBE_EEMNGDATA	0x10114
@@ -1448,6 +1452,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_BARCTRL_FLSIZE		0x0700
 #define IXGBE_BARCTRL_FLSIZE_SHIFT	8
 #define IXGBE_BARCTRL_CSRSIZE		0x2000
+#define IXGBE_BARCTRL_CSRSIZE_SHIFT	13
 
 /* RSCCTL Bit Masks */
 #define IXGBE_RSCCTL_RSCEN	0x01
