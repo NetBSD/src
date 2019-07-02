@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.274 2019/07/02 15:46:06 sevan Exp $
+$NetBSD: acronyms.comp,v 1.275 2019/07/02 15:53:50 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -441,11 +441,14 @@ DSN	delivery status notification
 DSO	dynamic shared object
 DSP	digital signal processor
 DSSS	direct sequence spread spectrum
+DTB	device tree blob
+DTC	device tree compiler
 DTD	document type definition
 DTE	data terminal equipment
 DTE	dumb terminal emulator
 DTL	diode-transistor logic
 DTLS	datagram transport layer security
+DTS	device tree source
 DTS	digital thermal sensor
 DUT	device under test
 DVB	digital video broadcasting
