@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.2 2018/09/20 09:02:46 jmcneill Exp $ */
+/* $NetBSD: rkpmic.c,v 1.3 2019/07/03 10:21:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.2 2018/09/20 09:02:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.3 2019/07/03 10:21:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,31 +123,31 @@ static const struct rkpmic_ctrl rk808_ctrls[] = {
 	  .vsel_reg = 0x3b,	.vsel_mask = __BITS(4,0),
 	  .base = 1800000,	.step = 100000 },
 	{ .name = "LDO_REG2",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(1),
 	  .vsel_reg = 0x3d,	.vsel_mask = __BITS(4,0),
 	  .base = 1800000,	.step = 100000 },
 	{ .name = "LDO_REG3",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(2),
 	  .vsel_reg = 0x3f,	.vsel_mask = __BITS(3,0),
 	  .base = 800000,	.step = 100000 },
 	{ .name = "LDO_REG4",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(3),
 	  .vsel_reg = 0x41,	.vsel_mask = __BITS(4,0),
 	  .base = 1800000,	.step = 100000 },
 	{ .name = "LDO_REG5",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(4),
 	  .vsel_reg = 0x43,	.vsel_mask = __BITS(4,0),
 	  .base = 1800000,	.step = 100000 },
 	{ .name = "LDO_REG6",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(5),
 	  .vsel_reg = 0x45,	.vsel_mask = __BITS(4,0),
 	  .base = 800000,	.step = 100000 },
 	{ .name = "LDO_REG7",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(6),
 	  .vsel_reg = 0x47,	.vsel_mask = __BITS(4,0),
 	  .base = 800000,	.step = 100000 },
 	{ .name = "LDO_REG8",
-	  .enable_reg = 0x24,	.enable_mask = __BIT(0),
+	  .enable_reg = 0x24,	.enable_mask = __BIT(7),
 	  .vsel_reg = 0x49,	.vsel_mask = __BITS(4,0),
 	  .base = 1800000,	.step = 100000 },
 
