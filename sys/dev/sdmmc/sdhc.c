@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.102 2019/03/13 12:16:49 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.103 2019/07/03 23:10:08 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.102 2019/03/13 12:16:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.103 2019/07/03 23:10:08 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1460,7 +1460,7 @@ sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
 		aprint_error_dev(hp->sc->sc_dev,
 		    "tuning did not complete, using fixed sampling clock\n");
-		return EIO;		/* tuning did not complete */
+		return 0;		/* tuning did not complete */
 	}
 
 	if ((HREAD2(hp, SDHC_HOST_CTL2) & SDHC_SAMPLING_CLOCK_SEL) == 0) {
@@ -1469,7 +1469,7 @@ sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
 		aprint_error_dev(hp->sc->sc_dev,
 		    "tuning failed, using fixed sampling clock\n");
-		return EIO;		/* tuning failed */
+		return 0;		/* tuning failed */
 	}
 
 	if (hp->tuning_timer_count) {
