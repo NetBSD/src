@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.32 2019/05/30 21:40:40 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.33 2019/07/03 17:24:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -112,9 +112,24 @@ void	x86_patch(bool);
 
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
-/* x86_cpuid2() writes four 32bit values, %eax, %ebx, %ecx and %edx */
-#define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
-void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
+
+static inline void
+x86_cpuid2(uint32_t eax, uint32_t ecx, uint32_t *regs)
+{
+	uint32_t ebx, edx;
+
+	__asm volatile (
+		"cpuid"
+		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		: "a" (eax), "c" (ecx)
+	);
+
+	regs[0] = eax;
+	regs[1] = ebx;
+	regs[2] = ecx;
+	regs[3] = edx;
+}
+#define x86_cpuid(a,b)	x86_cpuid2((a), 0, (b))
 
 /* -------------------------------------------------------------------------- */
 
@@ -176,6 +191,7 @@ void	setusergs(int);
 			"mov	%[val],%%cr" #crnum	\
 			:				\
 			: [val] "r" (val)		\
+			: "memory"			\
 		);					\
 	}						\
 	static inline register_t rcr##crnum(void)	\
@@ -325,13 +341,13 @@ void x86_enable_intr(void);
 static inline void
 x86_disable_intr(void)
 {
-	__asm volatile ("cli");
+	__asm volatile ("cli" ::: "memory");
 }
 
 static inline void
 x86_enable_intr(void)
 {
-	__asm volatile ("sti");
+	__asm volatile ("sti" ::: "memory");
 }
 #endif /* XENPV */
 
