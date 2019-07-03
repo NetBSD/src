@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2019/07/02 16:23:47 mlelstv Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2019/07/03 07:05:27 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2019/07/02 16:23:47 mlelstv Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2019/07/03 07:05:27 mlelstv Exp $");
 #endif
 #endif	/* not lint */
 
@@ -480,7 +480,9 @@ main(int argc, char *argv[])
 #endif
 		DELETE
 	} op = UNSPEC, old_op;
+#if !defined(NATIVELABEL_ONLY)
 	unsigned long val;
+#endif
 
 #ifndef HAVE_NBTOOL_CONFIG_H
 #if !defined(NATIVELABEL_ONLY)
@@ -508,7 +510,11 @@ main(int argc, char *argv[])
 #endif
 
 	error = 0;
+#if !defined(NATIVELABEL_ONLY)
 	while ((ch = getopt(argc, argv, "AB:CDFIL:M:NO:P:RWef:ilmnrtvw")) != -1) {
+#else
+	while ((ch = getopt(argc, argv, "ACDFINRWef:ilrtvw")) != -1) {
+#endif
 		old_op = op;
 		switch (ch) {
 		case 'A':	/* Action all labels */
@@ -550,6 +556,7 @@ main(int argc, char *argv[])
 		case 'N':	/* Disallow writes to label sector */
 			op = SETREADONLY;
 			break;
+#if !defined(NATIVELABEL_ONLY)
 		case 'L':	/* Label sector */
 			val = strtoul(optarg, NULL, 10);
 			if ((val == ULONG_MAX && errno == ERANGE) || val > UINT_MAX)
@@ -568,6 +575,7 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "invalid max partitions: %s", optarg);
 			maxpartitions = val;
 			break;
+#endif
 		case 'W':	/* Allow writes to label sector */
 			op = SETWRITABLE;
 			break;
@@ -586,12 +594,14 @@ main(int argc, char *argv[])
 		case 'l':	/* List all known file system types and exit */
 			lflag = 1;
 			break;
+#if !defined(NATIVELABEL_ONLY)
 		case 'm':	/* Expect disk to have an MBR */
 			labelusesmbr = 1;
 			break;
 		case 'n':	/* Expect disk to not have an MBR */
 			labelusesmbr = 0;
 			break;
+#endif
 		case 'r':	/* Read/write label directly from disk */
 			rflag = 1;
 			break;
