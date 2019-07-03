@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.172 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.172 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1013,6 +1013,7 @@ sunos_sys_reboot(struct lwp *l, const struct sunos_sys_reboot_args *uap, registe
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 	char *bootstr;
+	char bs[128];
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_REBOOT,
 	    0, NULL, NULL, NULL)) != 0)
@@ -1036,8 +1037,6 @@ sunos_sys_reboot(struct lwp *l, const struct sunos_sys_reboot_args *uap, registe
 	 * next booted kernel.
 	 */
 	if (sun_howto & SUNOS_RB_STRING) {
-		char bs[128];
-
 		error = copyinstr(SCARG(uap, bootstr), bs, sizeof(bs), 0);
 
 		if (error)
