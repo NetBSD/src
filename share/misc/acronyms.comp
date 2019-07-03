@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.276 2019/07/02 16:10:15 sevan Exp $
+$NetBSD: acronyms.comp,v 1.277 2019/07/03 20:26:16 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -641,6 +641,7 @@ HDMI	High-Definition Multimedia Interface
 HDTV	high-definition television
 HECI	host embedded controller interface
 HEST	hardware error source table
+HEVC	high efficiency video coding
 HF	high frequency
 HFM	highest frequency mode
 HFS	hierarchical file system
@@ -685,6 +686,7 @@ ICT	information and communications technology
 ICW	initialization command word
 IDA	Intel dynamic acceleration
 IDCMP	Intuition direct communication message port
+IDCT	inverse discrete cosine transform
 IDE	integrated development environment
 IDE	integrated drive electronics
 IDPS	intrusion detection [and] prevention system
@@ -1650,6 +1652,7 @@ VCM	virtual channel memory
 VCO	voltage-controlled oscillator
 VCP	virtual chassis port
 VCS	version control system
+VDPAU	Video Decode and Presentation API for Unix
 VES	virtual execution system
 VESA	Video Electronics Standards Association
 VFO	variable-frequency oscillator
@@ -1662,6 +1665,7 @@ VIM	Vi IMproved
 VIPT	virtually indexed, physically tagged
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
+VLD	variable-length decoding
 VLIW	very long instruction word
 VLSI	very large scale integration
 VLSM	variable length subnet mask
