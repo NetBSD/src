@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1633 2019/07/03 12:38:28 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1634 2019/07/03 15:52:35 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1398,13 +1398,14 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2019a / tzdata2019a
-Current Vers:	tzcode2019a / tzdata2019a
+Version:	tzcode2019b / tzdata2019a
+Current Vers:	tzcode2019b / tzdata2019b
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
+Date:		2019-07-03
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
