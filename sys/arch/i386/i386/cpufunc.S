@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.32 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.33 2019/07/03 17:24:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.32 2019/05/19 08:17:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.33 2019/07/03 17:24:37 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -243,22 +243,6 @@ ENTRY(x86_mwait)
 	leave
 	ret
 END(x86_mwait)  
-
-ENTRY(x86_cpuid2)
-	pushl	%ebx
-	pushl	%edi
-	movl	12(%esp), %eax
-	movl	16(%esp), %ecx
-	movl	20(%esp), %edi
-	cpuid
-	movl	%eax, 0(%edi)
-	movl	%ebx, 4(%edi)
-	movl	%ecx, 8(%edi)
-	movl	%edx, 12(%edi)
-	popl	%edi
-	popl	%ebx
-	ret
-END(x86_cpuid2)
 
 ENTRY(fnsave)
 	movl	4(%esp), %eax

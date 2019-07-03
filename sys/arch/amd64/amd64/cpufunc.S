@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.41 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.42 2019/07/03 17:24:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -357,20 +357,6 @@ ENTRY(x86_mwait)
 	leave
 	ret
 END(x86_mwait)
-
-ENTRY(x86_cpuid2)
-	movq	%rbx, %r8
-	movq	%rdi, %rax
-	movq	%rsi, %rcx
-	movq	%rdx, %rsi
-	cpuid
-	movl	%eax, 0(%rsi)
-	movl	%ebx, 4(%rsi)
-	movl	%ecx, 8(%rsi)
-	movl	%edx, 12(%rsi)
-	movq	%r8, %rbx
-	ret
-END(x86_cpuid2)
 
 ENTRY(fnsave)
 	fnsave	(%rdi)
