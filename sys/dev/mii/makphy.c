@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.59 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.59 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,11 @@ page0:
 	switch (model) {
 	case MII_MODEL_xxMARVELL_E1011:
 	case MII_MODEL_xxMARVELL_E1112:
-		PHY_READ(sc, MAKPHY_ESSR, &reg);
+		if (PHY_READ(sc, MAKPHY_ESSR, &reg) != 0) {
+			aprint_verbose_dev(self,
+			    "Failed to read MAKPHY_ESSR\n");
+			break;
+		}
 		if (reg & ESSR_FIBER_LINK)
 			sc->mii_flags |= MIIF_HAVEFIBER;
 		break;
