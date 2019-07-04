@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.117 2019/07/02 07:20:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.118 2019/07/04 09:02:24 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2730,7 +2730,7 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change, rc = 0;
+	int change, rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
@@ -2738,15 +2738,18 @@ ixv_ifflags_cb(struct ethercom *ec)
 	if (change != 0)
 		adapter->if_flags = ifp->if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
-		rc = ENETRESET;
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		rv = ENETRESET;
+		goto out;
+	}
 
 	/* Set up VLAN support and filter */
 	ixv_setup_vlan_support(adapter);
 
+out:
 	IXGBE_CORE_UNLOCK(adapter);
 
-	return rc;
+	return rv;
 }
 
 
