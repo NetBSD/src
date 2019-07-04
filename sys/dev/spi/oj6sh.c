@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.2 2015/12/14 10:31:38 hkenken Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.3 2019/07/04 11:13:26 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.2 2015/12/14 10:31:38 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.3 2019/07/04 11:13:26 hkenken Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -205,13 +205,7 @@ static void
 oj6sh_poll(void *arg)
 {
 	struct oj6sh_softc *sc = (struct oj6sh_softc *)arg;
-
 	workqueue_enqueue(sc->sc_wq, &sc->sc_wk, NULL);
-
-	if (sc->sc_enabled)
-		callout_reset(&sc->sc_c, POLLRATE, oj6sh_poll, sc);
-
-	return;
 }
 
 static void
@@ -254,6 +248,9 @@ oj6sh_cb(struct work *wk, void *arg)
 	splx(s);
 out:
 	mutex_exit(&sc->sc_lock);
+
+	if (sc->sc_enabled)
+		callout_reset(&sc->sc_c, POLLRATE, oj6sh_poll, sc);
 }
 
 static uint8_t
