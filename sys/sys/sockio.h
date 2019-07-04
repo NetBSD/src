@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.37 2019/05/17 07:37:12 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.38 2019/07/04 02:44:25 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -142,6 +142,9 @@
 #define	SIOCGETHERCAP	_IOWR('i', 139, struct eccapreq) /* get ethercap */
 #define SIOCGIFINDEX  _IOWR('i', 140, struct ifreq)   /* get ifnet index */
 #define	SIOCSETHERCAP    _IOW('i', 141, struct eccapreq) /* set ethercap */
+
+#define SIOCSIFDESCR	_IOW('i', 142, struct ifreq)	/* set interface description */
+#define SIOCGIFDESCR	_IOWR('i', 143, struct ifreq)	/* get interface description */
 
 #define SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
 #define SIOCSUMBPARAM	_IOW('i', 191, struct ifreq)	/* set MBIM param */

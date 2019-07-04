@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.455 2019/05/21 09:18:37 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.456 2019/07/04 02:44:25 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.455 2019/05/21 09:18:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.456 2019/07/04 02:44:25 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3050,6 +3050,58 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 #endif
 		return ENETRESET;
+	case SIOCSIFDESCR:
+		{
+			char *descrbuf;
+
+ 			ifr = data;
+
+ 			if (ifr->ifr_buflen > IFDESCRSIZE)
+				return ENAMETOOLONG;
+
+ 			if (ifr->ifr_buf == NULL || ifr->ifr_buflen == 0) {
+				/* unset description */
+				descrbuf = NULL;
+			} else {
+				int error;
+
+ 				descrbuf = kmem_zalloc(IFDESCRSIZE, KM_SLEEP);
+				/* copy (IFDESCRSIZE - 1) bytes to ensure terminating nul */
+				error = copyin(ifr->ifr_buf, descrbuf, IFDESCRSIZE - 1);
+				if (error) {
+					kmem_free(descrbuf, IFDESCRSIZE);
+					return error;
+				}
+			}
+
+ 			if (ifp->if_description != NULL)
+				kmem_free(ifp->if_description, IFDESCRSIZE);
+
+ 			ifp->if_description = descrbuf;
+		}
+		break;
+
+ 	case SIOCGIFDESCR:
+		{
+			char *descr;
+
+ 			ifr = data;
+			descr = ifp->if_description;
+
+ 			if (descr == NULL)
+				return ENOMSG;
+
+ 			if (ifr->ifr_buflen < IFDESCRSIZE)
+				return EINVAL;
+			else {
+				int error;
+				error = copyout(descr, ifr->ifr_buf, IFDESCRSIZE);
+				if (error)
+					return error;
+			}
+		}
+ 		break;
+
 	default:
 		return ENOTTY;
 	}
