@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.277 2019/07/03 20:26:16 sevan Exp $
+$NetBSD: acronyms.comp,v 1.278 2019/07/04 15:31:37 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -23,12 +23,14 @@ ACU	automatic calling unit
 ADB	Apple desktop bus
 ADC	analog [to] digital converter
 ADD	acronym driven development
+ADDDC	adaptive double DRAM device correction
 ADO	active data objects
 ADP	automatic data processing
 ADPCM	adaptive differential pulse code modulation
 ADS	alternate data stream
 ADSL	asymmetric digital subscriber line
 ADT	abstract data type
+AEDC	advanced error detection and correction
 AER	advanced error reporting
 AES	Advanced Encryption Standard
 AFP	Apple Filing Protocol
@@ -673,6 +675,7 @@ IAAS	infrastructure as a service
 IANA	Internet Assigned Numbers Authority
 IBC	iterated block cipher
 IBM	International Business Machines
+IBPI	international blinking pattern interpretation
 IBS	instruction based sampling
 IBSS	independent basic service set
 IC	integrated circuit
@@ -837,6 +840,7 @@ LLF	low level format
 LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
 LM	long mode
+LMCE	local machine check exception
 LMI	local management interface
 LMM	link management mode
 LMP	link management protocol
@@ -1188,6 +1192,7 @@ POE	power over ethernet
 POF	probability of failure
 POP	Post Office Protocol
 POP	power on password
+POR	plan of record
 POSIX	Portable Operating System Interface [for Unix]
 POST	power on self test
 POTS	plain old telephone system
@@ -1202,6 +1207,7 @@ PPM	pages per minute
 PPP	Point-to-Point Protocol
 PPPOA	Point-to-Point Protocol over ATM
 PPPOE	Point-to-Point Protocol over Ethernet
+PPR	processor programming reference
 PPU	physics processing unit
 PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
@@ -1342,6 +1348,7 @@ SAAS	software as a service
 SABRE	Semi-automated business research environment
 SACD	super audio compact disc
 SAD	security association database
+SAF-TE	SCSI accessed fault-tolerant enclosure
 SAGE	Semi-automated ground environment
 SAL	{service,system} abstraction layer
 SAM	serial access memory
@@ -1376,6 +1383,7 @@ SCP	system control processor
 SCPI	system control and power interface
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
+SDDC	software defined data center
 SDEI	software delegated exception interface
 SDI	symbol deinterleave
 SDK	software development kit
@@ -1483,6 +1491,7 @@ SS	stack segment
 SSA	static single assignment
 SSAP	source service access point
 SSB	single-sideband modulation
+SSC	spread spectrum clock
 SSD	solid state drive
 SSE	streaming SIMD extensions
 SSFDC	solid state floppy disc card
@@ -1701,6 +1710,7 @@ WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
 WFQ	weighted fair queuing
 WH	write hit
+WHEA	Windows hardware error architecture
 WIFI	wireless fidelity
 WLAN	wireless local area network
 WM	write miss
