@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.53 2019/06/27 05:55:40 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.54 2019/07/04 08:56:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -233,7 +233,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		i = (cpu_index(curcpu()) % ncpu) % adapter->num_queues;
 
 	/* Check for a hung queue and pick alternative */
-	if (((1 << i) & adapter->active_queues) == 0)
+	if (((1ULL << i) & adapter->active_queues) == 0)
 		i = ffs64(adapter->active_queues);
 
 	txr = &adapter->tx_rings[i];
