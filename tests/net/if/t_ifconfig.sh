@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.19 2019/05/13 17:55:08 bad Exp $
+# $NetBSD: t_ifconfig.sh,v 1.20 2019/07/04 02:46:40 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -478,6 +478,40 @@ ifconfig_number_cleanup()
 	cleanup
 }
 
+atf_test_case ifconfig_description cleanup
+ifconfig_description_head()
+{
+	atf_set "descr" "tests of setting and unsetting interface description"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_description_body()
+{
+
+	rump_server_start $RUMP_SERVER1
+
+	export RUMP_SERVER=$RUMP_SERVER1
+	for descr in description descr; do
+		atf_check -s exit:0 rump.ifconfig lo0 $descr DESCRIPTION-TEST
+		atf_check -s exit:0 -o match:"DESCRIPTION-TEST" rump.ifconfig lo0
+		atf_check -s exit:0 rump.ifconfig lo0 $descr DESCRIPTION-TEST-MODIFIED
+		atf_check -s exit:0 -o match:"DESCRIPTION-TEST-MODIFIED" rump.ifconfig lo0
+		atf_check -s exit:0 rump.ifconfig lo0 -$descr
+		atf_check -s exit:0 -o not-match:'DESCRIPTION-TEST-MODIFIED' rump.ifconfig lo0
+
+		atf_check -s exit:0 rump.ifconfig lo0 $descr `printf "%063d" 0`	
+		atf_check -s not-exit:0 -e match:"description too long" rump.ifconfig lo0 $descr `printf "%064d" 0`
+		atf_check -s exit:0 rump.ifconfig lo0 $descr ""
+	done
+}
+
+ifconfig_description_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -487,4 +521,5 @@ atf_init_test_cases()
 	atf_add_test_case ifconfig_up_down_ipv4
 	atf_add_test_case ifconfig_up_down_ipv6
 	atf_add_test_case ifconfig_number
+	atf_add_test_case ifconfig_description
 }
