@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1376 2019/07/02 07:52:58 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1377 2019/07/05 06:19:24 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4801,8 +4801,11 @@ product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
 product INTEL COFLK_IGD_4	0x3e93	UHD Graphics 610
 product INTEL XEONE_IGD		0x3e96	UHD Graphics P630
 product INTEL COFLK_IGD_5	0x3e9b	UHD Graphics 630
+product INTEL WHISKYLK_IGD_1	0x3ea0	UHD Graphics 620
+product INTEL WHISKYLK_IGD_2	0x3ea1	UHD Graphics 610
 product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
 product INTEL XEONE_S_D_HOST_DRAM_6C 0x3ec2 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL CORE8G_H_H_HOST_DRAM_6C 0x3ec4 Core 8G (H, Halo) Host Bridge, DRAM
 product INTEL XEONE_S_W_HOST_DRAM_6C 0x3ec6 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL XEONE_S_S_HOST_DRAM_6C 0x3eca Xeon E (S, Server) Host Bridge, DRAM
 product INTEL XEONE_U_HOST_DRAM_2C 0x3ecc Xeon E (U) Host Bridge, DRAM
