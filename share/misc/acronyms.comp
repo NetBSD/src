@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.278 2019/07/04 15:31:37 sevan Exp $
+$NetBSD: acronyms.comp,v 1.279 2019/07/05 15:33:07 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1399,6 +1399,7 @@ SEA	synchronous external abort
 SEGV	segmentation violation
 SED	self-encrypting drive
 SED	stream editor
+SEMB	serial ATA enclosure management bridge
 SEO	search engine optimization
 SES	SCSI enclosure services
 SFC	sequential function chart
@@ -1408,6 +1409,7 @@ SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
 SGMII	serial gigabit media independent interface
+SGPIO	serial general purpose input/output
 SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
 SIDH	supersingular isogeny Diffie-Hellman
