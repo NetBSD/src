@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.42 2019/07/03 17:24:37 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.43 2019/07/05 17:08:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -363,21 +363,6 @@ ENTRY(fnsave)
 	ret
 END(fnsave)
 
-ENTRY(fnstcw)
-	fnstcw	(%rdi)
-	ret
-END(fnstcw)
-
-ENTRY(fngetsw)
-	fnstsw	%ax
-	ret
-END(fngetsw)
-
-ENTRY(fnstsw)
-	fnstsw	(%rdi)
-	ret
-END(fnstsw)
-
 ENTRY(frstor)
 	frstor	(%rdi)
 	ret
@@ -429,16 +414,6 @@ ENTRY(xrstor)
 	xrstor	(%rdi)
 	ret
 END(xrstor)
-
-ENTRY(x86_stmxcsr)
-	stmxcsr	(%rdi)
-	ret
-END(x86_stmxcsr)
-
-ENTRY(x86_ldmxcsr)
-	ldmxcsr	(%rdi)
-	ret
-END(x86_ldmxcsr)
 
 ENTRY(inb)
 	movq	%rdi, %rdx
