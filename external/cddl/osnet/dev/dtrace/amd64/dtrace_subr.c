@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.12 2019/01/12 10:41:31 hannken Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.13 2019/07/05 08:29:18 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -115,7 +115,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
-	(*func)(0, VM_MIN_KERNEL_ADDRESS);
+	(*func)(0, VM_MIN_KERNEL_ADDRESS_DEFAULT);
 }
 
 static void
