@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.477 2019/06/27 19:56:10 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.478 2019/07/05 17:14:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.477 2019/06/27 19:56:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.478 2019/07/05 17:14:48 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2074,6 +2074,7 @@ spawn_return(void *arg)
 	/* handle posix_spawnattr */
 	if (spawn_data->sed_attrs != NULL) {
 		struct sigaction sigact;
+		memset(&sigact, 0, sizeof(sigact));
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
 
