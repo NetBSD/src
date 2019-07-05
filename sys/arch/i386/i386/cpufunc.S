@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.33 2019/07/03 17:24:37 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.33 2019/07/03 17:24:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -250,23 +250,6 @@ ENTRY(fnsave)
 	ret
 END(fnsave)
 
-ENTRY(fnstcw)
-	movl	4(%esp), %eax
-	fnstcw	(%eax)
-	ret
-END(fnstcw)
-
-ENTRY(fngetsw)
-	fnstsw	%ax
-	ret
-END(fngetsw)
-
-ENTRY(fnstsw)
-	movl	4(%esp), %eax
-	fnstsw	(%eax)
-	ret
-END(fnstsw)
-
 ENTRY(frstor)
 	movl	4(%esp), %eax
 	frstor	(%eax)
@@ -318,18 +301,6 @@ ENTRY(xrstor)
 	xrstor	(%ecx)
 	ret
 END(xrstor)
-
-ENTRY(x86_stmxcsr)
-	movl	4(%esp), %eax
-	stmxcsr	(%eax)
-	ret
-END(x86_stmxcsr)
-
-ENTRY(x86_ldmxcsr)
-	movl	4(%esp), %eax
-	ldmxcsr	(%eax)
-	ret
-END(x86_ldmxcsr)
 
 ENTRY(fldummy)
 	ffree	%st(7)
