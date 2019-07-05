@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.54 2019/06/26 12:30:13 mgorny Exp $	*/
+/*	$NetBSD: fpu.c,v 1.55 2019/07/05 17:08:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.54 2019/06/26 12:30:13 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.55 2019/07/05 17:08:56 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -188,6 +188,8 @@ fpuinit_mxcsr_mask(void)
 static inline void
 fpu_errata_amd(void)
 {
+	uint16_t sw;
+
 	/*
 	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
 	 * when FSW.ES=0, leaking other threads' execution history.
@@ -203,7 +205,8 @@ fpu_errata_amd(void)
 	 * which indicates that FIP/FDP/FOP are restored (same behavior
 	 * as Intel). We're not using it though.
 	 */
-	if (fngetsw() & 0x80)
+	fnstsw(&sw);
+	if (sw & 0x80)
 		fnclex();
 	fldummy();
 }

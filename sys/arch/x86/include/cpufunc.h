@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.33 2019/07/03 17:24:37 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.34 2019/07/05 17:08:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -280,11 +280,25 @@ fnclex(void)
 	__asm volatile ("fnclex");
 }
 
-void	fnsave(union savefpu *);
-void	fnstcw(uint16_t *);
-uint16_t fngetsw(void);
-void	fnstsw(uint16_t *);
-void	frstor(const union savefpu *);
+static inline void
+fnstcw(uint16_t *val)
+{
+	__asm volatile (
+		"fnstcw	%[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
+
+static inline void
+fnstsw(uint16_t *val)
+{
+	__asm volatile (
+		"fnstsw	%[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
 
 static inline void
 clts(void)
@@ -293,11 +307,27 @@ clts(void)
 }
 
 void	stts(void);
-void	fxsave(union savefpu *);
-void	fxrstor(const union savefpu *);
 
-void	x86_ldmxcsr(const uint32_t *);
-void	x86_stmxcsr(uint32_t *);
+static inline void
+x86_stmxcsr(uint32_t *val)
+{
+	__asm volatile (
+		"stmxcsr %[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
+
+static inline void
+x86_ldmxcsr(uint32_t *val)
+{
+	__asm volatile (
+		"ldmxcsr %[val]"
+		:
+		: [val] "m" (*val)
+	);
+}
+
 void	fldummy(void);
 
 static inline uint64_t
@@ -328,9 +358,15 @@ wrxcr(uint32_t xcr, uint64_t val)
 	);
 }
 
-void	xrstor(const union savefpu *, uint64_t);
+void	fnsave(union savefpu *);
+void	frstor(const union savefpu *);
+
+void	fxsave(union savefpu *);
+void	fxrstor(const union savefpu *);
+
 void	xsave(union savefpu *, uint64_t);
 void	xsaveopt(union savefpu *, uint64_t);
+void	xrstor(const union savefpu *, uint64_t);
 
 /* -------------------------------------------------------------------------- */
 
