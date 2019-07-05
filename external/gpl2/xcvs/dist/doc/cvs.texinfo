@@ -8338,6 +8338,12 @@ When running a CVS client, @samp{-T} affects only the local process;
 specifying @samp{-T} for the client has no effect on the server and
 vice versa.
 
+@cindex CVS directory, overriding
+@cindex Overriding CVS directory
+@item -D @var{cvs_directory}
+Use @var{cvs_directory} as the location of the CVS internal files, instead
+of the default @file{CVS}.
+
 @cindex CVSROOT, overriding
 @cindex Overriding CVSROOT
 @item -d @var{cvs_root_directory}
