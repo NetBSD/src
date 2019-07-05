@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.49 2019/06/02 08:55:00 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.49 2019/06/02 08:55:00 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,7 +1154,7 @@ pms_synaptics_input(void *vsc, int data)
 
 	getmicrouptime(&psc->current);
 
-	if (psc->inputstate > 0) {
+	if (psc->inputstate != 0) {
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
 			aprint_debug_dev(psc->sc_dev,
@@ -1173,14 +1173,23 @@ pms_synaptics_input(void *vsc, int data)
 	psc->last = psc->current;
 
 	switch (psc->inputstate) {
+	case -5:
+	case -4:
+	case -3:
+	case -2:
+	case -1:
 	case 0:
 		if ((data & 0xc8) != 0x80) {
 			aprint_debug_dev(psc->sc_dev,
 			    "pms_input: 0x%02x out of sync\n", data);
+			/* use negative counts to limit resync phase */
+			psc->inputstate--;
 			return;	/* not in sync yet, discard input */
 		}
+		psc->inputstate = 0;
 		/*FALLTHROUGH*/
 
+	case -6:
 	case 3:
 		if ((data & 8) == 8) {
 			aprint_debug_dev(psc->sc_dev,
