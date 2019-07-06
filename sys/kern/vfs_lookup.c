@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.210 2019/03/17 10:14:52 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.211 2019/07/06 14:27:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.210 2019/03/17 10:14:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.211 2019/07/06 14:27:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -678,6 +678,7 @@ namei_start(struct namei_state *state, int isnfsd,
 	 * POSIX.1 requirement: "" is not a valid file name.
 	 */
 	if (ndp->ni_pathlen == 1) {
+		ndp->ni_erootdir = NULL;
 		return ENOENT;
 	}
 
