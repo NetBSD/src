@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.532 2019/06/21 14:58:32 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.533 2019/07/06 14:37:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.532 2019/06/21 14:58:32 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.533 2019/07/06 14:37:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3913,21 +3913,21 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		struct timeval tv[2];
 
 		if (seg != UIO_SYSSPACE) {
-			error = copyin(tptr, tv, sizeof (tv));
+			error = copyin(tptr, tv, sizeof(tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
 		}
 
-		if ((tv[0].tv_usec == UTIME_NOW) || 
-		    (tv[0].tv_usec == UTIME_OMIT))
-			ts[0].tv_nsec = tv[0].tv_usec;
+		if ((tptr[0].tv_usec == UTIME_NOW) || 
+		    (tptr[0].tv_usec == UTIME_OMIT))
+			ts[0].tv_nsec = tptr[0].tv_usec;
 		else
 			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
 
-		if ((tv[1].tv_usec == UTIME_NOW) || 
-		    (tv[1].tv_usec == UTIME_OMIT))
-			ts[1].tv_nsec = tv[1].tv_usec;
+		if ((tptr[1].tv_usec == UTIME_NOW) || 
+		    (tptr[1].tv_usec == UTIME_OMIT))
+			ts[1].tv_nsec = tptr[1].tv_usec;
 		else
 			TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 
