@@ -8428,6 +8428,12 @@ Trace program execution; display messages showing the steps of
 @sc{cvs} activity.  Particularly useful with @samp{-n} to explore the
 potential impact of an unfamiliar command.
 
+@item -u
+Do not take internal locks (for transactional integrity) during read
+and write operations. (Note this is unrelated to releasing reserved
+checkouts, as accomplished with the @code{cvs admin -u} command,
+@pxref{admin options}.)
+
 @item -v
 @item --version
 Display version and copyright information for @sc{cvs}.
