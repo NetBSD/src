@@ -410,6 +410,14 @@ Trace program execution; display messages showing the steps of
 potential impact of an unfamiliar command.
 .SP
 .IP "" 0
+\fB-u\fR
+.IP "" 2
+Do not take internal locks (for transactional integrity) during read
+and write operations. (Note this is unrelated to releasing reserved
+checkouts, as accomplished with the \fBcvs admin -u\fR command,
+see node `admin options\(aq in the CVS manual.)
+.SP
+.IP "" 0
 \fB-v\fR
 .IP "" 2
 .IP "" 0
