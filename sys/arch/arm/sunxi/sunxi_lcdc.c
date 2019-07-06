@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.5 2019/02/18 02:42:27 jakllsch Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.6 2019/07/06 00:23:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.5 2019/02/18 02:42:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.6 2019/07/06 00:23:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -219,10 +219,8 @@ sunxi_lcdc_tcon0_commit(struct drm_encoder *encoder)
 	const u_int hbp = mode->htotal - mode->hsync_start;
 	const u_int vspw = mode->vsync_end - mode->vsync_start;
 	const u_int vbp = mode->vtotal - mode->vsync_start;
-	const u_int vblank_len =
-	    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
-	const u_int start_delay =
-	    vblank_len >= 32 ? 30 : vblank_len - 2;
+	const u_int vblank_len = (mode->vtotal - mode->vdisplay) >> interlace_p;
+	const u_int start_delay = uimin(vblank_len, 30);
 
 	val = TCON0_CTL_TCON0_EN |
 	      __SHIFTIN(start_delay, TCON0_CTL_START_DELAY);
