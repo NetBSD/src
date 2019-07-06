@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.2 2017/06/06 00:26:59 jmcneill Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.3 2019/07/06 15:53:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.2 2017/06/06 00:26:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.3 2019/07/06 15:53:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -262,9 +262,15 @@ plfb_init(struct plfb_softc *sc)
 	struct display_timing timing;
 
 	if (plfb_get_panel_timing(sc, &timing) != 0) {
-		aprint_error_dev(sc->sc_gen.sc_dev,
-		    "couldn't get panel timings\n");
-		return;
+		/* No timings specified in DT, assume 800x600 */
+		timing.hactive = 800;
+		timing.hback_porch = 128;
+		timing.hfront_porch = 24;
+		timing.hsync_len = 72;
+		timing.vactive = 600;
+		timing.vback_porch = 22;
+		timing.vfront_porch = 1;
+		timing.vsync_len = 2;
 	}
 
 	prop_dictionary_set_uint32(dict, "width", timing.hactive);
