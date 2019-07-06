@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.22 2019/06/26 07:47:25 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.23 2019/07/06 12:58:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.22 2019/06/26 07:47:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.23 2019/07/06 12:58:58 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -593,6 +593,7 @@ static int audio_mixer_init(struct audio_softc *, int,
 static void audio_mixer_destroy(struct audio_softc *, audio_trackmixer_t *);
 static void audio_pmixer_start(struct audio_softc *, bool);
 static void audio_pmixer_process(struct audio_softc *);
+static void audio_pmixer_agc(audio_trackmixer_t *, int);
 static int  audio_pmixer_mix_track(audio_trackmixer_t *, audio_track_t *, int);
 static void audio_pmixer_output(struct audio_softc *);
 static int  audio_pmixer_halt(struct audio_softc *);
@@ -2155,6 +2156,7 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 		if (sc->sc_popens == 0) {
 			mutex_enter(sc->sc_intr_lock);
 			sc->sc_pmixer->volume = 256;
+			sc->sc_pmixer->voltimer = 0;
 			mutex_exit(sc->sc_intr_lock);
 		}
 	}
@@ -4972,59 +4974,32 @@ audio_pmixer_process(struct audio_softc *sc)
 		memset(mixer->mixsample, 0,
 		    frametobyte(&mixer->mixfmt, frame_count));
 	} else {
-		aint2_t ovf_plus;
-		aint2_t ovf_minus;
-		int vol;
-
-		/* Overflow detection */
-		ovf_plus = AINT_T_MAX;
-		ovf_minus = AINT_T_MIN;
-		m = mixer->mixsample;
-		for (i = 0; i < sample_count; i++) {
-			aint2_t val;
-
-			val = *m++;
-			if (val > ovf_plus)
-				ovf_plus = val;
-			else if (val < ovf_minus)
-				ovf_minus = val;
+		if (mixed > 1) {
+			/* If there are multiple tracks, do auto gain control */
+			audio_pmixer_agc(mixer, sample_count);
 		}
 
-		/* Master Volume Auto Adjust */
-		vol = mixer->volume;
-		if (ovf_plus > (aint2_t)AINT_T_MAX
-		 || ovf_minus < (aint2_t)AINT_T_MIN) {
-			aint2_t ovf;
-			int vol2;
-
-			/* XXX TODO: Check AINT2_T_MIN ? */
-			ovf = ovf_plus;
-			if (ovf < -ovf_minus)
-				ovf = -ovf_minus;
-
-			/* Turn down the volume if overflow occured. */
-			vol2 = (int)((aint2_t)AINT_T_MAX * 256 / ovf);
-			if (vol2 < vol)
-				vol = vol2;
-
-			if (vol < mixer->volume) {
-				/* Turn down gradually to 128. */
-				if (mixer->volume > 128) {
-					mixer->volume =
-					    (mixer->volume * 95) / 100;
-					TRACE(2,
-					    "auto volume adjust: volume %d",
-					    mixer->volume);
-				}
-			}
-		}
-
-		/* Apply Master Volume. */
-		if (vol != 256) {
+		/* Apply master volume */
+		if (mixer->volume < 256) {
 			m = mixer->mixsample;
 			for (i = 0; i < sample_count; i++) {
-				*m = AUDIO_SCALEDOWN(*m * vol, 8);
+				*m = AUDIO_SCALEDOWN(*m * mixer->volume, 8);
 				m++;
+			}
+
+			/*
+			 * Recover the volume gradually at the pace of
+			 * several times per second.  If it's too fast, you
+			 * can recognize that the volume changes up and down
+			 * quickly and it's not so comfortable.
+			 */
+			mixer->voltimer += mixer->blktime_n;
+			if (mixer->voltimer * 4 >= mixer->blktime_d) {
+				mixer->volume++;
+				mixer->voltimer = 0;
+#if defined(AUDIO_DEBUG_AGC)
+				TRACE(1, "volume recover: %d", mixer->volume);
+#endif
 			}
 		}
 	}
@@ -5066,6 +5041,62 @@ audio_pmixer_process(struct audio_softc *sc)
 	    (int)mixer->mixseq,
 	    mixer->hwbuf.head, mixer->hwbuf.used, mixer->hwbuf.capacity,
 	    (mixed == 0) ? " silent" : "");
+}
+
+/*
+ * Do auto gain control.
+ * Must be called sc_intr_lock held.
+ */
+static void
+audio_pmixer_agc(audio_trackmixer_t *mixer, int sample_count)
+{
+	struct audio_softc *sc __unused;
+	aint2_t val;
+	aint2_t maxval;
+	aint2_t minval;
+	aint2_t over_plus;
+	aint2_t over_minus;
+	aint2_t *m;
+	int newvol;
+	int i;
+
+	sc = mixer->sc;
+
+	/* Overflow detection */
+	maxval = AINT_T_MAX;
+	minval = AINT_T_MIN;
+	m = mixer->mixsample;
+	for (i = 0; i < sample_count; i++) {
+		val = *m++;
+		if (val > maxval)
+			maxval = val;
+		else if (val < minval)
+			minval = val;
+	}
+
+	/* Absolute value of overflowed amount */
+	over_plus = maxval - AINT_T_MAX;
+	over_minus = AINT_T_MIN - minval;
+
+	if (over_plus > 0 || over_minus > 0) {
+		if (over_plus > over_minus) {
+			newvol = (int)((aint2_t)AINT_T_MAX * 256 / maxval);
+		} else {
+			newvol = (int)((aint2_t)AINT_T_MIN * 256 / minval);
+		}
+
+		/*
+		 * Change the volume only if new one is smaller.
+		 * Reset the timer even if the volume isn't changed.
+		 */
+		if (newvol <= mixer->volume) {
+			mixer->volume = newvol;
+			mixer->voltimer = 0;
+#if defined(AUDIO_DEBUG_AGC)
+			TRACE(1, "auto volume adjust: %d", mixer->volume);
+#endif
+		}
+	}
 }
 
 /*

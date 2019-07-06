@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.6 2019/06/26 06:57:45 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.7 2019/07/06 12:58:58 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -214,6 +214,11 @@ struct audio_trackmixer {
 	 * Must be protected by sc_intr_lock.
 	 */
 	u_int		volume;
+	/*
+	 * Volume recovery timer in auto gain control.
+	 * Must be protected by sc_intr_lock.
+	 */
+	int		voltimer;
 
 	audio_format2_t	mixfmt;
 	void		*mixsample;	/* mixing buf in double-sized int */
