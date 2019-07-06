@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.231 2019/07/06 05:05:53 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.232 2019/07/06 08:00:19 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.231 2019/07/06 05:05:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.232 2019/07/06 08:00:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -366,7 +366,7 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 		    altidx, curaidx);
 		DPRINTFN(4, "len=%jd type=%jd", d->bLength, d->bDescriptorType,
 		    0, 0);
-		if (d->bLength < USB_INTERFACE_DESCRIPTOR_SIZE)
+		if (d->bLength == 0)
 			break; /* bad descriptor */
 		p += d->bLength;
 		if (p <= end && d->bDescriptorType == UDESC_INTERFACE) {
@@ -402,7 +402,7 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 	curidx = -1;
 	for (p = (char *)d + d->bLength; p < end; ) {
 		e = (usb_endpoint_descriptor_t *)p;
-		if (e->bLength < USB_ENDPOINT_DESCRIPTOR_SIZE)
+		if (e->bLength == 0)
 			break; /* bad descriptor */
 		p += e->bLength;
 		if (p <= end && e->bDescriptorType == UDESC_INTERFACE)
