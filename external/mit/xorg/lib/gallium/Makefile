@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2019/06/19 05:17:05 mrg Exp $
+# $NetBSD: Makefile,v 1.34 2019/07/07 17:50:34 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -103,6 +103,7 @@ BUILD_VDPAU=1
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
+    !empty(MACHINE_ARCH:Maarch64*) || \
     !empty(MACHINE_ARCH:Mmips*) || \
     !empty(MACHINE_ARCH:Mearm*) || \
     !empty(MACHINE_ARCH:Marm*)
