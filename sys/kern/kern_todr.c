@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.39 2015/04/13 16:36:54 riastradh Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.40 2019/07/07 15:12:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.39 2015/04/13 16:36:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.40 2019/07/07 15:12:59 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,6 +112,8 @@ inittodr(time_t base)
 	 */
 	if (todr_handle)
 		todr_handle->base_time = base;
+
+	memset(&tv, 0, sizeof(tv));
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
