@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.42 2019/07/07 11:58:14 skrll Exp $
+#	$NetBSD: GENERIC,v 1.43 2019/07/07 11:58:44 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -202,6 +202,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
+
+options 	MSGBUFSIZE=32768
 
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
