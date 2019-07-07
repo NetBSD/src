@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.23 2019/07/06 12:58:58 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.24 2019/07/07 06:06:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.23 2019/07/06 12:58:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.24 2019/07/07 06:06:46 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2213,9 +2213,15 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	audio_ring_t *input;
 	int error;
 
+	/*
+	 * On half-duplex hardware, O_RDWR is treated as O_WRONLY.
+	 * However read() system call itself can be called because it's
+	 * opened with O_RDWR.  So in this case, deny this read().
+	 */
 	track = file->rtrack;
-	KASSERT(track);
-	TRACET(2, track, "resid=%zd", uio->uio_resid);
+	if (track == NULL) {
+		return EBADF;
+	}
 
 	KASSERT(!mutex_owned(sc->sc_lock));
 
@@ -2223,21 +2229,14 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	if (track->mmapped)
 		return EPERM;
 
+	TRACET(2, track, "resid=%zd", uio->uio_resid);
+
 #ifdef AUDIO_PM_IDLE
 	mutex_enter(sc->sc_lock);
 	if (device_is_active(&sc->sc_dev) || sc->sc_idle)
 		device_active(&sc->sc_dev, DVA_SYSTEM);
 	mutex_exit(sc->sc_lock);
 #endif
-
-	/*
-	 * On half-duplex hardware, O_RDWR is treated as O_WRONLY.
-	 * However read() system call itself can be called because it's
-	 * opened with O_RDWR.  So in this case, deny this read().
-	 */
-	if ((file->mode & AUMODE_RECORD) == 0) {
-		return EBADF;
-	}
 
 	usrbuf = &track->usrbuf;
 	input = track->input;
