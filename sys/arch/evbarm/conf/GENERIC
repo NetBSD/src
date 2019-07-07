@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.41 2019/06/22 07:58:55 skrll Exp $
+#	$NetBSD: GENERIC,v 1.42 2019/07/07 11:58:14 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -557,8 +557,8 @@ tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
 hdmicec*	at hdmicecbus?
 
 # Display
-#tegradrm*	at fdt?			# NVIDIA Tegra Display
-#tegrafb*	at tegrafbbus?
+tegradrm*	at fdt?			# NVIDIA Tegra Display
+tegrafb*	at tegrafbbus?
 genfb*		at fdt?			# Simple Framebuffer
 mesonfb*	at fdt?			# Amlogic Meson Framebuffer
 wsdisplay*	at wsemuldisplaydev?
