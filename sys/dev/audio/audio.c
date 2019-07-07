@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.24 2019/07/07 06:06:46 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.25 2019/07/07 06:14:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.24 2019/07/07 06:06:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.25 2019/07/07 06:14:21 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2213,6 +2213,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	audio_ring_t *input;
 	int error;
 
+	KASSERT(!mutex_owned(sc->sc_lock));
+
 	/*
 	 * On half-duplex hardware, O_RDWR is treated as O_WRONLY.
 	 * However read() system call itself can be called because it's
@@ -2222,8 +2224,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	if (track == NULL) {
 		return EBADF;
 	}
-
-	KASSERT(!mutex_owned(sc->sc_lock));
 
 	/* I think it's better than EINVAL. */
 	if (track->mmapped)
@@ -2340,17 +2340,18 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 	audio_ring_t *outbuf;
 	int error;
 
+	KASSERT(!mutex_owned(sc->sc_lock));
+
 	track = file->ptrack;
 	KASSERT(track);
-	TRACET(2, track, "%sresid=%zd pid=%d.%d ioflag=0x%x",
-	    audiodebug >= 3 ? "begin " : "",
-	    uio->uio_resid, (int)curproc->p_pid, (int)curlwp->l_lid, ioflag);
-
-	KASSERT(!mutex_owned(sc->sc_lock));
 
 	/* I think it's better than EINVAL. */
 	if (track->mmapped)
 		return EPERM;
+
+	TRACET(2, track, "%sresid=%zd pid=%d.%d ioflag=0x%x",
+	    audiodebug >= 3 ? "begin " : "",
+	    uio->uio_resid, (int)curproc->p_pid, (int)curlwp->l_lid, ioflag);
 
 	if (uio->uio_resid == 0) {
 		track->eofcounter++;
