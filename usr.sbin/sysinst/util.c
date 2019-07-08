@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.25 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.26 2019/07/08 19:36:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1351,14 +1351,20 @@ tzm_set_names(menudesc *m, void *arg)
 			if (stat(zoneinfo_dir, &sb) == -1)
 				continue;
 			if (nfiles >= maxfiles) {
-				p = realloc(tz_menu, 2 * maxfiles * sizeof *tz_menu);
+				p = realloc(tz_menu,
+				    2 * maxfiles * sizeof *tz_menu);
 				if (p == NULL)
 					break;
 				tz_menu = p;
-				p = realloc(tz_names, 2 * maxfiles * sizeof *tz_names);
+				memset(tz_menu + maxfiles, 0,
+				    maxfiles * sizeof *tz_menu);
+				p = realloc(tz_names,
+				    2 * maxfiles * sizeof *tz_names);
 				if (p == NULL)
 					break;
 				tz_names = p;
+				memset(tz_names + maxfiles, 0,
+				    maxfiles * sizeof *tz_names);
 				maxfiles *= 2;
 			}
 			if (S_ISREG(sb.st_mode))
