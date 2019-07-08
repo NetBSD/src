@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.4 2019/05/27 23:27:26 jmcneill Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.5 2019/07/08 03:22:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.4 2019/05/27 23:27:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.5 2019/07/08 03:22:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.4 2019/05/27 23:27:26 jmcneill Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/gpio.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_gmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $ */
+/* $NetBSD: cycv_gmac.c,v 1.3 2019/07/08 03:22:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.3 2019/07/08 03:22:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $")
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/gpio.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
