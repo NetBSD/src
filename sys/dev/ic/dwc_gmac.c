@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.62 2019/05/23 13:10:51 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.63 2019/07/08 03:22:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.62 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.63 2019/07/08 03:22:38 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.62 2019/05/23 13:10:51 msaitoh Exp $"
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/cprng.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -333,6 +334,8 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, dwc_gmac_ifflags_cb);
 	if_register(ifp);
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/*
 	 * Enable interrupts
@@ -1454,6 +1457,8 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 		dwc_dump_and_abort(sc, "interrupt error condition");
 #endif
 	}
+
+	rnd_add_uint32(&sc->rnd_source, dma_status);
 
 	/* ack interrupt */
 	if (dma_status)
