@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.5 2019/06/30 19:00:38 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.6 2019/07/08 16:31:54 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -79,4 +79,16 @@ sys/dev/ic/mvsata.c				1.47-1.48
 
 	PR/54205: fix "mvsata:0:0:1: buffer load failed: error=27" failure.
 	[tsutsui, ticket #1283]
+
+sys/arch/hp300/hp300/autoconf.c			1.106
+
+	Handle sti(4) graphics at sgc on HP9000/425t properly.
+	[tsutsui, ticket #1284]
+
+sys/netinet6/nd6.c				1.255
+tests/net/ndp/t_ndp.sh				1.32
+
+	nd6: restore a missing reachability confirmation.
+	tests: test state transitions of neighbor caches.
+	[ozaki-r, ticket #1285]
 
