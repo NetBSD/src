@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.31 2019/07/07 12:58:45 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.32 2019/07/08 19:46:57 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -731,8 +731,9 @@ again:
 	}
 
 	/* confirm the setting */
+	msg_clear();
 	if (slip)
-		msg_fmt_display(MSG_netok_slip, "%s%s%s%s%s%s%s%s%s",
+		msg_fmt_table_add(MSG_netok_slip, "%s%s%s%s%s%s%s%s%s",
 		    net_domain,
 		    net_host,
 		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
@@ -743,7 +744,7 @@ again:
 		    *net_mask == '\0' ? "<none>" : net_mask,
 		    *net_defroute == '\0' ? "<none>" : net_defroute);
 	else
-		msg_fmt_display(MSG_netok, "%s%s%s%s%s%s%s%s",
+		msg_fmt_table_add(MSG_netok, "%s%s%s%s%s%s%s%s",
 		    net_domain,
 		    net_host,
 		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
@@ -753,7 +754,7 @@ again:
 		    *net_mask == '\0' ? "<none>" : net_mask,
 		    *net_defroute == '\0' ? "<none>" : net_defroute);
 #ifdef INET6
-	msg_fmt_display_add(MSG_netokv6, "%s",
+	msg_fmt_table_add(MSG_netokv6, "%s",
 		     !is_v6kernel() ? "<not supported>" : net_ip6);
 #endif
 done:
