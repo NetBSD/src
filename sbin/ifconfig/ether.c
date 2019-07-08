@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.3 2018/12/21 08:58:08 msaitoh Exp $	*/
+/*	$NetBSD: ether.c,v 1.4 2019/07/08 03:04:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.3 2018/12/21 08:58:08 msaitoh Exp $");
+__RCSID("$NetBSD: ether.c,v 1.4 2019/07/08 03:04:15 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -67,6 +67,7 @@ static const struct kwinst ethercapskw[] = {
 #if 0 /* notyet */
 	  IFKW("vlan-hwfilter",	ETHERCAP_VLAN_HWFILTER)
 #endif
+	  IFKW("vlan-hwtagging", ETHERCAP_VLAN_HWTAGGING),
 	  IFKW("eee",		ETHERCAP_EEE)
 };
 
