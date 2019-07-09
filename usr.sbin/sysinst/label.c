@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.8 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: label.c,v 1.9 2019/07/09 16:16:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.8 2019/06/22 20:46:07 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.9 2019/07/09 16:16:33 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -915,8 +915,9 @@ update_edit_ptn_menu(menudesc *m, void *arg)
 			/* can only install onto PT_root partitions */
 			continue;
 		if (m->opts[i].opt_action == edit_fs_preserve &&
-		    t != FS_BSDFFS && t != FS_BSDLFS && t != FS_APPLEUFS) {
-			/* Can only newfs UFS and LFS filesystems */
+		    t != FS_BSDFFS && t != FS_BSDLFS && t != FS_APPLEUFS &&
+		    t != FS_MSDOS && t != FS_EX2FS) {
+			/* Can not newfs this filesystem */
 			edit->wanted->instflags &= ~PUIINST_NEWFS;
 			continue;
 		}
