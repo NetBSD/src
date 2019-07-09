@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlinfo.c,v 1.5 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_dlinfo.c,v 1.6 2019/07/09 16:24:01 maya Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -116,5 +116,5 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_inval);
 	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_dlopen);
 	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_dlopen_iter);
-	return 0;
+	return atf_no_error();
 }

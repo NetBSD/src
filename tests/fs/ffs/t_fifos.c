@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fifos.c,v 1.6 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: t_fifos.c,v 1.7 2019/07/09 16:24:01 maya Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -154,5 +154,5 @@ ATF_TC_CLEANUP(fifos, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, fifos);
-	return 0;
+	return atf_no_error();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.5 2017/01/16 16:29:19 christos Exp $ */
+/* $NetBSD: t_condwait.c,v 1.6 2019/07/09 16:24:01 maya Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.5 2017/01/16 16:29:19 christos Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.6 2019/07/09 16:24:01 maya Exp $");
 
 #include <sys/time.h>
 #include <errno.h>
@@ -141,5 +141,5 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cond_wait_real);
 	ATF_TP_ADD_TC(tp, cond_wait_mono);
-	return 0;
+	return atf_no_error();
 }
