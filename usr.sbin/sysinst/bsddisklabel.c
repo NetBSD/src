@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.16 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.17 2019/07/09 16:21:52 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -829,7 +829,6 @@ set_use_default_sizes(menudesc *m, void *arg)
  * Check if there is a reasonable pre-existing partition for
  * NetBSD.
  */
-
 static bool
 check_existing_netbsd(struct disk_partitions *parts)
 {
@@ -838,8 +837,11 @@ check_existing_netbsd(struct disk_partitions *parts)
 
 	nbsd_parts = 0;
 	for (part_id p = 0; p < parts->num_part; p++) {
-		if (parts->pscheme->get_part_info(parts, p, &info) &&
-		    info.nat_type && info.nat_type->generic_ptype == PT_root)
+		if (!parts->pscheme->get_part_info(parts, p, &info))
+			continue;
+		if (info.flags & (PTI_PSCHEME_INTERNAL|PTI_RAW_PART))
+			continue;
+		if (info.nat_type && info.nat_type->generic_ptype == PT_root)
 			nbsd_parts++;
 	}
 
