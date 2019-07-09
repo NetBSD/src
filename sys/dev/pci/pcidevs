@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1377 2019/07/05 06:19:24 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1378 2019/07/09 12:07:30 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -634,6 +634,7 @@ vendor RENESAS		0x1912	Renesas Technologies
 vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
+vendor PHISON		0x1987	Phison
 vendor SERVERENGINES	0x19a2	ServerEngines
 vendor HUAWEI		0x19e5	Huaewi Technology
 vendor ASPEED		0x1a03	ASPEED Technology
@@ -6000,6 +6001,10 @@ product PHILIPS SAA7133HL	0x7133	SAA7133HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7134HL	0x7134	SAA7134HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7135HL	0x7135	SAA7135HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7146AH	0x7146	SAA7146AH PCI Multimedia Bridge
+
+/* Phison products */
+product PHISON PS5000		0x5000 PS5000
+product PHISON PS5016		0x5016 PS5016
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810			0x0001	53c810
