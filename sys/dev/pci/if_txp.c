@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.58 2019/06/20 15:25:28 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.59 2019/07/09 08:46:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.58 2019/06/20 15:25:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.59 2019/07/09 08:46:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2022,6 +2022,7 @@ txp_capabilities(struct txp_softc *sc)
 		sc->sc_tx_capability |= OFFLOAD_VLAN;
 		sc->sc_rx_capability |= OFFLOAD_VLAN;
 		sc->sc_arpcom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+		sc->sc_arpcom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 	}
 
 #if 0
