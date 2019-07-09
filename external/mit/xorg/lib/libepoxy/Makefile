@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/04/18 10:10:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2019/07/09 22:12:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,11 +22,13 @@ CPPFLAGS+=	-DPLATFORM_HAS_EGL=1
 
 INCSDIR=${X11INCDIR}/epoxy
 INCS= \
+	common.h \
 	gl.h gl_generated.h \
 	glx.h glx_generated.h \
 	egl.h egl_generated.h
 
 CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/src
+CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/../include
 CPPFLAGS+=	${X11FLAGS.CONNECTION}
 
 PKGCONFIG=	epoxy
