@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.37 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.38 2019/07/09 08:46:58 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1441,6 +1441,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 
 #if NVLAN > 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 #endif
 
 	/*

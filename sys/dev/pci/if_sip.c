@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.173 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.174 2019/07/09 08:46:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.173 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.174 2019/07/09 08:46:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1266,6 +1266,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		 */
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 		/*
 		 * The DP83820 can do IPv4, TCPv4, and UDPv4 checksums

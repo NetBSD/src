@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.138 2019/06/25 12:30:50 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.139 2019/07/09 08:46:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.138 2019/06/25 12:30:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.139 2019/07/09 08:46:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -500,7 +500,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 		 * offload.
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
-			ec->ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 			ifp->if_capabilities = p->if_capabilities &
 			    (IFCAP_TSOv4 | IFCAP_TSOv6 |
 				IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx |

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.43 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.44 2019/07/09 08:46:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.43 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.44 2019/07/09 08:46:59 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -473,6 +473,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->jme_ec.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->jme_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	if (sc->jme_flags & JME_FLAG_GIGA)
 		sc->jme_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;

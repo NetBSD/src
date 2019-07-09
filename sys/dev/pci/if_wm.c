@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.641 2019/06/12 01:54:11 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.642 2019/07/09 08:46:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.641 2019/06/12 01:54:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.642 2019/07/09 08:46:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2889,9 +2889,11 @@ alloc_retry:
 	}
 
 	/* If we're a i82543 or greater, we can support VLANs. */
-	if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type >= WM_T_82543) {
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
+	}
 
 	if ((sc->sc_flags & WM_F_EEE) != 0)
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_EEE;

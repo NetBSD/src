@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.153 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.154 2019/07/09 08:46:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.153 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.154 2019/07/09 08:46:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,6 +392,7 @@ fxp_attach(struct fxp_softc *sc)
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 	} else if (sc->sc_flags & FXPF_82559_RXCSUM) {
 		ifp->if_capabilities =
 		    IFCAP_CSUM_TCPv4_Rx |

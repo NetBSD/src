@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.59 2019/05/28 07:41:49 msaitoh Exp $ */
+/*	$NetBSD: if_age.c,v 1.60 2019/07/09 08:46:58 msaitoh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.59 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60 2019/07/09 08:46:58 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -262,6 +262,7 @@ age_attach(device_t parent, device_t self, void *aux)
 
 #if NVLAN > 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 #endif
 
 	/* Set up MII bus. */

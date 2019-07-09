@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.29 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.30 2019/07/09 08:46:58 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.29 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.30 2019/07/09 08:46:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1721,7 +1721,9 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 
 	sc->vmx_ethercom.ec_if.if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 
-	sc->vmx_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->vmx_ethercom.ec_capabilities |=
+	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->vmx_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->vmx_ntxdescs);
 	IFQ_SET_READY(&ifp->if_snd);

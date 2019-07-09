@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.111 2019/05/29 10:07:29 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.111 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1831,6 +1831,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can do IPv4, TCPv4, and UDPv4 checksums in hardware.
