@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlerror-cleared.c,v 1.2 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_dlerror-cleared.c,v 1.3 2019/07/09 16:24:01 maya Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,5 +63,5 @@ ATF_TC_BODY(rtld_dlerror_cleared, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, rtld_dlerror_cleared);
-	return 0;
+	return atf_no_error();
 }

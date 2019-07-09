@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.7 2013/02/06 09:05:01 hannken Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.8 2019/07/09 16:24:01 maya Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -224,5 +224,5 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, snapshot);
 	ATF_TP_ADD_TC(tp, snapshotstress);
-	return 0;
+	return atf_no_error();
 }
