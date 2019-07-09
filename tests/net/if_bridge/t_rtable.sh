@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.5 2019/05/31 15:36:10 gson Exp $
+#	$NetBSD: t_rtable.sh,v 1.6 2019/07/09 02:50:24 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -341,7 +341,14 @@ bridge_rtable_maxaddr_body()
 	atf_check -s exit:0 -o match:"max cache: 1" /sbin/brconfig bridge0
 	/sbin/brconfig bridge0
 
-	# Test just one address is cached
+	# Check a cache is flushed out
+	n=$(get_number_of_caches)
+	atf_check_equal $n 1
+
+	# Test a new address cache is not created
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
+	export RUMP_SERVER=$SOCK2
 	n=$(get_number_of_caches)
 	atf_check_equal $n 1
 
