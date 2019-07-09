@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.72 2019/05/28 07:41:49 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.73 2019/07/09 08:46:59 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.72 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.73 2019/07/09 08:46:59 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -980,6 +980,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
