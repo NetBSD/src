@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.17 2019/07/09 16:21:52 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.18 2019/07/09 16:25:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ default_parts_init[] =
 	  .mount = PART_BOOT_MOUNT,
 	  .instflags = PUIINST_MOUNT|PUIINST_BOOT,
 #else
-	  .instflags = PUIINST_MOUNT|PUIINST_BOOT,
+	  .instflags = PUIINST_BOOT,
 #endif
 #ifdef PART_BOOT_TYPE
 	  .fs_type = PART_BOOT_TYPE,
@@ -996,6 +996,11 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	}
 
 	memcpy(wanted->infos, default_parts_init, sizeof(default_parts_init));
+
+#ifdef MD_PART_DEFAULTS
+	MD_PART_DEFAULTS(pm, wanted->infos, wanted->num);
+#endif
+
 	for (i = 0; i < wanted->num; i++) {
 		wanted->infos[i].parts = parts;
 		wanted->infos[i].cur_part_id = NO_PART;
@@ -1034,10 +1039,6 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			wanted->infos[i].def_size =
 			    get_ramsize() * (MEG/512/4);
 	}
-
-#ifdef MD_PART_DEFAULTS
-	MD_PART_DEFAULTS(pm, wanted->infos[i].parts, wanted->num);
-#endif
 
 	/*
 	 * Now we have the defaults as if we were installing to an
