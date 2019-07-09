@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_apple.c,v 1.4 2019/07/06 05:41:23 maxv Exp $	*/
+/*	$NetBSD: dkwedge_apple.c,v 1.5 2019/07/09 17:06:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.4 2019/07/06 05:41:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.5 2019/07/09 17:06:46 maxv Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -225,6 +225,7 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 		}
 
 		struct dkwedge_info dkw;
+		memset(&dkw, 0, sizeof(dkw));
 
 		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
