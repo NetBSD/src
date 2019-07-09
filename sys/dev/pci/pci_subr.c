@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.213 2019/07/09 12:13:42 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.214 2019/07/09 12:17:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.213 2019/07/09 12:13:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.214 2019/07/09 12:17:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4240,6 +4240,9 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
+	{ 0x25, "unknown", NULL },
+	{ 0x26, "unknown", NULL },
+	{ 0x27, "unknown", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
