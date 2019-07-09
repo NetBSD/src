@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.168 2019/01/27 02:08:48 pgoyette Exp $ */
+/* $NetBSD: ipsec.c,v 1.169 2019/07/09 16:56:24 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.168 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.169 2019/07/09 16:56:24 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -172,7 +172,7 @@ int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 #endif
 
 static int ipsec_setspidx_inpcb(struct mbuf *, void *);
-static int ipsec_setspidx(struct mbuf *, struct secpolicyindex *, int);
+static int ipsec_setspidx(struct mbuf *, struct secpolicyindex *, int, int);
 static void ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec4_setspidx_ipaddr(struct mbuf *, struct secpolicyindex *);
 #ifdef INET6
@@ -220,7 +220,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	}
 	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
 		/* NB: assume ipsec_setspidx never sleep */
-		if (ipsec_setspidx(m, &spidx, 1) != 0) {
+		if (ipsec_setspidx(m, &spidx, dir, 1) != 0) {
 			sp = NULL;
 			goto out;
 		}
@@ -269,7 +269,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 
 	pcbsp->sp_cache[dir].cachesp = NULL;
 	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_UNKNOWN;
-	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
+	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, dir, 1) != 0) {
 		return EINVAL;
 	}
 	pcbsp->sp_cache[dir].cachesp = sp;
@@ -537,7 +537,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	sp = NULL;
 
 	/* Make an index to look for a policy. */
-	*error = ipsec_setspidx(m, &spidx, (flag & IP_FORWARDING) ? 0 : 1);
+	*error = ipsec_setspidx(m, &spidx, dir, (flag & IP_FORWARDING) ? 0 : 1);
 	if (*error != 0) {
 		IPSECLOG(LOG_DEBUG, "setpidx failed, dir %u flag %u\n", dir, flag);
 		memset(&spidx, 0, sizeof(spidx));
@@ -791,9 +791,9 @@ ipsec_setspidx_inpcb(struct mbuf *m, void *pcb)
 	KASSERT(inph->inph_sp->sp_out != NULL);
 	KASSERT(inph->inph_sp->sp_in != NULL);
 
-	error = ipsec_setspidx(m, &inph->inph_sp->sp_in->spidx, 1);
+	error = ipsec_setspidx(m, &inph->inph_sp->sp_in->spidx,
+	    IPSEC_DIR_INBOUND, 1);
 	if (error == 0) {
-		inph->inph_sp->sp_in->spidx.dir = IPSEC_DIR_INBOUND;
 		inph->inph_sp->sp_out->spidx = inph->inph_sp->sp_in->spidx;
 		inph->inph_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
 	} else {
@@ -811,7 +811,8 @@ ipsec_setspidx_inpcb(struct mbuf *m, void *pcb)
  * the caller is responsible for error recovery (like clearing up spidx).
  */
 static int
-ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
+ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int dir,
+    int needport)
 {
 	struct ip *ip = NULL;
 	struct ip ipbuf;
@@ -827,6 +828,9 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		    m->m_pkthdr.len);
 		return EINVAL;
 	}
+
+	memset(spidx, 0, sizeof(*spidx));
+	spidx->dir = dir;
 
 	if (m->m_len >= sizeof(*ip)) {
 		ip = mtod(m, struct ip *);
