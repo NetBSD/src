@@ -1,4 +1,4 @@
-/* $NetBSD: ims.c,v 1.1 2017/12/10 17:05:54 bouyer Exp $ */
+/* $NetBSD: ims.c,v 1.2 2019/07/09 12:52:51 ryoon Exp $ */
 /* $OpenBSD ims.c,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
 
 /*
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.1 2017/12/10 17:05:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.2 2019/07/09 12:52:51 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ ims_attach(device_t parent, device_t self, void *aux)
 	struct ihidev_attach_arg *iha = (struct ihidev_attach_arg *)aux;
 	int size, repid;
 	void *desc;
+	struct hid_data * d __debugused;
+	struct hid_item item __debugused;
 
 	sc->sc_hdev.sc_idev = self;
 	sc->sc_hdev.sc_intr = ims_intr;
@@ -109,6 +111,30 @@ ims_attach(device_t parent, device_t self, void *aux)
 
 	if (!hidms_setup(self, ms, iha->reportid, desc, size) != 0)
 		return;
+
+#if defined(DEBUG)
+	/* calibrate the touchscreen */
+	memset(&sc->sc_ms.sc_calibcoords, 0, sizeof(sc->sc_ms.sc_calibcoords));
+	d = hid_start_parse(desc, size, hid_input);
+	if (d != NULL) {
+		while (hid_get_item(d, &item)) {
+			if (item.kind != hid_input
+			    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
+			    || item.report_ID != sc->sc_hdev.sc_report_id)
+				continue;
+			if (HID_GET_USAGE(item.usage) == HUG_X) {
+				aprint_normal("X range: %d - %d\n", item.logical_minimum, item.logical_maximum);
+			}
+			if (HID_GET_USAGE(item.usage) == HUG_Y) {
+				aprint_normal("Y range: %d - %d\n", item.logical_minimum, item.logical_maximum);
+			}
+		}
+		hid_end_parse(d);
+	}
+#endif
+	tpcalib_init(&sc->sc_ms.sc_tpcalib);
+	tpcalib_ioctl(&sc->sc_ms.sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+	    (void *)&sc->sc_ms.sc_calibcoords, 0, 0);
 
 	hidms_attach(self, ms, &ims_accessops);
 }
@@ -199,6 +225,9 @@ ims_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 			*(u_int *)data = WSMOUSE_TYPE_USB;
 		}
 		return 0;
+	case WSMOUSEIO_SCALIBCOORDS:
+	case WSMOUSEIO_GCALIBCOORDS:
+		return tpcalib_ioctl(&sc->sc_ms.sc_tpcalib, cmd, data, flag, l);
 	}
 	return EPASSTHROUGH;
 }
