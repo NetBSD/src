@@ -1,4 +1,4 @@
-/* $NetBSD: ims.c,v 1.2 2019/07/09 12:52:51 ryoon Exp $ */
+/* $NetBSD: ims.c,v 1.3 2019/07/09 12:56:30 ryoon Exp $ */
 /* $OpenBSD ims.c,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
 
 /*
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.2 2019/07/09 12:52:51 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.3 2019/07/09 12:56:30 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,10 @@ ims_match(device_t parent, cfdata_t match, void *aux)
 
 	if (hid_is_collection(desc, size, iha->reportid,
 	    HID_USAGE2(HUP_DIGITIZERS, HUD_PEN)))
+		return (IMATCH_IFACECLASS);
+
+	if (hid_is_collection(desc, size, iha->reportid,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCH_SCREEN)))
 		return (IMATCH_IFACECLASS);
 
 	return (IMATCH_NONE);

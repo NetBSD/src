@@ -1,4 +1,4 @@
-/*	$NetBSD: hidms.c,v 1.3 2019/07/09 12:52:51 ryoon Exp $	*/
+/*	$NetBSD: hidms.c,v 1.4 2019/07/09 12:56:30 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.3 2019/07/09 12:52:51 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.4 2019/07/09 12:56:30 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,11 @@ hidms_setup(device_t self, struct hidms *ms, int id, void *desc, int size)
 	bool isdigitizer;
 	int i, hl;
 
+	/* Sync with ims_match() */
 	isdigitizer = hid_is_collection(desc, size, id,
-	    HID_USAGE2(HUP_DIGITIZERS, 0x0002));
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_PEN)) ||
+            hid_is_collection(desc, size, id,
+		HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCH_SCREEN));
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 	       id, hid_input, &ms->hidms_loc_x, &flags)) {
