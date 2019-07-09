@@ -1,4 +1,4 @@
-/*	$NetBSD: hidms.c,v 1.2 2018/05/25 15:52:45 ryoon Exp $	*/
+/*	$NetBSD: hidms.c,v 1.3 2019/07/09 12:52:51 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.2 2018/05/25 15:52:45 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.3 2019/07/09 12:52:51 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,6 +267,7 @@ hidms_intr(struct hidms *ms, void *ibuf, u_int len)
 	if (ms->flags & HIDMS_ABS) {
 		flags |= (WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 		dy = hid_get_data(ibuf, &ms->hidms_loc_y);
+		tpcalib_trans(&ms->sc_tpcalib, dx, dy, &dx, &dy);
 	} else
 		dy = -hid_get_data(ibuf, &ms->hidms_loc_y);
 	dz =  hid_get_data(ibuf, &ms->hidms_loc_z);
