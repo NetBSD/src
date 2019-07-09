@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.6 2019/07/08 16:31:54 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.7 2019/07/09 15:17:50 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -91,4 +91,9 @@ tests/net/ndp/t_ndp.sh				1.32
 	nd6: restore a missing reachability confirmation.
 	tests: test state transitions of neighbor caches.
 	[ozaki-r, ticket #1285]
+
+sys/dev/hyperv/vmbus.c				1.4
+
+	Zero clear the allocated ring buffer for vmbus_channel.
+	[nakayama, ticket #1286]
 
