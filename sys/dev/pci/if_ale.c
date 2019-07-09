@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.32 2019/05/28 09:24:33 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.33 2019/07/09 08:46:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.32 2019/05/28 09:24:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.33 2019/07/09 08:46:59 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -553,6 +553,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 
 #if NVLAN > 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 #endif
 
 	/* Set up MII bus. */
