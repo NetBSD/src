@@ -132,5 +132,5 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, listen_err);
 	ATF_TP_ADD_TC(tp, listen_low_port);
 
-	return 0;
+	return atf_no_error();
 }
