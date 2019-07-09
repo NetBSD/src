@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.3 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.4 2019/07/09 10:07:11 nakayama Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.3 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.4 2019/07/09 10:07:11 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,6 +1263,7 @@ vmbus_channel_ring_create(struct vmbus_channel *ch, uint32_t buflen)
 		    "failed to allocate channel ring\n");
 		return ENOMEM;
 	}
+	memset(ch->ch_ring, 0, ch->ch_ring_size);
 
 	memset(&ch->ch_wrd, 0, sizeof(ch->ch_wrd));
 	ch->ch_wrd.rd_ring = (struct vmbus_bufring *)ch->ch_ring;
