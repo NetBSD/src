@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.85 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.86 2019/07/09 08:46:59 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.85 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.86 2019/07/09 08:46:59 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -863,6 +863,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	sc->bnx_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->bnx_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
