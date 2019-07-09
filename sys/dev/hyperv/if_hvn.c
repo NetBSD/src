@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.3 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.4 2019/07/09 08:46:58 msaitoh Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.3 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4 2019/07/09 08:46:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -284,6 +284,7 @@ hvn_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
 		sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 		sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+		sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 	}
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, HVN_TX_DESC - 1);

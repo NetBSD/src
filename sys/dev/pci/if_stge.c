@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.69 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.70 2019/07/09 08:46:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.69 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.70 2019/07/09 08:46:59 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -647,6 +647,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | /* XXX ETHERCAP_JUMBO_MTU | */
 	    ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
