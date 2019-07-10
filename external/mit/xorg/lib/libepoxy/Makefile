@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/07/09 22:12:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2019/07/10 21:32:22 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,9 @@ SRCS+= \
 	dispatch_egl.c \
 	egl_generated_dispatch.c
 CPPFLAGS+=	-DPLATFORM_HAS_EGL=1
+EGL=1
+.else
+EGL=0
 .endif
 
 INCSDIR=${X11INCDIR}/epoxy
@@ -33,7 +36,10 @@ CPPFLAGS+=	${X11FLAGS.CONNECTION}
 
 PKGCONFIG=	epoxy
 PKGCONFIG_SED_FLAGS= \
-        -e "s,@DLOPEN_LIBS@,,"
+        -e "s,@DLOPEN_LIBS@,," \
+        -e "s,@epoxy_has_glx@,1," \
+        -e "s,@epoxy_has_egl@,${EGL}," \
+        -e "s,@epoxy_has_wgl@,0,"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
