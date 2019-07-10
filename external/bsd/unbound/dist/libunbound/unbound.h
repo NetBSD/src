@@ -102,9 +102,9 @@ extern "C" {
 #endif
 
 /** the version of this header file */
-#define UNBOUND_VERSION_MAJOR @UNBOUND_VERSION_MAJOR@
-#define UNBOUND_VERSION_MINOR @UNBOUND_VERSION_MINOR@
-#define UNBOUND_VERSION_MICRO @UNBOUND_VERSION_MICRO@
+#define UNBOUND_VERSION_MAJOR 1
+#define UNBOUND_VERSION_MINOR 9
+#define UNBOUND_VERSION_MICRO 1
 
 /**
  * The validation context is created to hold the resolver status,
