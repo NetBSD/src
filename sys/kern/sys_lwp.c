@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.68 2019/07/01 17:15:43 maxv Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.69 2019/07/10 17:52:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.68 2019/07/01 17:15:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.69 2019/07/10 17:52:22 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.68 2019/07/01 17:15:43 maxv Exp $");
 #include <uvm/uvm_extern.h>
 
 #define	LWP_UNPARK_MAX		1024
+
+static const stack_t lwp_ss_init = SS_INIT;
 
 static syncobj_t lwp_park_sobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_LIFO,
@@ -111,7 +113,7 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 		return ENOMEM;
 
 	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
-	    mi_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
+	    mi_startlwp, arg, &l2, l->l_class, sigmask, &lwp_ss_init);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
