@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.131 2019/06/01 06:57:03 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.132 2019/07/10 21:53:35 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -355,8 +355,14 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@EXPAT_CFLAGS@,,; \
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,;" \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
-		< ${.IMPSRC} > ${.TARGET}.tmp && \
-	${MV} ${.TARGET}.tmp ${.TARGET}
+		< ${.IMPSRC} > ${.TARGET}.tmp
+	if ${TOOL_GREP} '@.*@' ${.TARGET}.tmp; then \
+		echo "${.TARGET} matches @.*@, probably missing updates" 1>&2; \
+		false; \
+	else \
+		${MV} ${.TARGET}.tmp ${.TARGET}; \
+	fi
+
 
 CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
