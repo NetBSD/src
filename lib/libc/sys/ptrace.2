@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.76 2019/06/26 13:31:48 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.77 2019/07/10 19:03:47 mgorny Exp $
 .\"
 .\" This file is in the public domain.
 .Dd June 26, 2019
@@ -475,7 +475,7 @@ without pending on its termination or
 operation.
 If enabled,
 the child is also traced by the debugger and
-.Dv SIGRAP
+.Dv SIGTRAP
 is generated twice,
 first for the parent and second for the child.
 The
