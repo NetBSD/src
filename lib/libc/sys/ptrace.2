@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.77 2019/07/10 19:03:47 mgorny Exp $
+.\"	$NetBSD: ptrace.2,v 1.78 2019/07/10 19:51:14 mgorny Exp $
 .\"
 .\" This file is in the public domain.
-.Dd June 26, 2019
+.Dd July 10, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -632,9 +632,22 @@ If the
 argument is less than zero, it contains the negative of the LWP ID of
 the thread to be stepped, and only that thread executes.
 .It Dv PT_SETSTEP
-This request will turn on single stepping of the specified process.
+This request will turn on single stepping of the specified thread.
+.Fa addr
+is unused.
+.Fa data
+specifies the LWP ID of the thread to be stepped.
+The execution does not continue until
+.Dv PT_CONTINUE
+is issued.
+This request permits combining single-stepping with sending syscalls and
+.Dv PT_SYSCALL .
 .It Dv PT_CLEARSTEP
-This request will turn off single stepping of the specified process.
+This request will turn off single stepping of the specified thread.
+.Fa addr
+is unused.
+.Fa data
+specifies the LWP ID of the thread to disable single-stepping.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
 .Vt struct reg
