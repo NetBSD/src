@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.26 2019/07/07 06:29:14 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.27 2019/07/10 13:17:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.26 2019/07/07 06:29:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.27 2019/07/10 13:17:57 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4801,16 +4801,15 @@ abort:
 static void
 audio_mixer_destroy(struct audio_softc *sc, audio_trackmixer_t *mixer)
 {
-	int mode;
+	int bufsize;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	mode = mixer->mode;
-	KASSERT(mode == AUMODE_PLAY || mode == AUMODE_RECORD);
+	bufsize = frametobyte(&mixer->hwbuf.fmt, mixer->hwbuf.capacity);
 
 	if (mixer->hwbuf.mem != NULL) {
 		if (sc->hw_if->freem) {
-			sc->hw_if->freem(sc->hw_hdl, mixer->hwbuf.mem, mode);
+			sc->hw_if->freem(sc->hw_hdl, mixer->hwbuf.mem, bufsize);
 		} else {
 			kern_free(mixer->hwbuf.mem);
 		}
