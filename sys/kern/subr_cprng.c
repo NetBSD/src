@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.29 2017/12/01 19:05:49 christos Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.30 2019/07/10 17:32:37 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.29 2017/12/01 19:05:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.30 2019/07/10 17:32:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -140,6 +140,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 	KASSERT(ipl != IPL_SCHED && ipl != IPL_HIGH);
 
 	/* Initialize the easy fields.  */
+	memset(cprng->cs_name, 0, sizeof(cprng->cs_name));
 	(void)strlcpy(cprng->cs_name, name, sizeof(cprng->cs_name));
 	cprng->cs_flags = flags;
 	mutex_init(&cprng->cs_lock, MUTEX_DEFAULT, ipl);
