@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.5 2019/06/25 07:14:45 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.6 2019/07/10 16:35:11 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ disklabel_delete_all(struct disk_partitions *arg)
 	    (struct disklabel_disk_partitions*)arg;
 	daddr_t total_size = parts->l.d_partitions[RAW_PART].p_size;
 
-	memset(&parts->l, 0, sizeof(parts->l));
+	memset(&parts->l.d_partitions, 0, sizeof(parts->l.d_partitions));
 	parts->dp.num_part = 0;
 
 #if RAW_PART > 2
