@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.27 2019/07/10 13:17:57 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.28 2019/07/10 13:26:47 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.27 2019/07/10 13:17:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28 2019/07/10 13:26:47 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4685,13 +4685,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 			return ENOMEM;
 		}
 	} else {
-		mixer->hwbuf.mem = kern_malloc(bufsize, M_NOWAIT);
-		if (mixer->hwbuf.mem == NULL) {
-			device_printf(sc->sc_dev,
-			    "%s: malloc hwbuf(%zu) failed\n",
-			    __func__, bufsize);
-			return ENOMEM;
-		}
+		mixer->hwbuf.mem = kmem_alloc(bufsize, KM_SLEEP);
 	}
 
 	/* From here, audio_mixer_destroy is necessary to exit. */
@@ -4811,7 +4805,7 @@ audio_mixer_destroy(struct audio_softc *sc, audio_trackmixer_t *mixer)
 		if (sc->hw_if->freem) {
 			sc->hw_if->freem(sc->hw_hdl, mixer->hwbuf.mem, bufsize);
 		} else {
-			kern_free(mixer->hwbuf.mem);
+			kmem_free(mixer->hwbuf.mem, bufsize);
 		}
 		mixer->hwbuf.mem = NULL;
 	}
