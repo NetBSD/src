@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.279 2019/07/05 15:33:07 sevan Exp $
+$NetBSD: acronyms.comp,v 1.280 2019/07/11 15:21:46 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1726,6 +1726,7 @@ WP	word processor
 WP	write protect
 WPA	Wi-Fi Protected Access
 WPA2	Wi-Fi Protected Access II
+WPAD	web proxy auto-discovery protocol
 WPS	Wi-Fi Protected Setup
 WRAM	window random access memory
 WS	web services
