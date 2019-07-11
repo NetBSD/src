@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.78 2019/07/10 19:51:14 mgorny Exp $
+.\"	$NetBSD: ptrace.2,v 1.79 2019/07/11 03:30:01 mgorny Exp $
 .\"
 .\" This file is in the public domain.
-.Dd July 10, 2019
+.Dd July 11, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -640,7 +640,7 @@ specifies the LWP ID of the thread to be stepped.
 The execution does not continue until
 .Dv PT_CONTINUE
 is issued.
-This request permits combining single-stepping with sending syscalls and
+This request permits combining single-stepping with sending signals and
 .Dv PT_SYSCALL .
 .It Dv PT_CLEARSTEP
 This request will turn off single stepping of the specified thread.
