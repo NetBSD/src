@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 2019/01/27 02:08:36 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2019/07/11 09:03:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,6 @@
  */
 
 #include "opt_arm_debug.h"
-#include "opt_compat_netbsd32.h"
 #include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
@@ -39,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.33 2019/01/27 02:08:36 pgoyette Exp $")
+RCSID("$NetBSD: locore.S,v 1.34 2019/07/11 09:03:41 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
