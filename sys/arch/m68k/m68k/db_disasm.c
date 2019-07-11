@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.42 2019/02/05 07:18:52 mrg Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.43 2019/07/11 03:49:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.42 2019/02/05 07:18:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.43 2019/07/11 03:49:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -2691,7 +2691,7 @@ get_modregstr_mit(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 			    bd == 3 ? SIZE_LONG :
 			    SIZE_BYTE);
 			if (od && !ISBITSET(ext,6) && !ISBITSET(ext,2))
-				/* Pre-indexed and not supressing index */
+				/* Pre-indexed and not suppressing index */
 				addchar(',');
 			else if (od && ISBITSET(ext,2)) {
 				/* Post-indexed */

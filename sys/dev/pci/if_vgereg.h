@@ -240,8 +240,8 @@
 #define VGE_INTCTL_HC_RELOAD		0x02 /* enable hold timer reload */
 #define VGE_INTCTL_STATUS		0x04 /* interrupt pending status */
 #define VGE_INTCTL_MASK			0x18 /* multilayer int mask */
-#define VGE_INTCTL_RXINTSUP_DISABLE	0x20 /* disable RX int supression */
-#define VGE_INTCTL_TXINTSUP_DISABLE	0x40 /* disable TX int supression */
+#define VGE_INTCTL_RXINTSUP_DISABLE	0x20 /* disable RX int suppression */
+#define VGE_INTCTL_TXINTSUP_DISABLE	0x40 /* disable TX int suppression */
 #define VGE_INTCTL_SOFTINT		0x80 /* request soft interrupt */
 
 #define VGE_INTMASK_LAYER0		0x00
@@ -384,8 +384,8 @@
  *   the multicast hash filter or the CAM table)
  * - The behavior of the interrupt holdoff timer register at offset
  *   0x20 (the page select bits allow you to set the interrupt
- *   holdoff timer, the TX interrupt supression count or the
- *   RX interrupt supression count)
+ *   holdoff timer, the TX interrupt suppression count or the
+ *   RX interrupt suppression count)
  * - The behavior the WOL pattern programming registers at offset
  *   0xC0 (controls which pattern is set)
  */
