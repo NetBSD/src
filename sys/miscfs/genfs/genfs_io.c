@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.74 2018/12/10 21:10:52 jdolecek Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.75 2019/07/11 16:59:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.74 2018/12/10 21:10:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.75 2019/07/11 16:59:14 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -993,8 +993,8 @@ retry:
 		 * if the current page is not interesting, move on to the next.
 		 */
 
-		KASSERT(pg == NULL || pg->uobject == uobj ||
-		    (pg->flags & PG_MARKER) != 0);
+		KASSERT(pg == NULL || (pg->flags & PG_MARKER) != 0 ||
+		    pg->uobject == uobj);
 		KASSERT(pg == NULL ||
 		    (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		    (pg->flags & (PG_BUSY|PG_MARKER)) != 0);
