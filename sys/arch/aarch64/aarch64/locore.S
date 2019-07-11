@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2019/07/11 09:03:41 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2019/07/11 10:53:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.34 2019/07/11 09:03:41 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.35 2019/07/11 10:53:39 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -363,7 +363,7 @@ ENTRY_NP(cpu_mpstart)
 	add	x1, x1, #1
 	cmp	x1, MAXCPUS		/* cpuindex >= MAXCPUS ? */
 	bge	toomanycpus
-	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpunidex] */
+	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpuindex] */
 	cmp	x2, x3			/* == mpidr_el1 & MPIDR_AFF ? */
 	bne	1b
 
