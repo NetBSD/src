@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.182 2019/03/01 11:06:57 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.183 2019/07/11 03:49:51 msaitoh Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.182 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.183 2019/07/11 03:49:51 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4571,7 +4571,7 @@ sppp_chap_tlu(struct sppp *sp)
 		if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0)
 			addlog("next re-challenge in %d seconds\n", i);
 		else
-			addlog("re-challenging supressed\n");
+			addlog("re-challenging suppressed\n");
 	}
 
 	x = splnet();
