@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.53 2019/07/11 23:27:24 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.53 2019/07/11 23:27:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1447,6 +1447,10 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 #endif
 		return error;
 	case MODULE_CMD_FINI:
+#if 1
+		// XXX: Need to keep track if we are in use.
+		return ENOTTY;
+#else
 		error = config_cfdata_detach(swcrypto_cfdata);
 		if (error) {
 			return error;
@@ -1456,6 +1460,7 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 		config_cfdriver_detach(&swcrypto_cd);
 
 		return 0;
+#endif
 	default:
 		return ENOTTY;
 	}
