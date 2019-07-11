@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.360 2019/06/08 23:48:33 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.361 2019/07/11 17:07:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.360 2019/06/08 23:48:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.361 2019/07/11 17:07:10 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4946,7 +4946,7 @@ fill_vmentry(struct lwp *l, struct proc *p, struct kinfo_vmentry *kve,
 	kve->kve_offset = e->offset;
 	kve->kve_wired_count = e->wired_count;
 	kve->kve_inheritance = e->inheritance;
-	kve->kve_attributes = e->map_attrib;
+	kve->kve_attributes = 0; /* e->map_attrib */
 	kve->kve_advice = e->advice;
 #define PROT(p) (((p) & VM_PROT_READ) ? KVME_PROT_READ : 0) | \
 	(((p) & VM_PROT_WRITE) ? KVME_PROT_WRITE : 0) | \
