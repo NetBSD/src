@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.6 2019/07/09 16:14:46 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.7 2019/07/12 18:25:08 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -834,7 +834,6 @@ parts_use_wholedisk(struct disk_partitions *parts,
 			    1, info.size, align, -1, -1) != 1)
 				return false;
 			info.start = space.start;
-			info.size = space.size;
 			if (parts->pscheme->add_partition(parts, &info, NULL)
 			    == NO_PART)
 				return false;
