@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.86 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.87 2019/07/12 23:32:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.86 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.87 2019/07/12 23:32:45 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3199,8 +3199,10 @@ cast(tnode_t *tn, type_t *tp)
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		/* invalid cast expression */
-		error(147);
-		return (NULL);
+		if (!Sflag || nt == ARRAY || nt == FUNC) {
+			error(147);
+			return (NULL);
+		}
 	} else if (ot == STRUCT || ot == UNION) {
 		/* invalid cast expression */
 		error(147);
