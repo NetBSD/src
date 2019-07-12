@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2019/06/19 09:56:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2019/07/12 10:39:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2019/06/19 09:56:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2019/07/12 10:39:12 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -722,7 +722,7 @@ pmap_page_remove(struct vm_page *pg)
 	for (; pv != NULL; pv = npv) {
 		npv = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		if (pv->pv_va & PV_KENTER) {
+		if (PV_ISKENTER_P(pv)) {
 			UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %jx"
 			    " skip", (uintptr_t)pv, (uintptr_t)pv->pv_pmap,
 			    pv->pv_va, 0);
@@ -988,7 +988,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		if (pv->pv_pmap != NULL) {
 			while (pv != NULL) {
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-				if (pv->pv_va & PV_KENTER) {
+				if (PV_ISKENTER_P(pv)) {
 					pv = pv->pv_next;
 					continue;
 				}
@@ -1664,7 +1664,7 @@ pmap_clear_modify(struct vm_page *pg)
 
 		pv_next = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		if (pv->pv_va & PV_KENTER)
+		if (PV_ISKENTER_P(pv))
 			continue;
 #endif
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
