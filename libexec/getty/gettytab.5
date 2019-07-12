@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.37 2019/07/11 09:48:22 wiz Exp $
+.\"	$NetBSD: gettytab.5,v 1.38 2019/07/12 01:53:45 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,33 +60,33 @@ processes is normally defined by
 .Xr ttys 5 .
 .Pp
 There is a default terminal class,
-.Em default ,
+.Ic default ,
 that is used to set global defaults for all other classes.
 (That is, the
-.Em default
+.Ic default
 entry is read, then the entry for the class required
 is used to override particular settings.)
 The
-.Em default
+.Ic default
 entry is also normally read by other programs that present login prompts
 to the user, such as
 .Xr telnetd 8 ,
 in order to retrieve the values of the
-.Em he ,
-.Em hn ,
-.Em im ,
+.Ic \&he ,
+.Ic \&hn ,
+.Ic \&im ,
 and
-.Em if
+.Ic \&if
 capabilities.
 .Sh CAPABILITIES
 Refer to
 .Xr capfile 5
 for a description of the file layout.
 The
-.Em default
+.Sq Sy Default
 column below lists defaults obtained if there is
 no entry in the table obtained, nor one in the special
-.Em default
+.Ic default
 table.
 .Bl -column Namexx /usr/bin/login Default
 .It Sy Name	Type	Default	Description
@@ -206,39 +206,40 @@ are derived from the boolean flags specified.
 If the derivation should prove inadequate,
 any (or all) of these three may be overridden
 with one of the
-.Em \&c0 ,
-.Em \&c1 ,
-.Em \&c2 ,
-.Em \&i0 ,
-.Em \&i1 ,
-.Em \&i2 ,
-.Em \&l0 ,
-.Em \&l1 ,
-.Em \&l2 ,
-.Em \&o0 ,
-.Em \&o1 ,
+.Ic \&c0 ,
+.Ic \&c1 ,
+.Ic \&c2 ,
+.Ic \&i0 ,
+.Ic \&i1 ,
+.Ic \&i2 ,
+.Ic \&l0 ,
+.Ic \&l1 ,
+.Ic \&l2 ,
+.Ic \&o0 ,
+.Ic \&o1 ,
 or
-.Em \&o2
+.Ic \&o2
 numeric specifications, which can be used to specify
 (usually in octal, with a leading '0')
 the exact values of the flags.
 These flags correspond to the termios
-.Em c_cflag ,
-.Em c_iflag ,
-.Em c_lflag ,
+.Fa c_cflag ,
+.Fa c_iflag ,
+.Fa c_lflag ,
 and
-.Em c_oflag
+.Fa c_oflag
 fields, respectively.
 Each these sets must be completely specified to be effective.
 The
-.Em \&f0 ,
-.Em \&f1 ,
+.Ic \&f0 ,
+.Ic \&f1 ,
 and
-.Em \&f2
+.Ic \&f2
 are excepted for backwards compatibility with a previous incarnation of
 the TTY sub-system.
-In these flags the bottom 16 bits of the (32 bits) value contain the sgttyb
-.Em sg_flags
+In these flags the bottom 16 bits of the (32 bits) value contain the
+.Vt sgttyb
+.Fa sg_flags
 field, while the top 16 bits represent the local mode word.
 .Pp
 Should
@@ -246,7 +247,7 @@ Should
 receive a null character
 (presumed to indicate a line break)
 it will restart using the table indicated by the
-.Em nx
+.Ic nx
 entry.
 If there is none, it will re-use its original table.
 .Pp
@@ -257,16 +258,16 @@ with values 0, 1, 2, and 3 are interpreted as
 choosing that particular delay algorithm from the driver.
 .Pp
 The
-.Em \&cl
+.Ic \&cl
 screen clear string may be preceded by a (decimal) number
 of milliseconds of delay required (a la termcap).
 This delay is simulated by repeated use of the pad character
-.Em \&pc .
+.Ic \&pc .
 .Pp
 The initial message, and login message,
-.Em \&im
+.Ic \&im
 and
-.Em \&lm
+.Ic \&lm
 may include any of the following character sequences, which expand to
 information about the environment in which
 .Xr getty 8
@@ -280,17 +281,17 @@ The hostname of the machine, which is normally obtained from the
 system using
 .Xr gethostname 3 ,
 but may also be overridden by the
-.Em \&hn
+.Ic \&hn
 table entry.
 In either case it may be edited with the
-.Em \&he
+.Ic \&he
 string.
 A '@' in the
-.Em \&he
+.Ic \&he
 string causes one character from the real hostname to
 be copied to the final hostname.
 A '#' in the
-.Em \&he
+.Ic \&he
 string causes the next character of the real hostname
 to be skipped.
 Each character that
@@ -311,16 +312,16 @@ character.
 .Pp
 When getty execs the login process, given
 in the
-.Em \&lo
+.Ic \&lo
 string (usually
 .Dq Pa /usr/bin/login ) ,
 it will have set
 the environment to include the terminal type, as indicated
 by the
-.Em \&tt
+.Ic \&tt
 string (if it exists).
 The
-.Em \&ev
+.Ic \&ev
 string, can be used to enter additional data into
 the environment.
 It is a list of comma separated strings, each of which
@@ -328,7 +329,7 @@ will presumably be of the form
 .Em name=value .
 .Pp
 If a non-zero timeout is specified, with
-.Em \&to ,
+.Ic \&to ,
 then getty will exit within the indicated
 number of seconds, either having
 received a login name and passed control
@@ -340,15 +341,15 @@ This may be useful to hangup dial in lines.
 Output from
 .Xr getty 8
 is even parity unless
-.Em \&op
+.Ic \&op
 or
-.Em \&np
+.Ic \&np
 is specified.
 The
-.Em \&op
+.Ic \&op
 string
 may be specified with
-.Em \&ap
+.Ic \&ap
 to allow any parity on input, but generate odd parity output.
 Note: this only applies while getty is being run,
 terminal driver limitations prevent a more complete
@@ -359,13 +360,13 @@ does not check parity of input characters in
 mode.
 .Pp
 If
-.Em \&pp
+.Ic \&pp
 string is specified and a Point to Point Protocol
 .Pq Tn PPP
 link bringup sequence is recognized,
 .Xr getty 8
 will invoke the program referenced by the
-.Em \&pp
+.Ic \&pp
 string, e.g.
 .Xr pppd 8 .
 This can be used to handle incoming
@@ -400,5 +401,5 @@ of the delay algorithms are not implemented.
 The terminal driver should support sane delay settings.
 .Pp
 The
-.Em \&he
+.Ic \&he
 capability is stupid.
