@@ -131,7 +131,7 @@ aarch64*-*-linux*)
 aarch64*-*-netbsd*)
 	# Target: AArch64 NetBSD
 	gdb_target_obs="aarch64-tdep.o aarch64-nbsd-tdep.o \
-			arch/aarch64-insn.o solib-svr4.o"
+			arch/aarch64-insn.o"
 	;;
 
 alpha*-*-osf*)
@@ -256,11 +256,11 @@ hppa*-*-linux*)
 	;;
 hppa*-*-netbsd*)
 	# Target: NetBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-nbsd-tdep.o solib-svr4.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-nbsd-tdep.o"
 	;;
 hppa*-*-openbsd*)
 	# Target: OpenBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o solib-svr4.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o"
 	;;
 
 i[34567]86-*-darwin*)
@@ -724,7 +724,7 @@ v850*-*-elf | v850*-*-rtems*)
 
 vax-*-netbsd* | vax-*-knetbsd*-gnu)
 	# Target: NetBSD/vax
-	gdb_target_obs="vax-tdep.o solib-svr4.o"
+	gdb_target_obs="vax-tdep.o"
 	;;
 vax-*-openbsd*)
 	# Target: OpenBSD/vax
