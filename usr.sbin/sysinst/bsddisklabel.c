@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.18 2019/07/09 16:25:05 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.19 2019/07/12 18:28:08 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1215,8 +1215,10 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 			continue;
 		if (pset->parts != pset->infos[i].parts)
 			continue;
-		if (pset->infos[i].flags &
-		    (PUIFLG_IS_OUTER|PUIFLG_JUST_MOUNTPOINT))
+		if (pset->infos[i].flags & PUIFLG_JUST_MOUNTPOINT)
+			continue;
+		if ((pset->infos[i].flags & (PUIFLG_IS_OUTER|PUIFLAG_ADD_INNER))
+		    == PUIFLG_IS_OUTER)
 			continue;
 		if (pno >= pset->parts->num_part)
 			continue;
@@ -1288,7 +1290,8 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		if ((wanted->infos[i].flags & PUIFLAG_EXTEND) &&
 		    exp_ndx == ~0U)
 			exp_ndx = i;
-		if (wanted->infos[i].flags & PUIFLG_JUST_MOUNTPOINT)
+		if (wanted->infos[i].flags &
+		    (PUIFLG_JUST_MOUNTPOINT|PUIFLG_IS_OUTER))
 			continue;
 		nsp = wanted->infos[i].size;
 		if (wanted->infos[i].cur_part_id != NO_PART) {
@@ -1337,14 +1340,67 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		ps->pscheme->set_part_info(ps, want->cur_part_id,
 		    &infos[i], NULL);
 	}
-	/* Now add new partitions */
+
 	from = -1;
+	/*
+	 * First add all outer partitions - we need to align those exactly
+	 * with the inner counterpart later.
+	 */
+	if (parts->parent) {
+		ps = parts->parent;
+		daddr_t outer_align = ps->pscheme->get_part_alignment(ps);
+
+		for (i = 0; i < wanted->num; i++) {
+			struct part_usage_info *want = &wanted->infos[i];
+
+			if (want->cur_part_id != NO_PART)
+				continue;
+			if (!(want->flags & PUIFLAG_ADD_OUTER))
+				continue;
+			if (want->size <= 0)
+				continue;
+
+			size_t cnt = ps->pscheme->get_free_spaces(ps,
+			    &space, 1, want->size-2*outer_align,
+			    outer_align, from, -1);
+
+			if (cnt == 0)	/* no free space for this partition */
+				continue;
+
+			infos[i].start = space.start;
+			infos[i].size = min(want->size, space.size);
+			infos[i].nat_type =
+			    ps->pscheme->get_fs_part_type(
+			        want->fs_type, want->fs_version);
+			infos[i].last_mounted = want->mount;
+			infos[i].fs_type = want->fs_type;
+			infos[i].fs_sub_type = want->fs_version;
+			if (want->fs_type != FS_UNUSED && want->type != PT_swap)
+				want->instflags |= PUIINST_NEWFS|PUIINST_MOUNT;
+			new_part_id = ps->pscheme->add_partition(ps,
+			    &infos[i], NULL);
+			if (new_part_id == NO_PART)
+				continue;	/* failed to add, skip */
+
+			ps->pscheme->get_part_info(ps,
+			    new_part_id, &infos[i]);
+			want->cur_part_id = new_part_id;
+
+			want->flags |= PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER;
+			from = rounddown(infos[i].start + 
+			    infos[i].size+outer_align, outer_align);
+		}
+	}
+
+	/*
+	 * Now add new inner partitions
+	 */
 	for (i = 0; i < wanted->num && from < wanted->parts->disk_size; i++) {
 		struct part_usage_info *want = &wanted->infos[i];
 
 		if (want->cur_part_id != NO_PART)
 			continue;
-		if (want->flags & PUIFLG_JUST_MOUNTPOINT)
+		if (want->flags & (PUIFLG_JUST_MOUNTPOINT|PUIFLG_IS_OUTER))
 			continue;
 		if (want->size <= 0)
 			continue;
@@ -1376,15 +1432,62 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		from = rounddown(infos[i].start+infos[i].size+align, align);
 	}
 
+
+	/*
+	* If there are any outer partitions that we need as inner ones
+	 * too, add them to the inner partitioning scheme.
+	 */
+	for (i = 0; i < wanted->num; i++) {
+		struct part_usage_info *want = &wanted->infos[i];
+
+		if (want->cur_part_id != NO_PART)
+			continue;
+		if (want->flags & PUIFLG_JUST_MOUNTPOINT)
+			continue;
+		if (want->size <= 0)
+			continue;
+
+		if ((want->flags & (PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER)) !=
+		    (PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER))
+			continue;
+
+		infos[i].start = want->cur_start;
+		infos[i].size = want->size;
+		infos[i].nat_type = wanted->parts->pscheme->get_fs_part_type(
+		    want->fs_type, want->fs_version);
+		infos[i].last_mounted = want->mount;
+		infos[i].fs_type = want->fs_type;
+		infos[i].fs_sub_type = want->fs_version;
+		if (want->fs_type != FS_UNUSED &&
+		    want->type != PT_swap)
+			want->instflags |= PUIINST_NEWFS|PUIINST_MOUNT;
+
+		if (wanted->parts->pscheme->add_outer_partition
+		    != NULL)
+			new_part_id = wanted->parts->pscheme->
+			    add_outer_partition(
+			    wanted->parts, &infos[i], NULL);
+		else
+			new_part_id = wanted->parts->pscheme->
+			    add_partition(
+			    wanted->parts, &infos[i], NULL);
+		
+		if (new_part_id == NO_PART)
+			continue;	/* failed to add, skip */
+
+		wanted->parts->pscheme->get_part_info(
+		    wanted->parts, new_part_id, &infos[i]);
+	}
+
 	/*
 	 * Note: all part_ids are invalid now, as we have added things!
 	 */
 	for (i = 0; i < wanted->num; i++)
 		wanted->infos[i].cur_part_id = NO_PART;
-	for (pno = 0; pno < ps->num_part; pno++) {
+	for (pno = 0; pno < parts->num_part; pno++) {
 		struct disk_part_info t;
 
-		if (!ps->pscheme->get_part_info(ps, pno, &t))
+		if (!parts->pscheme->get_part_info(parts, pno, &t))
 			continue;
 
 		for (i = 0; i < wanted->num; i++) {
