@@ -1,5 +1,5 @@
-/* $NetBSD: piixpm.c,v 1.52 2017/03/29 09:04:36 msaitoh Exp $ */
-/*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
+/* $NetBSD: piixpm.c,v 1.53 2019/07/12 03:57:50 msaitoh Exp $ */
+/*	$OpenBSD: piixpm.c,v 1.35 2011/04/09 04:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52 2017/03/29 09:04:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.53 2019/07/12 03:57:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ piixpm_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_CSB5:
 		case PCI_PRODUCT_SERVERWORKS_CSB6:
 		case PCI_PRODUCT_SERVERWORKS_HT1000SB:
+		case PCI_PRODUCT_SERVERWORKS_HT1100SB:
 			return 1;
 		}
 		break;
@@ -195,7 +196,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
-	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
+	if (base == 0 || bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
 		aprint_error_dev(self,
 		    "can't map power management I/O space\n");
@@ -251,21 +252,25 @@ nopowermanagement:
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		/* No PCI IRQ */
 		aprint_normal("interrupting at SMI, ");
-	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
-		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
-			    sizeof(intrbuf));
-			sc->sc_smb_ih = pci_intr_establish_xname(pa->pa_pc, ih,
-			    IPL_BIO, piixpm_intr, sc, device_xname(sc->sc_dev));
-			if (sc->sc_smb_ih != NULL) {
-				aprint_normal("interrupting at %s", intrstr);
-				sc->sc_poll = 0;
+	} else {
+		if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
+			/* Install interrupt handler */
+			if (pci_intr_map(pa, &ih) == 0) {
+				intrstr = pci_intr_string(pa->pa_pc, ih,
+				    intrbuf, sizeof(intrbuf));
+				sc->sc_smb_ih = pci_intr_establish_xname(
+					pa->pa_pc, ih, IPL_BIO, piixpm_intr,
+					sc, device_xname(sc->sc_dev));
+				if (sc->sc_smb_ih != NULL) {
+					aprint_normal("interrupting at %s",
+					    intrstr);
+					sc->sc_poll = 0;
+				}
 			}
 		}
+		if (sc->sc_poll)
+			aprint_normal("polling");
 	}
-	if (sc->sc_poll)
-		aprint_normal("polling");
 
 	aprint_normal("\n");
 
@@ -472,8 +477,9 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t ctl = 0, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %zu, len %zu, flags 0x%x\n",
-	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
+		"flags 0x%x\n",
+		device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
@@ -569,7 +575,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
+		if (tsleep(sc, PRIBIO, "piixpm", PIIXPM_TIMEOUT * hz))
 			goto timeout;
 	}
 
