@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.6 2019/07/10 16:35:11 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.7 2019/07/12 18:22:36 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -914,6 +914,65 @@ disklabel_add_partition(struct disk_partitions *arg,
 	return new_id;
 }
 
+static part_id
+disklabel_add_outer_partition(struct disk_partitions *arg,
+    const struct disk_part_info *info, const char **err_msg)
+{
+	struct disklabel_disk_partitions *parts =
+	    (struct disklabel_disk_partitions*)arg;
+	int i, part = -1;
+	part_id new_id;
+
+	if (dl_maxpart == 0)
+		dl_maxpart = getmaxpartitions();
+
+	for (new_id = 0, i = 0; i < parts->l.d_npartitions; i++) {
+		if (parts->l.d_partitions[i].p_size > 0)
+			new_id++;
+		if (info->nat_type->generic_ptype != PT_root &&
+		    info->nat_type->generic_ptype != PT_swap && i < RAW_PART)
+			continue;
+		if (i == 0 && info->nat_type->generic_ptype != PT_root)
+			continue;
+		if (i == 1 && info->nat_type->generic_ptype != PT_swap)
+			continue;
+		if (i == RAW_PART)
+			continue;
+#if RAW_PART > 2
+		if (i == RAW_PART-1)
+			continue;
+#endif
+		if (parts->l.d_partitions[i].p_size > 0)
+			continue;
+		part = i;
+		break;
+	}
+
+	if (part < 0) {
+		if (parts->l.d_npartitions >= dl_maxpart) {
+			if (err_msg)
+				*err_msg =
+				    msg_string(MSG_err_too_many_partitions);
+			return NO_PART;
+		}
+
+		part = parts->l.d_npartitions++;
+	}
+	parts->l.d_partitions[part].p_offset = info->start;
+	parts->l.d_partitions[part].p_size = info->size;
+	parts->l.d_partitions[part].p_fstype =
+	     dl_part_type_from_generic(info->nat_type);
+	if (info->last_mounted && info->last_mounted[0])
+		strlcpy(parts->last_mounted[part], info->last_mounted,
+		    sizeof(parts->last_mounted[part]));
+	else
+		parts->last_mounted[part][0] = 0;
+	parts->fs_sub_type[part] = info->fs_sub_type;
+	parts->dp.num_part++;
+
+	return new_id;
+}
+
 static size_t
 disklabel_get_free_spaces(const struct disk_partitions *arg,
     struct disk_part_free_space *result, size_t max_num_result,
@@ -982,6 +1041,7 @@ disklabel_parts = {
 	.can_add_partition = disklabel_can_add_partition,
 	.set_part_info = disklabel_set_part_info,
 	.add_partition = disklabel_add_partition,
+	.add_outer_partition = disklabel_add_outer_partition,
 	.max_free_space_at = disklabel_max_free_space_at,
 	.get_free_spaces = disklabel_get_free_spaces,
 	.get_part_device = disklabel_get_part_device,
