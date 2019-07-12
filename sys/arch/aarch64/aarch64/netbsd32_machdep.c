@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.6 2019/04/12 09:29:26 ryo Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.6 2019/04/12 09:29:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -226,7 +226,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    tf->tf_reg[13];	/* r13 = sp on aarch32 */
 
 	fp = (struct netbsd32_sigframe_siginfo *)sp;
-	fp = (struct netbsd32_sigframe_siginfo *)STACK_ALIGN(fp - 1, 8);
+	fp = (struct netbsd32_sigframe_siginfo *)STACK_ALIGN(fp - 1, (8 - 1));
 
 	memset(&frame, 0, sizeof(frame));
 
