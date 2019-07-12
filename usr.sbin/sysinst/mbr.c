@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.15 2019/06/20 00:43:55 christos Exp $ */
+/*	$NetBSD: mbr.c,v 1.16 2019/07/12 18:23:06 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,6 +113,7 @@ const struct {
 	{ .ptype=MBR_PTYPE_FAT16B, .desc="DOS FAT16, >32M" },
 	{ .ptype=MBR_PTYPE_FAT16L, .desc="Windows FAT16, LBA" },
 	{ .ptype=MBR_PTYPE_FAT32, .desc="Windows FAT32" },
+	{ .ptype=MBR_PTYPE_EFI, .desc="(U)EFI Boot" },
 };
 
 /* bookeeping of available partition types (including custom ones) */
