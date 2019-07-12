@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.36 2019/06/21 21:54:39 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.37 2019/07/12 18:28:08 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -249,8 +249,9 @@ struct part_usage_info {
 					 * is available */
 #define	PUIFLAG_ADD_OUTER	2	/* Add this partition to the outer
 					 * partitions (if available) */
-#define	PUIFLG_IS_OUTER		4
-#define	PUIFLG_JUST_MOUNTPOINT	8	/* tmpfs of mfs mountpoints */
+#define	PUIFLG_IS_OUTER		4	/* this is an existing outer one */
+#define	PUIFLAG_ADD_INNER	8	/* add outer also to inner */
+#define	PUIFLG_JUST_MOUNTPOINT	16	/* tmpfs of mfs mountpoints */
 	uint flags;
 	struct disk_partitions *parts;	/* Where does this partition live?
 					 * We currently only support
