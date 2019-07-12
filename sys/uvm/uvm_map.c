@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.361 2019/07/11 17:07:10 maxv Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.362 2019/07/12 06:27:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.361 2019/07/11 17:07:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.362 2019/07/12 06:27:13 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4446,9 +4446,11 @@ uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
 		if (old_entry->aref.ar_amap &&
 		    !UVM_ET_ISNEEDSCOPY(old_entry)) {
 			if (old_entry->max_protection & VM_PROT_WRITE) {
+				uvm_map_lock_entry(old_entry);
 				pmap_protect(old_map->pmap,
 				    old_entry->start, old_entry->end,
 				    old_entry->protection & ~VM_PROT_WRITE);
+				uvm_map_unlock_entry(old_entry);
 			}
 			old_entry->etype |= UVM_ET_NEEDSCOPY;
 		}
