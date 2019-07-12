@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.100 2019/06/22 07:58:55 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.101 2019/07/12 19:28:20 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -137,8 +137,8 @@ options 	INCLUDE_CONFIG_FILE
 # instead of warnings.
 #makeoptions 	KASAN=1		# mandatory
 #options 	KASAN		# mandatory
-#options	POOL_QUARANTINE	# optional
-#options	KASAN_PANIC	# optional
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
