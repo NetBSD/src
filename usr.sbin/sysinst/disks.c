@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.36 2019/06/22 20:46:07 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.37 2019/07/13 17:13:36 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1031,7 +1031,7 @@ make_filesystems(struct install_partition_desc *install)
 			    "/sbin/newfs -V2 -O2 %s", rdev);
 		}
 
-		md_pre_mount(install);
+		md_pre_mount(install, 0);
 
 		make_target_dir("/");
 
@@ -1147,7 +1147,7 @@ make_filesystems(struct install_partition_desc *install)
 			return error;
 
 		ptn->instflags &= ~PUIINST_NEWFS;
-		md_pre_mount(install);
+		md_pre_mount(install, i);
 
 		if (partman_go == 0 && (ptn->instflags & PUIINST_MOUNT) &&
 				mnt_opts != NULL) {
@@ -1493,7 +1493,7 @@ mount_root(const char *devdev, struct install_partition_desc *install)
 	if (error != 0)
 		return error;
 
-	md_pre_mount(install);
+	md_pre_mount(install, 0);
 
 	/* Mount devdev on target's "".
 	 * If we pass "" as mount-on, Prefixing will DTRT.
