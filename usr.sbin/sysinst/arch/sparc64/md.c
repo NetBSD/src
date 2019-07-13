@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2019/06/20 00:43:58 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2019/07/13 17:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,9 +172,10 @@ install_ofwboot(void)
 }
 
 int
-md_pre_mount(struct install_partition_desc *install)
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
-	install_bootblocks();
+	if (ndx == 0)
+		install_bootblocks();
 	return 0;
 }
 

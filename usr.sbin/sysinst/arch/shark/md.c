@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2019/06/20 00:43:57 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2019/07/13 17:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,7 +224,7 @@ clear_mbr(const char *disk, char *diskpath, size_t diskpathlen)
 }
 
 int
-md_pre_mount(struct install_partition_desc *install)
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
