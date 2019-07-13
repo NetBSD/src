@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.35 2019/06/22 20:46:07 christos Exp $ */
+/*	$NetBSD: partman.c,v 1.36 2019/07/13 17:13:36 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2273,7 +2273,7 @@ pm_mountall(void)
 			ok = 1;
 		}
 		if (ok)
-			md_pre_mount();
+			md_pre_mount(NULL, 0);
 	}
 	if (strlen(localfs_dev) < 1) {
 		hit_enter_to_continue(MSG_noroot, NULL);
