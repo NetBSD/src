@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.148 2019/06/26 12:29:00 mgorny Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.149 2019/07/13 09:28:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -701,12 +701,16 @@
 #define CPUID_APM_TSC	0x00000100	/* TSC invariant */
 #define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 #define CPUID_APM_EFF	0x00000400	/* Effective Frequency (read-only) */
+#define CPUID_APM_PROCFI 0x00000800	/* Proc Feedback Interface */
+#define CPUID_APM_PROCPR 0x00001000	/* Proc Power Reporting  */
+#define CPUID_APM_CONNSTBY 0x00002000	/* Connected Standby */
+#define CPUID_APM_RAPL	0x00004000	/* Running Average Power Limit */
 
-#define CPUID_APM_FLAGS		"\20" \
-	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP" \
-	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP" \
-	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "B11" \
-	"\15" "B12"
+#define CPUID_APM_FLAGS		"\20"					      \
+	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP"	      \
+	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP"	      \
+	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
+	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
 /* AMD Fn8000000a %edx features (SVM features) */
 #define CPUID_AMD_SVM_NP		0x00000001
