@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2019/06/20 00:43:56 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2019/07/13 17:13:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,7 +222,7 @@ md_update(struct install_partition_desc *install)
 }
 
 int
-md_pre_mount(struct install_partition_desc *install)
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
