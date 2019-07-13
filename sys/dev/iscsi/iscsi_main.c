@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.29 2019/04/21 11:26:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.30 2019/07/13 17:06:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -252,6 +252,9 @@ iscsi_attach(device_t parent, device_t self, void *aux)
 	iscsi_detaching = false;
 	iscsi_init_cleanup();
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	aprint_normal("%s: attached.  major = %d\n", iscsi_cd.cd_name,
 	    cdevsw_lookup_major(&iscsi_cdevsw));
 }
@@ -284,6 +287,8 @@ iscsi_detach(device_t self, int flags)
 	error = iscsi_destroy_cleanup();
 	if (error)
 		return error;
+
+	pmf_device_deregister(sc->dev);
 
 	mutex_destroy(&sc->lock);
 
