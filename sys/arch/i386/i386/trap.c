@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.301 2019/05/29 14:28:37 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.302 2019/07/13 17:04:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.301 2019/05/29 14:28:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.302 2019/07/13 17:04:21 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -582,17 +582,20 @@ kernelfault:
 
 		if (frame->tf_err & PGEX_X) {
 			/* SMEP might have brought us here */
-			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS)
-				panic("prevented execution of %p (SMEP)",
+			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS) {
+				printf("prevented execution of %p (SMEP)\n",
 				    (void *)cr2);
+				goto we_re_toast;
+			}
 		}
 
 		if ((frame->tf_err & PGEX_P) &&
 		    cr2 < VM_MAXUSER_ADDRESS) {
 			/* SMAP might have brought us here */
 			if (onfault_handler(pcb, frame) == NULL) {
-				panic("prevented access to %p (SMAP)",
+				printf("prevented access to %p (SMAP)\n",
 				    (void *)cr2);
+				goto we_re_toast;
 			}
 		}
 
