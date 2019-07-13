@@ -141,25 +141,25 @@ static const struct tramp_frame shnbsd_sigtramp_si2 =
   SIGTRAMP_FRAME,
   2,
   {
-    { 0x64f3, (ULONGEST)-1 },			/* mov     r15,r4 */
-    { 0xd002, (ULONGEST)-1 },			/* mov.l   .LSYS_setcontext */
-    { 0xc380, (ULONGEST)-1 },			/* trapa   #-128 */
-    { 0xa003, (ULONGEST)-1 },			/* bra     .Lskip1 */
-    { 0x0009, (ULONGEST)-1 },			/* nop */
-    { 0x0009, (ULONGEST)-1 },			/* nop */
+    { 0x64f3, ULONGEST_MAX },			/* mov     r15,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_setcontext */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip1 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
  /* .LSYS_setcontext */
-    { 0x0134, (ULONGEST)-1 }, { 0x0000, (ULONGEST)-1 },     /* 0x134 */
+    { 0x0134, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x134 */
  /* .Lskip1 */
-    { 0x6403, (ULONGEST)-1 },			/* mov     r0,r4 */
-    { 0xd002, (ULONGEST)-1 },			/* mov.l   .LSYS_exit  */
-    { 0xc380, (ULONGEST)-1 },			/* trapa   #-128 */
-    { 0xa003, (ULONGEST)-1 },			/* bra     .Lskip2 */
-    { 0x0009, (ULONGEST)-1 },			/* nop */
-    { 0x0009, (ULONGEST)-1 },			/* nop */
+    { 0x6403, ULONGEST_MAX },			/* mov     r0,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_exit  */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip2 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
  /* .LSYS_exit */
-    { 0x0001, (ULONGEST)-1 }, { 0x0000, (ULONGEST)-1 },     /* 0x1 */
+    { 0x0001, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x1 */
 /* .Lskip2 */
-    { TRAMP_SENTINEL_INSN, (ULONGEST)-1 }
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   shnbsd_sigtramp_cache_init
 };
