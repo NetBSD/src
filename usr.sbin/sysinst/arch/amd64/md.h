@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2019/07/14 11:27:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,3 +110,16 @@ extern struct mbr_bootsel *mbs;
 /*
  *  prototypes for MD code.
  */
+
+/*
+ * When we do an UEFI install, we have completely different default
+ * partitions and need to adjust the description at runtime.
+ */
+void x86_md_part_defaults(struct pm_devs*, struct part_usage_info**,
+            size_t *num_usage_infos);
+#define MD_PART_DEFAULTS(A,B,C)	x86_md_part_defaults(A,&(B),&(C))
+
+/* no need to install bootblock if installing for UEFI */
+bool x86_md_need_bootblock(struct install_partition_desc *install);
+#define	MD_NEED_BOOTBLOCK(A)	x86_md_need_bootblock(A)
+
