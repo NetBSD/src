@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.37 2019/07/13 17:13:36 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.38 2019/07/14 11:25:10 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1053,9 +1053,8 @@ make_filesystems(struct install_partition_desc *install)
 
 	for (i = 0; i < install->num; i++) {
 		/*
-		 * newfs and mount. For now, process only BSD filesystems.
-		 * but if this is the mounted-on root, has no mount
-		 * point defined, or is marked preserve, don't touch it!
+		 * Newfs all file systems mareked as needing this.
+		 * Mount the ones that have a mountpoint in the target.
 		 */
 		ptn = &install->infos[i];
 		parts = ptn->parts;
@@ -1068,8 +1067,7 @@ make_filesystems(struct install_partition_desc *install)
 		    && is_active_rootpart(devdev, partno))
 			continue;
 
-		if ((ptn->instflags & PUIINST_MOUNT) == 0)
-			/* No mount point */
+		if (!(ptn->instflags & PUIINST_NEWFS))
 			continue;
 
 		parts->pscheme->get_part_device(parts, ptn->cur_part_id,
