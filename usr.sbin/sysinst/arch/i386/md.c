@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2019/07/13 17:13:38 martin Exp $ */
+/*	$NetBSD: md.c,v 1.20 2019/07/14 11:27:33 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,6 +60,7 @@
 #endif
 
 static struct biosdisk_info *biosdisk = NULL;
+static bool uefi_boot;
 
 /* prototypes */
 
@@ -68,11 +69,30 @@ static int mbr_root_above_chs(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 
-static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
+static int conmib[] = { CTL_MACHDEP, CPU_CONSDEV };
+
+#define	BOOT_PART	(128*(MEG/512))
+#define	BOOT_PART_TYPE	PT_EFI_SYSTEM
+
+static const char * uefi_bootloaders[] = {
+	"/usr/mdec/bootia32.efi",
+	"/usr/mdec/bootx64.efi",
+};
 
 void
 md_init(void)
 {
+	char boot_method[100];
+	size_t len;
+
+	len = sizeof(boot_method);
+	if (sysctlbyname("machdep.bootmethod", boot_method, &len, NULL, 0)
+	    != -1) {
+		if (strcmp(boot_method, "BIOS") == 0)
+			uefi_boot = false;
+		else if (strcmp(boot_method, "UEFI") == 0)
+			uefi_boot = true;
+	}
 }
 
 void
@@ -150,6 +170,10 @@ md_check_partitions(struct install_partition_desc *install)
 	int rval;
 	char *bootxx;
 
+	/* if booting via UEFI no boot blocks are needed */
+	if (uefi_boot)
+		return true;
+
 	/* check we have boot code for the root partition type */
 	bootxx = bootxx_name(install);
 	rval = access(bootxx, R_OK);
@@ -197,12 +221,10 @@ md_post_disklabel(struct install_partition_desc *install,
 }
 
 /*
- * hook called after upgrade() or install() has finished setting
- * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message.
+ * Do all legacy bootblock update/setup here
  */
-int
-md_post_newfs(struct install_partition_desc *install)
+static int
+md_post_newfs_bios(struct install_partition_desc *install)
 {
 	int ret;
 	size_t len;
@@ -280,6 +302,82 @@ md_post_newfs(struct install_partition_desc *install)
                     __UNCONST("Warning: disk is probably not bootable"));
 
 	return ret;
+}
+
+/*
+ * Make sure our bootloader(s) are in the proper directory in the boot
+ * boot partition (or update them).
+ */
+static int
+copy_uefi_boot(const struct part_usage_info *boot)
+{
+	char dev[MAXPATHLEN], path[MAXPATHLEN];
+	size_t i;
+	int err;
+
+	if (!boot->parts->pscheme->get_part_device(boot->parts,
+	    boot->cur_part_id, dev, sizeof(dev), NULL, plain_name, true))
+		return -1;
+
+	/*
+	 * We should have a valid file system on that partition.
+	 * Try to mount it and check if there is a /EFI in there.
+	 */
+	if (boot->mount[0])
+		strlcpy(path, boot->mount, sizeof(path));
+	else
+		strcpy(path, "/mnt");
+
+	if (!(boot->instflags & PUIINST_MOUNT)) {
+		make_target_dir(path);
+		err = target_mount("", dev, path);
+		if (err != 0)
+			return err;
+	}
+
+	strlcat(path, "/EFI/boot", sizeof(path));
+	make_target_dir(path);
+
+	for (i = 0; i < __arraycount(uefi_bootloaders); i++) {
+		if (access(uefi_bootloaders[i], R_OK) != 0)
+			continue;
+		err = cp_to_target(uefi_bootloaders[i], path);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
+/*
+ * Find (U)EFI boot partition and install/update bootloaders
+ */
+static int
+md_post_newfs_uefi(struct install_partition_desc *install)
+{
+	size_t i;
+
+	for (i = 0; i < install->num; i++) {
+		if (!(install->infos[i].instflags & PUIINST_BOOT))
+			continue;
+
+		return copy_uefi_boot(&install->infos[i]);
+	}
+
+	return -1;	/* no EFI boot partition found */
+}
+
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
+int
+md_post_newfs(struct install_partition_desc *install)
+{
+
+	return uefi_boot ? md_post_newfs_uefi(install)
+	    : md_post_newfs_bios(install);
 }
 
 int
@@ -497,7 +595,18 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 bool
 md_parts_use_wholedisk(struct disk_partitions *parts)
 {
-	return parts_use_wholedisk(parts, 0, NULL);
+	struct disk_part_info boot_part = {
+		.size = BOOT_PART,
+		.fs_type = FS_MSDOS, .fs_sub_type = MBR_PTYPE_FAT32L,
+	};
+
+	if (!uefi_boot)
+		return parts_use_wholedisk(parts, 0, NULL);
+
+	boot_part.nat_type = parts->pscheme->get_generic_part_type(
+	    PT_EFI_SYSTEM);
+
+	return parts_use_wholedisk(parts, 1, &boot_part);
 }
 
 static bool
@@ -732,3 +841,74 @@ md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
 	return true;
 }
 #endif
+
+/*
+ * When we do an UEFI install, we have completely different default
+ * partitions and need to adjust the description at runtime.
+ */
+void
+x86_md_part_defaults(struct pm_devs *cur_pm, struct part_usage_info **partsp,
+    size_t *num_usage_infos)
+{
+	static const struct part_usage_info uefi_boot_part =
+	{
+		.size = BOOT_PART,
+		.type = BOOT_PART_TYPE,
+		.instflags = PUIINST_NEWFS|PUIINST_BOOT,
+		.fs_type = FS_MSDOS, .fs_version = MBR_PTYPE_FAT32L,
+		.flags = PUIFLAG_ADD_OUTER,
+	};
+
+	struct disk_partitions *parts;
+	struct part_usage_info *new_usage, *boot;
+	struct disk_part_info info;
+	size_t num;
+	part_id pno;
+
+	if (!uefi_boot)
+		return;		/* legacy defaults apply */
+
+	/*
+	 * Insert a UEFI boot partition at the beginning of the array
+	 */
+
+	/* create space for new description */
+	num = *num_usage_infos + 1;
+	new_usage = realloc(*partsp, sizeof(*new_usage)*num);
+	if (new_usage == NULL)
+		return;
+	*partsp = new_usage;
+	*num_usage_infos = num;
+	boot = new_usage;
+	memmove(boot+1, boot, sizeof(*boot)*(num-1));
+	*boot = uefi_boot_part;
+
+	/*
+	 * Check if the UEFI partition already exists
+	 */
+	parts = pm->parts;
+	if (parts->parent != NULL)
+		parts = parts->parent;
+	for (pno = 0; pno < parts->num_part; pno++) {
+		if (!parts->pscheme->get_part_info(parts, pno, &info))
+			continue;
+		if (info.nat_type->generic_ptype != boot->type)
+			continue;
+		boot->flags &= ~PUIFLAG_ADD_OUTER;
+		boot->flags |= PUIFLG_IS_OUTER|PUIFLAG_ADD_INNER;
+		boot->size = info.size;
+		boot->cur_start = info.start;
+		boot->cur_flags = info.flags;
+		break;
+	}
+}
+
+/* no need to install bootblock if installing for UEFI */
+bool
+x86_md_need_bootblock(struct install_partition_desc *install)
+{
+
+	return !uefi_boot;
+}
+
+
