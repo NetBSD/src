@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.19 2019/07/12 18:28:08 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.20 2019/07/14 11:26:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1375,8 +1375,6 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
-			if (want->fs_type != FS_UNUSED && want->type != PT_swap)
-				want->instflags |= PUIINST_NEWFS|PUIINST_MOUNT;
 			new_part_id = ps->pscheme->add_partition(ps,
 			    &infos[i], NULL);
 			if (new_part_id == NO_PART)
@@ -1420,8 +1418,11 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		infos[i].last_mounted = want->mount;
 		infos[i].fs_type = want->fs_type;
 		infos[i].fs_sub_type = want->fs_version;
-		if (want->fs_type != FS_UNUSED && want->type != PT_swap)
-			want->instflags |= PUIINST_NEWFS|PUIINST_MOUNT;
+		if (want->fs_type != FS_UNUSED && want->type != PT_swap) {
+			want->instflags |= PUIINST_NEWFS;
+			if (want->mount[0] != 0)
+				want->instflags |= PUIINST_MOUNT;
+		}
 		new_part_id = wanted->parts->pscheme->add_partition(
 		    wanted->parts, &infos[i], NULL);
 		if (new_part_id == NO_PART)
@@ -1458,9 +1459,6 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		infos[i].last_mounted = want->mount;
 		infos[i].fs_type = want->fs_type;
 		infos[i].fs_sub_type = want->fs_version;
-		if (want->fs_type != FS_UNUSED &&
-		    want->type != PT_swap)
-			want->instflags |= PUIINST_NEWFS|PUIINST_MOUNT;
 
 		if (wanted->parts->pscheme->add_outer_partition
 		    != NULL)
@@ -1663,6 +1661,10 @@ make_bsd_partitions(struct install_partition_desc *install)
 	return true;
 }
 
+#ifndef MD_NEED_BOOTBLOCK
+#define MD_NEED_BOOTBLOCK(A)	true
+#endif
+
 /*
  * check that there is at least a / somewhere.
  */
@@ -1678,30 +1680,34 @@ check_partitions(struct install_partition_desc *install)
 #endif
 
 #ifdef HAVE_BOOTXX_xFS
-	/* check if we have boot code for the root partition type */
-	bootxx = bootxx_name(install);
-	if (bootxx != NULL) {
-		rv = access(bootxx, R_OK);
-		free(bootxx);
-	} else
-		rv = -1;
-	if (rv != 0) {
-		hit_enter_to_continue(NULL, MSG_No_Bootcode);
-		return false;
+	if (MD_NEED_BOOTBLOCK(install)) {
+		/* check if we have boot code for the root partition type */
+		bootxx = bootxx_name(install);
+		if (bootxx != NULL) {
+			rv = access(bootxx, R_OK);
+			free(bootxx);
+		} else
+			rv = -1;
+		if (rv != 0) {
+			hit_enter_to_continue(NULL, MSG_No_Bootcode);
+			return false;
+		}
 	}
 #endif
 #ifndef HAVE_UFS2_BOOT
-	for (i = 0; i < install->num; i++) {
-		if (install->infos[i].type != PT_root)
-			continue;
-		if (strcmp(install->infos[i].mount, "/") != 0)
-			continue;
-		if (install->infos[i].fs_type != FS_BSDFFS)
-			continue;
-		if (install->infos[i].fs_version != 2)
-			continue;
-		hit_enter_to_continue(NULL, MSG_cannot_ufs2_root);
-		return false;
+	if (MD_NEED_BOOTBLOCK(install)) {
+		for (i = 0; i < install->num; i++) {
+			if (install->infos[i].type != PT_root)
+				continue;
+			if (strcmp(install->infos[i].mount, "/") != 0)
+				continue;
+			if (install->infos[i].fs_type != FS_BSDFFS)
+				continue;
+			if (install->infos[i].fs_version != 2)
+				continue;
+			hit_enter_to_continue(NULL, MSG_cannot_ufs2_root);
+			return false;
+		}
 	}
 #endif
 
