@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: rpi-mkknlimg.sh,v 1.1 2017/12/10 21:38:26 skrll Exp $
+# $NetBSD: rpi-mkknlimg.sh,v 1.2 2019/07/14 20:12:22 thorpej Exp $
 #
 # Tag an RPI kernel so the firmware will load device tree
 
@@ -8,8 +8,8 @@
 
 magic_rptl=1280594002		# 'RPTL'
 magic_283x=2016622642		# '283x'
-magic_ddtk=
-magic_dtok=1263490116
+magic_ddtk=1263813700		# 'DDTK'
+magic_dtok=1263490116		# 'DTOK'
 magic_kver=
 
 if [ $# -ne 2 ] ; then
@@ -48,9 +48,12 @@ le32enc()
 	le32enc 1
 	le32enc 4
 	le32enc $magic_dtok
+	le32enc 1
+	le32enc 4
+	le32enc $magic_ddtk
 
-	# length ( 9 * 4 + 8)
-	le32enc 44
+	# length ( 11 * 4 + 12)
+	le32enc 56
 	le32enc 4
 	le32enc $magic_rptl
 } > ${output}
