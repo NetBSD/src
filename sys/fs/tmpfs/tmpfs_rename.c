@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.8 2015/07/06 10:24:59 wiz Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.9 2019/07/14 05:58:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.8 2015/07/06 10:24:59 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.9 2019/07/14 05:58:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -282,7 +282,7 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(tcnp != NULL);
 	KASSERT(tdep != NULL);
 	KASSERT(fdep != tdep);
-	KASSERT((*fdep) != (*tdep));
+	KASSERT((tvp == NULL) || (*fdep) != (*tdep));
 	KASSERT((*fdep) != NULL);
 	KASSERT((*fdep)->td_node == VP_TO_TMPFS_NODE(fvp));
 	KASSERT((tvp == NULL) || ((*tdep) != NULL));
