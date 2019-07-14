@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.37 2019/07/14 15:36:57 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.38 2019/07/14 16:12:02 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2683,10 +2683,23 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 				mount_point = msg_string(MSG_pmmounted);
 			else
 				mount_point = msg_string(MSG_pmunused);
-			fstype = getfslabelname(info.fs_type, info.fs_sub_type);
-			snprintf(buf, STRSIZE, "%s (%s) %s",
-				info.last_mounted, fstype, mount_point);
-			pm_fmt_disk_line(m->mw, dev, buf, info.size, NULL);
+			fstype = getfslabelname(info.fs_type,
+			    info.fs_sub_type);
+			if (info.last_mounted != NULL) {
+				snprintf(buf, STRSIZE, "%s (%s) %s",
+				    info.last_mounted, fstype,
+				     mount_point);
+				pm_fmt_disk_line(m->mw, dev, buf,
+				    info.size, NULL);
+			} else {
+				if (fstype != NULL) {
+					strlcat(dev, " (", sizeof(dev));
+					strlcat(dev, fstype, sizeof(dev));
+					strlcat(dev, ")", sizeof(dev));
+				}
+				pm_fmt_disk_line(m->mw, dev, NULL,
+				    info.size, NULL);
+			}
 			break;
 		case PM_SPEC:
 			/* XXX ? */
@@ -2820,6 +2833,8 @@ pm_upddevlist(menudesc *m, void *arg)
 					continue;
 				if (info.fs_type == FS_UNUSED)
 					continue;
+				if (i >= MAX_ENTRIES)
+					break;
 				i++;
 				m->opts[i].opt_name = NULL;
 				m->opts[i].opt_exp_name = NULL;
@@ -2841,6 +2856,8 @@ pm_upddevlist(menudesc *m, void *arg)
 					continue;
 				if (info.fs_type == FS_UNUSED)
 					continue;
+				if (i >= MAX_ENTRIES)
+					break;
 				i++;
 				m->opts[i].opt_name = NULL;
 				m->opts[i].opt_exp_name = NULL;
