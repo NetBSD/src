@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.23 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.24 2019/07/14 09:31:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.23 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.24 2019/07/14 09:31:33 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -945,7 +945,7 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 	KASSERT(pv->pv_pmap != NULL);
 	bool ret = false;
 	for (pv_entry_t npv = pv; npv && npv->pv_pmap;) {
-		if (npv->pv_va & PV_KENTER) {
+		if (PV_ISKENTER_P(npv)) {
 			npv = npv->pv_next;
 			continue;
 		}
