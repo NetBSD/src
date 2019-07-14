@@ -263,7 +263,12 @@ nbsd_add_threads (pid_t pid)
     {
       ptid_t ptid = ptid_t (pid, pl.pl_lwpid, 0);
       if (!in_thread_list (ptid))
-	add_thread (ptid);
+	{
+	  if (inferior_ptid.lwp () == 0)
+	    thread_change_ptid (inferior_ptid, ptid);
+	  else
+	    add_thread (ptid);
+	}
     }
 }
 
@@ -454,7 +459,10 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
               ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
               return wptid;
             }
-            add_thread (wptid);
+	    if (inferior_ptid.lwp () == 0)
+	      thread_change_ptid (inferior_ptid, wptid);
+	    else
+	      add_thread (wptid);
             ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
             if (debug_nbsd_lwp)
               fprintf_unfiltered (gdb_stdlog, "NLWP: created LWP %d\n", pst.pe_lwp);
