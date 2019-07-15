@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.129.4.2 2019/01/29 07:04:09 msaitoh Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.129.4.3 2019/07/15 08:20:57 martin Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.129.4.2 2019/01/29 07:04:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.129.4.3 2019/07/15 08:20:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -665,6 +665,11 @@ udp6_attach(struct socket *so, int proto)
 	KASSERT(sotoin6pcb(so) == NULL);
 	sosetlock(so);
 
+	error = soreserve(so, udp6_sendspace, udp6_recvspace);
+	if (error) {
+		return error;
+	}
+
 	/*
 	 * MAPPED_ADDR implementation spec:
 	 *  Always attach for IPv6, and only when necessary for IPv4.
@@ -675,10 +680,7 @@ udp6_attach(struct socket *so, int proto)
 	if (error) {
 		return error;
 	}
-	error = soreserve(so, udp6_sendspace, udp6_recvspace);
-	if (error) {
-		return error;
-	}
+
 	in6p = sotoin6pcb(so);
 	in6p->in6p_cksum = -1;	/* just to be sure */
 
