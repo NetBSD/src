@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.38 2019/07/14 16:12:02 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.39 2019/07/15 17:17:59 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -457,7 +457,8 @@ pm_fmt_disk_line(WINDOW *w, const char *line, const char *on,
 		wprintw(w, "   %-56s (%s)", line, no_size_display);
 	} else {
 		humanize_number(human, sizeof(human),
-	            total, "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+	            total * 512, "",
+		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 		wprintw(w, "   %-56s %s", line, human);
 	}
 }
