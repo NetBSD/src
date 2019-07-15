@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 2019/07/15 11:45:54 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.38 2019/07/15 11:46:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.37 2019/07/15 11:45:54 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.38 2019/07/15 11:46:53 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -826,7 +826,7 @@ init_mmutable:
 	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_AP_RW	/* attr */
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x3, #L2_SIZE			/* blocksize */
-	adr	x1, start			/* va = start */
+	adr	x1, start			/* pa = start */
 	ADDR	x2, _end
 	sub	x2, x2, x1			/* size = _end - start */
 	ldr	x0, =start			/* va */
