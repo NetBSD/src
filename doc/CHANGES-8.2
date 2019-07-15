@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.7 2019/07/09 15:17:50 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.8 2019/07/15 08:27:39 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -96,4 +96,27 @@ sys/dev/hyperv/vmbus.c				1.4
 
 	Zero clear the allocated ring buffer for vmbus_channel.
 	[nakayama, ticket #1286]
+
+sys/netipsec/keysock.c				1.69
+
+	Fix locking: it is fine if the lock is already key_so_mtx, this
+	can happen in socketpair.
+	[maxv, ticket #1287]
+
+sys/netinet6/udp6_usrreq.c			1.147
+
+	Fix the order in udp6_attach: soreserve should be called before
+	in6_pcballoc.
+	[maxv, ticket #1288]
+
+sys/dev/pci/vioscsi.c				1.21
+
+	Fix use-after-free.
+	[maxv, ticket #1289]
+
+xsrc/external/mit/xf86-video-intel/dist/src/intel_list.h 1.2
+
+	Fix sandy bridge crashes by merging changes from xorg-server 1.20
+	list.h into this older version.
+	[mrg, ticket #1290]
 
