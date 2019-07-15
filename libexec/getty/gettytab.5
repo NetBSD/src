@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.39 2019/07/12 03:32:41 uwe Exp $
+.\"	$NetBSD: gettytab.5,v 1.40 2019/07/15 01:26:15 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,19 +289,18 @@ of milliseconds of delay required (a la termcap).
 This delay is simulated by repeated use of the pad character
 .Ic \&pc .
 .Pp
-The initial message, and login message,
-.Ic \&im
-and
+The initial message
+.Ic \&im\^ ,
+and login message
 .Ic \&lm
 may include any of the following character sequences, which expand to
 information about the environment in which
 .Xr getty 8
 is running.
-.Pp
-.Bl -tag -width \&%xxx -compact
-.It \&%d
+.Bl -tag -width ".Li XXXX"
+.It Li \&%d
 The current date.
-.It \&%h
+.It Li \&%h
 The hostname of the machine, which is normally obtained from the
 system using
 .Xr gethostname 3 ,
@@ -311,27 +310,39 @@ table entry.
 In either case it may be edited with the
 .Ic \&he
 string.
-A '@' in the
+A
+.Ql @
+in the
 .Ic \&he
 string causes one character from the real hostname to
 be copied to the final hostname.
-A '#' in the
+A
+.Ql #
+in the
 .Ic \&he
 string causes the next character of the real hostname
 to be skipped.
 Each character that
-is neither '@' nor '#' is copied into the final hostname.
-Surplus '@' and '#' characters are ignored.
-.It \&%t
+is neither
+.Ql @
+nor
+.Ql #
+is copied into the final hostname.
+Surplus
+.Ql @
+and
+.Ql #
+characters are ignored.
+.It Li \&%t
 The tty name.
-.It "\&%m, \&%r, \&%s, \&%v"
+.It Li \&%m , \&%r , \&%s , \&%v
 The type of machine, release of the operating system, name of the
 operating system, and version of the kernel, respectively, as
 returned by
 .Xr uname 3 .
-.It \&%%
+.It Li \&%%
 A
-.Dq %
+.Ql %
 character.
 .El
 .Pp
@@ -351,7 +362,7 @@ string, can be used to enter additional data into
 the environment.
 It is a list of comma separated strings, each of which
 will presumably be of the form
-.Em name=value .
+.Ar name Ns Li \^= Ns Ar value .
 .Pp
 If a non-zero timeout is specified, with
 .Ic \&to ,
@@ -392,7 +403,7 @@ link bringup sequence is recognized,
 .Xr getty 8
 will invoke the program referenced by the
 .Ic \&pp
-string, e.g.
+string, e.g.\&
 .Xr pppd 8 .
 This can be used to handle incoming
 .Tn PPP
@@ -417,8 +428,14 @@ by
 .Xr login 1 .
 In
 .Em all
-cases, '#' or '^H' typed in a login name will be treated as
-an erase character, and '@' will be treated as a kill character.
+cases,
+.Ql #
+or
+.Ql ^H
+typed in a login name will be treated as
+an erase character, and
+.Ql @
+will be treated as a kill character.
 .Pp
 The delay stuff is a real crock.
 Apart from its general lack of flexibility, some
