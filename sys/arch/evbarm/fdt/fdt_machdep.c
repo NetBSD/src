@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.62 2019/04/24 06:37:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.63 2019/07/15 08:44:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.62 2019/04/24 06:37:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.63 2019/07/15 08:44:33 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -571,9 +571,11 @@ initarm(void *arg)
 		const paddr_t spg = atop(spa);
 		const paddr_t epg = atop(epa);
 
+		VPRINTF("         start %08lx  end %08lx... "
+		    "loading in freelist %d\n", spa, epa, VM_FREELIST_DEFAULT);
+
 		uvm_page_physload(spg, epg, spg, epg, VM_FREELIST_DEFAULT);
 
-		VPRINTF("           start %08lx  end %08lx", ptoa(spa), ptoa(epa));
 	}
 
 	return sp;
