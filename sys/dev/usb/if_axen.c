@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.49 2019/06/28 01:57:43 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.50 2019/07/15 03:14:22 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.49 2019/06/28 01:57:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.50 2019/07/15 03:14:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -902,7 +902,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "AX88179\n");
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
-	/* Initialize interface info.*/
+	/* Initialize interface info. */
 
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
@@ -1796,7 +1796,6 @@ axen_stop_locked(struct ifnet *ifp, int disable)
 		if (err) {
 			aprint_error_dev(sc->axen_dev,
 			    "abort rx pipe failed: %s\n", usbd_errstr(err));
-
 		}
 	}
 
