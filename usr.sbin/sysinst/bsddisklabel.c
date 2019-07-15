@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.20 2019/07/14 11:26:18 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.21 2019/07/15 19:13:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1025,13 +1025,16 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 				else
 					def_usr = i;
 			}
-			wanted->infos[i].fs_type = FS_BSDFFS;
+			if (wanted->infos[i].fs_type == FS_UNUSED)
+				wanted->infos[i].fs_type = FS_BSDFFS;
+			if (wanted->infos[i].fs_type == FS_BSDFFS) {
 #ifdef DEFAULT_UFS2
 #ifndef HAVE_UFS2_BOOT
-			if (boot < wanted->num || i != root)
+				if (boot < wanted->num || i != root)
 #endif
-				wanted->infos[i].fs_version = 2;
+					wanted->infos[i].fs_version = 2;
 #endif
+			}
 		}
 		if ((wanted->infos[i].flags & PUIFLG_JUST_MOUNTPOINT) &&
 		    wanted->infos[i].size == 0)
