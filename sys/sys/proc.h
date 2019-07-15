@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.354 2019/06/21 01:03:51 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.355 2019/07/15 19:34:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -153,8 +153,8 @@ struct emul {
 	const uint32_t	*e_nomodbits;	/* sys_nosys/sys_nomodule flags
 					 * for syscall_disestablish() */
 	const char * const *e_syscallnames; /* System call name array */
+	struct sc_autoload *e_sc_autoload; /* List of autoloadable syscalls */
 					/* Signal sending function */
-	struct sc_autoload *e_sc_autoload;	/* List of autoloadable syscalls */
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
 	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
