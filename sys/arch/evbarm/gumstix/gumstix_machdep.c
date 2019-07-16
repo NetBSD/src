@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.62 2019/05/18 08:49:24 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.63 2019/07/16 14:41:45 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -565,7 +565,7 @@ extern uint32_t *uboot_args;
 #endif
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -577,7 +577,7 @@ extern uint32_t *uboot_args;
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern char KERNEL_BASE_phys[];
@@ -778,7 +778,7 @@ initarm(void *arg)
 
 	evbarm_device_register = gumstix_device_register;
 
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 	/*
 	 * initarm_common flushes cache if required before AP start

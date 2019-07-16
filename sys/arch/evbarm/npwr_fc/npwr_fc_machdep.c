@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_machdep.c,v 1.25 2019/07/16 09:25:56 skrll Exp $	*/
+/*	$NetBSD: npwr_fc_machdep.c,v 1.26 2019/07/16 14:41:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.25 2019/07/16 09:25:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.26 2019/07/16 14:41:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -334,7 +334,7 @@ static const struct pmap_devmap iq80321_devmap[] = {
 };
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -346,7 +346,7 @@ static const struct pmap_devmap iq80321_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
