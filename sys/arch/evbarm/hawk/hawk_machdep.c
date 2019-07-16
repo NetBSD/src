@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.4 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.5 2019/07/16 14:41:45 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -286,7 +286,7 @@ hawk_device_register (device_t self, void *aux)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -298,7 +298,7 @@ hawk_device_register (device_t self, void *aux)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	vaddr_t addr;

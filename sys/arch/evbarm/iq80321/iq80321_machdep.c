@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.60 2019/07/16 09:25:56 skrll Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.61 2019/07/16 14:41:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.60 2019/07/16 09:25:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.61 2019/07/16 14:41:46 skrll Exp $");
 
 #include "opt_console.h"
 #include "opt_ddb.h"
@@ -355,7 +355,7 @@ iq80321_hardclock_hook(void)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -367,7 +367,7 @@ iq80321_hardclock_hook(void)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
