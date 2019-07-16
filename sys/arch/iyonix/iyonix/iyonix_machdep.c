@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.26 2018/10/28 14:30:32 skrll Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.27 2019/07/16 09:25:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.26 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.27 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -813,7 +813,7 @@ initarm(void *arg)
 	printf("howto: %x\n", boothowto);
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

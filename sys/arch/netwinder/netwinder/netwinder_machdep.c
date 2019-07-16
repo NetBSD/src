@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.86 2018/10/28 14:30:33 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.87 2019/07/16 09:25:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.86 2018/10/28 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.87 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -842,7 +842,7 @@ initarm(void *arg)
 	ISA_PUTBYTE(0x338, 0x06);
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.23 2018/10/28 14:30:32 skrll Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.24 2019/07/16 09:25:57 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.23 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.24 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -574,7 +574,7 @@ initarm(void *arg)
 	printf("initarm done.\n");
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void arm11_pmc_ccnt_init(void);

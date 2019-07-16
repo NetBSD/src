@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.24 2018/10/28 14:30:31 skrll Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.25 2019/07/16 09:25:56 skrll Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.24 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.25 2019/07/16 09:25:56 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -724,7 +724,7 @@ printf("%s: textsize %#lx, totalsize %#lx\n",
 		Debugger();
 #endif
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 #if 0

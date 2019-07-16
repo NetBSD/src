@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.61 2018/10/28 14:30:31 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.62 2019/07/16 09:25:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.61 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.62 2019/07/16 09:25:56 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -724,7 +724,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

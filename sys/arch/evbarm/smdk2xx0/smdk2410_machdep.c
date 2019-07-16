@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.39 2018/10/28 14:30:32 skrll Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.40 2019/07/16 09:25:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.39 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.40 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -899,7 +899,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

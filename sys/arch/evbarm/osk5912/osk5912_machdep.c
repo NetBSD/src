@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.20 2018/10/28 14:30:32 skrll Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.21 2019/07/16 09:25:57 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.20 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.21 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -482,7 +482,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 static void

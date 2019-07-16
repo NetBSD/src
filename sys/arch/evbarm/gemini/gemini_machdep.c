@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.29 2018/10/28 14:30:31 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.30 2019/07/16 09:25:56 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.29 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.30 2019/07/16 09:25:56 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -759,7 +759,7 @@ initarm(void *arg)
 	printf("initarm done.\n");
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 static void

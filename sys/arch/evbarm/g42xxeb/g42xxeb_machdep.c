@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.33 2018/10/28 14:30:31 skrll Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.34 2019/07/16 09:25:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -882,7 +882,7 @@ initarm(void *arg)
 	pldreg8_write(G42XXEB_LED, 0);
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 #if 0

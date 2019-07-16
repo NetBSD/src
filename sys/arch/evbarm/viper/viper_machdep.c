@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.28 2018/10/28 14:30:32 skrll Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.29 2019/07/16 09:25:57 skrll Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.28 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.29 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -779,7 +779,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 #if 0
