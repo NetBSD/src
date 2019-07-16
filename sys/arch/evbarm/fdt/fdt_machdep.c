@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.63 2019/07/15 08:44:33 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.64 2019/07/16 14:41:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.63 2019/07/15 08:44:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.64 2019/07/16 14:41:45 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -416,9 +416,7 @@ fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 }
 #endif
 
-u_int initarm(void *arg);
-
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	const struct arm_platform *plat;
@@ -543,7 +541,7 @@ initarm(void *arg)
 	VPRINTF("Memory regions:\n");
 	fdt_memory_foreach(fdt_add_boot_physmem, &memory_size);
 
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
 
 	/*

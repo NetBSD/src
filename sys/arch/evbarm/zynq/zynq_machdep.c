@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.10 2019/03/16 10:45:06 skrll Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.11 2019/07/16 14:41:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.10 2019/03/16 10:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.11 2019/07/16 14:41:48 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -250,7 +250,7 @@ zynq_mpstart(void)
 
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -261,7 +261,7 @@ zynq_mpstart(void)
  *   Initialising the physical console so characters can be printed.
  *   Setting up page tables for the kernel
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	/*
@@ -338,7 +338,7 @@ initarm(void *arg)
 	/* we've a specific device_register routine */
 	evbarm_device_register = zynq7000_device_register;
 
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 	/*
 	 * initarm_common flushes cache if required before AP start

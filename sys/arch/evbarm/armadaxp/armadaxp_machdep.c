@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.16 2018/09/21 12:04:07 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.17 2019/07/16 14:41:44 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.16 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.17 2019/07/16 14:41:44 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -309,7 +309,7 @@ reset_axp_pcie_win(void)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -321,7 +321,7 @@ reset_axp_pcie_win(void)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	cpu_reset_address = axp_system_reset;

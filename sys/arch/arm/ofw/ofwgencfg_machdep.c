@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.19 2012/10/27 17:17:40 chs Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.20 2019/07/16 14:41:44 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.19 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.20 2019/07/16 14:41:44 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,7 +146,7 @@ cpu_reboot(int howto, char *bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
-u_int
+vaddr_t
 initarm(void *cookie)
 {
 	ofw_handle_t ofw_handle = cookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2018/10/28 14:30:31 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2019/07/16 14:41:44 skrll Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2019/07/16 14:41:44 skrll Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -149,7 +149,7 @@ static const struct pmap_devmap epoc32_fb_devmap[] = {
 };
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -161,7 +161,7 @@ static const struct pmap_devmap epoc32_fb_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern char _end[];

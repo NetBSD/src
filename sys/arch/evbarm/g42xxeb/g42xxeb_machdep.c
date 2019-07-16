@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.34 2019/07/16 09:25:55 skrll Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.35 2019/07/16 14:41:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -388,7 +388,7 @@ static const struct pmap_devmap g42xxeb_devmap[] = {
 
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -400,7 +400,7 @@ static const struct pmap_devmap g42xxeb_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;

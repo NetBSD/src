@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.26 2019/07/16 09:25:57 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.27 2019/07/16 14:41:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.26 2019/07/16 09:25:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.27 2019/07/16 14:41:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -135,7 +135,7 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 u_int cpu_get_control(void);
 
-u_int init_pxa2x0(int, char **, struct bootinfo *);
+vaddr_t init_pxa2x0(int, char **, struct bootinfo *);
 
 /* Machine dependent initialize function */
 extern void pxa2x0_machdep_init(void);
@@ -238,7 +238,7 @@ read_ttb(void)
  *   Initializing the physical console so characters can be printed.
  *   Setting up page tables for the kernel.
  */
-u_int
+vaddr_t
 init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 {
 #ifdef DIAGNOSTIC

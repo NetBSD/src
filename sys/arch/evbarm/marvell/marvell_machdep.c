@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.35 2018/09/21 12:04:09 skrll Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.36 2019/07/16 14:41:47 skrll Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.35 2018/09/21 12:04:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.36 2019/07/16 14:41:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -274,7 +274,7 @@ static struct pmap_devmap marvell_devmap[] = {
 extern uint32_t *u_boot_args[];
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -286,7 +286,7 @@ extern uint32_t *u_boot_args[];
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int cs, cs_end, memtag = 0, iotag = 0;

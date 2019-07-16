@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_machdep.c,v 1.6 2019/05/18 08:49:24 skrll Exp $	*/
+/*	$NetBSD: kobo_machdep.c,v 1.7 2019/07/16 14:41:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.6 2019/05/18 08:49:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.7 2019/07/16 14:41:47 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -411,7 +411,7 @@ int consrate = CONSPEED;
 #endif
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -422,7 +422,7 @@ int consrate = CONSPEED;
  *   Initialising the physical console so characters can be printed.
  *   Setting up page tables for the kernel
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	/*

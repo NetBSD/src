@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.27 2019/07/16 09:25:57 skrll Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.28 2019/07/16 14:41:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.27 2019/07/16 09:25:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.28 2019/07/16 14:41:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -417,7 +417,7 @@ iyonix_pic_init(void)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -429,7 +429,7 @@ iyonix_pic_init(void)
  *   Setting up page tables for the kernel
  *   Initialising interrupt controllers to a sane default state
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	struct bootconfig *passed_bootconfig = arg;

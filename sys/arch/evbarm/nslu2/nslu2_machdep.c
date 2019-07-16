@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.31 2019/07/16 09:25:57 skrll Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.32 2019/07/16 14:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.31 2019/07/16 09:25:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.32 2019/07/16 14:41:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -413,7 +413,7 @@ static const struct pmap_devmap nslu2_devmap[] = {
 };
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -425,7 +425,7 @@ static const struct pmap_devmap nslu2_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;

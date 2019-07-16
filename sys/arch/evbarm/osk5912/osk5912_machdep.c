@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.21 2019/07/16 09:25:57 skrll Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.22 2019/07/16 14:41:48 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.21 2019/07/16 09:25:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.22 2019/07/16 14:41:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -313,7 +313,7 @@ static const struct pmap_devmap devmap[] = {
 #undef	_S
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -325,7 +325,7 @@ static const struct pmap_devmap devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	/*
