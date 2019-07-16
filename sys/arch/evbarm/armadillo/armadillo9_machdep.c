@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.32 2018/10/28 14:30:31 skrll Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.33 2019/07/16 09:25:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.32 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.33 2019/07/16 09:25:55 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -871,7 +871,7 @@ initarm(void *arg)
 	evbarm_device_register = armadillo9_device_register;
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void
