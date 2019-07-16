@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.13 2019/06/25 15:33:55 rjs Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.14 2019/07/16 22:57:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
-#include "opt_sctp.h"
 #endif
 
 #include <sys/systm.h>
@@ -42,10 +41,6 @@
 #ifdef NTP
 #include <sys/timespec.h>
 #include <sys/timex.h>
-#endif
-
-#ifdef SCTP
-#include <netinet/sctp_route.h>
 #endif
 
 /*
@@ -68,15 +63,15 @@ void (*vec_ntp_adjtime1)(struct timex *) = NULL;
  * Routine vectors for sctp (called from within rtsock)
  *
  * MP-hooks not needed since the SCTP code is not modular
+ *
+ * For now, just point these at NULL.  Network initialization code
+ * in if.c will overwrite these with correct values.  This is needed
+ * to enable building of rumpkern library without creating circular
+ * dependency with rumpnet library
  */
 
-#ifdef SCTP
-void (*vec_sctp_add_ip_address)(struct ifaddr *) = sctp_add_ip_address;
-void (*vec_sctp_delete_ip_address)(struct ifaddr *) = sctp_delete_ip_address;
-#else
 void (*vec_sctp_add_ip_address)(struct ifaddr *) = NULL;
 void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
-#endif 
 
 
 /*
