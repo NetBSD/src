@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.101 2019/07/12 19:28:20 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.102 2019/07/16 09:47:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -290,6 +290,7 @@ ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
+wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
 # MII/PHY support
 exphy* 		at mii? phy ?		# 3Com internal PHYs
