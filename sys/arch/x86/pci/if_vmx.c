@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.31 2019/07/16 10:01:23 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.32 2019/07/16 10:12:10 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.31 2019/07/16 10:01:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.32 2019/07/16 10:12:10 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -372,7 +372,6 @@ void vmxnet3_start_locked(struct ifnet *);
 void vmxnet3_start(struct ifnet *);
 
 void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
-int vmxnet3_change_mtu(struct vmxnet3_softc *, int);
 int vmxnet3_ioctl(struct ifnet *, u_long, void *);
 int vmxnet3_ifflags_cb(struct ethercom *);
 
@@ -2877,18 +2876,6 @@ setit:
 }
 
 int
-vmxnet3_change_mtu(struct vmxnet3_softc *sc, int mtu)
-{
-
-	if (mtu < VMXNET3_MIN_MTU || mtu > VMXNET3_MAX_MTU)
-		return EINVAL;
-
-	vmxnet3_init_locked(sc);
-
-	return 0;
-}
-
-int
 vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -2896,13 +2883,20 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifp->if_mtu != ifr->ifr_mtu) {
-			VMXNET3_CORE_LOCK(sc);
-			error = vmxnet3_change_mtu(sc, ifr->ifr_mtu);
-			VMXNET3_CORE_UNLOCK(sc);
+	case SIOCSIFMTU: {
+		int nmtu = ifr->ifr_mtu;
+
+		if (nmtu < VMXNET3_MIN_MTU || nmtu > VMXNET3_MAX_MTU) {
+			error = EINVAL;
+			break;
+		}
+		if (ifp->if_mtu != nmtu) {
+			error = ether_ioctl(ifp, cmd, data);
+			if (error == ENETRESET)
+				error = vmxnet3_init(ifp);
 		}
 		break;
+	}
 	case SIOCGIFDATA:
 	case SIOCZIFDATA:
 		ifp->if_ipackets = 0;
