@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.7 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.8 2019/07/16 11:32:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -654,8 +654,6 @@ struct uio;
 	(*(t)->_dmamap_unload)((t), (p))
 #define	bus_dmamap_sync(t, p, o, l, ops)			\
 do {									\
-	if (((p)->_dm_flags & (_BUS_DMAMAP_COHERENT|_BUS_DMAMAP_IS_BOUNCING)) == _BUS_DMAMAP_COHERENT) \
-		break;							\
 	if (((ops) & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0	\
 	    && (t)->_dmamap_sync_pre != NULL)				\
 		(*(t)->_dmamap_sync_pre)((t), (p), (o), (l), (ops));	\
