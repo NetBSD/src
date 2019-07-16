@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.280 2019/06/01 15:20:51 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.281 2019/07/16 22:57:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.280 2019/06/01 15:20:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.281 2019/07/16 22:57:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -112,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.280 2019/06/01 15:20:51 maxv Exp $
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_loan.h>
 #include <uvm/uvm_page.h>
+
+#ifdef SCTP
+#include <netinet/sctp_route.h>
+#endif
 
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
 
@@ -438,6 +442,13 @@ soinit(void)
 {
 
 	sysctl_kern_socket_setup();
+
+#ifdef SCTP
+	/* Update the SCTP function hooks if necessary*/
+
+        vec_sctp_add_ip_address = sctp_add_ip_address;
+        vec_sctp_delete_ip_address = sctp_delete_ip_address; 
+#endif
 
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
