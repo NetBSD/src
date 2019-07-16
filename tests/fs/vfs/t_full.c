@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.10 2018/11/30 09:52:39 hannken Exp $	*/
+/*	$NetBSD: t_full.c,v 1.11 2019/07/16 17:29:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ fillfs(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");
-	fd = rump_sys_open("afile", O_CREAT | O_RDWR);
+	fd = rump_sys_open("afile", O_CREAT | O_RDWR, 0600);
 	if (fd == -1)
 		atf_tc_fail_errno("create file");
 
