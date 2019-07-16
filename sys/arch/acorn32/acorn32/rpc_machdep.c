@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.92 2018/10/28 14:30:30 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.93 2019/07/16 14:41:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.92 2018/10/28 14:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.93 2019/07/16 14:41:43 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -392,7 +392,7 @@ canonicalise_bootconfig(struct bootconfig *bootconf, struct bootconfig *raw_boot
 }
 
 
-u_int
+vaddr_t
 initarm(void *cookie)
 {
 	struct bootconfig *raw_bootconf = cookie;
