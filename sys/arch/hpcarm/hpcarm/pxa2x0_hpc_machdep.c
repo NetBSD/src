@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.25 2018/10/28 14:30:32 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.26 2019/07/16 09:25:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.25 2018/10/28 14:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.26 2019/07/16 09:25:57 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -638,7 +638,7 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 #endif /* DDB */
 
 	/* We return the new stack pointer address */
-	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 #ifdef DEBUG_BEFOREMMU
