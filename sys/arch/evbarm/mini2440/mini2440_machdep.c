@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.14 2019/07/16 09:25:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.15 2019/07/16 14:41:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -425,7 +425,7 @@ read_ttb(void)
 #define	ioreg_write32(a,v)  	(*(volatile uint32_t *)(a)=(v))
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -438,7 +438,7 @@ read_ttb(void)
  *   Relocating the kernel to the bottom of physical memory
  */
 
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int loop;

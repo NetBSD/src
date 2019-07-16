@@ -1,5 +1,5 @@
-/*	$Id: mmnet_machdep.c,v 1.3 2018/07/15 05:16:42 maxv Exp $	*/
-/*	$NetBSD: mmnet_machdep.c,v 1.3 2018/07/15 05:16:42 maxv Exp $	*/
+/*	$Id: mmnet_machdep.c,v 1.4 2019/07/16 14:41:47 skrll Exp $	*/
+/*	$NetBSD: mmnet_machdep.c,v 1.4 2019/07/16 14:41:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -78,7 +78,7 @@
 /* Adaptation for Propox MMnet by Aymeric Vincent is in the public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.3 2018/07/15 05:16:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.4 2019/07/16 14:41:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -224,7 +224,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -236,10 +236,10 @@ cpu_reboot(int howto, char *bootstr)
  *   Setting up page tables for the kernel
  *   Initialising interrupt controllers to a sane default state
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
-	u_int ret;
+	vaddr_t sp;
 	/*
 	 * basic AT91 initialization:
 	 */
@@ -260,7 +260,7 @@ initarm(void *arg)
  	bootconfig.dramblocks = 1;
  	bootconfig.dram[0].address = 0x20000000UL;
  	bootconfig.dram[0].pages =   0x04000000UL / PAGE_SIZE;
-	ret = at91bus_setup(&bootconfig);
+	sp = at91bus_setup(&bootconfig);
 
 	if (AT91_CHIP_ID() != AT91SAM9260_CHIP_ID)
 		panic("%s: processor is not AT91SAM9260", __FUNCTION__);
@@ -269,7 +269,7 @@ initarm(void *arg)
 	evbarm_device_register = mmnet_device_register;
 
 	/* We return the new stack pointer address */
-	return ret;
+	return sp;
 }
 
 
