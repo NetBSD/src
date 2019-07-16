@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2019/03/29 20:27:45 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2019/07/16 09:25:58 skrll Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2019/03/29 20:27:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2019/07/16 09:25:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1132,7 +1132,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void *
