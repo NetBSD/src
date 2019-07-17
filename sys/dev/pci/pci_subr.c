@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.9 2018/12/04 11:29:41 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.10 2019/07/17 15:34:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.9 2018/12/04 11:29:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.10 2019/07/17 15:34:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3726,7 +3726,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 		printf("Device Specific Mode\n");
 		break;
 	default:
-		printf("(reserved vaule)\n");
+		printf("(reserved value)\n");
 		break;
 	}
 	printf("      TPH Requester Enable: ");
@@ -3741,7 +3741,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 		printf("TPH and Extended TPH");
 		break;
 	default:
-		printf("(reserved vaule)\n");
+		printf("(reserved value)\n");
 		break;
 	}
 
@@ -4240,6 +4240,9 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
+	{ 0x25, "unknown", NULL },
+	{ 0x26, "unknown", NULL },
+	{ 0x27, "unknown", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
