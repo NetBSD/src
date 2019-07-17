@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.22.2.3 2018/08/08 10:28:35 martin Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.22.2.4 2019/07/17 16:20:26 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.22.2.3 2018/08/08 10:28:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.22.2.4 2019/07/17 16:20:26 martin Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -223,7 +223,9 @@ athn_usb_lookup(int vendor, int product)
 		_D( LITEON,	LITEON_AR9271,	  	NONE ),
 		_D( NETGEAR,	NETGEAR_WNA1100,	NONE ),
 		_D( NETGEAR,	NETGEAR_WNDA3200,	AR7010 ),
-		_D( VIA,	VIA_AR9271,		NONE )
+		_D( VIA,	VIA_AR9271,		NONE ),
+		_D( MELCO,	MELCO_CEWL_1,		AR7010 ),
+		_D( PANASONIC,	PANASONIC_N5HBZ0000055,	AR7010 ),
 #undef _D
 	};
 
@@ -323,6 +325,9 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	config_mountroot(self, athn_usb_attachhook);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, usc->usc_udev, sc->sc_dev);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
  fail:
@@ -473,6 +478,8 @@ athn_usb_detach(device_t self, int flags)
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
+	pmf_device_deregister(self);
+
 	mutex_enter(&usc->usc_lock);
 	usc->usc_dying = 1;
 	mutex_exit(&usc->usc_lock);
@@ -501,6 +508,7 @@ athn_usb_detach(device_t self, int flags)
 
 	athn_usb_wait_async(usc);
 
+	athn_usb_stop(&sc->sc_if, 0);
 	usb_rem_task_wait(usc->usc_udev, &usc->usc_task, USB_TASKQ_DRIVER,
 	    NULL);
 
@@ -516,6 +524,7 @@ athn_usb_detach(device_t self, int flags)
 	athn_usb_free_rx_list(usc);
 	athn_usb_free_tx_list(usc);
 	athn_usb_free_tx_cmd(usc);
+	athn_usb_free_tx_msg(usc);
 
 	/* Close Tx/Rx pipes. */
 	athn_usb_close_pipes(usc);
@@ -756,10 +765,6 @@ athn_usb_free_tx_list(struct athn_usb_softc *usc)
 		xfer = atomic_swap_ptr(&usc->usc_tx_data[i].xfer, NULL);
 		if (xfer != NULL)
 			usbd_destroy_xfer(xfer);
-	}
-	if (usc->usc_tx_bcn) {
-		usbd_destroy_xfer(usc->usc_tx_bcn->xfer);
-		usc->usc_tx_bcn = NULL;
 	}
 }
 
@@ -1420,7 +1425,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	struct athn_softc *sc = &usc->usc_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate, nstate;
-	uint32_t reg, imask;
+	uint32_t reg, intr_mask;
 	int s;
 
 	DPRINTFN(DBG_FN, sc, "\n");
@@ -1477,13 +1482,13 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			athn_set_hostap_timers(sc);
 			/* Enable software beacon alert interrupts. */
-			imask = htobe32(AR_IMR_SWBA);
+			intr_mask = htobe32(AR_IMR_SWBA);
 		} else
 #endif
 		{
 			athn_set_sta_timers(sc);
 			/* Enable beacon miss interrupts. */
-			imask = htobe32(AR_IMR_BMISS);
+			intr_mask = htobe32(AR_IMR_BMISS);
 
 			/* Stop receiving beacons from other BSS. */
 			reg = AR_READ(sc, AR_RX_FILTER);
@@ -1493,7 +1498,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			AR_WRITE_BARRIER(sc);
 		}
 		athn_usb_wmi_xcmd(usc, AR_WMI_CMD_ENABLE_INTR,
-		    &imask, sizeof(imask), NULL);
+		    &intr_mask, sizeof(intr_mask), NULL);
 		break;
 	}
 	if (!usc->usc_dying)
