@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.79 2019/05/29 10:07:30 msaitoh Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.80 2019/07/17 03:09:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,7 +59,7 @@
 /*
  * Some Ethernet extensions.
  */
-#define	ETHER_VLAN_ENCAP_LEN	4      /* length of 802.1Q VLAN encapsulation */
+#define	ETHER_VLAN_ENCAP_LEN	4     /* length of 802.1Q VLAN encapsulation */
 #define	EVL_VLANOFTAG(tag)	((tag) & 4095)		/* VLAN ID */
 #define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
 #define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
@@ -184,7 +184,8 @@ struct ethercom {
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
 	struct ifmedia				*ec_ifmedia;
-	/* Called after a change to ec_if.if_flags.  Returns
+	/*
+	 * Called after a change to ec_if.if_flags.  Returns
 	 * ENETRESET if the device should be reinitialized with
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
@@ -255,7 +256,7 @@ void    ether_input(struct ifnet *, struct mbuf *);
 struct ether_multi {
 	uint8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	uint8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	u_int	 enm_refcount;		/* no. claims to this addr/range */
+	u_int	enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
 
@@ -308,9 +309,9 @@ ether_next_multi(struct ether_multistep *step)
 
 	return enm;
 }
-#define ETHER_NEXT_MULTI(step, enm) \
-	/* struct ether_multistep step; */  \
-	/* struct ether_multi *enm; */  \
+#define ETHER_NEXT_MULTI(step, enm)		\
+	/* struct ether_multistep step; */	\
+	/* struct ether_multi *enm; */		\
 	(enm) = ether_next_multi(&(step))
 
 static __inline struct ether_multi *
@@ -322,10 +323,10 @@ ether_first_multi(struct ether_multistep *step, const struct ethercom *ec)
 	return ether_next_multi(step);
 }
 
-#define ETHER_FIRST_MULTI(step, ec, enm) \
-	/* struct ether_multistep step; */ \
-	/* struct ethercom *ec; */ \
-	/* struct ether_multi *enm; */ \
+#define ETHER_FIRST_MULTI(step, ec, enm)		\
+	/* struct ether_multistep step; */		\
+	/* struct ethercom *ec; */			\
+	/* struct ether_multi *enm; */			\
 	(enm) = ether_first_multi(&(step), (ec))
 
 #define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
