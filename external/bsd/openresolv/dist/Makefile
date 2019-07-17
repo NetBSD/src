@@ -79,11 +79,6 @@ maninstall:
 
 install: proginstall maninstall
 
-import:
-	rm -rf /tmp/${DISTPREFIX}
-	${INSTALL} -d /tmp/${DISTPREFIX}
-	cp README ${SRCS} /tmp/${DISTPREFIX}
-
 dist-git:
 	git archive --prefix=${DISTPREFIX}/ ${GITREF} | xz >${DISTFILE}
 
@@ -103,3 +98,8 @@ distinfo: dist
 	${PGP} --clearsign --output=${DISTINFOSIGN} ${DISTINFO}
 	chmod 644 ${DISTINFOSIGN}
 	ls -l ${DISTFILE} ${DISTINFO} ${DISTINFOSIGN}
+
+import: dist
+	rm -rf /tmp/${DISTPREFIX}
+	${INSTALL} -d /tmp/${DISTPREFIX}
+	tar xvJpf ${DISTFILE} -C /tmp
