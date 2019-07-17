@@ -1,13 +1,13 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.3 2019/02/07 06:13:50 msaitoh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.4 2019/07/17 16:08:10 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.3 2019/02/07 06:13:26 msaitoh Exp
+ *	NetBSD: usbdevs,v 1.736.2.4 2019/07/17 16:07:38 martin Exp
  */
 
-/*
+/*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 /*
- * Use "make -f Makefile.usbdevs" to regenerate usbdevs.h and usbdevs_data.h
+ * Follow the handling instructions in Makefile.usbdevs
  */
 
 /*
@@ -69,7 +69,8 @@
 #define	USB_VENDOR_UNKNOWN2	0x0105		/* Unknown vendor */
 #define	USB_VENDOR_EGALAX2	0x0123		/* eGalax, Inc. */
 #define	USB_VENDOR_QUAN	0x01e1		/* Quan */
-#define	USB_VENDOR_CHIPSBANK	0x0204		/* Chipsbank */
+#define	USB_VENDOR_CHIPSBANK	0x0204		/* Chipsbank Microelectronics Co. */
+#define	USB_VENDOR_HUMAX	0x02ad		/* HUMAX */
 #define	USB_VENDOR_AOX	0x03e8		/* AOX */
 #define	USB_VENDOR_ATMEL	0x03eb		/* Atmel */
 #define	USB_VENDOR_MITSUMI	0x03ee		/* Mitsumi */
@@ -98,9 +99,10 @@
 #define	USB_VENDOR_THRUST	0x044f		/* Thrustmaster */
 #define	USB_VENDOR_TI	0x0451		/* Texas Instruments */
 #define	USB_VENDOR_ANALOGDEVICES	0x0456		/* Analog Devices */
-#define	USB_VENDOR_SIS	0x0457		/* Silicon Integrated Systems */
+#define	USB_VENDOR_SIS	0x0457		/* Silicon Integrated Systems Corp. */
 #define	USB_VENDOR_KYE	0x0458		/* KYE Systems */
 #define	USB_VENDOR_DIAMOND2	0x045a		/* Diamond (Supra) */
+#define	USB_VENDOR_RENESAS	0x045b		/* Renesas */
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
 #define	USB_VENDOR_PRIMAX	0x0461		/* Primax Electronics */
 #define	USB_VENDOR_MGE	0x0463		/* MGE UPS Systems */
@@ -110,12 +112,14 @@
 #define	USB_VENDOR_LOGITECH	0x046d		/* Logitech */
 #define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
+#define	USB_VENDOR_SUN2	0x0472		/* Sun Microsystems (official) */
 #define	USB_VENDOR_SANYO	0x0474		/* Sanyo Electric */
+#define	USB_VENDOR_SEAGATE	0x0477		/* Seagate */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
 #define	USB_VENDOR_KENSINGTON	0x047d		/* Kensington */
 #define	USB_VENDOR_LUCENT	0x047e		/* Lucent */
 #define	USB_VENDOR_PLANTRONICS	0x047f		/* Plantronics */
-#define	USB_VENDOR_KYOCERA	0x0482		/* Kyocera */
+#define	USB_VENDOR_KYOCERA	0x0482		/* Kyocera Wireless Corp. */
 #define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_FOXCONN	0x0489		/* Foxconn / Hon Hai */
 #define	USB_VENDOR_MEIZU	0x0492		/* Meizu Electronics */
@@ -123,6 +127,7 @@
 #define	USB_VENDOR_COMPAQ	0x049f		/* Compaq */
 #define	USB_VENDOR_HITACHI	0x04a4		/* Hitachi */
 #define	USB_VENDOR_ACERP	0x04a5		/* Acer Peripherals */
+#define	USB_VENDOR_DAVIDCOM	0x04a6		/* Davicom */
 #define	USB_VENDOR_VISIONEER	0x04a7		/* Visioneer */
 #define	USB_VENDOR_CANON	0x04a9		/* Canon */
 #define	USB_VENDOR_NIKON	0x04b0		/* Nikon */
@@ -152,6 +157,7 @@
 #define	USB_VENDOR_MICROCHIP	0x04d8		/* Microchip Technology */
 #define	USB_VENDOR_HOLTEK	0x04d9		/* Holtek Semiconductor */
 #define	USB_VENDOR_PANASONIC	0x04da		/* Panasonic (Matsushita) */
+#define	USB_VENDOR_HUANHSIN	0x04dc		/* Huan Hsin */
 #define	USB_VENDOR_SHARP	0x04dd		/* Sharp */
 #define	USB_VENDOR_IIYAMA	0x04e1		/* Iiyama */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
@@ -289,6 +295,7 @@
 #define	USB_VENDOR_AUREAL	0x0755		/* Aureal Semiconductor */
 #define	USB_VENDOR_MIDIMAN	0x0763		/* Midiman */
 #define	USB_VENDOR_CYBERPOWER	0x0764		/* CyberPower Systems, Inc. */
+#define	USB_VENDOR_XRITE	0x0765		/* X-Rite */
 #define	USB_VENDOR_SURECOM	0x0769		/* Surecom Technology */
 #define	USB_VENDOR_LINKSYS2	0x077b		/* Linksys */
 #define	USB_VENDOR_GRIFFIN	0x077d		/* Griffin Technology */
@@ -325,9 +332,10 @@
 #define	USB_VENDOR_ARASAN	0x07da		/* Arasan Chip Systems */
 #define	USB_VENDOR_ALLIEDCABLE	0x07e6		/* Allied Cable */
 #define	USB_VENDOR_STSN	0x07ef		/* STSN */
-#define	USB_VENDOR_CENTURY	0x07f7		/* CENTURY Corporation */
 #define	USB_VENDOR_BEWAN	0x07fa		/* Bewan */
+#define	USB_VENDOR_CENTURY	0x07f7		/* CENTURY Corporation */
 #define	USB_VENDOR_ZOOM	0x0803		/* Zoom Telephonics */
+#define	USB_VENDOR_ZORAN	0x0595		/* Zoran Microelectronics */
 #define	USB_VENDOR_SYNET	0x0812		/* Synet Electronics */
 #define	USB_VENDOR_BROADLOGIC	0x0827		/* BroadLogic */
 #define	USB_VENDOR_HANDSPRING	0x082d		/* Handspring */
@@ -361,7 +369,7 @@
 #define	USB_VENDOR_ALATION	0x0910		/* Alation Systems */
 #define	USB_VENDOR_GLOBESPAN	0x0915		/* Globespan */
 #define	USB_VENDOR_CONCORDCAMERA	0x0919		/* Concord Camera */
-#define	USB_VENDOR_GARMIN	0x091e		/* Garmin */
+#define	USB_VENDOR_GARMIN	0x091e		/* Garmin International */
 #define	USB_VENDOR_GOHUBS	0x0921		/* GoHubs */
 #define	USB_VENDOR_BIOMETRIC	0x0929		/* American Biometric Company */
 #define	USB_VENDOR_TOSHIBA	0x0930		/* Toshiba */
@@ -374,6 +382,7 @@
 #define	USB_VENDOR_GUDE	0x0959		/* Gude ADS */
 #define	USB_VENDOR_PORTSMITH	0x095a		/* Portsmith */
 #define	USB_VENDOR_ACERW	0x0967		/* Acer */
+#define	USB_VENDOR_GRETAGMACBETH	0x0971		/* GretagMacbeth */
 #define	USB_VENDOR_ADIRONDACK	0x0976		/* Adirondack Wire & Cable */
 #define	USB_VENDOR_BECKHOFF	0x0978		/* Beckhoff */
 #define	USB_VENDOR_MINDSATWORK	0x097a		/* Minds At Work */
@@ -385,7 +394,7 @@
 #define	USB_VENDOR_ARRIS	0x09c1		/* Arris Interactive */
 #define	USB_VENDOR_ACTIVCARD	0x09c3		/* ACTIVCARD */
 #define	USB_VENDOR_ACTISYS	0x09c4		/* ACTiSYS */
-#define	USB_VENDOR_NOVATEL	0x09d7		/* NovAtel */
+#define	USB_VENDOR_NOVATEL	0x09d7		/* Novatel Wireless */
 #define	USB_VENDOR_AFOURTECH	0x09da		/* A-FOUR TECH */
 #define	USB_VENDOR_AIMEX	0x09dc		/* AIMEX */
 #define	USB_VENDOR_ADDONICS	0x09df		/* Addonics Technologies */
@@ -404,7 +413,7 @@
 #define	USB_VENDOR_GEOCAST	0x0a79		/* Geocast Network Systems */
 #define	USB_VENDOR_ZYDAS	0x0ace		/* Zydas Technology Corporation */
 #define	USB_VENDOR_NEODIO	0x0aec		/* Neodio */
-#define	USB_VENDOR_OPTIONNV	0x0af0		/* Option N.V: */
+#define	USB_VENDOR_OPTIONNV	0x0af0		/* Option N.V. */
 #define	USB_VENDOR_ASUSTEK	0x0b05		/* ASUSTeK Computer */
 #define	USB_VENDOR_TODOS	0x0b0c		/* Todos Data System */
 #define	USB_VENDOR_SIIG2	0x0b39		/* SIIG */
@@ -412,7 +421,7 @@
 #define	USB_VENDOR_HAL	0x0b41		/* HAL Corporation */
 #define	USB_VENDOR_EMS	0x0b43		/* EMS Production */
 #define	USB_VENDOR_NEC2	0x0b62		/* NEC */
-#define	USB_VENDOR_ATI2	0x0b6f		/* ATI */
+#define	USB_VENDOR_ATI2	0x0b6f		/* ATI Technologies */
 #define	USB_VENDOR_ZEEVO	0x0b7a		/* Zeevo, Inc. */
 #define	USB_VENDOR_KURUSUGAWA	0x0b7e		/* Kurusugawa Electronics, Inc. */
 #define	USB_VENDOR_ASIX	0x0b95		/* ASIX Electronics */
@@ -463,6 +472,7 @@
 #define	USB_VENDOR_MOTOROLA4	0x100d		/* Motorola */
 #define	USB_VENDOR_HP3	0x103c		/* Hewlett Packard */
 #define	USB_VENDOR_GIGABYTE	0x1044		/* GIGABYTE */
+#define	USB_VENDOR_YUBICO	0x1050		/* Yubico.se */
 #define	USB_VENDOR_WESTERN	0x1058		/* Western Digital */
 #define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
 #define	USB_VENDOR_CCYU	0x1065		/* CCYU Technology */
@@ -554,6 +564,7 @@
 #define	USB_VENDOR_4GSYSTEMS	0x1c9e		/* 4G Systems */
 #define	USB_VENDOR_PEGATRON	0x1d4d		/* Pegatron */
 #define	USB_VENDOR_FUTUREBITS	0x1d50		/* Future Bits */
+#define	USB_VENDOR_LINUXFOUNDATION	0x1d6b		/* Linux Foundation */
 #define	USB_VENDOR_AIRTIES	0x1eda		/* AirTies */
 #define	USB_VENDOR_DLINK	0x2001		/* D-Link */
 #define	USB_VENDOR_PLANEX2	0x2019		/* Planex Communications */
@@ -563,12 +574,14 @@
 #define	USB_VENDOR_TRENDNET	0x20f4		/* TRENDnet */
 #define	USB_VENDOR_RTSYS	0x2100		/* RT Systems */
 #define	USB_VENDOR_DLINK3	0x2101		/* D-Link */
+#define	USB_VENDOR_INTENSO	0x2109		/* INTENSO */
 #define	USB_VENDOR_VIALABS	0x2109		/* VIA Labs */
 #define	USB_VENDOR_ERICSSON	0x2282		/* Ericsson */
 #define	USB_VENDOR_MOTOROLA2	0x22b8		/* Motorola */
 #define	USB_VENDOR_PINNACLE	0x2304		/* Pinnacle Systems */
 #define	USB_VENDOR_ARDUINO	0x2341		/* Arduino SA */
 #define	USB_VENDOR_TPLINK	0x2357		/* TP-Link */
+#define	USB_VENDOR_WMR	0x2405		/* West Mountain Radio */
 #define	USB_VENDOR_TRIPPLITE	0x2478		/* Tripp-Lite */
 #define	USB_VENDOR_HIROSE	0x2631		/* Hirose Electric */
 #define	USB_VENDOR_NHJ	0x2770		/* NHJ */
@@ -617,7 +630,7 @@
 #define	USB_PRODUCT_3COM_HOMECONN	0x009d		/* HomeConnect USB Camera */
 #define	USB_PRODUCT_3COM_3CREB96	0x00a0		/* Bluetooth USB Adapter */
 #define	USB_PRODUCT_3COM_3C19250	0x03e8		/* 3C19250 Ethernet adapter */
-#define	USB_PRODUCT_3COM_3CRSHEW696	0x0a01		/* 3CRSHEW696 */
+#define	USB_PRODUCT_3COM_3CRSHEW696	0x0a01		/* 3CRSHEW696 Wireless Adapter */
 #define	USB_PRODUCT_3COM_3C460	0x11f8		/* HomeConnect 3C460 */
 #define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice Faxmodem Pro */
 #define	USB_PRODUCT_3COM_3C460B	0x4601		/* HomeConnect 3C460B */
@@ -889,6 +902,7 @@
 #define	USB_PRODUCT_APPLE_IPAD_3	0x12a6		/* Apple iPad 3 */
 #define	USB_PRODUCT_APPLE_IPAD_MINI	0x12ab		/* Apple iPad Mini */
 #define	USB_PRODUCT_APPLE_ETHERNET	0x1402		/* Apple USB to Ethernet */
+#define	USB_PRODUCT_APPLE_BLUETOOTH1	0x8203		/* Bluetooth */
 #define	USB_PRODUCT_APPLE_BLUETOOTH2	0x8205		/* Bluetooth */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_1	0x8213		/* Bluetooth USB Host Controller MacBookPro 7,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_2	0x8215		/* Bluetooth USB Host Controller iMac 11,1 */
@@ -1391,6 +1405,7 @@
 #define	USB_PRODUCT_DLINK_RTL8192CU_4	0x330b		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_DWA131B	0x330d		/* DWA-131 rev B */
 #define	USB_PRODUCT_DLINK_DWA125D1	0x330f		/* DWA-125 rev D1 */
+#define	USB_PRODUCT_DLINK_DWA131E	0x3319		/* DWA-131 rev E */
 #define	USB_PRODUCT_DLINK_DWL122	0x3700		/* Wireless DWL122 */
 #define	USB_PRODUCT_DLINK_DWLG120	0x3701		/* DWL-G120 */
 #define	USB_PRODUCT_DLINK_DWL120F	0x3702		/* DWL-120 rev F */
@@ -1417,6 +1432,12 @@
 #define	USB_PRODUCT_DLINK_DSB650TX3	0x400b		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DSB650TX2	0x4102		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DSB650	0xabc1		/* 10/100 ethernet adapter */
+#define	USB_PRODUCT_DLINK_DWM157_CD	0xa707		/* DWM-157 CD-ROM Mode */
+#define	USB_PRODUCT_DLINK_DWM157	0x7d02		/* DWM-157 LTE */
+#define	USB_PRODUCT_DLINK_DWM222_CD	0xab00		/* DWM-222 CD-ROM Mode */
+#define	USB_PRODUCT_DLINK_DWM222	0x7e35		/* DWM-222 LTE */
+#define	USB_PRODUCT_DLINK_DWR510_CD	0xa805		/* DWR-510 CD-ROM Mode */
+#define	USB_PRODUCT_DLINK_DWR510	0x7e12		/* DWR-510 LTE */
 
 /* D-Link(2) products */
 #define	USB_PRODUCT_DLINK2_RTL8192SU_1	0x3300		/* RTL8192SU */
@@ -1488,6 +1509,9 @@
 /* EIZO products */
 #define	USB_PRODUCT_EIZO_HUB	0x0000		/* hub */
 #define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
+
+/* ELAN Products */
+#define	USB_PRODUCT_ELAN_ACTIVEJET	0x0103		/* ActiveJet K-2024 Multimedia Keyboard */
 
 /* ELCON Systemtechnik products */
 #define	USB_PRODUCT_ELCON_PLAN	0x0002		/* Goldpfeil P-LAN */
@@ -1683,6 +1707,9 @@
 /* GREENHOUSE products */
 #define	USB_PRODUCT_GREENHOUSE_KANA21	0x0001		/* CF-writer with Portable MP3 Player */
 
+/* GretagMacbeth products */
+#define	USB_PRODUCT_GRETAGMACBETH_HUEY	0x2005		/* Huey */
+
 /* Griffin Technology */
 #define	USB_PRODUCT_GRIFFIN_IMATE	0x0405		/* iMate, ADB adapter */
 #define	USB_PRODUCT_GRIFFIN_POWERMATE	0x0410		/* PowerMate Assignable Controller */
@@ -1788,6 +1815,8 @@
 #define	USB_PRODUCT_HP_P2000U	0x1801		/* Inkjet P-2000U */
 #define	USB_PRODUCT_HP_RNDIS	0x1c1d		/* Generic RNDIS */
 #define	USB_PRODUCT_HP_640C	0x2004		/* DeskJet 640c */
+#define	USB_PRODUCT_HP_LP2275W	0x2e24		/* LP2275w hub */
+#define	USB_PRODUCT_HP_LP2475W	0x2f24		/* LP2475w hub */
 #define	USB_PRODUCT_HP_4670V	0x3005		/* ScanJet 4670v */
 #define	USB_PRODUCT_HP_P1100	0x3102		/* Photosmart P1100 */
 #define	USB_PRODUCT_HP_V125W	0x3307		/* v125w */
@@ -1808,6 +1837,7 @@
 #define	USB_PRODUCT_HUAWEI_U8150	0x1037		/* Huawei U8150 */
 #define	USB_PRODUCT_HUAWEI_EM770W	0x1404		/* Huawei EM770W */
 #define	USB_PRODUCT_HUAWEI_E1750	0x140c		/* Huawei E1750 */
+#define	USB_PRODUCT_HUAWEI_E182	0x1429		/* Huawei E182 */
 #define	USB_PRODUCT_HUAWEI_E1750INIT	0x1446		/* Huawei E1750 USB CD */
 #define	USB_PRODUCT_HUAWEI_K3765	0x1465		/* Huawei K3765 */
 #define	USB_PRODUCT_HUAWEI_E1820	0x14ac		/* Huawei E1820 */
@@ -2073,6 +2103,10 @@
 #define	USB_PRODUCT_LINKSYS4_RT3070	0x0078		/* RT3070 */
 #define	USB_PRODUCT_LINKSYS4_WUSB600NV2	0x0079		/* WUSB600N v2 */
 
+#define	USB_PRODUCT_LINUXFOUNDATION_ROOT_HUB_11	0x0001		/* 1.1 root hub */
+#define	USB_PRODUCT_LINUXFOUNDATION_ROOT_HUB_20	0x0002		/* 2.0 root hub */
+#define	USB_PRODUCT_LINUXFOUNDATION_ROOT_HUB_30	0x0003		/* 3.0 root hub */
+
 /* Lite-On Technology */
 #define	USB_PRODUCT_LITEON_AR9271	0x4605		/* AR9271 */
 
@@ -2125,6 +2159,8 @@
 #define	USB_PRODUCT_LOGITECH_MX700	0xc506		/* Cordless optical mouse */
 #define	USB_PRODUCT_LOGITECH_CBT44	0xc517		/* C-BT44 Receiver */
 #define	USB_PRODUCT_LOGITECH_QUICKCAMPRO2	0xd001		/* QuickCam Pro */
+#define	USB_PRODUCT_LOGITECH_GF310	0xc21d		/* Gamepad F310 */
+#define	USB_PRODUCT_LOGITECH_DAG	0xc216		/* Dual Action Gamepad */
 
 /* Lucent products */
 #define	USB_PRODUCT_LUCENT_EVALKIT	0x1001		/* USS-720 evaluation kit */
@@ -2183,6 +2219,7 @@
 #define	USB_PRODUCT_MELCO_WLIUCGNHP	0x0158		/* WLI-UC-GNHP */
 #define	USB_PRODUCT_MELCO_WLIUCGN	0x015d		/* WLI-UC-GN */
 #define	USB_PRODUCT_MELCO_WLIUCG301N	0x016f		/* WLI-UC-G301N */
+#define	USB_PRODUCT_MELCO_CEWL_1	0x017f		/* Sony UWA-BR100 WLAN */
 #define	USB_PRODUCT_MELCO_WLIUCGNM	0x01a2		/* WLI-UC-GNM */
 #define	USB_PRODUCT_MELCO_WLIUCGNM2T	0x01ee		/* WLI-UC-GNM2T */
 #define	USB_PRODUCT_MELCO_WIU2300D	0x0241		/* WI-U2-300D */
@@ -2250,6 +2287,7 @@
 #define	USB_PRODUCT_MICROSOFT_INETPRO2	0x002b		/* Internet Keyboard Pro */
 #define	USB_PRODUCT_MICROSOFT_MN510	0x006e		/* MN510 Wireless */
 #define	USB_PRODUCT_MICROSOFT_MN110	0x007a		/* 10/100 USB NIC */
+#define	USB_PRODUCT_MICROSOFT_NATURAL_6000	0x00e1		/* Wireless Laser Mouse 6000 Receiver */
 #define	USB_PRODUCT_MICROSOFT_XBOX_MEMORY_UNIT	0x0280		/* Xbox Memory Unit */
 #define	USB_PRODUCT_MICROSOFT_XBOX_DVD_PLAYBACK	0x0284		/* Xbox DVD Movie Playback Kit */
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S10	0x0285		/* Xbox Controller S (1.0) */
@@ -2311,6 +2349,7 @@
 
 /* MosChip Semiconductor */
 #define	USB_PRODUCT_MOSCHIP_MCS7703	0x7703		/* MCS7703 USB Serial Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7720	0x7720		/* MCS7720 USB Serial Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7780	0x7780		/* MCS7780 Fast IrDA Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7781	0x7781		/* MCS7781 Fast IrDA Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7784	0x7784		/* MCS7784 Slow IrDA Adapter */
@@ -2542,6 +2581,7 @@
 #define	USB_PRODUCT_PANASONIC_KXLCB20AN	0x0d0a		/* CD-R Drive KXL-CB20AN */
 #define	USB_PRODUCT_PANASONIC_KXLCB35AN	0x0d0e		/* DVD-ROM & CD-R/RW */
 #define	USB_PRODUCT_PANASONIC_SDCAAE	0x1b00		/* MultiMediaCard Adapter */
+#define	USB_PRODUCT_PANASONIC_N5HBZ0000055	0x3904		/* Wireless LAN USB Adapter */
 #define	USB_PRODUCT_PANASONIC_DMCFS45	0x2372		/* Lumix Camera DMC-FS45 */
 #define	USB_PRODUCT_PANASONIC_TYTP50P6S	0x3900		/* TY-TP50P6-S 50in Touch Panel */
 
@@ -2739,6 +2779,7 @@
 #define	USB_PRODUCT_RALINK_RT2070	0x2070		/* RT2070 */
 #define	USB_PRODUCT_RALINK_RT2570_2	0x2570		/* RT2570 */
 #define	USB_PRODUCT_RALINK_RT2573	0x2573		/* RT2573 */
+#define	USB_PRODUCT_RALINK_RT73	0x2578		/* RT73 */
 #define	USB_PRODUCT_RALINK_RT2671	0x2671		/* RT2671 */
 #define	USB_PRODUCT_RALINK_RT2770	0x2770		/* RT2770 */
 #define	USB_PRODUCT_RALINK_RT2870	0x2870		/* RT2870 */
@@ -2836,11 +2877,15 @@
 #define	USB_PRODUCT_ROLAND_UA101F	0x008d		/* EDIROL UA-101 USB1 */
 #define	USB_PRODUCT_ROLAND_UA1EX	0x0096		/* EDIROL UA-1EX */
 #define	USB_PRODUCT_ROLAND_UM3	0x009A		/* EDIROL UM-3 */
-#define	USB_PRODUCT_ROLAND_UA4FX	0x00A3		/* EDIROL UA-4FX */
-#define	USB_PRODUCT_ROLAND_SONICCELL	0x00C2		/* SonicCell */
+#define	USB_PRODUCT_ROLAND_UA4FX	0x00a3		/* EDIROL UA-4FX */
+#define	USB_PRODUCT_ROLAND_SONICCELL	0x00c2		/* SonicCell */
+#define	USB_PRODUCT_ROLAND_UA25EXA	0x00e6		/* EDIROL UA-25EX (advanced) */
+#define	USB_PRODUCT_ROLAND_UA25EX	0x00e7		/* EDIROL UA-25EX */
 #define	USB_PRODUCT_ROLAND_UMONE	0x012a		/* UM-ONE MIDI I/F */
+#define	USB_PRODUCT_ROLAND_QUADCAPTURE	0x012f		/* QUAD-CAPTURE */
 
 /* RT Systems products */
+#define	USB_PRODUCT_RTSYS_RTS03	0x9100		/* RTS-03 */
 #define	USB_PRODUCT_RTSYS_CT57A	0x9e51		/* CT57A Radio Cable */
 
 /* Sagem products */
@@ -2982,6 +3027,8 @@
 #define	USB_PRODUCT_SIERRA_AC881U	0x6856		/* Sierra Wireless AirCard 881U */
 #define	USB_PRODUCT_SIERRA_AC885U	0x6880		/* Sierra Wireless AirCard 885U */
 #define	USB_PRODUCT_SIERRA_USB305	0x68a3		/* Sierra Wireless AirCard USB 305 */
+#define	USB_PRODUCT_SIERRA_MC7304	0x68c0		/* MC7304 */
+#define	USB_PRODUCT_SIERRA_EM7455	0x9079		/* EM7455 */
 
 /* Sigmatel products */
 #define	USB_PRODUCT_SIGMATEL_SIR4116	0x4116		/* StIR4116 SIR */
@@ -3096,6 +3143,10 @@
 #define	USB_PRODUCT_SMSC_2513HUB	0x2513		/* USB 2.0 3-Port Hub */
 #define	USB_PRODUCT_SMSC_2514HUB	0x2514		/* USB 2.0 4-Port Hub */
 #define	USB_PRODUCT_SMSC_LAN7500	0x7500		/* LAN7500 USB 2.0 gigabit ethernet device */
+#define	USB_PRODUCT_SMSC_LAN7505	0x7505		/* LAN7505 USB 2.0 gigabit ethernet device */
+#define	USB_PRODUCT_SMSC_LAN7800	0x7800		/* LAN7800 USB 3.1 gigabit ethernet device */
+#define	USB_PRODUCT_SMSC_LAN7801	0x7801		/* LAN7801 USB 3.1 gigabit ethernet device */
+#define	USB_PRODUCT_SMSC_LAN7850	0x7850		/* LAN7850 USB 2.0 gigabit ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9500	0x9500		/* SMSC9500 Ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9505	0x9505		/* SMSC9505 Ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9512	0x9512		/* SMSC9512 USB Hub & Ethernet device */
@@ -3286,6 +3337,7 @@
 
 /* TP-Link products */
 #define	USB_PRODUCT_TPLINK_RTL8192CU	0x0100		/* RTL8192CU */
+#define	USB_PRODUCT_TPLINK_RTL8192EU	0x0109		/* RTL8192EU */
 #define	USB_PRODUCT_TPLINK_RTL8188EU	0x010c		/* RTL8188EU */
 
 /* Trek Technology products */
@@ -3408,9 +3460,14 @@
 #define	USB_PRODUCT_WACOM_GRAPHIRE4_4X5	0x0015		/* Graphire4 4x5 */
 #define	USB_PRODUCT_WACOM_INTUOSA5	0x0021		/* Intuos A5 */
 #define	USB_PRODUCT_WACOM_GD0912U	0x0022		/* Intuos 9x12 Graphics Tablet */
+#define	USB_PRODUCT_WACOM_XD0912U	0x0043		/* Intuos2 A4 i-920 XD-0912-U */
+#define	USB_PRODUCT_WACOM_CTH690K0	0x033e		/* Intuos Art CTH-690/K0 */
 
 /* Weltrend Semiconductor */
 #define	USB_PRODUCT_WELTREND_HID	0x2201		/* HID Device */
+
+/* West Mountain Radio products */
+#define	USB_PRODUCT_WMR_RIGBLASTER	0x0003		/* RIGblaster */
 
 /* Western Digital products */
 #define	USB_PRODUCT_WESTERN_EXTHDD	0x0400		/* External HDD */
@@ -3433,6 +3490,10 @@
 /* Xirlink products */
 #define	USB_PRODUCT_XIRLINK_IMAGING	0x800d		/* IMAGING DEVICE */
 #define	USB_PRODUCT_XIRLINK_PCCAM	0x8080		/* IBM PC Camera */
+
+/* X-Rite products */
+#define	USB_PRODUCT_XRITE_HUEY_1	0x5001		/* Huey */
+#define	USB_PRODUCT_XRITE_HUEY_2	0x5010		/* Huey */
 
 /* Conexant */
 #define	USB_PRODUCT_CONEXANT_MODEM_1	0x1329		/* USB Modem */
@@ -3465,6 +3526,11 @@
 /* Y-E Data products */
 #define	USB_PRODUCT_YEDATA_FLASHBUSTERU	0x0000		/* Flashbuster-U */
 
+/* Yubico products */
+#define	USB_PRODUCT_YUBICO_YUBIKEY4MODE1	0x0404		/* YubiKey 4 CCID */
+#define	USB_PRODUCT_YUBICO_YUBIKEY4MODE2	0x0405		/* YubiKey 4 OTP+CCID */
+#define	USB_PRODUCT_YUBICO_YUBIKEY4MODE6	0x0407		/* YubiKey 4 OTP+CCID+U2F */
+
 /* Z-Com products */
 #define	USB_PRODUCT_ZCOM_M4Y750	0x0001		/* M4Y-750 */
 #define	USB_PRODUCT_ZCOM_725	0x0002		/* 725/726 Prism2.5 WLAN */
@@ -3494,6 +3560,9 @@
 /* Zoom Telephonics, Inc. products */
 #define	USB_PRODUCT_ZOOM_2986L	0x9700		/* 2986L Fax modem */
 #define	USB_PRODUCT_ZOOM_3095	0x3095		/* 3095 USB Fax modem */
+
+/* Zoran Microelectronics products */
+#define	USB_PRODUCT_ZORAN_EX20DSC	0x4343		/* Digital Camera EX-20 DSC */
 
 /* ZTE products */
 #define	USB_PRODUCT_ZTE_MF622	0x0001		/* MF622 modem */
@@ -3530,5 +3599,7 @@
 #define	USB_PRODUCT_ZYXEL_RT2870_2	0x341a		/* RT2870 */
 #define	USB_PRODUCT_ZYXEL_NWD2105	0x341e		/* NWD2105 */
 #define	USB_PRODUCT_ZYXEL_RTL8192CU	0x341f		/* RTL8192CU */
+#define	USB_PRODUCT_ZYXEL_NWD2705	0x3421		/* NWD2705 */
+#define	USB_PRODUCT_ZYXEL_NWD6605	0x3426		/* ND6605 */
 #define	USB_PRODUCT_ZYXEL_RT3070	0x343e		/* RT3070 */
 #define	USB_PRODUCT_ZYXEL_PRESTIGE	0x401a		/* Prestige */
