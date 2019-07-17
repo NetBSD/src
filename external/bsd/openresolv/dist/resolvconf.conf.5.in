@@ -70,7 +70,7 @@ These interfaces will be processed next, unless they have a metric.
 If unset, defaults to the following:-
 .D1 tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*
 .It Sy inclusive_interfaces
-Ignore any exlcusive marking for these interfaces.
+Ignore any exclusive marking for these interfaces.
 This is handy when 3rd party integrations force the
 .Nm resolvconf -x
 option and you want to disable it easily.
