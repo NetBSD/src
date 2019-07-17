@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.64.10.2 2018/07/26 20:37:42 snj Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.64.10.3 2019/07/17 15:43:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64.10.2 2018/07/26 20:37:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64.10.3 2019/07/17 15:43:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2156,6 +2156,7 @@ static const struct wb_product wbsio_products[] = {
     { WBSIO_ID_NCT6793D,    "NCT6793D", nct6779d_sensors, NULL },
     { WBSIO_ID_NCT6795D,    "NCT6795D", nct6779d_sensors, NULL },
     { WBSIO_ID_NCT6796D,    "NCT6796D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6798D,    "NCT6798D", nct6779d_sensors, NULL },
     { 0, NULL, NULL, NULL }
 };
 
@@ -2270,6 +2271,9 @@ lm_attach(struct lm_softc *lmsc)
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(lmsc->sc_sme);
 	}
+	if (!pmf_device_register(lmsc->sc_dev, NULL, NULL))
+		aprint_error_dev(lmsc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 /*
@@ -2282,6 +2286,7 @@ lm_detach(struct lm_softc *lmsc)
 	callout_halt(&lmsc->sc_callout, NULL);
 	callout_destroy(&lmsc->sc_callout);
 	sysmon_envsys_unregister(lmsc->sc_sme);
+	pmf_device_deregister(lmsc->sc_dev);
 }
 
 static void
