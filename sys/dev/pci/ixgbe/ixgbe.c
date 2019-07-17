@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.192 2019/07/04 09:02:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.193 2019/07/17 03:26:24 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -220,10 +220,9 @@ static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
 static void	ixgbe_eitr_write(struct adapter *, uint32_t, uint32_t);
 
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
-#if 0
-static void	ixgbe_register_vlan(void *, struct ifnet *, u16);
-static void	ixgbe_unregister_vlan(void *, struct ifnet *, u16);
-#endif
+static int	ixgbe_vlan_cb(struct ethercom *, uint16_t, bool);
+static int	ixgbe_register_vlan(void *, struct ifnet *, u16);
+static int	ixgbe_unregister_vlan(void *, struct ifnet *, u16);
 
 static void	ixgbe_add_device_sysctls(struct adapter *);
 static void	ixgbe_add_hw_stats(struct adapter *);
@@ -904,6 +903,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Enable WoL (if supported) */
 	ixgbe_check_wol_support(adapter);
+
+	/* Register for VLAN events */
+	ether_set_vlan_cb(&adapter->osdep.ec, ixgbe_vlan_cb);
 
 	/* Verify adapter fan is still functional (if applicable) */
 	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
@@ -2299,7 +2301,20 @@ ixgbe_sysctl_rdt_handler(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_rdt_handler */
 
-#if 0	/* XXX Badly need to overhaul vlan(4) on NetBSD. */
+static int
+ixgbe_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	int rv;
+
+	if (set)
+		rv = ixgbe_register_vlan(ifp->if_softc, ifp, vid);
+	else
+		rv = ixgbe_unregister_vlan(ifp->if_softc, ifp, vid);
+
+	return rv;
+}
+
 /************************************************************************
  * ixgbe_register_vlan
  *
@@ -2308,24 +2323,30 @@ ixgbe_sysctl_rdt_handler(SYSCTLFN_ARGS)
  *   just creates the entry in the soft version of the
  *   VFTA, init will repopulate the real table.
  ************************************************************************/
-static void
+static int
 ixgbe_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	u16		index, bit;
+	int		error;
 
 	if (ifp->if_softc != arg)   /* Not our event */
-		return;
+		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
-		return;
+		return EINVAL;
 
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	adapter->shadow_vfta[index] |= (1 << bit);
-	ixgbe_setup_vlan_hw_support(adapter);
+	error = adapter->hw.mac.ops.set_vfta(&adapter->hw, vtag, 0, true,
+	    true);
 	IXGBE_CORE_UNLOCK(adapter);
+	if (error != 0)
+		error = EACCES;
+
+	return error;
 } /* ixgbe_register_vlan */
 
 /************************************************************************
@@ -2333,27 +2354,31 @@ ixgbe_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
  *
  *   Run via vlan unconfig EVENT, remove our entry in the soft vfta.
  ************************************************************************/
-static void
+static int
 ixgbe_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	u16		index, bit;
+	int		error;
 
 	if (ifp->if_softc != arg)
-		return;
+		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
-		return;
+		return EINVAL;
 
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	adapter->shadow_vfta[index] &= ~(1 << bit);
-	/* Re-init to load the changes */
-	ixgbe_setup_vlan_hw_support(adapter);
+	error = adapter->hw.mac.ops.set_vfta(&adapter->hw, vtag, 0, false,
+	    true);
 	IXGBE_CORE_UNLOCK(adapter);
+	if (error != 0)
+		error = EACCES;
+
+	return error;
 } /* ixgbe_unregister_vlan */
-#endif
 
 static void
 ixgbe_setup_vlan_hw_support(struct adapter *adapter)
@@ -2363,6 +2388,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct rx_ring	*rxr;
 	int		i;
 	u32		ctrl;
+	struct vlanid_list *vlanidp;
 	bool		hwtagging;
 
 	/*
@@ -2391,14 +2417,21 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
 
-	/*
-	 * A soft reset zero's out the VFTA, so
-	 * we need to repopulate it now.
-	 */
+	/* Cleanup shadow_vfta */
 	for (i = 0; i < IXGBE_VFTA_SIZE; i++)
-		if (adapter->shadow_vfta[i] != 0)
-			IXGBE_WRITE_REG(hw, IXGBE_VFTA(i),
-			    adapter->shadow_vfta[i]);
+		adapter->shadow_vfta[i] = 0;
+	/* Generate shadow_vfta from ec_vids */
+	mutex_enter(ec->ec_lock);
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
+		uint32_t idx;
+
+		idx = vlanidp->vid / 32;
+		KASSERT(idx < IXGBE_VFTA_SIZE);
+		adapter->shadow_vfta[idx] |= 1 << vlanidp->vid % 32;
+	}
+	mutex_exit(ec->ec_lock);
+	for (i = 0; i < IXGBE_VFTA_SIZE; i++)
+		IXGBE_WRITE_REG(hw, IXGBE_VFTA(i), adapter->shadow_vfta[i]);
 
 	ctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 	/* Enable the Filter Table if enabled */
@@ -4107,6 +4140,7 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Update saved flags. See ixgbe_ifflags_cb() */
 	adapter->if_flags = ifp->if_flags;
+	adapter->ec_capenable = adapter->osdep.ec.ec_capenable;
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
@@ -6151,8 +6185,23 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 	} else if ((change & IFF_PROMISC) != 0)
 		ixgbe_set_promisc(adapter);
 
+	/* Check for ec_capenable. */
+	change = ec->ec_capenable ^ adapter->ec_capenable;
+	adapter->ec_capenable = ec->ec_capenable;
+	if ((change & ~(ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING
+	    | ETHERCAP_VLAN_HWFILTER)) != 0) {
+		rv = ENETRESET;
+		goto out;
+	}
+
+	/*
+	 * Special handling is not required for ETHERCAP_VLAN_MTU.
+	 * MAXFRS(MHADD) does not include the 4bytes of the VLAN header.
+	 */
+
 	/* Set up VLAN support and filter */
-	ixgbe_setup_vlan_hw_support(adapter);
+	if ((change & (ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_HWFILTER)) != 0)
+		ixgbe_setup_vlan_hw_support(adapter);
 
 out:
 	IXGBE_CORE_UNLOCK(adapter);

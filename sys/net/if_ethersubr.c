@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.275 2019/05/29 10:07:30 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.275 2019/05/29 10:07:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -996,6 +996,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 		if_set_sadl(ifp, lla, ETHER_ADDR_LEN, !ETHER_IS_LOCAL(lla));
 
 	LIST_INIT(&ec->ec_multiaddrs);
+	SIMPLEQ_INIT(&ec->ec_vids);
 	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 	ec->ec_flags = 0;
 	ifp->if_broadcastaddr = etherbroadcastaddr;
@@ -1042,6 +1043,7 @@ ether_ifdetach(struct ifnet *ifp)
 #endif
 
 	ETHER_LOCK(ec);
+	KASSERT(ec->ec_nvlans == 0);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
 		kmem_free(enm, sizeof(*enm));
@@ -1370,6 +1372,13 @@ void
 ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 {
 	ec->ec_ifflags_cb = cb;
+}
+
+void
+ether_set_vlan_cb(struct ethercom *ec, ether_vlancb_t cb)
+{
+
+	ec->ec_vlan_cb = cb;
 }
 
 static int
