@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.118 2019/07/04 09:02:24 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.119 2019/07/17 03:09:16 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -131,7 +131,6 @@ static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
-
 
 /* Sysctl handlers */
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
