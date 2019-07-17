@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2019/07/15 11:46:53 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 2019/07/17 08:39:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.38 2019/07/15 11:46:53 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.39 2019/07/17 08:39:03 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -976,7 +976,7 @@ tcr_setting:
 
 
 sctlr_ee:
-	.quad (SCTLR_EE | SCTLR_EOE)	/* Endiannes of Exception and EL0 */
+	.quad (SCTLR_EE | SCTLR_EOE)	/* Endianness of Exception and EL0 */
 sctlr_set:
 	.quad ( \
 	    SCTLR_LSMAOE |  /* Load/Store Multiple Atomicity and Ordering */ \
