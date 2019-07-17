@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.139 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.140 2019/07/17 03:09:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.139 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.140 2019/07/17 03:09:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -620,7 +620,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 		struct ethercom *ec = (void *)p;
 		if (--ec->ec_nvlans == 0) {
 			IFNET_LOCK(p);
-			(void) ether_disable_vlan_mtu(p);
+			(void)ether_disable_vlan_mtu(p);
 			IFNET_UNLOCK(p);
 		}
 
@@ -1000,9 +1000,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		error = vlan_config(ifv, pr, vlr.vlr_tag);
-		if (error != 0) {
+		if (error != 0)
 			break;
-		}
 
 		/* Update promiscuous mode, if necessary. */
 		vlan_set_promisc(ifp);
