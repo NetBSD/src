@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.5 2019/02/11 13:23:03 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.6 2019/07/17 16:01:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.5 2019/02/11 13:23:03 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.6 2019/07/17 16:01:43 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ static const char * const i386_intel_brand[] = {
 	"Pentium III",	    /* Intel (R) Pentium (R) III processor */
 	"",		    /* 0x05: Reserved */
 	"Mobile Pentium III",/* Mobile Intel (R) Pentium (R) III processor-M */
-	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
 	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
@@ -320,10 +320,10 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x06] = "Celeron (Mendocino)",
 				[0x07] = "Pentium III (Katmai)",
 				[0x08] = "Pentium III (Coppermine)",
-				[0x09] = "Pentium M (Banias)", 
+				[0x09] = "Pentium M (Banias)",
 				[0x0a] = "Pentium III Xeon (Cascades)",
 				[0x0b] = "Pentium III (Tualatin)",
-				[0x0d] = "Pentium M (Dothan)", 
+				[0x0d] = "Pentium M (Dothan)",
 				[0x0e] = "Pentium Core Duo, Core solo",
 				[0x0f] = "Xeon 30xx, 32xx, 51xx, 53xx, 73xx, "
 					 "Core 2 Quad 6xxx, "
@@ -372,7 +372,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x4d] = "Atom C2000",
 				[0x4e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x4f] = "Xeon E[57] v4 (Broadwell), Core i7-69xx Extreme",
-				[0x55] = "Xeon Scalable (Skylake)",
+				[0x55] = "Xeon Scalable (Skylake, Cascade Lake, Copper Lake)",
 				[0x56] = "Xeon D-1500 (Broadwell)",
 				[0x57] = "Xeon Phi [357]200 (Knights Landing)",
 				[0x5a] = "Atom E3500",
@@ -380,13 +380,16 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x5f] = "Atom (Goldmont, Denverton)",
-				[0x66] = "Future Core (Cannon Lake)",
+				[0x66] = "8th gen Core i3 (Cannon Lake)",
+				[0x6a] = "Future Xeon (Ice Lake)",
+				[0x6c] = "Future Xeon (Ice Lake)",
 				[0x7a] = "Atom (Goldmont Plus)",
+				[0x7d] = "Future Core (Ice Lake)",
 				[0x7e] = "Future Core (Ice Lake)",
 				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
 				[0x86] = "Atom (Tremont)",
-				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
-				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
+				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
+				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
@@ -725,7 +728,7 @@ static void
 cyrix6x86_cpu_setup(struct cpu_info *ci)
 {
 
-	/* 
+	/*
 	 * Do not disable the TSC on the Geode GX, it's reported to
 	 * work fine.
 	 */
@@ -975,7 +978,7 @@ amd_family6_probe(struct cpu_info *ci)
 
 	if (*cpu_brand_string == '\0')
 		return;
-	
+
 	for (i = 1; i < __arraycount(amd_brand); i++)
 		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
@@ -1226,10 +1229,10 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 	}
 }
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] =
     AMD_L2CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] =
     AMD_L3CACHE_INFO;
 
 static void
@@ -1716,19 +1719,28 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		/*
 		 * HV vendor	ID string
 		 * ------------+--------------
+		 * HAXM		"HAXMHAXMHAXM"
 		 * KVM		"KVMKVMKVM"
 		 * Microsoft	"Microsoft Hv"
+		 * QEMU(TCG)	"TCGTCGTCGTCG"
 		 * VMware	"VMwareVMware"
 		 * Xen		"XenVMMXenVMM"
+		 * NetBSD	"___ NVMM ___"
 		 */
-		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
+		if (strncmp(hv_sig, "HAXMHAXMHAXM", 12) == 0)
+			hv_name = "HAXM";
+		else if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
 			hv_name = "KVM";
 		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
 			hv_name = "Hyper-V";
+		else if (strncmp(hv_sig, "TCGTCGTCGTCG", 12) == 0)
+			hv_name = "QEMU(TCG)";
 		else if (strncmp(hv_sig, "VMwareVMware", 12) == 0)
 			hv_name = "VMware";
 		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
 			hv_name = "Xen";
+		else if (strncmp(hv_sig, "___ NVMM ___", 12) == 0)
+			hv_name = "NVMM";
 		else
 			hv_name = "unknown";
 
@@ -1784,6 +1796,25 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 	while (*bp != '\0') {
 		aprint_verbose("%s: %s %s\n", cpuname, hdr, bp);
 		bp += strlen(bp) + 1;
+	}
+}
+
+static void
+dump_descs(uint32_t leafstart, uint32_t leafend, const char *cpuname,
+    const char *blockname)
+{
+	uint32_t descs[4];
+	uint32_t leaf;
+
+	aprint_verbose("%s: highest %s info %08x\n", cpuname, blockname,
+	    leafend);
+
+	if (verbose) {
+		for (leaf = leafstart; leaf <= leafend; leaf++) {
+			x86_cpuid(leaf, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    leaf, descs[0], descs[1], descs[2], descs[3]);
+		}
 	}
 }
 
@@ -1930,29 +1961,12 @@ identifycpu(int fd, const char *cpuname)
 
 	ci = &cistore;
 	cpu_probe_base_features(ci, cpuname);
-	aprint_verbose("%s: highest basic info %08x\n", cpuname,
-	    ci->ci_cpuid_level);
-	if (verbose) {
-		int bf;
-		
-		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
-			x86_cpuid(bf, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    bf, descs[0], descs[1], descs[2], descs[3]);
-		}
+	dump_descs(0x00000000, ci->ci_cpuid_level, cpuname, "basic");
+	if ((ci->ci_feat_val[1] & CPUID2_RAZ) != 0) {
+		x86_cpuid(0x40000000, descs);
+		dump_descs(0x40000000, descs[0], cpuname, "hypervisor");
 	}
-	if (ci->ci_cpuid_extlevel >=  0x80000000)
-		aprint_verbose("%s: highest extended info %08x\n", cpuname,
-		    ci->ci_cpuid_extlevel);
-	if (verbose) {
-		unsigned int ef;
-
-		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
-			x86_cpuid(ef, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    ef, descs[0], descs[1], descs[2], descs[3]);
-		}
-	}
+	dump_descs(0x80000000, ci->ci_cpuid_extlevel, cpuname, "extended");
 
 	cpu_probe_hv_features(ci, cpuname);
 	cpu_probe_features(ci);
@@ -2023,8 +2037,8 @@ identifycpu(int fd, const char *cpuname)
 			if (cpu_vendor == CPUVENDOR_AMD) {
 				if (ci->ci_family == 6 && ci->ci_model >= 6) {
 					if (ci->ci_brand_id == 1)
-						/* 
-						 * It's Duron. We override the 
+						/*
+						 * It's Duron. We override the
 						 * name, since it might have
 						 * been misidentified as Athlon.
 						 */
@@ -2042,7 +2056,7 @@ identifycpu(int fd, const char *cpuname)
 						name = tmp;
 				}
 			}
-			
+
 			if (cpu_vendor == CPUVENDOR_IDT && ci->ci_family >= 6)
 				vendorname = "VIA";
 		}
@@ -2167,7 +2181,7 @@ identifycpu(int fd, const char *cpuname)
 		|| (cpu_vendor == CPUVENDOR_AMD))) {
 		uint16_t lmin, lmax;
 		x86_cpuid(5, descs);
-		
+
 		print_bits(cpuname, "MONITOR/MWAIT extensions",
 		    CPUID_MON_FLAGS, descs[2]);
 		lmin = __SHIFTOUT(descs[0], CPUID_MON_MINSIZE);
