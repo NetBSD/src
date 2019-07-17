@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.80 2019/07/17 03:09:16 msaitoh Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.81 2019/07/17 03:26:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -163,6 +163,7 @@ struct mii_data;
 struct ethercom;
 
 typedef int (*ether_cb_t)(struct ethercom *);
+typedef int (*ether_vlancb_t)(struct ethercom *, uint16_t, bool);
 
 /*
  * Structure shared between the ethernet driver modules and
@@ -181,6 +182,7 @@ struct ethercom {
 						   capabilities to enable */
 
 	int	ec_nvlans;			/* # VLANs on this interface */
+	SIMPLEQ_HEAD(, vlanid_list) ec_vids;	/* list of VLAN IDs */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
 	struct ifmedia				*ec_ifmedia;
@@ -190,6 +192,12 @@ struct ethercom {
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
 	ether_cb_t				ec_ifflags_cb;
+	/*
+	 * Called whenever a vlan interface is configured or unconfigured.
+	 * Args include the vlan tag and a flag indicating whether the tag is
+	 * being added or removed.
+	 */
+	ether_vlancb_t				ec_vlan_cb;
 	kmutex_t				*ec_lock;
 	/* Flags used only by the kernel */
 	int					ec_flags;
@@ -241,6 +249,7 @@ extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
 void	ether_set_ifflags_cb(struct ethercom *, ether_cb_t);
+void	ether_set_vlan_cb(struct ethercom *, ether_vlancb_t);
 int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
@@ -335,6 +344,12 @@ ether_first_multi(struct ether_multistep *step, const struct ethercom *ec)
 /*
  * Ethernet 802.1Q VLAN structures.
  */
+
+/* for ethercom */
+struct vlanid_list {
+	uint16_t vid;
+	SIMPLEQ_ENTRY(vlanid_list) vid_list;
+};
 
 /* add VLAN tag to input/received packet */
 static __inline void
