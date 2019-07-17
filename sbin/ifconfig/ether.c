@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.4 2019/07/08 03:04:15 msaitoh Exp $	*/
+/*	$NetBSD: ether.c,v 1.5 2019/07/17 03:09:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.4 2019/07/08 03:04:15 msaitoh Exp $");
+__RCSID("$NetBSD: ether.c,v 1.5 2019/07/17 03:09:16 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -65,10 +65,10 @@ static cmdloop_branch_t branch;
 
 static const struct kwinst ethercapskw[] = {
 #if 0 /* notyet */
-	  IFKW("vlan-hwfilter",	ETHERCAP_VLAN_HWFILTER)
+	IFKW("vlan-hwfilter",	ETHERCAP_VLAN_HWFILTER),
 #endif
-	  IFKW("vlan-hwtagging", ETHERCAP_VLAN_HWTAGGING),
-	  IFKW("eee",		ETHERCAP_EEE)
+	IFKW("vlan-hwtagging",	ETHERCAP_VLAN_HWTAGGING),
+	IFKW("eee",		ETHERCAP_EEE)
 };
 
 struct pkw ethercaps = PKW_INITIALIZER(&ethercaps, "ethercaps", setethercaps,
