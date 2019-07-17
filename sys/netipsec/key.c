@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.263 2019/06/12 22:23:06 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.264 2019/07/17 07:07:59 ozaki-r Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.263 2019/06/12 22:23:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.264 2019/07/17 07:07:59 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -696,8 +696,8 @@ static bool key_sah_has_sav(struct secashead *);
 static void key_sah_ref(struct secashead *);
 static void key_sah_unref(struct secashead *);
 static void key_init_sav(struct secasvar *);
+static void key_wait_sav(struct secasvar *);
 static void key_destroy_sav(struct secasvar *);
-static void key_destroy_sav_with_ref(struct secasvar *);
 static struct secasvar *key_newsav(struct mbuf *,
 	const struct sadb_msghdr *, int *, const char*, int);
 #define	KEY_NEWSAV(m, sadb, e)				\
@@ -1598,30 +1598,20 @@ key_destroy_sav(struct secasvar *sav)
 }
 
 /*
- * Destroy sav with holding its reference.
+ * Wait for references of a passed sav to go away.
  */
 static void
-key_destroy_sav_with_ref(struct secasvar *sav)
+key_wait_sav(struct secasvar *sav)
 {
 
 	ASSERT_SLEEPABLE();
 
 	mutex_enter(&key_sad.lock);
-	sav->state = SADB_SASTATE_DEAD;
-	SAVLIST_WRITER_REMOVE(sav);
-	SAVLUT_WRITER_REMOVE(sav);
-	mutex_exit(&key_sad.lock);
-
-	/* We cannot unref with holding key_sad.lock */
-	KEY_SA_UNREF(&sav);
-
-	mutex_enter(&key_sad.lock);
+	KASSERT(sav->state == SADB_SASTATE_DEAD);
 	KDASSERT(mutex_ownable(softnet_lock));
 	key_sad_pserialize_perform();
 	localcount_drain(&sav->localcount, &key_sad.cv_lc, &key_sad.lock);
 	mutex_exit(&key_sad.lock);
-
-	key_destroy_sav(sav);
 }
 
 /* %%% SPD management */
@@ -3529,6 +3519,38 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 	}
 out:
 	pserialize_read_exit(s);
+
+	return sav;
+}
+
+/*
+ * Search SAD litmited alive SA by an SPI and remove it from a list.
+ * OUT:
+ *	NULL	: not found
+ *	others	: found, pointer to a SA.
+ */
+static struct secasvar *
+key_lookup_and_remove_sav(struct secashead *sah, u_int32_t spi)
+{
+	struct secasvar *sav = NULL;
+	u_int state;
+
+	/* search all status */
+	mutex_enter(&key_sad.lock);
+	SASTATE_ALIVE_FOREACH(state) {
+		SAVLIST_WRITER_FOREACH(sav, sah, state) {
+			KASSERT(sav->state == state);
+
+			if (sav->spi == spi) {
+				sav->state = SADB_SASTATE_DEAD;
+				SAVLIST_WRITER_REMOVE(sav);
+				SAVLUT_WRITER_REMOVE(sav);
+				goto out;
+			}
+		}
+	}
+out:
+	mutex_exit(&key_sad.lock);
 
 	return sav;
 }
@@ -5628,7 +5650,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
-	struct secasvar *sav, *newsav;
+	struct secasvar *sav, *newsav, *oldsav;
 	u_int16_t proto;
 	u_int8_t mode;
 	u_int16_t reqid;
@@ -5781,11 +5803,24 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
+	/*
+	 * We need to lookup and remove the sav atomically, so get it again
+	 * here by a special API while we have a reference to it.
+	 */
+	oldsav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi);
+	/* We can release the reference because of oldsav */
+	KEY_SA_UNREF(&sav);
+	if (oldsav == NULL) {
+		/* Someone has already removed the sav.  Nothing to do. */
+	} else {
+		key_wait_sav(oldsav);
+		key_destroy_sav(oldsav);
+		oldsav = NULL;
+	}
+	sav = NULL;
+
 	key_sah_unref(sah);
 	sah = NULL;
-
-	key_destroy_sav_with_ref(sav);
-	sav = NULL;
 
     {
 	struct mbuf *n;
@@ -6187,7 +6222,7 @@ key_api_delete(struct socket *so, struct mbuf *m,
 	sah = key_getsah_ref(&saidx, CMP_HEAD);
 	if (sah != NULL) {
 		/* get a SA with SPI. */
-		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		sav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi);
 		key_sah_unref(sah);
 	}
 
@@ -6196,7 +6231,8 @@ key_api_delete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOENT);
 	}
 
-	key_destroy_sav_with_ref(sav);
+	key_wait_sav(sav);
+	key_destroy_sav(sav);
 	sav = NULL;
 
     {
