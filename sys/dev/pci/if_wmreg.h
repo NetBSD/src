@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98.6.8 2019/03/07 17:11:53 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98.6.9 2019/07/17 16:12:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -720,17 +720,17 @@ struct livengood_tcpip_ctxdesc {
 #define IVAR_VALID       __BIT(7)
 /* IVAR definitions for 82580 and newer */
 #define WMREG_IVAR_Q(x)	(WMREG_IVAR0 + ((x) / 2) * 4)
-#define IVAR_TX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 8 : 24))
-#define IVAR_RX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 0 : 16))
+#define IVAR_TX_MASK_Q(x) (0x000000ffUL << (((x) % 2) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q(x) (0x000000ffUL << (((x) % 2) == 0 ? 0 : 16))
 /* IVAR definitions for 82576 */
 #define WMREG_IVAR_Q_82576(x)	(WMREG_IVAR0 + ((x) & 0x7) * 4)
-#define IVAR_TX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 8 : 24))
-#define IVAR_RX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 0 : 16))
+#define IVAR_TX_MASK_Q_82576(x) (0x000000ffUL << (((x) / 8) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q_82576(x) (0x000000ffUL << (((x) / 8) == 0 ? 0 : 16))
 /* IVAR definitions for 82574 */
 #define IVAR_ALLOC_MASK_82574	__BITS(0, 2)
 #define IVAR_VALID_82574	__BIT(3)
-#define IVAR_TX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 8 : 12))
-#define IVAR_RX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 0 : 4))
+#define IVAR_TX_MASK_Q_82574(x) (0x0000000fUL << ((x) == 0 ? 8 : 12))
+#define IVAR_RX_MASK_Q_82574(x) (0x0000000fUL << ((x) == 0 ? 0 : 4))
 #define IVAR_OTHER_MASK		__BITS(16, 19)
 #define IVAR_INT_ON_ALL_WB	__BIT(31)
 
