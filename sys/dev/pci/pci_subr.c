@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.10 2019/07/17 15:34:31 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.11 2019/07/17 15:55:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.10 2019/07/17 15:34:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.11 2019/07/17 15:55:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1688,7 +1688,7 @@ pci_print_pcie_compl_timeout(uint32_t val)
 	}
 }
 
-static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0"};
+static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0", "16.0"};
 
 /*
  * Print link speed. This function is used for the following register bits:
