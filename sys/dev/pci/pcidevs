@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289.2.14 2019/03/07 17:03:52 martin Exp $
+$NetBSD: pcidevs,v 1.1289.2.15 2019/07/17 15:27:55 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -634,6 +634,7 @@ vendor RENESAS		0x1912	Renesas Technologies
 vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
+vendor PHISON		0x1987	Phison
 vendor SERVERENGINES	0x19a2	ServerEngines
 vendor HUAWEI		0x19e5	Huaewi Technology
 vendor ASPEED		0x1a03	ASPEED Technology
@@ -1291,7 +1292,11 @@ product ASMEDIA ASM1061_12	0x0612	ASM1061 AHCI SATA III Controller
 product	ASMEDIA	ASM1042		0x1042	ASM1042 USB 3.0 Host Controller
 product ASMEDIA ASM1083		0x1080	ASM1083/1085 PCIe-PCI Bridge
 product	ASMEDIA	ASM1042A	0x1142	ASM1042A USB 3.0 Host Controller
+product	ASMEDIA	ASM1182		0x1182	ASM1182E PCIE Bridge Controller
+product	ASMEDIA	ASM1184		0x1184	ASM1184E PCIE Bridge Controller
 product ASMEDIA ASM1142		0x1242	ASM1142 USB 3.1 Host Controller
+product ASMEDIA ASM1143		0x1343	ASM1143 USB 3.1 Host Controller
+product ASMEDIA ASM2142		0x2142	ASM2142 USB 3.1 Host Controller
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
@@ -1725,14 +1730,33 @@ product ATI RADEON_HD6320	0x9806	Radeon HD6320 Graphics
 product ATI RADEON_HD7340	0x9808	Radeon HD7340 Graphics
 product ATI RADEON_HDMI_DP_AUDIO	0x9840	HDMI/DP Audio
 product ATI RADEON_R2_R3_R3E_R4	0x9854	Radeon R2/R3/R4 Graphics
-product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
+product ATI RADEON_HD2900_HDA	0xaa00	Radeon HD 2900 HD Audio Controller
+product ATI RADEON_HD3650_HDA	0xaa01	Radeon HD 3650/3730/3750 HD Audio Controller
+product ATI RADEON_HD2600_HDA	0xaa08	Radeon HD 2600 HD Audio Controller
+product ATI RADEON_HD2350_HDA	0xaa10	Radeon HD 2350PRO/2400PRO/2400XT/3410 HD Audio Controller
+product ATI RADEON_HD3690_HDA	0xaa18	Radeon HD 3690/3800 HD Audio Controller
+product ATI RADEON_HD36XX_HDA	0xaa20	Radeon HD 3650/3730/3750 HD Audio Controller
 product ATI RADEON_HD34XX_HDA	0xaa28	Radeon HD 34xx HD Audio Controller
-product ATI RADEON_HD4350_HD	0xaa38	Radeon HD4350 HD Audio Controller
-product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
-product ATI RADEON_HD54XX_HDA	0xaa68	Radeon HD 54xx Audio
-product ATI RADEON_HD7700_HDA	0xaab0	Radeon HD 7700 HD Audio
-product ATI RADEON_RX460_HDA	0xaae0	Radeon RX460 HD Audio
-product ATI RADEON_RX470_HDA	0xaaf0	Radeon RX470 HD Audio
+product ATI RADEON_HD4850_HDA	0xaa30	Radeon HD 4850 HD Audio Controller
+product ATI RADEON_HD4350_HDA	0xaa38	Radeon HD 4350 HD Audio Controller
+product ATI RADEON_HD5830_HDA	0xaa50	Radeon HD 5830/5850/5870/6850/6870 HD Audio Controller
+product ATI RADEON_HD5700_HDA	0xaa58	Radeon HD 5700 HD Audio Controller
+product ATI RADEON_HD5000_HDA	0xaa60	Radeon HD 5000 HD Audio Controller
+product ATI RADEON_HD68XX_HDA	0xaa68	Radeon HD 5400/6300/7300 HD Audio Controller
+product ATI RADEON_HD6930_HDA	0xaa80	Radeon HD 6930/6950/6970/6990 HD Audio Controller
+product ATI RADEON_HD6790_HDA	0xaa88	Radeon HD 6790/6850/6870/7720 HD Audio Controller
+product ATI RADEON_HD6500_HDA	0xaa90	Radeon HD 6500/6600/6700M HD Audio Controller
+product ATI RADEON_HD6450_HDA	0xaa98	Radeon HD 6450/7450/8450/8490, R5 230/235/235X HD Audio Controller
+product ATI RADEON_HD7870_HDA	0xaaa0	Radeon HD 7870XT/7950/7970 HD Audio Controller
+product ATI RADEON_HD7700_HDA	0xaab0	Radeon HD 7700 HD Audio Controller
+product ATI RADEON_R7_360_HDA	0xaac0	Radeon R7 360, R9 360 HD Audio Controller
+product ATI RADEON_R9_290_HDA	0xaac8	Radeon R9 290/290X, 390/390X HD Audio Controller
+product ATI RADEON_R9_285_HDA	0xaad8	Radeon R9 285/380 HD Audio Controller
+product ATI RADEON_RX_460_HDA	0xaae0	Radeon RX 460/550/640SP, RX 560/560X HD Audio Controller
+product ATI RADEON_RX_550_HDA	0xaae8	Radeon R9 Nano, FURY HD Audio Controller
+product ATI RADEON_RX_470_HDA	0xaaf0	Radeon RX 470/480/570/580/590 HD Audio Controller
+product ATI RADEON_VEGA56_HDA	0xaaf8	Radeon Vega 56/64
+product ATI RADEON_RX_550_HDA2	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller  
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -2754,17 +2778,25 @@ product MARVELL MV78260		0x7826	MV78260 SoC Armada XP
 product MARVELL MV78460		0x7846	MV78460 SoC Armada XP
 product MARVELL 88W8660		0x8660	88W8660 SoC Orion1
 
-product MARVELL2 88SE9120	0x9120	88SE9120 SATA
-product MARVELL2 88SE912X	0x9123	88SE912[38] SATA II or III PCI-E AHCI Controller
-product MARVELL2 88SE9125	0x9125	88SE9125 SATA III PCI-E AHCI Controller
-product MARVELL2 88SE9172	0x9172	88SE9172 SATA
-product MARVELL2 88SE9182	0x9182	88SE9182 SATA
-product MARVELL2 88SE9183	0x9183	88SE9183 SATA
-product MARVELL2 88SE91XX	0x91a3	88SE91XX SATA
-product MARVELL2 88SE9215	0x9215	88SE9215 SATA
-product MARVELL2 88SE9220	0x9220	88SE9220 SATA
-product MARVELL2 88SE9230	0x9230	88SE9230 SATA
-product MARVELL2 88SE9235	0x9235	88SE9235 SATA
+product MARVELL2 88SE9120	0x9120	88SE9120 SATA Controller
+product MARVELL2 88SE912X	0x9123	88SE912[38] SATA II or III PCI-E Controller
+product MARVELL2 88SE9125	0x9125	88SE9125 SATA III PCI-E Controller
+product MARVELL2 88SE9128	0x9128	88SE9128 SATA III PCI-E Controller
+product MARVELL2 88SE9130	0x9130	88SE9130 SATA III PCI-E Controller with HyperDuo
+product MARVELL2 88SE9172	0x9172	88SE9172 SATA Controller
+product MARVELL2 88SE9170	0x9178	88SE9170 SATA Controller
+product MARVELL2 88SE9172_2	0x917a	88SE9170 SATA Controller
+product MARVELL2 88SE9182	0x9182	88SE9182 SATA Controller
+product MARVELL2 88SE9183	0x9183	88SE9183 SATA Controller
+product MARVELL2 88SE91XX	0x91a3	88SE91XX SATA Controller
+product MARVELL2 88SE912X_2	0x91a4	88SE912X IDE Controller
+product MARVELL2 88SE9215	0x9215	88SE9215 SATA Controller
+product MARVELL2 88SE9220	0x9220	88SE9220 SATA Controller
+product MARVELL2 88SE9230	0x9230	88SE9230 SATA Controller
+product MARVELL2 88SE9235	0x9235	88SE9235 SATA Controller
+product MARVELL2 88SE9445	0x9445	88SE9445 SATA Controller
+product MARVELL2 88SE9480	0x9480	88SE9480 SATA Controller
+product MARVELL2 88SE9485	0x9485	88SE9485 SATA Controller
 
 /* Micro-star International Co Ltd */
 product	MSI	RT3090		0x891a	MIS RT3090
@@ -3498,12 +3530,13 @@ product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
 product INTEL X552_VF		0x15a8	X552 VF
-product INTEL X552_VF_HV	0x15a9	X552 VF
+product INTEL X552_VF_HV	0x15a9	X552 VF (Hyper-V)
 product INTEL X552_KX4		0x15aa	X552 KX4
 product INTEL X552_KR		0x15ab	X552 KR
 product INTEL X552_SFP		0x15ac	X552 SFP+
 product INTEL X557_AT2		0x15ad	X557-AT2
 product INTEL X552_1G_T		0x15ae	X552 1000Base-T
+product INTEL X552_XFI		0x15b0	X552 XFI
 product INTEL C3K_X553_VF_HYPV	0x15b4	C3000 X553 VF (Hyper-V)
 product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
@@ -3519,6 +3552,8 @@ product INTEL C3K_X553_VF	0x15c5	C3000 X553 VF
 product INTEL C3K_X553_SGMII_BP	0x15c6	C3000 X553 1GbE SGMII Backplane (10G SKU)
 product INTEL C3K_X553_SGMII_BP_L 0x15c7 C3000 X553 1GbE SGMII Backplane (non-10G SKU)
 product INTEL C3K_X553_10G_T	0x15c8	C3000 X553 10GBASE-T (X557)
+product INTEL C3K_X553_QSFP	0x15ca	C3000 X553 10G QSFP
+product INTEL C3K_X553_QSFP_N	0x15cc	C3000 X553 10G QSFP
 product INTEL C3K_X553_KR_SFP	0x15ce	C3000 X553 10G SFP+ (KR)
 product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
@@ -3808,6 +3843,10 @@ product INTEL C2000_1000KX	0x1f40	C2000 Ethernet(1000BASE-KX)
 product INTEL C2000_SGMII	0x1f41	C2000 Ethernet(SGMII)
 product INTEL C2000_DUMMYGBE	0x1f42	C2000 Ethernet(Dummy function)
 product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
+product INTEL XEONSC_UBOX_0	0x2014	Xeon Scalable Ubox
+product INTEL XEONSC_UBOX_1	0x2016	Xeon Scalable Ubox
+product INTEL XEONSC_PCU_0	0x2080	Xeon Scalable PCU
+product INTEL XEONSC_PCU_1	0x2082	Xeon Scalable PCU
 product INTEL BSW_HB		0x2280	Braswell Soc Transaction Router
 product INTEL BSW_HDA		0x2284	Braswell HD Audio
 product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
@@ -4369,26 +4408,39 @@ product INTEL XE5_V3_RQPI_PM_2	0x2f37	Xeon E5 v3/Core i7-6xxxK QPI Ring Interfac
 product INTEL XE7_V4_QPI_LINK2	0x2f40	Xeon E7 v4 QPI Link 2
 product INTEL XE7_V4_RQPI_RING	0x2f41	Xeon E7 v4 QPI Ring Interface
 product INTEL XE5_V3_IMC1_MAIN	0x2f68	Xeon E5 v3 IMC Main
+product INTEL XE5_V3_HA1	0x2f60  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 1
+product INTEL XE5_V3_ICM1_TATRR	0x2f68  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 1 Target Address, Thermal & RAS Registers
 product INTEL XE5_V3_IMC1_TADR1	0x2f6a	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC1_TADR2	0x2f6b	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE7_V4_IMC1_TADR3	0x2f6c	Xeon E7 v4 IMC Ch 0-3 Target Address Decoder
 product INTEL XE7_V4_IMC1_TADR4	0x2f6d	Xeon E7 v4 IMC Ch 0-3 Target Address Decoder
+product INTEL XE5_V3_DDRIO_CHAN2 0x2f6e  Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Channel 2/3 Broadcast
+product INTEL XE5_V3_DDRIO_BROAD2 0x2f6f  Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Global Broadcast
 product INTEL XE5_V3_IMC0_RAS	0x2f71	Xeon E5 v3 IMC RAS Registers
 product INTEL XE5_V3_IMC1_RAS	0x2f79	Xeon E5 v3 IMC Ras Registers
 product INTEL XE5_V3_UBOX_2	0x2f7d	Xeon E5 v3 Scratchpad and Semaphores
 product INTEL XE5_V3_QPI_LINK0	0x2f80	Xeon E5 v3 QPI Link 0
 product INTEL XE5_V3_RQPI_RING	0x2f81	Xeon E5 v3/Core i7-6xxxK QPI Ring Interface
 product INTEL XE5_V3_QPI_LINK4	0x2f83	Xeon E5 v3 QPI Link 0
+product INTEL XE5_V3_QPIL0D1	0x2f85  Xeon E7 v3/Xeon E5 v3/Core i7 QPI Link 0 Debug
+product INTEL XE5_V3_QPIL0D2	0x2f86  Xeon E7 v3/Xeon E5 v3/Core i7 QPI Link 0 Debug
+product INTEL XE5_V3_QPIL0D3	0x2f87  Xeon E7 v3/Xeon E5 v3/Core i7 QPI Link 0 Debug
+product INTEL XE5_V3_VCU1	0x2f88  Xeon E7 v3/Xeon E5 v3/Core i7 VCU
+product INTEL XE5_V3_VCU2	0x2f8a  Xeon E7 v3/Xeon E5 v3/Core i7 VCU
 product INTEL XE5_V3_QPI_LINK1	0x2f90	Xeon E5 v3 QPI Link 1
 product INTEL XE5_V3_PCU_1	0x2f98	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_2	0x2f99	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_3	0x2f9a	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_5	0x2f9c	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_IMC0_MAIN	0x2fa8	Xeon E5 v3 IMC Main
+product INTEL XE5_V3_HA0	0x2fa0  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 0
+product INTEL XE5_V3_IMC0_TATRR	0x2fa8  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 0 Target Address, Thermal & RAS Registers
 product INTEL XE5_V3_IMC0_TADR1 0x2faa	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC0_TADR2 0x2fab	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC0_TADR3 0x2fac	Xeon E5 v3 IMC Ch 2-3 Target Address Decode Registers
 product INTEL XE5_V3_IMC0_TADR4 0x2fad	Xeon E5 v3 IMC Ch 2-3 Target Address Decode Registers
+product INTEL XE5_V3_DDRIO_CHAN	0x2fae  Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Channel 0/1 Broadcast
+product INTEL XE5_V3_DDRIO_BROAD 0x2faf Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Global Broadcast
 product INTEL XE5_V3_IMC0_REG1	0x2fb0	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC0_REG2	0x2fb1	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC0_REG3	0x2fb2	Xeon E5 v3 IMC Ch 2-3 Registers
@@ -4418,6 +4470,37 @@ product INTEL XE5_V3_IMC0_DDRIO_9 0x2fd8 Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_A 0x2fd9 Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_B 0x2fda Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_C 0x2fdb Xeon E5 v3 IMC DDRIO
+product INTEL XE5_V3_UC_REG1	0x2fe0  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG2	0x2fe1  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG3	0x2fe2  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG4	0x2fe3  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG5	0x2fe4  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG6	0x2fe5  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG7	0x2fe6  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG8	0x2fe7  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG9	0x2fe8  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG10	0x2fe9  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG11	0x2fea  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG12	0x2feb  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG13	0x2fec  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG14	0x2fed  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG15	0x2fee  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG16	0x2fef  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG17	0x2ff0  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG18	0x2ff1  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG19	0x2ff2  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG20	0x2ff3  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG21	0x2ff4  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG22	0x2ff5  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG23	0x2ff6  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG24	0x2ff7  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_BRA1	0x2ff8  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent
+product INTEL XE5_V3_BRA2	0x2ff9  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent
+product INTEL XE5_V3_BRA3	0x2ffa  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent
+product INTEL XE5_V3_BRA4	0x2ffb  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Agent
+product INTEL XE5_V3_SADBR1	0x2ffc  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
+product INTEL XE5_V3_SADBR2	0x2ffd  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
+product INTEL XE5_V3_SADBR3	0x2ffe  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
 product INTEL WIFI_LINK_3165_1	0x3165	Dual Band Wireless AC 3165
 product INTEL WIFI_LINK_3165_2	0x3166	Dual Band Wireless AC 3165
 product INTEL GLK_IGD_1		0x3184	UHD Graphics 605
@@ -4697,8 +4780,18 @@ product INTEL E5_UNICAST	0x3ce8	E5 Unicast
 product INTEL E5_SAD_1		0x3cf4	E5 SAD
 product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
 product INTEL E5_SAD_2		0x3cf6	E5 SAD
+product INTEL XEONE_S_D_HOST_DRAM_2C 0x3e0f Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL XEONE_H_HOST_DRAM_4C 0x3e10 Xeon E (H) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_4C 0x3e18 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_4C 0x3e1f Core 8G (S) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_4C 0x3e34 Core 8G (U) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_2C 0x3e35 Core 8G (U) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_6C 0x3ec2 Core 8G (S) Host Bridge, DRAM
+product INTEL XEONE_S_D_HOST_DRAM_8C 0x3e30 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_8C 0x3e31 Xeon E (S, WS) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_8C 0x3e32 Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_4C 0x3e33 Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_H_HOST_DRAM_6C 0x3e4c Xeon E (H) Host Bridge, DRAM
 product INTEL CORE8G_PCIE_X16	0x3e81 Core 8G (S) PCIe x16
 product INTEL CORE8G_PCIE_X8	0x3e85 Core 8G (S) PCIe x16
 product INTEL CORE8G_PCIE_X4	0x3e89 Core 8G (S) PCIe x16
@@ -4706,8 +4799,17 @@ product INTEL COFLK_IGD_1	0x3e90	UHD Graphics 610
 product INTEL COFLK_IGD_2	0x3e91	UHD Graphics 630
 product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
 product INTEL COFLK_IGD_4	0x3e93	UHD Graphics 610
+product INTEL XEONE_IGD		0x3e96	UHD Graphics P630
 product INTEL COFLK_IGD_5	0x3e9b	UHD Graphics 630
+product INTEL WHISKYLK_IGD_1	0x3ea0	UHD Graphics 620
+product INTEL WHISKYLK_IGD_2	0x3ea1	UHD Graphics 610
 product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
+product INTEL XEONE_S_D_HOST_DRAM_6C 0x3ec2 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL CORE8G_H_H_HOST_DRAM_6C 0x3ec4 Core 8G (H, Halo) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_6C 0x3ec6 Xeon E (S, WS) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_6C 0x3eca Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_U_HOST_DRAM_2C 0x3ecc Xeon E (U) Host Bridge, DRAM
+product INTEL XEONE_U_HOST_DRAM_4C 0x3ed0 Xeon E (U) Host Bridge, DRAM
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
@@ -5342,6 +5444,9 @@ product INTEL C620_LPC_5	0xa1c5	C626 LPC or eSPI
 product INTEL C620_LPC_6	0xa1c6	C627 LPC or eSPI
 product INTEL C620_LPC_7	0xa1c7	C628 LPC or eSPI
 product INTEL C620_LPC_8	0xa1ca	C629 LPC or eSPI
+product INTEL C620_LPC_9	0xa1cb	C621A LPC or eSPI
+product INTEL C620_LPC_10	0xa1cc	C627A LPC or eSPI
+product INTEL C620_LPC_11	0xa1cd	C629A LPC or eSPI
 product INTEL C620_SSATA_AHCI	0xa1d2	C620 sSATA AHCI
 product INTEL C620_SSATA_RAID	0xa1d6	C620 sSATA 3rd Party RAID
 product INTEL C620_PCIE_16	0xa1e7	C620 PCIe Root Port
@@ -5391,6 +5496,9 @@ product INTEL C620_LPC_S_2	0xa243	C627 LPC or eSPI
 product INTEL C620_LPC_S_3	0xa244	C621 LPC or eSPI
 product INTEL C620_LPC_S_4	0xa245	C627 LPC or eSPI
 product INTEL C620_LPC_S_5	0xa246	C628 LPC or eSPI
+product INTEL C620_LPC_S_6	0xa24a	C621A LPC or eSPI
+product INTEL C620_LPC_12	0xa24b	C627A LPC or eSPI
+product INTEL C620_LPC_13	0xa24c	C629A LPC or eSPI
 product INTEL C620_SSATA_AHCI_S	0xa252	C620 sSATA AHCI
 product INTEL C620_SSATA_RAID_S	0xa256	C620 sSATA 3rd Party RAID
 product INTEL C620_PCIE_S_16	0xa267	C620 PCIe Root Port
@@ -5892,6 +6000,10 @@ product PHILIPS SAA7133HL	0x7133	SAA7133HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7134HL	0x7134	SAA7134HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7135HL	0x7135	SAA7135HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7146AH	0x7146	SAA7146AH PCI Multimedia Bridge
+
+/* Phison products */
+product PHISON PS5000		0x5000 PS5000
+product PHISON PS5016		0x5016 PS5016
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810			0x0001	53c810
@@ -6481,9 +6593,23 @@ product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
 product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
 product NVIDIA	GT610M		0x105A	GeForce GT 610M
 product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
+product NVIDIA	GF_GTX960	0x1401 	GeForce GTX 960
+product NVIDIA	GF_GTX950	0x1402 	GeForce GTX 950
+product NVIDIA	GF_GTX960_2	0x1406 	GeForce GTX 960
+product NVIDIA	GF_GTX750	0x1407 	GeForce GTX 750
+product NVIDIA	GF_GTX950_2	0x1427 	GeForce GTX 950
+product NVIDIA	QUADRO_M2000	0x1430 	Quadro M2000
+product NVIDIA	TESLA_M4	0x1431 	Tesla M4
+product NVIDIA	QUADRO_M2200	0x1436 	Quadro M2200
+product NVIDIA	QUADRO_GP100	0x15f0 	Quadro GP100
 product NVIDIA	TESLA_12G	0x15f7 	Tesla P100 PCIe 12GB
 product NVIDIA	TESLA_16G	0x15f8 	Tesla P100 PCIe 16GB
 product NVIDIA	TESLA_16G_SXM2	0x15f9 	Tesla P100 SXM2 16GB
+product NVIDIA	GF_GTX980M	0x1617 	GeForce GTX 965M
+product NVIDIA	GF_GTX970M	0x1618 	GeForce GTX 965M
+product NVIDIA	GF_GTX965M	0x1619 	GeForce GTX 965M
+product NVIDIA	GF_GTX980	0x161A 	GeForce GTX 980
+product NVIDIA	GF_GTX965M_2	0x1667 	GeForce GTX 965M
 product NVIDIA	GF_TITAN_X	0x1b00 	GeForce TITAN X
 product NVIDIA	GF_GTX1080_TI	0x1b06 	GeForce GTX 1080 Ti
 product NVIDIA	QUADRO_P6000	0x1b30 	Quadro P6000
@@ -6495,6 +6621,7 @@ product NVIDIA	GF_GTX1080M	0x1ba0 	GeForce GTX 1080 Mobile
 product NVIDIA	GF_GTX1070M	0x1ba1 	GeForce GTX 1070 Mobile
 product NVIDIA	QUADRO_P5000	0x1bb0 	Quadro P5000
 product NVIDIA	TESLA_P4	0x1bb3 	Tesla P4
+product NVIDIA	TESLA_P6	0x1bb4 	Tesla P6
 product NVIDIA	QUADRO_P5000M	0x1bb6 	Quadro P5000 Mobile
 product NVIDIA	QUADRO_P4000M	0x1bb7 	Quadro P4000 Mobile
 product NVIDIA	QUADRO_P3000M	0x1bb8 	Quadro P3000 Mobile
@@ -6510,10 +6637,8 @@ product NVIDIA	GF_GTX1050_X	0x1c81 	GeForce GTX 1050
 product NVIDIA	GF_GTX1050_Ti	0x1c82 	GeForce GTX 1050 Ti
 product NVIDIA	GF_GTX1050_TiM	0x1c8c 	GeForce GTX 1050 Ti Mobile
 product NVIDIA	GF_GTX1050_M	0x1c8d 	GeForce GTX 1050 Mobile
-
 product NVIDIA	GF_GTX1030	0x1d01 	GeForce GT 1030
 product NVIDIA	GF_MX150	0x1d10 	GeForce MX150
-
 product NVIDIA	TITAN_V		0x1d81 	GV100 TITAN V
 product NVIDIA	TESLA_V100SXM16	0x1db1 	Tesla V100 SXM2 16GB
 product NVIDIA	TESLA_V100PCI16	0x1db4 	Tesla V100 PCIe 16GB
@@ -6702,15 +6827,35 @@ product QINHENG2 CH384_8S	0x3853	CH384 8S
 product QINHENG2 CH384_28S	0x4353	CH384 28S
 
 /* QLogic products */
-product QLOGIC QLA200	0x0119	QLA200
-product QLOGIC ISP1020	0x1020	ISP1020
-product QLOGIC ISP1022	0x1022	ISP1022
-product QLOGIC ISP1080	0x1080	ISP1080
-product QLOGIC ISP1240	0x1240	ISP1240
-product QLOGIC ISP1280	0x1280	ISP1280
-product QLOGIC ISP2100	0x2100	ISP2100
-product QLOGIC ISP3022	0x3022	ISP4022 iSCSI TOE
-product QLOGIC ISP4022	0x4022	ISP4022 iSCSI TOE
+product QLOGIC QLA200		0x0119	QLA200
+product QLOGIC ISP10160		0x1016	ISP10160
+product QLOGIC ISP1020		0x1020	ISP1020
+product QLOGIC ISP1022		0x1022	ISP1022
+product QLOGIC ISP1080		0x1080	ISP1080
+product QLOGIC ISP12160		0x1216	ISP12160
+product QLOGIC ISP1240		0x1240	ISP1240
+product QLOGIC ISP1280		0x1280	ISP1280
+product QLOGIC ISP2100		0x2100	ISP2100
+product QLOGIC ISP2200		0x2200	ISP2200
+product QLOGIC ISP2300		0x2300	ISP2300
+product QLOGIC ISP2312		0x2312	ISP2312
+product QLOGIC ISP2322		0x2322	ISP2322
+product QLOGIC ISP2422		0x2422	ISP2422
+product QLOGIC ISP2432		0x2432	ISP2432
+product QLOGIC ISP2512		0x2512	ISP2512
+product QLOGIC ISP2522		0x2522	ISP2522
+product QLOGIC ISP2532		0x2532	ISP2532
+product QLOGIC ISP4010_TOE	0x3010	ISP4010 iSCSI TOE
+product QLOGIC ISP4022_TOE	0x3022	ISP4022 iSCSI TOE
+product QLOGIC ISP4032_TOE	0x3032	ISP4032 iSCSI TOE
+product QLOGIC ISP4010_HBA	0x4010	ISP4010 iSCSI HBA
+product QLOGIC ISP4022_HBA	0x4022	ISP4022 iSCSI HBA
+product QLOGIC ISP4032_HBA	0x4032	ISP4032 iSCSI HBA
+product QLOGIC ISP5422		0x5422	ISP5422
+product QLOGIC ISP5432		0x5432	ISP5432
+product QLOGIC ISP6312		0x6312	ISP6312
+product QLOGIC ISP6322		0x6322	ISP6322
+product QLOGIC ISP8432		0x8432	ISP8432
 
 /* QUANCOM Electronic GmbH products */
 product QUANCOM PWDOG1		0x0010	PWDOG1
@@ -6723,12 +6868,12 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product QUICKLOGIC PCWATCHDOG	0x5030	PC Watchdog
 
 /* Qumranet products */
-product QUMRANET VIRTIO_1000	0x1000	Virtio
-product QUMRANET VIRTIO_1001	0x1001	Virtio
-product QUMRANET VIRTIO_1002	0x1002	Virtio
-product QUMRANET VIRTIO_1003	0x1003	Virtio
-product QUMRANET VIRTIO_1004	0x1004	Virtio
-product QUMRANET VIRTIO_1005	0x1005	Virtio
+product QUMRANET VIRTIO_1000	0x1000	Virtio Network
+product QUMRANET VIRTIO_1001	0x1001	Virtio Storage
+product QUMRANET VIRTIO_1002	0x1002	Virtio Memory Balloon
+product QUMRANET VIRTIO_1003	0x1003	Virtio Console
+product QUMRANET VIRTIO_1004	0x1004	Virtio SCSI
+product QUMRANET VIRTIO_1005	0x1005	Virtio RNG
 product QUMRANET VIRTIO_1006	0x1006	Virtio
 product QUMRANET VIRTIO_1007	0x1007	Virtio
 product QUMRANET VIRTIO_1008	0x1008	Virtio
@@ -7027,6 +7172,9 @@ product SERVERWORKS FRODO4_SATA		0x0241	Frodo4 SATA
 product SERVERWORKS FRODO8_SATA		0x0242	Frodo8 SATA
 product SERVERWORKS HT1000_SATA_1	0x024a	HT-1000 SATA
 product SERVERWORKS HT1000_SATA_2 	0x024b	HT-1000 SATA
+product SERVERWORKS HT1100SB		0x0408	HT1100SB South Bridge
+product SERVERWORKS HT1100_SATA_1	0x0410	HT-1100 SATA
+product SERVERWORKS HT1100_SATA_2 	0x0411	HT-1100 SATA
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
@@ -7564,9 +7712,11 @@ product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics
 product VIATECH KT880_5		0x7269	KT880 CPU to PCI Bridge
 product VIATECH VT3351_HB_7351	0x7351	VT3351 Host Bridge
 product VIATECH P4M900_7	0x7364	CN896/P4M900 Host Bridge
+product VIATECH VT8237S_SATA_RAID 0x7372 VT8237S Integrated SATA Controller (RAID mode)
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
+product VIATECH VX855		0x8409  VX855 PCI-LPC Bridge
 product VIATECH CX700		0x8324	CX700 PCI-LPC Bridge
 product VIATECH VX800		0x8353	VX800/VX820 PCI-LPC Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
