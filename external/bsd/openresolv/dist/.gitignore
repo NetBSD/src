@@ -1,0 +1,9 @@
+resolvconf
+resolvconf.8
+resolvconf.conf.5
+
+dnsmasq
+libc
+named
+pdnsd
+unbound
