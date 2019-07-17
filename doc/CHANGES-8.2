@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.8 2019/07/15 08:27:39 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.9 2019/07/17 16:22:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -119,4 +119,124 @@ xsrc/external/mit/xf86-video-intel/dist/src/intel_list.h 1.2
 	Fix sandy bridge crashes by merging changes from xorg-server 1.20
 	list.h into this older version.
 	[mrg, ticket #1290]
+
+sys/dev/pci/pcidevs				1.1367-1.1380
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add other two Intel Core 8G host bridges.
+	- Add Intel Xeon E devices.
+	- Add some new Intel C620 LPC devices.
+	- Add some Intel Xeon Scalable processor's devices.
+	- Add some Intel Whisky Lake devices.
+	- Add Xeon D XFI.
+	- Add "(Hyper-V)" to Intel 0x15a9's description.
+	- Add Intel C3000 QSFP devices.
+	- Add Some Qlogic devices from OpenBSD.
+	- Rename Qlogic 0x3022's name from ISP3022 to ISP4022.
+	- Add IDs for SATA controllers VT8237S and VX855
+	- Modify some descriptions of Virtio devices from OpenBSD to identify
+	  the functions.
+	- Add Phison PS5000 and PS5016 NVMe.
+	- Add some ServerWorks HT1100 devices from OpenBSD.
+	- Remove extra white spaces.
+	[msaitoh, ticket #1291]
+
+sys/dev/pci/pci_subr.c				1.211,1.214
+
+	Fix a typo. Print extend capability from 0x25 to 0x29 correctly.
+	[msaitoh, ticket #1292]
+
+sys/arch/x86/include/specialreg.h		1.149
+
+	Define some new bits of CPUID Fn8000_0007 %edx AMD
+	Advanced Power Management leaf.
+	[msaitoh, ticket #1293]
+
+sys/dev/ic/nslm7x.c				1.72
+sys/dev/ic/nslm7x.c				1.73
+sys/dev/isa/wbsio.c				1.25
+sys/dev/isa/wbsioreg.h				1.9
+
+	Use pmf_device_{register,deregister}().
+	Identify Nuvoton NCT6798D correctly.
+	[msaitoh, ticket #1294]
+
+sys/dev/pci/pci_subr.c				1.213
+sys/dev/pci/ppb.c				1.69
+
+	Identify 16GT/s.
+	[msaitoh, ticket #1295]
+
+usr.sbin/cpuctl/arch/i386.c			1.91,1.93-1.95,1.100-1.103
+						(via patch)
+
+	- Handle NVMM and HAXM's signature.
+	- Regard "TCGTCGTCGTCG" as QEMU(TCG).
+	- Dump CPUID leaf 0x40000000 if available (for -v option).
+	- Add Cascade Lake, Copper Lake.
+	- Add Future Xeon (Cannon Lake)
+	- Add 06_7DH for another Ice Lake.
+	- Add Coffee Lake based Xeon E.
+	- White space fix. No functional change.
+	[msaitoh, ticket #1296]
+
+sys/dev/usb/usbdevs				1.737-1.741,1.743-1.752,
+						1.756-1.759,1.763-1.770
+						(via patch)
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	- Add yet another moschip serial adapter chip.
+	- Add some classic Roland products from Shinichi Doyashiki in
+	  PR kern/52385.
+	- Add Ralink RT73.
+	- Add Wacom Intuos2 A4 and Intuos Art pen tablets.
+	- Add ELAN keyboard.
+	- Add Sony UWA-BR100 WLAN adapter.
+	- Add the TP-LINK TL-WN823N (version 2).
+	- Add RT Systems RTS-03 USB to Serial Adapter.
+	- Add West Mountain Radio IDs from OpenBSD.
+	- Add LAN78xx family (Raspberry Pi 3B+) entries - PR kern/53105.
+	- Add Linux Foundation vendor ID, and their root hub device IDs.
+	- Apple Bluetooth adapter, as found on the G4 PowerBook FW-800
+	  (PowerBook5,2).
+	- Add Yubico Yubikey devices.
+	- Add Huawei E182.
+	- Add the Sierra Wireless MC7304 and EM7455 USB modems.
+	- Add SMSC LAN7505 USB 2.0 gigabit ethernet device.
+	- Add Panasonic N5HBZ0000055 WiFi device reported by
+	  David H. Gutteridge in PR kern/53647.
+	- Add Logitech Gamepad F310 and Logitech Dual Action Gamepad.
+	- Add D-Link LTE products.
+	- Add D-Link DWA-131 rev E "Wireless N300 Nano USB Adapter"
+	- Add Microsoft Natural Wireless Mouse 600 from Julian in
+	  PR kern/44634.
+	- Add Gretag Macbeth/X-Rite Huey device ids.
+	- Add HP LP2[24]75w hub.
+	- Prefer longer "canonical" names and add some vendors (mainly from
+	  FreeBSD r334649).
+	- Make whitespace much more consistent.
+	- Lowercase hexadecimal number.
+	- Update comment.
+	[msaitoh, ticket #1297]
+
+sys/dev/pci/if_wm.c				1.633, 1.637-1.641 (via patch)
+sys/dev/pci/if_wmreg.h				1.114 (via patch)
+
+	- Use unsigned to avoid undefined behavior.
+	- Print ICH/PCH's NVM version.
+	- Fix typo in comment. u_int*_t -> uint*_t. Whitespace fix.
+	[msaitoh, ticket #1298]
+
+sys/dev/usb/if_athn_usb.c			1.24,1.31-1.34 (via patch)
+
+	- Match BUFFALO CEWL-1 (Sony UWA-BR100 WLAN).
+	- Add support for Panasonic N5HBZ0000055, from David H. Gutteridge
+	  in PR kern/53647.
+	- Resolves build on macppc by renaming imask to intr_mask as imask is
+	  defined globally in sys/arch/powerpc/include/intr.h.
+	- Use pmf(9).
+	- Fix the detach path to prevent panic.
+	[msaitoh, ticket #1299]
 
