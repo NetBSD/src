@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.140 2019/07/17 03:09:16 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.140 2019/07/17 03:09:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -130,14 +130,9 @@ struct vlan_mc_entry {
 	 * used since multiple sockaddr may mapped into the same
 	 * ether_multi (e.g., AF_UNSPEC).
 	 */
-	union {
-		struct ether_multi	*mcu_enm;
-	} mc_u;
+	struct ether_multi	*mc_enm;
 	struct sockaddr_storage		mc_addr;
 };
-
-#define	mc_enm		mc_u.mcu_enm
-
 
 struct ifvlan_linkmib {
 	struct ifvlan *ifvm_ifvlan;
@@ -153,9 +148,7 @@ struct ifvlan_linkmib {
 };
 
 struct ifvlan {
-	union {
-		struct ethercom ifvu_ec;
-	} ifv_u;
+	struct ethercom ifv_ec;
 	struct ifvlan_linkmib *ifv_mib;	/*
 					 * reader must use vlan_getref_linkmib()
 					 * instead of direct dereference
@@ -170,8 +163,6 @@ struct ifvlan {
 };
 
 #define	IFVF_PROMISC	0x01		/* promiscuous mode enabled */
-
-#define	ifv_ec		ifv_u.ifvu_ec
 
 #define	ifv_if		ifv_ec.ec_if
 
@@ -466,6 +457,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
+		struct vlanid_list *vidmem;
+
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
@@ -492,7 +485,36 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			}
 			error = 0;
 		}
-
+		/*
+		 * Add a vid to the list even if it's not enabled in case
+		 * it's enabled later.
+		 */
+		if (ec->ec_capabilities & ETHERCAP_VLAN_HWFILTER) {
+			vidmem = kmem_alloc(sizeof(struct vlanid_list),
+			    KM_SLEEP);
+			if (vidmem == NULL){
+				ec->ec_nvlans--;
+				if (ec->ec_nvlans == 0)
+					(void)ether_disable_vlan_mtu(p);
+				error = ENOMEM;
+				goto done;
+			}
+			vidmem->vid = vid;
+			mutex_enter(ec->ec_lock);
+			SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
+			mutex_exit(ec->ec_lock);
+		}
+		if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
+			if (ec->ec_vlan_cb != NULL) {
+				error = (*ec->ec_vlan_cb)(ec, vid, true);
+				if (error) {
+					ec->ec_nvlans--;
+					if (ec->ec_nvlans == 0)
+						(void)ether_disable_vlan_mtu(p);
+					goto done;
+				}
+			}
+		}
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
@@ -618,6 +640,20 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
+		struct vlanid_list *vlanidp, *tmpp;
+		uint16_t vid = EVL_VLANOFTAG(nmib->ifvm_tag);
+
+		mutex_enter(ec->ec_lock);
+		SIMPLEQ_FOREACH_SAFE(vlanidp, &ec->ec_vids, vid_list, tmpp) {
+			if (vlanidp->vid == vid) {
+				SIMPLEQ_REMOVE(&ec->ec_vids, vlanidp,
+				    vlanid_list, vid_list);
+				kmem_free(vlanidp, sizeof(*vlanidp));
+			}
+		}
+		mutex_exit(ec->ec_lock);
+		if (ec->ec_vlan_cb != NULL)
+			(void)(*ec->ec_vlan_cb)(ec, vid, false);
 		if (--ec->ec_nvlans == 0) {
 			IFNET_LOCK(p);
 			(void)ether_disable_vlan_mtu(p);
@@ -999,6 +1035,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = ENOENT;
 			break;
 		}
+		
 		error = vlan_config(ifv, pr, vlr.vlr_tag);
 		if (error != 0)
 			break;
