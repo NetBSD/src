@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.3 2018/01/27 21:24:30 kardel Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.4 2019/07/18 08:53:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.3 2018/01/27 21:24:30 kardel Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.4 2019/07/18 08:53:41 msaitoh Exp $ ");
 
 /*
  * Driver for the AMD Family 17h CPU System Management Network.
@@ -54,13 +54,20 @@ __KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.3 2018/01/27 21:24:30 kardel Exp $ ");
 
 #define	SMN_ADDR_REG	0x60
 #define	SMN_DATA_REG	0x64
-#define	AMD_17H_MANAGEMENT_NETWORK_PCI_ID	0x14501022
 
 struct amdsmn_softc {
 	kmutex_t smn_lock;
 	struct pci_attach_args pa;
 	pci_chipset_tag_t pc;
 	pcitag_t pcitag;
+};
+
+static const struct pciid {
+	uint16_t	amdsmn_deviceid;
+} amdsmn_ids[] = {
+	{ PCI_PRODUCT_AMD_F17_RC },
+	{ PCI_PRODUCT_AMD_F17_1X_RC },
+	{ PCI_PRODUCT_AMD_F17_7X_RC },
 };
 
 static int amdsmn_match(device_t, cfdata_t, void *);
@@ -76,8 +83,16 @@ static int
 amdsmn_match(device_t parent, cfdata_t match, void *aux) 
 {
 	struct pci_attach_args *pa = aux;
-	
-	return pa->pa_id == AMD_17H_MANAGEMENT_NETWORK_PCI_ID ? 2 : 0;
+	int i;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
+		return 0;
+
+	for (i = 0; i <  __arraycount(amdsmn_ids); i++)
+		if (PCI_PRODUCT(pa->pa_id) == amdsmn_ids[i].amdsmn_deviceid)
+			return 2;
+
+	return 0;
 }
 
 static int 
