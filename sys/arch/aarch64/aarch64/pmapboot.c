@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.3 2018/12/29 19:53:38 alnsn Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.4 2019/07/18 06:47:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3 2018/12/29 19:53:38 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.4 2019/07/18 06:47:36 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -386,21 +386,21 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
  nextblk:
 #ifdef OPTIMIZE_TLB_CONTIG
 		/*
-		 * when overwrite pte, also contiguous bit before/after
-		 * this pte should be cleared.
+		 * when overwriting a pte entry the contiguous bit in entries
+		 * before/after the entry should be cleared.
 		 */
-		if ((ll != NULL) && (va == va_start) &&
-		    ((llidx & 15) != 0)) {
-			/* clear CONTIG flag in front of this pte entry */
-			for (i = (llidx & ~15); i < llidx; i++) {
-				ll[i] &= ~LX_BLKPAG_CONTIG;
+		if (ll != NULL) {
+			if (va == va_start && (llidx & 15) != 0) {
+				/* clear CONTIG flag before this pte entry */
+				for (i = (llidx & ~15); i < llidx; i++) {
+					ll[i] &= ~LX_BLKPAG_CONTIG;
+				}
 			}
-		}
-		if ((ll != NULL) && (va == va_end) &&
-		    ((llidx & 15) != 15)) {
-			/* clear CONTIG flag in back of this pte entry */
-			for (i = (llidx + 1); i < ((llidx + 16) & ~15); i++) {
-				ll[i] &= ~LX_BLKPAG_CONTIG;
+			if (va == va_end && (llidx & 15) != 15) {
+				/* clear CONTIG flag after this pte entry */
+				for (i = (llidx + 1); i < ((llidx + 16) & ~15); i++) {
+					ll[i] &= ~LX_BLKPAG_CONTIG;
+				}
 			}
 		}
 #endif
