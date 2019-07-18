@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.32 2019/06/28 06:46:04 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.33 2019/07/18 04:00:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -121,10 +121,15 @@ ndp_cache_expiration_body()
 	setup_dst_server
 	setup_src_server
 
+	export RUMP_SERVER=$SOCKSRC
+
+	# Shorten the expire time of cache entries
+	atf_check -s exit:0 -o match:'basereachable=7s0ms' \
+	    rump.ndp -i shmif0 basereachable=7000
+
 	#
 	# Check if a cache is expired expectedly
 	#
-	export RUMP_SERVER=$SOCKSRC
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 
 	$DEBUG && rump.ndp -n -a
@@ -713,6 +718,10 @@ ndp_cache_state_body()
 	setup_src_server
 
 	export RUMP_SERVER=$SOCKSRC
+
+	# Shorten the expire time of cache entries
+	atf_check -s exit:0 -o match:'basereachable=7s0ms' \
+	    rump.ndp -i shmif0 basereachable=7000
 
 	#
 	# Reachability confirmation (RFC 4861 7.3.3)
