@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.16 2018/07/12 02:26:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.17 2019/07/18 06:47:10 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -143,16 +143,17 @@ struct llentry {
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 
 #if 0
-#define LLE_REF_TRACE(t, n)	log(LOG_DEBUG, "%s:%d: REF(" #t "): refcnt=%d\n", \
-				    __func__, __LINE__, (n))
+#define LLE_REF_TRACE(t, lle, n) \
+	log(LOG_DEBUG, "%s:%d: %p REF(" #t "): refcnt=%d\n", \
+	    __func__, __LINE__, (lle), (n))
 #else
-#define LLE_REF_TRACE(t, n)	do {} while (0)
+#define LLE_REF_TRACE(t, lle, n)	do {} while (0)
 #endif
 
 #define	LLE_ADDREF(lle) do {					\
 	LLE_WLOCK_ASSERT(lle);					\
-	LLE_REF_TRACE(ADD, (lle)->lle_refcnt);			\
-	KASSERTMSG((lle)->lle_refcnt >= 0,				\
+	LLE_REF_TRACE(ADD, (lle), (lle)->lle_refcnt);		\
+	KASSERTMSG((lle)->lle_refcnt >= 0,			\
 	    "negative refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
 	(lle)->lle_refcnt++;					\
@@ -160,13 +161,13 @@ struct llentry {
 
 #define	LLE_REMREF(lle)	do {					\
 	LLE_WLOCK_ASSERT(lle);					\
-	LLE_REF_TRACE(REM, (lle)->lle_refcnt);			\
-	KASSERTMSG((lle)->lle_refcnt > 0,				\
+	LLE_REF_TRACE(REM, (lle), (lle)->lle_refcnt);		\
+	KASSERTMSG((lle)->lle_refcnt > 0,			\
 	    "bogus refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
 	(lle)->lle_refcnt--;					\
 	if ((lle)->lle_refcnt == 0)				\
-		LLE_REF_TRACE(ZERO, (lle)->lle_refcnt);		\
+		LLE_REF_TRACE(ZERO, (lle), (lle)->lle_refcnt);	\
 } while (0)
 
 #define	LLE_FREE_LOCKED(lle) do {				\
