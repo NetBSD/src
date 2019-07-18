@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1380 2019/07/12 02:38:35 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1381 2019/07/18 08:50:50 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1022,6 +1022,8 @@ product AMD F17_DF_7	0x1466	Family17h Data Fabric
 product AMD F17_DF_8	0x1467	Family17h Data Fabric
 product AMD F17_PCIE_4	0x1470	Family17h PCIE
 product AMD F17_PCIE_5	0x1471	Family17h PCIE
+product AMD F17_7X_RC	0x1480	Family17h/7xh Root Complex
+product AMD F17_7X_IOMMU 0x1481	Family17h/7xh IOMMU
 product AMD F14_RC	0x1510	Family14h Root Complex
 product AMD F16_HT	0x1530	Family16h HyperTransport Configuration
 product AMD F16_ADDR	0x1531	Family16h Address Map Configuration
@@ -4604,7 +4606,7 @@ product INTEL C620_VSWP_0	0x37c2	C620 Virtual Switch Port (for QAT 0)
 product INTEL C620_VSWP_1	0x37c3	C620 Virtual Switch Port (for QAT 1)
 product INTEL C620_VSWP_2	0x37c4	C620 Virtual Switch Port (for QAT 2)
 product INTEL C620_VSWP_3	0x37c5	C620 Virtual Switch Port (for 10GbE LAN)
-product INTEL C620_VSWP_4	0x37c6	C620 Virtual Switch Port (for Termal Sensor)
+product INTEL C620_VSWP_5	0x37c7	C620 Virtual Switch Port (for Termal Sensor)
 product INTEL C620_QAT		0x37c8	C620 QAT
 product INTEL C620_QAT_VF	0x37c9	C620 QAT Virtual Function
 product INTEL X722		0x37cc	X722 10GbE
