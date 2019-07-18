@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.420 2019/04/07 19:31:38 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.421 2019/07/18 18:21:45 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3463,11 +3463,11 @@ pcbspill:
 	or	%g7, %g6, %g6				! Then combine them to form PA
 
 	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
-	
-	lduba	[%g6 + PCB_NSAVED] %asi, %g7
-	sllx	%g7, 7, %g5
-	add	%g6, %g5, %g5
-	SPILL	stxa, %g5 + PCB_RW, 8, %asi
+
+	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Fetch current nsaved from the pcb
+	sllx	%g7, 7, %g5				! 8+8 registers each 8 bytes = 128 bytes (2^7)
+	add	%g6, %g5, %g5				! Offset into pcb_rw
+	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins 
 	saved
 
 	sllx	%g7, 3, %g5
@@ -5089,7 +5089,7 @@ rft_user:
 	 * to exceede the maximum trap level on sun4v, so a manual fill
 	 * may be necessary.
 	*/
-	
+
 #ifdef SUN4V
 	sethi	%hi(cputyp), %g5
 	ld	[%g5 + %lo(cputyp)], %g5
