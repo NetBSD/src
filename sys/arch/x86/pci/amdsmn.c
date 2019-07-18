@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.4 2019/07/18 08:53:41 msaitoh Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.5 2019/07/18 12:04:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.4 2019/07/18 08:53:41 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.5 2019/07/18 12:04:16 msaitoh Exp $ ");
 
 /*
  * Driver for the AMD Family 17h CPU System Management Network.
@@ -83,12 +83,12 @@ static int
 amdsmn_match(device_t parent, cfdata_t match, void *aux) 
 {
 	struct pci_attach_args *pa = aux;
-	int i;
+	unsigned int i;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
 		return 0;
 
-	for (i = 0; i <  __arraycount(amdsmn_ids); i++)
+	for (i = 0; i < __arraycount(amdsmn_ids); i++)
 		if (PCI_PRODUCT(pa->pa_id) == amdsmn_ids[i].amdsmn_deviceid)
 			return 2;
 
