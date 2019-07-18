@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.31 2019/05/13 17:55:08 bad Exp $
+#	$NetBSD: net_common.sh,v 1.32 2019/07/18 04:22:22 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -389,7 +389,8 @@ extract_rump_server_core()
 
 	if [ -f rump_server.core ]; then
 		gdb -ex bt /usr/bin/rump_server rump_server.core
-		strings rump_server.core |grep panic
+		# Extract kernel logs including a panic message
+		strings rump_server.core |grep -E '^\[.+\] '
 	fi
 }
 
