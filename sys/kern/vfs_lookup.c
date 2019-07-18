@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.211 2019/07/06 14:27:38 maxv Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212 2019/07/18 09:39:40 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.211 2019/07/06 14:27:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212 2019/07/18 09:39:40 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -515,7 +515,8 @@ namei_cleanup(struct namei_state *state)
 	KASSERT(state->cnp == &state->ndp->ni_cnd);
 
 	if (state->root_referenced) {
-		vrele(state->ndp->ni_rootdir);
+		if (state->ndp->ni_rootdir != NULL)
+			vrele(state->ndp->ni_rootdir);
 		if (state->ndp->ni_erootdir != NULL)
 			vrele(state->ndp->ni_erootdir);
 	}
@@ -538,7 +539,8 @@ namei_getstartdir(struct namei_state *state)
 	struct vnode *rootdir, *erootdir, *curdir, *startdir;
 
 	if (state->root_referenced) {
-		vrele(state->ndp->ni_rootdir);
+		if (state->ndp->ni_rootdir != NULL)
+			vrele(state->ndp->ni_rootdir);
 		if (state->ndp->ni_erootdir != NULL)
 			vrele(state->ndp->ni_erootdir);
 		state->root_referenced = 0;
@@ -595,8 +597,10 @@ namei_getstartdir(struct namei_state *state)
 	 * Must hold references to rootdir and erootdir while we're running.
 	 * A multithreaded process may chroot during namei.
 	 */
-	vref(startdir);
-	vref(state->ndp->ni_rootdir);
+	if (startdir != NULL)
+		vref(startdir);
+	if (state->ndp->ni_rootdir != NULL)
+		vref(state->ndp->ni_rootdir);
 	if (state->ndp->ni_erootdir != NULL)
 		vref(state->ndp->ni_erootdir);
 	state->root_referenced = 1;
@@ -616,6 +620,9 @@ namei_getstartdir_for_nfsd(struct namei_state *state)
 	KASSERT(state->ndp->ni_atdir != NULL);
 
 	/* always use the real root, and never set an emulation root */
+	if (rootvnode == NULL) {
+		return NULL;
+	}
 	state->ndp->ni_rootdir = rootvnode;
 	state->ndp->ni_erootdir = NULL;
 
@@ -691,6 +698,10 @@ namei_start(struct namei_state *state, int isnfsd,
 	} else {
 		startdir = namei_getstartdir(state);
 		namei_ktrace(state);
+	}
+
+	if (startdir == NULL) {
+		return ENOENT;
 	}
 
 	/* NDAT may feed us with a non directory namei_getstartdir */
