@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.233 2019/07/19 04:17:34 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.234 2019/07/19 04:18:49 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.233 2019/07/19 04:17:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.234 2019/07/19 04:18:49 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -112,42 +112,6 @@ usbd_errstr(usbd_status err)
 		return buffer;
 	}
 }
-
-#if 0
-int
-usbd_err_to_errno(usbd_status err)
-{
-	switch (err) {
-	case USBD_NORMAL_COMPLETION:
-	case USBD_IN_PROGRESS:
-		return 0;
-	case USBD_PENDING_REQUESTS:
-	case USBD_NOT_STARTED:
-		return EAGAIN;
-	case USBD_INVAL:
-		return EINVAL;
-	case USBD_NOMEM:
-		return ENOMEM;
-	case USBD_CANCELLED: // ?
-	case USBD_INTERRUPTED:
-		return EINTR;
-	case USBD_BAD_ADDRESS:
-		return EFAULT;
-	case USBD_IN_USE:
-	case USBD_NO_ADDR:
-		return EBUSY;
-	case USBD_TOO_DEEP:
-		return ENOSPC;
-	case USBD_NOT_CONFIGURED:
-		return ENXIO;
-	case USBD_TIMEOUT:
-	case USBD_STALLED:
-		return ETIMEDOUT;
-	default:
-		return EIO;
-	}
-}
-#endif
 
 usbd_status
 usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
