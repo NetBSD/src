@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.16 2019/01/26 14:43:46 thorpej Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.17 2019/07/19 12:14:15 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.16 2019/01/26 14:43:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.17 2019/07/19 12:14:15 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +59,7 @@ struct gic_fdt_irq;
 
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 static void	gic_fdt_attach_v2m(struct gic_fdt_softc *, bus_space_tag_t, int);
 #endif
 
@@ -179,7 +179,7 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 
 	arm_fdt_irq_set_handler(armgic_irq_handler);
 
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
@@ -190,7 +190,7 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 static void
 gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 {
