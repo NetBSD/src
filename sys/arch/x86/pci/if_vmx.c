@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.33 2019/07/19 08:31:41 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.34 2019/07/19 08:46:32 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.33 2019/07/19 08:31:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.34 2019/07/19 08:46:32 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2820,7 +2820,9 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	uint8_t *p;
 
 	ds->mcast_tablelen = 0;
-	CLR(ifp->if_flags, IFF_ALLMULTI);
+	ETHER_LOCK(ec);
+	CLR(ec->ec_flags, ETHER_F_ALLMULTI);
+	ETHER_UNLOCK(ec);
 
 	/*
 	 * Always accept broadcast frames.
@@ -2864,7 +2866,9 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	goto setit;
 
 allmulti:
-	SET(ifp->if_flags, IFF_ALLMULTI);
+	ETHER_LOCK(ec);
+	SET(ec->ec_flags, ETHER_F_ALLMULTI);
+	ETHER_UNLOCK(ec);
 	SET(mode, (VMXNET3_RXMODE_ALLMULTI | VMXNET3_RXMODE_MCAST));
 	if (ifp->if_flags & IFF_PROMISC)
 		SET(mode, VMXNET3_RXMODE_PROMISC);
