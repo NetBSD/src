@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.13 2019/06/28 01:57:43 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.14 2019/07/19 04:17:34 mrg Exp $	*/
 
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.13 2019/06/28 01:57:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.14 2019/07/19 04:17:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -116,6 +116,7 @@ static void	ure_ocp_reg_write(struct ure_softc *, uint16_t, uint16_t);
 
 static int	ure_init(struct ifnet *);
 static void	ure_stop(struct ifnet *, int);
+static void	ure_stop_locked(struct ifnet *, int);
 static void	ure_start(struct ifnet *);
 static void	ure_reset(struct ure_softc *);
 static void	ure_miibus_statchg(struct ifnet *);
@@ -530,7 +531,7 @@ ure_init_locked(struct ifnet *ifp)
 
 	/* Cancel pending I/O. */
 	if (ifp->if_flags & IFF_RUNNING)
-		ure_stop(ifp, 1);
+		ure_stop_locked(ifp, 1);
 
 	/* Set MAC address. */
 	memset(eaddr, 0, sizeof(eaddr));
