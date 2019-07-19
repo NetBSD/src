@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.34 2019/07/19 08:46:32 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.35 2019/07/19 08:49:44 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.34 2019/07/19 08:46:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.35 2019/07/19 08:49:44 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1705,6 +1705,7 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	strlcpy(ifp->if_xname, device_xname(sc->vmx_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = vmxnet3_ioctl;
 	ifp->if_start = vmxnet3_start;
 	ifp->if_watchdog = NULL;
