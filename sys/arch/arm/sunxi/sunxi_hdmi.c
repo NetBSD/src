@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.6 2019/01/27 02:08:37 pgoyette Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.7 2019/07/19 10:54:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,12 +29,13 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.6 2019/01/27 02:08:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.7 2019/07/19 10:54:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -650,6 +651,8 @@ sunxi_hdmi_do_enable(struct sunxi_hdmi_softc *sc)
 	delay(1000);
 }
 
+#define EDID_BLOCK_SIZE 128
+
 static int
 sunxi_hdmi_read_edid_block(struct sunxi_hdmi_softc *sc, uint8_t *data,
     uint8_t block)
@@ -663,27 +666,23 @@ sunxi_hdmi_read_edid_block(struct sunxi_hdmi_softc *sc, uint8_t *data,
 
 	wbuf[0] = block;	/* start address */
 
-	if ((error = iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1,
-	    data, 128, I2C_F_POLL)) != 0) {
-		iic_release_bus(tag, I2C_F_POLL);
-		return error;
-	}
+	error = iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1,
+	    data, EDID_BLOCK_SIZE, I2C_F_POLL);
 	iic_release_bus(tag, I2C_F_POLL);
-
-	return 0;
+	return error;
 }
 
 static void
 sunxi_hdmi_read_edid(struct sunxi_hdmi_softc *sc)
 {
 	const struct videomode *mode;
-	char edid[128];
-	struct edid_info ei;
+	char *edid;
+	struct edid_info *eip;
 	int retry = 4;
 	u_int display_mode;
 
-	memset(edid, 0, sizeof(edid));
-	memset(&ei, 0, sizeof(ei));
+	edid = kmem_zalloc(EDID_BLOCK_SIZE, KM_SLEEP);
+	eip = kmem_zalloc(sizeof(struct edid_info), KM_SLEEP);
 
 	while (--retry > 0) {
 		if (!sunxi_hdmi_read_edid_block(sc, edid, 0))
@@ -692,18 +691,18 @@ sunxi_hdmi_read_edid(struct sunxi_hdmi_softc *sc)
 	if (retry == 0) {
 		device_printf(sc->sc_dev, "failed to read EDID\n");
 	} else {
-		if (edid_parse(edid, &ei) != 0) {
+		if (edid_parse(edid, eip) != 0) {
 			device_printf(sc->sc_dev, "failed to parse EDID\n");
 		}
 #ifdef SUNXI_HDMI_DEBUG
 		else {
-			edid_print(&ei);
+			edid_print(eip);
 		}
 #endif
 	}
 
 	if (sc->sc_display_mode == DISPLAY_MODE_AUTO)
-		display_mode = sunxi_hdmi_get_display_mode(sc, &ei);
+		display_mode = sunxi_hdmi_get_display_mode(sc, eip);
 	else
 		display_mode = sc->sc_display_mode;
 
@@ -712,13 +711,13 @@ sunxi_hdmi_read_edid(struct sunxi_hdmi_softc *sc)
 	device_printf(sc->sc_dev, "%s mode (%s)\n",
 	    display_mode == DISPLAY_MODE_HDMI ? "HDMI" : "DVI", forced);
 
-	strlcpy(sc->sc_display_vendor, ei.edid_vendorname,
+	strlcpy(sc->sc_display_vendor, eip->edid_vendorname,
 	    sizeof(sc->sc_display_vendor));
-	strlcpy(sc->sc_display_product, ei.edid_productname,
+	strlcpy(sc->sc_display_product, eip->edid_productname,
 	    sizeof(sc->sc_display_product));
 	sc->sc_current_display_mode = display_mode;
 
-	mode = ei.edid_preferred_mode;
+	mode = eip->edid_preferred_mode;
 	if (mode == NULL)
 		mode = pick_mode_by_ref(640, 480, 60);
 
@@ -735,15 +734,18 @@ sunxi_hdmi_read_edid(struct sunxi_hdmi_softc *sc)
 		delay(20000);
 		sunxi_hdmi_video_enable(sc, true);
 	}
+	kmem_free(edid, EDID_BLOCK_SIZE);
+	kmem_free(eip, sizeof(struct edid_info));
 }
 
 static u_int
 sunxi_hdmi_get_display_mode(struct sunxi_hdmi_softc *sc,
     const struct edid_info *ei)
 {
-	char edid[128];
+	char *edid;
 	bool found_hdmi = false;
 	unsigned int n, p;
+	edid = kmem_zalloc(EDID_BLOCK_SIZE, KM_SLEEP);
 
 	/*
 	 * Scan through extension blocks, looking for a CEA-861-D v3
@@ -818,6 +820,7 @@ next_block:
 		}
 	}
 
+	kmem_free(edid, EDID_BLOCK_SIZE);
 	return found_hdmi ? DISPLAY_MODE_HDMI : DISPLAY_MODE_DVI;
 }
 
