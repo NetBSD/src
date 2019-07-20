@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.280 2019/07/11 15:21:46 sevan Exp $
+$NetBSD: acronyms.comp,v 1.281 2019/07/20 13:29:36 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -195,6 +195,7 @@ BW	bandwidth
 BWM	block-write mode
 BUAG	big ugly ASCII graphic
 CA	certificate authority
+CACLS	change access control lists
 CAD	computer-aided design
 CAM	computer assisted manufacturing
 CAM	conditional access module
@@ -386,6 +387,7 @@ DFT	discrete Fourier transform
 DGL	data generation language
 DH	Diffie-Hellman
 DHCP	Dynamic Host Configuration Protocol
+DIA	dedicated Internet access
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
@@ -680,6 +682,7 @@ IBS	instruction based sampling
 IBSS	independent basic service set
 IC	integrated circuit
 ICA	independent computer architecture
+ICACLS	integrity control access control lists
 ICB	Internet Citizen's Band
 ICE	in-circuit emulator
 ICE	internal compiler error
