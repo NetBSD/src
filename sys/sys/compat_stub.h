@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.17 2019/07/20 18:23:05 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.18 2019/07/20 20:59:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -353,6 +353,7 @@ MODULE_HOOK(ifmedia_80_post_hook, int, (struct ifreq *, u_long));
  * the main kernel, and not in a compat_netbsd32 module.  (In particular,
  * this is true for i386 and sgimips.)
  */
+struct reg;
 MODULE_HOOK(netbsd32_machine32_hook, const char *, (void));
 MODULE_HOOK(netbsd32_reg_validate_hook, int,
     (struct lwp *, const struct reg *));
