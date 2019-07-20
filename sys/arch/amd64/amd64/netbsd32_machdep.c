@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.124 2019/06/26 12:30:12 mgorny Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.125 2019/07/20 18:25:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.124 2019/06/26 12:30:12 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.125 2019/07/20 18:25:11 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -382,7 +382,7 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	regs->r_esp = tf->tf_rsp & 0xffffffff;
 	regs->r_ss = tf->tf_ss & 0xffff;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -987,6 +987,25 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 	return 0;
 }
 
+static int
+cpu_mcontext32from64_validate(struct lwp *l, const struct reg *regp)
+{
+	mcontext32_t mc;
+	__greg32_t *gr32 = mc.__gregs;
+	const __greg_t *gr = regp->regs;
+
+	memset(&mc, 0, sizeof(mc));
+	gr32[_REG32_EFL] = gr[_REG_RFLAGS];
+	gr32[_REG32_EIP] = gr[_REG_RIP];
+	gr32[_REG32_CS] = gr[_REG_CS];
+	gr32[_REG32_DS] = gr[_REG_DS];
+	gr32[_REG32_ES] = gr[_REG_ES];
+	gr32[_REG32_FS] = gr[_REG_FS];
+	gr32[_REG32_GS] = gr[_REG_GS];
+	gr32[_REG32_SS] = gr[_REG_SS];
+	return cpu_mcontext32_validate(l, &mc);
+}
+
 vaddr_t
 netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
     int topdown)
@@ -1009,6 +1028,8 @@ netbsd32_machdep_md_init(void)
 {
 
 	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_reg_validate_hook,
+	    "mcontext32from64_validate", cpu_mcontext32from64_validate);
 }
 
 void
@@ -1016,4 +1037,5 @@ netbsd32_machdep_md_fini(void)
 {
 
 	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
+	MODULE_HOOK_UNSET(netbsd32_reg_validate_hook);
 }
