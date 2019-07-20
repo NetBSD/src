@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1147 2019/07/20 19:09:23 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.1148 2019/07/20 20:25:35 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1495,6 +1495,7 @@ HAVE_XORG_GLAMOR?=	no
 	ico iceauth listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
 	rstart setxkbmap showfont smproxy transset twm viewres \
+	util-macros \
 	x11perf xauth xcalc xclipboard \
 	xclock xcmsdb xconsole xditview xdpyinfo xdriinfo xdm \
 	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
