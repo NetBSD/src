@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.14 2019/07/16 22:57:55 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.15 2019/07/20 18:23:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -273,3 +273,4 @@ struct ifmedia_80_post_hook_t ifmedia_80_post_hook;
  * this is true for i386 and sgimips.)
  */
 struct netbsd32_machine32_hook_t netbsd32_machine32_hook;
+struct netbsd32_reg_validate_hook_t netbsd32_reg_validate_hook;
