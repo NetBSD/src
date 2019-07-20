@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.41 2019/06/27 01:59:30 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.42 2019/07/20 18:25:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2019/06/27 01:59:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.42 2019/07/20 18:25:11 christos Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.41 2019/06/27 01:59:30 christo
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,42 +104,48 @@ process_frame(struct lwp *l)
 }
 
 int
-process_read_regs(struct lwp *l, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
+	long *regs = regp->regs;
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
-
-	regs->regs[_REG_RDI] = tf->tf_rdi;
-	regs->regs[_REG_RSI] = tf->tf_rsi;
-	regs->regs[_REG_RDX] = tf->tf_rdx;
-	regs->regs[_REG_R10] = tf->tf_r10;
-	regs->regs[_REG_R8]  = tf->tf_r8;
-	regs->regs[_REG_R9]  = tf->tf_r9;
+	regs[_REG_RDI] = tf->tf_rdi;
+	regs[_REG_RSI] = tf->tf_rsi;
+	regs[_REG_RDX] = tf->tf_rdx;
+	regs[_REG_R10] = tf->tf_r10;
+	regs[_REG_R8]  = tf->tf_r8;
+	regs[_REG_R9]  = tf->tf_r9;
 	/* argX not touched */
-	regs->regs[_REG_RCX] = tf->tf_rcx;
-	regs->regs[_REG_R11] = tf->tf_r11;
-	regs->regs[_REG_R12] = tf->tf_r12;
-	regs->regs[_REG_R13] = tf->tf_r13;
-	regs->regs[_REG_R14] = tf->tf_r14;
-	regs->regs[_REG_R15] = tf->tf_r15;
-	regs->regs[_REG_RBP] = tf->tf_rbp;
-	regs->regs[_REG_RBX] = tf->tf_rbx;
-	regs->regs[_REG_RAX] = tf->tf_rax;
-	regs->regs[_REG_GS]  = 0;
-	regs->regs[_REG_FS]  = 0;
-	regs->regs[_REG_ES]  = GSEL(GUDATA_SEL, SEL_UPL);
-	regs->regs[_REG_DS]  = GSEL(GUDATA_SEL, SEL_UPL);
-	regs->regs[_REG_TRAPNO] = tf->tf_trapno;
-	regs->regs[_REG_ERR] = tf->tf_err;
-	regs->regs[_REG_RIP] = tf->tf_rip;
-	regs->regs[_REG_CS]  = LSEL(LUCODE_SEL, SEL_UPL);
-	regs->regs[_REG_RFLAGS] = tf->tf_rflags;
-	regs->regs[_REG_RSP] = tf->tf_rsp;
-	regs->regs[_REG_SS]  = LSEL(LUDATA_SEL, SEL_UPL);
+	regs[_REG_RCX] = tf->tf_rcx;
+	regs[_REG_R11] = tf->tf_r11;
+	regs[_REG_R12] = tf->tf_r12;
+	regs[_REG_R13] = tf->tf_r13;
+	regs[_REG_R14] = tf->tf_r14;
+	regs[_REG_R15] = tf->tf_r15;
+	regs[_REG_RBP] = tf->tf_rbp;
+	regs[_REG_RBX] = tf->tf_rbx;
+	regs[_REG_RAX] = tf->tf_rax;
+	if (pk32) {
+		regs[_REG_GS] = tf->tf_gs & 0xffff;
+		regs[_REG_FS] = tf->tf_fs & 0xffff;
+		regs[_REG_ES] = tf->tf_es & 0xffff;
+		regs[_REG_DS] = tf->tf_ds & 0xffff;
+		regs[_REG_CS] = tf->tf_cs & 0xffff;
+		regs[_REG_SS] = tf->tf_ss & 0xffff;
+	} else {
+		regs[_REG_GS] = 0;
+		regs[_REG_FS] = 0;
+		regs[_REG_ES] = GSEL(GUDATA_SEL, SEL_UPL);
+		regs[_REG_DS] = GSEL(GUDATA_SEL, SEL_UPL);
+		regs[_REG_CS] = LSEL(LUCODE_SEL, SEL_UPL);
+		regs[_REG_SS] = LSEL(LUDATA_SEL, SEL_UPL);
+	}
+	regs[_REG_TRAPNO] = tf->tf_trapno;
+	regs[_REG_ERR] = tf->tf_err;
+	regs[_REG_RIP] = tf->tf_rip;
+	regs[_REG_RFLAGS] = tf->tf_rflags;
+	regs[_REG_RSP] = tf->tf_rsp;
 
 	return 0;
 }
@@ -146,11 +153,6 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	process_read_fpregs_xmm(l, &regs->fxstate);
 
@@ -160,11 +162,6 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 int
 process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	x86_dbregs_read(l, regs);
 
@@ -175,19 +172,20 @@ int
 process_write_regs(struct lwp *l, const struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
 	int error;
 	const long *regs = regp->regs;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	/*
 	 * Check for security violations. Note that struct regs is compatible
 	 * with the __gregs array in mcontext_t.
 	 */
-	error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
+	if (pk32) {
+		MODULE_HOOK_CALL(netbsd32_reg_validate_hook, (l, regp), EINVAL,
+		    error);
+	} else {
+		error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
+	}
 	if (error != 0)
 		return error;
 
@@ -207,16 +205,25 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	tf->tf_rbp  = regs[_REG_RBP];
 	tf->tf_rbx  = regs[_REG_RBX];
 	tf->tf_rax  = regs[_REG_RAX];
-	tf->tf_gs   = 0;
-	tf->tf_fs   = 0;
-	tf->tf_es   = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds   = GSEL(GUDATA_SEL, SEL_UPL);
+	if (pk32) {
+		tf->tf_gs = regs[_REG_GS] & 0xffff;
+		tf->tf_fs = regs[_REG_FS] & 0xffff;
+		tf->tf_es = regs[_REG_ES] & 0xffff;
+		tf->tf_ds = regs[_REG_DS] & 0xffff;
+		tf->tf_cs = regs[_REG_CS] & 0xffff;
+		tf->tf_ss = regs[_REG_SS] & 0xffff;
+	} else {
+		tf->tf_gs = 0;
+		tf->tf_fs = 0;
+		tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+		tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	}
 	/* trapno, err not touched */
 	tf->tf_rip  = regs[_REG_RIP];
-	tf->tf_cs   = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = regs[_REG_RFLAGS];
 	tf->tf_rsp  = regs[_REG_RSP];
-	tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
 
 #ifdef XENPV
 	/* see comment in cpu_setmcontext */
@@ -230,11 +237,6 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	process_write_fpregs_xmm(l, &regs->fxstate);
 	return 0;
@@ -243,12 +245,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 int
 process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
 {
-	struct proc *p = l->l_proc;
 	int error;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	/*
 	 * Check for security violations.
@@ -279,15 +276,12 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const uint64_t rip = (uint64_t)addr;
 
-	if (p->p_flag & PK_32) {
+	if (rip >= (pk32 ? VM_MAXUSER_ADDRESS32 : VM_MAXUSER_ADDRESS))
 		return EINVAL;
-	}
-
-	if ((uint64_t)addr >= VM_MAXUSER_ADDRESS)
-		return EINVAL;
-	tf->tf_rip = (uint64_t)addr;
+	tf->tf_rip = rip;
 
 	return 0;
 }
