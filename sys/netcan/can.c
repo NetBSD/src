@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.6 2018/11/15 10:23:56 maxv Exp $	*/
+/*	$NetBSD: can.c,v 1.7 2019/07/20 15:34:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.6 2018/11/15 10:23:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.7 2019/07/20 15:34:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -924,9 +924,7 @@ can_raw_setop(struct canpcb *canp, struct sockopt *sopt)
 		int nfilters = sopt->sopt_size / sizeof(struct can_filter);
 		if (sopt->sopt_size % sizeof(struct can_filter) != 0)
 			return EINVAL;
-		mutex_enter(&canp->canp_mtx);
 		error = can_pcbsetfilter(canp, sopt->sopt_data, nfilters);
-		mutex_exit(&canp->canp_mtx);
 		break;
 		}
 	default:
