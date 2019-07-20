@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1146 2019/06/11 04:52:44 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1147 2019/07/20 19:09:23 wiz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1141,7 +1141,9 @@ MKFIRMWARE.macppc=		yes
 MKFIRMWARE.sandpoint=		yes
 MKFIRMWARE.sparc64=		yes
 
-# Only install the radeon firmware on DRM-happy systems.
+# Only install the nouveau and radeon firmwares on DRM-happy systems.
+MKNOUVEAUFIRMWARE.x86_64=	yes
+MKNOUVEAUFIRMWARE.i386=		yes
 MKRADEONFIRMWARE.x86_64=	yes
 MKRADEONFIRMWARE.i386=		yes
 
@@ -1181,7 +1183,7 @@ _MKVARS.no= \
 	MKKYUA \
 	MKLIBCXX MKLLD MKLLDB MKLLVM MKLLVMRT MKLINT \
 	MKMANZ MKMCLINKER \
-	MKNSD \
+	MKNOUVEAUFIRMWARE MKNSD \
 	MKOBJDIRS \
 	MKPCC MKPIGZGZIP \
 	MKRADEONFIRMWARE MKREPRO \
