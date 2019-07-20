@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.391 2019/04/19 22:06:03 kamil Exp $
+#	$NetBSD: bsd.README,v 1.392 2019/07/20 19:09:23 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -352,6 +352,10 @@ MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
 		Default: yes
 
+MKNOUVEAUFIRMWARE If "yes", install the /libdata/firmware/nouveau directory,
+		which is necessary for the nouveau DRM driver.
+		Default: yes on i386 and amd64, no elsewhere.
+
 MKNPF		If "no", don't build or install the NPF and its modules.
 		Default: yes
 
@@ -406,7 +410,7 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
 
-MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
+MKRADEONFIRMWARE If "yes", install the /libdata/firmware/radeon directory,
 		which is necessary for the radeon DRM driver.
 		Default: yes on i386 and amd64, no elsewhere.
 
