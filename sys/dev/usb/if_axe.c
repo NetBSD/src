@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.100 2019/07/15 06:40:21 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.101 2019/07/21 09:38:28 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.100 2019/07/15 06:40:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.101 2019/07/21 09:38:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,8 +138,6 @@ struct axe_chain {
 	struct axe_softc	*axe_sc;
 	struct usbd_xfer	*axe_xfer;
 	uint8_t			*axe_buf;
-	int			axe_accum;
-	int			axe_idx;
 };
 
 struct axe_cdata {
@@ -1360,7 +1358,6 @@ axe_rx_list_init(struct axe_softc *sc)
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
 		c = &cd->axe_rx_chain[i];
 		c->axe_sc = sc;
-		c->axe_idx = i;
 		if (c->axe_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axe_ep[AXE_ENDPT_RX],
 			    sc->axe_bufsz, 0, 0, &c->axe_xfer);
@@ -1385,7 +1382,6 @@ axe_tx_list_init(struct axe_softc *sc)
 	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
 		c = &cd->axe_tx_chain[i];
 		c->axe_sc = sc;
-		c->axe_idx = i;
 		if (c->axe_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axe_ep[AXE_ENDPT_TX],
 			    sc->axe_bufsz, USBD_FORCE_SHORT_XFER, 0,
