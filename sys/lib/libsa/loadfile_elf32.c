@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.54 2019/06/20 17:33:30 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.55 2019/07/21 16:53:17 rin Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -59,12 +59,18 @@
 #define	ELFROUND	(ELFSIZE / 8)
 
 #ifndef _STANDALONE
-#include "byteorder.h"
-
 /*
  * Byte swapping may be necessary in the non-_STANDLONE case because
  * we may be built with a host compiler.
  */
+#ifndef LIBSA_BIENDIAN_SUPPORT
+#define LIBSA_BIENDIAN_SUPPORT
+#endif
+#endif
+
+#ifdef LIBSA_BIENDIAN_SUPPORT
+#include "byteorder.h"
+
 #define	E16(f)								\
 	f = (bo == ELFDATA2LSB) ? sa_htole16(f) : sa_htobe16(f)
 #define	E32(f)								\
@@ -241,10 +247,10 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #error ELFSIZE is not 32 or 64
 #endif
 }
-#else /* _STANDALONE */
+#else /* LIBSA_BIENDIAN_SUPPORT */
 /*
- * Byte swapping is never necessary in the _STANDALONE case because
- * we are being built with the target compiler.
+ * Byte swapping is never necessary in the !LIBSA_BIENDIAN_SUPPORT case
+ * because we are being built with the target compiler.
  */
 #define	internalize_ehdr(bo, ehdr)	/* nothing */
 #define	externalize_ehdr(bo, ehdr)	/* nothing */
@@ -253,7 +259,7 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 
 #define	internalize_shdr(bo, shdr)	/* nothing */
 #define	externalize_shdr(bo, shdr)	/* nothing */
-#endif /* _STANDALONE */
+#endif /* LIBSA_BIENDIAN_SUPPORT */
 
 #define IS_TEXT(p)	(p.p_flags & PF_X)
 #define IS_DATA(p)	((p.p_flags & PF_X) == 0)
@@ -379,7 +385,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 	maxp += sizeof(Elf_Ehdr);
 
-#ifndef _STANDALONE
+#ifdef LIBSA_BIENDIAN_SUPPORT
 	for (i = 0; i < elf->e_shnum; i++)
 		internalize_shdr(elf->e_ident[EI_DATA], &shdr[i]);
 #endif
@@ -472,7 +478,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	/*
 	 * Finally, load the SECTION HEADERS.
 	 */
-#ifndef _STANDALONE
+#ifdef LIBSA_BIENDIAN_SUPPORT
 	for (i = 0; i < elf->e_shnum; i++)
 		externalize_shdr(elf->e_ident[EI_DATA], &shdr[i]);
 #endif
@@ -526,7 +532,7 @@ ELFNAMEEND(loadsym)(int fd, Elf_Ehdr *elf, Elf_Addr maxp, Elf_Addr elfp,
 	shpp = maxp;
 	maxp += roundup(sz, ELFROUND);
 
-#ifndef _STANDALONE
+#ifdef LIBSA_BIENDIAN_SUPPORT
 	for (i = 0; i < elf->e_shnum; i++)
 		internalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
 #endif
@@ -636,7 +642,7 @@ havesym:
 		}
 	}
 	if (flags & LOAD_SYM) {
-#ifndef _STANDALONE
+#ifdef LIBSA_BIENDIAN_SUPPORT
 		for (i = 0; i < elf->e_shnum; i++)
 			externalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
 #endif
