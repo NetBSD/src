@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.27 2019/07/21 11:35:36 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.28 2019/07/21 12:23:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1469,16 +1469,13 @@ done:
 void
 scripting_vfprintf(FILE *f, const char *fmt, va_list ap)
 {
-	va_list saved;
+	va_list ap2;
 
-	if (f && script)
-		va_copy(saved, ap);
+	va_copy(ap2, ap);
 	if (f)
 		(void)vfprintf(f, fmt, ap);
-	if (f && script)
-		va_copy(ap, saved);
 	if (script)
-		(void)vfprintf(script, fmt, ap);
+		(void)vfprintf(script, fmt, ap2);
 }
 
 void
