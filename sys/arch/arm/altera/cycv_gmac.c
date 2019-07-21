@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_gmac.c,v 1.3 2019/07/08 03:22:38 msaitoh Exp $ */
+/* $NetBSD: cycv_gmac.c,v 1.4 2019/07/21 08:24:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.3 2019/07/08 03:22:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.4 2019/07/21 08:24:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,7 +129,7 @@ cycv_gmac_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
+	if (fdtbus_intr_establish(phandle, 0, IPL_NET, DWCGMAC_FDT_INTR_MPSAFE,
 				  cycv_gmac_intr, sc) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 				 intrstr);

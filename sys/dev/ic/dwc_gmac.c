@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.63 2019/07/08 03:22:38 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.63 2019/07/08 03:22:38 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -178,10 +178,6 @@ static void dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *);
 static void dwc_dump_and_abort(struct dwc_gmac_softc *, const char *);
 static void dwc_dump_status(struct dwc_gmac_softc *);
 static void dwc_gmac_dump_ffilt(struct dwc_gmac_softc *, uint32_t);
-#endif
-
-#ifdef NET_MPSAFE
-#define DWCGMAC_MPSAFE	1
 #endif
 
 int
@@ -698,7 +694,7 @@ fail:
 static void
 dwc_gmac_txdesc_sync(struct dwc_gmac_softc *sc, int start, int end, int ops)
 {
-	/* 'end' is pointing one descriptor beyound the last we want to sync */
+	/* 'end' is pointing one descriptor beyond the last we want to sync */
 	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    TX_DESC_OFFSET(start),
