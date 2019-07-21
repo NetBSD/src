@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.8 2019/07/21 11:36:34 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.9 2019/07/21 11:56:20 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -99,18 +99,18 @@ disklabel_change_geom(struct disk_partitions *arg, int ncyl, int nhead,
 	struct disklabel_disk_partitions *parts =
 	    (struct disklabel_disk_partitions*)arg;
 
+	assert(parts->l.d_secsize != 0);
+	assert(parts->l.d_nsectors != 0);
+	assert(parts->l.d_ntracks != 0);
+	assert(parts->l.d_ncylinders != 0);
+	assert(parts->l.d_secpercyl != 0);
+
 	disklabel_init_default_alignment(parts, nhead * nsec);
-
-	parts->l.d_ncylinders = ncyl;
-	parts->l.d_ntracks = nhead;
-	parts->l.d_nsectors = nsec;
-	parts->l.d_secsize = DEV_BSIZE;
-	parts->l.d_secpercyl = nsec * nhead;
-
 	if (ncyl*nhead*nsec <= TINY_DISK_SIZE)
 		set_default_sizemult(1);
 	else
 		set_default_sizemult(MEG/512);
+
 	return true;
 }
 
@@ -273,6 +273,10 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	size_t n;
 
 	assert(parts->l.d_secsize != 0);
+	assert(parts->l.d_nsectors != 0);
+	assert(parts->l.d_ntracks != 0);
+	assert(parts->l.d_ncylinders != 0);
+	assert(parts->l.d_secpercyl != 0);
 
 	sprintf(fname, "/tmp/disklabel.%u", getpid());
 	f = fopen(fname, "w");
