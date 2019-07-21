@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.21 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.22 2019/07/21 10:27:56 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -159,9 +159,7 @@ struct cue_cdata {
 	struct cue_chain	cue_tx_chain[CUE_TX_LIST_CNT];
 	struct cue_chain	cue_rx_chain[CUE_RX_LIST_CNT];
 	int			cue_tx_prod;
-	int			cue_tx_cons;
 	int			cue_tx_cnt;
-	int			cue_rx_prod;
 };
 
 struct cue_softc {
