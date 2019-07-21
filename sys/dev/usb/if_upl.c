@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.63 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.64 2019/07/21 10:27:56 mrg Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.63 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.64 2019/07/21 10:27:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -117,16 +117,13 @@ struct upl_chain {
 	struct usbd_xfer	*upl_xfer;
 	char			*upl_buf;
 	struct mbuf		*upl_mbuf;
-	int			upl_idx;
 };
 
 struct upl_cdata {
 	struct upl_chain	upl_tx_chain[UPL_TX_LIST_CNT];
 	struct upl_chain	upl_rx_chain[UPL_RX_LIST_CNT];
 	int			upl_tx_prod;
-	int			upl_tx_cons;
 	int			upl_tx_cnt;
-	int			upl_rx_prod;
 };
 
 struct upl_softc {
@@ -437,7 +434,6 @@ upl_rx_list_init(struct upl_softc *sc)
 	for (i = 0; i < UPL_RX_LIST_CNT; i++) {
 		c = &cd->upl_rx_chain[i];
 		c->upl_sc = sc;
-		c->upl_idx = i;
 		if (upl_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->upl_xfer == NULL) {
@@ -465,7 +461,6 @@ upl_tx_list_init(struct upl_softc *sc)
 	for (i = 0; i < UPL_TX_LIST_CNT; i++) {
 		c = &cd->upl_tx_chain[i];
 		c->upl_sc = sc;
-		c->upl_idx = i;
 		c->upl_mbuf = NULL;
 		if (c->upl_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_ep[UPL_ENDPT_TX],

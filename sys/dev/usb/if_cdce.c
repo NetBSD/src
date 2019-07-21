@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.52 2019/06/29 07:46:19 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.53 2019/07/21 10:27:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.52 2019/06/29 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.53 2019/07/21 10:27:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,9 +100,7 @@ struct cdce_cdata {
 	struct cdce_chain	 cdce_rx_chain[CDCE_RX_LIST_CNT];
 	struct cdce_chain	 cdce_tx_chain[CDCE_TX_LIST_CNT];
 	int			 cdce_tx_prod;
-	int			 cdce_tx_cons;
 	int			 cdce_tx_cnt;
-	int			 cdce_rx_prod;
 };
 
 struct cdce_softc {

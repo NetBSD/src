@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.13 2019/07/21 10:27:56 mrg Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -160,9 +160,7 @@ struct udav_cdata {
 	struct udav_intrpkg	udav_ibuf;
 #endif
 	int			udav_tx_prod;
-	int			udav_tx_cons;
 	int			udav_tx_cnt;
-	int			udav_rx_prod;
 };
 
 struct udav_softc {

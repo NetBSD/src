@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.65 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.66 2019/07/21 10:27:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.65 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.66 2019/07/21 10:27:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -822,7 +822,6 @@ url_rx_list_init(struct url_softc *sc)
 	for (i = 0; i < URL_RX_LIST_CNT; i++) {
 		c = &cd->url_rx_chain[i];
 		c->url_sc = sc;
-		c->url_idx = i;
 		if (url_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->url_xfer == NULL) {
@@ -850,7 +849,6 @@ url_tx_list_init(struct url_softc *sc)
 	for (i = 0; i < URL_TX_LIST_CNT; i++) {
 		c = &cd->url_tx_chain[i];
 		c->url_sc = sc;
-		c->url_idx = i;
 		c->url_mbuf = NULL;
 		if (c->url_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_pipe_tx, URL_BUFSZ,
