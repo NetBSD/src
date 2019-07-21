@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.48 2019/01/27 12:03:09 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.49 2019/07/21 15:25:39 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.48 2019/01/27 12:03:09 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.49 2019/07/21 15:25:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	char nextch;
 	char *format;
 	char ch;
-	int error, o;
+	int error;
 
 #if !defined(SHELL) && !defined(BUILTIN)
 	(void)setlocale (LC_ALL, "");
@@ -138,6 +138,13 @@ main(int argc, char *argv[])
 
 	rval = 0;	/* clear for builtin versions (avoid holdover) */
 
+#if 0
+	int o;
+
+	/*
+	 * printf does not comply with Posix XBD 12.2 - there are no opts,
+	 * not even the -- end of options marker.   Do not run getoot().
+	 */
 	while ((o = getopt(argc, argv, "")) != -1) {
 		switch (o) {
 		case '?':
@@ -148,6 +155,10 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+#else
+	argc -= 1;
+	argv += 1;
+#endif
 
 	if (argc < 1) {
 		usage();
