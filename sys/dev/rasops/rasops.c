@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.79 2018/12/04 09:27:59 mlelstv Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.80 2019/07/21 16:19:45 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.79 2018/12/04 09:27:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.80 2019/07/21 16:19:45 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1025,11 +1025,35 @@ rasops_do_cursor(struct rasops_info *ri)
 		hrp = ri->ri_hwbits + row * ri->ri_yscale + col
 		    * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
-	slop1 = (4 - ((long)rp & 3)) & 3;
 
-	if (slop1 > ri->ri_xscale)
-		slop1 = ri->ri_xscale;
+	/*
+	 * For ri_xscale = 1:
+	 *
+	 * Logic below does not work for ri_xscale = 1, e.g.,
+	 * fontwidth = 8 and bpp = 1. So we take care of it.
+	 */
+	if (ri->ri_xscale == 1) {
+		while (height--) {
+			uint8_t tmp8 = ~*rp;
 
+			*rp = tmp8;
+			rp += ri->ri_stride;
+
+			if (ri->ri_hwbits) {
+				*hrp = tmp8;
+				hrp += ri->ri_stride;
+			}
+		}
+		return;
+	}
+
+	/*
+	 * For ri_xscale = 2, 3, 4, ...:
+	 *
+	 * Note that siop1 <= ri_xscale even for ri_xscale = 2,
+	 * since rp % 3 = 0 or 2.
+	 */
+	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
 	slop2 = (ri->ri_xscale - slop1) & 3;
 	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
 
