@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1635 2019/07/17 18:35:00 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1636 2019/07/21 19:03:12 maya Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -239,12 +239,12 @@ Notes:
 See /usr/src/external/bsd/byacc/byacc2netbsd for update instructions.
 
 Package:	bzip2
-Version:	1.0.6
-Current Vers:	1.0.6
+Version:	1.0.8
+Current Vers:	1.0.8
 Maintainer:	Julian Seward <jseward@acm.org>
-Archive Site:	http://sources.redhat.com/bzip2/files/
-Home Page:	http://www.bzip.org/
-Date:		2019-01-09
+Archive Site:	https://sourceware.org/pub/bzip2/
+Home Page:	https://www.sourceware.org/bzip2/
+Date:		2019-07-21
 Mailing List:
 Responsible:
 License:	BSD (4-clause)
