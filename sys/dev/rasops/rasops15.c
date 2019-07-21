@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.22 2018/12/04 09:27:59 mlelstv Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.23 2019/07/21 16:18:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.22 2018/12/04 09:27:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.23 2019/07/21 16:18:08 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -321,10 +321,10 @@ rasops15_makestamp(struct rasops_info *ri, long attr)
 		stamp[i + 1] = (i & 4 ? fg : bg);
 		stamp[i + 1] |= ((i & 2 ? fg : bg) << 16);
 #else
-		stamp[i] = (i & 2 ? fg : bg);
-		stamp[i] |= ((i & 4 ? fg : bg) << 16);
-		stamp[i + 1] = (i & 8 ? fg : bg);
-		stamp[i + 1] |= ((i & 16 ? fg : bg) << 16);
+		stamp[i] = (i & 8 ? fg : bg);
+		stamp[i] |= ((i & 16 ? fg : bg) << 16);
+		stamp[i + 1] = (i & 2 ? fg : bg);
+		stamp[i + 1] |= ((i & 4 ? fg : bg) << 16);
 #endif
 	}
 }
