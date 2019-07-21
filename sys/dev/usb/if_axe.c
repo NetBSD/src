@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.101 2019/07/21 09:38:28 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.102 2019/07/21 10:27:56 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.101 2019/07/21 09:38:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.102 2019/07/21 10:27:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -144,9 +144,7 @@ struct axe_cdata {
 	struct axe_chain	axe_tx_chain[AXE_TX_LIST_CNT];
 	struct axe_chain	axe_rx_chain[AXE_RX_LIST_CNT];
 	int			axe_tx_prod;
-	int			axe_tx_cons;
 	int			axe_tx_cnt;
-	int			axe_rx_prod;
 };
 
 struct axe_softc {

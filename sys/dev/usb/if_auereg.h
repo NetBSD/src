@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.28 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.29 2019/07/21 10:27:56 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -220,9 +220,7 @@ struct aue_cdata {
 	struct aue_chain	aue_rx_chain[AUE_RX_LIST_CNT];
 	struct aue_intrpkt	aue_ibuf;
 	int			aue_tx_prod;
-	int			aue_tx_cons;
 	int			aue_tx_cnt;
-	int			aue_rx_prod;
 };
 
 struct aue_softc {
