@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.7 2019/04/21 22:30:41 thorpej Exp $
+# $NetBSD: Makefile.efiboot,v 1.8 2019/07/21 17:01:39 rin Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -97,6 +97,7 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
 SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
 SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_BIENDIAN=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
