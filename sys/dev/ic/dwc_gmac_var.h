@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.14 2019/07/08 03:22:38 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.15 2019/07/21 08:24:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -29,6 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
+/* Use DWCGMAC_MPSAFE inside the front-ends for interrupt handlers.  */
+#ifdef NET_MPSAFE
+#define DWCGMAC_MPSAFE	1
+#endif
+
+#ifdef DWCGMAC_MPSAFE
+#define DWCGMAC_FDT_INTR_MPSAFE FDT_INTR_MPSAFE
+#else
+#define DWCGMAC_FDT_INTR_MPSAFE 0
+#endif
 
 /*
  * We could use 1024 DMA descriptors to fill up an 8k page (each is 16 byte).
