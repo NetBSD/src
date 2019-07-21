@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.4 2018/12/08 17:46:13 thorpej Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.5 2019/07/21 15:57:23 rin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.4 2018/12/08 17:46:13 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.5 2019/07/21 15:57:23 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,6 +182,8 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 
 	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_DW_APB, flags))
 		panic("Cannot initialize dw-apb-uart console");
+
+	cn_set_magic("+++++");
 }
 
 static const struct fdt_console dw_apb_uart_console = {
