@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.1 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.2 2019/07/21 16:08:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.1 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.2 2019/07/21 16:08:13 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,9 @@ hvkbd_set_leds(void *v, int leds)
 static int
 hvkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 	struct hvkbd_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -434,6 +436,7 @@ hvkbd_decode(struct hvkbd_softc *sc, u_int *type, int *scancode)
 	return 1;
 }
 
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 static int
 hvkbd_encode(struct hvkbd_softc *sc, u_char *buf, int *len)
 {
@@ -478,6 +481,7 @@ hvkbd_encode(struct hvkbd_softc *sc, u_char *buf, int *len)
 
 	return 1;
 }
+#endif
 
 static void
 hvkbd_intr(void *xsc)
