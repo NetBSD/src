@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.33 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: GENERIC.common,v 1.34 2019/07/21 17:05:11 rin Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -28,7 +28,7 @@ no pseudo-device vcoda
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
+options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support
