@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.13 2019/07/21 10:27:56 mrg Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -135,7 +135,6 @@ struct url_chain {
 	struct usbd_xfer	*url_xfer;
 	char			*url_buf;
 	struct mbuf		*url_mbuf;
-	int			url_idx;
 };
 
 struct url_cdata {
@@ -146,9 +145,7 @@ struct url_cdata {
 	struct url_intrpkg	url_ibuf;
 #endif
 	int			url_tx_prod;
-	int			url_tx_cons;
 	int			url_tx_cnt;
-	int			url_rx_prod;
 };
 
 struct url_softc {
