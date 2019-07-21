@@ -1,4 +1,4 @@
-# $NetBSD: t_builtin.sh,v 1.4 2018/09/14 19:52:23 kre Exp $
+# $NetBSD: t_builtin.sh,v 1.5 2019/07/21 15:00:18 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,7 @@ do_printf()
 	case "$*" in
 	*\'*)
 		$Running_under_ATF && atf_require_prog printf
-		$Running_under_ATF && atf_require_pfog sed
+		$Running_under_ATF && atf_require_prog sed
 		;;
 	esac
 
