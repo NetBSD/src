@@ -1367,9 +1367,13 @@ alloc:
 # endif
 	{
 	const char *p;
+# ifdef __FreeBSD__
 	char kernname[512];
 
 	p = dt_bootfile(kernname, sizeof(kernname));
+# else
+	p = "netbsd";
+# endif
 
 	/*
 	 * Format the global variables based on the kernel module name.
