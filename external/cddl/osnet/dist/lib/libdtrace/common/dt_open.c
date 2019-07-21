@@ -1140,6 +1140,16 @@ dt_vopen(int version, int flags, int *errp,
 	 */
 	dt_provmod_open(&provmod, &df);
 
+#ifdef __NetBSD__
+	modctl_load_t cmdargs;
+
+	cmdargs.ml_filename = "dtrace";
+	cmdargs.ml_flags = MODCTL_NO_PROP;
+	cmdargs.ml_props = NULL;
+	cmdargs.ml_propslen = 0;
+
+	(void)modctl(MODCTL_LOAD, &cmdargs);
+#endif
 	dtfd = open("/dev/dtrace/dtrace", O_RDWR);
 	err = errno; /* save errno from opening dtfd */
 #if defined(__FreeBSD__)
