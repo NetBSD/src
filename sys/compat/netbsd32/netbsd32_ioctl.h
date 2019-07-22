@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.56.8.1 2017/11/27 14:07:53 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.56.8.2 2019/07/22 16:27:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -116,6 +116,7 @@ struct netbsd32_bpf_dltlist {
 #define BIOCSTCPF32	_IOW('B',114, struct netbsd32_bpf_program)
 #define BIOCSUDPF32	_IOW('B',115, struct netbsd32_bpf_program)
 #define BIOCGDLTLIST32	_IOWR('B',119, struct netbsd32_bpf_dltlist)
+#define BIOCSRTIMEOUT32	_IOW('B',122, struct netbsd32_timeval)
 
 
 struct netbsd32_wsdisplay_addscreendata {
