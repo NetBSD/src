@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.10 2019/07/22 16:32:17 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.11 2019/07/22 18:13:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -246,4 +246,80 @@ sys/compat/netbsd32/netbsd32_ioctl.h		1.65
 	Add BIOCSRTIMEOUT32 to fix tcpdump for COMPAT_NETBSD32.
 	Correct misleading macro argument names.
 	[rin, ticket #1054]
+
+sys/arch/x86/pci/if_vmx.c			1.31
+sys/arch/x86/pci/if_vmx.c			1.32 (via patch)
+
+	Eliminate IFF_RUNNING checking code from vmxnet3_init_locked().
+	Fix vmx(4) MTU setting.
+	[knakahara, ticket #1300]
+
+sys/dev/pci/ixgbe/if_sriov.c			1.5-1.6
+sys/dev/pci/ixgbe/ix_txrx.c			1.53-1.54
+sys/dev/pci/ixgbe/ixgbe_x550.h			1.5
+sys/dev/pci/ixgbe/ixgbe.c			1.169-1.170,1.176,1.179,1.181,1.185-1.186,1.188-1.192 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.53,1.55
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.21
+sys/dev/pci/ixgbe/ixgbe_api.c			1.22-1.23
+sys/dev/pci/ixgbe/ixgbe_api.h			1.14-1.15
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.14-1.15
+sys/dev/pci/ixgbe/ixgbe_common.c		1.23
+sys/dev/pci/ixgbe/ixgbe_common.h		1.14
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.11
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.14
+sys/dev/pci/ixgbe/ixgbe_netmap.c		1.2
+sys/dev/pci/ixgbe/ixgbe_features.h		1.2
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.9
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.9-1.10
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.18
+sys/dev/pci/ixgbe/ixgbe_type.h			1.37,1.39-1.40
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.18
+sys/dev/pci/ixgbe/ixv.c				1.112-1.114,1.117,1.119 via patch
+
+	Sync ixgbe up to 20190717 except ETHERCAP or ixv's VLAN stuff:
+	- Add firmware recovery mode for X550, X550A(Xeon D) and X550EM(C3000).
+	- Remove IXGBE_DEV_ID_82599_LS(0x154f) support again.
+	- On X550EMU, use ixgbe_identify_sfp_module_X550em() instead of
+	  ixgbe_identify_module_generic(). ixgbe_identify_sfp_module_X550em()
+	  has extra check (e.g. exclude 1G copper).
+	- It's not required to calculate unused queues' statistics.
+	- Remove ETHERCAP_VLAN_HWFILTER's definition.
+	- Match 82598_BX(0x1508), 82599_KR(0x1517), 82599_SFP_EM(0x1507),
+	  X550EM_X_XFI(0x15b0), X550EM_A_QSFP(0x15ca) and
+	  X550EM_A_QSFP_N(0x15cc)
+	- Add missing XFI support into ixgbe_get_link_capabilities_X550em().
+	- Other than IXGBE_VF_RESET should wait ACK, so use
+	  ixgbevf_write_msg_read_ack() instead of write_posted() in
+	  ixgbe_update_mc_addr_list_vf().
+	- When ixv_check_link() failed in the watchdog function, reset the
+	  interface.
+	- Remove RXCSUM register modification in
+	  ixv_initialize_receive_units(). It seems it's not required.
+	- Remove some debug printf in ixv_print_debug_info().
+	- Calculate vector's bit location correctly when the vector >= 31
+	  in ixgbe_allocate_msix().
+	- Fix hung queue check when the queue number >= 31.
+	- On ENETRESET case, not continue and quit the ifflags_cb() function
+	  because if_init() will do the same thing.
+	- Fix bugs in unused code.
+	- Fix typo in comment.
+	- Fix typo in unused code.
+	- Whitespace fixes. KNF.
+	[msaitoh, ticket #1301]
+
+sys/kern/sys_ptrace_common.c			1.58
+
+	Enhance locking of ptrace_update_lwp.
+	Do not switch lwp for PT_SET_SIGINFO.
+	[kamil, ticket #1302]
+
+sys/netipsec/key.c				1.264
+
+	Avoid a race condition between SA (sav) manipulations.
+	[ozaki-r, ticket #1303]
+
+usr.bin/vmstat/vmstat.c				1.226
+
+	Fix "vmstat -m" numbers running into each other.
+	[mrg, ticket #1304]
 
