@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.15 2019/03/01 17:33:24 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.16 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
 
@@ -233,7 +233,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		i = (cpu_index(curcpu()) % ncpu) % adapter->num_queues;
 
 	/* Check for a hung queue and pick alternative */
-	if (((1 << i) & adapter->active_queues) == 0)
+	if (((1ULL << i) & adapter->active_queues) == 0)
 		i = ffs64(adapter->active_queues);
 
 	txr = &adapter->tx_rings[i];
@@ -694,7 +694,7 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 		 * netmap_idx_n2k() handles wraparounds properly.
 		 */
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int si = netmap_idx_n2k(&na->tx_rings[txr->me], i);
+			int si = netmap_idx_n2k(na->tx_rings[txr->me], i);
 			netmap_load_map(na, txr->txtag,
 			    txbuf->map, NMB(na, slot + si));
 		}
@@ -1105,7 +1105,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 	    (adapter->ifp->if_capenable & IFCAP_NETMAP)) {
 		struct netmap_adapter *na = NA(adapter->ifp);
-		struct netmap_kring *kring = &na->tx_rings[txr->me];
+		struct netmap_kring *kring = na->tx_rings[txr->me];
 		txd = txr->tx_base;
 		bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 		    BUS_DMASYNC_POSTREAD);
@@ -1123,9 +1123,8 @@ ixgbe_txeof(struct tx_ring *txr)
 		 * - the driver ignores tx interrupts unless netmap_mitigate=0
 		 *   or the slot has the DD bit set.
 		 */
-		if (!netmap_mitigate ||
-		    (kring->nr_kflags < kring->nkr_num_slots &&
-		     txd[kring->nr_kflags].wb.status & IXGBE_TXD_STAT_DD)) {
+		if (kring->nr_kflags < kring->nkr_num_slots &&
+		    txd[kring->nr_kflags].wb.status & IXGBE_TXD_STAT_DD) {
 			netmap_tx_irq(ifp, txr->me);
 		}
 		return false;
@@ -1405,7 +1404,7 @@ update:
 static int
 ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 {
-	struct	adapter     *adapter = rxr->adapter;
+	struct adapter      *adapter = rxr->adapter;
 	device_t            dev = adapter->dev;
 	struct ixgbe_rx_buf *rxbuf;
 	int                 bsize, error;
@@ -1530,7 +1529,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		 * an mbuf, so end the block with a continue;
 		 */
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int sj = netmap_idx_n2k(&na->rx_rings[rxr->me], j);
+			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], j);
 			uint64_t paddr;
 			void *addr;
 
@@ -1827,7 +1826,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		u16         len;
 		u16         vtag = 0;
 		bool        eop;
- 
+
 		/* Sync the ring. */
 		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -2307,7 +2306,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/*
 	 * Next the RX queues...
-	 */ 
+	 */
 	rsize = roundup2(adapter->num_rx_desc * sizeof(union ixgbe_adv_rx_desc),
 	    DBA_ALIGN);
 	for (int i = 0; i < adapter->num_queues; i++, rxconf++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.12.8.2 2018/04/14 10:25:11 martin Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.12.8.3 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -388,7 +388,6 @@ s32 ixgbe_update_mc_addr_list_vf(struct ixgbe_hw *hw, u8 *mc_addr_list,
 				 u32 mc_addr_count, ixgbe_mc_addr_itr next,
 				 bool clear)
 {
-	struct ixgbe_mbx_info *mbx = &hw->mbx;
 	u32 msgbuf[IXGBE_VFMAILBOX_SIZE];
 	u16 *vector_list = (u16 *)&msgbuf[1];
 	u32 vector;
@@ -419,8 +418,8 @@ s32 ixgbe_update_mc_addr_list_vf(struct ixgbe_hw *hw, u8 *mc_addr_list,
 		DEBUGOUT1("Hash value = 0x%03X\n", vector);
 		vector_list[i] = (u16)vector;
 	}
-
-	return mbx->ops.write_posted(hw, msgbuf, IXGBE_VFMAILBOX_SIZE, 0);
+	return ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
+	    IXGBE_VFMAILBOX_SIZE);
 }
 
 /**

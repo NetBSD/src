@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.c,v 1.15.8.4 2018/07/26 23:21:54 snj Exp $ */
+/* $NetBSD: ixgbe_api.c,v 1.15.8.5 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -173,7 +173,6 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_82599_SFP_SF_QP:
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 	case IXGBE_DEV_ID_82599EN_SFP:
-	case IXGBE_DEV_ID_82599_LS:
 	case IXGBE_DEV_ID_82599_CX4:
 	case IXGBE_DEV_ID_82599_BYPASS:
 	case IXGBE_DEV_ID_82599_T3_LOM:
@@ -1107,6 +1106,19 @@ s32 ixgbe_set_vlvf(struct ixgbe_hw *hw, u32 vlan, u32 vind, bool vlan_on,
 }
 
 /**
+ *  ixgbe_toggle_txdctl - Toggle VF's queues
+ *  @hw: pointer to hardware structure
+ *  @vind: VMDq pool index
+ *
+ *  Enable and disable each queue in VF.
+ */
+s32 ixgbe_toggle_txdctl(struct ixgbe_hw *hw, u32 vind)
+{
+	return ixgbe_call_func(hw, hw->mac.ops.toggle_txdctl, (hw,
+			       vind), IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
  *  ixgbe_fc_enable - Enable flow control
  *  @hw: pointer to hardware structure
  *
@@ -1307,6 +1319,18 @@ void ixgbe_restore_mdd_vf(struct ixgbe_hw *hw, u32 vf)
 {
 	if (hw->mac.ops.restore_mdd_vf)
 		hw->mac.ops.restore_mdd_vf(hw, vf);
+}
+
+/**
+ *  ixgbe_fw_recovery_mode - Check if in FW NVM recovery mode
+ *  @hw: pointer to hardware structure
+ *
+ **/
+bool ixgbe_fw_recovery_mode(struct ixgbe_hw *hw)
+{
+	if (hw->mac.ops.fw_recovery_mode)
+		return hw->mac.ops.fw_recovery_mode(hw);
+	return FALSE;
 }
 
 /**

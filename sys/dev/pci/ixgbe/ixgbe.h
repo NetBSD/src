@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.16 2019/03/01 17:33:24 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.17 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -240,7 +240,7 @@
 #endif
 
 /*
- * Interrupt Moderation parameters 
+ * Interrupt Moderation parameters
  */
 #define IXGBE_LOW_LATENCY	128
 #define IXGBE_AVE_LATENCY	400
@@ -348,7 +348,7 @@ struct ix_queue {
  * The transmit ring, one per queue
  */
 struct tx_ring {
-        struct adapter		*adapter;
+	struct adapter		*adapter;
 	kmutex_t		tx_mtx;
 	u32			me;
 	u32			tail;
@@ -396,7 +396,7 @@ struct tx_ring {
  * The Receive ring, one per rx queue
  */
 struct rx_ring {
-        struct adapter		*adapter;
+	struct adapter		*adapter;
 	kmutex_t		rx_mtx;
 	u32			me;
 	u32			tail;
@@ -408,8 +408,8 @@ struct rx_ring {
 	bool			lro_enabled;
 	bool			hw_rsc;
 	bool			vtag_strip;
-        u16			next_to_refresh;
-        u16 			next_to_check;
+	u16			next_to_refresh;
+	u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
 #if 0
@@ -574,6 +574,10 @@ struct adapter {
 	void 			(*init_locked)(struct adapter *);
 	void 			(*stop_locked)(void *);
 
+	/* Firmware error check */
+	u_int                   recovery_mode;
+	struct callout          recovery_mode_timer;
+
 	/* Misc stats maintained by the driver */
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt   		mbuf_defrag_failed;
@@ -674,11 +678,11 @@ struct adapter {
 	"\nControl advertised link speed using these flags:\n" \
 	"\t0x01 - advertise 100M\n" \
 	"\t0x02 - advertise 1G\n" \
-        "\t0x04 - advertise 10G\n" \
-        "\t0x08 - advertise 10M\n" \
-        "\t0x10 - advertise 2.5G\n" \
-        "\t0x20 - advertise 5G\n\n" \
-        "\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
+	"\t0x04 - advertise 10G\n" \
+	"\t0x08 - advertise 10M\n" \
+	"\t0x10 - advertise 2.5G\n" \
+	"\t0x20 - advertise 5G\n\n" \
+	"\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
 
 #define IXGBE_SYSCTL_DESC_SET_FC \
 	"\nSet flow control mode using these values:\n" \
@@ -743,6 +747,18 @@ ixv_check_ether_addr(u8 *addr)
 		status = FALSE;
 
 	return (status);
+}
+
+/*
+ * This checks the adapter->recovery_mode software flag which is
+ * set by ixgbe_fw_recovery_mode().
+ *
+ */
+static inline bool
+ixgbe_fw_recovery_mode_swflag(struct adapter *adapter)
+{
+	return (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) &&
+	    atomic_load_acq_uint(&adapter->recovery_mode);
 }
 
 /* Shared Prototypes */
