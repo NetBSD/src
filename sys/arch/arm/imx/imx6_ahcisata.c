@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.9 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.10 2019/07/22 11:44:01 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.9 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.10 2019/07/22 11:44:01 hkenken Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -289,26 +289,26 @@ imx6_ahcisata_init(struct imx_ahci_softc *sc)
 
 	v = iomux_read(IOMUX_GPR13);
 	/* clear */
-	v &= ~(IOMUX_GPR13_SATA_PHY_8(7) |
-	    IOMUX_GPR13_SATA_PHY_7(0x1f) |
-	    IOMUX_GPR13_SATA_PHY_6(7) |
-	    IOMUX_GPR13_SATA_SPEED(1) |
-	    IOMUX_GPR13_SATA_PHY_5(1) |
-	    IOMUX_GPR13_SATA_PHY_4(7) |
-	    IOMUX_GPR13_SATA_PHY_3(0xf) |
-	    IOMUX_GPR13_SATA_PHY_2(0x1f) |
-	    IOMUX_GPR13_SATA_PHY_1(1) |
-	    IOMUX_GPR13_SATA_PHY_0(1));
+	v &= ~(IOMUX_GPR13_SATA_PHY_8 |
+	    IOMUX_GPR13_SATA_PHY_7 |
+	    IOMUX_GPR13_SATA_PHY_6 |
+	    IOMUX_GPR13_SATA_SPEED |
+	    IOMUX_GPR13_SATA_PHY_5 |
+	    IOMUX_GPR13_SATA_PHY_4 |
+	    IOMUX_GPR13_SATA_PHY_3 |
+	    IOMUX_GPR13_SATA_PHY_2 |
+	    IOMUX_GPR13_SATA_PHY_1 |
+	    IOMUX_GPR13_SATA_PHY_0);
 	/* setting */
-	v |= IOMUX_GPR13_SATA_PHY_8(5) |	/* Rx 3.0db */
-	    IOMUX_GPR13_SATA_PHY_7(0x12) |	/* Rx SATA2m */
-	    IOMUX_GPR13_SATA_PHY_6(3) |		/* Rx DPLL mode */
-	    IOMUX_GPR13_SATA_SPEED(1) |		/* 3.0GHz */
-	    IOMUX_GPR13_SATA_PHY_5(0) |		/* SpreadSpectram */
-	    IOMUX_GPR13_SATA_PHY_4(4) |		/* Tx Attenuation 9/16 */
-	    IOMUX_GPR13_SATA_PHY_3(0) |		/* Tx Boost 0db */
-	    IOMUX_GPR13_SATA_PHY_2(0x11) |	/* Tx Level 1.104V */
-	    IOMUX_GPR13_SATA_PHY_1(1);		/* PLL clock enable */
+	v |= __SHIFTIN(5, IOMUX_GPR13_SATA_PHY_8);	/* Rx 3.0db */
+	v |= __SHIFTIN(0x12, IOMUX_GPR13_SATA_PHY_7);	/* Rx SATA2m */
+	v |= __SHIFTIN(3, IOMUX_GPR13_SATA_PHY_6);	/* Rx DPLL mode */
+	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_SPEED);	/* 3.0GHz */
+	v |= __SHIFTIN(0, IOMUX_GPR13_SATA_PHY_5);	/* SpreadSpectram */
+	v |= __SHIFTIN(4, IOMUX_GPR13_SATA_PHY_4);	/* Tx Attenuation 9/16 */
+	v |= __SHIFTIN(0, IOMUX_GPR13_SATA_PHY_3);	/* Tx Boost 0db */
+	v |= __SHIFTIN(0x11, IOMUX_GPR13_SATA_PHY_2);	/* Tx Level 1.104V */
+	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_PHY_1);	/* PLL clock enable */
 	iomux_write(IOMUX_GPR13, v);
 
 	/* phy reset */
