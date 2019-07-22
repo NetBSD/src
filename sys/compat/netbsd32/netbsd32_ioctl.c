@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.89.8.1 2017/11/27 14:07:53 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.89.8.2 2019/07/22 16:27:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89.8.1 2017/11/27 14:07:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89.8.2 2019/07/22 16:27:29 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1303,6 +1303,12 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(BIOCSUDPF, bpf_program);
 	case BIOCGDLTLIST32:
 		IOCTL_STRUCT_CONV_TO(BIOCGDLTLIST, bpf_dltlist);
+	case BIOCSRTIMEOUT32:
+#define netbsd32_to_timeval(s32p, p, cmd) netbsd32_to_timeval(s32p, p)
+#define netbsd32_from_timeval(p, s32p, cmd) netbsd32_from_timeval(p, s32p)
+		IOCTL_STRUCT_CONV_TO(BIOCSRTIMEOUT, timeval);
+#undef netbsd32_to_timeval
+#undef netbsd32_from_timeval
 
 	case WSDISPLAYIO_ADDSCREEN32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);
