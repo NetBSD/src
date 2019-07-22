@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.h,v 1.9.8.3 2018/04/14 10:25:11 martin Exp $ */
+/* $NetBSD: ixgbe_api.h,v 1.9.8.4 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -133,6 +133,7 @@ s32 ixgbe_set_vfta(struct ixgbe_hw *hw, u32 vlan,
 s32 ixgbe_set_vlvf(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 		   bool vlan_on, u32 *vfta_delta, u32 vfta,
 		   bool vlvf_bypass);
+s32 ixgbe_toggle_txdctl(struct ixgbe_hw *hw, u32 vind);
 s32 ixgbe_fc_enable(struct ixgbe_hw *hw);
 s32 ixgbe_setup_fc(struct ixgbe_hw *hw);
 s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 min, u8 build,
@@ -219,6 +220,7 @@ void ixgbe_disable_mdd(struct ixgbe_hw *hw);
 void ixgbe_enable_mdd(struct ixgbe_hw *hw);
 void ixgbe_mdd_event(struct ixgbe_hw *hw, u32 *vf_bitmap);
 void ixgbe_restore_mdd_vf(struct ixgbe_hw *hw, u32 vf);
+bool ixgbe_fw_recovery_mode(struct ixgbe_hw *hw);
 s32 ixgbe_enter_lplu(struct ixgbe_hw *hw);
 s32 ixgbe_handle_lasi(struct ixgbe_hw *hw);
 void ixgbe_set_rate_select_speed(struct ixgbe_hw *hw, ixgbe_link_speed speed);

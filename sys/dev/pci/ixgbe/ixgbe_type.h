@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.8 2019/04/01 12:35:38 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.9 2019/07/22 17:53:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -131,7 +131,6 @@
 #define IXGBE_SUBDEV_ID_82599EN_SFP_OCP1	0x0001
 #define IXGBE_DEV_ID_82599_XAUI_LOM		PCI_PRODUCT_INTEL_82599_XAUI_LOM
 #define IXGBE_DEV_ID_82599_T3_LOM		0x151C
-#define IXGBE_DEV_ID_82599_LS			0x154F
 #define IXGBE_DEV_ID_82599_VF			0x10ED
 #define IXGBE_DEV_ID_82599_VF_HV		0x152E
 #define IXGBE_DEV_ID_82599_BYPASS		0x155D
@@ -211,6 +210,10 @@
 #define IXGBE_FLA_X550EM_x	IXGBE_FLA
 #define IXGBE_FLA_X550EM_a	0x15F68
 #define IXGBE_FLA_BY_MAC(_hw)	IXGBE_BY_MAC((_hw), FLA)
+#define IXGBE_FLA_FL_SIZE_SHIFT_X540	17
+#define IXGBE_FLA_FL_SIZE_SHIFT_X550	12
+#define IXGBE_FLA_FL_SIZE_MASK_X540	(0x7 << IXGBE_FLA_FL_SIZE_SHIFT_X540)
+#define IXGBE_FLA_FL_SIZE_MASK_X550	(0x7 << IXGBE_FLA_FL_SIZE_SHIFT_X550)
 
 #define IXGBE_EEMNGCTL	0x10110
 #define IXGBE_EEMNGDATA	0x10114
@@ -878,6 +881,10 @@ struct ixgbe_dmac_config {
 #define IXGBE_RTTDQSEL		0x04904
 #define IXGBE_RTTDT1C		0x04908
 #define IXGBE_RTTDT1S		0x0490C
+#define IXGBE_RTTQCNCR		0x08B00
+#define IXGBE_RTTQCNTG		0x04A90
+#define IXGBE_RTTBCNRD		0x0498C
+#define IXGBE_RTTQCNRR		0x0498C
 #define IXGBE_RTTDTECC		0x04990
 #define IXGBE_RTTDTECC_NO_BCN	0x00000100
 
@@ -888,6 +895,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_RTTBCNRC_RF_INT_MASK \
 	(IXGBE_RTTBCNRC_RF_DEC_MASK << IXGBE_RTTBCNRC_RF_INT_SHIFT)
 #define IXGBE_RTTBCNRM	0x04980
+#define IXGBE_RTTQCNRM	0x04980
 
 /* BCN (for DCB) Registers */
 #define IXGBE_RTTBCNRS	0x04988
@@ -1096,6 +1104,9 @@ struct ixgbe_dmac_config {
 #define IXGBE_FWSM_MODE_MASK	0xE
 #define IXGBE_FWSM_TS_ENABLED	0x1
 #define IXGBE_FWSM_FW_MODE_PT	0x4
+#define IXGBE_FWSM_FW_NVM_RECOVERY_MODE (1 << 5)
+#define IXGBE_FWSM_EXT_ERR_IND_MASK 0x01F80000
+#define IXGBE_FWSM_FW_VAL_BIT	(1 << 15)
 
 /* ARC Subsystem registers */
 #define IXGBE_HICR		0x15F00
@@ -1441,6 +1452,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_BARCTRL_FLSIZE		0x0700
 #define IXGBE_BARCTRL_FLSIZE_SHIFT	8
 #define IXGBE_BARCTRL_CSRSIZE		0x2000
+#define IXGBE_BARCTRL_CSRSIZE_SHIFT	13
 
 /* RSCCTL Bit Masks */
 #define IXGBE_RSCCTL_RSCEN	0x01
@@ -3759,7 +3771,6 @@ enum ixgbe_media_type {
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
 	ixgbe_media_type_fiber_qsfp,
-	ixgbe_media_type_fiber_lco,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
@@ -4049,6 +4060,7 @@ struct ixgbe_mac_operations {
 	s32 (*init_uta_tables)(struct ixgbe_hw *);
 	void (*set_mac_anti_spoofing)(struct ixgbe_hw *, bool, int);
 	void (*set_vlan_anti_spoofing)(struct ixgbe_hw *, bool, int);
+	s32 (*toggle_txdctl)(struct ixgbe_hw *hw, u32 vf_index);
 
 	/* Flow Control */
 	s32 (*fc_enable)(struct ixgbe_hw *);
@@ -4078,6 +4090,7 @@ struct ixgbe_mac_operations {
 	void (*enable_mdd)(struct ixgbe_hw *hw);
 	void (*mdd_event)(struct ixgbe_hw *hw, u32 *vf_bitmap);
 	void (*restore_mdd_vf)(struct ixgbe_hw *hw, u32 vf);
+	bool (*fw_recovery_mode)(struct ixgbe_hw *hw);
 };
 
 struct ixgbe_phy_operations {
@@ -4132,6 +4145,8 @@ struct ixgbe_eeprom_info {
 	u16				address_bits;
 	u16 word_page_size;
 	u16 ctrl_word_3;
+	u8  nvm_image_ver_high;
+	u8  nvm_image_ver_low;
 };
 
 #define IXGBE_FLAGS_DOUBLE_RESET_REQUIRED	0x01
@@ -4205,6 +4220,7 @@ struct ixgbe_mbx_operations {
 	s32  (*check_for_msg)(struct ixgbe_hw *, u16);
 	s32  (*check_for_ack)(struct ixgbe_hw *, u16);
 	s32  (*check_for_rst)(struct ixgbe_hw *, u16);
+	s32  (*clear)(struct ixgbe_hw *hw, u16 vf_number);
 };
 
 struct ixgbe_mbx_stats {
@@ -4504,5 +4520,17 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD_SHIFT 3
 #define IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD	\
 				(0x1F << IXGBE_NW_MNG_IF_SEL_MDIO_PHY_ADD_SHIFT)
+
+/* Code Command (Flash I/F Interface) */
+#define IXGBE_HOST_INTERFACE_FLASH_READ_CMD			0x30
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_READ_CMD		0x31
+#define IXGBE_HOST_INTERFACE_FLASH_WRITE_CMD			0x32
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_WRITE_CMD		0x33
+#define IXGBE_HOST_INTERFACE_FLASH_MODULE_UPDATE_CMD		0x34
+#define IXGBE_HOST_INTERFACE_FLASH_BLOCK_EREASE_CMD		0x35
+#define IXGBE_HOST_INTERFACE_SHADOW_RAM_DUMP_CMD		0x36
+#define IXGBE_HOST_INTERFACE_FLASH_INFO_CMD			0x37
+#define IXGBE_HOST_INTERFACE_APPLY_UPDATE_CMD			0x38
+#define IXGBE_HOST_INTERFACE_MASK_CMD				0x000000FF
 
 #endif /* _IXGBE_TYPE_H_ */
