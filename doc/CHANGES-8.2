@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.9 2019/07/17 16:22:40 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.10 2019/07/22 16:32:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -239,4 +239,11 @@ sys/dev/usb/if_athn_usb.c			1.24,1.31-1.34 (via patch)
 	- Use pmf(9).
 	- Fix the detach path to prevent panic.
 	[msaitoh, ticket #1299]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.98,1.99
+sys/compat/netbsd32/netbsd32_ioctl.h		1.65
+
+	Add BIOCSRTIMEOUT32 to fix tcpdump for COMPAT_NETBSD32.
+	Correct misleading macro argument names.
+	[rin, ticket #1054]
 
