@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.22.2.4 2018/11/29 14:58:25 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.22.2.5 2019/07/22 18:02:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.22.2.4 2018/11/29 14:58:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.22.2.5 2019/07/22 18:02:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -527,9 +527,9 @@ ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid)
 	if (lid == 0 || lid == (*lt)->l_lid || t->p_nlwps == 1)
 		return 0;
 
-	lwp_delref(*lt);
-
 	mutex_enter(t->p_lock);
+	lwp_delref2(*lt);
+
 	*lt = lwp_find(t, lid);
 	if (*lt == NULL) {
 		mutex_exit(t->p_lock);
@@ -537,6 +537,7 @@ ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid)
 	}
 
 	if ((*lt)->l_flag & LW_SYSTEM) {
+		mutex_exit(t->p_lock);
 		*lt = NULL;
 		return EINVAL;
 	}
@@ -573,9 +574,6 @@ ptrace_set_siginfo(struct proc *t, struct lwp **lt, struct ptrace_methods *ptm,
 	/* Check that the data is a valid signal number or zero. */
 	if (psi.psi_siginfo.si_signo < 0 || psi.psi_siginfo.si_signo >= NSIG)
 		return EINVAL;
-
-	if ((error = ptrace_update_lwp(t, lt, psi.psi_lwpid)) != 0)
-		return error;
 
 	t->p_sigctx.ps_faked = true;
 	t->p_sigctx.ps_info = psi.psi_siginfo._info;
