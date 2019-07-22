@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.198 2019/07/20 19:09:21 wiz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.199 2019/07/22 14:47:51 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -65,6 +65,7 @@
 ./lib/npf
 ./libdata
 ./libdata/firmware
+./libdata/firmware/bcm43xx
 ./libdata/firmware/if_athn
 ./libdata/firmware/if_bwfm
 ./libdata/firmware/if_ipw
@@ -281,8 +282,6 @@
 ./usr/libdata/debug/usr/libexec/postfix
 ./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
-./usr/libdata/firmware
-./usr/libdata/firmware/bcm43xx
 ./usr/libdata/ldscripts
 ./usr/libdata/lint
 ./usr/libexec
