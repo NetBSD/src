@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.19.6.5 2019/03/21 14:27:02 martin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.19.6.6 2019/07/22 17:47:16 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.5 2019/03/21 14:27:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.6 2019/07/22 17:47:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -372,7 +372,6 @@ void vmxnet3_start_locked(struct ifnet *);
 void vmxnet3_start(struct ifnet *);
 
 void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
-int vmxnet3_change_mtu(struct vmxnet3_softc *, int);
 int vmxnet3_ioctl(struct ifnet *, u_long, void *);
 int vmxnet3_ifflags_cb(struct ethercom *);
 
@@ -1748,14 +1747,12 @@ void
 vmxnet3_evintr(struct vmxnet3_softc *sc)
 {
 	device_t dev;
-	struct ifnet *ifp;
 	struct vmxnet3_txq_shared *ts;
 	struct vmxnet3_rxq_shared *rs;
 	uint32_t event;
 	int reset;
 
 	dev = sc->vmx_dev;
-	ifp = &sc->vmx_ethercom.ec_if;
 	reset = 0;
 
 	VMXNET3_CORE_LOCK(sc);
@@ -1787,10 +1784,8 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	if (event & VMXNET3_EVENT_DEBUG)
 		device_printf(dev, "debug event\n");
 
-	if (reset != 0) {
-		ifp->if_flags &= ~IFF_RUNNING;
+	if (reset != 0)
 		vmxnet3_init_locked(sc);
-	}
 
 	VMXNET3_CORE_UNLOCK(sc);
 }
@@ -2500,9 +2495,6 @@ vmxnet3_init_locked(struct vmxnet3_softc *sc)
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
 	int error;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
-
 	vmxnet3_stop_locked(sc);
 
 	error = vmxnet3_reinit(sc);
@@ -2880,22 +2872,6 @@ setit:
 }
 
 int
-vmxnet3_change_mtu(struct vmxnet3_softc *sc, int mtu)
-{
-	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
-
-	if (mtu < VMXNET3_MIN_MTU || mtu > VMXNET3_MAX_MTU)
-		return EINVAL;
-
-	if (ifp->if_flags & IFF_RUNNING) {
-		ifp->if_flags &= ~IFF_RUNNING;
-		vmxnet3_init_locked(sc);
-	}
-
-	return 0;
-}
-
-int
 vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -2903,13 +2879,20 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifp->if_mtu != ifr->ifr_mtu) {
-			VMXNET3_CORE_LOCK(sc);
-			error = vmxnet3_change_mtu(sc, ifr->ifr_mtu);
-			VMXNET3_CORE_UNLOCK(sc);
+	case SIOCSIFMTU: {
+		int nmtu = ifr->ifr_mtu;
+
+		if (nmtu < VMXNET3_MIN_MTU || nmtu > VMXNET3_MAX_MTU) {
+			error = EINVAL;
+			break;
+		}
+		if (ifp->if_mtu != nmtu) {
+			error = ether_ioctl(ifp, cmd, data);
+			if (error == ENETRESET)
+				error = vmxnet3_init(ifp);
 		}
 		break;
+	}
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		s = splnet();
@@ -3014,11 +2997,9 @@ void
 vmxnet3_tick(void *xsc)
 {
 	struct vmxnet3_softc *sc;
-	struct ifnet *ifp;
 	int i, timedout;
 
 	sc = xsc;
-	ifp = &sc->vmx_ethercom.ec_if;
 	timedout = 0;
 
 	VMXNET3_CORE_LOCK(sc);
@@ -3028,10 +3009,9 @@ vmxnet3_tick(void *xsc)
 	for (i = 0; i < sc->vmx_ntxqueues; i++)
 		timedout |= vmxnet3_watchdog(&sc->vmx_txq[i]);
 
-	if (timedout != 0) {
-		ifp->if_flags &= ~IFF_RUNNING;
+	if (timedout != 0)
 		vmxnet3_init_locked(sc);
-	} else
+	else
 		callout_reset(&sc->vmx_tick, hz, vmxnet3_tick, sc);
 
 	VMXNET3_CORE_UNLOCK(sc);
