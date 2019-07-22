@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.35 2019/07/19 08:49:44 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.36 2019/07/22 06:52:06 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.35 2019/07/19 08:49:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.36 2019/07/22 06:52:06 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1030,8 +1030,6 @@ vmxnet3_init_rxq(struct vmxnet3_softc *sc, int q)
 		rxr->vxrxr_ndesc = sc->vmx_nrxdescs;
 		rxr->vxrxr_rxbuf = kmem_zalloc(rxr->vxrxr_ndesc *
 		    sizeof(struct vmxnet3_rxbuf), KM_SLEEP);
-		if (rxr->vxrxr_rxbuf == NULL)
-			return (ENOMEM);
 
 		rxq->vxrxq_comp_ring.vxcr_ndesc += sc->vmx_nrxdescs;
 	}
@@ -1058,8 +1056,6 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 	txr->vxtxr_ndesc = sc->vmx_ntxdescs;
 	txr->vxtxr_txbuf = kmem_zalloc(txr->vxtxr_ndesc *
 	    sizeof(struct vmxnet3_txbuf), KM_SLEEP);
-	if (txr->vxtxr_txbuf == NULL)
-		return (ENOMEM);
 
 	txq->vxtxq_comp_ring.vxcr_ndesc = sc->vmx_ntxdescs;
 
@@ -1093,8 +1089,6 @@ vmxnet3_alloc_rxtx_queues(struct vmxnet3_softc *sc)
 	    sizeof(struct vmxnet3_rxqueue) * sc->vmx_max_nrxqueues, KM_SLEEP);
 	sc->vmx_txq = kmem_zalloc(
 	    sizeof(struct vmxnet3_txqueue) * sc->vmx_max_ntxqueues, KM_SLEEP);
-	if (sc->vmx_rxq == NULL || sc->vmx_txq == NULL)
-		return (ENOMEM);
 
 	for (i = 0; i < sc->vmx_max_nrxqueues; i++) {
 		error = vmxnet3_init_rxq(sc, i);
