@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.8 2019/07/23 07:52:53 rin Exp $	*/
+/*	$NetBSD: espvar.h,v 1.9 2019/07/23 15:19:07 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -43,4 +43,10 @@ struct esp_softc {
 	size_t		*sc_dmalen;
 	int		sc_tc;			/* used in PIO */
 	int		sc_pad;			/* only used in quick */
+
+	/* for avdma */
+	int		sc_rset;
+	int		sc_pio;
+	bus_dma_tag_t	sc_dmat;
+	bus_dmamap_t	sc_dmap;
 };
