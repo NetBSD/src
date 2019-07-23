@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.56 2019/01/08 19:41:09 jdolecek Exp $	*/
+/*	$NetBSD: esp.c,v 1.57 2019/07/23 07:52:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,38 +77,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.56 2019/01/08 19:41:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.57 2019/07/23 07:52:53 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/queue.h>
-#include <sys/mutex.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <dev/scsipi/scsi_message.h>
-
-#include <machine/cpu.h>
-#include <machine/bus.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
+#include <machine/cpu.h>
 #include <machine/viareg.h>
 
 #include <mac68k/obio/espvar.h>
 #include <mac68k/obio/obiovar.h>
 
-int	espmatch(device_t, cfdata_t, void *);
-void	espattach(device_t, device_t, void *);
+static int	espmatch(device_t, cfdata_t, void *);
+static void	espattach(device_t, device_t, void *);
 
 /* Linkup to the rest of the kernel */
 CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
@@ -117,74 +106,74 @@ CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
-void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
-int	esp_dma_isintr(struct ncr53c9x_softc *);
-void	esp_dma_reset(struct ncr53c9x_softc *);
-int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *, int,
-	    size_t *);
-void	esp_dma_go(struct ncr53c9x_softc *);
-void	esp_dma_stop(struct ncr53c9x_softc *);
-int	esp_dma_isactive(struct ncr53c9x_softc *);
-void	esp_quick_write_reg(struct ncr53c9x_softc *, int, u_char);
-int	esp_quick_dma_intr(struct ncr53c9x_softc *);
-int	esp_quick_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *, int,
-	     size_t *);
-void	esp_quick_dma_go(struct ncr53c9x_softc *);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static int	esp_dma_isintr(struct ncr53c9x_softc *);
+static void	esp_dma_reset(struct ncr53c9x_softc *);
+static int	esp_dma_intr(struct ncr53c9x_softc *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *,
+			int, size_t *);
+static void	esp_dma_go(struct ncr53c9x_softc *);
+static void	esp_dma_stop(struct ncr53c9x_softc *);
+static int	esp_dma_isactive(struct ncr53c9x_softc *);
+static void	esp_quick_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static int	esp_quick_dma_intr(struct ncr53c9x_softc *);
+static int	esp_quick_dma_setup(struct ncr53c9x_softc *, uint8_t **,
+			size_t *, int, size_t *);
+static void	esp_quick_dma_go(struct ncr53c9x_softc *);
 
-void	esp_intr(void *);
-void	esp_dualbus_intr(void *);
-static struct esp_softc		*esp0, *esp1;
+static void	esp_intr(void *);
+static void	esp_dualbus_intr(void *);
 
-static inline int esp_dafb_have_dreq(struct esp_softc *);
-static inline int esp_iosb_have_dreq(struct esp_softc *);
+static int	esp_dafb_have_dreq(struct esp_softc *);
+static int	esp_iosb_have_dreq(struct esp_softc *);
 int (*esp_have_dreq)(struct esp_softc *);
 
-struct ncr53c9x_glue esp_glue = {
-	esp_read_reg,
-	esp_write_reg,
-	esp_dma_isintr,
-	esp_dma_reset,
-	esp_dma_intr,
-	esp_dma_setup,
-	esp_dma_go,
-	esp_dma_stop,
-	esp_dma_isactive,
-	NULL,			/* gl_clear_latched_intr */
+static struct esp_softc *esp0, *esp1;
+
+static struct ncr53c9x_glue esp_glue = {
+	.gl_read_reg = esp_read_reg,
+	.gl_write_reg = esp_write_reg,
+	.gl_dma_isintr = esp_dma_isintr,
+	.gl_dma_reset = esp_dma_reset,
+	.gl_dma_intr = esp_dma_intr,
+	.gl_dma_setup = esp_dma_setup,
+	.gl_dma_go = esp_dma_go,
+	.gl_dma_stop = esp_dma_stop,
+	.gl_dma_isactive = esp_dma_isactive,
+	.gl_clear_latched_intr = NULL,
 };
 
-int
+static int
 espmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 
-	if (oa->oa_addr == 0 && mac68k_machine.scsi96) {
+	if (oa->oa_addr == 0 && mac68k_machine.scsi96)
 		return 1;
-	}
-	if (oa->oa_addr == 1 && mac68k_machine.scsi96_2) {
+	if (oa->oa_addr == 1 && mac68k_machine.scsi96_2)
 		return 1;
-	}
 	return 0;
 }
 
 /*
  * Attach this instance, and then all the sub-devices
  */
-void
+static void
 espattach(device_t parent, device_t self, void *aux)
 {
 	struct esp_softc	*esc = device_private(self);
 	struct ncr53c9x_softc	*sc = &esc->sc_ncr53c9x;
 	struct obio_attach_args *oa = aux;
-	int			quick = 0;
+	bus_addr_t		addr;
 	unsigned long		reg_offset;
+	int			quick = 0;
+	uint8_t			irq_mask;	/* mask for clearing IRQ */
 	extern vaddr_t		SCSIBase;
 
 	sc->sc_dev = self;
 
 	reg_offset = SCSIBase - IOBase;
-	esc->sc_tag = oa->oa_tag;
 
 	/*
 	 * For Wombat, Primus and Optimus motherboards, DREQ is
@@ -196,33 +185,34 @@ espattach(device_t parent, device_t self, void *aux)
 	 * a (12-bit) configuration register for DAFB's control of the
 	 * pseudo-DMA timing.  The default value is 0x1d1.
 	 */
-	esp_have_dreq = esp_dafb_have_dreq;
 	if (oa->oa_addr == 0) {
 		if (reg_offset == 0x10000) {
 			quick = 1;
 			esp_have_dreq = esp_iosb_have_dreq;
-		} else if (reg_offset == 0x18000) {
+		} else if (reg_offset == 0x18000)
 			quick = 0;
-		} else {
-			if (bus_space_map(esc->sc_tag, 0xf9800024,
-					  4, 0, &esc->sc_bsh)) {
-				aprint_error(": failed to map 4"
-				    " at 0xf9800024.\n");
-			} else {
-				quick = 1;
-				bus_space_write_4(esc->sc_tag,
-						  esc->sc_bsh, 0, 0x1d1);
-			}
+		else {
+			addr = 0xf9800024;
+			goto dafb_dreq;
 		}
 	} else {
-		if (bus_space_map(esc->sc_tag, 0xf9800028,
-				  4, 0, &esc->sc_bsh)) {
-			aprint_error(": failed to map 4 at 0xf9800028.\n");
-		} else {
+		bus_space_tag_t bst;
+		bus_space_handle_t bsh;
+
+		addr = 0xf9800028;
+
+dafb_dreq:	bst = oa->oa_tag;
+		if (bus_space_map(bst, addr, 4, 0, &bsh))
+			aprint_error(": failed to map 4 at 0x%lx.\n", addr);
+		else {
 			quick = 1;
-			bus_space_write_4(esc->sc_tag, esc->sc_bsh, 0, 0x1d1);
+			esp_have_dreq = esp_dafb_have_dreq;
+			esc->sc_dreqreg = (volatile uint32_t *)
+			    bus_space_vaddr(bst, bsh);
+			*esc->sc_dreqreg = 0x1d1;
 		}
 	}
+
 	if (quick) {
 		esp_glue.gl_write_reg = esp_quick_write_reg;
 		esp_glue.gl_dma_intr = esp_quick_dma_intr;
@@ -243,28 +233,25 @@ espattach(device_t parent, device_t self, void *aux)
 
 		esc->sc_reg = (volatile uint8_t *)SCSIBase;
 		via2_register_irq(VIA2_SCSIIRQ, esp_intr, esc);
-		esc->irq_mask = V2IF_SCSIIRQ;
+		irq_mask = V2IF_SCSIIRQ;
 		if (reg_offset == 0x10000) {
 			/* From the Q650 developer's note */
 			sc->sc_freq = 16500000;
-		} else {
+		} else
 			sc->sc_freq = 25000000;
-		}
 
-		if (esp_glue.gl_dma_go == esp_quick_dma_go) {
+		if (quick)
 			aprint_normal(" (quick)");
-		}
 	} else {
 		esp1 = esc;
 
 		esc->sc_reg = (volatile uint8_t *)SCSIBase + 0x402;
 		via2_register_irq(VIA2_SCSIIRQ, esp_dualbus_intr, NULL);
-		esc->irq_mask = 0;
+		irq_mask = 0;
 		sc->sc_freq = 25000000;
 
-		if (esp_glue.gl_dma_go == esp_quick_dma_go) {
+		if (quick)
 			printf(" (quick)");
-		}
 	}
 
 	aprint_normal(": address %p", esc->sc_reg);
@@ -313,10 +300,10 @@ espattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Configure interrupts.
 	 */
-	if (esc->irq_mask) {
+	if (irq_mask) {
 		via2_reg(vPCR) = 0x22;
-		via2_reg(vIFR) = esc->irq_mask;
-		via2_reg(vIER) = 0x80 | esc->irq_mask;
+		via2_reg(vIFR) = irq_mask;
+		via2_reg(vIER) = 0x80 | irq_mask;
 	}
 
 	/*
@@ -331,7 +318,7 @@ espattach(device_t parent, device_t self, void *aux)
  * Glue functions.
  */
 
-uint8_t
+static uint8_t
 esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -339,7 +326,7 @@ esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 	return esc->sc_reg[reg * 16];
 }
 
-void
+static void
 esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -351,12 +338,12 @@ esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 	esc->sc_reg[reg * 16] = v;
 }
 
-void
+static void
 esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 }
 
-int
+static int
 esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -364,15 +351,15 @@ esp_dma_isactive(struct ncr53c9x_softc *sc)
 	return esc->sc_active;
 }
 
-int
+static int
 esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return esc->sc_reg[NCR_STAT * 16] & 0x80;
+	return esc->sc_reg[NCR_STAT * 16] & NCRSTAT_INT;
 }
 
-void
+static void
 esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -381,11 +368,11 @@ esp_dma_reset(struct ncr53c9x_softc *sc)
 	esc->sc_tc = 0;
 }
 
-int
+static int
 esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	volatile u_char *cmdreg, *intrreg, *statreg, *fiforeg;
+	volatile uint8_t *cmdreg, *intrreg, *statreg, *fiforeg;
 	uint8_t	*p;
 	u_int	espphase, espstat, espintr;
 	int	cnt, s;
@@ -445,8 +432,8 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 		}
 	} while (esc->sc_active && (espintr & NCRINTR_BS));
 	sc->sc_phase = espphase;
-	sc->sc_espstat = (u_char)espstat;
-	sc->sc_espintr = (u_char)espintr;
+	sc->sc_espstat = (uint8_t)espstat;
+	sc->sc_espintr = (uint8_t)espintr;
 	*esc->sc_dmaaddr = p;
 	*esc->sc_dmalen = cnt;
 
@@ -457,7 +444,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 	return 0;
 }
 
-int
+static int
 esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
@@ -472,7 +459,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	return 0;
 }
 
-void
+static void
 esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -485,8 +472,8 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 	esc->sc_active = 1;
 }
 
-void
-esp_quick_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
+static void
+esp_quick_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -497,7 +484,7 @@ esp_quick_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 int mac68k_esp_debug=0;
 #endif
 
-int
+static int
 esp_quick_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -558,7 +545,7 @@ esp_quick_dma_intr(struct ncr53c9x_softc *sc)
 	return 0;
 }
 
-int
+static int
 esp_quick_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
@@ -591,14 +578,14 @@ esp_quick_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	return 0;
 }
 
-static inline int
+static int
 esp_dafb_have_dreq(struct esp_softc *esc)
 {
 
-	return *(volatile uint32_t *)(esc->sc_bsh.base) & 0x200;
+	return *esc->sc_dreqreg & 0x200;
 }
 
-static inline int
+static int
 esp_iosb_have_dreq(struct esp_softc *esc)
 {
 
@@ -617,7 +604,7 @@ static volatile int espspl = -1;
  * NCR chip with the DACK/ line.  This space appears to be mapped over
  * and over, every 4 bytes, but only the lower 16 bits are valid (but
  * reading the upper 16 bits will handshake DACK/ just fine, so if you
- * read *u_int16_t++ = *u_int16_t++ in a loop, you'll get
+ * read *uint16_t++ = *uint16_t++ in a loop, you'll get
  * <databyte><databyte>0xff0xff<databyte><databyte>0xff0xff...
  *
  * When you're attempting to read or write memory to this DACK/ed space,
@@ -640,7 +627,7 @@ static volatile int espspl = -1;
  *          This is done to allow serial interrupts to get in during
  *          scsi transfers.  This is ugly.
  */
-void
+static void
 esp_quick_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -878,7 +865,7 @@ gotintr:
 	espspl = -1;
 }
 
-void
+static void
 esp_intr(void *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -888,7 +875,7 @@ esp_intr(void *sc)
 	}
 }
 
-void
+static void
 esp_dualbus_intr(void *sc)
 {
 	if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80)) {
