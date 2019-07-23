@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.43 2019/07/07 11:58:44 skrll Exp $
+#	$NetBSD: GENERIC,v 1.44 2019/07/23 12:32:40 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -433,11 +433,11 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 #athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
-com*		at fdt?			# UART
-exuart*		at fdt?			# SSCOM UART
-plcom*		at fdt?			# ARM PL011 UART
-mesonuart*	at fdt?			# Amlogic Meson UART
-zynquart*	at fdt?			# Cadence UART
+com*		at fdt?	pass 4		# UART
+exuart*		at fdt?	pass 4		# SSCOM UART
+plcom*		at fdt?	pass 4		# ARM PL011 UART
+mesonuart*	at fdt?	pass 4		# Amlogic Meson UART
+zynquart*	at fdt?	pass 4		# Cadence UART
 
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
