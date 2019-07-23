@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnpf.3,v 1.8 2019/07/23 00:52:01 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.9 2019/07/23 14:18:20 wiz Exp $
 .\"
 .\" Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,8 +180,8 @@ The state is uniquely identified by a 5-tuple (source and destination
 IP addresses, port numbers and an interface identifier).
 .It Dv NPF_RULE_GSTATEFUL
 Exclude the interface identifier from the state key i.e. use a 4-tuple.
-This makes the state global with the respect network interfaces.
-The state is also picked on packet travelling different direction that
+This makes the state global with respect to the network interfaces.
+The state is also picked for packets travelling different direction than
 originally.
 .It Dv NPF_RULE_RETRST
 Return TCP RST packet in a case of packet block.
