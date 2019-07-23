@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.35 2018/11/19 04:54:37 ozaki-r Exp $
+.\"	$NetBSD: setkey.8,v 1.36 2019/07/23 04:32:06 ozaki-r Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 19, 2018
+.Dd July 23, 2019
 .Dt SETKEY 8
 .Os
 .\"
@@ -166,6 +166,24 @@ Add an SAD entry.
 .Cm add
 can fail for multiple reasons, including when the key length does
 not match the specified algorithm.
+.\"
+.It Cm getspi Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+Oo Ar extensions Oc Li ;
+Add a larval SAD entry.
+If
+.Ar spi
+is not zero, tell the kernel use the SPI as-is.
+Otherwise, the kernel picks a random SPI.
+.\"
+.It Cm update Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+Oo Ar extensions Oc Ar algorithm ... Li ;
+Update an existing SAD entry.
+It must be used together with
+.Cm add
+or
+.Cm getspi
+in a series of operations because the API requires that a process
+updating an SAD entry is the same as one created the SAD entry.
 .\"
 .It Cm get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
 Show an SAD entry.
