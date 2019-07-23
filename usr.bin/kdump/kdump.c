@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.131 2019/05/06 19:20:13 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.132 2019/07/23 01:54:51 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.131 2019/05/06 19:20:13 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.132 2019/07/23 01:54:51 nonaka Exp $");
 #endif
 #endif /* not lint */
 
@@ -1143,6 +1143,27 @@ ktruser_control(const char *name, const void *buf, size_t len)
 }
 
 static void
+ktruser_malloc(const char *name, const void *buf, size_t len)
+{
+	struct ut { void *p; size_t s; void *r; } m;
+
+	if (len != sizeof(m))
+		warnx("%.*s: len %zu != %zu", KTR_USER_MAXIDLEN, name, len,
+		    sizeof(m));
+	memcpy(&m, buf, len < sizeof(m) ? len : sizeof(m));
+	if (m.p == NULL && m.s == 0 && m.r == NULL)
+		printf("%.*s: malloc_init()\n", KTR_USER_MAXIDLEN, name);
+	else if (m.p != NULL && m.s != 0)
+		printf("%.*s: %p = realloc(%p, %zu)\n", KTR_USER_MAXIDLEN, name,
+		    m.r, m.p, m.s);
+	else if (m.s == 0)
+		printf("%.*s: free(%p)\n", KTR_USER_MAXIDLEN, name, m.p);
+	else
+		printf("%.*s: %p = malloc(%zu)\n", KTR_USER_MAXIDLEN, name,
+		    m.r, m.s);
+}
+
+static void
 ktruser_misc(const char *name, const void *buf, size_t len)
 {
 	size_t i;
@@ -1161,6 +1182,7 @@ static struct {
 	{ "msghdr", ktruser_msghdr },
 	{ "mbsoname", ktruser_soname },
 	{ "mbcontrol", ktruser_control },
+	{ "malloc", ktruser_malloc },
 	{ NULL,	ktruser_misc },
 };
 
