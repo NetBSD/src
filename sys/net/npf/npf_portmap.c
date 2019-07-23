@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.1 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.2 2019/07/23 08:25:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,6 +106,8 @@ typedef struct {
 	int		max_port;
 } npf_portmap_params_t;
 
+static kmutex_t			portmap_lock;
+
 void
 npf_portmap_init(npf_t *npf)
 {
@@ -130,6 +132,8 @@ npf_portmap_init(npf_t *npf)
 	npf->portmap = kmem_zalloc(sizeof(npf_portmap_t), KM_SLEEP);
 	mutex_init(&npf->portmap->list_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	npf->portmap->addr_map = thmap_create(0, NULL, THMAP_NOCOPY);
+
+	mutex_init(&portmap_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 }
 
 void
@@ -146,9 +150,30 @@ npf_portmap_fini(npf_t *npf)
 	thmap_destroy(pm->addr_map);
 	mutex_destroy(&pm->list_lock);
 	kmem_free(pm, sizeof(npf_portmap_t));
+
+	mutex_destroy(&portmap_lock);
 }
 
 /////////////////////////////////////////////////////////////////////////
+
+#if defined(_LP64)
+#define	__npf_atomic_cas_64	atomic_cas_64
+#else
+static uint64_t
+__npf_atomic_cas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new)
+{
+	uint64_t prev;
+
+	mutex_enter(&portmap_lock);
+	prev = *ptr;
+	if (prev == old) {
+		*ptr = new;
+	}
+	mutex_exit(&portmap_lock);
+
+	return prev;
+}
+#endif
 
 /*
  * bitmap_word_isset: test whether the bit value is in the packed array.
@@ -283,7 +308,7 @@ again:
 		 */
 		if ((nval = bitmap_word_cax(bval, -1, chunk_bit)) != 0) {
 			KASSERT((nval & PORTMAP_L1_TAG) == 0);
-			if (atomic_cas_64(&bm->bits0[i], bval, nval) != bval) {
+			if (__npf_atomic_cas_64(&bm->bits0[i], bval, nval) != bval) {
 				goto again;
 			}
 			return true;
@@ -315,7 +340,7 @@ again:
 		bm1p = (uintptr_t)bm1;
 		KASSERT((bm1p & PORTMAP_L1_TAG) == 0);
 		bm1p |= PORTMAP_L1_TAG;
-		if (atomic_cas_64(&bm->bits0[i], bval, bm1p) != bval) {
+		if (__npf_atomic_cas_64(&bm->bits0[i], bval, bm1p) != bval) {
 			kmem_intr_free(bm1, sizeof(bitmap_l1_t));
 			goto again;
 		}
@@ -332,7 +357,7 @@ again:
 		return false;
 	}
 	nval = oval | b;
-	if (atomic_cas_64(&bm1->bits1[i], oval, nval) != oval) {
+	if (__npf_atomic_cas_64(&bm1->bits1[i], oval, nval) != oval) {
 		goto again;
 	}
 	return true;
@@ -356,7 +381,7 @@ again:
 		}
 		nval = bitmap_word_cax(bval, chunk_bit, chunk_bit);
 		KASSERT((nval & PORTMAP_L1_TAG) == 0);
-		if (atomic_cas_64(&bm->bits0[i], bval, nval) != bval) {
+		if (__npf_atomic_cas_64(&bm->bits0[i], bval, nval) != bval) {
 			goto again;
 		}
 		return true;
@@ -372,7 +397,7 @@ again:
 		return false;
 	}
 	nval = oval & ~b;
-	if (atomic_cas_64(&bm1->bits1[i], oval, nval) != oval) {
+	if (__npf_atomic_cas_64(&bm1->bits1[i], oval, nval) != oval) {
 		goto again;
 	}
 	return true;
