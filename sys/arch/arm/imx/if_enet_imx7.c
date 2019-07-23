@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx7.c,v 1.2 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enet_imx7.c,v 1.3 2019/07/23 06:36:36 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.2 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.3 2019/07/23 06:36:36 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -69,17 +69,29 @@ enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
 void
 enet_attach(device_t parent, device_t self, void *aux)
 {
-	struct enet_softc *sc;
-	struct axi_attach_args *aa;
-
-	aa = aux;
-	sc = device_private(self);
+	struct enet_softc *sc = device_private(self);
+	struct axi_attach_args *aa = aux;
 
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = AIPS_ENET_SIZE;
 
+	sc->sc_dev = self;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_dmat = aa->aa_dmat;
+
 	sc->sc_imxtype = 7;	/* i.MX7 */
 	sc->sc_rgmii = 1;
+
+	switch (aa->aa_addr) {
+	case (IMX7_AIPS_BASE + AIPS3_ENET1_BASE):
+		sc->sc_unit = 0;
+		get_mac_from_ocotp(sc, self, "enet1-ocotp-mac");
+		break;
+	case (IMX7_AIPS_BASE + AIPS3_ENET2_BASE):
+		sc->sc_unit = 1;
+		get_mac_from_ocotp(sc, self, "enet2-ocotp-mac");
+		break;
+	}
 
 #if NIMXCCM > 0
 	/* PLL power up */
@@ -93,20 +105,47 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pllclock = 1000000000;
 #endif
 
-	switch (aa->aa_addr) {
-	case (IMX7_AIPS_BASE + AIPS3_ENET1_BASE):
-		sc->sc_unit = 0;
-		get_mac_from_ocotp(sc, self, "enet1-ocotp-mac");
-		break;
-
-	case (IMX7_AIPS_BASE + AIPS3_ENET2_BASE):
-		sc->sc_unit = 1;
-		get_mac_from_ocotp(sc, self, "enet2-ocotp-mac");
-		break;
+	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
+	    &sc->sc_ioh)) {
+		aprint_error_dev(self, "cannot map registers\n");
+		return;
 	}
 
-	enet_attach_common(self, aa->aa_iot, aa->aa_dmat, aa->aa_addr,
-	    aa->aa_size, aa->aa_irq);
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+
+	/* setup interrupt handlers */
+	if ((sc->sc_ih = intr_establish(aa->aa_irq, IPL_NET,
+	    IST_LEVEL, enet_intr, sc)) == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		goto failure;
+	}
+
+	/* i.MX7 use 3 interrupts */
+	if ((sc->sc_ih2 = intr_establish(aa->aa_irq + 1, IPL_NET,
+		    IST_LEVEL, enet_intr, sc)) == NULL) {
+		aprint_error_dev(self,
+		    "unable to establish 2nd interrupt\n");
+		intr_disestablish(sc->sc_ih);
+		goto failure;
+	}
+	if ((sc->sc_ih3 = intr_establish(aa->aa_irq + 2, IPL_NET,
+		    IST_LEVEL, enet_intr, sc)) == NULL) {
+		aprint_error_dev(self,
+		    "unable to establish 3rd interrupt\n");
+		intr_disestablish(sc->sc_ih2);
+		intr_disestablish(sc->sc_ih);
+		goto failure;
+	}
+
+	if (enet_attach_common(self) != 0)
+		goto failure;
+
+	return;
+
+failure:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_size);
+	return;
 }
 
 static void
