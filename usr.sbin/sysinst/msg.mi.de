@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.12 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.13 2019/07/23 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1470,3 +1470,5 @@ message	gpt_flag_desc	{, (S)tart}
  *  $0 = file system type		FFSv2
  */
 message size_ptn_not_mounted		{(Sonstige: $0)}
+
+message running_system			{aktuelles System}
