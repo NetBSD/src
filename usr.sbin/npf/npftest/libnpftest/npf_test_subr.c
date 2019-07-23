@@ -48,7 +48,7 @@ static void		npftest_ifop_flush(void *);
 static void *		npftest_ifop_getmeta(const ifnet_t *);
 static void		npftest_ifop_setmeta(ifnet_t *, void *);
 
-static const npf_ifops_t npftest_ifops = {
+const npf_ifops_t npftest_ifops = {
 	.getname	= npftest_ifop_getname,
 	.lookup		= npf_test_getif,
 	.flush		= npftest_ifop_flush,
@@ -72,12 +72,15 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 	_pton_func = pton_func;
 	_ntop_func = ntop_func;
 	_random_func = rndfunc;
+
+	(void)npf_test_addif(IFNAME_DUMMY, false, false);
 }
 
 void
 npf_test_fini(void)
 {
 	npf_t *npf = npf_getkernctx();
+	npf_thread_unregister(npf);
 	npf_destroy(npf);
 	npf_sysfini();
 }

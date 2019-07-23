@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.45 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.46 2019/07/23 00:52:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,8 +129,6 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_match_info_t mi;
 	bool mff;
 
-	/* QSBR checkpoint. */
-	pserialize_checkpoint(npf->qsbr);
 	KASSERT(ifp != NULL);
 
 	/*
@@ -234,7 +232,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	 */
 	if ((mi.mi_retfl & NPF_RULE_STATEFUL) != 0 && !con) {
 		con = npf_conn_establish(&npc, di,
-		    (mi.mi_retfl & NPF_RULE_MULTIENDS) == 0);
+		    (mi.mi_retfl & NPF_RULE_GSTATEFUL) == 0);
 		if (con) {
 			/*
 			 * Note: the reference on the rule procedure is

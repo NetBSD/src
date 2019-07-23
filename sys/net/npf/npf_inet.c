@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.53 2019/01/19 21:19:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.54 2019/07/23 00:52:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -219,6 +219,26 @@ npf_addr_cmp(const npf_addr_t *addr1, const npf_netmask_t mask1,
 		addr2 = &realaddr2;
 	}
 	return memcmp(addr1, addr2, alen);
+}
+
+int
+npf_netmask_check(const int alen, npf_netmask_t mask)
+{
+	switch (alen) {
+	case sizeof(struct in_addr):
+		if (__predict_false(mask > 32 && mask != NPF_NO_NETMASK)) {
+			return EINVAL;
+		}
+		break;
+	case sizeof(struct in6_addr):
+		if (__predict_false(mask > 128 && mask != NPF_NO_NETMASK)) {
+			return EINVAL;
+		}
+		break;
+	default:
+		return EINVAL;
+	}
+	return 0;
 }
 
 /*
