@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.39 2019/06/30 05:04:48 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.40 2019/07/23 14:34:11 rin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.39 2019/06/30 05:04:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.40 2019/07/23 14:34:11 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,8 @@ omfbmmap(void *v, void *vs, off_t offset, int prot)
 #endif
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (offset >= 0 &&
-		    offset < dc->dc_rowbytes * dc->dc_ht * dc->dc_depth)
+		    offset < (m68k_page_offset(OMFB_FB_RADDR) +
+		    dc->dc_rowbytes * dc->dc_ht) * dc->dc_depth)
 			cookie = m68k_btop(m68k_trunc_page(OMFB_FB_RADDR) +
 			    offset);
 		break;
