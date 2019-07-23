@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.14 2019/01/31 13:16:31 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.15 2019/07/23 12:34:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.14 2019/01/31 13:16:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.15 2019/07/23 12:34:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.14 2019/01/31 13:16:31 skrll
 
 #include <libfdt.h>
 
-#define	VEXPRESS_CLCD_NODE_PATH	\
-	"/smb@8000000/motherboard/iofpga@3,00000000/clcd@1f0000"
 #define	VEXPRESS_REF_FREQ	24000000
 
 extern struct bus_space armv7_generic_bs_tag;
@@ -188,14 +186,6 @@ vexpress_platform_bootstrap(void)
 #ifdef MULTIPROCESSOR
 	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
 #endif
-
-	if (match_bootconf_option(boot_args, "console", "fb")) {
-		void *fdt_data = __UNCONST(fdtbus_get_data());
-		const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
-		if (chosen_off >= 0)
-			fdt_setprop_string(fdt_data, chosen_off, "stdout-path",
-			    VEXPRESS_CLCD_NODE_PATH);
-	}
 }
 
 static void
