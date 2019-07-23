@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.38 2019/07/13 17:13:36 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.39 2019/07/23 15:23:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -771,6 +771,7 @@ void	free_install_desc(struct install_partition_desc*);
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
 void	backtowin(void);
 #endif
+bool	is_root_part_mount(const char *);
 const	char *concat_paths(const char *, const char *);
 const	char *target_expand(const char *);
 bool	needs_expanding(const char *, size_t);
