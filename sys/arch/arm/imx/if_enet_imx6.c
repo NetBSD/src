@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.4 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.5 2019/07/23 06:36:36 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.4 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.5 2019/07/23 06:36:36 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -71,17 +71,18 @@ enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
 void
 enet_attach(device_t parent, device_t self, void *aux)
 {
-	struct enet_softc *sc;
-	struct axi_attach_args *aa;
+	struct enet_softc *sc = device_private(self);
+	struct axi_attach_args *aa = aux;
 #if NIMXOCOTP > 0
 	uint32_t eaddr;
 #endif
 
-	aa = aux;
-	sc = device_private(self);
-
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = AIPS_ENET_SIZE;
+
+	sc->sc_dev = self;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_dmat = aa->aa_dmat;
 
 	sc->sc_imxtype = 6;	/* i.MX6 */
 	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
@@ -144,8 +145,30 @@ enet_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet_ref);
 
-	enet_attach_common(self, aa->aa_iot, aa->aa_dmat, aa->aa_addr,
-	    aa->aa_size, aa->aa_irq);
+	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
+	    &sc->sc_ioh)) {
+		aprint_error_dev(self, "cannot map registers\n");
+		return;
+	}
+
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+
+	/* setup interrupt handlers */
+	if ((sc->sc_ih = intr_establish(aa->aa_irq, IPL_NET,
+	    IST_LEVEL, enet_intr, sc)) == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		goto failure;
+	}
+
+	if (enet_attach_common(self) != 0)
+		goto failure;
+
+	return;
+
+failure:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_size);
+	return;
 }
 
 static int
