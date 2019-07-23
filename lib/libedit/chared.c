@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.58 2019/07/23 09:47:16 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.59 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.58 2019/07/23 09:47:16 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.59 2019/07/23 10:18:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -396,26 +396,22 @@ cv__endword(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 libedit_private int
 ch_init(EditLine *el)
 {
-	el->el_line.buffer		= el_malloc(EL_BUFSIZ *
+	el->el_line.buffer		= el_calloc(EL_BUFSIZ,
 	    sizeof(*el->el_line.buffer));
 	if (el->el_line.buffer == NULL)
 		return -1;
 
-	(void) memset(el->el_line.buffer, 0, EL_BUFSIZ *
-	    sizeof(*el->el_line.buffer));
 	el->el_line.cursor		= el->el_line.buffer;
 	el->el_line.lastchar		= el->el_line.buffer;
 	el->el_line.limit		= &el->el_line.buffer[EL_BUFSIZ - EL_LEAVE];
 
-	el->el_chared.c_undo.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_undo.buf	= el_calloc(EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_undo.buf));
 	if (el->el_chared.c_undo.buf == NULL)
 		return -1;
-	(void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ *
-	    sizeof(*el->el_chared.c_undo.buf));
 	el->el_chared.c_undo.len	= -1;
 	el->el_chared.c_undo.cursor	= 0;
-	el->el_chared.c_redo.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_redo.buf	= el_calloc(EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_redo.buf));
 	if (el->el_chared.c_redo.buf == NULL)
 		return -1;
@@ -426,12 +422,10 @@ ch_init(EditLine *el)
 	el->el_chared.c_vcmd.action	= NOP;
 	el->el_chared.c_vcmd.pos	= el->el_line.buffer;
 
-	el->el_chared.c_kill.buf	= el_malloc(EL_BUFSIZ *
+	el->el_chared.c_kill.buf	= el_calloc(EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_kill.buf));
 	if (el->el_chared.c_kill.buf == NULL)
 		return -1;
-	(void) memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ *
-	    sizeof(*el->el_chared.c_kill.buf));
 	el->el_chared.c_kill.mark	= el->el_line.buffer;
 	el->el_chared.c_kill.last	= el->el_chared.c_kill.buf;
 	el->el_chared.c_resizefun	= NULL;
