@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.155 2019/07/23 15:55:49 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.156 2019/07/23 17:39:36 rin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.155 2019/07/23 15:55:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.156 2019/07/23 17:39:36 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -277,6 +277,19 @@ static int wsdisplay_dosync(struct wsdisplay_softc *, int);
 int wsdisplay_clearonclose;
 
 #ifdef WSDISPLAY_MULTICONS
+/*
+ * Replace cn_isconsole() so that we can enter DDB from old console.
+ */
+bool
+wsdisplay_cn_isconsole(dev_t dev)
+{
+
+	return (cn_tab != NULL && cn_tab->cn_dev == dev) ||
+	    (cn_tab == &wsdisplay_cons && !wsdisplay_multicons_suspended &&
+	    wsdisplay_multicons_enable && wsdisplay_ocn != NULL &&
+	    wsdisplay_ocn->cn_dev == dev);
+}
+
 static void
 wsscreen_getc_poll(void *priv)
 {
