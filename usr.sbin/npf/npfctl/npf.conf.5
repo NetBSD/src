@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.87 2019/07/23 00:52:02 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.88 2019/07/23 14:20:22 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -304,7 +304,7 @@ keywords.
 The former creates a state which is uniquely identified by a 5-tuple (source
 and destination IP addresses, port numbers and an interface identifier).
 The latter excludes the interface identifier, i.e. making the state global,
-and must be used with precaution.
+and must be used with caution.
 In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
@@ -374,7 +374,6 @@ hash of the original source and destination addresses.
 This algorithms attempts to keep all connections of particular client
 associated with the same translation address.
 This is the default algorithm.
-.Pp
 .It Cm round-robin
 The translation address for each new connection is selected on a
 round-robin basis.
@@ -440,7 +439,7 @@ Depending on the call, the key might represent the argument and the value
 might be optional.
 Available options:
 .Bl -tag -width "Cm log: Ar interface" -offset indent
-.It Cm log: Ar interface
+.It Cm log : Ar interface
 Log events.
 This requires the
 .Pa npf_ext_log
@@ -451,7 +450,7 @@ configuration is loaded.
 The log packets can be written to a file using the
 .Xr npfd 8
 daemon.
-.It Cm normalize: Ar option1 Ns Op Li \&, Ar option2 ...
+.It Cm normalize : Ar option1 Ns Op Li \&, Ar option2 ...
 Modify packets according to the specified normalization options.
 This requires the
 .Pa npf_ext_normalize kernel
@@ -482,7 +481,8 @@ procedure "someproc" {
 .Pp
 In this case, the procedure calls the logging and normalization modules.
 .Ss Parameter settings
-NPF supports a set of dynamically tunable parameters. See
+NPF supports a set of dynamically tunable parameters.
+See
 .Xr npf-params 7
 for specific details.
 .Ss Misc
