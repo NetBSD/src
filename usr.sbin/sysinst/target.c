@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.6 2019/06/15 08:20:33 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.7 2019/07/23 15:23:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.6 2019/06/15 08:20:33 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.7 2019/07/23 15:23:14 martin Exp $");
 #endif
 
 /*
@@ -164,13 +164,19 @@ target_already_root(void)
 		return last_res;
 
 	last_pm = pm;
-	last_res = 1;
+	last_res = 0;
 
 	parts = pm->parts;
-	if (pm->no_part || parts == NULL) {
+	if (parts == NULL) {
 		last_res = 0;
 		return 0;
 	}
+
+	if (pm->no_part) {
+		last_res = is_active_rootpart(pm->diskdev, -1);
+		return last_res;
+	}
+
 	if (pm->parts->pscheme->secondary_partitions != NULL)
 		parts = pm->parts->pscheme->secondary_partitions(parts,
 		    pm->ptstart, false);
@@ -180,20 +186,30 @@ target_already_root(void)
 			continue;
 		if (info.nat_type->generic_ptype != PT_root)
 			continue;
-		if (strcmp(info.last_mounted, "/") != 0)
+		if (!is_root_part_mount(info.last_mounted))
 			continue;
-
 		if (!parts->pscheme->get_part_device(parts, ptn,
 		    dev, sizeof dev, &rootpart, plain_name, false))
 			continue;
 
 		last_res = is_active_rootpart(dev, rootpart);
-		return last_res;
-	}
+		break;
+ 	}
 
-	return 1;
+	return last_res;
 }
 
+/*
+ * Could something with this "last mounted on" information be a potential
+ * root partition?
+ */
+bool
+is_root_part_mount(const char *last_mounted)
+{
+	return strcmp(last_mounted, "/") == 0 ||
+	    strcmp(last_mounted, "/targetroot") == 0 ||
+	    strcmp(last_mounted, "/altroot") == 0;
+}
 
 /*
  * Is this device partition (e.g., "sd0a") mounted as root? 

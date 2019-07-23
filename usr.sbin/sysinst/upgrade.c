@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.9 2019/06/24 18:48:08 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.10 2019/07/23 15:23:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,6 +66,11 @@ do_upgrade(void)
 
 	if (find_disks(msg_string(MSG_upgrade)) < 0)
 		return;
+
+	if (pm->parts == NULL) {
+		hit_enter_to_continue(MSG_noroot, NULL);
+		return;
+	}
 
 	if (pm->parts->pscheme->pre_update_verify) {
 		if (pm->parts->pscheme->pre_update_verify(pm->parts))
