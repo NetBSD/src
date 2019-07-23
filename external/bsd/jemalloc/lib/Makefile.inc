@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2019/04/15 20:40:53 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2019/07/23 06:31:20 martin Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -38,7 +38,10 @@ witness.c
 .SUFFIXES: .3
 .PATH.3: ${JEMALLOC}/dist/doc
 .for i in ${JEMALLOC_SRCS}
-CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
+# helps in tracking bad malloc/pointer usage, but has a serious
+# performance penalty:
+#   CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
+CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD
 COPTS.${i}+= -fvisibility=hidden -funroll-loops
 COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment :}
 .endfor
