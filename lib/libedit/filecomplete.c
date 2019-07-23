@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.55 2019/04/20 08:44:10 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.56 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.55 2019/04/20 08:44:10 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.56 2019/07/23 10:18:52 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ fn_tilde_expand(const char *txt)
 	} else {
 		/* text until string after slash */
 		len = (size_t)(temp - txt + 1);
-		temp = el_malloc(len * sizeof(*temp));
+		temp = el_calloc(len, sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
 		(void)strncpy(temp, txt + 1, len - 2);
@@ -118,7 +118,7 @@ fn_tilde_expand(const char *txt)
 	txt += len;
 
 	len = strlen(pass->pw_dir) + 1 + strlen(txt) + 1;
-	temp = el_malloc(len * sizeof(*temp));
+	temp = el_calloc(len, sizeof(*temp));
 	if (temp == NULL)
 		return NULL;
 	(void)snprintf(temp, len, "%s/%s", pass->pw_dir, txt);
@@ -179,7 +179,7 @@ unescape_string(const wchar_t *string, size_t length)
 {
 	size_t i;
 	size_t j = 0;
-	wchar_t *unescaped = el_malloc(sizeof(*string) * (length + 1));
+	wchar_t *unescaped = el_calloc(length + 1, sizeof(*string));
 	if (unescaped == NULL)
 		return NULL;
 	for (i = 0; i < length ; i++) {
@@ -410,7 +410,7 @@ fn_filename_completion_function(const char *text, int state)
 #endif
 
 		len = strlen(dirname) + len + 1;
-		temp = el_malloc(len * sizeof(*temp));
+		temp = el_calloc(len, sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
 		(void)snprintf(temp, len, "%s%s", dirname, entry->d_name);
@@ -486,7 +486,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 		max_equal = i;
 	}
 
-	retstr = el_malloc((max_equal + 1) * sizeof(*retstr));
+	retstr = el_calloc(max_equal + 1, sizeof(*retstr));
 	if (retstr == NULL) {
 		el_free(match_list);
 		return NULL;
