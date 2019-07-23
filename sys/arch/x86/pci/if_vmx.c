@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.36 2019/07/22 06:52:06 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.37 2019/07/23 04:50:05 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.36 2019/07/22 06:52:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.37 2019/07/23 04:50:05 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -223,6 +223,7 @@ struct vmxnet3_softc {
 	struct vmxnet3_rxqueue *vmx_rxq;
 
 	struct pci_attach_args *vmx_pa;
+	pci_chipset_tag_t vmx_pc;
 
 	bus_space_tag_t vmx_iot0;
 	bus_space_tag_t vmx_iot1;
@@ -528,6 +529,7 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 
 	sc->vmx_dev = self;
 	sc->vmx_pa = pa;
+	sc->vmx_pc = pa->pa_pc;
 	if (pci_dma64_available(pa))
 		sc->vmx_dmat = pa->pa_dmat64;
 	else
@@ -802,7 +804,7 @@ vmxnet3_alloc_interrupts(struct vmxnet3_softc *sc)
 void
 vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 {
-	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
+	pci_chipset_tag_t pc = sc->vmx_pc;
 	int i;
 
 	for (i = 0; i < sc->vmx_nintrs; i++) {
