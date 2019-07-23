@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.41 2018/11/29 03:10:20 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.42 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.41 2018/11/29 03:10:20 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.42 2019/07/23 10:18:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -112,7 +112,7 @@ el_wparse(EditLine *el, int argc, const wchar_t *argv[])
 		if (ptr == argv[0])
 			return 0;
 		l = (size_t)(ptr - argv[0]);
-		tprog = el_malloc((l + 1) * sizeof(*tprog));
+		tprog = el_calloc(l + 1, sizeof(*tprog));
 		if (tprog == NULL)
 			return 0;
 		(void) wcsncpy(tprog, argv[0], l);
