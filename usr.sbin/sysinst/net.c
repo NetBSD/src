@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.32 2019/07/08 19:46:57 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.33 2019/07/23 12:37:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -260,7 +260,8 @@ get_ifconfig_info(struct net_desc *devs)
 		strlcpy (devs[i].if_dev, buf, STRSIZE);
 		i++;
 	}
-	strcpy(devs[i].if_dev, "\0");
+	if (i < MAX_NETS)
+		devs[i].if_dev[0] = 0;	/* XXX ? */
 
 	free(buf);
 	free(buf_in);
