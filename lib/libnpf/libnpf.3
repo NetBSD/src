@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnpf.3,v 1.7 2019/01/19 21:19:31 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.8 2019/07/23 00:52:01 rmind Exp $
 .\"
-.\" Copyright (c) 2011-2018 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 29, 2018
+.Dd April 14, 2019
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -95,10 +95,10 @@
 .Ft int
 .Fn npf_nat_setport "nl_nat_t *nt" "in_port_t port"
 .Ft int
-.Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
+.Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt"
 .\" ---
 .Ft nl_table_t *
-.Fn npf_table_create "const char *name" "u_int id" "int type"
+.Fn npf_table_create "const char *name" "unsigned id" "int type"
 .Ft int
 .Fn npf_table_add_entry "nl_table_t *tl" "int af" \
 "const npf_addr_t *addr" "const npf_netmask_t mask"
@@ -178,8 +178,11 @@ Create a state (session) on match, track the connection and pass the
 backwards stream (the returning packets) without the ruleset inspection.
 The state is uniquely identified by a 5-tuple (source and destination
 IP addresses, port numbers and an interface identifier).
-.It Dv NPF_RULE_MULTIENDS
+.It Dv NPF_RULE_GSTATEFUL
 Exclude the interface identifier from the state key i.e. use a 4-tuple.
+This makes the state global with the respect network interfaces.
+The state is also picked on packet travelling different direction that
+originally.
 .It Dv NPF_RULE_RETRST
 Return TCP RST packet in a case of packet block.
 .It Dv NPF_RULE_RETICMP
@@ -373,8 +376,8 @@ original address (zero bits of the mask).
 IPv6-to-IPv6 Network Prefix Translation (NPTv6, defined in RFC 6296).
 .El
 .\" ---
-.It Fn npf_nat_insert "ncf" "nt" "pri"
-Insert NAT policy, its rule, into the specified configuration.
+.It Fn npf_nat_insert "ncf" "nt"
+Insert the NAT policy, its rule, into the specified configuration.
 The NAT rule must not be referenced after insertion.
 .El
 .\" -----
