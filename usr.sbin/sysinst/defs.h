@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.39 2019/07/23 15:23:14 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.40 2019/07/23 16:02:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -684,7 +684,7 @@ int	do_system(const char *);
 
 /* from upgrade.c */
 void	do_upgrade(void);
-void	do_reinstall_sets(struct install_partition_desc*);
+void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from part_edit.c */

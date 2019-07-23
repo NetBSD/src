@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.10 2019/07/23 15:23:14 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.11 2019/07/23 16:02:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,9 +193,11 @@ merge_X(const char *xroot)
  * Unpacks sets,  clobbering existing contents.
  */
 void
-do_reinstall_sets(struct install_partition_desc *install)
+do_reinstall_sets()
 {
+	struct install_partition_desc install;
 	int retcode = 0;
+	partman_go = 0;
 
 	unwind_mounts();
 	msg_display(MSG_reinstallusure);
@@ -205,17 +207,25 @@ do_reinstall_sets(struct install_partition_desc *install)
 	if (find_disks(msg_string(MSG_reinstall)) < 0)
 		return;
 
-	/* XXX find proper pm pointer and pass it here, make sure we have
-	 * read partitions and provide "infos" in there */
-	if (mount_disks(install) != 0)
+	if (pm->parts == NULL) {
+		hit_enter_to_continue(MSG_noroot, NULL);
 		return;
+	}
+
+	install_desc_from_parts(&install, pm->parts);
+
+	if (mount_disks(&install) != 0)
+		goto free_install;
 
 	/* Unpack the distribution. */
 	process_menu(MENU_distset, &retcode);
 	if (retcode == 0)
-		return;
+		goto free_install;
 	if (get_and_unpack_sets(0, NULL, MSG_unpackcomplete, MSG_abortunpack) != 0)
-		return;
+		goto free_install;
 
 	sanity_check();
+
+free_install:
+	free_install_desc(&install);
 }
