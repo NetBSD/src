@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: cyclic.h,v 1.6 2019/07/23 07:46:22 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -40,7 +40,9 @@ typedef	void	cpu_t;
 #ifndef _ASM
 #include <sys/time.h>
 #include <sys/cpuvar.h>
+#ifndef __NetBSD__
 #include <sys/cpupart.h>
+#endif
 #endif /* !_ASM */
 
 #define	CY_LOW_LEVEL		0
