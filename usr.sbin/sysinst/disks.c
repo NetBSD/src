@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.38 2019/07/14 11:25:10 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.39 2019/07/23 15:23:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1514,6 +1514,7 @@ mount_disks(struct install_partition_desc *install)
 	int   fstabsize;
 	int   error;
 	char devdev[PATH_MAX];
+	size_t i;
 
 	static struct lookfor fstabbuf[] = {
 		{"/dev/", "/dev/%s %s ffs %s", "c", NULL, 0, 0, foundffs},
@@ -1530,10 +1531,18 @@ mount_disks(struct install_partition_desc *install)
 		/* avoid needing to call target_already_root() again */
 		targetroot_mnt[0] = 0;
 	else {
-		assert(install != NULL && install->num > 0);
-		assert(strcmp(install->infos[0].mount, "/") == 0);
-		if (!install->infos[0].parts->pscheme->get_part_device(
-		    install->infos[0].parts, install->infos[0].cur_part_id,
+		for (i = 0; i < install->num; i++) {
+			if (is_root_part_mount(install->infos[i].mount))
+				break;
+		}
+
+		if (i >= install->num) {
+			hit_enter_to_continue(MSG_noroot, NULL);
+			return -1;
+		}
+
+		if (!install->infos[i].parts->pscheme->get_part_device(
+		    install->infos[i].parts, install->infos[i].cur_part_id,
 		    devdev, sizeof devdev, NULL, plain_name, true))
 			return -1;
 		error = mount_root(devdev, install);
