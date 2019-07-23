@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.18 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: menus.mi,v 1.19 2019/07/23 16:02:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -270,7 +270,7 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 	option MSG_Upgrade_NetBSD_on_a_hard_disk,
 		action { do_upgrade(); };
 	option MSG_Re_install_sets_or_install_additional_sets,
-		action { do_reinstall_sets(NULL); };
+		action { do_reinstall_sets(); };
 	option MSG_Reboot_the_computer, exit,
 		action (endwin) { system("/sbin/reboot -q"); };
 	option MSG_Utility_menu, sub menu utility;
