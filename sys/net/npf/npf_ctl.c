@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.53 2019/01/19 21:19:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.54 2019/07/23 00:52:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -98,6 +98,50 @@ npf_nvlist_copyout(npf_t *npf, void *data, nvlist_t *nvl)
 	}
 	nvlist_destroy(nvl);
 	return error;
+}
+
+static int __noinline
+npf_mk_params(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict, bool set)
+{
+	const nvlist_t *params;
+	int type, error, val;
+	const char *name;
+	void *cookie;
+
+	params = dnvlist_get_nvlist(npf_dict, "params", NULL);
+	if (params == NULL) {
+		return 0;
+	}
+	cookie = NULL;
+	while ((name = nvlist_next(params, &type, &cookie)) != NULL) {
+		if (type != NV_TYPE_NUMBER) {
+			NPF_ERR_DEBUG(errdict);
+			return EINVAL;
+		}
+		val = (int)nvlist_get_number(params, name);
+		if (set) {
+			/* Actually set the parameter. */
+			error = npf_param_set(npf, name, val);
+			KASSERT(error == 0);
+			continue;
+		}
+
+		/* Validate the parameter and its value. */
+		error = npf_param_check(npf, name, val);
+		if (__predict_true(error == 0)) {
+			continue;
+		}
+		if (error == ENOENT) {
+			nvlist_add_stringf(errdict, "error-msg",
+			    "invalid parameter `%s`", name);
+		}
+		if (error == EINVAL) {
+			nvlist_add_stringf(errdict, "error-msg",
+			    "invalid parameter `%s` value %d", name, val);
+		}
+		return error;
+	}
+	return 0;
 }
 
 static int __noinline
@@ -409,8 +453,58 @@ npf_mk_rules(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 }
 
 static int __noinline
-npf_mk_natlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
-    npf_tableset_t *tblset, npf_ruleset_t **ntsetp)
+npf_mk_singlenat(npf_t *npf, const nvlist_t *nat, npf_ruleset_t *ntset,
+    npf_tableset_t *tblset, nvlist_t *errdict, npf_rule_t **rlp)
+{
+	npf_rule_t *rl = NULL;
+	npf_natpolicy_t *np;
+	int error;
+
+	/*
+	 * NAT rules are standard rules, plus the translation policy.
+	 * We first construct the rule structure.
+	 */
+	error = npf_mk_singlerule(npf, nat, NULL, &rl, errdict);
+	if (error) {
+		return error;
+	}
+	KASSERT(rl != NULL);
+	*rlp = rl;
+
+	/* If rule is named, it is a group with NAT policies. */
+	if (dnvlist_get_string(nat, "name", NULL)) {
+		return 0;
+	}
+
+	/* Check the table ID. */
+	if (nvlist_exists_number(nat, "nat-table-id")) {
+		unsigned tid = nvlist_get_number(nat, "nat-table-id");
+
+		if (!npf_tableset_getbyid(tblset, tid)) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			goto out;
+		}
+	}
+
+	/* Allocate a new NAT policy and assign it to the rule. */
+	np = npf_nat_newpolicy(npf, nat, ntset);
+	if (np == NULL) {
+		NPF_ERR_DEBUG(errdict);
+		error = ENOMEM;
+		goto out;
+	}
+	npf_rule_setnat(rl, np);
+out:
+	if (error) {
+		npf_rule_free(rl);
+	}
+	return error;
+}
+
+static int __noinline
+npf_mk_natlist(npf_t *npf, nvlist_t *npf_dict, npf_tableset_t *tblset,
+    nvlist_t *errdict, npf_ruleset_t **ntsetp)
 {
 	const nvlist_t * const *nat_rules;
 	npf_ruleset_t *ntset;
@@ -434,42 +528,12 @@ npf_mk_natlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 	for (unsigned i = 0; i < nitems; i++) {
 		const nvlist_t *nat = nat_rules[i];
 		npf_rule_t *rl = NULL;
-		npf_natpolicy_t *np;
 
-		/*
-		 * NAT policies are standard rules, plus the additional
-		 * translation information.  First, make a rule.
-		 */
-		error = npf_mk_singlerule(npf, nat, NULL, &rl, errdict);
+		error = npf_mk_singlenat(npf, nat, ntset, tblset, errdict, &rl);
 		if (error) {
 			break;
 		}
 		npf_ruleset_insert(ntset, rl);
-
-		/* If rule is named, it is a group with NAT policies. */
-		if (dnvlist_get_string(nat, "name", NULL)) {
-			continue;
-		}
-
-		/* Check the table ID. */
-		if (nvlist_exists_number(nat, "nat-table-id")) {
-			unsigned tid = nvlist_get_number(nat, "nat-table-id");
-
-			if (!npf_tableset_getbyid(tblset, tid)) {
-				NPF_ERR_DEBUG(errdict);
-				error = EINVAL;
-				break;
-			}
-		}
-
-		/* Allocate a new NAT policy and assign to the rule. */
-		np = npf_nat_newpolicy(npf, nat, ntset);
-		if (np == NULL) {
-			NPF_ERR_DEBUG(errdict);
-			error = ENOMEM;
-			break;
-		}
-		npf_rule_setnat(rl, np);
 	}
 	*ntsetp = ntset;
 	return error;
@@ -533,6 +597,10 @@ npfctl_load_nvlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict)
 		error = EPROGMISMATCH;
 		goto fail;
 	}
+	error = npf_mk_params(npf, npf_dict, errdict, false /* validate */);
+	if (error) {
+		goto fail;
+	}
 	error = npf_mk_algs(npf, npf_dict, errdict);
 	if (error) {
 		goto fail;
@@ -545,7 +613,7 @@ npfctl_load_nvlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict)
 	if (error) {
 		goto fail;
 	}
-	error = npf_mk_natlist(npf, npf_dict, errdict, tblset, &ntset);
+	error = npf_mk_natlist(npf, npf_dict, tblset, errdict, &ntset);
 	if (error) {
 		goto fail;
 	}
@@ -563,6 +631,7 @@ npfctl_load_nvlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict)
 	 */
 	flush = dnvlist_get_bool(npf_dict, "flush", false);
 	npf_config_load(npf, rlset, tblset, ntset, rpset, conndb, flush);
+	npf_mk_params(npf, npf_dict, errdict, true /* set the params */);
 
 	/* Done.  Since data is consumed now, we shall not destroy it. */
 	tblset = NULL;
@@ -698,31 +767,42 @@ npfctl_rule(npf_t *npf, u_long cmd, void *data)
 	const char *ruleset_name;
 	uint32_t rcmd;
 	int error = 0;
+	bool natset;
 
 	error = npf_nvlist_copyin(npf, data, &npf_rule);
 	if (error) {
 		return error;
 	}
 	rcmd = dnvlist_get_number(npf_rule, "command", 0);
+	natset = dnvlist_get_bool(npf_rule, "nat-rule", false);
 	ruleset_name = dnvlist_get_string(npf_rule, "ruleset-name", NULL);
 	if (!ruleset_name) {
 		error = EINVAL;
 		goto out;
 	}
 
-	if (rcmd == NPF_CMD_RULE_ADD) {
-		retdict = nvlist_create(0);
-		error = npf_mk_singlerule(npf, npf_rule, NULL, &rl, retdict);
-		if (error) {
-			goto out;
-		}
-	}
-
 	npf_config_enter(npf);
-	rlset = npf_config_ruleset(npf);
-
+	rlset = natset ? npf_config_natset(npf) : npf_config_ruleset(npf);
 	switch (rcmd) {
 	case NPF_CMD_RULE_ADD: {
+		retdict = nvlist_create(0);
+		if (natset) {
+			/*
+			 * Translation rule.
+			 */
+			error = npf_mk_singlenat(npf, npf_rule, rlset,
+			    npf_config_tableset(npf), retdict, &rl);
+		} else {
+			/*
+			 * Standard rule.
+			 */
+			error = npf_mk_singlerule(npf, npf_rule, NULL,
+			    &rl, retdict);
+		}
+		if (error) {
+			npf_config_exit(npf);
+			goto out;
+		}
 		if ((error = npf_ruleset_add(rlset, ruleset_name, rl)) == 0) {
 			/* Success. */
 			uint64_t id = npf_rule_getid(rl);
