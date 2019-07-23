@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.56 2018/10/23 09:15:36 jmcneill Exp $	*/
+/*	$NetBSD: plcom.c,v 1.57 2019/07/23 12:10:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.56 2018/10/23 09:15:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.57 2019/07/23 12:10:38 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2520,7 +2520,7 @@ plcom_is_console(bus_space_tag_t iot, bus_addr_t iobase,
 #ifdef KGDB
 	else if (!plcom_kgdb_attached &&
 	    bus_space_is_equal(iot, plcomkgdb_info.pi_iot) &&
-	    iobase == plcomkgdb_info.pi_iobase) 
+	    iobase == plcomkgdb_info.pi_iobase)
 		help = plcomkgdb_info.pi_ioh;
 #endif
 	else
