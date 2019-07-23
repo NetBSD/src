@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.27 2019/07/23 07:52:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -785,6 +785,13 @@ __MAC68K_copy_region_N(4)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ */
+#define	bus_space_vaddr(t, h)	((void)(t), (void *)(h.base))
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
