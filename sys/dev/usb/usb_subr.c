@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.234 2019/07/19 04:18:49 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.235 2019/07/23 17:21:33 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.234 2019/07/19 04:18:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.235 2019/07/23 17:21:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -135,6 +135,8 @@ usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
 	if (actlen < 2)
 		return USBD_SHORT_XFER;
 
+	if (sdesc->bLength > sizeof(*sdesc))
+		return USBD_INVAL;
 	USETW(req.wLength, sdesc->bLength);	/* the whole string */
 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
 		&actlen, USBD_DEFAULT_TIMEOUT);
@@ -607,7 +609,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		return err;
 	}
 	len = UGETW(cd.wTotalLength);
-	if (len == 0) {
+	if (len < USB_CONFIG_DESCRIPTOR_SIZE) {
 		DPRINTF("empty short descriptor", 0, 0, 0, 0);
 		return USBD_INVAL;
 	}
@@ -629,6 +631,11 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		err = USBD_INVAL;
 		goto bad;
 	}
+	if (UGETW(cdp->wTotalLength) != UGETW(cd.wTotalLength)) {
+		DPRINTF("bad len %jd", UGETW(cdp->wTotalLength), 0, 0, 0);
+		err = USBD_INVAL;
+		goto bad;
+	}
 
 	if (USB_IS_SS(dev->ud_speed)) {
 		usb_bos_descriptor_t bd;
@@ -637,7 +644,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		err = usbd_get_bos_desc(dev, index, &bd);
 		if (!err) {
 			int blen = UGETW(bd.wTotalLength);
-			if (blen == 0) {
+			if (blen < USB_BOS_DESCRIPTOR_SIZE) {
 				DPRINTF("empty bos descriptor", 0, 0, 0, 0);
 				err = USBD_INVAL;
 				goto bad;
