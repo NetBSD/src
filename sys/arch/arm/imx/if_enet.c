@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.23 2019/05/28 07:41:46 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.24 2019/07/23 06:36:36 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.23 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.24 2019/07/23 06:36:36 hkenken Exp $");
 
 #include "vlan.h"
 
@@ -132,7 +132,6 @@ static void enet_attach_evcnt(struct enet_softc *);
 static void enet_update_evcnt(struct enet_softc *);
 #endif
 
-static int enet_intr(void *);
 static void enet_tick(void *);
 static int enet_tx_intr(void *);
 static int enet_rx_intr(void *);
@@ -170,30 +169,16 @@ static int enet_alloc_dma(struct enet_softc *, size_t, void **,
 CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
     enet_match, enet_attach, NULL, NULL);
 
-void
-enet_attach_common(device_t self, bus_space_tag_t iot,
-    bus_dma_tag_t dmat, bus_addr_t addr, bus_size_t size, int irq)
+int
+enet_attach_common(device_t self)
 {
 	struct enet_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_mii;
 
-	sc->sc_dev = self;
-	sc->sc_iot = iot;
-	sc->sc_addr = addr;
-	sc->sc_dmat = dmat;
-
-	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
-	if (bus_space_map(sc->sc_iot, sc->sc_addr, size, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(self, "cannot map registers\n");
-		return;
-	}
-
 	/* allocate dma buffer */
 	if (enet_alloc_ring(sc))
-		return;
+		return -1;
 
 #define IS_ENADDR_ZERO(enaddr)				\
 	((enaddr[0] | enaddr[1] | enaddr[2] |		\
@@ -224,32 +209,6 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	    ether_sprintf(sc->sc_enaddr));
 
 	enet_init_regs(sc, 1);
-
-	/* setup interrupt handlers */
-	if ((sc->sc_ih = intr_establish(irq, IPL_NET,
-	    IST_LEVEL, enet_intr, sc)) == NULL) {
-		aprint_error_dev(self, "unable to establish interrupt\n");
-		goto failure;
-	}
-
-	if (sc->sc_imxtype == 7) {
-		/* i.MX7 use 3 interrupts */
-		if ((sc->sc_ih2 = intr_establish(irq + 1, IPL_NET,
-		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self,
-			    "unable to establish 2nd interrupt\n");
-			intr_disestablish(sc->sc_ih);
-			goto failure;
-		}
-		if ((sc->sc_ih3 = intr_establish(irq + 2, IPL_NET,
-		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self,
-			    "unable to establish 3rd interrupt\n");
-			intr_disestablish(sc->sc_ih2);
-			intr_disestablish(sc->sc_ih);
-			goto failure;
-		}
-	}
 
 	/* callout will be scheduled from enet_init() */
 	callout_init(&sc->sc_tick_ch, 0);
@@ -312,11 +271,7 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 
 	sc->sc_stopping = false;
 
-	return;
-
- failure:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
-	return;
+	return 0;
 }
 
 #ifdef ENET_EVENT_COUNTER
@@ -446,7 +401,7 @@ enet_tick(void *arg)
 	splx(s);
 }
 
-static int
+int
 enet_intr(void *arg)
 {
 	struct enet_softc *sc;
