@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.57 2017/10/11 06:49:03 abhinav Exp $	*/
+/*	$NetBSD: chared.c,v 1.58 2019/07/23 09:47:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.57 2017/10/11 06:49:03 abhinav Exp $");
+__RCSID("$NetBSD: chared.c,v 1.58 2019/07/23 09:47:16 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -174,7 +174,7 @@ c_delbefore(EditLine *el, int num)
 		wchar_t *cp;
 
 		for (cp = el->el_line.cursor - num;
-		    cp <= el->el_line.lastchar;
+		    &cp[num] <= el->el_line.lastchar;
 		    cp++)
 			*cp = cp[num];
 
