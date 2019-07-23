@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.48 2018/02/26 17:36:14 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.48 2018/02/26 17:36:14 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -70,7 +70,7 @@ libedit_private int
 search_init(EditLine *el)
 {
 
-	el->el_search.patbuf = el_malloc(EL_BUFSIZ *
+	el->el_search.patbuf = el_calloc(EL_BUFSIZ,
 	    sizeof(*el->el_search.patbuf));
 	if (el->el_search.patbuf == NULL)
 		return -1;

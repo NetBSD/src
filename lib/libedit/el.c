@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.98 2019/04/26 16:56:57 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.99 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.98 2019/04/26 16:56:57 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.99 2019/07/23 10:18:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -71,12 +71,10 @@ libedit_private EditLine *
 el_init_internal(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
     int fdin, int fdout, int fderr, int flags)
 {
-	EditLine *el = el_malloc(sizeof(*el));
+	EditLine *el = el_calloc(1, sizeof(*el));
 
 	if (el == NULL)
 		return NULL;
-
-	memset(el, 0, sizeof(EditLine));
 
 	el->el_infile = fin;
 	el->el_outfile = fout;
@@ -534,7 +532,7 @@ el_source(EditLine *el, const char *fname)
 			if ((ptr = getenv("HOME")) == NULL)
 				return -1;
 			plen += strlen(ptr);
-			if ((path = el_malloc(plen * sizeof(*path))) == NULL)
+			if ((path = el_calloc(plen, sizeof(*path))) == NULL)
 				return -1;
 			(void)snprintf(path, plen, "%s%s", ptr,
 				elpath + (*ptr == '\0'));
