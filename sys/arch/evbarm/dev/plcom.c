@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.57 2019/07/23 12:10:38 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.58 2019/07/23 12:13:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.57 2019/07/23 12:10:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.58 2019/07/23 12:13:47 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2275,7 +2275,7 @@ int
 plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 {
 	int s = splserial();
-	u_char stat, c;
+	u_char c;
 
 	/* got a character from reading things earlier */
 	if (plcom_readaheadcount > 0) {
@@ -2290,9 +2290,10 @@ plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 		return c;
 	}
 
-	/* block until a character becomes available */
-	while (ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE))
-		;
+	if (ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)) {
+		splx(s);
+		return -1;
+	}
 
 	c = PREAD1(pi, PL01XCOM_DR);
 	{
