@@ -1,4 +1,4 @@
-.\"	$NetBSD: fortune.6,v 1.14 2019/07/22 13:37:37 sevan Exp $
+.\"	$NetBSD: fortune.6,v 1.15 2019/07/23 09:50:27 uwe Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Op Fl aefilosw
 .Op Fl m Ar pattern
 .Oo
-.Op Ar N%
-.Ar file/dir/all
+.Op Ar N\^ Ns Cm \&%
+.Ar file\| Ns / Ns Ar dir\| Ns / Ns Cm \^all
 .Oc
 .Sh DESCRIPTION
 When
@@ -110,12 +110,12 @@ to guarantee that the message can be read before the screen is cleared.
 The user may specify alternative sayings.
 You can specify a specific file, a directory which contains one or
 more files, or the special word
-.Em all ,
+.Cm all ,
 which says to use all the standard databases.
 Any of these may be preceded by a percentage, which is a number
 .Ar N
 between 0 and 100 inclusive, followed by a
-.Sq %
+.Ql %
 character.
 If it is, there will be an
 .Ar N
@@ -127,18 +127,18 @@ and/or directories, in which case the probability of selecting from
 one of them will be based on their relative sizes.
 .Pp
 As an example, given two databases
-.Em funny
+.Ar funny
 and
-.Em not-funny ,
+.Ar not-funny ,
 with
-.Em funny
+.Ar funny
 twice as big, saying
 .Bd -literal -offset indent
 $ fortune funny not-funny
 .Ed
 .Pp
 will get you fortunes out of
-.Em funny
+.Ar funny
 two-thirds of the time.
 The command
 .Bd -literal -offset indent
@@ -146,9 +146,9 @@ $ fortune 90% funny 10% not-funny
 .Ed
 .Pp
 will pick out 90% of its fortunes from
-.Em funny
+.Ar funny
 (the
-.Dq 10%
+.Ql 10%
 is unnecessary, since 10% is all that's left).
 The
 .Fl e
