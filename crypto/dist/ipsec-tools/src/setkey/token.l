@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.22 2018/10/14 08:27:39 maxv Exp $	*/
+/*	$NetBSD: token.l,v 1.23 2019/07/23 04:30:32 ozaki-r Exp $	*/
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ update		{ return(UPDATE); }
 delete		{ return(DELETE); }
 deleteall	{ return(DELETEALL); }
 get		{ return(GET); }
+getspi		{ return(GETSPI); }
 flush		{ return(FLUSH); }
 dump		{ return(DUMP); }
 exit		{ return(EXIT); }
