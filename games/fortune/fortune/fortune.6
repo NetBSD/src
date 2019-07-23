@@ -1,4 +1,4 @@
-.\"	$NetBSD: fortune.6,v 1.16 2019/07/23 10:40:55 uwe Exp $
+.\"	$NetBSD: fortune.6,v 1.17 2019/07/23 11:02:29 uwe Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ Epigrams are divided into several categories, where each category
 is subdivided into those which are potentially offensive and those
 which are not.
 The options are as follows:
-.Bl -tag -width flag
+.Bl -tag -width ".Fl XXX"
 .It Fl a
 Choose from all lists of maxims, both offensive and not.
 (See the
@@ -133,17 +133,15 @@ and
 with
 .Ar funny
 twice as big, saying
-.Bd -literal -offset indent
-$ fortune funny not-funny
-.Ed
+.Pp
+.Dl $ fortune funny not-funny
 .Pp
 will get you fortunes out of
 .Ar funny
 two-thirds of the time.
 The command
-.Bd -literal -offset indent
-$ fortune 90% funny 10% not-funny
-.Ed
+.Pp
+.Dl $ fortune 90% funny 10% not-funny
 .Pp
 will pick out 90% of its fortunes from
 .Ar funny
@@ -153,14 +151,12 @@ is unnecessary, since 10% is all that's left).
 The
 .Fl e
 option says to consider all files equal; thus
-.Bd -literal -offset indent
-$ fortune -e
-.Ed
+.Pp
+.Dl $ fortune -e
 .Pp
 is equivalent to
-.Bd -literal -offset indent
-$ fortune 50% funny 50% not-funny
-.Ed
+.Pp
+.Dl $ fortune 50% funny 50% not-funny
 .Pp
 Datafiles for
 .Nm
@@ -168,7 +164,7 @@ are created by the
 .Xr strfile 8
 utility.
 .Sh FILES
-.Bl -tag -width XX/usr/share/games/fortune/*XX -compact
+.Bl -tag -width ".Pa /usr/share/games/fortune/XXXX" -compact
 .It Pa /usr/share/games/fortune/*
 Fortune files.
 .El
