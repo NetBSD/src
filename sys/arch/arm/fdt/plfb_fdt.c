@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.3 2019/07/06 15:53:38 jmcneill Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.4 2019/07/23 12:34:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,8 +30,10 @@
  * ARM PrimeCell PL111 framebuffer console driver
  */
 
+#include "opt_wsdisplay_compat.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.3 2019/07/06 15:53:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.4 2019/07/23 12:34:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,15 +173,27 @@ plfb_attach(device_t parent, device_t self, void *aux)
 
 	plfb_init(sc);
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	sc->sc_wstype = WSDISPLAY_TYPE_PLFB;
-	prop_dictionary_set_bool(dict, "is_console",
-	    phandle == plfb_console_phandle);
+
+#ifdef WSDISPLAY_MULTICONS
+	const bool is_console = true;
+	genfb_cnattach();
+#else
+	const bool is_console = phandle == plfb_console_phandle;
+	if (is_console)
+		aprint_normal_dev(self, "switching to framebuffer console\n");
+#endif
+
+	prop_dictionary_set_bool(dict, "is_console", is_console);
 
 	genfb_init(&sc->sc_gen);
 
 	if (sc->sc_gen.sc_width == 0 ||
 	    sc->sc_gen.sc_fbsize == 0) {
-		aprint_normal(": disabled\n");
+		aprint_normal_dev(self, "disabled\n");
 		return;
 	}
 
@@ -188,9 +202,6 @@ plfb_attach(device_t parent, device_t self, void *aux)
 	memset(&ops, 0, sizeof(ops));
 	ops.genfb_ioctl = plfb_ioctl;
 	ops.genfb_mmap = plfb_mmap;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	genfb_attach(&sc->sc_gen, &ops);
 }
