@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.264 2019/07/17 07:07:59 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.265 2019/07/23 04:29:26 ozaki-r Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.264 2019/07/17 07:07:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.265 2019/07/23 04:29:26 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -3530,7 +3530,8 @@ out:
  *	others	: found, pointer to a SA.
  */
 static struct secasvar *
-key_lookup_and_remove_sav(struct secashead *sah, u_int32_t spi)
+key_lookup_and_remove_sav(struct secashead *sah, u_int32_t spi,
+    const struct secasvar *hint)
 {
 	struct secasvar *sav = NULL;
 	u_int state;
@@ -3542,6 +3543,8 @@ key_lookup_and_remove_sav(struct secashead *sah, u_int32_t spi)
 			KASSERT(sav->state == state);
 
 			if (sav->spi == spi) {
+				if (hint != NULL && hint != sav)
+					continue;
 				sav->state = SADB_SASTATE_DEAD;
 				SAVLIST_WRITER_REMOVE(sav);
 				SAVLUT_WRITER_REMOVE(sav);
@@ -5807,7 +5810,8 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	 * We need to lookup and remove the sav atomically, so get it again
 	 * here by a special API while we have a reference to it.
 	 */
-	oldsav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi);
+	oldsav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi, sav);
+	KASSERT(oldsav == NULL || oldsav == sav);
 	/* We can release the reference because of oldsav */
 	KEY_SA_UNREF(&sav);
 	if (oldsav == NULL) {
@@ -6222,7 +6226,7 @@ key_api_delete(struct socket *so, struct mbuf *m,
 	sah = key_getsah_ref(&saidx, CMP_HEAD);
 	if (sah != NULL) {
 		/* get a SA with SPI. */
-		sav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi);
+		sav = key_lookup_and_remove_sav(sah, sa0->sadb_sa_spi, NULL);
 		key_sah_unref(sah);
 	}
 
