@@ -77,7 +77,9 @@
 
 #ifdef	_KERNEL
 #include <sys/callb.h>
+#ifndef __NetBSD__
 #include <sys/cpupart.h>
+#endif
 #include <sys/zone.h>
 #endif	/* _KERNEL */
 

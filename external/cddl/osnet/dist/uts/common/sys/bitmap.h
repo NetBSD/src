@@ -126,6 +126,12 @@ extern "C" {
 #endif /* _LP64 */
 
 
+#ifdef __NetBSD__
+
+#include <sys/atomic.h>
+
+#else /*__NetBSD__ */
+
 /*
  * BIT_ONLYONESET is a private macro not designed for bitmaps of
  * arbitrary size.  u must be an unsigned integer/long.  It returns
@@ -189,6 +195,9 @@ extern int	odd_parity(ulong_t);
 #define	BITX(u, h, l)	(((u) >> (l)) & ((1LU << ((h) - (l) + 1LU)) - 1LU))
 
 #endif	/* _KERNEL && !_ASM */
+
+#endif /*__NetBSD__ */
+
 
 #ifdef	__cplusplus
 }
