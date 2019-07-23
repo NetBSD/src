@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.58 2019/07/23 12:13:47 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.59 2019/07/23 15:56:14 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.58 2019/07/23 12:13:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.59 2019/07/23 15:56:14 jmcneill Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -178,6 +178,7 @@ dev_type_poll(plcompoll);
 int	plcomcngetc	(dev_t);
 void	plcomcnputc	(dev_t, int);
 void	plcomcnpollc	(dev_t, int);
+void	plcomcnhalt	(dev_t);
 
 #define	integrate	static inline
 void 	plcomsoft	(void *);
@@ -2407,7 +2408,7 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
  */
 struct consdev plcomcons = {
 	NULL, NULL, plcomcngetc, plcomcnputc, plcomcnpollc, NULL,
-	NULL, NULL, NODEV, CN_NORMAL
+	plcomcnhalt, NULL, NODEV, CN_NORMAL
 };
 
 int
@@ -2464,6 +2465,23 @@ plcomcnpollc(dev_t dev, int on)
 {
 
 	plcom_readaheadcount = 0;
+}
+
+void
+plcomcnhalt(dev_t dev)
+{
+	struct plcom_instance *pi = &plcomcons_info;
+
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		PWRITE1(pi, PL010COM_CR, PL01X_CR_UARTEN);
+		break;
+	case PLCOM_TYPE_PL011:
+		PWRITE4(pi, PL011COM_CR,
+		    PL01X_CR_UARTEN | PL011_CR_RXE | PL011_CR_TXE);
+		PWRITE4(pi, PL011COM_IMSC, 0);
+		break;
+	}
 }
 
 #ifdef KGDB
