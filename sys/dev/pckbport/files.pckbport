@@ -1,4 +1,4 @@
-# $NetBSD: files.pckbport,v 1.8 2011/09/07 19:05:13 jakllsch Exp $
+# $NetBSD: files.pckbport,v 1.8.46.1 2019/07/23 08:46:43 martin Exp $
 # devices attached at pckbport, for use with wscons
 
 defflag	opt_wskbdmap.h			WSKBD_USONLY
@@ -9,7 +9,7 @@ file	dev/pckbport/pckbport.c		pckbport | pckbport_machdep_cnattach
 device	pckbd: wskbddev
 attach	pckbd at pckbport
 file	dev/pckbport/pckbd.c		pckbd			needs-flag
-file	dev/pckbport/wskbdmap_mfii.c	pckbd
+file	dev/pckbport/wskbdmap_mfii.c	pckbd | hvkbd
 defparam PCKBD_LAYOUT
 defflag	PCKBD_CNATTACH_MAY_FAIL
 
