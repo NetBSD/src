@@ -37,7 +37,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#define	NPF_VERSION		21
+#define	NPF_VERSION		22
 
 #if defined(_NPF_STANDALONE)
 #include "npf_stand.h"
@@ -203,7 +203,7 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_RETRST			0x00000010
 #define	NPF_RULE_RETICMP		0x00000020
 #define	NPF_RULE_DYNAMIC		0x00000040
-#define	NPF_RULE_MULTIENDS		0x00000080
+#define	NPF_RULE_GSTATEFUL		0x00000080
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
@@ -317,8 +317,9 @@ typedef struct npf_ioctl_table {
 
 typedef struct {
 	int64_t		id;
+	char *		error_msg;
 	char *		source_file;
-	u_int		source_line;
+	unsigned	source_line;
 } npf_error_t;
 
 /*

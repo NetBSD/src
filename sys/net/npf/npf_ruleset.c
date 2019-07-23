@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.47 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.48 2019/07/23 00:52:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -523,8 +523,9 @@ npf_ruleset_reload(npf_t *npf, npf_ruleset_t *newset,
 		return;
 
 	/*
-	 * Scan all rules in the new ruleset and share NAT policies.
-	 * Also, assign a unique ID for each policy here.
+	 * Scan all rules in the new ruleset and inherit the active NAT
+	 * policies if they are the same.  Also, assign a unique ID for
+	 * each policy here.
 	 */
 	LIST_FOREACH(rl, &newset->rs_all, r_aentry) {
 		npf_natpolicy_t *np;
@@ -534,13 +535,6 @@ npf_ruleset_reload(npf_t *npf, npf_ruleset_t *newset,
 		if ((np = rl->r_natp) == NULL) {
 			continue;
 		}
-
-		/*
-		 * First, try to share the active port map.  If this
-		 * policy will be unused, npf_nat_freepolicy() will
-		 * drop the reference.
-		 */
-		npf_ruleset_sharepm(oldset, np);
 
 		/* Does it match with any policy in the active ruleset? */
 		LIST_FOREACH(actrl, &oldset->rs_all, r_aentry) {
@@ -575,31 +569,8 @@ npf_ruleset_reload(npf_t *npf, npf_ruleset_t *newset,
 }
 
 /*
- * npf_ruleset_sharepm: attempt to share the active NAT portmap.
+ * npf_ruleset_findnat: find a NAT policy in the ruleset by a given ID.
  */
-npf_rule_t *
-npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
-{
-	npf_natpolicy_t *np;
-	npf_rule_t *rl;
-
-	/*
-	 * Scan the NAT policies in the ruleset and match with the
-	 * given policy based on the translation IP address.  If they
-	 * match - adjust the given NAT policy to use the active NAT
-	 * portmap.  In such case the reference on the old portmap is
-	 * dropped and acquired on the active one.
-	 */
-	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
-		np = rl->r_natp;
-		if (np == NULL || np == mnp)
-			continue;
-		if (npf_nat_sharepm(np, mnp))
-			break;
-	}
-	return rl;
-}
-
 npf_natpolicy_t *
 npf_ruleset_findnat(npf_ruleset_t *rlset, uint64_t id)
 {
@@ -664,7 +635,7 @@ npf_rule_alloc(npf_t *npf, const nvlist_t *rule)
 
 	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
 		/* Priority of the dynamic rule. */
-		rl->r_priority = dnvlist_get_number(rule, "prio", 0);
+		rl->r_priority = (int)dnvlist_get_number(rule, "prio", 0);
 	} else {
 		/* The skip-to index.  No need to validate it. */
 		rl->r_skip_to = dnvlist_get_number(rule, "skip-to", 0);

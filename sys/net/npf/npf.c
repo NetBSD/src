@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.37 2019/01/19 21:19:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38 2019/07/23 00:52:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,8 +76,11 @@ npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 	npf->stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf->mbufops = mbufops;
 
+	npf_param_init(npf);
+	npf_state_sysinit(npf);
 	npf_ifmap_init(npf, ifops);
 	npf_conn_init(npf, flags);
+	npf_portmap_init(npf);
 	npf_alg_init(npf);
 	npf_ext_init(npf);
 
@@ -98,8 +101,11 @@ npf_destroy(npf_t *npf)
 	/* Finally, safe to destroy the subsystems. */
 	npf_ext_fini(npf);
 	npf_alg_fini(npf);
+	npf_portmap_fini(npf);
 	npf_conn_fini(npf);
 	npf_ifmap_fini(npf);
+	npf_state_sysfini(npf);
+	npf_param_fini(npf);
 
 	pserialize_destroy(npf->qsbr);
 	percpu_free(npf->stats_percpu, NPF_STATS_SIZE);
@@ -173,12 +179,29 @@ npf_stats_collect(void *mem, void *arg, struct cpu_info *ci)
 	}
 }
 
+static void
+npf_stats_clear_cb(void *mem, void *arg, struct cpu_info *ci)
+{
+	uint64_t *percpu_stats = mem;
+
+	for (unsigned i = 0; i < NPF_STATS_COUNT; i++) {
+		percpu_stats[i] = 0;
+	}
+}
+
 /*
  * npf_stats: export collected statistics.
  */
+
 __dso_public void
 npf_stats(npf_t *npf, uint64_t *buf)
 {
 	memset(buf, 0, NPF_STATS_SIZE);
 	percpu_foreach(npf->stats_percpu, npf_stats_collect, buf);
+}
+
+__dso_public void
+npf_stats_clear(npf_t *npf)
+{
+	percpu_foreach(npf->stats_percpu, npf_stats_clear_cb, NULL);
 }

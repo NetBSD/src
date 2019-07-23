@@ -211,6 +211,8 @@ void		npfctl_build_natseg(int, int, unsigned, const char *,
 void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
 
+void		npfctl_setparam(const char *, int);
+
 /*
  * For the systems which do not define TH_ECE and TW_CRW.
  */

@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.12 2019/04/17 20:41:58 tih Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.13 2019/07/23 00:52:02 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>

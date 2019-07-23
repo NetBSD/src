@@ -74,6 +74,16 @@ void	npf_thread_unregister(npf_t *);
 int	npf_packet_handler(npf_t *, struct mbuf **, struct ifnet *, int);
 void	npf_ifmap_attach(npf_t *, struct ifnet *);
 void	npf_ifmap_detach(npf_t *, struct ifnet *);
+int	npf_param_get(npf_t *, const char *, int *);
+int	npf_param_set(npf_t *, const char *, int);
 void	npf_stats(npf_t *, uint64_t *);
+void	npf_stats_clear(npf_t *);
+
+/*
+ * ALGs.
+ */
+
+int	npf_alg_icmp_init(npf_t *);
+int	npf_alg_icmp_fini(npf_t *);
 
 #endif

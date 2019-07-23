@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.11 2019/02/27 21:37:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12 2019/07/23 00:52:01 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -140,19 +140,7 @@ npf_fini(void)
 	return 0;
 }
 
-#if 1
-/*
- * When npf_init() is static and inlined into npf_modcmd() directly (either
- * by the human or GCC 7), then GCC 7 on 32 bit sparc do * something wrong
- * and CPUs hang up.  Making it not static works for some reason.
- *
- * Revert this when the real problem is found.
- */
-int npf_init(void);
-int
-#else
 static int
-#endif
 npf_init(void)
 {
 	npf_t *npf;
@@ -391,6 +379,7 @@ npf_ifaddrhook(void *arg, u_long cmd, void *arg2)
 	case SIOCAIFADDR_IN6:
 	case SIOCDIFADDR_IN6:
 #endif
+		KASSERT(ifa != NULL);
 		break;
 	default:
 		return;
