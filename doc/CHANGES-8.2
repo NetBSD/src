@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.11 2019/07/22 18:13:23 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.12 2019/07/23 08:47:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -322,4 +322,9 @@ usr.bin/vmstat/vmstat.c				1.226
 
 	Fix "vmstat -m" numbers running into each other.
 	[mrg, ticket #1304]
+
+sys/dev/pckbport/files.pckbport			1.10
+
+	hvkbd requires pckbd_keydesctab in wskbdmap_mfii.c.
+	[nakayama, ticket #1305]
 
