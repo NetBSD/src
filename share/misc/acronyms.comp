@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.281 2019/07/20 13:29:36 sevan Exp $
+$NetBSD: acronyms.comp,v 1.282 2019/07/23 18:13:47 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1283,6 +1283,7 @@ RDM	relational data model
 RDMA	remote direct memory access
 RDRAM	Rambus DRAM
 RE	regular expression
+REPL	read, evaluate, print, loop
 REST	representational state transfer
 RF	radio frequency
 RFI	radio frequency interference
