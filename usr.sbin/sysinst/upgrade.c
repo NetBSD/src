@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.11 2019/07/23 16:02:32 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.12 2019/07/23 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,7 @@ static int merge_X(const char *);
 void
 do_upgrade(void)
 {
-	struct install_partition_desc install;
+	struct install_partition_desc install = {};
 	int retcode = 0;
 	partman_go = 0;
 
@@ -64,20 +64,24 @@ do_upgrade(void)
 
 	get_ramsize();
 
-	if (find_disks(msg_string(MSG_upgrade)) < 0)
+	if (find_disks(msg_string(MSG_upgrade), true) < 0)
 		return;
 
-	if (pm->parts == NULL) {
+	if (pm->parts == NULL && !pm->cur_system) {
 		hit_enter_to_continue(MSG_noroot, NULL);
 		return;
 	}
 
-	if (pm->parts->pscheme->pre_update_verify) {
-		if (pm->parts->pscheme->pre_update_verify(pm->parts))
-			pm->parts->pscheme->write_to_disk(pm->parts);
-	}
+	if (!pm->cur_system) {
+		if (pm->parts->pscheme->pre_update_verify) {
+			if (pm->parts->pscheme->pre_update_verify(pm->parts))
+				pm->parts->pscheme->write_to_disk(pm->parts);
+		}
 
-	install_desc_from_parts(&install, pm->parts);
+		install_desc_from_parts(&install, pm->parts);
+	} else {
+		install.cur_system = true;
+	}
 
 	if (set_swap_if_low_ram(&install) < 0)
 		return;
@@ -195,7 +199,7 @@ merge_X(const char *xroot)
 void
 do_reinstall_sets()
 {
-	struct install_partition_desc install;
+	struct install_partition_desc install = {};
 	int retcode = 0;
 	partman_go = 0;
 
@@ -204,15 +208,19 @@ do_reinstall_sets()
 	if (!ask_noyes(NULL))
 		return;
 
-	if (find_disks(msg_string(MSG_reinstall)) < 0)
+	if (find_disks(msg_string(MSG_reinstall), true) < 0)
 		return;
 
-	if (pm->parts == NULL) {
-		hit_enter_to_continue(MSG_noroot, NULL);
-		return;
+	if (!pm->cur_system) {
+		if (pm->parts == NULL) {
+			hit_enter_to_continue(MSG_noroot, NULL);
+			return;
+		}
+
+		install_desc_from_parts(&install, pm->parts);
+	} else {
+		install.cur_system = true;
 	}
-
-	install_desc_from_parts(&install, pm->parts);
 
 	if (mount_disks(&install) != 0)
 		goto free_install;
