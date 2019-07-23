@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.285 2019/05/20 20:35:45 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.286 2019/07/23 17:39:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -44,6 +44,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_gprof.h"
 #include "opt_kleak.h"
+#include "opt_wsdisplay_compat.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
@@ -541,7 +542,12 @@ typedef struct cnm_state {
 #define cn_trap()	console_debugger()
 #endif
 #ifndef cn_isconsole
+#ifndef WSDISPLAY_MULTICONS
 #define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
+#else
+bool wsdisplay_cn_isconsole(dev_t);
+#define cn_isconsole(d)	wsdisplay_cn_isconsole(d)
+#endif
 #endif
 
 void cn_init_magic(cnm_state_t *);
