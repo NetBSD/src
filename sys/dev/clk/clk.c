@@ -1,4 +1,4 @@
-/* $NetBSD: clk.c,v 1.6 2019/01/30 01:20:47 jmcneill Exp $ */
+/* $NetBSD: clk.c,v 1.7 2019/07/23 17:44:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.6 2019/01/30 01:20:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.7 2019/07/23 17:44:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/kmem.h>
 
 #include <dev/clk/clk.h>
 #include <dev/clk/clk_backend.h>
@@ -135,11 +136,23 @@ clk_sysctl_parent_domain_helper(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
+static void
+clk_normalize_name(char *name)
+{
+	unsigned char *p;
+
+	for (p = (unsigned char *)name; *p; p++)
+		if (!isalpha(*p) && !isdigit(*p) && *p != '-' && *p != '_')
+			*p = '_';
+}
+
 int
 clk_attach(struct clk *clk)
 {
 	const struct sysctlnode *node;
 	struct clk_domain *domain = clk->domain;
+	char *name;
+	size_t namelen;
 	int error;
 
 	KASSERT(domain != NULL);
@@ -149,12 +162,17 @@ clk_attach(struct clk *clk)
 		return 0;
 	}
 
+	namelen = strlen(clk->name) + 1;
+	name = kmem_zalloc(namelen, KM_SLEEP);
+	memcpy(name, clk->name, namelen);
+	clk_normalize_name(name);
+
 	error = create_domain_node(domain);
 	if (error != 0)
 		goto sysctl_failed;
 
 	error = sysctl_createv(&clk_log, 0, &domain->node, &node,
-	    CTLFLAG_PRIVATE, CTLTYPE_NODE, clk->name, NULL,
+	    CTLFLAG_PRIVATE, CTLTYPE_NODE, name, NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
@@ -182,8 +200,10 @@ clk_attach(struct clk *clk)
 
 sysctl_failed:
 	if (error)
-		aprint_error("%s: failed to create sysctl node for %s: %d\n",
-		    domain->name, clk->name, error);
+		aprint_error("%s: failed to create sysctl node for %s (%s): %d\n",
+		    domain->name, clk->name, name, error);
+
+	kmem_free(name, namelen);
 	return error;
 }
 
