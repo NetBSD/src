@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.9 2019/06/22 20:46:07 christos Exp $ */
+/* $NetBSD: configmenu.c,v 1.10 2019/07/23 18:13:40 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -446,7 +446,7 @@ do_configmenu(struct install_partition_desc *install)
 	/* if the target isn't mounted already, figure it out. */
 	if (install != NULL && target_mounted() == 0) {
 		partman_go = 0;
-		if (find_disks(msg_string(MSG_configure_prior)) < 0)
+		if (find_disks(msg_string(MSG_configure_prior), true) < 0)
 			return;
 
 		if (mount_disks(install) != 0)

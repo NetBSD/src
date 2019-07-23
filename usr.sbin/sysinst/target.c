@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.7 2019/07/23 15:23:14 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.8 2019/07/23 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.7 2019/07/23 15:23:14 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.8 2019/07/23 18:13:40 martin Exp $");
 #endif
 
 /*
@@ -162,6 +162,9 @@ target_already_root(void)
 
 	if (pm == last_pm)
 		return last_res;
+
+	if (pm->cur_system)
+		return 1;
 
 	last_pm = pm;
 	last_res = 0;
