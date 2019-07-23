@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.19 2019/07/14 16:04:03 kamil Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20 2019/07/23 18:13:40 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1392,3 +1392,6 @@ message	gpt_flag_desc	{, (R)ozruchowa}
  *  $0 = file system type		FFSv2
  */
 message size_ptn_not_mounted		{(Inna: $0)}
+
+message running_system			{current system}
+

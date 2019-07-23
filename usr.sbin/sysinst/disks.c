@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.39 2019/07/23 15:23:14 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.40 2019/07/23 18:13:40 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -761,11 +761,32 @@ convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg)
 	return true;
 }
 
+static struct pm_devs *
+dummy_whole_system_pm(void)
+{
+	static struct pm_devs whole_system = {
+		.diskdev = "/",
+		.no_mbr = true,
+		.no_part = true,
+		.cur_system = true,
+	};
+	static bool init = false;
+
+	if (!init) {
+		strlcpy(whole_system.diskdev_descr,
+		    msg_string(MSG_running_system),
+		    sizeof whole_system.diskdev_descr);
+	}
+
+	return &whole_system;
+}
+
 int
-find_disks(const char *doingwhat)
+find_disks(const char *doingwhat, bool allow_cur_system)
 {
 	struct disk_desc disks[MAX_DISKS];
-	menu_ent dsk_menu[__arraycount(disks) + 1]; // + 1 for extended partitioning entry
+	/* need two more menu entries: current system + extended partitioning */
+	menu_ent dsk_menu[__arraycount(disks) + 2];
 	struct disk_desc *disk;
 	int i = 0, skipped = 0;
 	int already_found, numdisks, selected_disk = -1;
@@ -790,16 +811,23 @@ find_disks(const char *doingwhat)
 	 *                  all disks
 	 */
 	if (partman_go <= 0) {
-		if (numdisks == 0) {
+		if (numdisks == 0 && !allow_cur_system) {
 			/* No disks found! */
 			hit_enter_to_continue(MSG_nodisk, NULL);
 			/*endwin();*/
 			return -1;
 		} else {
-			/* One or more disks found! */
-			for (i = 0; i < numdisks; i++) {
+			/* One or more disks found or current system allowed */
+			i = 0;
+			if (allow_cur_system) {
+				dsk_menu[i].opt_name = MSG_running_system;
+				dsk_menu[i].opt_flags = OPT_EXIT;
+				dsk_menu[i].opt_action = set_menu_select;
+				i++;
+			}
+			for (; i < numdisks; i++) {
 				dsk_menu[i].opt_name =
-				    disks[i].dd_descr;
+				    disks[i-allow_cur_system].dd_descr;
 				dsk_menu[i].opt_flags = OPT_EXIT;
 				dsk_menu[i].opt_action = set_menu_select;
 			}
@@ -807,10 +835,10 @@ find_disks(const char *doingwhat)
 				dsk_menu[i].opt_name = MSG_partman;
 				dsk_menu[i].opt_flags = OPT_EXIT;
 				dsk_menu[i].opt_action = set_menu_select;
+				i++;
 			}
 			menu_no = new_menu(MSG_Available_disks,
-				dsk_menu, numdisks
-				 + ((partman_go<0)?1:0), -1,
+				dsk_menu, i, -1,
 				 4, 0, 0, MC_SCROLL,
 				NULL, NULL, NULL, NULL, NULL);
 			if (menu_no == -1)
@@ -818,6 +846,14 @@ find_disks(const char *doingwhat)
 			msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
 			process_menu(menu_no, &selected_disk);
 			free_menu(menu_no);
+			if (allow_cur_system) {
+				if (selected_disk == 0) {
+					pm = dummy_whole_system_pm();
+					return 1;
+				} else {
+					selected_disk--;
+				}
+			}
 		}
 		if (partman_go < 0 && selected_disk == numdisks) {
 			partman_go = 1;
@@ -1020,6 +1056,9 @@ make_filesystems(struct install_partition_desc *install)
 	struct disk_partitions *parts;
 	const char *mnt_opts = NULL, *fsname = NULL;
 
+	if (pm->cur_system)
+		return 1;
+
 	if (pm->no_part) {
 		/* check if this target device already has a ffs */
 		snprintf(rdev, sizeof rdev, _PATH_DEV "/r%s", pm->diskdev);
@@ -1170,6 +1209,9 @@ make_fstab(struct install_partition_desc *install)
 	const char *dump_dev = NULL;
 	const char *dev;
 	char dev_buf[PATH_MAX], swap_dev[PATH_MAX];
+
+	if (pm->cur_system)
+		return 1;
 
 	swap_dev[0] = 0;
 
@@ -1515,6 +1557,9 @@ mount_disks(struct install_partition_desc *install)
 	int   error;
 	char devdev[PATH_MAX];
 	size_t i;
+
+	if (install->cur_system)
+		return 0;
 
 	static struct lookfor fstabbuf[] = {
 		{"/dev/", "/dev/%s %s ffs %s", "c", NULL, 0, 0, foundffs},

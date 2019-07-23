@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.40 2019/07/23 16:02:32 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.41 2019/07/23 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -324,6 +324,7 @@ struct single_part_fs_edit {
 struct install_partition_desc {
 	size_t num;				/* how many entries in infos */
 	struct part_usage_info *infos;		/* individual partitions */
+	bool cur_system;			/* target is the life system */
 };
 
 /* variables */
@@ -383,6 +384,12 @@ struct pm_devs {
 	 * Used for wedges (dk*) or LVM devices.
 	 */
 	bool no_part;
+
+	/*
+	 * This is a pseudo-device representing the currently running
+	 * system (i.e. all mounted file systems).
+	 */
+	bool cur_system;
 
 	/* Actual values for current disk - set by find_disks() or
 	   md_get_info() */
@@ -592,7 +599,7 @@ void	toplevel(void);
 
 /* from disks.c */
 bool	get_default_cdrom(char *, size_t);
-int	find_disks(const char *);
+int	find_disks(const char *, bool);
 bool enumerate_disks(void *state,bool (*func)(void *state, const char *dev));
 bool is_cdrom_device(const char *dev, bool as_target);
 bool is_bootable_device(const char *dev);

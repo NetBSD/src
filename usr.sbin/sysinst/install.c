@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.8 2019/06/20 00:43:55 christos Exp $	*/
+/*	$NetBSD: install.c,v 1.9 2019/07/23 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,7 +119,7 @@ do_install(void)
 {
 	int find_disks_ret;
 	int retcode = 0;
-	struct install_partition_desc install;
+	struct install_partition_desc install = {};
 	struct disk_partitions *parts;
 
 #ifndef NO_PARTMAN
@@ -139,7 +139,7 @@ do_install(void)
 	get_ramsize();
 
 	/* Create and mount partitions */
-	find_disks_ret = find_disks(msg_string(MSG_install));
+	find_disks_ret = find_disks(msg_string(MSG_install), false);
 	if (partman_go == 1) {
 		if (partman() < 0) {
 			hit_enter_to_continue(MSG_abort_part, NULL);
