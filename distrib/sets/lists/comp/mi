@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2277 2019/06/10 10:28:41 mrg Exp $
+#	$NetBSD: mi,v 1.2278 2019/07/24 14:07:16 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5557,6 +5557,7 @@
 ./usr/share/man/cat3/archive_entry_linkresolver_free.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_linkresolver_new.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_linkresolver_set_strategy.0	comp-c-catman		.cat
+./usr/share/man/cat3/archive_entry_misc.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_mode.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_mtime.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_mtime_is_set.0	comp-c-catman		.cat
@@ -13613,6 +13614,7 @@
 ./usr/share/man/html3/archive_entry_linkresolver_free.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_linkresolver_new.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_linkresolver_set_strategy.html	comp-c-htmlman		html
+./usr/share/man/html3/archive_entry_misc.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_mtime.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_mtime_is_set.html	comp-c-htmlman		html
@@ -21506,6 +21508,7 @@
 ./usr/share/man/man3/archive_entry_linkresolver_free.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_linkresolver_new.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_linkresolver_set_strategy.3	comp-c-man		.man
+./usr/share/man/man3/archive_entry_misc.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_mode.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_mtime.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_mtime_is_set.3	comp-c-man		.man
