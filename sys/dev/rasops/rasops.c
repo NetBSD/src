@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.82 2019/07/24 18:33:49 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.83 2019/07/24 18:40:01 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.82 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.83 2019/07/24 18:40:01 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1081,9 +1081,6 @@ rasops_do_cursor(struct rasops_info *ri)
 	} else {
 		uint32_t tmp32, msk1, msk2;
 
-		msk1 = be32toh(0xffffffff >> (32 - (8 * slop1)));
-		msk2 = be32toh(0xffffffff << (32 - (8 * slop2)));
-
 		while (height--) {
 			dp = (uint8_t *)((uintptr_t)rp & ~3);
 			rp += ri->ri_stride;
@@ -1092,7 +1089,9 @@ rasops_do_cursor(struct rasops_info *ri)
 				hrp += ri->ri_stride;
 			}
 
-			if (msk1 != 0) {
+			if (slop1) {
+				msk1 =
+				    be32toh(0xffffffff >> (32 - (8 * slop1)));
 				tmp32 = *(uint32_t *)dp ^ msk1;
 				*(uint32_t *)dp = tmp32;
 				dp += 4;
@@ -1112,7 +1111,9 @@ rasops_do_cursor(struct rasops_info *ri)
 				}
 			}
 
-			if (msk2 != 0) {
+			if (slop2) {
+				msk2 =
+				    be32toh(0xffffffff << (32 - (8 * slop2)));
 				tmp32 = *(uint32_t *)dp ^ msk2;
 				*(uint32_t *)dp = tmp32;
 				if (ri->ri_hwbits)
