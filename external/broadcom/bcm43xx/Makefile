@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.4 2019/07/22 14:47:51 wiz Exp $
+# $NetBSD: Makefile,v 1.5 2019/07/24 06:53:42 wiz Exp $
 
 NOMAN=	# define
 
 FILES=	LICENCE.broadcom_bcm43xx BCM43430A1.hcd
 
-FILESDIR=	${FIRMWAREDIR}/bcm43xx
+FILESDIR=	/usr${FIRMWAREDIR}/bcm43xx
 
 .include <bsd.files.mk>
