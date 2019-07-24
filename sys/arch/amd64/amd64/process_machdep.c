@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.42 2019/07/20 18:25:11 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.43 2019/07/24 16:36:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.42 2019/07/20 18:25:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2019/07/24 16:36:47 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -224,12 +224,6 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	tf->tf_rip  = regs[_REG_RIP];
 	tf->tf_rflags = regs[_REG_RFLAGS];
 	tf->tf_rsp  = regs[_REG_RSP];
-
-#ifdef XENPV
-	/* see comment in cpu_setmcontext */
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#endif
 
 	return 0;
 }
