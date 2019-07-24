@@ -1,4 +1,4 @@
-/* $NetBSD: pca9685.c,v 1.1 2019/07/24 05:25:32 thorpej Exp $ */
+/* $NetBSD: pca9685.c,v 1.2 2019/07/24 05:47:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018, 2019 Jason R. Thorpe
@@ -27,18 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.1 2019/07/24 05:25:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.2 2019/07/24 05:47:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/bus.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/proc.h>
-#include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pca9685reg.h>
