@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -738,9 +739,6 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #ifdef INET
 				dhcp_abort(ifp);
 #endif
-#ifdef INET6
-				ipv6nd_expire(ifp, 0);
-#endif
 #ifdef DHCP6
 				dhcp6_abort(ifp);
 #endif
@@ -785,7 +783,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			/* Set any IPv6 Routers we remembered to expire
 			 * faster than they would normally as we
 			 * maybe on a new network. */
-			ipv6nd_expire(ifp, RTR_CARRIER_EXPIRE);
+			ipv6nd_startexpire(ifp);
 #endif
 			/* RFC4941 Section 3.5 */
 			ipv6_gentempifid(ifp);
@@ -1003,6 +1001,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 	struct if_head *ifs;
 	struct interface *ifp, *iff;
 	const char * const argv[] = { ifname };
+	int e;
 
 	ctx = arg;
 	if (action == -1) {
@@ -1026,13 +1025,17 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 		logerr(__func__);
 		return -1;
 	}
+
 	ifp = if_find(ifs, ifname);
 	if (ifp == NULL) {
 		/* This can happen if an interface is quickly added
 		 * and then removed. */
 		errno = ENOENT;
-		return -1;
+		e = -1;
+		goto out;
 	}
+	e = 1;
+
 	/* Check if we already have the interface */
 	iff = if_find(ctx->ifaces, ifp->name);
 
@@ -1061,6 +1064,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 			dhcpcd_prestartinterface(iff);
 	}
 
+out:
 	/* Free our discovered list */
 	while ((ifp = TAILQ_FIRST(ifs))) {
 		TAILQ_REMOVE(ifs, ifp, next);
@@ -1068,7 +1072,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 	}
 	free(ifs);
 
-	return 1;
+	return e;
 }
 
 static void
@@ -1081,7 +1085,8 @@ dhcpcd_handlelink(void *arg)
 			dhcpcd_linkoverflow(ctx);
 			return;
 		}
-		logerr(__func__);
+		if (errno != ENOTSUP)
+			logerr(__func__);
 	}
 }
 
@@ -1092,6 +1097,22 @@ dhcpcd_checkcarrier(void *arg)
 
 	dhcpcd_handlecarrier(ifp->ctx, LINK_UNKNOWN, ifp->flags, ifp->name);
 }
+
+#ifndef SMALL
+static void
+dhcpcd_setlinkrcvbuf(struct dhcpcd_ctx *ctx)
+{
+	socklen_t socklen;
+
+	if (ctx->link_rcvbuf == 0)
+		return;
+
+	socklen = sizeof(ctx->link_rcvbuf);
+	if (setsockopt(ctx->link_fd, SOL_SOCKET,
+	    SO_RCVBUF, &ctx->link_rcvbuf, socklen) == -1)
+		logerr(__func__);
+}
+#endif
 
 void
 dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
@@ -1113,10 +1134,17 @@ dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 		eloop_exit(ctx->eloop, EXIT_FAILURE);
 		return;
 	}
+#ifndef SMALL
+	dhcpcd_setlinkrcvbuf(ctx);
+#endif
 	eloop_event_add(ctx->eloop, ctx->link_fd, dhcpcd_handlelink, ctx);
 
 	/* Work out the current interfaces. */
 	ifaces = if_discover(ctx, &ifaddrs, ctx->ifc, ctx->ifv);
+	if (ifaces == NULL) {
+		logerr(__func__);
+		return;
+	}
 
 	/* Punt departed interfaces */
 	TAILQ_FOREACH_SAFE(ifp, ctx->ifaces, next, ifn) {
@@ -1126,21 +1154,23 @@ dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 	}
 
 	/* Add new interfaces */
-	TAILQ_FOREACH_SAFE(ifp, ifaces, next, ifn) {
+	while ((ifp = TAILQ_FIRST(ifaces)) != NULL ) {
+		TAILQ_REMOVE(ifaces, ifp, next);
 		ifp1 = if_find(ctx->ifaces, ifp->name);
 		if (ifp1 != NULL) {
 			/* If the interface already exists,
 			 * check carrier state. */
 			eloop_timeout_add_sec(ctx->eloop, 0,
 			    dhcpcd_checkcarrier, ifp1);
+			if_free(ifp);
 			continue;
 		}
-		TAILQ_REMOVE(ifaces, ifp, next);
 		TAILQ_INSERT_TAIL(ctx->ifaces, ifp, next);
 		if (ifp->active)
 			eloop_timeout_add_sec(ctx->eloop, 0,
 			    dhcpcd_prestartinterface, ifp);
 	}
+	free(ifaces);
 
 	/* Update address state. */
 	if_markaddrsstale(ctx->ifaces);
@@ -1958,6 +1988,9 @@ printpidfile:
 		logerr("%s: if_opensockets", __func__);
 		goto exit_failure;
 	}
+#ifndef SMALL
+	dhcpcd_setlinkrcvbuf(&ctx);
+#endif
 
 	/* When running dhcpcd against a single interface, we need to retain
 	 * the old behaviour of waiting for an IP address */
@@ -2057,7 +2090,6 @@ printpidfile:
 	free_options(&ctx, ifo);
 	ifo = NULL;
 
-	if_sortinterfaces(&ctx);
 	TAILQ_FOREACH(ifp, ctx.ifaces, next) {
 		if (ifp->active)
 			eloop_timeout_add_sec(ctx.eloop, 0,
@@ -2114,5 +2146,11 @@ exit1:
 	if (ctx.options & DHCPCD_FORKED)
 		_exit(i); /* so atexit won't remove our pidfile */
 #endif
+#ifdef HAVE_OPEN_MEMSTREAM
+	if (ctx.script_fp)
+		fclose(ctx.script_fp);
+#endif
+	free(ctx.script_buf);
+	free(ctx.script_env);
 	return i;
 }

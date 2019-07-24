@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -582,10 +583,14 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 
 #define BIT(n) (1UL << (n))
 #define BIT_MASK(len) (BIT(len) - 1)
-		if (ia->sla_max == 0)
+		if (ia->sla_max == 0) {
 			/* Work out the real sla_max from our bits used */
-			ia->sla_max = (uint32_t)BIT_MASK(asla.prefix_len -
-			    prefix->prefix_len);
+			bits = asla.prefix_len - prefix->prefix_len;
+			/* Make static analysis happy.
+			 * Bits cannot be bigger than 32 thanks to fls32. */
+			assert(bits <= 32);
+			ia->sla_max = (uint32_t)BIT_MASK(bits);
+		}
 	}
 
 	if (ipv6_userprefix(&prefix->prefix, prefix->prefix_len,
@@ -2845,26 +2850,11 @@ dhcp6_delegate_prefix(struct interface *ifp)
 			struct dhcp6_state *s = D6_STATE(ifd);
 
 			ipv6_addaddrs(&s->addrs);
-
-			/*
-			 * Can't add routes here because that will trigger
-			 * interface sorting which may break the current
-			 * enumeration.
-			 * This doesn't really matter thanks to DaD because
-			 * calling the script will be delayed and routes
-			 * will get re-built if needed first.
-			 * This only cause minor confusion when dhcpcd is
-			 * restarted and confirms a lease where prior delegation
-			 * has already been assigned, because it will log it
-			 * added routes after the script has run.
-			 * The routes should still be there and fine though.
-			 */
 			dhcp6_script_try_run(ifd, 1);
 		}
 	}
 
 	/* Now all addresses have been added, rebuild the routing table. */
-	if_initrt(ifp->ctx, AF_INET6);
 	rt_build(ifp->ctx, AF_INET6);
 }
 
@@ -2929,7 +2919,6 @@ dhcp6_find_delegates(struct interface *ifp)
 		state = D6_STATE(ifp);
 		state->state = DH6S_DELEGATED;
 		ipv6_addaddrs(&state->addrs);
-		if_initrt(ifp->ctx, AF_INET6);
 		rt_build(ifp->ctx, AF_INET6);
 		dhcp6_script_try_run(ifp, 1);
 	}
@@ -3167,7 +3156,6 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 		else
 			lognewinfo("%s: expire in %"PRIu32" seconds",
 			    ifp->name, state->expire);
-		if_initrt(ifp->ctx, AF_INET6);
 		rt_build(ifp->ctx, AF_INET6);
 		if (!timed_out)
 			dhcp6_writelease(ifp);
@@ -3971,24 +3959,22 @@ dhcp6_handleifa(int cmd, struct ipv6_addr *ia, pid_t pid)
 }
 
 ssize_t
-dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
+dhcp6_env(FILE *fp, const char *prefix, const struct interface *ifp,
     const struct dhcp6_message *m, size_t len)
 {
 	const struct if_options *ifo;
 	struct dhcp_opt *opt, *vo;
 	const uint8_t *p;
 	struct dhcp6_option o;
-	size_t i, n;
+	size_t i;
 	char *pfx;
 	uint32_t en;
 	const struct dhcpcd_ctx *ctx;
 #ifndef SMALL
 	const struct dhcp6_state *state;
 	const struct ipv6_addr *ap;
-	char *v, *val;
 #endif
 
-	n = 0;
 	if (m == NULL)
 		goto delegated;
 
@@ -4003,28 +3989,20 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 	ctx = ifp->ctx;
 
 	/* Zero our indexes */
-	if (env) {
-		for (i = 0, opt = ctx->dhcp6_opts;
-		    i < ctx->dhcp6_opts_len;
-		    i++, opt++)
-			dhcp_zero_index(opt);
-		for (i = 0, opt = ifp->options->dhcp6_override;
-		    i < ifp->options->dhcp6_override_len;
-		    i++, opt++)
-			dhcp_zero_index(opt);
-		for (i = 0, opt = ctx->vivso;
-		    i < ctx->vivso_len;
-		    i++, opt++)
-			dhcp_zero_index(opt);
-		i = strlen(prefix) + strlen("_dhcp6") + 1;
-		pfx = malloc(i);
-		if (pfx == NULL) {
-			logerr(__func__);
-			return -1;
-		}
-		snprintf(pfx, i, "%s_dhcp6", prefix);
-	} else
-		pfx = NULL;
+	for (i = 0, opt = ctx->dhcp6_opts;
+	    i < ctx->dhcp6_opts_len;
+	    i++, opt++)
+		dhcp_zero_index(opt);
+	for (i = 0, opt = ifp->options->dhcp6_override;
+	    i < ifp->options->dhcp6_override_len;
+	    i++, opt++)
+		dhcp_zero_index(opt);
+	for (i = 0, opt = ctx->vivso;
+	    i < ctx->vivso_len;
+	    i++, opt++)
+		dhcp_zero_index(opt);
+	if (asprintf(&pfx, "%s_dhcp6", prefix) == -1)
+		return -1;
 
 	/* Unlike DHCP, DHCPv6 options *may* occur more than once.
 	 * There is also no provision for option concatenation unlike DHCP. */
@@ -4070,15 +4048,13 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 				opt = NULL;
 		}
 		if (opt) {
-			n += dhcp_envoption(ifp->ctx,
-			    env == NULL ? NULL : &env[n],
-			    pfx, ifp->name,
+			dhcp_envoption(ifp->ctx,
+			    fp, pfx, ifp->name,
 			    opt, dhcp6_getoption, p, o.len);
 		}
 		if (vo) {
-			n += dhcp_envoption(ifp->ctx,
-			    env == NULL ? NULL : &env[n],
-			    pfx, ifp->name,
+			dhcp_envoption(ifp->ctx,
+			    fp, pfx, ifp->name,
 			    vo, dhcp6_getoption,
 			    p + sizeof(en),
 			    o.len - sizeof(en));
@@ -4090,38 +4066,29 @@ delegated:
 #ifndef SMALL
         /* Needed for Delegated Prefixes */
 	state = D6_CSTATE(ifp);
-	i = 0;
 	TAILQ_FOREACH(ap, &state->addrs, next) {
-		if (ap->delegating_prefix) {
-			i += strlen(ap->saddr) + 1;
-		}
+		if (ap->delegating_prefix)
+			break;
 	}
-	if (env && i) {
-		i += strlen(prefix) + strlen("_delegated_dhcp6_prefix=");
-                v = val = env[n] = malloc(i);
-		if (v == NULL) {
-			logerr(__func__);
+	if (ap == NULL)
+		return 1;
+	if (fprintf(fp, "%s_delegated_dhcp6_prefix=", prefix) == -1)
+		return -1;
+	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (ap->delegating_prefix == NULL)
+			continue;
+		if (ap != TAILQ_FIRST(&state->addrs)) {
+			if (fputc(' ', fp) == EOF)
+				return -1;
+		}
+		if (fprintf(fp, "%s", ap->saddr) == -1)
 			return -1;
-		}
-		v += snprintf(val, i, "%s_delegated_dhcp6_prefix=", prefix);
-		TAILQ_FOREACH(ap, &state->addrs, next) {
-			if (ap->delegating_prefix) {
-				/* Can't use stpcpy(3) due to "security" */
-				const char *sap = ap->saddr;
-
-				do
-					*v++ = *sap;
-				while (*++sap != '\0');
-				*v++ = ' ';
-			}
-		}
-		*--v = '\0';
         }
-	if (i)
-		n++;
+	if (fputc('\0', fp) == EOF)
+		return -1;
 #endif
 
-	return (ssize_t)n;
+	return 1;
 }
 
 int

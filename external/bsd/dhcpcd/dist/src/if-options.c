@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -64,7 +65,7 @@
 #define O_IPV6RS		O_BASE + 4
 #define O_NOIPV6RS		O_BASE + 5
 #define O_IPV6RA_FORK		O_BASE + 6
-// unused			O_BASE + 7
+#define O_LINK_RCVBUF		O_BASE + 7
 // unused			O_BASE + 8
 #define O_NOALIAS		O_BASE + 9
 #define O_IA_NA			O_BASE + 10
@@ -204,6 +205,7 @@ const struct option cf_options[] = {
 	{"lastleaseextend", no_argument,       NULL, O_LASTLEASE_EXTEND},
 	{"inactive",        no_argument,       NULL, O_INACTIVE},
 	{"mudurl",          required_argument, NULL, O_MUDURL},
+	{"link_rcvbuf",     required_argument, NULL, O_LINK_RCVBUF},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -724,8 +726,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			logerr(__func__);
 			return -1;
 		}
-		parse_str(ifo->script, dl, arg, PARSE_STRING_NULL);
-		if (ifo->script[0] == '\0' ||
+		s = parse_str(ifo->script, dl, arg, PARSE_STRING_NULL);
+		if (s == -1 ||
+		    ifo->script[0] == '\0' ||
 		    strcmp(ifo->script, "/dev/null") == 0)
 		{
 			free(ifo->script);
@@ -1122,16 +1125,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				*fp = ' ';
 				return -1;
 			}
-			if ((rt = rt_new0(ctx)) == NULL) {
-				*fp = ' ';
+			*fp = ' ';
+			if ((rt = rt_new0(ctx)) == NULL)
 				return -1;
-			}
 			sa_in_init(&rt->rt_dest, &addr);
 			sa_in_init(&rt->rt_netmask, &addr2);
 			sa_in_init(&rt->rt_gateway, &addr3);
-			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
-			*fp = ' ';
-			add_environ(&ifo->config, arg, 0);
+			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
+				add_environ(&ifo->config, arg, 0);
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
 			if (parse_addr(&addr, NULL, p) == -1)
 				return -1;
@@ -1141,8 +1142,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_dest, &addr2);
 			sa_in_init(&rt->rt_netmask, &addr2);
 			sa_in_init(&rt->rt_gateway, &addr);
-			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
-			add_environ(&ifo->config, arg, 0);
+			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
+				add_environ(&ifo->config, arg, 0);
 		} else if (strncmp(arg, "interface_mtu=",
 		    strlen("interface_mtu=")) == 0 ||
 		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
@@ -1868,6 +1869,7 @@ err_sla:
 		    ifo->vivco_len + 1, sizeof(*ifo->vivco));
 		if (vivco == NULL) {
 			logerr( __func__);
+			free(np);
 			return -1;
 		}
 		ifo->vivco = vivco;
@@ -2160,6 +2162,16 @@ err_sla:
 		}
 		*ifo->mudurl = (uint8_t)s;
 		break;
+	case O_LINK_RCVBUF:
+#ifndef SMALL
+		ARG_REQUIRED;
+		ctx->link_rcvbuf = (int)strtoi(arg, NULL, 0, 0, INT32_MAX, &e);
+		if (e) {
+			logerrx("failed to convert link_rcvbuf %s", arg);
+			return -1;
+		}
+#endif
+		break;
 	default:
 		return 0;
 	}
@@ -2269,7 +2281,7 @@ default_config(struct dhcpcd_ctx *ctx)
 	ifo->script = UNCONST(default_script);
 	ifo->metric = -1;
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
-	TAILQ_INIT(&ifo->routes);
+	rb_tree_init(&ifo->routes, &rt_compare_proto_ops);
 #ifdef AUTH
 	TAILQ_INIT(&ifo->auth.tokens);
 #endif
@@ -2326,6 +2338,9 @@ read_config(struct dhcpcd_ctx *ctx,
 
 	buf = NULL;
 	buflen = 0;
+
+	/* Reset route order */
+	ctx->rt_order = 0;
 
 	/* Parse our embedded options file */
 	if (ifname == NULL && !(ctx->options & DHCPCD_PRINT_PIDFILE)) {
