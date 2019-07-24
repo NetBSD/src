@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.10 2019/04/21 22:30:41 thorpej Exp $ */
+/* $NetBSD: exec.c,v 1.11 2019/07/24 11:40:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -330,6 +330,10 @@ exec_netbsd(const char *fname, const char *args)
 		load_fdt_overlays();
 		efi_fdt_initrd(initrd_addr, initrd_size);
 		efi_fdt_bootargs(args);
+#ifdef EFIBOOT_ACPI
+		if (efi_acpi_available())
+			efi_fdt_gop();
+#endif
 		efi_fdt_memory_map();
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.15 2019/04/21 22:30:41 thorpej Exp $ */
+/* $NetBSD: efifdt.c,v 1.16 2019/07/24 11:40:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -185,13 +185,19 @@ efi_fdt_memory_map(void)
 	EFI_MEMORY_DESCRIPTOR *md, *memmap;
 	UINT32 descver;
 	UINT64 phys_start, phys_size;
-	int n, memory;
+	int n, memory, chosen;
 
 	memory = fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH);
 	if (memory < 0)
 		memory = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_MEMORY_NODE_NAME);
 	if (memory < 0)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
 
 	fdt_delprop(fdt_data, memory, "reg");
 
@@ -202,6 +208,12 @@ efi_fdt_memory_map(void)
 	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
 		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
 			continue;
+
+		fdt_appendprop_u32(fdt_data, chosen, "netbsd,uefi-memory-map", md->Type);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->PhysicalStart);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->NumberOfPages);
+		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->Attribute);
+
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
 			continue;
 		if (!FDT_MEMORY_USABLE(md))
@@ -239,6 +251,70 @@ efi_fdt_memory_map(void)
 }
 
 void
+efi_fdt_gop(void)
+{
+	EFI_STATUS status;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *mode;
+	EFI_HANDLE *gop_handle;
+	UINTN ngop_handle, n;
+	char buf[48];
+	int fb;
+
+	status = LibLocateHandle(ByProtocol, &GraphicsOutputProtocol, NULL, &ngop_handle, &gop_handle);
+	if (EFI_ERROR(status) || ngop_handle == 0)
+		return;
+
+	for (n = 0; n < ngop_handle; n++) {
+		status = uefi_call_wrapper(BS->HandleProtocol, 3, gop_handle[n], &GraphicsOutputProtocol, (void **)&gop);
+		if (EFI_ERROR(status))
+			continue;
+
+		mode = gop->Mode;
+		if (mode == NULL)
+			continue;
+
+#ifdef EFIBOOT_DEBUG
+		printf("GOP: FB @ 0x%lx size 0x%lx\n", mode->FrameBufferBase, mode->FrameBufferSize);
+		printf("GOP: Version %d\n", mode->Info->Version);
+		printf("GOP: HRes %d VRes %d\n", mode->Info->HorizontalResolution, mode->Info->VerticalResolution);
+		printf("GOP: PixelFormat %d\n", mode->Info->PixelFormat);
+		printf("GOP: PixelBitmask R 0x%x G 0x%x B 0x%x Res 0x%x\n",
+		    mode->Info->PixelInformation.RedMask,
+		    mode->Info->PixelInformation.GreenMask,
+		    mode->Info->PixelInformation.BlueMask,
+		    mode->Info->PixelInformation.ReservedMask);
+		printf("GOP: Pixels per scanline %d\n", mode->Info->PixelsPerScanLine);
+#endif
+
+		if (mode->Info->PixelFormat == PixelBltOnly) {
+			printf("GOP: PixelBltOnly pixel format not supported\n");
+			continue;
+		}
+
+		snprintf(buf, sizeof(buf), "framebuffer@%lx", mode->FrameBufferBase);
+		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/chosen"), buf);
+		if (fb < 0)
+			panic("FDT: Failed to create framebuffer node");
+
+		fdt_appendprop_string(fdt_data, fb, "compatible", "simple-framebuffer");
+		fdt_appendprop_string(fdt_data, fb, "status", "okay");
+		fdt_appendprop_u64(fdt_data, fb, "reg", mode->FrameBufferBase);
+		fdt_appendprop_u64(fdt_data, fb, "reg", mode->FrameBufferSize);
+		fdt_appendprop_u32(fdt_data, fb, "width", mode->Info->HorizontalResolution);
+		fdt_appendprop_u32(fdt_data, fb, "height", mode->Info->VerticalResolution);
+		fdt_appendprop_u32(fdt_data, fb, "stride", mode->Info->PixelsPerScanLine * 4);	/* XXX */
+		fdt_appendprop_string(fdt_data, fb, "format", "a8b8g8r8");
+
+		snprintf(buf, sizeof(buf), "/chosen/framebuffer@%lx", mode->FrameBufferBase);
+		fdt_setprop_string(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH),
+		    "stdout-path", buf);
+
+		return;
+	}
+}
+
+void
 efi_fdt_bootargs(const char *bootargs)
 {
 	struct efi_block_part *bpart = efi_block_boot_part();
@@ -250,6 +326,10 @@ efi_fdt_bootargs(const char *bootargs)
 		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
 	if (chosen < 0)
 		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	fdt_setprop_u32(fdt_data, chosen, "#address-cells", 2);
+	fdt_setprop_u32(fdt_data, chosen, "#size-cells", 2);
+	fdt_setprop_empty(fdt_data, chosen, "ranges");
 
 	if (*bootargs)
 		fdt_setprop_string(fdt_data, chosen, "bootargs", bootargs);

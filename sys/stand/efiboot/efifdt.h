@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.h,v 1.5 2019/04/21 22:30:41 thorpej Exp $ */
+/* $NetBSD: efifdt.h,v 1.6 2019/07/24 11:40:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 int efi_fdt_probe(void);
 void efi_fdt_memory_map(void);
+void efi_fdt_gop(void);
 int efi_fdt_set_data(void *);
 void *efi_fdt_data(void);
 int efi_fdt_size(void);
