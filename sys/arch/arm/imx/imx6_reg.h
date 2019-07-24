@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.9 2019/07/24 11:20:55 hkenken Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.10 2019/07/24 11:58:00 hkenken Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,9 +143,6 @@
 #define	AIPS1_USBPHY2_BASE	0x000ca000
 #define	AIPS1_USBPHY1_BASE	0x000c9000
 #define	AIPS1_USBPHY_SIZE	0x00001000
-
-#define	AIPS1_CCM_ANALOG_BASE	0x000c8000
-#define	AIPS1_CCM_ANALOG_SIZE	0x00001000
 
 #define	AIPS1_CCM_BASE		0x000c4000
 #define	AIPS1_CCM_SIZE		0x00004000
