@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_ioreg.h,v 1.2 2010/10/07 12:40:34 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_ioreg.h,v 1.3 2019/07/24 05:45:42 msaitoh Exp $	*/
 /*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 /* CMD52 arguments */
 #define SD_ARG_CMD52_READ		(0<<31)
-#define SD_ARG_CMD52_WRITE		(1<<31)
+#define SD_ARG_CMD52_WRITE		(1UL<<31)
 #define SD_ARG_CMD52_FUNC_SHIFT		28
 #define SD_ARG_CMD52_FUNC_MASK		0x7
 #define SD_ARG_CMD52_EXCHANGE		(1<<27)
