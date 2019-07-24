@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2019/02/04 04:05:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2019/07/24 08:37:59 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -16,10 +16,6 @@ COPTS.regexec.c+=	-Wno-old-style-definition
 COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
-.endif
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.log1.c+=		-Wno-error=implicit-fallthrough
 .endif
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I.
