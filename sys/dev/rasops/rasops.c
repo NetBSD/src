@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.85 2019/07/24 19:31:12 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.86 2019/07/24 19:33:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.85 2019/07/24 19:31:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.86 2019/07/24 19:33:35 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -133,28 +133,6 @@ const uint8_t rasops_isgray[16] = {
 	1, 0, 0, 0,
 	0, 0, 0, 1
 };
-
-#ifdef GENFB_MAC68K
-static const uint8_t apple_devcmap[16] = {
-	0xff,	/* black	0x00, 0x00, 0x00 */
-	0x6b,	/* red		0x99, 0x00, 0x00 */
-	0xc5,	/* green	0x00, 0x99, 0x00 */
-	0x59,	/* yellow	0x99, 0x99, 0x00 */
-	0xd4,	/* blue		0x00, 0x00, 0x99 */
-	0x68,	/* magenta	0x99, 0x00, 0x99 */
-	0xc2,	/* cyan		0x00, 0x99, 0x99 */
-	0x2b,	/* white	0xcc, 0xcc, 0xcc */
-
-	0x56,	/* black	0x99, 0x99, 0x99 */
-	0x23,	/* red		0xff, 0x00, 0x00 */
-	0xb9,	/* green	0x00, 0xff, 0x00 */
-	0x05,	/* yellow	0xff, 0xff, 0x00 */
-	0xd2,	/* blue		0x00, 0x00, 0xff */
-	0x1e,	/* magenta	0xff, 0x00, 0xff */
-	0xb4,	/* cyan		0x00, 0xff, 0xff */
-	0x00,	/* white	0xff, 0xff, 0xff */
-};
-#endif
 
 /* Generic functions */
 static void	rasops_copyrows(void *, int, int, int);
@@ -866,15 +844,9 @@ rasops_init_devcmap(struct rasops_info *ri)
 
 	case 8:
 		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
-			for (i = 0; i < 16; i++) {
-#ifdef GENFB_MAC68K
-				c = apple_devcmap[i];
-#else
-				c = i;
-#endif
+			for (i = 0; i < 16; i++)
 				ri->ri_devcmap[i] =
-				    c | (c<<8) | (c<<16) | (c<<24);
-			}
+				    i | (i<<8) | (i<<16) | (i<<24);
 			return;
 		}
 	}
