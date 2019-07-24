@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.39 2019/07/24 10:15:23 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.40 2019/07/24 10:17:52 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.39 2019/07/24 10:15:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.40 2019/07/24 10:17:52 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.39 2019/07/24 10:15:23 knakahara Exp $"
     mutex_owned((_rxq)->vxrxq_mtx)
 
 #define VMXNET3_TXQ_LOCK(_txq)		mutex_enter((_txq)->vxtxq_mtx)
+#define VMXNET3_TXQ_TRYLOCK(_txq)	mutex_tryenter((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_UNLOCK(_txq)	mutex_exit((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_LOCK_ASSERT(_txq)		\
     mutex_owned((_txq)->vxtxq_mtx)
@@ -181,6 +182,8 @@ struct vmxnet3_txqueue {
 	struct vmxnet3_txq_stats vxtxq_stats;
 	struct vmxnet3_txq_shared *vxtxq_ts;
 	char vxtxq_name[16];
+
+	void *vxtxq_si;
 };
 
 struct vmxnet3_rxq_stats {
@@ -375,6 +378,7 @@ void vmxnet3_start_locked(struct ifnet *);
 void vmxnet3_start(struct ifnet *);
 void vmxnet3_transmit_locked(struct ifnet *, struct vmxnet3_txqueue *);
 int vmxnet3_transmit(struct ifnet *, struct mbuf *);
+void vmxnet3_deferred_transmit(void *);
 
 void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, void *);
@@ -1059,6 +1063,9 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 	txq->vxtxq_sc = sc;
 	txq->vxtxq_id = q;
 
+	txq->vxtxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    vmxnet3_deferred_transmit, txq);
+
 	txr->vxtxr_ndesc = sc->vmx_ntxdescs;
 	txr->vxtxr_txbuf = kmem_zalloc(txr->vxtxr_ndesc *
 	    sizeof(struct vmxnet3_txbuf), KM_SLEEP);
@@ -1146,6 +1153,8 @@ vmxnet3_destroy_txq(struct vmxnet3_txqueue *txq)
 
 	txq->vxtxq_sc = NULL;
 	txq->vxtxq_id = -1;
+
+	softint_disestablish(txq->vxtxq_si);
 
 	while ((m = pcq_get(txq->vxtxq_interq)) != NULL)
 		m_freem(m);
@@ -2209,7 +2218,10 @@ vmxnet3_txq_intr(void *xtxq)
 
 	VMXNET3_TXQ_LOCK(txq);
 	vmxnet3_txq_eof(txq);
-	if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
+	/* for ALTQ */
+	if (txq->vxtxq_id == 0)
+		if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
+	softint_schedule(txq->vxtxq_si);
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	vmxnet3_enable_intr(sc, txq->vxtxq_intr_idx);
@@ -2880,11 +2892,27 @@ vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	VMXNET3_TXQ_LOCK(txq);
-	vmxnet3_transmit_locked(ifp, txq);
-	VMXNET3_TXQ_UNLOCK(txq);
+	if (VMXNET3_TXQ_TRYLOCK(txq)) {
+		vmxnet3_transmit_locked(ifp, txq);
+		VMXNET3_TXQ_UNLOCK(txq);
+	} else {
+		softint_schedule(txq->vxtxq_si);
+	}
 
 	return 0;
+}
+
+void
+vmxnet3_deferred_transmit(void *arg)
+{
+	struct vmxnet3_txqueue *txq = arg;
+	struct vmxnet3_softc *sc = txq->vxtxq_sc;
+	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
+
+	VMXNET3_TXQ_LOCK(txq);
+	if (pcq_peek(txq->vxtxq_interq) != NULL)
+		vmxnet3_transmit_locked(ifp, txq);
+	VMXNET3_TXQ_UNLOCK(txq);
 }
 
 void
