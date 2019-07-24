@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.26 2018/03/12 07:35:45 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.27 2019/07/24 10:45:47 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -362,6 +362,7 @@ __CI_TBL(0, 0x02,    2, 0, 0, NULL), \
 __CI_TBL(0, 0x04,    4, 0, 0, NULL), \
 __CI_TBL(0, 0x06,    8, 0, 0, NULL), \
 __CI_TBL(0, 0x08,   16, 0, 0, NULL), \
+__CI_TBL(0, 0x09,   16, 0, 0, NULL), \
 __CI_TBL(0, 0x0a,   32, 0, 0, NULL), \
 __CI_TBL(0, 0x0b,   48, 0, 0, NULL), \
 __CI_TBL(0, 0x0c,   64, 0, 0, NULL), \
