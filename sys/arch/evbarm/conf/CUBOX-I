@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.20 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: CUBOX-I,v 1.21 2019/07/24 12:33:18 hkenken Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -208,7 +208,6 @@ imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
 imxgpio5	at axi? addr 0x020b0000 irqbase 416 irq 108
 imxgpio6	at axi? addr 0x020b4000 irqbase 448 irq 110
 gpio*		at imxgpio?
-options 	IMX_GPIO_INTR_SPLIT
 
 # Clock Control
 imxccm0		at axi? addr 0x020c4000

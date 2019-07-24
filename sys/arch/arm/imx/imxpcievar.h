@@ -1,7 +1,7 @@
-/*	$NetBSD: imx51var.h,v 1.7 2019/07/24 12:33:18 hkenken Exp $ */
+/*	$NetBSD: imxpcievar.h,v 1.1 2019/07/24 12:33:18 hkenken Exp $	*/
 
 /*
- * Copyright (c) 2015 Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_IMX_IMX51VAR_H
-#define	_ARM_IMX_IMX51VAR_H
+#ifndef	_ARM_IMX_IMXPCIEVAR_H_
+#define	_ARM_IMX_IMXPCIEVAR_H_
 
-struct imxfb_attach_args {
-	void			*ifb_fb;
-	bus_dma_tag_t		 ifb_dmat;
-	bus_dmamap_t		 ifb_dmamap;
-	bus_dma_segment_t	*ifb_dmasegs;
-	int			 ifb_ndmasegs;
-	u_int			 ifb_width;
-	u_int			 ifb_height;
-	u_int			 ifb_depth;
-	u_int			 ifb_stride;
-	device_t		 ifb_outputdev;
+struct imxpcie_ih;
+
+struct imxpcie_softc {
+	device_t sc_dev;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_root_ioh;
+	bus_space_handle_t sc_gpr_ioh;
+	bus_dma_tag_t sc_dmat;
+
+	paddr_t sc_root_addr;
+	size_t sc_root_size;
+
+	struct arm32_pci_chipset sc_pc;
+
+	TAILQ_HEAD(, imxpcie_ih) sc_intrs;
+
+	void *sc_ih;
+	kmutex_t sc_lock;
+	u_int sc_intrgen;
+
+	struct clk *sc_clk_pcie_axi;
+	struct clk *sc_clk_lvds1_gate;
+	struct clk *sc_clk_pcie_ref;
+
+	void *sc_cookie;
+	void (* sc_pci_netbsd_configure)(void *);
+	uint32_t (* sc_gpr_read)(void *, uint32_t);
+	void (* sc_gpr_write)(void *, uint32_t, uint32_t);
+	void (* sc_reset)(void *);
 };
 
-void	imx_genfb_set_videomode(device_t, u_int, u_int);
-
-extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
-extern struct arm32_bus_dma_tag arm_generic_dma_tag;
-extern struct arm32_bus_dma_tag imx_bus_dma_tag;
-
-struct axi_attach_args {
-	const char	*aa_name;
-	bus_space_tag_t	aa_iot;
-	bus_dma_tag_t	aa_dmat;
-	bus_addr_t	aa_addr;
-	bus_size_t	aa_size;
-	int		aa_irq;
-	int		aa_irqbase;
+struct imxpcie_ih {
+	int (*ih_handler)(void *);
+	void *ih_arg;
+	int ih_ipl;
+	TAILQ_ENTRY(imxpcie_ih) ih_entry;
 };
 
-/* iomux utility functions */
-struct iomux_conf {
-	u_int pin;
-#define	IOMUX_CONF_EOT	((u_int)(-1))
-	u_short mux;
-	u_short pad;
-};
+int imxpcie_intr(void *);
+void imxpcie_attach_common(struct imxpcie_softc *);
 
-void iomux_set_function(u_int, u_int);
-void iomux_set_pad(u_int, u_int);
-//void iomux_set_input(u_int, u_int);
-void iomux_mux_config(const struct iomux_conf *);
-
-#endif	/* _ARM_IMX_IMX51VAR_H */
+#endif	/* _ARM_IMX_IMXPCIEVAR_H_ */

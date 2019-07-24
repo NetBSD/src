@@ -25,7 +25,11 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.5 2019/07/24 11:20:55 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $");
+
+#include "locators.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.5 2019/07/24 11:20:55 hkenken Ex
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -49,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.5 2019/07/24 11:20:55 hkenken Ex
 #include <arm/imx/imxusbvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
 #include <arm/imx/imxgpiovar.h>
-#include "locators.h"
 
 struct netwalker_usbc_softc {
 	struct imxusbc_softc sc_imxusbc; /* Must be first */
@@ -145,8 +149,8 @@ init_h1(struct imxehci_softc *sc)
 	uint32_t reg;
 
 	/* output HIGH to USBH1_STP */
-	gpio_data_write(GPIO_NO(1, 27), 1);
-	gpio_set_direction(GPIO_NO(1, 27), GPIO_DIR_OUT);
+	gpio_data_write(GPIO_NO(1, 27), GPIO_PIN_HIGH);
+	gpio_set_direction(GPIO_NO(1, 27), GPIO_PIN_OUTPUT);
 
 	iomux_mux_config(iomux_usb1_config);
 
@@ -178,21 +182,21 @@ init_h1(struct imxehci_softc *sc)
 
 
 	/* HUB RESET release */
-	gpio_data_write(GPIO_NO(1, 7), 1);
-	gpio_set_direction(GPIO_NO(1, 7), GPIO_DIR_OUT);
+	gpio_data_write(GPIO_NO(1, 7), GPIO_PIN_HIGH);
+	gpio_set_direction(GPIO_NO(1, 7), GPIO_PIN_OUTPUT);
 
 	/* Drive 26M_OSC_EN line high 3_1 */
-	gpio_data_write(GPIO_NO(3, 1), 1);
-	gpio_set_direction(GPIO_NO(3, 1), GPIO_DIR_OUT);
+	gpio_data_write(GPIO_NO(3, 1), GPIO_PIN_HIGH);
+	gpio_set_direction(GPIO_NO(3, 1), GPIO_PIN_OUTPUT);
 
 	/* Drive USB_CLK_EN_B line low  2_1 */
-	gpio_data_write(GPIO_NO(2, 1), 0);
-	gpio_set_direction(GPIO_NO(2, 1), GPIO_DIR_IN);
+	gpio_data_write(GPIO_NO(2, 1), GPIO_PIN_LOW);
+	gpio_set_direction(GPIO_NO(2, 1), GPIO_PIN_INPUT);
 
 	/* MX51_PIN_EIM_D21 - De-assert USB PHY RESETB */
 	delay(10 * 1000);
-	gpio_data_write(GPIO_NO(2, 5), 1);
-	gpio_set_direction(GPIO_NO(2, 5), GPIO_DIR_OUT);
+	gpio_data_write(GPIO_NO(2, 5), GPIO_PIN_HIGH);
+	gpio_set_direction(GPIO_NO(2, 5), GPIO_PIN_OUTPUT);
 	iomux_set_function(MUX_PIN(EIM_D21), IOMUX_CONFIG_ALT1);
 	delay(5 * 1000);
 }
