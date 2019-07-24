@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.42 2019/07/24 02:38:29 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.43 2019/07/24 14:35:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -825,7 +825,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 				dsk_menu[i].opt_action = set_menu_select;
 				i++;
 			}
-			for (; i < numdisks; i++) {
+			for (; i < numdisks+allow_cur_system; i++) {
 				dsk_menu[i].opt_name =
 				    disks[i-allow_cur_system].dd_descr;
 				dsk_menu[i].opt_flags = OPT_EXIT;
