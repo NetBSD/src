@@ -134,8 +134,9 @@ main(int argc, char *argv[])
 	struct cpio _cpio; /* Allocated on stack. */
 	struct cpio *cpio;
 	const char *errmsg;
+	char *tptr;
 	int uid, gid;
-	int opt;
+	int opt, t;
 
 	cpio = &_cpio;
 	memset(cpio, 0, sizeof(*cpio));
@@ -204,9 +205,15 @@ main(int argc, char *argv[])
 			cpio->add_filter = opt;
 			break;
 		case 'C': /* NetBSD/OpenBSD */
-			cpio->bytes_per_block = atoi(cpio->argument);
-			if (cpio->bytes_per_block <= 0)
-				lafe_errc(1, 0, "Invalid blocksize %s", cpio->argument);
+			errno = 0;
+			tptr = NULL;
+			t = (int)strtol(cpio->argument, &tptr, 10);
+			if (errno || t <= 0 || *(cpio->argument) == '\0' ||
+			    tptr == NULL || *tptr != '\0') {
+				lafe_errc(1, 0, "Invalid blocksize: %s",
+				    cpio->argument);
+			}
+			cpio->bytes_per_block = t;
 			break;
 		case 'c': /* POSIX 1997 */
 			cpio->format = "odc";
@@ -269,6 +276,7 @@ main(int argc, char *argv[])
 		case OPTION_LZ4:
 		case OPTION_LZMA: /* GNU tar, others */
 		case OPTION_LZOP: /* GNU tar, others */
+		case OPTION_ZSTD:
 			cpio->compress = opt;
 			break;
 		case 'm': /* POSIX 1997 */
@@ -498,7 +506,7 @@ long_help(void)
 static void
 version(void)
 {
-	fprintf(stdout,"bsdcpio %s - %s\n",
+	fprintf(stdout,"bsdcpio %s - %s \n",
 	    BSDCPIO_VERSION_STRING,
 	    archive_version_details());
 	exit(0);
@@ -545,6 +553,9 @@ mode_out(struct cpio *cpio)
 		break;
 	case OPTION_LZOP:
 		r = archive_write_add_filter_lzop(cpio->archive);
+		break;
+	case OPTION_ZSTD:
+		r = archive_write_add_filter_zstd(cpio->archive);
 		break;
 	case 'j': case 'y':
 		r = archive_write_add_filter_bzip2(cpio->archive);
@@ -628,6 +639,7 @@ mode_out(struct cpio *cpio)
 		    blocks == 1 ? "block" : "blocks");
 	}
 	archive_write_free(cpio->archive);
+	archive_entry_linkresolver_free(cpio->linkresolver);
 }
 
 static const char *
@@ -743,8 +755,10 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 	}
 	if (cpio->option_rename)
 		destpath = cpio_rename(destpath);
-	if (destpath == NULL)
+	if (destpath == NULL) {
+		archive_entry_free(entry);
 		return (0);
+	}
 	archive_entry_copy_pathname(entry, destpath);
 
 	/*
@@ -1194,12 +1208,15 @@ mode_pass(struct cpio *cpio, const char *destdir)
 	struct lafe_line_reader *lr;
 	const char *p;
 	int r;
+	size_t destdir_len;
 
 	/* Ensure target dir has a trailing '/' to simplify path surgery. */
-	cpio->destdir = malloc(strlen(destdir) + 8);
-	strcpy(cpio->destdir, destdir);
-	if (destdir[strlen(destdir) - 1] != '/')
-		strcat(cpio->destdir, "/");
+	destdir_len = strlen(destdir);
+	cpio->destdir = malloc(destdir_len + 8);
+	memcpy(cpio->destdir, destdir, destdir_len);
+	if (destdir_len == 0 || destdir[destdir_len - 1] != '/')
+		cpio->destdir[destdir_len++] = '/';
+	cpio->destdir[destdir_len++] = '\0';
 
 	cpio->archive = archive_write_disk_new();
 	if (cpio->archive == NULL)
@@ -1240,6 +1257,7 @@ mode_pass(struct cpio *cpio, const char *destdir)
 	}
 
 	archive_write_free(cpio->archive);
+	free(cpio->pass_destpath);
 }
 
 /*

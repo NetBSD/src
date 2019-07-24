@@ -140,7 +140,7 @@ archive_compression_name(struct archive *a)
 /*
  * Return a count of the number of compressed bytes processed.
  */
-int64_t
+la_int64_t
 archive_position_compressed(struct archive *a)
 {
 	return archive_filter_bytes(a, -1);
@@ -149,7 +149,7 @@ archive_position_compressed(struct archive *a)
 /*
  * Return a count of the number of uncompressed bytes processed.
  */
-int64_t
+la_int64_t
 archive_position_uncompressed(struct archive *a)
 {
 	return archive_filter_bytes(a, 0);
@@ -449,7 +449,7 @@ __archive_mktemp(const char *tmpdir)
 		temp_name.s[temp_name.length-1] = '\0';
 		temp_name.length --;
 	}
-	if (stat(temp_name.s, &st) < 0)
+	if (la_stat(temp_name.s, &st) < 0)
 		goto exit_tmpfile;
 	if (!S_ISDIR(st.st_mode)) {
 		errno = ENOTDIR;
