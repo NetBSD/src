@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.5 2019/07/24 11:20:55 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,11 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Ex
 #include <arm/imx/imxgpiovar.h>
 #include "locators.h"
 
-
 struct netwalker_usbc_softc {
-	struct imxusbc_softc  sc_imxusbc;
+	struct imxusbc_softc sc_imxusbc; /* Must be first */
 };
-
 
 static int	imxusbc_match(device_t, cfdata_t, void *);
 static void	imxusbc_attach(device_t, device_t, void *);
@@ -85,14 +83,20 @@ imxusbc_match(device_t parent, cfdata_t cf, void *aux)
 static void
 imxusbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct axi_attach_args *aa = aux;
 	struct imxusbc_softc *sc = device_private(self);
+	struct axi_attach_args *aa = aux;
+
+	aprint_normal("\n");
+	aprint_normal(": Universal Serial Bus Controller\n");
+
+	if (aa->aa_size == AXICF_SIZE_DEFAULT)
+		aa->aa_size = USBOH3_SIZE;
 
 	sc->sc_init_md_hook = netwalker_usb_init;
+	sc->sc_intr_establish_md_hook = NULL;
 	sc->sc_setup_md_hook = NULL;
 
-	imxusbc_attach_common(parent, self, aa->aa_iot);
-
+	imxusbc_attach_common(parent, self, aa->aa_iot, aa->aa_addr, aa->aa_size);
 }
 
 static void
@@ -133,9 +137,6 @@ init_otg(struct imxehci_softc *sc)
 	reg = (reg & ~PHYCTRL1_PLLDIVVALUE_MASK) | PHYCTRL1_PLLDIVVALUE_24MHZ;
 	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBOH3_PHYCTRL1, reg);
 }
-
-
-
 
 static void
 init_h1(struct imxehci_softc *sc)
