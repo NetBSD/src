@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.37 2019/07/23 04:50:05 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.38 2019/07/24 10:13:14 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.37 2019/07/23 04:50:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.38 2019/07/24 10:13:14 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -29,6 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.37 2019/07/23 04:50:05 knakahara Exp $"
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/sockio.h>
+#include <sys/pcq.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -174,6 +175,7 @@ struct vmxnet3_txqueue {
 	int vxtxq_id;
 	int vxtxq_intr_idx;
 	int vxtxq_watchdog;
+	pcq_t *vxtxq_interq;
 	struct vmxnet3_txring vxtxq_cmd_ring;
 	struct vmxnet3_comp_ring vxtxq_comp_ring;
 	struct vmxnet3_txq_stats vxtxq_stats;
@@ -371,6 +373,8 @@ void vmxnet3_txq_unload_mbuf(struct vmxnet3_txqueue *, bus_dmamap_t);
 int vmxnet3_txq_encap(struct vmxnet3_txqueue *, struct mbuf **);
 void vmxnet3_start_locked(struct ifnet *);
 void vmxnet3_start(struct ifnet *);
+void vmxnet3_transmit_locked(struct ifnet *, struct vmxnet3_txqueue *);
+int vmxnet3_transmit(struct ifnet *, struct mbuf *);
 
 void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, void *);
@@ -1061,6 +1065,8 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 
 	txq->vxtxq_comp_ring.vxcr_ndesc = sc->vmx_ntxdescs;
 
+	txq->vxtxq_interq = pcq_create(sc->vmx_ntxdescs, KM_SLEEP);
+
 	return (0);
 }
 
@@ -1134,11 +1140,16 @@ void
 vmxnet3_destroy_txq(struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_txring *txr;
+	struct mbuf *m;
 
 	txr = &txq->vxtxq_cmd_ring;
 
 	txq->vxtxq_sc = NULL;
 	txq->vxtxq_id = -1;
+
+	while ((m = pcq_get(txq->vxtxq_interq)) != NULL)
+		m_freem(m);
+	pcq_destroy(txq->vxtxq_interq);
 
 	if (txr->vxtxr_txbuf != NULL) {
 		kmem_free(txr->vxtxr_txbuf,
@@ -1704,6 +1715,7 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = vmxnet3_ioctl;
 	ifp->if_start = vmxnet3_start;
+	ifp->if_transmit = vmxnet3_transmit;
 	ifp->if_watchdog = NULL;
 	ifp->if_init = vmxnet3_init;
 	ifp->if_stop = vmxnet3_stop;
@@ -2803,6 +2815,95 @@ vmxnet3_start(struct ifnet *ifp)
 	VMXNET3_TXQ_LOCK(txq);
 	vmxnet3_start_locked(ifp);
 	VMXNET3_TXQ_UNLOCK(txq);
+}
+
+static int
+vmxnet3_select_txqueue(struct ifnet *ifp, struct mbuf *m __unused)
+{
+	struct vmxnet3_softc *sc;
+	u_int cpuid;
+
+	sc = ifp->if_softc;
+	cpuid = cpu_index(curcpu());
+	/*
+	 * Furure work
+	 * We should select txqueue to even up the load even if ncpu is
+	 * different from sc->vmx_ntxqueues. Currently, the load is not
+	 * even, that is, when ncpu is six and ntxqueues is four, the load
+	 * of vmx_txq[0] and vmx_txq[1] is higher than vmx_txq[2] and
+	 * vmx_txq[3] because CPU#4 always uses vmx_txq[0] and CPU#5 always
+	 * uses vmx_txq[1].
+	 * Furthermore, we should not use random value to select txqueue to
+	 * avoid reordering. We should use flow information of mbuf.
+	 */
+	return cpuid % sc->vmx_ntxqueues;
+}
+
+void
+vmxnet3_transmit_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq)
+{
+	struct vmxnet3_softc *sc;
+	struct vmxnet3_txring *txr;
+	struct mbuf *m_head;
+	int tx;
+
+	sc = ifp->if_softc;
+	txr = &txq->vxtxq_cmd_ring;
+	tx = 0;
+
+	VMXNET3_TXQ_LOCK_ASSERT(txq);
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    sc->vmx_link_active == 0)
+		return;
+
+	for (;;) {
+		m_head = pcq_peek(txq->vxtxq_interq);
+		if (m_head == NULL)
+			break;
+
+		if (vmxnet3_txring_avail(txr) < VMXNET3_TX_MAXSEGS)
+			break;
+
+		m_head = pcq_get(txq->vxtxq_interq);
+		if (m_head == NULL)
+			break;
+
+		if (vmxnet3_txq_encap(txq, &m_head) != 0) {
+			if (m_head != NULL)
+				m_freem(m_head);
+			break;
+		}
+
+		tx++;
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
+	}
+
+	if (tx > 0)
+		txq->vxtxq_watchdog = VMXNET3_WATCHDOG_TIMEOUT;
+}
+
+int
+vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	struct vmxnet3_softc *sc;
+	struct vmxnet3_txqueue *txq;
+	int qid;
+
+	qid = vmxnet3_select_txqueue(ifp, m);
+	sc = ifp->if_softc;
+	txq = &sc->vmx_txq[qid];
+
+	if (__predict_false(!pcq_put(txq->vxtxq_interq, m))) {
+		m_freem(m);
+		return ENOBUFS;
+	}
+
+	VMXNET3_TXQ_LOCK(txq);
+	vmxnet3_transmit_locked(ifp, txq);
+	VMXNET3_TXQ_UNLOCK(txq);
+
+	return 0;
 }
 
 void
