@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.334 2019/06/27 02:00:30 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.335 2019/07/24 16:36:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.334 2019/06/27 02:00:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2019/07/24 16:36:47 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2063,15 +2063,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
 		tf->tf_rsp  = gr[_REG_RSP];
 		tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
-
-#ifdef XENPV
-		/*
-		 * Xen has its own way of dealing with %cs and %ss,
-		 * reset them to proper values.
-		 */
-		tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#endif
 
 		l->l_md.md_flags |= MDL_IRET;
 	}
