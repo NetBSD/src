@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2556 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2557 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -407,3 +407,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		Submitted by Michael Zucca via PR port-mac68k/24883.
 		[rin 20190723]
 	dhcpcd(8): Import dhcpcd-8.0.0 [roy 20190724]
+	tar(1): MKBSDTAR now defaults to yes [roy 20190724]
