@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.33 2019/07/24 18:03:30 rin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.34 2019/07/24 18:33:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.33 2019/07/24 18:03:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.34 2019/07/24 18:33:49 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -77,7 +77,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int width, height, cnt, fs, fb, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int32_t *dp, *rp, *hp, *hrp;
+	uint32_t *dp, *rp, *hp, *hrp;
 	uint8_t *fr;
 
 	hp = hrp = NULL;
@@ -95,9 +95,9 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (!CHAR_IN_FONT(uc, font))
 		return;
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 
 	height = font->fontheight;
@@ -109,10 +109,10 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		while (height--) {
 			dp = rp;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hp = hrp;
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 
 			for (cnt = width; cnt; cnt--) {
@@ -130,10 +130,10 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) |
 			    (fr[0] << 24);
 			fr += fs;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hp = hrp;
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 
 			for (cnt = width; cnt; cnt--) {
@@ -147,9 +147,9 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		if (ri->ri_hwbits)
-			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
 
 		while (width--) {
 			*rp++ = clr[1];
@@ -165,7 +165,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	int width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int32_t *dp, *rp;
+	uint32_t *dp, *rp;
 	uint8_t *rrp;
 	uint8_t *fr;
 	uint32_t buffer[64]; /* XXX */
@@ -186,7 +186,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 
 	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
-	rp = (int32_t *)rrp;
+	rp = (uint32_t *)rrp;
 
 	height = font->fontheight;
 	width = font->fontwidth;
@@ -199,7 +199,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			buffer[cnt] = clr[0];
 		while (height--) {
 			dp = rp;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			memcpy(dp, buffer, width << 2);
 		}
 	} else {
@@ -238,7 +238,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp = (uint32_t *)rrp;
 		height = font->fontheight;
-		DELTA(rp, (ri->ri_stride * (height - 2)), int32_t *);
+		DELTA(rp, (ri->ri_stride * (height - 2)), uint32_t *);
 		while (width--)
 			*rp++ = clr[1];
 	}
