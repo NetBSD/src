@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.6 2019/07/24 14:57:09 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.7 2019/07/24 15:55:07 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -150,7 +150,7 @@
 #define GEN8_RING_PDP_LDW(ring, n)	((ring)->mmio_base+0x270 + (n) * 8)
 
 #define GEN8_R_PWR_CLK_STATE		0x20C8
-#define   GEN8_RPCS_ENABLE		(1 << 31)
+#define   GEN8_RPCS_ENABLE		(1UL << 31)
 #define   GEN8_RPCS_S_CNT_ENABLE	(1 << 18)
 #define   GEN8_RPCS_S_CNT_SHIFT		15
 #define   GEN8_RPCS_S_CNT_MASK		(0x7 << GEN8_RPCS_S_CNT_SHIFT)
@@ -640,7 +640,7 @@ enum skl_disp_power_wells {
 };
 
 #define SKL_POWER_WELL_STATE(pw) (1 << ((pw) * 2))
-#define SKL_POWER_WELL_REQ(pw) (1 << (((pw) * 2) + 1))
+#define SKL_POWER_WELL_REQ(pw) (1U << (((pw) * 2) + 1))
 
 #define PUNIT_REG_PWRGT_CTRL			0x60
 #define PUNIT_REG_PWRGT_STATUS			0x61
@@ -7428,7 +7428,7 @@ enum skl_disp_power_wells {
 /* LCPLL_CTL */
 #define LCPLL1_CTL		0x46010
 #define LCPLL2_CTL		0x46014
-#define  LCPLL_PLL_ENABLE	(1<<31)
+#define  LCPLL_PLL_ENABLE	(1UL << 31)
 
 /* DPLL control1 */
 #define DPLL_CTRL1		0x6C058
