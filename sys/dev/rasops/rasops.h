@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.33 2019/07/24 18:03:30 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.34 2019/07/24 18:24:42 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,8 +119,8 @@ struct rasops_info {
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
 	int	ri_yscale;	/* fontheight * stride */
-	uint8_t  *ri_origbits;	/* where screen bits actually start */
-	uint8_t  *ri_hworigbits;	/* where hw bits actually start */
+	uint8_t	*ri_origbits;	/* where screen bits actually start */
+	uint8_t *ri_hworigbits;	/* where hw bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
 	int32_t	ri_devcmap[16]; /* color -> framebuffer data */
