@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_impl.h,v 1.6 2019/02/12 12:49:23 rmind Exp $	*/
+/*	$NetBSD: nv_impl.h,v 1.7 2019/07/24 14:25:56 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -72,6 +72,11 @@ extern void *nv_calloc(size_t, size_t);
 extern void nv_free(void *);
 extern char *nv_strdup(const char *);
 # endif
+#ifdef __NetBSD__
+# define nv_kmem_free(B,L)		kmem_free(B,L)
+#else
+# define nv_kmem_free(B,L)		nv_free(B)
+#endif
 # define nv_vasprintf(ptr, ...)		vasprintf(ptr, M_NVLIST, __VA_ARGS__)
 #elif defined(_STANDALONE)
 extern void *nv_malloc(size_t);
@@ -86,6 +91,7 @@ extern char *nv_strdup(const char *);
 # define nv_realloc(buf, size)		realloc((buf), (size))
 # define nv_free(buf)			free((buf))
 # define nv_vasprintf(ptr, ...)		vasprintf(ptr, __VA_ARGS__)
+# define nv_kmem_free(B,L)		nv_free(B)
 void *nv_calloc(size_t, size_t);
 char *nv_strdup(const char *);
 
