@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -55,54 +56,6 @@
 
 /* Most route(4) messages are less than 256 bytes. */
 #define IOVEC_BUFSIZ	256
-
-ssize_t
-setvar(char **e, const char *prefix, const char *var, const char *value)
-{
-	size_t len = strlen(var) + strlen(value) + 3;
-
-	if (prefix)
-		len += strlen(prefix) + 1;
-	if ((*e = malloc(len)) == NULL) {
-		logerr(__func__);
-		return -1;
-	}
-	if (prefix)
-		snprintf(*e, len, "%s_%s=%s", prefix, var, value);
-	else
-		snprintf(*e, len, "%s=%s", var, value);
-	return (ssize_t)len;
-}
-
-ssize_t
-setvard(char **e, const char *prefix, const char *var, size_t value)
-{
-
-	char buffer[32];
-
-	snprintf(buffer, sizeof(buffer), "%zu", value);
-	return setvar(e, prefix, var, buffer);
-}
-
-ssize_t
-addvar(char ***e, const char *prefix, const char *var, const char *value)
-{
-	ssize_t len;
-
-	len = setvar(*e, prefix, var, value);
-	if (len != -1)
-		(*e)++;
-	return (ssize_t)len;
-}
-
-ssize_t
-addvard(char ***e, const char *prefix, const char *var, size_t value)
-{
-	char buffer[32];
-
-	snprintf(buffer, sizeof(buffer), "%zu", value);
-	return addvar(e, prefix, var, buffer);
-}
 
 const char *
 hwaddr_ntoa(const void *hwaddr, size_t hwlen, char *buf, size_t buflen)
