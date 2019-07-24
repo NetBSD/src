@@ -209,6 +209,7 @@ vlogmessage(int pri, const char *fmt, va_list args)
 
 #ifdef SMALL
 	vsyslog(pri, fmt, args);
+	return len;
 #else
 	if (ctx->log_file == NULL) {
 		vsyslog(pri, fmt, args);
