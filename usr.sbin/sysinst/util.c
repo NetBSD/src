@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.28 2019/07/21 12:23:18 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.29 2019/07/24 10:22:04 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -954,7 +954,7 @@ extract_file(distinfo *dist, int update)
 
 	/* now extract set files into "./". */
 	rval = run_program(RUN_DISPLAY | RUN_PROGRESS,
-			"progress -zf %s tar --chroot -xhepf -", path);
+			"progress -zf %s tar --chroot -xpf -", path);
 
 	chdir(owd);
 	free(owd);
