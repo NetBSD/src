@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -182,6 +183,10 @@ struct dhcp_lease {
 	uint32_t cookie;
 };
 
+#ifndef DHCP_INFINITE_LIFETIME
+#  define DHCP_INFINITE_LIFETIME	(~0U)
+#endif
+
 enum DHS {
 	DHS_NONE,
 	DHS_INIT,
@@ -245,15 +250,15 @@ struct dhcp_state {
 #include "dhcpcd.h"
 #include "if-options.h"
 
-char *decode_rfc3361(const uint8_t *, size_t);
-ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
+ssize_t print_rfc3361(FILE *, const uint8_t *, size_t);
+ssize_t print_rfc3442(FILE *, const uint8_t *, size_t);
 
 void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 uint16_t dhcp_get_mtu(const struct interface *);
-int dhcp_get_routes(struct rt_head *, struct interface *);
-ssize_t dhcp_env(char **, const char *, const struct bootp *, size_t,
-    const struct interface *);
+int dhcp_get_routes(rb_tree_t *, struct interface *);
+ssize_t dhcp_env(FILE *, const char *, const struct interface *,
+    const struct bootp *, size_t);
 
 void dhcp_handleifa(int, struct ipv4_addr *, pid_t pid);
 void dhcp_drop(struct interface *, const char *);
