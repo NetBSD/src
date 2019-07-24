@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -30,11 +31,8 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <stdint.h>
 #include <stdio.h>
-
-#include "config.h"
-#include "defs.h"
-#include "dhcpcd.h"
 
 #ifndef HOSTNAME_MAX_LEN
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
@@ -130,6 +128,29 @@
 # endif
 #endif
 
+/* Needed for rbtree(3) compat */
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
+#ifndef __predict_false
+# if __GNUC__ > 2
+#  define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
+#  define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
+#else
+#  define	__predict_true(exp)	(exp)
+#  define	__predict_false(exp)	(exp)
+# endif
+#endif
+#ifndef __BEGIN_DECLS
+# if defined(__cplusplus)
+#  define	__BEGIN_DECLS		extern "C" {
+#  define	__END_DECLS		};
+# else /* __BEGIN_DECLS */
+#  define	__BEGIN_DECLS
+#  define	__END_DECLS
+# endif /* __BEGIN_DECLS */
+#endif /* __BEGIN_DECLS */
+
 #ifndef __fallthrough
 # if __GNUC__ >= 7
 #  define __fallthrough __attribute__((fallthrough))
@@ -172,11 +193,6 @@
 void get_line_free(void);
 extern int clock_monotonic;
 int get_monotonic(struct timespec *);
-
-ssize_t setvar(char **, const char *, const char *, const char *);
-ssize_t setvard(char **, const char *, const char *, size_t);
-ssize_t addvar(char ***, const char *, const char *, const char *);
-ssize_t addvard(char ***, const char *, const char *, size_t);
 
 const char *hwaddr_ntoa(const void *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);

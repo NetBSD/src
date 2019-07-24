@@ -37,7 +37,7 @@
 #  endif
 #endif
 
-#include "common.h"
+#include "config.h"
 #include "sha256.h"
 
 #if BYTE_ORDER == BIG_ENDIAN

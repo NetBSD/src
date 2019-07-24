@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -91,7 +92,7 @@ getprogname(void)
 
 #ifndef SMALL
 /* Write the time, syslog style. month day time - */
-static void
+static int
 logprintdate(FILE *stream)
 {
 	struct timeval tv;
@@ -100,19 +101,22 @@ logprintdate(FILE *stream)
 	char buf[32];
 
 	if (gettimeofday(&tv, NULL) == -1)
-		return;
+		return -1;
 
 	now = tv.tv_sec;
 	tzset();
-	localtime_r(&now, &tmnow);
-	strftime(buf, sizeof(buf), "%b %d %T ", &tmnow);
-	fprintf(stream, "%s", buf);
+	if (localtime_r(&now, &tmnow) == NULL)
+		return -1;
+	if (strftime(buf, sizeof(buf), "%b %d %T ", &tmnow) == 0)
+		return -1;
+	return fprintf(stream, "%s", buf);
 }
 #endif
 
-__printflike(3, 0) static void
+__printflike(3, 0) static int
 vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 {
+	int len = 0, e;
 	va_list a;
 #ifndef SMALL
 	bool log_pid;
@@ -122,7 +126,11 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 
 	if ((stream == stderr && ctx->log_opts & LOGERR_ERR_DATE) ||
 	    (stream != stderr && ctx->log_opts & LOGERR_LOG_DATE))
-		logprintdate(stream);
+	{
+		if ((e = logprintdate(stream)) == -1)
+			return -1;
+		len += e;
+	}
 
 #ifdef LOGERR_TAG
 	log_tag = ((stream == stderr && ctx->log_opts & LOGERR_ERR_TAG) ||
@@ -130,29 +138,43 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 	if (log_tag) {
 		if (ctx->log_tag == NULL)
 			ctx->log_tag = getprogname();
-		fprintf(stream, "%s", ctx->log_tag);
+		if ((e = fprintf(stream, "%s", ctx->log_tag)) == -1)
+			return -1;
+		len += e;
 	}
 #endif
 
 	log_pid = ((stream == stderr && ctx->log_opts & LOGERR_ERR_PID) ||
 	    (stream != stderr && ctx->log_opts & LOGERR_LOG_PID));
-	if (log_pid)
-		fprintf(stream, "[%d]", getpid());
+	if (log_pid) {
+		if ((e = fprintf(stream, "[%d]", getpid())) == -1)
+			return -1;
+		len += e;
+	}
 
 #ifdef LOGERR_TAG
 	if (log_tag || log_pid)
 #else
 	if (log_pid)
 #endif
-		fprintf(stream, ": ");
+	{
+		if ((e = fprintf(stream, ": ")) == -1)
+			return -1;
+		len += e;
+	}
 #else
 	UNUSED(ctx);
 #endif
 
 	va_copy(a, args);
-	vfprintf(stream, fmt, a);
-	fputc('\n', stream);
+	e = vfprintf(stream, fmt, a);
+	if (fputc('\n', stream) == EOF)
+		e = -1;
+	else if (e != -1)
+		e++;
 	va_end(a);
+
+	return e == -1 ? -1 : len + e;
 }
 
 /*
@@ -170,30 +192,31 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-format-attribute"
 #endif
-__printflike(2, 0) static void
+__printflike(2, 0) static int
 vlogmessage(int pri, const char *fmt, va_list args)
 {
 	struct logctx *ctx = &_logctx;
+	int len = 0;
 
 	if (ctx->log_opts & LOGERR_ERR &&
 	    (pri <= LOG_ERR ||
 	    (!(ctx->log_opts & LOGERR_QUIET) && pri <= LOG_INFO) ||
 	    (ctx->log_opts & LOGERR_DEBUG && pri <= LOG_DEBUG)))
-		vlogprintf_r(ctx, stderr, fmt, args);
+		len = vlogprintf_r(ctx, stderr, fmt, args);
 
 	if (!(ctx->log_opts & LOGERR_LOG))
-		return;
+		return len;
 
 #ifdef SMALL
 	vsyslog(pri, fmt, args);
 #else
 	if (ctx->log_file == NULL) {
 		vsyslog(pri, fmt, args);
-		return;
+		return len;
 	}
 	if (pri == LOG_DEBUG && !(ctx->log_opts & LOGERR_DEBUG))
-		return;
-	vlogprintf_r(ctx, ctx->log_file, fmt, args);
+		return len;
+	return vlogprintf_r(ctx, ctx->log_file, fmt, args);
 #endif
 }
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))

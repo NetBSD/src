@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -1540,23 +1541,17 @@ ipv6_staticdadcallback(void *arg)
 }
 
 ssize_t
-ipv6_env(char **env, const char *prefix, const struct interface *ifp)
+ipv6_env(FILE *fp, const char *prefix, const struct interface *ifp)
 {
-	char **ep;
-	ssize_t n;
 	struct ipv6_addr *ia;
 
-	ep = env;
-	n = 0;
 	ia = ipv6_iffindaddr(UNCONST(ifp), &ifp->options->req_addr6,
 	    IN6_IFF_NOTUSEABLE);
-	if (ia) {
-		if (env)
-			addvar(&ep, prefix, "ip6_address", ia->saddr);
-		n++;
-	}
-
-	return n;
+	if (ia == NULL)
+		return 0;
+	if (efprintf(fp, "%s_ip6_address=%s", prefix, ia->saddr) == -1)
+		return -1;
+	return 1;
 }
 
 int
@@ -1612,7 +1607,6 @@ ipv6_startstatic(struct interface *ifp)
 	ia->prefix_pltime = ND6_INFINITE_LIFETIME;
 	ia->dadcallback = ipv6_staticdadcallback;
 	ipv6_addaddr(ia, NULL);
-	if_initrt(ifp->ctx, AF_INET6);
 	rt_build(ifp->ctx, AF_INET6);
 	if (run_script)
 		script_runreason(ifp, "STATIC6");
@@ -1654,8 +1648,6 @@ ipv6_start(struct interface *ifp)
 			ipv6_regentempifid(ifp);
 	}
 
-	/* Load existing routes */
-	if_initrt(ifp->ctx, AF_INET6);
 	return 0;
 }
 
@@ -1679,10 +1671,8 @@ ipv6_freedrop(struct interface *ifp, int drop)
 
 	ipv6_freedrop_addrs(&state->addrs, drop ? 2 : 0, NULL);
 	if (drop) {
-		if (ifp->ctx->ra_routers != NULL) {
-			if_initrt(ifp->ctx, AF_INET6);
+		if (ifp->ctx->ra_routers != NULL)
 			rt_build(ifp->ctx, AF_INET6);
-		}
 	} else {
 		/* Because we need to cache the addresses we don't control,
 		 * we only free the state on when NOT dropping addresses. */
@@ -2216,7 +2206,7 @@ inet6_makerouter(struct ra *rap)
 	    IN6_ARE_ADDR_EQUAL(&((rtp)->mask), &in6addr_any))
 
 static int
-inet6_staticroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx)
+inet6_staticroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 {
 	struct interface *ifp;
 	struct ipv6_state *state;
@@ -2232,7 +2222,7 @@ inet6_staticroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx)
 			{
 				rt = inet6_makeprefix(ifp, NULL, ia);
 				if (rt)
-					TAILQ_INSERT_TAIL(routes, rt, rt_next);
+					rt_proto_add(routes, rt);
 			}
 		}
 	}
@@ -2240,15 +2230,14 @@ inet6_staticroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx)
 }
 
 static int
-inet6_raroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx, int expired,
-    bool *have_default)
+inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 {
 	struct rt *rt;
 	struct ra *rap;
 	const struct ipv6_addr *addr;
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
-		if (rap->expired != expired)
+		if (rap->expired)
 			continue;
 		TAILQ_FOREACH(addr, &rap->addrs, next) {
 			if (addr->prefix_vltime == 0)
@@ -2256,25 +2245,23 @@ inet6_raroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx, int expired,
 			rt = inet6_makeprefix(rap->iface, rap, addr);
 			if (rt) {
 				rt->rt_dflags |= RTDF_RA;
-				TAILQ_INSERT_TAIL(routes, rt, rt_next);
+				rt_proto_add(routes, rt);
 			}
 		}
-		if (rap->lifetime) {
-			rt = inet6_makerouter(rap);
-			if (rt) {
-				rt->rt_dflags |= RTDF_RA;
-				TAILQ_INSERT_TAIL(routes, rt, rt_next);
-				if (have_default)
-					*have_default = true;
-			}
-		}
+		if (rap->lifetime == 0)
+			continue;
+		rt = inet6_makerouter(rap);
+		if (rt == NULL)
+			continue;
+		rt->rt_dflags |= RTDF_RA;
+		rt_proto_add(routes, rt);
 	}
 	return 0;
 }
 
 #ifdef DHCP6
 static int
-inet6_dhcproutes(struct rt_head *routes, struct dhcpcd_ctx *ctx,
+inet6_dhcproutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx,
     enum DH6S dstate)
 {
 	struct interface *ifp;
@@ -2287,10 +2274,10 @@ inet6_dhcproutes(struct rt_head *routes, struct dhcpcd_ctx *ctx,
 		if (d6_state && d6_state->state == dstate) {
 			TAILQ_FOREACH(addr, &d6_state->addrs, next) {
 				rt = inet6_makeprefix(ifp, NULL, addr);
-				if (rt) {
-					rt->rt_dflags |= RTDF_DHCP;
-					TAILQ_INSERT_TAIL(routes, rt, rt_next);
-				}
+				if (rt == NULL)
+					continue;
+				rt->rt_dflags |= RTDF_DHCP;
+				rt_proto_add(routes, rt);
 			}
 		}
 	}
@@ -2299,43 +2286,25 @@ inet6_dhcproutes(struct rt_head *routes, struct dhcpcd_ctx *ctx,
 #endif
 
 bool
-inet6_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
+inet6_getroutes(struct dhcpcd_ctx *ctx, rb_tree_t *routes)
 {
-	bool have_default;
 
 	/* Should static take priority? */
 	if (inet6_staticroutes(routes, ctx) == -1)
 		return false;
 
 	/* First add reachable routers and their prefixes */
-	have_default = false;
-	if (inet6_raroutes(routes, ctx, 0, &have_default) == -1)
+	if (inet6_raroutes(routes, ctx) == -1)
 		return false;
 
 #ifdef DHCP6
 	/* We have no way of knowing if prefixes added by DHCP are reachable
 	 * or not, so we have to assume they are.
-	 * Add bound before delegated so we can prefer interfaces better */
+	 * Add bound before delegated so we can prefer interfaces better. */
 	if (inet6_dhcproutes(routes, ctx, DH6S_BOUND) == -1)
 		return false;
 	if (inet6_dhcproutes(routes, ctx, DH6S_DELEGATED) == -1)
 		return false;
-#endif
-
-#ifdef HAVE_ROUTE_METRIC
-	/* If we have an unreachable router, we really do need to remove the
-	 * route to it beause it could be a lower metric than a reachable
-	 * router. Of course, we should at least have some routers if all
-	 * are unreachable. */
-	if (!have_default) {
-#endif
-	/* Add our non-reachable routers and prefixes
-	 * Unsure if this is needed, but it's a close match to kernel
-	 * behaviour */
-		if (inet6_raroutes(routes, ctx, 1, NULL) == -1)
-			return false;
-#ifdef HAVE_ROUTE_METRIC
-	}
 #endif
 
 	return true;

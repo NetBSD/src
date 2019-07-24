@@ -93,7 +93,7 @@ wpa_supplicant_stop()
 	err=$(wpa_cli -i"$interface" terminate 2>&1)
 	errn=$?
 	if [ $errn != 0 ]; then
-		syslog err "failed to start wpa_supplicant"
+		syslog err "failed to stop wpa_supplicant"
 		syslog err "$err"
 	fi
 	return $errn
