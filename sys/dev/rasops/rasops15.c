@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.24 2019/07/24 18:03:30 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.25 2019/07/24 18:33:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.24 2019/07/24 18:03:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.25 2019/07/24 18:33:49 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -55,7 +55,7 @@ static void	rasops15_makestamp(struct rasops_info *, long);
 /*
  * (2x2)x1 stamp for optimized character blitting
  */
-static int32_t	stamp[32];
+static uint32_t	stamp[32];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in readme */
 
@@ -64,12 +64,12 @@ static int	stamp_mutex;	/* XXX see note in readme */
  * that the shift count is negative.
  *
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
- * destination int32_t[0] = STAMP_READ(offset)
- * destination int32_t[1] = STAMP_READ(offset + 4)
+ * destination uint32_t[0] = STAMP_READ(offset)
+ * destination uint32_t[1] = STAMP_READ(offset + 4)
  */
 #define STAMP_SHIFT(fb,n)	((n*4-3) >= 0 ? (fb)>>(n*4-3):(fb)<<-(n*4-3))
 #define STAMP_MASK		(15 << 3)
-#define STAMP_READ(o)		(*(int32_t *)((char *)stamp + (o)))
+#define STAMP_READ(o)		(*(uint32_t *)((char *)stamp + (o)))
 #endif
 
 /*
@@ -145,7 +145,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	clr[0] = ri->ri_devcmap[((u_int)attr >> 16) & 0xf];
 
 	if (uc == ' ') {
-		int16_t c = (int16_t)clr[0];
+		uint16_t c = (uint16_t)clr[0];
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
@@ -155,10 +155,10 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 
 			for (cnt = width; cnt; cnt--) {
-				*(int16_t *)dp = c;
+				*(uint16_t *)dp = c;
 				dp += 2;
 				if (ri->ri_hwbits) {
-					*(int16_t *)hp = c;
+					*(uint16_t *)hp = c;
 					hp += 2;
 				}
 			}
@@ -178,10 +178,10 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 
 			for (cnt = width; cnt; cnt--) {
-				*(int16_t *)dp = (int16_t)clr[(fb >> 31) & 1];
+				*(uint16_t *)dp = (uint16_t)clr[(fb >> 31) & 1];
 				if (ri->ri_hwbits)
-					*(int16_t *)hp =
-					    (int16_t)clr[(fb >> 31) & 1];
+					*(uint16_t *)hp =
+					    (uint16_t)clr[(fb >> 31) & 1];
 				fb <<= 1;
 				dp += 2;
 				if (ri->ri_hwbits)
@@ -192,16 +192,16 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		int16_t c = (int16_t)clr[1];
+		uint16_t c = (uint16_t)clr[1];
 		rp -= ri->ri_stride << 1;
 		if (ri->ri_hwbits)
 			hrp -= ri->ri_stride << 1;
 
 		while (width--) {
-			*(int16_t *)rp = c;
+			*(uint16_t *)rp = c;
 			rp += 2;
 			if (ri->ri_hwbits) {
-				*(int16_t *)hrp = c;
+				*(uint16_t *)hrp = c;
 				hrp += 2;
 			}
 		}
@@ -214,7 +214,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	int width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int16_t *dp, *rp;
+	uint16_t *dp, *rp;
 	uint8_t *rrp;
 	uint8_t *fr;
 	uint16_t buffer[64]; /* XXX */
@@ -236,7 +236,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 
 	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
-	rp = (int16_t *)rrp;
+	rp = (uint16_t *)rrp;
 
 	height = font->fontheight;
 	width = font->fontwidth;
@@ -249,7 +249,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	                buffer[cnt] = clr[0];
 		while (height--) {
 			dp = rp;
-			DELTA(rp, ri->ri_stride, int16_t *);
+			DELTA(rp, ri->ri_stride, uint16_t *);
 			memcpy(dp, buffer, width << 1);
 		}
 	} else {
@@ -294,7 +294,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 	        rp = (uint16_t *)rrp;
-		DELTA(rp, (ri->ri_stride * (height - 2)), int16_t *);
+		DELTA(rp, (ri->ri_stride * (height - 2)), uint16_t *);
 		while (width--)
 			*rp++ = clr[1];
 	}
@@ -307,7 +307,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops15_makestamp(struct rasops_info *ri, long attr)
 {
-	int32_t fg, bg;
+	uint32_t fg, bg;
 	int i;
 
 	fg = ri->ri_devcmap[((u_int)attr >> 24) & 0xf] & 0xffff;
@@ -338,7 +338,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
-	int32_t *rp, *hrp;
+	uint32_t *rp, *hrp;
 	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
@@ -366,20 +366,20 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	if (attr != stamp_attr)
 		rasops15_makestamp(ri, attr);
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		int32_t c = stamp[0];
+		uint32_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] = c;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hrp[0] = hrp[1] = hrp[2] = hrp[3] = c;
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
 	} else {
@@ -405,20 +405,20 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 			}
 
 			fr += fs;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits)
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		int32_t c = STAMP_READ(28);
+		uint32_t c = STAMP_READ(28);
 
-		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] = c;
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
 			hrp[0] = hrp[1] = hrp[2] = hrp[3] = c;
 		}
 	}
@@ -435,7 +435,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
-	int32_t *rp, *hrp;
+	uint32_t *rp, *hrp;
 	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
@@ -463,21 +463,21 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	if (attr != stamp_attr)
 		rasops15_makestamp(ri, attr);
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		int32_t c = stamp[0];
+		uint32_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] = c;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hrp[0] = hrp[1] = hrp[2] = hrp[3] = hrp[4] =
 				    hrp[5] = c;
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
 	} else {
@@ -511,20 +511,20 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 			}
 
 			fr += fs;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits)
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 		}
 	}
 
 	/* Do underline */
 	if (attr & WSATTR_UNDERLINE) {
-		int32_t c = STAMP_READ(28);
+		uint32_t c = STAMP_READ(28);
 
-		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] = c;
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
 			hrp[0] = hrp[1] = hrp[2] = hrp[3] = hrp[4] = hrp[5] = c;
 		}
 	}
@@ -541,7 +541,7 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
-	int32_t *rp, *hrp;
+	uint32_t *rp, *hrp;
 	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
@@ -569,22 +569,22 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	if (attr != stamp_attr)
 		rasops15_makestamp(ri, attr);
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		int32_t c = stamp[0];
+		uint32_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] =
 			rp[4] = rp[5] = rp[6] = rp[7] = c;
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hrp[0] = hrp[1] = hrp[2] = hrp[3] =
 				hrp[4] = hrp[5] = hrp[6] = hrp[7] = c;
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
 	} else {
@@ -625,22 +625,22 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 				hrp[7] = STAMP_READ(so + 4);
 			}
 
-			DELTA(rp, ri->ri_stride, int32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits)
-				DELTA(hrp, ri->ri_stride, int32_t *);
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			fr += fs;
 		}
 	}
 
 	/* Do underline */
 	if (attr & WSATTR_UNDERLINE) {
-		int32_t c = STAMP_READ(28);
+		uint32_t c = STAMP_READ(28);
 
-		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] =
 		rp[4] = rp[5] = rp[6] = rp[7] = c;
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
 			hrp[0] = hrp[1] = hrp[2] = hrp[3] =
 			hrp[4] = hrp[5] = hrp[6] = hrp[7] = c;
 		}

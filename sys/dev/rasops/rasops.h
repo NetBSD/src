@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.34 2019/07/24 18:24:42 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.35 2019/07/24 18:33:49 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,8 @@ struct rasops_info {
 	uint8_t *ri_hworigbits;	/* where hw bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
-	int32_t	ri_devcmap[16]; /* color -> framebuffer data */
+	uint32_t
+		ri_devcmap[16]; /* color -> framebuffer data */
 
 	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
