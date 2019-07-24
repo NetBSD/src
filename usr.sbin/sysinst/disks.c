@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.41 2019/07/24 02:37:17 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.42 2019/07/24 02:38:29 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -518,7 +518,7 @@ bool
 is_partitionable_device(const char *dev)
 {
 	static const char *non_partitionable_devs[] = {
-		"dk",	/* this is alreay a partitioned slice */
+		"dk",	/* this is already a partitioned slice */
 		NULL
 	};
 
