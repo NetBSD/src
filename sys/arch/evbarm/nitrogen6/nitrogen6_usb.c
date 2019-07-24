@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: nitrogen6_usb.c,v 1.6 2019/07/24 11:20:55 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.6 2019/07/24 11:20:55 hkenken Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Ex
 #include <arm/imx/imx6_iomuxreg.h>
 #include <arm/imx/imxusbreg.h>
 #include <arm/imx/imxusbvar.h>
-#include <arm/imx/imxgpiovar.h>
-#include "locators.h"
 
 struct nitrogen6_usbc_softc {
-	struct imxusbc_softc sc_imxusbc;
+	struct imxusbc_softc sc_imxusbc; /* Must be first */
 };
 
 static int nitrogen6_usbc_match(device_t, cfdata_t, void *);
@@ -85,16 +85,20 @@ nitrogen6_usbc_match(device_t parent, cfdata_t cf, void *aux)
 static void
 nitrogen6_usbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct axi_attach_args *aa = aux;
 	struct imxusbc_softc *sc = device_private(self);
-
-	sc->sc_init_md_hook = nitrogen6_usb_init;
-	sc->sc_setup_md_hook = NULL;
+	struct axi_attach_args *aa = aux;
 
 	aprint_naive("\n");
 	aprint_normal(": Universal Serial Bus Controller\n");
 
-	imxusbc_attach_common(parent, self, aa->aa_iot);
+	if (aa->aa_size == AXICF_SIZE_DEFAULT)
+		aa->aa_size = AIPS2_USBOH_SIZE + USBNC_SIZE;
+
+	sc->sc_init_md_hook = nitrogen6_usb_init;
+	sc->sc_intr_establish_md_hook = NULL;
+	sc->sc_setup_md_hook = NULL;
+
+	imxusbc_attach_common(parent, self, aa->aa_iot, aa->aa_addr, aa->aa_size);
 }
 
 static void
@@ -125,12 +129,12 @@ init_otg(struct imxehci_softc *sc)
 
 	imxehci_reset(sc);
 
-	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_OTG_CTRL);
+	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh_usbnc, USBNC_USB_OTG_CTRL);
 	v |= USBNC_USB_OTG_CTRL_WKUP_VBUS_EN;
 	v |= USBNC_USB_OTG_CTRL_OVER_CUR_DIS;
 	v |= USBNC_USB_OTG_CTRL_PWR_POL;
 	v &= ~USBNC_USB_OTG_CTRL_UTMI_ON_CLOCK;
-	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_OTG_CTRL, v);
+	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh_usbnc, USBNC_USB_OTG_CTRL, v);
 }
 
 static void
@@ -141,17 +145,17 @@ init_h1(struct imxehci_softc *sc)
 
 	sc->sc_iftype = IMXUSBC_IF_UTMI_WIDE;
 
-	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_UH1_CTRL);
+	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh_usbnc, USBNC_USB_UH1_CTRL);
 	v |= USBNC_USB_UH1_CTRL_OVER_CUR_POL;
 	v |= USBNC_USB_UH1_CTRL_OVER_CUR_DIS;
-	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBNC_USB_UH1_CTRL, v);
+	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh_usbnc, USBNC_USB_UH1_CTRL, v);
 
 	/* do reset */
 	imxehci_reset(sc);
 
 	/* set mode */
 	v = bus_space_read_4(usbc->sc_iot, usbc->sc_ioh, USBC_UH1_USBMODE);
-	v &= ~__SHIFTIN(USBC_UH_USBMODE_CM, 3);
-	v |= __SHIFTIN(USBC_UH_USBMODE_CM, USBC_UH_USBMODE_CM_HOST_CONTROLLER);
+	v &= ~USBC_UH_USBMODE_CM;
+	v |= __SHIFTIN(USBC_UH_USBMODE_CM_HOST_CONTROLLER, USBC_UH_USBMODE_CM);
 	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBC_UH1_USBMODE, v);
 }

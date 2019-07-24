@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.6 2019/07/24 11:20:55 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.6 2019/07/24 11:20:55 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.5 2019/06/20 08:16:19 hkenken Exp $")
 #include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/imx6_usbreg.h>
 #include <arm/imx/imxusbvar.h>
+#include <arm/imx/imxusbreg.h>
 
 #include "locators.h"
 
@@ -58,17 +59,21 @@ static int imxusbc_print(void *, const char *);
 static int imxusbc_init_clocks(struct imxusbc_softc *);
 
 int
-imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot)
+imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
+    bus_addr_t addr, bus_size_t size)
 {
-	struct imxusbc_softc *sc;
+	struct imxusbc_softc *sc = device_private(self);
 
-	sc = device_private(self);
+	sc->sc_dev = self;
 	sc->sc_iot = iot;
+	sc->sc_ehci_size = IMXUSB_EHCI_SIZE;
+	sc->sc_ehci_offset = IMXUSB_EHCI_SIZE;
 
 	/* Map entire USBOH registers.  Host controller drivers
 	 * re-use subregions of this. */
-	if (bus_space_map(iot, IMX6_AIPS2_BASE + AIPS2_USBOH_BASE,
-	    AIPS2_USBOH_SIZE, 0, &sc->sc_ioh))
+	if (bus_space_map(iot, addr, size, 0, &sc->sc_ioh))
+		return -1;
+	if (bus_space_subregion(iot, sc->sc_ioh, USBNC_BASE, USBNC_SIZE, &sc->sc_ioh_usbnc))
 		return -1;
 
 	sc->sc_clk = imx6_get_clock("usboh3");
