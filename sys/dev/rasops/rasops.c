@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.83 2019/07/24 18:40:01 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.84 2019/07/24 18:49:37 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.83 2019/07/24 18:40:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.84 2019/07/24 18:49:37 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -994,7 +994,9 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 static void
 rasops_do_cursor(struct rasops_info *ri)
 {
-	int full1, height, cnt, slop1, slop2, row, col;
+	int full, height, cnt, slop1, slop2, row, col;
+	uint32_t tmp32, msk;
+	uint8_t tmp8;
 	uint8_t *dp, *rp, *hrp, *hp;
 
 	hrp = hp = NULL;
@@ -1034,7 +1036,7 @@ rasops_do_cursor(struct rasops_info *ri)
 	 */
 	if (ri->ri_xscale == 1) {
 		while (height--) {
-			uint8_t tmp8 = ~*rp;
+			tmp8 = ~*rp;
 
 			*rp = tmp8;
 			rp += ri->ri_stride;
@@ -1051,74 +1053,50 @@ rasops_do_cursor(struct rasops_info *ri)
 	 * For ri_xscale = 2, 3, 4, ...:
 	 *
 	 * Note that siop1 <= ri_xscale even for ri_xscale = 2,
-	 * since rp % 3 = 0 or 2.
+	 * since rp % 3 = 0 or 2 (ri_stride % 4 = 0).
 	 */
 	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
 	slop2 = (ri->ri_xscale - slop1) & 3;
-	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
+	full = (ri->ri_xscale - slop1 - slop2) >> 2;
 
-	if ((slop1 | slop2) == 0) {
-		uint32_t tmp32;
-		/* A common case */
-		while (height--) {
-			dp = rp;
-			rp += ri->ri_stride;
+	rp = (uint8_t *)((uintptr_t)rp & ~3);
+	hrp = (uint8_t *)((uintptr_t)hrp & ~3);
+
+	while (height--) {
+		dp = rp;
+		rp += ri->ri_stride;
+		if (ri->ri_hwbits) {
+			hp = hrp;
+			hrp += ri->ri_stride;
+		}
+
+		if (slop1) {
+			msk = be32toh(0xffffffffU >> (32 - (8 * slop1)));
+			tmp32 = *(uint32_t *)dp ^ msk;
+			*(uint32_t *)dp = tmp32;
+			dp += 4;
 			if (ri->ri_hwbits) {
-				hp = hrp;
-				hrp += ri->ri_stride;
-			}
-
-			for (cnt = full1; cnt; cnt--) {
-				tmp32 = *(uint32_t *)dp ^ ~0;
-				*(uint32_t *)dp = tmp32;
-				dp += 4;
-				if (ri->ri_hwbits) {
-					*(uint32_t *)hp = tmp32;
-					hp += 4;
-				}
+				*(uint32_t *)hp = tmp32;
+				hp += 4;
 			}
 		}
-	} else {
-		uint32_t tmp32, msk1, msk2;
 
-		while (height--) {
-			dp = (uint8_t *)((uintptr_t)rp & ~3);
-			rp += ri->ri_stride;
+		for (cnt = full; cnt; cnt--) {
+			tmp32 = ~*(uint32_t *)dp;
+			*(uint32_t *)dp = tmp32;
+			dp += 4;
 			if (ri->ri_hwbits) {
-				hp = (uint8_t *)((uintptr_t)hrp & ~3);
-				hrp += ri->ri_stride;
+				*(uint32_t *)hp = tmp32;
+				hp += 4;
 			}
+		}
 
-			if (slop1) {
-				msk1 =
-				    be32toh(0xffffffff >> (32 - (8 * slop1)));
-				tmp32 = *(uint32_t *)dp ^ msk1;
-				*(uint32_t *)dp = tmp32;
-				dp += 4;
-				if (ri->ri_hwbits) {
-					*(uint32_t *)hp = tmp32;
-					hp += 4;
-				}
-			}
-
-			for (cnt = full1; cnt; cnt--) {
-				tmp32 = *(uint32_t *)dp ^ ~0;
-				*(uint32_t *)dp = tmp32;
-				dp += 4;
-				if (ri->ri_hwbits) {
-					*(uint32_t *)hp = tmp32;
-					hp += 4;
-				}
-			}
-
-			if (slop2) {
-				msk2 =
-				    be32toh(0xffffffff << (32 - (8 * slop2)));
-				tmp32 = *(uint32_t *)dp ^ msk2;
-				*(uint32_t *)dp = tmp32;
-				if (ri->ri_hwbits)
-					*(uint32_t *)hp = tmp32;
-			}
+		if (slop2) {
+			msk = be32toh(0xffffffffU << (32 - (8 * slop2)));
+			tmp32 = *(uint32_t *)dp ^ msk;
+			*(uint32_t *)dp = tmp32;
+			if (ri->ri_hwbits)
+				*(uint32_t *)hp = tmp32;
 		}
 	}
 }
