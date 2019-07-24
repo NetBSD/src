@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.129 2018/06/21 10:37:50 knakahara Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.130 2019/07/24 02:38:29 msaitoh Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.129 2018/06/21 10:37:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.130 2019/07/24 02:38:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1584,7 +1584,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * on the outgoing interface, loop back a copy.
 	 */
 	/*
-	 * Does not have to check source info, as it's alreay covered by
+	 * Does not have to check source info, as it's already covered by
 	 * ip6_input
 	 */
 	sockaddr_in6_init(&dst6, &ip6->ip6_dst, 0, 0, 0);
