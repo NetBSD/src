@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.38 2019/07/24 10:13:14 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.39 2019/07/24 10:15:23 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.38 2019/07/24 10:13:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.39 2019/07/24 10:15:23 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2756,17 +2756,17 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	return (0);
 }
 
-void
-vmxnet3_start_locked(struct ifnet *ifp)
+#define VMXNET3_TX_START 1
+#define VMXNET3_TX_TRANSMIT 2
+static inline void
+vmxnet3_tx_common_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq, int txtype)
 {
 	struct vmxnet3_softc *sc;
-	struct vmxnet3_txqueue *txq;
 	struct vmxnet3_txring *txr;
 	struct mbuf *m_head;
 	int tx;
 
 	sc = ifp->if_softc;
-	txq = &sc->vmx_txq[0];
 	txr = &txq->vxtxq_cmd_ring;
 	tx = 0;
 
@@ -2777,14 +2777,20 @@ vmxnet3_start_locked(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_POLL(&ifp->if_snd, m_head);
+		if (txtype == VMXNET3_TX_START)
+			IFQ_POLL(&ifp->if_snd, m_head);
+		else
+			m_head = pcq_peek(txq->vxtxq_interq);
 		if (m_head == NULL)
 			break;
 
 		if (vmxnet3_txring_avail(txr) < VMXNET3_TX_MAXSEGS)
 			break;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		if (txtype == VMXNET3_TX_START)
+			IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		else
+			m_head = pcq_get(txq->vxtxq_interq);
 		if (m_head == NULL)
 			break;
 
@@ -2800,6 +2806,18 @@ vmxnet3_start_locked(struct ifnet *ifp)
 
 	if (tx > 0)
 		txq->vxtxq_watchdog = VMXNET3_WATCHDOG_TIMEOUT;
+}
+
+void
+vmxnet3_start_locked(struct ifnet *ifp)
+{
+	struct vmxnet3_softc *sc;
+	struct vmxnet3_txqueue *txq;
+
+	sc = ifp->if_softc;
+	txq = &sc->vmx_txq[0];
+
+	vmxnet3_tx_common_locked(ifp, txq, VMXNET3_TX_START);
 }
 
 
@@ -2842,45 +2860,8 @@ vmxnet3_select_txqueue(struct ifnet *ifp, struct mbuf *m __unused)
 void
 vmxnet3_transmit_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq)
 {
-	struct vmxnet3_softc *sc;
-	struct vmxnet3_txring *txr;
-	struct mbuf *m_head;
-	int tx;
 
-	sc = ifp->if_softc;
-	txr = &txq->vxtxq_cmd_ring;
-	tx = 0;
-
-	VMXNET3_TXQ_LOCK_ASSERT(txq);
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    sc->vmx_link_active == 0)
-		return;
-
-	for (;;) {
-		m_head = pcq_peek(txq->vxtxq_interq);
-		if (m_head == NULL)
-			break;
-
-		if (vmxnet3_txring_avail(txr) < VMXNET3_TX_MAXSEGS)
-			break;
-
-		m_head = pcq_get(txq->vxtxq_interq);
-		if (m_head == NULL)
-			break;
-
-		if (vmxnet3_txq_encap(txq, &m_head) != 0) {
-			if (m_head != NULL)
-				m_freem(m_head);
-			break;
-		}
-
-		tx++;
-		bpf_mtap(ifp, m_head, BPF_D_OUT);
-	}
-
-	if (tx > 0)
-		txq->vxtxq_watchdog = VMXNET3_WATCHDOG_TIMEOUT;
+	vmxnet3_tx_common_locked(ifp, txq, VMXNET3_TX_TRANSMIT);
 }
 
 int
