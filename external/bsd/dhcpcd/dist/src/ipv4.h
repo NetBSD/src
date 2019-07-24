@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -71,6 +72,9 @@
         (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED | IN_IFF_DETACHED)
 #endif
 
+#define IN_ARE_ADDR_EQUAL(a, b)		((a)->s_addr == (b)->s_addr)
+#define IN_IS_ADDR_UNSPECIFIED(a)	((a)->s_addr == INADDR_ANY)
+
 struct ipv4_addr {
 	TAILQ_ENTRY(ipv4_addr) next;
 	struct in_addr addr;
@@ -79,6 +83,8 @@ struct ipv4_addr {
 	struct interface *iface;
 	int addr_flags;
 	unsigned int flags;
+	uint32_t vltime;
+	uint32_t pltime;
 	char saddr[INET_ADDRSTRLEN + 3];
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
@@ -115,14 +121,15 @@ int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
 int ipv4_hasaddr(const struct interface *);
 
-bool inet_getroutes(struct dhcpcd_ctx *, struct rt_head *);
+bool inet_getroutes(struct dhcpcd_ctx *, rb_tree_t *);
 
 #define STATE_ADDED		0x01
 #define STATE_FAKE		0x02
 
 int ipv4_deladdr(struct ipv4_addr *, int);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *);
+    const struct in_addr *, const struct in_addr *, const struct in_addr *,
+    uint32_t, uint32_t);
 void ipv4_applyaddr(void *);
 
 struct ipv4_addr *ipv4_iffindaddr(struct interface *,
