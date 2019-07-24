@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbvar.h,v 1.5 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imxusbvar.h,v 1.6 2019/07/24 11:20:55 hkenken Exp $	*/
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -37,14 +37,19 @@ enum imx_usb_role {
 
 struct imxusbc_softc {
 	device_t sc_dev;
+
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh_usbnc;
 
 	struct clk *sc_clk;
 
 	/* filled in by platform dependent param & routine */
+	bus_addr_t sc_ehci_offset;
 	bus_size_t sc_ehci_size;
+
 	void (* sc_init_md_hook)(struct imxehci_softc *);
+	void *(* sc_intr_establish_md_hook)(struct imxehci_softc *);
 	void (* sc_setup_md_hook)(struct imxehci_softc *, enum imx_usb_role);
 };
 
@@ -68,14 +73,18 @@ enum imx_usb_if {
 struct imxehci_softc {
 	ehci_softc_t sc_hsc;
 
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	void *sc_ih;
+
 	struct imxusbc_softc *sc_usbc;
+
 	uint sc_unit;
 	enum imx_usb_if sc_iftype;
 };
 
-int imxusbc_attach_common(device_t, device_t, bus_space_tag_t);
+int imxusbc_attach_common(device_t, device_t, bus_space_tag_t, bus_addr_t, bus_size_t);
 void imxehci_reset(struct imxehci_softc *);
 
 #endif	/* _ARM_IMX_IMXUSBVAR_H */

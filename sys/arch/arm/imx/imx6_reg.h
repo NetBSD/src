@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.8 2018/06/20 07:05:37 hkenken Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.9 2019/07/24 11:20:55 hkenken Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -220,7 +220,7 @@
 #define	AIPS2_MLB150_BASE	0x0008c000
 #define	AIPS2_ENET_BASE		0x00088000
 #define	AIPS2_USBOH_BASE	0x00084000
-#define	AIPS2_USBOH_SIZE	0x00000820
+#define	AIPS2_USBOH_SIZE	0x00000800
 #define	AIPS2_CONFIG_BASE	0x0007c000
 #define	AIPS2_DAP_BASE		0x00040000
 #define	AIPS2_CAAM_BASE		0x00000000
