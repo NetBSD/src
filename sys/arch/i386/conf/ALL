@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.468 2019/05/07 22:00:10 mrg Exp $
+# $NetBSD: ALL,v 1.469 2019/07/24 23:13:46 tnn Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.468 $"
+#ident		"ALL-$Revision: 1.469 $"
 
 maxusers	64		# estimated number of users
 
@@ -785,6 +785,9 @@ ihidev* at iic?
 # I2C Mice
 ims*	at ihidev? reportid ?
 wsmouse* at ims? mux 0
+
+# I2C Displays
+ssdfb*	at iic?
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
