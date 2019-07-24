@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.35 2018/12/04 09:27:59 mlelstv Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.36 2019/07/24 18:03:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.35 2018/12/04 09:27:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.36 2019/07/24 18:03:30 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -113,7 +113,7 @@ static void
 rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height, cnt, fs, fb;
-	u_char *dp, *rp, *hp, *hrp, *fr, clr[2];
+	uint8_t *dp, *rp, *hp, *hrp, *fr, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 
@@ -137,11 +137,11 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	height = font->fontheight;
 	width = font->fontwidth;
-	clr[0] = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
-	clr[1] = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
+	clr[0] = (uint8_t)ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr[1] = (uint8_t)ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (uc == ' ') {
-		u_char c = clr[0];
+		uint8_t c = clr[0];
 
 		while (height--) {
 			memset(rp, c, width);
@@ -176,7 +176,7 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		u_char c = clr[1];
+		uint8_t c = clr[1];
 
 		rp -= (ri->ri_stride << 1);
 		if (ri->ri_hwbits)
@@ -194,7 +194,7 @@ static void
 rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height;
-	u_char *rp, *hrp, *fr, bg, fg, pixel;
+	uint8_t *rp, *hrp, *fr, bg, fg, pixel;
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int x, y, r, g, b, aval;
@@ -221,8 +221,8 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 
 	height = font->fontheight;
 	width = font->fontwidth;
-	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
-	fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
+	bg = (uint8_t)ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = (uint8_t)ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 
@@ -338,7 +338,7 @@ rasops8_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs;
 	int32_t *rp, *hp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -429,7 +429,7 @@ rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs;
 	int32_t *rp,  *hrp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -524,7 +524,7 @@ rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs;
 	int32_t *rp, *hrp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {

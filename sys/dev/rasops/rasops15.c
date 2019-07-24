@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.23 2019/07/21 16:18:08 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.24 2019/07/24 18:03:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.23 2019/07/21 16:18:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.24 2019/07/24 18:03:30 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -121,7 +121,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	u_char *dp, *rp, *hp, *hrp, *fr;
+	uint8_t *dp, *rp, *hp, *hrp, *fr;
 
 	hp = hrp = NULL;
 
@@ -165,7 +165,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
 		while (height--) {
 			dp = rp;
@@ -216,7 +216,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int16_t *dp, *rp;
 	uint8_t *rrp;
-	u_char *fr;
+	uint8_t *fr;
 	uint16_t buffer[64]; /* XXX */
 	int x, y, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
@@ -339,7 +339,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp, *hrp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -384,7 +384,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -436,7 +436,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp, *hrp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -482,7 +482,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -542,7 +542,7 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp, *hrp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -589,7 +589,7 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {

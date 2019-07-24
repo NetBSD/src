@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.30 2018/12/04 09:27:59 mlelstv Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.31 2019/07/24 18:03:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.30 2018/12/04 09:27:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.31 2019/07/24 18:03:30 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -122,7 +122,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	u_char *dp, *rp, *fr;
+	uint8_t *dp, *rp, *fr;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -141,7 +141,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	clr[0] = ri->ri_devcmap[((u_int)attr >> 16) & 0xf];
 
 	if (uc == ' ') {
-		u_char c = clr[0];
+		uint8_t c = clr[0];
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
@@ -154,7 +154,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
 		while (height--) {
 			dp = rp;
@@ -179,7 +179,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		u_char c = clr[1];
+		uint8_t c = clr[1];
 
 		rp -= ri->ri_stride << 1;
 
@@ -243,7 +243,7 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -279,7 +279,7 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -319,7 +319,7 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -356,7 +356,7 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -402,7 +402,7 @@ rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, so, fs;
 	int32_t *rp;
-	u_char *fr;
+	uint8_t *fr;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -440,7 +440,7 @@ rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc*ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -490,7 +490,7 @@ static void
 rasops24_eraserows(void *cookie, int row, int num, long attr)
 {
 	int n9, n3, n1, cnt, stride, delta;
-	u_int32_t *dp, clr, xstamp[3];
+	uint32_t *dp, clr, xstamp[3];
 	struct rasops_info *ri;
 
 	/*
@@ -593,7 +593,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	int n12, n4, height, cnt, slop, clr, xstamp[3];
 	struct rasops_info *ri;
 	int32_t *dp, *rp;
-	u_char *dbp;
+	uint8_t *dbp;
 
 	/*
 	 * If the color is gray, we can cheat and use the generic routines
@@ -656,7 +656,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	n4 = num >> 2;		num &= 3;
 
 	while (height--) {
-		dbp = (u_char *)rp;
+		dbp = (uint8_t *)rp;
 		DELTA(rp, ri->ri_stride, int32_t *);
 
 		/* Align to 4 bytes */
@@ -693,7 +693,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 
 		/* Trailing slop */
 		/* XXX handle with masks, bring under control of RI_BSWAP */
-		dbp = (u_char *)dp;
+		dbp = (uint8_t *)dp;
 		for (cnt = num; cnt; cnt--) {
 			*dbp++ = (clr >> 16);
 			*dbp++ = (clr >> 8);
