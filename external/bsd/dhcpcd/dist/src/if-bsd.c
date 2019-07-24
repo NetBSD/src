@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * BSD interface driver for dhcpcd
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -496,6 +497,8 @@ if_route(unsigned char cmd, const struct rt *rt)
 	bool gateway_unspec;
 
 	assert(rt != NULL);
+	assert(rt->rt_ifp != NULL);
+	assert(rt->rt_ifp->ctx != NULL);
 	ctx = rt->rt_ifp->ctx;
 
 #define ADDSA(sa) do {							      \
@@ -695,15 +698,13 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 }
 
 int
-if_initrt(struct dhcpcd_ctx *ctx, int af)
+if_initrt(struct dhcpcd_ctx *ctx, rb_tree_t *kroutes, int af)
 {
 	struct rt_msghdr *rtm;
 	int mib[6];
 	size_t needed;
 	char *buf, *p, *end;
-	struct rt rt;
-
-	rt_headclear(&ctx->kroutes, af);
+	struct rt rt, *rtn;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -730,10 +731,15 @@ if_initrt(struct dhcpcd_ctx *ctx, int af)
 			errno = EINVAL;
 			break;
 		}
-		if (if_copyrt(ctx, &rt, rtm) == 0) {
-			rt.rt_dflags |= RTDF_INIT;
-			rt_recvrt(RTM_ADD, &rt, rtm->rtm_pid);
+		if (if_copyrt(ctx, &rt, rtm) != 0)
+			continue;
+		if ((rtn = rt_new(rt.rt_ifp)) == NULL) {
+			logerr(__func__);
+			break;
 		}
+		memcpy(rtn, &rt, sizeof(*rtn));
+		if (rb_tree_insert_node(kroutes, rtn) != rtn)
+			rt_free(rtn);
 	}
 	free(buf);
 	return p == end ? 0 : -1;
@@ -1063,7 +1069,7 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 		return 0;
 
 	if (if_copyrt(ctx, &rt, rtm) == -1)
-		return errno == ENOTSUP ? 0 : -1;
+		return -1;
 
 #ifdef INET6
 	/*
@@ -1306,7 +1312,6 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 #ifdef RTM_DESYNC
 	case RTM_DESYNC:
 		dhcpcd_linkoverflow(ctx);
-		return 0;
 #endif
 	}
 
@@ -1326,12 +1331,13 @@ if_handlelink(struct dhcpcd_ctx *ctx)
 		return -1;
 	if (len == 0)
 		return 0;
-	if ((size_t)len < offsetof(struct rt_msghdr, rtm_index) ||
-	    len < rtm.hdr.rtm_msglen)
-	{
+	if (len < rtm.hdr.rtm_msglen) {
 		errno = EINVAL;
 		return -1;
 	}
+	/* We generally treat rtm.hdr has an array so we can easily
+	 * access the following data. */
+	/* coverity[callee_ptr_arith] */
 	return if_dispatch(ctx, &rtm.hdr);
 }
 
