@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.2 2019/06/15 08:20:33 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.3 2019/07/24 02:37:17 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define	FS_MFS		257	/* another random (out of range) value */
 #endif
 
-#define	MAX_LABEL_LEN		128	/* max. length of a partion label */
+#define	MAX_LABEL_LEN		128	/* max. length of a partition label */
 #define	MAX_SHORTCUT_LEN	8	/* max. lenght of a shortcut ("a:") */
 
 /*
