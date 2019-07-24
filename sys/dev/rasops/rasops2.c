@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.20 2019/07/24 18:03:30 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.21 2019/07/24 18:33:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.20 2019/07/24 18:03:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.21 2019/07/24 18:33:49 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -57,7 +57,7 @@ static void	rasops2_makestamp(struct rasops_info *, long);
 /*
  * 4x1 stamp for optimized character blitting
  */
-static int8_t	stamp[16];
+static uint8_t	stamp[16];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in README */
 #endif
@@ -104,7 +104,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int32_t *rp;
+	uint32_t *rp;
 	uint8_t *fr;
 
 #ifdef RASOPS_CLIPPING
@@ -119,7 +119,8 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	width = font->fontwidth << 1;
 	height = font->fontheight;
 	col *= width;
-	rp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale + ((col >> 3) & ~3));
+	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
+	    ((col >> 3) & ~3));
 	col = col & 31;
 	rs = ri->ri_stride;
 
@@ -147,7 +148,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 			while (height--) {
 				*rp = (*rp & lmask) | bg;
-				DELTA(rp, rs, int32_t *);
+				DELTA(rp, rs, uint32_t *);
 			}
 		} else {
 			while (height--) {
@@ -160,7 +161,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 		/* Do underline */
 		if (attr & WSATTR_UNDERLINE) {
-			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 			*rp = (*rp & lmask) | (fg & rmask);
 		}
 	} else {
@@ -174,7 +175,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			while (height--) {
 				rp[0] = (rp[0] & lmask) | bg;
 				rp[1] = (rp[1] & rmask) | width;
-				DELTA(rp, rs, int32_t *);
+				DELTA(rp, rs, uint32_t *);
 			}
 		} else {
 			width = 32 - col;
@@ -191,13 +192,13 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				   | (MBE((u_int)fb << width) & ~rmask);
 
 				fr += fs;
-				DELTA(rp, rs, int32_t *);
+				DELTA(rp, rs, uint32_t *);
 			}
 		}
 
 		/* Do underline */
 		if (attr & WSATTR_UNDERLINE) {
-			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+			DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 			rp[0] = (rp[0] & lmask) | (fg & ~lmask);
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
 		}
@@ -290,9 +291,9 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		int8_t c = stamp[0];
+		uint8_t c = stamp[0];
 		while (height--) {
-			*(int16_t *)rp = c;
+			*(uint16_t *)rp = c;
 			rp += rs;
 		}
 	} else {
@@ -310,7 +311,7 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0)
-		*(int16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
+		*(uint16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 
 	stamp_mutex--;
 }
@@ -355,7 +356,7 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		int8_t c = stamp[0];
+		uint8_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = c;
 			rp += rs;
@@ -423,9 +424,9 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		int8_t c = stamp[0];
+		uint8_t c = stamp[0];
 		while (height--) {
-			*(int32_t *)rp = c;
+			*(uint32_t *)rp = c;
 			rp += rs;
 		}
 	} else {
@@ -445,7 +446,7 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0)
-		*(int32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
+		*(uint32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 
 	stamp_mutex--;
 }
