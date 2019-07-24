@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_usdhc.c,v 1.2 2017/10/26 05:08:30 ryo Exp $	*/
+/*	$NetBSD: imx7_usdhc.c,v 1.3 2019/07/24 12:33:18 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -29,9 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_usdhc.c,v 1.2 2017/10/26 05:08:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_usdhc.c,v 1.3 2019/07/24 12:33:18 hkenken Exp $");
 
 #include "imxgpio.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,7 +143,7 @@ sdhc_set_gpio_cd(struct sdhc_axi_softc *sc, const char *name)
 
 	sc->sc_gpio_cd = GPIO_NO(grp, pin);
 #if NIMXGPIO > 0
-	gpio_set_direction(sc->sc_gpio_cd, GPIO_DIR_IN);
+	gpio_set_direction(sc->sc_gpio_cd, GPIO_PIN_INPUT);
 #endif
 }
 
