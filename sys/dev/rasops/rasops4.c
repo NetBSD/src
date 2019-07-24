@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.13 2018/12/05 05:52:23 mlelstv Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.14 2019/07/24 18:03:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.13 2018/12/05 05:52:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.14 2019/07/24 18:03:30 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -57,7 +57,7 @@ static void	rasops4_makestamp(struct rasops_info *, long);
 /*
  * 4x1 stamp for optimized character blitting
  */
-static u_int16_t	stamp[16];
+static uint16_t	stamp[16];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in README */
 #endif
@@ -105,7 +105,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *rp;
-	u_char *fr;
+	uint8_t *fr;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -133,7 +133,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		fs = 0;		/* shutup gcc */
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 		fs = font->stride;
 	}
 
@@ -259,8 +259,8 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
-	u_char *fr;
-	u_int16_t *rp;
+	uint8_t *fr;
+	uint16_t *rp;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -282,7 +282,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (u_int16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -291,7 +291,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		u_int16_t c = stamp[0];
+		uint16_t c = stamp[0];
 		while (height--) {
 			rp[0] = c;
 			rp[1] = c;
@@ -299,7 +299,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -329,8 +329,8 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
-	u_char *fr;
-	u_int16_t *rp;
+	uint8_t *fr;
+	uint16_t *rp;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -352,7 +352,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (u_int16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -361,7 +361,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		u_int16_t c = stamp[0];
+		uint16_t c = stamp[0];
 		while (height--) {
 			rp[0] = c;
 			rp[1] = c;
@@ -370,7 +370,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
@@ -402,8 +402,8 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
-	u_char *fr;
-	u_int16_t *rp;
+	uint8_t *fr;
+	uint16_t *rp;
 
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
@@ -425,7 +425,7 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (u_int16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -434,7 +434,7 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		u_int16_t c = stamp[0];
+		uint16_t c = stamp[0];
 		while (height--) {
 			rp[0] = c;
 			rp[1] = c;
@@ -444,7 +444,7 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
 		fs = font->stride;
 
 		while (height--) {
