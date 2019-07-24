@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.28 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.29 2019/07/24 14:57:09 msaitoh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1424,7 +1424,7 @@ struct i915_gpu_error {
 	atomic_t reset_counter;
 
 #define I915_RESET_IN_PROGRESS_FLAG	1
-#define I915_WEDGED			(1 << 31)
+#define I915_WEDGED			(1UL << 31)
 
 	/**
 	 * Waitqueue to signal when the reset has completed. Used by clients
