@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -287,9 +288,9 @@ void ipv6_addtempaddrs(struct interface *, const struct timespec *);
 int ipv6_start(struct interface *);
 int ipv6_staticdadcompleted(const struct interface *);
 int ipv6_startstatic(struct interface *);
-ssize_t ipv6_env(char **, const char *, const struct interface *);
+ssize_t ipv6_env(FILE *, const char *, const struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
-bool inet6_getroutes(struct dhcpcd_ctx *, struct rt_head *);
+bool inet6_getroutes(struct dhcpcd_ctx *, rb_tree_t *);
 #endif /* INET6 */
 
 #endif /* INET6_H */

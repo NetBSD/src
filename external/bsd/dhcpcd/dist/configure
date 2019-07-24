@@ -13,7 +13,9 @@ IPV4LL=
 INET6=
 ARC4RANDOM=
 CLOSEFROM=
+RBTREE=
 CONSTTIME_MEMEQUAL=
+OPEN_MEMSTREAM=
 STRLCPY=
 UDEV=
 OS=
@@ -421,8 +423,8 @@ freebsd*|kfreebsd*)
 	case "$OS" in
 	kfreebsd*)	echo "#include		<inttypes.h>" >>$CONFIG_H;
 	esac
-	echo "#include		<net/if.h>" >>$CONFIG_H
-	echo "#include		<net/if_var.h>" >>$CONFIG_H
+	echo "#include			<net/if.h>" >>$CONFIG_H
+	echo "#include			<net/if_var.h>" >>$CONFIG_H
 	;;
 netbsd*)
 	# reallocarray(3) is guarded by _OPENBSD_SOURCE
@@ -740,28 +742,25 @@ if [ "$ARC4RANDOM_UNIFORM" = no ]; then
 	echo "#include			\"compat/arc4random_uniform.h\"" >>$CONFIG_H
 fi
 
-if [ -z "$STRLCPY" ]; then
-	printf "Testing for strlcpy ... "
-	cat <<EOF >_strlcpy.c
-#include <string.h>
+if [ -z "$OPEN_MEMSTREAM" ]; then
+	printf "Testing for open_memstream ... "
+	cat <<EOF >_open_memstream.c
+#include <stdio.h>
 int main(void) {
-	const char s1[] = "foo";
-	char s2[10];
-	strlcpy(s2, s1, sizeof(s2));
+	open_memstream(NULL, NULL);
 	return 0;
 }
 EOF
-	if $XCC _strlcpy.c -o _strlcpy 2>&3; then
-		STRLCPY=yes
+	if $XCC _open_memstream.c -o _open_memstream 2>&3; then
+		OPEN_MEMSTREAM=yes
 	else
-		STRLCPY=no
+		OPEN_MEMSTREAM=no
 	fi
-	echo "$STRLCPY"
-	rm -f _strlcpy.c _strlcpy
+	echo "$OPEN_MEMSTREAM"
+	rm -f _open_memstream.c _open_memstream
 fi
-if [ "$STRLCPY" = no ]; then
-	echo "COMPAT_SRCS+=	compat/strlcpy.c" >>$CONFIG_MK
-	echo "#include			\"compat/strlcpy.h\"" >>$CONFIG_H
+if [ "$OPEN_MEMSTREAM" = yes ]; then
+	echo "#define	HAVE_OPEN_MEMSTREAM" >>$CONFIG_H
 fi
 
 if [ -z "$PIDFILE_LOCK" ]; then
@@ -820,6 +819,30 @@ EOF
 fi
 if [ "$SETPROCTITLE" = yes ]; then
 	echo "#define	HAVE_SETPROCTITLE" >>$CONFIG_H
+fi
+
+if [ -z "$STRLCPY" ]; then
+	printf "Testing for strlcpy ... "
+	cat <<EOF >_strlcpy.c
+#include <string.h>
+int main(void) {
+	const char s1[] = "foo";
+	char s2[10];
+	strlcpy(s2, s1, sizeof(s2));
+	return 0;
+}
+EOF
+	if $XCC _strlcpy.c -o _strlcpy 2>&3; then
+		STRLCPY=yes
+	else
+		STRLCPY=no
+	fi
+	echo "$STRLCPY"
+	rm -f _strlcpy.c _strlcpy
+fi
+if [ "$STRLCPY" = no ]; then
+	echo "COMPAT_SRCS+=	compat/strlcpy.c" >>$CONFIG_MK
+	echo "#include			\"compat/strlcpy.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$STRTOI" ]; then
@@ -958,11 +981,38 @@ if [ "$TAILQ_FOREACH_SAFE" = no -o "$TAILQ_CONCAT" = no ]; then
 	# Strictly speaking this isn't needed, but I like it to help
 	# catch any nasties.
 	if [ "$TAILQ_FOREACH" = yes ]; then
-		echo "#include		<sys/queue.h>">>$CONFIG_H
+		echo "#include			<sys/queue.h>">>$CONFIG_H
 	fi
 	echo "#include			\"compat/queue.h\"">>$CONFIG_H
 else
 	echo "#define	HAVE_SYS_QUEUE_H" >>$CONFIG_H
+fi
+
+if [ -z "$RBTREE" ]; then
+	printf "Testing for rb_tree_init ... "
+	cat <<EOF >_rbtree.c
+#include <sys/rbtree.h>
+static rb_tree_ops_t ops;
+int main(void) {
+	rb_tree_t tree;
+	rb_tree_init(&tree, &ops);
+	return 0;
+}
+EOF
+	if $XCC _rbtree.c -o _rbtree 2>&3; then
+		RBTREE=yes
+	else
+		RBTREE=no
+	fi
+	echo "$RBTREE"
+	rm -f _rbtree.c _rbtree
+fi
+if [ "$RBTREE" = no ]; then
+	echo "CPPFLAGS+=	-DRBTEST" >>$CONFIG_MK
+	echo "COMPAT_SRCS+=	compat/rb.c" >>$CONFIG_MK
+	echo "#include			\"compat/rbtree.h\"" >>$CONFIG_H
+else
+	echo "#define	HAVE_SYS_RBTREE_H" >>$CONFIG_H
 fi
 
 if [ -z "$REALLOCARRAY" ]; then

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -33,8 +34,17 @@
 
 #include <stdint.h>
 
+#include <arpa/nameser.h> /* after normal includes for sunos */
+
 #include "common.h"
 #include "dhcpcd.h"
+
+/* Support very old arpa/nameser.h as found in OpenBSD */
+#ifndef NS_MAXDNAME
+#define NS_MAXCDNAME MAXCDNAME
+#define NS_MAXDNAME MAXDNAME
+#define NS_MAXLABEL MAXLABEL
+#endif
 
 /* Max MTU - defines dhcp option length */
 #define	IP_UDP_SIZE		  28
@@ -111,8 +121,8 @@ ssize_t decode_rfc1035(char *, size_t, const uint8_t *, size_t);
 ssize_t print_string(char *, size_t, int, const uint8_t *, size_t);
 int dhcp_set_leasefile(char *, size_t, int, const struct interface *);
 
-size_t dhcp_envoption(struct dhcpcd_ctx *,
-    char **, const char *, const char *, struct dhcp_opt *,
+void dhcp_envoption(struct dhcpcd_ctx *,
+    FILE *, const char *, const char *, struct dhcp_opt *,
     const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
     size_t *, unsigned int *, size_t *,
     const uint8_t *, size_t, struct dhcp_opt **),
