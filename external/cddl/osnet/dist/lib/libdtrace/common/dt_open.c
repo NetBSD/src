@@ -1140,19 +1140,36 @@ dt_vopen(int version, int flags, int *errp,
 	 */
 	dt_provmod_open(&provmod, &df);
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
 	modctl_load_t cmdargs;
+	const char * const mod_list[] = {
+		"dtrace",
+		"dtrace_sdt",
+		"dtrace_fbt",
+		"dtrace_syscall"
+	};
 
-	cmdargs.ml_filename = "dtrace";
-	cmdargs.ml_flags = MODCTL_NO_PROP;
-	cmdargs.ml_props = NULL;
-	cmdargs.ml_propslen = 0;
+	dtfd = -1;
+	err = 0;
+	for (i = 0; i < __arraycount(mod_list); i++) {
+		cmdargs.ml_filename = mod_list[i];
+		cmdargs.ml_flags = MODCTL_NO_PROP;
+		cmdargs.ml_props = NULL;
+		cmdargs.ml_propslen = 0;
 
-	(void)modctl(MODCTL_LOAD, &cmdargs);
+		if (modctl(MODCTL_LOAD, &cmdargs) < 0 && errno != EEXIST) {
+			err = errno;
+			break;
+		}
+	}
+	if (err == 0) {
+		dtfd = open("/dev/dtrace/dtrace", O_RDWR);
+		err = errno; /* save errno from opening dtfd */
+	}
 #endif
+#if defined(__FreeBSD__)
 	dtfd = open("/dev/dtrace/dtrace", O_RDWR);
 	err = errno; /* save errno from opening dtfd */
-#if defined(__FreeBSD__)
 	/*
 	 * Automatically load the 'dtraceall' module if we couldn't open the
 	 * char device.
