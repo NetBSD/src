@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.5 2014/09/25 05:05:28 ryo Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,32 +29,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.5 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $");
 
 #define	_INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
-#include "opt_imxgpio.h"
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
-
-#include <uvm/uvm_extern.h>
+#include <sys/bus.h>
 
 #include <machine/intr.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-
-#include <sys/bus.h>
-
-#include <arm/imx/imx31reg.h>
-#include <arm/imx/imx31var.h>
-#include <arm/imx/imxgpioreg.h>
-#include <arm/pic/picvar.h>
 
 #include <arm/imx/imxgpioreg.h>
 #include <arm/imx/imxgpiovar.h>
@@ -67,68 +58,37 @@ __KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.5 2014/09/25 05:05:28 ryo Exp $");
 
 #define	MAX_NGROUP	8
 
-static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
-static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
-static int gpio_pic_find_pending_irqs(struct pic_softc *);
-static void gpio_pic_establish_irq(struct pic_softc *, struct intrsource *);
+static void imxgpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
+static void imxgpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
+static int imxgpio_pic_find_pending_irqs(struct pic_softc *);
+static void imxgpio_pic_establish_irq(struct pic_softc *, struct intrsource *);
 
-const struct pic_ops gpio_pic_ops = {
-	.pic_unblock_irqs = gpio_pic_unblock_irqs,
-	.pic_block_irqs = gpio_pic_block_irqs,
-	.pic_find_pending_irqs = gpio_pic_find_pending_irqs,
-	.pic_establish_irq = gpio_pic_establish_irq,
+const struct pic_ops imxgpio_pic_ops = {
+	.pic_unblock_irqs = imxgpio_pic_unblock_irqs,
+	.pic_block_irqs = imxgpio_pic_block_irqs,
+	.pic_find_pending_irqs = imxgpio_pic_find_pending_irqs,
+	.pic_establish_irq = imxgpio_pic_establish_irq,
 	.pic_source_name = NULL
 };
 
-struct gpio_softc {
-	device_t gpio_dev;
-	struct pic_softc gpio_pic;
-#if defined(IMX_GPIO_INTR_SPLIT)
-	struct intrsource *gpio_is_0_15;
-	struct intrsource *gpio_is_16_31;
-#else
-	struct intrsource *gpio_is;
-#endif
-	bus_space_tag_t gpio_memt;
-	bus_space_handle_t gpio_memh;
-	uint32_t gpio_enable_mask;
-	uint32_t gpio_edge_mask;
-	uint32_t gpio_level_mask;
-#if NGPIO > 0
-	struct gpio_chipset_tag gpio_chipset;
-	gpio_pin_t gpio_pins[32];
-#endif
-};
+static struct imxgpio_softc *imxgpio_handles[MAX_NGROUP];
 
-static struct {
-	bus_space_tag_t	iot;
-	struct {
-		bus_space_handle_t ioh;
-		struct gpio_softc *softc;
-	} unit[MAX_NGROUP];
-} gpio_handles;
+CFATTACH_DECL_NEW(imxgpio, sizeof(struct imxgpio_softc),
+    imxgpio_match, imxgpio_attach, NULL, NULL);
 
-extern struct cfdriver imxgpio_cd;
+#define	PIC_TO_SOFTC(pic)						      \
+	((struct imxgpio_softc *)((char *)(pic) -			      \
+	    offsetof(struct imxgpio_softc, gpio_pic)))
 
-CFATTACH_DECL_NEW(imxgpio,
-	sizeof(struct gpio_softc),
-	imxgpio_match, imxgpio_attach,
-	NULL, NULL);
-
-
-#define	PIC_TO_SOFTC(pic) \
-	((struct gpio_softc *)((char *)(pic) - \
-		offsetof(struct gpio_softc, gpio_pic)))
-
-#define	GPIO_READ(gpio, reg) \
+#define	GPIO_READ(gpio, reg)						      \
 	bus_space_read_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg))
-#define	GPIO_WRITE(gpio, reg, val) \
+#define	GPIO_WRITE(gpio, reg, val)					      \
 	bus_space_write_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg), (val))
 
 void
-gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
+imxgpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
-	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	struct imxgpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
 	gpio->gpio_enable_mask |= irq_mask;
@@ -138,9 +98,9 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 }
 
 void
-gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
+imxgpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
-	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	struct imxgpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
 	gpio->gpio_enable_mask &= ~irq_mask;
@@ -148,9 +108,9 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 }
 
 int
-gpio_pic_find_pending_irqs(struct pic_softc *pic)
+imxgpio_pic_find_pending_irqs(struct pic_softc *pic)
 {
-	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	struct imxgpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	uint32_t v;
 	uint32_t pending;
 
@@ -213,9 +173,9 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	 (GPIO_ICR_EDGE_RISING << (2*IST_EDGE_BOTH)))
 
 void
-gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
+imxgpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
-	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	struct imxgpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(is->is_irq < 32);
 	uint32_t irq_mask = __BIT(is->is_irq);
 	uint32_t v;
@@ -265,20 +225,26 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 
 #if NGPIO > 0
 
-static int
+int
 imxgpio_pin_read(void *arg, int pin)
 {
-	struct gpio_softc * const gpio = arg;
+	struct imxgpio_softc * const gpio = arg;
+	int val;
 
-	return (GPIO_READ(gpio, GPIO_DR) >> pin) & 1;
+	val = __SHIFTOUT(GPIO_READ(gpio, GPIO_DR), __BIT(pin));
+
+	return val;
 }
 
-static void
+void
 imxgpio_pin_write(void *arg, int pin, int value)
 {
-	struct gpio_softc * const gpio = arg;
-	uint32_t mask = 1 << pin;
-	uint32_t old, new;
+	struct imxgpio_softc * const gpio = arg;
+	uint32_t mask = __BIT(pin);
+	uint32_t old;
+	uint32_t new;
+
+	mutex_enter(&gpio->gpio_lock);
 
 	old = GPIO_READ(gpio, GPIO_DR);
 	if (value)
@@ -288,30 +254,43 @@ imxgpio_pin_write(void *arg, int pin, int value)
 
 	if (old != new)
 		GPIO_WRITE(gpio, GPIO_DR, new);
+
+	mutex_exit(&gpio->gpio_lock);
 }
 
-static void
+void
 imxgpio_pin_ctl(void *arg, int pin, int flags)
 {
-	struct gpio_softc * const gpio = arg;
-	uint32_t mask = 1 << pin;
-	uint32_t old, new;
+	struct imxgpio_softc * const gpio = arg;
+	uint32_t mask = __BIT(pin);
+	uint32_t old;
+	uint32_t new;
+
+	mutex_enter(&gpio->gpio_lock);
 
 	old = GPIO_READ(gpio, GPIO_DIR);
 	new = old;
-	switch (flags & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
-	case GPIO_PIN_INPUT:	new &= ~mask; break;
-	case GPIO_PIN_OUTPUT:	new |= mask; break;
-	default:		return;
+	switch (flags & (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT)) {
+	case GPIO_PIN_INPUT:
+		new &= ~mask;
+		break;
+	case GPIO_PIN_OUTPUT:
+		new |= mask;
+		break;
+	default:
+		break;
 	}
+
 	if (old != new)
 		GPIO_WRITE(gpio, GPIO_DIR, new);
+
+	mutex_exit(&gpio->gpio_lock);
 }
 
 static void
 gpio_defer(device_t self)
 {
-	struct gpio_softc * const gpio = device_private(self);
+	struct imxgpio_softc * const gpio = device_private(self);
 	struct gpio_chipset_tag * const gp = &gpio->gpio_chipset;
 	struct gpiobus_attach_args gba;
 	gpio_pin_t *pins;
@@ -332,7 +311,7 @@ gpio_defer(device_t self)
 	for (pin = 0, mask = 1, pins = gpio->gpio_pins;
 	     pin < 32; pin++, mask <<= 1, pins++) {
 		pins->pin_num = pin;
-		if ((gpio->gpio_edge_mask|gpio->gpio_level_mask) & mask)
+		if ((gpio->gpio_edge_mask | gpio->gpio_level_mask) & mask)
 			pins->pin_caps = GPIO_PIN_INPUT;
 		else
 			pins->pin_caps = GPIO_PIN_INPUT|GPIO_PIN_OUTPUT;
@@ -347,112 +326,69 @@ gpio_defer(device_t self)
 #endif /* NGPIO > 0 */
 
 void
-imxgpio_attach_common(device_t self, bus_space_tag_t iot,
-    bus_space_handle_t ioh, int index, int intr, int irqbase)
+imxgpio_attach_common(device_t self)
 {
-	struct gpio_softc * const gpio = device_private(self);
+	struct imxgpio_softc * const gpio = device_private(self);
 
-	KASSERT(index < MAX_NGROUP);
+	KASSERT(gpio->gpio_unit < MAX_NGROUP);
 
 	gpio->gpio_dev = self;
-	gpio->gpio_memt = iot;
-	gpio->gpio_memh = ioh;
 
-	if (irqbase > 0) {
-		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
+	if (gpio->gpio_irqbase > 0) {
+		aprint_normal_dev(gpio->gpio_dev, "interrupts %d..%d\n",
+		    gpio->gpio_irqbase, gpio->gpio_irqbase + GPIO_NPINS - 1);
+
+		gpio->gpio_pic.pic_ops = &imxgpio_pic_ops;
 		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 
-		pic_add(&gpio->gpio_pic, irqbase);
-
-		aprint_normal(": interrupts %d..%d",
-		    irqbase, irqbase + GPIO_NPINS - 1);
-
-#if defined(IMX_GPIO_INTR_SPLIT)
-		gpio->gpio_is_0_15 = intr_establish(intr,
-		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
-		KASSERT( gpio->gpio_is_0_15 != NULL );
-		gpio->gpio_is_16_31 = intr_establish(intr + 1,
-		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
-		KASSERT( gpio->gpio_is_16_31 != NULL );
-#else
-		gpio->gpio_is = intr_establish(intr,
-		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
-		KASSERT( gpio->gpio_is != NULL );
-#endif
+		pic_add(&gpio->gpio_pic, gpio->gpio_irqbase);
 	}
-	aprint_normal("\n");
 
-	gpio_handles.iot = iot;
-	gpio_handles.unit[index].softc = gpio;
-	gpio_handles.unit[index].ioh = ioh;
+	mutex_init(&gpio->gpio_lock, MUTEX_DEFAULT, IPL_VM);
+
+	imxgpio_handles[gpio->gpio_unit] = gpio;
 
 #if NGPIO > 0
 	config_interrupts(self, gpio_defer);
 #endif
 }
 
-#define	GPIO_GROUP_READ(index,offset)	\
-	bus_space_read_4(gpio_handles.iot, gpio_handles.unit[index].ioh, \
-	    (offset))
-#define	GPIO_GROUP_WRITE(index,offset,value)				\
-	bus_space_write_4(gpio_handles.iot, gpio_handles.unit[index].ioh, \
-	    (offset), (value))
-
+/* in-kernel GPIO access utility functions */
 void
-gpio_set_direction(u_int gpio, u_int dir)
+gpio_set_direction(u_int gpio, int dir)
 {
 	int index = gpio / GPIO_NPINS;
-	int bit = gpio % GPIO_NPINS;
-	uint32_t reg;
+	int pin = gpio % GPIO_NPINS;
 
 	KDASSERT(index < imxgpio_ngroups);
+	KASSERT(imxgpio_handles[index] != NULL);
 
-	/* XXX lock */
-
-
-	reg = GPIO_GROUP_READ(index, GPIO_DIR);
-	if (dir == GPIO_DIR_OUT)
-		reg |= __BIT(bit);
-	else
-		reg &= ~__BIT(bit);
-	GPIO_GROUP_WRITE(index, GPIO_DIR, reg);
-		      
-	/* XXX unlock */
+	imxgpio_pin_ctl(imxgpio_handles[index], pin, dir);
 }
-
 
 void
 gpio_data_write(u_int gpio, u_int value)
 {
 	int index = gpio / GPIO_NPINS;
-	int bit = gpio % GPIO_NPINS;
-	uint32_t reg;
+	int pin = gpio % GPIO_NPINS;
 
 	KDASSERT(index < imxgpio_ngroups);
+	KASSERT(imxgpio_handles[index] != NULL);
 
-	/* XXX lock */
-	reg = GPIO_GROUP_READ(index, GPIO_DR);
-	if (value)
-		reg |= __BIT(bit);
-	else
-		reg &= ~__BIT(bit);
-	GPIO_GROUP_WRITE(index, GPIO_DR, reg);
-
-	/* XXX unlock */
+	imxgpio_pin_write(imxgpio_handles[index], pin, value);
 }
 
 bool
 gpio_data_read(u_int gpio)
 {
 	int index = gpio / GPIO_NPINS;
-	int bit = gpio % GPIO_NPINS;
-	uint32_t reg;
+	int pin = gpio % GPIO_NPINS;
 
 	KDASSERT(index < imxgpio_ngroups);
+	KASSERT(imxgpio_handles[index] != NULL);
 
-	reg = GPIO_GROUP_READ(index, GPIO_DR);
-
-	return reg & __BIT(bit) ? true : false;
+	return imxgpio_pin_read(imxgpio_handles[index], pin) ? true : false;
 }
+

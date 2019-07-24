@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.7 2019/06/20 08:16:19 hkenken Exp $ */
+/*	$NetBSD: imx6_usdhc.c,v 1.8 2019/07/24 12:33:18 hkenken Exp $ */
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -28,9 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.7 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.8 2019/07/24 12:33:18 hkenken Exp $");
 
 #include "imxgpio.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,22 +117,22 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 	case IMX6_AIPS2_BASE + AIPS2_USDHC1_BASE:
 		sc->sc_clk = imx6_get_clock("usdhc1");
 		imx6_set_gpio(self, "usdhc1-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC2_BASE:
 		sc->sc_clk = imx6_get_clock("usdhc2");
 		imx6_set_gpio(self, "usdhc2-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC3_BASE:
 		sc->sc_clk = imx6_get_clock("usdhc3");
 		imx6_set_gpio(self, "usdhc3-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC4_BASE:
 		sc->sc_clk = imx6_get_clock("usdhc4");
 		imx6_set_gpio(self, "usdhc4-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	}
 
