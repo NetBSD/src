@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1381 2019/07/18 08:50:50 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1382 2019/07/24 02:23:31 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1009,6 +1009,7 @@ product AMD F17_IOMMU	0x1451	Family17h IOMMU
 product AMD F17_PCIE_1	0x1452	Family17h PCIE
 product AMD F17_PCIE_2	0x1453	Family17h PCIE
 product AMD F17_PCIE_3	0x1454	Family17h PCIE
+product AMD F17_CCP_1	0x1456	Family17h Crypto
 product AMD F17_HDA	0x1457	Family17h HD Audio
 product AMD F17_XHCI	0x145c	Family17h xHCI
 product AMD F17_XHCI_2	0x145f	Family17h xHCI
@@ -1032,7 +1033,7 @@ product AMD F16_NB	0x1533	Family16h North Bridge Configuration
 product AMD F16_CSTATE	0x1534	Family16h CPU C-state Configuration
 product AMD F16_MISC	0x1535	Family16h Miscellaneous Configuration
 product AMD F16_RC	0x1536	Family16h Root Complex
-product AMD CRYPTO_COP	0x1537	Cryptographic Coprocessor
+product AMD F16_CCP	0x1537	Family16h Cryptographic Coprocessor
 product AMD F16_30_RC	0x1566	Family16h Root Complex
 product AMD F16_30_IOMMU	0x1567	Family16h IOMMU
 product AMD F16_HB	0x1568	Family16h Host Bridge
@@ -1110,6 +1111,13 @@ product AMD HUDSON_PCIE_0	0x43a0	Hudson PCIE Root Port 0
 product AMD HUDSON_PCIE_1	0x43a1	Hudson PCIE Root Port 1
 product AMD HUDSON_PCIE_2	0x43a2	Hudson PCIE Root Port 2
 product AMD HUDSON_PCIE_3	0x43a3	Hudson PCIE Root Port 3
+product AMD 300SERIES_PCIE	0x43b4	300 Series PCIe
+product AMD 300SERIES_SATA	0x43b7	300 Series SATA
+product AMD 300SERIES_XHCI	0x43bb	300 Series xHCI
+product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIe
+product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIe
+product AMD 400SERIES_AHCI	0x43c8	400 Series AHCI
+product AMD 400SERIES_XHCI	0x43d0	400 Series xHCI
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-PCI Bridge
 product AMD IGR4_AGP	0x700a	AMD IGR4 AGP Bridge
@@ -1154,21 +1162,33 @@ product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
 product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
-product AMD HUDSON_SATA		0x7800	Hudson SATA Controller
-product AMD HUDSON_SATA_AHCI	0x7801	Hudson AHCI SATA Controller
+product AMD HUDSON_SATA		0x7800	Hudson SATA (IDE) Controller
+product AMD HUDSON_SATA_AHCI	0x7801	Hudson SATA (AHCI) Controller
+product AMD HUDSON_SATA_RAID	0x7802	Hudson SATA (RAID) Controller
+product AMD HUDSON_SATA_RAID5	0x7803	Hudson SATA (RAID5) Controller
+product AMD HUDSON_SATA_AHCI_2	0x7804	Hudson SATA (AMD AHCI) Controller
+product AMD HUDSON_SATA_RAID_2	0x7805	Hudson SATA (RAID) Controller
 product AMD HUDSON_SDHC		0x7806	Hudson SD Flash Controller
 product AMD HUDSON_OHCI		0x7807	Hudson USB OHCI Controller
 product AMD HUDSON_EHCI		0x7808	Hudson USB EHCI Controller
 product AMD HUDSON_OHCI_2	0x7809	Hudson USB OHCI Controller
 product AMD HUDSON_SMB		0x780b	Hudson SMBus Controller
 product AMD HUDSON_IDE		0x780c	Hudson IDE Controller
-product AMD HUDSON_HDAUDIO	0x780d	Hudson HD Audio Controller
+product AMD HUDSON_HDA		0x780d	Hudson HD Audio Controller
 product AMD HUDSON_LPC		0x780e	Hudson LPC Bridge
 product AMD HUDSON_PCI		0x780f	Hudson PCI Bridge
 product AMD HUDSON_XHCI		0x7812	Hudson USB xHCI Controller
 product AMD FCH_SDHC		0x7813	FCH SD Flash Controller
 product AMD FCH_XHCI		0x7814	FCH USB xHCI Controller
+product AMD KERNCZ_SATA_1	0x7900	FCH SATA
+product AMD KERNCZ_AHCI_1	0x7901	FCH AHCI
+product AMD KERNCZ_RAID_1	0x7902	FCH RAID
+product AMD KERNCZ_RAID_2	0x7903	FCH RAID
+product AMD KERNCZ_AHCI_2	0x7904	FCH AHCI
+product AMD KERNCZ_EHCI		0x7908	FCH USB2
 product AMD KERNCZ_SMB		0x790b	X370/X399 SMBus Controller
+product AMD KERNCZ_LPC		0x790e	FCH LPC
+product AMD KERNCZ_XHCI		0x7914	FCH xHCI
 product AMD RS780_HB		0x9600	RS780 Host Bridge
 product AMD RS880_HB		0x9601	RS785/RS880 Host Bridge
 product AMD RS780_PPB_GFX	0x9602	RS780/RS880 PCI-PCI Bridge (int gfx)
@@ -1757,7 +1777,7 @@ product ATI RADEON_R9_285_HDA	0xaad8	Radeon R9 285/380 HD Audio Controller
 product ATI RADEON_RX_460_HDA	0xaae0	Radeon RX 460/550/640SP, RX 560/560X HD Audio Controller
 product ATI RADEON_RX_550_HDA	0xaae8	Radeon R9 Nano, FURY HD Audio Controller
 product ATI RADEON_RX_470_HDA	0xaaf0	Radeon RX 470/480/570/580/590 HD Audio Controller
-product ATI RADEON_VEGA56_HDA	0xaaf8	Radeon Vega 56/64
+product ATI RADEON_VEGA56_HDA	0xaaf8	Radeon Vega 56/64 HD Audio
 product ATI RADEON_RX_550_HDA2	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller  
 
 /* Auravision products */
