@@ -1,3 +1,5 @@
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
 .\" Copyright (c) 2006-2019 Roy Marples
 .\" All rights reserved
 .\"
@@ -428,6 +430,12 @@ globally but needs to be enabled for one interface.
 .It Ic leasetime Ar seconds
 Request a leasetime of
 .Ar seconds .
+.It Ic link_rcvbuf Ar size
+Override the size of the link receive buffer from the kernel default.
+While
+.Nm dhcpcd
+will recover from link buffer overflows,
+this may not be desirable on heavily loaded systems.
 .It Ic logfile Ar logfile
 Writes to the specified
 .Ar logfile
