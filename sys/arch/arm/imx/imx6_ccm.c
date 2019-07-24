@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.10 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.11 2019/07/24 11:58:00 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.10 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.11 2019/07/24 11:58:00 hkenken Exp $");
 
 #include "opt_imx.h"
-#include "opt_imx6clk.h"
 #include "opt_cputypes.h"
 
 #include "locators.h"
@@ -48,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.10 2019/06/20 08:16:19 hkenken Exp $"
 #include <sys/param.h>
 
 #include <machine/cpu.h>
-#ifdef CPU_CORTEXA9
-#include <arm/cortex/a9tmr_var.h>
-#endif
 
 #include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/imx6_ccmreg.h>
@@ -59,15 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.10 2019/06/20 08:16:19 hkenken Exp $"
 #include <arm/imx/imx6_reg.h>
 
 #include <dev/clk/clk_backend.h>
-
-struct imxccm_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_ioh_analog;
-
-	struct clk_domain sc_clkdom;
-};
 
 /* Clock Parents Tables */
 static const char *step_p[] = {
@@ -369,6 +356,275 @@ static const char *lvds_p[] = {
 	"sata_ref_100m"
 };
 
+/* DT clock ID to clock name mappings */
+static struct imx_clock_id {
+	u_int		id;
+	const char	*name;
+} imx6_clock_ids[] = {
+	{ IMX6CLK_DUMMY,		"dummy" },
+	{ IMX6CLK_CKIL,			"ckil" },
+	{ IMX6CLK_CKIH,			"ckih" },
+	{ IMX6CLK_OSC,			"osc" },
+	{ IMX6CLK_PLL2_PFD0_352M,	"pll2_pfd0_352m" },
+	{ IMX6CLK_PLL2_PFD1_594M,	"pll2_pfd1_594m" },
+	{ IMX6CLK_PLL2_PFD2_396M,	"pll2_pfd2_396m" },
+	{ IMX6CLK_PLL3_PFD0_720M,	"pll3_pfd0_720m" },
+	{ IMX6CLK_PLL3_PFD1_540M,	"pll3_pfd1_540m" },
+	{ IMX6CLK_PLL3_PFD2_508M,	"pll3_pfd2_508m" },
+	{ IMX6CLK_PLL3_PFD3_454M,	"pll3_pfd3_454m" },
+	{ IMX6CLK_PLL2_198M,		"pll2_198m" },
+	{ IMX6CLK_PLL3_120M,		"pll3_120m" },
+	{ IMX6CLK_PLL3_80M,		"pll3_80m" },
+	{ IMX6CLK_PLL3_60M,		"pll3_60m" },
+	{ IMX6CLK_TWD,			"twd" },
+	{ IMX6CLK_STEP,			"step" },
+	{ IMX6CLK_PLL1_SW,		"pll1_sw" },
+	{ IMX6CLK_PERIPH_PRE,		"periph_pre" },
+	{ IMX6CLK_PERIPH2_PRE,		"periph2_pre" },
+	{ IMX6CLK_PERIPH_CLK2_SEL,	"periph_clk2_sel" },
+	{ IMX6CLK_PERIPH2_CLK2_SEL,	"periph2_clk2_sel" },
+	{ IMX6CLK_AXI_SEL,		"axi_sel" },
+	{ IMX6CLK_ESAI_SEL,		"esai_sel" },
+	{ IMX6CLK_ASRC_SEL,		"asrc_sel" },
+	{ IMX6CLK_SPDIF_SEL,		"spdif_sel" },
+	{ IMX6CLK_GPU2D_AXI,		"gpu2d_axi" },
+	{ IMX6CLK_GPU3D_AXI,		"gpu3d_axi" },
+	{ IMX6CLK_GPU2D_CORE_SEL,	"gpu2d_core_sel" },
+	{ IMX6CLK_GPU3D_CORE_SEL,	"gpu3d_core_sel" },
+	{ IMX6CLK_GPU3D_SHADER_SEL,	"gpu3d_shader_sel" },
+	{ IMX6CLK_IPU1_SEL,		"ipu1_sel" },
+	{ IMX6CLK_IPU2_SEL,		"ipu2_sel" },
+	{ IMX6CLK_LDB_DI0_SEL,		"ldb_di0_sel" },
+	{ IMX6CLK_LDB_DI1_SEL,		"ldb_di1_sel" },
+	{ IMX6CLK_IPU1_DI0_PRE_SEL,	"ipu1_di0_pre_sel" },
+	{ IMX6CLK_IPU1_DI1_PRE_SEL,	"ipu1_di1_pre_sel" },
+	{ IMX6CLK_IPU2_DI0_PRE_SEL,	"ipu2_di0_pre_sel" },
+	{ IMX6CLK_IPU2_DI1_PRE_SEL,	"ipu2_di1_pre_sel" },
+	{ IMX6CLK_IPU1_DI0_SEL,		"ipu1_di0_sel" },
+	{ IMX6CLK_IPU1_DI1_SEL,		"ipu1_di1_sel" },
+	{ IMX6CLK_IPU2_DI0_SEL,		"ipu2_di0_sel" },
+	{ IMX6CLK_IPU2_DI1_SEL,		"ipu2_di1_sel" },
+	{ IMX6CLK_HSI_TX_SEL,		"hsi_tx_sel" },
+	{ IMX6CLK_PCIE_AXI_SEL,		"pcie_axi_sel" },
+	{ IMX6CLK_SSI1_SEL,		"ssi1_sel" },
+	{ IMX6CLK_SSI2_SEL,		"ssi2_sel" },
+	{ IMX6CLK_SSI3_SEL,		"ssi3_sel" },
+	{ IMX6CLK_USDHC1_SEL,		"usdhc1_sel" },
+	{ IMX6CLK_USDHC2_SEL,		"usdhc2_sel" },
+	{ IMX6CLK_USDHC3_SEL,		"usdhc3_sel" },
+	{ IMX6CLK_USDHC4_SEL,		"usdhc4_sel" },
+	{ IMX6CLK_ENFC_SEL,		"enfc_sel" },
+	{ IMX6CLK_EIM_SEL,		"eim_sel" },
+	{ IMX6CLK_EIM_SLOW_SEL,		"eim_slow_sel" },
+	{ IMX6CLK_VDO_AXI_SEL,		"vdo_axi_sel" },
+	{ IMX6CLK_VPU_AXI_SEL,		"vpu_axi_sel" },
+	{ IMX6CLK_CKO1_SEL,		"cko1_sel" },
+	{ IMX6CLK_PERIPH,		"periph" },
+	{ IMX6CLK_PERIPH2,		"periph2" },
+	{ IMX6CLK_PERIPH_CLK2,		"periph_clk2" },
+	{ IMX6CLK_PERIPH2_CLK2,		"periph2_clk2" },
+	{ IMX6CLK_IPG,			"ipg" },
+	{ IMX6CLK_IPG_PER,		"ipg_per" },
+	{ IMX6CLK_ESAI_PRED,		"esai_pred" },
+	{ IMX6CLK_ESAI_PODF,		"esai_podf" },
+	{ IMX6CLK_ASRC_PRED,		"asrc_pred" },
+	{ IMX6CLK_ASRC_PODF,		"asrc_podf" },
+	{ IMX6CLK_SPDIF_PRED,		"spdif_pred" },
+	{ IMX6CLK_SPDIF_PODF,		"spdif_podf" },
+	{ IMX6CLK_CAN_ROOT,		"can_root" },
+	{ IMX6CLK_ECSPI_ROOT,		"ecspi_root" },
+	{ IMX6CLK_GPU2D_CORE_PODF,	"gpu2d_core_podf" },
+	{ IMX6CLK_GPU3D_CORE_PODF,	"gpu3d_core_podf" },
+	{ IMX6CLK_GPU3D_SHADER,		"gpu3d_shader" },
+	{ IMX6CLK_IPU1_PODF,		"ipu1_podf" },
+	{ IMX6CLK_IPU2_PODF,		"ipu2_podf" },
+	{ IMX6CLK_LDB_DI0_PODF,		"ldb_di0_podf" },
+	{ IMX6CLK_LDB_DI1_PODF,		"ldb_di1_podf" },
+	{ IMX6CLK_IPU1_DI0_PRE,		"ipu1_di0_pre" },
+	{ IMX6CLK_IPU1_DI1_PRE,		"ipu1_di1_pre" },
+	{ IMX6CLK_IPU2_DI0_PRE,		"ipu2_di0_pre" },
+	{ IMX6CLK_IPU2_DI1_PRE,		"ipu2_di1_pre" },
+	{ IMX6CLK_HSI_TX_PODF,		"hsi_tx_podf" },
+	{ IMX6CLK_SSI1_PRED,		"ssi1_pred" },
+	{ IMX6CLK_SSI1_PODF,		"ssi1_podf" },
+	{ IMX6CLK_SSI2_PRED,		"ssi2_pred" },
+	{ IMX6CLK_SSI2_PODF,		"ssi2_podf" },
+	{ IMX6CLK_SSI3_PRED,		"ssi3_pred" },
+	{ IMX6CLK_SSI3_PODF,		"ssi3_podf" },
+	{ IMX6CLK_UART_SERIAL_PODF,	"uart_serial_podf" },
+	{ IMX6CLK_USDHC1_PODF,		"usdhc1_podf" },
+	{ IMX6CLK_USDHC2_PODF,		"usdhc2_podf" },
+	{ IMX6CLK_USDHC3_PODF,		"usdhc3_podf" },
+	{ IMX6CLK_USDHC4_PODF,		"usdhc4_podf" },
+	{ IMX6CLK_ENFC_PRED,		"enfc_pred" },
+	{ IMX6CLK_ENFC_PODF,		"enfc_podf" },
+	{ IMX6CLK_EIM_PODF,		"eim_podf" },
+	{ IMX6CLK_EIM_SLOW_PODF,	"eim_slow_podf" },
+	{ IMX6CLK_VPU_AXI_PODF,		"vpu_axi_podf" },
+	{ IMX6CLK_CKO1_PODF,		"cko1_podf" },
+	{ IMX6CLK_AXI,			"axi" },
+	{ IMX6CLK_MMDC_CH0_AXI_PODF,	"mmdc_ch0_axi_podf" },
+	{ IMX6CLK_MMDC_CH1_AXI_PODF,	"mmdc_ch1_axi_podf" },
+	{ IMX6CLK_ARM,			"arm" },
+	{ IMX6CLK_AHB,			"ahb" },
+	{ IMX6CLK_APBH_DMA,		"apbh_dma" },
+	{ IMX6CLK_ASRC,			"asrc" },
+	{ IMX6CLK_CAN1_IPG,		"can1_ipg" },
+	{ IMX6CLK_CAN1_SERIAL,		"can1_serial" },
+	{ IMX6CLK_CAN2_IPG,		"can2_ipg" },
+	{ IMX6CLK_CAN2_SERIAL,		"can2_serial" },
+	{ IMX6CLK_ECSPI1,		"ecspi1" },
+	{ IMX6CLK_ECSPI2,		"ecspi2" },
+	{ IMX6CLK_ECSPI3,		"ecspi3" },
+	{ IMX6CLK_ECSPI4,		"ecspi4" },
+	{ IMX6CLK_ECSPI5,		"ecspi5" },
+	{ IMX6CLK_ENET,			"enet" },
+	{ IMX6CLK_ESAI_EXTAL,		"esai_extal" },
+	{ IMX6CLK_GPT_IPG,		"gpt_ipg" },
+	{ IMX6CLK_GPT_IPG_PER,		"gpt_ipg_per" },
+	{ IMX6CLK_GPU2D_CORE,		"gpu2d_core" },
+	{ IMX6CLK_GPU3D_CORE,		"gpu3d_core" },
+	{ IMX6CLK_HDMI_IAHB,		"hdmi_iahb" },
+	{ IMX6CLK_HDMI_ISFR,		"hdmi_isfr" },
+	{ IMX6CLK_I2C1,			"i2c1" },
+	{ IMX6CLK_I2C2,			"i2c2" },
+	{ IMX6CLK_I2C3,			"i2c3" },
+	{ IMX6CLK_IIM,			"iim" },
+	{ IMX6CLK_ENFC,			"enfc" },
+	{ IMX6CLK_IPU1,			"ipu1" },
+	{ IMX6CLK_IPU1_DI0,		"ipu1_di0" },
+	{ IMX6CLK_IPU1_DI1,		"ipu1_di1" },
+	{ IMX6CLK_IPU2,			"ipu2" },
+	{ IMX6CLK_IPU2_DI0,		"ipu2_di0" },
+	{ IMX6CLK_LDB_DI0,		"ldb_di0" },
+	{ IMX6CLK_LDB_DI1,		"ldb_di1" },
+	{ IMX6CLK_IPU2_DI1,		"ipu2_di1" },
+	{ IMX6CLK_HSI_TX,		"hsi_tx" },
+	{ IMX6CLK_MLB,			"mlb" },
+	{ IMX6CLK_MMDC_CH0_AXI,		"mmdc_ch0_axi" },
+	{ IMX6CLK_MMDC_CH1_AXI,		"mmdc_ch1_axi" },
+	{ IMX6CLK_OCRAM,		"ocram" },
+	{ IMX6CLK_OPENVG_AXI,		"openvg_axi" },
+	{ IMX6CLK_PCIE_AXI,		"pcie_axi" },
+	{ IMX6CLK_PWM1,			"pwm1" },
+	{ IMX6CLK_PWM2,			"pwm2" },
+	{ IMX6CLK_PWM3,			"pwm3" },
+	{ IMX6CLK_PWM4,			"pwm4" },
+	{ IMX6CLK_PER1_BCH,		"per1_bch" },
+	{ IMX6CLK_GPMI_BCH_APB,		"gpmi_bch_apb" },
+	{ IMX6CLK_GPMI_BCH,		"gpmi_bch" },
+	{ IMX6CLK_GPMI_IO,		"gpmi_io" },
+	{ IMX6CLK_GPMI_APB,		"gpmi_apb" },
+	{ IMX6CLK_SATA,			"sata" },
+	{ IMX6CLK_SDMA,			"sdma" },
+	{ IMX6CLK_SPBA,			"spba" },
+	{ IMX6CLK_SSI1,			"ssi1" },
+	{ IMX6CLK_SSI2,			"ssi2" },
+	{ IMX6CLK_SSI3,			"ssi3" },
+	{ IMX6CLK_UART_IPG,		"uart_ipg" },
+	{ IMX6CLK_UART_SERIAL,		"uart_serial" },
+	{ IMX6CLK_USBOH3,		"usboh3" },
+	{ IMX6CLK_USDHC1,		"usdhc1" },
+	{ IMX6CLK_USDHC2,		"usdhc2" },
+	{ IMX6CLK_USDHC3,		"usdhc3" },
+	{ IMX6CLK_USDHC4,		"usdhc4" },
+	{ IMX6CLK_VDO_AXI,		"vdo_axi" },
+	{ IMX6CLK_VPU_AXI,		"vpu_axi" },
+	{ IMX6CLK_CKO1,			"cko1" },
+	{ IMX6CLK_PLL1_SYS,		"pll1_sys" },
+	{ IMX6CLK_PLL2_BUS,		"pll2_bus" },
+	{ IMX6CLK_PLL3_USB_OTG,		"pll3_usb_otg" },
+	{ IMX6CLK_PLL4_AUDIO,		"pll4_audio" },
+	{ IMX6CLK_PLL5_VIDEO,		"pll5_video" },
+	{ IMX6CLK_PLL8_MLB,		"pll8_mlb" },
+	{ IMX6CLK_PLL7_USB_HOST,	"pll7_usb_host" },
+	{ IMX6CLK_PLL6_ENET,		"pll6_enet" },
+	{ IMX6CLK_SSI1_IPG,		"ssi1_ipg" },
+	{ IMX6CLK_SSI2_IPG,		"ssi2_ipg" },
+	{ IMX6CLK_SSI3_IPG,		"ssi3_ipg" },
+	{ IMX6CLK_ROM,			"rom" },
+	{ IMX6CLK_USBPHY1,		"usbphy1" },
+	{ IMX6CLK_USBPHY2,		"usbphy2" },
+	{ IMX6CLK_LDB_DI0_DIV_3_5,	"ldb_di0_div_3_5" },
+	{ IMX6CLK_LDB_DI1_DIV_3_5,	"ldb_di1_div_3_5" },
+	{ IMX6CLK_SATA_REF,		"sata_ref" },
+	{ IMX6CLK_SATA_REF_100M,	"sata_ref_100m" },
+	{ IMX6CLK_PCIE_REF,		"pcie_ref" },
+	{ IMX6CLK_PCIE_REF_125M,	"pcie_ref_125m" },
+	{ IMX6CLK_ENET_REF,		"enet_ref" },
+	{ IMX6CLK_USBPHY1_GATE,		"usbphy1_gate" },
+	{ IMX6CLK_USBPHY2_GATE,		"usbphy2_gate" },
+	{ IMX6CLK_PLL4_POST_DIV,	"pll4_post_div" },
+	{ IMX6CLK_PLL5_POST_DIV,	"pll5_post_div" },
+	{ IMX6CLK_PLL5_VIDEO_DIV,	"pll5_video_div" },
+	{ IMX6CLK_EIM_SLOW,		"eim_slow" },
+	{ IMX6CLK_SPDIF,		"spdif" },
+	{ IMX6CLK_CKO2_SEL,		"cko2_sel" },
+	{ IMX6CLK_CKO2_PODF,		"cko2_podf" },
+	{ IMX6CLK_CKO2,			"cko2" },
+	{ IMX6CLK_CKO,			"cko" },
+	{ IMX6CLK_VDOA,			"vdoa" },
+	{ IMX6CLK_PLL4_AUDIO_DIV,	"pll4_audio_div" },
+	{ IMX6CLK_LVDS1_SEL,		"lvds1_sel" },
+	{ IMX6CLK_LVDS2_SEL,		"lvds2_sel" },
+	{ IMX6CLK_LVDS1_GATE,		"lvds1_gate" },
+	{ IMX6CLK_LVDS2_GATE,		"lvds2_gate" },
+	{ IMX6CLK_ESAI_IPG,		"esai_ipg" },
+	{ IMX6CLK_ESAI_MEM,		"esai_mem" },
+	{ IMX6CLK_ASRC_IPG,		"asrc_ipg" },
+	{ IMX6CLK_ASRC_MEM,		"asrc_mem" },
+	{ IMX6CLK_LVDS1_IN,		"lvds1_in" },
+	{ IMX6CLK_LVDS2_IN,		"lvds2_in" },
+	{ IMX6CLK_ANACLK1,		"anaclk1" },
+	{ IMX6CLK_ANACLK2,		"anaclk2" },
+	{ IMX6CLK_PLL1_BYPASS_SRC,	"pll1_bypass_src" },
+	{ IMX6CLK_PLL2_BYPASS_SRC,	"pll2_bypass_src" },
+	{ IMX6CLK_PLL3_BYPASS_SRC,	"pll3_bypass_src" },
+	{ IMX6CLK_PLL4_BYPASS_SRC,	"pll4_bypass_src" },
+	{ IMX6CLK_PLL5_BYPASS_SRC,	"pll5_bypass_src" },
+	{ IMX6CLK_PLL6_BYPASS_SRC,	"pll6_bypass_src" },
+	{ IMX6CLK_PLL7_BYPASS_SRC,	"pll7_bypass_src" },
+	{ IMX6CLK_PLL1,			"pll1" },
+	{ IMX6CLK_PLL2,			"pll2" },
+	{ IMX6CLK_PLL3,			"pll3" },
+	{ IMX6CLK_PLL4,			"pll4" },
+	{ IMX6CLK_PLL5,			"pll5" },
+	{ IMX6CLK_PLL6,			"pll6" },
+	{ IMX6CLK_PLL7,			"pll7" },
+	{ IMX6CLK_PLL1_BYPASS,		"pll1_bypass" },
+	{ IMX6CLK_PLL2_BYPASS,		"pll2_bypass" },
+	{ IMX6CLK_PLL3_BYPASS,		"pll3_bypass" },
+	{ IMX6CLK_PLL4_BYPASS,		"pll4_bypass" },
+	{ IMX6CLK_PLL5_BYPASS,		"pll5_bypass" },
+	{ IMX6CLK_PLL6_BYPASS,		"pll6_bypass" },
+	{ IMX6CLK_PLL7_BYPASS,		"pll7_bypass" },
+	{ IMX6CLK_GPT_3M,		"gpt_3m" },
+	{ IMX6CLK_VIDEO_27M,		"video_27m" },
+	{ IMX6CLK_MIPI_CORE_CFG,	"mipi_core_cfg" },
+	{ IMX6CLK_MIPI_IPG,		"mipi_ipg" },
+	{ IMX6CLK_CAAM_MEM,		"caam_mem" },
+	{ IMX6CLK_CAAM_ACLK,		"caam_aclk" },
+	{ IMX6CLK_CAAM_IPG,		"caam_ipg" },
+	{ IMX6CLK_SPDIF_GCLK,		"spdif_gclk" },
+	{ IMX6CLK_UART_SEL,		"uart_sel" },
+	{ IMX6CLK_IPG_PER_SEL,		"ipg_per_sel" },
+	{ IMX6CLK_ECSPI_SEL,		"ecspi_sel" },
+	{ IMX6CLK_CAN_SEL,		"can_sel" },
+	{ IMX6CLK_MMDC_CH1_AXI_CG,	"mmdc_ch1_axi_cg" },
+	{ IMX6CLK_PRE0,			"pre0" },
+	{ IMX6CLK_PRE1,			"pre1" },
+	{ IMX6CLK_PRE2,			"pre2" },
+	{ IMX6CLK_PRE3,			"pre3" },
+	{ IMX6CLK_PRG0_AXI,		"prg0_axi" },
+	{ IMX6CLK_PRG1_AXI,		"prg1_axi" },
+	{ IMX6CLK_PRG0_APB,		"prg0_apb" },
+	{ IMX6CLK_PRG1_APB,		"prg1_apb" },
+	{ IMX6CLK_PRE_AXI,		"pre_axi" },
+	{ IMX6CLK_MLB_SEL,		"mlb_sel" },
+	{ IMX6CLK_MLB_PODF,		"mlb_podf" },
+	{ IMX6CLK_END,			"end" },
+};
+
 /* Clock Divider Tables */
 static const int enet_ref_tbl[] = { 20, 10, 5, 4, 0 };
 static const int post_div_tbl[] = { 4, 2, 1, 0 };
@@ -634,6 +890,7 @@ static struct imx6_clk imx6_clks[] = {
 };
 
 static struct imx6_clk *imx6_clk_find(const char *);
+static struct imx6_clk *imx6_clk_find_by_id(u_int);
 
 static void imxccm_init_clocks(struct imxccm_softc *);
 static struct clk *imxccm_clk_get(void *, const char *);
@@ -656,47 +913,12 @@ static const struct clk_funcs imxccm_clk_funcs = {
 	.get_parent = imxccm_clk_get_parent,
 };
 
-static int imxccm_match(device_t, cfdata_t, void *);
-static void imxccm_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(imxccm, sizeof(struct imxccm_softc),
-    imxccm_match, imxccm_attach, NULL, NULL);
-
-static int
-imxccm_match(device_t parent, cfdata_t cfdata, void *aux)
-{
-	struct axi_attach_args *aa = aux;
-
-	if (aa->aa_addr == IMX6_AIPS1_BASE + AIPS1_CCM_BASE)
-		return 1;
-
-	return 0;
-}
-
-static void
-imxccm_attach(device_t parent, device_t self, void *aux)
+void
+imxccm_attach_common(device_t self)
 {
 	struct imxccm_softc * const sc = device_private(self);
-	struct axi_attach_args *aa = aux;
-	bus_space_tag_t iot = aa->aa_iot;
 
 	sc->sc_dev = self;
-	sc->sc_iot = iot;
-
-	if (bus_space_map(iot, aa->aa_addr, AIPS1_CCM_SIZE, 0, &sc->sc_ioh)) {
-		aprint_error(": can't map CCM registers\n");
-		return;
-	}
-
-	if (bus_space_map(iot, IMX6_AIPS1_BASE + AIPS1_CCM_ANALOG_BASE,
-	    AIPS1_CCM_ANALOG_SIZE, 0, &sc->sc_ioh_analog)) {
-		aprint_error(": can't map CCM_ANALOG registers\n");
-		bus_space_unmap(iot, sc->sc_ioh, AIPS1_CCM_SIZE);
-		return;
-	}
-
-	aprint_naive("\n");
-	aprint_normal(": Clock Control Module\n");
 
 	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &imxccm_clk_funcs;
@@ -712,7 +934,7 @@ imxccm_attach(device_t parent, device_t self, void *aux)
 		struct clk *clk = &imx6_clks[n].base;
 		struct clk *clk_parent = clk_get_parent(clk);
 		const char *parent_str = clk_parent ? clk_parent->name : "none";
-		aprint_verbose_dev(self, "%s (%s): %u Hz\n", clk->name,
+		aprint_verbose_dev(self, "%s (%s) : %u Hz\n", clk->name,
 		    parent_str, clk_get_rate(clk));
 	}
 }
@@ -729,6 +951,18 @@ imx6_get_clock(const char *name)
 	return &iclk->base;
 }
 
+struct clk *
+imx6_get_clock_by_id(u_int clock_id)
+{
+	struct imx6_clk *iclk;
+	iclk = imx6_clk_find_by_id(clock_id);
+
+	if (iclk == NULL)
+		return NULL;
+
+	return &iclk->base;
+}
+
 static struct imx6_clk *
 imx6_clk_find(const char *name)
 {
@@ -738,6 +972,19 @@ imx6_clk_find(const char *name)
 	for (int n = 0; n < __arraycount(imx6_clks); n++) {
 		if (strcmp(imx6_clks[n].base.name, name) == 0)
 			return &imx6_clks[n];
+	}
+
+	return NULL;
+}
+
+static struct imx6_clk *
+imx6_clk_find_by_id(u_int clock_id)
+{
+	for (int n = 0; n < __arraycount(imx6_clock_ids); n++) {
+		if (imx6_clock_ids[n].id == clock_id) {
+			const char *name = imx6_clock_ids[n].name;
+			return imx6_clk_find(name);
+		}
 	}
 
 	return NULL;

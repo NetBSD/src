@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.6 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.7 2019/07/24 11:58:00 hkenken Exp $	*/
 /*
  * Copyright (c) 2012,2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -31,7 +31,19 @@
 #include <dev/clk/clk.h>
 #include <dev/clk/clk_backend.h>
 
-struct clk *imx6_get_clock(const char *name);
+struct imxccm_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh_analog;
+
+	struct clk_domain sc_clkdom;
+};
+
+void imxccm_attach_common(device_t);
+
+struct clk *imx6_get_clock(const char *);
+struct clk *imx6_get_clock_by_id(u_int);
 
 /* Clock IDs */
 #define IMX6CLK_DUMMY			0

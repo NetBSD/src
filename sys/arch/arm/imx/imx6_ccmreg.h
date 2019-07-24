@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmreg.h,v 1.10 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccmreg.h,v 1.11 2019/07/24 11:58:00 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -302,6 +302,9 @@
 #define  CCM_CCGR6_USDHC2_CLK_ENABLE		__BITS(5, 4)
 #define  CCM_CCGR6_USDHC1_CLK_ENABLE		__BITS(3, 2)
 #define  CCM_CCGR6_USBOH3_CLK_ENABLE		__BITS(1, 0)
+
+#define CCM_ANALOG_BASE				0x00004000
+#define CCM_ANALOG_SIZE				0x00001000
 
 #define CCM_ANALOG_PLL_ARM			0x00000000	/* = 020c8000 */
 #define CCM_ANALOG_PLL_ARM_SET			0x00000004
