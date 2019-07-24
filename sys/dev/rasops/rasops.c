@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.84 2019/07/24 18:49:37 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.85 2019/07/24 19:31:12 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.84 2019/07/24 18:49:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.85 2019/07/24 19:31:12 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -133,6 +133,28 @@ const uint8_t rasops_isgray[16] = {
 	1, 0, 0, 0,
 	0, 0, 0, 1
 };
+
+#ifdef GENFB_MAC68K
+static const uint8_t apple_devcmap[16] = {
+	0xff,	/* black	0x00, 0x00, 0x00 */
+	0x6b,	/* red		0x99, 0x00, 0x00 */
+	0xc5,	/* green	0x00, 0x99, 0x00 */
+	0x59,	/* yellow	0x99, 0x99, 0x00 */
+	0xd4,	/* blue		0x00, 0x00, 0x99 */
+	0x68,	/* magenta	0x99, 0x00, 0x99 */
+	0xc2,	/* cyan		0x00, 0x99, 0x99 */
+	0x2b,	/* white	0xcc, 0xcc, 0xcc */
+
+	0x56,	/* black	0x99, 0x99, 0x99 */
+	0x23,	/* red		0xff, 0x00, 0x00 */
+	0xb9,	/* green	0x00, 0xff, 0x00 */
+	0x05,	/* yellow	0xff, 0xff, 0x00 */
+	0xd2,	/* blue		0x00, 0x00, 0xff */
+	0x1e,	/* magenta	0xff, 0x00, 0xff */
+	0xb4,	/* cyan		0x00, 0xff, 0xff */
+	0x00,	/* white	0xff, 0xff, 0xff */
+};
+#endif
 
 /* Generic functions */
 static void	rasops_copyrows(void *, int, int, int);
@@ -844,9 +866,15 @@ rasops_init_devcmap(struct rasops_info *ri)
 
 	case 8:
 		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
-			for (i = 0; i < 16; i++)
+			for (i = 0; i < 16; i++) {
+#ifdef GENFB_MAC68K
+				c = apple_devcmap[i];
+#else
+				c = i;
+#endif
 				ri->ri_devcmap[i] =
-				    i | (i<<8) | (i<<16) | (i<<24);
+				    c | (c<<8) | (c<<16) | (c<<24);
+			}
 			return;
 		}
 	}
@@ -995,7 +1023,7 @@ static void
 rasops_do_cursor(struct rasops_info *ri)
 {
 	int full, height, cnt, slop1, slop2, row, col;
-	uint32_t tmp32, msk;
+	uint32_t tmp32, msk1, msk2;
 	uint8_t tmp8;
 	uint8_t *dp, *rp, *hrp, *hp;
 
@@ -1062,6 +1090,9 @@ rasops_do_cursor(struct rasops_info *ri)
 	rp = (uint8_t *)((uintptr_t)rp & ~3);
 	hrp = (uint8_t *)((uintptr_t)hrp & ~3);
 
+	msk1 = be32toh(0xffffffffU >> (32 - (8 * slop1)));
+	msk2 = be32toh(0xffffffffU << (32 - (8 * slop2)));
+
 	while (height--) {
 		dp = rp;
 		rp += ri->ri_stride;
@@ -1071,8 +1102,7 @@ rasops_do_cursor(struct rasops_info *ri)
 		}
 
 		if (slop1) {
-			msk = be32toh(0xffffffffU >> (32 - (8 * slop1)));
-			tmp32 = *(uint32_t *)dp ^ msk;
+			tmp32 = *(uint32_t *)dp ^ msk1;
 			*(uint32_t *)dp = tmp32;
 			dp += 4;
 			if (ri->ri_hwbits) {
@@ -1092,8 +1122,7 @@ rasops_do_cursor(struct rasops_info *ri)
 		}
 
 		if (slop2) {
-			msk = be32toh(0xffffffffU << (32 - (8 * slop2)));
-			tmp32 = *(uint32_t *)dp ^ msk;
+			tmp32 = *(uint32_t *)dp ^ msk2;
 			*(uint32_t *)dp = tmp32;
 			if (ri->ri_hwbits)
 				*(uint32_t *)hp = tmp32;
