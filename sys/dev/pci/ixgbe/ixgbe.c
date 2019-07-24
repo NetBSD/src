@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.193 2019/07/17 03:26:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.194 2019/07/24 06:07:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -609,7 +609,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 		/* Set RQSMR (Receive Queue Statistic Mapping) register */
 		reg = IXGBE_READ_REG(hw, IXGBE_RQSMR(regnum));
-		reg &= ~(0x000000ff << (regshift * 8));
+		reg &= ~(0x000000ffUL << (regshift * 8));
 		reg |= i << (regshift * 8);
 		IXGBE_WRITE_REG(hw, IXGBE_RQSMR(regnum), reg);
 
@@ -698,7 +698,7 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		else
 			tqsmreg = IXGBE_TQSM(regnum);
 		reg = IXGBE_READ_REG(hw, tqsmreg);
-		reg &= ~(0x000000ff << (regshift * 8));
+		reg &= ~(0x000000ffUL << (regshift * 8));
 		reg |= i << (regshift * 8);
 		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
@@ -4200,14 +4200,14 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 		if (type == -1) { /* MISC IVAR */
 			index = (entry & 1) * 8;
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR_MISC);
-			ivar &= ~(0xFF << index);
-			ivar |= (vector << index);
+			ivar &= ~(0xffUL << index);
+			ivar |= ((u32)vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR_MISC, ivar);
 		} else {	/* RX/TX IVARS */
 			index = (16 * (entry & 1)) + (8 * type);
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR(entry >> 1));
-			ivar &= ~(0xFF << index);
-			ivar |= (vector << index);
+			ivar &= ~(0xffUL << index);
+			ivar |= ((u32)vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR(entry >> 1), ivar);
 		}
 		break;
