@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1208 2019/07/22 14:47:51 wiz Exp $
+# $NetBSD: mi,v 1.1209 2019/07/24 06:53:42 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -134,9 +134,9 @@
 ./lib/npf					base-sys-root		compatfile
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
-./libdata/firmware/bcm43xx			base-firmware-usr
-./libdata/firmware/bcm43xx/BCM43430A1.hcd	base-firmware-usr	firmware
-./libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx		base-firmware-usr	firmware
+./libdata/firmware/bcm43xx			base-obsolete		obsolete
+./libdata/firmware/bcm43xx/BCM43430A1.hcd	base-obsolete		obsolete
+./libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx	base-obsolete		obsolete
 ./libdata/firmware/if_athn			base-firmware-root
 ./libdata/firmware/if_athn/athn-ar7010		base-firmware-root	firmware
 ./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root	firmware
@@ -1330,10 +1330,10 @@
 ./usr/libdata/debug/usr/libexec/uucp		base-obsolete		obsolete
 ./usr/libdata/debug/usr/mdec			base-sys-usr
 ./usr/libdata/debug/usr/sbin			base-sys-usr
-./usr/libdata/firmware				base-obsolete	obsolete
-./usr/libdata/firmware/bcm43xx			base-obsolete	obsolete
-./usr/libdata/firmware/bcm43xx/BCM43430A1.hcd	base-obsolete	obsolete
-./usr/libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx		base-obsolete	obsolete
+./usr/libdata/firmware				base-firmware-usr
+./usr/libdata/firmware/bcm43xx			base-firmware-usr
+./usr/libdata/firmware/bcm43xx/BCM43430A1.hcd	base-firmware-usr	firmware
+./usr/libdata/firmware/bcm43xx/LICENCE.broadcom_bcm43xx		base-firmware-usr	firmware
 ./usr/libdata/firmware/radeon			base-obsolete	obsolete
 ./usr/libdata/firmware/radeon/ARUBA_me.bin	base-obsolete	obsolete
 ./usr/libdata/firmware/radeon/ARUBA_pfp.bin	base-obsolete	obsolete
