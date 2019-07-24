@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.80 2019/07/21 16:19:45 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.81 2019/07/24 18:03:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.80 2019/07/21 16:19:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.81 2019/07/24 18:03:30 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -68,7 +68,7 @@ struct rasops_matchdata {
 };	
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
-const u_char rasops_cmap[256*3] = {
+const uint8_t rasops_cmap[256*3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
 	0x00, 0x7f, 0x00, /* green */
@@ -127,7 +127,7 @@ const u_char rasops_cmap[256*3] = {
 };
 
 /* True if color is gray */
-const u_char rasops_isgray[16] = {
+const uint8_t rasops_isgray[16] = {
 	1, 0, 0, 0,
 	0, 0, 0, 1,
 	1, 0, 0, 0,
@@ -724,7 +724,7 @@ void
 rasops_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri;
-	u_char *sp, *dp, *hp;
+	uint8_t *sp, *dp, *hp;
 	int height;
 
 	ri = (struct rasops_info *)cookie;
@@ -823,7 +823,7 @@ rasops_cursor(void *cookie, int on, int row, int col)
 static void
 rasops_init_devcmap(struct rasops_info *ri)
 {
-	const u_char *p;
+	const uint8_t *p;
 	int i, c;
 
 	switch (ri->ri_depth) {
@@ -995,7 +995,7 @@ static void
 rasops_do_cursor(struct rasops_info *ri)
 {
 	int full1, height, cnt, slop1, slop2, row, col;
-	u_char *dp, *rp, *hrp, *hp;
+	uint8_t *dp, *rp, *hrp, *hp;
 
 	hrp = hp = NULL;
 
@@ -1085,10 +1085,10 @@ rasops_do_cursor(struct rasops_info *ri)
 		msk2 = be32toh(0xffffffff << (32 - (8 * slop2)));
 
 		while (height--) {
-			dp = (u_char *)((uintptr_t)rp & ~3);
+			dp = (uint8_t *)((uintptr_t)rp & ~3);
 			rp += ri->ri_stride;
 			if (ri->ri_hwbits) {
-				hp = (u_char *)((uintptr_t)hrp & ~3);
+				hp = (uint8_t *)((uintptr_t)hrp & ~3);
 				hrp += ri->ri_stride;
 			}
 
@@ -1214,10 +1214,10 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 				}
 
 				for (cnt = num; cnt; cnt--) {
-					*(u_char *)dp = clr;
+					*(uint8_t *)dp = clr;
 					DELTA(dp, 1, int32_t *);
 					if (ri->ri_hwbits) {
-						*(u_char *)hp = clr;
+						*(uint8_t *)hp = clr;
 						DELTA(hp, 1, int32_t *);
 					}
 				}
@@ -1243,10 +1243,10 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 
 		/* Align span to 4 bytes */
 		if (slop1 & 1) {
-			*(u_char *)dp = clr;
+			*(uint8_t *)dp = clr;
 			DELTA(dp, 1, int32_t *);
 			if (ri->ri_hwbits) {
-				*(u_char *)hp = clr;
+				*(uint8_t *)hp = clr;
 				DELTA(hp, 1, int32_t *);
 			}
 		}
@@ -1281,10 +1281,10 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 
 		/* Write unaligned trailing slop */
 		if (slop2 & 1) {
-			*(u_char *)dp = clr;
+			*(uint8_t *)dp = clr;
 			DELTA(dp, 1, int32_t *);
 			if (ri->ri_hwbits) {
-				*(u_char *)hp = clr;
+				*(uint8_t *)hp = clr;
 				DELTA(hp, 1, int32_t *);
 			}
 		}
@@ -1346,7 +1346,7 @@ static void
 rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 {
 	struct rasops_info *ri;
-	u_char *sp, *dp;
+	uint8_t *sp, *dp;
 	int height;
 	int r_srcrow, r_dstrow, r_srccol, r_dstcol;
 
@@ -1375,7 +1375,7 @@ static void
 rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
-	u_char *rp;
+	uint8_t *rp;
 	int height;
 
 	ri = (struct rasops_info *)cookie;
@@ -1473,7 +1473,7 @@ static void
 rasops_copychar_ccw(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 {
 	struct rasops_info *ri;
-	u_char *sp, *dp;
+	uint8_t *sp, *dp;
 	int height;
 	int r_srcrow, r_dstrow, r_srccol, r_dstcol;
 
@@ -1502,7 +1502,7 @@ static void
 rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
-	u_char *rp;
+	uint8_t *rp;
 	int height;
 
 	ri = (struct rasops_info *)cookie;
