@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd: BPF arp and bootp filtering
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
@@ -84,11 +85,28 @@ size_t
 bpf_frame_header_len(const struct interface *ifp)
 {
 
-	switch(ifp->family) {
+	switch (ifp->family) {
 	case ARPHRD_ETHER:
 		return sizeof(struct ether_header);
 	default:
 		return 0;
+	}
+}
+
+static const uint8_t etherbroadcastaddr[] =
+    { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
+int
+bpf_frame_bcast(const struct interface *ifp, const char *frame)
+{
+
+	switch (ifp->family) {
+	case ARPHRD_ETHER:
+		return memcmp(frame +
+		    offsetof(struct ether_header, ether_dhost),
+		    etherbroadcastaddr, sizeof(etherbroadcastaddr));
+	default:
+		return -1;
 	}
 }
 
@@ -227,8 +245,12 @@ bpf_read(struct interface *ifp, int fd, void *data, size_t len,
 		if (state->buffer_pos + packet.bh_caplen + packet.bh_hdrlen >
 		    state->buffer_len)
 			goto next; /* Packet beyond buffer, drop. */
-		payload = state->buffer + state->buffer_pos +
-		    packet.bh_hdrlen + fl;
+		payload = state->buffer + state->buffer_pos + packet.bh_hdrlen;
+		if (bpf_frame_bcast(ifp, payload) == 0)
+			*flags |= BPF_BCAST;
+		else
+			*flags &= ~BPF_BCAST;
+		payload += fl;
 		bytes = (ssize_t)packet.bh_caplen - fl;
 		if ((size_t)bytes > len)
 			bytes = (ssize_t)len;
