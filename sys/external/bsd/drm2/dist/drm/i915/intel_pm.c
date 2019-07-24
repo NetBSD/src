@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.16 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.17 2019/07/24 14:57:09 msaitoh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.16 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.17 2019/07/24 14:57:09 msaitoh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -4625,7 +4625,7 @@ static void gen6_disable_rps(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(GEN6_RC_CONTROL, 0);
-	I915_WRITE(GEN6_RPNSWREQ, 1 << 31);
+	I915_WRITE(GEN6_RPNSWREQ, 1UL << 31);
 }
 
 static void cherryview_disable_rps(struct drm_device *dev)
