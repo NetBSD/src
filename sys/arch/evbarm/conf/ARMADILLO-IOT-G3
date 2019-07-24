@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.18 2019/05/18 08:49:23 skrll Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.19 2019/07/24 12:33:18 hkenken Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -201,7 +201,6 @@ imxgpio4	at axi? addr 0x30220000 irqbase 384 irq 104
 imxgpio5	at axi? addr 0x30210000 irqbase 416 irq 106
 imxgpio6	at axi? addr 0x30200000 irqbase 448 irq 108
 gpio*		at imxgpio?
-options 	IMX_GPIO_INTR_SPLIT
 
 # Clock Control
 imxccm0 	at axi? addr 0x30380000

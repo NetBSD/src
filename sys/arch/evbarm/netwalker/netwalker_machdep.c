@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.25 2019/07/16 14:41:47 skrll Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.26 2019/07/24 12:33:18 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.25 2019/07/16 14:41:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.26 2019/07/24 12:33:18 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -145,7 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.25 2019/07/16 14:41:47 skrll
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
-#include <arm/imx/imxgpiovar.h>
 
 #include <evbarm/netwalker/netwalker_reg.h>
 #include <evbarm/netwalker/netwalker.h>
