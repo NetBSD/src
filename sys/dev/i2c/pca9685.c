@@ -1,4 +1,4 @@
-/* $NetBSD: pca9685.c,v 1.2 2019/07/24 05:47:39 thorpej Exp $ */
+/* $NetBSD: pca9685.c,v 1.3 2019/07/25 04:24:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018, 2019 Jason R. Thorpe
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.2 2019/07/24 05:47:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.3 2019/07/25 04:24:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/mutex.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -58,7 +57,6 @@ struct pcapwm_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-	int		sc_i2c_flags;
 
 	/*
 	 * Locking order is:
@@ -100,7 +98,7 @@ pcapwm_read1(struct pcapwm_softc * const sc, uint8_t reg, uint8_t *valp)
 
 	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 			sc->sc_addr, &reg, sizeof(reg),
-			valp, sizeof(*valp), cold ? I2C_F_POLL : 0);
+			valp, sizeof(*valp), 0);
 }
 
 static int
@@ -109,7 +107,7 @@ pcapwm_write1(struct pcapwm_softc * const sc, uint8_t reg, uint8_t val)
 
 	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
 			sc->sc_addr, &reg, sizeof(reg),
-			&val, sizeof(val), cold ? I2C_F_POLL : 0);
+			&val, sizeof(val), 0);
 }
 
 static int
@@ -120,7 +118,7 @@ pcapwm_read_LEDn(struct pcapwm_softc * const sc, uint8_t reg, uint8_t *buf,
 	/* We rely on register auto-increment being enabled. */
 	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 			sc->sc_addr, &reg, sizeof(reg),
-			buf, buflen, cold ? I2C_F_POLL : 0);
+			buf, buflen, 0);
 }
 
 static int
@@ -131,7 +129,7 @@ pcapwm_write_LEDn(struct pcapwm_softc * const sc, uint8_t reg, uint8_t *buf,
 	/* We rely on register auto-increment being enabled. */
 	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
 			sc->sc_addr, &reg, sizeof(reg),
-			buf, buflen, cold ? I2C_F_POLL : 0);
+			buf, buflen, 0);
 }
 
 static int
@@ -142,13 +140,25 @@ pcapwm_program_channel(struct pcapwm_softc * const sc,
 	const uint8_t reg = chan->ch_number == PCA9685_ALL_CHANNELS ?
 	    PCA9685_ALL_LED_ON_L : PCA9685_LEDx_ON_L(chan->ch_number);
 	uint8_t regs[4];
+	int error;
 
 	regs[0] = (uint8_t)(on_tick & 0xff);
 	regs[1] = (uint8_t)((on_tick >> 8) & 0xff);
 	regs[2] = (uint8_t)(off_tick & 0xff);
 	regs[3] = (uint8_t)((off_tick >> 8) & 0xff);
 
-	return pcapwm_write_LEDn(sc, reg, regs, sizeof(regs));
+	error = iic_acquire_bus(sc->sc_i2c, 0);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "program_channel: failed to acquire I2C bus\n");
+		return error;
+	}
+
+	error = pcapwm_write_LEDn(sc, reg, regs, sizeof(regs));
+
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
 }
 
 static int
@@ -161,7 +171,17 @@ pcapwm_inspect_channel(struct pcapwm_softc * const sc,
 	uint8_t regs[4];
 	int error;
 
+	error = iic_acquire_bus(sc->sc_i2c, 0);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "inspect_channel: failed to acquire I2C bus\n");
+		return error;
+	}
+
 	error = pcapwm_read_LEDn(sc, reg, regs, sizeof(regs));
+
+	iic_release_bus(sc->sc_i2c, 0);
+
 	if (error) {
 		return error;
 	}
@@ -359,12 +379,19 @@ pcapwm_pwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
 			goto out;
 		}
 
+		error = iic_acquire_bus(sc->sc_i2c, 0);
+		if (error) {
+			device_printf(sc->sc_dev,
+			    "set_config: unable to acquire I2C bus\n");
+			goto out;
+		}
+
 		uint8_t mode1;
 		error = pcapwm_read1(sc, PCA9685_MODE1, &mode1);
 		if (error) {
 			device_printf(sc->sc_dev,
 			    "set_config: unable to read MODE1\n");
-			goto out;
+			goto out_release_i2c;
 		}
 
 		/* Disable the internal oscillator. */
@@ -373,7 +400,7 @@ pcapwm_pwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
 		if (error) {
 			device_printf(sc->sc_dev,
 			    "set_config: unable to write MODE1\n");
-			goto out;
+			goto out_release_i2c;
 		}
 
 		/* Update the prescale register. */
@@ -382,7 +409,7 @@ pcapwm_pwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
 		if (error) {
 			device_printf(sc->sc_dev,
 			    "set_config: unable to write PRE_SCALE\n");
-			goto out;
+			goto out_release_i2c;
 		}
 
 		/*
@@ -411,8 +438,10 @@ pcapwm_pwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
 		if (error) {
 			device_printf(sc->sc_dev,
 			    "set_config: unable to write MODE1\n");
-			goto out;
+			goto out_release_i2c;
 		}
+
+		iic_release_bus(sc->sc_i2c, 0);
 
 		if (sc->sc_ext_clk == false) {
 			/* Wait for 500us for the clock to settle. */
@@ -470,6 +499,10 @@ pcapwm_pwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
 	mutex_exit(&sc->sc_lock);
 
 	return error;
+
+ out_release_i2c:
+	iic_release_bus(sc->sc_i2c, 0);
+	goto out;
 }
 
 static int
@@ -531,6 +564,12 @@ pcapwm_attach(device_t parent, device_t self, void *aux)
 	 * MODE2.
 	 */
 
+	error = iic_acquire_bus(sc->sc_i2c, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "failed to acquire I2C bus\n");
+		return;
+	}
+
 	/*
 	 * Set up the outputs.  We want the channel to update when
 	 * we send the I2C "STOP" condition.
@@ -547,6 +586,7 @@ pcapwm_attach(device_t parent, device_t self, void *aux)
 		}
 		error = pcapwm_write1(sc, PCA9685_MODE2, mode2);
 	}
+	iic_release_bus(sc->sc_i2c, 0);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "failed to configure MODE2\n");
 		return;
