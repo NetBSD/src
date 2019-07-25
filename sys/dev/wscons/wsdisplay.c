@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.157 2019/07/24 19:40:55 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.158 2019/07/25 20:26:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.157 2019/07/24 19:40:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.158 2019/07/25 20:26:39 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -943,11 +943,12 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
 								  ccol, crow,
 								  defattr);
 
-	if (cn_tab != &wsdisplay_cons) {
-		if (cn_tab != NULL && cn_tab->cn_halt != NULL)
-			cn_tab->cn_halt(cn_tab->cn_dev);
+	if (cn_tab != &wsdisplay_cons)
 		wsdisplay_ocn = cn_tab;
-	}
+
+	if (wsdisplay_ocn != NULL && wsdisplay_ocn->cn_halt != NULL)
+		wsdisplay_ocn->cn_halt(wsdisplay_ocn->cn_dev);
+
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 2;
 }
@@ -974,11 +975,12 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 								  ccol, crow,
 								  defattr);
 
-	if (cn_tab != &wsdisplay_cons) {
-		if (cn_tab != NULL && cn_tab->cn_halt != NULL)
-			cn_tab->cn_halt(cn_tab->cn_dev);
+	if (cn_tab != &wsdisplay_cons)
 		wsdisplay_ocn = cn_tab;
-	}
+
+	if (wsdisplay_ocn != NULL && wsdisplay_ocn->cn_halt != NULL)
+		wsdisplay_ocn->cn_halt(wsdisplay_ocn->cn_dev);
+
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 1;
 }
