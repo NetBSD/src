@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.49 2019/07/23 00:52:02 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.50 2019/07/25 00:48:55 rmind Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -969,6 +969,7 @@ npfctl_setparam(const char *name, int val)
 {
 	if (strcmp(name, "bpf.jit") == 0) {
 		npfctl_bpfjit(val != 0);
+		return;
 	}
 	if (npf_param_set(npf_conf, name, val) != 0) {
 		yyerror("invalid parameter `%s` or its value", name);
