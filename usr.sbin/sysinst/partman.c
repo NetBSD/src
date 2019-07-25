@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.40 2019/07/23 18:13:40 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.41 2019/07/25 19:01:08 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -3019,7 +3019,7 @@ partman(void)
 			free_menu(menu_no);
 		}
 
-		if (args[0].retvalue == 0) {
+		if (args[0].retvalue == 0 && pm->parts != NULL) {
 			struct install_partition_desc install;
 
 			install_desc_from_parts(&install, pm->parts);
