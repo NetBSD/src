@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.45 2019/07/25 00:30:45 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.46 2019/07/25 20:04:41 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -350,9 +350,6 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 # Performance monitors
 armpmu*		at fdt?
 pseudo-device	tprof
-
-# Power state coordination interface
-psci*		at fdt?
 
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
