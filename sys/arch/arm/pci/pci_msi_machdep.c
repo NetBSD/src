@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.5 2018/12/01 20:38:45 skrll Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.6 2019/07/25 00:42:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5 2018/12/01 20:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.6 2019/07/25 00:42:43 jmcneill Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -237,14 +237,16 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 void 
 pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 {
-	struct arm_pci_msi *msi;
+	struct arm_pci_msi *msi = NULL;
 
 	if (pih == NULL || count == 0)
 		return;
 
-	msi = arm_pci_msi_find_frame(pih[0]);
-	KASSERT(msi != NULL);
-	msi->msi_intr_release(msi, pih, count);
+	if ((pih[0] & (ARM_PCI_INTR_MSIX|ARM_PCI_INTR_MSI)) != 0) {
+		msi = arm_pci_msi_find_frame(pih[0]);
+		KASSERT(msi != NULL);
+		msi->msi_intr_release(msi, pih, count);
+	}
 
 	kmem_free(pih, sizeof(*pih) * count);
 }
