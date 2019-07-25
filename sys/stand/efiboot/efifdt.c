@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.16 2019/07/24 11:40:36 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.17 2019/07/25 11:44:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -292,7 +292,7 @@ efi_fdt_gop(void)
 			continue;
 		}
 
-		snprintf(buf, sizeof(buf), "framebuffer@%lx", mode->FrameBufferBase);
+		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
 		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/chosen"), buf);
 		if (fb < 0)
 			panic("FDT: Failed to create framebuffer node");
@@ -306,7 +306,7 @@ efi_fdt_gop(void)
 		fdt_appendprop_u32(fdt_data, fb, "stride", mode->Info->PixelsPerScanLine * 4);	/* XXX */
 		fdt_appendprop_string(fdt_data, fb, "format", "a8b8g8r8");
 
-		snprintf(buf, sizeof(buf), "/chosen/framebuffer@%lx", mode->FrameBufferBase);
+		snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
 		fdt_setprop_string(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH),
 		    "stdout-path", buf);
 
