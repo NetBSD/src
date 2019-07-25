@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.70 2019/06/15 04:00:17 msaitoh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.71 2019/07/25 14:31:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.70 2019/06/15 04:00:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.71 2019/07/25 14:31:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1092,13 +1092,13 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 			    &cp[1], 2);
 			urtwn_write_4(sc, R92C_HMEBOX(fwcur),
 			    cp[0] + (cp[3] << 8) + (cp[4] << 16) +
-			    (cp[5] << 24));
+			    ((uint32_t)cp[5] << 24));
 		} else {
 			urtwn_write_region(sc, R92E_HMEBOX_EXT(fwcur),
 			    &cp[4], 2);
 			urtwn_write_4(sc, R92C_HMEBOX(fwcur),
 			    cp[0] + (cp[1] << 8) + (cp[2] << 16) +
-			    (cp[3] << 24));
+			    ((uint32_t)cp[3] << 24));
 		}
 	} else {
 		urtwn_write_region(sc, R92C_HMEBOX(fwcur), cp, len);
