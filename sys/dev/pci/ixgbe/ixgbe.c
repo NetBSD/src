@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.194 2019/07/24 06:07:57 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.195 2019/07/25 09:01:56 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2339,7 +2339,7 @@ ixgbe_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	adapter->shadow_vfta[index] |= (1 << bit);
+	adapter->shadow_vfta[index] |= ((u32)1 << bit);
 	error = adapter->hw.mac.ops.set_vfta(&adapter->hw, vtag, 0, true,
 	    true);
 	IXGBE_CORE_UNLOCK(adapter);
@@ -2370,7 +2370,7 @@ ixgbe_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	adapter->shadow_vfta[index] &= ~(1 << bit);
+	adapter->shadow_vfta[index] &= ~((u32)1 << bit);
 	error = adapter->hw.mac.ops.set_vfta(&adapter->hw, vtag, 0, false,
 	    true);
 	IXGBE_CORE_UNLOCK(adapter);
