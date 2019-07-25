@@ -127,7 +127,7 @@ static const char * const dhcp_params[] = {
 
 static int dhcp_openbpf(struct interface *);
 static void dhcp_start1(void *);
-#ifdef ARP
+#if defined(ARP) && (!defined(KERNEL_RFC5227) || defined(ARPING))
 static void dhcp_arp_found(struct arp_state *, const struct arp_msg *);
 #endif
 static void dhcp_handledhcp(struct interface *, struct bootp *, size_t,
@@ -1958,6 +1958,7 @@ dhcp_rebind(void *arg)
 	send_rebind(ifp);
 }
 
+#if defined(ARP) || defined(IN_IFF_DUPLICATED)
 static void
 dhcp_finish_dad(struct interface *ifp, struct in_addr *ia)
 {
@@ -2026,19 +2027,22 @@ dhcp_addr_duplicated(struct interface *ifp, struct in_addr *ia)
 	eloop_timeout_add_sec(ifp->ctx->eloop,
 	    DHCP_RAND_MAX, dhcp_discover, ifp);
 }
+#endif
 
-#ifdef ARP
+#if defined(ARP) && (!defined(KERNEL_RFC5227) || defined(ARPING))
 static void
 dhcp_arp_not_found(struct arp_state *astate)
 {
 	struct interface *ifp;
+#ifdef ARPING
 	struct dhcp_state *state;
 	struct if_options *ifo;
+#endif
 
 	ifp = astate->iface;
+#ifdef ARPING
 	state = D_STATE(ifp);
 	ifo = ifp->options;
-#ifdef ARPING
 	if (ifo->arping_len && state->arping_index < ifo->arping_len) {
 		/* We didn't find a profile for this
 		 * address or hwaddr, so move to the next
@@ -2062,12 +2066,11 @@ static void
 dhcp_arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 {
 	struct in_addr addr;
+	struct interface *ifp = astate->iface;
 #ifdef ARPING
-	struct interface *ifp;
 	struct dhcp_state *state;
 	struct if_options *ifo;
 
-	ifp = astate->iface;
 	state = D_STATE(ifp);
 
 	ifo = ifp->options;
@@ -2093,6 +2096,8 @@ dhcp_arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 		dhcpcd_startinterface(ifp);
 		return;
 	}
+#else
+	UNUSED(amsg);
 #endif
 
 	addr = astate->addr;
@@ -2304,6 +2309,7 @@ dhcp_arp_defend_failed(struct arp_state *astate)
 }
 #endif
 
+#if !defined(KERNEL_RFC5227) || defined(ARPING)
 static struct arp_state *
 dhcp_arp_new(struct interface *ifp, struct in_addr *addr)
 {
@@ -2322,6 +2328,7 @@ dhcp_arp_new(struct interface *ifp, struct in_addr *addr)
 #endif
 	return astate;
 }
+#endif
 
 static int
 dhcp_arp_address(struct interface *ifp)
