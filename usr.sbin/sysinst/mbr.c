@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.16 2019/07/12 18:23:06 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.17 2019/07/25 13:16:35 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -570,7 +570,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 			ext_base = next_ext;
 			next_ext = 0;
 		}
-		ext = calloc(sizeof *ext, 1);
+		ext = calloc(1, sizeof *ext);
 		if (!ext)
 			break;
 		mbrs = &ext->mbr;
@@ -829,7 +829,7 @@ mbr_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 	if (start != 0)
 		return NULL;
 
-	parts = calloc(sizeof(*parts), 1);
+	parts = calloc(1, sizeof(*parts));
 	if (!parts)
 		return NULL;
 
@@ -892,7 +892,7 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len)
 	if (start != 0)
 		return NULL;
 
-	parts = calloc(sizeof(*parts), 1);
+	parts = calloc(1, sizeof(*parts));
 	if (!parts)
 		return NULL;
 
