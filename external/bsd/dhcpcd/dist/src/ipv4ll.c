@@ -298,7 +298,7 @@ ipv4ll_not_found_arp(struct arp_state *astate)
 	state = IPV4LL_STATE(ifp);
 	assert(state != NULL);
 	assert(state->arp == astate);
-	ipv4ll_not_found_arp(astate);
+	ipv4ll_not_found(ifp);
 }
 
 static void
@@ -552,18 +552,23 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 
 	ifp = ia->iface;
 	state = IPV4LL_STATE(ifp);
-	if (state == NULL || state->addr == NULL ||
-	    !IN_ARE_ADDR_EQUAL(&state->addr->addr, &ia->addr))
+	if (state == NULL)
 		return;
 
-	if (cmd == RTM_DELADDR) {
+	if (cmd == RTM_DELADDR &&
+	    state->addr != NULL &&
+	    IN_ARE_ADDR_EQUAL(&state->addr->addr, &ia->addr))
+	{
 		loginfox("%s: pid %d deleted IP address %s",
 		    ifp->name, pid, ia->saddr);
 		ipv4ll_defend_failed(ifp);
+		return;
 	}
 
 #ifdef IN_IFF_DUPLICATED
 	if (cmd != RTM_NEWADDR)
+		return;
+	if (!IN_ARE_ADDR_EQUAL(&state->pickedaddr, &ia->addr))
 		return;
 	if (!(ia->addr_flags & IN_IFF_NOTUSEABLE))
 		ipv4ll_not_found(ifp);
