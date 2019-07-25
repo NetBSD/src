@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.122 2019/07/25 09:01:56 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.123 2019/07/25 09:28:07 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1993,7 +1993,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 
 		idx = vlanidp->vid / 32;
 		KASSERT(idx < IXGBE_VFTA_SIZE);
-		adapter->shadow_vfta[idx] |= 1 << vlanidp->vid % 32;
+		adapter->shadow_vfta[idx] |= (u32)1 << (vlanidp->vid % 32);
 	}
 	mutex_exit(ec->ec_lock);
 	
@@ -2012,7 +2012,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		 */
 		for (int j = 0; j < 32; j++) {
 			retry = 0;
-			if ((vfta & (1 << j)) == 0)
+			if ((vfta & ((u32)1 << j)) == 0)
 				continue;
 			vid = (i * 32) + j;
 			
