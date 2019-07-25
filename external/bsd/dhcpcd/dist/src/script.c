@@ -180,7 +180,7 @@ make_env(const struct interface *ifp, const char *reason)
 	char **env, **envp, *buf, *bufp, *endp, *path;
 	size_t nenv;
 	long buf_pos, i;
-	int protocol;
+	int protocol = PROTO_LINK;
 	const struct if_options *ifo = ifp->options;
 	const struct interface *ifp2;
 	int af;
