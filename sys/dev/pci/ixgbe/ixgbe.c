@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.195 2019/07/25 09:01:56 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.196 2019/07/25 09:28:07 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2427,7 +2427,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 
 		idx = vlanidp->vid / 32;
 		KASSERT(idx < IXGBE_VFTA_SIZE);
-		adapter->shadow_vfta[idx] |= 1 << vlanidp->vid % 32;
+		adapter->shadow_vfta[idx] |= (u32)1 << (vlanidp->vid % 32);
 	}
 	mutex_exit(ec->ec_lock);
 	for (i = 0; i < IXGBE_VFTA_SIZE; i++)
