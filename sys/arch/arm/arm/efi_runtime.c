@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.1 2018/10/28 10:21:42 jmcneill Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.2 2019/07/25 02:00:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.1 2018/10/28 10:21:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.2 2019/07/25 02:00:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -113,13 +113,19 @@ arm_efirt_settime(struct efi_tm *tm)
 int
 arm_efirt_reset(enum efi_reset type)
 {
+	static int reset_called = false;
 	efi_status status;
 
 	if (RT == NULL || RT->rt_reset == NULL)
 		return ENXIO;
 
 	mutex_enter(&efi_lock);
-	status = RT->rt_reset(type, 0, 0, NULL);
+	if (reset_called == false) {
+		reset_called = true;
+		status = RT->rt_reset(type, 0, 0, NULL);
+	} else {
+		status = 1;
+	}
 	mutex_exit(&efi_lock);
 	if (status)
 		return EIO;
