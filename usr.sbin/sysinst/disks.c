@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.43 2019/07/24 14:35:02 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.44 2019/07/25 13:11:15 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -873,15 +873,27 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			already_found = 0;
 			SLIST_FOREACH(pm_i, &pm_head, l) {
 				pm_last = pm_i;
-				if (!already_found &&
-				    strcmp(pm_i->diskdev, disk->dd_name) == 0) {
-					pm_i->found = 1;
+				if (strcmp(pm_i->diskdev, disk->dd_name) == 0) {
+					already_found = 1;
 					break;
 				}
 			}
-			if (pm_i != NULL && pm_i->found)
-				/* We already added this device, skipping */
+			if (pm_i != NULL && already_found) {
+				/*
+				 * We already added this device, but
+				 * partitions might have changed
+				 */
+				if (!pm_i->found) {
+					pm_i->found = true;
+					if (pm_i->parts == NULL) {
+						pm_i->parts =
+						    partitions_read_disk(
+						    pm_i->diskdev,
+						    disk->dd_totsec);
+					}
+				}
 				continue;
+			}
 		}
 		pm = pm_new;
 		pm->found = 1;
