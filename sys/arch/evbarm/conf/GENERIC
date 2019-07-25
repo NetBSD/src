@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.44 2019/07/23 12:32:40 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.45 2019/07/25 00:30:45 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -507,7 +507,6 @@ h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
 hdaudio*	at fdt?			# Intel HDA
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
-options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 sun8icodec*	at fdt?			# Audio codec (sun8i)
