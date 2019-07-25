@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwnreg.h,v 1.1 2018/06/29 04:02:10 thorpej Exp $	*/
+/*	$NetBSD: rtwnreg.h,v 1.2 2019/07/25 14:31:35 msaitoh Exp $	*/
 /*	$OpenBSD: r92creg.h,v 1.16 2017/09/22 13:41:56 kevlo Exp $	*/
 
 /*-
@@ -1031,7 +1031,8 @@
 
 /* Macros to access unaligned little-endian memory. */
 #define LE_READ_2(x)	((x)[0] | ((x)[1] << 8))
-#define LE_READ_4(x)	((x)[0] | ((x)[1] << 8) | ((x)[2] << 16) | ((x)[3] << 24))
+#define LE_READ_4(x)	((x)[0] | ((x)[1] << 8) | ((x)[2] << 16) | \
+	    ((uint32_t)((x)[3]) << 24))
 
 /*
  * Macros to access subfields in registers.
