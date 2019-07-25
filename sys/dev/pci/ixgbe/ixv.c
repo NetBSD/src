@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.120 2019/07/17 03:26:24 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.121 2019/07/25 05:58:25 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2190,8 +2190,8 @@ ixv_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 	} else {	  /* RX/TX IVARS */
 		index = (16 * (entry & 1)) + (8 * type);
 		ivar = IXGBE_READ_REG(hw, IXGBE_VTIVAR(entry >> 1));
-		ivar &= ~(0xFF << index);
-		ivar |= (vector << index);
+		ivar &= ~(0xffUL << index);
+		ivar |= ((u32)vector << index);
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR(entry >> 1), ivar);
 	}
 } /* ixv_set_ivar */
