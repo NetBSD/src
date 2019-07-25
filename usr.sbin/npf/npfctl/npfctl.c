@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.59 2019/07/23 00:52:02 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.60 2019/07/25 00:48:55 rmind Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -231,7 +231,7 @@ npfctl_print_error(const npf_error_t *ne)
 	const char *srcfile = ne->source_file;
 
 	if (ne->error_msg) {
-		warnx("%s", ne->error_msg);
+		errx(EXIT_FAILURE, "%s", ne->error_msg);
 	}
 	if (srcfile) {
 		warnx("source %s line %d", srcfile, ne->source_line);
