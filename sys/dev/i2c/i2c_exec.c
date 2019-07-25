@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.11 2018/12/10 00:31:45 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.12 2019/07/25 04:20:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.11 2018/12/10 00:31:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.12 2019/07/25 04:20:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.11 2018/12/10 00:31:45 thorpej Exp $"
 #include <sys/module.h>
 #include <sys/event.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 
 #define	_I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
@@ -53,6 +54,13 @@ static uint8_t	iic_smbus_pec(int, uint8_t *, uint8_t *);
 
 static int	i2cexec_modcmd(modcmd_t, void *);
 
+static inline int
+iic_op_flags(int flags)
+{
+
+	return flags | (cold ? I2C_F_POLL : 0);
+}
+
 /*
  * iic_acquire_bus:
  *
@@ -61,6 +69,8 @@ static int	i2cexec_modcmd(modcmd_t, void *);
 int
 iic_acquire_bus(i2c_tag_t tag, int flags)
 {
+
+	flags = iic_op_flags(flags);
 
 	return (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
 }
@@ -73,6 +83,8 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 void
 iic_release_bus(i2c_tag_t tag, int flags)
 {
+
+	flags = iic_op_flags(flags);
 
 	(*tag->ic_release_bus)(tag->ic_cookie, flags);
 }
@@ -95,6 +107,8 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	uint8_t *buf = vbuf;
 	int error;
 	size_t len;
+
+	flags = iic_op_flags(flags);
 
 	if ((flags & I2C_F_PEC) && cmdlen > 0 && tag->ic_exec != NULL) {
 		uint8_t data[33]; /* XXX */
