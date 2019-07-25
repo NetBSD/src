@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.22 2019/07/25 02:26:32 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.23 2019/07/25 03:02:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.22 2019/07/25 02:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.23 2019/07/25 03:02:44 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -133,8 +133,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		fr = 0;		/* shutup gcc */
 		fs = 0;		/* shutup gcc */
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 	}
 
@@ -296,8 +295,7 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 			rp += rs;
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -360,8 +358,7 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 			rp += rs;
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -427,8 +424,7 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 			rp += rs;
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.26 2019/07/25 02:26:32 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.27 2019/07/25 03:02:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.26 2019/07/25 02:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.27 2019/07/25 03:02:44 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -164,8 +164,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 
 		while (height--) {
 			dp = rp;
@@ -254,7 +253,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			memcpy(dp, buffer, width << 1);
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 
 		fgo = ((attr >> 24) & 0xf) * 3;
 		bgo = ((attr >> 16) & 0xf) * 3;
@@ -383,8 +382,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -481,8 +479,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -587,8 +584,7 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (uint8_t *)font->data + uc*ri->ri_fontscale;
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
