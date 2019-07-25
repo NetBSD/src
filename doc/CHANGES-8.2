@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.12 2019/07/23 08:47:43 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.13 2019/07/25 08:59:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -327,4 +327,13 @@ sys/dev/pckbport/files.pckbport			1.10
 
 	hvkbd requires pckbd_keydesctab in wskbdmap_mfii.c.
 	[nakayama, ticket #1305]
+
+crypto/dist/ipsec-tools/src/setkey/parse.y	1.23
+crypto/dist/ipsec-tools/src/setkey/token.l	1.23
+sys/netipsec/key.c				1.265
+tests/net/ipsec/t_ipsec_misc.sh			1.23
+
+	ipsec: fix a regression of the update API.
+	tests: add tests for getspi and udpate.
+	[ozaki-r, ticket #1306]
 
