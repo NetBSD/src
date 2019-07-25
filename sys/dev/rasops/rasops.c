@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.86 2019/07/24 19:33:35 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.87 2019/07/25 00:55:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.86 2019/07/24 19:33:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.87 2019/07/25 00:55:13 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1062,8 +1062,8 @@ rasops_do_cursor(struct rasops_info *ri)
 	rp = (uint8_t *)((uintptr_t)rp & ~3);
 	hrp = (uint8_t *)((uintptr_t)hrp & ~3);
 
-	msk1 = be32toh(0xffffffffU >> (32 - (8 * slop1)));
-	msk2 = be32toh(0xffffffffU << (32 - (8 * slop2)));
+	msk1 = !slop1 ? 0 : be32toh(0xffffffffU >> (32 - (8 * slop1)));
+	msk2 = !slop2 ? 0 : be32toh(0xffffffffU << (32 - (8 * slop2)));
 
 	while (height--) {
 		dp = rp;
