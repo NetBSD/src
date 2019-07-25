@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.15 2013/12/02 14:05:51 tsutsui Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.16 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -143,7 +143,8 @@ NAME(do_cursor)(struct rasops_info *ri)
 	col = ri->ri_ccol * ri->ri_font->fontwidth << PIXEL_SHIFT;
 	height = ri->ri_font->fontheight;
 	num = ri->ri_font->fontwidth << PIXEL_SHIFT;
-	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale + ((col >> 3) & ~3));
+	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
+	    ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
 		hrp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
