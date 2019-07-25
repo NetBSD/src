@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.32 2019/07/24 18:33:49 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.33 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.32 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.33 2019/07/25 02:26:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -272,9 +272,9 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		uint32_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] = c;
+			rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] =
+			    stamp[0];
 			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	} else {
@@ -300,10 +300,8 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		uint32_t c = STAMP_READ(52);
-
 		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-		rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] = c;
+		rp[0] = rp[1] = rp[2] = rp[3] = rp[4] = rp[5] = STAMP_READ(52);
 	}
 
 	stamp_mutex--;
@@ -348,10 +346,9 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		uint32_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] =
-			rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = c;
+			rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = stamp[0];
 			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	} else {
@@ -382,11 +379,9 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		uint32_t c = STAMP_READ(52);
-
 		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] =
-		rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = c;
+		rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = STAMP_READ(52);
 	}
 
 	stamp_mutex--;
@@ -431,11 +426,10 @@ rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 
 	if (uc == (u_int)-1) {
-		uint32_t c = stamp[0];
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] =
 			rp[4] = rp[5] = rp[6] = rp[7] =
-			rp[8] = rp[9] = rp[10] = rp[11] = c;
+			rp[8] = rp[9] = rp[10] = rp[11] = stamp[0];
 			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	} else {
@@ -471,12 +465,10 @@ rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		uint32_t c = STAMP_READ(52);
-
 		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] =
 		rp[4] = rp[5] = rp[6] = rp[7] =
-		rp[8] = rp[9] = rp[10] = rp[11] = c;
+		rp[8] = rp[9] = rp[10] = rp[11] = STAMP_READ(52);
 	}
 
 	stamp_mutex--;

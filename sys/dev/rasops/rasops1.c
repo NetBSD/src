@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.26 2019/07/24 18:33:49 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.27 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.26 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.27 2019/07/25 02:26:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -219,11 +219,11 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 					fb = ~(fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
 
-					tmp = (rp[0] & lmask)
-					    | MBE((u_int)fb >> col);
+					tmp = (rp[0] & lmask) |
+					    MBE((u_int)fb >> col);
 
-					tmp2 = (rp[1] & rmask)
-					    | (MBE((u_int)fb << width) & ~rmask);
+					tmp2 = (rp[1] & rmask) |
+					    (MBE((u_int)fb << width) & ~rmask);
 					rp[0] = tmp;
 					rp[1] = tmp2;
 					fr += fs;
@@ -239,11 +239,11 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 					fb = (fr[3] | (fr[2] << 8) |
 					    (fr[1] << 16) | (fr[0] << 24));
 
-					tmp = (rp[0] & lmask)
-					    | MBE(fb >> col);
+					tmp = (rp[0] & lmask) |
+					    MBE(fb >> col);
 
-					tmp2 = (rp[1] & rmask)
-					    | (MBE(fb << width) & ~rmask);
+					tmp2 = (rp[1] & rmask) |
+					    (MBE(fb << width) & ~rmask);
 					rp[0] = tmp;
 					rp[1] = tmp2;
 					fr += fs;

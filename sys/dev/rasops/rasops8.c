@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.39 2019/07/25 01:07:32 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.40 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.39 2019/07/25 01:07:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.40 2019/07/25 02:26:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -482,9 +482,12 @@ rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 			rp[1] = STAMP_READ(STAMP_SHIFT(fr[0], 0) & STAMP_MASK);
 			rp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) & STAMP_MASK);
 			if (ri->ri_hwbits) {
-				hrp[0] = STAMP_READ(STAMP_SHIFT(fr[0], 1) & STAMP_MASK);
-				hrp[1] = STAMP_READ(STAMP_SHIFT(fr[0], 0) & STAMP_MASK);
-				hrp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) & STAMP_MASK);
+				hrp[0] = STAMP_READ(STAMP_SHIFT(fr[0], 1) &
+				    STAMP_MASK);
+				hrp[1] = STAMP_READ(STAMP_SHIFT(fr[0], 0) &
+				    STAMP_MASK);
+				hrp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) &
+				    STAMP_MASK);
 			}
 
 			fr += fs;
@@ -572,10 +575,14 @@ rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 			rp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) & STAMP_MASK);
 			rp[3] = STAMP_READ(STAMP_SHIFT(fr[1], 0) & STAMP_MASK);
 			if (ri->ri_hwbits) {
-				hrp[0] = STAMP_READ(STAMP_SHIFT(fr[0], 1) & STAMP_MASK);
-				hrp[1] = STAMP_READ(STAMP_SHIFT(fr[0], 0) & STAMP_MASK);
-				hrp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) & STAMP_MASK);
-				hrp[3] = STAMP_READ(STAMP_SHIFT(fr[1], 0) & STAMP_MASK);
+				hrp[0] = STAMP_READ(STAMP_SHIFT(fr[0], 1) &
+				    STAMP_MASK);
+				hrp[1] = STAMP_READ(STAMP_SHIFT(fr[0], 0) &
+				    STAMP_MASK);
+				hrp[2] = STAMP_READ(STAMP_SHIFT(fr[1], 1) &
+				    STAMP_MASK);
+				hrp[3] = STAMP_READ(STAMP_SHIFT(fr[1], 0) &
+				    STAMP_MASK);
 			}
 
 			fr += fs;
