@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.37 2019/07/24 18:33:49 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.38 2019/07/25 00:59:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.37 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.38 2019/07/25 00:59:04 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -564,11 +564,13 @@ rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		while (height--) {
 			rp[0] = rp[1] = rp[2] = rp[3] = stamp[0];
+			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
 				hrp[0] = stamp[0];
 				hrp[1] = stamp[0];
 				hrp[2] = stamp[0];
 				hrp[3] = stamp[0];
+				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
 	} else {
