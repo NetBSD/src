@@ -201,7 +201,6 @@ npf_nbuf_test(bool verbose)
 		bufb = parse_nbuf_chain(m1);
 		ok = validate_mbuf_data(bufa, bufb);
 		CHECK_TRUE(ok);
-		m_freem(m1);
 	}
 
 	m2 = mbuf_bytesize(MBUF_CHAIN_LEN);
@@ -209,7 +208,6 @@ npf_nbuf_test(bool verbose)
 	bufb = parse_nbuf_chain(m2);
 	ok = validate_mbuf_data(bufa, bufb);
 	CHECK_TRUE(ok);
-	m_freem(m2);
 
 	(void)verbose;
 	return true;
