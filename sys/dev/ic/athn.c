@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: athn.c,v 1.22 2019/07/25 11:56:09 msaitoh Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.22 2019/07/25 11:56:09 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -1021,7 +1021,7 @@ athn_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 
 	/* exponent = 14 - floor(log2(coeff)) */
 	for (exp = 31; exp > 0; exp--)
-		if (coeff & (1 << exp))
+		if (coeff & (1U << exp))
 			break;
 	exp = 14 - (exp - COEFF_SCALE_SHIFT);
 
