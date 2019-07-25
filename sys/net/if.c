@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.456 2019/07/04 02:44:25 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.457 2019/07/25 07:45:57 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.456 2019/07/04 02:44:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457 2019/07/25 07:45:57 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1043,9 +1043,9 @@ static inline bool
 if_snd_is_used(struct ifnet *ifp)
 {
 
-	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
-	    ifp->if_transmit == if_transmit ||
-	    ALTQ_IS_ENABLED(&ifp->if_snd);
+	return ALTQ_IS_ENABLED(&ifp->if_snd) ||
+		ifp->if_transmit == if_transmit ||
+		ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit;
 }
 
 /*
