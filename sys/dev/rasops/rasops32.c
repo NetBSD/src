@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.34 2019/07/24 18:33:49 rin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.35 2019/07/25 03:02:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.34 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.35 2019/07/25 03:02:44 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -122,7 +122,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -203,7 +203,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			memcpy(dp, buffer, width << 2);
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 
 		r0 = (clr[0] >> 16) & 0xff;
 		r1 = (clr[1] >> 16) & 0xff;

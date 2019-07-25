@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.35 2019/07/24 18:33:49 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.36 2019/07/25 03:02:44 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -148,6 +148,10 @@ struct rasops_info {
 #define PICK_FONT(ri, c) (((c & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT) && \
 			  (ri->ri_optfont.data != NULL)) ? \
 			 &ri->ri_optfont : ri->ri_font
+
+#define	FONT_GLYPH(uc, font, ri)					\
+	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
+	    (ri)->ri_fontscale)
 
 /*
  * rasops_init().
