@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.2 2019/07/23 08:25:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.3 2019/07/25 01:00:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -460,8 +460,6 @@ npf_portmap_flush(npf_t *npf)
 {
 	npf_portmap_t *pm = npf->portmap;
 	bitmap_t *bm;
-
-	KASSERT(npf_config_locked_p(npf));
 
 	while ((bm = LIST_FIRST(&pm->bitmap_list)) != NULL) {
 		for (unsigned i = 0; i < PORTMAP_L0_WORDS; i++) {
