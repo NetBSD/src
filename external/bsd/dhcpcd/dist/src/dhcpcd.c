@@ -1210,9 +1210,11 @@ dhcpcd_handlehwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
 static void
 if_reboot(struct interface *ifp, int argc, char **argv)
 {
+#ifdef INET
 	unsigned long long oldopts;
 
 	oldopts = ifp->options->options;
+#endif
 	script_runreason(ifp, "RECONFIGURE");
 	dhcpcd_initstate1(ifp, argc, argv, 0);
 #ifdef INET
@@ -2123,6 +2125,12 @@ exit1:
 		}
 		free(ctx.ifaces);
 	}
+#ifdef HAVE_OPEN_MEMSTREAM
+	if (ctx.script_fp)
+		fclose(ctx.script_fp);
+#endif
+	free(ctx.script_buf);
+	free(ctx.script_env);
 	free_options(&ctx, ifo);
 	rt_dispose(&ctx);
 	free(ctx.duid);
@@ -2146,11 +2154,5 @@ exit1:
 	if (ctx.options & DHCPCD_FORKED)
 		_exit(i); /* so atexit won't remove our pidfile */
 #endif
-#ifdef HAVE_OPEN_MEMSTREAM
-	if (ctx.script_fp)
-		fclose(ctx.script_fp);
-#endif
-	free(ctx.script_buf);
-	free(ctx.script_env);
 	return i;
 }
