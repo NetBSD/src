@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.24 2019/07/25 07:05:44 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.25 2019/07/25 09:01:56 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4020,7 +4020,7 @@ s32 ixgbe_set_vfta_generic(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 	 *    bits[4-0]:  which bit in the register
 	 */
 	regidx = vlan / 32;
-	vfta_delta = 1 << (vlan % 32);
+	vfta_delta = (u32)1 << (vlan % 32);
 	vfta = IXGBE_READ_REG(hw, IXGBE_VFTA(regidx));
 
 	/*
