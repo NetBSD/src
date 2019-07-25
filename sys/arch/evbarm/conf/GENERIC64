@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.102 2019/07/16 09:47:41 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.103 2019/07/25 00:30:45 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -403,9 +403,9 @@ spi*		at spibus?
 
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
+hdaudio*	at pci? dev ? function ?
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
-options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 ausoc*		at fdt?			# Simple SoC audio card
