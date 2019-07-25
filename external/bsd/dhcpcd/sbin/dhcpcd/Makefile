@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2019/07/24 21:19:05 roy Exp $
+# $NetBSD: Makefile,v 1.47 2019/07/25 08:58:32 roy Exp $
 #
 
 WARNS?=		6
@@ -32,10 +32,10 @@ SRCS+=		auth.c
 .if (${USE_INET} != "no")
 CPPFLAGS+=	-DARP -DINET
 SRCS+=		arp.c bpf.c dhcp.c ipv4.c
-#.if !defined(SMALLPROG)
+.if !defined(SMALLPROG)
 CPPFLAGS+=	-DIPV4LL -DARPING
 SRCS+=		ipv4ll.c
-#.endif
+.endif
 .endif
 
 .if (${USE_INET6} != "no")
