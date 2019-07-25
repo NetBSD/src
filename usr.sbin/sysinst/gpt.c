@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.2 2019/06/23 11:47:08 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.3 2019/07/25 13:16:35 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -394,7 +394,7 @@ gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 		return NULL;
 	}
 
-	parts = calloc(sizeof(*parts), 1);
+	parts = calloc(1, sizeof(*parts));
 	if (!parts)
 		return NULL;
 
