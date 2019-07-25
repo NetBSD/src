@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.47 2019/07/25 20:26:47 skrll Exp $
+#	$NetBSD: GENERIC,v 1.48 2019/07/25 20:27:45 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -291,7 +291,7 @@ gpioleds*	at fdt?
 vxsysreg* 	at fdt?
 
 # SRAM controller
-sunxisramc* 	at fdt? pass 4          # SRAM controller
+sunxisramc* 	at fdt? pass 4		# SRAM controller
 
 # System Controller
 syscon*		at fdt? pass 1		# Generic System Controller
@@ -477,7 +477,7 @@ bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
 
 # Security ID EFUSE
-sunxisid* 	at fdt? pass 4          # SID
+sunxisid* 	at fdt? pass 4		# SID
 
 # Low res ADC
 sunxilradc* 	at fdt?
@@ -566,7 +566,7 @@ sunxihdmi* 	at fdt? pass 4		# HDMI controller
 connector* 	at fdt? pass 4
 panel* 		at fdt? pass 4
 #sunxidep must be after display pipeline elements but before genfb@fdt
-sunxidep* 	at fdt? pass 5  # Display Engine Pipeline
+sunxidep* 	at fdt? pass 5		# Display Engine Pipeline
 
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
