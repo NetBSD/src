@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.40 2019/07/25 02:26:32 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.40 2019/07/25 02:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -152,7 +152,7 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			rp += ri->ri_stride;
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -236,7 +236,7 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			rp += ri->ri_stride;
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		/*
 		 * we need the RGB colours here, get offsets into rasops_cmap
 		 */
@@ -385,7 +385,7 @@ rasops8_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -474,7 +474,7 @@ rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
@@ -566,7 +566,7 @@ rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		fr = WSFONT_GLYPH(uc, font);
+		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
