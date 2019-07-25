@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.21 2019/07/24 18:33:49 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.22 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.21 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.22 2019/07/25 02:26:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -291,9 +291,8 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint8_t c = stamp[0];
 		while (height--) {
-			*(uint16_t *)rp = c;
+			*(uint16_t *)rp = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -356,9 +355,8 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint8_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = c;
+			rp[0] = rp[1] = rp[2] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -424,9 +422,8 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint8_t c = stamp[0];
 		while (height--) {
-			*(uint32_t *)rp = c;
+			*(uint32_t *)rp = stamp[0];
 			rp += rs;
 		}
 	} else {

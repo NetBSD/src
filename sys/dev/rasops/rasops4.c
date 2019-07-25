@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.15 2019/07/24 18:33:49 rin Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.16 2019/07/25 02:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.15 2019/07/24 18:33:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.16 2019/07/25 02:26:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -283,7 +283,8 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -292,10 +293,8 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint16_t c = stamp[0];
 		while (height--) {
-			rp[0] = c;
-			rp[1] = c;
+			rp[0] = rp[1] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -314,8 +313,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
-		rp[0] = stamp[15];
-		rp[1] = stamp[15];
+		rp[0] = rp[1] = stamp[15];
 	}
 
 	stamp_mutex--;
@@ -353,7 +351,8 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -362,11 +361,8 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint16_t c = stamp[0];
 		while (height--) {
-			rp[0] = c;
-			rp[1] = c;
-			rp[2] = c;
+			rp[0] = rp[1] = rp[2] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -386,9 +382,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
-		rp[0] = stamp[15];
-		rp[1] = stamp[15];
-		rp[2] = stamp[15];
+		rp[0] = rp[1] = rp[2] = stamp[15];
 	}
 
 	stamp_mutex--;
@@ -426,7 +420,8 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif
 
-	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale);
+	rp = (uint16_t *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * ri->ri_xscale);
 	height = font->fontheight;
 	rs = ri->ri_stride / sizeof(*rp);
 
@@ -435,12 +430,8 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		rasops4_makestamp(ri, attr);
 
 	if (uc == ' ') {
-		uint16_t c = stamp[0];
 		while (height--) {
-			rp[0] = c;
-			rp[1] = c;
-			rp[2] = c;
-			rp[3] = c;
+			rp[0] = rp[1] = rp[2] = rp[3] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -461,10 +452,7 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
-		rp[0] = stamp[15];
-		rp[1] = stamp[15];
-		rp[2] = stamp[15];
-		rp[3] = stamp[15];
+		rp[0] = rp[1] = rp[2] = rp[3] = stamp[15];
 	}
 
 	stamp_mutex--;
