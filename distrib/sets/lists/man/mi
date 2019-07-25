@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1648 2019/06/12 09:03:32 mrg Exp $
+# $NetBSD: mi,v 1.1649 2019/07/25 00:02:56 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2317,6 +2317,7 @@
 ./usr/share/man/cat7/msafer.0			man-obsolete		obsolete
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
 ./usr/share/man/cat7/npf.0			man-npf-catman		.cat,npf
+./usr/share/man/cat7/npf-params.0		man-npf-catman		.cat,npf
 ./usr/share/man/cat7/orders.0			man-reference-catman	.cat
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pcap-filter.0		man-netutil-catman	.cat
@@ -5383,6 +5384,7 @@
 ./usr/share/man/html7/module.html		man-reference-htmlman	html
 ./usr/share/man/html7/nls.html			man-reference-htmlman	html
 ./usr/share/man/html7/npf.html			man-npf-htmlman		html,npf
+./usr/share/man/html7/npf-params.html		man-npf-htmlman		html,npf
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
 ./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
@@ -8424,6 +8426,7 @@
 ./usr/share/man/man7/msafer.7			man-obsolete		obsolete
 ./usr/share/man/man7/nls.7			man-reference-man	.man
 ./usr/share/man/man7/npf.7			man-npf-man		.man,npf
+./usr/share/man/man7/npf-params.7		man-npf-man		.man,npf
 ./usr/share/man/man7/orders.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
