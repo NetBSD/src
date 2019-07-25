@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.38 2019/07/24 12:33:18 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.39 2019/07/25 16:28:10 skrll Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -35,7 +35,7 @@ options 	BOOT_ARGS="\"verbose console=fb\""
 #options 	BOOT_ARGS="\"verbose\""
 
 # Kernel root file system and dump configuration.
-#config		netbsd		root on ? type ?
+config		netbsd		root on ? type ?
 config		netbsd-ld0	root on ld0 type ffs
 
 # The main bus device
