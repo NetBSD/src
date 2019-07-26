@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.89 2019/07/26 05:15:47 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.90 2019/07/26 05:24:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.89 2019/07/26 05:15:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.90 2019/07/26 05:24:04 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -617,12 +617,11 @@ rasops_allocattr_mono(void *cookie, int fg0, int bg0, int flg, long *attr)
 static void
 rasops_copyrows(void *cookie, int src, int dst, int num)
 {
-	uint32_t *sp, *dp, *hp, *srp, *drp, *hrp;
-	struct rasops_info *ri;
-	int n8, n1, cnt, delta;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	uint8_t *sp, *dp, *hp;
+	int n;
 
-	ri = (struct rasops_info *)cookie;
-	hp = hrp = NULL;
+	hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
@@ -649,72 +648,21 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 #endif
 
 	num *= ri->ri_font->fontheight;
-	n8 = ri->ri_emustride >> 5;
-	n1 = (ri->ri_emustride >> 2) & 7;
+	n = ri->ri_emustride;
 
-	if (dst < src) {
-		srp = (uint32_t *)(ri->ri_bits + src * ri->ri_yscale);
-		drp = (uint32_t *)(ri->ri_bits + dst * ri->ri_yscale);
-		if (ri->ri_hwbits)
-			hrp = (uint32_t *)(ri->ri_hwbits + dst *
-			    ri->ri_yscale);
-		delta = ri->ri_stride;
-	} else {
-		src = ri->ri_font->fontheight * src + num - 1;
-		dst = ri->ri_font->fontheight * dst + num - 1;
-		srp = (uint32_t *)(ri->ri_bits + src * ri->ri_stride);
-		drp = (uint32_t *)(ri->ri_bits + dst * ri->ri_stride);
-		if (ri->ri_hwbits)
-			hrp = (uint32_t *)(ri->ri_hwbits + dst *
-			    ri->ri_stride);
-		
-		delta = -ri->ri_stride;
-	}
+	sp = ri->ri_bits + src * ri->ri_yscale;
+	dp = ri->ri_bits + dst * ri->ri_yscale;
+	if (ri->ri_hwbits)
+		hp = ri->ri_hwbits + dst * ri->ri_yscale;
 
 	while (num--) {
-		dp = drp;
-		sp = srp;
-		if (ri->ri_hwbits)
-			hp = hrp;
-
-		DELTA(drp, delta, uint32_t *);
-		DELTA(srp, delta, uint32_t *);
-		if (ri->ri_hwbits)
-			DELTA(hrp, delta, uint32_t *);
-
-		for (cnt = n8; cnt; cnt--) {
-			dp[0] = sp[0];
-			dp[1] = sp[1];
-			dp[2] = sp[2];
-			dp[3] = sp[3];
-			dp[4] = sp[4];
-			dp[5] = sp[5];
-			dp[6] = sp[6];
-			dp[7] = sp[7];
-			dp += 8;
-			sp += 8;
-		}
+		memmove(dp, sp, n);
+		dp += n;
 		if (ri->ri_hwbits) {
-			sp -= (8 * n8);
-			for (cnt = n8; cnt; cnt--) {
-				hp[0] = sp[0];
-				hp[1] = sp[1];
-				hp[2] = sp[2];
-				hp[3] = sp[3];
-				hp[4] = sp[4];
-				hp[5] = sp[5];
-				hp[6] = sp[6];
-				hp[7] = sp[7];
-				hp += 8;
-				sp += 8;
-			}
+			memcpy(hp, sp, n);
+			hp += n;
 		}
-
-		for (cnt = n1; cnt; cnt--) {
-			*dp++ = *sp++;
-			if (ri->ri_hwbits)
-				*hp++ = *(sp - 1);
-		}
+		sp += n;
 	}
 }
 
@@ -916,13 +864,11 @@ rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 void
 rasops_eraserows(void *cookie, int row, int num, long attr)
 {
-	struct rasops_info *ri;
-	int np, nw, cnt, delta;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	uint32_t *dp, *hp, clr;
-	int i;
+	int n, cnt, delta;
 
-	ri = (struct rasops_info *)cookie;
-	hp = NULL;
+	hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	if (row < 0) {
@@ -946,16 +892,14 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
 	 */
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
-		np = ri->ri_stride >> 5;
-		nw = (ri->ri_stride >> 2) & 7;
+		n = ri->ri_stride >> 2;
 		num = ri->ri_height;
 		dp = (uint32_t *)ri->ri_origbits;
 		if (ri->ri_hwbits)
 			hp = (uint32_t *)ri->ri_hworigbits;
 		delta = 0;
 	} else {
-		np = ri->ri_emustride >> 5;
-		nw = (ri->ri_emustride >> 2) & 7;
+		n = ri->ri_emustride >> 2;
 		num *= ri->ri_font->fontheight;
 		dp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale);
 		if (ri->ri_hwbits)
@@ -965,26 +909,11 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 	}
 
 	while (num--) {
-		for (cnt = np; cnt; cnt--) {
-			for (i = 0; i < 8; i++) {
-				dp[i] = clr;
-				if (ri->ri_hwbits)
-					hp[i] = clr;
-			}
-			dp += 8;
+		for (cnt = n; cnt; cnt--) {
+			*dp++ = clr;
 			if (ri->ri_hwbits)
-				hp += 8;
+				*hp++ = clr;
 		}
-
-		for (cnt = nw; cnt; cnt--) {
-			*(uint32_t *)dp = clr;
-			DELTA(dp, 4, uint32_t *);
-			if (ri->ri_hwbits) {
-				*(uint32_t *)hp = clr;
-				DELTA(hp, 4, uint32_t *);
-			}
-		}
-
 		DELTA(dp, delta, uint32_t *);
 		if (ri->ri_hwbits)
 			DELTA(hp, delta, uint32_t *);
@@ -1112,13 +1041,11 @@ rasops_do_cursor(struct rasops_info *ri)
 void
 rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 {
-	int n8, height, cnt, slop1, slop2, clr;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	int height, cnt, slop1, slop2, clr;
 	uint32_t *rp, *dp, *hrp, *hp;
-	int i;
 
-	ri = (struct rasops_info *)cookie;
-	hrp = hp = NULL;
+	hrp = hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
@@ -1136,7 +1063,7 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 		return;
 #endif
 
-	num = num * ri->ri_xscale;
+	num *= ri->ri_xscale;
 	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
 		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
@@ -1190,20 +1117,11 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 			}
 		} else {
 			while (height--) {
-				dp = rp;
+				memset(rp, clr, num);
 				DELTA(rp, ri->ri_stride, uint32_t *);
 				if (ri->ri_hwbits) {
-					hp = hrp;
+					memset(hrp, clr, num);
 					DELTA(hrp, ri->ri_stride, uint32_t *);
-				}
-
-				for (cnt = num; cnt; cnt--) {
-					*(uint8_t *)dp = clr;
-					DELTA(dp, 1, uint32_t *);
-					if (ri->ri_hwbits) {
-						*(uint8_t *)hp = clr;
-						DELTA(hp, 1, uint32_t *);
-					}
 				}
 			}
 		}
@@ -1211,11 +1129,9 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 		return;
 	}
 
-	slop1 = (4 - ((long)rp & 3)) & 3;
+	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
 	slop2 = (num - slop1) & 3;
-	num -= slop1 + slop2;
-	n8 = num >> 5;
-	num = (num >> 2) & 7;
+	num = (num - slop1 /* - slop2 */) >> 2;
 
 	while (height--) {
 		dp = rp;
@@ -1242,18 +1158,6 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 				*(uint16_t *)hp = clr;
 				DELTA(hp, 2, uint32_t *);
 			}
-		}
-
-		/* Write 32 bytes per loop */
-		for (cnt = n8; cnt; cnt--) {
-			for (i = 0; i < 8; i++) {
-				dp[i] = clr;
-				if (ri->ri_hwbits)
-					hp[i] = clr;
-			}
-			dp += 8;
-			if (ri->ri_hwbits)
-				hp += 8;
 		}
 
 		/* Write 4 bytes per loop */
