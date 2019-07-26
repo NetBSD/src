@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.643 2019/07/25 08:35:36 tnn Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.644 2019/07/26 09:26:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.643 2019/07/25 08:35:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.644 2019/07/26 09:26:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14648,7 +14648,8 @@ wm_ulp_disable(struct wm_softc *sc)
 	if (rv != 0) {
 		uint32_t reg2;
 
-		printf("%s: Force SMBus first.\n", __func__);
+		aprint_debug_dev(sc->sc_dev, "%s: Force SMBus first.\n",
+			__func__);
 		reg2 = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg2 |= CTRL_EXT_FORCE_SMBUS;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg2);
