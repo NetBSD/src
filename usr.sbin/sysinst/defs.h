@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.41 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.42 2019/07/26 08:18:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -648,6 +648,7 @@ int	fs_is_lfs(void *);
  */
 const char *get_last_mounted(int fd, daddr_t offset, uint *fs_type,
      uint *fs_sub_type, uint flags);
+void	canonicalize_last_mounted(char*);
 int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset);
 int edit_ptn(menudesc *, void *);
 int checkoverlap(struct disk_partitions *parts);

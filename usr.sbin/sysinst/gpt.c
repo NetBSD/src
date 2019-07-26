@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.3 2019/07/25 13:16:35 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.4 2019/07/26 08:18:47 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -358,7 +358,9 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 			const char *lm = get_last_mounted(fd, p->gp_start,
 			    &p->fs_type, &p->fs_sub_type, p->gp_type->fsflags);
 			if (lm != NULL && *lm != 0) {
-				p->last_mounted = strdup(lm);
+				char *path = strdup(lm);
+				canonicalize_last_mounted(path);
+				p->last_mounted = path;
 			} else {
 				p->fs_type = p->gp_type->default_fs_type;
 #ifdef DEFAULT_UFS2
