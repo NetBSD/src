@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.141 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.142 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -5966,7 +5966,7 @@ Changes from NetBSD 1.5 to NetBSD 1.6:
 		`?' is given at the prompt.  [lukem 20000815]
 	mvme68k: Support for VMEbus slave mode added to mvme147 and mvme167.
 		[scw 20000820]
-	sparc64: gcc now generates 32 bit code with `-m32'  [mrg 20010830]
+	sparc64: gcc now generates 32 bit code with `-m32'. [mrg 20000830]
 	cvs(1): Add cvs-1.10.8 to gnusrc [christos 20000904]
 	mvme68k: Added support for MVME162-LX 200/300 series of boards.
 		[scw 20000906]
@@ -8642,7 +8642,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mac68k: Add support for four more NuBus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
 	puc(4): Add support for Perle Systems 4 and 8 ports modem boards.
-		[manu 20071209]
+		[manu 20061209]
 	arm: Add support for NPE Ethernet on IXP425. [scw 20061210]
 	arm: Add support for IXP425 watchdog timer. [scw 20061210]
 	libutil: Add flags_to_string(3) and string_to_flags(3),
@@ -9906,7 +9906,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[drochner 20090321]
 	savecore(8): Use ksyms(4) if it's available. [tls 20090321]
 	httpd(8): Fix redirection core dump as reported in PR#41042.
-		[reinoud 20080323]
+		[reinoud 20090323]
 	rc.conf(5), rc.d(8): Add flags to rc.d/ipfilter. [hannken 20090323]
 	ahcisata(4): Handle quirks of more NVIDIA MCP65 SATA controllers.
 		[dholland 20090327]
@@ -10472,7 +10472,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ld.elf_so(1): Implement negative symbol lookup cache [roy 20100227]
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
 	ddb(4): Add 'mach frame' for hp700.  [skrll 20100302]
-	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
+	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20100303]
 	module(7): Remove all kernel compile time #defines indicating file
 		system support (e.g. fs_ffs.h / -DFFS).  [pooka 20100303]
 	module(7): Make it possible to disable builtin modules and
@@ -10748,7 +10748,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		timezones as opposed to having to alter the environment
 		to change a timezone. [christos 20101216]
 	amigappc: Made onboard serial interface work. [phx 20101219]
-	yacc(1): Import byacc-20101127 [christos 20091223]
+	yacc(1): Import byacc-20101127 [christos 20101223]
 	dm(4): Make LVM use non 512-byte sector devices. [mlelstv 20101223]
 	auvitek(4): Add a driver for Auvitek AU0828 family USB video
 		capture controllers. [jmcneill 20101227]
@@ -11543,7 +11543,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[tsutsui 20140110]
 	luna68k: Add support to pass boothowto and boot device info from
 		bootloader to kernel. [tsutsui 20140111]
-	OpenSSL: Imported 1.0.1f. [christos 20130111]
+	OpenSSL: Imported 1.0.1f. [christos 20140111]
 	postfix(1): Import version 2.10.3. [tron 20140118]
 	igmafb(4): Added framebuffer driver for Intel Graphics
 		[mlelstv 20140121]
@@ -11567,7 +11567,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	mcp48x1dac(4): Add preliminary support for Microchip MCP48x1 family of
 		Digital-to-Analog converters. [rkujawa 20140225]
 	micphy(4): Add Micrel PHY (KSZ9021RN). [ozaki-r 20140226]
-	bind: Update to 9.10.0b1. [christos 20130228]
+	bind: Update to 9.10.0b1. [christos 20140228]
 	dhcpcd(8): Import dhcpcd-6.3.1. [roy 20140301]
 	x68k: Switch to X11FLAVOUR=Xorg, including X68k monolithic server.
 		[tsutsui 20140301]
