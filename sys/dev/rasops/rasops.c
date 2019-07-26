@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.88 2019/07/25 02:26:32 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.89 2019/07/26 05:15:47 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.88 2019/07/25 02:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.89 2019/07/26 05:15:47 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
 #include "opt_wsmsgattrs.h"
 
 #include <sys/param.h>
+#include <sys/bswap.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kmem.h>
 
-#include <sys/bswap.h>
 #include <machine/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
@@ -68,7 +68,7 @@ struct rasops_matchdata {
 };	
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
-const uint8_t rasops_cmap[256*3] = {
+const uint8_t rasops_cmap[256 * 3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
 	0x00, 0x7f, 0x00, /* green */
@@ -131,7 +131,7 @@ const uint8_t rasops_isgray[16] = {
 	1, 0, 0, 0,
 	0, 0, 0, 1,
 	1, 0, 0, 0,
-	0, 0, 0, 1
+	0, 0, 0, 1,
 };
 
 /* Generic functions */
@@ -222,7 +222,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		 * this means there is no supported font in the list
 		 */
 		if (cookie <= 0) {
-			aprint_error("rasops_init: font table is empty\n");
+			aprint_error("%s: font table is empty\n", __func__);
 			return -1;
 		}
 
@@ -240,7 +240,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 #endif
 
 		if (wsfont_lock(cookie, &ri->ri_font)) {
-			aprint_error("rasops_init: couldn't lock font\n");
+			aprint_error("%s: couldn't lock font\n", __func__);
 			return -1;
 		}
 
@@ -249,19 +249,17 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 #endif
 
 	/* This should never happen in reality... */
-#ifdef DEBUG
-	if ((long)ri->ri_bits & 3) {
-		aprint_error(
-		    "rasops_init: bits not aligned on 32-bit boundary\n");
+	if ((uintptr_t)ri->ri_bits & 3) {
+		aprint_error("%s: bits not aligned on 32-bit boundary\n",
+		    __func__);
 		return -1;
 	}
 
-	if ((int)ri->ri_stride & 3) {
-		aprint_error(
-		    "rasops_init: stride not aligned on 32-bit boundary\n");
+	if (ri->ri_stride & 3) {
+		aprint_error("%s: stride not aligned on 32-bit boundary\n",
+		    __func__);
 		return -1;
 	}
-#endif
 
 	if (rasops_reconfig(ri, wantrows, wantcols))
 		return -1;
@@ -276,7 +274,8 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 int
 rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 {
-	int bpp, s, len;
+	int bpp, s;
+	size_t len;
 
 	s = splhigh();
 
@@ -299,11 +298,19 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_optfont.fontheight = ri->ri_font->fontheight;
 	ri->ri_optfont.stride = ri->ri_font->stride;
 	len = ri->ri_optfont.fontheight * ri->ri_optfont.stride *
-		      ri->ri_optfont.numchars; 
+	    ri->ri_optfont.numchars; 
+
+	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4) {
+		aprint_error("%s: fontwidth assumptions botched", __func__);
+		splx(s);
+		return -1;
+	}
 
 	if ((ri->ri_flg & RI_NO_AUTO) == 0) {
 		ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP);
-		if (ri->ri_optfont.stride < ri->ri_optfont.fontwidth) {
+		if (FONT_IS_ALPHA(&ri->ri_optfont))
+			rasops_make_box_chars_alpha(ri);
+		else {
 			switch (ri->ri_optfont.stride) {
 			case 1:
 				rasops_make_box_chars_8(ri);
@@ -314,15 +321,16 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 			case 4:
 				rasops_make_box_chars_32(ri);
 				break;
+			default:
+				aprint_error(
+				    "%s: font stride assumptions botched",
+				    __func__);
+				splx(s);
+				return -1;
 			}
-		} else {
-			rasops_make_box_chars_alpha(ri);
 		}
 	} else
 		memset(&ri->ri_optfont, 0, sizeof(ri->ri_optfont));
-
-	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4)
-		panic("rasops_init: fontwidth assumptions botched!");
 
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
@@ -374,10 +382,12 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_yscale = ri->ri_font->fontheight * ri->ri_stride;
 	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
 
-#ifdef DEBUG
-	if ((ri->ri_delta & 3) != 0)
-		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
-#endif
+	if ((ri->ri_delta & 3) != 0) {
+		aprint_error(
+		    "%s: ri_delta not aligned on 32-bit boundary", __func__);
+		splx(s);
+		return -1;
+	}
 	ri->ri_origbits = ri->ri_bits;
 	ri->ri_hworigbits = ri->ri_hwbits;
 
@@ -398,10 +408,10 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 			    ((ri->ri_height - ri->ri_emuheight) >> 1) *
 			    ri->ri_stride;
 		}
-		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits)
-		   / ri->ri_stride;
-		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits)
-		   % ri->ri_stride) * 8 / bpp);
+		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits) /
+		    ri->ri_stride;
+		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits) %
+		    ri->ri_stride) * 8 / bpp);
 	} else
 		ri->ri_xorigin = ri->ri_yorigin = 0;
 
@@ -467,6 +477,7 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 #endif
 	default:
 		ri->ri_flg &= ~RI_CFGDONE;
+		aprint_error("%s: depth not supported\n", __func__);
 		splx(s);
 		return -1;
 	}
@@ -502,28 +513,23 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 static int
 rasops_mapchar(void *cookie, int c, u_int *cp)
 {
-	struct rasops_info *ri;
-
-	ri = (struct rasops_info *)cookie;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 
 	KASSERT(ri->ri_font != NULL);
 
-	if ( (c = wsfont_map_unichar(ri->ri_font, c)) < 0) {
+	if ((c = wsfont_map_unichar(ri->ri_font, c)) < 0 ||
+	    c < ri->ri_font->firstchar) {
 		*cp = ' ';
 		return 0;
 	}
 
-	if (c < ri->ri_font->firstchar) {
-		*cp = ' ';
-		return 0;
-	}
-
-#if 0
-	if (c - ri->ri_font->firstchar >= ri->ri_font->numchars) {
+#if 0 /* XXXRO */
+	if (CHAR_IN_FONT(c, ri->ri_font)) {
 		*cp = ' ';
 		return 0;
 	}
 #endif
+
 	*cp = c;
 	return 5;
 }
@@ -532,13 +538,12 @@ rasops_mapchar(void *cookie, int c, u_int *cp)
  * Allocate a color attribute.
  */
 static int
-rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
-    long *attr)
+rasops_allocattr_color(void *cookie, int fg0, int bg0, int flg, long *attr)
 {
-	int swap;
+	uint32_t fg = fg0, bg = bg0;
 
-	if (__predict_false((unsigned int)fg >= sizeof(rasops_isgray) ||
-	    (unsigned int)bg >= sizeof(rasops_isgray)))
+	if (__predict_false(fg >= sizeof(rasops_isgray) ||
+	    bg >= sizeof(rasops_isgray)))
 		return EINVAL;
 
 #ifdef RASOPS_CLIPPING
@@ -562,7 +567,7 @@ rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
 	}
 
 	if ((flg & WSATTR_REVERSE) != 0) {
-		swap = fg;
+		uint32_t swap = fg;
 		fg = bg;
 		bg = swap;
 	}
@@ -586,10 +591,9 @@ rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
  * Allocate a mono attribute.
  */
 static int
-rasops_allocattr_mono(void *cookie, int fg, int bg, int flg,
-    long *attr)
+rasops_allocattr_mono(void *cookie, int fg0, int bg0, int flg, long *attr)
 {
-	int swap;
+	uint32_t fg = fg0, bg = bg0;
 
 	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
 		return EINVAL;
@@ -598,7 +602,7 @@ rasops_allocattr_mono(void *cookie, int fg, int bg, int flg,
 	bg = 0;
 
 	if ((flg & WSATTR_REVERSE) != 0) {
-		swap = fg;
+		uint32_t swap = fg;
 		fg = bg;
 		bg = swap;
 	}
@@ -629,7 +633,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 		src = 0;
 	}
 
-	if ((src + num) > ri->ri_rows)
+	if (src + num > ri->ri_rows)
 		num = ri->ri_rows - src;
 
 	if (dst < 0) {
@@ -637,7 +641,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 		dst = 0;
 	}
 
-	if ((dst + num) > ri->ri_rows)
+	if (dst + num > ri->ri_rows)
 		num = ri->ri_rows - dst;
 
 	if (num <= 0)
@@ -723,12 +727,11 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 void
 rasops_copycols(void *cookie, int row, int src, int dst, int num)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	uint8_t *sp, *dp, *hp;
 	int height;
 
-	ri = (struct rasops_info *)cookie;
-	hp = NULL;
+	hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
@@ -743,7 +746,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 		src = 0;
 	}
 
-	if ((src + num) > ri->ri_cols)
+	if (src + num > ri->ri_cols)
 		num = ri->ri_cols - src;
 
 	if (dst < 0) {
@@ -751,7 +754,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 		dst = 0;
 	}
 
-	if ((dst + num) > ri->ri_cols)
+	if (dst + num > ri->ri_cols)
 		num = ri->ri_cols - dst;
 
 	if (num <= 0)
@@ -769,11 +772,11 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 
 	while (height--) {
 		memmove(dp, sp, num);
+		dp += ri->ri_stride;
 		if (ri->ri_hwbits) {
 			memcpy(hp, sp, num);
 			hp += ri->ri_stride;
 		}
-		dp += ri->ri_stride;
 		sp += ri->ri_stride;
 	}
 }
@@ -784,9 +787,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 static void
 rasops_cursor(void *cookie, int on, int row, int col)
 {
-	struct rasops_info *ri;
-
-	ri = (struct rasops_info *)cookie;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 
 	/* Turn old cursor off */
 	if ((ri->ri_flg & RI_CURSOR) != 0)
@@ -823,8 +824,9 @@ rasops_cursor(void *cookie, int on, int row, int col)
 static void
 rasops_init_devcmap(struct rasops_info *ri)
 {
+	int i;
+	uint32_t c;
 	const uint8_t *p;
-	int i, c;
 
 	switch (ri->ri_depth) {
 	case 1:
@@ -835,18 +837,20 @@ rasops_init_devcmap(struct rasops_info *ri)
 
 	case 2:
 		for (i = 1; i < 15; i++)
-			ri->ri_devcmap[i] = 0xaaaaaaaaU;
+			ri->ri_devcmap[i] = 0xaaaaaaaa;
 
 		ri->ri_devcmap[0] = 0;
-		ri->ri_devcmap[8] = 0x55555555U;
+		ri->ri_devcmap[8] = 0x55555555;
 		ri->ri_devcmap[15] = -1;
 		return;
 
 	case 8:
 		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
-			for (i = 0; i < 16; i++)
+			for (i = 0; i < 16; i++) {
+				c = i;
 				ri->ri_devcmap[i] =
-				    i | (i<<8) | (i<<16) | (i<<24);
+				    c | (c << 8) | (c << 16) | (c << 24);
+			}
 			return;
 		}
 	}
@@ -855,40 +859,40 @@ rasops_init_devcmap(struct rasops_info *ri)
 
 	for (i = 0; i < 16; i++) {
 		if (ri->ri_rnum <= 8)
-			c = (*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
+			c = (uint32_t)(*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
 		else
-			c = (*p << (ri->ri_rnum - 8)) << ri->ri_rpos;
+			c = (uint32_t)(*p << (ri->ri_rnum - 8)) << ri->ri_rpos;
 		p++;
 
 		if (ri->ri_gnum <= 8)
-			c |= (*p >> (8 - ri->ri_gnum)) << ri->ri_gpos;
+			c |= (uint32_t)(*p >> (8 - ri->ri_gnum)) << ri->ri_gpos;
 		else
-			c |= (*p << (ri->ri_gnum - 8)) << ri->ri_gpos;
+			c |= (uint32_t)(*p << (ri->ri_gnum - 8)) << ri->ri_gpos;
 		p++;
 
 		if (ri->ri_bnum <= 8)
-			c |= (*p >> (8 - ri->ri_bnum)) << ri->ri_bpos;
+			c |= (uint32_t)(*p >> (8 - ri->ri_bnum)) << ri->ri_bpos;
 		else
-			c |= (*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
+			c |= (uint32_t)(*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
 		p++;
 
 		/* Fill the word for generic routines, which want this */
-		if (ri->ri_depth == 24)
-			c = c | ((c & 0xff) << 24);
-		else if (ri->ri_depth == 8) {
-			c = c | (c << 8);
+		if (ri->ri_depth == 8) {
+			c |= c << 8;
 			c |= c << 16;
-		} else if (ri->ri_depth <= 16)
-			c = c | (c << 16);
+		} else if (ri->ri_depth == 15 || ri->ri_depth == 16)
+			c |= c << 16;
+		else if (ri->ri_depth == 24)
+			c |= (c & 0xff) << 24;
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
 		if ((ri->ri_flg & RI_BSWAP) == 0)
 			ri->ri_devcmap[i] = c;
+		else if (ri->ri_depth == 15 || ri->ri_depth == 16)
+			ri->ri_devcmap[i] = bswap16(c);
 		else if (ri->ri_depth == 32)
 			ri->ri_devcmap[i] = bswap32(c);
-		else if (ri->ri_depth == 16 || ri->ri_depth == 15)
-			ri->ri_devcmap[i] = bswap16(c);
-		else
+		else /* 8, 24 */
 			ri->ri_devcmap[i] = c;
 	}
 }
@@ -900,10 +904,10 @@ void
 rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 {
 
-	*fg = ((u_int)attr >> 24) & 0xf;
-	*bg = ((u_int)attr >> 16) & 0xf;
+	*fg = ((uint32_t)attr >> 24) & 0xf;
+	*bg = ((uint32_t)attr >> 16) & 0xf;
 	if (underline != NULL)
-		*underline = (u_int)attr & WSATTR_UNDERLINE;
+		*underline = (uint32_t)attr & WSATTR_UNDERLINE;
 }
 
 /*
@@ -926,7 +930,7 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 		row = 0;
 	}
 
-	if ((row + num) > ri->ri_rows)
+	if (row + num > ri->ri_rows)
 		num = ri->ri_rows - row;
 
 	if (num <= 0)
@@ -999,7 +1003,7 @@ rasops_do_cursor(struct rasops_info *ri)
 	uint8_t tmp8;
 	uint8_t *dp, *rp, *hrp, *hp;
 
-	hrp = hp = NULL;
+	hrp = hp = NULL;	/* XXX GCC */
 
 #if NRASOPS_ROTATION > 0
 	if (ri->ri_flg & RI_ROTATE_MASK) {
@@ -1057,7 +1061,7 @@ rasops_do_cursor(struct rasops_info *ri)
 	 */
 	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
 	slop2 = (ri->ri_xscale - slop1) & 3;
-	full = (ri->ri_xscale - slop1 - slop2) >> 2;
+	full = (ri->ri_xscale - slop1 /* - slop2 */) >> 2;
 
 	rp = (uint8_t *)((uintptr_t)rp & ~3);
 	hrp = (uint8_t *)((uintptr_t)hrp & ~3);
@@ -1283,8 +1287,6 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
  * built-in Zaurus C3x00 display in 16bpp).
  */
 
-#include <sys/malloc.h>
-
 static void
 rasops_rotate_font(int *cookie, int rotate)
 {
@@ -1303,12 +1305,10 @@ rasops_rotate_font(int *cookie, int rotate)
 	 * code to compute one for us.
 	 */
 
-	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
-	if (f == NULL)
-		goto fail0;
+	f = kmem_alloc(sizeof(*f), KM_SLEEP);
 
 	if ((ncookie = wsfont_rotate(*cookie, rotate)) == -1)
-		goto fail1;
+		goto fail;
 
 	f->rf_cookie = *cookie;
 	f->rf_rotated = ncookie;
@@ -1317,20 +1317,17 @@ rasops_rotate_font(int *cookie, int rotate)
 	*cookie = ncookie;
 	return;
 
-fail1:	free(f, M_DEVBUF);
-fail0:	/* Just use the existing font, I guess...  */
+fail:	free(f, sizeof(*f));
 	return;
 }
 
 static void
 rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 {
-	struct rasops_info *ri;
-	uint8_t *sp, *dp;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int height;
 	int r_srcrow, r_dstrow, r_srccol, r_dstcol;
-
-	ri = (struct rasops_info *)cookie;
+	uint8_t *sp, *dp;
 
 	r_srcrow = srccol;
 	r_dstrow = dstcol;
@@ -1354,18 +1351,16 @@ rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 static void
 rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
-	uint8_t *rp;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int height;
-
-	ri = (struct rasops_info *)cookie;
+	uint8_t *rp;
 
 	if (__predict_false((unsigned int)row > ri->ri_rows ||
 	    (unsigned int)col > ri->ri_cols))
 		return;
 
 	/* Avoid underflow */
-	if ((ri->ri_rows - row - 1) < 0)
+	if (ri->ri_rows - row - 1 < 0)
 		return;
 
 	/* Do rotated char sans (side)underline */
@@ -1392,10 +1387,8 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops_erasecols_rotated_cw(void *cookie, int row, int col, int num, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int i;
-
-	ri = (struct rasops_info *)cookie;
 
 	for (i = col; i < col + num; i++)
 		ri->ri_ops.putchar(cookie, row, i, ' ', attr);
@@ -1438,10 +1431,8 @@ rasops_copycols_rotated_cw(void *cookie, int row, int src, int dst, int num)
 static void
 rasops_eraserows_rotated_cw(void *cookie, int row, int num, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int col, rn;
-
-	ri = (struct rasops_info *)cookie;
 
 	for (rn = row; rn < row + num; rn++)
 		for (col = 0; col < ri->ri_cols; col++)
@@ -1456,12 +1447,9 @@ static void
 rasops_copychar_ccw(void *cookie, int srcrow, int dstrow, int srccol,
     int dstcol)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	int height, r_srcrow, r_dstrow, r_srccol, r_dstcol;
 	uint8_t *sp, *dp;
-	int height;
-	int r_srcrow, r_dstrow, r_srccol, r_dstcol;
-
-	ri = (struct rasops_info *)cookie;
 
 	r_srcrow = ri->ri_cols - srccol - 1;
 	r_dstrow = ri->ri_cols - dstcol - 1;
@@ -1485,18 +1473,16 @@ rasops_copychar_ccw(void *cookie, int srcrow, int dstrow, int srccol,
 static void
 rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
-	uint8_t *rp;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int height;
-
-	ri = (struct rasops_info *)cookie;
+	uint8_t *rp;
 
 	if (__predict_false((unsigned int)row > ri->ri_rows ||
 	    (unsigned int)col > ri->ri_cols))
 		return;
 
 	/* Avoid underflow */
-	if ((ri->ri_cols - col - 1) < 0)
+	if (ri->ri_cols - col - 1 < 0)
 		return;
 
 	/* Do rotated char sans (side)underline */
@@ -1559,12 +1545,12 @@ rasops_copycols_rotated_ccw(void *cookie, int row, int src, int dst, int num)
 void
 rasops_make_box_chars_16(struct rasops_info *ri)
 {
+	int c, i, mid;
 	uint16_t vert_mask, hmask_left, hmask_right;
 	uint16_t *data = (uint16_t *)ri->ri_optfont.data;
-	int c, i, mid;
 
-	vert_mask = 0xc000 >> ((ri->ri_font->fontwidth >> 1) - 1);
-	hmask_left = 0xff00 << (8 - (ri->ri_font->fontwidth >> 1));
+	vert_mask = 0xc000U >> ((ri->ri_font->fontwidth >> 1) - 1);
+	hmask_left = 0xff00U << (8 - (ri->ri_font->fontwidth >> 1));
 	hmask_right = hmask_left >> ((ri->ri_font->fontwidth + 1) >> 1);
 	mid = (ri->ri_font->fontheight + 1) >> 1;
 
@@ -1598,12 +1584,12 @@ rasops_make_box_chars_16(struct rasops_info *ri)
 void
 rasops_make_box_chars_8(struct rasops_info *ri)
 {
+	int c, i, mid;
 	uint8_t vert_mask, hmask_left, hmask_right;
 	uint8_t *data = (uint8_t *)ri->ri_optfont.data;
-	int c, i, mid;
 
-	vert_mask = 0xc0 >> ((ri->ri_font->fontwidth >> 1) - 1);
-	hmask_left = 0xf0 << (4 - (ri->ri_font->fontwidth >> 1));
+	vert_mask = 0xc0U >> ((ri->ri_font->fontwidth >> 1) - 1);
+	hmask_left = 0xf0U << (4 - (ri->ri_font->fontwidth >> 1));
 	hmask_right = hmask_left >> ((ri->ri_font->fontwidth + 1) >> 1);
 	mid = (ri->ri_font->fontheight + 1) >> 1;
 
@@ -1637,9 +1623,9 @@ rasops_make_box_chars_8(struct rasops_info *ri)
 void
 rasops_make_box_chars_32(struct rasops_info *ri)
 {
+	int c, i, mid;
 	uint32_t vert_mask, hmask_left, hmask_right;
 	uint32_t *data = (uint32_t *)ri->ri_optfont.data;
-	int c, i, mid;
 
 	vert_mask = 0xc0000000U >> ((ri->ri_font->fontwidth >> 1) - 1);
 	hmask_left = 0xffff0000U << (16 - (ri->ri_font->fontwidth >> 1));
@@ -1676,12 +1662,12 @@ rasops_make_box_chars_32(struct rasops_info *ri)
 void
 rasops_make_box_chars_alpha(struct rasops_info *ri)
 {
+	int c, i, hmid, vmid, wi, he;
 	uint8_t *data = (uint8_t *)ri->ri_optfont.data;
 	uint8_t *ddata;
-	int c, i, hmid, vmid, wi, he;
 
-	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
+	wi = ri->ri_font->fontwidth;
 	
 	vmid = (he + 1) >> 1;
 	hmid = (wi + 1) >> 1;
@@ -1735,7 +1721,7 @@ int
 rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
 {
 
-	if ((ri->ri_depth == 8 ) && ((ri->ri_flg & RI_8BIT_IS_RGB) > 0)) {
+	if ((ri->ri_depth == 8) && ((ri->ri_flg & RI_8BIT_IS_RGB) != 0)) {
 		/* generate an R3G3B2 palette */
 		int i, idx = 0;
 		uint8_t tmp;
@@ -1764,6 +1750,6 @@ rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
 			idx++;
 		}
 	} else
-		memcpy(palette, rasops_cmap, MIN(bytes, sizeof(rasops_cmap)));
+		memcpy(palette, rasops_cmap, uimin(bytes, sizeof(rasops_cmap)));
 	return 0;
 }
