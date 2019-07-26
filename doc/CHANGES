@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2559 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2560 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -132,7 +132,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amd64: Add SVS (Meltdown mitigation). [maxv 20180226]
 	imcsmb(4): For amd64 and i386 on Intel {Ivy,Sandy}bridge and
 		{Broad,Has}well CPUs, enable access to Integrated Memory
-		Controller-based SMBus [pgoyette 20170228]
+		Controller-based SMBus. [pgoyette 20180228]
 	ichsmb(4): Add Apollo Lake and Gemini Lake devices. [msaitoh 20180302]
 	lm(4): Add NCT6796D support. [msaitoh 20180308]
 	macppc: Enable Bluetooth support by default in GENERIC kernel.
@@ -357,7 +357,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		host during early stages of startup. [sevan 20190410]
 	dhcpcd(8): Import dhcpcd-7.2.0 [roy 20190418]
 	evbarm: Add support for Amlogic GXL family SoCs. [jmcneill 20190419]
-	OpenSSH: Import 8.0 [christos 20180420]
+	OpenSSH: Import 8.0. [christos 20190420]
 	evbarm: Add support for boot configuration (efiboot.plist) and
 		applying device tree overlays to efiboot. [thorpej 20190421]
 	libpthread(3): Import C11 thread support library [kamil 20190424]
