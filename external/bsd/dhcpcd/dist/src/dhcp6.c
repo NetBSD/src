@@ -1523,7 +1523,9 @@ dhcp6_dadcallback(void *arg)
 				if (valid)
 					dhcpcd_daemonise(ifp->ctx);
 			}
+#ifdef ND6_ADVERTISE
 			ipv6nd_advertise(ia);
+#endif
 		}
 	}
 }
@@ -3927,16 +3929,20 @@ dhcp6_free(struct interface *ifp)
 void
 dhcp6_abort(struct interface *ifp)
 {
+#ifdef ND6_ADVERTISE
 	struct dhcp6_state *state;
 	struct ipv6_addr *ia;
+#endif
 
 	eloop_timeout_delete(ifp->ctx->eloop, dhcp6_start1, ifp);
+#ifdef ND6_ADVERTISE
 	state = D6_STATE(ifp);
 	if (state == NULL)
 		return;
 	TAILQ_FOREACH(ia, &state->addrs, next) {
 		ipv6nd_advertise(ia);
 	}
+#endif
 }
 
 void

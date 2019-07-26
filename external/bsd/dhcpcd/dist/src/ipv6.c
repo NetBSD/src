@@ -616,8 +616,10 @@ ipv6_deleteaddr(struct ipv6_addr *ia)
 		}
 	}
 
+#ifdef ND6_ADVERTISE
 	/* Advertise the address if it exists on another interface. */
 	ipv6nd_advertise(ia);
+#endif
 }
 
 static int
@@ -625,8 +627,10 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 {
 	struct interface *ifp;
 	uint32_t pltime, vltime;
-	bool vltime_was_zero;
 	__printflike(1, 2) void (*logfunc)(const char *, ...);
+#ifdef ND6_ADVERTISE
+	bool vltime_was_zero;
+#endif
 #ifdef __sun
 	struct ipv6_state *state;
 	struct ipv6_addr *ia2;
@@ -694,7 +698,9 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 		    " seconds",
 		    ifp->name, ia->prefix_pltime, ia->prefix_vltime);
 
+#ifdef ND6_ADVERTISE
 	vltime_was_zero = ia->prefix_vltime == 0;
+#endif
 	if (if_address6(RTM_NEWADDR, ia) == -1) {
 		logerr(__func__);
 		/* Restore real pltime and vltime */
@@ -758,9 +764,11 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 	}
 #endif
 
+#ifdef ND6_ADVERTISE
 	/* Re-advertise the preferred address to be safe. */
 	if (!vltime_was_zero)
 		ipv6nd_advertise(ia);
+#endif
 
 	return 0;
 }
@@ -1081,9 +1089,11 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 	case RTM_DELADDR:
 		if (ia != NULL) {
 			TAILQ_REMOVE(&state->addrs, ia, next);
+#ifdef ND6_ADVERTISE
 			/* Advertise the address if it exists on
 			 * another interface. */
 			ipv6nd_advertise(ia);
+#endif
 			/* We'll free it at the end of the function. */
 		}
 		break;

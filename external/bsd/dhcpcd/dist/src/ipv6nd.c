@@ -389,6 +389,7 @@ ipv6nd_sendrsprobe(void *arg)
 	}
 }
 
+#ifdef ND6_ADVERTISE
 static void
 ipv6nd_sendadvertisement(void *arg)
 {
@@ -526,6 +527,7 @@ ipv6nd_advertise(struct ipv6_addr *ia)
 	eloop_timeout_delete(ctx->eloop, ipv6nd_sendadvertisement, iaf);
 	ipv6nd_sendadvertisement(iaf);
 }
+#endif /* ND6_ADVERTISE */
 
 static void
 ipv6nd_expire(void *arg)
@@ -908,7 +910,9 @@ try_script:
 					return;
 			}
 		}
+#ifdef ND6_ADVERTISE
 		ipv6nd_advertise(ia);
+#endif
 	}
 }
 
