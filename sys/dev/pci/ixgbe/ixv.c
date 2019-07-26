@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.123 2019/07/25 09:28:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.124 2019/07/26 03:27:24 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -826,7 +826,7 @@ ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u32		queue = 1 << vector;
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -847,7 +847,7 @@ ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1 << vector);
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
