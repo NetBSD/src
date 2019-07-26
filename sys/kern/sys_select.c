@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.45 2019/05/08 00:55:18 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.45 2019/05/08 00:55:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -826,7 +826,7 @@ selsysinit(struct cpu_info *ci)
 		sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		sleepq_init(&sc->sc_sleepq);
 		sc->sc_ncoll = 0;
-		sc->sc_mask = (1 << index);
+		sc->sc_mask = __BIT(index);
 		selcluster[index] = sc;
 	}
 	ci->ci_data.cpu_selcluster = sc;
