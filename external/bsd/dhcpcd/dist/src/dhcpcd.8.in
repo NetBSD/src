@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 23, 2019
+.Dd July 25, 2019
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -234,12 +234,11 @@ and need to be copied to
 .Pa @HOOKDIR@
 if you intend to use them.
 For example, you could install
-.Pa 10-wpa_supplicant
+.Pa 29-lookup-hostname
 so that
 .Nm
-can ensure that
-.Xr wpa_supplicant 8
-is always running on a hot-plugged wireless interface.
+can lookup the hostname of the IP address in DNS if no hostname
+is given by the lease and one is not already set.
 .Ss Fine tuning
 You can fine-tune the behaviour of
 .Nm
@@ -404,10 +403,6 @@ is specified then this applies to all interfaces in Master mode.
 If
 .Nm
 is not running, then it starts up as normal.
-This may also cause
-.Xr wpa_supplicant 8
-to reload its configuration for each interface as well if the
-relevant hook script has been installed.
 .It Fl N , Fl Fl renew Op Ar interface
 Notifies
 .Nm
