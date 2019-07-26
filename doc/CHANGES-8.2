@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.13 2019/07/25 08:59:17 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.14 2019/07/26 11:28:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -336,4 +336,10 @@ tests/net/ipsec/t_ipsec_misc.sh			1.23
 	ipsec: fix a regression of the update API.
 	tests: add tests for getspi and udpate.
 	[ozaki-r, ticket #1306]
+
+sys/netinet6/nd6.c				1.256
+
+	Decrease the reference count before freeing, so that the
+	entries actually get free'd.
+	[christos, ticket #1307]
 
