@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2019/06/20 17:33:31 maxv Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2019/07/26 12:09:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -226,40 +226,16 @@ clearit(void)
 static void
 bootit(const char *filename, int howto)
 {
-	EFI_STATUS status;
-	EFI_PHYSICAL_ADDRESS bouncebuf;
-	UINTN npages;
-	u_long allocsz;
 
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
 
-	if (count_netbsd(filename, &allocsz) < 0) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(errno));
-		return;
-	}
-
-	bouncebuf = EFI_ALLOCATE_MAX_ADDRESS;
-	npages = EFI_SIZE_TO_PAGES(allocsz);
-	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
-	    EfiLoaderData, npages, &bouncebuf);
-	if (EFI_ERROR(status)) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(ENOMEM));
-		return;
-	}
-
-	efi_loadaddr = bouncebuf;
-	if (exec_netbsd(filename, bouncebuf, howto, 0, efi_cleanup) < 0)
+	if (exec_netbsd(filename, efi_loadaddr, howto, 0, efi_cleanup) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
 		printf("boot returned\n");
-
-	(void) uefi_call_wrapper(BS->FreePages, 2, bouncebuf, npages);
-	efi_loadaddr = 0;
 }
 
 void
