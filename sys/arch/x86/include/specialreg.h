@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.149 2019/07/13 09:28:03 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.150 2019/07/26 10:03:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -734,6 +734,14 @@
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
 	"\21" "VGIF"
+
+/*
+ * AMD Fn8000_0001d  Cache Topology Information.
+ * It's almost the same as Intel Deterministic Cache Parameter Leaf(0x04)
+ * except the following:
+ *	No Cores/package (%eax bit 31..26)
+ *	No Complex cache indexing (%edx bit 2)
+ */
 
 /*
  * Centaur Extended Feature flags
