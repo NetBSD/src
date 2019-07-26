@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.197 2019/07/26 03:28:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.198 2019/07/26 04:08:39 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4188,8 +4188,8 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 			entry += (type * 64);
 		index = (entry >> 2) & 0x1F;
 		ivar = IXGBE_READ_REG(hw, IXGBE_IVAR(index));
-		ivar &= ~(0xFF << (8 * (entry & 0x3)));
-		ivar |= (vector << (8 * (entry & 0x3)));
+		ivar &= ~(0xffUL << (8 * (entry & 0x3)));
+		ivar |= ((u32)vector << (8 * (entry & 0x3)));
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_IVAR(index), ivar);
 		break;
 	case ixgbe_mac_82599EB:
