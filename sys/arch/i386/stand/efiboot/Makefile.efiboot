@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.14 2018/07/25 23:45:32 kamil Exp $
+# $NetBSD: Makefile.efiboot,v 1.15 2019/07/26 11:30:31 nonaka Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -18,7 +18,9 @@ SOURCES+= efidisk.c efidisk_ll.c efigetsecs.c efimemory.c
 SOURCES+= efinet.c efipxe.c
 LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
 LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
-SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
+# use our own nfs implementation
+LIBSASRCS+= nfs.c
+SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS} ${LIBSASRCS}
 
 .include <bsd.init.mk>
 
@@ -35,6 +37,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR} ${.CURDIR}/..
 .PATH:	${.CURDIR}/../../lib
+.PATH:	${.CURDIR}/../../libsa
 
 LDSCRIPT?= ${.CURDIR}/ldscript
 LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared -nocombreloc
@@ -60,7 +63,7 @@ CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DSUPPORT_BOOTP
 CPPFLAGS+= -DSUPPORT_DHCP
 CPPFLAGS+= -DSUPPORT_NFS
-#CPPFLAGS+= -DSUPPORT_TFTP
+CPPFLAGS+= -DSUPPORT_TFTP
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DBIOSDISK_DEFAULT_SECSIZE=2048	# for bootinfo_biosgeom.c
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
