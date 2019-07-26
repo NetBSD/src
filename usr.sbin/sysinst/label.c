@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.9 2019/07/09 16:16:33 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.10 2019/07/26 08:18:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.9 2019/07/09 16:16:33 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.10 2019/07/26 08:18:47 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1477,6 +1477,24 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 	pset->menu = -1;
 
 	return i != 0;
+}
+
+/*
+ * strip trailing / to avoid confusion in path comparisions later
+ */
+void
+canonicalize_last_mounted(char *path)
+{
+	char *p;
+
+	for (;;) {
+		p = strrchr(path, '/');
+		if (p == NULL)
+			return;
+		if (p[1] != 0)
+			return;
+		p[0] = 0;
+	}
 }
 
 /*

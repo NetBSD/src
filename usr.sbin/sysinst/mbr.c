@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.18 2019/07/25 18:55:40 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.19 2019/07/26 08:18:47 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -547,7 +547,9 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 					    &mbri->fs_type[i],
 					    &mbri->fs_sub_type[i],
 					    flags);
-					mbri->last_mounted[i] = strdup(mount);
+					char *p = strdup(mount);
+					canonicalize_last_mounted(p);
+					mbri->last_mounted[i] = p;
 				}
 			}
 #if BOOTSEL
