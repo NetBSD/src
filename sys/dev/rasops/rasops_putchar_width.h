@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.1 2019/07/25 15:18:54 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.2 2019/07/26 02:31:09 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -213,6 +213,7 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 
 	height = font->fontheight;
 
+#if RASOPS_DEPTH != 24 /* XXXRO fix me! */
 	if (uc == ' ') {
 		while (height--) {
 			SUBST_STAMP(rp, stamp[0]);
@@ -222,7 +223,9 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
-	} else {
+	} else
+#endif
+	{
 		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
