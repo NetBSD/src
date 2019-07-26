@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.5 2018/03/27 14:15:05 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.6 2019/07/26 12:09:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -63,6 +63,10 @@ static const char *efimemtypes[] = {
 	"PalCode",
 	"PersistentMemory",
 };
+
+#ifndef KERN_LOADSPACE_SIZE
+#define KERN_LOADSPACE_SIZE	(128 * 1024 * 1024)	/* 128MiB */
+#endif
 
 static int
 getmemtype(EFI_MEMORY_DESCRIPTOR *md)
@@ -231,13 +235,21 @@ void
 efi_memory_probe(void)
 {
 	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
+	EFI_STATUS status;
+	EFI_PHYSICAL_ADDRESS bouncebuf;
 	UINTN i, n, NoEntries, MapKey, DescriptorSize, MappingSize;
 	UINT32 DescriptorVersion;
 	int memtype;
 
+	bouncebuf = EFI_ALLOCATE_MAX_ADDRESS;
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, EFI_SIZE_TO_PAGES(KERN_LOADSPACE_SIZE), &bouncebuf);
+	if (EFI_ERROR(status))
+		panic("couldn't allocate kernel space.");
+	efi_loadaddr = bouncebuf;
+
 	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, false);
-
 	printf(" mem[");
 	for (i = 0, n = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
