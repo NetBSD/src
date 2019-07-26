@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.2 2019/07/26 06:57:55 skrll Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.3 2019/07/26 06:59:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,12 +25,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.2 2019/07/26 06:57:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.3 2019/07/26 06:59:48 skrll Exp $");
 
-#include "opt_soc.h"
 #include "arml2cc.h"
-#include "opt_multiprocessor.h"
 #include "opt_fdt.h"
+#include "opt_multiprocessor.h"
+#include "opt_soc.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
