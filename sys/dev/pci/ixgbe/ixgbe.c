@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.196 2019/07/25 09:28:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.197 2019/07/26 03:28:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2565,7 +2565,7 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1ULL << vector);
+	u64		queue = 1ULL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -2595,7 +2595,7 @@ ixgbe_disable_queue_internal(struct adapter *adapter, u32 vector, bool nestok)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1ULL << vector);
+	u64		queue = 1ULL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
