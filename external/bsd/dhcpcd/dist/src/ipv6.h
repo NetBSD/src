@@ -149,6 +149,10 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
+#ifndef SMALL
+#  define ND6_ADVERTISE
+#endif
+
 #ifdef INET6
 TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
