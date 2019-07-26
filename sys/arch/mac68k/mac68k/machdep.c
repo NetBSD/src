@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.352 2017/11/07 14:56:03 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.353 2019/07/26 10:48:44 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2017/11/07 14:56:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2019/07/26 10:48:44 rin Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2017/11/07 14:56:03 christos Exp $
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "akbd.h"
+#include "genfb.h"
 #include "macfb.h"
 #include "zsc.h"
 
@@ -315,7 +316,7 @@ consinit(void)
 		cninit();
 		init = 1;
 	} else {
-#if NAKBD > 0 && NMACFB > 0
+#if NAKBD > 0 && (NMACFB + NGENFB) > 0
 		/*
 		 * XXX  This is an evil hack on top of an evil hack!
 		 *

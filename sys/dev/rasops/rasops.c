@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.90 2019/07/26 05:24:04 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.91 2019/07/26 10:48:45 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.90 2019/07/26 05:24:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.91 2019/07/26 10:48:45 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -133,6 +133,51 @@ const uint8_t rasops_isgray[16] = {
 	1, 0, 0, 0,
 	0, 0, 0, 1,
 };
+
+#ifdef RASOPS_APPLE_PALETTE
+/*
+ * Approximate ANSI colormap for legacy Apple color palettes
+ */
+static const uint8_t apple8_devcmap[16] = {
+	0xff,	/* black	0x00, 0x00, 0x00 */
+	0x6b,	/* red		0x99, 0x00, 0x00 */
+	0xc5,	/* green	0x00, 0x99, 0x00 */
+	0x59,	/* yellow	0x99, 0x99, 0x00 */
+	0xd4,	/* blue		0x00, 0x00, 0x99 */
+	0x68,	/* magenta	0x99, 0x00, 0x99 */
+	0xc2,	/* cyan		0x00, 0x99, 0x99 */
+	0x2b,	/* white	0xcc, 0xcc, 0xcc */
+
+	0x56,	/* black	0x99, 0x99, 0x99 */
+	0x23,	/* red		0xff, 0x00, 0x00 */
+	0xb9,	/* green	0x00, 0xff, 0x00 */
+	0x05,	/* yellow	0xff, 0xff, 0x00 */
+	0xd2,	/* blue		0x00, 0x00, 0xff */
+	0x1e,	/* magenta	0xff, 0x00, 0xff */
+	0xb4,	/* cyan		0x00, 0xff, 0xff */
+	0x00,	/* white	0xff, 0xff, 0xff */
+};
+
+static const uint8_t apple4_devcmap[16] = {
+	15,	/* black	*/
+	 3,	/* red		*/
+	 8,	/* green	*/
+	 1,	/* yellow	*/
+	 6,	/* blue		*/
+	 4,	/* magenta	*/
+	 7,	/* cyan		*/
+	12,	/* light grey	*/
+
+	13,	/* medium grey	*/
+	 3,	/* red		*/
+	 8,	/* green	*/
+	 1,	/* yellow	*/
+	 6,	/* blue		*/
+	 4,	/* magenta	*/
+	 7,	/* cyan		*/
+	 0,	/* white	*/
+};
+#endif
 
 /* Generic functions */
 static void	rasops_copyrows(void *, int, int, int);
@@ -429,7 +474,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 
 	ri->ri_caps &= ~(WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE);
-	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
+
+	if ((ri->ri_flg & RI_FORCEMONO) != 0 ||
+#ifdef RASOPS_APPLE_PALETTE
+	    ri->ri_depth == 1
+#else
+	    ri->ri_depth < 8
+#endif
+	) {
 		ri->ri_ops.allocattr = rasops_allocattr_mono;
 		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
@@ -792,10 +844,27 @@ rasops_init_devcmap(struct rasops_info *ri)
 		ri->ri_devcmap[15] = -1;
 		return;
 
+#ifdef RASOPS_APPLE_PALETTE
+	case 4:
+		for (i = 0; i < 16; i++) {
+			c = apple4_devcmap[i];
+			ri->ri_devcmap[i] =
+			    (c <<  0) | (c <<  4) | (c <<  8) | (c << 12) |
+			    (c << 16) | (c << 20) | (c << 24) | (c << 28);
+		}
+		return;
+#else
+	/* XXXRO What should we do here? */
+#endif
+
 	case 8:
 		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
 			for (i = 0; i < 16; i++) {
+#ifdef RASOPS_APPLE_PALETTE
+				c = apple8_devcmap[i];
+#else
 				c = i;
+#endif
 				ri->ri_devcmap[i] =
 				    c | (c << 8) | (c << 16) | (c << 24);
 			}
