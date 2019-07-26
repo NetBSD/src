@@ -1,0 +1,6 @@
+# $NetBSD: WSFBSBC,v 1.1 2019/07/26 10:48:44 rin Exp $
+#
+# GENERICSBC with wsfb raster console driver enabled
+
+include "arch/mac68k/conf/GENERICSBC"
+include "arch/mac68k/conf/WSFB.common"

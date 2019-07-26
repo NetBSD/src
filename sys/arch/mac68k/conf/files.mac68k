@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.128 2019/02/18 01:12:23 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.129 2019/07/26 10:48:44 rin Exp $
 
 # mac68k-specific configuration info
 
@@ -64,7 +64,10 @@ device	macfb: wsemuldisplaydev, wsrasteremulops
 attach	macfb at grfbus
 file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
-file	arch/mac68k/dev/maccons.c	akbd & macfb
+attach	genfb at grfbus with genfb_grfbus
+file	arch/mac68k/dev/genfb_grfbus.c	genfb_grfbus
+
+file	arch/mac68k/dev/maccons.c	akbd & (macfb | genfb_grfbus)
 
 #device	ite: wsemuldisplaydev
 #attach	ite at wsdisplay
