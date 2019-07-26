@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.86 2019/07/09 08:46:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.87 2019/07/26 05:53:30 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.86 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.87 2019/07/26 05:53:30 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5631,7 +5631,7 @@ allmulti:
 			}
 			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
 			    0xFF;
-			hashes[(h & 0xE0) >> 5] |= 1 << (h & 0x1F);
+			hashes[(h & 0xE0) >> 5] |= __BIT(h & 0x1F);
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		ETHER_UNLOCK(ec);
