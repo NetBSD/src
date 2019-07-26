@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2019/07/26 10:34:26 roy Exp $
+# $NetBSD: Makefile,v 1.3 2019/07/26 13:29:36 roy Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@
 .PATH:			${DIST}/hooks
 
 .if ${MKSHARE} != "no"
-FILES=			15-timezone 29-lookup-hostname
+FILES=			10-wpa_supplicant 15-timezone 29-lookup-hostname
 
 .if ${MKYP} != "no"
 FILESBUILD_50-ypbind=	YES
