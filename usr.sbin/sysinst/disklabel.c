@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.9 2019/07/21 11:56:20 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10 2019/07/26 08:18:47 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -245,6 +245,8 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len)
 				if (parts->l.d_partitions[part].p_fstype ==
 				    fs_type)
 					parts->fs_sub_type[part] = fs_sub_type;
+				canonicalize_last_mounted(
+				    parts->last_mounted[part]);
 			}
 		}
 
