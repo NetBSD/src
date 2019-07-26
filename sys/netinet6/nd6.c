@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.255 2019/06/28 06:45:16 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256 2019/07/26 10:18:42 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.255 2019/06/28 06:45:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256 2019/07/26 10:18:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -497,6 +497,7 @@ nd6_llinfo_timer(void *arg)
 				ln->ln_hold = m0;
 				clear_llinfo_pqueue(ln);
  			}
+			LLE_REMREF(ln);
 			nd6_free(ln, 0);
 			ln = NULL;
 			if (m != NULL) {
@@ -516,6 +517,7 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_STALE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
+			LLE_REMREF(ln);
 			nd6_free(ln, 1);
 			ln = NULL;
 		}
@@ -539,6 +541,7 @@ nd6_llinfo_timer(void *arg)
 			daddr6 = &ln->r_l3addr.addr6;
 			send_ns = true;
 		} else {
+			LLE_REMREF(ln);
 			nd6_free(ln, 0);
 			ln = NULL;
 		}
