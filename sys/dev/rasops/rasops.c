@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.91 2019/07/26 10:48:45 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.92 2019/07/26 11:16:19 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.91 2019/07/26 10:48:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.92 2019/07/26 11:16:19 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1186,11 +1186,20 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 			}
 		} else {
 			while (height--) {
-				memset(rp, clr, num);
+				dp = rp;
 				DELTA(rp, ri->ri_stride, uint32_t *);
 				if (ri->ri_hwbits) {
-					memset(hrp, clr, num);
+					hp = hrp;
 					DELTA(hrp, ri->ri_stride, uint32_t *);
+				}
+
+				for (cnt = num; cnt; cnt--) {
+					*(uint8_t *)dp = clr;
+					DELTA(dp, 1, uint32_t *);
+					if (ri->ri_hwbits) {
+						*(uint8_t *)hp = clr;
+						DELTA(hp, 1, uint32_t *);
+					}
 				}
 			}
 		}
