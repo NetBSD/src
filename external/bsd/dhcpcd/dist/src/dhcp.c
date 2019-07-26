@@ -2329,7 +2329,9 @@ dhcp_arp_new(struct interface *ifp, struct in_addr *addr)
 	return astate;
 }
 #endif
+#endif /* ARP */
 
+#if defined(ARP) || defined(KERNEL_RFC5227)
 static int
 dhcp_arp_address(struct interface *ifp)
 {
@@ -2417,7 +2419,7 @@ dhcp_static(struct interface *ifp)
 	    ia ? &ia->addr : &ifo->req_addr,
 	    ia ? &ia->mask : &ifo->req_mask);
 	if (state->offer_len)
-#ifdef ARP
+#if defined(ARP) || defined(KERNEL_RFC5227)
 		dhcp_arp_bind(ifp);
 #else
 		dhcp_bind(ifp);
@@ -3210,7 +3212,7 @@ rapidcommit:
 	lease->frominfo = 0;
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
-#ifdef ARP
+#if defined(ARP) || defined(KERNEL_RFC5227)
 	dhcp_arp_bind(ifp);
 #else
 	dhcp_bind(ifp);
