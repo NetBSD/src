@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr_reg.h,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: a9tmr_reg.h,v 1.2 2019/07/27 07:02:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +57,7 @@
 #define	TMR_CTR			0x0004	// Timer Counter Register
 #define	TMR_CTL			0x0008	// Timer Control Register
 #define	TMR_INT			0x000C	// Timer Interrupt Status
-#define	TMR_RST			0x0010  // Timer Reset Status (WDOG only)
+#define	TMR_WDOGRST		0x0010  // Timer Reset Status (WDOG only)
 #define	TMR_WDOGDIS		0x0014  // [WO] Timer Disable (WDOG only)
 
 #define	TMR_CTL_PRESCALER	__BITS(15,8)
