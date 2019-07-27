@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.78.2.1 2017/12/10 10:10:24 snj Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.78.2.2 2019/07/27 17:11:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.78.2.1 2017/12/10 10:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.78.2.2 2019/07/27 17:11:09 martin Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -668,7 +668,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 
 	ring->cur = 0;
 
-	size = WPI_RX_RING_COUNT * sizeof (uint32_t);
+	size = WPI_RX_RING_COUNT * sizeof (struct wpi_rx_desc);
 	error = wpi_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
 	    (void **)&ring->desc, size,
 	    WPI_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
