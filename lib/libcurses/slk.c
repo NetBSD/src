@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.4 2018/10/04 19:11:09 roy Exp $	*/
+/*	$NetBSD: slk.c,v 1.5 2019/07/27 00:46:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.4 2018/10/04 19:11:09 roy Exp $");
+__RCSID("$NetBSD: slk.c,v 1.5 2019/07/27 00:46:43 uwe Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -60,19 +60,24 @@ __RCSID("$NetBSD: slk.c,v 1.4 2018/10/04 19:11:09 roy Exp $");
 static int	 slk_fmt = SLK_FMT_INVAL;	/* fmt of slk_init */
 
 /* Safe variants of public functions. */
-static int	 __slk_attron(SCREEN *, const chtype);
-static int	 __slk_attr_on(SCREEN *, const attr_t, void *);
-static int	 __slk_attroff(SCREEN *, const chtype);
+#ifdef HAVE_WCHAR
 static int	 __slk_attr_off(SCREEN *, const attr_t, void *);
-static int	 __slk_attrset(SCREEN *, const chtype);
+static int	 __slk_attr_on(SCREEN *, const attr_t, void *);
 static int	 __slk_attr_set(SCREEN *, const attr_t, short, void *opt);
+#endif
+static int	 __slk_attroff(SCREEN *, const chtype);
+static int	 __slk_attron(SCREEN *, const chtype);
+static int	 __slk_attrset(SCREEN *, const chtype);
+
 static int	 __slk_color(SCREEN *, short);
 static int	 __slk_clear(SCREEN *);
 static char	*__slk_label(SCREEN *, int);
 static int	 __slk_restore(SCREEN *);
 static int	 __slk_set(SCREEN *, int, const char *, int);
 static int	 __slk_touch(SCREEN *);
+#ifdef HAVE_WCHAR
 static int	 __slk_wset(SCREEN *, int, const wchar_t *, int);
+#endif
 
 /* Internal engine parts. */
 static int	 __slk_ripoffline(WINDOW *, int);
@@ -113,6 +118,7 @@ slk_attron(const chtype attr)
 	return __slk_attron(_cursesi_screen, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * slk_attr_on --
  *	Test and set wide attributes on ripped off slk window.
@@ -123,6 +129,7 @@ slk_attr_on(const attr_t attr, void *opt)
 
 	return __slk_attr_on(_cursesi_screen, attr, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * slk_attroff --
@@ -135,6 +142,7 @@ slk_attroff(const chtype attr)
 	return __slk_attroff(_cursesi_screen, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * slk_attr_off --
  *	Test and unset wide attributes on ripped off slk window.
@@ -145,6 +153,7 @@ slk_attr_off(const attr_t attr, void *opt)
 
 	return __slk_attr_off(_cursesi_screen, attr, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * slk_attrset --
@@ -157,6 +166,7 @@ slk_attrset(const chtype attr)
 	return __slk_attrset(_cursesi_screen, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * slk_attr_set --
  *	Set wide attributes and color pair on ripped off slk window.
@@ -167,6 +177,7 @@ slk_attr_set(const attr_t attr, short pair, void *opt)
 
 	return __slk_attr_set(_cursesi_screen, attr, pair, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * slk_clear --
@@ -259,6 +270,7 @@ slk_touch(void)
 	return __slk_touch(_cursesi_screen);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * slk_wset --
  *	Sets the wide text of the label specified by labnum
@@ -270,6 +282,7 @@ slk_wset(int labnum, const wchar_t *label, int justify)
 
 	return __slk_wset(_cursesi_screen, labnum, label, justify);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * __slk_attron --
@@ -284,6 +297,7 @@ __slk_attron(SCREEN *screen, const chtype attr)
 	return wattron(screen->slk_window, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * __slk_attr_on --
  *	Test and set wide attributes on ripped off slk window.
@@ -296,6 +310,7 @@ __slk_attr_on(SCREEN *screen, const attr_t attr, void *opt)
 		return ERR;
 	return wattr_on(screen->slk_window, attr, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * __slk_attroff --
@@ -310,6 +325,7 @@ __slk_attroff(SCREEN *screen, const chtype attr)
 	return wattroff(screen->slk_window, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * __slk_attr_off --
  *	Test and unset wide attributes on ripped off slk window.
@@ -322,6 +338,7 @@ __slk_attr_off(SCREEN *screen, const attr_t attr, void *opt)
 		return ERR;
 	return wattr_off(screen->slk_window, attr, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * __slk_attrset --
@@ -336,6 +353,7 @@ __slk_attrset(SCREEN *screen, const chtype attr)
 	return wattrset(screen->slk_window, attr);
 }
 
+#ifdef HAVE_WCHAR
 /*
  * __slk_attr_set --
  *	Set wide attributes and color pair on ripped off slk window.
@@ -348,6 +366,7 @@ __slk_attr_set(SCREEN *screen, const attr_t attr, short pair, void *opt)
 		return ERR;
 	return wattr_set(screen->slk_window, attr, pair, opt);
 }
+#endif	/* HAVE_WCHAR */
 
 /*
  * __slk_clear --
@@ -516,6 +535,8 @@ __slk_touch(SCREEN *screen)
 	return touchwin(screen->slk_window);
 }
 
+
+#ifdef HAVE_WCHAR
 /*
  * __slk_wset --
  *	Sets the wide text of the label specified by labnum
@@ -524,7 +545,6 @@ __slk_touch(SCREEN *screen)
 static int
 __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 {
-#ifdef HAVE_WCHAR
 	const wchar_t *olabel;
 	size_t len;
 	char *str;
@@ -545,10 +565,8 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 out:
 	free(str);
 	return result;
-#else
-	return ERR;
-#endif
 }
+#endif	/* HAVE_WCHAR */
 
 
 /*
