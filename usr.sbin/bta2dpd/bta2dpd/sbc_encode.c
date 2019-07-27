@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.5 2019/03/31 11:44:11 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.6 2019/07/27 23:33:09 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -707,7 +707,8 @@ sbc_decode(int32_t *samples, int16_t *pcm)
 			pcm[i++] = (int16_t)R[k];
 		k++;
 	}
-return numsamples;
+
+	return numsamples;
 }
 
 uint8_t
