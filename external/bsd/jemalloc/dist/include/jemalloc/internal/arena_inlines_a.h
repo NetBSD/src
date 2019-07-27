@@ -32,9 +32,10 @@ arena_prof_accum(tsdn_t *tsdn, arena_t *arena, uint64_t accumbytes) {
 	return prof_accum_add(tsdn, &arena->prof_accum, accumbytes);
 }
 
-static JEMALLOC_NORETURN inline void
+#ifdef JEMALLOC_PERCPU_ARENA
+static
+inline void
 percpu_arena_update(tsd_t *tsd, unsigned cpu) {
-	assert(have_percpu_arena);
 	arena_t *oldarena = tsd_arena_get(tsd);
 	assert(oldarena != NULL);
 	unsigned oldind = arena_ind_get(oldarena);
@@ -53,5 +54,11 @@ percpu_arena_update(tsd_t *tsd, unsigned cpu) {
 		}
 	}
 }
+#else
+static JEMALLOC_NORETURN inline void
+percpu_arena_update(tsd_t *tsd, unsigned cpu) {
+	abort();
+}
+#endif
 
 #endif /* JEMALLOC_INTERNAL_ARENA_INLINES_A_H */
