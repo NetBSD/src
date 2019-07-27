@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.6 2012/10/27 17:17:39 chs Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.7 2019/07/27 08:02:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,11 +99,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.6 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.7 2019/07/27 08:02:04 skrll Exp $");
 
 #include "locators.h"
 #include "avic.h"
-#include "imxgpio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
