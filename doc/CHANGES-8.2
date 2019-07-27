@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.14 2019/07/26 11:28:46 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.15 2019/07/27 17:11:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -342,4 +342,9 @@ sys/netinet6/nd6.c				1.256
 	Decrease the reference count before freeing, so that the
 	entries actually get free'd.
 	[christos, ticket #1307]
+
+sys/dev/pci/if_wpi.c				1.86
+
+	PR kern/54320: put back correct recieve ring allocation size.
+	[jakllsch, ticket #1308]
 
