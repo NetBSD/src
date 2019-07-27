@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.49 2018/07/08 11:37:50 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.50 2019/07/27 14:05:04 skrll Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -83,7 +83,7 @@ file	arch/arm/nvidia/tegra210_xusbpad.c	tegra210_xusbpad
 
 # UART
 attach	com at fdt with tegra_com
-file	arch/arm/nvidia/tegra_com.c		tegra_com needs-flag
+file	arch/arm/nvidia/tegra_com.c		tegra_com
 
 # I2C
 device	tegrai2c: i2cbus, i2cexec
