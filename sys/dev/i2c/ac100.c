@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.3 2019/05/27 21:11:13 jmcneill Exp $ */
+/* $NetBSD: ac100.c,v 1.4 2019/07/27 16:02:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.3 2019/05/27 21:11:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.4 2019/07/27 16:02:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,15 +165,13 @@ ac100_attach(device_t parent, device_t self, void *aux)
 static int
 ac100_read(struct ac100_softc *sc, uint8_t reg, uint16_t *val)
 {
-	return iic_smbus_read_word(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_read_word(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static int
 ac100_write(struct ac100_softc *sc, uint8_t reg, uint16_t val)
 {
-	return iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static int

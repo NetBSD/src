@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.24 2019/05/28 20:22:18 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.25 2019/07/27 16:02:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.24 2019/05/28 20:22:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.25 2019/07/27 16:02:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ axppmic_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t val, int flag
 static int
 axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c, u_int min, u_int max)
 {
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	u_int vol, reg_val;
 	int nstep, error;
 	uint8_t val;
@@ -526,7 +526,7 @@ axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c
 static int
 axppmic_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c, u_int *pvol)
 {
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	int reg_val, error;
 	uint8_t val;
 
@@ -1015,7 +1015,7 @@ axpreg_enable(device_t dev, bool enable)
 {
 	struct axpreg_softc *sc = device_private(dev);
 	const struct axppmic_ctrl *c = sc->sc_ctrl;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t val;
 	int error;
 
