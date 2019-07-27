@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.1 2019/07/24 13:12:33 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.2 2019/07/27 08:02:04 skrll Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -36,7 +36,7 @@ file	arch/arm/imx/fdt/imx6_iomux.c	imxiomux
 # GPIO controller
 device	imxgpio: gpiobus
 attach	imxgpio at fdt
-file	arch/arm/imx/imxgpio.c		imxgpio
+file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
 file	arch/arm/imx/fdt/imx6_gpio.c	imxgpio
 
 # UART
