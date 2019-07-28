@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.42 2019/07/25 15:18:53 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.42 2019/07/25 15:18:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -42,12 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.42 2019/07/25 15:18:53 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops8_putchar(void *, int, int, u_int, long attr);
-static void 	rasops8_putchar_aa(void *, int, int, u_int, long attr);
+static void 	rasops8_putchar(void *, int, int, u_int, long);
+static void 	rasops8_putchar_aa(void *, int, int, u_int, long);
 #ifndef RASOPS_SMALL
-static void 	rasops8_putchar8(void *, int, int, u_int, long attr);
-static void 	rasops8_putchar12(void *, int, int, u_int, long attr);
-static void 	rasops8_putchar16(void *, int, int, u_int, long attr);
+static void 	rasops8_putchar8(void *, int, int, u_int, long);
+static void 	rasops8_putchar12(void *, int, int, u_int, long);
+static void 	rasops8_putchar16(void *, int, int, u_int, long);
 static void	rasops8_makestamp(struct rasops_info *ri, long);
 
 /*
@@ -59,15 +59,12 @@ static int	stamp_mutex;	/* XXX see note in README */
 #endif
 
 /*
- * XXX this confuses the hell out of gcc2 (not egcs) which always insists
- * that the shift count is negative.
- *
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
  * destination = STAMP_READ(offset)
  */
-#define STAMP_SHIFT(fb,n)	((n*4-2) >= 0 ? (fb)>>(n*4-2):(fb)<<-(n*4-2))
-#define STAMP_MASK		(0xf << 2)
-#define STAMP_READ(o)		(*(uint32_t *)((char *)stamp + (o)))
+#define	STAMP_SHIFT(fb, n)	((n) ? (fb) >> 2 : (fb) << 2)
+#define	STAMP_MASK		(0xf << 2)
+#define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -76,33 +73,35 @@ void
 rasops8_init(struct rasops_info *ri)
 {
 
+	if (ri->ri_flg & RI_8BIT_IS_RGB) {
+		ri->ri_rnum = ri->ri_gnum = 3;
+		ri->ri_bnum = 2;
+
+		ri->ri_rpos = 5;
+		ri->ri_gpos = 2;
+		ri->ri_bpos = 0;
+	}
+
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = rasops8_putchar_aa;
-	} else {
-		switch (ri->ri_font->fontwidth) {
-#ifndef RASOPS_SMALL
-		case 8:
-			ri->ri_ops.putchar = rasops8_putchar8;
-			break;
-		case 12:
-			ri->ri_ops.putchar = rasops8_putchar12;
-			break;
-		case 16:
-			ri->ri_ops.putchar = rasops8_putchar16;
-			break;
-#endif /* !RASOPS_SMALL */
-		default:
-			ri->ri_ops.putchar = rasops8_putchar;
-			break;
-		}
+		return;
 	}
-	if (ri->ri_flg & RI_8BIT_IS_RGB) {
-		ri->ri_rnum = 3;
-		ri->ri_rpos = 5;
-		ri->ri_gnum = 3;
-		ri->ri_gpos = 2;
-		ri->ri_bnum = 2;
-		ri->ri_bpos = 0;
+
+	switch (ri->ri_font->fontwidth) {
+#ifndef RASOPS_SMALL
+	case 8:
+		ri->ri_ops.putchar = rasops8_putchar8;
+		break;
+	case 12:
+		ri->ri_ops.putchar = rasops8_putchar12;
+		break;
+	case 16:
+		ri->ri_ops.putchar = rasops8_putchar16;
+		break;
+#endif /* !RASOPS_SMALL */
+	default:
+		ri->ri_ops.putchar = rasops8_putchar;
+		break;
 	}
 }
 
@@ -120,7 +119,7 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t scanline[32] __attribute__ ((aligned(8)));
 
-	hrp = NULL;
+	hrp = NULL;	/* XXX GCC */
 
 	if (!CHAR_IN_FONT(uc, font))
 		return;
@@ -140,8 +139,8 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 
 	height = font->fontheight;
 	width = font->fontwidth;
-	bg = (uint8_t)ri->ri_devcmap[(attr >> 16) & 0xf];
-	fg = (uint8_t)ri->ri_devcmap[(attr >> 24) & 0xf];
+	bg = (uint8_t)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	fg = (uint8_t)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 
@@ -158,8 +157,8 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 		/*
 		 * we need the RGB colours here, get offsets into rasops_cmap
 		 */
-		fgo = ((attr >> 24) & 0xf) * 3;
-		bgo = ((attr >> 16) & 0xf) * 3;
+		fgo = (((uint32_t)attr >> 24) & 0xf) * 3;
+		bgo = (((uint32_t)attr >> 16) & 0xf) * 3;
 
 		r0 = rasops_cmap[bgo];
 		r1 = rasops_cmap[fgo];
@@ -221,8 +220,8 @@ rasops8_makestamp(struct rasops_info *ri, long attr)
 	uint32_t fg, bg;
 	int i;
 
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf] & 0xff;
-	bg = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xff;
+	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xff;
+	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xff;
 	stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
@@ -233,16 +232,16 @@ rasops8_makestamp(struct rasops_info *ri, long attr)
 #endif
 		if ((ri->ri_flg & RI_BSWAP) == NEED_LITTLE_ENDIAN_STAMP) {
 			/* little endian */
-			stamp[i] = (i & 8 ? fg : bg);
-			stamp[i] |= ((i & 4 ? fg : bg) << 8);
-			stamp[i] |= ((i & 2 ? fg : bg) << 16);
-			stamp[i] |= ((i & 1 ? fg : bg) << 24);
+			stamp[i]  = (i & 8 ? fg : bg);
+			stamp[i] |= (i & 4 ? fg : bg) << 8;
+			stamp[i] |= (i & 2 ? fg : bg) << 16;
+			stamp[i] |= (i & 1 ? fg : bg) << 24;
 		} else {
 			/* big endian */
-			stamp[i] = (i & 1 ? fg : bg);
-			stamp[i] |= ((i & 2 ? fg : bg) << 8);
-			stamp[i] |= ((i & 4 ? fg : bg) << 16);
-			stamp[i] |= ((i & 8 ? fg : bg) << 24);
+			stamp[i]  = (i & 1 ? fg : bg);
+			stamp[i] |= (i & 2 ? fg : bg) << 8;
+			stamp[i] |= (i & 4 ? fg : bg) << 16;
+			stamp[i] |= (i & 8 ? fg : bg) << 24;
 		}
 	}
 }

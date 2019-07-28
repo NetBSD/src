@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.1 2019/07/25 15:18:53 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.2 2019/07/28 12:06:10 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -68,13 +68,13 @@
 static void
 PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
-	int width, height, cnt, fs, fb;
-	uint8_t *dp, *rp, *hp, *hrp, *fr;
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
+	int width, height, cnt, fs, fb;
+	uint8_t *dp, *rp, *hp, *hrp, *fr;
 	CLR_TYPE clr[2];
 
-	hp = hrp = NULL;
+	hp = hrp = NULL;	/* XXX GCC */
 
 	if (!CHAR_IN_FONT(uc, font))
 		return;
@@ -96,8 +96,8 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 	width = font->fontwidth;
 
-	clr[0] = (CLR_TYPE)ri->ri_devcmap[(attr >> 16) & 0xf];
-	clr[1] = (CLR_TYPE)ri->ri_devcmap[(attr >> 24) & 0xf];
+	clr[0] = (CLR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	clr[1] = (CLR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 		while (height--) {

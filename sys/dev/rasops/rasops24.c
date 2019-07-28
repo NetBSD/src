@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.35 2019/07/25 15:18:53 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.36 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.35 2019/07/25 15:18:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.36 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.35 2019/07/25 15:18:53 rin Exp $");
 
 static void 	rasops24_erasecols(void *, int, int, int, long);
 static void 	rasops24_eraserows(void *, int, int, long);
-static void 	rasops24_putchar(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar(void *, int, int, u_int, long);
 #ifndef RASOPS_SMALL
-static void 	rasops24_putchar8(void *, int, int, u_int, long attr);
-static void 	rasops24_putchar12(void *, int, int, u_int, long attr);
-static void 	rasops24_putchar16(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar8(void *, int, int, u_int, long);
+static void 	rasops24_putchar12(void *, int, int, u_int, long);
+static void 	rasops24_putchar16(void *, int, int, u_int, long);
 static void	rasops24_makestamp(struct rasops_info *, long);
 
 /*
@@ -63,17 +63,14 @@ static int	stamp_mutex;	/* XXX see note in readme */
 #endif
 
 /*
- * XXX this confuses the hell out of gcc2 (not egcs) which always insists
- * that the shift count is negative.
- *
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
  * destination uint32_t[0] = STAMP_READ(offset)
  * destination uint32_t[1] = STAMP_READ(offset + 4)
  * destination uint32_t[2] = STAMP_READ(offset + 8)
  */
-#define STAMP_SHIFT(fb,n)	((n*4-4) >= 0 ? (fb)>>(n*4-4):(fb)<<-(n*4-4))
-#define STAMP_MASK		(0xf << 4)
-#define STAMP_READ(o)		(*(uint32_t *)((char *)stamp + (o)))
+#define	STAMP_SHIFT(fb, n)	((n) ? (fb) : (fb) << 4)
+#define	STAMP_MASK		(0xf << 4)
+#define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
 
 /*
  * Initialize rasops_info struct for this colordepth.
@@ -81,6 +78,17 @@ static int	stamp_mutex;	/* XXX see note in readme */
 void
 rasops24_init(struct rasops_info *ri)
 {
+
+	if (ri->ri_rnum == 0) {
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
+
+		ri->ri_rpos = 0;
+		ri->ri_gpos = 8;
+		ri->ri_bpos = 16;
+	}
+
+	ri->ri_ops.erasecols = rasops24_erasecols;
+	ri->ri_ops.eraserows = rasops24_eraserows;
 
 	switch (ri->ri_font->fontwidth) {
 #ifndef RASOPS_SMALL
@@ -98,18 +106,6 @@ rasops24_init(struct rasops_info *ri)
 		ri->ri_ops.putchar = rasops24_putchar;
 		break;
 	}
-
-	if (ri->ri_rnum == 0) {
-		ri->ri_rnum = 8;
-		ri->ri_rpos = 0;
-		ri->ri_gnum = 8;
-		ri->ri_gpos = 8;
-		ri->ri_bnum = 8;
-		ri->ri_bpos = 16;
-	}
-
-	ri->ri_ops.erasecols = rasops24_erasecols;
-	ri->ri_ops.eraserows = rasops24_eraserows;
 }
 
 #define	RASOPS_DEPTH	24
@@ -122,37 +118,37 @@ rasops24_init(struct rasops_info *ri)
 static void
 rasops24_makestamp(struct rasops_info *ri, long attr)
 {
-	u_int fg, bg, c1, c2, c3, c4;
+	uint32_t fg, bg, c1, c2, c3, c4;
 	int i;
 
-	fg = ri->ri_devcmap[((u_int)attr >> 24) & 0xf] & 0xffffff;
-	bg = ri->ri_devcmap[((u_int)attr >> 16) & 0xf] & 0xffffff;
+	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffffff;
+	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
 	stamp_attr = attr;
 
 	for (i = 0; i < 64; i += 4) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		c1 = (i & 32 ? fg : bg);
-		c2 = (i & 16 ? fg : bg);
-		c3 = (i & 8 ? fg : bg);
-		c4 = (i & 4 ? fg : bg);
+		c1 = i & 32 ? fg : bg;
+		c2 = i & 16 ? fg : bg;
+		c3 = i &  8 ? fg : bg;
+		c4 = i &  4 ? fg : bg;
 #else
-		c1 = (i & 8 ? fg : bg);
-		c2 = (i & 4 ? fg : bg);
-		c3 = (i & 16 ? fg : bg);
-		c4 = (i & 32 ? fg : bg);
+		c1 = i &  8 ? fg : bg;
+		c2 = i &  4 ? fg : bg;
+		c3 = i & 16 ? fg : bg;
+		c4 = i & 32 ? fg : bg;
 #endif
-		stamp[i+0] = (c1 <<  8) | (c2 >> 16);
-		stamp[i+1] = (c2 << 16) | (c3 >>  8);
-		stamp[i+2] = (c3 << 24) | c4;
+		stamp[i + 0] = (c1 <<  8) | (c2 >> 16);
+		stamp[i + 1] = (c2 << 16) | (c3 >>  8);
+		stamp[i + 2] = (c3 << 24) |  c4;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
 		if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-			stamp[i+0] = bswap32(stamp[i+0]);
-			stamp[i+1] = bswap32(stamp[i+1]);
-			stamp[i+2] = bswap32(stamp[i+2]);
+			stamp[i + 0] = bswap32(stamp[i + 0]);
+			stamp[i + 1] = bswap32(stamp[i + 1]);
+			stamp[i + 2] = bswap32(stamp[i + 2]);
 		}
 	}
 }
@@ -205,7 +201,7 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 		return;
 #endif
 
-	clr = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xffffff;
+	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
 	xstamp[0] = (clr <<  8) | (clr >> 16);
 	xstamp[1] = (clr << 16) | (clr >>  8);
 	xstamp[2] = (clr << 24) | clr;
@@ -315,7 +311,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	num *= ri->ri_font->fontwidth;
 	height = ri->ri_font->fontheight;
 
-	clr = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xffffff;
+	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
 	xstamp[0] = (clr <<  8) | (clr >> 16);
 	xstamp[1] = (clr << 16) | (clr >>  8);
 	xstamp[2] = (clr << 24) | clr;

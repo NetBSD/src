@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.37 2019/07/25 15:18:53 rin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.38 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.37 2019/07/25 15:18:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.38 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.37 2019/07/25 15:18:53 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops32_putchar(void *, int, int, u_int, long attr);
-static void 	rasops32_putchar_aa(void *, int, int, u_int, long attr);
+static void 	rasops32_putchar(void *, int, int, u_int, long);
+static void 	rasops32_putchar_aa(void *, int, int, u_int, long);
 #ifndef RASOPS_SMALL
 static void	rasops32_putchar8(void *, int, int, u_int, long);
 static void	rasops32_putchar12(void *, int, int, u_int, long);
@@ -67,7 +67,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  */
 #define	STAMP_SHIFT(fb, n)	((n) ? (fb) : (fb) << 4)
 #define	STAMP_MASK		(0xf << 4)
-#define	STAMP_READ(o)		(*(uint32_t *)((char *)stamp + (o)))
+#define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -77,11 +77,10 @@ rasops32_init(struct rasops_info *ri)
 {
 
 	if (ri->ri_rnum == 0) {
-		ri->ri_rnum = 8;
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
+
 		ri->ri_rpos = 0;
-		ri->ri_gnum = 8;
 		ri->ri_gpos = 8;
-		ri->ri_bnum = 8;
 		ri->ri_bpos = 16;
 	}
 
@@ -143,8 +142,8 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 	width = font->fontwidth;
 
-	clr[0] = ri->ri_devcmap[(attr >> 16) & 0xf];
-	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
+	clr[0] = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	clr[1] = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 		for (cnt = 0; cnt < width; cnt++)
@@ -211,10 +210,10 @@ rasops32_makestamp(struct rasops_info *ri, long attr)
 	stamp_attr = attr;
 
 	for (i = 0; i < 64; i += 4) {
-		stamp[i + 0] = (i & 32 ? fg : bg);
-		stamp[i + 1] = (i & 16 ? fg : bg);
-		stamp[i + 2] = (i & 8 ? fg : bg);
-		stamp[i + 3] = (i & 4 ? fg : bg);
+		stamp[i + 0] = i & 32 ? fg : bg;
+		stamp[i + 1] = i & 16 ? fg : bg;
+		stamp[i + 2] = i &  8 ? fg : bg;
+		stamp[i + 3] = i &  4 ? fg : bg;
 	}
 }
 

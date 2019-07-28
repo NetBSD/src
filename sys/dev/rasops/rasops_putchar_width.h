@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.5 2019/07/28 10:07:43 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.6 2019/07/28 12:06:10 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -65,7 +65,7 @@
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
-		so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
+		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 1 + 0] = STAMP_READ(so);			\
 		if (ri->ri_hwbits) {					\
 			hrp[(off) * 1 + 0] = STAMP_READ(so);		\
@@ -83,7 +83,7 @@
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
-		so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
+		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 2 + 0] = STAMP_READ(so);			\
 		rp[(off) * 2 + 1] = STAMP_READ(so +  4);		\
 		if (ri->ri_hwbits) {					\
@@ -107,7 +107,7 @@
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
-		so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
+		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 3 + 0] = STAMP_READ(so);			\
 		rp[(off) * 3 + 1] = STAMP_READ(so +  4);		\
 		rp[(off) * 3 + 2] = STAMP_READ(so +  8);		\
@@ -130,7 +130,7 @@
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
-		so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
+		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 4 + 0] = STAMP_READ(so);			\
 		rp[(off) * 4 + 1] = STAMP_READ(so +  4);		\
 		rp[(off) * 4 + 2] = STAMP_READ(so +  8);		\
@@ -202,8 +202,8 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int height, so, fs;
-	uint32_t *rp, *hrp = NULL;
+	int height, fs;
+	uint32_t *rp, *hrp;
 	uint8_t *fr;
 
 	hrp = NULL; /* XXX GCC */
