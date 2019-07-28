@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.3 2019/07/28 02:56:53 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.4 2019/07/28 03:09:24 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -98,8 +98,12 @@
 
 #if RASOPS_DEPTH == 24
 
-#define	SUBST_STAMP1(p, off)						\
-	(p)[(off) * 3 + 0] = (p)[(off) * 3 + 1] = (p)[(off) * 3 + 2] =
+#define	SUBST_STAMP1(p, off, base)					\
+	do {								\
+		(p)[(off) * 3 + 0] = stamp[(base) + 0];			\
+		(p)[(off) * 3 + 1] = stamp[(base) + 1];			\
+		(p)[(off) * 3 + 2] = stamp[(base) + 2];			\
+	} while (0 /* CONSTCOND */);
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -143,17 +147,38 @@
 
 /* ################################################################### */
 
+#if RASOPS_DEPTH != 24
 #if   RASOPS_WIDTH == 8
-#define	SUBST_STAMP(p, val) \
-	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) (val)
+#define	SUBST_STAMP(p, base) \
+	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) stamp[base];
 #elif RASOPS_WIDTH == 12
-#define	SUBST_STAMP(p, val) \
-	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) SUBST_STAMP1(p, 2) (val)
+#define	SUBST_STAMP(p, base) \
+	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) SUBST_STAMP1(p, 2) stamp[base];
 #elif RASOPS_WIDTH == 16
-#define	SUBST_STAMP(p, val) \
+#define	SUBST_STAMP(p, base) \
 	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) SUBST_STAMP1(p, 2) \
-	SUBST_STAMP1(p, 3) (val)
+	SUBST_STAMP1(p, 3) stamp[base];
 #endif
+#endif /* RASOPS_DEPTH != 24 */
+
+/* ################################################################### */
+
+#if RASOPS_DEPTH == 24
+#if   RASOPS_WIDTH == 8
+#define	SUBST_STAMP(p, base) \
+	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base)
+#elif RASOPS_WIDTH == 12
+#define	SUBST_STAMP(p, base) \
+	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base) \
+	SUBST_STAMP1(p, 2, base)
+#elif RASOPS_WIDTH == 16
+#define	SUBST_STAMP(p, base) \
+	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base) \
+	SUBST_STAMP1(p, 2, base) SUBST_STAMP1(p, 3, base)
+#endif
+#endif /* RASOPS_DEPTH == 24 */
+
+/* ################################################################### */
 
 #if   RASOPS_WIDTH == 8
 #define	SUBST_GLYPH \
@@ -213,24 +238,21 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 
 	height = font->fontheight;
 
-#if RASOPS_DEPTH != 24 /* XXXRO fix me! */
 	if (uc == ' ') {
 		while (height--) {
-			SUBST_STAMP(rp, stamp[0]);
+			SUBST_STAMP(rp, 0);
 			DELTA(rp, ri->ri_stride, uint32_t *);
 			if (ri->ri_hwbits) {
-				SUBST_STAMP(hrp, stamp[0]);
+				SUBST_STAMP(hrp, 0);
 				DELTA(hrp, ri->ri_stride, uint32_t *);
 			}
 		}
-	} else
-#endif
-	{
+	} else {
 		fr = FONT_GLYPH(uc, font, ri);
 		fs = font->stride;
 
 		while (height--) {
-			SUBST_GLYPH
+			SUBST_GLYPH;
 
 			fr += fs;
 			DELTA(rp, ri->ri_stride, uint32_t *);
@@ -242,10 +264,11 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-		SUBST_STAMP(rp, stamp[FILLED_STAMP]);
-		if (ri->ri_hwbits)
+		SUBST_STAMP(rp, FILLED_STAMP);
+		if (ri->ri_hwbits) {
 			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
-			SUBST_STAMP(hrp, stamp[FILLED_STAMP]);
+			SUBST_STAMP(hrp, FILLED_STAMP);
+		}
 	}
 
 	stamp_mutex--;
