@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.56 2019/07/23 10:18:52 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.57 2019/07/28 09:27:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.56 2019/07/23 10:18:52 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.57 2019/07/28 09:27:29 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -538,7 +538,7 @@ fn_display_match_list(EditLine * el, char **matches, size_t num, size_t width,
 	 * Find out how many entries can be put on one line; count
 	 * with one space between strings the same way it's printed.
 	 */
-	cols = (size_t)screenwidth / (width + 1);
+	cols = (size_t)screenwidth / (width + 2);
 	if (cols == 0)
 		cols = 1;
 
@@ -558,7 +558,7 @@ fn_display_match_list(EditLine * el, char **matches, size_t num, size_t width,
 				break;
 			(void)fprintf(el->el_outfile, "%s%s%s",
 			    col == 0 ? "" : " ", matches[thisguy],
-				append_char_function(matches[thisguy]));
+				(*app_func)(matches[thisguy]));
 			(void)fprintf(el->el_outfile, "%-*s",
 				(int) (width - strlen(matches[thisguy])), "");
 		}
