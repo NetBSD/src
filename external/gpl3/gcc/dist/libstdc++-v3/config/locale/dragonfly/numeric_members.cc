@@ -31,7 +31,8 @@
 
 #include <locale>
 #include <cstring>
-#include <xlocale.h>
+
+#include "xlocale_port.h"
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {

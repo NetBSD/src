@@ -35,7 +35,8 @@
 #include <cwchar>
 #include <stdlib.h>
 #include <langinfo.h>
-#include <xlocale.h>
+
+#include "xlocale_port.h"
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
