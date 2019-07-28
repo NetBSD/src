@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.2 2019/07/26 02:31:09 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.3 2019/07/28 02:56:53 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -244,6 +244,7 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
 		SUBST_STAMP(rp, stamp[FILLED_STAMP]);
 		if (ri->ri_hwbits)
+			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
 			SUBST_STAMP(hrp, stamp[FILLED_STAMP]);
 	}
 
