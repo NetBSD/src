@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.24 2019/07/28 02:51:38 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.25 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.24 2019/07/28 02:51:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.25 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -124,8 +124,8 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	col = col & 31;
 	rs = ri->ri_stride;
 
-	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
@@ -224,8 +224,8 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 {
 	int i, fg, bg;
 
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf] & 3;
-	bg = ri->ri_devcmap[(attr >> 16) & 0xf] & 3;
+	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 3;
+	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 3;
 	stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
