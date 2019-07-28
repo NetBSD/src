@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.28 2019/07/25 15:18:53 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.29 2019/07/28 02:45:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.28 2019/07/25 15:18:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.29 2019/07/28 02:45:52 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -154,7 +154,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 	        for (cnt = 0; cnt < width; cnt++)
 	                buffer[cnt] = clr[0];
-		while (height--) {
+		for (y = 0; y < height; y++) {
 			dp = rp;
 			DELTA(rp, ri->ri_stride, uint16_t *);
 			memcpy(dp, buffer, width << 1);
