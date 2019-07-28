@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.4 2019/07/26 08:18:47 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.5 2019/07/28 13:17:46 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -354,29 +354,34 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 		bool fs_is_default = false;
 #endif
 
-		if (p->gp_type->fsflags != 0) {
-			const char *lm = get_last_mounted(fd, p->gp_start,
-			    &p->fs_type, &p->fs_sub_type, p->gp_type->fsflags);
-			if (lm != NULL && *lm != 0) {
-				char *path = strdup(lm);
-				canonicalize_last_mounted(path);
-				p->last_mounted = path;
+		if (p->gp_type != NULL) {
+
+			if (p->gp_type->fsflags != 0) {
+				const char *lm = get_last_mounted(fd,
+				    p->gp_start, &p->fs_type,
+				    &p->fs_sub_type, p->gp_type->fsflags);
+				if (lm != NULL && *lm != 0) {
+					char *path = strdup(lm);
+					canonicalize_last_mounted(path);
+					p->last_mounted = path;
+				} else {
+					p->fs_type = p->gp_type->
+					    default_fs_type;
+#ifdef DEFAULT_UFS2
+					fs_is_default = true;
+#endif
+				}
 			} else {
 				p->fs_type = p->gp_type->default_fs_type;
 #ifdef DEFAULT_UFS2
 				fs_is_default = true;
 #endif
 			}
-		} else {
-			p->fs_type = p->gp_type->default_fs_type;
 #ifdef DEFAULT_UFS2
-			fs_is_default = true;
+			if (fs_is_default && p->fs_type == FS_BSDFFS)
+				p->fs_sub_type = 2;
 #endif
 		}
-#ifdef DEFAULT_UFS2
-		if (fs_is_default && p->fs_type == FS_BSDFFS)
-			p->fs_sub_type = 2;
-#endif
 
 		parts->dp.free_space -= p->gp_size;
 	}
@@ -418,6 +423,9 @@ static bool
 gpt_get_part_info(const struct disk_partitions *arg, part_id id,
     struct disk_part_info *info)
 {
+	static const struct part_type_desc gpt_unknown_type =
+		{ .generic_ptype = PT_undef,
+		  .short_desc = "<unknown>" };
 	const struct gpt_disk_partitions *parts =
 	    (const struct gpt_disk_partitions*)arg;
 	const struct gpt_part_entry *p = parts->partitions;
@@ -434,6 +442,8 @@ gpt_get_part_info(const struct disk_partitions *arg, part_id id,
 	info->size = p->gp_size;
 	if (p->gp_type)
 		info->nat_type = &p->gp_type->gent;
+	else
+		info->nat_type = &gpt_unknown_type;
 	info->last_mounted = p->last_mounted;
 	info->fs_type = p->fs_type;
 	info->fs_sub_type = p->fs_sub_type;
@@ -1247,7 +1257,7 @@ gpt_write_to_disk(struct disk_partitions *arg)
 	 */
 	for (pno = 0, p = parts->partitions; p != NULL; p = p->gp_next, pno++) {
 		p->gp_flags &= ~GPEF_WEDGE;
-		if (root_id == NO_PART) {
+		if (root_id == NO_PART && p->gp_type != NULL) {
 			if (p->gp_type->gent.generic_ptype == PT_root &&
 			    p->gp_start == pm->ptstart) {
 				root_id = pno;
@@ -1322,10 +1332,17 @@ gpt_write_to_disk(struct disk_partitions *arg)
 		else
 			sprintf(label_arg, "-l %s", p->gp_label);
 
-		run_program(RUN_SILENT,
-		    "gpt -n add -b %" PRIu64 " -s %" PRIu64 "s -t %s %s %s",
-		    p->gp_start, p->gp_size, p->gp_type->tid,
-		    label_arg, arg->disk);
+		if (p->gp_type != NULL)
+			run_program(RUN_SILENT,
+			    "gpt -n add -b %" PRIu64 " -s %" PRIu64
+			    "s -t %s %s %s",
+			    p->gp_start, p->gp_size, p->gp_type->tid,
+			    label_arg, arg->disk);
+		else
+			run_program(RUN_SILENT,
+			    "gpt -n add -b %" PRIu64 " -s %" PRIu64
+			    "s %s %s",
+			    p->gp_start, p->gp_size, label_arg, arg->disk);
 		gpt_apply_attr(arg->disk, "set", p->gp_start, p->gp_attr);
 		gpt_read_part(arg->disk, p->gp_start, p);
 		p->gp_flags |= GPEF_ON_DISK;
@@ -1399,7 +1416,8 @@ gpt_custom_attribute_writable(const struct disk_partitions *arg,
 	if (p == NULL)
 		return false;
 
-	if (p->fs_type == FS_SWAP || p->gp_type->gent.generic_ptype == PT_swap)
+	if (p->fs_type == FS_SWAP ||
+	    (p->gp_type != NULL && p->gp_type->gent.generic_ptype == PT_swap))
 		return false;
 
 	return true;
@@ -1437,9 +1455,12 @@ gpt_format_custom_attribute(const struct disk_partitions *arg,
 		strlcpy(out, p->gp_label, out_space);
 	else if (label == MSG_ptn_uuid)
 		strlcpy(out, p->gp_id, out_space);
-	else if (label == MSG_ptn_gpt_type)
-		strlcpy(out, p->gp_type->gent.description, out_space);
-	else if (label == MSG_ptn_boot)
+	else if (label == MSG_ptn_gpt_type) {
+		if (p->gp_type != NULL)
+			strlcpy(out, p->gp_type->gent.description, out_space);
+		else if (out_space > 1)
+			out[0] = 0;
+	} else if (label == MSG_ptn_boot)
 		strlcpy(out, msg_string(p->gp_attr & GPT_ATTR_BOOT ?
 		    MSG_Yes : MSG_No), out_space);
 	else
