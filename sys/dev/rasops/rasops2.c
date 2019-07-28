@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.23 2019/07/25 03:02:44 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.24 2019/07/28 02:51:38 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.23 2019/07/25 03:02:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.24 2019/07/28 02:51:38 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -291,7 +291,7 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 
 	if (uc == ' ') {
 		while (height--) {
-			*(uint16_t *)rp = stamp[0];
+			rp[0] = rp[1] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -307,8 +307,10 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & WSATTR_UNDERLINE) != 0)
-		*(uint16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
+	if ((attr & WSATTR_UNDERLINE) != 0) {
+		rp -= ri->ri_stride << 1;
+		rp[0] = rp[1] = stamp[15];
+	}
 
 	stamp_mutex--;
 }
@@ -420,7 +422,7 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 
 	if (uc == ' ') {
 		while (height--) {
-			*(uint32_t *)rp = stamp[0];
+			rp[0] = rp[1] = rp[2] = rp[3] = stamp[0];
 			rp += rs;
 		}
 	} else {
@@ -438,8 +440,10 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & WSATTR_UNDERLINE) != 0)
-		*(uint32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
+	if ((attr & WSATTR_UNDERLINE) != 0) {
+		rp -= ri->ri_stride << 1;
+		rp[0] = rp[1] = stamp[15];
+	}
 
 	stamp_mutex--;
 }
