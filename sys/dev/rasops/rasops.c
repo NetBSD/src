@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.92 2019/07/26 11:16:19 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.93 2019/07/28 10:24:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.92 2019/07/26 11:16:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.93 2019/07/28 10:24:08 martin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1299,7 +1299,7 @@ rasops_rotate_font(int *cookie, int rotate)
 	*cookie = ncookie;
 	return;
 
-fail:	free(f, sizeof(*f));
+fail:	kmem_free(f, sizeof(*f));
 	return;
 }
 
