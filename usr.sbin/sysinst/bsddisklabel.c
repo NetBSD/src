@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.22 2019/07/28 16:03:00 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23 2019/07/28 16:30:36 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,8 +319,15 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 	} else if (pset->infos[opt].mount[0]) {
 		mount = pset->infos[opt].mount;
 	} else {
-		mount = getfslabelname(pset->infos[opt].fs_type,
-		    pset->infos[opt].fs_version);
+		mount = NULL;
+		if (pset->infos[opt].parts->pscheme->other_partition_identifier
+		    && pset->infos[opt].cur_part_id != NO_PART)
+			mount = pset->infos[opt].parts->pscheme->
+			    other_partition_identifier(pset->infos[opt].parts,
+			    pset->infos[opt].cur_part_id);
+		if (mount == NULL)
+			mount = getfslabelname(pset->infos[opt].fs_type,
+			    pset->infos[opt].fs_version);
 		mount = str_arg_subst(msg_string(MSG_size_ptn_not_mounted),
 		    1, &mount);
 		free_mount = true;
