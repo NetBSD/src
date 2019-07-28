@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.5 2019/07/28 13:17:46 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6 2019/07/28 16:30:36 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1423,6 +1423,26 @@ gpt_custom_attribute_writable(const struct disk_partitions *arg,
 	return true;
 }
 
+static const char *
+gpt_get_label_str(const struct disk_partitions *arg, part_id ptn)
+{
+	const struct gpt_disk_partitions *parts =
+	    (const struct gpt_disk_partitions*)arg;
+	size_t i;
+	struct gpt_part_entry *p;
+
+	for (i = 0, p = parts->partitions; p != NULL; i++, p = p->gp_next)
+		if (i == ptn)
+			break;
+
+	if (p == NULL)
+		return NULL;
+
+	if (p->gp_label[0] != 0)
+		return p->gp_label;
+	return p->gp_id;
+}
+
 static bool
 gpt_format_custom_attribute(const struct disk_partitions *arg,
     part_id ptn, size_t attr_no, const struct disk_part_info *info,
@@ -1570,6 +1590,7 @@ gpt_parts = {
 	.format_custom_attribute = gpt_format_custom_attribute,
 	.custom_attribute_toggle = gpt_custom_attribute_toggle,
 	.custom_attribute_set_str = gpt_custom_attribute_set_str,
+	.other_partition_identifier = gpt_get_label_str,
 	.get_part_device = gpt_get_part_device,
 	.max_free_space_at = gpt_max_free_space_at,
 	.get_free_spaces = gpt_get_free_spaces,

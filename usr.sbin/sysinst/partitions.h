@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.3 2019/07/24 02:37:17 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.4 2019/07/28 16:30:36 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -291,6 +291,13 @@ struct disk_partitioning_scheme {
 	/* pet_str or pet_cardinal: */
 	bool (*custom_attribute_set_str)(struct disk_partitions*,
 	    part_id, size_t attr_no, const char *new_val);
+
+	/*
+	 * Optional: additional user information when showing the size
+	 * editor (especially for existing unknown partitions)
+	 */
+	const char * (*other_partition_identifier)(const struct
+	    disk_partitions*, part_id);
 
 
 	/* Retrieve device and partition names, e.g. for checking
