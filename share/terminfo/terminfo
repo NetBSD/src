@@ -6,8 +6,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.11 $
-#	$Date: 2017/02/23 13:22:53 $
+#	$Revision: 1.12 $
+#	$Date: 2019/07/28 02:37:54 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -2507,8 +2507,7 @@ ofcons|DNARD OpenFirmware console,
 	sgr0=\2330m, smso=\2337m, smul=\2334m,
 
 # NetBSD "wscons" emulator in vt220 mode.
-# This entry is based on the NetBSD termcap entry, correcting the ncv value.
-# The emulator renders underlined text in red.  Colors are otherwise usable.
+# This entry is based on the NetBSD termcap entry.
 #
 # Testing the emulator and reading the source code (NetBSD 2.0), it appears
 # that "vt220" is inaccurate.  There are a few vt220-features, but most of the
@@ -2520,7 +2519,7 @@ ofcons|DNARD OpenFirmware console,
 # work.  Don't use it on a VMS system -TD
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode,
 	bce, msgr,
-	colors#8, cols#80, it#8, lines#25, ncv#2, pairs#64,
+	colors#8, cols#80, it#8, lines#25, pairs#64,
 	civis=\E[?25l, cnorm=\E[?25h, is2=\E[r\E[25;1H,
 	kdch1=\E[3~, kend=\E[8~, kf1=\E[11~, kf10=\E[21~,
 	kf11=\E[23~, kf12=\E[24~, kf2=\E[12~, kf3=\E[13~,
