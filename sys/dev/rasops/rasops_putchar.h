@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.2 2019/07/28 12:06:10 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.3 2019/07/28 12:10:52 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -101,11 +101,6 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 	if (uc == ' ') {
 		while (height--) {
-#if RASOPS_DEPTH == 8
-			memset(rp, clr[0], width);
-			if (ri->ri_hwbits)
-				memset(hrp, clr[0], width);
-#else
 			dp = rp;
 			if (ri->ri_hwbits)
 				hp = hrp;
@@ -114,7 +109,6 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 				if (ri->ri_hwbits)
 					SUBST_CLR(hp, 0);
 			}
-#endif
 			rp += ri->ri_stride;
 			if (ri->ri_hwbits)
 				hrp += ri->ri_stride;
@@ -147,17 +141,11 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		rp -= (ri->ri_stride << 1);
 		if (ri->ri_hwbits)
 			hrp -= (ri->ri_stride << 1);
-#if RASOPS_DEPTH == 8
-		memset(rp, clr[1], width);
-		if (ri->ri_hwbits)
-			memset(hrp, clr[1], width);
-#else
 		while (width--) {
 			SUBST_CLR(rp, 1);
 			if (ri->ri_hwbits)
 				SUBST_CLR(hrp, 1);
 		}
-#endif
 	}
 }
 
