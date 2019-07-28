@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.93 2019/07/28 10:24:08 martin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.94 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.93 2019/07/28 10:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.94 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -232,7 +232,7 @@ int
 rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 {
 
-	memset (&ri->ri_optfont, 0, sizeof(ri->ri_optfont));
+	memset(&ri->ri_optfont, 0, sizeof(ri->ri_optfont));
 #ifdef _KERNEL
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
@@ -952,7 +952,7 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 		return;
 #endif
 
-	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 
 	/*
 	 * XXX The wsdisplay_emulops interface seems a little deficient in
@@ -1138,7 +1138,7 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
-	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 
 	/* Don't bother using the full loop for <= 32 pels */
 	if (num <= 32) {
@@ -1357,7 +1357,7 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 	/* XXX this assumes 16-bit color depth */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		uint16_t c =
-		    (uint16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
+		    (uint16_t)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 		while (height--) {
 			*(uint16_t *)rp = c;
@@ -1480,7 +1480,7 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 	/* XXX this assumes 16-bit color depth */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		uint16_t c =
-		    (uint16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
+		    (uint16_t)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 		while (height--) {
 			*(uint16_t *)rp = c;
