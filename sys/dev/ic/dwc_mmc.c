@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.16 2019/04/30 23:19:55 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.17 2019/07/28 10:30:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.16 2019/04/30 23:19:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.17 2019/07/28 10:30:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -625,7 +625,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 				    DWC_MMC_IDST_ERROR | DWC_MMC_IDST_COMPLETE;
 				retry = 10;
 				while ((sc->sc_idma_idst & idst_mask) == 0) {
-					if (retry == 0) {
+					if (--retry == 0) {
 						cmd->c_error = ETIMEDOUT;
 						break;
 					}
