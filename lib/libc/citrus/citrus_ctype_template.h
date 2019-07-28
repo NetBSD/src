@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.36 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.37 2019/07/28 14:26:08 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -372,6 +372,7 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 		err = _FUNCNAME(wcrtomb_priv)(ei, buf, sizeof(buf),
 					      *pwcs0, psenc, &siz);
 		if (siz == (size_t)-1) {
+			*pwcs = pwcs0;
 			*nresult = siz;
 			return (err);
 		}
