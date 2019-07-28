@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.7 2019/07/28 00:15:38 uwe Exp $	*/
+/*	$NetBSD: slk.c,v 1.8 2019/07/28 00:51:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.7 2019/07/28 00:15:38 uwe Exp $");
+__RCSID("$NetBSD: slk.c,v 1.8 2019/07/28 00:51:59 uwe Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -719,7 +719,7 @@ static int
 __slk_set_finalise(SCREEN *screen, int labnum)
 {
 	struct __slk_label *l;
-	size_t spc, len, x;
+	size_t spc, len, width, x;
 	char *p;
 
 	l = &screen->slk_labels[labnum];
@@ -727,24 +727,34 @@ __slk_set_finalise(SCREEN *screen, int labnum)
 
 #ifdef HAVE_WCHAR
 	len = 0;
+	width = 0;
 	if (l->text != NULL) {
-		wchar_t wc;
+		size_t plen;
 
 		p = l->text;
+		plen = strlen(l->text);
 		while (*p != '\0') {
-			if ((x = mbrtowc(0, p, strlen(p), &screen->sp)) == -1)
+			size_t mblen;
+			wchar_t wc;
+			int w;
+
+			mblen = mbrtowc(&wc, p, plen, &screen->sp);
+			if ((ssize_t)mblen < 0)
 				return ERR;
-			mbrtowc(&wc, p, x, &screen->sp);
-			if (len + wcwidth(wc) > spc)
+			w = wcwidth(wc);
+			if (width + w > spc)
 				break;
-			len += wcwidth(wc);
-			p += x;
+			width += w;
+			len += mblen;
+			p += mblen;
+			plen -= mblen;
 		}
 	}
 #else
 	len = l->text == NULL ? 0 : strlen(l->text);
 	if (len > spc)
 		len = spc;
+	width = len;
 #endif
 
 	switch(l->justify) {
@@ -752,12 +762,12 @@ __slk_set_finalise(SCREEN *screen, int labnum)
 		x = 0;
 		break;
 	case SLK_JUSTIFY_CENTER:
-		x = (spc - len) / 2;
-		if (x + len > spc)
+		x = (spc - width) / 2;
+		if (x + width > spc)
 			x--;
 		break;
 	case SLK_JUSTIFY_RIGHT:
-		x = spc - len;
+		x = spc - width;
 		break;
 	default:
 		return ERR; /* impossible */
@@ -772,7 +782,7 @@ __slk_set_finalise(SCREEN *screen, int labnum)
 	if (len != 0) {
 		memcpy(p, l->text, len);
 		p += len;
-		spc -= len;
+		spc -= width;
 	}
 	if (spc != 0) {
 		memset(p, ' ', spc);
