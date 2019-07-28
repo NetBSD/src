@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.21 2019/07/15 19:13:05 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.22 2019/07/28 16:03:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -904,17 +904,18 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 static void
 merge_part_with_wanted(struct disk_partitions *parts, part_id pno,
     const struct disk_part_info *info, struct partition_usage_set *wanted,
-    bool is_outer)
+    size_t wanted_num, bool is_outer)
 {
 	struct part_usage_info *infos;
 
 	/*
 	 * does this partition match something in the wanted set?
 	 */
-	for (size_t i = 0; i < wanted->num; i++) {
+	for (size_t i = 0; i < wanted_num; i++) {
 		if (wanted->infos[i].type != info->nat_type->generic_ptype)
 			continue;
-		if (info->last_mounted != NULL && info->last_mounted[0] != 0 &&
+		if (wanted->infos[i].type == PT_root &&
+		    info->last_mounted != NULL && info->last_mounted[0] != 0 &&
 		    strcmp(info->last_mounted, wanted->infos[i].mount) != 0)
 			continue;
 		if (wanted->infos[i].cur_part_id != NO_PART)
@@ -929,6 +930,8 @@ merge_part_with_wanted(struct disk_partitions *parts, part_id pno,
 			wanted->infos[i].instflags |= PUIINST_MOUNT;
 		if (is_outer)
 			wanted->infos[i].flags |= PUIFLG_IS_OUTER;
+		else
+			wanted->infos[i].flags &= ~PUIFLG_IS_OUTER;
 		return;
 	}
 
@@ -1050,6 +1053,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	 * The only thing outside of target range that we care for
 	 * is a potential swap partition - we assume one is enough.
 	 */
+	size_t num = wanted->num;
 	if (parts->parent) {
 		for (part_id pno = 0; pno < parts->parent->num_part; pno++) {
 			struct disk_part_info info;
@@ -1060,7 +1064,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			if (info.nat_type->generic_ptype != PT_swap)
 				continue;
 			merge_part_with_wanted(parts->parent, pno, &info,
-			    wanted, true);
+			    wanted, num, true);
 			break;
 		}
 	}
@@ -1079,7 +1083,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			continue;
 
 		merge_part_with_wanted(parts, pno, &info,
-		    wanted, false);
+		    wanted, num, false);
 	}
 
 	daddr_t align = parts->pscheme->get_part_alignment(parts);
