@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.16 2019/07/25 02:26:32 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.17 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 	col *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	num *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	height = ri->ri_font->fontheight;
-	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
 		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
