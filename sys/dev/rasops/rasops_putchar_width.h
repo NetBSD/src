@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.4 2019/07/28 03:09:24 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.5 2019/07/28 10:07:43 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -60,8 +60,8 @@
 
 #if RASOPS_DEPTH == 8
 
-#define	SUBST_STAMP1(p, off)						\
-	(p)[(off) * 1 + 0] =
+#define	SUBST_STAMP1(p, off, base)					\
+	(p)[(off) * 1 + 0] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -70,7 +70,7 @@
 		if (ri->ri_hwbits) {					\
 			hrp[(off) * 1 + 0] = STAMP_READ(so);		\
 		}							\
-	} while (0 /* CONSTCOND */);
+	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 8 */
 
@@ -78,8 +78,8 @@
 
 #if RASOPS_DEPTH == 15
 
-#define	SUBST_STAMP1(p, off)						\
-	(p)[(off) * 2 + 0] = (p)[(off) * 2 + 1] =
+#define	SUBST_STAMP1(p, off, base)					\
+	(p)[(off) * 2 + 0] = (p)[(off) * 2 + 1] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -90,7 +90,7 @@
 			hrp[(off) * 2 + 0] = STAMP_READ(so);		\
 			hrp[(off) * 2 + 1] = STAMP_READ(so +  4);	\
 		}							\
-	} while (0 /* CONSTCOND */);
+	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 15 */
 
@@ -103,7 +103,7 @@
 		(p)[(off) * 3 + 0] = stamp[(base) + 0];			\
 		(p)[(off) * 3 + 1] = stamp[(base) + 1];			\
 		(p)[(off) * 3 + 2] = stamp[(base) + 2];			\
-	} while (0 /* CONSTCOND */);
+	} while (0 /* CONSTCOND */)
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -116,7 +116,7 @@
 			hrp[(off) * 3 + 1] = STAMP_READ(so +  4);	\
 			hrp[(off) * 3 + 2] = STAMP_READ(so +  8);	\
 		}							\
-	} while (0 /* CONSTCOND */);
+	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 24 */
 
@@ -124,9 +124,9 @@
 
 #if RASOPS_DEPTH == 32
 
-#define	SUBST_STAMP1(p, off)						\
+#define	SUBST_STAMP1(p, off, base)					\
 	(p)[(off) * 4 + 0] = (p)[(off) * 4 + 1] =			\
-	(p)[(off) * 4 + 2] = (p)[(off) * 4 + 3] =
+	(p)[(off) * 4 + 2] = (p)[(off) * 4 + 3] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -141,55 +141,56 @@
 			hrp[(off) * 4 + 2] = STAMP_READ(so +  8);	\
 			hrp[(off) * 4 + 3] = STAMP_READ(so + 12);	\
 		}							\
-	} while (0 /* CONSTCOND */);
+	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 32 */
 
 /* ################################################################### */
 
-#if RASOPS_DEPTH != 24
 #if   RASOPS_WIDTH == 8
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) stamp[base];
+#define	SUBST_STAMP(p, base) 			\
+	do {					\
+		SUBST_STAMP1(p, 0, base);	\
+		SUBST_STAMP1(p, 1, base);	\
+	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 12
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) SUBST_STAMP1(p, 2) stamp[base];
+#define	SUBST_STAMP(p, base)			\
+	do {					\
+		SUBST_STAMP1(p, 0, base);	\
+		SUBST_STAMP1(p, 1, base);	\
+		SUBST_STAMP1(p, 2, base);	\
+	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 16
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0) SUBST_STAMP1(p, 1) SUBST_STAMP1(p, 2) \
-	SUBST_STAMP1(p, 3) stamp[base];
+#define	SUBST_STAMP(p, base)			\
+	do {					\
+		SUBST_STAMP1(p, 0, base);	\
+		SUBST_STAMP1(p, 1, base);	\
+		SUBST_STAMP1(p, 2, base);	\
+		SUBST_STAMP1(p, 3, base);	\
+	} while (0 /* CONSTCOND */)
 #endif
-#endif /* RASOPS_DEPTH != 24 */
-
-/* ################################################################### */
-
-#if RASOPS_DEPTH == 24
-#if   RASOPS_WIDTH == 8
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base)
-#elif RASOPS_WIDTH == 12
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base) \
-	SUBST_STAMP1(p, 2, base)
-#elif RASOPS_WIDTH == 16
-#define	SUBST_STAMP(p, base) \
-	SUBST_STAMP1(p, 0, base) SUBST_STAMP1(p, 1, base) \
-	SUBST_STAMP1(p, 2, base) SUBST_STAMP1(p, 3, base)
-#endif
-#endif /* RASOPS_DEPTH == 24 */
-
-/* ################################################################### */
 
 #if   RASOPS_WIDTH == 8
-#define	SUBST_GLYPH \
-	SUBST_GLYPH1(0, 1, 0) SUBST_GLYPH1(0, 0, 1)
+#define	SUBST_GLYPH				\
+	do {					\
+		SUBST_GLYPH1(0, 1, 0);		\
+		SUBST_GLYPH1(0, 0, 1);		\
+	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 12
-#define	SUBST_GLYPH \
-	SUBST_GLYPH1(0, 1, 0) SUBST_GLYPH1(0, 0, 1) SUBST_GLYPH1(1, 1, 2)
+#define	SUBST_GLYPH				\
+	do {					\
+		SUBST_GLYPH1(0, 1, 0);		\
+		SUBST_GLYPH1(0, 0, 1);		\
+		SUBST_GLYPH1(1, 1, 2);		\
+	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 16
-#define	SUBST_GLYPH \
-	SUBST_GLYPH1(0, 1, 0) SUBST_GLYPH1(0, 0, 1) SUBST_GLYPH1(1, 1, 2) \
-	SUBST_GLYPH1(1, 0, 3)
+#define	SUBST_GLYPH				\
+	do {					\
+		SUBST_GLYPH1(0, 1, 0);		\
+		SUBST_GLYPH1(0, 0, 1);		\
+		SUBST_GLYPH1(1, 1, 2);		\
+		SUBST_GLYPH1(1, 0, 3);		\
+	} while (0 /* CONSTCOND */)
 #endif
 
 /*
