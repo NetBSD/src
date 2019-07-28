@@ -34,7 +34,9 @@
 #include <stdexcept>
 #include <limits>
 #include <langinfo.h>
+#ifndef __NetBSD__
 #include <xlocale.h>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
