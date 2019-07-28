@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.127 2018/05/28 21:04:35 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.128 2019/07/28 05:28:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.127 2018/05/28 21:04:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.128 2019/07/28 05:28:53 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -1342,7 +1342,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	npages = 1;
 
 	KASSERT(mutex_owned(uobj->vmobjlock));
-	rv = uao_get(uobj, pageidx << PAGE_SHIFT, &pg, &npages,
+	rv = uao_get(uobj, (voff_t)pageidx << PAGE_SHIFT, &pg, &npages,
 	    0, VM_PROT_READ | VM_PROT_WRITE, 0, PGO_SYNCIO);
 
 	/*
