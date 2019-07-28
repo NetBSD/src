@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.282 2019/07/23 18:13:47 sevan Exp $
+$NetBSD: acronyms.comp,v 1.283 2019/07/28 21:43:39 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1412,6 +1412,8 @@ SFI	software fault isolation
 SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
+SGI	Silicon Graphics, Inc
+SGI	software generated interrupt
 SGMII	serial gigabit media independent interface
 SGPIO	serial general purpose input/output
 SGRAM	synchronous graphics random access memory
