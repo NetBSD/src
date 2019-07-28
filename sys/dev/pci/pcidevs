@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1382 2019/07/24 02:23:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1383 2019/07/28 15:20:22 mlelstv Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2078,6 +2078,8 @@ product BROADCOM 5825		0x5825	5825 Security Processor
 product BROADCOM 5860		0x5860	5860 Security Processor
 product BROADCOM 5861		0x5861	5861 Security Processor
 product BROADCOM 5862		0x5862	5862 Security Processor
+
+product BROADCOM BCM2711	0x2711	BCM2711 PCIe Host
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	Bt848 Video Capture
