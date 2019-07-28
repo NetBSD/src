@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.817 2019/06/20 12:14:46 isaki Exp $
+# $NetBSD: mi,v 1.818 2019/07/28 13:49:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2609,6 +2609,7 @@
 ./usr/tests/lib/libc/locale/t_wcscoll		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcscspn		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcspbrk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_wcsrtombs		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcsspn		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		compattestfile,atf
