@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.29 2019/07/28 02:45:52 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.30 2019/07/28 12:06:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.29 2019/07/28 02:45:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.30 2019/07/28 12:06:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -42,34 +42,31 @@ __KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.29 2019/07/28 02:45:52 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops15_putchar(void *, int, int, u_int, long attr);
-static void 	rasops15_putchar_aa(void *, int, int, u_int, long attr);
+static void 	rasops15_putchar(void *, int, int, u_int, long);
+static void 	rasops15_putchar_aa(void *, int, int, u_int, long);
 #ifndef RASOPS_SMALL
-static void 	rasops15_putchar8(void *, int, int, u_int, long attr);
-static void 	rasops15_putchar12(void *, int, int, u_int, long attr);
-static void 	rasops15_putchar16(void *, int, int, u_int, long attr);
+static void 	rasops15_putchar8(void *, int, int, u_int, long);
+static void 	rasops15_putchar12(void *, int, int, u_int, long);
+static void 	rasops15_putchar16(void *, int, int, u_int, long);
 static void	rasops15_makestamp(struct rasops_info *, long);
 #endif
 
 #ifndef RASOPS_SMALL
 /*
- * (2x2)x1 stamp for optimized character blitting
+ * 4x1 stamp for optimized character blitting
  */
 static uint32_t	stamp[32];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in readme */
 
 /*
- * XXX this confuses the hell out of gcc2 (not egcs) which always insists
- * that the shift count is negative.
- *
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
  * destination uint32_t[0] = STAMP_READ(offset)
  * destination uint32_t[1] = STAMP_READ(offset + 4)
  */
-#define STAMP_SHIFT(fb,n)	((n*4-3) >= 0 ? (fb)>>(n*4-3):(fb)<<-(n*4-3))
-#define STAMP_MASK		(15 << 3)
-#define STAMP_READ(o)		(*(uint32_t *)((char *)stamp + (o)))
+#define	STAMP_SHIFT(fb, n)	((n) ? (fb) >> 1: (fb) << 3)
+#define	STAMP_MASK		(0xf << 3)
+#define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
 #endif
 
 /*
@@ -79,36 +76,35 @@ void
 rasops15_init(struct rasops_info *ri)
 {
 
-	if (FONT_IS_ALPHA(ri->ri_font)) {
-		ri->ri_ops.putchar = rasops15_putchar_aa;
-	} else {
-		switch (ri->ri_font->fontwidth) {
-#ifndef RASOPS_SMALL
-		case 8:
-			ri->ri_ops.putchar = rasops15_putchar8;
-			break;
+	if (ri->ri_rnum == 0) {
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 5;
+		ri->ri_gnum += (ri->ri_depth == 16);
 
-		case 12:
-			ri->ri_ops.putchar = rasops15_putchar12;
-			break;
-
-		case 16:
-			ri->ri_ops.putchar = rasops15_putchar16;
-			break;
-#endif	/* !RASOPS_SMALL */
-		default:
-			ri->ri_ops.putchar = rasops15_putchar;
-			break;
-		}
+		ri->ri_rpos = 10 + (ri->ri_depth == 16);
+		ri->ri_gpos = 5;
+		ri->ri_bpos = 0;
 	}
 
-	if (ri->ri_rnum == 0) {
-		ri->ri_rnum = 5;
-		ri->ri_rpos = 10 + (ri->ri_depth == 16);
-		ri->ri_gnum = 5 + (ri->ri_depth == 16);
-		ri->ri_gpos = 5;
-		ri->ri_bnum = 5;
-		ri->ri_bpos = 0;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = rasops15_putchar_aa;
+		return;
+	}
+
+	switch (ri->ri_font->fontwidth) {
+#ifndef RASOPS_SMALL
+	case 8:
+		ri->ri_ops.putchar = rasops15_putchar8;
+		break;
+	case 12:
+		ri->ri_ops.putchar = rasops15_putchar12;
+		break;
+	case 16:
+		ri->ri_ops.putchar = rasops15_putchar16;
+		break;
+#endif	/* !RASOPS_SMALL */
+	default:
+		ri->ri_ops.putchar = rasops15_putchar;
+		break;
 	}
 }
 
@@ -127,7 +123,6 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	uint16_t buffer[64]; /* XXX */
 	int x, y, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
-
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -148,8 +143,8 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	height = font->fontheight;
 	width = font->fontwidth;
 
-	clr[0] = ri->ri_devcmap[(attr >> 16) & 0xf];
-	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
+	clr[0] = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	clr[1] = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 	        for (cnt = 0; cnt < width; cnt++)
@@ -162,8 +157,8 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
 
-		fgo = ((attr >> 24) & 0xf) * 3;
-		bgo = ((attr >> 16) & 0xf) * 3;
+		fgo = (((uint32_t)attr >> 24) & 0xf) * 3;
+		bgo = (((uint32_t)attr >> 16) & 0xf) * 3;
 
 		r0 = rasops_cmap[bgo];
 		r1 = rasops_cmap[fgo];
@@ -209,7 +204,7 @@ rasops15_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 
 #ifndef RASOPS_SMALL
 /*
- * Recompute the (2x2)x1 blitting stamp.
+ * Recompute the 4x1 blitting stamp.
  */
 static void
 rasops15_makestamp(struct rasops_info *ri, long attr)
@@ -217,21 +212,21 @@ rasops15_makestamp(struct rasops_info *ri, long attr)
 	uint32_t fg, bg;
 	int i;
 
-	fg = ri->ri_devcmap[((u_int)attr >> 24) & 0xf] & 0xffff;
-	bg = ri->ri_devcmap[((u_int)attr >> 16) & 0xf] & 0xffff;
+	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffff;
+	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffff;
 	stamp_attr = attr;
 
 	for (i = 0; i < 32; i += 2) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		stamp[i] = (i & 16 ? fg : bg);
-		stamp[i] |= ((i & 8 ? fg : bg) << 16);
-		stamp[i + 1] = (i & 4 ? fg : bg);
-		stamp[i + 1] |= ((i & 2 ? fg : bg) << 16);
+		stamp[i]      = (i & 16 ? fg : bg);
+		stamp[i]     |= (i &  8 ? fg : bg) << 16;
+		stamp[i + 1]  = (i &  4 ? fg : bg);
+		stamp[i + 1] |= (i &  2 ? fg : bg) << 16;
 #else
-		stamp[i] = (i & 8 ? fg : bg);
-		stamp[i] |= ((i & 16 ? fg : bg) << 16);
-		stamp[i + 1] = (i & 2 ? fg : bg);
-		stamp[i + 1] |= ((i & 4 ? fg : bg) << 16);
+		stamp[i]      = (i &  8 ? fg : bg);
+		stamp[i]     |= (i & 16 ? fg : bg) << 16;
+		stamp[i + 1]  = (i &  2 ? fg : bg);
+		stamp[i + 1] |= (i &  4 ? fg : bg) << 16;
 #endif
 	}
 }
