@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.42 2019/07/29 09:45:16 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.43 2019/07/29 10:24:18 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.42 2019/07/29 09:45:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.43 2019/07/29 10:24:18 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -81,6 +81,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.42 2019/07/29 09:45:16 knakahara Exp $"
  * Our Tx watchdog timeout.
  */
 #define VMXNET3_WATCHDOG_TIMEOUT	5
+
+/*
+ * Default value for vmx_intr_{rx,tx}_process_limit which is used for
+ * max number of packets to process for interrupt handler
+ */
+#define VMXNET3_RX_INTR_PROCESS_LIMIT 0U
+#define VMXNET3_TX_INTR_PROCESS_LIMIT 256
+
+/*
+ * Default value for vmx_{rx,tx}_process_limit which is used for
+ * max number of packets to process for deferred processing
+ */
+#define VMXNET3_RX_PROCESS_LIMIT 256
+#define VMXNET3_TX_PROCESS_LIMIT 256
 
 /*
  * IP protocols that we can perform Tx checksum offloading of.
@@ -209,6 +223,8 @@ struct vmxnet3_queue {
 
 	struct vmxnet3_txqueue vxq_txqueue;
 	struct vmxnet3_rxqueue vxq_rxqueue;
+
+	void *vxq_si;
 };
 
 struct vmxnet3_statistics {
@@ -270,6 +286,11 @@ struct vmxnet3_softc {
 	int vmx_max_ntxqueues;
 	int vmx_max_nrxqueues;
 	uint8_t vmx_lladdr[ETHER_ADDR_LEN];
+
+	u_int vmx_rx_intr_process_limit;
+	u_int vmx_tx_intr_process_limit;
+	u_int vmx_rx_process_limit;
+	u_int vmx_tx_process_limit;
 };
 
 #define VMXNET3_STAT
@@ -342,7 +363,7 @@ void vmxnet3_free_data(struct vmxnet3_softc *);
 int vmxnet3_setup_interface(struct vmxnet3_softc *);
 
 void vmxnet3_evintr(struct vmxnet3_softc *);
-void vmxnet3_txq_eof(struct vmxnet3_txqueue *);
+bool vmxnet3_txq_eof(struct vmxnet3_txqueue *, u_int);
 int vmxnet3_newbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
 void vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *,
     struct vmxnet3_rxring *, int);
@@ -350,9 +371,10 @@ void vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 void vmxnet3_rxq_input(struct vmxnet3_rxqueue *,
     struct vmxnet3_rxcompdesc *, struct mbuf *);
-void vmxnet3_rxq_eof(struct vmxnet3_rxqueue *);
+bool vmxnet3_rxq_eof(struct vmxnet3_rxqueue *, u_int);
 int vmxnet3_legacy_intr(void *);
 int vmxnet3_txrxq_intr(void *);
+void vmxnet3_handle_queue(void *);
 int vmxnet3_event_intr(void *);
 
 void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
@@ -819,6 +841,10 @@ vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 	int i;
 
 	for (i = 0; i < sc->vmx_nintrs; i++) {
+		struct vmxnet3_queue *vmxq =  &sc->vmx_queue[i];
+
+		softint_disestablish(vmxq->vxq_si);
+		vmxq->vxq_si = NULL;
 		pci_intr_disestablish(pc, sc->vmx_ihs[i]);
 	}
 	pci_intr_release(pc, sc->vmx_intrs, sc->vmx_nintrs);
@@ -859,6 +885,14 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 		}
 		aprint_normal_dev(sc->vmx_dev, "txrx interrupting at %s\n", intrstr);
 
+		vmxq->vxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+		    vmxnet3_handle_queue, vmxq);
+		if (vmxq->vxq_si == NULL) {
+			aprint_error_dev(sc->vmx_dev,
+			    "softint_establish for vxq_si failed\n");
+			return (-1);
+		}
+
 		vmxq->vxq_intr_idx = intr_idx;
 	}
 
@@ -886,6 +920,7 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
 	pci_intr_handle_t *intr;
 	void **ihs;
+	struct vmxnet3_queue *vmxq;
 	int i;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -893,6 +928,7 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 
 	intr = &sc->vmx_intrs[0];
 	ihs = sc->vmx_ihs;
+	vmxq = &sc->vmx_queue[0];
 
 	intrstr = pci_intr_string(pc, *intr, intrbuf, sizeof(intrbuf));
 
@@ -907,6 +943,14 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 	}
 	aprint_normal_dev(sc->vmx_dev, "interrupting at %s\n", intrstr);
 
+	vmxq->vxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    vmxnet3_handle_queue, vmxq);
+	if (vmxq->vxq_si == NULL) {
+		aprint_error_dev(sc->vmx_dev,
+		    "softint_establish for vxq_si failed\n");
+		return (-1);
+	}
+
 	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
 	sc->vmx_event_intr_idx = 0;
@@ -920,6 +964,7 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
 	pci_intr_handle_t *intr;
 	void **ihs;
+	struct vmxnet3_queue *vmxq;
 	int i;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -927,6 +972,7 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 
 	intr = &sc->vmx_intrs[0];
 	ihs = sc->vmx_ihs;
+	vmxq = &sc->vmx_queue[0];
 
 	intrstr = pci_intr_string(pc, *intr, intrbuf, sizeof(intrbuf));
 
@@ -940,6 +986,14 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 		return (-1);
 	}
 	aprint_normal_dev(sc->vmx_dev, "interrupting at %s\n", intrstr);
+
+	vmxq->vxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    vmxnet3_handle_queue, vmxq);
+	if (vmxq->vxq_si == NULL) {
+		aprint_error_dev(sc->vmx_dev,
+		    "softint_establish for vxq_si failed\n");
+		return (-1);
+	}
 
 	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
@@ -1750,6 +1804,12 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	ether_set_ifflags_cb(&sc->vmx_ethercom, vmxnet3_ifflags_cb);
 	vmxnet3_link_status(sc);
 
+	/* should set before setting interrupts */
+	sc->vmx_rx_intr_process_limit = VMXNET3_RX_INTR_PROCESS_LIMIT;
+	sc->vmx_rx_process_limit = VMXNET3_RX_PROCESS_LIMIT;
+	sc->vmx_tx_intr_process_limit = VMXNET3_TX_INTR_PROCESS_LIMIT;
+	sc->vmx_tx_process_limit = VMXNET3_TX_PROCESS_LIMIT;
+
 	return (0);
 }
 
@@ -1800,8 +1860,8 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	VMXNET3_CORE_UNLOCK(sc);
 }
 
-void
-vmxnet3_txq_eof(struct vmxnet3_txqueue *txq)
+bool
+vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 {
 	struct vmxnet3_softc *sc;
 	struct vmxnet3_txring *txr;
@@ -1810,6 +1870,7 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq)
 	struct vmxnet3_txbuf *txb;
 	struct mbuf *m;
 	u_int sop;
+	bool more = false;
 
 	sc = txq->vxtxq_sc;
 	txr = &txq->vxtxq_cmd_ring;
@@ -1818,6 +1879,11 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq)
 	VMXNET3_TXQ_LOCK_ASSERT(txq);
 
 	for (;;) {
+		if (limit-- == 0) {
+			more = true;
+			break;
+		}
+
 		txcd = &txc->vxcr_u.txcd[txc->vxcr_next];
 		if (txcd->gen != txc->vxcr_gen)
 			break;
@@ -1851,6 +1917,8 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq)
 
 	if (txr->vxtxr_head == txr->vxtxr_next)
 		txq->vxtxq_watchdog = 0;
+
+	return more;
 }
 
 int
@@ -2018,8 +2086,8 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
-void
-vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq)
+bool
+vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 {
 	struct vmxnet3_softc *sc;
 	struct ifnet *ifp;
@@ -2029,6 +2097,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq)
 	struct vmxnet3_rxcompdesc *rxcd;
 	struct mbuf *m, *m_head, *m_tail;
 	int idx, length;
+	bool more = false;
 
 	sc = rxq->vxrxq_sc;
 	ifp = &sc->vmx_ethercom.ec_if;
@@ -2037,7 +2106,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq)
 	VMXNET3_RXQ_LOCK_ASSERT(rxq);
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
+		return more;
 
 	m_head = rxq->vxrxq_mhead;
 	rxq->vxrxq_mhead = NULL;
@@ -2046,6 +2115,11 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq)
 	KASSERT(m_head == NULL || m_tail != NULL);
 
 	for (;;) {
+		if (limit-- == 0) {
+			more = true;
+			break;
+		}
+
 		rxcd = &rxc->vxcr_u.rxcd[rxc->vxcr_next];
 		if (rxcd->gen != rxc->vxcr_gen) {
 			rxq->vxrxq_mhead = m_head;
@@ -2155,6 +2229,8 @@ nextp:
 			vmxnet3_write_bar0(sc, r, idx);
 		}
 	}
+
+	return more;
 }
 
 int
@@ -2163,10 +2239,14 @@ vmxnet3_legacy_intr(void *xsc)
 	struct vmxnet3_softc *sc;
 	struct vmxnet3_rxqueue *rxq;
 	struct vmxnet3_txqueue *txq;
+	u_int txlimit, rxlimit;
+	bool txmore, rxmore;
 
 	sc = xsc;
 	rxq = &sc->vmx_queue[0].vxq_rxqueue;
 	txq = &sc->vmx_queue[0].vxq_txqueue;
+	txlimit = sc->vmx_tx_intr_process_limit;
+	rxlimit = sc->vmx_rx_intr_process_limit;
 
 	if (sc->vmx_intr_type == VMXNET3_IT_LEGACY) {
 		if (vmxnet3_read_bar1(sc, VMXNET3_BAR1_INTR) == 0)
@@ -2179,16 +2259,19 @@ vmxnet3_legacy_intr(void *xsc)
 		vmxnet3_evintr(sc);
 
 	VMXNET3_RXQ_LOCK(rxq);
-	vmxnet3_rxq_eof(rxq);
+	rxmore = vmxnet3_rxq_eof(rxq, txlimit);
 	VMXNET3_RXQ_UNLOCK(rxq);
 
 	VMXNET3_TXQ_LOCK(txq);
-	vmxnet3_txq_eof(txq);
-	if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
+	txmore = vmxnet3_txq_eof(txq, rxlimit);
 	VMXNET3_TXQ_UNLOCK(txq);
 
-	vmxnet3_enable_all_intrs(sc);
-
+	if (txmore || rxmore) {
+		softint_schedule(sc->vmx_queue[0].vxq_si);
+	} else {
+		if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
+		vmxnet3_enable_all_intrs(sc);
+	}
 	return (1);
 }
 
@@ -2199,17 +2282,60 @@ vmxnet3_txrxq_intr(void *xvmxq)
 	struct vmxnet3_queue *vmxq;
 	struct vmxnet3_txqueue *txq;
 	struct vmxnet3_rxqueue *rxq;
+	u_int txlimit, rxlimit;
+	bool txmore, rxmore;
 
 	vmxq = xvmxq;
 	txq = &vmxq->vxq_txqueue;
 	rxq = &vmxq->vxq_rxqueue;
 	sc = txq->vxtxq_sc;
+	txlimit = sc->vmx_tx_intr_process_limit;
+	rxlimit = sc->vmx_rx_intr_process_limit;
 
 	if (sc->vmx_intr_mask_mode == VMXNET3_IMM_ACTIVE)
 		vmxnet3_disable_intr(sc, vmxq->vxq_intr_idx);
 
 	VMXNET3_TXQ_LOCK(txq);
-	vmxnet3_txq_eof(txq);
+	txmore = vmxnet3_txq_eof(txq, txlimit);
+	VMXNET3_TXQ_UNLOCK(txq);
+
+	VMXNET3_RXQ_LOCK(rxq);
+	rxmore = vmxnet3_rxq_eof(rxq, rxlimit);
+	VMXNET3_RXQ_UNLOCK(rxq);
+
+	if (txmore || rxmore) {
+		softint_schedule(vmxq->vxq_si);
+	} else {
+		/* for ALTQ */
+		if (vmxq->vxq_id == 0)
+			if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
+		softint_schedule(txq->vxtxq_si);
+
+		vmxnet3_enable_intr(sc, vmxq->vxq_intr_idx);
+	}
+
+	return (1);
+}
+
+void
+vmxnet3_handle_queue(void *xvmxq)
+{
+	struct vmxnet3_softc *sc;
+	struct vmxnet3_queue *vmxq;
+	struct vmxnet3_txqueue *txq;
+	struct vmxnet3_rxqueue *rxq;
+	u_int txlimit, rxlimit;
+	bool txmore, rxmore;
+
+	vmxq = xvmxq;
+	txq = &vmxq->vxq_txqueue;
+	rxq = &vmxq->vxq_rxqueue;
+	sc = txq->vxtxq_sc;
+	txlimit = sc->vmx_tx_process_limit;
+	rxlimit = sc->vmx_rx_process_limit;
+
+	VMXNET3_TXQ_LOCK(txq);
+	txmore = vmxnet3_txq_eof(txq, txlimit);
 	/* for ALTQ */
 	if (vmxq->vxq_id == 0)
 		if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
@@ -2217,12 +2343,13 @@ vmxnet3_txrxq_intr(void *xvmxq)
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	VMXNET3_RXQ_LOCK(rxq);
-	vmxnet3_rxq_eof(rxq);
+	rxmore = vmxnet3_rxq_eof(rxq, rxlimit);
 	VMXNET3_RXQ_UNLOCK(rxq);
 
-	vmxnet3_enable_intr(sc, vmxq->vxq_intr_idx);
-
-	return (1);
+	if (txmore || rxmore)
+		softint_schedule(vmxq->vxq_si);
+	else
+		vmxnet3_enable_intr(sc, vmxq->vxq_intr_idx);
 }
 
 int
