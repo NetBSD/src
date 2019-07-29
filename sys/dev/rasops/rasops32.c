@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.38 2019/07/28 12:06:10 rin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.39 2019/07/29 10:55:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.38 2019/07/28 12:06:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.39 2019/07/29 10:55:56 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -109,91 +109,7 @@ rasops32_init(struct rasops_info *ri)
 
 #define	RASOPS_DEPTH	32
 #include "rasops_putchar.h"
-
-static void
-rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
-{
-	int width, height, cnt, clr[2];
-	struct rasops_info *ri = (struct rasops_info *)cookie;
-	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	uint32_t *dp, *rp;
-	uint8_t *rrp;
-	uint8_t *fr;
-	uint32_t buffer[64]; /* XXX */
-	int x, y, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0;
-
-#ifdef RASOPS_CLIPPING
-	/* Catches 'row < 0' case too */
-	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
-
-	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
-#endif
-
-	/* check if character fits into font limits */
-	if (!CHAR_IN_FONT(uc, font))
-		return;
-
-	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
-	rp = (uint32_t *)rrp;
-
-	height = font->fontheight;
-	width = font->fontwidth;
-
-	clr[0] = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	clr[1] = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
-
-	if (uc == ' ') {
-		for (cnt = 0; cnt < width; cnt++)
-			buffer[cnt] = clr[0];
-		while (height--) {
-			dp = rp;
-			DELTA(rp, ri->ri_stride, uint32_t *);
-			memcpy(dp, buffer, width << 2);
-		}
-	} else {
-		fr = FONT_GLYPH(uc, font, ri);
-
-		r0 = (clr[0] >> 16) & 0xff;
-		r1 = (clr[1] >> 16) & 0xff;
-		g0 = (clr[0] >> 8) & 0xff;
-		g1 = (clr[1] >> 8) & 0xff;
-		b0 =  clr[0] & 0xff;
-		b1 =  clr[1] & 0xff;
-
-		for (y = 0; y < height; y++) {
-			dp = (uint32_t *)(rrp + ri->ri_stride * y);
-			for (x = 0; x < width; x++) {
-				aval = *fr;
-				if (aval == 0) {
-					buffer[x] = clr[0];
-				} else if (aval == 255) {
-					buffer[x] = clr[1];
-				} else {
-					r = aval * r1 + (255 - aval) * r0;
-					g = aval * g1 + (255 - aval) * g0;
-					b = aval * b1 + (255 - aval) * b0;
-					buffer[x] = (r & 0xff00) << 8 |
-					      (g & 0xff00) |
-					      (b & 0xff00) >> 8;
-				}
-				fr++;
-			}
-			memcpy(dp, buffer, width << 2);
-		}
-	}
-
-	/* Do underline */
-	if ((attr & WSATTR_UNDERLINE) != 0) {
-		rp = (uint32_t *)rrp;
-		height = font->fontheight;
-		DELTA(rp, (ri->ri_stride * (height - 2)), uint32_t *);
-		while (width--)
-			*rp++ = clr[1];
-	}
-}
+#include "rasops_putchar_aa.h"
 
 #ifndef RASOPS_SMALL
 /*
