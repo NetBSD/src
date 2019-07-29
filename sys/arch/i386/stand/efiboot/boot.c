@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2019/07/26 12:09:48 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2019/07/29 11:28:51 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -351,7 +351,7 @@ command_help(char *arg)
 #if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
 #endif
-	       "memmap [{sorted|unsorted}]\n"
+	       "memmap [{sorted|unsorted|compact}]\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
 #endif
@@ -613,18 +613,21 @@ void
 command_memmap(char *arg)
 {
 	bool sorted = true;
+	bool compact = false;
 
 	if (*arg == '\0' || strcmp(arg, "sorted") == 0)
 		/* Already sorted is true. */;
 	else if (strcmp(arg, "unsorted") == 0)
 		sorted = false;
+	else if (strcmp(arg, "compact") == 0)
+		compact = true;
 	else {
 		printf("invalid flag, "
-		    "must be 'sorted' or 'unsorted'.\n");
+		    "must be 'sorted', 'unsorted' or 'compact'.\n");
 		return;
 	}
 
-	efi_memory_show_map(sorted);
+	efi_memory_show_map(sorted, compact);
 }
 
 void

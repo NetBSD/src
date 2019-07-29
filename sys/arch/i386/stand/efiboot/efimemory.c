@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.6 2019/07/26 12:09:48 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.7 2019/07/29 11:28:51 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -107,7 +107,7 @@ EFI_MEMORY_DESCRIPTOR *
 efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
     UINT32 *DescriptorVersion, bool sorted)
 {
-	EFI_MEMORY_DESCRIPTOR *desc, *md, *next, *target, tmp;
+	EFI_MEMORY_DESCRIPTOR *desc, *md, *next, *target, *tmp;
 	UINTN i, j;
 
 	*NoEntries = 0;
@@ -119,17 +119,93 @@ efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
 	if (!sorted)
 		return desc;
 
+	tmp = alloc(*DescriptorSize);
+	if (tmp == NULL)
+		return desc;
+
 	for (i = 0, md = desc; i < *NoEntries - 1; i++, md = next) {
 		target = next = NextMemoryDescriptor(md, *DescriptorSize);
 		for (j = i + 1; j < *NoEntries; j++) {
 			if (md->PhysicalStart > target->PhysicalStart) {
-				CopyMem(&tmp, md, sizeof(*md));
-				CopyMem(md, target, sizeof(*md));
-				CopyMem(target, &tmp, sizeof(*md));
+				CopyMem(tmp, md, *DescriptorSize);
+				CopyMem(md, target, *DescriptorSize);
+				CopyMem(target, tmp, *DescriptorSize);
 			}
 			target = NextMemoryDescriptor(target, *DescriptorSize);
 		}
 	}
+	dealloc(tmp, *DescriptorSize);
+
+	return desc;
+}
+
+EFI_MEMORY_DESCRIPTOR *
+efi_memory_compact_map(EFI_MEMORY_DESCRIPTOR *desc, UINTN *NoEntries,
+    UINTN DescriptorSize)
+{
+	EFI_MEMORY_DESCRIPTOR *md, *next, *target, *tmp;
+	UINTN i, j;
+	UINT32 type;
+	bool first = true, do_compact;
+
+	for (i = 0, md = target = desc; i < *NoEntries; i++, md = next) {
+		type = md->Type;
+		switch (type) {
+		case EfiLoaderCode:
+		case EfiLoaderData:
+		case EfiBootServicesCode:
+		case EfiBootServicesData:
+		case EfiConventionalMemory:
+			if ((md->Attribute & EFI_MEMORY_WB) != 0)
+				type = EfiConventionalMemory;
+			if (md->Attribute == target->Attribute) {
+				do_compact = true;
+				break;
+			}
+			/* FALLTHROUGH */
+		case EfiACPIReclaimMemory:
+		case EfiACPIMemoryNVS:
+		case EfiPersistentMemory:
+		case EfiReservedMemoryType:
+		case EfiRuntimeServicesCode:
+		case EfiRuntimeServicesData:
+		case EfiUnusableMemory:
+		case EfiMemoryMappedIO:
+		case EfiMemoryMappedIOPortSpace:
+		case EfiPalCode:
+		default:
+			do_compact = false;
+			break;
+		}
+
+		if (first) {
+			first = false;
+		} else if (do_compact &&
+		    type == target->Type &&
+		    md->Attribute == target->Attribute &&
+		    md->PhysicalStart == target->PhysicalStart + target->NumberOfPages * EFI_PAGE_SIZE) {
+			/* continuous region */
+			target->NumberOfPages += md->NumberOfPages;
+
+			tmp = md;
+			for (j = i + 1; j < *NoEntries; j++) {
+				next = NextMemoryDescriptor(md, DescriptorSize);
+				CopyMem(md, next, DescriptorSize);
+				md = next;
+			}
+			next = tmp;
+
+			i--;
+			(*NoEntries)--;
+			continue;
+		} else {
+			target = md;
+		}
+
+		target->Type = type;
+		next = NextMemoryDescriptor(md, DescriptorSize);
+	}
+
 	return desc;
 }
 
@@ -273,7 +349,7 @@ efi_memory_probe(void)
 }
 
 void
-efi_memory_show_map(bool sorted)
+efi_memory_show_map(bool sorted, bool compact)
 {
 	EFI_STATUS status;
 	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
@@ -292,6 +368,8 @@ efi_memory_show_map(bool sorted)
 
 	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, sorted);
+	if (compact)
+		efi_memory_compact_map(mdtop, &NoEntries, DescriptorSize);
 
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
