@@ -149,7 +149,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    for (;; ++__to_next, __from += __conv)
 	      {
 		__conv = mbrtowc_l(__to_next, __from, __from_end - __from,
-				 &__tmp_state), (locale_t)_M_c_locale_codecvt);
+				 &__tmp_state, (locale_t)_M_c_locale_codecvt);
 		if (__conv == static_cast<size_t>(-1)
 		    || __conv == static_cast<size_t>(-2))
 		  break;
