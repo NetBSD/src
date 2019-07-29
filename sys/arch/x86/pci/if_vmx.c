@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.41 2019/07/29 02:20:59 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.42 2019/07/29 09:45:16 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.41 2019/07/29 02:20:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.42 2019/07/29 09:45:16 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1046,6 +1046,12 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 
 	txq->vxtxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    vmxnet3_deferred_transmit, txq);
+	if (txq->vxtxq_si == NULL) {
+		mutex_obj_free(txq->vxtxq_mtx);
+		aprint_error_dev(sc->vmx_dev,
+		    "softint_establish for vxtxq_si failed\n");
+		return ENOMEM;
+	}
 
 	txr->vxtxr_ndesc = sc->vmx_ntxdescs;
 	txr->vxtxr_txbuf = kmem_zalloc(txr->vxtxr_ndesc *
