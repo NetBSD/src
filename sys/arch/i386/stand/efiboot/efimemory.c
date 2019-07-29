@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.7 2019/07/29 11:28:51 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.8 2019/07/29 11:33:07 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,38 +30,22 @@
 
 #include <bootinfo.h>
 
-static const char *memtypes[] = {
-	"unknown",
-	"available",
-	"reserved",
-	"ACPI reclaimable",
-	"ACPI NVS",
-	"unusable",
-	"disabled",
-	"Persistent",
-	"undefined (8)",
-	"undefined (9)",
-	"undefined (10)",
-	"undefined (11)",
-	"Persistent (Legacy)"
-};
-
-static const char *efimemtypes[] = {
-	"Reserved",
-	"LoaderCode",
-	"LoaderData",
-	"BootServicesCode",
-	"BootServicesData",
-	"RuntimeServicesCode",
-	"RuntimeServicesData",
-	"ConventionalMemory",
-	"UnusableMemory",
-	"ACPIReclaimMemory",
-	"ACPIMemoryNVS",
-	"MemoryMappedIO",
-	"MemoryMappedIOPortSpace",
-	"PalCode",
-	"PersistentMemory",
+static const char *efi_memory_type[] = {
+	[EfiReservedMemoryType]		= "Reserved Memory Type",
+	[EfiLoaderCode]			= "Loader Code",
+	[EfiLoaderData]			= "Loader Data",
+	[EfiBootServicesCode]		= "Boot Services Code",
+	[EfiBootServicesData]		= "Boot Services Data",
+	[EfiRuntimeServicesCode]	= "Runtime Services Code",
+	[EfiRuntimeServicesData]	= "Runtime Services Data",
+	[EfiConventionalMemory]		= "Conventional Memory",
+	[EfiUnusableMemory]		= "Unusable Memory",
+	[EfiACPIReclaimMemory]		= "ACPI Reclaim Memory",
+	[EfiACPIMemoryNVS]		= "ACPI Memory NVS",
+	[EfiMemoryMappedIO]		= "MMIO",
+	[EfiMemoryMappedIOPortSpace]	= "MMIO (Port Space)",
+	[EfiPalCode]			= "Pal Code",
+	[EfiPersistentMemory]		= "Persistent Memory",
 };
 
 #ifndef KERN_LOADSPACE_SIZE
@@ -355,9 +339,8 @@ efi_memory_show_map(bool sorted, bool compact)
 	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
 	UINTN i, NoEntries, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
-	char memstr[32], efimemstr[32];
-	int memtype;
-	UINTN cols, rows, row = 0;
+	char efimemstr[32];
+	UINTN cols, rows, row;
 
 	status = uefi_call_wrapper(ST->ConOut->QueryMode, 4, ST->ConOut,
 	    ST->ConOut->Mode->Mode, &cols, &rows);
@@ -371,24 +354,23 @@ efi_memory_show_map(bool sorted, bool compact)
 	if (compact)
 		efi_memory_compact_map(mdtop, &NoEntries, DescriptorSize);
 
+	printf("%-22s  %-16s  %-16s  %-16s\n", "Type", "Start", "End", "Attributes");
+	printf("----------------------  ----------------  ----------------  ----------------\n");
+	row = 2;
+
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
 
-		memtype = getmemtype(md);
-		if (memtype >= __arraycount(memtypes))
-			snprintf(memstr, sizeof(memstr), "unknown (%d)",
-			    memtype);
-		if (md->Type >= __arraycount(efimemtypes))
+		if (md->Type >= __arraycount(efi_memory_type))
 			snprintf(efimemstr, sizeof(efimemstr), "unknown (%d)",
 			    md->Type);
-		printf("%016" PRIxMAX "/%016" PRIxMAX ": %s [%s]\n",
+		printf("%-22s  %016" PRIxMAX "  %016" PRIxMAX "  %016" PRIxMAX "\n",
+		    md->Type >= __arraycount(efi_memory_type) ?
+		      efimemstr : efi_memory_type[md->Type],
 		    (uintmax_t)md->PhysicalStart,
 		    (uintmax_t)md->PhysicalStart +
 		      md->NumberOfPages * EFI_PAGE_SIZE - 1,
-		    memtype >= __arraycount(memtypes) ?
-		      memstr : memtypes[memtype],
-		    md->Type >= __arraycount(efimemtypes) ?
-		      efimemstr : efimemtypes[md->Type]);
+		    (uintmax_t)md->Attribute);
 
 		if (++row >= rows) {
 			row = 0;
