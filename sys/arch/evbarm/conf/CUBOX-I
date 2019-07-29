@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.21 2019/07/24 12:33:18 hkenken Exp $
+# $NetBSD: CUBOX-I,v 1.22 2019/07/29 11:11:19 martin Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -21,6 +21,7 @@ options 	CPU_CORTEXA9
 options 	IMX6
 options 	MULTIPROCESSOR
 options 	PMAPCOUNTERS
+makeoptions	CPUFLAGS="-march=armv7-a -mfpu=vfpv3"
 
 # Standard system options
 
