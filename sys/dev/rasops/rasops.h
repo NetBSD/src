@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.37 2019/07/28 12:06:10 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.38 2019/07/29 08:13:50 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,6 +152,18 @@ struct rasops_info {
 #define	FONT_GLYPH(uc, font, ri)					\
 	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
 	    (ri)->ri_fontscale)
+
+static __inline uint32_t
+be32uatoh(uint8_t *p)
+{
+	uint32_t u;
+
+	u  = p[0]; u <<= 8;
+	u |= p[1]; u <<= 8;
+	u |= p[2]; u <<= 8;
+	u |= p[3];
+	return u;
+}
 
 /*
  * rasops_init().
