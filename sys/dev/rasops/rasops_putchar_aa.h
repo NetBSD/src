@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_aa.h,v 1.1 2019/07/29 10:55:56 rin Exp $ */
+/* $NetBSD: rasops_putchar_aa.h,v 1.2 2019/07/29 14:06:32 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp */
 /*-
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if RASOPS_DEPTH != 8 && RASOPS_DEPTH != 15 && /* RASOPS_DEPTH != 24 && */ \
+#if RASOPS_DEPTH != 8 && RASOPS_DEPTH != 15 && RASOPS_DEPTH != 24 && \
     RASOPS_DEPTH != 32
 #error "Depth not supported"
 #endif
@@ -38,33 +38,63 @@
 #define	PUTCHAR_AA(depth)	PUTCHAR_AA1(depth)
 #define	PUTCHAR_AA1(depth)	rasops ## depth ## _putchar_aa
 
+#define	MAX_WIDTH	64	/* XXX */
+
 #if   RASOPS_DEPTH == 8
 #define	PIXEL_TYPE	uint8_t
-#define	PIXEL_BITS	8
 #elif RASOPS_DEPTH == 15
 #define	PIXEL_TYPE	uint16_t
-#define	PIXEL_BITS	16
+#elif RASOPS_DEPTH == 24
+#define	PIXEL_TYPE	uint8_t
 #elif RASOPS_DEPTH == 32
 #define	PIXEL_TYPE	uint32_t
-#define	PIXEL_BITS	32
 #endif
 
-#define	MAX_WIDTH	64	/* XXX */
+#if RASOPS_DEPTH != 24
+#define	PIXEL_LEN	sizeof(PIXEL_TYPE)
+#define	BUF_LEN		MAX_WIDTH
+#define	SET_PIXEL(x, c)	buf[x] = clr[c]
+#endif /* RASOPS_DEPTH != 24 */
+
+#if RASOPS_DEPTH == 24
+#define	PIXEL_LEN	3
+#define	BUF_LEN		(MAX_WIDTH * 3)
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#define	ROFF		(ri->ri_rpos / 8)
+#define	GOFF		(ri->ri_gpos / 8)
+#define	BOFF		(ri->ri_bpos / 8)
+#  else	/* BIG_ENDIAN XXX not tested */
+#define	ROFF		(2 - ri->ri_rpos / 8)
+#define	GOFF		(2 - ri->ri_gpos / 8)
+#define	BOFF		(2 - ri->ri_bpos / 8)
+#  endif
+#define	SET_PIXEL(x, c)				\
+	do {					\
+		buf[3 * x + ROFF] = r[c];	\
+		buf[3 * x + GOFF] = g[c];	\
+		buf[3 * x + BOFF] = b[c];	\
+	} while (0 /* CONSTCOND */)
+#endif /* RASOPS_DEPTH == 24 */
+
+#if RASOPS_DEPTH != 8
+#define	SET_BUF(c)	for (x = 0; x < width; x++) { SET_PIXEL(x, c); }
+#else
+#define	SET_BUF(c)	memset(buf, clr[c], width)
+#endif
 
 static void
 PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int height, width, bgo, fgo, x, y;
-	uint8_t *fr, r0, r1, g0, g1, b0, b1, aval;
-#if RASOPS_DEPTH == 8
-	uint16_t r, g, b;
-#else
-	PIXEL_TYPE r, g, b;
+	int height, width, x, y, off[2];
+	uint16_t r[2], g[2], b[2];
+	uint8_t *fr, aval;
+	PIXEL_TYPE *rp, *hp, R, G, B;
+	PIXEL_TYPE buf[BUF_LEN] __attribute__ ((aligned(8))); /* XXX */
+#if RASOPS_DEPTH != 24
+	PIXEL_TYPE clr[2];
 #endif
-	PIXEL_TYPE *rp, *hp, bg, fg, pixel;
-	PIXEL_TYPE buf[MAX_WIDTH] __attribute__ ((aligned(8))); /* XXX */
 
 	hp = NULL;	/* XXX GCC */
 
@@ -93,65 +123,72 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	if (__predict_false(width > MAX_WIDTH))
 		width = MAX_WIDTH;
 
-	bg = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	fg = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
+#if RASOPS_DEPTH != 24
+	clr[0] = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	clr[1] = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
+#endif
+
+	/*
+	 * This is independent to positions/lengths of RGB in pixel.
+	 */
+	off[0] = (((uint32_t)attr >> 16) & 0xf) * 3;
+	off[1] = (((uint32_t)attr >> 24) & 0xf) * 3;
+
+	r[0] = rasops_cmap[off[0]];
+	r[1] = rasops_cmap[off[1]];
+	g[0] = rasops_cmap[off[0] + 1];
+	g[1] = rasops_cmap[off[1] + 1];
+	b[0] = rasops_cmap[off[0] + 2];
+	b[1] = rasops_cmap[off[1] + 2];
 
 	if (uc == ' ') {
-#if RASOPS_DEPTH == 8
-		memset(buf, bg, width);
-#else
-		for (x = 0; x < width; x++)
-			buf[x] = bg;
-#endif
+		SET_BUF(0);
 		while (height--) {
-			memcpy(rp, buf, width * sizeof(PIXEL_TYPE));
+			memcpy(rp, buf, width * PIXEL_LEN);
 			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 			if (ri->ri_hwbits) {
-				memcpy(hp, buf, width * sizeof(PIXEL_TYPE));
+				memcpy(hp, buf, width * PIXEL_LEN);
 				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
 		}
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
 
-		/*
-		 * This is independent to positions/lengths of RGB in pixel.
-		 */
-		bgo = (((uint32_t)attr >> 16) & 0xf) * 3;
-		fgo = (((uint32_t)attr >> 24) & 0xf) * 3;
-
-		r0 = rasops_cmap[bgo];
-		r1 = rasops_cmap[fgo];
-		g0 = rasops_cmap[bgo + 1];
-		g1 = rasops_cmap[fgo + 1];
-		b0 = rasops_cmap[bgo + 2];
-		b1 = rasops_cmap[fgo + 2];
-
 		for (y = 0; y < height; y++) {
 			for (x = 0; x < width; x++) {
 				aval = *fr;
 				fr++;
-				if (aval == 0) {
-					pixel = bg;
-				} else if (aval == 255) {
-					pixel = fg;
-				} else {
-					r = aval * r1 + (0xff - aval) * r0;
-					g = aval * g1 + (0xff - aval) * g0;
-					b = aval * b1 + (0xff - aval) * b0;
-#define	RGB2PIXEL(r, g, b)						\
-	((((r) & 0xff00) >> (8 + 8 - ri->ri_rnum)) << ri->ri_rpos) |	\
-	((((g) & 0xff00) >> (8 + 8 - ri->ri_gnum)) << ri->ri_gpos) |	\
-	((((b) & 0xff00) >> (8 + 8 - ri->ri_bnum)) << ri->ri_bpos)
-					pixel = RGB2PIXEL(r, g, b);
+				if (aval == 0)
+					SET_PIXEL(x, 0);
+				else if (aval == 255)
+					SET_PIXEL(x, 1);
+				else {
+#define	AVERAGE(p, w)	((w * p[1] + (0xff - w) * p[0]) >> 8)
+					R = AVERAGE(r, aval);
+					G = AVERAGE(g, aval);
+					B = AVERAGE(b, aval);
+#undef	AVERAGE
+
+#if RASOPS_DEPTH != 24
+#define	RGB2PIXEL(_r, _g, _b)				\
+	(((_r) >> (8 - ri->ri_rnum)) << ri->ri_rpos) |	\
+	(((_g) >> (8 - ri->ri_gnum)) << ri->ri_gpos) |	\
+	(((_b) >> (8 - ri->ri_bnum)) << ri->ri_bpos)
+					buf[x] = RGB2PIXEL(R, G, B);
 #undef	RGB2PIXEL
+#endif
+
+#if RASOPS_DEPTH == 24
+					buf[3 * x + ROFF] = R;
+					buf[3 * x + GOFF] = G;
+					buf[3 * x + BOFF] = B;
+#endif
 				}
-				buf[x] = pixel;
 			}
-			memcpy(rp, buf, width * sizeof(PIXEL_TYPE));
+			memcpy(rp, buf, width * PIXEL_LEN);
 			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 			if (ri->ri_hwbits) {
-				memcpy(hp, buf, width * sizeof(PIXEL_TYPE));
+				memcpy(hp, buf, width * PIXEL_LEN);
 				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
 		}
@@ -159,22 +196,27 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
+		SET_BUF(1);
 		DELTA(rp, -(ri->ri_stride << 1), PIXEL_TYPE *);
-		if (ri->ri_hwbits) {
+		if (ri->ri_hwbits)
 			DELTA(hp, -(ri->ri_stride << 1), PIXEL_TYPE *);
-		}
-		while (width--) {
-			*rp++ = fg;
-			if (ri->ri_hwbits)
-				*hp++ = fg;
-		}
+		memcpy(rp, buf, width * PIXEL_LEN);
+		if (ri->ri_hwbits)
+			memcpy(hp, buf, width * PIXEL_LEN);
 	}
 }
 
 #undef	PUTCHAR_AA
 #undef	PUTCHAR_AA1
 
-#undef	PIXEL_TYPE
-#undef	PIXEL_BITS
-
 #undef	MAX_WIDTH
+
+#undef	PIXEL_TYPE
+#undef	PIXEL_LEN
+#undef	SET_PIXEL
+
+#undef	ROFF
+#undef	GOFF
+#undef	BOFF
+
+#undef	SET_BUF
