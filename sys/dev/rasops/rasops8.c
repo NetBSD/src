@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.44 2019/07/29 10:55:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.44 2019/07/29 10:55:56 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -107,108 +107,7 @@ rasops8_init(struct rasops_info *ri)
 
 #define	RASOPS_DEPTH	8
 #include "rasops_putchar.h"
-
-static void
-rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
-{
-	int width, height;
-	uint8_t *rp, *hrp, *fr, bg, fg, pixel;
-	struct rasops_info *ri = (struct rasops_info *)cookie;
-	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int x, y, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0, fgo, bgo;
-	uint8_t scanline[32] __attribute__ ((aligned(8)));
-
-	hrp = NULL;	/* XXX GCC */
-
-	if (!CHAR_IN_FONT(uc, font))
-		return;
-
-#ifdef RASOPS_CLIPPING
-	/* Catches 'row < 0' case too */
-	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
-
-	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
-#endif
-	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
-	if (ri->ri_hwbits)
-		hrp = ri->ri_hwbits + row * ri->ri_yscale + col *
-		    ri->ri_xscale;
-
-	height = font->fontheight;
-	width = font->fontwidth;
-	bg = (uint8_t)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	fg = (uint8_t)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
-
-	if (uc == ' ') {
-
-		while (height--) {
-			memset(rp, bg, width);
-			if (ri->ri_hwbits) {
-				memset(hrp, bg, width);
-				hrp += ri->ri_stride;
-			}
-			rp += ri->ri_stride;
-		}
-	} else {
-		fr = FONT_GLYPH(uc, font, ri);
-		/*
-		 * we need the RGB colours here, get offsets into rasops_cmap
-		 */
-		fgo = (((uint32_t)attr >> 24) & 0xf) * 3;
-		bgo = (((uint32_t)attr >> 16) & 0xf) * 3;
-
-		r0 = rasops_cmap[bgo];
-		r1 = rasops_cmap[fgo];
-		g0 = rasops_cmap[bgo + 1];
-		g1 = rasops_cmap[fgo + 1];
-		b0 = rasops_cmap[bgo + 2];
-		b1 = rasops_cmap[fgo + 2];
-
-		for (y = 0; y < height; y++) {
-			for (x = 0; x < width; x++) {
-				aval = *fr;
-				fr++;
-				if (aval == 0) {
-					pixel = bg;
-				} else if (aval == 255) {
-					pixel = fg;
-				} else {
-					r = aval * r1 + (255 - aval) * r0;
-					g = aval * g1 + (255 - aval) * g0;
-					b = aval * b1 + (255 - aval) * b0;
-					pixel = ((r & 0xe000) >> 8) |
-						((g & 0xe000) >> 11) |
-						((b & 0xc000) >> 14);
-				}
-				scanline[x] = pixel;
-			}
-			memcpy(rp, scanline, width);
-			if (ri->ri_hwbits) {
-				memcpy(hrp, scanline, width);
-				hrp += ri->ri_stride;
-			}
-			rp += ri->ri_stride;
-
-		}
-	}
-
-	/* Do underline */
-	if ((attr & WSATTR_UNDERLINE) != 0) {
-
-		rp -= (ri->ri_stride << 1);
-		if (ri->ri_hwbits)
-			hrp -= (ri->ri_stride << 1);
-
-		while (width--) {
-			*rp++ = fg;
-			if (ri->ri_hwbits)
-				*hrp++ = fg;
-		}
-	}
-}
+#include "rasops_putchar_aa.h"
 
 #ifndef RASOPS_SMALL
 /*
