@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.95 2019/07/29 01:04:20 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.96 2019/07/29 14:43:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.95 2019/07/29 01:04:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.96 2019/07/29 14:43:14 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -899,8 +899,13 @@ rasops_init_devcmap(struct rasops_info *ri)
 			c |= c << 16;
 		} else if (ri->ri_depth == 15 || ri->ri_depth == 16)
 			c |= c << 16;
-		else if (ri->ri_depth == 24)
+		else if (ri->ri_depth == 24) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+			c = (c & 0x0000ff) << 16 | (c & 0x00ff00) |
+			    (c & 0xff0000) >> 16;
+#endif
 			c |= (c & 0xff) << 24;
+		}
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
 		if ((ri->ri_flg & RI_BSWAP) == 0)
