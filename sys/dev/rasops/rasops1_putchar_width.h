@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1_putchar_width.h,v 1.1 2019/07/29 02:57:41 rin Exp $ */
+/* $NetBSD: rasops1_putchar_width.h,v 1.2 2019/07/29 17:22:19 rin Exp $ */
 
 /* NetBSD: rasops1.c,v 1.28 2019/07/25 03:02:44 rin Exp */
 /*-
@@ -94,9 +94,7 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 		while (height--) {
 			*rp = bg;
 			DELTA(rp, rs, COPY_UNIT *);
-		}
-		if (ri->ri_hwbits) {
-			while (height--) {
+			if (ri->ri_hwbits) {
 				*hrp = bg;
 				DELTA(hrp, rs, COPY_UNIT *);
 			}
