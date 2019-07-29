@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.37 2019/07/29 14:06:32 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.38 2019/07/29 16:17:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.37 2019/07/29 14:06:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.38 2019/07/29 16:17:29 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -79,6 +79,14 @@ static int	stamp_mutex;	/* XXX see note in readme */
 void
 rasops24_init(struct rasops_info *ri)
 {
+
+#ifndef RASOPS_SMALL
+	/*
+	 * Different devcmap's are used depending on font widths,
+	 * therefore we need reset stamp here.
+	 */
+	stamp_attr = 0;
+#endif
 
 	if (ri->ri_rnum == 0) {
 		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
