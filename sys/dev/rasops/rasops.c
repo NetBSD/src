@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.94 2019/07/28 12:06:10 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.95 2019/07/29 01:04:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.94 2019/07/28 12:06:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.95 2019/07/29 01:04:20 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -511,7 +511,7 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		rasops8_init(ri);
 		break;
 #endif
-#if NRASOPS15 > 0 || NRASOPS16 > 0
+#if (NRASOPS15 + NRASOPS16) > 0
 	case 15:
 	case 16:
 		rasops15_init(ri);
@@ -659,7 +659,7 @@ rasops_allocattr_mono(void *cookie, int fg0, int bg0, int flg, long *attr)
 		bg = swap;
 	}
 
-	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
+	*attr = (bg << 16) | (fg << 24) | flg;
 	return 0;
 }
 
