@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.60 2018/11/24 18:10:29 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.61 2019/07/29 12:07:57 gdt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.60 2018/11/24 18:10:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.61 2019/07/29 12:07:57 gdt Exp $");
 
 #include "bio.h"
 
@@ -869,6 +869,7 @@ mfi_get_bbu(struct mfi_softc *sc, struct mfi_bbu_status *stat)
 		    stat->detail.bbu.remaining_capacity ,
 		    stat->detail.bbu.full_charge_capacity ,
 		    stat->detail.bbu.is_SOH_good);
+		break;
 	default:
 		printf("\n");
 	}
