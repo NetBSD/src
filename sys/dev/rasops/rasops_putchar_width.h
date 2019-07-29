@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.6 2019/07/28 12:06:10 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.7 2019/07/29 03:01:09 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -30,21 +30,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if RASOPS_DEPTH != 8 && RASOPS_DEPTH != 15 && RASOPS_DEPTH != 24 && \
-    RASOPS_DEPTH != 32
+#if RASOPS_DEPTH !=  2 && RASOPS_DEPTH !=  4 && RASOPS_DEPTH !=  8 &&	\
+    RASOPS_DEPTH != 15 && RASOPS_DEPTH != 24 && RASOPS_DEPTH != 32
 #error "Depth not supported"
 #endif
 
 #if RASOPS_WIDTH != 8 && RASOPS_WIDTH != 12 && RASOPS_WIDTH != 16
 #error "Width not supported"
-#endif
-
-#if   RASOPS_DEPTH == 8
-#define	FILLED_STAMP	15
-#elif RASOPS_DEPTH == 15
-#define	FILLED_STAMP	30
-#else
-#define	FILLED_STAMP	60
 #endif
 
 #define	PUTCHAR_WIDTH1(depth, width)	rasops ## depth ## _putchar ## width
@@ -56,9 +48,25 @@
 #define	MAKESTAMP1(depth)		rasops ## depth ## _makestamp
 #define	MAKESTAMP(depth)		MAKESTAMP1(depth)
 
+#if   RASOPS_DEPTH == 2
+#define	STAMP_TYPE	uint8_t
+#elif RASOPS_DEPTH == 4
+#define	STAMP_TYPE	uint16_t
+#else
+#define	STAMP_TYPE	uint32_t
+#endif
+
+#if   RASOPS_DEPTH <= 8
+#define	FILLED_STAMP	15
+#elif RASOPS_DEPTH == 15
+#define	FILLED_STAMP	30
+#else
+#define	FILLED_STAMP	60
+#endif
+
 /* ################################################################### */
 
-#if RASOPS_DEPTH == 8
+#if RASOPS_DEPTH <= 8
 
 #define	SUBST_STAMP1(p, off, base)					\
 	(p)[(off) * 1 + 0] = stamp[base]
@@ -72,7 +80,7 @@
 		}							\
 	} while (0 /* CONSTCOND */)
 
-#endif /* RASOPS_DEPTH == 8 */
+#endif /* RASOPS_DEPTH <= 8 */
 
 /* ################################################################### */
 
@@ -203,7 +211,7 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs;
-	uint32_t *rp, *hrp;
+	STAMP_TYPE *rp, *hrp;
 	uint8_t *fr;
 
 	hrp = NULL; /* XXX GCC */
@@ -232,20 +240,23 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	if (attr != stamp_attr)
 		MAKESTAMP(RASOPS_DEPTH)(ri, attr);
 
-	rp = (uint32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (STAMP_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
-		    col*ri->ri_xscale);
+		hrp = (STAMP_TYPE *)(ri->ri_hwbits + row * ri->ri_yscale +
+		    col * ri->ri_xscale);
 
 	height = font->fontheight;
 
 	if (uc == ' ') {
 		while (height--) {
 			SUBST_STAMP(rp, 0);
-			DELTA(rp, ri->ri_stride, uint32_t *);
-			if (ri->ri_hwbits) {
+			DELTA(rp, ri->ri_stride, STAMP_TYPE *);
+		}
+		if (ri->ri_hwbits) {
+			while (height--) {
 				SUBST_STAMP(hrp, 0);
-				DELTA(hrp, ri->ri_stride, uint32_t *);
+				DELTA(hrp, ri->ri_stride, STAMP_TYPE *);
 			}
 		}
 	} else {
@@ -256,24 +267,26 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 			SUBST_GLYPH;
 
 			fr += fs;
-			DELTA(rp, ri->ri_stride, uint32_t *);
+			DELTA(rp, ri->ri_stride, STAMP_TYPE *);
 			if (ri->ri_hwbits)
-				DELTA(hrp, ri->ri_stride, uint32_t *);
+				DELTA(hrp, ri->ri_stride, STAMP_TYPE *);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
+		DELTA(rp, -(ri->ri_stride << 1), STAMP_TYPE *);
 		SUBST_STAMP(rp, FILLED_STAMP);
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
+			DELTA(hrp, -(ri->ri_stride << 1), STAMP_TYPE *);
 			SUBST_STAMP(hrp, FILLED_STAMP);
 		}
 	}
 
 	stamp_mutex--;
 }
+
+#undef	STAMP_TYPE
 
 #undef	FILLED_STAMP
 
