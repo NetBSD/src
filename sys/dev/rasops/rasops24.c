@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.36 2019/07/28 12:06:10 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.37 2019/07/29 14:06:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.36 2019/07/28 12:06:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.37 2019/07/29 14:06:32 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.36 2019/07/28 12:06:10 rin Exp $");
 static void 	rasops24_erasecols(void *, int, int, int, long);
 static void 	rasops24_eraserows(void *, int, int, long);
 static void 	rasops24_putchar(void *, int, int, u_int, long);
+static void 	rasops24_putchar_aa(void *, int, int, u_int, long);
 #ifndef RASOPS_SMALL
 static void 	rasops24_putchar8(void *, int, int, u_int, long);
 static void 	rasops24_putchar12(void *, int, int, u_int, long);
@@ -90,6 +91,11 @@ rasops24_init(struct rasops_info *ri)
 	ri->ri_ops.erasecols = rasops24_erasecols;
 	ri->ri_ops.eraserows = rasops24_eraserows;
 
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = rasops24_putchar_aa;
+		return;
+	}
+
 	switch (ri->ri_font->fontwidth) {
 #ifndef RASOPS_SMALL
 	case 8:
@@ -110,6 +116,7 @@ rasops24_init(struct rasops_info *ri)
 
 #define	RASOPS_DEPTH	24
 #include "rasops_putchar.h"
+#include "rasops_putchar_aa.h"
 
 #ifndef RASOPS_SMALL
 /*
