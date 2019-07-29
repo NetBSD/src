@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.66 2019/07/28 02:42:48 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.67 2019/07/29 14:07:37 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.66 2019/07/28 02:42:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.67 2019/07/29 14:07:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,16 +557,13 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
 
-	if (existing && sc->sc_want_clear) {
+	if (existing && sc->sc_want_clear)
 		ri->ri_flg |= RI_CLEAR;
-	}
 
 	if (ri->ri_depth == 32 || ri->ri_depth == 24) {
-		bool is_bgr = false;
+		ri->ri_flg |= RI_ENABLE_ALPHA;
 
-		if (ri->ri_depth == 32) {
-			ri->ri_flg |= RI_ENABLE_ALPHA;
-		}
+		bool is_bgr = false;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
 		if (is_bgr) {
