@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.9 2019/07/29 11:28:51 nonaka Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.10 2019/07/29 12:37:26 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -88,6 +88,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 		}
 	}
 
+	efi_memory_probe();
 	efi_disk_probe();
 	efi_pxe_probe();
 	efi_net_probe();
