@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.96 2019/07/29 14:43:14 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.97 2019/07/29 16:17:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.96 2019/07/29 14:43:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.97 2019/07/29 16:17:29 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -901,8 +901,18 @@ rasops_init_devcmap(struct rasops_info *ri)
 			c |= c << 16;
 		else if (ri->ri_depth == 24) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-			c = (c & 0x0000ff) << 16 | (c & 0x00ff00) |
-			    (c & 0xff0000) >> 16;
+#  ifndef RASOPS_SMALL
+			if (ri->ri_font->fontwidth != 12)
+#  endif
+				c = (c & 0x0000ff) << 16 | (c & 0x00ff00) |
+				    (c & 0xff0000) >> 16;
+#  ifndef RASOPS_SMALL
+			else
+				c = (c & 0x0000ff) | (c & 0x00ff00) << 8 |
+				    (c & 0xff0000) >> 8;
+#  endif
+#else
+			/* XXXRO What should we do here? */
 #endif
 			c |= (c & 0xff) << 24;
 		}
