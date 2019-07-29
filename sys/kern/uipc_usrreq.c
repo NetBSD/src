@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.193 2019/06/03 06:04:20 msaitoh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.193 2019/06/03 06:04:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1573,6 +1573,7 @@ unp_internalize(struct mbuf **controlp)
 		goto out;
 	}
 	memcpy(newcm, cm, sizeof(struct cmsghdr));
+	memset(newcm + 1, 0, CMSG_LEN(0) - sizeof(struct cmsghdr));
 	files = (file_t **)CMSG_DATA(newcm);
 
 	/*
