@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.3 2019/07/28 12:10:52 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.4 2019/07/29 08:13:50 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -70,7 +70,8 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int width, height, cnt, fs, fb;
+	int width, height, cnt, fs;
+	uint32_t fb;
 	uint8_t *dp, *rp, *hp, *hrp, *fr;
 	CLR_TYPE clr[2];
 
@@ -124,8 +125,7 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 				hp = hrp;
 				hrp += ri->ri_stride;
 			}
-			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) |
-			    (fr[0] << 24);
+			fb = be32uatoh(fr);
 			fr += fs;
 			for (cnt = width; cnt; cnt--) {
 				SUBST_CLR(dp, (fb >> 31) & 1);

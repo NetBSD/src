@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.29 2019/07/29 02:57:41 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.30 2019/07/29 08:13:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.29 2019/07/29 02:57:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.30 2019/07/29 08:13:50 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -151,8 +151,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		} else {
 			while (height--) {
 				tmp = *rp & lmask;
-				fb = fr[3] | (fr[2] << 8) |
-				    (fr[1] << 16) | (fr[0] << 24);
+				fb = be32uatoh(fr);
 				fr += fs;
 				if (bg)
 					fb = ~fb;
@@ -202,8 +201,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			while (height--) {
 				tmp0 = rp[0] & lmask;
 				tmp1 = rp[1] & rmask;
-				fb = fr[3] | (fr[2] << 8) |
-				    (fr[1] << 16) | (fr[0] << 24);
+				fb = be32uatoh(fr);
 				fr += fs;
 				if (bg)
 					fb = ~fb;
