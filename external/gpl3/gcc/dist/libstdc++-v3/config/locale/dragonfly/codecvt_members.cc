@@ -232,7 +232,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	const extern_type* __tmp_from = __from;
 	size_t __conv = mbsnrtowcs_l(__to, &__from,
 				   __from_chunk_end - __from,
-				   __max, &__state),
+				   __max, &__state,
 				   (locale_t)_M_c_locale_codecvt);
 	if (__conv == static_cast<size_t>(-1))
 	  {
