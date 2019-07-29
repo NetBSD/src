@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_aa.h,v 1.2 2019/07/29 14:06:32 rin Exp $ */
+/* $NetBSD: rasops_putchar_aa.h,v 1.3 2019/07/29 14:59:25 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp */
 /*-
@@ -51,30 +51,23 @@
 #endif
 
 #if RASOPS_DEPTH != 24
+#define	COLOR_TYPE	PIXEL_TYPE
 #define	PIXEL_LEN	sizeof(PIXEL_TYPE)
 #define	BUF_LEN		MAX_WIDTH
 #define	SET_PIXEL(x, c)	buf[x] = clr[c]
-#endif /* RASOPS_DEPTH != 24 */
+#endif
 
 #if RASOPS_DEPTH == 24
+#define	COLOR_TYPE	uint32_t
 #define	PIXEL_LEN	3
 #define	BUF_LEN		(MAX_WIDTH * 3)
-#  if BYTE_ORDER == LITTLE_ENDIAN
-#define	ROFF		(ri->ri_rpos / 8)
-#define	GOFF		(ri->ri_gpos / 8)
-#define	BOFF		(ri->ri_bpos / 8)
-#  else	/* BIG_ENDIAN XXX not tested */
-#define	ROFF		(2 - ri->ri_rpos / 8)
-#define	GOFF		(2 - ri->ri_gpos / 8)
-#define	BOFF		(2 - ri->ri_bpos / 8)
-#  endif
 #define	SET_PIXEL(x, c)				\
 	do {					\
-		buf[3 * x + ROFF] = r[c];	\
-		buf[3 * x + GOFF] = g[c];	\
-		buf[3 * x + BOFF] = b[c];	\
+		buf[3 * x + 0] = clr[c] >> 16;	\
+		buf[3 * x + 1] = clr[c] >> 8;	\
+		buf[3 * x + 2] = clr[c];	\
 	} while (0 /* CONSTCOND */)
-#endif /* RASOPS_DEPTH == 24 */
+#endif
 
 #if RASOPS_DEPTH != 8
 #define	SET_BUF(c)	for (x = 0; x < width; x++) { SET_PIXEL(x, c); }
@@ -92,9 +85,7 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	uint8_t *fr, aval;
 	PIXEL_TYPE *rp, *hp, R, G, B;
 	PIXEL_TYPE buf[BUF_LEN] __attribute__ ((aligned(8))); /* XXX */
-#if RASOPS_DEPTH != 24
-	PIXEL_TYPE clr[2];
-#endif
+	COLOR_TYPE clr[2];
 
 	hp = NULL;	/* XXX GCC */
 
@@ -123,23 +114,8 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	if (__predict_false(width > MAX_WIDTH))
 		width = MAX_WIDTH;
 
-#if RASOPS_DEPTH != 24
-	clr[0] = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	clr[1] = (PIXEL_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
-#endif
-
-	/*
-	 * This is independent to positions/lengths of RGB in pixel.
-	 */
-	off[0] = (((uint32_t)attr >> 16) & 0xf) * 3;
-	off[1] = (((uint32_t)attr >> 24) & 0xf) * 3;
-
-	r[0] = rasops_cmap[off[0]];
-	r[1] = rasops_cmap[off[1]];
-	g[0] = rasops_cmap[off[0] + 1];
-	g[1] = rasops_cmap[off[1] + 1];
-	b[0] = rasops_cmap[off[0] + 2];
-	b[1] = rasops_cmap[off[1] + 2];
+	clr[0] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
+	clr[1] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
 		SET_BUF(0);
@@ -153,6 +129,19 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
+
+		/*
+	 	 * This is independent to positions/lengths of RGB in pixel.
+	 	 */
+		off[0] = (((uint32_t)attr >> 16) & 0xf) * 3;
+		off[1] = (((uint32_t)attr >> 24) & 0xf) * 3;
+
+		r[0] = rasops_cmap[off[0]];
+		r[1] = rasops_cmap[off[1]];
+		g[0] = rasops_cmap[off[0] + 1];
+		g[1] = rasops_cmap[off[1] + 1];
+		b[0] = rasops_cmap[off[0] + 2];
+		b[1] = rasops_cmap[off[1] + 2];
 
 		for (y = 0; y < height; y++) {
 			for (x = 0; x < width; x++) {
@@ -179,9 +168,21 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 #endif
 
 #if RASOPS_DEPTH == 24
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#define	ROFF	(ri->ri_rpos / 8)
+#define	GOFF	(ri->ri_gpos / 8)
+#define	BOFF	(ri->ri_bpos / 8)
+#  else	/* BIG_ENDIAN XXX not tested */
+#define	ROFF	(2 - ri->ri_rpos / 8)
+#define	GOFF	(2 - ri->ri_gpos / 8)
+#define	BOFF	(2 - ri->ri_bpos / 8)
+#  endif
 					buf[3 * x + ROFF] = R;
 					buf[3 * x + GOFF] = G;
 					buf[3 * x + BOFF] = B;
+#undef	ROFF
+#undef	GOFF
+#undef	BOFF
 #endif
 				}
 			}
@@ -212,11 +213,7 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 #undef	MAX_WIDTH
 
 #undef	PIXEL_TYPE
+#undef	COLOR_TYPE
 #undef	PIXEL_LEN
 #undef	SET_PIXEL
-
-#undef	ROFF
-#undef	GOFF
-#undef	BOFF
-
 #undef	SET_BUF
