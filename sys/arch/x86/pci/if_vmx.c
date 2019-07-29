@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.43 2019/07/29 10:24:18 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.43 2019/07/29 10:24:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -291,6 +291,8 @@ struct vmxnet3_softc {
 	u_int vmx_tx_intr_process_limit;
 	u_int vmx_rx_process_limit;
 	u_int vmx_tx_process_limit;
+
+	struct sysctllog *vmx_sysctllog;
 };
 
 #define VMXNET3_STAT
@@ -337,6 +339,7 @@ int vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *);
 int vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *);
 void vmxnet3_set_interrupt_idx(struct vmxnet3_softc *);
 int vmxnet3_setup_interrupts(struct vmxnet3_softc *);
+int vmxnet3_setup_sysctl(struct vmxnet3_softc *);
 
 int vmxnet3_init_rxq(struct vmxnet3_softc *, int);
 int vmxnet3_init_txq(struct vmxnet3_softc *, int);
@@ -615,6 +618,10 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	if (error)
 		return;
 
+	error = vmxnet3_setup_sysctl(sc);
+	if (error)
+		return;
+
 	sc->vmx_flags |= VMXNET3_FLAG_ATTACHED;
 }
 
@@ -638,6 +645,8 @@ vmxnet3_detach(device_t self, int flags)
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 	}
+
+	sysctl_teardown(&sc->vmx_sysctllog);
 
 	vmxnet3_free_interrupts(sc);
 
@@ -1811,6 +1820,69 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	sc->vmx_tx_process_limit = VMXNET3_TX_PROCESS_LIMIT;
 
 	return (0);
+}
+
+int
+vmxnet3_setup_sysctl(struct vmxnet3_softc *sc)
+{
+	const char *devname;
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *rxnode, *txnode;
+	int error;
+
+	log = &sc->vmx_sysctllog;
+	devname = device_xname(sc->vmx_dev);
+
+	error = sysctl_createv(log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, devname,
+	    SYSCTL_DESCR("vmxnet3 information and settings"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rnode, &rxnode,
+	    0, CTLTYPE_NODE, "rx",
+	    SYSCTL_DESCR("vmxnet3 information and settings for Rx"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+	error = sysctl_createv(log, 0, &rxnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "intr_process_limit",
+	    SYSCTL_DESCR("max number of Rx packets to process for interrupt processing"),
+	    NULL, 0, &sc->vmx_rx_intr_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+	error = sysctl_createv(log, 0, &rxnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "process_limit",
+	    SYSCTL_DESCR("max number of Rx packets to process for deferred processing"),
+	    NULL, 0, &sc->vmx_rx_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rnode, &txnode,
+	    0, CTLTYPE_NODE, "tx",
+	    SYSCTL_DESCR("vmxnet3 information and settings for Tx"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+	error = sysctl_createv(log, 0, &txnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "intr_process_limit",
+	    SYSCTL_DESCR("max number of Tx packets to process for interrupt processing"),
+	    NULL, 0, &sc->vmx_tx_intr_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+	error = sysctl_createv(log, 0, &txnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "process_limit",
+	    SYSCTL_DESCR("max number of Tx packets to process for deferred processing"),
+	    NULL, 0, &sc->vmx_tx_process_limit, 0, CTL_CREATE, CTL_EOL);
+
+out:
+	if (error) {
+		aprint_error_dev(sc->vmx_dev,
+		    "unable to create sysctl node\n");
+		sysctl_teardown(log);
+	}
+	return error;
 }
 
 void
