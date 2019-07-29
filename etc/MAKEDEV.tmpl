@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.204 2019/05/31 13:15:00 nia Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.205 2019/07/29 17:53:20 gdt Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -914,6 +914,7 @@ ramdisk)
 
 usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	makedev usb8 usb9 usb10 usb11 usb12 usb13 usb14 usb15
 	makedev uhid0 uhid1 uhid2 uhid3 uhid4 uhid5
 	makedev uhid6 uhid7 uhid8 uhid9 uhid10 uhid11
 	makedev uhid12 uhid13 uhid14 uhid15
