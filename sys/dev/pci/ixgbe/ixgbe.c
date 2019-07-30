@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.198 2019/07/26 04:08:39 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199 2019/07/30 08:44:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3568,8 +3568,13 @@ ixgbe_detach(device_t dev, int flags)
 		return (EBUSY);
 	}
 
-	/* Stop the interface. Callouts are stopped in it. */
-	ixgbe_ifstop(adapter->ifp, 1);
+	/*
+	 * Stop the interface. ixgbe_setup_low_power_mode() calls ixgbe_stop(),
+	 * so it's not required to call ixgbe_stop() directly.
+	 */
+	IXGBE_CORE_LOCK(adapter);
+	ixgbe_setup_low_power_mode(adapter);
+	IXGBE_CORE_UNLOCK(adapter);
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
@@ -3585,10 +3590,6 @@ ixgbe_detach(device_t dev, int flags)
 	pmf_device_deregister(dev);
 
 	ether_ifdetach(adapter->ifp);
-	/* Stop the adapter */
-	IXGBE_CORE_LOCK(adapter);
-	ixgbe_setup_low_power_mode(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 
 	ixgbe_free_softint(adapter);
 
