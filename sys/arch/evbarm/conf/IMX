@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IMX,v 1.1 2019/07/24 13:12:34 hkenken Exp $
+#	$NetBSD: IMX,v 1.2 2019/07/30 06:52:57 hkenken Exp $
 #
 #	NXP(Freescale) I.MX family SoCs
 #
@@ -129,6 +129,10 @@ imxpcie*	at fdt?
 pci*		at imxpcie?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
+
+# IIC
+imxi2c* 	at fdt?
+iic*		at imxi2c?
 
 cinclude "arch/evbarm/conf/IMX.local"
 
