@@ -8,8 +8,9 @@ To compile small dhcpcd, maybe to be used for installation media where
 size is a concern, you can use the `--small` configure option to enable
 a reduced feature set within dhcpcd.
 Currently this just removes non important options out of
-`dhcpcd-definitions.conf`, the logfile option and
-support for DHCPv6 Prefix Delegation.
+`dhcpcd-definitions.conf`, the logfile option,
+DHCPv6 Prefix Delegation and IPv6 address announcement *(to prefer an
+address on another interface)*.
 Other features maybe dropped as and when required.
 dhcpcd can also be made smaller by removing the IPv4 or IPv6 stack:
   *  `--disable-inet`
