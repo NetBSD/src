@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.350 2019/05/25 02:49:26 isaki Exp $
+#	$NetBSD: BRANCHES,v 1.351 2019/07/30 15:56:53 martin Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -317,6 +317,17 @@ Status:		Active
 Start Date:	2017-06-04
 End Date:
 Base Tag:	netbsd-8-base
+Maintainer:	Release Engineering <releng@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-9
+Description:	The NetBSD 9 release branch
+Status:		Active
+Start Date:	2019-07-30
+End Date:
+Base Tag:	netbsd-9-base
 Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
