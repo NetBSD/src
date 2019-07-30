@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.335 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.336 2019/07/30 15:50:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.335 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.336 2019/07/30 15:50:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1827,7 +1827,7 @@ bge_setmulti(struct bge_softc *sc)
 		/* Just want the 7 least-significant bits. */
 		h &= 0x7f;
 
-		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
+		hashes[(h & 0x60) >> 5] |= 1U << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
@@ -5530,7 +5530,8 @@ bge_init(struct ifnet *ifp)
 	/* Load our MAC address. */
 	m = (const uint16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
-	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
+	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI,
+	    ((uint32_t)htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
 	if (ifp->if_flags & IFF_PROMISC)
