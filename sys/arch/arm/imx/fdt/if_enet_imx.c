@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.2 2019/07/30 06:26:31 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.2 2019/07/30 06:26:31 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -40,13 +40,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.1 2019/07/24 13:12:33 hkenken Exp 
 
 #include <dev/fdt/fdtvar.h>
 
+struct enet_fdt_softc {
+	struct enet_softc sc_enet;
+
+	struct fdtbus_gpio_pin *sc_pin_reset;
+};
+
+CFATTACH_DECL_NEW(enet_fdt, sizeof(struct enet_fdt_softc),
+    enet_match, enet_attach, NULL, NULL);
+
 static const char * const compatible[] = {
 	"fsl,imx6q-fec",
 	NULL
 };
 
 static int enet_init_clocks(struct enet_softc *);
-static void enet_phy_reset(const int);
+static void enet_phy_reset(struct enet_fdt_softc *, const int);
 
 int
 enet_match(device_t parent, cfdata_t cf, void *aux)
@@ -59,7 +68,8 @@ enet_match(device_t parent, cfdata_t cf, void *aux)
 void
 enet_attach(device_t parent, device_t self, void *aux)
 {
-	struct enet_softc *sc = device_private(self);
+	struct enet_fdt_softc * const efsc = device_private(self);
+	struct enet_softc *sc = &efsc->sc_enet;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
@@ -93,7 +103,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
 
-	enet_phy_reset(phandle);
+	enet_phy_reset(efsc, phandle);
 
 	sc->sc_dev = self;
 	sc->sc_iot = bst;
@@ -150,13 +160,12 @@ enet_init_clocks(struct enet_softc *sc)
 }
 
 static void
-enet_phy_reset(const int phandle)
+enet_phy_reset(struct enet_fdt_softc *sc, const int phandle)
 {
-	struct fdtbus_gpio_pin *reset;
 	int error;
 
-	reset = fdtbus_gpio_acquire(phandle, "phy-reset-gpios", GPIO_PIN_OUTPUT);
-	if (reset == NULL)
+	sc->sc_pin_reset = fdtbus_gpio_acquire(phandle, "phy-reset-gpios", GPIO_PIN_OUTPUT);
+	if (sc->sc_pin_reset == NULL)
 		return;
 
 	u_int msec;
@@ -165,9 +174,7 @@ enet_phy_reset(const int phandle)
 		msec = 1;
 
 	/* Reset */
-	fdtbus_gpio_write(reset, 1);
+	fdtbus_gpio_write(sc->sc_pin_reset, 1);
 	delay(msec * 1000);
-	fdtbus_gpio_write(reset, 0);
-
-	fdtbus_gpio_release(reset);
+	fdtbus_gpio_write(sc->sc_pin_reset, 0);
 }
