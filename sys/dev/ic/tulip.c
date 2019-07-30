@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.197 2019/05/28 08:59:34 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.198 2019/07/30 16:49:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.197 2019/05/28 08:59:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.198 2019/07/30 16:49:20 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -2943,7 +2943,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 		}
 
 		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
-		mchash[hash >> 5] |= 1 << (hash & 0x1f);
+		mchash[hash >> 5] |= __BIT(hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
