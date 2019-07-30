@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.30 2019/07/29 08:13:50 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.31 2019/07/30 15:29:40 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.30 2019/07/29 08:13:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.31 2019/07/30 15:29:40 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -91,11 +91,11 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	uint32_t fs, rs, fb, bg, fg, lmask, rmask;
 	uint32_t height, width;
-	uint32_t *rp, *hrp, tmp, tmp0, tmp1;
+	uint32_t *rp, *hp, tmp, tmp0, tmp1;
 	uint8_t *fr;
 	bool space;
 
-	hrp = NULL;	/* XXX GCC */
+	hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -110,7 +110,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
 	    ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
-		hrp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
+		hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
 	height = font->fontheight;
 	width = font->fontwidth;
@@ -144,8 +144,8 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				*rp = tmp;
 				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
-					*hrp = tmp;
-					DELTA(hrp, rs, uint32_t *);
+					*hp = tmp;
+					DELTA(hp, rs, uint32_t *);
 				}
 			}
 		} else {
@@ -159,8 +159,8 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				*rp = tmp;
 				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
-					*hrp = tmp;
-					DELTA(hrp, rs, uint32_t *);
+					*hp = tmp;
+					DELTA(hp, rs, uint32_t *);
 				}
 			}
 		}
@@ -171,8 +171,8 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			tmp = (*rp & lmask) | (fg & rmask);
 			*rp = tmp;
 			if (ri->ri_hwbits) {
-				DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
-				*hrp = tmp;
+				DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
+				*hp = tmp;
 			}
 		}
 	} else {
@@ -191,9 +191,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				rp[1] = tmp1;
 				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
-					hrp[0] = tmp0;
-					hrp[1] = tmp1;
-					DELTA(hrp, rs, uint32_t *);
+					hp[0] = tmp0;
+					hp[1] = tmp1;
+					DELTA(hp, rs, uint32_t *);
 				}
 			}
 		} else {
@@ -211,9 +211,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				rp[1] = tmp1;
 				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
-					hrp[0] = tmp0;
-					hrp[1] = tmp1;
-					DELTA(hrp, rs, uint32_t *);
+					hp[0] = tmp0;
+					hp[1] = tmp1;
+					DELTA(hp, rs, uint32_t *);
 				}
 			}
 		}
@@ -226,9 +226,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			rp[0] = tmp0;
 			rp[1] = tmp1;
 			if (ri->ri_hwbits) {
-				DELTA(hrp, -(ri->ri_stride << 1), uint32_t *);
-				hrp[0] = tmp0;
-				hrp[1] = tmp1;
+				DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
+				hp[0] = tmp0;
+				hp[1] = tmp1;
 			}
 		}
 	}
