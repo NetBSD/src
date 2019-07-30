@@ -2329,7 +2329,9 @@ dhcp_arp_new(struct interface *ifp, struct in_addr *addr)
 	return astate;
 }
 #endif
+#endif /* ARP */
 
+#if defined(ARP) || defined(KERNEL_RFC5227)
 static int
 dhcp_arp_address(struct interface *ifp)
 {
@@ -2417,7 +2419,7 @@ dhcp_static(struct interface *ifp)
 	    ia ? &ia->addr : &ifo->req_addr,
 	    ia ? &ia->mask : &ifo->req_mask);
 	if (state->offer_len)
-#ifdef ARP
+#if defined(ARP) || defined(KERNEL_RFC5227)
 		dhcp_arp_bind(ifp);
 #else
 		dhcp_bind(ifp);
@@ -3210,7 +3212,7 @@ rapidcommit:
 	lease->frominfo = 0;
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
-#ifdef ARP
+#if defined(ARP) || defined(KERNEL_RFC5227)
 	dhcp_arp_bind(ifp);
 #else
 	dhcp_bind(ifp);
@@ -3218,70 +3220,80 @@ rapidcommit:
 }
 
 static void *
-get_udp_data(void *udp, size_t *len)
+get_udp_data(void *packet, size_t *len)
 {
-	struct bootp_pkt *p;
+	const struct ip *ip = packet;
+	size_t ip_hl = (size_t)ip->ip_hl * 4;
+	char *p = packet;
 
-	p = (struct bootp_pkt *)udp;
-	*len = (size_t)ntohs(p->ip.ip_len) - sizeof(p->ip) - sizeof(p->udp);
-	return (char *)udp + offsetof(struct bootp_pkt, bootp);
+	p += ip_hl + sizeof(struct udphdr);
+	*len = (size_t)ntohs(ip->ip_len) - sizeof(struct udphdr) - ip_hl;
+	return p;
 }
 
 static int
-valid_udp_packet(void *data, size_t data_len, struct in_addr *from,
-    int noudpcsum)
+valid_udp_packet(void *packet, size_t plen, struct in_addr *from,
+	unsigned int flags)
 {
-	struct bootp_pkt *p;
-	uint16_t bytes;
+	struct ip *ip = packet;
+	char ip_hlv = *(char *)ip;
+	size_t ip_hlen;
+	uint16_t ip_len, uh_sum;
+	struct udphdr *udp;
 
-	if (data_len < sizeof(p->ip)) {
-		if (from)
+	if (plen < sizeof(*ip)) {
+		if (from != NULL)
 			from->s_addr = INADDR_ANY;
 		errno = ERANGE;
 		return -1;
 	}
-	p = (struct bootp_pkt *)data;
-	if (from)
-		from->s_addr = p->ip.ip_src.s_addr;
-	if (checksum(&p->ip, sizeof(p->ip)) != 0) {
+
+	if (from != NULL)
+		from->s_addr = ip->ip_src.s_addr;
+
+	ip_hlen = (size_t)ip->ip_hl * 4;
+	if (checksum(ip, ip_hlen) != 0) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	bytes = ntohs(p->ip.ip_len);
+	ip_len = ntohs(ip->ip_len);
 	/* Check we have a payload */
-	if (bytes <= sizeof(p->ip) + sizeof(p->udp)) {
+	if (ip_len <= ip_hlen + sizeof(*udp)) {
 		errno = ERANGE;
 		return -1;
 	}
 	/* Check we don't go beyond the payload */
-	if (bytes > data_len) {
+	if (ip_len > plen) {
 		errno = ENOBUFS;
 		return -1;
 	}
 
-	if (noudpcsum == 0) {
-		uint16_t udpsum, iplen;
+	if (flags & BPF_PARTIALCSUM)
+		return 0;
 
-		/* This does scribble on the packet, but at this point
-		 * we don't care to keep it. */
-		iplen = p->ip.ip_len;
-		udpsum = p->udp.uh_sum;
-		p->udp.uh_sum = 0;
-		p->ip.ip_hl = 0;
-		p->ip.ip_v = 0;
-		p->ip.ip_tos = 0;
-		p->ip.ip_len = p->udp.uh_ulen;
-		p->ip.ip_id = 0;
-		p->ip.ip_off = 0;
-		p->ip.ip_ttl = 0;
-		p->ip.ip_sum = 0;
-		if (udpsum && checksum(p, bytes) != udpsum) {
-			errno = EINVAL;
-			return -1;
-		}
-		p->ip.ip_len = iplen;
+	udp = (struct udphdr *)((char *)ip + ip_hlen);
+	if (udp->uh_sum == 0)
+		return 0;
+	uh_sum = udp->uh_sum;
+
+	/* This does scribble on the packet, but at this point
+	 * we don't care to keep it. */
+	udp->uh_sum = 0;
+	ip->ip_hl = 0;
+	ip->ip_v = 0;
+	ip->ip_tos = 0;
+	ip->ip_len = udp->uh_ulen;
+	ip->ip_id = 0;
+	ip->ip_off = 0;
+	ip->ip_ttl = 0;
+	ip->ip_sum = 0;
+	if (checksum(packet, ip_len) != uh_sum) {
+		errno = EINVAL;
+		return -1;
 	}
+	*(char *)ip = ip_hlv;
+	ip->ip_len = htons(ip_len);
 
 	return 0;
 }
@@ -3318,9 +3330,7 @@ dhcp_handlepacket(struct interface *ifp, uint8_t *data, size_t len)
 	size_t udp_len;
 	const struct dhcp_state *state = D_CSTATE(ifp);
 
-	if (valid_udp_packet(data, len, &from,
-			     state->bpf_flags & RAW_PARTIALCSUM) == -1)
-	{
+	if (valid_udp_packet(data, len, &from, state->bpf_flags) == -1) {
 		if (errno == EINVAL)
 			logerrx("%s: checksum failure from %s",
 			  ifp->name, inet_ntoa(from));
@@ -3382,6 +3392,7 @@ dhcp_readpacket(void *arg)
 static void
 dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 {
+	const struct dhcp_state *state;
 	struct sockaddr_in from;
 	unsigned char buf[10 * 1024]; /* Maximum MTU */
 	struct iovec iov = {
@@ -3403,8 +3414,7 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 	ssize_t bytes;
 
 	if (ifp != NULL) {
-		const struct dhcp_state *state = D_CSTATE(ifp);
-
+		state = D_CSTATE(ifp);
 		s = state->udp_fd;
 	} else
 		s = ctx->udp_fd;
@@ -3424,11 +3434,17 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 			logerr(__func__);
 			return;
 		}
-		if (D_CSTATE(ifp) == NULL) {
+		state = D_CSTATE(ifp);
+		if (state == NULL) {
 			logdebugx("%s: received BOOTP for inactive interface",
 			    ifp->name);
 			return;
 		}
+	}
+
+	if (state->bpf_fd != -1) {
+		/* Avoid a duplicate read if BPF is open for the interface. */
+		return;
 	}
 
 	dhcp_handlebootp(ifp, (struct bootp *)(void *)buf, (size_t)bytes,
