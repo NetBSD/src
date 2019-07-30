@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.24 2019/07/23 06:36:36 hkenken Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.25 2019/07/30 06:26:31 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.24 2019/07/23 06:36:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.25 2019/07/30 06:26:31 hkenken Exp $");
 
 #include "vlan.h"
 
@@ -165,9 +165,6 @@ static void enet_drain_txbuf(struct enet_softc *);
 static void enet_drain_rxbuf(struct enet_softc *);
 static int enet_alloc_dma(struct enet_softc *, size_t, void **,
 			  bus_dmamap_t *);
-
-CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
-    enet_match, enet_attach, NULL, NULL);
 
 int
 enet_attach_common(device_t self)

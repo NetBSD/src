@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx7.c,v 1.3 2019/07/23 06:36:36 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx7.c,v 1.4 2019/07/30 06:26:31 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.3 2019/07/23 06:36:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.4 2019/07/30 06:26:31 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.3 2019/07/23 06:36:36 hkenken Exp
 #include <arm/imx/imx7_ocotpvar.h>
 #include <arm/imx/if_enetreg.h>
 #include <arm/imx/if_enetvar.h>
+
+CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
+    enet_match, enet_attach, NULL, NULL);
 
 static void get_mac_from_ocotp(struct enet_softc *, device_t self,
     const char *);
