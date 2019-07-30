@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.6 2018/09/08 13:10:08 mlelstv Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.7 2019/07/30 06:35:03 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -98,7 +98,6 @@ struct smsc_softc {
 #define	SMSC_FLAG_LINK      0x0001
 
 	struct if_percpuq *sc_ipq;		/* softint-based input queues */
-
 };
 
 #define SMSC_MIN_BUFSZ		2048
