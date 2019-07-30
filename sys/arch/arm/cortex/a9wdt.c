@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.8 2019/07/30 06:57:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.8 2019/07/30 06:57:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -214,7 +214,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Let's hope the timer frequency isn't prime.
 		 */
-		for (size_t div = 256; div >= 2; div++) {
+		for (size_t div = 256; div >= 2; div--) {
 			if (sc->sc_freq % div == 0) {
 				sc->sc_wdog_prescaler = div;
 				break;
