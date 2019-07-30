@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.98 2019/07/30 12:20:24 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.99 2019/07/30 14:33:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.98 2019/07/30 12:20:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.99 2019/07/30 14:33:04 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -671,7 +671,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	uint8_t *sp, *dp, *hp;
-	int n;
+	int n, stride;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -701,6 +701,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 
 	num *= ri->ri_font->fontheight;
 	n = ri->ri_emustride;
+	stride = ri->ri_stride;
 
 	sp = ri->ri_bits + src * ri->ri_yscale;
 	dp = ri->ri_bits + dst * ri->ri_yscale;
@@ -709,12 +710,12 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 
 	while (num--) {
 		memmove(dp, sp, n);
-		dp += n;
+		dp += stride;
 		if (ri->ri_hwbits) {
 			memcpy(hp, sp, n);
-			hp += n;
+			hp += stride;
 		}
-		sp += n;
+		sp += stride;
 	}
 }
 
