@@ -51,6 +51,8 @@
 #include <netinet6/nd6.h>
 #ifdef __NetBSD__
 #include <net/if_vlanvar.h> /* Needs netinet/if_ether.h */
+#elif defined(__DragonFly__)
+#include <net/vlan/if_vlan_var.h>
 #else
 #include <net/if_vlan_var.h>
 #endif
@@ -541,7 +543,7 @@ if_route(unsigned char cmd, const struct rt *rt)
  * try to encourage someone to fix that by logging a waring during compile.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-#warning OS does not allow IPv6 address sharing
+#warning kernel does not allow IPv6 address sharing
 			if (!gateway_unspec || rt->rt_dest.sa_family!=AF_INET6)
 #endif
 			rtm->rtm_addrs |= RTA_IFP;

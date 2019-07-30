@@ -2611,73 +2611,92 @@ void
 free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 {
 	size_t i;
+#ifdef RT_FREE_ROUTE_TABLE
+	struct interface *ifp;
+	struct rt *rt;
+#endif
 	struct dhcp_opt *opt;
 	struct vivco *vo;
 #ifdef AUTH
 	struct token *token;
 #endif
 
-	if (ifo) {
-		if (ifo->environ) {
-			i = 0;
-			while (ifo->environ[i])
-				free(ifo->environ[i++]);
-			free(ifo->environ);
-		}
-		if (ifo->config) {
-			i = 0;
-			while (ifo->config[i])
-				free(ifo->config[i++]);
-			free(ifo->config);
-		}
-		rt_headclear0(ctx, &ifo->routes, AF_UNSPEC);
-		if (ifo->script != default_script)
-			free(ifo->script);
-		free(ifo->arping);
-		free(ifo->blacklist);
-		free(ifo->fallback);
+	if (ifo == NULL)
+		return;
 
-		for (opt = ifo->dhcp_override;
-		    ifo->dhcp_override_len > 0;
-		    opt++, ifo->dhcp_override_len--)
-			free_dhcp_opt_embenc(opt);
-		free(ifo->dhcp_override);
-		for (opt = ifo->nd_override;
-		    ifo->nd_override_len > 0;
-		    opt++, ifo->nd_override_len--)
-			free_dhcp_opt_embenc(opt);
-		free(ifo->nd_override);
-		for (opt = ifo->dhcp6_override;
-		    ifo->dhcp6_override_len > 0;
-		    opt++, ifo->dhcp6_override_len--)
-			free_dhcp_opt_embenc(opt);
-		free(ifo->dhcp6_override);
-		for (vo = ifo->vivco;
-		    ifo->vivco_len > 0;
-		    vo++, ifo->vivco_len--)
-			free(vo->data);
-		free(ifo->vivco);
-		for (opt = ifo->vivso_override;
-		    ifo->vivso_override_len > 0;
-		    opt++, ifo->vivso_override_len--)
-			free_dhcp_opt_embenc(opt);
-		free(ifo->vivso_override);
+	if (ifo->environ) {
+		i = 0;
+		while (ifo->environ[i])
+			free(ifo->environ[i++]);
+		free(ifo->environ);
+	}
+	if (ifo->config) {
+		i = 0;
+		while (ifo->config[i])
+			free(ifo->config[i++]);
+		free(ifo->config);
+	}
+
+#ifdef RT_FREE_ROUTE_TABLE
+	/* Stupidly, we don't know the interface when creating the options.
+	 * As such, make sure each route has one so they can goto the
+	 * free list. */
+	ifp = ctx->ifaces != NULL ? TAILQ_FIRST(ctx->ifaces) : NULL;
+	if (ifp != NULL) {
+		RB_TREE_FOREACH(rt, &ifo->routes) {
+			if (rt->rt_ifp == NULL)
+				rt->rt_ifp = ifp;
+		}
+	}
+#endif
+	rt_headclear0(ctx, &ifo->routes, AF_UNSPEC);
+
+	if (ifo->script != default_script)
+		free(ifo->script);
+	free(ifo->arping);
+	free(ifo->blacklist);
+	free(ifo->fallback);
+
+	for (opt = ifo->dhcp_override;
+	    ifo->dhcp_override_len > 0;
+	    opt++, ifo->dhcp_override_len--)
+		free_dhcp_opt_embenc(opt);
+	free(ifo->dhcp_override);
+	for (opt = ifo->nd_override;
+	    ifo->nd_override_len > 0;
+	    opt++, ifo->nd_override_len--)
+		free_dhcp_opt_embenc(opt);
+	free(ifo->nd_override);
+	for (opt = ifo->dhcp6_override;
+	    ifo->dhcp6_override_len > 0;
+	    opt++, ifo->dhcp6_override_len--)
+		free_dhcp_opt_embenc(opt);
+	free(ifo->dhcp6_override);
+	for (vo = ifo->vivco;
+	    ifo->vivco_len > 0;
+	    vo++, ifo->vivco_len--)
+		free(vo->data);
+	free(ifo->vivco);
+	for (opt = ifo->vivso_override;
+	    ifo->vivso_override_len > 0;
+	    opt++, ifo->vivso_override_len--)
+		free_dhcp_opt_embenc(opt);
+	free(ifo->vivso_override);
 
 #if defined(INET6) && !defined(SMALL)
-		for (; ifo->ia_len > 0; ifo->ia_len--)
-			free(ifo->ia[ifo->ia_len - 1].sla);
+	for (; ifo->ia_len > 0; ifo->ia_len--)
+		free(ifo->ia[ifo->ia_len - 1].sla);
 #endif
-		free(ifo->ia);
+	free(ifo->ia);
 
 #ifdef AUTH
-		while ((token = TAILQ_FIRST(&ifo->auth.tokens))) {
-			TAILQ_REMOVE(&ifo->auth.tokens, token, next);
-			if (token->realm_len)
-				free(token->realm);
-			free(token->key);
-			free(token);
-		}
-#endif
-		free(ifo);
+	while ((token = TAILQ_FIRST(&ifo->auth.tokens))) {
+		TAILQ_REMOVE(&ifo->auth.tokens, token, next);
+		if (token->realm_len)
+			free(token->realm);
+		free(token->key);
+		free(token);
 	}
+#endif
+	free(ifo);
 }

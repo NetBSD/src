@@ -634,6 +634,15 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 #ifdef __sun
 	struct ipv6_state *state;
 	struct ipv6_addr *ia2;
+
+	/* If we re-add then address on Solaris then the prefix
+	 * route will be scrubbed and re-added. Something might
+	 * be using it, so let's avoid it. */
+	if (ia->flags & IPV6_AF_DADCOMPLETED) {
+		logdebugx("%s: IP address %s already exists",
+		    ia->iface->name, ia->saddr);
+		return 0;
+	}
 #endif
 
 	/* Remember the interface of the address. */
@@ -1187,6 +1196,8 @@ out:
 	/* Done with the ia now, so free it. */
 	if (cmd == RTM_DELADDR)
 		ipv6_freeaddr(ia);
+	else if (!(ia->addr_flags & IN6_IFF_NOTUSEABLE))
+		ia->flags |= IPV6_AF_DADCOMPLETED;
 }
 
 int
@@ -1465,8 +1476,10 @@ ipv6_newaddr(struct interface *ifp, const struct in6_addr *addr,
 		goto err;
 
 	ia->iface = ifp;
-	ia->flags = IPV6_AF_NEW | flags;
 	ia->addr_flags = addr_flags;
+	ia->flags = IPV6_AF_NEW | flags;
+	if (!(ia->addr_flags & IN6_IFF_NOTUSEABLE))
+		ia->flags |= IPV6_AF_DADCOMPLETED;
 	ia->prefix_len = prefix_len;
 	ia->dhcp6_fd = -1;
 

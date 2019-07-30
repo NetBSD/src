@@ -2125,13 +2125,13 @@ exit1:
 		}
 		free(ctx.ifaces);
 	}
+	free_options(&ctx, ifo);
 #ifdef HAVE_OPEN_MEMSTREAM
 	if (ctx.script_fp)
 		fclose(ctx.script_fp);
 #endif
 	free(ctx.script_buf);
 	free(ctx.script_env);
-	free_options(&ctx, ifo);
 	rt_dispose(&ctx);
 	free(ctx.duid);
 	if (ctx.link_fd != -1) {
