@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.99 2019/07/30 14:33:04 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.100 2019/07/30 14:41:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.99 2019/07/30 14:33:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.100 2019/07/30 14:41:10 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -675,10 +675,10 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 
 	hp = NULL;	/* XXX GCC */
 
-#ifdef RASOPS_CLIPPING
-	if (dst == src)
+	if (__predict_false(dst == src))
 		return;
 
+#ifdef RASOPS_CLIPPING
 	if (src < 0) {
 		num += src;
 		src = 0;
@@ -709,7 +709,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 		hp = ri->ri_hwbits + dst * ri->ri_yscale;
 
 	while (num--) {
-		memmove(dp, sp, n);
+		memcpy(dp, sp, n);
 		dp += stride;
 		if (ri->ri_hwbits) {
 			memcpy(hp, sp, n);
@@ -734,10 +734,10 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 
 	hp = NULL;	/* XXX GCC */
 
-#ifdef RASOPS_CLIPPING
-	if (dst == src)
+	if (__predict_false(dst == src))
 		return;
 
+#ifdef RASOPS_CLIPPING
 	/* Catches < 0 case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
@@ -772,7 +772,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 		hp = ri->ri_hwbits + row + dst * ri->ri_xscale;
 
 	while (height--) {
-		memmove(dp, sp, num);
+		memcpy(dp, sp, num);
 		dp += ri->ri_stride;
 		if (ri->ri_hwbits) {
 			memcpy(hp, sp, num);
