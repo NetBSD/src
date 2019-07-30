@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.12 2019/07/26 06:57:54 skrll Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.13 2019/07/30 11:11:15 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.12 2019/07/26 06:57:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.13 2019/07/30 11:11:15 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -1031,6 +1031,7 @@ imxccm_clk_get_rate_pll_generic(struct imxccm_softc *sc, struct imx6_clk *iclk,
     const u_int rate_parent)
 {
 	struct imx6_clk_pll *pll = &iclk->clk.pll;
+	uint64_t freq = rate_parent;
 
 	KASSERT((pll->type == IMX6_CLK_PLL_GENNERIC) ||
 	    (pll->type == IMX6_CLK_PLL_USB));
@@ -1038,7 +1039,7 @@ imxccm_clk_get_rate_pll_generic(struct imxccm_softc *sc, struct imx6_clk *iclk,
 	uint32_t v = bus_space_read_4(sc->sc_iot, sc->sc_ioh_analog, pll->reg);
 	uint32_t div = __SHIFTOUT(v, pll->mask);
 
-	return rate_parent * ((div == 1) ? 22 : 20);
+	return freq * ((div == 1) ? 22 : 20);
 }
 
 static u_int
@@ -1046,13 +1047,14 @@ imxccm_clk_get_rate_pll_sys(struct imxccm_softc *sc, struct imx6_clk *iclk,
     const u_int rate_parent)
 {
 	struct imx6_clk_pll *pll = &iclk->clk.pll;
+	uint64_t freq = rate_parent;
 
 	KASSERT(pll->type == IMX6_CLK_PLL_SYS);
 
 	uint32_t v = bus_space_read_4(sc->sc_iot, sc->sc_ioh_analog, pll->reg);
 	uint32_t div = __SHIFTOUT(v, pll->mask);
 
-	return rate_parent * div / 2;
+	return freq * div / 2;
 }
 
 #define PLL_AUDIO_VIDEO_NUM_OFFSET	0x10
@@ -1063,7 +1065,7 @@ imxccm_clk_get_rate_pll_audio_video(struct imxccm_softc *sc,
     struct imx6_clk *iclk, const u_int rate_parent)
 {
 	struct imx6_clk_pll *pll = &iclk->clk.pll;
-	uint64_t freq;
+	uint64_t freq = rate_parent;
 
 	KASSERT(pll->type == IMX6_CLK_PLL_AUDIO_VIDEO);
 
@@ -1074,10 +1076,9 @@ imxccm_clk_get_rate_pll_audio_video(struct imxccm_softc *sc,
 	uint32_t denom = bus_space_read_4(sc->sc_iot, sc->sc_ioh_analog,
 	    pll->reg + PLL_AUDIO_VIDEO_DENOM_OFFSET);
 
-	uint64_t tmp = rate_parent * num / denom;
-	freq = (uint64_t)rate_parent * div + tmp;
+	uint64_t tmp = freq * num / denom;
 
-	return freq;
+	return freq * div + tmp;
 }
 
 static u_int
@@ -1102,7 +1103,7 @@ imxccm_clk_get_rate_fixed_factor(struct imxccm_softc *sc, struct imx6_clk *iclk)
 	parent = imx6_clk_find(iclk->parent);
 	KASSERT(parent != NULL);
 
-	const u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
+	uint64_t rate_parent = imxccm_clk_get_rate(sc, &parent->base);
 
 	return rate_parent * fixed_factor->mult / fixed_factor->div;
 }
@@ -1118,7 +1119,7 @@ imxccm_clk_get_rate_pll(struct imxccm_softc *sc, struct imx6_clk *iclk)
 	parent = imx6_clk_find(iclk->parent);
 	KASSERT(parent != NULL);
 
-	const u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
+	uint64_t rate_parent = imxccm_clk_get_rate(sc, &parent->base);
 
 	switch(pll->type) {
 	case IMX6_CLK_PLL_GENNERIC:
@@ -1182,7 +1183,7 @@ imxccm_clk_get_rate_pfd(struct imxccm_softc *sc, struct imx6_clk *iclk)
 	parent = imx6_clk_find(iclk->parent);
 	KASSERT(parent != NULL);
 
-	const u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
+	uint64_t rate_parent = imxccm_clk_get_rate(sc, &parent->base);
 
 	uint32_t v = bus_space_read_4(sc->sc_iot, sc->sc_ioh_analog, pfd->reg);
 	uint32_t n = __SHIFTOUT(v, __BITS(5, 0) << (pfd->index * 8));
