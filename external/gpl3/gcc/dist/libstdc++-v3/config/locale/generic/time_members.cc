@@ -205,6 +205,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_data->_M_amonth11 = L"Nov";
       _M_data->_M_amonth12 = L"Dec";
     }
+  template<> 
+    __timepunct<wchar_t>::~__timepunct()
+   { 
+   }
 #endif
 
 _GLIBCXX_END_NAMESPACE_VERSION

@@ -328,6 +328,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #ifdef _GLIBCXX_USE_WCHAR_T
   template<>
+    __timepunct<wchar_t>::~__timepunct();
+  template<>
     void
     __timepunct<wchar_t>::_M_initialize_timepunct(__c_locale __cloc);
 
