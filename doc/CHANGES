@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2561 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2562 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -415,3 +415,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	tar(1): MKBSDTAR now defaults to yes. [roy 20190724]
 	dhcpcd(8): Import dhcpcd-8.0.1. [roy 20190725]
 	mac68k: Add genfb(4) framebuffer driver. [rin 20190726]
+	dhcpcd(8): Import dhcpcd-8.0.2. [roy 20190730]
