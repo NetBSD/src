@@ -1523,7 +1523,9 @@ dhcp6_dadcallback(void *arg)
 				if (valid)
 					dhcpcd_daemonise(ifp->ctx);
 			}
+#ifdef ND6_ADVERTISE
 			ipv6nd_advertise(ia);
+#endif
 		}
 	}
 }
@@ -1936,6 +1938,7 @@ dhcp6_checkstatusok(const struct interface *ifp,
 	if ((opt = f(farg, len, D6_OPTION_STATUS_CODE, &opt_len)) == NULL) {
 		//logdebugx("%s: no status", ifp->name);
 		state->lerror = 0;
+		errno = ESRCH;
 		return 0;
 	}
 
@@ -1947,7 +1950,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 	code = ntohs(code);
 	if (code == D6_STATUS_OK) {
 		state->lerror = 0;
-		return 1;
+		errno = 0;
+		return 0;
 	}
 
 	/* Anything after the code is a message. */
@@ -1978,7 +1982,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 	logfunc("%s: DHCPv6 REPLY: %s", ifp->name, status);
 	free(sbuf);
 	state->lerror = code;
-	return -1;
+	errno = 0;
+	return (int)code;
 }
 
 const struct ipv6_addr *
@@ -2225,7 +2230,7 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 	struct dhcp6_option o;
 	uint8_t *d, *p;
 	struct dhcp6_ia_na ia;
-	int i, e;
+	int i, e, error;
 	size_t j;
 	uint16_t nl;
 	uint8_t iaid[4];
@@ -2314,7 +2319,9 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 			}
 		} else
 			ia.t1 = ia.t2 = 0; /* appease gcc */
-		if (dhcp6_checkstatusok(ifp, NULL, p, o.len) == -1) {
+		if ((error = dhcp6_checkstatusok(ifp, NULL, p, o.len)) != 0) {
+			if (error == D6_STATUS_NOBINDING)
+				state->has_no_binding = true;
 			e = 1;
 			continue;
 		}
@@ -2415,7 +2422,7 @@ dhcp6_validatelease(struct interface *ifp,
     const char *sfrom, const struct timespec *acquired)
 {
 	struct dhcp6_state *state;
-	int ok, nia;
+	int nia, ok_errno;
 	struct timespec aq;
 
 	if (len <= sizeof(*m)) {
@@ -2424,8 +2431,10 @@ dhcp6_validatelease(struct interface *ifp,
 	}
 
 	state = D6_STATE(ifp);
-	if ((ok = dhcp6_checkstatusok(ifp, m, NULL, len) == -1))
+	errno = 0;
+	if (dhcp6_checkstatusok(ifp, m, NULL, len) != 0)
 		return -1;
+	ok_errno = errno;
 
 	state->renew = state->rebind = state->expire = 0;
 	state->lowpl = ND6_INFINITE_LIFETIME;
@@ -2433,9 +2442,10 @@ dhcp6_validatelease(struct interface *ifp,
 		clock_gettime(CLOCK_MONOTONIC, &aq);
 		acquired = &aq;
 	}
+	state->has_no_binding = false;
 	nia = dhcp6_findia(ifp, m, len, sfrom, acquired);
 	if (nia == 0) {
-		if (state->state != DH6S_CONFIRM && ok != 1) {
+		if (state->state != DH6S_CONFIRM && ok_errno != 0) {
 			logerrx("%s: no useable IA found in lease", ifp->name);
 			return -1;
 		}
@@ -2445,6 +2455,7 @@ dhcp6_validatelease(struct interface *ifp,
 		 * IA's must have existed here otherwise we would
 		 * have rejected it earlier. */
 		assert(state->new != NULL && state->new_len != 0);
+		state->has_no_binding = false;
 		nia = dhcp6_findia(ifp, state->new, state->new_len,
 		    sfrom, acquired);
 	}
@@ -3267,7 +3278,7 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 	case DHCP6_REPLY:
 		switch(state->state) {
 		case DH6S_INFORM:
-			if (dhcp6_checkstatusok(ifp, r, NULL, len) == -1)
+			if (dhcp6_checkstatusok(ifp, r, NULL, len) != 0)
 				return;
 			break;
 		case DH6S_CONFIRM:
@@ -3313,6 +3324,14 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 				 */
 				if (state->state != DH6S_DISCOVER)
 					dhcp6_startdiscover(ifp);
+				return;
+			}
+			/* RFC8415 18.2.10.1 */
+			if ((state->state == DH6S_RENEW ||
+			    state->state == DH6S_REBIND) &&
+			    state->has_no_binding)
+			{
+				dhcp6_startrequest(ifp);
 				return;
 			}
 			if (state->state == DH6S_DISCOVER)
@@ -3927,16 +3946,20 @@ dhcp6_free(struct interface *ifp)
 void
 dhcp6_abort(struct interface *ifp)
 {
+#ifdef ND6_ADVERTISE
 	struct dhcp6_state *state;
 	struct ipv6_addr *ia;
+#endif
 
 	eloop_timeout_delete(ifp->ctx->eloop, dhcp6_start1, ifp);
+#ifdef ND6_ADVERTISE
 	state = D6_STATE(ifp);
 	if (state == NULL)
 		return;
 	TAILQ_FOREACH(ia, &state->addrs, next) {
 		ipv6nd_advertise(ia);
 	}
+#endif
 }
 
 void
