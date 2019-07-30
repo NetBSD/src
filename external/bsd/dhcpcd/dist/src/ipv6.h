@@ -149,7 +149,13 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
-#ifndef SMALL
+/*
+ * ND6 Advertising is only used for IP address sharing to prefer
+ * the address on a specific interface.
+ * This just fails to work on OpenBSD and causes erroneous duplicate
+ * address messages on BSD's other then NetBSD.
+ */
+#if !defined(SMALL) && (defined(__NetBSD__) || defined(__linux__))
 #  define ND6_ADVERTISE
 #endif
 
