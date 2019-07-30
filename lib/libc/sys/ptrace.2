@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.79 2019/07/11 03:30:01 mgorny Exp $
+.\"	$NetBSD: ptrace.2,v 1.80 2019/07/30 20:18:11 mgorny Exp $
 .\"
 .\" This file is in the public domain.
 .Dd July 11, 2019
@@ -519,11 +519,14 @@ This request reads the state information associated with the event
 that stopped the traced process.
 The information is reported in a
 .Vt struct ptrace_state
-defined as:
+that is equivalent to:
 .Bd -literal -offset indent
 typedef struct ptrace_state {
 	int	pe_report_event;
-	pid_t	pe_other_pid;
+	union {
+		pid_t	pe_other_pid;
+		lwpid_t	pe_lwp;
+	};
 } ptrace_state_t;
 .Ed
 .Pp
