@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_aa.h,v 1.3 2019/07/29 14:59:25 rin Exp $ */
+/* $NetBSD: rasops_putchar_aa.h,v 1.4 2019/07/30 15:29:40 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp */
 /*-
@@ -38,41 +38,41 @@
 #define	PUTCHAR_AA(depth)	PUTCHAR_AA1(depth)
 #define	PUTCHAR_AA1(depth)	rasops ## depth ## _putchar_aa
 
-#define	MAX_WIDTH	64	/* XXX */
+#define	MAX_WIDTH		64	/* XXX */
 
 #if   RASOPS_DEPTH == 8
-#define	PIXEL_TYPE	uint8_t
+#define	PIXEL_TYPE		uint8_t
 #elif RASOPS_DEPTH == 15
-#define	PIXEL_TYPE	uint16_t
+#define	PIXEL_TYPE		uint16_t
 #elif RASOPS_DEPTH == 24
-#define	PIXEL_TYPE	uint8_t
+#define	PIXEL_TYPE		uint8_t
 #elif RASOPS_DEPTH == 32
-#define	PIXEL_TYPE	uint32_t
+#define	PIXEL_TYPE		uint32_t
 #endif
 
 #if RASOPS_DEPTH != 24
-#define	COLOR_TYPE	PIXEL_TYPE
-#define	PIXEL_LEN	sizeof(PIXEL_TYPE)
-#define	BUF_LEN		MAX_WIDTH
-#define	SET_PIXEL(x, c)	buf[x] = clr[c]
+#define	COLOR_TYPE		PIXEL_TYPE
+#define	PIXEL_BYTES		sizeof(PIXEL_TYPE)
+#define	BUF_LEN			MAX_WIDTH
+#define	SET_PIXEL(p, x, c)	(p)[x] = clr[c]
 #endif
 
 #if RASOPS_DEPTH == 24
-#define	COLOR_TYPE	uint32_t
-#define	PIXEL_LEN	3
-#define	BUF_LEN		(MAX_WIDTH * 3)
-#define	SET_PIXEL(x, c)				\
+#define	COLOR_TYPE		uint32_t
+#define	PIXEL_BYTES		3
+#define	BUF_LEN			(MAX_WIDTH * 3)
+#define	SET_PIXEL(p, x, c)			\
 	do {					\
-		buf[3 * x + 0] = clr[c] >> 16;	\
-		buf[3 * x + 1] = clr[c] >> 8;	\
-		buf[3 * x + 2] = clr[c];	\
+		(p)[3 * x + 0] = clr[c] >> 16;	\
+		(p)[3 * x + 1] = clr[c] >> 8;	\
+		(p)[3 * x + 2] = clr[c];	\
 	} while (0 /* CONSTCOND */)
 #endif
 
 #if RASOPS_DEPTH != 8
-#define	SET_BUF(c)	for (x = 0; x < width; x++) { SET_PIXEL(x, c); }
+#define	SET_WIDTH(p, c)	for (x = 0; x < width; x++) { SET_PIXEL(p, x, c); }
 #else
-#define	SET_BUF(c)	memset(buf, clr[c], width)
+#define	SET_WIDTH(p, c)	memset(p, clr[c], width)
 #endif
 
 static void
@@ -118,12 +118,12 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	clr[1] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
 
 	if (uc == ' ') {
-		SET_BUF(0);
+		SET_WIDTH(buf, 0);
 		while (height--) {
-			memcpy(rp, buf, width * PIXEL_LEN);
+			memcpy(rp, buf, width * PIXEL_BYTES);
 			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 			if (ri->ri_hwbits) {
-				memcpy(hp, buf, width * PIXEL_LEN);
+				memcpy(hp, buf, width * PIXEL_BYTES);
 				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
 		}
@@ -148,9 +148,9 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 				aval = *fr;
 				fr++;
 				if (aval == 0)
-					SET_PIXEL(x, 0);
+					SET_PIXEL(buf, x, 0);
 				else if (aval == 255)
-					SET_PIXEL(x, 1);
+					SET_PIXEL(buf, x, 1);
 				else {
 #define	AVERAGE(p, w)	((w * p[1] + (0xff - w) * p[0]) >> 8)
 					R = AVERAGE(r, aval);
@@ -186,10 +186,10 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 #endif
 				}
 			}
-			memcpy(rp, buf, width * PIXEL_LEN);
+			memcpy(rp, buf, width * PIXEL_BYTES);
 			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 			if (ri->ri_hwbits) {
-				memcpy(hp, buf, width * PIXEL_LEN);
+				memcpy(hp, buf, width * PIXEL_BYTES);
 				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
 		}
@@ -197,13 +197,12 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		SET_BUF(1);
 		DELTA(rp, -(ri->ri_stride << 1), PIXEL_TYPE *);
-		if (ri->ri_hwbits)
+		SET_WIDTH(rp, 1);
+		if (ri->ri_hwbits) {
 			DELTA(hp, -(ri->ri_stride << 1), PIXEL_TYPE *);
-		memcpy(rp, buf, width * PIXEL_LEN);
-		if (ri->ri_hwbits)
-			memcpy(hp, buf, width * PIXEL_LEN);
+			memcpy(hp, rp, width * PIXEL_BYTES);
+		}
 	}
 }
 
@@ -214,6 +213,6 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 #undef	PIXEL_TYPE
 #undef	COLOR_TYPE
-#undef	PIXEL_LEN
+#undef	PIXEL_BYTES
 #undef	SET_PIXEL
-#undef	SET_BUF
+#undef	SET_WIDTH

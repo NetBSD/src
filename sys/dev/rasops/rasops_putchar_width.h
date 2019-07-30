@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.8 2019/07/29 17:22:19 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.9 2019/07/30 15:29:40 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -57,6 +57,18 @@
 #endif
 
 #if   RASOPS_DEPTH <= 8
+#define	SUBST_UNIT	1
+#elif RASOPS_DEPTH == 15
+#define	SUBST_UNIT	2
+#elif RASOPS_DEPTH == 24
+#define	SUBST_UNIT	3
+#elif RASOPS_DEPTH == 32
+#define	SUBST_UNIT	4
+#endif
+
+#define	SUBST_BYTES	(SUBST_UNIT * (RASOPS_WIDTH / 4) * sizeof(STAMP_TYPE))
+
+#if   RASOPS_DEPTH <= 8
 #define	FILLED_STAMP	15
 #elif RASOPS_DEPTH == 15
 #define	FILLED_STAMP	30
@@ -68,16 +80,13 @@
 
 #if RASOPS_DEPTH <= 8
 
-#define	SUBST_STAMP1(p, off, base)					\
-	(p)[(off) * 1 + 0] = stamp[base]
+#define	SUBST_STAMP1(off, base)						\
+	rp[(off) * 1 + 0] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
 		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 1 + 0] = STAMP_READ(so);			\
-		if (ri->ri_hwbits) {					\
-			hrp[(off) * 1 + 0] = STAMP_READ(so);		\
-		}							\
 	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH <= 8 */
@@ -86,18 +95,14 @@
 
 #if RASOPS_DEPTH == 15
 
-#define	SUBST_STAMP1(p, off, base)					\
-	(p)[(off) * 2 + 0] = (p)[(off) * 2 + 1] = stamp[base]
+#define	SUBST_STAMP1(off, base)						\
+	rp[(off) * 2 + 0] = rp[(off) * 2 + 1] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
 		int so = STAMP_SHIFT(fr[index], nibble) & STAMP_MASK;	\
 		rp[(off) * 2 + 0] = STAMP_READ(so);			\
 		rp[(off) * 2 + 1] = STAMP_READ(so +  4);		\
-		if (ri->ri_hwbits) {					\
-			hrp[(off) * 2 + 0] = STAMP_READ(so);		\
-			hrp[(off) * 2 + 1] = STAMP_READ(so +  4);	\
-		}							\
 	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 15 */
@@ -106,11 +111,11 @@
 
 #if RASOPS_DEPTH == 24
 
-#define	SUBST_STAMP1(p, off, base)					\
+#define	SUBST_STAMP1(off, base)						\
 	do {								\
-		(p)[(off) * 3 + 0] = stamp[(base) + 0];			\
-		(p)[(off) * 3 + 1] = stamp[(base) + 1];			\
-		(p)[(off) * 3 + 2] = stamp[(base) + 2];			\
+		rp[(off) * 3 + 0] = stamp[(base) + 0];			\
+		rp[(off) * 3 + 1] = stamp[(base) + 1];			\
+		rp[(off) * 3 + 2] = stamp[(base) + 2];			\
 	} while (0 /* CONSTCOND */)
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
@@ -119,11 +124,6 @@
 		rp[(off) * 3 + 0] = STAMP_READ(so);			\
 		rp[(off) * 3 + 1] = STAMP_READ(so +  4);		\
 		rp[(off) * 3 + 2] = STAMP_READ(so +  8);		\
-		if (ri->ri_hwbits) {					\
-			hrp[(off) * 3 + 0] = STAMP_READ(so);		\
-			hrp[(off) * 3 + 1] = STAMP_READ(so +  4);	\
-			hrp[(off) * 3 + 2] = STAMP_READ(so +  8);	\
-		}							\
 	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 24 */
@@ -132,9 +132,9 @@
 
 #if RASOPS_DEPTH == 32
 
-#define	SUBST_STAMP1(p, off, base)					\
-	(p)[(off) * 4 + 0] = (p)[(off) * 4 + 1] =			\
-	(p)[(off) * 4 + 2] = (p)[(off) * 4 + 3] = stamp[base]
+#define	SUBST_STAMP1(off, base)						\
+	rp[(off) * 4 + 0] = rp[(off) * 4 + 1] =				\
+	rp[(off) * 4 + 2] = rp[(off) * 4 + 3] = stamp[base]
 
 #define	SUBST_GLYPH1(index, nibble, off)				\
 	do {								\
@@ -143,12 +143,6 @@
 		rp[(off) * 4 + 1] = STAMP_READ(so +  4);		\
 		rp[(off) * 4 + 2] = STAMP_READ(so +  8);		\
 		rp[(off) * 4 + 3] = STAMP_READ(so + 12);		\
-		if (ri->ri_hwbits) {					\
-			hrp[(off) * 4 + 0] = STAMP_READ(so);		\
-			hrp[(off) * 4 + 1] = STAMP_READ(so +  4);	\
-			hrp[(off) * 4 + 2] = STAMP_READ(so +  8);	\
-			hrp[(off) * 4 + 3] = STAMP_READ(so + 12);	\
-		}							\
 	} while (0 /* CONSTCOND */)
 
 #endif /* RASOPS_DEPTH == 32 */
@@ -156,25 +150,25 @@
 /* ################################################################### */
 
 #if   RASOPS_WIDTH == 8
-#define	SUBST_STAMP(p, base) 			\
+#define	SUBST_STAMP(base) 			\
 	do {					\
-		SUBST_STAMP1(p, 0, base);	\
-		SUBST_STAMP1(p, 1, base);	\
+		SUBST_STAMP1(0, base);		\
+		SUBST_STAMP1(1, base);		\
 	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 12
-#define	SUBST_STAMP(p, base)			\
+#define	SUBST_STAMP(base)			\
 	do {					\
-		SUBST_STAMP1(p, 0, base);	\
-		SUBST_STAMP1(p, 1, base);	\
-		SUBST_STAMP1(p, 2, base);	\
+		SUBST_STAMP1(0, base);		\
+		SUBST_STAMP1(1, base);		\
+		SUBST_STAMP1(2, base);		\
 	} while (0 /* CONSTCOND */)
 #elif RASOPS_WIDTH == 16
-#define	SUBST_STAMP(p, base)			\
+#define	SUBST_STAMP(base)			\
 	do {					\
-		SUBST_STAMP1(p, 0, base);	\
-		SUBST_STAMP1(p, 1, base);	\
-		SUBST_STAMP1(p, 2, base);	\
-		SUBST_STAMP1(p, 3, base);	\
+		SUBST_STAMP1(0, base);		\
+		SUBST_STAMP1(1, base);		\
+		SUBST_STAMP1(2, base);		\
+		SUBST_STAMP1(3, base);		\
 	} while (0 /* CONSTCOND */)
 #endif
 
@@ -211,10 +205,10 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs;
-	STAMP_TYPE *rp, *hrp;
+	STAMP_TYPE *rp, *hp;
 	uint8_t *fr;
 
-	hrp = NULL; /* XXX GCC */
+	hp = NULL; /* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -243,19 +237,19 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	rp = (STAMP_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
 	    col * ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hrp = (STAMP_TYPE *)(ri->ri_hwbits + row * ri->ri_yscale +
+		hp = (STAMP_TYPE *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    col * ri->ri_xscale);
 
 	height = font->fontheight;
 
 	if (uc == ' ') {
 		while (height--) {
-			SUBST_STAMP(rp, 0);
-			DELTA(rp, ri->ri_stride, STAMP_TYPE *);
+			SUBST_STAMP(0);
 			if (ri->ri_hwbits) {
-				SUBST_STAMP(hrp, 0);
-				DELTA(hrp, ri->ri_stride, STAMP_TYPE *);
+				memcpy(hp, rp, SUBST_BYTES);
+				DELTA(hp, ri->ri_stride, STAMP_TYPE *);
 			}
+			DELTA(rp, ri->ri_stride, STAMP_TYPE *);
 		}
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
@@ -263,21 +257,22 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 
 		while (height--) {
 			SUBST_GLYPH;
-
 			fr += fs;
+			if (ri->ri_hwbits) {
+				memcpy(hp, rp, SUBST_BYTES);
+				DELTA(hp, ri->ri_stride, STAMP_TYPE *);
+			}
 			DELTA(rp, ri->ri_stride, STAMP_TYPE *);
-			if (ri->ri_hwbits)
-				DELTA(hrp, ri->ri_stride, STAMP_TYPE *);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), STAMP_TYPE *);
-		SUBST_STAMP(rp, FILLED_STAMP);
+		SUBST_STAMP(FILLED_STAMP);
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), STAMP_TYPE *);
-			SUBST_STAMP(hrp, FILLED_STAMP);
+			DELTA(hp, -(ri->ri_stride << 1), STAMP_TYPE *);
+			memcpy(hp, rp, SUBST_BYTES);
 		}
 	}
 
@@ -285,6 +280,9 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 }
 
 #undef	STAMP_TYPE
+
+#undef	SUBST_UNIT
+#undef	SUBST_BYTES
 
 #undef	FILLED_STAMP
 
