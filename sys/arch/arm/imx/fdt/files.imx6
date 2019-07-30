@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.2 2019/07/27 08:02:04 skrll Exp $
+#	$NetBSD: files.imx6,v 1.3 2019/07/30 06:26:31 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -48,9 +48,9 @@ defflag opt_imxuart.h			IMXUARTCONSOLE
 
 # FEC
 device	enet: ether, ifnet, arp, mii, bus_dma_generic
-attach	enet at fdt
+attach	enet at fdt with enet_fdt
 file	arch/arm/imx/if_enet.c		enet
-file	arch/arm/imx/fdt/if_enet_imx.c	enet
+file	arch/arm/imx/fdt/if_enet_imx.c	enet_fdt
 
 # SATA
 attach	ahcisata at fdt with imx6_ahcisata
