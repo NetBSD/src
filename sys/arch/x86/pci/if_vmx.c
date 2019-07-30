@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -30,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $"
 #include <sys/mbuf.h>
 #include <sys/sockio.h>
 #include <sys/pcq.h>
+#include <sys/workqueue.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -95,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.44 2019/07/29 10:28:57 knakahara Exp $"
  */
 #define VMXNET3_RX_PROCESS_LIMIT 256
 #define VMXNET3_TX_PROCESS_LIMIT 256
+
+#define VMXNET3_WORKQUEUE_PRI PRI_SOFTNET
 
 /*
  * IP protocols that we can perform Tx checksum offloading of.
@@ -225,6 +228,8 @@ struct vmxnet3_queue {
 	struct vmxnet3_rxqueue vxq_rxqueue;
 
 	void *vxq_si;
+	bool vxq_workqueue;
+	struct work vxq_wq_cookie;
 };
 
 struct vmxnet3_statistics {
@@ -291,8 +296,10 @@ struct vmxnet3_softc {
 	u_int vmx_tx_intr_process_limit;
 	u_int vmx_rx_process_limit;
 	u_int vmx_tx_process_limit;
-
 	struct sysctllog *vmx_sysctllog;
+
+	bool vmx_txrx_workqueue;
+	struct workqueue *vmx_queue_wq;
 };
 
 #define VMXNET3_STAT
@@ -378,6 +385,7 @@ bool vmxnet3_rxq_eof(struct vmxnet3_rxqueue *, u_int);
 int vmxnet3_legacy_intr(void *);
 int vmxnet3_txrxq_intr(void *);
 void vmxnet3_handle_queue(void *);
+void vmxnet3_handle_queue_work(struct work *, void *);
 int vmxnet3_event_intr(void *);
 
 void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
@@ -849,6 +857,7 @@ vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 	pci_chipset_tag_t pc = sc->vmx_pc;
 	int i;
 
+	workqueue_destroy(sc->vmx_queue_wq);
 	for (i = 0; i < sc->vmx_nintrs; i++) {
 		struct vmxnet3_queue *vmxq =  &sc->vmx_queue[i];
 
@@ -866,7 +875,7 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 	struct vmxnet3_queue *vmxq;
 	pci_intr_handle_t *intr;
 	void **ihs;
-	int intr_idx, i, use_queues;
+	int intr_idx, i, use_queues, error;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char xnamebuf[32];
@@ -904,6 +913,15 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 
 		vmxq->vxq_intr_idx = intr_idx;
 	}
+	snprintf(xnamebuf, MAXCOMLEN, "%s_tx_rx", device_xname(sc->vmx_dev));
+	error = workqueue_create(&sc->vmx_queue_wq, xnamebuf,
+	    vmxnet3_handle_queue_work, sc, VMXNET3_WORKQUEUE_PRI, IPL_NET,
+	    WQ_PERCPU | WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(sc->vmx_dev, "workqueue_create failed\n");
+		return (-1);
+	}
+	sc->vmx_txrx_workqueue = false;
 
 	intrstr = pci_intr_string(pc, *intr, intrbuf, sizeof(intrbuf));
 
@@ -1839,6 +1857,12 @@ vmxnet3_setup_sysctl(struct vmxnet3_softc *sc)
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto out;
+	error = sysctl_createv(log, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &sc->vmx_txrx_workqueue, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
 
 	error = sysctl_createv(log, 0, &rnode, &rxnode,
 	    0, CTLTYPE_NODE, "rx",
@@ -2305,6 +2329,18 @@ nextp:
 	return more;
 }
 
+static inline void
+vmxnet3_sched_handle_queue(struct vmxnet3_softc *sc, struct vmxnet3_queue *vmxq)
+{
+
+	if (vmxq->vxq_workqueue) {
+		workqueue_enqueue(sc->vmx_queue_wq, &vmxq->vxq_wq_cookie,
+		    curcpu());
+	} else {
+		softint_schedule(vmxq->vxq_si);
+	}
+}
+
 int
 vmxnet3_legacy_intr(void *xsc)
 {
@@ -2339,7 +2375,7 @@ vmxnet3_legacy_intr(void *xsc)
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	if (txmore || rxmore) {
-		softint_schedule(sc->vmx_queue[0].vxq_si);
+		vmxnet3_sched_handle_queue(sc, &sc->vmx_queue[0]);
 	} else {
 		if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 		vmxnet3_enable_all_intrs(sc);
@@ -2363,6 +2399,7 @@ vmxnet3_txrxq_intr(void *xvmxq)
 	sc = txq->vxtxq_sc;
 	txlimit = sc->vmx_tx_intr_process_limit;
 	rxlimit = sc->vmx_rx_intr_process_limit;
+	vmxq->vxq_workqueue = sc->vmx_txrx_workqueue;
 
 	if (sc->vmx_intr_mask_mode == VMXNET3_IMM_ACTIVE)
 		vmxnet3_disable_intr(sc, vmxq->vxq_intr_idx);
@@ -2376,7 +2413,7 @@ vmxnet3_txrxq_intr(void *xvmxq)
 	VMXNET3_RXQ_UNLOCK(rxq);
 
 	if (txmore || rxmore) {
-		softint_schedule(vmxq->vxq_si);
+		vmxnet3_sched_handle_queue(sc, vmxq);
 	} else {
 		/* for ALTQ */
 		if (vmxq->vxq_id == 0)
@@ -2419,9 +2456,18 @@ vmxnet3_handle_queue(void *xvmxq)
 	VMXNET3_RXQ_UNLOCK(rxq);
 
 	if (txmore || rxmore)
-		softint_schedule(vmxq->vxq_si);
+		vmxnet3_sched_handle_queue(sc, vmxq);
 	else
 		vmxnet3_enable_intr(sc, vmxq->vxq_intr_idx);
+}
+
+void
+vmxnet3_handle_queue_work(struct work *wk, void *context)
+{
+	struct vmxnet3_queue *vmxq;
+
+	vmxq = container_of(wk, struct vmxnet3_queue, vxq_wq_cookie);
+	vmxnet3_handle_queue(vmxq);
 }
 
 int
