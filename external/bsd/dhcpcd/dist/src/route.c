@@ -392,8 +392,10 @@ rt_free(struct rt *rt)
 	struct dhcpcd_ctx *ctx;
 
 	assert(rt != NULL);
-	assert(rt->rt_ifp != NULL);
-	assert(rt->rt_ifp->ctx != NULL);
+	if (rt->rt_ifp == NULL) {
+		free(rt);
+		return;
+	}
 
 	ctx = rt->rt_ifp->ctx;
 	rb_tree_insert_node(&ctx->froutes, rt);
