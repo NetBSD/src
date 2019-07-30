@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1639 2019/07/30 10:28:28 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1640 2019/07/30 14:57:06 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -700,12 +700,12 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	3.3.2pre
-Current Vers:	3.3.2
+Version:	3.4.0
+Current Vers:	3.4.0
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
-Archive Site:	https://github.com/libarchive/libarchive/downloads
+Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2019-01-09
+Date:		2019-06-13
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
