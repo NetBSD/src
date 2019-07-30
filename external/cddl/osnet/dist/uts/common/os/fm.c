@@ -64,7 +64,11 @@
 #include <sys/kobj.h>
 #include <sys/kstat.h>
 #include <sys/processor.h>
+#ifdef __NetBSD__
+#include <sys/cpu.h>
+#else
 #include <sys/pcpu.h>
+#endif
 #include <sys/sunddi.h>
 #include <sys/systeminfo.h>
 #include <sys/sysevent/eventdefs.h>
@@ -1194,7 +1198,11 @@ fm_ena_generate_cpu(uint64_t timestamp, processorid_t cpuid, uchar_t format)
 uint64_t
 fm_ena_generate(uint64_t timestamp, uchar_t format)
 {
+#ifdef __NetBSD__
+	return (fm_ena_generate_cpu(timestamp, cpu_index(curcpu()), format));
+#else
 	return (fm_ena_generate_cpu(timestamp, PCPU_GET(cpuid), format));
+#endif
 }
 
 uint64_t

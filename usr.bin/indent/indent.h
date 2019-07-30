@@ -1,3 +1,5 @@
+/*	$NetBSD: indent.h,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -27,7 +29,15 @@
  */
 
 #if 0
+#if defined(__NetBSD__)
+__RCSID("$NetBSD: indent.h,v 1.1 2019/04/04 15:27:35 kamil Exp $");
+#elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
+#endif
+#endif
+
+#ifndef nitems
+#define nitems(array) (sizeof (array) / sizeof (array[0]))
 #endif
 
 void	add_typename(const char *);
