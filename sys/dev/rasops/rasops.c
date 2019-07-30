@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.97 2019/07/29 16:17:29 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.98 2019/07/30 12:20:24 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.97 2019/07/29 16:17:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.98 2019/07/30 12:20:24 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -618,16 +618,16 @@ rasops_allocattr_color(void *cookie, int fg0, int bg0, int flg, long *attr)
 #endif
 	}
 
+	if ((flg & WSATTR_HILIT) != 0)
+		fg += 8;
+
 	if ((flg & WSATTR_REVERSE) != 0) {
 		uint32_t swap = fg;
 		fg = bg;
 		bg = swap;
 	}
 
-	if ((flg & WSATTR_HILIT) != 0)
-		fg += 8;
-
-	flg = flg & WSATTR_USERMASK;
+	flg &= WSATTR_USERMASK;
 
 	if (rasops_isgray[fg])
 		flg |= WSATTR_PRIVATE1;
