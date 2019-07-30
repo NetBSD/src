@@ -213,10 +213,11 @@ make_env(const struct interface *ifp, const char *reason)
 	if (tmpfd == -1)
 		goto eexit;
 	unlink(tmpfile);
-	fp = fopen(tmpfile, "w+");
-	close(tmpfd);
-	if (fp == NULL)
+	fp = fdopen(tmpfd, "w+");
+	if (fp == NULL) {
+		close(tmpfd);
 		goto eexit;
+	}
 #endif
 
 #ifdef INET

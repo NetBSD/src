@@ -75,6 +75,10 @@
 #define IN_ARE_ADDR_EQUAL(a, b)		((a)->s_addr == (b)->s_addr)
 #define IN_IS_ADDR_UNSPECIFIED(a)	((a)->s_addr == INADDR_ANY)
 
+#ifdef __linux__
+#define IP_LIFETIME
+#endif
+
 struct ipv4_addr {
 	TAILQ_ENTRY(ipv4_addr) next;
 	struct in_addr addr;
@@ -83,8 +87,10 @@ struct ipv4_addr {
 	struct interface *iface;
 	int addr_flags;
 	unsigned int flags;
+#ifdef IP_LIFETIME
 	uint32_t vltime;
 	uint32_t pltime;
+#endif
 	char saddr[INET_ADDRSTRLEN + 3];
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
