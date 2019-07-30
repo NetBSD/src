@@ -1,4 +1,4 @@
-/*	$NetBSD: if_etreg.h,v 1.1 2010/11/13 00:47:25 jnemeth Exp $	*/
+/*	$NetBSD: if_etreg.h,v 1.2 2019/07/30 16:07:04 msaitoh Exp $	*/
 /*	$OpenBSD: if_etreg.h,v 1.3 2008/06/08 06:18:07 jsg Exp $	*/
 
 /*
@@ -235,7 +235,7 @@
 #define ET_MAC_CFG1_RST_TXMC		(1 << 18)
 #define ET_MAC_CFG1_RST_RXMC		(1 << 19)
 #define ET_MAC_CFG1_SIM_RST		(1 << 30)
-#define ET_MAC_CFG1_SOFT_RST		(1 << 31)
+#define ET_MAC_CFG1_SOFT_RST		__BIT(31)
 
 #define ET_MAC_CFG2			0x5004
 #define ET_MAC_CFG2_FDX			(1 << 0)
