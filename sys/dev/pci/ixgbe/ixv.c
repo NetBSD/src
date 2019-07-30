@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.124 2019/07/26 03:27:24 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.125 2019/07/30 08:38:03 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -592,10 +592,6 @@ ixv_detach(device_t dev, int flags)
 		return EBUSY;
 	}
 #endif
-
-	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 
 	for (int i = 0; i < adapter->num_queues; i++, que++, txr++) {
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
