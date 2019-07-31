@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.27 2019/07/31 00:14:25 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.28 2019/07/31 02:04:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.27 2019/07/31 00:14:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.28 2019/07/31 02:04:14 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -55,13 +55,6 @@ static void	rasops2_putchar8(void *, int, int col, u_int, long);
 static void	rasops2_putchar12(void *, int, int col, u_int, long);
 static void	rasops2_putchar16(void *, int, int col, u_int, long);
 static void	rasops2_makestamp(struct rasops_info *, long);
-
-/*
- * 4x1 stamp for optimized character blitting
- */
-static uint8_t	stamp[16];
-static long	stamp_attr;
-static int	stamp_mutex;	/* XXX see note in README */
 #endif
 
 /*
@@ -79,6 +72,12 @@ void
 rasops2_init(struct rasops_info *ri)
 {
 
+	if ((ri->ri_font->fontwidth & 3) != 0) {
+		ri->ri_ops.erasecols = rasops2_erasecols;
+		ri->ri_ops.copycols = rasops2_copycols;
+		ri->ri_do_cursor = rasops2_do_cursor;
+	}
+
 	switch (ri->ri_font->fontwidth) {
 #ifndef RASOPS_SMALL
 	case 8:
@@ -94,14 +93,12 @@ rasops2_init(struct rasops_info *ri)
 	default:
 		panic("fontwidth not 8/12/16 or RASOPS_SMALL - fixme!");
 		ri->ri_ops.putchar = rasops2_putchar;
-		break;
+		return;
 	}
 
-	if ((ri->ri_font->fontwidth & 3) != 0) {
-		ri->ri_ops.erasecols = rasops2_erasecols;
-		ri->ri_ops.copycols = rasops2_copycols;
-		ri->ri_do_cursor = rasops2_do_cursor;
-	}
+#ifndef RASOPS_SMALL
+	rasops_allocstamp(ri, sizeof(uint8_t) * 16);
+#endif
 }
 
 /*
@@ -121,11 +118,12 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops2_makestamp(struct rasops_info *ri, long attr)
 {
+	uint8_t *stamp = (uint8_t *)ri->ri_stamp;
 	int i, fg, bg;
 
 	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 3;
 	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 3;
-	stamp_attr = attr;
+	ri->ri_stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
 #if BYTE_ORDER == BIG_ENDIAN
