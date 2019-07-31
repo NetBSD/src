@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.73 2019/02/07 13:20:41 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.74 2019/07/31 19:40:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.73 2019/02/07 13:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.74 2019/07/31 19:40:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -470,7 +470,9 @@ usbd_get_hid_descriptor(struct usbd_interface *ifc)
 
 	for (; p < end; p += hd->bLength) {
 		hd = (usb_hid_descriptor_t *)p;
-		if (p + hd->bLength <= end && hd->bDescriptorType == UDESC_HID)
+		if (p + hd->bLength <= end &&
+		    hd->bLength >= USB_HID_DESCRIPTOR_SIZE(0) &&
+		    hd->bDescriptorType == UDESC_HID)
 			return hd;
 		if (hd->bDescriptorType == UDESC_INTERFACE)
 			break;
@@ -494,6 +496,8 @@ usbd_read_report_desc(struct usbd_interface *ifc, void **descp, int *sizep)
 	if (hid == NULL)
 		return USBD_IOERROR;
 	*sizep = UGETW(hid->descrs[0].wDescriptorLength);
+	if (*sizep == 0)
+		return USBD_INVAL;
 	*descp = kmem_alloc(*sizep, KM_SLEEP);
 	err = usbd_get_report_descriptor(dev, id->bInterfaceNumber,
 					 *sizep, *descp);

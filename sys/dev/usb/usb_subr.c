@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.235 2019/07/23 17:21:33 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.236 2019/07/31 19:40:59 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.235 2019/07/23 17:21:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.236 2019/07/31 19:40:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -452,7 +452,8 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 			DPRINTFN(10, "p=%#jx end=%#jx len=%jd type=%jd",
 			    (uintptr_t)p, (uintptr_t)end, ed->bLength,
 			    ed->bDescriptorType);
-			if (p + ed->bLength <= end && ed->bLength != 0 &&
+			if (p + ed->bLength <= end &&
+			    ed->bLength >= USB_ENDPOINT_DESCRIPTOR_SIZE &&
 			    ed->bDescriptorType == UDESC_ENDPOINT)
 				goto found;
 			if (ed->bLength == 0 ||
@@ -659,7 +660,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 					break;
 				usbd_delay_ms(dev, 200);
 			}
-			if (err || bdp->bDescriptorType != UDESC_BOS) {
+			if (err || bdp->bDescriptorType != UDESC_BOS ||
+			    UGETW(bdp->wTotalLength) != UGETW(bd.wTotalLength)) {
 				DPRINTF("error %jd or bad desc %jd", err,
 				    bdp->bDescriptorType, 0, 0);
 				kmem_free(bdp, blen);
