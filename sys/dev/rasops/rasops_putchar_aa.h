@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_aa.h,v 1.5 2019/07/31 02:26:40 rin Exp $ */
+/* $NetBSD: rasops_putchar_aa.h,v 1.6 2019/07/31 04:45:44 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp */
 /*-
@@ -38,8 +38,6 @@
 #define	PUTCHAR_AA(depth)	PUTCHAR_AA1(depth)
 #define	PUTCHAR_AA1(depth)	rasops ## depth ## _putchar_aa
 
-#define	MAX_WIDTH		64	/* XXX */
-
 #if   RASOPS_DEPTH == 8
 #define	PIXEL_TYPE		uint8_t
 #elif RASOPS_DEPTH == 15
@@ -53,14 +51,12 @@
 #if RASOPS_DEPTH != 24
 #define	COLOR_TYPE		PIXEL_TYPE
 #define	PIXEL_BYTES		sizeof(PIXEL_TYPE)
-#define	BUF_LEN			MAX_WIDTH
 #define	SET_PIXEL(p, x, c)	(p)[x] = clr[c]
 #endif
 
 #if RASOPS_DEPTH == 24
 #define	COLOR_TYPE		uint32_t
 #define	PIXEL_BYTES		3
-#define	BUF_LEN			(MAX_WIDTH * 3)
 #define	SET_PIXEL(p, x, c)			\
 	do {					\
 		(p)[3 * x + 0] = clr[c] >> 16;	\
@@ -80,11 +76,11 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
+	PIXEL_TYPE *buf = (PIXEL_TYPE *)ri->ri_buf;
 	int height, width, x, y, off[2];
 	uint16_t r[2], g[2], b[2];
 	uint8_t *fr, aval;
 	PIXEL_TYPE *rp, *hp, R, G, B;
-	PIXEL_TYPE buf[BUF_LEN] __attribute__ ((aligned(8))); /* XXX */
 	COLOR_TYPE clr[2];
 
 	hp = NULL;	/* XXX GCC */
@@ -108,11 +104,7 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		    col * ri->ri_xscale);
 	
 	height = font->fontheight;
-
-	/* XXX */
 	width = font->fontwidth;
-	if (__predict_false(width > MAX_WIDTH))
-		width = MAX_WIDTH;
 
 	clr[0] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 	clr[1] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
@@ -207,8 +199,6 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 #undef	PUTCHAR_AA
 #undef	PUTCHAR_AA1
-
-#undef	MAX_WIDTH
 
 #undef	PIXEL_TYPE
 #undef	COLOR_TYPE
