@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.24 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.25 2019/07/31 16:08:23 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.24 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.25 2019/07/31 16:08:23 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1038,6 +1038,8 @@ et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			/*
 			 * If only the PROMISC or ALLMULTI flag changes, then
