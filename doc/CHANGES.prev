@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.144 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.145 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12622,7 +12622,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[rin 20190723]
 	dhcpcd(8): Import dhcpcd-8.0.0. [roy 20190724]
 	tar(1): MKBSDTAR now defaults to yes. [roy 20190724]
-	libarchive: Import libarchive-3.4.0. [joerg 20090724]
+	libarchive: Import libarchive-3.4.0. [joerg 20190724]
 	dhcpcd(8): Import dhcpcd-8.0.1. [roy 20190725]
 	mac68k: Add genfb(4) framebuffer driver. [rin 20190726]
 	dhcpcd(8): Import dhcpcd-8.0.2. [roy 20190730]
