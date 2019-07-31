@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.157 2019/07/31 09:13:16 mrg Exp $
+#	$NetBSD: files.usb,v 1.158 2019/07/31 10:19:55 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -338,7 +338,7 @@ attach	aue at usbdevif
 file	dev/usb/if_aue.c		aue
 
 # CDC Ethernet
-device	cdce: arp, ether, ifnet
+device	cdce: arp, ether, ifnet, usbnet
 attach	cdce at usbifif
 file	dev/usb/if_cdce.c		cdce
 
