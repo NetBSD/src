@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.40 2019/07/31 02:04:14 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.41 2019/07/31 02:09:02 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,6 @@ struct rasops_info {
 	int	ri_emustride;	/* bytes per row we actually care about */
 	int	ri_rows;	/* number of rows (characters, not pels) */
 	int	ri_cols;	/* number of columns (characters, not pels) */
-	int	ri_delta;	/* row delta in bytes */
 	int	ri_pelbytes;	/* bytes per pel (may be zero) */
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
