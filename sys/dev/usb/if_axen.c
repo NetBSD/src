@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.51 2019/07/31 09:13:16 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.52 2019/07/31 23:47:16 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.51 2019/07/31 09:13:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.52 2019/07/31 23:47:16 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,9 +127,9 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 }
 
 static usbd_status
-axen_mii_read_reg(struct usbnet *un, int reg, int phy, uint16_t *val)
+axen_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	uint16_t data;
 	usbd_status err = axen_cmd(sc, AXEN_CMD_MII_READ_REG, reg, phy, &data);
 
@@ -144,9 +144,9 @@ axen_mii_read_reg(struct usbnet *un, int reg, int phy, uint16_t *val)
 }
 
 static usbd_status
-axen_mii_write_reg(struct usbnet *un, int reg, int phy, uint16_t val)
+axen_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	uint16_t uval = htole16(val);
 
 	return axen_cmd(sc, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
@@ -156,7 +156,7 @@ static void
 axen_miibus_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	struct mii_data * const mii = usbnet_mii(un);
 	int err;
 	uint16_t val;
@@ -215,7 +215,7 @@ axen_miibus_statchg(struct ifnet *ifp)
 static void
 axen_setiff_locked(struct usbnet *un)
 {
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct ethercom *ec = &un->un_ec;
 	struct ether_multi *enm;
@@ -519,7 +519,7 @@ axen_ax88179_init(struct axen_softc *sc)
 static void
 axen_setoe_locked(struct usbnet *un)
 {
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint64_t enabled = ifp->if_capenable;
 	uint8_t val;
@@ -612,6 +612,9 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	un->un_dev = self;
 	un->un_udev = dev;
@@ -626,10 +629,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 	un->un_init_cb = axen_init;
 	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
 	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
- 
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AXEN_CONFIG_NO, 1);
 	if (err) {
@@ -724,7 +723,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx;
 
 	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0);
+	    0, 0);
 }
 
 static int
@@ -916,7 +915,7 @@ static int
 axen_init_locked(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	uint16_t rxmode;
 	uint16_t wval;
 	uint8_t bval;
@@ -953,7 +952,7 @@ axen_init_locked(struct ifnet *ifp)
 
 	usbnet_unlock_mii_un_locked(un);
 
-	return usbnet_init_rx_tx(un, 0, 0);
+	return usbnet_init_rx_tx(un, 0, USBD_FORCE_SHORT_XFER);
 }
 
 static int
@@ -968,15 +967,11 @@ axen_init(struct ifnet *ifp)
 	return ret;
 }
 
-/*
- * Stop the adapter and free any mbufs allocated to the
- * RX and TX lists.
- */
 static void
 axen_stop_cb(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
-	struct axen_softc * const sc = un->un_sc;
+	struct axen_softc * const sc = usbnet_softc(un);
 	uint16_t rxmode, wval;
 
 	axen_reset(sc);
