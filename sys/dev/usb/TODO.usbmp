@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.13 2019/06/30 22:19:55 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.14 2019/07/31 11:02:49 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -66,7 +66,6 @@ splusb drivers:
   - emdtv_dtv.c
   - if_athn_usb.c
   - if_aue.c
-  - if_axe.c
   - if_cue.c
   - if_kue.c
   - if_otus.c
@@ -115,7 +114,6 @@ missing D_MPSAFE drivers:
 
 missing CALLOUT_MPSAFE drivers:
   - if_aue.c
-  - if_axe.c
   - if_cue.c
   - if_otus.c
   - if_rum.c
