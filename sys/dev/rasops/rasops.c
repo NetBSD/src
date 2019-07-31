@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.103 2019/07/31 02:04:14 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.104 2019/07/31 02:09:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.103 2019/07/31 02:04:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.104 2019/07/31 02:09:02 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -417,7 +417,6 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_rows = ri->ri_emuheight / ri->ri_font->fontheight;
 	}
 	ri->ri_emustride = ri->ri_emuwidth * bpp >> 3;
-	ri->ri_delta = ri->ri_stride - ri->ri_emustride;
 	ri->ri_ccol = 0;
 	ri->ri_crow = 0;
 	ri->ri_pelbytes = bpp >> 3;
@@ -426,12 +425,6 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_yscale = ri->ri_font->fontheight * ri->ri_stride;
 	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
 
-	if ((ri->ri_delta & 3) != 0) {
-		aprint_error(
-		    "%s: ri_delta not aligned on 32-bit boundary", __func__);
-		splx(s);
-		return -1;
-	}
 	ri->ri_origbits = ri->ri_bits;
 	ri->ri_hworigbits = ri->ri_hwbits;
 
