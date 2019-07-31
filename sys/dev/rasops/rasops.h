@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.41 2019/07/31 02:09:02 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.42 2019/07/31 04:45:44 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,6 +130,10 @@ struct rasops_info {
 
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
+
+	/* buffer capable of single-row pixels */
+	void	*ri_buf;
+	size_t	ri_buflen;
 
 	/* 4x1 stamp for optimized character blitting */
 	void	*ri_stamp;
