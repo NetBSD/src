@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.104 2019/07/31 02:09:02 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.105 2019/07/31 04:45:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.104 2019/07/31 02:09:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.105 2019/07/31 04:45:44 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -481,6 +481,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
+
+	if (ri->ri_buf != NULL) {
+		kmem_free(ri->ri_buf, ri->ri_buflen);
+		ri->ri_buf = NULL;
+	}
+	len = (ri->ri_flg & RI_FULLCLEAR) ? ri->ri_stride : ri->ri_emustride;
+	ri->ri_buflen = len;
+	ri->ri_buf = kmem_alloc(len, KM_SLEEP);
 
 #ifndef RASOPS_SMALL
 	if (ri->ri_stamp != NULL) {
@@ -949,8 +957,9 @@ void
 rasops_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	uint32_t *rp, *dp, *hp, clr;
-	int n, cnt;
+	uint32_t *buf = (uint32_t *)ri->ri_buf;
+	uint32_t *rp, *hp, clr;
+	int stride, cnt;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -976,25 +985,26 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
 	 */
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
-		n = ri->ri_stride >> 2;
+		stride = ri->ri_stride;
 		num = ri->ri_height;
 		rp = (uint32_t *)ri->ri_origbits;
 		if (ri->ri_hwbits)
 			hp = (uint32_t *)ri->ri_hworigbits;
 	} else {
-		n = ri->ri_emustride >> 2;
+		stride = ri->ri_emustride;
 		num *= ri->ri_font->fontheight;
 		rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale);
 		if (ri->ri_hwbits)
 			hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale);
 	}
 
+	for (cnt = 0; cnt < stride >> 2; cnt++)
+		buf[cnt] = clr;
+
 	while (num--) {
-		dp = rp;
-		for (cnt = n; cnt; cnt--)
-			*dp++ = clr;
+		memcpy(rp, buf, stride);
 		if (ri->ri_hwbits) {
-			memcpy(hp, rp, n << 2);
+			memcpy(hp, buf, stride);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
 		DELTA(rp, ri->ri_stride, uint32_t *);
@@ -1114,8 +1124,9 @@ void
 rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
+	void *buf = ri->ri_buf;
 	int height, cnt, slop1, slop2, clr;
-	uint32_t *rp, *dp, *hp;
+	uint32_t *dp, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -1143,95 +1154,45 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 	height = ri->ri_font->fontheight;
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 
-	/* Don't bother using the full loop for <= 32 pels */
-	if (num <= 32) {
-		if (((num | ri->ri_xscale) & 3) == 0) {
-			/* Word aligned blt */
-			num >>= 2;
-
-			while (height--) {
-				dp = rp;
-				for (cnt = num; cnt; cnt--)
-					*dp++ = clr;
-				if (ri->ri_hwbits) {
-					memcpy(hp, rp, num << 2);
-					DELTA(hp, ri->ri_stride, uint32_t *);
-				}
-				DELTA(rp, ri->ri_stride, uint32_t *);
-			}
-		} else if (((num | ri->ri_xscale) & 1) == 0) {
-			/*
-			 * Halfword aligned blt. This is needed so the
-			 * 15/16 bit ops can use this function.
-			 */
-			num >>= 1;
-
-			while (height--) {
-				dp = rp;
-				for (cnt = num; cnt; cnt--) {
-					*(uint16_t *)dp = clr;
-					DELTA(dp, 2, uint32_t *);
-				}
-				if (ri->ri_hwbits) {
-					memcpy(hp, rp, num << 1);
-					DELTA(hp, ri->ri_stride, uint32_t *);
-				}
-				DELTA(rp, ri->ri_stride, uint32_t *);
-			}
-		} else {
-			while (height--) {
-				dp = rp;
-				for (cnt = num; cnt; cnt--) {
-					*(uint8_t *)dp = clr;
-					DELTA(dp, 1, uint32_t *);
-				}
-				if (ri->ri_hwbits) {
-					memcpy(hp, rp, num);
-					DELTA(hp, ri->ri_stride, uint32_t *);
-				}
-				DELTA(rp, ri->ri_stride, uint32_t *);
-			}
-		}
-
-		return;
-	}
+	dp = buf;
 
 	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
 	slop2 = (num - slop1) & 3;
 	num = (num - slop1 /* - slop2 */) >> 2;
 
+	/* Align span to 4 bytes */
+	if (slop1 & 1) {
+		*(uint8_t *)dp = clr;
+		DELTA(dp, 1, uint32_t *);
+	}
+
+	if (slop1 & 2) {
+		*(uint16_t *)dp = clr;
+		DELTA(dp, 2, uint32_t *);
+	}
+
+	/* Write 4 bytes per loop */
+	for (cnt = num; cnt; cnt--)
+		*dp++ = clr;
+
+	/* Write unaligned trailing slop */
+	if (slop2 & 1) {
+		*(uint8_t *)dp = clr;
+		DELTA(dp, 1, uint32_t *);
+	}
+
+	if (slop2 & 2)
+		*(uint16_t *)dp = clr;
+
+	num = slop1 + (num << 2) + slop2;
+
 	while (height--) {
-		dp = rp;
-
-		/* Align span to 4 bytes */
-		if (slop1 & 1) {
-			*(uint8_t *)dp = clr;
-			DELTA(dp, 1, uint32_t *);
-		}
-
-		if (slop1 & 2) {
-			*(uint16_t *)dp = clr;
-			DELTA(dp, 2, uint32_t *);
-		}
-
-		/* Write 4 bytes per loop */
-		for (cnt = num; cnt; cnt--)
-			*dp++ = clr;
-
-		/* Write unaligned trailing slop */
-		if (slop2 & 1) {
-			*(uint8_t *)dp = clr;
-			DELTA(dp, 1, uint32_t *);
-		}
-
-		if (slop2 & 2)
-			*(uint16_t *)dp = clr;
-
+		memcpy(rp, buf, num);
+		DELTA(rp, ri->ri_stride, uint32_t *);
 		if (ri->ri_hwbits) {
-			memcpy(hp, rp, slop1 + (num << 2) + slop2);
+			memcpy(hp, buf, num);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
-		DELTA(rp, ri->ri_stride, uint32_t *);
 	}
 }
 
