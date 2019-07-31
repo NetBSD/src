@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.38 2019/07/29 08:13:50 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.39 2019/07/31 00:14:25 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,8 +100,7 @@ struct rasops_info {
 	 * on depths other than 15, 16, 24 and 32 bits per pel. On
 	 * 24 bit displays, ri_{r,g,b}num must be 8.
 	 */
-	uint8_t	ri_rnum;
-	/* number of bits for red */
+	uint8_t	ri_rnum;	/* number of bits for red */
 	uint8_t	ri_gnum;	/* number of bits for green */
 	uint8_t	ri_bnum;	/* number of bits for blue */
 	uint8_t	ri_rpos;	/* which bit red starts at */
@@ -139,8 +138,6 @@ struct rasops_info {
 #endif
 };
 
-#define DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
-
 #define CHAR_IN_FONT(c,font) 					\
        ((c) >= (font)->firstchar && 				\
 	((c) - (font)->firstchar) < (font)->numchars)
@@ -148,6 +145,44 @@ struct rasops_info {
 #define PICK_FONT(ri, c) (((c & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT) && \
 			  (ri->ri_optfont.data != NULL)) ? \
 			 &ri->ri_optfont : ri->ri_font
+
+/*
+ * rasops_init().
+ *
+ * Integer parameters are the number of rows and columns we'd *like*.
+ *
+ * In terms of optimization, fonts that are a multiple of 8 pixels wide
+ * work the best.
+ *
+ * rasops_init() takes care of rasops_reconfig(). The parameters to both
+ * are the same. If calling rasops_reconfig() to change the font and
+ * ri_wsfcookie >= 0, you must call wsfont_unlock() on it, and reset it
+ * to -1 (or a new, valid cookie).
+ */
+
+/* rasops.c */
+int	rasops_init(struct rasops_info *, int, int);
+int	rasops_reconfig(struct rasops_info *, int, int);
+void	rasops_unpack_attr(long, int *, int *, int *);
+void	rasops_eraserows(void *, int, int, long);
+void	rasops_erasecols(void *, int, int, int, long);
+int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
+
+extern const uint8_t	rasops_cmap[256 * 3];
+
+#ifdef _RASOPS_PRIVATE
+/*
+ * Per-depth initialization functions.
+ */
+void	rasops1_init(struct rasops_info *);
+void	rasops2_init(struct rasops_info *);
+void	rasops4_init(struct rasops_info *);
+void	rasops8_init(struct rasops_info *);
+void	rasops15_init(struct rasops_info *);
+void	rasops24_init(struct rasops_info *);
+void	rasops32_init(struct rasops_info *);
+
+#define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
 
 #define	FONT_GLYPH(uc, font, ri)					\
 	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
@@ -164,44 +199,6 @@ be32uatoh(uint8_t *p)
 	u |= p[3];
 	return u;
 }
-
-/*
- * rasops_init().
- *
- * Integer parameters are the number of rows and columns we'd *like*.
- *
- * In terms of optimization, fonts that are a multiple of 8 pixels wide
- * work the best.
- *
- * rasops_init() takes care of rasops_reconfig(). The parameters to both
- * are the same. If calling rasops_reconfig() to change the font and
- * ri_wsfcookie >= 0, you must call wsfont_unlock() on it, and reset it
- * to -1 (or a new, valid cookie).
- */
-
-/*
- * Per-depth initialization functions. These should not be called outside
- * the rasops code.
- */
-void	rasops1_init(struct rasops_info *);
-void	rasops2_init(struct rasops_info *);
-void	rasops4_init(struct rasops_info *);
-void	rasops8_init(struct rasops_info *);
-void	rasops15_init(struct rasops_info *);
-void	rasops24_init(struct rasops_info *);
-void	rasops32_init(struct rasops_info *);
-
-/* rasops.c */
-int	rasops_init(struct rasops_info *, int, int);
-int	rasops_reconfig(struct rasops_info *, int, int);
-void	rasops_unpack_attr(long, int *, int *, int *);
-void	rasops_eraserows(void *, int, int, long);
-void	rasops_erasecols(void *, int, int, int, long);
-void	rasops_copycols(void *, int, int, int, int);
-int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
-
-
-extern const uint8_t	rasops_isgray[16];
-extern const uint8_t	rasops_cmap[256*3];
+#endif /* _RASOPS_PRIVATE */
 
 #endif /* _RASOPS_H_ */

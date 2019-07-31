@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.101 2019/07/30 15:29:40 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.102 2019/07/31 00:14:25 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.101 2019/07/30 15:29:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.102 2019/07/31 00:14:25 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.101 2019/07/30 15:29:40 rin Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
+
+#define	_RASOPS_PRIVATE
 #include <dev/rasops/rasops.h>
 
 #ifndef _KERNEL
@@ -127,11 +129,9 @@ const uint8_t rasops_cmap[256 * 3] = {
 };
 
 /* True if color is gray */
-const uint8_t rasops_isgray[16] = {
-	1, 0, 0, 0,
-	0, 0, 0, 1,
-	1, 0, 0, 0,
-	0, 0, 0, 1,
+static const uint8_t rasops_isgray[16] = {
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
 };
 
 #ifdef RASOPS_APPLE_PALETTE
@@ -181,6 +181,7 @@ static const uint8_t apple4_devcmap[16] = {
 
 /* Generic functions */
 static void	rasops_copyrows(void *, int, int, int);
+static void	rasops_copycols(void *, int, int, int, int);
 static int	rasops_mapchar(void *, int, u_int *);
 static void	rasops_cursor(void *, int, int, int);
 static int	rasops_allocattr_color(void *, int, int, int, long *);
@@ -222,8 +223,6 @@ void	rasops_make_box_chars_8(struct rasops_info *);
 void	rasops_make_box_chars_16(struct rasops_info *);
 void	rasops_make_box_chars_32(struct rasops_info *);
 void	rasops_make_box_chars_alpha(struct rasops_info *);
-
-extern int cold;
 
 /*
  * Initialize a 'rasops_info' descriptor.
@@ -725,7 +724,7 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
  * We simply cop-out here and use memmove(), since it handles all of
  * these cases anyway.
  */
-void
+static void
 rasops_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
