@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.42 2019/07/31 04:45:44 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.43 2019/07/31 05:08:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.42 2019/07/31 04:45:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.43 2019/07/31 05:08:10 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -51,6 +51,9 @@ static void 	rasops24_erasecols(void *, int, int, int, long);
 static void 	rasops24_eraserows(void *, int, int, long);
 static void 	rasops24_putchar(void *, int, int, u_int, long);
 static void 	rasops24_putchar_aa(void *, int, int, u_int, long);
+static __inline void
+		rasops24_makestamp1(struct rasops_info *, uint32_t *,
+				    uint32_t, uint32_t, uint32_t, uint32_t);
 #ifndef RASOPS_SMALL
 static void 	rasops24_putchar8(void *, int, int, u_int, long);
 static void 	rasops24_putchar12(void *, int, int, u_int, long);
@@ -117,6 +120,27 @@ rasops24_init(struct rasops_info *ri)
 #include "rasops_putchar.h"
 #include "rasops_putchar_aa.h"
 
+static __inline void
+rasops24_makestamp1(struct rasops_info *ri, uint32_t *stamp,
+    uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4)
+{
+
+	stamp[0] = (c1 <<  8) | (c2 >> 16);
+	stamp[1] = (c2 << 16) | (c3 >>  8);
+	stamp[2] = (c3 << 24) |  c4;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	if ((ri->ri_flg & RI_BSWAP) == 0)
+#else
+	if ((ri->ri_flg & RI_BSWAP) != 0)
+#endif
+	{
+		stamp[0] = bswap32(stamp[0]);
+		stamp[1] = bswap32(stamp[1]);
+		stamp[2] = bswap32(stamp[2]);
+	}
+}
+
 #ifndef RASOPS_SMALL
 /*
  * Recompute the blitting stamp.
@@ -144,19 +168,7 @@ rasops24_makestamp(struct rasops_info *ri, long attr)
 		c3 = i & 16 ? fg : bg;
 		c4 = i & 32 ? fg : bg;
 #endif
-		stamp[i + 0] = (c1 <<  8) | (c2 >> 16);
-		stamp[i + 1] = (c2 << 16) | (c3 >>  8);
-		stamp[i + 2] = (c3 << 24) |  c4;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-		if ((ri->ri_flg & RI_BSWAP) == 0) {
-#else
-		if ((ri->ri_flg & RI_BSWAP) != 0) {
-#endif
-			stamp[i + 0] = bswap32(stamp[i + 0]);
-			stamp[i + 1] = bswap32(stamp[i + 1]);
-			stamp[i + 2] = bswap32(stamp[i + 2]);
-		}
+		rasops24_makestamp1(ri, &stamp[i], c1, c2, c3, c4);
 	}
 }
 
@@ -210,19 +222,7 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 #endif
 
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	stamp[0] = (clr <<  8) | (clr >> 16);
-	stamp[1] = (clr << 16) | (clr >>  8);
-	stamp[2] = (clr << 24) |  clr;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-	if ((ri->ri_flg & RI_BSWAP) == 0) {
-#else
-	if ((ri->ri_flg & RI_BSWAP) != 0) {
-#endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
-	}
+	rasops24_makestamp1(ri, stamp, clr, clr, clr, clr);
 
 	/*
 	 * XXX the wsdisplay_emulops interface seems a little deficient in
@@ -317,19 +317,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	height = ri->ri_font->fontheight;
 
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	stamp[0] = (clr <<  8) | (clr >> 16);
-	stamp[1] = (clr << 16) | (clr >>  8);
-	stamp[2] = (clr << 24) |  clr;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-	if ((ri->ri_flg & RI_BSWAP) == 0) {
-#else
-	if ((ri->ri_flg & RI_BSWAP) != 0) {
-#endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
-	}
+	rasops24_makestamp1(ri, stamp, clr, clr, clr, clr);
 
 	/*
 	 * The current byte offset mod 4 tells us the number of 24-bit pels
