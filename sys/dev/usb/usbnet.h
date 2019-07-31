@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.1 2019/07/31 09:13:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.2 2019/07/31 23:47:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -76,7 +76,7 @@
  */
 
 /*
- * Converted drivers:  if_axen if_cdce.
+ * Converted drivers:  if_axe if_axen if_cdce if_ure.
  *
  * Note: these drivers have slightly different mbuf handling that need to be
  * adjusted to the common method (see if_cdce conversion):
@@ -87,6 +87,7 @@
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/rndsource.h>
+#include <sys/mutex.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -229,6 +230,7 @@ struct usbnet {
 
 #define usbnet_ifp(un)		(&(un)->un_ec.ec_if)
 #define usbnet_mii(un)		(un->un_ec.ec_mii)
+#define usbnet_softc(un)	(un->un_sc)
 
 /*
  * Endpoint / rx/tx chain management:
@@ -259,7 +261,7 @@ void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int);
 
 /* autoconf */
 void	usbnet_attach(struct usbnet *un, const char *, unsigned, unsigned);
-void	usbnet_attach_ifp(struct usbnet *, bool, unsigned, unsigned);
+void	usbnet_attach_ifp(struct usbnet *, bool, unsigned, unsigned, int);
 int	usbnet_detach(device_t, int);
 int	usbnet_activate(device_t, devact_t);
 

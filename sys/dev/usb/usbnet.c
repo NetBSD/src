@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.1 2019/07/31 09:13:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.2 2019/07/31 23:47:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.1 2019/07/31 09:13:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.2 2019/07/31 23:47:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,8 +44,46 @@ __KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.1 2019/07/31 09:13:16 mrg Exp $");
 
 static int usbnet_modcmd(modcmd_t, void *);
 
-#define DPRINTF(fmt, ...) \
-        printf("%s:%d: " fmt "\n", __func__, __LINE__, ## __VA_ARGS__)
+#ifdef USB_DEBUG
+#ifndef USBNET_DEBUG
+#define usbnetdebug 0
+#else
+static int usbnetdebug = 20;
+
+SYSCTL_SETUP(sysctl_hw_usbnet_setup, "sysctl hw.usbnet setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "usbnet",
+	    SYSCTL_DESCR("usbnet global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &usbnetdebug, sizeof(usbnetdebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
+
+#endif /* USBNET_DEBUG */
+#endif /* USB_DEBUG */
+
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(usbnetdebug,1,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbnetdebug,N,FMT,A,B,C,D)
+#define USBNETHIST_FUNC()	USBHIST_FUNC()
+#define USBNETHIST_CALLED(name)	USBHIST_CALLED(usbnetdebug)
 
 /* Interrupt handling. */
 
@@ -83,7 +121,6 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 	struct ifnet *ifp = &un->un_ec.ec_if;
 	struct mbuf *m;
 
-//DPRINTF("enter");
 	KASSERT(mutex_owned(&un->un_rxlock));
 
 	m = usbnet_newbuf();
@@ -113,7 +150,6 @@ usbnet_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	struct ifnet *ifp = &un->un_ec.ec_if;
 	uint32_t total_len;
 
-//DPRINTF("enter");
 	mutex_enter(&un->un_rxlock);
 
 	if (un->un_dying || un->un_stopping ||
@@ -166,7 +202,6 @@ usbnet_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	struct usbnet_cdata *cd = &un->un_cdata;
 	struct ifnet * const ifp = usbnet_ifp(un);
 
-//DPRINTF("enter");
 	mutex_enter(&un->un_txlock);
 	if (un->un_stopping || un->un_dying) {
 		mutex_exit(&un->un_txlock);
@@ -213,7 +248,6 @@ usbnet_start_locked(struct ifnet *ifp)
 	unsigned length;
 	int idx;
 
-//DPRINTF("enter");
 	KASSERT(mutex_owned(&un->un_txlock));
 	KASSERT(cd->uncd_tx_cnt <= cd->uncd_tx_list_cnt);
 
@@ -221,7 +255,6 @@ usbnet_start_locked(struct ifnet *ifp)
 		return;
 
 	idx = cd->uncd_tx_prod;
-//DPRINTF("idx %d", idx);
 	while (cd->uncd_tx_cnt < cd->uncd_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
@@ -262,7 +295,6 @@ usbnet_start_locked(struct ifnet *ifp)
 		idx = (idx + 1) % cd->uncd_tx_list_cnt;
 		cd->uncd_tx_cnt++;
 	}
-//DPRINTF("idx %d", idx);
 	cd->uncd_tx_prod = idx;
 
 	/*
@@ -276,7 +308,6 @@ usbnet_start(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-//DPRINTF("enter");
 	mutex_enter(&un->un_txlock);
 	if (!un->un_stopping)
 		usbnet_start_locked(ifp);
@@ -596,7 +627,7 @@ usbnet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	mutex_exit(&un->un_lock);
 
 	usbnet_lock_mii(un);
-	err = (*un->un_read_reg_cb)(un, reg, phy, val);
+	err = (*un->un_read_reg_cb)(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
 	if (err) {
@@ -621,7 +652,7 @@ usbnet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	mutex_exit(&un->un_lock);
 
 	usbnet_lock_mii(un);
-	err = (*un->un_write_reg_cb)(un, reg, phy, val);
+	err = (*un->un_write_reg_cb)(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
 	if (err) {
@@ -893,7 +924,7 @@ usbnet_attach(struct usbnet *un,
 }
 
 static void
-usbnet_attach_mii(struct usbnet *un)
+usbnet_attach_mii(struct usbnet *un, int mii_flags)
 {
 	struct mii_data * const mii = &un->un_mii;
 	struct ifnet *ifp = usbnet_ifp(un);
@@ -907,7 +938,7 @@ usbnet_attach_mii(struct usbnet *un)
 	un->un_ec.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, usbnet_media_upd, ether_mediastatus);
 	mii_attach(un->un_dev, mii, 0xffffffff, MII_PHY_ANY,
-		   MII_OFFSET_ANY, 0);
+		   MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -925,7 +956,8 @@ void
 usbnet_attach_ifp(struct usbnet *un,
 		  bool have_mii,		/* setup MII */
 		  unsigned if_flags,		/* additional if_flags */
-		  unsigned if_extflags)		/* additional if_extflags */
+		  unsigned if_extflags,		/* additional if_extflags */
+		  int mii_flags)		/* additional mii_attach flags */
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 
@@ -945,7 +977,7 @@ usbnet_attach_ifp(struct usbnet *un,
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if (have_mii)
-		usbnet_attach_mii(un);
+		usbnet_attach_mii(un, mii_flags);
 
 	/* Attach the interface. */
 	if_attach(ifp);
