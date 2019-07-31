@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_aa.h,v 1.4 2019/07/30 15:29:40 rin Exp $ */
+/* $NetBSD: rasops_putchar_aa.h,v 1.5 2019/07/31 02:26:40 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.43 2019/07/28 12:06:10 rin Exp */
 /*-
@@ -148,9 +148,9 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 				aval = *fr;
 				fr++;
 				if (aval == 0)
-					SET_PIXEL(buf, x, 0);
+					SET_PIXEL(rp, x, 0);
 				else if (aval == 255)
-					SET_PIXEL(buf, x, 1);
+					SET_PIXEL(rp, x, 1);
 				else {
 #define	AVERAGE(p, w)	((w * p[1] + (0xff - w) * p[0]) >> 8)
 					R = AVERAGE(r, aval);
@@ -163,7 +163,7 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	(((_r) >> (8 - ri->ri_rnum)) << ri->ri_rpos) |	\
 	(((_g) >> (8 - ri->ri_gnum)) << ri->ri_gpos) |	\
 	(((_b) >> (8 - ri->ri_bnum)) << ri->ri_bpos)
-					buf[x] = RGB2PIXEL(R, G, B);
+					rp[x] = RGB2PIXEL(R, G, B);
 #undef	RGB2PIXEL
 #endif
 
@@ -177,21 +177,20 @@ PUTCHAR_AA(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 #define	GOFF	(2 - ri->ri_gpos / 8)
 #define	BOFF	(2 - ri->ri_bpos / 8)
 #  endif
-					buf[3 * x + ROFF] = R;
-					buf[3 * x + GOFF] = G;
-					buf[3 * x + BOFF] = B;
+					rp[3 * x + ROFF] = R;
+					rp[3 * x + GOFF] = G;
+					rp[3 * x + BOFF] = B;
 #undef	ROFF
 #undef	GOFF
 #undef	BOFF
 #endif
 				}
 			}
-			memcpy(rp, buf, width * PIXEL_BYTES);
-			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 			if (ri->ri_hwbits) {
-				memcpy(hp, buf, width * PIXEL_BYTES);
+				memcpy(hp, rp, width * PIXEL_BYTES);
 				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
+			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 		}
 	}
 
