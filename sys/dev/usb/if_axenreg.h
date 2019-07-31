@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.14 2019/06/18 09:34:57 mrg Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.15 2019/07/31 09:13:16 mrg Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -220,15 +220,6 @@
 
 #define AXEN_CONFIG_NO		1
 #define AXEN_IFACE_IDX		0
-
-/*
- * The interrupt endpoint is currently unused
- * by the ASIX part.
- */
-#define AXEN_ENDPT_RX		0x0
-#define AXEN_ENDPT_TX		0x1
-#define AXEN_ENDPT_INTR		0x2
-#define AXEN_ENDPT_MAX		0x3
 
 struct axen_qctrl {
 	uint8_t			ctrl;

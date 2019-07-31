@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122 2019/06/20 03:31:55 pgoyette Exp $
+# $NetBSD: mi,v 1.123 2019/07/31 09:13:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -440,6 +440,8 @@
 ./@MODULEDIR@/umap/umap.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/union				base-kernel-modules	kmod
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/usbnet				base-kernel-modules	kmod
+./@MODULEDIR@/usbnet/usbnet.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/v7fs				base-kernel-modules	kmod
