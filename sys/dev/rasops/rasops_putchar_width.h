@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.9 2019/07/30 15:29:40 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.10 2019/07/31 02:04:14 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -204,9 +204,10 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
+	STAMP_TYPE *stamp = (STAMP_TYPE *)ri->ri_stamp;
 	int height, fs;
-	STAMP_TYPE *rp, *hp;
 	uint8_t *fr;
+	STAMP_TYPE *rp, *hp;
 
 	hp = NULL; /* XXX GCC */
 
@@ -223,15 +224,8 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 	if (!CHAR_IN_FONT(uc, font))
 		return;
 
-	/* Can't risk remaking the stamp if it's already in use */
-	if (stamp_mutex++) {
-		stamp_mutex--;
-		PUTCHAR(RASOPS_DEPTH)(cookie, row, col, uc, attr);
-		return;
-	}
-
 	/* Recompute stamp? */
-	if (attr != stamp_attr)
+	if (attr != ri->ri_stamp_attr)
 		MAKESTAMP(RASOPS_DEPTH)(ri, attr);
 
 	rp = (STAMP_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
@@ -275,8 +269,6 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 			memcpy(hp, rp, SUBST_BYTES);
 		}
 	}
-
-	stamp_mutex--;
 }
 
 #undef	STAMP_TYPE
