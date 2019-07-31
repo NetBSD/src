@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.102 2019/07/31 00:14:25 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.103 2019/07/31 02:04:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.102 2019/07/31 00:14:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.103 2019/07/31 02:04:14 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -488,6 +488,13 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
+
+#ifndef RASOPS_SMALL
+	if (ri->ri_stamp != NULL) {
+		kmem_free(ri->ri_stamp, ri->ri_stamp_len);
+		ri->ri_stamp = NULL;
+	}
+#endif
 
 	switch (ri->ri_depth) {
 #if NRASOPS1 > 0
@@ -1670,7 +1677,6 @@ rasops_make_box_chars_alpha(struct rasops_info *ri)
  * For now this is either a copy of rasops_cmap[] or an R3G3B2 map, it should
  * probably be a linear ( or gamma corrected? ) ramp for higher depths.
  */
- 
 int
 rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
 {
@@ -1707,3 +1713,15 @@ rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
 		memcpy(palette, rasops_cmap, uimin(bytes, sizeof(rasops_cmap)));
 	return 0;
 }
+
+#ifndef RASOPS_SMALL
+void
+rasops_allocstamp(struct rasops_info *ri, size_t len)
+{
+
+	KASSERT(ri->ri_stamp == NULL);
+	ri->ri_stamp_len = len;
+	ri->ri_stamp = kmem_zalloc(len, KM_SLEEP);
+	ri->ri_stamp_attr = 0;
+}
+#endif

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.39 2019/07/31 00:14:25 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.40 2019/07/31 02:04:14 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,6 +132,11 @@ struct rasops_info {
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
 
+	/* 4x1 stamp for optimized character blitting */
+	void	*ri_stamp;
+	long	ri_stamp_attr;
+	size_t	ri_stamp_len;
+
 #if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
@@ -181,6 +186,8 @@ void	rasops8_init(struct rasops_info *);
 void	rasops15_init(struct rasops_info *);
 void	rasops24_init(struct rasops_info *);
 void	rasops32_init(struct rasops_info *);
+
+void	rasops_allocstamp(struct rasops_info *, size_t);
 
 #define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
 

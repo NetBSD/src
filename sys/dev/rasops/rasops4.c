@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.21 2019/07/31 00:14:25 rin Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.22 2019/07/31 02:04:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.21 2019/07/31 00:14:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.22 2019/07/31 02:04:14 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -55,13 +55,6 @@ static void	rasops4_putchar8(void *, int, int col, u_int, long);
 static void	rasops4_putchar12(void *, int, int col, u_int, long);
 static void	rasops4_putchar16(void *, int, int col, u_int, long);
 static void	rasops4_makestamp(struct rasops_info *, long);
-
-/*
- * 4x1 stamp for optimized character blitting
- */
-static uint16_t	stamp[16];
-static long	stamp_attr;
-static int	stamp_mutex;	/* XXX see note in README */
 #endif
 
 /*
@@ -100,8 +93,12 @@ rasops4_init(struct rasops_info *ri)
 	default:
 		panic("fontwidth not 8/12/16 or RASOPS_SMALL - fixme!");
 		ri->ri_ops.putchar = rasops4_putchar;
-		break;
+		return;
 	}
+
+#ifndef RASOPS_SMALL
+	rasops_allocstamp(ri, sizeof(uint16_t) * 16);
+#endif
 }
 
 /*
@@ -121,11 +118,12 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops4_makestamp(struct rasops_info *ri, long attr)
 {
+	uint16_t *stamp = (uint16_t *)ri->ri_stamp;
 	int i, fg, bg;
 
 	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xf;
 	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xf;
-	stamp_attr = attr;
+	ri->ri_stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
 #if BYTE_ORDER == BIG_ENDIAN
