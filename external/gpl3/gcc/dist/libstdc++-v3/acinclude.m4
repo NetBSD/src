@@ -2416,7 +2416,7 @@ AC_DEFUN([GLIBCXX_ENABLE_CLOCALE], [
       darwin*)
 	enable_clocale_flag=darwin
 	;;
-      dragonfly* | freebsd*)
+      dragonfly* | freebsd* | netbsd*)
 	enable_clocale_flag=dragonfly
 	;;
       openbsd*)
@@ -2512,7 +2512,7 @@ AC_DEFUN([GLIBCXX_ENABLE_CLOCALE], [
       ;;
 
     dragonfly)
-      AC_MSG_RESULT(dragonfly or freebsd)
+      AC_MSG_RESULT(dragonfly or freebsd or netbsd)
 
       CLOCALE_H=config/locale/dragonfly/c_locale.h
       CLOCALE_CC=config/locale/dragonfly/c_locale.cc
