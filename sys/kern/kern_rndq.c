@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.93 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.94 2019/07/31 02:21:31 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.93 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.94 2019/07/31 02:21:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.93 2019/03/01 11:06:57 pgoyette Exp 
 #endif
 
 #ifdef RND_DEBUG
-#define	DPRINTF(l,x)      if (rnd_debug & (l)) rnd_printf x
+#define	DPRINTF(l,x)	if (rnd_debug & (l)) rnd_printf x
 int	rnd_debug = 0;
 #else
 #define	DPRINTF(l,x)
@@ -155,7 +155,7 @@ static void *rnd_process __read_mostly;
 static void *rnd_wakeup __read_mostly;
 
 static inline uint32_t	rnd_counter(void);
-static        void	rnd_intr(void *);
+static	      void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
@@ -617,7 +617,7 @@ rnd_init(void)
 	 * If we have a cycle counter, take its error with respect
 	 * to the callout mechanism as a source of entropy, ala
 	 * TrueRand.
- 	 *
+	 *
 	 */
 #if defined(__HAVE_CPU_COUNTER)
 	/* IPL_VM because taken while rnd_global.lock is held.  */
@@ -840,10 +840,9 @@ rnd_estimate(krndsource_t *rs, uint32_t ts, uint32_t val)
 			entropy += dt_est;
 		}
 
-                if (rs->flags & RND_FLAG_ESTIMATE_VALUE) {
+		if (rs->flags & RND_FLAG_ESTIMATE_VALUE) {
 			entropy += dv_est;
 		}
-
 	}
 	return entropy;
 }
@@ -883,7 +882,7 @@ _rnd_add_uint64(krndsource_t *rs, uint64_t val)
 	uint32_t entropy = 0;
 
 	if (rs->flags & RND_FLAG_NO_COLLECT)
-                return;
+		return;
 
 	/*
 	 * Sample the counter as soon as possible to avoid
@@ -1414,9 +1413,9 @@ krndsource_to_rndsource(krndsource_t *kr, rndsource_t *r)
 
 	memset(r, 0, sizeof(*r));
 	strlcpy(r->name, kr->name, sizeof(r->name));
-        r->total = kr->total;
-        r->type = kr->type;
-        r->flags = kr->flags;
+	r->total = kr->total;
+	r->type = kr->type;
+	r->flags = kr->flags;
 }
 
 static void
@@ -1440,7 +1439,7 @@ krs_setflags(krndsource_t *kr, uint32_t flags, uint32_t mask)
 	kr->flags |= (flags & mask);
 
 	if (oflags & RND_FLAG_HASENABLE &&
-            ((oflags & RND_FLAG_NO_COLLECT) !=
+	    ((oflags & RND_FLAG_NO_COLLECT) !=
 		(flags & RND_FLAG_NO_COLLECT))) {
 		kr->enable(kr, !(flags & RND_FLAG_NO_COLLECT));
 	}
@@ -1634,7 +1633,7 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		}
 		mutex_spin_exit(&rnd_global.lock);
 
-		ret = ENOENT;           /* name not found */
+		ret = ENOENT;		/* name not found */
 
 		break;
 
