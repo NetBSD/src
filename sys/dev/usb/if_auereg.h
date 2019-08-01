@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.29 2019/07/21 10:27:56 mrg Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.30 2019/08/01 00:10:22 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -212,7 +212,6 @@ struct aue_chain {
 	struct usbd_xfer	*aue_xfer;
 	char			*aue_buf;
 	struct mbuf		*aue_mbuf;
-	int			aue_idx;
 };
 
 struct aue_cdata {
