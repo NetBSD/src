@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.46 2019/08/01 09:37:34 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.46 2019/08/01 09:37:34 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $"
 #include <sys/sockio.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
+#include <sys/interrupt.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -876,6 +877,7 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 	pci_intr_handle_t *intr;
 	void **ihs;
 	int intr_idx, i, use_queues, error;
+	kcpuset_t *affinity;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char xnamebuf[32];
@@ -902,6 +904,16 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 			return (-1);
 		}
 		aprint_normal_dev(sc->vmx_dev, "txrx interrupting at %s\n", intrstr);
+
+		kcpuset_create(&affinity, true);
+		kcpuset_set(affinity, intr_idx % ncpu);
+		error = interrupt_distribute(*ihs, affinity, NULL);
+		if (error) {
+			aprint_normal_dev(sc->vmx_dev,
+			    "%s cannot be changed affinity, use default CPU\n",
+			    intrstr);
+		}
+		kcpuset_destroy(affinity);
 
 		vmxq->vxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 		    vmxnet3_handle_queue, vmxq);
