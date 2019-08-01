@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1640 2019/07/30 14:57:06 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1641 2019/08/01 13:45:54 msaitoh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2109,6 +2109,7 @@ Notes:
 Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
 distribution for import.
 Update MDATE in src/external/gpl2/groff/Makefile.inc.
+
 Package:	gmake
 Version:	3.81 (Last GPlv2+ version)
 Current Vers:	4.2
@@ -2174,3 +2175,15 @@ License:	BSD-like (4-clause)
 Location:	usr.bin/indent
 Notes:
 Tests are stored in tests/usr.bin/indent.
+
+Package:	ena
+Version:	0.8.1
+Current Vers:	2.0.0
+Maintainer:	Amazon.com
+Archive Site:	https://github.com/amzn/amzn-drivers/tree/master/kernel/fbsd/ena
+Home Page:	https://github.com/amzn/amzn-drivers/
+Mailing List:	none
+Responsible:
+License:	BSD-like (2 and 3-clause)
+Location:	sys/external/bsd/ena-com
+Notes:
