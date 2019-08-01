@@ -1384,7 +1384,7 @@
 
 /* Define if your system supports gnu indirect functions. */
 #ifndef USED_FOR_TARGET
-#define HAVE_GNU_INDIRECT_FUNCTION 0
+#define HAVE_GNU_INDIRECT_FUNCTION 1
 #endif
 
 

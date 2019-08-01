@@ -16,9 +16,6 @@
 #ifndef LIBC_MUSL
 # define LIBC_MUSL 4
 #endif
-#ifndef NETBSD_ENABLE_PTHREADS
-# define NETBSD_ENABLE_PTHREADS
-#endif
 #ifdef IN_GCC
 # include "options.h"
 # include "insn-constants.h"
