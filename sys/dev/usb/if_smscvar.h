@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.7 2019/07/30 06:35:03 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.8 2019/08/01 00:10:22 mrg Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -39,8 +39,6 @@ struct smsc_chain {
 	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
-	int			 sc_accum;
-	int			 sc_idx;
 };
 
 struct smsc_cdata {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.154 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.155 2019/08/01 00:10:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.154 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.155 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1028,7 +1028,6 @@ aue_rx_list_init(struct aue_softc *sc)
 	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
 		c = &cd->aue_rx_chain[i];
 		c->aue_sc = sc;
-		c->aue_idx = i;
 		if (aue_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->aue_xfer == NULL) {
@@ -1057,7 +1056,6 @@ aue_tx_list_init(struct aue_softc *sc)
 	for (i = 0; i < AUE_TX_LIST_CNT; i++) {
 		c = &cd->aue_tx_chain[i];
 		c->aue_sc = sc;
-		c->aue_idx = i;
 		c->aue_mbuf = NULL;
 		if (c->aue_xfer == NULL) {
 			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_TX],
@@ -1520,19 +1518,13 @@ Static int
 aue_ifmedia_upd(struct ifnet *ifp)
 {
 	struct aue_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii = GET_MII(sc);
-	int rc;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
 	if (sc->aue_dying)
 		return 0;
 
-	sc->aue_link = 0;
-
-	if ((rc = mii_mediachg(mii)) == ENXIO)
-		return 0;
-	return rc;
+	return ether_mediachange(ifp);
 }
 
 Static int
