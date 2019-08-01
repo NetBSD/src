@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.8 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.9 2019/08/01 16:32:06 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.8 2019/07/23 18:13:40 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.9 2019/08/01 16:32:06 martin Exp $");
 #endif
 
 /*
@@ -209,6 +209,9 @@ target_already_root(void)
 bool
 is_root_part_mount(const char *last_mounted)
 {
+	if (last_mounted == NULL)
+		return false;
+
 	return strcmp(last_mounted, "/") == 0 ||
 	    strcmp(last_mounted, "/targetroot") == 0 ||
 	    strcmp(last_mounted, "/altroot") == 0;
