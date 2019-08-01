@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.10 2016/11/02 07:01:54 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.10.8.1 2019/08/01 14:27:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10 2016/11/02 07:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10.8.1 2019/08/01 14:27:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,10 @@ static const struct mii_phydesc ihphys[] = {
 	  MII_STR_INTEL_I82579 },
 	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I217,
 	  MII_STR_INTEL_I217 },
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82580,
+	  MII_STR_INTEL_I82580},
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I350,
+	  MII_STR_INTEL_I350},
 
 	{ 0,				0,
 	  NULL },
@@ -153,9 +157,7 @@ ihphyattach(device_t parent, device_t self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	/*
-	 * Link setup (as done by Intel's Linux driver for the 82577).
-	 */
+	/* Link setup (as done by Intel's Linux driver for the 82577). */
 	reg = PHY_READ(sc, IHPHY_MII_CFG);
 	reg |= IHPHY_CFG_TX_CRS;
 	reg |= IHPHY_CFG_DOWN_SHIFT;
@@ -170,9 +172,7 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -188,15 +188,11 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		/*
-		 * If media is deselected, disable link (standby).
-		 */
+		/* If media is deselected, disable link (standby). */
 		reg = PHY_READ(sc, IHPHY_MII_ECR);
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
 			reg &= ~IHPHY_ECR_LNK_EN;
@@ -204,17 +200,13 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			reg |= IHPHY_ECR_LNK_EN;
 		PHY_WRITE(sc, IHPHY_MII_ECR, reg);
 
-		/*
-		 * XXX Adjust MDI/MDIX configuration?  Other settings?
-		 */
+		/* XXX Adjust MDI/MDIX configuration?  Other settings? */
 
 		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
