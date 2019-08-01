@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.736.2.4 2019/07/17 16:07:38 martin Exp $
+$NetBSD: usbdevs,v 1.736.2.5 2019/08/01 13:40:54 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -558,6 +558,7 @@ vendor 4GSYSTEMS	0x1c9e	4G Systems
 vendor PEGATRON		0x1d4d	Pegatron
 vendor FUTUREBITS	0x1d50	Future Bits
 vendor LINUXFOUNDATION	0x1d6b	Linux Foundation
+vendor CINTERION	0x1e2d	Cinterion
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -1116,7 +1117,6 @@ product BROADCOM BCM43236	0xbd17	BCM43236
 product BROADCOM BCM43143	0xbd1e	BCM43143
 product BROADCOM BCM43242	0xbd1f	BCM43242
 product BROADCOM BCM43569	0xbd27	BCM43569
-
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
@@ -1831,17 +1831,21 @@ product HUAWEI U8150		0x1037	Huawei U8150
 product HUAWEI EM770W		0x1404	Huawei EM770W
 product HUAWEI E1750		0x140c	Huawei E1750
 product HUAWEI E182		0x1429	Huawei E182
+product HUAWEI E353		0x1442	Huawei E353
 product HUAWEI E1750INIT	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765		0x1465	Huawei K3765
 product HUAWEI E1820		0x14ac	Huawei E1820
+product HUAWEI HWD12_RNDIS	0x14db	Huawei HWD12 RNDIS mode
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
-product HUAWEI E171		0x1506	Huawei E171
+product HUAWEI E392INIT		0x1505	Huawei E392 EC156 Installer
+product HUAWEI E171		0x1506	Huawei E171 / HWD12 RAS mode
 product HUAWEI E353_HiLink	0x1507	Huawei E353_HiLink
 /* Accessing http://192.168.1.1/html/switchProjectMode.html on
    a Huawei HiLink device will switch it to u3g mode */
-product HUAWEI E353             0x1442	Huawei E353
 product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
+product HUAWEI E3272		0x1c1e	Huawei E3272 E355 / Softbank 203HW
 product HUAWEI E353INIT		0x1f01	Huawei E353 USB CD
+product HUAWEI HWD12_INSTALLER	0x1f03	Huawei HWD12 Installer
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
@@ -2448,6 +2452,8 @@ product NETGEAR3 WPN111_NF	0x5f01	WPN111
 product NETGEAR4 RTL8188CU	0x9041	RTL8188CU
 
 /* NetIndex products */
+product NETINDEX RTWJ02		0x1022	RT-WJ02
+product NETINDEX UX312NC	0x1032	UX312NC
 product NETINDEX WS002IN	0x2001	Willcom WS002IN (DD)
 
 /* NHJ product */
@@ -2988,6 +2994,9 @@ product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
 /* Siemens Info products */
 product SIEMENS2 WLL013		0x001b	WLL013
 product SIEMENS2 MC75		0x0034	Wireless Modules MC75
+product SIEMENS2 HC28MDMNET	0x004a	HC28 MdmNet
+product SIEMENS2 HC28MS		0x004b	HC28 Mass Storage Device
+product SIEMENS2 HC28MDM	0x004c	HC28 Mdm
 product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
@@ -3019,6 +3028,7 @@ product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
 product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
 product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
 product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
+product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 product SIERRA MC7304		0x68c0	MC7304
 product SIERRA EM7455		0x9079	EM7455
@@ -3135,6 +3145,7 @@ product SMSC 2020HUB		0x2020	USB Hub
 product SMSC 2512HUB		0x2512	USB 2.0 2-Port Hub
 product SMSC 2513HUB		0x2513	USB 2.0 3-Port Hub
 product SMSC 2514HUB		0x2514	USB 2.0 4-Port Hub
+product SMSC 2517HUB		0x2517	USB 2.0 7-Port Hub
 product SMSC LAN7500		0x7500	LAN7500 USB 2.0 gigabit ethernet device
 product SMSC LAN7505		0x7505	LAN7505 USB 2.0 gigabit ethernet device
 product SMSC LAN7800		0x7800	LAN7800 USB 3.1 gigabit ethernet device
@@ -3560,7 +3571,11 @@ product ZORAN EX20DSC		0x4343	Digital Camera EX-20 DSC
 /* ZTE products */
 product ZTE MF622		0x0001	MF622 modem
 product ZTE MF628		0x0015	MF628 modem
+product ZTE MF633		0x0016	MF633 USUPA USB modem
 product ZTE MF626		0x0031	MF626 modem
+product ZTE UMASS_INSTALLER2	0x0103	USB MSM installer
+product ZTE MF112		0x0117	MF112 MF119 MF190 MF228 modem / Softbank 004Z
+product ZTE UMASS_INSTALLER3	0x0149	USB MSM installer (MF288)
 product ZTE MF820D_INSTALLER	0x0166	MF820D CD
 product ZTE MF820D		0x0167	MF820D modem
 product ZTE INSTALLER		0x2000	UMTS CD
