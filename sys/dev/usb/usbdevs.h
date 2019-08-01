@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.4 2019/07/17 16:08:10 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.5 2019/08/01 13:41:54 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.4 2019/07/17 16:07:38 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.5 2019/08/01 13:40:54 martin Exp
  */
 
 /*-
@@ -565,6 +565,7 @@
 #define	USB_VENDOR_PEGATRON	0x1d4d		/* Pegatron */
 #define	USB_VENDOR_FUTUREBITS	0x1d50		/* Future Bits */
 #define	USB_VENDOR_LINUXFOUNDATION	0x1d6b		/* Linux Foundation */
+#define	USB_VENDOR_CINTERION	0x1e2d		/* Cinterion */
 #define	USB_VENDOR_AIRTIES	0x1eda		/* AirTies */
 #define	USB_VENDOR_DLINK	0x2001		/* D-Link */
 #define	USB_VENDOR_PLANEX2	0x2019		/* Planex Communications */
@@ -1123,7 +1124,6 @@
 #define	USB_PRODUCT_BROADCOM_BCM43143	0xbd1e		/* BCM43143 */
 #define	USB_PRODUCT_BROADCOM_BCM43242	0xbd1f		/* BCM43242 */
 #define	USB_PRODUCT_BROADCOM_BCM43569	0xbd27		/* BCM43569 */
-
 
 /* Brother Industries products */
 #define	USB_PRODUCT_BROTHER_HL1050	0x0002		/* HL-1050 laser printer */
@@ -1838,17 +1838,21 @@
 #define	USB_PRODUCT_HUAWEI_EM770W	0x1404		/* Huawei EM770W */
 #define	USB_PRODUCT_HUAWEI_E1750	0x140c		/* Huawei E1750 */
 #define	USB_PRODUCT_HUAWEI_E182	0x1429		/* Huawei E182 */
+#define	USB_PRODUCT_HUAWEI_E353	0x1442		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_E1750INIT	0x1446		/* Huawei E1750 USB CD */
 #define	USB_PRODUCT_HUAWEI_K3765	0x1465		/* Huawei K3765 */
 #define	USB_PRODUCT_HUAWEI_E1820	0x14ac		/* Huawei E1820 */
+#define	USB_PRODUCT_HUAWEI_HWD12_RNDIS	0x14db		/* Huawei HWD12 RNDIS mode */
 #define	USB_PRODUCT_HUAWEI_E171INIT	0x14fe		/* Huawei E171 USB CD */
-#define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 */
+#define	USB_PRODUCT_HUAWEI_E392INIT	0x1505		/* Huawei E392 EC156 Installer */
+#define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 / HWD12 RAS mode */
 #define	USB_PRODUCT_HUAWEI_E353_HiLink	0x1507		/* Huawei E353_HiLink */
 /* Accessing http://192.168.1.1/html/switchProjectMode.html on
    a Huawei HiLink device will switch it to u3g mode */
-#define	USB_PRODUCT_HUAWEI_E353	0x1442		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_K3765INIT	0x1520		/* Huawei K3765 USB CD */
+#define	USB_PRODUCT_HUAWEI_E3272	0x1c1e		/* Huawei E3272 E355 / Softbank 203HW */
 #define	USB_PRODUCT_HUAWEI_E353INIT	0x1f01		/* Huawei E353 USB CD */
+#define	USB_PRODUCT_HUAWEI_HWD12_INSTALLER	0x1f03		/* Huawei HWD12 Installer */
 
 /* Huawei-3Com products */
 #define	USB_PRODUCT_HUAWEI3COM_RT2573	0x0009		/* RT2573 */
@@ -2455,6 +2459,8 @@
 #define	USB_PRODUCT_NETGEAR4_RTL8188CU	0x9041		/* RTL8188CU */
 
 /* NetIndex products */
+#define	USB_PRODUCT_NETINDEX_RTWJ02	0x1022		/* RT-WJ02 */
+#define	USB_PRODUCT_NETINDEX_UX312NC	0x1032		/* UX312NC */
 #define	USB_PRODUCT_NETINDEX_WS002IN	0x2001		/* Willcom WS002IN (DD) */
 
 /* NHJ product */
@@ -2995,6 +3001,9 @@
 /* Siemens Info products */
 #define	USB_PRODUCT_SIEMENS2_WLL013	0x001b		/* WLL013 */
 #define	USB_PRODUCT_SIEMENS2_MC75	0x0034		/* Wireless Modules MC75 */
+#define	USB_PRODUCT_SIEMENS2_HC28MDMNET	0x004a		/* HC28 MdmNet */
+#define	USB_PRODUCT_SIEMENS2_HC28MS	0x004b		/* HC28 Mass Storage Device */
+#define	USB_PRODUCT_SIEMENS2_HC28MDM	0x004c		/* HC28 Mdm */
 #define	USB_PRODUCT_SIEMENS2_WL54G	0x3c06		/* 54g USB Network Adapter */
 
 /* Sierra Wireless products */
@@ -3026,6 +3035,7 @@
 #define	USB_PRODUCT_SIERRA_AC880U	0x6855		/* Sierra Wireless AirCard 880U */
 #define	USB_PRODUCT_SIERRA_AC881U	0x6856		/* Sierra Wireless AirCard 881U */
 #define	USB_PRODUCT_SIERRA_AC885U	0x6880		/* Sierra Wireless AirCard 885U */
+#define	USB_PRODUCT_SIERRA_C01SW	0x6890		/* C01SW */
 #define	USB_PRODUCT_SIERRA_USB305	0x68a3		/* Sierra Wireless AirCard USB 305 */
 #define	USB_PRODUCT_SIERRA_MC7304	0x68c0		/* MC7304 */
 #define	USB_PRODUCT_SIERRA_EM7455	0x9079		/* EM7455 */
@@ -3142,6 +3152,7 @@
 #define	USB_PRODUCT_SMSC_2512HUB	0x2512		/* USB 2.0 2-Port Hub */
 #define	USB_PRODUCT_SMSC_2513HUB	0x2513		/* USB 2.0 3-Port Hub */
 #define	USB_PRODUCT_SMSC_2514HUB	0x2514		/* USB 2.0 4-Port Hub */
+#define	USB_PRODUCT_SMSC_2517HUB	0x2517		/* USB 2.0 7-Port Hub */
 #define	USB_PRODUCT_SMSC_LAN7500	0x7500		/* LAN7500 USB 2.0 gigabit ethernet device */
 #define	USB_PRODUCT_SMSC_LAN7505	0x7505		/* LAN7505 USB 2.0 gigabit ethernet device */
 #define	USB_PRODUCT_SMSC_LAN7800	0x7800		/* LAN7800 USB 3.1 gigabit ethernet device */
@@ -3567,7 +3578,11 @@
 /* ZTE products */
 #define	USB_PRODUCT_ZTE_MF622	0x0001		/* MF622 modem */
 #define	USB_PRODUCT_ZTE_MF628	0x0015		/* MF628 modem */
+#define	USB_PRODUCT_ZTE_MF633	0x0016		/* MF633 USUPA USB modem */
 #define	USB_PRODUCT_ZTE_MF626	0x0031		/* MF626 modem */
+#define	USB_PRODUCT_ZTE_UMASS_INSTALLER2	0x0103		/* USB MSM installer */
+#define	USB_PRODUCT_ZTE_MF112	0x0117		/* MF112 MF119 MF190 MF228 modem / Softbank 004Z */
+#define	USB_PRODUCT_ZTE_UMASS_INSTALLER3	0x0149		/* USB MSM installer (MF288) */
 #define	USB_PRODUCT_ZTE_MF820D_INSTALLER	0x0166		/* MF820D CD */
 #define	USB_PRODUCT_ZTE_MF820D	0x0167		/* MF820D modem */
 #define	USB_PRODUCT_ZTE_INSTALLER	0x2000		/* UMTS CD */
