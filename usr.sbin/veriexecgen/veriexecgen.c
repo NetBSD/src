@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.20 2019/07/31 15:02:39 alnsn Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.21 2019/08/01 08:51:52 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.20 2019/07/31 15:02:39 alnsn Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.21 2019/08/01 08:51:52 alnsn Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,9 +468,6 @@ main(int argc, char **argv)
 			Fflag = 1;
 			break;
 #endif /* notyet */
-		case 'h':
-			usage();
-			return EXIT_SUCCESS;
 		case 'f':
 			if (strcmp(optarg, "-") == 0) {
 				v.from_file = stdin;
@@ -485,6 +482,9 @@ main(int argc, char **argv)
 				v.from_filename = strdup(optarg);
 			}
 			break;
+		case 'h':
+			usage();
+			return EXIT_SUCCESS;
 		case 'o':
 			v.dbfile = optarg;
 			break;
