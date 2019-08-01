@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIg.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtoIg.c,v 1.4 2019/08/01 02:27:43 riastradh Exp $ */
 
 /****************************************************************
 
@@ -35,9 +35,9 @@ THIS SOFTWARE.
 
  int
 #ifdef KR_headers
-strtoIg(s00, se, fpi, exp, B, rvp) CONST char *s00; char **se; FPI *fpi; Long *exp; Bigint **B; int *rvp;
+strtoIg(s00, se, fpi, exp, B, rvp) CONST char *s00; char **se; CONST FPI *fpi; Long *exp; Bigint **B; int *rvp;
 #else
-strtoIg(CONST char *s00, char **se, FPI *fpi, Long *exp, Bigint **B, int *rvp)
+strtoIg(CONST char *s00, char **se, CONST FPI *fpi, Long *exp, Bigint **B, int *rvp)
 #endif
 {
 	Bigint *b, *b1;
