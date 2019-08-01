@@ -31,6 +31,7 @@ THIS SOFTWARE.
 #define	DEBUG
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -333,6 +334,10 @@ int quoted(const uschar **pp)	/* pick up next thing after a \\ */
 		c = '\r';
 	else if (c == 'b')
 		c = '\b';
+	else if (c == 'v')
+		c = '\v';
+	else if (c == 'a')
+		c = '\a';
 	else if (c == '\\')
 		c = '\\';
 	else if (c == 'x') {	/* hexadecimal goo follows */
@@ -978,6 +983,7 @@ static int repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	if (secondnum < 0) {	/* means {n,} -> repeat n-1 times followed by PLUS */
 		if (firstnum < 2) {
 			/* 0 or 1: should be handled before you get here */
+			FATAL("internal error");
 		} else {
 			return replace_repeat(reptok, reptoklen, atom, atomlen,
 				firstnum, secondnum, REPEAT_PLUS_APPENDED);
@@ -998,6 +1004,7 @@ static int repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 		return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_WITH_Q);
 	} else {	/* Error - shouldn't be here (n>m) */
+		FATAL("internal error");
 	}
 	return 0;
 }
@@ -1013,6 +1020,7 @@ int relex(void)		/* lexical analyzer for reparse */
 	int i;
 	int num, m, commafound, digitfound;
 	const uschar *startreptok;
+	static int parens = 0;
 
 rescan:
 	starttok = prestr;
@@ -1026,9 +1034,18 @@ rescan:
 	case '\0': prestr--; return '\0';
 	case '^':
 	case '$':
-	case '(':
-	case ')':
 		return c;
+	case '(':
+		parens++;
+ 		return c;
+	case ')':
+		if (parens) {
+			parens--;
+			return c;
+		}
+		/* unmatched close parenthesis; per POSIX, treat as literal */
+		rlxval = c;
+		return CHAR;
 	case '\\':
 		rlxval = quoted(&prestr);
 		return CHAR;
@@ -1064,7 +1081,15 @@ rescan:
 				if (cc->cc_name != NULL && prestr[1 + cc->cc_namelen] == ':' &&
 				    prestr[2 + cc->cc_namelen] == ']') {
 					prestr += cc->cc_namelen + 3;
-					for (i = 1; i < NCHARS; i++) {
+					/*
+					 * BUG: We begin at 1, instead of 0, since we
+					 * would otherwise prematurely terminate the
+					 * string for classes like [[:cntrl:]]. This
+					 * means that we can't match the NUL character,
+					 * not without first adapting the entire
+					 * program to track each string's length.
+					 */
+					for (i = 1; i <= UCHAR_MAX; i++) {
 						if (!adjbuf(&buf, &bufsz, bp-buf+1, 100, &bp, "relex2"))
 						    FATAL("out of space for reg expr %.10s...", lastre);
 						if (cc->cc_func(i)) {
