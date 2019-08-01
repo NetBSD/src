@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.10 2014/01/16 20:31:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2019/08/01 02:06:31 riastradh Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
 CPPFLAGS+=-I${.CURDIR}/gdtoa -I${.CURDIR}/locale
 
+.if ${MACHINE_ARCH} == "vax"
 CPPFLAGS+=-DNO_FENV_H
+.else
+CPPFLAGS+=-DHonor_FLT_ROUNDS
+.endif
 
 # machine-dependent directory must provide the following:
 # 	arith.h gd_qnan.h
