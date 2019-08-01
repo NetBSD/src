@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.5 2018/04/11 14:51:43 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.6 2019/08/01 13:22:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -224,40 +224,16 @@ clearit(void)
 static void
 bootit(const char *filename, int howto)
 {
-	EFI_STATUS status;
-	EFI_PHYSICAL_ADDRESS bouncebuf;
-	UINTN npages;
-	u_long allocsz;
 
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
 
-	if (count_netbsd(filename, &allocsz) < 0) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(errno));
-		return;
-	}
-
-	bouncebuf = EFI_ALLOCATE_MAX_ADDRESS;
-	npages = EFI_SIZE_TO_PAGES(allocsz);
-	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
-	    EfiLoaderData, npages, &bouncebuf);
-	if (EFI_ERROR(status)) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(ENOMEM));
-		return;
-	}
-
-	efi_loadaddr = bouncebuf;
-	if (exec_netbsd(filename, bouncebuf, howto, 0, efi_cleanup) < 0)
+	if (exec_netbsd(filename, efi_loadaddr, howto, 0, efi_cleanup) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
 		printf("boot returned\n");
-
-	(void) uefi_call_wrapper(BS->FreePages, 2, bouncebuf, npages);
-	efi_loadaddr = 0;
 }
 
 void
@@ -372,7 +348,7 @@ command_help(char *arg)
 #if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
 #endif
-	       "memmap [{sorted|unsorted}]\n"
+	       "memmap [{sorted|unsorted|compact}]\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
 #endif
@@ -625,18 +601,21 @@ void
 command_memmap(char *arg)
 {
 	bool sorted = true;
+	bool compact = false;
 
 	if (*arg == '\0' || strcmp(arg, "sorted") == 0)
 		/* Already sorted is true. */;
 	else if (strcmp(arg, "unsorted") == 0)
 		sorted = false;
+	else if (strcmp(arg, "compact") == 0)
+		compact = true;
 	else {
 		printf("invalid flag, "
-		    "must be 'sorted' or 'unsorted'.\n");
+		    "must be 'sorted', 'unsorted' or 'compact'.\n");
 		return;
 	}
 
-	efi_memory_show_map(sorted);
+	efi_memory_show_map(sorted, compact);
 }
 
 void

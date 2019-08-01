@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.4.10.3 2018/04/11 14:51:43 martin Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.4.10.4 2019/08/01 13:22:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -89,6 +89,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 		}
 	}
 
+	efi_memory_probe();
 	efi_disk_probe();
 	efi_pxe_probe();
 	efi_net_probe();
@@ -135,6 +136,7 @@ efi_cleanup(void)
 	}
 	efi_cleanuped = true;
 
+	efi_memory_compact_map(desc, &NoEntries, DescriptorSize);
 	allocsz = sizeof(struct btinfo_efimemmap) - 1
 	    + NoEntries * DescriptorSize;
 	bim = alloc(allocsz);
