@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.9 2019/07/22 17:53:35 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.10 2019/08/01 14:14:30 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4457,7 +4457,7 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_KRM_LINK_CTRL_1_TETH_EEE_CAP_KR		(1 << 26)
 #define IXGBE_KRM_LINK_S1_MAC_AN_COMPLETE		(1 << 28)
 #define IXGBE_KRM_LINK_CTRL_1_TETH_AN_ENABLE		(1 << 29)
-#define IXGBE_KRM_LINK_CTRL_1_TETH_AN_RESTART		(1 << 31)
+#define IXGBE_KRM_LINK_CTRL_1_TETH_AN_RESTART		(1UL << 31)
 
 #define IXGBE_KRM_AN_CNTL_1_SYM_PAUSE			(1 << 28)
 #define IXGBE_KRM_AN_CNTL_1_ASM_PAUSE			(1 << 29)
@@ -4487,7 +4487,7 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CMINUS1_OVRRD_EN	(1 << 1)
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CPLUS1_OVRRD_EN	(1 << 2)
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CZERO_EN		(1 << 3)
-#define IXGBE_KRM_TX_COEFF_CTRL_1_OVRRD_EN		(1 << 31)
+#define IXGBE_KRM_TX_COEFF_CTRL_1_OVRRD_EN		(1UL << 31)
 
 #define IXGBE_SB_IOSF_INDIRECT_CTRL	0x00011144
 #define IXGBE_SB_IOSF_INDIRECT_DATA	0x00011148
@@ -4503,7 +4503,7 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_SB_IOSF_CTRL_TARGET_SELECT_SHIFT	28
 #define IXGBE_SB_IOSF_CTRL_TARGET_SELECT_MASK	0x7
 #define IXGBE_SB_IOSF_CTRL_BUSY_SHIFT		31
-#define IXGBE_SB_IOSF_CTRL_BUSY		(1 << IXGBE_SB_IOSF_CTRL_BUSY_SHIFT)
+#define IXGBE_SB_IOSF_CTRL_BUSY		(1UL << IXGBE_SB_IOSF_CTRL_BUSY_SHIFT)
 #define IXGBE_SB_IOSF_TARGET_KR_PHY	0
 
 #define IXGBE_NW_MNG_IF_SEL		0x00011178
