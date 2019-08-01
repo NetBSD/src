@@ -1,4 +1,4 @@
-/* $NetBSD: strtopdd.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtopdd.c,v 1.4 2019/08/01 02:27:43 riastradh Exp $ */
 
 /****************************************************************
 
@@ -41,9 +41,9 @@ strtopdd(CONST char *s, char **sp, double *dd)
 #endif
 {
 #ifdef Sudden_Underflow
-	static FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
+	static CONST FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
 #else
-	static FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
+	static CONST FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
 #endif
 	ULong bits[4];
 	Long expt;

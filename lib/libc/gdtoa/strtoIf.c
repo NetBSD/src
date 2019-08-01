@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIf.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoIf.c,v 1.3 2019/08/01 02:27:43 riastradh Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtoIf(s, sp, f0, f1) CONST char *s; char **sp; float *f0, *f1;
 strtoIf(CONST char *s, char **sp, float *f0, float *f1)
 #endif
 {
-	static FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static CONST FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

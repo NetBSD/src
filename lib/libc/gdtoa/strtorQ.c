@@ -1,4 +1,4 @@
-/* $NetBSD: strtorQ.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtorQ.c,v 1.5 2019/08/01 02:27:43 riastradh Exp $ */
 
 /****************************************************************
 
@@ -101,8 +101,9 @@ strtorQ(s, sp, rounding, L) CONST char *s; char **sp; int rounding; void *L;
 strtorQ(CONST char *s, char **sp, int rounding, void *L)
 #endif
 {
-	static FPI fpi0 = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
-	FPI *fpi, fpi1;
+	static CONST FPI fpi0 = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
+	CONST FPI *fpi;
+	FPI fpi1;
 	ULong bits[4];
 	Long expt;
 	int k;
