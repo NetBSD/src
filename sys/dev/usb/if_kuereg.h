@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.22 2019/07/21 10:27:56 mrg Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.23 2019/08/01 00:10:22 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -147,7 +147,6 @@ struct kue_chain {
 	struct kue_softc	*kue_sc;
 	struct usbd_xfer	*kue_xfer;
 	uint8_t			*kue_buf;
-	int			kue_idx;
 };
 
 struct kue_cdata {

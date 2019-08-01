@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.66 2019/07/21 10:27:56 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.67 2019/08/01 00:10:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.66 2019/07/21 10:27:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.67 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,7 +110,6 @@ Static void url_stop_task(struct url_softc *);
 Static void url_stop(struct ifnet *, int);
 Static void url_watchdog(struct ifnet *);
 Static int url_ifmedia_change(struct ifnet *);
-Static void url_ifmedia_status(struct ifnet *, struct ifmediareq *);
 Static void url_lock_mii(struct url_softc *);
 Static void url_unlock_mii(struct url_softc *);
 Static int url_int_miibus_readreg(device_t, int, int, uint16_t *);
@@ -304,7 +303,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 	sc->sc_ec.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0,
-		     url_ifmedia_change, url_ifmedia_status);
+		     url_ifmedia_change, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -1245,8 +1244,6 @@ Static int
 url_ifmedia_change(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
-	struct mii_data *mii = GET_MII(sc);
-	int rc;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
@@ -1254,23 +1251,8 @@ url_ifmedia_change(struct ifnet *ifp)
 		return 0;
 
 	sc->sc_link = 0;
-	if ((rc = mii_mediachg(mii)) == ENXIO)
-		return 0;
-	return rc;
-}
 
-/* Report current media status. */
-Static void
-url_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct url_softc *sc = ifp->if_softc;
-
-	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
-
-	if (sc->sc_dying)
-		return;
-
-	ether_mediastatus(ifp, ifmr);
+	return ether_mediachange(ifp);
 }
 
 Static void

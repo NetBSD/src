@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.46 2019/08/01 00:10:22 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.46 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -178,7 +178,6 @@ void		 smsc_miibus_statchg_locked(struct ifnet *);
 int		 smsc_miibus_readreg(device_t, int, int, uint16_t *);
 int		 smsc_miibus_writereg(device_t, int, int, uint16_t);
 int		 smsc_ifmedia_upd(struct ifnet *);
-void		 smsc_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void		 smsc_lock_mii(struct smsc_softc *);
 void		 smsc_unlock_mii(struct smsc_softc *);
 
@@ -422,7 +421,6 @@ smsc_ifmedia_upd(struct ifnet *ifp)
 {
 	struct smsc_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->sc_mii;
-	int err;
 
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
@@ -430,24 +428,8 @@ smsc_ifmedia_upd(struct ifnet *ifp)
 		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
-	err = mii_mediachg(mii);
-	return err;
-}
 
-void
-smsc_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct smsc_softc * const sc = ifp->if_softc;
-	struct mii_data * const mii = &sc->sc_mii;
-
-	/* SMSC_LOCK */
-
-	mii_pollstat(mii);
-
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
-
-	/* SMSC_UNLOCK */
+	return ether_mediachange(ifp);
 }
 
 static inline uint32_t
@@ -1215,7 +1197,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = smsc_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 	sc->sc_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, 0, smsc_ifmedia_upd, smsc_ifmedia_sts);
+	ifmedia_init(&mii->mii_media, 0, smsc_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -1625,7 +1607,6 @@ smsc_tx_list_init(struct smsc_softc *sc)
 	for (i = 0; i < SMSC_TX_LIST_CNT; i++) {
 		c = &cd->tx_chain[i];
 		c->sc_sc = sc;
-		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_ep[SMSC_ENDPT_TX],
@@ -1669,7 +1650,6 @@ smsc_rx_list_init(struct smsc_softc *sc)
 	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
 		c = &cd->rx_chain[i];
 		c->sc_sc = sc;
-		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_ep[SMSC_ENDPT_RX],

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.21 2019/03/05 08:25:03 msaitoh Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.22 2019/08/01 00:10:22 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21 2019/03/05 08:25:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.22 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -66,7 +66,6 @@ struct urndis_chain {
 	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
-	int			 sc_idx;
 };
 
 struct urndis_cdata {
@@ -935,7 +934,6 @@ urndis_rx_list_init(struct urndis_softc *sc)
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
 		c = &cd->sc_rx_chain[i];
 		c->sc_softc = sc;
-		c->sc_idx = i;
 
 		if (urndis_newbuf(sc, c) == ENOBUFS)
 			return ENOBUFS;
@@ -963,7 +961,6 @@ urndis_tx_list_init(struct urndis_softc *sc)
 	for (i = 0; i < RNDIS_TX_LIST_CNT; i++) {
 		c = &cd->sc_tx_chain[i];
 		c->sc_softc = sc;
-		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
 			int err = usbd_create_xfer(sc->sc_bulkout_pipe,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.96 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.97 2019/08/01 00:10:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.96 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.97 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -591,7 +591,6 @@ kue_rx_list_init(struct kue_softc *sc)
 	for (i = 0; i < KUE_RX_LIST_CNT; i++) {
 		c = &cd->kue_rx_chain[i];
 		c->kue_sc = sc;
-		c->kue_idx = i;
 		if (c->kue_xfer == NULL) {
 			int error = usbd_create_xfer(sc->kue_ep[KUE_ENDPT_RX],
 			    KUE_BUFSZ, 0, 0, &c->kue_xfer);
@@ -617,7 +616,6 @@ kue_tx_list_init(struct kue_softc *sc)
 	for (i = 0; i < KUE_TX_LIST_CNT; i++) {
 		c = &cd->kue_tx_chain[i];
 		c->kue_sc = sc;
-		c->kue_idx = i;
 		if (c->kue_xfer == NULL) {
 			int error = usbd_create_xfer(sc->kue_ep[KUE_ENDPT_TX],
 			    KUE_BUFSZ, 0, 0, &c->kue_xfer);
