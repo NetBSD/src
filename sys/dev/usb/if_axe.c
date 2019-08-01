@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.102 2019/07/21 10:27:56 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.103 2019/08/01 01:19:21 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.102 2019/07/21 10:27:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.103 2019/08/01 01:19:21 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -716,11 +716,11 @@ axe_reset(struct axe_softc *sc)
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
 #else
-	axe_lock_mii(sc);
+	axe_lock_mii_sc_locked(sc);
 
 	axe_ax_init(sc);
 
-	axe_unlock_mii(sc);
+	axe_unlock_mii_sc_locked(sc);
 #endif
 }
 
