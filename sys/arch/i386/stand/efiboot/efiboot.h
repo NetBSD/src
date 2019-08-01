@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.5.2.3 2018/04/11 14:51:43 martin Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.5.2.4 2019/08/01 13:22:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -80,9 +80,11 @@ void efi_disk_show(void);
 
 /* efimemory.c */
 void efi_memory_probe(void);
-void efi_memory_show_map(bool);
+void efi_memory_show_map(bool, bool);
 EFI_MEMORY_DESCRIPTOR *efi_memory_get_map(UINTN *, UINTN *, UINTN *, UINT32 *,
     bool);
+EFI_MEMORY_DESCRIPTOR *efi_memory_compact_map(EFI_MEMORY_DESCRIPTOR *, UINTN *,
+    UINTN);
 
 /* efinet.c */
 void efi_net_probe(void);

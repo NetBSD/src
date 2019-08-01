@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.68 2017/03/24 08:50:17 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.68.6.1 2019/08/01 13:22:48 martin Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -462,55 +462,6 @@ out:
 	BI_FREE();
 	bootinfo = NULL;
 	return -1;
-}
-
-int
-count_netbsd(const char *file, u_long *rsz)
-{
-	u_long marks[MARK_MAX];
-	char kdev[64];
-	char base_path[64] = "/";
-	struct stat st;
-	boot_module_t *bm;
-	u_long sz;
-	int err, fd;
-
-	howto = AB_SILENT;
-
-	memset(marks, 0, sizeof(marks));
-	if ((fd = loadfile(file, marks, COUNT_KERNEL | LOAD_NOTE)) == -1)
-		return -1;
-	close(fd);
-	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
-	    (-sizeof(int));
-	sz = marks[MARK_END];
-
-	/* The modules must be allocated after the kernel */
-	if (boot_modules_enabled) {
-		extract_device(file, kdev, sizeof(kdev));
-		module_base_path(base_path, sizeof(base_path));
-
-		/* If the root fs type is unusual, load its module. */
-		if (fsmod != NULL)
-			module_add_common(fsmod, BM_TYPE_KMOD);
-
-		for (bm = boot_modules; bm; bm = bm->bm_next) {
-			fd = module_open(bm, 0, kdev, base_path, false);
-			if (fd == -1)
-				continue;
-			sz = (sz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-			err = fstat(fd, &st);
-			if (err == -1 || st.st_size == -1) {
-				close(fd);
-				continue;
-			}
-			sz += st.st_size;
-			close(fd);
-		}
-	}
-
-	*rsz = sz;
-	return 0;
 }
 
 static void
