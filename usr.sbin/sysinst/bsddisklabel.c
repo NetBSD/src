@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.25 2019/08/01 17:49:12 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.26 2019/08/01 17:50:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1424,8 +1424,12 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			continue;
 
 		size_t cnt = wanted->parts->pscheme->get_free_spaces(
-		    wanted->parts, &space, 1, want->size-2*align, align, from,
+		    wanted->parts, &space, 1, want->size-align, align, from,
 		    -1);
+		if (cnt == 0)
+			cnt = wanted->parts->pscheme->get_free_spaces(
+			    wanted->parts, &space, 1,
+			    want->size-5*align, align, from, -1);
 
 		if (cnt == 0)
 			continue;	/* no free space for this partition */
