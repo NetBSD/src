@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.36 2014/05/31 16:25:29 christos Exp $	*/
+/*	$NetBSD: siside.c,v 1.36.20.1 2019/08/01 14:19:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.36 2014/05/31 16:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.36.20.1 2019/08/01 14:19:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,6 +451,7 @@ sis_setup_channel(struct ata_channel *chp)
 				sis_tim |=
 				    sis_udma100new_tim[drvp->UDMA_mode] <<
 				    SIS_TIM100_UDMA_TIME_OFF(drive);
+				break;
 			case SIS_TYPE_133OLD:
 				sis_tim |=
 				    sis_udma133old_tim[drvp->UDMA_mode] <<
