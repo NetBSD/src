@@ -1,4 +1,4 @@
-/* $NetBSD: g_dfmt.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: g_dfmt.c,v 1.4 2019/08/01 02:27:43 riastradh Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ g_dfmt(buf, d, ndig, bufsize) char *buf; double *d; int ndig; size_t bufsize;
 g_dfmt(char *buf, double *d, int ndig, size_t bufsize)
 #endif
 {
-	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, 0 };
+	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, 0 };
 	char *b, *s, *se;
 	ULong bits[2], *L, sign;
 	int decpt, ex, i, mode;
