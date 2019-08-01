@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.50 2019/05/29 09:04:01 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.51 2019/08/01 00:10:22 mrg Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.50 2019/05/29 09:04:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.51 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -121,7 +121,6 @@ static int	mue_miibus_readreg(device_t, int, int, uint16_t *);
 static int	mue_miibus_writereg(device_t, int, int, uint16_t);
 static void	mue_miibus_statchg(struct ifnet *);
 static int	mue_ifmedia_upd(struct ifnet *);
-static void	mue_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static uint8_t	mue_eeprom_getbyte(struct mue_softc *, int, uint8_t *);
 static int	mue_read_eeprom(struct mue_softc *, uint8_t *, int, int);
@@ -458,28 +457,14 @@ mue_ifmedia_upd(struct ifnet *ifp)
 	struct mue_softc *sc = ifp->if_softc;
 	struct mii_data *mii = GET_MII(sc);
 
-	sc->mue_link = 0; /* XXX */
+	sc->mue_link = 0;
 
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
 		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
-	return mii_mediachg(mii);
-}
-
-/*
- * Report current media status.
- */
-static void
-mue_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct mue_softc *sc = ifp->if_softc;
-	struct mii_data *mii = GET_MII(sc);
-
-	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
+	return ether_mediachange(ifp);
 }
 
 static uint8_t
@@ -1044,7 +1029,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 
 	sc->mue_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, 0, mue_ifmedia_upd, mue_ifmedia_sts);
+	ifmedia_init(&mii->mii_media, 0, mue_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
