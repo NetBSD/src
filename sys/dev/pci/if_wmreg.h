@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98.6.9 2019/07/17 16:12:17 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98.6.10 2019/08/01 13:50:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1269,7 +1269,7 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_RETA_Q(x)		(0x5c00 + ((x) >> 2) * 4) /* Redirection Table */
 #define RETA_NUM_ENTRIES	128
-#define RETA_ENTRY_MASK_Q(x)	(0x000000ff << (((x) % 4) * 8)) /* Redirection Table */
+#define RETA_ENTRY_MASK_Q(x)	(0x000000ffUL << (((x) % 4) * 8)) /* Redirection Table */
 #define RETA_ENT_QINDEX_MASK		__BITS(3,0) /*queue index for 82580 and newer */
 #define RETA_ENT_QINDEX0_MASK_82575	__BITS(3,2) /*queue index for pool0 */
 #define RETA_ENT_QINDEX1_MASK_82575	__BITS(7,6) /*queue index for pool1 and regular RSS */
