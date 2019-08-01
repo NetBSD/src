@@ -1,5 +1,5 @@
-/*	$NetBSD: if_et.c,v 1.25 2019/07/31 16:08:23 msaitoh Exp $	*/
-/*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
+/*	$NetBSD: if_et.c,v 1.26 2019/08/01 13:36:37 msaitoh Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.25 2019/07/31 16:08:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.26 2019/08/01 13:36:37 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -83,17 +83,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.25 2019/07/31 16:08:23 msaitoh Exp $");
 
 int	et_match(device_t, cfdata_t, void *);
 void	et_attach(device_t, device_t, void *);
-int	et_detach(device_t, int flags);
+int	et_detach(device_t, int);
 int	et_shutdown(device_t);
 
 int	et_miibus_readreg(device_t, int, int, uint16_t *);
 int	et_miibus_writereg(device_t, int, int, uint16_t);
 void	et_miibus_statchg(struct ifnet *);
 
-int	et_init(struct ifnet *ifp);
+int	et_init(struct ifnet *);
 int	et_ioctl(struct ifnet *, u_long, void *);
 void	et_start(struct ifnet *);
 void	et_watchdog(struct ifnet *);
+static int	et_ifmedia_upd(struct ifnet *);
+static void	et_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 int	et_intr(void *);
 void	et_enable_intrs(struct et_softc *, uint32_t);
@@ -131,7 +133,6 @@ int	et_start_rxdma(struct et_softc *);
 int	et_start_txdma(struct et_softc *);
 int	et_stop_rxdma(struct et_softc *);
 int	et_stop_txdma(struct et_softc *);
-int	et_enable_txrx(struct et_softc *);
 void	et_reset(struct et_softc *);
 int	et_bus_config(struct et_softc *);
 void	et_get_eaddr(struct et_softc *, uint8_t[]);
@@ -190,6 +191,7 @@ et_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_miibus;
+	uint32_t pmcfg;
 	pcireg_t memtype;
 	int error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -234,6 +236,9 @@ et_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
+	if (pa->pa_id == PCI_PRODUCT_LUCENT_ET1301)
+		sc->sc_flags |= ET_FLAG_FASTETHER;
+
 	error = et_bus_config(sc);
 	if (error)
 		goto fail;
@@ -243,8 +248,11 @@ et_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
-	CSR_WRITE_4(sc, ET_PM,
-		    ET_PM_SYSCLK_GATE | ET_PM_TXCLK_GATE | ET_PM_RXCLK_GATE);
+	/* Take PHY out of COMA and enable clocks. */
+	pmcfg = ET_PM_SYSCLK_GATE | ET_PM_TXCLK_GATE | ET_PM_RXCLK_GATE;
+	if ((sc->sc_flags & ET_FLAG_FASTETHER) == 0)
+		pmcfg |= EM_PM_GIGEPHY_ENB;
+	CSR_WRITE_4(sc, ET_PM, pmcfg);
 
 	et_reset(sc);
 
@@ -273,8 +281,7 @@ et_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = et_miibus_statchg;
 
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	ifmedia_init(&mii->mii_media, 0, et_ifmedia_upd, et_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -450,31 +457,117 @@ et_miibus_statchg(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
-	uint32_t cfg2, ctrl;
+	uint32_t cfg1, cfg2, ctrl;
+	int i;
 
-	cfg2 = CSR_READ_4(sc, ET_MAC_CFG2);
-	cfg2 &= ~(ET_MAC_CFG2_MODE_MII | ET_MAC_CFG2_MODE_GMII |
-		  ET_MAC_CFG2_FDX | ET_MAC_CFG2_BIGFRM);
-	cfg2 |= ET_MAC_CFG2_LENCHK | ET_MAC_CFG2_CRC | ET_MAC_CFG2_PADCRC |
-		__SHIFTIN(7, ET_MAC_CFG2_PREAMBLE_LEN);
+	sc->sc_flags &= ~ET_FLAG_LINK;
+	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
+	    (IFM_ACTIVE | IFM_AVALID)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_10_T:
+		case IFM_100_TX:
+			sc->sc_flags |= ET_FLAG_LINK;
+			break;
+		case IFM_1000_T:
+			if ((sc->sc_flags & ET_FLAG_FASTETHER) == 0)
+				sc->sc_flags |= ET_FLAG_LINK;
+			break;
+		}
+	}
 
+	/* XXX Stop TX/RX MAC? */
+	if ((sc->sc_flags & ET_FLAG_LINK) == 0)
+		return;
+
+	/* Program MACs with resolved speed/duplex/flow-control. */
 	ctrl = CSR_READ_4(sc, ET_MAC_CTRL);
 	ctrl &= ~(ET_MAC_CTRL_GHDX | ET_MAC_CTRL_MODE_MII);
+	cfg1 = CSR_READ_4(sc, ET_MAC_CFG1);
+	cfg1 &= ~(ET_MAC_CFG1_TXFLOW | ET_MAC_CFG1_RXFLOW |
+	    ET_MAC_CFG1_LOOPBACK);
+	cfg2 = CSR_READ_4(sc, ET_MAC_CFG2);
+	cfg2 &= ~(ET_MAC_CFG2_MODE_MII | ET_MAC_CFG2_MODE_GMII |
+	    ET_MAC_CFG2_FDX | ET_MAC_CFG2_BIGFRM);
+	cfg2 |= ET_MAC_CFG2_LENCHK | ET_MAC_CFG2_CRC | ET_MAC_CFG2_PADCRC |
+	    __SHIFTIN(7, ET_MAC_CFG2_PREAMBLE_LEN);
 
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
 		cfg2 |= ET_MAC_CFG2_MODE_GMII;
-	} else {
+	else {
 		cfg2 |= ET_MAC_CFG2_MODE_MII;
 		ctrl |= ET_MAC_CTRL_MODE_MII;
 	}
 
-	if ((mii->mii_media_active & IFM_FDX) != 0)
+	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
 		cfg2 |= ET_MAC_CFG2_FDX;
-	else
+		/*
+		 * Controller lacks automatic TX pause frame
+		 * generation so it should be handled by driver.
+		 * Even though driver can send pause frame with
+		 * arbitrary pause time, controller does not
+		 * provide a way that tells how many free RX
+		 * buffers are available in controller.  This
+		 * limitation makes it hard to generate XON frame
+		 * in time on driver side so don't enable TX flow
+		 * control.
+		 */
+#ifdef notyet
+		if (IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE)
+			cfg1 |= ET_MAC_CFG1_TXFLOW;
+#endif
+		if (IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE)
+			cfg1 |= ET_MAC_CFG1_RXFLOW;
+	} else
 		ctrl |= ET_MAC_CTRL_GHDX;
 
 	CSR_WRITE_4(sc, ET_MAC_CTRL, ctrl);
 	CSR_WRITE_4(sc, ET_MAC_CFG2, cfg2);
+	cfg1 |= ET_MAC_CFG1_TXEN | ET_MAC_CFG1_RXEN;
+	CSR_WRITE_4(sc, ET_MAC_CFG1, cfg1);
+
+#define NRETRY	100
+
+	for (i = 0; i < NRETRY; ++i) {
+		cfg1 = CSR_READ_4(sc, ET_MAC_CFG1);
+		if ((cfg1 & (ET_MAC_CFG1_SYNC_TXEN | ET_MAC_CFG1_SYNC_RXEN)) ==
+		    (ET_MAC_CFG1_SYNC_TXEN | ET_MAC_CFG1_SYNC_RXEN))
+			break;
+
+		DELAY(10);
+	}
+	/* Note: Timeout always happens when cable is not plugged in. */
+
+	sc->sc_flags |= ET_FLAG_TXRX_ENABLED;
+
+#undef NRETRY
+}
+
+static int
+et_ifmedia_upd(struct ifnet *ifp)
+{
+	struct et_softc *sc;
+	struct mii_data *mii;
+	struct mii_softc *miisc;
+
+	sc = ifp->if_softc;
+	mii = &sc->sc_miibus;
+	LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+		PHY_RESET(miisc);
+	return (mii_mediachg(mii));
+}
+
+static void
+et_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct et_softc *sc;
+	struct mii_data *mii;
+
+	sc = ifp->if_softc;
+	mii = &sc->sc_miibus;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 void
@@ -497,6 +590,7 @@ et_stop(struct et_softc *sc)
 
 	sc->sc_tx = 0;
 	sc->sc_tx_intr = 0;
+	sc->sc_flags &= ~ET_FLAG_TXRX_ENABLED;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -595,6 +689,7 @@ et_get_eaddr(struct et_softc *sc, uint8_t eaddr[])
 void
 et_reset(struct et_softc *sc)
 {
+
 	CSR_WRITE_4(sc, ET_MAC_CFG1,
 		    ET_MAC_CFG1_RST_TXFUNC | ET_MAC_CFG1_RST_RXFUNC |
 		    ET_MAC_CFG1_RST_TXMC | ET_MAC_CFG1_RST_RXMC |
@@ -981,6 +1076,7 @@ et_init(struct ifnet *ifp)
 	s = splnet();
 
 	et_stop(sc);
+	et_reset(sc);
 
 	for (i = 0; i < ET_RX_NRING; ++i) {
 		sc->sc_rx_data[i].rbd_bufsize = et_bufsize[i].bufsize;
@@ -999,10 +1095,6 @@ et_init(struct ifnet *ifp)
 	if (error)
 		goto back;
 
-	error = et_enable_txrx(sc);
-	if (error)
-		goto back;
-
 	error = et_start_rxdma(sc);
 	if (error)
 		goto back;
@@ -1011,6 +1103,7 @@ et_init(struct ifnet *ifp)
 	if (error)
 		goto back;
 
+	/* Enable interrupts. */
 	et_enable_intrs(sc, ET_INTRS);
 
 	callout_schedule(&sc->sc_tick, hz);
@@ -1019,6 +1112,9 @@ et_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	sc->sc_flags &= ~ET_FLAG_LINK;
+	et_ifmedia_upd(ifp);
 back:
 	if (error)
 		et_stop(sc);
@@ -1068,7 +1164,6 @@ et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
-
 	}
 
 	splx(s);
@@ -1084,7 +1179,9 @@ et_start(struct ifnet *ifp)
 	int trans;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) ||
+	    ((sc->sc_flags & (ET_FLAG_LINK | ET_FLAG_TXRX_ENABLED)) !=
+		(ET_FLAG_LINK | ET_FLAG_TXRX_ENABLED)))
 		return;
 
 	trans = 0;
@@ -1129,6 +1226,7 @@ et_watchdog(struct ifnet *ifp)
 int
 et_stop_rxdma(struct et_softc *sc)
 {
+
 	CSR_WRITE_4(sc, ET_RXDMA_CTRL,
 		    ET_RXDMA_CTRL_HALT | ET_RXDMA_CTRL_RING1_ENABLE);
 
@@ -1143,6 +1241,7 @@ et_stop_rxdma(struct et_softc *sc)
 int
 et_stop_txdma(struct et_softc *sc)
 {
+
 	CSR_WRITE_4(sc, ET_TXDMA_CTRL,
 		    ET_TXDMA_CTRL_HALT | ET_TXDMA_CTRL_SINGLE_EPKT);
 	return 0;
@@ -1226,7 +1325,7 @@ et_setmulti(struct et_softc *sc)
 		uint32_t *hp, h;
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			addr[i] &=  enm->enm_addrlo[i];
+			addr[i] &= enm->enm_addrlo[i];
 		}
 
 		h = ether_crc32_be(addr, ETHER_ADDR_LEN);
@@ -1611,6 +1710,7 @@ et_init_rxmac(struct et_softc *sc)
 void
 et_init_txmac(struct et_softc *sc)
 {
+
 	/* Disable TX MAC and FC(?) */
 	CSR_WRITE_4(sc, ET_TXMAC_CTRL, ET_TXMAC_CTRL_FC_DISABLE);
 
@@ -1648,45 +1748,9 @@ et_start_rxdma(struct et_softc *sc)
 int
 et_start_txdma(struct et_softc *sc)
 {
+
 	CSR_WRITE_4(sc, ET_TXDMA_CTRL, ET_TXDMA_CTRL_SINGLE_EPKT);
 	return 0;
-}
-
-int
-et_enable_txrx(struct et_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t val;
-	int i, rc = 0;
-
-	val = CSR_READ_4(sc, ET_MAC_CFG1);
-	val |= ET_MAC_CFG1_TXEN | ET_MAC_CFG1_RXEN;
-	val &= ~(ET_MAC_CFG1_TXFLOW | ET_MAC_CFG1_RXFLOW |
-		 ET_MAC_CFG1_LOOPBACK);
-	CSR_WRITE_4(sc, ET_MAC_CFG1, val);
-
-	if ((rc = ether_mediachange(ifp)) != 0)
-		goto out;
-
-#define NRETRY	100
-
-	for (i = 0; i < NRETRY; ++i) {
-		val = CSR_READ_4(sc, ET_MAC_CFG1);
-		if ((val & (ET_MAC_CFG1_SYNC_TXEN | ET_MAC_CFG1_SYNC_RXEN)) ==
-		    (ET_MAC_CFG1_SYNC_TXEN | ET_MAC_CFG1_SYNC_RXEN))
-			break;
-
-		DELAY(10);
-	}
-	if (i == NRETRY) {
-		aprint_error_dev(sc->sc_dev, "can't enable RX/TX\n");
-		return ETIMEDOUT;
-	}
-
-#undef NRETRY
-	return 0;
-out:
-	return rc;
 }
 
 void
@@ -1697,6 +1761,9 @@ et_rxeof(struct et_softc *sc)
 	struct et_rxstat_ring *rxst_ring = &sc->sc_rxstat_ring;
 	uint32_t rxs_stat_ring;
 	int rxst_wrap, rxst_index;
+
+	if ((sc->sc_flags & ET_FLAG_TXRX_ENABLED) == 0)
+		return;
 
 	bus_dmamap_sync(sc->sc_dmat, rxsd->rxsd_dmap, 0,
 	    rxsd->rxsd_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1931,6 +1998,9 @@ et_txeof(struct et_softc *sc)
 	struct et_txbuf_data *tbd = &sc->sc_tx_data;
 	uint32_t tx_done;
 	int end, wrap;
+
+	if ((sc->sc_flags & ET_FLAG_TXRX_ENABLED) == 0)
+		return;
 
 	if (tbd->tbd_used == 0)
 		return;

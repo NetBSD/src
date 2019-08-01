@@ -1,4 +1,4 @@
-/*	$NetBSD: if_etreg.h,v 1.2 2019/07/30 16:07:04 msaitoh Exp $	*/
+/*	$NetBSD: if_etreg.h,v 1.3 2019/08/01 13:36:37 msaitoh Exp $	*/
 /*	$OpenBSD: if_etreg.h,v 1.3 2008/06/08 06:18:07 jsg Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #define ET_RXQ_END			0x000c
 
 #define ET_PM				0x0010
+#define EM_PM_GIGEPHY_ENB		(1 << 0)
 #define ET_PM_SYSCLK_GATE		(1 << 3)
 #define ET_PM_TXCLK_GATE		(1 << 4)
 #define ET_PM_RXCLK_GATE		(1 << 5)
@@ -487,6 +488,7 @@ struct et_softc {
 	struct ethercom		sc_ethercom;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	int			sc_if_flags;
+	uint32_t		sc_flags;	/* ET_FLAG_ */
 
 	int			sc_mem_rid;
 	struct resource		*sc_mem_res;
@@ -527,5 +529,9 @@ struct et_softc {
 	int			sc_tx_intr_nsegs;
 	uint32_t		sc_timer;
 };
+
+#define	ET_FLAG_FASTETHER	0x0004
+#define	ET_FLAG_TXRX_ENABLED	0x0100
+#define	ET_FLAG_LINK		0x8000
 
 #endif	/* !_IF_ETREG_H */
