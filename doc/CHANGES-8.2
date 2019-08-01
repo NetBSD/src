@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.15 2019/07/27 17:11:56 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.16 2019/08/01 14:02:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -347,4 +347,49 @@ sys/dev/pci/if_wpi.c				1.86
 
 	PR kern/54320: put back correct recieve ring allocation size.
 	[jakllsch, ticket #1308]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.15
+sys/arch/i386/stand/efiboot/boot.c		1.12,1.13
+sys/arch/i386/stand/efiboot/dev_net.c		1.2
+sys/arch/i386/stand/efiboot/efiboot.c		1.9,1.10
+sys/arch/i386/stand/efiboot/efiboot.h		1.9
+sys/arch/i386/stand/efiboot/efimemory.c		1.6-1.8
+sys/arch/i386/stand/lib/exec.c			1.73
+sys/arch/i386/stand/lib/libi386.h		1.44
+
+	Add tftp support to x86 efiboot.
+	Pre-allocate memory for the kernel space at startup.
+	Added BTINFO_EFIMEMMAP compaction support to x86 efiboot.
+	Sync the output of memmap command to the output of stand/efiboot
+	mem command.
+	[nonaka, ticket #1309]
+
+sys/dev/usb/usbdevs				1.754-1.755 via patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	- Add Cinterion
+	- Add Sierra Wireless C01SW.
+	- Add SMSC USB 2.0 7-Port Hub.
+	- Add ZTE MF633 USUPA USB modem, USB MSM installer, ZTE MF112, MF119,
+	  MF190, MF228 modem and Softbank 004Z.
+	- Add Huawei HWD12, E353, E355, E392, EC156, E3272 / Softbank 203HW
+	- Add NetIndex RT-WJ02 and UX312NC.
+	- Add Siemens HC28
+	[msaitoh, ticket #1310]
+
+sys/dev/pci/agp_intel.c				1.38
+
+	Fix a >15 year old code rework bug, and add a missing "break".
+	[msaitoh, ticket #1311]
+
+sys/dev/pci/if_wm.c				1.644,1.645
+sys/dev/pci/if_wmreg.h				1.115
+
+	- Avoid undefined behavior while writing RSS redirection table.
+	- Don't print debug message in wm_ulp_disable().
+	- Fix rnd(9) usage when MSI-X is used to prevent panic.
+	- Use better rnd value when INTx or MSI is used.
+	[msaitoh, ticket #1312]
+
 
