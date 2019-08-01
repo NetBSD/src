@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.3 2018/10/28 10:17:47 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.4 2019/08/01 13:11:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <libfdt.h>
 
-#define	ACPI_FDT_SIZE	(64 * 1024)
+#define	ACPI_FDT_SIZE	(128 * 1024)
 
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
