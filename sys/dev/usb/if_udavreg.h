@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.13 2019/07/21 10:27:56 mrg Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.14 2019/08/01 00:10:22 mrg Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -149,7 +149,6 @@ struct udav_chain {
 	struct usbd_xfer	*udav_xfer;
 	char			*udav_buf;
 	struct mbuf		*udav_mbuf;
-	int			udav_idx;
 };
 
 struct udav_cdata {

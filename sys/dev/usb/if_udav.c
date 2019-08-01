@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.59 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.60 2019/08/01 00:10:22 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.59 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.60 2019/08/01 00:10:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -109,7 +109,6 @@ Static void udav_stop_task(struct udav_softc *);
 Static void udav_stop(struct ifnet *, int);
 Static void udav_watchdog(struct ifnet *);
 Static int udav_ifmedia_change(struct ifnet *);
-Static void udav_ifmedia_status(struct ifnet *, struct ifmediareq *);
 Static void udav_lock_mii(struct udav_softc *);
 Static void udav_unlock_mii(struct udav_softc *);
 Static int udav_miibus_readreg(device_t, int, int, uint16_t *);
@@ -309,7 +308,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 	sc->sc_ec.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0,
-		     udav_ifmedia_change, udav_ifmedia_status);
+		     udav_ifmedia_change, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -943,7 +942,6 @@ udav_rx_list_init(struct udav_softc *sc)
 	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
 		c = &cd->udav_rx_chain[i];
 		c->udav_sc = sc;
-		c->udav_idx = i;
 		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->udav_xfer == NULL) {
@@ -971,7 +969,6 @@ udav_tx_list_init(struct udav_softc *sc)
 	for (i = 0; i < UDAV_TX_LIST_CNT; i++) {
 		c = &cd->udav_tx_chain[i];
 		c->udav_sc = sc;
-		c->udav_idx = i;
 		c->udav_mbuf = NULL;
 		if (c->udav_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_pipe_tx, UDAV_BUFSZ,
@@ -1376,32 +1373,13 @@ Static int
 udav_ifmedia_change(struct ifnet *ifp)
 {
 	struct udav_softc *sc = ifp->if_softc;
-	struct mii_data *mii = GET_MII(sc);
-	int rc;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
 		return 0;
 
-	sc->sc_link = 0;
-	if ((rc = mii_mediachg(mii)) == ENXIO)
-		return 0;
-	return rc;
-}
-
-/* Report current media status. */
-Static void
-udav_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct udav_softc *sc = ifp->if_softc;
-
-	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
-
-	if (sc->sc_dying)
-		return;
-
-	ether_mediastatus(ifp, ifmr);
+	return ether_mediachange(ifp);
 }
 
 Static void
