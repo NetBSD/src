@@ -17,9 +17,6 @@
 #ifndef LIBC_MUSL
 # define LIBC_MUSL 4
 #endif
-#ifndef NETBSD_ENABLE_PTHREADS
-# define NETBSD_ENABLE_PTHREADS
-#endif
 #ifndef TARGET_BIG_ENDIAN_DEFAULT
 # define TARGET_BIG_ENDIAN_DEFAULT 1
 #endif
