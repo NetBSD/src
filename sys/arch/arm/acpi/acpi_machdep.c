@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.7 2019/08/01 13:13:51 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.8 2019/08/01 18:59:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7 2019/08/01 13:13:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2019/08/01 18:59:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,21 +74,31 @@ acpi_md_pmapflags(paddr_t pa)
 		return 0;
 
 	while (len >= 28) {
+		const uint32_t type = be32dec(&map[0]);
 		const uint64_t phys_start = be64dec(&map[1]);
 		const uint64_t num_pages = be64dec(&map[3]);
 		const uint64_t attr = be64dec(&map[5]);
 
 		if (pa >= phys_start && pa < phys_start + (num_pages * EFI_PAGE_SIZE)) {
-			if ((attr & EFI_MD_ATTR_UC) != 0)
-				return PMAP_DEV;	/* Not cacheable means Device-nGnRnE */
-			else if ((attr & EFI_MD_ATTR_WC) != 0)
-				return PMAP_WRITE_COMBINE;
-			else if ((attr & EFI_MD_ATTR_WT) != 0)
-				return 0;	/* XXX */
-			else if ((attr & EFI_MD_ATTR_WB) != 0)
+			switch (type) {
+			case EFI_MD_TYPE_RECLAIM:
+				/* ACPI table memory */
 				return PMAP_WRITE_BACK;
-			else
+
+			case EFI_MD_TYPE_IOMEM:
+			case EFI_MD_TYPE_IOPORT:
 				return PMAP_DEV;
+
+			default:
+				if ((attr & EFI_MD_ATTR_WB) != 0)
+					return PMAP_WRITE_BACK;
+				else if ((attr & EFI_MD_ATTR_WC) != 0)
+					return PMAP_WRITE_COMBINE;
+				else if ((attr & EFI_MD_ATTR_WT) != 0)
+					return 0;	/* XXX */
+
+				return PMAP_DEV;
+			}
 		}
 
 		map += 7;
