@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.18 2019/07/30 15:29:40 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.19 2019/08/01 03:43:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,14 +38,13 @@
 static void
 NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 {
-	int lclr, rclr, clr;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	uint32_t lclr, rclr, clr;
 	uint32_t *dp, *rp, *hp, tmp, lmask, rmask;
 	int height, cnt;
 
 	hp = NULL;	/* XXX GCC */
 
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
@@ -56,7 +55,7 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 		col = 0;
 	}
 
-	if ((col + num) > ri->ri_cols)
+	if (col + num > ri->ri_cols)
 		num = ri->ri_cols - col;
 
 	if (num <= 0)
@@ -70,8 +69,10 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 	if (ri->ri_hwbits)
 		hp = (uint32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    ((col >> 3) & ~3));
-	if ((col & 31) + num <= 32) {
-		lmask = ~rasops_pmask[col & 31][num];
+	col &= 31;
+
+	if (col + num <= 32) {
+		lmask = ~rasops_pmask[col][num & 31];
 		lclr = clr & ~lmask;
 
 		while (height--) {
@@ -86,11 +87,11 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 			}
 		}
 	} else {
-		lmask = rasops_rmask[col & 31];
+		lmask = rasops_rmask[col];
 		rmask = rasops_lmask[(col + num) & 31];
 
 		if (lmask)
-			num = (num - (32 - (col & 31))) >> 5;
+			num = (num - (32 - col)) >> 5;
 		else
 			num = num >> 5;
 
@@ -127,10 +128,10 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 static void
 NAME(do_cursor)(struct rasops_info *ri)
 {
-	int height, row, col, num;
-	uint32_t *dp, *rp, *hrp, *hp, tmp, lmask, rmask;
+	int height, row, col, num, cnt;
+	uint32_t *dp, *rp, *hp, tmp, lmask, rmask;
 
-	hrp = hp = NULL;	/* XXX GCC */
+	hp = NULL;	/* XXX GCC */
 
 	row = ri->ri_crow;
 	col = ri->ri_ccol * ri->ri_font->fontwidth << PIXEL_SHIFT;
@@ -139,49 +140,53 @@ NAME(do_cursor)(struct rasops_info *ri)
 	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
 	    ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
-		hrp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
+		hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
+	col &= 31;
 
-	if ((col & 31) + num <= 32) {
-		lmask = rasops_pmask[col & 31][num];
+	if (col + num <= 32) {
+		lmask = rasops_pmask[col][num & 31];
 
 		while (height--) {
 			tmp = *rp ^ lmask;
 			*rp = tmp;
 			if (ri->ri_hwbits) {
-				*hrp = tmp;
-				DELTA(hrp, ri->ri_stride, uint32_t *);
+				*hp = tmp;
+				DELTA(hp, ri->ri_stride, uint32_t *);
 			}
 			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	} else {
-		lmask = ~rasops_rmask[col & 31];
+		lmask = ~rasops_rmask[col];
 		rmask = ~rasops_lmask[(col + num) & 31];
+
+		if (lmask != -1)
+			num = (num - (32 - col)) >> 5;
+		else
+			num = num >> 5;
 
 		while (height--) {
 			dp = rp;
-			DELTA(rp, ri->ri_stride, uint32_t *);
-			if (ri->ri_hwbits) {
-				hp = hrp;
-				DELTA(hrp, ri->ri_stride, uint32_t *);
-			}
 
 			if (lmask != -1) {
-				tmp = *dp ^ lmask;
-				*dp = tmp;
+				*dp = *dp ^ lmask;
 				dp++;
-				if (ri->ri_hwbits) {
-					*hp = tmp;
-					hp++;
-				}
 			}
 
-			if (rmask != -1) {
-				tmp = *dp ^ rmask;
-				*dp = tmp;
-				if (ri->ri_hwbits)
-					*hp = tmp;
+			for (cnt = num; cnt; cnt--) {
+				*dp = ~*dp;
+				dp++;
 			}
+
+			if (rmask != -1)
+				*dp = *dp ^ rmask;
+
+			if (ri->ri_hwbits) {
+				memcpy(hp, rp, ((lmask != -1) + num +
+				    (rmask != -1)) << 2);
+				DELTA(hp, ri->ri_stride, uint32_t *);
+			}
+			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	}
 }
