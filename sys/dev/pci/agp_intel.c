@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.37 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.37.48.1 2019/08/01 13:45:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.37 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.37.48.1 2019/08/01 13:45:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,7 @@ agp_intel_init(struct agp_softc *sc)
 	case CHIP_I443:
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
 		    AGPCTRL_AGPRSE | AGPCTRL_GTLB);
+		break;
 
 	default:
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
