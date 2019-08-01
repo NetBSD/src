@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.14 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.15 2019/08/01 02:06:31 riastradh Exp $ */
 
 /****************************************************************
 
@@ -200,6 +200,9 @@ THIS SOFTWARE.
 #include "gd_qnan.h"
 #ifdef Honor_FLT_ROUNDS
 #include <fenv.h>
+__weakref_visible int __libc_fegetround_ref(void) __weak_reference(fegetround);
+#define fegetround()							\
+	(__libc_fegetround_ref ? __libc_fegetround_ref() : FE_TONEAREST)
 #endif
 
 #ifdef DEBUG
