@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.16 2019/08/01 14:02:47 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.17 2019/08/01 14:29:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -392,4 +392,47 @@ sys/dev/pci/if_wmreg.h				1.115
 	- Use better rnd value when INTx or MSI is used.
 	[msaitoh, ticket #1312]
 
+sys/dev/pci/ixgbe/ixgbe_type.h			1.41
+sys/dev/pci/ixgbe/ixgbe.c			1.194,1.197-1.199 via patch
+sys/dev/pci/ixgbe/ixgbe_common.c		1.24
+sys/dev/pci/ixgbe/ixv.c				1.121,1.124-1.125
+
+	- Avoid undefined behavior of interrupt vector setting.
+	- Avoid undefined behavior of TX/RX queue statistics calculation.
+	- Avoid undefined behavior of X550EM's PHY accesses.
+	- Avoid undefined behavior of Flow Control Transmit Timer setting.
+	- Don't call {ixgbe,ixv}_stop() twice while detaching.
+	[msaitoh, ticket #1313]
+
+sys/dev/pci/siside.c				1.38
+
+	Add missing break; after "100NEW" configuration.
+	Don't also set "133OLD", since the 100NEW cards don't support 133.
+	[msaitoh, ticket #1314]
+
+sys/dev/mii/miidevs				1.145-1.153
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	- Fix I82578 OUI. This change only affects to MIIVERBOSE.
+	- Add Bankspeed Pty and NetExcell's OUI.
+	- Add another ASIX OUI and AX88772* devices.
+	- Add SMSC(Microchip) LAN911X and LAN75XX.
+	- Add Davicom DM9161, DM9161[ABC] and DM9601.
+	- Add Amlogix GXL internal PHY.
+	- Add Broadcom BCM53125 1000BASE-T switch.
+	- Sort xx or yy's OUIs by number. No functional change.
+	[msaitoh, ticket #1315]
+
+sys/dev/mii/makphy.c				1.54,1.57-1.60 via patch
+sys/dev/mii/makphyvar.h				1.1-1.2
+sys/dev/mii/ihphy.c				1.12,1.14 via patch
+
+	- Support Intel I21[01].
+	- 88E1000(S) has no page select register, so don't access it.
+	  Note that qemu doesn't implement the register and the access fails.
+	- Check the result of the ESSR register access because Qemu doesn't
+	  implement the register.
+	- KNF.
+	[msaitoh, ticket #1316]
 
