@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.24 2019/08/01 16:48:06 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.25 2019/08/01 17:49:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -401,8 +401,11 @@ add_other_ptn_size(menudesc *menu, void *arg)
 	p += pset->num;
 	memset(m, 0, sizeof(*m));
 	memset(p, 0, sizeof(*p));
+	p->parts = pset->parts;
 	p->cur_part_id = NO_PART;
 	p->type = PT_root;
+	p->fs_type = FS_BSDFFS;
+	p->fs_version = 2;
 	strncpy(p->mount, new_mp, sizeof(p->mount));
 
 	menu->cursel = pset->num;
