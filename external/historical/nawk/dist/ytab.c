@@ -1010,7 +1010,7 @@ yylex1(void)
 	const long *t3p;
 	int c;
 
-#ifdef YYARG	
+#ifdef YYARG
 	yychar = yylex(yyarg);
 #else
 	yychar = yylex();
@@ -1218,7 +1218,7 @@ yydefault:
 	if(yyj >= YYLAST || yychk[yystate=yyact[yyj]] != -yyn)
 		yystate = yyact[yyg];
 	switch(yym) {
-		
+
 case 1:
 #line	98	"/n/fs/fac/bwk/awk/awkgram.y"
 { if (errorflag==0)
@@ -1381,12 +1381,12 @@ case 72:
 { yyval.p = op2(INTEST, yypt[-3].yyv.p, makearr(yypt[-0].yyv.p)); } break;
 case 73:
 #line	241	"/n/fs/fac/bwk/awk/awkgram.y"
-{ 
+{
 			if (safe) SYNTAX("cmd | getline is unsafe");
 			else yyval.p = op3(GETLINE, yypt[-0].yyv.p, itonp(yypt[-2].yyv.i), yypt[-3].yyv.p); } break;
 case 74:
 #line	244	"/n/fs/fac/bwk/awk/awkgram.y"
-{ 
+{
 			if (safe) SYNTAX("cmd | getline is unsafe");
 			else yyval.p = op3(GETLINE, (Node*)0, itonp(yypt[-1].yyv.i), yypt[-2].yyv.p); } break;
 case 75:
@@ -1421,7 +1421,7 @@ case 96:
 { yyval.s = yypt[-1].yyv.s; } break;
 case 99:
 #line	295	"/n/fs/fac/bwk/awk/awkgram.y"
-{ 
+{
 			if (safe) SYNTAX("print | is unsafe");
 			else yyval.p = stat3(yypt[-3].yyv.i, yypt[-2].yyv.p, itonp(yypt[-1].yyv.i), yypt[-0].yyv.p); } break;
 case 100:
