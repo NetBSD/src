@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.22 2019/07/22 17:53:35 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.23 2019/08/01 14:14:30 martin Exp $*/
 
 /******************************************************************************
 
@@ -606,10 +606,6 @@ ixv_detach(device_t dev, int flags)
 	}
 #endif
 
-	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
-
 	for (int i = 0; i < adapter->num_queues; i++, que++, txr++) {
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
 			softint_disestablish(txr->txr_si);
@@ -846,7 +842,7 @@ ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u32		queue = 1 << vector;
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -867,7 +863,7 @@ ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1 << vector);
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -2146,8 +2142,8 @@ ixv_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 	} else {	  /* RX/TX IVARS */
 		index = (16 * (entry & 1)) + (8 * type);
 		ivar = IXGBE_READ_REG(hw, IXGBE_VTIVAR(entry >> 1));
-		ivar &= ~(0xFF << index);
-		ivar |= (vector << index);
+		ivar &= ~(0xffUL << index);
+		ivar |= ((u32)vector << index);
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR(entry >> 1), ivar);
 	}
 } /* ixv_set_ivar */
