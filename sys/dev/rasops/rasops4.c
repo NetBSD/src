@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.22 2019/07/31 02:04:14 rin Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.23 2019/08/01 03:38:12 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.22 2019/07/31 02:04:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.23 2019/08/01 03:38:12 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -167,6 +167,6 @@ rasops4_makestamp(struct rasops_info *ri, long attr)
  * Grab routines common to depths where (bpp < 8)
  */
 #define NAME(ident)	rasops4_##ident
-#define PIXEL_SHIFT	3
+#define PIXEL_SHIFT	2
 
 #include <dev/rasops/rasops_bitops.h>
