@@ -220,7 +220,7 @@ int makeinit(fa *f, int anchor)
 	f->curstat = 2;
 	f->out[2] = 0;
 	k = *(f->re[0].lfollow);
-	xfree(f->posns[2]);			
+	xfree(f->posns[2]);
 	if ((f->posns[2] = calloc(1, (k+1)*sizeof(int))) == NULL)
 		overflo("out of space in makeinit");
 	for (i=0; i <= k; i++) {
@@ -649,9 +649,9 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
  * RETURN VALUES
  *     0    No match found.
  *     1    Match found.
- */  
+ */
 
-int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)	
+int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 {
 	uschar *buf = *pbuf;
 	int bufsize = *pbufsize;
@@ -676,7 +676,7 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 			if (++j == k) {
 				if (k == bufsize)
 					if (!adjbuf(&buf, &bufsize, bufsize+1, quantum, 0, "fnematch"))
-						FATAL("stream '%.30s...' too long", buf);	
+						FATAL("stream '%.30s...' too long", buf);
 				buf[k++] = (c = getc(f)) != EOF ? c : 0;
 			}
 			c = buf[j];
@@ -716,7 +716,7 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 		 */
 		do
 			if (buf[--k] && ungetc(buf[k], f) == EOF)
-				FATAL("unable to ungetc '%c'", buf[k]);	
+				FATAL("unable to ungetc '%c'", buf[k]);
 		while (k > i + patlen);
 		buf[k] = 0;
 		return 1;
@@ -905,8 +905,8 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	uschar *buf = 0;
 	int ret = 1;
 	int init_q = (firstnum==0);		/* first added char will be ? */
-	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */ 
-	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/ 
+	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */
+	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/
 	int suffix_length = strlen(reptok) - reptoklen;	/* string after rep specifier	*/
 	int size = prefix_length +  suffix_length;
 
@@ -924,7 +924,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	}
 	if ((buf = (uschar *) malloc(size+1)) == NULL)
 		FATAL("out of space in reg expr %.10s..", lastre);
-	memcpy(buf, basestr, prefix_length);	/* copy prefix	*/ 
+	memcpy(buf, basestr, prefix_length);	/* copy prefix	*/
 	j = prefix_length;
 	if (special_case == REPEAT_ZERO) {
 		j -= atomlen;
@@ -979,23 +979,23 @@ static int repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 		if (firstnum < 2) {
 			/* 0 or 1: should be handled before you get here */
 		} else {
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 				firstnum, secondnum, REPEAT_PLUS_APPENDED);
 		}
 	} else if (firstnum == secondnum) {	/* {n} or {n,n} -> simply repeat n-1 times */
 		if (firstnum == 0) {	/* {0} or {0,0} */
-			/* This case is unusual because the resulting 
-			   replacement string might actually be SMALLER than 
+			/* This case is unusual because the resulting
+			   replacement string might actually be SMALLER than
 			   the original ERE */
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_ZERO);
 		} else {		/* (firstnum >= 1) */
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_SIMPLE);
 		}
 	} else if (firstnum < secondnum) {	/* {n,m} -> repeat n-1 times then alternate  */
 		/*  x{n,m}  =>  xx...x{1, m-n+1}  =>  xx...x?x?x?..x?	*/
-		return replace_repeat(reptok, reptoklen, atom, atomlen, 
+		return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_WITH_Q);
 	} else {	/* Error - shouldn't be here (n>m) */
 	}
@@ -1035,7 +1035,7 @@ rescan:
 	default:
 		rlxval = c;
 		return CHAR;
-	case '[': 
+	case '[':
 		if (buf == 0 && (buf = malloc(bufsz)) == NULL)
 			FATAL("out of space in reg expr %.10s..", lastre);
 		bp = buf;
@@ -1098,7 +1098,7 @@ rescan:
 				if (*prestr == '=' && prestr[1] == ']') {
 					prestr += 2;
 					/* Found it: map via locale TBD: for now
-					   simply return this char. This is 
+					   simply return this char. This is
 					   sufficient to pass conformance test
 					   awk.ex 156
 					 */
@@ -1123,7 +1123,7 @@ rescan:
 				*bp++ = c;
 		}
 		break;
-	case '{': 
+	case '{':
 		if (isdigit(*(prestr))) {
 			num = 0;	/* Process as a repetition */
 			n = -1; m = -1;

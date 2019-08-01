@@ -862,7 +862,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 					    "\"%.30s\")", os);
 				x = execute(a);
 				a = a->nnext;
-				snprintf(t - 1, FMTSZ(t - 1), 
+				snprintf(t - 1, FMTSZ(t - 1),
 				    "%d", fmtwd=(int) getfval(x));
 				if (fmtwd < 0)
 					fmtwd = -fmtwd;
@@ -2117,7 +2117,7 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 				FATAL("gensub doesn't support backreferences (subst \"%s\")", rptr);
 			}
 		}
-		
+
 		do {
 			if (whichm >= 0 && whichm != num) {
 				num++;
