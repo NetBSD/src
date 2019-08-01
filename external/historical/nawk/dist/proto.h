@@ -149,8 +149,6 @@ extern	double	errcheck(double, const char *);
 extern	int	isclvar(const char *);
 extern	int	is_number(const char *);
 
-/*###152 [cc] note: expected 'uschar ** {aka unsigned char **}' but argument is of type 'char **'%%%*/
-/*###152 [cc] note: expected 'uschar ** {aka unsigned char **}' but argument is of type 'char **'%%%*/
 extern	int	adjbuf(uschar **, int *, int, int, uschar **, const char *);
 extern	void	run(Node *);
 extern	Cell	*execute(Node *);
