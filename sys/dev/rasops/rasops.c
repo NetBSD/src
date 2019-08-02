@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.106 2019/08/02 04:18:15 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.107 2019/08/02 04:22:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.106 2019/08/02 04:18:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.107 2019/08/02 04:22:04 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1124,8 +1124,8 @@ void
 rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	void *buf = ri->ri_buf;
-	int height, cnt, slop1, slop2, clr;
+	uint32_t *buf = ri->ri_buf;
+	int height, cnt, clr;
 	uint32_t *dp, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
@@ -1156,35 +1156,15 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	dp = buf;
 
-	slop1 = (4 - ((uintptr_t)rp & 3)) & 3;
-	slop2 = (num - slop1) & 3;
-	num = (num - slop1 /* - slop2 */) >> 2;
-
-	/* Align span to 4 bytes */
-	if (slop1 & 1) {
-		*(uint8_t *)dp = clr;
-		DELTA(dp, 1, uint32_t *);
-	}
-
-	if (slop1 & 2) {
-		*(uint16_t *)dp = clr;
-		DELTA(dp, 2, uint32_t *);
-	}
-
 	/* Write 4 bytes per loop */
-	for (cnt = num; cnt; cnt--)
+	for (cnt = num >> 2; cnt; cnt--)
 		*dp++ = clr;
 
 	/* Write unaligned trailing slop */
-	if (slop2 & 1) {
+	for (cnt = num & 3; cnt; cnt--) {
 		*(uint8_t *)dp = clr;
 		DELTA(dp, 1, uint32_t *);
 	}
-
-	if (slop2 & 2)
-		*(uint16_t *)dp = clr;
-
-	num = slop1 + (num << 2) + slop2;
 
 	while (height--) {
 		memcpy(rp, buf, num);
