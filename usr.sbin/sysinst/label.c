@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10 2019/07/26 08:18:47 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.1 2019/08/02 05:41:46 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10 2019/07/26 08:18:47 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.1 2019/08/02 05:41:46 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1486,6 +1486,12 @@ void
 canonicalize_last_mounted(char *path)
 {
 	char *p;
+
+	if (path == NULL)
+		return;
+
+	if (strcmp(path, "/") == 0)
+		return;	/* in this case a "trailing" slash is allowed */
 
 	for (;;) {
 		p = strrchr(path, '/');
