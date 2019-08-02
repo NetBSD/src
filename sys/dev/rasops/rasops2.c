@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.28 2019/07/31 02:04:14 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.29 2019/08/02 04:39:09 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.28 2019/07/31 02:04:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.29 2019/08/02 04:39:09 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.28 2019/07/31 02:04:14 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	2
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
@@ -91,7 +92,6 @@ rasops2_init(struct rasops_info *ri)
 		break;
 #endif	/* !RASOPS_SMALL */
 	default:
-		panic("fontwidth not 8/12/16 or RASOPS_SMALL - fixme!");
 		ri->ri_ops.putchar = rasops2_putchar;
 		return;
 	}
@@ -99,16 +99,6 @@ rasops2_init(struct rasops_info *ri)
 #ifndef RASOPS_SMALL
 	rasops_allocstamp(ri, sizeof(uint8_t) * 16);
 #endif
-}
-
-/*
- * Put a single character. This is the generic version.
- */
-static void
-rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
-{
-
-	/* XXX punt */
 }
 
 #ifndef RASOPS_SMALL
@@ -147,8 +137,6 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
-#define	RASOPS_DEPTH	2
-
 #define	RASOPS_WIDTH	8
 #include "rasops_putchar_width.h"
 #undef	RASOPS_WIDTH
@@ -166,7 +154,4 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 /*
  * Grab routines common to depths where (bpp < 8)
  */
-#define NAME(ident)	rasops2_##ident
-#define PIXEL_SHIFT	1
-
 #include <dev/rasops/rasops_bitops.h>

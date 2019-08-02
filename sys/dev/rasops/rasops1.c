@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.33 2019/08/02 04:23:20 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.34 2019/08/02 04:39:09 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.33 2019/08/02 04:23:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.34 2019/08/02 04:39:09 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.33 2019/08/02 04:23:20 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	1
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
@@ -251,7 +252,4 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 /*
  * Grab routines common to depths where (bpp < 8)
  */
-#define NAME(ident)	rasops1_##ident
-#define PIXEL_SHIFT	0
-
 #include <dev/rasops/rasops_bitops.h>

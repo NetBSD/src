@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.43 2019/07/31 05:08:10 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.44 2019/08/02 04:39:09 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.43 2019/07/31 05:08:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.44 2019/08/02 04:39:09 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.43 2019/07/31 05:08:10 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	24
 #include <dev/rasops/rasops.h>
 
 static void 	rasops24_erasecols(void *, int, int, int, long);
@@ -116,7 +117,6 @@ rasops24_init(struct rasops_info *ri)
 #endif
 }
 
-#define	RASOPS_DEPTH	24
 #include "rasops_putchar.h"
 #include "rasops_putchar_aa.h"
 
