@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.29 2018/03/29 13:25:11 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2019/08/02 12:04:45 joerg Exp $
 
-IMAGESIZE=	9800k
+IMAGESIZE=	9900k
 DBG=		${${ACTIVE_CC} == "clang":? -Oz -fomit-frame-pointer : -Os } -fno-unwind-tables
 
 MAKEFS_FLAGS+=   -o density=4k
