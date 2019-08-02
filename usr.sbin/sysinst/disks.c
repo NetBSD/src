@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44 2019/07/25 13:11:15 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.1 2019/08/02 05:41:46 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,6 +79,8 @@ struct disk_desc {
 	uint	dd_secsize;
 	daddr_t	dd_totsec;
 };
+
+static const char name_prefix[] = "NAME=";
 
 /* Local prototypes */
 static int foundffs(struct data *, size_t);
@@ -1399,23 +1401,37 @@ done_with_disks:
 	return 0;
 }
 
-
-
 static int
 /*ARGSUSED*/
 foundffs(struct data *list, size_t num)
 {
 	int error;
+	char rbuf[PATH_MAX], buf[PATH_MAX];
+	const char *rdev, *dev;
 
 	if (num < 2 || strcmp(list[1].u.s_val, "/") == 0 ||
 	    strstr(list[2].u.s_val, "noauto") != NULL)
 		return 0;
 
-	error = fsck_preen(list[0].u.s_val, "ffs", false);
+	/* need the raw device for fsck_preen */
+	if (strncmp(list[0].u.s_val, name_prefix, sizeof(name_prefix)-1)
+	     != 0) {
+		strcpy(rbuf, "/dev/r");
+		strlcat(rbuf, list[0].u.s_val, sizeof(rbuf));
+		rdev = rbuf;
+		strcpy(buf, "/dev/");
+		strlcat(buf, list[0].u.s_val, sizeof(buf));
+		dev = buf;
+	} else {
+		rdev = list[0].u.s_val;
+		dev = list[0].u.s_val;
+	}
+
+	error = fsck_preen(rdev, "ffs", false);
 	if (error != 0)
 		return error;
 
-	error = target_mount("", list[0].u.s_val, list[1].u.s_val);
+	error = target_mount("", dev, list[1].u.s_val);
 	if (error != 0) {
 		msg_fmt_display(MSG_mount_failed, "%s", list[0].u.s_val);
 		if (!ask_noyes(NULL))
