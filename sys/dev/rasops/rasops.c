@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.105 2019/07/31 04:45:44 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.106 2019/08/02 04:18:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.105 2019/07/31 04:45:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.106 2019/08/02 04:18:15 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -779,12 +779,12 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 		hp = ri->ri_hwbits + row + dst * ri->ri_xscale;
 
 	while (height--) {
-		memcpy(dp, sp, num);
-		dp += ri->ri_stride;
+		memmove(dp, sp, num);
 		if (ri->ri_hwbits) {
-			memcpy(hp, sp, num);
+			memcpy(hp, dp, num);
 			hp += ri->ri_stride;
 		}
+		dp += ri->ri_stride;
 		sp += ri->ri_stride;
 	}
 }
