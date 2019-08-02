@@ -1,10 +1,17 @@
-# $NetBSD: WSFB.common,v 1.1 2019/07/26 10:48:44 rin Exp $
+# $NetBSD: WSFB.common,v 1.2 2019/08/02 10:46:50 rin Exp $
 
 genfb* at intvid?
 genfb* at macvid?
 wsdisplay* at wsemuldisplaydev?
 
 options RASOPS_APPLE_PALETTE
+
+# At the expense of memory, boost display output drastically for
+# some depth/font settings.
+# XXX
+# This may have the opposite effect. Specify with care!
+#
+#options GENFB_SHADOWFB
 
 options WSDISPLAY_DEFAULTSCREENS=1
 options WS_KERNEL_FG=WSCOL_GREEN
