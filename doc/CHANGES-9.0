@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.2 2019/08/02 05:48:34 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.3 2019/08/02 05:51:55 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -13,7 +13,7 @@ sys/sys/param.h                                 patched by hand
 
 distrib/utils/libhack/multibyte.c		1.9
 
-	Avoid using an unitialized variable.
+	Avoid using an uninitialized variable.
 	[martin, ticket #2]
 
 usr.sbin/sysinst/disks.c			1.45
