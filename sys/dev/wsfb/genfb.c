@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.67 2019/07/29 14:07:37 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.68 2019/08/02 10:34:39 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.67 2019/07/29 14:07:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.68 2019/08/02 10:34:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 		if (sc->sc_want_clear == false)
 			memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
+		aprint_verbose_dev(sc->sc_dev,
+		    "shadow framebuffer enabled, size %zu KB\n",
+		    sc->sc_fbsize >> 10);
 	}
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
