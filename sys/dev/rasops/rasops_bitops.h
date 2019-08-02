@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.21 2019/08/02 04:31:54 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.22 2019/08/02 04:35:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -298,8 +298,6 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 		while (height--) {
 			sp = srp;
 			dp = drp;
-			DELTA(srp, ri->ri_stride, uint32_t *);
-			DELTA(drp, ri->ri_stride, uint32_t *);
 
 			if (rnum) {
 				GETBITS(sp, sboff, rnum, tmp);
@@ -324,11 +322,14 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 
 			if (ri->ri_hwbits) {
 				hp = dhp;
-				hp -= full + (lmask != 0);
-				memcpy(hp, dp, ((rmask != 0) + cnt +
-				    (lmask != 0)) << 2);
+				hp -= (lmask != 0) + full;
+				memcpy(hp, dp, ((lmask != 0) + full +
+				    (rnum != 0)) << 2);
 				DELTA(dhp, ri->ri_stride, uint32_t *);
 			}
+
+			DELTA(srp, ri->ri_stride, uint32_t *);
+			DELTA(drp, ri->ri_stride, uint32_t *);
  		}
 	} else {
 		/* Copy left-to-right */
