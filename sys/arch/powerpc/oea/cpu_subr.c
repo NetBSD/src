@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.99 2019/02/06 07:32:50 mrg Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.100 2019/08/02 05:08:07 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.99 2019/02/06 07:32:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.100 2019/08/02 05:08:07 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1381,6 +1381,17 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
 	__asm volatile ("sync; isync");
 #endif
+	int hatch_bail = 0;
+	while ((h->hatch_running < 1) && (hatch_bail < 100000)) {
+		delay(1);
+		hatch_bail++;
+#ifdef CACHE_PROTO_MEI
+		__asm volatile ("dcbi 0,%0"::"r"(&h->hatch_running):"memory");
+		__asm volatile ("sync; isync");
+		__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
+		__asm volatile ("sync; isync");
+#endif
+	}
 	if (h->hatch_running < 1) {
 #ifdef CACHE_PROTO_MEI
 		__asm volatile ("dcbi 0,%0"::"r"(&cpu_spinstart_ack):"memory");
