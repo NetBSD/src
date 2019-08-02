@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.15 2019/07/24 19:37:52 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.16 2019/08/02 19:49:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.15 2019/07/24 19:37:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.16 2019/08/02 19:49:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -278,12 +278,7 @@ acpi_platform_startup(void)
 				plcom_console.pi_iot = &arm_generic_bs_tag;
 				plcom_console.pi_iobase = spcr->SerialPort.Address;
 				plcom_console.pi_size = PL011COM_UART_SIZE;
-				if (spcr->InterfaceType == ACPI_DBG2_ARM_SBSA_32BIT) {
-					plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
-				} else {
-					plcom_console.pi_flags = ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8 ?
-					    0 : PLC_FLAG_32BIT_ACCESS;
-				}
+				plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
 
 				plcomcnattach(&plcom_console, baud_rate, 0, TTYDEF_CFLAG, -1);
 				break;
