@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.32 2019/07/31 00:14:25 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.33 2019/08/02 04:23:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.32 2019/07/31 00:14:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.33 2019/08/02 04:23:20 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -136,7 +136,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (col + width <= 32) {
 		/* Single word, only one mask */
 
-		rmask = rasops_pmask[col][width];
+		rmask = rasops_pmask[col][width & 31];
 		lmask = ~rmask;
 
 		if (space) {
