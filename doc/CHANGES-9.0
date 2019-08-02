@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.1 2019/07/30 16:52:10 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.2 2019/08/02 05:48:34 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -11,4 +11,28 @@ sys/sys/param.h                                 patched by hand
 
 	Welcome to 9.0_BETA!
 
+distrib/utils/libhack/multibyte.c		1.9
 
+	Avoid using an unitialized variable.
+	[martin, ticket #2]
+
+usr.sbin/sysinst/disks.c			1.45
+usr.sbin/sysinst/label.c			1.11
+usr.sbin/sysinst/target.c			1.9
+
+	Do not strip the trailing / on root mounts when evaluation
+	"last mounted on". Fix some /dev/ and raw vs. block device confusion
+	on system upgrades.
+	[martin, ticket #4]
+
+usr.sbin/sysinst/bsddisklabel.c			1.24-1.25
+
+	PR 54423: Fix handling of user defined partitions. Complete
+	initialization of install info for user defined partitions.
+	[martin, ticket #5]
+
+usr.sbin/sysinst/bsddisklabel.c			1.26
+
+	If we can not fit a planned partition, retry with a bit more slope
+	in size.
+	[martin, ticket #6]
