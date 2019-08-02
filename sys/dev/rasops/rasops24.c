@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.45 2019/08/02 23:05:42 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.46 2019/08/02 23:24:37 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.45 2019/08/02 23:05:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.46 2019/08/02 23:24:37 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -329,7 +329,6 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	}
 
 	/* Trailing slop */
-	/* XXX handle with masks, bring under control of RI_BSWAP */
 	dbp = (uint8_t *)dp;
 	for (cnt = num & 3; cnt; cnt--) {
 		*dbp++ = (clr >> 16);

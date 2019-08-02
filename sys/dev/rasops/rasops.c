@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.107 2019/08/02 04:22:04 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.108 2019/08/02 23:24:37 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.107 2019/08/02 04:22:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.108 2019/08/02 23:24:37 rin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -412,7 +412,6 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	} else
 #endif
 	{
-
 		ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
 		ri->ri_rows = ri->ri_emuheight / ri->ri_font->fontheight;
 	}
@@ -434,17 +433,31 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 
 	/* Now centre our window if needs be */
 	if ((ri->ri_flg & RI_CENTER) != 0) {
-		ri->ri_bits += (((ri->ri_width * bpp >> 3) -
-		    ri->ri_emustride) >> 1) & ~3;
-		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
-		    ri->ri_stride;
-		if (ri->ri_hwbits != NULL) {
-			ri->ri_hwbits += (((ri->ri_width * bpp >> 3) -
-			    ri->ri_emustride) >> 1) & ~3;
-			ri->ri_hwbits +=
-			    ((ri->ri_height - ri->ri_emuheight) >> 1) *
-			    ri->ri_stride;
+		uint32_t xoff, yoff;
+
+		xoff = ((ri->ri_width * bpp >> 3) - ri->ri_emustride) >> 1;
+		if (ri->ri_depth != 24) {
+			/*
+			 * Truncate to word boundary.
+			 */
+			xoff &= ~3;
+		} else {
+			/*
+			 * Truncate to word and 24-bit color boundary.
+			 */
+			xoff = (xoff / (4 * 3)) * (4 * 3);
 		}
+
+		yoff = ((ri->ri_height - ri->ri_emuheight) >> 1) *
+		    ri->ri_stride;
+
+		ri->ri_bits += xoff;
+		ri->ri_bits += yoff;
+		if (ri->ri_hwbits != NULL) {
+			ri->ri_hwbits += xoff;
+			ri->ri_hwbits += yoff;
+		}
+
 		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits) /
 		    ri->ri_stride;
 		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits) %
@@ -901,39 +914,49 @@ rasops_init_devcmap(struct rasops_info *ri)
 			c |= (uint32_t)(*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
 		p++;
 
-		/* Fill the word for generic routines, which want this */
-		if (ri->ri_depth == 8) {
+		/*
+		 * Swap byte order if necessary. Then, fill the word for
+		 * generic routines, which want this.
+		 */
+		switch (ri->ri_depth) {
+		case 8:
 			c |= c << 8;
 			c |= c << 16;
-		} else if (ri->ri_depth == 15 || ri->ri_depth == 16)
+			break;
+		case 15:
+		case 16:
+			if ((ri->ri_flg & RI_BSWAP) != 0)
+				c = bswap16(c);
 			c |= c << 16;
-		else if (ri->ri_depth == 24) {
+			break;
+		case 24:
 #if BYTE_ORDER == LITTLE_ENDIAN
-#  ifndef RASOPS_SMALL
-			if (ri->ri_font->fontwidth != 12)
-#  endif
-				c = (c & 0x0000ff) << 16 | (c & 0x00ff00) |
-				    (c & 0xff0000) >> 16;
-#  ifndef RASOPS_SMALL
-			else
-				c = (c & 0x0000ff) | (c & 0x00ff00) << 8 |
-				    (c & 0xff0000) >> 8;
-#  endif
+			if ((ri->ri_flg & RI_BSWAP) == 0)
 #else
-			/* XXXRO What should we do here? */
+			if ((ri->ri_flg & RI_BSWAP) != 0)
 #endif
+			{
+				/*
+				 * Convert to ``big endian'' if not RI_BSWAP.
+				 */
+				c = (c & 0x0000ff) << 16|
+				    (c & 0x00ff00) |
+				    (c & 0xff0000) >> 16;
+			}
+
+			/*
+			 * No worries, we use generic routines only for
+			 * gray colors, where all 3 bytes are same.
+			 */
 			c |= (c & 0xff) << 24;
+			break;
+		case 32:
+			if ((ri->ri_flg & RI_BSWAP) != 0)
+				c = bswap32(c);
+			break;
 		}
 
-		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
-		if ((ri->ri_flg & RI_BSWAP) == 0)
-			ri->ri_devcmap[i] = c;
-		else if (ri->ri_depth == 15 || ri->ri_depth == 16)
-			ri->ri_devcmap[i] = bswap16(c);
-		else if (ri->ri_depth == 32)
-			ri->ri_devcmap[i] = bswap32(c);
-		else /* 8, 24 */
-			ri->ri_devcmap[i] = c;
+		ri->ri_devcmap[i] = c;
 	}
 }
 
