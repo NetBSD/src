@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.20 2019/08/02 04:26:44 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.21 2019/08/02 04:31:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -270,7 +270,7 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 	rnum = (dst + num) & 31;
 
 	if (lmask)
-		full = (num - (32 - (dst & 31))) >> 5;
+		full = (num - lnum) >> 5;
 	else
 		full = num >> 5;
 
