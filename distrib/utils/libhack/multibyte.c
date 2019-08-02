@@ -1,4 +1,4 @@
-/*      $NetBSD: multibyte.c,v 1.8 2019/07/28 10:21:18 martin Exp $      */
+/*      $NetBSD: multibyte.c,v 1.8.2.1 2019/08/02 05:39:28 msaitoh Exp $      */
 
 /*
  * Ignore all multibyte sequences, removes all the citrus code.
@@ -246,10 +246,8 @@ wcslen(const wchar_t *s)
 	if (s == NULL)
 		return 0;
 
-	while (*s) {
+	for (l = 0; *s; l++)
 		s++;
-		l++;
-	}
 
 	return l;
 }
