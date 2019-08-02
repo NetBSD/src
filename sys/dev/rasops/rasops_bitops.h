@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.19 2019/08/01 03:43:54 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.20 2019/08/02 04:26:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 
 	hp = NULL;	/* XXX GCC */
 
-
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
@@ -61,6 +60,7 @@ NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
 	if (num <= 0)
 		return;
 #endif
+
 	col *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	num *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	height = ri->ri_font->fontheight;
@@ -186,6 +186,7 @@ NAME(do_cursor)(struct rasops_info *ri)
 				    (rmask != -1)) << 2);
 				DELTA(hp, ri->ri_stride, uint32_t *);
 			}
+
 			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	}
@@ -336,7 +337,6 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 		if (ri->ri_hwbits)
 			dhp = (uint32_t *)(ri->ri_hwbits + row +
 			    ((dst >> 3) & ~3));
-		db = dst & 31;
 
 		while (height--) {
 			sb = src & 31;
@@ -348,7 +348,8 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 				PUTBITS(tmp, db, lnum, dp);
 				dp++;
 
-				if (sb += lnum > 31) {
+				sb += lnum;
+				if (sb > 31) {
 					sp++;
 					sb -= 32;
 				}
