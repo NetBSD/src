@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.44 2019/08/02 04:39:09 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.45 2019/08/02 23:05:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.44 2019/08/02 04:39:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.45 2019/08/02 23:05:42 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -276,8 +276,8 @@ static void
 rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	uint8_t *buf = (uint8_t *)ri->ri_buf;
-	int height, cnt, full, slop1, slop2, clr, stamp[3];
+	void *buf = ri->ri_buf;
+	int height, cnt, clr, stamp[3];
 	uint32_t *dp;
 	uint8_t *rp, *hp, *dbp;
 
@@ -319,33 +319,9 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
 	rasops24_makestamp1(ri, stamp, clr, clr, clr, clr);
 
-	/*
-	 * The current byte offset mod 4 tells us the number of 24-bit pels
-	 * we need to write for alignment to 32-bits. Once we're aligned on
-	 * a 32-bit boundary, we're also aligned on a 4 pixel boundary, so
-	 * the stamp does not need to be rotated. The following shows the
-	 * layout of 4 pels in a 3 word region and illustrates this:
-	 *
-	 *	aaab bbcc cddd
-	 */
-	slop1 = (uintptr_t)rp & 3;
-	cnt = slop1;
-	full = (num /* - cnt */) / 4;
-	cnt += full * 4;
-	slop2 = num - cnt;
-
-	/* Align to 4 bytes */
-	/* XXX handle with masks, bring under control of RI_BSWAP */
-	dbp = buf;
-	for (cnt = slop1; cnt; cnt--) {
-		*dbp++ = (clr >> 16);
-		*dbp++ = (clr >> 8);
-		*dbp++ =  clr;
-	}
-
 	/* 4 pels per loop */
-	dp = (uint32_t *)dbp;
-	for (cnt = full; cnt; cnt--) {
+	dp = (uint32_t *)buf;
+	for (cnt = num >> 2; cnt; cnt--) {
 		dp[0] = stamp[0];
 		dp[1] = stamp[1];
 		dp[2] = stamp[2];
@@ -355,7 +331,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	/* Trailing slop */
 	/* XXX handle with masks, bring under control of RI_BSWAP */
 	dbp = (uint8_t *)dp;
-	for (cnt = slop2; cnt; cnt--) {
+	for (cnt = num & 3; cnt; cnt--) {
 		*dbp++ = (clr >> 16);
 		*dbp++ = (clr >> 8);
 		*dbp++ =  clr;
