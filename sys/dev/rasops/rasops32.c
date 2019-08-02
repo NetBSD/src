@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.41 2019/07/31 02:04:14 rin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.42 2019/08/02 04:40:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.41 2019/07/31 02:04:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.42 2019/08/02 04:40:53 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.41 2019/07/31 02:04:14 rin Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	32
 #include <dev/rasops/rasops.h>
 
 static void 	rasops32_putchar(void *, int, int, u_int, long);
@@ -106,7 +107,6 @@ rasops32_init(struct rasops_info *ri)
 #endif
 }
 
-#define	RASOPS_DEPTH	32
 #include "rasops_putchar.h"
 #include "rasops_putchar_aa.h"
 
