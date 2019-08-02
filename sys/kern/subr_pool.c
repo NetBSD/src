@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.252 2019/06/29 11:13:23 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.253 2019/08/02 05:22:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252 2019/06/29 11:13:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.253 2019/08/02 05:22:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -216,6 +216,8 @@ struct pool_item {
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
+#define	POOL_OBJ_TO_PAGE(pp, v)						\
+	(void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask)
 
 /*
  * Pool cache management.
@@ -408,6 +410,40 @@ pr_item_linkedlist_get(struct pool *pp, struct pool_item_header *ph)
 
 /* -------------------------------------------------------------------------- */
 
+static inline void
+pr_phinpage_check(struct pool *pp, struct pool_item_header *ph, void *page,
+    void *object)
+{
+	if (__predict_false((void *)ph->ph_page != page)) {
+		panic("%s: [%s] item %p not part of pool", __func__,
+		    pp->pr_wchan, object);
+	}
+	if (__predict_false((char *)object < (char *)page + ph->ph_off)) {
+		panic("%s: [%s] item %p below item space", __func__,
+		    pp->pr_wchan, object);
+	}
+	if (__predict_false(ph->ph_poolid != pp->pr_poolid)) {
+		panic("%s: [%s] item %p poolid %u != %u", __func__,
+		    pp->pr_wchan, object, ph->ph_poolid, pp->pr_poolid);
+	}
+}
+
+static inline void
+pc_phinpage_check(pool_cache_t pc, void *object)
+{
+	struct pool_item_header *ph;
+	struct pool *pp;
+	void *page;
+
+	pp = &pc->pc_pool;
+	page = POOL_OBJ_TO_PAGE(pp, object);
+	ph = (struct pool_item_header *)page;
+
+	pr_phinpage_check(pp, ph, page, object);
+}
+
+/* -------------------------------------------------------------------------- */
+
 static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
@@ -456,25 +492,10 @@ pr_find_pagehead(struct pool *pp, void *v)
 	if ((pp->pr_roflags & PR_NOALIGN) != 0) {
 		ph = pr_find_pagehead_noalign(pp, v);
 	} else {
-		void *page =
-		    (void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
-
+		void *page = POOL_OBJ_TO_PAGE(pp, v);
 		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 			ph = (struct pool_item_header *)page;
-			if (__predict_false((void *)ph->ph_page != page)) {
-				panic("%s: [%s] item %p not part of pool",
-				    __func__, pp->pr_wchan, v);
-			}
-			if (__predict_false((char *)v < (char *)page +
-			    ph->ph_off)) {
-				panic("%s: [%s] item %p below item space",
-				    __func__, pp->pr_wchan, v);
-			}
-			if (__predict_false(ph->ph_poolid != pp->pr_poolid)) {
-				panic("%s: [%s] item %p poolid %u != %u",
-				    __func__, pp->pr_wchan, v, ph->ph_poolid,
-				    pp->pr_poolid);
-			}
+			pr_phinpage_check(pp, ph, page, v);
 		} else {
 			tmp.ph_page = page;
 			ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
@@ -1832,7 +1853,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	int n;
 
 	if ((pp->pr_roflags & PR_NOALIGN) == 0) {
-		page = (void *)((uintptr_t)ph & pp->pr_alloc->pa_pagemask);
+		page = POOL_OBJ_TO_PAGE(pp, ph);
 		if (page != ph->ph_page &&
 		    (pp->pr_roflags & PR_PHINPAGE) != 0) {
 			if (label != NULL)
@@ -1866,7 +1887,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 		if ((pp->pr_roflags & PR_NOALIGN) != 0) {
 			continue;
 		}
-		page = (void *)((uintptr_t)pi & pp->pr_alloc->pa_pagemask);
+		page = POOL_OBJ_TO_PAGE(pp, pi);
 		if (page == ph->ph_page)
 			continue;
 
@@ -2615,6 +2636,10 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	KASSERT(object != NULL);
 	pool_cache_redzone_check(pc, object);
 	FREECHECK_IN(&pc->pc_freecheck, object);
+
+	if (pc->pc_pool.pr_roflags & PR_PHINPAGE) {
+		pc_phinpage_check(pc, object);
+	}
 
 	if (pool_cache_put_quarantine(pc, object, pa)) {
 		return;
