@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.253 2019/08/02 05:22:14 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.254 2019/08/03 09:31:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.253 2019/08/02 05:22:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.254 2019/08/03 09:31:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3098,8 +3098,8 @@ static void
 pool_cache_redzone_check(pool_cache_t pc, void *p)
 {
 #ifdef KASAN
-	/* If there is a ctor/dtor, leave the data as valid. */
-	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc))) {
+	/* If there is a ctor+dtor, leave the data as valid. */
+	if (__predict_false(pc_has_ctor(pc) && pc_has_dtor(pc))) {
 		return;
 	}
 #endif
