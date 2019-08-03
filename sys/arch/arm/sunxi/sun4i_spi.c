@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.1 2019/08/03 13:28:42 tnn Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.2 2019/08/03 19:56:42 tnn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.1 2019/08/03 13:28:42 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.2 2019/08/03 19:56:42 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,7 @@ static int sun4ispi_transfer(void *, struct spi_transfer *);
 
 static void sun4ispi_txfifo_fill(struct sun4ispi_softc * const, size_t);
 static void sun4ispi_rxfifo_drain(struct sun4ispi_softc * const, size_t);
-static void sun4ispi_rxtx(struct sun4ispi_softc *);
+static void sun4ispi_rxtx(struct sun4ispi_softc * const);
 static void sun4ispi_set_interrupt_mask(struct sun4ispi_softc * const);
 static void sun4ispi_start(struct sun4ispi_softc * const);
 static int sun4ispi_intr(void *);
@@ -139,7 +139,7 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, sun4ispi_intr, sc);
 	if (sc->sc_intrh == NULL) {
-		aprint_error("unable to establish interrupt\n");
+		aprint_error(": unable to establish interrupt\n");
 		return;
 	}
 
