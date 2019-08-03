@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.2 2019/07/31 23:47:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.3 2019/08/03 15:58:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -92,8 +92,8 @@
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_arp.h>
-#include <net/if_dl.h> 
-#include <net/if_ether.h>  
+#include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>
