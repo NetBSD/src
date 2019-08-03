@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.2 2019/07/31 23:47:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.3 2019/08/03 15:58:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.2 2019/07/31 23:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.3 2019/08/03 15:58:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,7 +402,7 @@ usbnet_rx_start_pipes(struct usbnet *un, usbd_callback cb)
 		usbd_setup_xfer(c->unc_xfer, c, c->unc_buf, cd->uncd_rx_bufsz,
 		    un->un_rx_xfer_flags, USBD_NO_TIMEOUT, cb);
 		usbd_transfer(c->unc_xfer);
-	}       
+	}
 
 	mutex_exit(&un->un_txlock);
 	mutex_exit(&un->un_rxlock);
@@ -905,7 +905,7 @@ usbnet_attach(struct usbnet *un,
 	ether_set_ifflags_cb(&un->un_ec, usbnet_ifflags_cb);
 
 	usb_init_task(&un->un_ticktask, usbnet_tick_task, un, USB_TASKQ_MPSAFE);
-	callout_init(&un->un_stat_ch, CALLOUT_MPSAFE); 
+	callout_init(&un->un_stat_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&un->un_stat_ch, usbnet_tick, un);
 
 	mutex_init(&un->un_miilock, MUTEX_DEFAULT, IPL_NONE);
