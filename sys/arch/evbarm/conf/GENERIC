@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48 2019/07/25 20:27:45 skrll Exp $
+#	$NetBSD: GENERIC,v 1.49 2019/08/03 13:33:10 tnn Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -469,6 +469,7 @@ pseudo-device 	canloop			# CAN loopback interface
 sunxican* 	at fdt?			# A10/A20 CAN controller
 
 # SPI
+sun4ispi* 	at fdt?
 sun6ispi* 	at fdt?
 spi* 		at spibus?
 
