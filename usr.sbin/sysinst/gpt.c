@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.7 2019/08/02 10:44:22 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.8 2019/08/03 14:00:42 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -228,11 +228,34 @@ gpt_add_info(struct gpt_part_entry *part, const char *tag, char *val,
 	}
 }
 
+/*
+ * Find the partition matching this wedge info and record that we
+ * have a wedge already.
+ */
+static void
+update_part_from_wedge_info(struct gpt_disk_partitions *parts,
+    const struct dkwedge_info *dkw)
+{
+	for (struct gpt_part_entry *p = parts->partitions; p != NULL;
+	    p = p->gp_next) {
+		if (p->gp_start != dkw->dkw_offset ||
+		    (uint64_t)p->gp_size != dkw->dkw_size)
+			continue;
+		p->gp_flags |= GPEF_WEDGE;
+		strlcpy(p->gp_dev_name, dkw->dkw_devname,
+		    sizeof p->gp_dev_name);
+		return;
+	}
+}
+
 static struct disk_partitions *
 gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
+	struct dkwedge_info *dkw;
+	struct dkwedge_list dkwl;
+	size_t bufsize, dk;
 
 	assert(start == 0);
 	assert(have_gpt);
@@ -384,6 +407,26 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 
 		parts->dp.free_space -= p->gp_size;
 	}
+
+	/*
+	 * Check if we have any (matching/auto-configured) wedges already
+	 */
+	dkw = NULL;
+	dkwl.dkwl_buf = dkw;
+	dkwl.dkwl_bufsize = 0;
+	if (ioctl(fd, DIOCLWEDGES, &dkwl) == 0) {
+		/* do not even try to deal with any races at this point */
+		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
+		dkw = malloc(bufsize);
+		dkwl.dkwl_buf = dkw;
+		dkwl.dkwl_bufsize = bufsize;
+		if (dkw != NULL && ioctl(fd, DIOCLWEDGES, &dkwl) == 0) {
+			for (dk = 0; dk < dkwl.dkwl_ncopied; dk++)
+				update_part_from_wedge_info(parts, &dkw[dk]);
+		}
+		free(dkw);
+	}
+
 	close(fd);
 
 	return &parts->dp;
