@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.6 2018/01/31 16:00:03 jakllsch Exp $ */
+/* $NetBSD: m25p.c,v 1.7 2019/08/03 00:46:02 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.6 2018/01/31 16:00:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.7 2019/08/03 00:46:02 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,8 @@ m25p_doattach(device_t self)
 	}
 
 	if (info->name == NULL) {
-		aprint_error(": unknown or unsupported device\n");
+		aprint_error(": vendor 0x%02X dev 0x%04X sig 0x%02X not supported\n",
+			     mfgid, devid, sig);
 		return;
 	}
 
