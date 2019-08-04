@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.3 2019/08/02 05:51:55 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.4 2019/08/04 15:07:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -36,3 +36,19 @@ usr.sbin/sysinst/bsddisklabel.c			1.26
 	If we can not fit a planned partition, retry with a bit more slope
 	in size.
 	[martin, ticket #6]
+
+sys/arch/arm/acpi/acpi_machdep.c		1.7,1.8
+sys/stand/efiboot/efiacpi.c			1.4
+sys/stand/efiboot/efifdt.c			1.18
+sys/stand/efiboot/version			1.12
+
+	Add full UEFI memory map to the /chosen node.
+	acpi_md_OsMapMemory can be used for both normal and device memory.
+	Use the UEFI memory map to determine how to map a given region.
+	[jmcneill, ticket #3]
+
+sys/net/raw_usrreq.c				1.63,1.64
+
+	PR kern/54419: fix typos (s/m_free/m_freem/).
+	[ozaki-r, ticket #7]
+
