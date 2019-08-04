@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.17 2019/07/25 11:44:14 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.17.2.1 2019/08/04 11:37:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -206,13 +206,13 @@ efi_fdt_memory_map(void)
 
 	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+		fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Type);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->PhysicalStart);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->NumberOfPages);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Attribute);
+
 		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
 			continue;
-
-		fdt_appendprop_u32(fdt_data, chosen, "netbsd,uefi-memory-map", md->Type);
-		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->PhysicalStart);
-		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->NumberOfPages);
-		fdt_appendprop_u64(fdt_data, chosen, "netbsd,uefi-memory-map", md->Attribute);
 
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
 			continue;
