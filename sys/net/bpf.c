@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.216.6.6 2018/05/15 13:48:37 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.216.6.7 2019/08/04 11:19:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.6.6 2018/05/15 13:48:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.6.7 2019/08/04 11:19:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1969,10 +1969,10 @@ static int
 bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
+	d->bd_fbuf = kmem_zalloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
+	d->bd_sbuf = kmem_zalloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_sbuf) {
 		kmem_free(d->bd_fbuf, d->bd_bufsize);
 		return (ENOBUFS);
