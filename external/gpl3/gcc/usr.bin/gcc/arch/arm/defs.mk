@@ -40,7 +40,7 @@ G_GTFILES=${GNUHOSTDIST}/gcc/../libcpp/include/line-map.h ${GNUHOSTDIST}/gcc/../
 G_GTFILES_LANG_DIR_NAMES=
 G_NOEXCEPTION_FLAGS=-fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 G_NATIVE_SYSTEM_HEADER_DIR=/usr/include
-G_tm_defines=LIBC_GLIBC=1 LIBC_UCLIBC=2 LIBC_BIONIC=3 LIBC_MUSL=4 NETBSD_ENABLE_PTHREADS
+G_tm_defines=LIBC_GLIBC=1 LIBC_UCLIBC=2 LIBC_BIONIC=3 LIBC_MUSL=4
 G_host_xm_file=
 G_host_xm_defines=
 G_tm_p_file=
