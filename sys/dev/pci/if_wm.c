@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.34 2019/08/01 13:50:13 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.35 2019/08/04 10:59:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.34 2019/08/01 13:50:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.35 2019/08/04 10:59:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10176,6 +10176,9 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		case IFM_1000_T:
 			sc->sc_ctrl |= CTRL_SPEED_1000;
 			break;
+		case IFM_NONE:
+			/* There is no specific setting for IFM_NONE */
+			break;
 		default:
 			panic("wm_gmii_mediachange: bad media 0x%x",
 			    ife->ifm_media);
@@ -10219,7 +10222,7 @@ wm_i82543_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 	v &= ~(MDI_IO | MDI_CLK | (CTRL_SWDPIO_MASK << CTRL_SWDPIO_SHIFT));
 	v |= MDI_DIR | CTRL_SWDPIO(3);
 
-	for (i = 1 << (nbits - 1); i != 0; i >>= 1) {
+	for (i = __BIT(nbits - 1); i != 0; i >>= 1) {
 		if (data & i)
 			v |= MDI_IO;
 		else
