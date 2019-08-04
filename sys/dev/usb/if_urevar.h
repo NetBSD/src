@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urevar.h,v 1.3 2019/06/23 02:14:14 mrg Exp $	*/
+/*	$NetBSD: if_urevar.h,v 1.4 2019/08/04 09:03:46 mrg Exp $	*/
 
 /*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
@@ -72,10 +72,6 @@ struct ure_txpkt {
 #define URE_TXPKT_UDP_CS	__BIT(31)
 } __packed;
 
-#define URE_ENDPT_RX		0
-#define URE_ENDPT_TX		1
-#define URE_ENDPT_MAX		2
-
 #ifndef URE_TX_LIST_CNT
 #define URE_TX_LIST_CNT		4
 #endif
@@ -83,50 +79,8 @@ struct ure_txpkt {
 #define URE_RX_LIST_CNT		4
 #endif
 
-struct ure_chain {
-	struct ure_softc	*uc_sc;
-	struct usbd_xfer	*uc_xfer;
-	char			*uc_buf;
-};
-
-struct ure_cdata {
-	struct ure_chain	tx_chain[URE_TX_LIST_CNT];
-	struct ure_chain	rx_chain[URE_RX_LIST_CNT];
-	int			tx_prod;
-	int			tx_cnt;
-};
-
 struct ure_softc {
-	device_t		ure_dev;
-	struct usbd_device	*ure_udev;
-
-	/* usb */
-	struct usbd_interface	*ure_iface;
-	struct usb_task		ure_tick_task;
-	int			ure_ed[URE_ENDPT_MAX];
-	struct usbd_pipe	*ure_ep[URE_ENDPT_MAX];
-
-	/* ethernet */
-	struct ethercom		ure_ec;
-#define GET_IFP(sc)		(&(sc)->ure_ec.ec_if)
-	struct mii_data		ure_mii;
-#define GET_MII(sc)		(&(sc)->ure_mii)
-
-	kmutex_t		ure_mii_lock;
-	kmutex_t		ure_lock;
-	kmutex_t		ure_rxlock;
-	kmutex_t		ure_txlock;
-	kcondvar_t		ure_detachcv;
-	int			ure_refcnt;
-
-	struct ure_cdata	ure_cdata;
-	callout_t		ure_stat_ch;
-
-	struct timeval		ure_rx_notice;
-	struct timeval		ure_tx_notice;
-	u_int			ure_bufsz;
-
-	int			ure_phyno;
+	struct usbnet		ure_un;
 
 	u_int			ure_flags;
 #define	URE_FLAG_LINK		0x0001
@@ -140,9 +94,4 @@ struct ure_softc {
 #define	URE_CHIP_VER_5C20	0x10
 #define	URE_CHIP_VER_5C30	0x20
 
-	krndsource_t            ure_rnd_source;
-
-	bool			ure_dying;
-	bool			ure_stopping;
-	bool			ure_attached;
 };
