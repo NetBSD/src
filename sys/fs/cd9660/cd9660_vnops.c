@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.54 2016/03/12 02:36:25 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.54.10.1 2019/08/04 11:16:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.54 2016/03/12 02:36:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.54.10.1 2019/08/04 11:16:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ cd9660_readdir(void *v)
 	imp = dp->i_mnt;
 	bmask = imp->im_bmask;
 
-	idp = (struct isoreaddir *)malloc(sizeof(*idp), M_TEMP, M_WAITOK);
+	idp = malloc(sizeof(*idp), M_TEMP, M_WAITOK | M_ZERO);
 	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
 	/*
 	 * XXX
