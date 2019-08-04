@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.17 2019/08/01 14:29:18 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.18 2019/08/04 11:30:39 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -435,4 +435,51 @@ sys/dev/mii/ihphy.c				1.12,1.14 via patch
 	  implement the register.
 	- KNF.
 	[msaitoh, ticket #1316]
+
+sys/dev/pci/if_wm.c				1.612,1.646
+
+	- Fix a bug that "ifconfig wmX media none" panics on 8254[23].
+	- Avoid undefined behavior in wm_i82543_mii_sendbits().
+	[msaitoh, ticket #1317]
+
+sys/net/raw_usrreq.c				1.63,1.64
+
+	PR kern/54419: fix typos (s/m_free/m_freem/).
+	[ozaki-r, ticket #1318]
+
+sys/kern/sys_ptrace_common.c			1.57
+
+	Do not release the reflock if we didn't take it in the first place.
+	[maxv, ticket #1319]
+
+sys/uvm/uvm_map.c				1.361
+
+	Fix info leak: 'map_attrib' is not used in UVM, and contains
+	uninitialized heap garbage. Return zero.
+	[maxv, ticket #1320]
+
+sys/fs/tmpfs/tmpfs_mem.c			1.10
+
+	Remove incorrect roundups.
+	[maxv, ticket #1321]
+
+sys/fs/cd9660/cd9660_vnops.c			1.55
+
+	Fix info leak: zero out the buffer, because it is not entirely filled.
+	[maxv, ticket #1322]
+
+sys/net/bpf.c					1.229
+
+	Fix info leak: use kmem_zalloc to clear uninitialized padding.
+	[maxv, ticket #1323]
+
+sys/kern/kern_exec.c				1.469-1.478 (patch)
+
+	Fix off-by-one and info leak.
+	[maxv, ticket #1324]
+
+sys/arch/i386/stand/efiboot/version		1.2
+
+	x86 efiboot: version 1.1.
+	[nonaka, ticket #1325]
 
