@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	cmdname = argv[0];
 	if (argc == 1) {
-		fprintf(stderr, 
-		  "usage: %s [-F fs] [-v var=value] [-f progfile | 'prog'] [file ...]\n", 
+		fprintf(stderr,
+		  "usage: %s [-F fs] [-v var=value] [-f progfile | 'prog'] [file ...]\n",
 		  cmdname);
 		exit(1);
 	}
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 				    maxpfile * sizeof(*pfile));
 				if (pfile == NULL)
 					FATAL("error allocating space for "
-					    "-f options"); 
+					    "-f options");
 			}
 			pfile[npfile++] = fn;
 			break;

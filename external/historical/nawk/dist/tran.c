@@ -187,7 +187,7 @@ void freesymtab(Cell *ap)	/* free a symbol table */
 			if (freeable(cp))
 				xfree(cp->sval);
 			temp = cp->cnext;	/* avoids freeing then using */
-			free(cp); 
+			free(cp);
 			tp->nelem--;
 		}
 		tp->tab[i] = 0;
@@ -203,7 +203,7 @@ void freeelem(Cell *ap, const char *s)	/* free elem s from ap (i.e., ap["s"] */
 	Array *tp;
 	Cell *p, *prev = NULL;
 	int h;
-	
+
 	tp = (Array *) ap->sval;
 	h = hash(s, tp->size);
 	for (p = tp->tab[h]; p != NULL; prev = p, p = p->cnext)
@@ -302,7 +302,7 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 	int fldno;
 
 	f += 0.0;		/* normalise negative zero to positive zero */
-	if ((vp->tval & (NUM | STR)) == 0) 
+	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
 		donerec = 0;	/* mark $0 invalid */
@@ -344,7 +344,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	int fldno;
 	Awkfloat f;
 
-	   dprintf( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n", 
+	   dprintf( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n",
 		vp, NN(vp->nval), s, vp->tval, donerec, donefld) );
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
@@ -364,7 +364,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	vp->tval &= ~NUM;
 	vp->tval |= STR;
 	setfree(vp);
-	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
+	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n",
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
 
 	vp->sval = t;
@@ -490,7 +490,7 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 			if (c == 0) {	/* \ at end */
 				*bp++ = '\\';
 				break;	/* for loop */
-			}	
+			}
 			switch (c) {
 			case '\\':	*bp++ = '\\'; break;
 			case 'n':	*bp++ = '\n'; break;
@@ -498,6 +498,8 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 			case 'b':	*bp++ = '\b'; break;
 			case 'f':	*bp++ = '\f'; break;
 			case 'r':	*bp++ = '\r'; break;
+			case 'v':	*bp++ = '\v'; break;
+			case 'a':	*bp++ = '\a'; break;
 			default:
 				if (!isdigit(c)) {
 					*bp++ = c;
