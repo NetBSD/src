@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.442.4.4 2018/11/21 11:58:32 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442.4.5 2019/08/04 11:25:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.4 2018/11/21 11:58:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.5 2019/08/04 11:25:43 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -541,6 +541,12 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
+/*
+ * Copy the user or kernel supplied upath to the allocated pathbuffer pbp
+ * making it absolute in the process, by prepending the current working
+ * directory if it is not. If offs is supplied it will contain the offset
+ * where the original supplied copy of upath starts.
+ */
 int
 sys_fexecve(struct lwp *l, const struct sys_fexecve_args *uap,
     register_t *retval)
@@ -610,11 +616,8 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 
 	path = PNBUF_GET();
 	error = copyinstr(upath, path, MAXPATHLEN, &len);
-	if (error) {
-		PNBUF_PUT(path);
-		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
-		return error;
-	}
+	if (error)
+		goto err;
 
 	if (path[0] == '/') {
 		*offs = 0;
@@ -622,8 +625,10 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 	}
 
 	len++;
-	if (len + 1 >= MAXPATHLEN)
-		goto out;
+	if (len + 1 >= MAXPATHLEN) {
+		error = ENAMETOOLONG;
+		goto err;
+	}
 	bp = path + MAXPATHLEN - len;
 	memmove(bp, path, len);
 	*(--bp) = '/';
@@ -634,19 +639,19 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 	    GETCWD_CHECK_ACCESS, l);
 	rw_exit(&cwdi->cwdi_lock);
 
-	if (error) {
-		DPRINTF(("%s: getcwd_common path %s %d\n", __func__, path,
-		    error));
-		goto out;
-	}
+	if (error)
+		goto err;
 	tlen = path + MAXPATHLEN - bp;
 
 	memmove(path, bp, tlen);
-	path[tlen] = '\0';
+	path[tlen - 1] = '\0';
 	*offs = tlen - len;
 out:
 	*pbp = pathbuf_assimilate(path);
 	return 0;
+err:
+	PNBUF_PUT(path);
+	return error;
 }
 
 vaddr_t
@@ -672,7 +677,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
-	size_t			offs = 0;	// XXX: GCC
+	size_t			offs;
 
 	KASSERT(data != NULL);
 
@@ -2088,6 +2093,7 @@ spawn_return(void *arg)
 	/* handle posix_spawnattr */
 	if (spawn_data->sed_attrs != NULL) {
 		struct sigaction sigact;
+		memset(&sigact, 0, sizeof(sigact));
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
 
