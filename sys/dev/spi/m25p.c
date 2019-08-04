@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.8 2019/08/03 02:22:06 tnn Exp $ */
+/* $NetBSD: m25p.c,v 1.9 2019/08/04 20:49:54 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.8 2019/08/03 02:22:06 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.9 2019/08/04 20:49:54 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ static const struct m25p_info {
 	{ 0x00, 0xC2, 0x2012, "Macronix MX25L20", 256, 4 },	/* 2Mbit */
 	{ 0x00, 0xC2, 0x2013, "Macronix MX25L40", 512, 4 },	/* 4Mbit */
 	{ 0x00, 0xC2, 0x2014, "Macronix MX25L80", 1024, 4 },	/* 8Mbit */
+	{ 0x00, 0xC8, 0x4018, "GigaDevice 25Q127CSIG", 16384, 4 },	/* 128Mbit */
 	{ 0x00, 0xEF, 0x3011, "Winbond W25X10", 128, 4 },	/* 1Mbit */
 	{ 0x00, 0xEF, 0x3012, "Winbond W25X20", 256, 4 },	/* 2Mbit */
 	{ 0x00, 0xEF, 0x3013, "Winbond W25X40", 512, 4 },	/* 4Mbit */
