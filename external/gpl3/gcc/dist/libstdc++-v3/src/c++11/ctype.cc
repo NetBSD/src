@@ -53,7 +53,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   ctype<char>::~ctype()
   {
+#if 0
+    // There is no constructor for the char specialization, and
+    // _M_c_locale_ctype is uninitialized, found by jemalloc
     _S_destroy_c_locale(_M_c_locale_ctype);
+#endif
     if (_M_del)
       delete[] this->table();
   }

@@ -15848,7 +15848,7 @@ fi
       darwin*)
 	enable_clocale_flag=darwin
 	;;
-      dragonfly* | freebsd*)
+      dragonfly* | freebsd* | netbsd*)
 	enable_clocale_flag=dragonfly
 	;;
       openbsd*)
@@ -15997,8 +15997,8 @@ $as_echo "darwin" >&6; }
       ;;
 
     dragonfly)
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: dragonfly or freebsd" >&5
-$as_echo "dragonfly or freebsd" >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: dragonfly or freebsd or netbsd" >&5
+$as_echo "dragonfly or freebsd or netbsd" >&6; }
 
       CLOCALE_H=config/locale/dragonfly/c_locale.h
       CLOCALE_CC=config/locale/dragonfly/c_locale.cc
