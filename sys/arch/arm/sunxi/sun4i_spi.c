@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.2 2019/08/03 19:56:42 tnn Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.3 2019/08/04 22:26:40 tnn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.2 2019/08/03 19:56:42 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.3 2019/08/04 22:26:40 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -337,7 +337,6 @@ sun4ispi_start(struct sun4ispi_softc * const sc)
 {
 	struct spi_transfer *st;
 	uint32_t ctl;
-	int s;
 	struct spi_chunk *chunk;
 	size_t burstcount;
 
@@ -368,13 +367,11 @@ sun4ispi_start(struct sun4ispi_softc * const sc)
 		if (!cold)
 			return;
 
-		s = splbio();
 		for (;;) {
 			(void) sun4ispi_intr(sc);
 			if (ISSET(st->st_flags, SPI_F_DONE))
 				break;
 		}
-		splx(s);
 	}
 	sc->sc_running = false;
 }
