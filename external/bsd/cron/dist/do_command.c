@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.13 2018/06/14 22:04:28 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.13.4.1 2019/08/04 19:22:24 martin Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.13 2018/06/14 22:04:28 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.13.4.1 2019/08/04 19:22:24 martin Exp $");
 #endif
 #endif
 
@@ -182,7 +182,7 @@ read_data(entry *e, const char *mailto, const char *usernm, char **envp,
 	/*
 	 * Unsafe, disable mailing.
 	 */
-	if (!safe_p(usernm, mailto))
+	if (mailto && !safe_p(usernm, mailto))
 		mailto = NULL;
 
 	/* if we are supposed to be mailing, MAILTO will
