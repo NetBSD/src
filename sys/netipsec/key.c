@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.265 2019/07/23 04:29:26 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.266 2019/08/04 14:30:36 maxv Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.265 2019/07/23 04:29:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.266 2019/08/04 14:30:36 maxv Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -7251,6 +7251,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 		sup = (struct sadb_supported *)(mtod(n, char *) + off);
 		sup->sadb_supported_len = PFKEY_UNIT64(alen);
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
+		sup->sadb_supported_reserved = 0;
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_AALG_MAX; i++) {
@@ -7266,6 +7267,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 			key_getsizes_ah(aalgo, i, &minkeysize, &maxkeysize);
 			alg->sadb_alg_minbits = _BITS(minkeysize);
 			alg->sadb_alg_maxbits = _BITS(maxkeysize);
+			alg->sadb_alg_reserved = 0;
 			off += PFKEY_ALIGN8(sizeof(*alg));
 		}
 	}
@@ -7275,6 +7277,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 		sup = (struct sadb_supported *)(mtod(n, char *) + off);
 		sup->sadb_supported_len = PFKEY_UNIT64(elen);
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
+		sup->sadb_supported_reserved = 0;
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_EALG_MAX; i++) {
@@ -7288,6 +7291,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 			alg->sadb_alg_ivlen = ealgo->blocksize;
 			alg->sadb_alg_minbits = _BITS(ealgo->minkey);
 			alg->sadb_alg_maxbits = _BITS(ealgo->maxkey);
+			alg->sadb_alg_reserved = 0;
 			off += PFKEY_ALIGN8(sizeof(struct sadb_alg));
 		}
 	}
