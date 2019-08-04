@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.62 2018/09/07 06:13:14 maxv Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.62.4.1 2019/08/04 11:40:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.62 2018/09/07 06:13:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.62.4.1 2019/08/04 11:40:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -110,12 +110,12 @@ raw_input(struct mbuf *m0, struct sockproto *proto, struct sockaddr *src,
 	}
 	if (last != NULL) {
 		if (sbappendaddr(&last->so_rcv, src, m, NULL) == 0) {
-			m_free(m);
+			m_freem(m);
 			soroverflow(last);
 		} else
 			sorwakeup(last);
 	} else {
-		m_free(m);
+		m_freem(m);
 	}
 }
 
