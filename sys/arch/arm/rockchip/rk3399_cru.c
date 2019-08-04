@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.8 2019/06/09 16:14:53 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.9 2019/08/04 17:09:07 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8 2019/06/09 16:14:53 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.9 2019/08/04 17:09:07 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -759,6 +759,50 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_PCLK_I2C6, "pclk_rki2c6", "pclk_perilp1", CLKGATE_CON(22), 8),
 	RK_GATE(RK3399_PCLK_I2C2, "pclk_rki2c2", "pclk_perilp1", CLKGATE_CON(22), 9),
 	RK_GATE(RK3399_PCLK_I2C3, "pclk_rki2c3", "pclk_perilp1", CLKGATE_CON(22), 10),
+
+	/*
+	 * SPI
+	 */
+	RK_COMPOSITE(RK3399_SCLK_SPI0, "clk_spi0", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(59),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI1, "clk_spi1", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(59),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI2, "clk_spi2", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(60),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(14),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI4, "clk_spi4", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(60),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(15),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI5, "clk_spi5", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(58),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_SPI0, "pclk_rkspi0", "pclk_perilp1", CLKGATE_CON(23), 10),
+	RK_GATE(RK3399_PCLK_SPI1, "pclk_rkspi1", "pclk_perilp1", CLKGATE_CON(23), 11),
+	RK_GATE(RK3399_PCLK_SPI2, "pclk_rkspi2", "pclk_perilp1", CLKGATE_CON(23), 12),
+	RK_GATE(RK3399_PCLK_SPI4, "pclk_rkspi4", "pclk_perilp1", CLKGATE_CON(23), 13),
+	RK_GATE(RK3399_PCLK_SPI5, "pclk_rkspi5", "hclk_perilp1", CLKGATE_CON(34), 5),
 
 	/* PCIe */
 	RK_GATE(RK3399_ACLK_PERF_PCIE, "aclk_perf_pcie", "aclk_perihp", CLKGATE_CON(20), 2),
