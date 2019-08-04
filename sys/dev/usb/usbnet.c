@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.3 2019/08/03 15:58:14 skrll Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.4 2019/08/04 08:59:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.3 2019/08/03 15:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.4 2019/08/04 08:59:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.3 2019/08/03 15:58:14 skrll Exp $");
 #include <sys/module.h>
 
 #include <dev/usb/usbnet.h>
+#include <dev/usb/usbhist.h>
 
 static int usbnet_modcmd(modcmd_t, void *);
 
@@ -48,7 +49,9 @@ static int usbnet_modcmd(modcmd_t, void *);
 #ifndef USBNET_DEBUG
 #define usbnetdebug 0
 #else
-static int usbnetdebug = 20;
+static int usbnetdebug = 1;
+
+int     sysctl_hw_usbnet_setup(SYSCTLFN_PROTO);
 
 SYSCTL_SETUP(sysctl_hw_usbnet_setup, "sysctl hw.usbnet setup")
 {
@@ -118,6 +121,7 @@ void
 usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 		int flags)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet *ifp = &un->un_ec.ec_if;
 	struct mbuf *m;
 
@@ -143,9 +147,10 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
  * the higher level protocols.
  */
 static void
-usbnet_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
+usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	struct usbnet_chain *c = (struct usbnet_chain *)priv;
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	struct usbnet_chain *c = priv;
 	struct usbnet * const un = c->unc_un;
 	struct ifnet *ifp = &un->un_ec.ec_if;
 	uint32_t total_len;
@@ -195,9 +200,10 @@ out:
 }
 
 static void
-usbnet_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
+usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	struct usbnet_chain *c = (struct usbnet_chain *)priv;
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	struct usbnet_chain *c = priv;
 	struct usbnet * const un = c->unc_un;
 	struct usbnet_cdata *cd = &un->un_cdata;
 	struct ifnet * const ifp = usbnet_ifp(un);
@@ -240,8 +246,35 @@ usbnet_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 }
 
 static void
+usbnet_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
+{
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	struct usbnet		*un = priv;
+	struct ifnet		*ifp = usbnet_ifp(un);
+
+	if (un->un_dying || un->un_stopping ||
+	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
+	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING))
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		if (usbd_ratecheck(&un->un_intr_notice)) {
+			aprint_error_dev(un->un_dev, "usb error on intr: %s\n",
+			    usbd_errstr(status));
+		}
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(un->un_ep[USBNET_ENDPT_INTR]);
+		return;
+	}
+
+	if (un->un_intr_cb)
+		(*un->un_intr_cb)(un, status);
+}
+
+static void
 usbnet_start_locked(struct ifnet *ifp)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_cdata *cd = &un->un_cdata;
 	struct mbuf *m;
@@ -495,10 +528,20 @@ static usbd_status
 usbnet_ep_open_pipes(struct usbnet *un)
 {
 	for (size_t i = 0; i < __arraycount(un->un_ep); i++) {
+		usbd_status err;
+
 		if (un->un_ed[i] == 0)
 			continue;
-		usbd_status err = usbd_open_pipe(un->un_iface, un->un_ed[i],
-		    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &un->un_ep[i]);
+
+		if (i == USBNET_ENDPT_INTR && un->un_intr_buf) {
+			err = usbd_open_pipe_intr(un->un_iface, un->un_ed[i],
+			    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &un->un_ep[i], un,
+			    un->un_intr_buf, un->un_intr_bufsz, usbnet_intr,
+			    un->un_intr_interval);
+		} else {
+			err = usbd_open_pipe(un->un_iface, un->un_ed[i],
+			    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &un->un_ep[i]);
+		}
 		if (err) {
 			usbnet_ep_close_pipes(un);
 			return err;
@@ -525,27 +568,39 @@ usbnet_ep_stop_pipes(struct usbnet *un)
 int
 usbnet_init_rx_tx(struct usbnet * const un, unsigned rxflags, unsigned txflags)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet * const ifp = usbnet_ifp(un);
 	usbd_status err;
+	int error = 0;
+
+	usbnet_isowned(un);
+
+	if (un->un_dying) {
+		return EIO;
+	}
+	un->un_refcnt++;
 
 	/* Open RX and TX pipes. */
 	err = usbnet_ep_open_pipes(un);
 	if (err) {
 		aprint_error_dev(un->un_dev, "open rx/tx pipes failed: %s\n",
 		    usbd_errstr(err));
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 
 	/* Init RX ring. */
 	if (usbnet_rx_list_init(un, rxflags)) {
 		aprint_error_dev(un->un_dev, "rx list init failed\n");
-		goto nobufs;
+		error = ENOBUFS;
+		goto out;
 	}
 
 	/* Init TX ring. */
 	if (usbnet_tx_list_init(un, txflags)) {
 		aprint_error_dev(un->un_dev, "tx list init failed\n");
-		goto nobufs;
+		error = ENOBUFS;
+		goto out;
 	}
 
 	/* Start up the receive pipe(s). */
@@ -556,14 +611,19 @@ usbnet_init_rx_tx(struct usbnet * const un, unsigned rxflags, unsigned txflags)
 	ifp->if_flags |= IFF_RUNNING;
 
 	callout_schedule(&un->un_stat_ch, hz);
-	return 0;
 
-nobufs:
-	usbnet_rx_list_fini(un);
-	usbnet_tx_list_fini(un);
-	usbnet_ep_close_pipes(un);
+out:
+	if (error) {
+		usbnet_rx_list_fini(un);
+		usbnet_tx_list_fini(un);
+		usbnet_ep_close_pipes(un);
+	}
+	if (--un->un_refcnt < 0)
+		cv_broadcast(&un->un_detachcv);
 
-	return ENOBUFS;
+	usbnet_isowned(un);
+
+	return error;
 }
 
 /* MII management. */
@@ -666,6 +726,7 @@ usbnet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 void
 usbnet_miibus_statchg(struct ifnet *ifp)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 
 	(*un->un_statchg_cb)(ifp);
@@ -674,6 +735,7 @@ usbnet_miibus_statchg(struct ifnet *ifp)
 static int
 usbnet_media_upd(struct ifnet *ifp)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 	struct mii_data * const mii = usbnet_mii(un);
 
@@ -697,6 +759,7 @@ usbnet_media_upd(struct ifnet *ifp)
 static int
 usbnet_ifflags_cb(struct ethercom *ec)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet *ifp = &ec->ec_if;
 	struct usbnet *un = ifp->if_softc;
 	int rv = 0;
@@ -720,6 +783,7 @@ usbnet_ifflags_cb(struct ethercom *ec)
 static int
 usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 	int error;
 
@@ -746,6 +810,8 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+
 	KASSERT(mutex_owned(&un->un_lock));
 
 	mutex_enter(&un->un_rxlock);
@@ -836,6 +902,7 @@ usbnet_watchdog(struct ifnet *ifp)
 static void
 usbnet_tick_task(void *arg)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = arg;
 
 	mutex_enter(&un->un_lock);
@@ -871,6 +938,7 @@ usbnet_tick_task(void *arg)
 static int
 usbnet_init(struct ifnet *ifp)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 
 	return (*un->un_init_cb)(ifp);
@@ -893,6 +961,7 @@ usbnet_attach(struct usbnet *un,
 	      unsigned rx_list_cnt,	/* size of rx chain list */
 	      unsigned tx_list_cnt)	/* size of tx chain list */
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
 	KASSERT(un->un_tx_prepare_cb);
 	KASSERT(un->un_rx_loop_cb);
@@ -926,6 +995,7 @@ usbnet_attach(struct usbnet *un,
 static void
 usbnet_attach_mii(struct usbnet *un, int mii_flags)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct mii_data * const mii = &un->un_mii;
 	struct ifnet *ifp = usbnet_ifp(un);
 
@@ -959,6 +1029,7 @@ usbnet_attach_ifp(struct usbnet *un,
 		  unsigned if_extflags,		/* additional if_extflags */
 		  int mii_flags)		/* additional mii_attach flags */
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet *ifp = usbnet_ifp(un);
 
 	KASSERT(un->un_attached);
@@ -978,6 +1049,8 @@ usbnet_attach_ifp(struct usbnet *un,
 
 	if (have_mii)
 		usbnet_attach_mii(un, mii_flags);
+	else
+		un->un_link = true;
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -987,6 +1060,7 @@ usbnet_attach_ifp(struct usbnet *un,
 int
 usbnet_detach(device_t self, int flags)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = device_private(self);
 	struct ifnet *ifp = usbnet_ifp(un);
 	struct mii_data *mii = usbnet_mii(un);
@@ -1047,6 +1121,7 @@ usbnet_detach(device_t self, int flags)
 int
 usbnet_activate(device_t self, devact_t act)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = device_private(self);
 	struct ifnet * const ifp = usbnet_ifp(un);
 
@@ -1077,7 +1152,18 @@ usbnet_modcmd(modcmd_t cmd, void *arg)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
+# if defined(USB_DEBUG) && defined(USBNET_DEBUG)
+		sysctl_hw_usbnet_setup(&usbnet_clog);
+# endif
+#endif
+		return 0;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
+# if defined(USB_DEBUG) && defined(USBNET_DEBUG)
+		sysctl_teardown(&usbnet_clog);
+# endif
+#endif
 		return 0;
 	case MODULE_CMD_STAT:
 	case MODULE_CMD_AUTOUNLOAD:

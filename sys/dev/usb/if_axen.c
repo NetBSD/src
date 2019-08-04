@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.52 2019/07/31 23:47:16 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.53 2019/08/04 08:59:13 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.52 2019/07/31 23:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.53 2019/08/04 08:59:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -100,7 +100,7 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 	usb_device_request_t req;
 	usbd_status err;
 
-	KASSERT(mutex_owned(&un->un_miilock));
+	usbnet_isowned_mii(un);
 
 	if (un->un_dying)
 		return 0;
@@ -217,7 +217,7 @@ axen_setiff_locked(struct usbnet *un)
 {
 	struct axen_softc * const sc = usbnet_softc(un);
 	struct ifnet * const ifp = usbnet_ifp(un);
-	struct ethercom *ec = &un->un_ec;
+	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t h = 0;
@@ -228,7 +228,7 @@ axen_setiff_locked(struct usbnet *un)
 	if (un->un_dying)
 		return;
 
-	KASSERT(mutex_owned(&un->un_miilock));
+	usbnet_isowned_mii(un);
 
 	rxmode = 0;
 
@@ -294,7 +294,7 @@ axen_reset(struct axen_softc *sc)
 {
 	struct usbnet * const un = &sc->axen_un;
 
-	KASSERT(mutex_owned(&un->un_lock));
+	usbnet_isowned(un);
 	if (un->un_dying)
 		return;
 	/* XXX What to reset? */
@@ -524,7 +524,7 @@ axen_setoe_locked(struct usbnet *un)
 	uint64_t enabled = ifp->if_capenable;
 	uint8_t val;
 
-	KASSERT(mutex_owned(&un->un_miilock));
+	usbnet_isowned_mii(un);
 
 	val = AXEN_RXCOE_OFF;
 	if (enabled & IFCAP_CSUM_IPv4_Rx)
@@ -711,10 +711,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(un->un_eaddr));
 
-	struct ifnet *ifp = usbnet_ifp(un);
-	un->un_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
+	struct ethercom *ec = usbnet_ec(un);
+	ec->ec_capabilities = ETHERCAP_VLAN_MTU;
 
 	/* Adapter does not support TSOv6 (They call it LSOv2). */
+	struct ifnet *ifp = usbnet_ifp(un);
 	ifp->if_capabilities |= IFCAP_TSOv4 |
 	    IFCAP_CSUM_IPv4_Rx	| IFCAP_CSUM_IPv4_Tx  |
 	    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx |
@@ -772,7 +773,7 @@ axen_csum_flags_rx(struct ifnet *ifp, uint32_t pkt_hdr)
 }
 
 static void
-axen_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
+axen_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
 		struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
@@ -783,7 +784,7 @@ axen_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 	size_t pkt_len;
 	size_t temp;
 
-	KASSERT(mutex_owned(&un->un_rxlock));
+	usbnet_isowned_rx(un);
 
 	if (total_len < sizeof(pkt_hdr)) {
 		aprint_error_dev(un->un_dev, "rxeof: too short transfer\n");
@@ -877,7 +878,7 @@ axen_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	struct axen_sframe_hdr hdr;
 	u_int length, boundary;
 
-	KASSERT(mutex_owned(&un->un_txlock));
+	usbnet_isowned_tx(un);
 
 	/* XXX Is this needed?  wMaxPacketSize? */
 	switch (un->un_udev->ud_speed) {
@@ -920,7 +921,7 @@ axen_init_locked(struct ifnet *ifp)
 	uint16_t wval;
 	uint8_t bval;
 
-	KASSERT(mutex_owned(&un->un_lock));
+	usbnet_isowned(un);
 
 	if (un->un_dying)
 		return EIO;
@@ -960,9 +961,9 @@ axen_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	mutex_enter(&un->un_lock);
+	usbnet_lock(un);
 	int ret = axen_init_locked(ifp);
-	mutex_exit(&un->un_lock);
+	usbnet_unlock(un);
 
 	return ret;
 }
