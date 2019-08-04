@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.55 2019/07/31 23:47:16 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.56 2019/08/04 08:59:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.55 2019/07/31 23:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.56 2019/08/04 08:59:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -263,7 +263,7 @@ cdce_init(struct ifnet *ifp)
 	struct usbnet		*un = ifp->if_softc;
 	int rv;
 
-	mutex_enter(&un->un_lock);
+	usbnet_lock(un);
 	if (un->un_dying)
 		rv = EIO;
 	else {
@@ -272,7 +272,7 @@ cdce_init(struct ifnet *ifp)
 		if (rv == 0)
 			un->un_link = true;
 	}
-	mutex_exit(&un->un_lock);
+	usbnet_unlock(un);
 
 	return rv;
 }
@@ -282,9 +282,9 @@ cdce_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
-	struct cdce_softc	*sc = un->un_sc;
+	struct cdce_softc	*sc = usbnet_softc(un);
 
-	KASSERT(mutex_owned(&un->un_rxlock));
+	usbnet_isowned_rx(un);
 
 	/* Strip off CRC added by Zaurus, if present */
 	if (sc->cdce_flags & CDCE_ZAURUS && total_len > 4)
@@ -301,10 +301,10 @@ cdce_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 static unsigned
 cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
-	struct cdce_softc	*sc = un->un_sc;
+	struct cdce_softc	*sc = usbnet_softc(un);
 	int			 extra = 0;
 
-	KASSERT(mutex_owned(&un->un_txlock));
+	usbnet_isowned_tx(un);
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
 	if (sc->cdce_flags & CDCE_ZAURUS) {
