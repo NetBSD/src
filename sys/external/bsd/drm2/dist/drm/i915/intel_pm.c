@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.17 2019/07/24 14:57:09 msaitoh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.18 2019/08/05 10:14:19 msaitoh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.17 2019/07/24 14:57:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.18 2019/08/05 10:14:19 msaitoh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -5036,7 +5036,7 @@ static void gen6_enable_rps(struct drm_device *dev)
 		DRM_DEBUG_DRIVER("Failed to set the min frequency\n");
 
 	ret = sandybridge_pcode_read(dev_priv, GEN6_READ_OC_PARAMS, &pcu_mbox);
-	if (!ret && (pcu_mbox & (1<<31))) { /* OC supported */
+	if (!ret && (pcu_mbox & __BIT(31))) { /* OC supported */
 		DRM_DEBUG_DRIVER("Overclocking supported. Max: %dMHz, Overclock max: %dMHz\n",
 				 (dev_priv->rps.max_freq_softlimit & 0xff) * 50,
 				 (pcu_mbox & 0xff) * 50);
