@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.207 2019/08/05 17:36:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.207 2019/08/05 17:36:42 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -996,8 +996,11 @@ uvm_fault_check(
 	 */
 
 	flt->enter_prot = ufi->entry->protection;
-	if (VM_MAPENT_ISWIRED(ufi->entry))
+	if (VM_MAPENT_ISWIRED(ufi->entry)) {
 		flt->wire_mapping = true;
+		flt->wire_paging = true;
+		flt->narrow = true;
+	}
 
 	if (flt->wire_mapping) {
 		flt->access_type = flt->enter_prot; /* full access for wired */
@@ -2437,8 +2440,6 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 
 	oentry = NULL;
 	for (va = start; va < end; va += PAGE_SIZE) {
-		if (pmap_extract(pmap, va, &pa) == false)
-			continue;
 
 		/*
 		 * find the map entry for the current address.
@@ -2468,6 +2469,9 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 		/*
 		 * if the entry is no longer wired, tell the pmap.
 		 */
+
+		if (!pmap_extract(pmap, va, &pa))
+			continue;
 
 		if (VM_MAPENT_ISWIRED(entry) == 0)
 			pmap_unwire(pmap, va);
