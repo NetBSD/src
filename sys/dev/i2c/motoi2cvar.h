@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.4 2011/04/17 15:14:59 phx Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.5 2019/08/05 12:21:00 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ struct motoi2c_softc {
 	kmutex_t		sc_buslock;
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
+	int			sc_phandle;
 };
 
 #define	MOTOI2C_ADR_DEFAULT	(0x7e << 1)
