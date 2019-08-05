@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.6 2019/07/27 23:33:09 maya Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.7 2019/08/05 13:45:01 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -997,9 +997,6 @@ recvstream(int in, int outfd)
 		totalSize += 2 * decsize;
 		offset += decsize;
 		cur_pkt++;
-
-		if (cur_pkt > 13)
-			break;
 	}
 
 	res = (ssize_t)(sizeof(myHeader)) + next_pkt;
