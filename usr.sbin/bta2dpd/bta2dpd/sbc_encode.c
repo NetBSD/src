@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.8 2019/08/05 13:49:10 maya Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.9 2019/08/05 13:50:58 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -983,7 +983,6 @@ recvstream(int in, int outfd)
 		return -1;
 	}
 
-
 	myFrame = frameData + sizeof(myHeader);
 	next_pkt = 0;
 	pkt_len = 0;
@@ -1002,7 +1001,7 @@ recvstream(int in, int outfd)
 	res = (ssize_t)(sizeof(myHeader)) + next_pkt;
 		readlen -= res;
 	if (readlen > 0)
-			memcpy(frameData, frameData + res, (size_t)readlen);
+		memcpy(frameData, frameData + res, (size_t)readlen);
 
 send_again:
 	len = write(outfd, music, totalSize);
