@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.5 2019/08/04 19:28:05 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.6 2019/08/05 04:41:41 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -244,3 +244,26 @@ sys/arch/arm/pci/pci_msi_machdep.c		1.7
 	Properly honour max_type arg to pci_intr_alloc.
 	[jmcneill, ticket #18]
 
+usr.sbin/sysinst/gpt.c				1.7
+
+	Deal with missing labels when parsing gpt(8) output.
+	[martin, ticket #8]
+
+usr.sbin/sysinst/disks.c			1.46
+
+	Properly handle partitions that we were requested to mount but not
+	newfs.
+	[martin, ticket #14]
+
+usr.sbin/sysinst/gpt.c				1.8
+
+	When reading an existing gpt, match the wedges already existing 
+	on the parent device, so we can use them directly if we should proceed
+	with an unmodified partition table.
+	[martin, ticket #15]
+
+usr.sbin/sysinst/label.c			1.12
+
+	When we find a FFSv1 filesystem, properly record it that way - so the
+	correct bootblocks get installed on system upgrades.
+	[martin, ticket #16]
