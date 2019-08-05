@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_i2c.c,v 1.1 2019/07/30 06:52:57 hkenken Exp $	*/
+/*	$NetBSD: imx6_i2c.c,v 1.2 2019/08/05 12:21:00 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.1 2019/07/30 06:52:57 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2 2019/08/05 12:21:00 hkenken Exp $");
 
 #include <sys/bus.h>
 
@@ -75,6 +75,9 @@ imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 	if (error)
 		freq = 100000;
 	imxi2c_set_freq(self, clk_get_rate(sc->sc_clk), freq);
+
+	sc->sc_motoi2c.sc_phandle = phandle;
+
 	imxi2c_attach_common(parent, self, bst, addr, size, -1, 0);
 }
 
