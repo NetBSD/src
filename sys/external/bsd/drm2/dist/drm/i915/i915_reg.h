@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.8 2019/08/05 10:14:19 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.9 2019/08/05 13:28:31 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -185,7 +185,7 @@
 
 #define GEN6_STOLEN_RESERVED		0x1082C0
 #define GEN6_STOLEN_RESERVED_ADDR_MASK	(0xFFFUL << 20)
-#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFF << 18)
+#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFFUL << 18)
 #define GEN6_STOLEN_RESERVED_SIZE_MASK	(3 << 4)
 #define GEN6_STOLEN_RESERVED_1M		(0 << 4)
 #define GEN6_STOLEN_RESERVED_512K	(1 << 4)
