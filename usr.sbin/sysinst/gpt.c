@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.6 2019/07/28 16:30:36 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6.2.1 2019/08/05 04:34:54 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -212,8 +212,7 @@ gpt_add_info(struct gpt_part_entry *part, const char *tag, char *val,
 	} else if (strcmp(tag, "GUID:") == 0) {
 		strlcpy(part->gp_id, val, sizeof(part->gp_id));
 	} else if (strcmp(tag, "Label:") == 0) {
-		if (strlen(val) > 0)
-			strlcpy(part->gp_label, val, sizeof(part->gp_label));
+		strlcpy(part->gp_label, val, sizeof(part->gp_label));
 	} else if (strcmp(tag, "Attributes:") == 0) {
 		char *n;
 
