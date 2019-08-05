@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.h,v 1.10 2018/12/12 01:40:20 rin Exp $	*/
+/*	$NetBSD: in6_offload.h,v 1.11 2019/08/05 10:25:41 christos Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -33,6 +33,7 @@
  * Subroutines to do software-only equivalent of h/w offloading.
  */
 struct mbuf *tcp6_segment(struct mbuf *, int);
+struct sockaddr_in6;
 int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
     const struct sockaddr_in6 *, struct rtentry *);
 void in6_undefer_cksum(struct mbuf *, size_t, int);
