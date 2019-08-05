@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.442.4.6 2019/08/05 14:43:54 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442.4.7 2019/08/05 14:47:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.6 2019/08/05 14:43:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.7 2019/08/05 14:47:49 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -677,7 +677,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
-	size_t			offss = 0;	// XXX: GCC
+	size_t			offs = 0;	// XXX: GCC
 
 	KASSERT(data != NULL);
 
