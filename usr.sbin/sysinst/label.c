@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.1 2019/08/02 05:41:46 msaitoh Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.2 2019/08/05 04:38:47 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.1 2019/08/02 05:41:46 msaitoh Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.2 2019/08/05 04:38:47 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1578,7 +1578,7 @@ get_last_mounted(int fd, daddr_t partstart, uint *fs_type, uint *fs_sub_type,
 			if (fs_type)
 				*fs_type = FS_BSDFFS;
 			if (fs_sub_type)
-				*fs_sub_type = 2;
+				*fs_sub_type = 1;
 			continue;
 		case FS_UFS2_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
