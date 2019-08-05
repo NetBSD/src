@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44.2.1 2019/08/02 05:41:46 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.2 2019/08/05 04:36:42 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1112,15 +1112,12 @@ make_filesystems(struct install_partition_desc *install)
 		ptn = &install->infos[i];
 		parts = ptn->parts;
 
-		if (ptn->size == 0 || parts == NULL)
-			continue;
+		if (ptn->size == 0 || parts == NULL|| ptn->type == PT_swap)
+			continue;			
 
 		if (parts->pscheme->get_part_device(parts, ptn->cur_part_id,
 		    devdev, sizeof devdev, &partno, parent_device_only, false)
 		    && is_active_rootpart(devdev, partno))
-			continue;
-
-		if (!(ptn->instflags & PUIINST_NEWFS))
 			continue;
 
 		parts->pscheme->get_part_device(parts, ptn->cur_part_id,
