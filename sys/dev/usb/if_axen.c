@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.53 2019/08/04 08:59:13 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.54 2019/08/05 07:03:55 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.53 2019/08/04 08:59:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.54 2019/08/05 07:03:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -350,7 +350,7 @@ axen_get_eaddr(struct axen_softc *sc, void *addr)
 	csum = eeprom[6] + eeprom[7] + eeprom[8] + eeprom[9];
 	csum = (csum >> 8) + (csum & 0xff) + eeprom[10];
 	if (csum != 0xff) {
-		printf("eeprom checksum mismatchi(0x%02x)\n", csum);
+		printf("eeprom checksum mismatch(0x%02x)\n", csum);
 		return EINVAL;
 	}
 
