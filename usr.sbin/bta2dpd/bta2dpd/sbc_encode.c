@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.7 2019/08/05 13:45:01 maya Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.8 2019/08/05 13:49:10 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -162,7 +162,7 @@ calc_scalefactors_joint(int32_t sb_sample[16][2][8])
 	unsigned int joint;
 
 	joint = 0;
-	for (sb = 0;sb < global_bands - 1;sb++) {
+	for (sb = 0; sb < global_bands - 1; sb++) {
 		for (block = 0; block < global_blocks; block++) {
 			sb_j[block][0] = (sb_sample[block][0][sb]) +
 			    (sb_sample[block][1][sb]);
@@ -254,8 +254,8 @@ next_chan:
 	slicecount=0;
 
 	if (global_alloc == ALLOC_SNR) {
-		for (ch = start_chan;ch < global_chan;ch++) {
-			for (sb = 0;sb < global_bands;sb++) {
+		for (ch = start_chan; ch < global_chan; ch++) {
+			for (sb = 0; sb < global_bands; sb++) {
 				bitneed[ch][sb] = (int32_t)scalefactor[ch][sb];
 
 				if (bitneed[ch][sb] > max_bitneed)
@@ -263,8 +263,8 @@ next_chan:
 			}
 		}
 	} else {
-		for (ch = start_chan;ch < global_chan;ch++) {
-			for (sb = 0;sb < global_bands;sb++) {
+		for (ch = start_chan; ch < global_chan; ch++) {
+			for (sb = 0; sb < global_bands; sb++) {
 				if (scalefactor[ch][sb] == 0)
 					bitneed[ch][sb] = -5;
 				else {
@@ -296,8 +296,8 @@ next_chan:
 		bitslice--;
 		bitcount += slicecount;
 		slicecount = 0;
-		for (ch = start_chan;ch < global_chan;ch++) {
-			for (sb = 0;sb < global_bands;sb++) {
+		for (ch = start_chan; ch < global_chan; ch++) {
+			for (sb = 0; sb < global_bands; sb++) {
 				if((bitneed[ch][sb] > bitslice + 1)&&
 				    (bitneed[ch][sb] < bitslice + 16))
 					slicecount++;
@@ -311,8 +311,8 @@ next_chan:
 		bitslice--;
 	}
 
-	for (ch = start_chan;ch < global_chan;ch++) {
-		for (sb = 0;sb < global_bands;sb++) {
+	for (ch = start_chan; ch < global_chan; ch++) {
+		for (sb = 0; sb < global_bands; sb++) {
 			if (bitneed[ch][sb] < bitslice + 2)
 				bits[ch][sb] = 0;
 			else {
@@ -555,8 +555,8 @@ sbc_encode(int16_t *input, int32_t *samples)
 
 	calc_bitneed();
 
-	for(chan = 0;chan < global_chan;chan++) {
-		for (sb = 0; sb < global_bands;sb++) {
+	for(chan = 0; chan < global_chan; chan++) {
+		for (sb = 0; sb < global_bands; sb++) {
 			levels[chan][sb] = ((1 << bits[chan][sb]) - 1) <<
 				(15 - scalefactor[chan][sb]);
 			delta[chan][sb] = 1 << (scalefactor[chan][sb] + 16);
@@ -592,8 +592,8 @@ sbc_decode(int32_t *samples, int16_t *pcm)
 	int chan, block, sb, position, i, k;
 	size_t numsamples;
 
-	for(chan = 0;chan < global_chan;chan++) {
-		for (sb = 0; sb < global_bands;sb++) {
+	for(chan = 0; chan < global_chan; chan++) {
+		for (sb = 0; sb < global_bands; sb++) {
 			levels[chan][sb] = (1 << bits[chan][sb]) - 1;
 			delta[chan][sb] = 1 << (scalefactor[chan][sb] + 1);
 		}
@@ -620,7 +620,7 @@ sbc_decode(int32_t *samples, int16_t *pcm)
 	if (global_mode == MODE_JOINT) {
 		k = 0;
 		while (k < (global_blocks * global_bands * global_chan)) {
-			for (sb = 0; sb < global_bands;sb++) {
+			for (sb = 0; sb < global_bands; sb++) {
 				if (join & 1 << (global_bands - sb - 1)) {
 					audioout = samples[k];
 					samples[k] = (2 * samples[k]) + (2 *
@@ -639,7 +639,7 @@ sbc_decode(int32_t *samples, int16_t *pcm)
 
 
 	position = 0;
-	for (block = 0;block < global_blocks; block++) {
+	for (block = 0; block < global_blocks; block++) {
 		for (chan = 0; chan < global_chan; chan++) {
 			if (chan == 0)
 				X = L;
