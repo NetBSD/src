@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.7 2019/08/05 12:30:13 hkenken Exp $");
 
 #include "locators.h"
 
@@ -77,10 +77,9 @@ imxusbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct axi_attach_args *aa = aux;
 
-	printf("%s\n", __func__);
-
 	if (aa->aa_addr == USBOH3_BASE)
 		return 1;
+
 	return 0;
 }
 
@@ -90,7 +89,7 @@ imxusbc_attach(device_t parent, device_t self, void *aux)
 	struct imxusbc_softc *sc = device_private(self);
 	struct axi_attach_args *aa = aux;
 
-	aprint_normal("\n");
+	aprint_naive("\n");
 	aprint_normal(": Universal Serial Bus Controller\n");
 
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
