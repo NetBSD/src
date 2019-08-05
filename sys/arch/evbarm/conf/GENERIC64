@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.103 2019/07/25 00:30:45 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.104 2019/08/05 15:30:37 tnn Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -399,6 +399,7 @@ ld*		at nvme? nsid ?
 
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
+rkspi*		at fdt?			# Rockchip SPI
 spi*		at spibus?
 
 # Audio support
