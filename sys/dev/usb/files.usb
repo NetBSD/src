@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.158 2019/07/31 10:19:55 martin Exp $
+#	$NetBSD: files.usb,v 1.159 2019/08/06 01:44:24 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -363,7 +363,7 @@ attach	url at usbdevif
 file	dev/usb/if_url.c		url
 
 # ASIX AX88172
-device	axe: arp, ether, ifnet, mii, mii_phy
+device	axe: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	axe at usbdevif
 file	dev/usb/if_axe.c		axe
 
@@ -393,7 +393,7 @@ attach	umb at usbifif
 file	dev/usb/if_umb.c		umb
 
 # RealTek RTL8152 and RTL8153
-device	ure: arp, ether, ifnet, mii, mii_phy
+device	ure: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	ure at usbdevif
 file	dev/usb/if_ure.c		ure
 
