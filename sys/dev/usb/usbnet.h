@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.4 2019/08/04 08:59:13 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.5 2019/08/06 00:19:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -50,12 +50,15 @@
  *   can be stored in un_sc member)
  * - use MII bus lock / access methods
  * - usbnet_attach() to initialise and allocate rx/tx chains
+ * - usbnet_attach_ifp() to attach the interface, and either ether_ifattach()
+ *   for ethernet devices, or if_alloc_sadl()/bpf_attach() pair otherwise.
  * - usbnet_detach() to clean them up
  * - usbnet_activate() for autoconf
  * - interface ioctl and start have direct frontends with callbacks for
  *   device specific handling:
- *   - ioctl replies upon ether_ioctl() and a device-specific callback
- *     to handle setting multicast/offload/etc
+ *   - ioctl can use either a device-specific override (useful for special 
+ *     cases), but provides a normal handler with callback to handle
+ *     ENETRESET conditions that should be sufficient for most users
  *   - start uses usbnet send callback
  * - interface init and stop have helper functions
  *   - device specific init should use usbnet_init_rx_tx() to open pipes
@@ -73,15 +76,6 @@
  *     transmit queue and use the send callback for the given mbuf.
  *     the usb callback will use usbnet_txeof() for the transmit
  *     completion function (internal to usbnet)
- */
-
-/*
- * Converted drivers:  if_axe if_axen if_cdce if_ure.
- *
- * Note: these drivers have slightly different mbuf handling that need to be
- * adjusted to the common method (see if_cdce conversion):
- *
- * if_atu if_aue if_cue if_smsc if_udav if_upl if_url if_urndis.
  */
 
 #include <sys/device.h>
@@ -225,6 +219,7 @@ struct usbnet {
 
 	usbnet_stop_cb		un_stop_cb;
 	usbnet_ioctl_cb		un_ioctl_cb;
+	usbnet_ioctl_cb		un_override_ioctl_cb;
 	usbnet_init_cb		un_init_cb;
 	usbnet_mii_read_reg_cb	un_read_reg_cb;
 	usbnet_mii_write_reg_cb un_write_reg_cb;
@@ -338,7 +333,9 @@ int	usbnet_miibus_writereg(device_t, int, int, uint16_t);
 void	usbnet_miibus_statchg(struct ifnet *);
 
 /* interrupt handling */
-void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int);
+void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int,
+		       uint32_t, int);
+void	usbnet_input(struct usbnet * const, uint8_t *, size_t);
 
 /* autoconf */
 void	usbnet_attach(struct usbnet *un, const char *, unsigned, unsigned);

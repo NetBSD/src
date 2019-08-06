@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.4 2019/08/04 08:59:13 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.5 2019/08/06 00:19:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.4 2019/08/04 08:59:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.5 2019/08/06 00:19:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,11 +115,12 @@ usbnet_newbuf(void)
  * usbnet_rxeof() is designed to be the done callback for rx completion.
  * it provides generic setup and finalisation, calls a different usbnet
  * rx_loop callback in the middle, which can use usbnet_enqueue() to
- * enqueue a packet for higher levels.
+ * enqueue a packet for higher levels (or usbnet_input() if previously
+ * using if_input() path.)
  */
 void
 usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
-		int flags)
+	       int csum_flags, uint32_t csum_data, int mbuf_flags)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet *ifp = &un->un_ec.ec_if;
@@ -135,11 +136,36 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 
 	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = buflen;
-	m->m_pkthdr.csum_flags = flags;
+	m->m_pkthdr.csum_flags = csum_flags;
+	m->m_pkthdr.csum_data = csum_data;
+	m->m_flags |= mbuf_flags;
 	memcpy(mtod(m, char *), buf, buflen);
 
 	/* push the packet up */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
+}
+
+void
+usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
+{
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	struct ifnet * const ifp = usbnet_ifp(un);
+	struct mbuf *m;
+
+	KASSERT(mutex_owned(&un->un_rxlock));
+
+	m = usbnet_newbuf();
+	if (m == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
+
+	m_set_rcvif(m, ifp);
+	m->m_pkthdr.len = m->m_len = buflen;
+	memcpy(mtod(m, char *), buf, buflen);
+
+	/* push the packet up */
+	if_input(ifp, m);
 }
 
 /*
@@ -152,7 +178,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet_chain *c = priv;
 	struct usbnet * const un = c->unc_un;
-	struct ifnet *ifp = &un->un_ec.ec_if;
+	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t total_len;
 
 	mutex_enter(&un->un_rxlock);
@@ -787,6 +813,9 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct usbnet * const un = ifp->if_softc;
 	int error;
 
+	if (un->un_override_ioctl_cb)
+		return (*un->un_override_ioctl_cb)(ifp, cmd, data);
+
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET && un->un_ioctl_cb)
 		error = (*un->un_ioctl_cb)(ifp, cmd, data);
@@ -946,6 +975,14 @@ usbnet_init(struct ifnet *ifp)
 
 /* Autoconf management. */
 
+static bool
+usbnet_empty_eaddr(struct usbnet *un)
+{
+	return (un->un_eaddr[0] == 0 && un->un_eaddr[1] == 0 &&
+		un->un_eaddr[2] == 0 && un->un_eaddr[3] == 0 &&
+		un->un_eaddr[4] == 0 && un->un_eaddr[5] == 0);
+}
+
 /*
  * usbnet_attach() and usbnet_attach_ifp() perform setup of the relevant
  * 'usbnet'.  The first is enough to enable device access (eg, endpoints
@@ -954,6 +991,9 @@ usbnet_init(struct ifnet *ifp)
  *
  * Always call usbnet_detach(), even if usbnet_attach_ifp() is skippped.
  * Also usable as driver detach directly.
+ *
+ * To skip ethernet configuration (eg, point-to-point), make sure that
+ * the un_eaddr[] is fully zero.
  */
 void
 usbnet_attach(struct usbnet *un,
@@ -1054,7 +1094,17 @@ usbnet_attach_ifp(struct usbnet *un,
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp, un->un_eaddr);
+
+	/*
+	 * If ethernet address is all zero, skip ether_ifattach() and
+	 * instead attach bpf here..
+	 */
+	if (!usbnet_empty_eaddr(un)) {
+		ether_ifattach(ifp, un->un_eaddr);
+	} else {
+		if_alloc_sadl(ifp);
+		bpf_attach(ifp, DLT_RAW, 0);
+	}
 }
 
 int
@@ -1101,7 +1151,10 @@ usbnet_detach(device_t self, int flags)
 		ifmedia_delete_instance(&mii->mii_media, IFM_INST_ANY);
 	}
 	if (ifp->if_softc) {
-		ether_ifdetach(ifp);
+		if (!usbnet_empty_eaddr(un))
+			ether_ifdetach(ifp);
+		else
+			bpf_detach(ifp);
 		if_detach(ifp);
 	}
 

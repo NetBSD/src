@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.56 2019/08/04 08:59:13 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.57 2019/08/06 00:19:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.56 2019/08/04 08:59:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.57 2019/08/06 00:19:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,8 +81,8 @@ static const struct cdce_type cdce_devs[] = {
 static int	cdce_match(device_t, cfdata_t, void *);
 static void	cdce_attach(device_t, device_t, void *);
 static int	cdce_init(struct ifnet *);
-static void	cdce_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-				struct usbnet_chain *, uint32_t);
+static void	cdce_rx_loop(struct usbnet *, struct usbd_xfer *,
+			     struct usbnet_chain *, uint32_t);
 static unsigned	cdce_tx_prepare(struct usbnet *, struct mbuf *,
 				struct usbnet_chain *);
 
@@ -136,7 +136,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	un->un_sc = sc;
 	un->un_init_cb = cdce_init;
 	un->un_tx_prepare_cb = cdce_tx_prepare;
-	un->un_rx_loop_cb = cdce_rxeof_loop;
+	un->un_rx_loop_cb = cdce_rx_loop;
 	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
 	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
 	un->un_cdata.uncd_rx_bufsz = CDCE_BUFSZ;
@@ -278,8 +278,8 @@ cdce_init(struct ifnet *ifp)
 }
 
 static void
-cdce_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
-		struct usbnet_chain *c, uint32_t total_len)
+cdce_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
+	     struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	struct cdce_softc	*sc = usbnet_softc(un);
@@ -295,7 +295,7 @@ cdce_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		return;
 	}
 
-	usbnet_enqueue(un, c->unc_buf, total_len, 0);
+	usbnet_enqueue(un, c->unc_buf, total_len, 0, 0, 0);
 }
 
 static unsigned

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.54 2019/08/05 07:03:55 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.55 2019/08/06 00:19:57 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.54 2019/08/05 07:03:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.55 2019/08/06 00:19:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -153,7 +153,7 @@ axen_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-axen_miibus_statchg(struct ifnet *ifp)
+axen_mii_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct axen_softc * const sc = usbnet_softc(un);
@@ -623,7 +623,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	un->un_ioctl_cb = axen_ioctl_cb;
 	un->un_read_reg_cb = axen_mii_read_reg;
 	un->un_write_reg_cb = axen_mii_write_reg;
-	un->un_statchg_cb = axen_miibus_statchg;
+	un->un_statchg_cb = axen_mii_statchg;
 	un->un_tx_prepare_cb = axen_tx_prepare;
 	un->un_rx_loop_cb = axen_rxeof_loop;
 	un->un_init_cb = axen_init;
@@ -857,7 +857,7 @@ axen_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
 		}
 
 		usbnet_enqueue(un, buf + 2, pkt_len - 6,
-			       axen_csum_flags_rx(ifp, pkt_hdr));
+			       axen_csum_flags_rx(ifp, pkt_hdr), 0, 0);
 
 nextpkt:
 		/*
