@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.57 2019/08/06 00:19:57 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.58 2019/08/06 01:42:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.57 2019/08/06 00:19:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.58 2019/08/06 01:42:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -249,8 +249,6 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		memcpy(&un->un_eaddr[1], &hardclock_ticks, sizeof(uint32_t));
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
-
-	aprint_normal_dev(self, "address %s\n", ether_sprintf(un->un_eaddr));
 
 	usbnet_attach(un, "cdcedet", CDCE_RX_LIST_CNT, CDCE_TX_LIST_CNT);
 	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,

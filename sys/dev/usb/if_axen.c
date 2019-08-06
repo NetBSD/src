@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.55 2019/08/06 00:19:57 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.56 2019/08/06 01:42:22 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.55 2019/08/06 00:19:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.56 2019/08/06 01:42:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -708,8 +708,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "AX88179\n");
 	else
 		aprint_normal_dev(self, "(unknown)\n");
-	aprint_normal_dev(self, "Ethernet address %s\n",
-	    ether_sprintf(un->un_eaddr));
 
 	struct ethercom *ec = usbnet_ec(un);
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU;

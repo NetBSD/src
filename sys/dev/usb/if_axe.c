@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.105 2019/08/06 00:19:57 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.106 2019/08/06 01:42:22 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.105 2019/08/06 00:19:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.106 2019/08/06 01:42:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -976,12 +976,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usbnet_unlock_mii(un);
-
-	/*
-	 * An ASIX chip was detected. Inform the world.
-	 */
-	aprint_normal_dev(self, "Ethernet address %s\n",
-	    ether_sprintf(un->un_eaddr));
 
 	if (AXE_IS_178_FAMILY(sc))
 		usbnet_ec(un)->ec_capabilities = ETHERCAP_VLAN_MTU;
