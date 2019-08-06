@@ -875,7 +875,7 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 	 *  Broken firmware sets BMCR register incorrectly if
 	 * FW_PHY_ACT_SETUP_LINK_AN isn't set.
 	 * a) FDX may not be set.
-	 * b) BMCR_SPEED1 (bit 6) is always cleard.
+	 * b) BMCR_SPEED1 (bit 6) is always cleared.
 	 * + -------+------+-----------+-----+--------------------------+
 	 * |request | BMCR | BMCR spd | BMCR |                          |
 	 * |        | (HEX)| (in bits)|  FDX |                          |
