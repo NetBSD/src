@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.19 2019/08/05 14:48:29 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.20 2019/08/06 18:22:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -482,4 +482,55 @@ sys/arch/i386/stand/efiboot/version		1.2
 
 	x86 efiboot: version 1.1.
 	[nonaka, ticket #1325]
+
+sys/dev/pci/pcidevs				1.1381-1.1383
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Intel C620 Virtual Switch Port for Termal Sensor is not
+	  0x37c6 but 0x37c7.
+	- Add Some AMD Ryzen 3xxx's devices.
+	- Add some AMD devices mainly taken from OpenBSD.
+	- Rename some device names for consistency.
+	- Use _HDA for HD Audio.
+	- Add BCM2711 PCIe Host bridge for RPI4
+	[msaitoh, ticket #1326]
+
+sys/dev/pci/piixpm.c				1.53,1.54
+sys/dev/pci/piixpmreg.h				1.8
+
+	- Add newer chipset (e.g. X370/X399 and newer) support that the PCI
+	  device id is 0x790b
+	- SB800 also support 4 ports.
+	- SB800's interrupt configuration bit is different from others.
+	  Use SB800_SMB_HOSTC's bit 0.
+	- Print "polling" correctly when in the attach function.
+	- Improve debug printf()'s.
+	- Do not bus_space_map devices which are at address 0 (it is
+	  uninitialized).
+	- Add ServerWorks HT1100 device.
+	- Use unique wait channel.
+	- Rename PIIXPM_INDIRECTIO_* to SB800_INDIRECTIO_* because those are
+	  only for SB800 and newer chipsets.
+	- Add the port number to the dmesg output.
+	[msaitoh, ticket #1327]
+
+sys/arch/x86/pci/amdsmn.c			1.4-1.6
+
+	Add support for Ryzen 2xxx and 3xxx.
+	[msaitoh, ticket #1328]
+
+sys/dev/pci/if_etreg.h				1.2-1.3
+sys/dev/pci/if_et.c				1.23,1.25 and 1.26 via patch
+
+	Make et(4) work:
+	- Add missing ifioctl_common() for SIOCSIFFLAGS to make if_flags
+	  controllable.
+	- Enabling TX/RX in et_init() will always fail when cable is not
+	  plugged in. If this happens, we delay TX/RX enablement until link is
+	  up.
+	- Modify flow control stuff a little. It still doesn't work.
+	- Avoid undefined behavior when reset the chip.
+	- Code cleanup.
+	[msaitoh, ticket #1329]
 
