@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.5 2019/08/06 00:19:57 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.6 2019/08/06 01:42:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.5 2019/08/06 00:19:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.6 2019/08/06 01:42:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1100,6 +1100,8 @@ usbnet_attach_ifp(struct usbnet *un,
 	 * instead attach bpf here..
 	 */
 	if (!usbnet_empty_eaddr(un)) {
+		aprint_normal_dev(un->un_dev, "Ethernet address %s\n",
+		    ether_sprintf(un->un_eaddr));
 		ether_ifattach(ifp, un->un_eaddr);
 	} else {
 		if_alloc_sadl(ifp);
