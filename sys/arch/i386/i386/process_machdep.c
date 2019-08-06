@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.93 2019/06/26 12:30:12 mgorny Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.94 2019/08/06 02:04:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.93 2019/06/26 12:30:12 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.94 2019/08/06 02:04:43 kamil Exp $");
 
 #include "opt_ptrace.h"
 
@@ -281,7 +281,7 @@ ptrace_machdep_dorequest(
 {
 	struct uio uio;
 	struct iovec iov;
-	struct iovec *user_iov = (struct iovec*)addr;
+	struct iovec user_iov;
 	struct vmspace *vm;
 	int error;
 	int write = 0;
@@ -319,12 +319,14 @@ ptrace_machdep_dorequest(
 		/* write = 0 done above. */
 		if (!process_machdep_validxstate(lt->l_proc))
 			return EINVAL;
+		if ((error = copyin(addr, &user_iov, sizeof(user_iov))) != 0)
+			return error;
 		error = proc_vmspace_getref(l->l_proc, &vm);
 		if (error) {
 			return error;
 		}
-		iov.iov_base = user_iov->iov_base;
-		iov.iov_len = user_iov->iov_len;
+		iov.iov_base = user_iov.iov_base;
+		iov.iov_len = user_iov.iov_len;
 		if (iov.iov_len > sizeof(struct xstate))
 			iov.iov_len = sizeof(struct xstate);
 		uio.uio_iov = &iov;
