@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.15 2019/07/17 15:29:41 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.16 2019/08/06 15:52:23 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.15 2019/07/17 15:27:55 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.16 2019/08/06 15:51:07 martin Exp
  */
 
 /*
@@ -1016,6 +1016,7 @@
 #define	PCI_PRODUCT_AMD_F17_PCIE_1	0x1452		/* Family17h PCIE */
 #define	PCI_PRODUCT_AMD_F17_PCIE_2	0x1453		/* Family17h PCIE */
 #define	PCI_PRODUCT_AMD_F17_PCIE_3	0x1454		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_CCP_1	0x1456		/* Family17h Crypto */
 #define	PCI_PRODUCT_AMD_F17_HDA	0x1457		/* Family17h HD Audio */
 #define	PCI_PRODUCT_AMD_F17_XHCI	0x145c		/* Family17h xHCI */
 #define	PCI_PRODUCT_AMD_F17_XHCI_2	0x145f		/* Family17h xHCI */
@@ -1029,6 +1030,8 @@
 #define	PCI_PRODUCT_AMD_F17_DF_8	0x1467		/* Family17h Data Fabric */
 #define	PCI_PRODUCT_AMD_F17_PCIE_4	0x1470		/* Family17h PCIE */
 #define	PCI_PRODUCT_AMD_F17_PCIE_5	0x1471		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_7X_RC	0x1480		/* Family17h/7xh Root Complex */
+#define	PCI_PRODUCT_AMD_F17_7X_IOMMU	0x1481		/* Family17h/7xh IOMMU */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
 #define	PCI_PRODUCT_AMD_F16_HT	0x1530		/* Family16h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F16_ADDR	0x1531		/* Family16h Address Map Configuration */
@@ -1037,7 +1040,7 @@
 #define	PCI_PRODUCT_AMD_F16_CSTATE	0x1534		/* Family16h CPU C-state Configuration */
 #define	PCI_PRODUCT_AMD_F16_MISC	0x1535		/* Family16h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_F16_RC	0x1536		/* Family16h Root Complex */
-#define	PCI_PRODUCT_AMD_CRYPTO_COP	0x1537		/* Cryptographic Coprocessor */
+#define	PCI_PRODUCT_AMD_F16_CCP	0x1537		/* Family16h Cryptographic Coprocessor */
 #define	PCI_PRODUCT_AMD_F16_30_RC	0x1566		/* Family16h Root Complex */
 #define	PCI_PRODUCT_AMD_F16_30_IOMMU	0x1567		/* Family16h IOMMU */
 #define	PCI_PRODUCT_AMD_F16_HB	0x1568		/* Family16h Host Bridge */
@@ -1115,6 +1118,13 @@
 #define	PCI_PRODUCT_AMD_HUDSON_PCIE_1	0x43a1		/* Hudson PCIE Root Port 1 */
 #define	PCI_PRODUCT_AMD_HUDSON_PCIE_2	0x43a2		/* Hudson PCIE Root Port 2 */
 #define	PCI_PRODUCT_AMD_HUDSON_PCIE_3	0x43a3		/* Hudson PCIE Root Port 3 */
+#define	PCI_PRODUCT_AMD_300SERIES_PCIE	0x43b4		/* 300 Series PCIe */
+#define	PCI_PRODUCT_AMD_300SERIES_SATA	0x43b7		/* 300 Series SATA */
+#define	PCI_PRODUCT_AMD_300SERIES_XHCI	0x43bb		/* 300 Series xHCI */
+#define	PCI_PRODUCT_AMD_400SERIES_PCIE_1	0x43c6		/* 400 Series PCIe */
+#define	PCI_PRODUCT_AMD_400SERIES_PCIE_2	0x43c7		/* 400 Series PCIe */
+#define	PCI_PRODUCT_AMD_400SERIES_AHCI	0x43c8		/* 400 Series AHCI */
+#define	PCI_PRODUCT_AMD_400SERIES_XHCI	0x43d0		/* 400 Series xHCI */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-PCI Bridge */
 #define	PCI_PRODUCT_AMD_IGR4_AGP	0x700a		/* AMD IGR4 AGP Bridge */
@@ -1159,21 +1169,33 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
-#define	PCI_PRODUCT_AMD_HUDSON_SATA	0x7800		/* Hudson SATA Controller */
-#define	PCI_PRODUCT_AMD_HUDSON_SATA_AHCI	0x7801		/* Hudson AHCI SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA	0x7800		/* Hudson SATA (IDE) Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_AHCI	0x7801		/* Hudson SATA (AHCI) Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_RAID	0x7802		/* Hudson SATA (RAID) Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_RAID5	0x7803		/* Hudson SATA (RAID5) Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_AHCI_2	0x7804		/* Hudson SATA (AMD AHCI) Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_RAID_2	0x7805		/* Hudson SATA (RAID) Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_SDHC	0x7806		/* Hudson SD Flash Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_OHCI	0x7807		/* Hudson USB OHCI Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_EHCI	0x7808		/* Hudson USB EHCI Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_OHCI_2	0x7809		/* Hudson USB OHCI Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_SMB	0x780b		/* Hudson SMBus Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_IDE	0x780c		/* Hudson IDE Controller */
-#define	PCI_PRODUCT_AMD_HUDSON_HDAUDIO	0x780d		/* Hudson HD Audio Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_HDA	0x780d		/* Hudson HD Audio Controller */
 #define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson USB xHCI Controller */
 #define	PCI_PRODUCT_AMD_FCH_SDHC	0x7813		/* FCH SD Flash Controller */
 #define	PCI_PRODUCT_AMD_FCH_XHCI	0x7814		/* FCH USB xHCI Controller */
+#define	PCI_PRODUCT_AMD_KERNCZ_SATA_1	0x7900		/* FCH SATA */
+#define	PCI_PRODUCT_AMD_KERNCZ_AHCI_1	0x7901		/* FCH AHCI */
+#define	PCI_PRODUCT_AMD_KERNCZ_RAID_1	0x7902		/* FCH RAID */
+#define	PCI_PRODUCT_AMD_KERNCZ_RAID_2	0x7903		/* FCH RAID */
+#define	PCI_PRODUCT_AMD_KERNCZ_AHCI_2	0x7904		/* FCH AHCI */
+#define	PCI_PRODUCT_AMD_KERNCZ_EHCI	0x7908		/* FCH USB2 */
 #define	PCI_PRODUCT_AMD_KERNCZ_SMB	0x790b		/* X370/X399 SMBus Controller */
+#define	PCI_PRODUCT_AMD_KERNCZ_LPC	0x790e		/* FCH LPC */
+#define	PCI_PRODUCT_AMD_KERNCZ_XHCI	0x7914		/* FCH xHCI */
 #define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS785/RS880 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780/RS880 PCI-PCI Bridge (int gfx) */
@@ -1762,7 +1784,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_RX_460_HDA	0xaae0		/* Radeon RX 460/550/640SP, RX 560/560X HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_RX_550_HDA	0xaae8		/* Radeon R9 Nano, FURY HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_RX_470_HDA	0xaaf0		/* Radeon RX 470/480/570/580/590 HD Audio Controller */
-#define	PCI_PRODUCT_ATI_RADEON_VEGA56_HDA	0xaaf8		/* Radeon Vega 56/64 */
+#define	PCI_PRODUCT_ATI_RADEON_VEGA56_HDA	0xaaf8		/* Radeon Vega 56/64 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_RX_550_HDA2	0xab00		/* Radeon RX 550/640SP/560/560X HD Audio Controller */
 
 /* Auravision products */
@@ -2063,6 +2085,8 @@
 #define	PCI_PRODUCT_BROADCOM_5860	0x5860		/* 5860 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5861	0x5861		/* 5861 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5862	0x5862		/* 5862 Security Processor */
+
+#define	PCI_PRODUCT_BROADCOM_BCM2711	0x2711		/* BCM2711 PCIe Host */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Bt848 Video Capture */
@@ -4610,7 +4634,7 @@
 #define	PCI_PRODUCT_INTEL_C620_VSWP_1	0x37c3		/* C620 Virtual Switch Port (for QAT 1) */
 #define	PCI_PRODUCT_INTEL_C620_VSWP_2	0x37c4		/* C620 Virtual Switch Port (for QAT 2) */
 #define	PCI_PRODUCT_INTEL_C620_VSWP_3	0x37c5		/* C620 Virtual Switch Port (for 10GbE LAN) */
-#define	PCI_PRODUCT_INTEL_C620_VSWP_4	0x37c6		/* C620 Virtual Switch Port (for Termal Sensor) */
+#define	PCI_PRODUCT_INTEL_C620_VSWP_5	0x37c7		/* C620 Virtual Switch Port (for Termal Sensor) */
 #define	PCI_PRODUCT_INTEL_C620_QAT	0x37c8		/* C620 QAT */
 #define	PCI_PRODUCT_INTEL_C620_QAT_VF	0x37c9		/* C620 QAT Virtual Function */
 #define	PCI_PRODUCT_INTEL_X722	0x37cc		/* X722 10GbE */
