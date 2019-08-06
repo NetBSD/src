@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.43 2019/07/24 16:36:47 bouyer Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.43.2.1 2019/08/06 16:14:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2019/07/24 16:36:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43.2.1 2019/08/06 16:14:33 martin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -327,14 +327,21 @@ ptrace_machdep_dorequest(
 		if (!process_machdep_validxstate(lt->l_proc))
 			return EINVAL;
 		if (__predict_false(l->l_proc->p_flag & PK_32)) {
-			struct netbsd32_iovec *user_iov = addr;
-			iov.iov_base = NETBSD32PTR64(user_iov->iov_base);
-			iov.iov_len = user_iov->iov_len;
+			struct netbsd32_iovec user_iov;
+			if ((error = copyin(addr, &user_iov, sizeof(user_iov)))
+			    != 0)
+				return error;
+
+			iov.iov_base = NETBSD32PTR64(user_iov.iov_base);
+			iov.iov_len = user_iov.iov_len;
 		} else {
-			struct iovec *user_iov;
-			user_iov = (struct iovec*)addr;
-			iov.iov_base = user_iov->iov_base;
-			iov.iov_len = user_iov->iov_len;
+			struct iovec user_iov;
+			if ((error = copyin(addr, &user_iov, sizeof(user_iov)))
+			    != 0)
+				return error;
+
+			iov.iov_base = user_iov.iov_base;
+			iov.iov_len = user_iov.iov_len;
 		}
 
 		error = proc_vmspace_getref(l->l_proc, &vm);
