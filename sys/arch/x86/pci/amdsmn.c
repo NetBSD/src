@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.5 2019/07/18 12:04:16 msaitoh Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.6 2019/08/06 05:32:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.5 2019/07/18 12:04:16 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.6 2019/08/06 05:32:44 msaitoh Exp $ ");
 
 /*
  * Driver for the AMD Family 17h CPU System Management Network.
@@ -78,9 +78,9 @@ static int amdsmn_misc_search(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL3_NEW(amdsmn, sizeof(struct amdsmn_softc), amdsmn_match,
     amdsmn_attach, amdsmn_detach, NULL, amdsmn_rescan, NULL, 0);
-    
+
 static int
-amdsmn_match(device_t parent, cfdata_t match, void *aux) 
+amdsmn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	unsigned int i;
@@ -95,8 +95,8 @@ amdsmn_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-static int 
-amdsmn_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux) 
+static int
+amdsmn_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 	if (config_match(parent, cf, aux))
 		config_attach_loc(parent, cf, locs, aux, NULL);
@@ -104,8 +104,8 @@ amdsmn_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	return 0;
 }
 
-static void 
-amdsmn_attach(device_t parent, device_t self, void *aux) 
+static void
+amdsmn_attach(device_t parent, device_t self, void *aux)
 {
 	struct amdsmn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
@@ -130,7 +130,7 @@ amdsmn_rescan(device_t self, const char *ifattr, const int *flags)
 }
 
 static int
-amdsmn_detach(device_t self, int flags) 
+amdsmn_detach(device_t self, int flags)
 {
 	struct amdsmn_softc *sc = device_private(self);
 
