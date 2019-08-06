@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.37 2018/08/23 13:24:44 jmcneill Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.38 2019/08/06 18:17:52 tnn Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -126,6 +126,7 @@ int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);
 
 void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
+void	of_enter_spi_devs(prop_dictionary_t, int, size_t);
 
 bool	of_hasprop(int, const char *);
 #define of_getprop_bool	of_hasprop
