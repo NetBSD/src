@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.76 2019/08/05 10:12:04 msaitoh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.77 2019/08/06 01:53:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.76 2019/08/05 10:12:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.77 2019/08/06 01:53:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -679,20 +679,15 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 	if (func == ACPI_READ)
 		*value = 0;
 
-	do {
-		switch (func) {
-		case ACPI_READ:
+	for (addr = paddr; addr < (paddr + width / 8); addr++, reg++) {
+		if (func == ACPI_READ)
 			rv = acpiec_read(dv, addr, reg);
-			break;
-		case ACPI_WRITE:
+		else
 			rv = acpiec_write(dv, addr, *reg);
-			break;
-		}
+
 		if (rv != AE_OK)
 			break;
-		addr++;
-		reg++;
-	} while (addr < (paddr + width / 8));
+	}
 
 	return rv;
 }
