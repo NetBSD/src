@@ -107,7 +107,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.27 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.28 2019/08/06 10:25:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -143,6 +143,7 @@ CTASSERT(PFIL_ALL == (0x001 | 0x002));
 enum { CONN_TRACKING_OFF, CONN_TRACKING_ON };
 
 static nvlist_t *npf_conn_export(npf_t *, npf_conn_t *);
+static void npf_conn_destroy_idx(npf_t *, npf_conn_t *, unsigned);
 
 /*
  * npf_conn_sys{init,fini}: initialise/destroy connection tracking.
@@ -432,7 +433,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool global)
 
 	/* Initialize the protocol state. */
 	if (!npf_state_init(npc, &con->c_state)) {
-		npf_conn_destroy(npf, con);
+		npf_conn_destroy_idx(npf, con, idx);
 		return NULL;
 	}
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -446,7 +447,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool global)
 	 */
 	if (!npf_conn_conkey(npc, fw, true) ||
 	    !npf_conn_conkey(npc, bk, false)) {
-		npf_conn_destroy(npf, con);
+		npf_conn_destroy_idx(npf, con, idx);
 		return NULL;
 	}
 	con->c_ifid = global ? nbuf->nb_ifid : 0;
@@ -501,8 +502,12 @@ npf_conn_destroy(npf_t *npf, npf_conn_t *con)
 {
 	const npf_connkey_t *key = npf_conn_getforwkey(con);
 	const unsigned alen = NPF_CONNKEY_ALEN(key);
-	const unsigned idx __unused = NPF_CONNCACHE(alen);
+	npf_conn_destroy_idx(npf, con, NPF_CONNCACHE(alen));
+}
 
+static void
+npf_conn_destroy_idx(npf_t *npf, npf_conn_t *con, unsigned idx)
+{
 	KASSERT(con->c_refcnt == 0);
 
 	if (con->c_nat) {
@@ -894,7 +899,7 @@ npf_conn_import(npf_t *npf, npf_conndb_t *cd, const nvlist_t *cdict,
 	npf_conndb_enqueue(cd, con);
 	return 0;
 err:
-	npf_conn_destroy(npf, con);
+	npf_conn_destroy_idx(npf, con, idx);
 	return EINVAL;
 }
 
