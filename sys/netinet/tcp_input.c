@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.414 2019/06/01 15:18:42 kamil Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.415 2019/08/06 15:48:18 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414 2019/06/01 15:18:42 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.415 2019/08/06 15:48:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3379,7 +3379,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 		if (__predict_false(tcp_rttlocal) && tcp_msl_enable
 		    && tp->t_srtt > tcp_msl_remote_threshold
 		    && tp->t_msl  < tcp_msl_remote) {
-			tp->t_msl = tcp_msl_remote;
+			tp->t_msl = MIN(tcp_msl_remote, TCP_MAXMSL);
 		}
 	} else {
 		/*
@@ -3647,7 +3647,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= tcp_keepinit)
+	if (sc->sc_rxttot >= MIN(tcp_keepinit, TCP_TIMER_MAXTICKS))
 		goto dropit;
 
 	TCP_STATINC(TCP_STAT_SC_RETRANSMITTED);
