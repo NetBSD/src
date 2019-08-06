@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.135 2019/06/10 00:35:47 chs Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.136 2019/08/06 15:48:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.135 2019/06/10 00:35:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.136 2019/08/06 15:48:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -425,14 +425,19 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	shmseg->shm_lpid = p->p_pid;
 	shmseg->shm_nattch++;
 	shm_realloc_disable++;
-	mutex_exit(&shm_lock);
 
 	/*
-	 * Add a reference to the memory object, map it to the
-	 * address space, and lock the memory, if needed.
+	 * Add a reference to the uvm object while we hold the
+	 * shm_lock.
 	 */
 	uobj = shmseg->_shm_internal;
 	uao_reference(uobj);
+	mutex_exit(&shm_lock);
+
+	/*
+	 * Drop the shm_lock to map it into the address space, and lock
+	 * the memory, if needed (XXX where does this lock memory?).
+	 */
 	error = uvm_map(&vm->vm_map, &attach_va, size, uobj, 0, 0,
 	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, flags));
 	if (error)
