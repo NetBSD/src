@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.6 2019/08/05 04:41:41 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.7 2019/08/06 16:24:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -267,3 +267,30 @@ usr.sbin/sysinst/label.c			1.12
 	When we find a FFSv1 filesystem, properly record it that way - so the
 	correct bootblocks get installed on system upgrades.
 	[martin, ticket #16]
+
+sys/arch/amd64/amd64/process_machdep.c		1.44
+
+	Do not dereference user pointer in ptrace_machdep_dorequest()/amd64,
+	always use copyin(9) for reading user memory.
+	This fixes SMAP crash on some amd64 machines.
+	[kamil, ticket #19]
+
+sys/kern/kern_proc.c				1.234
+
+	Update our vm resource use for sysctl(3) call reading kinfo_proc*.
+	Without this change RSS properties are zeroed unless a process exits
+	or calls getrusage(2).
+	[kamil, ticket #20]
+
+sys/arch/i386/i386/process_machdep.c		1.94
+
+	Do not dereference user pointer in ptrace_machdep_dorequest()/i386,
+	always use copyin(9) for reading user memory.
+	[kamil, ticket #21]
+
+sys/sys/event.h					1.33
+
+	Make EV_SET() casts compatible with the C++ code.
+	[kamil, ticket #22]
+
+
