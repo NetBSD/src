@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.38 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: timevar.h,v 1.39 2019/08/06 15:47:55 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -84,6 +84,7 @@ struct 	ptimer {
 	int	pt_type;
 	int	pt_entry;
 	int	pt_queued;
+	bool	pt_dying;
 	struct proc *pt_proc;
 	TAILQ_ENTRY(ptimer) pt_chain;
 };
@@ -174,7 +175,7 @@ int	settimeofday1(const struct timeval *, bool,
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
 	    struct lwp *);
 void	timer_gettime(struct ptimer *, struct itimerspec *);
-void	timer_settime(struct ptimer *);
+int	timer_settime(struct ptimer *);
 struct	ptimers *timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 void	timer_tick(struct lwp *, bool);
