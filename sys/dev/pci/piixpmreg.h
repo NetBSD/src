@@ -1,5 +1,33 @@
-/* $NetBSD: piixpmreg.h,v 1.7 2014/03/18 18:20:42 riastradh Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.7.22.1 2019/08/06 16:02:54 martin Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
+
+/*-
+ * Copyright (c) 2016 Andriy Gapon <avg@FreeBSD.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: head/sys/dev/amdsbwd/amd_chipset.h 333269 2018-05-05 05:22:11Z avg $
+ */
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -75,10 +103,16 @@
 #define PIIX_PM_SIZE	0x38		/* Power management I/O space size */
 #define PIIX_SMB_SIZE	0x10		/* SMBus I/O space size */
 
-#define PIIXPM_INDIRECTIO_BASE	0xcd6
-#define PIIXPM_INDIRECTIO_SIZE	2 
-#define PIIXPM_INDIRECTIO_INDEX	0
-#define PIIXPM_INDIRECTIO_DATA	1
+/*
+ * AMD SB800 and compatible chipset's configuration registers.
+ * See SB8xx RRG 2.3.3, etc.
+ */
+
+/* In the I/O area */
+#define SB800_INDIRECTIO_BASE	0xcd6
+#define SB800_INDIRECTIO_SIZE	2 
+#define SB800_INDIRECTIO_INDEX	0
+#define SB800_INDIRECTIO_DATA	1
  
 #define SB800_PM_SMBUS0EN_LO	0x2c
 #define SB800_PM_SMBUS0EN_HI	0x2d
@@ -87,5 +121,29 @@
                                       
 #define SB800_PM_SMBUS0EN_ENABLE 0x0001
 #define SB800_PM_SMBUS0EN_BADDR	0xffe0
+
+/* In the PCI config space */
+#define SB800_SMB_HOSTC		0x10	/* I2C bus configuration */
+#define SB800_SMB_HOSTC_SMI	(1 << 0)	/* SMI */
+
+/*
+ * Newer FCH registers in the PMIO space.
+ * See BKDG for Family 16h Models 30h-3Fh 3.26.13 PMx00 and PMx04.
+ */
+#define AMDFCH41_PM_DECODE_EN0		0x00
+#define		AMDFCH41_SMBUS_EN	0x10
+#define		AMDFCH41_WDT_EN		0x80
+#define AMDFCH41_PM_DECODE_EN1		0x01
+#define AMDFCH41_PM_PORT_INDEX		0x02
+#define	AMDFCH41_PM_DECODE_EN3		0x03
+#define		AMDFCH41_WDT_RES_MASK	0x03
+#define		AMDFCH41_WDT_RES_32US	0x00
+#define		AMDFCH41_WDT_RES_10MS	0x01
+#define		AMDFCH41_WDT_RES_100MS	0x02
+#define		AMDFCH41_WDT_RES_1S	0x03
+#define		AMDFCH41_WDT_EN_MASK	0x0c
+#define		AMDFCH41_WDT_ENABLE	0x00
+#define	AMDFCH41_PM_ISA_CTRL		0x04
+#define		AMDFCH41_MMIO_EN	0x02
 
 #endif	/* !_DEV_PCI_PIIXREG_H_ */
