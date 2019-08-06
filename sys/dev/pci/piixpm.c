@@ -1,5 +1,5 @@
-/* $NetBSD: piixpm.c,v 1.52 2017/03/29 09:04:36 msaitoh Exp $ */
-/*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
+/* $NetBSD: piixpm.c,v 1.52.6.1 2019/08/06 16:02:54 martin Exp $ */
+/*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52 2017/03/29 09:04:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52.6.1 2019/08/06 16:02:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,26 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52 2017/03/29 09:04:36 msaitoh Exp $");
 #define DPRINTF(x)
 #endif
 
-#define PIIXPM_IS_CSB5(id) \
-	(PCI_VENDOR((id)) == PCI_VENDOR_SERVERWORKS && \
-	PCI_PRODUCT((id)) == PCI_PRODUCT_SERVERWORKS_CSB5)
+#define PIIXPM_IS_CSB5(sc)						      \
+	(PCI_VENDOR((sc)->sc_id) == PCI_VENDOR_SERVERWORKS &&		      \
+	PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_SERVERWORKS_CSB5)
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
+
+#define PIIXPM_IS_SB800GRP(sc)						      \
+	((PCI_VENDOR((sc)->sc_id) == PCI_VENDOR_ATI) &&			      \
+	    ((PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_ATI_SB600_SMB) &&	      \
+		((sc)->sc_rev >= 0x40)))
+
+#define PIIXPM_IS_HUDSON(sc)						      \
+	((PCI_VENDOR((sc)->sc_id) == PCI_VENDOR_AMD) &&			      \
+	    (PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_AMD_HUDSON_SMB))
+
+#define PIIXPM_IS_KERNCZ(sc)						      \
+	((PCI_VENDOR((sc)->sc_id) == PCI_VENDOR_AMD) &&			      \
+	    (PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_AMD_KERNCZ_SMB))
+
+#define PIIXPM_IS_FCHGRP(sc)	(PIIXPM_IS_HUDSON(sc) || PIIXPM_IS_KERNCZ(sc))
 
 struct piixpm_smbus {
 	int			sda;
@@ -75,6 +90,7 @@ struct piixpm_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;
+	pcireg_t		sc_rev;
 
 	int			sc_numbusses;
 	device_t		sc_i2c_device[4];
@@ -142,12 +158,14 @@ piixpm_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_CSB5:
 		case PCI_PRODUCT_SERVERWORKS_CSB6:
 		case PCI_PRODUCT_SERVERWORKS_HT1000SB:
+		case PCI_PRODUCT_SERVERWORKS_HT1100SB:
 			return 1;
 		}
 		break;
 	case PCI_VENDOR_AMD:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_AMD_HUDSON_SMB:
+		case PCI_PRODUCT_AMD_KERNCZ_SMB:
 			return 1;
 		}
 		break;
@@ -164,6 +182,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t base, conf;
 	pcireg_t pmmisc;
 	pci_intr_handle_t ih;
+	bool usesmi = false;
 	const char *intrstr = NULL;
 	int i, flags;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -171,6 +190,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_id = pa->pa_id;
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_numbusses = 1;
@@ -179,10 +199,6 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	/* Read configuration */
-	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%x\n", device_xname(self), conf));
 
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
@@ -195,7 +211,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
-	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
+	if (base == 0 || bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
 		aprint_error_dev(self,
 		    "can't map power management I/O space\n");
@@ -207,69 +223,76 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	 * PIIX4 and PIIX4E have a bug in the timer latch, see Errata #20
 	 * in the "Specification update" (document #297738).
 	 */
-	acpipmtimer_attach(self, sc->sc_pm_iot, sc->sc_pm_ioh,
-			   PIIX_PM_PMTMR,
-		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
+	acpipmtimer_attach(self, sc->sc_pm_iot, sc->sc_pm_ioh, PIIX_PM_PMTMR,
+	    (PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0);
 
 nopowermanagement:
 
-	/* SB800 rev 0x40+ and AMD HUDSON need special initialization */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON_SMB) {
-		if (piixpm_sb800_init(sc) == 0) {
-			goto attach_i2c;
-		}
-		aprint_normal_dev(self, "SMBus initialization failed\n");
-		return;
-	}
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB &&
-	    PCI_REVISION(pa->pa_class) >= 0x40) {
+	/* SB800 rev 0x40+, AMD HUDSON and newer need special initialization */
+	if (PIIXPM_IS_FCHGRP(sc) || PIIXPM_IS_SB800GRP(sc)) {
 		if (piixpm_sb800_init(sc) == 0) {
 			sc->sc_numbusses = 4;
-			goto attach_i2c;
+
+			/* Read configuration */
+			conf = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    SB800_SMB_HOSTC);
+			DPRINTF(("%s: conf 0x%08x\n", device_xname(self),
+				conf));
+
+			usesmi = conf & SB800_SMB_HOSTC_SMI;
+			goto setintr;
 		}
 		aprint_normal_dev(self, "SMBus initialization failed\n");
 		return;
 	}
+
+	/* Read configuration */
+	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
+	DPRINTF(("%s: conf 0x%08x\n", device_xname(self), conf));
 
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
 		aprint_normal_dev(self, "SMBus disabled\n");
 		return;
 	}
+	usesmi = (conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI;
 
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
-	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
+	if (base == 0 ||
+	    bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(self, "can't map smbus I/O space\n");
 		return;
 	}
 
+setintr:
 	sc->sc_poll = 1;
 	aprint_normal_dev(self, "");
-	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
+	if (usesmi) {
 		/* No PCI IRQ */
 		aprint_normal("interrupting at SMI, ");
-	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
-		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
-			    sizeof(intrbuf));
-			sc->sc_smb_ih = pci_intr_establish_xname(pa->pa_pc, ih,
-			    IPL_BIO, piixpm_intr, sc, device_xname(sc->sc_dev));
-			if (sc->sc_smb_ih != NULL) {
-				aprint_normal("interrupting at %s", intrstr);
-				sc->sc_poll = 0;
+	} else {
+		if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
+			/* Install interrupt handler */
+			if (pci_intr_map(pa, &ih) == 0) {
+				intrstr = pci_intr_string(pa->pa_pc, ih,
+				    intrbuf, sizeof(intrbuf));
+				sc->sc_smb_ih = pci_intr_establish_xname(
+					pa->pa_pc, ih, IPL_BIO, piixpm_intr,
+					sc, device_xname(sc->sc_dev));
+				if (sc->sc_smb_ih != NULL) {
+					aprint_normal("interrupting at %s",
+					    intrstr);
+					sc->sc_poll = 0;
+				}
 			}
 		}
+		if (sc->sc_poll)
+			aprint_normal("polling");
 	}
-	if (sc->sc_poll)
-		aprint_normal("polling");
 
 	aprint_normal("\n");
 
-attach_i2c:
 	for (i = 0; i < sc->sc_numbusses; i++)
 		sc->sc_i2c_device[i] = NULL;
 
@@ -278,6 +301,20 @@ attach_i2c:
 	piixpm_rescan(self, "i2cbus", &flags);
 }
 
+static int
+piixpm_iicbus_print(void *aux, const char *pnp)
+{
+	struct i2cbus_attach_args *iba = aux;
+	struct i2c_controller *tag = iba->iba_tag;
+	struct piixpm_smbus *bus = tag->ic_cookie;
+	struct piixpm_softc *sc = bus->softc;
+
+	iicbus_print(aux, pnp);
+	if (sc->sc_numbusses != 0)
+		aprint_normal(" port %d", bus->sda);
+
+	return UNCONF;
+}
 static int
 piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 {
@@ -303,7 +340,7 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 		iba.iba_type = I2C_TYPE_SMBUS;
 		iba.iba_tag = &sc->sc_i2c_tags[i];
 		sc->sc_i2c_device[i] = config_found_ia(self, ifattr, &iba,
-						    iicbus_print);
+		    piixpm_iicbus_print);
 	}
 
 	return 0;
@@ -362,39 +399,53 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;	/* indirect I/O handle */
 	uint16_t val, base_addr;
+	bool enabled;
 
 	/* Fetch SMB base address */
 	if (bus_space_map(iot,
-	    PIIXPM_INDIRECTIO_BASE, PIIXPM_INDIRECTIO_SIZE, 0, &ioh)) {
+	    SB800_INDIRECTIO_BASE, SB800_INDIRECTIO_SIZE, 0, &ioh)) {
 		device_printf(sc->sc_dev, "couldn't map indirect I/O space\n");
 		return EBUSY;
 	}
-	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
-	    SB800_PM_SMBUS0EN_LO);
-	val = bus_space_read_1(iot, ioh, PIIXPM_INDIRECTIO_DATA);
-	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
-	    SB800_PM_SMBUS0EN_HI);
-	val |= bus_space_read_1(iot, ioh, PIIXPM_INDIRECTIO_DATA) << 8;
+	if (PIIXPM_IS_FCHGRP(sc)) {
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		    AMDFCH41_PM_DECODE_EN0);
+		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		enabled = val & AMDFCH41_SMBUS_EN;
+		if (!enabled)
+			return ENOENT;
+
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		    AMDFCH41_PM_DECODE_EN1);
+		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA) << 8;
+		base_addr = val;
+	} else {
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		    SB800_PM_SMBUS0EN_LO);
+		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		enabled = val & SB800_PM_SMBUS0EN_ENABLE;
+		if (!enabled)
+			return ENOENT;
+
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		    SB800_PM_SMBUS0EN_HI);
+		val |= bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA) << 8;
+		base_addr = val & SB800_PM_SMBUS0EN_BADDR;
+
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		    SB800_PM_SMBUS0SELEN);
+		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_DATA,
+		    SB800_PM_SMBUS0EN_ENABLE);
+	}
+
 	sc->sc_sb800_ioh = ioh;
-
-	if ((val & SB800_PM_SMBUS0EN_ENABLE) == 0)
-		return ENOENT;
-
-	base_addr = val & SB800_PM_SMBUS0EN_BADDR;
-
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
-
-	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
-	    SB800_PM_SMBUS0SELEN);
-	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_DATA, 1); /* SMBUS0SEL */
 
 	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
 	}
-	aprint_normal_dev(sc->sc_dev, "polling (SB800)\n");
-	sc->sc_poll = 1;
 
 	return 0;
 }
@@ -429,12 +480,16 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 	if (!cold)
 		mutex_enter(&sc->sc_i2c_mutex);
 
-	if (smbus->sda > 0)	/* SB800 */
-	{
+	if (PIIXPM_IS_KERNCZ(sc)) {
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    PIIXPM_INDIRECTIO_DATA, smbus->sda << 1);
+		    SB800_INDIRECTIO_DATA, smbus->sda << 3);
+	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA, smbus->sda << 1);
 	}
 
 	return 0;
@@ -446,16 +501,20 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
 
-	if (smbus->sda > 0)	/* SB800 */
-	{
+	if (PIIXPM_IS_KERNCZ(sc)) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA, 0);
+	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
 		/*
 		 * HP Microserver hangs after reboot if not set to SDA0.
 		 * Also add shutdown hook?
 		 */
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    PIIXPM_INDIRECTIO_DATA, 0);
+		    SB800_INDIRECTIO_DATA, 0);
 	}
 
 	if (!cold)
@@ -468,12 +527,13 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 {
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
-	const u_int8_t *b;
-	u_int8_t ctl = 0, st;
+	const uint8_t *b;
+	uint8_t ctl = 0, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %zu, len %zu, flags 0x%x\n",
-	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
+		"flags 0x%x\n",
+		device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
@@ -543,6 +603,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		ctl = PIIX_SMB_HC_CMD_BDATA;
 	else if (len == 2)
 		ctl = PIIX_SMB_HC_CMD_WDATA;
+	else
+		panic("%s: unexpected len %zu", __func__, len);
 
 	if ((flags & I2C_F_POLL) == 0)
 		ctl |= PIIX_SMB_HC_INTREN;
@@ -553,7 +615,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	if (flags & I2C_F_POLL) {
 		/* Poll for completion */
-		if (PIIXPM_IS_CSB5(sc->sc_id))
+		if (PIIXPM_IS_CSB5(sc))
 			DELAY(2*PIIXPM_DELAY);
 		else
 			DELAY(PIIXPM_DELAY);
@@ -569,7 +631,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
+		if (tsleep(sc, PRIBIO, "piixpm", PIIXPM_TIMEOUT * hz))
 			goto timeout;
 	}
 
@@ -594,7 +656,7 @@ timeout:
 	/*
 	 * CSB5 needs hard reset to unlock the smbus after timeout.
 	 */
-	if (PIIXPM_IS_CSB5(sc->sc_id))
+	if (PIIXPM_IS_CSB5(sc))
 		piixpm_csb5_reset(sc);
 	return (1);
 }
@@ -603,8 +665,8 @@ static int
 piixpm_intr(void *arg)
 {
 	struct piixpm_softc *sc = arg;
-	u_int8_t st;
-	u_int8_t *b;
+	uint8_t st;
+	uint8_t *b;
 	size_t len;
 
 	/* Read status */
