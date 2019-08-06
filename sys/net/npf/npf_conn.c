@@ -107,7 +107,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.28 2019/08/06 10:25:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.29 2019/08/06 11:40:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -143,14 +143,13 @@ CTASSERT(PFIL_ALL == (0x001 | 0x002));
 enum { CONN_TRACKING_OFF, CONN_TRACKING_ON };
 
 static nvlist_t *npf_conn_export(npf_t *, npf_conn_t *);
-static void npf_conn_destroy_idx(npf_t *, npf_conn_t *, unsigned);
 
 /*
  * npf_conn_sys{init,fini}: initialise/destroy connection tracking.
  */
 
 void
-npf_conn_init(npf_t *npf, int flags)
+npf_conn_init(npf_t *npf)
 {
 	npf->conn_cache[0] = pool_cache_init(
 	    offsetof(npf_conn_t, c_keys[NPF_CONNKEY_V4WORDS * 2]),
@@ -162,10 +161,6 @@ npf_conn_init(npf_t *npf, int flags)
 	mutex_init(&npf->conn_lock, MUTEX_DEFAULT, IPL_NONE);
 	npf->conn_tracking = CONN_TRACKING_OFF;
 	npf->conn_db = npf_conndb_create();
-
-	if ((flags & NPF_NO_GC) == 0) {
-		npf_worker_register(npf, npf_conn_worker);
-	}
 	npf_conndb_sysinit(npf);
 }
 
@@ -430,10 +425,11 @@ npf_conn_establish(npf_cache_t *npc, int di, bool global)
 
 	con->c_proto = npc->npc_proto;
 	CTASSERT(sizeof(con->c_proto) >= sizeof(npc->npc_proto));
+	con->c_alen = alen;
 
 	/* Initialize the protocol state. */
 	if (!npf_state_init(npc, &con->c_state)) {
-		npf_conn_destroy_idx(npf, con, idx);
+		npf_conn_destroy(npf, con);
 		return NULL;
 	}
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -447,7 +443,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool global)
 	 */
 	if (!npf_conn_conkey(npc, fw, true) ||
 	    !npf_conn_conkey(npc, bk, false)) {
-		npf_conn_destroy_idx(npf, con, idx);
+		npf_conn_destroy(npf, con);
 		return NULL;
 	}
 	con->c_ifid = global ? nbuf->nb_ifid : 0;
@@ -500,14 +496,8 @@ err:
 void
 npf_conn_destroy(npf_t *npf, npf_conn_t *con)
 {
-	const npf_connkey_t *key = npf_conn_getforwkey(con);
-	const unsigned alen = NPF_CONNKEY_ALEN(key);
-	npf_conn_destroy_idx(npf, con, NPF_CONNCACHE(alen));
-}
+	const unsigned idx __unused = NPF_CONNCACHE(con->c_alen);
 
-static void
-npf_conn_destroy_idx(npf_t *npf, npf_conn_t *con, unsigned idx)
-{
 	KASSERT(con->c_refcnt == 0);
 
 	if (con->c_nat) {
@@ -799,6 +789,7 @@ npf_conn_export(npf_t *npf, npf_conn_t *con)
 
 	fw = npf_conn_getforwkey(con);
 	alen = NPF_CONNKEY_ALEN(fw);
+	KASSERT(alen == con->c_alen);
 	bk = npf_conn_getbackkey(con, alen);
 
 	kdict = npf_connkey_export(fw);
@@ -899,7 +890,7 @@ npf_conn_import(npf_t *npf, npf_conndb_t *cd, const nvlist_t *cdict,
 	npf_conndb_enqueue(cd, con);
 	return 0;
 err:
-	npf_conn_destroy_idx(npf, con, idx);
+	npf_conn_destroy(npf, con);
 	return EINVAL;
 }
 
