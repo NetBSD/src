@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.104 2019/08/04 09:03:46 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.105 2019/08/06 00:19:57 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.104 2019/08/04 09:03:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.105 2019/08/06 00:19:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1150,7 +1150,7 @@ axe_rx_loop_cb(struct usbnet * un, struct usbd_xfer *xfer,
 			total_len = 0;
 		}
 
-		usbnet_enqueue(un, buf, pktlen, flags);
+		usbnet_enqueue(un, buf, pktlen, flags, 0, 0);
 		buf += rxlen;
 
 	} while (total_len > 0);
