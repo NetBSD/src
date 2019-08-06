@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.172 2019/04/06 03:06:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.173 2019/08/06 08:10:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.172 2019/04/06 03:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.173 2019/08/06 08:10:27 maxv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -132,7 +132,8 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 	vaddr_t start, end, lim;
 	struct vm_map *map;
 	vsize_t len;
-	int error = 0, npgs;
+	int error = 0;
+	size_t npgs;
 
 	map = &p->p_vmspace->vm_map;
 
