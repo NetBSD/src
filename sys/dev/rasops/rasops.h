@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.44 2019/08/07 11:47:33 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.45 2019/08/07 12:09:30 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
+
+#include <sys/param.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
@@ -113,6 +115,22 @@ struct rasops_info {
 	int	ri_emustride;	/* bytes per row we actually care about */
 	int	ri_rows;	/* number of rows (characters, not pels) */
 	int	ri_cols;	/* number of columns (characters, not pels) */
+#if __NetBSD_Prereq__(9, 99, 1)
+	struct {
+		int	off;	/* offset of underline from bottom */
+		int	height;	/* height of underline */
+	} ri_ul;
+#else
+	/*
+	 * XXX
+	 * hack to keep ABI compatibility for netbsd-9, -8, and -7.
+	 */
+	// int	ri_delta;	/* obsoleted */
+	struct {
+		short	off;
+		short	height;
+	} __packed ri_ul;
+#endif
 	int	ri_pelbytes;	/* bytes per pel (may be zero) */
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
@@ -130,15 +148,6 @@ struct rasops_info {
 
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
-
-	/* buffer capable of single-row pixels */
-	void	*ri_buf;
-	size_t	ri_buflen;
-
-	/* 4x1 stamp for optimized character blitting */
-	void	*ri_stamp;
-	long	ri_stamp_attr;
-	size_t	ri_stamp_len;
 
 #if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
