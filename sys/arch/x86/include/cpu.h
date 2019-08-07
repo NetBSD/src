@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.107 2019/06/26 12:29:00 mgorny Exp $	*/
+/*	$NetBSD: cpu.h,v 1.108 2019/08/07 06:23:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -245,7 +245,7 @@ struct cpu_info {
 #ifdef SVS
 	pd_entry_t *	ci_svs_updir;
 	paddr_t		ci_svs_updirpa;
-	paddr_t		ci_unused;
+	int		ci_svs_ldt_sel;
 	kmutex_t	ci_svs_mtx;
 	pd_entry_t *	ci_svs_rsp0_pte;
 	vaddr_t		ci_svs_rsp0;
