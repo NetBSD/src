@@ -1993,6 +1993,9 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	if (uap == NULL)
 		return (SET_ERROR(EINVAL));
 
+	if (*data_len < sizeof *uap)
+		return (SET_ERROR(EINVAL));
+
 	if (mvp->v_type != VDIR)
 		return (SET_ERROR(ENOTDIR));
 
