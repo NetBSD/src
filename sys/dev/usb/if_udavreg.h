@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.14 2019/08/01 00:10:22 mrg Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.15 2019/08/07 19:21:48 skrll Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -140,61 +140,3 @@
 #define	 UDAV_GPR_GEPIO2	(1<<2) /* General purpose 2 */
 #define	 UDAV_GPR_GEPIO1	(1<<1) /* General purpose 1 */
 #define	 UDAV_GPR_GEPIO0	(1<<0) /* General purpose 0 */
-
-#define	GET_IFP(sc)		(&(sc)->sc_ec.ec_if)
-#define	GET_MII(sc)		(&(sc)->sc_mii)
-
-struct udav_chain {
-	struct udav_softc	*udav_sc;
-	struct usbd_xfer	*udav_xfer;
-	char			*udav_buf;
-	struct mbuf		*udav_mbuf;
-};
-
-struct udav_cdata {
-	struct udav_chain	udav_tx_chain[UDAV_TX_LIST_CNT];
-	struct udav_chain	udav_rx_chain[UDAV_TX_LIST_CNT];
-#if 0
-	/* XXX: Interrupt Endpoint is not yet supported! */
-	struct udav_intrpkg	udav_ibuf;
-#endif
-	int			udav_tx_prod;
-	int			udav_tx_cnt;
-};
-
-struct udav_softc {
-	device_t		sc_dev;	/* base device */
-	struct usbd_device *	sc_udev;
-
-	/* USB */
-	struct usbd_interface *	sc_ctl_iface;
-	/* int			sc_ctl_iface_no; */
-	int			sc_bulkin_no; /* bulk in endpoint */
-	int			sc_bulkout_no; /* bulk out endpoint */
-	int			sc_intrin_no; /* intr in endpoint */
-	struct usbd_pipe *	sc_pipe_rx;
-	struct usbd_pipe *	sc_pipe_tx;
-	struct usbd_pipe *	sc_pipe_intr;
-	struct callout		sc_stat_ch;
-	u_int			sc_rx_errs;
-	/* u_int		sc_intr_errs; */
-	struct timeval		sc_rx_notice;
-
-	/* Ethernet */
-	struct ethercom		sc_ec; /* ethernet common */
-	struct mii_data		sc_mii;
-	kmutex_t		sc_mii_lock;
-	int			sc_link;
-#define	sc_media udav_mii.mii_media
-	krndsource_t	rnd_source;
-	struct udav_cdata	sc_cdata;
-
-	int                     sc_attached;
-	int			sc_dying;
-	int                     sc_refcnt;
-
-	struct usb_task		sc_tick_task;
-	struct usb_task		sc_stop_task;
-
-	uint16_t		sc_flags;
-};
