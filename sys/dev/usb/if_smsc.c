@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.47 2019/08/07 07:05:54 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.48 2019/08/07 08:16:24 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.47 2019/08/07 07:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.48 2019/08/07 08:16:24 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1097,7 +1097,7 @@ if_smsc_modcmd(modcmd_t cmd, void *aux)
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_smsc,
-		    cfattach_ioconf_axen, cfdata_ioconf_smsc);
+		    cfattach_ioconf_smsc, cfdata_ioconf_smsc);
 #endif
 		return error;
 	default:
