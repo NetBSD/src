@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.159 2019/08/06 01:44:24 mrg Exp $
+#	$NetBSD: files.usb,v 1.160 2019/08/07 07:25:09 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -489,7 +489,7 @@ attach	upgt at usbdevif
 file	dev/usb/if_upgt.c		upgt
 
 # SMSC LAN95xx
-device	usmsc: arp, ether, ifnet, mii, mii_phy
+device	usmsc: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	usmsc at usbdevif
 file	dev/usb/if_smsc.c		usmsc
 
