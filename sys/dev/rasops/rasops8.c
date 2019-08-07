@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.47 2019/08/02 04:40:53 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.48 2019/08/07 11:47:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.47 2019/08/02 04:40:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.48 2019/08/07 11:47:33 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -54,6 +54,12 @@ static void 	rasops8_putchar16(void *, int, int, u_int, long);
 static void	rasops8_makestamp(struct rasops_info *ri, long);
 #endif
 
+#ifndef RASOPS_SMALL
+/* 4x1 stamp for optimized character blitting */
+static uint32_t			stamp[16];
+static long			stamp_attr;
+static struct rasops_info	*stamp_ri;
+
 /*
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
  * destination = STAMP_READ(offset)
@@ -61,6 +67,7 @@ static void	rasops8_makestamp(struct rasops_info *ri, long);
 #define	STAMP_SHIFT(fb, n)	((n) ? (fb) >> 2 : (fb) << 2)
 #define	STAMP_MASK		(0xf << 2)
 #define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
+#endif
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -101,7 +108,8 @@ rasops8_init(struct rasops_info *ri)
 	}
 
 #ifndef RASOPS_SMALL
-	rasops_allocstamp(ri, sizeof(uint32_t) * 16);
+	stamp_attr = 0;
+	stamp_ri = NULL;
 #endif
 }
 
@@ -115,13 +123,14 @@ rasops8_init(struct rasops_info *ri)
 static void
 rasops8_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t *stamp = (uint32_t *)ri->ri_stamp;
 	uint32_t fg, bg;
 	int i;
 
+	stamp_attr = attr;
+	stamp_ri = ri;
+
 	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xff;
 	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xff;
-	ri->ri_stamp_attr = attr;
 
 	for (i = 0; i < 16; i++) {
 #if BYTE_ORDER == BIG_ENDIAN
