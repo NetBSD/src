@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: automountd,v 1.1 2018/01/09 03:31:14 christos Exp $
+# $NetBSD: automountd,v 1.2 2019/08/07 19:30:00 nakayama Exp $
 #
 
 # PROVIDE: automountd
 # REQUIRE: DAEMON
 # KEYWORD: nojail
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="automountd"
 rcvar="autofs"
