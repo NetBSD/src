@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2019/06/12 06:20:20 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2019/08/07 10:08:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,6 @@
  */
 #include <machine/disklabel.h>
 
-#define	USE_SYSVBFS
 #define	PART_BOOT	(8*MEG)
 #define	PART_BOOT_TYPE	FS_SYSVBFS
 
