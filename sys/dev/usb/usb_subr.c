@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.236 2019/07/31 19:40:59 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.237 2019/08/07 08:47:09 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.236 2019/07/31 19:40:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.237 2019/08/07 08:47:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -359,29 +359,41 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
-	usb_interface_descriptor_t *d;
+	usb_descriptor_t *desc;
+	usb_interface_descriptor_t *idesc;
 	int curidx, lastidx, curaidx = 0;
 
 	for (curidx = lastidx = -1; p < end; ) {
-		d = (usb_interface_descriptor_t *)p;
+		desc = (usb_descriptor_t *)p;
+
 		DPRINTFN(4, "idx=%jd(%jd) altidx=%jd(%jd)", ifaceidx, curidx,
 		    altidx, curaidx);
-		DPRINTFN(4, "len=%jd type=%jd", d->bLength, d->bDescriptorType,
-		    0, 0);
-		if (d->bLength == 0)
-			break; /* bad descriptor */
-		p += d->bLength;
-		if (p <= end && d->bDescriptorType == UDESC_INTERFACE) {
-			if (d->bInterfaceNumber != lastidx) {
-				lastidx = d->bInterfaceNumber;
-				curidx++;
-				curaidx = 0;
-			} else
-				curaidx++;
-			if (ifaceidx == curidx && altidx == curaidx)
-				return d;
+		DPRINTFN(4, "len=%jd type=%jd", desc->bLength,
+		    desc->bDescriptorType, 0, 0);
+
+		if (desc->bLength < USB_DESCRIPTOR_SIZE)
+			break;
+		p += desc->bLength;
+		if (p > end)
+			break;
+
+		if (desc->bDescriptorType != UDESC_INTERFACE)
+			continue;
+		idesc = (usb_interface_descriptor_t *)desc;
+		if (idesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE)
+			break;
+
+		if (idesc->bInterfaceNumber != lastidx) {
+			lastidx = idesc->bInterfaceNumber;
+			curidx++;
+			curaidx = 0;
+		} else {
+			curaidx++;
 		}
+		if (ifaceidx == curidx && altidx == curaidx)
+			return idesc;
 	}
+
 	return NULL;
 }
 
@@ -391,29 +403,39 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 {
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
-	usb_interface_descriptor_t *d;
-	usb_endpoint_descriptor_t *e;
+	usb_interface_descriptor_t *idesc;
+	usb_endpoint_descriptor_t *edesc;
+	usb_descriptor_t *desc;
 	int curidx;
 
-	d = usbd_find_idesc(cd, ifaceidx, altidx);
-	if (d == NULL)
+	idesc = usbd_find_idesc(cd, ifaceidx, altidx);
+	if (idesc == NULL)
 		return NULL;
-	if (endptidx >= d->bNumEndpoints) /* quick exit */
+	if (endptidx >= idesc->bNumEndpoints) /* quick exit */
 		return NULL;
 
 	curidx = -1;
-	for (p = (char *)d + d->bLength; p < end; ) {
-		e = (usb_endpoint_descriptor_t *)p;
-		if (e->bLength == 0)
-			break; /* bad descriptor */
-		p += e->bLength;
-		if (p <= end && e->bDescriptorType == UDESC_INTERFACE)
-			return NULL;
-		if (p <= end && e->bDescriptorType == UDESC_ENDPOINT) {
-			curidx++;
-			if (curidx == endptidx)
-				return e;
-		}
+	for (p = (char *)idesc + idesc->bLength; p < end; ) {
+		desc = (usb_descriptor_t *)p;
+
+		if (desc->bLength < USB_DESCRIPTOR_SIZE)
+			break;
+		p += desc->bLength;
+		if (p > end)
+			break;
+
+		if (desc->bDescriptorType == UDESC_INTERFACE)
+			break;
+		if (desc->bDescriptorType != UDESC_ENDPOINT)
+			continue;
+
+		edesc = (usb_endpoint_descriptor_t *)desc;
+		if (edesc->bLength < USB_ENDPOINT_DESCRIPTOR_SIZE)
+			break;
+
+		curidx++;
+		if (curidx == endptidx)
+			return edesc;
 	}
 	return NULL;
 }
