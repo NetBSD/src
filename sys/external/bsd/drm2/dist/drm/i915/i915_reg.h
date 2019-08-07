@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.9 2019/08/05 13:28:31 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.10 2019/08/07 14:58:04 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -2032,7 +2032,7 @@ enum skl_disp_power_wells {
 #define FBC_CFB_BASE		0x03200 /* 4k page aligned */
 #define FBC_LL_BASE		0x03204 /* 4k page aligned */
 #define FBC_CONTROL		0x03208
-#define   FBC_CTL_EN		(1<<31)
+#define   FBC_CTL_EN		__BIT(31)
 #define   FBC_CTL_PERIODIC	(1<<30)
 #define   FBC_CTL_INTERVAL_SHIFT (16)
 #define   FBC_CTL_UNCOMPRESSIBLE (1<<14)
@@ -3540,7 +3540,7 @@ enum skl_disp_power_wells {
 
 /* Panel fitting */
 #define PFIT_CONTROL	(dev_priv->info.display_mmio_offset + 0x61230)
-#define   PFIT_ENABLE		(1 << 31)
+#define   PFIT_ENABLE		__BIT(31)
 #define   PFIT_PIPE_MASK	(3 << 29)
 #define   PFIT_PIPE_SHIFT	29
 #define   VERT_INTERP_DISABLE	(0 << 10)
@@ -4583,7 +4583,7 @@ enum skl_disp_power_wells {
 /* pnv/gen4/g4x/vlv/chv */
 #define DSPFW1			(dev_priv->info.display_mmio_offset + 0x70034)
 #define   DSPFW_SR_SHIFT		23
-#define   DSPFW_SR_MASK			(0x1ff<<23)
+#define   DSPFW_SR_MASK			(0x1ffU<<23)
 #define   DSPFW_CURSORB_SHIFT		16
 #define   DSPFW_CURSORB_MASK		(0x3f<<16)
 #define   DSPFW_PLANEB_SHIFT		8

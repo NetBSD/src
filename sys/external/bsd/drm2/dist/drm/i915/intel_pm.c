@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.18 2019/08/05 10:14:19 msaitoh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.19 2019/08/07 14:58:04 msaitoh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.18 2019/08/05 10:14:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.19 2019/08/07 14:58:04 msaitoh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -289,7 +289,7 @@ static void chv_set_memory_pm5(struct drm_i915_private *dev_priv, bool enable)
 }
 
 #define FW_WM(value, plane) \
-	(((value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK)
+	(((u32)(value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK)
 
 void intel_set_memory_cxsr(struct drm_i915_private *dev_priv, bool enable)
 {
