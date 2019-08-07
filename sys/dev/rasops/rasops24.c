@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.46 2019/08/02 23:24:37 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.47 2019/08/07 11:47:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.46 2019/08/02 23:24:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.47 2019/08/07 11:47:33 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -62,6 +62,12 @@ static void 	rasops24_putchar16(void *, int, int, u_int, long);
 static void	rasops24_makestamp(struct rasops_info *, long);
 #endif
 
+#ifndef RASOPS_SMALL
+/* 4x1 stamp for optimized character blitting */
+static uint32_t			stamp[64];
+static long			stamp_attr;
+static struct rasops_info	*stamp_ri;
+
 /*
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
  * destination uint32_t[0] = STAMP_READ(offset)
@@ -71,6 +77,7 @@ static void	rasops24_makestamp(struct rasops_info *, long);
 #define	STAMP_SHIFT(fb, n)	((n) ? (fb) : (fb) << 4)
 #define	STAMP_MASK		(0xf << 4)
 #define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
+#endif
 
 /*
  * Initialize rasops_info struct for this colordepth.
@@ -113,7 +120,8 @@ rasops24_init(struct rasops_info *ri)
 	}
 
 #ifndef RASOPS_SMALL
-	rasops_allocstamp(ri, sizeof(uint32_t) * 64);
+	stamp_attr = 0;
+	stamp_ri = NULL;
 #endif
 }
 
@@ -121,13 +129,13 @@ rasops24_init(struct rasops_info *ri)
 #include "rasops_putchar_aa.h"
 
 static __inline void
-rasops24_makestamp1(struct rasops_info *ri, uint32_t *stamp,
+rasops24_makestamp1(struct rasops_info *ri, uint32_t *xstamp,
     uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4)
 {
 
-	stamp[0] = (c1 <<  8) | (c2 >> 16);
-	stamp[1] = (c2 << 16) | (c3 >>  8);
-	stamp[2] = (c3 << 24) |  c4;
+	xstamp[0] = (c1 <<  8) | (c2 >> 16);
+	xstamp[1] = (c2 << 16) | (c3 >>  8);
+	xstamp[2] = (c3 << 24) |  c4;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if ((ri->ri_flg & RI_BSWAP) == 0)
@@ -135,9 +143,9 @@ rasops24_makestamp1(struct rasops_info *ri, uint32_t *stamp,
 	if ((ri->ri_flg & RI_BSWAP) != 0)
 #endif
 	{
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
+		xstamp[0] = bswap32(xstamp[0]);
+		xstamp[1] = bswap32(xstamp[1]);
+		xstamp[2] = bswap32(xstamp[2]);
 	}
 }
 
@@ -148,13 +156,14 @@ rasops24_makestamp1(struct rasops_info *ri, uint32_t *stamp,
 static void
 rasops24_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t *stamp = (uint32_t *)ri->ri_stamp;
 	uint32_t fg, bg, c1, c2, c3, c4;
 	int i;
 
+	stamp_attr = attr;
+	stamp_ri = ri;
+
 	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffffff;
 	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	ri->ri_stamp_attr = attr;
 
 	for (i = 0; i < 64; i += 4) {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -193,9 +202,8 @@ static void
 rasops24_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	uint32_t *buf = (uint32_t *)ri->ri_buf;
 	int full, slop, cnt, stride;
-	uint32_t *rp, *dp, *hp, clr, stamp[3];
+	uint32_t *rp, *dp, *hp, clr, xstamp[3];
 
 	hp = NULL;	/* XXX GCC */
 
@@ -222,7 +230,7 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 #endif
 
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	rasops24_makestamp1(ri, stamp, clr, clr, clr, clr);
+	rasops24_makestamp1(ri, xstamp, clr, clr, clr, clr);
 
 	/*
 	 * XXX the wsdisplay_emulops interface seems a little deficient in
@@ -247,25 +255,23 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 	full = stride / (4 * 3);
 	slop = (stride - full * (4 * 3)) / 4;
 
-	dp = buf;
-
-	for (cnt = full; cnt; cnt--) {
-		dp[0] = stamp[0];
-		dp[1] = stamp[1];
-		dp[2] = stamp[2];
-		dp += 3;
-	}
-
-	for (cnt = 0; cnt < slop; cnt++)
-		*dp++ = stamp[cnt];
-
 	while (num--) {
-		memcpy(rp, buf, stride);
-		DELTA(rp, ri->ri_stride, uint32_t *);
+		dp = rp;
+		for (cnt = full; cnt; cnt--) {
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
+			dp += 3;
+		}
+		for (cnt = 0; cnt < slop; cnt++)
+			*dp++ = xstamp[cnt];
+
 		if (ri->ri_hwbits) {
-			memcpy(hp, buf, stride);
+			memcpy(hp, rp, stride);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
+
+		DELTA(rp, ri->ri_stride, uint32_t *);
 	}
 }
 
@@ -276,9 +282,8 @@ static void
 rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	void *buf = ri->ri_buf;
-	int height, cnt, clr, stamp[3];
-	uint32_t *dp;
+	int height, cnt, slop1, slop2, full;
+	uint32_t clr, xstamp[3], *dp;
 	uint8_t *rp, *hp, *dbp;
 
 	hp = NULL;	/* XXX GCC */
@@ -313,37 +318,62 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	if (ri->ri_hwbits)
 		hp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
 
-	num *= ri->ri_font->fontwidth;
+	num *= ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	rasops24_makestamp1(ri, stamp, clr, clr, clr, clr);
+	rasops24_makestamp1(ri, xstamp, clr, clr, clr, clr);
 
-	/* 4 pels per loop */
-	dp = (uint32_t *)buf;
-	for (cnt = num >> 2; cnt; cnt--) {
-		dp[0] = stamp[0];
-		dp[1] = stamp[1];
-		dp[2] = stamp[2];
-		dp += 3;
-	}
-
-	/* Trailing slop */
-	dbp = (uint8_t *)dp;
-	for (cnt = num & 3; cnt; cnt--) {
-		*dbp++ = (clr >> 16);
-		*dbp++ = (clr >> 8);
-		*dbp++ =  clr;
-	}
-
-	num *= 3;
+	/*
+	 * Align to word boundary by 24-bit-wise operations:
+	 *
+	 * rp % 4 == 1 ---> slop1 = 3:
+	 *	0123
+	 *	-RGB
+	 *
+	 * rp % 4 == 2 ---> slop1 = 6:
+	 *	0123 0123
+	 *	--RG BRGB
+	 *
+	 * rp % 4 == 3 ---> slop1 = 9:
+	 *	0123 0123 0123
+	 *	---R GBRG BRGB
+	 */
+	slop1 = 3 * ((uintptr_t)rp % 4);
+	slop2 = (num - slop1) % 12;
+	full = (num - slop1 /* - slop2 */) / 12;
 
 	while (height--) {
-		memcpy(rp, buf, num);
-		rp += ri->ri_stride;
+		/* Align to word boundary */
+		dbp = rp;
+		for (cnt = slop1; cnt; cnt -= 3) {
+			*dbp++ = (clr >> 16);
+			*dbp++ = (clr >> 8);
+			*dbp++ = clr;
+		}
+
+		/* 4 pels per loop */
+		dp = (uint32_t *)dbp;
+		for (cnt = full; cnt; cnt--) {
+			dp[0] = xstamp[0];
+			dp[1] = xstamp[1];
+			dp[2] = xstamp[2];
+			dp += 3;
+		}
+
+		/* Trailing slop */
+		dbp = (uint8_t *)dp;
+		for (cnt = slop2; cnt; cnt -= 3) {
+			*dbp++ = (clr >> 16);
+			*dbp++ = (clr >> 8);
+			*dbp++ = clr;
+		}
+
 		if (ri->ri_hwbits) {
-			memcpy(hp, buf, num);
+			memcpy(hp, rp, num);
 			hp += ri->ri_stride;
 		}
+
+		rp += ri->ri_stride;
 	}
 }

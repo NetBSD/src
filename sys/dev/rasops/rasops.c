@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.114 2019/08/07 11:08:44 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.115 2019/08/07 11:47:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.114 2019/08/07 11:08:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.115 2019/08/07 11:47:33 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -508,21 +508,6 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
-
-	if (ri->ri_buf != NULL) {
-		kmem_free(ri->ri_buf, ri->ri_buflen);
-		ri->ri_buf = NULL;
-	}
-	len = (ri->ri_flg & RI_FULLCLEAR) ? ri->ri_stride : ri->ri_emustride;
-	ri->ri_buflen = len;
-	ri->ri_buf = kmem_alloc(len, KM_SLEEP);
-
-#ifndef RASOPS_SMALL
-	if (ri->ri_stamp != NULL) {
-		kmem_free(ri->ri_stamp, ri->ri_stamp_len);
-		ri->ri_stamp = NULL;
-	}
-#endif
 
 	switch (ri->ri_depth) {
 #if NRASOPS1 > 0
@@ -1004,9 +989,8 @@ void
 rasops_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	uint32_t *buf = (uint32_t *)ri->ri_buf;
 	uint32_t *rp, *hp, clr;
-	int stride, cnt;
+	int stride;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -1045,13 +1029,10 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 			hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale);
 	}
 
-	for (cnt = 0; cnt < stride >> 2; cnt++)
-		buf[cnt] = clr;
-
 	while (num--) {
-		memcpy(rp, buf, stride);
+		rasops_memset32(rp, clr, stride);
 		if (ri->ri_hwbits) {
-			memcpy(hp, buf, stride);
+			memcpy(hp, rp, stride);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
 		DELTA(rp, ri->ri_stride, uint32_t *);
@@ -1166,9 +1147,8 @@ void
 rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	uint32_t *buf = ri->ri_buf;
-	int height, cnt, clr;
-	uint32_t *dp, *rp, *hp;
+	int height, clr;
+	uint32_t *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -1196,25 +1176,13 @@ rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 	height = ri->ri_font->fontheight;
 	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
 
-	dp = buf;
-
-	/* Write 4 bytes per loop */
-	for (cnt = num >> 2; cnt; cnt--)
-		*dp++ = clr;
-
-	/* Write unaligned trailing slop */
-	for (cnt = num & 3; cnt; cnt--) {
-		*(uint8_t *)dp = clr;
-		DELTA(dp, 1, uint32_t *);
-	}
-
 	while (height--) {
-		memcpy(rp, buf, num);
-		DELTA(rp, ri->ri_stride, uint32_t *);
+		rasops_memset32(rp, clr, num);
 		if (ri->ri_hwbits) {
-			memcpy(hp, buf, num);
+			memcpy(hp, rp, num);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
+		DELTA(rp, ri->ri_stride, uint32_t *);
 	}
 }
 
@@ -1689,15 +1657,3 @@ rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
 		memcpy(palette, rasops_cmap, uimin(bytes, sizeof(rasops_cmap)));
 	return 0;
 }
-
-#ifndef RASOPS_SMALL
-void
-rasops_allocstamp(struct rasops_info *ri, size_t len)
-{
-
-	KASSERT(ri->ri_stamp == NULL);
-	ri->ri_stamp_len = len;
-	ri->ri_stamp = kmem_zalloc(len, KM_SLEEP);
-	ri->ri_stamp_attr = 0;
-}
-#endif

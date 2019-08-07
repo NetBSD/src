@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.43 2019/08/03 06:29:52 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.44 2019/08/07 11:47:33 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -191,13 +191,50 @@ void	rasops15_init(struct rasops_info *);
 void	rasops24_init(struct rasops_info *);
 void	rasops32_init(struct rasops_info *);
 
-void	rasops_allocstamp(struct rasops_info *, size_t);
-
 #define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
 
 #define	FONT_GLYPH(uc, font, ri)					\
 	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
 	    (ri)->ri_fontscale)
+
+static __inline void
+rasops_memset32(void *p, uint32_t val, size_t bytes)
+{
+	int slop1, slop2, full;
+	uint8_t *dp = (uint8_t *)p;
+
+	if (bytes == 1) {
+		*dp = val;
+		return;
+	}
+
+	slop1 = (4 - ((uintptr_t)dp & 3)) & 3;
+	slop2 = (bytes - slop1) & 3;
+	full = (bytes - slop1 /* - slop2 */) >> 2;
+
+	if (slop1 & 1)
+		*dp++ = val;
+
+	if (slop1 & 2) {
+		*(uint16_t *)dp = val;
+		dp += 2;
+	}
+
+	for (; full; full--) {
+		*(uint32_t *)dp = val;
+		dp += 4;
+	}
+
+	if (slop2 & 2) {
+		*(uint16_t *)dp = val;
+		dp += 2;
+	}
+
+	if (slop2 & 1)
+		*dp = val;
+
+	return;
+}
 
 static __inline uint32_t
 be32uatoh(uint8_t *p)
