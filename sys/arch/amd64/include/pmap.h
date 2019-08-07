@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.62 2019/08/07 06:23:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -175,6 +175,7 @@ extern pt_entry_t *pte_base;
 #define PG_X		PTE_X
 
 void svs_pmap_sync(struct pmap *, int);
+void svs_ldt_sync(struct pmap *);
 void svs_lwp_switch(struct lwp *, struct lwp *);
 void svs_pdir_switch(struct pmap *);
 void svs_init(void);
