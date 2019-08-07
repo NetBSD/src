@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.7 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.8 2019/08/07 01:47:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.7 2019/08/07 00:38:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.8 2019/08/07 01:47:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -633,7 +633,7 @@ usbnet_init_rx_tx(struct usbnet * const un, unsigned rxflags, unsigned txflags)
 	usbnet_rx_start_pipes(un, usbnet_rxeof);
 
 	/* Indicate we are up and running. */
-	KASSERT(IFNET_LOCKED(ifp));
+	KASSERT(ifp->if_softc == NULL || IFNET_LOCKED(ifp));
 	ifp->if_flags |= IFF_RUNNING;
 
 	callout_schedule(&un->un_stat_ch, hz);
@@ -1055,11 +1055,6 @@ usbnet_attach_mii(struct usbnet *un, int mii_flags)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, un->un_udev, un->un_dev);
-
-	if (!pmf_device_register(un->un_dev, NULL, NULL))
-		aprint_error_dev(un->un_dev, "couldn't establish power handler\n");
 }
 
 void
@@ -1107,6 +1102,11 @@ usbnet_attach_ifp(struct usbnet *un,
 		if_alloc_sadl(ifp);
 		bpf_attach(ifp, DLT_RAW, 0);
 	}
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, un->un_udev, un->un_dev);
+
+	if (!pmf_device_register(un->un_dev, NULL, NULL))
+		aprint_error_dev(un->un_dev, "couldn't establish power handler\n");
 }
 
 int
