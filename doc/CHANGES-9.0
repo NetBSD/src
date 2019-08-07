@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.8 2019/08/07 08:29:46 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.9 2019/08/07 10:20:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -308,4 +308,15 @@ sys/net/npf/npf_conn.h				1.17
 	- npf_conn_init(): fix a race when initialising the G/C thread.
 	- Fix a bug when partially initialised connection is destroyed on error.
 	[rmind, ticket #25]
+
+etc/Makefile					1.439
+
+	PR kern/53590: remove -U DEBUG from config(1) invocation, provide
+	full symbol information for DTrace.
+	[hannken, ticket #26]
+
+sys/arch/aarch64/aarch64/trap.c			1.18
+
+	trap_el0_32sync: add missing break to ESR_EC_FP_TRAP_A32 case.
+	[jmcneill, ticket #27]
 
