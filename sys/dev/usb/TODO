@@ -70,13 +70,13 @@ Factor out the common code from the Ethernet drivers and reuse that.
 	if_cue
 	if_kue
 	if_mue
-	if_smsc 
+	if_smsc - done
 	if_udav
 	if_umb - maybe too special?
 	if_upl
 	if_ure - done
 	if_url
-	if_urndis  
+	if_urndis
 
 Get rid of hcpriv.
 
