@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.22 2019/08/07 19:16:36 wiz Exp $
+.\"	$NetBSD: sysctl.9,v 1.23 2019/08/07 19:58:50 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -564,7 +564,7 @@ The address of the function is added to a list of functions that
 .Fn sysctl_init
 traverses during initialization.
 For loadable kernel modules (see
-.Xr module 7 ) ,
+.Xr module 9 ) ,
 the list of functions is called from the module loader after the module's
 initialization routine.
 Any sysctl nodes created for the loadable module are removed using
