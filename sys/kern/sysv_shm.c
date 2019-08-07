@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.136 2019/08/06 15:48:06 riastradh Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.136 2019/08/06 15:48:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -933,7 +933,7 @@ shmrealloc(int newshmni)
 }
 
 int
-shminit(struct sysctllog **clog)
+shminit(void)
 {
 	vaddr_t v;
 	size_t sz;
@@ -978,10 +978,6 @@ shminit(struct sysctllog **clog)
 	uvm_shmexit = shmexit;
 	uvm_shmfork = shmfork;
 
-#ifdef _MODULE
-	if (clog)
-		sysctl_ipc_shm_setup(clog);
-#endif
 	return 0;
 }
 
