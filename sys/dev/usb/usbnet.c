@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.6 2019/08/06 01:42:22 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.7 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.6 2019/08/06 01:42:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.7 2019/08/07 00:38:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1207,18 +1207,8 @@ usbnet_modcmd(modcmd_t cmd, void *arg)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
-# if defined(USB_DEBUG) && defined(USBNET_DEBUG)
-		sysctl_hw_usbnet_setup(&usbnet_clog);
-# endif
-#endif
 		return 0;
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
-# if defined(USB_DEBUG) && defined(USBNET_DEBUG)
-		sysctl_teardown(&usbnet_clog);
-# endif
-#endif
 		return 0;
 	case MODULE_CMD_STAT:
 	case MODULE_CMD_AUTOUNLOAD:
