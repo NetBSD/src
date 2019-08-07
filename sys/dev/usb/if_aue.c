@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.155 2019/08/01 00:10:22 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.156 2019/08/07 06:31:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.155 2019/08/01 00:10:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.156 2019/08/07 06:31:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -587,6 +587,7 @@ aue_setmulti(struct aue_softc *sc)
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	uint32_t		h = 0, i;
+	uint8_t hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
@@ -601,10 +602,6 @@ allmulti:
 
 	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
 
-	/* first, zot all the existing hash bits */
-	for (i = 0; i < 8; i++)
-		aue_csr_write_1(sc, AUE_MAR0 + i, 0);
-
 	/* now program new ones */
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
@@ -616,10 +613,14 @@ allmulti:
 		}
 
 		h = aue_crc(enm->enm_addrlo);
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
+		hashtbl[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
+
+	/* write the hashtable */
+	for (i = 0; i < 8; i++)
+		aue_csr_write_1(sc, AUE_MAR0 + i, hashtbl[i]);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
