@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.17 2019/04/06 03:06:24 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.17.4.1 2019/08/07 10:19:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.17 2019/04/06 03:06:24 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.17.4.1 2019/08/07 10:19:54 martin Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -355,6 +355,7 @@ trap_el0_32sync(struct trapframe *tf)
 	case ESR_EC_FP_TRAP_A32:
 		do_trapsignal(l, SIGFPE, FPE_FLTUND, NULL, esr); /* XXX */
 		userret(l);
+		break;
 
 	case ESR_EC_PC_ALIGNMENT:
 		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
