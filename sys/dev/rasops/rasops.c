@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.115 2019/08/07 11:47:33 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.116 2019/08/07 11:57:40 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.115 2019/08/07 11:47:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.116 2019/08/07 11:57:40 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -442,8 +442,12 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_hworigbits = ri->ri_hwbits;
 
 	/* Clear the entire display */
-	if ((ri->ri_flg & RI_CLEAR) != 0)
-		memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
+	if ((ri->ri_flg & RI_CLEAR) != 0) {
+		rasops_memset32(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
+		if (ri->ri_hwbits)
+			rasops_memset32(ri->ri_hwbits, 0,
+			    ri->ri_stride * ri->ri_height);
+	}
 
 	/* Now centre our window if needs be */
 	if ((ri->ri_flg & RI_CENTER) != 0) {
