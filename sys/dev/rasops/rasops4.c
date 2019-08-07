@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.25 2019/08/07 11:47:33 rin Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.26 2019/08/07 12:36:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.25 2019/08/07 11:47:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.26 2019/08/07 12:36:36 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -163,4 +163,7 @@ rasops4_makestamp(struct rasops_info *ri, long attr)
 /*
  * Grab routines common to depths where (bpp < 8)
  */
+#undef	RASOPS_AA
+#include "rasops1-4_putchar.h"
+
 #include <dev/rasops/rasops_bitops.h>

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.30 2019/08/07 11:47:33 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.31 2019/08/07 12:36:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.30 2019/08/07 11:47:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.31 2019/08/07 12:36:36 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -51,6 +51,7 @@ static void	rasops2_copycols(void *, int, int, int, int);
 static void	rasops2_erasecols(void *, int, int, int, long);
 static void	rasops2_do_cursor(struct rasops_info *);
 static void	rasops2_putchar(void *, int, int col, u_int, long);
+static void	rasops2_putchar_aa(void *, int, int col, u_int, long);
 #ifndef RASOPS_SMALL
 static void	rasops2_putchar8(void *, int, int col, u_int, long);
 static void	rasops2_putchar12(void *, int, int col, u_int, long);
@@ -84,6 +85,11 @@ rasops2_init(struct rasops_info *ri)
 		ri->ri_ops.erasecols = rasops2_erasecols;
 		ri->ri_ops.copycols = rasops2_copycols;
 		ri->ri_do_cursor = rasops2_do_cursor;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = rasops2_putchar_aa;
+		return;
 	}
 
 	switch (ri->ri_font->fontwidth) {
@@ -163,4 +169,11 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 /*
  * Grab routines common to depths where (bpp < 8)
  */
+#undef	RASOPS_AA
+#include "rasops1-4_putchar.h"
+
+#define	RASOPS_AA
+#include "rasops1-4_putchar.h"
+#undef	RASOPS_AA
+
 #include <dev/rasops/rasops_bitops.h>
