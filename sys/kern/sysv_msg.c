@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.74 2019/04/10 10:03:50 pgoyette Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.75 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.74 2019/04/10 10:03:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.75 2019/08/07 00:38:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -94,7 +94,7 @@ extern int kern_has_sysvmsg;
 SYSCTL_SETUP_PROTO(sysctl_ipc_msg_setup);
 
 int
-msginit(struct sysctllog **clog)
+msginit(void)
 {
 	int i, sz;
 	vaddr_t v;
@@ -167,10 +167,6 @@ msginit(struct sysctllog **clog)
 
 	kern_has_sysvmsg = 1;
 
-#ifdef _MODULE
-	if (clog)
-		sysctl_ipc_msg_setup(clog);
-#endif
 	return 0;
 }
 
