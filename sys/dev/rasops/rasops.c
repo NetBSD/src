@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.113 2019/08/07 11:03:14 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.114 2019/08/07 11:08:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.113 2019/08/07 11:03:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.114 2019/08/07 11:08:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.113 2019/08/07 11:03:14 rin Exp $");
 
 #define	_RASOPS_PRIVATE
 #include <dev/rasops/rasops.h>
+#include <dev/rasops/rasops_masks.h>	/* XXX for MBE */
 
 #ifndef _KERNEL
 #include <errno.h>
@@ -71,6 +72,16 @@ struct rasops_matchdata {
 	struct wsdisplay_font *pick;
 	int ident;
 };	
+
+static const uint32_t rasops_lmask32[4 + 1] = {
+	MBE(0x00000000), MBE(0x00ffffff), MBE(0x0000ffff), MBE(0x000000ff),
+	MBE(0x00000000),
+};
+
+static const uint32_t rasops_rmask32[4 + 1] = {
+	MBE(0x00000000), MBE(0xff000000), MBE(0xffff0000), MBE(0xffffff00),
+	MBE(0xffffffff),
+};
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
 const uint8_t rasops_cmap[256 * 3] = {
@@ -1055,9 +1066,8 @@ static void
 rasops_do_cursor(struct rasops_info *ri)
 {
 	int full, height, cnt, slop1, slop2, row, col;
-	uint32_t tmp32, msk1, msk2;
-	uint8_t tmp8;
-	uint8_t *dp, *rp, *hp;
+	uint32_t mask1, mask2, *dp;
+	uint8_t tmp8, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -1121,28 +1131,24 @@ rasops_do_cursor(struct rasops_info *ri)
 	rp = (uint8_t *)((uintptr_t)rp & ~3);
 	hp = (uint8_t *)((uintptr_t)hp & ~3);
 
-	msk1 = !slop1 ? 0 : be32toh(0xffffffffU >> (32 - (8 * slop1)));
-	msk2 = !slop2 ? 0 : be32toh(0xffffffffU << (32 - (8 * slop2)));
+	mask1 = rasops_lmask32[4 - slop1];
+	mask2 = rasops_rmask32[slop2];
 
 	while (height--) {
-		dp = rp;
+		dp = (uint32_t *)rp;
 
 		if (slop1) {
-			tmp32 = *(uint32_t *)dp ^ msk1;
-			*(uint32_t *)dp = tmp32;
-			dp += 4;
+			*dp = *dp ^ mask1;
+			dp++;
 		}
 
 		for (cnt = full; cnt; cnt--) {
-			tmp32 = ~*(uint32_t *)dp;
-			*(uint32_t *)dp = tmp32;
-			dp += 4;
+			*dp = ~*(uint32_t *)dp;
+			dp++;
 		}
 
-		if (slop2) {
-			tmp32 = *(uint32_t *)dp ^ msk2;
-			*(uint32_t *)dp = tmp32;
-		}
+		if (slop2)
+			*dp = *dp ^ mask2;
 
 		if (ri->ri_hwbits) {
 			memcpy(hp, rp, ((slop1 != 0) + full +
