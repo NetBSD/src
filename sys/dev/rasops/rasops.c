@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.109 2019/08/07 10:51:57 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.110 2019/08/07 10:53:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.109 2019/08/07 10:51:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.110 2019/08/07 10:53:41 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -446,9 +446,9 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 			xoff &= ~3;
 		} else {
 			/*
-			 * Truncate to word and 24-bit color boundary.
+			 * Truncate to both word and 24-bit color boundary.
 			 */
-			xoff = (xoff / (4 * 3)) * (4 * 3);
+			xoff -= xoff % 12;
 		}
 
 		yoff = ((ri->ri_height - ri->ri_emuheight) >> 1) *
