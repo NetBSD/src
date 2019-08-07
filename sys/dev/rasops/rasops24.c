@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.47 2019/08/07 11:47:33 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.48 2019/08/07 12:33:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.47 2019/08/07 11:47:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.48 2019/08/07 12:33:48 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -125,8 +125,12 @@ rasops24_init(struct rasops_info *ri)
 #endif
 }
 
+#undef	RASOPS_AA
 #include "rasops_putchar.h"
-#include "rasops_putchar_aa.h"
+
+#define	RASOPS_AA
+#include "rasops_putchar.h"
+#undef	RASOPS_AA
 
 static __inline void
 rasops24_makestamp1(struct rasops_info *ri, uint32_t *xstamp,
