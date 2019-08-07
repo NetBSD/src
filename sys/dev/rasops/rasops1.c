@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.34 2019/08/02 04:39:09 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.35 2019/08/07 12:27:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.34 2019/08/02 04:39:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.35 2019/08/07 12:27:49 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -170,12 +170,18 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 		/* Do underline */
 		if ((attr & WSATTR_UNDERLINE) != 0) {
-			DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-			tmp = (*rp & lmask) | (fg & rmask);
-			*rp = tmp;
-			if (ri->ri_hwbits) {
-				DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
-				*hp = tmp;
+			DELTA(rp, - ri->ri_stride * ri->ri_ul.off, uint32_t *);
+			if (ri->ri_hwbits)
+				DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
+				    uint32_t *);
+			for (height = ri->ri_ul.height; height; height--) {
+				DELTA(rp, - ri->ri_stride, uint32_t *);
+				tmp = (*rp & lmask) | (fg & rmask);
+				*rp = tmp;
+				if (ri->ri_hwbits) {
+					DELTA(hp, - ri->ri_stride, uint32_t *);
+					*hp = tmp;
+				}
 			}
 		}
 	} else {
@@ -223,15 +229,21 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 		/* Do underline */
 		if ((attr & WSATTR_UNDERLINE) != 0) {
-			DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-			tmp0 = (rp[0] & lmask) | (fg & ~lmask);
-			tmp1 = (rp[1] & rmask) | (fg & ~rmask);
-			rp[0] = tmp0;
-			rp[1] = tmp1;
-			if (ri->ri_hwbits) {
-				DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
-				hp[0] = tmp0;
-				hp[1] = tmp1;
+			DELTA(rp, - ri->ri_stride * ri->ri_ul.off, uint32_t *);
+			if (ri->ri_hwbits)
+				DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
+				    uint32_t *);
+			for (height = ri->ri_ul.height; height; height--) {
+				DELTA(rp, - ri->ri_stride, uint32_t *);
+				tmp0 = (rp[0] & lmask) | (fg & ~lmask);
+				tmp1 = (rp[1] & rmask) | (fg & ~rmask);
+				rp[0] = tmp0;
+				rp[1] = tmp1;
+				if (ri->ri_hwbits) {
+					DELTA(hp, - ri->ri_stride, uint32_t *);
+					hp[0] = tmp0;
+					hp[1] = tmp1;
+				}
 			}
 		}
 	}
