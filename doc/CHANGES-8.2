@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.20 2019/08/06 18:22:57 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.21 2019/08/07 08:22:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -533,4 +533,9 @@ sys/dev/pci/if_et.c				1.23,1.25 and 1.26 via patch
 	- Avoid undefined behavior when reset the chip.
 	- Code cleanup.
 	[msaitoh, ticket #1329]
+
+sys/kern/uipc_socket2.c				1.134
+
+	Fix kernel heap info leaks in sys_recvmsg().
+	[maxv, ticket #1330]
 
