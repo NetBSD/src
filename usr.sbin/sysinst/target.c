@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.9 2019/08/01 16:32:06 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.10 2019/08/07 10:08:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.9 2019/08/01 16:32:06 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.10 2019/08/07 10:08:04 martin Exp $");
 #endif
 
 /*
@@ -484,6 +484,28 @@ target_mount_do(const char *opts, const char *from, const char *on)
 	unwind_mountlist = m;
 	return 0;
 }
+
+/*
+ * Special case - we have mounted the target / readonly
+ * to peek at etc/fstab, and now want it undone.
+ */
+void
+umount_root(void)
+{
+
+	/* verify this is the only mount */
+	if (unwind_mountlist == NULL)
+		return;
+	if (unwind_mountlist->um_prev != NULL)
+		return;
+
+	if (run_program(0, "/sbin/umount %s", target_prefix()) != 0)
+		return;
+
+	free(unwind_mountlist);
+	unwind_mountlist = NULL;
+}
+
 
 int
 target_mount(const char *opts, const char *from, const char *on)
