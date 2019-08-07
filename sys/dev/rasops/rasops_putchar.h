@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.5 2019/07/30 15:29:40 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.6 2019/08/07 12:33:48 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -35,9 +35,6 @@
 #error "Depth not supported"
 #endif
 
-#define PUTCHAR(depth)	PUTCHAR1(depth)
-#define PUTCHAR1(depth)	rasops ## depth ## _putchar
-
 #if   RASOPS_DEPTH == 8
 #define	COLOR_TYPE		uint8_t
 #elif RASOPS_DEPTH ==  15
@@ -47,15 +44,17 @@
 #endif
 
 #if RASOPS_DEPTH != 24
-#define	PIXEL_BYTES		sizeof(COLOR_TYPE)
-#define	SET_PIXEL(p, index)						\
-	do {								\
-		*(COLOR_TYPE *)(p) = clr[index];			\
-		(p) += sizeof(COLOR_TYPE);				\
-	} while (0 /* CONSTCOND */)
+#define	PIXEL_TYPE		COLOR_TYPE
+#define	PIXEL_BYTES		sizeof(PIXEL_TYPE)
+#define	SET_PIXEL(p, index)	*(p)++ = clr[index]
+#define	SET_RGB(p, r, g, b)						\
+	*(p)++ = (((r) >> (8 - ri->ri_rnum)) << ri->ri_rpos) |		\
+		 (((g) >> (8 - ri->ri_gnum)) << ri->ri_gpos) |		\
+		 (((b) >> (8 - ri->ri_bnum)) << ri->ri_bpos)
 #endif
 
 #if RASOPS_DEPTH == 24
+#define	PIXEL_TYPE		uint8_t
 #define	PIXEL_BYTES		3
 #define	SET_PIXEL(p, index)						\
 	do {								\
@@ -64,20 +63,46 @@
 		*(p)++ = c >> 8;					\
 		*(p)++ = c;						\
 	} while (0 /* CONSTCOND */)
+#define	SET_RGB(p, r, g, b)						\
+	do {								\
+		(p)[R_OFF] = (r);					\
+		(p)[G_OFF] = (g);					\
+		(p)[B_OFF] = (b);					\
+		(p) += 3;						\
+	} while (0 /* CONSTCOND */)
+#endif
+
+#define	AV(p, w)	(((w) * (p)[1] + (0xff - (w)) * (p)[0]) >> 8)
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define	R_OFF	(ri->ri_rpos / 8)
+#define	G_OFF	(ri->ri_gpos / 8)
+#define	B_OFF	(ri->ri_bpos / 8)
+#else /* BIG_ENDIAN XXX not tested */
+#define	R_OFF	(2 - ri->ri_rpos / 8)
+#define	G_OFF	(2 - ri->ri_gpos / 8)
+#define	B_OFF	(2 - ri->ri_bpos / 8)
+#endif
+
+#define NAME(depth)	NAME1(depth)
+#ifndef RASOPS_AA
+#define NAME1(depth)	rasops ## depth ## _putchar
+#else
+#define NAME1(depth)	rasops ## depth ## _putchar_aa
 #endif
 
 /*
  * Put a single character.
  */
 static void
-PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
+NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int width, height, cnt, fs;
-	uint32_t fb;
-	uint8_t *dp, *rp, *hp, *fr;
+	int height, width, cnt;
 	COLOR_TYPE clr[2];
+	PIXEL_TYPE *dp, *rp, *hp;
+	uint8_t *fr;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -93,9 +118,11 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 #endif
 
-	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	rp = (PIXEL_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * ri->ri_xscale);
 	if (ri->ri_hwbits)
-		hp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
+		hp = (PIXEL_TYPE *)(ri->ri_hwbits + row * ri->ri_yscale +
+		    col * ri->ri_xscale);
 
 	height = font->fontheight;
 	width = font->fontwidth;
@@ -112,47 +139,100 @@ PUTCHAR(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 				uint16_t bytes = width * PIXEL_BYTES;
 					/* XXX GCC */
 				memcpy(hp, rp, bytes);
-				hp += ri->ri_stride;
+				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
-			rp += ri->ri_stride;
+			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 		}
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
-		fs = font->stride;
+
+#ifdef RASOPS_AA
+		int off[2];
+		uint8_t r[2], g[2], b[2];
+
+		/*
+	 	 * This is independent to positions/lengths of RGB in pixel.
+	 	 */
+		off[0] = (((uint32_t)attr >> 16) & 0xf) * 3;
+		off[1] = (((uint32_t)attr >> 24) & 0xf) * 3;
+
+		r[0] = rasops_cmap[off[0]];
+		r[1] = rasops_cmap[off[1]];
+		g[0] = rasops_cmap[off[0] + 1];
+		g[1] = rasops_cmap[off[1] + 1];
+		b[0] = rasops_cmap[off[0] + 2];
+		b[1] = rasops_cmap[off[1] + 2];
+#endif
 
 		while (height--) {
 			dp = rp;
-			fb = be32uatoh(fr);
-			fr += fs;
-			for (cnt = width; cnt; cnt--) {
+
+#ifndef RASOPS_AA
+			uint32_t fb = be32uatoh(fr);
+			fr += ri->ri_font->stride;
+#endif
+
+			for (cnt = width; cnt; cnt--)
+#ifndef	RASOPS_AA
+			{
 				SET_PIXEL(dp, (fb >> 31) & 1);
 				fb <<= 1;
 			}
+#else
+			{
+				int w = *fr++;
+				if (w == 0xff)
+					SET_PIXEL(dp, 1);
+				else if (w == 0)
+					SET_PIXEL(dp, 0);
+				else
+					SET_RGB(dp,
+					    AV(r, w), AV(g, w), AV(b, w));
+			}
+#endif
 			if (ri->ri_hwbits) {
 				uint16_t bytes = width * PIXEL_BYTES;
 					/* XXX GCC */
 				memcpy(hp, rp, bytes);
-				hp += ri->ri_stride;
+				DELTA(hp, ri->ri_stride, PIXEL_TYPE *);
 			}
-			rp += ri->ri_stride;
+			DELTA(rp, ri->ri_stride, PIXEL_TYPE *);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		rp -= (ri->ri_stride << 1);
-		dp = rp;
-		while (width--)
-			SET_PIXEL(dp, 1);
-		if (ri->ri_hwbits) {
-			hp -= (ri->ri_stride << 1);
-			uint16_t bytes = width * PIXEL_BYTES; /* XXX GCC */
-			memcpy(hp, rp, bytes);
+		DELTA(rp, - ri->ri_stride * ri->ri_ul.off, PIXEL_TYPE *);
+		if (ri->ri_hwbits)
+			DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
+			    PIXEL_TYPE *);
+		for (height = ri->ri_ul.height; height; height--) {
+			DELTA(rp, - ri->ri_stride, PIXEL_TYPE *);
+			dp = rp;
+			for (cnt = width; cnt; cnt--)
+				SET_PIXEL(dp, 1);
+			if (ri->ri_hwbits) {
+				DELTA(hp, - ri->ri_stride, PIXEL_TYPE *);
+				uint16_t bytes = width * PIXEL_BYTES;
+					/* XXX GCC */
+				memcpy(hp, rp, bytes);
+			}
 		}
 	}
 }
 
-#undef	PUTCHAR
 #undef	COLOR_TYPE
+
+#undef	PIXEL_TYPE
 #undef	PIXEL_BYTES
 #undef	SET_PIXEL
+#undef	SET_RGB
+
+#undef	AV
+
+#undef	R_OFF
+#undef	G_OFF
+#undef	B_OFF
+
+#undef	NAME
+#undef	NAME1

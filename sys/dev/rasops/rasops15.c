@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.36 2019/08/07 11:48:43 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.37 2019/08/07 12:33:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.36 2019/08/07 11:48:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.37 2019/08/07 12:33:48 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -114,8 +114,12 @@ rasops15_init(struct rasops_info *ri)
 #endif
 }
 
+#undef	RASOPS_AA
 #include "rasops_putchar.h"
-#include "rasops_putchar_aa.h"
+
+#define	RASOPS_AA
+#include "rasops_putchar.h"
+#undef	RASOPS_AA
 
 #ifndef RASOPS_SMALL
 /*
