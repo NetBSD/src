@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.10 2019/07/31 02:04:14 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.11 2019/08/07 11:47:33 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -204,7 +204,6 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	STAMP_TYPE *stamp = (STAMP_TYPE *)ri->ri_stamp;
 	int height, fs;
 	uint8_t *fr;
 	STAMP_TYPE *rp, *hp;
@@ -225,7 +224,7 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 		return;
 
 	/* Recompute stamp? */
-	if (attr != ri->ri_stamp_attr)
+	if (attr != stamp_attr || __predict_false(ri != stamp_ri))
 		MAKESTAMP(RASOPS_DEPTH)(ri, attr);
 
 	rp = (STAMP_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
