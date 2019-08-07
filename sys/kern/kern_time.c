@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.198 2019/08/06 15:47:55 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.199 2019/08/07 07:22:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.198 2019/08/06 15:47:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.199 2019/08/07 07:22:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1410,7 +1410,7 @@ static int
 itimerdecr(struct ptimer *pt, int nsec)
 {
 	struct itimerspec *itp;
-	int error;
+	int error __diagused;
 
 	KASSERT(mutex_owned(&timer_lock));
 	KASSERT(CLOCK_VIRTUAL_P(pt->pt_type));
