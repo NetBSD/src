@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.8 2019/08/07 01:47:18 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.9 2019/08/07 10:01:05 maya Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.8 2019/08/07 01:47:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.9 2019/08/07 10:01:05 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -817,8 +817,12 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return (*un->un_override_ioctl_cb)(ifp, cmd, data);
 
 	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET && un->un_ioctl_cb)
-		error = (*un->un_ioctl_cb)(ifp, cmd, data);
+	if (error == ENETRESET) {
+		if (un->un_ioctl_cb)
+			error = (*un->un_ioctl_cb)(ifp, cmd, data);
+		else
+			error = 0;
+	}
 
 	return error;
 }
