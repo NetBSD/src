@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.7 2019/08/06 16:24:59 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.8 2019/08/07 08:29:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -293,4 +293,19 @@ sys/sys/event.h					1.33
 	Make EV_SET() casts compatible with the C++ code.
 	[kamil, ticket #22]
 
+bin/ps/keyword.c				1.57
+bin/ps/ps.1					1.110
+
+	Restore maxrss, idrss, isrss, ixrss printing in ps(1)
+	[kamil, ticket #24]
+
+sys/net/npf/npf.c				1.39
+sys/net/npf/npf_conn.c				1.28,1.29
+sys/net/npf/npf_conn.h				1.17
+
+	- Introduce an npf_conn_destroy_idx() that can handle partially
+	  constructed conn structures.
+	- npf_conn_init(): fix a race when initialising the G/C thread.
+	- Fix a bug when partially initialised connection is destroyed on error.
+	[rmind, ticket #25]
 
