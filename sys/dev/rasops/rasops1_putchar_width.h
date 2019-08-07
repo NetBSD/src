@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1_putchar_width.h,v 1.2 2019/07/29 17:22:19 rin Exp $ */
+/* $NetBSD: rasops1_putchar_width.h,v 1.3 2019/08/07 11:13:20 rin Exp $ */
 
 /* NetBSD: rasops1.c,v 1.28 2019/07/25 03:02:44 rin Exp */
 /*-
@@ -44,7 +44,7 @@
 
 #if RASOPS_WIDTH == 16
 /*
- * rp and hrp are always half-word aligned, whereas
+ * rp and hp are always half-word aligned, whereas
  * fr may not be aligned in half-word boundary.
  */
 #define	COPY_UNIT	uint16_t
@@ -65,9 +65,9 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs, bg, fg;
 	uint8_t *fr;
-	COPY_UNIT *rp, *hrp, tmp;
+	COPY_UNIT *rp, *hp, tmp;
 
-	hrp = NULL;	/* XXX GCC */
+	hp = NULL;	/* XXX GCC */
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -81,7 +81,7 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 	rp = (COPY_UNIT *)(ri->ri_bits + row * ri->ri_yscale +
 	    col * sizeof(COPY_UNIT));
 	if (ri->ri_hwbits)
-		hrp = (COPY_UNIT *)(ri->ri_hwbits + row * ri->ri_yscale +
+		hp = (COPY_UNIT *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    col * sizeof(COPY_UNIT));
 	height = font->fontheight;
 	rs = ri->ri_stride;
@@ -95,8 +95,8 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 			*rp = bg;
 			DELTA(rp, rs, COPY_UNIT *);
 			if (ri->ri_hwbits) {
-				*hrp = bg;
-				DELTA(hrp, rs, COPY_UNIT *);
+				*hp = bg;
+				DELTA(hp, rs, COPY_UNIT *);
 			}
 		}
 	} else {
@@ -110,8 +110,8 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 			*rp = tmp;
 			DELTA(rp, rs, COPY_UNIT *);
 			if (ri->ri_hwbits) {
-				*hrp = tmp;
-				DELTA(hrp, rs, COPY_UNIT *);
+				*hp = tmp;
+				DELTA(hp, rs, COPY_UNIT *);
 			}
 			fr += fs;
 		}
@@ -122,8 +122,8 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 		DELTA(rp, -(ri->ri_stride << 1), COPY_UNIT *);
 		*rp = fg;
 		if (ri->ri_hwbits) {
-			DELTA(hrp, -(ri->ri_stride << 1), COPY_UNIT *);
-			*hrp = fg;
+			DELTA(hp, -(ri->ri_stride << 1), COPY_UNIT *);
+			*hp = fg;
 		}
 	}
 }
