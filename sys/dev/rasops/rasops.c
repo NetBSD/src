@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.108 2019/08/02 23:24:37 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.109 2019/08/07 10:51:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,11 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.108 2019/08/02 23:24:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.109 2019/08/07 10:51:57 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
-#include "rasops_glue.h"
 #include "opt_wsmsgattrs.h"
+#endif
+
+#include "rasops_glue.h"
 
 #include <sys/param.h>
 #include <sys/bswap.h>
