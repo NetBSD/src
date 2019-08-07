@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.116 2018/07/31 16:44:30 khorben Exp $	*/
+/*	$NetBSD: usb.h,v 1.117 2019/08/07 08:47:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 } UPACKED usb_descriptor_t;
+#define USB_DESCRIPTOR_SIZE 3
 
 typedef struct {
 	uByte		bLength;
