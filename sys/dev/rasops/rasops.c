@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.112 2019/08/07 10:59:51 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.113 2019/08/07 11:03:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.112 2019/08/07 10:59:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.113 2019/08/07 11:03:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -726,19 +726,29 @@ rasops_copyrows(void *cookie, int src, int dst, int num)
 	n = ri->ri_emustride;
 	stride = ri->ri_stride;
 
-	sp = ri->ri_bits + src * ri->ri_yscale;
-	dp = ri->ri_bits + dst * ri->ri_yscale;
+	src *= ri->ri_yscale;
+	dst *= ri->ri_yscale;
+
+	if (src < dst) {
+		/* backward copy */
+		src += (num - 1) * stride;
+		dst += (num - 1) * stride;
+		stride *= -1;
+	}
+
+	sp = ri->ri_bits + src;
+	dp = ri->ri_bits + dst;
 	if (ri->ri_hwbits)
-		hp = ri->ri_hwbits + dst * ri->ri_yscale;
+		hp = ri->ri_hwbits + dst;
 
 	while (num--) {
 		memcpy(dp, sp, n);
-		dp += stride;
+		sp += stride;
 		if (ri->ri_hwbits) {
-			memcpy(hp, sp, n);
+			memcpy(hp, dp, n);
 			hp += stride;
 		}
-		sp += stride;
+		dp += stride;
 	}
 }
 
