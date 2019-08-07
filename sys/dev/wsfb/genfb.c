@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.68 2019/08/02 10:34:39 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.69 2019/08/07 13:23:12 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.68 2019/08/02 10:34:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.69 2019/08/07 13:23:12 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,6 +541,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct genfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	int wantcols;
+	bool is_bgr;
 
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
@@ -563,10 +564,11 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (existing && sc->sc_want_clear)
 		ri->ri_flg |= RI_CLEAR;
 
-	if (ri->ri_depth == 32 || ri->ri_depth == 24) {
+	switch (ri->ri_depth) {
+	case 32:
+	case 24:
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 
-		bool is_bgr = false;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
 		if (is_bgr) {
@@ -586,13 +588,25 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 			ri->ri_gpos = 8;
 			ri->ri_bpos = 0;
 		}
-	}
+		break;
 
-	if (ri->ri_depth == 16 || ri->ri_depth == 15)
+	case 16:
+	case 15:
 		ri->ri_flg |= RI_ENABLE_ALPHA;
+		break;
 
-	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
-		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+	case 8:
+		if (sc->sc_cmcb != NULL)
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+		break;
+
+	case 2:
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+		break;
+
+	default:
+		break;
+	}
 
 	wantcols = genfb_calc_cols(sc);
 
