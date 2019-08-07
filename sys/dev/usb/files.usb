@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.160 2019/08/07 07:25:09 skrll Exp $
+#	$NetBSD: files.usb,v 1.161 2019/08/07 19:21:48 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -378,7 +378,7 @@ attach	mue at usbdevif
 file	dev/usb/if_mue.c		mue
 
 # DAVICOM DM9601
-device	udav: arp, ether, ifnet, mii, mii_phy
+device	udav: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	udav at usbdevif
 file	dev/usb/if_udav.c		udav
 
