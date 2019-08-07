@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.45 2019/08/07 12:09:30 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.46 2019/08/07 16:14:51 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,14 +181,13 @@ struct rasops_info {
 int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
 void	rasops_unpack_attr(long, int *, int *, int *);
+void	rasops_eraserows(void *, int, int, long);
+void	rasops_erasecols(void *, int, int, int, long);
 int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
 
 extern const uint8_t	rasops_cmap[256 * 3];
 
 #ifdef _RASOPS_PRIVATE
-void	rasops_eraserows(void *, int, int, long);
-void	rasops_erasecols(void *, int, int, int, long);
-
 /*
  * Per-depth initialization functions.
  */
