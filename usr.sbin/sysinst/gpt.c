@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.8 2019/08/03 14:00:42 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.9 2019/08/07 10:08:04 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1400,6 +1400,24 @@ gpt_write_to_disk(struct disk_partitions *arg)
 	return true;
 }
 
+static part_id
+gpt_find_by_name(struct disk_partitions *arg, const char *name)
+{
+	struct gpt_disk_partitions *parts = (struct gpt_disk_partitions*)arg;
+	struct gpt_part_entry *p;
+	part_id pno;
+
+	for (pno = 0, p = parts->partitions; p != NULL;
+	    p = p->gp_next, pno++) {
+		if (strcmp(p->gp_label, name) == 0)
+			return pno;
+		if (strcmp(p->gp_id, name) == 0)
+			return pno;
+	}
+
+	return NO_PART;
+}
+
 bool
 gpt_parts_check(void)
 {
@@ -1627,6 +1645,7 @@ gpt_parts = {
 	.read_from_disk = gpt_read_from_disk,
 	.create_new_for_disk = gpt_create_new,
 	.have_boot_support = gpt_have_boot_support,
+	.find_by_name = gpt_find_by_name,
 	.can_add_partition = gpt_can_add_partition,
 	.custom_attribute_writable = gpt_custom_attribute_writable,
 	.format_custom_attribute = gpt_format_custom_attribute,
