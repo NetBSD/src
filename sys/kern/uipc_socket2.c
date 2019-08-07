@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.124.8.3 2018/07/31 17:01:20 martin Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.124.8.4 2019/08/07 08:21:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.124.8.3 2018/07/31 17:01:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.124.8.4 2019/08/07 08:21:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1419,6 +1419,10 @@ sbcreatecontrol1(void **p, int size, int type, int level, int flags)
 	cp->cmsg_len = CMSG_LEN(size);
 	cp->cmsg_level = level;
 	cp->cmsg_type = type;
+
+	memset(cp + 1, 0, CMSG_LEN(0) - sizeof(*cp));
+	memset((uint8_t *)*p + size, 0, CMSG_ALIGN(size) - size);
+
 	return m;
 }
 
