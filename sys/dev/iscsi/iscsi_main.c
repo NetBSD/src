@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.30 2019/07/13 17:06:00 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.31 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -677,7 +677,6 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 #ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
-	static struct sysctllog *clog;
 #endif
 
 	switch (cmd) {
@@ -723,8 +722,6 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&iscsi_cd);
 			return ENXIO;
 		}
-
-		sysctl_iscsi_setup(&clog);
 #endif
 		return 0;
 		break;
@@ -734,8 +731,6 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfdata_detach(iscsi_cfdata);
 		if (error)
 			return error;
-
-		sysctl_teardown(&clog);
 
 		config_cfattach_detach(iscsi_cd.cd_name, &iscsi_ca);
 		config_cfdriver_detach(&iscsi_cd);
