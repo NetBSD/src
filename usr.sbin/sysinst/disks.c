@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.47 2019/08/07 10:08:04 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.48 2019/08/07 10:12:32 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1352,7 +1352,7 @@ make_fstab(struct install_partition_desc *install)
 		  "%s%s\t\t%s\t%s\trw%s%s%s%s%s%s%s%s\t\t %d %d\n",
 		   s, dev, mp, fstype,
 		   ptn->mountflags & PUIMNT_LOG ? ",log" : "",
-		   ptn->mountflags & PUIMNT_NOAUTO ? "" : ",noauto",
+		   ptn->mountflags & PUIMNT_NOAUTO ? ",noauto" : "",
 		   ptn->mountflags & PUIMNT_ASYNC ? ",async" : "",
 		   ptn->mountflags & PUIMNT_NOATIME ? ",noatime" : "",
 		   ptn->mountflags & PUIMNT_NODEV ? ",nodev" : "",
