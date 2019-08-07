@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.46 2019/08/03 12:09:22 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.47 2019/08/07 10:08:04 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <util.h>
 #include <uuid.h>
 #include <paths.h>
+#include <fstab.h>
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -80,13 +81,22 @@ struct disk_desc {
 	daddr_t	dd_totsec;
 };
 
-static const char name_prefix[] = "NAME=";
+#define	NAME_PREFIX	"NAME="
+static const char name_prefix[] = NAME_PREFIX;
+
+/* things we could have as /sbin/newfs_* and /sbin/fsck_* */
+static const char *extern_fs_with_chk[] = {
+	"ext2fs", "lfs", "msdos", "v7fs"
+};
+
+/* things we could have as /sbin/newfs_* but not /sbin/fsck_* */
+static const char *extern_fs_newfs_only[] = {
+	"sysvbfs", "udf"
+};
 
 /* Local prototypes */
-static int foundffs(struct data *, size_t);
-#ifdef USE_SYSVBFS
-static int foundsysvbfs(struct data *, size_t);
-#endif
+static int found_fs(struct data *, size_t, const struct lookfor*);
+static int found_fs_nocheck(struct data *, size_t, const struct lookfor*);
 static int fsck_preen(const char *, const char *, bool silent);
 static void fixsb(const char *, const char *);
 
@@ -1153,20 +1163,16 @@ make_filesystems(struct install_partition_desc *install)
 			mnt_opts = "-tmsdos";
 			fsname = "msdos";
 			break;
-#ifdef USE_SYSVBFS
 		case FS_SYSVBFS:
 			asprintf(&newfs, "/sbin/newfs_sysvbfs");
 			mnt_opts = "-tsysvbfs";
 			fsname = "sysvbfs";
 			break;
-#endif
-#ifdef USE_EXT2FS
 		case FS_EX2FS:
 			asprintf(&newfs, "/sbin/newfs_ext2fs");
 			mnt_opts = "-text2fs";
 			fsname = "ext2fs";
 			break;
-#endif
 		}
 		if ((ptn->instflags & PUIINST_NEWFS) && newfs != NULL) {
 			if (ptn->fs_type == FS_MSDOS) {
@@ -1258,7 +1264,7 @@ make_fstab(struct install_partition_desc *install)
 
 		if (!get_name_and_parent(pm->diskdev, buf, parent))
 			goto done_with_disks;
-		scripting_fprintf(f, "NAME=%s\t/\tffs\trw\t\t1 1\n",
+		scripting_fprintf(f, NAME_PREFIX "%s\t/\tffs\trw\t\t1 1\n",
 		    buf);
 		if (!find_swap_part_on(parent, swap))
 			goto done_with_disks;
@@ -1268,7 +1274,7 @@ make_fstab(struct install_partition_desc *install)
 		res = ask_yesno(prompt);
 		free(prompt);
 		if (res)
-			scripting_fprintf(f, "NAME=%s\tnone"
+			scripting_fprintf(f, NAME_PREFIX "%s\tnone"
 			    "\tswap\tsw,dp\t\t0 0\n", swap);
 		goto done_with_disks;
 	}
@@ -1328,12 +1334,10 @@ make_fstab(struct install_partition_desc *install)
 			scripting_fprintf(f, "%s\t\tnone\tswap\tsw%s\t\t 0 0\n",
 				dev, dump_dev);
 			continue;
-#ifdef USE_SYSVBFS
 		case FS_SYSVBFS:
 			fstype = "sysvbfs";
 			make_target_dir("/stand");
 			break;
-#endif
 		default:
 			fstype = "???";
 			s = "# ";
@@ -1398,37 +1402,138 @@ done_with_disks:
 	return 0;
 }
 
-static int
-/*ARGSUSED*/
-foundffs(struct data *list, size_t num)
+static bool
+find_part_by_name(const char *name, struct disk_partitions **parts,
+    part_id *pno)
 {
-	int error;
-	char rbuf[PATH_MAX], buf[PATH_MAX];
-	const char *rdev, *dev;
+	struct pm_devs *i;
+	struct disk_partitions *ps;
+	part_id id;
+	struct disk_desc disks[MAX_DISKS];
+	int n, cnt;
 
-	if (num < 2 || strcmp(list[1].u.s_val, "/") == 0 ||
-	    strstr(list[2].u.s_val, "noauto") != NULL)
-		return 0;
-
-	/* need the raw device for fsck_preen */
-	if (strncmp(list[0].u.s_val, name_prefix, sizeof(name_prefix)-1)
-	     != 0) {
-		strcpy(rbuf, "/dev/r");
-		strlcat(rbuf, list[0].u.s_val, sizeof(rbuf));
-		rdev = rbuf;
-		strcpy(buf, "/dev/");
-		strlcat(buf, list[0].u.s_val, sizeof(buf));
-		dev = buf;
+	if (SLIST_EMPTY(&pm_head)) {
+		/*
+		 * List has not been filled, only "pm" is valid - check
+		 * that first.
+		 */
+		if (pm->parts->pscheme->find_by_name != NULL) {
+			id = pm->parts->pscheme->find_by_name(pm->parts, name);
+			if (id != NO_PART) {
+				*pno = id;
+				*parts = pm->parts;
+				return true;
+			}
+		}
+		/*
+		 * Not that easy - check all other disks
+		 */
+		cnt = get_disks(disks, false);
+		for (n = 0; n < cnt; n++) {
+			if (strcmp(disks[n].dd_name, pm->diskdev) == 0)
+				continue;
+			ps = partitions_read_disk(disks[n].dd_name,
+			    disks[n].dd_totsec);
+			if (ps == NULL)
+				continue;
+			if (ps->pscheme->find_by_name == NULL)
+				continue;
+			id = ps->pscheme->find_by_name(ps, name);
+			if (id != NO_PART) {
+				*pno = id;
+				*parts = ps;
+				return true;	/* XXX this leaks memory */
+			}
+			ps->pscheme->free(ps);
+		}
 	} else {
-		rdev = list[0].u.s_val;
-		dev = list[0].u.s_val;
+		SLIST_FOREACH(i, &pm_head, l) {
+			if (i->parts == NULL)
+				continue;
+			if (i->parts->pscheme->find_by_name == NULL)
+				continue;
+			id = i->parts->pscheme->find_by_name(i->parts, name);
+			if (id == NO_PART)
+				continue;
+			*pno = id;
+			*parts = i->parts;
+			return true;
+		}
 	}
 
-	error = fsck_preen(rdev, "ffs", false);
-	if (error != 0)
-		return error;
+	*pno = NO_PART;
+	*parts = NULL;
+	return false;
+}
 
-	error = target_mount("", dev, list[1].u.s_val);
+static int
+/*ARGSUSED*/
+process_found_fs(struct data *list, size_t num, const struct lookfor *item,
+    bool with_fsck)
+{
+	int error;
+	char rdev[PATH_MAX], dev[PATH_MAX],
+	    options[STRSIZE], tmp[STRSIZE], *op, *last;
+	const char *fsname = (const char*)item->var;
+	part_id pno;
+	struct disk_partitions *parts;
+	bool first;
+
+	if (num < 2 || strstr(list[2].u.s_val, "noauto") != NULL)
+		return 0;
+
+	if ((strcmp(list[1].u.s_val, "/") == 0) && target_mounted())
+		return 0;
+
+	if (strcmp(item->head, name_prefix) == 0) {
+		/* this fstab entry uses NAME= syntax */
+		if (!find_part_by_name(list[0].u.s_val,
+		    &parts, &pno) || parts == NULL || pno == NO_PART)
+			return 0;
+		parts->pscheme->get_part_device(parts, pno,
+		    dev, sizeof(dev), NULL, plain_name, true);
+		parts->pscheme->get_part_device(parts, pno,
+		    rdev, sizeof(rdev), NULL, raw_dev_name, true);
+	} else {
+		/* plain device name */
+		strcpy(rdev, "/dev/r");
+		strlcat(rdev, list[0].u.s_val, sizeof(rdev));
+		strcpy(dev, "/dev/");
+		strlcat(dev, list[0].u.s_val, sizeof(dev));
+	}
+
+	if (with_fsck) {
+		/* need the raw device for fsck_preen */
+		error = fsck_preen(rdev, fsname, false);
+		if (error != 0)
+			return error;
+	}
+
+	/* add mount option for fs type */
+	strcpy(options, "-t ");
+	strlcat(options, fsname, sizeof(options));
+
+	/* extract mount options from fstab */
+	strlcpy(tmp, list[2].u.s_val, sizeof(tmp));
+	for (first = true, op = strtok_r(tmp, ",", &last); op != NULL;
+	    op = strtok_r(NULL, ",", &last)) {
+		if (strcmp(op, FSTAB_RW) == 0 ||
+		    strcmp(op, FSTAB_RQ) == 0 ||
+		    strcmp(op, FSTAB_RO) == 0 ||
+		    strcmp(op, FSTAB_SW) == 0 ||
+		    strcmp(op, FSTAB_DP) == 0 ||
+		    strcmp(op, FSTAB_XX) == 0)
+			continue;
+		if (first) {
+			first = false;
+			strlcat(options, " -o ", sizeof(options));
+		} else {
+			strlcat(options, ",", sizeof(options));
+		}
+		strlcat(options, op, sizeof(options));
+	}
+
+	error = target_mount(options, dev, list[1].u.s_val);
 	if (error != 0) {
 		msg_fmt_display(MSG_mount_failed, "%s", list[0].u.s_val);
 		if (!ask_noyes(NULL))
@@ -1437,23 +1542,19 @@ foundffs(struct data *list, size_t num)
 	return 0;
 }
 
-#ifdef USE_SYSVBFS
 static int
 /*ARGSUSED*/
-foundsysvbfs(struct data *list, size_t num)
+found_fs(struct data *list, size_t num, const struct lookfor *item)
 {
-	int error;
-
-	if (num < 2 || strcmp(list[1].u.s_val, "/") == 0 ||
-	    strstr(list[2].u.s_val, "noauto") != NULL)
-		return 0;
-
-	error = target_mount("", list[0].u.s_val, list[1].u.s_val);
-	if (error != 0)
-		return error;
-	return 0;
+	return process_found_fs(list, num, item, true);
 }
-#endif
+
+static int
+/*ARGSUSED*/
+found_fs_nocheck(struct data *list, size_t num, const struct lookfor *item)
+{
+	return process_found_fs(list, num, item, false);
+}
 
 /*
  * Do an fsck. On failure, inform the user by showing a warning
@@ -1550,7 +1651,8 @@ fixsb(const char *prog, const char *disk)
  * devdev is the fully qualified block device name.
  */
 static int
-mount_root(const char *devdev, struct install_partition_desc *install)
+mount_root(const char *devdev, bool first, bool writeable,
+     struct install_partition_desc *install)
 {
 	int	error;
 
@@ -1558,7 +1660,8 @@ mount_root(const char *devdev, struct install_partition_desc *install)
 	if (error != 0)
 		return error;
 
-	md_pre_mount(install, 0);
+	if (first)
+		md_pre_mount(install, 0);
 
 	/* Mount devdev on target's "".
 	 * If we pass "" as mount-on, Prefixing will DTRT.
@@ -1566,7 +1669,7 @@ mount_root(const char *devdev, struct install_partition_desc *install)
 	 * XXX consider -o remount in case target root is
 	 * current root, still readonly from single-user?
 	 */
-	return target_mount("", devdev, "");
+	return target_mount(writeable? "" : "-r", devdev, "");
 }
 
 /* Get information on the file systems mounted from the root filesystem.
@@ -1581,20 +1684,92 @@ mount_disks(struct install_partition_desc *install)
 	int   fstabsize;
 	int   error;
 	char devdev[PATH_MAX];
-	size_t i;
+	size_t i, num_fs_types, num_entries;
+	struct lookfor *fstabbuf, *l;
 
 	if (install->cur_system)
 		return 0;
 
-	static struct lookfor fstabbuf[] = {
-		{"/dev/", "/dev/%s %s ffs %s", "c", NULL, 0, 0, foundffs},
-		{"/dev/", "/dev/%s %s ufs %s", "c", NULL, 0, 0, foundffs},
-#ifdef USE_SYSVBFS
-		{"/dev/", "/dev/%s %s sysvbfs %s", "c", NULL, 0, 0,
-		    foundsysvbfs},
-#endif
-	};
-	static size_t numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
+	/*
+	 * Check what file system tools are available and create parsers
+	 * for the corresponding fstab(5) entries - all others will be
+	 * ignored.
+	 */
+	num_fs_types = 1;	/* ffs is implicit */
+	for (i = 0; i < __arraycount(extern_fs_with_chk); i++) {
+		sprintf(devdev, "/sbin/newfs_%s", extern_fs_with_chk[i]);
+		if (file_exists_p(devdev))
+			num_fs_types++;
+	}
+	for (i = 0; i < __arraycount(extern_fs_newfs_only); i++) {
+		sprintf(devdev, "/sbin/newfs_%s", extern_fs_newfs_only[i]);
+		if (file_exists_p(devdev))
+			num_fs_types++;
+	}
+	num_entries = 2 *  num_fs_types + 1;	/* +1 for "ufs" special case */
+	fstabbuf = calloc(num_entries, sizeof(*fstabbuf));
+	if (fstabbuf == NULL)
+		return -1;
+	l = fstabbuf;
+	l->head = "/dev/";
+	l->fmt = strdup("/dev/%s %s ffs %s");
+	l->todo = "c";
+	l->var = __UNCONST("ffs");
+	l->func = found_fs;
+	l++;
+	l->head = "/dev/";
+	l->fmt = strdup("/dev/%s %s ufs %s");
+	l->todo = "c";
+	l->var = __UNCONST("ffs");
+	l->func = found_fs;
+	l++;
+	l->head = NAME_PREFIX;
+	l->fmt = strdup(NAME_PREFIX "%s %s ffs %s");
+	l->todo = "c";
+	l->var = __UNCONST("ffs");
+	l->func = found_fs;
+	l++;
+	for (i = 0; i < __arraycount(extern_fs_with_chk); i++) {
+		sprintf(devdev, "/sbin/newfs_%s", extern_fs_with_chk[i]);
+		if (!file_exists_p(devdev))
+			continue;
+		sprintf(devdev, "/dev/%%s %%s %s %%s", extern_fs_with_chk[i]);
+		l->head = "/dev/";
+		l->fmt = strdup(devdev);
+		l->todo = "c";
+		l->var = __UNCONST(extern_fs_with_chk[i]);
+		l->func = found_fs;
+		l++;
+		sprintf(devdev, NAME_PREFIX "%%s %%s %s %%s",
+		    extern_fs_with_chk[i]);
+		l->head = NAME_PREFIX;
+		l->fmt = strdup(devdev);
+		l->todo = "c";
+		l->var = __UNCONST(extern_fs_with_chk[i]);
+		l->func = found_fs;
+		l++;
+	}
+	for (i = 0; i < __arraycount(extern_fs_newfs_only); i++) {
+		sprintf(devdev, "/sbin/newfs_%s", extern_fs_newfs_only[i]);
+		if (!file_exists_p(devdev))
+			continue;
+		sprintf(devdev, "/dev/%%s %%s %s %%s", extern_fs_newfs_only[i]);
+		l->head = "/dev/";
+		l->fmt = strdup(devdev);
+		l->todo = "c";
+		l->var = __UNCONST(extern_fs_newfs_only[i]);
+		l->func = found_fs_nocheck;
+		l++;
+		sprintf(devdev, NAME_PREFIX "%%s %%s %s %%s",
+		    extern_fs_newfs_only[i]);
+		l->head = NAME_PREFIX;
+		l->fmt = strdup(devdev);
+		l->todo = "c";
+		l->var = __UNCONST(extern_fs_newfs_only[i]);
+		l->func = found_fs_nocheck;
+		l++;
+	}
+	assert((size_t)(l - fstabbuf) == num_entries);
 
 	/* First the root device. */
 	if (target_already_root())
@@ -1615,7 +1790,7 @@ mount_disks(struct install_partition_desc *install)
 		    install->infos[i].parts, install->infos[i].cur_part_id,
 		    devdev, sizeof devdev, NULL, plain_name, true))
 			return -1;
-		error = mount_root(devdev, install);
+		error = mount_root(devdev, true, false, install);
 		if (error != 0 && error != EBUSY)
 			return -1;
 	}
@@ -1635,10 +1810,23 @@ mount_disks(struct install_partition_desc *install)
 		/* error ! */
 		msg_fmt_display(MSG_badetcfstab, "%s", pm->diskdev);
 		hit_enter_to_continue(NULL, NULL);
+		umount_root();
 		return -2;
 	}
-	error = walk(fstab, (size_t)fstabsize, fstabbuf, numfstabbuf);
+	/*
+	 * We unmount the read-only root again, so we can mount it
+	 * with proper options from /etc/fstab
+	 */
+	umount_root();
+
+	/*
+	 * Now do all entries in /etc/fstab and mount them if required
+	 */
+	error = walk(fstab, (size_t)fstabsize, fstabbuf, num_entries);
 	free(fstab);
+	for (i = 0; i < num_entries; i++)
+		free(__UNCONST(fstabbuf[i].fmt));
+	free(fstabbuf);
 
 	return error;
 }

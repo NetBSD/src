@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.4 2019/07/28 16:30:36 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.5 2019/08/07 10:08:04 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -426,16 +426,19 @@ struct disk_partitioning_scheme {
 	 * Optional: this scheme may be used to boot from the given disk
 	 */
 	bool (*have_boot_support)(const char *disk);
+
 	/*
 	 * Optional: try to guess disk geometry from the partition information
 	 */
 	int (*guess_disk_geom)(struct disk_partitions *,
 	    int *cyl, int *head, int *sec);
+
 	/*
 	 * Optional: change used geometry info and update internal state
 	 */
 	bool (*change_disk_geom)(struct disk_partitions *,
 	    int cyl, int head, int sec);
+
 	/*
 	 * Optional:
 	 * Get or set a name for the whole disk (most partitioning
@@ -446,6 +449,13 @@ struct disk_partitioning_scheme {
 	bool (*get_disk_pack_name)(const struct disk_partitions *,
 	    char *, size_t);
 	bool (*set_disk_pack_name)(struct disk_partitions *, const char *);
+
+	/*
+	 * Optional:
+	 * Find a partition by name (as used in /etc/fstab NAME= entries)
+	 */
+	part_id (*find_by_name)(struct disk_partitions *, const char *name);
+
 	/*
 	 * Optional:
 	 * Try to guess install target partition from internal data,
@@ -454,6 +464,7 @@ struct disk_partitioning_scheme {
 	 */
 	bool (*guess_install_target)(const struct disk_partitions *,
 		daddr_t *start, daddr_t *size);
+
 	/*
 	 * Optional: verify that the whole set of partitions would be bootable,
 	 * fix up any issues (with user interaction) where needed.
@@ -465,6 +476,7 @@ struct disk_partitioning_scheme {
 	 *  2: use anyway (continue)
 	 */
 	int (*post_edit_verify)(struct disk_partitions *, bool quiet);
+
 	/*
 	 * Optional: called during updates, before mounting the target disk(s),
 	 * before md_pre_update() is called. Can be used to fixup
