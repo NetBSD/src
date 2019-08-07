@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.5 2019/08/06 00:19:57 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.6 2019/08/07 07:25:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -56,7 +56,7 @@
  * - usbnet_activate() for autoconf
  * - interface ioctl and start have direct frontends with callbacks for
  *   device specific handling:
- *   - ioctl can use either a device-specific override (useful for special 
+ *   - ioctl can use either a device-specific override (useful for special
  *     cases), but provides a normal handler with callback to handle
  *     ENETRESET conditions that should be sufficient for most users
  *   - start uses usbnet send callback
