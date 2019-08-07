@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.111 2019/08/07 10:55:51 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.112 2019/08/07 10:59:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.111 2019/08/07 10:55:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.112 2019/08/07 10:59:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -484,10 +484,10 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE);
 
 	if ((ri->ri_flg & RI_FORCEMONO) != 0 ||
-#ifdef RASOPS_APPLE_PALETTE
-	    ri->ri_depth == 1
-#else
+#ifndef RASOPS_APPLE_PALETTE
 	    ri->ri_depth < 8
+#else
+	    ri->ri_depth < 4
 #endif
 	) {
 		ri->ri_ops.allocattr = rasops_allocattr_mono;
