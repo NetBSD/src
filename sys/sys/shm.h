@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.52 2019/04/10 10:03:50 pgoyette Exp $	*/
+/*	$NetBSD: shm.h,v 1.53 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ extern int shm_nused;
 
 struct vmspace;
 
-int	shminit(struct sysctllog **);
+int	shminit(void);
 int	shmfini(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.51 2017/06/04 08:02:26 hannken Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.52 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.51 2017/06/04 08:02:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.52 2019/08/07 00:38:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -97,20 +97,11 @@ MODULE(MODULE_CLASS_MISC, layerfs, NULL);
 static int
 layerfs_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
-	static struct sysctllog *layerfs_clog = NULL;
-#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		sysctl_vfs_layerfs_setup(&layerfs_clog);
-#endif
 		return 0;
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		sysctl_teardown(&layerfs_clog);
-#endif
 		return 0;
 	default:
 		return ENOTTY;

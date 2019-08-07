@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.136 2019/06/19 15:01:01 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.136 2019/06/19 15:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -947,6 +947,35 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 }
 
 /*
+ * module_load_sysctl
+ *
+ * Check to see if the module has any SYSCTL_SETUP() routine(s)
+ * registered.  If so, call it (them).
+ */
+
+static void
+module_load_sysctl(module_t *mod)
+{
+	void (**ls_funcp)(struct sysctllog **);
+	void *ls_start;
+	size_t ls_size, count;
+	int error;
+
+	error = kobj_find_section(mod->mod_kobj, "link_set_sysctl_funcs",
+	    &ls_start, &ls_size);
+	if (error == 0) {
+		count = ls_size / sizeof(ls_start);
+		ls_funcp = ls_start;
+		while (count--) {
+			(**ls_funcp)(&mod->mod_sysctllog);
+			ls_funcp++;
+		}
+	}
+	else
+		error = 0;	/* no setup funcs registered */
+}
+
+/*
  * module_do_load:
  *
  *	Helper routine: load a module from the file system, or one
@@ -1265,6 +1294,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail1;
 	}
 
+	module_load_sysctl(mod);	/* Set-up module's sysctl if any */
+
 	/*
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
@@ -1344,9 +1375,18 @@ module_do_unload(const char *name, bool load_requires_force)
 	prev_active = module_active;
 	module_active = mod;
 	module_callback_unload(mod);
+
+	/*
+	 * If there were any registered SYSCTL_SETUP funcs, make sure
+	 * we release the sysctl entries
+	 */
+	if (mod->mod_sysctllog) {
+		sysctl_teardown(&mod->mod_sysctllog);
+	}
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
 	module_active = prev_active;
 	if (error != 0) {
+		module_load_sysctl(mod);	/* re-enable sysctl stuff */
 		module_print("cannot unload module `%s' error=%d", name,
 		    error);
 		return error;
