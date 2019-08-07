@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.1 2019/08/07 08:28:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,13 +79,17 @@ npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 	npf_param_init(npf);
 	npf_state_sysinit(npf);
 	npf_ifmap_init(npf, ifops);
-	npf_conn_init(npf, flags);
+	npf_conn_init(npf);
 	npf_portmap_init(npf);
 	npf_alg_init(npf);
 	npf_ext_init(npf);
 
 	/* Load an empty configuration. */
 	npf_config_init(npf);
+
+	if ((flags & NPF_NO_GC) == 0) {
+		npf_worker_register(npf, npf_conn_worker);
+	}
 	return npf;
 }
 
