@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.21 2019/08/07 13:22:00 pgoyette Exp $
+.\"	$NetBSD: sysctl.9,v 1.22 2019/08/07 19:16:36 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,7 +164,6 @@ which function to call to handle the specific request.
 The following algorithm is used by
 .Fn sysctl_dispatch
 to determine the function to call:
-.Pp
 .Bl -bullet -offset indent
 .It
 Scan the tree using
@@ -189,7 +188,6 @@ call the appropriate function.
 If none of these options applies and no other error was yet recorded,
 return
 .Er EOPNOTSUPP .
-.Pp
 .El
 The
 .Fa oldp
@@ -566,7 +564,7 @@ The address of the function is added to a list of functions that
 .Fn sysctl_init
 traverses during initialization.
 For loadable kernel modules (see
-.Xr modules 9 ) ,
+.Xr module 7 ) ,
 the list of functions is called from the module loader after the module's
 initialization routine.
 Any sysctl nodes created for the loadable module are removed using
