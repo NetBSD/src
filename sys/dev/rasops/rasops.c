@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.116 2019/08/07 11:57:40 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.117 2019/08/07 12:27:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.116 2019/08/07 11:57:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.117 2019/08/07 12:27:49 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -332,7 +332,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 int
 rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 {
-	int bpp, s;
+	int bpp, height, s;
 	size_t len;
 
 	s = splhigh();
@@ -482,6 +482,11 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 		    ri->ri_stride) * 8 / bpp);
 	} else
 		ri->ri_xorigin = ri->ri_yorigin = 0;
+
+	/* Scaling underline by font height */
+	height = ri->ri_font->fontheight;
+	ri->ri_ul.off = rounddown(height, 16) / 16;	/* offset from bottom */
+	ri->ri_ul.height = roundup(height, 16) / 16;	/* height */
 
 	/*
 	 * Fill in defaults for operations set.  XXX this nukes private

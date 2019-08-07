@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.11 2019/08/07 11:47:33 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.12 2019/08/07 12:27:49 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -261,11 +261,17 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		DELTA(rp, -(ri->ri_stride << 1), STAMP_TYPE *);
-		SUBST_STAMP(FILLED_STAMP);
-		if (ri->ri_hwbits) {
-			DELTA(hp, -(ri->ri_stride << 1), STAMP_TYPE *);
-			memcpy(hp, rp, SUBST_BYTES);
+		DELTA(rp, - ri->ri_stride * ri->ri_ul.off, STAMP_TYPE *);
+		if (ri->ri_hwbits)
+			DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
+			    STAMP_TYPE *);
+		for (height = ri->ri_ul.height; height; height--) {
+			DELTA(rp, - ri->ri_stride, STAMP_TYPE *);
+			SUBST_STAMP(FILLED_STAMP);
+			if (ri->ri_hwbits) {
+				DELTA(hp, - ri->ri_stride, STAMP_TYPE *);
+				memcpy(hp, rp, SUBST_BYTES);
+			}
 		}
 	}
 }
