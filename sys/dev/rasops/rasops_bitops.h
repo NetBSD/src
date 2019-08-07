@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.23 2019/08/02 04:39:09 rin Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.24 2019/08/07 12:36:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,10 +32,6 @@
 #ifndef _RASOPS_BITOPS_H_
 #define _RASOPS_BITOPS_H_ 1
 
-#define	NAME(name)		NAME1(RASOPS_DEPTH, name)
-#define	NAME1(depth, name)	NAME2(depth, name)
-#define	NAME2(depth, name)	rasops ## depth ## _ ## name
-
 #if   RASOPS_DEPTH == 1
 #define	PIXEL_SHIFT	0
 #elif RASOPS_DEPTH == 2
@@ -46,218 +42,9 @@
 #error "Depth not supported"
 #endif
 
-#define	PIXEL_BITS	RASOPS_DEPTH
-#define	COLOR_MASK	__BITS(32 - PIXEL_BITS, 31)
-
-#if RASOPS_DEPTH != 1
-/*
- * Paint a single character. This function is also applicable to
- * monochrome, but that in rasops1.c is much simpler and faster.
- */
-static void
-NAME(putchar)(void *cookie, int row, int col, u_int uc, long attr)
-{
-	struct rasops_info *ri = (struct rasops_info *)cookie;
-	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int full, cnt, bit;
-	uint32_t fs, rs, fb, bg, fg, lmask, rmask, lbg, rbg, clr[2];
-	uint32_t height, width;
-	uint32_t *rp, *bp, *hp, tmp;
-	uint8_t *fr;
-	bool space;
-
-	hp = NULL;	/* XXX GCC */
-
-#ifdef RASOPS_CLIPPING
-	/* Catches 'row < 0' case too */
-	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
-
-	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
-#endif
-
-	width = font->fontwidth << PIXEL_SHIFT;
-	col *= width;
-	height = font->fontheight;
-	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
-	    ((col >> 3) & ~3));
-	if (ri->ri_hwbits)
-		hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
-		    ((col >> 3) & ~3));
-	col &= 31;
-	rs = ri->ri_stride;
-
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
-
-	/* If fg and bg match this becomes a space character */
-	if (uc == ' ' || __predict_false(fg == bg)) {
-		space = true;
-		fr = NULL;	/* XXX GCC */
-		fs = 0;		/* XXX GCC */
-	} else {
-		space = false;
-		fr = FONT_GLYPH(uc, font, ri);
-		fs = font->stride;
-	}
-
-	if (col + width <= 32) {
-		/* Single word, only one mask */
-
-		rmask = rasops_pmask[col][width & 31];
-		lmask = ~rmask;
-
-		if (space) {
-			bg &= rmask;
-			while (height--) {
-				tmp = (*rp & lmask) | bg;
-				*rp = tmp;
-				DELTA(rp, rs, uint32_t *);
-				if (ri->ri_hwbits) {
-					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
-				}
-			}
-		} else {
-			clr[0] = bg & COLOR_MASK;
-			clr[1] = fg & COLOR_MASK;
-			while (height--) {
-				fb = be32uatoh(fr);
-				fr += fs;
-				tmp = 0;
-				for (bit = col; bit < col + width;
-				    bit += PIXEL_BITS) {
-					tmp |= clr[(fb >> 31) & 1] >> bit;
-					fb <<= 1;
-				}
-				tmp = (*rp & lmask) | MBE(tmp);
-				*rp = tmp;
-				DELTA(rp, rs, uint32_t *);
-				if (ri->ri_hwbits) {
-					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
-				}
-			}
-		}
-
-		/* Do underline */
-		if ((attr & WSATTR_UNDERLINE) != 0) {
-			DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-			tmp = (*rp & lmask) | (fg & rmask);
-			*rp = tmp;
-			if (ri->ri_hwbits) {
-				DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
-				*hp = tmp;
-			}
-		}
-
-		return;
-	}
-
-	/* Word boundary, two masks needed */
-
-	lmask = ~rasops_lmask[col];
-	rmask = ~rasops_rmask[(col + width) & 31];
-
-	if (lmask != -1)
-		width -= 32 - col;
-	full = width / 32;
-	width -= full * 32;
-
-	if (space) {
-		lbg = bg & ~lmask;
-		rbg = bg & ~rmask;
-
-		while (height--) {
-			bp = rp;
-
-			if (lmask != -1) {
-				*bp = (*bp & lmask) | lbg;
-				bp++;
-			}
-
-			for (cnt = full; cnt; cnt--)
-				*bp++ = bg;
-
-			if (rmask != -1)
-				*bp = (*bp & rmask) | rbg;
-
-			if (ri->ri_hwbits) {
-				memcpy(hp, rp, ((lmask != -1) + full +
-				    (rmask != -1)) << 2);
-				DELTA(hp, rs, uint32_t *);
-			}
-			DELTA(rp, rs, uint32_t *);
-		}
-	} else {
-		clr[0] = bg & COLOR_MASK;
-		clr[1] = fg & COLOR_MASK;
-
-		while (height--) {
-			bp = rp;
-
-			fb = be32uatoh(fr);
-			fr += fs;
-
-			if (lmask != -1) {
-				tmp = 0;
-				for (bit = col; bit < 32; bit += PIXEL_BITS) {
-					tmp |= clr[(fb >> 31) & 1] >> bit;
-					fb <<= 1;
-				}
-				*bp = (*bp & lmask) | MBE(tmp);
-				bp++;
-			}
-
-			for (cnt = full; cnt; cnt--) {
-				tmp = 0;
-				for (bit = 0; bit < 32; bit += PIXEL_BITS) {
-					tmp |= clr[(fb >> 31) & 1] >> bit;
-					fb <<= 1;
-				}
-				*bp++ = MBE(tmp);
-			}
-
-			if (rmask != -1) {
-				tmp = 0;
-				for (bit = 0; bit < width; bit += PIXEL_BITS) {
-					tmp |= clr[(fb >> 31) & 1] >> bit;
-					fb <<= 1;
-				}
-				*bp = (*bp & rmask) | MBE(tmp);
-			}
-
-			if (ri->ri_hwbits) {
-				memcpy(hp, rp, ((lmask != -1) + full +
-				    (rmask != -1)) << 2);
-				DELTA(hp, rs, uint32_t *);
-			}
-
-			DELTA(rp, rs, uint32_t *);
-		}
-	}
-
-	/* Do underline */
-	if ((attr & WSATTR_UNDERLINE) != 0) {
-		DELTA(rp, -(ri->ri_stride << 1), uint32_t *);
-		bp = rp;
-		if (lmask != -1) {
-			*bp = (*bp & lmask) | (fg & ~lmask);
-			bp++;
-		}
-		for (cnt = full; cnt; cnt--)
-			*bp++ = fg;
-		if (rmask != -1)
-			*bp = (*bp & rmask) | (fg & ~rmask);
-		if (ri->ri_hwbits) {
-			DELTA(hp, -(ri->ri_stride << 1), uint32_t *);
-			memcpy(hp, rp, ((lmask != -1) + full +
-			    (rmask != -1)) << 2);
-		}
-	}
-}
-#endif /* RASOPS_DEPTH != 1 */
+#define	NAME(name)		NAME1(RASOPS_DEPTH, name)
+#define	NAME1(depth, name)	NAME2(depth, name)
+#define	NAME2(depth, name)	rasops ## depth ## _ ## name
 
 /*
  * Erase columns.
@@ -607,7 +394,9 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 }
 
 #undef	PIXEL_SHIFT
-#undef	PIXEL_BITS
-#undef	COLOR_MASK
+
+#undef	NAME
+#undef	NAME1
+#undef	NAME2
 
 #endif /* _RASOPS_BITOPS_H_ */
