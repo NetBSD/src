@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.335 2019/08/07 06:23:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335 2019/08/07 06:23:48 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2710,6 +2710,11 @@ pmap_ldt_xcall(void *arg1, void *arg2)
 	kpreempt_disable();
 	pm = arg1;
 	if (curcpu()->ci_pmap == pm) {
+#if defined(SVS) && defined(USER_LDT)
+		if (svs_enabled) {
+			svs_ldt_sync(pm);
+		} else
+#endif
 		lldt(pm->pm_ldt_sel);
 	}
 	kpreempt_enable();
@@ -2947,6 +2952,11 @@ pmap_load(void)
 #endif
 #endif
 
+#if defined(SVS) && defined(USER_LDT)
+	if (svs_enabled) {
+		svs_ldt_sync(pmap);
+	} else
+#endif
 	lldt(pmap->pm_ldt_sel);
 
 	cpu_load_pmap(pmap, oldpmap);
