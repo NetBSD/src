@@ -142,6 +142,8 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 	struct crypto_bignum *x_candidate = NULL, *cofactor = NULL;
 	const struct crypto_bignum *prime;
 	u8 mask, found_ctr = 0, is_odd = 0;
+	int cmp_prime;
+	unsigned int in_range;
 
 	if (grp->pwe)
 		return -1;
@@ -234,8 +236,13 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 		if (primebitlen % 8)
 			buf_shift_right(prfbuf, primebytelen,
 					8 - primebitlen % 8);
-		if (const_time_memcmp(prfbuf, prime_bin, primebytelen) >= 0)
-			continue;
+		cmp_prime = const_time_memcmp(prfbuf, prime_bin, primebytelen);
+		/* Create a const_time mask for selection based on prf result
+		 * being smaller than prime. */
+		in_range = const_time_fill_msb((unsigned int) cmp_prime);
+		/* The algorithm description would skip the next steps if
+		 * cmp_prime >= 0, but go through them regardless to minimize
+		 * externally observable differences in behavior. */
 
 		crypto_bignum_deinit(x_candidate, 1);
 		x_candidate = crypto_bignum_init_set(prfbuf, primebytelen);
@@ -298,7 +305,7 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 			goto fail;
 		mask = const_time_eq(res, check);
 		found_ctr = const_time_select_u8(found, found_ctr, ctr);
-		found |= mask;
+		found |= mask & in_range;
 	}
 	if (found == 0) {
 		wpa_printf(MSG_INFO,
