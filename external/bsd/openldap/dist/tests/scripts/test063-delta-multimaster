@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2017 The OpenLDAP Foundation.
+## Copyright 1998-2019 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -114,7 +114,7 @@ fi
 MYURI=`eval echo '$URI'$n`
 PROVIDERURI=`eval echo '$URI'$o`
 if test $INDEXDB = indexdb ; then
-INDEX1="olcDbIndex: objectClass,entryCSN,reqStart,reqDN eq"
+INDEX1="olcDbIndex: objectClass,entryCSN,reqStart,reqDN,reqResult eq"
 INDEX2="olcDbIndex: objectClass,entryCSN,entryUUID eq"
 else
 INDEX1=

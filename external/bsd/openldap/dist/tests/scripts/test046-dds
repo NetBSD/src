@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2017 The OpenLDAP Foundation.
+## Copyright 2005-2019 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -150,6 +150,7 @@ fi
 SEARCH=0
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -253,6 +254,7 @@ if test $RC != 0 ; then
 fi
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -307,6 +309,7 @@ if test $RC != 0 ; then
 fi
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -332,6 +335,7 @@ if test $RC != 0 ; then
 fi
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -355,6 +359,7 @@ if test $RC != 0 ; then
 fi
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -371,6 +376,7 @@ echo "Waiting $SLEEP seconds for remaining entry to expire..."
 sleep $SLEEP
 
 SEARCH=`expr $SEARCH + 1`
+sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
@@ -530,16 +536,36 @@ test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 LDIF=$DDSOUT
 
+# dds removes entryTtl and re-adds it, changing the order of attributes
 echo "Filtering ldapsearch results..."
-$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -s a < $SEARCHOUT > $SEARCHFLT
+grep -i -v -e '^entryttl: ' < $SEARCHFLT > $SEARCHFLT2
 echo "Filtering original ldif used to create database..."
-$LDIFFILTER < $LDIF > $LDIFFLT
+$LDIFFILTER -s a < $LDIF > $LDIFFLT
+grep -i -v -e '^entryttl: ' < $LDIFFLT > $LDIFFLT2
 echo "Comparing filter output..."
-$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+$CMP $SEARCHFLT2 $LDIFFLT2 > $CMPOUT
 
 if test $? != 0 ; then
 	echo "Comparison failed"
 	exit 1
+fi
+
+echo "Listing entryTtl values from ldapsearch results..."
+grep -i -e '^entryttl: ' < $SEARCHFLT | awk '{ print $2 }' > $SEARCHFLT2
+echo "Listing entryTtl values from original ldif used to create database..."
+grep -i -e '^entryttl: ' < $LDIFFLT | awk '{ print $2 }' > $LDIFFLT2
+
+if ! type paste >/dev/null 2>&1; then
+    echo "Cannot find 'paste' command, skipping entryTtl checks..."
+else
+    echo "Checking entryTtl appears to decrease with time..."
+    paste $SEARCHFLT2 $LDIFFLT2 | while read resultTTL savedTTL; do
+        if [ `expr $savedTTL - $resultTTL` -lt $SLEEP0 ]; then
+            echo "TTL has not reduced accordingly"
+            exit 1
+        fi
+    done
 fi
 
 echo ">>>>> Test succeeded"
