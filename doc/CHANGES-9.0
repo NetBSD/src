@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.9 2019/08/07 10:20:44 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.10 2019/08/08 05:54:48 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -320,3 +320,24 @@ sys/arch/aarch64/aarch64/trap.c			1.18
 	trap_el0_32sync: add missing break to ESR_EC_FP_TRAP_A32 case.
 	[jmcneill, ticket #27]
 
+usr.sbin/sysinst/arch/ews4800mips/md.h		1.4
+usr.sbin/sysinst/defs.h				1.43
+usr.sbin/sysinst/disklabel.c			1.11
+usr.sbin/sysinst/disks.c			1.47
+usr.sbin/sysinst/gpt.c				1.9
+usr.sbin/sysinst/partitions.h			1.5
+usr.sbin/sysinst/target.c			1.10
+usr.sbin/sysinst/txtwalk.c			1.2
+usr.sbin/sysinst/txtwalk.h			1.2
+
+	- Support upgrade of systems using NAME= syntax in /etc/fstab.
+	- Make supported file system types dynamic - instead of hardcoding the
+	  available types at compile time, check for available newfs_* helper
+	  binaries in the actual install environment at runtime.
+	  [martin, ticket #28]
+
+usr.sbin/sysinst/disks.c			1.48
+
+	When creating the /etc/fstab for new installs, the sense of the
+	"noauto" flag was inverted.
+	[martin, ticket #29]
