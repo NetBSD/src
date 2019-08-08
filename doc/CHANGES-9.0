@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.10 2019/08/08 05:54:48 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.11 2019/08/08 11:52:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -341,3 +341,18 @@ usr.sbin/sysinst/disks.c			1.48
 	When creating the /etc/fstab for new installs, the sense of the
 	"noauto" flag was inverted.
 	[martin, ticket #29]
+
+etc/rc.d/automount				1.2
+etc/rc.d/automountd				1.2
+etc/rc.d/autounmountd				1.2
+etc/rc.d/ip6addrctl				1.3
+
+	Add $_rc_subr_loaded before ". /etc/rc.subr" for speedup and
+	consistency.
+	[nakayama, ticket #30]
+
+etc/mtree/NetBSD.dist.base			1.201
+
+	/etc/namedb: sync user and group with etc/mtree/special.
+	[nakayama, ticket #31]
+
