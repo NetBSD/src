@@ -1,6 +1,6 @@
 .TH LDAP_BIND 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2019 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_bind, ldap_bind_s, ldap_simple_bind, ldap_simple_bind_s, ldap_sasl_bind, ldap_sasl_bind_s, ldap_sasl_interactive_bind_s, ldap_parse_sasl_bind_result, ldap_unbind, ldap_unbind_s, ldap_unbind_ext, ldap_unbind_ext_s, ldap_set_rebind_proc \- LDAP bind routines
@@ -112,6 +112,12 @@ taking the same parameters but only initiating the bind operation and
 returning the message id of the request it sent.  The result of the
 operation can be obtained by a subsequent call to
 .BR ldap_result (3).
+The
+.B ldap_sasl_bind_s()
+and asynchronous
+.B ldap_sasl_bind()
+functions can also be used to make a simple bind by using
+LDAP_SASL_SIMPLE as the SASL mechanism.
 .SH GENERAL AUTHENTICATION
 The
 .B ldap_bind()

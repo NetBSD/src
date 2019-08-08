@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapexop.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: ldapexop.c,v 1.1.1.7 2019/08/08 13:31:09 christos Exp $	*/
 
 /* ldapexop.c -- a tool for performing well-known extended operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapexop.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $");
+__RCSID("$NetBSD: ldapexop.c,v 1.1.1.7 2019/08/08 13:31:09 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_thr_debug.h,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: ldap_thr_debug.h,v 1.1.1.7 2019/08/08 13:31:13 christos Exp $	*/
 
 /* ldap_thr_debug.h - preprocessor magic for LDAP_THREAD_DEBUG */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
