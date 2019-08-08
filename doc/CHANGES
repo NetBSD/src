@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2564 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2565 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,3 +24,5 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 9.0 to NetBSD 10.0:
+openldap: Import 2.4.48. [christos 20180808]
+
