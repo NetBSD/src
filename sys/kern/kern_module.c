@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.138 2019/08/08 18:08:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.137 2019/08/07 00:38:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.138 2019/08/08 18:08:41 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -949,7 +949,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 /*
  * module_load_sysctl
  *
- * Check to see if the module has any SYSCTL_SETUP() routine(s)
+ * Check to see if a non-builtin module has any SYSCTL_SETUP() routine(s)
  * registered.  If so, call it (them).
  */
 
@@ -960,6 +960,13 @@ module_load_sysctl(module_t *mod)
 	void *ls_start;
 	size_t ls_size, count;
 	int error;
+
+	/*
+	 * Built-in modules don't have a mod_kobj so we cannot search
+	 * for their link_set_sysctl_funcs
+	 */
+	if (mod->mod_source == MODULE_SOURCE_KERNEL)
+		return;
 
 	error = kobj_find_section(mod->mod_kobj, "link_set_sysctl_funcs",
 	    &ls_start, &ls_size);
