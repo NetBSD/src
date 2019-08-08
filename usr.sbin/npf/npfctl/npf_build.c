@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.50 2019/07/25 00:48:55 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.51 2019/08/08 21:29:15 rmind Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -290,7 +290,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 	const int type = npfvar_get_type(vars, 0);
 	size_t i;
 
-	npfctl_bpf_group(ctx);
+	npfctl_bpf_group_enter(ctx);
 	for (i = 0; i < npfvar_get_count(vars); i++) {
 		void *data = npfvar_get_data(vars, type, i);
 		assert(data != NULL);
@@ -316,7 +316,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			assert(false);
 		}
 	}
-	npfctl_bpf_endgroup(ctx, (opts & MATCH_INVERT) != 0);
+	npfctl_bpf_group_exit(ctx, (opts & MATCH_INVERT) != 0);
 }
 
 static void
@@ -423,10 +423,10 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	/* Build port-range blocks. */
 	if (need_tcpudp) {
 		/* TCP/UDP check for the ports. */
-		npfctl_bpf_group(bc);
+		npfctl_bpf_group_enter(bc);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
-		npfctl_bpf_endgroup(bc, false);
+		npfctl_bpf_group_exit(bc, false);
 	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
