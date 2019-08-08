@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.18 2019/08/07 13:46:02 rin Exp $
+.\"     $NetBSD: rasops.9,v 1.19 2019/08/08 00:20:54 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,9 @@
 .Fn rasops_init "struct rasops_info *ri" "int wantrows" "int wantcols"
 .Ft int
 .Fn rasops_reconfig "struct rasops_info *ri" "int wantrows" "int wantcols"
+.Pp
+.Cd options RASOPS_DEFAULT_WIDTH=80
+.Cd options RASOPS_DEFAULT_HEIGHT=25
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,15 +52,15 @@ subsystem is a set of raster operations for
 .Xr wscons 9 .
 .Pp
 The primary data type for using the raster operations is the
-.Em rasops_info
+.Vt rasops_info
 structure in
-.Pa dev/rasops/rasops.h .
+.In dev/rasops/rasops.h .
 .Pp
 Valid values for the
-.Em ri_flg
+.Fa ri_flg
 member are:
 .Pp
-.Bl -tag -offset indent -width RI_ENABLE_ALPHA_XX -compact
+.Bl -tag -width ".Dv RI_ENABLE_ALPHA" -offset indent -compact
 .It Dv RI_FULLCLEAR
 .Fn eraserows
 hack to clear full screen
@@ -81,56 +84,47 @@ do not generate box drawing characters for ISO fonts.
 Use this when it is not safe to allocate memory, for example when setting up
 an early console.
 .It Dv RI_ENABLE_ALPHA
-set this if the caller supports anti-aliased fonts in the given colour depth.
+the caller supports anti-aliased fonts in the given colour depth.
 Without this flag
 .Fn rasops_init
 will only pick bitmap fonts.
 .It Dv RI_8BIT_IS_RGB
-set this if the caller uses an R3G3B2 colour map in 8 bit.
+the caller uses an R3G3B2 colour map in 8 bit.
 .Fn rasops_init
-will generate an appropriate ri_devcmap[] but the caller still needs to set up
-the actual colour map.
+will generate an appropriate
+.Fa ri_devcmap Ns Li []
+but the caller still needs to set up the actual colour map.
 .El
 .Sh FUNCTIONS
-.Bl -tag -width compact
-.It Fn rasops_init "ri" "wantrows" "wantcols"
-Initialise a
-.Em rasops_info
+.Fn rasops_init
+initialises a
+.Vt rasops_info
 descriptor.
+.Fn rasops_reconfig
+is used to reconfigure it if parameters have changed in some way.
+.Pp
 The arguments
 .Fa wantrows
 and
 .Fa wantcols
 are the number of rows and columns we'd like.
-In terms of optimization, bitmap fonts of width
-.Bl -item -offset indent -compact
-.It
-8 or 16 (all depths)
-.It
-12 (depths other than 1)
-.El
-work the best.
-.It Fn rasops_reconfig "ri" "wantrows" "wantcols"
-Reconfigure a
-.Em rasops_info
-descriptor because parameters have changed in some way.
-The arguments
-.Fa wantrows
+Passing zero for either one of them uses the default \(em normally
+80 by 25 but it can be changed with config options
+.Dv RASOPS_DEFAULT_WIDTH
 and
-.Fa wantcols
-are the number of rows and columns we'd like.
-Passing zero for either one of
-them uses the default - normally 80x25 but it can be changed with
-.Bd -literal -offset indent -compact
-options RASOPS_DEFAULT_WIDTH=80
-options RASOPS_DEFAULT_HEIGHT=25
-.Ed
+.Dv RASOPS_DEFAULT_HEIGHT .
+.Pp
+In terms of optimization, bitmap fonts of width 8 or 16 work the best
+for all depths.
+For depths other than 1 the fonts of width 12 are also optimized.
+.Pp
 If calling
 .Fn rasops_reconfig
-to change the font and ri_wsfcookie \*[Ge] 0, you must call
+to change the font and
+.Fa ri_wsfcookie
+is non-negative, you must call
 .Fn wsfont_unlock
-on it, and reset it to -1 (or a new, valid cookie).
-.El
+on it, and reset it to \-1 or a new, valid cookie.
 .Sh CODE REFERENCES
 The rasops subsystem is implemented within the directory
 .Pa sys/dev/rasops .
