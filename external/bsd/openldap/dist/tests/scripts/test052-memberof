@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2017 The OpenLDAP Foundation.
+## Copyright 1998-2019 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -94,10 +94,12 @@ olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.3
  NAME 'memberB' SUP distinguishedName )
 olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.4 
  NAME 'memberOfB' SUP distinguishedName )
+olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.5
+ NAME 'memberOfC' SUP distinguishedName )
 olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.1 
  NAME 'groupA' SUP top STRUCTURAL MUST cn MAY memberA )
 olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.2 
- NAME 'groupMemberA' SUP top AUXILIARY MAY memberOfA )
+ NAME 'groupMemberA' SUP top AUXILIARY MAY ( memberOfA $ memberOfC ) )
 olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.3 
  NAME 'groupB' SUP top STRUCTURAL MUST cn MAY memberB )
 olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.4 
@@ -260,6 +262,11 @@ $LDAPMODIFY -h $LOCALHOST -p $PORT1 \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Cartoonia,ou=Groups,$BASEDN
 changetype: modrdn
+newrdn: cn=Toon town
+deleteoldrdn: 1
+
+dn: cn=Toon town,ou=Groups,$BASEDN
+changetype: modrdn
 newrdn: cn=Toon Town
 deleteoldrdn: 1
 EOF
@@ -382,6 +389,51 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after adding groups with MAY member type schemas..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to reconfigure the schema used..."
+$LDAPADD -h $LOCALHOST -p $PORT1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={1}memberof,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcMemberOfMemberOfAD
+olcMemberOfMemberOfAD: memberOfC
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Updating groups to expose the new setting..."
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 <<EOF
+dn: cn=group1,ou=Groups,$BASEDN
+changetype: modify
+add: memberA
+memberA: cn=person1,ou=People,$BASEDN
+memberA: cn=person2,ou=People,$BASEDN
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after updating memberof configuration..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
