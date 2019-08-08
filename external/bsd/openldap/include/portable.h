@@ -5,7 +5,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation
+ * Copyright 1998-2019 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -852,7 +852,7 @@
 #define LDAP_SYSLOG 1
 
 /* Version */
-#define LDAP_VENDOR_VERSION 20439
+#define LDAP_VENDOR_VERSION 20448
 
 /* Major */
 #define LDAP_VENDOR_VERSION_MAJOR 2
@@ -861,7 +861,7 @@
 #define LDAP_VENDOR_VERSION_MINOR 4
 
 /* Patch */
-#define LDAP_VENDOR_VERSION_PATCH 39
+#define LDAP_VENDOR_VERSION_PATCH 48
 
 /* define if memcmp is not 8-bit clean or is otherwise broken */
 /* #undef NEED_MEMCMP_REPLACEMENT */
@@ -876,7 +876,7 @@
 #define OPENLDAP_PACKAGE "OpenLDAP"
 
 /* Version */
-#define OPENLDAP_VERSION "2.4.39"
+#define OPENLDAP_VERSION "2.4.48"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
