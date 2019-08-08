@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10 2019/07/26 08:18:47 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.2.1 2019/08/08 05:51:43 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1016,6 +1016,32 @@ disklabel_get_alignment(const struct disk_partitions *arg)
 	return parts->ptn_alignment;
 }
 
+static part_id
+disklabel_find_by_name(struct disk_partitions *arg, const char *name)
+{
+	const struct disklabel_disk_partitions *parts =
+	    (const struct disklabel_disk_partitions*)arg;
+	char *sl, part;
+	ptrdiff_t n;
+	part_id pno;
+
+	sl = strrchr(name, '/');
+	if (sl == NULL)
+		return NO_PART;
+	n = sl - name;
+	if (strncmp(name, parts->l.d_packname, n) != 0)
+		return NO_PART;
+	part = name[n+1];
+	if (part < 'a')
+		return NO_PART;
+	pno = part - 'a';
+	if (pno >= parts->l.d_npartitions)
+		return NO_PART;
+	if (parts->l.d_partitions[pno].p_fstype == FS_UNUSED)
+		return NO_PART;
+	return pno;
+}
+
 static void
 disklabel_free(struct disk_partitions *arg)
 {
@@ -1034,6 +1060,7 @@ disklabel_parts = {
 	.read_from_disk = disklabel_parts_read,
 	.create_new_for_disk = disklabel_parts_new,
 	.change_disk_geom = disklabel_change_geom,
+	.find_by_name = disklabel_find_by_name,
 	.get_disk_pack_name = disklabel_get_disk_pack_name,
 	.set_disk_pack_name = disklabel_set_disk_pack_name,
 	.delete_all_partitions = disklabel_delete_all,
