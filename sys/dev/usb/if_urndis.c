@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.24 2019/08/08 06:16:40 maya Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.25 2019/08/08 18:03:40 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.24 2019/08/08 06:16:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.25 2019/08/08 18:03:40 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.24 2019/08/08 06:16:40 maya Exp $");
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
