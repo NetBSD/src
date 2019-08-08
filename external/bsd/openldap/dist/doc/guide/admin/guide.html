@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">1 June 2017</ADDRESS>
+<ADDRESS CLASS="doc-modified">23 July 2019</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -2021,11 +2021,11 @@ SQL Programmable backend
 <P>This directive specifies the DN that is not subject to access control or administrative limit restrictions for operations on this database.  The DN need not refer to an entry in this database or even in the directory. The DN may refer to a SASL identity.</P>
 <P>Entry-based Example:</P>
 <PRE>
-        olcRootDN: &quot;cn=Manager,dc=example,dc=com&quot;
+        olcRootDN: cn=Manager,dc=example,dc=com
 </PRE>
 <P>SASL-based Example:</P>
 <PRE>
-        olcRootDN: &quot;uid=root,cn=example.com,cn=digest-md5,cn=auth&quot;
+        olcRootDN: uid=root,cn=example.com,cn=digest-md5,cn=auth
 </PRE>
 <P>See the <A HREF="#SASL Authentication">SASL Authentication</A> section for information on SASL authentication identities.</P>
 <H4><A NAME="olcRootPW: &lt;password&gt;">5.2.5.5. olcRootPW: &lt;password&gt;</A></H4>
@@ -2051,7 +2051,7 @@ SQL Programmable backend
 <P>This directive specifies the DN suffix of queries that will be passed to this backend database. Multiple suffix lines can be given, and usually at least one is required for each database definition. (Some backend types, such as <TT>frontend</TT> and <TT>monitor</TT> use a hard-coded suffix which may not be overridden in the configuration.)</P>
 <P>Example:</P>
 <PRE>
-        olcSuffix: &quot;dc=example,dc=com&quot;
+        olcSuffix: dc=example,dc=com
 </PRE>
 <P>Queries with a DN ending in &quot;dc=example,dc=com&quot; will be passed to this backend.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -2222,7 +2222,7 @@ dn: olcDatabase=hdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcHdbConfig
 olcDatabase: hdb
-olcSuffix: &quot;dc=example,dc=com&quot;
+olcSuffix: dc=example,dc=com
 olcDbDirectory: /usr/local/var/openldap-data
 olcDbCacheSize: 1000
 olcDbCheckpoint: 1024 10
@@ -2318,9 +2318,9 @@ olcDbIndex: objectClass eq
  53.    objectClass: olcDatabaseConfig
  54.    objectClass: olcBdbConfig
  55.    olcDatabase: bdb
- 56.    olcSuffix: &quot;dc=example,dc=net&quot;
+ 56.    olcSuffix: dc=example,dc=net
  57.    olcDbDirectory: /usr/local/var/openldap-data-net
- 58.    olcRootDN: &quot;cn=Manager,dc=example,dc=com&quot;
+ 58.    olcRootDN: cn=Manager,dc=example,dc=com
  59.    olcDbIndex: objectClass eq
  60.    olcAccess: to * by users read
 </PRE>
@@ -2747,18 +2747,18 @@ SQL Programmable backend
 
 <P>Example:</P>
 <PRE>
-        backend bdb
+        backend mdb
 </PRE>
-<P>This marks the beginning of a new <TERM>BDB</TERM> backend definition.</P>
+<P>This marks the beginning of a new <TERM>MDB</TERM> backend definition.</P>
 <H3><A NAME="General Database Directives">6.2.3. General Database Directives</A></H3>
 <P>Directives in this section apply only to the database in which they are defined. They are supported by every type of database.</P>
 <H4><A NAME="database &lt;type&gt;">6.2.3.1. database &lt;type&gt;</A></H4>
 <P>This directive marks the beginning of a database instance declaration. <TT>&lt;type&gt;</TT> should be one of the supported backend types listed in Table 6.2.</P>
 <P>Example:</P>
 <PRE>
-        database bdb
+        database mdb
 </PRE>
-<P>This marks the beginning of a new <TERM>BDB</TERM> database instance declaration.</P>
+<P>This marks the beginning of a new <TERM>MDB</TERM> database instance declaration.</P>
 <H4><A NAME="limits &lt;selector&gt; &lt;limit&gt; [&lt;limit&gt; [...]]">6.2.3.2. limits &lt;selector&gt; &lt;limit&gt; [&lt;limit&gt; [...]]</A></H4>
 <P>Specify time and size limits based on the operation's initiator or base DN.</P>
 <P>See the <A HREF="#Limits">Limits</A> section of this guide and <EM>slapd.conf</EM>(5) for more details.</P>
@@ -4932,7 +4932,7 @@ Members of a group
 <H2><A NAME="Perl/Shell">11.9. Perl/Shell</A></H2>
 <H3><A NAME="Overview">11.9.1. Overview</A></H3>
 <P>The Perl backend to <EM>slapd</EM>(8) works by embedding a <EM>perl</EM>(1) interpreter into <EM>slapd</EM>(8). Any perl database section of the configuration file <EM>slapd.conf</EM>(5) must then specify what Perl module to use. Slapd then creates a new Perl object that handles all the requests for that particular instance of the backend.</P>
-<P>The Shell backend to <EM>slapd</EM>(8) executes external programs to implement operations, and is designed to make it easy to tie an existing database to the slapd front-end. This backend is is primarily intended to be used in prototypes.</P>
+<P>The Shell backend to <EM>slapd</EM>(8) executes external programs to implement operations, and is designed to make it easy to tie an existing database to the slapd front-end. This backend is primarily intended to be used in prototypes.</P>
 <H3><A NAME="back-perl/back-shell Configuration">11.9.2. back-perl/back-shell Configuration</A></H3>
 <P>LATER</P>
 <H3><A NAME="Further Information">11.9.3. Further Information</A></H3>
@@ -5060,16 +5060,18 @@ Members of a group
 <H3><A NAME="Access Logging Configuration">12.1.2. Access Logging Configuration</A></H3>
 <P>The following is a basic example that implements Access Logging:</P>
 <PRE>
-        database bdb
+        database mdb
         suffix dc=example,dc=com
+        maxsize 85899345920
         ...
         overlay accesslog
         logdb cn=log
         logops writes reads
         logold (objectclass=person)
 
-        database bdb
+        database mdb
         suffix cn=log
+        maxsize 85899345920
         ...
         index reqStart eq
         access to *
@@ -5077,17 +5079,19 @@ Members of a group
 </PRE>
 <P>The following is an example used for <A HREF="#delta-syncrepl replication">delta-syncrepl replication</A>:</P>
 <PRE>
-        database hdb
+        database mdb
         suffix cn=accesslog
-        directory /usr/local/var/openldap-accesslog
         rootdn cn=accesslog
+        maxsize 85899345920
+        directory /usr/local/var/openldap-accesslog
         index default eq
-        index entryCSN,objectClass,reqEnd,reqResult,reqStart
+        index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 </PRE>
 <P>Accesslog overlay definitions for the primary db</P>
 <PRE>
-        database bdb
+        database mdb
         suffix dc=example,dc=com
+        maxsize 85899345920
         ...
         overlay accesslog
         logdb cn=accesslog
@@ -5418,10 +5422,11 @@ Members of a group
 
         authz-regexp &quot;gidNumber=0\\\+uidNumber=0,cn=peercred,cn=external,cn=auth&quot;
                 &quot;cn=Manager,dc=example,dc=com&quot;
-        database        bdb
+        database        mdb
         suffix          &quot;dc=example,dc=com&quot;
         rootdn          &quot;cn=Manager,dc=example,dc=com&quot;
         rootpw          secret
+        maxsize         85899345920
         directory       /var/lib/ldap2.4
         checkpoint 256 5
         index   objectClass   eq
@@ -5482,7 +5487,7 @@ Members of a group
 <PRE>
  pcache &lt;DB&gt; &lt;maxentries&gt; &lt;nattrsets&gt; &lt;entrylimit&gt; &lt;period&gt;
 </PRE>
-<P>This directive enables proxy caching and sets general cache parameters.  The &lt;DB&gt; parameter specifies which underlying database is to be used to hold cached entries.  It should be set to <TT>bdb</TT> or <TT>hdb</TT>.  The &lt;maxentries&gt; parameter specifies the total number of entries which may be held in the cache.  The &lt;nattrsets&gt; parameter specifies the total number of attribute sets (as specified by the <TT>pcacheAttrset</TT> directive) that may be defined.  The &lt;entrylimit&gt; parameter specifies the maximum number of entries in a cacheable query.  The &lt;period&gt; specifies the consistency check period (in seconds).  In each period, queries with expired TTLs are removed.</P>
+<P>This directive enables proxy caching and sets general cache parameters.  The &lt;DB&gt; parameter specifies which underlying database is to be used to hold cached entries.  It should be set to <TT>mdb</TT>, <TT>hdb</TT>, or <TT>bdb</TT>.  The &lt;maxentries&gt; parameter specifies the total number of entries which may be held in the cache. The &lt;nattrsets&gt; parameter specifies the total number of attribute sets (as specified by the <TT>pcacheAttrset</TT> directive) that may be defined.  The &lt;entrylimit&gt; parameter specifies the maximum number of entries in a cacheable query.  The &lt;period&gt; specifies the consistency check period (in seconds).  In each period, queries with expired TTLs are removed.</P>
 <H4><A NAME="Defining attribute sets">12.9.2.2. Defining attribute sets</A></H4>
 <PRE>
  pcacheAttrset &lt;index&gt; &lt;attrs...&gt;
@@ -5501,7 +5506,7 @@ Members of a group
         rootdn          &quot;dc=example,dc=com&quot;
         uri             ldap://ldap.example.com/
         overlay pcache
-        pcache         hdb 100000 1 1000 100
+        pcache         mdb 100000 1 1000 100
         pcacheAttrset  0 mail postaladdress telephonenumber
         pcacheTemplate (sn=) 0 3600
         pcacheTemplate (&amp;(sn=)(givenName=)) 0 3600
@@ -5527,7 +5532,7 @@ Members of a group
    objectClass: olcOverlayConfig
    objectClass: olcPcacheConfig
    olcOverlay: {0}pcache
-   olcPcache: hdb 100000 1 1000 100
+   olcPcache: mdb 100000 1 1000 100
    olcPcacheAttrset: 0 mail postalAddress telephoneNumber
    olcPcacheTemplate: &quot;(sn=)&quot; 0 3600 0 0 0
    olcPcacheTemplate: &quot;(&amp;(sn=)(givenName=))&quot; 0 3600 0 0 0
@@ -5579,7 +5584,7 @@ Members of a group
 <H3><A NAME="Password Policy Configuration">12.10.2. Password Policy Configuration</A></H3>
 <P>Instantiate the module in the database where it will be used, after adding the new ppolicy schema and loading the ppolicy module. The following example shows the ppolicy module being added to the database that handles the naming context &quot;dc=example,dc=com&quot;. In this example we are also specifying the DN of a policy object to use if none other is specified in a user's object.</P>
 <PRE>
-       database bdb
+       database mdb
        suffix &quot;dc=example,dc=com&quot;
        [...additional database configuration directives go here...]
 
@@ -5643,7 +5648,7 @@ Members of a group
 <P><EM>slapo-ppolicy(5)</EM></P>
 <H2><A NAME="Referential Integrity">12.11. Referential Integrity</A></H2>
 <H3><A NAME="Overview">12.11.1. Overview</A></H3>
-<P>This overlay can be used with a backend database such as slapd-bdb(5) to maintain the cohesiveness of a schema which utilizes reference attributes.</P>
+<P>This overlay can be used with a backend database such as slapd-mdb(5) to maintain the cohesiveness of a schema which utilizes reference attributes.</P>
 <P>Whenever a <EM>modrdn</EM> or <EM>delete</EM> is performed, that is, when an entry's DN is renamed or an entry is removed, the server will search the directory for references to this DN (in selected attributes: see below) and update them accordingly. If it was a <EM>delete</EM> operation, the reference is deleted. If it was a <EM>modrdn</EM> operation, then the reference is updated with the new DN.</P>
 <P>For example, a very common administration task is to maintain group membership lists, specially when users are removed from the directory. When an user account is deleted or renamed, all groups this user is a member of have to be updated. LDAP administrators usually have scripts for that. But we can use the <TT>refint</TT> overlay to automate this task. In this example, if the user is removed from the directory, the overlay will take care to remove the user from all the groups he/she was a member of. No more scripting for this.</P>
 <H3><A NAME="Referential Integrity Configuration">12.11.2. Referential Integrity Configuration</A></H3>
@@ -5739,7 +5744,7 @@ Members of a group
 <P>The <EM>slapo-syncprov(5)</EM> man page and the <A HREF="#Configuring the different replication types">Configuring the different replication types</A> section</P>
 <H2><A NAME="Translucent Proxy">12.15. Translucent Proxy</A></H2>
 <H3><A NAME="Overview">12.15.1. Overview</A></H3>
-<P>This overlay can be used with a backend database such as <EM>slapd-bdb</EM>(5) to create a &quot;translucent proxy&quot;.</P>
+<P>This overlay can be used with a backend database such as <EM>slapd-mdb</EM>(5) to create a &quot;translucent proxy&quot;.</P>
 <P>Entries retrieved from a remote LDAP server may have some or all attributes overridden, or new attributes added, by entries in the local database before being presented to the client.</P>
 <P>A search operation is first populated with entries from the remote LDAP server, the attributes of which are then overridden with any attributes defined in the local database. Local overrides may be populated with the add, modify, and modrdn operations, the use of which is restricted to the root user of the translucent local database.</P>
 <P>A compare operation will perform a comparison with attributes defined in the local database record (if any) before any comparison is made with data in the remote database.</P>
@@ -5758,10 +5763,11 @@ Members of a group
        pidfile     ./slapd.pid
        argsfile    ./slapd.args
 
-       database    bdb
+       database    mdb
        suffix      &quot;dc=suretecsystems,dc=com&quot;
        rootdn      &quot;cn=trans,dc=suretecsystems,dc=com&quot;
        rootpw      secret
+       maxsize     85899345920
        directory   ./openldap-data
 
        index       objectClass eq
@@ -5836,7 +5842,7 @@ Members of a group
 <P><EM>slapo-translucent(5)</EM></P>
 <H2><A NAME="Attribute Uniqueness">12.16. Attribute Uniqueness</A></H2>
 <H3><A NAME="Overview">12.16.1. Overview</A></H3>
-<P>This overlay can be used with a backend database such as <EM>slapd-bdb(5)</EM> to enforce the uniqueness of some or all attributes within a subtree.</P>
+<P>This overlay can be used with a backend database such as <EM>slapd-mdb(5)</EM> to enforce the uniqueness of some or all attributes within a subtree.</P>
 <H3><A NAME="Attribute Uniqueness Configuration">12.16.2. Attribute Uniqueness Configuration</A></H3>
 <P>This overlay is only effective on new data from the point the overlay is enabled. To check uniqueness for existing data, you can export and import your data again via the LDAP Add operation, which will not be suitable for large amounts of data, unlike <B>slapcat</B>.</P>
 <P>For the following example, if uniqueness were enforced for the <B>mail</B> attribute, the subtree would be searched for any other records which also have a <B>mail</B> attribute containing the same value presented with an <B>add</B>, <B>modify</B> or <B>modrdn</B> operation which are unique within the configured scope. If any are found, the request is rejected.</P>
@@ -5886,7 +5892,7 @@ Members of a group
 <PRE>
        loglevel    sync stats
 
-       database    hdb
+       database    mdb
        suffix      &quot;dc=suretecsystems,dc=com&quot;
        directory   /usr/local/var/openldap-data
 
@@ -7096,7 +7102,13 @@ browser.  Press 'Enter' for the new password.</UL>
         certtool --generate-dh-params --bits &lt;numbits&gt; --outfile &lt;filename&gt;
 </PRE>
 <P>This directive is ignored with Mozilla NSS.</P>
-<H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.8. TLSVerifyClient { never | allow | try | demand }</A></H4>
+<H4><A NAME="TLSECName &lt;name&gt;">16.2.1.8. TLSECName &lt;name&gt;</A></H4>
+<P>This directive specifies the curve to use for Elliptic Curve Diffie-Hellman ephemeral key exchange.  This is required in order to use ECDHE-based cipher suites in OpenSSL.  The names of supported curves may be shown using the following command</P>
+<PRE>
+        openssl ecparam -list_curves
+</PRE>
+<P>This directive is not used for GnuTLS and is ignored with Mozilla NSS. For GnuTLS the curves may be specified in the ciphersuite.</P>
+<H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.9. TLSVerifyClient { never | allow | try | demand }</A></H4>
 <P>This directive specifies what checks to perform on client certificates in an incoming TLS session, if any. This option is set to <TT>never</TT> by default, in which case the server never asks the client for a certificate. With a setting of <TT>allow</TT> the server will ask for a client certificate; if none is provided the session proceeds normally. If a certificate is provided but the server is unable to verify it, the certificate is ignored and the session proceeds normally, as if no certificate had been provided. With a setting of <TT>try</TT> the certificate is requested, and if none is provided, the session proceeds normally. If a certificate is provided and it cannot be verified, the session is immediately terminated. With a setting of <TT>demand</TT> the certificate is requested and a valid certificate must be provided, otherwise the session is immediately terminated.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>The server must request a client certificate in order to use the SASL EXTERNAL authentication mechanism with a TLS session. As such, a non-default <TT>TLSVerifyClient</TT> setting must be configured before SASL EXTERNAL authentication may be attempted, and the SASL EXTERNAL mechanism will only be offered to the client if a valid client certificate was received.
@@ -7330,9 +7342,9 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>A more complete example of the <EM>slapd.conf</EM>(5) content is thus:</P>
 <PRE>
         database mdb
-        maxsize 1073741824
-        suffix dc=Example,dc=com
-        rootdn dc=Example,dc=com
+        maxsize 85899345920
+        suffix dc=example,dc=com
+        rootdn dc=example,dc=com
         directory /var/ldap/db
         index objectclass,entryCSN,entryUUID eq
 
@@ -7344,9 +7356,9 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>The syncrepl replication is specified in the database section of <EM>slapd.conf</EM>(5) for the replica context. The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
 <PRE>
         database mdb
-        maxsize 1073741824
-        suffix dc=Example,dc=com
-        rootdn dc=Example,dc=com
+        maxsize 85899345920
+        suffix dc=example,dc=com
+        rootdn dc=example,dc=com
         directory /var/ldap/db
         index objectclass,entryCSN,entryUUID eq
 
@@ -7378,14 +7390,14 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
      # of a database.  The &quot;by * break&quot; portion causes evaluation of
      # subsequent rules.  See slapd.access(5) for details.
      access to *
-        by dn.base=&quot;cn=replicator,dc=symas,dc=com&quot; read
+        by dn.base=&quot;cn=replicator,dc=example,dc=com&quot; read
         by * break
 
      # Set the module path location
-     modulepath /opt/symas/lib/openldap
+     modulepath /usr/lib/openldap
 
-     # Load the hdb backend
-     moduleload back_hdb.la
+     # Load the mdb backend
+     moduleload back_mdb.la
 
      # Load the accesslog overlay
      moduleload accesslog.la
@@ -7394,24 +7406,26 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
      moduleload syncprov.la
 
      # Accesslog database definitions
-     database hdb
+     database mdb
      suffix cn=accesslog
-     directory /db/accesslog
      rootdn cn=accesslog
+     directory /var/lib/db/accesslog
+     maxsize 85899345920
      index default eq
-     index entryCSN,objectClass,reqEnd,reqResult,reqStart
+     index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 
      overlay syncprov
      syncprov-nopresent TRUE
      syncprov-reloadhint TRUE
 
      # Let the replica DN have limitless searches
-     limits dn.exact=&quot;cn=replicator,dc=symas,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+     limits dn.exact=&quot;cn=replicator,dc=example,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 
      # Primary database definitions
-     database hdb
-     suffix &quot;dc=symas,dc=com&quot;
-     rootdn &quot;cn=manager,dc=symas,dc=com&quot;
+     database mdb
+     suffix &quot;dc=example,dc=com&quot;
+     rootdn &quot;cn=manager,dc=example,dc=com&quot;
+     maxsize 85899345920
 
      ## Whatever other configuration options are desired
 
@@ -7432,15 +7446,16 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
      logpurge 07+00:00 01+00:00
 
      # Let the replica DN have limitless searches
-     limits dn.exact=&quot;cn=replicator,dc=symas,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+     limits dn.exact=&quot;cn=replicator,dc=example,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 </PRE>
 <P>For more information, always consult the relevant man pages (<EM>slapo-accesslog</EM>(5) and <EM>slapd.conf</EM>(5))</P>
 <H4><A NAME="Delta-syncrepl Consumer configuration">18.3.2.2. Delta-syncrepl Consumer configuration</A></H4>
 <PRE>
      # Replica database configuration
-     database hdb
-     suffix &quot;dc=symas,dc=com&quot;
-     rootdn &quot;cn=manager,dc=symas,dc=com&quot;
+     database mdb
+     suffix &quot;dc=example,dc=com&quot;
+     rootdn &quot;cn=manager,dc=example,dc=com&quot;
+     maxsize 85899345920
 
      ## Whatever other configuration bits for the replica, like indexing
      ## that you want
@@ -7450,11 +7465,11 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 
      # syncrepl directives
      syncrepl  rid=0
-               provider=ldap://ldapmaster.symas.com:389
+               provider=ldap://ldapmaster.example.com:389
                bindmethod=simple
-               binddn=&quot;cn=replicator,dc=symas,dc=com&quot;
+               binddn=&quot;cn=replicator,dc=example,dc=com&quot;
                credentials=secret
-               searchbase=&quot;dc=symas,dc=com&quot;
+               searchbase=&quot;dc=example,dc=com&quot;
                logbase=&quot;cn=accesslog&quot;
                logfilter=&quot;(&amp;(objectClass=auditWriteObject)(reqResult=0))&quot;
                schemachecking=on
@@ -7463,7 +7478,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
                syncdata=accesslog
 
      # Refer updates to the master
-     updateref               ldap://ldapmaster.symas.com
+     updateref               ldap://ldapmaster.example.com
 </PRE>
 <P>The above configuration assumes that you have a replicator identity defined in your database that can be used to bind to the provider. In addition, all of the databases (primary, replica, and the accesslog storage database) should also have properly tuned <EM>DB_CONFIG</EM> files that meet your needs.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -7646,7 +7661,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
         include     /usr/local/etc/openldap/slapd.acl
 
         modulepath  /usr/local/libexec/openldap
-        moduleload  back_hdb.la
+        moduleload  back_mdb.la
         moduleload  syncprov.la
         moduleload  back_monitor.la
         moduleload  back_ldap.la
@@ -7656,13 +7671,12 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 
         loglevel    sync stats
 
-        database    hdb
+        database    mdb
         suffix      &quot;dc=suretecsystems,dc=com&quot;
         directory   /usr/local/var/openldap-data
+   maxsize     85899345920
 
         checkpoint      1024 5
-        cachesize       10000
-        idlcachesize    10000
 
         index       objectClass eq
         # rest of indexes
@@ -7732,7 +7746,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
         include     /usr/local/etc/openldap/slapd.acl
 
         modulepath  /usr/local/libexec/openldap
-        moduleload  back_hdb.la
+        moduleload  back_mdb.la
         moduleload  syncprov.la
         moduleload  back_monitor.la
         moduleload  back_ldap.la
@@ -7742,13 +7756,12 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 
         loglevel    sync stats
 
-        database    hdb
+        database    mdb
         suffix      &quot;dc=suretecsystems,dc=com&quot;
         directory   /usr/local/var/openldap-slave/data
 
+   maxsize         85899345920
         checkpoint      1024 5
-        cachesize       10000
-        idlcachesize    10000
 
         index       objectClass eq
         # rest of indexes

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2019 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using TLS
@@ -202,6 +202,18 @@ or
 >	certtool --generate-dh-params --bits <numbits> --outfile <filename>
 
 This directive is ignored with Mozilla NSS.
+
+H4: TLSECName <name>
+
+This directive specifies the curve to use for Elliptic Curve
+Diffie-Hellman ephemeral key exchange.  This is required in order
+to use ECDHE-based cipher suites in OpenSSL.  The names of supported
+curves may be shown using the following command
+
+>	openssl ecparam -list_curves
+
+This directive is not used for GnuTLS and is ignored with Mozilla NSS.
+For GnuTLS the curves may be specified in the ciphersuite.
 
 H4: TLSVerifyClient { never | allow | try | demand }
 

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2017 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2019 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Overlays
@@ -86,16 +86,18 @@ H3: Access Logging Configuration
 
 The following is a basic example that implements Access Logging:
 
->        database bdb
+>        database mdb
 >        suffix dc=example,dc=com
+>        maxsize 85899345920
 >        ...
 >        overlay accesslog
 >        logdb cn=log
 >        logops writes reads
 >        logold (objectclass=person)
 >        
->        database bdb
+>        database mdb
 >        suffix cn=log
+>        maxsize 85899345920
 >        ...
 >        index reqStart eq
 >        access to *
@@ -103,17 +105,19 @@ The following is a basic example that implements Access Logging:
 
 The following is an example used for {{SECT:delta-syncrepl replication}}:
 
->        database hdb
+>        database mdb
 >        suffix cn=accesslog
->        directory /usr/local/var/openldap-accesslog
 >        rootdn cn=accesslog
+>        maxsize 85899345920
+>        directory /usr/local/var/openldap-accesslog
 >        index default eq
->        index entryCSN,objectClass,reqEnd,reqResult,reqStart
+>        index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 
 Accesslog overlay definitions for the primary db
 
->        database bdb
+>        database mdb
 >        suffix dc=example,dc=com
+>        maxsize 85899345920
 >        ...
 >        overlay accesslog
 >        logdb cn=accesslog
@@ -619,10 +623,11 @@ specific database. For example, with the following minimal slapd.conf:
 >
 >        authz-regexp "gidNumber=0\\\+uidNumber=0,cn=peercred,cn=external,cn=auth"
 >                "cn=Manager,dc=example,dc=com"
->        database        bdb
+>        database        mdb
 >        suffix          "dc=example,dc=com"
 >        rootdn          "cn=Manager,dc=example,dc=com"
 >        rootpw          secret
+>        maxsize         85899345920
 >        directory       /var/lib/ldap2.4
 >        checkpoint 256 5
 >        index   objectClass   eq
@@ -738,9 +743,9 @@ H4: Setting cache parameters
 This directive enables proxy caching and sets general cache
 parameters.  The <DB> parameter specifies which underlying database
 is to be used to hold cached entries.  It should be set to
-{{EX:bdb}} or {{EX:hdb}}.  The <maxentries> parameter specifies the
-total number of entries which may be held in the cache.  The
-<nattrsets> parameter specifies the total number of attribute sets
+{{EX:mdb}}, {{EX:hdb}}, or {{EX:bdb}}.  The <maxentries> parameter
+specifies the total number of entries which may be held in the cache.
+The <nattrsets> parameter specifies the total number of attribute sets
 (as specified by the {{EX:pcacheAttrset}} directive) that may be
 defined.  The <entrylimit> parameter specifies the maximum number of
 entries in a cacheable query.  The <period> specifies the consistency
@@ -777,7 +782,7 @@ at server {{EX:ldap.example.com}}.
 >	rootdn 		"dc=example,dc=com" 
 >	uri    		ldap://ldap.example.com/
 >	overlay pcache
->	pcache         hdb 100000 1 1000 100
+>	pcache         mdb 100000 1 1000 100
 >	pcacheAttrset  0 mail postaladdress telephonenumber 
 >	pcacheTemplate (sn=) 0 3600
 >	pcacheTemplate (&(sn=)(givenName=)) 0 3600
@@ -806,7 +811,7 @@ at server {{EX:ldap.example.com}}.
 >   objectClass: olcOverlayConfig
 >   objectClass: olcPcacheConfig
 >   olcOverlay: {0}pcache
->   olcPcache: hdb 100000 1 1000 100
+>   olcPcache: mdb 100000 1 1000 100
 >   olcPcacheAttrset: 0 mail postalAddress telephoneNumber
 >   olcPcacheTemplate: "(sn=)" 0 3600 0 0 0
 >   olcPcacheTemplate: "(&(sn=)(givenName=))" 0 3600 0 0 0
@@ -889,7 +894,7 @@ the ppolicy module being added to the database that handles the naming
 context "dc=example,dc=com". In this example we are also specifying the DN of 
 a policy object to use if none other is specified in a user's object.
 
->       database bdb
+>       database mdb
 >       suffix "dc=example,dc=com"
 >       [...additional database configuration directives go here...]
 >       
@@ -978,7 +983,7 @@ H2: Referential Integrity
 
 H3: Overview
 
-This overlay can be used with a backend database such as slapd-bdb(5)
+This overlay can be used with a backend database such as slapd-mdb(5)
 to maintain the cohesiveness of a schema which utilizes reference
 attributes.
 
@@ -1173,7 +1178,7 @@ H2: Translucent Proxy
 
 H3: Overview
 
-This overlay can be used with a backend database such as {{:slapd-bdb}}(5)
+This overlay can be used with a backend database such as {{:slapd-mdb}}(5)
 to create a "translucent proxy".
 
 Entries retrieved from a remote LDAP server may have some or all attributes 
@@ -1212,10 +1217,11 @@ First we configure the overlay in the normal manner:
 >       pidfile     ./slapd.pid
 >       argsfile    ./slapd.args
 >       
->       database    bdb
+>       database    mdb
 >       suffix      "dc=suretecsystems,dc=com"
 >       rootdn      "cn=trans,dc=suretecsystems,dc=com"
 >       rootpw      secret
+>       maxsize     85899345920
 >       directory   ./openldap-data
 >       
 >       index       objectClass eq
@@ -1305,7 +1311,7 @@ H2: Attribute Uniqueness
 
 H3: Overview
 
-This overlay can be used with a backend database such as {{slapd-bdb(5)}}
+This overlay can be used with a backend database such as {{slapd-mdb(5)}}
 to enforce the uniqueness of some or all attributes within a subtree.
 
 
@@ -1390,7 +1396,7 @@ Here are a few examples:
 
 >       loglevel    sync stats
 >       
->       database    hdb
+>       database    mdb
 >       suffix      "dc=suretecsystems,dc=com"
 >       directory   /usr/local/var/openldap-data
 >       

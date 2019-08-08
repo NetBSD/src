@@ -1,10 +1,10 @@
-/*	$NetBSD: opensock.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: opensock.c,v 1.1.1.7 2019/08/08 13:31:42 christos Exp $	*/
 
 /* opensock.c - open a unix domain socket */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2017 The OpenLDAP Foundation.
+ * Copyright 2007-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: opensock.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: opensock.c,v 1.1.1.7 2019/08/08 13:31:42 christos Exp $");
 
 #include "portable.h"
 

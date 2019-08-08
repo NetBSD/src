@@ -1,10 +1,10 @@
-/*	$NetBSD: dyngroup.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: dyngroup.c,v 1.1.1.7 2019/08/08 13:31:40 christos Exp $	*/
 
 /* dyngroup.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2017 The OpenLDAP Foundation.
+ * Copyright 2003-2019 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dyngroup.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: dyngroup.c,v 1.1.1.7 2019/08/08 13:31:40 christos Exp $");
 
 #include "portable.h"
 

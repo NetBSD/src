@@ -1,9 +1,9 @@
-/*	$NetBSD: util-int.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: util-int.c,v 1.1.1.7 2019/08/08 13:31:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util-int.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: util-int.c,v 1.1.1.7 2019/08/08 13:31:16 christos Exp $");
 
 #include "portable.h"
 

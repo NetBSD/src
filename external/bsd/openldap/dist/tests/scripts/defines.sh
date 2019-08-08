@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2017 The OpenLDAP Foundation.
+## Copyright 1998-2019 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -261,6 +261,7 @@ UPDATEDN="cn=Replica,$BASEDN"
 PASSWD=secret
 BABSDN="cn=Barbara Jensen,ou=Information Technology DivisioN,ou=People,$BASEDN"
 BJORNSDN="cn=Bjorn Jensen,ou=Information Technology DivisioN,ou=People,$BASEDN"
+BADBJORNSDN="cn=Bjorn JensenNotReally,ou=Information Technology DivisioN,ou=People,$BASEDN"
 JAJDN="cn=James A Jones 1,ou=Alumni Association,ou=People,$BASEDN"
 JOHNDDN="cn=John Doe,ou=Information Technology Division,ou=People,$BASEDN"
 MELLIOTDN="cn=Mark Elliot,ou=Alumni Association,ou=People,$BASEDN"
@@ -288,6 +289,7 @@ SEARCHOUT2=$TESTDIR/ldapsearch2.out
 SEARCHFLT=$TESTDIR/ldapsearch.flt
 SEARCHFLT2=$TESTDIR/ldapsearch2.flt
 LDIFFLT=$TESTDIR/ldif.flt
+LDIFFLT2=$TESTDIR/ldif2.flt
 TESTOUT=$TESTDIR/test.out
 INITOUT=$TESTDIR/init.out
 VALSORTOUT1=$DATADIR/valsort1.out
