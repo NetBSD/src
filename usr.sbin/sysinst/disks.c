@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.49 2019/08/08 11:41:16 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.50 2019/08/08 13:45:19 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1121,6 +1121,8 @@ make_filesystems(struct install_partition_desc *install)
 		 */
 		ptn = &install->infos[i];
 		parts = ptn->parts;
+		newfs = NULL;
+		fsname = NULL;
 
 		if (ptn->size == 0 || parts == NULL|| ptn->type == PT_swap)
 			continue;			
@@ -1136,7 +1138,6 @@ make_filesystems(struct install_partition_desc *install)
 		parts->pscheme->get_part_device(parts, ptn->cur_part_id,
 		    rdev, sizeof rdev, &partno, raw_dev_name, true);
 
-		newfs = NULL;
 		switch (ptn->fs_type) {
 		case FS_APPLEUFS:
 			asprintf(&newfs, "/sbin/newfs");
@@ -1168,6 +1169,11 @@ make_filesystems(struct install_partition_desc *install)
 			mnt_opts = "-tsysvbfs";
 			fsname = "sysvbfs";
 			break;
+		case FS_V7:
+			asprintf(&newfs, "/sbin/newfs_v7fs");
+			mnt_opts = "-tv7fs";
+			fsname = "v7fs";
+			break;
 		case FS_EX2FS:
 			asprintf(&newfs, "/sbin/newfs_ext2fs");
 			mnt_opts = "-text2fs";
@@ -1192,7 +1198,8 @@ make_filesystems(struct install_partition_desc *install)
 				error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s %s", newfs, rdev);
 			}
-		} else if (ptn->instflags & (PUIINST_MOUNT|PUIINST_BOOT)) {
+		} else if ((ptn->instflags & (PUIINST_MOUNT|PUIINST_BOOT))
+		    && fsname != NULL) {
 			/* We'd better check it isn't dirty */
 			error = fsck_preen(devdev, fsname, false);
 		}
