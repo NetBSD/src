@@ -1,10 +1,10 @@
-/*	$NetBSD: nssov.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: nssov.c,v 1.1.1.7 2019/08/08 13:31:06 christos Exp $	*/
 
 /* nssov.c - nss-ldap overlay for slapd */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * Portions Copyright 2013 by Ted C. Cheng, Symas Corp.
  * All rights reserved.
