@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.29 2019/06/28 23:25:12 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.30 2019/08/08 14:38:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.29 2019/06/28 23:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.30 2019/08/08 14:38:53 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -6536,8 +6536,11 @@ ipf_checkl4sum(fr_info_t *fin)
 		/*NOTREACHED*/
 	}
 
-	if (csump != NULL)
+	if (csump != NULL) {
 		hdrsum = *csump;
+		if (fin->fin_p == IPPROTO_UDP && hdrsum == 0xffff)
+			hdrsum = 0x0000;
+	}
 
 	if (dosum) {
 		sum = fr_cksum(fin, fin->fin_ip, fin->fin_p, fin->fin_dp);
