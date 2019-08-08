@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2019 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -567,9 +567,9 @@ The default is FALSE.
 A more complete example of the {{slapd.conf}}(5) content is thus:
 
 >	database mdb
->	maxsize 1073741824
->	suffix dc=Example,dc=com
->	rootdn dc=Example,dc=com
+>	maxsize 85899345920
+>	suffix dc=example,dc=com
+>	rootdn dc=example,dc=com
 >	directory /var/ldap/db
 >	index objectclass,entryCSN,entryUUID eq
 >
@@ -586,9 +586,9 @@ is backend independent and the directive can be defined with any
 database type.
 
 >	database mdb
->	maxsize 1073741824
->	suffix dc=Example,dc=com
->	rootdn dc=Example,dc=com
+>	maxsize 85899345920
+>	suffix dc=example,dc=com
+>	rootdn dc=example,dc=com
 >	directory /var/ldap/db
 >	index objectclass,entryCSN,entryUUID eq
 >
@@ -668,14 +668,14 @@ replica servers:
 >     # of a database.  The "by * break" portion causes evaluation of
 >     # subsequent rules.  See slapd.access(5) for details.
 >     access to *
->        by dn.base="cn=replicator,dc=symas,dc=com" read
+>        by dn.base="cn=replicator,dc=example,dc=com" read
 >        by * break
 >     
 >     # Set the module path location
->     modulepath /opt/symas/lib/openldap
+>     modulepath /usr/lib/openldap
 >     
->     # Load the hdb backend
->     moduleload back_hdb.la
+>     # Load the mdb backend
+>     moduleload back_mdb.la
 >     
 >     # Load the accesslog overlay
 >     moduleload accesslog.la
@@ -684,24 +684,26 @@ replica servers:
 >     moduleload syncprov.la
 >     
 >     # Accesslog database definitions
->     database hdb
+>     database mdb
 >     suffix cn=accesslog
->     directory /db/accesslog
 >     rootdn cn=accesslog
+>     directory /var/lib/db/accesslog
+>     maxsize 85899345920
 >     index default eq
->     index entryCSN,objectClass,reqEnd,reqResult,reqStart
+>     index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 >     
 >     overlay syncprov
 >     syncprov-nopresent TRUE
 >     syncprov-reloadhint TRUE
 >     
 >     # Let the replica DN have limitless searches
->     limits dn.exact="cn=replicator,dc=symas,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+>     limits dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 >     
 >     # Primary database definitions
->     database hdb
->     suffix "dc=symas,dc=com"
->     rootdn "cn=manager,dc=symas,dc=com"
+>     database mdb
+>     suffix "dc=example,dc=com"
+>     rootdn "cn=manager,dc=example,dc=com"
+>     maxsize 85899345920
 >     
 >     ## Whatever other configuration options are desired
 >     
@@ -722,7 +724,7 @@ replica servers:
 >     logpurge 07+00:00 01+00:00
 >     
 >     # Let the replica DN have limitless searches
->     limits dn.exact="cn=replicator,dc=symas,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+>     limits dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 
 For more information, always consult the relevant man pages ({{slapo-accesslog}}(5) and {{slapd.conf}}(5))
 
@@ -730,9 +732,10 @@ For more information, always consult the relevant man pages ({{slapo-accesslog}}
 H4: Delta-syncrepl Consumer configuration
 
 >     # Replica database configuration
->     database hdb
->     suffix "dc=symas,dc=com"
->     rootdn "cn=manager,dc=symas,dc=com"
+>     database mdb
+>     suffix "dc=example,dc=com"
+>     rootdn "cn=manager,dc=example,dc=com"
+>     maxsize 85899345920
 >     
 >     ## Whatever other configuration bits for the replica, like indexing
 >     ## that you want
@@ -742,11 +745,11 @@ H4: Delta-syncrepl Consumer configuration
 >     
 >     # syncrepl directives
 >     syncrepl  rid=0
->               provider=ldap://ldapmaster.symas.com:389
+>               provider=ldap://ldapmaster.example.com:389
 >               bindmethod=simple
->               binddn="cn=replicator,dc=symas,dc=com"
+>               binddn="cn=replicator,dc=example,dc=com"
 >               credentials=secret
->               searchbase="dc=symas,dc=com"
+>               searchbase="dc=example,dc=com"
 >               logbase="cn=accesslog"
 >               logfilter="(&(objectClass=auditWriteObject)(reqResult=0))"
 >               schemachecking=on
@@ -755,7 +758,7 @@ H4: Delta-syncrepl Consumer configuration
 >               syncdata=accesslog
 >     
 >     # Refer updates to the master
->     updateref               ldap://ldapmaster.symas.com
+>     updateref               ldap://ldapmaster.example.com
 
 
 The above configuration assumes that you have a replicator identity defined 
@@ -978,7 +981,7 @@ The following example is for a self-contained push-based replication solution:
 >	include     /usr/local/etc/openldap/slapd.acl
 >	
 >	modulepath  /usr/local/libexec/openldap
->	moduleload  back_hdb.la
+>	moduleload  back_mdb.la
 >	moduleload  syncprov.la
 >	moduleload  back_monitor.la
 >	moduleload  back_ldap.la
@@ -988,13 +991,12 @@ The following example is for a self-contained push-based replication solution:
 >	
 >	loglevel    sync stats
 >	
->	database    hdb
+>	database    mdb
 >	suffix      "dc=suretecsystems,dc=com"
 >	directory   /usr/local/var/openldap-data
+>   maxsize     85899345920
 >	
 >	checkpoint      1024 5
->	cachesize       10000
->	idlcachesize    10000
 >	
 >	index       objectClass eq
 >	# rest of indexes
@@ -1064,7 +1066,7 @@ A replica configuration for this type of setup could be:
 >	include     /usr/local/etc/openldap/slapd.acl
 >	
 >	modulepath  /usr/local/libexec/openldap
->	moduleload  back_hdb.la
+>	moduleload  back_mdb.la
 >	moduleload  syncprov.la
 >	moduleload  back_monitor.la
 >	moduleload  back_ldap.la
@@ -1074,13 +1076,12 @@ A replica configuration for this type of setup could be:
 >	
 >	loglevel    sync stats
 >	
->	database    hdb
+>	database    mdb
 >	suffix      "dc=suretecsystems,dc=com"
 >	directory   /usr/local/var/openldap-slave/data
 >	
+>   maxsize         85899345920
 >	checkpoint      1024 5
->	cachesize       10000
->	idlcachesize    10000
 >	
 >	index       objectClass eq
 >	# rest of indexes

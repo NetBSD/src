@@ -1,10 +1,10 @@
-/*	$NetBSD: nssov.h,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: nssov.h,v 1.1.1.7 2019/08/08 13:31:05 christos Exp $	*/
 
 /* nssov.h - NSS overlay header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * Portions Copyright 2008 Howard Chu.
  * Portions Copyright 2013 Ted C. Cheng, Symas Corp.
  * All rights reserved.
@@ -43,7 +43,7 @@
 #undef PACKAGE_VERSION
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nssov.h,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: nssov.h,v 1.1.1.7 2019/08/08 13:31:05 christos Exp $");
 
 #include "portable.h"
 #include "slap.h"
