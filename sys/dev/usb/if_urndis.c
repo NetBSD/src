@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.23 2019/08/07 22:26:28 macallan Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.24 2019/08/08 06:16:40 maya Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.23 2019/08/07 22:26:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.24 2019/08/08 06:16:40 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,6 +142,8 @@ static uint32_t urndis_ctrl_handle_init(struct urndis_softc *,
 static uint32_t urndis_ctrl_handle_query(struct urndis_softc *,
     const struct rndis_comp_hdr *, void **, size_t *);
 static uint32_t urndis_ctrl_handle_reset(struct urndis_softc *,
+    const struct rndis_comp_hdr *);
+static uint32_t urndis_ctrl_handle_status(struct urndis_softc *,
     const struct rndis_comp_hdr *);
 
 static uint32_t urndis_ctrl_init(struct urndis_softc *);
@@ -276,6 +278,10 @@ urndis_ctrl_handle(struct urndis_softc *sc, struct rndis_comp_hdr *hdr,
 		case REMOTE_NDIS_KEEPALIVE_CMPLT:
 		case REMOTE_NDIS_SET_CMPLT:
 			rval = le32toh(hdr->rm_status);
+			break;
+
+		case REMOTE_NDIS_INDICATE_STATUS_MSG:
+			rval = urndis_ctrl_handle_status(sc, hdr);
 			break;
 
 		default:
@@ -445,6 +451,38 @@ urndis_ctrl_handle_reset(struct urndis_softc *sc,
 			    DEVNAME(sc));
 			return rval;
 		}
+	}
+
+	return rval;
+}
+
+static uint32_t
+urndis_ctrl_handle_status(struct urndis_softc *sc,
+    const struct rndis_comp_hdr *hdr)
+{
+	const struct rndis_status_msg	*msg;
+	uint32_t			rval;
+
+	msg = (const struct rndis_status_msg *)hdr;
+
+	rval = le32toh(msg->rm_status);
+
+	DPRINTF(("%s: urndis_ctrl_handle_status: len %u status 0x%x "
+	    "stbuflen %u\n",
+	    DEVNAME(sc),
+	    le32toh(msg->rm_len),
+	    rval,
+	    le32toh(msg->rm_stbuflen)));
+
+	switch (rval) {
+		case RNDIS_STATUS_MEDIA_CONNECT:
+		case RNDIS_STATUS_MEDIA_DISCONNECT:
+		case RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG:
+			rval = RNDIS_STATUS_SUCCESS;
+			break;
+
+		default:
+		        printf("%s: status 0x%x\n", DEVNAME(sc), rval);
 	}
 
 	return rval;
