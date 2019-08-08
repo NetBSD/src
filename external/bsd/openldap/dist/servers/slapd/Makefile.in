@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2017 The OpenLDAP Foundation.
+## Copyright 1998-2019 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -210,7 +210,7 @@ slapd.def: libbackends.a liboverlays.a version.o
 	dlltool --exclude-symbols main,ServiceMain@8 --export-all-symbols \
 			--output-def $@.tmp $$objs;
 	echo EXPORTS > $@
-	$(SED) -e 1,2d -e 's/ @ [0-9][0-9]*//' $@.tmp | sort >> $@
+	$(SED) -e 1,2d -e 's/ @ [0-9][0-9]*//' -e '/\.refptr\./d' $@.tmp | sort >> $@
 	$(RM) $@.tmp
 
 symdummy.c: slapd.def
