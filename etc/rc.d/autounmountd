@@ -7,7 +7,7 @@
 # REQUIRE: DAEMON
 # KEYWORD: nojail
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="autounmountd"
 rcvar="autofs"
