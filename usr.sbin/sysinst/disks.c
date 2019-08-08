@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.48 2019/08/07 10:12:32 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.49 2019/08/08 11:41:16 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1192,7 +1192,7 @@ make_filesystems(struct install_partition_desc *install)
 				error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s %s", newfs, rdev);
 			}
-		} else {
+		} else if (ptn->instflags & (PUIINST_MOUNT|PUIINST_BOOT)) {
 			/* We'd better check it isn't dirty */
 			error = fsck_preen(devdev, fsname, false);
 		}
