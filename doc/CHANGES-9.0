@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.11 2019/08/08 11:52:58 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.12 2019/08/09 16:16:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -355,4 +355,59 @@ etc/mtree/NetBSD.dist.base			1.201
 
 	/etc/namedb: sync user and group with etc/mtree/special.
 	[nakayama, ticket #31]
+
+	Do not try to fsck partitions we are never going to mount.
+	Found by Andreas Gustafsson's baremetal test bed.
+	[martin, ticket #32]
+
+	Do not even consider to fsck partitions where we do not know the file
+	system type. Add v7fs support.
+	[martin, ticket #33]
+
+sbin/reboot/reboot.c				1.41
+
+	reboot(8): fix argument order for logwtmpx(3) call.
+	[roy, ticket #34]
+
+sys/arch/amd64/conf/ALL				1.121
+sys/arch/amd64/conf/GENERIC			1.534
+sys/arch/amd64/conf/XEN3_DOM0			1.168
+sys/arch/i386/conf/GENERIC			1.1210
+sys/arch/i386/conf/XEN3PAE_DOM0			1.14
+
+	xhci(4) is considered stable enough. So, remove misleading comments.
+	[rin, ticket #35]
+
+sys/dev/pci/if_et.c				1.25,1.26
+sys/dev/pci/if_etreg.h				1.2,1.3
+
+	Make et(4) work:
+	- Add missing ifioctl_common() for SIOCSIFFLAGS to make if_flags
+	  controllable.  
+	- Enabling TX/RX in et_init() will always fail when cable is not
+	  plugged in. If this happens, we delay TX/RX enablement until link is
+	  up.
+	- Modify flow control stuff a little. It still doesn't work.
+	- Avoid undefined behavior when reset the chip.
+	[msaitoh, ticket #36]
+
+doc/3RDPARTY					1.1641
+sys/arch/amd64/conf/GENERIC			1.532
+sys/dev/pci/if_ena.c				1.16
+
+	If the memory space's BAR and the MSI-X table is on the same BAR,
+	reserve the space. Almost the same as nvme_pci.c and xhci_pci.c.
+	Add ena(4).
+	[msaitoh, ticket #37]
+
+sys/dev/acpi/acpi_ec.c				1.76,1.77
+
+	Fix a bug that acpiec_space_handler() doesn't access more than 64bit
+	correctly.
+	[msaitoh, ticket #38]
+
+sys/dev/usb/if_aue.c				1.156
+
+	Fix panic when setting multicast addresses.
+	[msaitoh, ticket #39]
 
