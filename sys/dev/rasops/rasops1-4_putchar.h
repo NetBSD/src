@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1-4_putchar.h,v 1.1 2019/08/07 12:36:36 rin Exp $ */
+/* $NetBSD: rasops1-4_putchar.h,v 1.2 2019/08/09 12:05:51 rin Exp $ */
 
 /* NetBSD: rasops_bitops.h,v 1.23 2019/08/02 04:39:09 rin Exp */
 /*-
@@ -96,6 +96,9 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	bool space;
 
 	hp = NULL;	/* XXX GCC */
+
+	if (__predict_false(!CHAR_IN_FONT(uc, font)))
+		return;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
