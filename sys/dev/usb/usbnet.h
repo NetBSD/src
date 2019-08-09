@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.7 2019/08/09 01:17:33 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.8 2019/08/09 02:14:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -192,6 +192,7 @@ struct usbnet {
 	device_t		un_dev;
 	struct usbd_interface	*un_iface;
 	struct usbd_device *	un_udev;
+
 	krndsource_t		un_rndsrc;
 	struct usbnet_ops	*un_ops;
 
@@ -206,6 +207,9 @@ struct usbnet {
 	struct usbnet_cdata	un_cdata;
 	struct callout		un_stat_ch;
 	int			un_if_flags;
+
+	/* This is for driver to use. */
+	unsigned		un_flags;
 
 	/*
 	 * - un_lock protects most of the structure
@@ -350,6 +354,5 @@ int	usbnet_activate(device_t, devact_t);
 
 /* stop backend */
 void	usbnet_stop(struct usbnet *, struct ifnet *, int);
-void	usbnet_stop_locked(struct usbnet *, struct ifnet *, int);
 
 #endif /* _DEV_USB_USBNET_H */
