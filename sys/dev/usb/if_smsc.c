@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.49 2019/08/09 01:17:33 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.50 2019/08/09 07:54:05 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.49 2019/08/09 01:17:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.50 2019/08/09 07:54:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -964,19 +964,6 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 			return;
 		}
 
-#if 0
-		struct mbuf *m = usbnet_newbuf();
-		if (m == NULL) {
-			smsc_dbg_printf(un, "smc_newbuf returned NULL\n");
-			ifp->if_ierrors++;
-			return;
-		}
-
-		m_set_rcvif(m, ifp);
-		m->m_pkthdr.len = m->m_len = pktlen;
-		m->m_flags |= M_HASFCS;
-		m_adj(m, ETHER_ALIGN);
-#endif
 		uint8_t *pktbuf = buf + ETHER_ALIGN;
 		size_t buflen = pktlen;
 		int mbuf_flags = M_HASFCS;
@@ -984,7 +971,6 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		uint16_t csum_data = 0;
 
  		KASSERT(pktlen < MCLBYTES);
-//  		memcpy(mtod(m, char *), buf + ETHER_ALIGN, m->m_len);
 
 		/* Check if RX TCP/UDP checksumming is being offloaded */
 		if (sc->sc_coe_ctrl & SMSC_COE_CTRL_RX_EN) {
