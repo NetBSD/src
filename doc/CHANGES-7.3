@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.56 2019/06/15 16:00:20 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.57 2019/08/09 19:25:47 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -613,4 +613,10 @@ libexec/httpd/testsuite/test-simple		1.6
 	Avoid possible NULL dereference when sending a big request that timeout.
 	Avoid an assertion failure when using cgihandler (-C option).
 	[mrg, ticket #1699]
+
+sys/external/bsd/ipf/netinet/fil.c		1.30
+
+	PR/54443: ipf mistakenly regards UDP packet with checksum field
+	0xffff as bad.
+	[christos, ticket #1701]
 
