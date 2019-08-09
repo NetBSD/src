@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.167 2019/05/06 02:24:37 sevan Exp $
+# $NetBSD: XEN3_DOM0,v 1.167.2.1 2019/08/09 15:59:52 martin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.167 $"
+#ident		"XEN3_DOM0-$Revision: 1.167.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -570,7 +570,6 @@ wsmouse*	at pms? mux 0
 
 # PCI USB controllers
 xhci*	at pci? dev ? function ?	# eXtensible Host Controller
-					# xhci is at best experimental
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
