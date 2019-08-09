@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mode.h,v 1.4 2018/08/27 15:13:05 riastradh Exp $	*/
+/*	$NetBSD: radeon_mode.h,v 1.5 2019/08/09 06:27:21 msaitoh Exp $	*/
 
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
@@ -693,7 +693,7 @@ struct atom_voltage_table
 
 /* Driver internal use only flags of radeon_get_crtc_scanoutpos() */
 #define USE_REAL_VBLANKSTART 		(1 << 30)
-#define GET_DISTANCE_TO_VBLANKSTART	(1 << 31)
+#define GET_DISTANCE_TO_VBLANKSTART	(1U << 31)
 
 extern void
 radeon_add_atom_connector(struct drm_device *dev,
