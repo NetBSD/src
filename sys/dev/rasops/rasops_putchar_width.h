@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar_width.h,v 1.12 2019/08/07 12:27:49 rin Exp $ */
+/* $NetBSD: rasops_putchar_width.h,v 1.13 2019/08/09 12:05:51 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -220,7 +220,7 @@ PUTCHAR_WIDTH(RASOPS_DEPTH, RASOPS_WIDTH)(void *cookie, int row, int col,
 #endif
 
 	/* check if character fits into font limits */
-	if (!CHAR_IN_FONT(uc, font))
+	if (__predict_false(!CHAR_IN_FONT(uc, font)))
 		return;
 
 	/* Recompute stamp? */
