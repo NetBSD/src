@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.117 2019/08/07 12:27:49 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.118 2019/08/09 11:08:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.117 2019/08/07 12:27:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.118 2019/08/09 11:08:20 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -175,7 +175,7 @@ static const uint8_t apple8_devcmap[16] = {
 static const uint8_t apple4_devcmap[16] = {
 	15,	/* black	*/
 	 3,	/* red		*/
-	 8,	/* green	*/
+	 9,	/* dark green	*/
 	 1,	/* yellow	*/
 	 6,	/* blue		*/
 	 4,	/* magenta	*/
@@ -184,7 +184,7 @@ static const uint8_t apple4_devcmap[16] = {
 
 	13,	/* medium grey	*/
 	 3,	/* red		*/
-	 8,	/* green	*/
+	 9,	/* dark green	*/
 	 1,	/* yellow	*/
 	 6,	/* blue		*/
 	 4,	/* magenta	*/
