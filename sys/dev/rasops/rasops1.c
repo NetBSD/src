@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.35 2019/08/07 12:27:49 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.36 2019/08/09 12:05:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.35 2019/08/07 12:27:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.36 2019/08/09 12:05:51 rin Exp $");
 
 #include "opt_rasops.h"
 
@@ -99,6 +99,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	bool space;
 
 	hp = NULL;	/* XXX GCC */
+
+	if (__predict_false(!CHAR_IN_FONT(uc, font)))
+		return;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
