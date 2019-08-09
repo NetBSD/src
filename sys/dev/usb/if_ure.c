@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.19 2019/08/09 01:17:33 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.20 2019/08/09 02:52:59 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.19 2019/08/09 01:17:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.20 2019/08/09 02:52:59 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -78,10 +78,10 @@ static const struct usb_devno ure_devs[] = {
 static void	ure_reset(struct usbnet *);
 static uint32_t	ure_txcsum(struct mbuf *);
 static int	ure_rxcsum(struct ifnet *, struct ure_rxpkt *);
-static void	ure_rtl8152_init(struct ure_softc *);
-static void	ure_rtl8153_init(struct ure_softc *);
-static void	ure_disable_teredo(struct ure_softc *);
-static void	ure_init_fifo(struct ure_softc *);
+static void	ure_rtl8152_init(struct usbnet *);
+static void	ure_rtl8153_init(struct usbnet *);
+static void	ure_disable_teredo(struct usbnet *);
+static void	ure_init_fifo(struct usbnet *);
 
 static void	ure_stop_cb(struct ifnet *, int);
 static int	ure_ioctl_cb(struct ifnet *, u_long, void *);
@@ -97,7 +97,7 @@ static int	ure_init(struct ifnet *);
 static int	ure_match(device_t, cfdata_t, void *);
 static void	ure_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(ure, sizeof(struct ure_softc), ure_match, ure_attach,
+CFATTACH_DECL_NEW(ure, sizeof(struct usbnet), ure_match, ure_attach,
     usbnet_detach, usbnet_activate);
 
 static struct usbnet_ops ure_ops = {
@@ -297,7 +297,6 @@ static void
 ure_miibus_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
-	struct ure_softc * const sc = usbnet_softc(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
 	if (usbnet_isdying(un))
@@ -312,7 +311,7 @@ ure_miibus_statchg(struct ifnet *ifp)
 			un->un_link = true;
 			break;
 		case IFM_1000_T:
-			if ((sc->ure_flags & URE_FLAG_8152) != 0)
+			if ((un->un_flags & URE_FLAG_8152) != 0)
 				break;
 			un->un_link = true;
 			break;
@@ -485,9 +484,8 @@ ure_stop_cb(struct ifnet *ifp, int disable __unused)
 }
 
 static void
-ure_rtl8152_init(struct ure_softc *sc)
+ure_rtl8152_init(struct usbnet *un)
 {
-	struct usbnet * const un = &sc->ure_un;
 	uint32_t pwrctrl;
 
 	/* Disable ALDPS. */
@@ -495,7 +493,7 @@ ure_rtl8152_init(struct ure_softc *sc)
 	    URE_DIS_SDSAVE);
 	usbd_delay_ms(un->un_udev, 20);
 
-	if (sc->ure_chip & URE_CHIP_VER_4C00) {
+	if (un->un_flags & URE_FLAG_VER_4C00) {
 		ure_write_2(un, URE_PLA_LED_FEATURE, URE_MCU_TYPE_PLA,
 		    ure_read_2(un, URE_PLA_LED_FEATURE, URE_MCU_TYPE_PLA) &
 		    ~URE_LED_MODE_MASK);
@@ -529,7 +527,7 @@ ure_rtl8152_init(struct ure_softc *sc)
 	    URE_DIS_SDSAVE);
 	usbd_delay_ms(un->un_udev, 20);
 
-	ure_init_fifo(sc);
+	ure_init_fifo(un);
 
 	ure_write_1(un, URE_USB_TX_AGG, URE_MCU_TYPE_USB,
 	    URE_TX_AGG_MAX_THRESHOLD);
@@ -539,9 +537,8 @@ ure_rtl8152_init(struct ure_softc *sc)
 }
 
 static void
-ure_rtl8153_init(struct ure_softc *sc)
+ure_rtl8153_init(struct usbnet *un)
 {
-	struct usbnet * const un = &sc->ure_un;
 	uint16_t val;
 	uint8_t u1u2[8];
 	int i;
@@ -578,7 +575,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	    ure_read_2(un, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB) &
 	    ~URE_U2P3_ENABLE);
 
-	if (sc->ure_chip & URE_CHIP_VER_5C10) {
+	if (un->un_flags & URE_FLAG_VER_5C10) {
 		val = ure_read_2(un, URE_USB_SSPHYLINK2, URE_MCU_TYPE_USB);
 		val &= ~URE_PWD_DN_SCALE_MASK;
 		val |= URE_PWD_DN_SCALE(96);
@@ -587,12 +584,12 @@ ure_rtl8153_init(struct ure_softc *sc)
 		ure_write_1(un, URE_USB_USB2PHY, URE_MCU_TYPE_USB,
 		    ure_read_1(un, URE_USB_USB2PHY, URE_MCU_TYPE_USB) |
 		    URE_USB2PHY_L1 | URE_USB2PHY_SUSPEND);
-	} else if (sc->ure_chip & URE_CHIP_VER_5C20) {
+	} else if (un->un_flags & URE_FLAG_VER_5C20) {
 		ure_write_1(un, URE_PLA_DMY_REG0, URE_MCU_TYPE_PLA,
 		    ure_read_1(un, URE_PLA_DMY_REG0, URE_MCU_TYPE_PLA) &
 		    ~URE_ECM_ALDPS);
 	}
-	if (sc->ure_chip & (URE_CHIP_VER_5C20 | URE_CHIP_VER_5C30)) {
+	if (un->un_flags & (URE_FLAG_VER_5C20 | URE_FLAG_VER_5C30)) {
 		val = ure_read_1(un, URE_USB_CSR_DUMMY1, URE_MCU_TYPE_USB);
 		if (ure_read_2(un, URE_USB_BURST_SIZE, URE_MCU_TYPE_USB) ==
 		    0)
@@ -614,7 +611,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	    ure_read_2(un, URE_PLA_LED_FEATURE, URE_MCU_TYPE_PLA) &
 	    ~URE_LED_MODE_MASK);
 
-	if ((sc->ure_chip & URE_CHIP_VER_5C10) &&
+	if ((un->un_flags & URE_FLAG_VER_5C10) &&
 	    un->un_udev->ud_speed != USB_SPEED_SUPER)
 		val = URE_LPM_TIMER_500MS;
 	else
@@ -653,7 +650,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	    URE_EEE_SPDWN_EN);
 
 	val = ure_read_2(un, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB);
-	if (!(sc->ure_chip & (URE_CHIP_VER_5C00 | URE_CHIP_VER_5C10)))
+	if (!(un->un_flags & (URE_FLAG_VER_5C00 | URE_FLAG_VER_5C10)))
 		val |= URE_U2P3_ENABLE;
 	else
 		val &= ~URE_U2P3_ENABLE;
@@ -668,7 +665,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	    ure_ocp_reg_read(un, URE_OCP_POWER_CFG) & ~URE_EN_ALDPS);
 	usbd_delay_ms(un->un_udev, 20);
 
-	ure_init_fifo(sc);
+	ure_init_fifo(un);
 
 	/* Enable Rx aggregation. */
 	ure_write_2(un, URE_USB_USB_CTRL, URE_MCU_TYPE_USB,
@@ -676,7 +673,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	    ~URE_RX_AGG_DISABLE);
 
 	val = ure_read_2(un, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB);
-	if (!(sc->ure_chip & (URE_CHIP_VER_5C00 | URE_CHIP_VER_5C10)))
+	if (!(un->un_flags & (URE_FLAG_VER_5C00 | URE_FLAG_VER_5C10)))
 		val |= URE_U2P3_ENABLE;
 	else
 		val &= ~URE_U2P3_ENABLE;
@@ -688,10 +685,8 @@ ure_rtl8153_init(struct ure_softc *sc)
 }
 
 static void
-ure_disable_teredo(struct ure_softc *sc)
+ure_disable_teredo(struct usbnet *un)
 {
-	struct usbnet * const un = &sc->ure_un;
-
 	ure_write_4(un, URE_PLA_TEREDO_CFG, URE_MCU_TYPE_PLA,
 	    ure_read_4(un, URE_PLA_TEREDO_CFG, URE_MCU_TYPE_PLA) &
 	    ~(URE_TEREDO_SEL | URE_TEREDO_RS_EVENT_MASK | URE_OOB_TEREDO_EN));
@@ -702,9 +697,8 @@ ure_disable_teredo(struct ure_softc *sc)
 }
 
 static void
-ure_init_fifo(struct ure_softc *sc)
+ure_init_fifo(struct usbnet *un)
 {
-	struct usbnet * const un = &sc->ure_un;
 	uint32_t rx_fifo1, rx_fifo2;
 	int i;
 
@@ -712,18 +706,18 @@ ure_init_fifo(struct ure_softc *sc)
 	    ure_read_2(un, URE_PLA_MISC_1, URE_MCU_TYPE_PLA) |
 	    URE_RXDY_GATED_EN);
 
-	ure_disable_teredo(sc);
+	ure_disable_teredo(un);
 
 	ure_write_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA,
 	    ure_read_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA) &
 	    ~URE_RCR_ACPT_ALL);
 
-	if (!(sc->ure_flags & URE_FLAG_8152)) {
-		if (sc->ure_chip & (URE_CHIP_VER_5C00 | URE_CHIP_VER_5C10 |
-		    URE_CHIP_VER_5C20))
+	if (!(un->un_flags & URE_FLAG_8152)) {
+		if (un->un_flags & (URE_FLAG_VER_5C00 | URE_FLAG_VER_5C10 |
+		    URE_FLAG_VER_5C20))
 			ure_ocp_reg_write(un, URE_OCP_ADC_CFG,
 			    URE_CKADSEL_L | URE_ADC_EN | URE_EN_EMI_L);
-		if (sc->ure_chip & URE_CHIP_VER_5C00)
+		if (un->un_flags & URE_FLAG_VER_5C00)
 			ure_ocp_reg_write(un, URE_OCP_EEE_CFG,
 			    ure_ocp_reg_read(un, URE_OCP_EEE_CFG) &
 			    ~URE_CTAP_SHORT_EN);
@@ -838,8 +832,7 @@ ure_match(device_t parent, cfdata_t match, void *aux)
 static void
 ure_attach(device_t parent, device_t self, void *aux)
 {
-	struct ure_softc *sc = device_private(self);
-	struct usbnet * const un = &sc->ure_un;
+	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
 	usb_interface_descriptor_t *id;
@@ -860,7 +853,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 
 	un->un_dev = self;
 	un->un_udev = dev;
-	un->un_sc = sc;
+	un->un_sc = un;
 	un->un_ops = &ure_ops;
 
 #define URE_CONFIG_NO	1 /* XXX */
@@ -872,7 +865,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (uaa->uaa_product == USB_PRODUCT_REALTEK_RTL8152)
-		sc->ure_flags |= URE_FLAG_8152;
+		un->un_flags |= URE_FLAG_8152;
 
 #define URE_IFACE_IDX  0 /* XXX */
 	error = usbd_device2interface_handle(dev, URE_IFACE_IDX, &un->un_iface);
@@ -908,39 +901,39 @@ ure_attach(device_t parent, device_t self, void *aux)
 	ver = ure_read_2(un, URE_PLA_TCR1, URE_MCU_TYPE_PLA) & URE_VERSION_MASK;
 	switch (ver) {
 	case 0x4c00:
-		sc->ure_chip |= URE_CHIP_VER_4C00;
+		un->un_flags |= URE_FLAG_VER_4C00;
 		break;
 	case 0x4c10:
-		sc->ure_chip |= URE_CHIP_VER_4C10;
+		un->un_flags |= URE_FLAG_VER_4C10;
 		break;
 	case 0x5c00:
-		sc->ure_chip |= URE_CHIP_VER_5C00;
+		un->un_flags |= URE_FLAG_VER_5C00;
 		break;
 	case 0x5c10:
-		sc->ure_chip |= URE_CHIP_VER_5C10;
+		un->un_flags |= URE_FLAG_VER_5C10;
 		break;
 	case 0x5c20:
-		sc->ure_chip |= URE_CHIP_VER_5C20;
+		un->un_flags |= URE_FLAG_VER_5C20;
 		break;
 	case 0x5c30:
-		sc->ure_chip |= URE_CHIP_VER_5C30;
+		un->un_flags |= URE_FLAG_VER_5C30;
 		break;
 	default:
 		/* fake addr?  or just fail? */
 		break;
 	}
 	aprint_normal_dev(self, "RTL%d %sver %04x\n",
-	    (sc->ure_flags & URE_FLAG_8152) ? 8152 : 8153,
-	    (sc->ure_chip != 0) ? "" : "unknown ",
+	    (un->un_flags & URE_FLAG_8152) ? 8152 : 8153,
+	    (un->un_flags != 0) ? "" : "unknown ",
 	    ver);
 
 	usbnet_lock(un);
-	if (sc->ure_flags & URE_FLAG_8152)
-		ure_rtl8152_init(sc);
+	if (un->un_flags & URE_FLAG_8152)
+		ure_rtl8152_init(un);
 	else
-		ure_rtl8153_init(sc);
+		ure_rtl8153_init(un);
 
-	if (sc->ure_chip & URE_CHIP_VER_4C00)
+	if (un->un_flags & URE_FLAG_VER_4C00)
 		ure_read_mem(un, URE_PLA_IDR, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
 	else
@@ -960,7 +953,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 #ifdef INET6
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx;
 #endif
-	if (sc->ure_chip & ~URE_CHIP_VER_4C00) {
+	if (un->un_flags & ~URE_FLAG_VER_4C00) {
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx |
 		    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 		    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
@@ -1157,3 +1150,5 @@ ure_txcsum(struct mbuf *m)
 
 	return reg;
 }
+
+/* XXX module is built but no MODULE() or modcmd */
