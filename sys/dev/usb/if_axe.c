@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.106 2019/08/06 01:42:22 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.107 2019/08/09 01:17:33 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.106 2019/08/06 01:42:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.107 2019/08/09 01:17:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -261,18 +261,32 @@ void	axe_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 	axe_match, axe_attach, usbnet_detach, usbnet_activate);
 
+static void	axe_stop_cb(struct ifnet *, int);
+static int	axe_ioctl_cb(struct ifnet *, u_long, void *);
+static int	axe_init(struct ifnet *);
+static usbd_status axe_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static usbd_status axe_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void	axe_mii_statchg_cb(struct ifnet *);
 static void	axe_rx_loop_cb(struct usbnet *, struct usbd_xfer *,
 			       struct usbnet_chain *, uint32_t);
 static unsigned axe_tx_prepare_cb(struct usbnet *, struct mbuf *,
 				  struct usbnet_chain *);
-static int	axe_init(struct ifnet *);
-static void	axe_stop_cb(struct ifnet *, int);
-static int	axe_ioctl_cb(struct ifnet *, u_long, void *);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);
 static void	axe_ax88772a_init(struct axe_softc *);
 static void	axe_ax88772b_init(struct axe_softc *);
+
+static struct usbnet_ops axe_ops = {
+	.uno_stop = axe_stop_cb,
+	.uno_ioctl = axe_ioctl_cb,
+	.uno_read_reg = axe_mii_read_reg,
+	.uno_write_reg = axe_mii_write_reg,
+	.uno_statchg = axe_mii_statchg_cb,
+	.uno_tx_prepare = axe_tx_prepare_cb,
+	.uno_rx_loop = axe_rx_loop_cb,
+	.uno_init = axe_init,
+};
 
 static usbd_status
 axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
@@ -284,7 +298,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 
 	usbnet_isowned_mii(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return -1;
 
 	DPRINTFN(20, "cmd %#jx index %#jx val %#jx", cmd, index, val, 0);
@@ -364,10 +378,10 @@ axe_mii_statchg_cb(struct ifnet *ifp)
 
 	struct usbnet * const un = ifp->if_softc;
 	struct axe_softc * const sc = usbnet_softc(un);
-	struct mii_data *mii = &un->un_mii;
+	struct mii_data *mii = usbnet_mii(un);
 	int val, err;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	val = 0;
@@ -425,7 +439,7 @@ axe_setiff_locked(struct usbnet *un)
 
 	usbnet_isowned_mii(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	if (axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, &rxmode)) {
@@ -516,7 +530,7 @@ axe_reset(struct usbnet *un)
 
 	usbnet_isowned_mii(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	/*
@@ -871,16 +885,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	un->un_dev = self;
 	un->un_udev = dev;
 	un->un_sc = sc;
-	un->un_stop_cb = axe_stop_cb;
-	un->un_ioctl_cb = axe_ioctl_cb;
-	un->un_read_reg_cb = axe_mii_read_reg;
-	un->un_write_reg_cb = axe_mii_write_reg;
-	un->un_statchg_cb = axe_mii_statchg_cb;
-	un->un_tx_prepare_cb = axe_tx_prepare_cb;
-	un->un_rx_loop_cb = axe_rx_loop_cb;
-	un->un_init_cb = axe_init;
-	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
-	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_ops = &axe_ops;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
@@ -905,8 +910,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
 	else
 		bufsz = AXE_172_BUFSZ;
-	un->un_cdata.uncd_rx_bufsz = bufsz;
-	un->un_cdata.uncd_tx_bufsz = bufsz;
 
 	un->un_ed[USBNET_ENDPT_RX] = 0;
 	un->un_ed[USBNET_ENDPT_TX] = 0;
@@ -934,7 +937,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axe_cmd().  */
-	usbnet_attach(un, "axedet", AXE_RX_LIST_CNT, AXE_TX_LIST_CNT);
+	usbnet_attach(un, "axedet", AXE_RX_LIST_CNT, AXE_TX_LIST_CNT,
+		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER, bufsz, bufsz);
 
 	/* We need the PHYID for init dance in some cases */
 	usbnet_lock_mii(un);
@@ -1245,7 +1249,7 @@ axe_init_locked(struct ifnet *ifp)
 
 	usbnet_isowned(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return EIO;
 
 	/* Cancel pending I/O */
@@ -1342,7 +1346,7 @@ axe_init_locked(struct ifnet *ifp)
 
 	usbnet_unlock_mii_un_locked(un);
 
-	return usbnet_init_rx_tx(un, 0, USBD_FORCE_SHORT_XFER);
+	return usbnet_init_rx_tx(un);
 }
 
 static int
