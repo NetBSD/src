@@ -1,4 +1,4 @@
-/*	$NetBSD: evergreend.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: evergreend.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -1415,7 +1415,7 @@
 #define CAYMAN_DMA1_CNTL                                  0xd82c
 
 /* async DMA packets */
-#define DMA_PACKET(cmd, sub_cmd, n) ((((cmd) & 0xF) << 28) |    \
+#define DMA_PACKET(cmd, sub_cmd, n) ((((uint32_t)(cmd) & 0xF) << 28) |	\
                                     (((sub_cmd) & 0xFF) << 20) |\
                                     (((n) & 0xFFFFF) << 0))
 #define GET_DMA_CMD(h) (((h) & 0xf0000000) >> 28)
