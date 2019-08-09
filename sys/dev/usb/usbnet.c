@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.9 2019/08/07 10:01:05 maya Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.10 2019/08/09 01:17:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.9 2019/08/07 10:01:05 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.10 2019/08/09 01:17:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,6 +87,73 @@ fail:
 #define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbnetdebug,N,FMT,A,B,C,D)
 #define USBNETHIST_FUNC()	USBHIST_FUNC()
 #define USBNETHIST_CALLED(name)	USBHIST_CALLED(usbnetdebug)
+
+/* Callback vectors. */
+
+static void
+uno_stop(struct usbnet *un, struct ifnet *ifp, int disable)
+{
+	if (un->un_ops->uno_stop)
+		(*un->un_ops->uno_stop)(ifp, disable);
+}
+
+static int
+uno_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
+{
+	if (un->un_ops->uno_ioctl)
+		return (*un->un_ops->uno_ioctl)(ifp, cmd, data);
+	return 0;
+}
+
+static int
+uno_override_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
+{
+	return (*un->un_ops->uno_override_ioctl)(ifp, cmd, data);
+}
+
+static int
+uno_init(struct usbnet *un, struct ifnet *ifp)
+{
+	return (*un->un_ops->uno_init)(ifp);
+}
+
+static int
+uno_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+{
+	return (*un->un_ops->uno_read_reg)(un, phy, reg, val);
+}
+
+static int
+uno_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+{
+	return (*un->un_ops->uno_write_reg)(un, phy, reg, val);
+}
+
+static void
+uno_mii_statchg(struct usbnet *un, struct ifnet *ifp)
+{
+	(*un->un_ops->uno_statchg)(ifp);
+}
+
+static unsigned
+uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+{
+	return (*un->un_ops->uno_tx_prepare)(un, m, c);
+}
+
+static void
+uno_rx_loop(struct usbnet *un, struct usbd_xfer *xfer,
+	    struct usbnet_chain *c, uint32_t total_len)
+{
+	(*un->un_ops->uno_rx_loop)(un, xfer, c, total_len);
+}
+
+static void
+uno_intr(struct usbnet *un, usbd_status status)
+{
+	if (un->un_ops->uno_intr)
+		(*un->un_ops->uno_intr)(un, status);
+}
 
 /* Interrupt handling. */
 
@@ -178,6 +245,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet_chain *c = priv;
 	struct usbnet * const un = c->unc_un;
+	struct usbnet_cdata *cd = &un->un_cdata;
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t total_len;
 
@@ -199,14 +267,14 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	if (total_len > un->un_cdata.uncd_rx_bufsz) {
+	if (total_len > cd->uncd_rx_bufsz) {
 		aprint_error_dev(un->un_dev,
 		    "rxeof: too large transfer (%u > %u)\n",
-		    total_len, un->un_cdata.uncd_rx_bufsz);
+		    total_len, cd->uncd_rx_bufsz);
 		goto done;
 	}
 
-	(*un->un_rx_loop_cb)(un, xfer, c, total_len);
+	uno_rx_loop(un, xfer, c, total_len);
 	KASSERT(mutex_owned(&un->un_rxlock));
 
 done:
@@ -216,8 +284,8 @@ done:
 	mutex_exit(&un->un_rxlock);
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, c, c->unc_buf, un->un_cdata.uncd_rx_bufsz,
-	    un->un_rx_xfer_flags, USBD_NO_TIMEOUT, usbnet_rxeof);
+	usbd_setup_xfer(xfer, c, c->unc_buf, cd->uncd_rx_bufsz,
+	    cd->uncd_rx_xfer_flags, USBD_NO_TIMEOUT, usbnet_rxeof);
 	usbd_transfer(xfer);
 	return;
 
@@ -293,8 +361,7 @@ usbnet_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 
-	if (un->un_intr_cb)
-		(*un->un_intr_cb)(un, status);
+	uno_intr(un, status);
 }
 
 static void
@@ -319,9 +386,9 @@ usbnet_start_locked(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		struct usbnet_chain *c = &un->un_cdata.uncd_tx_chain[idx];
+		struct usbnet_chain *c = &cd->uncd_tx_chain[idx];
 
-		length = (*un->un_tx_prepare_cb)(un, m, c);
+		length = uno_tx_prepare(un, m, c);
 		if (length == 0) {
 			ifp->if_oerrors++;
 			break;
@@ -333,7 +400,7 @@ usbnet_start_locked(struct ifnet *ifp)
 		}
 
 		usbd_setup_xfer(c->unc_xfer, c, c->unc_buf, length,
-		    un->un_tx_xfer_flags, 10000, usbnet_txeof);
+		    cd->uncd_tx_xfer_flags, 10000, usbnet_txeof);
 
 		/* Transmit */
 		usbd_status err = usbd_transfer(c->unc_xfer);
@@ -388,11 +455,10 @@ usbnet_rx_list_size(struct usbnet_cdata *cd)
 }
 
 static void
-usbnet_rx_list_alloc(struct usbnet *un, unsigned cnt)
+usbnet_rx_list_alloc(struct usbnet *un)
 {
 	struct usbnet_cdata *cd = &un->un_cdata;
 
-	cd->uncd_rx_list_cnt = cnt;
 	cd->uncd_rx_chain = kmem_zalloc(usbnet_rx_list_size(cd), KM_SLEEP);
 }
 
@@ -408,7 +474,7 @@ usbnet_rx_list_free(struct usbnet *un)
 }
 
 static int
-usbnet_rx_list_init(struct usbnet *un, unsigned xfer_flags)
+usbnet_rx_list_init(struct usbnet *un)
 {
 	struct usbnet_cdata *cd = &un->un_cdata;
 
@@ -418,7 +484,8 @@ usbnet_rx_list_init(struct usbnet *un, unsigned xfer_flags)
 		c->unc_un = un;
 		if (c->unc_xfer == NULL) {
 			int err = usbd_create_xfer(un->un_ep[USBNET_ENDPT_RX],
-			    cd->uncd_rx_bufsz, xfer_flags, 0, &c->unc_xfer);
+			    cd->uncd_rx_bufsz, cd->uncd_rx_xfer_flags, 0,
+			    &c->unc_xfer);
 			if (err)
 				return err;
 			c->unc_buf = usbd_get_buffer(c->unc_xfer);
@@ -459,7 +526,7 @@ usbnet_rx_start_pipes(struct usbnet *un, usbd_callback cb)
 		struct usbnet_chain *c = &cd->uncd_rx_chain[i];
 
 		usbd_setup_xfer(c->unc_xfer, c, c->unc_buf, cd->uncd_rx_bufsz,
-		    un->un_rx_xfer_flags, USBD_NO_TIMEOUT, cb);
+		    cd->uncd_rx_xfer_flags, USBD_NO_TIMEOUT, cb);
 		usbd_transfer(c->unc_xfer);
 	}
 
@@ -476,11 +543,10 @@ usbnet_tx_list_size(struct usbnet_cdata *cd)
 }
 
 static void
-usbnet_tx_list_alloc(struct usbnet *un, unsigned cnt)
+usbnet_tx_list_alloc(struct usbnet *un)
 {
 	struct usbnet_cdata *cd = &un->un_cdata;
 
-	cd->uncd_tx_list_cnt = cnt;
 	cd->uncd_tx_chain = kmem_zalloc(usbnet_tx_list_size(cd), KM_SLEEP);
 }
 
@@ -496,7 +562,7 @@ usbnet_tx_list_free(struct usbnet *un)
 }
 
 static int
-usbnet_tx_list_init(struct usbnet *un, unsigned xfer_flags)
+usbnet_tx_list_init(struct usbnet *un)
 {
 	struct usbnet_cdata *cd = &un->un_cdata;
 
@@ -506,7 +572,8 @@ usbnet_tx_list_init(struct usbnet *un, unsigned xfer_flags)
 		c->unc_un = un;
 		if (c->unc_xfer == NULL) {
 			int err = usbd_create_xfer(un->un_ep[USBNET_ENDPT_TX],
-			    cd->uncd_tx_bufsz, xfer_flags, 0, &c->unc_xfer);
+			    cd->uncd_tx_bufsz, cd->uncd_tx_xfer_flags, 0,
+			    &c->unc_xfer);
 			if (err)
 				return err;
 			c->unc_buf = usbd_get_buffer(c->unc_xfer);
@@ -592,7 +659,7 @@ usbnet_ep_stop_pipes(struct usbnet *un)
 }
 
 int
-usbnet_init_rx_tx(struct usbnet * const un, unsigned rxflags, unsigned txflags)
+usbnet_init_rx_tx(struct usbnet * const un)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct ifnet * const ifp = usbnet_ifp(un);
@@ -616,14 +683,14 @@ usbnet_init_rx_tx(struct usbnet * const un, unsigned rxflags, unsigned txflags)
 	}
 
 	/* Init RX ring. */
-	if (usbnet_rx_list_init(un, rxflags)) {
+	if (usbnet_rx_list_init(un)) {
 		aprint_error_dev(un->un_dev, "rx list init failed\n");
 		error = ENOBUFS;
 		goto out;
 	}
 
 	/* Init TX ring. */
-	if (usbnet_tx_list_init(un, txflags)) {
+	if (usbnet_tx_list_init(un)) {
 		aprint_error_dev(un->un_dev, "tx list init failed\n");
 		error = ENOBUFS;
 		goto out;
@@ -700,7 +767,7 @@ usbnet_unlock_mii_un_locked(struct usbnet *un)
 }
 
 int
-usbnet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
+usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct usbnet * const un = device_private(dev);
 	usbd_status err;
@@ -713,7 +780,7 @@ usbnet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	mutex_exit(&un->un_lock);
 
 	usbnet_lock_mii(un);
-	err = (*un->un_read_reg_cb)(un, phy, reg, val);
+	err = uno_read_reg(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
 	if (err) {
@@ -725,7 +792,7 @@ usbnet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 }
 
 int
-usbnet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
+usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct usbnet * const un = device_private(dev);
 	usbd_status err;
@@ -738,7 +805,7 @@ usbnet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	mutex_exit(&un->un_lock);
 
 	usbnet_lock_mii(un);
-	err = (*un->un_write_reg_cb)(un, phy, reg, val);
+	err = uno_write_reg(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
 	if (err) {
@@ -750,12 +817,12 @@ usbnet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 }
 
 void
-usbnet_miibus_statchg(struct ifnet *ifp)
+usbnet_mii_statchg(struct ifnet *ifp)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 
-	(*un->un_statchg_cb)(ifp);
+	uno_mii_statchg(un, ifp);
 }
 
 static int
@@ -813,16 +880,12 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct usbnet * const un = ifp->if_softc;
 	int error;
 
-	if (un->un_override_ioctl_cb)
-		return (*un->un_override_ioctl_cb)(ifp, cmd, data);
+	if (un->un_ops->uno_override_ioctl)
+		return uno_override_ioctl(un, ifp, cmd, data);
 
 	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET) {
-		if (un->un_ioctl_cb)
-			error = (*un->un_ioctl_cb)(ifp, cmd, data);
-		else
-			error = 0;
-	}
+	if (error == ENETRESET)
+		error = uno_ioctl(un, ifp, cmd, data);
 
 	return error;
 }
@@ -853,8 +916,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	mutex_exit(&un->un_txlock);
 	mutex_exit(&un->un_rxlock);
 
-	if (un->un_stop_cb)
-		(*un->un_stop_cb)(ifp, disable);
+	uno_stop(un, ifp, disable);
 
 	/*
 	 * XXXSMP Would like to
@@ -974,7 +1036,7 @@ usbnet_init(struct ifnet *ifp)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 
-	return (*un->un_init_cb)(ifp);
+	return uno_init(un, ifp);
 }
 
 /* Autoconf management. */
@@ -1003,17 +1065,30 @@ void
 usbnet_attach(struct usbnet *un,
 	      const char *detname,	/* detach cv name */
 	      unsigned rx_list_cnt,	/* size of rx chain list */
-	      unsigned tx_list_cnt)	/* size of tx chain list */
+	      unsigned tx_list_cnt,	/* size of tx chain list */
+	      unsigned rx_flags,	/* flags for rx xfer */
+	      unsigned tx_flags,	/* flags for tx xfer */
+	      unsigned rx_bufsz,	/* size of rx buffers */
+	      unsigned tx_bufsz)	/* size of tx buffers */
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	struct usbnet_cdata *cd = &un->un_cdata;
 
-	KASSERT(un->un_tx_prepare_cb);
-	KASSERT(un->un_rx_loop_cb);
-	KASSERT(un->un_init_cb);
-	KASSERT(un->un_cdata.uncd_rx_bufsz);
-	KASSERT(un->un_cdata.uncd_tx_bufsz);
+	/* Required inputs.  */
+	KASSERT(un->un_ops->uno_tx_prepare);
+	KASSERT(un->un_ops->uno_rx_loop);
+	KASSERT(un->un_ops->uno_init);
+	KASSERT(rx_bufsz);
+	KASSERT(tx_bufsz);
 	KASSERT(rx_list_cnt);
 	KASSERT(tx_list_cnt);
+
+	cd->uncd_rx_xfer_flags = rx_flags;
+	cd->uncd_tx_xfer_flags = tx_flags;
+	cd->uncd_rx_list_cnt = rx_list_cnt;
+	cd->uncd_tx_list_cnt = tx_list_cnt;
+	cd->uncd_rx_bufsz = rx_bufsz;
+	cd->uncd_tx_bufsz = tx_bufsz;
 
 	ether_set_ifflags_cb(&un->un_ec, usbnet_ifflags_cb);
 
@@ -1030,8 +1105,8 @@ usbnet_attach(struct usbnet *un,
 	rnd_attach_source(&un->un_rndsrc, device_xname(un->un_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
-	usbnet_rx_list_alloc(un, rx_list_cnt);
-	usbnet_tx_list_alloc(un, tx_list_cnt);
+	usbnet_rx_list_alloc(un);
+	usbnet_tx_list_alloc(un);
 
 	un->un_attached = true;
 }
@@ -1043,10 +1118,14 @@ usbnet_attach_mii(struct usbnet *un, int mii_flags)
 	struct mii_data * const mii = &un->un_mii;
 	struct ifnet *ifp = usbnet_ifp(un);
 
+	KASSERT(un->un_ops->uno_read_reg);
+	KASSERT(un->un_ops->uno_write_reg);
+	KASSERT(un->un_ops->uno_statchg);
+
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = usbnet_miibus_readreg;
-	mii->mii_writereg = usbnet_miibus_writereg;
-	mii->mii_statchg = usbnet_miibus_statchg;
+	mii->mii_readreg = usbnet_mii_readreg;
+	mii->mii_writereg = usbnet_mii_writereg;
+	mii->mii_statchg = usbnet_mii_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 
 	un->un_ec.ec_mii = mii;
