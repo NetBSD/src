@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_reg.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_reg.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
 
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
@@ -3715,10 +3715,10 @@
 #define RADEON_CP_PACKET3_GET_OPCODE(h) (((h) >> 8) & 0xFF)
 #define R100_CP_PACKET0_GET_REG(h) (((h) & 0x1FFF) << 2)
 #define R600_CP_PACKET0_GET_REG(h) (((h) & 0xFFFF) << 2)
-#define RADEON_PACKET_TYPE0 0
-#define RADEON_PACKET_TYPE1 1
-#define RADEON_PACKET_TYPE2 2
-#define RADEON_PACKET_TYPE3 3
+#define RADEON_PACKET_TYPE0 0U
+#define RADEON_PACKET_TYPE1 1U
+#define RADEON_PACKET_TYPE2 2U
+#define RADEON_PACKET_TYPE3 3U
 
 #define RADEON_PACKET3_NOP 0x10
 

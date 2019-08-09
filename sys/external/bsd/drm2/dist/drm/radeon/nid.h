@@ -1,4 +1,4 @@
-/*	$NetBSD: nid.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: nid.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -869,7 +869,7 @@
 #define AUX_SW_DATA_RW					(1 << 0)
 #define AUX_SW_DATA_MASK(x)				(((x) & 0xff) << 8)
 #define AUX_SW_DATA_INDEX(x)				(((x) & 0x1f) << 16)
-#define AUX_SW_AUTOINCREMENT_DISABLE			(1 << 31)
+#define AUX_SW_AUTOINCREMENT_DISABLE			(1U << 31)
 
 #define	LB_SYNC_RESET_SEL				0x6b28
 #define		LB_SYNC_RESET_SEL_MASK			(3 << 0)
@@ -1319,7 +1319,7 @@
 #define DMA_IB_CNTL                                       0xd024
 #       define DMA_IB_ENABLE                              (1 << 0)
 #       define DMA_IB_SWAP_ENABLE                         (1 << 4)
-#       define CMD_VMID_FORCE                             (1 << 31)
+#       define CMD_VMID_FORCE                             (1U << 31)
 #define DMA_IB_RPTR                                       0xd028
 #define DMA_CNTL                                          0xd02c
 #       define TRAP_ENABLE                                (1 << 0)
@@ -1335,7 +1335,7 @@
 #define DMA_TILING_CONFIG  				  0xd0b8
 #define DMA_MODE                                          0xd0bc
 
-#define DMA_PACKET(cmd, t, s, n)	((((cmd) & 0xF) << 28) |	\
+#define DMA_PACKET(cmd, t, s, n)	((((uint32_t)(cmd) & 0xF) << 28) | \
 					 (((t) & 0x1) << 23) |		\
 					 (((s) & 0x1) << 22) |		\
 					 (((n) & 0xFFFFF) << 0))
