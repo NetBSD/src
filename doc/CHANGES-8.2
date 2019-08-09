@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.21 2019/08/07 08:22:41 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.22 2019/08/09 19:22:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -538,4 +538,10 @@ sys/kern/uipc_socket2.c				1.134
 
 	Fix kernel heap info leaks in sys_recvmsg().
 	[maxv, ticket #1330]
+
+sys/external/bsd/ipf/netinet/fil.c		1.30
+
+	PR/54443: ipf mistakenly regards UDP packet with checksum field
+	0xffff as bad.
+	[christos, ticket #1331]
 
