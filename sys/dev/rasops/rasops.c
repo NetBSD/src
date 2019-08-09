@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.118 2019/08/09 11:08:20 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.119 2019/08/09 11:42:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.118 2019/08/09 11:08:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.119 2019/08/09 11:42:03 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -646,7 +646,7 @@ rasops_allocattr_color(void *cookie, int fg0, int bg0, int flg, long *attr)
 #endif
 	}
 
-	if ((flg & WSATTR_HILIT) != 0)
+	if ((flg & WSATTR_HILIT) != 0 && fg < 8)
 		fg += 8;
 
 	if ((flg & WSATTR_REVERSE) != 0) {
