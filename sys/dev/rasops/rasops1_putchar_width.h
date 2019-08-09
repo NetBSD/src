@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1_putchar_width.h,v 1.4 2019/08/07 12:27:49 rin Exp $ */
+/* $NetBSD: rasops1_putchar_width.h,v 1.5 2019/08/09 12:05:51 rin Exp $ */
 
 /* NetBSD: rasops1.c,v 1.28 2019/07/25 03:02:44 rin Exp */
 /*-
@@ -68,6 +68,9 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 	COPY_UNIT *rp, *hp, tmp;
 
 	hp = NULL;	/* XXX GCC */
+
+	if (__predict_false(!CHAR_IN_FONT(uc, font)))
+		return;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
