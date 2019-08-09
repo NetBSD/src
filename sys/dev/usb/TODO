@@ -73,7 +73,7 @@ Factor out the common code from the Ethernet drivers and reuse that.
 	if_upl - patch available
 	if_ure - done
 	if_url - patch available
-	if_urndis - patch available, probably works
+	if_urndis - done
 
 Get rid of hcpriv.
 

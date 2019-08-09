@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.161 2019/08/07 19:21:48 skrll Exp $
+#	$NetBSD: files.usb,v 1.162 2019/08/09 06:38:39 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -528,7 +528,7 @@ attach	uyurex at uhidbus
 file	dev/usb/uyurex.c		uyurex
 
 # Microsoft RNDIS
-device	urndis: arp, ether, ifnet
+device	urndis: arp, ether, ifnet, usbnet
 attach	urndis at usbifif
 file	dev/usb/if_urndis.c		urndis
 
