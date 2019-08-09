@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.18 2019/08/06 01:42:22 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.19 2019/08/09 01:17:33 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.18 2019/08/06 01:42:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.19 2019/08/09 01:17:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -73,24 +73,43 @@ static const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8153 }
 };
 
-static int	ure_match(device_t, cfdata_t, void *);
-static void	ure_attach(device_t, device_t, void *);
-static int	ure_init(struct ifnet *);
+#define URE_BUFSZ	(16 * 1024)
+
 static void	ure_reset(struct usbnet *);
-static void	ure_miibus_statchg(struct ifnet *);
 static uint32_t	ure_txcsum(struct mbuf *);
 static int	ure_rxcsum(struct ifnet *, struct ure_rxpkt *);
-static unsigned ure_tx_prepare(struct usbnet *, struct mbuf *,
-			       struct usbnet_chain *);
-static void	ure_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-			       struct usbnet_chain *, uint32_t);
 static void	ure_rtl8152_init(struct ure_softc *);
 static void	ure_rtl8153_init(struct ure_softc *);
 static void	ure_disable_teredo(struct ure_softc *);
 static void	ure_init_fifo(struct ure_softc *);
 
+static void	ure_stop_cb(struct ifnet *, int);
+static int	ure_ioctl_cb(struct ifnet *, u_long, void *);
+static usbd_status ure_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static usbd_status ure_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void	ure_miibus_statchg(struct ifnet *);
+static unsigned ure_tx_prepare(struct usbnet *, struct mbuf *,
+			       struct usbnet_chain *);
+static void	ure_rxeof_loop(struct usbnet *, struct usbd_xfer *,
+			       struct usbnet_chain *, uint32_t);
+static int	ure_init(struct ifnet *);
+
+static int	ure_match(device_t, cfdata_t, void *);
+static void	ure_attach(device_t, device_t, void *);
+
 CFATTACH_DECL_NEW(ure, sizeof(struct ure_softc), ure_match, ure_attach,
     usbnet_detach, usbnet_activate);
+
+static struct usbnet_ops ure_ops = {
+	.uno_stop = ure_stop_cb,
+	.uno_ioctl = ure_ioctl_cb,
+	.uno_read_reg = ure_mii_read_reg,
+	.uno_write_reg = ure_mii_write_reg,
+	.uno_statchg = ure_miibus_statchg,
+	.uno_tx_prepare = ure_tx_prepare,
+	.uno_rx_loop = ure_rxeof_loop,
+	.uno_init = ure_init,
+};
 
 static int
 ure_ctl(struct usbnet *un, uint8_t rw, uint16_t val, uint16_t index,
@@ -99,7 +118,7 @@ ure_ctl(struct usbnet *un, uint8_t rw, uint16_t val, uint16_t index,
 	usb_device_request_t req;
 	usbd_status err;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return 0;
 
 	if (rw == URE_CTL_WRITE)
@@ -281,7 +300,7 @@ ure_miibus_statchg(struct ifnet *ifp)
 	struct ure_softc * const sc = usbnet_softc(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	un->un_link = false;
@@ -316,7 +335,7 @@ ure_setiff_locked(struct usbnet *un)
 
 	usbnet_isowned(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	rxmode = ure_read_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA);
@@ -407,7 +426,7 @@ ure_init_locked(struct ifnet *ifp)
 
 	usbnet_isowned(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return EIO;
 
 	/* Cancel pending I/O. */
@@ -442,7 +461,7 @@ ure_init_locked(struct ifnet *ifp)
 	/* Load the multicast filter. */
 	ure_setiff_locked(un);
 
-	return usbnet_init_rx_tx(un, 0, 0);
+	return usbnet_init_rx_tx(un);
 }
 
 static int
@@ -842,16 +861,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	un->un_dev = self;
 	un->un_udev = dev;
 	un->un_sc = sc;
-	un->un_stop_cb = ure_stop_cb;
-	un->un_ioctl_cb = ure_ioctl_cb;
-	un->un_read_reg_cb = ure_mii_read_reg;
-	un->un_write_reg_cb = ure_mii_write_reg;
-	un->un_statchg_cb = ure_miibus_statchg;
-	un->un_tx_prepare_cb = ure_tx_prepare;
-	un->un_rx_loop_cb = ure_rxeof_loop;
-	un->un_init_cb = ure_init;
-	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
-	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_ops = &ure_ops;
 
 #define URE_CONFIG_NO	1 /* XXX */
 	error = usbd_set_config_no(dev, URE_CONFIG_NO, 1);
@@ -872,8 +882,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 		return; /* XXX */
 	}
 
-	un->un_cdata.uncd_rx_bufsz = un->un_cdata.uncd_tx_bufsz = 16 * 1024;
-
 	id = usbd_get_interface_descriptor(un->un_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(un->un_iface, i);
@@ -891,7 +899,9 @@ ure_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for ure_ctl().  */
-	usbnet_attach(un, "uredet", URE_RX_LIST_CNT, URE_TX_LIST_CNT);
+	usbnet_attach(un, "uredet", URE_RX_LIST_CNT, URE_TX_LIST_CNT,
+		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
+		      URE_BUFSZ, URE_BUFSZ);
 
 	un->un_phyno = 0;
 
@@ -1008,7 +1018,7 @@ ure_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
 	} while (total_len > 0);
 
 	if (pkt_count)
-		rnd_add_uint32(&un->un_rndsrc, pkt_count);
+		rnd_add_uint32(usbnet_rndsrc(un), pkt_count);
 }
 
 static int

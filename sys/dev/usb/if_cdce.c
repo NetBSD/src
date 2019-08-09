@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.58 2019/08/06 01:42:22 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.59 2019/08/09 01:17:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.58 2019/08/06 01:42:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.59 2019/08/09 01:17:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,14 +80,21 @@ static const struct cdce_type cdce_devs[] = {
 
 static int	cdce_match(device_t, cfdata_t, void *);
 static void	cdce_attach(device_t, device_t, void *);
-static int	cdce_init(struct ifnet *);
+
+CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
+    usbnet_detach, usbnet_activate);
+
 static void	cdce_rx_loop(struct usbnet *, struct usbd_xfer *,
 			     struct usbnet_chain *, uint32_t);
 static unsigned	cdce_tx_prepare(struct usbnet *, struct mbuf *,
 				struct usbnet_chain *);
+static int	cdce_init(struct ifnet *);
 
-CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
-    usbnet_detach, usbnet_activate);
+static struct usbnet_ops cdce_ops = {
+	.uno_tx_prepare = cdce_tx_prepare,
+	.uno_rx_loop = cdce_rx_loop,
+	.uno_init = cdce_init,
+};
 
 static int
 cdce_match(device_t parent, cfdata_t match, void *aux)
@@ -134,13 +141,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	un->un_dev = self;
 	un->un_udev = dev;
 	un->un_sc = sc;
-	un->un_init_cb = cdce_init;
-	un->un_tx_prepare_cb = cdce_tx_prepare;
-	un->un_rx_loop_cb = cdce_rx_loop;
-	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
-	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
-	un->un_cdata.uncd_rx_bufsz = CDCE_BUFSZ;
-	un->un_cdata.uncd_tx_bufsz = CDCE_BUFSZ;
+	un->un_ops = &cdce_ops;
 
 	t = cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (t)
@@ -250,7 +251,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 
-	usbnet_attach(un, "cdcedet", CDCE_RX_LIST_CNT, CDCE_TX_LIST_CNT);
+	usbnet_attach(un, "cdcedet", CDCE_RX_LIST_CNT, CDCE_TX_LIST_CNT,
+		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
+		      CDCE_BUFSZ, CDCE_BUFSZ);
 	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, 0);
 }
@@ -262,11 +265,11 @@ cdce_init(struct ifnet *ifp)
 	int rv;
 
 	usbnet_lock(un);
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		rv = EIO;
 	else {
 		usbnet_stop(un, ifp, 1);
-		rv = usbnet_init_rx_tx(un, 0, 0);
+		rv = usbnet_init_rx_tx(un);
 		if (rv == 0)
 			un->un_link = true;
 	}

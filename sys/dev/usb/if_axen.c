@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.56 2019/08/06 01:42:22 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.57 2019/08/09 01:17:33 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.56 2019/08/06 01:42:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.57 2019/08/09 01:17:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -79,19 +79,32 @@ static void	axen_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(axen, sizeof(struct axen_softc),
 	axen_match, axen_attach, usbnet_detach, usbnet_activate);
 
-static unsigned	axen_tx_prepare(struct usbnet *, struct mbuf *,
-			        struct usbnet_chain *);
-static int	axen_init(struct ifnet *);
 static int	axen_cmd(struct axen_softc *, int, int, int, void *);
 static void	axen_reset(struct axen_softc *);
 static int	axen_get_eaddr(struct axen_softc *, void *);
-static void	axen_stop_cb(struct ifnet *, int);
 static void	axen_ax88179_init(struct axen_softc *);
 
+static void	axen_stop_cb(struct ifnet *, int);
+static int	axen_ioctl_cb(struct ifnet *, u_long, void *);
 static usbd_status axen_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static usbd_status axen_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void	axen_mii_statchg(struct ifnet *);
 static void	axen_rxeof_loop(struct usbnet *, struct usbd_xfer *,
 		    struct usbnet_chain *, uint32_t);
+static unsigned	axen_tx_prepare(struct usbnet *, struct mbuf *,
+			        struct usbnet_chain *);
+static int	axen_init(struct ifnet *);
+
+static struct usbnet_ops axen_ops = {
+	.uno_stop = axen_stop_cb,
+	.uno_ioctl = axen_ioctl_cb,
+	.uno_read_reg = axen_mii_read_reg,
+	.uno_write_reg = axen_mii_write_reg,
+	.uno_statchg = axen_mii_statchg,
+	.uno_tx_prepare = axen_tx_prepare,
+	.uno_rx_loop = axen_rxeof_loop,
+	.uno_init = axen_init,
+};
 
 static int
 axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
@@ -102,7 +115,7 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 
 	usbnet_isowned_mii(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return 0;
 
 	if (AXEN_CMD_DIR(cmd))
@@ -162,7 +175,7 @@ axen_mii_statchg(struct ifnet *ifp)
 	uint16_t val;
 	uint16_t wval;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	un->un_link = false;
@@ -225,7 +238,7 @@ axen_setiff_locked(struct usbnet *un)
 	uint8_t hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	uint16_t wval;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 
 	usbnet_isowned_mii(un);
@@ -295,7 +308,7 @@ axen_reset(struct axen_softc *sc)
 	struct usbnet * const un = &sc->axen_un;
 
 	usbnet_isowned(un);
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return;
 	/* XXX What to reset? */
 
@@ -501,18 +514,18 @@ axen_ax88179_init(struct axen_softc *sc)
 #define GMII_PHY_PAGE_SEL	0x1e
 #define GMII_PHY_PAGE_SEL	0x1f
 #define GMII_PAGE_EXT		0x0007
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE_SEL,
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE_SEL,
 	    GMII_PAGE_EXT);
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE,
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE,
 	    0x002c);
 #endif
 
 #if 1 /* XXX: phy hack ? */
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0005);
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, 0x0C, 0x0000);
-	usbnet_miibus_readreg(un->un_dev, un->un_phyno, 0x0001, &wval);
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, 0x01, wval | 0x0080);
-	usbnet_miibus_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0000);
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0005);
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x0C, 0x0000);
+	usbnet_mii_readreg(un->un_dev, un->un_phyno, 0x0001, &wval);
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x01, wval | 0x0080);
+	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0000);
 #endif
 }
 
@@ -604,6 +617,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
+	unsigned rx_bufsz, tx_bufsz;
 	uint16_t axen_flags;
 	int i;
 
@@ -619,16 +633,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	un->un_dev = self;
 	un->un_udev = dev;
 	un->un_sc = sc;
-	un->un_stop_cb = axen_stop_cb;
-	un->un_ioctl_cb = axen_ioctl_cb;
-	un->un_read_reg_cb = axen_mii_read_reg;
-	un->un_write_reg_cb = axen_mii_write_reg;
-	un->un_statchg_cb = axen_mii_statchg;
-	un->un_tx_prepare_cb = axen_tx_prepare;
-	un->un_rx_loop_cb = axen_rxeof_loop;
-	un->un_init_cb = axen_init;
-	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
-	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_ops = &axen_ops;
 
 	err = usbd_set_config_no(dev, AXEN_CONFIG_NO, 1);
 	if (err) {
@@ -648,19 +653,17 @@ axen_attach(device_t parent, device_t self, void *aux)
 	/* decide on what our bufsize will be */
 	switch (dev->ud_speed) {
 	case USB_SPEED_SUPER:
-		un->un_cdata.uncd_rx_bufsz = AXEN_BUFSZ_SS * 1024;
+		rx_bufsz = AXEN_BUFSZ_SS * 1024;
 		break;
 	case USB_SPEED_HIGH:
-		un->un_cdata.uncd_rx_bufsz = AXEN_BUFSZ_HS * 1024;
+		rx_bufsz = AXEN_BUFSZ_HS * 1024;
 		break;
 	default:
-		un->un_cdata.uncd_rx_bufsz = AXEN_BUFSZ_LS * 1024;
+		rx_bufsz = AXEN_BUFSZ_LS * 1024;
 		break;
 	}
-
-	un->un_cdata.uncd_tx_bufsz = IP_MAXPACKET +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN +
-	    sizeof(struct axen_sframe_hdr);
+	tx_bufsz = IP_MAXPACKET + ETHER_HDR_LEN + ETHER_CRC_LEN +
+		   ETHER_VLAN_ENCAP_LEN + sizeof(struct axen_sframe_hdr);
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(un->un_iface);
@@ -685,7 +688,9 @@ axen_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axen_cmd().  */
-	usbnet_attach(un, "axendet", AXEN_RX_LIST_CNT, AXEN_TX_LIST_CNT);
+	usbnet_attach(un, "axendet", AXEN_RX_LIST_CNT, AXEN_TX_LIST_CNT,
+		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
+		      rx_bufsz, tx_bufsz);
 
 	un->un_phyno = AXEN_PHY_ID;
 	DPRINTF(("%s: phyno %d\n", device_xname(self), un->un_phyno));
@@ -828,7 +833,7 @@ axen_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
 #endif
 
 	if (pkt_count)
-		rnd_add_uint32(&un->un_rndsrc, pkt_count);
+		rnd_add_uint32(usbnet_rndsrc(un), pkt_count);
 
 	do {
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)) {
@@ -921,7 +926,7 @@ axen_init_locked(struct ifnet *ifp)
 
 	usbnet_isowned(un);
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return EIO;
 
 	/* Cancel pending I/O */
@@ -951,7 +956,7 @@ axen_init_locked(struct ifnet *ifp)
 
 	usbnet_unlock_mii_un_locked(un);
 
-	return usbnet_init_rx_tx(un, 0, USBD_FORCE_SHORT_XFER);
+	return usbnet_init_rx_tx(un);
 }
 
 static int
