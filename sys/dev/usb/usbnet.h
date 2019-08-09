@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.6 2019/08/07 07:25:50 skrll Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.7 2019/08/09 01:17:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -122,6 +122,9 @@ struct usbnet_cdata {
 	unsigned		uncd_rx_list_cnt;
 	unsigned		uncd_tx_list_cnt;
 
+	int			uncd_rx_xfer_flags;
+	int			uncd_tx_xfer_flags;
+
 	int			uncd_tx_prod;
 	int			uncd_tx_cnt;
 	int			uncd_rx_cnt;
@@ -163,6 +166,19 @@ typedef void (*usbnet_rx_loop_cb)(struct usbnet *, struct usbd_xfer *,
 /* Interrupt pipe callback. */
 typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
 
+struct usbnet_ops {
+	usbnet_stop_cb		uno_stop;
+	usbnet_ioctl_cb		uno_ioctl;
+	usbnet_ioctl_cb		uno_override_ioctl;
+	usbnet_init_cb		uno_init;
+	usbnet_mii_read_reg_cb	uno_read_reg;
+	usbnet_mii_write_reg_cb uno_write_reg;
+	usbnet_mii_statchg_cb	uno_statchg;
+	usbnet_tx_prepare_cb	uno_tx_prepare;
+	usbnet_rx_loop_cb	uno_rx_loop;
+	usbnet_intr_cb		uno_intr;
+};
+
 /*
  * Generic USB ethernet structure.  Use this as ifp->if_softc and
  * set as device_private() in attach.
@@ -177,6 +193,7 @@ struct usbnet {
 	struct usbd_interface	*un_iface;
 	struct usbd_device *	un_udev;
 	krndsource_t		un_rndsrc;
+	struct usbnet_ops	*un_ops;
 
 	struct ethercom		un_ec;
 	struct mii_data		un_mii;
@@ -217,21 +234,6 @@ struct usbnet {
 	struct timeval		un_tx_notice;
 	struct timeval		un_intr_notice;
 
-	usbnet_stop_cb		un_stop_cb;
-	usbnet_ioctl_cb		un_ioctl_cb;
-	usbnet_ioctl_cb		un_override_ioctl_cb;
-	usbnet_init_cb		un_init_cb;
-	usbnet_mii_read_reg_cb	un_read_reg_cb;
-	usbnet_mii_write_reg_cb un_write_reg_cb;
-	usbnet_mii_statchg_cb	un_statchg_cb;
-	usbnet_tx_prepare_cb	un_tx_prepare_cb;
-	usbnet_rx_loop_cb	un_rx_loop_cb;
-	usbnet_intr_cb		un_intr_cb;
-
-	/* Passed to usbd_setup_xfer(). */
-	int			un_rx_xfer_flags;
-	int			un_tx_xfer_flags;
-
 	/*
 	 * if un_intr_buf is not NULL, use usbd_open_pipe_intr() not
 	 * usbd_open_pipe() for USBNET_ENDPT_INTR, with this buffer,
@@ -243,9 +245,11 @@ struct usbnet {
 };
 
 #define usbnet_ifp(un)		(&(un)->un_ec.ec_if)
-#define usbnet_mii(un)		(un->un_ec.ec_mii)
 #define usbnet_ec(un)		(&(un)->un_ec)
-#define usbnet_softc(un)	(un->un_sc)
+#define usbnet_rndsrc(un)	(&(un)->un_rndsrc)
+#define usbnet_mii(un)		((un)->un_ec.ec_mii)
+#define usbnet_softc(un)	((un)->un_sc)
+#define usbnet_isdying(un)	((un)->un_dying)
 
 /*
  * Endpoint / rx/tx chain management:
@@ -259,7 +263,7 @@ struct usbnet {
  * Setup un_ed[] with valid end points before calling usbnet_init_rx_tx().
  * Will return with un_ep[] initialised upon success.
  */
-int	usbnet_init_rx_tx(struct usbnet * const, unsigned, unsigned);
+int	usbnet_init_rx_tx(struct usbnet * const);
 
 /* locking */
 static __inline__ void
@@ -328,9 +332,9 @@ usbnet_isowned_mii(struct usbnet *un)
 	KASSERT(mutex_owned(&un->un_miilock));
 }
 
-int	usbnet_miibus_readreg(device_t, int, int, uint16_t *);
-int	usbnet_miibus_writereg(device_t, int, int, uint16_t);
-void	usbnet_miibus_statchg(struct ifnet *);
+int	usbnet_mii_readreg(device_t, int, int, uint16_t *);
+int	usbnet_mii_writereg(device_t, int, int, uint16_t);
+void	usbnet_mii_statchg(struct ifnet *);
 
 /* interrupt handling */
 void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int,
@@ -338,7 +342,8 @@ void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int,
 void	usbnet_input(struct usbnet * const, uint8_t *, size_t);
 
 /* autoconf */
-void	usbnet_attach(struct usbnet *un, const char *, unsigned, unsigned);
+void	usbnet_attach(struct usbnet *un, const char *, unsigned, unsigned,
+		      unsigned, unsigned, unsigned, unsigned);
 void	usbnet_attach_ifp(struct usbnet *, bool, unsigned, unsigned, int);
 int	usbnet_detach(device_t, int);
 int	usbnet_activate(device_t, devact_t);
