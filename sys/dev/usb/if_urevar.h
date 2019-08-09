@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urevar.h,v 1.4 2019/08/04 09:03:46 mrg Exp $	*/
+/*	$NetBSD: if_urevar.h,v 1.5 2019/08/09 06:46:35 mrg Exp $	*/
 
 /*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
@@ -79,19 +79,11 @@ struct ure_txpkt {
 #define URE_RX_LIST_CNT		4
 #endif
 
-struct ure_softc {
-	struct usbnet		ure_un;
-
-	u_int			ure_flags;
-#define	URE_FLAG_LINK		0x0001
+/* usbnet::un_flags values */
+#define	URE_FLAG_VER_4C00	0x0001
+#define	URE_FLAG_VER_4C10	0x0002
+#define	URE_FLAG_VER_5C00	0x0004
+#define	URE_FLAG_VER_5C10	0x0008
+#define	URE_FLAG_VER_5C20	0x0010
+#define	URE_FLAG_VER_5C30	0x0020
 #define	URE_FLAG_8152		0x1000	/* RTL8152 */
-
-	u_int			ure_chip;
-#define	URE_CHIP_VER_4C00	0x01
-#define	URE_CHIP_VER_4C10	0x02
-#define	URE_CHIP_VER_5C00	0x04
-#define	URE_CHIP_VER_5C10	0x08
-#define	URE_CHIP_VER_5C20	0x10
-#define	URE_CHIP_VER_5C30	0x20
-
-};
