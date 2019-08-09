@@ -59,24 +59,21 @@ Stylistic changes:
 	use usb_ and usbd_ consistently
 	rearrange the contents and names of some files (Nick)
 
-Change what's done at watchdog timeout inb if_{a,c,k}ue.c; what we have
-now doesn't work because it's done in an interrupt context.
-
 Factor out the common code from the Ethernet drivers and reuse that.
-	if_aue
+	if_aue - patch available
 	if_axe - done
 	if_axen - done
 	if_cdce - done
-	if_cue
-	if_kue
-	if_mue
+	if_cue - patch available
+	if_kue - patch available
+	if_mue - patch available
 	if_smsc - done
-	if_udav
+	if_udav - done
 	if_umb - maybe too special?
-	if_upl
+	if_upl - patch available
 	if_ure - done
-	if_url
-	if_urndis
+	if_url - patch available
+	if_urndis - patch available, probably works
 
 Get rid of hcpriv.
 
