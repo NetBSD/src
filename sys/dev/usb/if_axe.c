@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.107 2019/08/09 01:17:33 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.108 2019/08/09 02:52:59 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.107 2019/08/09 01:17:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.108 2019/08/09 02:52:59 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -113,7 +113,7 @@ struct axe_type {
 struct axe_softc {
 	struct usbnet		axe_un;
 
-	uint32_t		axe_flags;	/* copied from axe_type */
+	/* usbnet:un_flags values */
 #define AX178		__BIT(0)	/* AX88178 */
 #define AX772		__BIT(1)	/* AX88772 */
 #define AX772A		__BIT(2)	/* AX88772A */
@@ -128,11 +128,11 @@ struct axe_softc {
 
 };
 
-#define	AXE_IS_178_FAMILY(sc)						  \
-	((sc)->axe_flags & (AX772 | AX772A | AX772B | AX178))
+#define	AXE_IS_178_FAMILY(un)				\
+	((un)->un_flags & (AX772 | AX772A | AX772B | AX178))
 
-#define	AXE_IS_772(sc)							  \
-	((sc)->axe_flags & (AX772 | AX772A | AX772B))
+#define	AXE_IS_772(un)					\
+	((un)->un_flags & (AX772 | AX772A | AX772B))
 
 #define AX_RXCSUM					\
     (IFCAP_CSUM_IPv4_Rx | 				\
@@ -340,7 +340,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	}
 
 	*val = le16toh(data);
-	if (AXE_IS_772(sc) && reg == MII_BMSR) {
+	if (AXE_IS_772(un) && reg == MII_BMSR) {
 		/*
 		 * BMSR of AX88772 indicates that it supports extended
 		 * capability but the extended status register is
@@ -388,7 +388,7 @@ axe_mii_statchg_cb(struct ifnet *ifp)
 	un->un_link = false;
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		val |= AXE_MEDIA_FULL_DUPLEX;
-		if (AXE_IS_178_FAMILY(sc)) {
+		if (AXE_IS_178_FAMILY(un)) {
 			if ((IFM_OPTIONS(mii->mii_media_active) &
 			    IFM_ETH_TXPAUSE) != 0)
 				val |= AXE_178_MEDIA_TXFLOW_CONTROL_EN;
@@ -397,9 +397,9 @@ axe_mii_statchg_cb(struct ifnet *ifp)
 				val |= AXE_178_MEDIA_RXFLOW_CONTROL_EN;
 		}
 	}
-	if (AXE_IS_178_FAMILY(sc)) {
+	if (AXE_IS_178_FAMILY(un)) {
 		val |= AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC;
-		if (sc->axe_flags & AX178)
+		if (un->un_flags & AX178)
 			val |= AXE_178_MEDIA_ENCK;
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_1000_T:
@@ -504,13 +504,13 @@ axe_ax_init(struct usbnet *un)
 
 	int cmd = AXE_178_CMD_READ_NODEID;
 
-	if (sc->axe_flags & AX178) {
+	if (un->un_flags & AX178) {
 		axe_ax88178_init(sc);
-	} else if (sc->axe_flags & AX772) {
+	} else if (un->un_flags & AX772) {
 		axe_ax88772_init(sc);
-	} else if (sc->axe_flags & AX772A) {
+	} else if (un->un_flags & AX772A) {
 		axe_ax88772a_init(sc);
-	} else if (sc->axe_flags & AX772B) {
+	} else if (un->un_flags & AX772B) {
 		axe_ax88772b_init(sc);
 		return;
 	} else {
@@ -894,7 +894,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axe_flags = axe_lookup(uaa->uaa_vendor, uaa->uaa_product)->axe_flags;
+	un->un_flags = axe_lookup(uaa->uaa_vendor, uaa->uaa_product)->axe_flags;
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &un->un_iface);
 	if (err) {
@@ -905,7 +905,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	id = usbd_get_interface_descriptor(un->un_iface);
 
 	/* decide on what our bufsize will be */
-	if (AXE_IS_178_FAMILY(sc))
+	if (AXE_IS_178_FAMILY(un))
 		bufsz = (un->un_udev->ud_speed == USB_SPEED_HIGH) ?
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
 	else
@@ -966,7 +966,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Fetch IPG values.
 	 */
-	if (sc->axe_flags & (AX772A | AX772B)) {
+	if (un->un_flags & (AX772A | AX772B)) {
 		/* Set IPG values. */
 		sc->axe_ipgs[0] = AXE_IPG0_DEFAULT;
 		sc->axe_ipgs[1] = AXE_IPG1_DEFAULT;
@@ -981,9 +981,9 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	usbnet_unlock_mii(un);
 
-	if (AXE_IS_178_FAMILY(sc))
+	if (AXE_IS_178_FAMILY(un))
 		usbnet_ec(un)->ec_capabilities = ETHERCAP_VLAN_MTU;
-	if (sc->axe_flags & AX772B) {
+	if (un->un_flags & AX772B) {
 		struct ifnet *ifp = usbnet_ifp(un);
 
 		ifp->if_capabilities =
@@ -1001,7 +1001,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 		 */
 	}
 	u_int adv_pause;
-	if (sc->axe_flags & (AX772A | AX772B | AX178))
+	if (un->un_flags & (AX772A | AX772B | AX178))
 		adv_pause = MIIF_DOPAUSE;
 	else
 		adv_pause = 0;
@@ -1025,7 +1025,7 @@ axe_rx_loop_cb(struct usbnet * un, struct usbd_xfer *xfer,
 		u_int rxlen = 0;
 		int flags = 0;
 
-		if ((sc->axe_flags & AXSTD_FRAME) != 0) {
+		if ((un->un_flags & AXSTD_FRAME) != 0) {
 			struct axe_sframe_hdr hdr;
 
 			if (total_len < sizeof(hdr)) {
@@ -1071,7 +1071,7 @@ axe_rx_loop_cb(struct usbnet * un, struct usbd_xfer *xfer,
 				total_len -= rxlen;
 			}
 
-		} else if ((sc->axe_flags & AXCSUM_FRAME) != 0) {
+		} else if ((un->un_flags & AXCSUM_FRAME) != 0) {
 			struct axe_csum_hdr csum_hdr;
 
 			if (total_len <	sizeof(csum_hdr)) {
@@ -1160,7 +1160,6 @@ static unsigned
 axe_tx_prepare_cb(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
-	struct axe_softc * const sc = usbnet_softc(un);
 	int length, boundary;
 
 	usbnet_isowned_tx(un);
@@ -1169,7 +1168,7 @@ axe_tx_prepare_cb(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	 * Copy the mbuf data into a contiguous buffer, leaving two
 	 * bytes at the beginning to hold the frame length.
 	 */
-	if (AXE_IS_178_FAMILY(sc)) {
+	if (AXE_IS_178_FAMILY(un)) {
 		struct axe_sframe_hdr hdr;
 
 		boundary = (un->un_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
@@ -1208,7 +1207,7 @@ axe_csum_cfg(struct axe_softc *sc)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint16_t csum1, csum2;
 
-	if ((sc->axe_flags & AX772B) != 0) {
+	if ((un->un_flags & AX772B) != 0) {
 		csum1 = 0;
 		csum2 = 0;
 		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) != 0)
@@ -1265,7 +1264,7 @@ axe_init_locked(struct ifnet *ifp)
 			      AX_GPIO_GPO2EN, 5, in_pm);
 #endif
 	/* Set MAC address and transmitter IPG values. */
-	if (AXE_IS_178_FAMILY(sc)) {
+	if (AXE_IS_178_FAMILY(un)) {
 		axe_cmd(sc, AXE_178_CMD_WRITE_NODEID, 0, 0, un->un_eaddr);
 		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, sc->axe_ipgs[2],
 		    (sc->axe_ipgs[1] << 8) | (sc->axe_ipgs[0]), NULL);
@@ -1275,22 +1274,22 @@ axe_init_locked(struct ifnet *ifp)
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
 	}
-	if (AXE_IS_178_FAMILY(sc)) {
-		sc->axe_flags &= ~(AXSTD_FRAME | AXCSUM_FRAME);
-		if ((sc->axe_flags & AX772B) != 0 &&
+	if (AXE_IS_178_FAMILY(un)) {
+		un->un_flags &= ~(AXSTD_FRAME | AXCSUM_FRAME);
+		if ((un->un_flags & AX772B) != 0 &&
 		    (ifp->if_capenable & AX_RXCSUM) != 0) {
 			sc->sc_lenmask = AXE_CSUM_HDR_LEN_MASK;
-			sc->axe_flags |= AXCSUM_FRAME;
+			un->un_flags |= AXCSUM_FRAME;
 		} else {
 			sc->sc_lenmask = AXE_HDR_LEN_MASK;
-			sc->axe_flags |= AXSTD_FRAME;
+			un->un_flags |= AXSTD_FRAME;
 		}
 	}
 
 	/* Configure TX/RX checksum offloading. */
 	axe_csum_cfg(sc);
 
-	if (sc->axe_flags & AX772B) {
+	if (un->un_flags & AX772B) {
 		/* AX88772B uses different maximum frame burst configuration. */
 		axe_cmd(sc, AXE_772B_CMD_RXCTL_WRITE_CFG,
 		    ax88772b_mfb_table[AX88772B_MFB_16K].threshold,
@@ -1298,8 +1297,8 @@ axe_init_locked(struct ifnet *ifp)
 	}
 	/* Enable receiver, set RX mode */
 	rxmode = (AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
-	if (AXE_IS_178_FAMILY(sc)) {
-		if (sc->axe_flags & AX772B) {
+	if (AXE_IS_178_FAMILY(un)) {
+		if (un->un_flags & AX772B) {
 			/*
 			 * Select RX header format type 1.  Aligning IP
 			 * header on 4 byte boundary is not needed when
@@ -1311,7 +1310,7 @@ axe_init_locked(struct ifnet *ifp)
 			 * header size.
 			 */
 			rxmode |= AXE_772B_RXCMD_HDR_TYPE_1;
-			if (sc->axe_flags & AXCSUM_FRAME)
+			if (un->un_flags & AXCSUM_FRAME)
 				rxmode |= AXE_772B_RXCMD_IPHDR_ALIGN;
 		} else {
 			/*

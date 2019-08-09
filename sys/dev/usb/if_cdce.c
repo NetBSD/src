@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.59 2019/08/09 01:17:33 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.60 2019/08/09 02:52:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.59 2019/08/09 01:17:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.60 2019/08/09 02:52:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,11 +55,6 @@ struct cdce_type {
 	uint16_t		 cdce_flags;
 #define CDCE_ZAURUS	1
 #define CDCE_NO_UNION	2
-};
-
-struct cdce_softc {
-	struct usbnet		 cdce_un;
-	uint16_t		 cdce_flags;
 };
 
 static const struct cdce_type cdce_devs[] = {
@@ -81,7 +76,7 @@ static const struct cdce_type cdce_devs[] = {
 static int	cdce_match(device_t, cfdata_t, void *);
 static void	cdce_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
+CFATTACH_DECL_NEW(cdce, sizeof(struct usbnet), cdce_match, cdce_attach,
     usbnet_detach, usbnet_activate);
 
 static void	cdce_rx_loop(struct usbnet *, struct usbd_xfer *,
@@ -114,8 +109,7 @@ cdce_match(device_t parent, cfdata_t match, void *aux)
 static void
 cdce_attach(device_t parent, device_t self, void *aux)
 {
-	struct cdce_softc 		*sc = device_private(self);
-	struct usbnet * const		 un = &sc->cdce_un;
+	struct usbnet * const		 un = device_private(self); 
 	struct usbif_attach_arg		*uiaa = aux;
 	char				*devinfop;
 	struct usbd_device	        *dev = uiaa->uiaa_device;
@@ -129,9 +123,6 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	const usb_cdc_ethernet_descriptor_t *ue;
 	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
 
-	/* Switch to usbnet for device_private() */
-	self->dv_private = un;
-
 	aprint_naive("\n");
 	aprint_normal("\n");
 	devinfop = usbd_devinfo_alloc(dev, 0);
@@ -140,14 +131,14 @@ cdce_attach(device_t parent, device_t self, void *aux)
 
 	un->un_dev = self;
 	un->un_udev = dev;
-	un->un_sc = sc;
+	un->un_sc = un;
 	un->un_ops = &cdce_ops;
 
 	t = cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (t)
-		sc->cdce_flags = t->cdce_flags;
+		un->un_flags = t->cdce_flags;
 
-	if (sc->cdce_flags & CDCE_NO_UNION)
+	if (un->un_flags & CDCE_NO_UNION)
 		un->un_iface = uiaa->uiaa_iface;
 	else {
 		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(un->un_udev,
@@ -283,12 +274,11 @@ cdce_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
 	     struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
-	struct cdce_softc	*sc = usbnet_softc(un);
 
 	usbnet_isowned_rx(un);
 
 	/* Strip off CRC added by Zaurus, if present */
-	if (sc->cdce_flags & CDCE_ZAURUS && total_len > 4)
+	if (un->un_flags & CDCE_ZAURUS && total_len > 4)
 		total_len -= 4;
 
 	if (total_len < sizeof(struct ether_header)) {
@@ -302,13 +292,12 @@ cdce_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
 static unsigned
 cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
-	struct cdce_softc	*sc = usbnet_softc(un);
 	int			 extra = 0;
 
 	usbnet_isowned_tx(un);
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
-	if (sc->cdce_flags & CDCE_ZAURUS) {
+	if (un->un_flags & CDCE_ZAURUS) {
 		/* Zaurus wants a 32-bit CRC appended to every frame */
 		uint32_t crc;
 
