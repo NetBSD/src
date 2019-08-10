@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.363 2019/08/01 02:28:55 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.364 2019/08/10 01:06:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.363 2019/08/01 02:28:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.364 2019/08/10 01:06:45 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4730,7 +4730,9 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	struct vm_map_entry *dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
-	KASSERT(start < end);
+	KASSERTMSG(start < end,
+	    "%s: map %p: start %#jx < end %#jx", __func__, map,
+	    (uintmax_t)start, (uintmax_t)end);
 	UVMHIST_LOG(maphist, "  (map=%#jx, start=%#jx, end=%#jx)",
 	    (uintptr_t)map, start, end, 0);
 	if (map == kernel_map) {
