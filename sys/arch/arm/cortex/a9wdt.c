@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.9 2019/08/10 16:50:23 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.10 2019/08/10 17:03:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.9 2019/08/10 16:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.10 2019/08/10 17:03:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,7 +67,7 @@ struct a9wdt_softc {
 #define	A9WDT_PERIOD_DEFAULT	12
 #endif
 
-CFATTACH_DECL_NEW(a9wdt, sizeof(struct a9wdt_softc),
+CFATTACH_DECL_NEW(arma9wdt, sizeof(struct a9wdt_softc),
     a9wdt_match, a9wdt_attach, NULL, NULL);
 
 static bool attached;
@@ -192,7 +192,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = mpcaa->mpcaa_memt;
 
 	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh,
-	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
+	    mpcaa->mpcaa_off1, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
 
 	/*
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the

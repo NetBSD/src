@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.11 2018/11/12 12:56:05 jmcneill Exp $
+# $NetBSD: files.cortex,v 1.12 2019/08/10 17:03:59 skrll Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -37,7 +37,12 @@ device	arma9tmr
 attach	arma9tmr at mpcorebus
 file	arch/arm/cortex/a9tmr.c			arma9tmr
 
+# A9 MPcore Private Timer
+device	arma9ptmr
+attach	arma9ptmr at mpcorebus
+file	arch/arm/cortex/a9ptmr.c		arma9ptmr
+
 # A9 MPcore Watchdog Timer
-device	a9wdt: sysmon_wdog
-attach	a9wdt at mpcorebus
-file	arch/arm/cortex/a9wdt.c			a9wdt
+device	arma9wdt: sysmon_wdog
+attach	arma9wdt at mpcorebus
+file	arch/arm/cortex/a9wdt.c			arma9wdt
