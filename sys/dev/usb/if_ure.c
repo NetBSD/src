@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.20 2019/08/09 02:52:59 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.21 2019/08/10 02:17:36 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.20 2019/08/09 02:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.21 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -302,18 +302,18 @@ ure_miibus_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	un->un_link = false;
+	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_10_T:
 		case IFM_100_TX:
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		case IFM_1000_T:
 			if ((un->un_flags & URE_FLAG_8152) != 0)
 				break;
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		default:
 			break;
@@ -855,6 +855,12 @@ ure_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = un;
 	un->un_ops = &ure_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = URE_RX_LIST_CNT;
+	un->un_tx_list_cnt = URE_TX_LIST_CNT;
+	un->un_rx_bufsz = URE_BUFSZ;
+	un->un_tx_bufsz = URE_BUFSZ;
 
 #define URE_CONFIG_NO	1 /* XXX */
 	error = usbd_set_config_no(dev, URE_CONFIG_NO, 1);
@@ -892,9 +898,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for ure_ctl().  */
-	usbnet_attach(un, "uredet", URE_RX_LIST_CNT, URE_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
-		      URE_BUFSZ, URE_BUFSZ);
+	usbnet_attach(un, "uredet");
 
 	un->un_phyno = 0;
 
