@@ -1,5 +1,6 @@
-/*	$NetBSD: if_udavreg.h,v 1.15 2019/08/07 19:21:48 skrll Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.16 2019/08/10 02:32:27 mrg Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
+
 /*
  * Copyright (c) 2003
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
