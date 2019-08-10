@@ -1,0 +1,33 @@
+#!/bin/sh
+# $NetBSD: compare-lib-lists,v 1.1 2019/08/10 12:50:36 christos Exp $
+#
+# Q+D script to print the library lists for compariston between whats in the
+# bsd.prog.mk file and bsd.README
+
+prog=$(basename "$0")
+
+RD=/tmp/${prog}.rd.$$
+MK=/tmp/${prog}.mk.$$
+
+trap "rm -f ${MK} ${RD}" 0 1 2 3 15
+
+make -f - all << \EOF > ${MK}
+.include <bsd.prog.mk>
+
+all:
+.for l in ${_LIBLIST}
+	@echo $l
+.endfor
+.for l in crt0.o crti.o crti.o crtn.o
+	@echo $l
+.endfor
+.for l in ${_X11LIBLIST}
+	@echo $l
+.endfor
+EOF
+
+grep '	LIB' bsd.README | \
+    grep DESTDIR | \
+    sed -e 's/.*lib\([a-zA-Z0-9_+\-]*\)\.a$/\1/' > ${RD}
+
+paste ${MK} ${RD}
