@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_var.h,v 1.7 2019/08/10 17:03:59 skrll Exp $ */
+/* $NetBSD: a9ptmr_var.h,v 1.1 2019/08/10 17:03:59 skrll Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,35 +28,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_CORTEX_A9TMR_VAR_
-#define _ARM_CORTEX_A9TMR_VAR_
-
-struct a9tmr_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_memt;
-	bus_space_handle_t sc_memh;
-	bus_space_handle_t sc_global_memh;
-	struct evcnt sc_ev_missing_ticks;
-	uint32_t sc_freq;
-	u_long sc_autoinc;
-	void *sc_global_ih;
-};
+#ifndef	_ARM_CORTEX_A9PTMR_VAR_
+#define	_ARM_CORTEX_A9PTMR_VAR_
 
 #ifdef _KERNEL
-#include "opt_arm_timer.h"
+
+void	a9ptmr_cpu_initclocks(void);
+
 struct cpu_info;
-void	a9tmr_init_cpu_clock(struct cpu_info *);
-#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
-void	a9tmr_cpu_initclocks(void);
-#else
-#define a9tmr_cpu_initclocks	cpu_initclocks
-#endif
-int	a9tmr_intr(void *);
-void	a9tmr_update_freq(uint32_t);
-void	a9tmr_delay(unsigned int n);
+void	a9ptmr_init_cpu_clock(struct cpu_info *);
 
 int	a9ptmr_intr(void *);
 void	a9ptmr_delay(unsigned int n);
 #endif
 
-#endif /* _ARM_CORTEX_A9TMR_VAR_ */
+#endif	/* _ARM_CORTEX_A9PTMR_VAR_ */
