@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.33 2019/08/06 11:21:59 kamil Exp $	*/
+/*	$NetBSD: event.h,v 1.34 2019/08/10 11:20:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -78,6 +78,14 @@ _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
 {
 	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
 	    reinterpret_cast<intptr_t>(_udata));
+}
+
+static __inline void
+_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
+    uint32_t _flags, uint32_t _fflags, int64_t _data, int _udata)
+{
+	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
+	    static_cast<intptr_t>(_udata));
 }
 #else
 #define EV_SET(kevp, ident, filter, flags, fflags, data, udata)	\
