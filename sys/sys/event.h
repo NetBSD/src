@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.35 2019/08/10 15:02:03 kamil Exp $	*/
+/*	$NetBSD: event.h,v 1.36 2019/08/10 20:33:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -75,54 +75,21 @@ _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
 	_kevp->udata = reinterpret_cast<intptr_t>(_udata);
 }
 
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
+#define _EV_SET_INTEGER_TYPE(_UTYPE)					\
+static __inline void							\
+_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,	\
+    uint32_t _flags, uint32_t _fflags, int64_t _data, _UTYPE _udata)	\
+{									\
+	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,		\
+	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));	\
 }
 
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, long int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
-}
-
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, long long int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
-}
-
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, unsigned int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
-}
-
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, unsigned long int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
-}
-
-static __inline void
-_EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data,
-    unsigned long long int _udata)
-{
-	_EV_SET(_kevp, _ident, _filter, _flags, _fflags, _data,
-	    reinterpret_cast<void *>(static_cast<intptr_t>(_udata)));
-}
+_EV_SET_INTEGER_TYPE(int)
+_EV_SET_INTEGER_TYPE(long int)
+_EV_SET_INTEGER_TYPE(long long int)
+_EV_SET_INTEGER_TYPE(unsigned int)
+_EV_SET_INTEGER_TYPE(unsigned long int)
+_EV_SET_INTEGER_TYPE(unsigned long long int)
 
 #pragma GCC diagnistic pop
 #else
