@@ -1,10 +1,10 @@
-/*	$NetBSD: addpartial-overlay.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: addpartial-overlay.c,v 1.1.1.6.6.1 2019/08/10 06:17:08 martin Exp $	*/
 
 /* addpartial-overlay.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2017 The OpenLDAP Foundation.
+ * Copyright 2004-2019 The OpenLDAP Foundation.
  * Portions Copyright (C) 2004 Virginia Tech, David Hawes.
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: addpartial-overlay.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: addpartial-overlay.c,v 1.1.1.6.6.1 2019/08/10 06:17:08 martin Exp $");
 
 #include "portable.h" 
 #include "slap.h"

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_dump.c,v 1.1.1.2 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: mdb_dump.c,v 1.1.1.2.6.1 2019/08/10 06:17:15 martin Exp $	*/
 
 /* mdb_dump.c - memory-mapped database dump tool */
 /*
- * Copyright 2011-2017 Howard Chu, Symas Corp.
+ * Copyright 2011-2018 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
