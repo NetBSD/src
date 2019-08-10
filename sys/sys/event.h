@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.36 2019/08/10 20:33:01 kamil Exp $	*/
+/*	$NetBSD: event.h,v 1.37 2019/08/10 23:47:13 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -91,7 +91,7 @@ _EV_SET_INTEGER_TYPE(unsigned int)
 _EV_SET_INTEGER_TYPE(unsigned long int)
 _EV_SET_INTEGER_TYPE(unsigned long long int)
 
-#pragma GCC diagnistic pop
+#pragma GCC diagnostic pop
 #else
 static __inline void
 _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
