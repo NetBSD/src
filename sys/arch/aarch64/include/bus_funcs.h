@@ -1,3 +1,3 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2019/08/10 16:46:07 skrll Exp $	*/
 
-#include <arm/ansi.h>
+#include <arm/bus_funcs.h>
