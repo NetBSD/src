@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.319 2019/01/21 21:11:54 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.320 2019/08/10 12:46:38 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -267,43 +267,13 @@ PAM_STATIC_DPADD=
 .endif
 
 #	NB:	If you are a library here, add it in bsd.README
-.for _lib in \
-	FS \
-	GL \
-	GLU \
-	ICE \
-	SM \
-	X11 \
-	XTrap \
-	Xau \
-	Xaw \
-	Xdmcp \
-	Xext \
-	Xfont2 \
-	Xfont \
-	Xft \
-	Xi \
-	Xinerama \
-	Xmu \
-	Xmuu \
-	Xpm \
-	Xrandr \
-	Xrender \
-	Xss \
-	Xt \
-	Xtst \
-	Xv \
-	Xxf86dga \
-	Xxf86misc \
-	Xxf86vm \
-	dps \
-	fntstubs \
-	fontcache \
-	fontconfig \
-	fontenc \
-	freetype \
-	lbxutil \
-	xkbfile
+#	This list is sorted with -f so that it matches the order in bsd.README
+_X11LIBLIST= dps fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
+    ICE lbxutil SM X11 X11_xcb Xau Xaw xcb Xdmcp Xext Xfont Xfont2 Xft Xi \
+    Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt XTrap Xtst Xv Xxf86dga \
+    Xxf86misc Xxf86vm
+
+.for _lib in ${_X11LIBLIST}
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
