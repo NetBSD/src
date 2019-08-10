@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2566 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2567 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,10 +24,10 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 9.0 to NetBSD 10.0:
-openldap: Import 2.4.48. [christos 20180808]
-rasops(9): Major improvements for rasops(9) routines. General putchar functions
-	added to color depths 2 and 4. Width-optimized putchar functions added
-	to depth 32. Anti-aliasing supported for depths 2 and 24. Shadow
-	framebuffer supported for all color depths. A lot of bug fixes, both
-	major or minor. Dedup more than 20% of lines, or 50% of characters.
-	[rin 20190810]
+	openldap: Import 2.4.48. [christos 20180808]
+	rasops(9): Major improvements for rasops(9) routines. General putchar
+		functions added for color depths 2 and 4. Width-optimized
+		putchar functions added for depth 32. Anti-aliasing supported
+		for depths 2 and 24. Shadow framebuffer supported for all
+		depths. A lot of bug fixes, both major and minor. Dedup more
+		than 20% of lines, or 50% of characters. [rin 20190810]
