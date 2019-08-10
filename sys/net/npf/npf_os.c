@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.13 2019/08/10 21:13:54 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -313,7 +313,7 @@ npf_ifop_flush(void *arg)
 	KERNEL_LOCK(1, NULL);
 	IFNET_GLOBAL_LOCK();
 	IFNET_WRITER_FOREACH(ifp) {
-		ifp->if_pf_kif = arg;
+		ifp->if_npf_private = arg;
 	}
 	IFNET_GLOBAL_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
@@ -322,13 +322,13 @@ npf_ifop_flush(void *arg)
 static void *
 npf_ifop_getmeta(const ifnet_t *ifp)
 {
-	return ifp->if_pf_kif;
+	return ifp->if_npf_private;
 }
 
 static void
 npf_ifop_setmeta(ifnet_t *ifp, void *arg)
 {
-	ifp->if_pf_kif = arg;
+	ifp->if_npf_private = arg;
 }
 
 #ifdef _KERNEL
