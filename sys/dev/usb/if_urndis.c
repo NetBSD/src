@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.26 2019/08/09 06:38:39 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.27 2019/08/10 02:17:36 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.26 2019/08/09 06:38:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.27 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -130,7 +130,7 @@ urndis_ctrl_send(struct usbnet *un, void *buf, size_t len)
 	struct urndis_softc	*sc = usbnet_softc(un);
 	usbd_status err;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return(0);
 
 	err = urndis_ctrl_msg(un, UT_WRITE_CLASS_INTERFACE, UR_GET_STATUS,
@@ -150,7 +150,7 @@ urndis_ctrl_recv(struct usbnet *un)
 	char			*buf;
 	usbd_status		 err;
 
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		return(0);
 
 	buf = kmem_alloc(URNDIS_RESPONSE_LEN, KM_SLEEP);
@@ -866,13 +866,12 @@ urndis_init_un(struct ifnet *ifp, struct usbnet *un)
 		return EIO;
 
 	usbnet_lock(un);
-	if (un->un_dying)
+	if (usbnet_isdying(un))
 		err = EIO;
 	else {
 		usbnet_stop(un, ifp, 1);
 		err = usbnet_init_rx_tx(un);
-		if (err == 0)
-			un->un_link = true;
+		usbnet_set_link(un, err == 0);
 	}
 	usbnet_unlock(un);
 
@@ -943,6 +942,12 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = sc;
 	un->un_ops = &urndis_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = RNDIS_RX_LIST_CNT;
+	un->un_tx_list_cnt = RNDIS_TX_LIST_CNT;
+	un->un_rx_bufsz = RNDIS_BUFSZ;
+	un->un_tx_bufsz = RNDIS_BUFSZ;
 
 	iface_ctl = uiaa->uiaa_iface;
 	un->un_iface = uiaa->uiaa_iface;
@@ -1044,9 +1049,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = urndis_watchdog;
 #endif
 
-	usbnet_attach(un, "urndisdet", RNDIS_RX_LIST_CNT, RNDIS_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
-		      RNDIS_BUFSZ, RNDIS_BUFSZ);
+	usbnet_attach(un, "urndisdet");
 
 	urndis_init_un(ifp, un);
 

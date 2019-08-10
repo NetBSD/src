@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.50 2019/08/09 07:54:05 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.51 2019/08/10 02:17:36 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.50 2019/08/09 07:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.51 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -319,13 +319,13 @@ smsc_miibus_statchg(struct ifnet *ifp)
 	uint32_t flow;
 	uint32_t afc_cfg;
 
-	un->un_link = false;
+	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 			case IFM_10_T:
 			case IFM_100_TX:
-				un->un_link = true;
+				usbnet_set_link(un, true);
 				break;
 			case IFM_1000_T:
 				/* Gigabit ethernet not supported by chipset */
@@ -336,7 +336,7 @@ smsc_miibus_statchg(struct ifnet *ifp)
 	}
 
 	/* Lost link, do nothing. */
-	if (!un->un_link)
+	if (!usbnet_havelink(un))
 		return;
 
 	usbnet_lock_mii(un);
@@ -801,6 +801,10 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = sc;
 	un->un_ops = &smsc_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = SMSC_RX_LIST_CNT;
+	un->un_tx_list_cnt = SMSC_TX_LIST_CNT;
 
 	devinfop = usbd_devinfo_alloc(un->un_udev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
@@ -827,6 +831,8 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	} else {
 		bufsz = SMSC_MIN_BUFSZ;
 	}
+	un->un_rx_bufsz = bufsz;
+	un->un_tx_bufsz = bufsz;
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -849,8 +855,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	usbnet_attach(un, "smscdet", SMSC_RX_LIST_CNT, SMSC_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER, bufsz, bufsz);
+	usbnet_attach(un, "smscdet");
 
 #ifdef notyet
 	/*
