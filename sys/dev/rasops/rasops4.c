@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.26 2019/08/07 12:36:36 rin Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.27 2019/08/10 01:24:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.26 2019/08/07 12:36:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.27 2019/08/10 01:24:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
+
 #include <machine/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
@@ -59,7 +60,7 @@ static void	rasops4_makestamp(struct rasops_info *, long);
 #endif
 
 #ifndef RASOPS_SMALL
-/* 4x1 stamp for optimized character blitting */
+/* stamp for optimized character blitting */
 static uint16_t			stamp[16];
 static long			stamp_attr;
 static struct rasops_info	*stamp_ri;
@@ -116,21 +117,22 @@ rasops4_init(struct rasops_info *ri)
 static void
 rasops4_makestamp(struct rasops_info *ri, long attr)
 {
-	int i, fg, bg;
+	int i;
+	uint32_t bg, fg;
 
 	stamp_attr = attr;
 	stamp_ri = ri;
 
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xf;
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xf;
+	bg = ATTR_BG(ri, attr) & 0xf;
+	fg = ATTR_FG(ri, attr) & 0xf;
 
 	for (i = 0; i < 16; i++) {
-#if BYTE_ORDER == BIG_ENDIAN
-#define NEED_LITTLE_ENDIAN_STAMP RI_BSWAP
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if ((ri->ri_flg & RI_BSWAP) == 0)
 #else
-#define NEED_LITTLE_ENDIAN_STAMP 0
+		if ((ri->ri_flg & RI_BSWAP) != 0)
 #endif
-		if ((ri->ri_flg & RI_BSWAP) == NEED_LITTLE_ENDIAN_STAMP) {
+		{
 			/* little endian */
 			stamp[i]  = (i & 1 ? fg : bg) << 12;
 			stamp[i] |= (i & 2 ? fg : bg) << 8;
@@ -146,24 +148,28 @@ rasops4_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	12
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #endif	/* !RASOPS_SMALL */
 
+/* rasops4_putchar */
+#undef	RASOPS_AA
+#include <dev/rasops/rasops1-4_putchar.h>
+
 /*
  * Grab routines common to depths where (bpp < 8)
  */
-#undef	RASOPS_AA
-#include "rasops1-4_putchar.h"
-
 #include <dev/rasops/rasops_bitops.h>

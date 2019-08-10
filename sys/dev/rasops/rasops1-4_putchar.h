@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1-4_putchar.h,v 1.2 2019/08/09 12:05:51 rin Exp $ */
+/* $NetBSD: rasops1-4_putchar.h,v 1.3 2019/08/10 01:24:17 rin Exp $ */
 
 /* NetBSD: rasops_bitops.h,v 1.23 2019/08/02 04:39:09 rin Exp */
 /*-
@@ -61,13 +61,13 @@
 #else
 #define	PIXEL_OR(tmp)							\
 	do {								\
-		uint8_t c, av = *fr++;					\
-		if (av == 0xff)						\
+		uint8_t c, w = *fr++;					\
+		if (w == 0xff)						\
 			c = clr[1];					\
-		else if (av == 0)					\
+		else if (w == 0)					\
 			c = clr[0];					\
 		else							\
-			c = (av * clr[1] + (0xff - av) * clr[0]) >> 8;	\
+			c = (w * clr[1] + (0xff - w) * clr[0]) >> 8;	\
 		(tmp) |= c << (32 - PIXEL_BITS - bit);			\
 	} while (0 /* CONSTCOND */)
 #endif
@@ -88,10 +88,9 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int full, cnt, bit;
-	uint32_t rs, bg, fg, lmask, rmask, lbg, rbg, clr[2];
-	uint32_t height, width;
-	uint32_t *rp, *bp, *hp, tmp;
+	int height, width, full, cnt, bit;
+	uint32_t bg, fg, lbg, rbg, clr[2], lmask, rmask, tmp;
+	uint32_t *rp, *bp, *hp;
 	uint8_t *fr;
 	bool space;
 
@@ -109,19 +108,20 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 #endif
 
+	height = font->fontheight;
 	width = font->fontwidth << PIXEL_SHIFT;
 	col *= width;
-	height = font->fontheight;
+
 	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
 	    ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
 		hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
-	col &= 31;
-	rs = ri->ri_stride;
 
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
+	col &= 31;
+
+	bg = ATTR_BG(ri, attr);
+	fg = ATTR_FG(ri, attr);
 
 	/* If fg and bg match this becomes a space character */
 	if (uc == ' ' || __predict_false(fg == bg)) {
@@ -134,7 +134,6 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 	if (col + width <= 32) {
 		/* Single word, only one mask */
-
 		rmask = rasops_pmask[col][width & 31];
 		lmask = ~rmask;
 
@@ -143,18 +142,19 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 			while (height--) {
 				tmp = (*rp & lmask) | bg;
 				*rp = tmp;
-				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
 					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		} else {
 			clr[0] = bg & COLOR_MASK;
 			clr[1] = fg & COLOR_MASK;
+
 			while (height--) {
 #ifndef RASOPS_AA
-				uint32_t fb = be32uatoh(fr);
+				uint32_t fb = rasops_be32uatoh(fr);
 				fr += ri->ri_font->stride;
 #endif
 
@@ -167,10 +167,10 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 				if (ri->ri_hwbits) {
 					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
 
-				DELTA(rp, rs, uint32_t *);
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		}
 
@@ -196,12 +196,12 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Word boundary, two masks needed */
-
 	lmask = ~rasops_lmask[col];
 	rmask = ~rasops_rmask[(col + width) & 31];
 
 	if (lmask != -1)
 		width -= 32 - col;
+
 	full = width / 32;
 	width -= full * 32;
 
@@ -226,10 +226,10 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 			if (ri->ri_hwbits) {
 				memcpy(hp, rp, ((lmask != -1) + full +
 				    (rmask != -1)) << 2);
-				DELTA(hp, rs, uint32_t *);
+				DELTA(hp, ri->ri_stride, uint32_t *);
 			}
 
-			DELTA(rp, rs, uint32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	} else {
 		clr[0] = bg & COLOR_MASK;
@@ -239,7 +239,7 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 			bp = rp;
 
 #ifndef RASOPS_AA
-			uint32_t fb = be32uatoh(fr);
+			uint32_t fb = rasops_be32uatoh(fr);
 			fr += ri->ri_font->stride;
 #endif
 
@@ -268,10 +268,10 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 			if (ri->ri_hwbits) {
 				memcpy(hp, rp, ((lmask != -1) + full +
 				    (rmask != -1)) << 2);
-				DELTA(hp, rs, uint32_t *);
+				DELTA(hp, ri->ri_stride, uint32_t *);
 			}
 
-			DELTA(rp, rs, uint32_t *);
+			DELTA(rp, ri->ri_stride, uint32_t *);
 		}
 	}
 

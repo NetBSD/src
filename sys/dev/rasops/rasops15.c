@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.37 2019/08/07 12:33:48 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.38 2019/08/10 01:24:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.37 2019/08/07 12:33:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.38 2019/08/10 01:24:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -55,7 +55,7 @@ static void	rasops15_makestamp(struct rasops_info *, long);
 #endif
 
 #ifndef RASOPS_SMALL
-/* 4x1 stamp for optimized character blitting */
+/* stamp for optimized character blitting */
 static uint32_t			stamp[32];
 static long			stamp_attr;
 static struct rasops_info	*stamp_ri;
@@ -114,11 +114,13 @@ rasops15_init(struct rasops_info *ri)
 #endif
 }
 
+/* rasops15_putchar */
 #undef	RASOPS_AA
-#include "rasops_putchar.h"
+#include <dev/rasops/rasops_putchar.h>
 
+/* rasops15_putchar_aa */
 #define	RASOPS_AA
-#include "rasops_putchar.h"
+#include <dev/rasops/rasops_putchar.h>
 #undef	RASOPS_AA
 
 #ifndef RASOPS_SMALL
@@ -128,14 +130,14 @@ rasops15_init(struct rasops_info *ri)
 static void
 rasops15_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t fg, bg;
 	int i;
+	uint32_t bg, fg;
 
 	stamp_attr = attr;
 	stamp_ri = ri;
 
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffff;
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffff;
+	bg = ATTR_BG(ri, attr) & 0xffff;
+	fg = ATTR_FG(ri, attr) & 0xffff;
 
 	for (i = 0; i < 32; i += 2) {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -152,16 +154,19 @@ rasops15_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	12
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #endif /* !RASOPS_SMALL */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.36 2019/08/09 12:05:51 rin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.37 2019/08/10 01:24:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.36 2019/08/09 12:05:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.37 2019/08/10 01:24:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
+
 #include <machine/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
@@ -92,9 +93,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	uint32_t fs, rs, fb, bg, fg, lmask, rmask;
-	uint32_t height, width;
-	uint32_t *rp, *hp, tmp, tmp0, tmp1;
+	int height, width;
+	uint32_t bg, fg, lbg, rbg, fb, lmask, rmask, tmp, tmp0, tmp1;
+	uint32_t *rp, *hp;
 	uint8_t *fr;
 	bool space;
 
@@ -112,34 +113,32 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 #endif
 
-	col *= ri->ri_font->fontwidth;
+	height = font->fontheight;
+	width = font->fontwidth;
+	col *= width;
+
 	rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale +
 	    ((col >> 3) & ~3));
 	if (ri->ri_hwbits)
 		hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
-	height = font->fontheight;
-	width = font->fontwidth;
-	col &= 31;
-	rs = ri->ri_stride;
 
-	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
-	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+	col &= 31;
+
+	bg = ATTR_BG(ri, attr);
+	fg = ATTR_FG(ri, attr);
 
 	/* If fg and bg match this becomes a space character */
-	if (uc == ' ' || fg == bg) {
+	if (uc == ' ' || __predict_false(fg == bg)) {
 		space = true;
 		fr = NULL;	/* XXX GCC */
-		fs = 0;		/* XXX GCC */
 	} else {
 		space = false;
 		fr = FONT_GLYPH(uc, font, ri);
-		fs = font->stride;
 	}
 
 	if (col + width <= 32) {
 		/* Single word, only one mask */
-
 		rmask = rasops_pmask[col][width & 31];
 		lmask = ~rmask;
 
@@ -148,26 +147,29 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			while (height--) {
 				tmp = (*rp & lmask) | bg;
 				*rp = tmp;
-				DELTA(rp, rs, uint32_t *);
 				if (ri->ri_hwbits) {
 					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		} else {
 			while (height--) {
-				tmp = *rp & lmask;
-				fb = be32uatoh(fr);
-				fr += fs;
+				fb = rasops_be32uatoh(fr);
+				fr += font->stride;
 				if (bg)
 					fb = ~fb;
+
+				tmp = *rp & lmask;
 				tmp |= (MBE(fb >> col) & rmask);
 				*rp = tmp;
-				DELTA(rp, rs, uint32_t *);
+
 				if (ri->ri_hwbits) {
 					*hp = tmp;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
+
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		}
 
@@ -177,6 +179,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			if (ri->ri_hwbits)
 				DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
 				    uint32_t *);
+
 			for (height = ri->ri_ul.height; height; height--) {
 				DELTA(rp, - ri->ri_stride, uint32_t *);
 				tmp = (*rp & lmask) | (fg & rmask);
@@ -189,44 +192,53 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		/* Word boundary, two masks needed */
-
 		lmask = ~rasops_lmask[col];
 		rmask = ~rasops_rmask[(col + width) & 31];
 
 		if (space) {
-			width = bg & ~rmask;
-			bg = bg & ~lmask;
+			lbg = bg & ~lmask;
+			rbg = bg & ~rmask;
+
 			while (height--) {
-				tmp0 = (rp[0] & lmask) | bg;
-				tmp1 = (rp[1] & rmask) | width;
+				tmp0 = (rp[0] & lmask) | lbg;
+				tmp1 = (rp[1] & rmask) | rbg;
+
 				rp[0] = tmp0;
 				rp[1] = tmp1;
-				DELTA(rp, rs, uint32_t *);
+
 				if (ri->ri_hwbits) {
 					hp[0] = tmp0;
 					hp[1] = tmp1;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
+
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		} else {
 			width = 32 - col;
+
 			while (height--) {
-				tmp0 = rp[0] & lmask;
-				tmp1 = rp[1] & rmask;
-				fb = be32uatoh(fr);
-				fr += fs;
+				fb = rasops_be32uatoh(fr);
+				fr += font->stride;
 				if (bg)
 					fb = ~fb;
+
+				tmp0 = rp[0] & lmask;
 				tmp0 |= MBE(fb >> col);
+
+				tmp1 = rp[1] & rmask;
 				tmp1 |= (MBE(fb << width) & ~rmask);
+
 				rp[0] = tmp0;
 				rp[1] = tmp1;
-				DELTA(rp, rs, uint32_t *);
+
 				if (ri->ri_hwbits) {
 					hp[0] = tmp0;
 					hp[1] = tmp1;
-					DELTA(hp, rs, uint32_t *);
+					DELTA(hp, ri->ri_stride, uint32_t *);
 				}
+
+				DELTA(rp, ri->ri_stride, uint32_t *);
 			}
 		}
 
@@ -236,6 +248,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			if (ri->ri_hwbits)
 				DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
 				    uint32_t *);
+
 			for (height = ri->ri_ul.height; height; height--) {
 				DELTA(rp, - ri->ri_stride, uint32_t *);
 				tmp0 = (rp[0] & lmask) | (fg & ~lmask);
@@ -253,13 +266,15 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 }
 
 #ifndef RASOPS_SMALL
-
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops1_putchar_width.h"
+#include <dev/rasops/rasops1_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops1_putchar_width.h"
+#include <dev/rasops/rasops1_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #endif	/* !RASOPS_SMALL */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.48 2019/08/07 12:33:48 rin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.49 2019/08/10 01:24:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.48 2019/08/07 12:33:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.49 2019/08/10 01:24:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
+#include <sys/bswap.h>
 
 #include <machine/endian.h>
-#include <sys/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -63,7 +63,7 @@ static void	rasops24_makestamp(struct rasops_info *, long);
 #endif
 
 #ifndef RASOPS_SMALL
-/* 4x1 stamp for optimized character blitting */
+/* stamp for optimized character blitting */
 static uint32_t			stamp[64];
 static long			stamp_attr;
 static struct rasops_info	*stamp_ri;
@@ -125,11 +125,13 @@ rasops24_init(struct rasops_info *ri)
 #endif
 }
 
+/* rasops24_putchar */
 #undef	RASOPS_AA
-#include "rasops_putchar.h"
+#include <dev/rasops/rasops_putchar.h>
 
+/* rasops24_putchar_aa */
 #define	RASOPS_AA
-#include "rasops_putchar.h"
+#include <dev/rasops/rasops_putchar.h>
 #undef	RASOPS_AA
 
 static __inline void
@@ -160,14 +162,14 @@ rasops24_makestamp1(struct rasops_info *ri, uint32_t *xstamp,
 static void
 rasops24_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t fg, bg, c1, c2, c3, c4;
 	int i;
+	uint32_t bg, fg, c1, c2, c3, c4;
 
 	stamp_attr = attr;
 	stamp_ri = ri;
 
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffffff;
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
+	bg = ATTR_BG(ri, attr) & 0xffffff;
+	fg = ATTR_FG(ri, attr) & 0xffffff;
 
 	for (i = 0; i < 64; i += 4) {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -185,16 +187,19 @@ rasops24_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	12
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #endif	/* !RASOPS_SMALL */
@@ -206,8 +211,9 @@ static void
 rasops24_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	int full, slop, cnt, stride;
-	uint32_t *rp, *dp, *hp, clr, xstamp[3];
+	int bytes, full, slop, cnt;
+	uint32_t bg, xstamp[3];
+	uint32_t *dp, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -233,8 +239,8 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 		return;
 #endif
 
-	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	rasops24_makestamp1(ri, xstamp, clr, clr, clr, clr);
+	bg = ATTR_BG(ri, attr) & 0xffffff;
+	rasops24_makestamp1(ri, xstamp, bg, bg, bg, bg);
 
 	/*
 	 * XXX the wsdisplay_emulops interface seems a little deficient in
@@ -243,35 +249,37 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
 	 */
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
-		stride = ri->ri_stride;
+		bytes = ri->ri_stride;
 		num = ri->ri_height;
 		rp = (uint32_t *)ri->ri_origbits;
 		if (ri->ri_hwbits)
 			hp = (uint32_t *)ri->ri_hworigbits;
 	} else {
-		stride = ri->ri_emustride;
+		bytes = ri->ri_emustride;
 		num *= ri->ri_font->fontheight;
 		rp = (uint32_t *)(ri->ri_bits + row * ri->ri_yscale);
 		if (ri->ri_hwbits)
 			hp = (uint32_t *)(ri->ri_hwbits + row * ri->ri_yscale);
 	}
 
-	full = stride / (4 * 3);
-	slop = (stride - full * (4 * 3)) / 4;
+	full = bytes / (4 * 3);
+	slop = (bytes - full * (4 * 3)) / 4;
 
 	while (num--) {
 		dp = rp;
+
 		for (cnt = full; cnt; cnt--) {
 			dp[0] = xstamp[0];
 			dp[1] = xstamp[1];
 			dp[2] = xstamp[2];
 			dp += 3;
 		}
+
 		for (cnt = 0; cnt < slop; cnt++)
 			*dp++ = xstamp[cnt];
 
 		if (ri->ri_hwbits) {
-			memcpy(hp, rp, stride);
+			memcpy(hp, rp, bytes);
 			DELTA(hp, ri->ri_stride, uint32_t *);
 		}
 
@@ -286,9 +294,10 @@ static void
 rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
-	int height, cnt, slop1, slop2, full;
-	uint32_t clr, xstamp[3], *dp;
-	uint8_t *rp, *hp, *dbp;
+	int height, slop1, slop2, full, cnt;
+	uint32_t bg, xstamp[3];
+	uint32_t *dp;
+	uint8_t *bp, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -318,15 +327,15 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 		return;
 #endif
 
+	height = ri->ri_font->fontheight;
+	num *= ri->ri_xscale;
+
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	if (ri->ri_hwbits)
 		hp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
 
-	num *= ri->ri_xscale;
-	height = ri->ri_font->fontheight;
-
-	clr = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffffff;
-	rasops24_makestamp1(ri, xstamp, clr, clr, clr, clr);
+	bg = ATTR_BG(ri, attr) & 0xffffff;
+	rasops24_makestamp1(ri, xstamp, bg, bg, bg, bg);
 
 	/*
 	 * Align to word boundary by 24-bit-wise operations:
@@ -349,15 +358,15 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	while (height--) {
 		/* Align to word boundary */
-		dbp = rp;
+		bp = rp;
 		for (cnt = slop1; cnt; cnt -= 3) {
-			*dbp++ = (clr >> 16);
-			*dbp++ = (clr >> 8);
-			*dbp++ = clr;
+			*bp++ = (bg >> 16);
+			*bp++ = (bg >> 8);
+			*bp++ = bg;
 		}
 
 		/* 4 pels per loop */
-		dp = (uint32_t *)dbp;
+		dp = (uint32_t *)bp;
 		for (cnt = full; cnt; cnt--) {
 			dp[0] = xstamp[0];
 			dp[1] = xstamp[1];
@@ -366,11 +375,11 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 		}
 
 		/* Trailing slop */
-		dbp = (uint8_t *)dp;
+		bp = (uint8_t *)dp;
 		for (cnt = slop2; cnt; cnt -= 3) {
-			*dbp++ = (clr >> 16);
-			*dbp++ = (clr >> 8);
-			*dbp++ = clr;
+			*bp++ = (bg >> 16);
+			*bp++ = (bg >> 8);
+			*bp++ = bg;
 		}
 
 		if (ri->ri_hwbits) {
