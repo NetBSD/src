@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.108 2019/08/09 02:52:59 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.109 2019/08/10 02:17:36 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.108 2019/08/09 02:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.109 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -385,7 +385,7 @@ axe_mii_statchg_cb(struct ifnet *ifp)
 		return;
 
 	val = 0;
-	un->un_link = false;
+	usbnet_set_link(un, false);
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		val |= AXE_MEDIA_FULL_DUPLEX;
 		if (AXE_IS_178_FAMILY(un)) {
@@ -404,14 +404,14 @@ axe_mii_statchg_cb(struct ifnet *ifp)
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_1000_T:
 			val |= AXE_178_MEDIA_GMII | AXE_178_MEDIA_ENCK;
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		case IFM_100_TX:
 			val |= AXE_178_MEDIA_100TX;
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		case IFM_10_T:
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		}
 	}
@@ -886,6 +886,10 @@ axe_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = sc;
 	un->un_ops = &axe_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = AXE_RX_LIST_CNT;
+	un->un_tx_list_cnt = AXE_TX_LIST_CNT;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
@@ -910,6 +914,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
 	else
 		bufsz = AXE_172_BUFSZ;
+	un->un_rx_bufsz = un->un_tx_bufsz = bufsz;
 
 	un->un_ed[USBNET_ENDPT_RX] = 0;
 	un->un_ed[USBNET_ENDPT_TX] = 0;
@@ -937,8 +942,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axe_cmd().  */
-	usbnet_attach(un, "axedet", AXE_RX_LIST_CNT, AXE_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER, bufsz, bufsz);
+	usbnet_attach(un, "axedet");
 
 	/* We need the PHYID for init dance in some cases */
 	usbnet_lock_mii(un);
