@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.7 2019/08/09 12:05:51 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.8 2019/08/10 01:24:17 rin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -46,7 +46,7 @@
 #if RASOPS_DEPTH != 24
 #define	PIXEL_TYPE		COLOR_TYPE
 #define	PIXEL_BYTES		sizeof(PIXEL_TYPE)
-#define	SET_PIXEL(p, index)	*(p)++ = clr[index]
+#define	SET_COLOR(p, index)	*(p)++ = clr[index]
 #define	SET_RGB(p, r, g, b)						\
 	*(p)++ = (((r) >> (8 - ri->ri_rnum)) << ri->ri_rpos) |		\
 		 (((g) >> (8 - ri->ri_gnum)) << ri->ri_gpos) |		\
@@ -56,7 +56,7 @@
 #if RASOPS_DEPTH == 24
 #define	PIXEL_TYPE		uint8_t
 #define	PIXEL_BYTES		3
-#define	SET_PIXEL(p, index)						\
+#define	SET_COLOR(p, index)						\
 	do {								\
 		COLOR_TYPE c = clr[index];				\
 		*(p)++ = c >> 16;					\
@@ -100,9 +100,9 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, width, cnt;
+	uint8_t *fr;
 	COLOR_TYPE clr[2];
 	PIXEL_TYPE *dp, *rp, *hp;
-	uint8_t *fr;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -118,23 +118,21 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 #endif
 
-	rp = (PIXEL_TYPE *)(ri->ri_bits + row * ri->ri_yscale +
-	    col * ri->ri_xscale);
-	if (ri->ri_hwbits)
-		hp = (PIXEL_TYPE *)(ri->ri_hwbits + row * ri->ri_yscale +
-		    col * ri->ri_xscale);
-
 	height = font->fontheight;
 	width = font->fontwidth;
 
-	clr[0] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf];
-	clr[1] = (COLOR_TYPE)ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf];
+	rp = (PIXEL_TYPE *)(ri->ri_bits + FBOFFSET(ri, row, col));
+	if (ri->ri_hwbits)
+		hp = (PIXEL_TYPE *)(ri->ri_hwbits + FBOFFSET(ri, row, col));
+
+	clr[0] = (COLOR_TYPE)ATTR_BG(ri, attr);
+	clr[1] = (COLOR_TYPE)ATTR_FG(ri, attr);
 
 	if (uc == ' ') {
 		while (height--) {
 			dp = rp;
 			for (cnt = width; cnt; cnt--)
-				SET_PIXEL(dp, 0);
+				SET_COLOR(dp, 0);
 			if (ri->ri_hwbits) {
 				uint16_t bytes = width * PIXEL_BYTES;
 					/* XXX GCC */
@@ -168,23 +166,20 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 			dp = rp;
 
 #ifndef RASOPS_AA
-			uint32_t fb = be32uatoh(fr);
+			uint32_t fb = rasops_be32uatoh(fr);
 			fr += ri->ri_font->stride;
-#endif
 
-			for (cnt = width; cnt; cnt--)
-#ifndef	RASOPS_AA
-			{
-				SET_PIXEL(dp, (fb >> 31) & 1);
+			for (cnt = width; cnt; cnt--) {
+				SET_COLOR(dp, (fb >> 31) & 1);
 				fb <<= 1;
 			}
-#else
-			{
+#else /* RASOPS_AA */
+			for (cnt = width; cnt; cnt--) {
 				int w = *fr++;
 				if (w == 0xff)
-					SET_PIXEL(dp, 1);
+					SET_COLOR(dp, 1);
 				else if (w == 0)
-					SET_PIXEL(dp, 0);
+					SET_COLOR(dp, 0);
 				else
 					SET_RGB(dp,
 					    AV(r, w), AV(g, w), AV(b, w));
@@ -206,11 +201,12 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		if (ri->ri_hwbits)
 			DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
 			    PIXEL_TYPE *);
+
 		for (height = ri->ri_ul.height; height; height--) {
 			DELTA(rp, - ri->ri_stride, PIXEL_TYPE *);
 			dp = rp;
 			for (cnt = width; cnt; cnt--)
-				SET_PIXEL(dp, 1);
+				SET_COLOR(dp, 1);
 			if (ri->ri_hwbits) {
 				DELTA(hp, - ri->ri_stride, PIXEL_TYPE *);
 				uint16_t bytes = width * PIXEL_BYTES;
@@ -225,7 +221,7 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 
 #undef	PIXEL_TYPE
 #undef	PIXEL_BYTES
-#undef	SET_PIXEL
+#undef	SET_COLOR
 #undef	SET_RGB
 
 #undef	AV

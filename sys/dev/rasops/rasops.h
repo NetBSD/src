@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.46 2019/08/07 16:14:51 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.47 2019/08/10 01:24:17 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,13 +155,14 @@ struct rasops_info {
 #endif
 };
 
-#define CHAR_IN_FONT(c,font) 					\
-       ((c) >= (font)->firstchar && 				\
-	((c) - (font)->firstchar) < (font)->numchars)
+#define CHAR_IN_FONT(c, font)						\
+	((c) >= (font)->firstchar &&					\
+	    (c) - (font)->firstchar < (font)->numchars)
 
-#define PICK_FONT(ri, c) (((c & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT) && \
-			  (ri->ri_optfont.data != NULL)) ? \
-			 &ri->ri_optfont : ri->ri_font
+#define PICK_FONT(ri, c)						\
+	((((c) & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT &&		\
+	    (ri)->ri_optfont.data != NULL) ?				\
+		&(ri)->ri_optfont : (ri)->ri_font)
 
 /*
  * rasops_init().
@@ -199,7 +200,13 @@ void	rasops15_init(struct rasops_info *);
 void	rasops24_init(struct rasops_info *);
 void	rasops32_init(struct rasops_info *);
 
+#define	ATTR_BG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 16) & 0xf])
+#define	ATTR_FG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 24) & 0xf])
+
 #define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
+
+#define	FBOFFSET(ri, row, col)						\
+	((row) * (ri)->ri_yscale + (col) * (ri)->ri_xscale)
 
 #define	FONT_GLYPH(uc, font, ri)					\
 	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
@@ -245,7 +252,7 @@ rasops_memset32(void *p, uint32_t val, size_t bytes)
 }
 
 static __inline uint32_t
-be32uatoh(uint8_t *p)
+rasops_be32uatoh(uint8_t *p)
 {
 	uint32_t u;
 
