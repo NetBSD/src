@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.393 2019/07/24 09:28:29 roy Exp $
+#	$NetBSD: bsd.README,v 1.394 2019/08/10 12:46:38 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1754,24 +1754,31 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following X-Windows libraries are predefined for DPADD:
 
+		LIBDPS?=		${DESTDIR}/usr/X11R7/lib/libdps.a
+		LIBFNTSTUBS?=		${DESTDIR}/usr/X11R7/lib/libfntstubs.a
+		LIBFONTCACHE?=		${DESTDIR}/usr/X11R7/lib/libfontcache.a
+		LIBFONTCONFIG?=		${DESTDIR}/usr/X11R7/lib/libfontconfig.a
+		LIBFONTENC?=		${DESTDIR}/usr/X11R7/lib/libfontenc.a
+		LIBFREETYPE?=		${DESTDIR}/usr/X11R7/lib/libfreetype.a
 		LIBFS?=			${DESTDIR}/usr/X11R7/lib/libFS.a
 		LIBGL?=			${DESTDIR}/usr/X11R7/lib/libGL.a
 		LIBGLU?=		${DESTDIR}/usr/X11R7/lib/libGLU.a
 		LIBICE?=		${DESTDIR}/usr/X11R7/lib/libICE.a
+		LIBLBXUTIL?=		${DESTDIR}/usr/X11R7/lib/liblbxutil.a
 		LIBSM?=			${DESTDIR}/usr/X11R7/lib/libSM.a
 		LIBX11?=		${DESTDIR}/usr/X11R7/lib/libX11.a
 		LIBX11_XCB?=		${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
-		LIBXTRAP?=		${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=		${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=		${DESTDIR}/usr/X11R7/lib/libXaw.a
 		LIBXCB?=		${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXDMCP?=		${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=		${DESTDIR}/usr/X11R7/lib/libXext.a
-		LIBXFONT?=		${DESTDIR}/usr/X11R7/lib/libXfont.a
 		LIBXFONT2?=		${DESTDIR}/usr/X11R7/lib/libXfont2.a
+		LIBXFONT?=		${DESTDIR}/usr/X11R7/lib/libXfont.a
 		LIBXFT?=		${DESTDIR}/usr/X11R7/lib/libXft.a
 		LIBXI?=			${DESTDIR}/usr/X11R7/lib/libXi.a
 		LIBXINERAMA?=		${DESTDIR}/usr/X11R7/lib/libXinerama.a
+		LIBXKBFILE?=		${DESTDIR}/usr/X11R7/lib/libxkbfile.a
 		LIBXMU?=		${DESTDIR}/usr/X11R7/lib/libXmu.a
 		LIBXMUU?=		${DESTDIR}/usr/X11R7/lib/libXmuu.a
 		LIBXPM?=		${DESTDIR}/usr/X11R7/lib/libXpm.a
@@ -1779,18 +1786,12 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXRENDER?=		${DESTDIR}/usr/X11R7/lib/libXrender.a
 		LIBXSS?=		${DESTDIR}/usr/X11R7/lib/libXss.a
 		LIBXT?=			${DESTDIR}/usr/X11R7/lib/libXt.a
+		LIBXTRAP?=		${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXTST?=		${DESTDIR}/usr/X11R7/lib/libXtst.a
 		LIBXV?=			${DESTDIR}/usr/X11R7/lib/libXv.a
 		LIBXXF86DGA?=		${DESTDIR}/usr/X11R7/lib/libXxf86dga.a
 		LIBXXF86MISC?=		${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
 		LIBXXF86VM?=		${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
-		LIBDPS?=		${DESTDIR}/usr/X11R7/lib/libdps.a
-		LIBFNTSTUBS?=		${DESTDIR}/usr/X11R7/lib/libfntstubs.a
-		LIBFONTCONFIG?=		${DESTDIR}/usr/X11R7/lib/libfontconfig.a
-		LIBFONTENC?=		${DESTDIR}/usr/X11R7/lib/libfontenc.a
-		LIBFREETYPE?=		${DESTDIR}/usr/X11R7/lib/libfreetype.a
-		LIBLBXUTIL?=		${DESTDIR}/usr/X11R7/lib/liblbxutil.a
-		LIBXKBFILE?=		${DESTDIR}/usr/X11R7/lib/libxkbfile.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
