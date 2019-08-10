@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.93 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: ums.c,v 1.94 2019/08/10 06:30:26 yhardy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.93 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.94 2019/08/10 06:30:26 yhardy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -192,6 +192,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	tpcalib_init(&sc->sc_ms.sc_tpcalib);
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
 }
 
