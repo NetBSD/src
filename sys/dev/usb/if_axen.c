@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.58 2019/08/09 02:52:59 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.59 2019/08/10 02:17:36 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.58 2019/08/09 02:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.59 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -169,16 +169,16 @@ axen_mii_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	un->un_link = false;
+	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_10_T:
 		case IFM_100_TX:
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		case IFM_1000_T:
-			un->un_link = true;
+			usbnet_set_link(un, true);
 			break;
 		default:
 			break;
@@ -186,7 +186,7 @@ axen_mii_statchg(struct ifnet *ifp)
 	}
 
 	/* Lost link, do nothing. */
-	if (!un->un_link)
+	if (!usbnet_havelink(un))
 		return;
 
 	val = 0;
@@ -599,7 +599,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	unsigned rx_bufsz, tx_bufsz;
 	uint16_t axen_flags;
 	int i;
 
@@ -613,6 +612,10 @@ axen_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = un;
 	un->un_ops = &axen_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = AXEN_RX_LIST_CNT;
+	un->un_tx_list_cnt = AXEN_TX_LIST_CNT;
 
 	err = usbd_set_config_no(dev, AXEN_CONFIG_NO, 1);
 	if (err) {
@@ -632,17 +635,17 @@ axen_attach(device_t parent, device_t self, void *aux)
 	/* decide on what our bufsize will be */
 	switch (dev->ud_speed) {
 	case USB_SPEED_SUPER:
-		rx_bufsz = AXEN_BUFSZ_SS * 1024;
+		un->un_rx_bufsz = AXEN_BUFSZ_SS * 1024;
 		break;
 	case USB_SPEED_HIGH:
-		rx_bufsz = AXEN_BUFSZ_HS * 1024;
+		un->un_rx_bufsz = AXEN_BUFSZ_HS * 1024;
 		break;
 	default:
-		rx_bufsz = AXEN_BUFSZ_LS * 1024;
+		un->un_rx_bufsz = AXEN_BUFSZ_LS * 1024;
 		break;
 	}
-	tx_bufsz = IP_MAXPACKET + ETHER_HDR_LEN + ETHER_CRC_LEN +
-		   ETHER_VLAN_ENCAP_LEN + sizeof(struct axen_sframe_hdr);
+	un->un_tx_bufsz = IP_MAXPACKET + ETHER_HDR_LEN + ETHER_CRC_LEN +
+	    ETHER_VLAN_ENCAP_LEN + sizeof(struct axen_sframe_hdr);
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(un->un_iface);
@@ -667,9 +670,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axen_cmd().  */
-	usbnet_attach(un, "axendet", AXEN_RX_LIST_CNT, AXEN_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
-		      rx_bufsz, tx_bufsz);
+	usbnet_attach(un, "axendet");
 
 	un->un_phyno = AXEN_PHY_ID;
 	DPRINTF(("%s: phyno %d\n", device_xname(self), un->un_phyno));
@@ -876,7 +877,7 @@ axen_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	}
 
 	length = m->m_pkthdr.len + sizeof(hdr);
-	KASSERT(length <= un->un_cdata.uncd_tx_bufsz);
+	KASSERT(length <= un->un_tx_bufsz);
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 

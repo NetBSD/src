@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.64 2019/08/09 06:44:42 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.65 2019/08/10 02:17:36 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.64 2019/08/09 06:44:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.65 2019/08/10 02:17:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -180,6 +180,12 @@ udav_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = un;
 	un->un_ops = &udav_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = UDAV_RX_LIST_CNT;
+	un->un_tx_list_cnt = UDAV_TX_LIST_CNT;
+	un->un_rx_bufsz = UDAV_BUFSZ;
+	un->un_tx_bufsz = UDAV_BUFSZ;
 
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1); /* idx 0 */
@@ -237,9 +243,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 // 	/* reset the adapter */
 // 	udav_reset(un);
 
-	usbnet_attach(un, "udavdet", UDAV_RX_LIST_CNT, UDAV_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
-		      UDAV_BUFSZ, UDAV_BUFSZ);
+	usbnet_attach(un, "udavdet");
 
 	/* Get Ethernet Address */
 	usbnet_lock_mii(un);
@@ -252,7 +256,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	bool have_mii = !ISSET(un->un_flags, UDAV_NO_PHY);
 	if (!have_mii)
-		un->un_link = 1;
+		usbnet_set_link(un, true);
 
 	/* initialize interface information */
 	usbnet_attach_ifp(un, have_mii,
@@ -867,12 +871,12 @@ udav_mii_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	un->un_link = false;
+	usbnet_set_link(un, false);
 	if (mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		DPRINTF(("%s: %s: got link\n",
 			 device_xname(un->un_dev), __func__));
-		un->un_link = true;
+		usbnet_set_link(un, true);
 	}
 }
 
