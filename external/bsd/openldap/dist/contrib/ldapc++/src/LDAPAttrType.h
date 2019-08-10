@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAttrType.h,v 1.1.1.5 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: LDAPAttrType.h,v 1.1.1.5.6.1 2019/08/10 06:17:07 martin Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2003-2017 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2003-2019 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

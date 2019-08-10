@@ -1,10 +1,10 @@
-/*	$NetBSD: vernum.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: vernum.c,v 1.1.1.4.6.1 2019/08/10 06:17:11 martin Exp $	*/
 
 /* vernum.c - RDN value overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vernum.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: vernum.c,v 1.1.1.4.6.1 2019/08/10 06:17:11 martin Exp $");
 
 #include "portable.h"
 

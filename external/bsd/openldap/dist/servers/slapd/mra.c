@@ -1,10 +1,10 @@
-/*	$NetBSD: mra.c,v 1.1.1.6 2018/02/06 01:53:14 christos Exp $	*/
+/*	$NetBSD: mra.c,v 1.1.1.6.6.1 2019/08/10 06:17:17 martin Exp $	*/
 
 /* mra.c - routines for dealing with extensible matching rule assertions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mra.c,v 1.1.1.6 2018/02/06 01:53:14 christos Exp $");
+__RCSID("$NetBSD: mra.c,v 1.1.1.6.6.1 2019/08/10 06:17:17 martin Exp $");
 
 #include "portable.h"
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_copy.c,v 1.1.1.3 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: mdb_copy.c,v 1.1.1.3.6.1 2019/08/10 06:17:15 martin Exp $	*/
 
 /* mdb_copy.c - memory-mapped database backup tool */
 /*
- * Copyright 2012-2017 Howard Chu, Symas Corp.
+ * Copyright 2012-2018 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: allop.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: allop.c,v 1.1.1.6.6.1 2019/08/10 06:17:08 martin Exp $	*/
 
 /* allop.c - returns all operational attributes when appropriate */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ allop-URI	<ldapURI>
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: allop.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: allop.c,v 1.1.1.6.6.1 2019/08/10 06:17:08 martin Exp $");
 
 #include "portable.h"
 

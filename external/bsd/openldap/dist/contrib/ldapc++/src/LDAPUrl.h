@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPUrl.h,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: LDAPUrl.h,v 1.1.1.6.6.1 2019/08/10 06:17:07 martin Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2017 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2019 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
