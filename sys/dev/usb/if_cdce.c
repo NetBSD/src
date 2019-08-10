@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.60 2019/08/09 02:52:59 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.61 2019/08/10 02:17:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.60 2019/08/09 02:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.61 2019/08/10 02:17:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,6 +133,12 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	un->un_udev = dev;
 	un->un_sc = un;
 	un->un_ops = &cdce_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = CDCE_RX_LIST_CNT;
+	un->un_tx_list_cnt = CDCE_TX_LIST_CNT;
+	un->un_rx_bufsz = CDCE_BUFSZ;
+	un->un_tx_bufsz = CDCE_BUFSZ;
 
 	t = cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (t)
@@ -242,9 +248,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 
-	usbnet_attach(un, "cdcedet", CDCE_RX_LIST_CNT, CDCE_TX_LIST_CNT,
-		      USBD_SHORT_XFER_OK, USBD_FORCE_SHORT_XFER,
-		      CDCE_BUFSZ, CDCE_BUFSZ);
+	usbnet_attach(un, "cdcedet");
 	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, 0);
 }
@@ -261,8 +265,7 @@ cdce_init(struct ifnet *ifp)
 	else {
 		usbnet_stop(un, ifp, 1);
 		rv = usbnet_init_rx_tx(un);
-		if (rv == 0)
-			un->un_link = true;
+		usbnet_set_link(un, rv == 0);
 	}
 	usbnet_unlock(un);
 
