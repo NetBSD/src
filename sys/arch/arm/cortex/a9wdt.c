@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.8 2019/07/30 06:57:02 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.9 2019/08/10 16:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.8 2019/07/30 06:57:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.9 2019/08/10 16:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -183,7 +183,7 @@ a9wdt_setmode(struct sysmon_wdog *smw)
 static void
 a9wdt_attach(device_t parent, device_t self, void *aux)
 {
-        struct a9wdt_softc * const sc = device_private(self);
+	struct a9wdt_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	const char *cpu_type;
