@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.120 2019/08/09 12:05:51 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.121 2019/08/10 01:20:47 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.120 2019/08/09 12:05:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.121 2019/08/10 01:20:47 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -876,18 +876,18 @@ rasops_init_devcmap(struct rasops_info *ri)
 		ri->ri_devcmap[15] = -1;
 		return;
 
-#ifdef RASOPS_APPLE_PALETTE
 	case 4:
 		for (i = 0; i < 16; i++) {
+#ifdef RASOPS_APPLE_PALETTE
 			c = apple4_devcmap[i];
+#else
+			c = i;
+#endif
 			ri->ri_devcmap[i] =
 			    (c <<  0) | (c <<  4) | (c <<  8) | (c << 12) |
 			    (c << 16) | (c << 20) | (c << 24) | (c << 28);
 		}
 		return;
-#else
-	/* XXXRO What should we do here? */
-#endif
 
 	case 8:
 		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
