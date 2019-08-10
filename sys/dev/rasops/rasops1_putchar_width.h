@@ -1,4 +1,4 @@
-/* $NetBSD: rasops1_putchar_width.h,v 1.5 2019/08/09 12:05:51 rin Exp $ */
+/* $NetBSD: rasops1_putchar_width.h,v 1.6 2019/08/10 01:24:17 rin Exp $ */
 
 /* NetBSD: rasops1.c,v 1.28 2019/07/25 03:02:44 rin Exp */
 /*-
@@ -34,12 +34,9 @@
 #error "Width not supported"
 #endif
 
-#define	PUTCHAR_WIDTH1(width)	rasops1_putchar ## width
-#define	PUTCHAR_WIDTH(width)	PUTCHAR_WIDTH1(width)
-
 #if RASOPS_WIDTH == 8
-#define	COPY_UNIT	uint8_t
-#define	GET_GLYPH	tmp = fr[0]
+#define	SUBST_UNIT	uint8_t
+#define	GET_GLYPH(fr)	(fr)[0]
 #endif
 
 #if RASOPS_WIDTH == 16
@@ -47,25 +44,29 @@
  * rp and hp are always half-word aligned, whereas
  * fr may not be aligned in half-word boundary.
  */
-#define	COPY_UNIT	uint16_t
+#define	SUBST_UNIT	uint16_t
 #  if BYTE_ORDER == BIG_ENDIAN
-#define	GET_GLYPH	tmp = (fr[0] << 8) | fr[1]
+#define	GET_GLYPH(fr)	((fr)[0] << 8) | (fr)[1]
 #  else
-#define	GET_GLYPH	tmp = fr[0] | (fr[1] << 8)
+#define	GET_GLYPH(fr)	(fr)[0] | ((fr)[1] << 8)
 #  endif
 #endif /* RASOPS_WIDTH == 16 */
+
+#define	NAME(width)	NAME1(width)
+#define	NAME1(width)	rasops1_putchar ## width
 
 /*
  * Width-optimized putchar function.
  */
 static void
-PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
+NAME(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int height, fs, rs, bg, fg;
+	int height;
+	uint32_t bg, fg;
 	uint8_t *fr;
-	COPY_UNIT *rp, *hp, tmp;
+	SUBST_UNIT tmp, *rp, *hp;
 
 	hp = NULL;	/* XXX GCC */
 
@@ -81,63 +82,67 @@ PUTCHAR_WIDTH(RASOPS_WIDTH)(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 #endif
 
-	rp = (COPY_UNIT *)(ri->ri_bits + row * ri->ri_yscale +
-	    col * sizeof(COPY_UNIT));
-	if (ri->ri_hwbits)
-		hp = (COPY_UNIT *)(ri->ri_hwbits + row * ri->ri_yscale +
-		    col * sizeof(COPY_UNIT));
 	height = font->fontheight;
-	rs = ri->ri_stride;
 
-	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
-	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+	rp = (SUBST_UNIT *)(ri->ri_bits + row * ri->ri_yscale +
+	    col * sizeof(SUBST_UNIT));
+	if (ri->ri_hwbits)
+		hp = (SUBST_UNIT *)(ri->ri_hwbits + row * ri->ri_yscale +
+		    col * sizeof(SUBST_UNIT));
+
+	bg = ATTR_BG(ri, attr);
+	fg = ATTR_FG(ri, attr);
 
 	/* If fg and bg match this becomes a space character */
-	if (uc == ' ' || fg == bg) {
+	if (uc == ' ' || __predict_false(fg == bg)) {
 		while (height--) {
 			*rp = bg;
-			DELTA(rp, rs, COPY_UNIT *);
 			if (ri->ri_hwbits) {
 				*hp = bg;
-				DELTA(hp, rs, COPY_UNIT *);
+				DELTA(hp, ri->ri_stride, SUBST_UNIT *);
 			}
+			DELTA(rp, ri->ri_stride, SUBST_UNIT *);
 		}
 	} else {
 		fr = FONT_GLYPH(uc, font, ri);
-		fs = font->stride;
 
 		while (height--) {
-			GET_GLYPH;
+			tmp = GET_GLYPH(fr);
+			fr += font->stride;
 			if (bg)
 				tmp = ~tmp;
+
 			*rp = tmp;
-			DELTA(rp, rs, COPY_UNIT *);
+
 			if (ri->ri_hwbits) {
 				*hp = tmp;
-				DELTA(hp, rs, COPY_UNIT *);
+				DELTA(hp, ri->ri_stride, SUBST_UNIT *);
 			}
-			fr += fs;
+
+			DELTA(rp, ri->ri_stride, SUBST_UNIT *);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-		DELTA(rp, - ri->ri_stride * ri->ri_ul.off, COPY_UNIT *);
+		DELTA(rp, - ri->ri_stride * ri->ri_ul.off, SUBST_UNIT *);
 		if (ri->ri_hwbits)
-			DELTA(hp, - ri->ri_stride * ri->ri_ul.off, COPY_UNIT *);
+			DELTA(hp, - ri->ri_stride * ri->ri_ul.off,
+			    SUBST_UNIT *);
+
 		for (height = ri->ri_ul.height; height; height--) {
-			DELTA(rp, - ri->ri_stride, COPY_UNIT *);
+			DELTA(rp, - ri->ri_stride, SUBST_UNIT *);
 			*rp = fg;
 			if (ri->ri_hwbits) {
-				DELTA(hp, - ri->ri_stride, COPY_UNIT *);
+				DELTA(hp, - ri->ri_stride, SUBST_UNIT *);
 				*hp = fg;
 			}
 		}
 	}
 }
 
-#undef	PUTCHAR_WIDTH1
-#undef	PUTCHAR_WIDTH
-
-#undef	COPY_UNIT
+#undef	SUBST_UNIT
 #undef	GET_GLYPH
+
+#undef	NAME
+#undef	NAME1
