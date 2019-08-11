@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.54 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.55 2019/08/11 20:26:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -712,7 +712,9 @@ npf_rwrcksum(const npf_cache_t *npc, u_int which,
 	const npf_addr_t *oaddr = npc->npc_ips[which];
 	const int proto = npc->npc_proto;
 	const int alen = npc->npc_alen;
-	uint16_t *ocksum;
+	uint16_t cksum, *ocksum;
+	struct tcphdr *th;
+	struct udphdr *uh;
 	in_port_t oport;
 
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
@@ -729,41 +731,43 @@ npf_rwrcksum(const npf_cache_t *npc, u_int which,
 		KASSERT(npf_iscached(npc, NPC_IP6));
 	}
 
-	/* Nothing else to do for ICMP. */
-	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
-		return true;
-	}
-	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
-
 	/*
 	 * Calculate TCP/UDP checksum:
 	 * - Skip if UDP and the current checksum is zero.
 	 * - Fixup the IP address change.
 	 * - Fixup the port change, if required (non-zero).
 	 */
-	if (proto == IPPROTO_TCP) {
-		struct tcphdr *th = npc->npc_l4.tcp;
-
+	switch (proto) {
+	case IPPROTO_TCP:
+		KASSERT(npf_iscached(npc, NPC_TCP));
+		th = npc->npc_l4.tcp;
 		ocksum = &th->th_sum;
 		oport = (which == NPF_SRC) ? th->th_sport : th->th_dport;
-	} else {
-		struct udphdr *uh = npc->npc_l4.udp;
-
-		KASSERT(proto == IPPROTO_UDP);
+		break;
+	case IPPROTO_UDP:
+		KASSERT(npf_iscached(npc, NPC_UDP));
+		uh = npc->npc_l4.udp;
 		ocksum = &uh->uh_sum;
 		if (*ocksum == 0) {
 			/* No need to update. */
 			return true;
 		}
 		oport = (which == NPF_SRC) ? uh->uh_sport : uh->uh_dport;
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+	default:
+		/* Nothing else to do for ICMP. */
+		return true;
 	}
 
-	uint16_t cksum = npf_addr_cksum(*ocksum, alen, oaddr, addr);
+	/*
+	 * Update and rewrite the TCP/UDP checksum.
+	 */
+	cksum = npf_addr_cksum(*ocksum, alen, oaddr, addr);
 	if (port) {
 		cksum = npf_fixup16_cksum(cksum, oport, port);
 	}
-
-	/* Rewrite TCP/UDP checksum. */
 	memcpy(ocksum, &cksum, sizeof(uint16_t));
 	return true;
 }
