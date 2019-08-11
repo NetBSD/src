@@ -75,8 +75,6 @@ Factor out the common code from the Ethernet drivers and reuse that.
 	if_url - patch available
 	if_urndis - done
 
-Get rid of hcpriv.
-
 Keyspan serial driver
 
 Clean up umass driver
