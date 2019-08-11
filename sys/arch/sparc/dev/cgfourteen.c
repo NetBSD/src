@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.87 2019/01/17 23:05:15 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.88 2019/08/11 06:04:16 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -58,13 +58,6 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
-
-/*
- * The following is for debugging only; it opens up a security hole
- * enabled by allowing any user to map the control registers for the
- * cg14 into their space.
- */
-#undef CG14_MAP_REGS
 
 #include "opt_wsemul.h"
 #include "sx.h"
