@@ -230,7 +230,7 @@ npf_nat_test(bool verbose)
 		}
 		m = mbuf_get_pkt(t->af, IPPROTO_UDP,
 		    t->src, t->dst, t->sport, t->dport);
-		error = npf_packet_handler(npf, &m, ifp, t->di);
+		error = npfk_packet_handler(npf, &m, ifp, t->di);
 		ret = checkresult(verbose, i, m, ifp, error);
 		if (m) {
 			m_freem(m);
