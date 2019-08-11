@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.27 2019/08/10 02:17:36 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.28 2019/08/11 13:16:10 hannken Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.27 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.28 2019/08/11 13:16:10 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1032,7 +1032,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 			DPRINTF(("%s: in=0x%x, out=0x%x\n",
 			    DEVNAME(un),
 			    un->un_ed[USBNET_ENDPT_RX],
-			    sc->sc_bulkout_no));
+			    un->un_ed[USBNET_ENDPT_TX]));
 			break;
 		}
 	}
