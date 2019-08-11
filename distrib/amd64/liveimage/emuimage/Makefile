@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2019/08/07 07:59:35 gson Exp $
+#	$NetBSD: Makefile,v 1.7 2019/08/11 11:00:30 gson Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live	# gives ${IMGBASE}.img
 
-EMUIMAGEMB?=	3725            	# 4GB USB flash memories aren't 4GiB
+EMUIMAGEMB?=	1907            	# 2GB USB flash memories aren't 2GiB
 LIVEIMAGEMB=	${EMUIMAGEMB}
 
 .include "${.CURDIR}/../Makefile.liveimage"
