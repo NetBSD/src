@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.12 2019/08/11 01:31:19 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.13 2019/08/11 23:55:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -29,11 +29,11 @@
  */
 
 /*
- * Common code shared between USB ethernet drivers.
+ * Common code shared between USB network drivers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.12 2019/08/11 01:31:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.13 2019/08/11 23:55:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -438,6 +438,7 @@ usbnet_start_locked(struct ifnet *ifp)
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+		KASSERT(m->m_pkthdr.len <= un->un_tx_bufsz);
 
 		struct usbnet_chain *c = &cd->uncd_tx_chain[idx];
 
@@ -1273,6 +1274,9 @@ usbnet_attach(struct usbnet *un,
 	KASSERT(un->un_tx_bufsz);
 	KASSERT(un->un_rx_list_cnt);
 	KASSERT(un->un_tx_list_cnt);
+
+	/* Unfortunate fact.  */
+	KASSERT(un == device_private(un->un_dev));
 
 	un->un_pri = kmem_zalloc(sizeof(*un->un_pri), KM_SLEEP);
 	struct usbnet_private * const unp = un->un_pri;
