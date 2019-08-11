@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.53 2019/08/11 07:58:16 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.54 2019/08/11 11:17:35 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.53 2019/08/11 07:58:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.54 2019/08/11 11:17:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -71,14 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.53 2019/08/11 07:58:16 skrll Exp $");
 #include <sys/module.h>
 
 #include <dev/usb/usbnet.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/if_smscreg.h>
 
 #include "ioconf.h"
-
-#ifdef USB_DEBUG
-int smsc_debug = 0;
-#endif
 
 struct smsc_softc {
 	struct usbnet		smsc_un;
@@ -121,14 +118,45 @@ static const struct usb_devno smsc_devs[] = {
 };
 
 #ifdef USB_DEBUG
-#define smsc_dbg_printf(un, fmt, args...) \
-	do { \
-		if (smsc_debug > 0) \
-			printf("debug: " fmt, ##args); \
-	} while(0)
+#ifndef USMSC_DEBUG
+#define usmscdebug 0
 #else
-#define smsc_dbg_printf(un, fmt, args...)
-#endif
+static int usmscdebug = 20;
+
+SYSCTL_SETUP(sysctl_hw_smsc_setup, "sysctl hw.usmsc setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "usmsc",
+	    SYSCTL_DESCR("usmsc global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &usmscdebug, sizeof(usmscdebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
+
+#endif /* SMSC_DEBUG */
+#endif /* USB_DEBUG */
+
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(usmscdebug,1,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usmscdebug,N,FMT,A,B,C,D)
+#define USMSCHIST_FUNC()	USBHIST_FUNC()
+#define USMSCHIST_CALLED(name)	USBHIST_CALLED(usmscdebug)
 
 #define smsc_warn_printf(un, fmt, args...) \
 	printf("%s: warning: " fmt, device_xname((un)->un_dev), ##args)
@@ -309,6 +337,7 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 void
 smsc_miibus_statchg(struct ifnet *ifp)
 {
+	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 
 	if (usbnet_isdying(un))
@@ -350,7 +379,7 @@ smsc_miibus_statchg(struct ifnet *ifp)
 
 	/* Enable/disable full duplex operation and TX/RX pause */
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
-		smsc_dbg_printf(un, "full duplex operation\n");
+		DPRINTF("full duplex operation", 0, 0, 0, 0);
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_RCVOWN;
 		sc->sc_mac_csr |= SMSC_MAC_CSR_FDPX;
 
@@ -364,7 +393,7 @@ smsc_miibus_statchg(struct ifnet *ifp)
 		else
 			afc_cfg &= ~0xf;
 	} else {
-		smsc_dbg_printf(un, "half duplex operation\n");
+		DPRINTF("half duplex operation", 0, 0, 0, 0);
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_FDPX;
 		sc->sc_mac_csr |= SMSC_MAC_CSR_RCVOWN;
 
@@ -392,7 +421,8 @@ smsc_hash(uint8_t addr[ETHER_ADDR_LEN])
 static void
 smsc_setiff_locked(struct usbnet *un)
 {
-    	struct smsc_softc * const sc = usbnet_softc(un);
+	USMSCHIST_FUNC(); USMSCHIST_CALLED();
+	struct smsc_softc * const sc = usbnet_softc(un);
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
@@ -407,7 +437,7 @@ smsc_setiff_locked(struct usbnet *un)
 
 	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
 allmulti:
-		smsc_dbg_printf(un, "receive all multicast enabled\n");
+		DPRINTF("receive all multicast enabled", 0, 0, 0, 0);
 		sc->sc_mac_csr |= SMSC_MAC_CSR_MCPAS;
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_HPFILT;
 		smsc_writereg(un, SMSC_MAC_CSR, sc->sc_mac_csr);
@@ -433,9 +463,9 @@ allmulti:
 
 	/* Debug */
 	if (sc->sc_mac_csr & SMSC_MAC_CSR_HPFILT) {
-		smsc_dbg_printf(un, "receive select group of macs\n");
+		DPRINTF("receive select group of macs", 0, 0, 0, 0);
 	} else {
-		smsc_dbg_printf(un, "receive own packets only\n");
+		DPRINTF("receive own packets only", 0, 0, 0, 0);
 	}
 
 	/* Write the hash table and mac control registers */
@@ -509,12 +539,14 @@ smsc_setoe(struct usbnet *un)
 int
 smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 {
+	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	int err;
 	uint32_t val;
 
-	smsc_dbg_printf(un, "setting mac address to "
-	    "%02x:%02x:%02x:%02x:%02x:%02x\n",
-	    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+	DPRINTF("setting mac address to %02x:%02x:%02x:...", addr[0], addr[1],
+	    addr[2], 0);
+
+	DPRINTF("... %02x:%02x:%02x", addr[3], addr[4], addr[5], 0);
 
 	val = (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0];
 	if ((err = smsc_writereg(un, SMSC_MAC_ADDRL, val)) != 0)
@@ -911,6 +943,7 @@ void
 smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
     struct usbnet_chain *c, uint32_t total_len)
 {
+	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct smsc_softc * const sc = usbnet_softc(un);
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
@@ -920,8 +953,8 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 	while (total_len != 0) {
 		uint32_t rxhdr;
 		if (total_len < sizeof(rxhdr)) {
-			smsc_dbg_printf(un, "total_len %d < sizeof(rxhdr) %zu\n",
-			    total_len, sizeof(rxhdr));
+			DPRINTF("total_len %d < sizeof(rxhdr) %zu",
+			    total_len, sizeof(rxhdr), 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
@@ -937,18 +970,18 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		if (rxhdr & (SMSC_RX_STAT_ERROR
 			   | SMSC_RX_STAT_LENGTH_ERROR
 			   | SMSC_RX_STAT_MII_ERROR)) {
-			smsc_dbg_printf(un, "rx error (hdr 0x%08x)\n", rxhdr);
+			DPRINTF("rx error (hdr 0x%08x)", rxhdr, 0, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
 
 		uint16_t pktlen = (uint16_t)SMSC_RX_STAT_FRM_LENGTH(rxhdr);
-		smsc_dbg_printf(un, "rxeof total_len %d pktlen %d rxhdr "
-		    "0x%08x\n", total_len, pktlen, rxhdr);
+		DPRINTF("rxeof total_len %d pktlen %d rxhdr "
+		    "0x%08x", total_len, pktlen, rxhdr, 0);
 
 		if (pktlen < ETHER_HDR_LEN) {
-			smsc_dbg_printf(un, "pktlen %d < ETHER_HDR_LEN %d\n",
-			    pktlen, ETHER_HDR_LEN);
+			DPRINTF("pktlen %d < ETHER_HDR_LEN %d",
+			    pktlen, ETHER_HDR_LEN, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
@@ -956,15 +989,15 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		pktlen += ETHER_ALIGN;
 
 		if (pktlen > MCLBYTES) {
-			smsc_dbg_printf(un, "pktlen %d > MCLBYTES %d\n",
-			    pktlen, MCLBYTES);
+			DPRINTF("pktlen %d > MCLBYTES %d",
+			    pktlen, MCLBYTES, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
 
 		if (pktlen > total_len) {
-			smsc_dbg_printf(un, "pktlen %d > total_len %d\n",
-			    pktlen, total_len);
+			DPRINTF("pktlen %d > total_len %d",
+			    pktlen, total_len, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
@@ -979,7 +1012,7 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 
 		/* Check if RX TCP/UDP checksumming is being offloaded */
 		if (sc->sc_coe_ctrl & SMSC_COE_CTRL_RX_EN) {
-			smsc_dbg_printf(un,"RX checksum offload checking\n");
+			DPRINTF("RX checksum offload checking", 0, 0, 0, 0);
 			struct ether_header *eh = (struct ether_header *)pktbuf;
 			const size_t cssz = sizeof(csum_data);
 
@@ -997,8 +1030,8 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 			 *
 			 * Ignore H/W csum for non-IPv4 packets.
 			 */
-			smsc_dbg_printf(un,"Ethertype %02x pktlen %02x\n",
-			    be16toh(eh->ether_type), pktlen);
+			DPRINTF("Ethertype %02x pktlen %02x",
+			    be16toh(eh->ether_type), pktlen, 0, 0);
 			if (be16toh(eh->ether_type) == ETHERTYPE_IP &&
 			    pktlen > ETHER_MIN_LEN) {
 
@@ -1018,9 +1051,8 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 				 * in host network order.
 				 */
 				csum_data = ntohs(csum_data);
-				smsc_dbg_printf(un,
-				    "RX checksum offloaded (0x%04x)\n",
-				    csum_data);
+				DPRINTF("RX checksum offloaded (0x%04x)",
+				    csum_data, 0, 0, 0);
 			}
 		}
 
