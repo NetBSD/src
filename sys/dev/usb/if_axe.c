@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.110 2019/08/11 01:04:33 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.111 2019/08/11 02:37:03 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.110 2019/08/11 01:04:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.111 2019/08/11 02:37:03 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1192,9 +1192,9 @@ axe_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 			length, m->m_pkthdr.len, sizeof(hdr), 0);
 	}
 
-	length = hdr_len + m->m_pkthdr.len + tlr_len;
-	if (length > un->un_tx_bufsz)
+	if (m->m_pkthdr.len > un->un_tx_bufsz - hdr_len - tlr_len)
 		return 0;
+	length = hdr_len + m->m_pkthdr.len + tlr_len;
 
 	if (hdr_len)
 		memcpy(c->unc_buf, &hdr, hdr_len);
