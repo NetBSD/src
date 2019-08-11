@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.44 2019/08/11 13:55:18 martin Exp $
+#	$NetBSD: Makefile.mdset,v 1.45 2019/08/11 17:50:26 martin Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -103,9 +103,9 @@ ${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
 .endif
 
 .if defined(MDSET_NOGZIP.${_FILENAME}) || defined(MDSET_NOGZIP)
-KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S} .WAIT
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}
 .else							# {
-KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz .WAIT
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
 
 ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 	${_MKTARGET_CREATE}
