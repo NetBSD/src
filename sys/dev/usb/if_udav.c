@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.65 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.66 2019/08/11 08:56:53 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.65 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.66 2019/08/11 08:56:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -672,7 +672,7 @@ udav_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	if (m->m_pkthdr.len > UDAV_BUFSZ - 2)
+	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - 2)
 		return 0;
 
 	/* Copy the mbuf data into a contiguous buffer */
