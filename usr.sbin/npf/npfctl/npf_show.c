@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.28 2019/07/23 00:52:02 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.28.2.1 2019/08/11 10:12:18 martin Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -220,21 +220,29 @@ print_tcpflags(npf_conf_info_t *ctx __unused, const uint32_t *words)
 }
 
 static char *
-print_portrange(npf_conf_info_t *ctx, const uint32_t *words)
+print_pbarrier(npf_conf_info_t *ctx, const uint32_t *words __unused)
+{
+	if (ctx->curmark == BM_SRC_PORTS && (ctx->flags & SEEN_SRC) == 0) {
+		ctx->flags |= SEEN_SRC;
+		return estrdup("from any");
+	}
+	if (ctx->curmark == BM_DST_PORTS && (ctx->flags & SEEN_DST) == 0) {
+		ctx->flags |= SEEN_DST;
+		return estrdup("to any");
+	}
+	return NULL;
+}
+
+static char *
+print_portrange(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	u_int fport = words[0], tport = words[1];
-	const char *any_str = "";
 	char *p;
 
-	if (ctx->curmark == BM_SRC_PORTS && (ctx->flags & SEEN_SRC) == 0)
-		any_str = "from any ";
-	if (ctx->curmark == BM_DST_PORTS && (ctx->flags & SEEN_DST) == 0)
-		any_str = "to any ";
-
 	if (fport != tport) {
-		easprintf(&p, "%sport %u:%u", any_str, fport, tport);
+		easprintf(&p, "%u-%u", fport, tport);
 	} else {
-		easprintf(&p, "%sport %u", any_str, fport);
+		easprintf(&p, "%u", fport);
 	}
 	return p;
 }
@@ -283,12 +291,14 @@ static const struct mark_keyword_mapent {
 	{ BM_ICMP_CODE,	"code %s",	NULL, 0,	print_number,	1 },
 
 	{ BM_SRC_CIDR,	"from %s",	", ", SEEN_SRC,	print_address,	6 },
-	{ BM_SRC_TABLE,	"from %s",	NULL, SEEN_SRC,	print_table,	1 },
-	{ BM_SRC_PORTS,	"%s",		", ", 0,	print_portrange,2 },
+	{ BM_SRC_TABLE,	"from %s",	", ", SEEN_SRC,	print_table,	1 },
+	{ BM_SRC_PORTS,	"%s",		NULL, 0,	print_pbarrier,	2 },
+	{ BM_SRC_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
 
 	{ BM_DST_CIDR,	"to %s",	", ", SEEN_DST,	print_address,	6 },
-	{ BM_DST_TABLE,	"to %s",	NULL, SEEN_DST,	print_table,	1 },
-	{ BM_DST_PORTS,	"%s",		", ", 0,	print_portrange,2 },
+	{ BM_DST_TABLE,	"to %s",	", ", SEEN_DST,	print_table,	1 },
+	{ BM_DST_PORTS,	"%s",		NULL, 0,	print_pbarrier,	2 },
+	{ BM_DST_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
 };
 
 static const char * __attribute__((format_arg(2)))
@@ -314,13 +324,17 @@ scan_marks(npf_conf_info_t *ctx, const struct mark_keyword_mapent *mk,
 			errx(EXIT_FAILURE, "byte-code marking inconsistency");
 		}
 		if (m == mk->mark) {
+			char *val;
+
 			/* Set the current mark and the flags. */
 			ctx->flags |= mk->set_flags;
 			ctx->curmark = m;
 
 			/* Value is processed by the print function. */
 			assert(mk->fwords == nwords);
-			vals[nvals++] = mk->printfn(ctx, marks);
+			if ((val = mk->printfn(ctx, marks)) != NULL) {
+				vals[nvals++] = val;
+			}
 		}
 		marks += nwords;
 		mlen -= nwords;
