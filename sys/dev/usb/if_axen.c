@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.59 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.60 2019/08/11 01:04:33 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.59 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.60 2019/08/11 01:04:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -863,6 +863,10 @@ axen_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	usbnet_isowned_tx(un);
 
+	length = m->m_pkthdr.len + sizeof(hdr);
+	if (length > un->un_tx_bufsz)
+		return 0;
+
 	/* XXX Is this needed?  wMaxPacketSize? */
 	switch (un->un_udev->ud_speed) {
 	case USB_SPEED_SUPER:
@@ -875,9 +879,6 @@ axen_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 		boundary = 64;
 		break;
 	}
-
-	length = m->m_pkthdr.len + sizeof(hdr);
-	KASSERT(length <= un->un_tx_bufsz);
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 

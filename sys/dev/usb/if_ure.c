@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.21 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.22 2019/08/11 01:04:33 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.21 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.22 2019/08/11 01:04:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1066,6 +1066,9 @@ ure_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	usbnet_isowned_tx(un);
 
+	if (m->m_pkthdr.len + sizeof(txhdr) > un->un_tx_bufsz)
+		return 0;
+
 	/* header */
 	txhdr.ure_pktlen = htole32(m->m_pkthdr.len | URE_TXPKT_TX_FS |
 	    URE_TXPKT_TX_LS);
@@ -1077,9 +1080,6 @@ ure_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	/* packet */
 	m_copydata(m, 0, m->m_pkthdr.len, buf);
 	frm_len += m->m_pkthdr.len;
-
-	if (__predict_false(c->unc_xfer == NULL))
-		return EIO;	/* XXX plugged out or down */
 
 	DPRINTFN(2, ("tx %d bytes\n", frm_len));
 
