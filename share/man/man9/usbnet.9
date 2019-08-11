@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.1 2019/08/10 20:35:35 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.2 2019/08/11 08:26:46 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm usbnet
-.Nd common USB ethernet driver framework
+.Nd common USB Ethernet driver framework
 .Sh SYNOPSIS
 .In dev/usb/usbnet.h
 .Ss Functions offered by usbnet.h
@@ -114,10 +114,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-framework provides methods usable for USB ethernet drivers.
+framework provides methods usable for USB Ethernet drivers.
 The framework has support for these features:
-.Pp
-.Bl -tag -width "123456"
+.Bl -bullet -offset 8n
 .It
 Partial autoconf handling
 .It
@@ -129,7 +128,7 @@ Generic handlers or support for several struct ifnet callbacks
 .It
 MII bus locking
 .It
-Interrupt handling  
+Interrupt handling
 .El
 .Pp
 .Nm
@@ -139,7 +138,7 @@ members inside
 .Va struct usbnet ,
 which can be used directly as the device softc structure if
 no additional storage is required.
-An structure exists for receive and transmit chain management,
+A structure exists for receive and transmit chain management,
 .Va struct usbnet_chain ,
 that tracks the metadata for each transfer descriptor available,
 minimum of one each for Rx and Tx slot, and will be passed
@@ -157,9 +156,9 @@ is set to the device
 .Fa dv_private ,
 if it can not be used directly as the device softc, as well as set
 up the necessary structure members, find end-points, find the
-ethernet address if relevant, call
+Ethernet address if relevant, call
 .Fn usbnet_attach ,
-setup interface, ethernet, and MII capabilities, and finally call
+set up interface, Ethernet, and MII capabilities, and finally call
 .Fn usbnet_attach_ifp .
 The device detach routine should free any resources allocated
 by attach and then call
@@ -177,9 +176,9 @@ To manage all Rx and Tx chains the
 .Dq uno_init
 callback of
 .Va struct usbnet_ops
-should perform any device specific initialisation and then call
+should perform any device specific initialization and then call
 .Fn usbnet_init_rx_tx
-which will allocate chains, setup and open pipes, and start the
+which will allocate chains, set up and open pipes, and start the
 Rx transfers so that packets can arrived.
 These allocations and pipes can be closed and destroyed by calling
 .Fn usbnet_stop .
@@ -191,7 +190,7 @@ must be called with the
 .Nm
 lock held, see
 .Fn usbnet_lock
-and 
+and
 .Fn usbnet_unlock .
 See the
 .Sx RECEIVE AND SEND
@@ -199,11 +198,11 @@ section for details on using the chains.
 .Pp
 The interface init, ioctl, start, and stop, routines are handled by the
 framework with callbacks for device-specific handling.
-For interface init (ie, when bringing the interface up), the
+For interface init (i.e., when bringing the interface up), the
 .Dq uno_init
-callback should perform any device specific initialisation and then call
+callback should perform any device specific initialization and then call
 .Fn usbnet_init_rx_tx
-to finalise Rx and Tx queue initialisation.
+to finalize Rx and Tx queue initialization.
 For interface ioctl, most of the handling is in the framework and the
 optional
 .Dq uno_ioctl
@@ -228,11 +227,11 @@ For devices requiring MII handling there are callbacks for reading and
 writing registers, and for status change events.
 The framework provides an MII-specific lock per interface which will be
 held when calling these functions, and these locks should be used by
-internal code that also requires serialised access to registers with the 
+internal code that also requires serialized access to registers with the
 .Fn usbnet_lock_mii ,
 .Fn usbnet_unlock_mii ,
 .Fn usbnet_lock_mii_un_locked ,
-and 
+and
 .Fn usbnet_unlock_mii_un_locked
 functions.
 These functions handle device detach events safely, and as such take
@@ -252,7 +251,7 @@ the network frame up the stack via either
 .Fn usbnet_enqueue
 or
 .Fn usbnet_input .
-Typically ethernet devices prefer
+Typically Ethernet devices prefer
 .Fn usbnet_enqueue .
 .Pp
 General accessor functions for
@@ -295,11 +294,10 @@ Returns true if device is dying (has been pulled or deactivated,
 pending detach.)
 .El
 .Pp
-
 Lock handling functions for
 .Fa struct usbnet :
 .Pp
-.Bl -compact -tag -width 4n
+.Bl -tag -width 4n -compact
 .It Fn usbnet_lock un
 .It Fn usbnet_unlock un
 .It Fn usbnet_isowned un
@@ -342,7 +340,6 @@ versions.
 .Pp
 MII access functions for
 .Fa struct usbnet :
-.Pp
 .Bl -tag -width 4n
 .It Fn usbnet_mii_readreg dev phy reg valp
 Read register
@@ -365,7 +362,6 @@ Trigger a status change update for interface
 .Pp
 Buffer enqueue handling for
 .Fa struct usbnet :
-.Pp
 .Bl -tag -width 4n
 .It Fn usbnet_enqueue un buf buflen csum_flags csum_data mbuf_flags
 Enqueue buffer
@@ -392,7 +388,6 @@ Autoconfiguration handling for
 See the
 .Sx AUTOCONFIGURATION
 section for more details about these functions.
-.Pp
 .Bl -tag -width 4n
 .It Fn usbnet_attach un detachname
 Initial stage attach of a usb network device.
@@ -419,11 +414,11 @@ Device activate (deactivate) method.
 Usable as actual device method.
 .It Fn usbnet_stop un ifp disable
 Interface stop routine.
-.Pp
+.El
 .Sh AUTOCONFIGURATION
 The framework expects the usbnet structure to have these members
 filled in with valid values or functions:
-.Bl -tag 
+.Bl -tag -width 6n
 .It un_sc
 Real softc allocated by autoconf and provided to attach, should be
 set to the usbnet structure if no device-specific softc is needed.
@@ -449,7 +444,7 @@ Simple ioctl callback (optional.)
 .It uno_override_ioctl
 Full ioctl callback (optional.)
 .It uno_init
-Initialise (bring up) interface.
+Initialize (bring up) interface.
 Required.
 Must call
 .Fn usbnet_rx_tx_init .
@@ -463,9 +458,11 @@ Required with MII.
 Handle MII status change.
 Required with MII.
 .It uno_tx_prepare
-Prepare an mbuf for transmit. Required.
+Prepare an mbuf for transmit.
+Required.
 .It uno_rx_loop
-Prepare one or more chain for enqueue. Required.
+Prepare one or more chain for enqueue.
+Required.
 .It uno_intr
 Process periodic interrupt (optional.)
 .El
@@ -475,7 +472,9 @@ Points to a
 structure which should have these members set:
 .Bl -tag -width 4n
 .It uni_intr_buf
-If non-NULL, points to a buffer passed to
+If
+.Pf non- Dv NULL ,
+points to a buffer passed to
 Fn usbd_open_pipe_intr
 in the device init callback, along with the size and interval.
 .It uni_intr_bufsz
@@ -485,7 +484,7 @@ Frequency of the interrupt in milliseconds.
 .El
 .It un_ed
 Array of endpoint descriptors.
-There indexes are provded:
+There indexes are provided:
 .Dq USBNET_ENDPT_RX ,
 .Dq USBNET_ENDPT_TX ,
 and
@@ -494,18 +493,22 @@ The Rx and Tx endpoints are required.
 .It un_phyno
 MII phy number.
 .It un_eaddr
-6 bytes of ethernet address that must be provided before calling
+6 bytes of Ethernet address that must be provided before calling
 .Fn usbnet_attach_ifp
-if the device has ethernet.
+if the device has Ethernet.
 .It un_flags
 Device owned flags word.
 The
 .Nm
 framework will not touch this value.
 .It un_rx_xfer_flags
-Passed to usbd_setup_xfer() for receiving packets.
+Passed to
+.Fn usbd_setup_xfer
+for receiving packets.
 .It un_tx_xfer_flags
-Passed to usbd_setup_xfer() for sending packets.
+Passed to
+.Fn usbd_setup_xfer
+for sending packets.
 .It un_rx_list_cnt
 Number of chain elements to allocate for Rx.
 .It un_tx_list_cnt
@@ -534,11 +537,11 @@ Receive and send routines are structured around a the
 .Va usbnet_cdata
 and
 .Va usbnet_chain
-structures, then
+structures, the
 .Dv un_ed ,
 .Dv un_rx_xfer_flags ,
 and
-.Dv un_tx_xfer_flags ,
+.Dv un_tx_xfer_flags
 members, and the
 .Fn uno_stop ,
 .Fn uno_init ,
@@ -548,13 +551,13 @@ and
 callbacks of
 .Va usbnet_ops .
 .Pp
-Typically, the device attach routine will fill in members of the 
+Typically, the device attach routine will fill in members of the
 .Va usbnet
 structure, as listed in
 .Sx AUTOCONFIGURATION .
 The
 .Fn un_ed
-should have the
+member should have the
 .Dv USBNET_ENDPT_RX
 and
 .Dv USBNET_ENDPT_TX
@@ -571,13 +574,13 @@ The
 .Fn uno_init
 callback both performs device-specific enablement and then calls
 .Fn usbnet_rx_tx_init ,
-which sets up the receieve, transmit, and, optionally, the interrupt
+which sets up the receive, transmit, and, optionally, the interrupt
 pipes, as well as starting the receive pipes.
 All USB transfer setup is handled internally to the framework, and
 the driver callbacks merely copy data in or out of a chain entry using
 what is typically a device-specific method.
 .Pp
-.The
+The
 .Fn uno_rx_loop
 callback converts the provided
 .Va usbnet_chain
@@ -587,7 +590,7 @@ enqueued with the higher layers using either
 (for most devices) or
 .Fn usbnet_input
 for devices that currently use
-.Fn if_input.
+.Fn if_input .
 .Pp
 The
 .Fn uno_tx_prepare
@@ -609,7 +612,6 @@ It also contains pointers back to the owning
 and the
 .Va struct usbd_xfer
 associated with this transfer.
-.Pp
 .Sh MII
 For devices that have MII support these callbacks in
 .Fa struct usbnet_ops
@@ -618,18 +620,16 @@ must be provided:
 .It uno_read_reg
 Read an MII register for a particular PHY.
 Returns
-.Fr usbd_status .
+.Xr usbd_status 9 .
 .It uno_write_reg
 Write an MII register for a particular PHY.
 Returns
-.Fr usbd_status .
+.Xr usbd_status 9 .
 .It uno_statchg
 Handle a status change event for this interface.
 .El
-.Pp
-.Pp
 .Sh INTERRUPT PIPE
-The interrupt speicifc callback,
+The interrupt specific callback,
 .Dq uno_intr ,
 is an optional callback that can be called periodically, registered by
 .Nm
@@ -648,16 +648,15 @@ must point to a
 .Va struct usbnet_intr
 structure that has the data buffer, size and interval to be passed to
 .Fn usbd_open_pipe_intr .
-.Pp
 .Sh SEE ALSO
 .Xr usb 4 ,
-.Xr driver 9
+.Xr driver 9 ,
+.Xr usbd_status 9 ,
 .Xr usbdi 9
-.Xr usbd_status 9
-.Sh AUTHORS
-.An Matthew R. Green Mt mrg@eterna.com.au
 .Sh HISTORY
 This
 .Nm
 interface first appeared in
 .Nx 9.0 .
+.Sh AUTHORS
+.An Matthew R. Green Aq Mt mrg@eterna.com.au
