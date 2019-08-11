@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.54 2019/08/11 11:17:35 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.55 2019/08/11 12:16:59 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.54 2019/08/11 11:17:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.55 2019/08/11 12:16:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -121,7 +121,7 @@ static const struct usb_devno smsc_devs[] = {
 #ifndef USMSC_DEBUG
 #define usmscdebug 0
 #else
-static int usmscdebug = 20;
+static int usmscdebug = 1;
 
 SYSCTL_SETUP(sysctl_hw_smsc_setup, "sysctl hw.usmsc setup")
 {
@@ -153,10 +153,10 @@ fail:
 #endif /* SMSC_DEBUG */
 #endif /* USB_DEBUG */
 
-#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(usmscdebug,1,FMT,A,B,C,D)
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOG(usmscdebug,FMT,A,B,C,D)
 #define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usmscdebug,N,FMT,A,B,C,D)
 #define USMSCHIST_FUNC()	USBHIST_FUNC()
-#define USMSCHIST_CALLED(name)	USBHIST_CALLED(usmscdebug)
+#define USMSCHIST_CALLED()	USBHIST_CALLED(usmscdebug)
 
 #define smsc_warn_printf(un, fmt, args...) \
 	printf("%s: warning: " fmt, device_xname((un)->un_dev), ##args)
@@ -543,10 +543,10 @@ smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 	int err;
 	uint32_t val;
 
-	DPRINTF("setting mac address to %02x:%02x:%02x:...", addr[0], addr[1],
+	DPRINTF("setting mac address to %02jx:%02jx:%02jx:...", addr[0], addr[1],
 	    addr[2], 0);
 
-	DPRINTF("... %02x:%02x:%02x", addr[3], addr[4], addr[5], 0);
+	DPRINTF("... %02jx:%0j2x:%02jx", addr[3], addr[4], addr[5], 0);
 
 	val = (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0];
 	if ((err = smsc_writereg(un, SMSC_MAC_ADDRL, val)) != 0)
@@ -950,10 +950,11 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 
 	usbnet_isowned_rx(un);
 
+	DPRINTF("total_len %jd/0x%jx", total_len, total_len, 0, 0);
 	while (total_len != 0) {
 		uint32_t rxhdr;
 		if (total_len < sizeof(rxhdr)) {
-			DPRINTF("total_len %d < sizeof(rxhdr) %zu",
+			DPRINTF("total_len %jd < sizeof(rxhdr) %jd",
 			    total_len, sizeof(rxhdr), 0, 0);
 			ifp->if_ierrors++;
 			return;
@@ -970,18 +971,18 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		if (rxhdr & (SMSC_RX_STAT_ERROR
 			   | SMSC_RX_STAT_LENGTH_ERROR
 			   | SMSC_RX_STAT_MII_ERROR)) {
-			DPRINTF("rx error (hdr 0x%08x)", rxhdr, 0, 0, 0);
+			DPRINTF("rx error (hdr 0x%08jx)", rxhdr, 0, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
 
 		uint16_t pktlen = (uint16_t)SMSC_RX_STAT_FRM_LENGTH(rxhdr);
-		DPRINTF("rxeof total_len %d pktlen %d rxhdr "
-		    "0x%08x", total_len, pktlen, rxhdr, 0);
+		DPRINTF("total_len %jd pktlen %jd rxhdr 0x%08jx", total_len,
+		    pktlen, rxhdr, 0);
 
 		if (pktlen < ETHER_HDR_LEN) {
-			DPRINTF("pktlen %d < ETHER_HDR_LEN %d",
-			    pktlen, ETHER_HDR_LEN, 0, 0);
+			DPRINTF("pktlen %jd < ETHER_HDR_LEN %jd", pktlen,
+			    ETHER_HDR_LEN, 0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
@@ -989,15 +990,15 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		pktlen += ETHER_ALIGN;
 
 		if (pktlen > MCLBYTES) {
-			DPRINTF("pktlen %d > MCLBYTES %d",
-			    pktlen, MCLBYTES, 0, 0);
+			DPRINTF("pktlen %jd > MCLBYTES %jd", pktlen, MCLBYTES, 0,
+			    0);
 			ifp->if_ierrors++;
 			return;
 		}
 
 		if (pktlen > total_len) {
-			DPRINTF("pktlen %d > total_len %d",
-			    pktlen, total_len, 0, 0);
+			DPRINTF("pktlen %jd > total_len %jd", pktlen, total_len,
+			    0, 0);
 			ifp->if_ierrors++;
 			return;
 		}
@@ -1030,7 +1031,7 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 			 *
 			 * Ignore H/W csum for non-IPv4 packets.
 			 */
-			DPRINTF("Ethertype %02x pktlen %02x",
+			DPRINTF("Ethertype %02jx pktlen %02jx",
 			    be16toh(eh->ether_type), pktlen, 0, 0);
 			if (be16toh(eh->ether_type) == ETHERTYPE_IP &&
 			    pktlen > ETHER_MIN_LEN) {
@@ -1051,7 +1052,7 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 				 * in host network order.
 				 */
 				csum_data = ntohs(csum_data);
-				DPRINTF("RX checksum offloaded (0x%04x)",
+				DPRINTF("RX checksum offloaded (0x%04jx)",
 				    csum_data, 0, 0, 0);
 			}
 		}
