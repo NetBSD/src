@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.61 2019/08/10 02:17:36 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.62 2019/08/11 01:04:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.61 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.62 2019/08/11 01:04:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -295,19 +295,25 @@ cdce_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
 static unsigned
 cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
-	int			 extra = 0;
+	/* Zaurus wants a 32-bit CRC appended to every frame */
+	uint32_t		 crc;
+	unsigned		 extra = 0;
+	unsigned		 length;
 
 	usbnet_isowned_tx(un);
 
+	if (un->un_flags & CDCE_ZAURUS)
+		extra = sizeof(crc);
+
+	length = m->m_pkthdr.len + extra;
+	if (length > un->un_tx_bufsz)
+		return 0;
+
 	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
 	if (un->un_flags & CDCE_ZAURUS) {
-		/* Zaurus wants a 32-bit CRC appended to every frame */
-		uint32_t crc;
-
 		crc = htole32(~ether_crc32_le(c->unc_buf, m->m_pkthdr.len));
 		memcpy(c->unc_buf + m->m_pkthdr.len, &crc, sizeof(crc));
-		extra = sizeof(crc);
 	}
 
-	return m->m_pkthdr.len + extra;
+	return length;
 }
