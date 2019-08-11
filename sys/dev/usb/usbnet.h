@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.9 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.10 2019/08/11 01:29:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -100,10 +100,11 @@
 #include <dev/usb/usbdevs.h>
 
 /*
- * Per-transfer data, initialised in usbnet_[rt]x_list_init().
+ * Per-transfer data.
  *
- * Front-end must set uncd_tx_list_cnt and uncd_rx_list_cnt before calling
- * list init, which will allocate the chain arrays, and must be NULL to
+ * Front-end must set un_rx_list_cnt and un_tx_list_cnt before
+ * calling usbnet_attach(), and then call usbnet_rx_tx_init()
+ * which will allocate the chain arrays, and must be NULL to
  * indicate the first call.
  */
 struct usbnet;
@@ -276,7 +277,7 @@ usbnet_isowned_tx(struct usbnet *un)
 /*
  * Endpoint / rx/tx chain management:
  *
- * usbnet_attach() allocates rx and tx chains
+ * usbnet_attach() initialises usbnet and allocates rx and tx chains
  * usbnet_init_rx_tx() open pipes, initialises the rx/tx chains for use
  * usbnet_stop() stops pipes, cleans (not frees) rx/tx chains, locked
  *               version assumes un_lock is held
