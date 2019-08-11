@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.62 2019/08/11 01:04:33 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.63 2019/08/11 02:37:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.62 2019/08/11 01:04:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.63 2019/08/11 02:37:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -305,9 +305,9 @@ cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	if (un->un_flags & CDCE_ZAURUS)
 		extra = sizeof(crc);
 
-	length = m->m_pkthdr.len + extra;
-	if (length > un->un_tx_bufsz)
+	if (m->m_pkthdr.len > un->un_tx_bufsz - extra)
 		return 0;
+	length = m->m_pkthdr.len + extra;
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
 	if (un->un_flags & CDCE_ZAURUS) {
