@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.28 2019/08/11 13:16:10 hannken Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.29 2019/08/11 23:55:43 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.28 2019/08/11 13:16:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.29 2019/08/11 23:55:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -720,6 +720,11 @@ urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	struct rndis_packet_msg		*msg;
 
+	usbnet_isowned_tx(un);
+
+	if (m->m_pkthdr.len > un->un_tx_bufsz - sizeof(*msg))
+		return 0;
+
 	msg = (struct rndis_packet_msg *)c->unc_buf;
 
 	memset(msg, 0, sizeof(*msg));
@@ -929,8 +934,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	uint32_t			 filter;
 	char				*devinfop;
 
-	/* Switch to usbnet for device_private() */
-	self->dv_private = un;
+	KASSERT((void *)sc == un);
 
 	aprint_naive("\n");
 	aprint_normal("\n");

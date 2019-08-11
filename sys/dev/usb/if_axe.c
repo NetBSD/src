@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.112 2019/08/11 05:14:41 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.113 2019/08/11 23:55:43 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.112 2019/08/11 05:14:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.113 2019/08/11 23:55:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -873,8 +873,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	unsigned bufsz;
 	int i;
 
-	/* Switch to usbnet for device_private() */
-	self->dv_private = un;
+	KASSERT((void *)sc == un);
 
 	aprint_naive("\n");
 	aprint_normal("\n");

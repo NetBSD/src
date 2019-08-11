@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.55 2019/08/11 12:16:59 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.56 2019/08/11 23:55:43 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.55 2019/08/11 12:16:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.56 2019/08/11 23:55:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -823,8 +823,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	int err, i;
 	uint32_t mac_h, mac_l;
 
-	/* Switch to usbnet for device_private() */
-	self->dv_private = un;
+	KASSERT((void *)sc == un);
 
 	aprint_naive("\n");
 	aprint_normal("\n");

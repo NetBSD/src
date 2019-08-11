@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.24 2019/08/11 08:57:36 skrll Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.25 2019/08/11 23:55:43 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.24 2019/08/11 08:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.25 2019/08/11 23:55:43 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -841,9 +841,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 	uint16_t ver;
 	uint8_t eaddr[8]; /* 2byte padded */
 	char *devinfop;
-
-	/* Switch to usbnet for device_private() */
-	self->dv_private = un;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
