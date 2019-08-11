@@ -42,7 +42,7 @@ worker(void *arg)
 	while (!done) {
 		int error;
 
-		error = npf_packet_handler(npf, &m, ifp, PFIL_OUT);
+		error = npfk_packet_handler(npf, &m, ifp, PFIL_OUT);
 		KASSERT(error == 0); (void)error;
 		n++;
 	}

@@ -113,7 +113,7 @@ run_gc_tests(void)
 	int val;
 
 	/* Check the default value. */
-	npf_param_get(npf_getkernctx(), "gc.step", &val);
+	npfk_param_get(npf_getkernctx(), "gc.step", &val);
 	CHECK_TRUE(val == 256);
 
 	/* Empty => GC => 0 in conndb. */
@@ -145,7 +145,7 @@ run_gc_tests(void)
 	CHECK_TRUE(ok);
 
 	/* 512 expired => GC => 127 in conndb. */
-	npf_param_set(npf_getkernctx(), "gc.step", 128);
+	npfk_param_set(npf_getkernctx(), "gc.step", 128);
 	ok = run_conn_gc(0, 512, 384);
 	CHECK_TRUE(ok);
 

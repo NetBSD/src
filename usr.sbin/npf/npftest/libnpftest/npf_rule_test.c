@@ -92,7 +92,7 @@ run_handler_testcase(unsigned i)
 	int error;
 
 	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
-	error = npf_packet_handler(npf, &m, ifp, t->di);
+	error = npfk_packet_handler(npf, &m, ifp, t->di);
 	if (m) {
 		m_freem(m);
 	}
