@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.11 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.12 2019/08/11 01:31:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.11 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.12 2019/08/11 01:31:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -242,7 +242,7 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mbuf *m;
 
-	KASSERT(mutex_owned(&un->un_pri->unp_rxlock));
+	usbnet_isowned_rx(un);
 
 	m = usbnet_newbuf();
 	if (m == NULL) {
@@ -268,7 +268,7 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mbuf *m;
 
-	KASSERT(mutex_owned(&un->un_pri->unp_rxlock));
+	usbnet_isowned_rx(un);
 
 	m = usbnet_newbuf();
 	if (m == NULL) {
@@ -324,7 +324,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	uno_rx_loop(un, xfer, c, total_len);
-	KASSERT(mutex_owned(&unp->unp_rxlock));
+	usbnet_isowned_rx(un);
 
 done:
 	if (unp->unp_dying || unp->unp_stopping)
@@ -427,7 +427,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	unsigned length;
 	int idx;
 
-	KASSERT(mutex_owned(&unp->unp_txlock));
+	usbnet_isowned_tx(un);
 	KASSERT(cd->uncd_tx_cnt <= un->un_tx_list_cnt);
 
 	if (!unp->unp_link || (ifp->if_flags & IFF_RUNNING) == 0)
@@ -503,13 +503,13 @@ usbnet_start(struct ifnet *ifp)
 /* Start of common RX functions */
 
 static size_t
-usbnet_rx_list_size(struct usbnet_cdata *cd, struct usbnet *un)
+usbnet_rx_list_size(struct usbnet_cdata * const cd, struct usbnet * const un)
 {
 	return sizeof(*cd->uncd_rx_chain) * un->un_rx_list_cnt;
 }
 
 static void
-usbnet_rx_list_alloc(struct usbnet *un)
+usbnet_rx_list_alloc(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -517,7 +517,7 @@ usbnet_rx_list_alloc(struct usbnet *un)
 }
 
 static void
-usbnet_rx_list_free(struct usbnet *un)
+usbnet_rx_list_free(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -528,7 +528,7 @@ usbnet_rx_list_free(struct usbnet *un)
 }
 
 static int
-usbnet_rx_list_init(struct usbnet *un)
+usbnet_rx_list_init(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
@@ -551,7 +551,7 @@ usbnet_rx_list_init(struct usbnet *un)
 }
 
 static void
-usbnet_rx_list_fini(struct usbnet *un)
+usbnet_rx_list_fini(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -569,7 +569,7 @@ usbnet_rx_list_fini(struct usbnet *un)
 /* End of common RX functions */
 
 static void
-usbnet_rx_start_pipes(struct usbnet *un, usbd_callback cb)
+usbnet_rx_start_pipes(struct usbnet * const un, usbd_callback cb)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
@@ -593,13 +593,13 @@ usbnet_rx_start_pipes(struct usbnet *un, usbd_callback cb)
 /* Start of common TX functions */
 
 static size_t
-usbnet_tx_list_size(struct usbnet_cdata *cd, struct usbnet *un)
+usbnet_tx_list_size(struct usbnet_cdata * const cd, struct usbnet * const un)
 {
 	return sizeof(*cd->uncd_tx_chain) * un->un_tx_list_cnt;
 }
 
 static void
-usbnet_tx_list_alloc(struct usbnet *un)
+usbnet_tx_list_alloc(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -607,7 +607,7 @@ usbnet_tx_list_alloc(struct usbnet *un)
 }
 
 static void
-usbnet_tx_list_free(struct usbnet *un)
+usbnet_tx_list_free(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -618,7 +618,7 @@ usbnet_tx_list_free(struct usbnet *un)
 }
 
 static int
-usbnet_tx_list_init(struct usbnet *un)
+usbnet_tx_list_init(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
@@ -641,7 +641,7 @@ usbnet_tx_list_init(struct usbnet *un)
 }
 
 static void
-usbnet_tx_list_fini(struct usbnet *un)
+usbnet_tx_list_fini(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 
@@ -661,7 +661,7 @@ usbnet_tx_list_fini(struct usbnet *un)
 /* Endpoint pipe management. */
 
 static void
-usbnet_ep_close_pipes(struct usbnet *un)
+usbnet_ep_close_pipes(struct usbnet * const un)
 {
 	struct usbnet_private * const unp = un->un_pri;
 
@@ -677,7 +677,7 @@ usbnet_ep_close_pipes(struct usbnet *un)
 }
 
 static usbd_status
-usbnet_ep_open_pipes(struct usbnet *un)
+usbnet_ep_open_pipes(struct usbnet * const un)
 {
 	struct usbnet_intr * const uni = un->un_intr;
 	struct usbnet_private * const unp = un->un_pri;
@@ -707,7 +707,7 @@ usbnet_ep_open_pipes(struct usbnet *un)
 }
 
 static usbd_status
-usbnet_ep_stop_pipes(struct usbnet *un)
+usbnet_ep_stop_pipes(struct usbnet * const un)
 {
 	struct usbnet_private * const unp = un->un_pri;
 
@@ -807,7 +807,7 @@ usbnet_lock_mii_un_locked(struct usbnet *un)
 {
 	struct usbnet_private * const unp = un->un_pri;
 
-	KASSERT(mutex_owned(&unp->unp_lock));
+	usbnet_isowned(un);
 
 	unp->unp_refcnt++;
 	mutex_enter(&unp->unp_miilock);
@@ -830,7 +830,7 @@ usbnet_unlock_mii_un_locked(struct usbnet *un)
 {
 	struct usbnet_private * const unp = un->un_pri;
 
-	KASSERT(mutex_owned(&unp->unp_lock));
+	usbnet_isowned(un);
 
 	mutex_exit(&unp->unp_miilock);
 	if (--unp->unp_refcnt < 0)
@@ -993,7 +993,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
-	KASSERT(mutex_owned(&unp->unp_lock));
+	usbnet_isowned(un);
 
 	mutex_enter(&unp->unp_rxlock);
 	mutex_enter(&unp->unp_txlock);
@@ -1127,6 +1127,7 @@ usbnet_init(struct ifnet *ifp)
 	return uno_init(un, ifp);
 }
 
+
 /* Various accessors. */
 
 void
@@ -1238,7 +1239,7 @@ usbnet_mutex_tx(struct usbnet *un)
 /* Autoconf management. */
 
 static bool
-usbnet_empty_eaddr(struct usbnet *un)
+usbnet_empty_eaddr(struct usbnet * const un)
 {
 	return (un->un_eaddr[0] == 0 && un->un_eaddr[1] == 0 &&
 		un->un_eaddr[2] == 0 && un->un_eaddr[3] == 0 &&
