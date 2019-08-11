@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.7 2019/08/10 07:36:15 martin Exp $ */
+/* $NetBSD: t_condwait.c,v 1.8 2019/08/11 11:42:23 martin Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.7 2019/08/10 07:36:15 martin Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.8 2019/08/11 11:42:23 martin Exp $");
 
 #include <sys/time.h>
 #include <errno.h>
@@ -87,12 +87,12 @@ run(void *param)
 		}
 		twmin.tv_sec = WAITTIME;
 		twmin.tv_nsec = 0;
-		if (0 /* XXX */ && isQEMU()) {
+		if (isQEMU()) {
 			struct timespec td, t;
-			td.tv_sec = 0;
-			td.tv_nsec = 900000000;
+			// td.tv_sec = 0;
+			// td.tv_nsec = 900000000;
 			t = twmin;
-			timespecsub(&t, &td, &twmin);
+			// timespecsub(&t, &td, &twmin);
 			td.tv_sec = 2;
 			td.tv_nsec = 500000000;
 			timespecadd(&t, &td, &twmax);
