@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.1 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.2 2019/08/11 20:26:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -175,7 +175,7 @@ npf_param_check(npf_t *npf, const char *name, int val)
 }
 
 __dso_public int
-npf_param_get(npf_t *npf, const char *name, int *val)
+npfk_param_get(npf_t *npf, const char *name, int *val)
 {
 	npf_param_t *param;
 
@@ -187,7 +187,7 @@ npf_param_get(npf_t *npf, const char *name, int *val)
 }
 
 __dso_public int
-npf_param_set(npf_t *npf, const char *name, int val)
+npfk_param_set(npf_t *npf, const char *name, int val)
 {
 	npf_param_t *param;
 
