@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.109 2019/08/10 02:17:36 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.110 2019/08/11 01:04:33 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.109 2019/08/10 02:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.110 2019/08/11 01:04:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -261,16 +261,16 @@ void	axe_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 	axe_match, axe_attach, usbnet_detach, usbnet_activate);
 
-static void	axe_stop_cb(struct ifnet *, int);
-static int	axe_ioctl_cb(struct ifnet *, u_long, void *);
+static void	axe_stop(struct ifnet *, int);
+static int	axe_ioctl(struct ifnet *, u_long, void *);
 static int	axe_init(struct ifnet *);
 static usbd_status axe_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static usbd_status axe_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void	axe_mii_statchg_cb(struct ifnet *);
-static void	axe_rx_loop_cb(struct usbnet *, struct usbd_xfer *,
-			       struct usbnet_chain *, uint32_t);
-static unsigned axe_tx_prepare_cb(struct usbnet *, struct mbuf *,
-				  struct usbnet_chain *);
+static void	axe_mii_statchg(struct ifnet *);
+static void	axe_rx_loop(struct usbnet *, struct usbd_xfer *,
+			    struct usbnet_chain *, uint32_t);
+static unsigned axe_tx_prepare(struct usbnet *, struct mbuf *,
+			       struct usbnet_chain *);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);
@@ -278,13 +278,13 @@ static void	axe_ax88772a_init(struct axe_softc *);
 static void	axe_ax88772b_init(struct axe_softc *);
 
 static struct usbnet_ops axe_ops = {
-	.uno_stop = axe_stop_cb,
-	.uno_ioctl = axe_ioctl_cb,
+	.uno_stop = axe_stop,
+	.uno_ioctl = axe_ioctl,
 	.uno_read_reg = axe_mii_read_reg,
 	.uno_write_reg = axe_mii_write_reg,
-	.uno_statchg = axe_mii_statchg_cb,
-	.uno_tx_prepare = axe_tx_prepare_cb,
-	.uno_rx_loop = axe_rx_loop_cb,
+	.uno_statchg = axe_mii_statchg,
+	.uno_tx_prepare = axe_tx_prepare,
+	.uno_rx_loop = axe_rx_loop,
 	.uno_init = axe_init,
 };
 
@@ -372,7 +372,7 @@ axe_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-axe_mii_statchg_cb(struct ifnet *ifp)
+axe_mii_statchg(struct ifnet *ifp)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 
@@ -1016,8 +1016,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-axe_rx_loop_cb(struct usbnet * un, struct usbd_xfer *xfer,
-	       struct usbnet_chain *c, uint32_t total_len)
+axe_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
+	    struct usbnet_chain *c, uint32_t total_len)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc * const sc = usbnet_softc(un);
@@ -1161,45 +1161,46 @@ axe_rx_loop_cb(struct usbnet * un, struct usbd_xfer *xfer,
 }
 
 static unsigned
-axe_tx_prepare_cb(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+axe_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
+	struct axe_sframe_hdr hdr, tlr;
+	size_t hdr_len = 0, tlr_len = 0;
 	int length, boundary;
 
 	usbnet_isowned_tx(un);
 
-	/*
-	 * Copy the mbuf data into a contiguous buffer, leaving two
-	 * bytes at the beginning to hold the frame length.
-	 */
 	if (AXE_IS_178_FAMILY(un)) {
-		struct axe_sframe_hdr hdr;
-
+		/*
+		 * Copy the mbuf data into a contiguous buffer, leaving two
+		 * bytes at the beginning to hold the frame length.
+		 */
 		boundary = (un->un_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
 
 		hdr.len = htole16(m->m_pkthdr.len);
 		hdr.ilen = ~hdr.len;
+		hdr_len = sizeof(hdr);
 
-		memcpy(c->unc_buf, &hdr, sizeof(hdr));
-		length = sizeof(hdr);
-
-		m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf + length);
-		length += m->m_pkthdr.len;
+		length = hdr_len + m->m_pkthdr.len;
 
 		if ((length % boundary) == 0) {
-			hdr.len = 0x0000;
-			hdr.ilen = 0xffff;
-			memcpy(c->unc_buf + length, &hdr, sizeof(hdr));
-			length += sizeof(hdr);
+			tlr.len = 0x0000;
+			tlr.ilen = 0xffff;
+			tlr_len = sizeof(tlr);
 		}
 		DPRINTFN(20, "length %jx m_pkthdr.len %jx hdrsize %#jx",
 			length, m->m_pkthdr.len, sizeof(hdr), 0);
-	} else {
-		m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
-		length = m->m_pkthdr.len;
-		DPRINTFN(20, "length %jx", length, 0, 0, 0);
 	}
 
+	length = hdr_len + m->m_pkthdr.len + tlr_len;
+	if (length > un->un_tx_bufsz)
+		return 0;
+
+	if (hdr_len)
+		memcpy(c->unc_buf, &hdr, hdr_len);
+	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf + hdr_len);
+	if (tlr_len)
+		memcpy(c->unc_buf + length, &tlr, tlr_len);
 
 	return length;
 }
@@ -1365,7 +1366,7 @@ axe_init(struct ifnet *ifp)
 }
 
 static int
-axe_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
+axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
 
@@ -1382,7 +1383,7 @@ axe_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 static void
-axe_stop_cb(struct ifnet *ifp, int disable)
+axe_stop(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
 
