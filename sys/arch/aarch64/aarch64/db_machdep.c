@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.16 2019/03/20 07:16:07 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.17 2019/08/11 15:52:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.16 2019/03/20 07:16:07 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.17 2019/08/11 15:52:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -278,7 +278,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("%p cpu[%lu].ci_curlwp       = %p\n",
 	    &ci->ci_curlwp, cpuid, cpuinfobuf.ci_curlwp);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		db_printf("%p cpu[%lu].ci_softlwps[%d] = %p\n",
+		db_printf("%p cpu[%lu].ci_softlwps[%d]  = %p\n",
 		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
 	}
 	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
