@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.52 2019/08/11 06:54:14 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.53 2019/08/11 07:58:16 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.52 2019/08/11 06:54:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.53 2019/08/11 07:58:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -970,7 +970,7 @@ smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
 		}
 
 		uint8_t *pktbuf = buf + ETHER_ALIGN;
-		size_t buflen = pktlen;
+		size_t buflen = pktlen - ETHER_ALIGN;
 		int mbuf_flags = M_HASFCS;
 		int csum_flags = 0;
 		uint16_t csum_data = 0;
