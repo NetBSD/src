@@ -185,7 +185,6 @@ typedef enum {
 	NPF_PARAMS_CONNDB = 0,
 	NPF_PARAMS_GENERIC_STATE,
 	NPF_PARAMS_TCP_STATE,
-	NPF_PARAMS_PORTMAP,
 	NPF_PARAMS_COUNT
 } npf_paramgroup_t;
 
@@ -461,10 +460,13 @@ int		npf_state_tcp_timeout(npf_t *, const npf_state_t *);
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);
 
-in_port_t	npf_portmap_get(npf_t *, int, const npf_addr_t *);
-bool		npf_portmap_take(npf_t *, int, const npf_addr_t *, in_port_t);
-void		npf_portmap_put(npf_t *, int, const npf_addr_t *, in_port_t);
-void		npf_portmap_flush(npf_t *);
+npf_portmap_t *	npf_portmap_create(int, int);
+void		npf_portmap_destroy(npf_portmap_t *);
+
+in_port_t	npf_portmap_get(npf_portmap_t *, int, const npf_addr_t *);
+bool		npf_portmap_take(npf_portmap_t *, int, const npf_addr_t *, in_port_t);
+void		npf_portmap_put(npf_portmap_t *, int, const npf_addr_t *, in_port_t);
+void		npf_portmap_flush(npf_portmap_t *);
 
 /* NAT. */
 void		npf_nat_sysinit(void);

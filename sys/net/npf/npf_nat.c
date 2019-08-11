@@ -67,7 +67,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.46 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.47 2019/08/11 20:26:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -514,7 +514,8 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_conn_t *con)
 
 	/* Get a new port for translation. */
 	if ((np->n_flags & NPF_NAT_PORTMAP) != 0) {
-		nt->nt_tport = npf_portmap_get(np->n_npfctx, alen, taddr);
+		npf_portmap_t *pm = np->n_npfctx->portmap;
+		nt->nt_tport = npf_portmap_get(pm, alen, taddr);
 	} else {
 		nt->nt_tport = np->n_tport;
 	}
@@ -745,7 +746,8 @@ npf_nat_destroy(npf_nat_t *nt)
 
 	/* Return taken port to the portmap. */
 	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport) {
-		npf_portmap_put(npf, nt->nt_alen, &nt->nt_taddr, nt->nt_tport);
+		npf_portmap_t *pm = npf->portmap;
+		npf_portmap_put(pm, nt->nt_alen, &nt->nt_taddr, nt->nt_tport);
 	}
 	npf_stats_inc(np->n_npfctx, NPF_STAT_NAT_DESTROY);
 
@@ -804,10 +806,14 @@ npf_nat_import(npf_t *npf, const nvlist_t *nat,
 	nt->nt_tport = dnvlist_get_number(nat, "tport", 0);
 
 	/* Take a specific port from port-map. */
-	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport &&
-	    !npf_portmap_take(npf, nt->nt_alen, &nt->nt_taddr, nt->nt_tport)) {
-		pool_cache_put(nat_cache, nt);
-		return NULL;
+	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport) {
+		npf_portmap_t *pm = npf->portmap;
+
+		if (!npf_portmap_take(pm, nt->nt_alen,
+		    &nt->nt_taddr, nt->nt_tport)) {
+			pool_cache_put(nat_cache, nt);
+			return NULL;
+		}
 	}
 	npf_stats_inc(npf, NPF_STAT_NAT_CREATE);
 
