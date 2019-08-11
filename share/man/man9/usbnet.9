@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.3 2019/08/11 21:33:08 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.4 2019/08/11 22:03:16 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -755,7 +755,8 @@ framework handles pipes and transfers and buffers.
 The
 .Nm
 framework provides four locks for the system: normal device/softc lock,
-receive and transmit locks, and the MII lock.  The normal locking order
+receive and transmit locks, and the MII lock.
+The normal locking order
 for these locks is ifnet lock -> usbnet lock -> usbnet rxlock -> usbne
 txlock, or, ifnet lock -> usbnet lock -> MII lock.
 .It MII handling
@@ -767,9 +768,9 @@ These functions are called with the MII lock is held (see
 and do not require any checking for running, or up, or dying devices
 unless they drop and retake the MII lock.
 Their return value is changed from
-.Fr int
+.Vt int
 to
-.Fr usbd_status
+.Vt usbd_status
 and should use
 .Dv USBD_NORMAL_COMPLETION
 for success.
@@ -781,7 +782,7 @@ and
 .Fn usbnet_havelink .
 Other ifmedia callbacks that were passed to
 .Fn ifmedia_init
-should be deleted and any work moved into 
+should be deleted and any work moved into
 .Dq uno_statchg .
 .It Receive and Transmit
 The
@@ -816,8 +817,11 @@ Be sure to call
 .Fn usbent_set_link
 during any status change event.
 .Pp
-Many locking issues are hidden without LOCKDEBUG, including hard-hangs.
-It's highly recommended to develop with LOCKDEBUG.
+Many locking issues are hidden without
+.Dv LOCKDEBUG ,
+including hard-hangs.
+It's highly recommended to develop with
+.Dv LOCKDEBUG .
 .Pp
 The
 .Va usbnet
@@ -826,7 +830,6 @@ array is unsigned and should use
 .Dq 0
 as the no-endpoint value.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr usb 4 ,
 .Xr driver 9 ,
