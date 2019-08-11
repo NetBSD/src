@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.13 2019/08/10 06:19:48 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.14 2019/08/11 10:13:30 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1611,4 +1611,17 @@ doc/3RDPARTY			 		1.1642
 
 	Import OpenLDAP 2.4.48
 	[christos, ticket #41]
+
+usr.sbin/npf/npfctl/npf_bpf_comp.c		1.14
+usr.sbin/npf/npfctl/npf_build.c			1.51
+usr.sbin/npf/npfctl/npfctl.h			1.49
+
+	NPF: fix BPF byte-code generation for a port-range used in a group.
+	[rmind, ticket #44]
+
+usr.sbin/npf/npfctl/npf_show.c			1.29
+
+	npfctl show/validate: fix couple bugs in multiple table/port
+	representation.
+	[rmind, ticket #45]
 
