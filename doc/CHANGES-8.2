@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.22 2019/08/09 19:22:51 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.23 2019/08/11 10:05:06 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -544,4 +544,14 @@ sys/external/bsd/ipf/netinet/fil.c		1.30
 	PR/54443: ipf mistakenly regards UDP packet with checksum field
 	0xffff as bad.
 	[christos, ticket #1331]
+
+sys/uvm/uvm_mmap.c				1.173
+
+	Change 'npgs' from int to size_t.
+	[maxv, ticket #1332]
+
+sys/kern/sys_lwp.c				1.69 (patch)
+
+	Fix info leak in sys___sigaltstack14().
+	[maxv, ticket #1333]
 
