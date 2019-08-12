@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2018/09/09 01:53:23 riastradh Exp $
+#	$NetBSD: Makefile,v 1.17 2019/08/12 14:21:54 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ COPTS.xf86drm.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=\#warnings :}
 CWARNFLAGS.clang+=	-Wno-conversion -Wno-tautological-compare
 
 LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
-LIBDPLIBS=	pci	${.CURDIR}/../../../../../lib/libpci
+LIBDPLIBS+=	pci	${.CURDIR}/../../../../../lib/libpci
 
 .if 0
 MAN=		drm.7 \
