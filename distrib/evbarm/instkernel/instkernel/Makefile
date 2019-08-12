@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2019/05/18 07:33:10 skrll Exp $
+#	$NetBSD: Makefile,v 1.32 2019/08/12 08:04:28 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,6 +15,7 @@ MDSETTARGETS=
 .if ${i} == "RPI_INSTALL"
 MDSETTARGETS+=		${i}	${SSHRAMDISK}	netbsd-${i}
 MDSET_SUFFIXES.netbsd-${i}=	bin create-bin  img create-img
+MDSET_.RPI_INSTALL.netbsd-RPI_INSTALL.img.deps=	netbsd-RPI_INSTALL.bin
 .else
 MDSETTARGETS+=		${i}	${RAMDISK}	-
 .endif

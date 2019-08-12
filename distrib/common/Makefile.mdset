@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.45 2019/08/11 17:50:26 martin Exp $
+#	$NetBSD: Makefile.mdset,v 1.46 2019/08/12 08:04:28 martin Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -94,7 +94,7 @@ _KERNEL.${_K}.${_F}:=	${_F}
 .for _S _C in ${MDSET_SUFFIXES.${_F}}		# {
 CLEANFILES+=	${_KERNEL.${_K}.${_F}}.${_S}
 
-${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
+${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}} ${MDSET_.${_K}.${_F}.${_S}.deps}
 .if defined(${_C})
 	${${_C}}
 .else
