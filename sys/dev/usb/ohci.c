@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.273.6.4 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: ohci.c,v 1.273.6.5 2019/08/12 17:19:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.273.6.4 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.273.6.5 2019/08/12 17:19:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -587,7 +587,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTF("start len=%jd", alen, 0, 0, 0);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(8, "addr=%jd endpt=%jd len=%jd speed=%jd",
 	    xfer->ux_pipe->up_dev->ud_addr,
@@ -1675,7 +1675,7 @@ ohci_device_bulk_done(struct usbd_xfer *xfer)
 	int isread =
 	    (UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTFN(10, "xfer=%#jx, actlen=%jd", (uintptr_t)xfer, xfer->ux_actlen,
