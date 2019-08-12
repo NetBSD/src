@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.46 2018/01/13 23:43:46 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.47 2019/08/12 11:11:28 nia Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -564,7 +564,7 @@ and is currently 1.
 All new code should use a call similar to the below to ensure the
 correct version is returned.
 .Bd -literal -offset indent
-int ver = WSDISPLAY_EVENT_VERSION;
+int ver = WSDISPLAYIO_EVENT_VERSION;
 if (ioctl(fd, WSDISPLAYIO_SETVERSION, &ver) == -1)
     err(EXIT_FAILURE, "cannot set version");
 .Ed
