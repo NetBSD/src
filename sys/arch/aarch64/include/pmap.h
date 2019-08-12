@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.24 2019/04/08 21:18:22 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.25 2019/08/12 10:28:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 		.pd_pa = DEVMAP_TRUNC_ADDR(pa),		\
 		.pd_size = DEVMAP_ROUND_SIZE(sz),	\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_flags = PMAP_NOCACHE		\
+		.pd_flags = PMAP_DEV			\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
 

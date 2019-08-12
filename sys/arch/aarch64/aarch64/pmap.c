@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2019/05/17 06:05:07 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2019/08/12 10:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2019/05/17 06:05:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2019/08/12 10:28:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -283,7 +283,7 @@ pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
 	blocksize = L2_SIZE;
 
 	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL, false);
-	attr = _pmap_pte_adjust_cacheflags(attr, flags | PMAP_DEV);
+	attr = _pmap_pte_adjust_cacheflags(attr, flags);
 	/* user cannot execute, and kernel follows the prot */
 	attr |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
 	if (prot & VM_PROT_EXECUTE)
