@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.4 2019/08/11 22:03:16 wiz Exp $
+.\"	$NetBSD: usbnet.9,v 1.5 2019/08/12 00:01:23 mrg Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -152,11 +152,9 @@ that will be described below.
 For autoconfiguration the device attach routine is expected to
 ensure that this device's
 .Va struct usbnet
-is set to the device
-.Fa dv_private ,
-if it can not be used directly as the device softc, as well as set
-up the necessary structure members, find end-points, find the
-Ethernet address if relevant, call
+is the first member of the device softc, if it can not be used directly
+as the device softc, as well as set up the necessary structure members,
+find end-points, find the Ethernet address if relevant, call
 .Fn usbnet_attach ,
 set up interface, Ethernet, and MII capabilities, and finally call
 .Fn usbnet_attach_ifp .
@@ -682,7 +680,7 @@ The majority of the driver's existing
 structure can likely be replaced with usage of
 .Va struct usbnet
 and its related functionality.
-This includes at least the device_t pointer, ethernet address, the
+This includes at least the device_t pointer, Ethernet address, the
 ethercom and mii_data structures, end point descriptors, usbd device,
 interface, and task and callout structures (both these probably go
 away entirely) and all the associated watchdog handling,
