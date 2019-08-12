@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.14 2019/08/11 10:13:30 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.15 2019/08/12 17:33:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1624,4 +1624,20 @@ usr.sbin/npf/npfctl/npf_show.c			1.29
 	npfctl show/validate: fix couple bugs in multiple table/port
 	representation.
 	[rmind, ticket #45]
+
+external/mit/xorg/lib/libdrm/Makefile		1.17
+
+	Fix makefile bug so we link against libm as intended.
+	[maya, ticket #46]
+
+external/gpl3/gdb/dist/gdb/auxv.c		1.2
+
+	On NetBSD the auxv tag is always 32 bits long.
+	[christos, ticket #47]
+
+sys/arch/arm/acpi/acpi_machdep.c		1.9,1.10
+
+	Correct the test for writeable memory.
+	Use same style test as acpi_md_OsWritable
+	[skrll, ticket #48]
 
