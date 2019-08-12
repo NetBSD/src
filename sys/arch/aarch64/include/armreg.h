@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.25 2019/06/16 15:16:15 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.26 2019/08/12 23:31:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1138,11 +1138,38 @@ gtmr_cntv_ctl_write(uint32_t val)
 	reg_cntv_ctl_el0_write(val);
 }
 
+/*
+ * Counter-timer Physical Timer Control register
+ */
+static __inline uint32_t
+gtmr_cntp_ctl_read(void)
+{
+
+	return reg_cntp_ctl_el0_read();
+}
+
 static __inline void
 gtmr_cntp_ctl_write(uint32_t val)
 {
 
 	reg_cntp_ctl_el0_write(val);
+}
+
+/*
+ * Counter-timer Physical Timer TimerValue register
+ */
+static __inline uint32_t
+gtmr_cntp_tval_read(void)
+{
+
+	return reg_cntp_tval_el0_read();
+}
+
+static __inline void
+gtmr_cntp_tval_write(uint32_t val)
+{
+
+	reg_cntp_tval_el0_write(val);
 }
 
 /*
@@ -1162,6 +1189,22 @@ gtmr_cntv_tval_write(uint32_t val)
 	reg_cntv_tval_el0_write(val);
 }
 
+/*
+ * Counter-timer Physical Timer CompareValue register
+ */
+static __inline uint64_t
+gtmr_cntp_cval_read(void)
+{
+
+	return reg_cntp_cval_el0_read();
+}
+
+static __inline void
+gtmr_cntp_cval_write(uint64_t val)
+{
+
+	reg_cntp_cval_el0_write(val);
+}
 
 /*
  * Counter-timer Virtual Timer CompareValue register
