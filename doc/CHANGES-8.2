@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.23 2019/08/11 10:05:06 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.24 2019/08/12 17:20:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -554,4 +554,10 @@ sys/kern/sys_lwp.c				1.69 (patch)
 
 	Fix info leak in sys___sigaltstack14().
 	[maxv, ticket #1333]
+
+sys/dev/usb/ohci.c				1.289
+sys/dev/usb/ohci.c				1.290
+
+	Adjust KASSERT()s to handle polling case.
+	[mrg, ticket #1334]
 
