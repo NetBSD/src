@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2013/01/07 16:57:28 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2019/08/12 09:18:30 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -83,7 +83,7 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap	*pv_pmap;	/* the pmap */
 	vaddr_t		pv_va;		/* the virtual address + flags */
 #define	PV_VAMASK	(~(PAGE_SIZE - 1))
-#define	PV_KENTER	0x001
+#define	PV_KENTER	__BIT(0)
 
 	struct vm_page	*pv_ptp;	/* the vm_page of the PTP */
 };
