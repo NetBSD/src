@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.63 2019/08/11 02:37:03 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.64 2019/08/12 08:52:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.63 2019/08/11 02:37:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.64 2019/08/12 08:52:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,7 +109,7 @@ cdce_match(device_t parent, cfdata_t match, void *aux)
 static void
 cdce_attach(device_t parent, device_t self, void *aux)
 {
-	struct usbnet * const		 un = device_private(self); 
+	struct usbnet * const		 un = device_private(self);
 	struct usbif_attach_arg		*uiaa = aux;
 	char				*devinfop;
 	struct usbd_device	        *dev = uiaa->uiaa_device;
