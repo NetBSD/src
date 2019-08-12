@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.6.6.1 2019/08/04 11:37:56 martin Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6.6.2 2019/08/12 17:32:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.6.1 2019/08/04 11:37:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.6.2 2019/08/12 17:32:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ acpi_md_OsReadable(void *va, UINT32 len)
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
-		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP_RO)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RO))
+		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RO))
 			return FALSE;
 	}
 
@@ -231,7 +231,7 @@ acpi_md_OsWritable(void *va, UINT32 len)
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
-		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP_RW)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
+		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
 			return FALSE;
 	}
 
