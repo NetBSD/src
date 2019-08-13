@@ -2796,7 +2796,7 @@ dsl_dataset_promote_sync(void *arg, dmu_tx_t *tx)
 		ASSERT(!dsl_prop_hascb(ds));
 	}
 
-#if defined(__FreeBSD__) && defined(_KERNEL)
+#if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(_KERNEL)
 	mutex_exit(&spa_namespace_lock);
 
 	kmem_free(newname, MAXPATHLEN);
