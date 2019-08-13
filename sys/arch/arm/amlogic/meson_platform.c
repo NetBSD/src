@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.11 2019/04/21 15:57:33 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.12 2019/08/13 09:52:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.11 2019/04/21 15:57:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.12 2019/08/13 09:52:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -256,7 +256,7 @@ meson8b_platform_device_register(device_t self, void *aux)
 				strcat(boot_args, rootarg);
 		}
 	}
-			
+
 	meson_platform_device_register(self, aux);
 }
 #endif
