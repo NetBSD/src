@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.10 2019/08/04 22:13:24 tnn Exp $ */
+/* $NetBSD: m25p.c,v 1.11 2019/08/13 17:11:32 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.10 2019/08/04 22:13:24 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.11 2019/08/13 17:11:32 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,16 +114,26 @@ static const struct m25p_info {
 	{ 0 }
 };
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "jedec,spi-nor",	0 },
+	{ NULL,			0 }
+};
+
 static int
 m25p_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int res;
+
+	res = spi_compatible_match(sa, cf, compat_data);
+	if (!res)
+		return res;
 
 	/* configure for 20MHz, which is the max for normal reads */
 	if (spi_configure(sa->sa_handle, SPI_MODE_0, 20000000))
-		return 0;
+		res = 0;
 
-	return 1;
+	return res;
 }
 
 static void
