@@ -38,8 +38,6 @@
 
 #include "npf_impl.h"
 
-typedef struct npf_connkey npf_connkey_t;
-
 #if defined(__NPF_CONN_PRIVATE)
 
 /*
@@ -91,6 +89,8 @@ struct npf_conn {
 	uint32_t		c_keys[];
 };
 
+#endif
+
 /*
  * Connection key interface.
  *
@@ -104,10 +104,10 @@ struct npf_conn {
 #define	NPF_CONNKEY_ALEN(key)	((key)->ck_key[0] & 0xffff)
 #define	NPF_CONNKEY_LEN(key)	(8 + (NPF_CONNKEY_ALEN(key) * 2))
 
-struct npf_connkey {
+typedef struct npf_connkey {
 	/* Warning: ck_key has a variable length -- see above. */
 	uint32_t		ck_key[NPF_CONNKEY_MAXWORDS];
-};
+} npf_connkey_t;
 
 unsigned	npf_conn_conkey(const npf_cache_t *, npf_connkey_t *, bool);
 npf_connkey_t *	npf_conn_getforwkey(npf_conn_t *);
@@ -118,8 +118,6 @@ void		npf_conn_adjkey(npf_connkey_t *, const npf_addr_t *,
 unsigned	npf_connkey_import(const nvlist_t *, npf_connkey_t *);
 nvlist_t *	npf_connkey_export(const npf_connkey_t *);
 void		npf_connkey_print(const npf_connkey_t *);
-
-#endif
 
 /*
  * Connection tracking interface.
@@ -140,7 +138,7 @@ bool		npf_conn_pass(const npf_conn_t *, npf_match_info_t *,
 void		npf_conn_setpass(npf_conn_t *, const npf_match_info_t *,
 		    npf_rproc_t *);
 int		npf_conn_setnat(const npf_cache_t *, npf_conn_t *,
-		    npf_nat_t *, u_int);
+		    npf_nat_t *, unsigned);
 npf_nat_t *	npf_conn_getnat(npf_conn_t *, const int, bool *);
 bool		npf_conn_expired(npf_t *, const npf_conn_t *, uint64_t);
 void		npf_conn_remove(npf_conndb_t *, npf_conn_t *);

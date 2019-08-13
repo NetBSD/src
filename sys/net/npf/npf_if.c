@@ -44,7 +44,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.9 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.9.4.1 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -181,7 +181,7 @@ npf_ifmap_getname(npf_t *npf, const u_int id)
 }
 
 __dso_public void
-npf_ifmap_attach(npf_t *npf, ifnet_t *ifp)
+npfk_ifmap_attach(npf_t *npf, ifnet_t *ifp)
 {
 	const npf_ifops_t *ifops = npf->ifops;
 	u_int i;
@@ -193,7 +193,7 @@ npf_ifmap_attach(npf_t *npf, ifnet_t *ifp)
 }
 
 __dso_public void
-npf_ifmap_detach(npf_t *npf, ifnet_t *ifp)
+npfk_ifmap_detach(npf_t *npf, ifnet_t *ifp)
 {
 	/* Diagnostic. */
 	npf_config_enter(npf);

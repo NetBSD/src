@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.54 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.54.2.1 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -121,7 +121,7 @@ npf_mk_params(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict, bool set)
 		val = (int)nvlist_get_number(params, name);
 		if (set) {
 			/* Actually set the parameter. */
-			error = npf_param_set(npf, name, val);
+			error = npfk_param_set(npf, name, val);
 			KASSERT(error == 0);
 			continue;
 		}

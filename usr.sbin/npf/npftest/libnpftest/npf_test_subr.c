@@ -63,9 +63,9 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 {
 	npf_t *npf;
 
-	npf_sysinit(0);
-	npf = npf_create(0, &npftest_mbufops, &npftest_ifops);
-	npf_thread_register(npf);
+	npfk_sysinit(0);
+	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops);
+	npfk_thread_register(npf);
 	npf_setkernctx(npf);
 
 	npf_state_setsampler(npf_state_sample);
@@ -80,9 +80,9 @@ void
 npf_test_fini(void)
 {
 	npf_t *npf = npf_getkernctx();
-	npf_thread_unregister(npf);
-	npf_destroy(npf);
-	npf_sysfini();
+	npfk_thread_unregister(npf);
+	npfk_destroy(npf);
+	npfk_sysfini();
 }
 
 int
@@ -99,7 +99,7 @@ npf_test_load(const void *buf, size_t len, bool verbose)
 	load_npf_config_ifs(npf_dict, verbose);
 
 	// Note: npf_dict will be consumed by npf_load().
-	return npf_load(npf_getkernctx(), npf_dict, &error);
+	return npfk_load(npf_getkernctx(), npf_dict, &error);
 }
 
 ifnet_t *
@@ -116,7 +116,7 @@ npf_test_addif(const char *ifname, bool reg, bool verbose)
 	strlcpy(ifp->if_xname, ifname, sizeof(ifp->if_xname));
 	TAILQ_INSERT_TAIL(&npftest_ifnet_list, ifp, if_list);
 
-	npf_ifmap_attach(npf, ifp);
+	npfk_ifmap_attach(npf, ifp);
 	if (reg) {
 		npf_ifmap_register(npf, ifname);
 	}
@@ -212,7 +212,7 @@ npf_test_statetrack(const void *data, size_t len, ifnet_t *ifp,
 	int i = 0, error;
 
 	m = mbuf_getwithdata(data, len);
-	error = npf_packet_handler(npf, &m, ifp, forw ? PFIL_OUT : PFIL_IN);
+	error = npfk_packet_handler(npf, &m, ifp, forw ? PFIL_OUT : PFIL_IN);
 	if (error) {
 		assert(m == NULL);
 		return error;

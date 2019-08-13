@@ -29,7 +29,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.6 2019/01/19 21:19:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.6.4.1 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -198,7 +198,7 @@ npf_worker(void *arg)
 			npf_workfunc_t work;
 
 			if (!npf->sync_registered) {
-				npf_thread_register(npf);
+				npfk_thread_register(npf);
 				npf->sync_registered = true;
 			}
 
