@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.104 2019/08/05 15:30:37 tnn Exp $
+#	$NetBSD: GENERIC64,v 1.105 2019/08/13 17:21:01 tnn Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -401,6 +401,8 @@ ld*		at nvme? nsid ?
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
 rkspi*		at fdt?			# Rockchip SPI
 spi*		at spibus?
+m25p*		at spi?
+spiflash*	at spiflashbus?
 
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
