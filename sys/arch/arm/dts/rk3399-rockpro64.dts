@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.7 2019/07/28 10:03:56 jmcneill Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.8 2019/08/13 17:24:25 tnn Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -78,4 +78,13 @@
 	pinctrl-0 = <&pcie_clkreqn>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
+};
+
+&spi1 {
+	status = "okay";
+	spiflash {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		status = "okay";
+	};
 };
