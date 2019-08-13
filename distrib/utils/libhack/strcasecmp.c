@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.2 2019/08/12 09:34:53 martin Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.3 2019/08/13 08:48:07 christos Exp $	*/
 
 /*
  * Written by Martin Husemann <martin@NetBSD.org>
@@ -13,7 +13,7 @@
 int
 strcasecmp(const char *s1, const char *s2)
 {
-	unsigned int c1, c2;
+	unsigned char c1, c2;
 
 	do {
 		c1 = *s1++;
