@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.52 2019/06/14 11:08:18 hkenken Exp $ */
+/* $NetBSD: fdtvar.h,v 1.53 2019/08/13 16:46:49 tnn Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -80,6 +80,10 @@ struct fdtbus_interrupt_controller_func {
 
 struct fdtbus_i2c_controller_func {
 	i2c_tag_t (*get_tag)(device_t);
+};
+
+struct fdtbus_spi_controller_func {
+	struct spi_controller *	(*get_controller)(device_t);
 };
 
 struct fdtbus_gpio_controller;
@@ -253,6 +257,8 @@ int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(device_t, int,
 		    const struct fdtbus_i2c_controller_func *);
+int		fdtbus_register_spi_controller(device_t, int,
+		    const struct fdtbus_spi_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
 int		fdtbus_register_pinctrl_config(device_t, int,
@@ -370,6 +376,7 @@ void		fdtbus_power_reset(void);
 void		fdtbus_power_poweroff(void);
 
 device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
+device_t	fdtbus_attach_spibus(device_t, int, cfprint_t);
 
 bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
