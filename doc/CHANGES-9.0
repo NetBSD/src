@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.15 2019/08/12 17:33:25 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.16 2019/08/13 14:59:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1640,4 +1640,57 @@ sys/arch/arm/acpi/acpi_machdep.c		1.9,1.10
 	Correct the test for writeable memory.
 	Use same style test as acpi_md_OsWritable
 	[skrll, ticket #48]
+
+sys/net/npf/npf.c				1.40
+sys/net/npf/npf_conf.c				1.14
+sys/net/npf/npf_conn.h				1.18
+sys/net/npf/npf_ctl.c				1.55
+sys/net/npf/npf_handler.c			1.47
+sys/net/npf/npf_if.c				1.10
+sys/net/npf/npf_impl.h				1.76
+sys/net/npf/npf_inet.c				1.55
+sys/net/npf/npf_nat.c				1.47
+sys/net/npf/npf_os.c				1.14
+sys/net/npf/npf_params.c			1.2
+sys/net/npf/npf_portmap.c			1.4
+sys/net/npf/npf_worker.c			1.7
+sys/net/npf/npfkern.h				1.4
+usr.sbin/npf/npf-params.7			1.3
+usr.sbin/npf/npf.7				1.7
+usr.sbin/npf/npftest/libnpftest/npf_conn_test.c	1.3
+usr.sbin/npf/npftest/libnpftest/npf_nat_test.c	1.13
+usr.sbin/npf/npftest/libnpftest/npf_perf_test.c	1.9
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.18
+usr.sbin/npf/npftest/libnpftest/npf_test_subr.c	1.16
+
+	NPF: minor API and documentation improvements.
+	[rmind, ticket #49]
+
+lib/libperfuse/ops.c				1.87
+
+	Fix filehandles of directories for FUSE lock operations.
+	[manu, ticket #50]
+
+sys/arch/i386/stand/lib/bootinfo_biosgeom.c	1.24
+
+	Fix buffer overflow in BIOS disk geometry collection for bootinfo.
+	[manu, ticket #51]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/dsl_dataset.c 1.5
+
+	Make "zfs promote" work.
+	[hannken, ticket #52]
+
+sys/arch/aarch64/include/bus_funcs.h		1.3
+
+	Really provide bus_funcs.h.
+	[skrll, ticket #53]
+
+sys/arch/aarch64/include/armreg.h		1.26
+sys/arch/arm/cortex/gtmr.c			1.41
+sys/arch/arm/cortex/gtmr_var.h			1.12
+sys/arch/arm/include/armreg.h			1.128
+
+	Add support for physical timers and sprinkle isb where needed.
+	[jmcneill, ticket #54]
 
