@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.86 2019/02/09 02:22:45 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.86.2.1 2019/08/13 14:44:37 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2976,24 +2976,15 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * expect one. E.g.: if we provide none, GlusterFS logs an error
 	 * "0-glusterfs-fuse: xl is NULL"
 	 *
-	 * There is one exception with directories where filehandle
-	 * is not included, because libfuse uses different filehandle
-	 * in opendir/releasedir/readdir/fsyncdir compared to other 
-	 * operations. Who locks a directory anyway?
-	 *
 	 * We need the read file handle if the file is open read only,
 	 * in order to support shared locks on read-only files.
 	 * NB: The kernel always sends advlock for read-only
 	 * files at exit time when the process used lock, see
 	 * sys_exit -> exit1 -> fd_free -> fd_close -> VOP_ADVLOCK
 	 */
-	if (!PN_ISDIR(opc)) {
-		if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
-			error = EBADF;
-			goto out;
-		}
-	} else {
-		fh = FUSE_UNKNOWN_FH;
+	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
+		error = EBADF;
+		goto out;
 	}
 
 	ps = puffs_getspecific(pu);
