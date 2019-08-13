@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.24 2019/08/12 17:20:03 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.25 2019/08/13 14:30:50 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -560,4 +560,14 @@ sys/dev/usb/ohci.c				1.290
 
 	Adjust KASSERT()s to handle polling case.
 	[mrg, ticket #1334]
+
+lib/libperfuse/ops.c				1.87
+
+	Fix filehandles of directories for FUSE lock operations.
+	[manu, ticket #1335]
+
+sys/arch/i386/stand/lib/bootinfo_biosgeom.c	1.24
+
+	Fix buffer overflow in BIOS disk geometry collection for bootinfo.
+	[manu, ticket #1336]
 
