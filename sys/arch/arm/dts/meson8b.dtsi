@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b.dtsi,v 1.5 2019/01/20 17:57:29 jmcneill Exp $ */
+/* $NetBSD: meson8b.dtsi,v 1.6 2019/08/13 09:56:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,6 @@
 #define	CLKID_PERIPH	126
 
 / {
-	timer@c4300200 {
-		compatible = "arm,cortex-a5-global-timer";
-		reg = <0xc4300200 0x20>;
-		interrupts = <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_EDGE_RISING)>;
-		clocks = <&clkc CLKID_PERIPH>;
-	};
-
 	genfb: fb@c8006000 {
 		compatible = "amlogic,meson8b-fb";
 		reg = <0xc8006000 0x400>,	/* DMC */
