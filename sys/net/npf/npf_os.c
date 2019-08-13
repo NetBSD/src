@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.1 2019/08/13 14:35:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -135,8 +135,8 @@ npf_fini(void)
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
 	npf_pfil_unregister(true);
-	npf_destroy(npf);
-	npf_sysfini();
+	npfk_destroy(npf);
+	npfk_sysfini();
 	return 0;
 }
 
@@ -146,10 +146,10 @@ npf_init(void)
 	npf_t *npf;
 	int error = 0;
 
-	error = npf_sysinit(nworkers);
+	error = npfk_sysinit(nworkers);
 	if (error)
 		return error;
-	npf = npf_create(0, NULL, &kern_ifops);
+	npf = npfk_create(0, NULL, &kern_ifops);
 	npf_setkernctx(npf);
 	npf_pfil_register(true);
 
@@ -219,7 +219,7 @@ npf_stats_export(npf_t *npf, void *data)
 	int error;
 
 	fullst = kmem_alloc(NPF_STATS_SIZE, KM_SLEEP);
-	npf_stats(npf, fullst); /* will zero the buffer */
+	npfk_stats(npf, fullst); /* will zero the buffer */
 	error = copyout(fullst, uptr, NPF_STATS_SIZE);
 	kmem_free(fullst, NPF_STATS_SIZE);
 	return error;
@@ -337,10 +337,10 @@ npf_ifop_setmeta(ifnet_t *ifp, void *arg)
  * Wrapper of the main packet handler to pass the kernel NPF context.
  */
 static int
-npfkern_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
+npfos_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	npf_t *npf = npf_getkernctx();
-	return npf_packet_handler(npf, mp, ifp, di);
+	return npfk_packet_handler(npf, mp, ifp, di);
 }
 
 /*
@@ -354,11 +354,11 @@ npf_ifhook(void *arg, unsigned long cmd, void *arg2)
 
 	switch (cmd) {
 	case PFIL_IFNET_ATTACH:
-		npf_ifmap_attach(npf, ifp);
+		npfk_ifmap_attach(npf, ifp);
 		npf_ifaddr_sync(npf, ifp);
 		break;
 	case PFIL_IFNET_DETACH:
-		npf_ifmap_detach(npf, ifp);
+		npfk_ifmap_detach(npf, ifp);
 		npf_ifaddr_flush(npf, ifp);
 		break;
 	}
@@ -434,12 +434,12 @@ npf_pfil_register(bool init)
 
 	/* Packet IN/OUT handlers for IP layer. */
 	if (npf_ph_inet) {
-		error = pfil_add_hook(npfkern_packet_handler, npf,
+		error = pfil_add_hook(npfos_packet_handler, npf,
 		    PFIL_ALL, npf_ph_inet);
 		KASSERT(error == 0);
 	}
 	if (npf_ph_inet6) {
-		error = pfil_add_hook(npfkern_packet_handler, npf,
+		error = pfil_add_hook(npfos_packet_handler, npf,
 		    PFIL_ALL, npf_ph_inet6);
 		KASSERT(error == 0);
 	}
@@ -473,11 +473,11 @@ npf_pfil_unregister(bool fini)
 		    PFIL_IFADDR, npf_ph_if);
 	}
 	if (npf_ph_inet) {
-		(void)pfil_remove_hook(npfkern_packet_handler, npf,
+		(void)pfil_remove_hook(npfos_packet_handler, npf,
 		    PFIL_ALL, npf_ph_inet);
 	}
 	if (npf_ph_inet6) {
-		(void)pfil_remove_hook(npfkern_packet_handler, npf,
+		(void)pfil_remove_hook(npfos_packet_handler, npf,
 		    PFIL_ALL, npf_ph_inet6);
 	}
 	pfil_registered = false;

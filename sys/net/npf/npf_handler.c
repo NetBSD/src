@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.46 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.46.2.1 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,12 +112,12 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 }
 
 /*
- * npf_packet_handler: main packet handling routine for layer 3.
+ * npfk_packet_handler: main packet handling routine for layer 3.
  *
  * Note: packet flow and inspection logic is in strict order.
  */
 __dso_public int
-npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
+npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	nbuf_t nbuf;
 	npf_cache_t npc;

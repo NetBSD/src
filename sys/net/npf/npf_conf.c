@@ -47,7 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.13 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.13.2.1 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,7 +169,7 @@ npf_config_load(npf_t *npf, npf_ruleset_t *rset, npf_tableset_t *tset,
 	/* Synchronise: drain all references. */
 	pserialize_perform(npf->qsbr);
 	if (flush) {
-		npf_portmap_flush(npf);
+		npf_portmap_flush(npf->portmap);
 		npf_ifmap_flush(npf);
 	}
 

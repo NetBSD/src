@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.1 2019/08/07 08:28:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.2 2019/08/13 14:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.1 2019/08/07 08:28:37 martin Exp $");
 static __read_mostly npf_t *	npf_kernel_ctx = NULL;
 
 __dso_public int
-npf_sysinit(unsigned nworkers)
+npfk_sysinit(unsigned nworkers)
 {
 	npf_bpf_sysinit();
 	npf_tableset_sysinit();
@@ -58,7 +58,7 @@ npf_sysinit(unsigned nworkers)
 }
 
 __dso_public void
-npf_sysfini(void)
+npfk_sysfini(void)
 {
 	npf_worker_sysfini();
 	npf_nat_sysfini();
@@ -67,7 +67,7 @@ npf_sysfini(void)
 }
 
 __dso_public npf_t *
-npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
+npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 {
 	npf_t *npf;
 
@@ -94,7 +94,7 @@ npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 }
 
 __dso_public void
-npf_destroy(npf_t *npf)
+npfk_destroy(npf_t *npf)
 {
 	/*
 	 * Destroy the current configuration.  Note: at this point all
@@ -117,25 +117,25 @@ npf_destroy(npf_t *npf)
 }
 
 __dso_public int
-npf_load(npf_t *npf, void *config_ref, npf_error_t *err)
+npfk_load(npf_t *npf, void *config_ref, npf_error_t *err)
 {
 	return npfctl_load(npf, 0, config_ref);
 }
 
 __dso_public void
-npf_gc(npf_t *npf)
+npfk_gc(npf_t *npf)
 {
 	npf_conn_worker(npf);
 }
 
 __dso_public void
-npf_thread_register(npf_t *npf)
+npfk_thread_register(npf_t *npf)
 {
 	pserialize_register(npf->qsbr);
 }
 
 __dso_public void
-npf_thread_unregister(npf_t *npf)
+npfk_thread_unregister(npf_t *npf)
 {
 	pserialize_perform(npf->qsbr);
 	pserialize_unregister(npf->qsbr);
@@ -198,14 +198,14 @@ npf_stats_clear_cb(void *mem, void *arg, struct cpu_info *ci)
  */
 
 __dso_public void
-npf_stats(npf_t *npf, uint64_t *buf)
+npfk_stats(npf_t *npf, uint64_t *buf)
 {
 	memset(buf, 0, NPF_STATS_SIZE);
 	percpu_foreach(npf->stats_percpu, npf_stats_collect, buf);
 }
 
 __dso_public void
-npf_stats_clear(npf_t *npf)
+npfk_stats_clear(npf_t *npf)
 {
 	percpu_foreach(npf->stats_percpu, npf_stats_clear_cb, NULL);
 }
