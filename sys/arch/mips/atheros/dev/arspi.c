@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.11 2018/09/03 16:29:25 riastradh Exp $ */
+/* $NetBSD: arspi.c,v 1.12 2019/08/13 17:03:11 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.11 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.12 2019/08/13 17:03:11 tnn Exp $");
 
 #include "locators.h"
 
@@ -191,6 +191,7 @@ arspi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach bus attach.
 	 */
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 	(void) config_found_ia(self, "spibus", &sba, spibus_print);
 }
