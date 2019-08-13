@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.5 2018/10/04 09:09:29 ryo Exp $ */
+/* $NetBSD: pte.h,v 1.6 2019/08/13 08:27:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define LX_BLKPAG_UXN		__BIT(54)	/* Unprivileged Execute Never */
 #define LX_BLKPAG_PXN		__BIT(53)	/* Privileged Execute Never */
 #define LX_BLKPAG_CONTIG	__BIT(52)	/* Hint of TLB cache */
+#define LX_BLKPAG_DBM		__BIT(51)	/* Dirty Bit Modifier (V8.1) */
 #define LX_TBL_PA		__BITS(47, 12)
 #define LX_BLKPAG_OA		__BITS(47, 12)
 #define LX_BLKPAG_NG		__BIT(11)	/* Not Global */
