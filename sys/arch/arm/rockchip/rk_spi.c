@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.1 2019/08/05 15:22:59 tnn Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.2 2019/08/13 17:03:10 tnn Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.1 2019/08/05 15:22:59 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.2 2019/08/13 17:03:10 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,6 +253,7 @@ rk_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = rk_spi_transfer;
 	sc->sc_spi.sct_nslaves = 2;
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	(void) config_found_ia(self, "spibus", &sba, spibus_print);
