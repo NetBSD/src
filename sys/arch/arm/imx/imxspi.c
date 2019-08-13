@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.3 2017/08/07 09:24:43 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.3 2017/08/07 09:24:43 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxspi.h"
@@ -114,6 +114,7 @@ imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
 	if (!sc->sc_spi.sct_nslaves)
 		aprint_error_dev(sc->sc_dev, "no slaves!\n");
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	/* initialize the queue */
