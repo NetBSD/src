@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.21 2019/08/14 13:02:23 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1188,6 +1188,11 @@ Chcesz jej uzyc?}
 
 message parttype_disklabel {disklabel BSD}
 message parttype_disklabel_short {disklabel}
+/*
+ * This is used on architectures with MBR above disklabel when there is
+ * no MBR on a disk.
+ */
+message parttype_only_disklabel {disklabel (NetBSD only)}
 
 message select_part_scheme
 {Ten dysk nie byl wczesniej partycjonowany. Wybierz typ tablicy
