@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.14 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.15 2019/08/14 13:02:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1242,6 +1242,11 @@ Do you want to use that?}
 
 message parttype_disklabel {BSD disklabel}
 message parttype_disklabel_short {disklabel}
+/*
+ * This is used on architectures with MBR above disklabel when there is
+ * no MBR on a disk.
+ */
+message parttype_only_disklabel {disklabel (NetBSD only)}
 
 message select_part_scheme
 {The disk seems not to have been partitioned before. Please select
