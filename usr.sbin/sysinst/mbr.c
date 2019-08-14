@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.19 2019/07/26 08:18:47 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.20 2019/08/14 13:02:23 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -880,7 +880,8 @@ mbr_calc_free_space(struct mbr_disk_partitions *parts)
 }
 
 static struct disk_partitions *
-mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len)
+mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len,
+    const struct disk_partitioning_scheme *scheme)
 {
 	struct mbr_disk_partitions *parts;
 
@@ -892,7 +893,7 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len)
 	if (!parts)
 		return NULL;
 
-	parts->dp.pscheme = &mbr_parts;
+	parts->dp.pscheme = scheme;
 	parts->dp.disk = disk;
 	if (len >= mbr_parts.size_limit)
 		len = mbr_parts.size_limit;
@@ -1629,7 +1630,8 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 
 		if (!force_empty)
 			myparts->dlabel = disklabel_parts.read_from_disk(
-			    myparts->dp.disk, part.start, part.size);
+			    myparts->dp.disk, part.start, part.size,
+			    &disklabel_parts);
 
 		if (myparts->dlabel == NULL && part.size > 0) {
 			/* we just created the outer partitions? */

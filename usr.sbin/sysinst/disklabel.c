@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.11 2019/08/07 10:08:04 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.12 2019/08/14 13:02:23 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -164,7 +164,8 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 }
 
 static struct disk_partitions *
-disklabel_parts_read(const char *disk, daddr_t start, daddr_t len)
+disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
+    const struct disk_partitioning_scheme *scheme)
 {
 	int fd;
 	char diskpath[MAXPATHLEN];
@@ -214,7 +215,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len)
 
 	if (len > disklabel_parts.size_limit)
 		len = disklabel_parts.size_limit;
-	parts->dp.pscheme = &disklabel_parts;
+	parts->dp.pscheme = scheme;
 	parts->dp.disk = disk;
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;

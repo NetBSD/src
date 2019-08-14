@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.9 2019/08/07 10:08:04 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.10 2019/08/14 13:02:23 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -249,7 +249,8 @@ update_part_from_wedge_info(struct gpt_disk_partitions *parts,
 }
 
 static struct disk_partitions *
-gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
+gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
+    const struct disk_partitioning_scheme *scheme)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
@@ -362,7 +363,7 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len)
 		return NULL;
 	}
 
-	parts->dp.pscheme = &gpt_parts;
+	parts->dp.pscheme = scheme;
 	parts->dp.disk = dev;
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = disk_size;
