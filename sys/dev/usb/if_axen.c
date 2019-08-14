@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.62 2019/08/11 08:57:36 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.63 2019/08/14 03:44:58 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,14 +23,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.62 2019/08/11 08:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.63 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/module.h>
 
 #include <netinet/in.h>		/* XXX for netinet/ip.h */
 #include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
@@ -969,31 +968,8 @@ axen_stop_cb(struct ifnet *ifp, int disable)
 	usbnet_unlock_mii_un_locked(un);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_axen, "usbnet");
-
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
-static int
-if_axen_modcmd(modcmd_t cmd, void *aux)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_axen,
-		    cfattach_ioconf_axen, cfdata_ioconf_axen);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_axen,
-		    cfattach_ioconf_axen, cfdata_ioconf_axen);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
+USBNET_MODULE(axen)

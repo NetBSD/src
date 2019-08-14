@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.25 2019/08/11 23:55:43 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.26 2019/08/14 03:44:58 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.25 2019/08/11 23:55:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.26 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.25 2019/08/11 23:55:43 mrg Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 
 #include <net/route.h>
 
@@ -1152,4 +1150,8 @@ ure_txcsum(struct mbuf *m)
 	return reg;
 }
 
-/* XXX module is built but no MODULE() or modcmd */
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+USBNET_MODULE(ure)

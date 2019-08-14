@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.66 2019/08/11 08:56:53 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.67 2019/08/14 03:44:58 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,16 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.66 2019/08/11 08:56:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.67 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/module.h>
-#include <sys/kernel.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/if_udavreg.h>
@@ -468,19 +465,21 @@ udav_csr_write1(struct usbnet *un, int offset, unsigned char ch)
 }
 
 static int
-udav_init_locked(struct ifnet *ifp)
+udav_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct mii_data * const mii = usbnet_mii(un);
 	uint8_t eaddr[ETHER_ADDR_LEN];
-	int rc;
+	int rc = 0;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_isowned(un);
+	usbnet_lock(un);
 
-	if (usbnet_isdying(un))
+	if (usbnet_isdying(un)) {
+		usbnet_unlock(un);
 		return EIO;
+	}
 
 	/* Cancel pending I/O and free all TX/RX buffers */
 	if (ifp->if_flags & IFF_RUNNING)
@@ -515,29 +514,22 @@ udav_init_locked(struct ifnet *ifp)
 	UDAV_CLRBIT(un, UDAV_GPR, UDAV_GPR_GEPIO0);
 
 	usbnet_unlock_mii_un_locked(un);
+	usbnet_unlock(un);
 
-	rc = 0;
-	if (mii) {
-		if ((rc = mii_mediachg(mii)) == ENXIO)
-			rc = 0;
-	}
+	if (mii && (rc = mii_mediachg(mii)) == ENXIO)
+		rc = 0;
 
 	if (rc != 0)
 		return rc;
 
-	return usbnet_init_rx_tx(un);
-}
-
-static int
-udav_init(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
 	usbnet_lock(un);
-	int ret = udav_init_locked(ifp);
+	if (usbnet_isdying(un))
+		rc = EIO;
+	else
+		rc = usbnet_init_rx_tx(un);
 	usbnet_unlock(un);
 
-	return ret;
+	return rc;
 }
 
 static void
@@ -880,31 +872,8 @@ udav_mii_statchg(struct ifnet *ifp)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_udav, "usbnet");
-
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
-static int
-if_udav_modcmd(modcmd_t cmd, void *aux)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_udav,
-		    cfattach_ioconf_udav, cfdata_ioconf_udav);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_udav,
-		    cfattach_ioconf_udav, cfdata_ioconf_udav);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
+USBNET_MODULE(udav)

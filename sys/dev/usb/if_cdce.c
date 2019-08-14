@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.64 2019/08/12 08:52:39 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.65 2019/08/14 03:44:58 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.64 2019/08/12 08:52:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.65 2019/08/14 03:44:58 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/usbcdc.h>
@@ -202,7 +201,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		}
 		/* Find endpoints. */
 		id = usbd_get_interface_descriptor(un->un_iface);
-		un->un_ed[USBNET_ENDPT_RX] = un->un_ed[USBNET_ENDPT_TX] = -1;
+		un->un_ed[USBNET_ENDPT_RX] = un->un_ed[USBNET_ENDPT_TX] = 0;
 		for (i = 0; i < id->bNumEndpoints; i++) {
 			ed = usbd_interface2endpoint_descriptor(un->un_iface, i);
 			if (!ed) {
@@ -225,15 +224,15 @@ cdce_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 		/* If we found something, try and use it... */
-		if (un->un_ed[USBNET_ENDPT_RX] != -1 && un->un_ed[USBNET_ENDPT_TX] != -1)
+		if (un->un_ed[USBNET_ENDPT_RX] != 0 && un->un_ed[USBNET_ENDPT_TX] != 0)
 			break;
 	}
 
-	if (un->un_ed[USBNET_ENDPT_RX] == -1) {
+	if (un->un_ed[USBNET_ENDPT_RX] == 0) {
 		aprint_error_dev(self, "could not find data bulk in\n");
 		return;
 	}
-	if (un->un_ed[USBNET_ENDPT_TX] == -1 ) {
+	if (un->un_ed[USBNET_ENDPT_TX] == 0) {
 		aprint_error_dev(self, "could not find data bulk out\n");
 		return;
 	}
@@ -305,7 +304,7 @@ cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	if (un->un_flags & CDCE_ZAURUS)
 		extra = sizeof(crc);
 
-	if (m->m_pkthdr.len > un->un_tx_bufsz - extra)
+	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - extra)
 		return 0;
 	length = m->m_pkthdr.len + extra;
 
@@ -317,3 +316,9 @@ cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	return length;
 }
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+USBNET_MODULE(cdce)

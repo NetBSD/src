@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.29 2019/08/11 23:55:43 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.30 2019/08/14 03:44:58 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,16 +21,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.29 2019/08/11 23:55:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.30 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kmem.h>
-#include <sys/kernel.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/usbdevs.h>
@@ -722,7 +720,7 @@ urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	usbnet_isowned_tx(un);
 
-	if (m->m_pkthdr.len > un->un_tx_bufsz - sizeof(*msg))
+	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - sizeof(*msg))
 		return 0;
 
 	msg = (struct rndis_packet_msg *)c->unc_buf;
@@ -1100,3 +1098,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, 0);
 }
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+USBNET_MODULE(urndis)
