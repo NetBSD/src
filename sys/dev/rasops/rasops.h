@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.47 2019/08/10 01:24:17 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.48 2019/08/14 00:51:10 rin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,6 +202,9 @@ void	rasops32_init(struct rasops_info *);
 
 #define	ATTR_BG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 16) & 0xf])
 #define	ATTR_FG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 24) & 0xf])
+
+#define	ATTR_MASK_BG __BITS(16, 19)
+#define	ATTR_MASK_FG __BITS(24, 27)
 
 #define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
 
