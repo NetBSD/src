@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.113 2019/08/11 23:55:43 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.114 2019/08/14 03:44:58 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.113 2019/08/11 23:55:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.114 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -95,11 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.113 2019/08/11 23:55:43 mrg Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/module.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/systm.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/usbhist.h>
@@ -1391,31 +1386,8 @@ axe_stop(struct ifnet *ifp, int disable)
 	usbnet_unlock_mii_un_locked(un);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_axe, "usbnet");
-
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
-static int
-if_axe_modcmd(modcmd_t cmd, void *aux)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_axe,
-		    cfattach_ioconf_axe, cfdata_ioconf_axe);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_axe,
-		    cfattach_ioconf_axe, cfdata_ioconf_axe);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
+USBNET_MODULE(axe)

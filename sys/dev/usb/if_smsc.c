@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.56 2019/08/11 23:55:43 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.57 2019/08/14 03:44:58 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,14 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.56 2019/08/11 23:55:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.57 2019/08/14 03:44:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/module.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/usbhist.h>
@@ -1107,31 +1106,8 @@ smsc_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	return frm_len;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_smsc, "usbnet");
-
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
-static int
-if_smsc_modcmd(modcmd_t cmd, void *aux)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_smsc,
-		    cfattach_ioconf_smsc, cfdata_ioconf_smsc);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_smsc,
-		    cfattach_ioconf_smsc, cfdata_ioconf_smsc);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
+USBNET_MODULE(smsc)
