@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.10 2019/08/11 01:29:45 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.11 2019/08/14 03:44:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -82,6 +82,7 @@
 #include <sys/mbuf.h>
 #include <sys/rndsource.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -232,6 +233,7 @@ struct usbnet {
 /* Various accessors. */
 
 void usbnet_set_link(struct usbnet *, bool);
+void usbnet_set_dying(struct usbnet *, bool);
 
 struct ifnet *usbnet_ifp(struct usbnet *);
 struct ethercom *usbnet_ec(struct usbnet *);
@@ -319,5 +321,40 @@ int	usbnet_activate(device_t, devact_t);
 
 /* stop backend */
 void	usbnet_stop(struct usbnet *, struct ifnet *, int);
+
+/* module hook up */
+
+#ifdef _MODULE
+#define USENET_INIT(name)						\
+	error = config_init_component(cfdriver_ioconf_##name,		\
+	    cfattach_ioconf_##name, cfdata_ioconf_##name);
+#define USENET_FINI(name)						\
+	error = config_fini_component(cfdriver_ioconf_##name,		\
+	    cfattach_ioconf_##name, cfdata_ioconf_##name);
+#else
+#define USENET_INIT(name)
+#define USENET_FINI(name)
+#endif
+
+#define USBNET_MODULE(name)						\
+									\
+MODULE(MODULE_CLASS_DRIVER, if_##name, "usbnet");			\
+									\
+static int								\
+if_##name##_modcmd(modcmd_t cmd, void *aux)				\
+{									\
+	int error = 0;							\
+									\
+	switch (cmd) {							\
+	case MODULE_CMD_INIT:						\
+		USENET_INIT(name)					\
+		return error;						\
+	case MODULE_CMD_FINI:						\
+		USENET_FINI(name)					\
+		return error;						\
+	default:							\
+		return ENOTTY;						\
+	}								\
+}
 
 #endif /* _DEV_USB_USBNET_H */
