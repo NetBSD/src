@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.38 2019/08/10 01:24:17 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.39 2019/08/14 00:51:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.38 2019/08/10 01:24:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.39 2019/08/14 00:51:10 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -109,7 +109,7 @@ rasops15_init(struct rasops_info *ri)
 	}
 
 #ifndef RASOPS_SMALL
-	stamp_attr = 0;
+	stamp_attr = -1;
 	stamp_ri = NULL;
 #endif
 }
