@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.50 2019/08/13 09:56:09 skrll Exp $
+#	$NetBSD: GENERIC,v 1.51 2019/08/14 15:08:53 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -306,6 +306,7 @@ gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
 mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
 armgtmr*	at mct?
+meson6timer* 	at fdt?			# Amlogic Timer
 sunxitimer* 	at fdt?			# Allwinner async timer
 sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
 tegratimer* 	at fdt?			# Timers
