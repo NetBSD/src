@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2018/04/08 15:48:39 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.18 2019/08/14 12:08:27 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,7 +25,7 @@ IMAGEENDIAN=	be
 .endif
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile master.passwd sshd_config ssh_host_dsa_key \
+		dot.profile master.passwd sshd_config ssh_host_rsa_key \
 		${NETBSDSRCDIR}/etc/group \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
