@@ -1,4 +1,4 @@
-/*	$NetBSD: a9ptmr.c,v 1.1 2019/08/10 17:03:59 skrll Exp $	*/
+/*	$NetBSD: a9ptmr.c,v 1.2 2019/08/14 09:20:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9ptmr.c,v 1.1 2019/08/10 17:03:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9ptmr.c,v 1.2 2019/08/14 09:20:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,7 @@ a9ptmr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ctl = a9ptmr_read(sc, TMR_CTL);
 
 	sc->sc_prescaler = 1;
+#if 0
 	/*
 	 * Let's hope the timer frequency isn't prime.
 	 */
@@ -154,13 +155,16 @@ a9ptmr_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	sc->sc_freq /= sc->sc_prescaler;
+#endif
 
-	aprint_debug_dev(sc->sc_dev, ": freq %d prescaler %d", sc->sc_freq,
+	aprint_debug(": freq %d prescaler %d", sc->sc_freq,
 	    sc->sc_prescaler);
 	sc->sc_ctl = TMR_CTL_INT_ENABLE | TMR_CTL_AUTO_RELOAD | TMR_CTL_ENABLE;
 	sc->sc_ctl |= __SHIFTIN(sc->sc_prescaler - 1, TMR_CTL_PRESCALER);
 
 	sc->sc_load = (sc->sc_freq / hz) - 1;
+
+	aprint_debug(": load %d ", sc->sc_load);
 
 	a9ptmr_init_cpu_clock(curcpu());
 
@@ -188,7 +192,6 @@ a9ptmr_delay(unsigned int n)
 	    curcpu()->ci_data.cpu_cc_freq / 2;
 	KASSERT(freq != 0);
 
-
 	const uint64_t counts_per_usec = freq / 1000000;
 	uint32_t delta, usecs, last, curr;
 
@@ -200,11 +203,11 @@ a9ptmr_delay(unsigned int n)
 	while (n > usecs) {
 		curr = a9ptmr_read(sc, TMR_CTR);
 
-		/* Check to see if the timer has wrapped around. */
-		if (curr < last)
-			delta += curr + (sc->sc_load - last);
+		/* Check to see if the timer has reloaded. */
+		if (curr > last)
+			delta += (sc->sc_load - curr) + last;
 		else
-			delta += curr - last;
+			delta += last - curr;
 
 		last = curr;
 
