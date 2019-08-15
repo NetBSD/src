@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.17 2019/08/15 09:51:12 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.18 2019/08/15 12:23:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1729,4 +1729,35 @@ sys/arch/evbarm/conf/ZEDBOARD			1.6
 	- improve AB_DEBUG output
 	- fix a9ptmr_delay to work with a decrementing counter!
 	[skrll, ticket #55]
+
+share/man/man9/rasops.9				1.18,1.19
+sys/arch/luna68k/dev/omrasops.c			1.21
+sys/dev/rasops/README				1.7
+sys/dev/rasops/rasops.c				1.102-1.122
+sys/dev/rasops/rasops.h				1.39-1.48
+sys/dev/rasops/rasops1-4_putchar.h		1.1-1.3
+sys/dev/rasops/rasops1.c			1.32-1.37
+sys/dev/rasops/rasops15.c			1.32-1.39
+sys/dev/rasops/rasops1_putchar_width.h		1.3-1.6
+sys/dev/rasops/rasops2.c			1.27-1.33
+sys/dev/rasops/rasops24.c			1.40-1.50
+sys/dev/rasops/rasops32.c			1.40-1.46
+sys/dev/rasops/rasops4.c			1.21-1.28
+sys/dev/rasops/rasops8.c			1.45-1.51
+sys/dev/rasops/rasops_bitops.h			1.19-1.25
+sys/dev/rasops/rasops_masks.c			1.10
+sys/dev/rasops/rasops_masks.h			1.9
+sys/dev/rasops/rasops_putchar.h			1.6-1.8
+sys/dev/rasops/rasops_putchar_aa.h		delete
+sys/dev/rasops/rasops_putchar_width.h		1.10-1.15
+sys/dev/wscons/wsdisplay_vcons.c		1.40
+sys/dev/wsfb/genfb.c				1.68-1.70
+
+	rasops(9): Major improvements for rasops(9) routines. General putchar
+	functions added for color depths 2 and 4. Width-optimized
+	putchar functions added for depth 32. Anti-aliasing supported
+	for depths 2 and 24. Shadow framebuffer supported for all
+	depths. A lot of bug fixes, both major and minor. Dedup more
+	than 20% of lines, or 50% of characters.
+	[rin, ticket #56]
 
