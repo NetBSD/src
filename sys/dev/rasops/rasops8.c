@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.44 2019/07/29 10:55:56 rin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.44.2.1 2019/08/15 12:21:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,16 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.44 2019/07/29 10:55:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.44.2.1 2019/08/15 12:21:27 martin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+
+#define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	8
 #include <dev/rasops/rasops.h>
 
 static void 	rasops8_putchar(void *, int, int, u_int, long);
@@ -49,14 +52,13 @@ static void 	rasops8_putchar8(void *, int, int, u_int, long);
 static void 	rasops8_putchar12(void *, int, int, u_int, long);
 static void 	rasops8_putchar16(void *, int, int, u_int, long);
 static void	rasops8_makestamp(struct rasops_info *ri, long);
-
-/*
- * 4x1 stamp for optimized character blitting
- */
-static uint32_t	stamp[16];
-static long	stamp_attr;
-static int	stamp_mutex;	/* XXX see note in README */
 #endif
+
+#ifndef RASOPS_SMALL
+/* stamp for optimized character blitting */
+static uint32_t			stamp[16];
+static long			stamp_attr;
+static struct rasops_info	*stamp_ri;
 
 /*
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
@@ -65,6 +67,7 @@ static int	stamp_mutex;	/* XXX see note in README */
 #define	STAMP_SHIFT(fb, n)	((n) ? (fb) >> 2 : (fb) << 2)
 #define	STAMP_MASK		(0xf << 2)
 #define	STAMP_READ(o)		(*(uint32_t *)((uint8_t *)stamp + (o)))
+#endif
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -101,35 +104,47 @@ rasops8_init(struct rasops_info *ri)
 #endif /* !RASOPS_SMALL */
 	default:
 		ri->ri_ops.putchar = rasops8_putchar;
-		break;
+		return;
 	}
+
+#ifndef RASOPS_SMALL
+	stamp_attr = -1;
+	stamp_ri = NULL;
+#endif
 }
 
-#define	RASOPS_DEPTH	8
-#include "rasops_putchar.h"
-#include "rasops_putchar_aa.h"
+/* rasops8_putchar */
+#undef	RASOPS_AA
+#include <dev/rasops/rasops_putchar.h>
+
+/* rasops8_putchar_aa */
+#define	RASOPS_AA
+#include <dev/rasops/rasops_putchar.h>
+#undef	RASOPS_AA
 
 #ifndef RASOPS_SMALL
 /*
- * Recompute the 4x1 blitting stamp.
+ * Recompute the blitting stamp.
  */
 static void
 rasops8_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t fg, bg;
 	int i;
+	uint32_t bg, fg;
 
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xff;
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xff;
 	stamp_attr = attr;
+	stamp_ri = ri;
+
+	bg = ATTR_BG(ri, attr) & 0xff;
+	fg = ATTR_FG(ri, attr) & 0xff;
 
 	for (i = 0; i < 16; i++) {
-#if BYTE_ORDER == BIG_ENDIAN
-#define NEED_LITTLE_ENDIAN_STAMP RI_BSWAP
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if ((ri->ri_flg & RI_BSWAP) == 0)
 #else
-#define NEED_LITTLE_ENDIAN_STAMP 0
+		if ((ri->ri_flg & RI_BSWAP) != 0)
 #endif
-		if ((ri->ri_flg & RI_BSWAP) == NEED_LITTLE_ENDIAN_STAMP) {
+		{
 			/* little endian */
 			stamp[i]  = (i & 8 ? fg : bg);
 			stamp[i] |= (i & 4 ? fg : bg) << 8;
@@ -145,16 +160,19 @@ rasops8_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	12
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
-#endif
+#endif /* !RASOPS_SMALL */

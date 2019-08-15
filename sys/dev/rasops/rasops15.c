@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.31 2019/07/29 10:55:56 rin Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.31.2.1 2019/08/15 12:21:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,16 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.31 2019/07/29 10:55:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.31.2.1 2019/08/15 12:21:27 martin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_rasops.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+
+#define	_RASOPS_PRIVATE
+#define	RASOPS_DEPTH	15
 #include <dev/rasops/rasops.h>
 
 static void 	rasops15_putchar(void *, int, int, u_int, long);
@@ -52,12 +55,10 @@ static void	rasops15_makestamp(struct rasops_info *, long);
 #endif
 
 #ifndef RASOPS_SMALL
-/*
- * 4x1 stamp for optimized character blitting
- */
-static uint32_t	stamp[32];
-static long	stamp_attr;
-static int	stamp_mutex;	/* XXX see note in readme */
+/* stamp for optimized character blitting */
+static uint32_t			stamp[32];
+static long			stamp_attr;
+static struct rasops_info	*stamp_ri;
 
 /*
  * offset = STAMP_SHIFT(fontbits, nibble #) & STAMP_MASK
@@ -104,13 +105,23 @@ rasops15_init(struct rasops_info *ri)
 #endif	/* !RASOPS_SMALL */
 	default:
 		ri->ri_ops.putchar = rasops15_putchar;
-		break;
+		return;
 	}
+
+#ifndef RASOPS_SMALL
+	stamp_attr = -1;
+	stamp_ri = NULL;
+#endif
 }
 
-#define	RASOPS_DEPTH	15
-#include "rasops_putchar.h"
-#include "rasops_putchar_aa.h"
+/* rasops15_putchar */
+#undef	RASOPS_AA
+#include <dev/rasops/rasops_putchar.h>
+
+/* rasops15_putchar_aa */
+#define	RASOPS_AA
+#include <dev/rasops/rasops_putchar.h>
+#undef	RASOPS_AA
 
 #ifndef RASOPS_SMALL
 /*
@@ -119,12 +130,14 @@ rasops15_init(struct rasops_info *ri)
 static void
 rasops15_makestamp(struct rasops_info *ri, long attr)
 {
-	uint32_t fg, bg;
 	int i;
+	uint32_t bg, fg;
 
-	fg = ri->ri_devcmap[((uint32_t)attr >> 24) & 0xf] & 0xffff;
-	bg = ri->ri_devcmap[((uint32_t)attr >> 16) & 0xf] & 0xffff;
 	stamp_attr = attr;
+	stamp_ri = ri;
+
+	bg = ATTR_BG(ri, attr) & 0xffff;
+	fg = ATTR_FG(ri, attr) & 0xffff;
 
 	for (i = 0; i < 32; i += 2) {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -141,16 +154,19 @@ rasops15_makestamp(struct rasops_info *ri, long attr)
 	}
 }
 
+/*
+ * Width-optimized putchar functions
+ */
 #define	RASOPS_WIDTH	8
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	12
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #define	RASOPS_WIDTH	16
-#include "rasops_putchar_width.h"
+#include <dev/rasops/rasops_putchar_width.h>
 #undef	RASOPS_WIDTH
 
 #endif /* !RASOPS_SMALL */
