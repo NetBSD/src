@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.114 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.115 2019/08/15 05:52:23 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.114 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.115 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -262,8 +262,7 @@ static int	axe_init(struct ifnet *);
 static usbd_status axe_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static usbd_status axe_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	axe_mii_statchg(struct ifnet *);
-static void	axe_rx_loop(struct usbnet *, struct usbd_xfer *,
-			    struct usbnet_chain *, uint32_t);
+static void	axe_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned axe_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
 
@@ -380,7 +379,6 @@ axe_mii_statchg(struct ifnet *ifp)
 		return;
 
 	val = 0;
-	usbnet_set_link(un, false);
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		val |= AXE_MEDIA_FULL_DUPLEX;
 		if (AXE_IS_178_FAMILY(un)) {
@@ -1010,8 +1008,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-axe_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
-	    struct usbnet_chain *c, uint32_t total_len)
+axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc * const sc = usbnet_softc(un);

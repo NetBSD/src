@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.63 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.64 2019/08/15 05:52:23 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.63 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.64 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -83,8 +83,7 @@ static int	axen_ioctl_cb(struct ifnet *, u_long, void *);
 static usbd_status axen_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static usbd_status axen_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	axen_mii_statchg(struct ifnet *);
-static void	axen_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-		    struct usbnet_chain *, uint32_t);
+static void	axen_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned	axen_tx_prepare(struct usbnet *, struct mbuf *,
 			        struct usbnet_chain *);
 static int	axen_init(struct ifnet *);
@@ -96,7 +95,7 @@ static struct usbnet_ops axen_ops = {
 	.uno_write_reg = axen_mii_write_reg,
 	.uno_statchg = axen_mii_statchg,
 	.uno_tx_prepare = axen_tx_prepare,
-	.uno_rx_loop = axen_rxeof_loop,
+	.uno_rx_loop = axen_rx_loop,
 	.uno_init = axen_init,
 };
 
@@ -168,7 +167,6 @@ axen_mii_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -755,8 +753,7 @@ axen_csum_flags_rx(struct ifnet *ifp, uint32_t pkt_hdr)
 }
 
 static void
-axen_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
-		struct usbnet_chain *c, uint32_t total_len)
+axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;

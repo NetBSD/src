@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.26 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.27 2019/08/15 05:52:23 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.26 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.27 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,8 +88,7 @@ static usbd_status ure_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	ure_miibus_statchg(struct ifnet *);
 static unsigned ure_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
-static void	ure_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-			       struct usbnet_chain *, uint32_t);
+static void	ure_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static int	ure_init(struct ifnet *);
 
 static int	ure_match(device_t, cfdata_t, void *);
@@ -105,7 +104,7 @@ static struct usbnet_ops ure_ops = {
 	.uno_write_reg = ure_mii_write_reg,
 	.uno_statchg = ure_miibus_statchg,
 	.uno_tx_prepare = ure_tx_prepare,
-	.uno_rx_loop = ure_rxeof_loop,
+	.uno_rx_loop = ure_rx_loop,
 	.uno_init = ure_init,
 };
 
@@ -300,7 +299,6 @@ ure_miibus_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -968,8 +966,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-ure_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
-	       struct usbnet_chain *c, uint32_t total_len)
+ure_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;

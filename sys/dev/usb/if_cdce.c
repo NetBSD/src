@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.65 2019/08/14 03:44:58 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.66 2019/08/15 05:52:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.65 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.66 2019/08/15 05:52:23 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -78,8 +78,7 @@ static void	cdce_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cdce, sizeof(struct usbnet), cdce_match, cdce_attach,
     usbnet_detach, usbnet_activate);
 
-static void	cdce_rx_loop(struct usbnet *, struct usbd_xfer *,
-			     struct usbnet_chain *, uint32_t);
+static void	cdce_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned	cdce_tx_prepare(struct usbnet *, struct mbuf *,
 				struct usbnet_chain *);
 static int	cdce_init(struct ifnet *);
@@ -272,8 +271,7 @@ cdce_init(struct ifnet *ifp)
 }
 
 static void
-cdce_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
-	     struct usbnet_chain *c, uint32_t total_len)
+cdce_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 
