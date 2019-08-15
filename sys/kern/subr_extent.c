@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.88 2019/08/15 09:03:09 skrll Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.89 2019/08/15 09:04:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.88 2019/08/15 09:03:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.89 2019/08/15 09:04:22 skrll Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -647,6 +647,8 @@ extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
 	if ((size < 1) || ((size - 1) > (subend - substart))) {
 		printf("extent_alloc_subregion: extent `%s', size 0x%lx\n",
 		    ex->ex_name, size);
+		printf("extent_alloc_subregion: substart 0x%lx, subend 0x%lx\n",
+		    substart, subend);
 		panic("extent_alloc_subregion: bad size");
 	}
 	if (alignment == 0)
