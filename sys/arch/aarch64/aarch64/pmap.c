@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2019/08/12 10:28:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2019/08/15 10:24:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2019/08/12 10:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2019/08/15 10:24:26 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2366,11 +2366,9 @@ pmap_db_pte_print(pt_entry_t pte, int level,
 		pr(", PA=%lx", l3pte_pa(pte));
 
 		pr(", %s", (pte & LX_BLKPAG_UXN) ?
-		    "UXN      " :
-		    "user-exec");
+		    "UXN" : "UX ");
 		pr(", %s", (pte & LX_BLKPAG_PXN) ?
-		   "PXN        " :
-		   "kernel-exec");
+		   "PXN" :  "PX ");
 
 		if (pte & LX_BLKPAG_CONTIG)
 			pr(", CONTIG");
@@ -2401,13 +2399,13 @@ pmap_db_pte_print(pt_entry_t pte, int level,
 
 		switch (pte & LX_BLKPAG_ATTR_MASK) {
 		case LX_BLKPAG_ATTR_NORMAL_WB:
-			pr(", WRITEBACK");
+			pr(", WB");
 			break;
 		case LX_BLKPAG_ATTR_NORMAL_NC:
-			pr(", NOCACHE");
+			pr(", NC");
 			break;
 		case LX_BLKPAG_ATTR_NORMAL_WT:
-			pr(", WHITETHRU");
+			pr(", WT");
 			break;
 		case LX_BLKPAG_ATTR_DEVICE_MEM:
 			pr(", DEVICE");
@@ -2421,7 +2419,7 @@ pmap_db_pte_print(pt_entry_t pte, int level,
 		if (pte & LX_BLKPAG_OS_WRITE)
 			pr(", pmap_write");
 		if (pte & LX_BLKPAG_OS_WIRED)
-			pr(", pmap_wired");
+			pr(", wired");
 	} else {
 		pr(" **ILLEGAL TYPE**");
 	}
