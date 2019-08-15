@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.41 2019/08/15 14:06:40 martin Exp $	*/
+/*	$NetBSD: machines.c,v 1.42 2019/08/15 19:53:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.41 2019/08/15 14:06:40 martin Exp $");
+__RCSID("$NetBSD: machines.c,v 1.42 2019/08/15 19:53:01 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: machines.c,v 1.41 2019/08/15 14:06:40 martin Exp $");
 
 struct ib_mach * const machines[] = {
 #ifdef	SINGLE_ARCH
-#define	IB_PREFIX(X)	ib_mach_##X
-#define	MY_ARCH(X) IB_PREFIX(X)
-    &MY_ARCH(SINGLE_ARCH),
+    &SINGLE_ARCH,
 #else
     &ib_mach_alpha,
     &ib_mach_amd64,
