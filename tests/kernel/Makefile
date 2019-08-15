@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.60 2019/06/07 21:18:16 christos Exp $
+# $NetBSD: Makefile,v 1.61 2019/08/15 08:46:09 kamil Exp $
 
 NOMAN=		# defined
 
@@ -66,12 +66,25 @@ CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
 
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}
+.if ${MKSANITIZER:Uno} == "yes"
+	# These symbols will be redefined by MKSANITIZER
+	${TOOL_SED} -i '/undef .*printf/d' ${.TARGET}
+.endif
+
 CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
 # Test explicitly tests failure modes.
 CPPFLAGS.t_subr_prf.c+=	-Wno-error=format-truncation
 .endif
+
+SANITIZER_RENAME_CLASSES+=		t_subr_prf
+SANITIZER_RENAME_FILES.t_subr_prf+=	t_subr_prf.c
+SANITIZER_RENAME_SYMBOL.t_subr_prf+=	snprintf
+SANITIZER_RENAME_SYMBOL.t_subr_prf+=	vsnprintf
+SANITIZER_RENAME_SYMBOL.t_subr_prf+=	sprintf
+SANITIZER_RENAME_SYMBOL.t_subr_prf+=	vsnprintf
+SANITIZER_RENAME_SYMBOL.t_subr_prf+=	vasprintf
 
 CLEANFILES+=	t_subr_prf.c
 
