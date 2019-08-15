@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.12 2012/08/13 12:37:18 wiz Exp $	*/
+/*	$NetBSD: lockd.c,v 1.13 2019/08/15 08:34:19 kamil Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.12 2012/08/13 12:37:18 wiz Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.13 2019/08/15 08:34:19 kamil Exp $");
 #endif
 
 /*
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: lockd.c,v 1.12 2012/08/13 12:37:18 wiz Exp $");
 #include <rpcsvc/nlm_prot.h>
 
 int		debug_level = 0;	/* 0 = no debugging syslog() calls */
-int		_rpcsvcdirty = 0;
+extern int	_rpcsvcdirty;
 
 int grace_expired;
 
