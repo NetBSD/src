@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.457 2019/07/25 07:45:57 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.458 2019/08/15 04:20:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457 2019/07/25 07:45:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.458 2019/08/15 04:20:59 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1611,6 +1611,8 @@ if_clone_destroy(const char *name)
 	struct if_clone *ifc;
 	struct ifnet *ifp;
 	struct psref psref;
+	int error;
+	int (*if_ioctl)(struct ifnet *, u_long, void *);
 
 	KASSERT(mutex_owned(&if_clone_mtx));
 
@@ -1627,6 +1629,7 @@ if_clone_destroy(const char *name)
 
 	/* We have to disable ioctls here */
 	IFNET_LOCK(ifp);
+	if_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = if_nullioctl;
 	IFNET_UNLOCK(ifp);
 
@@ -1636,7 +1639,16 @@ if_clone_destroy(const char *name)
 	 */
 	if_put(ifp, &psref);
 
-	return (*ifc->ifc_destroy)(ifp);
+	error = (*ifc->ifc_destroy)(ifp);
+
+	if (error != 0) {
+		/* We have to restore if_ioctl on error */
+		IFNET_LOCK(ifp);
+		ifp->if_ioctl = if_ioctl;
+		IFNET_UNLOCK(ifp);
+	}
+
+	return error;
 }
 
 static bool
