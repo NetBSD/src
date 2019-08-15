@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.34 2019/04/04 20:19:07 christos Exp $
+#	$NetBSD: files.kern,v 1.35 2019/08/15 12:24:08 maxv Exp $
 
 #
 # kernel sources
@@ -123,9 +123,7 @@ file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
 file	kern/subr_kleak.c		kleak
 file	kern/subr_kcov.c		kcov
-defflag	opt_kmem.h			KMEM_GUARD
-					KMEM_SIZE
-defparam opt_kmem.h			KMEM_GUARD_DEPTH
+defflag	opt_kmem.h			KMEM_SIZE
 file	kern/subr_kmem.c		kern
 file	kern/subr_kobj.c		kern
 file	kern/subr_kobj_vfs.c		kern
