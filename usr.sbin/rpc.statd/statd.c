@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.32 2018/01/23 21:06:26 sevan Exp $	*/
+/*	$NetBSD: statd.c,v 1.33 2019/08/15 08:34:19 kamil Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.32 2018/01/23 21:06:26 sevan Exp $");
+__RCSID("$NetBSD: statd.c,v 1.33 2019/08/15 08:34:19 kamil Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: statd.c,v 1.32 2018/01/23 21:06:26 sevan Exp $");
 
 struct sigaction sa;
 int     	debug = 0;		/* Controls syslog() for debug msgs */
-int     	_rpcsvcdirty = 0;	/* XXX ??? */
+extern int     	_rpcsvcdirty;
 static DB	*db;			/* Database file */
 
 Header		 status_info;
