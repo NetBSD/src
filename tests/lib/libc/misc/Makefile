@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/02/04 03:10:33 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2019/08/15 08:17:32 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -8,13 +8,15 @@ TESTS_C+=	t_ubsan
 TESTS_CXX+=	t_ubsanxx
 
 .PATH:		${NETBSDSRCDIR}/common/lib/libc/misc
-SRCS.t_ubsan=	t_ubsan.c ubsan.c
-SRCS.t_ubsanxx=	t_ubsanxx.cpp ubsan.c
+SRCS.t_ubsan=	t_ubsan.c
+SRCS.t_ubsanxx=	t_ubsanxx.cpp
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
 # These tests are designed to be used against micro-UBSan only.
 # micro-UBSan is used in these tests as a standalone libary only.
 CPPFLAGS+=		-DENABLE_TESTS
+SRCS.t_ubsan+=		ubsan.c
+SRCS.t_ubsanxx+=	ubsan.c
 UBSAN_FLAGS=		-fsanitize=undefined
 UBSAN_FLAGS+=		${${ACTIVE_CC} == "clang" :? -fsanitize=integer :}
 UBSAN_FLAGS+=		${${ACTIVE_CC} == "clang" :? -fsanitize=nullability :}
