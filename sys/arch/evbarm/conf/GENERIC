@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48 2019/07/25 20:27:45 skrll Exp $
+#	$NetBSD: GENERIC,v 1.48.2.1 2019/08/15 09:49:49 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -298,6 +298,8 @@ syscon*		at fdt? pass 1		# Generic System Controller
 #zynqslcr*	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
+a9ptmr* 	at fdt? pass 2		# ARM Cortex A5/A9 Private Timer
+arma9ptmr* 	at a9ptmr?
 a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
 arma9tmr* 	at a9tmr?
 gtmr*		at fdt? pass 1		# ARM Generic Timer

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.13 2019/04/26 22:46:03 sevan Exp $
+#	$NetBSD: DUOVERO,v 1.13.2.1 2019/08/15 09:49:49 martin Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -154,7 +154,7 @@ armperiph0	at mainbus?
 arml2cc0	at armperiph?				# L2 Cache Controller
 armgic0		at armperiph?				# Interrupt Controller
 arma9tmr0	at armperiph?				# Global Timer
-a9wdt0		at armperiph?				# Watchdog
+arma9wdt0	at armperiph?				# Watchdog
 
 # L3 Interconnect
 L3i0		at mainbus?

@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_clkc.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson8b_clkc.c,v 1.3.6.1 2019/08/15 09:49:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.3.6.1 2019/08/15 09:49:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,6 +74,7 @@ static int meson8b_clkc_match(device_t, cfdata_t, void *);
 static void meson8b_clkc_attach(device_t, device_t, void *);
 
 static const char * const compatible[] = {
+	"amlogic,meson8-clkc",
 	"amlogic,meson8b-clkc",
 	NULL
 };
@@ -333,18 +334,12 @@ meson8b_clkc_attach(device_t parent, device_t self, void *aux)
 {
 	struct meson_clk_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	bus_addr_t addr;
-	bus_size_t size;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_bst = faa->faa_bst;
-	if (fdtbus_get_reg(sc->sc_phandle, MESON8B_CLKC_REG_INDEX, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(sc->sc_phandle));
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get syscon registers\n");
 		return;
 	}
 
