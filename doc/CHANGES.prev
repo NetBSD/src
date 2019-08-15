@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.145 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.146 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12626,4 +12626,10 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	dhcpcd(8): Import dhcpcd-8.0.1. [roy 20190725]
 	mac68k: Add genfb(4) framebuffer driver. [rin 20190726]
 	dhcpcd(8): Import dhcpcd-8.0.2. [roy 20190730]
+	rasops(9): Major improvements for rasops(9) routines. General putchar
+		functions added for color depths 2 and 4. Width-optimized
+		putchar functions added for depth 32. Anti-aliasing supported
+		for depths 2 and 24. Shadow framebuffer supported for all
+		depths. A lot of bug fixes, both major and minor. Dedup more
+		than 20% of lines, or 50% of characters. [rin 20190810]
 
