@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.6 2019/08/15 08:33:14 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.7 2019/08/15 08:37:13 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -442,7 +442,7 @@ structure which contains these members:
 Stop interface (optional.)
 .It Ft int Fn (*uno_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
 Simple ioctl callback (optional.)
-.It Ft int Fn (*uno_override_ioctl "struct ifnet *ifp" "u_long cmd" "void *data"
+.It Ft int Fn (*uno_override_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
 Full ioctl callback (optional.)
 .It Ft int Fn (*uno_init) "struct ifnet *ifp"
 Initialize (bring up) interface.
@@ -597,9 +597,9 @@ enqueued with the higher layers using either
 for devices that currently use
 .Fn if_input .
 The Rx lock will be held during this call, see
-.Xr Fn usbnet_lock_rx
+.Fn usbnet_lock_rx
 and
-.Xr Fn usbnet_unlock_rx .
+.Fn usbnet_unlock_rx .
 .Pp
 The
 .Fn uno_tx_prepare
@@ -615,9 +615,9 @@ more than the chain buffer size, as set in the
 member.
 This callback is only called once per packet.
 The Tx lock will be held during this call, see
-.Xr Fn usbnet_lock_tx
+.Fn usbnet_lock_tx
 and
-.Xr Fn usbnet_unlock_tx .
+.Fn usbnet_unlock_tx .
 .Pp
 The
 .Fa struct usbnet_chain
@@ -648,9 +648,9 @@ Handle a status change event for this interface.
 .El
 The read and write callbacks are called with the MII lock held.
 See
-.Xr usbnet_lock_mii
+.Fn usbnet_lock_mii
 and
-.Xr usbnet_unlock_mii .
+.Fn usbnet_unlock_mii .
 .Sh INTERRUPT PIPE
 The interrupt specific callback,
 .Dq uno_intr ,
