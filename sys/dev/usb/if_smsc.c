@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.57 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.58 2019/08/15 05:52:23 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.57 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.58 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -190,8 +190,7 @@ usbd_status	 smsc_miibus_writereg(struct usbnet *, int, int, uint16_t);
 static int	 smsc_ioctl_cb(struct ifnet *, u_long, void *);
 static unsigned	 smsc_tx_prepare(struct usbnet *, struct mbuf *,
 		     struct usbnet_chain *);
-static void	 smsc_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-		    struct usbnet_chain *, uint32_t);
+static void	 smsc_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 
 static struct usbnet_ops smsc_ops = {
 	.uno_stop = smsc_stop_cb,
@@ -200,7 +199,7 @@ static struct usbnet_ops smsc_ops = {
 	.uno_write_reg = smsc_miibus_writereg,
 	.uno_statchg = smsc_miibus_statchg,
 	.uno_tx_prepare = smsc_tx_prepare,
-	.uno_rx_loop = smsc_rxeof_loop,
+	.uno_rx_loop = smsc_rx_loop,
 	.uno_init = smsc_init,
 };
 
@@ -347,7 +346,6 @@ smsc_miibus_statchg(struct ifnet *ifp)
 	uint32_t flow;
 	uint32_t afc_cfg;
 
-	usbnet_set_link(un, false);
 	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
 	    (IFM_ACTIVE | IFM_AVALID)) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -938,8 +936,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-smsc_rxeof_loop(struct usbnet * un, struct usbd_xfer *xfer,
-    struct usbnet_chain *c, uint32_t total_len)
+smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct smsc_softc * const sc = usbnet_softc(un);
