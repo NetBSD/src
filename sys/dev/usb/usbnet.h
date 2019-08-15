@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.11 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.12 2019/08/15 05:52:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -76,6 +76,9 @@
  *     transmit queue and use the send callback for the given mbuf.
  *     the usb callback will use usbnet_txeof() for the transmit
  *     completion function (internal to usbnet)
+ *   - there is special interrupt pipe handling
+ * - timer/tick:
+ *   - the uno_tick callback will be called once a second if present.
  */
 
 #include <sys/device.h>
@@ -146,8 +149,10 @@ typedef void (*usbnet_mii_statchg_cb)(struct ifnet *);
 typedef unsigned (*usbnet_tx_prepare_cb)(struct usbnet *, struct mbuf *,
 					 struct usbnet_chain *);
 /* Receive some packets callback. */
-typedef void (*usbnet_rx_loop_cb)(struct usbnet *, struct usbd_xfer *,
-			          struct usbnet_chain *, uint32_t);
+typedef void (*usbnet_rx_loop_cb)(struct usbnet *, struct usbnet_chain *,
+				  uint32_t);
+/* Tick callback. */
+typedef void (*usbnet_tick_cb)(struct usbnet *);
 /* Interrupt pipe callback. */
 typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
 
@@ -161,6 +166,7 @@ struct usbnet_ops {
 	usbnet_mii_statchg_cb	uno_statchg;
 	usbnet_tx_prepare_cb	uno_tx_prepare;
 	usbnet_rx_loop_cb	uno_rx_loop;
+	usbnet_tick_cb		uno_tick;
 	usbnet_intr_cb		uno_intr;
 };
 

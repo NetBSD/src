@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.30 2019/08/14 03:44:58 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.31 2019/08/15 05:52:23 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.30 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.31 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -67,8 +67,7 @@ static void urndis_watchdog(struct ifnet *);
 #endif
 
 static int urndis_init(struct ifnet *);
-static void urndis_rx_loop(struct usbnet *, struct usbd_xfer *,
-			   struct usbnet_chain *, uint32_t);
+static void urndis_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned urndis_tx_prepare(struct usbnet *, struct mbuf *,
 				  struct usbnet_chain *);
 
@@ -747,8 +746,7 @@ urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-urndis_rx_loop(struct usbnet * un, struct usbd_xfer *xfer,
-	       struct usbnet_chain *c, uint32_t total_len)
+urndis_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct rndis_packet_msg	*msg;
 	struct ifnet		*ifp = usbnet_ifp(un);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.67 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.68 2019/08/15 05:52:23 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.67 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.68 2019/08/15 05:52:23 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -67,8 +67,7 @@ static void udav_chip_init(struct usbnet *);
 
 static unsigned udav_tx_prepare(struct usbnet *, struct mbuf *,
 			        struct usbnet_chain *);
-static void udav_rxeof_loop(struct usbnet *, struct usbd_xfer *,
-			    struct usbnet_chain *, uint32_t);
+static void udav_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static void udav_stop_cb(struct ifnet *, int);
 static int udav_ioctl_cb(struct ifnet *, u_long, void *);
 static usbd_status udav_mii_read_reg(struct usbnet *, int, int, uint16_t *);
@@ -139,7 +138,7 @@ static struct usbnet_ops udav_ops = {
 	.uno_write_reg = udav_mii_write_reg,
 	.uno_statchg = udav_mii_statchg,
 	.uno_tx_prepare = udav_tx_prepare,
-	.uno_rx_loop = udav_rxeof_loop,
+	.uno_rx_loop = udav_rx_loop,
 	.uno_init = udav_init,
 };
 
@@ -252,8 +251,6 @@ udav_attach(device_t parent, device_t self, void *aux)
 	}
 
 	bool have_mii = !ISSET(un->un_flags, UDAV_NO_PHY);
-	if (!have_mii)
-		usbnet_set_link(un, true);
 
 	/* initialize interface information */
 	usbnet_attach_ifp(un, have_mii,
@@ -688,8 +685,7 @@ udav_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-udav_rxeof_loop(struct usbnet *un, struct usbd_xfer *xfer,
-	        struct usbnet_chain *c, uint32_t total_len)
+udav_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
@@ -863,7 +859,6 @@ udav_mii_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	usbnet_set_link(un, false);
 	if (mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		DPRINTF(("%s: %s: got link\n",
