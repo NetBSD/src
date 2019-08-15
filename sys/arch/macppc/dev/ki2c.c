@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.25 2018/03/08 21:53:20 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.26 2019/08/15 22:35:39 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -84,13 +84,13 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
-	uint32_t addr, channel;
+	uint32_t addr, channel, reg;
 	int rate, child, /*namelen,*/ i2cbus;
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
-	int devs;
-	char compat[256];
+	int devs, devc;
+	char compat[256], num[8], descr[32];
 	prop_dictionary_t dev;
 	prop_data_t data;
 	char name[32];
@@ -178,6 +178,18 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		prop_object_release(data);
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", devs);
+		/* look for location info for sensors */
+		devc = OF_child(devs);
+		while (devc != 0) {
+			if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
+			if (OF_getprop(devc, "location", descr, 32) <= 0)
+				goto nope;
+			DPRINTF("found '%s' at %02x\n", descr, reg);
+			snprintf(num, 7, "s%02x", reg);
+			prop_dictionary_set_cstring(dev, num, descr);
+		nope:
+			devc = OF_peer(devc);
+		}
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:
