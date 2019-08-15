@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.163 2019/08/11 11:17:35 skrll Exp $
+#	$NetBSD: files.usb,v 1.164 2019/08/15 08:02:32 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -344,7 +344,7 @@ attach	cdce at usbifif
 file	dev/usb/if_cdce.c		cdce
 
 # CATC USB-EL1201A
-device	cue: arp, ether, ifnet
+device	cue: arp, ether, ifnet, usbnet
 attach	cue at usbdevif
 file	dev/usb/if_cue.c		cue
 
@@ -359,7 +359,7 @@ attach	upl at usbdevif
 file	dev/usb/if_upl.c		upl
 
 # Realtek RTL8150L(M)
-device	url: arp, ether, ifnet, mii
+device	url: arp, ether, ifnet, mii, usbnet
 attach	url at usbdevif
 file	dev/usb/if_url.c		url
 
@@ -374,7 +374,7 @@ attach	axen at usbdevif
 file	dev/usb/if_axen.c		axen
 
 # Microchip LAN750x and LAN85xx
-device	mue: arp, ether, ifnet, mii, mii_phy
+device	mue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	mue at usbdevif
 file	dev/usb/if_mue.c		mue
 
