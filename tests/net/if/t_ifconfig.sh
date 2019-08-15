@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.20 2019/07/04 02:46:40 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.21 2019/08/15 04:21:33 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,6 +68,11 @@ ifconfig_create_destroy_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::1
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+
+	# Check if ifconfig (ioctl) works after a failure of ifconfig destroy
+	atf_check -s exit:0 -o ignore rump.ifconfig lo0
+	atf_check -s not-exit:0 -e ignore rump.ifconfig lo0 destroy
+	atf_check -s exit:0 -o ignore rump.ifconfig lo0
 
 	unset RUMP_SERVER
 }
