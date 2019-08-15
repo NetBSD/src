@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.16 2019/08/13 14:59:01 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.17 2019/08/15 09:51:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1693,4 +1693,40 @@ sys/arch/arm/include/armreg.h			1.128
 
 	Add support for physical timers and sprinkle isb where needed.
 	[jmcneill, ticket #54]
+
+sys/arch/arm/amlogic/meson8b_clkc.c		1.4
+sys/arch/arm/amlogic/meson8b_pinctrl.c		1.2
+sys/arch/arm/amlogic/meson_platform.c		1.12,1.13
+sys/arch/arm/cortex/a9ptmr.c			1.1,1.2
+sys/arch/arm/cortex/a9ptmr_var.h		1.1
+sys/arch/arm/cortex/a9tmr_var.h			1.7
+sys/arch/arm/cortex/a9wdt.c			1.9,1.10
+sys/arch/arm/cortex/files.cortex		1.12
+sys/arch/arm/dts/meson8b-odroidc1.dts		1.4
+sys/arch/arm/dts/meson8b.dtsi			1.6,1.7
+sys/arch/arm/fdt/a9ptmr_fdt.c			1.1
+sys/arch/arm/fdt/a9wdt_fdt.c			1.1
+sys/arch/arm/fdt/files.fdt			1.29
+sys/arch/evbarm/conf/BCM5301X			1.34
+sys/arch/evbarm/conf/BCM56340			1.19
+sys/arch/evbarm/conf/CUBOX-I			1.23
+sys/arch/evbarm/conf/DUOVERO			1.14
+sys/arch/evbarm/conf/GENERIC			1.50
+sys/arch/evbarm/conf/HUMMINGBOARD		1.9
+sys/arch/evbarm/conf/NITROGEN6X			1.24
+sys/arch/evbarm/conf/PANDABOARD			1.30
+sys/arch/evbarm/conf/PARALLELLA			1.7
+sys/arch/evbarm/conf/ZEDBOARD			1.6
+
+	Catch up to recent mainline dts changes.
+	Add a driver for the A5/A9 Private timer.
+	FDTise the Watchdog driver.
+	Update for recent a9wdt changes.
+	Updates to get Odroid-C1 in better shape since the last DTS import.
+	Add eth_rxd3 and eth_rxd2 pinctrl groups.
+	a9ptmr.c:
+	- don't use prescaler
+	- improve AB_DEBUG output
+	- fix a9ptmr_delay to work with a decrementing counter!
+	[skrll, ticket #55]
 
