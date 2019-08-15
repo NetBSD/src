@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.14 2019/08/14 03:44:58 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.15 2019/08/15 05:52:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.14 2019/08/14 03:44:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.15 2019/08/15 05:52:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,8 +99,6 @@ static int usbnet_modcmd(modcmd_t, void *);
 #define usbnetdebug 0
 #else
 static int usbnetdebug = 1;
-
-int     sysctl_hw_usbnet_setup(SYSCTLFN_PROTO);
 
 SYSCTL_SETUP(sysctl_hw_usbnet_setup, "sysctl hw.usbnet setup")
 {
@@ -191,10 +189,16 @@ uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-uno_rx_loop(struct usbnet *un, struct usbd_xfer *xfer,
-	    struct usbnet_chain *c, uint32_t total_len)
+uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
-	(*un->un_ops->uno_rx_loop)(un, xfer, c, total_len);
+	(*un->un_ops->uno_rx_loop)(un, c, total_len);
+}
+
+static void
+uno_tick(struct usbnet *un)
+{
+	if (un->un_ops->uno_tick)
+		(*un->un_ops->uno_tick)(un);
 }
 
 static void
@@ -323,7 +327,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	uno_rx_loop(un, xfer, c, total_len);
+	uno_rx_loop(un, c, total_len);
 	usbnet_isowned_rx(un);
 
 done:
@@ -392,7 +396,6 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 static void
 usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = priv;
 	struct usbnet_private * const unp = un->un_pri;
 	struct usbnet_intr * const uni = un->un_intr;
@@ -430,8 +433,11 @@ usbnet_start_locked(struct ifnet *ifp)
 	usbnet_isowned_tx(un);
 	KASSERT(cd->uncd_tx_cnt <= un->un_tx_list_cnt);
 
-	if (!unp->unp_link || (ifp->if_flags & IFF_RUNNING) == 0)
+	if (!unp->unp_link || (ifp->if_flags & IFF_RUNNING) == 0) {
+		DPRINTF("start called no link (%x) or running (flags %x)",
+		    unp->unp_link, ifp->if_flags, 0, 0);
 		return;
+	}
 
 	idx = cd->uncd_tx_prod;
 	while (cd->uncd_tx_cnt < un->un_tx_list_cnt) {
@@ -1015,7 +1021,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	unp->unp_timer = 0;
 
 	callout_stop(&unp->unp_stat_ch);
-	unp->unp_link = false;
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
@@ -1110,6 +1115,9 @@ usbnet_tick_task(void *arg)
 		if (!unp->unp_link)
 			(*mii->mii_statchg)(ifp);
 	}
+
+	/* Call driver if requested. */
+	uno_tick(un);
 
 	mutex_enter(&unp->unp_lock);
 	if (--unp->unp_refcnt < 0)
