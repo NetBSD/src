@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.254 2019/08/03 09:31:07 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.255 2019/08/16 10:41:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.254 2019/08/03 09:31:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.255 2019/08/16 10:41:35 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -767,6 +767,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_drain_hook = NULL;
 	pp->pr_drain_hook_arg = NULL;
 	pp->pr_freecheck = NULL;
+	pp->pr_redzone = false;
 	pool_redzone_init(pp, size);
 	pool_quarantine_init(pp);
 
