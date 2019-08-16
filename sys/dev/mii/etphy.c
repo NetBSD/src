@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.4 2019/03/25 09:29:08 msaitoh Exp $	*/
+/*	$NetBSD: etphy.c,v 1.5 2019/08/16 15:17:31 msaitoh Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.4 2019/03/25 09:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.5 2019/08/16 15:17:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,13 @@ __KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.4 2019/03/25 09:29:08 msaitoh Exp $");
 #define ETPHY_SR_FDX		0x0080
 
 
-int	etphy_service(struct mii_softc *, struct mii_data *, int);
-void	etphy_attach(device_t, device_t, void *);
-int	etphy_match(device_t, cfdata_t, void *);
-void	etphy_reset(struct mii_softc *);
-void	etphy_status(struct mii_softc *);
+static int	etphy_service(struct mii_softc *, struct mii_data *, int);
+static void	etphy_attach(device_t, device_t, void *);
+static int	etphy_match(device_t, cfdata_t, void *);
+static void	etphy_reset(struct mii_softc *);
+static void	etphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs etphy_funcs = {
+static const struct mii_phy_funcs etphy_funcs = {
 	etphy_service, etphy_status, etphy_reset,
 };
 
@@ -133,7 +133,7 @@ static const struct etphy_dsp {
 	{ 0x8010,	46     }	/* IdlguardTime */
 };
 
-int
+static int
 etphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -144,7 +144,7 @@ etphy_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 etphy_attach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
@@ -185,7 +185,7 @@ etphy_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-int
+static int
 etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -229,7 +229,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
 				PHY_WRITE(sc, MII_BMCR,
-					  bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
+				    bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
 			}
 		}
 		break;
@@ -252,7 +252,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return 0;
 }
 
-void
+static void
 etphy_reset(struct mii_softc *sc)
 {
 	uint16_t reg;
@@ -263,8 +263,7 @@ etphy_reset(struct mii_softc *sc)
 		PHY_READ(sc, MII_PHYIDR2, &reg);
 
 		PHY_READ(sc, ETPHY_CTRL, &reg);
-		PHY_WRITE(sc, ETPHY_CTRL,
-		    ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1);
+		PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1);
 
 		PHY_WRITE(sc, ETPHY_INDEX, ETPHY_INDEX_MAGIC);
 		PHY_READ(sc, ETPHY_DATA, &reg);
@@ -294,13 +293,13 @@ etphy_reset(struct mii_softc *sc)
 
 	PHY_READ(sc, MII_BMCR, &reg);
 	PHY_READ(sc, ETPHY_CTRL, &reg);
-	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN |  BMCR_S1000);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_S1000);
 	PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_RSV1);
 
 	mii_phy_reset(sc);
 }
 
-void
+static void
 etphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
