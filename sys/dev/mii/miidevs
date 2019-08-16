@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.153 2019/06/06 16:04:13 thorpej Exp $
+$NetBSD: miidevs,v 1.154 2019/08/16 15:19:48 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,8 @@ oui xxXAQTI			0xace000	XaQti Corp.
 /*
  * Agere PHYs
  */
-model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
+model AGERE ET1011		0x0001 ET1011 10/100/1000baseT PHY
+model AGERE ET1011C		0x0004 ET1011C 10/100/1000baseT PHY
 
 /* Asix semiconductor PHYs */
 model xxASIX AX88X9X		0x0031 Ax88x9x internal PHY
