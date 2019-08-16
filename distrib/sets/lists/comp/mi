@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2278.2.2 2019/08/16 19:23:52 martin Exp $
+#	$NetBSD: mi,v 1.2278.2.3 2019/08/16 19:28:26 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2094,6 +2094,7 @@
 ./usr/include/gcc-7/sanitizer/allocator_interface.h	comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/asan_interface.h	comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=7
+./usr/include/gcc-7/sanitizer/lsan_interface.h	comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=7
 ./usr/include/gcc-7/stdatomic.h			comp-gcc-include	gcc=7
 ./usr/include/gelf.h				comp-c-include
