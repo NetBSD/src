@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.5 2019/08/16 15:17:31 msaitoh Exp $	*/
+/*	$NetBSD: etphy.c,v 1.6 2019/08/16 15:24:09 msaitoh Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.5 2019/08/16 15:17:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.6 2019/08/16 15:24:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ static const struct mii_phy_funcs etphy_funcs = {
 
 static const struct mii_phydesc etphys[] = {
 	MII_PHY_DESC(AGERE, ET1011),
+	MII_PHY_DESC(AGERE, ET1011C),
 	MII_PHY_END,
 };
 
@@ -258,6 +259,11 @@ etphy_reset(struct mii_softc *sc)
 	uint16_t reg;
 	int i;
 
+	if (sc->mii_mpd_model == MII_MODEL_AGERE_ET1011) {
+		mii_phy_reset(sc);
+		return;
+	}
+
 	for (i = 0; i < 2; ++i) {
 		PHY_READ(sc, MII_PHYIDR1, &reg);
 		PHY_READ(sc, MII_PHYIDR2, &reg);
@@ -339,7 +345,7 @@ etphy_status(struct mii_softc *sc)
 	}
 
 	if (sr & ETPHY_SR_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
 }
