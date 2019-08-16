@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.15 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.16 2019/08/16 08:38:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.15 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.16 2019/08/16 08:38:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,7 +211,7 @@ uno_intr(struct usbnet *un, usbd_status status)
 /* Interrupt handling. */
 
 static struct mbuf *
-usbnet_newbuf(void)
+usbnet_newbuf(size_t buflen)
 {
 	struct mbuf *m;
 
@@ -219,14 +219,16 @@ usbnet_newbuf(void)
 	if (m == NULL)
 		return NULL;
 
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
-		return NULL;
+	if (buflen > MHLEN - ETHER_ALIGN) {
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m);
+			return NULL;
+		}
 	}
 
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	m_adj(m, ETHER_ALIGN);
+	m->m_len = m->m_pkthdr.len = buflen;
 
 	return m;
 }
@@ -248,18 +250,17 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 
 	usbnet_isowned_rx(un);
 
-	m = usbnet_newbuf();
+	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
 
 	m_set_rcvif(m, ifp);
-	m->m_pkthdr.len = m->m_len = buflen;
 	m->m_pkthdr.csum_flags = csum_flags;
 	m->m_pkthdr.csum_data = csum_data;
 	m->m_flags |= mbuf_flags;
-	memcpy(mtod(m, char *), buf, buflen);
+	memcpy(mtod(m, uint8_t *), buf, buflen);
 
 	/* push the packet up */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -274,14 +275,13 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 
 	usbnet_isowned_rx(un);
 
-	m = usbnet_newbuf();
+	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
 
 	m_set_rcvif(m, ifp);
-	m->m_pkthdr.len = m->m_len = buflen;
 	memcpy(mtod(m, char *), buf, buflen);
 
 	/* push the packet up */
@@ -576,7 +576,7 @@ usbnet_rx_list_fini(struct usbnet * const un)
 /* End of common RX functions */
 
 static void
-usbnet_rx_start_pipes(struct usbnet * const un, usbd_callback cb)
+usbnet_rx_start_pipes(struct usbnet * const un)
 {
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
@@ -589,7 +589,7 @@ usbnet_rx_start_pipes(struct usbnet * const un, usbd_callback cb)
 		struct usbnet_chain *c = &cd->uncd_rx_chain[i];
 
 		usbd_setup_xfer(c->unc_xfer, c, c->unc_buf, un->un_rx_bufsz,
-		    un->un_rx_xfer_flags, USBD_NO_TIMEOUT, cb);
+		    un->un_rx_xfer_flags, USBD_NO_TIMEOUT, usbnet_rxeof);
 		usbd_transfer(c->unc_xfer);
 	}
 
@@ -769,7 +769,7 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	}
 
 	/* Start up the receive pipe(s). */
-	usbnet_rx_start_pipes(un, usbnet_rxeof);
+	usbnet_rx_start_pipes(un);
 
 	/* Indicate we are up and running. */
 	KASSERT(ifp->if_softc == NULL || IFNET_LOCKED(ifp));
