@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.27 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.28 2019/08/16 08:29:20 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.27 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.28 2019/08/16 08:29:20 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.27 2019/08/15 05:52:23 mrg Exp $");
 #ifdef URE_DEBUG
 #define DPRINTF(x)	do { if (uredebug) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (uredebug >= (n)) printf x; } while (0)
-int	uredebug = 1;
+int	uredebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
