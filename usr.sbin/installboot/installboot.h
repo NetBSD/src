@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.40 2019/05/07 05:02:42 thorpej Exp $	*/
+/*	$NetBSD: installboot.h,v 1.40.2.1 2019/08/16 19:20:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ int		ext2fs_findstage2(ib_params *, uint32_t *, ib_block *);
 extern struct ib_mach ib_mach_alpha;
 extern struct ib_mach ib_mach_amd64;
 extern struct ib_mach ib_mach_amiga;
+extern struct ib_mach ib_mach_emips;
 extern struct ib_mach ib_mach_evbarm;
 extern struct ib_mach ib_mach_ews4800mips;
 extern struct ib_mach ib_mach_hp300;
