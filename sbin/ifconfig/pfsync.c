@@ -1,4 +1,4 @@
-/*	$NetBSD: pfsync.c,v 1.1 2009/09/14 10:36:49 degroote Exp $	*/
+/*	$NetBSD: pfsync.c,v 1.2 2019/08/16 10:33:17 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfsync.c,v 1.1 2009/09/14 10:36:49 degroote Exp $");
+__RCSID("$NetBSD: pfsync.c,v 1.2 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -199,7 +199,7 @@ setpfsync_peer(prop_dictionary_t env, prop_dictionary_t oenv)
 
 		memcpy(&pfsyncr.pfsyncr_syncpeer.s_addr, &s->sin_addr,
 		    MIN(sizeof(pfsyncr.pfsyncr_syncpeer.s_addr),
-		    peerpfx->pfx_addr.sa_len));	   
+		    peerpfx->pfx_addr.sa_len));
 	} else {
 		memset(&pfsyncr.pfsyncr_syncpeer.s_addr, 0,
 		    sizeof(pfsyncr.pfsyncr_syncpeer.s_addr));

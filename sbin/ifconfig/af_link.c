@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.7 2014/01/19 22:31:13 matt Exp $	*/
+/*	$NetBSD: af_link.c,v 1.8 2019/08/16 10:33:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,15 +27,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.7 2014/01/19 22:31:13 matt Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.8 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
-#include <net/if_dl.h> 
+#include <net/if.h>
+#include <net/if_dl.h>
 
 #include <assert.h>
 #include <err.h>
