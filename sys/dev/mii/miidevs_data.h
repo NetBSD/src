@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs_data.h,v 1.139 2019/06/06 16:05:45 thorpej Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.140 2019/08/16 15:20:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.153 2019/06/06 16:04:13 thorpej Exp
+ *	NetBSD: miidevs,v 1.154 2019/08/16 15:19:48 msaitoh Exp
  */
 
 /*-
@@ -43,6 +43,7 @@ struct mii_knowndev {
 };
 struct mii_knowndev mii_knowndevs[] = {
  { MII_OUI_AGERE, MII_MODEL_AGERE_ET1011, MII_STR_AGERE_ET1011 },
+ { MII_OUI_AGERE, MII_MODEL_AGERE_ET1011C, MII_STR_AGERE_ET1011C },
  { MII_OUI_xxASIX, MII_MODEL_xxASIX_AX88X9X, MII_STR_xxASIX_AX88X9X },
  { MII_OUI_yyASIX, MII_MODEL_yyASIX_AX88772, MII_STR_yyASIX_AX88772 },
  { MII_OUI_yyASIX, MII_MODEL_yyASIX_AX88772A, MII_STR_yyASIX_AX88772A },

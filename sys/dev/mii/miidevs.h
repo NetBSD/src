@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.151 2019/06/06 16:05:45 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.152 2019/08/16 15:20:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.153 2019/06/06 16:04:13 thorpej Exp
+ *	NetBSD: miidevs,v 1.154 2019/08/16 15:19:48 msaitoh Exp
  */
 
 /*-
@@ -131,8 +131,10 @@
 /*
  * Agere PHYs
  */
-#define	MII_MODEL_AGERE_ET1011	0x0004
-#define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+#define	MII_MODEL_AGERE_ET1011	0x0001
+#define	MII_STR_AGERE_ET1011	"ET1011 10/100/1000baseT PHY"
+#define	MII_MODEL_AGERE_ET1011C	0x0004
+#define	MII_STR_AGERE_ET1011C	"ET1011C 10/100/1000baseT PHY"
 
 /* Asix semiconductor PHYs */
 #define	MII_MODEL_xxASIX_AX88X9X	0x0031
