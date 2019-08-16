@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.319 2019/01/21 21:11:54 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.319.2.1 2019/08/16 19:22:08 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -17,6 +17,16 @@ LDFLAGS+=	${SANITIZERFLAGS}
 .if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
 .	for _symbol in ${SANITIZER_RENAME_SYMBOL}
 CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
+.	endfor
+.endif
+
+.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_CLASSES)
+.	for _class in ${SANITIZER_RENAME_CLASSES}
+.		for _file in ${SANITIZER_RENAME_FILES.${_class}}
+.			for _symbol in ${SANITIZER_RENAME_SYMBOL.${_class}}
+COPTS.${_file}+=	-D${_symbol}=__mksanitizer_${_symbol}
+.			endfor
+.		endfor
 .	endfor
 .endif
 
