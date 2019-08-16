@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2278 2019/07/24 14:07:16 joerg Exp $
+#	$NetBSD: mi,v 1.2278.2.1 2019/08/16 19:10:42 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3297,6 +3297,19 @@
 ./usr/include/zconf.h				comp-c-include
 ./usr/include/zlib.h				comp-c-include
 ./usr/lib					base-sys-usr		compatdir
+./usr/lib/clang/7.0.0/include/sanitizer/allocator_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/asan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/common_interface_defs.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/coverage_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/msan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/tsan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/sanitizer/tsan_interface_atomic.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/xray/xray_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/xray/xray_log_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/include/xray/xray_records.h	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/share/asan_blacklist.txt	comp-cxx-include		llvm
+./usr/lib/clang/7.0.0/share/msan_blacklist.txt	comp-cxx-include		llvm
 ./usr/lib/crt0.o				comp-c-lib		compatfile
 ./usr/lib/gcrt0.o				comp-c-lib		compatfile
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
