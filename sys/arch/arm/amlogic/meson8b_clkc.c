@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_clkc.c,v 1.4 2019/08/13 09:56:08 skrll Exp $ */
+/* $NetBSD: meson8b_clkc.c,v 1.5 2019/08/16 10:36:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.4 2019/08/13 09:56:08 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.5 2019/08/16 10:36:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,9 +268,9 @@ static struct meson_clk_clk meson8b_clkc_clks[] = {
 	    MESON_CLK_PLL_REG_INVALID,				/* ssen */
 	    0),
 	MESON_CLK_MPLL(MESON8B_CLOCK_MPLL2_DIV, "mpll2_div", "mpll_prediv",
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL8, __BITS(13,0)),	/* sdm */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL8, __BIT(15)),	/* sdm_enable */
-	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL8, __BITS(24,16)),	/* n2 */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL9, __BITS(13,0)),	/* sdm */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL9, __BIT(15)),	/* sdm_enable */
+	    MESON_CLK_PLL_REG(HHI_MPLL_CNTL9, __BITS(24,16)),	/* n2 */
 	    MESON_CLK_PLL_REG_INVALID,				/* ssen */
 	    0),
 
