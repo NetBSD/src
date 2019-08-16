@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.239 2019/07/04 02:45:45 ozaki-r Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.240 2019/08/16 10:33:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.239 2019/07/04 02:45:45 ozaki-r Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.240 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1081,7 +1081,7 @@ setifflags(prop_dictionary_t env, prop_dictionary_t oenv)
 	rc = prop_dictionary_get_int64(env, "ifflag", &ifflag);
 	assert(rc);
 
- 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
+	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		return -1;
 
 	if (ifflag < 0) {
@@ -1487,31 +1487,31 @@ setifdescr(prop_dictionary_t env, prop_dictionary_t oenv)
 	prop_data_t data;
 	char *descr;
 
- 	data = (prop_data_t)prop_dictionary_get(env, "descr");
+	data = (prop_data_t)prop_dictionary_get(env, "descr");
 	if (data == NULL) {
 		errno = ENOENT;
 		return -1;
 	}
 	len = prop_data_size(data) + 1;
 
- 	if (len > IFDESCRSIZE)
+	if (len > IFDESCRSIZE)
 		err(EXIT_FAILURE, "description too long");
 
- 	descr = malloc(len);
+	descr = malloc(len);
 	if (descr == NULL)
 		err(EXIT_FAILURE, "malloc description space");
 	if (getargstr(env, "descr", descr, len) == -1)
 		errx(EXIT_FAILURE, "getargstr descr failed");
 
 
- 	ifr.ifr_buf = descr;
+	ifr.ifr_buf = descr;
 	ifr.ifr_buflen = len;
 	if (direct_ioctl(env, SIOCSIFDESCR, &ifr) != 0)
 		err(EXIT_FAILURE, "SIOCSIFDESCR");
 
- 	free(descr);
+	free(descr);
 
- 	return 0;
+	return 0;
 }
 
 static int
@@ -1521,10 +1521,10 @@ unsetifdescr(prop_dictionary_t env, prop_dictionary_t oenv)
 	ifr.ifr_buf = NULL;
 	ifr.ifr_buflen = 0;
 
- 	if (direct_ioctl(env, SIOCSIFDESCR, &ifr) != 0)
+	if (direct_ioctl(env, SIOCSIFDESCR, &ifr) != 0)
 		err(EXIT_FAILURE, "SIOCSIFDESCR");
 
- 	return 0;
+	return 0;
 }
 
 

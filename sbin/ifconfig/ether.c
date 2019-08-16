@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.6 2019/07/17 03:26:24 msaitoh Exp $	*/
+/*	$NetBSD: ether.c,v 1.7 2019/08/16 10:33:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.6 2019/07/17 03:26:24 msaitoh Exp $");
+__RCSID("$NetBSD: ether.c,v 1.7 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <net/if_ether.h>
 
 #include <assert.h>
