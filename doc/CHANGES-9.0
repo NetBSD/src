@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.19 2019/08/16 02:09:21 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.20 2019/08/16 19:29:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1764,3 +1764,145 @@ sys/dev/wsfb/genfb.c				1.68-1.70
 	depths. A lot of bug fixes, both major and minor. Dedup more
 	than 20% of lines, or 50% of characters.
 	[rin, ticket #56]
+external/bsd/compiler_rt/Makefile		1.1
+external/bsd/compiler_rt/lib/Makefile		1.1
+external/bsd/compiler_rt/lib/clang/Makefile	1.1
+external/bsd/compiler_rt/lib/clang/include/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/include/sanitizer/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/include/xray/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/Makefile	1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-dynamic-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-dynamic-m32/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-dynamic-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-dynamic-m64/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-preinit-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-preinit-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan_cxx-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan_cxx-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/common.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/dd-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/dyndd-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/dyndd-m64/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/fuzzer-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/fuzzer_no_main-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/gen_dynamic_list.sh 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/m32.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/m64.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan_cxx-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/safestack-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/safestack-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/shared_deps.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/sources.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/syms.mk 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan_cxx-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-dynamic-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-dynamic-m32/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-dynamic-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-dynamic-m64/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-dynamic-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-dynamic-m32/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-dynamic-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-dynamic-m64/shlib_version 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone_cxx-m32/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone_cxx-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/xray-basic-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/xray-fdr-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/xray-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/lib/netbsd/xray-profiling-m64/Makefile 1.1
+external/bsd/compiler_rt/lib/clang/share/Makefile 1.1
+
+	Add compiler-rt build rules for LLVM sanitizers.
+	[kamil, ticket #58]
+
+sys/external/bsd/compiler_rt/dist/lib/asan/asan_posix.cc 1.2
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_interceptors_ioctl_netbsd.inc 1.2
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_platform_limits_netbsd.cc 1.2
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_platform_limits_netbsd.h 1.2
+
+	Cherry-pick upstream compiler-rt patches for LLVM sanitizers.
+	[kamil, ticket #59]
+
+distrib/sets/lists/base/md.amd64		1.278
+distrib/sets/lists/base/mi			1.1210
+distrib/sets/lists/comp/mi			1.2280
+etc/mtree/NetBSD.dist.base			1.202
+external/bsd/Makefile				1.64
+
+	Add LLVM sanitizers in the MKLLVM=yes build
+	[kamil, ticket #60]
+
+libexec/telnetd/sys_term.c			1.49
+libexec/telnetd/telnetd.c			1.56
+
+	telnetd: Stop defining the same variables concurrently in bss and data.
+	[kamil, ticket #61]
+
+tests/lib/libc/misc/Makefile			1.4
+
+	Fix build of t_ubsan/t_ubsanxx under MKSANITIZER:
+	do not link micro-ubsan runtime for disabled tests.
+	[kamil, ticket #62]
+
+tests/usr.bin/id/Makefile			1.2
+
+	Avoid symbol clashes in tests/usr.bin/id under MKSANITIZER.
+	[kamil, ticket #63]
+
+tests/fs/nfs/nfsservice/Makefile		1.13
+
+	Avoid symbol clashes in fs/nfs/nfsservice under MKSANITIZER.
+	[kamil, ticket #64]
+
+tests/bin/df/Makefile				1.2
+
+	Avoid symbol clashes in bin/df under MKSANITIZER.
+	[kamil, ticket #65]
+
+usr.sbin/ypserv/ypserv/Makefile			1.19
+
+	Avoid symbol clashes in usr.sbin/ypserv/ypserv under MKSANITIZER.
+	[kamil, ticket #66]
+
+usr.sbin/installboot/installboot.h		1.41
+
+	Add missing extern declaration of ib_mach_emips in installboot.
+	[kamil, ticket #67]
+
+share/mk/bsd.prog.mk				1.321
+
+	Add SANITIZER_RENAME_CLASSES in bsd.prog.mk.
+	[kamil, ticket #68]
+
+distrib/sets/lists/comp/mi			1.2282
+external/bsd/compiler_rt/lib/clang/include/sanitizer/Makefile 1.2
+
+	Ship with sanitizer/lsan_interface.h for LLVM 7.
+	[kamil, ticket #69]
+
+usr.sbin/rpc.bootparamd/bootparamd.c		1.47
+usr.sbin/rpc.lockd/lockd.c			1.13
+usr.sbin/rpc.statd/statd.c			1.33
+
+	Stop defining _rpcsvcdirty in bss and data
+	[kamil, ticket #70]
+
+tests/kernel/Makefile				1.61
+
+	Adapt tests/kernel/t_subr_prf for MKSANITIZER.
+	[kamil, ticket #71]
+
+distrib/sets/lists/comp/mi			1.2281
+external/gpl3/gcc/usr.bin/include/sanitizer/Makefile 1.4
+
+	Ship with sanitizer/lsan_interface.h for GCC 7.
+	[kamil, ticket #72]
+
