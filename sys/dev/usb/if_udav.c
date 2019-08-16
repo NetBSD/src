@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.68 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.69 2019/08/16 08:29:20 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.68 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.69 2019/08/16 08:29:20 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,7 +93,7 @@ static int udav_mem_write1(struct usbnet *, int, unsigned char);
 #ifdef UDAV_DEBUG
 #define DPRINTF(x)	if (udavdebug) printf x
 #define DPRINTFN(n, x)	if (udavdebug >= (n)) printf x
-int udavdebug = 10;
+int udavdebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)

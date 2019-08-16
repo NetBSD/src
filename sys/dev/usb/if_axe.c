@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.115 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.116 2019/08/16 08:29:20 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.115 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.116 2019/08/16 08:29:20 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -159,7 +159,7 @@ struct axe_softc {
 #ifndef AXE_DEBUG
 #define axedebug 0
 #else
-static int axedebug = 20;
+static int axedebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_axe_setup, "sysctl hw.axe setup")
 {
