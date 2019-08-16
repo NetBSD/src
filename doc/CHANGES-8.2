@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.25 2019/08/13 14:30:50 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.26 2019/08/16 15:39:59 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -570,4 +570,21 @@ sys/arch/i386/stand/lib/bootinfo_biosgeom.c	1.24
 
 	Fix buffer overflow in BIOS disk geometry collection for bootinfo.
 	[manu, ticket #1336]
+
+sys/dev/acpi/acpi_ec.c				1.76,1.77
+
+	Fix a bug that acpiec_space_handler() doesn't access more than 64bit
+	correctly.
+	[msaitoh, ticket #1337]
+
+sys/arch/x86/include/cacheinfo.h		1.27,1.28
+sys/arch/x86/x86/identcpu.c			1.74,1.93
+sys/arch/x86/include/specialreg.h		1.150
+usr.sbin/cpuctl/arch/i386.c			1.104
+
+	- Handle more Vortex CPU's from Andrius V.
+	- AMD CPUID Fn8000_0001d Cache Topology Information leaf is almost the
+	  same as Intel Deterministic Cache Parameter Leaf(0x04), so make new
+	  cpu_dcp_cacheinfo() and use it on both Intel and AMD.
+	[msaitoh, ticket #1338]
 
