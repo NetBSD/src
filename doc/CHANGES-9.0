@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.20 2019/08/16 19:29:16 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.21 2019/08/16 19:31:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1905,4 +1905,11 @@ external/gpl3/gcc/usr.bin/include/sanitizer/Makefile 1.4
 
 	Ship with sanitizer/lsan_interface.h for GCC 7.
 	[kamil, ticket #72]
+
+sbin/fsck_ext2fs/main.c				1.40
+sbin/fsck_ffs/main.c				1.86
+sbin/fsck_lfs/main.c				1.54
+
+	fsck: Stop defining the same variable concurrently in bss and data.
+	[kamil, ticket #73]
 
