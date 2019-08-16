@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2019/08/16 18:44:09 martin Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2019/08/16 19:23:53 martin Exp $
 
 TOPDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -13,7 +13,7 @@ INCS+=	coverage_interface.h
 #INCS+=	dfsan_interface.h # not supported
 #INCS+=	esan_interface.h # not supported
 #INCS+=	hwasan_interface.h # not supported
-#INCS+=	lsan_interface.h # not supported
+INCS+=	lsan_interface.h
 INCS+=	msan_interface.h
 INCS+=	netbsd_syscall_hooks.h
 #INCS+=	scudo_interface.h # not ready
