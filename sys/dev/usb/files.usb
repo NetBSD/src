@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.164 2019/08/15 08:02:32 mrg Exp $
+#	$NetBSD: files.usb,v 1.165 2019/08/16 08:52:46 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -349,7 +349,7 @@ attach	cue at usbdevif
 file	dev/usb/if_cue.c		cue
 
 # Kawasaki LSI KL5KUSB101B
-device	kue: arp, ether, ifnet
+device	kue: arp, ether, ifnet, usbnet
 attach	kue at usbdevif
 file	dev/usb/if_kue.c		kue
 
