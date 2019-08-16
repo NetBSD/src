@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.20 2013/10/19 15:59:15 christos Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.21 2019/08/16 10:33:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.20 2013/10/19 15:59:15 christos Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.21 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 
 #ifdef INET6
 #include <netinet/in.h>
