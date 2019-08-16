@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2013/10/19 00:35:30 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2019/08/16 10:33:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.17 2013/10/19 00:35:30 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.18 2019/08/16 10:33:17 msaitoh Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -160,9 +160,9 @@ struct paddr_prefix *
 prefixlen_to_mask(int af, int plen)
 {
 	union {
-		struct sockaddr sa; 
-		struct sockaddr_in sin; 
-		struct sockaddr_in6 sin6; 
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
 	} u;
 	struct paddr_prefix *pfx;
 	size_t addrlen;
