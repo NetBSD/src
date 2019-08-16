@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/08/13 11:20:00 christos Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2019/08/16 19:16:59 martin Exp $
 #
 
 NOMAN=	1
@@ -47,5 +47,7 @@ CPPFLAGS+=	-I${LIBRPCDIR} -DPORTMAP -DLIBWRAP -DRPCBIND_RUMP
 
 LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
+
+SANITIZER_RENAME_SYMBOL+=	__getmntinfo13
 
 .include <bsd.test.mk>
