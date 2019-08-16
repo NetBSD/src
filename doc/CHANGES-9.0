@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.18 2019/08/15 12:23:59 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.19 2019/08/16 02:09:21 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -356,9 +356,13 @@ etc/mtree/NetBSD.dist.base			1.201
 	/etc/namedb: sync user and group with etc/mtree/special.
 	[nakayama, ticket #31]
 
+usr.sbin/sysinst/disks.c			1.49
+
 	Do not try to fsck partitions we are never going to mount.
 	Found by Andreas Gustafsson's baremetal test bed.
 	[martin, ticket #32]
+
+usr.sbin/sysinst/disks.c			1.50
 
 	Do not even consider to fsck partitions where we do not know the file
 	system type. Add v7fs support.
@@ -1760,4 +1764,3 @@ sys/dev/wsfb/genfb.c				1.68-1.70
 	depths. A lot of bug fixes, both major and minor. Dedup more
 	than 20% of lines, or 50% of characters.
 	[rin, ticket #56]
-
