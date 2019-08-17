@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.255 2019/08/16 10:41:35 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.256 2019/08/17 12:37:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.255 2019/08/16 10:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.256 2019/08/17 12:37:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,7 +81,7 @@ TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 #define	PHPOOL_MAX	8
 static struct pool phpool[PHPOOL_MAX];
 #define	PHPOOL_FREELIST_NELEM(idx) \
-	(((idx) == 0) ? 0 : BITMAP_SIZE * (1 << (idx)))
+	(((idx) == 0) ? BITMAP_MIN_SIZE : BITMAP_SIZE * (1 << (idx)))
 
 #if defined(KASAN)
 #define POOL_REDZONE
@@ -162,6 +162,7 @@ static unsigned int poolid_counter = 0;
 typedef uint32_t pool_item_bitmap_t;
 #define	BITMAP_SIZE	(CHAR_BIT * sizeof(pool_item_bitmap_t))
 #define	BITMAP_MASK	(BITMAP_SIZE - 1)
+#define	BITMAP_MIN_SIZE	(CHAR_BIT * sizeof(((struct pool_item_header *)NULL)->ph_u2))
 
 struct pool_item_header {
 	/* Page headers */
@@ -200,6 +201,9 @@ struct pool_item_header {
 #define ph_bitmap	ph_u2.phu_notouch.phu_bitmap
 
 #define PHSIZE	ALIGN(sizeof(struct pool_item_header))
+
+CTASSERT(offsetof(struct pool_item_header, ph_u2) +
+    BITMAP_MIN_SIZE / CHAR_BIT == sizeof(struct pool_item_header));
 
 #if defined(DIAGNOSTIC) && !defined(KASAN)
 #define POOL_CHECK_MAGIC
@@ -588,13 +592,11 @@ pool_subsystem_init(void)
 		size_t sz;
 
 		nelem = PHPOOL_FREELIST_NELEM(idx);
+		KASSERT(nelem != 0);
 		snprintf(phpool_names[idx], sizeof(phpool_names[idx]),
 		    "phpool-%d", nelem);
-		sz = sizeof(struct pool_item_header);
-		if (nelem) {
-			sz = offsetof(struct pool_item_header,
-			    ph_bitmap[howmany(nelem, BITMAP_SIZE)]);
-		}
+		sz = offsetof(struct pool_item_header,
+		    ph_bitmap[howmany(nelem, BITMAP_SIZE)]);
 		pool_init(&phpool[idx], sz, 0, 0, 0,
 		    phpool_names[idx], &pool_allocator_meta, IPL_VM);
 	}
@@ -657,12 +659,16 @@ pool_init_is_usebmap(const struct pool *pp)
 	}
 
 	/*
+	 * If we're off-page, go with a bitmap.
+	 */
+	if (!(pp->pr_roflags & PR_PHINPAGE)) {
+		return true;
+	}
+
+	/*
 	 * If we're on-page, and the page header can already contain a bitmap
 	 * big enough to cover all the items of the page, go with a bitmap.
 	 */
-	if (!(pp->pr_roflags & PR_PHINPAGE)) {
-		return false;
-	}
 	bmapsize = roundup(PHSIZE, pp->pr_align) -
 	    offsetof(struct pool_item_header, ph_bitmap[0]);
 	KASSERT(bmapsize % sizeof(pool_item_bitmap_t) == 0);
@@ -801,13 +807,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/*
-	 * If we're off-page and use a bitmap, choose the appropriate pool to
-	 * allocate page headers, whose size varies depending on the bitmap. If
-	 * we're just off-page, take the first pool, no extra size. If we're
-	 * on-page, nothing to do.
+	 * If we're off-page, then we're using a bitmap; choose the appropriate
+	 * pool to allocate page headers, whose size varies depending on the
+	 * bitmap. If we're on-page, nothing to do.
 	 */
-	if (!(pp->pr_roflags & PR_PHINPAGE) && (pp->pr_roflags & PR_USEBMAP)) {
+	if (!(pp->pr_roflags & PR_PHINPAGE)) {
 		int idx;
+
+		KASSERT(pp->pr_roflags & PR_USEBMAP);
 
 		for (idx = 0; pp->pr_itemsperpage > PHPOOL_FREELIST_NELEM(idx);
 		    idx++) {
@@ -823,8 +830,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			    pp->pr_wchan, pp->pr_itemsperpage);
 		}
 		pp->pr_phpool = &phpool[idx];
-	} else if (!(pp->pr_roflags & PR_PHINPAGE)) {
-		pp->pr_phpool = &phpool[0];
 	} else {
 		pp->pr_phpool = NULL;
 	}
