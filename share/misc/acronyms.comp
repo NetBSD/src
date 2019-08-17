@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.283 2019/07/28 21:43:39 sevan Exp $
+$NetBSD: acronyms.comp,v 1.284 2019/08/17 21:14:22 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1281,11 +1281,13 @@ RDBMS	relational database management system
 RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
+RDP	remote desktop protocol
 RDRAM	Rambus DRAM
 RE	regular expression
 REPL	read, evaluate, print, loop
 REST	representational state transfer
 RF	radio frequency
+RFB	remote frame buffer
 RFI	radio frequency interference
 RFO	request for ownership
 RFU	reserved for future use
@@ -1690,6 +1692,7 @@ VM	virtual {machine,memory}
 VME	virtual mode extension
 VMX	vector multimedia extensions
 VMX	virtual machine extensions
+VNC	virtual network computing
 VOD	video on demand
 VPD	vital product data
 VPN	virtual private network
