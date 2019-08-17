@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.30 2019/08/17 17:51:19 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.31 2019/08/17 18:03:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -933,6 +933,7 @@ extract_file(distinfo *dist, int update)
 			    1, &dist->name);
 			hit_enter_to_continue(err, NULL);
 			free(err);
+			free(owd);
 			return SET_RETRY;
 		}
 #ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
