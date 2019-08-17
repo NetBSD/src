@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.35 2019/01/13 14:35:00 gson Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.36 2019/08/17 09:44:01 gson Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -102,7 +102,7 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
 	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("PR kern/49046");
+		atf_tc_expect_fail("PR kern/53865");
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
