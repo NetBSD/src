@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.10 2019/08/17 18:03:12 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.11 2019/08/17 18:08:06 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -213,8 +213,6 @@ do_install(void)
 	sanity_check();
 
 	md_cleanup_install(&install);
-
-	free(install.infos);
 
 	hit_enter_to_continue(MSG_instcomplete, NULL);
 
