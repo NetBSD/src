@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600.c,v 1.2 2019/08/17 15:50:05 msaitoh Exp $	*/
+/*	$NetBSD: radeon_r600.c,v 1.3 2019/08/17 16:02:55 msaitoh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.2 2019/08/17 15:50:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.3 2019/08/17 16:02:55 msaitoh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/slab.h>
@@ -1008,7 +1008,8 @@ void r600_hpd_init(struct radeon_device *rdev)
 				break;
 			}
 		}
-		enable |= 1 << radeon_connector->hpd.hpd;
+		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			enable |= 1 << radeon_connector->hpd.hpd;
 		radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
 	}
 	radeon_irq_kms_enable_hpd(rdev, enable);
