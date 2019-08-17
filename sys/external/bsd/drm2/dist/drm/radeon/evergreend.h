@@ -1,4 +1,4 @@
-/*	$NetBSD: evergreend.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
+/*	$NetBSD: evergreend.h,v 1.4 2019/08/17 17:03:32 msaitoh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -109,7 +109,7 @@
 #define		IBIAS(x)				((x) << 20)
 #define		IBIAS_MASK				(0x3ff << 20)
 #define		RESET					(1 << 30)
-#define		PDNB					(1 << 31)
+#define		PDNB					(1U << 31)
 #define	MPLL_AD_FUNC_CNTL_2				0x628
 #define		BYPASS					(1 << 19)
 #define		BIAS_GEN_PDNB				(1 << 24)
@@ -184,7 +184,7 @@
 #       define MRDCKC0_BYPASS                           (1 << 28)
 #       define MRDCKC1_BYPASS                           (1 << 29)
 #       define MRDCKD0_BYPASS                           (1 << 30)
-#       define MRDCKD1_BYPASS                           (1 << 31)
+#       define MRDCKD1_BYPASS                           (1U << 31)
 
 #define CG_AT                                           0x6d4
 #       define CG_R(x)					((x) << 0)
@@ -415,7 +415,7 @@
 #define		INSTANCE_INDEX(x)			((x) << 0)
 #define		SE_INDEX(x)     			((x) << 16)
 #define		INSTANCE_BROADCAST_WRITES      		(1 << 30)
-#define		SE_BROADCAST_WRITES      		(1 << 31)
+#define		SE_BROADCAST_WRITES      		(1U << 31)
 #define RLC_GFX_INDEX           			0x3fC4
 #define CC_GC_SHADER_PIPE_CONFIG			0x8950
 #define		WRITE_DIS      				(1 << 0)
@@ -479,7 +479,7 @@
 #define		RB_BUFSZ(x)					((x) << 0)
 #define		RB_BLKSZ(x)					((x) << 8)
 #define		RB_NO_UPDATE					(1 << 27)
-#define		RB_RPTR_WR_ENA					(1 << 31)
+#define		RB_RPTR_WR_ENA					(1U << 31)
 #define		BUF_SWAP_32BIT					(2 << 16)
 #define	CP_RB_RPTR					0x8700
 #define	CP_RB_RPTR_ADDR					0xC10C
@@ -816,7 +816,7 @@
 #       define PIN1_AUDIO_ENABLED                         (1 << 25)
 #       define PIN2_AUDIO_ENABLED                         (1 << 26)
 #       define PIN3_AUDIO_ENABLED                         (1 << 27)
-#       define AUDIO_ENABLED                              (1 << 31)
+#       define AUDIO_ENABLED                              (1U << 31)
 
 
 #define	GC_USER_SHADER_PIPE_CONFIG			0x8954
@@ -1047,7 +1047,7 @@
 #define		PS_PRIO(x)					((x) << 24)
 #define		VS_PRIO(x)					((x) << 26)
 #define		GS_PRIO(x)					((x) << 28)
-#define		ES_PRIO(x)					((x) << 30)
+#define		ES_PRIO(x)					((u32)(x) << 30)
 #define	SQ_GPR_RESOURCE_MGMT_1				0x8C04
 #define		NUM_PS_GPRS(x)					((x) << 0)
 #define		NUM_VS_GPRS(x)					((x) << 16)
@@ -1252,7 +1252,7 @@
 #       define TIME_STAMP_INT_ENABLE                    (1 << 26)
 #       define IB2_INT_ENABLE                           (1 << 29)
 #       define IB1_INT_ENABLE                           (1 << 30)
-#       define RB_INT_ENABLE                            (1 << 31)
+#       define RB_INT_ENABLE                            (1U << 31)
 #define CP_INT_STATUS                                   0xc128
 #       define SCRATCH_INT_STAT                         (1 << 25)
 #       define TIME_STAMP_INT_STAT                      (1 << 26)
