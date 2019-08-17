@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.15 2019/08/14 13:02:23 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.16 2019/08/17 17:51:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -668,8 +668,11 @@ Instalación interrumpida.}
 message delete_xfer_file
 {A eliminar después de la instalación}
 
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
 message notarfile
-{El conjunto %s no existe.}
+{El conjunto $0 no existe.}
 
 message endtarok
 {Todos los conjuntos de distribución han sido desempaquetados

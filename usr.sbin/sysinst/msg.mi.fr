@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.18 2019/08/14 13:02:23 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.19 2019/08/17 17:51:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -684,8 +684,11 @@ message delete_xfer_file
 Effacer après l'installation
 }
 
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
 message notarfile
-{Le composant %s n'existe pas.}
+{Le composant $0 n'existe pas.}
 
 message endtarok
 {

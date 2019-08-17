@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.14 2019/08/14 13:02:23 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.15 2019/08/17 17:51:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -679,8 +679,11 @@ Installation abgebrochen.}
 message delete_xfer_file
 {Nach der Installation löschen}
 
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
 message notarfile
-{Das Release-Paket %s existiert nicht.}
+{Das Release-Paket $0 existiert nicht.}
 
 message endtarok
 {Alle Distributionspakete wurden erfolgreich entpackt.}
