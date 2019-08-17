@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.321 2019/08/15 08:42:59 kamil Exp $
+#	$NetBSD: bsd.prog.mk,v 1.322 2019/08/17 00:14:48 kamil Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -452,8 +452,16 @@ PROGNAME.${_P}?=	${_P}
 _PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
 .endif
 
+# paxctl specific arguments
+
 .if defined(PAXCTL_FLAGS)
 PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
+.endif
+
+.if ${MKSANITIZER:Uno} == "yes" && \
+	(${USE_SANITIZER} == "address" || ${USE_SANITIZER} == "thread" || \
+	${USE_SANITIZER} == "memory")
+PAXCTL_FLAGS.${_P}= +a
 .endif
 
 ##### PROG specific flags.
