@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.41 2019/07/25 19:01:08 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.41.2.1 2019/08/18 13:17:39 msaitoh Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2802,8 +2802,7 @@ pm_upddevlist(menudesc *m, void *arg)
 		return -1;
 
 	SLIST_FOREACH(pm_i, &pm_head, l) {
-		m->opts[i].opt_name = NULL;
-		m->opts[i].opt_exp_name = NULL;
+		memset(&m->opts[i], 0, sizeof m->opts[i]);
 		m->opts[i].opt_action = pm_submenu;
 		((struct part_entry *)arg)[i].dev_ptr = pm_i;
 		((struct part_entry *)arg)[i].id = NO_PART;
@@ -2837,8 +2836,7 @@ pm_upddevlist(menudesc *m, void *arg)
 				if (i >= MAX_ENTRIES)
 					break;
 				i++;
-				m->opts[i].opt_name = NULL;
-				m->opts[i].opt_exp_name = NULL;
+				memset(&m->opts[i], 0, sizeof m->opts[i]);
 				m->opts[i].opt_action = pm_submenu;
 				((struct part_entry *)arg)[i].parts =
 				    pm_i->parts;
@@ -2860,8 +2858,7 @@ pm_upddevlist(menudesc *m, void *arg)
 				if (i >= MAX_ENTRIES)
 					break;
 				i++;
-				m->opts[i].opt_name = NULL;
-				m->opts[i].opt_exp_name = NULL;
+				memset(&m->opts[i], 0, sizeof m->opts[i]);
 				m->opts[i].opt_action = pm_submenu;
 				((struct part_entry *)arg)[i].parts = secondary;
 				((struct part_entry *)arg)[i].dev_ptr = pm_i;
