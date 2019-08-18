@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $	*/
+/*	$NetBSD: partutil.c,v 1.15.18.1 2019/08/18 13:31:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.15.18.1 2019/08/18 13:31:21 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,6 +131,8 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		geom_dict = prop_dictionary_get(disk_dict, "geometry");
 		dict2geom(geo, geom_dict);
 	}
+	if (disk_dict != NULL)
+		prop_object_release(disk_dict);
 
 	if (dkw == NULL)
 		return 0;
