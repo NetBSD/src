@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.22 2019/08/18 10:02:10 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.23 2019/08/18 14:36:49 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1943,3 +1943,94 @@ sys/arch/mac68k/mac68k/machdep.c		1.354
 	mac68k has switched to 8KB page size.
 	[rin, ticket #87]
 
+distrib/utils/libhack/strcasecmp.c		1.2-1.3
+
+	Fix (non locale aware) strcasecmp() for small install media.
+	[martin, ticket #74]
+
+distrib/common/Makefile.mdset			1.46
+distrib/evbarm/instkernel/instkernel/Makefile	1.32
+
+	Fix parallel build race resulting in non-bootable RPI install images.
+	[martin, ticket #75]
+
+usr.sbin/sysinst/partman.c			1.42
+
+	Make sure to completely initialize dynamic menu entries.
+	[martin, ticket #76]
+
+usr.sbin/sysinst/arch/arc/md.c			1.9
+usr.sbin/sysinst/arch/bebox/md.c		1.6
+usr.sbin/sysinst/arch/cobalt/md.c		1.9
+usr.sbin/sysinst/arch/evbarm/md.c		1.9
+usr.sbin/sysinst/arch/evbmips/md.c		1.6
+usr.sbin/sysinst/arch/evbppc/md.c		1.6
+usr.sbin/sysinst/arch/hpcarm/md.c		1.6
+usr.sbin/sysinst/arch/hpcmips/md.c		1.6
+usr.sbin/sysinst/arch/hpcsh/md.c		1.7
+usr.sbin/sysinst/arch/i386/md.c			1.21
+usr.sbin/sysinst/arch/landisk/md.c		1.11
+usr.sbin/sysinst/arch/ofppc/md.c		1.8
+usr.sbin/sysinst/arch/playstation2/md.c		1.6
+usr.sbin/sysinst/arch/prep/md.c			1.9
+usr.sbin/sysinst/arch/sandpoint/md.c		1.6
+usr.sbin/sysinst/arch/zaurus/md.c		1.6
+
+	When we ask the user to select a partitioning scheme and they refuse
+	(that is: select "Exit" in the menu), abort installation.
+	[martin, ticket #77]
+
+usr.sbin/sysinst/disklabel.c			1.12
+usr.sbin/sysinst/gpt.c				1.10
+usr.sbin/sysinst/mbr.c				1.20
+usr.sbin/sysinst/msg.mi.de			1.14
+usr.sbin/sysinst/msg.mi.en			1.20
+usr.sbin/sysinst/msg.mi.es			1.15
+usr.sbin/sysinst/msg.mi.fr			1.18
+usr.sbin/sysinst/msg.mi.pl			1.21
+usr.sbin/sysinst/partitions.c			1.2
+usr.sbin/sysinst/partitions.h			1.6
+
+	On architectures that usually do MBR/disklabel, nevertheless deal with
+	pure/plain disklabel disks, and explicitly offer this as partitioning
+	option when bootability is not a concern.
+	[martin, ticket #78]
+
+usr.sbin/sysinst/disklabel.c			1.13
+
+	Fix some "partition index" (as used in the abstract interface)
+	versus disklabel "partition letter" confusion.
+	[martin, ticket #79]
+
+usr.sbin/installboot/Makefile			1.53-1.54
+usr.sbin/installboot/machines.c			1.41-1.42
+
+	installboot(8#): only include a single target architecture in
+        small (crunched) install media binaries.
+	[martin, ticket #80]
+
+usr.sbin/sysinst/msg.mi.de			1.15
+usr.sbin/sysinst/msg.mi.en			1.21
+usr.sbin/sysinst/msg.mi.es			1.16
+usr.sbin/sysinst/msg.mi.fr			1.19
+usr.sbin/sysinst/msg.mi.pl			1.22
+usr.sbin/sysinst/util.c				1.30
+
+	PR 54473: fix error prompt when a set file is missing.
+	[martin, ticket #82]
+
+usr.sbin/sysinst/install.c			1.10-1.11
+usr.sbin/sysinst/util.c				1.31
+
+	Fix some memory leaks in error paths and avoid double free.
+	[martin, ticket #83]
+
+sbin/fsck/partutil.c				1.16
+
+	Fix memory leak.
+	[martin, ticket #88]
+
+usr.sbin/sysinst/checkrc.c			1.2
+
+	Fix memory leak (found by MKSANITIZER=yes build).
+	[martin, ticket #89]
