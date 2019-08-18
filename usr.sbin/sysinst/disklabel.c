@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10.2.2 2019/08/18 13:21:40 msaitoh Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.2.3 2019/08/18 13:22:49 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -814,9 +814,25 @@ disklabel_get_part_device(const struct disk_partitions *arg,
     part_id ptn, char *devname, size_t max_devname_len, int *part,
     enum dev_name_usage which_name, bool with_path)
 {
+	const struct disklabel_disk_partitions *parts =
+	    (const struct disklabel_disk_partitions*)arg;
+	part_id id;
+	int part_index;
+	char pname;
+
+	if (ptn >= parts->l.d_npartitions)
+		return false;
+
+	for (id = part_index = 0; id < ptn &&
+	    part_index < parts->l.d_npartitions; part_index++)
+		if (parts->l.d_partitions[part_index].p_fstype != FS_UNUSED ||
+		    parts->l.d_partitions[part_index].p_size != 0)
+			id++;
 
 	if (part != 0)
-		*part = ptn;
+		*part = part_index;
+
+	pname = 'a'+ part_index;
 
 	switch (which_name) {
 	case parent_device_only:
@@ -826,18 +842,18 @@ disklabel_get_part_device(const struct disk_partitions *arg,
 	case plain_name:
 		if (with_path)
 			snprintf(devname, max_devname_len, _PATH_DEV "%s%c",
-			    arg->disk, (char)ptn + 'a');
+			    arg->disk, pname);
 		else
 			snprintf(devname, max_devname_len, "%s%c",
-			    arg->disk, (char)ptn + 'a');
+			    arg->disk, pname);
 		return true;
 	case raw_dev_name:
 		if (with_path)
 			snprintf(devname, max_devname_len, _PATH_DEV "r%s%c",
-			    arg->disk, (char)ptn + 'a');
+			    arg->disk, pname);
 		else
 			snprintf(devname, max_devname_len, "r%s%c",
-			    arg->disk, (char)ptn + 'a');
+			    arg->disk, pname);
 		return true;
 	}
 
@@ -1024,7 +1040,7 @@ disklabel_find_by_name(struct disk_partitions *arg, const char *name)
 	    (const struct disklabel_disk_partitions*)arg;
 	char *sl, part;
 	ptrdiff_t n;
-	part_id pno;
+	part_id pno, id, i;
 
 	sl = strrchr(name, '/');
 	if (sl == NULL)
@@ -1040,7 +1056,11 @@ disklabel_find_by_name(struct disk_partitions *arg, const char *name)
 		return NO_PART;
 	if (parts->l.d_partitions[pno].p_fstype == FS_UNUSED)
 		return NO_PART;
-	return pno;
+	for (id = 0, i = 0; i < pno; i++)
+		if (parts->l.d_partitions[i].p_fstype != FS_UNUSED ||
+		    parts->l.d_partitions[i].p_size != 0)
+			id++;
+	return id;
 }
 
 static void
