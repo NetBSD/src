@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2569 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2570 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -29,3 +29,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		axe(4), axen(4), cdce(4), cue(4), mue(4), smsc(4), udav(4),
 		ure(4), url(4), and urndis(4) drivers fixing many bugs and
 		porting to NET_MPSAFE in the process.  [mrg 20190814]
+	usbnet(9): Port kue(4) and upl(4). [mrg 20190818]
