@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.165 2019/08/16 08:52:46 mrg Exp $
+#	$NetBSD: files.usb,v 1.166 2019/08/18 09:29:38 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -354,7 +354,7 @@ attach	kue at usbdevif
 file	dev/usb/if_kue.c		kue
 
 # Prolific PL2302 host-host
-device	upl: ifnet
+device	upl: ifnet, usbnet
 attach	upl at usbdevif
 file	dev/usb/if_upl.c		upl
 
