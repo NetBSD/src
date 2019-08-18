@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.98 2019/08/16 08:51:09 mrg Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.99 2019/08/18 11:46:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.98 2019/08/16 08:51:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.99 2019/08/18 11:46:38 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -131,6 +131,8 @@ static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BTX },
+	{ USB_VENDOR_ACTIONTEC, USB_PRODUCT_ACTIONTEC_KL5KUSB101 },
+	{ USB_VENDOR_ALLIEDTELESYN, USB_PRODUCT_ALLIEDTELESYN_AT_USB10 },
 	{ USB_VENDOR_AOX, USB_PRODUCT_AOX_USB101 },
 	{ USB_VENDOR_ASANTE, USB_PRODUCT_ASANTE_EA },
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC10T },
@@ -157,6 +159,7 @@ static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_PORTSMITH, USB_PRODUCT_PORTSMITH_EEA },
 	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SILICOM, USB_PRODUCT_SILICOM_U2E },
+	{ USB_VENDOR_SILICOM, USB_PRODUCT_SILICOM_GPE },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 };
 #define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
