@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.4.2.1 2019/08/08 05:51:43 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.4.2.2 2019/08/18 13:21:40 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -413,7 +413,8 @@ struct disk_partitioning_scheme {
 	 * disk.
 	 */
 	struct disk_partitions * (*read_from_disk)(const char *,
-	    daddr_t start, daddr_t len);
+	    daddr_t start, daddr_t len, const struct
+	    disk_partitioning_scheme *);
 
 	/*
 	 * Set up all internal data for a new disk
