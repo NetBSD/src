@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.818 2019/07/28 13:49:23 christos Exp $
+# $NetBSD: mi,v 1.819 2019/08/18 20:15:59 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3840,6 +3840,26 @@
 ./usr/tests/usr.bin/c++/t_ubsan_int_neg_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_ubsan_int_sub_overflow	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/c++/t_ubsan_vla_out_of_bounds	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_allocated_memory	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_check_mem	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_free		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_heap		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_partial_poison	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_poison		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_realloc		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_shadow		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_stack		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_msan_unpoison		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_data_race	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_heap_use_after_free	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_lock_order_inversion	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_locked_mutex_destroy	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_signal_errno	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_thread_leak	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_tsan_vptr_race	tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_fuzzer_oom		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_fuzzer_simple		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_fuzzer_timeout	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
@@ -3856,6 +3876,25 @@
 ./usr/tests/usr.bin/cc/t_ubsan_int_neg_overflow		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_sub_overflow		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_vla_out_of_bounds	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_allocated_memory		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_check_mem		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_free		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_heap		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_partial_poison    tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_poison		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_realloc		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_shadow		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_stack		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_msan_unpoison		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_data_race		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_heap_use_after_free	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_lock_order_inversion	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_locked_mutex_destroy	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_signal_errno	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_tsan_thread_leak	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_fuzzer_oom		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_fuzzer_simple		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_fuzzer_timeout		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cmp/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
