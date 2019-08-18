@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.9 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.9.2.1 2019/08/18 13:29:15 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -165,7 +165,7 @@ do_install(void)
 		if (!md_get_info(&install) ||
 		    !md_make_bsd_partitions(&install)) {
 			hit_enter_to_continue(MSG_abort_inst, NULL);
-			return;
+			goto error;
 		}
 
 		/* Last chance ... do you really want to do this? */
@@ -173,7 +173,7 @@ do_install(void)
 		refresh();
 		msg_fmt_display(MSG_lastchance, "%s", pm->diskdev);
 		if (!ask_noyes(NULL))
-			return;
+			goto error;
 
 		/*
 		 * Check if we have a secondary partitioning and
@@ -194,19 +194,19 @@ do_install(void)
 		    make_filesystems(&install) ||
 		    make_fstab(&install) != 0 ||
 		    md_post_newfs(&install) != 0)
-		return;
+		goto error;
 	}
 
 	/* Unpack the distribution. */
 	process_menu(MENU_distset, &retcode);
 	if (retcode == 0)
-		return;
+		goto error;
 	if (get_and_unpack_sets(0, MSG_disksetupdone,
 	    MSG_extractcomplete, MSG_abortinst) != 0)
-		return;
+		goto error;
 
 	if (md_post_extract(&install) != 0)
-		return;
+		goto error;
 
 	do_configmenu(&install);
 
@@ -214,7 +214,8 @@ do_install(void)
 
 	md_cleanup_install(&install);
 
-	free(install.infos);
-
 	hit_enter_to_continue(MSG_instcomplete, NULL);
+
+error:
+	free(install.infos);
 }
