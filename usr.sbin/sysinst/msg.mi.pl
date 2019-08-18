@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20.2.1 2019/08/18 13:21:40 msaitoh Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20.2.2 2019/08/18 13:25:21 msaitoh Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -648,8 +648,11 @@ Instalacja przerwana.}
 message delete_xfer_file
 {Usun po zakonczeniu instalacji}
 
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
 message notarfile
-{Pakiet %s nie istnieje.}
+{Pakiet $0 nie istnieje.}
 
 message endtarok
 {Wszystkie wybrane pakiety dystrybucji zostaly rozpakowane.}
