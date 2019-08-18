@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.21 2019/08/16 19:31:27 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.22 2019/08/18 10:02:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -1912,4 +1912,34 @@ sbin/fsck_lfs/main.c				1.54
 
 	fsck: Stop defining the same variable concurrently in bss and data.
 	[kamil, ticket #73]
+
+sys/kern/subr_pool.c				1.253-1.255
+
+	Kernel Heap Hardening: perform certain sanity checks on the pool
+	caches directly, to immediately detect certain bugs that would
+	otherwise have been detected only later on the pool layer.
+	[maxv, ticket #81]
+
+sys/arch/mac68k/conf/WSFB.common		1.2
+sys/arch/mac68k/conf/WSFB.common		1.3
+
+	Mimic macppc color/font settings, which also reduces differences b/w
+	color and monochrome color depths.
+	Add commented out GENFB_SHADOWFB option.
+	[rin, ticket #84]
+
+sys/external/bsd/drm2/i915drm/intelfb.c		1.17
+
+	Fix PR kern/52229: correct stride for intelfb(4).
+	[rin, ticket #85]
+
+sys/dev/pci/radeonfb.c				1.105
+
+	Support bitmap fonts with stride 4 (i.e., width 17 to 32).
+	[rin, ticket #86]
+
+sys/arch/mac68k/mac68k/machdep.c		1.354
+
+	mac68k has switched to 8KB page size.
+	[rin, ticket #87]
 
