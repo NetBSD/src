@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.31 2019/08/15 05:52:23 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.32 2019/08/18 08:16:34 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.31 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.32 2019/08/18 08:16:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1044,13 +1044,13 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	if (un->un_ed[USBNET_ENDPT_RX] == 0 || un->un_ed[USBNET_ENDPT_TX] == 0)
 		return;
 
-	struct ifnet *ifp = usbnet_ifp(un);
 #if 0
 	ifp->if_watchdog = urndis_watchdog;
 #endif
 
 	usbnet_attach(un, "urndisdet");
 
+	struct ifnet *ifp = usbnet_ifp(un);
 	urndis_init_un(ifp, un);
 
 	if (urndis_ctrl_query(un, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
