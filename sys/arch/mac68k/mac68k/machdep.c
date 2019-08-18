@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.353 2019/07/26 10:48:44 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.353.2.1 2019/08/18 10:00:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2019/07/26 10:48:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353.2.1 2019/08/18 10:00:41 martin Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -812,7 +812,7 @@ int	get_top_of_ram(void);
 int
 get_top_of_ram(void)
 {
-	return ((mac68k_machine.mach_memsize * (1024 * 1024)) - 4096);
+	return ((mac68k_machine.mach_memsize * (1024 * 1024)) - PAGE_SIZE);
 }
 
 /*
