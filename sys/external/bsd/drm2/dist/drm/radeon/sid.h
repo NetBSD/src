@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
+/*	$NetBSD: sid.h,v 1.4 2019/08/18 02:42:40 msaitoh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -781,10 +781,10 @@
 #       define DESCRIPTION17(x)                          (((x) & 0xff) << 8)
 
 #define AZ_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL         0x54
-#       define AUDIO_ENABLED                             (1 << 31)
+#       define AUDIO_ENABLED                             (1U << 31)
 
 #define AZ_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT  0x56
-#define		PORT_CONNECTIVITY_MASK				(3 << 30)
+#define		PORT_CONNECTIVITY_MASK				(3U << 30)
 #define		PORT_CONNECTIVITY_SHIFT				30
 
 #define	DC_LB_MEMORY_SPLIT					0x6b0c
