@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute_hostops.c,v 1.1 2010/12/15 00:09:41 pooka Exp $	*/
+/*	$NetBSD: traceroute_hostops.c,v 1.2 2019/08/18 04:12:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute_hostops.c,v 1.1 2010/12/15 00:09:41 pooka Exp $");
+__RCSID("$NetBSD: traceroute_hostops.c,v 1.2 2019/08/18 04:12:07 kamil Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -52,4 +52,5 @@ const struct prog_ops prog_ops = {
 	.op_connect = connect,
 	.op_getsockname = getsockname,
 	.op_sysctl = sysctl,
+	.op_getifaddrs = getifaddrs,
 };
