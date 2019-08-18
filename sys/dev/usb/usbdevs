@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770 2019/01/30 19:51:28 jakllsch Exp $
+$NetBSD: usbdevs,v 1.771 2019/08/18 09:05:31 mrg Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1066,6 +1066,7 @@ product BELKIN RTL8192CU_2	0x1004	RTL8192CU
 product BELKIN RTL8188CU	0x1102	RTL8188CU
 product BELKIN RTL8188CUS	0x11f2	RTL8188CUS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
+product BELKIN F5U258		0x258a	F5U258/F5U279 Host to host adapter
 product BELKIN RTL8192CU	0x2102	RTL8192CU
 product BELKIN F7D2102		0x2103	F7D2102
 product BELKIN RTL8192CU_1	0x21f2	RTL8192CU
@@ -2409,6 +2410,7 @@ product MUSTEK DV2000		0xc441	DV2000 digital camera
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
+product NI HTOH_7825		0x7825	Host to Host Adapter
 
 /* National Semiconductor */
 product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
@@ -2752,6 +2754,7 @@ product PROLIFIC PL2303		0x2303	PL2303 Serial adapter (ATEN/IOGEAR UC232A)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
+product PROLIFIC PL25A1		0x25a1	PL25A1 Host-Host interface
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
 product PROLIFIC RSAQ3		0xaaa2	PL2303 Serial adapter (IODATA USB-RSAQ3)
 product PROLIFIC2 PL2303	0x2303	PL2303 Serial adapter (SMART Technologies)
