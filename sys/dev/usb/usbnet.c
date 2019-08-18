@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.16 2019/08/16 08:38:21 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.17 2019/08/18 09:29:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.16 2019/08/16 08:38:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.17 2019/08/18 09:29:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -274,6 +274,7 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 	struct mbuf *m;
 
 	usbnet_isowned_rx(un);
+	DPRINTFN(0, "called! un %p buf %p len %ju", un, buf, buflen, 0);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
@@ -717,16 +718,17 @@ static usbd_status
 usbnet_ep_stop_pipes(struct usbnet * const un)
 {
 	struct usbnet_private * const unp = un->un_pri;
+	usbd_status err = USBD_NORMAL_COMPLETION;
 
 	for (size_t i = 0; i < __arraycount(unp->unp_ep); i++) {
 		if (unp->unp_ep[i] == NULL)
 			continue;
-		usbd_status err = usbd_abort_pipe(unp->unp_ep[i]);
-		if (err)
-			return err;
+		usbd_status err2 = usbd_abort_pipe(unp->unp_ep[i]);
+		if (err == USBD_NORMAL_COMPLETION && err2)
+			return err = err2;
 	}
 
-	return USBD_NORMAL_COMPLETION;
+	return err;
 }
 
 int
@@ -772,7 +774,10 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	usbnet_rx_start_pipes(un);
 
 	/* Indicate we are up and running. */
+#if 0
+	/* XXX if_mcast_op() can call this without ifnet locked */
 	KASSERT(ifp->if_softc == NULL || IFNET_LOCKED(ifp));
+#endif
 	ifp->if_flags |= IFF_RUNNING;
 
 	callout_schedule(&unp->unp_stat_ch, hz);
@@ -1068,19 +1073,17 @@ static void
 usbnet_watchdog(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
+	struct usbnet_private * const unp = un->un_pri;
 	struct usbnet_cdata * const cd = un_cdata(un);
-	usbd_status stat;
+	usbd_status err;
 
 	ifp->if_oerrors++;
 	aprint_error_dev(un->un_dev, "watchdog timeout\n");
 
 	if (cd->uncd_tx_cnt > 0) {
-		/*
-		 * XXX index 0
-		 */
-		struct usbnet_chain *c = &un_cdata(un)->uncd_tx_chain[0];
-		usbd_get_xfer_status(c->unc_xfer, NULL, NULL, NULL, &stat);
-		usbnet_txeof(c->unc_xfer, c, stat);
+		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
+		aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
+		    usbd_errstr(err));
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1357,9 +1360,6 @@ usbnet_attach_ifp(struct usbnet *un,
 
 	KASSERT(unp->unp_attached);
 
-	IFQ_SET_READY(&ifp->if_snd);
-
-	ifp->if_softc = un;
 	strlcpy(ifp->if_xname, device_xname(un->un_dev), IFNAMSIZ);
 	ifp->if_flags = if_flags;
 	ifp->if_extflags = IFEF_MPSAFE | if_extflags;
@@ -1376,7 +1376,14 @@ usbnet_attach_ifp(struct usbnet *un,
 		unp->unp_link = true;
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	int rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(un->un_dev, "if_initialize failed(%d)\n", rv);
+		return;
+	}
+	if (ifp->_if_input == NULL)
+		ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	/*
 	 * If ethernet address is all zero, skip ether_ifattach() and
@@ -1391,6 +1398,10 @@ usbnet_attach_ifp(struct usbnet *un,
 		if_alloc_sadl(ifp);
 		bpf_attach(ifp, DLT_RAW, 0);
 	}
+
+	/* Now ready, and attached. */
+	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_softc = un;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, un->un_udev, un->un_dev);
 
