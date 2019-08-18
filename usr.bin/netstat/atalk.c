@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.16 2015/06/06 13:08:31 joerg Exp $	*/
+/*	$NetBSD: atalk.c,v 1.17 2019/08/18 04:14:40 kamil Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.16 2015/06/06 13:08:31 joerg Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.17 2019/08/18 04:14:40 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: atalk.c,v 1.16 2015/06/06 13:08:31 joerg Exp $");
 #include <stdio.h>
 #include <string.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 struct ddpcb    ddpcb;
 struct socket   sockb;
@@ -290,7 +291,7 @@ ddp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(ddpstat);
 
-		if (sysctlbyname("net.atalk.ddp.stats", ddpstat, &size,
+		if (prog_sysctlbyname("net.atalk.ddp.stats", ddpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
