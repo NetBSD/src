@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.17 2019/08/18 09:29:38 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.18 2019/08/18 09:46:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.17 2019/08/18 09:29:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.18 2019/08/18 09:46:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -725,7 +725,7 @@ usbnet_ep_stop_pipes(struct usbnet * const un)
 			continue;
 		usbd_status err2 = usbd_abort_pipe(unp->unp_ep[i]);
 		if (err == USBD_NORMAL_COMPLETION && err2)
-			return err = err2;
+			err = err2;
 	}
 
 	return err;
