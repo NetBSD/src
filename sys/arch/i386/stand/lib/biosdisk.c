@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.50 2019/08/18 02:18:25 manu Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.51 2019/08/18 16:49:30 kamil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -858,7 +858,7 @@ biosdisk_probe(void)
 			printf("Out of memory\n");
 			return;
 		}
-		memset(d, 0, sizeof(d));
+		memset(d, 0, sizeof(*d));
 		memset(&ed, 0, sizeof(ed));
 		if (i >= MAX_BIOSDISKS)
 			d->ll.dev = 0x00 + i - MAX_BIOSDISKS;	/* fd */
