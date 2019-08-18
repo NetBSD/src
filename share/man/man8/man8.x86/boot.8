@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.16 2019/08/18 02:23:48 manu Exp $
+.\"	$NetBSD: boot.8,v 1.17 2019/08/18 08:12:36 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 15, 2019
+.Dd August 18, 2019
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -40,13 +40,9 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Tn IA-32
-computers
-.Po
-the
+Intel Architecture, 32-bit (IA-32) computers (the
 .Tn IBM PC
-and its clones
-.Pc
+and its clones)
 that can run
 .Nx Ns /i386
 or
@@ -62,7 +58,7 @@ from the system
 .Tn BIOS
 .It efiboot
 bootstrap
-.Nx 
+.Nx
 from the system
 .Tn UEFI
 .It Xr x86/dosboot 8
@@ -180,8 +176,8 @@ input of these commands:
 .It Ic boot Oo Va device : Oc Ns Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
 The default
 .Va device
-will be set to the disk from which the boot loader was loaded. The
-partition is set to the first match in this list:
+will be set to the disk from which the boot loader was loaded.
+The partition is set to the first match in this list:
 .Bl -enum -compact
 .It
 The first
@@ -193,7 +189,7 @@ attribute set.
 The partition from which the boot loader was loaded from, if that
 can be detected.
 .It
-The first partition with a filesystem that could be bootable.
+The first partition with a file system that could be bootable.
 .It
 The first partition.
 .El
@@ -204,7 +200,8 @@ is of the form
 .Va NAME=partition_label
 when booting from a
 .Xr gpt 8
-partitionned disk. Otherwise, the syntax is
+partitioned disk.
+Otherwise, the syntax is
 .Xo Va xd
 .Op Va N Ns Op Va x
 .Xc
@@ -231,17 +228,17 @@ Floppy drives as numbered by the BIOS.
 CD-ROM drives as numbered by the BIOS.
 .It raid
 RAIDframe configured from hard disks recognized by the BIOS.
-Only RAID level 1 sets are supported by bootstrap code. If
-the RAID is partitionned, the first partition is used, or the
+Only RAID level 1 sets are supported by bootstrap code.
+If the RAID is partitioned, the first partition is used, or the
 first
 .Xr gpt 8
 partition that has the
 .Va bootme
-attribute set. Inner RAIDframe partition can also be
-given to the
+attribute set.
+Inner RAIDframe partitions can also be given to the
 .Ic dev
 command using he
-.Va NAME=partiton_label
+.Va NAME=partition_label
 syntax.
 .El
 .Pp
@@ -839,12 +836,13 @@ partitionning, but some do not handle the later.
 Booting
 from a
 .Xr gpt 8
-partitionned disk is still possible in this case, by adding
+partitioned disk is still possible in this case, by adding
 an overlapping
 .Tn EFI
 partition in the protective
 .Xr mbr 8
-block. This can be achieved using the following commands
+block.
+This can be achieved using the following commands
 (you must adapt the hard disk and
 .Tn EFI
 partition start end size to fit your setup):
@@ -863,4 +861,3 @@ partition table will look like this:
 2: <UNUSED>
 3: <UNUSED>
 .Ed
-
