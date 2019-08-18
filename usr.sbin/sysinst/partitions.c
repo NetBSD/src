@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.1.2.1 2019/08/18 13:21:40 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ partitions_read_disk(const char *dev, daddr_t disk_size)
 
 	for (ps = available_part_schemes; *ps; ps++) {
 		struct disk_partitions *parts =
-		    (*ps)->read_from_disk(dev, 0, disk_size);
+		    (*ps)->read_from_disk(dev, 0, disk_size, *ps);
 		if (parts)
 			return parts;
 	}
@@ -78,8 +78,23 @@ extern const struct disk_partitioning_scheme gpt_parts;
 #ifdef HAVE_MBR
 extern const struct disk_partitioning_scheme mbr_parts;
 #endif
-#if RAW_PART == 2	/* only available as primary on some architectures */
-const struct disk_partitioning_scheme disklabel_parts;
+
+extern const struct disk_partitioning_scheme disklabel_parts;
+#if RAW_PART != 2
+static struct disk_partitioning_scheme only_disklabel_parts;
+
+/*
+ * If not overriden by MD code, we can not boot from plain
+ * disklabel disks (w/o MBR).
+ */
+static bool have_only_disklabel_boot_support(const char *disk)
+{
+#ifdef HAVE_PLAIN_DISKLABEL_BOOT
+	return HAVE_PLAIN_DISKLABEL_BOOT(disk);
+#else
+	return false;
+#endif
+}
 #endif
 
 /*
@@ -104,6 +119,9 @@ static const struct part_scheme_desc all_descs[] = {
 #ifdef HAVE_MBR
 		{ NULL, &mbr_parts },
 #endif
+#if RAW_PART != 2	/* "whole disk NetBSD" disklabel variant */
+		{ NULL, &only_disklabel_parts },
+#endif
 	};
 
 	size_t i, avail;
@@ -112,6 +130,15 @@ static const struct part_scheme_desc all_descs[] = {
 	static const size_t all_cnt = __arraycount(all_descs);
 
 	check_available_binaries();
+
+#if RAW_PART != 2
+	/* generate a variant of disklabel w/o parent scheme */
+	only_disklabel_parts = disklabel_parts;
+	only_disklabel_parts.name = MSG_parttype_only_disklabel;
+	only_disklabel_parts.have_boot_support =
+	    have_only_disklabel_boot_support;
+#endif
+
 
 	is_available = malloc(all_cnt);
 
