@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.32 2019/07/18 04:22:22 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.33 2019/08/19 03:21:13 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -321,7 +321,9 @@ rump_server_add_iface()
 
 	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig $ifname create
-	atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
+	if [ -n "$bus" ]; then
+		atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
+	fi
 	export RUMP_SERVER=$backup
 
 	echo $sock $ifname >> $_rump_server_ifaces
@@ -359,13 +361,17 @@ rump_server_destroy_ifaces()
 
 	# XXX using pipe doesn't work. See PR bin/51667
 	#cat $_rump_server_ifaces | while read sock ifname; do
+	# Destroy interfaces in the reverse order
+	tac $_rump_server_ifaces > __ifaces
 	while read sock ifname; do
 		export RUMP_SERVER=$sock
 		if rump.ifconfig -l |grep -q $ifname; then
 			atf_check -s exit:0 rump.ifconfig $ifname destroy
 		fi
 		atf_check -s exit:0 -o ignore rump.ifconfig
-	done < $_rump_server_ifaces
+	done < __ifaces
+	rm -f __ifaces
+
 	export RUMP_SERVER=$backup
 
 	return 0
