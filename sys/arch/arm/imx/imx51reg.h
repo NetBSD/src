@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.7 2015/05/07 04:37:29 hkenken Exp $ */
+/* $NetBSD: imx51reg.h,v 1.8 2019/08/19 11:41:36 hkenken Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,7 +140,6 @@
 
 #define	ECSPI1_BASE	(AIPSTZ1_BASE + 0x00010000)
 #define	ECSPI2_BASE	(AIPSTZ2_BASE + 0x03fac000)
-#define	ECSPI_SIZE	0x4000
 
 #define	SSI1_BASE	(AIPSTZ2_BASE + 0x03fcc000)
 #define	SSI2_BASE	(AIPSTZ1_BASE + 0x00014000)
