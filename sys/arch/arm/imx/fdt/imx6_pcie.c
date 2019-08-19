@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.2 2019/07/26 06:57:54 skrll Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.2 2019/07/26 06:57:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -179,7 +179,8 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, imxpcie_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, imxpcie_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
