@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.49 2019/08/19 09:30:30 christos Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.50 2019/08/19 14:09:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.49 2019/08/19 09:30:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.50 2019/08/19 14:09:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -238,17 +238,13 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	switch (attrnamespace) {
 	case EXTATTR_NAMESPACE_SYSTEM:
 		(void)snprintf(path, PATH_MAX, "%s/%s/%s/%s", 
-			       mp->mnt_stat.f_mntonname,
-			       UFS_EXTATTR_FSROOTSUBDIR,
-			       UFS_EXTATTR_SUBDIR_SYSTEM,
-			       attrname);
+		    mp->mnt_stat.f_mntonname, UFS_EXTATTR_FSROOTSUBDIR,
+		    UFS_EXTATTR_SUBDIR_SYSTEM, attrname);
 		break;
 	case EXTATTR_NAMESPACE_USER:
 		(void)snprintf(path, PATH_MAX, "%s/%s/%s/%s", 
-			       mp->mnt_stat.f_mntonname,
-			       UFS_EXTATTR_FSROOTSUBDIR,
-			       UFS_EXTATTR_SUBDIR_USER,
-			       attrname);
+		    mp->mnt_stat.f_mntonname, UFS_EXTATTR_FSROOTSUBDIR,
+		    UFS_EXTATTR_SUBDIR_USER, attrname);
 		break;
 	default:
 		PNBUF_PUT(path);
@@ -666,16 +662,18 @@ ufs_extattr_subdir(struct lwp *l, struct mount *mp, struct vnode *attr_dvp,
 	error = ufs_extattr_lookup(attr_dvp, LOCKPARENT, subdir, &attr_sub, l);
 	KASSERT(VOP_ISLOCKED(attr_dvp) == LK_EXCLUSIVE);
 	if (error) {
-		printf("%s: Can't find `%s/%s' (%d)\n",
-		    __func__, UFS_EXTATTR_FSROOTSUBDIR, subdir, error);
+		printf("%s: Can't find `%s/%s/%s' (%d)\n",
+		    __func__, mp->mnt_stat.f_mntonname,
+		    UFS_EXTATTR_FSROOTSUBDIR, subdir, error);
 		return error;
 	}
 	KASSERT(VOP_ISLOCKED(attr_sub) == LK_EXCLUSIVE);
 	error = ufs_extattr_iterate_directory(VFSTOUFS(mp),
 	    attr_sub, namespace, l);
 	if (error) {
-		printf("%s: ufs_extattr_iterate_directory for `%s/%s' (%d)\n",
-		    __func__, UFS_EXTATTR_FSROOTSUBDIR, subdir, error);
+		printf("%s: ufs_extattr_iterate_directory `%s/%s/%s' (%d)\n",
+		    __func__, mp->mnt_stat.f_mntonname,
+		    UFS_EXTATTR_FSROOTSUBDIR, subdir, error);
 	}
 	KASSERT(VOP_ISLOCKED(attr_sub) == LK_EXCLUSIVE);
 	vput(attr_sub);
@@ -710,8 +708,8 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 		/* rvp ref'd but now unlocked */
 		KASSERT(VOP_ISLOCKED(rvp) == 0);
 		vrele(rvp);
-		printf("%s: lookup `%s' (%d)\n", __func__,
-		    UFS_EXTATTR_FSROOTSUBDIR, error);
+		printf("%s: lookup `%s/%s' (%d)\n", __func__,
+		    mp->mnt_stat.f_mntonname, UFS_EXTATTR_FSROOTSUBDIR, error);
 		return error;
 	}
 	if (rvp == attr_dvp) {
@@ -719,8 +717,8 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 		KASSERT(VOP_ISLOCKED(rvp) == LK_EXCLUSIVE);
 		vrele(attr_dvp);
 		vput(rvp);
-		printf("%s: `/' == `%s' (%d)\n", __func__,
-		    UFS_EXTATTR_FSROOTSUBDIR, EINVAL);
+		printf("%s: `/' == `%s/%s' (%d)\n", __func__,
+		    mp->mnt_stat.f_mntonname, UFS_EXTATTR_FSROOTSUBDIR, EINVAL);
 		return EINVAL;
 	}
 	KASSERT(VOP_ISLOCKED(rvp) == 0);
@@ -729,8 +727,9 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 	KASSERT(VOP_ISLOCKED(attr_dvp) == LK_EXCLUSIVE);
 
 	if (attr_dvp->v_type != VDIR) {
-		printf("%s: `%s' is not a directory\n",
-		    __func__, UFS_EXTATTR_FSROOTSUBDIR);
+		printf("%s: `%s/%s' is not a directory\n",
+		    __func__, mp->mnt_stat.f_mntonname,
+		    UFS_EXTATTR_FSROOTSUBDIR);
 		goto return_vput_attr_dvp;
 	}
 
