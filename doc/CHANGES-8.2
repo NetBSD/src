@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.26 2019/08/16 15:39:59 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.27 2019/08/19 14:32:14 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -587,4 +587,16 @@ usr.sbin/cpuctl/arch/i386.c			1.104
 	  same as Intel Deterministic Cache Parameter Leaf(0x04), so make new
 	  cpu_dcp_cacheinfo() and use it on both Intel and AMD.
 	[msaitoh, ticket #1338]
+
+sys/net/if.c					1.458
+tests/net/if/t_ifconfig.sh			1.21
+
+	PR kern/54434.: restore if_ioctl on error of ifc_destroy, otherwise
+	subsequent ioctls will not work. Add a test case for this.
+	[ozaki-r, ticket #1339]
+
+sys/netinet6/nd6.c				1.257
+
+	Add missing IFNET_LOCK for regen_tmpaddr.
+	[ozaki-r, ticket #1340]
 
