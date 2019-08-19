@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.35 2019/06/25 12:30:50 msaitoh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.36 2019/08/19 03:24:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.35 2019/06/25 12:30:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.36 2019/08/19 03:24:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -275,6 +275,24 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if.if_transmit = l2tp_transmit;
 	sc->l2tp_ec.ec_if._if_input = ether_input;
 	IFQ_SET_READY(&sc->l2tp_ec.ec_if.if_snd);
+
+#ifdef MBUFTRACE
+	struct ethercom *ec = &sc->l2tp_ec;
+	struct ifnet *ifp = &sc->l2tp_ec.ec_if;
+
+	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_tx_mowner.mo_name));
+	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
+	    sizeof(ec->ec_tx_mowner.mo_descr));
+	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_rx_mowner.mo_name));
+	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
+	    sizeof(ec->ec_rx_mowner.mo_descr));
+	MOWNER_ATTACH(&ec->ec_tx_mowner);
+	MOWNER_ATTACH(&ec->ec_rx_mowner);
+	ifp->if_mowner = &ec->ec_tx_mowner;
+#endif
+
 	/* XXX
 	 * It may improve performance to use if_initialize()/if_register()
 	 * so that l2tp_input() calls if_input() instead of
