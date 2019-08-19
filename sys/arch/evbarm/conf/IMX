@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IMX,v 1.3 2019/08/12 11:46:39 skrll Exp $
+#	$NetBSD: IMX,v 1.4 2019/08/19 11:41:36 hkenken Exp $
 #
 #	NXP(Freescale) I.MX family SoCs
 #
@@ -15,6 +15,7 @@ makeoptions	DTS="
 	imx6dl-hummingboard.dts
 	imx6q-hummingboard2.dts
 	imx6dl-hummingboard2.dts
+	imx6qp-sabresd.dts
 "
 
 options 	MULTIPROCESSOR
@@ -135,6 +136,15 @@ pci*		at ppb?
 # IIC
 imxi2c* 	at fdt?
 iic*		at imxi2c?
+
+# SPI
+imxspi*		at fdt?
+spi*		at imxspi?
+options		IMXSPINSLAVES=1
+
+# SPI NOR-Flash
+spiflash*	at spiflashbus?
+m25p*		at spi? slave ?
 
 cinclude "arch/evbarm/conf/IMX.local"
 
