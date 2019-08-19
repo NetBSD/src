@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.9 2019/05/03 02:10:58 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.10 2019/08/19 03:23:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.9 2019/05/03 02:10:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.10 2019/08/19 03:23:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1646,6 +1646,10 @@ COMPATNAME(route_init)(void)
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    COMPATNAME(route_intr), NULL);
 	IFQ_LOCK_INIT(&ri->ri_intrq);
+
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&COMPATNAME(routedomain).dom_mowner);
+#endif
 }
 
 /*
@@ -1698,4 +1702,7 @@ struct domain COMPATNAME(routedomain) = {
 	.dom_protosw = COMPATNAME(route_protosw),
 	.dom_protoswNPROTOSW =
 	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
+#ifdef MBUFTRACE
+	.dom_mowner = MOWNER_INIT("route", "rtm"),
+#endif
 };
