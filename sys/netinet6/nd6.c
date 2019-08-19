@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232.2.11 2019/07/26 11:27:36 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.12 2019/08/19 14:28:12 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.11 2019/07/26 11:27:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.12 2019/08/19 14:28:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -668,8 +668,12 @@ nd6_timer_work(struct work *wk, void *arg)
 			if (ip6_use_tempaddr &&
 			    (ia6->ia6_flags & IN6_IFF_TEMPORARY) != 0 &&
 			    (oldflags & IN6_IFF_DEPRECATED) == 0) {
+				int ret;
 
-				if (regen_tmpaddr(ia6) == 0) {
+				IFNET_LOCK(ia6->ia_ifa.ifa_ifp);
+				ret = regen_tmpaddr(ia6);
+				IFNET_UNLOCK(ia6->ia_ifa.ifa_ifp);
+				if (ret == 0) {
 					/*
 					 * A new temporary address is
 					 * generated.
