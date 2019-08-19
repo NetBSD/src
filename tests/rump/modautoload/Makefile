@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/10/14 16:02:35 christos Exp $
+#	$NetBSD: Makefile,v 1.8.16.1 2019/08/19 15:47:00 martin Exp $
 #
 
 .include <bsd.init.mk>
@@ -28,5 +28,10 @@ WARNS=	4
 SRCS.t_modautoload+=		sysctlbyname.c
 SRCS.t_modautoload+=		sysctlgetmibinfo.c
 CPPFLAGS+=	-DRUMP_ACTION
+
+SANITIZER_RENAME_CLASSES+=		t_modautoload
+SANITIZER_RENAME_FILES.t_modautoload+=	${SRCS.t_modautoload}
+SANITIZER_RENAME_SYMBOL.t_modautoload+=	sysctlbyname
+SANITIZER_RENAME_SYMBOL.t_modautoload+=	sysctlgetmibinfo
 
 .include <bsd.test.mk>
