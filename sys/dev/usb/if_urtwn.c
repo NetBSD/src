@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.71 2019/07/25 14:31:35 msaitoh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.72 2019/08/19 07:20:07 mrg Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.71 2019/07/25 14:31:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.72 2019/08/19 07:20:07 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -390,6 +390,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_calib_to, 0);
 	callout_setfunc(&sc->sc_calib_to, urtwn_calib_to, sc);
 
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
+
 	error = usbd_set_config_no(sc->sc_udev, 1, 0);
 	if (error != 0) {
 		aprint_error_dev(self, "failed to set configuration"
@@ -513,8 +516,6 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
-	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	ieee80211_announce(ic);
 
@@ -568,6 +569,8 @@ urtwn_detach(device_t self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+
+	rnd_detach_source(&sc->rnd_source);
 
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
