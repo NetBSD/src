@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,8 +181,8 @@ imx6_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
-	    ahci_intr, &sc->sc);
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO,
+	    FDT_INTR_MPSAFE, ahci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
