@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2019/06/20 03:31:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2019/08/19 09:31:31 christos Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	ufs
 
 CPPFLAGS+=      -DUFS_DIRHASH -DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
+CPPFLAGS+=	-DUFS_EXTATTR
 
 CWARNFLAGS.clang=	-Wno-conversion
 
