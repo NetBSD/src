@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.58 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.59 2019/08/19 07:33:37 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.58 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.59 2019/08/19 07:33:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -279,14 +279,15 @@ smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t addr;
 	uint32_t data = 0;
-	int rv = 0;
 
 	usbnet_isowned_mii(un);
 
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII is busy\n");
-		rv = -1;
-		goto done;
+		return USBD_TIMEOUT;
 	}
 
 	addr = (phy << 11) | (reg << 6) | SMSC_MII_READ;
@@ -294,14 +295,13 @@ smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII read timeout\n");
-		rv = ETIMEDOUT;
+		return USBD_TIMEOUT;
 	}
 
 	smsc_readreg(un, SMSC_MII_DATA, &data);
 
-done:
 	*val = data & 0xffff;
-	return rv;
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -312,11 +312,11 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return -1;
+		return USBD_INVAL;
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII is busy\n");
-		return -1;
+		return USBD_TIMEOUT;
 	}
 
 	smsc_writereg(un, SMSC_MII_DATA, val);
@@ -326,10 +326,10 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII write timeout\n");
-		return ETIMEDOUT;
+		return USBD_TIMEOUT;
 	}
 
-	return 0;
+	return USBD_NORMAL_COMPLETION;
 }
 
 void

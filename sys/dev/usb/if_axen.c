@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.64 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.65 2019/08/19 07:33:37 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.64 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.65 2019/08/19 07:33:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -135,8 +135,11 @@ static usbd_status
 axen_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint16_t data;
-	usbd_status err = axen_cmd(un, AXEN_CMD_MII_READ_REG, reg, phy, &data);
 
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
+	usbd_status err = axen_cmd(un, AXEN_CMD_MII_READ_REG, reg, phy, &data);
 	if (!err) {
 		*val = le16toh(data);
 
@@ -151,6 +154,9 @@ static usbd_status
 axen_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint16_t uval = htole16(val);
+
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
 
 	return axen_cmd(un, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
 }
