@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2019/03/25 02:13:01 manu Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2019/08/19 18:12:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2019/03/25 02:13:01 manu Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2019/08/19 18:12:50 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789aB:b:cd:eFf:h:ik:l:L:nr:s:StT:uU:Wwx:X")) != -1)
+	    "0123456789aB:b:cd:D:eFf:h:ik:l:L:nr:s:StT:uU:Wwx:X")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -162,6 +162,10 @@ main(int argc, char *argv[])
 			density = numarg("density", 10L, 327670L) / 10;
 			if (density >= 625 && !bflag)
 				ntrec = HIGHDENSITYTREC;
+			break;
+
+		case 'D':		/* specify alt. dumpdates file */
+			dumpdates = optarg;
 			break;
 
 		case 'e':		/* eject full tapes */
