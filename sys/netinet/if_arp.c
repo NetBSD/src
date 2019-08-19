@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.283 2019/08/19 03:23:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.283 2019/08/19 03:23:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -247,6 +247,9 @@ struct domain arpdomain = {
 	.dom_name = "arp",
 	.dom_protosw = arpsw,
 	.dom_protoswNPROTOSW = &arpsw[__arraycount(arpsw)],
+#ifdef MBUFTRACE
+	.dom_mowner = MOWNER_INIT("internet", "arp"),
+#endif
 };
 
 static void sysctl_net_inet_arp_setup(struct sysctllog **);
@@ -258,6 +261,10 @@ arp_init(void)
 	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
 	IFQ_LOCK_INIT(&arpintrq);
+
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&arpdomain.dom_mowner);
+#endif
 }
 
 static void
