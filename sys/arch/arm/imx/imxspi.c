@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.5 2019/08/19 11:41:36 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.5 2019/08/19 11:41:36 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxspi.h"
+#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $");
 #include <arm/imx/imxspivar.h>
 #include <arm/imx/imxspireg.h>
 
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
 /* SPI service routines */
 static int imxspi_configure_enhanced(void *, int, int, int);
 static int imxspi_configure(void *, int, int, int);
 static int imxspi_transfer(void *, struct spi_transfer *);
-static int imxspi_intr(void *);
 
 /* internal stuff */
 void imxspi_done(struct imxspi_softc *, int);
@@ -78,30 +82,30 @@ int imxspi_debug = IMXSPI_DEBUG;
 #define	DPRINTFN(n,x)
 #endif
 
-int
-imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
+#ifdef FDT
+static struct spi_controller *
+imxspi_get_controller(device_t dev)
 {
-	struct imxspi_attach_args *saa = aux;
-	struct spibus_attach_args sba;
-	bus_addr_t addr = saa->saa_addr;
-	bus_size_t size = saa->saa_size;
+	struct imxspi_softc * const sc = device_private(dev);
 
-	sc->sc_iot = saa->saa_iot;
-	sc->sc_freq = saa->saa_freq;
-	sc->sc_tag = saa->saa_tag;
-	sc->sc_enhanced = saa->saa_enhanced;
-	if (size <= 0)
-		size = SPI_SIZE;
+	return &sc->sc_spi;
+}
 
-	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
-		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
-		return 1;
-	}
+static const struct fdtbus_spi_controller_func imxspi_funcs = {
+	.get_controller = imxspi_get_controller
+};
+#endif
 
-	aprint_normal(": i.MX %sCSPI Controller (clock %ld Hz)\n",
+int
+imxspi_attach_common(device_t self)
+{
+	struct imxspi_softc * const sc = device_private(self);
+
+	aprint_normal("i.MX %sCSPI Controller (clock %ld Hz)\n",
 	    ((sc->sc_enhanced) ? "e" : ""), sc->sc_freq);
 
 	/* Initialize SPI controller */
+	sc->sc_dev = self;
 	sc->sc_spi.sct_cookie = sc;
 	if (sc->sc_enhanced)
 		sc->sc_spi.sct_configure = imxspi_configure_enhanced;
@@ -110,12 +114,9 @@ imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
 	sc->sc_spi.sct_transfer = imxspi_transfer;
 
 	/* sc->sc_spi.sct_nslaves must have been initialized by machdep code */
-	sc->sc_spi.sct_nslaves = saa->saa_nslaves;
+	sc->sc_spi.sct_nslaves = sc->sc_nslaves;
 	if (!sc->sc_spi.sct_nslaves)
 		aprint_error_dev(sc->sc_dev, "no slaves!\n");
-
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
 
 	/* initialize the queue */
 	SIMPLEQ_INIT(&sc->sc_q);
@@ -132,12 +133,19 @@ imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
 
 	WRITE_REG(sc, PERIODREG, 0x0);
 
-	/* enable device interrupts */
-	sc->sc_ih = intr_establish(saa->saa_irq, IPL_BIO, IST_LEVEL,
-	    imxspi_intr, sc);
+#ifdef FDT
+	KASSERT(sc->sc_phandle != 0);
+
+	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
+	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
+#else
+	struct spibus_attach_args sba;
+	memset(&sba, 0, sizeof(sba));
+	sba.sba_controller = &sc->sc_spi;
 
 	/* attach slave devices */
 	(void)config_found_ia(sc->sc_dev, "spibus", &sba, spibus_print);
+#endif
 
 	return 0;
 }
@@ -363,7 +371,7 @@ imxspi_done(struct imxspi_softc *sc, int err)
 	imxspi_sched(sc);
 }
 
-static int
+int
 imxspi_intr(void *arg)
 {
 	struct imxspi_softc *sc = arg;

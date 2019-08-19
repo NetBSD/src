@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_spi.c,v 1.2 2019/07/24 12:33:18 hkenken Exp $	*/
+/*	$NetBSD: netwalker_spi.c,v 1.3 2019/08/19 11:41:36 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.2 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.3 2019/08/19 11:41:36 hkenken Exp $");
 
 #include "opt_imxspi.h"
 
@@ -45,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.2 2019/07/24 12:33:18 hkenken Ex
 #include <arm/imx/imx51_iomuxreg.h>
 #include <arm/imx/imxgpiovar.h>
 #include <arm/imx/imxspivar.h>
+#include <arm/imx/imxspireg.h>
 
 struct imx51spi_softc {
-	struct imxspi_softc	sc_spi;
+	struct imxspi_softc	sc_spi; /* Must be first */
+
 	struct spi_chipset_tag	sc_tag;
 };
 
@@ -110,14 +112,22 @@ imxspi_match(device_t parent, cfdata_t cf, void *aux)
 void
 imxspi_attach(device_t parent, device_t self, void *aux)
 {
-	struct imx51spi_softc *sc = device_private(self);
+	struct imx51spi_softc *isc = device_private(self);
+	struct imxspi_softc *sc = &isc->sc_spi;
 	struct axi_attach_args *aa = aux;
-	struct imxspi_attach_args saa;
 	int cf_flags = device_cfdata(self)->cf_flags;
+	bus_addr_t addr;
+	bus_size_t size;
 
-	sc->sc_tag.cookie = sc;
+	addr = aa->aa_addr;
+	size = aa->aa_size;
+	if (size <= 0)
+		size = SPI_SIZE;
 
-	if (device_cfdata(self)->cf_unit == 0) {
+	isc->sc_tag.cookie = sc;
+
+	switch (device_unit(self)) {
+	case 0:
 		/* CS 0 GPIO setting */
 		gpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
 		gpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
@@ -135,21 +145,26 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 		gpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
 		gpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
 
-		sc->sc_tag.spi_cs_enable = imxspi_cs_enable;
-		sc->sc_tag.spi_cs_disable = imxspi_cs_disable;
+		isc->sc_tag.spi_cs_enable = imxspi_cs_enable;
+		isc->sc_tag.spi_cs_disable = imxspi_cs_disable;
+		break;
 	}
 
-	saa.saa_iot = aa->aa_iot;
-	saa.saa_addr = aa->aa_addr;
-	saa.saa_size = aa->aa_size;
-	saa.saa_irq = aa->aa_irq;
-	saa.saa_enhanced = cf_flags;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_enhanced = cf_flags;
 
-	saa.saa_nslaves = IMXSPINSLAVES;
-	saa.saa_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
-	saa.saa_tag = &sc->sc_tag;
+	sc->sc_nslaves = IMXSPINSLAVES;
+	sc->sc_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
+	sc->sc_tag = &isc->sc_tag;
 
-	sc->sc_spi.sc_dev = self;
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
+		return;
+	}
 
-	imxspi_attach_common(parent, &sc->sc_spi, &saa);
+	/* enable device interrupts */
+	sc->sc_ih = intr_establish(aa->aa_irq, IPL_BIO, IST_LEVEL,
+	    imxspi_intr, sc);
+
+	imxspi_attach_common(self);
 }
