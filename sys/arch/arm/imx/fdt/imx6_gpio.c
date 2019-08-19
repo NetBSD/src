@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpio.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: imx6_gpio.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $");
 
 #include "opt_fdt.h"
 #include "gpio.h"
@@ -123,8 +123,8 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->gpio_is = fdtbus_intr_establish(phandle, 0, IPL_HIGH, 0,
-	    pic_handle_intr, &sc->gpio_pic);
+	sc->gpio_is = fdtbus_intr_establish(phandle, 0, IPL_HIGH,
+	    FDT_INTR_MPSAFE, pic_handle_intr, &sc->gpio_pic);
 	if (sc->gpio_is == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
@@ -136,8 +136,8 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	sc->gpio_is_high = fdtbus_intr_establish(phandle, 1, IPL_HIGH, 0,
-	    pic_handle_intr, &sc->gpio_pic);
+	sc->gpio_is_high = fdtbus_intr_establish(phandle, 1, IPL_HIGH,
+	    FDT_INTR_MPSAFE, pic_handle_intr, &sc->gpio_pic);
 	if (sc->gpio_is_high == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
