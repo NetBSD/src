@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_pfil.sh,v 1.1 2019/01/17 02:49:11 knakahara Exp $
+#	$NetBSD: t_ipsec_pfil.sh,v 1.2 2019/08/19 03:22:05 ozaki-r Exp $
 #
 # Copyright (c) 2019 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ setup_if_ipsec()
 	local dst=$4
 	local peernet=$5
 
-	atf_check -s exit:0 rump.ifconfig ipsec0 create
+	rump_server_add_iface $RUMP_SERVER ipsec0
 	atf_check -s exit:0 rump.ifconfig ipsec0 tunnel $src $dst
 	atf_check -s exit:0 rump.ifconfig ipsec0 inet ${addr}/32 $remote
 	atf_check -s exit:0 -o ignore rump.route add -inet $peernet $addr

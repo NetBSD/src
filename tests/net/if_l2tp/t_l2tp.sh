@@ -1,4 +1,4 @@
-#	$NetBSD: t_l2tp.sh,v 1.4 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: t_l2tp.sh,v 1.5 2019/08/19 03:22:05 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -227,12 +227,12 @@ setup_if_l2tp()
 
 	export RUMP_SERVER=${sock}
 
-	atf_check -s exit:0 rump.ifconfig l2tp0 create
+	rump_server_add_iface $sock l2tp0
 	atf_check -s exit:0 rump.ifconfig l2tp0 tunnel ${src} ${dst}
 	atf_check -s exit:0 rump.ifconfig l2tp0 session ${src_session} ${dst_session}
 	atf_check -s exit:0 rump.ifconfig l2tp0 up
 
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	rump_server_add_iface $sock bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	atf_check -s exit:0 brconfig bridge0 add shmif0

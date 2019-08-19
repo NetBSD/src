@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.6 2019/07/09 02:50:24 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.7 2019/08/19 03:22:05 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -79,7 +79,7 @@ setup_bridge()
 {
 
 	export RUMP_SERVER=$SOCK2
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	rump_server_add_iface $SOCK2 bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
