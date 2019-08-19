@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.71 2019/08/19 09:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.71 2019/08/19 09:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -807,10 +807,11 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	vfs_ref(mp);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
-       if (error) {
+	if (error) {
 		vrele(vp);
 	} else if (flags & MNT_EXTATTR) {
-		(void)start_extattr(mp);
+		if (start_extattr(mp) != 0)
+			mp->mnt_flag &= ~MNT_EXTATTR;
 	}
 	/* Drop reference held for VFS_START(). */
 	vfs_rele(mp);
