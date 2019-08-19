@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.34 2019/08/13 07:20:43 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.35 2019/08/19 03:20:27 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -687,7 +687,7 @@ ndp_stray_entries_cleanup()
 }
 
 atf_test_case ndp_cache_state cleanup
-ndp_stray_entries_head()
+ndp_cache_state_head()
 {
 
 	atf_set "descr" "Tests states of neighbor cache entries"
