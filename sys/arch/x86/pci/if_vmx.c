@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.46 2019/08/01 09:37:34 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.47 2019/08/19 05:23:50 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.46 2019/08/01 09:37:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.47 2019/08/19 05:23:50 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -859,11 +859,13 @@ vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 	int i;
 
 	workqueue_destroy(sc->vmx_queue_wq);
-	for (i = 0; i < sc->vmx_nintrs; i++) {
+	for (i = 0; i < sc->vmx_ntxqueues; i++) {
 		struct vmxnet3_queue *vmxq =  &sc->vmx_queue[i];
 
 		softint_disestablish(vmxq->vxq_si);
 		vmxq->vxq_si = NULL;
+	}
+	for (i = 0; i < sc->vmx_nintrs; i++) {
 		pci_intr_disestablish(pc, sc->vmx_ihs[i]);
 	}
 	pci_intr_release(pc, sc->vmx_intrs, sc->vmx_nintrs);
