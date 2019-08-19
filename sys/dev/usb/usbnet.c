@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.18 2019/08/18 09:46:58 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.19 2019/08/19 06:35:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.18 2019/08/18 09:46:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.19 2019/08/19 06:35:14 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -134,6 +134,8 @@ fail:
 #define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbnetdebug,N,FMT,A,B,C,D)
 #define USBNETHIST_FUNC()	USBHIST_FUNC()
 #define USBNETHIST_CALLED(name)	USBHIST_CALLED(usbnetdebug)
+#define USBNETHIST_CALLARGS(FMT,A,B,C,D) \
+				USBHIST_CALLARGS(usbnetdebug,FMT,A,B,C,D)
 
 /* Callback vectors. */
 
@@ -274,7 +276,8 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 	struct mbuf *m;
 
 	usbnet_isowned_rx(un);
-	DPRINTFN(0, "called! un %p buf %p len %ju", un, buf, buflen, 0);
+	DPRINTFN(0, "called! un %jx buf %jx len %ju",
+	    (uintmax_t)un, (uintmax_t)buf, buflen, 0);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
@@ -860,6 +863,7 @@ usbnet_mutex_mii(struct usbnet *un)
 int
 usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
+	USBNETHIST_FUNC();
 	struct usbnet * const un = device_private(dev);
 	struct usbnet_private * const unp = un->un_pri;
 	usbd_status err;
@@ -876,7 +880,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	usbnet_unlock_mii(un);
 
 	if (err) {
-		aprint_error_dev(un->un_dev, "read PHY failed: %d\n", err);
+		USBNETHIST_CALLARGS("read PHY failed: %d", err, 0, 0, 0);
 		return EIO;
 	}
 
@@ -886,6 +890,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 int
 usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
+	USBNETHIST_FUNC();
 	struct usbnet * const un = device_private(dev);
 	struct usbnet_private * const unp = un->un_pri;
 	usbd_status err;
@@ -902,7 +907,7 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	usbnet_unlock_mii(un);
 
 	if (err) {
-		aprint_error_dev(un->un_dev, "write PHY failed: %d\n", err);
+		USBNETHIST_CALLARGS("write PHY failed: %d", err, 0, 0, 0);
 		return EIO;
 	}
 
