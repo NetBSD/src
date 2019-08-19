@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.23 2019/08/18 14:36:49 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.24 2019/08/19 16:12:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2034,3 +2034,75 @@ usr.sbin/sysinst/checkrc.c			1.2
 
 	Fix memory leak (found by MKSANITIZER=yes build).
 	[martin, ticket #89]
+
+external/bsd/compiler_rt/lib/clang/lib/netbsd/common.mk 1.2
+
+	Set NODEBUG for LLVM sanitizers.
+	[kamil, ticket #90]
+
+tests/rump/modautoload/Makefile			1.9
+
+	Avoid symbol clashes in test/rump/modautoload/t_modautoload with
+	sanitizers.
+	[kamil, ticket #91]
+
+usr.sbin/traceroute/Makefile			1.20
+usr.sbin/traceroute/ifaddrlist.c		1.11
+usr.sbin/traceroute/prog_ops.h			1.2
+usr.sbin/traceroute/traceroute_hostops.c	1.2
+usr.sbin/traceroute/traceroute_rumpops.c	1.2
+
+	traceroute: Add indirection of symbol to remove clash with sanitizers.
+	[kamil, ticket #92]
+
+share/mk/bsd.prog.mk				1.322
+
+	Add PAXCTL_FLAG rules for MKSANITIZER: disable ASLR for
+	programs sanitized by ASan, TSan and MSan.
+	[kamil, ticket #93]
+
+usr.bin/netstat/Makefile			1.46
+usr.bin/netstat/atalk.c				1.17
+usr.bin/netstat/bpf.c				1.14
+usr.bin/netstat/fast_ipsec.c			1.23
+usr.bin/netstat/inet.c				1.110
+usr.bin/netstat/inet6.c				1.73
+usr.bin/netstat/netstat_hostops.c		1.2
+usr.bin/netstat/netstat_rumpops.c		1.2
+usr.bin/netstat/pfkey.c				1.2
+usr.bin/netstat/pfsync.c			1.2
+usr.bin/netstat/prog_ops.h			1.3
+
+	netstat: Add indirection of symbols to remove clash with sanitizers.
+	[kamil, ticket #94]
+
+sbin/sysctl/Makefile				1.22
+sbin/sysctl/prog_ops.h				1.3
+sbin/sysctl/sysctl.c				1.162
+sbin/sysctl/sysctl_hostops.c			1.2
+sbin/sysctl/sysctl_rumpops.c			1.2
+
+	sysctl: Add indirection of symbols to remove clash with sanitizers.
+	[kamil, ticket #95]
+
+usr.bin/sockstat/Makefile			1.4
+usr.bin/sockstat/prog_ops.h			1.2
+usr.bin/sockstat/sockstat.c			1.21
+usr.bin/sockstat/sockstat_hostops.c		1.2
+usr.bin/sockstat/sockstat_rumpops.c		1.2
+
+	sockstat: Add indirection of symbols to remove clash with sanitizers.
+	[kamil, ticket #96]
+
+sys/netinet6/nd6.c				1.257
+
+	Add missing IFNET_LOCK for regen_tmpaddr.
+	[ozaki-r, ticket #97]
+
+sys/net/if.c					1.458
+tests/net/if/t_ifconfig.sh			1.21
+
+	PR kern/54434: restore if_ioctl on error of ifc_destroy, 
+	otherwise subsequent ioctls will not work. Add a test for this.
+	[ozaki-r, ticket #98]
+
