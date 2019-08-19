@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.33 2019/08/19 03:21:13 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.34 2019/08/19 03:22:47 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -337,10 +337,31 @@ rump_server_add_iface()
 	return 0
 }
 
+rump_server_check_poolleaks()
+{
+	local target=$1
+
+	reqs=$($HIJACKING vmstat -mv | awk "/$target/ {print \$3;}")
+	rels=$($HIJACKING vmstat -mv | awk "/$target/ {print \$5;}")
+	atf_check_equal '$target$reqs' '$target$rels'
+}
+
+
+rump_server_check_memleaks()
+{
+
+	rump_server_check_poolleaks llentrypl
+	# This doesn't work for objects allocated through pool_cache
+	#rump_server_check_poolleaks mbpl
+	#rump_server_check_poolleaks mclpl
+	#rump_server_check_poolleaks socket
+}
+
 rump_server_destroy_ifaces()
 {
 	local backup=$RUMP_SERVER
 	local output=ignore
+	local reqs= rels=
 
 	$DEBUG && cat $_rump_server_ifaces
 
@@ -371,6 +392,11 @@ rump_server_destroy_ifaces()
 		atf_check -s exit:0 -o ignore rump.ifconfig
 	done < __ifaces
 	rm -f __ifaces
+
+	for sock in $(cat $_rump_server_socks); do
+		export RUMP_SERVER=$sock
+		rump_server_check_memleaks
+	done
 
 	export RUMP_SERVER=$backup
 
@@ -410,6 +436,7 @@ dump_kernel_stats()
 	rump.netstat -nr
 	# XXX still need hijacking
 	$HIJACKING rump.netstat -nai
+	$HIJACKING vmstat -m
 	rump.arp -na
 	rump.ndp -na
 	$HIJACKING ifmcstat
