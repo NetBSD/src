@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_sdhc.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: imx6_sdhc.c,v 1.2 2019/08/19 03:48:41 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.2 2019/08/19 03:48:41 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -50,6 +50,7 @@ static int imx6_sdhc_match(device_t, cfdata_t, void *);
 static void imx6_sdhc_attach(device_t, device_t, void *);
 
 static int imx6_sdhc_card_detect(struct sdhc_softc *);
+static int imx6_sdhc_write_protect(struct sdhc_softc *);
 
 struct imx6_sdhc_softc {
 	struct sdhc_softc sc_sdhc;
@@ -64,6 +65,7 @@ struct imx6_sdhc_softc {
 	struct clk		*sc_clk_per;
 
 	struct fdtbus_gpio_pin	*sc_pin_cd;
+	struct fdtbus_gpio_pin	*sc_pin_wp;
 };
 
 CFATTACH_DECL_NEW(imx6_sdhc, sizeof(struct imx6_sdhc_softc),
@@ -116,13 +118,12 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 	    SDHC_FLAG_NO_PWR0 |
 	    SDHC_FLAG_HAVE_DVS |
 	    SDHC_FLAG_32BIT_ACCESS |
-	    SDHC_FLAG_8BIT_MODE |
 	    SDHC_FLAG_USE_ADMA2 |
 	    SDHC_FLAG_USDHC;
 
-	if (bus_width == 8) {
+	if (bus_width == 8)
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_8BIT_MODE;
-	}
+
 	sc->sc_sdhc.sc_host = &sc->sc_host;
 
 	sc->sc_bst = faa->faa_bst;
@@ -135,10 +136,15 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pin_cd = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "cd-gpios", GPIO_PIN_INPUT);
-
 	if (sc->sc_pin_cd) {
 		sc->sc_sdhc.sc_vendor_card_detect = imx6_sdhc_card_detect;
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_POLL_CARD_DET;
+	}
+
+	sc->sc_pin_wp = fdtbus_gpio_acquire(faa->faa_phandle,
+	    "wp-gpios", GPIO_PIN_INPUT);
+	if (sc->sc_pin_wp) {
+		sc->sc_sdhc.sc_vendor_write_protect = imx6_sdhc_write_protect;
 	}
 
 	error = clk_enable(sc->sc_clk_per);
@@ -160,8 +166,8 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SDMMC, 0,
-	    sdhc_intr, &sc->sc_sdhc);
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SDMMC,
+	    FDT_INTR_MPSAFE, sdhc_intr, &sc->sc_sdhc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
@@ -187,5 +193,15 @@ imx6_sdhc_card_detect(struct sdhc_softc *ssc)
 	KASSERT(sc->sc_pin_cd != NULL);
 
 	return fdtbus_gpio_read(sc->sc_pin_cd);
+}
+
+static int
+imx6_sdhc_write_protect(struct sdhc_softc *ssc)
+{
+	struct imx6_sdhc_softc *sc = device_private(ssc->sc_dev);
+
+	KASSERT(sc->sc_pin_wp != NULL);
+
+	return fdtbus_gpio_read(sc->sc_pin_wp);
 }
 
