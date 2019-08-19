@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.28 2019/08/16 08:29:20 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.29 2019/08/19 07:33:37 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.28 2019/08/16 08:29:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.29 2019/08/19 07:33:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -271,6 +271,11 @@ ure_ocp_reg_write(struct usbnet *un, uint16_t addr, uint16_t data)
 static usbd_status
 ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
+	usbnet_isowned_mii(un);
+
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
 	/* Let the rgephy driver read the URE_PLA_PHYSTATUS register. */
 	if (reg == RTK_GMEDIASTAT) {
 		*val = ure_read_1(un, URE_PLA_PHYSTATUS, URE_MCU_TYPE_PLA);
@@ -285,6 +290,11 @@ ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 static usbd_status
 ure_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
+	usbnet_isowned_mii(un);
+
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
 	ure_ocp_reg_write(un, URE_OCP_BASE_MII + reg * 2, val);
 
 	return USBD_NORMAL_COMPLETION;

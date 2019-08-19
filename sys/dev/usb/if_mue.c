@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.52 2019/08/15 08:02:32 mrg Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.53 2019/08/19 07:33:37 mrg Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.52 2019/08/15 08:02:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.53 2019/08/19 07:33:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -217,6 +217,9 @@ mue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	usbnet_isowned_mii(un);
 
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "not ready\n");
 		return USBD_IN_USE;
@@ -241,6 +244,9 @@ static usbd_status
 mue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	usbnet_isowned_mii(un);
+
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "not ready\n");
