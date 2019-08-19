@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2017/10/10 19:31:10 christos Exp $
+#	$NetBSD: Makefile,v 1.45.6.1 2019/08/19 15:56:49 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -25,6 +25,10 @@ RUMPSRCS+= sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
 LDADD.rump+=	-lrumpres
 DPADD.add+=	${LIBRUMPRES}
 CPPFLAGS+=      -DRUMP_ACTION
+
+SANITIZER_RENAME_CLASSES+=	rump
+SANITIZER_RENAME_FILES.rump+=	${PROG}_rumpops.c ${RUMPSRCS}
+SANITIZER_RENAME_SYMBOL.rump+=	sysctlbyname sysctlgetmibinfo sysctlnametomib
 .endif
 
 
