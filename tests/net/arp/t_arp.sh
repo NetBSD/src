@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.37 2019/05/13 17:55:08 bad Exp $
+#	$NetBSD: t_arp.sh,v 1.38 2019/08/19 03:22:05 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -485,7 +485,7 @@ test_proxy_arp()
 	# Test#1: First setup an endpoint then create proxy arp entry
 	#
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 rump.ifconfig tap1 create
+	rump_server_add_iface $SOCKDST tap1
 	atf_check -s exit:0 rump.ifconfig tap1 $IP4DST_PROXYARP1/24 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
@@ -536,7 +536,7 @@ test_proxy_arp()
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 rump.ifconfig tap2 create
+	rump_server_add_iface $SOCKDST tap2
 	atf_check -s exit:0 rump.ifconfig tap2 $IP4DST_PROXYARP2/24 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
