@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.19 2019/08/19 06:35:14 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.20 2019/08/19 07:33:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.19 2019/08/19 06:35:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.20 2019/08/19 07:33:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -869,13 +869,13 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	usbd_status err;
 
 	mutex_enter(&unp->unp_lock);
-	if (unp->unp_dying || un->un_phyno != phy) {
+	if (unp->unp_dying) {
 		mutex_exit(&unp->unp_lock);
 		return EIO;
 	}
-	mutex_exit(&unp->unp_lock);
 
-	usbnet_lock_mii(un);
+	usbnet_lock_mii_un_locked(un);
+	mutex_exit(&unp->unp_lock);
 	err = uno_read_reg(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
@@ -896,13 +896,13 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	usbd_status err;
 
 	mutex_enter(&unp->unp_lock);
-	if (unp->unp_dying || un->un_phyno != phy) {
+	if (unp->unp_dying) {
 		mutex_exit(&unp->unp_lock);
 		return EIO;
 	}
-	mutex_exit(&unp->unp_lock);
 
-	usbnet_lock_mii(un);
+	usbnet_lock_mii_un_locked(un);
+	mutex_exit(&unp->unp_lock);
 	err = uno_write_reg(un, phy, reg, val);
 	usbnet_unlock_mii(un);
 
@@ -1087,8 +1087,9 @@ usbnet_watchdog(struct ifnet *ifp)
 
 	if (cd->uncd_tx_cnt > 0) {
 		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
-		aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
-		    usbd_errstr(err));
+		if (err)
+			aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
+			    usbd_errstr(err));
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1372,8 +1373,6 @@ usbnet_attach_ifp(struct usbnet *un,
 	ifp->if_start = usbnet_start;
 	ifp->if_init = usbnet_init;
 	ifp->if_stop = usbnet_stop_ifp;
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if (have_mii)
 		usbnet_attach_mii(un, mii_flags);

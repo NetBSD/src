@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.116 2019/08/16 08:29:20 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.117 2019/08/19 07:33:37 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.116 2019/08/16 08:29:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.117 2019/08/19 07:33:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,6 +323,9 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
 
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
+
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 
 	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, &data);
@@ -355,6 +358,9 @@ axe_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	struct axe_softc * const sc = usbnet_softc(un);
 	usbd_status err;
 	uint16_t aval;
+
+	if (un->un_phyno != phy)
+		return USBD_INVAL;
 
 	aval = htole16(val);
 
