@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.16 2019/08/02 19:49:17 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.17 2019/08/19 10:53:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.16 2019/08/02 19:49:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.17 2019/08/19 10:53:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -444,4 +444,4 @@ static const struct arm_platform acpi_platform = {
 	.ap_uart_freq = acpi_platform_uart_freq,
 };
 
-ARM_PLATFORM(virt, "netbsd,generic-acpi", &acpi_platform);
+ARM_PLATFORM(acpi, "netbsd,generic-acpi", &acpi_platform);
