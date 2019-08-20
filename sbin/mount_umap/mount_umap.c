@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.24 2019/08/20 20:18:54 perseant Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.25 2019/08/20 21:07:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.24 2019/08/20 20:18:54 perseant Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.25 2019/08/20 21:07:21 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: mount_umap [-o options] [-i fsid] -g groupmap -u usermap target_fs mount_point\n");
+"usage: mount_umap [-i fsid] [-o options] -g groupmap -u usermap target_fs mount_point\n");
 	exit(1);
 }
