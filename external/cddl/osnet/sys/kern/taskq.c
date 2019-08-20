@@ -1,4 +1,4 @@
-/*	$NetBSD: taskq.c,v 1.10 2019/06/11 09:05:33 hannken Exp $	*/
+/*	$NetBSD: taskq.c,v 1.10.2.1 2019/08/20 11:45:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ task_executor(struct threadpool_job *job)
 	struct taskq_executor *state = (struct taskq_executor *)job;
 	taskq_t *tq = state->te_self;
 	taskq_ent_t *tqe; 
+	bool is_dynamic;
 	int error;
 
 	lwp_setspecific(taskq_lwp_key, tq);
@@ -97,13 +98,14 @@ task_executor(struct threadpool_job *job)
 		tqe = SIMPLEQ_FIRST(&tq->tq_list);
 		KASSERT(tqe != NULL);
 		SIMPLEQ_REMOVE_HEAD(&tq->tq_list, tqent_list);
+		is_dynamic = tqe->tqent_dynamic;
 		tqe->tqent_queued = 0;
 		mutex_exit(&tq->tq_lock);
 
 		(*tqe->tqent_func)(tqe->tqent_arg);
 
 		mutex_enter(&tq->tq_lock);
-		if (tqe->tqent_dynamic)
+		if (is_dynamic)
 			kmem_free(tqe, sizeof(*tqe));
 		tq->tq_active--;
 	}
