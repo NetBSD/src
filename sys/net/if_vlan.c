@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.142 2019/08/20 03:50:55 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.143 2019/08/20 03:56:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.142 2019/08/20 03:50:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.143 2019/08/20 03:56:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -494,8 +494,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			    KM_SLEEP);
 			if (vidmem == NULL){
 				ec->ec_nvlans--;
-				if (ec->ec_nvlans == 0)
+				if (ec->ec_nvlans == 0) {
+					IFNET_LOCK(p);
 					(void)ether_disable_vlan_mtu(p);
+					IFNET_UNLOCK(p);
+				}
 				error = ENOMEM;
 				goto done;
 			}
@@ -509,8 +512,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 				error = (*ec->ec_vlan_cb)(ec, vid, true);
 				if (error) {
 					ec->ec_nvlans--;
-					if (ec->ec_nvlans == 0)
+					if (ec->ec_nvlans == 0) {
+						IFNET_LOCK(p);
 						(void)ether_disable_vlan_mtu(p);
+						IFNET_UNLOCK(p);
+					}
 					goto done;
 				}
 			}
