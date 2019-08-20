@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.7 2019/08/20 12:33:26 riastradh Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -14,12 +14,12 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.7 2019/08/20 12:33:26 riastradh Exp $");
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $");
+__RCSID("$NetBSD: murmurhash.c,v 1.7 2019/08/20 12:33:26 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,7 +51,10 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 
 	if (__predict_true(ALIGNED_POINTER(key, uint32_t))) {
 		while (len >= sizeof(uint32_t)) {
-			uint32_t k = *(const uint32_t *)data;
+			uint32_t k;
+
+			ALIGNED_POINTER_LOAD(&k, data, uint32_t);
+			k = htole32(k);
 
 			k *= m;
 			k ^= k >> r;
