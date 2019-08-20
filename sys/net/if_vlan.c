@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.142 2019/08/20 03:50:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.142 2019/08/20 03:50:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1373,7 +1373,7 @@ vlan_start(struct ifnet *ifp)
 		 * If the parent can insert the tag itself, just mark
 		 * the tag in the mbuf header.
 		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+		if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
 			vlan_set_tag(m, mib->ifvm_tag);
 		} else {
 			/*
@@ -1491,7 +1491,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	 * If the parent can insert the tag itself, just mark
 	 * the tag in the mbuf header.
 	 */
-	if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+	if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
 		vlan_set_tag(m, mib->ifvm_tag);
 	} else {
 		/*
