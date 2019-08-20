@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.47 2019/08/20 01:56:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.47 2019/08/20 01:56:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 			ibits = *ibitp;
 			obits = 0;
 			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
-				ibits &= ~(1 << j);
+				ibits &= ~(1U << j);
 				if ((fp = fd_getfile(fd)) == NULL)
 					return (EBADF);
 				/*
@@ -400,7 +400,7 @@ selscan(char *bits, const int nfd, const size_t ni, register_t *retval)
 				 */
 				curlwp->l_selrec = fd;
 				if ((*fp->f_ops->fo_poll)(fp, sel_flag[msk])) {
-					obits |= (1 << j);
+					obits |= (1U << j);
 					n++;
 				}
 				fd_putfile(fd);
@@ -754,7 +754,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 		sip->sel_collision = 0;
 		do {
 			index = ffs(mask) - 1;
-			mask &= ~(1 << index);
+			mask &= ~(1U << index);
 			sc = selcluster[index];
 			lock = sc->sc_lock;
 			mutex_spin_enter(lock);
