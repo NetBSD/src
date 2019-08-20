@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107 2019/05/08 06:31:02 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.108 2019/08/20 12:40:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107 2019/05/08 06:31:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.108 2019/08/20 12:40:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -790,7 +790,7 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	/* Index arrays with 0..n-1 where ports are numbered 1..n */
 	for (size_t cp = cpo - 1; cp < cpo + cpc - 1; cp++) {
 		if (sc->sc_ctlrportmap[cp] != 0) {
-			aprint_error_dev(sc->sc_dev, "contoller port %zu "
+			aprint_error_dev(sc->sc_dev, "controller port %zu "
 			    "already assigned", cp);
 			continue;
 		}
