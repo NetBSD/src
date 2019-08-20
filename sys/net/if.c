@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.458 2019/08/15 04:20:59 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.459 2019/08/20 10:59:00 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.458 2019/08/15 04:20:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.459 2019/08/20 10:59:00 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2914,6 +2914,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
+	unsigned short flags;
 
 	switch (cmd) {
 	case SIOCSIFCAP:
@@ -2985,8 +2986,13 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 			splx(s);
 		}
 		KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
-		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
-			(ifr->ifr_flags &~ IFF_CANTCHANGE);
+		flags = (ifp->if_flags & IFF_CANTCHANGE) |
+		    (ifr->ifr_flags &~ IFF_CANTCHANGE);
+		if (ifp->if_flags != flags) {
+			ifp->if_flags = flags;
+			/* Notify that the flags have changed. */
+			rt_ifmsg(ifp);
+		}
 		break;
 	case SIOCGIFFLAGS:
 		ifr = data;
