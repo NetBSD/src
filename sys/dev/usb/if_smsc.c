@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.59 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.60 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.59 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.60 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -184,8 +184,8 @@ static void	 smsc_miibus_statchg(struct ifnet *);
 int		 smsc_readreg(struct usbnet *, uint32_t, uint32_t *);
 int		 smsc_writereg(struct usbnet *, uint32_t, uint32_t);
 int		 smsc_wait_for_bits(struct usbnet *, uint32_t, uint32_t);
-usbd_status	 smsc_miibus_readreg(struct usbnet *, int, int, uint16_t *);
-usbd_status	 smsc_miibus_writereg(struct usbnet *, int, int, uint16_t);
+static int	 smsc_miibus_readreg(struct usbnet *, int, int, uint16_t *);
+static int	 smsc_miibus_writereg(struct usbnet *, int, int, uint16_t);
 
 static int	 smsc_ioctl_cb(struct ifnet *, u_long, void *);
 static unsigned	 smsc_tx_prepare(struct usbnet *, struct mbuf *,
@@ -274,7 +274,7 @@ smsc_wait_for_bits(struct usbnet *un, uint32_t reg, uint32_t bits)
 	return 1;
 }
 
-usbd_status
+static int
 smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t addr;
@@ -283,11 +283,11 @@ smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII is busy\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
 	addr = (phy << 11) | (reg << 6) | SMSC_MII_READ;
@@ -295,16 +295,16 @@ smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII read timeout\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
 	smsc_readreg(un, SMSC_MII_DATA, &data);
 
 	*val = data & 0xffff;
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
-usbd_status
+static int
 smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint32_t addr;
@@ -312,11 +312,11 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII is busy\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
 	smsc_writereg(un, SMSC_MII_DATA, val);
@@ -326,10 +326,10 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII write timeout\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 void
@@ -809,6 +809,7 @@ smsc_match(device_t parent, cfdata_t match, void *aux)
 void
 smsc_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct smsc_softc * const sc = device_private(self);
 	struct usbnet * const un = &sc->smsc_un;
 	struct usb_attach_arg *uaa = aux;
@@ -931,8 +932,8 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	}
 	usbnet_unlock_mii(un);
 
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 }
 
 void
