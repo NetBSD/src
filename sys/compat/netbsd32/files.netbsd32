@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.47 2019/08/20 12:25:41 maxv Exp $
+#	$NetBSD: files.netbsd32,v 1.48 2019/08/20 14:12:33 christos Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -8,7 +8,7 @@
 
 define	compat_netbsd32
 
-makeoptions	drmkms	CPPFLAGS+="-DNETBSD32_DRMKMS"
+#makeoptions	drmkms	CPPFLAGS+="-DNETBSD32_DRMKMS"
 
 file	compat/netbsd32/netbsd32_core.c		compat_netbsd32 & coredump
 file	compat/netbsd32/netbsd32_exec_elf32.c	compat_netbsd32 & exec_elf32
