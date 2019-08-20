@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.25 2019/06/18 01:40:29 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2019/08/20 09:36:40 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
 
 KMOD=	compat_netbsd32
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+NETBSD32_DRMKMS?=yes
+.endif
 
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
@@ -11,7 +15,19 @@ CPPFLAGS+=	-DCOREDUMP -DNTP -DVMSWAP
 CPPFLAGS+=	-DKTRACE -DMODULAR -DQUOTA
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
+.if ${NETBSD32_DRMKMS:Uno} == "yes"
+CPPFLAGS+=	-DNETBSD32_DRMKMS
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/common/include
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/include
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist/include
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist/uapi
+.endif
+
 .PATH:	${S}/compat/netbsd32
+.if ${NETBSD32_DRMKMS:Uno} == "yes"
+SRCS+=	netbsd32_drm.c
+.endif
 SRCS+=	netbsd32_core.c		netbsd32_event.c
 SRCS+=	netbsd32_exec_elf32.c	netbsd32_execve.c
 SRCS+=	netbsd32_fd.c		netbsd32_fs.c
