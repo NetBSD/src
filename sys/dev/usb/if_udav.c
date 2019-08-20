@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.69 2019/08/16 08:29:20 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.70 2019/08/20 06:37:06 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.69 2019/08/16 08:29:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.70 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -70,8 +70,8 @@ static unsigned udav_tx_prepare(struct usbnet *, struct mbuf *,
 static void udav_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static void udav_stop_cb(struct ifnet *, int);
 static int udav_ioctl_cb(struct ifnet *, u_long, void *);
-static usbd_status udav_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status udav_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int udav_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int udav_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void udav_mii_statchg(struct ifnet *);
 static int udav_init(struct ifnet *);
 static void udav_setiff(struct usbnet *);
@@ -156,6 +156,8 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 void
 udav_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
+	struct usbnet_mii *unmp;
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
@@ -250,11 +252,14 @@ udav_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	bool have_mii = !ISSET(un->un_flags, UDAV_NO_PHY);
+	if (ISSET(un->un_flags, UDAV_NO_PHY))
+		unmp = NULL;
+	else
+		unmp = &unm;
 
 	/* initialize interface information */
-	usbnet_attach_ifp(un, have_mii,
-	    IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST, 0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, unmp);
 
 	return;
 }
@@ -755,7 +760,7 @@ udav_stop_cb(struct ifnet *ifp, int disable)
 	udav_reset(un);
 }
 
-static usbd_status
+static int
 udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint8_t data[2];
@@ -770,14 +775,14 @@ udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		printf("%s: %s: dying\n", device_xname(un->un_dev),
 		       __func__);
 #endif
-		return USBD_INVAL;
+		return EINVAL;
 	}
 
 	/* XXX: one PHY only for the internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
-		return USBD_INVAL;
+		return EINVAL;
 	}
 
 	/* select internal PHY and set PHY register address */
@@ -800,10 +805,10 @@ udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04hx\n",
 		device_xname(un->un_dev), __func__, phy, reg, *val));
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
-static usbd_status
+static int
 udav_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint8_t data[2];
@@ -818,14 +823,14 @@ udav_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 		printf("%s: %s: dying\n", device_xname(un->un_dev),
 		       __func__);
 #endif
-		return -1;
+		return EIO;
 	}
 
 	/* XXX: one PHY only for the internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
-		return -1;
+		return EIO;
 	}
 
 	/* select internal PHY and set PHY register address */
@@ -845,7 +850,7 @@ udav_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	/* end write command */
 	UDAV_CLRBIT(un, UDAV_EPCR, UDAV_EPCR_ERPRW);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 static void
