@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.60 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.61 2019/08/20 18:43:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.60 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.61 2019/08/20 18:43:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -330,6 +330,8 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 
 	if (!ped || !ped->dict || !pev_data)
 		return EINVAL;
+
+	memset(&pev, 0, sizeof(pev));
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	
