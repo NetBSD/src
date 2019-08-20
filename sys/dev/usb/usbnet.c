@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.20 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.21 2019/08/20 06:18:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.20 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.21 2019/08/20 06:18:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -277,7 +277,7 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 
 	usbnet_isowned_rx(un);
 	DPRINTFN(0, "called! un %jx buf %jx len %ju",
-	    (uintmax_t)un, (uintmax_t)buf, buflen, 0);
+	    (uintmax_t)(uintptr_t)un, (uintmax_t)(uintptr_t)buf, buflen, 0);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
