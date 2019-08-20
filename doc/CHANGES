@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2571 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2572 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -30,4 +30,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		ure(4), url(4), and urndis(4) drivers fixing many bugs and
 		porting to NET_MPSAFE in the process.  [mrg 20190814]
 	usbnet(9): Port kue(4) and upl(4). [mrg 20190818]
-	boot(8): GPT and RAIDframe support for x86 bootstrap [manu 20180818]
+	boot(8): GPT and RAIDframe support for x86 bootstrap [manu 20190818]
