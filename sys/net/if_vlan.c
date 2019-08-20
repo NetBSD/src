@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.143 2019/08/20 03:56:59 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.144 2019/08/20 04:11:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.143 2019/08/20 03:56:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.144 2019/08/20 04:11:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -485,40 +485,32 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			}
 			error = 0;
 		}
-		/*
-		 * Add a vid to the list even if it's not enabled in case
-		 * it's enabled later.
-		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWFILTER) {
-			vidmem = kmem_alloc(sizeof(struct vlanid_list),
-			    KM_SLEEP);
-			if (vidmem == NULL){
+		/* Add a vid to the list */
+		vidmem = kmem_alloc(sizeof(struct vlanid_list), KM_SLEEP);
+		if (vidmem == NULL) {
+			error = ENOMEM;
+			goto viderr;
+		}
+		vidmem->vid = vid;
+		mutex_enter(ec->ec_lock);
+		SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
+		mutex_exit(ec->ec_lock);
+
+		if (ec->ec_vlan_cb != NULL) {
+			/*
+			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
+			 * HW tagging function.
+			 */
+			error = (*ec->ec_vlan_cb)(ec, vid, true);
+viderr:
+			if (error) {
 				ec->ec_nvlans--;
 				if (ec->ec_nvlans == 0) {
 					IFNET_LOCK(p);
 					(void)ether_disable_vlan_mtu(p);
 					IFNET_UNLOCK(p);
 				}
-				error = ENOMEM;
 				goto done;
-			}
-			vidmem->vid = vid;
-			mutex_enter(ec->ec_lock);
-			SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
-			mutex_exit(ec->ec_lock);
-		}
-		if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
-			if (ec->ec_vlan_cb != NULL) {
-				error = (*ec->ec_vlan_cb)(ec, vid, true);
-				if (error) {
-					ec->ec_nvlans--;
-					if (ec->ec_nvlans == 0) {
-						IFNET_LOCK(p);
-						(void)ether_disable_vlan_mtu(p);
-						IFNET_UNLOCK(p);
-					}
-					goto done;
-				}
 			}
 		}
 		/*
@@ -658,8 +650,13 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 			}
 		}
 		mutex_exit(ec->ec_lock);
-		if (ec->ec_vlan_cb != NULL)
+		if (ec->ec_vlan_cb != NULL) {
+			/*
+			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
+			 * HW tagging function.
+			 */
 			(void)(*ec->ec_vlan_cb)(ec, vid, false);
+		}
 		if (--ec->ec_nvlans == 0) {
 			IFNET_LOCK(p);
 			(void)ether_disable_vlan_mtu(p);
