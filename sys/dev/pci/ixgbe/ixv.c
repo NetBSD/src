@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.125 2019/07/30 08:38:03 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.126 2019/08/20 04:11:22 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -120,6 +120,7 @@ static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
 static void	ixv_eitr_write(struct adapter *, uint32_t, uint32_t);
 
+static void	ixv_setup_vlan_tagging(struct adapter *);
 static int	ixv_setup_vlan_support(struct adapter *);
 static int	ixv_vlan_cb(struct ethercom *, uint16_t, bool);
 static int	ixv_register_vlan(void *, struct ifnet *, u16);
@@ -1935,33 +1936,22 @@ ixv_sysctl_rdt_handler(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixv_sysctl_rdt_handler */
 
-/************************************************************************
- * ixv_setup_vlan_support
- ************************************************************************/
-static int
-ixv_setup_vlan_support(struct adapter *adapter)
+static void
+ixv_setup_vlan_tagging(struct adapter *adapter)
 {
 	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct rx_ring	*rxr;
-	u32		ctrl, vid, vfta, retry;
-	struct vlanid_list *vlanidp;
-	int rv, error = 0;
-	bool usevlan;
+	u32		ctrl;
+	int		i;
 	bool		hwtagging;
-
-	/*
-	 *  This function is called from both if_init and ifflags_cb()
-	 * on NetBSD.
-	 */
-	usevlan = VLAN_ATTACHED(ec);
 
 	/* Enable HW tagging only if any vlan is attached */
 	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 	    && VLAN_ATTACHED(ec);
 
 	/* Enable the queues */
-	for (int i = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		rxr = &adapter->rx_rings[i];
 		ctrl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(rxr->me));
 		if (hwtagging)
@@ -1975,10 +1965,38 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		 */
 		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
+} /* ixv_setup_vlan_tagging */
 
-	if (!usevlan)
+/************************************************************************
+ * ixv_setup_vlan_support
+ ************************************************************************/
+static int
+ixv_setup_vlan_support(struct adapter *adapter)
+{
+	struct ethercom *ec = &adapter->osdep.ec;
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32		vid, vfta, retry;
+	struct vlanid_list *vlanidp;
+	int rv, error = 0;
+
+	/*
+	 *  This function is called from both if_init and ifflags_cb()
+	 * on NetBSD.
+	 */
+
+	/*
+	 * Part 1:
+	 * Setup VLAN HW tagging
+	 */
+	ixv_setup_vlan_tagging(adapter);
+
+	if (!VLAN_ATTACHED(ec))
 		return 0;
 
+	/*
+	 * Part 2:
+	 * Setup VLAN HW filter
+	 */
 	/* Cleanup shadow_vfta */
 	for (int i = 0; i < IXGBE_VFTA_SIZE; i++)
 		adapter->shadow_vfta[i] = 0;
@@ -2036,12 +2054,23 @@ static int
 ixv_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 {
 	struct ifnet *ifp = &ec->ec_if;
+	struct adapter *adapter = ifp->if_softc;
 	int rv;
 
 	if (set)
 		rv = ixv_register_vlan(ifp->if_softc, ifp, vid);
 	else
 		rv = ixv_unregister_vlan(ifp->if_softc, ifp, vid);
+
+	if (rv != 0)
+		return rv;
+
+	/*
+	 * Control VLAN HW tagging when ec_nvlan is changed from 1 to 0
+	 * or 0 to 1.
+	 */
+	if ((set && (ec->ec_nvlans == 1)) || (!set && (ec->ec_nvlans == 0)))
+		ixv_setup_vlan_tagging(adapter);
 
 	return rv;
 }
