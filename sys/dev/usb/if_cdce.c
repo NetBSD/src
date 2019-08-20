@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.66 2019/08/15 05:52:23 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.67 2019/08/20 06:37:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.66 2019/08/15 05:52:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.67 2019/08/20 06:37:06 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -247,8 +247,8 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usbnet_attach(un, "cdcedet");
-	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-            0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+            0, NULL);
 }
 
 static int
