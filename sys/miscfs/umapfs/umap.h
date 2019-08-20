@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.17 2017/04/11 07:51:37 hannken Exp $	*/
+/*	$NetBSD: umap.h,v 1.18 2019/08/20 20:18:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,7 @@ struct umap_args {
 	int 		gnentries;	/* # of entries in group map array */
 	u_long 		(*mapdata)[2];	/* pointer to array of user mappings */
 	u_long 		(*gmapdata)[2];	/* pointer to array of group mappings */
+	u_long		fsid;		/* user-supplied per-fs ident */
 };
 
 #ifdef _KERNEL
@@ -94,11 +95,11 @@ void umap_mapids(struct mount *v_mount, kauth_cred_t credp);
 #define	MOUNTTOUMAPMOUNT(mp) ((struct umap_mount *)((mp)->mnt_data))
 #define	VTOUMAP(vp) ((struct umap_node *)(vp)->v_data)
 #define UMAPTOV(xp) ((xp)->umap_vnode)
-#ifdef UMAPFS_DIAGNOSTIC
+/* #ifdef UMAPFS_DIAGNOSTIC
 #define	UMAPVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
-#else
+#else */
 #define	UMAPVPTOLOWERVP(vp) (VTOUMAP(vp)->umap_lowervp)
-#endif
+/* #endif */
 
 extern int (**umap_vnodeop_p)(void *);
 extern struct vfsops umapfs_vfsops;
