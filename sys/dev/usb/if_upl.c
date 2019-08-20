@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.65 2019/08/18 09:29:38 mrg Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.66 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.65 2019/08/18 09:29:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.66 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -221,8 +221,8 @@ upl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_baudrate = 12000000;
 	ifp->if_dlt = DLT_RAW;
 
-	usbnet_attach_ifp(un, false, IFF_POINTOPOINT | IFF_NOARP | IFF_SIMPLEX,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_POINTOPOINT | IFF_NOARP | IFF_SIMPLEX,
+	    0, NULL);
 }
 
 static void

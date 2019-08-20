@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.117 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.118 2019/08/20 06:37:06 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.117 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.118 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -259,8 +259,8 @@ CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 static void	axe_stop(struct ifnet *, int);
 static int	axe_ioctl(struct ifnet *, u_long, void *);
 static int	axe_init(struct ifnet *);
-static usbd_status axe_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status axe_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int	axe_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int	axe_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	axe_mii_statchg(struct ifnet *);
 static void	axe_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned axe_tx_prepare(struct usbnet *, struct mbuf *,
@@ -313,7 +313,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	return err;
 }
 
-static usbd_status
+static int
 axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
@@ -324,7 +324,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 
@@ -333,7 +333,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (err) {
 		aprint_error_dev(un->un_dev, "read PHY failed\n");
-		return err;
+		return EIO;
 	}
 
 	*val = le16toh(data);
@@ -349,10 +349,10 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, *val, 0);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
-static usbd_status
+static int
 axe_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	struct axe_softc * const sc = usbnet_softc(un);
@@ -360,7 +360,7 @@ axe_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	uint16_t aval;
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	aval = htole16(val);
 
@@ -368,7 +368,9 @@ axe_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	err = axe_cmd(sc, AXE_CMD_MII_WRITE_REG, reg, phy, &aval);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
 
-	return err;
+	if (err)
+		return EIO;
+	return 0;
 }
 
 static void
@@ -861,6 +863,7 @@ void
 axe_attach(device_t parent, device_t self, void *aux)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct axe_softc *sc = device_private(self);
 	struct usbnet * const un = &sc->axe_un;
 	struct usb_attach_arg *uaa = aux;
@@ -1009,8 +1012,9 @@ axe_attach(device_t parent, device_t self, void *aux)
 		adv_pause = 0;
 	adv_pause = 0;
 
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, adv_pause);
+	unm.un_mii_flags = adv_pause;
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.53 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.54 2019/08/20 06:37:06 mrg Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.53 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.54 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -99,8 +99,8 @@ static void	mue_reset(struct usbnet *);
 
 static void	mue_stop_cb(struct ifnet *, int);
 static int	mue_ioctl_cb(struct ifnet *, u_long, void *);
-static usbd_status	mue_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status	mue_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int	mue_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int	mue_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	mue_mii_statchg(struct ifnet *);
 static void	mue_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned	mue_tx_prepare(struct usbnet *, struct mbuf *,
@@ -210,7 +210,7 @@ mue_wait_for_bits(struct usbnet *un, uint32_t reg,
 	return 1;
 }
 
-static usbd_status
+static int
 mue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t data;
@@ -218,11 +218,11 @@ mue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "not ready\n");
-		return USBD_IN_USE;
+		return EBUSY;
 	}
 
 	mue_csr_write(un, MUE_MII_ACCESS, MUE_MII_ACCESS_READ |
@@ -231,26 +231,26 @@ mue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "timed out\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
 	data = mue_csr_read(un, MUE_MII_DATA);
 	*val = data & 0xffff;
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
-static usbd_status
+static int
 mue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "not ready\n");
-		return USBD_IN_USE;
+		return EBUSY;
 	}
 
 	mue_csr_write(un, MUE_MII_DATA, val);
@@ -260,10 +260,10 @@ mue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "timed out\n");
-		return USBD_TIMEOUT;
+		return ETIMEDOUT;
 	}
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 static void
@@ -761,6 +761,7 @@ mue_match(device_t parent, cfdata_t match, void *aux)
 static void
 mue_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	prop_dictionary_t dict = device_properties(self);
 	struct usb_attach_arg *uaa = aux;
@@ -885,8 +886,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 #endif
 
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 }
 
 static unsigned

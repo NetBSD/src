@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.85 2019/08/15 08:02:32 mrg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.86 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.85 2019/08/15 08:02:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.86 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -536,8 +536,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 	 */
 	cue_getmac(un);
 
-	usbnet_attach_ifp(un, false, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, NULL);
 }
 
 static void

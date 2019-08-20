@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.65 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.66 2019/08/20 06:37:06 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.65 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.66 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -80,8 +80,8 @@ static void	axen_ax88179_init(struct usbnet *);
 
 static void	axen_stop_cb(struct ifnet *, int);
 static int	axen_ioctl_cb(struct ifnet *, u_long, void *);
-static usbd_status axen_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status axen_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int	axen_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int	axen_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	axen_mii_statchg(struct ifnet *);
 static void	axen_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned	axen_tx_prepare(struct usbnet *, struct mbuf *,
@@ -131,34 +131,38 @@ axen_cmd(struct usbnet *un, int cmd, int index, int val, void *buf)
 	return 0;
 }
 
-static usbd_status
+static int
 axen_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint16_t data;
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	usbd_status err = axen_cmd(un, AXEN_CMD_MII_READ_REG, reg, phy, &data);
-	if (!err) {
-		*val = le16toh(data);
+	if (err)
+		return EIO;
 
-		if (reg == MII_BMSR)
-			*val &= ~BMSR_EXTCAP;
-	}
+	*val = le16toh(data);
+	if (reg == MII_BMSR)
+		*val &= ~BMSR_EXTCAP;
 
-	return err;
+	return 0;
 }
 
-static usbd_status
+static int
 axen_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint16_t uval = htole16(val);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
-	return axen_cmd(un, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
+	usbd_status err = axen_cmd(un, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
+	if (err)
+		return EIO;
+
+	return 0;
 }
 
 static void
@@ -595,6 +599,7 @@ axen_match(device_t parent, cfdata_t match, void *aux)
 static void
 axen_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
@@ -709,8 +714,8 @@ axen_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx |
 	    IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx;
 
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 }
 
 static int
