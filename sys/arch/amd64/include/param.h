@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2019/03/16 11:50:48 rin Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2019/08/20 12:33:04 riastradh Exp $	*/
 
 #ifdef __x86_64__
 
@@ -21,7 +21,8 @@
 #define	MACHINE_ARCH	"x86_64"
 #define MID_MACHINE	MID_X86_64
 
-#define ALIGNED_POINTER(p,t)	1
+#define ALIGNED_POINTER(p,t)		1
+#define ALIGNED_POINTER_LOAD(q,p,t)	memcpy((q), (p), sizeof(t))
 
 /*
  * Align stack as required by AMD64 System V ABI. This is because
