@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.21 2019/08/20 06:18:54 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.22 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.21 2019/08/20 06:18:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.22 2019/08/20 06:37:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -866,7 +866,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = device_private(dev);
 	struct usbnet_private * const unp = un->un_pri;
-	usbd_status err;
+	int err;
 
 	mutex_enter(&unp->unp_lock);
 	if (unp->unp_dying) {
@@ -881,7 +881,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 
 	if (err) {
 		USBNETHIST_CALLARGS("read PHY failed: %d", err, 0, 0, 0);
-		return EIO;
+		return err;
 	}
 
 	return 0;
@@ -893,7 +893,7 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = device_private(dev);
 	struct usbnet_private * const unp = un->un_pri;
-	usbd_status err;
+	int err;
 
 	mutex_enter(&unp->unp_lock);
 	if (unp->unp_dying) {
@@ -908,7 +908,7 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 
 	if (err) {
 		USBNETHIST_CALLARGS("write PHY failed: %d", err, 0, 0, 0);
-		return EIO;
+		return err;
 	}
 
 	return 0;
@@ -1324,7 +1324,7 @@ usbnet_attach(struct usbnet *un,
 }
 
 static void
-usbnet_attach_mii(struct usbnet *un, int mii_flags)
+usbnet_attach_mii(struct usbnet *un, const struct usbnet_mii *unm)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet_private * const unp = un->un_pri;
@@ -1343,8 +1343,8 @@ usbnet_attach_mii(struct usbnet *un, int mii_flags)
 
 	usbnet_ec(un)->ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, usbnet_media_upd, ether_mediastatus);
-	mii_attach(un->un_dev, mii, 0xffffffff, MII_PHY_ANY,
-		   MII_OFFSET_ANY, mii_flags);
+	mii_attach(un->un_dev, mii, unm->un_mii_capmask, unm->un_mii_phyloc,
+		   unm->un_mii_offset, unm->un_mii_flags);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -1355,10 +1355,9 @@ usbnet_attach_mii(struct usbnet *un, int mii_flags)
 
 void
 usbnet_attach_ifp(struct usbnet *un,
-		  bool have_mii,		/* setup MII */
 		  unsigned if_flags,		/* additional if_flags */
 		  unsigned if_extflags,		/* additional if_extflags */
-		  int mii_flags)		/* additional mii_attach flags */
+		  const struct usbnet_mii *unm)	/* additional mii_attach flags */
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet_private * const unp = un->un_pri;
@@ -1374,8 +1373,8 @@ usbnet_attach_ifp(struct usbnet *un,
 	ifp->if_init = usbnet_init;
 	ifp->if_stop = usbnet_stop_ifp;
 
-	if (have_mii)
-		usbnet_attach_mii(un, mii_flags);
+	if (unm)
+		usbnet_attach_mii(un, unm);
 	else
 		unp->unp_link = true;
 

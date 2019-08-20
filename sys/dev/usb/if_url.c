@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.68 2019/08/15 08:02:32 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.69 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.68 2019/08/15 08:02:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.69 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -75,8 +75,8 @@ CFATTACH_DECL_NEW(url, sizeof(struct usbnet), url_match, url_attach,
 static unsigned	url_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
 static void url_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static usbd_status url_int_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status url_int_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int url_int_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int url_int_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static int url_ioctl_cb(struct ifnet *, u_long, void *);
 static void url_stop_cb(struct ifnet *, int);
 static void url_mii_statchg_cb(struct ifnet *);
@@ -157,6 +157,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 void
 url_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
@@ -259,8 +260,8 @@ url_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* initialize interface information */
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 
 	return;
 
@@ -637,7 +638,7 @@ url_stop_cb(struct ifnet *ifp, int disable)
 	url_reset(un);
 }
 
-static usbd_status
+static int
 url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint16_t data;
@@ -652,7 +653,7 @@ url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
-		return USBD_INVAL;
+		return EINVAL;
 	}
 
 	switch (reg) {
@@ -679,9 +680,7 @@ url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	default:
 		printf("%s: %s: bad register %04x\n",
 		       device_xname(un->un_dev), __func__, reg);
-		err = USBD_INVAL;
-		goto R_DONE;
-		break;
+		return EINVAL;
 	}
 
 	if (reg == URL_MSR)
@@ -697,11 +696,9 @@ url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	return err;
 }
 
-static usbd_status
+static int
 url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
-	usbd_status err = USBD_NORMAL_COMPLETION;
-
 	usbnet_isowned_mii(un);
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
@@ -711,7 +708,7 @@ url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
-		return USBD_INVAL;
+		return EINVAL;
 	}
 
 	switch (reg) {
@@ -723,8 +720,7 @@ url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 		break;
 	case MII_PHYIDR1:
 	case MII_PHYIDR2:
-		goto W_DONE;
-		break;
+		return 0;
 	case MII_ANAR:		/* Autonegotiation advertisement */
 		reg = URL_ANAR;
 		break;
@@ -737,18 +733,15 @@ url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	default:
 		printf("%s: %s: bad register %04x\n",
 		       device_xname(un->un_dev), __func__, reg);
-		err = USBD_INVAL;
-		goto W_DONE;
-		break;
+		return EINVAL;
 	}
 
 	if (reg == URL_MSR)
 		url_csr_write_1(un, reg, val);
 	else
 		url_csr_write_2(un, reg, val);
- W_DONE:
 
-	return err;
+	return 0;
 }
 
 static void

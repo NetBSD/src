@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.12 2019/08/15 05:52:23 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.13 2019/08/20 06:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -137,11 +137,11 @@ typedef int (*usbnet_ioctl_cb)(struct ifnet *, u_long, void *);
 typedef int (*usbnet_init_cb)(struct ifnet *);
 
 /* MII read register callback. */
-typedef usbd_status (*usbnet_mii_read_reg_cb)(struct usbnet *, int reg,
-					      int phy, uint16_t *val);
+typedef int (*usbnet_mii_read_reg_cb)(struct usbnet *, int reg,
+				      int phy, uint16_t *val);
 /* MII write register callback. */
-typedef usbd_status (*usbnet_mii_write_reg_cb)(struct usbnet *, int reg,
-					       int phy, uint16_t val);
+typedef int (*usbnet_mii_write_reg_cb)(struct usbnet *, int reg,
+				       int phy, uint16_t val);
 /* MII status change callback. */
 typedef void (*usbnet_mii_statchg_cb)(struct ifnet *);
 
@@ -184,6 +184,28 @@ struct usbnet_intr {
 	unsigned		uni_bufsz;
 	unsigned		uni_interval;
 };
+
+/*
+ * Structure to setup MII.  Use the UBSNET_MII_DECL_DEFAULT() macro for
+ * sane default.  Pass a copy to usbnet_attach_ifp().  Not used
+ * after the usbnet_attach_ifp() function returns.
+ */
+struct usbnet_mii {
+	int			un_mii_flags;
+	int			un_mii_capmask;
+	int			un_mii_phyloc;
+	int			un_mii_offset;
+};
+
+#define UBSNET_MII_DECL(name, capmask, loc, off, flags)	\
+	struct usbnet_mii name = {			\
+		.un_mii_capmask = capmask,		\
+		.un_mii_phyloc = loc,			\
+		.un_mii_offset = off,			\
+		.un_mii_flags = flags,			\
+	}
+#define UBSNET_MII_DECL_DEFAULT(name)				\
+	UBSNET_MII_DECL(name, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0)
 
 /*
  * Generic USB ethernet structure.  Use this as ifp->if_softc and set as
@@ -321,7 +343,7 @@ void	usbnet_input(struct usbnet * const, uint8_t *, size_t);
 
 /* autoconf */
 void	usbnet_attach(struct usbnet *un, const char *);
-void	usbnet_attach_ifp(struct usbnet *, bool, unsigned, unsigned, int);
+void	usbnet_attach_ifp(struct usbnet *, unsigned, unsigned, const struct usbnet_mii *);
 int	usbnet_detach(device_t, int);
 int	usbnet_activate(device_t, devact_t);
 

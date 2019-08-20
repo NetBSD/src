@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.29 2019/08/19 07:33:37 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.30 2019/08/20 06:37:06 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.29 2019/08/19 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.30 2019/08/20 06:37:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -83,8 +83,8 @@ static void	ure_init_fifo(struct usbnet *);
 
 static void	ure_stop_cb(struct ifnet *, int);
 static int	ure_ioctl_cb(struct ifnet *, u_long, void *);
-static usbd_status ure_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static usbd_status ure_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int	ure_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int	ure_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	ure_miibus_statchg(struct ifnet *);
 static unsigned ure_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
@@ -268,13 +268,13 @@ ure_ocp_reg_write(struct usbnet *un, uint16_t addr, uint16_t data)
 	ure_write_2(un, reg, URE_MCU_TYPE_PLA, data);
 }
 
-static usbd_status
+static int
 ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	/* Let the rgephy driver read the URE_PLA_PHYSTATUS register. */
 	if (reg == RTK_GMEDIASTAT) {
@@ -284,20 +284,20 @@ ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	*val = ure_ocp_reg_read(un, URE_OCP_BASE_MII + reg * 2);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
-static usbd_status
+static int
 ure_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
-		return USBD_INVAL;
+		return EINVAL;
 
 	ure_ocp_reg_write(un, URE_OCP_BASE_MII + reg * 2, val);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 static void
@@ -838,6 +838,7 @@ ure_match(device_t parent, cfdata_t match, void *aux)
 static void
 ure_attach(device_t parent, device_t self, void *aux)
 {
+	UBSNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
@@ -971,8 +972,9 @@ ure_attach(device_t parent, device_t self, void *aux)
 	ec->ec_capabilities |= ETHERCAP_JUMBO_MTU;
 #endif
 
-	usbnet_attach_ifp(un, true, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
-	    0, 0);
+	unm.un_mii_phyloc = un->un_phyno;
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+	    0, &unm);
 }
 
 static void
