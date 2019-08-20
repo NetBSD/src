@@ -1,6 +1,9 @@
-/*	$NetBSD: netbsd32_drm.c,v 1.1 2019/08/20 09:32:21 christos Exp $ */
+/*	$NetBSD: netbsd32_drm.c,v 1.2 2019/08/20 09:55:49 christos Exp $ */
 
 /*
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
  * This code was written by Surya Shankar for GSoC 2019.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.1 2019/08/20 09:32:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.2 2019/08/20 09:55:49 christos Exp $");
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
