@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.45.2.1 2019/08/20 11:31:46 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45.2.1 2019/08/20 11:31:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45 2019/07/30 11:16:15 knakahara Exp $"
 #include <sys/sockio.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
+#include <sys/interrupt.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -199,6 +200,13 @@ struct vmxnet3_txqueue {
 	char vxtxq_name[16];
 
 	void *vxtxq_si;
+
+	struct evcnt vxtxq_intr;
+	struct evcnt vxtxq_defer;
+	struct evcnt vxtxq_deferreq;
+	struct evcnt vxtxq_pcqdrop;
+	struct evcnt vxtxq_transmitdef;
+	struct evcnt vxtxq_watchdogto;
 };
 
 struct vmxnet3_rxq_stats {
@@ -218,6 +226,10 @@ struct vmxnet3_rxqueue {
 	struct vmxnet3_rxq_stats vxrxq_stats;
 	struct vmxnet3_rxq_shared *vxrxq_rs;
 	char vxrxq_name[16];
+
+	struct evcnt vxrxq_intr;
+	struct evcnt vxrxq_defer;
+	struct evcnt vxrxq_deferreq;
 };
 
 struct vmxnet3_queue {
@@ -270,6 +282,12 @@ struct vmxnet3_softc {
 	int vmx_max_rxsegs;
 
 	struct vmxnet3_statistics vmx_stats;
+	struct evcnt vmx_event_intr;
+	struct evcnt vmx_event_link;
+	struct evcnt vmx_event_txqerror;
+	struct evcnt vmx_event_rxqerror;
+	struct evcnt vmx_event_dic;
+	struct evcnt vmx_event_debug;
 
 	int vmx_intr_type;
 	int vmx_intr_mask_mode;
@@ -347,6 +365,9 @@ int vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *);
 void vmxnet3_set_interrupt_idx(struct vmxnet3_softc *);
 int vmxnet3_setup_interrupts(struct vmxnet3_softc *);
 int vmxnet3_setup_sysctl(struct vmxnet3_softc *);
+
+int vmxnet3_setup_stats(struct vmxnet3_softc *);
+void vmxnet3_teardown_stats(struct vmxnet3_softc *);
 
 int vmxnet3_init_rxq(struct vmxnet3_softc *, int);
 int vmxnet3_init_txq(struct vmxnet3_softc *, int);
@@ -630,6 +651,10 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	if (error)
 		return;
 
+	error = vmxnet3_setup_stats(sc);
+	if (error)
+		return;
+
 	sc->vmx_flags |= VMXNET3_FLAG_ATTACHED;
 }
 
@@ -654,6 +679,7 @@ vmxnet3_detach(device_t self, int flags)
 		if_detach(ifp);
 	}
 
+	vmxnet3_teardown_stats(sc);
 	sysctl_teardown(&sc->vmx_sysctllog);
 
 	vmxnet3_free_interrupts(sc);
@@ -858,11 +884,13 @@ vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 	int i;
 
 	workqueue_destroy(sc->vmx_queue_wq);
-	for (i = 0; i < sc->vmx_nintrs; i++) {
+	for (i = 0; i < sc->vmx_ntxqueues; i++) {
 		struct vmxnet3_queue *vmxq =  &sc->vmx_queue[i];
 
 		softint_disestablish(vmxq->vxq_si);
 		vmxq->vxq_si = NULL;
+	}
+	for (i = 0; i < sc->vmx_nintrs; i++) {
 		pci_intr_disestablish(pc, sc->vmx_ihs[i]);
 	}
 	pci_intr_release(pc, sc->vmx_intrs, sc->vmx_nintrs);
@@ -876,6 +904,7 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 	pci_intr_handle_t *intr;
 	void **ihs;
 	int intr_idx, i, use_queues, error;
+	kcpuset_t *affinity;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char xnamebuf[32];
@@ -902,6 +931,16 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 			return (-1);
 		}
 		aprint_normal_dev(sc->vmx_dev, "txrx interrupting at %s\n", intrstr);
+
+		kcpuset_create(&affinity, true);
+		kcpuset_set(affinity, intr_idx % ncpu);
+		error = interrupt_distribute(*ihs, affinity, NULL);
+		if (error) {
+			aprint_normal_dev(sc->vmx_dev,
+			    "%s cannot be changed affinity, use default CPU\n",
+			    intrstr);
+		}
+		kcpuset_destroy(affinity);
 
 		vmxq->vxq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 		    vmxnet3_handle_queue, vmxq);
@@ -1909,6 +1948,93 @@ out:
 	return error;
 }
 
+int
+vmxnet3_setup_stats(struct vmxnet3_softc *sc)
+{
+	struct vmxnet3_queue *vmxq;
+	struct vmxnet3_txqueue *txq;
+	struct vmxnet3_rxqueue *rxq;
+	int i;
+
+	for (i = 0; i < sc->vmx_ntxqueues; i++) {
+		vmxq = &sc->vmx_queue[i];
+		txq = &vmxq->vxq_txqueue;
+		evcnt_attach_dynamic(&txq->vxtxq_intr, EVCNT_TYPE_INTR,
+		    NULL, txq->vxtxq_name, "Interrupt on queue");
+		evcnt_attach_dynamic(&txq->vxtxq_defer, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "Handled queue in softint/workqueue");
+		evcnt_attach_dynamic(&txq->vxtxq_deferreq, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "Requested in softint/workqueue");
+		evcnt_attach_dynamic(&txq->vxtxq_pcqdrop, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "Dropped in pcq");
+		evcnt_attach_dynamic(&txq->vxtxq_transmitdef, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "Deferred transmit");
+		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "Watchdog timeount");
+	}
+
+	for (i = 0; i < sc->vmx_nrxqueues; i++) {
+		vmxq = &sc->vmx_queue[i];
+		rxq = &vmxq->vxq_rxqueue;
+		evcnt_attach_dynamic(&rxq->vxrxq_intr, EVCNT_TYPE_INTR,
+		    NULL, rxq->vxrxq_name, "Interrupt on queue");
+		evcnt_attach_dynamic(&rxq->vxrxq_defer, EVCNT_TYPE_MISC,
+		    NULL, rxq->vxrxq_name, "Handled queue in softint/workqueue");
+		evcnt_attach_dynamic(&rxq->vxrxq_deferreq, EVCNT_TYPE_MISC,
+		    NULL, rxq->vxrxq_name, "Requested in softint/workqueue");
+	}
+
+	evcnt_attach_dynamic(&sc->vmx_event_intr, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->vmx_dev), "Interrupt for other events");
+	evcnt_attach_dynamic(&sc->vmx_event_link, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->vmx_dev), "Link status event");
+	evcnt_attach_dynamic(&sc->vmx_event_txqerror, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->vmx_dev), "Tx queue error event");
+	evcnt_attach_dynamic(&sc->vmx_event_rxqerror, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->vmx_dev), "Rx queue error event");
+	evcnt_attach_dynamic(&sc->vmx_event_dic, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->vmx_dev), "Device impl change event");
+	evcnt_attach_dynamic(&sc->vmx_event_debug, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->vmx_dev), "Debug event");
+
+	return 0;
+}
+
+void
+vmxnet3_teardown_stats(struct vmxnet3_softc *sc)
+{
+	struct vmxnet3_queue *vmxq;
+	struct vmxnet3_txqueue *txq;
+	struct vmxnet3_rxqueue *rxq;
+	int i;
+
+	for (i = 0; i < sc->vmx_ntxqueues; i++) {
+		vmxq = &sc->vmx_queue[i];
+		txq = &vmxq->vxq_txqueue;
+		evcnt_detach(&txq->vxtxq_intr);
+		evcnt_detach(&txq->vxtxq_defer);
+		evcnt_detach(&txq->vxtxq_deferreq);
+		evcnt_detach(&txq->vxtxq_pcqdrop);
+		evcnt_detach(&txq->vxtxq_transmitdef);
+		evcnt_detach(&txq->vxtxq_watchdogto);
+	}
+
+	for (i = 0; i < sc->vmx_nrxqueues; i++) {
+		vmxq = &sc->vmx_queue[i];
+		rxq = &vmxq->vxq_rxqueue;
+		evcnt_detach(&rxq->vxrxq_intr);
+		evcnt_detach(&rxq->vxrxq_defer);
+		evcnt_detach(&rxq->vxrxq_deferreq);
+	}
+
+	evcnt_detach(&sc->vmx_event_intr);
+	evcnt_detach(&sc->vmx_event_link);
+	evcnt_detach(&sc->vmx_event_txqerror);
+	evcnt_detach(&sc->vmx_event_rxqerror);
+	evcnt_detach(&sc->vmx_event_dic);
+	evcnt_detach(&sc->vmx_event_debug);
+}
+
 void
 vmxnet3_evintr(struct vmxnet3_softc *sc)
 {
@@ -1928,12 +2054,18 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	vmxnet3_write_bar1(sc, VMXNET3_BAR1_EVENT, event);
 
 	if (event & VMXNET3_EVENT_LINK) {
+		sc->vmx_event_link.ev_count++;
 		vmxnet3_link_status(sc);
 		if (sc->vmx_link_active != 0)
 			if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 	}
 
 	if (event & (VMXNET3_EVENT_TQERROR | VMXNET3_EVENT_RQERROR)) {
+		if (event & VMXNET3_EVENT_TQERROR)
+			sc->vmx_event_txqerror.ev_count++;
+		if (event & VMXNET3_EVENT_RQERROR)
+			sc->vmx_event_rxqerror.ev_count++;
+
 		reset = 1;
 		vmxnet3_read_cmd(sc, VMXNET3_CMD_GET_STATUS);
 		ts = sc->vmx_queue[0].vxq_txqueue.vxtxq_ts;
@@ -1945,10 +2077,14 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 		device_printf(dev, "Rx/Tx queue error event ... resetting\n");
 	}
 
-	if (event & VMXNET3_EVENT_DIC)
+	if (event & VMXNET3_EVENT_DIC) {
+		sc->vmx_event_dic.ev_count++;
 		device_printf(dev, "device implementation change event\n");
-	if (event & VMXNET3_EVENT_DEBUG)
+	}
+	if (event & VMXNET3_EVENT_DEBUG) {
+		sc->vmx_event_debug.ev_count++;
 		device_printf(dev, "debug event\n");
+	}
 
 	if (reset != 0)
 		vmxnet3_init_locked(sc);
@@ -2405,10 +2541,12 @@ vmxnet3_txrxq_intr(void *xvmxq)
 		vmxnet3_disable_intr(sc, vmxq->vxq_intr_idx);
 
 	VMXNET3_TXQ_LOCK(txq);
+	txq->vxtxq_intr.ev_count++;
 	txmore = vmxnet3_txq_eof(txq, txlimit);
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	VMXNET3_RXQ_LOCK(rxq);
+	rxq->vxrxq_intr.ev_count++;
 	rxmore = vmxnet3_rxq_eof(rxq, rxlimit);
 	VMXNET3_RXQ_UNLOCK(rxq);
 
@@ -2444,7 +2582,10 @@ vmxnet3_handle_queue(void *xvmxq)
 	rxlimit = sc->vmx_rx_process_limit;
 
 	VMXNET3_TXQ_LOCK(txq);
+	txq->vxtxq_defer.ev_count++;
 	txmore = vmxnet3_txq_eof(txq, txlimit);
+	if (txmore)
+		txq->vxtxq_deferreq.ev_count++;
 	/* for ALTQ */
 	if (vmxq->vxq_id == 0)
 		if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
@@ -2452,7 +2593,10 @@ vmxnet3_handle_queue(void *xvmxq)
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	VMXNET3_RXQ_LOCK(rxq);
+	rxq->vxrxq_defer.ev_count++;
 	rxmore = vmxnet3_rxq_eof(rxq, rxlimit);
+	if (rxmore)
+		rxq->vxrxq_deferreq.ev_count++;
 	VMXNET3_RXQ_UNLOCK(rxq);
 
 	if (txmore || rxmore)
@@ -2479,6 +2623,8 @@ vmxnet3_event_intr(void *xsc)
 
 	if (sc->vmx_intr_mask_mode == VMXNET3_IMM_ACTIVE)
 		vmxnet3_disable_intr(sc, sc->vmx_event_intr_idx);
+
+	sc->vmx_event_intr.ev_count++;
 
 	if (sc->vmx_ds->event != 0)
 		vmxnet3_evintr(sc);
@@ -3109,6 +3255,9 @@ vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
 	txq = &sc->vmx_queue[qid].vxq_txqueue;
 
 	if (__predict_false(!pcq_put(txq->vxtxq_interq, m))) {
+		VMXNET3_TXQ_LOCK(txq);
+		txq->vxtxq_pcqdrop.ev_count++;
+		VMXNET3_TXQ_UNLOCK(txq);
 		m_freem(m);
 		return ENOBUFS;
 	}
@@ -3131,6 +3280,7 @@ vmxnet3_deferred_transmit(void *arg)
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
 
 	VMXNET3_TXQ_LOCK(txq);
+	txq->vxtxq_transmitdef.ev_count++;
 	if (pcq_peek(txq->vxtxq_interq) != NULL)
 		vmxnet3_transmit_locked(ifp, txq);
 	VMXNET3_TXQ_UNLOCK(txq);
@@ -3313,6 +3463,7 @@ vmxnet3_watchdog(struct vmxnet3_txqueue *txq)
 		VMXNET3_TXQ_UNLOCK(txq);
 		return (0);
 	}
+	txq->vxtxq_watchdogto.ev_count++;
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	device_printf(sc->vmx_dev, "watchdog timeout on queue %d\n",
