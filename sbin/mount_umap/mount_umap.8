@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_umap.8,v 1.20 2019/08/20 20:18:54 perseant Exp $
+.\"	$NetBSD: mount_umap.8,v 1.21 2019/08/20 21:07:21 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
 .Nd user and group ID remapping file system layer
 .Sh SYNOPSIS
 .Nm
-.Op Fl o Ar options
 .Op Fl i Ar fsid
+.Op Fl o Ar options
 .Fl g Ar gid-mapfile
 .Fl u Ar uid-mapfile
 .Ar target
@@ -74,8 +74,8 @@ This flag is required.
 .It Fl i Ar fsid
 Use the specified
 .Ar fsid
-for the filesystem ID, rather than choosing one at random.
-This is useful if the filesystem is to be exported.
+for the file system ID, rather than choosing one at random.
+This is useful if the file system is to be exported.
 .It Fl o
 Options are specified with a
 .Fl o
