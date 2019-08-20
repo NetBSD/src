@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.25 2019/08/20 21:07:21 wiz Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.26 2019/08/20 21:18:10 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.25 2019/08/20 21:07:21 wiz Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.26 2019/08/20 21:18:10 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,10 +252,6 @@ mount_umap(int argc, char *argv[])
 	args.gmapdata = gmapdata;
 	args.fsid = fsid;
 
-	printf("sizeof export_args30 = %d, sizeof layer_args = %d, sizeof umap_args = %d\n",
-		(int)sizeof(struct export_args30),
-		(int)sizeof(struct layer_args),
-		(int)sizeof(struct umap_args));
 	if (mount(MOUNT_UMAP, target, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", source, target);
 	if (mntflags & MNT_GETARGS) {
