@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.24 2019/08/19 16:12:04 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.25 2019/08/20 11:46:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2105,4 +2105,28 @@ tests/net/if/t_ifconfig.sh			1.21
 	PR kern/54434: restore if_ioctl on error of ifc_destroy, 
 	otherwise subsequent ioctls will not work. Add a test for this.
 	[ozaki-r, ticket #98]
+
+sys/arch/x86/pci/if_vmx.c			1.46-1.48
+
+	vmx(4):
+	- uses interrupt distribution for each queue like ixg(4).
+	- fix panic when detaching.
+	- add basic statistics counters.
+	[knakahara, ticket #99]
+
+external/cddl/osnet/dist/lib/libzfs/common/libzfs_import.c 1.5
+
+	zfs: fix pools on wedges.
+	[hannken, ticket #100]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.12
+
+	Rearrange the evaluation of "dvd_maxphys" so it works for wedges too.
+	[hannken, ticket #101]
+
+external/cddl/osnet/sys/kern/taskq.c		1.11
+
+	task_executor: prevent use after free, the task function may free
+	the tasq entry.
+	[hannken, ticket #102]
 
