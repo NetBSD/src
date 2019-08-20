@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_drm.c,v 1.2 2019/08/20 09:55:49 christos Exp $ */
+/*	$NetBSD: netbsd32_drm.c,v 1.3 2019/08/20 14:26:05 christos Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.2 2019/08/20 09:55:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.3 2019/08/20 14:26:05 christos Exp $");
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
@@ -338,16 +338,18 @@ compat_drm_getstats(struct file *file, void *arg)
 		return error;
 
 	st64.count = st32.count;
+	if (st64.count > __arraycount(st64.data))
+		return EINVAL;
 
 	error = drm_ioctl(file, DRM_IOCTL_GET_STATS, &st64);
 	if (error)
 		return error;
 
-	// XXX: or does that need to be count?
-	for (int i = 0; i < __arraycount(st64.data); ++i) {
-		st64.data[i].value = st32.data[i].value;
-		st64.data[i].type = st32.data[i].type;
+	for (int i = 0; i < st64.count; ++i) {
+		st32.data[i].value = st64.data[i].value;
+		st32.data[i].type = st64.data[i].type;
 	}
+	st32.count = st64.count;
 
 	return copyout(arg, &st32, sizeof(s32));
 }
@@ -565,15 +567,15 @@ compat_drm_dma(struct file *file, void *arg)
 	if ((error = copyin(&d32, arg, sizeof(d32))) != 0)
 		return error;
 
-	dma64to32(&d32, &d64);
+	dma32to64(&d64, &d32);
 
 	error = drm_ioctl(file, DRM_IOCTL_DMA, &d64);
 	if (error)
 		return error;
 
-	dma32to64(&d64, &d32);
+	dma64to32(&d32, &d64);
 
-	return 0;
+	return copyout(arg, &d32, sizeof(d32));
 }
 
 //XXX:i commented the below line for later use
@@ -592,7 +594,7 @@ compat_drm_agp_enable(struct file *file, void *arg)
 	if ((error = copyin(&m32, arg, sizeof(m32))) != 0)
 		return error;
 
-	m32.mode = m64.mode;
+	m64.mode = m32.mode;
 
 	return drm_ioctl(file, DRM_IOCTL_AGP_ENABLE, &m64);
 }
@@ -612,17 +614,17 @@ typedef struct drm_agp_info32 {
 } drm_agp_info32_t;
 
 static void 
-info32to64(struct drm_agp_info *i64, const drm_agp_info32_t *i32)
+info64to32(drm_agp_info32_t *i32, const struct drm_agp_info *i64)
 {
-	i64->agp_version_major = i32->agp_version_major;
-	i64->agp_version_minor = i32->agp_version_minor;
-	i64->mode = i32->mode;
-	i64->aperture_base = i32->aperture_base;
-	i64->aperture_size = i32->aperture_size;
-	i64->memory_allowed = i32->memory_allowed;
-	i64->memory_used = i64->memory_used;
-	i64->id_vendor = i32->id_vendor;
-	i64->id_device = i32->id_device;
+	i32->agp_version_major = i64->agp_version_major;
+	i32->agp_version_minor = i64->agp_version_minor;
+	i32->mode = i64->mode;
+	i32->aperture_base = i64->aperture_base;
+	i32->aperture_size = i64->aperture_size;
+	i32->memory_allowed = i64->memory_allowed;
+	i32->memory_used = i64->memory_used;
+	i32->id_vendor = i64->id_vendor;
+	i32->id_device = i64->id_device;
 }
 
 static int 
@@ -636,7 +638,7 @@ compat_drm_agp_info(struct file *file, void *arg)
 	if (error)
 		return error;
 	
-	info32to64(&i64,&i32);
+	info64to32(&i32, &i64);
 	
 	return copyout(arg, &i32, sizeof(i32));
 
