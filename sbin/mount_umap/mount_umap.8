@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_umap.8,v 1.19 2005/09/11 23:40:43 wiz Exp $
+.\"	$NetBSD: mount_umap.8,v 1.20 2019/08/20 20:18:54 perseant Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar options
+.Op Fl i Ar fsid
 .Fl g Ar gid-mapfile
 .Fl u Ar uid-mapfile
 .Ar target
@@ -70,6 +71,11 @@ The options are as follows:
 Use the group ID mapping specified in
 .Ar gid-mapfile .
 This flag is required.
+.It Fl i Ar fsid
+Use the specified
+.Ar fsid
+for the filesystem ID, rather than choosing one at random.
+This is useful if the filesystem is to be exported.
 .It Fl o
 Options are specified with a
 .Fl o
