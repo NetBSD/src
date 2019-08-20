@@ -220,23 +220,33 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	}
 
 	/* XXXNETBSD Once tls-maxphys gets merged this block becomes:
-		pdk = disk_find_blk(vp->v_rdev);
+		if (VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED) == 0)
+			pdk = disk_find(dkw.dkw_parent);
+		else
+			pdk = disk_find_blk(vp->v_rdev);
 		dvd->vd_maxphys = (pdk ? disk_maxphys(pdk) : MACHINE_MAXPHYS);
 	*/
 	{
 		struct buf buf = { .b_bcount = MAXPHYS };
-		const char *dev_name;
 
-		dev_name = devsw_blk2name(major(vp->v_rdev));
-		if (dev_name) {
-			char disk_name[16];
+		if (VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED) == 0) {
+			pdk = disk_find(dkw.dkw_parent);
+		} else {
+			const char *dev_name;
 
-			snprintf(disk_name, sizeof(disk_name), "%s%d",
-			    dev_name, DISKUNIT(vp->v_rdev));
-			pdk = disk_find(disk_name);
-			if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys)
-				(*pdk->dk_driver->d_minphys)(&buf);
+			dev_name = devsw_blk2name(major(vp->v_rdev));
+			if (dev_name) {
+				char disk_name[16];
+
+				snprintf(disk_name, sizeof(disk_name), "%s%d",
+				    dev_name, DISKUNIT(vp->v_rdev));
+				pdk = disk_find(disk_name);
+			} else {
+				pdk = NULL;
+			}
 		}
+		if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys)
+			(*pdk->dk_driver->d_minphys)(&buf);
 		dvd->vd_maxphys = buf.b_bcount;
 	}
 
