@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2019/08/20 09:36:40 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2019/08/20 12:25:41 maxv Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -6,7 +6,7 @@
 KMOD=	compat_netbsd32
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-NETBSD32_DRMKMS?=yes
+#NETBSD32_DRMKMS?=yes
 .endif
 
 CPPFLAGS+=	-DCOMPAT_NETBSD32
