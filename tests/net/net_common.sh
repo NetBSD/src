@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.34 2019/08/19 03:22:47 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.35 2019/08/20 09:53:45 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -350,7 +350,8 @@ rump_server_check_poolleaks()
 rump_server_check_memleaks()
 {
 
-	rump_server_check_poolleaks llentrypl
+	# XXX this doesn't work in some cases for unknown reasons
+	#rump_server_check_poolleaks llentrypl
 	# This doesn't work for objects allocated through pool_cache
 	#rump_server_check_poolleaks mbpl
 	#rump_server_check_poolleaks mclpl
