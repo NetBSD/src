@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2019/08/21 17:06:36 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.123 2019/08/21 17:14:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2019/08/21 17:06:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2019/08/21 17:14:05 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,21 +110,17 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2019/08/21 17:06:36 maxv Exp $");
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
-
 /*
- * This is a hook which is initialized by the dtrace module
- * to handle traps which might occur during DTrace probe
- * execution.
+ * This is a hook which is initialized by the dtrace module to handle traps
+ * which might occur during DTrace probe execution.
  */
-dtrace_trap_func_t	dtrace_trap_func = NULL;
-
-dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t dtrace_trap_func = NULL;
+dtrace_doubletrap_func_t dtrace_doubletrap_func = NULL;
 #endif
 
 void nmitrap(struct trapframe *);
 void doubletrap(struct trapframe *);
 void trap(struct trapframe *);
-void trap_return_fault_return(struct trapframe *) __dead;
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -149,7 +145,7 @@ const char * const trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = __arraycount(trap_type);
+int trap_types = __arraycount(trap_type);
 
 #ifdef TRAP_SIGDEBUG
 static void sigdebug(const struct trapframe *, const ksiginfo_t *, int);
@@ -274,7 +270,7 @@ trap(struct trapframe *frame)
 		p = l->l_proc;
 	} else {
 		/*
-		 * this can happen eg. on break points in early on boot.
+		 * This can happen eg on break points in early on boot.
 		 */
 		pcb = NULL;
 		p = NULL;
@@ -454,9 +450,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
-#ifdef DIAGNOSTIC
-			panic("unhandled type %x\n", type);
-#endif
+			KASSERT(0);
 			break;
 		}
 		goto trapsignal;
@@ -493,7 +487,7 @@ trap(struct trapframe *frame)
 			}
 		}
 
-		goto faultcommon;
+		goto pagefltcommon;
 
 	case T_PAGEFLT|T_USER: {
 		register vaddr_t va;
@@ -506,7 +500,7 @@ trap(struct trapframe *frame)
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
-faultcommon:
+pagefltcommon:
 		vm = p->p_vmspace;
 		if (__predict_false(vm == NULL)) {
 			goto we_re_toast;
