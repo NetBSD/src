@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.33 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.34 2019/08/21 21:45:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -456,12 +456,15 @@ npf_table_getid(npf_table_t *t)
  * npf_table_check: validate the name, ID and type.
  */
 int
-npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid, uint64_t type)
+npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid,
+    uint64_t type, bool replacing)
 {
+	const npf_table_t *t;
+
 	if (tid >= ts->ts_nitems) {
 		return EINVAL;
 	}
-	if (ts->ts_map[tid] != NULL) {
+	if (!replacing && ts->ts_map[tid] != NULL) {
 		return EEXIST;
 	}
 	switch (type) {
@@ -476,8 +479,10 @@ npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid, uint64_t typ
 	if (strlen(name) >= NPF_TABLE_MAXNAMELEN) {
 		return ENAMETOOLONG;
 	}
-	if (npf_tableset_getbyname(ts, name)) {
-		return EEXIST;
+	if ((t = npf_tableset_getbyname(ts, name)) != NULL) {
+		if (!replacing || t->t_id != tid) {
+			return EEXIST;
+		}
 	}
 	return 0;
 }
