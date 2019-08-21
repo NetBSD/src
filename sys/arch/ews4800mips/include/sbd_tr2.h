@@ -1,4 +1,4 @@
-/*	$NetBSD: sbd_tr2.h,v 1.2 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: sbd_tr2.h,v 1.3 2019/08/21 04:51:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
 /* read operation invokes channel attention. */
 #define	ETHER_SETADDR_REG	((volatile uint32_t *)0xbb060000)
 
-/* DCC (DMA controler. Parallel port and FDD use this.) */
+/* DCC (DMA controller. Parallel port and FDD use this.) */
 struct DCC {
 	uint32_t addr;	/* DMA address */
 	uint32_t cnt;	/* transfer count */
