@@ -139,7 +139,19 @@ rt_compare_os(__unused void *context, const void *node1, const void *node2)
 }
 
 static int
-rt_compare_proto(__unused void *context, const void *node1, const void *node2)
+rt_compare_list(__unused void *context, const void *node1, const void *node2)
+{
+	const struct rt *rt1 = node1, *rt2 = node2;
+
+	if (rt1->rt_order > rt2->rt_order)
+		return 1;
+	if (rt1->rt_order < rt2->rt_order)
+		return -1;
+	return 0;
+}
+
+static int
+rt_compare_proto(void *context, const void *node1, const void *node2)
 {
 	const struct rt *rt1 = node1, *rt2 = node2;
 	int c;
@@ -161,16 +173,19 @@ rt_compare_proto(__unused void *context, const void *node1, const void *node2)
 		return c;
 
 	/* Finally the order in which the route was given to us. */
-	if (rt1->rt_order > rt2->rt_order)
-		return 1;
-	if (rt1->rt_order < rt2->rt_order)
-		return -1;
-	return 0;
+	return rt_compare_list(context, rt1, rt2);
 }
 
 static const rb_tree_ops_t rt_compare_os_ops = {
 	.rbto_compare_nodes = rt_compare_os,
 	.rbto_compare_key = rt_compare_os,
+	.rbto_node_offset = offsetof(struct rt, rt_tree),
+	.rbto_context = NULL
+};
+
+const rb_tree_ops_t rt_compare_list_ops = {
+	.rbto_compare_nodes = rt_compare_list,
+	.rbto_compare_key = rt_compare_list,
 	.rbto_node_offset = offsetof(struct rt, rt_tree),
 	.rbto_context = NULL
 };
