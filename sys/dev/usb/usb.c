@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.179 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.179 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -585,10 +585,11 @@ usb_task_thread(void *arg)
 	struct usb_taskq *taskq;
 	bool mpsafe;
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-
 	taskq = arg;
-	DPRINTF("start taskq %#jx", (uintptr_t)taskq, 0, 0, 0);
+
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "start taskq %#jx",
+	    (uintptr_t)taskq, 0, 0, 0);
 
 	mutex_enter(&taskq->lock);
 	for (;;) {
@@ -737,7 +738,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 	struct usb_softc *sc;
 	int unit = minor(devt);
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	USBHIST_FUNC(); USBHIST_CALLARGS(usbdebug, "cmd %#jx", cmd, 0, 0, 0);
 
 	if (unit == USB_DEV_MINOR) {
 		switch (cmd) {
@@ -765,7 +766,6 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		return EIO;
 
 	int error = 0;
-	DPRINTF("cmd %#jx", cmd, 0, 0, 0);
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
@@ -1149,9 +1149,8 @@ void
 usb_schedsoftintr(struct usbd_bus *bus)
 {
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-
-	DPRINTFN(10, "polling=%jd", bus->ub_usepolling, 0, 0, 0);
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "polling=%jd", bus->ub_usepolling, 0, 0, 0);
 
 	/* In case the bus never finished setting up. */
 	if (__predict_false(bus->ub_soft == NULL))
