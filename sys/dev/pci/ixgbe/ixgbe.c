@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.201 2019/08/21 06:00:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.202 2019/08/21 10:01:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -222,8 +222,8 @@ static void	ixgbe_eitr_write(struct adapter *, uint32_t, uint32_t);
 static void	ixgbe_setup_vlan_hw_tagging(struct adapter *);
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
 static int	ixgbe_vlan_cb(struct ethercom *, uint16_t, bool);
-static int	ixgbe_register_vlan(void *, struct ifnet *, u16);
-static int	ixgbe_unregister_vlan(void *, struct ifnet *, u16);
+static int	ixgbe_register_vlan(struct adapter *, u16);
+static int	ixgbe_unregister_vlan(struct adapter *, u16);
 
 static void	ixgbe_add_device_sysctls(struct adapter *);
 static void	ixgbe_add_hw_stats(struct adapter *);
@@ -2310,9 +2310,9 @@ ixgbe_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 	int rv;
 
 	if (set)
-		rv = ixgbe_register_vlan(ifp->if_softc, ifp, vid);
+		rv = ixgbe_register_vlan(adapter, vid);
 	else
-		rv = ixgbe_unregister_vlan(ifp->if_softc, ifp, vid);
+		rv = ixgbe_unregister_vlan(adapter, vid);
 
 	if (rv != 0)
 		return rv;
@@ -2336,14 +2336,10 @@ ixgbe_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
  *   VFTA, init will repopulate the real table.
  ************************************************************************/
 static int
-ixgbe_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+ixgbe_register_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
 	u16		index, bit;
 	int		error;
-
-	if (ifp->if_softc != arg)   /* Not our event */
-		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return EINVAL;
@@ -2367,14 +2363,10 @@ ixgbe_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
  *   Run via vlan unconfig EVENT, remove our entry in the soft vfta.
  ************************************************************************/
 static int
-ixgbe_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+ixgbe_unregister_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
 	u16		index, bit;
 	int		error;
-
-	if (ifp->if_softc != arg)
-		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return EINVAL;
