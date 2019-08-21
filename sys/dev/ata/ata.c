@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $	*/
+/*	$NetBSD: ata.c,v 1.150 2019/08/21 04:51:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.150 2019/08/21 04:51:41 msaitoh Exp $");
 
 #include "opt_ata.h"
 
@@ -2232,7 +2232,7 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	struct ata_channel *chp = sc->sc_chan;
 
 	/*
-	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * XXX joerg: with wdc, the first channel unfreezes the controller.
 	 * Move this the reset and queue idling into wdc.
 	 */
 	ata_channel_lock(chp);
