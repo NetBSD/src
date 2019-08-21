@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.70 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.71 2019/08/21 10:48:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.70 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.71 2019/08/21 10:48:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -115,8 +115,8 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	usb_dma_block_t *b;
 	int error;
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	DPRINTFN(5, "size=%ju align=%ju", size, align, 0, 0);
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "size=%ju align=%ju", size, align, 0, 0);
 
 	ASSERT_SLEEPABLE();
 	KASSERT(size != 0);
@@ -236,11 +236,11 @@ usb_valid_block_p(usb_dma_block_t *b, struct usb_dma_block_qh *qh)
 Static void
 usb_block_freemem(usb_dma_block_t *b)
 {
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "size=%ju", b->size, 0, 0, 0);
 
 	KASSERT(mutex_owned(&usb_blk_lock));
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	DPRINTFN(6, "size=%ju", b->size, 0, 0, 0);
 #ifdef DEBUG
 	LIST_REMOVE(b, next);
 #endif
