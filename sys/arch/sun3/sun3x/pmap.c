@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2019/08/21 20:30:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2019/08/21 20:30:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2483,7 +2483,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
  **
  * Zero the contents of the specified physical page.
  *
- * Uses one of the virtual pages allocated in pmap_boostrap()
+ * Uses one of the virtual pages allocated in pmap_bootstrap()
  * to map the specified page into the kernel address space.
  */
 void
