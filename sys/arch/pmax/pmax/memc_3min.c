@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.14 2011/02/08 20:20:22 rmind Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.15 2019/08/21 04:17:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.14 2011/02/08 20:20:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.15 2019/08/21 04:17:41 msaitoh Exp $");
 
 /*
- * Motherboard memory error contoller used in both
+ * Motherboard memory error controller used in both
  * 3min (kn02ba) and maxine (kn02ca).
  */
 

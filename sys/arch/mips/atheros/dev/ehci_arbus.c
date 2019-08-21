@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.7 2016/07/12 17:04:21 maya Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.8 2019/08/21 04:17:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.7 2016/07/12 17:04:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.8 2019/08/21 04:17:41 msaitoh Exp $");
 
 #include "locators.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.7 2016/07/12 17:04:21 maya Exp $");
 #include <dev/usb/ehcivar.h>
 
 /*
- * This is relative to the start of the unreserved registers in USB contoller
+ * This is relative to the start of the unreserved registers in USB controller
  * block and not the full USB block which would be 0x1a8.
  */
 #define	ARBUS_USBMODE		0xa8			/* USB mode */
