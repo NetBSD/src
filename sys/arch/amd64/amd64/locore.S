@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.185 2019/05/18 13:32:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.186 2019/08/21 16:35:10 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1322,19 +1322,11 @@ ENTRY(handle_syscall)
 	jmp	syscall_sysret
 
 #ifdef DIAGNOSTIC
-	/* Report SPL error */
 .Lspl_error:
 	movabsq	$4f,%rdi
-	movl	TF_RAX(%rsp),%esi
-	movl	TF_RDI(%rsp),%edx
-	movl	%ebx,%ecx
-	movl	CPUVAR(ILEVEL),%r8d
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+	movl	CPUVAR(ILEVEL),%esi
+	call	_C_LABEL(panic)
+4:	.asciz	"spl not lowered on syscall, ilevel=%x"
 #endif
 
 /* AST pending or pmap load needed */
