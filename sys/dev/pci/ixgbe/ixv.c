@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.127 2019/08/21 06:00:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.128 2019/08/21 10:01:53 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -123,8 +123,8 @@ static void	ixv_eitr_write(struct adapter *, uint32_t, uint32_t);
 static void	ixv_setup_vlan_tagging(struct adapter *);
 static int	ixv_setup_vlan_support(struct adapter *);
 static int	ixv_vlan_cb(struct ethercom *, uint16_t, bool);
-static int	ixv_register_vlan(void *, struct ifnet *, u16);
-static int	ixv_unregister_vlan(void *, struct ifnet *, u16);
+static int	ixv_register_vlan(struct adapter *, u16);
+static int	ixv_unregister_vlan(struct adapter *, u16);
 
 static void	ixv_add_device_sysctls(struct adapter *);
 static void	ixv_save_stats(struct adapter *);
@@ -2058,9 +2058,9 @@ ixv_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 	int rv;
 
 	if (set)
-		rv = ixv_register_vlan(ifp->if_softc, ifp, vid);
+		rv = ixv_register_vlan(adapter, vid);
 	else
-		rv = ixv_unregister_vlan(ifp->if_softc, ifp, vid);
+		rv = ixv_unregister_vlan(adapter, vid);
 
 	if (rv != 0)
 		return rv;
@@ -2084,15 +2084,11 @@ ixv_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
  *   will repopulate the real table.
  ************************************************************************/
 static int
-ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+ixv_register_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
 	struct ixgbe_hw *hw = &adapter->hw;
 	u16		index, bit;
 	int error;
-
-	if (ifp->if_softc != arg) /* Not our event */
-		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095)) /* Invalid */
 		return EINVAL;
@@ -2118,15 +2114,11 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
  *   in the soft vfta.
  ************************************************************************/
 static int
-ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+ixv_unregister_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
 	struct ixgbe_hw *hw = &adapter->hw;
 	u16		index, bit;
 	int 		error;
-
-	if (ifp->if_softc !=  arg)
-		return EINVAL;
 
 	if ((vtag == 0) || (vtag > 4095))  /* Invalid */
 		return EINVAL;
