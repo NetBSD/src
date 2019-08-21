@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.200 2019/08/20 04:11:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.201 2019/08/21 06:00:07 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2462,7 +2462,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	for (i = 0; i < IXGBE_VFTA_SIZE; i++)
 		adapter->shadow_vfta[i] = 0;
 	/* Generate shadow_vfta from ec_vids */
-	mutex_enter(ec->ec_lock);
+	ETHER_LOCK(ec);
 	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
 		uint32_t idx;
 
@@ -2470,7 +2470,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 		KASSERT(idx < IXGBE_VFTA_SIZE);
 		adapter->shadow_vfta[idx] |= (u32)1 << (vlanidp->vid % 32);
 	}
-	mutex_exit(ec->ec_lock);
+	ETHER_UNLOCK(ec);
 	for (i = 0; i < IXGBE_VFTA_SIZE; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_VFTA(i), adapter->shadow_vfta[i]);
 
