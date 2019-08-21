@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.49 2019/04/26 21:40:30 sevan Exp $
+#	$NetBSD: WZERO3,v 1.50 2019/08/21 04:17:40 msaitoh Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 # estimated number of users
 maxusers	32
@@ -188,7 +188,7 @@ wskbd0 at hpckbd? mux 1
 wzero3keypad0 at pxaip?
 wskbd1 at wzero3keypad? mux 1
 
-# integrated MMC/SD contoller
+# integrated MMC/SD controller
 pxamci0 at pxaip? addr 0x41100000 size 0x48
 sdmmc* at pxamci?
 ld* at sdmmc?				# MMC/SD/SDHC card
