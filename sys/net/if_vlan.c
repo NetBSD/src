@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.144 2019/08/20 04:11:22 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.145 2019/08/21 06:00:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.144 2019/08/20 04:11:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.145 2019/08/21 06:00:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -492,9 +492,9 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			goto viderr;
 		}
 		vidmem->vid = vid;
-		mutex_enter(ec->ec_lock);
+		ETHER_LOCK(ec);
 		SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
-		mutex_exit(ec->ec_lock);
+		ETHER_UNLOCK(ec);
 
 		if (ec->ec_vlan_cb != NULL) {
 			/*
@@ -641,7 +641,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 		struct vlanid_list *vlanidp, *tmpp;
 		uint16_t vid = EVL_VLANOFTAG(nmib->ifvm_tag);
 
-		mutex_enter(ec->ec_lock);
+		ETHER_LOCK(ec);
 		SIMPLEQ_FOREACH_SAFE(vlanidp, &ec->ec_vids, vid_list, tmpp) {
 			if (vlanidp->vid == vid) {
 				SIMPLEQ_REMOVE(&ec->ec_vids, vlanidp,
@@ -649,7 +649,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 				kmem_free(vlanidp, sizeof(*vlanidp));
 			}
 		}
-		mutex_exit(ec->ec_lock);
+		ETHER_UNLOCK(ec);
 		if (ec->ec_vlan_cb != NULL) {
 			/*
 			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
