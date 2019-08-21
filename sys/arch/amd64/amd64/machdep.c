@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.335 2019/07/24 16:36:47 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.336 2019/08/21 20:30:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2019/07/24 16:36:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2019/08/21 20:30:36 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1739,7 +1739,7 @@ init_x86_64(paddr_t first_avail)
 	 */
 	lowmem_rsvd = 8 * PAGE_SIZE;
 
-	/* Initialize the memory clusters (needed in pmap_boostrap). */
+	/* Initialize the memory clusters (needed in pmap_bootstrap). */
 	init_x86_clusters();
 #else
 	/* Parse Xen command line (replace bootinfo) */
