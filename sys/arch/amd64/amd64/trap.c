@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2019/07/13 17:03:01 mlelstv Exp $	*/
+/*	$NetBSD: trap.c,v 1.122 2019/08/21 17:06:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2019/07/13 17:03:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2019/08/21 17:06:36 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -150,8 +150,6 @@ const char * const trap_type[] = {
 	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = __arraycount(trap_type);
-
-#define	IDTVEC(name)	__CONCAT(X, name)
 
 #ifdef TRAP_SIGDEBUG
 static void sigdebug(const struct trapframe *, const ksiginfo_t *, int);
@@ -265,8 +263,6 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char kcopy_fault[];
-	extern char IDTVEC(osyscall)[];
-	extern char IDTVEC(syscall32)[];
 	ksiginfo_t ksi;
 	void *onfault;
 	int type, error;
@@ -657,12 +653,6 @@ faultcommon:
 		if (x86_dbregs_user_trap())
 			break;
 
-		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
-		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
-			frame->tf_rflags &= ~PSL_T;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
