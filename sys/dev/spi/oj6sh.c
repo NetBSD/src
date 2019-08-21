@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.4 2019/08/19 10:56:33 hkenken Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.5 2019/08/21 08:03:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.4 2019/08/19 10:56:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.5 2019/08/21 08:03:22 martin Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -126,12 +126,17 @@ static const struct wsmouse_accessops oj6sh_accessops = {
 	.disable = oj6sh_disable
 };
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "oj6sh",	0 },
+	{ NULL,		0 }
+};
+
 static int
 oj6sh_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
-	if (strcmp(match->cf_name, "oj6sh"))
+	if (spi_compatible_match(sa, cf, compat_data) == 0)
 		return 0;
 	if (spi_configure(sa->sa_handle, SPI_MODE_0, 2500000))
 		return 0;
