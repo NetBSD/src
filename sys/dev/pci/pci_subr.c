@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.215 2019/07/18 07:49:26 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.216 2019/08/21 02:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.215 2019/07/18 07:49:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.216 2019/08/21 02:10:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -209,7 +209,7 @@ static const struct pci_class pci_subclass_memory[] = {
 
 /* PCI bridge programming interface */
 static const struct pci_class pci_interface_pcibridge[] = {
-	{ "",			PCI_INTERFACE_BRIDGE_PCI_PCI, NULL,	},
+	{ "",			PCI_INTERFACE_BRIDGE_PCI_PCI,	NULL,	},
 	{ "subtractive decode",	PCI_INTERFACE_BRIDGE_PCI_SUBDEC, NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -223,8 +223,8 @@ static const struct pci_class pci_interface_stpci[] = {
 
 /* Advanced Switching programming interface */
 static const struct pci_class pci_interface_advsw[] = {
-	{ "custom interface",	PCI_INTERFACE_ADVSW_CUSTOM, NULL, },
-	{ "ASI-SIG",		PCI_INTERFACE_ADVSW_ASISIG, NULL, },
+	{ "custom interface",	PCI_INTERFACE_ADVSW_CUSTOM,	NULL, },
+	{ "ASI-SIG",		PCI_INTERFACE_ADVSW_ASISIG,	NULL, },
 	{ NULL,			0,				NULL,	},
 };
 
@@ -304,7 +304,7 @@ static const struct pci_class pci_subclass_communications[] = {
 /*
  * Class 0x08.
  * Base system peripheral.
- */ 
+ */
 
 /* PIC programming interface */
 static const struct pci_class pci_interface_pic[] = {
@@ -429,10 +429,10 @@ static const struct pci_class pci_interface_usb[] = {
 
 /* IPMI programming interface */
 static const struct pci_class pci_interface_ipmi[] = {
-	{ "SMIC",		PCI_INTERFACE_IPMI_SMIC,		NULL,},
-	{ "keyboard",		PCI_INTERFACE_IPMI_KBD,			NULL,},
-	{ "block transfer",	PCI_INTERFACE_IPMI_BLOCKXFER,		NULL,},
-	{ NULL,			0,					NULL,},
+	{ "SMIC",		PCI_INTERFACE_IPMI_SMIC,	NULL,	},
+	{ "keyboard",		PCI_INTERFACE_IPMI_KBD,		NULL,	},
+	{ "block transfer",	PCI_INTERFACE_IPMI_BLOCKXFER,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 /* Subclasses */
@@ -478,8 +478,8 @@ static const struct pci_class pci_subclass_wireless[] = {
 
 /* Intelligent IO programming interface */
 static const struct pci_class pci_interface_i2o[] = {
-	{ "FIFO at offset 0x40", PCI_INTERFACE_I2O_FIFOAT40,		NULL,},
-	{ NULL,			0,					NULL,},
+	{ "FIFO at offset 0x40", PCI_INTERFACE_I2O_FIFOAT40,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 /* Subclasses */
@@ -494,9 +494,9 @@ static const struct pci_class pci_subclass_i2o[] = {
  * Satellite communication controller.
  */
 static const struct pci_class pci_subclass_satcom[] = {
-	{ "TV",			PCI_SUBCLASS_SATCOM_TV,	 	NULL,	},
-	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO, 	NULL,	},
-	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE, 	NULL,	},
+	{ "TV",			PCI_SUBCLASS_SATCOM_TV,		NULL,	},
+	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,	NULL,	},
+	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,	NULL,	},
 	{ "data",		PCI_SUBCLASS_SATCOM_DATA,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SATCOM_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
@@ -507,9 +507,9 @@ static const struct pci_class pci_subclass_satcom[] = {
  * Encryption/Decryption controller.
  */
 static const struct pci_class pci_subclass_crypto[] = {
-	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP, 	NULL,	},
+	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,	NULL,	},
 	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT, NULL,},
-	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC, 	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -585,7 +585,7 @@ DEV_VERBOSE_DEFINE(pci);
  * a positive value if the dest buffer would have overflowed.
  */
 
-static int __printflike(3,4)
+static int __printflike(3, 4)
 snappendf(char **dest, size_t *len, const char * restrict fmt, ...)
 {
 	va_list	ap;
@@ -609,7 +609,7 @@ snappendf(char **dest, size_t *len, const char * restrict fmt, ...)
 	/* Update dest & len to point at trailing NUL */
 	*dest += count;
 	*len -= count;
-		
+
 	return 0;
 }
 
@@ -1285,7 +1285,7 @@ pci_conf_print_pcix_cap_2ndbusmode(int num)
 		printf("PCI-X 266 (Mode 2)\n");
 	else
 		printf("PCI-X 533 (Mode 2)\n");
-	
+
 	printf("      Error protection: %s\n", (num <= 3) ? "parity" : "ECC");
 	switch (num & 0x03) {
 	default:
@@ -1564,7 +1564,7 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 	onoff("IOMMU Miscellaneous Information Register 1", reg,
 	    PCI_SECURE_CAP_EXT);
 	havemisc1 = reg & PCI_SECURE_CAP_EXT;
-	
+
 	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_BAL)];
 	printf("    Base Address Low Register: 0x%08x\n", reg);
 	onoff("Enable", reg, PCI_SECURE_IOMMU_BAL_EN);
@@ -1573,7 +1573,7 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 	printf("      Base Address: 0x%016" PRIx64 "\n",
 	    ((uint64_t)reg2 << 32)
 	    | (reg & (PCI_SECURE_IOMMU_BAL_H | PCI_SECURE_IOMMU_BAL_L)));
-	
+
 	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_RANGE)];
 	printf("    IOMMU Range Register: 0x%08x\n", reg);
 	printf("      HyperTransport UnitID: 0x%02x\n",
@@ -1607,7 +1607,7 @@ pci_conf_print_secure_cap(const pcireg_t *regs, int capoff)
 
 	if (!havemisc1)
 		return;
-	
+
 	reg = regs[o2i(capoff + PCI_SECURE_IOMMU_MISC1)];
 	printf("    Miscellaneous Information Register 1: 0x%08x\n", reg);
 	printf("      MSI Message number (GA): 0x%02x\n",
@@ -1985,7 +1985,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 
 	if (check_slot == true) {
 		pcireg_t slcap;
-		
+
 		/* Slot Capability Register */
 		slcap = reg = regs[o2i(capoff + PCIE_SLCAP)];
 		printf("    Slot Capability Register: 0x%08x\n", reg);
@@ -2146,7 +2146,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	default:
 		printf("(reserved value)\n");
 		break;
-		
 	}
 	printf("      LN System CLS: ");
 	switch (__SHIFTOUT(reg, PCIE_DCAP2_LNSYSCLS)) {
@@ -2340,7 +2339,7 @@ pci_conf_print_msix_cap(const pcireg_t *regs, int capoff)
 	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
 	printf("    Message Control register: 0x%04x\n",
 	    (reg >> 16) & 0xff);
-	printf("      Table Size: %d\n",PCI_MSIX_CTL_TBLSIZE(reg));
+	printf("      Table Size: %d\n", PCI_MSIX_CTL_TBLSIZE(reg));
 	onoff("Function Mask", reg, PCI_MSIX_CTL_FUNCMASK);
 	onoff("MSI-X Enable", reg, PCI_MSIX_CTL_ENABLE);
 	reg = regs[o2i(capoff + PCI_MSIX_TBLOFFSET)];
@@ -2517,14 +2516,14 @@ pci_conf_print_ea_cap(const pcireg_t *regs, int capoff)
 			printf("Reserved\n");
 			break;
 		}
-		
+
 		printf("      Primary Properties: ");
 		pci_conf_print_ea_cap_prop(__SHIFTOUT(reg, PCI_EA_PP));
 		printf("      Secondary Properties: ");
 		pci_conf_print_ea_cap_prop(__SHIFTOUT(reg, PCI_EA_SP));
 		onoff("Writable", reg, PCI_EA_W);
 		onoff("Enable for this entry", reg, PCI_EA_E);
-		    
+
 		if (entry_size == 0) {
 			entoff += 4;
 			continue;
@@ -2577,7 +2576,7 @@ static struct {
 	{ PCI_CAP_AGP,		"AGP",		pci_conf_print_agp_cap },
 	{ PCI_CAP_VPD,		"VPD",		NULL },
 	{ PCI_CAP_SLOTID,	"SlotID",	NULL },
-	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap }, 
+	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap },
 	{ PCI_CAP_CPCI_HOTSWAP,	"CompactPCI Hot-swapping", NULL },
 	{ PCI_CAP_PCIX,		"PCI-X",	pci_conf_print_pcix_cap },
 	{ PCI_CAP_LDT,		"HyperTransport", pci_conf_print_ht_cap },
@@ -2620,7 +2619,7 @@ pci_conf_find_cap(const pcireg_t *regs, unsigned int capid, int *offsetp)
 	default:
 		return 0;
 	}
-	
+
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capptr)]);
 	     off != 0; off = PCI_CAPLIST_NEXT(rval)) {
 		rval = regs[o2i(off)];
@@ -3150,7 +3149,7 @@ pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int extcapoff)
 		reg = regs[o2i(extcapoff + PCI_RCLINK_DCL_LINKDESC(i))];
 		printf("    Link Entry %d:\n", i + 1);
 		printf("      Link Description Register: 0x%08x\n", reg);
-		onoff("  Link Valid", reg,PCI_RCLINK_DCL_LINKDESC_LVALID);
+		onoff("  Link Valid", reg, PCI_RCLINK_DCL_LINKDESC_LVALID);
 		linktype = reg & PCI_RCLINK_DCL_LINKDESC_LTYPE;
 		onoff2("  Link Type", reg, PCI_RCLINK_DCL_LINKDESC_LTYPE,
 		    "Configuration Space", "Memory-Mapped Space");
@@ -3558,7 +3557,7 @@ pci_conf_print_resizbar_cap(const pcireg_t *regs, int extcapoff)
 	pcireg_t cap, ctl;
 	unsigned int bars, i, n;
 	char pbuf[MEM_PBUFSIZE];
-	
+
 	printf("\n  Resizable BAR\n");
 
 	/* Get Number of Resizable BARs */
