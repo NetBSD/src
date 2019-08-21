@@ -458,11 +458,10 @@ configure_interface1(struct interface *ifp)
 		ifo->options &= ~DHCPCD_ARP;
 		if (!(ifp->flags & IFF_MULTICAST))
 			ifo->options &= ~DHCPCD_IPV6RS;
-		if (!(ifo->options & DHCPCD_INFORM))
+		if (!(ifo->options & (DHCPCD_INFORM | DHCPCD_WANTDHCP)))
 			ifo->options |= DHCPCD_STATIC;
 	}
-	if (ifp->flags & IFF_NOARP ||
-	    !(ifo->options & DHCPCD_ARP) ||
+	if (!(ifo->options & DHCPCD_ARP) ||
 	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
 		ifo->options &= ~DHCPCD_IPV4LL;
 
@@ -1440,10 +1439,10 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 	 * write callback on the fd */
 	if (strcmp(*argv, "--version") == 0) {
 		return control_queue(fd, UNCONST(VERSION),
-		    strlen(VERSION) + 1, 0);
+		    strlen(VERSION) + 1, false);
 	} else if (strcmp(*argv, "--getconfigfile") == 0) {
 		return control_queue(fd, UNCONST(fd->ctx->cffile),
-		    strlen(fd->ctx->cffile) + 1, 0);
+		    strlen(fd->ctx->cffile) + 1, false);
 	} else if (strcmp(*argv, "--getinterfaces") == 0) {
 		eloop_event_add_w(fd->ctx->eloop, fd->fd,
 		    dhcpcd_getinterfaces, fd);

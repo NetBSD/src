@@ -2062,7 +2062,7 @@ err_sla:
 		ifo->auth.options &= ~DHCPCD_AUTH_REQUIRE;
 		break;
 	case O_DHCP:
-		ifo->options |= DHCPCD_DHCP | DHCPCD_IPV4;
+		ifo->options |= DHCPCD_DHCP | DHCPCD_WANTDHCP | DHCPCD_IPV4;
 		break;
 	case O_NODHCP:
 		ifo->options &= ~DHCPCD_DHCP;
@@ -2281,7 +2281,7 @@ default_config(struct dhcpcd_ctx *ctx)
 	ifo->script = UNCONST(default_script);
 	ifo->metric = -1;
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
-	rb_tree_init(&ifo->routes, &rt_compare_proto_ops);
+	rb_tree_init(&ifo->routes, &rt_compare_list_ops);
 #ifdef AUTH
 	TAILQ_INIT(&ifo->auth.tokens);
 #endif
