@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.8 2019/01/27 02:08:42 pgoyette Exp $ */
+/* $NetBSD: usbroothub.c,v 1.9 2019/08/21 10:48:37 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.8 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.9 2019/08/21 10:48:37 mrg Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -366,19 +366,19 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	usb_device_request_t *req;
 	usbd_status err = USBD_IOERROR;		/* XXX STALL? */
 	uint16_t len, value;
-	int buflen, actlen;
+	int buflen, actlen = -1;
 	void *buf;
 
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	USBHIST_FUNC();
 
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	req = &xfer->ux_request;
 
-	USBHIST_LOG(usbdebug, "type=%#2jx request=%#2jx", req->bmRequestType,
-	    req->bRequest, 0, 0);
-
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
+
+	USBHIST_CALLARGS(usbdebug, "type=%#jx request=%#jx len=%#jx value=%#jx",
+	    req->bmRequestType, req->bRequest, len, value);
 
 	buf = len ? usbd_get_buffer(xfer) : NULL;
 	buflen = 0;
@@ -553,8 +553,6 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	}
 
 	actlen = bus->ub_methods->ubm_rhctrl(bus, req, buf, buflen);
-	USBHIST_LOG(usbdebug, "xfer %#jx buflen %jd actlen %jd",
-	    (uintptr_t)xfer, buflen, actlen, 0);
 	if (actlen < 0)
 		goto fail;
 
@@ -562,7 +560,8 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	err = USBD_NORMAL_COMPLETION;
 
  fail:
-	USBHIST_LOG(usbdebug, "xfer %#jx err %jd", (uintptr_t)xfer, err, 0, 0);
+	USBHIST_LOG(usbdebug, "xfer %#jx buflen %jd actlen %jd err %jd",
+	    (uintptr_t)xfer, buflen, actlen, err);
 
 	xfer->ux_status = err;
 	mutex_enter(bus->ub_lock);
