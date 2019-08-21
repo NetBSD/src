@@ -1465,12 +1465,12 @@ bpf_read(struct interface *ifp, int s, void *data, size_t len,
 int
 bpf_attach(int s, void *filter, unsigned int filter_len)
 {
-	struct sock_fprog pf;
+	struct sock_fprog pf = {
+		.filter = filter,
+		.len = filter_len,
+	};
 
 	/* Install the filter. */
-	memset(&pf, 0, sizeof(pf));
-	pf.filter = filter;
-	pf.len = (unsigned short)filter_len;
 	return setsockopt(s, SOL_SOCKET, SO_ATTACH_FILTER, &pf, sizeof(pf));
 }
 
@@ -1480,7 +1480,9 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 	struct nlma nlm;
 	struct ifa_cacheinfo cinfo;
 	int retval = 0;
+#ifdef IFA_F_NOPREFIXROUTE
 	uint32_t flags = 0;
+#endif
 
 	memset(&nlm, 0, sizeof(nlm));
 	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
@@ -1507,8 +1509,8 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 #ifdef IFA_F_NOPREFIXROUTE
 		if (nlm.ifa.ifa_prefixlen < 32)
 			flags |= IFA_F_NOPREFIXROUTE;
-#endif
 		add_attr_32(&nlm.hdr, sizeof(nlm), IFA_FLAGS, flags);
+#endif
 
 		add_attr_l(&nlm.hdr, sizeof(nlm), IFA_BROADCAST,
 		    &ia->brd.s_addr, sizeof(ia->brd.s_addr));
@@ -1542,7 +1544,9 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 {
 	struct nlma nlm;
 	struct ifa_cacheinfo cinfo;
+#if defined(IFA_F_MANAGETEMPADDR) || defined(IFA_F_NOPREFIXROUTE)
 	uint32_t flags = 0;
+#endif
 
 	memset(&nlm, 0, sizeof(nlm));
 	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
@@ -1582,7 +1586,9 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 		if (!IN6_IS_ADDR_LINKLOCAL(&ia->addr))
 			flags |= IFA_F_NOPREFIXROUTE;
 #endif
+#if defined(IFA_F_MANAGETEMPADDR) || defined(IFA_F_NOPREFIXROUTE)
 		add_attr_32(&nlm.hdr, sizeof(nlm), IFA_FLAGS, flags);
+#endif
 
 		memset(&cinfo, 0, sizeof(cinfo));
 		cinfo.ifa_prefered = ia->prefix_pltime;

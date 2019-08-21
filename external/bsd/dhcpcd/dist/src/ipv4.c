@@ -268,13 +268,12 @@ inet_dhcproutes(rb_tree_t *routes, struct interface *ifp, bool *have_default)
 	rb_tree_init(&nroutes, &rt_compare_proto_ops);
 
 	/* First, add a subnet route. */
-	if (!(ifp->flags & IFF_POINTOPOINT) &&
+	if (state->addr->mask.s_addr != INADDR_ANY
 #ifndef BSD
 	    /* BSD adds a route in this instance */
-	    state->addr->mask.s_addr != INADDR_BROADCAST &&
+	    && state->addr->mask.s_addr != INADDR_BROADCAST
 #endif
-	    state->addr->mask.s_addr != INADDR_ANY)
-	{
+	) {
 		if ((rt = rt_new(ifp)) == NULL)
 			return -1;
 		rt->rt_dflags |= RTDF_IFA_ROUTE;
@@ -680,8 +679,10 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 		logdebugx("%s: aliased %s", ia->alias, ia->saddr);
 #endif
 
-	logdebugx("%s: adding IP address %s broadcast %s",
-	    ifp->name, ia->saddr, inet_ntoa(*bcast));
+	logdebugx("%s: adding IP address %s %s %s",
+	    ifp->name, ia->saddr,
+	    ifp->flags & IFF_POINTOPOINT ? "destination" : "broadcast",
+	    inet_ntoa(*bcast));
 	if (if_address(RTM_NEWADDR, ia) == -1) {
 		if (errno != EEXIST)
 			logerr("%s: if_addaddress",
@@ -742,7 +743,8 @@ ipv4_applyaddr(void *arg)
 #ifdef ARP
 				/* Announce the preferred address to
 				 * kick ARP caches. */
-				arp_announceaddr(ifp->ctx, &lease->addr);
+				if (!(ifp->flags & IFF_NOARP))
+					arp_announceaddr(ifp->ctx,&lease->addr);
 #endif
 			}
 			script_runreason(ifp, state->reason);
@@ -804,7 +806,8 @@ ipv4_applyaddr(void *arg)
 	rt_build(ifp->ctx, AF_INET);
 
 #ifdef ARP
-	arp_announceaddr(ifp->ctx, &state->addr->addr);
+	if (!(ifp->flags & IFF_NOARP))
+		arp_announceaddr(ifp->ctx, &state->addr->addr);
 #endif
 
 	if (state->state == DHS_BOUND) {

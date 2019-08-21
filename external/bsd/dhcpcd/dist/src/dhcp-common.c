@@ -622,6 +622,7 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
     int vname,
     const uint8_t *data, size_t dl, const char *ifname)
 {
+	fpos_t fp_pos;
 	const uint8_t *e, *t;
 	uint16_t u16;
 	int16_t s16;
@@ -636,25 +637,32 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 	if ((ssize_t)dl == -1)
 		return 0;
 
-	if (fprintf(fp, "%s", prefix) == -1)
+	if (fgetpos(fp, &fp_pos) == -1)
 		return -1;
+	if (fprintf(fp, "%s", prefix) == -1)
+		goto err;
+
+	/* We printed something, so always goto err from now-on
+	 * to terminate the string. */
 	if (vname) {
 		if (fprintf(fp, "_%s", opt->var) == -1)
-			return -1;
+			goto err;
 	}
 	if (fputc('=', fp) == EOF)
-		return -1;
+		goto err;
 	if (dl == 0)
-		return 1;
+		goto done;
 
 	if (opt->type & OT_RFC1035) {
 		char domain[NS_MAXDNAME];
 
 		sl = decode_rfc1035(domain, sizeof(domain), data, dl);
-		if (sl == 0 || sl == -1)
-			return sl;
+		if (sl == -1)
+			goto err;
+		if (sl == 0)
+			goto done;
 		if (valid_domainname(domain, opt->type) == -1)
-			return -1;
+			goto err;
 		return efprintf(fp, "%s", domain);
 	}
 
@@ -670,7 +678,7 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 		char buf[1024];
 
 		if (print_string(buf, sizeof(buf), opt->type, data, dl) == -1)
-			return -1;
+			goto err;
 		return efprintf(fp, "%s", buf);
 	}
 
@@ -690,12 +698,10 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 			    *data & (1 << sl))
 			{
 				if (fputc(opt->bitflags[l], fp) == EOF)
-					return -1;
+					goto err;
 			}
 		}
-		if (fputc('\0', fp) == EOF)
-			return -1;
-		return 1;
+		goto done;
 	}
 
 	t = data;
@@ -703,66 +709,71 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 	while (data < e) {
 		if (data != t) {
 			if (fputc(' ', fp) == EOF)
-				return -1;
+				goto err;
 		}
 		if (opt->type & OT_UINT8) {
 			if (fprintf(fp, "%u", *data) == -1)
-				return -1;
+				goto err;
 			data++;
 		} else if (opt->type & OT_INT8) {
 			if (fprintf(fp, "%d", *data) == -1)
-				return -1;
+				goto err;
 			data++;
 		} else if (opt->type & OT_UINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			u16 = ntohs(u16);
 			if (fprintf(fp, "%u", u16) == -1)
-				return -1;
+				goto err;
 			data += sizeof(u16);
 		} else if (opt->type & OT_INT16) {
 			memcpy(&u16, data, sizeof(u16));
 			s16 = (int16_t)ntohs(u16);
 			if (fprintf(fp, "%d", s16) == -1)
-				return -1;
+				goto err;
 			data += sizeof(u16);
 		} else if (opt->type & OT_UINT32) {
 			memcpy(&u32, data, sizeof(u32));
 			u32 = ntohl(u32);
 			if (fprintf(fp, "%u", u32) == -1)
-				return -1;
+				goto err;
 			data += sizeof(u32);
 		} else if (opt->type & OT_INT32) {
 			memcpy(&u32, data, sizeof(u32));
 			s32 = (int32_t)ntohl(u32);
 			if (fprintf(fp, "%d", s32) == -1)
-				return -1;
+				goto err;
 			data += sizeof(u32);
 		} else if (opt->type & OT_ADDRIPV4) {
 			memcpy(&addr.s_addr, data, sizeof(addr.s_addr));
 			if (fprintf(fp, "%s", inet_ntoa(addr)) == -1)
-				return -1;
+				goto err;
 			data += sizeof(addr.s_addr);
 		} else if (opt->type & OT_ADDRIPV6) {
 			char buf[INET6_ADDRSTRLEN];
 
 			if (inet_ntop(AF_INET6, data, buf, sizeof(buf)) == NULL)
-				return -1;
+				goto err;
 			if (fprintf(fp, "%s", buf) == -1)
-				return -1;
+				goto err;
 			if (data[0] == 0xfe && (data[1] & 0xc0) == 0x80) {
 				if (fprintf(fp,"%%%s", ifname) == -1)
-					return -1;
+					goto err;
 			}
 			data += 16;
 		} else {
 			errno = EINVAL;
-			return -1;
+			goto err;
 		}
 	}
 
+done:
 	if (fputc('\0', fp) == EOF)
 		return -1;
 	return 1;
+
+err:
+	(void)fsetpos(fp, &fp_pos);
+	return -1;
 }
 
 int

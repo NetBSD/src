@@ -96,6 +96,7 @@ struct rt {
 	rb_node_t		rt_tree;
 };
 
+extern const rb_tree_ops_t rt_compare_list_ops;
 extern const rb_tree_ops_t rt_compare_proto_ops;
 
 void rt_init(struct dhcpcd_ctx *);
