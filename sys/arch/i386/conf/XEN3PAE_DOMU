@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.6 2019/02/11 14:59:32 cherry Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.7 2019/08/21 12:16:07 maxv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -19,8 +19,6 @@ options 	PAE
 #options 	DOM0OPS
 
 makeoptions	CPUFLAGS="-march=i686"
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
 
