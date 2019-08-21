@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.46 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.47 2019/08/21 21:45:47 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -203,6 +203,30 @@ _npf_rules_process(nl_config_t *ncf, nvlist_t *dict, const char *key)
 }
 
 /*
+ * _npf_extract_error: check the error number field and extract the
+ * error details into the npf_error_t structure.
+ */
+static int
+_npf_extract_error(nvlist_t *resp, npf_error_t *errinfo)
+{
+	int error;
+
+	error = dnvlist_get_number(resp, "errno", 0);
+	if (error && errinfo) {
+		memset(errinfo, 0, sizeof(npf_error_t));
+
+		errinfo->id = dnvlist_get_number(resp, "id", 0);
+		errinfo->error_msg =
+		    dnvlist_take_string(resp, "error-msg", NULL);
+		errinfo->source_file =
+		    dnvlist_take_string(resp, "source-file", NULL);
+		errinfo->source_line =
+		    dnvlist_take_number(resp, "source-line", 0);
+	}
+	return error;
+}
+
+/*
  * CONFIGURATION INTERFACE.
  */
 
@@ -233,17 +257,7 @@ npf_config_submit(nl_config_t *ncf, int fd, npf_error_t *errinfo)
 		assert(errnv == NULL);
 		return errno;
 	}
-	error = dnvlist_get_number(errnv, "errno", 0);
-	if (error && errinfo) {
-		memset(errinfo, 0, sizeof(npf_error_t));
-		errinfo->id = dnvlist_get_number(errnv, "id", 0);
-		errinfo->error_msg =
-		    dnvlist_take_string(errnv, "error-msg", NULL);
-		errinfo->source_file =
-		    dnvlist_take_string(errnv, "source-file", NULL);
-		errinfo->source_line =
-		    dnvlist_take_number(errnv, "source-line", 0);
-	}
+	error = _npf_extract_error(errnv, errinfo);
 	nvlist_destroy(errnv);
 	return error;
 }
@@ -949,7 +963,7 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 }
 
 static inline int
-_npf_table_build(nl_table_t *tl)
+_npf_table_build_const(nl_table_t *tl)
 {
 	struct cdbw *cdbw;
 	const nvlist_t * const *entries;
@@ -958,6 +972,10 @@ _npf_table_build(nl_table_t *tl)
 	void *cdb, *buf;
 	struct stat sb;
 	char sfn[32];
+
+	if (dnvlist_get_number(tl->table_dict, "type", 0) != NPF_TABLE_CONST) {
+		return 0;
+	}
 
 	if (!nvlist_exists_nvlist_array(tl->table_dict, "entries")) {
 		return 0;
@@ -1050,15 +1068,34 @@ npf_table_insert(nl_config_t *ncf, nl_table_t *tl)
 	if (_npf_dataset_lookup(ncf->ncf_dict, "tables", "name", name)) {
 		return EEXIST;
 	}
-	if (dnvlist_get_number(tl->table_dict, "type", 0) == NPF_TABLE_CONST) {
-		if ((error = _npf_table_build(tl)) != 0) {
-			return error;
-		}
+	if ((error = _npf_table_build_const(tl)) != 0) {
+		return error;
 	}
 	nvlist_append_nvlist_array(ncf->ncf_dict, "tables", tl->table_dict);
 	nvlist_destroy(tl->table_dict);
 	free(tl);
 	return 0;
+}
+
+int
+npf_table_replace(int fd, nl_table_t *tl, npf_error_t *errinfo)
+{
+	nvlist_t *errnv = NULL;
+	int error;
+
+	/* Ensure const tables are built. */
+	if ((error = _npf_table_build_const(tl)) != 0) {
+		return error;
+	}
+
+	if (nvlist_xfer_ioctl(fd, IOC_NPF_TABLE_REPLACE,
+	    tl->table_dict, &errnv) == -1) {
+		assert(errnv == NULL);
+		return errno;
+	}
+	error = _npf_extract_error(errnv, errinfo);
+	nvlist_destroy(errnv);
+	return error;
 }
 
 nl_table_t *
