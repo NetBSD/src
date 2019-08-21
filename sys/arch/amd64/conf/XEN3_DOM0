@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.168 2019/08/09 08:01:06 rin Exp $
+# $NetBSD: XEN3_DOM0,v 1.169 2019/08/21 12:16:07 maxv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.168 $"
+#ident		"XEN3_DOM0-$Revision: 1.169 $"
 
 maxusers	32		# estimated number of users
 
@@ -20,8 +20,6 @@ options 	DOM0OPS
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 # CPU features
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)

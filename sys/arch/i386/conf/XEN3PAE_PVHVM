@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_PVHVM,v 1.1 2019/02/14 08:18:25 cherry Exp $
+# $NetBSD: XEN3PAE_PVHVM,v 1.2 2019/08/21 12:16:07 maxv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -19,8 +19,6 @@ options 	XEN
 options 	PAE
 
 makeoptions	CPUFLAGS="-march=i686"
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
 

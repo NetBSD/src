@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_PVHVM,v 1.1 2019/02/14 08:18:25 cherry Exp $
+# $NetBSD: XEN3_PVHVM,v 1.2 2019/08/21 12:16:07 maxv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,15 +12,13 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_PVHVM-$Revision: 1.1 $"
+#ident		"XEN3_PVHVM-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
 
