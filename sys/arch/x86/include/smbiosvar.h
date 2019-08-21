@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.5 2018/12/25 16:45:02 mlelstv Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.6 2019/08/21 04:51:41 msaitoh Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -153,8 +153,8 @@ struct smbios_struct_bios {
 	uint32_t	charext;
 	uint8_t	major_rel;
 	uint8_t	minor_rel;
-	uint8_t	ecf_mjr_rel;	/* embedded controler firmware */
-	uint8_t 	ecf_min_rel;	/* embedded controler firmware */
+	uint8_t	ecf_mjr_rel;	/* embedded controller firmware */
+	uint8_t 	ecf_min_rel;	/* embedded controller firmware */
 } __packed;
 
 /*
