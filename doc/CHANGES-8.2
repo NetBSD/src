@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.27 2019/08/19 14:32:14 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.28 2019/08/21 14:33:26 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -599,4 +599,16 @@ sys/netinet6/nd6.c				1.257
 
 	Add missing IFNET_LOCK for regen_tmpaddr.
 	[ozaki-r, ticket #1340]
+
+distrib/hpcarm/miniroot/list			1.11
+distrib/hpcmips/miniroot/list			1.19
+distrib/hpcsh/miniroot/list			1.11
+
+	sysctl(8) is useful to have in the install environment for debugging.
+	[sevan, ticket #1341]
+
+sys/uvm/uvm_aobj.c				1.128
+
+	Avoid undefined behavior in uao_pagein_page().
+	[msaitoh, ticket #1342]
 
