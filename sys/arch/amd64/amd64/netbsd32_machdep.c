@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.125 2019/07/20 18:25:11 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.126 2019/08/21 12:33:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.125 2019/07/20 18:25:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.126 2019/08/21 12:33:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -903,12 +903,6 @@ startlwp32(void *arg)
 	userret(l);
 }
 
-/*
- * For various reasons, the amd64 port can't do what the i386 port does,
- * and relies on catching invalid user contexts on exit from the kernel.
- * These functions perform the needed checks.
- */
-
 int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
@@ -923,21 +917,22 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 		return EINVAL;
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
-		/* Only when the LDT is user-set (with USER_LDT) */
+		/* Allow unfamiliar segment register values (USER_LDT). */
 		if (!USERMODE(scp->sc_cs))
 			return EINVAL;
 	} else {
 		if (!VALID_USER_CSEL32(scp->sc_cs))
 			return EINVAL;
 		if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-			!(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
+		    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 			return EINVAL;
 		if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-			!(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
+		    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 			return EINVAL;
 		if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 			return EINVAL;
-		if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
+		if (!VALID_USER_DSEL32(scp->sc_ds) ||
+		    !VALID_USER_DSEL32(scp->sc_ss))
 			return EINVAL;
 	}
 
@@ -950,36 +945,37 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 int
 cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	const __greg32_t *gr;
 	struct trapframe *tf;
+	struct pcb *pcb;
 
 	gr = mcp->__gregs;
 	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
 
 	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
-#ifdef USER_LDT
-	/* Userland is allowed to have unfamiliar segment register values */
-	if (!USERMODE(gr[_REG32_CS]))
-		return EINVAL;
-#else
-	struct pcb *pcb = lwp_getpcb(l);
-
-	if (!VALID_USER_CSEL32(gr[_REG32_CS]))
-		return EINVAL;
-	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
-	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
-		return EINVAL;
-	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
-	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
-		return EINVAL;
-	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
-		return EINVAL;
-	if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
-	    !VALID_USER_DSEL32(gr[_REG32_SS]))
-		return EINVAL;
-#endif
+	if (__predict_false(pmap->pm_ldt != NULL)) {
+		/* Allow unfamiliar segment register values (USER_LDT). */
+		if (!USERMODE(gr[_REG32_CS]))
+			return EINVAL;
+	} else {
+		if (!VALID_USER_CSEL32(gr[_REG32_CS]))
+			return EINVAL;
+		if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
+		    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
+			return EINVAL;
+		if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
+		    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
+			return EINVAL;
+		if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
+			return EINVAL;
+		if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
+		    !VALID_USER_DSEL32(gr[_REG32_SS]))
+			return EINVAL;
+	}
 
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
