@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.100 2019/04/26 22:46:03 sevan Exp $
+#	$NetBSD: GUMSTIX,v 1.101 2019/08/21 04:17:40 msaitoh Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -196,7 +196,7 @@ ohci0	at pxaip? addr 0x4c000000 intr 3	# consoleLCD-vx,consoleLCD16-vx
 						# ALSO NEEDS pxaudc
 pxaudc0	at pxaip? addr 0x40600000
 
-# integrated MMC/SD contoller
+# integrated MMC/SD controller
 pxamci0	at pxaip? addr 0x41100000 size 0x48
 sdmmc*	at pxamci?
 #options 	PXAMCI_DEBUG
