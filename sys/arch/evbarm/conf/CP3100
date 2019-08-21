@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.48 2018/08/01 20:04:10 maxv Exp $
+#	$NetBSD: CP3100,v 1.49 2019/08/21 04:17:40 msaitoh Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -160,7 +160,7 @@ wd*	at atabus? drive ? flags 0x0000
 
 # SCSI: Symbios Logic 53c1010
 #
-# Wire down the Target/Host instances. Disable the target contoller for
+# Wire down the Target/Host instances. Disable the target controller for
 # now as we don't currently support SCSI target mode.
 siop0		at pci0 dev 2 function 1	# Host controller
 #siop1		at pci0 dev 2 function 0	# Target controller
