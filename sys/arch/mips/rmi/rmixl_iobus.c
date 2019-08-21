@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.4 2018/09/16 09:25:47 skrll Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.5 2019/08/21 04:51:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 /*
  * RMI Peripherals IO Bus support
- * - interface to NOR, NAND, PCMCIA Memory controlers, &etc.
+ * - interface to NOR, NAND, PCMCIA Memory controllers, &etc.
  * - manages the 10 Chip Selects
  * - manages the "Flash" interrupts
  * - manages the "Flash" errors
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.4 2018/09/16 09:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.5 2019/08/21 04:51:41 msaitoh Exp $");
 
 #include "locators.h"
 
@@ -73,7 +73,7 @@ typedef struct {
  
 typedef struct rmixl_iobus_softc {
 	device_t		sc_dev;
-	bus_space_tag_t		sc_obio_bst;	/* for iobus device controler access */
+	bus_space_tag_t		sc_obio_bst;	/* for iobus device controller access */
 	bus_space_handle_t	sc_obio_bsh;	/*  "   "     "      "         "     */
 	bus_addr_t		sc_obio_addr;
 	bus_size_t		sc_obio_size;
