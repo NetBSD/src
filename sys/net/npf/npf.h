@@ -310,6 +310,7 @@ typedef struct npf_ioctl_table {
 #define	IOC_NPF_SAVE		_IOR('N', 105, nvlist_ref_t)
 #define	IOC_NPF_RULE		_IOWR('N', 107, nvlist_ref_t)
 #define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, nvlist_ref_t)
+#define	IOC_NPF_TABLE_REPLACE	_IOWR('N', 109, nvlist_ref_t)
 
 /*
  * NPF error report.
