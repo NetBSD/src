@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.25 2019/08/20 11:46:44 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.26 2019/08/21 14:35:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2129,4 +2129,16 @@ external/cddl/osnet/sys/kern/taskq.c		1.11
 	task_executor: prevent use after free, the task function may free
 	the tasq entry.
 	[hannken, ticket #102]
+
+distrib/hpcarm/miniroot/list			1.11
+distrib/hpcmips/miniroot/list			1.19
+distrib/hpcsh/miniroot/list			1.11
+
+	sysctl(8) is useful to have in the install environment for debugging.
+	[sevan, ticket #103]
+
+sys/dev/usb/xhci.c				1.108
+
+	Fix typo in error message.
+	[skrll, ticket #104]
 
