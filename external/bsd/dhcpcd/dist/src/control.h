@@ -31,14 +31,20 @@
 
 #include "dhcpcd.h"
 
+#if !defined(CTL_FREE_LIST)
+#define	CTL_FREE_LIST 1
+#elif CTL_FREE_LIST == 0
+#undef	CTL_FREE_LIST
+#endif
+
 /* Limit queue size per fd */
 #define CONTROL_QUEUE_MAX	100
 
 struct fd_data {
 	TAILQ_ENTRY(fd_data) next;
-	char *data;
+	void *data;
+	size_t data_size;
 	size_t data_len;
-	uint8_t freeit;
 };
 TAILQ_HEAD(fd_data_head, fd_data);
 
@@ -48,7 +54,10 @@ struct fd_list {
 	int fd;
 	unsigned int flags;
 	struct fd_data_head queue;
+	size_t queue_len;
+#ifdef CTL_FREE_LIST
 	struct fd_data_head free_queue;
+#endif
 };
 TAILQ_HEAD(fd_list_head, fd_list);
 
@@ -59,7 +68,7 @@ int control_start(struct dhcpcd_ctx *, const char *);
 int control_stop(struct dhcpcd_ctx *);
 int control_open(const char *);
 ssize_t control_send(struct dhcpcd_ctx *, int, char * const *);
-int control_queue(struct fd_list *fd, char *data, size_t data_len, uint8_t fit);
+int control_queue(struct fd_list *, void *, size_t, bool);
 void control_close(struct dhcpcd_ctx *ctx);
 
 #endif
