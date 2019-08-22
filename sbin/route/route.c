@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.160 2018/08/14 20:53:07 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.161 2019/08/22 16:10:48 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.160 2018/08/14 20:53:07 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.161 2019/08/22 16:10:48 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1460,6 +1460,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf("\n");
 		break;
 	case RTM_ADD:
+	case RTM_CHANGE:
 	case RTM_DELETE:
 	case RTM_GET:
 		(void)printf("pid %d, seq %d, errno %d, flags: ",
