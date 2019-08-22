@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.257 2019/08/14 08:34:44 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.258 2019/08/22 21:14:46 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.257 2019/08/14 08:34:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.258 2019/08/22 21:14:46 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2357,7 +2357,8 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		}
 
 		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
-		rt_clonedmsg(sin6tosa(&sin6), ifp, rt);
+		if (rt != NULL)
+			rt_clonedmsg(RTM_ADD, sin6tosa(&sin6), NULL, ifp);
 
 		created = true;
 	}
