@@ -1,21 +1,21 @@
-# $NetBSD: md.amd64,v 1.278 2019/08/14 01:42:08 kamil Exp $
+# $NetBSD: md.amd64,v 1.279 2019/08/22 18:15:44 adam Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/iasl					base-util-bin
 ./usr/bin/pmc					base-obsolete		obsolete
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0.0	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-x86_64.so	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-x86_64.so.0	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-x86_64.so.0.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-preinit-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-preinit-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-preinit-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan_cxx-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan_cxx-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan_cxx-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.dd-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.dyndd-x86_64.so	comp-cxx-lib	llvm
@@ -25,27 +25,27 @@
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.fuzzer_no_main-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.msan-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.msan_cxx-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.safestack-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.safestack-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.safestack-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.tsan-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.tsan_cxx-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0.0	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-x86_64.so	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-x86_64.so.0	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-x86_64.so.0.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-x86_64.a	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0	comp-cxx-lib	compat,llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0.0	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-x86_64.so	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-x86_64.so.0	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-x86_64.so.0.0	comp-cxx-lib	llvm
-./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone_cxx-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone_cxx-i386.a	comp-cxx-lib	compat,llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone_cxx-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.xray-basic-x86_64.a	comp-cxx-lib	llvm
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.xray-fdr-x86_64.a	comp-cxx-lib	llvm
