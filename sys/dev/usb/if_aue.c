@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.156 2019/08/07 06:31:03 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.157 2019/08/22 00:24:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.156 2019/08/07 06:31:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.157 2019/08/22 00:24:07 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -116,20 +116,57 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.156 2019/08/07 06:31:03 msaitoh Exp $")
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbhist.h>
 
 #include <sys/condvar.h>
 #include <sys/kthread.h>
 
 #include <dev/usb/if_auereg.h>
 
-#ifdef AUE_DEBUG
-#define DPRINTF(x)	if (auedebug) printf x
-#define DPRINTFN(n, x)	if (auedebug >= (n)) printf x
-int	auedebug = 0;
+#ifdef USB_DEBUG
+#ifndef AUE_DEBUG
+#define auedebug 0
 #else
-#define DPRINTF(x)
-#define DPRINTFN(n, x)
-#endif
+static int auedebug = 10;
+
+SYSCTL_SETUP(sysctl_hw_aue_setup, "sysctl hw.aue setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "aue",
+	    SYSCTL_DESCR("aue global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &auedebug, sizeof(auedebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
+
+#endif /* AXE_DEBUG */
+#endif /* USB_DEBUG */
+
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(auedebug,1,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(auedebug,N,FMT,A,B,C,D)
+#define AUEHIST_FUNC()		USBHIST_FUNC()
+#define AUEHIST_CALLED(name)	USBHIST_CALLED(auedebug)
+#define AUEHIST_CALLARGS(FMT,A,B,C,D) \
+				USBHIST_CALLARGS(auedebug,FMT,A,B,C,D)
+#define AUEHIST_CALLARGSN(N,FMT,A,B,C,D) \
+				USBHIST_CALLARGSN(auedebug,N,FMT,A,B,C,D)
 
 /*
  * Various supported device vendors/products.
@@ -279,8 +316,9 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	err = usbd_do_request(sc->aue_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: aue_csr_read_1: reg=0x%x err=%s\n",
-		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
+		AUEHIST_FUNC();
+		AUEHIST_CALLARGS("%d: aue_csr_read_1: reg=%#x err=%#s",
+		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
 		return 0;
 	}
 
@@ -306,8 +344,9 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	err = usbd_do_request(sc->aue_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: aue_csr_read_2: reg=0x%x err=%s\n",
-		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
+		AUEHIST_FUNC();
+		AUEHIST_CALLARGS("%d: aue_csr_read_2: reg=%#x err=%s",
+		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
 		return 0;
 	}
 
@@ -334,8 +373,9 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	err = usbd_do_request(sc->aue_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: aue_csr_write_1: reg=0x%x err=%s\n",
-		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
+		AUEHIST_FUNC();
+		AUEHIST_CALLARGS("%d: aue_csr_write_1: reg=%#x err=%s",
+		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
 		return -1;
 	}
 
@@ -362,8 +402,9 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	err = usbd_do_request(sc->aue_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: aue_csr_write_2: reg=0x%x err=%s\n",
-		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
+		AUEHIST_FUNC();
+		AUEHIST_CALLARGS("%s: aue_csr_write_2: reg=%#x err=%s",
+		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
 		return -1;
 	}
 
@@ -377,6 +418,7 @@ Static int
 aue_eeprom_getword(struct aue_softc *sc, int addr)
 {
 	int		i;
+	AUEHIST_FUNC(); AUEHIST_CALLED();
 
 	aue_csr_write_1(sc, AUE_EE_REG, addr);
 	aue_csr_write_1(sc, AUE_EE_CTL, AUE_EECTL_READ);
@@ -404,7 +446,9 @@ aue_read_mac(struct aue_softc *sc, u_char *dest)
 	int			off = 0;
 	int			word;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGS("%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	for (i = 0; i < 3; i++) {
 		word = aue_eeprom_getword(sc, off + i);
@@ -435,10 +479,11 @@ aue_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct aue_softc *sc = device_private(dev);
 	int			i, rv = 0;
 
+	AUEHIST_FUNC();
+
 	if (sc->aue_dying) {
-#ifdef DIAGNOSTIC
-		printf("%s: dying\n", device_xname(sc->aue_dev));
-#endif
+		AUEHIST_CALLARGS("%d: phy=%jx reg=%jx is dying",
+		    device_unit(sc->aue_dev), phy, reg, 0);
 		return -1;
 	}
 
@@ -470,15 +515,16 @@ aue_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		AUEHIST_CALLARGS("%d: phy=%jx reg=%jx read timed out",
+		    device_unit(sc->aue_dev), phy, reg, 0);
 		rv = ETIMEDOUT;
 		goto out;
 	}
 
 	*val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04hx\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, *val));
+	AUEHIST_CALLARGS("%d: phy=%jx reg=%jx => %#04hx",
+	    device_unit(sc->aue_dev), phy, reg, *val);
 
 out:
 	aue_unlock_mii(sc);
@@ -491,6 +537,10 @@ aue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	struct aue_softc *sc = device_private(dev);
 	int			i, rv = 0;
 
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGS("%d: phy=%d reg=%d data=%#04hx",
+	    device_unit(sc->aue_dev), phy, reg, val);
+
 #if 0
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
@@ -498,9 +548,6 @@ aue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 			return -1;
 	}
 #endif
-
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04hx\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, val));
 
 	aue_lock_mii(sc);
 	aue_csr_write_2(sc, AUE_PHY_DATA, val);
@@ -513,7 +560,8 @@ aue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		DPRINTF("%d: phy=%jx reg=%jx val=%jx write timed out",
+		    device_unit(sc->aue_dev), phy, reg, val);
 		rv = ETIMEDOUT;
 	}
 	aue_unlock_mii(sc);
@@ -527,7 +575,9 @@ aue_miibus_statchg(struct ifnet *ifp)
 	struct aue_softc *sc = ifp->if_softc;
 	struct mii_data	*mii = GET_MII(sc);
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC(); AUEHIST_CALLED();
+	AUEHIST_CALLARGS("%d: ifp=%jx",
+	    device_unit(sc->aue_dev), (uintptr_t)ifp, 0, 0);
 
 	aue_lock_mii(sc);
 	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_RX_ENB | AUE_CTL0_TX_ENB);
@@ -556,7 +606,6 @@ aue_miibus_statchg(struct ifnet *ifp)
 		aue_miibus_readreg(sc->aue_dev, 0, 0x1b, &auxmode);
 		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
-	DPRINTFN(5,("%s: %s: exit\n", device_xname(sc->aue_dev), __func__));
 }
 
 #define AUE_POLY	0xEDB88320
@@ -589,7 +638,9 @@ aue_setmulti(struct aue_softc *sc)
 	uint32_t		h = 0, i;
 	uint8_t hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	ifp = GET_IFP(sc);
 
@@ -644,7 +695,9 @@ aue_reset(struct aue_softc *sc)
 {
 	int		i;
 
-	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(2, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_RESETMAC);
 
@@ -744,9 +797,11 @@ aue_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
 
-	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
-
 	sc->aue_dev = self;
+
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(2, "%d: enter sc=%jx",
+	    device_unit(sc->aue_dev), (uintptr_t)sc, 0, 0);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -892,7 +947,9 @@ aue_detach(device_t self, int flags)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(2, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (!sc->aue_attached) {
 		/* Detached before attached finished, so just bail out. */
@@ -966,7 +1023,9 @@ aue_activate(device_t self, enum devact act)
 {
 	struct aue_softc *sc = device_private(self);
 
-	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(2, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -986,7 +1045,9 @@ aue_newbuf(struct aue_softc *sc, struct aue_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
-	DPRINTFN(10,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(10, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -1023,7 +1084,9 @@ aue_rx_list_init(struct aue_softc *sc)
 	struct aue_chain	*c;
 	int			i;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	cd = &sc->aue_cdata;
 	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
@@ -1051,7 +1114,9 @@ aue_tx_list_init(struct aue_softc *sc)
 	struct aue_chain	*c;
 	int			i;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	cd = &sc->aue_cdata;
 	for (i = 0; i < AUE_TX_LIST_CNT; i++) {
@@ -1079,7 +1144,9 @@ aue_intr(struct usbd_xfer *xfer, void *priv,
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct aue_intrpkt	*p = &sc->aue_cdata.aue_ibuf;
 
-	DPRINTFN(15,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(15, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc->aue_dying)
 		return;
@@ -1125,7 +1192,9 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct aue_rxpkt	r;
 	int			s;
 
-	DPRINTFN(10,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(10, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc->aue_dying)
 		return;
@@ -1181,8 +1250,8 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done1;
 	}
 
-	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
-		    __func__, m->m_len));
+	DPRINTFN(10, "%d: deliver %d",
+	    device_unit(sc->aue_dev), m->m_len, 0, 0);
 	if_percpuq_enqueue(ifp->if_percpuq, m);
  done1:
 	splx(s);
@@ -1194,8 +1263,7 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
 
-	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->aue_dev),
-		    __func__));
+	DPRINTFN(10, "%d: start rx", device_unit(sc->aue_dev), 0, 0, 0);
 }
 
 /*
@@ -1217,8 +1285,9 @@ aue_txeof(struct usbd_xfer *xfer, void *priv,
 
 	s = splnet();
 
-	DPRINTFN(10,("%s: %s: enter status=%d\n", device_xname(sc->aue_dev),
-		    __func__, status));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(10, "%d: enter status=%d",
+	    device_unit(sc->aue_dev), status, 0, 0);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1253,7 +1322,8 @@ aue_tick(void *xsc)
 {
 	struct aue_softc	*sc = xsc;
 
-	DPRINTFN(15,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(15, "%d: enter", device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc == NULL)
 		return;
@@ -1273,7 +1343,8 @@ aue_tick_task(void *xsc)
 	struct mii_data		*mii;
 	int			s;
 
-	DPRINTFN(15,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(15, "%d: enter", device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc->aue_dying)
 		return;
@@ -1290,8 +1361,8 @@ aue_tick_task(void *xsc)
 		mii_pollstat(mii); /* XXX FreeBSD has removed this call */
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTFN(2,("%s: %s: got link\n",
-			    device_xname(sc->aue_dev), __func__));
+			DPRINTFN(2, "%d: got link",
+			    device_unit(sc->aue_dev), __func__, 0, 0);
 			sc->aue_link++;
 			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				aue_start(ifp);
@@ -1310,7 +1381,8 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 	struct aue_chain	*c;
 	usbd_status		err;
 
-	DPRINTFN(10,("%s: %s: enter\n", device_xname(sc->aue_dev),__func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(10, "%d: enter", device_unit(sc->aue_dev), 0, 0, 0);
 
 	c = &sc->aue_cdata.aue_tx_chain[idx];
 
@@ -1344,8 +1416,8 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 		    USB_TASKQ_DRIVER);
 		return EIO;
 	}
-	DPRINTFN(5,("%s: %s: send %d bytes\n", device_xname(sc->aue_dev),
-		    __func__, total_len));
+	DPRINTFN(5, "%d: send %d bytes",
+	    device_unit(sc->aue_dev), total_len, 0, 0);
 
 	sc->aue_cdata.aue_tx_cnt++;
 
@@ -1358,8 +1430,9 @@ aue_start(struct ifnet *ifp)
 	struct aue_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	DPRINTFN(5,("%s: %s: enter, link=%d\n", device_xname(sc->aue_dev),
-		    __func__, sc->aue_link));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter link=%d",
+	    device_unit(sc->aue_dev), sc->aue_link, 0, 0);
 
 	if (sc->aue_dying)
 		return;
@@ -1404,7 +1477,9 @@ aue_init(void *xsc)
 	int			i, s;
 	const u_char		*eaddr;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc->aue_dying)
 		return;
@@ -1456,8 +1531,8 @@ aue_init(void *xsc)
 		usbd_setup_xfer(c->aue_xfer, c, c->aue_buf, AUE_BUFSZ,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
 		(void)usbd_transfer(c->aue_xfer); /* XXX */
-		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),
-			    __func__));
+		DPRINTFN(5, "%d: start read",
+		    device_unit(sc->aue_dev), 0, 0, 0);
 
 	}
 
@@ -1520,7 +1595,9 @@ aue_ifmedia_upd(struct ifnet *ifp)
 {
 	struct aue_softc	*sc = ifp->if_softc;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	if (sc->aue_dying)
 		return 0;
@@ -1606,7 +1683,9 @@ aue_watchdog(struct ifnet *ifp)
 	usbd_status		stat;
 	int			s;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	ifp->if_oerrors++;
 	aprint_error_dev(sc->aue_dev, "watchdog timeout\n");
@@ -1632,7 +1711,9 @@ aue_stop(struct aue_softc *sc)
 	struct ifnet		*ifp;
 	int			i;
 
-	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
+	AUEHIST_FUNC();
+	AUEHIST_CALLARGSN(5, "%d: enter",
+	    device_unit(sc->aue_dev), 0, 0, 0);
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
