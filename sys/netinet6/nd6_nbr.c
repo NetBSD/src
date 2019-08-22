@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.166 2019/04/29 16:12:30 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.167 2019/08/22 21:22:50 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.166 2019/04/29 16:12:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.167 2019/08/22 21:22:50 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -883,11 +883,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	ln->ln_asked = 0;
 	nd6_llinfo_release_pkts(ln, ifp);
-	/* FIXME */
-#if 0
-	if (rt_announce) /* tell user process about any new lladdr */
-		rt_newmsg(RTM_CHANGE, rt);
-#endif
+
+	if (rt_announce) {
+		struct sockaddr_in6 sin6;
+
+		sockaddr_in6_init(&sin6, &taddr6, 0, 0, 0);
+		rt_clonedmsg(RTM_CHANGE, sin6tosa(&sin6), lladdr, ifp);
+	}
 
  freeit:
 	if (ln != NULL)
