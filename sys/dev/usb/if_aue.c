@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.158 2019/08/22 00:25:18 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.159 2019/08/22 07:38:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.158 2019/08/22 00:25:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.159 2019/08/22 07:38:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -317,8 +317,8 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_read_1: reg=%#x err=%#s",
-		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
+		AUEHIST_CALLARGS("%d: aue_csr_read_1: reg=%#x err=%d",
+		    device_unit(sc->aue_dev), reg, err, 0);
 		return 0;
 	}
 
@@ -345,8 +345,8 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_read_2: reg=%#x err=%s",
-		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
+		AUEHIST_CALLARGS("%d: aue_csr_read_2: reg=%#x err=%d",
+		    device_unit(sc->aue_dev), reg, err, 0);
 		return 0;
 	}
 
@@ -374,8 +374,8 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_write_1: reg=%#x err=%s",
-		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
+		AUEHIST_CALLARGS("%d: aue_csr_write_1: reg=%#x err=%d",
+		    device_unit(sc->aue_dev), reg, err, 0);
 		return -1;
 	}
 
@@ -403,8 +403,8 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%s: aue_csr_write_2: reg=%#x err=%s",
-		    device_unit(sc->aue_dev), reg, usbd_errstr(err), 0);
+		AUEHIST_CALLARGS("%s: aue_csr_write_2: reg=%#x err=%d",
+		    device_unit(sc->aue_dev), reg, err, 0);
 		return -1;
 	}
 
@@ -1362,7 +1362,7 @@ aue_tick_task(void *xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			DPRINTFN(2, "%d: got link",
-			    device_unit(sc->aue_dev), __func__, 0, 0);
+			    device_unit(sc->aue_dev), 0, 0, 0);
 			sc->aue_link++;
 			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				aue_start(ifp);
