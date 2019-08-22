@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.284 2019/08/17 21:14:22 sevan Exp $
+$NetBSD: acronyms.comp,v 1.285 2019/08/22 21:30:47 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -109,6 +109,8 @@ AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
 ATC	address translation cache
+ATF	ARM trusted firmware
+ATF	automated testing framework
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
 AV	anti virus
@@ -1044,6 +1046,7 @@ NSA	National Security Agency
 NTM	non-deterministic Turing machine
 NTP	Network Time Protocol
 NUMA	non-uniform memory access
+NURBS	non-uniform rational basis spline
 NVMM	NetBSD Virtual Machine Monitor
 NVMM	non-volatile main memory
 NVRAM	non-volatile random access memory
