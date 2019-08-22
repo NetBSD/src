@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.157 2019/08/22 00:24:07 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.158 2019/08/22 00:25:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.157 2019/08/22 00:24:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.158 2019/08/22 00:25:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.157 2019/08/22 00:24:07 mrg Exp $");
 #ifndef AUE_DEBUG
 #define auedebug 0
 #else
-static int auedebug = 10;
+static int auedebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_aue_setup, "sysctl hw.aue setup")
 {
