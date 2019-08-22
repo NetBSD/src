@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.58 2016/03/18 10:10:21 mrg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.59 2019/08/22 20:28:08 brad Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ init_fs(struct clfs *fs, char *fsname)
 	int rootfd;
 	int i;
 	void *sbuf;
-	char *bn;
+	size_t mlen;
 
 	/*
 	 * Get the raw device from the block device.
@@ -222,16 +222,17 @@ init_fs(struct clfs *fs, char *fsname)
 	 */
 	if (kops.ko_statvfs(fsname, &sf, ST_WAIT) < 0)
 		return -1;
-	fs->clfs_dev = malloc(strlen(sf.f_mntfromname) + 2);
+	mlen = strlen(sf.f_mntfromname) + 2;
+	fs->clfs_dev = malloc(mlen);
 	if (fs->clfs_dev == NULL) {
 		syslog(LOG_ERR, "couldn't malloc device name string: %m");
 		return -1;
 	}
-	bn = strrchr(sf.f_mntfromname, '/');
-	bn = bn ? bn+1 : sf.f_mntfromname;
-	strlcpy(fs->clfs_dev, sf.f_mntfromname, bn - sf.f_mntfromname + 1);
-	strcat(fs->clfs_dev, "r");
-	strcat(fs->clfs_dev, bn);
+	if (getdiskrawname(fs->clfs_dev, mlen, sf.f_mntfromname) == NULL) {
+		syslog(LOG_ERR, "couldn't convert '%s' ro raw name: %m",
+		    sf.f_mntfromname);
+		return -1;
+	}
 	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDONLY, 0)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s for reading",
 			fs->clfs_dev);
