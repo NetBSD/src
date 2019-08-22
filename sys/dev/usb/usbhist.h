@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhist.h,v 1.5 2019/08/19 06:35:14 mrg Exp $	*/
+/*	$NetBSD: usbhist.h,v 1.6 2019/08/22 00:24:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2012 Matthew R. Green
@@ -74,6 +74,11 @@ extern int usbdebug;
 		KERNHIST_CALLARGS(usbhist,FMT,A,B,C,D);		\
 	}							\
 } while (0)
+#define USBHIST_CALLARGSN(NAME,N,FMT,A,B,C,D) do {		\
+	if ((NAME) >= (N)) {					\
+		KERNHIST_CALLARGS(usbhist,FMT,A,B,C,D);		\
+	}							\
+} while (0)
 #define USBHIST_FUNC()			KERNHIST_FUNC(__func__)
 
 USBHIST_DECL(usbhist);
@@ -89,6 +94,7 @@ USBHIST_DECL(usbhist);
 #define USBHIST_LOGM(N,NAME,FMT,A,B,C,D)	do { } while(0)
 #define USBHIST_LOG(NAME,FMT,A,B,C,D)		do { } while(0)
 #define USBHIST_CALLARGS(NAME,FMT,A,B,C,D)
+#define USBHIST_CALLARGSN(NAME,N,FMT,A,B,C,D)
 #define USBHIST_CALLED(NAME)
 #define USBHIST_FUNC()
 
