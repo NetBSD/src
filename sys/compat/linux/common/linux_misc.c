@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.242 2019/08/23 07:53:36 maxv Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.243 2019/08/23 08:01:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.242 2019/08/23 07:53:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.243 2019/08/23 08:01:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1347,6 +1347,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	struct linux_sysinfo si;
 	struct loadavg *la;
 
+	memset(&si, 0, sizeof(si));
 	si.uptime = time_uptime;
 	la = &averunnable;
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
