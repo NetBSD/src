@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.61 2019/08/23 06:54:54 maxv Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.62 2019/08/23 07:53:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.61 2019/08/23 06:54:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.62 2019/08/23 07:53:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
+		memset(&idb, 0, sizeof(idb));
 		idb.d_ino = bdp->d_fileno;
 		idb.d_type = bdp->d_type;
 		idb.d_off = off;

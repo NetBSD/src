@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.241 2019/08/23 06:47:58 maxv Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.242 2019/08/23 07:53:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.241 2019/08/23 06:47:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.242 2019/08/23 07:53:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,6 +772,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
+		memset(&idb, 0, sizeof(idb));
 		idb.d_ino = bdp->d_fileno;
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
