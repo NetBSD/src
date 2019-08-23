@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.117 2019/08/07 08:47:09 maxv Exp $	*/
+/*	$NetBSD: usb.h,v 1.118 2019/08/23 07:17:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -853,9 +853,9 @@ struct usb_endpoint_desc {
 };
 
 struct usb_full_desc {
-	int	ufd_config_index;
-	u_int	ufd_size;
-	u_char	*ufd_data;
+	int		ufd_config_index;
+	unsigned	ufd_size;
+	unsigned char	*ufd_data;
 };
 
 struct usb_string_desc {
@@ -865,8 +865,8 @@ struct usb_string_desc {
 };
 
 struct usb_ctl_report_desc {
-	int	ucrd_size;
-	u_char	ucrd_data[1024];	/* filled data size will vary */
+	int		ucrd_size;
+	unsigned char	ucrd_data[1024];	/* filled data size will vary */
 };
 
 typedef struct { uint32_t cookie; } usb_event_cookie_t;
@@ -928,17 +928,17 @@ struct usb_device_info_old {
 };
 
 struct usb_ctl_report {
-	int	ucr_report;
-	u_char	ucr_data[1024];	/* filled data size will vary */
+	int		ucr_report;
+	unsigned char	ucr_data[1024];	/* filled data size will vary */
 };
 
 struct usb_device_stats {
-	u_long	uds_requests[4];	/* indexed by transfer type UE_* */
+	unsigned long	uds_requests[4];	/* indexed by transfer type UE_* */
 };
 
 struct usb_bulk_ra_wb_opt {
-	u_int	ra_wb_buffer_size;
-	u_int	ra_wb_request_size;
+	unsigned	ra_wb_buffer_size;
+	unsigned	ra_wb_request_size;
 };
 
 /* Events that can be read from /dev/usb */
