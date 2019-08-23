@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.327 2019/06/14 09:12:42 martin Exp $
+#	$NetBSD: Makefile,v 1.328 2019/08/23 06:38:27 kamil Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -235,6 +235,13 @@ BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-compat-lib
+.if ${MKLLVM} != "no"
+BUILDTARGETS+=	do-sanitizer-includes
+BUILDTARGETS+=	do-sanitizer-lib
+.if ${MKSANITIZER:Uno} == "yes"
+BUILDTARGETS+=	do-sanitizer-tools
+.endif
+.endif
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
 .endif
@@ -469,6 +476,20 @@ do-lib: .PHONY .MAKE
 
 do-compat-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} compat build_install BOOTSTRAP_SUBDIRS="../../../lib"
+
+do-sanitizer-includes: .PHONY .MAKE
+	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/include includes
+	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/share includes
+
+do-sanitizer-lib: .PHONY .MAKE
+	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/lib build_install
+
+do-sanitizer-tools: .PHONY .MAKE
+.if !exists(${TOOLDIR}/lib/clang)
+	mkdir -p ${TOOLDIR}/lib/clang
+	cd ${DESTDIR}/usr/lib/clang && \
+		${TOOL_PAX} -rw . ${TOOLDIR}/lib/clang
+.endif
 
 do-top-obj: .PHONY .MAKE
 	${MAKEDIRTARGET} . obj NOSUBDIR=
