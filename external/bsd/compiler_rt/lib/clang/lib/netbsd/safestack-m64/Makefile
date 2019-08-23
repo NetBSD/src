@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/08/08 14:00:30 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2019/08/23 19:26:02 kamil Exp $
 
 NOSANITIZER=    # defined
 
@@ -25,6 +25,8 @@ SRCS+=	${SANITIZER_SOURCES}
 SRCS+=	${SANITIZER_NOLIBC_SOURCES}
 
 CXXFLAGS+=	-fno-rtti -fno-exceptions -fno-builtin -fno-stack-protector
+
+COPTS.safestack.cc+=	${${ACTIVE_CXX} == "gcc" :? -Wno-error :}
 
 LIBDIR=		/usr/lib/clang/${CLANG_VER}/lib/netbsd
 LIBISCXX=	yes

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/08/08 14:00:32 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2019/08/23 19:26:02 kamil Exp $
 
 NOSANITIZER=    # defined
 
@@ -22,6 +22,8 @@ SRCS+=	${SANITIZER_SOURCES}
 SRCS+=	${SANITIZER_LIBCDEP_SOURCES}
 
 CXXFLAGS+=	-fno-rtti -fno-exceptions -fno-builtin -fno-stack-protector
+
+COPTS.xray_init.cc+=	${${ACTIVE_CXX} == "gcc" :? -Wno-error :}
 
 # Macro defined in newer builtin subdirectory, it has to be empty on NetBSD
 CPPFLAGS+=	-DNO_EXEC_STACK_DIRECTIVE=""
