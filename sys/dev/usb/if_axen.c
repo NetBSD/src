@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.66 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.67 2019/08/23 04:32:57 mrg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.66 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.67 2019/08/23 04:32:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -599,7 +599,7 @@ axen_match(device_t parent, cfdata_t match, void *aux)
 static void
 axen_attach(device_t parent, device_t self, void *aux)
 {
-	UBSNET_MII_DECL_DEFAULT(unm);
+	USBNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;

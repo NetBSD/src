@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.54 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.55 2019/08/23 04:32:57 mrg Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.54 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.55 2019/08/23 04:32:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -761,7 +761,7 @@ mue_match(device_t parent, cfdata_t match, void *aux)
 static void
 mue_attach(device_t parent, device_t self, void *aux)
 {
-	UBSNET_MII_DECL_DEFAULT(unm);
+	USBNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	prop_dictionary_t dict = device_properties(self);
 	struct usb_attach_arg *uaa = aux;

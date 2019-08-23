@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.13 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.14 2019/08/23 04:32:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -186,7 +186,7 @@ struct usbnet_intr {
 };
 
 /*
- * Structure to setup MII.  Use the UBSNET_MII_DECL_DEFAULT() macro for
+ * Structure to setup MII.  Use the USBNET_MII_DECL_DEFAULT() macro for
  * sane default.  Pass a copy to usbnet_attach_ifp().  Not used
  * after the usbnet_attach_ifp() function returns.
  */
@@ -204,7 +204,7 @@ struct usbnet_mii {
 		.un_mii_offset = off,			\
 		.un_mii_flags = flags,			\
 	}
-#define UBSNET_MII_DECL_DEFAULT(name)				\
+#define USBNET_MII_DECL_DEFAULT(name)				\
 	UBSNET_MII_DECL(name, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0)
 
 /*

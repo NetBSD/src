@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.69 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.70 2019/08/23 04:32:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.69 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.70 2019/08/23 04:32:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -157,7 +157,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 void
 url_attach(device_t parent, device_t self, void *aux)
 {
-	UBSNET_MII_DECL_DEFAULT(unm);
+	USBNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;

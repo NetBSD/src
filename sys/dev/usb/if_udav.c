@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.70 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.71 2019/08/23 04:32:57 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.70 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.71 2019/08/23 04:32:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -156,7 +156,7 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 void
 udav_attach(device_t parent, device_t self, void *aux)
 {
-	UBSNET_MII_DECL_DEFAULT(unm);
+	USBNET_MII_DECL_DEFAULT(unm);
 	struct usbnet_mii *unmp;
 	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
