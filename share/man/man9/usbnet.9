@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.8 2019/08/23 05:37:05 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.9 2019/08/23 07:14:35 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -399,7 +399,9 @@ will be used while waiting for final references to drain when detaching.
 Final stage attach of usb network device.
 If the passed in
 .Fa unm
-is non-NULL then an MII interface will be created using the values
+is
+.Pf non- Dv NULL
+then an MII interface will be created using the values
 provided in the
 .Fa struct usbnet_mii
 structure, which has these members passed to
@@ -887,6 +889,6 @@ This
 interface first appeared in
 .Nx 9.0 .
 Portions of the original design are based upon ideas from
-.An Nick Hudson Aq Mt skrll@netbsd.org .
+.An Nick Hudson Aq Mt skrll@NetBSD.org .
 .Sh AUTHORS
 .An Matthew R. Green Aq Mt mrg@eterna.com.au
