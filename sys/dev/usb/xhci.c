@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.109 2019/08/21 06:19:43 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.110 2019/08/23 04:34:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.109 2019/08/21 06:19:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.110 2019/08/23 04:34:01 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -783,7 +783,7 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
 		break;
 	default:
-		aprint_debug_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
+		aprint_error_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
 		    major, minor);
 		return;
 	}
