@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $	*/
+/*	$NetBSD: db_access.c,v 1.24 2019/08/23 14:48:50 kamil Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.24 2019/08/23 14:48:50 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -59,18 +59,21 @@ db_expr_t
 db_get_value(db_addr_t addr, size_t size, bool is_signed)
 {
 	char data[sizeof(db_expr_t)] __aligned(sizeof(db_expr_t));
+	uintmax_t uvalue;
 	db_expr_t value;
 	size_t i;
 
 	db_read_bytes(addr, size, data);
 
-	value = 0;
+	uvalue = 0;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = size; i-- > 0;)
 #else /* BYTE_ORDER == BIG_ENDIAN */
 	for (i = 0; i < size; i++)
 #endif /* BYTE_ORDER */
-		value = (value << 8) + (data[i] & 0xFF);
+		uvalue = (uvalue << 8) + (data[i] & 0xFF);
+
+	value = (db_expr_t)uvalue;
 
 	if (size < sizeof(db_expr_t) && is_signed
 	    && (value & ((db_expr_t)1 << (8*size - 1)))) {
