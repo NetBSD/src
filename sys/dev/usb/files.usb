@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.166 2019/08/18 09:29:38 mrg Exp $
+#	$NetBSD: files.usb,v 1.167 2019/08/23 08:45:25 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -334,7 +334,7 @@ file	dev/usb/uthum.c			uthum
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
-device	aue: arp, ether, ifnet, mii, mii_phy
+device	aue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	aue at usbdevif
 file	dev/usb/if_aue.c		aue
 
