@@ -150,6 +150,11 @@ target_not_supported_head()
 	atf_set "descr" "Test forced skip"
 }
 
+target_not_supported_body()
+{
+	atf_skip "Target is not supported"
+}
+
 atf_init_test_cases()
 {
 	test_target
