@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2282 2019/08/15 16:31:17 kamil Exp $
+#	$NetBSD: mi,v 1.2283 2019/08/23 08:17:27 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2584,14 +2584,14 @@
 ./usr/include/objc/encoding.h			comp-obsolete		obsolete
 ./usr/include/objc/hash.h			comp-obsolete		obsolete
 ./usr/include/objc/list.h			comp-obsolete		obsolete
-./usr/include/objc/message.h			comp-objc-include	libstdcxx,gcc
+./usr/include/objc/message.h			comp-objc-include	gcc
 ./usr/include/objc/objc-api.h			comp-obsolete		obsolete
-./usr/include/objc/objc-decls.h			comp-cxx-include	gcc,cxx
-./usr/include/objc/objc-exception.h		comp-objc-include	libstdcxx,gcc
+./usr/include/objc/objc-decls.h			comp-objc-include	gcc
+./usr/include/objc/objc-exception.h		comp-objc-include	gcc
 ./usr/include/objc/objc-list.h			comp-obsolete		obsolete
-./usr/include/objc/objc-sync.h			comp-objc-include	libstdcxx,gcc
+./usr/include/objc/objc-sync.h			comp-objc-include	gcc
 ./usr/include/objc/objc.h			comp-c-include		gcc
-./usr/include/objc/runtime.h			comp-objc-include	libstdcxx,gcc
+./usr/include/objc/runtime.h			comp-objc-include	gcc
 ./usr/include/objc/sarray.h			comp-obsolete		obsolete
 ./usr/include/objc/thr.h			comp-c-include		gcc
 ./usr/include/objc/typedstream.h		comp-obsolete		obsolete
@@ -3341,8 +3341,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan.a				comp-c-lib		compatfile,gcc
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,gcc
+./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcc
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -3496,8 +3496,8 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
-./usr/lib/liblsan.a				comp-c-lib		compatfile,gcc
-./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,gcc
+./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcc
+./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
@@ -3825,8 +3825,8 @@
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
-./usr/lib/libubsan.a				comp-c-lib		compatfile,gcc
-./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,gcc
+./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc
+./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs
