@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.118 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.119 2019/08/23 04:32:57 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.118 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.119 2019/08/23 04:32:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -863,7 +863,7 @@ void
 axe_attach(device_t parent, device_t self, void *aux)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
-	UBSNET_MII_DECL_DEFAULT(unm);
+	USBNET_MII_DECL_DEFAULT(unm);
 	struct axe_softc *sc = device_private(self);
 	struct usbnet * const un = &sc->axe_un;
 	struct usb_attach_arg *uaa = aux;
@@ -1201,7 +1201,7 @@ axe_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 		memcpy(c->unc_buf, &hdr, hdr_len);
 	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf + hdr_len);
 	if (tlr_len)
-		memcpy(c->unc_buf + length, &tlr, tlr_len);
+		memcpy(c->unc_buf + length - tlr_len, &tlr, tlr_len);
 
 	return length;
 }
