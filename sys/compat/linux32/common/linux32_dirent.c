@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.19 2018/09/03 16:29:29 riastradh Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.20 2019/08/23 07:53:36 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.19 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.20 2019/08/23 07:53:36 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,6 +201,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
+		memset(&idb, 0, sizeof(idb));
 		idb.d_ino = bdp->d_fileno;
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
