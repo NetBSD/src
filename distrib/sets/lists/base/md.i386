@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.152 2018/09/30 15:56:47 jmcneill Exp $
+# $NetBSD: md.i386,v 1.153 2019/08/23 06:38:27 kamil Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -19,6 +19,22 @@
 ./usr/bin/iasl					base-util-bin
 ./usr/bin/pmc					base-obsolete		obsolete
 ./usr/bin/vttest				base-obsolete		obsolete
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-preinit-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan_cxx-i386.a	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.safestack-i386.a	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so      comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0.0	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone_cxx-i386.a	comp-cxx-lib	llvm
 ./usr/lib/libi386.so				base-sys-shlib		pic
 ./usr/lib/libi386.so.2				base-sys-shlib		pic
 ./usr/lib/libi386.so.2.0			base-sys-shlib		pic
