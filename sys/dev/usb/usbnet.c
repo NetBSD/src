@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.22 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.23 2019/08/23 04:29:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.22 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.23 2019/08/23 04:29:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <dev/usb/usbnet.h>
 #include <dev/usb/usbhist.h>
@@ -49,7 +50,6 @@ struct usbnet_cdata {
 
 	int			uncd_tx_prod;
 	int			uncd_tx_cnt;
-	int			uncd_rx_cnt;
 };
 
 struct usbnet_private {
@@ -82,6 +82,7 @@ struct usbnet_private {
 	int			unp_refcnt;
 	int			unp_timer;
 	int			unp_if_flags;
+	unsigned		unp_number;
 
 	krndsource_t		unp_rndsrc;
 
@@ -91,6 +92,8 @@ struct usbnet_private {
 };
 
 #define un_cdata(un)	(&(un)->un_pri->unp_cdata)
+
+volatile unsigned usbnet_number;
 
 static int usbnet_modcmd(modcmd_t, void *);
 
@@ -136,6 +139,8 @@ fail:
 #define USBNETHIST_CALLED(name)	USBHIST_CALLED(usbnetdebug)
 #define USBNETHIST_CALLARGS(FMT,A,B,C,D) \
 				USBHIST_CALLARGS(usbnetdebug,FMT,A,B,C,D)
+#define USBNETHIST_CALLARGSN(N,FMT,A,B,C,D) \
+				USBHIST_CALLARGSN(usbnetdebug,N,FMT,A,B,C,D)
 
 /* Callback vectors. */
 
@@ -246,14 +251,19 @@ void
 usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 	       int csum_flags, uint32_t csum_data, int mbuf_flags)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	USBNETHIST_FUNC();
 	struct ifnet * const ifp = usbnet_ifp(un);
+	struct usbnet_private * const unp __unused = un->un_pri;
 	struct mbuf *m;
+
+	USBNETHIST_CALLARGSN(5, "%d: enter: len=%zu csf %x mbf %x",
+	    unp->unp_number, buflen, csum_flags, mbuf_flags);
 
 	usbnet_isowned_rx(un);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
+		DPRINTF("%d: no memory", unp->unp_number, 0, 0, 0);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -271,13 +281,15 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 void
 usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	USBNETHIST_FUNC();
 	struct ifnet * const ifp = usbnet_ifp(un);
+	struct usbnet_private * const unp __unused = un->un_pri;
 	struct mbuf *m;
 
+	USBNETHIST_CALLARGSN(5, "%d: enter: buf %jx len %ju",
+	    unp->unp_number, (uintptr_t)buf, buflen, 0);
+
 	usbnet_isowned_rx(un);
-	DPRINTFN(0, "called! un %jx buf %jx len %ju",
-	    (uintmax_t)(uintptr_t)un, (uintmax_t)(uintptr_t)buf, buflen, 0);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
@@ -299,12 +311,15 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 static void
 usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	USBNETHIST_FUNC();
 	struct usbnet_chain * const c = priv;
 	struct usbnet * const un = c->unc_un;
 	struct usbnet_private * const unp = un->un_pri;
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t total_len;
+
+	USBNETHIST_CALLARGSN(5, "%d: enter: status %x xfer %jx",
+	    unp->unp_number, status, (uintptr_t)xfer, 0);
 
 	mutex_enter(&unp->unp_rxlock);
 
@@ -359,6 +374,9 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
 	struct ifnet * const ifp = usbnet_ifp(un);
+
+	USBNETHIST_CALLARGSN(5, "%d: enter: status %x xfer %jx",
+	    unp->unp_number, status, (uintptr_t)xfer, 0);
 
 	mutex_enter(&unp->unp_txlock);
 	if (unp->unp_stopping || unp->unp_dying) {
@@ -443,22 +461,32 @@ usbnet_start_locked(struct ifnet *ifp)
 		return;
 	}
 
+	if (cd->uncd_tx_cnt == un->un_tx_list_cnt) {
+		DPRINTF("start called, tx busy (%jx == %jx)",
+		    cd->uncd_tx_cnt, un->un_tx_list_cnt, 0, 0);
+		return;
+	}
+
 	idx = cd->uncd_tx_prod;
 	while (cd->uncd_tx_cnt < un->un_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
+		if (m == NULL) {
+			DPRINTF("start called, queue empty", 0, 0, 0, 0);
 			break;
+		}
 		KASSERT(m->m_pkthdr.len <= un->un_tx_bufsz);
 
 		struct usbnet_chain *c = &cd->uncd_tx_chain[idx];
 
 		length = uno_tx_prepare(un, m, c);
 		if (length == 0) {
+			DPRINTF("uno_tx_prepare gave zero length", 0, 0, 0, 0);
 			ifp->if_oerrors++;
 			break;
 		}
 
 		if (__predict_false(c->unc_xfer == NULL)) {
+			DPRINTF("unc_xfer is NULL", 0, 0, 0, 0);
 			ifp->if_oerrors++;
 			break;
 		}
@@ -469,6 +497,8 @@ usbnet_start_locked(struct ifnet *ifp)
 		/* Transmit */
 		usbd_status err = usbd_transfer(c->unc_xfer);
 		if (err != USBD_IN_PROGRESS) {
+			DPRINTF("usbd_transfer on %jx for %ju bytes: %d",
+			    (uintptr_t)c->unc_buf, length, err, 0);
 			ifp->if_oerrors++;
 			break;
 		}
@@ -665,6 +695,7 @@ usbnet_tx_list_fini(struct usbnet * const un)
 			c->unc_buf = NULL;
 		}
 	}
+	cd->uncd_tx_prod = cd->uncd_tx_cnt = 0;
 }
 
 /* End of common TX functions */
@@ -976,9 +1007,13 @@ usbnet_ifflags_cb(struct ethercom *ec)
 static int
 usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	USBNETHIST_FUNC();
 	struct usbnet * const un = ifp->if_softc;
+	struct usbnet_private * const unp __unused = un->un_pri;
 	int error;
+
+	USBNETHIST_CALLARGSN(11, "%d: enter %jx data %x",
+	    unp->unp_number, cmd, (uintptr_t)data, 0);
 
 	if (un->un_ops->uno_override_ioctl)
 		return uno_override_ioctl(un, ifp, cmd, data);
@@ -1077,6 +1112,7 @@ usbnet_tick(void *arg)
 static void
 usbnet_watchdog(struct ifnet *ifp)
 {
+	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
 	struct usbnet_cdata * const cd = un_cdata(un);
@@ -1086,10 +1122,13 @@ usbnet_watchdog(struct ifnet *ifp)
 	aprint_error_dev(un->un_dev, "watchdog timeout\n");
 
 	if (cd->uncd_tx_cnt > 0) {
+		DPRINTF("uncd_tx_cnt=%u non zero, aborting pipe", 0, 0, 0, 0);
 		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
 		if (err)
 			aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
 			    usbd_errstr(err));
+		if (cd->uncd_tx_cnt != 0)
+			DPRINTF("uncd_tx_cnt now %u", cd->uncd_tx_cnt, 0, 0, 0);
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1099,7 +1138,6 @@ usbnet_watchdog(struct ifnet *ifp)
 static void
 usbnet_tick_task(void *arg)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
 
@@ -1319,6 +1357,8 @@ usbnet_attach(struct usbnet *un,
 
 	usbnet_rx_list_alloc(un);
 	usbnet_tx_list_alloc(un);
+
+	unp->unp_number = atomic_inc_uint_nv(&usbnet_number);
 
 	unp->unp_attached = true;
 }
