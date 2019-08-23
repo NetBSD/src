@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.26 2019/08/21 14:35:49 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.27 2019/08/23 04:24:00 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2142,3 +2142,12 @@ sys/dev/usb/xhci.c				1.108
 	Fix typo in error message.
 	[skrll, ticket #104]
 
+distrib/evbarm/instkernel/sshramdisk/Makefile		1.18
+distrib/evbarm/instkernel/sshramdisk/list		1.2
+distrib/evbarm/instkernel/sshramdisk/sshd_config	1.2
+distrib/evbarm/instkernel/sshramdisk/ssh_host_dsa_key	delete
+distrib/evbarm/instkernel/sshramdisk/ssh_host_rsa_key	1.1
+
+	Update to newer sshd (the host key is the same as before, it already
+	was a rsa key). From Harold Gutch.
+	[martin, ticket #105]
