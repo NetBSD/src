@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2019/08/22 18:15:44 adam Exp $
+#	$NetBSD: Makefile,v 1.3 2019/08/23 06:38:27 kamil Exp $
 
 .include <bsd.own.mk>
 
+.if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	asan-m64
 SUBDIR+=	asan-preinit-m64
 SUBDIR+=	asan_cxx-m64
@@ -24,8 +25,10 @@ SUBDIR+=	xray-m64
 SUBDIR+=	xray-basic-m64
 SUBDIR+=	xray-fdr-m64
 SUBDIR+=	xray-profiling-m64
+.endif
 
-.if ${MKCOMPAT} != "no"
+.if ${MACHINE_ARCH} == "i386" || \
+        (${MACHINE_ARCH} == "x86_64" && ${MKCOMPAT} != "no")
 SUBDIR+=	asan-m32
 SUBDIR+=	asan-preinit-m32
 SUBDIR+=	asan_cxx-m32
