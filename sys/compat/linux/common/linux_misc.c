@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.240 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.241 2019/08/23 06:47:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.240 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.241 2019/08/23 06:47:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,7 @@ linux_sys_uname(struct lwp *l, const struct linux_sys_uname_args *uap, register_
 	} */
 	struct linux_utsname luts;
 
+	memset(&luts, 0, sizeof(luts));
 	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
 	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strlcpy(luts.l_release, linux_release, sizeof(luts.l_release));
