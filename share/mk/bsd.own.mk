@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1150 2019/08/10 12:20:17 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1151 2019/08/23 08:17:27 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1245,6 +1245,8 @@ MKXORG_SERVER=yes
 
 .if ${MKCXX} == "no"
 MKATF:=		no
+MKGCCCMDS:=	no
+MKGDB:=		no
 MKGROFF:=	no
 MKKYUA:=	no
 .endif

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.867 2019/08/21 13:48:37 nakayama Exp $
+# $NetBSD: shl.mi,v 1.868 2019/08/23 08:17:27 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -177,13 +177,13 @@
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.4			base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.4.0			base-sys-shlib		compatfile
-./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc
+./usr/lib/libasan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/libasan.so.2				base-obsolete		obsolete
 ./usr/lib/libasan.so.2.0			base-obsolete		obsolete
-./usr/lib/libasan.so.3				base-sys-shlib		compatfile,gcc=6
-./usr/lib/libasan.so.3.0			base-sys-shlib		compatfile,gcc=6
-./usr/lib/libasan.so.4				base-sys-shlib		compatfile,gcc=7
-./usr/lib/libasan.so.4.0			base-sys-shlib		compatfile,gcc=7
+./usr/lib/libasan.so.3				base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/libasan.so.3.0			base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/libasan.so.4				base-sys-shlib		compatfile,cxx,gcc=7
+./usr/lib/libasan.so.4.0			base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
@@ -385,11 +385,11 @@
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap,compatfile
-./usr/lib/liblsan.so				base-sys-shlib		compatfile,gcc
-./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,gcc=6
-./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,gcc=6
-./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,gcc=7
-./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,gcc=7
+./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcc
+./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcc=7
+./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/liblua.so				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5.3				base-sys-shlib		compatfile
@@ -852,13 +852,13 @@
 ./usr/lib/libtspi.so				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm
-./usr/lib/libubsan.so				base-sys-shlib		compatfile,gcc
+./usr/lib/libubsan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/libubsan.so.1				base-sys-shlib		obsolete,gcc=5
 ./usr/lib/libubsan.so.1.0			base-sys-shlib		obsolete,gcc=5
-./usr/lib/libubsan.so.2				base-sys-shlib		compatfile,gcc=6
-./usr/lib/libubsan.so.2.0			base-sys-shlib		compatfile,gcc=6
-./usr/lib/libubsan.so.3				base-sys-shlib		compatfile,gcc=7
-./usr/lib/libubsan.so.3.0			base-sys-shlib		compatfile,gcc=7
+./usr/lib/libubsan.so.2				base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/libubsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/libubsan.so.3				base-sys-shlib		compatfile,cxx,cxx,gcc=7
+./usr/lib/libubsan.so.3.0			base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump
