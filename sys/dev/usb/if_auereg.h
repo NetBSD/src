@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.31 2019/08/22 09:16:08 mrg Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.32 2019/08/23 04:34:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,10 +67,6 @@
  * we consider the RX data endpoint to be index 0
  * and work up from there.
  */
-#define AUE_ENDPT_RX		0x0
-#define AUE_ENDPT_TX		0x1
-#define AUE_ENDPT_INTR		0x2
-#define AUE_ENDPT_MAX		0x3
 
 #define AUE_CTL0		0x00
 #define AUE_CTL1		0x01
@@ -199,4 +195,3 @@ struct aue_rxpkt {
 #define AUE_RXSTAT_CRCERR	0x08
 #define AUE_RXSTAT_DRIBBLE	0x10
 #define AUE_RXSTAT_MASK		0x1E
-
