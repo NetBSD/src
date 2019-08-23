@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.13 2009/08/18 02:02:58 christos Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.14 2019/08/23 12:49:59 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.13 2009/08/18 02:02:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.14 2019/08/23 12:49:59 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,9 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 		error = linux32_ioctl_socket(l, uap, retval);
 		break;
 	default:
+#ifdef DEBUG_LINUX
 		printf("Not yet implemented ioctl group \'%c\'\n", group);
+#endif
 		error = EINVAL;
 		break;
 	}
