@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2018/06/28 14:01:12 kre Exp $
+#	$NetBSD: Makefile,v 1.18 2019/08/23 08:17:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,8 @@ SUBDIR+= liblto_plugin
 
 .if (${MKLIBSTDCXX} != "no") && (${MKCXX} != "no")
 SUBDIR+= libsupc++ libstdc++-v3
-.endif
 
 SUBDIR+= .WAIT libasan liblsan libubsan
+.endif
 
 .include <bsd.subdir.mk>
