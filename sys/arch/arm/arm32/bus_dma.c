@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.115 2019/06/14 09:09:12 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.116 2019/08/24 11:51:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.115 2019/06/14 09:09:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.116 2019/08/24 11:51:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -750,8 +750,10 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		sgsize = MIN(ds->ds_len, size);
 		if (sgsize == 0)
 			continue;
+		const bool coherent =
+		    (ds->_ds_flags & _BUS_DMAMAP_COHERENT) != 0;
 		error = _bus_dmamap_load_paddr(t, map, ds->ds_addr,
-		    sgsize, false);
+		    sgsize, coherent);
 		if (error != 0)
 			break;
 		size -= sgsize;
@@ -766,6 +768,9 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	/* XXX TBD bounce */
 
 	map->dm_mapsize = size0;
+	map->_dm_origbuf = NULL;
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_RAW;
+	map->_dm_vmspace = NULL;
 	return 0;
 }
 
@@ -1165,6 +1170,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	switch (buftype) {
 	case _BUS_DMA_BUFTYPE_LINEAR:
+	case _BUS_DMA_BUFTYPE_RAW:
 		_bus_dmamap_sync_linear(t, map, offset, len, ops);
 		break;
 
@@ -1174,10 +1180,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	case _BUS_DMA_BUFTYPE_UIO:
 		_bus_dmamap_sync_uio(t, map, offset, len, ops);
-		break;
-
-	case _BUS_DMA_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_RAW");
 		break;
 
 	case _BUS_DMA_BUFTYPE_INVALID:
