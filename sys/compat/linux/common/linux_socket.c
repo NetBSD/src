@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.146 2019/08/24 12:33:25 maxv Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.147 2019/08/24 14:08:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.146 2019/08/24 12:33:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.147 2019/08/24 14:08:35 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -568,14 +568,15 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 			/* Check the buffer is big enough */
 			if (__predict_false(cidx + cspace > clen)) {
 				u_int8_t *nc;
+				size_t nclen;
 
-				clen = cidx + cspace;
-				if (clen >= PAGE_SIZE) {
+				nclen = cidx + cspace;
+				if (nclen >= PAGE_SIZE) {
 					error = EINVAL;
 					goto done;
 				}
 				nc = realloc(clen <= MLEN ? NULL : control,
-						clen, M_TEMP, M_WAITOK);
+						nclen, M_TEMP, M_WAITOK);
 				if (!nc) {
 					error = ENOMEM;
 					goto done;
@@ -584,6 +585,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 					/* Old buffer was in mbuf... */
 					memcpy(nc, control, cidx);
 				control = nc;
+				clen = nclen;
 			}
 
 			/* Copy header */
