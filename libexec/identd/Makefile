@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2018/09/29 14:41:37 rmind Exp $
+# $NetBSD: Makefile,v 1.18 2019/08/24 13:20:52 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -22,10 +22,6 @@ CPPFLAGS+=-DWITH_PF
 .if (${MKNPF} != "no")
 SRCS+=	npf.c
 CPPFLAGS+=-DWITH_NPF
-
-PROGDPLIBS+= nv ${NETBSDSRCDIR}/external/bsd/libnv/lib
-CPPFLAGS+= -I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
-
 LDADD+=-lnpf
 DPADD+=${LIBNPF}
 .endif
