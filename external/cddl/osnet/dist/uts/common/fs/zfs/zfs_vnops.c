@@ -4444,6 +4444,16 @@ zfs_rename(vnode_t *sdvp, vnode_t **svpp, struct componentname *scnp,
 			if (*tvpp != NULL)
 				cache_purge(*tvpp);
 			cache_purge_negative(tdvp);
+#ifdef __NetBSD__
+			if (*svpp == *tvpp) {
+				VN_KNOTE(sdvp, NOTE_WRITE);
+				VN_KNOTE(*svpp, (szp->z_links == 0 ?
+				    NOTE_DELETE : NOTE_LINK));
+			} else {
+				genfs_rename_knote(sdvp, *svpp, tdvp, *tvpp,
+				    ((tzp != NULL) && (tzp->z_links == 0)));
+			}
+#endif
 		}
 	}
 
@@ -5094,6 +5104,10 @@ zfs_netbsd_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	vnode_t *vp = ap->a_vp;
+	znode_t *zp = VTOZ(vp);
+	struct uio *uio = ap->a_uio;
+	off_t osize = zp->z_size;
+	int error, resid;
 
 	switch (vp->v_type) {
 	case VBLK:
@@ -5105,7 +5119,13 @@ zfs_netbsd_write(void *v)
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
 	}
 
-	return (zfs_write(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
+	resid = uio->uio_resid;
+	error = zfs_write(vp, uio, ioflags(ap->a_ioflag), ap->a_cred, NULL);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE |
+		    (zp->z_size > osize ? NOTE_EXTEND : 0));
+
+	return error;
 }
 
 static int
@@ -5296,6 +5316,8 @@ zfs_netbsd_create(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*vpp, 0);
 
 	return (error);
@@ -5334,6 +5356,8 @@ zfs_netbsd_mknod(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*vpp, 0);
 
 	return (error);
@@ -5363,6 +5387,10 @@ zfs_netbsd_remove(void *v)
 	error = zfs_remove(dvp, vp, nm, cnp->cn_cred);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(vp, NOTE_DELETE);
+		VN_KNOTE(dvp, NOTE_WRITE);
+	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return (error);
@@ -5398,6 +5426,8 @@ zfs_netbsd_mkdir(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	VOP_UNLOCK(*vpp, 0);
 
 	return (error);
@@ -5427,6 +5457,10 @@ zfs_netbsd_rmdir(void *v)
 	error = zfs_rmdir(dvp, vp, nm, cnp->cn_cred);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VN_KNOTE(vp, NOTE_DELETE);
+	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return error;
@@ -5571,7 +5605,11 @@ zfs_netbsd_setattr(void *v)
 			return error;
 	}
 
-	return (zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL));
+	error = zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL);
+	if (error == 0)
+		VN_KNOTE(vp, NOTE_ATTRIB);
+
+	return error;
 }
 
 static int
@@ -5675,7 +5713,8 @@ zfs_netbsd_symlink(void *v)
 	error = zfs_symlink(dvp, vpp, nm, vap, target, cnp->cn_cred, 0);
 
 	PNBUF_PUT(nm);
-
+	if (error == 0)
+		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	VOP_UNLOCK(*vpp, 0);
@@ -5716,6 +5755,10 @@ zfs_netbsd_link(void *v)
 	    NULL, 0);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(vp, NOTE_LINK);
+		VN_KNOTE(dvp, NOTE_WRITE);
+	}
 	VOP_UNLOCK(vp, 0);
 	return error;
 }
@@ -6235,6 +6278,7 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_write_desc,		zfs_netbsd_write },
 	{ &vop_ioctl_desc,		zfs_netbsd_ioctl },
 	{ &vop_poll_desc,		genfs_poll },
+	{ &vop_kqfilter_desc,		genfs_kqfilter },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		zfs_netbsd_remove },
 	{ &vop_link_desc,		zfs_netbsd_link },
@@ -6278,6 +6322,7 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_ioctl_desc,		spec_ioctl },
 	{ &vop_poll_desc,		spec_poll },
+	{ &vop_kqfilter_desc,		spec_kqfilter },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		spec_remove },
 	{ &vop_link_desc,		spec_link },
@@ -6321,6 +6366,7 @@ const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_ioctl_desc,		vn_fifo_bypass },
 	{ &vop_poll_desc,		vn_fifo_bypass },
+	{ &vop_kqfilter_desc,		vn_fifo_bypass },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		vn_fifo_bypass },
 	{ &vop_link_desc,		vn_fifo_bypass },
