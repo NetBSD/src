@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.10 2019/08/24 05:45:24 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.11 2019/08/24 05:51:06 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -280,11 +280,6 @@ audiodev_set_param(struct audiodev *adev, int mode,
 		ai.record.precision = prec;
 		ai.record.channels = ch;
 		ai.record.sample_rate = freq;
-	}
-
-	if (setmode == 0) {
-		errno = EINVAL;
-		return -1;
 	}
 
 	ai.mode = setmode;
