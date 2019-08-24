@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.184 2019/08/22 07:38:06 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.185 2019/08/24 07:43:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.184 2019/08/22 07:38:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.185 2019/08/24 07:43:00 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1102,14 +1102,14 @@ usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 {
 	struct usbd_xfer *xfer;
 	usbd_status err;
+	size_t len = UGETW(req->wLength);
 
 	USBHIST_FUNC();
 	USBHIST_CALLARGS(usbdebug, "dev=%#jx req=%jx flgas=%jx len=%jx",
-	    (uintptr_t)dev, (uintptr_t)req, flags, *actlen);
+	    (uintptr_t)dev, (uintptr_t)req, flags, len);
 
 	ASSERT_SLEEPABLE();
 
-	size_t len = UGETW(req->wLength);
 	int error = usbd_create_xfer(dev->ud_pipe0, len, 0, 0, &xfer);
 	if (error)
 		return error;
