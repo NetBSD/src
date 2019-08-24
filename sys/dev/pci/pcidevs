@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1384 2019/08/21 06:03:57 mrg Exp $
+$NetBSD: pcidevs,v 1.1385 2019/08/24 11:40:22 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5869,6 +5869,10 @@ product MATROX G550_AGP		0x2527	MGA G550 AGP
 product MEDIAQ MQ200		0x0200	MQ200
 
 /* Mellanox Technologies */
+product MELLANOX MT27700	0x1013	ConnectX-4
+product MELLANOX MT27710	0x1015	ConnectX-4 Lx
+product MELLANOX MT27800	0x1017	ConnectX-5
+product MELLANOX MT28800	0x1019	ConnectX-5 Ex
 product MELLANOX MT23108	0x5a44	InfiniHost (Tavor)
 product MELLANOX MT23108_PCI	0x5a46	InfiniHost PCI Bridge (Tavor)
 product MELLANOX MT25204_OLD	0x5e8c	InfiniHost III Lx (old Sinai)
