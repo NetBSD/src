@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.12 2019/08/24 05:45:25 isaki Exp $ */
+/* $NetBSD: main.c,v 1.13 2019/08/24 05:51:06 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -222,6 +222,9 @@ main(int argc, char *argv[])
 			else
 				usage(argv[0]);
 		}
+		if (mode == 0)
+			usage(argv[0]);
+			/* NOTREACHED */
 		enc = argv[4];
 		prec = strtoul(argv[5], NULL, 10);
 		if (errno)
