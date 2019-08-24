@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.9 2019/08/24 04:04:10 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.10 2019/08/24 05:45:24 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -48,6 +48,7 @@ static int audiodev_test_chmask(struct audiodev *, unsigned int,
 
 static TAILQ_HEAD(audiodevhead, audiodev) audiodevlist =
     TAILQ_HEAD_INITIALIZER(audiodevlist);
+static unsigned int maxunit;
 
 #define AUDIODEV_SAMPLE_RATE	44100
 
@@ -138,6 +139,9 @@ audiodev_add(const char *pdev, const char *dev, unsigned int unit)
 
 	TAILQ_INSERT_TAIL(&audiodevlist, adev, next);
 
+	if (unit > maxunit)
+		maxunit = unit;
+
 	return 0;
 }
 
@@ -179,29 +183,22 @@ audiodev_refresh(void)
 }
 
 unsigned int
-audiodev_count(void)
+audiodev_maxunit(void)
 {
-	struct audiodev *adev;
-	unsigned int n;
-
-	n = 0;
-	TAILQ_FOREACH(adev, &audiodevlist, next)
-		++n;
-
-	return n;
+	return maxunit;
 }
 
+/*
+ * Get audiodev corresponding to audio<i> device.
+ */
 struct audiodev *
 audiodev_get(unsigned int i)
 {
 	struct audiodev *adev;
-	unsigned int n;
 
-	n = 0;
 	TAILQ_FOREACH(adev, &audiodevlist, next) {
-		if (n == i)
+		if (i == adev->unit)
 			return adev;
-		++n;
 	}
 
 	return NULL;

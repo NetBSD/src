@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2019/08/24 04:04:10 isaki Exp $ */
+/* $NetBSD: main.c,v 1.12 2019/08/24 05:45:25 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,15 +72,15 @@ const char *encoding_names[] = {
 u_int encoding_max = __arraycount(encoding_names);
 
 static void
-print_audiodev(struct audiodev *adev, int i)
+print_audiodev(struct audiodev *adev)
 {
 	struct audiofmt *f;
 	int j;
 
 	assert(adev != NULL);
 
-	printf("%u: [%c] %s @ %s: ",
-	    i, adev->defaultdev ? '*' : ' ',
+	printf("[%c] %s @ %s: ",
+	    adev->defaultdev ? '*' : ' ',
 	    adev->xname, adev->pxname);
 	printf("%s", adev->audio_device.name);
 	if (strlen(adev->audio_device.version) > 0)
@@ -159,9 +159,12 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 
 	if (strcmp(argv[1], "list") == 0 && argc == 2) {
-		n = audiodev_count();
-		for (i = 0; i < n; i++)
-			print_audiodev(audiodev_get(i), i);
+		n = audiodev_maxunit();
+		for (i = 0; i <= n; i++) {
+			adev = audiodev_get(i);
+			if (adev)
+				print_audiodev(adev);
+		}
 	} else if (strcmp(argv[1], "list") == 0 && argc == 3) {
 		errno = 0;
 		i = strtoul(argv[2], NULL, 10);
@@ -173,7 +176,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "no such device\n");
 			return EXIT_FAILURE;
 		}
-		print_audiodev(adev, i);
+		print_audiodev(adev);
 	} else if (strcmp(argv[1], "default") == 0 && argc == 3) {
 		if (*argv[2] < '0' || *argv[2] > '9')
 			usage(argv[0]);
@@ -252,7 +255,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "no such device\n");
 			return EXIT_FAILURE;
 		}
-		print_audiodev(adev, i);
+		print_audiodev(adev);
 		if (audiodev_test(adev) == -1)
 			return EXIT_FAILURE;
 	} else
