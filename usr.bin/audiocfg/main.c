@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2019/08/24 03:28:37 isaki Exp $ */
+/* $NetBSD: main.c,v 1.11 2019/08/24 04:04:10 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -253,13 +253,8 @@ main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 		print_audiodev(adev, i);
-		for (i = 0; i < adev->hwinfo.play.channels; i++) {
-			printf("  testing channel %d...", i);
-			fflush(stdout);
-			if (audiodev_test(adev, 1 << i) == -1)
-				return EXIT_FAILURE;
-			printf(" done\n");
-		}
+		if (audiodev_test(adev) == -1)
+			return EXIT_FAILURE;
 	} else
 		usage(argv[0]);
 		/* NOTREACHED */
