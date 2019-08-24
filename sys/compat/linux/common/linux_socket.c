@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.147 2019/08/24 14:08:35 maxv Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.148 2019/08/24 14:18:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.147 2019/08/24 14:08:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.148 2019/08/24 14:18:43 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -546,6 +546,8 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 				case LINUX_SCM_CREDENTIALS:
 					/* no native equivalent, just drop it */
+					if (control != mtod(ctl_mbuf, void *))
+						free(control, M_MBUF);
 					m_free(ctl_mbuf);
 					ctl_mbuf = NULL;
 					msg.msg_control = NULL;
