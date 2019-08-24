@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2018/09/29 14:41:36 rmind Exp $
+# $NetBSD: Makefile,v 1.14 2019/08/24 13:20:52 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,6 @@ SRCS+=		npf_bpf_comp.c npf_show.c
 CPPFLAGS+=	-I${.CURDIR}
 SRCS+=		npf_scan.l npf_parse.y
 YHEADER=	1
-
-PROGDPLIBS+=	nv ${NETBSDSRCDIR}/external/bsd/libnv/lib
-CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 LDADD+=		-lnpf -lpcap -lutil -ly
 DPADD+=		${LIBNPF} ${LIBUTIL} ${LIBPCAP} ${LIBUTIL} ${LIBY}
