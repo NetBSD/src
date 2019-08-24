@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.7 2019/05/08 14:36:12 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.8 2019/08/24 03:28:37 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -63,26 +63,26 @@ audiodev_getinfo(struct audiodev *adev)
 	if (stat(_PATH_AUDIOCTL, &st) != -1 && st.st_rdev == adev->dev)
 		adev->defaultdev = true;
 
-	adev->fd = open(adev->ctlpath, O_RDONLY);
-	if (adev->fd == -1) {
+	adev->ctlfd = open(adev->ctlpath, O_RDONLY);
+	if (adev->ctlfd == -1) {
 			return -1;
 	}
-	if (ioctl(adev->fd, AUDIO_GETDEV, &adev->audio_device) == -1) {
-		close(adev->fd);
+	if (ioctl(adev->ctlfd, AUDIO_GETDEV, &adev->audio_device) == -1) {
+		close(adev->ctlfd);
 		return -1;
 	}
 
 	for (i = 0; ;i++) {
 		memset(&query, 0, sizeof(query));
 		query.index = i;
-		if (ioctl(adev->fd, AUDIO_QUERYFORMAT, &query) == -1) {
+		if (ioctl(adev->ctlfd, AUDIO_QUERYFORMAT, &query) == -1) {
 			if (errno == ENODEV) {
 				/* QUERYFORMAT not supported. */
 				break;
 			}
 			if (errno == EINVAL)
 				break;
-			close(adev->fd);
+			close(adev->ctlfd);
 			return -1;
 		}
 
@@ -91,8 +91,8 @@ audiodev_getinfo(struct audiodev *adev)
 		TAILQ_INSERT_TAIL(&adev->formats, f, next);
 	}
 
-	if (ioctl(adev->fd, AUDIO_GETFORMAT, &adev->info) == -1) {
-		close(adev->fd);
+	if (ioctl(adev->ctlfd, AUDIO_GETFORMAT, &adev->hwinfo) == -1) {
+		close(adev->ctlfd);
 		return -1;
 	}
 
@@ -158,8 +158,8 @@ audiodev_refresh(void)
 
 	while (!TAILQ_EMPTY(&audiodevlist)) {
 		adev = TAILQ_FIRST(&audiodevlist);
-		if (adev->fd != -1)
-			close(adev->fd);
+		if (adev->ctlfd != -1)
+			close(adev->ctlfd);
 		TAILQ_REMOVE(&audiodevlist, adev, next);
 		free(adev);
 	}
@@ -250,12 +250,12 @@ int
 audiodev_set_param(struct audiodev *adev, int mode,
 	const char *encname, unsigned int prec, unsigned int ch, unsigned int freq)
 {
-	struct audio_info ai;
+	audio_info_t ai;
 	int setmode;
 	u_int enc;
 
 	setmode = 0;
-	ai = adev->info;
+	ai = adev->hwinfo;
 
 	for (enc = 0; enc < encoding_max; enc++) {
 		if (strcmp(encname, encoding_names[enc]) == 0)
@@ -290,7 +290,7 @@ audiodev_set_param(struct audiodev *adev, int mode,
 	ai.mode = setmode;
 	printf("setting %s to %s:%u, %uch, %uHz\n",
 	    adev->xname, encname, prec, ch, freq);
-	if (ioctl(adev->fd, AUDIO_SETFORMAT, &ai) == -1) {
+	if (ioctl(adev->ctlfd, AUDIO_SETFORMAT, &ai) == -1) {
 		perror("ioctl AUDIO_SETFORMAT");
 		return -1;
 	}
@@ -315,7 +315,7 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 
 	AUDIO_INITINFO(&info);
 	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
-	info.play.channels = adev->info.play.channels;
+	info.play.channels = adev->hwinfo.play.channels;
 	info.play.precision = 16;
 	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	info.mode = AUMODE_PLAY;
@@ -329,7 +329,7 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 	}
 
 	dtmf_new(&buf, &buflen, info.play.sample_rate, 2,
-	    adev->info.play.channels, chanmask, 350.0, 440.0);
+	    adev->hwinfo.play.channels, chanmask, 350.0, 440.0);
 	if (buf == NULL) {
 		goto abort;
 	}
