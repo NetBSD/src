@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.145 2019/04/18 17:45:12 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.146 2019/08/24 12:33:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.145 2019/04/18 17:45:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.146 2019/08/24 12:33:25 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -605,7 +605,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 			resid -= LINUX_CMSG_ALIGN(l_cmsg.cmsg_len);
 			cidx += cspace;
-		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc)) && resid > 0);
+		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc, &l_cmsg)) && resid > 0);
 
 		/* If we allocated a buffer, attach to mbuf */
 		if (cidx > MLEN) {
