@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.12 2019/08/24 06:00:49 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.13 2019/08/24 06:16:27 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -317,8 +317,8 @@ audiodev_test(struct audiodev *adev)
 		warn("ioctl AUDIO_SETINFO");
 		goto done;
 	}
-	if (ioctl(adev->fd, AUDIO_GETINFO, &info) == -1) {
-		warn("ioctl AUDIO_GETINFO");
+	if (ioctl(adev->fd, AUDIO_GETBUFINFO, &info) == -1) {
+		warn("ioctl AUDIO_GETBUFINFO");
 		goto done;
 	}
 
