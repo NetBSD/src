@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.8 2019/08/24 03:28:37 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.9 2019/08/24 04:04:10 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,6 +42,9 @@
 #include "audiodev.h"
 #include "drvctl.h"
 #include "dtmf.h"
+
+static int audiodev_test_chmask(struct audiodev *, unsigned int,
+	audio_info_t *);
 
 static TAILQ_HEAD(audiodevhead, audiodev) audiodevlist =
     TAILQ_HEAD_INITIALIZER(audiodevlist);
@@ -298,17 +301,16 @@ audiodev_set_param(struct audiodev *adev, int mode,
 }
 
 int
-audiodev_test(struct audiodev *adev, unsigned int chanmask)
+audiodev_test(struct audiodev *adev)
 {
 	audio_info_t info;
-	int16_t *buf;
-	size_t buflen;
-	off_t off;
-	int fd;
-	int rv = -1;
+	unsigned int i;
+	int rv;
 
-	fd = open(adev->path, O_WRONLY);
-	if (fd == -1) {
+	rv = -1;
+
+	adev->fd = open(adev->path, O_WRONLY);
+	if (adev->fd == -1) {
 		perror("open");
 		return -1;
 	}
@@ -319,19 +321,44 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 	info.play.precision = 16;
 	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	info.mode = AUMODE_PLAY;
-	if (ioctl(fd, AUDIO_SETINFO, &info) == -1) {
+	if (ioctl(adev->fd, AUDIO_SETINFO, &info) == -1) {
 		perror("ioctl AUDIO_SETINFO");
-		goto abort;
+		goto done;
 	}
-	if (ioctl(fd, AUDIO_GETINFO, &info) == -1) {
+	if (ioctl(adev->fd, AUDIO_GETINFO, &info) == -1) {
 		perror("ioctl AUDIO_GETINFO");
-		goto abort;
+		goto done;
 	}
 
-	dtmf_new(&buf, &buflen, info.play.sample_rate, 2,
+	for (i = 0; i < adev->hwinfo.play.channels; i++) {
+		printf("  testing channel %u...", i);
+		fflush(stdout);
+		if (audiodev_test_chmask(adev, 1 << i, &info) == -1)
+			goto done;
+		printf(" done\n");
+	}
+
+	rv = 0;
+done:
+	close(adev->fd);
+	return rv;
+}
+
+static int
+audiodev_test_chmask(struct audiodev *adev, unsigned int chanmask,
+	audio_info_t *info)
+{
+	int16_t *buf;
+	size_t buflen;
+	off_t off;
+	int rv;
+
+	rv = -1;
+
+	dtmf_new(&buf, &buflen, info->play.sample_rate, 2,
 	    adev->hwinfo.play.channels, chanmask, 350.0, 440.0);
 	if (buf == NULL) {
-		goto abort;
+		return -1;
 	}
 
 	off = 0;
@@ -339,10 +366,10 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 		size_t wlen; 
 		ssize_t ret;
 
-		wlen = info.play.buffer_size;
+		wlen = info->play.buffer_size;
 		if (wlen > buflen)
 			wlen = buflen;
-		ret = write(fd, (char *)buf + off, wlen);
+		ret = write(adev->fd, (char *)buf + off, wlen);
 		if (ret == -1) {
 			perror("write");
 			goto done;
@@ -352,7 +379,7 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 		buflen -= wlen;
 	}
 
-	if (ioctl(fd, AUDIO_DRAIN) == -1) {
+	if (ioctl(adev->fd, AUDIO_DRAIN) == -1) {
 		perror("ioctl AUDIO_DRAIN");
 		goto done;
 	}
@@ -360,8 +387,5 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 	rv = 0;
 done:
 	free(buf);
-abort:
-	close(fd);
-
 	return rv;
 }
