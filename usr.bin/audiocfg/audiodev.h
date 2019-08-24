@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.6 2019/08/24 03:28:37 isaki Exp $ */
+/* $NetBSD: audiodev.h,v 1.7 2019/08/24 04:04:10 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,6 +46,7 @@ struct audiodev {
 	uint16_t unit;
 	char path[PATH_MAX+1];
 	char ctlpath[PATH_MAX+1];
+	int fd;
 	int ctlfd;
 
 	dev_t dev;
@@ -65,7 +66,7 @@ int			audiodev_set_default(struct audiodev *);
 int			audiodev_set_param(struct audiodev *, int,
 				const char *, unsigned int, unsigned int,
 				unsigned int);
-int			audiodev_test(struct audiodev *, unsigned int);
+int			audiodev_test(struct audiodev *);
 
 extern const char *	encoding_names[];
 extern u_int		encoding_max;
