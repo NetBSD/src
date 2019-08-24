@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.7 2019/08/24 04:04:10 isaki Exp $ */
+/* $NetBSD: audiodev.h,v 1.8 2019/08/24 05:45:25 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -60,7 +60,7 @@ struct audiodev {
 };
 
 int			audiodev_refresh(void);
-unsigned int		audiodev_count(void);
+unsigned int		audiodev_maxunit(void);
 struct audiodev *	audiodev_get(unsigned int);
 int			audiodev_set_default(struct audiodev *);
 int			audiodev_set_param(struct audiodev *, int,
