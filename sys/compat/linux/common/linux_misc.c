@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.243 2019/08/23 08:01:42 maxv Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.244 2019/08/24 14:21:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.243 2019/08/23 08:01:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.244 2019/08/24 14:21:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 # ifdef DIAGNOSTIC
 	if (linux_options & LINUX_WAIT4_WNOTHREAD)
 		printf("WARNING: %s: linux process %d.%d called "
-		       "waitpid with __WNOTHREAD set!",
+		       "waitpid with __WNOTHREAD set!\n",
 		       __FILE__, l->l_proc->p_pid, l->l_lid);
 
 # endif
