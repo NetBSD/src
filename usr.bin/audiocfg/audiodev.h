@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.5 2019/05/08 14:36:12 isaki Exp $ */
+/* $NetBSD: audiodev.h,v 1.6 2019/08/24 03:28:37 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,14 +46,14 @@ struct audiodev {
 	uint16_t unit;
 	char path[PATH_MAX+1];
 	char ctlpath[PATH_MAX+1];
+	int ctlfd;
 
-	int fd;
 	dev_t dev;
 	bool defaultdev;
 
 	audio_device_t audio_device;
 	TAILQ_HEAD(, audiofmt) formats;
-	struct audio_info info;
+	audio_info_t hwinfo;
 
 	TAILQ_ENTRY(audiodev) next;
 };
