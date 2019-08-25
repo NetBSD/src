@@ -68,7 +68,7 @@ run_raw_testcase(unsigned i)
 	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
 	npc = get_cached_pkt(m, t->ifname);
 
-	slock = npf_config_read_enter();
+	slock = npf_config_read_enter(npf);
 	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_LAYER_3);
 	if (rl) {
 		npf_match_info_t mi;
@@ -76,7 +76,7 @@ run_raw_testcase(unsigned i)
 	} else {
 		error = ENOENT;
 	}
-	npf_config_read_exit(slock);
+	npf_config_read_exit(npf, slock);
 
 	put_cached_pkt(npc);
 	return error;
