@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.57 2019/08/25 13:21:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.58 2019/08/25 17:38:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,28 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.57 2019/08/25 13:21:03 rmind Exp $");
 #define	NPF_ERR_DEBUG(e) \
 	nvlist_add_string((e), "source-file", __FILE__); \
 	nvlist_add_number((e), "source-line", __LINE__);
-
-#ifdef _KERNEL
-/*
- * npfctl_switch: enable or disable packet inspection.
- */
-int
-npfctl_switch(void *data)
-{
-	const bool onoff = *(int *)data ? true : false;
-	int error;
-
-	if (onoff) {
-		/* Enable: add pfil hooks. */
-		error = npf_pfil_register(false);
-	} else {
-		/* Disable: remove pfil hooks. */
-		npf_pfil_unregister(false);
-		error = 0;
-	}
-	return error;
-}
-#endif
 
 static int
 npf_nvlist_copyin(npf_t *npf, void *data, nvlist_t **nvl)
@@ -731,7 +709,7 @@ npfctl_save(npf_t *npf, u_long cmd, void *data)
 	if (error) {
 		goto out;
 	}
-	nvlist_add_bool(npf_dict, "active", npf_pfil_registered_p());
+	nvlist_add_bool(npf_dict, "active", npf_active_p());
 	error = npf_nvlist_copyout(npf, data, npf_dict);
 	npf_dict = NULL;
 out:
