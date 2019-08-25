@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2019/08/08 14:00:27 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2019/08/25 06:06:48 kamil Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR+=	lib
 
+.include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
