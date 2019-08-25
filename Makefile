@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.328 2019/08/23 06:38:27 kamil Exp $
+#	$NetBSD: Makefile,v 1.329 2019/08/25 06:06:48 kamil Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -136,7 +136,11 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools .WAIT lib include external crypto/external bin
+_SUBDIR=	tools .WAIT lib
+.if ${MKLLVM} != "no"
+_SUBDIR+=	external/bsd/compiler_rt
+.endif
+_SUBDIR+=	 include external crypto/external bin
 _SUBDIR+=	games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
 _SUBDIR+=	.WAIT rescue .WAIT distrib regress
@@ -236,8 +240,7 @@ BUILDTARGETS+=	includes
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-compat-lib
 .if ${MKLLVM} != "no"
-BUILDTARGETS+=	do-sanitizer-includes
-BUILDTARGETS+=	do-sanitizer-lib
+BUILDTARGETS+=	do-sanitizer
 .if ${MKSANITIZER:Uno} == "yes"
 BUILDTARGETS+=	do-sanitizer-tools
 .endif
@@ -477,15 +480,11 @@ do-lib: .PHONY .MAKE
 do-compat-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} compat build_install BOOTSTRAP_SUBDIRS="../../../lib"
 
-do-sanitizer-includes: .PHONY .MAKE
-	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/include includes
-	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/share includes
-
-do-sanitizer-lib: .PHONY .MAKE
-	${MAKEDIRTARGET} external/bsd/compiler_rt/lib/clang/lib build_install
+do-sanitizer: .PHONY .MAKE
+	${MAKEDIRTARGET} external/bsd/compiler_rt build_install
 
 do-sanitizer-tools: .PHONY .MAKE
-.if !exists(${TOOLDIR}/lib/clang)
+.if !exists(${TOOLDIR}/lib/clang) && ${HAVE_LLVM:Uno} == "yes"
 	mkdir -p ${TOOLDIR}/lib/clang
 	cd ${DESTDIR}/usr/lib/clang && \
 		${TOOL_PAX} -rw . ${TOOLDIR}/lib/clang
