@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.219 2019/01/17 02:47:15 knakahara Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.220 2019/08/25 16:38:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -799,6 +799,7 @@ int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
 /* Packet tag types */
 #define PACKET_TAG_NONE			0  /* Nothing */
 #define PACKET_TAG_SO			4  /* sending socket pointer */
+#define PACKET_TAG_NPF			10 /* packet filter */
 #define PACKET_TAG_PF			11 /* packet filter */
 #define PACKET_TAG_ALTQ_QID		12 /* ALTQ queue id */
 #define PACKET_TAG_IPSEC_OUT_DONE	18
