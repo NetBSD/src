@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.16 2019/08/25 13:21:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.17 2019/08/25 17:38:25 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -83,6 +83,9 @@ MODULE(MODULE_CLASS_MISC, npf, "bpf");
 /* This module autoloads via /dev/npf so it needs to be a driver */
 MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
 #endif
+
+static int	npf_pfil_register(bool);
+static void	npf_pfil_unregister(bool);
 
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
 static int	npf_dev_close(dev_t, int, int, lwp_t *);
@@ -226,6 +229,26 @@ npf_stats_export(npf_t *npf, void *data)
 	return error;
 }
 
+/*
+ * npfctl_switch: enable or disable packet inspection.
+ */
+static int
+npfctl_switch(void *data)
+{
+	const bool onoff = *(int *)data ? true : false;
+	int error;
+
+	if (onoff) {
+		/* Enable: add pfil hooks. */
+		error = npf_pfil_register(false);
+	} else {
+		/* Disable: remove pfil hooks. */
+		npf_pfil_unregister(false);
+		error = 0;
+	}
+	return error;
+}
+
 static int
 npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
@@ -290,7 +313,7 @@ bool
 npf_autounload_p(void)
 {
 	npf_t *npf = npf_getkernctx();
-	return !npf_pfil_registered_p() && npf_default_pass(npf);
+	return !npf_active_p() && npf_default_pass(npf);
 }
 
 /*
@@ -394,7 +417,7 @@ npf_ifaddrhook(void *arg, u_long cmd, void *arg2)
 /*
  * npf_pfil_register: register pfil(9) hooks.
  */
-int
+static int
 npf_pfil_register(bool init)
 {
 	npf_t *npf = npf_getkernctx();
@@ -463,7 +486,7 @@ out:
 /*
  * npf_pfil_unregister: unregister pfil(9) hooks.
  */
-void
+static void
 npf_pfil_unregister(bool fini)
 {
 	npf_t *npf = npf_getkernctx();
@@ -490,10 +513,11 @@ npf_pfil_unregister(bool fini)
 }
 
 bool
-npf_pfil_registered_p(void)
+npf_active_p(void)
 {
 	return pfil_registered;
 }
+
 #endif
 
 #ifdef __NetBSD__

@@ -289,6 +289,7 @@ npf_ruleset_t *	npf_config_ruleset(npf_t *npf);
 npf_ruleset_t *	npf_config_natset(npf_t *npf);
 npf_tableset_t *npf_config_tableset(npf_t *npf);
 bool		npf_default_pass(npf_t *);
+bool		npf_active_p(void);
 
 int		npf_worker_sysinit(unsigned);
 void		npf_worker_sysfini(void);
@@ -296,8 +297,6 @@ void		npf_worker_signal(npf_t *);
 void		npf_worker_register(npf_t *, npf_workfunc_t);
 void		npf_worker_unregister(npf_t *, npf_workfunc_t);
 
-int		npfctl_switch(void *);
-int		npfctl_reload(u_long, void *);
 int		npfctl_save(npf_t *, u_long, void *);
 int		npfctl_load(npf_t *, u_long, void *);
 int		npfctl_rule(npf_t *, u_long, void *);
@@ -326,11 +325,6 @@ void		npf_ifmap_copyname(npf_t *, u_int, char *, size_t);
 void		npf_ifaddr_sync(npf_t *, ifnet_t *);
 void		npf_ifaddr_flush(npf_t *, ifnet_t *);
 void		npf_ifaddr_syncall(npf_t *);
-
-/* Packet filter hooks. */
-int		npf_pfil_register(bool);
-void		npf_pfil_unregister(bool);
-bool		npf_pfil_registered_p(void);
 
 /* Protocol helpers. */
 int		npf_cache_all(npf_cache_t *);
