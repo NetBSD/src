@@ -75,7 +75,6 @@ struct npf_rprocset;
 struct npf_portmap;
 struct npf_nat;
 struct npf_conn;
-struct npf_config;
 
 typedef struct npf_ruleset	npf_ruleset_t;
 typedef struct npf_rule		npf_rule_t;
@@ -85,7 +84,6 @@ typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_conn		npf_conn_t;
-typedef struct npf_config	npf_config_t;
 
 struct npf_conndb;
 struct npf_table;
@@ -98,9 +96,21 @@ typedef struct npf_table	npf_table_t;
 typedef struct npf_tableset	npf_tableset_t;
 typedef struct npf_algset	npf_algset_t;
 
+#ifdef __NetBSD__
+typedef void			ebr_t;
+#endif
+
 /*
  * DEFINITIONS.
  */
+
+typedef struct {
+	npf_ruleset_t *		ruleset;
+	npf_ruleset_t *		nat_ruleset;
+	npf_rprocset_t *	rule_procs;
+	npf_tableset_t *	tableset;
+	bool			default_pass;
+} npf_config_t;
 
 typedef void (*npf_workfunc_t)(npf_t *);
 
@@ -195,7 +205,7 @@ typedef enum {
 struct npf {
 	/* Active NPF configuration. */
 	kmutex_t		config_lock;
-	pserialize_t		qsbr;
+	ebr_t *			ebr;
 	npf_config_t *		config;
 
 	/* BPF byte-code context. */
@@ -265,19 +275,19 @@ void		npf_rproc_assign(npf_rproc_t *, void *);
 void		npf_config_init(npf_t *);
 void		npf_config_fini(npf_t *);
 
-void		npf_config_enter(npf_t *);
+npf_config_t *	npf_config_enter(npf_t *);
 void		npf_config_exit(npf_t *);
 void		npf_config_sync(npf_t *);
 bool		npf_config_locked_p(npf_t *);
-int		npf_config_read_enter(void);
-void		npf_config_read_exit(int s);
+int		npf_config_read_enter(npf_t *);
+void		npf_config_read_exit(npf_t *, int);
 
-void		npf_config_load(npf_t *, npf_ruleset_t *, npf_tableset_t *,
-		    npf_ruleset_t *, npf_rprocset_t *, npf_conndb_t *, bool);
+npf_config_t *	npf_config_create(void);
+void		npf_config_destroy(npf_config_t *);
+void		npf_config_load(npf_t *, npf_config_t *, npf_conndb_t *, bool);
 npf_ruleset_t *	npf_config_ruleset(npf_t *npf);
 npf_ruleset_t *	npf_config_natset(npf_t *npf);
 npf_tableset_t *npf_config_tableset(npf_t *npf);
-npf_rprocset_t *npf_config_rprocs(npf_t *);
 bool		npf_default_pass(npf_t *);
 
 int		npf_worker_sysinit(unsigned);
@@ -503,6 +513,16 @@ void		npf_alg_exec(npf_cache_t *, npf_nat_t *, bool);
 npf_conn_t *	npf_alg_conn(npf_cache_t *, int);
 int		npf_alg_export(npf_t *, nvlist_t *);
 
+/* Wrappers for the reclamation mechanism. */
+ebr_t *		npf_ebr_create(void);
+void		npf_ebr_destroy(ebr_t *);
+void		npf_ebr_register(ebr_t *);
+void		npf_ebr_unregister(ebr_t *);
+int		npf_ebr_enter(ebr_t *);
+void		npf_ebr_exit(ebr_t *, int);
+void		npf_ebr_full_sync(ebr_t *);
+bool		npf_ebr_incrit_p(ebr_t *);
+
 /* Debugging routines. */
 const char *	npf_addr_dump(const npf_addr_t *, int);
 void		npf_state_dump(const npf_state_t *);
@@ -513,11 +533,5 @@ void		npf_state_setsampler(void (*)(npf_state_t *, bool));
 /* In-kernel routines. */
 void		npf_setkernctx(npf_t *);
 npf_t *		npf_getkernctx(void);
-
-#ifdef __NetBSD__
-#define	pserialize_register(x)
-#define	pserialize_checkpoint(x)
-#define	pserialize_unregister(x)
-#endif
 
 #endif	/* _NPF_IMPL_H_ */

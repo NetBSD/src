@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.15 2019/08/21 21:45:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.16 2019/08/25 13:21:03 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.15 2019/08/21 21:45:47 rmind Exp $");
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/pserialize.h>
 #include <sys/socketvar.h>
 #include <sys/uio.h>
 
@@ -493,4 +494,59 @@ npf_pfil_registered_p(void)
 {
 	return pfil_registered;
 }
+#endif
+
+#ifdef __NetBSD__
+
+ebr_t *
+npf_ebr_create(void)
+{
+	return pserialize_create();
+}
+
+void
+npf_ebr_destroy(ebr_t *ebr)
+{
+	pserialize_destroy(ebr);
+}
+
+void
+npf_ebr_register(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+}
+
+void
+npf_ebr_unregister(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+}
+
+int
+npf_ebr_enter(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	return pserialize_read_enter();
+}
+
+void
+npf_ebr_exit(ebr_t *ebr, int s)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	pserialize_read_exit(s);
+}
+
+void
+npf_ebr_full_sync(ebr_t *ebr)
+{
+	pserialize_perform(ebr);
+}
+
+bool
+npf_ebr_incrit_p(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	return pserialize_in_read_section();
+}
+
 #endif
