@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.4 2018/11/07 06:47:38 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.5 2019/08/25 18:31:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.4 2018/11/07 06:47:38 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.5 2019/08/25 18:31:30 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -213,6 +213,7 @@ int
 fesetenv(const fenv_t *envp)
 {
 	reg_fpsr_write(envp->__fpsr);
+	reg_fpcr_write(envp->__fpcr);
 	return 0;
 }
 
@@ -225,11 +226,10 @@ fesetenv(const fenv_t *envp)
 int
 feupdateenv(const fenv_t *envp)
 {
-#ifndef lint
-	_DIAGASSERT(envp != NULL);
-#endif
-	reg_fpsr_write(envp->__fpsr);
-	reg_fpcr_write(envp->__fpcr);
+	int except = fetestexcept(FE_ALL_EXCEPT);
+
+	fesetenv(envp);
+	feraiseexcept(except);
 
 	/* Success */
 	return 0;
