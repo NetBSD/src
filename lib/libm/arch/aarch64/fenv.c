@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.5 2019/08/25 18:31:30 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.6 2019/08/25 18:59:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.5 2019/08/25 18:31:30 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.6 2019/08/25 18:59:52 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -107,11 +107,9 @@ feraiseexcept(int excepts)
 	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 	unsigned int fpsr = reg_fpsr_read();
-	fpsr = (fpsr & ~FPSR_CSUM) | __SHIFTIN(excepts, FPSR_CSUM);
+	excepts &= FE_ALL_EXCEPT; /* paranoia */
+	fpsr |= __SHIFTIN(excepts, FPSR_CSUM);
 	reg_fpsr_write(fpsr);
-	unsigned int fpcr = reg_fpcr_read();
-	fpcr = (fpcr & ~FPCR_ESUM) | __SHIFTIN(excepts, FPCR_ESUM);
-	reg_fpcr_write(fpcr);
 	return 0;
 }
 
