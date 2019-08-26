@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.36 2019/08/26 04:50:03 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.37 2019/08/26 04:50:32 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -351,7 +351,13 @@ rump_server_check_poolleaks()
 	atf_check_equal '$target$reqs' '$target$rels'
 }
 
-
+#
+# rump_server_check_memleaks detects memory leaks.  It can detect leaks of pool
+# objects that are guaranteed to be all deallocated at this point, i.e., all
+# created interfaces are destroyed.  Currently only llentpl satisfies this
+# constraint.  This mechanism can't be applied to objects allocated through
+# pool_cache(9) because it doesn't track released objects explicitly.
+#
 rump_server_check_memleaks()
 {
 
