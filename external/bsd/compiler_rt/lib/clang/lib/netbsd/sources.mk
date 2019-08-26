@@ -1,4 +1,4 @@
-#	$NetBSD: sources.mk,v 1.1 2019/08/08 14:00:28 kamil Exp $
+#	$NetBSD: sources.mk,v 1.2 2019/08/26 04:49:45 kamil Exp $
 
 # RTInterception
 INTERCEPTION_SOURCES+=	interception_linux.cc
@@ -236,6 +236,7 @@ UBSAN_CXXABI_SOURCES+=	ubsan_type_hash_win.cc
 UBSAN_CXX_SOURCES+=	${UBSAN_CXXABI_SOURCES}
 .else
 UBSAN_CXX_SOURCES+=	cxx_dummy.cc
+CLEANFILES+=		cxx_dummy.cc
 
 cxx_dummy.cc:
 	touch ${.TARGET}
