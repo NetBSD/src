@@ -1,9 +1,11 @@
-.SUFFIXES: .a .syms
-.a.syms:
-	${SCRIPT_ENV} \
-		NM=${NM} \
-		AWK=${AWK} \
-		FILE=${FILE} \
+#	$NetBSD: syms.mk,v 1.2 2019/08/26 04:49:45 kamil Exp $
+
+here := ${.PARSEDIR}
+
+.SUFFIXES: .a .a.syms
+.a.a.syms:
+	${_MKTARGET_CREATE}
+	NM=${NM:Q} AWK=${TOOL_AWK:Q} FILE=${TOOL_MKMAGIC:Q} \
 		${HOST_SH} \
-		${.PARSEDIR}/gen_dynamic_list.sh \
+		${here}/gen_dynamic_list.sh \
 		${.IMPSRC} > ${.TARGET}
