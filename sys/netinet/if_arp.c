@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.282.2.1 2019/08/26 13:42:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.1 2019/08/26 13:42:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -744,7 +744,8 @@ notfound:
 
 			arp_init_llentry(ifp, la);
 			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
-			rt_clonedmsg(sintosa(&sin), ifp, rt);
+			if (rt != NULL)
+				rt_clonedmsg(RTM_ADD, sintosa(&sin), NULL, ifp);
 		}
 	} else if (LLE_TRY_UPGRADE(la) == 0) {
 		create_lookup = "lookup";
