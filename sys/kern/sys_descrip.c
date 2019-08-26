@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.33 2019/05/21 18:09:31 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.34 2019/08/26 10:19:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.33 2019/05/21 18:09:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.34 2019/08/26 10:19:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,6 +661,9 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
 	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
+	if (offset < 0) {
+		return EINVAL;
+	}
 	if (len == 0) {
 		endoffset = INT64_MAX;
 	} else if (len > 0 && (INT64_MAX - offset) >= len) {
