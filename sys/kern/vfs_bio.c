@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.278 2018/11/24 17:52:39 maxv Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.279 2019/08/26 10:24:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.278 2018/11/24 17:52:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.279 2019/08/26 10:24:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -2177,7 +2177,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
  * Nothing outside this file should really need to know about nbuf,
  * but a few things still want to read it, so give them a way to do that.
  */
-int
+u_int
 buf_nbuf(void)
 {
 
