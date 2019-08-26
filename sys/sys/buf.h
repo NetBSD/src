@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.130 2019/06/28 14:56:45 jmcneill Exp $ */
+/*     $NetBSD: buf.h,v 1.131 2019/08/26 10:24:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...)
 void	buf_init(buf_t *);
 void	buf_destroy(buf_t *);
 int	bbusy(buf_t *, bool, int, kmutex_t *);
-int	buf_nbuf(void);
+u_int	buf_nbuf(void);
 
 void	biohist_init(void);
 
