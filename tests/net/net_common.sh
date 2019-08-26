@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.35 2019/08/20 09:53:45 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.36 2019/08/26 04:50:03 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -341,8 +341,13 @@ rump_server_check_poolleaks()
 {
 	local target=$1
 
-	reqs=$($HIJACKING vmstat -mv | awk "/$target/ {print \$3;}")
-	rels=$($HIJACKING vmstat -mv | awk "/$target/ {print \$5;}")
+	# XXX rumphijack doesn't work with a binary with suid/sgid bits like
+	# vmstat.  Use a copied one to drop sgid bit as a workaround until
+	# vmstat stops using kvm(3) for /dev/kmem and the sgid bit.
+	cp /usr/bin/vmstat ./vmstat
+	reqs=$($HIJACKING ./vmstat -mv | awk "/$target/ {print \$3;}")
+	rels=$($HIJACKING ./vmstat -mv | awk "/$target/ {print \$5;}")
+	rm -f ./vmstat
 	atf_check_equal '$target$reqs' '$target$rels'
 }
 
@@ -350,8 +355,7 @@ rump_server_check_poolleaks()
 rump_server_check_memleaks()
 {
 
-	# XXX this doesn't work in some cases for unknown reasons
-	#rump_server_check_poolleaks llentrypl
+	rump_server_check_poolleaks llentrypl
 	# This doesn't work for objects allocated through pool_cache
 	#rump_server_check_poolleaks mbpl
 	#rump_server_check_poolleaks mclpl
@@ -437,7 +441,10 @@ dump_kernel_stats()
 	rump.netstat -nr
 	# XXX still need hijacking
 	$HIJACKING rump.netstat -nai
-	$HIJACKING vmstat -m
+	# XXX workaround for vmstat with the sgid bit
+	cp /usr/bin/vmstat ./vmstat
+	$HIJACKING ./vmstat -m
+	rm -f ./vmstat
 	rump.arp -na
 	rump.ndp -na
 	$HIJACKING ifmcstat
