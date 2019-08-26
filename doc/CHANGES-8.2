@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.28 2019/08/21 14:33:26 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.29 2019/08/26 13:17:02 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -611,4 +611,10 @@ sys/uvm/uvm_aobj.c				1.128
 
 	Avoid undefined behavior in uao_pagein_page().
 	[msaitoh, ticket #1342]
+
+sys/dev/sysmon/sysmon.c				1.30
+
+	Module class of sysmon_envsys, sysmon_wdog and sysmon_power is
+	MODULE_CLASS_DRIVER, not MODULE_CLASS_MISC.
+	[nakayama, ticket #1344]
 
