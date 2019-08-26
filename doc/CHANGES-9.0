@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.28 2019/08/26 13:26:07 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.29 2019/08/26 14:16:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2156,4 +2156,79 @@ sys/sys/event.h					backout 1.33
 
 	Backout for now, causes build failures and final fix is not yet clear.
 	[kamil, ticket #22]
+
+distrib/sets/lists/base/shl.mi			1.867
+
+	Remove obsolete entry for libgomp.so.1.2.
+	[nakayama, ticket #106]
+
+sys/external/gpl2/dts/dist/arch/arm/boot/dts/bcm2835-rpi.dtsi 1.6
+
+	Revert to the version in linux mainline.
+	[rin, ticket #107]
+
+sbin/route/route.c				1.161
+
+	route(8): print RTM_CHANGE messages.
+	[roy, ticket #108]
+
+sys/net/route.h					1.124
+sys/net/rtsock.c				1.251
+sys/netinet/if_arp.c				1.284
+sys/netinet6/nd6.c				1.258,1.259
+sys/netinet6/nd6_nbr.c				1.167
+
+	rtsock: rework rt_clonedmsg to take a message type and lladdr.
+	nd6: notify userland of neighbour lla updates.
+	[roy, ticket #109]
+
+sys/dev/usb/usbdevs				1.771-1.773
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add
+	- belkin F5U258
+	- national instruments USB host to host adapter
+	- prolific id 25a1
+	- ACTIONTEC KL5KUSB101 USB Ethernet adapter
+	- ALLIEDTELESYN AT-USB10 USB Ethernet Adapter
+	- MosChip MCS7730
+	- Sitecom Europe LN030 ethernet adapters.
+	[mrg, ticket #111]
+
+sys/dev/pci/pcidevs				1.1384
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add micron/crucial SM2263 nvme.
+	Add some device found on asus x570-p with ryzen 3200G cpu.
+	Spell it "PCIe' when using the name.
+	[mrg, ticket #112]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.51
+
+	Implement poll support.
+	[hannken, ticket #113]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.52
+
+	Implement kqueue support.
+	[hannken, ticket #114]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/dnode.c 1.8
+
+	Add missing dmu_zfetch_fini() when dnode_create() lost the race.
+	[hannken, ticket #115]
+
+tests/net/ndp/t_ndp.sh				1.34
+
+	Make a permanent neighbor cache to avoid sending an NS packet
+	disturbing the test.
+	[ozaki-r, ticket #117]
+
+sys/dev/sysmon/sysmon.c				1.30
+
+	Module class of sysmon_envsys, sysmon_wdog and sysmon_power is
+	MODULE_CLASS_DRIVER, not MODULE_CLASS_MISC.
+	[nakayama, ticket #118]
 
