@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.20 2019/08/14 13:02:23 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.21 2019/08/27 17:23:24 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1047,6 +1047,9 @@ mbr_get_fs_part_type(unsigned fs_type, unsigned sub_type)
 	case FS_EX2FS:
 		return &mbr_gen_type_desc[MBR_PTYPE_LNXEXT2].gen;
 	case FS_MSDOS:
+		if (sub_type == 0)
+			sub_type = MBR_PTYPE_FAT32L;
+
 		switch (sub_type) {
 		case MBR_PTYPE_FAT12:
 		case MBR_PTYPE_FAT16S:
