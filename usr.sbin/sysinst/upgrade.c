@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.12 2019/07/23 18:13:40 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.13 2019/08/27 14:11:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,7 @@ do_upgrade(void)
 
 	get_ramsize();
 
-	if (find_disks(msg_string(MSG_upgrade), true) < 0)
+	if (find_disks(msg_string(MSG_upgrade), !root_is_read_only()) < 0)
 		return;
 
 	if (pm->parts == NULL && !pm->cur_system) {
@@ -208,7 +208,7 @@ do_reinstall_sets()
 	if (!ask_noyes(NULL))
 		return;
 
-	if (find_disks(msg_string(MSG_reinstall), true) < 0)
+	if (find_disks(msg_string(MSG_reinstall), !root_is_read_only()) < 0)
 		return;
 
 	if (!pm->cur_system) {

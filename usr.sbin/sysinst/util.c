@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.31 2019/08/17 18:03:12 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.32 2019/08/27 14:11:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -535,6 +535,17 @@ boot_media_still_needed(void)
 	}
 
 	return 0;
+}
+
+bool
+root_is_read_only(void)
+{
+	struct statvfs sb;
+
+	if (statvfs("/", &sb) == 0)
+		return sb.f_flag & ST_RDONLY;
+
+	return false;
 }
 
 /*
