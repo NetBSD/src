@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/08/26 04:49:46 kamil Exp $
+#	$NetBSD: Makefile,v 1.3 2019/08/27 22:48:55 kamil Exp $
 
 NOSANITIZER=    # defined
 
@@ -39,7 +39,7 @@ CPPFLAGS+=	-I${TOPDIR}/lib
 
 SYMS=		libclang_rt.tsan_cxx-x86_64.a.syms
 
-realall: ${SYMS}
+beforeinstall: ${SYMS}
 
 CLEANFILES+=	${SYMS}
 FILES=		${SYMS}

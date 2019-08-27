@@ -1,16 +1,10 @@
-#	$NetBSD: bsd.lib.mk,v 1.379 2019/01/21 21:11:54 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.380 2019/08/27 22:48:54 kamil Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
-
-# Rename the local function definitions to not conflict with libc/rt/pthread/m.
-.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
-.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
-CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
-.	endfor
-.endif
+.include <bsd.sanitizer.mk>
 
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
