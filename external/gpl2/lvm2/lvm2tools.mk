@@ -1,4 +1,4 @@
-#	$NetBSD: lvm2tools.mk,v 1.4 2011/03/04 22:48:29 matt Exp $
+#	$NetBSD: lvm2tools.mk,v 1.5 2019/08/27 22:48:53 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -24,3 +24,7 @@ CPPFLAGS+=-DDM_DEVICE_UID=0 -DDM_DEVICE_GID=5 -DDM_DEVICE_MODE=0640 \
 #.endif
 #
 #LVM2.liblvm=	${LVM2OBJDIR.liblvm}/liblvm.a
+
+.if ${MKSANITIZER:Uno} == "yes"
+CFLAGS+=	-Wno-macro-redefined # _REENTRANT redefined in lib.h
+.endif
