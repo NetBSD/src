@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.29 2019/08/26 14:16:35 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.30 2019/08/27 04:22:08 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2232,3 +2232,8 @@ sys/dev/sysmon/sysmon.c				1.30
 	MODULE_CLASS_DRIVER, not MODULE_CLASS_MISC.
 	[nakayama, ticket #118]
 
+usr.sbin/sysinst/gpt.c				1.11
+
+	Fix a bug when installing to pre-exising GPT partitions.
+	Handle GPT labels with spaces.
+	[martin, ticket #119]
