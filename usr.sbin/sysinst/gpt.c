@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.6.2.4 2019/08/18 13:21:40 msaitoh Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6.2.5 2019/08/27 04:21:01 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1131,7 +1131,7 @@ gpt_modify_part(const char *disk, struct gpt_part_entry *p)
 	/* Check label */
 	if (strcmp(p->gp_label, old.gp_label) != 0) {
 		if (run_program(RUN_SILENT,
-		    "gpt label -b %" PRIu64 " -l %s %s",
+		    "gpt label -b %" PRIu64 " -l \'%s\' %s",
 		    p->gp_start, p->gp_label, disk) != 0)
 			return false;
 	}
@@ -1213,6 +1213,20 @@ gpt_add_wedge(const char *disk, struct gpt_part_entry *p)
 	return true;
 }
 
+static void
+escape_spaces(char *dest, const char *src)
+{
+	unsigned char c;
+
+	while (*src) {
+		c = *src++;
+		if (isspace(c) || c == '\\')
+			*dest++ = '\\';
+		*dest++ = c;
+	}
+	*dest = 0;
+}
+
 static bool
 gpt_get_part_device(const struct disk_partitions *arg,
     part_id id, char *devname, size_t max_devname_len, int *part,
@@ -1221,6 +1235,7 @@ gpt_get_part_device(const struct disk_partitions *arg,
 	const struct gpt_disk_partitions *parts =
 	    (const struct gpt_disk_partitions*)arg;
 	struct  gpt_part_entry *p = parts->partitions;
+	char tmpname[GPT_LABEL_LEN*2];
 	part_id no;
 
 
@@ -1239,12 +1254,14 @@ gpt_get_part_device(const struct disk_partitions *arg,
 
 	switch (usage) {
 	case logical_name:
-		if (p->gp_label[0] != 0)
+		if (p->gp_label[0] != 0) {
+			escape_spaces(tmpname, p->gp_label);
 			snprintf(devname, max_devname_len,
-			    "NAME=%s", p->gp_label);
-		else
+			    "NAME=%s", tmpname);
+		} else {
 			snprintf(devname, max_devname_len,
 			    "NAME=%s", p->gp_id);
+		}
 		break;
 	case plain_name:
 		assert(p->gp_flags & GPEF_WEDGE);
@@ -1275,7 +1292,7 @@ gpt_write_to_disk(struct disk_partitions *arg)
 {
 	struct gpt_disk_partitions *parts = (struct gpt_disk_partitions*)arg;
 	struct gpt_part_entry *p, *n;
-	char label_arg[sizeof(p->gp_label) + 4];
+	char label_arg[sizeof(p->gp_label) + 10];
 	char diskpath[MAXPATHLEN];
 	int fd, bits = 0;
 	bool root_is_new = false, efi_is_new = false;
@@ -1295,11 +1312,9 @@ gpt_write_to_disk(struct disk_partitions *arg)
 	close(fd);
 
 	/*
-	 * Mark all partitions as "have no wedge yet". While there,
-	 * collect first root and efi partition (if available)
+	 * Collect first root and efi partition (if available)
 	 */
 	for (pno = 0, p = parts->partitions; p != NULL; p = p->gp_next, pno++) {
-		p->gp_flags &= ~GPEF_WEDGE;
 		if (root_id == NO_PART && p->gp_type != NULL) {
 			if (p->gp_type->gent.generic_ptype == PT_root &&
 			    p->gp_start == pm->ptstart) {
@@ -1373,7 +1388,7 @@ gpt_write_to_disk(struct disk_partitions *arg)
 		if (p->gp_label[0] == 0)
 			label_arg[0] = 0;
 		else
-			sprintf(label_arg, "-l %s", p->gp_label);
+			sprintf(label_arg, "-l \'%s\'", p->gp_label);
 
 		if (p->gp_type != NULL)
 			run_program(RUN_SILENT,
