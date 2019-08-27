@@ -1,3 +1,7 @@
+2019-08-22  Alan Modra  <amodra@gmail.com>
+
+	* elf/arm.h (ARM_GET_SYM_CMSE_SPCL, ARM_SET_SYM_CMSE_SPCL): Delete.
+
 2018-07-18  Nick Clifton  <nickc@redhat.com>
 
 	2.31.1 Release point.
