@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2283 2019/08/23 08:17:27 mrg Exp $
+#	$NetBSD: mi,v 1.2284 2019/08/28 21:48:14 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11899,6 +11899,7 @@
 ./usr/share/man/cat9/tc_syncbus.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_wmb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tcp_congctl.0		comp-sys-catman		.cat
+./usr/share/man/cat9/thmap.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_cancel_job.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_cancel_job_async.0 comp-sys-catman	.cat
@@ -19791,6 +19792,7 @@
 ./usr/share/man/html9/tc_syncbus.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tc_wmb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tcp_congctl.html		comp-sys-htmlman	html
+./usr/share/man/html9/thmap.html		comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool.html		comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_cancel_job.html comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_cancel_job_async.html comp-sys-htmlman	html
@@ -27882,6 +27884,7 @@
 ./usr/share/man/man9/tc_syncbus.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
 ./usr/share/man/man9/tcp_congctl.9		comp-sys-man		.man
+./usr/share/man/man9/thmap.9			comp-sys-man		.man
 ./usr/share/man/man9/threadpool.9		comp-sys-man		.man
 ./usr/share/man/man9/threadpool_cancel_job.9	comp-sys-man		.man
 ./usr/share/man/man9/threadpool_cancel_job_async.9 comp-sys-man		.man
