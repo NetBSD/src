@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.203 2019/08/28 08:23:35 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.204 2019/08/28 08:54:21 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3113,6 +3113,34 @@ ixgbe_msix_link(void *arg)
 	/* Clear interrupt with write */
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
+	if (ixgbe_is_sfp(hw)) {
+		/* Pluggable optics-related interrupt */
+		if (hw->mac.type >= ixgbe_mac_X540)
+			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
+		else
+			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
+
+		/*
+		 *  An interrupt might not arrive when a module is inserted.
+		 * When an link status change interrupt occurred and the driver
+		 * still regard SFP as unplugged, issue the module softint
+		 * and then issue LSC interrupt.
+		 */
+		if ((eicr & eicr_mask)
+		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
+			&& (eicr & IXGBE_EICR_LSC))) {
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
+			softint_schedule(adapter->mod_si);
+		}
+
+		if ((hw->mac.type == ixgbe_mac_82599EB) &&
+		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
+			IXGBE_WRITE_REG(hw, IXGBE_EICR,
+			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
+			softint_schedule(adapter->msf_si);
+		}
+	}
+
 	/* Link status change */
 	if (eicr & IXGBE_EICR_LSC) {
 		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
@@ -3169,26 +3197,6 @@ ixgbe_msix_link(void *arg)
 		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
 		    (eicr & IXGBE_EICR_MAILBOX))
 			softint_schedule(adapter->mbx_si);
-	}
-
-	if (ixgbe_is_sfp(hw)) {
-		/* Pluggable optics-related interrupt */
-		if (hw->mac.type >= ixgbe_mac_X540)
-			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
-		else
-			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
-
-		if (eicr & eicr_mask) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
-			softint_schedule(adapter->mod_si);
-		}
-
-		if ((hw->mac.type == ixgbe_mac_82599EB) &&
-		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR,
-			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-			softint_schedule(adapter->msf_si);
-		}
 	}
 
 	/* Check for fan failure */
