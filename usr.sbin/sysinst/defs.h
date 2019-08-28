@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.1 2019/08/08 05:51:43 msaitoh Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.2 2019/08/28 10:00:53 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -712,6 +712,7 @@ bool	parts_use_wholedisk(struct disk_partitions*,
 bool	md_parts_use_wholedisk(struct disk_partitions*);
 
 /* from util.c */
+bool	root_is_read_only(void);
 void	get_ptn_alignment(const struct disk_partitions *parts, daddr_t *align, daddr_t *p0off);
 char*	str_arg_subst(const char *, size_t, const char **);
 void	msg_display_subst(const char *, size_t, ...);
