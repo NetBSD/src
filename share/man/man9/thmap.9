@@ -1,3 +1,4 @@
+.\" $NetBSD: thmap.9,v 1.2 2019/08/28 22:11:25 wiz Exp $
 .\"
 .\" Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
 .\" All rights reserved.
@@ -195,24 +196,6 @@ are
         void      (*free)(uintptr_t addr, size_t len);
 .Ed
 .\" -----
-.Sh CAVEATS
-The implementation uses pointer tagging and atomic operations.
-This requires the base address and the allocations to provide at least word
-alignment.
-.Pp
-While the
-.Dv NULL
-values may be inserted,
-.Fn thmap_get
-and
-.Fn thmap_del
-cannot indicate whether the key was not found or a key with a
-.Dv NULL
-value was found.
-If the caller needs to indicate an "empty" value, it can use a
-special pointer value, such as
-.Li (void *)(uintptr_t)0x1 .
-.\" -----
 .Sh EXAMPLES
 Simple case backed by
 .Xr malloc 3 ,
@@ -234,3 +217,21 @@ which could be used in multi-threaded environment:
 .\" -----
 .Sh AUTHORS
 .An Mindaugas Rasiukevicius Aq Mt rmind@noxt.eu
+.Sh CAVEATS
+The implementation uses pointer tagging and atomic operations.
+This requires the base address and the allocations to provide at least word
+alignment.
+.Pp
+While the
+.Dv NULL
+values may be inserted,
+.Fn thmap_get
+and
+.Fn thmap_del
+cannot indicate whether the key was not found or a key with a
+.Dv NULL
+value was found.
+If the caller needs to indicate an "empty" value, it can use a
+special pointer value, such as
+.Li (void *)(uintptr_t)0x1 .
+.\" -----
