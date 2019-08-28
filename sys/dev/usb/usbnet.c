@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.23 2019/08/23 04:29:28 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.24 2019/08/28 06:07:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.23 2019/08/23 04:29:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.24 2019/08/28 06:07:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1457,17 +1457,18 @@ usbnet_detach(device_t self, int flags)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = device_private(self);
+	struct usbnet_private * const unp = un->un_pri;
+
+	/* Detached before attached finished, so just bail out. */
+	if (unp == NULL || !unp->unp_attached)
+		return 0;
+
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mii_data * const mii = usbnet_mii(un);
-	struct usbnet_private * const unp = un->un_pri;
 
 	mutex_enter(&unp->unp_lock);
 	unp->unp_dying = true;
 	mutex_exit(&unp->unp_lock);
-
-	/* Detached before attached finished, so just bail out. */
-	if (!unp->unp_attached)
-		return 0;
 
 	callout_halt(&unp->unp_stat_ch, NULL);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER, NULL);
