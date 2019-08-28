@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.185 2019/08/24 07:43:00 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.186 2019/08/28 01:44:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.185 2019/08/24 07:43:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.186 2019/08/28 01:44:39 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,8 +323,6 @@ usbd_transfer(struct usbd_xfer *xfer)
 
 	/* xfer is not valid after the transfer method unless synchronous */
 	err = pipe->up_methods->upm_transfer(xfer);
-	USBHIST_LOG(usbdebug, "<- done transfer %#jx, err = %jd",
-	    (uintptr_t)xfer, err, 0, 0);
 
 	if (err != USBD_IN_PROGRESS && err) {
 		/*
@@ -332,6 +330,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 * accepted by the HCD for some reason.  It needs removing
 		 * from the pipe queue.
 		 */
+		USBHIST_LOG(usbdebug, "xfer failed: %s, reinserting",
+		    err, 0, 0, 0);
 		usbd_lock_pipe(pipe);
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		if (pipe->up_serialise)
@@ -346,8 +346,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 
 	if (err != USBD_IN_PROGRESS) {
-		USBHIST_LOG(usbdebug, "<- done xfer %#jx, sync (err %jd)"
-		    "(complete/error)", (uintptr_t)xfer, err, 0, 0);
+		USBHIST_LOG(usbdebug, "<- done xfer %#jx, sync (err %jd)",
+		    (uintptr_t)xfer, err, 0, 0);
 		return err;
 	}
 
@@ -1100,12 +1100,22 @@ usbd_status
 usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
     void *data, uint16_t flags, int *actlen, uint32_t timeout)
 {
-	struct usbd_xfer *xfer;
-	usbd_status err;
 	size_t len = UGETW(req->wLength);
 
+	return usbd_do_request_len(dev, req, len, data, flags, actlen, timeout);
+}
+
+usbd_status
+usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
+    size_t len, void *data, uint16_t flags, int *actlen, uint32_t timeout)
+{
+	struct usbd_xfer *xfer;
+	usbd_status err;
+
+	KASSERT(len >= UGETW(req->wLength));
+
 	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "dev=%#jx req=%jx flgas=%jx len=%jx",
+	USBHIST_CALLARGS(usbdebug, "dev=%#jx req=%jx flags=%jx len=%jx",
 	    (uintptr_t)dev, (uintptr_t)req, flags, len);
 
 	ASSERT_SLEEPABLE();
