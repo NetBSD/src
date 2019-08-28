@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.439 2019/08/10 23:33:10 mrg Exp $
+#       $NetBSD: Makefile,v 1.440 2019/08/28 21:48:14 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -55,7 +55,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	spi.9 splraiseipl.9 \
 	suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
+	tcp_congctl.9 thmap.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
 	ts2timo.9 tvtohz.9 \
 	ubc.9 ucas.9 ucom.9 ufetch.9 uiomove.9 \
 	usbd_status.9 usbdi.9 usbnet.9 \
