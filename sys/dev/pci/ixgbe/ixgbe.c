@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.202 2019/08/21 10:01:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.203 2019/08/28 08:23:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1489,6 +1489,8 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 			return (TRUE);
 		return (FALSE);
 	case ixgbe_mac_82599EB:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
 		switch (hw->mac.ops.get_media_type(hw)) {
 		case ixgbe_media_type_fiber:
 		case ixgbe_media_type_fiber_qsfp:
@@ -1496,11 +1498,6 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 		default:
 			return (FALSE);
 		}
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_X550EM_a:
-		if (hw->mac.ops.get_media_type(hw) == ixgbe_media_type_fiber)
-			return (TRUE);
-		return (FALSE);
 	default:
 		return (FALSE);
 	}
