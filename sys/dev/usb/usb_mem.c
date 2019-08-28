@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.71 2019/08/21 10:48:37 mrg Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.72 2019/08/28 07:11:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.71 2019/08/21 10:48:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.72 2019/08/28 07:11:19 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -136,7 +136,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		}
 	}
 
-	DPRINTFN(6, "no free", 0, 0, 0, 0);
+	DPRINTFN(6, "no freelist entry", 0, 0, 0, 0);
 	mutex_exit(&usb_blk_lock);
 
 	b = kmem_zalloc(sizeof(*b), KM_SLEEP);
