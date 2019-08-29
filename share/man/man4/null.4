@@ -1,4 +1,4 @@
-.\"	$NetBSD: null.4,v 1.5 2019/08/29 15:22:08 sevan Exp $
+.\"	$NetBSD: null.4,v 1.6 2019/08/29 16:08:14 uwe Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,13 +38,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-device accepts and reads data as any ordinary (and willing)
-file \-
-but throws it away. The length of the
+device accepts and reads data as any ordinary (and willing) file \(em
+but throws it away.
+The length of the
 .Nm null
 device is always zero.
 .Sh FILES
-.Bl -tag -width /dev/null
+.Bl -tag -width Pa -compact
 .It Pa /dev/null
 .El
 .Sh HISTORY
