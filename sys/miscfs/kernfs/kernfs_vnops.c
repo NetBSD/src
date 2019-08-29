@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.160 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.161 2019/08/29 06:43:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.160 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.161 2019/08/29 06:43:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,7 @@ int	kernfs_print(void *);
 int	kernfs_pathconf(void *);
 #define	kernfs_advlock	genfs_einval
 #define	kernfs_bwrite	genfs_eopnotsupp
+int	kernfs_getpages(void *);
 #define	kernfs_putpages	genfs_putpages
 
 static int	kernfs_xread(struct kernfs_node *, int, char **,
@@ -219,6 +220,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, kernfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, kernfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, kernfs_getpages },	/* getpages */
 	{ &vop_putpages_desc, kernfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
@@ -1168,4 +1170,24 @@ kernfs_symlink(void *v)
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	return (EROFS);
+}
+ 
+int
+kernfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_flags & PGO_LOCKED) == 0)
+		mutex_exit(ap->a_vp->v_interlock);
+
+	return (EFAULT);
 }
