@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.57 2019/08/09 19:25:47 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.58 2019/08/29 16:14:07 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -619,4 +619,17 @@ sys/external/bsd/ipf/netinet/fil.c		1.30
 	PR/54443: ipf mistakenly regards UDP packet with checksum field
 	0xffff as bad.
 	[christos, ticket #1701]
+
+distrib/hpcarm/miniroot/list			1.11
+distrib/hpcmips/miniroot/list			1.19
+distrib/hpcsh/miniroot/list			1.11
+
+	sysctl(8) is useful to have in the install env when debugging.
+	[sevan, ticket #1702]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.161
+sys/miscfs/procfs/procfs_vnops.c		1.207
+
+	Add missing operation VOP_GETPAGES() returning EFAULT.
+	[hannken, ticket #1703]
 
