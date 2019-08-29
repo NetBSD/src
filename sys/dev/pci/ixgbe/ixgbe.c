@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.204 2019/08/28 08:54:21 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.205 2019/08/29 09:35:18 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -6537,7 +6537,7 @@ alloc_retry:
 	    ixgbe_handle_que, que);
 
 	if ((!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)
-		& (txr->txr_si == NULL)) || (que->que_si == NULL)) {
+		&& (txr->txr_si == NULL)) || (que->que_si == NULL)) {
 		aprint_error_dev(dev,
 		    "could not establish software interrupts\n");
 
