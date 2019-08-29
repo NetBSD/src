@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.31 2019/08/29 06:44:16 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.32 2019/08/29 06:46:44 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2251,3 +2251,8 @@ usr.sbin/sysinst/mbr.c				1.21
 	When requesting no special FS sub type, default to FAT32 with LBA.
 	Fixes one part of PR 54490.
 	[martin, ticket #125]
+
+usr.sbin/sysinst/bsddisklabel.c			1.27
+
+	Remove dead (#if 0) code.
+	[martin, ticket #130]
