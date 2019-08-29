@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.147 2019/06/15 15:59:33 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.148 2019/08/29 16:17:08 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5854,4 +5854,10 @@ libexec/httpd/testsuite/test-simple		1.6
 	Avoid possible NULL dereference when sending a big request that timeout.
 	Avoid an assertion failure when using cgihandler (-C option).
 	[mrg, ticket #1699]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.161
+sys/miscfs/procfs/procfs_vnops.c		1.207
+
+	Add missing operation VOP_GETPAGES() returning EFAULT.
+	[hannken, ticket #1703]
 
