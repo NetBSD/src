@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.29 2019/08/26 13:17:02 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.30 2019/08/29 16:33:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -617,4 +617,22 @@ sys/dev/sysmon/sysmon.c				1.30
 	Module class of sysmon_envsys, sysmon_wdog and sysmon_power is
 	MODULE_CLASS_DRIVER, not MODULE_CLASS_MISC.
 	[nakayama, ticket #1344]
+
+sys/fs/tmpfs/tmpfs_rename.c			1.9
+
+	Fix uninitialized variable that could have caused a KASSERT to
+	wrongfully fire.
+	[maxv, ticket #1345]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.161
+sys/miscfs/procfs/procfs_vnops.c		1.207
+
+	Add missing operation VOP_GETPAGES() returning EFAULT.
+	[hannken, ticket #1346]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.205,1.206
+
+	Fix typo in error handling of ixgbe_allocate_legacy().
+	Fix panic on single cpu systems.
+	[knakahara, ticket #1347]
 
