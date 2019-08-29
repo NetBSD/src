@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.24 2019/08/28 06:07:21 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.25 2019/08/29 09:17:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.24 2019/08/28 06:07:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25 2019/08/29 09:17:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1101,12 +1101,10 @@ usbnet_tick(void *arg)
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
 
-	mutex_enter(&unp->unp_lock);
-	if (!unp->unp_stopping && !unp->unp_dying) {
+	if (unp != NULL && !unp->unp_stopping && !unp->unp_dying) {
 		/* Perform periodic stuff in process context */
 		usb_add_task(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER);
 	}
-	mutex_exit(&unp->unp_lock);
 }
 
 static void
@@ -1225,7 +1223,6 @@ usbnet_rndsrc(struct usbnet *un)
 void *
 usbnet_softc(struct usbnet *un)
 {
-	//return un->un_pri->unp_sc;
 	return un->un_sc;
 }
 
@@ -1238,7 +1235,7 @@ usbnet_havelink(struct usbnet *un)
 bool
 usbnet_isdying(struct usbnet *un)
 {
-	return un->un_pri->unp_dying;
+	return un->un_pri == NULL || un->un_pri->unp_dying;
 }
 
 
