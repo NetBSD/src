@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.167 2019/08/22 21:22:50 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.168 2019/08/29 14:26:55 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.167 2019/08/22 21:22:50 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.168 2019/08/29 14:26:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,7 +611,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct llentry *ln = NULL;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
-	int rt_announce;
+	bool rt_announce;
 	bool checklink = false;
 	struct psref psref;
 	struct psref psref_ia;
@@ -770,21 +770,21 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			checklink = true;
 		}
 	} else {
-		int llchange;
+		bool llchange;
 
 		/*
 		 * Check if the link-layer address has changed or not.
 		 */
 		if (lladdr == NULL)
-			llchange = 0;
+			llchange = false;
 		else {
 			if (ln->la_flags & LLE_VALID) {
 				if (memcmp(lladdr, &ln->ll_addr, ifp->if_addrlen))
-					llchange = rt_announce = 1;
+					llchange = rt_announce = true;
 				else
-					llchange = 0;
+					llchange = false;
 			} else
-				llchange = rt_announce = 1;
+				llchange = rt_announce = true;
 		}
 
 		/*
