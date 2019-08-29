@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.30 2019/08/27 04:22:08 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.31 2019/08/29 06:44:16 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2237,3 +2237,17 @@ usr.sbin/sysinst/gpt.c				1.11
 	Fix a bug when installing to pre-exising GPT partitions.
 	Handle GPT labels with spaces.
 	[martin, ticket #119]
+
+usr.sbin/sysinst/defs.h				1.44
+usr.sbin/sysinst/upgrade.c			1.13
+usr.sbin/sysinst/util.c				1.32
+
+	Do not offer to upgrade the "current system" if we are running off a CD
+	(i.e. / is mounted read-only)
+	[martin, ticket #123]
+
+usr.sbin/sysinst/mbr.c				1.21
+
+	When requesting no special FS sub type, default to FAT32 with LBA.
+	Fixes one part of PR 54490.
+	[martin, ticket #125]
