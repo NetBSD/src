@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.32 2019/08/29 06:46:44 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.33 2019/08/29 16:58:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2256,3 +2256,55 @@ usr.sbin/sysinst/bsddisklabel.c			1.27
 
 	Remove dead (#if 0) code.
 	[martin, ticket #130]
+
+distrib/sets/lists/tests/mi			1.819
+tests/usr.bin/c++/Makefile			1.12
+tests/usr.bin/c++/t_fuzzer_oom.sh		1.1,1.2
+tests/usr.bin/c++/t_fuzzer_simple.sh		1.1,1.2
+tests/usr.bin/c++/t_fuzzer_timeout.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_allocated_memory.sh	1.1,1.2
+tests/usr.bin/c++/t_msan_check_mem.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_free.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_heap.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_partial_poison.sh	1.1,1.2
+tests/usr.bin/c++/t_msan_poison.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_realloc.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_shadow.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_stack.sh		1.1,1.2
+tests/usr.bin/c++/t_msan_unpoison.sh		1.1,1.2
+tests/usr.bin/c++/t_tsan_data_race.sh		1.1,1.2
+tests/usr.bin/c++/t_tsan_heap_use_after_free.sh	1.1,1.2
+tests/usr.bin/c++/t_tsan_lock_order_inversion.sh 1.1,1.2
+tests/usr.bin/c++/t_tsan_locked_mutex_destroy.sh 1.1,1.2
+tests/usr.bin/c++/t_tsan_signal_errno.sh	1.1,1.2
+tests/usr.bin/c++/t_tsan_thread_leak.sh		1.1,1.2
+tests/usr.bin/c++/t_tsan_vptr_race.sh		1.1,1.2
+tests/usr.bin/cc/Makefile			1.8
+tests/usr.bin/cc/t_fuzzer_oom.sh		1.1,1.2
+tests/usr.bin/cc/t_fuzzer_simple.sh		1.1,1.2
+tests/usr.bin/cc/t_fuzzer_timeout.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_allocated_memory.sh	1.1,1.2
+tests/usr.bin/cc/t_msan_check_mem.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_free.sh			1.1,1.2
+tests/usr.bin/cc/t_msan_heap.sh			1.1,1.2
+tests/usr.bin/cc/t_msan_partial_poison.sh	1.1,1.2
+tests/usr.bin/cc/t_msan_poison.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_realloc.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_shadow.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_stack.sh		1.1,1.2
+tests/usr.bin/cc/t_msan_unpoison.sh		1.1,1.2
+tests/usr.bin/cc/t_tsan_data_race.sh		1.1,1.2
+tests/usr.bin/cc/t_tsan_heap_use_after_free.sh	1.1,1.2
+tests/usr.bin/cc/t_tsan_lock_order_inversion.sh	1.1,1.2
+tests/usr.bin/cc/t_tsan_locked_mutex_destroy.sh	1.1,1.2
+tests/usr.bin/cc/t_tsan_signal_errno.sh		1.1,1.2
+tests/usr.bin/cc/t_tsan_thread_leak.sh		1.1,1.2
+
+	Add ATF c and c++ tests for TSan, MSan, libFuzzer.
+	[kamil, ticket #120]
+
+distrib/i386/ramdisks/common/Makefile.ramdisk	1.14
+
+	Set NOSANITIZER in i386 ramdisk image.
+	[kamil, ticket #121]
+
