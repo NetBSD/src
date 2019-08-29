@@ -1148,7 +1148,7 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 						   SUBREG_BYTE (in),
 						   GET_MODE (in)),
 			      REGNO (SUBREG_REG (in)));
-#ifdef __NetBSD__ // XXXMRG
+#if 1 // XXXMRG
       else if (REG_P (SUBREG_REG (in))
                || GET_CODE (SUBREG_REG (in)) == SYMBOL_REF)
 #else
