@@ -290,7 +290,7 @@ static unsigned HOST_WIDE_INT
 lowpart_bitmask (int n)
 {
   unsigned HOST_WIDE_INT mask = HOST_WIDE_INT_M1U;
-#ifdef __NetBSD__ // XXXMRG
+#if 1 // XXXMRG
   gcc_assert(n >= 0 && n <= HOST_BITS_PER_WIDE_INT);
   if (n == 0)
     return 0;
