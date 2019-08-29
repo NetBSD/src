@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.169 2019/08/29 14:28:06 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.170 2019/08/29 16:26:43 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.169 2019/08/29 14:28:06 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.170 2019/08/29 16:26:43 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -854,10 +854,27 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * Remove the sender from the Default Router List and
 			 * update the Destination Cache entries.
 			 */
+			const struct in6_addr *in6 = &ln->r_l3addr.addr6;
 			struct nd_defrouter *dr;
-			const struct in6_addr *in6;
+			struct sockaddr_in6 sin6;
 
-			in6 = &ln->r_l3addr.addr6;
+			/*
+			 * Userland really has no business with NA messages.
+			 * However, RFC 4861 6.2.5 only says departing routers
+			 * *SHOULD* send RA with lifetime of zero and *MUST*
+			 * send all subsequent NA messages if the router flag
+			 * unset.
+			 *
+			 * To help userland avoid the expensive process of
+			 * parsing NA messages, send RTM_CHANGE without a
+			 * lladdr in the gateway.
+			 * This is different from the intial RTM_ADD also
+			 * without a lladdr in the gateway and RTM_DELETE.
+			 */
+			sockaddr_in6_init(&sin6, in6, 0, 0, 0);
+			rt_clonedmsg(RTM_CHANGE, sin6tosa(&sin6), NULL,
+			    ln->lle_tbl->llt_ifp);
+			rt_announce = true;
 
 			ND6_WLOCK();
 			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
@@ -887,8 +904,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (rt_announce) {
 		struct sockaddr_in6 sin6;
 
-		sockaddr_in6_init(&sin6, &taddr6, 0, 0, 0);
-		rt_clonedmsg(RTM_CHANGE, sin6tosa(&sin6), lladdr, ifp);
+		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
+		rt_clonedmsg(RTM_CHANGE, sin6tosa(&sin6),
+		    (char *)&ln->ll_addr, ln->lle_tbl->llt_ifp);
 	}
 
  freeit:
