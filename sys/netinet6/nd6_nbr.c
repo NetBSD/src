@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.168 2019/08/29 14:26:55 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.169 2019/08/29 14:28:06 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.168 2019/08/29 14:26:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.169 2019/08/29 14:28:06 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -735,7 +735,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ln == NULL)
 		goto freeit;
 
-	rt_announce = 0;
+	rt_announce = false;
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
@@ -749,7 +749,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
 		ln->la_flags |= LLE_VALID;
-		rt_announce = 1;
+		rt_announce = true;
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
