@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.285 2019/08/22 21:30:47 sevan Exp $
+$NetBSD: acronyms.comp,v 1.286 2019/08/30 15:43:52 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1423,6 +1423,7 @@ SGMII	serial gigabit media independent interface
 SGPIO	serial general purpose input/output
 SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
+SICP	structure and interpretation of computer programs
 SIDH	supersingular isogeny Diffie-Hellman
 SIEM	security information and event management
 SIF	source input format
