@@ -148,11 +148,6 @@ int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *fpriv)
 	cs_id = 0;
 	cs->cs_id = cs_id;
 
-	if (dev_priv == NULL) {
-		DRM_ERROR("called with no initialization\n");
-		DRM_SPINUNLOCK(&dev_priv->cs.cs_mutex);
-		return -EINVAL;
-	}
 	if (!cs->num_chunks) {
 		DRM_SPINUNLOCK(&dev_priv->cs.cs_mutex);
 		return 0;
