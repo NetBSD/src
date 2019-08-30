@@ -1,4 +1,4 @@
-.\" $NetBSD: urndis.4,v 1.6 2019/08/08 05:50:20 maya Exp $
+.\" $NetBSD: urndis.4,v 1.7 2019/08/30 08:54:58 mrg Exp $
 .\"
 .\" Copyright (c) 2010 Michael Knudsen <mk@openbsd.org>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $OpenBSD: urndis.4,v 1.11 2011/07/20 13:12:16 jasper Exp $
 .\"
-.Dd August 8, 2019
+.Dd August 24 2019
 .Dt URNDIS 4
 .Os
 .Sh NAME
@@ -74,11 +74,16 @@ The
 driver does not support different media types or options.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
+.Xr usbnet 4 ,
 .Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
