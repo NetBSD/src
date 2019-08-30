@@ -1,4 +1,4 @@
-#	$NetBSD: syms.mk,v 1.2 2019/08/26 04:49:45 kamil Exp $
+#	$NetBSD: syms.mk,v 1.3 2019/08/30 23:36:40 kamil Exp $
 
 here := ${.PARSEDIR}
 
@@ -8,4 +8,5 @@ here := ${.PARSEDIR}
 	NM=${NM:Q} AWK=${TOOL_AWK:Q} FILE=${TOOL_MKMAGIC:Q} \
 		${HOST_SH} \
 		${here}/gen_dynamic_list.sh \
+		--extra ${SYMS_EXTRA:Q} \
 		${.IMPSRC} > ${.TARGET}
