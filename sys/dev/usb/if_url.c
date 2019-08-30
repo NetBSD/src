@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.70 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.71 2019/08/30 05:59:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.70 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.71 2019/08/30 05:59:17 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -190,7 +190,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		aprint_error_dev(self, "failed to set configuration"
 		    ", err=%s\n", usbd_errstr(err));
-		goto bad;
+		return;
 	}
 
 	/* get control interface */
@@ -198,7 +198,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		aprint_error_dev(self, "failed to get interface, err=%s\n",
 		       usbd_errstr(err));
-		goto bad;
+		return;
 	}
 
 	un->un_iface = iface;
@@ -221,7 +221,7 @@ url_attach(device_t parent, device_t self, void *aux)
 		if (ed == NULL) {
 			aprint_error_dev(self,
 			    "couldn't get endpoint %d\n", i);
-			goto bad;
+			return;
 		}
 		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK &&
 		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
@@ -238,7 +238,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	    un->un_ed[USBNET_ENDPT_TX] == 0 ||
 	    un->un_ed[USBNET_ENDPT_INTR] == 0) {
 		aprint_error_dev(self, "missing endpoint\n");
-		goto bad;
+		return;
 	}
 
 	/* Set these up now for url_mem().  */
