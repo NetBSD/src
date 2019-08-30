@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.171 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.172 2019/08/30 07:53:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.171 2019/05/29 16:54:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.172 2019/08/30 07:53:47 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -979,8 +979,14 @@ cpu_debug_dump(void)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	const char sixtyfour64space[] = 
+#ifdef _LP64
+			   "        "
+#endif
+			   "";
 
-	db_printf("addr		dev	id	flags	ipis	curlwp 		fpcurlwp\n");
+	db_printf("addr		%sdev	id	flags	ipis	curlwp 		"
+		  "fpcurlwp\n", sixtyfour64space);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
