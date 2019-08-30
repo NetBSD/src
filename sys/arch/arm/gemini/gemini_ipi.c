@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.6 2012/10/27 17:17:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.7 2019/08/30 00:33:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ ipi_intr_disestablish(void *ih)
         gemini_ipi_softc_t *sc = gemini_ipi_sc;
 
 	if (sc == NULL)
-		panic("%s: NULL gemini_ipi_sc", device_xname(sc->sc_dev));
+		panic("NULL gemini_ipi_sc");
 
         gemini_ipi_intrq_remove(sc, ih);
 }
