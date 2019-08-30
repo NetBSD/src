@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104 2019/07/26 10:03:40 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.105 2019/08/30 13:12:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104 2019/07/26 10:03:40 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.105 2019/08/30 13:12:24 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2292,10 +2292,16 @@ identifycpu(int fd, const char *cpuname)
 			ci->ci_max_ext_cpuid = descs[0];
 		else
 			ci->ci_max_ext_cpuid = 0;
-		if (descs[0] >= 0x80000007)
+		if (ci->ci_max_ext_cpuid >= 0x80000007)
 			powernow_probe(ci);
 
-		if ((descs[0] >= 0x8000000a)
+		if (ci->ci_max_ext_cpuid >= 0x80000008) {
+			x86_cpuid(0x80000008, descs);
+			print_bits(cpuname, "AMD Extended features",
+			    CPUID_CAPEX_FLAGS, descs[1]);
+		}
+
+		if ((ci->ci_max_ext_cpuid >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
