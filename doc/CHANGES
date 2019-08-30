@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2574 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2575 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -32,5 +32,3 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	usbnet(9): Port kue(4) and upl(4). [mrg 20190818]
 	boot(8): GPT and RAIDframe support for x86 bootstrap [manu 20190818]
 	dhcpcd(8): Import dhcpcd-8.0.3 [roy 20190821]
-	inet6: Announce Router to Host via RTM_CHANGE without a lladdr.
-		dhcpcd no longer needs to parse NA messages. [roy 20190829]
