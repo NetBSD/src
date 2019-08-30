@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.18 2019/08/01 13:11:16 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.19 2019/08/30 00:01:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -292,8 +292,15 @@ efi_fdt_gop(void)
 			continue;
 		}
 
+		fdt_setprop_u32(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#address-cells", 2);
+		fdt_setprop_u32(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#size-cells", 2);
+		fdt_setprop_empty(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "ranges");
+
 		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
-		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/chosen"), buf);
+		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), buf);
 		if (fb < 0)
 			panic("FDT: Failed to create framebuffer node");
 
@@ -326,10 +333,6 @@ efi_fdt_bootargs(const char *bootargs)
 		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
 	if (chosen < 0)
 		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
-
-	fdt_setprop_u32(fdt_data, chosen, "#address-cells", 2);
-	fdt_setprop_u32(fdt_data, chosen, "#size-cells", 2);
-	fdt_setprop_empty(fdt_data, chosen, "ranges");
 
 	if (*bootargs)
 		fdt_setprop_string(fdt_data, chosen, "bootargs", bootargs);
