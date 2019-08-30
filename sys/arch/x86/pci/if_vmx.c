@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.48 2019/08/19 05:25:38 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.49 2019/08/30 05:03:32 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.48 2019/08/19 05:25:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.49 2019/08/30 05:03:32 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -207,6 +207,8 @@ struct vmxnet3_txqueue {
 	struct evcnt vxtxq_pcqdrop;
 	struct evcnt vxtxq_transmitdef;
 	struct evcnt vxtxq_watchdogto;
+	struct evcnt vxtxq_defragged;
+	struct evcnt vxtxq_defrag_failed;
 };
 
 struct vmxnet3_rxq_stats {
@@ -230,6 +232,8 @@ struct vmxnet3_rxqueue {
 	struct evcnt vxrxq_intr;
 	struct evcnt vxrxq_defer;
 	struct evcnt vxrxq_deferreq;
+	struct evcnt vxrxq_mgetcl_failed;
+	struct evcnt vxrxq_mbuf_load_failed;
 };
 
 struct vmxnet3_queue {
@@ -242,13 +246,6 @@ struct vmxnet3_queue {
 	void *vxq_si;
 	bool vxq_workqueue;
 	struct work vxq_wq_cookie;
-};
-
-struct vmxnet3_statistics {
-	uint32_t vmst_defragged;
-	uint32_t vmst_defrag_failed;
-	uint32_t vmst_mgetcl_failed;
-	uint32_t vmst_mbuf_load_failed;
 };
 
 struct vmxnet3_softc {
@@ -281,7 +278,6 @@ struct vmxnet3_softc {
 	int vmx_nrxdescs;
 	int vmx_max_rxsegs;
 
-	struct vmxnet3_statistics vmx_stats;
 	struct evcnt vmx_event_intr;
 	struct evcnt vmx_event_link;
 	struct evcnt vmx_event_txqerror;
@@ -395,7 +391,8 @@ int vmxnet3_setup_interface(struct vmxnet3_softc *);
 
 void vmxnet3_evintr(struct vmxnet3_softc *);
 bool vmxnet3_txq_eof(struct vmxnet3_txqueue *, u_int);
-int vmxnet3_newbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
+int vmxnet3_newbuf(struct vmxnet3_softc *, struct vmxnet3_rxqueue *,
+    struct vmxnet3_rxring *);
 void vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *,
     struct vmxnet3_rxring *, int);
 void vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *);
@@ -1971,6 +1968,10 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		    NULL, txq->vxtxq_name, "Deferred transmit");
 		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "Watchdog timeount");
+		evcnt_attach_dynamic(&txq->vxtxq_defragged, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "m_defrag sucessed");
+		evcnt_attach_dynamic(&txq->vxtxq_defrag_failed, EVCNT_TYPE_MISC,
+		    NULL, txq->vxtxq_name, "m_defrag failed");
 	}
 
 	for (i = 0; i < sc->vmx_nrxqueues; i++) {
@@ -1982,6 +1983,10 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		    NULL, rxq->vxrxq_name, "Handled queue in softint/workqueue");
 		evcnt_attach_dynamic(&rxq->vxrxq_deferreq, EVCNT_TYPE_MISC,
 		    NULL, rxq->vxrxq_name, "Requested in softint/workqueue");
+		evcnt_attach_dynamic(&rxq->vxrxq_mgetcl_failed, EVCNT_TYPE_MISC,
+		    NULL, rxq->vxrxq_name, "MCLGET failed");
+		evcnt_attach_dynamic(&rxq->vxrxq_mbuf_load_failed, EVCNT_TYPE_MISC,
+		    NULL, rxq->vxrxq_name, "bus_dmamap_load_mbuf failed");
 	}
 
 	evcnt_attach_dynamic(&sc->vmx_event_intr, EVCNT_TYPE_INTR,
@@ -2017,6 +2022,8 @@ vmxnet3_teardown_stats(struct vmxnet3_softc *sc)
 		evcnt_detach(&txq->vxtxq_pcqdrop);
 		evcnt_detach(&txq->vxtxq_transmitdef);
 		evcnt_detach(&txq->vxtxq_watchdogto);
+		evcnt_detach(&txq->vxtxq_defragged);
+		evcnt_detach(&txq->vxtxq_defrag_failed);
 	}
 
 	for (i = 0; i < sc->vmx_nrxqueues; i++) {
@@ -2025,6 +2032,8 @@ vmxnet3_teardown_stats(struct vmxnet3_softc *sc)
 		evcnt_detach(&rxq->vxrxq_intr);
 		evcnt_detach(&rxq->vxrxq_defer);
 		evcnt_detach(&rxq->vxrxq_deferreq);
+		evcnt_detach(&rxq->vxrxq_mgetcl_failed);
+		evcnt_detach(&rxq->vxrxq_mbuf_load_failed);
 	}
 
 	evcnt_detach(&sc->vmx_event_intr);
@@ -2154,7 +2163,8 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 }
 
 int
-vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *rxr)
+vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq,
+    struct vmxnet3_rxring *rxr)
 {
 	struct mbuf *m;
 	struct vmxnet3_rxdesc *rxd;
@@ -2180,7 +2190,7 @@ vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *rxr)
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
-		sc->vmx_stats.vmst_mgetcl_failed++;
+		rxq->vxrxq_mgetcl_failed.ev_count++;
 		m_freem(m);
 		return (ENOBUFS);
 	}
@@ -2191,7 +2201,7 @@ vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *rxr)
 	error = bus_dmamap_load_mbuf(sc->vmx_dmat, dmap, m, BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(m);
-		sc->vmx_stats.vmst_mbuf_load_failed++;
+		rxq->vxrxq_mbuf_load_failed.ev_count++;
 		return (error);
 	}
 
@@ -2403,7 +2413,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 				goto nextp;
 			}
 
-			if (vmxnet3_newbuf(sc, rxr) != 0) {
+			if (vmxnet3_newbuf(sc, rxq, rxr) != 0) {
 				rxq->vxrxq_stats.vmrxs_iqdrops++;
 				vmxnet3_rxq_eof_discard(rxq, rxr, idx);
 				if (!rxcd->eop)
@@ -2422,7 +2432,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 			/* frame not started? */
 			KASSERT(m_head != NULL);
 
-			if (vmxnet3_newbuf(sc, rxr) != 0) {
+			if (vmxnet3_newbuf(sc, rxq, rxr) != 0) {
 				rxq->vxrxq_stats.vmrxs_iqdrops++;
 				vmxnet3_rxq_eof_discard(rxq, rxr, idx);
 				if (!rxcd->eop)
@@ -2784,7 +2794,7 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 		    rxr->vxrxr_ndesc * sizeof(struct vmxnet3_rxdesc));
 
 		for (idx = 0; idx < rxr->vxrxr_ndesc; idx++) {
-			error = vmxnet3_newbuf(sc, rxr);
+			error = vmxnet3_newbuf(sc, rxq, rxr);
 			if (error)
 				return (error);
 		}
@@ -3018,9 +3028,9 @@ vmxnet3_txq_load_mbuf(struct vmxnet3_txqueue *txq, struct mbuf **m0,
 	if (error) {
 		m_freem(*m0);
 		*m0 = NULL;
-		txq->vxtxq_sc->vmx_stats.vmst_defrag_failed++;
+		txq->vxtxq_defrag_failed.ev_count++;
 	} else
-		txq->vxtxq_sc->vmx_stats.vmst_defragged++;
+		txq->vxtxq_defragged.ev_count++;
 
 	return (error);
 }
