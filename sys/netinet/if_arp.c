@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.285 2019/08/30 18:48:34 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.286 2019/08/30 18:52:00 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.285 2019/08/30 18:48:34 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.286 2019/08/30 18:52:00 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -209,7 +209,7 @@ static struct ifnet *myip_ifp = NULL;
 
 static int arp_drainwanted;
 
-static int log_movements = 1;
+static int log_movements = 0;
 static int log_permanent_modify = 1;
 static int log_wrong_iface = 1;
 
