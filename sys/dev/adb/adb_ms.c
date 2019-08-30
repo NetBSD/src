@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.17 2019/08/30 19:24:03 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.17 2019/08/30 19:24:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -337,6 +337,17 @@ adbms_init_turbo(struct adbms_softc *sc)
 	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data1);
 	adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
 	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data2);
+
+#ifdef ADBMS_DEBUG
+	int i, reg;
+	for (reg = 1; reg < 4; reg++) {
+		adbms_send_sync(sc, ADBTALK(addr, reg), 0, NULL);
+		printf("reg %d", reg);
+		for (i = 0; i < sc->sc_msg_len; i++)
+			printf(" %02x", sc->sc_buffer[i]);
+		printf("\n");
+	}
+#endif
 }
 
 static void
@@ -564,7 +575,8 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 			break;
 	}
 
-	if (sc->sc_adbdev->handler_id != ADBMS_EXTENDED) {
+	if ((sc->sc_adbdev->handler_id != ADBMS_EXTENDED) &&
+	    (sc->sc_adbdev->handler_id != ADBMS_TURBO)) {
 		dx = ((int)(buffer[1] & 0x3f)) - ((buffer[1] & 0x40) ? 64 : 0);
 		dy = ((int)(buffer[0] & 0x3f)) - ((buffer[0] & 0x40) ? 64 : 0);
 	} else {
@@ -595,6 +607,9 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 #ifdef ADBMS_DEBUG
 		printf("%d %d %08x %d\n", dx, dy, smask, shift);
 #endif
+		if (sc->sc_adbdev->handler_id == ADBMS_TURBO) {
+			buttons = (buttons != 0) ? 1 : 0;
+		}
 	}
 
 	if (sc->sc_class == MSCLASS_TRACKPAD) {
@@ -806,7 +821,7 @@ adbms_send_sync(struct adbms_softc *sc, uint8_t cmd, int len, uint8_t *msg)
 		DPRINTF(" %02x", msg[i]);
 	DPRINTF("\n");
 	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, len, msg);
-	adbms_wait(sc, 1000);
+	adbms_wait(sc, 3);
 	return (sc->sc_msg_len != -1);
 }
 
