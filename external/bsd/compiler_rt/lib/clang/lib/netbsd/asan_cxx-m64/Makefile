@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/08/27 22:48:54 kamil Exp $
+#	$NetBSD: Makefile,v 1.4 2019/08/30 23:36:40 kamil Exp $
 
 NOSANITIZER=    # defined
 
@@ -37,7 +37,8 @@ COPTS+=		-fPIC
 .include "../m64.mk"
 .include "../syms.mk"
 
-SYMS=	libclang_rt.asan_cxx-x86_64.a.syms
+SYMS=		libclang_rt.asan_cxx-x86_64.a.syms
+SYMS_EXTRA=	${TOPDIR}/lib/asan/asan.syms.extra # Overlooked in upstream compiler-rt (8.0) ?
 
 beforeinstall: ${SYMS}
 
