@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.150 2019/07/26 10:03:40 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.151 2019/08/30 13:11:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -711,6 +711,38 @@
 	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP"	      \
 	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
 	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
+
+/*
+ * AMD Processor Capacity Parameters and Extended Features
+ * CPUID Fn8000_0008
+ * %eax: Long Mode Size Identifiers
+ * %ebx: Extended Feature Identifiers
+ * %ecx: Size Identifiers
+ */
+
+/* %ebx */
+#define CPUID_CAPEX_CLZERO	__BIT(0)	/* CLZERO instruction */
+#define CPUID_CAPEX_IRPERF	__BIT(1)	/* InstRetCntMsr */
+#define CPUID_CAPEX_XSAVEERPTR	__BIT(2)	/* RstrFpErrPtrs by XRSTOR */
+#define CPUID_CAPEX_RDPRU	__BIT(4)	/* RDPRU instruction */
+#define CPUID_CAPEX_WBNOINVD	__BIT(9)	/* WBNOINVD instruction */
+#define CPUID_CAPEX_IBPB	__BIT(12)	/* Speculation Control IBPB */
+#define CPUID_CAPEX_IBRS	__BIT(14)	/* Speculation Control IBRS */
+#define CPUID_CAPEX_STIBP	__BIT(15)	/* Speculation Control STIBP */
+#define CPUID_CAPEX_IBRS_ALWAYSON __BIT(16)	/* IBRS always on mode */
+#define CPUID_CAPEX_STIBP_ALWAYSON __BIT(17)	/* STIBP always on mode */
+#define CPUID_CAPEX_PREFER_IBRS	__BIT(18)	/* IBRS preferred */
+#define CPUID_CAPEX_SSBD	__BIT(24)	/* Speculation Control SSBD */
+#define CPUID_CAPEX_VIRT_SSBD	__BIT(25)	/* Virt Spec Control SSBD */
+#define CPUID_CAPEX_SSB_NO	__BIT(26)	/* SSBD not required */
+
+#define CPUID_CAPEX_FLAGS	"\20"					 \
+	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			 \
+	"\5RDPRU"			"\7B6"				 \
+	"\11B8"		"\12WBNOINVD"	"\12B10"			 \
+	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	 \
+	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
+	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
 
 /* AMD Fn8000000a %edx features (SVM features) */
 #define CPUID_AMD_SVM_NP		0x00000001
