@@ -536,6 +536,9 @@ _initialize_arm_netbsd_nat (void)
 {
   add_inf_child_target (&the_arm_nbsd_nat_target);
 
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (armnbsd_supply_pcb);
+
   deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);
 }
