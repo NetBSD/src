@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.1,v 1.8 2017/07/04 06:33:13 wiz Exp $
+.\"	$NetBSD: cd.1,v 1.9 2019/08/31 17:34:46 sevan Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cd.1	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd August 31, 2019
 .Dt CD 1
 .Os
 .Sh NAME
@@ -73,15 +73,20 @@ is invoked without arguments and the
 .Ev HOME
 environment variable exists and contains a directory name, that directory
 becomes the new working directory.
+.It Ev OLDPWD
+Set to the previous working directory after a directory change.
+Unsupported by
+.Xr csh 1 .
+.It Ev PWD
+Set to the current working directory.
 .El
 .Pp
-See
-.Xr csh 1
-for more information on environment variables.
+For more information on environment variables consult manual for shell in use.
 .Sh EXIT STATUS
 .Ex -std cd
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr ksh 1 ,
 .Xr pwd 1 ,
 .Xr sh 1 ,
 .Xr chdir 2
