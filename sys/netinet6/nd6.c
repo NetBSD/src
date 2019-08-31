@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.260 2019/08/27 21:11:26 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.261 2019/08/31 01:49:45 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.260 2019/08/27 21:11:26 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.261 2019/08/31 01:49:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1192,6 +1192,7 @@ nd6_free(struct llentry *ln, int gc)
 	struct ifnet *ifp;
 	struct in6_addr *in6;
 	struct sockaddr_in6 sin6;
+	const char *lladdr;
 
 	KASSERT(ln != NULL);
 	LLE_WLOCK_ASSERT(ln);
@@ -1282,8 +1283,8 @@ nd6_free(struct llentry *ln, int gc)
 	}
 
 	sockaddr_in6_init(&sin6, in6, 0, 0, 0);
-	rt_clonedmsg(RTM_DELETE, sin6tosa(&sin6),
-	    (const uint8_t *)&ln->ll_addr, ifp);
+	lladdr = ln->la_flags & LLE_VALID ? (const char *)&ln->ll_addr : NULL;
+	rt_clonedmsg(RTM_DELETE, sin6tosa(&sin6), lladdr, ifp);
 
 	/*
 	 * Save to unlock. We still hold an extra reference and will not
