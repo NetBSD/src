@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.30 2019/08/29 16:33:56 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.31 2019/09/01 17:15:34 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -635,4 +635,25 @@ sys/dev/pci/ixgbe/ixgbe.c			1.205,1.206
 	Fix typo in error handling of ixgbe_allocate_legacy().
 	Fix panic on single cpu systems.
 	[knakahara, ticket #1347]
+
+sys/dev/isa/itesio_isa.c			1.28
+sys/dev/isa/itesio_isavar.h			1.12
+
+	Add IT8655 support.
+	[msaitoh, ticket #1348]
+
+sys/dev/mii/micphy.c				1.6 (via patch)
+
+	Add KSZ8081 support from FreeBSD.
+	[msaitoh, ticket #1349]
+
+sys/dev/mii/ciphy.c				1.27-1.28, 1.30, 1.32 via patch
+sys/dev/mii/ciphyreg.h				1.6
+
+	- The register bit definitions from register 0 to 15 in ciphyreg.h
+	  conform to the 802.3 spec, so remove them and use mii.h's definition. 
+	  No functional change.
+	- Add CS8204, CS8244 VSC8211 and VSC8601 support from {Free,Open}BSD.
+	- KNF.
+	[msaitoh, ticket #1350]
 
