@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.319.2.2 2019/08/19 15:53:40 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.319.2.3 2019/09/01 10:44:22 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -6,29 +6,13 @@
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+.include <bsd.sanitizer.mk>
 
 ##### Sanitizer specific flags.
 
 CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 CXXFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 LDFLAGS+=	${SANITIZERFLAGS}
-
-# Rename the local function definitions to not conflict with libc/rt/pthread/m.
-.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
-.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
-CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
-.	endfor
-.endif
-
-.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_CLASSES)
-.	for _class in ${SANITIZER_RENAME_CLASSES}
-.		for _file in ${SANITIZER_RENAME_FILES.${_class}}
-.			for _symbol in ${SANITIZER_RENAME_SYMBOL.${_class}}
-COPTS.${_file}+=	-D${_symbol}=__mksanitizer_${_symbol}
-.			endfor
-.		endfor
-.	endfor
-.endif
 
 #
 # Definitions and targets shared among all programs built by a single

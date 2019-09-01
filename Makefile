@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.327.2.1 2019/09/01 10:36:26 martin Exp $
+#	$NetBSD: Makefile,v 1.327.2.2 2019/09/01 10:44:22 martin Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -481,7 +481,7 @@ do-compat-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} compat build_install BOOTSTRAP_SUBDIRS="../../../lib"
 
 do-sanitizer: .PHONY .MAKE
-	${MAKEDIRTARGET} external/bsd/compiler_rt all
+	${MAKEDIRTARGET} external/bsd/compiler_rt build_install
 
 do-sanitizer-tools: .PHONY .MAKE
 .if !exists(${TOOLDIR}/lib/clang) && ${HAVE_LLVM:Uno} == "yes"
