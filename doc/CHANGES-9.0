@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.34 2019/09/01 14:22:36 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.35 2019/09/01 19:35:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2640,4 +2640,16 @@ share/man/man1/cd.1				1.9,1.10
 	beginning of the description where it can be seen prominently.
 	Improve formatting.
 	[sevan, ticket #153]
+
+share/man/man9/Makefile				1.439
+
+	Fix editor mistake in rev. 1.438.
+	[oster, ticket #166]
+
+share/man/man9/copy.9				1.21
+share/man/man9/intro.9				1.25
+share/man/man9/uiomove.9			1.19
+
+	Fix cross-references in these man-pages.
+	[oster, ticket #167]
 
