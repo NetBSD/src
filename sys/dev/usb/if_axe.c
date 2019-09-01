@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.102.2.1 2019/09/01 13:00:36 martin Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.102.2.2 2019/09/01 14:03:02 martin Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.102.2.1 2019/09/01 13:00:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.102.2.2 2019/09/01 14:03:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1038,18 +1038,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 				break;
 			}
 
-#if !defined(__NO_STRICT_ALIGNMENT) && __GNUC_PREREQ__(6, 1)
-			/*
-			 * XXX hdr is 2-byte aligned in buf, not 4-byte.
-			 * For some architectures, __builtin_memcpy() of
-			 * GCC 6 attempts to copy sizeof(hdr) = 4 bytes
-			 * at onece, which results in alignment error.
-			 */
-			hdr.len = *(uint16_t *)buf;
-			hdr.ilen = *(uint16_t *)(buf + sizeof(uint16_t));
-#else
 			memcpy(&hdr, buf, sizeof(hdr));
-#endif
 
 			DPRINTFN(20, "total_len %#jx len %jx ilen %#jx",
 			    total_len,
