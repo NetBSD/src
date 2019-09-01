@@ -190,22 +190,22 @@ validate_mbuf_data(char *bufa, char *bufb)
 bool
 npf_nbuf_test(bool verbose)
 {
-	struct mbuf *m1, *m2;
+	struct mbuf *m;
 	char *bufa, *bufb;
 	unsigned n = 10000;
 	bool ok;
 
 	while (n--) {
-		m1 = mbuf_random_len(MBUF_CHAIN_LEN);
-		bufa = mbuf_getstring(m1);
-		bufb = parse_nbuf_chain(m1);
+		m = mbuf_random_len(MBUF_CHAIN_LEN);
+		bufa = mbuf_getstring(m);
+		bufb = parse_nbuf_chain(m);
 		ok = validate_mbuf_data(bufa, bufb);
 		CHECK_TRUE(ok);
 	}
 
-	m2 = mbuf_bytesize(MBUF_CHAIN_LEN);
-	bufa = mbuf_getstring(m2);
-	bufb = parse_nbuf_chain(m2);
+	m = mbuf_bytesize(MBUF_CHAIN_LEN);
+	bufa = mbuf_getstring(m);
+	bufb = parse_nbuf_chain(m);
 	ok = validate_mbuf_data(bufa, bufb);
 	CHECK_TRUE(ok);
 
