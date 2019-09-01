@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.60 2019/07/25 00:48:55 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.60.2.1 2019/09/01 13:13:14 martin Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -701,7 +701,7 @@ npfctl_open_dev(const char *path)
 	if (kernver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
 		    "incompatible NPF interface version (%d, kernel %d)\n"
-		    "Hint: update %s?", NPF_VERSION, kernver, 
+		    "Hint: update %s?", NPF_VERSION, kernver,
 		    kernver > NPF_VERSION ? "userland" : "kernel");
 	}
 	return fd;

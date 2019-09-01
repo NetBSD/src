@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.1 2019/08/13 14:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.2 2019/09/01 13:13:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -258,6 +258,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 	case IOC_NPF_CONN_LOOKUP:
 		error = npfctl_conn_lookup(npf, cmd, data);
+		break;
+	case IOC_NPF_TABLE_REPLACE:
+		error = npfctl_table_replace(npf, cmd, data);
 		break;
 	case IOC_NPF_VERSION:
 		*(int *)data = NPF_VERSION;

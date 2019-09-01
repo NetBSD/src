@@ -292,6 +292,7 @@ int		npfctl_save(npf_t *, u_long, void *);
 int		npfctl_load(npf_t *, u_long, void *);
 int		npfctl_rule(npf_t *, u_long, void *);
 int		npfctl_conn_lookup(npf_t *, u_long, void *);
+int		npfctl_table_replace(npf_t *, u_long, void *);
 int		npfctl_table(npf_t *, void *);
 
 void		npf_stats_inc(npf_t *, npf_stats_t);
@@ -379,7 +380,7 @@ npf_table_t *	npf_table_create(const char *, u_int, int, const void *, size_t);
 void		npf_table_destroy(npf_table_t *);
 
 u_int		npf_table_getid(npf_table_t *);
-int		npf_table_check(npf_tableset_t *, const char *, uint64_t, uint64_t);
+int		npf_table_check(npf_tableset_t *, const char *, uint64_t, uint64_t, bool);
 int		npf_table_insert(npf_table_t *, const int,
 		    const npf_addr_t *, const npf_netmask_t);
 int		npf_table_remove(npf_table_t *, const int,

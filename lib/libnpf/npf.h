@@ -146,6 +146,8 @@ int		npf_table_add_entry(nl_table_t *, int,
 int		npf_table_insert(nl_config_t *, nl_table_t *);
 void		npf_table_destroy(nl_table_t *);
 
+int		npf_table_replace(int, nl_table_t *, npf_error_t *);
+
 #ifdef _NPF_PRIVATE
 
 #include <ifaddrs.h>
