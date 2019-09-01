@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.33 2019/08/29 16:58:40 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.34 2019/09/01 14:22:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2307,4 +2307,337 @@ distrib/i386/ramdisks/common/Makefile.ramdisk	1.14
 
 	Set NOSANITIZER in i386 ramdisk image.
 	[kamil, ticket #121]
+
+Makefile					1.328-1.330
+distrib/sets/lists/base/md.amd64		1.279,1.280
+distrib/sets/lists/base/md.i386			1.153,1.154
+distrib/sets/lists/comp/md.amd64		1.272
+distrib/sets/lists/comp/md.i386			1.190
+external/bsd/Makefile				1.65
+external/bsd/compiler_rt/Makefile		1.2
+external/bsd/compiler_rt/lib/clang/Makefile	1.2
+external/bsd/compiler_rt/lib/clang/lib/Makefile	1.2,1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/Makefile 1.2,1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan_cxx-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan_cxx-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/safestack-m32/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/safestack-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/sources.mk 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/syms.mk 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan_cxx-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone_cxx-m64/Makefile 1.2
+external/bsd/compiler_rt/lib/clang/lib/netbsd/xray-m64/Makefile 1.2
+
+	Enhance MKSANITIZER support.
+	[kamil, ticket #122]
+
+share/mk/bsd.own.mk				1.1150
+
+	Do not install PIC libraries by default because they are too
+	big since they contain debug symbols.
+	[gson, ticket #124]
+
+Makefile					1.331
+common/lib/libc/gmon/mcount.c			1.14
+distrib/sets/lists/base/mi			1.1213
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan_cxx-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan_cxx-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan_cxx-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-m64/Makefile 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone_cxx-m64/Makefile 1.3
+external/bsd/fetch/lib/Makefile			1.12
+external/gpl2/lvm2/lvm2tools.mk			1.5
+lib/libc/gen/sysctlgetmibinfo.c			1.14
+share/mk/Makefile				1.51
+share/mk/bsd.lib.mk				1.380
+share/mk/bsd.prog.mk				1.323
+share/mk/bsd.sanitizer.mk			1.1
+tests/lib/libc/net/Makefile			1.12
+
+	Enhance the support of LLVM sanitizers.
+	[kamil, ticket #126]
+
+sys/netipsec/key.c				1.266
+
+	Fix info leaks.
+	[maxv, ticket #127]
+
+sys/dev/sysmon/sysmon_power.c			1.61
+
+	Fix info leak, not all of 'pev' is initialized.
+	[maxv, ticket #128]
+
+sys/kern/subr_pool.c				1.256,1.257
+
+	Kernel Heap Hardening: use bitmaps on all off-page pools.
+	Change the computation of the size of the PH pools, optimizing
+	space requirements.
+	Revert revision 1.254, it caused false positives.
+	[maxv, ticket #129]
+
+sys/netinet6/nd6.c				1.260
+
+	inet6: nd6_free assumes all routers are processed by kernel RA,
+	which has not been true for some time.
+	[roy, ticket #131]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.161
+sys/miscfs/procfs/procfs_vnops.c		1.207
+
+	Add missing operation VOP_GETPAGES() returning EFAULT.
+	[hannken, ticket #132]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.200,1.201
+sys/dev/pci/ixgbe/ixv.c				1.126,1.127
+sys/net/if_vlan.c				1.142-1.146
+
+	- Check ec_capenable instead of ec_capabilities to control TX side
+	  of VLAN HW tagging correctly.
+	- Add missing IFNET_LOCK() and IFNET_UNLOCK() in vlan_config().
+	- Fix a bug that VLAN HW "tagging" enable/disable may not reflect
+	  correctly.
+	- Use ETHER_LOCK()/ETHER_UNLOCK() instead of mutex_enter()/mutex_exit().
+	  No functional change.
+	- kmem_alloc(,KM_SLEEP) never return NULL, so remove NULL check.
+	- VLAN ID is never duplicated, so break the loop when found. Also
+	  move kmen_free() outside of ETHER_LOCK(ec)/ETHER_UNLOCK(ec) to
+	  reduce the hold time.
+	- Whitespace fix.
+	[msaitoh, ticket #133]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.202-1.204
+sys/dev/pci/ixgbe/ixv.c				1.128
+
+	- Detect QSFP support correctly for X550EM.
+	- An interrupt might not arrive when a module is inserted. When an
+	  link status change interrupt occurred and the driver still regard
+	  SFP as unplugged, link becomes up and the real media type is unknown.
+	  To resolve this problem, when an link status change interrupt
+	  occurred and the driver still regard SFP as unplugged, issue the
+	  module softint before issuing LSC interrupt.
+	- Simplify ix{gbe,v}_[un]register_vlan() API. No functional change.
+	[msaitoh, ticket #134]
+
+distrib/sets/lists/comp/mi			1.2279
+distrib/sets/lists/modules/mi			1.123
+share/man/man9/Makefile				1.438
+share/man/man9/usbnet.9				1.1-1.9
+sys/dev/ic/rndisreg.h				1.3
+sys/dev/usb/TODO				1.47-1.52
+sys/dev/usb/TODO.usbmp				1.15,1.16
+sys/dev/usb/files.usb				1.157-1.167
+sys/dev/usb/if_aue.c				1.155-1.161
+sys/dev/usb/if_auereg.h				1.30-1.32
+sys/dev/usb/if_axe.c				1.103-1.119
+sys/dev/usb/if_axen.c				1.51-1.53,1.55-1.67
+sys/dev/usb/if_axenreg.h			1.15
+sys/dev/usb/if_cdce.c				1.54-1.67
+sys/dev/usb/if_cue.c				1.85,1.86
+sys/dev/usb/if_cuereg.h				1.23
+sys/dev/usb/if_kue.c				1.97-1.100
+sys/dev/usb/if_kuereg.h				1.23,1.24
+sys/dev/usb/if_mue.c				1.51-1.55
+sys/dev/usb/if_muereg.h				1.6
+sys/dev/usb/if_muevar.h				1.9
+sys/dev/usb/if_smsc.c				1.46-1.61
+sys/dev/usb/if_smscreg.h			1.6
+sys/dev/usb/if_smscvar.h			delete
+sys/dev/usb/if_udav.c				1.60-1.71
+sys/dev/usb/if_udavreg.h			1.14,1.15
+sys/dev/usb/if_upl.c				1.65,1.66
+sys/dev/usb/if_ure.c				1.15-1.31
+sys/dev/usb/if_urevar.h				1.4,1.5
+sys/dev/usb/if_url.c				1.67-1.70
+sys/dev/usb/if_urlreg.h				1.14
+sys/dev/usb/if_urndis.c				1.22-1.33
+sys/dev/usb/if_urtwn.c				1.72
+sys/dev/usb/ohci.c				1.290
+sys/dev/usb/uhub.c				1.143
+sys/dev/usb/usb.c				1.180
+sys/dev/usb/usb.h				1.118
+sys/dev/usb/usb_mem.c				1.71
+sys/dev/usb/usb_subr.c				1.238,1.239
+sys/dev/usb/usbdi.c				1.183,1.186
+sys/dev/usb/usbdi.h				1.97
+sys/dev/usb/usbdi_util.c			1.75
+sys/dev/usb/usbhist.h				1.5,1.6
+sys/dev/usb/usbnet.c				1.1-1.24
+sys/dev/usb/usbnet.h				1.1-1.14
+sys/dev/usb/usbroothub.c			1.9
+sys/dev/usb/xhci.c				1.109,1.110
+sys/modules/Makefile				1.223
+sys/modules/usbnet/Makefile			1.1
+
+	usbnet(9): Add common framework for USB network devices.
+	This bring various safety fixes to all updated drivers,
+	and includes locking clean up, detach safety when being
+	used or not, separate rx/tx locks to improve performance,
+	porting to NET_MPSAFE, many edge/error case bugs in
+	drivers fixed, as well as resovling PRs 54303 and 54308.
+	These drivers are converted: axe(4), axen(4), aue(4),
+	cdce(4), cue(4), kue(4), mue(4), smsc(4), udav(4),
+	upl(4), ure(4), url(4), and urndis(4).
+	[mrg, ticket #135]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.205,1.206
+
+	ixg(4): make it work on single CPU systems.
+	[knakahara, ticket #136]
+
+external/gpl3/gcc/dist/gcc/dse.c		1.10
+external/gpl3/gcc/dist/gcc/reload.c		1.8
+
+	Do not keep our local modifications as ifdef __NetBSD__.
+	When we build netbsd on another OS, we produce a cross compiler without
+	these definitions.
+	[maya, ticket #137]
+
+lib/libnpf/libnpf.3				1.10
+lib/libnpf/npf.c				1.47
+lib/libnpf/npf.h				1.37
+sys/net/npf/npf.h				1.61
+sys/net/npf/npf_ctl.c				1.56
+sys/net/npf/npf_impl.h				1.77
+sys/net/npf/npf_os.c				1.15
+sys/net/npf/npf_tableset.c			1.34
+usr.sbin/npf/npfctl/npfctl.c			1.61
+usr.sbin/npf/npftest/libnpftest/npf_mbuf_subr.c	1.10
+usr.sbin/npf/npftest/libnpftest/npf_nbuf_test.c	1.10
+
+	- npftest: fix a memleak in a unit test (standalone path only).
+	- Minor style fixes.  No functional change.
+	- npfkern/libnpf: Add support for the table replace/swap operation.
+	[rmind, ticket #139]
+
+external/bsd/libnv/lib/Makefile			1.3
+external/bsd/libnv/lib/srcs.mk			1.1
+lib/libnpf/Makefile				1.11,1.12
+lib/npf/mod.mk					1.8
+libexec/identd/Makefile				1.18
+usr.sbin/npf/npfctl/Makefile			1.14
+usr.sbin/npf/npfd/Makefile			1.7
+
+	libnpf fix: link the library itself to libnv; libnpf users should
+	not be expected to assume this dependency.
+	Move common parts into a makefile fragment usable from elsewhere.
+	Include libnv directly into this library
+	[rmind, ticket #140]
+
+sys/net/npf/npf.c				1.41
+sys/net/npf/npf.h				1.62
+sys/net/npf/npf_alg.c				1.21
+sys/net/npf/npf_conf.c				1.15
+sys/net/npf/npf_ctl.c				1.57
+sys/net/npf/npf_ctl.c				1.58
+sys/net/npf/npf_handler.c			1.48
+sys/net/npf/npf_ifaddr.c			1.6
+sys/net/npf/npf_impl.h				1.78,1.79
+sys/net/npf/npf_nat.c				1.48
+sys/net/npf/npf_os.c				1.16
+sys/net/npf/npf_os.c				1.17
+sys/sys/mbuf.h					1.220
+usr.sbin/npf/npfctl/npf_bpf_comp.c		1.15
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.19
+
+	- npfctl_load_nvlist: simplify the config loading logic.
+	- Fix a small race condition in npf_nat_getaddr().
+	- Rework pserialize/EBR wrappers, make it easier to maintain.
+	- Move PACKET_TAG_NPF where it belongs to.
+	- Make npfctl_switch() and pfil private to OS-specific module.
+	[rmind, ticket #141]
+
+sys/stand/efiboot/efifdt.c			1.19
+
+	Only set #address-cells and #size-cells properties on /chosen if we are
+	fabricating a devicetree (ACPI mode). Fixes PR# 54494.
+	[jmcneill, ticket #142]
+
+sys/arch/x86/pci/if_vmx.c			1.49
+
+	vmx(4): fix statistics counters.
+	[knakahara, ticket #143]
+
+sys/dev/mii/etphy.c				1.5,1.6
+sys/dev/mii/miidevs				1.154
+
+	- Rename ET1011 to ET1011C
+	- Support ET1011 to etphy(4)
+	- Use mii_phy_flowstatus() in etphy(4) to reflect flow status from
+	  negotiated result
+	- KNF
+	[msaitoh, ticket #144]
+
+sys/arch/sparc/include/ctlreg.h			1.30
+sys/dev/pci/if_xgereg.h				1.3
+
+	Add missing NUL to prevent buffer overrun.
+	[msaitoh, ticket #145]
+
+sys/arch/arm/conf/Makefile.arm			1.50
+sys/dev/usb/if_axe.c				1.120
+
+	Workaround for alignment faults on ARMv6+, at least occur with
+	axe(4) and athn(4) drivers.
+	PR kern/54486
+	Revert workaround introduced in rev 1.94.
+	[rin, ticket #146]
+
+sys/netinet/if_arp.c				1.285,1.286
+
+	ARP: remove unused sysctl entry log_unknown_network
+	ARP: change default sysctl entry log_movements to 0.
+	[roy, ticket #147]
+
+sys/netinet6/nd6.c				1.261
+
+	inet6: do not set an invalid lladdr in nd6_free().
+	[roy, ticket #148]
+
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/asan_cxx-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/msan_cxx-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/syms.mk 1.3
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/tsan_cxx-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_minimal-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone-m64/Makefile 1.4
+external/bsd/compiler_rt/lib/clang/lib/netbsd/ubsan_standalone_cxx-m64/Makefile 1.4
+
+	Register syms.extra in LLVM sanitizer .syms files.
+	[kamil, ticket #149]
+
+sbin/route/route.c				1.162
+
+	route(8): show addrs for RTM_MISS.
+	[roy, ticket #150]
+
+external/gpl3/gdb/dist/gdb/arm-nbsd-nat.c	1.12
+
+	Restore the kvm support.
+	[skrll, ticket #151]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86AutoConfig.c 1.14,1.15
+
+	Match wsfb on x86, too.
+	Try modesetting on x86, too.
+	[maya, ticket #152]
+
+share/man/man1/cd.1				1.9,1.10
+
+	Direct reader to shell documentation generally, rather than csh(1)
+	specifically. Mention variables OLDPWD and PWD.
+	Move the text that explains that cd(1) is a shell built-in to the very
+	beginning of the description where it can be seen prominently.
+	Improve formatting.
+	[sevan, ticket #153]
 
