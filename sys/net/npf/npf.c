@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.2 2019/08/13 14:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.3 2019/09/01 13:21:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,7 +72,7 @@ npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 	npf_t *npf;
 
 	npf = kmem_zalloc(sizeof(npf_t), KM_SLEEP);
-	npf->qsbr = pserialize_create();
+	npf->ebr = npf_ebr_create();
 	npf->stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf->mbufops = mbufops;
 
@@ -111,7 +111,7 @@ npfk_destroy(npf_t *npf)
 	npf_state_sysfini(npf);
 	npf_param_fini(npf);
 
-	pserialize_destroy(npf->qsbr);
+	npf_ebr_destroy(npf->ebr);
 	percpu_free(npf->stats_percpu, NPF_STATS_SIZE);
 	kmem_free(npf, sizeof(npf_t));
 }
@@ -131,14 +131,14 @@ npfk_gc(npf_t *npf)
 __dso_public void
 npfk_thread_register(npf_t *npf)
 {
-	pserialize_register(npf->qsbr);
+	npf_ebr_register(npf->ebr);
 }
 
 __dso_public void
 npfk_thread_unregister(npf_t *npf)
 {
-	pserialize_perform(npf->qsbr);
-	pserialize_unregister(npf->qsbr);
+	npf_ebr_full_sync(npf->ebr);
+	npf_ebr_unregister(npf->ebr);
 }
 
 void

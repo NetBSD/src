@@ -67,7 +67,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.46.2.1 2019/08/13 14:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.46.2.2 2019/09/01 13:21:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -381,19 +381,20 @@ npf_nat_which(const unsigned type, bool forw)
 static npf_natpolicy_t *
 npf_nat_inspect(npf_cache_t *npc, const int di)
 {
-	int slock = npf_config_read_enter();
-	npf_ruleset_t *rlset = npf_config_natset(npc->npc_ctx);
+	npf_t *npf = npc->npc_ctx;
+	int slock = npf_config_read_enter(npf);
+	npf_ruleset_t *rlset = npf_config_natset(npf);
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
 	rl = npf_ruleset_inspect(npc, rlset, di, NPF_LAYER_3);
 	if (rl == NULL) {
-		npf_config_read_exit(slock);
+		npf_config_read_exit(npf, slock);
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);
 	atomic_inc_uint(&np->n_refcnt);
-	npf_config_read_exit(slock);
+	npf_config_read_exit(npf, slock);
 	return np;
 }
 
@@ -444,6 +445,7 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_conn_t *con)
 {
 	const int proto = npc->npc_proto;
 	const unsigned alen = npc->npc_alen;
+	npf_t *npf = npc->npc_ctx;
 	npf_addr_t *taddr;
 	npf_nat_t *nt;
 
@@ -455,7 +457,7 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_conn_t *con)
 	if (__predict_false(!nt)) {
 		return NULL;
 	}
-	npf_stats_inc(npc->npc_ctx, NPF_STAT_NAT_CREATE);
+	npf_stats_inc(npf, NPF_STAT_NAT_CREATE);
 	nt->nt_natpolicy = np;
 	nt->nt_conn = con;
 	nt->nt_alg = NULL;
@@ -464,12 +466,16 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_conn_t *con)
 	 * Select the translation address.
 	 */
 	if (np->n_flags & NPF_NAT_USETABLE) {
+		int slock = npf_config_read_enter(npf);
 		taddr = npf_nat_getaddr(npc, np, alen);
 		if (__predict_false(!taddr)) {
+			npf_config_read_exit(npf, slock);
 			pool_cache_put(nat_cache, nt);
 			return NULL;
 		}
 		memcpy(&nt->nt_taddr, taddr, alen);
+		npf_config_read_exit(npf, slock);
+
 	} else if (np->n_algo == NPF_ALGO_NETMAP) {
 		const unsigned which = npf_nat_which(np->n_type, true);
 		npf_nat_algo_netmap(npc, np, which, &nt->nt_taddr);

@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.46.2.1 2019/08/13 14:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.46.2.2 2019/09/01 13:21:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,13 +193,13 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
-	int slock = npf_config_read_enter();
+	int slock = npf_config_read_enter(npf);
 	npf_ruleset_t *rlset = npf_config_ruleset(npf);
 
 	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
 	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass(npf);
-		npf_config_read_exit(slock);
+		npf_config_read_exit(npf, slock);
 
 		if (pass) {
 			npf_stats_inc(npf, NPF_STAT_PASS_DEFAULT);
@@ -218,7 +218,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* Conclude with the rule and release the lock. */
 	error = npf_rule_conclude(rl, &mi);
-	npf_config_read_exit(slock);
+	npf_config_read_exit(npf, slock);
 
 	if (error) {
 		npf_stats_inc(npf, NPF_STAT_BLOCK_RULESET);
@@ -246,6 +246,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 pass:
 	decision = NPF_DECISION_PASS;
 	KASSERT(error == 0);
+
 	/*
 	 * Perform NAT.
 	 */
