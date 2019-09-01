@@ -1595,7 +1595,7 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	      if (hdr->sh_link == (SHN_LORESERVE & 0xffff) /* SHN_BEFORE */
 		  || hdr->sh_link == ((SHN_LORESERVE + 1) & 0xffff) /* SHN_AFTER */)
 		break;
-	      /* Otherwise fall through.  */
+	      /* Fall through.  */
 	    default:
 	      return FALSE;
 	    }

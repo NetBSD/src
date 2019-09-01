@@ -961,10 +961,12 @@ srec_write_record (bfd *abfd,
     case 7:
       TOHEX (dst, (address >> 24), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 8:
     case 2:
       TOHEX (dst, (address >> 16), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 9:
     case 1:
     case 0:
