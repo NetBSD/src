@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.141.2.1 2019/09/01 11:07:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141 2019/07/17 03:26:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141.2.1 2019/09/01 11:07:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -485,34 +485,27 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			}
 			error = 0;
 		}
-		/*
-		 * Add a vid to the list even if it's not enabled in case
-		 * it's enabled later.
-		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWFILTER) {
-			vidmem = kmem_alloc(sizeof(struct vlanid_list),
-			    KM_SLEEP);
-			if (vidmem == NULL){
+		/* Add a vid to the list */
+		vidmem = kmem_alloc(sizeof(struct vlanid_list), KM_SLEEP);
+		vidmem->vid = vid;
+		ETHER_LOCK(ec);
+		SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
+		ETHER_UNLOCK(ec);
+
+		if (ec->ec_vlan_cb != NULL) {
+			/*
+			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
+			 * HW tagging function.
+			 */
+			error = (*ec->ec_vlan_cb)(ec, vid, true);
+			if (error) {
 				ec->ec_nvlans--;
-				if (ec->ec_nvlans == 0)
+				if (ec->ec_nvlans == 0) {
+					IFNET_LOCK(p);
 					(void)ether_disable_vlan_mtu(p);
-				error = ENOMEM;
-				goto done;
-			}
-			vidmem->vid = vid;
-			mutex_enter(ec->ec_lock);
-			SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
-			mutex_exit(ec->ec_lock);
-		}
-		if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
-			if (ec->ec_vlan_cb != NULL) {
-				error = (*ec->ec_vlan_cb)(ec, vid, true);
-				if (error) {
-					ec->ec_nvlans--;
-					if (ec->ec_nvlans == 0)
-						(void)ether_disable_vlan_mtu(p);
-					goto done;
+					IFNET_UNLOCK(p);
 				}
+				goto done;
 			}
 		}
 		/*
@@ -640,20 +633,28 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
-		struct vlanid_list *vlanidp, *tmpp;
+		struct vlanid_list *vlanidp;
 		uint16_t vid = EVL_VLANOFTAG(nmib->ifvm_tag);
 
-		mutex_enter(ec->ec_lock);
-		SIMPLEQ_FOREACH_SAFE(vlanidp, &ec->ec_vids, vid_list, tmpp) {
+		ETHER_LOCK(ec);
+		SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
 			if (vlanidp->vid == vid) {
 				SIMPLEQ_REMOVE(&ec->ec_vids, vlanidp,
 				    vlanid_list, vid_list);
-				kmem_free(vlanidp, sizeof(*vlanidp));
+				break;
 			}
 		}
-		mutex_exit(ec->ec_lock);
-		if (ec->ec_vlan_cb != NULL)
+		ETHER_UNLOCK(ec);
+		if (vlanidp != NULL)
+			kmem_free(vlanidp, sizeof(*vlanidp));
+
+		if (ec->ec_vlan_cb != NULL) {
+			/*
+			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
+			 * HW tagging function.
+			 */
 			(void)(*ec->ec_vlan_cb)(ec, vid, false);
+		}
 		if (--ec->ec_nvlans == 0) {
 			IFNET_LOCK(p);
 			(void)ether_disable_vlan_mtu(p);
@@ -1035,7 +1036,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = ENOENT;
 			break;
 		}
-		
+
 		error = vlan_config(ifv, pr, vlr.vlr_tag);
 		if (error != 0)
 			break;
@@ -1373,7 +1374,7 @@ vlan_start(struct ifnet *ifp)
 		 * If the parent can insert the tag itself, just mark
 		 * the tag in the mbuf header.
 		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+		if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
 			vlan_set_tag(m, mib->ifvm_tag);
 		} else {
 			/*
@@ -1491,7 +1492,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	 * If the parent can insert the tag itself, just mark
 	 * the tag in the mbuf header.
 	 */
-	if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+	if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
 		vlan_set_tag(m, mib->ifvm_tag);
 	} else {
 		/*
