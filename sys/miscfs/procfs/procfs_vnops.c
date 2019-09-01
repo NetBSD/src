@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.206 2019/03/30 23:28:30 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.206.4.1 2019/09/01 11:02:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.206 2019/03/30 23:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.206.4.1 2019/09/01 11:02:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ int	procfs_pathconf(void *);
 #define	procfs_islocked	genfs_islocked
 #define	procfs_advlock	genfs_einval
 #define	procfs_bwrite	genfs_eopnotsupp
+int	procfs_getpages(void *);
 #define procfs_putpages	genfs_null_putpages
 
 static int atoi(const char *, size_t);
@@ -291,6 +292,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, procfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, procfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, procfs_advlock },		/* advlock */
+	{ &vop_getpages_desc, procfs_getpages },	/* getpages */
 	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
@@ -1717,6 +1719,26 @@ procfs_readlink(void *v)
 	if (path)
 		free(path, M_TEMP);
 	return error;
+}
+
+int
+procfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_flags & PGO_LOCKED) == 0)
+		mutex_exit(ap->a_vp->v_interlock);
+
+	return (EFAULT);
 }
 
 /*
