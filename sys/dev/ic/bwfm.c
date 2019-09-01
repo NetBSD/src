@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.14 2018/09/02 19:46:53 maya Exp $ */
+/* $NetBSD: bwfm.c,v 1.15 2019/09/01 05:40:39 mlelstv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -114,7 +114,8 @@ void	 bwfm_scan(struct bwfm_softc *);
 void	 bwfm_connect(struct bwfm_softc *);
 
 void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
-void	 bwfm_rx_event(struct bwfm_softc *, char *, size_t);
+void	 bwfm_rx_event(struct bwfm_softc *, struct mbuf *);
+void	 bwfm_rx_event_cb(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_scan_node(struct bwfm_softc *, struct bwfm_bss_info *, size_t);
 
 uint8_t bwfm_2ghz_channels[] = {
@@ -142,7 +143,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	int i, j, error;
 
 	error = workqueue_create(&sc->sc_taskq, DEVNAME(sc),
-	    bwfm_task, sc, PRI_NONE, IPL_NET, 0);
+	    bwfm_task, sc, PRI_NONE, IPL_NET, WQ_MPSAFE);
 	if (error != 0) {
 		printf("%s: could not create workqueue\n", DEVNAME(sc));
 		return;
@@ -304,9 +305,6 @@ bwfm_start(struct ifnet *ifp)
 	/* TODO: return if no link? */
 
 	for (;;) {
-		struct ieee80211_node *ni;
-		struct ether_header *eh;
-
 		/* Discard management packets (fw handles this for us) */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
@@ -323,36 +321,19 @@ bwfm_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		eh = mtod(m, struct ether_header *);
-		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
-		if (ni == NULL) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
-
-		if (ieee80211_classify(ic, m, ni) != 0) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			ieee80211_free_node(ni);
-			continue;
-		}
-
 		error = sc->sc_bus_ops->bs_txdata(sc, &m);
 		if (error == ENOBUFS) {
 			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-
 		if (error != 0) {
 			ifp->if_oerrors++;
 			m_freem(m);
-			if (ni != NULL)
-				ieee80211_free_node(ni);
-		} else {
-			bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
+			continue;
 		}
+
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 }
 
@@ -769,6 +750,9 @@ bwfm_task(struct work *wk, void *arg)
 		break;
 	case BWFM_TASK_KEY_DELETE:
 		bwfm_key_delete_cb(sc, &t->t_key);
+		break;
+	case BWFM_TASK_RX_EVENT:
+		bwfm_rx_event_cb(sc, t->t_mbuf);
 		break;
 	default:
 		panic("bwfm: unknown task command %d", t->t_cmd);
@@ -1261,6 +1245,52 @@ bwfm_chip_cm3_set_passive(struct bwfm_softc *sc)
 	}
 }
 
+int
+bwfm_chip_sr_capable(struct bwfm_softc *sc)
+{
+	struct bwfm_core *core;
+	uint32_t reg;
+
+	if (sc->sc_chip.ch_pmurev < 17)
+		return 0;
+
+	switch (sc->sc_chip.ch_chip) {
+	case BRCM_CC_4345_CHIP_ID:
+	case BRCM_CC_4354_CHIP_ID:
+	case BRCM_CC_4356_CHIP_ID:
+		core = bwfm_chip_get_pmu(sc);
+		sc->sc_buscore_ops->bc_write(sc, core->co_base +
+		    BWFM_CHIP_REG_CHIPCONTROL_ADDR, 3);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_CHIPCONTROL_DATA);
+		return (reg & (1 << 2)) != 0;
+	case BRCM_CC_43241_CHIP_ID:
+	case BRCM_CC_4335_CHIP_ID:
+	case BRCM_CC_4339_CHIP_ID:
+		core = bwfm_chip_get_pmu(sc);
+		sc->sc_buscore_ops->bc_write(sc, core->co_base +
+		    BWFM_CHIP_REG_CHIPCONTROL_ADDR, 3);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_CHIPCONTROL_DATA);
+		return reg != 0;
+	case BRCM_CC_43430_CHIP_ID:
+		core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_CHIPCOMMON);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_SR_CONTROL1);
+		return reg != 0;
+	default:
+		core = bwfm_chip_get_pmu(sc);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_PMUCAPABILITIES_EXT);
+		if ((reg & BWFM_CHIP_REG_PMUCAPABILITIES_SR_SUPP) == 0)
+			return 0;
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_RETENTION_CTL);
+		return (reg & (BWFM_CHIP_REG_RETENTION_CTL_MACPHY_DIS |
+		               BWFM_CHIP_REG_RETENTION_CTL_LOGIC_DIS)) == 0;
+	}
+}
+
 /* RAM size helpers */
 void
 bwfm_chip_socram_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
@@ -1455,8 +1485,6 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 	}
 
 	if (buf) {
-		if (size > *len)
-			size = *len;
 		if (size < *len)
 			*len = size;
 		memcpy(buf, dcmd->buf, *len);
@@ -1772,39 +1800,59 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
 	    ntohs(e->hdr.usr_subtype) == BWFM_BRCM_SUBTYPE_EVENT) {
-		bwfm_rx_event(sc, mtod(m, char *), m->m_len);
-		m_freem(m);
+		bwfm_rx_event(sc, m);
+		// m_freem(m);
 		return;
 	}
 
 	s = splnet();
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+	//if ((ifp->if_flags & IFF_RUNNING) != 0) {
 		m_set_rcvif(m, ifp);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-	}
+	//}
 
 	splx(s);
 }
 
 void
-bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
+bwfm_rx_event(struct bwfm_softc *sc, struct mbuf *m)
+{
+	struct bwfm_task *t;
+
+	t = pcq_get(sc->sc_freetask);
+	if (t == NULL) {
+		m_freem(m);
+		printf("%s: no free tasks\n", DEVNAME(sc));
+		return;
+	}
+
+	t->t_cmd = BWFM_TASK_RX_EVENT;
+	t->t_mbuf = m;
+	workqueue_enqueue(sc->sc_taskq, (struct work*)t, NULL);
+}
+
+void
+bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct bwfm_event *e = (void *)buf;
+	struct bwfm_event *e = mtod(m, void *);
+	size_t len = m->m_len;
 	int s;
 
-	DPRINTF(("%s: buf %p len %lu datalen %u code %u status %u"
-	    " reason %u\n", __func__, buf, len, ntohl(e->msg.datalen),
+	DPRINTF(("%s: event %p len %lu datalen %u code %u status %u"
+	    " reason %u\n", __func__, e, len, ntohl(e->msg.datalen),
 	    ntohl(e->msg.event_type), ntohl(e->msg.status),
 	    ntohl(e->msg.reason)));
 
-	if (ntohl(e->msg.event_type) >= BWFM_E_LAST)
+	if (ntohl(e->msg.event_type) >= BWFM_E_LAST) {
+		m_freem(m);
 		return;
+	}
 
 	switch (ntohl(e->msg.event_type)) {
 	case BWFM_E_ESCAN_RESULT: {
-		struct bwfm_escan_results *res = (void *)(buf + sizeof(*e));
+		struct bwfm_escan_results *res = (void *)&e[1];
 		struct bwfm_bss_info *bss;
 		int i;
 		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL) {
@@ -1817,11 +1865,13 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 		}
 		len -= sizeof(*e);
 		if (len < sizeof(*res) || len < le32toh(res->buflen)) {
+			m_freem(m);
 			printf("%s: results too small\n", DEVNAME(sc));
 			return;
 		}
 		len -= sizeof(*res);
 		if (len < le16toh(res->bss_count) * sizeof(struct bwfm_bss_info)) {
+			m_freem(m);
 			printf("%s: results too small\n", DEVNAME(sc));
 			return;
 		}
@@ -1874,6 +1924,8 @@ bwfm_rx_event(struct bwfm_softc *sc, char *buf, size_t len)
 	default:
 		break;
 	}
+
+	m_freem(m);
 }
 
 void
