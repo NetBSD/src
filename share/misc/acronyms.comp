@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.286 2019/08/30 15:43:52 sevan Exp $
+$NetBSD: acronyms.comp,v 1.287 2019/09/01 21:55:13 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -605,6 +605,7 @@ GCM	Galois counter mode
 GCR	group-coded recording
 GDI	Graphics Device Interface
 GDT	global descriptor table
+GECOS	general comprehensive operating supervisor
 GEM	graphics environment manager
 GEM	graphics execution manager
 GENA	general event notification architecture
