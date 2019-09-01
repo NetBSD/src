@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.2 2019/09/01 11:12:45 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.3 2019/09/01 13:08:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -6467,7 +6467,9 @@ ixgbe_allocate_legacy(struct adapter *adapter,
 	int		counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t intr_type, max_type;
 	char		intrbuf[PCI_INTRSTR_LEN];
+	char		wqname[MAXCOMLEN];
 	const char	*intrstr = NULL;
+	int defertx_error = 0, error;
 
 	/* We allocate a single interrupt resource */
 	max_type = PCI_INTR_TYPE_MSI;
@@ -6529,15 +6531,27 @@ alloc_retry:
 	 * Try allocating a fast interrupt and the associated deferred
 	 * processing contexts.
 	 */
-	if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
+	if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 		txr->txr_si =
 		    softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
 			ixgbe_deferred_mq_start, txr);
+
+		snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
+		defertx_error = workqueue_create(&adapter->txr_wq, wqname,
+		    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI,
+		    IPL_NET, IXGBE_WORKQUEUE_FLAGS);
+		adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
+	}
 	que->que_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
 	    ixgbe_handle_que, que);
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
+	error = workqueue_create(&adapter->que_wq, wqname,
+	    ixgbe_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
 
 	if ((!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)
-		& (txr->txr_si == NULL)) || (que->que_si == NULL)) {
+		&& ((txr->txr_si == NULL) || defertx_error != 0))
+	    || (que->que_si == NULL) || error != 0) {
 		aprint_error_dev(dev,
 		    "could not establish software interrupts\n");
 
