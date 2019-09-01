@@ -253,8 +253,9 @@ bool		npf_autounload_p(void);
 #define	NPF_LAYER_2			2
 #define	NPF_LAYER_3			3
 
-/* XXX mbuf.h: just for now. */
-#define	PACKET_TAG_NPF			10
+/*
+ * Flags passed via nbuf tags.
+ */
 #define	NPF_NTAG_PASS			0x0001
 
 /*

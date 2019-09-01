@@ -32,14 +32,14 @@
  *
  * Overview
  *
- *	Each NPF rule is compiled into BPF micro-program.  There is a
+ *	Each NPF rule is compiled into a BPF micro-program.  There is a
  *	BPF byte-code fragment for each higher-level filtering logic,
  *	e.g. to match L4 protocol, IP/mask, etc.  The generation process
  *	combines multiple BPF-byte code fragments into one program.
  *
  * Basic case
  *
- *	Consider a basic case, where all filters should match.  They
+ *	Consider a basic case where all filters should match.  They
  *	are expressed as logical conjunction, e.g.:
  *
  *		A and B and C and D
@@ -56,8 +56,8 @@
  *	Once all byte-code fragments are combined into one, then there
  *	are two additional steps:
  *
- *	- Two instructions are appended at the end of the program: return
- *	"success" followed by return "failure".
+ *	- Two instructions are appended at the end of the program: "return
+ *	success" followed by "return failure".
  *
  *	- All jumps with the JUMP_MAGIC value are patched to point to the
  *	"return failure" instruction.
@@ -65,11 +65,11 @@
  *	Therefore, if all filter criteria will match, then the first
  *	instruction will be reached, indicating a successful match of the
  *	rule.  Otherwise, if any of the criteria will not match, it will
- *	take the failure path and the rule will not matching.
+ *	take the failure path and the rule will not be matching.
  *
  * Grouping
  *
- *	Filters can have groups, which are have a meaning of logical
+ *	Filters can have groups, which have a meaning of logical
  *	disjunction, e.g.:
  *
  *		A and B and (C or D)
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.13.2.1 2019/08/11 10:10:23 martin Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.13.2.2 2019/09/01 13:21:39 martin Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>

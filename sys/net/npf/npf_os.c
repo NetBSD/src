@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.2 2019/09/01 13:13:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.3 2019/09/01 13:21:39 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.2 2019/09/01 13:13:14 martin Exp $
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/pserialize.h>
 #include <sys/socketvar.h>
 #include <sys/uio.h>
 
@@ -82,6 +83,9 @@ MODULE(MODULE_CLASS_MISC, npf, "bpf");
 /* This module autoloads via /dev/npf so it needs to be a driver */
 MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
 #endif
+
+static int	npf_pfil_register(bool);
+static void	npf_pfil_unregister(bool);
 
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
 static int	npf_dev_close(dev_t, int, int, lwp_t *);
@@ -225,6 +229,26 @@ npf_stats_export(npf_t *npf, void *data)
 	return error;
 }
 
+/*
+ * npfctl_switch: enable or disable packet inspection.
+ */
+static int
+npfctl_switch(void *data)
+{
+	const bool onoff = *(int *)data ? true : false;
+	int error;
+
+	if (onoff) {
+		/* Enable: add pfil hooks. */
+		error = npf_pfil_register(false);
+	} else {
+		/* Disable: remove pfil hooks. */
+		npf_pfil_unregister(false);
+		error = 0;
+	}
+	return error;
+}
+
 static int
 npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
@@ -289,7 +313,7 @@ bool
 npf_autounload_p(void)
 {
 	npf_t *npf = npf_getkernctx();
-	return !npf_pfil_registered_p() && npf_default_pass(npf);
+	return !npf_active_p() && npf_default_pass(npf);
 }
 
 /*
@@ -393,7 +417,7 @@ npf_ifaddrhook(void *arg, u_long cmd, void *arg2)
 /*
  * npf_pfil_register: register pfil(9) hooks.
  */
-int
+static int
 npf_pfil_register(bool init)
 {
 	npf_t *npf = npf_getkernctx();
@@ -462,7 +486,7 @@ out:
 /*
  * npf_pfil_unregister: unregister pfil(9) hooks.
  */
-void
+static void
 npf_pfil_unregister(bool fini)
 {
 	npf_t *npf = npf_getkernctx();
@@ -489,8 +513,64 @@ npf_pfil_unregister(bool fini)
 }
 
 bool
-npf_pfil_registered_p(void)
+npf_active_p(void)
 {
 	return pfil_registered;
 }
+
+#endif
+
+#ifdef __NetBSD__
+
+ebr_t *
+npf_ebr_create(void)
+{
+	return pserialize_create();
+}
+
+void
+npf_ebr_destroy(ebr_t *ebr)
+{
+	pserialize_destroy(ebr);
+}
+
+void
+npf_ebr_register(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+}
+
+void
+npf_ebr_unregister(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+}
+
+int
+npf_ebr_enter(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	return pserialize_read_enter();
+}
+
+void
+npf_ebr_exit(ebr_t *ebr, int s)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	pserialize_read_exit(s);
+}
+
+void
+npf_ebr_full_sync(ebr_t *ebr)
+{
+	pserialize_perform(ebr);
+}
+
+bool
+npf_ebr_incrit_p(ebr_t *ebr)
+{
+	KASSERT(ebr != NULL); (void)ebr;
+	return pserialize_in_read_section();
+}
+
 #endif
