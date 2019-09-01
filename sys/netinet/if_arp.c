@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.282.2.1 2019/08/26 13:42:36 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.282.2.2 2019/09/01 14:04:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.1 2019/08/26 13:42:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.2 2019/09/01 14:04:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -209,10 +209,9 @@ static struct ifnet *myip_ifp = NULL;
 
 static int arp_drainwanted;
 
-static int log_movements = 1;
+static int log_movements = 0;
 static int log_permanent_modify = 1;
 static int log_wrong_iface = 1;
-static int log_unknown_network = 1;
 
 DOMAIN_DEFINE(arpdomain);	/* forward declare and add to link set */
 
@@ -2067,13 +2066,6 @@ sysctl_net_inet_arp_setup(struct sysctllog **clog)
 			SYSCTL_DESCR("log ARP packets arriving on the wrong"
 			    " interface"),
 			NULL, 0, &log_wrong_iface, 0,
-			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "log_unknown_network",
-			SYSCTL_DESCR("log ARP packets from non-local network"),
-			NULL, 0, &log_unknown_network, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
