@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.1 2019/08/21 14:34:56 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.2 2019/09/01 13:00:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.1 2019/08/21 14:34:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.2 2019/09/01 13:00:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -753,6 +753,8 @@ xhci_hc_reset(struct xhci_softc * const sc)
 static void
 xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 {
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
 	/* XXX Cache this lot */
 
 	const uint32_t w0 = xhci_read_4(sc, ecp);
@@ -776,11 +778,12 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	case 0x0200:
 	case 0x0300:
 	case 0x0301:
+	case 0x0310:
 		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
 		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
 		break;
 	default:
-		aprint_debug_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
+		aprint_error_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
 		    major, minor);
 		return;
 	}
