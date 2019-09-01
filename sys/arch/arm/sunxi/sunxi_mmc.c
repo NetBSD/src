@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.34 2019/09/01 11:44:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.34 2019/09/01 11:44:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -620,7 +620,7 @@ sunxi_mmc_intr(void *priv)
 
 	if ((rint & ~SUNXI_MMC_INT_SDIO_INT) != 0) {
 		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
-		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~SUNXI_MMC_INT_SDIO_INT);
+		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & SUNXI_MMC_INT_SDIO_INT);
 		sc->sc_intr_rint |= (rint & ~SUNXI_MMC_INT_SDIO_INT);
 		cv_broadcast(&sc->sc_intr_cv);
 	}
