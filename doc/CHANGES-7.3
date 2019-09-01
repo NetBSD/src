@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.58 2019/08/29 16:14:07 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.59 2019/09/01 10:03:09 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -632,4 +632,14 @@ sys/miscfs/procfs/procfs_vnops.c		1.207
 
 	Add missing operation VOP_GETPAGES() returning EFAULT.
 	[hannken, ticket #1703]
+
+external/gpl3/gdb/dist/bfd/coffgen.c		(apply patch)
+external/gpl3/gdb/dist/bfd/elf.c		(apply patch)
+external/gpl3/gdb/dist/bfd/elflink.c		(apply patch)
+external/gpl3/gdb/dist/bfd/reloc.c		(apply patch)
+external/gpl3/gdb/dist/bfd/srec.c		(apply patch)
+
+	Cherry-pick fixes for newer compilers from -current, avoiding
+	fall-through warnings.
+	[mrg, ticket #1704]
 
