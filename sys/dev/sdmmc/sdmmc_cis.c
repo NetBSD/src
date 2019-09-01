@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.6 2019/09/01 05:45:42 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.6 2019/09/01 05:45:42 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -130,6 +130,7 @@ decode_funce_function(struct sdmmc_function *sf, struct sdmmc_cis *cis,
 	max_blk_size = sdmmc_io_read_1(sf0, reg + 11);
 	max_blk_size |= sdmmc_io_read_1(sf0, reg + 12) << 8;
 
+device_printf(dev, "MAX_BLK_SIZE%d = %d\n", sf->number, max_blk_size);
 	DPRINTF(("CISTPL_FUNCE: MAX_BLK_SIZE=0x%x\n", max_blk_size));
 }
 
@@ -256,6 +257,11 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 
 		case PCMCIA_CISTPL_VERS_1:
 			decode_vers_1(sf, cis, tpllen, reg);
+			reg += tpllen;
+			break;
+
+		case PCMCIA_CISTPL_SDIO:
+			aprint_normal_dev(dev, "SDIO function\n");
 			reg += tpllen;
 			break;
 

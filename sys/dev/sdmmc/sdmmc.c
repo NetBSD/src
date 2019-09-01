@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.36 2018/11/06 16:01:38 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.37 2019/09/01 05:45:42 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.36 2018/11/06 16:01:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.37 2019/09/01 05:45:42 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -656,6 +656,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
 	sf->width = 1;
+	sf->blklen = sdmmc_chip_host_maxblklen(sc->sc_sct, sc->sc_sch);
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
