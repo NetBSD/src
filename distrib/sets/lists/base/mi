@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1209.2.1 2019/08/16 19:10:42 martin Exp $
+# $NetBSD: mi,v 1.1209.2.2 2019/09/01 10:44:23 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4837,6 +4837,7 @@
 ./usr/share/mk/bsd.port.subdir.mk		base-obsolete		obsolete
 ./usr/share/mk/bsd.prog.mk			base-mk-share		share
 ./usr/share/mk/bsd.rpc.mk			base-mk-share		share
+./usr/share/mk/bsd.sanitizer.mk			base-mk-share		share
 ./usr/share/mk/bsd.shlib.mk			base-mk-share		share
 ./usr/share/mk/bsd.subdir.mk			base-mk-share		share
 ./usr/share/mk/bsd.sys.mk			base-mk-share		share
