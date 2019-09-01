@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.189 2019/05/11 13:41:52 christos Exp $
+# $NetBSD: md.i386,v 1.189.2.1 2019/09/01 10:36:25 martin Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -711,6 +711,22 @@
 ./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-preinit-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan_cxx-i386.a	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.safestack-i386.a	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so      comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_minimal-i386.so.0.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.a	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0	comp-cxx-lib	llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone-i386.so.0.0	comp-cxx-lib    llvm
+./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.ubsan_standalone_cxx-i386.a	comp-cxx-lib	llvm
 ./usr/lib/libi386.a				comp-c-lib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
 ./usr/lib/libi386_pic.a				comp-c-piclib		pic,picinstall
