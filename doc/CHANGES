@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2575 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2576 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -32,3 +32,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	usbnet(9): Port kue(4) and upl(4). [mrg 20190818]
 	boot(8): GPT and RAIDframe support for x86 bootstrap [manu 20190818]
 	dhcpcd(8): Import dhcpcd-8.0.3 [roy 20190821]
+	inet6: Fix sending RTM_MISS for unresolvable addresses and restore
+		ND6_LLINFO_WAITDELETE so that any send at this point can
+		return EHOSTDOWN to match inet behaviour. [roy 20190901]
