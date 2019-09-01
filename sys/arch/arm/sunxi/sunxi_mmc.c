@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.34 2019/09/01 11:44:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.35 2019/09/01 14:14:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.34 2019/09/01 11:44:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.35 2019/09/01 14:14:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -176,6 +176,7 @@ struct sunxi_mmc_softc {
 	size_t sc_dmabounce_buflen;
 
 	uint32_t sc_intr_rint;
+	uint32_t sc_intr_card;
 	uint32_t sc_idma_idst;
 
 	struct clk *sc_clk_ahb;
@@ -607,7 +608,7 @@ sunxi_mmc_intr(void *priv)
 		return 0;
 	}
 	MMC_WRITE(sc, SUNXI_MMC_IDST, idst);
-	MMC_WRITE(sc, SUNXI_MMC_RINT, rint & ~SUNXI_MMC_INT_SDIO_INT);
+	MMC_WRITE(sc, SUNXI_MMC_RINT, rint);
 
 	DPRINTF(sc->sc_dev, "mmc intr idst=%08X rint=%08X\n",
 	    idst, rint);
@@ -626,6 +627,8 @@ sunxi_mmc_intr(void *priv)
 	}
 
 	if ((rint & SUNXI_MMC_INT_SDIO_INT) != 0) {
+		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
+		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~SUNXI_MMC_INT_SDIO_INT);
 		sdmmc_card_intr(sc->sc_sdmmc_dev);
 	}
 
@@ -1218,7 +1221,8 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 done:
 	cmd->c_flags |= SCF_ITSDONE;
-	MMC_WRITE(sc, SUNXI_MMC_IMASK, oimask);
+	MMC_WRITE(sc, SUNXI_MMC_IMASK,
+	    (oimask & ~SUNXI_MMC_INT_SDIO_INT) | sc->sc_intr_card);
 	MMC_WRITE(sc, SUNXI_MMC_RINT, 0xffff);
 	MMC_WRITE(sc, SUNXI_MMC_IDST, 0x337);
 	mutex_exit(&sc->sc_intr_lock);
@@ -1246,18 +1250,25 @@ sunxi_mmc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 	struct sunxi_mmc_softc *sc = sch;
 	uint32_t imask;
 
+	mutex_enter(&sc->sc_intr_lock);
 	imask = MMC_READ(sc, SUNXI_MMC_IMASK);
 	if (enable)
 		imask |= SUNXI_MMC_INT_SDIO_INT;
 	else
 		imask &= ~SUNXI_MMC_INT_SDIO_INT;
+	sc->sc_intr_card = imask & SUNXI_MMC_INT_SDIO_INT;
 	MMC_WRITE(sc, SUNXI_MMC_IMASK, imask);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
 sunxi_mmc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
 	struct sunxi_mmc_softc *sc = sch;
+	uint32_t imask;
 
-	MMC_WRITE(sc, SUNXI_MMC_RINT, SUNXI_MMC_INT_SDIO_INT);
+	mutex_enter(&sc->sc_intr_lock);
+	imask = MMC_READ(sc, SUNXI_MMC_IMASK);
+	MMC_WRITE(sc, SUNXI_MMC_IMASK, imask | sc->sc_intr_card);
+	mutex_exit(&sc->sc_intr_lock);
 }
