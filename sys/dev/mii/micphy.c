@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.4.10.1 2019/09/01 10:14:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4.10.1 2019/09/01 10:14:20 martin Exp $");
 
 #include "opt_mii.h"
 
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $");
 
 static int	micphymatch(device_t, cfdata_t, void *);
 static void	micphyattach(device_t, device_t, void *);
+static void	micphy_reset(struct mii_softc *);
+static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 
 CFATTACH_DECL3_NEW(micphy, sizeof(struct mii_softc),
     micphymatch, micphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
@@ -88,16 +90,21 @@ static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 static void	micphy_fixup(struct mii_softc *, int, int, device_t);
 
 static const struct mii_phy_funcs micphy_funcs = {
-	micphy_service, ukphy_status, mii_phy_reset,
+	micphy_service, ukphy_status, micphy_reset,
 };
 
 static const struct mii_phydesc micphys[] = {
+	{ MII_OUI_MICREL,		MII_MODEL_MICREL_KSZ8081,
+	  MII_STR_MICREL_KSZ8081 },
+
 	{ MII_OUI_MICREL,		MII_MODEL_MICREL_KSZ9021RNI,
 	  MII_STR_MICREL_KSZ9021RNI },
 
 	{ 0,				0,
 	  NULL },
 };
+
+#define	MII_KSZ8081_PHYCTL2			0x1f
 
 static int
 micphymatch(device_t parent, cfdata_t match, void *aux)
@@ -146,6 +153,24 @@ micphyattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+}
+
+static void
+micphy_reset(struct mii_softc *sc)
+{
+	int reg;
+
+	/*
+	 * The 8081 has no "sticky bits" that survive a soft reset; several bits
+	 * in the Phy Control Register 2 must be preserved across the reset.
+	 * These bits are set up by the bootloader; they control how the phy
+	 * interfaces to the board (such as clock frequency and LED behavior).
+	 */
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8081)
+		reg = PHY_READ(sc, MII_KSZ8081_PHYCTL2);
+	mii_phy_reset(sc);
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8081)
+		PHY_WRITE(sc, MII_KSZ8081_PHYCTL2, reg);
 }
 
 static int
