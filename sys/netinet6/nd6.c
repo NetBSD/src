@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.256.2.2 2019/08/26 13:42:36 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256.2.3 2019/09/01 11:00:31 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.2 2019/08/26 13:42:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.3 2019/09/01 11:00:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1189,7 +1189,6 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 static void
 nd6_free(struct llentry *ln, int gc)
 {
-	struct nd_defrouter *dr;
 	struct ifnet *ifp;
 	struct in6_addr *in6;
 	struct sockaddr_in6 sin6;
@@ -1204,81 +1203,70 @@ nd6_free(struct llentry *ln, int gc)
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
-	if (!ip6_forwarding) {
-		ND6_WLOCK();
-		dr = nd6_defrouter_lookup(in6, ifp);
-
-		if (dr != NULL && dr->expire &&
-		    ln->ln_state == ND6_LLINFO_STALE && gc) {
+	if (!ip6_forwarding && ln->ln_router) {
+		if (ln->ln_state == ND6_LLINFO_STALE && gc) {
 			/*
 			 * If the reason for the deletion is just garbage
-			 * collection, and the neighbor is an active default
+			 * collection, and the neighbor is an active
 			 * router, do not delete it.  Instead, reset the GC
 			 * timer using the router's lifetime.
-			 * Simply deleting the entry would affect default
+			 * Simply deleting the entry may affect default
 			 * router selection, which is not necessarily a good
 			 * thing, especially when we're using router preference
 			 * values.
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time_uptime)
+			if (ln->ln_expire > time_uptime)
 				nd6_llinfo_settimer(ln,
-				    (dr->expire - time_uptime) * hz);
+				    (ln->ln_expire - time_uptime) * hz);
 			else
 				nd6_llinfo_settimer(ln, nd6_gctimer * hz);
-			ND6_UNLOCK();
 			LLE_WUNLOCK(ln);
 			return;
 		}
 
-		if (ln->ln_router || dr) {
-			/*
-			 * We need to unlock to avoid a LOR with nd6_rt_flush()
-			 * with the rnh and for the calls to
-			 * nd6_pfxlist_onlink_check() and nd6_defrouter_select() in the
-			 * block further down for calls into nd6_lookup().
-			 * We still hold a ref.
-			 */
-			LLE_WUNLOCK(ln);
+		ND6_WLOCK();
 
-			/*
-			 * nd6_rt_flush must be called whether or not the neighbor
-			 * is in the Default Router List.
-			 * See a corresponding comment in nd6_na_input().
-			 */
-			nd6_rt_flush(in6, ifp);
-		}
+		/*
+		 * We need to unlock to avoid a LOR with nd6_rt_flush()
+		 * with the rnh and for the calls to
+		 * nd6_pfxlist_onlink_check() and nd6_defrouter_select() in the
+		 * block further down for calls into nd6_lookup().
+		 * We still hold a ref.
+		 *
+		 * Temporarily fake the state to choose a new default
+		 * router and to perform on-link determination of
+		 * prefixes correctly.
+		 * Below the state will be set correctly,
+		 * or the entry itself will be deleted.
+		 */
+		ln->ln_state = ND6_LLINFO_INCOMPLETE;
+		LLE_WUNLOCK(ln);
 
-		if (dr) {
-			/*
-			 * Unreachablity of a router might affect the default
-			 * router selection and on-link detection of advertised
-			 * prefixes.
-			 */
+		/*
+		 * nd6_rt_flush must be called whether or not the neighbor
+		 * is in the Default Router List.
+		 * See a corresponding comment in nd6_na_input().
+		 */
+		nd6_rt_flush(in6, ifp);
 
-			/*
-			 * Temporarily fake the state to choose a new default
-			 * router and to perform on-link determination of
-			 * prefixes correctly.
-			 * Below the state will be set correctly,
-			 * or the entry itself will be deleted.
-			 */
-			ln->ln_state = ND6_LLINFO_INCOMPLETE;
+		/*
+		 * Unreachablity of a router might affect the default
+		 * router selection and on-link detection of advertised
+		 * prefixes.
+		 *
+		 * Since nd6_defrouter_select() does not affect the
+		 * on-link determination and MIP6 needs the check
+		 * before the default router selection, we perform
+		 * the check now.
+		 */
+		nd6_pfxlist_onlink_check();
 
-			/*
-			 * Since nd6_defrouter_select() does not affect the
-			 * on-link determination and MIP6 needs the check
-			 * before the default router selection, we perform
-			 * the check now.
-			 */
-			nd6_pfxlist_onlink_check();
-
-			/*
-			 * refresh default router list
-			 */
-			nd6_defrouter_select();
-		}
+		/*
+		 * refresh default router list
+		 */
+		nd6_defrouter_select();
 
 #ifdef __FreeBSD__
 		/*
@@ -1288,10 +1276,9 @@ nd6_free(struct llentry *ln, int gc)
 		if (ln->la_flags & LLE_REDIRECT)
 			nd6_free_redirect(ln);
 #endif
-		ND6_UNLOCK();
 
-		if (ln->ln_router || dr)
-			LLE_WLOCK(ln);
+		ND6_UNLOCK();
+		LLE_WLOCK(ln);
 	}
 
 	sockaddr_in6_init(&sin6, in6, 0, 0, 0);
