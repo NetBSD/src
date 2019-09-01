@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.35 2019/09/01 14:14:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.36 2019/09/01 15:02:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.35 2019/09/01 14:14:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.36 2019/09/01 15:02:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -639,7 +639,7 @@ sunxi_mmc_intr(void *priv)
 
 static int
 sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask,
-    int timeout, bool poll)
+    int secs, bool poll)
 {
 	int retry;
 	int error;
@@ -649,28 +649,27 @@ sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask,
 	if (sc->sc_intr_rint & mask)
 		return 0;
 
-	if (poll)
-		retry = timeout / hz * 1000;
-	else
-		retry = timeout / hz;
-
-	while (retry > 0) {
-		if (poll) {
+	if (poll) {
+		retry = secs * 1000;
+		while (retry > 0) {
 			sc->sc_intr_rint |= MMC_READ(sc, SUNXI_MMC_RINT);
-		} else {
-			error = cv_timedwait(&sc->sc_intr_cv,
-			    &sc->sc_intr_lock, hz);
-			if (error && error != EWOULDBLOCK)
+			if (sc->sc_intr_rint & mask)
+				return 0;
+			delay(1000);	
+			--retry;
+		}
+		return ETIMEDOUT;
+	} else {
+		struct bintime timeout = { .sec = secs, .frac = 0 };
+		const struct bintime epsilon = { .sec = 1, .frac = 0 };
+		while ((sc->sc_intr_rint & mask) == 0) {
+			error = cv_timedwaitbt(&sc->sc_intr_cv,
+			    &sc->sc_intr_lock, &timeout, &epsilon);
+			if (error != 0)
 				return error;
 		}
-		if (sc->sc_intr_rint & mask)
-			return 0;
-		if (poll)
-			delay(1000);	
-		--retry;
+		return 0;
 	}
-
-	return ETIMEDOUT;
 }
 
 static int
@@ -1164,7 +1163,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	cmd->c_error = sunxi_mmc_wait_rint(sc,
-	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 3, poll);
+	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, 5, poll);
 	if (cmd->c_error == 0 && (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 		if (sc->sc_intr_rint & SUNXI_MMC_INT_RESP_TIMEOUT) {
 			cmd->c_error = ETIMEDOUT;
@@ -1185,7 +1184,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		    SUNXI_MMC_INT_ERROR|
 		    SUNXI_MMC_INT_AUTO_CMD_DONE|
 		    SUNXI_MMC_INT_DATA_OVER,
-		    hz*3, poll);
+		    5, poll);
 		if (cmd->c_error == 0 &&
 		    (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 			cmd->c_error = ETIMEDOUT;
