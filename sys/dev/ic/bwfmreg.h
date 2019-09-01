@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmreg.h,v 1.3 2018/05/11 07:41:11 maya Exp $ */
+/* $NetBSD: bwfmreg.h,v 1.4 2019/09/01 05:40:39 mlelstv Exp $ */
 /* $OpenBSD: bwfmreg.h,v 1.16 2018/02/07 21:44:09 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -644,3 +644,4 @@ struct bwfm_event {
 	struct bwfm_ethhdr hdr;
 	struct bwfm_event_msg msg;
 } __packed;
+
