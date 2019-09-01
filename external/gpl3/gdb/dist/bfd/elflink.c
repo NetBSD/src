@@ -7698,6 +7698,7 @@ eval_symbol (bfd_vma *result,
 
     case 'S':
       symbol_is_section = TRUE;
+      /* Fall through.  */
     case 's':
       ++sym;
       symlen = strtol (sym, (char **) symp, 10);
