@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomuxreg.h,v 1.5 2019/07/22 11:44:01 hkenken Exp $	*/
+/*	$NetBSD: imx6_iomuxreg.h,v 1.6 2019/09/02 01:28:41 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -33,6 +33,7 @@
 #define IOMUX_GPR1					0x00000004
 #define  IOMUX_GPR1_CFG_L1_CLK_REMOVAL_EN	__BIT(31)
 #define  IOMUX_GPR1_APP_CLK_REQ_N		__BIT(30)
+#define  IOMUX_GPR1_PCIE_SW_RST			__BIT(29)
 #define  IOMUX_GPR1_APP_REQ_EXIT_L1		__BIT(28)
 #define  IOMUX_GPR1_APP_READY_ENTR_L23		__BIT(27)
 #define  IOMUX_GPR1_APP_REQ_ENTR_L1		__BIT(26)

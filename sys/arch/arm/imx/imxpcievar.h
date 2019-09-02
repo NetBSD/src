@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpcievar.h,v 1.1 2019/07/24 12:33:18 hkenken Exp $	*/
+/*	$NetBSD: imxpcievar.h,v 1.2 2019/09/02 01:28:41 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
@@ -54,12 +54,17 @@ struct imxpcie_softc {
 	struct clk *sc_clk_pcie_axi;
 	struct clk *sc_clk_lvds1_gate;
 	struct clk *sc_clk_pcie_ref;
+	struct clk *sc_clk_pcie_ext;
+	struct clk *sc_clk_pcie_ext_src;
+	bool sc_ext_osc;
 
 	void *sc_cookie;
 	void (* sc_pci_netbsd_configure)(void *);
 	uint32_t (* sc_gpr_read)(void *, uint32_t);
 	void (* sc_gpr_write)(void *, uint32_t, uint32_t);
 	void (* sc_reset)(void *);
+
+	bool sc_have_sw_reset;
 };
 
 struct imxpcie_ih {
