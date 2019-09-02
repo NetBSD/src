@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.60 2018/10/19 23:05:35 christos Exp $
+.\" $NetBSD: ctime.3,v 1.61 2019/09/02 00:24:01 sevan Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd May 5, 2018
+.Dd September 2, 2019
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -494,6 +494,11 @@ functions conform to
 .St -ansiC .
 Rest of the functions conform to
 .St -p1003.1-2008 .
+.Sh HISTORY
+A
+.Fn ctime
+function appeared in
+.At v1 .
 .Sh CAVEATS
 The functions that do not take an explicit
 .Ft timezone_t
