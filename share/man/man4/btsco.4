@@ -1,4 +1,4 @@
-.\" $NetBSD: btsco.4,v 1.12 2014/11/29 03:35:57 ryoon Exp $
+.\" $NetBSD: btsco.4,v 1.12.8.1 2019/09/02 16:39:20 martin Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ call on the mixer device, which returns a
 .Ar btsco_info
 structure as follows:
 .Bd -literal
-#include \*[Lt]dev/bluetooth/btsco.h\*[Gt]
+#include <dev/bluetooth/btsco.h>
 
 struct btsco_info {
 	bdaddr_t	laddr;		/* controller bdaddr */
