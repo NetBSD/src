@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2284 2019/08/28 21:48:14 rmind Exp $
+#	$NetBSD: mi,v 1.2285 2019/09/02 09:08:29 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6336,6 +6336,7 @@
 ./usr/share/man/cat3/curses_touch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_tty.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_underscore.0	comp-c-catman		.cat
+./usr/share/man/cat3/curses_version.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cuserid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0	comp-c-catman	.cat,openssl=10
@@ -14342,6 +14343,7 @@
 ./usr/share/man/html3/curses_touch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_tty.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_underscore.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_version.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/cuserid.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman	html,openssl=10
@@ -22291,6 +22293,7 @@
 ./usr/share/man/man3/curses_touch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_tty.3		comp-c-man		.man
 ./usr/share/man/man3/curses_underscore.3	comp-c-man		.man
+./usr/share/man/man3/curses_version.3		comp-c-man		.man
 ./usr/share/man/man3/curses_window.3		comp-c-man		.man
 ./usr/share/man/man3/cuserid.3			comp-c-man		.man
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3	comp-c-man	.man,openssl=10
