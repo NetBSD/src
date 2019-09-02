@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2019/08/18 02:18:24 manu Exp $	*/
+/*	$NetBSD: boot.c,v 1.15 2019/09/02 06:10:24 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -130,7 +130,8 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 	if (default_part_name == NULL) {
 		*devname = default_devname;
 	} else {
-		snprintf(savedevname, MAXDEVNAME, "NAME=%s", default_part_name);
+		snprintf(savedevname, sizeof(savedevname),
+		    "NAME=%s", default_part_name);
 		*devname = savedevname;
 	}
 	*unit = default_unit;
