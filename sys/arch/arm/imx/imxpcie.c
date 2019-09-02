@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpcie.c,v 1.1 2019/07/24 12:33:18 hkenken Exp $	*/
+/*	$NetBSD: imxpcie.c,v 1.2 2019/09/02 01:28:41 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.1 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.2 2019/09/02 01:28:41 hkenken Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -244,33 +244,31 @@ imxpcie_phy_read(struct imxpcie_softc *sc, uint32_t addr)
 static int
 imxpcie_assert_core_reset(struct imxpcie_softc *sc)
 {
-	uint32_t gpr1;
-	uint32_t gpr12;
+	if (sc->sc_have_sw_reset) {
+		uint32_t gpr1 = sc->sc_gpr_read(sc, IOMUX_GPR1);
+		gpr1 |= IOMUX_GPR1_PCIE_SW_RST;
+		sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
+	} else {
+		uint32_t gpr1 = sc->sc_gpr_read(sc, IOMUX_GPR1);
+		uint32_t gpr12 = sc->sc_gpr_read(sc, IOMUX_GPR12);
 
-	gpr1 = sc->sc_gpr_read(sc, IOMUX_GPR1);
-	gpr12 = sc->sc_gpr_read(sc, IOMUX_GPR12);
+		/* already enabled by bootloader */
+		if ((gpr1 & IOMUX_GPR1_REF_SSP_EN) &&
+		    (gpr12 & IOMUX_GPR12_APP_LTSSM_ENABLE)) {
+			uint32_t v = PCIE_READ(sc, PCIE_PL_PFLR);
+			v &= ~PCIE_PL_PFLR_LINK_STATE;
+			v |= PCIE_PL_PFLR_FORCE_LINK;
+			PCIE_WRITE(sc, PCIE_PL_PFLR, v);
 
-	/* already enabled by bootloader */
-	if ((gpr1 & IOMUX_GPR1_REF_SSP_EN) &&
-	    (gpr12 & IOMUX_GPR12_APP_LTSSM_ENABLE)) {
-		uint32_t v = PCIE_READ(sc, PCIE_PL_PFLR);
-		v &= ~PCIE_PL_PFLR_LINK_STATE;
-		v |= PCIE_PL_PFLR_FORCE_LINK;
-		PCIE_WRITE(sc, PCIE_PL_PFLR, v);
+			gpr12 &= ~IOMUX_GPR12_APP_LTSSM_ENABLE;
+			sc->sc_gpr_write(sc, IOMUX_GPR12, gpr12);
+		}
 
-		gpr12 &= ~IOMUX_GPR12_APP_LTSSM_ENABLE;
-		sc->sc_gpr_write(sc, IOMUX_GPR12, gpr12);
+		gpr1 |= IOMUX_GPR1_TEST_POWERDOWN;
+		sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
+		gpr1 &= ~IOMUX_GPR1_REF_SSP_EN;
+		sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
 	}
-
-#if defined(IMX6DQP)
-	gpr1 |= IOMUX_GPR1_PCIE_SW_RST;
-	sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
-#endif
-
-	gpr1 |= IOMUX_GPR1_TEST_POWERDOWN;
-	sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
-	gpr1 &= ~IOMUX_GPR1_REF_SSP_EN;
-	sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
 
 	return 0;
 }
@@ -285,11 +283,23 @@ imxpcie_deassert_core_reset(struct imxpcie_softc *sc)
 		aprint_error_dev(sc->sc_dev, "couldn't enable pcie_axi: %d\n", error);
 		return error;
 	}
-	error = clk_enable(sc->sc_clk_lvds1_gate);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "couldn't enable lvds1_gate: %d\n", error);
-		return error;
+
+	if (sc->sc_ext_osc) {
+		clk_set_parent(sc->sc_clk_pcie_ext, sc->sc_clk_pcie_ext_src);
+		error = clk_enable(sc->sc_clk_pcie_ext);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "couldn't enable ext: %d\n", error);
+			return error;
+		}
+	} else {
+		error = clk_enable(sc->sc_clk_lvds1_gate);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "couldn't enable lvds1_gate: %d\n",
+			    error);
+			return error;
+		}
 	}
+
 	error = clk_enable(sc->sc_clk_pcie_ref);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't enable pcie_ref: %d\n", error);
@@ -297,11 +307,6 @@ imxpcie_deassert_core_reset(struct imxpcie_softc *sc)
 	}
 
 	uint32_t gpr1 = sc->sc_gpr_read(sc, IOMUX_GPR1);
-
-#if defined(IMX6DQP)
-	gpr1 &= ~IOMUX_GPR1_PCIE_SW_RST;
-	sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
-#endif
 
 	delay(50 * 1000);
 
@@ -316,6 +321,31 @@ imxpcie_deassert_core_reset(struct imxpcie_softc *sc)
 	/* Reset */
 	if (sc->sc_reset != NULL)
 		sc->sc_reset(sc);
+
+	if (sc->sc_have_sw_reset) {
+		gpr1 &= ~IOMUX_GPR1_PCIE_SW_RST;
+		sc->sc_gpr_write(sc, IOMUX_GPR1, gpr1);
+		delay(200);
+	}
+
+	if (sc->sc_ext_osc) {
+		delay(5 * 1000);
+
+		uint32_t val;
+		val = imxpcie_phy_read(sc, PCIE_PHY_MPLL_OVRD_IN_LO);
+		val &= ~MPLL_MULTIPLIER;
+		val |= __SHIFTIN(0x19, MPLL_MULTIPLIER);
+		val |= MPLL_MULTIPLIER_OVRD;
+		imxpcie_phy_write(sc, PCIE_PHY_MPLL_OVRD_IN_LO, val);
+
+		delay(5 * 1000);
+
+		val = imxpcie_phy_read(sc, PCIE_PHY_ATEOVRD);
+		val |= REF_USB2_EN;
+		imxpcie_phy_write(sc, PCIE_PHY_ATEOVRD, val);
+
+		delay(5 * 1000);
+	}
 
 	return 0;
 }
