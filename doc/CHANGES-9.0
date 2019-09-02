@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.36 2019/09/02 07:07:21 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.37 2019/09/02 16:19:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2654,4 +2654,18 @@ share/man/man9/uiomove.9			1.19
 
 	Fix cross-references in these man-pages.
 	[oster, ticket #167]
+
+lib/libutil/getdiskrawname.c			1.6
+libexec/lfs_cleanerd/lfs_cleanerd.8		1.19
+libexec/lfs_cleanerd/lfs_cleanerd.c		1.59,1.60
+sbin/resize_lfs/resize_lfs.c			1.15
+tests/fs/common/fstest_lfs.c			1.7
+usr.sbin/puffs/rump_lfs/rump_lfs.c		1.19
+
+	Make ZFS and lfs interoperate:
+	Use getdiskrawname to find the device name.
+	Teach getdiskrawname and getdiskcookedname about zvols.
+	Also supply rope for rump based tests and use that to make the
+	lfs cleaner work properly in the test envrionment.
+	[brad, ticket #110]
 
