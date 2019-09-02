@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.35 2019/09/01 19:35:17 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.36 2019/09/02 07:07:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2568,6 +2568,8 @@ sys/arch/x86/pci/if_vmx.c			1.49
 
 sys/dev/mii/etphy.c				1.5,1.6
 sys/dev/mii/miidevs				1.154
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
 
 	- Rename ET1011 to ET1011C
 	- Support ET1011 to etphy(4)
