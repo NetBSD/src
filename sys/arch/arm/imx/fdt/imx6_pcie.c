@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.4 2019/09/02 01:28:41 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.4 2019/09/02 01:28:41 hkenken Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -69,6 +69,7 @@ struct imxpcie_fdt_softc {
 	struct imxpcie_softc sc_imxpcie;
 
 	struct fdtbus_gpio_pin	*sc_pin_reset;
+	struct fdtbus_regulator	*sc_reg_vpcie;
 };
 
 static int imx6_pcie_match(device_t, cfdata_t, void *);
@@ -89,9 +90,10 @@ static void imx6_pcie_reset(void *);
 CFATTACH_DECL_NEW(imxpcie_fdt, sizeof(struct imxpcie_fdt_softc),
     imx6_pcie_match, imx6_pcie_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-pcie",
-	NULL
+static const struct of_compat_data compat_data[] = {
+	{ "fsl,imx6q-pcie",	false },
+	{ "fsl,imx6qp-pcie",	true },
+	{ NULL }
 };
 
 static int
@@ -99,7 +101,7 @@ imx6_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -125,6 +127,7 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpr_read = imx6_pcie_gpr_read;
 	sc->sc_gpr_write = imx6_pcie_gpr_write;
 	sc->sc_reset = imx6_pcie_reset;
+	sc->sc_have_sw_reset = of_search_compatible(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg_byname(phandle, "dbi", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -170,6 +173,49 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get clock pcie_ref\n");
 		return;
 	}
+
+	if (of_hasprop(phandle, "vpcie-supply")) {
+		ifsc->sc_reg_vpcie = fdtbus_regulator_acquire(phandle, "vpcie-supply");
+		if (ifsc->sc_reg_vpcie == NULL) {
+			aprint_error(": couldn't acquire regulator\n");
+			return;
+		}
+		aprint_normal_dev(self, "regulator On\n");
+		fdtbus_regulator_enable(ifsc->sc_reg_vpcie);
+	}
+
+	if (of_hasprop(phandle, "ext_osc")) {
+		aprint_normal_dev(self, "Use external OSC\n");
+		sc->sc_ext_osc = true;
+
+		sc->sc_clk_pcie_ext = fdtbus_clock_get(phandle, "pcie_ext");
+		if (sc->sc_clk_pcie_ext == NULL) {
+			aprint_error(": couldn't get clock pcie_ext\n");
+			return;
+		}
+		sc->sc_clk_pcie_ext_src = fdtbus_clock_get(phandle, "pcie_ext_src");
+		if (sc->sc_clk_pcie_ext_src == NULL) {
+			aprint_error(": couldn't get clock pcie_ext_src\n");
+			return;
+		}
+
+		struct clk *clk_lvds1_in = imx6_get_clock("lvds1_in");
+		if (clk_lvds1_in == NULL) {
+			aprint_error(": couldn't get clock lvds1_in\n");
+			return;
+		}
+		int error = clk_set_parent(sc->sc_clk_pcie_ext_src, clk_lvds1_in);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't set '%s' parent to '%s': %d\n",
+			    sc->sc_clk_pcie_ext_src->name, clk_lvds1_in->name, error);
+		}
+	} else {
+		sc->sc_ext_osc = false;
+		sc->sc_clk_pcie_ext = NULL;
+		sc->sc_clk_pcie_ext_src = NULL;
+	}
+
 
 	TAILQ_INIT(&sc->sc_intrs);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);

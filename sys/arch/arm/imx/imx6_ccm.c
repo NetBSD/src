@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.13 2019/07/30 11:11:15 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.14 2019/09/02 01:28:41 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.13 2019/07/30 11:11:15 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.14 2019/09/02 01:28:41 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -886,6 +886,8 @@ static struct imx6_clk imx6_clks[] = {
 
 	CLK_GATE_EXCLUSIVE("lvds1_gate", "lvds1_sel", CCM_ANALOG, MISC1, LVDS_CLK1_OBEN, LVDS_CLK1_IBEN),
 	CLK_GATE_EXCLUSIVE("lvds2_gate", "lvds2_sel", CCM_ANALOG, MISC1, LVDS_CLK2_OBEN, LVDS_CLK2_IBEN),
+	CLK_GATE_EXCLUSIVE("lvds1_in", "anaclk1", CCM_ANALOG, MISC1, LVDS_CLK1_IBEN, LVDS_CLK1_OBEN),
+	CLK_GATE_EXCLUSIVE("lvds2_in", "anaclk2", CCM_ANALOG, MISC1, LVDS_CLK2_IBEN, LVDS_CLK2_OBEN),
 };
 
 static struct imx6_clk *imx6_clk_find(const char *);
