@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.37 2019/09/02 16:19:32 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.38 2019/09/02 17:28:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2668,4 +2668,21 @@ usr.sbin/puffs/rump_lfs/rump_lfs.c		1.19
 	Also supply rope for rump based tests and use that to make the
 	lfs cleaner work properly in the test envrionment.
 	[brad, ticket #110]
+
+share/man/man1/man1.atari/edahdi.1		1.12
+share/man/man1/man1.atari/msconfig.1		1.9
+share/man/man1/man1.x68k/aout2hux.1		1.6
+share/man/man1/man1.x68k/bellctrl.1		1.16
+share/man/man1/man1.x68k/bellctrl.1		1.17
+share/man/man1/man1.x68k/loadfont.1		1.10
+share/man/man1/man1.x68k/loadkmap.1		1.7
+share/man/man1/man1.x68k/palette.1		1.7
+share/man/man1/man1.x68k/tvctrl.1		1.6
+share/man/man4/null.4				1.5,1.6
+share/man/man8/man8.next68k/boot.8		1.5
+share/man/man9/arp.9				1.27
+
+	Provide history.
+	Improve grammar and readability. Minor cosmetics.
+	[sevan, tickets #154 - #164]
 
