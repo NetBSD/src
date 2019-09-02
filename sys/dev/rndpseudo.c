@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.37 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.38 2019/09/02 20:09:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.37 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.38 2019/09/02 20:09:30 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -360,11 +360,12 @@ rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	 * Choose a CPRNG to use -- either the per-open CPRNG, if this
 	 * is /dev/random or a long read, or the per-CPU one otherwise.
 	 *
-	 * XXX NIST_BLOCK_KEYLEN_BYTES is a detail of the cprng(9)
+	 * XXX NIST_HASH_DRBG_MIN_SEEDLEN_BYTES is a detail of the cprng(9)
 	 * implementation and as such should not be mentioned here.
 	 */
 	struct cprng_strong *const cprng =
-	    ((ctx->rc_hard || (uio->uio_resid > NIST_BLOCK_KEYLEN_BYTES))?
+	    ((ctx->rc_hard ||
+		(uio->uio_resid > NIST_HASH_DRBG_MIN_SEEDLEN_BYTES))?
 		rnd_ctx_cprng(ctx) : rnd_percpu_cprng());
 
 	/*
