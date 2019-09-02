@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.287 2019/09/01 21:55:13 sevan Exp $
+$NetBSD: acronyms.comp,v 1.288 2019/09/02 10:35:15 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1215,6 +1215,8 @@ PPP	Point-to-Point Protocol
 PPPOA	Point-to-Point Protocol over ATM
 PPPOE	Point-to-Point Protocol over Ethernet
 PPR	processor programming reference
+PPT	powerpoint
+PPT	punched paper tape
 PPU	physics processing unit
 PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
