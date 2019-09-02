@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.15 2019/09/01 05:40:39 mlelstv Exp $ */
+/* $NetBSD: bwfm.c,v 1.16 2019/09/02 07:25:48 mlelstv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -143,7 +143,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	int i, j, error;
 
 	error = workqueue_create(&sc->sc_taskq, DEVNAME(sc),
-	    bwfm_task, sc, PRI_NONE, IPL_NET, WQ_MPSAFE);
+	    bwfm_task, sc, PRI_NONE, IPL_NET, 0);
 	if (error != 0) {
 		printf("%s: could not create workqueue\n", DEVNAME(sc));
 		return;
