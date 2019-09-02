@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.15 2019/09/01 05:45:42 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.16 2019/09/02 11:09:42 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.15 2019/09/01 05:45:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.16 2019/09/02 11:09:42 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -394,7 +394,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	memset(&cmd, 0, sizeof cmd);
 	cmd.c_opcode = SD_IO_RW_EXTENDED;
 	cmd.c_arg = arg;
-	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R5;
 	cmd.c_data = datap;
 	cmd.c_datalen = datalen;
 	cmd.c_blklen = MIN(datalen, sf->blklen);
