@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.123 2018/09/30 10:55:00 kamil Exp $	*/
+/*	$NetBSD: curses.h,v 1.124 2019/09/02 09:08:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -979,6 +979,9 @@ int wgetbkgrnd(WINDOW *, cchar_t *);
 bool is_keypad(const WINDOW *);
 bool is_leaveok(const WINDOW *);
 bool is_pad(const WINDOW *);
+
+/* ncurses version for compat */
+const char *curses_version(void);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);
