@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.148 2014/08/10 16:44:36 tls Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.148.2.1 2019/09/03 12:20:42 martin Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -13,8 +13,7 @@ LIB=		rump
 	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
-	${RUMPTOP}/../crypto/nist_ctr_drbg			\
-	${RUMPTOP}/../crypto/rijndael				\
+	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
@@ -151,10 +150,7 @@ SRCS+=	clock_subr.c
 # sys/dev/crypto
 # Note: these are here only for cprng.  More crypto algos for drivers
 # are available from the rumpkern_crypto component
-SRCS+=	nist_ctr_drbg.c
-SRCS+=	rijndael-alg-fst.c
-SRCS+=	rijndael-api-fst.c
-SRCS+=	rijndael.c
+SRCS+=	nist_hash_drbg.c
 SRCS+=	cprng_fast.c
 
 # compat
