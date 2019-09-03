@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.38 2019/09/02 17:28:28 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.39 2019/09/03 07:48:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2685,4 +2685,24 @@ share/man/man9/arp.9				1.27
 	Provide history.
 	Improve grammar and readability. Minor cosmetics.
 	[sevan, tickets #154 - #164]
+
+sys/conf/files					1.1238
+sys/crypto/nist_ctr_drbg/files.nist_ctr_drbg	delete
+sys/crypto/nist_ctr_drbg/nist_ctr_aes_rijndael.h delete
+sys/crypto/nist_ctr_drbg/nist_ctr_drbg.c	delete
+sys/crypto/nist_ctr_drbg/nist_ctr_drbg.h	delete
+sys/crypto/nist_ctr_drbg/nist_ctr_drbg_aes128.h	delete
+sys/crypto/nist_ctr_drbg/nist_ctr_drbg_aes256.h	delete
+sys/crypto/nist_ctr_drbg/nist_ctr_drbg_config.h	delete
+sys/crypto/nist_hash_drbg/files.nist_hash_drbg	1.1
+sys/crypto/nist_hash_drbg/nist_hash_drbg.c	1.1
+sys/crypto/nist_hash_drbg/nist_hash_drbg.h	1.1
+sys/dev/rndpseudo.c				1.38
+sys/kern/subr_cprng.c				1.31
+sys/rump/kern/lib/libcrypto/Makefile		1.5
+sys/rump/librump/rumpkern/Makefile.rumpkern	1.176
+sys/sys/cprng.h					1.15
+
+	Switch from NIST CTR_DRBG with AES to NIST Hash_DRBG with SHA-256.
+	[riastradh, ticket #173]
 
