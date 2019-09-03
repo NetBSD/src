@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/08/27 12:45:04 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.6 2019/09/03 15:34:08 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -63,27 +63,7 @@ FILES=	\
 	TAHITI_vce.bin \
 	TURKS_mc.bin TURKS_me.bin TURKS_pfp.bin TURKS_smc.bin \
 	VERDE_ce.bin VERDE_mc.bin VERDE_mc2.bin VERDE_me.bin VERDE_pfp.bin \
-	VERDE_rlc.bin VERDE_smc.bin \
-	bonaire_ce.bin bonaire_mc.bin bonaire_me.bin bonaire_mec.bin \
-	bonaire_pfp.bin bonaire_rlc.bin bonaire_sdma.bin bonaire_smc.bin \
-	bonaire_uvd.bin \
-	hainan_ce.bin hainan_mc.bin hainan_me.bin hainan_pfp.bin \
-	hainan_rlc.bin hainan_smc.bin \
-	hawaii_ce.bin hawaii_mc.bin hawaii_me.bin hawaii_mec.bin \
-	hawaii_pfp.bin hawaii_rlc.bin hawaii_sdma.bin hawaii_smc.bin \
-	kabini_ce.bin kabini_me.bin kabini_mec.bin kabini_pfp.bin \
-	kabini_rlc.bin kabini_sdma.bin \
-	kaveri_ce.bin kaveri_me.bin kaveri_mec.bin kaveri_mec2.bin \
-	kaveri_pfp.bin kaveri_rlc.bin kaveri_sdma.bin \
-	mullins_ce.bin mullins_me.bin mullins_mec.bin mullins_pfp.bin \
-	mullins_rlc.bin mullins_sdma.bin \
-	oland_ce.bin oland_mc.bin oland_me.bin oland_pfp.bin oland_rlc.bin \
-	oland_smc.bin \
-	pitcairn_ce.bin pitcairn_mc.bin pitcairn_me.bin pitcairn_pfp.bin \
-	pitcairn_rlc.bin pitcairn_smc.bin \
-	tahiti_ce.bin tahiti_mc.bin tahiti_me.bin tahiti_pfp.bin \
-	tahiti_rlc.bin tahiti_smc.bin verde_ce.bin verde_mc.bin verde_me.bin \
-	verde_pfp.bin verde_rlc.bin verde_smc.bin
+	VERDE_rlc.bin VERDE_smc.bin
 
 # radeondrmks needs these after mountroot, but before starting init.
 FIRMWAREDIR=	/libdata/firmware
