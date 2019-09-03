@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.125 2019/09/03 10:36:17 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.126 2019/09/03 13:43:34 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -46,23 +46,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-
-/*
- *	#define __NetBSD_Curses_Version__ MMmmrrpp00
- *
- * M = major version
- * m = minor version; a minor number of 99 indicates current
- * r = 0 (*)
- * p = patchlevel
- *
- * This is similar to __NetBSD_Version__ as found in sys/param.h
- * It is maintained seperately and has no correlation to it or the
- * ELF symver libcurses is built as.
- */
-#define	__NetBSD_Curses_Version__	0200000000 /* NetBSD-Curses 2.0.0 */
-
-#define __NetBSD_Curses_Prereq__(M,m,p) (((((M) * 100000000) + \
-	        (m) * 1000000) + (p) * 100) <= __NetBSD_Curses_Version__)
 
 /*
  * attr_t must be the same size as wchar_t (see <wchar.h>) to avoid padding
