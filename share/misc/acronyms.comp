@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.288 2019/09/02 10:35:15 sevan Exp $
+$NetBSD: acronyms.comp,v 1.289 2019/09/03 21:34:03 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -727,6 +727,7 @@ IMR	interrupt mask register
 IMS	information management system
 IMSI	international mobile subscriber identity
 INCITS	InterNational Committee for Information Technology Standards
+INODE	index node
 IO	input/output
 IOCTL	input/output control
 IOM	input/output managers
@@ -1519,6 +1520,7 @@ SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
 STD	state transition diagram
+STM	software transactional memory
 STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
 STP	shielded twisted pair
