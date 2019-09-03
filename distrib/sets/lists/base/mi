@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1213 2019/08/27 22:48:54 kamil Exp $
+# $NetBSD: mi,v 1.1214 2019/09/03 15:34:08 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -428,72 +428,6 @@
 ./libdata/firmware/radeon/VERDE_pfp.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/radeon/VERDE_rlc.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/radeon/VERDE_smc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_ce.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_mc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_me.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_mec.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_sdma.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_smc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/bonaire_uvd.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_mc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hainan_smc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_mc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_mec.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_sdma.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/hawaii_smc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_mec.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kabini_sdma.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_mec.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_mec2.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/kaveri_sdma.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_ce.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_me.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_mec.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/mullins_sdma.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_mc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_pfp.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_rlc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/oland_smc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_ce.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_mc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_me.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/pitcairn_smc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_mc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_pfp.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_rlc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/tahiti_smc.bin	base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_ce.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_mc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_me.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_pfp.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_rlc.bin		base-firmware-usr	radeonfirmware
-./libdata/firmware/radeon/verde_smc.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/ral				base-firmware-root
 ./libdata/firmware/ral/ral-license		base-firmware-root	firmware
 ./libdata/firmware/ral/ral-rt2561		base-firmware-root	firmware
