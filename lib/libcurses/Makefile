@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2019/09/02 09:08:29 roy Exp $
+#	$NetBSD: Makefile,v 1.92 2019/09/03 10:36:17 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -210,10 +210,8 @@ SUBDIR.roff+= PSD.doc
 fileio.h: shlib_version genfileioh.awk
 	${TOOL_AWK} -f ${.CURDIR}/genfileioh.awk < ${.CURDIR}/shlib_version > ${.CURDIR}/fileio.h
 
-NETBSD_VERSION!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
-CPPFLAGS.version.c+=	-DNETBSD_VERSION=\"${NETBSD_VERSION}\"
-.PATH:			${NETBSDSRCDIR}/sys/sys
-version.o:		param.h
+CURSES_VERSION!=	${HOST_SH} ${.CURDIR}/cursesrelease.sh
+CPPFLAGS.version.c+=	-DCURSES_VERSION=\"${CURSES_VERSION}\"
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
