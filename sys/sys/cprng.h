@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.12 2015/04/13 15:51:30 riastradh Exp $ */
+/*	$NetBSD: cprng.h,v 1.12.10.1 2019/09/03 12:08:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 #include <sys/types.h>
 
-#include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
+#include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 #include <crypto/cprng_fast/cprng_fast.h>
 
 /*
- * NIST SP800-90 says 2^19 bytes per request for the CTR_DRBG.
+ * NIST SP800-90 says 2^19 bytes per request for the Hash_DRBG.
  */
 #define CPRNG_MAX_LEN	524288
 
@@ -71,7 +71,7 @@ int	cprng_strong_poll(cprng_strong_t *, int); /* XXX " */
 
 extern cprng_strong_t	*kern_cprng;
 
-static inline uint32_t
+static __inline uint32_t
 cprng_strong32(void)
 {
 	uint32_t r;
@@ -79,18 +79,12 @@ cprng_strong32(void)
 	return r;
 }
 
-static inline uint64_t
+static __inline uint64_t
 cprng_strong64(void)
 {
 	uint64_t r;
 	cprng_strong(kern_cprng, &r, sizeof(r), 0);
 	return r;
-}
-
-static inline unsigned int
-cprng_strong_strength(cprng_strong_t *c)
-{
-	return NIST_BLOCK_KEYLEN_BYTES;
 }
 
 #endif	/* _CPRNG_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.7 2019/04/10 07:39:31 martin Exp $
+#	$NetBSD: files,v 1.1173.2.8 2019/09/03 12:08:22 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -186,8 +186,8 @@ include "crypto/camellia/files.camellia"
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
 
-# NIST SP800.90 CTR DRBG
-include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
+# NIST SP800-90A Hash_DRBG
+include "crypto/nist_hash_drbg/files.nist_hash_drbg"
 
 # ChaCha-based fast PRNG
 include "crypto/cprng_fast/files.cprng_fast"
