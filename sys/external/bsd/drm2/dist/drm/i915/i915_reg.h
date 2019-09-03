@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.10 2019/08/07 14:58:04 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.11 2019/09/03 15:05:40 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -1785,7 +1785,7 @@ enum skl_disp_power_wells {
 #define FW_BLC_SELF	0x020e0 /* 915+ only */
 #define   FW_BLC_SELF_EN_MASK      (1<<31)
 #define   FW_BLC_SELF_FIFO_MASK    (1<<16) /* 945 only */
-#define   FW_BLC_SELF_EN           (1<<15) /* 945 only */
+#define   FW_BLC_SELF_EN           (1U<<15) /* 945 only */
 #define MM_BURST_LENGTH     0x00700000
 #define MM_FIFO_WATERMARK   0x0001F000
 #define LM_BURST_LENGTH     0x00000700
@@ -3683,7 +3683,7 @@ enum skl_disp_power_wells {
 /* TV port control */
 #define TV_CTL			0x68000
 /* Enables the TV encoder */
-# define TV_ENC_ENABLE			(1 << 31)
+# define TV_ENC_ENABLE			(1U << 31)
 /* Sources the TV encoder input from pipe B instead of A. */
 # define TV_ENC_PIPEB_SELECT		(1 << 30)
 /* Outputs composite video (DAC A only) */
@@ -3882,7 +3882,7 @@ enum skl_disp_power_wells {
 
 #define TV_H_CTL_2		0x68034
 /* Enables the colorburst (needed for non-component color) */
-# define TV_BURST_ENA			(1 << 31)
+# define TV_BURST_ENA			(1U << 31)
 /* Offset of the colorburst from the start of hsync, in pixels minus one. */
 # define TV_HBURST_START_SHIFT		16
 # define TV_HBURST_START_MASK		0x1fff0000
@@ -3927,7 +3927,7 @@ enum skl_disp_power_wells {
 
 #define TV_V_CTL_3		0x68044
 /* Enables generation of the equalization signal */
-# define TV_EQUAL_ENA			(1 << 31)
+# define TV_EQUAL_ENA			(1U << 31)
 /* Length of vsync, in half lines */
 # define TV_VEQ_LEN_MASK		0x007f0000
 # define TV_VEQ_LEN_SHIFT		16
@@ -4001,7 +4001,7 @@ enum skl_disp_power_wells {
 
 #define TV_SC_CTL_1		0x68060
 /* Turns on the first subcarrier phase generation DDA */
-# define TV_SC_DDA1_EN			(1 << 31)
+# define TV_SC_DDA1_EN			(1U << 31)
 /* Turns on the first subcarrier phase generation DDA */
 # define TV_SC_DDA2_EN			(1 << 30)
 /* Turns on the first subcarrier phase generation DDA */
@@ -4064,7 +4064,7 @@ enum skl_disp_power_wells {
  * If set, the rest of the registers are ignored, and the calculated values can
  * be read back from the register.
  */
-# define TV_AUTO_SCALE			(1 << 31)
+# define TV_AUTO_SCALE			(1U << 31)
 /*
  * Disables the vertical filter.
  *
