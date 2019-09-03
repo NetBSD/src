@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.35 2019/08/19 03:20:27 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.36 2019/09/03 19:07:50 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,8 @@ IP6SRC=fc00::1
 IP6SRC2=fc00::3
 IP6DST=fc00::2
 IP6NET=fc00::0
+IP6DST_FAIL1=fc00::99
+IP6DST_FAIL2=fc01::99
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -454,7 +456,38 @@ ndp_rtm_body()
 
 	hdr="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
 	what="<DST,GATEWAY>"
-	addr="$IP6DST link#2"
+	addr="$IP6DST $macaddr_dst"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) on subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	# nd6_mmaxtries = 3, second between each try
+	atf_check -s exit:1 -o ignore -e ignore \
+		rump.ping6 -n -X 3 -c 3 $IP6DST_FAIL1
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST,GATEWAY>"
+	addr="$IP6DST_FAIL1 link#2"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) off subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	atf_check -s exit:1 -o ignore -e ignore \
+		rump.ping6 -n -X 1 -c 1 $IP6DST_FAIL2
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST>"
+	addr="$IP6DST_FAIL2"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 
