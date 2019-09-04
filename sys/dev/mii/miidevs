@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.155 2019/09/04 06:27:49 msaitoh Exp $
+$NetBSD: miidevs,v 1.156 2019/09/04 08:56:45 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ oui XAQTI			0x00e0ae	XaQti Corp.
 oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
-oui Renesas			0x749050	Renesas
+oui RENESAS			0x749050	Renesas
 
 /* Unregisterd or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
