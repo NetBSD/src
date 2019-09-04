@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.24 2017/01/18 22:38:00 abhinav Exp $
+.\"	$NetBSD: rnd.4,v 1.25 2019/09/04 03:15:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 16, 2014
+.Dd September 3, 2019
 .Dt RND 4
 .Os
 .Sh NAME
@@ -404,9 +404,9 @@ When a user process opens
 or
 .Pa /dev/urandom
 and first reads from it, the kernel draws from the entropy pool to seed
-a cryptographic pseudorandom number generator, the NIST CTR_DRBG
-(counter-mode deterministic random bit generator) with AES-128 as the
-block cipher, and uses that to generate data.
+a cryptographic pseudorandom number generator, the NIST Hash_DRBG
+(hash-based deterministic random bit generator) with SHA-256 as the
+hash function, and uses that to generate data.
 .Pp
 To draw a seed from the entropy pool, the kernel
 .Bl -bullet -offset abcd -compact
@@ -600,8 +600,8 @@ it would be hopeless to assume we could for HTTPS, SSH, PGP, etc.
 .Pp
 History is littered with examples of broken entropy sources and failed
 system engineering for random number generators.
-Nobody has ever reported distinguishing AES ciphertext from uniform
-random without side channels, nor reported computing SHA-1 preimages
+Nobody has ever reported distinguishing SHA-256 hashes with secret
+inputs from uniform random, nor reported computing SHA-1 preimages
 faster than brute force.
 The folklore information-theoretic defence against computationally
 unbounded attackers replaces system engineering that successfully
