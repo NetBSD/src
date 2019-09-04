@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.25 2019/09/04 03:15:20 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.26 2019/09/04 04:00:04 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -551,50 +551,27 @@ Unfortunately, no amount of software engineering can fix that.
 .Sh ENTROPY ACCOUNTING
 The entropy accounting described here is not grounded in any
 cryptography theory.
-It is done because it was always done, and because it gives people a
-warm fuzzy feeling about information theory.
+.Sq Entropy estimation
+doesn't mean much: the kernel hypothesizes an extremely simple-minded
+parametric model for all entropy sources which bears little relation to
+any physical processes, implicitly fits parameters from data, and
+accounts for the entropy of the fitted model.
 .Pp
-The folklore is that every
-.Fa n Ns -bit
-output of
-.Fa /dev/random
-is not merely indistinguishable from uniform random to a
-computationally bounded attacker, but information-theoretically is
-independent and has
-.Fa n
-bits of entropy even to a computationally
-.Em unbounded
-attacker -- that is, an attacker who can recover AES keys, compute
-SHA-1 preimages, etc.
-This property is not provided, nor was it ever provided in any
-implementation of
-.Fa /dev/random
-known to the author.
+Past versions of the
+.Nm
+subsystem were concerned with
+.Sq information-theoretic
+security, under the premise that the number of bits of entropy out must
+not exceed the number of bits of entropy in -- never mind that its
+.Sq entropy estimation
+is essentially meaningless without a model for the physical processes
+the system is observing.
 .Pp
-This property would require that, after each read, the system discard
-all measurements from hardware in the entropy pool and begin anew.
-All work done to make the system unpredictable would be thrown out, and
-the system would immediately become predictable again.
-Reverting the system to being predictable every time a process reads
-from
-.Fa /dev/random
-would give attackers a tremendous advantage in predicting future
-outputs, especially if they can fool the entropy estimator, e.g. by
-sending carefully timed network packets.
-.Pp
-If you filled your entropy pool by flipping a coin 256 times, you would
-have to flip it again 256 times for the next output, and so on.
-In that case, if you really want information-theoretic guarantees, you
-might as well take
-.Fa /dev/random
-out of the picture and use your coin flips verbatim.
-.Pp
-On the other hand, every cryptographic protocol in practice, including
-HTTPS, SSH, PGP, etc., expands short secrets deterministically into
-long streams of bits, and their security relies on conjectures that a
-computationally bounded attacker cannot distinguish the long streams
-from uniform random.
-If we couldn't do that for
+But every cryptographic protocol in practice, including HTTPS, SSH,
+PGP, etc., expands short secrets deterministically into long streams of
+bits, and their security relies on conjectures that a computationally
+bounded attacker cannot distinguish the long streams from uniform
+random.  If we couldn't do that for
 .Fa /dev/random ,
 it would be hopeless to assume we could for HTTPS, SSH, PGP, etc.
 .Pp
@@ -603,7 +580,3 @@ system engineering for random number generators.
 Nobody has ever reported distinguishing SHA-256 hashes with secret
 inputs from uniform random, nor reported computing SHA-1 preimages
 faster than brute force.
-The folklore information-theoretic defence against computationally
-unbounded attackers replaces system engineering that successfully
-defends against realistic threat models by imaginary theory that
-defends only against fantasy threat models.
