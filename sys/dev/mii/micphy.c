@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.4.10.1 2019/09/01 10:14:20 martin Exp $	*/
+/*	$NetBSD: micphy.c,v 1.4.10.2 2019/09/04 08:33:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4.10.1 2019/09/01 10:14:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4.10.2 2019/09/04 08:33:39 martin Exp $");
 
 #include "opt_mii.h"
 
@@ -158,7 +158,7 @@ micphyattach(device_t parent, device_t self, void *aux)
 static void
 micphy_reset(struct mii_softc *sc)
 {
-	int reg;
+	int reg = 0; /* XXX gcc */
 
 	/*
 	 * The 8081 has no "sticky bits" that survive a soft reset; several bits
