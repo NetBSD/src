@@ -381,6 +381,9 @@ control_queue(struct fd_list *fd, void *data, size_t data_len, bool fit)
 {
 	struct fd_data *d;
 
+	if (data_len == 0)
+		return 0;
+
 #ifdef CTL_FREE_LIST
 	struct fd_data *df;
 

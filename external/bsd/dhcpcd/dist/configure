@@ -179,25 +179,6 @@ done
 : ${WC:=wc}
 
 : ${FORK:=yes}
-: ${SYSCONFDIR:=$PREFIX/etc}
-: ${SBINDIR:=$PREFIX/sbin}
-: ${LIBDIR:=$PREFIX/lib}
-: ${LIBEXECDIR:=$PREFIX/libexec}
-: ${STATEDIR:=/var}
-: ${DBDIR:=$STATEDIR/db/dhcpcd}
-: ${RUNDIR:=$STATEDIR/run}
-: ${MANDIR:=${PREFIX:-/usr}/share/man}
-: ${DATADIR:=${PREFIX:-/usr}/share}
-
-eval SYSCONFDIR="$SYSCONFDIR"
-eval LIBDIR="$LIBDIR"
-eval LIBEXECDIR="$LIBEXECDIR"
-eval STATEDIR="$STATEDIR"
-eval DBDIR="$DBDIR"
-eval RUNDIR="$RUNDIR"
-eval MANDIR="$MANDIR"
-eval DATADIR="$DATADIR"
-
 _which()
 {
 	x="$(which "$1" 2>/dev/null)"
@@ -252,6 +233,10 @@ if [ -z "$OS" ]; then
 	esac
 	# Special case
 	case "$OS" in
+	dragonfly*)
+		# This means /usr HAS to be mounted not via dhcpcd
+		: ${LIBEXECDIR:=${PREFIX:-/usr}/libexec}
+		;;
 	gnu*) OS=hurd;; # No HURD support as yet
 	esac
 fi
@@ -261,6 +246,26 @@ rm -f $CONFIG_H $CONFIG_MK
 echo "# $OS" >$CONFIG_MK
 echo "/* $OS */" >$CONFIG_H
 
+: ${SYSCONFDIR:=$PREFIX/etc}
+: ${SBINDIR:=$PREFIX/sbin}
+: ${LIBDIR:=$PREFIX/lib}
+: ${LIBEXECDIR:=$PREFIX/libexec}
+: ${STATEDIR:=/var}
+: ${DBDIR:=$STATEDIR/db/dhcpcd}
+: ${RUNDIR:=$STATEDIR/run}
+: ${MANDIR:=${PREFIX:-/usr}/share/man}
+: ${DATADIR:=${PREFIX:-/usr}/share}
+
+eval SYSCONFDIR="$SYSCONFDIR"
+eval LIBDIR="$LIBDIR"
+eval LIBEXECDIR="$LIBEXECDIR"
+eval STATEDIR="$STATEDIR"
+eval DBDIR="$DBDIR"
+eval RUNDIR="$RUNDIR"
+eval MANDIR="$MANDIR"
+eval DATADIR="$DATADIR"
+
+echo "#ifndef	SYSCONFDIR" >>$CONFIG_H
 for x in SYSCONFDIR SBINDIR LIBDIR LIBEXECDIR DBDIR RUNDIR; do
 	eval v=\$$x
 	# Make files look nice for import
@@ -272,6 +277,8 @@ for x in SYSCONFDIR SBINDIR LIBDIR LIBEXECDIR DBDIR RUNDIR; do
 	[ $l -gt 2 ] && t="	"
 	echo "#define	$x$t		\"$v\"" >>$CONFIG_H
 done
+echo "#endif" >>$CONFIG_H
+
 echo "LIBDIR=		$LIBDIR" >>$CONFIG_MK
 echo "MANDIR=		$MANDIR" >>$CONFIG_MK
 echo "DATADIR=	$DATADIR" >>$CONFIG_MK
@@ -452,8 +459,6 @@ qnx*)
 	echo "DHCPCD_SRCS+=	if-bsd.c" >>$CONFIG_MK
 	;;
 sunos*)
-	echo "WARNING!!! Solaris support is at early development stage!" >&2
-	echo "so don't expect it to work just yet, patches welcome" >&2
 	echo "CPPFLAGS+=	-D_XPG4_2 -D__EXTENSIONS__ -DBSD_COMP" \
 	    >>$CONFIG_MK
 	echo "DHCPCD_SRCS+=	if-sun.c" >>$CONFIG_MK
@@ -497,10 +502,6 @@ if [ -z "$AUTH" -o "$AUTH" = yes ]; then
 	echo "Enabling Authentication"
 	echo "CPPFLAGS+=	-DAUTH" >>$CONFIG_MK
 	echo "SRCS+=		auth.c" >>$CONFIG_MK
-	echo "CRYPT_SRCS+=	\${HMAC_SRC}" >>$CONFIG_MK
-fi
-if [ -z "$INET6" -o "$INET6" = yes -o -z "$AUTH" -o "$AUTH" = yes ]; then
-	echo "CRYPT_SRCS+=	\${MD5_SRC} \${SHA256_SRC}" >>$CONFIG_MK
 fi
 
 echo "Using compiler .. $CC"
@@ -931,6 +932,30 @@ EOF
 	echo "$TAILQ_FOREACH_SAFE"
 	rm -f _queue.c _queue
 fi
+if [ "$TAILQ_FOREACH_SAFE" = no ] && [ -z "$TAILQ_FOREACH_MUTABLE" ]; then
+	printf "Testing for TAILQ_FOREACH_MUTABLE ... "
+	cat <<EOF >_queue.c
+#include <sys/queue.h>
+int main(void) {
+#ifndef TAILQ_FOREACH_MUTABLE
+#error TAILQ_FOREACH_MUTABLE
+#endif
+	return 0;
+}
+EOF
+	if $XCC _queue.c -o _queue 2>&3; then
+		TAILQ_FOREACH_MUTABLE=yes
+		TAILQ_FOREACH_SAFE=yes
+		TAILQ_FOREACH=yes
+		echo "#define	TAILQ_FOREACH_SAFE	TAILQ_FOREACH_MUTABLE" \
+			>> $CONFIG_H
+	else
+		TAILQ_FOREACH_MUTABLE=no
+	fi
+	echo "$TAILQ_FOREACH_MUTABLE"
+	rm -f _queue.c _queue
+fi
+
 
 if [ -z "$TAILQ_CONCAT" ]; then
 	printf "Testing for TAILQ_CONCAT ..."
@@ -1007,7 +1032,7 @@ EOF
 	rm -f _rbtree.c _rbtree
 fi
 if [ "$RBTREE" = no ]; then
-	echo "CPPFLAGS+=	-DRBTEST" >>$CONFIG_MK
+	echo "#define	RBTEST" >>$CONFIG_H
 	echo "COMPAT_SRCS+=	compat/rb.c" >>$CONFIG_MK
 	echo "#include			\"compat/rbtree.h\"" >>$CONFIG_H
 else
@@ -1186,6 +1211,14 @@ if [ "$FLS64" = yes ]; then
 	echo "#define	HAVE_SYS_BITOPS_H" >>$CONFIG_H
 fi
 
+# Workaround for DragonFlyBSD import
+if [ "$OS" = dragonfly ]; then
+	echo "#ifdef	USE_PRIVATECRYPTO" >>$CONFIG_H
+	echo "#define	HAVE_MD5_H" >>$CONFIG_H
+	echo "#define	SHA2_H	<sha256.h>" >>$CONFIG_H
+	echo "#else" >>$CONFIG_H
+fi
+
 if [ -z "$MD5" ]; then
 	MD5_LIB=
 	printf "Testing for MD5Init ... "
@@ -1322,6 +1355,9 @@ else
 	[ -n "$SHA2_LIB" ] && echo "LDADD+=		$SHA2_LIB" >>$CONFIG_MK
 fi
 
+# Workarond for DragonFlyBSD import
+[ "$OS" = dragonfly ] && echo "#endif" >>$CONFIG_H
+
 if [ -z "$HMAC" ]; then
 	HMAC_LIB=
 	printf "Testing for hmac ... "
@@ -1361,6 +1397,21 @@ if [ "$HMAC" = no ]; then
 else
 	# echo "#define	HAVE_HMAC_H" >>$CONFIG_H
 	echo "HMAC_SRC=" >>$CONFIG_MK
+fi
+
+if [ -z "$AUTH" ] || [ "$AUTH" = yes ]; then
+	if [ "$HMAC" = no ]; then
+		echo "CRYPT_SRCS+=	\${HMAC_SRC}" >>$CONFIG_MK
+	fi
+fi
+if [ -z "$INET6" ] || [ "$INET6" = yes ] || \
+    [ -z "$AUTH" ] || [ "$AUTH" = yes ]; then
+	if [ "$MD5" = no ]; then
+		echo "CRYPT_SRCS+=	\${MD5_SRC}" >>$CONFIG_MK
+	fi
+	if [ "$SHA2" = no ]; then
+		echo "CRYPT_SRCS+=	\${SHA256_SRC}" >>$CONFIG_MK
+	fi
 fi
 
 if [ "$DEV" != no -a "$UDEV" != no ]; then

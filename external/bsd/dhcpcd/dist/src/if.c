@@ -72,6 +72,12 @@
 #include "ipv6nd.h"
 #include "logerr.h"
 
+#ifdef __sun
+/* It has the ioctl, but the member is missing from the struct?
+ * No matter, our getifaddrs foo in if-sun.c will DTRT. */
+#undef SIOCGIFHWADDR
+#endif
+
 void
 if_free(struct interface *ifp)
 {
@@ -235,6 +241,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 		case AF_INET6:
 			sin6 = (void *)ifa->ifa_addr;
 			net6 = (void *)ifa->ifa_netmask;
+
 #ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				/* Remove the scope from the address */

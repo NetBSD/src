@@ -680,8 +680,6 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 	struct ndmsg *r;
 	struct rtattr *rta;
 	size_t len;
-	struct in6_addr addr6;
-	int flags;
 
 	if (nlm->nlmsg_type != RTM_NEWNEIGH && nlm->nlmsg_type != RTM_DELNEIGH)
 		return 0;
@@ -692,14 +690,13 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 	rta = (struct rtattr *)RTM_RTA(r);
 	len = RTM_PAYLOAD(nlm);
         if (r->ndm_family == AF_INET6) {
-		flags = 0;
-		if (r->ndm_flags & NTF_ROUTER)
-			flags |= IPV6ND_ROUTER;
-		if (nlm->nlmsg_type == RTM_NEWNEIGH &&
+		bool reachable;
+		struct in6_addr addr6;
+
+		reachable = (nlm->nlmsg_type == RTM_NEWNEIGH &&
 		    r->ndm_state &
 		    (NUD_REACHABLE | NUD_STALE | NUD_DELAY | NUD_PROBE |
-		     NUD_PERMANENT))
-		        flags |= IPV6ND_REACHABLE;
+		     NUD_PERMANENT));
 		memset(&addr6, 0, sizeof(addr6));
 		while (RTA_OK(rta, len)) {
 			switch (rta->rta_type) {
@@ -710,7 +707,7 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 			}
 			rta = RTA_NEXT(rta, len);
 		}
-		ipv6nd_neighbour(ctx, &addr6, flags);
+		ipv6nd_neighbour(ctx, &addr6, reachable);
 	}
 
 	return 0;
@@ -1467,7 +1464,7 @@ bpf_attach(int s, void *filter, unsigned int filter_len)
 {
 	struct sock_fprog pf = {
 		.filter = filter,
-		.len = filter_len,
+		.len = (unsigned short)filter_len,
 	};
 
 	/* Install the filter. */

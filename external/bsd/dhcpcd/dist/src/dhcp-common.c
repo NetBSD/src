@@ -961,6 +961,8 @@ dhcp_read_lease_fd(int fd, void **lease)
 	}
 
 	sz = (size_t)st.st_size;
+	if (sz == 0)
+		goto out;
 	if ((buf = malloc(sz)) == NULL)
 		goto out;
 	if ((len = read(fd, buf, sz)) == -1) {

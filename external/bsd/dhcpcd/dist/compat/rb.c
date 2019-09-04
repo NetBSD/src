@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.1.1.1 2019/07/24 09:54:48 roy Exp $	*/
+/*	$NetBSD: rb.c,v 1.1.1.2 2019/09/04 13:27:50 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
 #include "common.h"
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -43,10 +44,10 @@
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rb.c,v 1.1.1.1 2019/07/24 09:54:48 roy Exp $");
+__RCSID("$NetBSD: rb.c,v 1.1.1.2 2019/09/04 13:27:50 roy Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.1.1.1 2019/07/24 09:54:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.1.1.2 2019/09/04 13:27:50 roy Exp $");
 #ifndef DIAGNOSTIC
 #define	__rbt_unused	__unused
 #else

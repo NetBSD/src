@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.1.1.1 2019/07/24 09:54:48 roy Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.1.1.2 2019/09/04 13:27:50 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _SYS_RBTREE_H_
 #define	_SYS_RBTREE_H_
 
+#include "config.h"
 #include "common.h"
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -40,7 +41,11 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#else
 #include "queue.h"
+#endif
 #if !defined(__linux__) && !defined(__QNX__) && !defined(__sun)
 #include <sys/endian.h>
 #else

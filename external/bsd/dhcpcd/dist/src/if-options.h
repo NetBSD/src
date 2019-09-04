@@ -61,7 +61,7 @@
 
 #define DHCPCD_ARP			(1ULL << 0)
 #define DHCPCD_RELEASE			(1ULL << 1)
-// unused				(1ULL << 2)
+#define DHCPCD_RTBUILD			(1ULL << 2)
 #define DHCPCD_GATEWAY			(1ULL << 3)
 #define DHCPCD_STATIC			(1ULL << 4)
 #define DHCPCD_DEBUG			(1ULL << 5)
