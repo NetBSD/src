@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.128 2019/08/21 10:01:53 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.129 2019/09/04 07:29:34 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2406,7 +2406,8 @@ ixv_sysctl_instance(struct adapter *adapter)
 
 	return rnode;
 err:
-	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	device_printf(adapter->dev,
+	    "%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
 }
 

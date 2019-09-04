@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.206 2019/08/29 09:45:22 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.207 2019/09/04 07:29:34 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3306,7 +3306,8 @@ ixgbe_sysctl_instance(struct adapter *adapter)
 
 	return rnode;
 err:
-	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	device_printf(adapter->dev,
+	    "%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
 }
 
