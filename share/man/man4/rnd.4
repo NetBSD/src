@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.27 2019/09/04 04:03:25 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.28 2019/09/04 05:37:06 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,8 +187,8 @@ quantum computers.
 Systems with nonvolatile storage should store a secret from
 .Pa /dev/urandom
 on disk during installation or shutdown, and feed it back during boot,
-so that the work the operating system has done to gather entropy --
-including the work its operator may have done to flip a coin! -- can be
+so that the work the operating system has done to gather entropy \(em
+including the work its operator may have done to flip a coin! \(em can be
 saved from one boot to the next, and so that newly installed systems
 are not vulnerable to generating cryptographic keys predictably.
 .Pp
@@ -205,7 +205,7 @@ in
 which is enabled by default; see
 .Xr rc.conf 5 .
 .Sh LIMITATIONS
-Some people worry about recovery from state compromise -- that is,
+Some people worry about recovery from state compromise \(em that is,
 ensuring that even if an attacker sees the entire state of the
 operating system, then the attacker will be unable to predict any new
 future outputs as long as the operating system gathers fresh entropy
@@ -562,7 +562,7 @@ Past versions of the
 subsystem were concerned with
 .Sq information-theoretic
 security, under the premise that the number of bits of entropy out must
-not exceed the number of bits of entropy in -- never mind that its
+not exceed the number of bits of entropy in \(em never mind that its
 .Sq entropy estimation
 is essentially meaningless without a model for the physical processes
 the system is observing.
@@ -571,7 +571,8 @@ But every cryptographic protocol in practice, including HTTPS, SSH,
 PGP, etc., expands short secrets deterministically into long streams of
 bits, and their security relies on conjectures that a computationally
 bounded attacker cannot distinguish the long streams from uniform
-random.  If we couldn't do that for
+random.
+If we couldn't do that for
 .Fa /dev/random ,
 it would be hopeless to assume we could for HTTPS, SSH, PGP, etc.
 .Pp
