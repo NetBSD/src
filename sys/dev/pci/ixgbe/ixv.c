@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.129 2019/09/04 07:29:34 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.130 2019/09/04 10:34:04 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -516,7 +516,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	error = ixv_allocate_msix(adapter, pa);
 	if (error) {
-		device_printf(dev, "ixv_allocate_msix() failed!\n");
+		aprint_error_dev(dev, "ixv_allocate_msix() failed!\n");
 		goto err_late;
 	}
 
