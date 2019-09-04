@@ -950,12 +950,7 @@ dhcpcd_prestartinterface(void *arg)
 
 	if ((!(ifp->ctx->options & DHCPCD_MASTER) ||
 	    ifp->options->options & DHCPCD_IF_UP) &&
-	    if_up(ifp) == -1
-#ifdef __sun
-	    /* Interface could not yet be plumbed. */
-	    && errno != ENXIO
-#endif
-	    )
+	    if_up(ifp) == -1)
 		logerr("%s: %s", __func__, ifp->name);
 
 	dhcpcd_startinterface(ifp);
