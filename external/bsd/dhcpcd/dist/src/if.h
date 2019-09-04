@@ -107,6 +107,7 @@
 struct ifaddrs;
 int if_getifaddrs(struct ifaddrs **);
 #define	getifaddrs	if_getifaddrs
+int if_getsubnet(struct dhcpcd_ctx *, const char *, int, void *, size_t);
 #endif
 
 int if_getflags(struct interface *ifp);
