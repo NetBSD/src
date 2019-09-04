@@ -110,9 +110,9 @@
     * While it supports DaD, to seems to only expose IFF_DUPLICATE
     * so we have no way of knowing if it's tentative or not.
     * I don't even know if Solaris has any special treatment for tentative. */
-#  define IN6_IFF_TENTATIVE	0
+#  define IN6_IFF_TENTATIVE	0x02
 #  define IN6_IFF_DUPLICATED	0x04
-#  define IN6_IFF_DETACHED	0
+#  define IN6_IFF_DETACHED	0x00
 #endif
 
 #define IN6_IFF_NOTUSEABLE \
@@ -159,7 +159,7 @@
 #if !defined(SMALL) && \
     ((defined(__DragonFly_version) && __DragonFly_version >= 500703) || \
     (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 899002800) || \
-    defined(__linux__))
+    defined(__linux__) || defined(__sun))
 #  define ND6_ADVERTISE
 #endif
 
@@ -273,6 +273,7 @@ int ipv6_handleifa_addrs(int, struct ipv6_addrhead *, const struct ipv6_addr *,
 struct ipv6_addr *ipv6_iffindaddr(struct interface *,
     const struct in6_addr *, int);
 int ipv6_hasaddr(const struct interface *);
+struct ipv6_addr *ipv6_ifanyglobal(struct interface *);
 int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
     unsigned int);
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,

@@ -141,7 +141,7 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 #ifdef RTM_IFANNOUNCE
 	    RTM_IFANNOUNCE,
 #endif
-	    RTM_ADD, RTM_CHANGE, RTM_DELETE,
+	    RTM_ADD, RTM_CHANGE, RTM_DELETE, RTM_MISS,
 #ifdef RTM_CHGADDR
 	    RTM_CHGADDR,
 #endif
@@ -639,7 +639,11 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 {
 	const struct sockaddr *rti_info[RTAX_MAX];
 
-	if (~rtm->rtm_addrs & (RTA_DST | RTA_GATEWAY)) {
+	if (!(rtm->rtm_addrs & RTA_DST)) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (rtm->rtm_type != RTM_MISS && !(rtm->rtm_addrs & RTA_GATEWAY)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -674,12 +678,24 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 		if (rt->rt_netmask.sa_family == 255) /* Why? */
 			rt->rt_netmask.sa_family = rt->rt_dest.sa_family;
 	}
-	/* dhcpcd likes an unspecified gateway to indicate via the link. */
-	if (rt->rt_flags & RTF_GATEWAY &&
-	    rti_info[RTAX_GATEWAY]->sa_family != AF_LINK)
-		if_copysa(&rt->rt_gateway, rti_info[RTAX_GATEWAY]);
+
+	/* dhcpcd likes an unspecified gateway to indicate via the link.
+	 * However we need to know if gateway was a link with an address. */
+	if (rtm->rtm_addrs & RTA_GATEWAY) {
+		if (rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) {
+			const struct sockaddr_dl *sdl;
+
+			sdl = (const struct sockaddr_dl*)
+			    (const void *)rti_info[RTAX_GATEWAY];
+			if (sdl->sdl_alen != 0)
+				rt->rt_dflags |= RTDF_GATELINK;
+		} else if (rtm->rtm_flags & RTF_GATEWAY)
+			if_copysa(&rt->rt_gateway, rti_info[RTAX_GATEWAY]);
+	}
+
 	if (rtm->rtm_addrs & RTA_IFA)
 		if_copysa(&rt->rt_ifa, rti_info[RTAX_IFA]);
+
 	rt->rt_mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
 
 	if (rtm->rtm_index)
@@ -690,6 +706,9 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 		rt->rt_ifp = if_findsa(ctx, rti_info[RTAX_GATEWAY]);
 	else
 		rt->rt_ifp = if_findsa(ctx, rti_info[RTAX_DST]);
+
+	if (rt->rt_ifp == NULL && rtm->rtm_type == RTM_MISS)
+		rt->rt_ifp = if_find(ctx->ifaces, "lo0");
 
 	if (rt->rt_ifp == NULL) {
 		errno = ESRCH;
@@ -1070,30 +1089,30 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 		return 0;
 
 	if (if_copyrt(ctx, &rt, rtm) == -1)
-		return -1;
+		return errno == ENOTSUP ? 0 : -1;
 
 #ifdef INET6
 	/*
 	 * BSD announces host routes.
 	 * As such, we should be notified of reachability by its
 	 * existance with a hardware address.
+	 * Ensure we don't call this for a newly incomplete state.
 	 */
-	if (rt.rt_dest.sa_family == AF_INET6 && rt.rt_flags & RTF_HOST) {
-		struct sockaddr_in6 dest;
-		struct sockaddr_dl sdl;
+	if (rt.rt_dest.sa_family == AF_INET6 &&
+	    (rt.rt_flags & RTF_HOST || rtm->rtm_type == RTM_MISS) &&
+	    !(rtm->rtm_type == RTM_ADD && !(rt.rt_dflags & RTDF_GATELINK)))
+	{
+		bool reachable;
 
-		memcpy(&dest, &rt.rt_dest, rt.rt_dest.sa_len);
-		if (rt.rt_gateway.sa_family == AF_LINK)
-			memcpy(&sdl, &rt.rt_gateway, rt.rt_gateway.sa_len);
-		else
-			sdl.sdl_alen = 0;
-		ipv6nd_neighbour(ctx, &dest.sin6_addr,
-		    rtm->rtm_type != RTM_DELETE && sdl.sdl_alen ?
-		    IPV6ND_REACHABLE : 0);
+		reachable = (rtm->rtm_type == RTM_ADD ||
+		    rtm->rtm_type == RTM_CHANGE) &&
+		    rt.rt_dflags & RTDF_GATELINK;
+		ipv6nd_neighbour(ctx, &rt.rt_ss_dest.sin6.sin6_addr, reachable);
 	}
 #endif
 
-	rt_recvrt(rtm->rtm_type, &rt, rtm->rtm_pid);
+	if (rtm->rtm_type != RTM_MISS)
+		rt_recvrt(rtm->rtm_type, &rt, rtm->rtm_pid);
 	return 0;
 }
 
@@ -1299,7 +1318,8 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 		return if_ifinfo(ctx, (const void *)rtm);
 	case RTM_ADD:		/* FALLTHROUGH */
 	case RTM_CHANGE:	/* FALLTHROUGH */
-	case RTM_DELETE:
+	case RTM_DELETE:	/* FALLTHROUGH */
+	case RTM_MISS:
 		return if_rtm(ctx, (const void *)rtm);
 #ifdef RTM_CHGADDR
 	case RTM_CHGADDR:	/* FALLTHROUGH */
