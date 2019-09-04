@@ -39,6 +39,7 @@
 #include "common.h"
 #include "dhcpcd.h"
 #include "if.h"
+#include "if-options.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6.h"
@@ -685,6 +686,7 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 	rb_tree_init(&kroutes, &rt_compare_os_ops);
 	if_initrt(ctx, &kroutes, af);
 	ctx->rt_order = 0;
+	ctx->options |= DHCPCD_RTBUILD;
 
 	switch (af) {
 #ifdef INET

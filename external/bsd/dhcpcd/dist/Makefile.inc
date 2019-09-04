@@ -8,6 +8,7 @@ MANMODE?=	${NONBINMODE}
 CONFMODE?=	0644
 
 CC?=		cc
+ECHO?=		echo
 INSTALL?=	install
 LINT?=		lint
 SED?=		sed
