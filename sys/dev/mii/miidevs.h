@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.152 2019/08/16 15:20:18 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.153 2019/09/04 06:28:08 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.154 2019/08/16 15:19:48 msaitoh Exp
+ *	NetBSD: miidevs,v 1.155 2019/09/04 06:27:49 msaitoh Exp
  */
 
 /*-
@@ -74,7 +74,9 @@
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_SUNPLUS	0x001105	/* Sunplus Technology */
 #define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_TERANETICS	0x0014a6	/* Teranetics */
 #define	MII_OUI_RALINK2	0x0017a5	/* Ralink Technology */
+#define	MII_OUI_AQUANTIA	0x0017b6	/* Aquantia Corporation */
 #define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_VIA	0x004063	/* VIA Technologies */
@@ -100,6 +102,7 @@
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
+#define	MII_OUI_Renesas	0x749050	/* Renesas */
 
 /* Unregisterd or wrong OUI */
 #define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
