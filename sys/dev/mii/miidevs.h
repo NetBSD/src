@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.153 2019/09/04 06:28:08 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.154 2019/09/04 08:57:05 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.155 2019/09/04 06:27:49 msaitoh Exp
+ *	NetBSD: miidevs,v 1.156 2019/09/04 08:56:45 msaitoh Exp
  */
 
 /*-
@@ -102,7 +102,7 @@
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
-#define	MII_OUI_Renesas	0x749050	/* Renesas */
+#define	MII_OUI_RENESAS	0x749050	/* Renesas */
 
 /* Unregisterd or wrong OUI */
 #define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
