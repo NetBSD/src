@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.154 2019/08/16 15:19:48 msaitoh Exp $
+$NetBSD: miidevs,v 1.155 2019/09/04 06:27:49 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@ oui ALTIMA			0x0010a9	Altima Communications
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui SUNPLUS			0x001105	Sunplus Technology
 oui ATHEROS			0x001374	Atheros
+oui TERANETICS			0x0014a6	Teranetics
 oui RALINK2			0x0017a5	Ralink Technology
+oui AQUANTIA			0x0017b6	Aquantia Corporation
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
 oui VIA				0x004063	VIA Technologies
@@ -93,6 +95,7 @@ oui XAQTI			0x00e0ae	XaQti Corp.
 oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
+oui Renesas			0x749050	Renesas
 
 /* Unregisterd or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
