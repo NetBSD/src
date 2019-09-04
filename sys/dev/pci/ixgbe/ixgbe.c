@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.207 2019/09/04 07:29:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.208 2019/09/04 08:13:43 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1403,7 +1403,6 @@ static void
 ixgbe_add_media_types(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	device_t	dev = adapter->dev;
 	u64		layer;
 
 	layer = adapter->phy_layer;
@@ -1469,7 +1468,7 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_5000_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_BX)
-		device_printf(dev, "Media supported: 1000baseBX\n");
+		ADD(IFM_1000_BX10 | IFM_FDX, 0);
 	/* XXX no ifmedia_set? */
 
 	ADD(IFM_AUTO, 0);
