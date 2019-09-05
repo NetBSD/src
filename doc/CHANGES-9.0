@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.41 2019/09/05 08:22:05 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.42 2019/09/05 08:35:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2761,4 +2761,23 @@ usr.bin/write/write.1				1.7
 	Adjust or add history information based on information from Dennis
 	Richie's v1 manuals, TUHS and CSRG archive.
 	[sevan, ticket #174]
+
+sys/net/rtsock.c				1.252
+sys/netinet6/nd6.c				1.262
+sys/netinet6/nd6_nbr.c				1.168-1.172
+
+	inet6: Send RTM_MISS when we fail to resolve an address.
+	inet6: change rt_announce and a few others to bool in nd6_na_input().
+	[roy, ticket #168]
+
+sys/netinet6/nd6.c				1.263
+sys/netinet6/nd6.h				1.87
+
+	inet6: Re-introduce ND6_LLINFO_WAITDELETE so we can return EHOSTDOWN.
+	[roy, ticket #169]
+
+sys/netinet/if_arp.c				1.287
+
+	inet: Send RTM_MISS when we fail to resolve an address.
+	[roy, ticket #170]
 
