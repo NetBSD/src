@@ -10,8 +10,8 @@ rem ifconfig.bat
 rem Set up interface aliases for bind9 system tests.
 rem
 rem IPv4: 10.53.0.{1..10}			RFC 1918
-rem       10.53.1.{0..2}
-rem       10.53.2.{0..2}
+rem       10.53.1.{1..2}
+rem       10.53.2.{1..2}
 rem IPv6: fd92:7065:b8e:ffff::{1..10}		ULA
 rem       fd92:7065:b8e:99ff::{1..2}
 rem       fd92:7065:b8e:ff::{1..2}
@@ -31,7 +31,7 @@ rem exit line
 
 echo on
 
-FOR %%I IN (1,2,3,4,5,6,7,8) DO (
+FOR %%I IN (1,2,3,4,5,6,7,8,9,10) DO (
 	netsh interface ipv4 add address name=Loopback 10.53.0.%%I 255.255.255.0
 	netsh interface ipv6 add address interface=Loopback fd92:7065:b8e:ffff::%%I/64
 )

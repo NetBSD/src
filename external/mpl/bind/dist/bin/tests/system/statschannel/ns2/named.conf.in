@@ -39,3 +39,13 @@ zone "example" {
 	file "example.db";
 	allow-transfer { any; };
 };
+
+zone "dnssec" {
+	type master;
+	file "dnssec.db.signed";
+	auto-dnssec maintain;
+	allow-update { any; };
+	zone-statistics full;
+	dnssec-dnskey-kskonly yes;
+	update-check-ksk yes;
+};

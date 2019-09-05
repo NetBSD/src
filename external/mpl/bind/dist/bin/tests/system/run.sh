@@ -188,19 +188,30 @@ status=`expr $status + $?`
 if [ $status != 0 ]; then
     echofail "R:$systest:FAIL"
     # Do not clean up - we need the evidence.
-    find . -name core -exec chmod 0644 '{}' \;
 else
-    echopass "R:$systest:PASS"
-    if $clean
-    then
-	$SHELL clean.sh $runall $systest "$@"
-	if test -d ../../../.git
-	then
-	    git status -su --ignored $systest 2>/dev/null | \
-	    sed -n -e 's|^?? \(.*\)|I:file \1 not removed|p' \
-	    -e 's|^!! \(.*/named.run\)$|I:file \1 not removed|p' \
-	    -e 's|^!! \(.*/named.memstats\)$|I:file \1 not removed|p'
-	fi
+    core_dumps="$(find $systest/ -name 'core*' | sort | tr '\n' ' ')"
+    assertion_failures=$(find $systest/ -name named.run | xargs grep "assertion failure" | wc -l)
+    if [ -n "$core_dumps" ]; then
+        echoinfo "I:$systest:Test claims success despite crashes: $core_dumps"
+        echofail "R:$systest:FAIL"
+        # Do not clean up - we need the evidence.
+    elif [ $assertion_failures -ne 0 ]; then
+        echoinfo "I:$systest:Test claims success despite $assertion_failures assertion failure(s)"
+        echofail "R:$systest:FAIL"
+        # Do not clean up - we need the evidence.
+    else
+        echopass "R:$systest:PASS"
+        if $clean
+        then
+            $SHELL clean.sh $runall $systest "$@"
+            if test -d ../../../.git
+            then
+                git status -su --ignored $systest 2>/dev/null | \
+                sed -n -e 's|^?? \(.*\)|I:file \1 not removed|p' \
+                -e 's|^!! \(.*/named.run\)$|I:file \1 not removed|p' \
+                -e 's|^!! \(.*/named.memstats\)$|I:file \1 not removed|p'
+            fi
+        fi
     fi
 fi
 

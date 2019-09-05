@@ -237,5 +237,7 @@ $4 == "NSEC3" && NF == 9 {
 	$1 = "H9P7U7TR2U91D0V0LJS9L1GIDNP90U3H." ZONE;
 	$9 = "H9P7U7TR2U91D0V0LJS9L1GIDNP90U3I";
 	print;
-}' ${file} >> ${file}
+}' ${file} > ${file}.tmp
+cat ${file}.tmp >> ${file}
+rm -f ${file}.tmp
 $SIGNER -3 - -Px -Z nonsecify -O full -o ${zone} -f ${file} ${file} $zsk > s.out$n 2>&1 || dumpit s.out$n

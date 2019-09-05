@@ -1,7 +1,3 @@
-Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
-
 NOTES ON BIND 9.10 FOR WINDOWS:
 
 BIND 9.10 is known to run on Windows XP, Vista, Windows 7,
