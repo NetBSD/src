@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.39 2019/09/03 07:48:51 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.40 2019/09/05 03:40:57 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2706,3 +2706,7 @@ sys/sys/cprng.h					1.15
 	Switch from NIST CTR_DRBG with AES to NIST Hash_DRBG with SHA-256.
 	[riastradh, ticket #173]
 
+distrib/ews4800mips/floppies/ramdisk/Makefile	1.13
+
+	Use the non wide char libcurses version for the ramdisk to save space.
+	[martin, ticket #176]
