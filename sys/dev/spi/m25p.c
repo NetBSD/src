@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.11 2019/08/13 17:11:32 tnn Exp $ */
+/* $NetBSD: m25p.c,v 1.12 2019/09/05 16:17:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.11 2019/08/13 17:11:32 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.12 2019/09/05 16:17:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ static const struct m25p_info {
 	{ 0x13, 0xEF, 0x4014, "Winbond W25Q80.V", 1024, 64 },	/* 8Mbit */
 	{ 0x14, 0xEF, 0x4015, "Winbond W25Q16.V", 2048, 64 },	/* 16Mbit */
 	{ 0x15, 0xEF, 0x4016, "Winbond W25Q32.V", 4096, 64 },	/* 32Mbit */
+	{ 0x15, 0xEF, 0x4018, "Winbond W25Q128.V", 16384, 64 },	/* 128Mbit */
 	{ 0x15, 0xEF, 0x6016, "Winbond W25Q32.W", 4096, 64 },	/* 32Mbit */
 	{ 0 }
 };
@@ -143,6 +144,9 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	struct spi_attach_args *sa = aux;
 
 	sc->sc_sh = sa->sa_handle;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	config_interrupts(self, m25p_doattach);
 }
