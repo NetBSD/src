@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.33 2019/09/03 12:21:15 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.34 2019/09/05 09:07:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -850,4 +850,23 @@ sys/sys/cprng.h					1.13-1.15
 
 	Switch from NIST CTR_DRBG with AES to NIST Hash_DRBG with SHA-256.
 	[riastradh, ticket #1365]
+
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.16
+sys/dev/pci/ixgbe/ixgbe.c			1.180,1.203-1.204,1.207-1.208 via patch
+sys/dev/pci/ixgbe/ix_txrx.c			1.55
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.10
+sys/dev/pci/ixgbe/ixgbe_common.c		1.25
+sys/dev/pci/ixgbe/ixv.c				1.129-1.130
+
+	- X550EM supports QSFP, so check ixgbe_media_type_fiber_qsfp too.
+	- An interrupt might not arrive when a module is inserted. When an link
+	  status change interrupt occurred and the driver still regard SFP as
+	  unplugged, issue the module softint before issuing LSC softint.
+	- Add 10000BASE-LX media if it's 1000BASE-BX.
+	- printf -> device_printf
+	- Avoid undefined behavior of VLAN filter setting.
+	- Simplify code.
+	- Fix typo in unused code.
+	- Fix typo in comment. Found by Wataru Ashihara.
+	[msaitoh, ticket #1367]
 
