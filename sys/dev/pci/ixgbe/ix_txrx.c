@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.16 2019/07/22 17:53:35 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.17 2019/09/05 09:06:07 martin Exp $ */
 
 /******************************************************************************
 
@@ -1363,7 +1363,9 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 			error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
 			    rxbuf->pmap, mp, BUS_DMA_NOWAIT);
 			if (error != 0) {
-				printf("Refresh mbufs: payload dmamap load failure - %d\n", error);
+				device_printf(adapter->dev, "Refresh mbufs: "
+				    "payload dmamap load failure - %d\n",
+				    error);
 				m_free(mp);
 				rxbuf->buf = NULL;
 				goto update;
