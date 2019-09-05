@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.18 2019/08/31 02:14:51 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.19 2019/09/05 21:29:22 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.18 2019/08/31 02:14:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.19 2019/09/05 21:29:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -320,6 +320,16 @@ adbms_init_uspeed(struct adbms_softc *sc)
 	sc->sc_res = 200;
 }
 
+static int
+adbms_turbo_csum(uint8_t *d)
+{
+	int i = 0, sum = 0;
+
+	for (i = 0; i < 7; i++)
+		sum ^= d[i];
+	return (sum ^ 0xff);
+}
+
 static void
 adbms_init_turbo(struct adbms_softc *sc)
 {
@@ -343,22 +353,13 @@ adbms_init_turbo(struct adbms_softc *sc)
  - 0x21 - button 1 - 2, button 2 - 1
  - 0x31 - button 1 - 3, button 2 - 1
  * byte 4 programs a delay for button presses, apparently in 1/100 seconds
- * byte 7 is some sort of checksum, writes will only stick if it's valid
-          no idea how exactly it works yet, can't be too complicated considering
-          the device's age
+ * byte 7 is a simple XOR checksum, writes will only stick if it's valid
+          as in, b[7] = (b[0] ^ b[1] ^ ... ^ b[6]) ^ 0xff
  */
  
-/*
- * XXX
- * I doubt the first command is actually necessary. Leave in for now since it 
- * doesn't do any harm either
- */
-	static u_char data1[] =
-		{ 0xe7, 0x8c, 0, 0, 0, 0xff, 0xff, 0x94 };
-
 	/* this seems to be the most reasonable default */
-	static u_char data2[] =
-		{ 0xa5, 0x0e, 0, 0, 1, 0xff, 0xff, 0x55 };
+	static u_char data[] =
+		{ 0xa5, 0x0e, 0, 0, 1, 0xff, 0xff, 0/*0x55*/ };
 
 	addr = sc->sc_adbdev->current_addr;
 
@@ -374,23 +375,9 @@ adbms_init_turbo(struct adbms_softc *sc)
 #endif
 
 	adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data1);
-	adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data2);
+	data[7] = adbms_turbo_csum(data);
+	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data);
 
-#ifdef ADBMS_BRUTEFORCE
-	sc->sc_buffer[1] = 0;
-	int y = 0;
-	while ((sc->sc_buffer[1] != data2[1]) && (y < 0x100)) {
-		data2[7] = y;
-		y++;
-		adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-		adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data2);
-		adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-		adbms_send_sync(sc, ADBTALK(addr, 2), 0, NULL);
-	}
-	printf("y %02x\n", data2[7]);	
-#endif
 
 #ifdef ADBMS_DEBUG
 	int i, reg;
