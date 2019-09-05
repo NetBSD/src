@@ -15,6 +15,13 @@ SYSTEMTESTTOP=..
 n=1
 status=0
 
+# Wait until all zones are loaded before checking SPF related logs
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	grep "all zones loaded" ns1/named.run > /dev/null && break
+	sleep 1
+done
+
 echo_i "checking that SPF warnings have been correctly generated ($n)"
 ret=0
 

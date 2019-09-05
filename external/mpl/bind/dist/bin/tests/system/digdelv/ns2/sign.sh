@@ -20,5 +20,5 @@ cp example.db.in example.db
 
 cat "$keyname.key" >> example.db
 
-echo "$keyname" | sed -e 's/.*[+]//' -e 's/^0*//' > keyid
+keyfile_to_key_id "$keyname" > keyid
 < "$keyname.key" grep -Ev '^;' | cut -f 7- -d ' ' > keydata

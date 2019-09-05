@@ -98,7 +98,7 @@ def create_response(msg):
             r.set_rcode(NXDOMAIN)
         if ugly:
             r.set_rcode(FORMERR)
-    elif "zoop.boing.".endswith(lqname):
+    elif lqname.endswith("zoop.boing."):
         r.authority.append(dns.rrset.from_text("zoop.boing." + suffix, 1, IN, SOA, "ns3." + suffix + " hostmaster.arpa. 2018050100 1 1 1 1"))
         r.set_rcode(NXDOMAIN)
     else:

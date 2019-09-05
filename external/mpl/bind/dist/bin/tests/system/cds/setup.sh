@@ -24,9 +24,9 @@ keyz=`$KEYGEN -q -a RSASHA256 $Z`
 key1=`$KEYGEN -q -a RSASHA256 -f KSK $Z`
 key2=`$KEYGEN -q -a RSASHA256 -f KSK $Z`
 
-idz=`echo $keyz | sed 's/.*+0*//'`
-id1=`echo $key1 | sed 's/.*+0*//'`
-id2=`echo $key2 | sed 's/.*+0*//'`
+idz=$(keyfile_to_key_id $keyz)
+id1=$(keyfile_to_key_id $key1)
+id2=$(keyfile_to_key_id $key2)
 
 cat <<EOF >vars.sh
 Z=$Z
