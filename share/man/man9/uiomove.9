@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.18.8.1 2019/09/01 19:34:16 martin Exp $
+.\"	$NetBSD: uiomove.9,v 1.18.8.2 2019/09/05 08:19:41 martin Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,6 @@ A
 .Va struct uio
 typically describes data in motion.
 Several of the fields described below reflect that expectation.
-.Pp
 .Bl -tag -width "uio_vmspace "
 .It Va uio_iov
 Pointer to array of
@@ -150,5 +149,5 @@ If a bad address is encountered,
 is returned.
 .Sh SEE ALSO
 .Xr copy 9 ,
-.Xr fetch 9 ,
+.Xr ufetch 9 ,
 .Xr ustore 9
