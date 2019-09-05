@@ -15,6 +15,15 @@
   <xsl:template match="statistics[@version=&quot;3.11&quot;]">
     <html>
       <head>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script type="text/javascript">
+          $(function($) {
+              var wid=0;
+              $('table.zones').each(function(i) { if( $(this).width() > wid ) wid = $(this).width(); return true; });
+              $('table.zones').css('min-width', wid );
+          });
+        </script>
+
         <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
           <!-- Non Mozilla specific markup -->
           <script type="text/javascript" src="https://www.google.com/jsapi"/>
@@ -221,6 +230,22 @@
       background-color: rgb(1,169,206);
       color: #ffffff;
      }
+     table.zones {
+       border: 1px solid grey;
+     }
+     table.zones td {
+       text-align: right;
+       font-family: monospace;
+     }
+     table.zones td:nth-child(2) {
+       text-align: center;
+     }
+     table.zones td:nth-child(3) {
+       text-align: left;
+     }
+     table.zones tr:hover{
+      background-color: #99ddff;
+     }
 
      td, th {
       padding-right: 5px;
@@ -293,25 +318,25 @@
         <hr/>
         <h2>Server Status</h2>
         <table class="info">
-          <tr>
+          <tr class="odd">
             <th>Boot time:</th>
             <td>
               <xsl:value-of select="server/boot-time"/>
             </td>
           </tr>
-          <tr>
+          <tr class="even">
             <th>Last reconfigured:</th>
             <td>
               <xsl:value-of select="server/config-time"/>
             </td>
           </tr>
-          <tr>
+          <tr class="odd">
             <th>Current time:</th>
             <td>
               <xsl:value-of select="server/current-time"/>
             </td>
           </tr>
-          <tr>
+          <tr class="even">
             <th>Server version:</th>
             <td>
               <xsl:value-of select="server/version"/>
@@ -330,7 +355,13 @@
           <table class="counters">
             <xsl:for-each select="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0 or substring(@name,1,3) != 'RES']">
               <xsl:sort select="." data-type="number" order="descending"/>
-              <tr>
+                <xsl:variable name="css-class0">
+                  <xsl:choose>
+                    <xsl:when test="position() mod 2 = 0">even</xsl:when>
+                    <xsl:otherwise>odd</xsl:otherwise>
+                  </xsl:choose>
+                </xsl:variable>
+                <tr class="{$css-class0}">
                 <th>
                   <xsl:value-of select="@name"/>
                 </th>
@@ -611,13 +642,13 @@
             <br/>
           </xsl:if>
         </xsl:for-each>
-        <xsl:if test="traffic/udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0] or traffic/udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0] or traffic/tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0] or traffic/tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
+        <xsl:if test="traffic//udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0] or traffic//udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0] or traffic//tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0] or traffic//tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
           <h2>Traffic Size Statistics</h2>
         </xsl:if>
-        <xsl:if test="traffic/udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
+        <xsl:if test="traffic//udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
           <h4>UDP Requests Received</h4>
           <table class="counters">
-            <xsl:for-each select="traffic/udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
+            <xsl:for-each select="traffic//udp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
               <xsl:variable name="css-class7">
                 <xsl:choose>
                   <xsl:when test="position() mod 2 = 0">even</xsl:when>
@@ -625,6 +656,7 @@
                 </xsl:choose>
               </xsl:variable>
               <tr class="{$css-class7}">
+                <th><xsl:value-of select="local-name(../../..)"/></th>
                 <th>
                   <xsl:value-of select="@name"/>
                 </th>
@@ -636,10 +668,10 @@
           </table>
           <br/>
         </xsl:if>
-        <xsl:if test="traffic/udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
+        <xsl:if test="traffic//udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
           <h4>UDP Responses Sent</h4>
           <table class="counters">
-            <xsl:for-each select="traffic/udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
+            <xsl:for-each select="traffic//udp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
               <xsl:variable name="css-class7">
                 <xsl:choose>
                   <xsl:when test="position() mod 2 = 0">even</xsl:when>
@@ -647,6 +679,7 @@
                 </xsl:choose>
               </xsl:variable>
               <tr class="{$css-class7}">
+                <th><xsl:value-of select="local-name(../../..)"/></th>
                 <th>
                   <xsl:value-of select="@name"/>
                 </th>
@@ -658,10 +691,10 @@
           </table>
           <br/>
         </xsl:if>
-        <xsl:if test="traffic/tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
+        <xsl:if test="traffic//tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
           <h4>TCP Requests Received</h4>
           <table class="counters">
-            <xsl:for-each select="traffic/tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
+            <xsl:for-each select="traffic//tcp/counters[@type=&quot;request-size&quot;]/counter[.&gt;0]">
               <xsl:variable name="css-class7">
                 <xsl:choose>
                   <xsl:when test="position() mod 2 = 0">even</xsl:when>
@@ -669,6 +702,7 @@
                 </xsl:choose>
               </xsl:variable>
               <tr class="{$css-class7}">
+                <th><xsl:value-of select="local-name(../../..)"/></th>
                 <th>
                   <xsl:value-of select="@name"/>
                 </th>
@@ -680,10 +714,10 @@
           </table>
           <br/>
         </xsl:if>
-        <xsl:if test="traffic/tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
+        <xsl:if test="traffic//tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
           <h4>TCP Responses Sent</h4>
           <table class="counters">
-            <xsl:for-each select="traffic/tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
+            <xsl:for-each select="traffic//tcp/counters[@type=&quot;response-size&quot;]/counter[.&gt;0]">
               <xsl:variable name="css-class7">
                 <xsl:choose>
                   <xsl:when test="position() mod 2 = 0">even</xsl:when>
@@ -691,6 +725,7 @@
                 </xsl:choose>
               </xsl:variable>
               <tr class="{$css-class7}">
+                <th><xsl:value-of select="local-name(../../..)"/></th>
                 <th>
                   <xsl:value-of select="@name"/>
                 </th>
@@ -724,35 +759,29 @@
           </table>
           <br/>
         </xsl:if>
-        <xsl:for-each select="views/view">
-	  <xsl:if test="zones/zone">
+        <xsl:if test="views/view/zones/zone">
+          <xsl:for-each select="views/view">
             <h3>Zones for View <xsl:value-of select="@name"/></h3>
             <table class="zones">
-              <tr>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Type</th>
-                <th>Serial</th>
-              </tr>
-              <xsl:for-each select="zones/zone">
-                <tr>
-                  <td>
-                    <xsl:value-of select="@name"/>
-                  </td>
-                  <td>
-                    <xsl:value-of select="@rdataclass"/>
-                  </td>
-                  <td>
-                    <xsl:value-of select="type"/>
-                  </td>
-                  <td>
-                    <xsl:value-of select="serial"/>
-                  </td>
-                </tr>
-              </xsl:for-each>
+              <thead><tr><th>Name</th><th>Class</th><th>Type</th><th>Serial</th></tr></thead>
+              <tbody>
+                <xsl:for-each select="zones/zone">
+                  <xsl:variable name="css-class15">
+                    <xsl:choose>
+                      <xsl:when test="position() mod 2 = 0">even</xsl:when>
+                      <xsl:otherwise>odd</xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <tr class="{$css-class15}">
+                      <td><xsl:value-of select="@name"/></td>
+                      <td><xsl:value-of select="@rdataclass"/></td>
+                      <td><xsl:value-of select="type"/></td>
+                      <td><xsl:value-of select="serial"/></td></tr>
+                </xsl:for-each>
+              </tbody>
             </table>
-	  </xsl:if>
-        </xsl:for-each>
+          </xsl:for-each>
+        </xsl:if>
         <xsl:if test="views/view[zones/zone/counters[@type=&quot;qtype&quot;]/counter &gt;0]">
           <h2>Received QTYPES per view/zone</h2>
           <xsl:for-each select="views/view[zones/zone/counters[@type=&quot;qtype&quot;]/counter &gt;0]">

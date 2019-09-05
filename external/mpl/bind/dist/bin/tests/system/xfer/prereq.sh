@@ -25,3 +25,9 @@ else
     echo_i "This test requires the Net::DNS library." >&2
     exit 1
 fi
+
+if ! $PERL -e 'use Digest::HMAC;' 2>/dev/null
+then
+    echo_i "This test requires the Digest::HMAC Perl module." >&2
+    exit 1
+fi

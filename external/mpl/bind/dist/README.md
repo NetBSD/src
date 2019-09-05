@@ -48,7 +48,7 @@ used in versions 4 and 8.  Internet Systems Consortium
 corporation dedicated to providing software and services in support of the
 Internet infrastructure, developed BIND 9 and is responsible for its
 ongoing maintenance and improvement.  BIND is open source software
-licenced under the terms of the Mozilla Public License, version 2.0.
+licensed under the terms of the Mozilla Public License, version 2.0.
 
 For a summary of features introduced in past major releases of BIND,
 see the file [HISTORY](HISTORY.md).
@@ -164,6 +164,21 @@ by the C compiler. Non-threaded builds are no longer supported.
 
 BIND 9.14.1 is a maintenance release, and addresses security
 vulnerabilities disclosed in CVE-2018-5743 and CVE-2019-6467.
+
+#### BIND 9.14.2
+
+BIND 9.14.2 is a maintenance release.
+
+#### BIND 9.14.3
+
+BIND 9.14.3 is a maintenance release, and addresses the security
+vulnerability disclosed in CVE-2019-6471.
+
+#### BIND 9.14.4
+
+BIND 9.14.4 is a maintenance release, and also adds support for
+the new MaxMind GeoIP2 geolocation API when built with
+`configure --with-geoip2`.
 
 ### <a name="build"/> Building BIND
 
@@ -365,6 +380,25 @@ In general, [func] and [experimental] tags will only appear in new-feature
 releases (i.e., those with version numbers ending in zero).  Some new
 functionality may be backported to older releases on a case-by-case basis.
 All other change types may be applied to all currently-supported releases.
+
+#### Bug report identifiers
+
+Most notes in the CHANGES file include a reference to a bug report or
+issue number. Prior to 2018, these were usually of the form `[RT #NNN]`
+and referred to entries in the "bind9-bugs" RT database, which was not open
+to the public. More recent entries use the form `[GL #NNN]` or, less often,
+`[GL !NNN]`, which, respectively, refer to issues or merge requests in the
+Gitlab database. Most of these are publicly readable, unless they include
+information which is confidential or security senstive.
+
+To look up a Gitlab issue by its number, use the URL
+[https://gitlab.isc.org/isc-projects/bind9/issues/NNN](https://gitlab.isc.org/isc-projects/bind9/issues).
+To look up a merge request, use
+[https://gitlab.isc.org/isc-projects/bind9/merge_requests/NNN](https://gitlab.isc.org/isc-projects/bind9/merge_requests).
+
+In rare cases, an issue or merge request number may be followed with the
+letter "P". This indicates that the information is in the private ISC
+Gitlab instance, which is not visible to the public.
 
 ### <a name="ack"/> Acknowledgments
 

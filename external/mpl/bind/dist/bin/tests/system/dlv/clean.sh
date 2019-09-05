@@ -16,6 +16,7 @@ rm -f ns1/dsset-*
 rm -f ns1/*.signed
 rm -f ns1/signer.err
 rm -f ns1/root.db
+rm -f ns1/trusted.conf
 rm -f ns2/K*
 rm -f ns2/dlvset-*
 rm -f ns2/dsset-*
@@ -25,18 +26,19 @@ rm -f ns2/signer.err
 rm -f ns2/druz.db
 rm -f ns3/K*
 rm -f ns3/*.db
-rm -f ns3/*.signed
+rm -f ns3/*.signed ns3/*.signed.tmp
 rm -f ns3/dlvset-*
 rm -f ns3/dsset-*
 rm -f ns3/keyset-*
-rm -f ns1/trusted.conf ns5/trusted.conf
-rm -f ns3/trusted-dlv.conf ns5/trusted-dlv.conf
+rm -f ns3/trusted*.conf
 rm -f ns3/signer.err
+rm -f ns5/trusted*.conf
 rm -f ns6/K*
 rm -f ns6/*.db
 rm -f ns6/*.signed
 rm -f ns6/dsset-*
 rm -f ns6/signer.err
+rm -f ns7/trusted*.conf ns8/trusted*.conf
 rm -f */named.memstats
 rm -f dig.out.ns*.test*
 rm -f ns*/named.lock

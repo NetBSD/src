@@ -16,11 +16,11 @@ SYSTESTDIR=wildcard
 
 dssets=
 
-zone=dlv.
+zone=dlv
 infile=dlv.db.in
 zonefile=dlv.db
 outfile=dlv.db.signed
-dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-${zone}${TP}"
 
 keyname1=`$KEYGEN -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null`
@@ -30,11 +30,11 @@ cat $infile $keyname1.key $keyname2.key > $zonefile
 $SIGNER -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
-zone=nsec.
+zone=nsec
 infile=nsec.db.in
 zonefile=nsec.db
 outfile=nsec.db.signed
-dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-${zone}${TP}"
 
 keyname1=`$KEYGEN -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null`
@@ -44,7 +44,7 @@ cat $infile $keyname1.key $keyname2.key > $zonefile
 $SIGNER -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
-zone=private.nsec.
+zone=private.nsec
 infile=private.nsec.db.in
 zonefile=private.nsec.db
 outfile=private.nsec.db.signed
@@ -59,11 +59,11 @@ echo_i "signed $zone"
 
 keyfile_to_trusted_keys $keyname2 > private.nsec.conf
 
-zone=nsec3.
+zone=nsec3
 infile=nsec3.db.in
 zonefile=nsec3.db
 outfile=nsec3.db.signed
-dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-${zone}${TP}"
 
 keyname1=`$KEYGEN -a NSEC3RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone 2> /dev/null`
@@ -73,7 +73,7 @@ cat $infile $keyname1.key $keyname2.key > $zonefile
 $SIGNER -3 - -H 10 -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
-zone=private.nsec3.
+zone=private.nsec3
 infile=private.nsec3.db.in
 zonefile=private.nsec3.db
 outfile=private.nsec3.db.signed

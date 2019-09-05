@@ -30,7 +30,7 @@ SRCS =		isctest.c aes_test.c buffer_test.c \
 		heap_test.c hmac_test.c ht_test.c lex_test.c \
 		mem_test.c md_test.c netaddr_test.c parse_test.c pool_test.c \
 		queue_test.c radix_test.c random_test.c \
-		regex_test.c result_test.c safe_test.c sockaddr_test.c \
+		regex_test.c result_test.c safe_test.c siphash_test.c sockaddr_test.c \
 		socket_test.c socket_test.c symtab_test.c task_test.c \
 		taskpool_test.c time_test.c timer_test.c
 
@@ -44,7 +44,7 @@ TARGETS =	aes_test@EXEEXT@ buffer_test@EXEEXT@ \
 		netaddr_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
 		queue_test@EXEEXT@ radix_test@EXEEXT@ \
 		random_test@EXEEXT@ regex_test@EXEEXT@ result_test@EXEEXT@ \
-		safe_test@EXEEXT@ sockaddr_test@EXEEXT@ socket_test@EXEEXT@ \
+		safe_test@EXEEXT@ siphash_test@EXEEXT@ sockaddr_test@EXEEXT@ socket_test@EXEEXT@ \
 		socket_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
 		taskpool_test@EXEEXT@ time_test@EXEEXT@ timer_test@EXEEXT@
 
@@ -158,6 +158,11 @@ result_test@EXEEXT@: result_test.@O@ ${ISCDEPLIBS}
 safe_test@EXEEXT@: safe_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ safe_test.@O@ \
+		${ISCLIBS} ${LIBS}
+
+siphash_test@EXEEXT@: siphash_test.@O@ ../siphash.c ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ siphash_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
 socket_test@EXEEXT@: socket_test.@O@ isctest.@O@ ${ISCDEPLIBS}

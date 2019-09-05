@@ -1,3 +1,5 @@
+README
+
 BIND 9
 
 Contents
@@ -37,7 +39,7 @@ in versions 4 and 8. Internet Systems Consortium (https://www.isc.org), a
 501(c)(3) public benefit corporation dedicated to providing software and
 services in support of the Internet infrastructure, developed BIND 9 and
 is responsible for its ongoing maintenance and improvement. BIND is open
-source software licenced under the terms of the Mozilla Public License,
+source software licensed under the terms of the Mozilla Public License,
 version 2.0.
 
 For a summary of features introduced in past major releases of BIND, see
@@ -148,6 +150,20 @@ BIND 9.14.1
 BIND 9.14.1 is a maintenance release, and addresses security
 vulnerabilities disclosed in CVE-2018-5743 and CVE-2019-6467.
 
+BIND 9.14.2
+
+BIND 9.14.2 is a maintenance release.
+
+BIND 9.14.3
+
+BIND 9.14.3 is a maintenance release, and addresses the security
+vulnerability disclosed in CVE-2019-6471.
+
+BIND 9.14.4
+
+BIND 9.14.4 is a maintenance release, and also adds support for the new
+MaxMind GeoIP2 geolocation API when built with configure --with-geoip2.
+
 Building BIND
 
 Minimally, BIND requires a UNIX or Linux system with an ANSI C compiler,
@@ -177,7 +193,7 @@ make depend. If you're using Emacs, you might find make tags helpful.
 Several environment variables that can be set before running configure
 will affect compilation:
 
-Variable       Description
+   Variable                            Description
 CC             The C compiler to use. configure tries to figure out the
                right one for supported systems.
                C compiler flags. Defaults to include -g and/or -O2 as
@@ -329,7 +345,7 @@ development BIND 9 is included in the file CHANGES, with the most recent
 changes listed first. Change notes include tags indicating the category of
 the change that was made; these categories are:
 
-Category       Description
+   Category                            Description
 [func]         New feature
 [bug]          General bug fix
 [security]     Fix for a significant security flaw
@@ -357,26 +373,46 @@ releases (i.e., those with version numbers ending in zero). Some new
 functionality may be backported to older releases on a case-by-case basis.
 All other change types may be applied to all currently-supported releases.
 
+Bug report identifiers
+
+Most notes in the CHANGES file include a reference to a bug report or
+issue number. Prior to 2018, these were usually of the form [RT #NNN] and
+referred to entries in the "bind9-bugs" RT database, which was not open to
+the public. More recent entries use the form [GL #NNN] or, less often, [GL
+!NNN], which, respectively, refer to issues or merge requests in the
+Gitlab database. Most of these are publicly readable, unless they include
+information which is confidential or security senstive.
+
+To look up a Gitlab issue by its number, use the URL https://
+gitlab.isc.org/isc-projects/bind9/issues/NNN. To look up a merge request,
+use https://gitlab.isc.org/isc-projects/bind9/merge_requests/NNN.
+
+In rare cases, an issue or merge request number may be followed with the
+letter "P". This indicates that the information is in the private ISC
+Gitlab instance, which is not visible to the public.
+
 Acknowledgments
 
   * The original development of BIND 9 was underwritten by the following
     organizations:
 
-    Sun Microsystems, Inc.
-    Hewlett Packard
-    Compaq Computer Corporation
-    IBM
-    Process Software Corporation
-    Silicon Graphics, Inc.
-    Network Associates, Inc.
-    U.S. Defense Information Systems Agency
-    USENIX Association
-    Stichting NLnet - NLnet Foundation
-    Nominum, Inc.
+      Sun Microsystems, Inc.
+      Hewlett Packard
+      Compaq Computer Corporation
+      IBM
+      Process Software Corporation
+      Silicon Graphics, Inc.
+      Network Associates, Inc.
+      U.S. Defense Information Systems Agency
+      USENIX Association
+      Stichting NLnet - NLnet Foundation
+      Nominum, Inc.
 
   * This product includes software developed by the OpenSSL Project for
     use in the OpenSSL Toolkit. http://www.OpenSSL.org/
+
   * This product includes cryptographic software written by Eric Young
     (eay@cryptsoft.com)
+
   * This product includes software written by Tim Hudson
     (tjh@cryptsoft.com)

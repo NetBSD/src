@@ -13,7 +13,7 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
-n=0
+n=1
 
 rm -f dig.out.*
 
@@ -33,12 +33,30 @@ status=`expr $status + $ret`
 
 # Check test vectors (RFC 8080 + errata)
 
-echo "I:checking that test vectors match ($n)"
+echo "I:checking that Ed25519 test vectors match ($n)"
 ret=0
 grep 'oL9krJun7xfBOIWcGHi7mag5/hdZrKWw15jP' ns2/example.com.db.signed > /dev/null || ret=1
 grep 'VrbpMngwcrqNAg==' ns2/example.com.db.signed > /dev/null || ret=1
 grep 'zXQ0bkYgQTEFyfLyi9QoiY6D8ZdYo4wyUhVi' ns2/example.com.db.signed > /dev/null || ret=1
 grep 'R0O7KuI5k2pcBg==' ns2/example.com.db.signed > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that Ed448 test vectors match ($n)"
+ret=0
+grep '3cPAHkmlnxcDHMyg7vFC34l0blBhuG1qpwLm' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'jInI8w1CMB29FkEAIJUA0amxWndkmnBZ6SKi' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'wZSAxGILn/NBtOXft0+Gj7FSvOKxE/07+4RQ' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'vE581N3Aj/JtIyaiYVdnYtyMWbSNyGEY2213' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'WKsJlwEA' ns2/example.com.db.signed > /dev/null || ret=1
+
+grep 'E1/oLjSGIbmLny/4fcgM1z4oL6aqo+izT3ur' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'CyHyvEp4Sp8Syg1eI+lJ57CSnZqjJP41O/9l' ns2/example.com.db.signed > /dev/null || ret=1
+grep '4m0AsQ4f7qI1gVnML8vWWiyW2KXhT9kuAICU' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'Sxv5OWbf81Rq7Yu60npabODB0QFPb/rkW3kU' ns2/example.com.db.signed > /dev/null || ret=1
+grep 'ZmQ0YQUA' ns2/example.com.db.signed > /dev/null || ret=1
+
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

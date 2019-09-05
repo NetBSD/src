@@ -44,12 +44,11 @@
   <section xml:id="relnotes_platforms"><info><title>Supported Platforms</title></info>
     <para>
       Since 9.12, BIND has undergone substantial code refactoring and
-      cleanup, and some very old code has been removed that was needed
-      to support legacy platforms which are no longer supported by their
-      vendors and for which ISC is no longer able to perform quality
-      assurance testing.  Specifically, workarounds for old versions of
-      UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster and IRIX have been
-      removed.
+      cleanup, and some very old code has been removed that supported
+      obsolete operating systems and operating systems for which ISC is
+      no longer able to perform quality assurance testing. Specifically,
+      workarounds for UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster
+      and IRIX have been removed.
     </para>
     <para>
       On UNIX-like systems, BIND now requires support for POSIX.1c
@@ -89,18 +88,10 @@
   <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
       <listitem>
-        <para>
-	  In certain configurations, <command>named</command> could crash
-	  with an assertion failure if <command>nxdomain-redirect</command>
-	  was in use and a redirected query resulted in an NXDOMAIN from the
-	  cache. This flaw is disclosed in CVE-2019-6467. [GL #880]
-	</para>
-      </listitem>
-      <listitem>
 	<para>
-	  The TCP client quota set using the <command>tcp-clients</command>
-	  option could be exceeded in some cases. This could lead to
-	  exhaustion of file descriptors. (CVE-2018-5743) [GL #615]
+	  A race condition could trigger an assertion failure when
+	  a large number of incoming packets were being rejected.
+	  This flaw is disclosed in CVE-2019-6471. [GL #942]
 	</para>
       </listitem>
     </itemizedlist>
@@ -110,20 +101,65 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  The new <command>add-soa</command> option specifies whether
-	  or not the <command>response-policy</command> zone's SOA record
-	  should be included in the additional section of RPZ responses.
-	  [GL #865]
-        </para>
+	  The new GeoIP2 API from MaxMind is now supported when BIND
+	  is compiled using <command>configure --with-geoip2</command>.
+	  The legacy GeoIP API can be used by compiling with
+	  <command>configure --with-geoip</command> instead.  (Note that
+	  the databases for the legacy API are no longer maintained by
+	  MaxMind.)
+	</para>
+	<para>
+	  The default path to the GeoIP2 databases will be set based
+	  on the location of the <command>libmaxminddb</command> library;
+	  for example, if it is in <filename>/usr/local/lib</filename>,
+	  then the default path will be
+	  <filename>/usr/local/share/GeoIP</filename>.
+	  This value can be overridden in <filename>named.conf</filename>
+	  using the <command>geoip-directory</command> option.
+	</para>
+	<para>
+	  Some <command>geoip</command> ACL settings that were available with
+	  legacy GeoIP, including searches for <command>netspeed</command>,
+	  <command>org</command>, and three-letter ISO country codes, will
+	  no longer work when using GeoIP2. Supported GeoIP2 database
+	  types are <command>country</command>, <command>city</command>,
+	  <command>domain</command>, <command>isp</command>, and
+	  <command>as</command>. All of the databases support both IPv4
+	  and IPv6 lookups. [GL #182]
+	</para>
       </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
-    <itemizedlist>
       <listitem>
 	<para>
-	  None.
+	  Two new metrics have been added to the
+	  <command>statistics-channel</command> to report DNSSEC
+	  signing operations.  For each key in each zone, the
+	  <command>dnssec-sign</command> counter indicates the total
+	  number of signatures <command>named</command> has generated
+	  using that key since server startup, and the
+	  <command>dnssec-refresh</command> counter indicates how
+	  many of those signatures were refreshed during zone
+	  maintenance, as opposed to having been generated
+	  as a result of a zone update.  [GL #513]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A SipHash 2-4 based DNS Cookie (RFC 7873) algorithm has been added.
+	  [GL #605]
+	</para>
+	<para>
+	  If you are running multiple DNS Servers (different versions of BIND 9
+	  or DNS server from multiple vendors) responding from the same IP
+	  address (anycast or load-balancing scenarios), you'll have to make
+	  sure that all the servers are configured with the same DNS Cookie
+	  algorithm and same Server Secret for the best performance.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  DS records included in DNS referral messages can now be validated
+	  and cached immediately, reducing the number of queries needed for
+	  a DNSSEC validation. [GL #964]
 	</para>
       </listitem>
     </itemizedlist>
@@ -133,12 +169,61 @@
     <itemizedlist>
       <listitem>
         <para>
-	  The <command>allow-update</command> and
-	  <command>allow-update-forwarding</command> options were
-	  inadvertently treated as configuration errors when used at the
-	  <command>options</command> or <command>view</command> level.
-	  This has now been corrected.
-	  [GL #913]
+	  When <command>qname-minimization</command> was set to
+	  <command>relaxed</command>, some improperly configured domains
+	  would fail to resolve, but would have succeeded if minimization
+	  were disabled. <command>named</command> will now fall back to normal
+	  resolution in such cases, and also uses type A rather than NS for
+	  minimal queries in order to reduce the likelihood of encountering
+	  the problem. [GL #1055]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Glue address records were not being returned in responses
+	  to root priming queries; this has been corrected. [GL #1092]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Cache database statistics counters could report invalid values
+	  when stale answers were enabled, because of a bug in counter
+	  maintenance when cache data becomes stale. The statistics counters
+	  have been corrected to report the number of RRsets for each
+	  RR type that are active, stale but still potentially served,
+	  or stale and marked for deletion. [GL #602]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Interaction between DNS64 and RPZ No Data rule (CNAME *.) could
+	  cause unexpected results; this has been fixed. [GL #1106]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named-checkconf</command> now checks DNS64 prefixes
+          to ensure bits 64-71 are zero. [GL #1159]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named-checkconf</command> could crash during
+	  configuration if configured to use "geoip continent" ACLs with
+	  legacy GeoIP. [GL #1163]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named-checkconf</command> now correctly reports missing
+	  <command>dnstap-output</command> option when
+	  <command>dnstap</command> is set. [GL #1136]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Handle ETIMEDOUT error on connect() with a non-blocking
+	  socket. [GL #1133]
 	</para>
       </listitem>
     </itemizedlist>
@@ -146,7 +231,7 @@
 
   <section xml:id="relnotes_license"><info><title>License</title></info>
     <para>
-      BIND is open source software licenced under the terms of the Mozilla
+      BIND is open source software licensed under the terms of the Mozilla
       Public License, version 2.0 (see the <filename>LICENSE</filename>
       file for the full text).
     </para>

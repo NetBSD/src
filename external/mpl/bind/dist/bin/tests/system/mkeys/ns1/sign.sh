@@ -38,6 +38,4 @@ cp unsupported.key "${unsupportedkey}.key"
 #
 echo "$keyname" > managed.key
 echo "$zskkeyname" > zone.key
-keyid=`expr $keyname : 'K\.+00.+\([0-9]*\)'`
-keyid=`expr $keyid + 0`
-echo "$keyid" > managed.key.id
+keyfile_to_key_id $keyname > managed.key.id

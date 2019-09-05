@@ -34,3 +34,5 @@ echo_i "signed $zone"
 
 keyfile_to_trusted_keys $keyname2 > trusted.conf
 cp trusted.conf ../ns5
+cp trusted.conf ../ns7
+cp trusted.conf ../ns8

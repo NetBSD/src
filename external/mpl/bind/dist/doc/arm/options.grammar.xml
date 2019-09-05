@@ -59,7 +59,7 @@
 	<command>check-wildcard</command> <replaceable>boolean</replaceable>;
 	<command>cleaning-interval</command> <replaceable>integer</replaceable>;
 	<command>clients-per-query</command> <replaceable>integer</replaceable>;
-	<command>cookie-algorithm</command> ( aes | sha1 | sha256 );
+	<command>cookie-algorithm</command> ( aes | sha1 | sha256 | siphash24 );
 	<command>cookie-secret</command> <replaceable>string</replaceable>;
 	<command>coresize</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
 	<command>datasize</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
@@ -241,11 +241,12 @@
 	<command>resolver-retry-interval</command> <replaceable>integer</replaceable>;
 	<command>response-padding</command> { <replaceable>address_match_element</replaceable>; ... } block-size
 	    <replaceable>integer</replaceable>;
-	<command>response-policy</command> { zone <replaceable>string</replaceable> [ log <replaceable>boolean</replaceable> ] [ max-policy-ttl
-	    <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [ policy ( cname |
-	    <command>disabled</command> | drop | given | no-op | nodata | nxdomain | passthru
-	    | tcp-only <replaceable>quoted_string</replaceable> ) ] [ recursive-only <replaceable>boolean</replaceable> ] [
-	    <command>nsip-enable</command> <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ]; ... } [
+	<command>response-policy</command> { zone <replaceable>string</replaceable> [ add-soa <replaceable>boolean</replaceable> ] [ log
+	    <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [ min-update-interval
+	    <replaceable>ttlval</replaceable> ] [ policy ( cname | disabled | drop | given | no-op |
+	    <command>nodata</command> | nxdomain | passthru | tcp-only <replaceable>quoted_string</replaceable> ) ] [
+	    <command>recursive-only</command> <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
+	    <command>nsdname-enable</command> <replaceable>boolean</replaceable> ]; ... } [ add-soa <replaceable>boolean</replaceable> ] [
 	    <command>break-dnssec</command> <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [
 	    <command>min-update-interval</command> <replaceable>ttlval</replaceable> ] [ min-ns-dots <replaceable>integer</replaceable> ] [
 	    <command>nsip-wait-recurse</command> <replaceable>boolean</replaceable> ] [ qname-wait-recurse <replaceable>boolean</replaceable> ]

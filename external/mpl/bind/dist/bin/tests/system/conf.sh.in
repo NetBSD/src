@@ -17,15 +17,11 @@
 # Find the top of the BIND9 tree.
 TOP=@abs_top_builddir@
 
-# Default algorithm for testing
-DEFAULT_ALGORITHM=ECDSAP256SHA256
-DEFAULT_ALGORITHM_NUMBER=13
-DEFAULT_BITS=256
+# This is not the windows build.
+CYGWIN=""
 
-# must be different from DEFAULT_ALGORITHM
-ALTERNATIVE_ALGORITHM=RSASHA256
-ALTERNATIVE_ALGORITHM_NUMBER=8
-ALTERNATIVE_BITS=1280
+# Load common values shared between windows and unix/linux.
+. $TOP/bin/tests/system/conf.sh.common
 
 ARPANAME=$TOP/bin/tools/arpaname
 CDS=$TOP/bin/dnssec/dnssec-cds
@@ -76,40 +72,14 @@ SAMPLEUPDATE=$TOP/lib/samples/sample-update
 # we don't want a KRB5_CONFIG setting breaking the tests
 KRB5_CONFIG=/dev/null
 
-# The "stress" test is not run by default since it creates enough
-# load on the machine to make it unusable to other users.
-# The "dialup", "delzone", and "dupsigs" tests are also not run by
-# default because they take a very long time to complete.
 #
-# List of tests hard-coded to use ports 5300 and 9953. For this
-# reason, these must be run sequentially.
-SEQUENTIALDIRS="ecdsa eddsa @PKCS11_TEST@ tkey"
+# Construct the lists of tests to run
+#
+SEQUENTIAL_UNIX="@PKCS11_TEST@"
+SEQUENTIALDIRS="$SEQUENTIAL_COMMON $SEQUENTIAL_UNIX"
 
-# List of tests that use ports assigned by caller (other than 5300
-# and 9953). Because separate blocks of ports can be used for teach
-# test, these tests can be run in parallel.
-#
-# This symbol must be kept in step with the PARALLEL macro in Makefile.in
-PARALLELDIRS="acl additional addzone allow-query auth autosign \
-	builtin cacheclean case catz cds chain \
-	checkconf checknames checkzone \
-	@CHECKDS@ @COVERAGE@ @KEYMGR@ \
-	cookie database digdelv dlv dlz dlzexternal \
-	dns64 dnssec @DNSTAP@ dscp dsdigest dyndb \
-	ednscompliance emptyzones \
-	fetchlimit filter-aaaa formerr forward \
-	geoip glue idna inline integrity ixfr keepalive \
-	legacy limits logfileconfig \
-	masterfile masterformat metadata mirror mkeys \
-	names notify nslookup nsupdate nzd2nzf \
-	padding pending pipelined qmin \
-	reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
-	rrchecker rrl rrsetorder rsabigexponent runtime \
-	serve-stale sfcache smartsign sortlist \
-	spf staticstub statistics statschannel stub synthfromdnssec \
-	tcp tools tsig tsiggss ttl \
-	unknown upforwd verify views wildcard \
-	xfer xferquota zero zonechecks"
+PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ logfileconfig"
+PARALLELDIRS="$PARALLEL_COMMON $PARALLEL_UNIX"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
 
@@ -130,6 +100,9 @@ CURL=@CURL@
 # XMLLINT will be empty if no program was found by configure
 XMLLINT=@XMLLINT@
 
+# XSLTPROC will be empty if no program was found by configure
+XSLTPROC=@XSLTPROC@
+
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
 
@@ -145,37 +118,3 @@ HAVEXMLSTATS=@XMLSTATS@
 HAVEJSONSTATS=@JSONSTATS@
 ZLIB=@ZLIB@
 NZD=@NZD_TOOLS@
-
-# copy_setports - Copy Configuration File and Replace Ports
-# Unfortunately it has to be different on Windows.
-#
-# Convenience function to copy a configuration file, replacing the tokens
-# QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
-# environment variables. (These values are set by "run.sh", which calls the
-# scripts invoking this function.)
-#
-# Usage:
-#   copy_setports infile outfile
-
-copy_setports() {
-    sed -e "s/@PORT@/${PORT}/g" \
-        -e "s/@EXTRAPORT1@/${EXTRAPORT1}/g" \
-        -e "s/@EXTRAPORT2@/${EXTRAPORT2}/g" \
-        -e "s/@EXTRAPORT3@/${EXTRAPORT3}/g" \
-        -e "s/@EXTRAPORT4@/${EXTRAPORT4}/g" \
-        -e "s/@EXTRAPORT5@/${EXTRAPORT5}/g" \
-        -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
-        -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
-        -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
-        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" \
-	-e "s/@DEFAULT_ALGORITHM@/${DEFAULT_ALGORITHM}/g" \
-	-e "s/@DEFAULT_ALGORITHM_NUMBER@/${DEFAULT_ALGORITHM_NUMBER}/g" \
-	-e "s/@DEFAULT_BITS@/${DEFAULT_BITS}/g" \
-	-e "s/@ALTERNATIVE_ALGORITHM@/${ALTERNATIVE_ALGORITHM}/g" \
-	-e "s/@ALTERNATIVE_ALGORITHM_NUMBER@/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
-	-e "s/@ALTERNATIVE_BITS@/${ALTERNATIVE_BITS}/g" \
-	$1 > $2
-}
-
-# The rest is shared between Windows and Unices
-. $TOP/bin/tests/system/conf.sh.common
