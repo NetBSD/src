@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.166.2.1 2019/08/26 13:42:36 martin Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.166.2.2 2019/09/05 08:28:06 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.166.2.1 2019/08/26 13:42:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.166.2.2 2019/09/05 08:28:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -605,13 +605,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int is_router;
 	int is_solicited;
 	int is_override;
+	int rt_cmd;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	struct ifaddr *ifa;
 	struct llentry *ln = NULL;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
-	int rt_announce;
 	bool checklink = false;
 	struct psref psref;
 	struct psref psref_ia;
@@ -735,7 +735,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ln == NULL)
 		goto freeit;
 
-	rt_announce = 0;
+	rt_cmd = 0;
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
@@ -749,7 +749,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
 		ln->la_flags |= LLE_VALID;
-		rt_announce = 1;
+		rt_cmd = RTM_ADD;
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -770,22 +770,24 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			checklink = true;
 		}
 	} else {
-		int llchange;
+		bool llchange;
 
 		/*
 		 * Check if the link-layer address has changed or not.
 		 */
 		if (lladdr == NULL)
-			llchange = 0;
+			llchange = false;
 		else {
 			if (ln->la_flags & LLE_VALID) {
 				if (memcmp(lladdr, &ln->ll_addr, ifp->if_addrlen))
-					llchange = rt_announce = 1;
+					llchange = true;
 				else
-					llchange = 0;
+					llchange = false;
 			} else
-				llchange = rt_announce = 1;
+				llchange = true;
 		}
+		if (llchange)
+			rt_cmd = RTM_CHANGE;
 
 		/*
 		 * This is VERY complex.  Look at it with care.
@@ -854,10 +856,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * Remove the sender from the Default Router List and
 			 * update the Destination Cache entries.
 			 */
+			const struct in6_addr *in6 = &ln->r_l3addr.addr6;
 			struct nd_defrouter *dr;
-			const struct in6_addr *in6;
-
-			in6 = &ln->r_l3addr.addr6;
 
 			ND6_WLOCK();
 			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
@@ -884,11 +884,12 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	ln->ln_asked = 0;
 	nd6_llinfo_release_pkts(ln, ifp);
 
-	if (rt_announce) {
+	if (rt_cmd != 0) {
 		struct sockaddr_in6 sin6;
 
-		sockaddr_in6_init(&sin6, &taddr6, 0, 0, 0);
-		rt_clonedmsg(RTM_CHANGE, sin6tosa(&sin6), lladdr, ifp);
+		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
+		rt_clonedmsg(rt_cmd, sin6tosa(&sin6),
+		    (char *)&ln->ll_addr, ln->lle_tbl->llt_ifp);
 	}
 
  freeit:
