@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.256.2.5 2019/09/05 08:28:06 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256.2.6 2019/09/05 08:32:34 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.5 2019/09/05 08:28:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.6 2019/09/05 08:32:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -480,9 +480,14 @@ nd6_llinfo_timer(void *arg)
 	ndi = ND_IFINFO(ifp);
 
 	switch (ln->ln_state) {
+	case ND6_LLINFO_WAITDELETE:
+		LLE_REMREF(ln);
+		nd6_free(ln, 0);
+		ln = NULL;
+		break;
+
 	case ND6_LLINFO_INCOMPLETE:
-		if (ln->ln_asked < nd6_mmaxtries) {
-			ln->ln_asked++;
+		if (ln->ln_asked++ < nd6_mmaxtries) {
 			send_ns = true;
 			break;
 		}
@@ -506,9 +511,17 @@ nd6_llinfo_timer(void *arg)
 		sockaddr_in6_init(&sin6, taddr6, 0, 0, 0);
 		rt_clonedmsg(RTM_MISS, sin6tosa(&sin6), NULL, ifp);
 
-		LLE_REMREF(ln);
-		nd6_free(ln, 0);
-		ln = NULL;
+		/*
+		 * Move to the ND6_LLINFO_WAITDELETE state for another
+		 * interval at which point the llentry will be freed
+		 * unless it's attempted to be used again and we'll
+		 * resend NS again, rinse and repeat.
+		 */
+		ln->ln_state = ND6_LLINFO_WAITDELETE;
+		if (ln->ln_asked == nd6_mmaxtries)
+			nd6_llinfo_settimer(ln, ndi->retrans * hz / 1000);
+		else
+			send_ns = true;
 		break;
 
 	case ND6_LLINFO_REACHABLE:
@@ -2312,6 +2325,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	struct llentry *ln = NULL;
 	bool created = false;
 	const struct sockaddr_in6 *dst = satocsin6(_dst);
+	int error;
 
 	/* discard the packet if IPv6 operation is disabled on the interface */
 	if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
@@ -2406,7 +2420,8 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	 * does not exceed nd6_maxqueuelen.  When it exceeds nd6_maxqueuelen,
 	 * the oldest packet in the queue will be removed.
 	 */
-	if (ln->ln_state == ND6_LLINFO_NOSTATE)
+	if (ln->ln_state == ND6_LLINFO_NOSTATE ||
+	    ln->ln_state == ND6_LLINFO_WAITDELETE)
 		ln->ln_state = ND6_LLINFO_INCOMPLETE;
 	if (ln->ln_hold) {
 		struct mbuf *m_hold;
@@ -2430,6 +2445,12 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		ln->ln_hold = m;
 	}
 
+	if (ln->ln_asked >= nd6_mmaxtries)
+		error = (rt != NULL && rt->rt_flags & RTF_GATEWAY) ?
+		    EHOSTUNREACH : EHOSTDOWN;
+	else
+		error = EWOULDBLOCK;
+
 	/*
 	 * If there has been no NS for the neighbor after entering the
 	 * INCOMPLETE state, send the first solicitation.
@@ -2448,7 +2469,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	if (created)
 		nd6_gc_neighbors(LLTABLE6(ifp), &dst->sin6_addr);
 
-	return EWOULDBLOCK;
+	return error;
 }
 
 int
