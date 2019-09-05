@@ -680,8 +680,6 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 	struct ndmsg *r;
 	struct rtattr *rta;
 	size_t len;
-	struct in6_addr addr6;
-	int flags;
 
 	if (nlm->nlmsg_type != RTM_NEWNEIGH && nlm->nlmsg_type != RTM_DELNEIGH)
 		return 0;
@@ -692,14 +690,13 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 	rta = (struct rtattr *)RTM_RTA(r);
 	len = RTM_PAYLOAD(nlm);
         if (r->ndm_family == AF_INET6) {
-		flags = 0;
-		if (r->ndm_flags & NTF_ROUTER)
-			flags |= IPV6ND_ROUTER;
-		if (nlm->nlmsg_type == RTM_NEWNEIGH &&
+		bool reachable;
+		struct in6_addr addr6;
+
+		reachable = (nlm->nlmsg_type == RTM_NEWNEIGH &&
 		    r->ndm_state &
 		    (NUD_REACHABLE | NUD_STALE | NUD_DELAY | NUD_PROBE |
-		     NUD_PERMANENT))
-		        flags |= IPV6ND_REACHABLE;
+		     NUD_PERMANENT));
 		memset(&addr6, 0, sizeof(addr6));
 		while (RTA_OK(rta, len)) {
 			switch (rta->rta_type) {
@@ -710,7 +707,7 @@ link_neigh(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 			}
 			rta = RTA_NEXT(rta, len);
 		}
-		ipv6nd_neighbour(ctx, &addr6, flags);
+		ipv6nd_neighbour(ctx, &addr6, reachable);
 	}
 
 	return 0;
@@ -1465,12 +1462,12 @@ bpf_read(struct interface *ifp, int s, void *data, size_t len,
 int
 bpf_attach(int s, void *filter, unsigned int filter_len)
 {
-	struct sock_fprog pf;
+	struct sock_fprog pf = {
+		.filter = filter,
+		.len = (unsigned short)filter_len,
+	};
 
 	/* Install the filter. */
-	memset(&pf, 0, sizeof(pf));
-	pf.filter = filter;
-	pf.len = (unsigned short)filter_len;
 	return setsockopt(s, SOL_SOCKET, SO_ATTACH_FILTER, &pf, sizeof(pf));
 }
 
@@ -1480,7 +1477,9 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 	struct nlma nlm;
 	struct ifa_cacheinfo cinfo;
 	int retval = 0;
+#ifdef IFA_F_NOPREFIXROUTE
 	uint32_t flags = 0;
+#endif
 
 	memset(&nlm, 0, sizeof(nlm));
 	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
@@ -1507,8 +1506,8 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 #ifdef IFA_F_NOPREFIXROUTE
 		if (nlm.ifa.ifa_prefixlen < 32)
 			flags |= IFA_F_NOPREFIXROUTE;
-#endif
 		add_attr_32(&nlm.hdr, sizeof(nlm), IFA_FLAGS, flags);
+#endif
 
 		add_attr_l(&nlm.hdr, sizeof(nlm), IFA_BROADCAST,
 		    &ia->brd.s_addr, sizeof(ia->brd.s_addr));
@@ -1542,7 +1541,9 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 {
 	struct nlma nlm;
 	struct ifa_cacheinfo cinfo;
+#if defined(IFA_F_MANAGETEMPADDR) || defined(IFA_F_NOPREFIXROUTE)
 	uint32_t flags = 0;
+#endif
 
 	memset(&nlm, 0, sizeof(nlm));
 	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
@@ -1582,7 +1583,9 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 		if (!IN6_IS_ADDR_LINKLOCAL(&ia->addr))
 			flags |= IFA_F_NOPREFIXROUTE;
 #endif
+#if defined(IFA_F_MANAGETEMPADDR) || defined(IFA_F_NOPREFIXROUTE)
 		add_attr_32(&nlm.hdr, sizeof(nlm), IFA_FLAGS, flags);
+#endif
 
 		memset(&cinfo, 0, sizeof(cinfo));
 		cinfo.ifa_prefered = ia->prefix_pltime;

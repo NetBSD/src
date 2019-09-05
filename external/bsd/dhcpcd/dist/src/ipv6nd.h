@@ -51,8 +51,9 @@ struct ra {
 	uint32_t retrans;
 	uint32_t mtu;
 	struct ipv6_addrhead addrs;
-	uint8_t hasdns;
-	uint8_t expired;
+	bool hasdns;
+	bool expired;
+	bool isreachable;
 };
 
 TAILQ_HEAD(ra_head, ra);
@@ -90,9 +91,6 @@ struct rs_state {
 #define	RETRANS_TIMER			1000	/* milliseconds */
 #define	DELAY_FIRST_PROBE_TIME		5	/* seconds */
 
-#define	IPV6ND_REACHABLE		(1 << 0)
-#define	IPV6ND_ROUTER			(1 << 1)
-
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
@@ -103,14 +101,15 @@ struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, unsigned int);
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
-int ipv6nd_hasra(const struct interface *);
-int ipv6nd_hasradhcp(const struct interface *);
+bool ipv6nd_hasralifetime(const struct interface *, bool);
+#define	ipv6nd_hasra(i)		ipv6nd_hasralifetime((i), false)
+bool ipv6nd_hasradhcp(const struct interface *);
 void ipv6nd_handleifa(int, struct ipv6_addr *, pid_t);
 int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_advertise(struct ipv6_addr *);
 void ipv6nd_startexpire(struct interface *);
 void ipv6nd_drop(struct interface *);
-void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
+void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, bool);
 #endif /* INET6 */
 
 #endif /* IPV6ND_H */

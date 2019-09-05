@@ -135,4 +135,38 @@ clean:
 distclean: clean
 	rm -f .depend
 
+_import-src: ${SRCS}
+	${INSTALL} -d ${DESTDIR}/src
+	touch if-bsd.h if-linux.h if-sun.h
+	cp defs.h ${SRCS} ${SRCS:.c=.h} dev.h ${MAN5}.in ${MAN8}.in ${DESTDIR}/src
+	rm if-bsd.h if-linux.h if-sun.h
+	rm -f ${DESTDIR}/src/if-bsd.h ${DESTDIR}/src/if-linux.h ${DESTDIR}/src/if-sun.h
+	if [ -n "${COMPAT_SRCS}" ]; then \
+		${INSTALL} -d ${DESTDIR}/compat; \
+		cd ..; \
+		touch compat/rb.h compat/strtou.h; \
+		cp ${COMPAT_SRCS} ${COMPAT_SRCS:.c=.h} ${DESTDIR}/compat; \
+		rm compat/rb.h compat/strtou.h; \
+		rm -f ${DESTDIR}/compat/rb.h ${DESTDIR}/compat/strtou.h; \
+	fi
+	if ! grep HAVE_SYS_BITOPS_H ../config.h; then \
+		cp ../compat/bitops.h ${DESTDIR}/compat; \
+	fi
+	if grep compat/consttime_memequal.h ../config.h; then \
+		cp ../compat/consttime_memequal.h ${DESTDIR}/compat; \
+	fi
+	if [ -e ${DESTDIR}/compat/rb.c ]; then \
+		cp ../compat/rbtree.h ${DESTDIR}/compat; \
+	fi
+	if [ -e ${DESTDIR}/compat/strtoi.c ]; then \
+		cp ../compat/_strtoi.h ${DESTDIR}/compat; \
+	fi
+	if [ -n "${CRYPT_SRCS}" ]; then \
+		${INSTALL} -d ${DESTDIR}/compat/crypt; \
+		cd ..; \
+		cp ${CRYPT_SRCS} ${CRYPT_SRCS:.c=.h} ${DESTDIR}/compat/crypt; \
+	fi
+	# DragonFlyBSD builds base version with private crypto
+	if [ `uname` = DragonFly ]; then rm ${DESTDIR}/compat/crypt/md5* ${DESTDIR}/compat/crypt/sha256*; fi
+
 include ${TOP}/Makefile.inc

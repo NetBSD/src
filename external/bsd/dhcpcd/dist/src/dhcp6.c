@@ -2488,22 +2488,22 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	struct dhcp6_state *state;
 	struct stat st;
 	int fd;
-	struct dhcp6_message *lease;
 	time_t now;
 	int retval;
-	bool fd_opened;
+	bool read_stdin, fd_opened;
 #ifdef AUTH
 	uint8_t *o;
 	uint16_t ol;
 #endif
 
 	state = D6_STATE(ifp);
-	if (state->leasefile[0] == '\0') {
+	read_stdin = state->leasefile[0] == '\0';
+	if (read_stdin) {
 		logdebugx("reading standard input");
 		fd = fileno(stdin);
 		fd_opened = false;
 	} else {
-		logdebugx("%s: reading lease `%s'", ifp->name, state->leasefile);
+		logdebugx("%s: reading lease `%s'", ifp->name,state->leasefile);
 		fd = open(state->leasefile, O_RDONLY);
 		if (fd != -1 && fstat(fd, &st) == -1) {
 			close(fd);
@@ -2514,18 +2514,18 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	if (fd == -1)
 		return -1;
 	retval = -1;
-	lease = NULL;
 	free(state->new);
-	state->new_len = dhcp_read_lease_fd(fd, (void **)&lease);
-	state->new = lease;
+	state->new_len = dhcp_read_lease_fd(fd, (void **)&state->new);
 	if (fd_opened)
 		close(fd);
-	if (state->new_len == 0)
-		goto ex;
 
-	if (ifp->ctx->options & DHCPCD_DUMPLEASE ||
-	    state->leasefile[0] == '\0')
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE || read_stdin)
 		return 0;
+
+	if (state->new_len == 0) {
+		retval = 0;
+		goto ex;
+	}
 
 	/* If not validating IA's and if they have expired,
 	 * skip to the auth check. */
@@ -2546,14 +2546,12 @@ dhcp6_readlease(struct interface *ifp, int validate)
 		goto ex;
 
 	if (state->expire != ND6_INFINITE_LIFETIME &&
-	    state->leasefile[0] != '\0')
+	    (time_t)state->expire < now - st.st_mtime &&
+	    !(ifp->options->options & DHCPCD_LASTLEASE_EXTEND))
 	{
-		if ((time_t)state->expire < now - st.st_mtime &&
-		    !(ifp->options->options & DHCPCD_LASTLEASE_EXTEND)) {
-			logdebugx("%s: discarding expired lease", ifp->name);
-			retval = 0;
-			goto ex;
-		}
+		logdebugx("%s: discarding expired lease", ifp->name);
+		retval = 0;
+		goto ex;
 	}
 
 auth:
@@ -2586,12 +2584,10 @@ auth:
 
 ex:
 	dhcp6_freedrop_addrs(ifp, 0, NULL);
+	unlink(state->leasefile);
 	free(state->new);
 	state->new = NULL;
 	state->new_len = 0;
-	if (!(ifp->ctx->options & DHCPCD_DUMPLEASE) &&
-	    state->leasefile[0] != '\0')
-		unlink(state->leasefile);
 	return retval;
 }
 

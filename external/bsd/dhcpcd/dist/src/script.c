@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
@@ -172,12 +173,12 @@ efprintf(FILE *fp, const char *fmt, ...)
 	return r;
 }
 
-static ssize_t
+static long
 make_env(const struct interface *ifp, const char *reason)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 	FILE *fp;
-	char **env, **envp, *buf, *bufp, *endp, *path;
+	char **env, **envp, *bufp, *endp, *path;
 	size_t nenv;
 	long buf_pos, i;
 	int protocol = PROTO_LINK;
@@ -458,31 +459,38 @@ dumplease:
 		logerr(__func__);
 		goto eexit;
 	}
-#ifdef HAVE_OPEN_MEMSTREAM
-	buf = ctx->script_buf;
-#else
+
+#ifndef HAVE_OPEN_MEMSTREAM
 	size_t buf_len = (size_t)buf_pos;
 	if (ctx->script_buflen < buf_len) {
-		buf = realloc(ctx->script_buf, buf_len);
+		char *buf = realloc(ctx->script_buf, buf_len);
 		if (buf == NULL)
 			goto eexit;
 		ctx->script_buf = buf;
 		ctx->script_buflen = buf_len;
 	}
-	buf = ctx->script_buf;
 	rewind(fp);
-	if (fread(buf, sizeof(char), buf_len, fp) != buf_len)
+	if (fread(ctx->script_buf, sizeof(char), buf_len, fp) != buf_len)
 		goto eexit;
 	fclose(fp);
 	fp = NULL;
 #endif
 
+	/* Count the terminated env strings.
+	 * Assert that the terminations are correct. */
 	nenv = 0;
-	endp = buf + buf_pos;
-	for (bufp = buf; bufp < endp; bufp++) {
-		if (*bufp == '\0')
+	endp = ctx->script_buf + buf_pos;
+	for (bufp = ctx->script_buf; bufp < endp; bufp++) {
+		if (*bufp == '\0') {
+#ifndef NDEBUG
+			if (bufp + 1 < endp)
+				assert(*(bufp + 1) != '\0');
+#endif
 			nenv++;
+		}
 	}
+	assert(*(bufp - 1) == '\0');
+
 	if (ctx->script_envlen < nenv) {
 		env = reallocarray(ctx->script_env, nenv + 1, sizeof(*env));
 		if (env == NULL)
@@ -490,7 +498,8 @@ dumplease:
 		ctx->script_env = env;
 		ctx->script_envlen = nenv;
 	}
-	bufp = buf;
+
+	bufp = ctx->script_buf;
 	envp = ctx->script_env;
 	*envp++ = bufp++;
 	endp--; /* Avoid setting the last \0 to an invalid pointer */
@@ -500,7 +509,7 @@ dumplease:
 	}
 	*envp = NULL;
 
-	return (ssize_t)nenv;
+	return buf_pos - 1;
 
 eexit:
 	logerr(__func__);
@@ -516,10 +525,12 @@ send_interface1(struct fd_list *fd, const struct interface *ifp,
     const char *reason)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
+	long len;
 
-	if (make_env(ifp, reason) == -1)
+	len = make_env(ifp, reason);
+	if (len == -1)
 		return -1;
-	return control_queue(fd, ctx->script_buf, ctx->script_buflen, 1);
+	return control_queue(fd, ctx->script_buf,  (size_t)len, 1);
 }
 
 int
@@ -636,8 +647,8 @@ send_listeners:
 	TAILQ_FOREACH(fd, &ctx->control_fds, next) {
 		if (!(fd->flags & FD_LISTEN))
 			continue;
-		if (control_queue(fd, ctx->script_buf, ctx->script_buflen, 1)
-		    == -1)
+		if (control_queue(fd, ctx->script_buf, ctx->script_buflen,
+		    true) == -1)
 			logerr("%s: control_queue", __func__);
 		else
 			status = 1;

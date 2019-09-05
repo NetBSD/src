@@ -217,7 +217,6 @@ ipv6nd_open0(void)
 		goto eexit;
 
 	ICMP6_FILTER_SETBLOCKALL(&filt);
-	ICMP6_FILTER_SETPASS(ND_NEIGHBOR_ADVERT, &filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
 	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER,
 	    &filt, sizeof(filt)) == -1)
@@ -460,6 +459,11 @@ ipv6nd_advertise(struct ipv6_addr *ia)
 	if (IN6_IS_ADDR_MULTICAST(&ia->addr))
 		return;
 
+#ifdef __sun
+	if (!(ia->flags & IPV6_AF_AUTOCONF) && ia->flags & IPV6_AF_RAPFX)
+		return;
+#endif
+
 	ctx = ia->iface->ctx;
 	/* Find the most preferred address to advertise. */
 	iaf = NULL;
@@ -555,45 +559,60 @@ ipv6nd_startexpire(struct interface *ifp)
 	    ipv6nd_expire, ifp);
 }
 
-static void
-ipv6nd_reachable(struct ra *rap, int flags)
+/*
+ * Neighbour reachability.
+ *
+ * RFC 4681 6.2.5 says when a node is no longer a router it MUST
+ * send a RA with a zero lifetime.
+ * All OS's I know of set the NA router flag if they are a router
+ * or not and disregard that they are actively advertising or
+ * shutting down. If the interface is disabled, it cant't send a NA at all.
+ *
+ * As such we CANNOT rely on the NA Router flag and MUST use
+ * unreachability or receive a RA with a lifetime of zero to remove
+ * the node as a default router.
+ */
+void
+ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, bool reachable)
 {
+	struct ra *rap, *rapr;
 
-	if (rap->lifetime == 0)
+	if (ctx->ra_routers == NULL)
 		return;
 
-	if (flags & IPV6ND_REACHABLE) {
-		if (rap->expired == 0)
+	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
+		if (IN6_ARE_ADDR_EQUAL(&rap->from, addr))
+			break;
+	}
+
+	if (rap == NULL || rap->expired)
+		return;
+
+	if (reachable) {
+		if (rap->isreachable)
 			return;
 		loginfox("%s: %s is reachable again",
 		    rap->iface->name, rap->sfrom);
-		rap->expired = 0;
+		rap->isreachable = true;
+		return;
 	} else {
-		if (rap->expired != 0)
+		if (!rap->isreachable)
 			return;
-		logwarnx("%s: %s is unreachable, expiring it",
+		logwarnx("%s: %s is unreachable",
 		    rap->iface->name, rap->sfrom);
-		rap->expired = 1;
+		rap->isreachable = false;
 	}
 
-	rt_build(rap->iface->ctx, AF_INET6);
-	/* XXX Not really an RA */
-	script_runreason(rap->iface, "ROUTERADVERT");
-}
-
-void
-ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, int flags)
-{
-	struct ra *rap;
-
-	if (ctx->ra_routers) {
-	        TAILQ_FOREACH(rap, ctx->ra_routers, next) {
-			if (IN6_ARE_ADDR_EQUAL(&rap->from, addr)) {
-				ipv6nd_reachable(rap, flags);
-				break;
-			}
-		}
+	/* If we have no reachable default routers, try and solicit one. */
+	TAILQ_FOREACH(rapr, ctx->ra_routers, next) {
+		if (rap == rapr || rap->iface != rapr->iface)
+			continue;
+		if (rapr->isreachable && !rapr->expired && rapr->lifetime)
+			break;
 	}
+
+	if (rapr == NULL)
+		ipv6nd_startrs(rap->iface);
 }
 
 const struct ipv6_addr *
@@ -944,7 +963,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	struct in6_addr pi_prefix;
 	struct ipv6_addr *ap;
 	struct dhcp_opt *dho;
-	bool new_rap, new_data;
+	bool new_rap, new_data, has_address;
 	uint32_t old_lifetime;
 	__printflike(1, 2) void (*logfunc)(const char *, ...);
 #ifdef IPV6_MANAGETEMPADDR
@@ -1026,6 +1045,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 		strlcpy(rap->sfrom, sfrom, sizeof(rap->sfrom));
 		TAILQ_INIT(&rap->addrs);
 		new_rap = true;
+		rap->isreachable = true;
 	} else
 		new_rap = false;
 	if (rap->data_len == 0) {
@@ -1044,7 +1064,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	 * routers like to decrease the advertised valid and preferred times
 	 * in accordance with the own prefix times which would result in too
 	 * much needless log spam. */
-	logfunc = new_rap ? loginfox : logdebugx,
+	logfunc = new_data || !rap->isreachable ? loginfox : logdebugx,
 	logfunc("%s: Router Advertisement from %s", ifp->name, rap->sfrom);
 
 	clock_gettime(CLOCK_MONOTONIC, &rap->acquired);
@@ -1064,9 +1084,10 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 
 		state->retrans = rap->retrans = ntohl(nd_ra->nd_ra_retransmit);
 	}
-	if (rap->lifetime)
-		rap->expired = 0;
-	rap->hasdns = 0;
+	rap->expired = false;
+	rap->hasdns = false;
+	rap->isreachable = true;
+	has_address = false;
 
 #ifdef IPV6_AF_TEMPORARY
 	ipv6_markaddrsstale(ifp, IPV6_AF_TEMPORARY);
@@ -1200,6 +1221,9 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 			    ntohl(pi.nd_opt_pi_valid_time);
 			ap->prefix_pltime =
 			    ntohl(pi.nd_opt_pi_preferred_time);
+			if (ap->prefix_vltime != 0 &&
+			    ap->flags & IPV6_AF_AUTOCONF)
+				has_address = true;
 
 #ifdef IPV6_MANAGETEMPADDR
 			/* RFC4941 Section 3.3.3 */
@@ -1266,6 +1290,10 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 		}
 	}
 
+	if (new_data && !has_address && rap->lifetime && !ipv6_ifanyglobal(ifp))
+		logwarnx("%s: no global addresses for default route",
+		    ifp->name);
+
 	if (new_rap)
 		add_router(ifp->ctx, rap);
 
@@ -1316,20 +1344,21 @@ nodhcp6:
 	ipv6nd_expirera(ifp);
 }
 
-int
-ipv6nd_hasra(const struct interface *ifp)
+bool
+ipv6nd_hasralifetime(const struct interface *ifp, bool lifetime)
 {
 	const struct ra *rap;
 
 	if (ifp->ctx->ra_routers) {
 		TAILQ_FOREACH(rap, ifp->ctx->ra_routers, next)
-			if (rap->iface == ifp && !rap->expired)
-				return 1;
+			if (rap->iface == ifp && !rap->expired &&
+			    (!lifetime ||rap->lifetime))
+				return true;
 	}
-	return 0;
+	return false;
 }
 
-int
+bool
 ipv6nd_hasradhcp(const struct interface *ifp)
 {
 	const struct ra *rap;
@@ -1338,11 +1367,11 @@ ipv6nd_hasradhcp(const struct interface *ifp)
 		TAILQ_FOREACH(rap, ifp->ctx->ra_routers, next) {
 			if (rap->iface == ifp &&
 			    !rap->expired &&
-			    (rap->flags & (ND_RA_FLAG_MANAGED | ND_RA_FLAG_OTHER)))
-				return 1;
+			    (rap->flags &(ND_RA_FLAG_MANAGED|ND_RA_FLAG_OTHER)))
+				return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 static const uint8_t *
@@ -1399,7 +1428,7 @@ ipv6nd_env(FILE *fp, const struct interface *ifp)
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	i = n = 0;
 	TAILQ_FOREACH(rap, ifp->ctx->ra_routers, next) {
-		if (rap->iface != ifp)
+		if (rap->iface != ifp || rap->expired)
 			continue;
 		i++;
 		snprintf(ndprefix, sizeof(ndprefix), "nd%zu", i);
@@ -1503,7 +1532,7 @@ ipv6nd_expirera(void *arg)
 	struct interface *ifp;
 	struct ra *rap, *ran;
 	struct timespec now, lt, expire, next;
-	bool expired, valid, validone;
+	bool expired, valid;
 	struct ipv6_addr *ia;
 	size_t len, olen;
 	uint8_t *p;
@@ -1522,9 +1551,9 @@ ipv6nd_expirera(void *arg)
 	timespecclear(&next);
 
 	TAILQ_FOREACH_SAFE(rap, ifp->ctx->ra_routers, next, ran) {
-		if (rap->iface != ifp)
+		if (rap->iface != ifp || rap->expired)
 			continue;
-		valid = validone = false;
+		valid = false;
 		if (rap->lifetime) {
 			lt.tv_sec = (time_t)rap->lifetime;
 			lt.tv_nsec = 0;
@@ -1533,8 +1562,8 @@ ipv6nd_expirera(void *arg)
 				if (!rap->expired) {
 					logwarnx("%s: %s: router expired",
 					    ifp->name, rap->sfrom);
-					rap->expired = expired = 1;
 					rap->lifetime = 0;
+					expired = true;
 				}
 			} else {
 				valid = true;
@@ -1552,7 +1581,7 @@ ipv6nd_expirera(void *arg)
 			if (ia->prefix_vltime == 0)
 				continue;
 			if (ia->prefix_vltime == ND6_INFINITE_LIFETIME) {
-				validone = true;
+				valid = true;
 				continue;
 			}
 			lt.tv_sec = (time_t)ia->prefix_vltime;
@@ -1576,7 +1605,7 @@ ipv6nd_expirera(void *arg)
 				if (!timespecisset(&next) ||
 				    timespeccmp(&next, &lt, >))
 					next = lt;
-				validone = true;
+				valid = true;
 			}
 		}
 
@@ -1626,7 +1655,7 @@ ipv6nd_expirera(void *arg)
 			if (ltime == 0)
 				continue;
 			if (ltime == ND6_INFINITE_LIFETIME) {
-				validone = true;
+				valid = true;
 				continue;
 			}
 
@@ -1643,15 +1672,15 @@ ipv6nd_expirera(void *arg)
 			    timespeccmp(&next, &lt, >))
 			{
 				next = lt;
-				validone = true;
+				valid = true;
 			}
 		}
 
-		if (valid || validone)
+		if (valid)
 			continue;
 
-		/* Router has expired. Let's not keep a lot of them.
-		 * We should work out if all the options have expired .... */
+		/* Router has expired. Let's not keep a lot of them. */
+		rap->expired = true;
 		if (++nexpired > EXPIRED_MAX)
 			ipv6nd_free_ra(rap);
 	}
@@ -1670,7 +1699,7 @@ void
 ipv6nd_drop(struct interface *ifp)
 {
 	struct ra *rap, *ran;
-	uint8_t expired = 0;
+	bool expired = false;
 
 	if (ifp->ctx->ra_routers == NULL)
 		return;
@@ -1678,7 +1707,7 @@ ipv6nd_drop(struct interface *ifp)
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	TAILQ_FOREACH_SAFE(rap, ifp->ctx->ra_routers, next, ran) {
 		if (rap->iface == ifp) {
-			rap->expired = expired = 1;
+			rap->expired = expired = true;
 			ipv6nd_drop_ra(rap);
 		}
 	}
@@ -1687,82 +1716,6 @@ ipv6nd_drop(struct interface *ifp)
 		if ((ifp->options->options & DHCPCD_NODROP) != DHCPCD_NODROP)
 			script_runreason(ifp, "ROUTERADVERT");
 	}
-}
-
-static void
-ipv6nd_handlena(struct dhcpcd_ctx *ctx, const char *sfrom,
-    struct interface *ifp, struct icmp6_hdr *icp, size_t len, int hoplimit)
-{
-	struct nd_neighbor_advert *nd_na;
-	struct in6_addr nd_na_target;
-	struct ra *rap;
-	uint32_t is_router, is_solicited;
-	char buf[INET6_ADDRSTRLEN];
-	const char *taddr;
-
-	if (ifp == NULL) {
-#ifdef DEBUG_NS
-		logdebugx("NA for unexpected interface from %s", sfrom);
-#endif
-		return;
-	}
-
-	if ((size_t)len < sizeof(struct nd_neighbor_advert)) {
-		logerrx("%s: IPv6 NA too short from %s", ifp->name, sfrom);
-		return;
-	}
-
-	/* RFC 4861 7.1.2 */
-	if (hoplimit != 255) {
-		logerrx("invalid hoplimit(%d) in NA from %s",
-		    hoplimit, sfrom);
-		return;
-	}
-
-	nd_na = (struct nd_neighbor_advert *)icp;
-	is_router = nd_na->nd_na_flags_reserved & ND_NA_FLAG_ROUTER;
-	is_solicited = nd_na->nd_na_flags_reserved & ND_NA_FLAG_SOLICITED;
-	taddr = inet_ntop(AF_INET6, &nd_na->nd_na_target,
-	    buf, INET6_ADDRSTRLEN);
-
-	/* nd_na->nd_na_target is not aligned. */
-	memcpy(&nd_na_target, &nd_na->nd_na_target, sizeof(nd_na_target));
-	if (IN6_IS_ADDR_MULTICAST(&nd_na_target)) {
-		logerrx("%s: NA multicast address %s (%s)",
-		    ifp->name, taddr, sfrom);
-		return;
-	}
-
-	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
-		if (rap->iface == ifp &&
-		    IN6_ARE_ADDR_EQUAL(&rap->from, &nd_na_target))
-			break;
-	}
-	if (rap == NULL) {
-#ifdef DEBUG_NS
-		logdebugx("%s: unexpected NA from %s for %s",
-		    ifp->name, sfrom, taddr);
-#endif
-		return;
-	}
-
-#ifdef DEBUG_NS
-	logdebugx("%s: %sNA for %s from %s",
-	    ifp->name, is_solicited ? "solicited " : "", taddr, sfrom);
-#endif
-
-	/* Node is no longer a router, so remove it from consideration */
-	if (!is_router && !rap->expired) {
-		loginfox("%s: %s not a router (%s)",
-		    ifp->name, taddr, sfrom);
-		rap->expired = 1;
-		rt_build(ifp->ctx,  AF_INET6);
-		script_runreason(ifp, "ROUTERADVERT");
-		return;
-	}
-
-	if (is_solicited && is_router && rap->lifetime)
-		ipv6nd_reachable(rap, IPV6ND_REACHABLE);
 }
 
 static void
@@ -1828,10 +1781,6 @@ ipv6nd_handledata(void *arg)
 	icp = (struct icmp6_hdr *)buf;
 	if (icp->icmp6_code == 0) {
 		switch(icp->icmp6_type) {
-			case ND_NEIGHBOR_ADVERT:
-				ipv6nd_handlena(ctx, sfrom,
-				    ifp, icp, (size_t)len, hoplimit);
-				return;
 			case ND_ROUTER_ADVERT:
 				ipv6nd_handlera(ctx, &from, sfrom,
 				    ifp, icp, (size_t)len, hoplimit);

@@ -72,6 +72,12 @@
 #include "ipv6nd.h"
 #include "logerr.h"
 
+#ifdef __sun
+/* It has the ioctl, but the member is missing from the struct?
+ * No matter, our getifaddrs foo in if-sun.c will DTRT. */
+#undef SIOCGIFHWADDR
+#endif
+
 void
 if_free(struct interface *ifp)
 {
@@ -235,6 +241,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 		case AF_INET6:
 			sin6 = (void *)ifa->ifa_addr;
 			net6 = (void *)ifa->ifa_netmask;
+
 #ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				/* Remove the scope from the address */
@@ -307,16 +314,15 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	struct if_spec spec;
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
-#ifdef SIOCGIFPRIORITY
-	struct ifreq ifr;
-#endif
 #ifdef IFLR_ACTIVE
 	struct if_laddrreq iflr = { .flags = IFLR_PREFIX };
 	int link_fd;
 #endif
-
 #elif AF_PACKET
 	const struct sockaddr_ll *sll;
+#endif
+#if defined(SIOCGIFPRIORITY) || defined(SIOCGIFHWADDR)
+	struct ifreq ifr;
 #endif
 
 	if ((ifs = malloc(sizeof(*ifs))) == NULL) {
@@ -512,10 +518,21 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
 #endif
 		}
-#ifdef __linux__
-		/* PPP addresses on Linux don't have hardware addresses */
-		else
-			ifp->index = if_nametoindex(ifp->name);
+#ifdef SIOCGIFHWADDR
+		else {
+			/* This is a huge bug in getifaddrs(3) as there
+			 * is no reason why this can't be returned in
+			 * ifa_addr. */
+			memset(&ifr, 0, sizeof(ifr));
+			strlcpy(ifr.ifr_name, ifa->ifa_name,
+			    sizeof(ifr.ifr_name));
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFHWADDR, &ifr) == -1)
+				logerr("%s: SIOCGIFHWADDR", ifa->ifa_name);
+			ifp->family = ifr.ifr_hwaddr.sa_family;
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFINDEX, &ifr) == -1)
+				logerr("%s: SIOCGIFINDEX", ifa->ifa_name);
+			ifp->index = (unsigned int)ifr.ifr_ifindex;
+		}
 #endif
 
 		/* Ensure hardware address is valid. */
@@ -535,6 +552,9 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #endif
 #ifdef ARPHRD_PPP
 			case ARPHRD_PPP:
+#endif
+#ifdef ARPHRD_NONE
+			case ARPHRD_NONE:
 #endif
 				/* We don't warn for supported families */
 				break;
