@@ -1,4 +1,4 @@
-/*	$NetBSD: gen-unix.h,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: gen-unix.h,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,8 +30,10 @@
 
 #include <sys/types.h>          /* Required on some systems for dirent.h. */
 
+#include <errno.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <unistd.h>		/* XXXDCL Required for ?. */
 
 #include <isc/lang.h>
@@ -68,9 +70,15 @@ next_file(isc_dir_t *dir) {
 	dir->filename = NULL;
 
 	if (dir->handle != NULL) {
+		errno = 0;
 		dirent = readdir(dir->handle);
-		if (dirent != NULL)
+		if (dirent != NULL) {
 			dir->filename = dirent->d_name;
+		} else {
+			if (errno != 0) {
+				exit(1);
+			}
+		}
 	}
 
 	if (dir->filename != NULL)

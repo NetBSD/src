@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.6 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,6 +179,14 @@ struct ns_client {
 	uint32_t		expire;
 	unsigned char		*keytag;
 	uint16_t		keytag_len;
+
+	/*%
+	 * Used to override the DNS response code in ns_client_error().
+	 * If set to -1, the rcode is determined from the result code,
+	 * but if set to any other value, the least significant 12
+	 * bits will be used as the rcode in the response message.
+	 */
+	int32_t			rcode_override;
 };
 
 typedef ISC_QUEUE(ns_client_t) client_queue_t;

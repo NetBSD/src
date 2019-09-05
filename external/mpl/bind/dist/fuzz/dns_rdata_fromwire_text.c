@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.1.1.1 2019/09/05 19:27:41 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.2 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

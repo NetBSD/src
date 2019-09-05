@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: aes_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <setjmp.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define UNIT_TESTING

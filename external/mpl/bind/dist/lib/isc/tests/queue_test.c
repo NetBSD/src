@@ -1,4 +1,4 @@
-/*	$NetBSD: queue_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: queue_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,10 +19,11 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
