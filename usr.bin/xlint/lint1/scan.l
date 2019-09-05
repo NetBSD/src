@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.89 2019/03/04 17:45:16 christos Exp $ */
+/* $NetBSD: scan.l,v 1.90 2019/09/05 20:12:11 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.89 2019/03/04 17:45:16 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.90 2019/09/05 20:12:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -209,11 +209,12 @@ static	struct	kwtab {
 	{ "__int128_t",	T_TYPE,		0,	INT128,	0,	  0,1,0,0,1 },
 	{ "__uint128_t",T_TYPE,		0,	UINT128,0,	  0,1,0,0,1 },
 #endif
-	{ "__thread",	T_QUAL,		0,	0,	THREAD,	  0,0,1,0,7 },
+	{ "__thread",	T_QUAL,		0,	0,	THREAD,	  0,0,1,0,1 },
 	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0,1,0,0,1 },
 	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0,1,0,0,1 },
 	{ "_Generic",	T_GENERIC,	0,	0,	0,	  0,1,0,0,1 },
 	{ "_Noreturn",	T_NORETURN,	0,	0,	0,	  0,1,0,0,1 },
+	{ "_Thread_local",T_QUAL,	0,	0,	THREAD,	  0,1,0,0,1 },
 	{ "alias",	T_AT_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
 	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "alignof",	T_ALIGNOF,	0,	0,	0,	  0,0,0,0,4 },
