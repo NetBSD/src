@@ -1,0 +1,24 @@
+#include "sun7i-a20-olinuxino-lime2-emmc.dts"
+
+&pio {
+	spi0_pc_pins: spi0-pc-pins {
+		pins = "PC0", "PC1", "PC2";
+		function = "spi0";
+	};
+
+											spi0_cs0_pc_pin: spi0-cs0-pc-pin {
+		pins = "PC23";
+		function = "spi0";
+	};
+};
+
+&spi0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi0_pc_pins>, <&spi0_cs0_pc_pin>;
+	status = "okay";
+	spiflash {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		status = "okay";
+	};
+};
