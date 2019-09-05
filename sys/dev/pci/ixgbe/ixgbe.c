@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.32 2019/08/29 16:31:53 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.33 2019/09/05 09:06:07 martin Exp $ */
 
 /******************************************************************************
 
@@ -1397,7 +1397,6 @@ static void
 ixgbe_add_media_types(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	device_t	dev = adapter->dev;
 	u64		layer;
 
 	layer = adapter->phy_layer;
@@ -1449,7 +1448,7 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_10G_KR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
-		ADD(AIFM_10G_KX4 | IFM_FDX, 0);
+		ADD(IFM_10G_KX4 | IFM_FDX, 0);
 	}
 #else
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
@@ -1476,7 +1475,7 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_5000_T | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_BX)
-		device_printf(dev, "Media supported: 1000baseBX\n");
+		ADD(IFM_1000_LX | IFM_FDX, 0); /* IFM_1000_BX */
 	/* XXX no ifmedia_set? */
 
 	ADD(IFM_AUTO, 0);
@@ -1496,6 +1495,8 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 			return (TRUE);
 		return (FALSE);
 	case ixgbe_mac_82599EB:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
 		switch (hw->mac.ops.get_media_type(hw)) {
 		case ixgbe_media_type_fiber:
 		case ixgbe_media_type_fiber_qsfp:
@@ -1503,11 +1504,6 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 		default:
 			return (FALSE);
 		}
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_X550EM_a:
-		if (hw->mac.ops.get_media_type(hw) == ixgbe_media_type_fiber)
-			return (TRUE);
-		return (FALSE);
 	default:
 		return (FALSE);
 	}
@@ -2542,7 +2538,7 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1ULL << vector);
+	u64		queue = 1ULL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -3077,6 +3073,34 @@ ixgbe_msix_link(void *arg)
 	/* Clear interrupt with write */
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
+	if (ixgbe_is_sfp(hw)) {
+		/* Pluggable optics-related interrupt */
+		if (hw->mac.type >= ixgbe_mac_X540)
+			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
+		else
+			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
+
+		/*
+		 *  An interrupt might not arrive when a module is inserted.
+		 * When an link status change interrupt occurred and the driver
+		 * still regard SFP as unplugged, issue the module softint
+		 * and then issue LSC interrupt.
+		 */
+		if ((eicr & eicr_mask)
+		    || ((hw->phy.sfp_type == ixgbe_sfp_type_not_present)
+			&& (eicr & IXGBE_EICR_LSC))) {
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
+			softint_schedule(adapter->mod_si);
+		}
+
+		if ((hw->mac.type == ixgbe_mac_82599EB) &&
+		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
+			IXGBE_WRITE_REG(hw, IXGBE_EICR,
+			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
+			softint_schedule(adapter->msf_si);
+		}
+	}
+
 	/* Link status change */
 	if (eicr & IXGBE_EICR_LSC) {
 		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
@@ -3133,26 +3157,6 @@ ixgbe_msix_link(void *arg)
 		if ((adapter->feat_en & IXGBE_FEATURE_SRIOV) &&
 		    (eicr & IXGBE_EICR_MAILBOX))
 			softint_schedule(adapter->mbx_si);
-	}
-
-	if (ixgbe_is_sfp(hw)) {
-		/* Pluggable optics-related interrupt */
-		if (hw->mac.type >= ixgbe_mac_X540)
-			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
-		else
-			eicr_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
-
-		if (eicr & eicr_mask) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr_mask);
-			softint_schedule(adapter->mod_si);
-		}
-
-		if ((hw->mac.type == ixgbe_mac_82599EB) &&
-		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR,
-			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-			softint_schedule(adapter->msf_si);
-		}
 	}
 
 	/* Check for fan failure */
@@ -3262,7 +3266,8 @@ ixgbe_sysctl_instance(struct adapter *adapter)
 
 	return rnode;
 err:
-	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	device_printf(adapter->dev,
+	    "%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
 }
 
