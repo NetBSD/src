@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.13 2015/01/08 22:27:18 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.14 2019/09/05 16:19:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,115 +37,102 @@
 #include <stdint.h>
 #endif
 
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_kasan.h"
+#endif
+
+#if defined(KASAN)
+#define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
+	void kasan_atomic_add_##name(volatile targ1 *, targ2); \
+	tret kasan_atomic_add_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_AND(name, tret, targ1, targ2) \
+	void kasan_atomic_and_##name(volatile targ1 *, targ2); \
+	tret kasan_atomic_and_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_OR(name, tret, targ1, targ2) \
+	void kasan_atomic_or_##name(volatile targ1 *, targ2); \
+	tret kasan_atomic_or_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_CAS(name, tret, targ1, targ2) \
+	tret kasan_atomic_cas_##name(volatile targ1 *, targ2, targ2); \
+	tret kasan_atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2);
+#define ATOMIC_PROTO_SWAP(name, tret, targ1, targ2) \
+	tret kasan_atomic_swap_##name(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_DEC(name, tret, targ1) \
+	void kasan_atomic_dec_##name(volatile targ1 *); \
+	tret kasan_atomic_dec_##name##_nv(volatile targ1 *);
+#define ATOMIC_PROTO_INC(name, tret, targ1) \
+	void kasan_atomic_inc_##name(volatile targ1 *); \
+	tret kasan_atomic_inc_##name##_nv(volatile targ1 *);
+#else
+#define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
+	void atomic_add_##name(volatile targ1 *, targ2); \
+	tret atomic_add_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_AND(name, tret, targ1, targ2) \
+	void atomic_and_##name(volatile targ1 *, targ2); \
+	tret atomic_and_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_OR(name, tret, targ1, targ2) \
+	void atomic_or_##name(volatile targ1 *, targ2); \
+	tret atomic_or_##name##_nv(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_CAS(name, tret, targ1, targ2) \
+	tret atomic_cas_##name(volatile targ1 *, targ2, targ2); \
+	tret atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2);
+#define ATOMIC_PROTO_SWAP(name, tret, targ1, targ2) \
+	tret atomic_swap_##name(volatile targ1 *, targ2);
+#define ATOMIC_PROTO_DEC(name, tret, targ1) \
+	void atomic_dec_##name(volatile targ1 *); \
+	tret atomic_dec_##name##_nv(volatile targ1 *);
+#define ATOMIC_PROTO_INC(name, tret, targ1) \
+	void atomic_inc_##name(volatile targ1 *); \
+	tret atomic_inc_##name##_nv(volatile targ1 *);
+#endif
+
 __BEGIN_DECLS
-/*
- * Atomic ADD
- */
-void		atomic_add_32(volatile uint32_t *, int32_t);
-void		atomic_add_int(volatile unsigned int *, int);
-void		atomic_add_long(volatile unsigned long *, long);
-void		atomic_add_ptr(volatile void *, ssize_t);
-void		atomic_add_64(volatile uint64_t *, int64_t);
 
-uint32_t	atomic_add_32_nv(volatile uint32_t *, int32_t);
-unsigned int	atomic_add_int_nv(volatile unsigned int *, int);
-unsigned long	atomic_add_long_nv(volatile unsigned long *, long);
-void *		atomic_add_ptr_nv(volatile void *, ssize_t);
-uint64_t	atomic_add_64_nv(volatile uint64_t *, int64_t);
+ATOMIC_PROTO_ADD(32, uint32_t, uint32_t, int32_t);
+ATOMIC_PROTO_ADD(64, uint64_t, uint64_t, int64_t);
+ATOMIC_PROTO_ADD(int, unsigned int, unsigned int, int);
+ATOMIC_PROTO_ADD(long, unsigned long, unsigned long, long);
+ATOMIC_PROTO_ADD(ptr, void *, void, ssize_t);
 
-/*
- * Atomic AND
- */
-void		atomic_and_32(volatile uint32_t *, uint32_t);
-void		atomic_and_uint(volatile unsigned int *, unsigned int);
-void		atomic_and_ulong(volatile unsigned long *, unsigned long);
-void		atomic_and_64(volatile uint64_t *, uint64_t);
+ATOMIC_PROTO_AND(32, uint32_t, uint32_t, uint32_t);
+ATOMIC_PROTO_AND(64, uint64_t, uint64_t, uint64_t);
+ATOMIC_PROTO_AND(uint, unsigned int, unsigned int, unsigned int);
+ATOMIC_PROTO_AND(ulong, unsigned long, unsigned long, unsigned long);
 
-uint32_t	atomic_and_32_nv(volatile uint32_t *, uint32_t);
-unsigned int	atomic_and_uint_nv(volatile unsigned int *, unsigned int);
-unsigned long	atomic_and_ulong_nv(volatile unsigned long *, unsigned long);
-uint64_t	atomic_and_64_nv(volatile uint64_t *, uint64_t);
+ATOMIC_PROTO_OR(32, uint32_t, uint32_t, uint32_t);
+ATOMIC_PROTO_OR(64, uint64_t, uint64_t, uint64_t);
+ATOMIC_PROTO_OR(uint, unsigned int, unsigned int, unsigned int);
+ATOMIC_PROTO_OR(ulong, unsigned long, unsigned long, unsigned long);
 
-/*
- * Atomic OR
- */
-void		atomic_or_32(volatile uint32_t *, uint32_t);
-void		atomic_or_uint(volatile unsigned int *, unsigned int);
-void		atomic_or_ulong(volatile unsigned long *, unsigned long);
-void		atomic_or_64(volatile uint64_t *, uint64_t);
+ATOMIC_PROTO_CAS(32, uint32_t, uint32_t, uint32_t);
+ATOMIC_PROTO_CAS(64, uint64_t, uint64_t, uint64_t);
+ATOMIC_PROTO_CAS(uint, unsigned int, unsigned int, unsigned int);
+ATOMIC_PROTO_CAS(ulong, unsigned long, unsigned long, unsigned long);
+ATOMIC_PROTO_CAS(ptr, void *, void, void *);
 
-uint32_t	atomic_or_32_nv(volatile uint32_t *, uint32_t);
-unsigned int	atomic_or_uint_nv(volatile unsigned int *, unsigned int);
-unsigned long	atomic_or_ulong_nv(volatile unsigned long *, unsigned long);
-uint64_t	atomic_or_64_nv(volatile uint64_t *, uint64_t);
+ATOMIC_PROTO_SWAP(32, uint32_t, uint32_t, uint32_t);
+ATOMIC_PROTO_SWAP(64, uint64_t, uint64_t, uint64_t);
+ATOMIC_PROTO_SWAP(uint, unsigned int, unsigned int, unsigned int);
+ATOMIC_PROTO_SWAP(ulong, unsigned long, unsigned long, unsigned long);
+ATOMIC_PROTO_SWAP(ptr, void *, void, void *);
 
-/*
- * Atomic COMPARE-AND-SWAP
- */
-uint32_t	atomic_cas_32(volatile uint32_t *, uint32_t, uint32_t);
-unsigned int	atomic_cas_uint(volatile unsigned int *, unsigned int,
-				unsigned int);
-unsigned long	atomic_cas_ulong(volatile unsigned long *, unsigned long,
-				 unsigned long);
-void *		atomic_cas_ptr(volatile void *, void *, void *);
-uint64_t	atomic_cas_64(volatile uint64_t *, uint64_t, uint64_t);
+ATOMIC_PROTO_DEC(32, uint32_t, uint32_t)
+ATOMIC_PROTO_DEC(64, uint64_t, uint64_t)
+ATOMIC_PROTO_DEC(uint, unsigned int, unsigned int);
+ATOMIC_PROTO_DEC(ulong, unsigned long, unsigned long);
+ATOMIC_PROTO_DEC(ptr, void *, void);
+
+ATOMIC_PROTO_INC(32, uint32_t, uint32_t)
+ATOMIC_PROTO_INC(64, uint64_t, uint64_t)
+ATOMIC_PROTO_INC(uint, unsigned int, unsigned int);
+ATOMIC_PROTO_INC(ulong, unsigned long, unsigned long);
+ATOMIC_PROTO_INC(ptr, void *, void);
 
 /*
- * This operations will be provided for userland, but may not be
+ * These operations will be provided for userland, but may not be
  * implemented efficiently.
  */
 uint16_t	atomic_cas_16(volatile uint16_t *, uint16_t, uint16_t);
 uint8_t 	atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
-
-/*
- * Non-interlocked atomic COMPARE-AND-SWAP.
- */
-uint32_t	atomic_cas_32_ni(volatile uint32_t *, uint32_t, uint32_t);
-unsigned int	atomic_cas_uint_ni(volatile unsigned int *, unsigned int,
-				   unsigned int);
-unsigned long	atomic_cas_ulong_ni(volatile unsigned long *, unsigned long,
-				    unsigned long);
-void *		atomic_cas_ptr_ni(volatile void *, void *, void *);
-uint64_t	atomic_cas_64_ni(volatile uint64_t *, uint64_t, uint64_t);
-
-/*
- * Atomic SWAP
- */
-uint32_t	atomic_swap_32(volatile uint32_t *, uint32_t);
-unsigned int	atomic_swap_uint(volatile unsigned int *, unsigned int);
-unsigned long	atomic_swap_ulong(volatile unsigned long *, unsigned long);
-void *		atomic_swap_ptr(volatile void *, void *);
-uint64_t	atomic_swap_64(volatile uint64_t *, uint64_t);
-
-/*
- * Atomic DECREMENT
- */
-void		atomic_dec_32(volatile uint32_t *);
-void		atomic_dec_uint(volatile unsigned int *);
-void		atomic_dec_ulong(volatile unsigned long *);
-void		atomic_dec_ptr(volatile void *);
-void		atomic_dec_64(volatile uint64_t *);
-
-uint32_t	atomic_dec_32_nv(volatile uint32_t *);
-unsigned int	atomic_dec_uint_nv(volatile unsigned int *);
-unsigned long	atomic_dec_ulong_nv(volatile unsigned long *);
-void *		atomic_dec_ptr_nv(volatile void *);
-uint64_t	atomic_dec_64_nv(volatile uint64_t *);
-
-/*
- * Atomic INCREMENT
- */
-void		atomic_inc_32(volatile uint32_t *);
-void		atomic_inc_uint(volatile unsigned int *);
-void		atomic_inc_ulong(volatile unsigned long *);
-void		atomic_inc_ptr(volatile void *);
-void		atomic_inc_64(volatile uint64_t *);
-
-uint32_t	atomic_inc_32_nv(volatile uint32_t *);
-unsigned int	atomic_inc_uint_nv(volatile unsigned int *);
-unsigned long	atomic_inc_ulong_nv(volatile unsigned long *);
-void *		atomic_inc_ptr_nv(volatile void *);
-uint64_t	atomic_inc_64_nv(volatile uint64_t *);
 
 /*
  * Memory barrier operations
@@ -163,5 +150,69 @@ void		membar_datadep_consumer(void);
 #endif
 
 __END_DECLS
+
+#if defined(KASAN)
+#define atomic_add_32		kasan_atomic_add_32
+#define atomic_add_int		kasan_atomic_add_int
+#define atomic_add_long		kasan_atomic_add_long
+#define atomic_add_ptr		kasan_atomic_add_ptr
+#define atomic_add_64		kasan_atomic_add_64
+#define atomic_add_32_nv	kasan_atomic_add_32_nv
+#define atomic_add_int_nv	kasan_atomic_add_int_nv
+#define atomic_add_long_nv	kasan_atomic_add_long_nv
+#define atomic_add_ptr_nv	kasan_atomic_add_ptr_nv
+#define atomic_add_64_nv	kasan_atomic_add_64_nv
+#define atomic_and_32		kasan_atomic_and_32
+#define atomic_and_uint		kasan_atomic_and_uint
+#define atomic_and_ulong	kasan_atomic_and_ulong
+#define atomic_and_64		kasan_atomic_and_64
+#define atomic_and_32_nv	kasan_atomic_and_32_nv
+#define atomic_and_uint_nv	kasan_atomic_and_uint_nv
+#define atomic_and_ulong_nv	kasan_atomic_and_ulong_nv
+#define atomic_and_64_nv	kasan_atomic_and_64_nv
+#define atomic_or_32		kasan_atomic_or_32
+#define atomic_or_uint		kasan_atomic_or_uint
+#define atomic_or_ulong		kasan_atomic_or_ulong
+#define atomic_or_64		kasan_atomic_or_64
+#define atomic_or_32_nv		kasan_atomic_or_32_nv
+#define atomic_or_uint_nv	kasan_atomic_or_uint_nv
+#define atomic_or_ulong_nv	kasan_atomic_or_ulong_nv
+#define atomic_or_64_nv		kasan_atomic_or_64_nv
+#define atomic_cas_32		kasan_atomic_cas_32
+#define atomic_cas_uint		kasan_atomic_cas_uint
+#define atomic_cas_ulong	kasan_atomic_cas_ulong
+#define atomic_cas_ptr		kasan_atomic_cas_ptr
+#define atomic_cas_64		kasan_atomic_cas_64
+#define atomic_cas_32_ni	kasan_atomic_cas_32_ni
+#define atomic_cas_uint_ni	kasan_atomic_cas_uint_ni
+#define atomic_cas_ulong_ni	kasan_atomic_cas_ulong_ni
+#define atomic_cas_ptr_ni	kasan_atomic_cas_ptr_ni
+#define atomic_cas_64_ni	kasan_atomic_cas_64_ni
+#define atomic_swap_32		kasan_atomic_swap_32
+#define atomic_swap_uint	kasan_atomic_swap_uint
+#define atomic_swap_ulong	kasan_atomic_swap_ulong
+#define atomic_swap_ptr		kasan_atomic_swap_ptr
+#define atomic_swap_64		kasan_atomic_swap_64
+#define atomic_dec_32		kasan_atomic_dec_32
+#define atomic_dec_uint		kasan_atomic_dec_uint
+#define atomic_dec_ulong	kasan_atomic_dec_ulong
+#define atomic_dec_ptr		kasan_atomic_dec_ptr
+#define atomic_dec_64		kasan_atomic_dec_64
+#define atomic_dec_32_nv	kasan_atomic_dec_32_nv
+#define atomic_dec_uint_nv	kasan_atomic_dec_uint_nv
+#define atomic_dec_ulong_nv	kasan_atomic_dec_ulong_nv
+#define atomic_dec_ptr_nv	kasan_atomic_dec_ptr_nv
+#define atomic_dec_64_nv	kasan_atomic_dec_64_nv
+#define atomic_inc_32		kasan_atomic_inc_32
+#define atomic_inc_uint		kasan_atomic_inc_uint
+#define atomic_inc_ulong	kasan_atomic_inc_ulong
+#define atomic_inc_ptr		kasan_atomic_inc_ptr
+#define atomic_inc_64		kasan_atomic_inc_64
+#define atomic_inc_32_nv	kasan_atomic_inc_32_nv
+#define atomic_inc_uint_nv	kasan_atomic_inc_uint_nv
+#define atomic_inc_ulong_nv	kasan_atomic_inc_ulong_nv
+#define atomic_inc_ptr_nv	kasan_atomic_inc_ptr_nv
+#define atomic_inc_64_nv	kasan_atomic_inc_64_nv
+#endif
 
 #endif /* ! _SYS_ATOMIC_H_ */

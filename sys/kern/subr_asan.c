@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.10 2019/06/15 06:40:34 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.11 2019/09/05 16:19:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.10 2019/06/15 06:40:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.11 2019/09/05 16:19:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -548,6 +548,228 @@ kasan_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	kasan_shadow_check((unsigned long)kaddr, len, false, __RET_ADDR);
 	return copyoutstr(kaddr, uaddr, len, done);
 }
+
+/* -------------------------------------------------------------------------- */
+
+#undef atomic_add_32
+#undef atomic_add_int
+#undef atomic_add_long
+#undef atomic_add_ptr
+#undef atomic_add_64
+#undef atomic_add_32_nv
+#undef atomic_add_int_nv
+#undef atomic_add_long_nv
+#undef atomic_add_ptr_nv
+#undef atomic_add_64_nv
+#undef atomic_and_32
+#undef atomic_and_uint
+#undef atomic_and_ulong
+#undef atomic_and_64
+#undef atomic_and_32_nv
+#undef atomic_and_uint_nv
+#undef atomic_and_ulong_nv
+#undef atomic_and_64_nv
+#undef atomic_or_32
+#undef atomic_or_uint
+#undef atomic_or_ulong
+#undef atomic_or_64
+#undef atomic_or_32_nv
+#undef atomic_or_uint_nv
+#undef atomic_or_ulong_nv
+#undef atomic_or_64_nv
+#undef atomic_cas_32
+#undef atomic_cas_uint
+#undef atomic_cas_ulong
+#undef atomic_cas_ptr
+#undef atomic_cas_64
+#undef atomic_cas_32_ni
+#undef atomic_cas_uint_ni
+#undef atomic_cas_ulong_ni
+#undef atomic_cas_ptr_ni
+#undef atomic_cas_64_ni
+#undef atomic_swap_32
+#undef atomic_swap_uint
+#undef atomic_swap_ulong
+#undef atomic_swap_ptr
+#undef atomic_swap_64
+#undef atomic_dec_32
+#undef atomic_dec_uint
+#undef atomic_dec_ulong
+#undef atomic_dec_ptr
+#undef atomic_dec_64
+#undef atomic_dec_32_nv
+#undef atomic_dec_uint_nv
+#undef atomic_dec_ulong_nv
+#undef atomic_dec_ptr_nv
+#undef atomic_dec_64_nv
+#undef atomic_inc_32
+#undef atomic_inc_uint
+#undef atomic_inc_ulong
+#undef atomic_inc_ptr
+#undef atomic_inc_64
+#undef atomic_inc_32_nv
+#undef atomic_inc_uint_nv
+#undef atomic_inc_ulong_nv
+#undef atomic_inc_ptr_nv
+#undef atomic_inc_64_nv
+
+#define ASAN_ATOMIC_FUNC_ADD(name, tret, targ1, targ2) \
+	void atomic_add_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_add_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_add_##name(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		atomic_add_##name(ptr, val); \
+	} \
+	tret atomic_add_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_add_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_add_##name##_nv(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_add_##name##_nv(ptr, val); \
+	}
+
+#define ASAN_ATOMIC_FUNC_AND(name, tret, targ1, targ2) \
+	void atomic_and_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_and_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_and_##name(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		atomic_and_##name(ptr, val); \
+	} \
+	tret atomic_and_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_and_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_and_##name##_nv(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_and_##name##_nv(ptr, val); \
+	}
+
+#define ASAN_ATOMIC_FUNC_OR(name, tret, targ1, targ2) \
+	void atomic_or_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_or_##name(volatile targ1 *, targ2); \
+	void kasan_atomic_or_##name(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		atomic_or_##name(ptr, val); \
+	} \
+	tret atomic_or_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_or_##name##_nv(volatile targ1 *, targ2); \
+	tret kasan_atomic_or_##name##_nv(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_or_##name##_nv(ptr, val); \
+	}
+
+#define ASAN_ATOMIC_FUNC_CAS(name, tret, targ1, targ2) \
+	tret atomic_cas_##name(volatile targ1 *, targ2, targ2); \
+	tret kasan_atomic_cas_##name(volatile targ1 *, targ2, targ2); \
+	tret kasan_atomic_cas_##name(volatile targ1 *ptr, targ2 exp, targ2 new) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_cas_##name(ptr, exp, new); \
+	} \
+	tret atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2); \
+	tret kasan_atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2); \
+	tret kasan_atomic_cas_##name##_ni(volatile targ1 *ptr, targ2 exp, targ2 new) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_cas_##name##_ni(ptr, exp, new); \
+	}
+
+#define ASAN_ATOMIC_FUNC_SWAP(name, tret, targ1, targ2) \
+	tret atomic_swap_##name(volatile targ1 *, targ2); \
+	tret kasan_atomic_swap_##name(volatile targ1 *, targ2); \
+	tret kasan_atomic_swap_##name(volatile targ1 *ptr, targ2 val) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_swap_##name(ptr, val); \
+	}
+
+#define ASAN_ATOMIC_FUNC_DEC(name, tret, targ1) \
+	void atomic_dec_##name(volatile targ1 *); \
+	void kasan_atomic_dec_##name(volatile targ1 *); \
+	void kasan_atomic_dec_##name(volatile targ1 *ptr) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		atomic_dec_##name(ptr); \
+	} \
+	tret atomic_dec_##name##_nv(volatile targ1 *); \
+	tret kasan_atomic_dec_##name##_nv(volatile targ1 *); \
+	tret kasan_atomic_dec_##name##_nv(volatile targ1 *ptr) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_dec_##name##_nv(ptr); \
+	}
+
+#define ASAN_ATOMIC_FUNC_INC(name, tret, targ1) \
+	void atomic_inc_##name(volatile targ1 *); \
+	void kasan_atomic_inc_##name(volatile targ1 *); \
+	void kasan_atomic_inc_##name(volatile targ1 *ptr) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		atomic_inc_##name(ptr); \
+	} \
+	tret atomic_inc_##name##_nv(volatile targ1 *); \
+	tret kasan_atomic_inc_##name##_nv(volatile targ1 *); \
+	tret kasan_atomic_inc_##name##_nv(volatile targ1 *ptr) \
+	{ \
+		kasan_shadow_check((uintptr_t)ptr, sizeof(tret), true, \
+		    __RET_ADDR); \
+		return atomic_inc_##name##_nv(ptr); \
+	}
+
+ASAN_ATOMIC_FUNC_ADD(32, uint32_t, uint32_t, int32_t);
+ASAN_ATOMIC_FUNC_ADD(64, uint64_t, uint64_t, int64_t);
+ASAN_ATOMIC_FUNC_ADD(int, unsigned int, unsigned int, int);
+ASAN_ATOMIC_FUNC_ADD(long, unsigned long, unsigned long, long);
+ASAN_ATOMIC_FUNC_ADD(ptr, void *, void, ssize_t);
+
+ASAN_ATOMIC_FUNC_AND(32, uint32_t, uint32_t, uint32_t);
+ASAN_ATOMIC_FUNC_AND(64, uint64_t, uint64_t, uint64_t);
+ASAN_ATOMIC_FUNC_AND(uint, unsigned int, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_AND(ulong, unsigned long, unsigned long, unsigned long);
+
+ASAN_ATOMIC_FUNC_OR(32, uint32_t, uint32_t, uint32_t);
+ASAN_ATOMIC_FUNC_OR(64, uint64_t, uint64_t, uint64_t);
+ASAN_ATOMIC_FUNC_OR(uint, unsigned int, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_OR(ulong, unsigned long, unsigned long, unsigned long);
+
+ASAN_ATOMIC_FUNC_CAS(32, uint32_t, uint32_t, uint32_t);
+ASAN_ATOMIC_FUNC_CAS(64, uint64_t, uint64_t, uint64_t);
+ASAN_ATOMIC_FUNC_CAS(uint, unsigned int, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_CAS(ulong, unsigned long, unsigned long, unsigned long);
+ASAN_ATOMIC_FUNC_CAS(ptr, void *, void, void *);
+
+ASAN_ATOMIC_FUNC_SWAP(32, uint32_t, uint32_t, uint32_t);
+ASAN_ATOMIC_FUNC_SWAP(64, uint64_t, uint64_t, uint64_t);
+ASAN_ATOMIC_FUNC_SWAP(uint, unsigned int, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_SWAP(ulong, unsigned long, unsigned long, unsigned long);
+ASAN_ATOMIC_FUNC_SWAP(ptr, void *, void, void *);
+
+ASAN_ATOMIC_FUNC_DEC(32, uint32_t, uint32_t)
+ASAN_ATOMIC_FUNC_DEC(64, uint64_t, uint64_t)
+ASAN_ATOMIC_FUNC_DEC(uint, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_DEC(ulong, unsigned long, unsigned long);
+ASAN_ATOMIC_FUNC_DEC(ptr, void *, void);
+
+ASAN_ATOMIC_FUNC_INC(32, uint32_t, uint32_t)
+ASAN_ATOMIC_FUNC_INC(64, uint64_t, uint64_t)
+ASAN_ATOMIC_FUNC_INC(uint, unsigned int, unsigned int);
+ASAN_ATOMIC_FUNC_INC(ulong, unsigned long, unsigned long);
+ASAN_ATOMIC_FUNC_INC(ptr, void *, void);
 
 /* -------------------------------------------------------------------------- */
 
