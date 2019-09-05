@@ -83,7 +83,6 @@ enum {
 	dns_rdatatype_csync = 62,
 	dns_rdatatype_zonemd = 63,
 	dns_rdatatype_spf = 99,
-	dns_rdatatype_unspec = 103,
 	dns_rdatatype_nid = 104,
 	dns_rdatatype_l32 = 105,
 	dns_rdatatype_l64 = 106,
@@ -171,7 +170,6 @@ enum {
 #define dns_rdatatype_csync	((dns_rdatatype_t)dns_rdatatype_csync)
 #define dns_rdatatype_zonemd	((dns_rdatatype_t)dns_rdatatype_zonemd)
 #define dns_rdatatype_spf	((dns_rdatatype_t)dns_rdatatype_spf)
-#define dns_rdatatype_unspec	((dns_rdatatype_t)dns_rdatatype_unspec)
 #define dns_rdatatype_nid	((dns_rdatatype_t)dns_rdatatype_nid)
 #define dns_rdatatype_l32	((dns_rdatatype_t)dns_rdatatype_l32)
 #define dns_rdatatype_l64	((dns_rdatatype_t)dns_rdatatype_l64)

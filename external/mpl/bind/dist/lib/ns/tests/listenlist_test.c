@@ -1,4 +1,4 @@
-/*	$NetBSD: listenlist_test.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: listenlist_test.c,v 1.4 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,11 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <setjmp.h>
 
-#include <isc/util.h>
-
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
