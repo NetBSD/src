@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.40 2019/09/05 03:40:57 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.41 2019/09/05 08:22:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2710,3 +2710,55 @@ distrib/ews4800mips/floppies/ramdisk/Makefile	1.13
 
 	Use the non wide char libcurses version for the ramdisk to save space.
 	[martin, ticket #176]
+games/bcd/bcd.6					1.18,1.19
+lib/libc/compat-43/creat.3			1.17
+lib/libc/gen/exec.3				1.30,1.31
+lib/libc/stdio/fopen.3				1.36
+lib/libc/stdio/getc.3				1.13
+lib/libc/stdio/putc.3				1.14
+lib/libc/stdlib/exit.3				1.17
+lib/libc/sys/chdir.2				1.23
+lib/libc/sys/chmod.2				1.48
+lib/libc/sys/chown.2				1.37
+lib/libc/sys/close.2				1.18
+lib/libc/sys/fork.2				1.25
+lib/libc/sys/getuid.2				1.18
+lib/libc/sys/link.2				1.33
+lib/libc/sys/lseek.2				1.25
+lib/libc/sys/mkdir.2				1.30
+lib/libc/sys/mount.2				1.51
+lib/libc/sys/open.2				1.60
+lib/libc/sys/read.2				1.39
+lib/libc/sys/setuid.2				1.23
+lib/libc/sys/stat.2				1.59
+lib/libc/sys/unlink.2				1.30
+lib/libc/sys/wait.2				1.40
+lib/libc/sys/write.2				1.36
+lib/libc/time/ctime.3				1.61
+lib/libcompat/4.1/stty.3			1.10
+lib/libm/man/cos.3				1.17
+lib/libm/man/exp.3				1.32
+lib/libm/man/log.3				1.7
+lib/libm/man/sin.3				1.15
+sbin/init/init.8				1.61,1.62
+share/man/man5/passwd.5				1.34
+share/man/man5/utmp.5				1.17
+share/man/man9/copy.9				1.22
+share/man/man9/intro.9				1.26
+share/man/man9/uiomove.9			1.20
+usr.bin/dc/dc.1					1.3
+usr.bin/du/du.1					1.24
+usr.bin/mail/mail.1				1.66,1.67
+usr.bin/mesg/mesg.1				1.11
+usr.bin/pr/pr.1					1.24
+usr.bin/sort/sort.1				1.40
+usr.bin/su/su.1					1.53,1.54
+usr.bin/tty/tty.1				1.10
+usr.bin/wc/wc.1					1.18
+usr.bin/who/who.1				1.25
+usr.bin/write/write.1				1.7
+
+	Adjust or add history information based on information from Dennis
+	Richie's v1 manuals, TUHS and CSRG archive.
+	[sevan, ticket #174]
+
