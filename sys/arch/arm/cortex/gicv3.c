@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.20 2019/06/30 11:11:38 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.21 2019/09/05 13:33:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.20 2019/06/30 11:11:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.21 2019/09/05 13:33:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,6 +213,7 @@ gicv3_set_priority(struct pic_softc *pic, int ipl)
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 
 	icc_pmr_write(IPL_TO_PMR(sc, ipl));
+	arm_isb();
 }
 
 static void
@@ -437,14 +438,17 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 			if ((ci->ci_gic_sgir & ICC_SGIR_EL1_Aff) != aff) {
 				if (targets != 0) {
 					icc_sgi1r_write(intid | aff | targets);
+					arm_isb();
 					targets = 0;
 				}
 				aff = (ci->ci_gic_sgir & ICC_SGIR_EL1_Aff);
 			}
 			targets |= (ci->ci_gic_sgir & ICC_SGIR_EL1_TargetList);
 		}
-		if (targets != 0)
+		if (targets != 0) {
 			icc_sgi1r_write(intid | aff | targets);
+			arm_isb();
+		}
 	}
 }
 
@@ -715,6 +719,7 @@ gicv3_irq_handler(void *frame)
 
 	for (;;) {
 		const uint32_t iar = icc_iar1_read();
+		arm_dsb();
 		const uint32_t irq = __SHIFTOUT(iar, ICC_IAR_INTID);
 		if (irq == ICC_IAR_INTID_SPURIOUS)
 			break;
@@ -726,26 +731,39 @@ gicv3_irq_handler(void *frame)
 		struct intrsource * const is = pic->pic_sources[irq - pic->pic_irqbase];
 		KASSERT(is != NULL);
 
+		const bool early_eoi = irq < GIC_LPI_BASE && is->is_type == IST_EDGE;
+
 		const int ipl = is->is_ipl;
-		if (ci->ci_cpl < ipl)
-			pic_set_priority(ci, ipl);
+		if (__predict_false(ipl < ci->ci_cpl)) {
+			pic_do_pending_ints(I32_bit, ipl, frame);
+		} else {
+			gicv3_set_priority(pic, ipl);
+			ci->ci_cpl = ipl;
+		}
+
+		if (early_eoi) {
+			icc_eoi1r_write(iar);
+			arm_isb();
+		}
 
 		cpsie(I32_bit);
 		pic_dispatch(is, frame);
 		cpsid(I32_bit);
 
-		icc_eoi1r_write(iar);
+		if (!early_eoi) {
+			icc_eoi1r_write(iar);
+			arm_isb();
+		}
 	}
 
-	if (ci->ci_cpl != oldipl)
-		pic_set_priority(ci, oldipl);
+	pic_do_pending_ints(I32_bit, oldipl, frame);
 }
 
 static int
 gicv3_detect_pmr_bits(struct gicv3_softc *sc)
 {
 	const uint32_t opmr = icc_pmr_read();
-	icc_pmr_write(0xff);
+	icc_pmr_write(0xbf);
 	const uint32_t npmr = icc_pmr_read();
 	icc_pmr_write(opmr);
 
