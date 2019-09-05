@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.282.2.2 2019/09/01 14:04:37 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.282.2.3 2019/09/05 08:34:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.2 2019/09/01 14:04:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.3 2019/09/05 08:34:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -307,6 +307,17 @@ arptimer(void *arg)
 	/* Guard against race with other llentry_free(). */
 	if (lle->la_flags & LLE_LINKED) {
 		size_t pkts_dropped;
+
+		if (lle->la_flags & LLE_VALID) {
+			struct in_addr *in;
+			struct sockaddr_in sin;
+			const char *lladdr;
+
+			in = &lle->r_l3addr.addr4;
+			sockaddr_in_init(&sin, in, 0);
+			lladdr = (const char *)&lle->ll_addr;
+			rt_clonedmsg(RTM_DELETE, sintosa(&sin), lladdr, ifp);
+		}
 
 		LLE_REMREF(lle);
 		pkts_dropped = llentry_free(lle);
@@ -738,14 +749,8 @@ notfound:
 			rt_unref(_rt);
 		if (la == NULL)
 			ARP_STATINC(ARP_STAT_ALLOCFAIL);
-		else {
-			struct sockaddr_in sin;
-
+		else
 			arp_init_llentry(ifp, la);
-			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
-			if (rt != NULL)
-				rt_clonedmsg(RTM_ADD, sintosa(&sin), NULL, ifp);
-		}
 	} else if (LLE_TRY_UPGRADE(la) == 0) {
 		create_lookup = "lookup";
 		LLE_RUNLOCK(la);
@@ -845,9 +850,16 @@ notfound:
 
 	if (renew) {
 		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
+		struct sockaddr_in sin;
+
 		la->la_expire = time_uptime;
 		arp_settimer(la, arpt_down);
 		la->la_asked++;
+
+		sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
+		if (error != EWOULDBLOCK)
+			rt_clonedmsg(RTM_MISS, sintosa(&sin), NULL, ifp);
+
 		LLE_WUNLOCK(la);
 
 		if (rt != NULL) {
@@ -855,10 +867,7 @@ notfound:
 			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
 		} else {
-			struct sockaddr_in sin;
 			struct rtentry *_rt;
-
-			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
 
 			/* XXX */
 			_rt = rtalloc1((struct sockaddr *)&sin, 0);
@@ -1000,7 +1009,7 @@ in_arpinput(struct mbuf *m)
 #endif
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
-	int op;
+	int op, rt_cmd;
 	void *tha;
 	uint64_t *arps;
 	struct psref psref, psref_ia;
@@ -1210,7 +1219,9 @@ in_arpinput(struct mbuf *m)
 				    "for %s by %s\n",
 				    IN_PRINT(ipbuf, &isaddr), llastr);
 		}
-	}
+		rt_cmd = RTM_CHANGE;
+	} else
+		rt_cmd = la->la_flags & LLE_VALID ? 0 : RTM_ADD;
 
 	KASSERT(ifp->if_sadl->sdl_alen == ifp->if_addrlen);
 
@@ -1251,6 +1262,13 @@ in_arpinput(struct mbuf *m)
 	}
 	la->la_asked = 0;
 	/* rt->rt_flags &= ~RTF_REJECT; */
+
+	if (rt_cmd != 0) {
+		struct sockaddr_in sin;
+
+		sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
+		rt_clonedmsg(rt_cmd, sintosa(&sin), ar_sha(ah), ifp);
+	}
 
 	if (la->la_hold != NULL) {
 		int n = la->la_numheld;
