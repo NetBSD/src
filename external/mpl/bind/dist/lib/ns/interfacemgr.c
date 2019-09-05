@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.5 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -234,7 +234,7 @@ ns_interfacemgr_create(isc_mem_t *mctx,
 	result = dns_aclenv_init(mctx, &mgr->aclenv);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_listenon;
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	mgr->aclenv.geoip = geoip;
 #else
 	UNUSED(geoip);
@@ -427,8 +427,8 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	 * connections will be handled in parallel even though there is
 	 * only one client initially.
 	 */
-	atomic_init(&ifp->ntcpaccepting, 0);
-	atomic_init(&ifp->ntcpactive, 0);
+	isc_refcount_init(&ifp->ntcpaccepting, 0);
+	isc_refcount_init(&ifp->ntcpactive, 0);
 
 	ifp->nudpdispatch = 0;
 
@@ -660,6 +660,9 @@ ns_interface_destroy(ns_interface_t *ifp) {
 	isc_mutex_destroy(&ifp->lock);
 
 	ns_interfacemgr_detach(&ifp->mgr);
+
+	isc_refcount_destroy(&ifp->ntcpactive);
+	isc_refcount_destroy(&ifp->ntcpaccepting);
 
 	ifp->magic = 0;
 	isc_mem_put(mctx, ifp, sizeof(*ifp));

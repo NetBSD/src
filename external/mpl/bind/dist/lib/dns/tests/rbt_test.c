@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <setjmp.h>
 
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,13 +171,13 @@ compress_test(dns_name_t *name1, dns_name_t *name2, dns_name_t *name3,
 	isc_buffer_setactive(&source, source.used);
 
 	dns_name_init(&name, NULL);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, false,
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
 					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, false,
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
 					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, false,
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
 					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, false,
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
 					&target) == ISC_R_SUCCESS);
 	dns_decompress_invalidate(dctx);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -265,7 +265,7 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size FLARG) {
 	if (mctx->debuglist == NULL)
 		return;
 
-	hash = isc_hash_function(&ptr, sizeof(ptr), true, NULL);
+	hash = isc_hash_function(&ptr, sizeof(ptr), true);
 	idx = hash % DEBUG_TABLE_COUNT;
 
 	dl = malloc(sizeof(debuglink_t));
@@ -300,7 +300,7 @@ delete_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size,
 	if (mctx->debuglist == NULL)
 		return;
 
-	hash = isc_hash_function(&ptr, sizeof(ptr), true, NULL);
+	hash = isc_hash_function(&ptr, sizeof(ptr), true);
 	idx = hash % DEBUG_TABLE_COUNT;
 
 	dl = ISC_LIST_HEAD(mctx->debuglist[idx]);

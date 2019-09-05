@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.4 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,15 +21,13 @@
 
 #include <isccfg/cfg.h>
 
-#ifdef HAVE_GEOIP
 #include <dns/geoip.h>
-#endif
 #include <dns/types.h>
 
 typedef struct cfg_aclconfctx {
 	ISC_LIST(dns_acl_t) named_acl_cache;
 	isc_mem_t *mctx;
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	dns_geoip_databases_t *geoip;
 #endif
 	isc_refcount_t references;

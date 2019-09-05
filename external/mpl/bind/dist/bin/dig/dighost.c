@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.5 2019/09/05 19:32:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1413,6 +1413,8 @@ dig_ednsoptname_t optnames[] = {
 	{ 12, "PAD" },		/* shorthand */
 	{ 13, "CHAIN" },	/* RFC 7901 */
 	{ 14, "KEY-TAG" },	/* RFC 8145 */
+	{ 16, "CLIENT-TAG" },	/* draft-bellis-dnsop-edns-tags */
+	{ 17, "SERVER-TAG" },	/* draft-bellis-dnsop-edns-tags */
 	{ 26946, "DEVICEID" },	/* Brian Hartvigsen */
 };
 
@@ -2191,12 +2193,14 @@ setup_lookup(dig_lookup_t *lookup) {
 	lookup->sendmsg->id = (dns_messageid_t)isc_random16();
 	lookup->sendmsg->opcode = lookup->opcode;
 	lookup->msgcounter = 0;
+
 	/*
-	 * If this is a trace request, completely disallow recursion, since
-	 * it's meaningless for traces.
+	 * If this is a trace request, completely disallow recursion after
+	 * looking up the root name servers, since it's meaningless for traces.
 	 */
-	if (lookup->trace || (lookup->ns_search_only && !lookup->trace_root))
+	if ((lookup->trace || lookup->ns_search_only) && !lookup->trace_root) {
 		lookup->recurse = false;
+	}
 
 	if (lookup->recurse &&
 	    lookup->rdtype != dns_rdatatype_axfr &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser_test.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: parser_test.c,v 1.5 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

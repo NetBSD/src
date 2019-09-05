@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.3 2019/01/09 16:55:02 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.4 2019/09/05 19:32:56 christos Exp $	*/
 
 /*
  * Driver API implementation and main entry point for BIND.
@@ -82,9 +82,8 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 		isc_lib_register();
 		isc_log_setcontext(dctx->lctx);
 		dns_log_setcontext(dctx->lctx);
+		isc_hash_set_initializer(dctx->hashinit);
 	}
-
-	isc_hash_set_initializer(dctx->hashinit);
 
 	s = isc_mem_strdup(mctx, parameters);
 	if (s == NULL) {

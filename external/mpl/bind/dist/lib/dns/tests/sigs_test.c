@@ -1,4 +1,4 @@
-/*	$NetBSD: sigs_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: sigs_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,13 +19,20 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <string.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
 
+#include <isc/buffer.h>
+#include <isc/list.h>
+#include <isc/region.h>
+#include <isc/result.h>
+#include <isc/stdtime.h>
+#include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -41,13 +48,6 @@
 #include <dns/zone.h>
 
 #include <dst/dst.h>
-
-#include <isc/buffer.h>
-#include <isc/list.h>
-#include <isc/region.h>
-#include <isc/stdtime.h>
-#include <isc/result.h>
-#include <isc/types.h>
 
 #include "../zone_p.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,10 +29,9 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/util.h>
-
 #include <isc/print.h>
 #include <isc/string.h>
+#include <isc/util.h>
 #include <isc/xml.h>
 
 #include <dns/cache.h>
@@ -310,10 +310,12 @@ dnskey_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
-
 /*
  * DNSKEY with no key material test:
  * dns_master_loadfile() understands DNSKEY with no key material
+ *
+ * RFC 4034 removed the ability to signal NOKEY, so empty key material should
+ * be rejected.
  */
 static void
 dnsnokey_test(void **state) {
@@ -323,7 +325,7 @@ dnsnokey_test(void **state) {
 
 	result = test_master("testdata/master/master7.data",
 			     dns_masterformat_text, nullmsg, nullmsg);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_UNEXPECTEDEND);
 }
 
 /*
@@ -363,7 +365,7 @@ master_includelist_test(void **state) {
 	assert_int_equal(result, DNS_R_SEENINCLUDE);
 	assert_non_null(filename);
 	if (filename != NULL) {
-		assert_string_equal(filename, "testdata/master/master7.data");
+		assert_string_equal(filename, "testdata/master/master6.data");
 		isc_mem_free(mctx, filename);
 	}
 }

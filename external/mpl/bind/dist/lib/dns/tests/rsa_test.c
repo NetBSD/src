@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa_test.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: rsa_test.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

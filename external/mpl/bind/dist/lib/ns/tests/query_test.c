@@ -1,4 +1,4 @@
-/*	$NetBSD: query_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: query_test.c,v 1.5 2019/09/05 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,8 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <isc/util.h>
-
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,13 +28,14 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
+#include <isc/util.h>
+
 #include <dns/badcache.h>
 #include <dns/view.h>
 
 #include <ns/client.h>
 #include <ns/hooks.h>
 #include <ns/query.h>
-#include <isc/util.h>
 
 #include "nstest.h"
 

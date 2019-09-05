@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: ecs.h,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,5 +51,7 @@ dns_ecs_format(dns_ecs_t *ecs, char *buf, size_t size);
  * \li  'buf' is not NULL.
  * \li  'size' is at least DNS_ECS_FORMATSIZE
  */
+
+ISC_LANG_ENDDECLS
 
 #endif /* DNS_ECS_H */

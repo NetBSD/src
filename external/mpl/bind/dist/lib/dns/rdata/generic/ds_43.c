@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,7 +168,7 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 	/*
 	 * Check digest lengths if we know them.
 	 */
-	if (sr.length < 4 ||
+	if (sr.length < 5 ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA1 &&
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&

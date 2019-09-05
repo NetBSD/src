@@ -1,4 +1,4 @@
-/*	$NetBSD: regex_test.c,v 1.5 2019/01/27 04:33:29 dholland Exp $	*/
+/*	$NetBSD: regex_test.c,v 1.6 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,12 +24,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define UNIT_TESTING
-#include <cmocka.h>
-
 #ifdef HAVE_REGEX_H
 #include <regex.h>
 #endif
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/commandline.h>
 #include <isc/regex.h>

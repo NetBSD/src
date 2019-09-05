@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.4 2019/09/05 19:32:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,7 @@ static bool besteffort = true;
 static bool display_short_form = false;
 static bool display_headers = true;
 static bool display_comments = true;
-static bool display_rrcomments = true;
+static int display_rrcomments = 0;
 static bool display_ttlunits = true;
 static bool display_ttl = true;
 static bool display_class = true;
@@ -251,7 +251,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		styleflags |= DNS_STYLEFLAG_COMMENT;
 	if (display_unknown_format)
 		styleflags |= DNS_STYLEFLAG_UNKNOWNFORMAT;
-	if (display_rrcomments)
+	if (display_rrcomments > 0)
 		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (display_ttlunits)
 		styleflags |= DNS_STYLEFLAG_TTL_UNITS;
@@ -269,7 +269,10 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		styleflags |= DNS_STYLEFLAG_TTL;
 		styleflags |= DNS_STYLEFLAG_MULTILINE;
 		styleflags |= DNS_STYLEFLAG_COMMENT;
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		/* Turn on rrcomments unless explicitly disabled */
+		if (display_rrcomments >= 0) {
+			styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		}
 	}
 	if (display_multiline || (!display_ttl && !display_class))
 		result = dns_master_stylecreate(&style, styleflags,
@@ -1111,7 +1114,7 @@ plus_option(char *option, struct query *query, bool global)
 			display_authority = state;
 			display_additional = state;
 			display_comments = state;
-			display_rrcomments = state;
+			display_rrcomments = state ? 1 : -1;
 			break;
 		case 'n': /* answer */
 			FULLCHECK("answer");
@@ -1360,7 +1363,7 @@ plus_option(char *option, struct query *query, bool global)
 		case 'r':
 			FULLCHECK("rrcomments");
 			GLOBAL();
-			display_rrcomments = state;
+			display_rrcomments = state ? 1 : -1;
 			break;
 		default:
 			goto invalid_option;
@@ -1378,7 +1381,7 @@ plus_option(char *option, struct query *query, bool global)
 				display_authority = false;
 				display_additional = false;
 				display_comments = false;
-				display_rrcomments = false;
+				display_rrcomments = -1;
 			}
 			break;
 		case 'p': /* split */

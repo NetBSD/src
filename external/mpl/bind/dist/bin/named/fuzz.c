@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: fuzz.c,v 1.4 2019/09/05 19:32:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifdef ENABLE_AFL
 #include <named/globals.h>
 #include <named/server.h>
-#include <sys/errno.h>
+#include <errno.h>
 
 #include <isc/app.h>
 #include <isc/condition.h>
