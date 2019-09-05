@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2578 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2579 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -37,3 +37,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		return EHOSTDOWN to match inet behaviour. [roy 20190901]
 	inet: Fix sending RTM_MISS for unresolvable addresses. [roy 20190901]
 	dhcpcd(8): Import dhcpcd-8.0.4 [roy 20190904]
+	bind: Import version 9.14.5. [christos 20190905]
