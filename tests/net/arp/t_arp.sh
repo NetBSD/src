@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.37 2019/05/13 17:55:08 bad Exp $
+#	$NetBSD: t_arp.sh,v 1.37.2.1 2019/09/05 08:45:53 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,8 @@ IP4NET=10.0.1.0
 IP4DST=10.0.1.2
 IP4DST_PROXYARP1=10.0.1.3
 IP4DST_PROXYARP2=10.0.1.4
+IP4DST_FAIL1=10.0.1.99
+IP4DST_FAIL2=10.0.99.99
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -718,7 +720,38 @@ arp_rtm_body()
 
 	hdr="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
 	what="<DST,GATEWAY>"
-	addr="$IP4DST link#2"
+	addr="$IP4DST $macaddr_dst"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) on subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	# arp_maxtries = 5, second between each try
+	atf_check -s exit:2 -o ignore -e ignore \
+		rump.ping -n -w 6 -c 6 $IP4DST_FAIL1
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST,GATEWAY>"
+	addr="$IP4DST_FAIL1 link#2"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) off subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	atf_check -s exit:2 -o ignore -e ignore \
+		rump.ping -n -w 1 -c 1 $IP4DST_FAIL2
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST>"
+	addr="$IP4DST_FAIL2"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 
