@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.42 2019/09/05 08:35:57 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.43 2019/09/05 08:44:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2780,4 +2780,9 @@ sys/netinet/if_arp.c				1.287
 
 	inet: Send RTM_MISS when we fail to resolve an address.
 	[roy, ticket #170]
+
+sbin/route/route.c				1.163
+
+	route(8): Show addres for RTM_LOSING.
+	[roy, ticket #172]
 
