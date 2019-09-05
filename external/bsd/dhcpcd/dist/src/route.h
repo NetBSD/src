@@ -92,10 +92,12 @@ struct rt {
 #define	RTDF_RA			0x08		/* Router Advertisement */
 #define	RTDF_DHCP		0x10		/* DHCP route */
 #define	RTDF_STATIC		0x20		/* Configured in dhcpcd */
+#define	RTDF_GATELINK		0x40		/* Gateway is on link */
 	size_t			rt_order;
 	rb_node_t		rt_tree;
 };
 
+extern const rb_tree_ops_t rt_compare_list_ops;
 extern const rb_tree_ops_t rt_compare_proto_ops;
 
 void rt_init(struct dhcpcd_ctx *);
