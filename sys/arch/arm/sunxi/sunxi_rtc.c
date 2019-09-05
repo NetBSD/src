@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rtc.c,v 1.4 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: sunxi_rtc.c,v 1.5 2019/09/05 23:42:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.4 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.5 2019/09/05 23:42:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,6 +130,8 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun4i-a10-rtc",		(uintptr_t)&sun4i_rtc_config },
 	{ "allwinner,sun6i-a31-rtc",		(uintptr_t)&sun6i_rtc_config },
 	{ "allwinner,sun7i-a20-rtc",		(uintptr_t)&sun7i_rtc_config },
+	{ "allwinner,sun8i-h3-rtc",		(uintptr_t)&sun6i_rtc_config },
+	{ "allwinner,sun50i-h5-rtc",		(uintptr_t)&sun6i_rtc_config },
 	{ NULL }
 };
 
