@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.125.2.2 2019/09/01 11:12:45 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.125.2.3 2019/09/05 09:11:03 martin Exp $*/
 
 /******************************************************************************
 
@@ -516,7 +516,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	error = ixv_allocate_msix(adapter, pa);
 	if (error) {
-		device_printf(dev, "ixv_allocate_msix() failed!\n");
+		aprint_error_dev(dev, "ixv_allocate_msix() failed!\n");
 		goto err_late;
 	}
 
@@ -2406,7 +2406,8 @@ ixv_sysctl_instance(struct adapter *adapter)
 
 	return rnode;
 err:
-	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	device_printf(adapter->dev,
+	    "%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
 }
 
