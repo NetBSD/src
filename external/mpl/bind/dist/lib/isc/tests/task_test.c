@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,12 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <inttypes.h>
 #include <string.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
