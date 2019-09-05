@@ -337,7 +337,7 @@ ninfo14			NINFO	"foo\;"
 ninfo15			NINFO	"bar\\;"
 
 ; type 57
-rkey01			RKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+rkey01			RKEY	0 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
@@ -390,7 +390,8 @@ uid01			UID	\# 1 02
 ; type 102 (GID - not implemented by BIND - unknown record format only)
 gid01			GID	\# 1 03
 
-; type 103 (UNSPEC - XXXMUKS TODO - this has some weird encoding - see btoa_totext())
+; type 103 (UNSPEC - not implemented by BIND - unknown record format only)
+unspec01		UNSPEC	\# 1 04
 
 ; type 104
 nid			NID	10 0014:4fff:ff20:ee64

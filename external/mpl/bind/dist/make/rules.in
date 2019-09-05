@@ -71,7 +71,7 @@ subdirs:
 #
 # Tests are built after the targets instead of before
 #
-testdirs:
+testdirs: subdirs ${TARGETS}
 	@for i in ${ALL_TESTDIRS}; do \
 		if [ "$$i" != "nulldir" -a -d $$i ]; then \
 			echo "making all in `pwd`/$$i"; \
@@ -115,6 +115,13 @@ BUILD_CFLAGS = @BUILD_CFLAGS@
 BUILD_CPPFLAGS = @BUILD_CPPFLAGS@
 BUILD_LDFLAGS = @BUILD_LDFLAGS@
 BUILD_LIBS = @BUILD_LIBS@
+
+LFS_CFLAGS = @LFS_CFLAGS@
+LFS_LDFLAGS = @LFS_LDFLAGS@
+LFS_LIBS = @LFS_LIBS@
+
+MAXMINDDB_CFLAGS = @MAXMINDDB_CFLAGS@
+MAXMINDDB_LIBS = @MAXMINDDB_LIBS@
 
 .SUFFIXES:
 .SUFFIXES: .c .@O@

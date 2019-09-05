@@ -14,6 +14,8 @@
 
 set -e
 
+echo_i "ns6/sign.sh"
+
 zone=optout-tld
 infile=optout-tld.db.in
 zonefile=optout-tld.db

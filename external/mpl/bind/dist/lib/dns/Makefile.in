@@ -27,7 +27,8 @@ VERSION=@BIND9_VERSION@
 USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/dns -Iinclude ${DNS_INCLUDES} \
-		${ISC_INCLUDES} @OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
+		${ISC_INCLUDES} ${MAXMINDDB_CFLAGS} \
+		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
 
 CDEFINES =	@USE_GSSAPI@ ${USE_ISC_SPNEGO}
 
@@ -37,7 +38,7 @@ ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
-LIBS =		@LIBS@
+LIBS =		${MAXMINDDB_LIBS} @LIBS@
 
 # Alphabetically
 
@@ -51,6 +52,7 @@ DSTOBJS =	@DST_EXTRA_OBJS@ \
 		key.@O@
 
 GEOIPLINKOBJS = geoip.@O@
+GEOIP2LINKOBJS = geoip2.@O@
 
 DNSTAPOBJS = dnstap.@O@ dnstap.pb-c.@O@
 
@@ -77,7 +79,7 @@ DNSOBJS =	acl.@O@ adb.@O@ badcache.@O@ byaddr.@O@ \
 PORTDNSOBJS =	client.@O@ ecdb.@O@
 
 OBJS=		@DNSTAPOBJS@ ${DNSOBJS} ${OTHEROBJS} ${DSTOBJS} \
-		${PORTDNSOBJS} @GEOIPLINKOBJS@
+		${PORTDNSOBJS} @GEOIPLINKOBJS@ @GEOIP2LINKOBJS@
 
 DSTSRCS =	@DST_EXTRA_SRCS@ @PKCS11LINKSRCS@ \
 		dst_api.c dst_parse.c \
@@ -89,6 +91,7 @@ DSTSRCS =	@DST_EXTRA_SRCS@ @PKCS11LINKSRCS@ \
 		key.c
 
 GEOIPLINKSRCS = geoip.c
+GEOIPL2INKSRCS = geoip2.c
 
 DNSTAPSRCS = dnstap.c dnstap.pb-c.c
 
@@ -111,7 +114,8 @@ DNSSRCS =	acl.c adb.c badcache. byaddr.c \
 		zonekey.c zt.c ${OTHERSRCS}
 PORTDNSSRCS =	client.c ecdb.c
 
-SRCS = ${DSTSRCS} ${DNSSRCS} ${PORTDNSSRCS} @DNSTAPSRCS@ @GEOIPLINKSRCS@
+SRCS = ${DSTSRCS} ${DNSSRCS} \
+	${PORTDNSSRCS} @DNSTAPSRCS@ @GEOIPLINKSRCS@ @GEOIP2LINKSRCS@
 
 SUBDIRS =	include
 TARGETS =	timestamp
@@ -169,7 +173,9 @@ code.h:	gen
 
 gen: gen.c
 	${BUILD_CC} ${BUILD_CFLAGS} -I${top_srcdir}/lib/isc/include \
-	${BUILD_CPPFLAGS} ${BUILD_LDFLAGS} -o $@ ${srcdir}/gen.c ${BUILD_LIBS}
+	${LFS_CFLAGS} ${LFS_LDFLAGS} \
+	${BUILD_CPPFLAGS} ${BUILD_LDFLAGS} -o $@ ${srcdir}/gen.c \
+	${BUILD_LIBS} ${LFS_LIBS}
 
 timestamp: include libdns.@A@
 	touch timestamp
