@@ -1,0 +1,161 @@
+--- ../include/config.h	2019-06-17 13:55:15.345039460 -0400
++++ config.h	2019-09-05 13:55:22.729372793 -0400
+@@ -4,9 +4,6 @@
+ /* Define if building universal (internal helper macro) */
+ /* #undef AC_APPLE_UNIVERSAL_BUILD */
+ 
+-/* Use AES for Client Cookie generation */
+-#define AES_CC 1
+-
+ /* Define if you cannot bind() before connect() for TCP sockets. */
+ /* #undef BROKEN_TCP_BIND_BEFORE_CONNECT */
+ 
+@@ -22,12 +19,6 @@
+ /* Define to enable American Fuzzy Lop test harness */
+ /* #undef ENABLE_AFL */
+ 
+-/* Define to enable rpz nsdname rules. */
+-#define ENABLE_RPZ_NSDNAME 1
+-
+-/* Define to enable rpz nsip rules. */
+-#define ENABLE_RPZ_NSIP 1
+-
+ /* define if you want TCP_FASTOPEN enabled if available */
+ #define ENABLE_TCP_FASTOPEN 1
+ 
+@@ -52,6 +43,9 @@
+ /* Define to 1 if you have the `arc4random_uniform' function. */
+ #define HAVE_ARC4RANDOM_UNIFORM 1
+ 
++/* define if the ARM yield instruction is available */
++/* #undef HAVE_ARM_YIELD */
++
+ /* Define to 1 if the compiler supports __builtin_clz. */
+ #define HAVE_BUILTIN_CLZ 1
+ 
+@@ -61,9 +55,6 @@
+ /* define if the compiler supports __builtin_unreachable(). */
+ #define HAVE_BUILTIN_UNREACHABLE 1
+ 
+-/* Define to 1 if you have the `catgets' function. */
+-#define HAVE_CATGETS 1
+-
+ /* Define to 1 if you have the `chroot' function. */
+ #define HAVE_CHROOT 1
+ 
+@@ -71,10 +62,7 @@
+ #define HAVE_CLOCK_GETTIME 1
+ 
+ /* Use CMocka */
+-/* #undef HAVE_CMOCKA */
+-
+-/* Define to 1 if you have the <cmocka.h> header file. */
+-/* #undef HAVE_CMOCKA_H */
++#define HAVE_CMOCKA 1
+ 
+ /* Define to 1 if you have the `cpuset_setaffinity' function. */
+ /* #undef HAVE_CPUSET_SETAFFINITY */
+@@ -178,6 +166,9 @@
+ /* Build with GeoIP support */
+ /* #undef HAVE_GEOIP */
+ 
++/* Build with GeoIP2 support */
++/* #undef HAVE_GEOIP2 */
++
+ /* Build with GeoIP City IPv6 support */
+ /* #undef HAVE_GEOIP_CITY_V6 */
+ 
+@@ -263,7 +254,7 @@
+ /* #undef HAVE_LIBSOCKET */
+ 
+ /* Define if libxml2 was found */
+-/* #define HAVE_LIBXML2 */
++#define HAVE_LIBXML2 1
+ 
+ /* Define to 1 if you have the <linux/netlink.h> header file. */
+ /* #undef HAVE_LINUX_NETLINK_H */
+@@ -295,6 +286,9 @@
+ /* define if OpenSSL supports Ed25519 */
+ #define HAVE_OPENSSL_ED25519 1
+ 
++/* define if OpenSSL supports Ed448 */
++#define HAVE_OPENSSL_ED448 1
++
+ /* Define to 1 if you have the `processor_bind' function. */
+ /* #undef HAVE_PROCESSOR_BIND */
+ 
+@@ -370,18 +364,17 @@
+ /* Define to 1 if you have the `setresuid' function. */
+ /* #undef HAVE_SETRESUID */
+ 
+-#ifdef ISC_PLATFORM_USETHREADS
+ /* Define to 1 if you have the `sigwait' function. */
+ #define HAVE_SIGWAIT 1
+-#endif
++
++/* define if the SPARC pause instruction is available */
++/* #undef HAVE_SPARC_PAUSE */
+ 
+ /* define if struct stat has st_mtim.tv_nsec field */
+ /* #undef HAVE_STAT_NSEC */
+ 
+ /* Define to 1 if you have the <stdatomic.h> header file. */
+-#ifndef __lint__
+ #define HAVE_STDATOMIC_H 1
+-#endif
+ 
+ /* Define to 1 if you have the <stdint.h> header file. */
+ #define HAVE_STDINT_H 1
+@@ -450,10 +443,10 @@
+ #define HAVE_SYS_UN_H 1
+ 
+ /* Define to 1 if you have the <threads.h> header file. */
+-/* #undef HAVE_THREADS_H */
++#define HAVE_THREADS_H 1
+ 
+ /* Define if thread_local keyword is available */
+-/* #undef HAVE_THREAD_LOCAL */
++#define HAVE_THREAD_LOCAL 1
+ 
+ /* Define if Thread-Local Storage is available */
+ #define HAVE_TLS 1
+@@ -483,13 +476,7 @@
+ /* #undef HAVE___ATOMIC */
+ 
+ /* Define if __thread keyword is available */
+-#define HAVE___THREAD 1
+-
+-/* Use HMAC-SHA1 for Client Cookie generation */
+-/* #undef HMAC_SHA1_CC */
+-
+-/* Use HMAC-SHA256 for Client Cookie generation */
+-/* #undef HMAC_SHA256_CC */
++/* #undef HAVE___THREAD */
+ 
+ /* Define if you want to use inline buffers */
+ #define ISC_BUFFER_USEINLINE 1
+@@ -498,7 +485,7 @@
+ #define ISC_DLZ_DLOPEN 1
+ 
+ /* define if the linker supports --wrap option */
+-/* #undef LD_WRAP */
++#define LD_WRAP 1
+ 
+ /* have __attribute__s used in librpz.h */
+ #define LIBRPZ_HAVE_ATTR 1
+@@ -595,7 +582,6 @@
+ /* Define to enable very verbose query trace logging. */
+ #define WANT_QUERYTRACE 1
+ 
+-#ifndef __NetBSD__
+ /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+    significant byte first (like Motorola and SPARC, unlike Intel). */
+ #if defined AC_APPLE_UNIVERSAL_BUILD
+@@ -607,7 +593,6 @@
+ /* #  undef WORDS_BIGENDIAN */
+ # endif
+ #endif
+-#endif
+ 
+ /* Define to 1 if on MINIX. */
+ /* #undef _MINIX */

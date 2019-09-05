@@ -15,6 +15,7 @@
 
 rm -f dig.out.ns2
 rm -f dig.out.expire
+rm -f rndc.out.*
 rm -f sed.out.*
 rm -f */named.memstats
 rm -f */named.run

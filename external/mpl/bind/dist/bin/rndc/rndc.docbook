@@ -1066,7 +1066,7 @@
 	  <para>
 	    List the names of all TSIG keys currently configured
 	    for use by <command>named</command> in each view.  The
-	    list both statically configured keys and dynamic
+	    list includes both statically configured keys and dynamic
 	    TKEY-negotiated keys.
 	  </para>
 	</listitem>

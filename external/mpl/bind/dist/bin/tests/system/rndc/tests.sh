@@ -314,15 +314,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "test 'rndc dumpdb' on a empty cache ($n)"
 ret=0
-$RNDCCMD 10.53.0.3 dumpdb > /dev/null || ret=1
-for i in 1 2 3 4 5 6 7 8 9
-do
-	tmp=0
-	grep "Dump complete" ns3/named_dump.db > /dev/null || tmp=1
-	[ $tmp -eq 0 ] && break
-	sleep 1
-done
-[ $tmp -eq 1 ] && ret=1
+rndc_dumpdb ns3 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

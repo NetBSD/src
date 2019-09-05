@@ -36,7 +36,7 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl class="toc">
-<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.14.1</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.14.5</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_versions">Note on Version Numbering</a></span></dt>
@@ -44,7 +44,6 @@
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_download">Download</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_security">Security Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_features">New Features</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_changes">Feature Changes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_bugs">Bug Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_license">License</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#end_of_life">End of Life</a></span></dt>
@@ -54,7 +53,7 @@
 </div>
       <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.9.2"></a>Release Notes for BIND Version 9.14.1</h2></div></div></div>
+<a name="id-1.9.2"></a>Release Notes for BIND Version 9.14.5</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -89,12 +88,11 @@
 <a name="relnotes_platforms"></a>Supported Platforms</h3></div></div></div>
     <p>
       Since 9.12, BIND has undergone substantial code refactoring and
-      cleanup, and some very old code has been removed that was needed
-      to support legacy platforms which are no longer supported by their
-      vendors and for which ISC is no longer able to perform quality
-      assurance testing.  Specifically, workarounds for old versions of
-      UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster and IRIX have been
-      removed.
+      cleanup, and some very old code has been removed that supported
+      obsolete operating systems and operating systems for which ISC is
+      no longer able to perform quality assurance testing. Specifically,
+      workarounds for UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster
+      and IRIX have been removed.
     </p>
     <p>
       On UNIX-like systems, BIND now requires support for POSIX.1c
@@ -136,20 +134,80 @@
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+	<p>
+	  A race condition could trigger an assertion failure when
+	  a large number of incoming packets were being rejected.
+	  This flaw is disclosed in CVE-2019-6471. [GL #942]
+	</p>
+      </li></ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_features"></a>New Features</h3></div></div></div>
     <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem">
-        <p>
-	  In certain configurations, <span class="command"><strong>named</strong></span> could crash
-	  with an assertion failure if <span class="command"><strong>nxdomain-redirect</strong></span>
-	  was in use and a redirected query resulted in an NXDOMAIN from the
-	  cache. This flaw is disclosed in CVE-2019-6467. [GL #880]
+	<p>
+	  The new GeoIP2 API from MaxMind is now supported when BIND
+	  is compiled using <span class="command"><strong>configure --with-geoip2</strong></span>.
+	  The legacy GeoIP API can be used by compiling with
+	  <span class="command"><strong>configure --with-geoip</strong></span> instead.  (Note that
+	  the databases for the legacy API are no longer maintained by
+	  MaxMind.)
+	</p>
+	<p>
+	  The default path to the GeoIP2 databases will be set based
+	  on the location of the <span class="command"><strong>libmaxminddb</strong></span> library;
+	  for example, if it is in <code class="filename">/usr/local/lib</code>,
+	  then the default path will be
+	  <code class="filename">/usr/local/share/GeoIP</code>.
+	  This value can be overridden in <code class="filename">named.conf</code>
+	  using the <span class="command"><strong>geoip-directory</strong></span> option.
+	</p>
+	<p>
+	  Some <span class="command"><strong>geoip</strong></span> ACL settings that were available with
+	  legacy GeoIP, including searches for <span class="command"><strong>netspeed</strong></span>,
+	  <span class="command"><strong>org</strong></span>, and three-letter ISO country codes, will
+	  no longer work when using GeoIP2. Supported GeoIP2 database
+	  types are <span class="command"><strong>country</strong></span>, <span class="command"><strong>city</strong></span>,
+	  <span class="command"><strong>domain</strong></span>, <span class="command"><strong>isp</strong></span>, and
+	  <span class="command"><strong>as</strong></span>. All of the databases support both IPv4
+	  and IPv6 lookups. [GL #182]
 	</p>
       </li>
 <li class="listitem">
 	<p>
-	  The TCP client quota set using the <span class="command"><strong>tcp-clients</strong></span>
-	  option could be exceeded in some cases. This could lead to
-	  exhaustion of file descriptors. (CVE-2018-5743) [GL #615]
+	  Two new metrics have been added to the
+	  <span class="command"><strong>statistics-channel</strong></span> to report DNSSEC
+	  signing operations.  For each key in each zone, the
+	  <span class="command"><strong>dnssec-sign</strong></span> counter indicates the total
+	  number of signatures <span class="command"><strong>named</strong></span> has generated
+	  using that key since server startup, and the
+	  <span class="command"><strong>dnssec-refresh</strong></span> counter indicates how
+	  many of those signatures were refreshed during zone
+	  maintenance, as opposed to having been generated
+	  as a result of a zone update.  [GL #513]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  A SipHash 2-4 based DNS Cookie (RFC 7873) algorithm has been added.
+	  [GL #605]
+	</p>
+	<p>
+	  If you are running multiple DNS Servers (different versions of BIND 9
+	  or DNS server from multiple vendors) responding from the same IP
+	  address (anycast or load-balancing scenarios), you'll have to make
+	  sure that all the servers are configured with the same DNS Cookie
+	  algorithm and same Server Secret for the best performance.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  DS records included in DNS referral messages can now be validated
+	  and cached immediately, reducing the number of queries needed for
+	  a DNSSEC validation. [GL #964]
 	</p>
       </li>
 </ul></div>
@@ -157,47 +215,75 @@
 
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_features"></a>New Features</h3></div></div></div>
-    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
-	<p>
-	  The new <span class="command"><strong>add-soa</strong></span> option specifies whether
-	  or not the <span class="command"><strong>response-policy</strong></span> zone's SOA record
-	  should be included in the additional section of RPZ responses.
-	  [GL #865]
-        </p>
-      </li></ul></div>
-  </div>
-
-  <div class="section">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_changes"></a>Feature Changes</h3></div></div></div>
-    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
-	<p>
-	  None.
-	</p>
-      </li></ul></div>
-  </div>
-
-  <div class="section">
-<div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
-    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
         <p>
-	  The <span class="command"><strong>allow-update</strong></span> and
-	  <span class="command"><strong>allow-update-forwarding</strong></span> options were
-	  inadvertently treated as configuration errors when used at the
-	  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span> level.
-	  This has now been corrected.
-	  [GL #913]
+	  When <span class="command"><strong>qname-minimization</strong></span> was set to
+	  <span class="command"><strong>relaxed</strong></span>, some improperly configured domains
+	  would fail to resolve, but would have succeeded if minimization
+	  were disabled. <span class="command"><strong>named</strong></span> will now fall back to normal
+	  resolution in such cases, and also uses type A rather than NS for
+	  minimal queries in order to reduce the likelihood of encountering
+	  the problem. [GL #1055]
 	</p>
-      </li></ul></div>
+      </li>
+<li class="listitem">
+	<p>
+	  Glue address records were not being returned in responses
+	  to root priming queries; this has been corrected. [GL #1092]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Cache database statistics counters could report invalid values
+	  when stale answers were enabled, because of a bug in counter
+	  maintenance when cache data becomes stale. The statistics counters
+	  have been corrected to report the number of RRsets for each
+	  RR type that are active, stale but still potentially served,
+	  or stale and marked for deletion. [GL #602]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Interaction between DNS64 and RPZ No Data rule (CNAME *.) could
+	  cause unexpected results; this has been fixed. [GL #1106]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named-checkconf</strong></span> now checks DNS64 prefixes
+          to ensure bits 64-71 are zero. [GL #1159]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named-checkconf</strong></span> could crash during
+	  configuration if configured to use "geoip continent" ACLs with
+	  legacy GeoIP. [GL #1163]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named-checkconf</strong></span> now correctly reports missing
+	  <span class="command"><strong>dnstap-output</strong></span> option when
+	  <span class="command"><strong>dnstap</strong></span> is set. [GL #1136]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Handle ETIMEDOUT error on connect() with a non-blocking
+	  socket. [GL #1133]
+	</p>
+      </li>
+</ul></div>
   </div>
 
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_license"></a>License</h3></div></div></div>
     <p>
-      BIND is open source software licenced under the terms of the Mozilla
+      BIND is open source software licensed under the terms of the Mozilla
       Public License, version 2.0 (see the <code class="filename">LICENSE</code>
       file for the full text).
     </p>
@@ -260,6 +346,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.5 (Stable Release)</p>
 </body>
 </html>

@@ -212,6 +212,9 @@
     <ClInclude Include="..\include\isc\serial.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\siphash.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\sockaddr.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -581,6 +584,9 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\serial.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\siphash.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\sockaddr.c">
