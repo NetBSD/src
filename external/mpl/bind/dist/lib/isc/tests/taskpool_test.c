@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: taskpool_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,7 +30,6 @@
 #include <isc/task.h>
 #include <isc/taskpool.h>
 #include <isc/util.h>
-
 
 #include "isctest.h"
 

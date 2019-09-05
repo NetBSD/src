@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: rpz.h,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,6 +73,7 @@ typedef enum {
 	DNS_RPZ_POLICY_NXDOMAIN = 5,	/* 'nxdomain': answer with NXDOMAIN */
 	DNS_RPZ_POLICY_NODATA = 6,	/* 'nodata': answer with ANCOUNT=0 */
 	DNS_RPZ_POLICY_CNAME = 7,	/* 'cname x': answer with x's rrsets */
+	DNS_RPZ_POLICY_DNS64,		/* Apply DN64 to the A rewrite */
 	DNS_RPZ_POLICY_RECORD,
 	DNS_RPZ_POLICY_WILDCNAME,
 	DNS_RPZ_POLICY_MISS,
@@ -248,6 +249,7 @@ struct dns_rpz_zones {
 	isc_timermgr_t		*timermgr;
 	isc_task_t		*updater;
 	isc_refcount_t		refs;
+	isc_refcount_t		irefs;
 	/*
 	 * One lock for short term read-only search that guarantees the
 	 * consistency of the pointers.
