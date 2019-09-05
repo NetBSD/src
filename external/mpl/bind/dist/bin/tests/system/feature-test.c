@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.6 2019/09/05 19:32:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,6 +45,7 @@ usage() {
 	fprintf(stderr, "	--gssapi\n");
 	fprintf(stderr, "	--have-dlopen\n");
 	fprintf(stderr, "	--have-geoip\n");
+	fprintf(stderr, "	--have-geoip2\n");
 	fprintf(stderr, "	--have-libxml2\n");
 	fprintf(stderr, "	--ipv6only=no\n");
 	fprintf(stderr, "	--with-idn\n");
@@ -123,6 +124,14 @@ main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "--have-geoip") == 0) {
 #ifdef HAVE_GEOIP
+		return (0);
+#else
+		return (1);
+#endif
+	}
+
+	if (strcmp(argv[1], "--have-geoip2") == 0) {
+#ifdef HAVE_GEOIP2
 		return (0);
 #else
 		return (1);

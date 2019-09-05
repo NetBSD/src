@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,14 +91,14 @@ struct dns_master_style {
  */
 typedef struct dns_totext_ctx {
 	dns_master_style_t	style;
-	bool 		class_printed;
+	bool 			class_printed;
 	char *			linebreak;
 	char 			linebreak_buf[DNS_TOTEXT_LINEBREAK_MAXLEN];
 	dns_name_t *		origin;
 	dns_name_t *		neworigin;
 	dns_fixedname_t		origin_fixname;
 	uint32_t 		current_ttl;
-	bool 		current_ttl_valid;
+	bool 			current_ttl_valid;
 	dns_ttl_t		serve_stale_ttl;
 } dns_totext_ctx_t;
 

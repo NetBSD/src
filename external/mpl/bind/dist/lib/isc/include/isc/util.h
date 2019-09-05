@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.6 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,8 @@
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
+
+#include <inttypes.h>
 
 /*! \file isc/util.h
  * NOTE:
@@ -41,6 +43,12 @@
  * \endcode
  */
 #define UNUSED(x)      (void)(x)
+
+#if __GNUC__ >= 8 && !defined(__clang__)
+#define ISC_NONSTRING	__attribute__((nonstring))
+#else
+#define ISC_NONSTRING
+#endif /* __GNUC__ */
 
 /*%
  * The opposite: silent warnings about stored values which are never read.
@@ -219,6 +227,10 @@ extern void mock_assert(const int result, const char* const expression,
 	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
 #define _assert_true(c, e, f, l) \
 	((c) ? (void)0 : (_assert_true(0, e, f, l), abort()))
+#define _assert_int_equal(a, b, f, l) \
+	(((a) == (b)) ? (void)0 : (_assert_int_equal(a, b, f, l), abort()))
+#define _assert_int_not_equal(a, b, f, l) \
+	(((a) != (b)) ? (void)0 : (_assert_int_not_equal(a, b, f, l), abort()))
 #else /* UNIT_TESTING */
 /*
  * Assertions
@@ -266,7 +278,11 @@ extern void mock_assert(const int result, const char* const expression,
 /*%
  * Alignment
  */
-#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((typeof(x))(a)-1))
+#ifdef __GNUC__
+#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((typeof(x))(a) - 1))
+#else
+#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((uintmax_t)(a) - 1))
+#endif
 
 /*%
  * Misc

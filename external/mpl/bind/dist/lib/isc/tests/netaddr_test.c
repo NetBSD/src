@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr_test.c,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: netaddr_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,11 +17,11 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <setjmp.h>
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define UNIT_TESTING
