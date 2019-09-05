@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.51 2019/08/14 15:08:53 skrll Exp $
+#	$NetBSD: GENERIC,v 1.52 2019/09/05 16:15:57 bouyer Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -96,6 +96,7 @@ makeoptions	DTS="
 	sun7i-a20-olimex-som204-evb-emmc.dts
 	sun7i-a20-olimex-som204-evb.dts
 	sun7i-a20-olinuxino-lime.dts
+	sun7i-a20-olinuxino-lime2-emmc-spi.dts
 	sun7i-a20-olinuxino-lime2-emmc.dts
 	sun7i-a20-olinuxino-lime2.dts
 	sun7i-a20-olinuxino-micro-emmc.dts
@@ -642,6 +643,10 @@ ch* 		at scsibus? target ? lun ?	# SCSI changer devices
 ss* 		at scsibus? target ? lun ?	# SCSI scanners
 ses* 		at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
 uk* 		at scsibus? target ? lun ?	# unknown SCSI
+
+# SPI NOR flash support
+m25p* at spi?
+spiflash* at spiflashbus?
 
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
