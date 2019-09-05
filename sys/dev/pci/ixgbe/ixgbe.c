@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.208 2019/09/04 08:13:43 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.209 2019/09/05 08:06:51 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1571,7 +1571,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	stats->illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
-	if (hw->mac.type == ixgbe_mac_X550)
+	if (hw->mac.type >= ixgbe_mac_X550)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
 	/* 16 registers exist */
@@ -2126,7 +2126,8 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	stats->illerrc.ev_count = 0;
 	stats->errbc.ev_count = 0;
 	stats->mspdc.ev_count = 0;
-	stats->mbsdc.ev_count = 0;
+	if (hw->mac.type >= ixgbe_mac_X550)
+		stats->mbsdc.ev_count = 0;
 	stats->mpctotal.ev_count = 0;
 	stats->mlfc.ev_count = 0;
 	stats->mrfc.ev_count = 0;
