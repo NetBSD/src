@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.43 2019/09/05 08:44:10 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.44 2019/09/05 08:47:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2785,4 +2785,11 @@ sbin/route/route.c				1.163
 
 	route(8): Show addres for RTM_LOSING.
 	[roy, ticket #172]
+
+tests/net/arp/t_arp.sh				1.39
+tests/net/ndp/t_ndp.sh				1.36
+
+	Fix ARP and NDP tests for RTM_* messages.
+	Add tests for RTM_MISS.
+	[roy, ticket #175]
 
