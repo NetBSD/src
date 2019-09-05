@@ -424,8 +424,6 @@ update add example 3600 nsec3param 1 0 0 -
 send
 EOF
 
-sleep 1
-
 # the zone is not signed.  The nsec3param records should be removed.
 # this also proves that the server is still running.
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec example.\
@@ -443,8 +441,6 @@ update add nsec3param.test 3600 NSEC3PARAM 1 0 1 -
 send
 EOF
 
-sleep 1
-
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
         @10.53.0.3 nsec3param > dig.out.ns3.$n || ret=1
 grep "ANSWER: 1" dig.out.ns3.$n > /dev/null || ret=1
@@ -454,18 +450,24 @@ grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
 
 n=`expr $n + 1`
 ret=0
-echo_i "add a new the NSEC3PARAM via update ($n)"
+echo_i "add a new NSEC3PARAM via update ($n)"
 $NSUPDATE << EOF
 server 10.53.0.3 ${PORT}
 update add nsec3param.test 3600 NSEC3PARAM 1 0 4 -
 send
 EOF
 
-sleep 1
+_ret=1
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	$DIG $DIGOPTS +tcp +norec +time=1 +tries=1 @10.53.0.3 nsec3param.test. NSEC3PARAM > dig.out.ns3.$n || _ret=1
+	if grep "ANSWER: 2" dig.out.ns3.$n > /dev/null; then
+		_ret=0
+		break
+	fi
+	sleep 1
+done
 
-$DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
-        @10.53.0.3 nsec3param > dig.out.ns3.$n || ret=1
-grep "ANSWER: 2" dig.out.ns3.$n > /dev/null || ret=1
+if [ $_ret -ne 0 ]; then ret=1; fi
 grep "NSEC3PARAM 1 0 4 -" dig.out.ns3.$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $ret + $status`; fi
@@ -480,11 +482,17 @@ update add nsec3param.test 7200 NSEC3PARAM 1 0 5 -
 send
 EOF
 
-sleep 1
+_ret=1
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	$DIG $DIGOPTS +tcp +norec +time=1 +tries=1 @10.53.0.3 nsec3param.test. NSEC3PARAM > dig.out.ns3.$n || _ret=1
+	if grep "ANSWER: 1" dig.out.ns3.$n > /dev/null; then
+		_ret=0
+		break
+	fi
+	sleep 1
+done
 
-$DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
-        @10.53.0.3 nsec3param > dig.out.ns3.$n || ret=1
-grep "ANSWER: 1" dig.out.ns3.$n > /dev/null || ret=1
+if [ $_ret -ne 0 ]; then ret=1; fi
 grep "7200.*NSEC3PARAM 1 0 5 -" dig.out.ns3.$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
 $JOURNALPRINT ns3/nsec3param.test.db.signed.jnl > jp.out.ns3.$n

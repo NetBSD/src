@@ -137,8 +137,11 @@
     <ClCompile Include="..\fixedname.c" />
     <ClCompile Include="..\forward.c" />
 @IF GEOIP
-    <ClCompile Include="..\geoip.c" />
+    <ClCompile Include="..\geoip2.c" />
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClCompile Include="..\geoip.c" />
+@END GEOIPLEGACY
     <ClCompile Include="..\gssapictx.c" />
     <ClCompile Include="..\gssapi_link.c" />
     <ClCompile Include="..\hmac_link.c" />
@@ -257,6 +260,9 @@
 @IF GEOIP
     <ClInclude Include="..\include\dns\geoip.h" />
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClInclude Include="..\include\dns\geoip.h" />
+@END GEOIPLEGACY
     <ClInclude Include="..\include\dns\ipkeylist.h" />
     <ClInclude Include="..\include\dns\iptable.h" />
     <ClInclude Include="..\include\dns\journal.h" />

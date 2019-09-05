@@ -20,7 +20,7 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
 CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 

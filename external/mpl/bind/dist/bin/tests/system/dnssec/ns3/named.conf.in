@@ -314,6 +314,56 @@ zone "occluded.example" {
 	file "occluded.example.db.signed";
 };
 
+zone "secure.managed" {
+	type master;
+	file "secure.managed.db.signed";
+};
+
+zone "disabled.managed" {
+	type master;
+	file "disabled.managed.db.signed";
+};
+
+zone "enabled.managed" {
+	type master;
+	file "enabled.managed.db.signed";
+};
+
+zone "unsupported.managed" {
+	type master;
+	file "unsupported.managed.db.signed";
+};
+
+zone "revoked.managed" {
+	type master;
+	file "revoked.managed.db.signed";
+};
+
+zone "secure.trusted" {
+	type master;
+	file "secure.trusted.db.signed";
+};
+
+zone "disabled.trusted" {
+	type master;
+	file "disabled.trusted.db.signed";
+};
+
+zone "enabled.trusted" {
+	type master;
+	file "enabled.trusted.db.signed";
+};
+
+zone "unsupported.trusted" {
+	type master;
+	file "unsupported.trusted.db.signed";
+};
+
+zone "revoked.trusted" {
+	type master;
+	file "revoked.trusted.db.signed";
+};
+
 include "siginterval.conf";
 
 include "trusted.conf";

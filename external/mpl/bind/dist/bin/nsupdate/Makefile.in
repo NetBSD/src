@@ -26,7 +26,7 @@ CINCLUDES =	${DNS_INCLUDES} ${BIND9_INCLUDES} ${ISC_INCLUDES} \
 CDEFINES =	-DVERSION=\"${VERSION}\" @USE_GSSAPI@
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@

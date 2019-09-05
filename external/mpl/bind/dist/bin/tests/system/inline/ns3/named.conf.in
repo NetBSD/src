@@ -168,3 +168,10 @@ zone "removedkeys-secondary" {
 	auto-dnssec maintain;
 	file "removedkeys-secondary.bk";
 };
+
+zone "unsupported" {
+	type master;
+	file "unsupported.db";
+	inline-signing yes;
+	auto-dnssec maintain;
+};
