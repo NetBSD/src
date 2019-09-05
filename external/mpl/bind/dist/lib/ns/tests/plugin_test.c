@@ -1,4 +1,4 @@
-/*	$NetBSD: plugin_test.c,v 1.1.1.1 2019/04/27 23:47:30 christos Exp $	*/
+/*	$NetBSD: plugin_test.c,v 1.1.1.2 2019/09/05 19:27:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,15 +17,16 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <setjmp.h>
+
+#include <limits.h>
+#include <sched.h> /* IWYU pragma: keep */
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
-
-#include <limits.h>
-#include <stdbool.h>
-#include <string.h>
 
 #include <isc/mem.h>
 #include <isc/platform.h>

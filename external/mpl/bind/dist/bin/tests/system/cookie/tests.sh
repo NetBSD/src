@@ -141,13 +141,8 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "checking for COOKIE value in adb ($n)"
 ret=0
-$RNDCCMD 10.53.0.1 dumpdb
-for i in 1 2 3 4 5 6 7 8 9 10
-do
-  sleep 1
-  grep "10.53.0.2.*\[cookie=" ns1/named_dump.db > /dev/null && break
-done
-grep "10.53.0.2.*\[cookie=" ns1/named_dump.db > /dev/null || ret=1
+rndc_dumpdb ns1
+grep "10.53.0.2.*\[cookie=" ns1/named_dump.db.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -211,12 +206,12 @@ status=`expr $status + $ret`
 #
 # Test shared cookie-secret support.
 #
-# NS4 has cookie-secret "569d36a6cc27d6bf55502183302ba352745255a2";
+# NS4 has cookie-secret "569d36a6cc27d6bf55502183302ba352";
 #
-# NS5 has cookie-secret "569d36a6cc27d6bf55502183302ba352745255a2";
-# NS5 has cookie-secret "6b300e27a0db46d4b046e4189790fa7db3c1ffb3"; (alternate)
+# NS5 has cookie-secret "569d36a6cc27d6bf55502183302ba352";
+# NS5 has cookie-secret "6b300e27a0db46d4b046e4189790fa7d"; (alternate)
 #
-# NS6 has cookie-secret "6b300e27a0db46d4b046e4189790fa7db3c1ffb3";
+# NS6 has cookie-secret "6b300e27a0db46d4b046e4189790fa7d";
 #
 # Server cookies from NS4 are accepted by NS5 and not NS6
 # Server cookies from NS5 are accepted by NS4 and not NS6

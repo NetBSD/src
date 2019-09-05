@@ -25,6 +25,7 @@ options {
 	dnssec-enable yes;
 	dnssec-validation yes;
 	dnssec-lookaside "." trust-anchor "dlv.utld";
+	disable-algorithms "utld." { @DISABLED_ALGORITHM@; };
 };
 
 zone "." { type hint; file "hints"; };

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.1.1.3 2019/04/27 23:47:20 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.1.1.4 2019/09/05 19:27:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -159,6 +159,7 @@ print_packet(dns_dtdata_t *dt, const dns_master_style_t *style) {
 
 			result = dns_message_totext(dt->msg, style, 0, b);
 			if (result == ISC_R_NOSPACE) {
+				isc_buffer_clear(b);
 				textlen *= 2;
 				continue;
 			} else if (result == ISC_R_SUCCESS) {

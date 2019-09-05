@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.3 2019/02/24 18:56:38 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.4 2019/09/05 19:27:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,9 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 
 #include <dns/log.h>
 #include <dns/result.h>

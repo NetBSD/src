@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_test.c,v 1.1.1.3 2019/02/24 18:56:47 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.1.1.4 2019/09/05 19:27:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,10 +20,11 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>

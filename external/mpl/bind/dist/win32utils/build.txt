@@ -1,7 +1,3 @@
-Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
-
        BIND 9.10 for Win32 Source Build Instructions.  17-Apr-2015
 
 Building BIND 9.10 on Windows has the following prerequisites:

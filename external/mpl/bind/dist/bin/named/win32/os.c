@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.3 2019/02/24 18:56:38 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4 2019/09/05 19:27:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -351,9 +351,9 @@ named_os_shutdown(void) {
 	if (lockfilefd != -1) {
 		(void) UnlockFile((HANDLE) _get_osfhandle(lockfilefd),
 				  0, 0, 0, 1);
-		close(lockfilefd);
-		lockfilefd = -1;
 	}
+	cleanup_lockfile();
+
 	ntservice_shutdown();	/* This MUST be the last thing done */
 }
 

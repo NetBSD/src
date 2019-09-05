@@ -1,4 +1,4 @@
-/*	$NetBSD: errno_test.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: errno_test.c,v 1.1.1.3 2019/09/05 19:27:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,8 +19,9 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/errno.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>

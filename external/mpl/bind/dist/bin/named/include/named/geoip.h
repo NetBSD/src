@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.1.1.2 2019/09/05 19:27:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,15 @@
  * information regarding copyright ownership.
  */
 
-#ifndef _GEOIP_H
-#define _GEOIP_H
+#pragma once
 
-#ifdef HAVE_GEOIP
-#include <GeoIP.h>
-#include <GeoIPCity.h>
-#endif /* HAVE_GEOIP */
-
-void named_geoip_init(void);
-void named_geoip_load(char *dir);
-
-#ifdef HAVE_GEOIP
 extern dns_geoip_databases_t *named_g_geoip;
-#endif /* HAVE_GEOIP */
-#endif
+
+void
+named_geoip_init(void);
+
+void
+named_geoip_load(char *dir);
+
+void
+named_geoip_shutdown(void);

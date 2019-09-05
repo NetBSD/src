@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: clientinfo.h,v 1.1.1.3 2019/09/05 19:27:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,8 +60,8 @@ typedef struct dns_clientinfo {
 typedef isc_result_t (*dns_clientinfo_sourceip_t)(dns_clientinfo_t *client,
 						  isc_sockaddr_t **addrp);
 
-#define DNS_CLIENTINFOMETHODS_VERSION 1
-#define DNS_CLIENTINFOMETHODS_AGE 0
+#define DNS_CLIENTINFOMETHODS_VERSION 2
+#define DNS_CLIENTINFOMETHODS_AGE 1
 
 typedef struct dns_clientinfomethods {
 	uint16_t version;

@@ -25,7 +25,7 @@ CDEFINES =	-DVERSION=\"${VERSION}\" \
 CWARNINGS =
 
 ISCLIBS =	../isc/libisc.@A@ @OPENSSL_LIBS@
-DNSLIBS =	../dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../isccfg/libisccfg.@A@
 IRSLIBS =	../irs/libirs.@A@
 

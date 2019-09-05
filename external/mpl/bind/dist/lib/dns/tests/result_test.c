@@ -1,4 +1,4 @@
-/*	$NetBSD: result_test.c,v 1.1.1.2 2019/04/27 23:47:30 christos Exp $	*/
+/*	$NetBSD: result_test.c,v 1.1.1.3 2019/09/05 19:27:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,9 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <setjmp.h>
+
+#include <stdlib.h>
 #include <string.h>
 
 #define UNIT_TESTING

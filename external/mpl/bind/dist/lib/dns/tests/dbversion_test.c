@@ -1,4 +1,4 @@
-/*	$NetBSD: dbversion_test.c,v 1.1.1.3 2019/02/24 18:56:51 christos Exp $	*/
+/*	$NetBSD: dbversion_test.c,v 1.1.1.4 2019/09/05 19:27:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

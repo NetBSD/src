@@ -481,16 +481,28 @@
 <dd>
 	    <p>
 	      Toggles the printing of the initial comment in the
-	      output identifying the version of <span class="command"><strong>dig</strong></span>
-	      and the query options that have been applied.  This
-	      comment is printed by default.
+	      output, identifying the version of <span class="command"><strong>dig</strong></span>
+	      and the query options that have been applied.  This option
+	      always has global effect; it cannot be set globally
+	      and then overridden on a per-lookup basis.  The default
+	      is to print this comment.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]comments</code></span></dt>
 <dd>
 	    <p>
-	      Toggle the display of comment lines in the output.
-	      The default is to print comments.
+	      Toggles the display of some comment lines in the output,
+	      containing information about the packet header and
+	      OPT pseudosection, and the names of the response
+	      section.  The default is to print these comments.
+	    </p>
+	    <p>
+	      Other types of comments in the output are not affected by
+	      this option, but can be controlled using other command
+	      line switches. These include <span class="command"><strong>+[no]cmd</strong></span>,
+	      <span class="command"><strong>+[no]question</strong></span>,
+	      <span class="command"><strong>+[no]stats</strong></span>, and
+	      <span class="command"><strong>+[no]rrcomments</strong></span>.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]cookie[<span class="optional">=####</span>]</code></span></dt>
@@ -757,14 +769,14 @@
 <dt><span class="term"><code class="option">+[no]qr</code></span></dt>
 <dd>
 	    <p>
-	      Print [do not print] the query as it is sent.  By
-	      default, the query is not printed.
+	      Toggles the display of the query message as it is sent.
+	      By default, the query is not printed.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]question</code></span></dt>
 <dd>
 	    <p>
-	      Print [do not print] the question section of a query
+	      Toggles the display of the question section of a query
 	      when an answer is returned.  The default is to print
 	      the question section as a comment.
 	    </p>
@@ -790,8 +802,10 @@
 	      in the query.  This bit is set by default, which means
 	      <span class="command"><strong>dig</strong></span> normally sends recursive
 	      queries.  Recursion is automatically disabled when
-	      the <em class="parameter"><code>+nssearch</code></em> or
-	      <em class="parameter"><code>+trace</code></em> query options are used.
+	      using the <em class="parameter"><code>+nssearch</code></em> option, and
+	      when using <em class="parameter"><code>+trace</code></em> except for
+	      an initial recursive query to get the list of root
+	      servers.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+retry=T</code></span></dt>
@@ -832,7 +846,9 @@
 <dd>
 	    <p>
 	      Provide a terse answer.  The default is to print the
-	      answer in a verbose form.
+	      answer in a verbose form.  This option always has global
+	      effect; it cannot be set globally and then overridden on
+	      a per-lookup basis.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]showsearch</code></span></dt>
@@ -865,10 +881,9 @@
 <dt><span class="term"><code class="option">+[no]stats</code></span></dt>
 <dd>
 	    <p>
-	      This query option toggles the printing of statistics:
-	      when the query was made, the size of the reply and
-	      so on.  The default behavior is to print the query
-	      statistics.
+	      Toggles the printing of statistics: when the query was made,
+	      the size of the reply and so on.  The default behavior is to
+	      print the query statistics as a comment after each lookup.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]subnet=addr[/prefix-length]</code></span></dt>

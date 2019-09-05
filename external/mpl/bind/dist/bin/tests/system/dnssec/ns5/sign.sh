@@ -14,6 +14,8 @@
 
 set -e
 
+echo_i "ns5/sign.sh"
+
 zone=.
 infile=../ns1/root.db.in
 zonefile=root.db.signed
