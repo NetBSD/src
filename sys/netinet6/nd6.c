@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.256.2.4 2019/09/01 14:06:22 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256.2.5 2019/09/05 08:28:06 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.4 2019/09/01 14:06:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.5 2019/09/05 08:28:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -461,6 +461,8 @@ nd6_llinfo_timer(void *arg)
 	struct nd_ifinfo *ndi = NULL;
 	bool send_ns = false;
 	const struct in6_addr *daddr6 = NULL;
+	const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
+	struct sockaddr_in6 sin6;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
@@ -472,7 +474,6 @@ nd6_llinfo_timer(void *arg)
 		goto out;
 	}
 
-
 	ifp = ln->lle_tbl->llt_ifp;
 	KASSERT(ifp != NULL);
 
@@ -483,29 +484,33 @@ nd6_llinfo_timer(void *arg)
 		if (ln->ln_asked < nd6_mmaxtries) {
 			ln->ln_asked++;
 			send_ns = true;
-		} else {
-			struct mbuf *m = ln->ln_hold;
-			if (m) {
-				struct mbuf *m0;
-
-				/*
-				 * assuming every packet in ln_hold has
-				 * the same IP header
-				 */
-				m0 = m->m_nextpkt;
-				m->m_nextpkt = NULL;
-				ln->ln_hold = m0;
-				clear_llinfo_pqueue(ln);
- 			}
-			LLE_REMREF(ln);
-			nd6_free(ln, 0);
-			ln = NULL;
-			if (m != NULL) {
-				icmp6_error2(m, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_ADDR, 0, ifp);
-			}
+			break;
 		}
+
+		if (ln->ln_hold) {
+			struct mbuf *m = ln->ln_hold, *m0;
+
+			/*
+			 * assuming every packet in ln_hold has
+			 * the same IP header
+			 */
+			m0 = m->m_nextpkt;
+			m->m_nextpkt = NULL;
+			ln->ln_hold = m0;
+			clear_llinfo_pqueue(ln);
+
+			icmp6_error2(m, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_ADDR, 0, ifp);
+		}
+
+		sockaddr_in6_init(&sin6, taddr6, 0, 0, 0);
+		rt_clonedmsg(RTM_MISS, sin6tosa(&sin6), NULL, ifp);
+
+		LLE_REMREF(ln);
+		nd6_free(ln, 0);
+		ln = NULL;
 		break;
+
 	case ND6_LLINFO_REACHABLE:
 		if (!ND6_LLINFO_PERMANENT(ln)) {
 			ln->ln_state = ND6_LLINFO_STALE;
@@ -550,7 +555,6 @@ nd6_llinfo_timer(void *arg)
 
 	if (send_ns) {
 		struct in6_addr src, *psrc;
-		const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
 
 		nd6_llinfo_settimer(ln, ndi->retrans * hz / 1000);
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
@@ -1191,8 +1195,6 @@ nd6_free(struct llentry *ln, int gc)
 {
 	struct ifnet *ifp;
 	struct in6_addr *in6;
-	struct sockaddr_in6 sin6;
-	const char *lladdr;
 
 	KASSERT(ln != NULL);
 	LLE_WLOCK_ASSERT(ln);
@@ -1282,9 +1284,15 @@ nd6_free(struct llentry *ln, int gc)
 		LLE_WLOCK(ln);
 	}
 
-	sockaddr_in6_init(&sin6, in6, 0, 0, 0);
-	lladdr = ln->la_flags & LLE_VALID ? (const char *)&ln->ll_addr : NULL;
-	rt_clonedmsg(RTM_DELETE, sin6tosa(&sin6), lladdr, ifp);
+	if (ln->la_flags & LLE_VALID || gc) {
+		struct sockaddr_in6 sin6;
+		const char *lladdr;
+
+		sockaddr_in6_init(&sin6, in6, 0, 0, 0);
+		lladdr = ln->la_flags & LLE_VALID ?
+		    (const char *)&ln->ll_addr : NULL;
+		rt_clonedmsg(RTM_DELETE, sin6tosa(&sin6), lladdr, ifp);
+	}
 
 	/*
 	 * Save to unlock. We still hold an extra reference and will not
@@ -2218,7 +2226,7 @@ nd6_cache_lladdr(
 		break;
 	}
 
-	if (do_update) {
+	if (do_update && lladdr != NULL) {
 		struct sockaddr_in6 sin6;
 
 		sockaddr_in6_init(&sin6, from, 0, 0, 0);
@@ -2334,7 +2342,6 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	/* Slow path */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, true);
 	if (ln == NULL && nd6_is_addr_neighbor(dst, ifp))  {
-		struct sockaddr_in6 sin6;
 		/*
 		 * Since nd6_is_addr_neighbor() internally calls nd6_lookup(),
 		 * the condition below is not very efficient.  But we believe
@@ -2350,11 +2357,6 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 			m_freem(m);
 			return ENOBUFS;
 		}
-
-		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
-		if (rt != NULL)
-			rt_clonedmsg(RTM_ADD, sin6tosa(&sin6), NULL, ifp);
-
 		created = true;
 	}
 
@@ -2439,12 +2441,9 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		nd6_llinfo_settimer(ln, ND_IFINFO(ifp)->retrans * hz / 1000);
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_WUNLOCK(ln);
-		ln = NULL;
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, NULL);
-	} else {
-		/* We did the lookup so we need to do the unlock here. */
+	} else
 		LLE_WUNLOCK(ln);
-	}
 
 	if (created)
 		nd6_gc_neighbors(LLTABLE6(ifp), &dst->sin6_addr);
