@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.4 2019/04/06 02:59:05 thorpej Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.5 2019/09/05 09:20:05 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.4 2019/04/06 02:59:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.5 2019/09/05 09:20:05 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -331,6 +331,9 @@ ipi_msg_cpu_handler(void *arg __unused)
 		msg->func(msg->arg);
 
 		/* Ack the request. */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_producer();
+#endif
 		atomic_dec_uint(&msg->_pending);
 	}
 }
