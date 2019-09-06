@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.29 2019/09/06 20:52:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.29 2019/09/06 20:52:57 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -112,12 +112,14 @@ int     dumpsize = 0;           /* also for savecore */
 long    dumplo = 0;
 
 void
-cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
+cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused)
 {
 	extern char __kernel_text[];
 	extern char _end[];
 	extern char __data_start[];
 	extern char __rodata_start[];
+	uint64_t start, end;
+	u_int blk;
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
@@ -127,17 +129,23 @@ cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
 	/* add KSEG mappings of whole memory */
-	VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx\n",
-	    memory_start, memory_start + memory_size);
 	const pt_entry_t ksegattr =
 	    LX_BLKPAG_ATTR_NORMAL_WB |
 	    LX_BLKPAG_AP_RW |
 	    LX_BLKPAG_PXN |
 	    LX_BLKPAG_UXN;
-	pmapboot_enter(AARCH64_PA_TO_KVA(memory_start), memory_start,
-	    memory_size, L1_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
-	    bootpage_alloc, NULL);
-	aarch64_tlbi_all();
+	for (blk = 0; blk < bootconfig.dramblocks; blk++) {
+		start = L2_TRUNC_BLOCK(bootconfig.dram[blk].address);
+		end = L2_ROUND_BLOCK(bootconfig.dram[blk].address +
+		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
+
+		VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx (L2)\n",
+		    start, end);
+		pmapboot_enter(AARCH64_PA_TO_KVA(start), start, 
+		    end - start, L2_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
+		    bootpage_alloc, NULL);
+		aarch64_tlbi_all();
+	}
 
 	/*
 	 * at this point, whole kernel image is mapped as "rwx".
