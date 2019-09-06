@@ -1,3 +1,11 @@
+2019-08-22  Alan Modra  <amodra@gmail.com>
+
+	* elf32-arm.c (cmse_scan): Don't use ARM_GET_SYM_CMSE_SPCL,
+	instead recognize CMSE_PREFIX in symbol name.
+	(elf32_arm_gc_mark_extra_sections): Likewise.
+	(elf32_arm_filter_cmse_symbols): Don't test ARM_GET_SYM_CMSE_SPCL.
+	(elf32_arm_swap_symbol_in): Don't invoke ARM_SET_SYM_CMSE_SPCL.
+
 2018-07-18  Nick Clifton  <nickc@redhat.com>
 
 	2.31.1 Release point.
