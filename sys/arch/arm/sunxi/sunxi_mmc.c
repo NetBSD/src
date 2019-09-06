@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.33.2.1 2019/09/06 19:54:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.33.2.1 2019/09/06 19:54:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -480,7 +480,7 @@ free:
 }
 
 static int
-sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
+sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr, bool dbl)
 {
 	const struct sunxi_mmc_delay *delays;
 	int error, timing = SUNXI_MMC_TIMING_400K;
@@ -506,7 +506,7 @@ sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 			return EINVAL;
 	}
 
-	error = clk_set_rate(sc->sc_clk_mmc, (freq * 1000) << ddr);
+	error = clk_set_rate(sc->sc_clk_mmc, (freq * 1000) << dbl);
 	if (error != 0)
 		return error;
 
@@ -554,7 +554,7 @@ sunxi_mmc_attach_i(device_t self)
 
 	sunxi_mmc_host_reset(sc);
 	sunxi_mmc_bus_width(sc, 1);
-	sunxi_mmc_set_clock(sc, 400, false);
+	sunxi_mmc_set_clock(sc, 400, false, false);
 
 	if (sc->sc_pwrseq)
 		fdtbus_mmc_pwrseq_post_power_on(sc->sc_pwrseq);
@@ -815,6 +815,7 @@ sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 	struct sunxi_mmc_softc *sc = sch;
 	uint32_t clkcr, gctrl, ntsr;
 	const u_int flags = sc->sc_config->flags;
+	bool dbl = 0;
 
 	clkcr = MMC_READ(sc, SUNXI_MMC_CLKCR);
 	if (clkcr & SUNXI_MMC_CLKCR_CARDCLKON) {
@@ -832,9 +833,15 @@ sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 	}
 
 	if (freq) {
+		/* For 8bits ddr in old timing modes, and all ddr in new
+		 * timing modes, the module clock has to be 2x the card clock.
+		 */
+		if (ddr && ((flags & SUNXI_MMC_FLAG_NEW_TIMINGS) ||
+		    sc->sc_mmc_width == 8))
+			dbl = 1;
 
 		clkcr &= ~SUNXI_MMC_CLKCR_DIV;
-		clkcr |= __SHIFTIN(ddr, SUNXI_MMC_CLKCR_DIV);
+		clkcr |= __SHIFTIN(dbl, SUNXI_MMC_CLKCR_DIV);
 		MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
 
 		if (flags & SUNXI_MMC_FLAG_NEW_TIMINGS) {
@@ -856,7 +863,7 @@ sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 			gctrl &= ~SUNXI_MMC_GCTRL_DDR_MODE;
 		MMC_WRITE(sc, SUNXI_MMC_GCTRL, gctrl);
 
-		if (sunxi_mmc_set_clock(sc, freq, ddr) != 0)
+		if (sunxi_mmc_set_clock(sc, freq, ddr, dbl) != 0)
 			return 1;
 
 		clkcr |= SUNXI_MMC_CLKCR_CARDCLKON;
