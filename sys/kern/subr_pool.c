@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.257 2019/08/26 10:35:35 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.258 2019/09/06 09:19:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.257 2019/08/26 10:35:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.258 2019/09/06 09:19:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -130,10 +130,37 @@ static bool pool_cache_put_quarantine(pool_cache_t, void *, paddr_t);
 #define pc_has_dtor(pc) \
 	(pc->pc_dtor != (void (*)(void *, void *))nullop)
 
+/*
+ * Pool backend allocators.
+ *
+ * Each pool has a backend allocator that handles allocation, deallocation,
+ * and any additional draining that might be needed.
+ *
+ * We provide two standard allocators:
+ *
+ *	pool_allocator_kmem - the default when no allocator is specified
+ *
+ *	pool_allocator_nointr - used for pools that will not be accessed
+ *	in interrupt context.
+ */
+void *pool_page_alloc(struct pool *, int);
+void pool_page_free(struct pool *, void *);
+
 static void *pool_page_alloc_meta(struct pool *, int);
 static void pool_page_free_meta(struct pool *, void *);
 
-/* allocator for pool metadata */
+struct pool_allocator pool_allocator_kmem = {
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
+};
+
+struct pool_allocator pool_allocator_nointr = {
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
+};
+
 struct pool_allocator pool_allocator_meta = {
 	.pa_alloc = pool_page_alloc_meta,
 	.pa_free = pool_page_free_meta,
@@ -141,7 +168,49 @@ struct pool_allocator pool_allocator_meta = {
 };
 
 #define POOL_ALLOCATOR_BIG_BASE 13
-extern struct pool_allocator pool_allocator_big[];
+static struct pool_allocator pool_allocator_big[] = {
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 0),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 1),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 2),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 3),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 4),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 5),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 6),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 7),
+	}
+};
+
 static int pool_bigidx(size_t);
 
 /* # of seconds to retain page after last use */
@@ -2739,77 +2808,6 @@ pool_cache_transfer(pool_cache_t pc)
 	mutex_exit(&pc->pc_lock);
 	splx(s);
 }
-
-/*
- * Pool backend allocators.
- *
- * Each pool has a backend allocator that handles allocation, deallocation,
- * and any additional draining that might be needed.
- *
- * We provide two standard allocators:
- *
- *	pool_allocator_kmem - the default when no allocator is specified
- *
- *	pool_allocator_nointr - used for pools that will not be accessed
- *	in interrupt context.
- */
-void	*pool_page_alloc(struct pool *, int);
-void	pool_page_free(struct pool *, void *);
-
-struct pool_allocator pool_allocator_kmem = {
-	.pa_alloc = pool_page_alloc,
-	.pa_free = pool_page_free,
-	.pa_pagesz = 0
-};
-
-struct pool_allocator pool_allocator_nointr = {
-	.pa_alloc = pool_page_alloc,
-	.pa_free = pool_page_free,
-	.pa_pagesz = 0
-};
-
-struct pool_allocator pool_allocator_big[] = {
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 0),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 1),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 2),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 3),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 4),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 5),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 6),
-	},
-	{
-		.pa_alloc = pool_page_alloc,
-		.pa_free = pool_page_free,
-		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 7),
-	}
-};
 
 static int
 pool_bigidx(size_t size)
