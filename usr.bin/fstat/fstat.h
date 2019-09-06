@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.h,v 1.9 2009/04/12 06:36:12 lukem Exp $	*/
+/*	$NetBSD: fstat.h,v 1.10 2019/09/06 17:08:22 christos Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,3 +60,4 @@ int	isofs_filestat(struct vnode *, struct filestat *);
 int	ntfs_filestat(struct vnode *, struct filestat *);
 int	ptyfs_filestat(struct vnode *, struct filestat *);
 int	tmpfs_filestat(struct vnode *, struct filestat *);
+void	oprint(struct file *, const char *);
