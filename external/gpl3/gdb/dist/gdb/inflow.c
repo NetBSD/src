@@ -103,35 +103,6 @@ static serial_ttystate initial_gdb_ttystate;
 
 static struct terminal_info *get_inflow_inferior_data (struct inferior *);
 
-/* RAII class used to ignore SIGTTOU in a scope.  */
-
-class scoped_ignore_sigttou
-{
-public:
-  scoped_ignore_sigttou ()
-  {
-#ifdef SIGTTOU
-    if (job_control)
-      m_osigttou = signal (SIGTTOU, SIG_IGN);
-#endif
-  }
-
-  ~scoped_ignore_sigttou ()
-  {
-#ifdef SIGTTOU
-    if (job_control)
-      signal (SIGTTOU, m_osigttou);
-#endif
-  }
-
-  DISABLE_COPY_AND_ASSIGN (scoped_ignore_sigttou);
-
-private:
-#ifdef SIGTTOU
-  sighandler_t m_osigttou = NULL;
-#endif
-};
-
 /* While the inferior is running, we want SIGINT and SIGQUIT to go to the
    inferior only.  If we have job control, that takes care of it.  If not,
    we save our handlers in these two variables and set SIGINT and SIGQUIT
