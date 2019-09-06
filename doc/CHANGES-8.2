@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.34 2019/09/05 09:07:42 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.35 2019/09/06 13:48:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -869,4 +869,9 @@ sys/dev/pci/ixgbe/ixv.c				1.129-1.130
 	- Fix typo in unused code.
 	- Fix typo in comment. Found by Wataru Ashihara.
 	[msaitoh, ticket #1367]
+
+lib/libc/nameser/ns_name.c			1.12
+
+	Fix buffer overrun.
+	[maya, ticket #1368]
 
