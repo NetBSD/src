@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.869 2019/09/05 19:37:46 christos Exp $
+# $NetBSD: shl.mi,v 1.870 2019/09/06 11:12:06 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -259,8 +259,8 @@
 ./usr/lib/libdm.so.0				base-sys-shlib		compatfile
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
-./usr/lib/libdns.so.12				base-bind-shlib		compatfile
-./usr/lib/libdns.so.12.0			base-bind-shlib		compatfile
+./usr/lib/libdns.so.13				base-bind-shlib		compatfile
+./usr/lib/libdns.so.13.0			base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
@@ -340,8 +340,8 @@
 ./usr/lib/libisc.so.13				base-bind-shlib		compatfile
 ./usr/lib/libisc.so.13.0			base-bind-shlib		compatfile
 ./usr/lib/libisccc.so				base-bind-shlib		compatfile
-./usr/lib/libisccc.so.12			base-bind-shlib		compatfile
-./usr/lib/libisccc.so.12.0			base-bind-shlib		compatfile
+./usr/lib/libisccc.so.13			base-bind-shlib		compatfile
+./usr/lib/libisccc.so.13.0			base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so				base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so.13			base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so.13.0			base-bind-shlib		compatfile
