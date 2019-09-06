@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.33 2019/09/05 09:06:07 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.34 2019/09/06 13:44:36 martin Exp $ */
 
 /******************************************************************************
 
@@ -1397,6 +1397,7 @@ static void
 ixgbe_add_media_types(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
+	device_t	dev = adapter->dev;
 	u64		layer;
 
 	layer = adapter->phy_layer;
