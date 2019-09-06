@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.30 2019/08/29 13:01:07 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.31 2019/09/06 06:44:45 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.30 2019/08/29 13:01:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.31 2019/09/06 06:44:45 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4621,7 +4621,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 		audio_params_t p = format2_to_params(&mixer->hwbuf.fmt);
 		rounded = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
 		    mode, &p);
-		TRACE(2, "round_blocksize %d -> %d", blksize, rounded);
+		TRACE(1, "round_blocksize %d -> %d", blksize, rounded);
 		if (rounded != blksize) {
 			if ((rounded * NBBY) % (mixer->hwbuf.fmt.stride *
 			    mixer->hwbuf.fmt.channels) != 0) {
@@ -4646,7 +4646,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 		size_t rounded;
 		rounded = sc->hw_if->round_buffersize(sc->hw_hdl, mode,
 		    bufsize);
-		TRACE(2, "round_buffersize %zd -> %zd", bufsize, rounded);
+		TRACE(1, "round_buffersize %zd -> %zd", bufsize, rounded);
 		if (rounded < bufsize) {
 			/* buffersize needs NBLKHW blocks at least. */
 			device_printf(sc->sc_dev,
@@ -4669,7 +4669,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 			capacity = mixer->frames_per_block * hwblks;
 		}
 	}
-	TRACE(2, "buffersize for %s = %zu",
+	TRACE(1, "buffersize for %s = %zu",
 	    (mode == AUMODE_PLAY) ? "playback" : "recording",
 	    bufsize);
 	mixer->hwbuf.capacity = capacity;
