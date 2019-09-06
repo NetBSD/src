@@ -32,6 +32,7 @@
 #include "gdbcmd.h"
 #include "common/filestuff.h"
 #include <termios.h>
+#include "inflow.h"
 
 struct hardwire_ttystate
   {
@@ -164,6 +165,9 @@ hardwire_print_tty_state (struct serial *scb,
 static int
 hardwire_drain_output (struct serial *scb)
 {
+  /* Ignore SIGTTOU which may occur during the drain.  */
+  scoped_ignore_sigttou ignore_sigttou;
+
   return tcdrain (scb->fd);
 }
 
