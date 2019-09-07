@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.17 2019/08/11 15:52:55 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.18 2019/09/07 09:21:17 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.17 2019/08/11 15:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18 2019/09/07 09:21:17 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -260,19 +260,17 @@ dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 }
 
 #if defined(_KERNEL)
-void
-db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
+static void
+show_cpuinfo(struct cpu_info *ci)
 {
-	struct cpu_info *ci, cpuinfobuf;
+	struct cpu_info cpuinfobuf;
 	cpuid_t cpuid;
 	int i;
 
-	ci = curcpu();
 	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
 	cpuid = cpuinfobuf.ci_cpuid;
-	db_printf("cpu_info=%p\n", ci);
+	db_printf("cpu_info=%p, cpu_name=%s\n", ci, cpuinfobuf.ci_cpuname);
 	db_printf("%p cpu[%lu].ci_cpuid        = %lu\n",
 	    &ci->ci_cpuid, cpuid, cpuinfobuf.ci_cpuid);
 	db_printf("%p cpu[%lu].ci_curlwp       = %p\n",
@@ -293,6 +291,34 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	    &ci->ci_astpending, cpuid, cpuinfobuf.ci_astpending);
 	db_printf("%p cpu[%lu].ci_intr_depth   = %u\n",
 	    &ci->ci_intr_depth, cpuid, cpuinfobuf.ci_intr_depth);
+}
+
+void
+db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	bool showall = false;
+
+	if (modif != NULL) {
+		for (; *modif != '\0'; modif++) {
+			switch (*modif) {
+			case 'a':
+				showall = true;
+				break;
+			}
+		}
+	}
+
+	if (showall) {
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			show_cpuinfo(ci);
+		}
+	} else
+#endif /* MULTIPROCESSOR */
+		show_cpuinfo(curcpu());
 }
 
 void
