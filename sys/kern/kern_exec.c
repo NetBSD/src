@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.478 2019/07/05 17:14:48 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.479 2019/09/07 15:34:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.478 2019/07/05 17:14:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.479 2019/09/07 15:34:44 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -304,6 +304,14 @@ static struct pool_allocator exec_palloc = {
 	.pa_pagesz = NCARGS
 };
 
+static void
+exec_path_free(struct execve_data *data)
+{              
+	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
+	pathbuf_destroy(data->ed_pathbuf);
+	PNBUF_PUT(data->ed_resolvedpathbuf);
+}
+
 /*
  * check exec:
  * given an "executable" described in the exec package's namei info,
@@ -338,25 +346,14 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	struct nameidata nd;
 	size_t		resid;
 
-#if 1
 	// grab the absolute pathbuf here before namei() trashes it.
 	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
-#endif
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
-#if 0
-	/*
-	 * XXX: can't use nd.ni_pnbuf, because although pb contains an
-	 * absolute path, nd.ni_pnbuf does not if the path contains symlinks.
-	 */
-	/* normally this can't fail */
-	error = copystr(nd.ni_pnbuf, epp->ep_resolvedname, PATH_MAX, NULL);
-	KASSERT(error == 0);
-#endif
 
 #ifdef DIAGNOSTIC
 	/* paranoia (take this out once namei stuff stabilizes) */
@@ -843,9 +840,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	rw_exit(&exec_lock);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 
  clrflg:
 	rw_exit(&p->p_reflock);
@@ -941,9 +936,7 @@ execve_free_data(struct execve_data *data)
 	if (epp->ep_interp != NULL)
 		vrele(epp->ep_interp);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 }
 
 static void
@@ -1313,9 +1306,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		mutex_exit(proc_lock);
 	}
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 #ifdef TRACE_EXEC
 	DPRINTF(("%s finished\n", __func__));
 #endif
@@ -1327,9 +1318,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (!no_local_exec_lock)
 		rw_exit(&exec_lock);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
