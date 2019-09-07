@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.46 2019/09/06 19:59:00 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.47 2019/09/07 18:06:30 snj Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2904,4 +2904,10 @@ external/gpl3/gdb/dist/gdb/top.c		1.2
 	PR toolchain/54508: cherry-pick upstream GDB patch to fix SIGTTOU
 	handling.
 	[kamil, ticket #188]
+
+sys/arch/amiga/dev/aucc.c			1.47
+
+	aucc(4) does not support recording.
+	Fixes diagnostic assertion failure in aucc_set_format().
+	[rin, ticket #189]
 
