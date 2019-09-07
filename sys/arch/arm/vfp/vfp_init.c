@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.62 2019/04/06 08:48:53 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.63 2019/09/07 19:42:42 tnn Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.62 2019/04/06 08:48:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.63 2019/09/07 19:42:42 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -332,8 +332,10 @@ vfp_attach(struct cpu_info *ci)
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
+	case FPU_VFP_CORTEXA12:
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
+	case FPU_VFP_CORTEXA17:
 	case FPU_VFP_CORTEXA53:
 	case FPU_VFP_CORTEXA57:
 		if (armreg_cpacr_read() & CPACR_V7_ASEDIS) {
