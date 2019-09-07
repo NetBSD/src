@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.12 2019/09/07 09:46:07 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.13 2019/09/07 10:24:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.12 2019/09/07 09:46:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.13 2019/09/07 10:24:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -778,6 +778,153 @@ ASAN_ATOMIC_FUNC_INC(64, uint64_t, uint64_t)
 ASAN_ATOMIC_FUNC_INC(uint, unsigned int, unsigned int);
 ASAN_ATOMIC_FUNC_INC(ulong, unsigned long, unsigned long);
 ASAN_ATOMIC_FUNC_INC(ptr, void *, void);
+
+/* -------------------------------------------------------------------------- */
+
+#include <sys/bus.h>
+
+#undef bus_space_read_multi_1
+#undef bus_space_read_multi_2
+#undef bus_space_read_multi_4
+#undef bus_space_read_multi_8
+#undef bus_space_read_multi_stream_1
+#undef bus_space_read_multi_stream_2
+#undef bus_space_read_multi_stream_4
+#undef bus_space_read_multi_stream_8
+#undef bus_space_read_region_1
+#undef bus_space_read_region_2
+#undef bus_space_read_region_4
+#undef bus_space_read_region_8
+#undef bus_space_read_region_stream_1
+#undef bus_space_read_region_stream_2
+#undef bus_space_read_region_stream_4
+#undef bus_space_read_region_stream_8
+#undef bus_space_write_multi_1
+#undef bus_space_write_multi_2
+#undef bus_space_write_multi_4
+#undef bus_space_write_multi_8
+#undef bus_space_write_multi_stream_1
+#undef bus_space_write_multi_stream_2
+#undef bus_space_write_multi_stream_4
+#undef bus_space_write_multi_stream_8
+#undef bus_space_write_region_1
+#undef bus_space_write_region_2
+#undef bus_space_write_region_4
+#undef bus_space_write_region_8
+#undef bus_space_write_region_stream_1
+#undef bus_space_write_region_stream_2
+#undef bus_space_write_region_stream_4
+#undef bus_space_write_region_stream_8
+
+#define ASAN_BUS_READ_FUNC(bytes, bits) \
+	void bus_space_read_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+	    bus_size_t, uint##bits##_t *, bus_size_t);				\
+	void kasan_bus_space_read_multi_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_multi_##bytes(bus_space_tag_t tag,		\
+	    bus_space_handle_t hnd, bus_size_t size, uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, false, __RET_ADDR);		\
+		bus_space_read_multi_##bytes(tag, hnd, size, buf, count);	\
+	}									\
+	void bus_space_read_multi_stream_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_multi_stream_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_multi_stream_##bytes(bus_space_tag_t tag,	\
+	    bus_space_handle_t hnd, bus_size_t size, uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, false, __RET_ADDR);		\
+		bus_space_read_multi_stream_##bytes(tag, hnd, size, buf, count);\
+	}									\
+	void bus_space_read_region_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+	    bus_size_t, uint##bits##_t *, bus_size_t);				\
+	void kasan_bus_space_read_region_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_region_##bytes(bus_space_tag_t tag,		\
+	    bus_space_handle_t hnd, bus_size_t size, uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, false, __RET_ADDR);		\
+		bus_space_read_region_##bytes(tag, hnd, size, buf, count);	\
+	}									\
+	void bus_space_read_region_stream_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_region_stream_##bytes(bus_space_tag_t,	\
+	    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);	\
+	void kasan_bus_space_read_region_stream_##bytes(bus_space_tag_t tag,	\
+	    bus_space_handle_t hnd, bus_size_t size, uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, false, __RET_ADDR);		\
+		bus_space_read_region_stream_##bytes(tag, hnd, size, buf, count);\
+	}
+
+#define ASAN_BUS_WRITE_FUNC(bytes, bits) \
+	void bus_space_write_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+	    bus_size_t, const uint##bits##_t *, bus_size_t);			\
+	void kasan_bus_space_write_multi_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_multi_##bytes(bus_space_tag_t tag,		\
+	    bus_space_handle_t hnd, bus_size_t size, const uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, true, __RET_ADDR);		\
+		bus_space_write_multi_##bytes(tag, hnd, size, buf, count);	\
+	}									\
+	void bus_space_write_multi_stream_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_multi_stream_##bytes(bus_space_tag_t,	\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_multi_stream_##bytes(bus_space_tag_t tag,	\
+	    bus_space_handle_t hnd, bus_size_t size, const uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, true, __RET_ADDR);		\
+		bus_space_write_multi_stream_##bytes(tag, hnd, size, buf, count);\
+	}									\
+	void bus_space_write_region_##bytes(bus_space_tag_t, bus_space_handle_t,\
+	    bus_size_t, const uint##bits##_t *, bus_size_t);			\
+	void kasan_bus_space_write_region_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_region_##bytes(bus_space_tag_t tag,		\
+	    bus_space_handle_t hnd, bus_size_t size, const uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, true, __RET_ADDR);		\
+		bus_space_write_region_##bytes(tag, hnd, size, buf, count);	\
+	}									\
+	void bus_space_write_region_stream_##bytes(bus_space_tag_t,		\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_region_stream_##bytes(bus_space_tag_t,	\
+	    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);\
+	void kasan_bus_space_write_region_stream_##bytes(bus_space_tag_t tag,	\
+	    bus_space_handle_t hnd, bus_size_t size, const uint##bits##_t *buf,	\
+	    bus_size_t count)							\
+	{									\
+		kasan_shadow_check((uintptr_t)buf,				\
+		    sizeof(uint##bits##_t) * count, true, __RET_ADDR);		\
+		bus_space_write_region_stream_##bytes(tag, hnd, size, buf, count);\
+	}
+
+ASAN_BUS_READ_FUNC(1, 8)
+ASAN_BUS_READ_FUNC(2, 16)
+ASAN_BUS_READ_FUNC(4, 32)
+ASAN_BUS_READ_FUNC(8, 64)
+
+ASAN_BUS_WRITE_FUNC(1, 8)
+ASAN_BUS_WRITE_FUNC(2, 16)
+ASAN_BUS_WRITE_FUNC(4, 32)
+ASAN_BUS_WRITE_FUNC(8, 64)
 
 /* -------------------------------------------------------------------------- */
 
