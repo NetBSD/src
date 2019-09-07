@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.35 2019/09/07 11:09:03 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.36 2019/09/07 18:33:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -419,8 +419,21 @@ rdmsr(u_int msr)
 	return (low | ((uint64_t)high << 32));
 }
 
-uint64_t	rdmsr_locked(u_int);
-int		rdmsr_safe(u_int, uint64_t *);
+static inline uint64_t
+rdmsr_locked(u_int msr)
+{
+	uint32_t low, high, pass = OPTERON_MSR_PASSCODE;
+
+	__asm volatile (
+		"rdmsr"
+		: "=a" (low), "=d" (high)
+		: "c" (msr), "D" (pass)
+	);
+
+	return (low | ((uint64_t)high << 32));
+}
+
+int	rdmsr_safe(u_int, uint64_t *);
 
 static inline void
 wrmsr(u_int msr, uint64_t val)
@@ -437,7 +450,20 @@ wrmsr(u_int msr, uint64_t val)
 	);
 }
 
-void		wrmsr_locked(u_int, uint64_t);
+static inline void
+wrmsr_locked(u_int msr, uint64_t val)
+{
+	uint32_t low, high, pass = OPTERON_MSR_PASSCODE;
+
+	low = val;
+	high = val >> 32;
+	__asm volatile (
+		"wrmsr"
+		:
+		: "a" (low), "d" (high), "c" (msr), "D" (pass)
+		: "memory"
+	);
+}
 
 #endif /* _KERNEL */
 
