@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.18 2019/09/07 09:21:17 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.19 2019/09/07 09:27:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18 2019/09/07 09:21:17 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.19 2019/09/07 09:27:25 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -868,22 +868,37 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 volatile struct cpu_info *db_trigger;
 volatile struct cpu_info *db_onproc;
 volatile struct cpu_info *db_newcpu;
+volatile int db_readytoswitch[MAXCPUS];
 
 #ifdef _KERNEL
 void
 db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+	struct cpu_info *new_ci = NULL;
 	u_int cpuno = (u_int)addr;
+	int i;
 
-	if (!have_addr || (cpuno >= ncpu)) {
-		db_printf("cpu: 0..%d\n", ncpu - 1);
+	membar_consumer();
+
+	if (!have_addr) {
+		for (i = 0; i < ncpu; i++) {
+			if (db_readytoswitch[i] != 0)
+				db_printf("cpu%d: ready\n", i);
+			else
+				db_printf("cpu%d: not responding\n", i);
+		}
 		return;
 	}
 
-	struct cpu_info *new_ci = cpu_lookup(cpuno);
+	if (cpuno < ncpu)
+		new_ci = cpu_lookup(cpuno);
 	if (new_ci == NULL) {
 		db_printf("cpu %u does not exist", cpuno);
+		return;
+	}
+	if (db_readytoswitch[new_ci->ci_index] == 0) {
+		db_printf("cpu %u is not responding", cpuno);
 		return;
 	}
 
@@ -940,6 +955,8 @@ kdb_trap(int type, struct trapframe *tf)
 		db_trigger = ci;
 		membar_producer();
 	}
+	db_readytoswitch[ci->ci_index] = 1;
+	membar_producer();
 #endif
 
 	for (;;) {
@@ -993,6 +1010,8 @@ kdb_trap(int type, struct trapframe *tf)
 		__asm __volatile ("sev; sev; sev");
 	}
 	db_trigger = NULL;
+	db_readytoswitch[ci->ci_index] = 0;
+	membar_producer();
 #endif
 
 	return 1;
