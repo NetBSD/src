@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.13 2019/07/13 09:47:14 skrll Exp $
+# $NetBSD: genassym.cf,v 1.14 2019/09/07 11:15:25 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,6 +70,7 @@ define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 define	VM_KERNEL_IO_ADDRESS	VM_KERNEL_IO_ADDRESS
 define	VM_KERNEL_IO_SIZE	VM_KERNEL_IO_SIZE
 define	AARCH64_KSEG_START	AARCH64_KSEG_START
+define	AARCH64_KSEG_MASK	AARCH64_KSEG_MASK
 define	UPAGES			UPAGES
 define	USPACE			(UPAGES * PAGE_SIZE)
 
