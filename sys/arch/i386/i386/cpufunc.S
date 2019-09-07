@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.35 2019/09/07 18:33:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.35 2019/09/07 18:33:16 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -90,26 +90,6 @@ END(x86_write_flags)
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
 STRONG_ALIAS(x86_read_psl,x86_read_flags)
 #endif	/* XENPV */
-
-ENTRY(rdmsr_locked)
-	movl	4(%esp), %ecx
-	pushl	%edi
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	rdmsr
-	popl	%edi
-	ret
-END(rdmsr_locked)
-
-ENTRY(wrmsr_locked)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	movl	12(%esp), %edx
-	pushl	%edi
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	wrmsr
-	popl	%edi
-	ret
-END(wrmsr_locked)
 
 /*
  * Support for reading MSRs in the safe manner (returns EFAULT on fault)
