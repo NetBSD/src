@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2019/08/15 10:24:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2019/09/07 09:57:37 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2019/08/15 10:24:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2019/09/07 09:57:37 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1718,9 +1718,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	/*
 	 * read permission is treated as an access permission internally.
 	 * require to add PROT_READ even if only PROT_WRITE or PROT_EXEC
-	 * for wired mapping.
 	 */
-	if ((flags & PMAP_WIRED) && (prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)))
+	if (prot & (VM_PROT_WRITE|VM_PROT_EXECUTE))
 		prot |= VM_PROT_READ;
 
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
@@ -1748,7 +1747,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (pg != NULL) {
 		/* update referenced/modified flags */
 		VM_PAGE_TO_MD(pg)->mdpg_flags |=
-		    (flags & (VM_PROT_READ | VM_PROT_WRITE));
+		    (prot & (VM_PROT_READ | VM_PROT_WRITE));
 		mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
 	}
 
@@ -1818,8 +1817,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 int
 pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
-
 	return _pmap_enter(pm, va, pa, prot, flags, false);
 }
 
