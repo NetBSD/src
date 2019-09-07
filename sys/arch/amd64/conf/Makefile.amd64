@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.77 2019/05/22 08:31:25 kamil Exp $
+#	$NetBSD: Makefile.amd64,v 1.78 2019/09/07 18:56:01 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -89,7 +89,7 @@ LINKFLAGS_NORMAL=	-X
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
+acpi_wakeup_low.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
 linux_sigcode.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
 netbsd32_sigcode.o: assym.h
 

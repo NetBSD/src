@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.44 2019/09/07 18:33:16 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.45 2019/09/07 18:56:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -27,10 +27,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Functions to provide access to i386-specific instructions.
  */
 
 #include <sys/errno.h>
@@ -81,6 +77,16 @@ ENTRY(invlpg)
 	ret
 END(invlpg)
 
+ENTRY(lgdt)
+	/* Reload the descriptor table. */
+	movq	%rdi,%rax
+	lgdt	(%rax)
+	/* Flush the prefetch queue. */
+	jmp	1f
+	nop
+1:	jmp	_C_LABEL(lgdt_finish)
+END(lgdt)
+
 ENTRY(lidt)
 	lidt	(%rdi)
 	ret
@@ -100,27 +106,7 @@ ENTRY(ltr)
 	ltr	%di
 	ret
 END(ltr)
-#endif
 
-/*
- * Big hammer: flush all TLB entries, including ones from PTE's
- * with the G bit set.  This should only be necessary if TLB
- * shootdown falls far behind.
- *
- * Intel Architecture Software Developer's Manual, Volume 3,
- *	System Programming, section 9.10, "Invalidating the
- * Translation Lookaside Buffers (TLBS)":
- * "The following operations invalidate all TLB entries, irrespective
- * of the setting of the G flag:
- * ...
- * "(P6 family processors only): Writing to control register CR4 to
- * modify the PSE, PGE, or PAE flag."
- *
- * (the alternatives not quoted above are not an option here.)
- *
- * If PGE is not in use, we reload CR3.
- */
-#ifndef XENPV
 ENTRY(tlbflushg)
 	movq	%cr4, %rax
 	testq	$CR4_PGE, %rax
@@ -150,6 +136,20 @@ ENTRY(tlbflush)
 	ret
 END(tlbflush)
 
+ENTRY(wbinvd)
+	wbinvd
+	ret
+END(wbinvd)
+
+ENTRY(setusergs)
+	CLI(ax)
+	swapgs
+	movw	%di, %gs
+	swapgs
+	STI(ax)
+	ret
+END(setusergs)
+
 ENTRY(x86_read_flags)
 	pushfq
 	popq	%rax
@@ -165,33 +165,38 @@ ENTRY(x86_write_flags)
 END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
-#endif /* XENPV */
 
-/*
- * Support for reading MSRs in the safe manner (returns EFAULT on fault)
- */
-/* int rdmsr_safe(u_int msr, uint64_t *data) */
+ENTRY(tsc_get_timecount)
+	movq	CPUVAR(CURLWP), %rcx
+1:
+	movq	L_NCSW(%rcx), %rdi
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	cmpq	%rdi, L_NCSW(%rcx)
+	jne	2f
+	ret
+2:
+	jmp	1b
+END(tsc_get_timecount)
+#endif /* !XENPV */
+
 ENTRY(rdmsr_safe)
 	movq	CPUVAR(CURLWP), %r8
 	movq	L_PCB(%r8), %r8
 	movq	$_C_LABEL(msr_onfault), PCB_ONFAULT(%r8)
 
-	movl	%edi, %ecx /* u_int msr */
-	rdmsr			/* Read MSR pointed by %ecx. Returns
-				   hi byte in edx, lo in %eax */
-	salq	$32, %rdx	/* sign-shift %rdx left */
+	movl	%edi, %ecx
+	rdmsr
+	salq	$32, %rdx
 	movl	%eax, %eax	/* zero-extend %eax -> %rax */
 	orq	%rdx, %rax
-	movq	%rax, (%rsi)  /* *data */
-	xorq	%rax, %rax    /* "no error" */
+	movq	%rax, (%rsi)
 
+	xorq	%rax, %rax
 	movq	%rax, PCB_ONFAULT(%r8)
 	ret
 END(rdmsr_safe)
 
-/*
- * MSR operations fault handler
- */
 ENTRY(msr_onfault)
 	movq	CPUVAR(CURLWP), %r8
 	movq	L_PCB(%r8), %r8
@@ -199,13 +204,6 @@ ENTRY(msr_onfault)
 	movl	$EFAULT, %eax
 	ret
 END(msr_onfault)
-
-#ifndef XENPV
-ENTRY(wbinvd)
-	wbinvd
-	ret
-END(wbinvd)
-#endif
 
 ENTRY(cpu_counter)
 	xorq	%rax, %rax
@@ -258,28 +256,7 @@ ENTRY(__byte_swap_u16_variable)
 END(__byte_swap_u16_variable)
 
 /*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Load a new GDT pointer (and do any necessary cleanup).
- * XXX It's somewhat questionable whether reloading all the segment registers
- * is necessary, since the actual descriptor data is not changed except by
- * process creation and exit, both of which clean up via task switches.
- */
-#ifndef XENPV
-ENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movq	%rdi,%rax
-	lgdt	(%rax)
-	/* Flush the prefetch q. */
-	jmp	1f
-	nop
-1:	jmp	_C_LABEL(lgdt_finish)
-END(lgdt)
-#endif
-
-/*
- * void lgdt_finish(void);
- * Reload segments after a GDT change
+ * Reload segments after a GDT change.
  */
 ENTRY(lgdt_finish)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
@@ -290,8 +267,6 @@ ENTRY(lgdt_finish)
 END(lgdt_finish)
 
 /*
- * void x86_flush()
- *
  * Flush instruction pipelines by doing an intersegment (far) return.
  */
 ENTRY(x86_flush)
@@ -487,14 +462,3 @@ ENTRY(outsl)
 	outsl
 	ret
 END(outsl)
-
-#ifndef XENPV
-ENTRY(setusergs)
-	CLI(ax)
-	swapgs
-	movw	%di, %gs
-	swapgs
-	STI(ax)
-	ret
-END(setusergs)
-#endif
