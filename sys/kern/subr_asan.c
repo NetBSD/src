@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.11 2019/09/05 16:19:16 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.12 2019/09/07 09:46:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.11 2019/09/05 16:19:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.12 2019/09/07 09:46:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -445,6 +445,14 @@ kasan_memset(void *b, int c, size_t len)
 {
 	kasan_shadow_check((unsigned long)b, len, true, __RET_ADDR);
 	return __builtin_memset(b, c, len);
+}
+
+void *
+kasan_memmove(void *dst, const void *src, size_t len)
+{
+	kasan_shadow_check((unsigned long)src, len, false, __RET_ADDR);
+	kasan_shadow_check((unsigned long)dst, len, true, __RET_ADDR);
+	return __builtin_memmove(dst, src, len);
 }
 
 char *
