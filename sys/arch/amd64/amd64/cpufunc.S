@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.43 2019/07/05 17:08:55 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.44 2019/09/07 18:33:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -166,26 +166,6 @@ END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
 #endif /* XENPV */
-
-ENTRY(rdmsr_locked)
-	movq	%rdi, %rcx
-	xorq	%rax, %rax
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	rdmsr
-	shlq	$32, %rdx
-	orq	%rdx, %rax
-	ret
-END(rdmsr_locked)
-
-ENTRY(wrmsr_locked)
-	movq	%rdi, %rcx
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	wrmsr
-	ret
-END(wrmsr_locked)
 
 /*
  * Support for reading MSRs in the safe manner (returns EFAULT on fault)
