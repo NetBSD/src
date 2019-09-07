@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.130 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.131 2019/09/07 09:46:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -370,9 +370,9 @@ void	*memset(void *, int, size_t);
 void	*memmem(const void *, size_t, const void *, size_t);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #if defined(_KERNEL) && defined(KASAN)
-void	*kasan_memset(void *, int, size_t);
-int	 kasan_memcmp(const void *, const void *, size_t);
 void	*kasan_memcpy(void *, const void *, size_t);
+int	 kasan_memcmp(const void *, const void *, size_t);
+void	*kasan_memset(void *, int, size_t);
 #define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
 #define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
 #define	memset(d, v, l)		kasan_memset(d, v, l)
@@ -437,7 +437,13 @@ int	inet_aton(const char *, struct in_addr *);
 char	*intoa(u_int32_t);
 #define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr(const void *, int, size_t);
+
 void	*memmove(void *, const void *, size_t);
+#if defined(_KERNEL) && defined(KASAN)
+void	*kasan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kasan_memmove(d, s, l)
+#endif
+
 int	 pmatch(const char *, const char *, const char **);
 #ifndef SMALL_RANDOM
 void	 srandom(unsigned long);
