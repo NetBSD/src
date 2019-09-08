@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.148 2019/08/24 14:18:43 maxv Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.149 2019/09/08 18:46:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.148 2019/08/24 14:18:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.149 2019/09/08 18:46:32 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1608,9 +1608,6 @@ linux_get_sa(struct lwp *l, int s, struct sockaddr_big *sb,
 		namelen = sizeof(struct sockaddr_in6);
 		sin6->sin6_scope_id = 0;
 	}
-
-	if (bdom == AF_INET)
-		namelen = sizeof(struct sockaddr_in);
 
 	sb->sb_family = bdom;
 	sb->sb_len = namelen;
