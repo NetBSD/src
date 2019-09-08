@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.57 2019/07/28 09:27:29 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.58 2019/09/08 05:50:58 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.57 2019/07/28 09:27:29 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.58 2019/09/08 05:50:58 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -192,7 +192,8 @@ unescape_string(const wchar_t *string, size_t length)
 }
 
 static char *
-escape_filename(EditLine * el, const char *filename)
+escape_filename(EditLine * el, const char *filename, int single_match,
+		const char *(*app_func)(const char *))
 {
 	size_t original_len = 0;
 	size_t escaped_character_count = 0;
@@ -204,6 +205,7 @@ escape_filename(EditLine * el, const char *filename)
 	size_t d_quoted = 0;	/* does the input contain a double quote */
 	char *escaped_str;
 	wchar_t *temp = el->el_line.buffer;
+	const char *append_char = NULL;
 
 	if (filename == NULL)
 		return NULL;
@@ -246,6 +248,9 @@ escape_filename(EditLine * el, const char *filename)
 	if (s_quoted || d_quoted)
 		newlen++;
 
+	if (single_match && app_func)
+		newlen++;
+
 	if ((escaped_str = el_malloc(newlen)) == NULL)
 		return NULL;
 
@@ -285,11 +290,24 @@ escape_filename(EditLine * el, const char *filename)
 		escaped_str[offset++] = c;
 	}
 
-	/* close the quotes */
-	if (s_quoted)
-		escaped_str[offset++] = '\'';
-	else if (d_quoted)
-		escaped_str[offset++] = '"';
+	if (single_match && app_func) {
+		escaped_str[offset] = 0;
+		append_char = app_func(escaped_str);
+		/* we want to append space only if we are not inside quotes */
+		if (append_char[0] == ' ') {
+			if (!s_quoted && !d_quoted)
+				escaped_str[offset++] = append_char[0];
+		} else
+			escaped_str[offset++] = append_char[0];
+	}
+
+	/* close the quotes if single match and the match is not a directory */
+	if (single_match && (append_char && append_char[0] == ' ')) { 
+		if (s_quoted)
+			escaped_str[offset++] = '\'';
+		else if (d_quoted)
+			escaped_str[offset++] = '"';
+	}
 
 	escaped_str[offset] = 0;
 	return escaped_str;
@@ -596,6 +614,10 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 			if (ctemp - buffer >= 2 && ctemp[-2] == '\\') {
 				ctemp -= 2;
 				continue;
+			} else if (ctemp - buffer >= 2 &&
+			    (ctemp[-2] == '\'' || ctemp[-2] == '"')) {
+				ctemp--;
+				continue;
 			} else
 				break;
 		}
@@ -605,6 +627,10 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 	}
 
 	len = (size_t) (cursor - ctemp);
+	if (len == 1 && (ctemp[0] == '\'' || ctemp[0] == '"')) {
+		len = 0;
+		ctemp++;
+	}
 	*length = len;
 	wchar_t *unescaped_word = unescape_string(ctemp, len);
 	if (unescaped_word == NULL)
@@ -689,31 +715,29 @@ fn_complete(EditLine *el,
 		retval = CC_REFRESH;
 
 		if (matches[0][0] != '\0') {
-			el_deletestr(el, (int) len);
+			el_deletestr(el, (int)len);
 			if (!attempted_completion_function)
-				completion = escape_filename(el, matches[0]);
+				completion = escape_filename(el, matches[0],
+				    single_match, app_func);
 			else
 				completion = strdup(matches[0]);
 			if (completion == NULL)
 				goto out;
 			if (single_match) {
-				/*
-				 * We found exact match. Add a space after
-				 * it, unless we do filename completion and the
-				 * object is a directory. Also do necessary escape quoting
+				/* We found exact match. Add a space after it,
+				 * unless we do filename completion and the
+				 * object is a directory. Also do necessary
+				 * escape quoting
 				 */
 				el_winsertstr(el,
-					ct_decode_string(completion, &el->el_scratch));
-				el_winsertstr(el,
-						ct_decode_string((*app_func)(completion),
-							&el->el_scratch));
+				    ct_decode_string(completion, &el->el_scratch));
 			} else {
-				/*
-				 * Only replace the completed string with common part of
-				 * possible matches if there is possible completion.
+				/* Only replace the completed string with
+				 * common part of possible matches if there is
+				 * possible completion.
 				 */
 				el_winsertstr(el,
-					ct_decode_string(completion, &el->el_scratch));
+				    ct_decode_string(completion, &el->el_scratch));
 			}
 			free(completion);
 		}
