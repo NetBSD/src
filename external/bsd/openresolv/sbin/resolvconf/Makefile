@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2019/09/08 20:55:57 roy Exp $
+# $NetBSD: Makefile,v 1.9 2019/09/08 21:04:31 roy Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ DIST=		${NETBSDSRCDIR}/external/bsd/openresolv/dist
 SCRIPTS=	resolvconf
 SCRIPTSDIR=	/sbin
 
-FILES=		libc dnsmasq named pdns_recursor unbound
+FILES=		libc dnsmasq named pdns_recursor pdnsd unbound
 FILESDIR=	/libexec/resolvconf
 # We should not have to do this ...
 .for f in ${FILES}
