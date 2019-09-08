@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2019/07/17 08:39:03 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.40 2019/09/08 12:17:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.39 2019/07/17 08:39:03 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.40 2019/09/08 12:17:23 jmcneill Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -766,6 +766,7 @@ init_mmutable:
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
 	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #L2_SIZE			/* size */
 	ldr	x1, =CONSADDR			/* pa */
@@ -779,6 +780,7 @@ init_mmutable:
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
 	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #(1024*1024*1024*4)		/* size */
 	mov	x1, xzr				/* pa */
