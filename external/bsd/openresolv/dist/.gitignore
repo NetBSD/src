@@ -1,3 +1,5 @@
+config.mk
+
 resolvconf
 resolvconf.8
 resolvconf.conf.5
@@ -6,4 +8,5 @@ dnsmasq
 libc
 named
 pdnsd
+pdns_recursor
 unbound
