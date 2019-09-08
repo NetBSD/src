@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130 2019/09/07 19:42:42 tnn Exp $	*/
+/*	$NetBSD: cpu.c,v 1.131 2019/09/08 07:59:43 tnn Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2019/09/07 19:42:42 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2019/09/08 07:59:43 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -518,7 +518,7 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA9R4,	CPU_CLASS_CORTEX,	"Cortex-A9 r4",
 	  pN_steppings, "7A" },
-	{ CPU_ID_CORTEXA12R0,	CPU_CLASS_CORTEX,	"Cortex-A12 r0",
+	{ CPU_ID_CORTEXA12R0,	CPU_CLASS_CORTEX,	"Cortex-A17(A12) r0",	/* A12 was rebranded A17 */
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
 	  pN_steppings, "7A" },
