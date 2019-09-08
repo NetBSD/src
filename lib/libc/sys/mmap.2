@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.54 2019/09/08 17:17:55 sevan Exp $
+.\"	$NetBSD: mmap.2,v 1.55 2019/09/08 17:24:49 sevan Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -206,12 +206,19 @@ resources for this mapping.
 Access to the address space is not guaranteed and may result in a segmentation
 violation.
 Unimplemented.
+.It Dv MAP_PRIVATE
+Modifications made by this process are private, however modifications made by
+other processes using
+.Dv MAP_SHARED
+will be seen.
 .It Dv MAP_REMAPDUP
 Only valid for
 .Xr mremap 2 .
 .It Dv MAP_RENAME
 Assign the referenced private pages to the file descriptor provided.
 Unimplemented.
+.It Dv MAP_SHARED
+Modifications are shared.
 .It Dv MAP_STACK
 Allocate a memory segment that can be used either for a process or thread stack.
 This currently has no effect, but its use is reserved for architectures
@@ -235,13 +242,6 @@ this flag is ignored and the system will select a mapping address.
 .It Dv MAP_WIRED
 Lock the mapped region into memory as with
 .Xr mlock 2 .
-.It Dv MAP_PRIVATE
-Modifications made by this process are private, however modifications made by
-other processes using
-.Dv MAP_SHARED
-will be seen.
-.It Dv MAP_SHARED
-Modifications are shared.
 .El
 .Pp
 The
