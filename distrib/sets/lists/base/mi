@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1214 2019/09/03 15:34:08 riastradh Exp $
+# $NetBSD: mi,v 1.1215 2019/09/08 20:55:57 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -472,6 +472,7 @@
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
 ./libexec/resolvconf/named			base-resolvconf-root
+./libexec/resolvconf/pdns_recursor		base-resolvconf-root
 ./libexec/resolvconf/unbound			base-resolvconf-root
 ./mnt						base-sys-root
 ./rescue					base-sys-root
