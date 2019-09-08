@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.25 2019/08/29 09:17:51 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.26 2019/09/08 18:59:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25 2019/08/29 09:17:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.26 2019/09/08 18:59:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,7 +101,7 @@ static int usbnet_modcmd(modcmd_t, void *);
 #ifndef USBNET_DEBUG
 #define usbnetdebug 0
 #else
-static int usbnetdebug = 1;
+static int usbnetdebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_usbnet_setup, "sysctl hw.usbnet setup")
 {
@@ -418,6 +418,7 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 static void
 usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
+	USBNETHIST_FUNC();
 	struct usbnet * const un = priv;
 	struct usbnet_private * const unp = un->un_pri;
 	struct usbnet_intr * const uni = un->un_intr;
@@ -425,8 +426,12 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (uni == NULL || unp->unp_dying || unp->unp_stopping ||
 	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
-	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING))
+	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING)) {
+		USBNETHIST_CALLARGS("%d: uni %jx d/s %x status %x",
+		    unp->unp_number, (uintptr_t)uni,
+		    (unp->unp_dying << 8) | unp->unp_stopping, status);
 		return;
+	}
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (usbd_ratecheck(&unp->unp_intr_notice)) {
@@ -435,6 +440,8 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(unp->unp_ep[USBNET_ENDPT_INTR]);
+		USBNETHIST_CALLARGS("%d: not normal status %x",
+		    unp->unp_number, status, 0, 0);
 		return;
 	}
 
@@ -444,13 +451,18 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 static void
 usbnet_start_locked(struct ifnet *ifp)
 {
-	USBNETHIST_FUNC(); USBNETHIST_CALLED();
+	USBNETHIST_FUNC();
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_cdata * const cd = un_cdata(un);
 	struct usbnet_private * const unp = un->un_pri;
 	struct mbuf *m;
 	unsigned length;
+	bool done_transmit = false;
 	int idx;
+
+	USBNETHIST_CALLARGS("%d: tx_cnt %d list_cnt %d link %d",
+	    unp->unp_number, cd->uncd_tx_cnt, un->un_tx_list_cnt,
+	    unp->unp_link);
 
 	usbnet_isowned_tx(un);
 	KASSERT(cd->uncd_tx_cnt <= un->un_tx_list_cnt);
@@ -502,6 +514,7 @@ usbnet_start_locked(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			break;
 		}
+		done_transmit = true;
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
@@ -517,10 +530,14 @@ usbnet_start_locked(struct ifnet *ifp)
 	}
 	cd->uncd_tx_prod = idx;
 
+	DPRINTF("finished with start; tx_cnt %d list_cnt %d link %d",
+	    cd->uncd_tx_cnt, un->un_tx_list_cnt, unp->unp_link, 0);
+
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
-	unp->unp_timer = 5;
+	if (done_transmit)
+		unp->unp_timer = 5;
 }
 
 static void
@@ -528,6 +545,10 @@ usbnet_start(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
+
+	USBNETHIST_FUNC();
+	USBNETHIST_CALLARGS("%d, stopping %d",
+	    unp->unp_number, unp->unp_stopping, 0, 0);
 
 	mutex_enter(&unp->unp_txlock);
 	if (!unp->unp_stopping)
@@ -1065,7 +1086,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~IFF_RUNNING;
 	unp->unp_timer = 0;
 
-	callout_stop(&unp->unp_stat_ch);
+	callout_halt(&unp->unp_stat_ch, &unp->unp_lock);
+	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
+	    &unp->unp_lock);
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
@@ -1098,8 +1121,11 @@ usbnet_stop_ifp(struct ifnet *ifp, int disable)
 static void
 usbnet_tick(void *arg)
 {
+	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
+
+	USBNETHIST_CALLARGSN(10, "%d: enter", unp->unp_number, 0, 0, 0);
 
 	if (unp != NULL && !unp->unp_stopping && !unp->unp_dying) {
 		/* Perform periodic stuff in process context */
@@ -1136,8 +1162,14 @@ usbnet_watchdog(struct ifnet *ifp)
 static void
 usbnet_tick_task(void *arg)
 {
+	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
+
+	if (unp == NULL)
+		return;
+
+	USBNETHIST_CALLARGSN(8, "%d: enter", unp->unp_number, 0, 0, 0);
 
 	mutex_enter(&unp->unp_lock);
 	if (unp->unp_stopping || unp->unp_dying) {
@@ -1155,6 +1187,7 @@ usbnet_tick_task(void *arg)
 		usbnet_watchdog(ifp);
 
 	if (mii && ifp) {
+		DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
 		mii_tick(mii);
 
 		if (!unp->unp_link)
@@ -1467,14 +1500,15 @@ usbnet_detach(device_t self, int flags)
 	unp->unp_dying = true;
 	mutex_exit(&unp->unp_lock);
 
-	callout_halt(&unp->unp_stat_ch, NULL);
-	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER, NULL);
-
 	if (ifp->if_flags & IFF_RUNNING) {
 		IFNET_LOCK(ifp);
 		usbnet_stop_ifp(ifp, 1);
 		IFNET_UNLOCK(ifp);
 	}
+
+	callout_halt(&unp->unp_stat_ch, NULL);
+	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
+	    NULL);
 
 	mutex_enter(&unp->unp_lock);
 	unp->unp_refcnt--;
@@ -1493,6 +1527,7 @@ usbnet_detach(device_t self, int flags)
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_delete_instance(&mii->mii_media, IFM_INST_ANY);
+		usbnet_ec(un)->ec_mii = NULL;
 	}
 	if (ifp->if_softc) {
 		if (!usbnet_empty_eaddr(un))
@@ -1513,6 +1548,7 @@ usbnet_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, un->un_udev, un->un_dev);
 
 	kmem_free(unp, sizeof(*unp));
+	un->un_pri = NULL;
 
 	return 0;
 }
