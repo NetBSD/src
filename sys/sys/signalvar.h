@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.94 2019/09/08 07:00:20 maxv Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.95 2019/09/08 11:53:23 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,6 +38,10 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/stdbool.h>
+
+#ifndef _KERNEL
+#include <string.h>     /* Required for memset(3) and memcpy(3) prototypes */
+#endif /* _KERNEL */
 
 /*
  * Kernel signal definitions and data structures,
