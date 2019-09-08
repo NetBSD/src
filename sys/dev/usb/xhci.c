@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.113 2019/09/07 22:56:47 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.114 2019/09/08 18:58:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.113 2019/09/07 22:56:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.114 2019/09/08 18:58:38 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2885,12 +2885,13 @@ xhci_address_device(struct xhci_softc * const sc,
 	usbd_status err;
 
 	XHCIHIST_FUNC();
-	if (bsr)
+	if (bsr) {
 		XHCIHIST_CALLARGS("icp %jx slot %jx with bsr",
 		    icp, slot_id, 0, 0);
-	else
+	} else {
 		XHCIHIST_CALLARGS("icp %jx slot %jx nobsr",
 		    icp, slot_id, 0, 0);
+	}
 
 	trb.trb_0 = icp;
 	trb.trb_2 = 0;
