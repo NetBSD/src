@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.93 2019/07/26 10:03:40 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.94 2019/09/09 05:36:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.93 2019/07/26 10:03:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.94 2019/09/09 05:36:21 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -357,7 +357,8 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	if (lfunc < 0x8000001d)
 		return;
 
-	cpu_dcp_cacheinfo(ci, 0x8000001d);
+	if (ci->ci_feat_val[3] & CPUID_TOPOEXT)
+		cpu_dcp_cacheinfo(ci, 0x8000001d);
 }
 
 static void
