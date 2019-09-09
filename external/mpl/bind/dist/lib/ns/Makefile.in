@@ -42,11 +42,11 @@ LIBS =		@LIBS@
 OBJS =		client.@O@ hooks.@O@ interfacemgr.@O@ lib.@O@ \
 		listenlist.@O@ log.@O@ notify.@O@ query.@O@ \
 		server.@O@ sortlist.@O@ stats.@O@ update.@O@ \
-		version.@O@ xfrout.@O@
+		version.@O@ xfrout.@O@ pfilter.@O@
 
 SRCS =		client.c hooks.c interfacemgr.c lib.c listenlist.c \
 		log.c notify.c query.c server.c sortlist.c stats.c \
-		update.c version.c xfrout.c
+		update.c version.c xfrout.c pfilter.c
 
 SUBDIRS =	include
 TESTDIRS =	@UNITTESTS@
