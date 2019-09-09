@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.287 2019/07/26 14:38:26 sevan Exp $
+$NetBSD: acronyms,v 1.288 2019/09/09 12:42:52 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -190,6 +190,7 @@ GBTW	get back to work
 GCD	greatest common divisor
 GDPR	General Data Protection Regulation
 GF	girlfriend
+GFCI	ground-fault circuit interrupter
 GFU	good for you
 GFY	good for you
 GG	good game
@@ -463,6 +464,7 @@ QED	quod erat demonstrandum
 QFT	quoted for truth
 RA	residential advisor
 RAND	reasonable and non-discriminatory
+RCD	residual current device
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
