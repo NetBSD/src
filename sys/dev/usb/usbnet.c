@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.27 2019/09/08 19:00:33 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.28 2019/09/09 07:20:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.27 2019/09/08 19:00:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.28 2019/09/09 07:20:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,11 @@ struct usbnet_private {
 	 * - unp_rxlock protects the rx path and its data
 	 * - unp_txlock protects the tx path and its data
 	 * - unp_detachcv handles detach vs open references
+	 *
+	 * the lock ordering is:
+	 *	ifnet lock -> unp_lock -> unp_rxlock -> unp_txlock
+	 *      unp_lock -> unp_miilock
+	 * and unp_lock may be dropped after taking unp_miilock.
 	 */
 	kmutex_t		unp_lock;
 	kmutex_t		unp_miilock;
