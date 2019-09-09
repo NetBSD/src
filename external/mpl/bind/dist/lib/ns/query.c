@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.6 2019/09/05 19:33:00 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.7 2019/09/09 14:40:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,6 +70,8 @@
 #include <ns/sortlist.h>
 #include <ns/stats.h>
 #include <ns/xfrout.h>
+
+#include <ns/pfilter.h>
 
 #if 0
 /*
@@ -868,6 +870,8 @@ query_checkcacheaccess(ns_client_t *client, const dns_name_t *name,
 					      msg);
 			}
 		} else if (log) {
+			pfilter_notify(result, client, "checkcacheaccess");
+
 			/*
 			 * We were denied by the "allow-query-cache" ACL.
 			 * There is no need to clear NS_QUERYATTR_CACHEACLOK
@@ -999,6 +1003,7 @@ query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 					      "%s approved", msg);
 			}
 		} else {
+			pfilter_notify(result, client, "validatezonedb");
 			ns_client_aclmsg("query", name, qtype,
 					 client->view->rdclass,
 					 msg, sizeof(msg));
@@ -1032,6 +1037,8 @@ query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 
 		result = ns_client_checkaclsilent(client, &client->destaddr,
 						  queryonacl, true);
+		if (result != ISC_R_SUCCESS)
+			pfilter_notify(result, client, "validatezonedb");
 		if ((options & DNS_GETDB_NOLOG) == 0 &&
 		    result != ISC_R_SUCCESS)
 			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
