@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2019/03/19 05:55:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.94 2019/09/09 13:57:13 maya Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -32,7 +32,7 @@ SOFTFLOAT_ARGS=	-with-float=soft
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
-			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
+			--with-bugurl=http://www.NetBSD.org/support/send-pr.html \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
 			--without-isl \
