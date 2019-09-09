@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.14 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.15 2019/09/09 07:20:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -343,7 +343,8 @@ void	usbnet_input(struct usbnet * const, uint8_t *, size_t);
 
 /* autoconf */
 void	usbnet_attach(struct usbnet *un, const char *);
-void	usbnet_attach_ifp(struct usbnet *, unsigned, unsigned, const struct usbnet_mii *);
+void	usbnet_attach_ifp(struct usbnet *, unsigned, unsigned,
+			  const struct usbnet_mii *);
 int	usbnet_detach(device_t, int);
 int	usbnet_activate(device_t, devact_t);
 
