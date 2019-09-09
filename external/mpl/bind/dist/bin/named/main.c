@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2019/09/09 14:40:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,7 +89,7 @@
 #include <zlib.h>
 #endif
 
-#include "pfilter.h"
+#include <ns/pfilter.h>
 /*
  * Include header files for database drivers here.
  */
@@ -1404,7 +1404,7 @@ main(int argc, char *argv[]) {
 
 	parse_command_line(argc, argv);
 
-	pfilter_open();
+	pfilter_enable();
 
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {
