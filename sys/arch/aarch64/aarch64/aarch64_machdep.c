@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.29 2019/09/06 20:52:57 jmcneill Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.30 2019/09/09 17:02:36 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.29 2019/09/06 20:52:57 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.30 2019/09/09 17:02:36 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -118,7 +118,6 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	extern char _end[];
 	extern char __data_start[];
 	extern char __rodata_start[];
-	uint64_t start, end;
 	u_int blk;
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
@@ -135,17 +134,79 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	    LX_BLKPAG_PXN |
 	    LX_BLKPAG_UXN;
 	for (blk = 0; blk < bootconfig.dramblocks; blk++) {
-		start = L2_TRUNC_BLOCK(bootconfig.dram[blk].address);
-		end = L2_ROUND_BLOCK(bootconfig.dram[blk].address +
-		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
+		uint64_t start, end, left, mapsize, nblocks;
 
-		VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx (L2)\n",
-		    start, end);
-		pmapboot_enter(AARCH64_PA_TO_KVA(start), start, 
-		    end - start, L2_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
-		    bootpage_alloc, NULL);
-		aarch64_tlbi_all();
+		start = trunc_page(bootconfig.dram[blk].address);
+		end = round_page(bootconfig.dram[blk].address +
+		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
+		left = end - start;
+
+		/* align the start address to L2 blocksize */
+		nblocks = ulmin(left / L3_SIZE,
+		    Ln_ENTRIES - __SHIFTOUT(start, L3_ADDR_BITS));
+		if (nblocks > 0) {
+			mapsize = nblocks * L3_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L3)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L3_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		/* align the start address to L1 blocksize */
+		nblocks = ulmin(left / L2_SIZE,
+		    Ln_ENTRIES - __SHIFTOUT(start, L2_ADDR_BITS));
+		if (nblocks > 0) {
+			mapsize = nblocks * L2_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L2)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L2_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		nblocks = left / L1_SIZE;
+		if (nblocks > 0) {
+			mapsize = nblocks * L1_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L1)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L1_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		if ((left & L2_ADDR_BITS) != 0) {
+			nblocks = left / L2_SIZE;
+			mapsize = nblocks * L2_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L2)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L2_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		if ((left & L3_ADDR_BITS) != 0) {
+			nblocks = left / L3_SIZE;
+			mapsize = nblocks * L3_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L3)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L3_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
 	}
+	aarch64_tlbi_all();
 
 	/*
 	 * at this point, whole kernel image is mapped as "rwx".
