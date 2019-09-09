@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.289 2019/09/03 21:34:03 sevan Exp $
+$NetBSD: acronyms.comp,v 1.290 2019/09/09 18:11:20 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -298,6 +298,7 @@ CR	carriage return
 CRC	cyclic redundancy check
 CRL	carrier recovery loop
 CRLF	carriage return line feed
+CSU	C start up
 CRT	cathode ray tube
 CRUD	create, read, update, and delete
 CS	cable select
@@ -1662,6 +1663,7 @@ UT	unit test
 UTC	coordinated universal time
 UTF	unicode transformation formats
 UTP	unshielded twisted pair
+UTS	UNIX time-sharing
 UUCP	Unix-to-Unix Copy Protocol
 UUID	universally unique identifier
 UUOC	useless use of cat
