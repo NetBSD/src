@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.h,v 1.2 2019/04/24 18:47:54 kamil Exp $	*/
+/*	$NetBSD: threads.h,v 1.3 2019/09/10 22:34:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ int	thrd_create(thrd_t *, thrd_start_t, void *);
 thrd_t	thrd_current(void);
 int	thrd_detach(thrd_t);
 int	thrd_equal(thrd_t, thrd_t);
-_Noreturn void	thrd_exit(int);
+__dead void	thrd_exit(int);
 int	thrd_join(thrd_t, int *);
 int	thrd_sleep(const struct timespec *, struct timespec *);
 void	thrd_yield(void);
