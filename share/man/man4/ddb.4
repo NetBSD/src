@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.185 2019/07/21 15:51:58 rin Exp $
+.\"	$NetBSD: ddb.4,v 1.186 2019/09/10 08:16:04 ryo Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 21, 2019
+.Dd September 10, 2019
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -441,6 +441,8 @@ Non-printing characters are displayed as octal escapes.
 .It Cm m
 display in unsigned hex with a character dump at the end of each line.
 The location is displayed as hex at the beginning of each line.
+.It Cm p
+display as a pointer and it's symbol if possible.
 .It Cm i
 display as a machine instruction.
 .It Cm I
