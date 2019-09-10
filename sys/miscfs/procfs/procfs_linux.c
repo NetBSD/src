@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.74 2018/12/05 18:16:51 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.74.4.1 2019/09/10 16:11:00 martin Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.74 2018/12/05 18:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.74.4.1 2019/09/10 16:11:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,19 +75,15 @@ extern int max_devsw_convs;
 #define LBFSZ (8 * 1024)
 
 static void
-get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, unsigned long *sstack)
+get_proc_size_info(struct proc *p, struct vm_map *map, unsigned long *stext,
+    unsigned long *etext, unsigned long *sstack)
 {
-	struct proc *p = l->l_proc;
-	struct vmspace *vm;
-	struct vm_map *map;
 	struct vm_map_entry *entry;
 
 	*stext = 0;
 	*etext = 0;
 	*sstack = 0;
 
-	proc_vmspace_getref(p, &vm);
-	map = &vm->vm_map;
 	vm_map_lock_read(map);
 
 	for (entry = map->header.next; entry != &map->header;
@@ -128,7 +124,6 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 	*sstack -= PAGE_SIZE;
 
 	vm_map_unlock_read(map);
-	uvmspace_free(vm);
 }
 
 /*
@@ -435,7 +430,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 		goto out;
 	}
 
-	get_proc_size_info(l, &stext, &etext, &sstack);
+	get_proc_size_info(p, &vm->vm_map, &stext, &etext, &sstack);
 
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
