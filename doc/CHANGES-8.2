@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.35 2019/09/06 13:48:43 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.36 2019/09/10 16:04:59 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -874,4 +874,20 @@ lib/libc/nameser/ns_name.c			1.12
 
 	Fix buffer overrun.
 	[maya, ticket #1368]
+
+sys/miscfs/procfs/procfs_linux.c		1.76
+
+	Have procfs_do_pid_stat() pass the proc's map to get_proc_size_info(),
+	rather than having the latter look up the map again.
+	[chs, ticket #1370]
+
+sys/dev/sysmon/sysmon_power.c			1.61
+
+	Fix info leak.
+	[maxv, ticket #1371]
+
+sys/netipsec/key.c				1.266
+
+	Fix info leaks.
+	[maxv, ticket #1372]
 
