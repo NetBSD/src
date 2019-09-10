@@ -1,4 +1,4 @@
-/*	$NetBSD: thrd.c,v 1.3 2019/04/29 20:11:43 kamil Exp $	*/
+/*	$NetBSD: thrd.c,v 1.4 2019/09/10 22:34:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thrd.c,v 1.3 2019/04/29 20:11:43 kamil Exp $");
+__RCSID("$NetBSD: thrd.c,v 1.4 2019/09/10 22:34:19 kamil Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -122,7 +122,7 @@ thrd_equal(thrd_t t1, thrd_t t2)
 	return pthread_equal(t1, t2);
 }
 
-_Noreturn void
+__dead void
 thrd_exit(int res)
 {
 
