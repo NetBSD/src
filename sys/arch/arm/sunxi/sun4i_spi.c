@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.5 2019/09/11 15:03:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.4 2019/08/13 17:03:10 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.5 2019/09/11 15:03:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,6 +65,7 @@ struct sun4ispi_softc {
 #define SPIREG_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+static struct spi_controller * sun4i_spi_get_controller(device_t);
 static int sun4ispi_match(device_t, cfdata_t, void *);
 static void sun4ispi_attach(device_t, device_t, void *);
 
@@ -80,6 +81,18 @@ static int sun4ispi_intr(void *);
 
 CFATTACH_DECL_NEW(sun4i_spi, sizeof(struct sun4ispi_softc),
     sun4ispi_match, sun4ispi_attach, NULL, NULL);
+
+static const struct fdtbus_spi_controller_func sun4i_spi_funcs = {
+	.get_controller = sun4i_spi_get_controller
+};
+
+static struct spi_controller *
+sun4i_spi_get_controller(device_t dev)
+{
+	struct sun4ispi_softc * const sc = device_private(dev);
+
+	return &sc->sc_spi;
+}
 
 static int
 sun4ispi_match(device_t parent, cfdata_t cf, void *aux)
@@ -99,7 +112,6 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	struct clk *clk, *modclk;
 	char intrstr[128];
-	struct spibus_attach_args sba;
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -151,10 +163,8 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_configure = sun4ispi_configure;
 	sc->sc_spi.sct_transfer = sun4ispi_transfer;
 	(void) of_getprop_uint32(phandle, "num-cs", &sc->sc_spi.sct_nslaves);
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	(void) config_found_ia(self, "spibus", &sba, spibus_print);
+	fdtbus_register_spi_controller(self, phandle, &sun4i_spi_funcs);
+	(void) fdtbus_attach_spibus(self, phandle, spibus_print);
 }
 
 static int
