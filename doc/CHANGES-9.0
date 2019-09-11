@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.47 2019/09/07 18:06:30 snj Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.48 2019/09/11 16:37:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2910,4 +2910,30 @@ sys/arch/amiga/dev/aucc.c			1.47
 	aucc(4) does not support recording.
 	Fixes diagnostic assertion failure in aucc_set_format().
 	[rin, ticket #189]
+
+sys/miscfs/procfs/procfs_linux.c		1.76
+
+	Have procfs_do_pid_stat() pass the proc's map to get_proc_size_info(),
+	rather than having the latter look up the map again.
+	[chs, ticket #190]
+
+sys/kern/sysv_shm.c				1.136
+
+	Acquire shmseg uobj reference while we hold shm_lock.
+	Otherwise nothing prevents it from being detached when we drop shm_lock.
+	[maxv, ticket #191]
+
+sys/kern/kern_time.c				1.198,1.199
+sys/sys/timevar.h				1.39
+
+	Fix race in timer destruction.
+	[maxv, ticket #192]
+
+sys/netinet/tcp_input.c				1.415
+sys/netinet/tcp_subr.c				1.283
+sys/netinet/tcp_timer.h				1.30
+sys/netinet/tcp_usrreq.c			1.225
+
+	Clamp tcp timer quantities to reasonable ranges.
+	[maxv, ticket #193]
 
