@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.9 2019/09/11 18:19:35 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.10 2019/09/11 18:23:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,13 @@
 
 #ifndef _LOCORE
 typedef uint64_t pd_entry_t;	/* L0(512G) / L1(1G) / L2(2M) table entry */
+
+#ifndef __BSD_PTENTRY_T__
+#define __BSD_PTENTRY_T__
 typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
+#define PRIxPTE         PRIx64
+#endif /* __BSD_PTENTRY_T__ */
+
 #endif /* _LOCORE */
 
 /*
