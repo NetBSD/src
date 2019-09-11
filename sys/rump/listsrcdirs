@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.36 2019/02/17 23:50:53 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.37 2019/09/11 22:30:16 bad Exp $
 #
 
 #
@@ -75,6 +75,7 @@ lsrc sys /lib/lib		c util
 lsrc sys /external/bsd/		flex mdocml byacc
 lsrc sys /external/cddl/	osnet
 lsrc sys /external/historical/	nawk
+lsrc sys /external/public-domain/	xz
 lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
