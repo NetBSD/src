@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.14 2019/09/05 16:19:16 maxv Exp $	*/
+/*	$NetBSD: atomic.h,v 1.15 2019/09/11 14:56:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -44,45 +44,45 @@
 #if defined(KASAN)
 #define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
 	void kasan_atomic_add_##name(volatile targ1 *, targ2); \
-	tret kasan_atomic_add_##name##_nv(volatile targ1 *, targ2);
+	tret kasan_atomic_add_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_AND(name, tret, targ1, targ2) \
 	void kasan_atomic_and_##name(volatile targ1 *, targ2); \
-	tret kasan_atomic_and_##name##_nv(volatile targ1 *, targ2);
+	tret kasan_atomic_and_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_OR(name, tret, targ1, targ2) \
 	void kasan_atomic_or_##name(volatile targ1 *, targ2); \
-	tret kasan_atomic_or_##name##_nv(volatile targ1 *, targ2);
+	tret kasan_atomic_or_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_CAS(name, tret, targ1, targ2) \
 	tret kasan_atomic_cas_##name(volatile targ1 *, targ2, targ2); \
-	tret kasan_atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2);
+	tret kasan_atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2)
 #define ATOMIC_PROTO_SWAP(name, tret, targ1, targ2) \
-	tret kasan_atomic_swap_##name(volatile targ1 *, targ2);
+	tret kasan_atomic_swap_##name(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_DEC(name, tret, targ1) \
 	void kasan_atomic_dec_##name(volatile targ1 *); \
-	tret kasan_atomic_dec_##name##_nv(volatile targ1 *);
+	tret kasan_atomic_dec_##name##_nv(volatile targ1 *)
 #define ATOMIC_PROTO_INC(name, tret, targ1) \
 	void kasan_atomic_inc_##name(volatile targ1 *); \
-	tret kasan_atomic_inc_##name##_nv(volatile targ1 *);
+	tret kasan_atomic_inc_##name##_nv(volatile targ1 *)
 #else
 #define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
 	void atomic_add_##name(volatile targ1 *, targ2); \
-	tret atomic_add_##name##_nv(volatile targ1 *, targ2);
+	tret atomic_add_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_AND(name, tret, targ1, targ2) \
 	void atomic_and_##name(volatile targ1 *, targ2); \
-	tret atomic_and_##name##_nv(volatile targ1 *, targ2);
+	tret atomic_and_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_OR(name, tret, targ1, targ2) \
 	void atomic_or_##name(volatile targ1 *, targ2); \
-	tret atomic_or_##name##_nv(volatile targ1 *, targ2);
+	tret atomic_or_##name##_nv(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_CAS(name, tret, targ1, targ2) \
 	tret atomic_cas_##name(volatile targ1 *, targ2, targ2); \
-	tret atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2);
+	tret atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2)
 #define ATOMIC_PROTO_SWAP(name, tret, targ1, targ2) \
-	tret atomic_swap_##name(volatile targ1 *, targ2);
+	tret atomic_swap_##name(volatile targ1 *, targ2)
 #define ATOMIC_PROTO_DEC(name, tret, targ1) \
 	void atomic_dec_##name(volatile targ1 *); \
-	tret atomic_dec_##name##_nv(volatile targ1 *);
+	tret atomic_dec_##name##_nv(volatile targ1 *)
 #define ATOMIC_PROTO_INC(name, tret, targ1) \
 	void atomic_inc_##name(volatile targ1 *); \
-	tret atomic_inc_##name##_nv(volatile targ1 *);
+	tret atomic_inc_##name##_nv(volatile targ1 *)
 #endif
 
 __BEGIN_DECLS
@@ -115,14 +115,14 @@ ATOMIC_PROTO_SWAP(uint, unsigned int, unsigned int, unsigned int);
 ATOMIC_PROTO_SWAP(ulong, unsigned long, unsigned long, unsigned long);
 ATOMIC_PROTO_SWAP(ptr, void *, void, void *);
 
-ATOMIC_PROTO_DEC(32, uint32_t, uint32_t)
-ATOMIC_PROTO_DEC(64, uint64_t, uint64_t)
+ATOMIC_PROTO_DEC(32, uint32_t, uint32_t);
+ATOMIC_PROTO_DEC(64, uint64_t, uint64_t);
 ATOMIC_PROTO_DEC(uint, unsigned int, unsigned int);
 ATOMIC_PROTO_DEC(ulong, unsigned long, unsigned long);
 ATOMIC_PROTO_DEC(ptr, void *, void);
 
-ATOMIC_PROTO_INC(32, uint32_t, uint32_t)
-ATOMIC_PROTO_INC(64, uint64_t, uint64_t)
+ATOMIC_PROTO_INC(32, uint32_t, uint32_t);
+ATOMIC_PROTO_INC(64, uint64_t, uint64_t);
 ATOMIC_PROTO_INC(uint, unsigned int, unsigned int);
 ATOMIC_PROTO_INC(ulong, unsigned long, unsigned long);
 ATOMIC_PROTO_INC(ptr, void *, void);
