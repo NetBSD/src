@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.30 2019/09/09 17:02:36 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.31 2019/09/11 08:15:48 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.30 2019/09/09 17:02:36 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.31 2019/09/11 08:15:48 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -144,7 +144,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 		/* align the start address to L2 blocksize */
 		nblocks = ulmin(left / L3_SIZE,
 		    Ln_ENTRIES - __SHIFTOUT(start, L3_ADDR_BITS));
-		if (nblocks > 0) {
+		if (((start & L3_ADDR_BITS) != 0) && (nblocks > 0)) {
 			mapsize = nblocks * L3_SIZE;
 			VPRINTF("Creating KSEG tables for %016lx-%016lx (L3)\n",
 			    start, start + mapsize - 1);
@@ -159,7 +159,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 		/* align the start address to L1 blocksize */
 		nblocks = ulmin(left / L2_SIZE,
 		    Ln_ENTRIES - __SHIFTOUT(start, L2_ADDR_BITS));
-		if (nblocks > 0) {
+		if (((start & L2_ADDR_BITS) != 0) && (nblocks > 0)) {
 			mapsize = nblocks * L2_SIZE;
 			VPRINTF("Creating KSEG tables for %016lx-%016lx (L2)\n",
 			    start, start + mapsize - 1);
