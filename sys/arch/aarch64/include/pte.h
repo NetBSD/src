@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.7 2019/08/15 09:07:34 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.8 2019/09/11 11:43:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -134,8 +134,9 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define TCR_TBI0		__BIT(37)		/* ignore Top Byte TTBR0_EL1 */
 #define TCR_AS64K		__BIT(36)		/* Use 64K ASIDs */
 #define TCR_IPS			__BITS(34,32)		/* Intermediate PhysAdr Size */
+#define  TCR_IPS_4PB		__SHIFTIN(6,TCR_IPS)	/* 52 bits (  4 PB) */
 #define  TCR_IPS_256TB		__SHIFTIN(5,TCR_IPS)	/* 48 bits (256 TB) */
-#define  TCR_IPS_64TB		__SHIFTIN(4,TCR_IPS)	/* 44 bits  (16 TB) */
+#define  TCR_IPS_16TB		__SHIFTIN(4,TCR_IPS)	/* 44 bits  (16 TB) */
 #define  TCR_IPS_4TB		__SHIFTIN(3,TCR_IPS)	/* 42 bits  ( 4 TB) */
 #define  TCR_IPS_1TB		__SHIFTIN(2,TCR_IPS)	/* 40 bits  ( 1 TB) */
 #define  TCR_IPS_64GB		__SHIFTIN(1,TCR_IPS)	/* 36 bits  (64 GB) */
@@ -162,9 +163,9 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define TCR_A1			__BIT(22)		/* ASID is in TTBR1_EL1 */
 #define TCR_T1SZ		__BITS(21,16)		/* Size offset for TTBR1_EL1 */
 #define TCR_TG0			__BITS(15,14)		/* TTBR0 Page Granule Size */
-#define  TCR_TG0_16KB		__SHIFTIN(1,TCR_TG1)	/* 16KB page size */
-#define  TCR_TG0_4KB		__SHIFTIN(2,TCR_TG1)	/* 4KB page size */
-#define  TCR_TG0_64KB		__SHIFTIN(3,TCR_TG1)	/* 64KB page size */
+#define  TCR_TG0_4KB		__SHIFTIN(0,TCR_TG0)	/* 4KB page size */
+#define  TCR_TG0_64KB		__SHIFTIN(1,TCR_TG0)	/* 64KB page size */
+#define  TCR_TG0_16KB		__SHIFTIN(2,TCR_TG0)	/* 16KB page size */
 #define TCR_SH0			__BITS(13,12)
 #define  TCR_SH0_NONE		__SHIFTIN(0,TCR_SH0)
 #define  TCR_SH0_OUTER		__SHIFTIN(2,TCR_SH0)
@@ -176,7 +177,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define  TCR_ORGN0_WB		__SHIFTIN(3,TCR_ORGN0)	/* WriteBack */
 #define TCR_IRGN0		__BITS(9,8)		/* TTBR0 Inner cacheability */
 #define  TCR_IRGN0_NC		__SHIFTIN(0,TCR_IRGN0)	/* Non Cacheable */
-#define  TCR_IRGN0_WB_WA		__SHIFTIN(1,TCR_IRGN0)	/* WriteBack WriteAllocate */
+#define  TCR_IRGN0_WB_WA	__SHIFTIN(1,TCR_IRGN0)	/* WriteBack WriteAllocate */
 #define  TCR_IRGN0_WT		__SHIFTIN(2,TCR_IRGN0)	/* WriteThrough */
 #define  TCR_IRGN0_WB		__SHIFTIN(3,TCR_IRGN0)	/* WriteBack */
 #define TCR_EPD0		__BIT(7)		/* Walk Disable for TTBR0 */
