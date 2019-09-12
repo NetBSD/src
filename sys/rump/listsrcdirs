@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.40 2019/09/12 15:17:08 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.41 2019/09/12 17:35:58 bad Exp $
 #
 
 #
@@ -61,6 +61,20 @@ lsrc ()
 	shift 2
 
 	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
+}
+
+include_headerlist ()
+{
+	what=$1
+	pfx=$2
+	shift 2
+
+	if iswanted ${what}; then
+		[ -f headerlist ] \
+			|| { echo 'missing file: headerlist' 1>&2; exit 1; }
+		sed -E -e '/^#/d' -e '/^[  ]*$/d' \
+		    -e "/^\.?\/?/s##src${pfx}#" headerlist
+	fi
 }
 
 ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 riscv"
@@ -133,6 +147,8 @@ if ${cvsmode}; then
 	for extra in ${ARCHS_EXTRA}; do
 		lsrc sys /sys/arch/ ${extra}
 	done
+	# the includes mentioned in src/tools/headerlist are required
+	include_headerlist sys /sys/arch/
 else
 	lsrc sys / sys
 
