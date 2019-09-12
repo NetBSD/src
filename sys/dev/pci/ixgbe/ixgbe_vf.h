@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.h,v 1.13 2018/04/04 08:13:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.h,v 1.14 2019/09/12 06:19:47 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -41,6 +41,8 @@
 #define IXGBE_VF_IRQ_CLEAR_MASK	7
 #define IXGBE_VF_MAX_TX_QUEUES	8
 #define IXGBE_VF_MAX_RX_QUEUES	8
+
+#define IXGBE_MAX_VF_MC 30  /* Max number of multicast entries */
 
 /* DCB define */
 #define IXGBE_VF_MAX_TRAFFIC_CLASS	8
