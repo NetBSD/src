@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.34 2018/09/16 23:18:55 mrg Exp $	*/
+/*	$NetBSD: db_output.c,v 1.35 2019/09/12 18:43:02 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.34 2018/09/16 23:18:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.35 2019/09/12 18:43:02 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,24 @@ db_force_whitespace(void)
 	db_last_non_space = db_output_position;
 }
 
+
+/*
+ * End the current line if we it exceeds $maxwidth
+ */
+static void
+db_check_wrap(void)
+{
+
+	if (db_max_width >= DB_MIN_MAX_WIDTH
+	    && db_output_position >= db_max_width) {
+		cnputc('\n');
+		db_output_position = 0;
+		db_last_non_space = 0;
+		db_output_line++;
+	}
+}
+
+
 static void
 db_more(void)
 {
@@ -148,16 +166,10 @@ db_putchar(int c)
 		 * Use tabs if possible.
 		 */
 		db_force_whitespace();
+		db_check_wrap();
 		cnputc(c);
 		db_output_position++;
-		if (db_max_width >= DB_MIN_MAX_WIDTH
-		    && db_output_position >= db_max_width) {
-			/* auto new line */
-			cnputc('\n');
-			db_output_position = 0;
-			db_last_non_space = 0;
-			db_output_line++;
-		}
+		db_check_wrap();
 		db_last_non_space = db_output_position;
 	} else if (c == '\n') {
 		/* Return */
