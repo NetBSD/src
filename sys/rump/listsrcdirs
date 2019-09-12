@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.42 2019/09/12 18:28:05 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.43 2019/09/12 20:10:00 bad Exp $
 #
 
 #
@@ -73,7 +73,8 @@ include_headerlist ()
 		[ -f headerlist ] \
 			|| { echo 'missing file: headerlist' 1>&2; exit 1; }
 		sed -E -e '/^#/d' -e '/^[  ]*$/d' \
-		    -e "/^\.?\/?/s##src${pfx}#" headerlist
+		    -e "/^\.?\/?/s##src${pfx}#" headerlist \
+		    | egrep -v "^src${pfx}($(echo "$@" | tr ' ' \|))/include"
 	fi
 }
 
@@ -140,15 +141,14 @@ if ${cvsmode}; then
 	    echo \!src/external/bsd/libc++/dist/libcxx/test \
 	           src/external/bsd/libc++
 
-	# the includes mentioned in src/tools/headerlist are required.
-	# pull them in first or else CVS export will complain if they
-	# have been checked out as one of the usefule archs.
-	include_headerlist sys /sys/arch/
-
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for arch in ${ARCHS}; do
 		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
 	done
+	# the includes mentioned in src/tools/headerlist are required.
+	# but pull in only those that have not been pulled in by the previous
+	# loop
+	include_headerlist sys /sys/arch/ ${ARCHS}
 	for extra in ${ARCHS_EXTRA}; do
 		lsrc sys /sys/arch/ ${extra}
 	done
