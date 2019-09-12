@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.4 2019/09/12 09:02:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.4 2019/09/12 09:02:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,6 +200,10 @@ gicv3_acpi_map_gicr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		const uint32_t typer = bus_space_read_4(sc->sc_gic.sc_bst, sc->sc_gic.sc_bsh_r[redist], GICR_TYPER);
 		if (typer & GICR_TYPER_Last)
 			break;
+
+		/* If the redistributor supports virtual LPIs, skip the VLPI register region */
+		if (typer & GICR_TYPER_VLPIS)
+			off += GICR_SIZE;
 	}
 
 	return AE_OK;
