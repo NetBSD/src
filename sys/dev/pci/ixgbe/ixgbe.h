@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56 2019/07/17 03:26:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.57 2019/09/12 06:19:47 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -435,8 +435,6 @@ struct rx_ring {
 	/* Flow Director */
 	u64			flm;
 };
-
-#define IXGBE_MAX_VF_MC 30  /* Max number of multicast entries */
 
 struct ixgbe_vf {
 	u_int    pool;
