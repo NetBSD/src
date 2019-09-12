@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.8 2018/12/19 11:02:21 mrg Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.9 2019/09/12 10:18:50 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <kvm.h>
 
 #include <machine/kcore.h>
+#include <machine/armreg.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
@@ -48,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.8 2018/12/19 11:02:21 mrg Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.9 2019/09/12 10:18:50 mlelstv Exp $");
 
 /*ARGSUSED*/
 void
