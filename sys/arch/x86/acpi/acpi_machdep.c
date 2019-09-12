@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.27 2019/09/12 00:52:22 manu Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.28 2019/09/12 14:28:08 martin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.27 2019/09/12 00:52:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.28 2019/09/12 14:28:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ acpi_md_OsGetRootPointer(void)
 		for (i = 0; i < info->cfg.nent; i++) {
                 	if (memcmp(&ct[i].ct_uuid,
 			    &EFI_UUID_ACPI20, sizeof(EFI_UUID_ACPI20)) == 0) {
-				PhysicalAddress =
-				    (ACPI_PHYSICAL_ADDRESS)ct[i].ct_data;
+				PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)
+				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
 					goto out;
 					
@@ -137,8 +137,8 @@ acpi_md_OsGetRootPointer(void)
 		for (i = 0; i < info->cfg.nent; i++) {
                 	if (memcmp(&ct[i].ct_uuid,
 			    &EFI_UUID_ACPI10, sizeof(EFI_UUID_ACPI10)) == 0) {
-				PhysicalAddress =
-				    (ACPI_PHYSICAL_ADDRESS)ct[i].ct_data;
+				PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)
+				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
 					goto out;
 					
