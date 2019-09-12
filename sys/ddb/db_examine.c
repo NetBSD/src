@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.39 2019/09/10 09:32:05 ryo Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.40 2019/09/12 09:20:23 ryo Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.39 2019/09/10 09:32:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.40 2019/09/12 09:20:23 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static void
 db_examine(db_addr_t addr, char *fmt, int count)
 {
 	int		i, c;
-	db_expr_t	value;
+	quad_t		value;
 	int		size;
 	int		width;
 	int		bytes;
@@ -103,7 +103,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				break;
 			case 'q':	/* quad-word */
 				size = 8;
-				width = 16;
+				width = 24;
 				break;
 			case 'L':	/* implementation maximum */
 				size = sizeof value;
@@ -114,27 +114,27 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				break;
 			case 'p':
 				size = sizeof(void *);
-				value = db_get_value(addr, size, true);
+				value = db_get_value(addr, size, false);
 				addr += size;
 				db_printf("= 0x%lx ", (long)value);
 				db_printsym((db_addr_t)value, DB_STGY_ANY, db_printf);
 				db_printf("\n");
 				break;
 			case 'r':	/* signed, current radix */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
 				db_format_radix(tbuf, 24, value, false);
 				db_printf("%-*s", width, tbuf);
 				break;
 			case 'x':	/* unsigned hex */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "x", width, value);
+				db_printf("%-*" PRIx64, width, value);
 				break;
 			case 'm':	/* hex dump */
 				/*
 				 * Print off in chunks of size. Try to print 16
-				 * bytes at a time into 4 columns. This
+				 * bytes at a time into 16/size columns. This
 				 * loops modify's count extra times in order
 				 * to get the nicely formatted lines.
 				 */
@@ -152,7 +152,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 						    1, false);
 #endif
 						db_printf(
-						    "%02" DDB_EXPR_FMT "x",
+						    "%02" PRIx64,
 						    value);
 						bytes++;
 						if (!(bytes % size))
@@ -174,25 +174,25 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
 				db_format_hex(tbuf, 24, value, false);
 				db_printf("%-*s", width, tbuf);
 				break;
 			case 'd':	/* signed decimal */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "d", width, value);
+				db_printf("%-*" PRId64, width, value);
 				break;
 			case 'u':	/* unsigned decimal */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "u", width, value);
+				db_printf("%-*" PRIu64, width, value);
 				break;
 			case 'o':	/* unsigned octal */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "o", width, value);
+				db_printf("%-*" PRIo64, width, value);
 				break;
 			case 'c':	/* character */
 				value = db_get_value(addr, 1, false);
