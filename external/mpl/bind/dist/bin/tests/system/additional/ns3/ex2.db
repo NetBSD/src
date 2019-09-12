@@ -7,5 +7,7 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-. 0 NS ns.root-servers.nil.
-ns.root-servers.nil. 0 A 10.53.0.1
+$TTL 86400
+@ IN SOA ns1 hostmaster ( 2 8H 2H 4W 1D );
+    NS ns1
+ns1 A 10.53.0.1

@@ -21,3 +21,5 @@ ns.example.com.		A	10.53.0.3
 ;
 $INCLUDE Kexample.com.+015+03613.key
 $INCLUDE Kexample.com.+015+35217.key
+$INCLUDE Kexample.com.+016+09713.key
+$INCLUDE Kexample.com.+016+38353.key

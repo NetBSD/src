@@ -1,4 +1,4 @@
-/*	$NetBSD: update_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: update_test.c,v 1.4.4.1 2019/09/12 19:18:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,11 +20,12 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <inttypes.h>
-#include <unistd.h>
+#include <sched.h> /* IWYU pragma: keep */
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>

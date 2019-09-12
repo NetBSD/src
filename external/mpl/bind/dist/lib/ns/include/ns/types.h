@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3.4.1 2019/09/12 19:18:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,10 @@ typedef struct ns_stats			ns_stats_t;
 typedef enum {
 	ns_cookiealg_aes,
 	ns_cookiealg_sha1,
-	ns_cookiealg_sha256
+	ns_cookiealg_sha256,
+	ns_cookiealg_siphash24
 } ns_cookiealg_t;
+
+#define NS_COOKIE_VERSION_1 1
 
 #endif /* NS_TYPES_H */

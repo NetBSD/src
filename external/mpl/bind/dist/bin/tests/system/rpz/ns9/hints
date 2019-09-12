@@ -7,5 +7,5 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-. 0 NS ns.root-servers.nil.
-ns.root-servers.nil. 0 A 10.53.0.1
+.	120	NS	ns.
+ns.	120	A	10.53.0.1

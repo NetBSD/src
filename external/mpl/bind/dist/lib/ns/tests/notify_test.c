@@ -1,4 +1,4 @@
-/*	$NetBSD: notify_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: notify_test.c,v 1.4.4.1 2019/09/12 19:18:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,11 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <setjmp.h>
 
-#include <isc/util.h>
-
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

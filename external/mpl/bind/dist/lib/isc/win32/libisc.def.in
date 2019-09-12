@@ -235,7 +235,6 @@ isc_fsaccess_changeowner
 isc_fsaccess_remove
 isc_fsaccess_set
 isc_hash_function
-isc_hash_function_reverse
 isc_hash_get_initializer
 isc_hash_set_initializer
 isc_heap_create
@@ -502,6 +501,7 @@ isc_serial_gt
 isc_serial_le
 isc_serial_lt
 isc_serial_ne
+isc_siphash24
 isc_sockaddr_any
 isc_sockaddr_any6
 isc_sockaddr_anyofpf

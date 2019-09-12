@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.3.4.1 2019/09/12 19:18:16 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
