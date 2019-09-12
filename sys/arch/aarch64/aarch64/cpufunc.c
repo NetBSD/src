@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.5 2018/12/21 08:01:01 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.6 2019/09/12 09:05:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.5 2018/12/21 08:01:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.6 2019/09/12 09:05:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,9 +137,12 @@ aarch64_getcacheinfo(void)
 		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
 		arm_dcache_align_mask = arm_dcache_align - 1;
 	}
-	/* update coherency_unit (in param.h) */
+
+#ifdef MULTIPROCESSOR
 	if (coherency_unit < arm_dcache_align)
-		coherency_unit = arm_dcache_align;
+		panic("coherency_unit %ld < arm_dcache_align %d; increase COHERENCY_UNIT",
+		    coherency_unit, arm_dcache_align);
+#endif
 
 	/*
 	 * CLIDR -  Cache Level ID Register
