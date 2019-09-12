@@ -313,8 +313,10 @@ idna_enabled_test() {
     # when they are received in DNS responses to ensure no IDNA2003 fallbacks
     # are in place.
     #
-    # Note that an invalid U-label is accepted even when +idnin is in effect
-    # because "xn--19g" is valid Punycode.
+    # Note that "+idnin +noidnout" is not tested because libidn2 2.2.0+ parses
+    # Punycode more strictly than older versions and thus dig fails with that
+    # combination of options with libidn2 2.2.0+ but succeeds with older
+    # versions.
     #
     # +noidnout: "dig" should send the ACE string to the server and display the
     #            returned qname.
@@ -326,7 +328,6 @@ idna_enabled_test() {
     idna_test "$text" ""                   "xn--19g" "xn--19g."
     idna_test "$text" "+noidnin +noidnout" "xn--19g" "xn--19g."
     idna_fail "$text" "+noidnin +idnout"   "xn--19g"
-    idna_test "$text" "+idnin   +noidnout" "xn--19g" "xn--19g."
     idna_fail "$text" "+idnin   +idnout"   "xn--19g"
 }
 

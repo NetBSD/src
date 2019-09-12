@@ -14,6 +14,8 @@
 
 set -e
 
+echo_i "ns7/sign.sh"
+
 zone=split-rrsig
 infile=split-rrsig.db.in
 zonefile=split-rrsig.db

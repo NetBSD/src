@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf_test.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: resconf_test.c,v 1.3.4.1 2019/09/12 19:18:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

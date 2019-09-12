@@ -12,6 +12,11 @@
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
+# Fake an unsupported key
+unsupportedkey=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone unsupported)
+awk '$3 == "DNSKEY" { $6 = 255 } { print }' ${unsupportedkey}.key > ${unsupportedkey}.tmp
+mv ${unsupportedkey}.tmp ${unsupportedkey}.key
+
 zone=bits
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private

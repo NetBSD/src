@@ -1,4 +1,4 @@
-/*	$NetBSD: ntservice.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.3.4.1 2019/09/12 19:18:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,7 +84,7 @@ ServiceControl(DWORD dwCtrlCode) {
 	case SERVICE_CONTROL_STOP:
 		named_server_flushonshutdown(named_g_server, true);
 		isc_app_shutdown();
-		UpdateSCM(SERVICE_STOPPED);
+		UpdateSCM(SERVICE_STOP_PENDING);
 		break;
 	default:
 		break;

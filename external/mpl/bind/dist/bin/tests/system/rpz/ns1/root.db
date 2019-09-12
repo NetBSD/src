@@ -33,3 +33,8 @@ ns.tld5.	A	10.53.0.5
 
 ; generate SERVFAIL
 servfail	NS	ns.tld2.
+
+a-only.example	A	1.2.3.4
+no-a-no-aaaa.example	TXT	placeholder
+a-plus-aaaa.example	A	1.2.3.4
+a-plus-aaaa.example	AAAA	::1

@@ -7,5 +7,8 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-. 0 NS ns.rootservers.utld.
-ns.rootservers.utld. 0 A 10.53.0.1
+$TTL 120
+
+.		NS	ns.utld.
+ns.utld.	A	10.53.0.1
+ns.utld.	AAAA	fd92:7065:b8e:ffff::1

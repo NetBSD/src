@@ -109,6 +109,9 @@
 @IF GEOIP
     <ClCompile Include="..\geoip.c" />
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClCompile Include="..\geoip.c" />
+@END GEOIPLEGACY
     <ClCompile Include="..\log.c" />
     <ClCompile Include="..\logconf.c" />
     <ClCompile Include="..\main.c" />
@@ -128,6 +131,9 @@
 @IF GEOIP
     <ClInclude Include="..\include\named\geoip.h" />
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClInclude Include="..\include\named\geoip.h" />
+@END GEOIPLEGACY
     <ClInclude Include="..\include\named\globals.h" />
     <ClInclude Include="..\include\named\log.h" />
     <ClInclude Include="..\include\named\logconf.h" />

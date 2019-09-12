@@ -20,7 +20,7 @@ CDEFINES =	-DTESTS="\"${top_builddir}/lib/irs/tests/\""
 
 CFGLIBS =	../../isccfg/libisccfg.@A@
 CFGDEPLIBS =	../../isccfg/libisccfg.@A@
-DNSLIBS =	../../dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 DNSDEPLIBS =	../../dns/libdns.@A@
 ISCLIBS =	../../isc/libisc.@A@ @OPENSSL_LIBS@
 ISCDEPLIBS =	../../isc/libisc.@A@

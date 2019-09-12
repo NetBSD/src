@@ -1,4 +1,4 @@
-/*	$NetBSD: time_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: time_test.c,v 1.3.4.1 2019/09/12 19:18:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,10 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define UNIT_TESTING

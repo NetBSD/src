@@ -13,8 +13,8 @@
 # Set up interface aliases for bind9 system tests.
 #
 # IPv4: 10.53.0.{1..10}				RFC 1918
-#       10.53.1.{0..2}
-#       10.53.2.{0..2}
+#       10.53.1.{1..2}
+#       10.53.2.{1..2}
 # IPv6: fd92:7065:b8e:ffff::{1..10}		ULA
 #       fd92:7065:b8e:99ff::{1..2}
 #       fd92:7065:b8e:ff::{1..2}
@@ -105,13 +105,7 @@ case "$1" in
 				[ "$ipv6" ] && ifconfig lo0 inet6 \
 					fd92:7065:b8e:${ipv6}ff::$ns alias
 				;;
-			    *-unknown-netbsd*)
-				ifconfig lo0 10.53.$i.$ns alias \
-					netmask 255.255.255.0
-				[ "$ipv6" ] && ifconfig lo0 inet6 \
-					fd92:7065:b8e:${ipv6}ff::$ns alias
-				;;
-			    *-unknown-openbsd*)
+			    *-unknown-dragonfly*|*-unknown-netbsd*|*-unknown-openbsd*)
 				ifconfig lo0 10.53.$i.$ns alias \
 					netmask 255.255.255.0
 				[ "$ipv6" ] && ifconfig lo0 inet6 \

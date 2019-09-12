@@ -11,8 +11,10 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
 
   RFC1034
   RFC1035 [1] [2]
+  RFC1101
   RFC1123
   RFC1183
+  RFC1521 [16]
   RFC1535
   RFC1536
   RFC1706
@@ -27,9 +29,11 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
   RFC2181
   RFC2230
   RFC2308
-  RFC2536
   RFC2539
+  RFC2606 [17]
   RFC2782
+  RFC2845
+  RFC2874 [18]
   RFC2915
   RFC2930
   RFC2931 [5]
@@ -46,6 +50,7 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
   RFC3597
   RFC3645
   RFC4025
+  RFC4033 [18]
   RFC4034
   RFC4035
   RFC4074
@@ -57,6 +62,7 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
   RFC4431
   RFC4470 [9]
   RFC4509
+  RFC4592
   RFC4635
   RFC4701
   RFC4892
@@ -73,23 +79,34 @@ or Best Current Practice (BCP) documents.  The list is non exhaustive.
   RFC6052
   RFC6147 [12]
   RFC6303
+  RFC6604
   RFC6605 [13]
   RFC6672
   RFC6698
   RFC6742
+  RFC6725 [19]
   RFC6840 [14]
   RFC6844
   RFC6891
+  RFC6944
   RFC7043
   RFC7314
+  RFC7344 [20]
   RFC7477
+  RFC7553
   RFC7793
   RFC7830 [15]
+  RFC7929
+  RFC8080
+
+No longer supported
+
+  RFC2536
 
 The following DNS related RFC have been obsoleted
 
   RFC2535 (Obsoleted by 4034, 4035) [3] [4]
-  RFC2537 (Obsoleted by 3110)
+  RFC2537 (Obsoleted by 3110) [19]
   RFC2538 (Obsoleted by 4398)
   RFC2671 (Obsoleted by 6891)
   RFC2672 (Obsoleted by 6672)
@@ -154,3 +171,14 @@ server is under attack or there is stale / bogus authoritative data.
 
 [15] Named doesn't currently encrypt DNS requests so the PAD option
 is accepted but not returned in responses.
+
+[16] Only the Base 64 encoding specification.
+
+[17] Not applicable to DNS server implementations.
+
+[18] Loading and serving of A6 records only.  A6 records were moved
+to the experimental category by RFC3363.
+
+[19] RSAMD5 support has been removed. See RFC 6944.
+
+[20] Updating of parent zones is not yet implemented.

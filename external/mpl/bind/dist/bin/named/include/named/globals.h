@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.4.4.1 2019/09/12 19:18:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ EXTERN bool		named_g_keepstderr	INIT(false);
 
 EXTERN unsigned int		named_g_tat_interval	INIT(24*3600);
 
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 EXTERN dns_geoip_databases_t	*named_g_geoip		INIT(NULL);
 #endif
 

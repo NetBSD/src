@@ -1,4 +1,4 @@
-/*	$NetBSD: counter_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: counter_test.c,v 1.4.4.1 2019/09/12 19:18:16 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
