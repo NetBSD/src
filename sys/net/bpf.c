@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.229 2019/07/10 17:55:33 maxv Exp $	*/
+/*	$NetBSD: bpf.c,v 1.230 2019/09/12 07:38:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.229 2019/07/10 17:55:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.230 2019/09/12 07:38:19 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1680,6 +1680,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m, u_int direction)
 		cpfn = (void *)memcpy;
 		marg = mtod(m, void *);
 		buflen = pktlen;
+		KASSERT(buflen != 0);
 	} else {
 		cpfn = bpf_mcpy;
 		marg = m;
