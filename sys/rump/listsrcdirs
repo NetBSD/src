@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.38 2019/09/12 00:17:03 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.39 2019/09/12 00:56:05 bad Exp $
 #
 
 #
@@ -96,7 +96,7 @@ lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
-lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
+lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv
 lsrc usr /bin/			rm rmdir
 lsrc usr /sbin/			brconfig cgdconfig chown
 lsrc usr /sbin/			disklabel dump fdisk
