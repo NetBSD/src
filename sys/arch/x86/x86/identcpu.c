@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.94 2019/09/09 05:36:21 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.95 2019/09/12 06:39:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.94 2019/09/09 05:36:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.95 2019/09/12 06:39:47 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -837,8 +837,10 @@ cpu_probe(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
-	cpu_vendor = i386_nocpuid_cpus[cputype << 1];
-	cpu_class = i386_nocpuid_cpus[(cputype << 1) + 1];
+	if (ci == &cpu_info_primary) {
+		cpu_vendor = i386_nocpuid_cpus[cputype << 1];
+		cpu_class = i386_nocpuid_cpus[(cputype << 1) + 1];
+	}
 
 	if (cpuid_level < 0) {
 		/* cpuid instruction not supported */
@@ -859,22 +861,24 @@ cpu_probe(struct cpu_info *ci)
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
-	if (memcmp(ci->ci_vendor, "GenuineIntel", 12) == 0)
-		cpu_vendor = CPUVENDOR_INTEL;
-	else if (memcmp(ci->ci_vendor,  "AuthenticAMD", 12) == 0)
-		cpu_vendor = CPUVENDOR_AMD;
-	else if (memcmp(ci->ci_vendor,  "CyrixInstead", 12) == 0)
-		cpu_vendor = CPUVENDOR_CYRIX;
-	else if (memcmp(ci->ci_vendor,  "Geode by NSC", 12) == 0)
-		cpu_vendor = CPUVENDOR_CYRIX;
-	else if (memcmp(ci->ci_vendor, "CentaurHauls", 12) == 0)
-		cpu_vendor = CPUVENDOR_IDT;
-	else if (memcmp(ci->ci_vendor, "GenuineTMx86", 12) == 0)
-		cpu_vendor = CPUVENDOR_TRANSMETA;
-	else if (memcmp(ci->ci_vendor, "Vortex86 SoC", 12) == 0)
-		cpu_vendor = CPUVENDOR_VORTEX86;
-	else
-		cpu_vendor = CPUVENDOR_UNKNOWN;
+	if (ci == &cpu_info_primary) {
+		if (memcmp(ci->ci_vendor, "GenuineIntel", 12) == 0)
+			cpu_vendor = CPUVENDOR_INTEL;
+		else if (memcmp(ci->ci_vendor, "AuthenticAMD", 12) == 0)
+			cpu_vendor = CPUVENDOR_AMD;
+		else if (memcmp(ci->ci_vendor, "CyrixInstead", 12) == 0)
+			cpu_vendor = CPUVENDOR_CYRIX;
+		else if (memcmp(ci->ci_vendor, "Geode by NSC", 12) == 0)
+			cpu_vendor = CPUVENDOR_CYRIX;
+		else if (memcmp(ci->ci_vendor, "CentaurHauls", 12) == 0)
+			cpu_vendor = CPUVENDOR_IDT;
+		else if (memcmp(ci->ci_vendor, "GenuineTMx86", 12) == 0)
+			cpu_vendor = CPUVENDOR_TRANSMETA;
+		else if (memcmp(ci->ci_vendor, "Vortex86 SoC", 12) == 0)
+			cpu_vendor = CPUVENDOR_VORTEX86;
+		else
+			cpu_vendor = CPUVENDOR_UNKNOWN;
+	}
 
 	if (cpuid_level >= 1) {
 		x86_cpuid(1, descs);
@@ -883,11 +887,13 @@ cpu_probe(struct cpu_info *ci)
 		ci->ci_feat_val[1] = descs[2];
 		ci->ci_feat_val[0] = descs[3];
 
-		/* Determine family + class. */
-		cpu_class = CPUID_TO_FAMILY(ci->ci_signature)
-		    + (CPUCLASS_386 - 3);
-		if (cpu_class > CPUCLASS_686)
-			cpu_class = CPUCLASS_686;
+		if (ci == &cpu_info_primary) {
+			/* Determine family + class. */
+			cpu_class = CPUID_TO_FAMILY(ci->ci_signature)
+			    + (CPUCLASS_386 - 3);
+			if (cpu_class > CPUCLASS_686)
+				cpu_class = CPUCLASS_686;
+		}
 
 		/* CLFLUSH line size is next 8 bits */
 		if (ci->ci_feat_val[0] & CPUID_CFLUSH)
