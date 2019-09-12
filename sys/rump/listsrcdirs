@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.37 2019/09/11 22:30:16 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.38 2019/09/12 00:17:03 bad Exp $
 #
 
 #
@@ -76,11 +76,11 @@ lsrc sys /external/bsd/		flex mdocml byacc
 lsrc sys /external/cddl/	osnet
 lsrc sys /external/historical/	nawk
 lsrc sys /external/public-domain/	xz
-lsrc sys /bin/			cat
+lsrc sys /bin/			cat pax
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
 lsrc sys /usr.bin/		rpcgen rump_wmd
-lsrc sys /usr.bin/		genassym stat uname
+lsrc sys /usr.bin/		genassym grep stat uname
 lsrc sys /usr.sbin/		mtree
 
 # sources hosted in the NetBSD tree that are required/useful
