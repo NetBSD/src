@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.131 2019/09/05 10:01:30 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.132 2019/09/12 06:19:47 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2920,7 +2920,41 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFFLAGS (Set Interface Flags)");
 		break;
-	case SIOCADDMULTI:
+	case SIOCADDMULTI: {
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		struct ethercom *ec = &adapter->osdep.ec;
+		int mcnt = 0;
+
+		/*
+		 * Check the number of multicast address. If it exceeds,
+		 * return ENOSPC.
+		 * Update this code when we support API 1.3.
+		 */
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
+		while (enm != NULL) {
+			mcnt++;
+
+			/*
+			 * This code is before adding, so one room is required
+			 * at least.
+			 */
+			if (mcnt > (IXGBE_MAX_VF_MC - 1)) {
+				device_printf(adapter->dev,
+				    "number of Ethernet multicast addresses "
+				    "exceeds the limit (%d)\n",
+				    IXGBE_MAX_VF_MC);
+				error = ENOSPC;
+				break;
+			}
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		ETHER_UNLOCK(ec);
+		if (error)
+			return error;
+	}
+		/*FALLTHROUGH*/
 	case SIOCDELMULTI:
 		IOCTL_DEBUGOUT("ioctl: SIOC(ADD|DEL)MULTI");
 		break;
