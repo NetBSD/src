@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.19 2019/09/11 04:59:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.20 2019/09/12 06:19:47 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -409,11 +409,11 @@ s32 ixgbe_update_mc_addr_list_vf(struct ixgbe_hw *hw, u8 *mc_addr_list,
 
 	DEBUGOUT1("MC Addr Count = %d\n", mc_addr_count);
 
-	if (mc_addr_count > 30) {
+	if (mc_addr_count > IXGBE_MAX_VF_MC) {
 		device_printf(ixgbe_dev_from_hw(hw),
-		    "number of multicast addresses exceeded the limit "
-		    "(%u > 30)\n", mc_addr_count);
-		cnt = 30;
+		    "number of Ethernet multicast addresses exceeded "
+		    "the limit (%u > %d)\n", mc_addr_count, IXGBE_MAX_VF_MC);
+		cnt = IXGBE_MAX_VF_MC;
 	} else
 		cnt = mc_addr_count;
 	msgbuf[0] = IXGBE_VF_SET_MULTICAST;
