@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.132 2019/09/12 06:19:47 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.133 2019/09/12 11:48:44 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1111,7 +1111,7 @@ ixv_set_multi(struct adapter *adapter)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ethercom *ec = &adapter->osdep.ec;
-	u8	mta[MAX_NUM_MULTICAST_ADDRESSES * IXGBE_ETH_LENGTH_OF_ADDRESS];
+	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
 	u8		   *update_ptr;
 	int		   mcnt = 0;
 
@@ -1126,7 +1126,7 @@ ixv_set_multi(struct adapter *adapter)
 		    IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
 		/* XXX This might be required --msaitoh */
-		if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES)
+		if (mcnt >= IXGBE_MAX_VF_MC)
 			break;
 		ETHER_NEXT_MULTI(step, enm);
 	}
