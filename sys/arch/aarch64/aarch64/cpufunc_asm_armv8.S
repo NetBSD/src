@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.3 2018/12/21 08:01:01 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.4 2019/09/12 06:12:56 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -243,16 +243,14 @@ ENTRY(aarch64_tlbi_by_asid_va)
 	/* x8 = bit 63[ASID]48, 47[RES0]44, 43[VA(55:12)]0 */
 	lsl	x8, x0, #48
 	bfxil	x8, x1, #12, #44
-#ifdef MULTIPROCESSOR
-	/* need dsb and isb for inner shareable? */
 	dsb	ishst
+#ifdef MULTIPROCESSOR
 	tlbi	vae1is, x8
-	dsb	ish
-	isb
 #else
-	/* no need dsb and isb for single entry */
 	tlbi	vae1, x8
 #endif
+	dsb	ish
+	isb
 	ret
 END(aarch64_tlbi_by_asid_va)
 
@@ -261,15 +259,13 @@ ENTRY(aarch64_tlbi_by_asid_va_ll)
 	/* x8 = bit 63[ASID]48, 47[RES0]44, 43[VA(55:12)]0 */
 	lsl	x8, x0, #48
 	bfxil	x8, x1, #12, #44
-#ifdef MULTIPROCESSOR
-	/* need dsb and isb for inner shareable? */
 	dsb	ishst
+#ifdef MULTIPROCESSOR
 	tlbi	vale1is, x8
-	dsb	ish
-	isb
 #else
-	/* no need dsb and isb for single entry */
 	tlbi	vale1, x8
 #endif
+	dsb	ish
+	isb
 	ret
 END(aarch64_tlbi_by_asid_va_ll)
