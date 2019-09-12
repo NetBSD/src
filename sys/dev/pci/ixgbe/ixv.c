@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.133 2019/09/12 11:48:44 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.134 2019/09/12 12:25:46 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1085,7 +1085,9 @@ static int
 ixv_negotiate_api(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int		mbx_api[] = { ixgbe_mbox_api_11,
+	int		mbx_api[] = { ixgbe_mbox_api_13,
+				      ixgbe_mbox_api_12,
+				      ixgbe_mbox_api_11,
 				      ixgbe_mbox_api_10,
 				      ixgbe_mbox_api_unknown };
 	int		i = 0;
@@ -1108,12 +1110,16 @@ ixv_negotiate_api(struct adapter *adapter)
 static void
 ixv_set_multi(struct adapter *adapter)
 {
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ethercom *ec = &adapter->osdep.ec;
 	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
 	u8		   *update_ptr;
 	int		   mcnt = 0;
+	bool overflow = false;
+	bool allmulti = false;
+	int error;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixv_set_multi: begin");
@@ -1121,16 +1127,47 @@ ixv_set_multi(struct adapter *adapter)
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
+		if (mcnt >= IXGBE_MAX_VF_MC) {
+			overflow = true;
+			break;
+		}
 		bcopy(enm->enm_addrlo,
 		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
 		    IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
-		/* XXX This might be required --msaitoh */
-		if (mcnt >= IXGBE_MAX_VF_MC)
-			break;
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
+
+	if (overflow) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_ALLMULTI);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = ENOSPC;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "number of Ethernet multicast addresses "
+			    "exceeds the limit (%d). error = %d\n",
+			    IXGBE_MAX_VF_MC, error);
+			error = ENOSPC;
+		} else {
+			allmulti = true;
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+		}
+	}
+
+	if (!allmulti) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_MULTI);
+		if (error) {
+			device_printf(adapter->dev,
+			    "failed to set Ethernet multicast address "
+			    "operation to normal. error = %d\n", error);
+		}
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	}
 
 	update_ptr = mta;
 
@@ -2910,8 +2947,9 @@ static int
 ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ifcapreq *ifcr = data;
-	int		error = 0;
+	int		error;
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
@@ -2924,6 +2962,7 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 		struct ether_multi *enm;
 		struct ether_multistep step;
 		struct ethercom *ec = &adapter->osdep.ec;
+		bool overflow = false;
 		int mcnt = 0;
 
 		/*
@@ -2941,16 +2980,29 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 * at least.
 			 */
 			if (mcnt > (IXGBE_MAX_VF_MC - 1)) {
-				device_printf(adapter->dev,
-				    "number of Ethernet multicast addresses "
-				    "exceeds the limit (%d)\n",
-				    IXGBE_MAX_VF_MC);
-				error = ENOSPC;
+				overflow = true;
 				break;
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		ETHER_UNLOCK(ec);
+		error = 0;
+		if (overflow && ((ec->ec_flags & ETHER_F_ALLMULTI) == 0)) {
+			error = hw->mac.ops.update_xcast_mode(hw,
+			    IXGBEVF_XCAST_MODE_ALLMULTI);
+			if (error == IXGBE_ERR_NOT_TRUSTED) {
+				device_printf(adapter->dev,
+				    "this interface is not trusted\n");
+				error = ENOSPC;
+			} else if (error) {
+				device_printf(adapter->dev,
+				    "number of Ethernet multicast addresses "
+				    "exceeds the limit (%d). error = %d\n",
+				    IXGBE_MAX_VF_MC, error);
+				error = ENOSPC;
+			} else
+				ec->ec_flags |= ETHER_F_ALLMULTI;
+		}
 		if (error)
 			return error;
 	}
