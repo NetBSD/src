@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2018/04/11 10:32:09 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5.6.1 2019/09/13 07:00:13 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -78,8 +78,10 @@ dev2bios(char *devname, int unit, int *biosdev)
 }
 
 void
-bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
+bios2dev(int biosdev, daddr_t sector, char **devname, int *unit,
+	 int *partition, const char **part_name)
 {
+	static char savedevname[MAXDEVNAME+1];
 
 	*unit = biosdev & 0x7f;
 
@@ -96,7 +98,12 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 	} else
 		*devname = "hd";
 
-	*partition = biosdisk_findpartition(biosdev, sector);
+	(void)biosdisk_findpartition(biosdev, sector, partition, part_name);
+	if (*part_name != NULL) {
+		snprintf(savedevname, sizeof(savedevname),
+		    "NAME=%s", *part_name);
+			*devname = savedevname;
+	}
 }
 
 struct btinfo_bootpath bibp;
@@ -129,6 +136,20 @@ devopen(struct open_file *f, const char *fname, char **file)
 	    (const char **) file);
 	if (error)
 		return error;
+
+	/* Search by GPT label or raidframe name */
+	if ((strstr(devname, "NAME=") == devname) ||
+	    (strstr(devname, "raid") == devname)) {
+		f->f_dev = &devsw[0];		/* must be biosdisk */
+
+		if (!kernel_loaded) {
+			strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+			BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+		}
+
+		error = biosdisk_open_name(f, devname);
+		return error;
+	}
 
 	memcpy(file_system, file_system_disk, sizeof(*file_system) * nfsys);
 	nfsys = nfsys_disk;
@@ -194,7 +215,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	 */
 	if (strcmp(devname, "esp") == 0) {
 		bios2dev(boot_biosdev, boot_biossector, &devname, &unit,
-		    &partition);
+		    &partition, NULL);
 		if (efidisk_get_efi_system_partition(boot_biosdev, &partition))
 			return ENXIO;
 	}
