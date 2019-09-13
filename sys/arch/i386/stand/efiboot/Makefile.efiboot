@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.15 2019/07/26 11:30:31 nonaka Exp $
+# $NetBSD: Makefile.efiboot,v 1.16 2019/09/13 02:19:45 manu Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -18,6 +18,7 @@ SOURCES+= efidisk.c efidisk_ll.c efigetsecs.c efimemory.c
 SOURCES+= efinet.c efipxe.c
 LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
 LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
+LIBI386SRCS+= exec_multiboot1.c exec_multiboot2.c
 # use our own nfs implementation
 LIBSASRCS+= nfs.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS} ${LIBSASRCS}

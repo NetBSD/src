@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.6 2018/05/16 19:53:54 jakllsch Exp $	*/
+/*	$NetBSD: eficons.c,v 1.7 2019/09/13 02:19:45 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -91,7 +91,7 @@ getcomaddr(int idx)
  * XXX only pass console parameters to kernel.
  */
 void
-consinit(int dev, int ioport, int speed)
+efi_consinit(int dev, int ioport, int speed)
 {
 	int i;
 
@@ -183,7 +183,7 @@ cninit(void)
 	eficons_init_video();
 	efi_com_probe();
 
-	consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
+	efi_consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
 	    boot_params.bp_conspeed);
 
 	return 0;

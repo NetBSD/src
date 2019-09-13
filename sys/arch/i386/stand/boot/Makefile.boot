@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.72 2018/07/25 23:45:32 kamil Exp $
+# $NetBSD: Makefile.boot,v 1.73 2019/09/13 02:19:45 manu Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -11,7 +11,8 @@ NEWVERSWHAT?= "BIOS Boot"
 
 AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
+SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c \
+	  exec_multiboot1.c exec_multiboot2.c
 SRCS= ${SOURCES}
 
 .include <bsd.init.mk>

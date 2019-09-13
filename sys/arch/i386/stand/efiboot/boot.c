@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2019/09/02 06:10:24 manu Exp $	*/
+/*	$NetBSD: boot.c,v 1.16 2019/09/13 02:19:45 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -558,7 +558,7 @@ command_consdev(char *arg)
 						goto error;
 				}
 			}
-			consinit(cdp->tag, ioport, speed);
+			efi_consinit(cdp->tag, ioport, speed);
 			print_banner();
 			return;
 		}

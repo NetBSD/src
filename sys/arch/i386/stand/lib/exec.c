@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.73 2019/07/26 12:09:48 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.74 2019/09/13 02:19:46 manu Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
-#include <i386/multiboot.h>
-
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
@@ -136,9 +134,9 @@ typedef struct userconf_command {
 } userconf_command_t;
 userconf_command_t *userconf_commands = NULL;
 
-static struct btinfo_framebuffer btinfo_framebuffer;
+struct btinfo_framebuffer btinfo_framebuffer;
 
-static struct btinfo_modulelist *btinfo_modulelist;
+struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
 static char module_base[64] = "/";
@@ -832,75 +830,57 @@ userconf_init(void)
 int
 exec_multiboot(const char *file, char *args)
 {
-	struct multiboot_info *mbi;
-	struct multiboot_module *mbm;
-	struct bi_modulelist_entry *bim;
-	int i, len;
+	physaddr_t loadaddr = 0;
 	u_long marks[MARK_MAX];
 	u_long extmem;
 	u_long basemem;
-	char *cmdline;
+	struct multiboot_package *mbp = NULL;
 
-	mbi = alloc(sizeof(struct multiboot_info));
-	mbi->mi_flags = MULTIBOOT_INFO_HAS_MEMORY;
+#ifndef NO_MULTIBOOT2
+	if ((mbp = probe_multiboot2(file)) != NULL)
+		goto is_multiboot;
+#endif
 
-	if (common_load_kernel(file, &basemem, &extmem, 0, 0, marks))
+	if ((mbp = probe_multiboot1(file)) != NULL) {
+#ifdef EFIBOOT
+		printf("EFI boot requires multiboot 2 kernel\n");
+		goto out;
+#else
+		goto is_multiboot;
+#endif
+	}
+
+#ifndef NO_MULTIBOOT2
+	printf("%s is not a multiboot kernel\n", file);
+#else
+	printf("%s is not a multiboot 1 kernel "
+	    "(multiboot 2 support is not built in)\n", file);
+#endif
+	goto out;
+
+is_multiboot:
+#ifdef EFIBOOT
+	loadaddr = efi_loadaddr;
+#endif
+	if (common_load_kernel(file, &basemem, &extmem, loadaddr, 0, marks))
 		goto out;
 
-	mbi->mi_mem_upper = extmem;
-	mbi->mi_mem_lower = basemem;
-
-	if (args) {
-		mbi->mi_flags |= MULTIBOOT_INFO_HAS_CMDLINE;
-		len = strlen(file) + 1 + strlen(args) + 1;
-		cmdline = alloc(len);
-		snprintf(cmdline, len, "%s %s", file, args);
-		mbi->mi_cmdline = (char *) vtophys(cmdline);
-	}
-
-	/* pull in any modules if necessary */
-	if (boot_modules_enabled) {
+	if (boot_modules_enabled)
 		module_init(file);
-		if (btinfo_modulelist) {
-			mbm = alloc(sizeof(struct multiboot_module) *
-					   btinfo_modulelist->num);
 
-			bim = (struct bi_modulelist_entry *)
-			  (((char *) btinfo_modulelist) +
-			   sizeof(struct btinfo_modulelist));
-			for (i = 0; i < btinfo_modulelist->num; i++) {
-				mbm[i].mmo_start = bim->base;
-				mbm[i].mmo_end = bim->base + bim->len;
-				mbm[i].mmo_string = (char *)vtophys(bim->path);
-				mbm[i].mmo_reserved = 0;
-				bim++;
-			}
-			mbi->mi_flags |= MULTIBOOT_INFO_HAS_MODS;
-			mbi->mi_mods_count = btinfo_modulelist->num;
-			mbi->mi_mods_addr = vtophys(mbm);
-		}
-	}
+	mbp->mbp_args = args;
+	mbp->mbp_basemem = basemem;
+	mbp->mbp_extmem = extmem;
+	mbp->mbp_loadaddr = loadaddr;
+	mbp->mbp_marks = marks;
 
-#ifdef DEBUG
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
-	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
-#endif
-
-#if 0
-	if (btinfo_symtab.nsym) {
-		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
-		mbi->mi_elfshdr_addr = marks[MARK_SYM];
-	btinfo_symtab.nsym = marks[MARK_NSYM];
-	btinfo_symtab.ssym = marks[MARK_SYM];
-	btinfo_symtab.esym = marks[MARK_END];
-#endif
-
-	multiboot(marks[MARK_ENTRY], vtophys(mbi),
-	    x86_trunc_page(mbi->mi_mem_lower * 1024));
-	panic("exec returned");
+	/* Only returns on error */
+	(void)mbp->mbp_exec(mbp);
 
 out:
-	dealloc(mbi, 0);
+	if (mbp != NULL)
+		mbp->mbp_cleanup(mbp);
+
 	return -1;
 }
 

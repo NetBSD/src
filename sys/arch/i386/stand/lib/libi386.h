@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.44 2019/07/26 12:09:48 nonaka Exp $	*/
+/*	$NetBSD: libi386.h,v 1.45 2019/09/13 02:19:46 manu Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -39,7 +39,7 @@ physaddr_t vtophys(void *);
 
 ssize_t pread(int, void *, size_t);
 void startprog(physaddr_t, uint32_t, uint32_t *, physaddr_t);
-void multiboot(physaddr_t, physaddr_t, physaddr_t);
+void multiboot(physaddr_t, physaddr_t, physaddr_t, uint32_t);
 
 int exec_netbsd(const char *, physaddr_t, int, int, void (*)(void));
 int exec_multiboot(const char *, char *);
@@ -73,6 +73,28 @@ void initio(int);
 int iskey(int);
 char awaitkey(int, int);
 void wait_sec(int);
+
+/* multiboot */
+struct multiboot_package;
+struct multiboot_package_priv;
+
+struct multiboot_package {
+	int			 mbp_version;
+	struct multiboot_header	*mbp_header;
+	const char		*mbp_file;
+	char			*mbp_args;
+	u_long			 mbp_basemem;
+	u_long			 mbp_extmem;
+	u_long			 mbp_loadaddr;
+	u_long			*mbp_marks;
+	struct multiboot_package_priv*mbp_priv;
+	struct multiboot_package*(*mbp_probe)(const char *);
+	int			(*mbp_exec)(struct multiboot_package *);
+	void			(*mbp_cleanup)(struct multiboot_package *);
+};
+
+struct multiboot_package *probe_multiboot1(const char *);
+struct multiboot_package *probe_multiboot2(const char *);
 
 /* this is in "user code"! */
 int parsebootfile(const char *, char **, char **, int *, int *, const char **);

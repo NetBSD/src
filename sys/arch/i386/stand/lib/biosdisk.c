@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.51 2019/08/18 16:49:30 kamil Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.52 2019/09/13 02:19:46 manu Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -184,10 +184,8 @@ const struct gpt_part gpt_parts[] = {
 };
 #endif /* NO_GPT */
 
-#ifdef _STANDALONE
-static struct btinfo_bootdisk bi_disk;
-static struct btinfo_bootwedge bi_wedge;
-#endif
+struct btinfo_bootdisk bi_disk;
+struct btinfo_bootwedge bi_wedge;
 
 #define MBR_PARTS(buf) ((char *)(buf) + offsetof(struct mbr_sector, mbr_parts))
 
@@ -568,7 +566,6 @@ check_label(struct biosdisk *d, daddr_t sector)
 
 	ingest_label(d, lp);
 
-#ifdef _STANDALONE
 	bi_disk.labelsector = sector + LABELSECTOR;
 	bi_disk.label.type = lp->d_type;
 	memcpy(bi_disk.label.packname, lp->d_packname, 16);
@@ -578,7 +575,6 @@ check_label(struct biosdisk *d, daddr_t sector)
 	bi_wedge.matchnblks = 1;
 
 	md5(bi_wedge.matchhash, d->buf, d->ll.secsize);
-#endif
 
 	return 0;
 }
@@ -1257,14 +1253,12 @@ biosdisk_open(struct open_file *f, ...)
 	}
 
 	partition = va_arg(ap, int);
-#ifdef _STANDALONE
 	bi_disk.biosdev = d->ll.dev;
 	bi_disk.partition = partition;
 	bi_disk.labelsector = -1;
 
 	bi_wedge.biosdev = d->ll.dev;
 	bi_wedge.matchblk = -1;
-#endif
 
 #if !defined(NO_DISKLABEL) || !defined(NO_GPT)
 	error = read_partitions(d, 0, 0);
@@ -1587,7 +1581,6 @@ biosdisk_open_name(struct open_file *f, const char *name)
 		goto out;
 	}
 
-#ifdef _STANDALONE
 	bi_disk.biosdev = d->ll.dev;
 	bi_disk.partition = 0;
 	bi_disk.labelsector = -1;
@@ -1612,14 +1605,13 @@ biosdisk_open_name(struct open_file *f, const char *name)
 
 		md5(bi_wedge.matchhash, d->buf, d->ll.secsize);
 	}
-#endif
 
 	d->boff = offset;
 
-#ifdef _STANDALONE
 	bi_wedge.startblk = offset;
 	bi_wedge.nblks = size;
 
+#ifdef _STANDALONE
 	add_biosdisk_bootinfo();
 #endif
 
