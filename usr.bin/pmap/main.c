@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2015/12/14 03:15:10 christos Exp $ */
+/*	$NetBSD: main.c,v 1.27 2019/09/13 13:55:24 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.26 2015/12/14 03:15:10 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2019/09/13 13:55:24 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -467,7 +467,12 @@ mapname(void *addr)
 void
 load_name_cache(kvm_t *kd)
 {
-	struct namecache _ncp, *ncp, *oncp;
+	struct namecache *ncp, *oncp;
+	union {
+		struct namecache ncp;
+		char buf[sizeof(*ncp) + USHRT_MAX];
+	} _n;
+#define _ncp _n.ncp
 	struct nchashhead _ncpp, *ncpp; 
 	u_long lnchash;
 	size_t nchash, i;
@@ -485,11 +490,19 @@ load_name_cache(kvm_t *kd)
 		ncpp = &nchashtbl[i];
 		oncp = NULL;
 		LIST_FOREACH(ncp, ncpp, nc_hash) {
+			size_t len;
+
 			if (ncp == oncp ||
 			    ncp == (void*)0xdeadbeef)
 				break;
 			oncp = ncp;
-			_KDEREF(kd, (u_long)ncp, &_ncp, sizeof(*ncp));
+			len = NCHNAMLEN;
+again:
+			_KDEREF(kd, (u_long)ncp, &_ncp, (len + sizeof(*ncp)));
+			if (_ncp.nc_nlen > len && _ncp.nc_nlen < 1024) {
+				len = _ncp.nc_nlen;
+				goto again;
+			}
 			ncp = &_ncp;
 			if (ncp->nc_nlen > 0) {
 				if (ncp->nc_nlen > 2 ||
