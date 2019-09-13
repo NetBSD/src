@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.49 2019/09/12 19:21:16 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.50 2019/09/13 07:02:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2458,7 +2458,7 @@ sys/dev/usb/if_ure.c				1.15-1.31
 sys/dev/usb/if_urevar.h				1.4,1.5
 sys/dev/usb/if_url.c				1.67-1.70
 sys/dev/usb/if_urlreg.h				1.14
-sys/dev/usb/if_urndis.c				1.22-1.33
+sys/dev/usb/if_urndis.c				1.22-1.23,1.25-1.33
 sys/dev/usb/if_urtwn.c				1.72
 sys/dev/usb/ohci.c				1.290
 sys/dev/usb/uhub.c				1.143
@@ -3478,4 +3478,82 @@ usr.bin/xlint/lint1/scan.l			1.90
 	Adapt set lists for bind update.
 	lint(1): fix decorators for __thread, add _Thread_local.
 	[christos, ticket #195]
+
+sys/compat/linux/arch/amd64/linux_machdep.c	1.59
+sys/compat/linux/common/linux_fcntl.h		1.18
+sys/compat/linux/common/linux_file64.c		1.61,1.62
+sys/compat/linux/common/linux_ipc.c		1.57
+sys/compat/linux/common/linux_misc.c		1.241-1.244
+sys/compat/linux/common/linux_signal.c		1.81
+sys/compat/linux/common/linux_socket.c		1.146-1.149
+sys/compat/linux/common/linux_socket.h		1.24
+sys/compat/linux/common/linux_statfs.h		1.7
+sys/compat/linux/common/linux_termios.c		1.38
+sys/compat/linux/common/linux_termios.h		1.22
+sys/compat/linux32/common/linux32_dirent.c	1.20
+sys/compat/linux32/common/linux32_ioctl.c	1.14
+sys/compat/linux32/common/linux32_misc.c	1.27
+sys/compat/linux32/common/linux32_signal.c	1.20
+sys/compat/linux32/common/linux32_sysinfo.c	1.8
+sys/compat/linux32/common/linux32_termios.c	1.15
+sys/compat/linux32/common/linux32_utsname.c	1.10
+sys/compat/netbsd32/netbsd32_compat_43.c	1.58
+sys/compat/ossaudio/ossaudio.c			1.75
+sys/kern/sysv_shm.c				1.138
+sys/miscfs/procfs/procfs_linux.c		1.75
+sys/sys/shm.h					1.54
+
+	Fix various info leaks, out of bound access, usage of uninitialized
+	values and direct access to userland variables from kernel space
+	and memory leaks.
+	[maxv, ticket #194]
+
+sys/dev/usb/xhci.c				1.111-1.114
+
+	Clean up debug logging and add more debug messages.
+	Fix the TD size to match the xhci spec.
+	[mrg, ticket #196]
+
+sys/dev/ic/rndisreg.h				1.3
+sys/dev/usb/if_upl.c				1.67
+sys/dev/usb/if_url.c				1.71
+sys/dev/usb/if_urndis.c				1.24
+sys/dev/usb/usb_mem.c				1.72
+sys/dev/usb/usbnet.c				1.25-1.28
+sys/dev/usb/usbnet.h				1.15
+
+	Teach urndis to handle some REMOTE_NDIS_INDICATE_STATUS_MSG.
+	Fix bug, remove {0,0} because we switched to usb_lookup().
+	PR 54495: fix a lock hang.
+	Fix locking and detach.
+	Improve debug logging.
+	Various fixes to usbnet, document locking.
+	[mrg, ticket #197]
+
+lib/libpthread/thrd.c				1.4
+lib/libpthread/threads.h			1.3
+
+	Switch back _Noreturn to __dead in C11 threads.
+	[kamil, ticket #198]
+
+sys/arch/mips/mips/locore.S			1.220
+
+	Set MIPS_COP_0_CAUSE to zero before the rest of the initialisation,
+	to make cobalt boot again.
+	[skrll, ticket #199]
+
+share/man/man8/man8.x86/boot.8			1.16,1.17
+sys/arch/i386/stand/boot/boot2.c		1.71,1.72
+sys/arch/i386/stand/boot/devopen.c		1.9
+sys/arch/i386/stand/boot/devopen.h		1.5
+sys/arch/i386/stand/efiboot/boot.c		1.14,1.15
+sys/arch/i386/stand/efiboot/devopen.c		1.6,1.7
+sys/arch/i386/stand/efiboot/devopen.h		1.4
+sys/arch/i386/stand/efiboot/efidisk.c		1.8
+sys/arch/i386/stand/lib/Makefile		1.46
+sys/arch/i386/stand/lib/biosdisk.c		1.50,1.51
+sys/arch/i386/stand/lib/biosdisk.h		1.11
+
+	Add GPT and RAIDframe support to bootloaders.
+	[manu, ticket #200]
 
