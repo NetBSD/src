@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.52 2019/04/10 10:03:50 pgoyette Exp $	*/
+/*	$NetBSD: shm.h,v 1.52.4.1 2019/09/13 06:25:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,6 +177,8 @@ int	shmfini(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+int	shm_find_segment_perm_by_index(int, struct ipc_perm *);
 
 extern void (*uvm_shmexit)(struct vmspace *);
 extern void (*uvm_shmfork)(struct vmspace *, struct vmspace *);

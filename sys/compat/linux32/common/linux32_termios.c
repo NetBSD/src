@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.14 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.14.72.1 2019/09/13 06:25:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.14 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.14.72.1 2019/09/13 06:25:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
@@ -262,6 +262,7 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 		case LINUX_TIOCLINUX_READMOUSE:
 		case LINUX_TIOCLINUX_VESABLANK:
 		case LINUX_TIOCLINUX_CURCONS:	/* could use VT_GETACTIVE */
+		default:
 			error = EINVAL;
 			goto out;
 		}
