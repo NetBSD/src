@@ -1,4 +1,4 @@
-/*	$NetBSD: efidef.h,v 1.3 2018/08/16 18:22:05 jmcneill Exp $	*/
+/*	$NetBSD: efidef.h,v 1.4 2019/09/13 20:56:29 tnn Exp $	*/
 
 #ifndef _EFI_DEF_H
 #define _EFI_DEF_H
@@ -24,7 +24,9 @@ Revision History
 
 typedef UINT16          CHAR16;
 typedef UINT8           CHAR8;
+#ifndef __ACTYPES_H__
 typedef UINT8           BOOLEAN;
+#endif /* __ACTYPES_H__ */
 #ifndef CONST
    #define CONST const
 #endif
