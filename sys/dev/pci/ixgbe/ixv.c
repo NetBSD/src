@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.134 2019/09/12 12:25:46 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.135 2019/09/13 06:50:18 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1145,7 +1145,11 @@ ixv_set_multi(struct adapter *adapter)
 		if (error == IXGBE_ERR_NOT_TRUSTED) {
 			device_printf(adapter->dev,
 			    "this interface is not trusted\n");
-			error = ENOSPC;
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support allmulti mode\n");
+			error = EOPNOTSUPP;
 		} else if (error) {
 			device_printf(adapter->dev,
 			    "number of Ethernet multicast addresses "
@@ -1161,7 +1165,10 @@ ixv_set_multi(struct adapter *adapter)
 	if (!allmulti) {
 		error = hw->mac.ops.update_xcast_mode(hw,
 		    IXGBEVF_XCAST_MODE_MULTI);
-		if (error) {
+		if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			/* normal operation */
+			error = 0;
+		} else if (error) {
 			device_printf(adapter->dev,
 			    "failed to set Ethernet multicast address "
 			    "operation to normal. error = %d\n", error);
@@ -2993,7 +3000,11 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 			if (error == IXGBE_ERR_NOT_TRUSTED) {
 				device_printf(adapter->dev,
 				    "this interface is not trusted\n");
-				error = ENOSPC;
+				error = EPERM;
+			} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+				device_printf(adapter->dev,
+				    "the PF doesn't support allmulti mode\n");
+				error = EOPNOTSUPP;
 			} else if (error) {
 				device_printf(adapter->dev,
 				    "number of Ethernet multicast addresses "
