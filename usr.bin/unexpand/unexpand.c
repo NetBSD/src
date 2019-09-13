@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.16 2019/09/13 16:53:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.16 2019/09/13 16:53:05 dyoung Exp $");
 #endif /* not lint */
 
 /*
@@ -86,13 +86,9 @@ main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "at:")) != -1) {
 		switch (c) {
 		case 'a':
-			if (nstops)
-				usage();
-			all++;
+			all = 1;
 			break;
 		case 't':
-			if (all)
-				usage();
 			while ((tab = strsep(&optarg, ", \t")) != NULL) {
 				if (*tab == '\0')
 					continue;
@@ -121,9 +117,6 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	for (i = 0; i < nstops; i++)
-		fprintf(stderr, "%lu %zu\n", i, tabstops[i]);
-
 	do {
 		if (argc > 0) {
 			if (freopen(argv[0], "r", stdin) == NULL)
@@ -150,8 +143,11 @@ tabify(const char *line, size_t len)
 			dcol++;
 			continue;
 		} else if (*p == '\t') {
-			if (nstops == 0) {
-				dcol = (1 + dcol / DSTOP) * DSTOP;
+			if (nstops <= 1) {
+				size_t stop = (nstops == 0)
+				    ? DSTOP
+				    : tabstops[0];
+				dcol = (1 + dcol / stop) * stop;
 				continue;
 			} else {
 				for (n = 0; n < nstops &&
@@ -165,13 +161,16 @@ tabify(const char *line, size_t len)
 		}
 
 		/* Output our tabs */
-		if (nstops == 0) {
-			while (((ocol + DSTOP) / DSTOP) <= (dcol / DSTOP)) {
+		if (nstops <= 1) {
+			size_t stop = (nstops == 0)
+			    ? DSTOP
+			    : tabstops[0];
+			while (((ocol + stop) / stop) <= (dcol / stop)) {
 				if (dcol - ocol < 2)
 					break;
 				if (putchar('\t') == EOF)
 					goto out;
-				ocol = (1 + ocol / DSTOP) * DSTOP;
+				ocol = (1 + ocol / stop) * stop;
 			}
 		} else {
 			for (n = 0; n < nstops && tabstops[n] <= ocol; n++)
