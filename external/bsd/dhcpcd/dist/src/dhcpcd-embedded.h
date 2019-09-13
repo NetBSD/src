@@ -1,8 +1,8 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
- *
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,53 +25,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#define INITDEFINES	     124
+#define INITDEFINENDS	       6
+#define INITDEFINE6S	      69
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"8.0.5"
-
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DEVDIR
-# define DEVDIR			LIBDIR "/" PACKAGE "/dev"
-#endif
-#ifndef DUID
-# define DUID			DBDIR "/duid"
-#endif
-#ifndef SECRET
-# define SECRET			DBDIR "/secret"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/%s%s.lease"
-#endif
-#ifndef LEASEFILE6
-# define LEASEFILE6		LEASEFILE "6"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE "%s%s.sock"
-#endif
-#ifndef UNPRIVSOCKET
-# define UNPRIVSOCKET		RUNDIR "/" PACKAGE ".unpriv.sock"
-#endif
-#ifndef RDM_MONOFILE
-# define RDM_MONOFILE		DBDIR "/rdm_monotonic"
-#endif
-
-#ifndef NO_SIGNALS
-#  define USE_SIGNALS
-#endif
-#ifndef USE_SIGNALS
-#  ifndef THERE_IS_NO_FORK
-#    define THERE_IS_NO_FORK
-#  endif
-#endif
-
-#endif
+extern const char * const dhcpcd_embedded_conf[];
