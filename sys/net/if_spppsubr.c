@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.183 2019/07/11 03:49:51 msaitoh Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.184 2019/09/13 07:55:07 msaitoh Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.183 2019/07/11 03:49:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.184 2019/09/13 07:55:07 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1172,7 +1172,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct sppp *sp = (struct sppp *) ifp;
-	int s, error=0, going_up, going_down, newmode;
+	int s, error=0, going_up, going_down;
+	u_short newmode;
 
 	s = splnet();
 	switch (cmd) {

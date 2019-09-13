@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.57 2019/09/12 06:19:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.58 2019/09/13 07:55:07 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -473,7 +473,7 @@ struct adapter {
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			if_flags;	/* saved ifp->if_flags */
+	u_short			if_flags;	/* saved ifp->if_flags */
 	int			ec_capenable;	/* saved ec->ec_capenable */
 
 	kmutex_t		core_mtx;

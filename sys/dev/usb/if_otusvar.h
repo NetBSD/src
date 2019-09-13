@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.8 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.9 2019/09/13 07:55:07 msaitoh Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ struct otus_softc {
 	uint8_t 			*sc_ibuf;
 	size_t				sc_ibuf_size;
 
-	int				sc_if_flags;
+	unsigned short			sc_if_flags;
 	int				sc_tx_timer;
 	int				sc_fixed_ridx;
 	int				sc_bb_reset;
