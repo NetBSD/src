@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.16 2019/09/13 16:53:05 dyoung Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.17 2019/09/13 17:26:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.16 2019/09/13 16:53:05 dyoung Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.17 2019/09/13 17:26:27 dyoung Exp $");
 #endif /* not lint */
 
 /*
@@ -136,7 +136,7 @@ tabify(const char *line, size_t len)
 	size_t dcol, ocol, limit, n;
 
 	dcol = ocol = 0;
-	limit = nstops == 0 ? UINT_MAX : tabstops[nstops - 1] - 1;
+	limit = nstops <= 1 ? UINT_MAX : tabstops[nstops - 1] - 1;
 	e = line + len;
 	for (p = line; p < e; p++) {
 		if (*p == ' ') {
