@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.190 2019/08/26 04:49:45 kamil Exp $
+# $NetBSD: md.i386,v 1.191 2019/09/13 05:13:54 martin Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -637,6 +637,7 @@
 ./usr/include/i386/mouse.h			comp-obsolete		obsolete
 ./usr/include/i386/mtrr.h			comp-c-include
 ./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/multiboot2.h			comp-c-include
 ./usr/include/i386/mutex.h			comp-c-include
 ./usr/include/i386/npx.h			comp-obsolete		obsolete
 ./usr/include/i386/param.h			comp-c-include
