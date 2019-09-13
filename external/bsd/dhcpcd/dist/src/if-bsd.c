@@ -653,6 +653,12 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 		return -1;
 	}
 #endif
+#ifdef RTF_WASCLONED
+	if (rtm->rtm_flags & RTF_WASCLONED) {
+		errno = ENOTSUP;
+		return -1;
+	}
+#endif
 #ifdef RTF_LOCAL
 	if (rtm->rtm_flags & RTF_LOCAL) {
 		errno = ENOTSUP;
