@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.8 2019/07/29 11:33:07 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.9 2019/09/13 02:19:45 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -191,6 +191,40 @@ efi_memory_compact_map(EFI_MEMORY_DESCRIPTOR *desc, UINTN *NoEntries,
 	}
 
 	return desc;
+}
+
+int
+efi_memory_get_memmap(struct bi_memmap_entry **memmapp, size_t *num)
+{
+	EFI_STATUS status;
+	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
+	UINTN i, NoEntries, MapKey, DescriptorSize;
+	UINT32 DescriptorVersion;
+	UINTN cols, rows;
+	struct bi_memmap_entry *memmap;
+
+	status = uefi_call_wrapper(ST->ConOut->QueryMode, 4, ST->ConOut,
+	    ST->ConOut->Mode->Mode, &cols, &rows);
+	if (EFI_ERROR(status) || rows <= 2)
+		return -1;
+
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
+	    &DescriptorVersion, true);
+	efi_memory_compact_map(mdtop, &NoEntries, DescriptorSize);
+
+	memmap = alloc(sizeof(*memmap) * NoEntries);
+
+	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
+		memmap[i].addr = md->PhysicalStart;
+		memmap[i].size = md->NumberOfPages * EFI_PAGE_SIZE;
+		memmap[i].type = getmemtype(md);
+
+		next = NextMemoryDescriptor(md, DescriptorSize);
+	}
+	
+	*memmapp = memmap;
+	*num = NoEntries;
+	return 0;
 }
 
 /*
