@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.136 2019/09/13 07:55:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.137 2019/09/13 08:09:24 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -112,6 +112,7 @@ static s32	ixv_check_link(struct adapter *);
 
 static void	ixv_enable_intr(struct adapter *);
 static void	ixv_disable_intr(struct adapter *);
+static int	ixv_set_promisc(struct adapter *);
 static void	ixv_set_multi(struct adapter *);
 static void	ixv_update_link_status(struct adapter *);
 static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
@@ -1074,6 +1075,69 @@ ixv_media_change(struct ifnet *ifp)
 	return (0);
 } /* ixv_media_change */
 
+/************************************************************************
+ * ixv_set_promisc
+ ************************************************************************/
+static int
+ixv_set_promisc(struct adapter *adapter)
+{
+	struct ifnet *ifp = adapter->ifp;
+	struct ixgbe_hw *hw = &adapter->hw;
+	struct ethercom *ec = &adapter->osdep.ec;
+	int error = 0;
+
+	KASSERT(mutex_owned(&adapter->core_mtx));
+	if (ifp->if_flags & IFF_PROMISC) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_PROMISC);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support promisc mode\n");
+			error = EOPNOTSUPP;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to set promisc mode. error = %d\n",
+			    error);
+			error = EIO;
+		}
+	} else if (ec->ec_flags & ETHER_F_ALLMULTI) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_ALLMULTI);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support allmulti mode\n");
+			error = EOPNOTSUPP;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to set allmulti mode. error = %d\n",
+			    error);
+			error = EIO;
+		}
+	} else {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_MULTI);
+		if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			/* normal operation */
+			error = 0;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to chane filtering mode to normal. "
+			    "error = %d\n", error);
+			error = EIO;
+		}
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	}
+
+	return error;
+} /* ixv_set_promisc */
 
 /************************************************************************
  * ixv_negotiate_api
@@ -2905,11 +2969,13 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
+	u_short saved_flags;
 	u_short change;
 	int rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
+	saved_flags = adapter->if_flags;
 	change = ifp->if_flags ^ adapter->if_flags;
 	if (change != 0)
 		adapter->if_flags = ifp->if_flags;
@@ -2917,6 +2983,13 @@ ixv_ifflags_cb(struct ethercom *ec)
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		rv = ENETRESET;
 		goto out;
+	} else if ((change & IFF_PROMISC) != 0) {
+		rv = ixv_set_promisc(adapter);
+		if (rv != 0) {
+			/* Restore previous */
+			adapter->if_flags = saved_flags;
+			goto out;
+		}
 	}
 
 	/* Check for ec_capenable. */
