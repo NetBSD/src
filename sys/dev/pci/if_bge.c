@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.336 2019/07/30 15:50:08 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.337 2019/09/13 07:55:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.336 2019/07/30 15:50:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.337 2019/09/13 07:55:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5770,7 +5770,7 @@ bge_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct bge_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->bge_if_flags;
+	u_short change = ifp->if_flags ^ sc->bge_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
