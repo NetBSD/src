@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.93 2018/11/22 21:28:21 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.94 2019/09/13 06:30:10 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.93 2018/11/22 21:28:21 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.94 2019/09/13 06:30:10 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -452,7 +452,7 @@ END(softint_switch)
  * r7 = curcpu()
  */
 ENTRY_NP(softint_tramp)
-	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readust after mi_switch */
+	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readjust after mi_switch */
 	add	r3, r3, #1
 	str	r3, [r7, #(CI_MTX_COUNT)]
 
