@@ -3264,7 +3264,13 @@ valid_udp_packet(void *packet, size_t plen, struct in_addr *from,
 	if (from != NULL)
 		from->s_addr = ip->ip_src.s_addr;
 
+	/* Check we have the IP header */
 	ip_hlen = (size_t)ip->ip_hl * 4;
+	if (ip_hlen > plen) {
+		errno = ENOBUFS;
+		return -1;
+	}
+
 	if (in_cksum(ip, ip_hlen, NULL) != 0) {
 		errno = EINVAL;
 		return -1;
