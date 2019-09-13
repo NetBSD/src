@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.67 2019/08/27 17:24:51 maxv Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.68 2019/09/13 07:47:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.67 2019/08/27 17:24:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.68 2019/09/13 07:47:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -229,8 +229,8 @@ upl_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	usbnet_isowned_rx(un);
 
-	DPRINTFN(9,("%s: %s: enter status=%d length=%d\n",
-		    device_xname(un->un_dev), __func__, status, total_len));
+	DPRINTFN(9,("%s: %s: enter length=%d\n",
+		    device_xname(un->un_dev), __func__, total_len));
 
 	usbnet_input(un, c->unc_buf, total_len);
 }
