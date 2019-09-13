@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2017/06/09 00:13:29 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.11 2019/09/13 13:56:04 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #define __EXPOSE_MOUNT
 #include <sys/mount.h>
 #include <sys/uio.h>
+#define __NAMECACHE_PRIVATE
 #include <sys/namei.h>
 #include <sys/sysctl.h>
 
