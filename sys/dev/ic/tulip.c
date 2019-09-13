@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.198 2019/07/30 16:49:20 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.199 2019/09/13 07:55:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.198 2019/07/30 16:49:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.199 2019/09/13 07:55:06 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -965,7 +965,7 @@ tlp_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct tulip_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;

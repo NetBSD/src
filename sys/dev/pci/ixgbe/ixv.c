@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.135 2019/09/13 06:50:18 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.136 2019/09/13 07:55:07 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2905,7 +2905,8 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change, rv = 0;
+	u_short change;
+	int rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 

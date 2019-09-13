@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.24 2018/11/27 19:17:02 bouyer Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.25 2019/09/13 07:55:07 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -321,7 +321,7 @@ struct bge_softc {
 #define BGE_STS_BIT(sc, x)	((sc)->bge_sts & (x))
 #define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
-	int			bge_if_flags;
+	u_short			bge_if_flags;
 	uint32_t		bge_flags;
 	uint32_t		bge_phy_flags;
 	int			bge_flowflags;

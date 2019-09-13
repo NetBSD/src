@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.28 2019/09/09 07:20:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.29 2019/09/13 07:55:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.28 2019/09/09 07:20:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.29 2019/09/13 07:55:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,7 +86,7 @@ struct usbnet_private {
 
 	int			unp_refcnt;
 	int			unp_timer;
-	int			unp_if_flags;
+	unsigned short		unp_if_flags;
 	unsigned		unp_number;
 
 	krndsource_t		unp_rndsrc;
@@ -1016,7 +1016,7 @@ usbnet_ifflags_cb(struct ethercom *ec)
 
 	mutex_enter(&unp->unp_lock);
 
-	const int changed = ifp->if_flags ^ unp->unp_if_flags;
+	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
 	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
 		unp->unp_if_flags = ifp->if_flags;
 		if ((changed & IFF_PROMISC) != 0)

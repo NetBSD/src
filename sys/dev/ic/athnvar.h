@@ -1,4 +1,4 @@
-/*	$NetBSD: athnvar.h,v 1.6 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.7 2019/09/13 07:55:06 msaitoh Exp $	*/
 /*	$OpenBSD: athnvar.h,v 1.34 2013/10/21 16:13:49 stsp Exp $	*/
 
 /*-
@@ -564,7 +564,7 @@ struct athn_softc {
 	void				*sc_txsring;
 	int				sc_txscur;
 
-	int				sc_if_flags;
+	u_short				sc_if_flags;
 	int				sc_tx_timer;
 
 	const struct athn_ini		*sc_ini;

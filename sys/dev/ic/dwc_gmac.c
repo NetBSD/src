@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.65 2019/09/13 07:55:06 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.65 2019/09/13 07:55:06 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1094,7 +1094,7 @@ dwc_gmac_ifflags_cb(struct ethercom *ec)
 	int ret = 0;
 
 	mutex_enter(sc->sc_lock);
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 	sc->sc_if_flags = ifp->if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {

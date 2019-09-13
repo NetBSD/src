@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.275 2019/08/10 21:13:54 rmind Exp $	*/
+/*	$NetBSD: if.h,v 1.276 2019/09/13 07:55:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ typedef struct ifnet {
 			    (struct ifnet *, const unsigned long,
 			    const struct sockaddr *);
 	int		(*if_setflags)	/* :: */
-			    (struct ifnet *, const short);
+			    (struct ifnet *, const u_short);
 	kmutex_t	*if_ioctl_lock;	/* :: */
 	char		*if_description;	/* i: interface description */
 #ifdef _KERNEL /* XXX kvm(3) */
@@ -1108,7 +1108,7 @@ int	ifpromisc_locked(struct ifnet *, int);
 int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
 int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
-int	if_flags_set(struct ifnet *, const short);
+int	if_flags_set(struct ifnet *, const u_short);
 int	if_clone_list(int, char *, int *);
 
 struct	ifnet *ifunit(const char *);

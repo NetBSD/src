@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -225,7 +225,7 @@ snioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa;
 	struct sn_softc *sc = ifp->if_softc;
 	int	s = splnet(), err = 0;
-	int	temp;
+	u_short	temp;
 
 	switch (cmd) {
 
@@ -480,7 +480,7 @@ snwatchdog(struct ifnet *ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	struct mtd *mtd;
-	int	temp;
+	u_short	temp;
 
 	if (sc->mtd_hw != sc->mtd_free) {
 		/* something still pending for transmit */
