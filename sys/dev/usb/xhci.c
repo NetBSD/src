@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.2 2019/09/01 13:00:37 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.3 2019/09/13 06:32:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.2 2019/09/01 13:00:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.3 2019/09/13 06:32:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -114,9 +114,12 @@ fail:
 #define HEXDUMP(a, b, c)
 #endif
 
-#define DPRINTFN(N,FMT,A,B,C,D) USBHIST_LOGN(xhcidebug,N,FMT,A,B,C,D)
-#define XHCIHIST_FUNC() USBHIST_FUNC()
-#define XHCIHIST_CALLED(name) USBHIST_CALLED(xhcidebug)
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOG(xhcidebug,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(xhcidebug,N,FMT,A,B,C,D)
+#define XHCIHIST_FUNC()		USBHIST_FUNC()
+#define XHCIHIST_CALLED(name)	USBHIST_CALLED(xhcidebug)
+#define XHCIHIST_CALLARGS(FMT,A,B,C,D) \
+				USBHIST_CALLARGS(xhcidebug,FMT,A,B,C,D)
 
 #define XHCI_DCI_SLOT 0
 #define XHCI_DCI_EP_CONTROL 1
@@ -1297,10 +1300,10 @@ xhci_intr1(struct xhci_softc * const sc)
 	uint32_t usbsts;
 	uint32_t iman;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
+	XHCIHIST_CALLARGS("USBSTS %08jx", usbsts, 0, 0, 0);
 	if ((usbsts & (XHCI_STS_HSE | XHCI_STS_EINT | XHCI_STS_PCD |
 	    XHCI_STS_HCE)) == 0) {
 		DPRINTFN(16, "ignored intr not for %s",
@@ -1411,8 +1414,8 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	struct xhci_soft_trb trb;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju dci %ju epaddr 0x%02jx attr 0x%02jx",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju epaddr 0x%02jx attr 0x%02jx",
 	    xs->xs_idx, dci, pipe->up_endpoint->ue_edesc->bEndpointAddress,
 	    pipe->up_endpoint->ue_edesc->bmAttributes);
 
@@ -1450,8 +1453,8 @@ xhci_unconfigure_endpoint(struct usbd_pipe *pipe)
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 #endif
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju", xs->xs_idx, 0, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju", xs->xs_idx, 0, 0, 0);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1467,8 +1470,8 @@ xhci_reset_endpoint_locked(struct usbd_pipe *pipe)
 	struct xhci_soft_trb trb;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1509,8 +1512,8 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 	usbd_status err;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1543,8 +1546,8 @@ xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 	struct xhci_soft_trb trb;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1587,8 +1590,8 @@ xhci_open(struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
 	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(1, "addr %jd depth %jd port %jd speed %jd", dev->ud_addr,
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("addr %jd depth %jd port %jd speed %jd", dev->ud_addr,
 	    dev->ud_depth, dev->ud_powersrc->up_portno, dev->ud_speed);
 	DPRINTFN(1, " dci %ju type 0x%02jx epaddr 0x%02jx attr 0x%02jx",
 	    xhci_ep_get_dci(ed), ed->bDescriptorType, ed->bEndpointAddress,
@@ -1657,7 +1660,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	struct xhci_soft_trb trb;
 	uint32_t *cp;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	if (sc->sc_dying)
 		return;
@@ -1666,8 +1669,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	if (xs == NULL || xs->xs_idx == 0)
 		return;
 
-	DPRINTFN(4, "pipe %#jx slot %ju dci %ju", (uintptr_t)pipe, xs->xs_idx,
-	    dci, 0);
+	XHCIHIST_CALLARGS("pipe %#jx slot %ju dci %ju",
+	    (uintptr_t)pipe, xs->xs_idx, dci, 0);
 
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -1719,7 +1722,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 static void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
@@ -1727,7 +1730,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
 	    "invalid status for abort: %d", (int)status);
 
-	DPRINTFN(4, "xfer %#jx pipe %#jx status %jd",
+	XHCIHIST_CALLARGS("xfer %#jx pipe %#jx status %jd",
 	    (uintptr_t)xfer, (uintptr_t)xfer->ux_pipe, status, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -1838,8 +1841,8 @@ xhci_clear_endpoint_stall_async_task(void *cookie)
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "xfer %#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx,
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("xfer %#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx,
 	    dci, 0);
 
 	/*
@@ -1871,8 +1874,8 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_pipe * const xp = (struct xhci_pipe *)xfer->ux_pipe;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
 
 	if (sc->sc_dying) {
 		return USBD_IOERROR;
@@ -1890,9 +1893,9 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 static void
 xhci_rhpsc(struct xhci_softc * const sc, u_int ctlrport)
 {
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "xhci%jd: port %ju status change", device_unit(sc->sc_dev),
-	   ctlrport, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("xhci%jd: port %ju status change",
+	   device_unit(sc->sc_dev), ctlrport, 0, 0);
 
 	if (ctlrport > sc->sc_maxports)
 		return;
@@ -2167,13 +2170,13 @@ xhci_handle_event(struct xhci_softc * const sc,
 	uint64_t trb_0;
 	uint32_t trb_2, trb_3;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
 	trb_3 = le32toh(trb->trb_3);
 
-	DPRINTFN(14, "event: %#jx 0x%016jx 0x%08jx 0x%08jx",
+	XHCIHIST_CALLARGS("event: %#jx 0x%016jx 0x%08jx 0x%08jx",
 	    (uintptr_t)trb, trb_0, trb_2, trb_3);
 
 	/*
@@ -2216,14 +2219,14 @@ xhci_softintr(void *v)
 	struct xhci_trb *trb;
 	int i, j, k;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
 	i = er->xr_ep;
 	j = er->xr_cs;
 
-	DPRINTFN(16, "er: xr_ep %jd xr_cs %jd", i, j, 0, 0);
+	XHCIHIST_CALLARGS("er: xr_ep %jd xr_cs %jd", i, j, 0, 0);
 
 	while (1) {
 		usb_syncmem(&er->xr_dma, XHCI_TRB_SIZE * i, XHCI_TRB_SIZE,
@@ -2346,8 +2349,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	struct xhci_slot *xs;
 	uint32_t *cp;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "port %ju depth %ju speed %ju up %#jx",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("port %ju depth %ju speed %ju up %#jx",
 	    port, depth, speed, (uintptr_t)up);
 
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
@@ -2448,7 +2451,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		/* 4.3.4 Address Assignment */
 		err = xhci_set_address(dev, slot, false);
 		if (err) {
-			DPRINTFN(1, "set address w/o bsr %ju", err, 0, 0, 0);
+			DPRINTFN(1, "failed! to set address: %ju", err, 0, 0, 0);
 			goto bad;
 		}
 
@@ -2544,7 +2547,9 @@ xhci_ring_init(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	usbd_status err;
 	size_t size = ntrb * XHCI_TRB_SIZE;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("xr %#jx ntrb %#jx align %#jx",
+	    (uintptr_t)xr, ntrb, align, 0);
 
 	err = usb_allocmem(&sc->sc_bus, size, align, &xr->xr_dma);
 	if (err)
@@ -2578,7 +2583,9 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	uint32_t status;
 	uint32_t control;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx xr_ep 0x%jx xr_cs %ju",
+	    (uintptr_t)xr, xr->xr_ep, xr->xr_cs, 0);
 
 	KASSERTMSG(ntrbs <= XHCI_XFER_NTRB, "ntrbs %zu", ntrbs);
 	for (i = 0; i < ntrbs; i++) {
@@ -2589,9 +2596,6 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 		KASSERTMSG(XHCI_TRB_3_TYPE_GET(trbs[i].trb_3) !=
 		    XHCI_TRB_TYPE_LINK, "trbs[%zu].trb3 %#x", i, trbs[i].trb_3);
 	}
-
-	DPRINTFN(12, "%#jx xr_ep 0x%jx xr_cs %ju", (uintptr_t)xr, xr->xr_ep,
-	    xr->xr_cs, 0);
 
 	ri = xr->xr_ep;
 	cs = xr->xr_cs;
@@ -2686,8 +2690,8 @@ xhci_abort_command(struct xhci_softc *sc)
 	uint64_t crcr;
 	int i;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(14, "command %#jx timeout, aborting",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("command %#jx timeout, aborting",
 	    sc->sc_command_addr, 0, 0, 0);
 
 	mutex_enter(&cr->xr_lock);
@@ -2729,8 +2733,8 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	struct xhci_ring * const cr = &sc->sc_cr;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(12, "input: 0x%016jx 0x%08jx 0x%08jx",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("input: 0x%016jx 0x%08jx 0x%08jx",
 	    trb->trb_0, trb->trb_2, trb->trb_3, 0);
 
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
@@ -2778,6 +2782,8 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 		break;
 	default:
 	case 192 ... 223:
+		DPRINTFN(5, "error %x",
+		    XHCI_TRB_2_ERROR_GET(trb->trb_2), 0, 0, 0);
 		err = USBD_IOERROR;
 		break;
 	case 224 ... 255:
@@ -2878,7 +2884,14 @@ xhci_address_device(struct xhci_softc * const sc,
 	struct xhci_soft_trb trb;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
+	if (bsr) {
+		XHCIHIST_CALLARGS("icp %jx slot %jx with bsr",
+		    icp, slot_id, 0, 0);
+	} else {
+		XHCIHIST_CALLARGS("icp %jx slot %jx nobsr",
+		    icp, slot_id, 0, 0);
+	}
 
 	trb.trb_0 = icp;
 	trb.trb_2 = 0;
@@ -2902,8 +2915,8 @@ xhci_update_ep0_mps(struct xhci_softc * const sc,
 	usbd_status err;
 	uint32_t * cp;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju mps %ju", xs->xs_idx, mps, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju mps %ju", xs->xs_idx, mps, 0, 0);
 
 	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
 	cp[0] = htole32(0);
@@ -2931,8 +2944,8 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
 {
 	uint64_t * const dcbaa = KERNADDR(&sc->sc_dcbaa_dma, 0);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "dcbaa %#jx dc %016jx slot %jd",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("dcbaa %#jx dc %016jx slot %jd",
 	    (uintptr_t)&dcbaa[si], dcba, si, 0);
 
 	dcbaa[si] = htole64(dcba);
@@ -2952,8 +2965,8 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 	usbd_status err;
 	u_int dci;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju", slot, 0, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju", slot, 0, 0, 0);
 
 	xs = &sc->sc_slots[slot];
 
@@ -3004,9 +3017,9 @@ xhci_free_slot(struct xhci_softc *sc, struct xhci_slot *xs, int start_dci,
 {
 	u_int dci;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju start %ju end %ju", xs->xs_idx, start_dci,
-	    end_dci, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju start %ju end %ju",
+	    xs->xs_idx, start_dci, end_dci, 0);
 
 	for (dci = start_dci; dci < end_dci; dci++) {
 		xhci_ring_free(sc, &xs->xs_ep[dci].xe_tr);
@@ -3028,8 +3041,8 @@ xhci_set_address(struct usbd_device *dev, uint32_t slot, bool bsr)
 	struct xhci_slot *xs;
 	usbd_status err;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %ju bsr %ju", slot, bsr, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju bsr %ju", slot, bsr, 0, 0);
 
 	xs = &sc->sc_slots[slot];
 
@@ -3067,8 +3080,8 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	uint8_t speed = dev->ud_speed;
 	uint8_t ival = ed->bInterval;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "pipe %#jx: slot %ju dci %ju speed %ju",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("pipe %#jx: slot %ju dci %ju speed %ju",
 	    (uintptr_t)pipe, xs->xs_idx, dci, speed);
 
 	/* set up initial input control context */
@@ -3255,7 +3268,7 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 	bool ishub;
 	bool usemtt;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	/*
 	 * 6.2.2, Table 57-60, 6.2.2.1, 6.2.2.2
@@ -3281,7 +3294,7 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 		ttportnum = 0;
 		tthubslot = 0;
 	}
-	DPRINTFN(4, "myhsport %#jx ttportnum=%jd tthubslot=%jd",
+	XHCIHIST_CALLARGS("myhsport %#jx ttportnum=%jd tthubslot=%jd",
 	    (uintptr_t)myhsport, ttportnum, tthubslot, 0);
 
 	/* ishub is valid after reading UDESC_DEVICE */
@@ -3467,7 +3480,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	int port, i;
 	uint32_t v;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
 
 	if (sc->sc_dying)
 		return -1;
@@ -3478,7 +3491,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	DPRINTFN(12, "rhreq: %04jx %04jx %04jx %04jx",
+	XHCIHIST_CALLARGS("rhreq: %04jx %04jx %04jx %04jx",
 	    req->bmRequestType | (req->bRequest << 8), value, index, len);
 
 #define C(x,y) ((x) | ((y) << 8))
@@ -3586,9 +3599,14 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		DPRINTFN(8, "get port status bn=%jd i=%jd cp=%ju",
 		    bn, index, cp, 0);
 		if (index < 1 || index > sc->sc_rhportcount[bn]) {
+			DPRINTFN(5, "bad get port status: index=%jd bn=%jd "
+				    "portcount=%jd",
+			    index, bn, sc->sc_rhportcount[bn], 0);
 			return -1;
 		}
 		if (len != 4) {
+			DPRINTFN(5, "bad get port status: len %d != 4",
+			    len, 0, 0, 0);
 			return -1;
 		}
 		v = xhci_op_read_4(sc, XHCI_PORTSC(cp));
@@ -3621,6 +3639,9 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		USETW(ps.wPortChange, i);
 		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
+		DPRINTFN(5, "get port status: wPortStatus %x wPortChange %x "
+			    "totlen %d",
+		    UGETW(ps.wPortStatus), UGETW(ps.wPortChange), totlen, 0);
 		break;
 	}
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
@@ -3832,8 +3853,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	u_int i;
 	const bool polling = xhci_polling_p(sc);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(12, "req: %04jx %04jx %04jx %04jx",
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("req: %04jx %04jx %04jx %04jx",
 	    req->bmRequestType | (req->bRequest << 8), UGETW(req->wValue),
 	    UGETW(req->wIndex), UGETW(req->wLength));
 
@@ -3860,7 +3881,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		parameter = DMAADDR(dma, 0);
 		KASSERTMSG(len <= 0x10000, "len %d", len);
 		status = XHCI_TRB_2_IRQ_SET(0) |
-		    XHCI_TRB_2_TDSZ_SET(1) |
+		    XHCI_TRB_2_TDSZ_SET(0) |
 		    XHCI_TRB_2_BYTES_SET(len);
 		control = (isread ? XHCI_TRB_3_DIR_IN : 0) |
 		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
@@ -3967,10 +3988,9 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	u_int i = 0;
 	const bool polling = xhci_polling_p(sc);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	DPRINTFN(15, "%#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx, dci,
-	    0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
+	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -3991,7 +4011,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	 */
 	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
-	    XHCI_TRB_2_TDSZ_SET(1) |
+	    XHCI_TRB_2_TDSZ_SET(0) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
@@ -4024,10 +4044,9 @@ xhci_device_bulk_done(struct usbd_xfer *xfer)
 #endif
 	const int isread = usbd_xfer_isread(xfer);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	DPRINTFN(15, "%#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx, dci,
-	    0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
+	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -4090,10 +4109,9 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	uint32_t control;
 	u_int i = 0;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	DPRINTFN(15, "%#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx, dci,
-	    0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
+	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -4103,7 +4121,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	parameter = DMAADDR(dma, 0);
 	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
-	    XHCI_TRB_2_TDSZ_SET(1) |
+	    XHCI_TRB_2_TDSZ_SET(0) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
@@ -4137,10 +4155,9 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 #endif
 	const int isread = usbd_xfer_isread(xfer);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	DPRINTFN(15, "%#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx, dci,
-	    0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
+	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
 	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
@@ -4153,10 +4170,10 @@ xhci_device_intr_abort(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc __diagused = XHCI_XFER2SC(xfer);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx", (uintptr_t)xfer, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	DPRINTFN(15, "%#jx", (uintptr_t)xfer, 0, 0, 0);
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 	xhci_abort_xfer(xfer, USBD_CANCELLED);
 }
@@ -4166,8 +4183,8 @@ xhci_device_intr_close(struct usbd_pipe *pipe)
 {
 	//struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(15, "%#jx", (uintptr_t)pipe, 0, 0, 0);
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("%#jx", (uintptr_t)pipe, 0, 0, 0);
 
 	xhci_close_pipe(pipe);
 }
