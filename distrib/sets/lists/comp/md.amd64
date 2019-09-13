@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.272 2019/08/26 04:49:45 kamil Exp $
+# $NetBSD: md.amd64,v 1.273 2019/09/13 05:13:54 martin Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -710,6 +710,7 @@
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mtrr.h			comp-c-include
 ./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/multiboot2.h			comp-c-include
 ./usr/include/i386/mutex.h			comp-c-include
 ./usr/include/i386/npx.h			comp-obsolete		obsolete
 ./usr/include/i386/param.h			comp-c-include
