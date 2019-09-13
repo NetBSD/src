@@ -1065,28 +1065,31 @@ ipv6_getstate(struct interface *ifp)
 }
 
 struct ipv6_addr *
-ipv6_ifanyglobal(struct interface *ifp)
+ipv6_anyglobal(struct interface *sifp)
 {
+	struct interface *ifp;
 	struct ipv6_state *state;
 	struct ipv6_addr *ia;
 
-	if (ifp->carrier == LINK_DOWN)
-		return NULL;
-
-	state = IPV6_STATE(ifp);
-	if (state == NULL)
-		return NULL;
-
-	TAILQ_FOREACH(ia, &state->addrs, next) {
-		if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
+	TAILQ_FOREACH(ifp, sifp->ctx->ifaces, next) {
+		if (ifp != sifp && ip6_forwarding(ifp->name) != 1)
 			continue;
-		/* Let's be optimistic.
-		 * Any decent OS won't forward or accept traffic
-		 * from/to tentative or detached addresses. */
-		if (!(ia->addr_flags & IN6_IFF_DUPLICATED))
-			break;
+
+		state = IPV6_STATE(ifp);
+		if (state == NULL)
+			continue;
+
+		TAILQ_FOREACH(ia, &state->addrs, next) {
+			if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
+				continue;
+			/* Let's be optimistic.
+			 * Any decent OS won't forward or accept traffic
+			 * from/to tentative or detached addresses. */
+			if (!(ia->addr_flags & IN6_IFF_DUPLICATED))
+				return ia;
+		}
 	}
-	return ia;
+	return NULL;
 }
 
 void
@@ -1133,7 +1136,7 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 		return;
 	if ((state = ipv6_getstate(ifp)) == NULL)
 		return;
-	anyglobal = ipv6_ifanyglobal(ifp) != NULL;
+	anyglobal = ipv6_anyglobal(ifp) != NULL;
 
 	TAILQ_FOREACH(ia, &state->addrs, next) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->addr, addr))
@@ -1252,7 +1255,7 @@ out:
 	 * call rt_build to add/remove the default route. */
 	if (ifp->active && ifp->options->options & DHCPCD_IPV6 &&
 	    !(ctx->options & DHCPCD_RTBUILD) &&
-	    (ipv6_ifanyglobal(ifp) != NULL) != anyglobal)
+	    (ipv6_anyglobal(ifp) != NULL) != anyglobal)
 		rt_build(ctx, AF_INET6);
 }
 
@@ -2335,7 +2338,7 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 		}
 		if (rap->lifetime == 0)
 			continue;
-		if (ipv6_ifanyglobal(rap->iface) == NULL)
+		if (ipv6_anyglobal(rap->iface) == NULL)
 			continue;
 		rt = inet6_makerouter(rap);
 		if (rt == NULL)
