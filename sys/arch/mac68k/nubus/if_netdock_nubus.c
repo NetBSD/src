@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.29 2019/02/05 06:17:01 msaitoh Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.30 2019/09/13 07:55:06 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.29 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.30 2019/09/13 07:55:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -377,7 +377,7 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct netdock_softc *sc = ifp->if_softc;
 	int s = splnet();
 	int err = 0;
-	int temp;
+	u_short temp;
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
@@ -546,7 +546,7 @@ static void
 netdock_watchdog(struct ifnet *ifp)
 {
 	struct netdock_softc *sc = ifp->if_softc;
-	int tmp;
+	u_short tmp;
 
 	printf("netdock_watchdog: resetting chip\n");
 	tmp = ifp->if_flags & IFF_UP;
