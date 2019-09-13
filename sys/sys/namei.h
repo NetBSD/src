@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.98 2019/06/03 06:05:39 msaitoh Exp $	*/
+/*	$NetBSD: namei.h,v 1.99 2019/09/13 13:59:31 christos Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.42 2019/06/03 06:04:21 msaitoh Exp 
+ *   from: NetBSD: namei.src,v 1.43 2019/09/13 13:58:53 christos Exp 
  */
 
 /*
@@ -195,20 +195,17 @@ struct nameidata {
 
 #endif
 
+#ifdef __NAMECACHE_PRIVATE
 /*
- * This structure describes the elements in the cache of recent
- * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize allocations.  Minimum reasonable
- * size is 15.
+ * For simplicity (and economy of storage), names longer than
+ * a maximum length of NCHNAMLEN are stored in non-pooled storage.
  */
-
-#define	NCHNAMLEN	31	/* maximum name segment length we bother with */
+#define	NCHNAMLEN	32	/* up to this size gets stored in pool */
 
 /*
- * Namecache entry.  This structure is arranged so that frequently
- * accessed and mostly read-only data is toward the front, with
- * infrequently accessed data and the lock towards the rear.  The
- * lock is then more likely to be in a separate cache line.
+ * Namecache entry.  
+ * This structure describes the elements in the cache of recent
+ * names looked up by namei.
  *
  * Locking rules:
  *
@@ -222,18 +219,21 @@ struct nameidata {
 struct namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
-	struct	vnode *nc_dvp;		/* N vnode of parent of name */
-	struct	vnode *nc_vp;		/* N vnode the name refers to */
-	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
-	char	nc_nlen;		/* - length of name */
-	char	nc_name[NCHNAMLEN];	/* - segment name */
-	void	*nc_gcqueue;		/* N queue for garbage collection */
-	TAILQ_ENTRY(namecache) nc_lru;	/* L psuedo-lru chain */
+	TAILQ_ENTRY(namecache) nc_lru;	/* L pseudo-lru chain */
 	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
 	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
+	struct	vnode *nc_dvp;		/* N vnode of parent of name */
+	struct	vnode *nc_vp;		/* N vnode the name refers to */
+	void	*nc_gcqueue;		/* N queue for garbage collection */
 	kmutex_t nc_lock;		/*   lock on this entry */
 	int	nc_hittime;		/* N last time scored a hit */
+	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
+	u_short	nc_nlen;		/* - length of name */
+	char	nc_name[0];		/* - segment name */
 };
+__CTASSERT((sizeof(struct namecache) + NCHNAMLEN)
+    % __alignof(struct namecache) == 0);
+#endif
 
 #ifdef _KERNEL
 #include <sys/pool.h>
