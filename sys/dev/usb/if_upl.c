@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.64.2.1 2019/09/01 13:00:36 martin Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.64.2.2 2019/09/13 06:51:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.64.2.1 2019/09/01 13:00:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.64.2.2 2019/09/13 06:51:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,8 +95,7 @@ static struct usb_devno sc_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL25A1 },
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U258 },
-	{ USB_VENDOR_NI, USB_PRODUCT_NI_HTOH_7825 },
-	{ 0, 0 }
+	{ USB_VENDOR_NI, USB_PRODUCT_NI_HTOH_7825 }
 };
 
 int	upl_match(device_t, cfdata_t, void *);

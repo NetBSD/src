@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.21.4.1 2019/09/01 13:00:36 martin Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.21.4.2 2019/09/13 06:51:58 martin Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21.4.1 2019/09/01 13:00:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21.4.2 2019/09/13 06:51:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -78,6 +78,8 @@ static uint32_t urndis_ctrl_handle_init(struct usbnet *,
 static uint32_t urndis_ctrl_handle_query(struct usbnet *,
     const struct rndis_comp_hdr *, void **, size_t *);
 static uint32_t urndis_ctrl_handle_reset(struct usbnet *,
+    const struct rndis_comp_hdr *);
+static uint32_t urndis_ctrl_handle_status(struct usbnet *,
     const struct rndis_comp_hdr *);
 
 static uint32_t urndis_ctrl_set(struct usbnet *, uint32_t, void *,
@@ -205,6 +207,10 @@ urndis_ctrl_handle(struct usbnet *un, struct rndis_comp_hdr *hdr,
 		case REMOTE_NDIS_KEEPALIVE_CMPLT:
 		case REMOTE_NDIS_SET_CMPLT:
 			rval = le32toh(hdr->rm_status);
+			break;
+
+		case REMOTE_NDIS_INDICATE_STATUS_MSG:
+			rval = urndis_ctrl_handle_status(un, hdr);
 			break;
 
 		default:
@@ -374,6 +380,38 @@ urndis_ctrl_handle_reset(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 			    DEVNAME(un));
 			return rval;
 		}
+	}
+
+	return rval;
+}
+
+static uint32_t
+urndis_ctrl_handle_status(struct usbnet *un,
+    const struct rndis_comp_hdr *hdr)
+{
+	const struct rndis_status_msg	*msg;
+	uint32_t			rval;
+
+	msg = (const struct rndis_status_msg *)hdr;
+
+	rval = le32toh(msg->rm_status);
+
+	DPRINTF(("%s: urndis_ctrl_handle_status: len %u status 0x%x "
+	    "stbuflen %u\n",
+	    DEVNAME(un),
+	    le32toh(msg->rm_len),
+	    rval,
+	    le32toh(msg->rm_stbuflen)));
+
+	switch (rval) {
+		case RNDIS_STATUS_MEDIA_CONNECT:
+		case RNDIS_STATUS_MEDIA_DISCONNECT:
+		case RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG:
+			rval = RNDIS_STATUS_SUCCESS;
+			break;
+
+		default:
+		        printf("%s: status 0x%x\n", DEVNAME(un), rval);
 	}
 
 	return rval;
