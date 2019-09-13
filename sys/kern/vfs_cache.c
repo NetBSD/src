@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.120 2017/03/18 22:36:56 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.121 2019/09/13 14:01:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,8 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.120 2017/03/18 22:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.121 2019/09/13 14:01:33 christos Exp $");
 
+#define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
@@ -92,10 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.120 2017/03/18 22:36:56 riastradh Ex
  * used names will hang around.  Cache is indexed by hash value
  * obtained from (dvp, name) where dvp refers to the directory
  * containing name.
- *
- * For simplicity (and economy of storage), names longer than
- * a maximum length of NCHNAMLEN are not cached; they occur
- * infrequently in any case, and are almost never of interest.
  *
  * Upon reaching the last segment of a path, if the reference
  * is for DELETE, or NOCACHE is set (rewrite), and the
@@ -589,7 +586,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 
 	cpup = curcpu()->ci_data.cpu_nch;
 	mutex_enter(&cpup->cpu_lock);
-	if (__predict_false(namelen > NCHNAMLEN)) {
+	if (__predict_false(namelen > USHRT_MAX)) {
 		SDT_PROBE(vfs, namecache, lookup, toolong, dvp,
 		    name, namelen, 0, 0);
 		COUNT(cpup, ncs_long);
@@ -703,7 +700,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 
 	cpup = curcpu()->ci_data.cpu_nch;
 	mutex_enter(&cpup->cpu_lock);
-	if (__predict_false(namelen > NCHNAMLEN)) {
+	if (__predict_false(namelen > USHRT_MAX)) {
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -868,7 +865,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	/* First, check whether we can/should add a cache entry. */
 	if ((cnflags & MAKEENTRY) == 0 ||
-	    __predict_false(namelen > NCHNAMLEN || !doingcache)) {
+	    __predict_false(namelen > USHRT_MAX || !doingcache)) {
 		SDT_PROBE(vfs, namecache, enter, toolong, vp, name, namelen,
 		    0, 0);
 		return;
@@ -882,6 +879,10 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		mutex_exit(namecache_lock);
 	}
 
+	if (namelen > NCHNAMLEN) {
+		ncp = kmem_alloc(sizeof(*ncp) + namelen, KM_SLEEP);
+		cache_ctor(NULL, ncp, 0);
+	} else
 	ncp = pool_cache_get(namecache_cache, PR_WAITOK);
 	mutex_enter(namecache_lock);
 	numcache++;
@@ -919,7 +920,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		ncp->nc_vlist.le_prev = NULL;
 		ncp->nc_vlist.le_next = NULL;
 	}
-	KASSERT(namelen <= NCHNAMLEN);
+	KASSERT(namelen <= USHRT_MAX);
 	ncp->nc_nlen = namelen;
 	memcpy(ncp->nc_name, name, (unsigned)ncp->nc_nlen);
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
@@ -970,7 +971,7 @@ nchinit(void)
 	int error;
 
 	TAILQ_INIT(&nclruhead);
-	namecache_cache = pool_cache_init(sizeof(struct namecache),
+	namecache_cache = pool_cache_init(sizeof(struct namecache) + NCHNAMLEN,
 	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, cache_ctor,
 	    cache_dtor, NULL);
 	KASSERT(namecache_cache != NULL);
@@ -1248,6 +1249,10 @@ cache_reclaim(void)
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = NULL;
 		}
+		if (ncp->nc_nlen > NCHNAMLEN) {
+			cache_dtor(NULL, ncp);
+			kmem_free(ncp, sizeof(*ncp) + ncp->nc_nlen);
+		} else
 		pool_cache_put(namecache_cache, ncp);
 		ncp = next;
 	}
