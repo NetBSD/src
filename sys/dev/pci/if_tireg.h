@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.21 2019/03/05 08:25:02 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.22 2019/09/13 07:55:07 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1127,7 +1127,7 @@ struct ti_softc {
 	u_int32_t		ti_rx_max_coal_bds;
 	u_int32_t		ti_tx_max_coal_bds;
 	u_int32_t		ti_tx_buf_ratio;
-	int			ti_if_flags;
+	u_short			ti_if_flags;
 	int			ti_txcnt;
 	void *sc_ih;
 	bus_dma_tag_t sc_dmat;

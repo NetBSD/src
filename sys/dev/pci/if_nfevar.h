@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.10 2010/11/03 14:03:40 jakllsch Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.11 2019/09/13 07:55:07 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.13 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ struct nfe_softc {
 	struct mii_data		sc_mii;
 	struct callout		sc_tick_ch;
 
-	int			sc_if_flags;
+	u_short			sc_if_flags;
 	u_int			sc_flags;
 #define NFE_JUMBO_SUP		0x01
 #define NFE_40BIT_ADDR		0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.647 2019/09/04 07:07:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.648 2019/09/13 07:55:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.647 2019/09/04 07:07:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.648 2019/09/13 07:55:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -514,7 +514,7 @@ struct wm_softc {
 #define	WM_MEDIATYPE_SERDES		0x03 /* Internal SERDES */
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
 	int sc_flags;			/* flags; see below */
-	int sc_if_flags;		/* last if_flags */
+	u_short sc_if_flags;		/* last if_flags */
 	int sc_ec_capenable;		/* last ec_capenable */
 	int sc_flowflags;		/* 802.3x flow control flags */
 	uint16_t eee_lp_ability;	/* EEE link partner's ability */
@@ -3295,7 +3295,8 @@ wm_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct wm_softc *sc = ifp->if_softc;
-	int iffchange, ecchange;
+	u_short iffchange;
+	int ecchange;
 	bool needreset = false;
 	int rc = 0;
 

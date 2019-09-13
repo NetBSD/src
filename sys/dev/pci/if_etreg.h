@@ -1,4 +1,4 @@
-/*	$NetBSD: if_etreg.h,v 1.3 2019/08/01 13:36:37 msaitoh Exp $	*/
+/*	$NetBSD: if_etreg.h,v 1.4 2019/09/13 07:55:07 msaitoh Exp $	*/
 /*	$OpenBSD: if_etreg.h,v 1.3 2008/06/08 06:18:07 jsg Exp $	*/
 
 /*
@@ -487,7 +487,7 @@ struct et_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ethercom;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
-	int			sc_if_flags;
+	u_short			sc_if_flags;
 	uint32_t		sc_flags;	/* ET_FLAG_ */
 
 	int			sc_mem_rid;

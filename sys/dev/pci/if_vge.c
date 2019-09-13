@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.73 2019/07/09 08:46:59 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.74 2019/09/13 07:55:07 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.73 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.74 2019/09/13 07:55:07 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -200,7 +200,7 @@ struct vge_softc {
 	void			*sc_intrhand;
 	struct mii_data		sc_mii;
 	uint8_t			sc_type;
-	int			sc_if_flags;
+	u_short			sc_if_flags;
 	int			sc_link;
 	int			sc_camidx;
 	callout_t		sc_timeout;
@@ -1955,7 +1955,7 @@ vge_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct vge_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
