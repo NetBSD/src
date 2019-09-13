@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/09/11 14:10:36 maya Exp $
+#	$NetBSD: Makefile,v 1.8 2019/09/13 10:31:46 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ YHEADER=1
 
 TWMCONFIGDIR=		${X11ETCDIR}/twm
 
-X11EXTRAMANDEFS+=	-e 's,__TWMDIR__,${TWMCONFIGDIR},g'
+X11EXTRAMANTRANSFORMS+=	__datadir__/X11/twm ${TWMCONFIGDIR}
 
 TWMDIR=			${X11SRCDIR.${PROG}}
 
