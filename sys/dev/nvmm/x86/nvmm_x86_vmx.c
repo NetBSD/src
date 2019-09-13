@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36 2019/06/16 18:30:31 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.37 2019/09/13 14:19:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36 2019/06/16 18:30:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.37 2019/09/13 14:19:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1106,6 +1106,13 @@ vmx_inkernel_advance(void)
 }
 
 static void
+vmx_exit_invalid(struct nvmm_exit *exit, uint64_t code)
+{
+	exit->u.inv.hwcode = code;
+	exit->reason = NVMM_EXIT_INVALID;
+}
+
+static void
 vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
@@ -1124,7 +1131,7 @@ vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	return;
 
 error:
-	exit->reason = NVMM_EXIT_INVALID;
+	vmx_exit_invalid(exit, VMCS_EXITCODE_EXC_NMI);
 }
 
 static void
@@ -1689,13 +1696,6 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 }
 
-static void
-vmx_exit_invalid(struct nvmm_exit *exit, uint64_t code)
-{
-	exit->u.inv.hwcode = code;
-	exit->reason = NVMM_EXIT_INVALID;
-}
-
 /* -------------------------------------------------------------------------- */
 
 static void
@@ -1940,7 +1940,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		splx(s);
 
 		if (__predict_false(ret != 0)) {
-			exit->reason = NVMM_EXIT_INVALID;
+			vmx_exit_invalid(exit, -1);
 			break;
 		}
 		vmx_exit_evt(cpudata);
