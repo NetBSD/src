@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2580 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2581 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -39,3 +39,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	dhcpcd(8): Import dhcpcd-8.0.4 [roy 20190904]
 	bind: Import version 9.14.5. [christos 20190905]
 	resolvconf(8): Import openresolv-3.9.2 [roy 20190908]
+	boot(8): multiboot 2 support, Xen can now boot from EFI [manu 20190913]
