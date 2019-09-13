@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.17 2019/09/13 17:26:27 dyoung Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.18 2019/09/13 17:32:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.17 2019/09/13 17:26:27 dyoung Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.18 2019/09/13 17:32:29 dyoung Exp $");
 #endif /* not lint */
 
 /*
@@ -67,9 +67,9 @@ static void	usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [-a] [-t tabstop] [file ...]\n",
-	getprogname());
-    exit(EXIT_FAILURE);
+	(void)fprintf(stderr, "Usage: %s [-a] [-t tabstop] [file ...]\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -132,6 +132,7 @@ main(int argc, char **argv)
 static void
 tabify(const char *line, size_t len)
 {
+	const size_t dstop = (nstops == 0) ? DSTOP : tabstops[0];
 	const char *e, *p;
 	size_t dcol, ocol, limit, n;
 
@@ -144,33 +145,25 @@ tabify(const char *line, size_t len)
 			continue;
 		} else if (*p == '\t') {
 			if (nstops <= 1) {
-				size_t stop = (nstops == 0)
-				    ? DSTOP
-				    : tabstops[0];
-				dcol = (1 + dcol / stop) * stop;
+				dcol = (1 + dcol / dstop) * dstop;
 				continue;
-			} else {
-				for (n = 0; n < nstops &&
-				    tabstops[n] - 1 < dcol; n++)
-					continue;
-				if (n < nstops - 1 && tabstops[n] - 1 < limit) {
-					dcol = tabstops[n];
-					continue;
-				}
+			}
+			for (n = 0; n < nstops && tabstops[n] <= dcol; n++)
+				continue;
+			if (n < nstops - 1 && tabstops[n] - 1 < limit) {
+				dcol = tabstops[n];
+				continue;
 			}
 		}
 
 		/* Output our tabs */
 		if (nstops <= 1) {
-			size_t stop = (nstops == 0)
-			    ? DSTOP
-			    : tabstops[0];
-			while (((ocol + stop) / stop) <= (dcol / stop)) {
+			while (((ocol + dstop) / dstop) <= (dcol / dstop)) {
 				if (dcol - ocol < 2)
 					break;
 				if (putchar('\t') == EOF)
 					goto out;
-				ocol = (1 + ocol / stop) * stop;
+				ocol = (1 + ocol / dstop) * dstop;
 			}
 		} else {
 			for (n = 0; n < nstops && tabstops[n] <= ocol; n++)
@@ -203,13 +196,15 @@ tabify(const char *line, size_t len)
 			dcol++;
 		}
 
+		if (all && dcol < limit)
+			continue; /* Collapse the rest of the line. */
+
 		/* Output remainder of line */
-		if (!all || dcol >= limit) {
-			for (p++; p < e; p++)
-				if (putchar(*p) == EOF)
-					goto out;
-			return;
+		for (p++; p < e; p++) {
+			if (putchar(*p) == EOF)
+				goto out;
 		}
+		return;
 	}
 	return;
 out:
