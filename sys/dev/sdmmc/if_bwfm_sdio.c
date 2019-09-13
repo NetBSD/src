@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.4 2019/09/01 05:51:45 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.5 2019/09/13 11:21:03 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1614,6 +1614,11 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 				break;
 			}
 			m_adj(m, hoff);
+			/* don't pass empty packet to stack */
+			if (m->m_len == 0) {
+				m_freem(m);
+				break;
+			}
 			bwfm_rx(&sc->sc_sc, m);
 			nextlen = swhdr->nextlen << 4;
 			break;
@@ -1752,6 +1757,11 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 				break;
 			}
 			m_adj(m, hoff);
+			/* don't pass empty packet to stack */
+			if (m->m_len == 0) {
+				m_freem(m);
+				break;
+			}
 			bwfm_rx(&sc->sc_sc, m);
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
