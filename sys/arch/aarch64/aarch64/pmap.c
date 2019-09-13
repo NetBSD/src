@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2019/09/07 09:57:37 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2019/09/13 18:07:30 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2019/09/07 09:57:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2019/09/13 18:07:30 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -214,6 +214,7 @@ static vaddr_t pmap_maxkvaddr;
 
 vaddr_t virtual_avail, virtual_end;
 vaddr_t virtual_devmap_addr;
+bool pmap_devmap_bootstrap_done = false;
 
 static struct pool_cache _pmap_cache;
 static struct pool_cache _pmap_pv_pool;
@@ -338,6 +339,8 @@ pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 		    table[i].pd_prot,
 		    table[i].pd_flags);
 	}
+
+	pmap_devmap_bootstrap_done = true;
 }
 
 const struct pmap_devmap *
