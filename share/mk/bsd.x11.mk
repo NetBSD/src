@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.132 2019/07/10 21:53:35 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.133 2019/09/13 10:23:07 maya Exp $
 
 .include <bsd.init.mk>
 
@@ -397,6 +397,7 @@ CLEANDIRFILES+= ${MAN:U${PROG:D${PROG.1}}}
 .SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
 
 _X11MANTRANSFORM= \
+	${X11EXTRAMANTRANSFORMS} \
 	__adminmansuffix__	8 \
 	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
 	__appmansuffix__ 	1 \
@@ -413,8 +414,7 @@ _X11MANTRANSFORM= \
 	__mandir__		${X11MANDIR} \
 	__miscmansuffix__	7 \
 	__oslibmansuffix__	3 \
-	__projectroot__		${X11ROOTDIR} \
-	${X11EXTRAMANTRANSFORMS}
+	__projectroot__		${X11ROOTDIR}
 
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
 XORGVERSION=	'"X Version 11"'
