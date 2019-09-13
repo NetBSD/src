@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.230 2019/09/12 07:38:19 maxv Exp $	*/
+/*	$NetBSD: bpf.c,v 1.231 2019/09/13 06:39:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.230 2019/09/12 07:38:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.231 2019/09/13 06:39:29 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1675,6 +1675,11 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m, u_int direction)
 	}
 
 	pktlen = m_length(m);
+
+	/* Skip zero-sized packets. */
+	if (__predict_false(pktlen == 0)) {
+		return;
+	}
 
 	if (pktlen == m->m_len) {
 		cpfn = (void *)memcpy;
