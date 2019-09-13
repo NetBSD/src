@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetvar.h,v 1.4 2019/07/23 06:36:36 hkenken Exp $	*/
+/*	$NetBSD: if_enetvar.h,v 1.5 2019/09/13 07:55:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -85,7 +85,7 @@ struct enet_softc {
 	int sc_rx_readidx;
 
 	/* misc */
-	int sc_if_flags;			/* local copy of if_flags */
+	u_short sc_if_flags;			/* local copy of if_flags */
 	int sc_flowflags;			/* 802.3x flow control flags */
 	struct ethercom sc_ethercom;		/* interface info */
 	struct mii_data sc_mii;

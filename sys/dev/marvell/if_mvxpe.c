@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.27 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.28 2019/09/13 07:55:07 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.27 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.28 2019/09/13 07:55:07 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1959,7 +1959,7 @@ mvxpe_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct mvxpe_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	mvxpe_sc_lock(sc);
 

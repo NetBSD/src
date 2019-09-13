@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.25 2019/07/30 06:26:31 hkenken Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.26 2019/09/13 07:55:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.25 2019/07/30 06:26:31 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.26 2019/09/13 07:55:05 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -945,7 +945,7 @@ enet_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct enet_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;

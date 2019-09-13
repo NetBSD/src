@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.15 2019/07/21 08:24:32 mrg Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.16 2019/09/13 07:55:06 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
 	const struct dwc_gmac_desc_methods *sc_descm;
-	short sc_if_flags;			/* shadow of ether flags */
+	u_short sc_if_flags;			/* shadow of ether flags */
 	uint16_t sc_mii_clk;
 	bool sc_stopping;
 	krndsource_t rnd_source;

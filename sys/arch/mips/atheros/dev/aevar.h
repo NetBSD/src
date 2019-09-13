@@ -1,4 +1,4 @@
-/*	$NetBSD: aevar.h,v 1.7 2015/04/13 21:18:42 riastradh Exp $	*/
+/*	$NetBSD: aevar.h,v 1.8 2019/09/13 07:55:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ struct ae_softc {
 	struct ae_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct ae_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
-	short	sc_if_flags;
+	u_short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
 

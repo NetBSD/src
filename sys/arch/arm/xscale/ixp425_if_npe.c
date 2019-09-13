@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.41 2019/05/28 07:41:46 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.42 2019/09/13 07:55:06 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.41 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.42 2019/09/13 07:55:06 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -118,7 +118,7 @@ struct npe_softc {
 	struct npestats	*sc_stats;
 	bus_dmamap_t	sc_stats_map;
 	bus_addr_t	sc_stats_phys;	/* phys addr of sc_stats */
-	int		sc_if_flags;	/* keep last if_flags */
+	u_short		sc_if_flags;	/* keep last if_flags */
 	krndsource_t rnd_source; /* random source */
 };
 
@@ -1458,7 +1458,7 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			error = (*ifp->if_init)(ifp);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			int diff;
+			u_short diff;
 
 			/* Up (AND RUNNING). */
 
