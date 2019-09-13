@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.18 2019/09/13 01:34:19 manu Exp $
+.\"	$NetBSD: boot.8,v 1.19 2019/09/13 07:11:04 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd August 18, 2019
+.Dd September 13, 2019
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -440,7 +440,8 @@ is of the form
 .Va NAME=partition_label
 for
 .Xr gpt 8
-partitionned disks. It can also be a unit name
+partitioned disks.
+It can also be a unit name
 .Po Dq wd0
 .Pc ,
 or an interface name
