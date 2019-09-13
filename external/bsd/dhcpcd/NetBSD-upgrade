@@ -1,4 +1,4 @@
-$NetBSD: NetBSD-upgrade,v 1.1 2019/09/13 12:13:18 roy Exp $
+$NetBSD: NetBSD-upgrade,v 1.2 2019/09/13 13:39:13 roy Exp $
 
 dhcpcd releases can be found at https://roy.marples.name/downloads/dhcpcd/
 
@@ -8,9 +8,9 @@ For the import there is a handy autoamated approach
 	./configure
 	make import-src
 	cd /tmp/dhcpcd-X.Y.Z
-	cvs import src/external/bsd/wpa/dist ROY dhcpcd-X-Y-Z
+	cvs import src/external/bsd/dhcpcd/dist ROY dhcpcd-X_Y_Z
 
-To make local changes to wpa, simply patch and commit
+To make local changes to dhcpcd, simply patch and commit
 to the main branch (aka HEAD).  Never make local changes on the
 vendor (ROY) branch.
 
