@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.12 2016/04/23 10:15:31 skrll Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.13 2019/09/14 12:42:36 maxv Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -74,6 +74,11 @@ struct ural_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ec;
 #define sc_if	sc_ec.ec_if
+
+	enum {
+		URAL_INIT_NONE,
+		URAL_INIT_INITED
+	} sc_init_state;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
