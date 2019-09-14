@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.39 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.40 2019/09/14 12:48:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.39 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.40 2019/09/14 12:48:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -62,6 +62,12 @@ int ugensadebug = 0;
 
 struct ugensa_softc {
 	device_t		sc_dev;		/* base device */
+
+	enum {
+		UGENSA_INIT_NONE,
+		UGENSA_INIT_INITED
+	} sc_init_state;
+
 	struct usbd_device *	sc_udev;	/* device */
 	struct usbd_interface *	sc_iface;	/* interface */
 
@@ -144,6 +150,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_dying = false;
+	sc->sc_init_state = UGENSA_INIT_NONE;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -187,8 +194,6 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_methods = &ugensa_methods;
 	ucaa.ucaa_arg = sc;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
-
 	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
@@ -227,6 +232,9 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
+	sc->sc_init_state = UGENSA_INIT_INITED;
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
 	DPRINTF(("ugensa: in=0x%x out=0x%x\n", ucaa.ucaa_bulkin,
 	    ucaa.ucaa_bulkout));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
@@ -260,6 +268,9 @@ ugensa_detach(device_t self, int flags)
 	DPRINTF(("ugensa_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = true;
+
+	if (sc->sc_init_state < UGENSA_INIT_INITED)
+		return 0;
 
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
