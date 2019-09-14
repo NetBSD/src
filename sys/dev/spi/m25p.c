@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.13 2019/09/14 14:41:23 tnn Exp $ */
+/* $NetBSD: m25p.c,v 1.14 2019/09/14 15:12:12 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.13 2019/09/14 14:41:23 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.14 2019/09/14 15:12:12 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ static const struct m25p_info {
 	uint8_t		mfgid;
 	uint16_t	devid;
 	const char	*name;
-	uint16_t	size;	/* in kB */
-	uint16_t	sector;	/* in kB */
+	uint16_t	size;	/* in KB */
+	uint16_t	sector;	/* in KB */
 	uint16_t	mhz;
 } m25p_infos[] = {
 	{ 0x16, 0x20, 0x2017, "STMicro M25P64", 8192, 64 },	/* 64Mbit */
