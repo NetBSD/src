@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.291 2018/10/27 05:38:08 maya Exp $ */
+/*	$NetBSD: wdc.c,v 1.292 2019/09/14 17:11:39 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.291 2018/10/27 05:38:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.292 2019/09/14 17:11:39 tsutsui Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -477,6 +477,14 @@ wdc_drvprobe(struct ata_channel *chp)
 int
 wdcprobe(struct wdc_regs *wdr)
 {
+
+	return wdcprobe_with_reset(wdr, NULL);
+}
+
+int
+wdcprobe_with_reset(struct wdc_regs *wdr,
+    void (*do_reset)(struct ata_channel *, int))
+{
 	struct wdc_softc wdc;
 	struct ata_channel ch;
 	int rv;
@@ -487,9 +495,8 @@ wdcprobe(struct wdc_regs *wdr)
 	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = wdr;
 
-	/* default reset method */
-	if (wdc.reset == NULL)
-		wdc.reset = wdc_do_reset;
+	/* check the MD reset method */
+	wdc.reset = (do_reset != NULL) ? do_reset : wdc_do_reset;
 
 	rv = wdcprobe1(&ch, 1);
 
