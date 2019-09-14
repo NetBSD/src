@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.51 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.52 2019/09/14 15:19:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.51 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.52 2019/09/14 15:19:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -404,8 +404,9 @@ uvisor_detach(device_t self, int flags)
 			sc->sc_subdevs[i] = NULL;
 		}
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+	if (sc->sc_udev != NULL)
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+		    sc->sc_dev);
 
 	return rv;
 }
