@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.25 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.26 2019/09/14 12:46:00 maxv Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.25 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.26 2019/09/14 12:46:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -398,8 +398,9 @@ uipaq_detach(device_t self, int flags)
 		rv |= config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+	if (sc->sc_udev != NULL)
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+		    sc->sc_dev);
 
 	return rv;
 }
