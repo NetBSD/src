@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.282 2019/09/14 14:09:54 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.283 2019/09/14 15:06:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.282 2019/09/14 14:09:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.283 2019/09/14 15:06:33 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1229,7 +1229,7 @@ restart:
 			u_short *e;
 			if (m != NULL)
 				goto dontblock;
-			*e = so->so_error ? &so->so_error : &so->so_rerror;
+			e = so->so_error ? &so->so_error : &so->so_rerror;
 			error = *e;
 			if ((flags & MSG_PEEK) == 0)
 				*e = 0;
