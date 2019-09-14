@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgtvar.h,v 1.2 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_upgtvar.h,v 1.3 2019/09/14 12:53:24 maxv Exp $	*/
 /*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
@@ -398,6 +398,10 @@ struct upgt_softc {
 	struct ethercom		 sc_ec;
 #define sc_if	sc_ec.ec_if
 
+	enum {
+		UPGT_INIT_NONE,
+		UPGT_INIT_INITED
+	} sc_init_state;
 	struct usbd_device *	 sc_udev;
 	struct usbd_interface *	 sc_iface;
 	int			 sc_rx_no;
