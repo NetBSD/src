@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.1 2019/09/14 06:57:52 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.2 2019/09/14 12:32:08 maxv Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.1 2019/09/14 06:57:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.2 2019/09/14 12:32:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.1 2019/09/14 06:57:52 maxv Exp $");
 #include <dev/usb/usbdivar.h>
 
 #include <dev/usb/usbroothub.h>
-
-#define VHCI_DEBUG
 
 #ifdef VHCI_DEBUG
 #define DPRINTF(fmt, ...)	printf(fmt, __VA_ARGS__)
@@ -126,15 +124,16 @@ static const struct usbd_pipe_methods vhci_root_intr_methods = {
 };
 
 typedef struct vhci_packet {
-	LIST_ENTRY(vhci_packet) portlist;
-	LIST_ENTRY(vhci_packet) xferlist;
+	TAILQ_ENTRY(vhci_packet) portlist;
+	TAILQ_ENTRY(vhci_packet) xferlist;
 	struct usbd_xfer *xfer; /* also vxfer */
+	bool utoh;
 	uint8_t *buf;
 	size_t size;
 	size_t cursor;
 } vhci_packet_t;
 
-typedef LIST_HEAD(, vhci_packet) vhci_packet_list_t;
+typedef TAILQ_HEAD(, vhci_packet) vhci_packet_list_t;
 
 typedef struct {
 	kmutex_t lock;
@@ -158,10 +157,10 @@ typedef struct vhci_xfer {
 	size_t refcnt;
 	vhci_port_t *port;
 	vhci_packet_list_t pkts;
-	LIST_ENTRY(vhci_xfer) freelist;
+	TAILQ_ENTRY(vhci_xfer) freelist;
 } vhci_xfer_t;
 
-typedef LIST_HEAD(, vhci_xfer) vhci_xfer_list_t;
+typedef TAILQ_HEAD(, vhci_xfer) vhci_xfer_list_t;
 
 #define VHCI_INDEX2PORT(idx)	(idx)
 #define VHCI_NPORTS		4
@@ -202,39 +201,48 @@ vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool usb_to_host)
 {
 	vhci_xfer_t *vxfer = (vhci_xfer_t *)xfer;
 	vhci_packet_list_t *reqlist, *pktlist;
-	vhci_packet_t *req, *pkt;
+	vhci_packet_t *req, *pkt = NULL;
+	size_t refcnt = 0;
 
 	/* Setup packet. */
 	reqlist = &port->pkts_device_ctrl.host_to_usb;
 	req = kmem_zalloc(sizeof(*req), KM_SLEEP);
 	req->xfer = xfer;
+	req->utoh = false;
 	req->buf = (uint8_t *)&xfer->ux_request;
 	req->size = sizeof(xfer->ux_request);
 	req->cursor = 0;
+	refcnt++;
 
 	/* Data packet. */
-	if (usb_to_host) {
-		pktlist = &port->pkts_device_ctrl.usb_to_host;
-	} else {
-		pktlist = &port->pkts_device_ctrl.host_to_usb;
+	if (xfer->ux_length > 0) {
+		if (usb_to_host) {
+			pktlist = &port->pkts_device_ctrl.usb_to_host;
+		} else {
+			pktlist = &port->pkts_device_ctrl.host_to_usb;
+		}
+		pkt = kmem_zalloc(sizeof(*pkt), KM_SLEEP);
+		pkt->xfer = xfer;
+		pkt->utoh = usb_to_host;
+		pkt->buf = xfer->ux_buf;
+		pkt->size = xfer->ux_length;
+		pkt->cursor = 0;
+		refcnt++;
 	}
-	pkt = kmem_zalloc(sizeof(*pkt), KM_SLEEP);
-	pkt->xfer = xfer;
-	pkt->buf = xfer->ux_buf;
-	pkt->size = xfer->ux_length;
-	pkt->cursor = 0;
 
 	/* Insert in the xfer. */
-	vxfer->refcnt = 2;
+	vxfer->refcnt = refcnt;
 	vxfer->port = port;
-	LIST_INIT(&vxfer->pkts);
-	LIST_INSERT_HEAD(&vxfer->pkts, req, xferlist);
-	LIST_INSERT_HEAD(&vxfer->pkts, pkt, xferlist);
+	TAILQ_INIT(&vxfer->pkts);
+	TAILQ_INSERT_TAIL(&vxfer->pkts, req, xferlist);
+	if (pkt != NULL)
+		TAILQ_INSERT_TAIL(&vxfer->pkts, pkt, xferlist);
 
 	/* Insert in the port. */
 	mutex_enter(&port->lock);
-	LIST_INSERT_HEAD(reqlist, req, portlist);
-	LIST_INSERT_HEAD(pktlist, pkt, portlist);
+	TAILQ_INSERT_TAIL(reqlist, req, portlist);
+	if (pkt != NULL)
+		TAILQ_INSERT_TAIL(pktlist, pkt, portlist);
 	mutex_exit(&port->lock);
 }
 
@@ -244,11 +252,18 @@ vhci_pkt_destroy(vhci_softc_t *sc, vhci_packet_t *pkt)
 	struct usbd_xfer *xfer = pkt->xfer;
 	vhci_xfer_t *vxfer = (vhci_xfer_t *)xfer;
 	vhci_port_t *port = vxfer->port;
+	vhci_packet_list_t *pktlist;
 
 	KASSERT(mutex_owned(&port->lock));
 
-	LIST_REMOVE(pkt, portlist);
-	LIST_REMOVE(pkt, xferlist);
+	if (pkt->utoh) {
+		pktlist = &port->pkts_device_ctrl.usb_to_host;
+	} else {
+		pktlist = &port->pkts_device_ctrl.host_to_usb;
+	}
+	TAILQ_REMOVE(pktlist, pkt, portlist);
+
+	TAILQ_REMOVE(&vxfer->pkts, pkt, xferlist);
 	kmem_free(pkt, sizeof(*pkt));
 
 	KASSERT(vxfer->refcnt > 0);
@@ -256,7 +271,7 @@ vhci_pkt_destroy(vhci_softc_t *sc, vhci_packet_t *pkt)
 	if (vxfer->refcnt > 0)
 		return;
 
-	KASSERT(LIST_FIRST(&vxfer->pkts) == NULL);
+	KASSERT(TAILQ_FIRST(&vxfer->pkts) == NULL);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -332,7 +347,7 @@ vhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	vhci_xfer_t *vxfer = (vhci_xfer_t *)xfer;
 
 	KASSERT(vxfer->refcnt == 0);
-	KASSERT(LIST_FIRST(&vxfer->pkts) == NULL);
+	KASSERT(TAILQ_FIRST(&vxfer->pkts) == NULL);
 
 #ifdef DIAGNOSTIC
 	vxfer->xfer.ux_state = XFER_FREE;
@@ -540,11 +555,11 @@ vhci_device_ctrl_abort(struct usbd_xfer *xfer)
 
 	mutex_enter(&port->lock);
 	for (; vxfer->refcnt > 0; vxfer->refcnt--) {
-		pkt = LIST_FIRST(&vxfer->pkts);
+		pkt = TAILQ_FIRST(&vxfer->pkts);
 		KASSERT(pkt != NULL);
 		vhci_pkt_destroy(sc, pkt);
 	}
-	KASSERT(LIST_FIRST(&vxfer->pkts) == NULL);
+	KASSERT(TAILQ_FIRST(&vxfer->pkts) == NULL);
 	mutex_exit(&port->lock);
 
 	xfer->ux_status = USBD_CANCELLED;
@@ -728,31 +743,31 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	mutex_enter(&port->lock);
 
-	LIST_INIT(&vxferlist);
+	TAILQ_INIT(&vxferlist);
 
 	pktlist = &port->pkts_device_ctrl.host_to_usb;
-	LIST_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
 		vxfer = (vhci_xfer_t *)pkt->xfer;
 		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
 		vhci_pkt_destroy(sc, pkt);
 		if (vxfer->refcnt == 0)
-			LIST_INSERT_HEAD(&vxferlist, vxfer, freelist);
+			TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
 	}
-	KASSERT(LIST_FIRST(pktlist) == NULL);
+	KASSERT(TAILQ_FIRST(pktlist) == NULL);
 
 	pktlist = &port->pkts_device_ctrl.usb_to_host;
-	LIST_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
 		vxfer = (vhci_xfer_t *)pkt->xfer;
 		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
 		vhci_pkt_destroy(sc, pkt);
 		if (vxfer->refcnt == 0)
-			LIST_INSERT_HEAD(&vxferlist, vxfer, freelist);
+			TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
 	}
-	KASSERT(LIST_FIRST(pktlist) == NULL);
+	KASSERT(TAILQ_FIRST(pktlist) == NULL);
 
-	while ((vxfer = LIST_FIRST(&vxferlist)) != NULL) {
+	while ((vxfer = TAILQ_FIRST(&vxferlist)) != NULL) {
 		struct usbd_xfer *xfer = &vxfer->xfer;
-		LIST_REMOVE(vxfer, freelist);
+		TAILQ_REMOVE(&vxferlist, vxfer, freelist);
 
 		xfer->ux_actlen = xfer->ux_length;
 		xfer->ux_status = USBD_NORMAL_COMPLETION;
@@ -922,7 +937,7 @@ vhci_fd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	port = &sc->sc_port[vfd->port];
 	pktlist = &port->pkts_device_ctrl.host_to_usb;
 
-	LIST_INIT(&vxferlist);
+	TAILQ_INIT(&vxferlist);
 
 	mutex_enter(&port->lock);
 
@@ -931,9 +946,10 @@ vhci_fd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 		goto out;
 	}
 
-	LIST_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
 		vxfer = (vhci_xfer_t *)pkt->xfer;
 		buf = pkt->buf + pkt->cursor;
+		KASSERT(pkt->size >= pkt->cursor);
 		size = uimin(uio->uio_resid, pkt->size - pkt->cursor);
 
 		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
@@ -949,7 +965,7 @@ vhci_fd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 		if (pkt->cursor == pkt->size) {
 			vhci_pkt_destroy(sc, pkt);
 			if (vxfer->refcnt == 0) {
-				LIST_INSERT_HEAD(&vxferlist, vxfer, freelist);
+				TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
 			}
 		}
 		if (uio->uio_resid == 0) {
@@ -960,9 +976,9 @@ vhci_fd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 out:
 	mutex_exit(&port->lock);
 
-	while ((vxfer = LIST_FIRST(&vxferlist)) != NULL) {
+	while ((vxfer = TAILQ_FIRST(&vxferlist)) != NULL) {
 		struct usbd_xfer *xfer = &vxfer->xfer;
-		LIST_REMOVE(vxfer, freelist);
+		TAILQ_REMOVE(&vxferlist, vxfer, freelist);
 
 		mutex_enter(&sc->sc_lock);
 		xfer->ux_actlen = xfer->ux_length;
@@ -994,7 +1010,7 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	port = &sc->sc_port[vfd->port];
 	pktlist = &port->pkts_device_ctrl.usb_to_host;
 
-	LIST_INIT(&vxferlist);
+	TAILQ_INIT(&vxferlist);
 
 	mutex_enter(&port->lock);
 
@@ -1003,7 +1019,7 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 		goto out;
 	}
 
-	LIST_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
 		vxfer = (vhci_xfer_t *)pkt->xfer;
 		buf = pkt->buf + pkt->cursor;
 		size = uimin(uio->uio_resid, pkt->size - pkt->cursor);
@@ -1021,7 +1037,7 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 		if (pkt->cursor == pkt->size) {
 			vhci_pkt_destroy(sc, pkt);
 			if (vxfer->refcnt == 0) {
-				LIST_INSERT_HEAD(&vxferlist, vxfer, freelist);
+				TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
 			}
 		}
 		if (uio->uio_resid == 0) {
@@ -1032,9 +1048,9 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 out:
 	mutex_exit(&port->lock);
 
-	while ((vxfer = LIST_FIRST(&vxferlist)) != NULL) {
+	while ((vxfer = TAILQ_FIRST(&vxferlist)) != NULL) {
 		struct usbd_xfer *xfer = &vxfer->xfer;
-		LIST_REMOVE(vxfer, freelist);
+		TAILQ_REMOVE(&vxferlist, vxfer, freelist);
 
 		mutex_enter(&sc->sc_lock);
 		xfer->ux_actlen = xfer->ux_length;
@@ -1123,8 +1139,8 @@ vhci_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_nports; i++) {
 		port = &sc->sc_port[i];
 		mutex_init(&port->lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-		LIST_INIT(&port->pkts_device_ctrl.usb_to_host);
-		LIST_INIT(&port->pkts_device_ctrl.host_to_usb);
+		TAILQ_INIT(&port->pkts_device_ctrl.usb_to_host);
+		TAILQ_INIT(&port->pkts_device_ctrl.host_to_usb);
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
