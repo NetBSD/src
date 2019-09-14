@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: spiflash.c,v 1.22 2019/09/14 14:41:23 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.22 2019/09/14 14:41:23 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -224,7 +224,7 @@ spiflash_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SPI flash\n");
 	aprint_normal(": %s SPI flash\n", sc->sc_name);
 	/* XXX: note that this has to change for boot-sectored flash */
-	aprint_normal_dev(self, "%d KB, %d sectors of %d KB each\n",
+	aprint_normal_dev(self, "%d kB, %d sectors of %d kB each\n",
 	    sc->sc_device_size / 1024,
 	    sc->sc_device_size / sc->sc_erase_size,
 	    sc->sc_erase_size / 1024);
