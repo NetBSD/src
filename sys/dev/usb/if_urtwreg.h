@@ -323,6 +323,11 @@ struct urtw_softc {
 	struct ieee80211com		sc_ic;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
+
+	enum {
+		URTW_INIT_NONE,
+		URTW_INIT_INITED
+	} sc_init_state;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 	struct urtw_rf			sc_rf;
