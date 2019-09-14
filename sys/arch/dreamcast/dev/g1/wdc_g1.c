@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_g1.c,v 1.4 2019/09/09 22:01:23 jdolecek Exp $ */
+/* $NetBSD: wdc_g1.c,v 1.5 2019/09/14 17:11:39 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,9 +62,7 @@ struct wdc_g1_softc {
 
 static int	wdc_g1_probe(device_t, cfdata_t, void *);
 static void	wdc_g1_attach(device_t, device_t, void *);
-#if 0
 static void	wdc_g1_do_reset(struct ata_channel *, int);
-#endif
 static int	wdc_g1_intr(void *);
 
 CFATTACH_DECL_NEW(wdc_g1bus, sizeof(struct wdc_g1_softc),
@@ -76,17 +74,10 @@ wdc_g1_probe(device_t parent, cfdata_t cf, void *aux)
 	struct g1bus_attach_args *ga = aux;
 	struct wdc_regs wdr;
 	int result = 0, i;
-#ifdef ATADEBUG
-	struct device dev;
-#endif
 
 	*((volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (i = 0; i < 0x200000 / 4; i++)
 		(void)((volatile uint32_t *)0xa0000000)[i];
-
-#if 0
-	wdc.reset = wdc_g1_do_reset;
-#endif
 
 	wdr.cmd_iot = ga->ga_memt;
 	if (bus_space_map(wdr.cmd_iot, WDC_G1_CMD_ADDR,
@@ -106,12 +97,7 @@ wdc_g1_probe(device_t parent, cfdata_t cf, void *aux)
 	    WDC_G1_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 	  goto outunmap;
 
-#ifdef ATADEBUG
-	/* fake up device name for ATADEBUG_PRINT() with DEBUG_PROBE */
-	memset(&dev, 0, sizeof(dev));
-	strncat(dev.dv_xname, "wdc(g1probe)", sizeof(dev.dv_xname));
-#endif
-	result = wdcprobe(&wdr);
+	result = wdcprobe_with_reset(&wdr, wdc_g1_do_reset);
 	
 	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_G1_AUXREG_NPORTS);
  outunmap:
@@ -157,9 +143,7 @@ wdc_g1_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
-#if 0
 	sc->sc_wdcdev.reset = wdc_g1_do_reset;
-#endif
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
@@ -180,12 +164,11 @@ wdc_g1_intr(void *arg)
 	return wdcintr(arg);
 }
 
-#if 0
 /*
- * This does what the generic wdc_do_reset() does, only with unnecessary
- * additional GD-ROM reset. Keep code around in case this turns out to be
- * actually useful/necessary. ATAPI code should do it's own reset in either
- * case anyway.
+ * This does what the generic wdc_do_reset() does, with additional
+ * GD-ROM reset. GD-ROM is a very early ATAPI device appeared in 1998
+ * and it doesn't reset itself by the WDCTL_RST in AUX_CTLR but requires
+ * ATAPI_SOFT_RESET command to reset whole device as a master.
  */
 static void
 wdc_g1_do_reset(struct ata_channel *chp, int poll)
@@ -220,4 +203,3 @@ wdc_g1_do_reset(struct ata_channel *chp, int poll)
 	if (poll != 0)
 		splx(s);
 }
-#endif
