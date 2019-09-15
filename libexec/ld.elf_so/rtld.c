@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.197 2019/04/14 19:21:37 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.198 2019/09/15 13:40:46 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.197 2019/04/14 19:21:37 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.198 2019/09/15 13:40:46 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,6 +134,7 @@ static void _rtld_objlist_clear(Objlist *);
 static void _rtld_unload_object(sigset_t *, Obj_Entry *, bool);
 static void _rtld_unref_dag(Obj_Entry *);
 static Obj_Entry *_rtld_obj_from_addr(const void *);
+static void _rtld_fill_dl_phdr_info(const Obj_Entry *, struct dl_phdr_info *);
 
 static inline void
 _rtld_call_initfini_function(const Obj_Entry *obj, Elf_Addr func, sigset_t *mask)
@@ -344,6 +345,7 @@ restart:
 static void
 _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 {
+	const Elf_Ehdr *ehdr;
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
 	_rtld_objself.path = __UNCONST(_rtld_path);
@@ -394,6 +396,10 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 
 	_rtld_debug.r_brk = _rtld_debug_state;
 	_rtld_debug.r_state = RT_CONSISTENT;
+
+	ehdr = (Elf_Ehdr *)mapbase;
+	_rtld_objself.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
+	_rtld_objself.phsize = ehdr->e_phnum * sizeof(_rtld_objself.phdr[0]);
 }
 
 /*
@@ -1433,6 +1439,26 @@ dlinfo(void *handle, int req, void *v)
 	return 0;
 }
 
+static void
+_rtld_fill_dl_phdr_info(const Obj_Entry *obj, struct dl_phdr_info *phdr_info)
+{
+
+	phdr_info->dlpi_addr = (Elf_Addr)obj->relocbase;
+	/* XXX: wrong but not fixing it yet */
+	phdr_info->dlpi_name = obj->path;
+	phdr_info->dlpi_phdr = obj->phdr;
+	phdr_info->dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	phdr_info->dlpi_tls_modid = obj->tlsindex;
+	phdr_info->dlpi_tls_data = obj->tlsinit;
+#else
+	phdr_info->dlpi_tls_modid = 0;
+	phdr_info->dlpi_tls_data = 0;
+#endif
+	phdr_info->dlpi_adds = _rtld_objloads;
+	phdr_info->dlpi_subs = _rtld_objloads - _rtld_objcount;
+}
+
 __strong_alias(__dl_iterate_phdr,dl_iterate_phdr);
 int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *param)
@@ -1446,25 +1472,19 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 	_rtld_shared_enter();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
-		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
-		/* XXX: wrong but not fixing it yet */
-		phdr_info.dlpi_name = obj->path;
-		phdr_info.dlpi_phdr = obj->phdr;
-		phdr_info.dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-		phdr_info.dlpi_tls_modid = obj->tlsindex;
-		phdr_info.dlpi_tls_data = obj->tlsinit;
-#else
-		phdr_info.dlpi_tls_modid = 0;
-		phdr_info.dlpi_tls_data = 0;
-#endif
-		phdr_info.dlpi_adds = _rtld_objloads;
-		phdr_info.dlpi_subs = _rtld_objloads - _rtld_objcount;
+		_rtld_fill_dl_phdr_info(obj, &phdr_info);
 
 		/* XXXlocking: exit point */
 		error = callback(&phdr_info, sizeof(phdr_info), param);
 		if (error)
 			break;
+	}
+
+	if (error == 0) {
+		_rtld_fill_dl_phdr_info(&_rtld_objself, &phdr_info);
+
+		/* XXXlocking: exit point */
+		error = callback(&phdr_info, sizeof(phdr_info), param);
 	}
 
 	_rtld_shared_exit();
