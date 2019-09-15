@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.48 2019/09/15 09:21:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.48 2019/09/15 09:21:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -527,6 +527,12 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	     (ifdesc = usb_desc_iter_next_interface(&iter)) != NULL;
 	     ++ifaceidx)
 	{
+		if (ifdesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE) {
+			DPRINTFN(50, ("uvideo_attach: "
+				      "ignoring incorrect descriptor len=%d\n",
+				      ifdesc->bLength));
+			continue;
+		}
 		if (ifdesc->bInterfaceClass != UICLASS_VIDEO) {
 			DPRINTFN(50, ("uvideo_attach: "
 				      "ignoring non-uvc interface: "
@@ -884,13 +890,17 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 
 	switch (desc->bDescriptorSubtype) {
 	case UDESC_INPUT_TERMINAL:
+		if (desc->bLength < sizeof(*input))
+			return USBD_INVAL;
 		input = (const uvideo_input_terminal_descriptor_t *)desc;
 		switch (UGETW(input->wTerminalType)) {
 		case UVIDEO_ITT_CAMERA:
+			if (desc->bLength < sizeof(*camera))
+				return USBD_INVAL;
 			camera =
 			    (const uvideo_camera_terminal_descriptor_t *)desc;
-			ct = &vu->u.vu_camera;
 
+			ct = &vu->u.vu_camera;
 			ct->ct_objective_focal_min =
 			    UGETW(camera->wObjectiveFocalLengthMin);
 			ct->ct_objective_focal_max =
@@ -911,12 +921,16 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 	case UDESC_OUTPUT_TERMINAL:
 		break;
 	case UDESC_SELECTOR_UNIT:
+		if (desc->bLength < sizeof(*selector))
+			return USBD_INVAL;
 		selector = (const uvideo_selector_unit_descriptor_t *)desc;
 
 		uvideo_unit_alloc_sources(vu, selector->bNrInPins,
 					  selector->baSourceID);
 		break;
 	case UDESC_PROCESSING_UNIT:
+		if (desc->bLength < sizeof(*processing))
+			return USBD_INVAL;
 		processing = (const uvideo_processing_unit_descriptor_t *)desc;
 		pu = &vu->u.vu_processing;
 
@@ -928,6 +942,8 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 					   processing->bmControls);
 		break;
 	case UDESC_EXTENSION_UNIT:
+		if (desc->bLength < sizeof(*extension))
+			return USBD_INVAL;
 		extension = (const uvideo_extension_unit_descriptor_t *)desc;
 		/* TODO: copy guid */
 
@@ -1081,6 +1097,9 @@ uvideo_stream_init(struct uvideo_stream *vs,
  * interface descriptor, modifying the iterator.  This may be called
  * multiple times because there may be several alternate interfaces
  * associated with the same interface number. */
+/*
+ * XXX XXX XXX: This function accesses descriptors in an unsafe manner.
+ */
 static usbd_status
 uvideo_stream_init_desc(struct uvideo_stream *vs,
 			const usb_interface_descriptor_t *ifdesc,
