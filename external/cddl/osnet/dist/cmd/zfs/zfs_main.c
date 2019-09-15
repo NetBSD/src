@@ -7135,8 +7135,13 @@ main(int argc, char **argv)
 	 * This command also doubles as the /etc/fs mount and unmount program.
 	 * Determine if we should take this behavior based on argv[0].
 	 */
+#ifdef __NetBSD__
+#define LEGACYPROGNAME "mount_zfs"
+#else
+#define LEGACYPROGNAME "mount"
+#endif
 	progname = basename(argv[0]);
-	if (strcmp(progname, "mount") == 0) {
+	if (strcmp(progname, LEGACYPROGNAME) == 0) {
 		ret = manual_mount(argc, argv);
 	} else if (strcmp(progname, "umount") == 0) {
 		ret = manual_unmount(argc, argv);

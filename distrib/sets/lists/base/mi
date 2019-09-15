@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1216 2019/09/08 21:04:31 roy Exp $
+# $NetBSD: mi,v 1.1217 2019/09/15 19:38:08 brad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -569,6 +569,7 @@
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root
 ./sbin/mount_v7fs				base-sysutil-root
+./sbin/mount_zfs				base-zfs-root		zfs
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
