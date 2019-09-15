@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.152 2019/09/15 22:32:48 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.153 2019/09/15 23:41:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
  * X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE)
 int	linkat(int, const char *, int, const char *, int);
 int	renameat(int, const char *, int, const char *);
 int	faccessat(int, const char *, int, int);
@@ -315,8 +315,6 @@ int	fchownat(int, const char *, uid_t, gid_t, int);
 ssize_t	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
-#endif
-#if defined(_INCOMPLETE_XOPEN_C063)
 int	fexecve(int, char * const *, char * const *);
 #endif
 
