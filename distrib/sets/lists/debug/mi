@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.286 2019/08/23 08:17:27 mrg Exp $
+# $NetBSD: mi,v 1.287 2019/09/15 16:28:09 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1730,6 +1730,7 @@
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_fcntl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_kauth_pr_47598.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ksem.debug			tests-kernel-tests	debug,atf,compattestfile
