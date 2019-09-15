@@ -1,0 +1,24 @@
+.\"	$NetBSD: mount_zfs.8,v 1.1 2019/09/15 19:38:09 brad Exp $
+.\"
+.\"
+.Dd August 29, 2019
+.Dt MOUNT_ZFS 8
+.Os
+.Sh NAME
+.Nm mount_zfs
+.Nd helper utility for mounting legacy ZFS mounts
+.Sh SYNOPSIS
+.Nm
+.Ar ZFS_dataset
+.Ar mount_point
+.Sh DESCRIPTION
+The
+.Nm
+utility supports mounting ZFS filesystems via /etc/fstab where the ZFS property is mountpoint=legacy
+.Sh SEE ALSO
+.Xr zfs 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 9.0 .
