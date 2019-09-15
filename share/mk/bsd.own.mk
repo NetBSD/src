@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1151 2019/08/23 08:17:27 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1152 2019/09/15 21:17:08 bad Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -329,7 +329,8 @@ DESTDIR?=
 # Don't append another copy of sysroot (coming from COMPATCPPFLAGS etc.)
 # because it confuses Coverity. Still we need to cov-configure specially
 # for each specific sysroot argument.
-.if !defined(HOSTPROG) && !defined(HOSTLIB)
+# Also don't add a sysroot at all if a rumpkernel build.
+.if !defined(HOSTPROG) && !defined(HOSTLIB) && !defined(RUMPRUN)
 .  if ${DESTDIR} != ""
 .	if empty(CPPFLAGS:M*--sysroot=*)
 CPPFLAGS+=	--sysroot=${DESTDIR}
