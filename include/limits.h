@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.40 2016/08/04 06:43:43 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.41 2019/09/15 23:41:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -149,9 +149,6 @@
  * This hides unimplemented functions from GNU configure until
  * we are done implementing them.
  */
-#if !defined(_INCOMPLETE_XOPEN_C063)
-#define __stub_fexecve
-#endif
 
 #include <machine/limits.h>
 
