@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.240 2018/07/31 13:04:10 rjs Exp $
+#	$NetBSD: Makefile.inc,v 1.241 2019/09/15 16:55:00 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -306,6 +306,7 @@ MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 MLINKS+=access.2 faccessat.2
 MLINKS+=chmod.2 fchmodat.2
 MLINKS+=chown.2 fchownat.2
+MLINKS+=execve.2 fexecve.2
 MLINKS+=fdiscard.2 posix_fallocate.2 
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
 MLINKS+=stat.2 fstatat.2
