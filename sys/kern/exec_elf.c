@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.98 2019/06/07 23:35:52 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.99 2019/09/15 20:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.98 2019/06/07 23:35:52 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.99 2019/09/15 20:20:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -157,6 +157,7 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 	size_t len, vlen;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a, *execname;
 	struct elf_args *ap;
+	char *path = l->l_proc->p_path;
 	int error;
 
 	a = ai;
@@ -224,9 +225,12 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 		a->a_v = l->l_proc->p_stackbase;
 		a++;
 
-		execname = a;
-		a->a_type = AT_SUN_EXECNAME;
-		a++;
+		/* "/" means fexecve(2) could not resolve the pathname */
+		if (path[0] == '/' && path[1] != '\0') {
+			execname = a;
+			a->a_type = AT_SUN_EXECNAME;
+			a++;
+		}
 
 		exec_free_emul_arg(pack);
 	} else {
@@ -242,7 +246,6 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 	KASSERT(vlen <= sizeof(ai));
 
 	if (execname) {
-		char *path = l->l_proc->p_path;
 		execname->a_v = (uintptr_t)(*stackp + vlen);
 		len = strlen(path) + 1;
 		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
