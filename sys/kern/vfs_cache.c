@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.122 2019/09/15 17:36:43 maya Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.123 2019/09/15 17:37:25 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.122 2019/09/15 17:36:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.123 2019/09/15 17:37:25 maya Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -1254,7 +1254,7 @@ cache_reclaim(void)
 			cache_dtor(NULL, ncp);
 			kmem_free(ncp, sizeof(*ncp) + ncp->nc_nlen);
 		} else
-		pool_cache_put(namecache_cache, ncp);
+			pool_cache_put(namecache_cache, ncp);
 		ncp = next;
 	}
 	cache_unlock_cpus();
