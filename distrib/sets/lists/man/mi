@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1651 2019/08/30 08:54:58 mrg Exp $
+# $NetBSD: mi,v 1.1652 2019/09/15 19:38:09 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2794,6 +2794,7 @@
 ./usr/share/man/cat8/mount_umap.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_union.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_v7fs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_zfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mountd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/moused.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mrinfo.0			man-netutil-catman	.cat
@@ -5759,6 +5760,7 @@
 ./usr/share/man/html8/mount_umap.html		man-miscfs-htmlman	html
 ./usr/share/man/html8/mount_union.html		man-miscfs-htmlman	html
 ./usr/share/man/html8/mount_v7fs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mount_zfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mountd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/moused.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mrinfo.html		man-netutil-htmlman	html
@@ -8906,6 +8908,7 @@
 ./usr/share/man/man8/mount_umap.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_union.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_v7fs.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_zfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mountd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/moused.8			man-sysutil-man		.man
 ./usr/share/man/man8/mrinfo.8			man-netutil-man		.man

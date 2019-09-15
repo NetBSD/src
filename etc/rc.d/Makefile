@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.104 2019/05/12 01:50:14 kre Exp $
+# $NetBSD: Makefile,v 1.105 2019/09/15 19:38:09 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -53,6 +53,10 @@ CONFIGFILES+=	xdm xfs fccache
 FILESBUILD_xdm=	yes
 FILESBUILD_xfs=	yes
 FILESBUILD_fccache= yes
+
+.if ${MKZFS} != "no"
+CONFIGFILES+=	zfs
+.endif
 
 .SUFFIXES: .in
 .in:
