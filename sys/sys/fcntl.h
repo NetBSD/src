@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.52 2019/09/15 20:25:48 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.53 2019/09/15 23:55:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -115,7 +115,7 @@
 #define	O_DIRECTORY	0x00200000	/* fail if not a directory */
 #define	O_CLOEXEC	0x00400000	/* set close on exec */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE)
 #define	O_SEARCH	0x00800000	/* skip search permission checks */
 #endif
 #if defined(_NETBSD_SOURCE)
@@ -295,7 +295,7 @@ struct flock {
  * Constants for X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE)
 #define	AT_FDCWD		-100	/* Use cwd for relative link target */
 #define	AT_EACCESS		0x100	/* Use euig/egid for access checks */
 #define	AT_SYMLINK_NOFOLLOW	0x200	/* Do not follow symlinks */
@@ -328,7 +328,7 @@ int	 posix_fallocate(int, off_t, off_t);
  * X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE)
 int	openat(int, const char *, int, ...);
 #endif
 
