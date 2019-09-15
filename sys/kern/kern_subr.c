@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.225 2019/09/13 01:33:20 manu Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.226 2019/09/15 23:59:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.225 2019/09/13 01:33:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.226 2019/09/15 23:59:33 manu Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -228,16 +228,6 @@ setroot(device_t bootdv, int bootpartition)
 	 * hp300 has similar MD code
 	 */
 	setroot_nfs(bootdv);
-
-
-	/*
-	 * Try to lookup by wedge label name
-	 */
-	if (bootdv == NULL && rootspec != NULL &&
-	    strncmp(rootspec, "NAME=", 5) == 0) {
-		if ((bootdv = dkwedge_find_by_wname(rootspec + 5)) != NULL)
-			rootspec = bootdv->dv_xname;
-	}
 
 	/*
 	 * If no bootdv was found by MD code and no
