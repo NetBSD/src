@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.205 2019/09/15 01:03:23 christos Exp $
+.\"	$NetBSD: sysctl.3,v 1.206 2019/09/15 07:01:13 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -288,7 +288,6 @@ The core interface to all of these meta-functions is the structure
 that the kernel uses to describe the tree internally, as defined in
 .In sys/sysctl.h
 as:
-.Pp
 .Bd -literal
 struct sysctlnode {
         uint32_t sysctl_flags;          /* flags and type */
@@ -359,7 +358,8 @@ Creation and destruction of nodes works by constructing part of a new
 node description (or a description of the existing node) and invoking
 .Dv CTL_CREATE
 (or
-.Dv CTL_CREATESYM ) or
+.Dv CTL_CREATESYM )
+or
 .Dv CTL_DESTROY
 at the parent of the new
 node, with a pointer to the new node passed via the
@@ -535,7 +535,6 @@ will match the
 .Fa sysctl_ver
 value for a given node, so that descriptions for nodes whose number
 have been recycled can be detected and ignored or discarded.
-.Pp
 .Bd -literal
 struct sysctldesc {
         int32_t         descr_num;      /* mib number of node */
