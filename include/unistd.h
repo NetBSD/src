@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.153 2019/09/15 23:41:00 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.154 2019/09/15 23:41:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,6 @@ int	 execle(const char *, const char *, ...);
 int	 execlp(const char *, const char *, ...);
 int	 execv(const char *, char * const *);
 int	 execve(const char *, char * const *, char * const *);
-int	 fexecve(int, char * const *, char * const *);
 int	 execvp(const char *, char * const *);
 pid_t	 fork(void);
 long	 fpathconf(int, int);
