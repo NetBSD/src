@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.27 2019/09/11 18:19:35 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.28 2019/09/15 15:16:30 tnn Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -260,6 +260,7 @@ AARCH64REG_READ_INLINE(id_aa64mmfr0_el1)
 #define	 ID_AA64MMFR0_EL1_PARANGE_16T	 4
 #define	 ID_AA64MMFR0_EL1_PARANGE_256T	 5
 
+AARCH64REG_READ_INLINE2(a72_cpuactlr_el1, s3_1_c15_c2_0)
 AARCH64REG_READ_INLINE(id_aa64mmfr1_el1)
 AARCH64REG_READ_INLINE(id_aa64mmfr2_el1)
 AARCH64REG_READ_INLINE(id_aa64pfr0_el1)
