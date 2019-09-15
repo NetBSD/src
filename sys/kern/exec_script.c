@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.79 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.80 2019/09/15 20:21:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.79 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.80 2019/09/15 20:21:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -290,7 +290,7 @@ check_shell:
 	/* try loading the interpreter */
 	if ((error = exec_makepathbuf(l, shellname, UIO_SYSSPACE,
 	    &shell_pathbuf, NULL)) == 0) {
-		error = check_exec(l, epp, shell_pathbuf);
+		error = check_exec(l, epp, shell_pathbuf, NULL);
 		pathbuf_destroy(shell_pathbuf);
 	}
 
