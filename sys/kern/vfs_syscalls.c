@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.533 2019/07/06 14:37:24 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.534 2019/09/15 20:51:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.533 2019/07/06 14:37:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.534 2019/09/15 20:51:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1571,6 +1571,13 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	if (open_flags & O_SEARCH) {
 		open_flags &= ~(int)O_SEARCH;
 	}
+
+	/*
+	 * Only one of the O_EXEC, O_RDONLY, O_WRONLY and O_RDWR flags
+	 * may be specified.
+	 */     
+	if ((open_flags & O_EXEC) && (open_flags & O_ACCMODE))
+		return EINVAL;
 
 	flags = FFLAGS(open_flags);
 	if ((flags & (FREAD | FWRITE)) == 0)
