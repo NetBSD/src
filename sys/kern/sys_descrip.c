@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.34 2019/08/26 10:19:08 maxv Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.34 2019/08/26 10:19:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,12 +239,9 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 	proc_t *p;
 	int error, flg;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
-	if (fp->f_type != DTYPE_VNODE) {
-		fd_putfile(fd);
-		return EINVAL;
-	}
+	if ((error = fd_getvnode(fd, &fp)) != 0)
+		return error;
+
 	vp = fp->f_vnode;
 	if (fl->l_whence == SEEK_CUR)
 		fl->l_start += fp->f_offset;
@@ -315,6 +312,26 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 	return error;
 }
 
+static int
+do_fcntl_getpath(struct lwp *l, file_t *fp, char *upath)
+{
+	char *kpath;
+	int error;
+
+	if (fp->f_type != DTYPE_VNODE)
+		return EOPNOTSUPP;
+
+	kpath = PNBUF_GET();
+
+	error = vnode_to_path(kpath, MAXPATHLEN, fp->f_vnode, l, l->l_proc);
+	if (!error)
+		error = copyoutstr(kpath, upath, MAXPATHLEN, NULL);
+
+	PNBUF_PUT(kpath);
+
+	return error;
+}
+	
 /*
  * The file control system call.
  */
@@ -371,7 +388,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	}
 
 	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, fp, cmd, SCARG(uap, arg));
@@ -461,6 +478,10 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	case F_SETOWN:
 		tmp = (int)(uintptr_t) SCARG(uap, arg);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp);
+		break;
+
+	case F_GETPATH:
+		error = do_fcntl_getpath(l, fp, SCARG(uap, arg));
 		break;
 
 	default:
@@ -606,15 +627,9 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 
 	fd = SCARG(uap, fd);
 	how = SCARG(uap, how);
-	error = 0;
 
-	if ((fp = fd_getfile(fd)) == NULL) {
-		return EBADF;
-	}
-	if (fp->f_type != DTYPE_VNODE) {
-		fd_putfile(fd);
-		return EOPNOTSUPP;
-	}
+	if ((error = fd_getvnode(fd, &fp)) != 0)
+		return error == EINVAL ? EOPNOTSUPP : error;
 
 	vp = fp->f_vnode;
 	lf.l_whence = SEEK_SET;
