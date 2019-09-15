@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.1 2019/09/08 05:55:15 macallan Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.2 2019/09/15 16:16:36 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.1 2019/09/08 05:55:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.2 2019/09/15 16:16:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,6 @@ ktm_init(struct ktm_softc *sc)
 {
 	const struct sysctlnode *me = NULL, *node = NULL;
 	int ret;
-	uint8_t addr;
 
 	/* Found Kensington Turbo Mouse */
 
@@ -212,7 +211,6 @@ ktm_init(struct ktm_softc *sc)
 	/* this seems to be the most reasonable default */
 	uint8_t data[8] = { 0xa5, 0x0e, 0, 0, 1, 0xff, 0xff, 0 };
 
-	addr = sc->sc_adbdev->current_addr;
 	memcpy(sc->sc_config, data, sizeof(data));
 
 	sc->sc_left = 1;
@@ -221,6 +219,7 @@ ktm_init(struct ktm_softc *sc)
 	ktm_buttons(sc);
 
 #ifdef KTM_DEBUG
+	int addr = sc->sc_adbdev->current_addr;
 	{
 		int i;
 		ktm_send_sync(sc, ADBTALK(addr, 2), 0, NULL);
