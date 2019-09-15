@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.239 2019/08/28 01:44:39 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.240 2019/09/15 09:24:38 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.239 2019/08/28 01:44:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.240 2019/09/15 09:24:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1353,6 +1353,7 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 
 	/* Re-establish the default pipe with the new MPS. */
 	usbd_kill_pipe(dev->ud_pipe0);
+	dev->ud_pipe0 = NULL;
 	err = usbd_setup_pipe_flags(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
 	    &dev->ud_pipe0, USBD_MPSAFE);
 	if (err) {
@@ -1378,6 +1379,7 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->ud_pipe0);
+	dev->ud_pipe0 = NULL;
 	err = usbd_setup_pipe_flags(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
 	    &dev->ud_pipe0, USBD_MPSAFE);
 	if (err) {
@@ -1431,6 +1433,10 @@ usbd_reload_device_desc(struct usbd_device *dev)
 	err = usbd_get_device_desc(dev, udd);
 	if (err)
 		return err;
+	if (udd->bDescriptorType != UDESC_DEVICE)
+		return USBD_INVAL;
+	if (udd->bLength < USB_DEVICE_DESCRIPTOR_SIZE)
+		return USBD_INVAL;
 
 	DPRINTFN(15, "bLength             %5ju", udd->bLength, 0, 0, 0);
 	DPRINTFN(15, "bDescriptorType     %5ju", udd->bDescriptorType, 0, 0, 0);
