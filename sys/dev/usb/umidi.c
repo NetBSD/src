@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: umidi.c,v 1.79 2019/09/15 09:18:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.79 2019/09/15 09:18:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -966,6 +966,8 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 
 	interface_desc = usbd_get_interface_descriptor(sc->sc_iface);
 	num_ep = interface_desc->bNumEndpoints;
+	if (num_ep == 0)
+		return USBD_INVAL;
 	sc->sc_endpoints_len = sizeof(struct umidi_endpoint) * num_ep;
 	sc->sc_endpoints = p = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
 	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
