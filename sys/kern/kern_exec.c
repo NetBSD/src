@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.479 2019/09/07 15:34:44 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.480 2019/09/15 20:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.479 2019/09/07 15:34:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.480 2019/09/15 20:23:50 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -257,7 +257,7 @@ struct execve_data {
 	struct ps_strings	ed_arginfo;
 	char			*ed_argp;
 	const char		*ed_pathstring;
-	char			*ed_resolvedpathbuf;
+	char			*ed_resolvedname;
 	size_t			ed_ps_strings_sz;
 	int			ed_szsigcode;
 	size_t			ed_argslen;
@@ -309,8 +309,31 @@ exec_path_free(struct execve_data *data)
 {              
 	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
 	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	if (data->ed_resolvedname)
+		PNBUF_PUT(data->ed_resolvedname);
 }
+
+static void
+exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
+    char **rpath)
+{
+	int error;
+	char *p;
+
+	KASSERT(rpath != NULL);
+
+	*rpath = PNBUF_GET();
+	error = vnode_to_path(*rpath, MAXPATHLEN, vp, l, l->l_proc);
+	if (error) {
+		PNBUF_PUT(*rpath);
+		*rpath = NULL;
+		return;
+	}
+	epp->ep_resolvedname = *rpath;
+	if ((p = strrchr(*rpath, '/')) != NULL)
+		epp->ep_kname = p + 1;
+}
+
 
 /*
  * check exec:
@@ -339,26 +362,40 @@ exec_path_free(struct execve_data *data)
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
+check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
+    char **rpath)
 {
 	int		error, i;
 	struct vnode	*vp;
-	struct nameidata nd;
 	size_t		resid;
 
-	// grab the absolute pathbuf here before namei() trashes it.
-	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+	if (epp->ep_resolvedname) {
+		struct nameidata nd;
 
-	/* first get the vnode */
-	if ((error = namei(&nd)) != 0)
-		return error;
-	epp->ep_vp = vp = nd.ni_vp;
+		// grab the absolute pathbuf here before namei() trashes it.
+		pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
+		/* first get the vnode */
+		if ((error = namei(&nd)) != 0)
+			return error;
+
+		epp->ep_vp = vp = nd.ni_vp;
 #ifdef DIAGNOSTIC
-	/* paranoia (take this out once namei stuff stabilizes) */
-	memset(nd.ni_pnbuf, '~', PATH_MAX);
+		/* paranoia (take this out once namei stuff stabilizes) */
+		memset(nd.ni_pnbuf, '~', PATH_MAX);
 #endif
+	} else {
+		struct file *fp;
+
+		if ((error = fd_getvnode(epp->ep_xfd, &fp)) != 0)
+			return error;
+		epp->ep_vp = vp = fp->f_vnode;
+		vref(vp);
+		fd_putfile(epp->ep_xfd);
+		exec_resolvename(l, epp, vp, rpath);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
 
 	/* check access and type */
 	if (vp->v_type != VREG) {
@@ -388,7 +425,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	VOP_UNLOCK(vp);
 
 #if NVERIEXEC > 0
-	error = veriexec_verify(l, vp, epp->ep_resolvedname,
+	error = veriexec_verify(l, vp,
+	    epp->ep_resolvedname ? epp->ep_resolvedname : epp->ep_kname,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
 	    NULL);
 	if (error)
@@ -545,7 +583,7 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 		syscallarg(char * const *)	envp;
 	} */
 
-	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
+	return execve1(l, SCARG(uap, path), -1, SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
@@ -559,7 +597,8 @@ sys_fexecve(struct lwp *l, const struct sys_fexecve_args *uap,
 		syscallarg(char * const *)	envp;
 	} */
 
-	return ENOSYS;
+	return execve1(l, NULL, SCARG(uap, fd), SCARG(uap, argp),
+	    SCARG(uap, envp), execve_fetch_element);
 }
 
 /*
@@ -680,7 +719,7 @@ exec_vm_minaddr(vaddr_t va_min)
 }
 
 static int
-execve_loadvm(struct lwp *l, const char *path, char * const *args,
+execve_loadvm(struct lwp *l, const char *path, int fd, char * const *args,
 	char * const *envs, execve_fetch_element_t fetch_element,
 	struct execve_data * restrict data)
 {
@@ -689,7 +728,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
-	size_t			offs;
 
 	KASSERT(data != NULL);
 
@@ -732,24 +770,36 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 */
 	rw_enter(&p->p_reflock, RW_WRITER);
 
-	/*
-	 * Init the namei data to point the file user's program name.
-	 * This is done here rather than in check_exec(), so that it's
-	 * possible to override this settings if any of makecmd/probe
-	 * functions call check_exec() recursively - for example,
-	 * see exec_script_makecmds().
-	 */
-	if ((error = exec_makepathbuf(l, path, UIO_USERSPACE,
-	    &data->ed_pathbuf, &offs)) != 0)
-		goto clrflg;
-	data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
-	data->ed_resolvedpathbuf = PNBUF_GET();
+	if (path == NULL) {
+		data->ed_pathbuf = pathbuf_assimilate(strcpy(PNBUF_GET(), "/"));
+		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
+		epp->ep_kname = "*fexecve*";
+		data->ed_resolvedname = NULL;
+		epp->ep_resolvedname = NULL;
+		epp->ep_xfd = fd;
+	} else {
+		size_t	offs;
+		/*
+		 * Init the namei data to point the file user's program name.
+		 * This is done here rather than in check_exec(), so that it's
+		 * possible to override this settings if any of makecmd/probe
+		 * functions call check_exec() recursively - for example,
+		 * see exec_script_makecmds().
+		 */
+		if ((error = exec_makepathbuf(l, path, UIO_USERSPACE,
+		    &data->ed_pathbuf, &offs)) != 0)
+			goto clrflg;
+		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
+		epp->ep_kname = data->ed_pathstring + offs;
+		data->ed_resolvedname = PNBUF_GET();
+		epp->ep_resolvedname = data->ed_resolvedname;
+		epp->ep_xfd = -1;
+	}
+
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	epp->ep_kname = data->ed_pathstring + offs;
-	epp->ep_resolvedname = data->ed_resolvedpathbuf;
 	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	epp->ep_hdrlen = exec_maxhdrsz;
 	epp->ep_hdrvalid = 0;
@@ -768,7 +818,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, epp, data->ed_pathbuf)) != 0) {
+	if ((error = check_exec(l, epp, data->ed_pathbuf,
+	    &data->ed_resolvedname)) != 0) {
 		if (error != ENOENT && error != EACCES && error != ENOEXEC) {
 			DPRINTF(("%s: check exec failed for %s, error %d\n",
 			    __func__, epp->ep_kname, error));
@@ -942,10 +993,19 @@ execve_free_data(struct execve_data *data)
 static void
 pathexec(struct proc *p, const char *resolvedname)
 {
-	KASSERT(resolvedname[0] == '/');
-
 	/* set command name & other accounting info */
-	strlcpy(p->p_comm, strrchr(resolvedname, '/') + 1, sizeof(p->p_comm));
+	const char *cmdname;
+
+	if (resolvedname == NULL) {
+		cmdname = "*fexecve*";
+		resolvedname = "/";
+	} else {
+		cmdname = strrchr(resolvedname, '/') + 1;
+	}
+	KASSERTMSG(resolvedname[0] == '/', "bad resolvedname `%s'",
+	    resolvedname);
+
+	strlcpy(p->p_comm, cmdname, sizeof(p->p_comm));
 
 	kmem_strfree(p->p_path);
 	p->p_path = kmem_strdupsize(resolvedname, NULL, KM_SLEEP);
@@ -1346,13 +1406,13 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 }
 
 int
-execve1(struct lwp *l, const char *path, char * const *args,
+execve1(struct lwp *l, const char *path, int fd, char * const *args,
     char * const *envs, execve_fetch_element_t fetch_element)
 {
 	struct execve_data data;
 	int error;
 
-	error = execve_loadvm(l, path, args, envs, fetch_element, &data);
+	error = execve_loadvm(l, path, fd, args, envs, fetch_element, &data);
 	if (error)
 		return error;
 	error = execve_runproc(l, &data, false, false);
@@ -2376,7 +2436,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * Do the first part of the exec now, collect state
 	 * in spawn_data.
 	 */
-	error = execve_loadvm(l1, path, argv,
+	error = execve_loadvm(l1, path, -1, argv,
 	    envp, fetch, &spawn_data->sed_exec);
 	if (error == EJUSTRETURN)
 		error = 0;
