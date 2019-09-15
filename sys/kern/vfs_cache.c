@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.121 2019/09/13 14:01:33 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.122 2019/09/15 17:36:43 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.121 2019/09/13 14:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.122 2019/09/15 17:36:43 maya Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -883,7 +883,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		ncp = kmem_alloc(sizeof(*ncp) + namelen, KM_SLEEP);
 		cache_ctor(NULL, ncp, 0);
 	} else
-	ncp = pool_cache_get(namecache_cache, PR_WAITOK);
+		ncp = pool_cache_get(namecache_cache, PR_WAITOK);
+
 	mutex_enter(namecache_lock);
 	numcache++;
 
