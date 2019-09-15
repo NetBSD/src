@@ -1,5 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.1 2019/09/13 02:19:46 manu Exp $ */
-#define MULTIBBOT2_DEBUG
+/* $NetBSD: exec_multiboot2.c,v 1.2 2019/09/15 23:55:26 manu Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
