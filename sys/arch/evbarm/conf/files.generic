@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.7 2019/06/11 13:01:48 skrll Exp $
+#	$NetBSD: files.generic,v 1.8 2019/09/15 21:04:41 bouyer Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -26,3 +26,9 @@ include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/vexpress/files.vexpress"
 include "arch/arm/virt/files.virt"
 include "arch/arm/xilinx/files.zynq"
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
