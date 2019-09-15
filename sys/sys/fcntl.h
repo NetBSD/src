@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.51 2019/09/15 16:25:57 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.52 2019/09/15 20:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -121,6 +121,7 @@
 #if defined(_NETBSD_SOURCE)
 #define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 #define	O_REGULAR	0x02000000	/* fail if not a regular file */
+#define	O_EXEC		0x04000000	/* open for executing only */
 #endif
 
 #ifdef _KERNEL
@@ -132,8 +133,9 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_REGULAR)
+			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_REGULAR|O_EXEC)
 
+#define	FEXEC		O_EXEC
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
@@ -144,7 +146,7 @@
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO|\
 			 FDIRECT|FNOSIGPIPE)
 /* bits to save after open(2) */
-#define	FMASK		(FREAD|FWRITE|FCNTLFLAGS)
+#define	FMASK		(FREAD|FWRITE|FCNTLFLAGS|FEXEC)
 #endif /* _KERNEL */
 
 /*
@@ -193,7 +195,7 @@
 #define	F_DUPFD_CLOEXEC	12		/* close on exec duplicated fd */
 #define	F_GETNOSIGPIPE	13		/* get SIGPIPE disposition */
 #define	F_SETNOSIGPIPE	14		/* set SIGPIPE disposition */
-#define	F_GETPATH	15		/* get pathname assosiated with fd */
+#define	F_GETPATH	15		/* get pathname associated with fd */
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
