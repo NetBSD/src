@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.200 2019/03/07 11:09:48 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.201 2019/09/15 20:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.200 2019/03/07 11:09:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.201 2019/09/15 20:24:25 christos Exp $");
 
 #include "veriexec.h"
 
@@ -308,6 +308,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 
 	if ((fflags & FREAD) != 0) {
 		permbits = VREAD;
+	}
+	if ((fflags & FEXEC) != 0) {
+		permbits |= VEXEC;
 	}
 	if ((fflags & (FWRITE | O_TRUNC)) != 0) {
 		permbits |= VWRITE;
