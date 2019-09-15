@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/11/18 17:41:54 manu Exp $
+# $NetBSD: Makefile,v 1.2 2019/09/15 23:39:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,5 @@ TESTS_C+=	t_renameat
 TESTS_C+=	t_symlinkat
 TESTS_C+=	t_unlinkat
 TESTS_C+=	t_utimensat
-
-COPTS+= -D_INCOMPLETE_XOPEN_C063
 
 .include <bsd.test.mk>
