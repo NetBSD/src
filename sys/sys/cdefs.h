@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.141 2019/02/21 21:34:05 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.142 2019/09/15 14:30:26 kamil Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,24 @@
 	 (__GNUC__ > (x)))
 #else
 #define	__GNUC_PREREQ__(x, y)	0
+#endif
+
+/*
+ * Macros to test Clang/LLVM features.
+ * Usage:
+ *
+ *	#if __has_feature(safe_stack)
+ *	...SafeStack specific code...
+ *	#else
+ *	..regular code...
+ *	#endif
+ */
+#ifndef __has_feature
+#define __has_feature(x)	0
+#endif
+
+#ifndef __has_extension
+#define __has_extension		__has_feature /* Compat with pre-3.0 Clang */
 #endif
 
 #include <machine/cdefs.h>
