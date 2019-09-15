@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.50 2018/02/20 18:20:05 kamil Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.51 2019/09/15 16:25:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -193,6 +193,7 @@
 #define	F_DUPFD_CLOEXEC	12		/* close on exec duplicated fd */
 #define	F_GETNOSIGPIPE	13		/* get SIGPIPE disposition */
 #define	F_SETNOSIGPIPE	14		/* set SIGPIPE disposition */
+#define	F_GETPATH	15		/* get pathname assosiated with fd */
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
