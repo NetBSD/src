@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_zfs.8,v 1.2 2019/09/15 20:51:52 gutteridge Exp $
+.\"	$NetBSD: mount_zfs.8,v 1.3 2019/09/16 04:57:12 wiz Exp $
 .\"
 .\"
 .Dd September 15, 2019
@@ -14,7 +14,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility supports mounting ZFS filesystems via /etc/fstab where the ZFS property is mountpoint=legacy.
+utility supports mounting ZFS filesystems via
+.Pa /etc/fstab
+where the ZFS property is
+.Cm mountpoint=legacy .
 .Sh SEE ALSO
 .Xr fstab 5 ,
 .Xr zfs 8
