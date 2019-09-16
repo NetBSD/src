@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.356 2019/04/27 02:00:12 sevan Exp $
+# $NetBSD: GENERIC,v 1.357 2019/09/16 07:11:08 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.356 $"
+#ident 		"GENERIC-$Revision: 1.357 $"
 
 maxusers	32
 
@@ -349,6 +349,7 @@ pmu*	at obio?		# PMU, *Books and newer PowerMacs
 nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
 adbkbd* at nadb?		# ADB keyboard
 adbms*	at nadb?		# ADB mice and touchpads
+ktm* 	at nadb?		# Kensington Turbo Mouse
 adbbt*	at nadb?		# button device found on *Books
 
 wskbd*		at wskbddev? console ?
