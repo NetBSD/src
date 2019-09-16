@@ -1,4 +1,4 @@
-/*	$NetBSD: utimens.c,v 1.1 2012/11/03 19:39:21 christos Exp $	*/
+/*	$NetBSD: utimens.c,v 1.2 2019/09/16 01:25:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,12 +31,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utimens.c,v 1.1 2012/11/03 19:39:21 christos Exp $");
+__RCSID("$NetBSD: utimens.c,v 1.2 2019/09/16 01:25:16 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#define _INCOMPLETE_XOPEN_C063
 #include <fcntl.h>
 #include <sys/stat.h>
 
