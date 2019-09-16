@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.99 2019/09/15 20:20:26 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.100 2019/09/16 11:11:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.99 2019/09/15 20:20:26 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.100 2019/09/16 11:11:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -160,6 +160,7 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 	char *path = l->l_proc->p_path;
 	int error;
 
+	execname = NULL;
 	a = ai;
 
 	memset(ai, 0, sizeof(ai));
@@ -233,8 +234,6 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 		}
 
 		exec_free_emul_arg(pack);
-	} else {
-		execname = NULL;
 	}
 
 	a->a_type = AT_NULL;
