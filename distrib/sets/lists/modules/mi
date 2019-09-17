@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.124 2019/08/08 16:06:14 skrll Exp $
+# $NetBSD: mi,v 1.125 2019/09/17 07:36:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -194,16 +194,24 @@
 ./@MODULEDIR@/i2cexec/i2cexec.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_agr				base-kernel-modules	kmod
 ./@MODULEDIR@/if_agr/if_agr.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_aue				base-kernel-modules	kmod
+./@MODULEDIR@/if_aue/if_aue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen/if_axen.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_cdce				base-kernel-modules	kmod
+./@MODULEDIR@/if_cdce/if_cdce.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_cue				base-kernel-modules	kmod
+./@MODULEDIR@/if_cue/if_cue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_faith				base-kernel-modules	kmod
 ./@MODULEDIR@/if_faith/if_faith.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_gif				base-kernel-modules	kmod
 ./@MODULEDIR@/if_gif/if_gif.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_gre				base-kernel-modules	kmod
 ./@MODULEDIR@/if_gre/if_gre.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_kue				base-kernel-modules	kmod
+./@MODULEDIR@/if_kue/if_kue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_l2tp				base-kernel-modules	kmod
 ./@MODULEDIR@/if_l2tp/if_l2tp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_loop				base-kernel-modules	kmod
@@ -234,8 +242,14 @@
 ./@MODULEDIR@/if_tun/if_tun.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_udav				base-kernel-modules	kmod
 ./@MODULEDIR@/if_udav/if_udav.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_upl				base-kernel-modules	kmod
+./@MODULEDIR@/if_upl/if_upl.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_ure				base-kernel-modules	kmod
 ./@MODULEDIR@/if_ure/if_ure.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_url				base-kernel-modules	kmod
+./@MODULEDIR@/if_url/if_url.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_urndis				base-kernel-modules	kmod
+./@MODULEDIR@/if_urndis/if_urndis.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_vioif				base-obsolete		obsolete
 ./@MODULEDIR@/if_vioif/if_vioif.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/if_vlan				base-kernel-modules	kmod
