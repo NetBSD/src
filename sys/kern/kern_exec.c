@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.480 2019/09/15 20:23:50 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.481 2019/09/17 15:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.480 2019/09/15 20:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.481 2019/09/17 15:19:27 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -583,7 +583,7 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 		syscallarg(char * const *)	envp;
 	} */
 
-	return execve1(l, SCARG(uap, path), -1, SCARG(uap, argp),
+	return execve1(l, true, SCARG(uap, path), -1, SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
@@ -597,7 +597,7 @@ sys_fexecve(struct lwp *l, const struct sys_fexecve_args *uap,
 		syscallarg(char * const *)	envp;
 	} */
 
-	return execve1(l, NULL, SCARG(uap, fd), SCARG(uap, argp),
+	return execve1(l, false, NULL, SCARG(uap, fd), SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
@@ -719,8 +719,9 @@ exec_vm_minaddr(vaddr_t va_min)
 }
 
 static int
-execve_loadvm(struct lwp *l, const char *path, int fd, char * const *args,
-	char * const *envs, execve_fetch_element_t fetch_element,
+execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
+	char * const *args, char * const *envs,
+	execve_fetch_element_t fetch_element,
 	struct execve_data * restrict data)
 {
 	struct exec_package	* const epp = &data->ed_pack;
@@ -770,14 +771,7 @@ execve_loadvm(struct lwp *l, const char *path, int fd, char * const *args,
 	 */
 	rw_enter(&p->p_reflock, RW_WRITER);
 
-	if (path == NULL) {
-		data->ed_pathbuf = pathbuf_assimilate(strcpy(PNBUF_GET(), "/"));
-		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
-		epp->ep_kname = "*fexecve*";
-		data->ed_resolvedname = NULL;
-		epp->ep_resolvedname = NULL;
-		epp->ep_xfd = fd;
-	} else {
+	if (has_path) {
 		size_t	offs;
 		/*
 		 * Init the namei data to point the file user's program name.
@@ -794,6 +788,13 @@ execve_loadvm(struct lwp *l, const char *path, int fd, char * const *args,
 		data->ed_resolvedname = PNBUF_GET();
 		epp->ep_resolvedname = data->ed_resolvedname;
 		epp->ep_xfd = -1;
+	} else {
+		data->ed_pathbuf = pathbuf_assimilate(strcpy(PNBUF_GET(), "/"));
+		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
+		epp->ep_kname = "*fexecve*";
+		data->ed_resolvedname = NULL;
+		epp->ep_resolvedname = NULL;
+		epp->ep_xfd = fd;
 	}
 
 
@@ -1406,13 +1407,15 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 }
 
 int
-execve1(struct lwp *l, const char *path, int fd, char * const *args,
-    char * const *envs, execve_fetch_element_t fetch_element)
+execve1(struct lwp *l, bool has_path, const char *path, int fd,
+    char * const *args, char * const *envs,
+    execve_fetch_element_t fetch_element)
 {
 	struct execve_data data;
 	int error;
 
-	error = execve_loadvm(l, path, fd, args, envs, fetch_element, &data);
+	error = execve_loadvm(l, has_path, path, fd, args, envs, fetch_element,
+	    &data);
 	if (error)
 		return error;
 	error = execve_runproc(l, &data, false, false);
@@ -2436,7 +2439,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * Do the first part of the exec now, collect state
 	 * in spawn_data.
 	 */
-	error = execve_loadvm(l1, path, -1, argv,
+	error = execve_loadvm(l1, true, path, -1, argv,
 	    envp, fetch, &spawn_data->sed_exec);
 	if (error == EJUSTRETURN)
 		error = 0;

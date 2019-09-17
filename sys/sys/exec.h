@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.155 2019/09/15 20:26:27 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.156 2019/09/17 15:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -302,14 +302,14 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 	new_vmcmd(evsp,lwp,len,addr,vp,offset,prot,flags)
 
 typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
-int	execve1(struct lwp *, const char *, int, char * const *, char * const *,
-    execve_fetch_element_t);
+int	execve1(struct lwp *, bool, const char *, int, char * const *,
+    char * const *, execve_fetch_element_t);
 
 struct posix_spawn_file_actions;
 struct posix_spawnattr;
 int	check_posix_spawn	(struct lwp *);
 void	posix_spawn_fa_free(struct posix_spawn_file_actions *, size_t);
-int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
+int	do_posix_spawn(struct lwp *, pid_t *, bool *, const char *,
     struct posix_spawn_file_actions *, struct posix_spawnattr *,
     char *const *, char *const *, execve_fetch_element_t);
 int      exec_makepathbuf(struct lwp *, const char *, enum uio_seg,
