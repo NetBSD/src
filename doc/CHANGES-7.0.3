@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.149 2019/09/03 12:31:11 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.150 2019/09/17 17:36:58 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5883,4 +5883,9 @@ sys/sys/cprng.h					1.13-1.15
 
 	Switch from NIST CTR_DRBG with AES to NIST Hash_DRBG with SHA-256.
 	[riastradh, ticket #1705]
+
+lib/libc/nameser/ns_name.c			1.12
+
+	Fix buffer overrun.
+	[maya, ticket #1706]
 
