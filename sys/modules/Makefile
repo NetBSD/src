@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.225 2019/09/17 04:43:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.226 2019/09/17 07:36:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -70,11 +70,15 @@ SUBDIR+=	am2315temp
 SUBDIR+=	i2cexec
 SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_agr
+SUBDIR+=	if_aue
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
+SUBDIR+=	if_cdce
+SUBDIR+=	if_cue
 SUBDIR+=	if_faith
 SUBDIR+=	if_gif
 SUBDIR+=	if_gre
+SUBDIR+=	if_kue
 SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
@@ -90,7 +94,10 @@ SUBDIR+=	if_strip
 SUBDIR+=	if_tap tap
 SUBDIR+=	if_tun tun
 SUBDIR+=	if_udav
+SUBDIR+=	if_upl
 SUBDIR+=	if_ure
+SUBDIR+=	if_url
+SUBDIR+=	if_urndis
 SUBDIR+=	if_vlan
 SUBDIR+=	iic
 SUBDIR+=	ip_ecn
