@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.40 2019/09/15 20:26:51 christos Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.41 2019/09/17 15:19:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.40 2019/09/15 20:26:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.41 2019/09/17 15:19:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ netbsd32_execve(struct lwp *l, const struct netbsd32_execve_args *uap, register_
 		syscallarg(netbsd32_charpp) envp;
 	} */
 
-	return execve1(l, SCARG_P32(uap, path), -1, SCARG_P32(uap, argp),
+	return execve1(l, true, SCARG_P32(uap, path), -1, SCARG_P32(uap, argp),
 	    SCARG_P32(uap, envp), netbsd32_execve_fetch_element);
 }
 
@@ -86,7 +86,7 @@ netbsd32_fexecve(struct lwp *l, const struct netbsd32_fexecve_args *uap,
 		syscallarg(netbsd32_charpp) envp;
 	} */
 
-	return execve1(l, NULL, SCARG(uap, fd), SCARG_P32(uap, argp),
+	return execve1(l, false, NULL, SCARG(uap, fd), SCARG_P32(uap, argp),
 	    SCARG_P32(uap, envp), netbsd32_execve_fetch_element);
 }
 
