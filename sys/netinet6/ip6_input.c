@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.178.2.7 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.178.2.8 2019/09/17 18:57:23 martin Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.7 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.8 2019/09/17 18:57:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -358,6 +358,13 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			return;
 		if (m == NULL)
 			return;
+		if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
+			if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+				IP6_STATINC(IP6_STAT_TOOSMALL);
+				in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
+				return;
+			}
+		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
