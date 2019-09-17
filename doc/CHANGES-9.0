@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.51 2019/09/17 19:57:08 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.52 2019/09/17 21:50:14 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3735,7 +3735,7 @@ external/mit/xorg/tools/fc-cache/Makefile	1.18
 
 sys/arch/evbarm/conf/files.generic		1.8
 
-	Add missing inlcude of external/bsd/sljit/conf/files.sljit.
+	Add missing include of external/bsd/sljit/conf/files.sljit.
 	[bouyer, ticket #207]
 
 sys/netinet/ip_input.c				1.390
