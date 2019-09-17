@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.150 2019/09/17 17:36:58 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.151 2019/09/17 18:10:00 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5888,4 +5888,11 @@ lib/libc/nameser/ns_name.c			1.12
 
 	Fix buffer overrun.
 	[maya, ticket #1706]
+
+sys/netinet/ip_input.c				1.390 (patch)
+sys/netinet6/ip6_input.c			1.209 (patch)
+
+	Packet filters can return an mbuf chain with fragmented headers, so
+	m_pullup() when needed.
+	[bouyer, ticket #1708]
 
