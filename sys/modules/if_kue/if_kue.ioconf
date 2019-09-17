@@ -1,0 +1,10 @@
+#	$NetBSD: if_kue.ioconf,v 1.1 2019/09/17 04:38:08 mrg Exp $
+
+ioconf kue
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root usbdevif*
+
+kue* at usbdevif?
