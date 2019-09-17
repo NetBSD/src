@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.10 2019/01/04 14:55:40 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.11 2019/09/17 18:53:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.10 2019/01/04 14:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.11 2019/09/17 18:53:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -755,6 +755,8 @@ hexdump(const char *msg, const void *base, size_t len)
 static void
 xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 {
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
 	/* XXX Cache this lot */
 
 	const uint32_t w0 = xhci_read_4(sc, ecp);
@@ -778,6 +780,7 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	case 0x0200:
 	case 0x0300:
 	case 0x0301:
+	case 0x0310:
 		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
 		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
 		break;
@@ -3832,7 +3835,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		parameter = DMAADDR(dma, 0);
 		KASSERTMSG(len <= 0x10000, "len %d", len);
 		status = XHCI_TRB_2_IRQ_SET(0) |
-		    XHCI_TRB_2_TDSZ_SET(1) |
+		    XHCI_TRB_2_TDSZ_SET(0) |
 		    XHCI_TRB_2_BYTES_SET(len);
 		control = (isread ? XHCI_TRB_3_DIR_IN : 0) |
 		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
@@ -3963,7 +3966,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	 */
 	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
-	    XHCI_TRB_2_TDSZ_SET(1) |
+	    XHCI_TRB_2_TDSZ_SET(0) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
@@ -4075,7 +4078,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	parameter = DMAADDR(dma, 0);
 	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
-	    XHCI_TRB_2_TDSZ_SET(1) |
+	    XHCI_TRB_2_TDSZ_SET(0) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
