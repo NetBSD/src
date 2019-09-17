@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.6 2019/08/01 13:22:48 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.7 2019/09/17 18:26:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,6 +35,7 @@
 #include "bootcfg.h"
 #include "bootmod.h"
 #include "bootmenu.h"
+#include "biosdisk.h"
 #include "devopen.h"
 
 int errno;
@@ -111,6 +112,7 @@ const struct bootblk_command commands[] = {
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
+static const char *default_part_name;
 
 static char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
@@ -120,9 +122,16 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
     int *partition, const char **file)
 {
 	const char *col;
+	static char savedevname[MAXDEVNAME+1];
 
 	*fsname = "ufs";
-	*devname = default_devname;
+	if (default_part_name == NULL) {
+		*devname = default_devname;
+	} else {
+		snprintf(savedevname, sizeof(savedevname),
+		    "NAME=%s", default_part_name);
+		*devname = savedevname;
+	}
 	*unit = default_unit;
 	*partition = default_partition;
 	*file = default_filename;
@@ -131,7 +140,6 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		return 0;
 
 	if ((col = strchr(fname, ':')) != NULL) {	/* device given */
-		static char savedevname[MAXDEVNAME+1];
 		int devlen;
 		int u = 0, p = 0;
 		int i = 0;
@@ -139,6 +147,15 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		devlen = col - fname;
 		if (devlen > MAXDEVNAME)
 			return EINVAL;
+
+		if (strstr(fname, "NAME=") == fname) {
+			strlcpy(savedevname, fname, devlen + 1);
+			*devname = savedevname;
+			*unit = -1;
+			*partition = -1;
+			fname = col + 1;
+			goto out;
+		}
 
 #define isvalidname(c) ((c) >= 'a' && (c) <= 'z')
 		if (!isvalidname(fname[i]))
@@ -175,6 +192,7 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		fname = col + 1;
 	}
 
+out:
 	if (*fname)
 		*file = fname;
 
@@ -191,8 +209,11 @@ snprint_bootdev(char *buf, size_t bufsize, const char *devname, int unit,
 	for (i = 0; i < __arraycount(no_partition_devs); i++)
 		if (strcmp(devname, no_partition_devs[i]) == 0)
 			break;
-	snprintf(buf, bufsize, "%s%d%c", devname, unit,
-	    i < __arraycount(no_partition_devs) ? '\0' : 'a' + partition);
+	if (strstr(devname, "NAME=") == devname)
+		strlcpy(buf, devname, bufsize);
+	else
+		snprintf(buf, bufsize, "%s%d%c", devname, unit,
+		  i < __arraycount(no_partition_devs) ? '\0' : 'a' + partition);
 	return buf;
 }
 
@@ -260,7 +281,7 @@ boot(void)
 
 	/* try to set default device to what BIOS tells us */
 	bios2dev(boot_biosdev, boot_biossector, &default_devname, &default_unit,
-	    &default_partition);
+	    &default_partition, &default_part_name);
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
@@ -337,23 +358,31 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
-	       "     (ex. \"hd0a:netbsd.old -s\"\n"
-	       "dev [xd[N[x]]:]\n"
+	       "boot [dev:][filename] [-12acdqsvxz]\n"
+#ifndef NO_RAIDFRAME
+	       "     dev syntax is (hd|fd|cd|raid)[N[x]]\n"
+#else
+	       "     dev syntax is (hd|fd|cd)[N[x]]\n"
+#endif
+#ifndef NO_GPT
+	       "                or NAME=gpt_label\n"
+#endif
+	       "     (ex. \"hd0a:netbsd.old -s\")\n"
+	       "dev [dev:]\n"
 	       "consdev {pc|com[0123][,{speed}]|com,{ioport}[,{speed}]}\n"
 	       "devpath\n"
 	       "efivar\n"
 	       "gop [{modenum|list}]\n"
 	       "load {path_to_module}\n"
 #if LIBSA_ENABLE_LS_OP
-	       "ls [path]\n"
+	       "ls [dev:][path]\n"
 #endif
 	       "memmap [{sorted|unsorted|compact}]\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
 #endif
 	       "modules {on|off|enabled|disabled}\n"
-	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "multiboot [dev:][filename] [<args>]\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "splash {path_to_image_file}\n"
 	       "text [{modenum|list}]\n"
@@ -421,8 +450,14 @@ command_dev(char *arg)
 	if (*arg == '\0') {
 		efi_disk_show();
 		efi_net_show();
-		printf("default %s\n", snprint_bootdev(buf, sizeof(buf),
-		    default_devname, default_unit, default_partition));
+	
+		if (default_part_name != NULL)
+			printf("default NAME=%s\n", default_part_name);
+		else
+			printf("default %s\n",
+			       snprint_bootdev(buf, sizeof(buf),
+					       default_devname, default_unit,
+					       default_partition));
 		return;
 	}
 
@@ -436,6 +471,10 @@ command_dev(char *arg)
 	/* put to own static storage */
 	strncpy(savedevname, devname, MAXDEVNAME + 1);
 	default_devname = savedevname;
+
+	/* +5 to skip leading NAME= */
+	if (strstr(devname, "NAME=") == devname)
+		default_part_name = default_devname + 5;
 }
 
 static const struct cons_devs {

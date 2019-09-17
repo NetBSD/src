@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.44.10.1 2019/09/17 18:26:53 martin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -17,6 +17,7 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
 #CPPFLAGS+= -DNO_DISKLABEL
 #CPPFLAGS+= -DNO_GPT
+#CPPFLAGS+= -DNO_RAIDFRAME
 #CPPFLAGS+= -DSAVE_MEMORY
 
 SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S
