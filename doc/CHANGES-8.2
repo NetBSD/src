@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.36 2019/09/10 16:04:59 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.37 2019/09/17 18:59:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -890,4 +890,156 @@ sys/netipsec/key.c				1.266
 
 	Fix info leaks.
 	[maxv, ticket #1372]
+
+share/man/man8/man8.x86/boot.8			1.16,1.17
+sys/arch/i386/stand/boot/boot2.c		1.71,1.72 (patch)
+sys/arch/i386/stand/boot/devopen.c		1.9
+sys/arch/i386/stand/boot/devopen.h		1.5
+sys/arch/i386/stand/efiboot/boot.c		1.14,1.15 (patch)
+sys/arch/i386/stand/efiboot/devopen.c		1.6,1.7
+sys/arch/i386/stand/efiboot/devopen.h		1.4
+sys/arch/i386/stand/efiboot/efidisk.c		1.8
+sys/arch/i386/stand/lib/Makefile		1.46
+sys/arch/i386/stand/lib/biosdisk.c		1.50,1.51
+sys/arch/i386/stand/lib/biosdisk.h		1.11
+
+	Add GPT and RAIDframe support to bootloaders.
+	[manu, ticket #1373]
+
+common/lib/libc/arch/arm/atomic/atomic_or_64.S	1.11
+common/lib/libc/arch/arm/atomic/atomic_xor_64.S	1.4
+
+	arm: fix return values of __sync_{,x}or_and_fetch_8.
+	[skrll, ticket #1375]
+
+external/mit/expat/dist/conftools/test-driver   up to 1.1.1.1
+external/mit/expat/dist/conftools/ar-lib        up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-append-compile-flags.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-append-flag.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-append-link-flags.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-check-compile-flag.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-check-link-flag.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/ax-require-defined.m4 up to 1.1.1.1
+external/mit/expat/dist/conftools/compile       up to 1.1.1.1
+external/mit/expat/dist/conftools/depcomp       up to 1.1.1.1
+external/mit/expat/dist/conftools/missing       up to 1.1.1.1
+external/mit/expat/dist/conftools/expatcfg-compiler-supports-visibility.m4 up to 1.1.1.1
+external/mit/expat/dist/doc/Makefile.am         up to 1.1.1.1
+external/mit/expat/dist/doc/Makefile.in         up to 1.1.1.1
+external/mit/expat/dist/examples/Makefile.am    up to 1.1.1.1
+external/mit/expat/dist/examples/Makefile.in    up to 1.1.1.1
+external/mit/expat/dist/lib/Makefile.am         up to 1.1.1.1
+external/mit/expat/dist/lib/Makefile.in         up to 1.1.1.1
+external/mit/expat/dist/tests/benchmark/Makefile.am up to 1.1.1.1
+external/mit/expat/dist/tests/benchmark/Makefile.in up to 1.1.1.1
+external/mit/expat/dist/tests/Makefile.am       up to 1.1.1.1
+external/mit/expat/dist/tests/Makefile.in       up to 1.1.1.1
+external/mit/expat/dist/tests/structdata.c      up to 1.1.1.1
+external/mit/expat/dist/tests/structdata.h      up to 1.1.1.1
+external/mit/expat/dist/tests/udiffer.py        up to 1.1.1.1
+external/mit/expat/dist/tests/xmltest.log.expected up to 1.1.1.1
+external/mit/expat/dist/win32/build_expat_iss.bat up to 1.1.1.1
+external/mit/expat/dist/xmlwf/Makefile.am       up to 1.1.1.1
+external/mit/expat/dist/xmlwf/Makefile.in       up to 1.1.1.1
+external/mit/expat/dist/xmlwf/xmlwf_helpgen.py  up to 1.1.1.1
+external/mit/expat/dist/xmlwf/xmlwf_helpgen.sh  up to 1.1.1.1
+external/mit/expat/dist/Makefile.am             up to 1.1.1.1
+external/mit/expat/dist/README.md               up to 1.1.1.1
+external/mit/expat/dist/cmake/expat-config.cmake.in up to 1.1.1.1
+external/mit/expat/dist/cmake/mingw-toolchain.cmake up to 1.1.1.1
+external/mit/expat/dist/acinclude.m4            up to 1.1.1.1
+external/mit/expat/dist/fix-xmltest-log.sh      up to 1.1.1.1
+external/mit/expat/dist/test-driver-wrapper.sh  up to 1.1.1.1
+external/mit/expat/dist/MANIFEST                delete
+external/mit/expat/dist/README                  delete
+external/mit/expat/dist/conftools/ac_c_bigendian_cross.m4 delete
+external/mit/expat/dist/conftools/mkinstalldirs delete
+external/mit/expat/dist/xmlwf/xmlurl.h          delete
+external/mit/expat/dist/xmlwf/xmlwin32url.cxx   delete
+external/mit/expat/dist/CMake.README            up to 1.1.1.5
+external/mit/expat/dist/CMakeLists.txt          up to 1.1.1.5
+external/mit/expat/dist/Changes                 up to 1.1.1.6
+external/mit/expat/dist/ConfigureChecks.cmake   up to 1.1.1.2
+external/mit/expat/dist/Makefile.in             up to 1.1.1.6
+external/mit/expat/dist/aclocal.m4              up to 1.1.1.4
+external/mit/expat/dist/configure               up to 1.1.1.6
+external/mit/expat/dist/configure.ac            up to 1.1.1.4
+external/mit/expat/dist/expat_config.h.cmake    up to 1.1.1.2
+external/mit/expat/dist/expat_config.h.in       up to 1.1.1.6
+external/mit/expat/dist/conftools/config.guess  up to 1.4
+external/mit/expat/dist/conftools/config.sub    up to 1.4
+external/mit/expat/dist/conftools/get-version.sh up to 1.1.1.2
+external/mit/expat/dist/conftools/install-sh    up to 1.1.1.5
+external/mit/expat/dist/conftools/ltmain.sh     up to 1.1.1.5
+external/mit/expat/dist/doc/reference.html      up to 1.1.1.5
+external/mit/expat/dist/doc/xmlwf.1             up to 1.1.1.4
+external/mit/expat/dist/doc/xmlwf.xml           up to 1.1.1.2
+external/mit/expat/dist/examples/elements.c     up to 1.1.1.5
+external/mit/expat/dist/examples/outline.c      up to 1.1.1.4
+external/mit/expat/dist/lib/ascii.h             up to 1.1.1.2
+external/mit/expat/dist/lib/asciitab.h          up to 1.1.1.2
+external/mit/expat/dist/lib/expat.h             up to 1.1.1.6
+external/mit/expat/dist/lib/expat_external.h    up to 1.1.1.4
+external/mit/expat/dist/lib/iasciitab.h         up to 1.1.1.2
+external/mit/expat/dist/lib/internal.h          up to 1.1.1.3
+external/mit/expat/dist/lib/latin1tab.h         up to 1.1.1.2
+external/mit/expat/dist/lib/libexpat.def        up to 1.1.1.3
+external/mit/expat/dist/lib/libexpatw.def       up to 1.1.1.3
+external/mit/expat/dist/lib/nametab.h           up to 1.1.1.2
+external/mit/expat/dist/lib/siphash.h           up to 1.1.1.2
+external/mit/expat/dist/lib/utf8tab.h           up to 1.1.1.2
+external/mit/expat/dist/lib/winconfig.h         up to 1.1.1.3
+external/mit/expat/dist/lib/xmlparse.c          up to 1.8
+external/mit/expat/dist/lib/xmlrole.c           up to 1.1.1.5
+external/mit/expat/dist/lib/xmlrole.h           up to 1.1.1.2
+external/mit/expat/dist/lib/xmltok.c            up to 1.5
+external/mit/expat/dist/lib/xmltok.h            up to 1.3
+external/mit/expat/dist/lib/xmltok_impl.c       up to 1.6
+external/mit/expat/dist/lib/xmltok_impl.h       up to 1.1.1.2
+external/mit/expat/dist/lib/xmltok_ns.c         up to 1.1.1.2
+external/mit/expat/dist/tests/chardata.c        up to 1.1.1.4
+external/mit/expat/dist/tests/chardata.h        up to 1.1.1.2
+external/mit/expat/dist/tests/memcheck.c        up to 1.1.1.2
+external/mit/expat/dist/tests/memcheck.h        up to 1.1.1.2
+external/mit/expat/dist/tests/minicheck.c       up to 1.1.1.4
+external/mit/expat/dist/tests/minicheck.h       up to 1.1.1.5
+external/mit/expat/dist/tests/runtests.c        up to 1.1.1.5
+external/mit/expat/dist/tests/runtestspp.cpp    up to 1.1.1.2
+external/mit/expat/dist/tests/xmltest.sh        up to 1.4
+external/mit/expat/dist/tests/benchmark/benchmark.c up to 1.1.1.3
+external/mit/expat/dist/win32/README.txt        up to 1.1.1.5
+external/mit/expat/dist/win32/expat.iss         up to 1.1.1.6
+external/mit/expat/dist/xmlwf/codepage.c        up to 1.1.1.4
+external/mit/expat/dist/xmlwf/codepage.h        up to 1.1.1.2
+external/mit/expat/dist/xmlwf/ct.c              up to 1.1.1.2
+external/mit/expat/dist/xmlwf/filemap.h         up to 1.1.1.3
+external/mit/expat/dist/xmlwf/readfilemap.c     up to 1.1.1.5
+external/mit/expat/dist/xmlwf/unixfilemap.c     up to 1.1.1.4
+external/mit/expat/dist/xmlwf/win32filemap.c    up to 1.1.1.3
+external/mit/expat/dist/xmlwf/xmlfile.c         up to 1.1.1.4
+external/mit/expat/dist/xmlwf/xmlfile.h         up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlmime.c         up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlmime.h         up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmltchar.h        up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlwf.c           up to 1.1.1.6
+external/mit/expat/lib/libexpat/expat_config.h  up to 1.6
+doc/3RDPARTY					1.1649 (patch)
+external/mit/xorg/tools/fc-cache/Makefile	1.18 (patch)
+
+	Update expat to 2.2.8.
+	Define XML_POOR_ENTROPY for the tool version of fc-cache
+	(we can not assume anything about the build host).
+	[maya, ticket #1376]
+
+sys/dev/usb/xhci.c				1.109,1.113
+
+	Fix ryzen usb issues and support xhci version 3.10.
+	[mrg, ticket #1377]
+
+sys/netinet/ip_input.c				1.390 (patch)
+sys/netinet6/ip6_input.c			1.209 (patch)
+
+	Packet filters can return an mbuf chain with fragmented headers, so
+	m_pullup() it when needed.
+	[bouyer, ticket #1378]
 
