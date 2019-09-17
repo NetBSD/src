@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.80 2019/09/17 07:58:54 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.80 2019/09/17 07:58:54 mrg Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -388,7 +388,7 @@ sunos32_sys_execv(struct lwp *l, const struct sunos32_sys_execv_args *uap, regis
 	} */
 	const char *path = SCARG_P32(uap, path);
 
-	return execve1(l, path, SCARG_P32(uap, argp), NULL,
+	return execve1(l, path, -1, SCARG_P32(uap, argp), NULL,
 	    sunos32_execve_fetch_element);
 }
 
@@ -402,7 +402,7 @@ sunos32_sys_execve(struct lwp *l, const struct sunos32_sys_execve_args *uap, reg
 	} */
 	const char *path = SCARG_P32(uap, path);
 
-	return execve1(l, path, SCARG_P32(uap, argp),
+	return execve1(l, path, -1, SCARG_P32(uap, argp),
 	    SCARG_P32(uap, envp),
 	    sunos32_execve_fetch_element);
 }
