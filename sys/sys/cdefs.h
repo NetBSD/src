@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.143 2019/09/15 15:18:45 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.144 2019/09/18 15:06:03 kamil Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -330,6 +330,14 @@
 #define	__noasan	__attribute__((no_sanitize_address))
 #else
 #define	__noasan	/* nothing */
+#endif
+
+#if defined(__clang__)
+#define __noubsan	__attribute__((no_sanitize("undefined")))
+#elif __GNUC_PREREQ__(4, 9)
+#define __noubsan	__attribute__((no_sanitize_undefined))
+#else
+#define __noubsan	/* nothing */
 #endif
 #endif
 
