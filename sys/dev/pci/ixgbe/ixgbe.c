@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.210 2019/09/13 07:55:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.211 2019/09/18 05:32:15 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4429,15 +4429,17 @@ ixgbe_set_multi(struct adapter *adapter)
 	else if (ec->ec_flags & ETHER_F_ALLMULTI) {
 		fctrl |= IXGBE_FCTRL_MPE;
 	}
-	ETHER_UNLOCK(ec);
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 
-	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES) {
+	/* Update multicast filter entries only when it's not ALLMULTI */
+	if ((ec->ec_flags & ETHER_F_ALLMULTI) == 0) {
+		ETHER_UNLOCK(ec);
 		update_ptr = (u8 *)mta;
 		ixgbe_update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
 		    ixgbe_mc_array_itr, TRUE);
-	}
+	} else
+		ETHER_UNLOCK(ec);
 
 } /* ixgbe_set_multi */
 
