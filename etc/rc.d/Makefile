@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.105 2019/09/15 19:38:09 brad Exp $
+# $NetBSD: Makefile,v 1.106 2019/09/18 05:16:15 nonaka Exp $
 
 .include <bsd.own.mk>
 
@@ -54,14 +54,14 @@ FILESBUILD_xdm=	yes
 FILESBUILD_xfs=	yes
 FILESBUILD_fccache= yes
 
-.if ${MKZFS} != "no"
-CONFIGFILES+=	zfs
-.endif
-
 .SUFFIXES: .in
 .in:
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's,@X11ROOTDIR@,${X11ROOTDIR},g' < ${.IMPSRC} > ${.TARGET}
+.endif
+
+.if ${MKZFS} != "no"
+CONFIGFILES+=	zfs
 .endif
 
 .include <bsd.prog.mk>
