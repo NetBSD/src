@@ -1,4 +1,4 @@
-.\"	$NetBSD: execve.2,v 1.44 2019/09/16 11:03:08 christos Exp $
+.\"	$NetBSD: execve.2,v 1.45 2019/09/18 04:57:53 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -257,6 +257,18 @@ The
 system call
 will fail and return to the calling process if:
 .Bl -tag -width Er
+.It Bq Er E2BIG
+The number of bytes in the new process' argument list
+is larger than the system-imposed limit.
+The default compile time limit is 262144 bytes and is specified
+in the variable
+.Dv NCARGS
+in
+.Aq Pa sys/param.h
+and get be read from the
+.Xr sysctl 3
+MIB variable
+.Dv KERN_ARGMAX .
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix,
 the new process file is not an ordinary file,
@@ -274,11 +286,12 @@ processes it is allowed to run concurrently.
 .It Bq Er EFAULT
 The new process file is not as long as indicated by
 the size values in its header; or
+the
 .Fa path ,
 .Fa argv ,
 or
 .Fa envp
-point to an illegal address.
+arguments point to an illegal address.
 .It Bq Er EIO
 An I/O error occurred while reading from the file system.
 .It Bq Er ELOOP
@@ -306,32 +319,6 @@ A component of the path prefix is not a directory.
 .It Bq Er ETXTBSY
 The new process file is a pure procedure (shared text)
 file that is currently open for writing or reading by some process.
-.It Bq Er E2BIG
-The number of bytes in the new process' argument list
-is larger than the system-imposed limit.
-The default compile time limit is 262144 bytes and is specified
-in the variable
-.Dv NCARGS
-in
-.Ao Pa sys/param.h Ac 
-and get be read from the
-.Xr sysctl 3
-MIB variable
-.Dv KERN_ARGMAX .
-.It Bq Er EFAULT
-The new process file is not as long as indicated by
-the size values in its header.
-.It Bq Er EFAULT
-The
-.Fa path ,
-.Fa argv ,
-or
-.Fa envp
-arguments
-point
-to an illegal address.
-.It Bq Er EIO
-An I/O error occurred while reading from the file system.
 .El
 .Pp
 In addition, the
