@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.4 2019/09/18 14:07:38 tnn Exp $ */
+/* $NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.4 2019/09/18 14:07:38 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ rkpmic_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 
 	val = I2C_READ(sc, RTC_CTRL_REG);
 	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_GET_TIME | RTC_CTRL_READSEL);
-	delay(1); /* need to wait 1/32768 seconds for shadow regs to latch */
+	delay(1000000 / 32768); /* wait one cycle for shadow regs to latch */
 	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_READSEL);
 	dt->dt_sec = bcdtobin(I2C_READ(sc, SECONDS_REG));
 	dt->dt_min = bcdtobin(I2C_READ(sc, MINUTES_REG));
