@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.212 2019/09/18 06:06:59 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.213 2019/09/18 10:42:44 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -211,7 +211,7 @@ static void	ixgbe_initialize_rss_mapping(struct adapter *);
 static void	ixgbe_enable_intr(struct adapter *);
 static void	ixgbe_disable_intr(struct adapter *);
 static void	ixgbe_update_stats_counters(struct adapter *);
-static void	ixgbe_set_multi(struct adapter *);
+static void	ixgbe_set_rxfilter(struct adapter *);
 static void	ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
@@ -3950,7 +3950,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	ixgbe_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
-	ixgbe_set_multi(adapter);
+	ixgbe_set_rxfilter(adapter);
 
 	/* Determine the correct mbuf pool, based on frame size */
 	if (adapter->max_frame_size <= MCLBYTES)
@@ -4339,12 +4339,12 @@ ixgbe_config_delay_values(struct adapter *adapter)
 } /* ixgbe_config_delay_values */
 
 /************************************************************************
- * ixgbe_set_multi - Multicast Update
+ * ixgbe_set_rxfilter - Multicast Update
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
 static void
-ixgbe_set_multi(struct adapter *adapter)
+ixgbe_set_rxfilter(struct adapter *adapter)
 {
 	struct ixgbe_mc_addr	*mta;
 	struct ifnet		*ifp = adapter->ifp;
@@ -4356,7 +4356,7 @@ ixgbe_set_multi(struct adapter *adapter)
 	struct ether_multistep	step;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
-	IOCTL_DEBUGOUT("ixgbe_set_multi: begin");
+	IOCTL_DEBUGOUT("ixgbe_set_rxfilter: begin");
 
 	mta = adapter->mta;
 	bzero(mta, sizeof(*mta) * MAX_NUM_MULTICAST_ADDRESSES);
@@ -4397,14 +4397,14 @@ ixgbe_set_multi(struct adapter *adapter)
 		    ixgbe_mc_array_itr, TRUE);
 	} else
 		ETHER_UNLOCK(ec);
-} /* ixgbe_set_multi */
+} /* ixgbe_set_rxfilter */
 
 /************************************************************************
  * ixgbe_mc_array_itr
  *
  *   An iterator function needed by the multicast shared code.
  *   It feeds the shared code routine the addresses in the
- *   array of ixgbe_set_multi() one by one.
+ *   array of ixgbe_set_rxfilter() one by one.
  ************************************************************************/
 static u8 *
 ixgbe_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
@@ -6175,7 +6175,7 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 		rv = ENETRESET;
 		goto out;
 	} else if ((change & IFF_PROMISC) != 0)
-		ixgbe_set_multi(adapter);
+		ixgbe_set_rxfilter(adapter);
 
 	/* Check for ec_capenable. */
 	change = ec->ec_capenable ^ adapter->ec_capenable;
@@ -6333,7 +6333,7 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 			 */
 			IXGBE_CORE_LOCK(adapter);
 			ixgbe_disable_intr(adapter);
-			ixgbe_set_multi(adapter);
+			ixgbe_set_rxfilter(adapter);
 			ixgbe_enable_intr(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		}
