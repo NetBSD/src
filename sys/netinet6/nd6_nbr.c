@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.172 2019/09/01 18:54:38 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.173 2019/09/18 08:18:05 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.172 2019/09/01 18:54:38 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.173 2019/09/18 08:18:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -494,7 +494,6 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 				    "determined: dst=%s, error=%d\n",
 				    IN6_PRINT(ip6buf, &dst_sa.sin6_addr),
 				    error);
-				pserialize_read_exit(s);
 				goto bad;
 			}
 			src = &src_in;
