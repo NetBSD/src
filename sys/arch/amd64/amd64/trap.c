@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2019/08/21 17:14:05 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 2019/09/18 20:18:27 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2019/08/21 17:14:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2019/09/18 20:18:27 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -351,7 +351,7 @@ trap(struct trapframe *frame)
 	{
 		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
 		const size_t sz = sizeof(lcall);
-		char tmp[sz];
+		char tmp[sizeof(lcall) /* Avoids VLA */];
 
 		/* Check for the oosyscall lcall instruction. */
 		if (p->p_emul == &emul_netbsd32 &&
