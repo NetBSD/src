@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.53 2019/09/18 07:32:25 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.54 2019/09/18 16:10:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3746,4 +3746,9 @@ sys/netinet6/ip6_input.c			1.209
 	Packet filters can return an mbuf chain with fragmented headers, so
 	m_pullup() when needed.
 	[bouyer, ticket #208]
+
+libexec/ld.elf_so/rtld.c			1.198
+
+	dl_iterate_phdr(3): do not skip the ELF loader dl_phdr_info.
+	[kamil, ticket #209]
 
