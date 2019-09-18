@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.93 2018/08/26 23:34:52 sevan Exp $ */
+/*	$NetBSD: df.c,v 1.94 2019/09/18 20:14:44 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,17 +45,20 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.93 2018/08/26 23:34:52 sevan Exp $");
+__RCSID("$NetBSD: df.c,v 1.94 2019/09/18 20:14:44 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/disk.h>
+#include <sys/ioctl.h>
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <locale.h>
 #include <util.h>
@@ -66,15 +69,17 @@ __RCSID("$NetBSD: df.c,v 1.93 2018/08/26 23:34:52 sevan Exp $");
 #include <util.h>
 
 static char	*getmntpt(const char *);
-static void	 prtstat(struct statvfs *, int);
+static void	 prtstat(const struct dkwedge_info *, const struct statvfs *,
+    int);
 static int	 selected(const char *, size_t);
 static void	 maketypelist(char *);
 static size_t	 regetmntinfo(struct statvfs **, size_t);
 __dead static void usage(void);
+static struct dkwedge_info *getwedgeinfo(const struct statvfs *, size_t);
 static void	 prthumanval(int64_t, const char *);
-static void	 prthuman(struct statvfs *, int64_t, int64_t);
+static void	 prthuman(const struct statvfs *, int64_t, int64_t);
 
-static int	 aflag, gflag, hflag, iflag, lflag, nflag, Pflag;
+static int	 aflag, gflag, hflag, iflag, lflag, nflag, Pflag, Wflag;
 static long	 usize;
 static char	**typelist;
 
@@ -83,14 +88,15 @@ main(int argc, char *argv[])
 {
 	struct stat stbuf;
 	struct statvfs *mntbuf;
-	long mntsize;
-	int ch, i, maxwidth, width;
+	struct dkwedge_info *wedge_info;
+	int ch, maxwidth, width;
+	size_t i, mntcount;
 	char *mntpt;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "aGghiklmnPt:")) != -1)
+	while ((ch = getopt(argc, argv, "aGghiklmnPt:W")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -126,6 +132,9 @@ main(int argc, char *argv[])
 		case 'P':
 			Pflag = 1;
 			break;
+		case 'W':
+			Wflag = 1;
+			break;
 		case 't':
 			if (typelist != NULL)
 				errx(EXIT_FAILURE,
@@ -154,17 +163,17 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
-	if (mntsize == 0)
+	mntcount = getmntinfo(&mntbuf, MNT_NOWAIT);
+	if (mntcount == 0)
 		err(EXIT_FAILURE,
 		    "retrieving information on mounted file systems");
 
 	if (*argv == NULL) {
-		mntsize = regetmntinfo(&mntbuf, mntsize);
+		mntcount = regetmntinfo(&mntbuf, mntcount);
 	} else {
-		if ((mntbuf = malloc(argc * sizeof(*mntbuf))) == NULL)
+		if ((mntbuf = calloc(argc, sizeof(*mntbuf))) == NULL)
 			err(EXIT_FAILURE, "can't allocate statvfs array");
-		mntsize = 0;
+		mntcount = 0;
 		for (/*EMPTY*/; *argv != NULL; argv++) {
 			if (stat(*argv, &stbuf) < 0) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
@@ -180,46 +189,50 @@ main(int argc, char *argv[])
 			 * Statfs does not take a `wait' flag, so we cannot
 			 * implement nflag here.
 			 */
-			if (!statvfs(mntpt, &mntbuf[mntsize]))
+			if (!statvfs(mntpt, &mntbuf[mntcount]))
 				if (lflag &&
-				    (mntbuf[mntsize].f_flag & MNT_LOCAL) == 0)
+				    (mntbuf[mntcount].f_flag & MNT_LOCAL) == 0)
 					warnx("Warning: %s is not a local %s",
 					    *argv, "file system");
 				else if
-				    (!selected(mntbuf[mntsize].f_fstypename,
-					sizeof(mntbuf[mntsize].f_fstypename)))
+				    (!selected(mntbuf[mntcount].f_fstypename,
+					sizeof(mntbuf[mntcount].f_fstypename)))
 					warnx("Warning: %s mounted as a %s %s",
 					    *argv,
-					    mntbuf[mntsize].f_fstypename,
+					    mntbuf[mntcount].f_fstypename,
 					    "file system");
 				else
-					++mntsize;
+					++mntcount;
 			else
 				warn("%s", *argv);
 		}
 	}
 
+	wedge_info = Wflag ? getwedgeinfo(mntbuf, mntcount) : NULL;
+
 	maxwidth = 0;
-	for (i = 0; i < mntsize; i++) {
-		width = (int)strlen(mntbuf[i].f_mntfromname);
+	for (i = 0; i < mntcount; i++) {
+		width = (int)strlen(Wflag && wedge_info[i].dkw_wname[0] ?
+		    (const char *)wedge_info[i].dkw_wname :
+		    mntbuf[i].f_mntfromname);
 		if (width > maxwidth)
 			maxwidth = width;
 	}
-	for (i = 0; i < mntsize; i++)
-		prtstat(&mntbuf[i], maxwidth);
+	for (i = 0; i < mntcount; i++)
+		prtstat(&wedge_info[i], &mntbuf[i], maxwidth);
 	return 0;
 }
 
 static char *
 getmntpt(const char *name)
 {
-	size_t mntsize, i;
+	size_t mntcount, i;
 	struct statvfs *mntbuf;
 
-	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
-	if (mntsize == 0)
+	mntcount = getmntinfo(&mntbuf, MNT_NOWAIT);
+	if (mntcount == 0)
 		err(EXIT_FAILURE, "Can't get mount information");
-	for (i = 0; i < mntsize; i++) {
+	for (i = 0; i < mntcount; i++) {
 		if (!strcmp(mntbuf[i].f_mntfromname, name))
 			return mntbuf[i].f_mntonname;
 	}
@@ -268,7 +281,7 @@ maketypelist(char *fslist)
 		++nextcp;
 
 	/* Build an array of that many types. */
-	if ((av = typelist = malloc((i + 1) * sizeof(*av))) == NULL)
+	if ((av = typelist = calloc((i + 1), sizeof(*av))) == NULL)
 		err(EXIT_FAILURE, "can't allocate type array");
 	av[0] = fslist;
 	for (i = 1, nextcp = fslist;
@@ -280,23 +293,50 @@ maketypelist(char *fslist)
 	av[i] = NULL;
 }
 
+static struct dkwedge_info *
+getwedgeinfo(const struct statvfs *mntbuf, size_t mntcount)
+{
+	struct dkwedge_info *wi = calloc(mntcount, sizeof(*wi));
+	char buf[1024];
+
+	if (wi == NULL)
+		err(EXIT_FAILURE, "can't allocate wedge info array");
+	
+	for (size_t i = 0; i < mntcount; i++) {
+		const char *dname = mntbuf[i].f_mntfromname;
+		const char *rdn = strrchr(dname, '/');
+		if (rdn == NULL) {
+			continue;
+		}
+		rdn++;
+		int fd = opendisk(rdn, O_RDONLY, buf, sizeof(buf), false);
+		if (fd == -1)
+			err(EXIT_FAILURE, "opendisk on `%s' failed", rdn);
+		if (ioctl(fd, DIOCGWEDGEINFO, &wi[i]) == -1) {
+			warn("DIOCGWEDGEINFO for `%s' failed", buf);
+		}
+		close(fd);
+	}
+	return wi;
+}
+
 /*
  * Make a pass over the filesystem info in ``mntbuf'' filtering out
  * filesystem types not in ``fsmask'' and possibly re-stating to get
  * current (not cached) info.  Returns the new count of valid statvfs bufs.
  */
 static size_t
-regetmntinfo(struct statvfs **mntbufp, size_t mntsize)
+regetmntinfo(struct statvfs **mntbufp, size_t mntcount)
 {
 	size_t i, j;
 	struct statvfs *mntbuf;
 
 	if (!lflag && typelist == NULL && aflag)
-		return nflag ? mntsize : (size_t)getmntinfo(mntbufp, MNT_WAIT);
+		return nflag ? mntcount : (size_t)getmntinfo(mntbufp, MNT_WAIT);
 
 	mntbuf = *mntbufp;
 	j = 0;
-	for (i = 0; i < mntsize; i++) {
+	for (i = 0; i < mntcount; i++) {
 		if (!aflag && (mntbuf[i].f_flag & MNT_IGNORE) != 0)
 			continue;
 		if (lflag && (mntbuf[i].f_flag & MNT_LOCAL) == 0)
@@ -335,7 +375,7 @@ prthumanval(int64_t bytes, const char *pad)
 }
 
 static void
-prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
+prthuman(const struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
 	prthumanval((int64_t)(sfsp->f_blocks * sfsp->f_frsize), "   ");
@@ -356,7 +396,8 @@ prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
  * Print out status about a filesystem.
  */
 static void
-prtstat(struct statvfs *sfsp, int maxwidth)
+prtstat(const struct dkwedge_info *dkwp, const struct statvfs *sfsp,
+    int maxwidth)
 {
 	static long blocksize;
 	static int headerlen, timesthrough;
@@ -366,6 +407,14 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	int64_t used, availblks, inodes;
 	int64_t bavail;
 	char pb[64];
+	char mntfromname[sizeof(sfsp->f_mntfromname)];
+
+	if (Wflag && dkwp->dkw_wname[0]) {
+		snprintf(mntfromname, sizeof(mntfromname), "NAME=%s",
+		    (const char *)dkwp->dkw_wname);
+	} else {
+		strlcpy(mntfromname, sfsp->f_mntfromname, sizeof(mntfromname));
+	}
 
 	if (gflag) {
 		/*
@@ -378,7 +427,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		 *
 		 */
 		(void)printf("%10s (%-12s): %7ld block size %12ld frag size\n",
-		    sfsp->f_mntonname, sfsp->f_mntfromname,
+		    sfsp->f_mntonname, mntfromname,
 		    sfsp->f_bsize,	/* On UFS/FFS systems this is
 					 * also called the "optimal
 					 * transfer block size" but it
@@ -469,7 +518,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		 * <file system root>
 		 */
 		(void)printf("%s %" PRId64 " %" PRId64 " %" PRId64 " %s%% %s\n",
-		    sfsp->f_mntfromname,
+		    mntfromname,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
 		    fsbtoblk(used, sfsp->f_frsize, blocksize),
 		    fsbtoblk(bavail, sfsp->f_frsize, blocksize),
@@ -484,7 +533,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		return;
 	}
 
-	(void)printf("%-*.*s ", maxwidth, maxwidth, sfsp->f_mntfromname);
+	(void)printf("%-*.*s ", maxwidth, maxwidth, mntfromname);
 
 	if (hflag)
 		prthuman(sfsp, used, bavail);
@@ -512,7 +561,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-agln] [-Ghkm|-ihkm|-Pk] [-t type] [file | "
+	    "Usage: %s [-aglnW] [-Ghkm|-ihkm|-Pk] [-t type] [file | "
 	    "file_system ...]\n",
 	    getprogname());
 	exit(1);
