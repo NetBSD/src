@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.124 2018/10/04 11:50:34 kre Exp $
+#	$NetBSD: security,v 1.125 2019/09/18 22:27:55 uwe Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -1033,12 +1033,12 @@ if checkyesno check_changelist ; then
 		*[\*\?\[]*)	# If changelist line is a glob ...
 				# ... expand possible backup files
 				#
-			ls -1d $(echo $backup_dir/${file}.current) 2>/dev/null \
+			ls -1d $backup_dir/${file}.current 2>/dev/null \
 			    | sed "s,^$backup_dir/,, ; s,\.current$,,"
 
 				# ... expand possible files
 				#
-			ls -1d $(echo $file) 2>/dev/null
+			ls -1d $file 2>/dev/null
 			;;
 		*)
 				# Otherwise, just print the filename
