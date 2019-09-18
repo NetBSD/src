@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.8 2019/09/18 18:18:44 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.9 2019/09/18 18:29:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.8 2019/09/18 18:18:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.9 2019/09/18 18:29:58 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -407,12 +407,12 @@ pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		pt_entry_t * const pte = pmap_pte_lookup(pmap, sva);
-		if (pte != NULL) {
+		pt_entry_t * const ptep = pmap_pte_lookup(pmap, sva);
+		if (ptep != NULL) {
 			/*
 			 * Callback to deal with the ptes for this segment.
 			 */
-			(*callback)(pmap, sva, lastseg_va, pte, flags);
+			(*callback)(pmap, sva, lastseg_va, ptep, flags);
 		}
 		/*
 		 * In theory we could release pages with no entries,
