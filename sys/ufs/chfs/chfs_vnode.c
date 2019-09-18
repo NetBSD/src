@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.16 2019/09/18 17:59:15 christos Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.17 2019/09/18 18:46:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -310,8 +310,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	VOP_UNLOCK(vp);
 	*vpp = vp;
-	cache_enter(pdir, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
-	    cnp->cn_flags);
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return (0);
 }
 
