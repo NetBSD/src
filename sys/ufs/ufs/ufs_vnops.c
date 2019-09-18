@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.247 2019/07/01 00:57:06 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.248 2019/09/18 17:59:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.247 2019/07/01 00:57:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.248 2019/09/18 17:59:15 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1909,6 +1909,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	if (error)
 		goto bad;
 	*vpp = tvp;
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return (0);
 
  bad:

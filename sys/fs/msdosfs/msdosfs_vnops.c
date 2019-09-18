@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.99 2019/09/18 17:59:14 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.99 2019/09/18 17:59:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ msdosfs_create(void *v)
 		goto bad;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	*ap->a_vpp = DETOV(dep);
+	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
+	    cnp->cn_flags);
 	return (0);
 
 bad:
