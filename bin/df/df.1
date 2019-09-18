@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.50 2019/09/18 20:14:44 christos Exp $
+.\"	$NetBSD: df.1,v 1.51 2019/09/18 20:17:46 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,3 +210,10 @@ A
 .Nm
 utility appeared in
 .At v1 .
+.Sh BUGS
+The
+.Fl W
+option needs root privileges to run because it needs to open the disk devices
+to get the wedge information.
+Perhaps this information should be exposed via a different mechanism in the
+future.
