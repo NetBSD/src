@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.217.10.1 2018/10/13 17:14:13 martin Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.217.10.2 2019/09/18 17:22:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.217.10.1 2018/10/13 17:14:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.217.10.2 2019/09/18 17:22:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -600,13 +600,18 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 static const char *
 getwedgename(const char *name, int namelen)
 {
-	const char *wpfx = "wedge:";
-	const int wpfxlen = strlen(wpfx);
+	const char *wpfx1 = "wedge:";
+	const char *wpfx2 = "NAME=";
+	const int wpfx1len = strlen(wpfx1);
+	const int wpfx2len = strlen(wpfx2);
 
-	if (namelen < wpfxlen || strncmp(name, wpfx, wpfxlen) != 0)
-		return NULL;
+	if (namelen > wpfx1len && strncmp(name, wpfx1, wpfx1len) == 0)
+		return name + wpfx1len;
 
-	return name + wpfxlen;
+	if (namelen > wpfx2len && strncasecmp(name, wpfx2, wpfx2len) == 0)
+		return name + wpfx2len;
+
+	return NULL;
 }
 
 static device_t

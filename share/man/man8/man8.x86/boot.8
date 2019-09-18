@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.11.4.2 2019/09/17 18:26:53 martin Exp $
+.\"	$NetBSD: boot.8,v 1.11.4.3 2019/09/18 17:22:32 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -436,7 +436,11 @@ being separated with spaces
 .It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
 Override the default boot device.
 .Ar dev
-can be a unit name
+is of the form
+.Va NAME=partition_label
+for
+.Xr gpt 8
+partitionned disks. It can also be a unit name
 .Po Dq wd0
 .Pc ,
 or an interface name
