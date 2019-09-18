@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.4 2018/09/02 10:07:17 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.5 2019/09/18 12:49:34 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.4 2018/09/02 10:07:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.5 2019/09/18 12:49:34 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -244,8 +244,8 @@ rk_i2c_stop(struct rk_i2c_softc *sc)
 }
 
 static int
-rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
-    size_t buflen, int flags, bool send_start)
+rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *cmd,
+    size_t cmdlen, const uint8_t *buf, size_t buflen, int flags, bool send_start)
 {
 	union {
 		uint8_t data8[32];
@@ -254,8 +254,10 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	uint32_t con;
 	u_int mode;
 	int error;
+	size_t len;
 
-	if (buflen > 31)
+	len = cmdlen + buflen;
+	if (len > 31)
 		return EINVAL;
 
 	mode = RKI2C_CON_I2C_MODE_TX;
@@ -267,10 +269,11 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 
 	/* Transmit data. Slave address goes in the lower 8 bits of TXDATA0 */
 	txdata.data8[0] = addr << 1;
-	memcpy(&txdata.data8[1], buf, buflen);
+	memcpy(&txdata.data8[1], cmd, cmdlen);
+	memcpy(&txdata.data8[1 + cmdlen], buf, buflen);
 	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh, RKI2C_TXDATA(0),
-	    txdata.data32, howmany(buflen + 1, 4));
-	WR4(sc, RKI2C_MTXCNT, __SHIFTIN(buflen + 1, RKI2C_MTXCNT_MTXCNT));
+	    txdata.data32, howmany(len + 1, 4));
+	WR4(sc, RKI2C_MTXCNT, __SHIFTIN(len + 1, RKI2C_MTXCNT_MTXCNT));
 
 	if ((error = rk_i2c_wait(sc, RKI2C_IPD_MBTFIPD)) != 0)
 		return error;
@@ -338,16 +341,9 @@ rk_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_READ_P(op)) {
 		error = rk_i2c_read(sc, addr, cmdbuf, cmdlen, buf, buflen, flags, send_start);
 	} else {
-		if (cmdlen > 0) {
-			error = rk_i2c_write(sc, addr, cmdbuf, cmdlen, flags, send_start);
-			if (error != 0)
-				goto done;
-			send_start = false;
-		}
-		error = rk_i2c_write(sc, addr, buf, buflen, flags, send_start);
+		error = rk_i2c_write(sc, addr, cmdbuf, cmdlen, buf, buflen, flags, send_start);
 	}
 
-done:
 	if (error != 0 || I2C_OP_STOP_P(op))
 		rk_i2c_stop(sc);
 
