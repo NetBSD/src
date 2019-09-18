@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.3 2019/07/03 10:21:41 jmcneill Exp $ */
+/* $NetBSD: rkpmic.c,v 1.4 2019/09/18 14:07:38 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.3 2019/07/03 10:21:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.4 2019/09/18 14:07:38 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,10 +37,33 @@ __KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.3 2019/07/03 10:21:41 jmcneill Exp $");
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
+#include <dev/clock_subr.h>
+
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/fdt/fdtvar.h>
 
+#define	SECONDS_REG		0x00
+#define	MINUTES_REG		0x01
+#define	HOURS_REG		0x02
+#define	DAYS_REG		0x03
+#define	MONTHS_REG		0x04
+#define	YEARS_REG		0x05
+#define	WEEKS_REG		0x06
+
+#define	RTC_CTRL_REG		0x10
+#define	RTC_CTRL_READSEL	__BIT(7)
+#define	RTC_CTRL_GET_TIME	__BIT(6)
+#define	RTC_CTRL_SET_32_COUNTER	__BIT(5)
+#define	RTC_CTRL_TEST_MODE	__BIT(4)
+#define	RTC_CTRL_AMPM_MODE	__BIT(3)
+#define	RTC_CTRL_AUTO_COMP	__BIT(2)
+#define	RTC_CTRL_ROUND_30S	__BIT(1)
+#define	RTC_CTRL_STOP_RTC	__BIT(0)
+
+#define	RTC_INT_REG		0x12
+#define	RTC_COMP_LSB_REG	0x13
+#define	RTC_COMP_MSB_REG	0x14
 #define	CHIP_NAME_REG		0x17
 #define	CHIP_VER_REG		0x18
 
@@ -169,7 +192,7 @@ struct rkpmic_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
-
+	struct todr_chip_handle sc_todr;
 	struct rkpmic_config *sc_conf;
 };
 
@@ -198,7 +221,7 @@ rkpmic_read(struct rkpmic_softc *sc, uint8_t reg, int flags)
 
 	error = iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, &val, flags);
 	if (error != 0)
-		aprint_error_dev(sc->sc_dev, "error reading reg %#x: %d\n", reg, error);
+		device_printf(sc->sc_dev, "error reading reg %#x: %d\n", reg, error);
 
 	return val;
 }
@@ -210,13 +233,89 @@ rkpmic_write(struct rkpmic_softc *sc, uint8_t reg, uint8_t val, int flags)
 
 	error = iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, flags);
 	if (error != 0)
-		aprint_error_dev(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
+		device_printf(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
 }
 
 #define	I2C_READ(sc, reg)	rkpmic_read((sc), (reg), I2C_F_POLL)
 #define	I2C_WRITE(sc, reg, val)	rkpmic_write((sc), (reg), (val), I2C_F_POLL)
 #define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
 #define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
+
+static int
+rkpmic_todr_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
+{
+	struct rkpmic_softc * const sc = ch->cookie;
+	uint8_t val;
+
+	if (dt->dt_year < 2000 || dt->dt_year >= 2100) {
+		device_printf(sc->sc_dev, "year out of range\n");
+		return EINVAL;
+	}
+
+	if (I2C_LOCK(sc))
+		return EBUSY;
+
+	val = I2C_READ(sc, RTC_CTRL_REG);
+	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_STOP_RTC);
+	I2C_WRITE(sc, SECONDS_REG, bintobcd(dt->dt_sec));
+	I2C_WRITE(sc, MINUTES_REG, bintobcd(dt->dt_min));
+	I2C_WRITE(sc, HOURS_REG, bintobcd(dt->dt_hour));
+	I2C_WRITE(sc, DAYS_REG, bintobcd(dt->dt_day));
+	I2C_WRITE(sc, MONTHS_REG, bintobcd(dt->dt_mon));
+	I2C_WRITE(sc, YEARS_REG, bintobcd(dt->dt_year % 100));
+	I2C_WRITE(sc, WEEKS_REG, bintobcd(dt->dt_wday == 0 ? 7 : dt->dt_wday));
+	I2C_WRITE(sc, RTC_CTRL_REG, val);
+	I2C_UNLOCK(sc);
+
+	return 0;
+}
+
+static int
+rkpmic_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
+{
+	struct rkpmic_softc * const sc = ch->cookie;
+	uint8_t val;
+
+	if (I2C_LOCK(sc))
+		return EBUSY;
+
+	val = I2C_READ(sc, RTC_CTRL_REG);
+	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_GET_TIME | RTC_CTRL_READSEL);
+	delay(1); /* need to wait 1/32768 seconds for shadow regs to latch */
+	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_READSEL);
+	dt->dt_sec = bcdtobin(I2C_READ(sc, SECONDS_REG));
+	dt->dt_min = bcdtobin(I2C_READ(sc, MINUTES_REG));
+	dt->dt_hour = bcdtobin(I2C_READ(sc, HOURS_REG));
+	dt->dt_day = bcdtobin(I2C_READ(sc, DAYS_REG));
+	dt->dt_mon = bcdtobin(I2C_READ(sc, MONTHS_REG));
+	dt->dt_year = 2000 + bcdtobin(I2C_READ(sc, YEARS_REG));
+	dt->dt_wday = bcdtobin(I2C_READ(sc, WEEKS_REG));
+	if (dt->dt_wday == 7)
+		dt->dt_wday = 0;
+	I2C_WRITE(sc, RTC_CTRL_REG, val);
+	I2C_UNLOCK(sc);
+
+	/*
+	 * RK808 has a hw bug which makes the 31st of November a valid day.
+	 * If we detect the 31st of November we skip ahead one day.
+	 * If the system has been turned off during the crossover the clock
+	 * will have lost a day. No easy way to detect this. Oh well.
+	 */
+	if (dt->dt_mon == 11 && dt->dt_day == 31) {
+		dt->dt_day--;
+		clock_secs_to_ymdhms(clock_ymdhms_to_secs(dt) + 86400, dt);
+		rkpmic_todr_settime(ch, dt);
+	}
+
+#if 0	
+	device_printf(sc->sc_dev, "%04" PRIu64 "-%02u-%02u (%u) %02u:%02u:%02u\n",
+	    dt->dt_year, dt->dt_mon, dt->dt_day, dt->dt_wday,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec);
+#endif
+
+	return 0;
+}
+
 
 static int
 rkpmic_match(device_t parent, cfdata_t match, void *aux)
@@ -248,14 +347,25 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_conf = (void *)entry->data;
 
+	memset(&sc->sc_todr, 0, sizeof(sc->sc_todr));
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime_ymdhms = rkpmic_todr_gettime;
+	sc->sc_todr.todr_settime_ymdhms = rkpmic_todr_settime;
+
 	aprint_naive("\n");
-	aprint_normal(": %s Power Management IC\n", sc->sc_conf->name);
+	aprint_normal(": %s Power Management and Real Time Clock IC\n", sc->sc_conf->name);
 
 	I2C_LOCK(sc);
 	chipid = I2C_READ(sc, CHIP_NAME_REG) << 8;
 	chipid |= I2C_READ(sc, CHIP_VER_REG);
 	aprint_debug_dev(self, "Chip ID 0x%04x\n", chipid);
+	I2C_WRITE(sc, RTC_CTRL_REG, 0x0);
+	I2C_WRITE(sc, RTC_INT_REG, 0);
+	I2C_WRITE(sc, RTC_COMP_LSB_REG, 0);
+	I2C_WRITE(sc, RTC_COMP_MSB_REG, 0);
 	I2C_UNLOCK(sc);
+
+	fdtbus_todr_attach(self, sc->sc_phandle, &sc->sc_todr);
 
 	regulators = of_find_firstchild_byname(sc->sc_phandle, "regulators");
 	if (regulators < 0)
