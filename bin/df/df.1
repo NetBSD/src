@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.51 2019/09/18 20:17:46 christos Exp $
+.\"	$NetBSD: df.1,v 1.52 2019/09/18 23:43:23 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -178,6 +178,14 @@ The wedge name is prefixed with
 .Dq NAME=
 as in
 .Xr fstab 5 .
+The .Fl W
+option needs read access on the devices to be able to access
+the wedge information.
+This is available to users with root privileges, and usually to
+members of group operator.
+If the wedge information cannot be obtained, for one or more
+filesystems, the
+.Fl W option is silently ignoresd for those filesystems.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
@@ -213,7 +221,7 @@ utility appeared in
 .Sh BUGS
 The
 .Fl W
-option needs root privileges to run because it needs to open the disk devices
-to get the wedge information.
+option needs read access to the disk device node to
+get the wedge information.
 Perhaps this information should be exposed via a different mechanism in the
 future.
