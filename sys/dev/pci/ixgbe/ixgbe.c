@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.211 2019/09/18 05:32:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.212 2019/09/18 06:06:59 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -211,7 +211,6 @@ static void	ixgbe_initialize_rss_mapping(struct adapter *);
 static void	ixgbe_enable_intr(struct adapter *);
 static void	ixgbe_disable_intr(struct adapter *);
 static void	ixgbe_update_stats_counters(struct adapter *);
-static void	ixgbe_set_promisc(struct adapter *);
 static void	ixgbe_set_multi(struct adapter *);
 static void	ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
@@ -3042,49 +3041,6 @@ invalid:
 } /* ixgbe_media_change */
 
 /************************************************************************
- * ixgbe_set_promisc
- ************************************************************************/
-static void
-ixgbe_set_promisc(struct adapter *adapter)
-{
-	struct ifnet *ifp = adapter->ifp;
-	int	     mcnt = 0;
-	u32	     rctl;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ethercom *ec = &adapter->osdep.ec;
-
-	KASSERT(mutex_owned(&adapter->core_mtx));
-	rctl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
-	rctl &= (~IXGBE_FCTRL_UPE);
-	ETHER_LOCK(ec);
-	if (ec->ec_flags & ETHER_F_ALLMULTI)
-		mcnt = MAX_NUM_MULTICAST_ADDRESSES;
-	else {
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
-				break;
-			mcnt++;
-			ETHER_NEXT_MULTI(step, enm);
-		}
-	}
-	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES)
-		rctl &= (~IXGBE_FCTRL_MPE);
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		rctl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-	} else if (ec->ec_flags & ETHER_F_ALLMULTI) {
-		rctl |= IXGBE_FCTRL_MPE;
-		rctl &= ~IXGBE_FCTRL_UPE;
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-	}
-	ETHER_UNLOCK(ec);
-} /* ixgbe_set_promisc */
-
-/************************************************************************
  * ixgbe_msix_link - Link status change ISR (MSI/MSI-X)
  ************************************************************************/
 static int
@@ -4423,12 +4379,13 @@ ixgbe_set_multi(struct adapter *adapter)
 	}
 
 	fctrl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
-	fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 	if (ifp->if_flags & IFF_PROMISC)
 		fctrl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 	else if (ec->ec_flags & ETHER_F_ALLMULTI) {
 		fctrl |= IXGBE_FCTRL_MPE;
-	}
+		fctrl &= ~IXGBE_FCTRL_UPE;
+	} else
+		fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 
@@ -4440,7 +4397,6 @@ ixgbe_set_multi(struct adapter *adapter)
 		    ixgbe_mc_array_itr, TRUE);
 	} else
 		ETHER_UNLOCK(ec);
-
 } /* ixgbe_set_multi */
 
 /************************************************************************
@@ -6219,7 +6175,7 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 		rv = ENETRESET;
 		goto out;
 	} else if ((change & IFF_PROMISC) != 0)
-		ixgbe_set_promisc(adapter);
+		ixgbe_set_multi(adapter);
 
 	/* Check for ec_capenable. */
 	change = ec->ec_capenable ^ adapter->ec_capenable;
