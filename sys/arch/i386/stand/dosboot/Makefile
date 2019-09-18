@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2016/01/23 22:29:29 christos Exp $
+#	$NetBSD: Makefile,v 1.30.10.1 2019/09/18 17:30:06 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,12 +9,13 @@ NEWVERSWHAT=	"DOS Boot"
 STARTFILE=	${DOSSTART}
 RELOC=		0x100
 
-SRCS= main.c devopen.c exec.c
+SRCS= main.c devopen.c exec.c exec_multiboot1.c exec_multiboot2.c
 
 CPPFLAGS+= -DSLOW	# for libz
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DXMS
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+CPPFLAGS+= -DNO_MULTIBOOT2 # keep the binary small
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2016/01/23 22:29:29 christos Exp $
+#	$NetBSD: Makefile,v 1.24.10.1 2019/09/18 17:30:06 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -14,7 +14,8 @@ RELOC=		0x0
 .PATH.S: ${.CURDIR}/../pxeboot
 .endif
 
-SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
+SRCS= main.c dev_net.c devopen.c conf.c 
+SRCS+=exec.c exec_multiboot1.c exec_multiboot2.c pxe.c pxe_call.S
 # use our own nfs implementation
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
