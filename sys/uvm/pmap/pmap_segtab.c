@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.7 2019/03/08 08:12:40 msaitoh Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.8 2019/09/18 18:18:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.7 2019/03/08 08:12:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.8 2019/09/18 18:18:44 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -392,7 +392,7 @@ pmap_segtab_activate(struct pmap *pm, struct lwp *l)
  */
 void
 pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
-	pte_callback_t callback, uintptr_t flags)
+    pte_callback_t callback, uintptr_t flags)
 {
 #if 0
 	printf("%s: %p, %"PRIxVADDR", %"PRIxVADDR", %p, %"PRIxPTR"\n",
