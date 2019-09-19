@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.210 2019/09/19 04:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.211 2019/09/19 05:31:50 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.210 2019/09/19 04:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.211 2019/09/19 05:31:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -405,7 +405,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad;
 	}
 
-	ro = percpu_getref(ip6_forward_rt_percpu);
+	ro = rtcache_percpu_getref(ip6_forward_rt_percpu);
 
 	/*
 	 * Multicast check
@@ -566,7 +566,7 @@ hbhcheck:
 			/* m already freed */
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 
@@ -764,7 +764,7 @@ hbhcheck:
 
 bad_unref:
 	rtcache_unref(rt, ro);
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
 bad:
 	m_freem(m);
 	return;

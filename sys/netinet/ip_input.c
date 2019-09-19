@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.391 2019/09/19 04:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.392 2019/09/19 05:31:50 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.391 2019/09/19 04:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.392 2019/09/19 05:31:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1369,7 +1369,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 
-	ro = percpu_getref(ipforward_rt_percpu);
+	ro = rtcache_percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
 		rtcache_percpu_putref(ipforward_rt_percpu);
@@ -1497,7 +1497,7 @@ error:
 		return;
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 }
 
 void
