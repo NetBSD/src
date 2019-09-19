@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.6 2018/10/19 00:12:56 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.7 2019/09/19 04:59:42 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -106,6 +106,9 @@ struct l2tp_softc {
 					*/
 	kmutex_t l2tp_lock;		/* writer lock for l2tp_var */
 	pserialize_t l2tp_psz;
+
+	void *l2tp_si;
+	percpu_t *l2tp_ifq_percpu;
 
 	LIST_ENTRY(l2tp_softc) l2tp_list; /* list of all l2tps */
 	struct pslist_entry l2tp_hash;	/* hashed list to lookup by session id */
