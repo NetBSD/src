@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.148 2019/06/25 12:30:50 msaitoh Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.149 2019/09/19 06:07:24 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.148 2019/06/25 12:30:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.149 2019/09/19 06:07:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,9 +103,6 @@ static struct {
 } gif_softcs __cacheline_aligned;
 
 struct psref_class *gv_psref_class __read_mostly;
-
-static void	gif_ro_init_pc(void *, void *, struct cpu_info *);
-static void	gif_ro_fini_pc(void *, void *, struct cpu_info *);
 
 static int	gifattach0(struct gif_softc *);
 static int	gif_output(struct ifnet *, struct mbuf *,
@@ -271,8 +268,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	mutex_init(&sc->gif_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->gif_psz = pserialize_create();
 
-	sc->gif_ro_percpu = percpu_alloc(sizeof(struct gif_ro));
-	percpu_foreach(sc->gif_ro_percpu, gif_ro_init_pc, NULL);
+	sc->gif_ro_percpu = if_tunnel_alloc_ro_percpu();
 	mutex_enter(&gif_softcs.lock);
 	LIST_INSERT_HEAD(&gif_softcs.list, sc, gif_list);
 	mutex_exit(&gif_softcs.lock);
@@ -309,32 +305,6 @@ gifattach0(struct gif_softc *sc)
 	return 0;
 }
 
-static void
-gif_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct gif_ro *gro = p;
-
-	gro->gr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-}
-
-static void
-gif_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct gif_ro *gro = p;
-
-	rtcache_free(&gro->gr_ro);
-
-	mutex_obj_free(gro->gr_lock);
-}
-
-void
-gif_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct gif_ro *gro = p;
-
-	rtcache_free(&gro->gr_ro);
-}
-
 static int
 gif_clone_destroy(struct ifnet *ifp)
 {
@@ -347,8 +317,7 @@ gif_clone_destroy(struct ifnet *ifp)
 	bpf_detach(ifp);
 	if_detach(ifp);
 
-	percpu_foreach(sc->gif_ro_percpu, gif_ro_fini_pc, NULL);
-	percpu_free(sc->gif_ro_percpu, sizeof(struct gif_ro));
+	if_tunnel_free_ro_percpu(sc->gif_ro_percpu);
 
 	pserialize_destroy(sc->gif_psz);
 	mutex_destroy(&sc->gif_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.37 2019/09/19 04:59:42 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.38 2019/09/19 06:07:24 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.37 2019/09/19 04:59:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.38 2019/09/19 06:07:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,9 +114,6 @@ static struct {
 
 pserialize_t l2tp_psz __read_mostly;
 struct psref_class *lv_psref_class __read_mostly;
-
-static void	l2tp_ro_init_pc(void *, void *, struct cpu_info *);
-static void	l2tp_ro_fini_pc(void *, void *, struct cpu_info *);
 
 static void	l2tp_ifq_init_pc(void *, void *, struct cpu_info *);
 
@@ -253,8 +250,7 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 	sc->l2tp_psz = pserialize_create();
 	PSLIST_ENTRY_INIT(sc, l2tp_hash);
 
-	sc->l2tp_ro_percpu = percpu_alloc(sizeof(struct l2tp_ro));
-	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_init_pc, NULL);
+	sc->l2tp_ro_percpu = if_tunnel_alloc_ro_percpu();
 
 	sc->l2tp_ifq_percpu = percpu_alloc(sizeof(struct ifqueue));
 	percpu_foreach(sc->l2tp_ifq_percpu, l2tp_ifq_init_pc, NULL);
@@ -321,24 +317,6 @@ l2tpattach0(struct l2tp_softc *sc)
 }
 
 void
-l2tp_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct l2tp_ro *lro = p;
-
-	lro->lr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-}
-
-void
-l2tp_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct l2tp_ro *lro = p;
-
-	rtcache_free(&lro->lr_ro);
-
-	mutex_obj_free(lro->lr_lock);
-}
-
-void
 l2tp_ifq_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct ifqueue *ifq = p;
@@ -376,8 +354,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
-	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_fini_pc, NULL);
-	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
+	if_tunnel_free_ro_percpu(sc->l2tp_ro_percpu);
 
 	kmem_free(var, sizeof(struct l2tp_variant));
 	pserialize_destroy(sc->l2tp_psz);

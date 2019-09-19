@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.460 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.461 2019/09/19 06:07:24 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.460 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.461 2019/09/19 06:07:24 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2905,6 +2905,63 @@ if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
 
 	return 0;
 }
+
+static void
+if_tunnel_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct tunnel_ro *tro = p;
+
+	tro->tr_ro = kmem_zalloc(sizeof(*tro->tr_ro), KM_SLEEP);
+	tro->tr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+}
+
+percpu_t *
+if_tunnel_alloc_ro_percpu(void)
+{
+	percpu_t *ro_percpu;
+
+	ro_percpu = percpu_alloc(sizeof(struct tunnel_ro));
+	percpu_foreach(ro_percpu, if_tunnel_ro_init_pc, NULL);
+
+	return ro_percpu;
+}
+
+static void
+if_tunnel_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct tunnel_ro *tro = p;
+
+	rtcache_free(tro->tr_ro);
+	kmem_free(tro->tr_ro, sizeof(*tro->tr_ro));
+
+	mutex_obj_free(tro->tr_lock);
+}
+
+void
+if_tunnel_free_ro_percpu(percpu_t *ro_percpu)
+{
+
+	percpu_foreach(ro_percpu, if_tunnel_ro_fini_pc, NULL);
+	percpu_free(ro_percpu, sizeof(struct tunnel_ro));
+}
+
+
+static void
+if_tunnel_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct tunnel_ro *tro = p;
+
+	mutex_enter(tro->tr_lock);
+	rtcache_free(tro->tr_ro);
+	mutex_exit(tro->tr_lock);
+}
+
+void if_tunnel_ro_percpu_rtcache_free(percpu_t *ro_percpu)
+{
+
+	percpu_foreach(ro_percpu, if_tunnel_rtcache_free_pc, NULL);
+}
+
 
 /* common */
 int
