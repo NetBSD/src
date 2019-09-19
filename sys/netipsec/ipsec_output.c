@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.82 2018/12/26 08:58:51 knakahara Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.83 2019/09/19 04:08:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.82 2018/12/26 08:58:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.83 2019/09/19 04:08:30 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -113,7 +113,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	KASSERT(af == AF_INET || af == AF_INET6);
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	ro = percpu_getref(ipsec_rtcache_percpu);
+	ro = rtcache_percpu_getref(ipsec_rtcache_percpu);
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -131,7 +131,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		break;
 #endif
 	}
-	percpu_putref(ipsec_rtcache_percpu);
+	rtcache_percpu_putref(ipsec_rtcache_percpu);
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return rv;
@@ -840,5 +840,5 @@ void
 ipsec_output_init(void)
 {
 
-	ipsec_rtcache_percpu = percpu_alloc(sizeof(struct route));
+	ipsec_rtcache_percpu = rtcache_percpu_alloc();
 }
