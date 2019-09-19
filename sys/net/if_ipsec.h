@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.4 2018/10/19 00:12:56 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.5 2019/09/19 06:07:24 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -86,14 +86,9 @@ struct ipsec_variant {
 	struct psref_target iv_psref;
 };
 
-struct ipsec_ro {
-	struct route ir_ro;
-	kmutex_t *ir_lock;
-};
-
 struct ipsec_softc {
 	struct ifnet	ipsec_if;	/* common area - must be at the top */
-	percpu_t *ipsec_ro_percpu;	/* struct ipsec_ro */
+	percpu_t *ipsec_ro_percpu;	/* struct tunnel_ro */
 	struct ipsec_variant *ipsec_var; /*
 					  * reader must use ipsec_getref_variant()
 					  * instead of direct dereference.
@@ -220,7 +215,7 @@ int if_ipsec_ioctl(struct ifnet *, u_long, void *);
  *   - ipsec_var->iv_psref for reader
  *       ipsec_softc->ipsec_var is used for variant values while the ipsec tunnel
  *       exists.
- * + struct ipsec_ro->ir_ro is protected by struct ipsec_ro->ir_lock.
+ * + struct tunnel_ro->tr_ro is protected by struct tunnel_ro->tr_lock.
  *       This lock is required to exclude softnet/0 lwp(such as output
  *       processing softint) and  processing lwp(such as DAD timer processing).
  * + if_ipsec_share_sp() and if_ipsec_unshare_sp() operations are serialized by
