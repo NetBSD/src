@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.209 2019/09/15 21:00:15 bouyer Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.210 2019/09/19 04:08:29 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.209 2019/09/15 21:00:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.210 2019/09/19 04:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -194,7 +194,7 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
-	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
+	ip6_forward_rt_percpu = rtcache_percpu_alloc();
 }
 
 static void
@@ -591,7 +591,7 @@ hbhcheck:
 				    ICMP6_PARAMPROB_HEADER,
 				    (char *)&ip6->ip6_plen - (char *)ip6);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
@@ -599,7 +599,7 @@ hbhcheck:
 		if (hbh == NULL) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		KASSERT(IP6_HDR_ALIGNED_P(hbh));
@@ -653,7 +653,7 @@ hbhcheck:
 
 			if (error != 0) {
 				rtcache_unref(rt, ro);
-				percpu_putref(ip6_forward_rt_percpu);
+				rtcache_percpu_putref(ip6_forward_rt_percpu);
 				IP6_STATINC(IP6_STAT_CANTFORWARD);
 				goto bad;
 			}
@@ -662,7 +662,7 @@ hbhcheck:
 			goto bad_unref;
 	} else if (!ours) {
 		rtcache_unref(rt, ro);
-		percpu_putref(ip6_forward_rt_percpu);
+		rtcache_percpu_putref(ip6_forward_rt_percpu);
 		ip6_forward(m, srcrt);
 		return;
 	}
@@ -703,7 +703,7 @@ hbhcheck:
 		rtcache_unref(rt, ro);
 		rt = NULL;
 	}
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
 
 	rh_present = 0;
 	frg_present = 0;
