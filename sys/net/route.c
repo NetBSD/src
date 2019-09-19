@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.220 2019/09/19 04:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.221 2019/09/19 04:46:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.220 2019/09/19 04:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.221 2019/09/19 04:46:29 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.220 2019/09/19 04:08:29 ozaki-r Exp $");
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
