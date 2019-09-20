@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2019/09/13 18:07:30 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2019/09/20 05:35:27 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2019/09/13 18:07:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2019/09/20 05:35:27 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1724,6 +1724,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	if (prot & (VM_PROT_WRITE|VM_PROT_EXECUTE))
 		prot |= VM_PROT_READ;
+	if (flags & (VM_PROT_WRITE|VM_PROT_EXECUTE))
+		flags |= VM_PROT_READ;
 
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
 	if (need_update_pv) {
@@ -1750,7 +1752,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (pg != NULL) {
 		/* update referenced/modified flags */
 		VM_PAGE_TO_MD(pg)->mdpg_flags |=
-		    (prot & (VM_PROT_READ | VM_PROT_WRITE));
+		    (flags & (VM_PROT_READ | VM_PROT_WRITE));
 		mdattr &= VM_PAGE_TO_MD(pg)->mdpg_flags;
 	}
 
