@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.26 2019/02/19 00:30:16 christos Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.27 2019/09/20 12:41:33 kamil Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.26 2019/02/19 00:30:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.27 2019/09/20 12:41:33 kamil Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -14969,8 +14969,8 @@ void i915_disable_vga(struct drm_device *dev)
 		aprint_error_dev(dev->pdev->pd_dev,
 		    "unable to map VGA registers: %d\n", error);
 	} else {
-		CTASSERT(vgabase <= VGA_SR_INDEX);
-		CTASSERT(vgabase <= VGA_SR_DATA);
+		DRMCTASSERT(vgabase <= VGA_SR_INDEX);
+		DRMCTASSERT(vgabase <= VGA_SR_DATA);
 		bus_space_write_1(iot, ioh, VGA_SR_INDEX - vgabase, SR01);
 		sr1 = bus_space_read_1(iot, ioh, VGA_SR_DATA - vgabase);
 		bus_space_write_1(iot, ioh, VGA_SR_DATA - vgabase,
