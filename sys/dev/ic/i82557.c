@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.154 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.155 2019/09/20 09:00:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.154 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.155 2019/09/20 09:00:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1892,7 +1892,7 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	for (i = 1000; i > 0; i++) {
+	for (i = 1000; i > 0; i--) {
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		status = le16toh(cb_ias->cb_status);

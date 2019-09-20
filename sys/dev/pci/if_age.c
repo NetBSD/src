@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.60 2019/07/09 08:46:58 msaitoh Exp $ */
+/*	$NetBSD: if_age.c,v 1.61 2019/09/20 08:58:25 maxv Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.61 2019/09/20 08:58:25 maxv Exp $");
 
 #include "vlan.h"
 
@@ -575,7 +575,7 @@ age_get_macaddr(struct age_softc *sc, uint8_t eaddr[])
 		 */
 		CSR_WRITE_4(sc, AGE_TWSI_CTRL, CSR_READ_4(sc, AGE_TWSI_CTRL) |
 		    TWSI_CTRL_SW_LD_START);
-		for (i = 100; i > 0; i++) {
+		for (i = 100; i > 0; i--) {
 			DELAY(1000);
 			reg = CSR_READ_4(sc, AGE_TWSI_CTRL);
 			if ((reg & TWSI_CTRL_SW_LD_START) == 0)
