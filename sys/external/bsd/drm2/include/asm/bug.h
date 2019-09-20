@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.5 2019/09/20 10:54:07 kamil Exp $	*/
+/*	$NetBSD: bug.h,v 1.6 2019/09/20 12:40:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,19 +35,20 @@
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
-#define	BUG()			panic("%s:%d: BUG!", __FILE__, __LINE__)
-#define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
-
-#define	BUILD_BUG()		do {} while (0)
-#define	BUILD_BUG_ON(CONDITION)	CTASSERT(!(CONDITION))
 /*
  * static_assert is violated with runtime-only compiler semantics in a few
  * places. Instead of breaking the build, stop asserting these corner cases.
  */
-#define	BUILD_BUG_ON_MSG(CONDITION,MSG)					\
-	CTASSERT((__builtin_choose_expr(				\
-		__builtin_constant_p(CONDITION), !(CONDITION), 1)))
 
+#define DRMCTASSERT(x)	CTASSERT((__builtin_choose_expr(		\
+			__builtin_constant_p(x), (x), 1)))
+
+#define	BUG()			panic("%s:%d: BUG!", __FILE__, __LINE__)
+#define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
+
+#define	BUILD_BUG()		do {} while (0)
+#define	BUILD_BUG_ON(CONDITION)	DRMCTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_MSG(CONDITION,MSG)	DRMCTASSERT(!(CONDITION))
 
 /* XXX Rate limit?  */
 #define WARN(CONDITION, FMT, ...)					\
