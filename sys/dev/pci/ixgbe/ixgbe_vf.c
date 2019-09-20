@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.21 2019/09/12 12:25:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.22 2019/09/20 09:28:37 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -460,8 +460,17 @@ s32 ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
 		return err;
 
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
-	if (msgbuf[0] == (IXGBE_VF_UPDATE_XCAST_MODE | IXGBE_VT_MSGTYPE_NACK))
-		return IXGBE_ERR_FEATURE_NOT_SUPPORTED;
+	if (msgbuf[0] ==
+	    (IXGBE_VF_UPDATE_XCAST_MODE | IXGBE_VT_MSGTYPE_NACK)) {
+		if (xcast_mode == IXGBEVF_XCAST_MODE_PROMISC) {
+			/*
+			 * If the API version matched and the reply was NACK,
+			 * assume the PF was not in PROMISC mode.
+			 */
+			return IXGBE_ERR_NOT_IN_PROMISC;
+		} else
+			return IXGBE_ERR_FEATURE_NOT_SUPPORTED;
+	}
 	/*
 	 *  On linux's PF driver implementation, the PF replies VF's
 	 * XCAST_MODE_ALLMULTI message not with NACK but with ACK even if the
