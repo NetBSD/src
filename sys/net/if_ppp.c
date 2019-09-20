@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.165 2019/06/25 12:30:50 msaitoh Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.166 2019/09/20 08:45:29 maxv Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.165 2019/06/25 12:30:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.166 2019/09/20 08:45:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -179,19 +179,6 @@ static void	ppp_ifstart(struct ifnet *ifp);
 static void	pppintr(void *);
 
 extern struct linesw ppp_disc;
-
-/*
- * Some useful mbuf macros not in mbuf.h.
- */
-#define M_IS_CLUSTER(m)	((m)->m_flags & M_EXT)
-
-#define M_DATASTART(m)							\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_buf :				\
-	    (m)->m_flags & M_PKTHDR ? (m)->m_pktdat : (m)->m_dat)
-
-#define M_DATASIZE(m)							\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_size :			\
-	    (m)->m_flags & M_PKTHDR ? MHLEN: MLEN)
 
 /*
  * We define two link layer specific mbuf flags, to mark high-priority
@@ -1624,7 +1611,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	 * If the packet will fit in a header mbuf, don't waste a
 	 * whole cluster on it.
 	 */
-	if (ilen <= MHLEN && M_IS_CLUSTER(m)) {
+	if (ilen <= MHLEN && (m->m_flags & M_EXT)) {
 		MGETHDR(mp, M_DONTWAIT, MT_DATA);
 		if (mp != NULL) {
 			m_copydata(m, 0, ilen, mtod(mp, void *));
