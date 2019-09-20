@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.199 2019/08/07 07:22:12 mrg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.200 2019/09/20 14:12:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.199 2019/08/07 07:22:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.200 2019/09/20 14:12:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -481,6 +481,9 @@ settimeofday1(const struct timeval *utv, bool userspace,
 			return error;
 		utv = &atv;
 	}
+
+	if (utv->tv_usec < 0 || utv->tv_usec >= 1000000)
+		return EINVAL;
 
 	TIMEVAL_TO_TIMESPEC(utv, &ts);
 	return settime1(l->l_proc, &ts, check_kauth);
