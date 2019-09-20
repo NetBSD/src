@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.534 2019/09/15 20:51:03 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.535 2019/09/20 13:29:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.534 2019/09/15 20:51:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.535 2019/09/20 13:29:31 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3929,14 +3929,22 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		if ((tptr[0].tv_usec == UTIME_NOW) || 
 		    (tptr[0].tv_usec == UTIME_OMIT))
 			ts[0].tv_nsec = tptr[0].tv_usec;
-		else
+		else {
+			if (tptr[0].tv_usec < 0 || tptr[0].tv_usec >= 1000000)
+				return EINVAL;
+
 			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		}
 
 		if ((tptr[1].tv_usec == UTIME_NOW) || 
 		    (tptr[1].tv_usec == UTIME_OMIT))
 			ts[1].tv_nsec = tptr[1].tv_usec;
-		else
+		else {
+			if (tptr[1].tv_usec < 0 || tptr[1].tv_usec >= 1000000)
+				return EINVAL;
+
 			TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
+		}
 
 		tsptr = &ts[0];	
 	}
