@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.244 2019/08/24 14:21:13 maxv Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.245 2019/09/20 15:25:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.244 2019/08/24 14:21:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.245 2019/09/20 15:25:19 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,7 +875,7 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
 		if ((error = copyin(timeout, &ltv, sizeof(ltv))))
 			return error;
 		uts.tv_sec = ltv.tv_sec;
-		uts.tv_nsec = ltv.tv_usec * 1000;
+		uts.tv_nsec = (long)((unsigned long)ltv.tv_usec * 1000);
 		if (itimespecfix(&uts)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
