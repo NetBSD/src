@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.40 2017/12/26 08:30:58 kamil Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.41 2019/09/20 15:25:19 kamil Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.40 2017/12/26 08:30:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.41 2019/09/20 15:25:19 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,7 +165,7 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 			return error;
 
 		uts.tv_sec = utv32.tv_sec;
-		uts.tv_nsec = utv32.tv_usec * 1000;
+		uts.tv_nsec = (long)((unsigned long)utv32.tv_usec * 1000);
 
 		if (itimespecfix(&uts)) {
 			/*
