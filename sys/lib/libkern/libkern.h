@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.131 2019/09/07 09:46:07 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.132 2019/09/20 13:38:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -336,7 +336,7 @@ tolower(int ch)
  * *fp does not match the type of struct bar::b_foo.
  * We skip the validation for coverity runs to avoid warnings.
  */
-#ifdef __COVERITY__
+#if defined(__COVERITY__) || defined(__LGTM_BOT__)
 #define __validate_container_of(PTR, TYPE, FIELD) 0
 #define __validate_const_container_of(PTR, TYPE, FIELD) 0
 #else
