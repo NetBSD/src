@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.137 2019/09/13 08:09:24 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.138 2019/09/20 09:28:37 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -112,8 +112,7 @@ static s32	ixv_check_link(struct adapter *);
 
 static void	ixv_enable_intr(struct adapter *);
 static void	ixv_disable_intr(struct adapter *);
-static int	ixv_set_promisc(struct adapter *);
-static void	ixv_set_multi(struct adapter *);
+static int	ixv_set_rxfilter(struct adapter *);
 static void	ixv_update_link_status(struct adapter *);
 static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
@@ -743,7 +742,7 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
-	ixv_set_multi(adapter);
+	ixv_set_rxfilter(adapter);
 
 	/*
 	 * Determine the correct mbuf pool
@@ -1076,70 +1075,6 @@ ixv_media_change(struct ifnet *ifp)
 } /* ixv_media_change */
 
 /************************************************************************
- * ixv_set_promisc
- ************************************************************************/
-static int
-ixv_set_promisc(struct adapter *adapter)
-{
-	struct ifnet *ifp = adapter->ifp;
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ethercom *ec = &adapter->osdep.ec;
-	int error = 0;
-
-	KASSERT(mutex_owned(&adapter->core_mtx));
-	if (ifp->if_flags & IFF_PROMISC) {
-		error = hw->mac.ops.update_xcast_mode(hw,
-		    IXGBEVF_XCAST_MODE_PROMISC);
-		if (error == IXGBE_ERR_NOT_TRUSTED) {
-			device_printf(adapter->dev,
-			    "this interface is not trusted\n");
-			error = EPERM;
-		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
-			device_printf(adapter->dev,
-			    "the PF doesn't support promisc mode\n");
-			error = EOPNOTSUPP;
-		} else if (error) {
-			device_printf(adapter->dev,
-			    "failed to set promisc mode. error = %d\n",
-			    error);
-			error = EIO;
-		}
-	} else if (ec->ec_flags & ETHER_F_ALLMULTI) {
-		error = hw->mac.ops.update_xcast_mode(hw,
-		    IXGBEVF_XCAST_MODE_ALLMULTI);
-		if (error == IXGBE_ERR_NOT_TRUSTED) {
-			device_printf(adapter->dev,
-			    "this interface is not trusted\n");
-			error = EPERM;
-		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
-			device_printf(adapter->dev,
-			    "the PF doesn't support allmulti mode\n");
-			error = EOPNOTSUPP;
-		} else if (error) {
-			device_printf(adapter->dev,
-			    "failed to set allmulti mode. error = %d\n",
-			    error);
-			error = EIO;
-		}
-	} else {
-		error = hw->mac.ops.update_xcast_mode(hw,
-		    IXGBEVF_XCAST_MODE_MULTI);
-		if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
-			/* normal operation */
-			error = 0;
-		} else if (error) {
-			device_printf(adapter->dev,
-			    "failed to chane filtering mode to normal. "
-			    "error = %d\n", error);
-			error = EIO;
-		}
-		ec->ec_flags &= ~ETHER_F_ALLMULTI;
-	}
-
-	return error;
-} /* ixv_set_promisc */
-
-/************************************************************************
  * ixv_negotiate_api
  *
  *   Negotiate the Mailbox API with the PF;
@@ -1171,27 +1106,56 @@ ixv_negotiate_api(struct adapter *adapter)
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
-static void
-ixv_set_multi(struct adapter *adapter)
+static int
+ixv_set_rxfilter(struct adapter *adapter)
 {
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ethercom *ec = &adapter->osdep.ec;
 	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8		   *update_ptr;
-	int		   mcnt = 0;
-	bool overflow = false;
-	bool allmulti = false;
-	int error;
+	struct ifnet		*ifp = adapter->ifp;
+	struct ixgbe_hw		*hw = &adapter->hw;
+	u8			*update_ptr;
+	int			mcnt = 0;
+	struct ethercom		*ec = &adapter->osdep.ec;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	bool			overflow = false;
+	int			error, rc = 0;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
-	IOCTL_DEBUGOUT("ixv_set_multi: begin");
+	IOCTL_DEBUGOUT("ixv_set_rxfilter: begin");
 
+	/* 1: For PROMISC */
+	if (ifp->if_flags & IFF_PROMISC) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_PROMISC);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support promisc mode\n");
+			error = EOPNOTSUPP;
+		} else if (error == IXGBE_ERR_NOT_IN_PROMISC) {
+			device_printf(adapter->dev,
+			    "the PF may not in promisc mode\n");
+			error = EINVAL;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to set promisc mode. error = %d\n",
+			    error);
+			error = EIO;
+		} else
+			return 0;
+		rc = error;
+	}
+
+	/* 2: For ALLMULTI or normal */
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (mcnt >= IXGBE_MAX_VF_MC) {
+		if ((mcnt >= IXGBE_MAX_VF_MC) ||
+		    (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			ETHER_ADDR_LEN) != 0)) {
 			overflow = true;
 			break;
 		}
@@ -1203,6 +1167,7 @@ ixv_set_multi(struct adapter *adapter)
 	}
 	ETHER_UNLOCK(ec);
 
+	/* 3: For ALLMULTI */
 	if (overflow) {
 		error = hw->mac.ops.update_xcast_mode(hw,
 		    IXGBEVF_XCAST_MODE_ALLMULTI);
@@ -1221,37 +1186,48 @@ ixv_set_multi(struct adapter *adapter)
 			    IXGBE_MAX_VF_MC, error);
 			error = ENOSPC;
 		} else {
-			allmulti = true;
+			ETHER_LOCK(ec);
 			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			return rc; /* Promisc might failed */
 		}
+
+		if (rc == 0)
+			rc = error;
+
+		/* Continue to update the multicast table as many as we can */
 	}
 
-	if (!allmulti) {
-		error = hw->mac.ops.update_xcast_mode(hw,
-		    IXGBEVF_XCAST_MODE_MULTI);
-		if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
-			/* normal operation */
-			error = 0;
-		} else if (error) {
-			device_printf(adapter->dev,
-			    "failed to set Ethernet multicast address "
-			    "operation to normal. error = %d\n", error);
-		}
+	/* 4: For normal operation */
+	error = hw->mac.ops.update_xcast_mode(hw, IXGBEVF_XCAST_MODE_MULTI);
+	if ((error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) || (error == 0)) {
+		/* Normal operation */
+		ETHER_LOCK(ec);
 		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		error = 0;
+	} else if (error) {
+		device_printf(adapter->dev,
+		    "failed to set Ethernet multicast address "
+		    "operation to normal. error = %d\n", error);
 	}
 
 	update_ptr = mta;
 
-	adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
-	    ixv_mc_array_itr, TRUE);
-} /* ixv_set_multi */
+	error = adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw,
+	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
+	if (rc == 0)
+		rc = error;
+
+	return rc;
+} /* ixv_set_rxfilter */
 
 /************************************************************************
  * ixv_mc_array_itr
  *
  *   An iterator function needed by the multicast shared code.
  *   It feeds the shared code routine the addresses in the
- *   array of ixv_set_multi() one by one.
+ *   array of ixv_set_rxfilter() one by one.
  ************************************************************************/
 static u8 *
 ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
@@ -2984,7 +2960,7 @@ ixv_ifflags_cb(struct ethercom *ec)
 		rv = ENETRESET;
 		goto out;
 	} else if ((change & IFF_PROMISC) != 0) {
-		rv = ixv_set_promisc(adapter);
+		rv = ixv_set_rxfilter(adapter);
 		if (rv != 0) {
 			/* Restore previous */
 			adapter->if_flags = saved_flags;
@@ -3144,7 +3120,7 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 */
 			IXGBE_CORE_LOCK(adapter);
 			ixv_disable_intr(adapter);
-			ixv_set_multi(adapter);
+			ixv_set_rxfilter(adapter);
 			ixv_enable_intr(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		}
