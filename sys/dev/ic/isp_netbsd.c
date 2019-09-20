@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.91 2019/02/03 03:19:27 mrg Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.92 2019/09/20 09:07:35 maxv Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.91 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.92 2019/09/20 09:07:35 maxv Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -609,7 +609,7 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 	}
 	if (isp->isp_osinfo.blocked) {
 		isp_prt(isp, ISP_LOGWARN,
-		    "I/O while blocked with retries %d", xs, xs->xs_retries);
+		    "I/O while blocked with retries %d", xs->xs_retries);
 		if (xs->xs_retries) {
 			xs->error = XS_REQUEUE;
 			xs->xs_retries--;
