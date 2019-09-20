@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.6 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.7 2019/09/20 12:41:33 kamil Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.6 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.7 2019/09/20 12:41:33 kamil Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
@@ -212,7 +212,7 @@ touch_vga_msr(struct drm_device *dev)
 		device_printf(dev->pdev->pd_dev,
 		    "unable to map VGA registers: %d\n", error);
 	} else {
-		CTASSERT(vgabase <= VGA_MSR_READ);
+		DRMCTASSERT(vgabase <= VGA_MSR_READ);
 		msr = bus_space_read_1(iot, ioh, VGA_MSR_READ - vgabase);
 		bus_space_write_1(iot, ioh, VGA_MSR_READ - vgabase, msr);
 		bus_space_unmap(iot, ioh, 0x10);
@@ -2211,4 +2211,3 @@ void intel_runtime_pm_enable(struct drm_i915_private *dev_priv)
 
 	pm_runtime_put_autosuspend(device);
 }
-
