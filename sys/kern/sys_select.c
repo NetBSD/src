@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.47 2019/08/20 01:56:21 msaitoh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.48 2019/09/20 15:00:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.47 2019/08/20 01:56:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.48 2019/09/20 15:00:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,10 @@ sys___select50(struct lwp *l, const struct sys___select50_args *uap,
 		error = copyin(SCARG(uap, tv), (void *)&atv, sizeof(atv));
 		if (error)
 			return error;
+
+		if (atv.tv_usec < 0 || atv.tv_usec >= 1000000)
+			return EINVAL;
+
 		TIMEVAL_TO_TIMESPEC(&atv, &ats);
 		ts = &ats;
 	}
