@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.70 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: an.c,v 1.71 2019/09/20 11:29:47 maxv Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.70 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.71 2019/09/20 11:29:47 maxv Exp $");
 
 
 #include <sys/param.h>
@@ -1240,8 +1240,9 @@ an_set_nwkey_eap(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 			 */
 			memset(unibuf, 0, sizeof(unibuf));
 			/* XXX: convert password to unicode */
-			for (i = 0; i < len; i++)
-				unibuf[i] = key->an_key[i];
+			int j;
+			for (j = 0; j < len; j++)
+				unibuf[j] = key->an_key[j];
 			/* set PasswordHash */
 			MD4Init(&ctx);
 			MD4Update(&ctx, (u_int8_t *)unibuf, len * 2);
