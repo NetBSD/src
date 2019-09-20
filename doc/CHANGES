@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2583 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2584 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -43,3 +43,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	dhcpcd(8): Import dhcpcd-8.0.6 [roy 20190913]
 	kernel: Add vHCI, a driver that allows to send and receive USB
 		packets from userland. [maxv 20190914]
+	mos(4): Ported driver for MosChip MCS7730/7830/7832 USB ethernet.
+		[mrg 20190814]
