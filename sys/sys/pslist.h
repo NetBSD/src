@@ -1,4 +1,4 @@
-/*	$NetBSD: pslist.h,v 1.5 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: pslist.h,v 1.6 2019/09/20 13:38:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -279,7 +279,7 @@ _pslist_reader_next_container(const struct pslist_entry *entry,
  * Type-safe macros for convenience.
  */
 
-#ifdef __COVERITY__
+#if defined(__COVERITY__) || defined(__LGTM_BOT__)
 #define	_PSLIST_VALIDATE_PTRS(P, Q)		0
 #define	_PSLIST_VALIDATE_CONTAINER(P, T, F)	0
 #else
