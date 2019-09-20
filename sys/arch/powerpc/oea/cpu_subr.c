@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.100 2019/08/02 05:08:07 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.101 2019/09/20 21:27:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.100 2019/08/02 05:08:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.101 2019/09/20 21:27:29 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -584,8 +584,11 @@ cpu_setup(device_t self, struct cpu_info *ci)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~HID0_SLEEP;
-		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
+		/* XXX my quicksilver hangs if nap is enabled */
+		if (vers != MPC7450) {
+			hid0 |= HID0_NAP | HID0_DPM;
+			powersave = 1;
+		}
 		break;
 #endif
 
