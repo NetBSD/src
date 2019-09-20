@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.216 2019/08/21 02:10:20 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.217 2019/09/20 10:04:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.216 2019/08/21 02:10:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.217 2019/09/20 10:04:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3990,23 +3990,23 @@ pci_conf_print_dpc_cap(const pcireg_t *regs, int extcapoff)
 	 */
 
 	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_STAT)];
-	printf("    RP PIO Status Register: 0x%04x\n", reg);
+	printf("    RP PIO Status Register: 0x%08x\n", reg);
 	pci_conf_print_dpc_pio(reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_MASK)];
-	printf("    RP PIO Mask Register: 0x%04x\n", reg);
+	printf("    RP PIO Mask Register: 0x%08x\n", reg);
 	pci_conf_print_dpc_pio(reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SEVE)];
-	printf("    RP PIO Severity Register: 0x%04x\n", reg);
+	printf("    RP PIO Severity Register: 0x%08x\n", reg);
 	pci_conf_print_dpc_pio(reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SYSERR)];
-	printf("    RP PIO SysError Register: 0x%04x\n", reg);
+	printf("    RP PIO SysError Register: 0x%08x\n", reg);
 	pci_conf_print_dpc_pio(reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_EXCPT)];
-	printf("    RP PIO Exception Register: 0x%04x\n", reg);
+	printf("    RP PIO Exception Register: 0x%08x\n", reg);
 	pci_conf_print_dpc_pio(reg);
 
 	printf("    RP PIO Header Log Register: start from 0x%03x\n",
