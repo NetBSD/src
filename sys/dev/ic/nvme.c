@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.44 2019/06/28 15:08:47 jmcneill Exp $	*/
+/*	$NetBSD: nvme.c,v 1.45 2019/09/20 05:32:42 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44 2019/06/28 15:08:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.45 2019/09/20 05:32:42 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1302,8 +1302,8 @@ nvme_poll_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 {
 	struct nvme_poll_state *state = ccb->ccb_cookie;
 
-	SET(cqe->flags, htole16(NVME_CQE_PHASE));
 	state->c = *cqe;
+	SET(state->c.flags, htole16(NVME_CQE_PHASE));
 
 	ccb->ccb_cookie = state->cookie;
 	state->done(q, ccb, &state->c);
