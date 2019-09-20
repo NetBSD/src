@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.26 2019/09/13 07:55:05 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.27 2019/09/20 08:48:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.26 2019/09/13 07:55:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.27 2019/09/20 08:48:55 maxv Exp $");
 
 #include "vlan.h"
 
@@ -1528,14 +1528,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 						 * m_dat[] (aligned) to en-
 						 * large trailingspace
 						 */
-						if (mt->m_flags & M_EXT) {
-							ap = mt->m_ext.ext_buf;
-						} else if (mt->m_flags &
-						    M_PKTHDR) {
-							ap = mt->m_pktdat;
-						} else {
-							ap = mt->m_dat;
-						}
+						ap = M_BUFADDR(mt);
 						ap = ALIGN_PTR(ap, ALIGNBYTE);
 						memcpy(ap, mt->m_data,
 						    mt->m_len);
