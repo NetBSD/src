@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.75 2015/08/28 13:03:36 joerg Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.76 2019/09/20 14:20:45 christos Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -394,8 +394,9 @@ void isp_uninit(ispsoftc_t *);
 /*
  * Platform Library Functionw
  */
-void isp_prt(ispsoftc_t *, int level, const char *, ...);
-void isp_xs_prt(ispsoftc_t *, XS_T *, int level, const char *, ...);
+void isp_prt(ispsoftc_t *, int level, const char *, ...) __printflike(3, 4);
+void isp_xs_prt(ispsoftc_t *, XS_T *, int level, const char *, ...)
+    __printflike(4, 5);
 void isp_lock(ispsoftc_t *);
 void isp_unlock(ispsoftc_t *);
 uint64_t isp_microtime_sub(struct timeval *, struct timeval *);
