@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.167 2019/08/23 08:45:25 mrg Exp $
+#	$NetBSD: files.usb,v 1.168 2019/09/20 10:34:54 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -373,20 +373,25 @@ device	axen: arp, ether, ifnet, mii, usbnet
 attach	axen at usbdevif
 file	dev/usb/if_axen.c		axen
 
+# Moscom MCS7730, MCS7830, and MCS7832
+device	mos: arp, ether, ifnet, mii, mii_phy, usbnet
+attach	mos at usbdevif
+file	dev/usb/if_mos.c		mos
+
 # Microchip LAN750x and LAN85xx
 device	mue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	mue at usbdevif
 file	dev/usb/if_mue.c		mue
 
-# DAVICOM DM9601
-device	udav: arp, ether, ifnet, mii, mii_phy, usbnet
-attach	udav at usbdevif
-file	dev/usb/if_udav.c		udav
-
 # Atheros AR9170
 device	otus: arp, ether, firmload, ifnet, wlan
 attach	otus at usbdevif
 file	dev/usb/if_otus.c		otus
+
+# DAVICOM DM9601
+device	udav: arp, ether, ifnet, mii, mii_phy, usbnet
+attach	udav at usbdevif
+file	dev/usb/if_udav.c		udav
 
 # Mobile Broadband Interface Model
 device	umb: ifnet
