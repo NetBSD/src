@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1654 2019/09/20 10:34:54 mrg Exp $
+# $NetBSD: mi,v 1.1655 2019/09/21 14:04:12 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1440,6 +1440,7 @@
 ./usr/share/man/cat4/mcp3kadc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcp48x1dac.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mcp980x.0			man-sys-catman		.cat
+./usr/share/man/cat4/mcx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/md.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfi.0			man-sys-catman		.cat
@@ -4573,6 +4574,7 @@
 ./usr/share/man/html4/mcp3kadc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp48x1dac.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp980x.html		man-sys-htmlman		html
+./usr/share/man/html4/mcx.html			man-sys-htmlman		html
 ./usr/share/man/html4/md.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfb.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfi.html			man-sys-htmlman		html
@@ -7556,6 +7558,7 @@
 ./usr/share/man/man4/mcp3kadc.4			man-sys-man		.man
 ./usr/share/man/man4/mcp48x1dac.4		man-sys-man		.man
 ./usr/share/man/man4/mcp980x.4			man-sys-man		.man
+./usr/share/man/man4/mcx.4			man-sys-man		.man
 ./usr/share/man/man4/md.4			man-sys-man		.man
 ./usr/share/man/man4/mfb.4			man-sys-man		.man
 ./usr/share/man/man4/mfi.4			man-sys-man		.man
