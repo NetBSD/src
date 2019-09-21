@@ -4,6 +4,10 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+/* 1234 = LILENDIAN, 4321 = BIGENDIAN */
+#include <endian.h>
+#define BYTEORDER _BYTE_ORDER
+
 /* Define to 1 if you have the `arc4random' function. */
 /* #undef HAVE_ARC4RANDOM */
 
