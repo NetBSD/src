@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.36 2018/07/05 19:46:58 jmcneill Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.37 2019/09/21 16:22:25 gson Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.36 2018/07/05 19:46:58 jmcneill Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.37 2019/09/21 16:22:25 gson Exp $");
 #endif
 
 #include <stdio.h>
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (dev == NULL) {
-		for (ncont = 0, i = 0; i < 10; i++) {
+		for (ncont = 0, i = 0; i < 16; i++) {
 			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
