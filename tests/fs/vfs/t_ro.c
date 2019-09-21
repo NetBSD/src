@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ro.c,v 1.7 2019/07/16 17:29:17 martin Exp $	*/
+/*	$NetBSD: t_ro.c,v 1.8 2019/09/21 14:25:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ fileio(const atf_tc_t *tc, const char *mp)
 static void
 attrs(const atf_tc_t *tc, const char *mp)
 {
-	struct timeval sometvs[2];
+	struct timeval sometvs[2] = { {0,0}, {0,0} };
 	struct stat sb;
 	int fd;
 
