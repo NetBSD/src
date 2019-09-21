@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
+/* $NetBSD: platform.h,v 1.1.1.2.42.1 2019/09/21 18:36:53 martin Exp $ */
 /******************************************************************************
  * platform.h
  * 
@@ -119,6 +119,15 @@ DEFINE_XEN_GUEST_HANDLE(xenpf_platform_quirk_t);
 #define XEN_FW_DISK_INFO          1 /* from int 13 AH=08/41/48 */
 #define XEN_FW_DISK_MBR_SIGNATURE 2 /* from MBR offset 0x1b8 */
 #define XEN_FW_VBEDDC_INFO        3 /* from int 10 AX=4f15 */
+#define XEN_FW_EFI_INFO           4 /* from EFI */
+#define  XEN_FW_EFI_VERSION        0
+#define  XEN_FW_EFI_CONFIG_TABLE   1
+#define  XEN_FW_EFI_VENDOR         2
+#define  XEN_FW_EFI_MEM_INFO       3
+#define  XEN_FW_EFI_RT_VERSION     4
+#define  XEN_FW_EFI_PCI_ROM        5
+#define  XEN_FW_EFI_APPLE_PROPERTIES 6
+#define XEN_FW_KBD_SHIFT_FLAGS    5
 struct xenpf_firmware_info {
     /* IN variables. */
     uint32_t type;
@@ -149,6 +158,43 @@ struct xenpf_firmware_info {
             /* must refer to 128-byte buffer */
             XEN_GUEST_HANDLE(uint8) edid;
         } vbeddc_info; /* XEN_FW_VBEDDC_INFO */
+        union xenpf_efi_info {
+            uint32_t version;
+            struct {
+                uint64_t addr;                /* EFI_CONFIGURATION_TABLE */
+                uint32_t nent;
+            } cfg;
+            struct {
+                uint32_t revision;
+                uint32_t bufsz;               /* input, in bytes */
+                XEN_GUEST_HANDLE(void) name;  /* UCS-2/UTF-16 string */
+            } vendor;
+            struct {
+                uint64_t addr;
+                uint64_t size;
+                uint64_t attr;
+                uint32_t type;
+            } mem;
+            struct {
+                /* IN variables */
+                uint16_t segment;
+                uint8_t bus;
+                uint8_t devfn;
+                uint16_t vendor;
+                uint16_t devid;
+                /* OUT variables */
+                uint64_t address;
+                xen_ulong_t size;
+            } pci_rom;
+            struct {
+                /* OUT variables */
+                uint64_t address;
+                xen_ulong_t size;
+            } apple_properties;
+        } efi_info; /* XEN_FW_EFI_INFO */
+
+        /* Int16, Fn02: Get keyboard shift flags. */
+        uint8_t kbd_shift_flags; /* XEN_FW_KBD_SHIFT_FLAGS */
     } u;
 };
 typedef struct xenpf_firmware_info xenpf_firmware_info_t;
