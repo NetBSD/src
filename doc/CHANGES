@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2584 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2585 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -45,3 +45,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		packets from userland. [maxv 20190914]
 	mos(4): Ported driver for MosChip MCS7730/7830/7832 USB ethernet.
 		[mrg 20190814]
+	mcx(4): Added driver for Mellanox 5th generation ethernet.
+		[jmcneill 20190921]
