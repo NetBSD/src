@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.93 2019/09/20 14:20:45 christos Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.94 2019/09/21 07:31:56 maxv Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.93 2019/09/20 14:20:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.94 2019/09/21 07:31:56 maxv Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -1042,7 +1042,6 @@ isp_make_gone(ispsoftc_t *isp, int tgt)
 static void
 isp_fc_worker(void *arg)
 {
-	void scsipi_run_queue(struct scsipi_channel *);
 	ispsoftc_t *isp = arg;
 	int slp = 0;
 	int chan = 0;
