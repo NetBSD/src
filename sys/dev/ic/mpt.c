@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.19 2019/09/21 07:08:27 maxv Exp $	*/
+/*	$NetBSD: mpt.c,v 1.20 2019/09/21 12:57:25 kre Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.19 2019/09/21 07:08:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.20 2019/09/21 12:57:25 kre Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -327,8 +327,8 @@ mpt_send_cmd(mpt_softc_t *mpt, request_t *req)
 	if (mpt->verbose > 1) {
 		u_int32_t *pReq;
 		pReq = req->req_vbuf;
-		mpt_prt(mpt, "Send Request %d (%#lx):",
-		    req->index, req->req_pbuf);
+		mpt_prt(mpt, "Send Request %d (%#jx):",
+		    req->index, (intmax_t)req->req_pbuf);
 		mpt_prt(mpt, "%08x %08x %08x %08x",
 		    pReq[0], pReq[1], pReq[2], pReq[3]);
 		mpt_prt(mpt, "%08x %08x %08x %08x",
