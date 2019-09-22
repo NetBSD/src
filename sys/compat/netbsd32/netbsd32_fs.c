@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.83 2019/09/21 06:56:51 maxv Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.84 2019/09/22 22:59:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.83 2019/09/21 06:56:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.84 2019/09/22 22:59:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,8 @@ netbsd32_copyout_statvfs(const void *kp, void *up, size_t len)
 }
 
 int
-netbsd32_statvfs1(struct lwp *l, const struct netbsd32_statvfs1_args *uap, register_t *retval)
+netbsd32___statvfs190(struct lwp *l,
+    const struct netbsd32___statvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -419,7 +420,8 @@ netbsd32_statvfs1(struct lwp *l, const struct netbsd32_statvfs1_args *uap, regis
 }
 
 int
-netbsd32_fstatvfs1(struct lwp *l, const struct netbsd32_fstatvfs1_args *uap, register_t *retval)
+netbsd32___fstatvfs190(struct lwp *l,
+    const struct netbsd32___fstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -438,7 +440,8 @@ netbsd32_fstatvfs1(struct lwp *l, const struct netbsd32_fstatvfs1_args *uap, reg
 }
 
 int
-netbsd32_getvfsstat(struct lwp *l, const struct netbsd32_getvfsstat_args *uap, register_t *retval)
+netbsd32___getvfsstat90(struct lwp *l,
+    const struct netbsd32___getvfsstat90_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_statvfsp_t) buf;
@@ -452,7 +455,8 @@ netbsd32_getvfsstat(struct lwp *l, const struct netbsd32_getvfsstat_args *uap, r
 }
 
 int
-netbsd32___fhstatvfs140(struct lwp *l, const struct netbsd32___fhstatvfs140_args *uap, register_t *retval)
+netbsd32___fhstatvfs190(struct lwp *l,
+    const struct netbsd32___fhstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_pointer_t) fhp;

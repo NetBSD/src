@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.125 2019/09/17 07:36:51 mrg Exp $
+# $NetBSD: mi,v 1.126 2019/09/22 22:59:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -100,6 +100,8 @@
 ./@MODULEDIR@/compat_70/compat_70.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_80				base-kernel-modules	kmod
 ./@MODULEDIR@/compat_80/compat_80.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_90				base-kernel-modules	kmod
+./@MODULEDIR@/compat_90/compat_90.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_crypto_50			base-kernel-modules	kmod

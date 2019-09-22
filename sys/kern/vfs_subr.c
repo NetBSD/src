@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.472 2019/09/22 22:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.472 2019/09/22 22:59:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1198,6 +1198,8 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 	    sizeof(sbp->f_mntonname));
 	(void)memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname,
 	    sizeof(sbp->f_mntfromname));
+	(void)memcpy(sbp->f_mntfromlabel, mp->mnt_stat.f_mntfromlabel,
+	    sizeof(sbp->f_mntfromlabel));
 	sbp->f_namemax = mbp->f_namemax;
 }
 
