@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/04 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2019/09/22 18:45:20 brad Exp $
 
 .include <bsd.init.mk>
+
+USE_SHLIBDIR=	yes
+
 .PATH: ${.CURDIR}/../../dist/lib/libuutil/common
 .PATH: ${.CURDIR}/../../dist/common/avl
 

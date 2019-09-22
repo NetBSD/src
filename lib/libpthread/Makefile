@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2019/05/07 18:45:37 maya Exp $
+#	$NetBSD: Makefile,v 1.95 2019/09/22 18:45:20 brad Exp $
 #
 
 NOSANITIZER=	# defined
@@ -6,6 +6,8 @@ WARNS?=	5
 LIB=	pthread
 
 .include <bsd.own.mk>
+
+USE_SHLIBDIR=	yes
 
 .if defined(PTHREAD_MACHINE_ARCH) && !empty(PTHREAD_MACHINE_ARCH) && \
     exists(${.CURDIR}/arch/${PTHREAD_MACHINE_ARCH})
