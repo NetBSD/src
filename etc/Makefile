@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.439 2019/07/31 18:35:58 martin Exp $
+#	$NetBSD: Makefile,v 1.440 2019/09/22 13:08:10 gson Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -343,7 +343,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
 		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
-    			/dev/null ${DESTDIR}${file}; \
+			/dev/null ${DESTDIR}${file}; \
 	else true; fi
 .endfor
 .for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
