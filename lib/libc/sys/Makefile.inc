@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.241 2019/09/15 16:55:00 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.242 2019/09/22 22:59:38 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -106,9 +106,9 @@ ASM=	access.S acct.S \
 		fsetxattr.S fgetxattr.S flistxattr.S fremovexattr.S \
 	faccessat.S fchdir.S fchflags.S fchmod.S fchmodat.S fchown.S \
 		fchownat.S fchroot.S fexecve.S __fhopen40.S __fhstat50.S \
-		__fhstatvfs140.S fktrace.S flock.S fpathconf.S __fstat50.S \
-		fstatvfs1.S fstatat.S  __futimes50.S futimens.S \
-	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
+		__fhstatvfs190.S fktrace.S flock.S fpathconf.S __fstat50.S \
+		__fstatvfs190.S fstatat.S  __futimes50.S futimens.S \
+	__getcwd.S __getdents30.S __getfh30.S __getvfsstat90.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
 		getsockname.S getsockopt.S getsockopt2.S __gettimeofday50.S \
@@ -145,7 +145,7 @@ ASM=	access.S acct.S \
 		sigqueueinfo.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
 		____sigtimedwait50.S __socket30.S socketpair.S __stat50.S \
-		statvfs1.S swapctl.S symlink.S symlinkat.S __sysctl.S \
+		__statvfs190.S swapctl.S symlink.S symlinkat.S __sysctl.S \
 	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
 		____semctl50.S __timer_settime50.S \
 	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
