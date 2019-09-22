@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.145 2019/09/22 23:13:10 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.146 2019/09/22 23:23:12 kamil Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -345,7 +345,8 @@
 #endif
 
 #if defined(__COVERITY__) ||						\
-    __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+    __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__) ||\
+    __has_feature(leak_sanitizer) || defined(__SANITIZE_LEAK__)
 #define	__NO_LEAKS
 #endif
 
