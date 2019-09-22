@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.15 2018/12/14 21:23:43 jakllsch Exp $ */
+/*	$NetBSD: malo.c,v 1.16 2019/09/22 09:03:07 kamil Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.15 2018/12/14 21:23:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.16 2019/09/22 09:03:07 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2156,7 +2156,7 @@ malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel)
 	body->action = htole16(1);
 	if (powerlevel < 30)
 		body->supportpowerlvl = htole16(5);	/* LOW */
-	else if (powerlevel >= 30 && powerlevel < 60)
+	else if (powerlevel < 60)
 		body->supportpowerlvl = htole16(10);	/* MEDIUM */
 	else
 		body->supportpowerlvl = htole16(15);	/* HIGH */
