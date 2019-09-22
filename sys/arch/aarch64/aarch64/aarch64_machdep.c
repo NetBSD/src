@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28.4.1 2019/09/22 10:36:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.1 2019/09/22 10:36:30 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -112,12 +112,13 @@ int     dumpsize = 0;           /* also for savecore */
 long    dumplo = 0;
 
 void
-cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
+cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused)
 {
 	extern char __kernel_text[];
 	extern char _end[];
 	extern char __data_start[];
 	extern char __rodata_start[];
+	u_int blk;
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
@@ -127,16 +128,84 @@ cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
 	/* add KSEG mappings of whole memory */
-	VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx\n",
-	    memory_start, memory_start + memory_size);
 	const pt_entry_t ksegattr =
 	    LX_BLKPAG_ATTR_NORMAL_WB |
 	    LX_BLKPAG_AP_RW |
 	    LX_BLKPAG_PXN |
 	    LX_BLKPAG_UXN;
-	pmapboot_enter(AARCH64_PA_TO_KVA(memory_start), memory_start,
-	    memory_size, L1_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
-	    bootpage_alloc, NULL);
+	for (blk = 0; blk < bootconfig.dramblocks; blk++) {
+		uint64_t start, end, left, mapsize, nblocks;
+
+		start = trunc_page(bootconfig.dram[blk].address);
+		end = round_page(bootconfig.dram[blk].address +
+		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
+		left = end - start;
+
+		/* align the start address to L2 blocksize */
+		nblocks = ulmin(left / L3_SIZE,
+		    Ln_ENTRIES - __SHIFTOUT(start, L3_ADDR_BITS));
+		if (((start & L3_ADDR_BITS) != 0) && (nblocks > 0)) {
+			mapsize = nblocks * L3_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L3)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L3_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		/* align the start address to L1 blocksize */
+		nblocks = ulmin(left / L2_SIZE,
+		    Ln_ENTRIES - __SHIFTOUT(start, L2_ADDR_BITS));
+		if (((start & L2_ADDR_BITS) != 0) && (nblocks > 0)) {
+			mapsize = nblocks * L2_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L2)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L2_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		nblocks = left / L1_SIZE;
+		if (nblocks > 0) {
+			mapsize = nblocks * L1_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L1)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L1_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		if ((left & L2_ADDR_BITS) != 0) {
+			nblocks = left / L2_SIZE;
+			mapsize = nblocks * L2_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L2)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L2_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+
+		if ((left & L3_ADDR_BITS) != 0) {
+			nblocks = left / L3_SIZE;
+			mapsize = nblocks * L3_SIZE;
+			VPRINTF("Creating KSEG tables for %016lx-%016lx (L3)\n",
+			    start, start + mapsize - 1);
+			pmapboot_enter(AARCH64_PA_TO_KVA(start), start,
+			    mapsize, L3_SIZE, ksegattr,
+			    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+			start += mapsize;
+			left -= mapsize;
+		}
+	}
 	aarch64_tlbi_all();
 
 	/*
