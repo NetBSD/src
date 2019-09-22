@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.6 2018/12/08 15:04:40 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.7 2019/09/22 18:31:59 jmcneill Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -14,6 +14,7 @@ file	arch/arm/acpi/acpi_iort.c		acpi
 file	arch/arm/acpi/acpi_machdep.c		acpi
 file	arch/arm/acpi/acpi_pci_machdep.c	acpi & pci
 file	arch/arm/acpi/acpi_platform.c		acpi
+file	arch/arm/acpi/acpi_simplefb.c		acpi & wsdisplay & genfb
 file	arch/arm/acpi/acpi_table.c		acpi
 
 attach	cpu at acpimadtbus with cpu_acpi
