@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.48 2019/08/20 14:12:33 christos Exp $
+#	$NetBSD: files.netbsd32,v 1.49 2019/09/22 22:59:38 christos Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -59,3 +59,4 @@ file	compat/netbsd32/netbsd32_compat_50_sysv.c compat_netbsd32 & compat_50 &
 						(sysvmsg | sysvsem | sysvshm)
 file	compat/netbsd32/netbsd32_compat_60.c	compat_netbsd32 & compat_60
 file	compat/netbsd32/netbsd32_compat_80.c	compat_netbsd32 & compat_80
+file	compat/netbsd32/netbsd32_compat_90.c	compat_netbsd32 & compat_90
