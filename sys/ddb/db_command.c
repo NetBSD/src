@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.160 2018/09/17 01:49:54 kre Exp $	*/
+/*	$NetBSD: db_command.c,v 1.161 2019/09/22 12:57:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.160 2018/09/17 01:49:54 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.161 2019/09/22 12:57:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1241,6 +1241,8 @@ db_kernhist_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+	if (!have_addr)
+		addr = 0;
 	kernhist_print((void *)(uintptr_t)addr, count, modif, db_printf);
 }
 #endif
