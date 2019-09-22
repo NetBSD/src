@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.17 2019/08/19 10:53:31 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.18 2019/09/22 18:31:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.17 2019/08/19 10:53:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.18 2019/09/22 18:31:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,12 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.17 2019/08/19 10:53:31 jmcneill 
 #include <dev/pci/pucvar.h>
 #endif
 
-#if NWSDISPLAY > 0
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
+#if NWSDISPLAY > 0 && NGENFB > 0
+#include <arm/acpi/acpi_simplefb.h>
 #endif
 
 #ifdef EFI_RUNTIME
@@ -133,107 +129,6 @@ acpi_platform_bootstrap(void)
 	acpi_coherent_dma_tag._ranges = acpi_coherent_ranges;
 	acpi_coherent_dma_tag._nranges = __arraycount(acpi_coherent_ranges);
 }
-
-#if NWSDISPLAY > 0 && NGENFB > 0
-static struct wsscreen_descr acpi_platform_stdscreen = {
-	.name = "std",
-	.ncols = 0,
-	.nrows = 0,
-	.textops = NULL,
-	.fontwidth = 0,
-	.fontheight = 0,
-	.capabilities = 0,
-	.modecookie = NULL
-};
-
-static struct vcons_screen acpi_platform_screen;
-
-static int
-acpi_platform_find_simplefb(void)
-{
-	static const char * simplefb_compatible[] = { "simple-framebuffer", NULL };
-	int chosen_phandle, child;
-
-	chosen_phandle = OF_finddevice("/chosen");
-	if (chosen_phandle == -1)
-		return -1;
-
-	for (child = OF_child(chosen_phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-		if (!of_match_compatible(child, simplefb_compatible))
-			continue;
-
-		return child;
-	}
-
-	return -1;
-}
-
-static void
-acpi_platform_wsdisplay_preattach(void)
-{
-	struct rasops_info *ri = &acpi_platform_screen.scr_ri;
-	bus_space_tag_t bst = &arm_generic_bs_tag;
-	bus_space_handle_t bsh;
-	uint32_t width, height, stride;
-	const char *format;
-	bus_addr_t addr;
-	bus_size_t size;
-	uint16_t depth;
-	long defattr;
-
-	memset(&acpi_platform_screen, 0, sizeof(acpi_platform_screen));
-
-	const int phandle = acpi_platform_find_simplefb();
-	if (phandle == -1)
-		return;
-
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0 || size == 0)
-		return;
-
-	if (of_getprop_uint32(phandle, "width", &width) != 0 ||
-	    of_getprop_uint32(phandle, "height", &height) != 0 ||
-	    of_getprop_uint32(phandle, "stride", &stride) != 0 ||
-	    (format = fdtbus_get_string(phandle, "format")) == NULL)
-		return;
-
-	if (strcmp(format, "a8b8g8r8") == 0 ||
-	    strcmp(format, "x8r8g8b8") == 0) {
-		depth = 32;
-	} else if (strcmp(format, "r5g6b5") == 0) {
-		depth = 16;
-	} else {
-		return;
-	}
-
-	if (bus_space_map(bst, addr, size,
-	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh) != 0)
-		return;
-
-	wsfont_init();
-
-	ri->ri_width = width;
-	ri->ri_height = height;
-	ri->ri_depth = depth;
-	ri->ri_stride = stride;
-	ri->ri_bits = bus_space_vaddr(bst, bsh);
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
-	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
-	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
-	    ri->ri_width / ri->ri_font->fontwidth);
-
-	acpi_platform_stdscreen.nrows = ri->ri_rows;
-	acpi_platform_stdscreen.ncols = ri->ri_cols;
-	acpi_platform_stdscreen.textops = &ri->ri_ops;
-	acpi_platform_stdscreen.capabilities = ri->ri_caps;
-
-	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-
-	wsdisplay_preattach(&acpi_platform_stdscreen, ri, 0, 0, defattr);
-}
-#endif
 
 static void
 acpi_platform_startup(void)
@@ -309,13 +204,6 @@ acpi_platform_startup(void)
 	}
 
 	/*
-	 * Setup framebuffer console, if present.
-	 */
-#if NWSDISPLAY > 0 && NGENFB > 0
-	acpi_platform_wsdisplay_preattach();
-#endif
-
-	/*
 	 * Initialize PSCI 0.2+ if implemented
 	 */
 	if (ACPI_SUCCESS(acpi_table_find(ACPI_SIG_FADT, (void **)&fadt))) {
@@ -361,6 +249,15 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
+#if NWSDISPLAY > 0 && NGENFB > 0
+	if (device_is_a(self, "armfdt")) {
+		/*
+		 * Setup framebuffer console, if present.
+		 */
+		acpi_simplefb_preattach();
+	}
+#endif
+
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 
