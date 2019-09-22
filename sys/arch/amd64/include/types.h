@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.60 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.61 2019/09/22 10:35:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,6 +103,9 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 #include "opt_xen.h"
 #include "opt_kasan.h"
+#ifdef KASAN
+#define __HAVE_KASAN_INSTR_BUS
+#endif
 #if defined(__x86_64__) && !defined(XENPV)
 #if !defined(KASAN)
 #define	__HAVE_PCPU_AREA 1
