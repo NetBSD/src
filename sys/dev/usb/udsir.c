@@ -1,11 +1,11 @@
-/*	$NetBSD: udsir.c,v 1.8 2019/07/22 06:24:57 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by David Sainty <David.Sainty@dtsp.co.nz>
+ * by David Sainty <dsainty@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.8 2019/07/22 06:24:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

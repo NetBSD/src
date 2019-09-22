@@ -1,11 +1,11 @@
-/*	$NetBSD: ustir.c,v 1.41 2019/09/14 15:21:19 maxv Exp $	*/
+/*	$NetBSD: ustir.c,v 1.42 2019/09/22 07:28:35 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by David Sainty <David.Sainty@dtsp.co.nz>
+ * by David Sainty <dsainty@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.41 2019/09/14 15:21:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.42 2019/09/22 07:28:35 dsainty Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

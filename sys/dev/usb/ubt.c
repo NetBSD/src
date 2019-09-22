@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.62 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: ubt.c,v 1.63 2019/09/22 07:29:16 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) and
- * David Sainty (David.Sainty@dtsp.co.nz).
+ * David Sainty (dsainty@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.62 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.63 2019/09/22 07:29:16 dsainty Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
