@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.13 2019/09/07 10:24:01 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.14 2019/09/22 10:35:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.13 2019/09/07 10:24:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.14 2019/09/22 10:35:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -781,6 +781,8 @@ ASAN_ATOMIC_FUNC_INC(ptr, void *, void);
 
 /* -------------------------------------------------------------------------- */
 
+#ifdef __HAVE_KASAN_INSTR_BUS
+
 #include <sys/bus.h>
 
 #undef bus_space_read_multi_1
@@ -925,6 +927,8 @@ ASAN_BUS_WRITE_FUNC(1, 8)
 ASAN_BUS_WRITE_FUNC(2, 16)
 ASAN_BUS_WRITE_FUNC(4, 32)
 ASAN_BUS_WRITE_FUNC(8, 64)
+
+#endif /* __HAVE_KASAN_INSTR_BUS */
 
 /* -------------------------------------------------------------------------- */
 
