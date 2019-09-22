@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/04 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2019/09/22 18:45:19 brad Exp $
 
 .include <bsd.init.mk>
+
+USE_SHLIBDIR=	yes
 
 LIB=	umem
 SRCS=	umem.c
