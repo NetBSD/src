@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.8 2019/09/07 10:24:01 maxv Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.9 2019/09/22 10:35:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ uint64_t bus_space_read_8(bus_space_tag_t, bus_space_handle_t,
 uint64_t bus_space_read_stream_8(bus_space_tag_t, bus_space_handle_t,
 				 bus_size_t);
 
-#ifdef KASAN
+#if defined(KASAN) && defined(__HAVE_KASAN_INSTR_BUS)
 #define BUS_SPACE_READ_MEM_PROTOS(bytes, bits)					\
 void kasan_bus_space_read_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
     bus_size_t, uint##bits##_t *, bus_size_t);					\
@@ -195,7 +195,7 @@ void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_write_stream_8(bus_space_tag_t, bus_space_handle_t,
 		  		 bus_size_t, uint64_t);
 
-#ifdef KASAN
+#if defined(KASAN) && defined(__HAVE_KASAN_INSTR_BUS)
 #define BUS_SPACE_WRITE_MEM_PROTOS(bytes, bits)					\
 void kasan_bus_space_write_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
     bus_size_t, const uint##bits##_t *, bus_size_t);				\
