@@ -1,4 +1,5 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.54 2019/09/18 16:10:18 martin Exp $
+
+# $NetBSD: CHANGES-9.0,v 1.1.2.55 2019/09/22 14:29:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3751,4 +3752,111 @@ libexec/ld.elf_so/rtld.c			1.198
 
 	dl_iterate_phdr(3): do not skip the ELF loader dl_phdr_info.
 	[kamil, ticket #209]
+
+usr.sbin/installboot/evboards.c			1.3
+usr.sbin/installboot/evboards.h			1.2
+
+	Add support for additional install step directives to enable using
+	installboot(8) to write u-boot images to SPI NOR and other types of
+	raw flash devices.
+	Add the ability to create aliases for install objects.
+	[thorpej, ticket #210]
+
+etc/MAKEDEV.tmpl				1.208
+
+	Create the character device for spiflash, in addition to the
+	block device.
+	[thorpej, ticket #211]
+
+sys/netinet6/nd6_nbr.c				1.173
+
+	nd6: remove extra pserialize_read_exit.
+	[ozaki-r, ticket #212]
+
+sys/arch/aarch64/aarch64/cpufunc_asm_armv8.S	1.4
+
+	Add missing isb after tlbi op,  it is required even for
+	non-MULTIPROCESSOR kernels.
+	[ryo, ticket #213]
+
+sys/arch/aarch64/aarch64/pmap.c			1.44,1.46
+
+	Remove incorrect KASSERT and fix updating page reference flags
+	when only PROT_WRITE or PROT_EXECUTE are specified.
+	[ryo, ticket #214]
+
+sys/arch/aarch64/aarch64/aarch64_machdep.c	1.29-1.31
+
+	Do not assume that DRAM is linear when creating KSEG mappings.
+	Use L1-L3 blocks/pages to fit dramblocks exactly.
+	[ryo, ticket #215]
+
+sys/dev/pci/if_age.c				1.61
+
+	Fix increment/decrement mistake in a for() loop.
+	[maxv, ticket #216]
+
+sys/dev/ic/i82557.c				1.155
+
+	Fix increment vs. decrement mistake in a for() loop.
+	[maxv, ticket #217]
+
+sys/dev/ic/nvme.c				1.45
+
+	Don't set Phase Tag bit of Completion Queue entry at nvme_poll_done(),
+	fixing PR kern/54275, PR kern/54503 and PR kern/54532.
+	[nonaka, ticket #218]
+
+share/man/man5/mk.conf.5			1.79
+
+	MKZFS is no longer the default on i386.
+	[gson, ticket #219]
+
+sys/arch/arm/amlogic/meson8b_clkc.c		1.5
+
+	Use correct register for mpll2_div clock.
+	[jmcneill, ticket #220]
+
+sys/arch/aarch64/aarch64/cpufunc.c		1.6
+
+	Do not attempt to change coherency_unit at runtime.
+	[jmcneill, ticket #221]
+
+sys/arch/arm/cortex/gicv3.c			1.21
+
+	Use pic_do_pending_ints in intr handler, sprinkle isb and
+	fix PMR bits detection on eMAG.
+	[jmcneill, ticket #222]
+
+sys/external/bsd/drm/dist/shared-core/savage_state.c 1.5
+
+	Mark FALLTHROUGH case labels so this can be compiled with newer gcc
+	versions.
+	[hauke, ticket #223]
+
+sys/arch/evbarm/conf/std.generic64		1.11
+
+	Add __HAVE_GENERIC_CPU_INITCLOCKS.
+	[jmcneill, ticket #224]
+
+sys/stand/efiboot/efiblock.c			1.6
+
+	Honour block device's IO alignment requirements.
+	[jmcneill, ticket #225]
+
+sys/arch/aarch64/aarch64/locore.S		1.40
+
+	Map device memory for early console XN.
+	[jmcneill, ticket #226]
+
+sys/arch/arm/acpi/gicv3_acpi.c			1.4
+
+	Redistributors with virtual LPI support have larger register spaces.
+	Take this into consideration when scanning LPI regions.
+	[jmcneill, ticket #227]
+
+external/mit/expat/lib/libexpat/expat_config.h	1.7
+
+	Actually define BYTEORDER since it is used.
+	[maya, ticket #228]
 
