@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.38 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.39 2019/09/22 22:59:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.38 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.39 2019/09/22 22:59:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -57,9 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.38 2019/01/27 02:08:39 pgoyett
 
 #include <compat/common/compat_mod.h>
 #include <compat/common/compat_util.h>
+
 #include <compat/sys/stat.h>
 #include <compat/sys/dirent.h>
 #include <compat/sys/mount.h>
+#include <compat/sys/statvfs.h>
 
 static void cvtstat(struct stat13 *, const struct stat *);
 
@@ -441,21 +443,25 @@ compat_30_sys___fhstat30(struct lwp *l,
 /* ARGSUSED */
 int
 compat_30_sys_fhstatvfs1(struct lwp *l,
-    const struct compat_30_sys_fhstatvfs1_args *uap_30, register_t *retval)
+    const struct compat_30_sys_fhstatvfs1_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const fhandle_t *) fhp;
-		syscallarg(struct statvfs *) buf;
+		syscallarg(struct statvfs90 *) buf;
 		syscallarg(int)	flags;
 	} */
-	struct sys___fhstatvfs140_args uap;
+	struct statvfs *sb = STATVFSBUF_GET();
+	int error = do_fhstatvfs(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
+	    sb, SCARG(uap, flags));
 
-	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
-	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
-	SCARG(&uap, buf) = SCARG(uap_30, buf);
-	SCARG(&uap, flags) = SCARG(uap_30, flags);
+	if (!error) {
+		error = statvfs_to_statvfs90_copy(sb, SCARG(uap, buf),
+		    sizeof(struct statvfs90));
+	}
 
-	return sys___fhstatvfs140(l, &uap, retval);
+	STATVFSBUF_PUT(sb);
+
+	return error;
 }
 
 int

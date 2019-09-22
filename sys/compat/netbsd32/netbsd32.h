@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.123 2019/02/20 06:04:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.124 2019/09/22 22:59:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -852,8 +852,8 @@ struct netbsd32_stat {
 };
 
 /* from <sys/statvfs.h> */
-typedef netbsd32_pointer_t netbsd32_statvfsp_t;
-struct netbsd32_statvfs {
+typedef netbsd32_pointer_t netbsd32_statvfs90p_t;
+struct netbsd32_statvfs90 {
 	netbsd32_u_long	f_flag;		/* copy of mount exported flags */
 	netbsd32_u_long	f_bsize;	/* system block size */
 	netbsd32_u_long	f_frsize;	/* system fragment size */
@@ -878,6 +878,35 @@ struct netbsd32_statvfs {
 	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
 	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
 	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+};
+
+typedef netbsd32_pointer_t netbsd32_statvfsp_t;
+struct netbsd32_statvfs {
+	netbsd32_u_long	f_flag;		/* copy of mount exported flags */
+	netbsd32_u_long	f_bsize;	/* system block size */
+	netbsd32_u_long	f_frsize;	/* system fragment size */
+	netbsd32_u_long	f_iosize;	/* optimal file system block size */
+	netbsd32_uint64	f_blocks;	/* number of blocks in file system */
+	netbsd32_uint64	f_bfree;	/* free blocks avail in file system */
+	netbsd32_uint64	f_bavail;	/* free blocks avail to non-root */
+	netbsd32_uint64	f_bresvd;	/* blocks reserved for root */
+	netbsd32_uint64	f_files;	/* total file nodes in file system */
+	netbsd32_uint64	f_ffree;	/* free file nodes in file system */
+	netbsd32_uint64	f_favail;	/* free file nodes avail to non-root */
+	netbsd32_uint64	f_fresvd;	/* file nodes reserved for root */
+	netbsd32_uint64	f_syncreads;	/* count of sync reads since mount */
+	netbsd32_uint64	f_syncwrites;	/* count of sync writes since mount */
+	netbsd32_uint64	f_asyncreads;	/* count of async reads since mount */
+	netbsd32_uint64	f_asyncwrites;	/* count of async writes since mount */
+	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
+	netbsd32_u_long	f_fsid;		/* Posix compatible fsid */
+	netbsd32_u_long	f_namemax;	/* maximum filename length */
+	uid_t		f_owner;	/* user that mounted the file system */
+	uint64_t	f_spare[4];	/* spare space */
+	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+	char	f_mntfromlabel[_VFS_MNAMELEN];  /* disk label name if available */
 };
 
 /* from <sys/timex.h> */

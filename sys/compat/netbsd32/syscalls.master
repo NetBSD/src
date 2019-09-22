@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.127 2019/06/18 16:23:24 christos Exp $
+	$NetBSD: syscalls.master,v 1.128 2019/09/22 22:59:38 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -803,15 +803,18 @@
 			    netbsd32_off_t start, netbsd32_off_t length); }
 355	STD		{ int|netbsd32||uuidgen(netbsd32_uuidp_t store, \
 			    int count); }
-356	STD		{ int|netbsd32||getvfsstat(netbsd32_statvfsp_t buf, \
+356	COMPAT_90 MODULAR compat_netbsd32_90 \
+			{ int|netbsd32||getvfsstat(netbsd32_statvfs90p_t buf, \
 			    netbsd32_size_t bufsize, int flags); }
-357	STD		{ int|netbsd32||statvfs1(netbsd32_charp path, \
-			    netbsd32_statvfsp_t buf, int flags); }
-358	STD		{ int|netbsd32||fstatvfs1(int fd, \
-			    netbsd32_statvfsp_t buf, int flags); }
+357	COMPAT_90 MODULAR compat_netbsd32_90 \
+			{ int|netbsd32||statvfs1(netbsd32_charp path, \
+			    netbsd32_statvfs90p_t buf, int flags); }
+358	COMPAT_90 MODULAR compat_netbsd32_90 \
+			{ int|netbsd32||fstatvfs1(int fd, \
+			    netbsd32_statvfs90p_t buf, int flags); }
 359	COMPAT_30 MODULAR compat_netbsd32_30	\
 			{ int|netbsd32||fhstatvfs1(netbsd32_fhandlep_t fhp, \
-			    netbsd32_statvfsp_t buf, int flags); }
+			    netbsd32_statvfs90p_t buf, int flags); }
 360	STD		{ int|netbsd32||extattrctl(netbsd32_charp path, \
 			    int cmd, netbsd32_charp filename, \
 			    int attrnamespace, netbsd32_charp attrname); }
@@ -914,9 +917,10 @@
 			    netbsd32_pointer_t fhp, netbsd32_size_tp fh_size); }
 396	STD		{ int|netbsd32|40|fhopen(netbsd32_pointer_t fhp, \
 			    netbsd32_size_t fh_size, int flags); }
-397	STD		{ int|netbsd32|40|fhstatvfs1(	\
+397	COMPAT_90 MODULAR compat_netbsd90 \
+			{ int|netbsd32||fhstatvfs1(	\
 			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
-			    netbsd32_statvfsp_t buf, int flags); }
+			    netbsd32_statvfs90p_t buf, int flags); }
 398	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32|40|fhstat(	\
 			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
@@ -1163,3 +1167,13 @@
 			    netbsd32_wrusagep_t wru, netbsd32_siginfop_t info); }
 482	STD		{ int|netbsd32||clock_getcpuclockid2(idtype_t idtype, \
 			    id_t id, netbsd32_clockidp_t clock_id); }
+483	STD 		{ int|netbsd32|90|getvfsstat( \
+			    netbsd32_statvfsp_t buf, \
+			    size_t bufsize, int flags); }
+484	STD 		{ int|netbsd32|90|statvfs1(netbsd32_charp path, \
+			    netbsd32_statvfsp_t buf, int flags); }
+485	STD 		{ int|netbsd32|90|fstatvfs1(int fd, \
+			    netbsd32_statvfsp_t buf, int flags); }
+486	STD 		{ int|netbsd32|90|fhstatvfs1(netbsd32_voidp fhp, \
+			    size_t fh_size, netbsd32_statvfsp_t buf, \
+			    int flags); }

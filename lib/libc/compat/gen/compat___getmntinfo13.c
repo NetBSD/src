@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_fhstatvfs1.c,v 1.4 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: compat___getmntinfo13.c,v 1.1 2019/09/22 22:59:38 christos Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@NetBSD.org>.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,35 +29,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhstatvfs1.c,v 1.4 2019/09/22 22:59:38 christos Exp $");
+__RCSID("$NetBSD: compat___getmntinfo13.c,v 1.1 2019/09/22 22:59:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
 
+#include "namespace.h"
+
 #include <sys/types.h>
-#include <sys/statvfs.h>
-#include <compat/include/fstypes.h>
+#include <sys/param.h>
+
+#include <assert.h>
 #include <compat/sys/statvfs.h>
+#include <string.h>
+#include <stdlib.h>
 
-__warn_references(fhstatvfs1,
-    "warning: reference to compatibility fhstatvfs1(); include <sys/statvfs.h> to generate correct reference")
+__warn_references(__getmntinfo13,
+    "warning: reference to obsolete __getmntinfo13(); use statvfs()")
 
-int	fhstatvfs1(const struct compat_30_fhandle *fhp, struct statvfs90 *buf,
-	int flags);
+__strong_alias(__getmntinfo13, __compat___getmntinfo13)
 
 /*
- * Convert old fhstatvs1() call to new calling convention
+ * Return information about mounted filesystems.
  */
 int
-fhstatvfs1(const struct compat_30_fhandle *fhp, struct statvfs90 *buf,
-    int flags)
+__compat___getmntinfo13(struct statvfs90 **mntbufp, int flags)
 {
-	struct statvfs sb;
-	int error = __fhstatvfs190(fhp, FHANDLE30_SIZE, &sb, flags);
-	if (error != -1)
-		statvfs_to_statvfs90(&sb, buf);
-	return error;
+	static struct statvfs90 *mntbuf;
+	static int mntsize;
+	static size_t bufsize;
+
+	_DIAGASSERT(mntbufp != NULL);
+
+	if (mntsize <= 0 &&
+	    (mntsize = __compat_getvfsstat(NULL, 0L, MNT_NOWAIT)) == -1)
+		return (0);
+	if (bufsize > 0 &&
+	    (mntsize = __compat_getvfsstat(mntbuf, bufsize, flags)) == -1)
+		return (0);
+	while (bufsize <= mntsize * sizeof(struct statvfs90)) {
+		if (mntbuf)
+			free(mntbuf);
+		bufsize = (mntsize + 1) * sizeof(struct statvfs90);
+		if ((mntbuf = malloc(bufsize)) == NULL)
+			return (0);
+		if ((mntsize = __compat_getvfsstat(mntbuf, bufsize,
+		    flags)) == -1)
+			return (0);
+	}
+	*mntbufp = mntbuf;
+	return (mntsize);
 }

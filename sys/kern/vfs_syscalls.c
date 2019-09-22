@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.535 2019/09/20 13:29:31 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.536 2019/09/22 22:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.535 2019/09/20 13:29:31 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.536 2019/09/22 22:59:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1187,7 +1187,7 @@ do_sys_pstatvfs(struct lwp *l, const char *path, int flags, struct statvfs *sb)
 
 /* ARGSUSED */
 int
-sys_statvfs1(struct lwp *l, const struct sys_statvfs1_args *uap, register_t *retval)
+sys___statvfs190(struct lwp *l, const struct sys___statvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1226,7 +1226,7 @@ do_sys_fstatvfs(struct lwp *l, int fd, int flags, struct statvfs *sb)
 
 /* ARGSUSED */
 int
-sys_fstatvfs1(struct lwp *l, const struct sys_fstatvfs1_args *uap, register_t *retval)
+sys___fstatvfs190(struct lwp *l, const struct sys___fstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1307,7 +1307,8 @@ out:
 }
 
 int
-sys_getvfsstat(struct lwp *l, const struct sys_getvfsstat_args *uap, register_t *retval)
+sys___getvfsstat90(struct lwp *l, const struct sys___getvfsstat90_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct statvfs *) buf;
@@ -2139,7 +2140,7 @@ do_fhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *sb,
 
 /* ARGSUSED */
 int
-sys___fhstatvfs140(struct lwp *l, const struct sys___fhstatvfs140_args *uap, register_t *retval)
+sys___fhstatvfs190(struct lwp *l, const struct sys___fhstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const void *) fhp;

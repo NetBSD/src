@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.175 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.176 2019/09/22 22:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.175 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.176 2019/09/22 22:59:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.175 2018/09/03 16:29:35 riastradh E
 #include <sys/poll.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/lockf.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
@@ -366,10 +367,19 @@ spec_node_getmountedfs(vnode_t *devvp)
 void
 spec_node_setmountedfs(vnode_t *devvp, struct mount *mp)
 {
+	struct dkwedge_info dkw;
 
 	KASSERT(devvp->v_type == VBLK);
 	KASSERT(devvp->v_specnode->sn_dev->sd_mountpoint == NULL || mp == NULL);
 	devvp->v_specnode->sn_dev->sd_mountpoint = mp;
+	if (mp == NULL)
+		return;
+
+	if (bdev_ioctl(devvp->v_rdev, DIOCGWEDGEINFO, &dkw, FREAD, curlwp) != 0)
+		return;
+
+	strlcpy(mp->mnt_stat.f_mntfromlabel, dkw.dkw_wname,
+	    sizeof(mp->mnt_stat.f_mntfromlabel));
 }
 
 /*

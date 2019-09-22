@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.94 2019/09/18 20:14:44 christos Exp $ */
+/*	$NetBSD: df.c,v 1.95 2019/09/22 22:59:37 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,15 +45,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.94 2019/09/18 20:14:44 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.95 2019/09/22 22:59:37 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <sys/disk.h>
-#include <sys/ioctl.h>
 
 #include <assert.h>
 #include <err.h>
@@ -69,13 +67,11 @@ __RCSID("$NetBSD: df.c,v 1.94 2019/09/18 20:14:44 christos Exp $");
 #include <util.h>
 
 static char	*getmntpt(const char *);
-static void	 prtstat(const struct dkwedge_info *, const struct statvfs *,
-    int);
+static void	 prtstat(const struct statvfs *, int);
 static int	 selected(const char *, size_t);
 static void	 maketypelist(char *);
 static size_t	 regetmntinfo(struct statvfs **, size_t);
 __dead static void usage(void);
-static struct dkwedge_info *getwedgeinfo(const struct statvfs *, size_t);
 static void	 prthumanval(int64_t, const char *);
 static void	 prthuman(const struct statvfs *, int64_t, int64_t);
 
@@ -88,7 +84,6 @@ main(int argc, char *argv[])
 {
 	struct stat stbuf;
 	struct statvfs *mntbuf;
-	struct dkwedge_info *wedge_info;
 	int ch, maxwidth, width;
 	size_t i, mntcount;
 	char *mntpt;
@@ -208,18 +203,15 @@ main(int argc, char *argv[])
 		}
 	}
 
-	wedge_info = Wflag ? getwedgeinfo(mntbuf, mntcount) : NULL;
-
 	maxwidth = 0;
 	for (i = 0; i < mntcount; i++) {
-		width = (int)strlen(Wflag && wedge_info[i].dkw_wname[0] ?
-		    (const char *)wedge_info[i].dkw_wname :
-		    mntbuf[i].f_mntfromname);
+		width = (int)strlen(Wflag && mntbuf[i].f_mntfromlabel[0] ?
+		    mntbuf[i].f_mntfromlabel : mntbuf[i].f_mntfromname);
 		if (width > maxwidth)
 			maxwidth = width;
 	}
 	for (i = 0; i < mntcount; i++)
-		prtstat(&wedge_info[i], &mntbuf[i], maxwidth);
+		prtstat(&mntbuf[i], maxwidth);
 	return 0;
 }
 
@@ -291,33 +283,6 @@ maketypelist(char *fslist)
 	}
 	/* Terminate the array. */
 	av[i] = NULL;
-}
-
-static struct dkwedge_info *
-getwedgeinfo(const struct statvfs *mntbuf, size_t mntcount)
-{
-	struct dkwedge_info *wi = calloc(mntcount, sizeof(*wi));
-	char buf[1024];
-
-	if (wi == NULL)
-		err(EXIT_FAILURE, "can't allocate wedge info array");
-	
-	for (size_t i = 0; i < mntcount; i++) {
-		const char *dname = mntbuf[i].f_mntfromname;
-		const char *rdn = strrchr(dname, '/');
-		if (rdn == NULL) {
-			continue;
-		}
-		rdn++;
-		int fd = opendisk(rdn, O_RDONLY, buf, sizeof(buf), false);
-		if (fd == -1)
-			err(EXIT_FAILURE, "opendisk on `%s' failed", rdn);
-		if (ioctl(fd, DIOCGWEDGEINFO, &wi[i]) == -1) {
-			warn("DIOCGWEDGEINFO for `%s' failed", buf);
-		}
-		close(fd);
-	}
-	return wi;
 }
 
 /*
@@ -396,8 +361,7 @@ prthuman(const struct statvfs *sfsp, int64_t used, int64_t bavail)
  * Print out status about a filesystem.
  */
 static void
-prtstat(const struct dkwedge_info *dkwp, const struct statvfs *sfsp,
-    int maxwidth)
+prtstat(const struct statvfs *sfsp, int maxwidth)
 {
 	static long blocksize;
 	static int headerlen, timesthrough;
@@ -407,11 +371,11 @@ prtstat(const struct dkwedge_info *dkwp, const struct statvfs *sfsp,
 	int64_t used, availblks, inodes;
 	int64_t bavail;
 	char pb[64];
-	char mntfromname[sizeof(sfsp->f_mntfromname)];
+	char mntfromname[sizeof(sfsp->f_mntfromname) + 10];
 
-	if (Wflag && dkwp->dkw_wname[0]) {
+	if (Wflag && sfsp->f_mntfromlabel[0]) {
 		snprintf(mntfromname, sizeof(mntfromname), "NAME=%s",
-		    (const char *)dkwp->dkw_wname);
+		    sfsp->f_mntfromlabel);
 	} else {
 		strlcpy(mntfromname, sfsp->f_mntfromname, sizeof(mntfromname));
 	}
