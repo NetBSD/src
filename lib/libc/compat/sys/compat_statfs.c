@@ -1,7 +1,7 @@
-/*	$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.8 2019/09/22 22:59:38 christos Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.8 2019/09/22 22:59:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $");
 #include <sys/mount.h>
 #include <compat/sys/mount.h>
 #include <compat/include/fstypes.h>
+#include <compat/sys/statvfs.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -135,7 +136,7 @@ __compat_statfs(const char *file, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = statvfs(file, &nst)) == -1)
+	if ((ret = __statvfs90(file, &nst)) == -1)
 		return ret;
 	vfs2fs(ost, &nst);
 	return ret;
@@ -147,14 +148,11 @@ __compat_fstatfs(int f, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = fstatvfs(f, &nst)) == -1)
+	if ((ret = __fstatvfs90(f, &nst)) == -1)
 		return ret;
 	vfs2fs(ost, &nst);
 	return ret;
 }
-
-int __fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
-    int flags);
 
 int
 __compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
@@ -162,7 +160,7 @@ __compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = __fhstatvfs140(fh, FHANDLE30_SIZE, &nst, ST_WAIT)) == -1)
+	if ((ret = __fhstatvfs190(fh, FHANDLE30_SIZE, &nst, ST_WAIT)) == -1)
 		return ret;
 	vfs2fs(ost, &nst);
 	return ret;
@@ -181,7 +179,7 @@ __compat_getfsstat(struct statfs12 *ost, long size, int flags)
 	} else
 		nst = NULL;
 
-	if ((ret = getvfsstat(nst, bsize, flags)) == -1)
+	if ((ret = __getvfsstat90(nst, bsize, flags)) == -1)
 		goto done;
 	if (nst)
 		for (i = 0; i < ret; i++)

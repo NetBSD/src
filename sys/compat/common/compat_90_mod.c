@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_fhstatvfs1.c,v 1.4 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: compat_90_mod.c,v 1.1 2019/09/22 22:59:38 christos Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@NetBSD.org>.
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Paul Goyette
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,35 +29,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Linkage for the compat module: spaghetti.
+ */
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhstatvfs1.c,v 1.4 2019/09/22 22:59:38 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.1 2019/09/22 22:59:38 christos Exp $");
 
-#define __LIBC12_SOURCE__
+#include <sys/systm.h>
+#include <sys/module.h>
 
-#include <sys/types.h>
-#include <sys/statvfs.h>
-#include <compat/include/fstypes.h>
-#include <compat/sys/statvfs.h>
+#include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 
-__warn_references(fhstatvfs1,
-    "warning: reference to compatibility fhstatvfs1(); include <sys/statvfs.h> to generate correct reference")
-
-int	fhstatvfs1(const struct compat_30_fhandle *fhp, struct statvfs90 *buf,
-	int flags);
-
-/*
- * Convert old fhstatvs1() call to new calling convention
- */
 int
-fhstatvfs1(const struct compat_30_fhandle *fhp, struct statvfs90 *buf,
-    int flags)
+compat_90_init(void)
 {
-	struct statvfs sb;
-	int error = __fhstatvfs190(fhp, FHANDLE30_SIZE, &sb, flags);
-	if (error != -1)
-		statvfs_to_statvfs90(&sb, buf);
-	return error;
+
+	vfs_syscalls_90_init();
+
+	return 0;
+}
+
+int
+compat_90_fini(void)
+{
+
+	vfs_syscalls_90_fini();
+
+	return 0;
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_90, NULL);
+
+static int
+compat_90_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return compat_90_init();
+
+	case MODULE_CMD_FINI:
+		return compat_90_fini();
+
+	default:
+		return ENOTTY;
+	}
 }
