@@ -93,6 +93,12 @@ define_builtin_macros_for_compilation_flags (cpp_reader *pfile)
   if (flag_sanitize & SANITIZE_ADDRESS)
     cpp_define (pfile, "__SANITIZE_ADDRESS__");
 
+  if (flag_sanitize & SANITIZE_UNDEFINED)
+    cpp_define (pfile, "__SANITIZE_UNDEFINED__");
+
+  if (flag_sanitize & SANITIZE_LEAK)
+    cpp_define (pfile, "__SANITIZE_LEAK__");
+
   if (flag_sanitize & SANITIZE_THREAD)
     cpp_define (pfile, "__SANITIZE_THREAD__");
 
