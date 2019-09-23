@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.39 2019/09/21 18:38:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.40 2019/09/23 06:57:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1045,6 +1045,7 @@ sys/netinet6/ip6_input.c			1.209 (patch)
 
 sys/arch/x86/acpi/acpi_machdep.c		1.27,1.28
 sys/arch/xen/include/xen-public/platform.h	(apply patch)
+sys/arch/xen/conf/files.xen			(parts of 1.178)
 
 	Attempt to obtain ACPI RSDP from the hypervisor for Xen PV.
 	[manu, ticket #1380]
@@ -1093,4 +1094,14 @@ sys/external/bsd/gnu-efi/dist/inc/efiapi.h	(apply patch)
 
 	Add multiboot 2 support to x86 bootloaders.
 	[manu, ticket #1382]
+
+sys/netinet6/nd6_nbr.c				1.173
+
+	nd6: remove extra pserialize_read_exit
+	[ozaki-r, ticket #1383]
+
+external/mit/expat/lib/libexpat/expat_config.h	1.7
+
+	Actually define BYTEORDER since it is used.
+	[maya, ticket #1384]
 
