@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2019/09/23 13:42:37 christos Exp $
 
 PROG=		zboot
 
@@ -67,4 +67,4 @@ cleanlibdir:
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
-	    ${RELEASEDIR}/${MACHINE}/installation
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation

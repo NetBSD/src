@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2018/09/28 15:05:21 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2019/09/23 13:42:33 christos Exp $
 CDBASE=		ia64cd		# gives ${CDBASE}.iso
 #CDINSTKERNEL=	../../instkernel/instkernel
 CDKERNELS=	netbsd netbsd
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 
 # don't make the CD bootable, there is no installboot support for ia64
