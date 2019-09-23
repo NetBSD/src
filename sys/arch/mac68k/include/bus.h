@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2019/07/23 07:52:53 rin Exp $	*/
+/*	$NetBSD: bus.h,v 1.28 2019/09/23 16:17:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 /*
  * Access methods for bus resources and address space.
  */
@@ -81,7 +84,7 @@ typedef struct bus_space_handle_s {
 	u_long	base;
 	int	swapped;
 	int	stride;
-	
+
 	u_int8_t	(*bsr1)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int16_t	(*bsr2)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int32_t	(*bsr4)(bus_space_tag_t, BSH_T *, bus_size_t);

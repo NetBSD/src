@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.6 2014/01/22 00:24:53 christos Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.7 2019/09/23 16:17:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -34,11 +34,16 @@
 typedef uint32_t bus_addr_t;
 typedef uint32_t bus_size_t;
 
+#define PRIxBUSADDR	"x"
+#define PRIxBUSSIZE	"x"
+#define PRIuBUSSIZE	"u"
 /*
  * Access methods for bus resources and address space.
  */
 typedef struct bus_space_tag *bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 struct amigappc_bus_dma_segment;
 struct amigappc_bus_dma_tag;

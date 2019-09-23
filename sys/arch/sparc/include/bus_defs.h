@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:10:01 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2019/09/23 16:17:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -68,8 +68,15 @@
  * Bus address and size types
  */
 typedef	u_long		bus_space_handle_t;
+
+#define PRIxBSH		"lx"
+
 typedef uint64_t	bus_addr_t;
 typedef u_long		bus_size_t;
+
+#define PRIxBUSADDR	PRIx64
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 
 #define	SPARC_BUS_SPACE	0
 
