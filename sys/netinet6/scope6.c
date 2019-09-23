@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.21 2019/09/20 14:53:24 kamil Exp $	*/
+/*	$NetBSD: scope6.c,v 1.22 2019/09/23 23:12:47 kamil Exp $	*/
 /*	$KAME$	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.21 2019/09/20 14:53:24 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.22 2019/09/23 23:12:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -472,7 +472,6 @@ in6_getscopename(const struct in6_addr *addr)
  * Just clear the embedded scope identifier.  Return 0 if the original address
  * is intact; return non 0 if the address is modified.
  */
-__noubsan
 int
 in6_clearscope(struct in6_addr *in6)
 {
