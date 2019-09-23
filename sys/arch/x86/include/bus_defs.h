@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2011/08/25 15:06:10 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2019/09/23 16:17:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,10 @@
 typedef paddr_t bus_addr_t;
 typedef size_t bus_size_t;
 
+#define PRIxBUSADDR	PRIxPADDR
+#define PRIxBUSSIZE	"%zx"
+#define PRIuBUSSIZE	"%zu"
+
 struct bus_space_tag;
 typedef	struct bus_space_tag *bus_space_tag_t;
 
@@ -97,6 +101,8 @@ struct bus_space_tag {
 };
 
 typedef	vaddr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxVADDR
 
 typedef struct x86_bus_dma_tag		*bus_dma_tag_t;
 typedef struct x86_bus_dmamap		*bus_dmamap_t;
