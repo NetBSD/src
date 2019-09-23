@@ -1,6 +1,7 @@
-# $NetBSD: shl.mi,v 1.229 2019/09/22 22:59:37 christos Exp $
+# $NetBSD: shl.mi,v 1.230 2019/09/23 16:07:07 kamil Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
+./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.214.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
@@ -17,16 +18,23 @@
 ./usr/libdata/debug/lib/liblzma.so.2.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libm.so.0.12.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnpf.so.0.1.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libnvpair.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libpcap.so.7.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libprop.so.1.1.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libpthread.so.1.4.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libradius.so.4.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-rump-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/librumpres.so.0.0.debug			comp-rump-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libumem.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libutil.so.7.23.debug			comp-obsolete	debug,obsolete,compatfile
 ./usr/libdata/debug/lib/libutil.so.7.24.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libuutil.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
+./usr/libdata/debug/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,dynamicroot,zfs
+./usr/libdata/debug/lib/libzpool.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
