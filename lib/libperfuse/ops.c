@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.87 2019/08/10 07:08:11 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.88 2019/09/23 12:00:57 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -955,7 +955,7 @@ perfuse_fs_unmount(struct puffs_usermount *pu, int flags)
 }
 
 int
-perfuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
+perfuse_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *svfsb)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;

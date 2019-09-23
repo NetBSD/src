@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.33 2011/11/25 15:02:02 manu Exp $	*/
+/*	$NetBSD: null.c,v 1.34 2019/09/23 12:00:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.33 2011/11/25 15:02:02 manu Exp $");
+__RCSID("$NetBSD: null.c,v 1.34 2019/09/23 12:00:57 christos Exp $");
 #endif /* !lint */
 
 /*
@@ -191,11 +191,12 @@ puffs_null_setops(struct puffs_ops *pops)
 
 /*ARGSUSED*/
 int
-puffs_null_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
+puffs_null_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *svfsb)
 {
-
-	if (statvfs(PNPATH(puffs_getroot(pu)), svfsb) == -1)
+	struct statvfs sb;
+	if (statvfs(PNPATH(puffs_getroot(pu)), &sb) == -1)
 		return errno;
+	statvfs_to_puffs_statvfs(&sb, svfsb);
 
 	return 0;
 }
