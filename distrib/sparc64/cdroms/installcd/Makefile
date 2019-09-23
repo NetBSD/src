@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.30 2018/09/28 15:05:23 martin Exp $
+#	$NetBSD: Makefile,v 1.31 2019/09/23 13:42:35 christos Exp $
 
 .include <bsd.own.mk>
 
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
-CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd
+CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd
 CD_SETS=	base etc
 .if ${MKKMOD} != "no"
 CD_SETS+=	modules
