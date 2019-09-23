@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.61 2019/09/22 10:35:12 maxv Exp $	*/
+/*	$NetBSD: types.h,v 1.62 2019/09/23 23:06:26 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,8 +74,11 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+#if !__has_feature(undefined_behavior_sanitizer) && \
+	!defined(__SANITIZE_UNDEFINED__)
 /* The amd64 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
+#endif
 
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_COUNTER
