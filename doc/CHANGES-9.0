@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.55 2019/09/22 14:29:48 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.56 2019/09/23 07:10:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3859,4 +3859,41 @@ external/mit/expat/lib/libexpat/expat_config.h	1.7
 
 	Actually define BYTEORDER since it is used.
 	[maya, ticket #228]
+
+sys/arch/aarch64/aarch64/pmap.c			1.47
+
+	Disable translation table walks using TTBR0 while changing its value
+	and when deactivating a pmap.
+	[jmcneill, ticket #229]
+
+distrib/sets/lists/man/mi			1.1655
+share/man/man4/Makefile				1.683
+share/man/man4/mcx.4				1.1
+sys/arch/evbarm/conf/GENERIC64			1.107
+sys/dev/pci/files.pci				1.414,1.415
+sys/dev/pci/if_mcx.c				1.1
+
+	Add support for Mellanox 5th generation ethernet devices.
+	[jmcneill, ticket #230]
+
+sys/arch/arm/acpi/acpi_platform.c		1.18
+sys/arch/arm/acpi/acpi_simplefb.c		1.1
+sys/arch/arm/acpi/acpi_simplefb.h		1.1
+sys/arch/arm/acpi/files.acpi			1.7
+
+	Use vcons for simplefb preattach to speed up early console messages.
+	[jmcneill, ticket #231]
+
+sys/arch/dreamcast/dev/g1/wdc_g1.c		1.4
+sys/arch/dreamcast/dev/g1/wdc_g1.c		1.5
+sys/arch/evbppc/mpc85xx/wdc_obio.c		1.7
+sys/arch/mips/adm5120/dev/wdc_extio.c		1.11
+sys/arch/mmeye/dev/wdc_mainbus.c		1.7
+sys/dev/ic/wdc.c				1.292
+sys/dev/ic/wdcvar.h				1.99
+
+	Adjust several missed drivers for wdcprobe() changes of ATA NCQ branch.
+	Restore interface to pass a MD reset function to MI wdcprobe() and fix
+	G1IDE on Dreamcast.
+	[tsutsui, ticket #232]
 
