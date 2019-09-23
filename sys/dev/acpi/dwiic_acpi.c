@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.3 2019/09/23 08:50:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.3 2019/09/23 08:50:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,8 @@ static void	dwiic_acpi_configure(struct dwiic_softc *, ACPI_HANDLE);
 CFATTACH_DECL_NEW(dwiic_acpi, sizeof(struct dwiic_softc), dwiic_acpi_match, dwiic_acpi_attach, NULL, NULL);
 
 static const char * const compatible[] = {
-	"AMDI0510",
+	"AMDI0510",	/* AMD Seattle */
+	"APMC0D0F",	/* Ampere eMAG */
 	NULL
 };
 
