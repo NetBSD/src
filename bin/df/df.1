@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.53 2019/09/20 13:43:47 wiz Exp $
+.\"	$NetBSD: df.1,v 1.54 2019/09/23 15:24:44 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd September 18, 2019
+.Dd September 23, 2019
 .Dt DF 1
 .Os
 .Sh NAME
@@ -178,12 +178,7 @@ The wedge name is prefixed with
 .Dq NAME=
 as in
 .Xr fstab 5 .
-The .Fl W
-option needs read access on the devices to be able to access
-the wedge information.
-This is available to users with root privileges, and usually to
-members of group operator.
-If the wedge information cannot be obtained, for one or more
+If the wedge information cannot be obtained for one or more
 file systems, the
 .Fl W
 option is silently ignored for those file systems.
@@ -219,10 +214,3 @@ A
 .Nm
 utility appeared in
 .At v1 .
-.Sh BUGS
-The
-.Fl W
-option needs read access to the disk device node to
-get the wedge information.
-Perhaps this information should be exposed via a different mechanism in the
-future.
