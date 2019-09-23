@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.71 2019/09/20 11:29:47 maxv Exp $	*/
+/*	$NetBSD: an.c,v 1.72 2019/09/23 17:37:04 maxv Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.71 2019/09/20 11:29:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.72 2019/09/23 17:37:04 maxv Exp $");
 
 
 #include <sys/param.h>
@@ -1796,11 +1796,11 @@ an_alloc_fid(struct an_softc *sc, int len, int *idp)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_ALLOC)
 			break;
-		if (i == AN_TIMEOUT) {
-			printf("%s: timeout in alloc\n", device_xname(sc->sc_dev));
-			return ETIMEDOUT;
-		}
 		DELAY(10);
+	}
+	if (i == AN_TIMEOUT) {
+		printf("%s: timeout in alloc\n", device_xname(sc->sc_dev));
+		return ETIMEDOUT;
 	}
 
 	*idp = CSR_READ_2(sc, AN_ALLOC_FID);
