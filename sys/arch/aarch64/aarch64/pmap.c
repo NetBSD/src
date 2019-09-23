@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41.2.1 2019/09/22 10:32:38 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.2.2 2019/09/23 07:00:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.1 2019/09/22 10:32:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.2 2019/09/23 07:00:35 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1271,7 +1271,7 @@ void
 pmap_activate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t ttbr0;
+	uint64_t ttbr0, tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1285,6 +1285,11 @@ pmap_activate(struct lwp *l)
 
 	UVMHIST_LOG(pmaphist, "lwp=%p (pid=%d)", l, l->l_proc->p_pid, 0, 0);
 
+	/* Disable translation table walks using TTBR0 */
+	tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr | TCR_EPD0);
+	__asm __volatile("isb" ::: "memory");
+
 	/* XXX */
 	CTASSERT(PID_MAX <= 65535);	/* 16bit ASID */
 	if (pm->pm_asid == -1)
@@ -1292,6 +1297,11 @@ pmap_activate(struct lwp *l)
 
 	ttbr0 = ((uint64_t)pm->pm_asid << 48) | pm->pm_l0table_pa;
 	cpu_set_ttbr0(ttbr0);
+
+	/* Re-enable translation table walks using TTBR0 */
+	tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr & ~TCR_EPD0);
+	__asm __volatile("isb" ::: "memory");
 
 	pm->pm_activated = true;
 
@@ -1302,6 +1312,7 @@ void
 pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
+	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1310,6 +1321,11 @@ pmap_deactivate(struct lwp *l)
 		return;
 
 	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pm->pm_asid, 0, 0);
+
+	/* Disable translation table walks using TTBR0 */
+	tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr | TCR_EPD0);
+	__asm __volatile("isb" ::: "memory");
 
 	/* XXX */
 	pm->pm_activated = false;
