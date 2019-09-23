@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2018/09/28 15:05:22 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2019/09/23 13:42:35 christos Exp $
 CDBASE=		sgimipscd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 CDKERNELS=	netbsd-INSTALL32_IP2x.gz ip2x
 CDKERNELS+=	netbsd-INSTALL32_IP3x.gz ip3x
