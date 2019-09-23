@@ -1,4 +1,4 @@
-.\" $NetBSD: ustir.4,v 1.6 2019/09/22 07:42:28 dsainty Exp $
+.\" $NetBSD: ustir.4,v 1.7 2019/09/23 18:43:59 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,6 +67,7 @@ driver was written by
 .An David Sainty Aq Mt dsainty@NetBSD.org .
 .Sh BUGS
 The STIr4200 cannot notify the driver when it has received data, instead it
-has to be continuously polled.  This driver polls (when idle) at a fairly low
+has to be continuously polled.
+This driver polls (when idle) at a fairly low
 rate of 10 times per second, which means that system performance is not overly
 affected by rapid polling, but latency is fairly high.
