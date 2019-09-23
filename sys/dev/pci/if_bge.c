@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.337 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.338 2019/09/23 07:47:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.337 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.338 2019/09/23 07:47:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4963,8 +4963,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			if (!M_READONLY(m)) {
 				if (M_LEADINGSPACE(m) < shorfall) {
 					void *m_dat;
-					m_dat = (m->m_flags & M_PKTHDR) ?
-					    m->m_pktdat : m->dat;
+					m_dat = M_BUFADDR(m);
 					memmove(m_dat, mtod(m, void*),
 					    m->m_len);
 					m->m_data = m_dat;
