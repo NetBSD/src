@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.37 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: sbp.c,v 1.38 2019/09/23 06:56:20 maxv Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.37 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.38 2019/09/23 06:56:20 maxv Exp $");
 
 
 #include <sys/param.h>
@@ -2052,7 +2052,6 @@ sbp_free_sdev(struct sbp_dev *sdev)
 		bus_dmamap_destroy(sc->sc_dmat, sdev->ocb[i].dmamap);
 	fwdma_free(sdev->dma.dma_tag, sdev->dma.dma_map, sdev->dma.v_addr);
 	free(sdev, M_SBP);
-	sdev = NULL;
 }
 
 static void
