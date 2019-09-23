@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.221 2019/09/18 16:18:12 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.222 2019/09/23 08:04:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -537,16 +537,11 @@ do {									\
 	(((m)->m_flags & (M_EXT|M_EXT_ROMAP)) == (M_EXT|M_EXT_ROMAP))
 
 /*
- * Compute the amount of space available
- * before the current start of data in an mbuf.
+ * Compute the amount of space available before the current start of
+ * data in an mbuf.
  */
-#define _M_LEADINGSPACE(m)						\
-	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :	\
-	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :	\
-	 (m)->m_data - (m)->m_dat)
-
 #define M_LEADINGSPACE(m)						\
-	(M_READONLY((m)) ? 0 : _M_LEADINGSPACE((m)))
+	(M_READONLY((m)) ? 0 : ((m)->m_data - M_BUFADDR(m)))
 
 /*
  * Compute the amount of space available
