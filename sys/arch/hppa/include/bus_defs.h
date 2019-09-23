@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2019/09/23 16:17:56 skrll Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -39,7 +39,14 @@
  */
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
+
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 typedef u_long bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 struct hppa_bus_space_tag {
 	void *hbt_cookie;
