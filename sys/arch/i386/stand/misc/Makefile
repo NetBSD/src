@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2019/01/27 04:56:46 dholland Exp $
+#	$NetBSD: Makefile,v 1.12 2019/09/23 13:42:36 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -13,8 +13,8 @@ release: check_RELEASEDIR .WAIT ${MISC_FILES} ${UUDECODE_FILES}
 	${_MKMSG_INSTALL} ${MISC_FILES}
 	cd ${.CURDIR} && \
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${MISC_FILES} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 	${_MKMSG_INSTALL} ${UUDECODE_FILES}
 	cd ${.OBJDIR} && \
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${UUDECODE_FILES} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc

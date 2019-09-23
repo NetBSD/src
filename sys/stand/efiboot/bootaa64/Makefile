@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2018/10/28 10:17:47 jmcneill Exp $
+# $NetBSD: Makefile,v 1.6 2019/09/23 13:42:37 christos Exp $
 
 PROG=		bootaa64.efi
 OBJFMT=		binary
@@ -17,4 +17,4 @@ CFLAGS+=	-DEFIBOOT_ACPI
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
-		${RELEASEDIR}/${MACHINE}/installation/misc
+		${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc

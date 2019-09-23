@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2019/09/13 02:19:45 manu Exp $
+#	$NetBSD: Makefile,v 1.33 2019/09/23 13:42:36 christos Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -37,6 +37,6 @@ VERSIONFILE= ${.CURDIR}/version
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} dosboot.com \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 
 .include "../Makefile.booters"
