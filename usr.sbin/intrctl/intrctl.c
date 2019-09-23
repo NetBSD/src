@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.9 2019/09/23 09:17:19 mrg Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.10 2019/09/23 20:15:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.9 2019/09/23 09:17:19 mrg Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.10 2019/09/23 20:15:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,8 +99,9 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s list [-c] [-w secs]\n", progname);
-	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n", progname);
+	fprintf(stderr, "usage: %s list [-c] [-w secs] [-z]\n", progname);
+	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n",
+	    progname);
 	fprintf(stderr, "       %s intr -c cpu_index\n", progname);
 	fprintf(stderr, "       %s nointr -c cpu_index\n", progname);
 	exit(EXIT_FAILURE);
@@ -110,7 +111,7 @@ usage(void)
 static int intrctl_io_alloc_retry_count = 4;
 
 static void
-intrctl_list_one(int compact)
+intrctl_list_one(bool compact, bool skipzero)
 {
 	char buf[64];
 	struct intrio_list_line *illine;
@@ -169,6 +170,20 @@ intrctl_list_one(int compact)
 	    illine = intrctl_io_nextline(handle, illine)) {
 		struct intrio_list_line_cpu *illc;
 
+		if (skipzero) {
+			bool is_zero = true;
+
+			for (i = 0; i < ncpus; i++) {
+				illc = &illine->ill_cpu[i];
+				if (illc->illc_count != 0) {
+					is_zero = false;
+					break;
+				}
+			}
+			if (is_zero)
+				continue;
+		}
+
 		printf("%-*s ", (int)intridlen, illine->ill_intrid);
 		if (compact) {
 			uint64_t total = 0;
@@ -209,12 +224,16 @@ intrctl_list(int argc, char **argv)
 {
 	int seconds = 0;
 	bool compact = false;
+	bool skipzero = false;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "cw:")) != -1) {
+	while ((ch = getopt(argc, argv, "cw:z")) != -1) {
 		switch (ch) {
 		case 'c':
 			compact = true;
+			break;
+		case 'z':
+			skipzero = true;
 			break;
 		case 'w':
 			seconds = atoi(optarg);
@@ -226,10 +245,12 @@ intrctl_list(int argc, char **argv)
 		}
 	}
 
-	do {
-		intrctl_list_one(compact);
+	for (;;) {
+		intrctl_list_one(compact, skipzero);
+		if (seconds == 0)
+			break;
 		sleep(seconds);
-	} while (seconds);
+	}
 }
 
 static void
