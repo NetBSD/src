@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.174 2019/09/23 21:07:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.174 2019/09/23 21:07:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,8 +277,12 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 		}
 		na.timeo = sna.timeo;
 		na.retrans = sna.retrans;
-		na.hostname = /* (char *)(u_long) */ sna.hostname;
-
+#ifdef __arch64__
+		/* XXX */
+		na.hostname = (char *)(intptr_t)sna.hostname;
+#else
+		na.hostname = sna.hostname;
+#endif
 		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG(uap, dir), nflags, &na,
 		    UIO_SYSSPACE, sizeof na, &dummy);
@@ -565,7 +569,7 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 			name = ipoptxlat[name - SUNOS_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN) {
+	if ((unsigned)SCARG(uap, valsize) > MLEN) {
 		error = EINVAL;
 		goto out;
 	}
