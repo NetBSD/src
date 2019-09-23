@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.8 2018/06/22 22:50:53 jdolecek Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.9 2019/09/23 09:17:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.8 2018/06/22 22:50:53 jdolecek Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.9 2019/09/23 09:17:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,7 +99,7 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s list [-c]\n", progname);
+	fprintf(stderr, "usage: %s list [-c] [-w secs]\n", progname);
 	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n", progname);
 	fprintf(stderr, "       %s intr -c cpu_index\n", progname);
 	fprintf(stderr, "       %s nointr -c cpu_index\n", progname);
@@ -110,25 +110,13 @@ usage(void)
 static int intrctl_io_alloc_retry_count = 4;
 
 static void
-intrctl_list(int argc, char **argv)
+intrctl_list_one(int compact)
 {
 	char buf[64];
 	struct intrio_list_line *illine;
 	int i, ncpus, *cpucol;
 	void *handle;
 	size_t intridlen;
-	int compact = 0;
-	int ch;
-
-	while ((ch = getopt(argc, argv, "c")) != -1) {
-		switch (ch) {
-		case 'c':
-			compact = 1;
-			break;
-		default:
-			usage();
-		}
-	}
 
 	handle = intrctl_io_alloc(intrctl_io_alloc_retry_count);
 	if (handle == NULL)
@@ -214,6 +202,34 @@ intrctl_list(int argc, char **argv)
 
 	free(cpucol);
 	intrctl_io_free(handle);
+}
+
+static void
+intrctl_list(int argc, char **argv)
+{
+	int seconds = 0;
+	bool compact = false;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "cw:")) != -1) {
+		switch (ch) {
+		case 'c':
+			compact = true;
+			break;
+		case 'w':
+			seconds = atoi(optarg);
+			if (seconds < 0)
+				errx(1, "seconds must be positive.");
+			break;
+		default:
+			usage();
+		}
+	}
+
+	do {
+		intrctl_list_one(compact);
+		sleep(seconds);
+	} while (seconds);
 }
 
 static void
