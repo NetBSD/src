@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.258 2019/09/06 09:19:06 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.259 2019/09/23 05:39:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.258 2019/09/06 09:19:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.259 2019/09/23 05:39:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -83,7 +83,7 @@ static struct pool phpool[PHPOOL_MAX];
 #define	PHPOOL_FREELIST_NELEM(idx) \
 	(((idx) == 0) ? BITMAP_MIN_SIZE : BITMAP_SIZE * (1 << (idx)))
 
-#if defined(KASAN)
+#if defined(DIAGNOSTIC) || defined(KASAN)
 #define POOL_REDZONE
 #endif
 
