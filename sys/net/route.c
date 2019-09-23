@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.221 2019/09/19 04:46:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.222 2019/09/23 05:00:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.221 2019/09/19 04:46:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.222 2019/09/23 05:00:20 rin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1387,47 +1387,48 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 }
 
 static struct ifaddr *
-rt_update_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
+rt_update_get_ifa(const struct rt_addrinfo *info, const struct rtentry *rt,
     struct ifnet **ifp, struct psref *psref_ifp, struct psref *psref)
 {
 	struct ifaddr *ifa = NULL;
 
 	*ifp = NULL;
-	if (info.rti_info[RTAX_IFP] != NULL) {
-		ifa = ifa_ifwithnet_psref(info.rti_info[RTAX_IFP], psref);
+	if (info->rti_info[RTAX_IFP] != NULL) {
+		ifa = ifa_ifwithnet_psref(info->rti_info[RTAX_IFP], psref);
 		if (ifa == NULL)
 			goto next;
 		*ifp = ifa->ifa_ifp;
 		if_acquire(*ifp, psref_ifp);
-		if (info.rti_info[RTAX_IFA] == NULL &&
-		    info.rti_info[RTAX_GATEWAY] == NULL)
+		if (info->rti_info[RTAX_IFA] == NULL &&
+		    info->rti_info[RTAX_GATEWAY] == NULL)
 			goto next;
 		ifa_release(ifa, psref);
-		if (info.rti_info[RTAX_IFA] == NULL) {
+		if (info->rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
-			    *ifp, psref);
+			ifa = ifaof_ifpforaddr_psref(
+			    info->rti_info[RTAX_GATEWAY], *ifp, psref);
 		} else {
 			/* route change <dst> -ifp <if> -ifa <addr> */
-			ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
+			ifa = ifa_ifwithaddr_psref(info->rti_info[RTAX_IFA],
+			    psref);
 			if (ifa != NULL)
 				goto out;
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_IFA],
+			ifa = ifaof_ifpforaddr_psref(info->rti_info[RTAX_IFA],
 			    *ifp, psref);
 		}
 		goto out;
 	}
 next:
-	if (info.rti_info[RTAX_IFA] != NULL) {
+	if (info->rti_info[RTAX_IFA] != NULL) {
 		/* route change <dst> <gw> -ifa <addr> */
-		ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
+		ifa = ifa_ifwithaddr_psref(info->rti_info[RTAX_IFA], psref);
 		if (ifa != NULL)
 			goto out;
 	}
-	if (info.rti_info[RTAX_GATEWAY] != NULL) {
+	if (info->rti_info[RTAX_GATEWAY] != NULL) {
 		/* route change <dst> <gw> */
 		ifa = ifa_ifwithroute_psref(rt->rt_flags, rt_getkey(rt),
-		    info.rti_info[RTAX_GATEWAY], psref);
+		    info->rti_info[RTAX_GATEWAY], psref);
 	}
 out:
 	if (ifa != NULL && *ifp == NULL) {
@@ -1487,7 +1488,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 	 * flags may also be different; ifp may be specified
 	 * by ll sockaddr when protocol address is ambiguous
 	 */
-	new_ifa = rt_update_get_ifa(*info, rt, &new_ifp, &psref_new_ifp,
+	new_ifa = rt_update_get_ifa(info, rt, &new_ifp, &psref_new_ifp,
 	    &psref_new_ifa);
 	if (new_ifa != NULL) {
 		ifa_release(ifa, &psref_ifa);
