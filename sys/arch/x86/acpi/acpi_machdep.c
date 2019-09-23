@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.18.6.1 2019/09/18 16:30:33 martin Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18.6.2 2019/09/23 14:36:17 martin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.6.1 2019/09/18 16:30:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.6.2 2019/09/23 14:36:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,14 @@ acpi_md_OsGetRootPointer(void)
 
 #ifdef XEN
 	/*
+	 * This should use EFI_UUID_ACPI20 and EFI_UUID_ACPI10
+	 * from src/sys/arch/x86/x86/efi.c but we want the
+	 * ablility to build without this file included.
+	 */
+	const struct uuid UUID_ACPI20 = EFI_TABLE_ACPI20;
+	const struct uuid UUID_ACPI10 = EFI_TABLE_ACPI10;
+
+	/*
 	 * Obtain the ACPI RSDP from the hypervisor. 
 	 * This is the only way to go if Xen booted from EFI: the 
 	 * Extended BIOS Data Area (EBDA) is not mapped, and Xen 
@@ -125,7 +133,7 @@ acpi_md_OsGetRootPointer(void)
 
 		for (i = 0; i < info->cfg.nent; i++) {
                 	if (memcmp(&ct[i].ct_uuid,
-			    &EFI_UUID_ACPI20, sizeof(EFI_UUID_ACPI20)) == 0) {
+			    &UUID_ACPI20, sizeof(UUID_ACPI20)) == 0) {
 				PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)
 				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
@@ -136,7 +144,7 @@ acpi_md_OsGetRootPointer(void)
 
 		for (i = 0; i < info->cfg.nent; i++) {
                 	if (memcmp(&ct[i].ct_uuid,
-			    &EFI_UUID_ACPI10, sizeof(EFI_UUID_ACPI10)) == 0) {
+			    &UUID_ACPI10, sizeof(UUID_ACPI10)) == 0) {
 				PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)
 				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
