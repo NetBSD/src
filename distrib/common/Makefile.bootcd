@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.41 2018/09/28 15:03:34 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.42 2019/09/23 13:42:31 christos Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -12,7 +12,7 @@
 #	CDBASE		Basename of the iso
 #
 # Optional variables:
-#	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
+#	CDRELEASE	Set to 'true' to include $RELEASEDIR/$RELEASEMACHINEDIR on the CD
 #	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
 #	CDRELEASE_NODEBUG	Excludes debug sets if set
 #	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
