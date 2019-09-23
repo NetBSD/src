@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.45 2019/08/07 15:29:02 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.45 2019/08/07 15:29:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $");
 
 
 #include <sys/param.h>
@@ -1453,7 +1453,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 			    "DMA segments, dropping...\n",
 			    device_xname(sc->jme_dev));
 			m_freem(*m_head);
-			m_head = NULL;
+			*m_head = NULL;
 		}
 		return (error);
 	}
