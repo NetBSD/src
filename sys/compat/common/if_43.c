@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.22 2019/05/17 07:37:11 msaitoh Exp $	*/
+/*	$NetBSD: if_43.c,v 1.23 2019/09/23 06:53:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.22 2019/05/17 07:37:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.23 2019/09/23 06:53:09 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -253,7 +253,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	}
 	if (cmd != ocmd) {
 		oifr = data;
-		data = ifr = &ifrb;
+		ifr = &ifrb;
 		IFREQO2N_43(oifr, ifr);
 	}
 
