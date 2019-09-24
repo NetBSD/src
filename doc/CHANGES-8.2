@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.41 2019/09/23 14:37:34 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.42 2019/09/24 18:28:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1103,4 +1103,34 @@ external/mit/expat/lib/libexpat/expat_config.h	1.7
 
 	Actually define BYTEORDER since it is used.
 	[maya, ticket #1384]
+
+sys/net/if.c				1.461
+sys/net/if.h				1.277
+sys/net/if_gif.c			1.149
+sys/net/if_gif.h			1.33
+sys/net/if_ipsec.c			1.19,1.20,1.24
+sys/net/if_ipsec.h			1.5
+sys/net/if_l2tp.c			1.33,1.36-1.39
+sys/net/if_l2tp.h			1.7,1.8
+sys/net/route.c 			1.220,1.221
+sys/net/route.h 			1.125
+sys/netinet/in_gif.c			1.95
+sys/netinet/in_l2tp.c			1.17
+sys/netinet/ip_input.c			1.391,1.392
+sys/netinet/wqinput.c			1.6
+sys/netinet6/in6_gif.c			1.94
+sys/netinet6/in6_l2tp.c 		1.18
+sys/netinet6/ip6_forward.c		1.97
+sys/netinet6/ip6_input.c		1.210,1.211
+sys/netipsec/ipsec_output.c		1.82,1.83 (patched)
+sys/netipsec/ipsecif.c			1.12,1.13,1.15,1.17 (patched)
+sys/netipsec/key.c			1.259,1.260
+
+	ipsecif(4): support input drop packet counter,
+	remove unnecessary addresses in PF_KEY message.
+	l2tp(4): fix output bytes counter, initialize mowner variables
+	for MBUFTRACE, divide Tx context of l2tp(4) to improve performance.
+	rtcache, wqinput and l2tp: avoid having data directly in a
+	percpu storage.
+	[knakahara, ticket #1385]
 
