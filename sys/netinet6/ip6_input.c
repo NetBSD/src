@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.178.2.8 2019/09/17 18:57:23 martin Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.178.2.9 2019/09/24 18:27:09 martin Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.8 2019/09/17 18:57:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.9 2019/09/24 18:27:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -205,7 +205,7 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
-	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
+	ip6_forward_rt_percpu = rtcache_percpu_alloc();
 }
 
 static void
@@ -453,7 +453,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad;
 	}
 
-	ro = percpu_getref(ip6_forward_rt_percpu);
+	ro = rtcache_percpu_getref(ip6_forward_rt_percpu);
 	/*
 	 * Multicast check
 	 */
@@ -639,7 +639,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
 #endif
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;	/* m have already been freed */
 		}
 
@@ -664,7 +664,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 				    ICMP6_PARAMPROB_HEADER,
 				    (char *)&ip6->ip6_plen - (char *)ip6);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
@@ -672,7 +672,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		if (hbh == NULL) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		KASSERT(IP6_HDR_ALIGNED_P(hbh));
@@ -727,7 +727,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 
 			if (error != 0) {
 				rtcache_unref(rt, ro);
-				percpu_putref(ip6_forward_rt_percpu);
+				rtcache_percpu_putref(ip6_forward_rt_percpu);
 				IP6_STATINC(IP6_STAT_CANTFORWARD);
 				goto bad;
 			}
@@ -736,7 +736,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			goto bad_unref;
 	} else if (!ours) {
 		rtcache_unref(rt, ro);
-		percpu_putref(ip6_forward_rt_percpu);
+		rtcache_percpu_putref(ip6_forward_rt_percpu);
 		ip6_forward(m, srcrt);
 		return;
 	}
@@ -780,7 +780,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		rtcache_unref(rt, ro);
 		rt = NULL;
 	}
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
 
 	rh_present = 0;
 	frg_present = 0;
@@ -839,7 +839,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 
  bad_unref:
 	rtcache_unref(rt, ro);
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
  bad:
 	m_freem(m);
 	return;

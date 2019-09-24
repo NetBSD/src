@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.1.2.8 2019/05/29 15:57:38 martin Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.1.2.9 2019/09/24 18:27:09 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.8 2019/05/29 15:57:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.9 2019/09/24 18:27:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.8 2019/05/29 15:57:38 martin Exp $
 
 #include <net/if_ipsec.h>
 
+static int ipsecif_set_natt_ports(struct ipsec_variant *, struct mbuf *);
 static void ipsecif4_input(struct mbuf *, int, int, void *);
 static int ipsecif4_output(struct ipsec_variant *, int, struct mbuf *);
 static int ipsecif4_filter4(const struct ip *, struct ipsec_variant *,
@@ -101,6 +102,32 @@ struct encapsw ipsecif4_encapsw = {
 #ifdef INET6
 static const struct encapsw ipsecif6_encapsw;
 #endif
+
+static int
+ipsecif_set_natt_ports(struct ipsec_variant *var, struct mbuf *m)
+{
+
+	KASSERT(if_ipsec_heldref_variant(var));
+
+	if (var->iv_sport || var->iv_dport) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+		    sizeof(uint16_t) + sizeof(uint16_t), M_DONTWAIT);
+		if (mtag) {
+			uint16_t *natt_port;
+
+			natt_port = (uint16_t *)(mtag + 1);
+			natt_port[0] = var->iv_dport;
+			natt_port[1] = var->iv_sport;
+			m_tag_prepend(m, mtag);
+		} else {
+			return ENOBUFS;
+		}
+	}
+
+	return 0;
+}
 
 static struct mbuf *
 ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
@@ -366,10 +393,9 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	KASSERT(sp->policy != IPSEC_POLICY_ENTRUST);
 	KASSERT(sp->policy != IPSEC_POLICY_BYPASS);
 	if(sp->policy != IPSEC_POLICY_IPSEC) {
-		struct ifnet *ifp = &var->iv_softc->ipsec_if;
 		m_freem(m);
-		IF_DROP(&ifp->if_snd);
-		return 0;
+		error = ENETUNREACH;
+		goto done;
 	}
 
 	/* get flowinfo */
@@ -396,6 +422,13 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	mtu = ipsecif4_needfrag(m, sp->req);
 	if (mtu > 0)
 		return ipsecif4_fragout(var, family, m, mtu);
+
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto done;
+	}
 
 	/* IPsec output */
 	IP_STATINC(IP_STAT_LOCALOUT);
@@ -469,7 +502,8 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 {
 	struct ifnet *ifp = &var->iv_softc->ipsec_if;
 	struct ipsec_softc *sc = ifp->if_softc;
-	struct ipsec_ro *iro;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 	struct rtentry *rt;
 	struct sockaddr_in6 *sin6_src;
 	struct sockaddr_in6 *sin6_dst;
@@ -575,37 +609,41 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 
 	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
 
-	iro = percpu_getref(sc->ipsec_ro_percpu);
-	mutex_enter(iro->ir_lock);
-	if ((rt = rtcache_lookup(&iro->ir_ro, &u.dst)) == NULL) {
-		mutex_exit(iro->ir_lock);
-		percpu_putref(sc->ipsec_ro_percpu);
+	if_tunnel_get_ro(sc->ipsec_ro_percpu, &ro_pc, &lock_pc);
+	if ((rt = rtcache_lookup(ro_pc, &u.dst)) == NULL) {
+		if_tunnel_put_ro(sc->ipsec_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, &iro->ir_ro);
-		rtcache_free(&iro->ir_ro);
-		mutex_exit(iro->ir_lock);
-		percpu_putref(sc->ipsec_ro_percpu);
+		rtcache_unref(rt, ro_pc);
+		rtcache_free(ro_pc);
+		if_tunnel_put_ro(sc->ipsec_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;
 	}
-	rtcache_unref(rt, &iro->ir_ro);
+	rtcache_unref(rt, ro_pc);
+
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto out;
+	}
 
 	/*
 	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &iro->ir_ro,
+	error = ip6_output(m, 0, ro_pc,
 	    ip6_ipsec_pmtu ? 0 : IPV6_MINMTU, 0, NULL, NULL);
-	if (error)
-		rtcache_free(&iro->ir_ro);
 
-	mutex_exit(iro->ir_lock);
-	percpu_putref(sc->ipsec_ro_percpu);
+out:
+	if (error)
+		rtcache_free(ro_pc);
+	if_tunnel_put_ro(sc->ipsec_ro_percpu, lock_pc);
 
 	return error;
 }
@@ -887,16 +925,10 @@ ipsecif4_detach(struct ipsec_variant *var)
 int
 ipsecif6_attach(struct ipsec_variant *var)
 {
-	struct sockaddr_in6 mask6;
 	struct ipsec_softc *sc = var->iv_softc;
 
 	KASSERT(if_ipsec_variant_is_configured(var));
 	KASSERT(var->iv_encap_cookie6 == NULL);
-
-	memset(&mask6, 0, sizeof(mask6));
-	mask6.sin6_len = sizeof(struct sockaddr_in6);
-	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
-	mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;
 
 	var->iv_encap_cookie6 = encap_attach_func(AF_INET6, -1, if_ipsec_encap_func,
 	    &ipsecif6_encapsw, sc);
@@ -907,16 +939,6 @@ ipsecif6_attach(struct ipsec_variant *var)
 	return 0;
 }
 
-static void
-ipsecif6_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct ipsec_ro *iro = p;
-
-	mutex_enter(iro->ir_lock);
-	rtcache_free(&iro->ir_ro);
-	mutex_exit(iro->ir_lock);
-}
-
 int
 ipsecif6_detach(struct ipsec_variant *var)
 {
@@ -925,7 +947,7 @@ ipsecif6_detach(struct ipsec_variant *var)
 
 	KASSERT(var->iv_encap_cookie6 != NULL);
 
-	percpu_foreach(sc->ipsec_ro_percpu, ipsecif6_rtcache_free_pc, NULL);
+	if_tunnel_ro_percpu_rtcache_free(sc->ipsec_ro_percpu);
 
 	var->iv_output = NULL;
 	error = encap_detach(var->iv_encap_cookie6);
@@ -941,7 +963,8 @@ ipsecif6_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *dst6;
-	struct ipsec_ro *iro;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -965,18 +988,16 @@ ipsecif6_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	if (!ip6)
 		return NULL;
 
-	iro = percpu_getref(sc->ipsec_ro_percpu);
-	mutex_enter(iro->ir_lock);
-	dst6 = satocsin6(rtcache_getdst(&iro->ir_ro));
+	if_tunnel_get_ro(sc->ipsec_ro_percpu, &ro_pc, &lock_pc);
+	dst6 = satocsin6(rtcache_getdst(ro_pc));
 	/* XXX scope */
 	if (dst6 == NULL)
 		;
 	else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
 		/* flush route cache */
-		rtcache_free(&iro->ir_ro);
+		rtcache_free(ro_pc);
 
-	mutex_exit(iro->ir_lock);
-	percpu_putref(sc->ipsec_ro_percpu);
+	if_tunnel_put_ro(sc->ipsec_ro_percpu, lock_pc);
 
 	return NULL;
 }

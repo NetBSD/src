@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.87.2.3 2018/03/30 11:57:13 martin Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.87.2.4 2019/09/24 18:27:09 martin Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87.2.3 2018/03/30 11:57:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87.2.4 2019/09/24 18:27:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -203,7 +203,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 #endif /* IPSEC */
 
-	ro = percpu_getref(ip6_forward_rt_percpu);
+	ro = rtcache_percpu_getref(ip6_forward_rt_percpu);
 	if (srcrt) {
 		union {
 			struct sockaddr		dst;
@@ -469,7 +469,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 #endif
 	rtcache_unref(rt, ro);
 	if (ro != NULL)
-		percpu_putref(ip6_forward_rt_percpu);
+		rtcache_percpu_putref(ip6_forward_rt_percpu);
 	if (rcvif != NULL)
 		m_put_rcvif_psref(rcvif, &psref);
 	return;

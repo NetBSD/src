@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.48.2.3 2018/05/05 19:31:33 martin Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.48.2.4 2019/09/24 18:27:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.48.2.3 2018/05/05 19:31:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.48.2.4 2019/09/24 18:27:09 martin Exp $");
 
 /*
  * IPsec output processing.
@@ -118,7 +118,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	KASSERT(af == AF_INET || af == AF_INET6);
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	ro = percpu_getref(ipsec_rtcache_percpu);
+	ro = rtcache_percpu_getref(ipsec_rtcache_percpu);
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -136,7 +136,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		break;
 #endif
 	}
-	percpu_putref(ipsec_rtcache_percpu);
+	rtcache_percpu_putref(ipsec_rtcache_percpu);
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return rv;
@@ -283,6 +283,24 @@ static void
 ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
     const int af)
 {
+	struct m_tag *mtag;
+	u_int16_t natt_src = IPSEC_PORT_ANY;
+	u_int16_t natt_dst = IPSEC_PORT_ANY;
+
+	/*
+	 * For NAT-T enabled ipsecif(4), set NAT-T port numbers
+	 * even if the saidx uses transport mode.
+	 *
+	 * See also ipsecif[46]_output().
+	 */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	if (mtag) {
+		u_int16_t *natt_ports;
+
+		natt_ports = (u_int16_t *)(mtag + 1);
+		natt_src = natt_ports[1];
+		natt_dst = natt_ports[0];
+	}
 
 	if (af == AF_INET) {
 		struct sockaddr_in *sin;
@@ -292,14 +310,14 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin = &saidx->src.sin;
 			sin->sin_len = sizeof(*sin);
 			sin->sin_family = AF_INET;
-			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_port = natt_src;
 			sin->sin_addr = ip->ip_src;
 		}
 		if (saidx->dst.sa.sa_len == 0) {
 			sin = &saidx->dst.sin;
 			sin->sin_len = sizeof(*sin);
 			sin->sin_family = AF_INET;
-			sin->sin_port = IPSEC_PORT_ANY;
+			sin->sin_port = natt_dst;
 			sin->sin_addr = ip->ip_dst;
 		}
 	} else {
@@ -310,7 +328,7 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin6 = (struct sockaddr_in6 *)&saidx->src;
 			sin6->sin6_len = sizeof(*sin6);
 			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_port = natt_src;
 			sin6->sin6_addr = ip6->ip6_src;
 			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
 				/* fix scope id for comparing SPD */
@@ -323,7 +341,7 @@ ipsec_fill_saidx_bymbuf(struct secasindex *saidx, const struct mbuf *m,
 			sin6 = (struct sockaddr_in6 *)&saidx->dst;
 			sin6->sin6_len = sizeof(*sin6);
 			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = IPSEC_PORT_ANY;
+			sin6->sin6_port = natt_dst;
 			sin6->sin6_addr = ip6->ip6_dst;
 			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
 				/* fix scope id for comparing SPD */
@@ -826,5 +844,5 @@ void
 ipsec_output_init(void)
 {
 
-	ipsec_rtcache_percpu = percpu_alloc(sizeof(struct route));
+	ipsec_rtcache_percpu = rtcache_percpu_alloc();
 }

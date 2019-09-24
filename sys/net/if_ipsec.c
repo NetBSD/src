@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.11 2019/03/15 14:47:22 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.12 2019/09/24 18:27:09 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.11 2019/03/15 14:47:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.12 2019/09/24 18:27:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,9 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.11 2019/03/15 14:47:22 martin Exp
 #include <netipsec/keydb.h> /* for union sockaddr_union */
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsecif.h>
-
-static void if_ipsec_ro_init_pc(void *, void *, struct cpu_info *);
-static void if_ipsec_ro_fini_pc(void *, void *, struct cpu_info *);
 
 static int if_ipsec_clone_create(struct if_clone *, int);
 static int if_ipsec_clone_destroy(struct ifnet *);
@@ -183,8 +180,7 @@ if_ipsec_clone_create(struct if_clone *ifc, int unit)
 	sc->ipsec_var = var;
 	mutex_init(&sc->ipsec_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->ipsec_psz = pserialize_create();
-	sc->ipsec_ro_percpu = percpu_alloc(sizeof(struct ipsec_ro));
-	percpu_foreach(sc->ipsec_ro_percpu, if_ipsec_ro_init_pc, NULL);
+	sc->ipsec_ro_percpu = if_tunnel_alloc_ro_percpu();
 
 	mutex_enter(&ipsec_softcs.lock);
 	LIST_INSERT_HEAD(&ipsec_softcs.list, sc, ipsec_list);
@@ -214,24 +210,6 @@ if_ipsec_attach0(struct ipsec_softc *sc)
 	if_register(&sc->ipsec_if);
 }
 
-static void
-if_ipsec_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct ipsec_ro *iro = p;
-
-	iro->ir_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-}
-
-static void
-if_ipsec_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
-{
-	struct ipsec_ro *iro = p;
-
-	rtcache_free(&iro->ir_ro);
-
-	mutex_obj_free(iro->ir_lock);
-}
-
 static int
 if_ipsec_clone_destroy(struct ifnet *ifp)
 {
@@ -250,8 +228,7 @@ if_ipsec_clone_destroy(struct ifnet *ifp)
 	bpf_detach(ifp);
 	if_detach(ifp);
 
-	percpu_foreach(sc->ipsec_ro_percpu, if_ipsec_ro_fini_pc, NULL);
-	percpu_free(sc->ipsec_ro_percpu, sizeof(struct ipsec_ro));
+	if_tunnel_free_ro_percpu(sc->ipsec_ro_percpu);
 
 	pserialize_destroy(sc->ipsec_psz);
 	mutex_destroy(&sc->ipsec_lock);
@@ -509,6 +486,7 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
+		ifp->if_iqdrops++;
 		m_freem(m);
 	}
 
@@ -1597,14 +1575,7 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
 	if (policy == IPSEC_POLICY_IPSEC) {
 		if_ipsec_add_mbuf(m, &xisr, sizeof(xisr));
-		/*
-		 * secpolicy.req->saidx.{src, dst} must be set port number,
-		 * when it is used for NAT-T.
-		 */
-		if_ipsec_add_mbuf_addr_port(m, src, sport, false);
-		if_ipsec_add_mbuf_addr_port(m, dst, dport, false);
 		padlen -= PFKEY_ALIGN8(sizeof(xisr));
-		padlen -= PFKEY_ALIGN8(src->sa_len + dst->sa_len);
 	}
 	if_ipsec_add_pad(m, padlen);
 
