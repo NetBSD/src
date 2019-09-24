@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.1 2019/09/21 14:04:12 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.2 2019/09/24 14:39:38 msaitoh Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -2159,7 +2159,7 @@ static const uint64_t mcx_eth_cap_map[] = {
 	IFM_40G_SR4,
 	IFM_40G_LR4,
 	0,
-	0, /* IFM_50G_SR2 */
+	IFM_50G_SR2,
 	0,
 	IFM_100G_CR4,
 	IFM_100G_SR4,
