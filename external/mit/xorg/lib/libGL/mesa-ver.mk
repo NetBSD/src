@@ -1,3 +1,3 @@
-#	$NetBSD: mesa-ver.mk,v 1.3 2019/03/10 10:51:58 mrg Exp $
+#	$NetBSD: mesa-ver.mk,v 1.4 2019/09/24 19:29:42 maya Exp $
 
-MESA_VER=	18.3.4
+MESA_VER=	19.1.17
