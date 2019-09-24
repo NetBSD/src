@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.123.2.1 2019/08/26 13:42:36 martin Exp $	*/
+/*	$NetBSD: route.h,v 1.123.2.2 2019/09/24 03:10:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -42,6 +42,7 @@
 #include <sys/rwlock.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
+#include <sys/percpu.h>
 #endif
 #include <sys/psref.h>
 
@@ -506,6 +507,24 @@ struct rtentry *
 	rtcache_validate(struct route *);
 
 void	rtcache_unref(struct rtentry *, struct route *);
+
+percpu_t *
+	rtcache_percpu_alloc(void);
+
+static inline struct route *
+rtcache_percpu_getref(percpu_t *pc)
+{
+
+	return *(struct route **)percpu_getref(pc);
+}
+
+static inline void
+rtcache_percpu_putref(percpu_t *pc)
+{
+
+	percpu_putref(pc);
+}
+
 
 /* rtsock */
 void	rt_ieee80211msg(struct ifnet *, int, void *, size_t);

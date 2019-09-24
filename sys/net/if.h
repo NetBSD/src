@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.274 2019/07/04 02:44:25 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.274.2.1 2019/09/24 03:10:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1121,6 +1121,33 @@ void	if_acquire(struct ifnet *, struct psref *);
 #define	if_release	if_put
 
 int if_tunnel_check_nesting(struct ifnet *, struct mbuf *, int);
+percpu_t *if_tunnel_alloc_ro_percpu(void);
+void if_tunnel_free_ro_percpu(percpu_t *);
+void if_tunnel_ro_percpu_rtcache_free(percpu_t *);
+
+struct tunnel_ro {
+	struct route *tr_ro;
+	kmutex_t *tr_lock;
+};
+
+static inline void
+if_tunnel_get_ro(percpu_t *ro_percpu, struct route **ro, kmutex_t **lock)
+{
+	struct tunnel_ro *tro;
+
+	tro = percpu_getref(ro_percpu);
+	*ro = tro->tr_ro;
+	*lock = tro->tr_lock;
+	mutex_enter(*lock);
+}
+
+static inline void
+if_tunnel_put_ro(percpu_t *ro_percpu, kmutex_t *lock)
+{
+
+	mutex_exit(lock);
+	percpu_putref(ro_percpu);
+}
 
 static __inline if_index_t
 if_get_index(const struct ifnet *ifp)
