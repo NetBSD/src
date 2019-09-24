@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.8 2019/09/24 19:29:41 maya Exp $
+#	$NetBSD: libmesa.mk,v 1.9 2019/09/24 21:33:48 maya Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -424,7 +424,7 @@ SRCS.state_tracker= \
 	st_tgsi_lower_yuv.c
 
 # Program sources
-PATHS.program=	mesa/program ../../src/mesa/main/program
+PATHS.program=	mesa/program ../../src/mesa/program
 INCLUDES.program=	glsl
 SRCS.program= \
 	arbprogparse.c \
