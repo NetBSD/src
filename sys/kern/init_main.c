@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: init_main.c,v 1.505 2019/09/24 19:21:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.505 2019/09/24 19:21:45 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -249,6 +249,9 @@ static void configure(void);
 static void configure2(void);
 static void configure3(void);
 void main(void);
+
+CTASSERT(sizeof(void *) == sizeof(intptr_t));
+CTASSERT(__alignof__(void *) == __alignof__(intptr_t));
 
 /*
  * System startup; initialize the world, create process 0, mount root
