@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.34 2019/09/23 16:17:58 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.35 2019/09/24 14:26:32 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ typedef psize_t bus_size_t;
 typedef	struct vax_bus_space *bus_space_tag_t;
 typedef	vaddr_t bus_space_handle_t;
 
-#define PRIxBUSADDR	PRIxVADDR
+#define PRIxBSH		PRIxVADDR
 
 struct vax_bus_space {
 	/* cookie */
