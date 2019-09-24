@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/09/23 17:20:41 maya Exp $
+#	$NetBSD: Makefile,v 1.4 2019/09/24 19:19:49 maya Exp $
 
 .include <bsd.init.mk>
 
@@ -36,7 +36,7 @@ dependall: all
 
 expat.pc: expat_config.h expat.pc.in
 	@(V=$$( (echo '#include <expat_config.h>'; echo PACKAGE_VERSION) | \
-	    ${CC} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
+	    ${CC} ${CPPFLAGS} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
 	    ${TOOL_SED} -e s/@VERSION@/$$V/ < ${.CURDIR}/expat.pc.in \
 	    > ${.TARGET})
 
