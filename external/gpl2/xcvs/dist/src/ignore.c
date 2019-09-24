@@ -8,7 +8,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ignore.c,v 1.5 2019/09/24 21:01:50 kamil Exp $");
+__RCSID("$NetBSD: ignore.c,v 1.6 2019/09/24 21:03:29 kamil Exp $");
 
 /*
  * .cvsignore file support contributed by David G. Grubbs <dgg@odi.com>
@@ -39,7 +39,7 @@ static int ign_hold = -1;		/* Index where first "temporary" item
 const char *ign_default = ". .. *.core RCSLOG tags TAGS RCS SCCS .make.state\
  .nse_depinfo #* .#* cvslog.* ,* CVS.adm .del-* *.a *.olb *.o *.obj\
  .gitignore .gitattributes .gitmodules .hgignore\
- *.so *.Z *~ *.old *.elc *.ln *.bak *.BAK *.orig *.rej *.exe _$* *$"
+ *.so *.Z *~ *.old *.elc *.ln *.bak *.BAK *.orig *.rej *.exe _$* *$";
 extern const char *cvsDir;
 
 #define IGN_GROW 16			/* grow the list by 16 elements at a
