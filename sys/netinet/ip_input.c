@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.389.2.1 2019/09/17 19:55:43 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.389.2.2 2019/09/24 03:10:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.389.2.1 2019/09/17 19:55:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.389.2.2 2019/09/24 03:10:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -308,7 +308,7 @@ ip_init(void)
 #endif
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
-	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
+	ipforward_rt_percpu = rtcache_percpu_alloc();
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
@@ -1184,16 +1184,16 @@ ip_rtaddr(struct in_addr dst, struct psref *psref)
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
-	ro = percpu_getref(ipforward_rt_percpu);
+	ro = rtcache_percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return NULL;
 	}
 
 	ia4_acquire(ifatoia(rt->rt_ifa), psref);
 	rtcache_unref(rt, ro);
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 
 	return ifatoia(rt->rt_ifa);
 }
@@ -1369,10 +1369,10 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 
-	ro = percpu_getref(ipforward_rt_percpu);
+	ro = rtcache_percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		return;
 	}
@@ -1444,13 +1444,13 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		m_freem(mcopy);
 	}
 
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 	return;
 
 redirect:
 error:
 	if (mcopy == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 
@@ -1493,11 +1493,11 @@ error:
 		 */
 		if (mcopy)
 			m_freem(mcopy);
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 }
 
 void
