@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.10 2019/09/23 20:15:31 mrg Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.11 2019/09/24 11:31:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.10 2019/09/23 20:15:31 mrg Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.11 2019/09/24 11:31:06 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,7 +99,7 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s list [-c] [-w secs] [-z]\n", progname);
+	fprintf(stderr, "usage: %s list [-cz] [-w secs]\n", progname);
 	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n",
 	    progname);
 	fprintf(stderr, "       %s intr -c cpu_index\n", progname);
