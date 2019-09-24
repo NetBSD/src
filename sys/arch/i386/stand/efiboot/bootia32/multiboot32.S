@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot32.S,v 1.1 2019/09/13 02:19:45 manu Exp $ */
+/*	$NetBSD: multiboot32.S,v 1.2 2019/09/24 00:47:46 manu Exp $ */
 
 #include <machine/asm.h>
 #include <machine/specialreg.h>
@@ -16,12 +16,12 @@ _C_LABEL(multiboot32_size):
 	.p2align 4,,15
 
 /*
- * multiboot32(entry 8(%esp), multiboot2_info 12(%esp), magic 16(%esp))
+ * multiboot32(entry 4(%esp), multiboot2_info 8(%esp), magic 12(%esp))
  */
 ENTRY(multiboot32_start)
 start:
-        movl    16(%esp),%eax
-        movl    12(%esp),%ebx
-        movl    8(%esp),%edx
+        movl    12(%esp),%eax
+        movl    8(%esp),%ebx
+        movl    4(%esp),%edx
         jmp    *%edx
 multiboot32_end:
