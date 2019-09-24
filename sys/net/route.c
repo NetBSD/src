@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.13 2019/03/15 14:44:05 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.14 2019/09/24 18:27:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.13 2019/03/15 14:44:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.14 2019/09/24 18:27:09 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.13 2019/03/15 14:44:05 martin Exp 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -2213,6 +2214,29 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 	}
 	rtcache_invariants(ro);
 	return 0;
+}
+
+static void
+rtcache_percpu_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct route **rop = p;
+
+	/*
+	 * We can't have struct route as percpu data because it can be destroyed
+	 * over a memory enlargement processing of percpu.
+	 */
+	*rop = kmem_zalloc(sizeof(**rop), KM_SLEEP);
+}
+
+percpu_t *
+rtcache_percpu_alloc(void)
+{
+	percpu_t *pc;
+
+	pc = percpu_alloc(sizeof(struct route *));
+	percpu_foreach(pc, rtcache_percpu_init_cpu, NULL);
+
+	return pc;
 }
 
 const struct sockaddr *

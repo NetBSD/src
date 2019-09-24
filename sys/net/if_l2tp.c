@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.11.2.10 2018/10/21 11:55:54 martin Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11.2.11 2019/09/24 18:27:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.10 2018/10/21 11:55:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.11 2019/09/24 18:27:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -118,8 +118,8 @@ static struct {
 pserialize_t l2tp_psz __read_mostly;
 struct psref_class *lv_psref_class __read_mostly;
 
-static void	l2tp_ro_init_pc(void *, void *, struct cpu_info *);
-static void	l2tp_ro_fini_pc(void *, void *, struct cpu_info *);
+static void	l2tp_ifq_init_pc(void *, void *, struct cpu_info *);
+static void	l2tp_ifq_fini_pc(void *, void *, struct cpu_info *);
 
 static int	l2tp_clone_create(struct if_clone *, int);
 static int	l2tp_clone_destroy(struct ifnet *);
@@ -127,9 +127,12 @@ static int	l2tp_clone_destroy(struct ifnet *);
 struct if_clone l2tp_cloner =
     IF_CLONE_INITIALIZER("l2tp", l2tp_clone_create, l2tp_clone_destroy);
 
+static int	l2tp_tx_enqueue(struct l2tp_variant *, struct mbuf *);
 static int	l2tp_output(struct ifnet *, struct mbuf *,
 		    const struct sockaddr *, const struct rtentry *);
+static void	l2tp_sendit(struct l2tp_variant *, struct mbuf *);
 static void	l2tpintr(struct l2tp_variant *);
+static void	l2tpintr_softint(void *);
 
 static void	l2tp_hash_init(void);
 static int	l2tp_hash_fini(void);
@@ -151,6 +154,20 @@ static void	l2tp_clear_cookie(struct l2tp_softc *);
 static void	l2tp_set_state(struct l2tp_softc *, int);
 static int	l2tp_encap_attach(struct l2tp_variant *);
 static int	l2tp_encap_detach(struct l2tp_variant *);
+
+static inline struct ifqueue *
+l2tp_ifq_percpu_getref(percpu_t *pc)
+{
+
+	return *(struct ifqueue **)percpu_getref(pc);
+}
+
+static inline void
+l2tp_ifq_percpu_putref(percpu_t *pc)
+{
+
+	percpu_putref(pc);
+}
 
 #ifndef MAX_L2TP_NEST
 /*
@@ -228,7 +245,10 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 	struct l2tp_softc *sc;
 	struct l2tp_variant *var;
 	int rv;
-
+	u_int si_flags = SOFTINT_NET;
+#ifdef NET_MPSAFE
+	si_flags |= SOFTINT_MPSAFE;
+#endif
 	sc = kmem_zalloc(sizeof(struct l2tp_softc), KM_SLEEP);
 	if_initname(&sc->l2tp_ec.ec_if, ifc->ifc_name, unit);
 	rv = l2tpattach0(sc);
@@ -248,8 +268,11 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 	sc->l2tp_psz = pserialize_create();
 	PSLIST_ENTRY_INIT(sc, l2tp_hash);
 
-	sc->l2tp_ro_percpu = percpu_alloc(sizeof(struct l2tp_ro));
-	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_init_pc, NULL);
+	sc->l2tp_ro_percpu = if_tunnel_alloc_ro_percpu();
+
+	sc->l2tp_ifq_percpu = percpu_alloc(sizeof(struct ifqueue *));
+	percpu_foreach(sc->l2tp_ifq_percpu, l2tp_ifq_init_pc, NULL);
+	sc->l2tp_si = softint_establish(si_flags, l2tpintr_softint, sc);
 
 	mutex_enter(&l2tp_softcs.lock);
 	LIST_INSERT_HEAD(&l2tp_softcs.list, sc, l2tp_list);
@@ -278,6 +301,24 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if.if_transmit = l2tp_transmit;
 	sc->l2tp_ec.ec_if._if_input = ether_input;
 	IFQ_SET_READY(&sc->l2tp_ec.ec_if.if_snd);
+
+#ifdef MBUFTRACE
+	struct ethercom *ec = &sc->l2tp_ec;
+	struct ifnet *ifp = &sc->l2tp_ec.ec_if;
+
+	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_tx_mowner.mo_name));
+	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
+	    sizeof(ec->ec_tx_mowner.mo_descr));
+	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_rx_mowner.mo_name));
+	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
+	    sizeof(ec->ec_rx_mowner.mo_descr));
+	MOWNER_ATTACH(&ec->ec_tx_mowner);
+	MOWNER_ATTACH(&ec->ec_rx_mowner);
+	ifp->if_mowner = &ec->ec_tx_mowner;
+#endif
+
 	/* XXX
 	 * It may improve performance to use if_initialize()/if_register()
 	 * so that l2tp_input() calls if_input() instead of
@@ -294,21 +335,20 @@ l2tpattach0(struct l2tp_softc *sc)
 }
 
 void
-l2tp_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+l2tp_ifq_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
-	struct l2tp_ro *lro = p;
+	struct ifqueue **ifqp = p;
 
-	lro->lr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	*ifqp = kmem_zalloc(sizeof(**ifqp), KM_SLEEP);
+	(*ifqp)->ifq_maxlen = IFQ_MAXLEN;
 }
 
 void
-l2tp_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+l2tp_ifq_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
-	struct l2tp_ro *lro = p;
+	struct ifqueue **ifqp = p;
 
-	rtcache_free(&lro->lr_ro);
-
-	mutex_obj_free(lro->lr_lock);
+	kmem_free(*ifqp, sizeof(**ifqp));
 }
 
 static int
@@ -321,12 +361,17 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	l2tp_clear_session(sc);
 	l2tp_delete_tunnel(&sc->l2tp_ec.ec_if);
 	/*
-	 * To avoid for l2tp_transmit() to access sc->l2tp_var after free it.
+	 * To avoid for l2tp_transmit() and l2tpintr_softint() to access
+	 * sc->l2tp_var after free it.
 	 */
 	mutex_enter(&sc->l2tp_lock);
 	var = sc->l2tp_var;
 	l2tp_variant_update(sc, NULL);
 	mutex_exit(&sc->l2tp_lock);
+
+	softint_disestablish(sc->l2tp_si);
+	percpu_foreach(sc->l2tp_ifq_percpu, l2tp_ifq_fini_pc, NULL);
+	percpu_free(sc->l2tp_ifq_percpu, sizeof(struct ifqueue *));
 
 	mutex_enter(&l2tp_softcs.lock);
 	LIST_REMOVE(sc, l2tp_list);
@@ -336,14 +381,44 @@ l2tp_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
-	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_fini_pc, NULL);
-	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
+	if_tunnel_free_ro_percpu(sc->l2tp_ro_percpu);
 
 	kmem_free(var, sizeof(struct l2tp_variant));
 	pserialize_destroy(sc->l2tp_psz);
 	mutex_destroy(&sc->l2tp_lock);
 	kmem_free(sc, sizeof(struct l2tp_softc));
 
+	return 0;
+}
+
+static int
+l2tp_tx_enqueue(struct l2tp_variant *var, struct mbuf *m)
+{
+	struct l2tp_softc *sc;
+	struct ifnet *ifp;
+	struct ifqueue *ifq;
+	int s;
+
+	KASSERT(psref_held(&var->lv_psref, lv_psref_class));
+
+	sc = var->lv_softc;
+	ifp = &sc->l2tp_ec.ec_if;
+
+	s = splsoftnet();
+	ifq = l2tp_ifq_percpu_getref(sc->l2tp_ifq_percpu);
+	if (IF_QFULL(ifq)) {
+		ifp->if_oerrors++;
+		l2tp_ifq_percpu_putref(sc->l2tp_ifq_percpu);
+		splx(s);
+		m_freem(m);
+		return ENOBUFS;
+	}
+
+	IF_ENQUEUE(ifq, m);
+	percpu_putref(sc->l2tp_ifq_percpu);
+	softint_schedule(sc->l2tp_si);
+	/* counter is incremented in l2tpintr() */
+	splx(s);
 	return 0;
 }
 
@@ -389,17 +464,7 @@ l2tp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 	*mtod(m, int *) = dst->sa_family;
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error)
-		goto end;
-
-	/*
-	 * direct call to avoid infinite loop at l2tpintr()
-	 */
-	l2tpintr(var);
-
-	error = 0;
-
+	error = l2tp_tx_enqueue(var, m);
 end:
 	l2tp_putref_variant(var, &psref);
 	if (error)
@@ -409,12 +474,54 @@ end:
 }
 
 static void
+l2tp_sendit(struct l2tp_variant *var, struct mbuf *m)
+{
+	int len;
+	int error;
+	struct l2tp_softc *sc;
+	struct ifnet *ifp;
+
+	KASSERT(psref_held(&var->lv_psref, lv_psref_class));
+
+	sc = var->lv_softc;
+	ifp = &sc->l2tp_ec.ec_if;
+
+	len = m->m_pkthdr.len;
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+	bpf_mtap(ifp, m);
+
+	switch (var->lv_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		error = in_l2tp_output(var, m);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		error = in6_l2tp_output(var, m);
+		break;
+#endif
+	default:
+		m_freem(m);
+		error = ENETDOWN;
+		break;
+	}
+	if (error) {
+		ifp->if_oerrors++;
+	} else {
+		ifp->if_opackets++;
+		ifp->if_obytes += len;
+	}
+}
+
+static void
 l2tpintr(struct l2tp_variant *var)
 {
 	struct l2tp_softc *sc;
 	struct ifnet *ifp;
 	struct mbuf *m;
-	int error;
+	struct ifqueue *ifq;
+	u_int cpuid = cpu_index(curcpu());
 
 	KASSERT(psref_held(&var->lv_psref, lv_psref_class));
 
@@ -423,44 +530,49 @@ l2tpintr(struct l2tp_variant *var)
 
 	/* output processing */
 	if (var->lv_my_sess_id == 0 || var->lv_peer_sess_id == 0) {
-		IFQ_PURGE(&ifp->if_snd);
+		ifq = l2tp_ifq_percpu_getref(sc->l2tp_ifq_percpu);
+		IF_PURGE(ifq);
+		l2tp_ifq_percpu_putref(sc->l2tp_ifq_percpu);
+		if (cpuid == 0)
+			IFQ_PURGE(&ifp->if_snd);
 		return;
 	}
 
+	/* Currently, l2tpintr() is always called in softint context. */
+	ifq = l2tp_ifq_percpu_getref(sc->l2tp_ifq_percpu);
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
+		IF_DEQUEUE(ifq, m);
+		if (m != NULL)
+			l2tp_sendit(var, m);
+		else
 			break;
-		m->m_flags &= ~(M_BCAST|M_MCAST);
-		bpf_mtap(ifp, m);
-		switch (var->lv_psrc->sa_family) {
-#ifdef INET
-		case AF_INET:
-			error = in_l2tp_output(var, m);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			error = in6_l2tp_output(var, m);
-			break;
-#endif
-		default:
-			m_freem(m);
-			error = ENETDOWN;
-			break;
-		}
+	}
+	l2tp_ifq_percpu_putref(sc->l2tp_ifq_percpu);
 
-		if (error)
-			ifp->if_oerrors++;
-		else {
-			ifp->if_opackets++;
-			/*
-			 * obytes is incremented at ether_output() or
-			 * bridge_enqueue().
-			 */
+	if (cpuid == 0) {
+		for (;;) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			if (m != NULL)
+				l2tp_sendit(var, m);
+			else
+				break;
 		}
 	}
+}
 
+static void
+l2tpintr_softint(void *arg)
+{
+	struct l2tp_variant *var;
+	struct psref psref;
+	struct l2tp_softc *sc = arg;
+
+	var = l2tp_getref_variant(sc, &psref);
+	if (var == NULL)
+		return;
+
+	l2tpintr(var);
+	l2tp_putref_variant(var, &psref);
 }
 
 void
@@ -570,7 +682,7 @@ l2tp_start(struct ifnet *ifp)
 	if (var->lv_psrc == NULL || var->lv_pdst == NULL)
 		return;
 
-	l2tpintr(var);
+	softint_schedule(sc->l2tp_si);
 	l2tp_putref_variant(var, &psref);
 }
 
@@ -596,33 +708,8 @@ l2tp_transmit(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-	bpf_mtap(ifp, m);
-	switch (var->lv_psrc->sa_family) {
-#ifdef INET
-	case AF_INET:
-		error = in_l2tp_output(var, m);
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		error = in6_l2tp_output(var, m);
-		break;
-#endif
-	default:
-		m_freem(m);
-		error = ENETDOWN;
-		break;
-	}
 
-	if (error)
-		ifp->if_oerrors++;
-	else {
-		ifp->if_opackets++;
-		/*
-		 * obytes is incremented at ether_output() or bridge_enqueue().
-		 */
-	}
-
+	error = l2tp_tx_enqueue(var, m);
 out:
 	l2tp_putref_variant(var, &psref);
 	return error;
