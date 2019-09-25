@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.290 2019/09/09 18:11:20 sevan Exp $
+$NetBSD: acronyms.comp,v 1.291 2019/09/25 20:17:59 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1406,6 +1406,7 @@ SDL	Simple Direct-media Layer
 SDLC	{software,system,systems} development life cycle
 SDN	software defined networking
 SDP	Session Description Protocol
+SDR	software defined radio
 SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
