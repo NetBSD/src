@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.42 2019/09/24 18:28:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.43 2019/09/25 15:49:45 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1133,4 +1133,10 @@ sys/netipsec/key.c			1.259,1.260
 	rtcache, wqinput and l2tp: avoid having data directly in a
 	percpu storage.
 	[knakahara, ticket #1385]
+
+sys/dev/ic/nvme.c				1.45
+
+	PRs kern/54275, kern/54503 and kern/54532:
+	don't set Phase Tag bit of Completion Queue entry at nvme_poll_done().
+	[nonaka, ticket #1386]
 
