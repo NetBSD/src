@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.145 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.146 2019/09/25 09:53:38 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.145 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.146 2019/09/25 09:53:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -946,7 +946,8 @@ restart:
 		}
 		pserialize_read_exit(s);
 
-		KASSERT(pr->ndpr_refcnt == 0);
+		KASSERTMSG(pr->ndpr_refcnt == 0, "ndpr_refcnt=%d",
+		    pr->ndpr_refcnt);
 		nd6_prelist_remove(pr);
 	}
 }
@@ -1068,7 +1069,7 @@ nd6_prelist_remove(struct nd_prefix *pr)
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
 
 	ND6_ASSERT_WLOCK();
-	KASSERT(pr->ndpr_refcnt == 0);
+	KASSERTMSG(pr->ndpr_refcnt == 0, "ndpr_refcnt=%d", pr->ndpr_refcnt);
 
 	nd6_invalidate_prefix(pr);
 

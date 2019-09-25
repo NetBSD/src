@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.234 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.235 2019/09/25 09:53:38 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.234 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.235 2019/09/25 09:53:38 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1937,7 +1937,7 @@ static void
 in_lltable_destroy_lle(struct llentry *lle)
 {
 
-	KASSERT(lle->la_numheld == 0);
+	KASSERTMSG(lle->la_numheld == 0, "la_numheld=%d", lle->la_numheld);
 
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
