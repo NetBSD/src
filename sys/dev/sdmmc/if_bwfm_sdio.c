@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.5 2019/09/13 11:21:03 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.6 2019/09/25 16:21:14 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1267,10 +1267,9 @@ bwfm_sdio_intr(void *v)
         DPRINTF(("%s: sdio_intr\n", DEVNAME(sc)));
 
 	mutex_enter(&sc->sc_intr_lock);
-	if (!sc->sc_task_queued) {
-		sc->sc_task_queued = true;
+	if (!sdmmc_task_pending(&sc->sc_task))
 		sdmmc_add_task(sc->sc_sf[1]->sc, &sc->sc_task);
-	}
+	sc->sc_task_queued = true;
 	mutex_exit(&sc->sc_intr_lock);
 	return 1;
 }
