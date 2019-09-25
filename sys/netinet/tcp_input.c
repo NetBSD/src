@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.415 2019/08/06 15:48:18 riastradh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.416 2019/09/25 19:06:30 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.415 2019/08/06 15:48:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.416 2019/09/25 19:06:30 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2405,8 +2405,8 @@ after_listen:
 
 	/*
 	 * Since we've covered the SYN-SENT and SYN-RECEIVED states above
-	 * we must be in a synchronized state.  RFC791 states (under RST
-	 * generation) that any unacceptable segment (an out-of-order SYN
+	 * we must be in a synchronized state.  RFC793 states (under Reset
+	 * Generation) that any unacceptable segment (an out-of-order SYN
 	 * qualifies) received in a synchronized state must elicit only an
 	 * empty acknowledgment segment ... and the connection remains in
 	 * the same state.
