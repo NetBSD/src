@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.22 2019/09/25 16:49:37 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.23 2019/09/25 16:50:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.22 2019/09/25 16:49:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.23 2019/09/25 16:50:28 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -170,8 +170,8 @@ struct bcm2835icu_softc {
 	int sc_phandle;
 };
 
-struct bcm2835icu_softc *bcml1icu_sc;
-struct bcm2835icu_softc *bcmicu_sc;
+static struct bcm2835icu_softc *bcml1icu_sc;
+static struct bcm2835icu_softc *bcmicu_sc;
 
 #define read_bcm2835reg(o)	\
 	bus_space_read_4(bcmicu_sc->sc_iot, bcmicu_sc->sc_ioh, (o))
