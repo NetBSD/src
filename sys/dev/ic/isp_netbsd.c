@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.94 2019/09/21 07:31:56 maxv Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.95 2019/09/25 15:51:37 maya Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.94 2019/09/21 07:31:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.95 2019/09/25 15:51:37 maya Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -1261,7 +1261,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 				   "Starting Loop Down Timer");
 			}
 		}
-		isp_prt(isp, ISP_LOGINFO, msg);
+		isp_prt(isp, ISP_LOGINFO, "%s", msg);
 		break;
         case ISPASYNC_LOOP_UP:
 		/*
@@ -1457,7 +1457,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 			isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0,
 			   "Stopping Loop Down Timer");
 		}
-		isp_prt(isp, ISP_LOGINFO, msg);
+		isp_prt(isp, ISP_LOGINFO, "%s", msg);
 		/*
 		 * We can set blocked here because we know it's now okay
 		 * to try and run isp_fc_runstate (in order to build loop
