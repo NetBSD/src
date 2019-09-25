@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.38 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.39 2019/09/25 09:53:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.38 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.39 2019/09/25 09:53:37 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -220,7 +220,8 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 				ifaref(ifa);
 				ifa_release(ifa, &psref);
 				ifa_remove(ifp, ifa);
-				KASSERT(ifa->ifa_refcnt == 1);
+				KASSERTMSG(ifa->ifa_refcnt == 1, "ifa_refcnt=%d",
+				    ifa->ifa_refcnt);
 				ifafree(ifa);
 				ifa = NULL;
 			}

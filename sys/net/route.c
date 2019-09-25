@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.222 2019/09/23 05:00:20 rin Exp $	*/
+/*	$NetBSD: route.c,v 1.223 2019/09/25 09:53:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.222 2019/09/23 05:00:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.223 2019/09/25 09:53:37 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -621,7 +621,7 @@ static void
 rt_ref(struct rtentry *rt)
 {
 
-	KASSERT(rt->rt_refcnt >= 0);
+	KASSERTMSG(rt->rt_refcnt >= 0, "rt_refcnt=%d", rt->rt_refcnt);
 	atomic_inc_uint(&rt->rt_refcnt);
 }
 
@@ -725,7 +725,7 @@ void
 rt_free(struct rtentry *rt)
 {
 
-	KASSERT(rt->rt_refcnt > 0);
+	KASSERTMSG(rt->rt_refcnt > 0, "rt_refcnt=%d", rt->rt_refcnt);
 	if (rt_wait_ok()) {
 		atomic_dec_uint(&rt->rt_refcnt);
 		_rt_free(rt);
