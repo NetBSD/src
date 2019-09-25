@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.373 2019/04/23 11:21:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.374 2019/09/25 16:37:54 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.373 2019/04/23 11:21:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.374 2019/09/25 16:37:54 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6406,7 +6406,7 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va, size_t nptes)
 		pd_entry_t pde = *pdep;
 
 		if (l1pte_section_p(pde)) {
-			__CTASSERT((L1_S_CACHE_MASK & L1_S_V6_SUPER) == 0);
+			KASSERT((L1_S_CACHE_MASK & L1_S_V6_SUPER) == 0);
 			if ((pde & L1_S_CACHE_MASK) != pte_l1_s_cache_mode_pt) {
 				*pdep = (pde & ~L1_S_CACHE_MASK) |
 				    pte_l1_s_cache_mode_pt;
