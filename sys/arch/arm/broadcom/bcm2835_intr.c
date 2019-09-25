@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.21 2019/09/25 16:48:06 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.22 2019/09/25 16:49:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.21 2019/09/25 16:48:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.22 2019/09/25 16:49:37 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -705,6 +705,7 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 static int
 bcm2836mp_icu_fdt_decode_irq(u_int *specifier)
 {
+
 	if (!specifier)
 		return -1;
 	return be32toh(specifier[0]);
