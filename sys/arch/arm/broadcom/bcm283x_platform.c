@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.23 2019/01/03 12:52:40 jmcneill Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.24 2019/09/25 18:01:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.23 2019/01/03 12:52:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.24 2019/09/25 18:01:03 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -149,8 +149,8 @@ bcm2835_bus_to_phys(bus_addr_t ba)
 {
 
 	/* Attempt to find the PA device mapping */
-	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
-	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE)
+	if (ba >= BCM283X_PERIPHERALS_BASE_BUS &&
+	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
 		return BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
 
 	return ba & ~BCM2835_BUSADDR_CACHE_MASK;
@@ -161,8 +161,8 @@ bcm2836_bus_to_phys(bus_addr_t ba)
 {
 
 	/* Attempt to find the PA device mapping */
-	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
-	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE)
+	if (ba >= BCM283X_PERIPHERALS_BASE_BUS &&
+	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
 		return BCM2836_PERIPHERALS_BUS_TO_PHYS(ba);
 
 	if (ba >= BCM2836_ARM_LOCAL_BASE &&
@@ -241,7 +241,7 @@ bcm2835_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
 		DEVMAP_ENTRY(BCM2835_PERIPHERALS_VBASE, BCM2835_PERIPHERALS_BASE,
-		    BCM2835_PERIPHERALS_SIZE),	/* 16Mb */
+		    BCM283X_PERIPHERALS_SIZE),	/* 16Mb */
 
 		DEVMAP_ENTRY_END
 	};
@@ -256,7 +256,7 @@ bcm2836_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
 		DEVMAP_ENTRY(BCM2836_PERIPHERALS_VBASE, BCM2836_PERIPHERALS_BASE,
-		    BCM2835_PERIPHERALS_SIZE),	/* 16Mb */
+		    BCM283X_PERIPHERALS_SIZE),	/* 16Mb */
 
 		DEVMAP_ENTRY(BCM2836_ARM_LOCAL_VBASE, BCM2836_ARM_LOCAL_BASE,
 		    BCM2836_ARM_LOCAL_SIZE),
