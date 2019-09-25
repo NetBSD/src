@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.20 2019/03/27 05:47:50 ryo Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.21 2019/09/25 16:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.20 2019/03/27 05:47:50 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.21 2019/09/25 16:48:06 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -547,7 +547,7 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
 	}
 	if (irq_mask & BCM2836MP_PMU_IRQ) {
 		bus_space_write_4(iot, ioh, BCM2836_LOCAL_PM_ROUTING_CLR,
-		     __BIT(cpuid));
+		    __BIT(cpuid));
 	}
 
 	bcm2835_barrier();
