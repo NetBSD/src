@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.59 2019/09/24 18:15:50 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.60 2019/09/25 15:47:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3960,4 +3960,12 @@ sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.37
 
 	Always set hwcode on error. Useful for debugging.
 	[maxv, ticket #239]
+
+usr.sbin/postinstall/postinstall.in		1.6,1.7
+
+	exclude_libs - redirect ls 2> /dev/null so that the user is not
+	spammed with errors for directories without any libraries.
+	Add missing ${DEST_DIR} prefix to check target directory
+	(instead of host directory).
+	[nakayama, ticket #240]
 
