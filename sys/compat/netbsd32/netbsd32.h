@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.124 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.125 2019/09/25 21:40:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -128,9 +128,9 @@ static __inline NETBSD32_POINTER_TYPE
 netbsd32_ptr32i(const void *p64)
 {
 	uintptr_t u64 = (uintptr_t)p64;
-	KASSERTMSG(u64 == (NETBSD32_POINTER_TYPE)u64, "u64 %llx != %llx",
-		   (unsigned long long)u64,
-		   (unsigned long long)(NETBSD32_POINTER_TYPE)u64);
+	KASSERTMSG(u64 == (uintptr_t)(NETBSD32_POINTER_TYPE)u64,
+	    "u64 %jx != %jx", (uintmax_t)u64,
+	   (uintmax_t)(NETBSD32_POINTER_TYPE)u64);
 	return u64;
 }
 
