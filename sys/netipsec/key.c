@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.266 2019/08/04 14:30:36 maxv Exp $	*/
+/*	$NetBSD: key.c,v 1.267 2019/09/25 09:53:38 ozaki-r Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.266 2019/08/04 14:30:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.267 2019/09/25 09:53:38 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1695,7 +1695,8 @@ key_lookup_and_remove_sp(const struct secpolicyindex *spidx, bool from_kernel)
 
 	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_FOREACH(sp, spidx->dir) {
-		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD, "sp->state=%u",
+		    sp->state);
 		/*
 		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
 		 * removed by userland programs.
@@ -1760,7 +1761,8 @@ key_lookupbyid_and_remove_sp(u_int32_t id, bool from_kernel)
 
 	mutex_enter(&key_spd.lock);
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
-		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD, "sp->state=%u",
+		    sp->state);
 		/*
 		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
 		 * removed by userland programs.
@@ -1772,7 +1774,8 @@ key_lookupbyid_and_remove_sp(u_int32_t id, bool from_kernel)
 	}
 
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_OUTBOUND) {
-		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD, "sp->state=%u",
+		    sp->state);
 		/*
 		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
 		 * removed by userland programs.
@@ -2812,7 +2815,8 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 	    retry:
 		mutex_enter(&key_spd.lock);
 		SPLIST_WRITER_FOREACH(sp, dir) {
-			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+			KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD,
+			    "sp->state=%u", sp->state);
 			/*
 			 * Userlang programs can remove SPs created by userland
 			 * probrams only, that is, they cannot remove SPs
@@ -3231,7 +3235,7 @@ key_unlink_sah(struct secashead *sah)
 
 	KASSERT(!cpu_softintr_p());
 	KASSERT(mutex_owned(&key_sad.lock));
-	KASSERT(sah->state == SADB_SASTATE_DEAD);
+	KASSERTMSG(sah->state == SADB_SASTATE_DEAD, "sah->state=%u", sah->state);
 
 	/* Remove from the sah list */
 	SAHLIST_WRITER_REMOVE(sah);
@@ -3566,7 +3570,8 @@ static void
 key_freesaval(struct secasvar *sav)
 {
 
-	KASSERT(key_sa_refcnt(sav) == 0);
+	KASSERTMSG(key_sa_refcnt(sav) == 0, "key_sa_refcnt(sav)=%u",
+	    key_sa_refcnt(sav));
 
 	if (sav->replay != NULL)
 		kmem_intr_free(sav->replay, sav->replay_len);
@@ -3606,7 +3611,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	KASSERT(mhp->msg != NULL);
 
 	/* We shouldn't initialize sav variables while someone uses it. */
-	KASSERT(key_sa_refcnt(sav) == 0);
+	KASSERTMSG(key_sa_refcnt(sav) == 0, "key_sa_refcnt(sav)=%u",
+	    key_sa_refcnt(sav));
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -3795,7 +3801,8 @@ key_init_xform(struct secasvar *sav)
 	int error;
 
 	/* We shouldn't initialize sav variables while someone uses it. */
-	KASSERT(key_sa_refcnt(sav) == 0);
+	KASSERTMSG(key_sa_refcnt(sav) == 0, "key_sa_refcnt(sav)=%u",
+	    key_sa_refcnt(sav));
 
 	/* check SPI value */
 	switch (sav->sah->saidx.proto) {
@@ -4885,7 +4892,8 @@ key_timehandler_spd(time_t now)
 	    retry:
 		mutex_enter(&key_spd.lock);
 		SPLIST_WRITER_FOREACH(sp, dir) {
-			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+			KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD,
+			    "sp->state=%u", sp->state);
 
 			if (sp->lifetime == 0 && sp->validtime == 0)
 				continue;
