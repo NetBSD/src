@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.127 2019/08/21 12:46:56 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.128 2019/09/26 01:39:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.127 2019/08/21 12:46:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.128 2019/09/26 01:39:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -437,7 +437,7 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 	if (!VALID_USER_DSEL32(regs->r_ds) ||
 	    !VALID_USER_DSEL32(regs->r_ss))
 		return EINVAL;
-	if (regs->r_eip >= VM_MAXUSER_ADDRESS32)
+	if ((u_int)regs->r_eip >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
 	tf->tf_rax = regs->r_eax;
@@ -479,7 +479,7 @@ netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
 
 	/* Check that DR0-DR3 contain user-space address */
 	for (i = 0; i < X86_DBREGS; i++) {
-		if (regs->dr[i] >= VM_MAXUSER_ADDRESS32)
+		if ((u_int)regs->dr[i] >= VM_MAXUSER_ADDRESS32)
 			return EINVAL;
 	}
 
@@ -811,7 +811,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg32_t)(uintptr_t)ras_lookup(l->l_proc,
-	    (void *) (uintptr_t)gr[_REG32_EIP])) != -1)
+	    (void *) (uintptr_t)gr[_REG32_EIP])) != (__greg32_t)-1)
 		gr[_REG32_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;
