@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr_30.c,v 1.4 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr_30.c,v 1.5 2019/09/26 01:28:27 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.4 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.5 2019/09/26 01:28:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -131,7 +131,8 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev,
     int (*do_printBCD)(char *cp, size_t l, int bcd))
 {
 	struct usbd_port *p;
-	int i, j, err;
+	size_t i, j;
+	int err;
 
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
@@ -171,7 +172,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev,
 		return 0;
 	}
 
-	const int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	const u_int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
 	for (i = 1; i <= __arraycount(di->udi_ports) && i <= nports;
 	     i++) {
 		p = &dev->ud_hub->uh_ports[i - 1];
