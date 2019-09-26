@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.536 2019/09/22 22:59:39 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.537 2019/09/26 01:34:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.536 2019/09/22 22:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.537 2019/09/26 01:34:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -163,7 +163,7 @@ const char * const mountcompatnames[] = {
 	MOUNT_AFS,	/* 9 */
 };
 
-const int nmountcompatnames = __arraycount(mountcompatnames);
+const u_int nmountcompatnames = __arraycount(mountcompatnames);
 
 static int 
 fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
