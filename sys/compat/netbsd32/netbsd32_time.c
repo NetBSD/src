@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.51 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.52 2019/09/26 01:30:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.51 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.52 2019/09/26 01:30:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -534,11 +534,11 @@ netbsd32_clock_getcpuclockid2(struct lwp *l,
 
 	switch (SCARG(uap, idtype)) {
 	case P_PID:
-		pid = id == 0 ? l->l_proc->p_pid : id;
+		pid = id == 0 ? l->l_proc->p_pid : (pid_t)id;
 		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
 		break;
 	case P_LWPID:
-		lid = id == 0 ? l->l_lid : id;
+		lid = id == 0 ? l->l_lid : (lwpid_t)id;
 		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
 		break;
 	default:
