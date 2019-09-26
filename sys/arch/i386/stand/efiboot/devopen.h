@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.h,v 1.4 2019/08/18 02:18:24 manu Exp $	*/
+/*	$NetBSD: devopen.h,v 1.5 2019/09/26 12:21:03 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -42,3 +42,13 @@ struct devdesc {
 	char	d_name[MAXDEVNAME];
 	char	d_unit;
 };
+
+struct netboot_fstab {
+	const char *name;
+	struct fs_ops *ops;
+};
+
+extern const struct netboot_fstab netboot_fstab[];
+extern const int nnetboot_fstab;
+
+const struct netboot_fstab *netboot_fstab_find(const char *);
