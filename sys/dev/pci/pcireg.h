@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.8 2018/12/04 11:29:41 martin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.9 2019/09/26 18:14:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1335,6 +1335,8 @@ typedef u_int8_t pci_intr_line_t;
 #define	  PCI_BRIDGE_IOHIGH_LIMIT_SHIFT		16
 #define	  PCI_BRIDGE_IOHIGH_BASE_MASK		0xffff
 #define	  PCI_BRIDGE_IOHIGH_LIMIT_MASK		0xffff
+
+#define PCI_BRIDGE_EXPROMADDR_REG	0x38
 
 #define PCI_BRIDGE_CONTROL_REG		0x3c
 #define	  PCI_BRIDGE_CONTROL_SHIFT		16
