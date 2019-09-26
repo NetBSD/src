@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.4 2019/09/05 09:11:03 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.5 2019/09/26 19:07:22 martin Exp $ */
 
 /******************************************************************************
 
@@ -211,8 +211,7 @@ static void	ixgbe_initialize_rss_mapping(struct adapter *);
 static void	ixgbe_enable_intr(struct adapter *);
 static void	ixgbe_disable_intr(struct adapter *);
 static void	ixgbe_update_stats_counters(struct adapter *);
-static void	ixgbe_set_promisc(struct adapter *);
-static void	ixgbe_set_multi(struct adapter *);
+static void	ixgbe_set_rxfilter(struct adapter *);
 static void	ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
@@ -1571,7 +1570,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	stats->illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
-	if (hw->mac.type == ixgbe_mac_X550)
+	if (hw->mac.type >= ixgbe_mac_X550)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
 	/* 16 registers exist */
@@ -2126,7 +2125,8 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	stats->illerrc.ev_count = 0;
 	stats->errbc.ev_count = 0;
 	stats->mspdc.ev_count = 0;
-	stats->mbsdc.ev_count = 0;
+	if (hw->mac.type >= ixgbe_mac_X550)
+		stats->mbsdc.ev_count = 0;
 	stats->mpctotal.ev_count = 0;
 	stats->mlfc.ev_count = 0;
 	stats->mrfc.ev_count = 0;
@@ -3041,49 +3041,6 @@ invalid:
 } /* ixgbe_media_change */
 
 /************************************************************************
- * ixgbe_set_promisc
- ************************************************************************/
-static void
-ixgbe_set_promisc(struct adapter *adapter)
-{
-	struct ifnet *ifp = adapter->ifp;
-	int	     mcnt = 0;
-	u32	     rctl;
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ethercom *ec = &adapter->osdep.ec;
-
-	KASSERT(mutex_owned(&adapter->core_mtx));
-	rctl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
-	rctl &= (~IXGBE_FCTRL_UPE);
-	ETHER_LOCK(ec);
-	if (ec->ec_flags & ETHER_F_ALLMULTI)
-		mcnt = MAX_NUM_MULTICAST_ADDRESSES;
-	else {
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
-				break;
-			mcnt++;
-			ETHER_NEXT_MULTI(step, enm);
-		}
-	}
-	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES)
-		rctl &= (~IXGBE_FCTRL_MPE);
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		rctl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-	} else if (ec->ec_flags & ETHER_F_ALLMULTI) {
-		rctl |= IXGBE_FCTRL_MPE;
-		rctl &= ~IXGBE_FCTRL_UPE;
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-	}
-	ETHER_UNLOCK(ec);
-} /* ixgbe_set_promisc */
-
-/************************************************************************
  * ixgbe_msix_link - Link status change ISR (MSI/MSI-X)
  ************************************************************************/
 static int
@@ -3993,7 +3950,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	ixgbe_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
-	ixgbe_set_multi(adapter);
+	ixgbe_set_rxfilter(adapter);
 
 	/* Determine the correct mbuf pool, based on frame size */
 	if (adapter->max_frame_size <= MCLBYTES)
@@ -4382,12 +4339,12 @@ ixgbe_config_delay_values(struct adapter *adapter)
 } /* ixgbe_config_delay_values */
 
 /************************************************************************
- * ixgbe_set_multi - Multicast Update
+ * ixgbe_set_rxfilter - Multicast Update
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
 static void
-ixgbe_set_multi(struct adapter *adapter)
+ixgbe_set_rxfilter(struct adapter *adapter)
 {
 	struct ixgbe_mc_addr	*mta;
 	struct ifnet		*ifp = adapter->ifp;
@@ -4399,7 +4356,7 @@ ixgbe_set_multi(struct adapter *adapter)
 	struct ether_multistep	step;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
-	IOCTL_DEBUGOUT("ixgbe_set_multi: begin");
+	IOCTL_DEBUGOUT("ixgbe_set_rxfilter: begin");
 
 	mta = adapter->mta;
 	bzero(mta, sizeof(*mta) * MAX_NUM_MULTICAST_ADDRESSES);
@@ -4422,30 +4379,32 @@ ixgbe_set_multi(struct adapter *adapter)
 	}
 
 	fctrl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
-	fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 	if (ifp->if_flags & IFF_PROMISC)
 		fctrl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 	else if (ec->ec_flags & ETHER_F_ALLMULTI) {
 		fctrl |= IXGBE_FCTRL_MPE;
-	}
-	ETHER_UNLOCK(ec);
+		fctrl &= ~IXGBE_FCTRL_UPE;
+	} else
+		fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 
-	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES) {
+	/* Update multicast filter entries only when it's not ALLMULTI */
+	if ((ec->ec_flags & ETHER_F_ALLMULTI) == 0) {
+		ETHER_UNLOCK(ec);
 		update_ptr = (u8 *)mta;
 		ixgbe_update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
 		    ixgbe_mc_array_itr, TRUE);
-	}
-
-} /* ixgbe_set_multi */
+	} else
+		ETHER_UNLOCK(ec);
+} /* ixgbe_set_rxfilter */
 
 /************************************************************************
  * ixgbe_mc_array_itr
  *
  *   An iterator function needed by the multicast shared code.
  *   It feeds the shared code routine the addresses in the
- *   array of ixgbe_set_multi() one by one.
+ *   array of ixgbe_set_rxfilter() one by one.
  ************************************************************************/
 static u8 *
 ixgbe_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
@@ -6203,7 +6162,8 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change, rv = 0;
+	u_short change;
+	int rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
@@ -6215,7 +6175,7 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 		rv = ENETRESET;
 		goto out;
 	} else if ((change & IFF_PROMISC) != 0)
-		ixgbe_set_promisc(adapter);
+		ixgbe_set_rxfilter(adapter);
 
 	/* Check for ec_capenable. */
 	change = ec->ec_capenable ^ adapter->ec_capenable;
@@ -6373,7 +6333,7 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 			 */
 			IXGBE_CORE_LOCK(adapter);
 			ixgbe_disable_intr(adapter);
-			ixgbe_set_multi(adapter);
+			ixgbe_set_rxfilter(adapter);
 			ixgbe_enable_intr(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		}

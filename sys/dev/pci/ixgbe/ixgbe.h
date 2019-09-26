@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56 2019/07/17 03:26:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.56.2.1 2019/09/26 19:07:22 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -436,8 +436,6 @@ struct rx_ring {
 	u64			flm;
 };
 
-#define IXGBE_MAX_VF_MC 30  /* Max number of multicast entries */
-
 struct ixgbe_vf {
 	u_int    pool;
 	u_int    rar_index;
@@ -475,7 +473,7 @@ struct adapter {
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			if_flags;	/* saved ifp->if_flags */
+	u_short			if_flags;	/* saved ifp->if_flags */
 	int			ec_capenable;	/* saved ec->ec_capenable */
 
 	kmutex_t		core_mtx;

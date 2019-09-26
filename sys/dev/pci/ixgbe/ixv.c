@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.125.2.3 2019/09/05 09:11:03 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.125.2.4 2019/09/26 19:07:22 martin Exp $*/
 
 /******************************************************************************
 
@@ -112,7 +112,7 @@ static s32	ixv_check_link(struct adapter *);
 
 static void	ixv_enable_intr(struct adapter *);
 static void	ixv_disable_intr(struct adapter *);
-static void	ixv_set_multi(struct adapter *);
+static int	ixv_set_rxfilter(struct adapter *);
 static void	ixv_update_link_status(struct adapter *);
 static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
@@ -131,6 +131,7 @@ static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
+static void	ixv_clear_evcnt(struct adapter *);
 
 /* Sysctl handlers */
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
@@ -741,7 +742,7 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
-	ixv_set_multi(adapter);
+	ixv_set_rxfilter(adapter);
 
 	/*
 	 * Determine the correct mbuf pool
@@ -1073,7 +1074,6 @@ ixv_media_change(struct ifnet *ifp)
 	return (0);
 } /* ixv_media_change */
 
-
 /************************************************************************
  * ixv_negotiate_api
  *
@@ -1084,7 +1084,9 @@ static int
 ixv_negotiate_api(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int		mbx_api[] = { ixgbe_mbox_api_11,
+	int		mbx_api[] = { ixgbe_mbox_api_13,
+				      ixgbe_mbox_api_12,
+				      ixgbe_mbox_api_11,
 				      ixgbe_mbox_api_10,
 				      ixgbe_mbox_api_unknown };
 	int		i = 0;
@@ -1104,45 +1106,128 @@ ixv_negotiate_api(struct adapter *adapter)
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
-static void
-ixv_set_multi(struct adapter *adapter)
+static int
+ixv_set_rxfilter(struct adapter *adapter)
 {
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ethercom *ec = &adapter->osdep.ec;
-	u8	mta[MAX_NUM_MULTICAST_ADDRESSES * IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8		   *update_ptr;
-	int		   mcnt = 0;
+	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
+	struct ifnet		*ifp = adapter->ifp;
+	struct ixgbe_hw		*hw = &adapter->hw;
+	u8			*update_ptr;
+	int			mcnt = 0;
+	struct ethercom		*ec = &adapter->osdep.ec;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	bool			overflow = false;
+	int			error, rc = 0;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
-	IOCTL_DEBUGOUT("ixv_set_multi: begin");
+	IOCTL_DEBUGOUT("ixv_set_rxfilter: begin");
 
+	/* 1: For PROMISC */
+	if (ifp->if_flags & IFF_PROMISC) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_PROMISC);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support promisc mode\n");
+			error = EOPNOTSUPP;
+		} else if (error == IXGBE_ERR_NOT_IN_PROMISC) {
+			device_printf(adapter->dev,
+			    "the PF may not in promisc mode\n");
+			error = EINVAL;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to set promisc mode. error = %d\n",
+			    error);
+			error = EIO;
+		} else
+			return 0;
+		rc = error;
+	}
+
+	/* 2: For ALLMULTI or normal */
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
+		if ((mcnt >= IXGBE_MAX_VF_MC) ||
+		    (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			ETHER_ADDR_LEN) != 0)) {
+			overflow = true;
+			break;
+		}
 		bcopy(enm->enm_addrlo,
 		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
 		    IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
-		/* XXX This might be required --msaitoh */
-		if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES)
-			break;
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
 
+	/* 3: For ALLMULTI */
+	if (overflow) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_ALLMULTI);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support allmulti mode\n");
+			error = EOPNOTSUPP;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "number of Ethernet multicast addresses "
+			    "exceeds the limit (%d). error = %d\n",
+			    IXGBE_MAX_VF_MC, error);
+			error = ENOSPC;
+		} else {
+			ETHER_LOCK(ec);
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			return rc; /* Promisc might failed */
+		}
+
+		if (rc == 0)
+			rc = error;
+
+		/* Continue to update the multicast table as many as we can */
+	}
+
+	/* 4: For normal operation */
+	error = hw->mac.ops.update_xcast_mode(hw, IXGBEVF_XCAST_MODE_MULTI);
+	if ((error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) || (error == 0)) {
+		/* Normal operation */
+		ETHER_LOCK(ec);
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		error = 0;
+	} else if (error) {
+		device_printf(adapter->dev,
+		    "failed to set Ethernet multicast address "
+		    "operation to normal. error = %d\n", error);
+	}
+
 	update_ptr = mta;
 
-	adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
-	    ixv_mc_array_itr, TRUE);
-} /* ixv_set_multi */
+	error = adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw,
+	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
+	if (rc == 0)
+		rc = error;
+
+	return rc;
+} /* ixv_set_rxfilter */
 
 /************************************************************************
  * ixv_mc_array_itr
  *
  *   An iterator function needed by the multicast shared code.
  *   It feeds the shared code routine the addresses in the
- *   array of ixv_set_multi() one by one.
+ *   array of ixv_set_rxfilter() one by one.
  ************************************************************************/
 static u8 *
 ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
@@ -2630,6 +2715,76 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 
 } /* ixv_add_stats_sysctls */
 
+static void
+ixv_clear_evcnt(struct adapter *adapter)
+{
+	struct tx_ring		*txr = adapter->tx_rings;
+	struct rx_ring		*rxr = adapter->rx_rings;
+	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i;
+
+	/* Driver Statistics */
+	adapter->efbig_tx_dma_setup.ev_count = 0;
+	adapter->mbuf_defrag_failed.ev_count = 0;
+	adapter->efbig2_tx_dma_setup.ev_count = 0;
+	adapter->einval_tx_dma_setup.ev_count = 0;
+	adapter->other_tx_dma_setup.ev_count = 0;
+	adapter->eagain_tx_dma_setup.ev_count = 0;
+	adapter->enomem_tx_dma_setup.ev_count = 0;
+	adapter->watchdog_events.ev_count = 0;
+	adapter->tso_err.ev_count = 0;
+	adapter->link_irq.ev_count = 0;
+
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		adapter->queues[i].irqs.ev_count = 0;
+		adapter->queues[i].handleq.ev_count = 0;
+		adapter->queues[i].req.ev_count = 0;
+		txr->tso_tx.ev_count = 0;
+		txr->no_desc_avail.ev_count = 0;
+		txr->total_packets.ev_count = 0;
+#ifndef IXGBE_LEGACY_TX
+		txr->pcq_drops.ev_count = 0;
+#endif
+		txr->q_efbig_tx_dma_setup = 0;
+		txr->q_mbuf_defrag_failed = 0;
+		txr->q_efbig2_tx_dma_setup = 0;
+		txr->q_einval_tx_dma_setup = 0;
+		txr->q_other_tx_dma_setup = 0;
+		txr->q_eagain_tx_dma_setup = 0;
+		txr->q_enomem_tx_dma_setup = 0;
+		txr->q_tso_err = 0;
+
+		rxr->rx_packets.ev_count = 0;
+		rxr->rx_bytes.ev_count = 0;
+		rxr->rx_copies.ev_count = 0;
+		rxr->no_jmbuf.ev_count = 0;
+		rxr->rx_discarded.ev_count = 0;
+	}
+
+	/* MAC stats get their own sub node */
+
+	stats->ipcs.ev_count = 0;
+	stats->l4cs.ev_count = 0;
+	stats->ipcs_bad.ev_count = 0;
+	stats->l4cs_bad.ev_count = 0;
+
+	/* Packet Reception Stats */
+	stats->vfgprc.ev_count = 0;
+	stats->vfgorc.ev_count = 0;
+	stats->vfmprc.ev_count = 0;
+	stats->vfgptc.ev_count = 0;
+	stats->vfgotc.ev_count = 0;
+
+	/* Mailbox Stats */
+	hw->mbx.stats.msgs_tx.ev_count = 0;
+	hw->mbx.stats.msgs_rx.ev_count = 0;
+	hw->mbx.stats.acks.ev_count = 0;
+	hw->mbx.stats.reqs.ev_count = 0;
+	hw->mbx.stats.rsts.ev_count = 0;
+
+} /* ixv_clear_evcnt */
+
 /************************************************************************
  * ixv_set_sysctl_value
  ************************************************************************/
@@ -2790,10 +2945,13 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change, rv = 0;
+	u_short saved_flags;
+	u_short change;
+	int rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
+	saved_flags = adapter->if_flags;
 	change = ifp->if_flags ^ adapter->if_flags;
 	if (change != 0)
 		adapter->if_flags = ifp->if_flags;
@@ -2801,6 +2959,13 @@ ixv_ifflags_cb(struct ethercom *ec)
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		rv = ENETRESET;
 		goto out;
+	} else if ((change & IFF_PROMISC) != 0) {
+		rv = ixv_set_rxfilter(adapter);
+		if (rv != 0) {
+			/* Restore previous */
+			adapter->if_flags = saved_flags;
+			goto out;
+		}
 	}
 
 	/* Check for ec_capenable. */
@@ -2839,8 +3004,9 @@ static int
 ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ifcapreq *ifcr = data;
-	int		error = 0;
+	int		error;
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
@@ -2849,7 +3015,59 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFFLAGS (Set Interface Flags)");
 		break;
-	case SIOCADDMULTI:
+	case SIOCADDMULTI: {
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		struct ethercom *ec = &adapter->osdep.ec;
+		bool overflow = false;
+		int mcnt = 0;
+
+		/*
+		 * Check the number of multicast address. If it exceeds,
+		 * return ENOSPC.
+		 * Update this code when we support API 1.3.
+		 */
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
+		while (enm != NULL) {
+			mcnt++;
+
+			/*
+			 * This code is before adding, so one room is required
+			 * at least.
+			 */
+			if (mcnt > (IXGBE_MAX_VF_MC - 1)) {
+				overflow = true;
+				break;
+			}
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		ETHER_UNLOCK(ec);
+		error = 0;
+		if (overflow && ((ec->ec_flags & ETHER_F_ALLMULTI) == 0)) {
+			error = hw->mac.ops.update_xcast_mode(hw,
+			    IXGBEVF_XCAST_MODE_ALLMULTI);
+			if (error == IXGBE_ERR_NOT_TRUSTED) {
+				device_printf(adapter->dev,
+				    "this interface is not trusted\n");
+				error = EPERM;
+			} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+				device_printf(adapter->dev,
+				    "the PF doesn't support allmulti mode\n");
+				error = EOPNOTSUPP;
+			} else if (error) {
+				device_printf(adapter->dev,
+				    "number of Ethernet multicast addresses "
+				    "exceeds the limit (%d). error = %d\n",
+				    IXGBE_MAX_VF_MC, error);
+				error = ENOSPC;
+			} else
+				ec->ec_flags |= ETHER_F_ALLMULTI;
+		}
+		if (error)
+			return error;
+	}
+		/*FALLTHROUGH*/
 	case SIOCDELMULTI:
 		IOCTL_DEBUGOUT("ioctl: SIOC(ADD|DEL)MULTI");
 		break;
@@ -2862,6 +3080,11 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
+		break;
+	case SIOCZIFDATA:
+		IOCTL_DEBUGOUT("ioctl: SIOCZIFDATA (Zero counter)");
+		ixv_update_stats(adapter);
+		ixv_clear_evcnt(adapter);
 		break;
 	default:
 		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)", (int)command);
@@ -2897,7 +3120,7 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 */
 			IXGBE_CORE_LOCK(adapter);
 			ixv_disable_intr(adapter);
-			ixv_set_multi(adapter);
+			ixv_set_rxfilter(adapter);
 			ixv_enable_intr(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		}
