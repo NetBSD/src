@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.43 2019/09/16 04:49:46 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.44 2019/09/26 17:13:52 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd September 15, 2019
+.Dd September 26, 2019
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -537,6 +537,31 @@ is
 .Dv F_SETOWN
 and
 the process ID given as argument is not in use.
+.It Bq Er EACCES
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH 
+and read or search permission was denied for a component of the pathname.
+.It Bq Er ENOENT
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH 
+and a component of the pathname no longer exists.
+.It Bq Er ENOMEM
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH 
+and insufficient memory is available.
+.It Bq Er ERANGE
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH 
+and the resulting path would be greater than
+.Dv MAXPATHLEN .
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
