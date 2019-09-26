@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.69 2019/02/06 22:38:10 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.70 2019/09/26 10:33:30 mlelstv Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.69 2019/02/06 22:38:10 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.70 2019/09/26 10:33:30 mlelstv Exp $");
 #endif
 
 
@@ -430,7 +430,7 @@ rf_get_device_status(int fd)
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
 	int is_clean;
-	int i;
+	int i, nspares;
 
 	cfg_ptr = &device_config;
 
@@ -441,9 +441,13 @@ rf_get_device_status(int fd)
 		printf("%20s: %s\n", device_config.devs[i].devname, 
 		       device_status(device_config.devs[i].status));
 	}
-	if (device_config.nspares > 0) {
+
+	nspares = uimin(device_config.nspares,
+	                __arraycount(device_config.spares));
+
+	if (nspares > 0) {
 		printf("Spares:\n");
-		for(i=0; i < device_config.nspares; i++) {
+		for(i=0; i < nspares; i++) {
 			printf("%20s: %s\n",
 			       device_config.spares[i].devname, 
 			       device_status(device_config.spares[i].status));
@@ -461,8 +465,8 @@ rf_get_device_status(int fd)
 		}
 	}
 
-	if (device_config.nspares > 0) {
-		for(i=0; i < device_config.nspares; i++) {
+	if (nspares > 0) {
+		for(i=0; i < nspares; i++) {
 			if ((device_config.spares[i].status == 
 			     rf_ds_optimal) ||
 			    (device_config.spares[i].status == 
