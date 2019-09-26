@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.46 2019/09/26 22:39:55 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.47 2019/09/26 22:43:36 bad Exp $
 #
 
 #
@@ -117,7 +117,7 @@ lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 # dist directory consisting ~90% (50+MB) of tests unnecessary to us
 lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
-lsrc usr /lib/lib		pthread rmt y z
+lsrc usr /lib/lib		pthread rmt wrap y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
