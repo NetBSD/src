@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for i386/ELF NetBSD systems.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by matthew green <mrg@eterna.com.au>
 
 This file is part of GCC.
@@ -39,6 +39,16 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef CPP_SPEC
 #define CPP_SPEC "%(netbsd_cpp_spec)"
+
+
+/* Provide C11_SPEC/CC1PLUS_SPEC appropriate for NetBSD/i386.  */
+#define NETBSD_CC1_CPU_SPEC " %(cc1_cpu) "
+
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
 
 
 /* Make gcc agree with <machine/ansi.h> */
@@ -109,6 +119,8 @@ along with GCC; see the file COPYING3.  If not see
 /* Default to pcc-struct-return, because this is the ELF abi and
    we don't care about compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 1
+
+#define HAVE_ENABLE_EXECUTE_STACK
 
 #define IX86_MAYBE_NO_LIBGCC_TFMODE
 

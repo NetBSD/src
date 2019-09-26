@@ -1,6 +1,6 @@
 /* Lower GIMPLE_SWITCH expressions to something more efficient than
    a jump table.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -935,9 +935,9 @@ constructor_contains_same_values_p (vec<constructor_elt, va_gc> *vec)
   return prev;
 }
 
-/* Return type which should be used for array elements, either TYPE,
-   or for integral type some smaller integral type that can still hold
-   all the constants.  */
+/* Return type which should be used for array elements, either TYPE's
+   main variant or, for integral types, some smaller integral type
+   that can still hold all the constants.  */
 
 static tree
 array_value_type (gswitch *swtch, tree type, int num,
@@ -948,6 +948,13 @@ array_value_type (gswitch *swtch, tree type, int num,
   machine_mode mode;
   int sign = 0;
   tree smaller_type;
+
+  /* Types with alignments greater than their size can reach here, e.g. out of
+     SRA.  We couldn't use these as an array component type so get back to the
+     main variant first, which, for our purposes, is fine for other types as
+     well.  */
+
+  type = TYPE_MAIN_VARIANT (type);
 
   if (!INTEGRAL_TYPE_P (type))
     return type;

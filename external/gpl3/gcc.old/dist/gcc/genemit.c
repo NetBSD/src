@@ -1,5 +1,5 @@
 /* Generate code from machine description to emit insns as rtl.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -188,9 +188,11 @@ gen_exp (rtx x, enum rtx_code subroutine_type, char *used)
 	printf ("const_true_rtx");
       else
 	{
-	  printf ("GEN_INT (HOST_WIDE_INT_C (");
+	  printf ("GEN_INT (");
+	  printf ("HOST_WIDE_INT_C (");
 	  printf (HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
-	  printf ("))");
+	  printf (")");
+	  printf (")");
 	}
       return;
 
@@ -302,7 +304,7 @@ emit_c_code (const char *code, bool can_fail_p, const char *name)
   printf ("#define DONE return (_val = get_insns (),"
 	  "end_sequence (), _val)\n");
 
-  print_md_ptr_loc (code);
+  rtx_reader_ptr->print_md_ptr_loc (code);
   printf ("%s\n", code);
 
   printf ("#undef DONE\n");
@@ -448,6 +450,10 @@ gen_expand (md_rtx_info *info)
 
   /* Find out how many operands this function has.  */
   get_pattern_stats (&stats, XVEC (expand, 1));
+  if (stats.min_scratch_opno != -1
+      && stats.min_scratch_opno <= MAX (stats.max_opno, stats.max_dup_opno))
+    fatal_at (info->loc, "define_expand for %s needs to have match_scratch "
+			 "numbers above all other operands", XSTR (expand, 0));
 
   /* Output the function name and argument declarations.  */
   printf ("rtx\ngen_%s (", XSTR (expand, 0));
@@ -479,8 +485,6 @@ gen_expand (md_rtx_info *info)
      make a local variable.  */
   for (i = stats.num_generator_args; i <= stats.max_dup_opno; i++)
     printf ("  rtx operand%d;\n", i);
-  for (; i <= stats.max_scratch_opno; i++)
-    printf ("  rtx operand%d ATTRIBUTE_UNUSED;\n", i);
   printf ("  rtx_insn *_val = 0;\n");
   printf ("  start_sequence ();\n");
 
@@ -516,7 +520,7 @@ gen_expand (md_rtx_info *info)
 	 (unless we aren't going to use them at all).  */
       if (XVEC (expand, 1) != 0)
 	{
-	  for (i = 0; i < stats.num_operand_vars; i++)
+	  for (i = 0; i <= MAX (stats.max_opno, stats.max_dup_opno); i++)
 	    {
 	      printf ("    operand%d = operands[%d];\n", i, i);
 	      printf ("    (void) operand%d;\n", i);
@@ -745,7 +749,7 @@ output_peephole2_scratches (rtx split)
 }
 
 int
-main (int argc, char **argv)
+main (int argc, const char **argv)
 {
   progname = "genemit";
 
@@ -773,6 +777,7 @@ from the machine description file `md'.  */\n\n");
   printf ("#include \"varasm.h\"\n");
   printf ("#include \"stor-layout.h\"\n");
   printf ("#include \"calls.h\"\n");
+  printf ("#include \"memmodel.h\"\n");
   printf ("#include \"tm_p.h\"\n");
   printf ("#include \"flags.h\"\n");
   printf ("#include \"insn-config.h\"\n");

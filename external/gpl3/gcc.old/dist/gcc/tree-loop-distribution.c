@@ -1,5 +1,5 @@
 /* Loop distribution.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
    Contributed by Georges-Andre Silber <Georges-Andre.Silber@ensmp.fr>
    and Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -278,7 +278,7 @@ create_edge_for_control_dependence (struct graph *rdg, basic_block bb,
   EXECUTE_IF_SET_IN_BITMAP (cd->get_edges_dependent_on (bb->index),
 			    0, edge_n, bi)
     {
-      basic_block cond_bb = cd->get_edge (edge_n)->src;
+      basic_block cond_bb = cd->get_edge_src (edge_n);
       gimple *stmt = last_stmt (cond_bb);
       if (stmt && is_ctrl_stmt (stmt))
 	{
@@ -312,7 +312,7 @@ create_rdg_flow_edges (struct graph *rdg)
 /* Creates the edges of the reduced dependence graph RDG.  */
 
 static void
-create_rdg_cd_edges (struct graph *rdg, control_dependences *cd)
+create_rdg_cd_edges (struct graph *rdg, control_dependences *cd, loop_p loop)
 {
   int i;
 
@@ -324,6 +324,7 @@ create_rdg_cd_edges (struct graph *rdg, control_dependences *cd)
 	  edge_iterator ei;
 	  edge e;
 	  FOR_EACH_EDGE (e, ei, gimple_bb (stmt)->preds)
+	    if (flow_bb_inside_loop_p (loop, e->src))
 	      create_edge_for_control_dependence (rdg, e->src, i, cd);
 	}
       else
@@ -455,7 +456,7 @@ build_rdg (vec<loop_p> loop_nest, control_dependences *cd)
 
   create_rdg_flow_edges (rdg);
   if (cd)
-    create_rdg_cd_edges (rdg, cd);
+    create_rdg_cd_edges (rdg, cd, loop_nest[0]);
 
   datarefs.release ();
 
@@ -465,7 +466,7 @@ build_rdg (vec<loop_p> loop_nest, control_dependences *cd)
 
 
 enum partition_kind {
-    PKIND_NORMAL, PKIND_MEMSET, PKIND_MEMCPY
+    PKIND_NORMAL, PKIND_MEMSET, PKIND_MEMCPY, PKIND_MEMMOVE
 };
 
 struct partition
@@ -473,12 +474,12 @@ struct partition
   bitmap stmts;
   bitmap loops;
   bool reduction_p;
+  bool plus_one;
   enum partition_kind kind;
   /* data-references a kind != PKIND_NORMAL partition is about.  */
   data_reference_p main_dr;
   data_reference_p secondary_dr;
   tree niter;
-  bool plus_one;
 };
 
 
@@ -874,10 +875,11 @@ generate_memcpy_builtin (struct loop *loop, partition *partition)
 				       false, GSI_CONTINUE_LINKING);
   dest = build_addr_arg_loc (loc, partition->main_dr, nb_bytes);
   src = build_addr_arg_loc (loc, partition->secondary_dr, nb_bytes);
-  if (ptr_derefs_may_alias_p (dest, src))
-    kind = BUILT_IN_MEMMOVE;
-  else
+  if (partition->kind == PKIND_MEMCPY
+      || ! ptr_derefs_may_alias_p (dest, src))
     kind = BUILT_IN_MEMCPY;
+  else
+    kind = BUILT_IN_MEMMOVE;
 
   dest = force_gimple_operand_gsi (&gsi, dest, true, NULL_TREE,
 				   false, GSI_CONTINUE_LINKING);
@@ -949,9 +951,9 @@ destroy_loop (struct loop *loop)
 			   recompute_dominator (CDI_DOMINATORS, dest));
 }
 
-/* Generates code for PARTITION.  */
+/* Generates code for PARTITION.  Return whether LOOP needs to be destroyed.  */
 
-static void
+static bool 
 generate_code_for_partition (struct loop *loop,
 			     partition *partition, bool copy_p)
 {
@@ -962,13 +964,14 @@ generate_code_for_partition (struct loop *loop,
       gcc_assert (!partition_reduction_p (partition)
 		  || !copy_p);
       generate_loops_for_partition (loop, partition, copy_p);
-      return;
+      return false;
 
     case PKIND_MEMSET:
       generate_memset_builtin (loop, partition);
       break;
 
     case PKIND_MEMCPY:
+    case PKIND_MEMMOVE:
       generate_memcpy_builtin (loop, partition);
       break;
 
@@ -979,7 +982,8 @@ generate_code_for_partition (struct loop *loop,
   /* Common tail for partitions we turn into a call.  If this was the last
      partition for which we generate code, we have to destroy the loop.  */
   if (!copy_p)
-    destroy_loop (loop);
+    return true;
+  return false;
 }
 
 
@@ -1068,6 +1072,13 @@ classify_partition (loop_p loop, struct graph *rdg, partition *partition)
       /* But exactly one store and/or load.  */
       for (j = 0; RDG_DATAREFS (rdg, i).iterate (j, &dr); ++j)
 	{
+	  tree type = TREE_TYPE (DR_REF (dr));
+
+	  /* The memset, memcpy and memmove library calls are only
+	     able to deal with generic address space.  */
+	  if (!ADDR_SPACE_GENERIC_P (TYPE_ADDR_SPACE (type)))
+	    return;
+
 	  if (DR_IS_READ (dr))
 	    {
 	      if (single_load != NULL)
@@ -1164,10 +1175,12 @@ classify_partition (loop_p loop, struct graph *rdg, partition *partition)
 		  return;
 		}
 	    }
+	  partition->kind = PKIND_MEMMOVE;
 	}
+      else
+	partition->kind = PKIND_MEMCPY;
       free_dependence_relation (ddr);
       loops.release ();
-      partition->kind = PKIND_MEMCPY;
       partition->main_dr = single_store;
       partition->secondary_dr = single_load;
       partition->niter = nb_iter;
@@ -1406,9 +1419,11 @@ pg_add_dependence_edges (struct graph *rdg, vec<loop_p> loops, int dir,
 	else
 	  this_dir = 0;
 	free_dependence_relation (ddr);
-	if (dir == 0)
+	if (this_dir == 2)
+	  return 2;
+	else if (dir == 0)
 	  dir = this_dir;
-	else if (dir != this_dir)
+	else if (this_dir != 0 && dir != this_dir)
 	  return 2;
 	/* Shuffle "back" dr1.  */
 	dr1 = saved_dr1;
@@ -1429,11 +1444,12 @@ pgcmp (const void *v1_, const void *v2_)
 /* Distributes the code from LOOP in such a way that producer
    statements are placed before consumer statements.  Tries to separate
    only the statements from STMTS into separate loops.
-   Returns the number of distributed loops.  */
+   Returns the number of distributed loops.  Set *DESTROY_P to whether
+   LOOP needs to be destroyed.  */
 
 static int
 distribute_loop (struct loop *loop, vec<gimple *> stmts,
-		 control_dependences *cd, int *nb_calls)
+		 control_dependences *cd, int *nb_calls, bool *destroy_p)
 {
   struct graph *rdg;
   partition *partition;
@@ -1442,6 +1458,7 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
   graph *pg = NULL;
   int num_sccs = 1;
 
+  *destroy_p = false;
   *nb_calls = 0;
   auto_vec<loop_p, 3> loop_nest;
   if (!find_loop_nest (loop, &loop_nest))
@@ -1532,13 +1549,13 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
      memory accesses.  */
   for (i = 0; partitions.iterate (i, &into); ++i)
     {
+      bool changed = false;
       if (partition_builtin_p (into))
 	continue;
       for (int j = i + 1;
 	   partitions.iterate (j, &partition); ++j)
 	{
-	  if (!partition_builtin_p (partition)
-	      && similar_memory_accesses (rdg, into, partition))
+	  if (similar_memory_accesses (rdg, into, partition))
 	    {
 	      if (dump_file && (dump_flags & TDF_DETAILS))
 		{
@@ -1552,8 +1569,15 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
 	      partitions.unordered_remove (j);
 	      partition_free (partition);
 	      j--;
+	      changed = true;
 	    }
 	}
+      /* If we fused 0 1 2 in step 1 to 0,2 1 as 0 and 2 have similar
+         accesses when 1 and 2 have similar accesses but not 0 and 1
+	 then in the next iteration we will fail to consider merging
+	 1 into 0,2.  So try again if we did any merging into 0.  */
+      if (changed)
+	i--;
     }
 
   /* Build the partition dependency graph.  */
@@ -1680,7 +1704,7 @@ distribute_loop (struct loop *loop, vec<gimple *> stmts,
     {
       if (partition_builtin_p (partition))
 	(*nb_calls)++;
-      generate_code_for_partition (loop, partition, i < nbp - 1);
+      *destroy_p |= generate_code_for_partition (loop, partition, i < nbp - 1);
     }
 
  ldist_done:
@@ -1734,6 +1758,7 @@ pass_loop_distribution::execute (function *fun)
   bool changed = false;
   basic_block bb;
   control_dependences *cd = NULL;
+  auto_vec<loop_p> loops_to_be_destroyed;
 
   FOR_ALL_BB_FN (bb, fun)
     {
@@ -1816,11 +1841,15 @@ out:
 	    {
 	      calculate_dominance_info (CDI_DOMINATORS);
 	      calculate_dominance_info (CDI_POST_DOMINATORS);
-	      cd = new control_dependences (create_edge_list ());
+	      cd = new control_dependences ();
 	      free_dominance_info (CDI_POST_DOMINATORS);
 	    }
+	  bool destroy_p;
 	  nb_generated_loops = distribute_loop (loop, work_list, cd,
-						&nb_generated_calls);
+						&nb_generated_calls,
+						&destroy_p);
+	  if (destroy_p)
+	    loops_to_be_destroyed.safe_push (loop);
 	}
 
       if (nb_generated_loops + nb_generated_calls > 0)
@@ -1840,6 +1869,12 @@ out:
 
   if (changed)
     {
+      /* Destroy loop bodies that could not be reused.  Do this late as we
+	 otherwise can end up refering to stale data in control dependences.  */
+      unsigned i;
+      FOR_EACH_VEC_ELT (loops_to_be_destroyed, i, loop)
+	  destroy_loop (loop);
+
       /* Cached scalar evolutions now may refer to wrong or non-existing
 	 loops.  */
       scev_reset_htab ();

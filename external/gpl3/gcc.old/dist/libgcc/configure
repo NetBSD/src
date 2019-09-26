@@ -555,9 +555,13 @@ ac_unique_file="static-object.mk"
 ac_includes_default='/* none */'
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+md_unwind_header
+unwind_header
+enable_execute_stack
 asm_hidden_op
 extra_parts
 cpu_type
+get_gcc_base_ver
 thread_header
 tm_defines
 tm_file
@@ -668,11 +672,13 @@ enable_version_specific_runtime_libs
 with_slibdir
 enable_maintainer_mode
 with_build_libsubdir
+enable_largefile
 enable_decimal_float
 with_system_libunwind
 enable_explicit_exception_frame_registration
 with_glibc_version
 enable_tls
+with_gcc_major_version_only
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1303,6 +1309,7 @@ Optional Features:
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
+  --disable-largefile     omit support for large files
   --enable-decimal-float={no,yes,bid,dpd}
 			enable decimal float extension to C.  Selecting 'bid'
 			or 'dpd' choses which decimal floating point format
@@ -1327,6 +1334,8 @@ Optional Packages:
   --with-system-libunwind use installed libunwind
   --with-glibc-version=M.N
                           assume GCC used with glibc version M.N or later
+  --with-gcc-major-version-only
+                          use only GCC major number in filesystem paths
 
 Some influential environment variables:
   CC          C compiler command
@@ -2306,7 +2315,7 @@ case "${host}" in
 	  # If we are using a compiler supporting mdynamic-no-pic
 	  # and the option has been tested as safe to add, then cancel
 	  # it here, since the code generated is incompatible with shared
-	  # libs.
+	  # libs.
 	  *-mdynamic-no-pic*) PICFLAG='-fno-common -mno-dynamic-no-pic' ;;
 	  *) PICFLAG=-fno-common ;;
 	esac
@@ -4054,6 +4063,205 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ac_c_preproc_warn_flag=yes
 
 
+# Check whether --enable-largefile was given.
+if test "${enable_largefile+set}" = set; then :
+  enableval=$enable_largefile;
+fi
+
+if test "$enable_largefile" != no; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for special C compiler options needed for large files" >&5
+$as_echo_n "checking for special C compiler options needed for large files... " >&6; }
+if test "${ac_cv_sys_largefile_CC+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_sys_largefile_CC=no
+     if test "$GCC" != yes; then
+       ac_save_CC=$CC
+       while :; do
+	 # IRIX 6.2 and later do not support large files by default,
+	 # so use the C compiler's -n32 option if that helps.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+ /* Check that off_t can represent 2**63 - 1 correctly.
+    We can't simply define LARGE_OFF_T to be 9223372036854775807,
+    since some C++ compilers masquerading as C compilers
+    incorrectly reject 9223372036854775807.  */
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
+		       && LARGE_OFF_T % 2147483647 == 1)
+		      ? 1 : -1];
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+	 if ac_fn_c_try_compile "$LINENO"; then :
+  break
+fi
+rm -f core conftest.err conftest.$ac_objext
+	 CC="$CC -n32"
+	 if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sys_largefile_CC=' -n32'; break
+fi
+rm -f core conftest.err conftest.$ac_objext
+	 break
+       done
+       CC=$ac_save_CC
+       rm -f conftest.$ac_ext
+    fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_largefile_CC" >&5
+$as_echo "$ac_cv_sys_largefile_CC" >&6; }
+  if test "$ac_cv_sys_largefile_CC" != no; then
+    CC=$CC$ac_cv_sys_largefile_CC
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _FILE_OFFSET_BITS value needed for large files" >&5
+$as_echo_n "checking for _FILE_OFFSET_BITS value needed for large files... " >&6; }
+if test "${ac_cv_sys_file_offset_bits+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  while :; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+ /* Check that off_t can represent 2**63 - 1 correctly.
+    We can't simply define LARGE_OFF_T to be 9223372036854775807,
+    since some C++ compilers masquerading as C compilers
+    incorrectly reject 9223372036854775807.  */
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
+		       && LARGE_OFF_T % 2147483647 == 1)
+		      ? 1 : -1];
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sys_file_offset_bits=no; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define _FILE_OFFSET_BITS 64
+#include <sys/types.h>
+ /* Check that off_t can represent 2**63 - 1 correctly.
+    We can't simply define LARGE_OFF_T to be 9223372036854775807,
+    since some C++ compilers masquerading as C compilers
+    incorrectly reject 9223372036854775807.  */
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
+		       && LARGE_OFF_T % 2147483647 == 1)
+		      ? 1 : -1];
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sys_file_offset_bits=64; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  ac_cv_sys_file_offset_bits=unknown
+  break
+done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_file_offset_bits" >&5
+$as_echo "$ac_cv_sys_file_offset_bits" >&6; }
+case $ac_cv_sys_file_offset_bits in #(
+  no | unknown) ;;
+  *)
+cat >>confdefs.h <<_ACEOF
+#define _FILE_OFFSET_BITS $ac_cv_sys_file_offset_bits
+_ACEOF
+;;
+esac
+rm -rf conftest*
+  if test $ac_cv_sys_file_offset_bits = unknown; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _LARGE_FILES value needed for large files" >&5
+$as_echo_n "checking for _LARGE_FILES value needed for large files... " >&6; }
+if test "${ac_cv_sys_large_files+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  while :; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+ /* Check that off_t can represent 2**63 - 1 correctly.
+    We can't simply define LARGE_OFF_T to be 9223372036854775807,
+    since some C++ compilers masquerading as C compilers
+    incorrectly reject 9223372036854775807.  */
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
+		       && LARGE_OFF_T % 2147483647 == 1)
+		      ? 1 : -1];
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sys_large_files=no; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define _LARGE_FILES 1
+#include <sys/types.h>
+ /* Check that off_t can represent 2**63 - 1 correctly.
+    We can't simply define LARGE_OFF_T to be 9223372036854775807,
+    since some C++ compilers masquerading as C compilers
+    incorrectly reject 9223372036854775807.  */
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
+		       && LARGE_OFF_T % 2147483647 == 1)
+		      ? 1 : -1];
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sys_large_files=1; break
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  ac_cv_sys_large_files=unknown
+  break
+done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_large_files" >&5
+$as_echo "$ac_cv_sys_large_files" >&6; }
+case $ac_cv_sys_large_files in #(
+  no | unknown) ;;
+  *)
+cat >>confdefs.h <<_ACEOF
+#define _LARGE_FILES $ac_cv_sys_large_files
+_ACEOF
+;;
+esac
+rm -rf conftest*
+  fi
+fi
+
+
 
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -4772,6 +4980,8 @@ case ${host} in
 # software libraries, and whether the assembler can handle xsaddqp
 # for hardware support.
 powerpc*-*-linux*)
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -mabi=altivec -mvsx -mfloat128"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 2.06 to build __float128 libraries" >&5
 $as_echo_n "checking for PowerPC ISA 2.06 to build __float128 libraries... " >&6; }
 if test "${libgcc_cv_powerpc_float128+set}" = set; then :
@@ -4779,8 +4989,7 @@ if test "${libgcc_cv_powerpc_float128+set}" = set; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#pragma GCC target ("vsx")
-     vector double dadd (vector double a, vector double b) { return a + b; }
+vector double dadd (vector double a, vector double b) { return a + b; }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   libgcc_cv_powerpc_float128=yes
@@ -4792,6 +5001,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_powerpc_float128" >&5
 $as_echo "$libgcc_cv_powerpc_float128" >&6; }
 
+  CFLAGS="$CFLAGS -mpower9-vector -mfloat128-hardware"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 3.0 to build hardware __float128 libraries" >&5
 $as_echo_n "checking for PowerPC ISA 3.0 to build hardware __float128 libraries... " >&6; }
 if test "${libgcc_cv_powerpc_float128_hw+set}" = set; then :
@@ -4799,12 +5009,11 @@ if test "${libgcc_cv_powerpc_float128_hw+set}" = set; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#pragma GCC target ("vsx,power9-vector")
-     #include <sys/auxv.h>
+#include <sys/auxv.h>
      #ifndef AT_PLATFORM
      #error "AT_PLATFORM is not defined"
      #endif
-     vector unsigned char (vector unsigned char a, vector unsigned char b)
+     vector unsigned char add (vector unsigned char a, vector unsigned char b)
      {
        vector unsigned char ret;
        __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
@@ -4823,6 +5032,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_powerpc_float128_hw" >&5
 $as_echo "$libgcc_cv_powerpc_float128_hw" >&6; }
+  CFLAGS="$saved_CFLAGS"
 esac
 
 # Collect host-machine-specific information.
@@ -5086,19 +5296,29 @@ esac
 
 
 
+# Determine what GCC version number to use in filesystem paths.
+
+  get_gcc_base_ver="cat"
+
+# Check whether --with-gcc-major-version-only was given.
+if test "${with_gcc_major_version_only+set}" = set; then :
+  withval=$with_gcc_major_version_only; if test x$with_gcc_major_version_only = xyes ; then
+        get_gcc_base_ver="sed -e 's/^\([0-9]*\).*/\1/'"
+      fi
+
+fi
+
+
+
+
 # Substitute configuration variables
 
 
 
-ac_config_links="$ac_config_links enable-execute-stack.c:$enable_execute_stack"
 
-ac_config_links="$ac_config_links unwind.h:$unwind_header"
 
-ac_config_links="$ac_config_links md-unwind-support.h:config/$md_unwind_header"
 
-ac_config_links="$ac_config_links sfp-machine.h:config/$sfp_machine_header"
 
-ac_config_links="$ac_config_links gthr-default.h:$thread_header"
 
 
 # We need multilib support.
@@ -5638,7 +5858,6 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
 config_headers="$ac_config_headers"
-config_links="$ac_config_links"
 config_commands="$ac_config_commands"
 
 _ACEOF
@@ -5667,9 +5886,6 @@ $config_files
 
 Configuration headers:
 $config_headers
-
-Configuration links:
-$config_links
 
 Configuration commands:
 $config_commands
@@ -5810,11 +6026,6 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "auto-target.h") CONFIG_HEADERS="$CONFIG_HEADERS auto-target.h:config.in" ;;
-    "enable-execute-stack.c") CONFIG_LINKS="$CONFIG_LINKS enable-execute-stack.c:$enable_execute_stack" ;;
-    "unwind.h") CONFIG_LINKS="$CONFIG_LINKS unwind.h:$unwind_header" ;;
-    "md-unwind-support.h") CONFIG_LINKS="$CONFIG_LINKS md-unwind-support.h:config/$md_unwind_header" ;;
-    "sfp-machine.h") CONFIG_LINKS="$CONFIG_LINKS sfp-machine.h:config/$sfp_machine_header" ;;
-    "gthr-default.h") CONFIG_LINKS="$CONFIG_LINKS gthr-default.h:$thread_header" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
 
@@ -5830,7 +6041,6 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
-  test "${CONFIG_LINKS+set}" = set || CONFIG_LINKS=$config_links
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -6118,7 +6328,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_HEADERS"
 
 
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS  :L $CONFIG_LINKS  :C $CONFIG_COMMANDS"
+eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    :C $CONFIG_COMMANDS"
 shift
 for ac_tag
 do
@@ -6354,38 +6564,7 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
       || as_fn_error "could not create -" "$LINENO" 5
   fi
  ;;
-  :L)
-  #
-  # CONFIG_LINK
-  #
 
-  if test "$ac_source" = "$ac_file" && test "$srcdir" = '.'; then
-    :
-  else
-    # Prefer the file from the source tree if names are identical.
-    if test "$ac_source" = "$ac_file" || test ! -r "$ac_source"; then
-      ac_source=$srcdir/$ac_source
-    fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: linking $ac_source to $ac_file" >&5
-$as_echo "$as_me: linking $ac_source to $ac_file" >&6;}
-
-    if test ! -r "$ac_source"; then
-      as_fn_error "$ac_source: file not found" "$LINENO" 5
-    fi
-    rm -f "$ac_file"
-
-    # Try a relative symlink, then a hard link, then a copy.
-    case $srcdir in
-    [\\/$]* | ?:[\\/]* ) ac_rel_source=$ac_source ;;
-	*) ac_rel_source=$ac_top_build_prefix$ac_source ;;
-    esac
-    ln -s "$ac_rel_source" "$ac_file" 2>/dev/null ||
-      ln "$ac_source" "$ac_file" 2>/dev/null ||
-      cp -p "$ac_source" "$ac_file" ||
-      as_fn_error "cannot link or copy $ac_source to $ac_file" "$LINENO" 5
-  fi
- ;;
   :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
 $as_echo "$as_me: executing $ac_file commands" >&6;}
  ;;

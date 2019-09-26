@@ -1,5 +1,5 @@
 /* Default target hook functions.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -73,6 +73,7 @@ extern tree default_mangle_assembler_name (const char *);
 
 extern bool default_scalar_mode_supported_p (machine_mode);
 extern bool default_libgcc_floating_mode_supported_p (machine_mode);
+extern machine_mode default_floatn_mode (int, bool);
 extern bool targhook_words_big_endian (void);
 extern bool targhook_float_words_big_endian (void);
 extern bool default_float_exceptions_rounding_supported_p (void);
@@ -181,6 +182,7 @@ extern rtx default_addr_space_legitimize_address (rtx, rtx, machine_mode,
 extern bool default_addr_space_subset_p (addr_space_t, addr_space_t);
 extern bool default_addr_space_zero_address_valid (addr_space_t);
 extern int default_addr_space_debug (addr_space_t);
+extern void default_addr_space_diagnose_usage (addr_space_t, location_t);
 extern rtx default_addr_space_convert (rtx, tree, tree);
 extern unsigned int default_case_values_threshold (void);
 extern bool default_have_conditional_execution (void);
@@ -199,6 +201,7 @@ extern bool default_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT,
 						    unsigned int,
 						    enum by_pieces_operation,
 						    bool);
+extern int default_compare_by_pieces_branch_ratio (machine_mode);
 
 extern bool default_profile_before_prologue (void);
 extern reg_class_t default_preferred_reload_class (rtx, reg_class_t);
@@ -253,5 +256,12 @@ extern void default_setup_incoming_vararg_bounds (cumulative_args_t ca ATTRIBUTE
 						  int second_time ATTRIBUTE_UNUSED);
 extern bool default_optab_supported_p (int, machine_mode, machine_mode,
 				       optimization_type);
+extern unsigned int default_max_noce_ifcvt_seq_cost (edge);
+extern bool default_noce_conversion_profitable_p (rtx_insn *,
+						  struct noce_if_info *);
+extern unsigned int default_min_arithmetic_precision (void);
+
+extern enum flt_eval_method
+default_excess_precision (enum excess_precision_type ATTRIBUTE_UNUSED);
 
 #endif /* GCC_TARGHOOKS_H */

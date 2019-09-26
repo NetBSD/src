@@ -1,5 +1,5 @@
 /* Vector API for GNU compiler.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
    Re-implemented in C++ by Diego Novillo <dnovillo@google.com>
 
@@ -410,10 +410,15 @@ struct GTY((user)) vec
 /* Type to provide NULL values for vec<T, A, L>.  This is used to
    provide nil initializers for vec instances.  Since vec must be
    a POD, we cannot have proper ctor/dtor for it.  To initialize
-   a vec instance, you can assign it the value vNULL.  */
+   a vec instance, you can assign it the value vNULL.  This isn't
+   needed for file-scope and function-local static vectors, which
+   are zero-initialized by default.  */
 struct vnull
 {
   template <typename T, typename A, typename L>
+#if __cpp_constexpr >= 200704
+  constexpr
+#endif
   operator vec<T, A, L> () { return vec<T, A, L>(); }
 };
 extern vnull vNULL;
@@ -454,6 +459,10 @@ public:
   bool is_empty (void) const { return m_vecpfx.m_num == 0; }
   T *address (void) { return m_vecdata; }
   const T *address (void) const { return m_vecdata; }
+  T *begin () { return address (); }
+  const T *begin () const { return address (); }
+  T *end () { return address () + length (); }
+  const T *end () const { return address () + length (); }
   const T &operator[] (unsigned) const;
   T &operator[] (unsigned);
   T &last (void);
@@ -473,6 +482,7 @@ public:
   void qsort (int (*) (const void *, const void *));
   T *bsearch (const void *key, int (*compar)(const void *, const void *));
   unsigned lower_bound (T, bool (*)(const T &, const T &)) const;
+  bool contains (const T &search) const;
   static size_t embedded_size (unsigned);
   void embedded_init (unsigned, unsigned = 0, unsigned = 0);
   void quick_grow (unsigned len);
@@ -541,7 +551,6 @@ vec_safe_is_empty (vec<T, A, vl_embed> *v)
 {
   return v ? v->is_empty () : true;
 }
-
 
 /* If V does not have space for NELEMS elements, call
    V->reserve(NELEMS, EXACT).  */
@@ -695,6 +704,15 @@ vec_safe_splice (vec<T, A, vl_embed> *&dst, const vec<T, A, vl_embed> *src
     }
 }
 
+/* Return true if SEARCH is an element of V.  Note that this is O(N) in the
+   size of the vector and so should be used with care.  */
+
+template<typename T, typename A>
+inline bool
+vec_safe_contains (vec<T, A, vl_embed> *v, const T &search)
+{
+  return v ? v->contains (search) : false;
+}
 
 /* Index into vector.  Return the IX'th element.  IX must be in the
    domain of the vector.  */
@@ -973,6 +991,20 @@ vec<T, A, vl_embed>::bsearch (const void *key,
   return NULL;
 }
 
+/* Return true if SEARCH is an element of V.  Note that this is O(N) in the
+   size of the vector and so should be used with care.  */
+
+template<typename T, typename A>
+inline bool
+vec<T, A, vl_embed>::contains (const T &search) const
+{
+  unsigned int len = length ();
+  for (unsigned int i = 0; i < len; i++)
+    if ((*this)[i] == search)
+      return true;
+
+  return false;
+}
 
 /* Find and return the first position in which OBJ could be inserted
    without changing the ordering of this vector.  LESSTHAN is a
@@ -1060,8 +1092,10 @@ inline void
 vec<T, A, vl_embed>::quick_grow_cleared (unsigned len)
 {
   unsigned oldlen = length ();
+  size_t sz = sizeof (T) * (len - oldlen);
   quick_grow (len);
-  memset (&(address ()[oldlen]), 0, sizeof (T) * (len - oldlen));
+  if (sz != 0)
+    memset (&(address ()[oldlen]), 0, sz);
 }
 
 
@@ -1167,6 +1201,10 @@ public:
   const T *address (void) const
   { return m_vec ? m_vec->m_vecdata : NULL; }
 
+  T *begin () { return address (); }
+  const T *begin () const { return address (); }
+  T *end () { return begin () + length (); }
+  const T *end () const { return begin () + length (); }
   const T &operator[] (unsigned ix) const
   { return (*m_vec)[ix]; }
 
@@ -1208,6 +1246,7 @@ public:
   void qsort (int (*) (const void *, const void *));
   T *bsearch (const void *key, int (*compar)(const void *, const void *));
   unsigned lower_bound (T, bool (*)(const T &, const T &)) const;
+  bool contains (const T &search) const;
 
   bool using_auto_storage () const;
 
@@ -1568,8 +1607,10 @@ inline void
 vec<T, va_heap, vl_ptr>::safe_grow_cleared (unsigned len MEM_STAT_DECL)
 {
   unsigned oldlen = length ();
+  size_t sz = sizeof (T) * (len - oldlen);
   safe_grow (len PASS_MEM_STAT);
-  memset (&(address ()[oldlen]), 0, sizeof (T) * (len - oldlen));
+  if (sz != 0)
+    memset (&(address ()[oldlen]), 0, sz);
 }
 
 
@@ -1693,6 +1734,16 @@ vec<T, va_heap, vl_ptr>::lower_bound (T obj,
     const
 {
   return m_vec ? m_vec->lower_bound (obj, lessthan) : 0;
+}
+
+/* Return true if SEARCH is an element of V.  Note that this is O(N) in the
+   size of the vector and so should be used with care.  */
+
+template<typename T>
+inline bool
+vec<T, va_heap, vl_ptr>::contains (const T &search) const
+{
+  return m_vec ? m_vec->contains (search) : false;
 }
 
 template<typename T>

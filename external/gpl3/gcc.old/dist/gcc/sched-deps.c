@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file computes dependencies between
    instructions.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) Enhanced by,
    and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -30,6 +30,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "df.h"
 #include "insn-config.h"
 #include "regs.h"
+#include "memmodel.h"
 #include "ira.h"
 #include "ira-int.h"
 #include "insn-attr.h"
@@ -3505,6 +3506,31 @@ sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
       if (!deps->readonly)
 	deps->last_args_size = insn;
     }
+
+  /* We must not mix prologue and epilogue insns.  See PR78029.  */
+  if (prologue_contains (insn))
+    {
+      add_dependence_list (insn, deps->last_epilogue, true, REG_DEP_ANTI, true);
+      if (!deps->readonly)
+	{
+	  if (deps->last_logue_was_epilogue)
+	    free_INSN_LIST_list (&deps->last_prologue);
+	  deps->last_prologue = alloc_INSN_LIST (insn, deps->last_prologue);
+	  deps->last_logue_was_epilogue = false;
+	}
+    }
+
+  if (epilogue_contains (insn))
+    {
+      add_dependence_list (insn, deps->last_prologue, true, REG_DEP_ANTI, true);
+      if (!deps->readonly)
+	{
+	  if (!deps->last_logue_was_epilogue)
+	    free_INSN_LIST_list (&deps->last_epilogue);
+	  deps->last_epilogue = alloc_INSN_LIST (insn, deps->last_epilogue);
+	  deps->last_logue_was_epilogue = true;
+	}
+    }
 }
 
 /* Return TRUE if INSN might not always return normally (e.g. call exit,
@@ -3910,6 +3936,9 @@ init_deps (struct deps_desc *deps, bool lazy_reg_last)
   deps->in_post_call_group_p = not_post_call;
   deps->last_debug_insn = 0;
   deps->last_args_size = 0;
+  deps->last_prologue = 0;
+  deps->last_epilogue = 0;
+  deps->last_logue_was_epilogue = false;
   deps->last_reg_pending_barrier = NOT_A_BARRIER;
   deps->readonly = 0;
 }
@@ -3996,8 +4025,14 @@ remove_from_deps (struct deps_desc *deps, rtx_insn *insn)
   removed = remove_from_dependence_list (insn, &deps->last_pending_memory_flush);
   deps->pending_flush_length -= removed;
 
+  unsigned to_clear = -1U;
   EXECUTE_IF_SET_IN_REG_SET (&deps->reg_last_in_use, 0, i, rsi)
     {
+      if (to_clear != -1U)
+	{
+	  CLEAR_REGNO_REG_SET (&deps->reg_last_in_use, to_clear);
+	  to_clear = -1U;
+	}
       struct deps_reg *reg_last = &deps->reg_last[i];
       if (reg_last->uses)
 	remove_from_dependence_list (insn, &reg_last->uses);
@@ -4009,8 +4044,10 @@ remove_from_deps (struct deps_desc *deps, rtx_insn *insn)
 	remove_from_dependence_list (insn, &reg_last->clobbers);
       if (!reg_last->uses && !reg_last->sets && !reg_last->implicit_sets
 	  && !reg_last->clobbers)
-        CLEAR_REGNO_REG_SET (&deps->reg_last_in_use, i);
+	to_clear = i;
     }
+  if (to_clear != -1U)
+    CLEAR_REGNO_REG_SET (&deps->reg_last_in_use, to_clear);
 
   if (CALL_P (insn))
     {
@@ -4189,22 +4226,29 @@ finish_deps_global (void)
 dw_t
 estimate_dep_weak (rtx mem1, rtx mem2)
 {
-  rtx r1, r2;
-
   if (mem1 == mem2)
     /* MEMs are the same - don't speculate.  */
     return MIN_DEP_WEAK;
 
-  r1 = XEXP (mem1, 0);
-  r2 = XEXP (mem2, 0);
+  rtx r1 = XEXP (mem1, 0);
+  rtx r2 = XEXP (mem2, 0);
+
+  if (sched_deps_info->use_cselib)
+    {
+      /* We cannot call rtx_equal_for_cselib_p because the VALUEs might be
+	 dangling at this point, since we never preserve them.  Instead we
+	 canonicalize manually to get stable VALUEs out of hashing.  */
+      if (GET_CODE (r1) == VALUE && CSELIB_VAL_PTR (r1))
+	r1 = canonical_cselib_val (CSELIB_VAL_PTR (r1))->val_rtx;
+      if (GET_CODE (r2) == VALUE && CSELIB_VAL_PTR (r2))
+	r2 = canonical_cselib_val (CSELIB_VAL_PTR (r2))->val_rtx;
+    }
 
   if (r1 == r2
-      || (REG_P (r1) && REG_P (r2)
-	  && REGNO (r1) == REGNO (r2)))
+      || (REG_P (r1) && REG_P (r2) && REGNO (r1) == REGNO (r2)))
     /* Again, MEMs are the same.  */
     return MIN_DEP_WEAK;
-  else if ((REG_P (r1) && !REG_P (r2))
-	   || (!REG_P (r1) && REG_P (r2)))
+  else if ((REG_P (r1) && !REG_P (r2)) || (!REG_P (r1) && REG_P (r2)))
     /* Different addressing modes - reason to be more speculative,
        than usual.  */
     return NO_DEP_WEAK - (NO_DEP_WEAK - UNCERTAIN_DEP_WEAK) / 2;

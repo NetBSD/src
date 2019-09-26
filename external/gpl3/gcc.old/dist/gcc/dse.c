@@ -1,5 +1,5 @@
 /* RTL dead store elimination.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    Contributed by Richard Sandiford <rsandifor@codesourcery.com>
    and Kenneth Zadeck <zadeck@naturalbridge.com>
@@ -32,6 +32,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "predict.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "gimple-ssa.h"
 #include "expmed.h"
@@ -288,10 +289,12 @@ struct store_info
 static unsigned HOST_WIDE_INT
 lowpart_bitmask (int n)
 {
-  unsigned HOST_WIDE_INT mask = ~(unsigned HOST_WIDE_INT) 0;
+  unsigned HOST_WIDE_INT mask = HOST_WIDE_INT_M1U;
+#if 1 // XXXMRG
   gcc_assert(n >= 0 && n <= HOST_BITS_PER_WIDE_INT);
   if (n == 0)
     return 0;
+#endif
   return mask >> (HOST_BITS_PER_WIDE_INT - n);
 }
 
@@ -914,7 +917,7 @@ can_escape (tree expr)
   base = get_base_address (expr);
   if (DECL_P (base)
       && !may_be_aliased (base)
-      && !(TREE_CODE (base) == VAR_DECL
+      && !(VAR_P (base)
 	   && !DECL_EXTERNAL (base)
 	   && !TREE_STATIC (base)
 	   && local_variable_can_escape (base)))
@@ -1204,7 +1207,7 @@ set_position_unneeded (store_info *s_info, int pos)
     }
   else
     s_info->positions_needed.small_bitmask
-      &= ~(((unsigned HOST_WIDE_INT) 1) << pos);
+      &= ~(HOST_WIDE_INT_1U << pos);
 }
 
 /* Mark the whole store S_INFO as unneeded.  */
@@ -1220,7 +1223,7 @@ set_all_positions_unneeded (store_info *s_info)
       s_info->positions_needed.large.count = end;
     }
   else
-    s_info->positions_needed.small_bitmask = (unsigned HOST_WIDE_INT) 0;
+    s_info->positions_needed.small_bitmask = HOST_WIDE_INT_0U;
 }
 
 /* Return TRUE if any bytes from S_INFO store are needed.  */
@@ -1232,8 +1235,7 @@ any_positions_needed_p (store_info *s_info)
     return (s_info->positions_needed.large.count
 	    < s_info->end - s_info->begin);
   else
-    return (s_info->positions_needed.small_bitmask
-	    != (unsigned HOST_WIDE_INT) 0);
+    return (s_info->positions_needed.small_bitmask != HOST_WIDE_INT_0U);
 }
 
 /* Return TRUE if all bytes START through START+WIDTH-1 from S_INFO
@@ -1453,7 +1455,12 @@ record_store (rtx body, bb_info_t bb_info)
 	      && offset >= s_info->begin
 	      && offset + width <= s_info->end
 	      && all_positions_needed_p (s_info, offset - s_info->begin,
-					 width))
+					 width)
+	      /* We can only remove the later store if the earlier aliases
+		 at least all accesses the later one.  */
+	      && (MEM_ALIAS_SET (mem) == MEM_ALIAS_SET (s_info->mem)
+		  || alias_set_subset_of (MEM_ALIAS_SET (mem),
+					  MEM_ALIAS_SET (s_info->mem))))
 	    {
 	      if (GET_MODE (mem) == BLKmode)
 		{
@@ -1750,7 +1757,7 @@ get_stored_val (store_info *store_info, machine_mode read_mode,
 	{
 	  unsigned HOST_WIDE_INT c
 	    = INTVAL (store_info->rhs)
-	      & (((HOST_WIDE_INT) 1 << BITS_PER_UNIT) - 1);
+	      & ((HOST_WIDE_INT_1 << BITS_PER_UNIT) - 1);
 	  int shift = BITS_PER_UNIT;
 	  while (shift < HOST_BITS_PER_WIDE_INT)
 	    {
@@ -2275,6 +2282,7 @@ scan_insn (bb_info_t bb_info, rtx_insn *insn)
   if (CALL_P (insn))
     {
       bool const_call;
+      rtx call, sym;
       tree memset_call = NULL_TREE;
 
       insn_info->cannot_delete = true;
@@ -2284,24 +2292,16 @@ scan_insn (bb_info_t bb_info, rtx_insn *insn)
 	 been pushed onto the stack.
 	 memset and bzero don't read memory either.  */
       const_call = RTL_CONST_CALL_P (insn);
-      if (!const_call)
-	{
-	  rtx call = get_call_rtx_from (insn);
-	  if (call && GET_CODE (XEXP (XEXP (call, 0), 0)) == SYMBOL_REF)
-	    {
-	      rtx symbol = XEXP (XEXP (call, 0), 0);
-	      if (SYMBOL_REF_DECL (symbol)
-		  && TREE_CODE (SYMBOL_REF_DECL (symbol)) == FUNCTION_DECL)
-		{
-		  if ((DECL_BUILT_IN_CLASS (SYMBOL_REF_DECL (symbol))
-		       == BUILT_IN_NORMAL
-		       && (DECL_FUNCTION_CODE (SYMBOL_REF_DECL (symbol))
-			   == BUILT_IN_MEMSET))
-		      || SYMBOL_REF_DECL (symbol) == block_clear_fn)
-		    memset_call = SYMBOL_REF_DECL (symbol);
-		}
-	    }
-	}
+      if (!const_call
+	  && (call = get_call_rtx_from (insn))
+	  && (sym = XEXP (XEXP (call, 0), 0))
+	  && GET_CODE (sym) == SYMBOL_REF
+	  && SYMBOL_REF_DECL (sym)
+	  && TREE_CODE (SYMBOL_REF_DECL (sym)) == FUNCTION_DECL
+	  && DECL_BUILT_IN_CLASS (SYMBOL_REF_DECL (sym)) == BUILT_IN_NORMAL
+	  && DECL_FUNCTION_CODE (SYMBOL_REF_DECL (sym)) == BUILT_IN_MEMSET)
+	memset_call = SYMBOL_REF_DECL (sym);
+
       if (const_call || memset_call)
 	{
 	  insn_info_t i_ptr = active_local_stores;
@@ -3013,11 +3013,11 @@ static void
 dse_step3 ()
 {
   basic_block bb;
-  sbitmap unreachable_blocks = sbitmap_alloc (last_basic_block_for_fn (cfun));
   sbitmap_iterator sbi;
   bitmap all_ones = NULL;
   unsigned int i;
 
+  auto_sbitmap unreachable_blocks (last_basic_block_for_fn (cfun));
   bitmap_ones (unreachable_blocks);
 
   FOR_ALL_BB_FN (bb, cfun)
@@ -3072,7 +3072,6 @@ dse_step3 ()
 
   if (all_ones)
     BITMAP_FREE (all_ones);
-  sbitmap_free (unreachable_blocks);
 }
 
 

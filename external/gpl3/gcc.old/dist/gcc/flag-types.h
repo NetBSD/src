@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -158,6 +158,14 @@ enum excess_precision
   EXCESS_PRECISION_STANDARD
 };
 
+/* The options for which values of FLT_EVAL_METHOD are permissible.  */
+enum permitted_flt_eval_methods
+{
+  PERMITTED_FLT_EVAL_METHODS_DEFAULT,
+  PERMITTED_FLT_EVAL_METHODS_TS_18661,
+  PERMITTED_FLT_EVAL_METHODS_C11
+};
+
 /* Type of stack check.  */
 enum stack_check_type
 {
@@ -176,30 +184,6 @@ enum stack_check_type
   /* Check the stack and entirely rely on the target configuration
      files, i.e. do not use the generic mechanism at all.  */
   FULL_BUILTIN_STACK_CHECK
-};
-
-/* Names for the different levels of -Wstrict-overflow=N.  The numeric
-   values here correspond to N.  */
-enum warn_strict_overflow_code
-{
-  /* Overflow warning that should be issued with -Wall: a questionable
-     construct that is easy to avoid even when using macros.  Example:
-     folding (x + CONSTANT > x) to 1.  */
-  WARN_STRICT_OVERFLOW_ALL = 1,
-  /* Overflow warning about folding a comparison to a constant because
-     of undefined signed overflow, other than cases covered by
-     WARN_STRICT_OVERFLOW_ALL.  Example: folding (abs (x) >= 0) to 1
-     (this is false when x == INT_MIN).  */
-  WARN_STRICT_OVERFLOW_CONDITIONAL = 2,
-  /* Overflow warning about changes to comparisons other than folding
-     them to a constant.  Example: folding (x + 1 > 1) to (x > 0).  */
-  WARN_STRICT_OVERFLOW_COMPARISON = 3,
-  /* Overflow warnings not covered by the above cases.  Example:
-     folding ((x * 10) / 5) to (x * 2).  */
-  WARN_STRICT_OVERFLOW_MISC = 4,
-  /* Overflow warnings about reducing magnitude of constants in
-     comparison.  Example: folding (x + 2 > y) to (x + 1 >= y).  */
-  WARN_STRICT_OVERFLOW_MAGNITUDE = 5
 };
 
 /* Floating-point contraction mode.  */
@@ -227,32 +211,34 @@ enum vect_cost_model {
 /* Different instrumentation modes.  */
 enum sanitize_code {
   /* AddressSanitizer.  */
-  SANITIZE_ADDRESS = 1 << 0,
-  SANITIZE_USER_ADDRESS = 1 << 1,
-  SANITIZE_KERNEL_ADDRESS = 1 << 2,
+  SANITIZE_ADDRESS = 1UL << 0,
+  SANITIZE_USER_ADDRESS = 1UL << 1,
+  SANITIZE_KERNEL_ADDRESS = 1UL << 2,
   /* ThreadSanitizer.  */
-  SANITIZE_THREAD = 1 << 3,
+  SANITIZE_THREAD = 1UL << 3,
   /* LeakSanitizer.  */
-  SANITIZE_LEAK = 1 << 4,
+  SANITIZE_LEAK = 1UL << 4,
   /* UndefinedBehaviorSanitizer.  */
-  SANITIZE_SHIFT = 1 << 5,
-  SANITIZE_DIVIDE = 1 << 6,
-  SANITIZE_UNREACHABLE = 1 << 7,
-  SANITIZE_VLA = 1 << 8,
-  SANITIZE_NULL = 1 << 9,
-  SANITIZE_RETURN = 1 << 10,
-  SANITIZE_SI_OVERFLOW = 1 << 11,
-  SANITIZE_BOOL = 1 << 12,
-  SANITIZE_ENUM = 1 << 13,
-  SANITIZE_FLOAT_DIVIDE = 1 << 14,
-  SANITIZE_FLOAT_CAST = 1 << 15,
-  SANITIZE_BOUNDS = 1UL << 16,
-  SANITIZE_ALIGNMENT = 1UL << 17,
-  SANITIZE_NONNULL_ATTRIBUTE = 1UL << 18,
-  SANITIZE_RETURNS_NONNULL_ATTRIBUTE = 1UL << 19,
-  SANITIZE_OBJECT_SIZE = 1UL << 20,
-  SANITIZE_VPTR = 1UL << 21,
-  SANITIZE_BOUNDS_STRICT = 1UL << 22,
+  SANITIZE_SHIFT_BASE = 1UL << 5,
+  SANITIZE_SHIFT_EXPONENT = 1UL << 6,
+  SANITIZE_DIVIDE = 1UL << 7,
+  SANITIZE_UNREACHABLE = 1UL << 8,
+  SANITIZE_VLA = 1UL << 9,
+  SANITIZE_NULL = 1UL << 10,
+  SANITIZE_RETURN = 1UL << 11,
+  SANITIZE_SI_OVERFLOW = 1UL << 12,
+  SANITIZE_BOOL = 1UL << 13,
+  SANITIZE_ENUM = 1UL << 14,
+  SANITIZE_FLOAT_DIVIDE = 1UL << 15,
+  SANITIZE_FLOAT_CAST = 1UL << 16,
+  SANITIZE_BOUNDS = 1UL << 17,
+  SANITIZE_ALIGNMENT = 1UL << 18,
+  SANITIZE_NONNULL_ATTRIBUTE = 1UL << 19,
+  SANITIZE_RETURNS_NONNULL_ATTRIBUTE = 1UL << 20,
+  SANITIZE_OBJECT_SIZE = 1UL << 21,
+  SANITIZE_VPTR = 1UL << 22,
+  SANITIZE_BOUNDS_STRICT = 1UL << 23,
+  SANITIZE_SHIFT = SANITIZE_SHIFT_BASE | SANITIZE_SHIFT_EXPONENT,
   SANITIZE_UNDEFINED = SANITIZE_SHIFT | SANITIZE_DIVIDE | SANITIZE_UNREACHABLE
 		       | SANITIZE_VLA | SANITIZE_NULL | SANITIZE_RETURN
 		       | SANITIZE_SI_OVERFLOW | SANITIZE_BOOL | SANITIZE_ENUM

@@ -1,5 +1,5 @@
 /* Define per-register tables for data flow info and register allocation.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -105,10 +105,7 @@ struct reg_info_t
 {
   int freq;			/* # estimated frequency (REG n) is used or set */
   int deaths;			/* # of times (REG n) dies */
-  int live_length;		/* # of instructions (REG n) is live */
   int calls_crossed;		/* # of calls (REG n) is live across */
-  int freq_calls_crossed;	/* # estimated frequency (REG n) crosses call */
-  int throw_calls_crossed;	/* # of calls that may throw (REG n) is live across */
   int basic_block;		/* # of basic blocks (REG n) is used in */
 };
 
@@ -163,26 +160,6 @@ extern size_t reg_info_p_size;
 /* Indexed by N, gives number of CALL_INSNS across which (REG n) is live.  */
 
 #define REG_N_CALLS_CROSSED(N)  (reg_info_p[N].calls_crossed)
-#define REG_FREQ_CALLS_CROSSED(N)  (reg_info_p[N].freq_calls_crossed)
-
-/* Indexed by N, gives number of CALL_INSNS that may throw, across which
-   (REG n) is live.  */
-
-#define REG_N_THROWING_CALLS_CROSSED(N) (reg_info_p[N].throw_calls_crossed)
-
-/* Total number of instructions at which (REG n) is live.
-   
-   This is set in regstat.c whenever register info is requested and
-   remains valid for the rest of the compilation of the function; it is
-   used to control register allocation.  The larger this is, the less
-   priority (REG n) gets for allocation in a hard register (in IRA in
-   priority-coloring mode).
-
-   Negative values are special: -1 is used to mark a pseudo reg that
-   should not be allocated to a hard register, because it crosses a
-   setjmp call.  */
-
-#define REG_LIVE_LENGTH(N)  (reg_info_p[N].live_length)
 
 /* Indexed by n, gives number of basic block that  (REG n) is used in.
    If the value is REG_BLOCK_GLOBAL (-1),
@@ -241,6 +218,10 @@ struct target_regs {
   /* 1 if the corresponding class contains a register of the given mode.  */
   char x_contains_reg_of_mode[N_REG_CLASSES][MAX_MACHINE_MODE];
 
+  /* 1 if the corresponding class contains a register of the given mode
+     which is not global and can therefore be allocated.  */
+  char x_contains_allocatable_reg_of_mode[N_REG_CLASSES][MAX_MACHINE_MODE];
+
   /* Record for each mode whether we can move a register directly to or
      from an object of that mode in memory.  If we can't, we won't try
      to use that mode directly when accessing a field of that mode.  */
@@ -266,6 +247,8 @@ extern struct target_regs *this_target_regs;
   (this_target_regs->x_have_regs_of_mode)
 #define contains_reg_of_mode \
   (this_target_regs->x_contains_reg_of_mode)
+#define contains_allocatable_reg_of_mode \
+  (this_target_regs->x_contains_allocatable_reg_of_mode)
 #define direct_load \
   (this_target_regs->x_direct_load)
 #define direct_store \

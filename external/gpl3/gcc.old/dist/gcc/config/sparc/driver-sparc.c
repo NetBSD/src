@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -79,6 +79,7 @@ static const struct cpu_names {
 #endif
   { "SPARC-M7",		"niagara7" },
   { "SPARC-S7",		"niagara7" },
+  { "SPARC-M8",		"m8" },
   { NULL,	NULL }
   };
 

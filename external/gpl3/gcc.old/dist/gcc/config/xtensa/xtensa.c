@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Tensilica's Xtensa architecture.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 This file is part of GCC.
@@ -28,6 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "optabs.h"
@@ -175,6 +176,7 @@ static bool xtensa_member_type_forces_blk (const_tree,
 					   machine_mode mode);
 
 static void xtensa_conditional_register_usage (void);
+static unsigned HOST_WIDE_INT xtensa_asan_shadow_offset (void);
 
 
 
@@ -266,6 +268,9 @@ static void xtensa_conditional_register_usage (void);
 #undef TARGET_CANNOT_FORCE_CONST_MEM
 #define TARGET_CANNOT_FORCE_CONST_MEM xtensa_cannot_force_const_mem
 
+#undef TARGET_LRA_P
+#define TARGET_LRA_P hook_bool_void_false
+
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P	xtensa_legitimate_address_p
 
@@ -299,6 +304,9 @@ static void xtensa_conditional_register_usage (void);
 
 #undef TARGET_CONDITIONAL_REGISTER_USAGE
 #define TARGET_CONDITIONAL_REGISTER_USAGE xtensa_conditional_register_usage
+
+#undef TARGET_ASAN_SHADOW_OFFSET
+#define TARGET_ASAN_SHADOW_OFFSET xtensa_asan_shadow_offset
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -2533,13 +2541,32 @@ xtensa_output_addr_const_extra (FILE *fp, rtx x)
   return false;
 }
 
+static void
+xtensa_output_integer_literal_parts (FILE *file, rtx x, int size)
+{
+  if (size > 4 && !(size & (size - 1)))
+    {
+      rtx first, second;
+
+      split_double (x, &first, &second);
+      xtensa_output_integer_literal_parts (file, first, size / 2);
+      fputs (", ", file);
+      xtensa_output_integer_literal_parts (file, second, size / 2);
+    }
+  else if (size == 4)
+    {
+      output_addr_const (file, x);
+    }
+  else
+    {
+      gcc_unreachable();
+    }
+}
 
 void
 xtensa_output_literal (FILE *file, rtx x, machine_mode mode, int labelno)
 {
   long value_long[2];
-  int size;
-  rtx first, second;
 
   fprintf (file, "\t.literal .LC%u, ", (unsigned) labelno);
 
@@ -2578,25 +2605,8 @@ xtensa_output_literal (FILE *file, rtx x, machine_mode mode, int labelno)
 
     case MODE_INT:
     case MODE_PARTIAL_INT:
-      size = GET_MODE_SIZE (mode);
-      switch (size)
-	{
-	case 4:
-	  output_addr_const (file, x);
-	  fputs ("\n", file);
-	  break;
-
-	case 8:
-	  split_double (x, &first, &second);
-	  output_addr_const (file, first);
-	  fputs (", ", file);
-	  output_addr_const (file, second);
-	  fputs ("\n", file);
-	  break;
-
-	default:
-	  gcc_unreachable ();
-	}
+      xtensa_output_integer_literal_parts (file, x, GET_MODE_SIZE (mode));
+      fputs ("\n", file);
       break;
 
     default:
@@ -2672,6 +2682,30 @@ xtensa_frame_pointer_required (void)
   return false;
 }
 
+HOST_WIDE_INT
+xtensa_initial_elimination_offset (int from, int to)
+{
+  long frame_size = compute_frame_size (get_frame_size ());
+  HOST_WIDE_INT offset;
+
+  switch (from)
+    {
+    case FRAME_POINTER_REGNUM:
+      if (FRAME_GROWS_DOWNWARD)
+	offset = frame_size - (WINDOW_SIZE * UNITS_PER_WORD)
+	  - cfun->machine->callee_save_size;
+      else
+	offset = 0;
+      break;
+    case ARG_POINTER_REGNUM:
+      offset = frame_size;
+      break;
+    default:
+      gcc_unreachable ();
+    }
+
+  return offset;
+}
 
 /* minimum frame = reg save area (4 words) plus static chain (1 word)
    and the total number of words must be a multiple of 128 bits.  */
@@ -2686,6 +2720,9 @@ xtensa_expand_prologue (void)
 
 
   total_size = compute_frame_size (get_frame_size ());
+
+  if (flag_stack_usage_info)
+    current_function_static_stack_size = total_size;
 
   if (TARGET_WINDOWED_ABI)
     {
@@ -4302,6 +4339,14 @@ enum reg_class xtensa_regno_to_class (int regno)
     return GR_REGS;
   else
     return regno_to_class[regno];
+}
+
+/* Implement TARGET_ASAN_SHADOW_OFFSET.  */
+
+static unsigned HOST_WIDE_INT
+xtensa_asan_shadow_offset (void)
+{
+  return HOST_WIDE_INT_UC (0x10000000);
 }
 
 #include "gt-xtensa.h"

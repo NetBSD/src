@@ -1,5 +1,5 @@
 /* Inlining decision heuristics.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -30,12 +30,12 @@ along with GCC; see the file COPYING3.  If not see
    For each call
      - call statement size and time
 
-   inlinie_summary datastructures store above information locally (i.e.
+   inline_summary data structures store above information locally (i.e.
    parameters of the function itself) and globally (i.e. parameters of
    the function created by applying all the inline decisions already
    present in the callgraph).
 
-   We provide accestor to the inline_summary datastructure and
+   We provide access to the inline_summary data structure and
    basic logic updating the parameters when inlining is performed. 
 
    The summaries are context sensitive.  Context means
@@ -43,7 +43,7 @@ along with GCC; see the file COPYING3.  If not see
      2) whether function is inlined into the call or not.
    It is easy to add more variants.  To represent function size and time
    that depends on context (i.e. it is known to be optimized away when
-   context is known either by inlining or from IP-CP and clonning),
+   context is known either by inlining or from IP-CP and cloning),
    we use predicates. Predicates are logical formulas in
    conjunctive-disjunctive form consisting of clauses. Clauses are bitmaps
    specifying what conditions must be true. Conditions are simple test
@@ -853,7 +853,8 @@ evaluate_conditions_for_known_args (struct cgraph_node *node,
 	  if (known_aggs.exists ())
 	    {
 	      agg = known_aggs[c->operand_num];
-	      val = ipa_find_agg_cst_for_param (agg, c->offset, c->by_ref);
+	      val = ipa_find_agg_cst_for_param (agg, known_vals[c->operand_num],
+						c->offset, c->by_ref);
 	    }
 	  else
 	    val = NULL_TREE;
@@ -1076,6 +1077,7 @@ reset_inline_summary (struct cgraph_node *node,
     reset_inline_edge_summary (e);
   for (e = node->indirect_calls; e; e = e->next_callee)
     reset_inline_edge_summary (e);
+  info->fp_expressions = false;
 }
 
 /* Hook that is called by cgraph.c when a node is removed.  */
@@ -1430,6 +1432,8 @@ dump_inline_summary (FILE *f, struct cgraph_node *node)
 	fprintf (f, " inlinable");
       if (s->contains_cilk_spawn)
 	fprintf (f, " contains_cilk_spawn");
+      if (s->fp_expressions)
+	fprintf (f, " fp_expression");
       fprintf (f, "\n  self time:       %i\n", s->self_time);
       fprintf (f, "  global time:     %i\n", s->time);
       fprintf (f, "  self size:       %i\n", s->self_size);
@@ -1494,19 +1498,20 @@ initialize_inline_failed (struct cgraph_edge *e)
 {
   struct cgraph_node *callee = e->callee;
 
-  if (e->indirect_unknown_callee)
+  if (e->inline_failed && e->inline_failed != CIF_BODY_NOT_AVAILABLE
+      && cgraph_inline_failed_type (e->inline_failed) == CIF_FINAL_ERROR)
+    ;
+  else if (e->indirect_unknown_callee)
     e->inline_failed = CIF_INDIRECT_UNKNOWN_CALL;
   else if (!callee->definition)
     e->inline_failed = CIF_BODY_NOT_AVAILABLE;
   else if (callee->local.redefined_extern_inline)
     e->inline_failed = CIF_REDEFINED_EXTERN_INLINE;
-  else if (e->call_stmt_cannot_inline_p)
-    e->inline_failed = CIF_MISMATCHED_ARGUMENTS;
-  else if (cfun && fn_contains_cilk_spawn_p (cfun))
-    /* We can't inline if the function is spawing a function.  */
-    e->inline_failed = CIF_FUNCTION_NOT_INLINABLE;
   else
     e->inline_failed = CIF_FUNCTION_NOT_CONSIDERED;
+  gcc_checking_assert (!e->call_stmt_cannot_inline_p
+		       || cgraph_inline_failed_type (e->inline_failed)
+			    == CIF_FINAL_ERROR);
 }
 
 /* Callback of walk_aliased_vdefs.  Flags that it has been invoked to the
@@ -2146,6 +2151,23 @@ struct record_modified_bb_info
   gimple *stmt;
 };
 
+/* Value is initialized in INIT_BB and used in USE_BB.  We want to copute
+   probability how often it changes between USE_BB.
+   INIT_BB->frequency/USE_BB->frequency is an estimate, but if INIT_BB
+   is in different loop nest, we can do better.
+   This is all just estimate.  In theory we look for minimal cut separating
+   INIT_BB and USE_BB, but we only want to anticipate loop invariant motion
+   anyway.  */
+
+static basic_block
+get_minimal_bb (basic_block init_bb, basic_block use_bb)
+{
+  struct loop *l = find_common_loop (init_bb->loop_father, use_bb->loop_father);
+  if (l && l->header->frequency < init_bb->frequency)
+    return l->header;
+  return init_bb;
+}
+
 /* Callback of walk_aliased_vdefs.  Records basic blocks where the value may be
    set except for info->stmt.  */
 
@@ -2159,7 +2181,9 @@ record_modified (ao_ref *ao ATTRIBUTE_UNUSED, tree vdef, void *data)
   bitmap_set_bit (info->bb_set,
 		  SSA_NAME_IS_DEFAULT_DEF (vdef)
 		  ? ENTRY_BLOCK_PTR_FOR_FN (cfun)->index
-		  : gimple_bb (SSA_NAME_DEF_STMT (vdef))->index);
+		  : get_minimal_bb
+			 (gimple_bb (SSA_NAME_DEF_STMT (vdef)),
+			  gimple_bb (info->stmt))->index);
   return false;
 }
 
@@ -2175,28 +2199,35 @@ param_change_prob (gimple *stmt, int i)
 {
   tree op = gimple_call_arg (stmt, i);
   basic_block bb = gimple_bb (stmt);
-  tree base;
 
-  /* Global invariants neve change.  */
-  if (is_gimple_min_invariant (op))
+  if (TREE_CODE (op) == WITH_SIZE_EXPR)
+    op = TREE_OPERAND (op, 0);
+
+  tree base = get_base_address (op);
+
+  /* Global invariants never change.  */
+  if (is_gimple_min_invariant (base))
     return 0;
+
   /* We would have to do non-trivial analysis to really work out what
      is the probability of value to change (i.e. when init statement
      is in a sibling loop of the call). 
 
      We do an conservative estimate: when call is executed N times more often
      than the statement defining value, we take the frequency 1/N.  */
-  if (TREE_CODE (op) == SSA_NAME)
+  if (TREE_CODE (base) == SSA_NAME)
     {
       int init_freq;
 
       if (!bb->frequency)
 	return REG_BR_PROB_BASE;
 
-      if (SSA_NAME_IS_DEFAULT_DEF (op))
+      if (SSA_NAME_IS_DEFAULT_DEF (base))
 	init_freq = ENTRY_BLOCK_PTR_FOR_FN (cfun)->frequency;
       else
-	init_freq = gimple_bb (SSA_NAME_DEF_STMT (op))->frequency;
+	init_freq = get_minimal_bb
+		      (gimple_bb (SSA_NAME_DEF_STMT (base)),
+		       gimple_bb (stmt))->frequency;
 
       if (!init_freq)
 	init_freq = 1;
@@ -2205,9 +2236,7 @@ param_change_prob (gimple *stmt, int i)
       else
 	return REG_BR_PROB_BASE;
     }
-
-  base = get_base_address (op);
-  if (base)
+  else
     {
       ao_ref refd;
       int max;
@@ -2248,7 +2277,6 @@ param_change_prob (gimple *stmt, int i)
       else
 	return REG_BR_PROB_BASE;
     }
-  return REG_BR_PROB_BASE;
 }
 
 /* Find whether a basic block BB is the final block of a (half) diamond CFG
@@ -2388,9 +2416,7 @@ find_foldable_builtin_expect (basic_block bb)
     {
       gimple *stmt = gsi_stmt (bsi);
       if (gimple_call_builtin_p (stmt, BUILT_IN_EXPECT)
-	  || (is_gimple_call (stmt)
-	      && gimple_call_internal_p (stmt)
-	      && gimple_call_internal_fn (stmt) == IFN_BUILTIN_EXPECT))
+	  || gimple_call_internal_p (stmt, IFN_BUILTIN_EXPECT))
         {
           tree var = gimple_call_lhs (stmt);
           tree arg = gimple_call_arg (stmt, 0);
@@ -2484,6 +2510,21 @@ clobber_only_eh_bb_p (basic_block bb, bool need_eh = true)
       return false;
 
   return true;
+}
+
+/* Return true if STMT compute a floating point expression that may be affected
+   by -ffast-math and similar flags.  */
+
+static bool
+fp_expression_p (gimple *stmt)
+{
+  ssa_op_iter i;
+  tree op;
+
+  FOR_EACH_SSA_TREE_OPERAND (op, stmt, i, SSA_OP_DEF|SSA_OP_USE)
+    if (FLOAT_TYPE_P (TREE_TYPE (op)))
+      return true;
+  return false;
 }
 
 /* Compute function body size parameters for NODE.
@@ -2760,6 +2801,13 @@ estimate_function_body_sizes (struct cgraph_node *node, bool early)
 				       this_time * (2 - prob), &p);
 		}
 
+	      if (!info->fp_expressions && fp_expression_p (stmt))
+		{
+		  info->fp_expressions = true;
+		  if (dump_file)
+		    fprintf (dump_file, "   fp_expression set\n");
+		}
+
 	      gcc_assert (time >= 0);
 	      gcc_assert (size >= 0);
 	    }
@@ -2918,79 +2966,93 @@ compute_inline_parameters (struct cgraph_node *node, bool early)
   info = inline_summaries->get (node);
   reset_inline_summary (node, info);
 
-  /* FIXME: Thunks are inlinable, but tree-inline don't know how to do that.
-     Once this happen, we will need to more curefully predict call
-     statement size.  */
+  /* Estimate the stack size for the function if we're optimizing.  */
+  self_stack_size = optimize && !node->thunk.thunk_p
+		    ? estimated_stack_frame_size (node) : 0;
+  info->estimated_self_stack_size = self_stack_size;
+  info->estimated_stack_size = self_stack_size;
+  info->stack_frame_offset = 0;
+
   if (node->thunk.thunk_p)
     {
       struct inline_edge_summary *es = inline_edge_summary (node->callees);
       struct predicate t = true_predicate ();
 
-      info->inlinable = 0;
-      node->callees->call_stmt_cannot_inline_p = true;
       node->local.can_change_signature = false;
-      es->call_stmt_time = 1;
-      es->call_stmt_size = 1;
-      account_size_time (info, 0, 0, &t);
-      return;
+      es->call_stmt_size = eni_size_weights.call_cost;
+      es->call_stmt_time = eni_time_weights.call_cost;
+      account_size_time (info, INLINE_SIZE_SCALE * 2,
+			 INLINE_TIME_SCALE * 2, &t);
+      t = not_inlined_predicate ();
+      account_size_time (info, 2 * INLINE_SIZE_SCALE, 0, &t);
+      inline_update_overall_summary (node);
+      info->self_size = info->size;
+      info->self_time = info->time;
+      /* We can not inline instrumentation clones.  */
+      if (node->thunk.add_pointer_bounds_args)
+	{
+          info->inlinable = false;
+          node->callees->inline_failed = CIF_CHKP;
+	}
+      else if (stdarg_p (TREE_TYPE (node->decl)))
+	{
+	  info->inlinable = false;
+	  node->callees->inline_failed = CIF_VARIADIC_THUNK;
+	}
+      else
+        info->inlinable = true;
     }
-
-  /* Even is_gimple_min_invariant rely on current_function_decl.  */
-  push_cfun (DECL_STRUCT_FUNCTION (node->decl));
-
-  /* Estimate the stack size for the function if we're optimizing.  */
-  self_stack_size = optimize ? estimated_stack_frame_size (node) : 0;
-  info->estimated_self_stack_size = self_stack_size;
-  info->estimated_stack_size = self_stack_size;
-  info->stack_frame_offset = 0;
-
-  /* Can this function be inlined at all?  */
-  if (!opt_for_fn (node->decl, optimize)
-      && !lookup_attribute ("always_inline",
-			    DECL_ATTRIBUTES (node->decl)))
-    info->inlinable = false;
-  else
-    info->inlinable = tree_inlinable_function_p (node->decl);
-
-  info->contains_cilk_spawn = fn_contains_cilk_spawn_p (cfun);
-
-  /* Type attributes can use parameter indices to describe them.  */
-  if (TYPE_ATTRIBUTES (TREE_TYPE (node->decl)))
-    node->local.can_change_signature = false;
   else
     {
-      /* Otherwise, inlinable functions always can change signature.  */
-      if (info->inlinable)
-	node->local.can_change_signature = true;
-      else
-	{
-	  /* Functions calling builtin_apply can not change signature.  */
-	  for (e = node->callees; e; e = e->next_callee)
-	    {
-	      tree cdecl = e->callee->decl;
-	      if (DECL_BUILT_IN (cdecl)
-		  && DECL_BUILT_IN_CLASS (cdecl) == BUILT_IN_NORMAL
-		  && (DECL_FUNCTION_CODE (cdecl) == BUILT_IN_APPLY_ARGS
-		      || DECL_FUNCTION_CODE (cdecl) == BUILT_IN_VA_START))
-		break;
-	    }
-	  node->local.can_change_signature = !e;
-	}
-    }
+       /* Even is_gimple_min_invariant rely on current_function_decl.  */
+       push_cfun (DECL_STRUCT_FUNCTION (node->decl));
 
-  /* Functions called by instrumentation thunk can't change signature
-     because instrumentation thunk modification is not supported.  */
-  if (node->local.can_change_signature)
-    for (e = node->callers; e; e = e->next_caller)
-      if (e->caller->thunk.thunk_p
-	  && e->caller->thunk.add_pointer_bounds_args)
-	{
-	  node->local.can_change_signature = false;
-	  break;
-	}
+       /* Can this function be inlined at all?  */
+       if (!opt_for_fn (node->decl, optimize)
+	   && !lookup_attribute ("always_inline",
+				 DECL_ATTRIBUTES (node->decl)))
+	 info->inlinable = false;
+       else
+	 info->inlinable = tree_inlinable_function_p (node->decl);
 
-  estimate_function_body_sizes (node, early);
+       info->contains_cilk_spawn = fn_contains_cilk_spawn_p (cfun);
 
+       /* Type attributes can use parameter indices to describe them.  */
+       if (TYPE_ATTRIBUTES (TREE_TYPE (node->decl)))
+	 node->local.can_change_signature = false;
+       else
+	 {
+	   /* Otherwise, inlinable functions always can change signature.  */
+	   if (info->inlinable)
+	     node->local.can_change_signature = true;
+	   else
+	     {
+	       /* Functions calling builtin_apply can not change signature.  */
+	       for (e = node->callees; e; e = e->next_callee)
+		 {
+		   tree cdecl = e->callee->decl;
+		   if (DECL_BUILT_IN (cdecl)
+		       && DECL_BUILT_IN_CLASS (cdecl) == BUILT_IN_NORMAL
+		       && (DECL_FUNCTION_CODE (cdecl) == BUILT_IN_APPLY_ARGS
+			   || DECL_FUNCTION_CODE (cdecl) == BUILT_IN_VA_START))
+		     break;
+		 }
+	       node->local.can_change_signature = !e;
+	     }
+	 }
+       /* Functions called by instrumentation thunk can't change signature
+	  because instrumentation thunk modification is not supported.  */
+       if (node->local.can_change_signature)
+	 for (e = node->callers; e; e = e->next_caller)
+	   if (e->caller->thunk.thunk_p
+	       && e->caller->thunk.add_pointer_bounds_args)
+	     {
+	       node->local.can_change_signature = false;
+	       break;
+	     }
+       estimate_function_body_sizes (node, early);
+       pop_cfun ();
+     }
   for (e = node->callees; e; e = e->next_callee)
     if (e->callee->comdat_local_p ())
       break;
@@ -3007,8 +3069,6 @@ compute_inline_parameters (struct cgraph_node *node, bool early)
       gcc_assert (info->time == info->self_time
 		  && info->size == info->self_size);
     }
-
-  pop_cfun ();
 }
 
 
@@ -3487,18 +3547,22 @@ remap_edge_change_prob (struct cgraph_edge *inlined_edge,
 	{
 	  struct ipa_jump_func *jfunc = ipa_get_ith_jump_func (args, i);
 	  if (jfunc->type == IPA_JF_PASS_THROUGH
-	      && (ipa_get_jf_pass_through_formal_id (jfunc)
-		  < (int) inlined_es->param.length ()))
+	      || jfunc->type == IPA_JF_ANCESTOR)
 	    {
-	      int jf_formal_id = ipa_get_jf_pass_through_formal_id (jfunc);
-	      int prob1 = es->param[i].change_prob;
-	      int prob2 = inlined_es->param[jf_formal_id].change_prob;
-	      int prob = combine_probabilities (prob1, prob2);
+	      int id = jfunc->type == IPA_JF_PASS_THROUGH
+		       ? ipa_get_jf_pass_through_formal_id (jfunc)
+		       : ipa_get_jf_ancestor_formal_id (jfunc);
+	      if (id < (int) inlined_es->param.length ())
+		{
+		  int prob1 = es->param[i].change_prob;
+		  int prob2 = inlined_es->param[id].change_prob;
+		  int prob = combine_probabilities (prob1, prob2);
 
-	      if (prob1 && prob2 && !prob)
-		prob = 1;
+		  if (prob1 && prob2 && !prob)
+		    prob = 1;
 
-	      es->param[i].change_prob = prob;
+		  es->param[i].change_prob = prob;
+		}
 	    }
 	}
     }
@@ -3616,6 +3680,8 @@ inline_merge_summary (struct cgraph_edge *edge)
     toplev_predicate = *es->predicate;
   else
     toplev_predicate = true_predicate ();
+
+  info->fp_expressions |= callee_info->fp_expressions;
 
   if (callee_info->conds)
     evaluate_properties_for_edge (edge, true, &clause, NULL, NULL, NULL);
@@ -4120,17 +4186,9 @@ inline_analyze_function (struct cgraph_node *node)
     {
       struct cgraph_edge *e;
       for (e = node->callees; e; e = e->next_callee)
-	{
-	  if (e->inline_failed == CIF_FUNCTION_NOT_CONSIDERED)
-	    e->inline_failed = CIF_FUNCTION_NOT_OPTIMIZED;
-	  e->call_stmt_cannot_inline_p = true;
-	}
+	e->inline_failed = CIF_FUNCTION_NOT_OPTIMIZED;
       for (e = node->indirect_calls; e; e = e->next_callee)
-	{
-	  if (e->inline_failed == CIF_FUNCTION_NOT_CONSIDERED)
-	    e->inline_failed = CIF_FUNCTION_NOT_OPTIMIZED;
-	  e->call_stmt_cannot_inline_p = true;
-	}
+	e->inline_failed = CIF_FUNCTION_NOT_OPTIMIZED;
     }
 
   pop_cfun ();
@@ -4269,6 +4327,7 @@ inline_read_section (struct lto_file_decl_data *file_data, const char *data,
       bp = streamer_read_bitpack (&ib);
       info->inlinable = bp_unpack_value (&bp, 1);
       info->contains_cilk_spawn = bp_unpack_value (&bp, 1);
+      info->fp_expressions = bp_unpack_value (&bp, 1);
 
       count2 = streamer_read_uhwi (&ib);
       gcc_assert (!info->conds);
@@ -4398,7 +4457,6 @@ write_inline_edge_summary (struct output_block *ob, struct cgraph_edge *e)
 void
 inline_write_summary (void)
 {
-  struct cgraph_node *node;
   struct output_block *ob = create_output_block (LTO_section_inline_summary);
   lto_symtab_encoder_t encoder = ob->decl_state->symtab_node_encoder;
   unsigned int count = 0;
@@ -4417,25 +4475,23 @@ inline_write_summary (void)
     {
       symtab_node *snode = lto_symtab_encoder_deref (encoder, i);
       cgraph_node *cnode = dyn_cast <cgraph_node *> (snode);
-      if (cnode && (node = cnode)->definition && !node->alias)
+      if (cnode && cnode->definition && !cnode->alias)
 	{
-	  struct inline_summary *info = inline_summaries->get (node);
+	  struct inline_summary *info = inline_summaries->get (cnode);
 	  struct bitpack_d bp;
 	  struct cgraph_edge *edge;
 	  int i;
 	  size_time_entry *e;
 	  struct condition *c;
 
-	  streamer_write_uhwi (ob,
-			       lto_symtab_encoder_encode (encoder,
-							  
-							  node));
+	  streamer_write_uhwi (ob, lto_symtab_encoder_encode (encoder, cnode));
 	  streamer_write_hwi (ob, info->estimated_self_stack_size);
 	  streamer_write_hwi (ob, info->self_size);
 	  streamer_write_hwi (ob, info->self_time);
 	  bp = bitpack_create (ob->main_stream);
 	  bp_pack_value (&bp, info->inlinable, 1);
 	  bp_pack_value (&bp, info->contains_cilk_spawn, 1);
+	  bp_pack_value (&bp, info->fp_expressions, 1);
 	  streamer_write_bitpack (&bp);
 	  streamer_write_uhwi (ob, vec_safe_length (info->conds));
 	  for (i = 0; vec_safe_iterate (info->conds, i, &c); i++)
@@ -4461,9 +4517,9 @@ inline_write_summary (void)
 	  write_predicate (ob, info->loop_iterations);
 	  write_predicate (ob, info->loop_stride);
 	  write_predicate (ob, info->array_index);
-	  for (edge = node->callees; edge; edge = edge->next_callee)
+	  for (edge = cnode->callees; edge; edge = edge->next_callee)
 	    write_inline_edge_summary (ob, edge);
-	  for (edge = node->indirect_calls; edge; edge = edge->next_callee)
+	  for (edge = cnode->indirect_calls; edge; edge = edge->next_callee)
 	    write_inline_edge_summary (ob, edge);
 	}
     }
