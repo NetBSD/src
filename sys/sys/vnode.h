@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.281 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.282 2019/09/26 20:57:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -277,6 +277,8 @@ struct vattr {
  * Token indicating no attribute value yet assigned.
  */
 #define	VNOVAL	(-1)
+#define VNOVALSIZE ((u_quad_t)-1)
+#define VNOVALFLAGS ((u_long)-1)
 
 /*
  * Convert between vnode types and inode formats (since POSIX.1
