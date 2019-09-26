@@ -1,0 +1,50 @@
+# Top level configure fragment for GNU Objective-C++.
+#   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+#   Contributed by Ziemowit Laski <zlaski@apple.com>
+
+#This file is part of GCC.
+
+#GCC is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 3, or (at your option)
+#any later version.
+
+#GCC is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with GCC; see the file COPYING3.  If not see
+#<http://www.gnu.org/licenses/>.
+
+# Configure looks for the existence of this file to auto-config each language.
+# We define several parameters used by configure:
+#
+# language	- name of language as it would appear in $(LANGUAGES)
+# compilers	- value to add to $(COMPILERS)
+
+language="obj-c++"
+
+compilers="cc1objplus\$(exeext)"
+
+# Per GCC Steering Committee.
+build_by_default="no"
+
+# By building the Objective-C and C++ front-ends, we will get
+# the object files we need, along with the libraries (libstdc++,
+# libobjc).
+lang_requires="objc c++"
+subdir_requires="objc cp"
+
+# When you add to this gtfiles list a header which comes from a
+# directory belonging to another language (ie, C++ or ObjC), you need
+# to also edit gengtype.c adding a special rule for the header to
+# avoid having the GC stuff from that header being added to gtype-cp.h
+# or gtype-objc.h.
+
+# This list is separated in two parts: the first one is identical to
+# the C++ one, the second one contains our ObjC++ additions.
+gtfiles="\$(srcdir)/cp/rtti.c \$(srcdir)/cp/mangle.c \$(srcdir)/cp/name-lookup.h \$(srcdir)/cp/name-lookup.c \$(srcdir)/cp/cp-tree.h \$(srcdir)/cp/decl.h \$(srcdir)/cp/call.c \$(srcdir)/cp/decl.c \$(srcdir)/cp/decl2.c \$(srcdir)/cp/pt.c \$(srcdir)/cp/repo.c \$(srcdir)/cp/semantics.c \$(srcdir)/cp/tree.c \$(srcdir)/cp/parser.h \$(srcdir)/cp/parser.c \$(srcdir)/cp/method.c \$(srcdir)/cp/typeck2.c \$(srcdir)/c-family/c-common.c \$(srcdir)/c-family/c-common.h \$(srcdir)/c-family/c-objc.h \$(srcdir)/c-family/c-lex.c \$(srcdir)/c-family/c-pragma.h \$(srcdir)/c-family/c-pragma.c \$(srcdir)/cp/class.c \$(srcdir)/cp/cp-objcp-common.c \$(srcdir)/cp/except.c \$(srcdir)/cp/vtable-class-hierarchy.c \$(srcdir)/cp/constexpr.c \$(srcdir)/cp/cp-gimplify.c \
+\$(srcdir)/objc/objc-map.h \$(srcdir)/objc/objc-act.h \$(srcdir)/objc/objc-act.c \$(srcdir)/objc/objc-runtime-shared-support.c \$(srcdir)/objc/objc-gnu-runtime-abi-01.c \$(srcdir)/objc/objc-next-runtime-abi-01.c \$(srcdir)/objc/objc-next-runtime-abi-02.c \$(srcdir)/c-family/c-cppbuiltin.c"
+
