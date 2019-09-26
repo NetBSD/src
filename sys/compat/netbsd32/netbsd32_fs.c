@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.84 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.85 2019/09/26 01:32:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.84 2019/09/22 22:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.85 2019/09/26 01:32:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,8 @@ dofilereadv32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt, 
 	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
-	long i, cnt, error = 0;
+	long i, error = 0;
+	size_t cnt;
 	u_int iovlen;
 	struct iovec *ktriov = NULL;
 
@@ -243,7 +244,8 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
-	long i, cnt, error = 0;
+	long i, error = 0;
+	size_t cnt;
 	u_int iovlen;
 	struct iovec *ktriov = NULL;
 
