@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.70 2019/09/26 10:33:30 mlelstv Exp $   */
+/*      $NetBSD: raidctl.c,v 1.71 2019/09/26 10:47:30 mlelstv Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.70 2019/09/26 10:33:30 mlelstv Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.71 2019/09/26 10:47:30 mlelstv Exp $");
 #endif
 
 
@@ -442,7 +442,7 @@ rf_get_device_status(int fd)
 		       device_status(device_config.devs[i].status));
 	}
 
-	nspares = uimin(device_config.nspares,
+	nspares = MIN(device_config.nspares,
 	                __arraycount(device_config.spares));
 
 	if (nspares > 0) {
@@ -607,7 +607,7 @@ rf_output_configuration(int fd, const char *name)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
-	int i;
+	int i, nspares;
 	RF_ComponentLabel_t component_label;
 	void *label_ptr;
 	int component_num;
@@ -619,6 +619,9 @@ rf_output_configuration(int fd, const char *name)
 	printf("\n");
 	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, "RAIDFRAME_GET_INFO");
 
+	nspares = MIN(device_config.nspares,
+	                __arraycount(device_config.spares));
+	
 	/*
 	 * After NetBSD 9, convert this to not output the numRow's value,
 	 * which is no longer required or ever used.
@@ -635,9 +638,9 @@ rf_output_configuration(int fd, const char *name)
 		    rf_output_devname(device_config.devs[i].devname));
 	printf("\n");
 
-	if (device_config.nspares > 0) {
+	if (nspares > 0) {
 		printf("START spare\n");
-		for(i=0; i < device_config.nspares; i++)
+		for(i=0; i < nspares; i++)
 			printf("%s\n", device_config.spares[i].devname);
 		printf("\n");
 	}
@@ -679,7 +682,7 @@ get_component_number(int fd, char *component_name, int *component_number,
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
-	int i;
+	int i, nspares;
 	int found;
 
 	*component_number = -1;
@@ -690,6 +693,9 @@ get_component_number(int fd, char *component_name, int *component_number,
 		 "RAIDFRAME_GET_INFO");
 
 	*num_columns = device_config.cols;
+
+	nspares = MIN(device_config.nspares,
+	                __arraycount(device_config.spares));
 	
 	found = 0;
 	for(i=0; i < device_config.ndevs; i++) {
@@ -700,7 +706,7 @@ get_component_number(int fd, char *component_name, int *component_number,
 		}
 	}
 	if (!found) { /* maybe it's a spare? */
-		for(i=0; i < device_config.nspares; i++) {
+		for(i=0; i < nspares; i++) {
 			if (strncmp(component_name, 
 				    device_config.spares[i].devname,
 				    PATH_MAX)==0) {
