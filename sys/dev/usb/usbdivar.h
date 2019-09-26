@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.118 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.119 2019/09/26 01:35:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ struct usbd_device {
 	const struct usbd_quirks
 			       *ud_quirks;	/* device quirks, always set */
 	struct usbd_hub	       *ud_hub;		/* only if this is a hub */
-	int			ud_subdevlen;	/* array length of following */
+	u_int			ud_subdevlen;	/* array length of following */
 	device_t	       *ud_subdevs;	/* sub-devices */
 	int			ud_nifaces_claimed; /* number of ifaces in use */
 	void		       *ud_hcpriv;
