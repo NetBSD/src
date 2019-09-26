@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/06/17 14:57:57 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2019/09/26 02:00:27 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -21,6 +21,8 @@ CPPFLAGS+=	-DINET -DINET6
 
 SRCS+=	rtsock_50.c
 
+COPTS.rtsock_50.c+=-Wno-sign-compare
+
 .PATH:	${S}/fs/puffs
 
 SRCS+=	puffs_compat.c
@@ -32,7 +34,5 @@ SRCS+=  wsevent_50.c
 .PATH:	${S}/dev
 
 SRCS+=	vnd_50.c
-
-WARNS=	3
 
 .include <bsd.kmodule.mk>
