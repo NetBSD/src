@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104.2.1 2019/09/26 18:47:14 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.104.2.2 2019/09/26 18:50:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104.2.1 2019/09/26 18:47:14 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.104.2.2 2019/09/26 18:50:18 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1433,7 +1433,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	if (lfunc < 0x8000001d)
 		return;
 
-	cpu_dcp_cacheinfo(ci, 0x8000001d);
+	if (ci->ci_feat_val[3] & CPUID_TOPOEXT)
+		cpu_dcp_cacheinfo(ci, 0x8000001d);
 }
 
 static void
