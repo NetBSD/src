@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.30.2.5 2019/09/25 15:49:16 martin Exp $	*/
+/*	$NetBSD: nvme.c,v 1.30.2.6 2019/09/26 18:23:13 martin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30.2.5 2019/09/25 15:49:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30.2.6 2019/09/26 18:23:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,6 +395,10 @@ nvme_attach(struct nvme_softc *sc)
 
 	if (nvme_identify(sc, NVME_CAP_MPSMIN(cap)) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to identify controller\n");
+		goto disable;
+	}
+	if (sc->sc_nn == 0) {
+		aprint_error_dev(sc->sc_dev, "namespace not found\n");
 		goto disable;
 	}
 
